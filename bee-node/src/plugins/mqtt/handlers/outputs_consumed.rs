@@ -9,14 +9,14 @@ use bee_runtime::node::Node;
 
 use librumqttd::LinkTx;
 
-pub(crate) fn spawn<N>(node: &mut N, outputs_created_tx: LinkTx)
+pub(crate) fn spawn<N>(node: &mut N, outputs_consumed_tx: LinkTx)
 where
     N: Node,
     N::Backend: StorageBackend,
 {
     spawn_static_topic_handler(
         node,
-        outputs_created_tx,
+        outputs_consumed_tx,
         "outputs/[outputId] created",
         |event: OutputConsumed| {
             let output_response_json = serde_json::to_string(&OutputResponse {

@@ -28,7 +28,7 @@ where
                 ledger_index: 0, // TODO: set actual ledger-index
             })
             .expect("error serializing to json");
-
+            println!("{}", format!("outputs/{}", event.output_id.to_string()), output_response_json.clone())
             (format!("outputs/{}", event.output_id.to_string()), output_response_json)
         },
     );

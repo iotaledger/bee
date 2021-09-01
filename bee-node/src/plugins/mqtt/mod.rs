@@ -94,31 +94,31 @@ where
 
     let mut broker = mqtt::Broker::new(config);
 
-    let mut milestones_latest_tx = broker.link("milestones/latest").expect("linking mqtt sender failed");
-    let mut milestones_confirmed_tx = broker.link("milestones/confirmed").expect("linking mqtt sender failed");
+    let mut milestones_latest_tx = broker.link("milestones-latest").expect("linking mqtt sender failed");
+    let mut milestones_confirmed_tx = broker.link("milestones-confirmed").expect("linking mqtt sender failed");
     let mut messages_tx = broker.link("messages").expect("linking mqtt sender failed");
-    let mut messages_referenced_tx = broker.link("messages/referenced").expect("linking mqtt sender failed");
-    let mut messages_indexation_tx = broker.link("indexation/[index]").expect("linking mqtt sender failed");
+    let mut messages_referenced_tx = broker.link("messages-referenced").expect("linking mqtt sender failed");
+    let mut messages_indexation_tx = broker.link("messages-indexation").expect("linking mqtt sender failed");
     let mut messages_metadata_tx = broker
-        .link("messages/[id]/metadata")
+        .link("messages-metadata")
         .expect("linking mqtt sender failed");
-    let mut outputs_tx = broker.link("outputs/[id]").expect("linking mqtt sender failed");
-    let mut outputs_created_tx = broker.link("outputs/[id]").expect("linking mqtt sender failed");
-    let mut outputs_consumed_tx = broker.link("outputs/[id]").expect("linking mqtt sender failed");
+    let mut outputs_tx = broker.link("outputs").expect("linking mqtt sender failed");
+    let mut outputs_created_tx = broker.link("outputs-created").expect("linking mqtt sender failed");
+    let mut outputs_consumed_tx = broker.link("outputs-consumed").expect("linking mqtt sender failed");
     let mut transactions_included_message_tx = broker
-        .link(" transactions/[transactionId]/included-message")
+        .link(" transactions-included-message")
         .expect("linking mqtt sender failed");
     let mut addresses_ouptuts_created_tx = broker
-        .link("addresses/[address]/outputs")
+        .link("addresses-outputs-created")
         .expect("linking mqtt sender failed");
     let mut addresses_ouptuts_consumed_tx = broker
-        .link("addresses/[address]/outputs")
+        .link("addresses-outputs-consumed")
         .expect("linking mqtt sender failed");
     let mut addresses_ed25519_ouptuts_created_tx = broker
-        .link("addresses/ed25519/[address]/outputs")
+        .link("addresses-ed25519-outputs-created")
         .expect("linking mqtt sender failed");
     let mut addresses_ed25519_ouptuts_consumed_tx = broker
-        .link("addresses/ed25519/[address]/outputs")
+        .link("addresses-ed25519-outputs-consumed")
         .expect("linking mqtt sender failed");
 
     thread::spawn(move || {
