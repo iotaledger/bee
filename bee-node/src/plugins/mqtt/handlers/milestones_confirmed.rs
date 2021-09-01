@@ -4,7 +4,7 @@
 use crate::{plugins::mqtt::handlers::spawn_static_topic_handler, storage::StorageBackend};
 
 use bee_runtime::node::Node;
-use bee_tangle::event::ConfirmedMilestoneChanged;
+use bee_ledger::workers::event::MilestoneConfirmed;
 
 use librumqttd::LinkTx;
 use serde::Serialize;
@@ -24,7 +24,7 @@ where
         node,
         milestones_confirmed_tx,
         "milestones/confirmed",
-        |event: ConfirmedMilestoneChanged| {
+        |event: MilestoneConfirmed| {
             let response = serde_json::to_string(&MilestoneConfirmedResponse {
                 index: *event.index,
                 timestamp: event.milestone.timestamp(),
