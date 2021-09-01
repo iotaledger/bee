@@ -12,10 +12,10 @@ pub use health::{Error as StorageHealthError, StorageHealth};
 pub use version::StorageVersion;
 
 use bee_packable::{
+    coerce::*,
     error::{PackError, UnpackError},
-    packable::{Packable, Packer, Unpacker}
+    packable::{Packable, Packer, Unpacker},
 };
-use bee_packable::coerce::*;
 
 /// Key used to store the system version.
 pub const SYSTEM_VERSION_KEY: u8 = 0;

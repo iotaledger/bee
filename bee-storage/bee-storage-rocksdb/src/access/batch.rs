@@ -6,10 +6,8 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
-use bee_packable::{Packable};
-use bee_message::{
-    Message, MessageId,
-};
+use bee_message::{Message, MessageId};
+use bee_packable::Packable;
 use bee_storage::access::{Batch, BatchBuilder};
 
 use rocksdb::{WriteBatch, WriteOptions};

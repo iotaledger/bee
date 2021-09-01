@@ -7,10 +7,8 @@ use crate::{storage::Storage, trees::*};
 
 use core::fmt::Debug;
 
+use bee_message::{Message, MessageId};
 use bee_packable::packable::Packable;
-use bee_message::{
-    Message, MessageId,
-};
 use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
 
 use std::{marker::PhantomData, slice::Iter};
@@ -22,7 +20,10 @@ pub struct TreeIter<'a, K, V, E> {
     marker: PhantomData<(V, E)>,
 }
 
-impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for TreeIter<'a, K, V, E> where <K as bee_packable::Packable>::PackError: Debug {
+impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for TreeIter<'a, K, V, E>
+where
+    <K as bee_packable::Packable>::PackError: Debug,
+{
     type Item = Result<Option<V>, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -44,7 +45,10 @@ pub struct DbIter<'a, K, V, E> {
     marker: PhantomData<(V, E)>,
 }
 
-impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for DbIter<'a, K, V, E> where <K as bee_packable::Packable>::PackError: Debug {
+impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for DbIter<'a, K, V, E>
+where
+    <K as bee_packable::Packable>::PackError: Debug,
+{
     type Item = Result<Option<V>, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -66,6 +70,7 @@ impl<'a> MultiFetch<'a, u8, System> for Storage {
         Ok(DbIter {
             db: &self.inner,
             keys: keys.iter(),
+
             marker: PhantomData,
         })
     }

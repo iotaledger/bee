@@ -5,9 +5,7 @@
 
 use crate::{storage::Storage, trees::*};
 
-use bee_message::{
-    Message, MessageId,
-};
+use bee_message::{Message, MessageId};
 use bee_storage::{access::Truncate, backend::StorageBackend};
 
 macro_rules! impl_truncate {

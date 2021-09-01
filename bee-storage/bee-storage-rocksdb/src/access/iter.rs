@@ -6,9 +6,7 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
-use bee_message::{
-    Message, MessageId,
-};
+use bee_message::{Message, MessageId};
 use bee_storage::{access::AsIterator, system::System};
 
 use rocksdb::{DBIterator, IteratorMode};

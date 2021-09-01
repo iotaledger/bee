@@ -6,11 +6,9 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
-use bee_message::{
-    Message, MessageId,
-};
-use bee_storage::{access::MultiFetch, system::System};
+use bee_message::{Message, MessageId};
 use bee_packable::Packable;
+use bee_storage::{access::MultiFetch, system::System};
 
 use std::{marker::PhantomData, vec::IntoIter};
 

@@ -5,7 +5,7 @@ use core::convert::Infallible;
 
 use bee_packable::{
     error::{PackError, UnpackError},
-    packable::{Packable, Packer, Unpacker}
+    packable::{Packable, Packer, Unpacker},
 };
 
 /// Version of the storage.

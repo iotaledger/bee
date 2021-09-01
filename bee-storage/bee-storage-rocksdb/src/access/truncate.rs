@@ -6,9 +6,7 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
-use bee_message::{
-    Message, MessageId,
-};
+use bee_message::{Message, MessageId};
 use bee_storage::access::Truncate;
 
 fn truncate(storage: &Storage, cf_str: &'static str) -> Result<(), <Storage as StorageBackend>::Error> {

@@ -7,9 +7,7 @@ use crate::{storage::Storage, trees::*};
 
 use bee_packable::packable::{Packable, SlicePacker};
 
-use bee_message::{
-    Message, MessageId,
-};
+use bee_message::{Message, MessageId};
 use bee_storage::{
     access::{Batch, BatchBuilder},
     backend::StorageBackend,

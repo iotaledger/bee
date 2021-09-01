@@ -17,7 +17,7 @@ use rocksdb::{
     ColumnFamily, ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, FlushOptions, Options, DB,
 };
 
-pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(9);
+pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(0);
 
 pub struct Storage {
     pub(crate) config: StorageConfig,
@@ -61,14 +61,7 @@ impl Storage {
         env.set_high_priority_background_threads(config.env.set_high_priority_background_threads);
         opts.set_env(&env);
 
-        let db = DB::open_cf_descriptors(
-            &opts,
-            config.path,
-            vec![
-                cf_system,
-                cf_message_id_to_message,
-            ],
-        )?;
+        let db = DB::open_cf_descriptors(&opts, config.path, vec![cf_system, cf_message_id_to_message])?;
 
         let mut flushopts = FlushOptions::new();
         flushopts.set_wait(true);

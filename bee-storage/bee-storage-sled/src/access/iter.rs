@@ -7,12 +7,10 @@ use crate::{storage::Storage, trees::*};
 
 use bee_packable::packable::Packable;
 
-use bee_message::{
-    Message, MessageId,
-};
+use bee_message::{Message, MessageId};
 use bee_storage::{access::AsIterator, backend::StorageBackend, system::System};
 
-use std::{marker::PhantomData};
+use std::marker::PhantomData;
 
 /// Type used to stream a subtree.
 pub struct StorageIterator<'a, K, V> {

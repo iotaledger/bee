@@ -6,11 +6,8 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
-use bee_message::{
-    Message, MessageId,
-};
+use bee_message::{Message, MessageId};
 use bee_storage::{access::Fetch, system::System};
-
 
 impl Fetch<u8, System> for Storage {
     fn fetch(&self, key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {

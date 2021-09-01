@@ -5,7 +5,7 @@
 
 use bee_packable::{
     error::{PackError, UnpackError},
-    packable::{Packable, Packer, Unpacker}
+    packable::{Packable, Packer, Unpacker},
 };
 
 use bee_packable::coerce::*;

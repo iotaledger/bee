@@ -6,10 +6,8 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
+use bee_message::{Message, MessageId};
 use bee_packable::Packable;
-use bee_message::{
-    Message, MessageId,
-};
 use bee_storage::{access::Insert, system::System};
 
 impl Insert<u8, System> for Storage {

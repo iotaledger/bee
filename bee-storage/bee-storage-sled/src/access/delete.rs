@@ -5,9 +5,7 @@
 
 use crate::{storage::Storage, trees::*};
 
-use bee_message::{
-    Message, MessageId,
-};
+use bee_message::{Message, MessageId};
 use bee_storage::{access::Delete, backend::StorageBackend};
 
 impl Delete<MessageId, Message> for Storage {
