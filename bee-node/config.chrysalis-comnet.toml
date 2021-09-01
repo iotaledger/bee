@@ -77,7 +77,7 @@ white_flag_solidification_timeout = 2
 [snapshot]
 full_path         = "./snapshots/comnet/latest-full_snapshot.bin"
 download_urls     = [
-    "https://comnet.tanglebay.com/ls/"
+    "https://cdn.tanglebay.com/snapshots/comnet/"
 ]
 depth             = 50
 interval_synced   = 50
