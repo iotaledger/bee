@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! Defines a type to represent different health states in which the storage backend can be.
