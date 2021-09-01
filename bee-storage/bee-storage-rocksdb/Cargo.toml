@@ -11,9 +11,9 @@ keywords = ["iota", "tangle", "bee", "framework", "rocksdb"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-message = { version = "0.1.3", path = "../../bee-message" }
-bee-storage = { path = "../bee-storage" }
+bee-message = { path = "../../bee-message" }
 bee-packable = { path = "../../bee-common/bee-packable" }
+bee-storage = { path = "../bee-storage" }
 
 num_cpus = "1.13"
 rocksdb = { version = "0.17", default-features = false }
