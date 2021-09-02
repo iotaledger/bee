@@ -7,6 +7,13 @@ use bee_message::parents::{ParentsBlock, ParentsKind, PREFIXED_PARENTS_LENGTH_MA
 
 /// Generates a random [`ParentsBlock`] of a given [`ParentsKind`].
 pub fn rand_parents_block(block_type: ParentsKind) -> ParentsBlock {
+    let mut parent_ids = vec_rand_length(
+        PREFIXED_PARENTS_LENGTH_MIN as usize..=PREFIXED_PARENTS_LENGTH_MAX as usize,
+        rand_message_id,
+    );
+
+    parent_ids.sort();
+
     ParentsBlock::new(
         block_type,
         vec_rand_length(

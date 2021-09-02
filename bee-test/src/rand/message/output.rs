@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::rand::{
-    address::rand_address, asset_balance::rand_asset_balance, number::rand_number_range,
-    transaction::rand_transaction_id, vec::vec_rand_length,
+    message::{address::rand_address, asset_balance::rand_asset_balance, transaction::rand_transaction_id},
+    number::{rand_number, rand_number_range},
+    vec::vec_rand_length,
 };
 
 use bee_message::output::{
@@ -11,9 +12,7 @@ use bee_message::output::{
     SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT,
 };
 
-use super::number::rand_number;
-
-/// Generates a random [`OutputId`](bee_message::output::OutputId).
+/// Generates a random [`OutputId`].
 pub fn rand_output_id() -> OutputId {
     OutputId::new(rand_transaction_id(), rand_number_range(OUTPUT_INDEX_RANGE)).unwrap()
 }

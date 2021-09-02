@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::output::rand_output_id;
+use crate::rand::message::output::rand_output_id;
 
 use bee_message::input::UtxoInput;
 
