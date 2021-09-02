@@ -20,8 +20,10 @@ The IOTA Foundation aims to allow machines of all performance levels to contribu
 
 Therefore, we are developing Bee as a modular collection of extendable crates, which expose foreign function interfaces (FFIs) for the next iteration of client libraries.
 
-::info
+:::info
+
 You can find details about future development plans in our [roadmap](https://roadmap.iota.org).
+
 :::
 
 ## Design
@@ -33,7 +35,9 @@ By using this approach, we hope that improvements to core components will quickl
 having to fix each one individually.
 
 :::info
+
 We have chosen the Rust programming language for Bee because of its C/C++ like performance, and its strong memory safety guarantees. [Learn more about Rust](https://www.rust-lang.org/).
+
 :::
 
 ## Supporting the Project

@@ -1,3 +1,11 @@
+---
+description: In this section you will find an overview of all the crates that make up Bee.
+image: /img/logo/bee_logo.png
+keywords:
+- troubleshooting
+- rust
+- crate
+---
 # Overview
 
 In this section you will find an overview of all the crates that make up Bee.  

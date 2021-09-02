@@ -1,3 +1,13 @@
+---
+description: The IOTA network is a distributed type of network called Tangle.  The network is distributed among plenty of servers called nodes which are the backbone of the IOTA network. 
+image: /img/logo/bee_logo.png
+keywords:
+- nodes
+- messages
+- Tangle
+- database
+- IOTA Network
+---
 # Nodes 101
 
 The IOTA network is a distributed type of network called Tangle.  The network is distributed among plenty of servers
