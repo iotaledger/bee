@@ -15,11 +15,9 @@ bee-message = { path = "../../bee-message" }
 bee-packable = { path = "../../bee-common/bee-packable", features = [ "io" ] }
 bee-storage = { path = "../bee-storage" }
 
-num_cpus = "1.13"
 serde = { version = "1.0", features = [ "derive" ] }
 sled = { version = "0.34.6", features = [ "compression" ]}
 thiserror = "1.0"
 
 [dev-dependencies]
 bee-storage-test = { path = "../bee-storage-test" }
-bee-test = { path = "../../bee-test" }

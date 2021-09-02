@@ -178,7 +178,6 @@ version = "0.9.0"
 dependencies = [
  "bee-packable",
  "serde",
- "thiserror",
 ]
 
 [[package]]
@@ -189,7 +188,6 @@ dependencies = [
  "bee-packable",
  "bee-storage",
  "bee-storage-test",
- "bee-test",
  "num_cpus",
  "rocksdb",
  "serde",
@@ -204,8 +202,6 @@ dependencies = [
  "bee-packable",
  "bee-storage",
  "bee-storage-test",
- "bee-test",
- "num_cpus",
  "serde",
  "sled",
  "thiserror",
@@ -217,7 +213,6 @@ version = "0.3.0"
 dependencies = [
  "bee-message",
  "bee-storage",
- "bee-test",
 ]
 
 [[package]]

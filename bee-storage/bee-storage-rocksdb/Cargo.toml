@@ -22,4 +22,3 @@ thiserror = "1.0"
 
 [dev-dependencies]
 bee-storage-test = { path = "../bee-storage-test" }
-bee-test = { path = "../../bee-test" }

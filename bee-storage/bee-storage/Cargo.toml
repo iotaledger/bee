@@ -14,4 +14,3 @@ homepage = "https://www.iota.org"
 bee-packable = { path = "../../bee-common/bee-packable" }
 
 serde = { version = "1.0", features = [ "derive" ] }
-thiserror = { version = "1.0" }

@@ -13,4 +13,3 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-message = { path = "../../bee-message" }
 bee-storage = { path = "../bee-storage" }
-bee-test = { path = "../../bee-test" }
