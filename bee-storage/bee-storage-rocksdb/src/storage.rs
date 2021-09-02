@@ -20,6 +20,8 @@ use rocksdb::{
 pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(0);
 
 pub struct Storage {
+    // TODO remove when fetch limits are starting to be used
+    #[allow(dead_code)]
     pub(crate) config: StorageConfig,
     pub(crate) inner: DB,
 }
@@ -66,6 +68,7 @@ impl Storage {
         let mut flushopts = FlushOptions::new();
         flushopts.set_wait(true);
         db.flush_opt(&flushopts)?;
+        // This can't fail since the `CF_SYSTEM` column family has just been created.
         db.flush_cf_opt(db.cf_handle(CF_SYSTEM).unwrap(), &flushopts)?;
 
         Ok(Storage {

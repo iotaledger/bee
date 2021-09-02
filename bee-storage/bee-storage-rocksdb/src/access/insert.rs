@@ -13,7 +13,8 @@ use bee_storage::{access::Insert, system::System};
 impl Insert<u8, System> for Storage {
     fn insert(&self, key: &u8, value: &System) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .put_cf(self.cf_handle(CF_SYSTEM)?, [*key], value.pack_new())?;
+            // Packing to bytes can't fail.
+            .put_cf(self.cf_handle(CF_SYSTEM)?, [*key], value.pack_to_vec().unwrap())?;
 
         Ok(())
     }
@@ -24,7 +25,8 @@ impl Insert<MessageId, Message> for Storage {
         self.inner.put_cf(
             self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?,
             message_id,
-            message.pack_new(),
+            // Packing to bytes can't fail.
+            message.pack_to_vec().unwrap(),
         )?;
 
         Ok(())

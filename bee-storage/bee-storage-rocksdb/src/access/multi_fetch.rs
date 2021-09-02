@@ -24,7 +24,8 @@ impl<V: Packable, E: From<rocksdb::Error>> Iterator for MultiIter<V, E> {
         Some(
             self.iter
                 .next()?
-                .map(|option| option.map(|bytes| V::unpack_unchecked(&mut bytes.as_slice()).unwrap()))
+                // Unpacking from storage slice can't fail.
+                .map(|option| option.map(|bytes| V::unpack(&mut bytes.as_slice()).unwrap()))
                 .map_err(E::from),
         )
     }
@@ -41,7 +42,8 @@ macro_rules! impl_multi_fetch {
                 Ok(MultiIter {
                     iter: self
                         .inner
-                        .multi_get_cf(keys.iter().map(|k| (cf, k.pack_new())))
+                        // Packing to bytes can't fail.
+                        .multi_get_cf(keys.iter().map(|k| (cf, k.pack_to_vec().unwrap())))
                         .into_iter(),
                     marker: PhantomData,
                 })

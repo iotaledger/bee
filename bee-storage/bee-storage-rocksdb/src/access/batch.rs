@@ -15,7 +15,8 @@ use rocksdb::{WriteBatch, WriteOptions};
 #[derive(Default)]
 pub struct StorageBatch {
     inner: WriteBatch,
-    key_buf: Vec<u8>,
+    // TODO uncomment when needed
+    // key_buf: Vec<u8>,
     value_buf: Vec<u8>,
 }
 

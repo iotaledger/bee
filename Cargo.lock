@@ -188,6 +188,7 @@ dependencies = [
  "bee-message",
  "bee-packable",
  "bee-storage",
+ "bee-storage-test",
  "bee-test",
  "num_cpus",
  "rocksdb",
@@ -207,6 +208,15 @@ dependencies = [
  "serde",
  "sled",
  "thiserror",
+]
+
+[[package]]
+name = "bee-storage-test"
+version = "0.3.0"
+dependencies = [
+ "bee-message",
+ "bee-storage",
+ "bee-test",
 ]
 
 [[package]]
