@@ -95,6 +95,7 @@ pub fn rand_salt_declaration_payload() -> SaltDeclarationPayload {
         .with_node_id(rand_number())
         .with_salt(rand_salt())
         .with_timestamp(rand_number())
+        .with_signature(rand_bytes_array())
         .finish()
         .unwrap()
 }
