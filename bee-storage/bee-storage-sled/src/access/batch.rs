@@ -5,9 +5,8 @@
 
 use crate::{storage::Storage, trees::*};
 
-use bee_packable::packable::{Packable, SlicePacker};
-
 use bee_message::{Message, MessageId};
+use bee_packable::packable::Packable;
 use bee_storage::{
     access::{Batch, BatchBuilder},
     backend::StorageBackend,
@@ -45,7 +44,7 @@ impl Batch<MessageId, Message> for Storage {
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.value_buf.clear();
         // Packing to bytes can't fail.
-        message.pack(&mut SlicePacker::new(&mut batch.value_buf)).unwrap();
+        message.pack(&mut batch.value_buf).unwrap();
 
         batch
             .inner

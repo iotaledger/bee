@@ -6,7 +6,7 @@
 mod health;
 mod version;
 
-use core::convert::Infallible;
+use std::convert::Infallible;
 
 pub use health::{Error as StorageHealthError, StorageHealth};
 pub use version::StorageVersion;

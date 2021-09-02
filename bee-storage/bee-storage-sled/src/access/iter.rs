@@ -5,9 +5,8 @@
 
 use crate::{storage::Storage, trees::*};
 
-use bee_packable::packable::Packable;
-
 use bee_message::{Message, MessageId};
+use bee_packable::packable::Packable;
 use bee_storage::{access::AsIterator, backend::StorageBackend, system::System};
 
 use std::marker::PhantomData;
@@ -60,13 +59,15 @@ macro_rules! impl_stream {
     };
 }
 
+// TODO impl system
+#[allow(dead_code)]
 impl<'a> StorageIterator<'a, u8, System> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (u8, System) {
         (
-            // Unpacking from storage is fine.
-            u8::unpack_from_slice(&mut key).unwrap(),
-            // Unpacking from storage is fine.
-            System::unpack_from_slice(&mut value).unwrap(),
+            // Unpacking from storage slice can't fail.
+            u8::unpack(&mut key).unwrap(),
+            // Unpacking from storage slice can't fail.
+            System::unpack(&mut value).unwrap(),
         )
     }
 }
@@ -74,10 +75,10 @@ impl<'a> StorageIterator<'a, u8, System> {
 impl<'a> StorageIterator<'a, MessageId, Message> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MessageId, Message) {
         (
-            // Unpacking from storage is fine.
-            MessageId::unpack_from_slice(&mut key).unwrap(),
-            // Unpacking from storage is fine.
-            Message::unpack_from_slice(&mut value).unwrap(),
+            // Unpacking from storage slice can't fail.
+            MessageId::unpack(&mut key).unwrap(),
+            // Unpacking from storage slice can't fail.
+            Message::unpack(&mut value).unwrap(),
         )
     }
 }

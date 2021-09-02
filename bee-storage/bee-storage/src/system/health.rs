@@ -10,7 +10,7 @@ use bee_packable::{
 
 use bee_packable::coerce::*;
 
-use core::convert::Infallible;
+use std::convert::Infallible;
 
 /// Errors related to storage health statuses.
 #[derive(Debug, thiserror::Error)]

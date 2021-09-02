@@ -5,38 +5,11 @@
 
 use crate::{storage::Storage, trees::*};
 
-use core::fmt::Debug;
-
 use bee_message::{Message, MessageId};
-use bee_packable::packable::Packable;
+use bee_packable::Packable;
 use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
 
 use std::{marker::PhantomData, slice::Iter};
-
-/// Multi-fetch iterator over an inner tree.
-pub struct TreeIter<'a, K, V, E> {
-    tree: sled::Tree,
-    keys: Iter<'a, K>,
-    marker: PhantomData<(V, E)>,
-}
-
-impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for TreeIter<'a, K, V, E>
-where
-    <K as bee_packable::Packable>::PackError: Debug,
-{
-    type Item = Result<Option<V>, E>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let key = Packable::pack_to_vec(self.keys.next()?).unwrap();
-
-        Some(
-            self.tree
-                .get(key)
-                .map(|option| option.map(|bytes| V::unpack_from_slice(&mut bytes.as_ref()).unwrap()))
-                .map_err(E::from),
-        )
-    }
-}
 
 /// Multi-fetch iterator over the database tree.
 pub struct DbIter<'a, K, V, E> {
@@ -45,19 +18,18 @@ pub struct DbIter<'a, K, V, E> {
     marker: PhantomData<(V, E)>,
 }
 
-impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for DbIter<'a, K, V, E>
-where
-    <K as bee_packable::Packable>::PackError: Debug,
-{
+impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for DbIter<'a, K, V, E> {
     type Item = Result<Option<V>, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let key = Packable::pack_to_vec(self.keys.next()?).unwrap();
+        // Packing to bytes can't fail.
+        let key = self.keys.next()?.pack_to_vec().unwrap();
 
         Some(
             self.db
                 .get(key)
-                .map(|option| option.map(|bytes| V::unpack_from_slice(&mut bytes.as_ref()).unwrap()))
+                // Unpacking from storage slice can't fail.
+                .map(|option| option.map(|bytes| V::unpack(&mut bytes.as_ref()).unwrap()))
                 .map_err(E::from),
         )
     }
@@ -70,9 +42,32 @@ impl<'a> MultiFetch<'a, u8, System> for Storage {
         Ok(DbIter {
             db: &self.inner,
             keys: keys.iter(),
-
             marker: PhantomData,
         })
+    }
+}
+
+/// Multi-fetch iterator over an inner tree.
+pub struct TreeIter<'a, K, V, E> {
+    tree: sled::Tree,
+    keys: Iter<'a, K>,
+    marker: PhantomData<(V, E)>,
+}
+
+impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for TreeIter<'a, K, V, E> {
+    type Item = Result<Option<V>, E>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // Packing to bytes can't fail.
+        let key = self.keys.next()?.pack_to_vec().unwrap();
+
+        Some(
+            self.tree
+                .get(key)
+                // Unpacking from storage slice can't fail.
+                .map(|option| option.map(|bytes| V::unpack(&mut bytes.as_ref()).unwrap()))
+                .map_err(E::from),
+        )
     }
 }
 
