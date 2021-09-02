@@ -6,7 +6,7 @@ use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
-use bee_test::rand::message::{rand_message, rand_message_id};
+// use bee_test::rand::message::{rand_message, rand_message_id};
 
 pub trait StorageBackend:
     backend::StorageBackend
@@ -36,91 +36,91 @@ impl<T> StorageBackend for T where
 {
 }
 
-pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
-    let (message_id, message) = (rand_message_id(), rand_message());
-
-    assert!(!Exist::<MessageId, Message>::exist(storage, &message_id).unwrap());
-    assert!(Fetch::<MessageId, Message>::fetch(storage, &message_id)
-        .unwrap()
-        .is_none());
-    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
-        .unwrap()
-        .collect::<Vec<_>>();
-    assert_eq!(results.len(), 1);
-    assert!(matches!(results.get(0), Some(Ok(None))));
-
-    Insert::<MessageId, Message>::insert(storage, &message_id, &message).unwrap();
-
-    assert!(Exist::<MessageId, Message>::exist(storage, &message_id).unwrap());
-    assert_eq!(
-        Fetch::<MessageId, Message>::fetch(storage, &message_id)
-            .unwrap()
-            .unwrap(),
-        message
-    );
-    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
-        .unwrap()
-        .collect::<Vec<_>>();
-    assert_eq!(results.len(), 1);
-    assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &message));
-
-    Delete::<MessageId, Message>::delete(storage, &message_id).unwrap();
-
-    assert!(!Exist::<MessageId, Message>::exist(storage, &message_id).unwrap());
-    assert!(Fetch::<MessageId, Message>::fetch(storage, &message_id)
-        .unwrap()
-        .is_none());
-    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
-        .unwrap()
-        .collect::<Vec<_>>();
-    assert_eq!(results.len(), 1);
-    assert!(matches!(results.get(0), Some(Ok(None))));
-
-    let mut batch = B::batch_begin();
-    let mut message_ids = Vec::new();
-    let mut messages = Vec::new();
-
-    for _ in 0..10 {
-        let (message_id, message) = (rand_message_id(), rand_message());
-        Insert::<MessageId, Message>::insert(storage, &message_id, &message).unwrap();
-        Batch::<MessageId, Message>::batch_delete(storage, &mut batch, &message_id).unwrap();
-        message_ids.push(message_id);
-        messages.push((message_id, None));
-    }
-
-    for _ in 0..10 {
-        let (message_id, message) = (rand_message_id(), rand_message());
-        Batch::<MessageId, Message>::batch_insert(storage, &mut batch, &message_id, &message).unwrap();
-        message_ids.push(message_id);
-        messages.push((message_id, Some(message)));
-    }
-
-    storage.batch_commit(batch, true).unwrap();
-
-    let iter = AsIterator::<MessageId, Message>::iter(storage).unwrap();
-    let mut count = 0;
-
-    for result in iter {
-        let (message_id, message) = result.unwrap();
-        assert!(messages.contains(&(message_id, Some(message))));
-        count += 1;
-    }
-
-    assert_eq!(count, 10);
-
-    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &message_ids)
-        .unwrap()
-        .collect::<Vec<_>>();
-
-    assert_eq!(results.len(), message_ids.len());
-
-    for ((_, message), result) in messages.into_iter().zip(results.into_iter()) {
-        assert_eq!(message, result.unwrap());
-    }
-
-    Truncate::<MessageId, Message>::truncate(storage).unwrap();
-
-    let mut iter = AsIterator::<MessageId, Message>::iter(storage).unwrap();
-
-    assert!(iter.next().is_none());
+pub fn message_id_to_message_access<B: StorageBackend>(_storage: &B) {
+    // let (message_id, message) = (rand_message_id(), rand_message());
+    //
+    // assert!(!Exist::<MessageId, Message>::exist(storage, &message_id).unwrap());
+    // assert!(Fetch::<MessageId, Message>::fetch(storage, &message_id)
+    //     .unwrap()
+    //     .is_none());
+    // let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
+    //     .unwrap()
+    //     .collect::<Vec<_>>();
+    // assert_eq!(results.len(), 1);
+    // assert!(matches!(results.get(0), Some(Ok(None))));
+    //
+    // Insert::<MessageId, Message>::insert(storage, &message_id, &message).unwrap();
+    //
+    // assert!(Exist::<MessageId, Message>::exist(storage, &message_id).unwrap());
+    // assert_eq!(
+    //     Fetch::<MessageId, Message>::fetch(storage, &message_id)
+    //         .unwrap()
+    //         .unwrap(),
+    //     message
+    // );
+    // let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
+    //     .unwrap()
+    //     .collect::<Vec<_>>();
+    // assert_eq!(results.len(), 1);
+    // assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &message));
+    //
+    // Delete::<MessageId, Message>::delete(storage, &message_id).unwrap();
+    //
+    // assert!(!Exist::<MessageId, Message>::exist(storage, &message_id).unwrap());
+    // assert!(Fetch::<MessageId, Message>::fetch(storage, &message_id)
+    //     .unwrap()
+    //     .is_none());
+    // let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
+    //     .unwrap()
+    //     .collect::<Vec<_>>();
+    // assert_eq!(results.len(), 1);
+    // assert!(matches!(results.get(0), Some(Ok(None))));
+    //
+    // let mut batch = B::batch_begin();
+    // let mut message_ids = Vec::new();
+    // let mut messages = Vec::new();
+    //
+    // for _ in 0..10 {
+    //     let (message_id, message) = (rand_message_id(), rand_message());
+    //     Insert::<MessageId, Message>::insert(storage, &message_id, &message).unwrap();
+    //     Batch::<MessageId, Message>::batch_delete(storage, &mut batch, &message_id).unwrap();
+    //     message_ids.push(message_id);
+    //     messages.push((message_id, None));
+    // }
+    //
+    // for _ in 0..10 {
+    //     let (message_id, message) = (rand_message_id(), rand_message());
+    //     Batch::<MessageId, Message>::batch_insert(storage, &mut batch, &message_id, &message).unwrap();
+    //     message_ids.push(message_id);
+    //     messages.push((message_id, Some(message)));
+    // }
+    //
+    // storage.batch_commit(batch, true).unwrap();
+    //
+    // let iter = AsIterator::<MessageId, Message>::iter(storage).unwrap();
+    // let mut count = 0;
+    //
+    // for result in iter {
+    //     let (message_id, message) = result.unwrap();
+    //     assert!(messages.contains(&(message_id, Some(message))));
+    //     count += 1;
+    // }
+    //
+    // assert_eq!(count, 10);
+    //
+    // let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &message_ids)
+    //     .unwrap()
+    //     .collect::<Vec<_>>();
+    //
+    // assert_eq!(results.len(), message_ids.len());
+    //
+    // for ((_, message), result) in messages.into_iter().zip(results.into_iter()) {
+    //     assert_eq!(message, result.unwrap());
+    // }
+    //
+    // Truncate::<MessageId, Message>::truncate(storage).unwrap();
+    //
+    // let mut iter = AsIterator::<MessageId, Message>::iter(storage).unwrap();
+    //
+    // assert!(iter.next().is_none());
 }
