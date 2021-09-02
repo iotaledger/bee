@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Stream access operations.
+//! Iterator access operations.
 
 use crate::{storage::Storage, trees::*};
 

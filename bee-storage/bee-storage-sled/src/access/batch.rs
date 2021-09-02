@@ -19,7 +19,8 @@ use std::collections::HashMap;
 #[derive(Default)]
 pub struct StorageBatch {
     inner: HashMap<&'static str, sled::Batch>,
-    key_buf: Vec<u8>,
+    // TODO uncomment when needed
+    // key_buf: Vec<u8>,
     value_buf: Vec<u8>,
 }
 

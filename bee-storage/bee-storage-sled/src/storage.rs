@@ -32,8 +32,10 @@ pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(0);
 
 /// The sled database.
 pub struct Storage {
-    pub(crate) inner: sled::Db,
+    // TODO remove when fetch limits are starting to be used
+    #[allow(dead_code)]
     pub(crate) config: SledConfig,
+    pub(crate) inner: sled::Db,
 }
 
 impl Storage {
