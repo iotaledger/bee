@@ -203,6 +203,7 @@ dependencies = [
  "bee-message",
  "bee-packable",
  "bee-storage",
+ "bee-storage-test",
  "bee-test",
  "num_cpus",
  "serde",

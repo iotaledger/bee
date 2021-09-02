@@ -18,6 +18,7 @@ pub enum OptI32 {
     Some(i32),
 }
 
+#[derive(Debug)]
 pub struct InvalidTag(u8);
 
 impl InvalidTag {
