@@ -7,7 +7,7 @@ use crate::{
 };
 
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::{format_ident, quote, ToTokens};
 use syn::{spanned::Spanned, Attribute, DataEnum, DataStruct, DeriveInput, Fields, Generics, Ident, Type, Variant};
 
 pub(crate) struct TraitImpl {
@@ -72,6 +72,8 @@ impl TraitImpl {
         // Store the tags and names of the variants so we can guarantee that tags are unique.
         let mut tags = Vec::with_capacity(len);
 
+        let mut tag_idents = Vec::with_capacity(len);
+
         // The branch for packing each variant.
         let mut pack_branches = Vec::with_capacity(len);
         // The branch with the packing length of each variant.
@@ -85,8 +87,7 @@ impl TraitImpl {
             } = variant;
 
             let Tag { value: tag } = Tag::new(&attrs, &type_name)?;
-
-            tags.push(tag.clone());
+            let tag_ident = format_ident!("__TAG_{}", tags.len());
 
             // Add the `Self::` prefix to the name of the variant.
             let name = quote!(Self::#ident);
@@ -106,26 +107,34 @@ impl TraitImpl {
                 )?,
             };
 
-            let (pack_branch, packed_len_branch, unpack_branch) = fragments.consume_for_variant(&tag, &tag_ty);
+            let (pack_branch, packed_len_branch, unpack_branch) = fragments.consume_for_variant(&tag_ident, &tag_ty);
+
+            tags.push(tag);
+            tag_idents.push(tag_ident);
 
             pack_branches.push(pack_branch);
             packed_len_branches.push(packed_len_branch);
             unpack_branches.push(unpack_branch);
         }
 
+        let tag_decls = quote!(#(const #tag_idents: #tag_ty = #tags;) *);
+
         // Add a surrounding match expresison for the branches.
         let pack = quote! {
+            #tag_decls
             match self {
                 #(#pack_branches,) *
             }
         };
         let packed_len = quote! {
+            #tag_decls
             match self {
                 #(#packed_len_branches,) *
             }
         };
 
         let unpack = quote! {
+            #tag_decls
             #[deny(unreachable_patterns)]
             match <#tag_ty>::unpack(unpacker).infallible()? {
                 #(#unpack_branches,) *
