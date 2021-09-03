@@ -165,7 +165,7 @@ impl Fragments {
         // the type of the tag is `W`. This would be
         // ```
         // Foo { bar: field_0 , baz: field_1 } => {
-        //     (tag as W).pack(packer).infallible()?;
+        //     W::pack(&tag, packer).infallible()?;
         //     <T>::pack(&field_0, packer).map_err(|err| err.map(core::convert::identity).coerce()?;
         //     <V>::pack(&field_1, packer).map_err(|err| err.map(core::convert::identity).coerce()?;
         //     Ok(())
@@ -174,16 +174,16 @@ impl Fragments {
         // The cast to `W` is included because `tag` is an integer without type annotations.
         let pack = quote! {
             #pattern => {
-                (#tag as #tag_ty).pack(packer).infallible()?;
+                #tag_ty::pack(&#tag, packer).infallible()?;
                 #pack
             }
         };
 
         // This would be
         // ```
-        // Foo { bar: field_0 , baz: field_1 } => (tag as W).packed_len() + 0 + <T>::packed_len(&field_0) + <V>::packed_len(&field_1)
+        // Foo { bar: field_0 , baz: field_1 } => W::packed_len(&tag) + 0 + <T>::packed_len(&field_0) + <V>::packed_len(&field_1)
         // ```
-        let packed_len = quote!(#pattern => (#tag as #tag_ty).packed_len() + #packed_len);
+        let packed_len = quote!(#pattern => #tag_ty::packed_len(&#tag) + #packed_len);
 
         // And this would be
         // ```
