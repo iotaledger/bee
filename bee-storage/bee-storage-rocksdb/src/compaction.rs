@@ -6,17 +6,17 @@ use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
 pub enum CompactionStyle {
+    Fifo,
     Level,
     Universal,
-    Fifo,
 }
 
 impl From<CompactionStyle> for DBCompactionStyle {
     fn from(compaction: CompactionStyle) -> Self {
         match compaction {
+            CompactionStyle::Fifo => DBCompactionStyle::Fifo,
             CompactionStyle::Level => DBCompactionStyle::Level,
             CompactionStyle::Universal => DBCompactionStyle::Universal,
-            CompactionStyle::Fifo => DBCompactionStyle::Fifo,
         }
     }
 }
