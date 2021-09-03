@@ -4,10 +4,10 @@
 #![allow(unused_imports)]
 
 use bee_packable::{
+    coerce::*,
     error::{PackError, UnknownTagError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
-    coerce::*,
     Packable,
 };
 
@@ -15,6 +15,7 @@ use core::convert::Infallible;
 
 pub struct Picky(u8);
 
+#[derive(Debug)]
 pub struct PickyError(u8);
 
 impl Packable for Picky {
@@ -40,6 +41,7 @@ impl Packable for Picky {
     }
 }
 
+#[derive(Debug)]
 pub enum PickyOrByteError {
     Picky(PickyError),
     UnknownTag(u8),
@@ -74,6 +76,7 @@ pub enum PickyOrByte {
     Byte(u8),
 }
 
+#[derive(Debug)]
 pub struct PickyAndByteError(PickyError);
 
 impl From<Infallible> for PickyAndByteError {

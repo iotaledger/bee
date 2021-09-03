@@ -30,7 +30,7 @@ pub use crate::{
 pub use bee_packable_derive::Packable;
 
 use alloc::vec::Vec;
-use core::convert::AsRef;
+use core::{convert::AsRef, fmt::Debug};
 
 /// A type that can be packed and unpacked.
 ///
@@ -42,13 +42,13 @@ pub trait Packable: Sized {
     ///
     /// It is recommended to use [`Infallible`](core::convert::Infallible) if this kind of error cannot happen or
     /// [`UnknownTagError`] when implementing this trait for an enum.
-    type PackError;
+    type PackError: Debug;
 
     /// The error type that can be returned if some semantic error occurs while unpacking.
     ///
     /// It is recommended to use [`Infallible`](core::convert::Infallible) if this kind of error cannot happen or
     /// [`UnknownTagError`] when implementing this trait for an enum.
-    type UnpackError;
+    type UnpackError: Debug;
 
     /// Packs this value into the given [`Packer`].
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>>;

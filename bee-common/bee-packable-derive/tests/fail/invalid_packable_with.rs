@@ -15,6 +15,7 @@ pub struct Point {
     y: i32,
 }
 
+#[derive(Debug)]
 pub enum Impossible {}
 
 impl Impossible {
