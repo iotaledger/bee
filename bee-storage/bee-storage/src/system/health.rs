@@ -3,8 +3,6 @@
 
 //! Defines a type to represent different health states in which the storage backend can be.
 
-#![allow(clippy::unnecessary_cast)]
-
 use bee_packable::Packable;
 
 /// Represents different health states for a `StorageBackend`.
