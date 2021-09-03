@@ -91,21 +91,22 @@ impl TraitImpl {
             // Add the `Self::` prefix to the name of the variant.
             let name = quote!(Self::#ident);
 
-            let (pack_branch, packed_len_branch, unpack_branch) = match fields {
+            let fragments = match fields {
                 Fields::Named(fields) => {
                     Fragments::new::<true>(name, &fields.named, &pack_error_attr.with, &unpack_error_attr.with)?
-                        .consume_for_variant(&tag, &tag_ty)
                 }
                 Fields::Unnamed(fields) => {
                     Fragments::new::<false>(name, &fields.unnamed, &pack_error_attr.with, &unpack_error_attr.with)?
-                        .consume_for_variant(&tag, &tag_ty)
                 }
-                Fields::Unit => (
-                    quote!(#name => #tag_ty::pack(&#tag, packer)),
-                    quote!(#name => #tag_ty::packed_len(&#tag)),
-                    quote!(#tag => Ok(#name)),
-                ),
+                Fields::Unit => Fragments::new::<true>(
+                    name,
+                    &Default::default(),
+                    &pack_error_attr.with,
+                    &unpack_error_attr.with,
+                )?,
             };
+
+            let (pack_branch, packed_len_branch, unpack_branch) = fragments.consume_for_variant(&tag, &tag_ty);
 
             pack_branches.push(pack_branch);
             packed_len_branches.push(packed_len_branch);
