@@ -101,8 +101,8 @@ impl TraitImpl {
                         .consume_for_variant(&tag, &tag_ty)
                 }
                 Fields::Unit => (
-                    quote!(#name => (#tag as #tag_ty).pack(packer)),
-                    quote!(#name => (#tag as #tag_ty).packed_len()),
+                    quote!(#name => #tag_ty::pack(&#tag, packer)),
+                    quote!(#name => #tag_ty::packed_len(&#tag)),
                     quote!(#tag => Ok(#name)),
                 ),
             };
