@@ -1,7 +1,7 @@
 # Duplicate this file to config.toml to use it
 
 identity   = ""
-alias      = "bee comnet"
+alias      = "bee"
 bech32_hrp = "atoi"
 network_id = "comnet1"
 
