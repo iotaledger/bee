@@ -87,7 +87,10 @@ impl TraitImpl {
             } = variant;
 
             let Tag { value: tag } = Tag::new(&attrs, &type_name)?;
-            let tag_ident = format_ident!("__TAG_{}", tags.len());
+            // @pvdrz: The span here is very important, otherwise the compiler won't detect
+            // unreachable patterns in the generated code for some reason. I think this is related
+            // to `https://github.com/rust-lang/rust/pull/80632`
+            let tag_ident = format_ident!("__TAG_{}", tags.len(), span = tag.span());
 
             // Add the `Self::` prefix to the name of the variant.
             let name = quote!(Self::#ident);
