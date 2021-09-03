@@ -174,7 +174,7 @@ impl Fragments {
         // The cast to `W` is included because `tag` is an integer without type annotations.
         let pack = quote! {
             #pattern => {
-                (#tag as #tag_ty).pack(packer).infallible()?;
+                #tag_ty::pack(&#tag, packer).infallible()?;
                 #pack
             }
         };
@@ -183,7 +183,7 @@ impl Fragments {
         // ```
         // Foo { bar: field_0 , baz: field_1 } => (tag as W).packed_len() + 0 + <T>::packed_len(&field_0) + <V>::packed_len(&field_1)
         // ```
-        let packed_len = quote!(#pattern => (#tag as #tag_ty).packed_len() + #packed_len);
+        let packed_len = quote!(#pattern => #tag_ty::packed_len(&#tag) + #packed_len);
 
         // And this would be
         // ```
