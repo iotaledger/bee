@@ -160,17 +160,19 @@ impl TraitImpl {
 
         let unpack_error = UnpackError::for_struct(&attrs, first_field_ty)?;
 
-        let (pack, packed_len, unpack) = match data.fields {
+        let fragments = match data.fields {
             Fields::Named(fields) => {
                 Fragments::new::<true>(quote!(Self), &fields.named, &pack_error.with, &unpack_error.with)?
-                    .consume_for_struct()
             }
             Fields::Unnamed(fields) => {
                 Fragments::new::<false>(quote!(Self), &fields.unnamed, &pack_error.with, &unpack_error.with)?
-                    .consume_for_struct()
             }
-            Fields::Unit => (quote!(Ok(())), quote!(0), quote!(Ok(Self))),
+            Fields::Unit => {
+                Fragments::new::<true>(quote!(Self), &Default::default(), &pack_error.with, &unpack_error.with)?
+            }
         };
+
+        let (pack, packed_len, unpack) = fragments.consume_for_struct();
 
         Ok(Self {
             type_name,
