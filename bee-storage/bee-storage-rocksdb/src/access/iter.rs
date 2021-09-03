@@ -47,17 +47,16 @@ macro_rules! impl_stream {
             type Item = Result<($key, $value), <Storage as StorageBackend>::Error>;
 
             fn next(&mut self) -> Option<Self::Item> {
-                self.inner
+                let item = self
+                    .inner
                     .next()
-                    .map(|(key, value)| Ok(Self::unpack_key_value(&key, &value)))
+                    .map(|(key, value)| Ok(Self::unpack_key_value(&key, &value)));
 
-                // inner.status()?;
-                //
-                // if inner.valid() {
-                //     Poll::Ready(item)
-                // } else {
-                //     Poll::Ready(None)
-                // }
+                if let Err(e) = self.inner.status() {
+                    Some(Err(e.into()))
+                } else {
+                    item
+                }
             }
         }
     };

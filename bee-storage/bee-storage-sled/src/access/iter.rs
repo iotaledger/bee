@@ -46,14 +46,6 @@ macro_rules! impl_stream {
                         .map(|(key, value)| Self::unpack_key_value(&key, &value))
                         .map_err(From::from)
                 })
-
-                // inner.status()?;
-                //
-                // if inner.valid() {
-                //     Poll::Ready(item)
-                // } else {
-                //     Poll::Ready(None)
-                // }
             }
         }
     };
