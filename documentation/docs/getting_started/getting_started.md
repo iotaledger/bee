@@ -1,3 +1,15 @@
+---
+description: Running a node is the best way to use IOTA. You have direct access to the Tangle and you help the IOTA network to become more distributed and resilient.
+image: /img/logo/bee_logo.png
+keywords:
+- node
+- HTTP 
+- API
+- ports
+- TCP
+- IOTA Network
+- REST 
+---
 # Getting Started
 
 Running a node is the best way to use IOTA. By doing so, you have direct access to the Tangle instead of having to

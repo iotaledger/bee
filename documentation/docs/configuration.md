@@ -1,3 +1,13 @@
+---
+description: Bee uses the Toml standard as a configuration file. The default configuration file is `config.toml`. You can change the configuration file's path or name  by using the `-c` or `--config` flag.
+image: /img/logo/bee_logo.png
+keywords:
+- REST
+- API
+- configuration
+- Toml
+- config
+---
 # Configuration
 
 Bee uses the Toml standard as a configuration file. If you are unsure about syntax, you can have a look at the [official Toml specifications](https://toml.io).

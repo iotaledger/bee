@@ -1,3 +1,14 @@
+---
+description: This section provides a checklist of steps for running a reliable and secure node.
+image: /img/logo/bee_logo.png
+keywords:
+- nodes
+- reverse proxy
+- ports
+- API
+- requests
+- SSH
+---
 # Security 101
 
 This section provides a checklist of steps for running a reliable and secure node.
