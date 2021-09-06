@@ -7,21 +7,16 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::{
     parse::{Parse, ParseStream},
-    Attribute, ExprLit, ExprPath, Ident,
+    Attribute, ExprLit, ExprPath,
 };
 
 pub(crate) struct Tag {
-    pub(crate) value: ExprTag,
+    pub(crate) value: Option<ExprTag>,
 }
 
 impl Tag {
-    pub(crate) fn new(attrs: &[Attribute], enum_name: &Ident) -> syn::Result<Self> {
-        super::parse_attribute::<Self>("tag", attrs).unwrap_or_else(|| {
-            Err(syn::Error::new(
-                enum_name.span(),
-                "All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute.",
-            ))
-        })
+    pub(crate) fn new(attrs: &[Attribute]) -> syn::Result<Self> {
+        super::parse_attribute::<Self>("tag", attrs).unwrap_or(Ok(Self { value: None }))
     }
 }
 
@@ -32,7 +27,7 @@ impl Parse for Tag {
             .parse::<ExprTag>()
             .map_err(|err| syn::Error::new(err.span(), "Tags for variants can only be literal or path expressions."))?;
 
-        Ok(Self { value })
+        Ok(Self { value: Some(value) })
     }
 }
 
