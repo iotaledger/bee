@@ -4,8 +4,7 @@
 /// Generates a random [`Vec`] from a given generator and length.
 pub fn rand_vec<T, F>(f: F, length: usize) -> Vec<T>
 where
-    T: Clone,
-    F: FnOnce() -> T,
+    F: Fn() -> T,
 {
-    vec![f(); length]
+    (0..length).map(|_| f()).collect()
 }
