@@ -83,10 +83,25 @@ impl TraitImpl {
 
         for variant in data.variants {
             let Variant {
-                attrs, ident, fields, ..
+                attrs,
+                ident,
+                fields,
+                discriminant,
             } = variant;
 
-            let Tag { value: tag } = Tag::new(&attrs, &type_name)?;
+            let tag = match Tag::new(&attrs)?.value {
+                Some(tag) => tag.into_token_stream(),
+                None => match discriminant {
+                    Some((_, tag)) => tag.into_token_stream(),
+                    None => {
+                        return Err(syn::Error::new(
+                            ident.span(),
+                            "All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute.",
+                        ));
+                    }
+                },
+            };
+
             // @pvdrz: The span here is very important, otherwise the compiler won't detect
             // unreachable patterns in the generated code for some reason. I think this is related
             // to `https://github.com/rust-lang/rust/pull/80632`
