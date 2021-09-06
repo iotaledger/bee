@@ -7,7 +7,7 @@ use crate::{
 };
 
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::{format_ident, quote, ToTokens};
 use syn::{spanned::Spanned, Attribute, DataEnum, DataStruct, DeriveInput, Fields, Generics, Ident, Type, Variant};
 
 pub(crate) struct TraitImpl {
@@ -39,10 +39,26 @@ impl TraitImpl {
                 .and_then(|variant| variant.fields.iter().next().map(|field| &field.ty))
         };
 
-        let TagType {
-            ty: tag_ty,
-            with_err: tag_with_err,
-        } = TagType::new(&attrs, &type_name)?;
+        let (tag_ty, tag_with_err) = match TagType::new(&attrs)? {
+            TagType { ty: Some(ty), with_err } => (ty, with_err),
+            TagType { ty: None, with_err } => {
+                match attrs.iter().find_map(|attr| {
+                    if attr.path.is_ident("repr") {
+                        Some(attr.parse_args::<Type>())
+                    } else {
+                        None
+                    }
+                }) {
+                    Some(ty) => (ty?, with_err),
+                    None => {
+                        return Err(syn::Error::new(
+                            type_name.span(),
+                            "Enums that derive `Packable` require a `#[packable(tag_type = ...)]` attribute.",
+                        ));
+                    }
+                }
+            }
+        };
 
         let pack_error_attr = PackError::new(&attrs, &first_field_ty)?;
 
@@ -72,6 +88,8 @@ impl TraitImpl {
         // Store the tags and names of the variants so we can guarantee that tags are unique.
         let mut tags = Vec::with_capacity(len);
 
+        let mut tag_idents = Vec::with_capacity(len);
+
         // The branch for packing each variant.
         let mut pack_branches = Vec::with_capacity(len);
         // The branch with the packing length of each variant.
@@ -81,50 +99,76 @@ impl TraitImpl {
 
         for variant in data.variants {
             let Variant {
-                attrs, ident, fields, ..
+                attrs,
+                ident,
+                fields,
+                discriminant,
             } = variant;
 
-            let Tag { value: tag } = Tag::new(&attrs, &type_name)?;
+            let tag = match Tag::new(&attrs)?.value {
+                Some(tag) => tag.into_token_stream(),
+                None => match discriminant {
+                    Some((_, tag)) => tag.into_token_stream(),
+                    None => {
+                        return Err(syn::Error::new(
+                            ident.span(),
+                            "All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute.",
+                        ));
+                    }
+                },
+            };
 
-            tags.push(tag.clone());
+            // @pvdrz: The span here is very important, otherwise the compiler won't detect
+            // unreachable patterns in the generated code for some reason. I think this is related
+            // to `https://github.com/rust-lang/rust/pull/80632`
+            let tag_ident = format_ident!("__TAG_{}", tags.len(), span = tag.span());
 
             // Add the `Self::` prefix to the name of the variant.
             let name = quote!(Self::#ident);
 
-            let (pack_branch, packed_len_branch, unpack_branch) = match fields {
+            let fragments = match fields {
                 Fields::Named(fields) => {
                     Fragments::new::<true>(name, &fields.named, &pack_error_attr.with, &unpack_error_attr.with)?
-                        .consume_for_variant(&tag, &tag_ty)
                 }
                 Fields::Unnamed(fields) => {
                     Fragments::new::<false>(name, &fields.unnamed, &pack_error_attr.with, &unpack_error_attr.with)?
-                        .consume_for_variant(&tag, &tag_ty)
                 }
-                Fields::Unit => (
-                    quote!(#name => #tag_ty::pack(&#tag, packer)),
-                    quote!(#name => #tag_ty::packed_len(&#tag)),
-                    quote!(#tag => Ok(#name)),
-                ),
+                Fields::Unit => Fragments::new::<true>(
+                    name,
+                    &Default::default(),
+                    &pack_error_attr.with,
+                    &unpack_error_attr.with,
+                )?,
             };
+
+            let (pack_branch, packed_len_branch, unpack_branch) = fragments.consume_for_variant(&tag_ident, &tag_ty);
+
+            tags.push(tag);
+            tag_idents.push(tag_ident);
 
             pack_branches.push(pack_branch);
             packed_len_branches.push(packed_len_branch);
             unpack_branches.push(unpack_branch);
         }
 
+        let tag_decls = quote!(#(const #tag_idents: #tag_ty = #tags;) *);
+
         // Add a surrounding match expresison for the branches.
         let pack = quote! {
+            #tag_decls
             match self {
                 #(#pack_branches,) *
             }
         };
         let packed_len = quote! {
+            #tag_decls
             match self {
                 #(#packed_len_branches,) *
             }
         };
 
         let unpack = quote! {
+            #tag_decls
             #[deny(unreachable_patterns)]
             match <#tag_ty>::unpack(unpacker).infallible()? {
                 #(#unpack_branches,) *
@@ -150,17 +194,19 @@ impl TraitImpl {
 
         let unpack_error = UnpackError::for_struct(&attrs, first_field_ty)?;
 
-        let (pack, packed_len, unpack) = match data.fields {
+        let fragments = match data.fields {
             Fields::Named(fields) => {
                 Fragments::new::<true>(quote!(Self), &fields.named, &pack_error.with, &unpack_error.with)?
-                    .consume_for_struct()
             }
             Fields::Unnamed(fields) => {
                 Fragments::new::<false>(quote!(Self), &fields.unnamed, &pack_error.with, &unpack_error.with)?
-                    .consume_for_struct()
             }
-            Fields::Unit => (quote!(Ok(())), quote!(0), quote!(Ok(Self))),
+            Fields::Unit => {
+                Fragments::new::<true>(quote!(Self), &Default::default(), &pack_error.with, &unpack_error.with)?
+            }
         };
+
+        let (pack, packed_len, unpack) = fragments.consume_for_struct();
 
         Ok(Self {
             type_name,
