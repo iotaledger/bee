@@ -5,7 +5,7 @@ mod signature_locked_asset;
 mod signature_locked_single;
 
 use crate::rand::{
-    message::payload::transaction::rand_transaction_id,
+    message::payload::rand_transaction_id,
     number::{rand_number, rand_number_range},
 };
 
