@@ -10,6 +10,7 @@ pub use utxo::rand_utxo_input;
 use bee_message::input::{Input, UtxoInput};
 
 /// Generates a random [`Input`].
+#[allow(clippy::modulo_one)]
 pub fn rand_input() -> Input {
     match rand_number::<u8>() % 1 {
         UtxoInput::KIND => rand_utxo_input().into(),
