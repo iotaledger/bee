@@ -23,6 +23,8 @@ pub mod signature;
 pub mod timestamp;
 /// Module providing random transaction generation utilities.
 pub mod transaction;
+/// Module providing random unlock block generation utilities.
+pub mod unlock;
 
 use crate::rand::bytes::rand_bytes_array;
 
