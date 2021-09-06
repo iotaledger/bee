@@ -8,7 +8,6 @@ use bee_packable::Packable;
 /// Represents different health states for a `StorageBackend`.
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Packable)]
-#[packable(tag_type = u8)]
 pub enum StorageHealth {
     /// The storage is in a healthy state.
     Healthy = 0,
