@@ -39,10 +39,26 @@ impl TraitImpl {
                 .and_then(|variant| variant.fields.iter().next().map(|field| &field.ty))
         };
 
-        let TagType {
-            ty: tag_ty,
-            with_err: tag_with_err,
-        } = TagType::new(&attrs, &type_name)?;
+        let (tag_ty, tag_with_err) = match TagType::new(&attrs)? {
+            TagType { ty: Some(ty), with_err } => (ty, with_err),
+            TagType { ty: None, with_err } => {
+                match attrs.iter().find_map(|attr| {
+                    if attr.path.is_ident("repr") {
+                        Some(attr.parse_args::<Type>())
+                    } else {
+                        None
+                    }
+                }) {
+                    Some(ty) => (ty?, with_err),
+                    None => {
+                        return Err(syn::Error::new(
+                            type_name.span(),
+                            "Enums that derive `Packable` require a `#[packable(tag_type = ...)]` attribute.",
+                        ));
+                    }
+                }
+            }
+        };
 
         let pack_error_attr = PackError::new(&attrs, &first_field_ty)?;
 
