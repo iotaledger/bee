@@ -1,9 +1,18 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/// Module providing random (FPC) conflict utilities.
+pub mod conflict;
+/// Module providing random salt generation utilities.
+pub mod salt;
+/// Module providing randoom (FPC) timestamp utilities.
+pub mod timestamp;
+/// Module providing random transaction generation utilities.
+pub mod transaction;
+
 use crate::rand::{
     bytes::{rand_bytes, rand_bytes_array},
-    message::{conflict::rand_conflict, salt::rand_salt, timestamp::rand_timestamp},
+    message::payload::{conflict::rand_conflict, salt::rand_salt, timestamp::rand_timestamp},
     number::{rand_number, rand_number_range},
     vec::rand_vec,
 };

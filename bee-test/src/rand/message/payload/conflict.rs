@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::{message::transaction::rand_transaction_id, number::rand_number_range};
+use crate::rand::{message::payload::transaction::rand_transaction_id, number::rand_number_range};
 
 use bee_message::payload::fpc::Conflict;
 
