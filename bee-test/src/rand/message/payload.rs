@@ -5,7 +5,7 @@ use crate::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     message::{conflict::rand_conflict, salt::rand_salt, timestamp::rand_timestamp},
     number::{rand_number, rand_number_range},
-    vec::vec_rand_length,
+    vec::rand_vec,
 };
 
 use bee_message::payload::{
@@ -83,8 +83,8 @@ pub fn rand_indexation_payload() -> IndexationPayload {
 /// Generates a random [`FpcPayload`].
 pub fn rand_fpc_payload() -> FpcPayload {
     FpcPayload::builder()
-        .with_conflicts(vec_rand_length(0..=10, rand_conflict))
-        .with_timestamps(vec_rand_length(0..=10, rand_timestamp))
+        .with_conflicts(rand_vec(rand_conflict, rand_number_range(0..=10)))
+        .with_timestamps(rand_vec(rand_timestamp, rand_number_range(0..=10)))
         .finish()
         .unwrap()
 }
