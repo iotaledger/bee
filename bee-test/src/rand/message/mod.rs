@@ -17,6 +17,8 @@ pub mod parents;
 pub mod payload;
 /// Module providing random salt generation utilities.
 pub mod salt;
+/// Module providing random signature generation utilities.
+pub mod signature;
 /// Module providing randoom (FPC) timestamp utilities.
 pub mod timestamp;
 /// Module providing random transaction generation utilities.
