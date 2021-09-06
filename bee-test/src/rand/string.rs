@@ -3,7 +3,7 @@
 
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 
-/// Generates a random string with a given charset.
+/// Generates a random [`String`] with a given charset.
 pub fn rand_string_charset(charset: &str, len: usize) -> String {
     let charset = charset.as_bytes();
     let mut rng = rand::thread_rng();
@@ -13,7 +13,7 @@ pub fn rand_string_charset(charset: &str, len: usize) -> String {
         .collect()
 }
 
-/// Generates a random string.
+/// Generates a random [`String`].
 pub fn rand_string(len: usize) -> String {
     String::from_utf8(thread_rng().sample_iter(&Alphanumeric).take(len).collect()).unwrap()
 }

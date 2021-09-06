@@ -3,7 +3,7 @@
 
 use rand::Rng;
 
-/// Generates a random boolean.
+/// Generates a random [`bool`].
 pub fn rand_bool() -> bool {
     rand::thread_rng().gen::<bool>()
 }

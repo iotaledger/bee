@@ -5,7 +5,7 @@ use crate::rand::number::rand_number_range;
 
 use rand::distributions::uniform::SampleRange;
 
-/// Generates a random `Vec` with a random length in a given range.
+/// Generates a random [`Vec`] with a random length in a given range.
 pub fn vec_rand_length<T, R, F>(len_range: R, f: F) -> Vec<T>
 where
     T: Clone,
