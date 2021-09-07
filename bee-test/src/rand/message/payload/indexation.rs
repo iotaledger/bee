@@ -7,10 +7,8 @@ use bee_message::payload::indexation::{IndexationPayload, INDEXATION_INDEX_LENGT
 
 /// Generates a random [`IndexationPayload`].
 pub fn rand_indexation_payload() -> IndexationPayload {
-    let index_range = *INDEXATION_INDEX_LENGTH_RANGE.start() as usize..=*INDEXATION_INDEX_LENGTH_RANGE.end() as usize;
-
     IndexationPayload::new(
-        rand_bytes(rand_number_range(index_range)),
+        rand_bytes(rand_number_range(INDEXATION_INDEX_LENGTH_RANGE) as usize),
         rand_bytes(rand_number_range(0..=255)),
     )
     .unwrap()
