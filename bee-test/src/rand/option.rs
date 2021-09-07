@@ -8,9 +8,5 @@ pub fn rand_option<T, F>(f: F) -> Option<T>
 where
     F: FnOnce() -> T,
 {
-    if rand_bool() {
-        Some(f())
-    } else {
-        None
-    }
+    if rand_bool() { Some(f()) } else { None }
 }

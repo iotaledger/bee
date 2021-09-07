@@ -126,14 +126,16 @@ fn unpack_invalid_payload_length() {
 #[test]
 fn invalid_no_strong_parents() {
     let message = MessageBuilder::new()
-        .with_parents_blocks(vec![ParentsBlock::new(
-            ParentsKind::Weak,
-            vec![
-                MessageId::new(hex_decode(PARENT_1).unwrap()),
-                MessageId::new(hex_decode(PARENT_2).unwrap()),
-            ],
-        )
-        .unwrap()])
+        .with_parents_blocks(vec![
+            ParentsBlock::new(
+                ParentsKind::Weak,
+                vec![
+                    MessageId::new(hex_decode(PARENT_1).unwrap()),
+                    MessageId::new(hex_decode(PARENT_2).unwrap()),
+                ],
+            )
+            .unwrap(),
+        ])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
