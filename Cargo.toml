@@ -8,8 +8,12 @@ members = [
   "bee-message",
   "bee-node/bee-node",
   "bee-node/bee-plugin",
+<<<<<<< HEAD
   "bee-storage/bee-storage",
   "bee-storage/bee-storage-rocksdb",
   "bee-storage/bee-storage-sled",
+=======
+  "bee-api/bee-rest-api",
+>>>>>>> test rest api
   "bee-test"
 ]
