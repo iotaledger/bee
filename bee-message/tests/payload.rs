@@ -219,7 +219,7 @@ fn transaction_payload_packable_round_trip() {
 
 #[test]
 fn unpack_invalid_version() {
-    let mut bytes = vec![0x68, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01];
+    let mut bytes = vec![0x08, 0x00, 0x00, 0x00, 0x01];
     bytes.extend([0x20, 0x00, 0x00, 0x00]);
     bytes.extend(rand_bytes_array::<32>());
     bytes.extend([0x40, 0x00, 0x00, 0x00]);
@@ -235,25 +235,8 @@ fn unpack_invalid_version() {
 }
 
 #[test]
-fn unpack_invalid_length() {
-    let mut bytes = vec![0x69, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00];
-    bytes.extend([0x20, 0x00, 0x00, 0x00]);
-    bytes.extend(rand_bytes_array::<32>());
-    bytes.extend([0x40, 0x00, 0x00, 0x00]);
-    bytes.extend(rand_bytes_array::<64>());
-
-    assert!(matches!(
-        Payload::unpack_from_slice(bytes).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::PayloadLengthMismatch {
-            expected: 105,
-            actual: 104,
-        }))
-    ));
-}
-
-#[test]
 fn unpack_invalid_kind() {
-    let mut bytes = vec![0x69, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00];
+    let mut bytes = vec![0x12, 0x00, 0x00, 0x00, 0x00];
     bytes.extend([0x20, 0x00, 0x00, 0x00]);
     bytes.extend(rand_bytes_array::<32>());
     bytes.extend([0x40, 0x00, 0x00, 0x00]);

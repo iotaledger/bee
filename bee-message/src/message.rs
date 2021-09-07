@@ -3,7 +3,7 @@
 
 use crate::{
     parents::{ParentsBlock, ParentsKind},
-    payload::Payload,
+    payload::{OptionalPayload, Payload},
     MessageId, MessageUnpackError, ValidationError,
 };
 
@@ -54,7 +54,7 @@ pub struct Message {
     /// The sequence number of the message, indicating the marker sequence it belongs to.
     pub(crate) sequence_number: u32,
     /// The optional [Payload] of the message.
-    pub(crate) payload: Option<Payload>,
+    pub(crate) payload: OptionalPayload,
     /// The result of the Proof of Work in order for the message to be accepted into the tangle.
     pub(crate) nonce: u64,
     /// Signature signing the above message fields.
@@ -94,8 +94,11 @@ impl Message {
     }
 
     /// Returns the optional payload of a [`Message`].
-    pub fn payload(&self) -> &Option<Payload> {
-        &self.payload
+    pub fn payload(&self) -> Option<&Payload> {
+        match &self.payload {
+            OptionalPayload::None => None,
+            OptionalPayload::Some(payload) => Some(payload),
+        }
     }
 
     /// Returns the nonce of a [`Message`].
@@ -185,7 +188,7 @@ impl Packable for Message {
         let issuer_public_key = <[u8; MESSAGE_PUBLIC_KEY_LENGTH]>::unpack(unpacker).infallible()?;
         let issue_timestamp = u64::unpack(unpacker).infallible()?;
         let sequence_number = u32::unpack(unpacker).infallible()?;
-        let payload = Option::<Payload>::unpack(unpacker).coerce()?;
+        let payload = OptionalPayload::unpack(unpacker).coerce()?;
         let nonce = u64::unpack(unpacker).infallible()?;
         let signature = <[u8; MESSAGE_SIGNATURE_LENGTH]>::unpack(unpacker).infallible()?;
 
