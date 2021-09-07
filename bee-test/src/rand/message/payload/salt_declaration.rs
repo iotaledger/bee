@@ -3,14 +3,14 @@
 
 use crate::rand::{
     bytes::{rand_bytes, rand_bytes_array},
-    number::rand_number,
+    number::{rand_number, rand_number_range},
 };
 
 use bee_message::payload::salt_declaration::{Salt, SaltDeclarationPayload};
 
 /// Generates a random [`Salt`].
 pub fn rand_salt() -> Salt {
-    Salt::new(rand_bytes(96), rand_number()).unwrap()
+    Salt::new(rand_bytes(rand_number_range(0..=255)), rand_number()).unwrap()
 }
 
 /// Generates a random [`SaltDeclarationPayload`].
