@@ -146,13 +146,6 @@ where
     // essential.
     {
         let tx = tx.clone();
-        bus.add_listener::<MqttBroker, _, _>(move |event: &MessageReferenced| {
-            let _ = tx.send(event.message_id);
-        });
-    }
-
-    {
-        let tx = tx.clone();
         bus.add_listener::<MqttBroker, _, _>(move |event: &MessageSolidified| {
             let _ = tx.send(event.message_id);
         });

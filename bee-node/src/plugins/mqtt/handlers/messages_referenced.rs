@@ -86,7 +86,11 @@ where
             })
                 .expect("error serializing to json");
 
-            if let Err(e) = messages_referenced_tx.publish("messages/referenced", false, response) {
+            if let Err(e) = messages_referenced_tx.publish("messages/referenced", false, response.clone()) {
+                warn!("Publishing MQTT message failed. Cause: {:?}", e);
+            }
+
+            if let Err(e) = messages_referenced_tx.publish("messages/metadata", false, response) {
                 warn!("Publishing MQTT message failed. Cause: {:?}", e);
             }
 
