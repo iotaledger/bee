@@ -34,30 +34,20 @@ where
             // existing message <=> existing metadata, therefore it's safe to unwrap
             let metadata = tangle.get_metadata(&event.message_id).await.unwrap();
             // the message is referenced by a milestone therefore it's safe to unwrap
-            let referenced_by_milestone_index = *metadata.milestone_index().unwrap();
+            let referenced_by_milestone_index = tangle.get_confirmed_milestone_index(); // TODO: is it safe to access the needed milestone index this way?
 
             let (
-                is_solid,
                 milestone_index,
                 ledger_inclusion_state,
                 conflict_reason,
-                should_promote,
-                should_reattach,
             ) = {
-                let is_solid;
                 let milestone_index;
                 let ledger_inclusion_state;
                 let conflict_reason;
-                let should_promote;
-                let should_reattach;
-
-                is_solid = true;
-                should_reattach = None;
-                should_promote = None;
 
                 // check if the message is an actual milestone
                 if metadata.flags().is_milestone() {
-                    milestone_index = Some(referenced_by_milestone_index);
+                    milestone_index = Some(*referenced_by_milestone_index);
                     ledger_inclusion_state = Some(LedgerInclusionStateDto::NoTransaction);
                     conflict_reason = None;
                 } else {
@@ -77,25 +67,22 @@ where
                 }
 
                 (
-                    is_solid,
                     milestone_index,
                     ledger_inclusion_state,
                     conflict_reason,
-                    should_reattach,
-                    should_promote,
                 )
             };
 
             let response = serde_json::to_string(&MessageMetadataResponse {
                 message_id: (&event.message_id).to_string(),
                 parent_message_ids: message.parents().iter().map(|id| id.to_string()).collect(),
-                is_solid,
-                referenced_by_milestone_index: Some(referenced_by_milestone_index),
+                is_solid: true,
+                referenced_by_milestone_index: Some(*referenced_by_milestone_index),
                 milestone_index,
                 ledger_inclusion_state,
                 conflict_reason: conflict_reason.map(|c| c as u8),
-                should_promote,
-                should_reattach,
+                should_promote: None,
+                should_reattach: None,
             })
                 .expect("error serializing to json");
 
