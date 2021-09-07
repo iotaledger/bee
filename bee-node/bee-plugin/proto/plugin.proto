@@ -189,15 +189,22 @@ message FpcPayload {
     repeated Timestamp timestamps = 2;
 }
 
+enum Opinion {
+    NONE = 0;
+    LIKE = 1;
+    DISLIKE = 2;
+    UNKNOWN = 4;
+}
+
 message Conflict {
     TransactionId transaction_id = 1;
-    uint32 opinion = 2;
+    Opinion opinion = 2;
     uint32 round = 3;
 }
 
 message Timestamp {
     MessageId message_id = 1;
-    uint32 opinion = 2;
+    Opinion opinion = 2;
     uint32 round = 3;
 }
 

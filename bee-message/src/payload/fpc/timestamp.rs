@@ -1,25 +1,26 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::MessageId;
+use crate::{payload::fpc::Opinion, MessageId, MessageUnpackError};
 
 use bee_packable::Packable;
 
 /// Describes a vote in a given round for a message timestamp.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = MessageUnpackError)]
 pub struct Timestamp {
     /// Identifier of the message that contains the timestamp.
     message_id: MessageId,
     /// The node's opinion value in a given round.
-    opinion: u8,
+    opinion: Opinion,
     /// Voting round number.
     round: u8,
 }
 
 impl Timestamp {
     /// Creates a new [`Timestamp`].
-    pub fn new(message_id: MessageId, opinion: u8, round: u8) -> Self {
+    pub fn new(message_id: MessageId, opinion: Opinion, round: u8) -> Self {
         Self {
             message_id,
             opinion,
@@ -33,7 +34,7 @@ impl Timestamp {
     }
 
     /// Returns the node's opinion value in a given round.
-    pub fn opinion(&self) -> u8 {
+    pub fn opinion(&self) -> Opinion {
         self.opinion
     }
 

@@ -6,6 +6,7 @@ pub use crate::{
     input::InputUnpackError,
     output::{OutputIdUnpackError, OutputUnpackError},
     payload::{
+        fpc::OpinionUnpackError,
         transaction::{TransactionEssenceUnpackError, TransactionUnpackError},
         PayloadUnpackError,
     },
@@ -26,6 +27,7 @@ pub enum MessageUnpackError {
     Input(InputUnpackError),
     InvalidPayloadKind(u32),
     InvalidOptionTag(u8),
+    Opinion(OpinionUnpackError),
     Output(OutputUnpackError),
     OutputId(OutputIdUnpackError),
     Payload(PayloadUnpackError),
@@ -55,6 +57,7 @@ impl_wrapped_validated!(
     UnlockBlockUnpackError
 );
 impl_wrapped_variant!(MessageUnpackError, MessageUnpackError::Address, AddressUnpackError);
+impl_wrapped_variant!(MessageUnpackError, MessageUnpackError::Opinion, OpinionUnpackError);
 impl_wrapped_variant!(MessageUnpackError, MessageUnpackError::Signature, SignatureUnpackError);
 impl_wrapped_variant!(MessageUnpackError, MessageUnpackError::Validation, ValidationError);
 impl_from_infallible!(MessageUnpackError);
@@ -75,6 +78,7 @@ impl fmt::Display for MessageUnpackError {
             Self::Input(e) => write!(f, "error unpacking Input: {}", e),
             Self::InvalidPayloadKind(kind) => write!(f, "invalid payload kind: {}.", kind),
             Self::InvalidOptionTag(tag) => write!(f, "invalid tag for Option: {} is not 0 or 1", tag),
+            Self::Opinion(e) => write!(f, "error unpacking Opinion: {}", e),
             Self::Output(e) => write!(f, "error unpacking Output: {}", e),
             Self::OutputId(e) => write!(f, "error unpacking OutputId: {}", e),
             Self::Payload(e) => write!(f, "error unpacking Payload: {}", e),
