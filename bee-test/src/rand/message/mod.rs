@@ -16,11 +16,30 @@ pub mod signature;
 /// Module providing random unlock block generation utilities.
 pub mod unlock;
 
-use crate::rand::bytes::rand_bytes_array;
+use crate::rand::{bool::rand_bool, bytes::rand_bytes_array, number::rand_number};
 
-use bee_message::MessageId;
+use bee_message::{Message, MessageBuilder, MessageId};
 
 /// Generates a random [`MessageId`].
 pub fn rand_message_id() -> MessageId {
     MessageId::new(rand_bytes_array())
+}
+
+/// Generates a random [`Message`].
+pub fn rand_message() -> Message {
+    let mut builder = MessageBuilder::new()
+        .with_parents_blocks(parents::rand_parents_blocks())
+        .with_issuer_public_key(rand_bytes_array())
+        .with_issue_timestamp(rand_number())
+        .with_sequence_number(rand_number());
+
+    if rand_bool() {
+        builder = builder.with_payload(payload::rand_payload());
+    }
+
+    builder
+        .with_nonce(rand_number())
+        .with_signature(rand_bytes_array())
+        .finish()
+        .unwrap()
 }
