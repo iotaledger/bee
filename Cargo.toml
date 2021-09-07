@@ -8,5 +8,6 @@ members = [
   "bee-message",
   "bee-node/bee-node",
   "bee-node/bee-plugin",
+  "bee-api/bee-rest-api",
   "bee-test"
 ]
