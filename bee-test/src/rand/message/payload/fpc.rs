@@ -3,24 +3,30 @@
 
 use crate::rand::{
     message::{payload::rand_transaction_id, rand_message_id},
-    number::rand_number_range,
+    number::{rand_number, rand_number_range},
     vec::rand_vec,
 };
 
-use bee_message::payload::fpc::{Conflict, FpcPayload, Timestamp};
+use bee_message::payload::fpc::{Conflict, FpcPayload, Opinion, Timestamp};
+
+/// Generates a random [`Opinion`].
+pub fn rand_opinion() -> Opinion {
+    match rand_number::<u32>() % 3 {
+        0 => Opinion::Like,
+        1 => Opinion::Dislike,
+        2 => Opinion::Unknown,
+        _ => unreachable!(),
+    }
+}
 
 /// Generates a random [`Conflict`].
 pub fn rand_conflict() -> Conflict {
-    Conflict::new(
-        rand_transaction_id(),
-        rand_number_range(0..=2),
-        rand_number_range(0..=127),
-    )
+    Conflict::new(rand_transaction_id(), rand_opinion(), rand_number_range(0..=127))
 }
 
 /// Generates a random [`Timestamp`].
 pub fn rand_timestamp() -> Timestamp {
-    Timestamp::new(rand_message_id(), rand_number_range(0..=2), rand_number_range(0..=127))
+    Timestamp::new(rand_message_id(), rand_opinion(), rand_number_range(0..=127))
 }
 
 /// Generates a random [`FpcPayload`].
