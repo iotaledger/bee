@@ -23,12 +23,12 @@ bee -c config_example.toml
 
 ## Node
 
-| Name       | Description                                                                                | Type   |
-| :--------- | :----------------------------------------------------------------------------------------- | :----- |
-| identity   | hex representation of an Ed25519 keypair. Can be generated with the `bee p2pidentity` tool | string |
-| alias      | alias for your node. Shows up in dashboard                                                 | string |
-| bech32_hrp | network address identifier                                                                 | string |
-| network_id | network identifier                                                                         | string |
+| Name       | Description                                                                                 | Type   |
+| :--------- | :------------------------------------------------------------------------------------------ | :----- |
+| identity   | hex representation of an Ed25519 keypair. Can be generated with the `bee p2p-identity` tool | string |
+| alias      | alias for your node. Shows up in dashboard                                                  | string |
+| bech32_hrp | network address identifier                                                                  | string |
+| network_id | network identifier                                                                          | string |
 
 ## Logger
 
