@@ -22,10 +22,8 @@ const PARENT_5: &str = "f1109e0f2f5532ba8e3ee6838c68d019b4bbf0b5eeb947ff0a7a8154
 #[test]
 fn new_valid() {
     let message = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Weak,
                 vec![
@@ -34,7 +32,7 @@ fn new_valid() {
                 ],
             )
             .unwrap(),
-        )
+        ])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
@@ -128,16 +126,14 @@ fn unpack_invalid_payload_length() {
 #[test]
 fn invalid_no_strong_parents() {
     let message = MessageBuilder::new()
-        .add_parents_block(
-            ParentsBlock::new(
-                ParentsKind::Weak,
-                vec![
-                    MessageId::new(hex_decode(PARENT_1).unwrap()),
-                    MessageId::new(hex_decode(PARENT_2).unwrap()),
-                ],
-            )
-            .unwrap(),
+        .with_parents_blocks(vec![ParentsBlock::new(
+            ParentsKind::Weak,
+            vec![
+                MessageId::new(hex_decode(PARENT_1).unwrap()),
+                MessageId::new(hex_decode(PARENT_2).unwrap()),
+            ],
         )
+        .unwrap()])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
@@ -176,25 +172,17 @@ fn invalid_no_parents_blocks() {
 #[test]
 fn invalid_parents_blocks_more_than_max() {
     let message = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(ParentsKind::Weak, vec![MessageId::new(hex_decode(PARENT_2).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(ParentsKind::Liked, vec![MessageId::new(hex_decode(PARENT_3).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Disliked,
                 vec![MessageId::new(hex_decode(PARENT_4).unwrap())],
             )
             .unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_5).unwrap())]).unwrap(),
-        )
+        ])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
@@ -221,22 +209,16 @@ fn accessors_eq() {
     let signature = rand_bytes_array::<64>();
 
     let message = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(ParentsKind::Weak, vec![MessageId::new(hex_decode(PARENT_2).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(ParentsKind::Liked, vec![MessageId::new(hex_decode(PARENT_3).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Disliked,
                 vec![MessageId::new(hex_decode(PARENT_4).unwrap())],
             )
             .unwrap(),
-        )
+        ])
         .with_issuer_public_key(issuer_public_key)
         .with_issue_timestamp(issue_timestamp)
         .with_sequence_number(sequence_number)
@@ -257,10 +239,8 @@ fn accessors_eq() {
 #[test]
 fn packed_len() {
     let message = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Weak,
                 vec![
@@ -269,7 +249,7 @@ fn packed_len() {
                 ],
             )
             .unwrap(),
-        )
+        ])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
@@ -290,10 +270,8 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let message_a = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Weak,
                 vec![
@@ -302,7 +280,7 @@ fn packable_round_trip() {
                 ],
             )
             .unwrap(),
-        )
+        ])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
@@ -322,10 +300,8 @@ fn packable_round_trip() {
 #[test]
 fn serde_round_trip() {
     let message_1 = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Weak,
                 vec![
@@ -334,7 +310,7 @@ fn serde_round_trip() {
                 ],
             )
             .unwrap(),
-        )
+        ])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
