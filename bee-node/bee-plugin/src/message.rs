@@ -21,8 +21,8 @@ use crate::grpc::{
     signature::Kind as SignatureKind, unlock_block::Kind as UnlockBlockKind, Address, ApplicationMessagePayload,
     AssetBalance, AssetId, BeaconPayload, BlsAddress, BlsSignature, CollectiveBeaconPayload, Conflict, DataPayload,
     DkgPayload, Ed25519Address, Ed25519Signature, EncryptedDeal, FpcPayload, IndexationPayload, Input, MessageId,
-    Output, OutputId, ParentsBlock, ParentsKind, Payload, ReferenceUnlock, Salt, SaltDeclarationPayload, Signature,
-    SignatureLockedAssetOutput, SignatureLockedSingleOutput, SignatureUnlock, Timestamp, TransactionEssence,
+    Opinion, Output, OutputId, ParentsBlock, ParentsKind, Payload, ReferenceUnlock, Salt, SaltDeclarationPayload,
+    Signature, SignatureLockedAssetOutput, SignatureLockedSingleOutput, SignatureUnlock, Timestamp, TransactionEssence,
     TransactionId, TransactionPayload, UnlockBlock, UtxoInput,
 };
 
@@ -553,11 +553,34 @@ impl Into<bee_message::payload::fpc::FpcPayload> for FpcPayload {
     }
 }
 
+impl From<bee_message::payload::fpc::Opinion> for Opinion {
+    fn from(opinion: bee_message::payload::fpc::Opinion) -> Self {
+        match opinion {
+            bee_message::payload::fpc::Opinion::Like => Opinion::Like,
+            bee_message::payload::fpc::Opinion::Dislike => Opinion::Dislike,
+            bee_message::payload::fpc::Opinion::Unknown => Opinion::Unknown,
+        }
+    }
+}
+
+impl Into<bee_message::payload::fpc::Opinion> for Opinion {
+    fn into(self) -> bee_message::payload::fpc::Opinion {
+        match self {
+            // This is not a valid opinion value, and should never be constructed.
+            // It is just used to make protobuf happy (it requires an enum variant with value 0).
+            Opinion::None => unreachable!(),
+            Opinion::Like => bee_message::payload::fpc::Opinion::Like,
+            Opinion::Dislike => bee_message::payload::fpc::Opinion::Dislike,
+            Opinion::Unknown => bee_message::payload::fpc::Opinion::Unknown,
+        }
+    }
+}
+
 impl From<&bee_message::payload::fpc::Conflict> for Conflict {
     fn from(conflict: &bee_message::payload::fpc::Conflict) -> Self {
         Self {
             transaction_id: Some(conflict.transaction_id().into()),
-            opinion: conflict.opinion().into(),
+            opinion: Opinion::from(conflict.opinion()).into(),
             round: conflict.round().into(),
         }
     }
@@ -567,7 +590,7 @@ impl Into<bee_message::payload::fpc::Conflict> for Conflict {
     fn into(self) -> bee_message::payload::fpc::Conflict {
         bee_message::payload::fpc::Conflict::new(
             self.transaction_id.unwrap().into(),
-            self.opinion.try_into().unwrap(),
+            Opinion::from_i32(self.opinion).unwrap().into(),
             self.round.try_into().unwrap(),
         )
     }
@@ -577,7 +600,7 @@ impl From<&bee_message::payload::fpc::Timestamp> for Timestamp {
     fn from(timestamp: &bee_message::payload::fpc::Timestamp) -> Self {
         Self {
             message_id: Some(timestamp.message_id().into()),
-            opinion: timestamp.opinion().into(),
+            opinion: Opinion::from(timestamp.opinion()).into(),
             round: timestamp.round().into(),
         }
     }
@@ -587,7 +610,7 @@ impl Into<bee_message::payload::fpc::Timestamp> for Timestamp {
     fn into(self) -> bee_message::payload::fpc::Timestamp {
         bee_message::payload::fpc::Timestamp::new(
             self.message_id.unwrap().into(),
-            self.opinion.try_into().unwrap(),
+            Opinion::from_i32(self.opinion).unwrap().into(),
             self.round.try_into().unwrap(),
         )
     }

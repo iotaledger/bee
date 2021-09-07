@@ -4,9 +4,11 @@
 //! Module describing the FPC statement payload.
 
 mod conflict;
+mod opinion;
 mod timestamp;
 
 pub use conflict::Conflict;
+pub use opinion::{Opinion, OpinionUnpackError};
 pub use timestamp::Timestamp;
 
 use crate::{
@@ -17,7 +19,7 @@ use crate::{
 use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
 
 use alloc::vec::Vec;
-use core::convert::{Infallible, TryInto};
+use core::convert::TryInto;
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`].
 const PREFIXED_CONFLICTS_LENGTH_MAX: u32 =
@@ -27,17 +29,17 @@ const PREFIXED_CONFLICTS_LENGTH_MAX: u32 =
 const PREFIXED_TIMESTAMPS_LENGTH_MAX: u32 =
     PAYLOAD_LENGTH_MAX / (MessageId::LENGTH + 2 * core::mem::size_of::<u8>()) as u32;
 
-fn unpack_prefix_to_conflict_validation_error(error: UnpackPrefixError<Infallible>) -> ValidationError {
+fn unpack_prefix_to_conflict_validation_error(error: UnpackPrefixError<MessageUnpackError>) -> MessageUnpackError {
     match error {
-        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidConflictsCount(len),
-        UnpackPrefixError::Packable(e) => match e {},
+        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidConflictsCount(len).into(),
+        UnpackPrefixError::Packable(e) => e,
     }
 }
 
-fn unpack_prefix_to_timestamp_validation_error(error: UnpackPrefixError<Infallible>) -> ValidationError {
+fn unpack_prefix_to_timestamp_validation_error(error: UnpackPrefixError<MessageUnpackError>) -> MessageUnpackError {
     match error {
-        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidTimestampsCount(len),
-        UnpackPrefixError::Packable(e) => match e {},
+        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidTimestampsCount(len).into(),
+        UnpackPrefixError::Packable(e) => e,
     }
 }
 
