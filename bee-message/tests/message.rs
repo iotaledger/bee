@@ -120,8 +120,8 @@ fn unpack_invalid_payload_length() {
         message.err().unwrap(),
         UnpackError::Packable(MessageUnpackError::Validation(ValidationError::PayloadLengthMismatch {
             expected: 108,
-            actual: 109, 
-        })), 
+            actual: 109,
+        })),
     ));
 }
 

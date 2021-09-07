@@ -89,7 +89,7 @@ pub trait MessagePayload: Packable + Into<Payload> {
     }
 }
 
-/// Representation of an optional [`Payload`]. 
+/// Representation of an optional [`Payload`].
 /// Essentially an `Option<Payload>` with a different [`Packable`] implementation, to conform to spec.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
