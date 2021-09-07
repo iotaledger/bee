@@ -3,13 +3,13 @@
 
 use bee_message::{
     payload::{
-        fpc::{Conflict, FpcPayload, Opinion, Timestamp},
+        fpc::{Conflict, FpcPayload, Opinion, OpinionUnpackError, Timestamp},
         transaction::TransactionId,
         MessagePayload,
     },
-    MessageId,
+    MessageId, MessageUnpackError,
 };
-use bee_packable::Packable;
+use bee_packable::{Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes_array;
 
 #[test]
@@ -87,7 +87,6 @@ fn accessors_eq() {
 #[test]
 fn unpack_valid() {
     let mut bytes = vec![3, 0, 0, 0];
-
     bytes.extend(rand_bytes_array::<32>());
     bytes.extend(vec![1, 0]);
     bytes.extend(rand_bytes_array::<32>());
@@ -106,6 +105,21 @@ fn unpack_valid() {
     let fpc = FpcPayload::unpack_from_slice(bytes);
 
     assert!(fpc.is_ok());
+}
+
+#[test]
+fn unpack_invalid_opinion() {
+    let mut bytes = vec![1, 0, 0, 0];
+
+    bytes.extend(rand_bytes_array::<32>());
+    bytes.extend(vec![0, 0]);
+
+    let fpc = FpcPayload::unpack_from_slice(bytes);
+
+    assert!(matches!(
+        fpc.err().unwrap(),
+        UnpackError::Packable(MessageUnpackError::Opinion(OpinionUnpackError::InvalidKind(0))),
+    ));
 }
 
 #[test]

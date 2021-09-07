@@ -9,17 +9,16 @@ use core::{convert::Infallible, fmt};
 
 /// Error encountered when unpacking an [`Opinion`].
 #[derive(Debug)]
-pub struct OpinionUnpackError(u8);
-
-impl OpinionUnpackError {
-    fn new(tag: u8) -> Self {
-        Self(tag)
-    }
+#[allow(missing_docs)]
+pub enum OpinionUnpackError {
+    InvalidKind(u8),
 }
 
 impl fmt::Display for OpinionUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "invalid Opinion kind: {}", self.0)
+        match self {
+            Self::InvalidKind(kind) => write!(f, "invalid Opinion kind: {}", kind),
+        }
     }
 }
 
@@ -28,7 +27,7 @@ impl_from_infallible!(OpinionUnpackError);
 /// Defines an opinion.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(tag_type = u8, with_error = OpinionUnpackError::new)]
+#[packable(tag_type = u8, with_error = OpinionUnpackError::InvalidKind)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum Opinion {
     /// Defines a "liked" opinion.
