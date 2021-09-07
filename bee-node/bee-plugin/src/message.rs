@@ -55,11 +55,13 @@ impl Into<bee_message::Message> for Message {
             builder = builder.with_payload(payload.into());
         }
 
+        let mut parents_blocks = Vec::with_capacity(self.parents_blocks.len());
+
         for parents_block in self.parents_blocks {
-            builder = builder.add_parents_block(parents_block.into());
+            parents_blocks.push(parents_block.into())
         }
 
-        builder.finish().unwrap()
+        builder.with_parents_blocks(parents_blocks).finish().unwrap()
     }
 }
 
