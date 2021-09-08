@@ -99,7 +99,7 @@ where
     let mut messages_tx = broker.link("messages").expect("linking mqtt sender failed");
     let mut messages_referenced_tx = broker.link("messages-referenced").expect("linking mqtt sender failed");
     let mut messages_indexation_tx = broker.link("messages-indexation").expect("linking mqtt sender failed");
-    let mut messages_metadata_tx = broker
+    let mut messages_solidified_tx = broker
         .link("messages-metadata")
         .expect("linking mqtt sender failed");
     let mut outputs_tx = broker.link("outputs").expect("linking mqtt sender failed");
@@ -152,7 +152,7 @@ where
         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
         .expect("mqtt connect error");
 
-    let _ = messages_metadata_tx
+    let _ = messages_solidified_tx
         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
         .expect("mqtt connect error");
 
@@ -194,7 +194,7 @@ where
         messages_tx,
         messages_referenced_tx,
         messages_indexation_tx,
-        messages_metadata_tx,
+        messages_solidified_tx,
         outputs_tx,
         outputs_rx,
         outputs_created_tx,

@@ -18,7 +18,7 @@ pub struct MqttBrokerConfig {
     pub messages_tx: LinkTx,
     pub messages_referenced_tx: LinkTx,
     pub messages_indexation_tx: LinkTx,
-    pub messages_metadata_tx: LinkTx,
+    pub messages_solidified_tx: LinkTx,
     pub outputs_tx: LinkTx,
     pub outputs_rx: LinkRx,
     pub outputs_created_tx: LinkTx,
@@ -49,7 +49,7 @@ where
             messages_tx,
             messages_referenced_tx,
             messages_indexation_tx,
-            messages_metadata_tx,
+            messages_solidified_tx,
             outputs_tx,
             outputs_rx,
             outputs_created_tx,
@@ -66,8 +66,8 @@ where
         milestones_confirmed::spawn(node, milestones_confirmed_tx);
         messages::spawn(node, messages_tx);
         messages_referenced::spawn(node, messages_referenced_tx);
+        messages_solidified::spawn(node, messages_solidified_tx);
         messages_indexation::spawn(node, messages_indexation_tx);
-        messages_metadata::spawn(node, messages_metadata_tx);
         outputs::spawn(node, outputs_tx, outputs_rx);
         outputs_created::spawn(node, outputs_created_tx);
         outputs_consumed::spawn(node, outputs_consumed_tx);

@@ -34,7 +34,8 @@ where
             // existing message <=> existing metadata, therefore it's safe to unwrap
             let metadata = tangle.get_metadata(&event.message_id).await.unwrap();
             // the message is referenced by a milestone therefore it's safe to unwrap
-            let referenced_by_milestone_index = tangle.get_confirmed_milestone_index(); // TODO: is it safe to access the needed milestone index this way?
+            // TODO: is it safe to access the needed milestone index this way? will it always fetch the correct milestone index?
+            let referenced_by_milestone_index = tangle.get_confirmed_milestone_index();
 
             let (
                 milestone_index,
