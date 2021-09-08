@@ -2,19 +2,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_storage::{
-    access::{Fetch, Insert, MultiFetch},
+    access::{AsIterator, Fetch, Insert, MultiFetch},
     backend,
     system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
 
+use std::collections::HashMap;
+
 pub trait StorageBackend:
-    backend::StorageBackend + Fetch<u8, System> + for<'a> MultiFetch<'a, u8, System> + Insert<u8, System>
-// + for<'a> AsIterator<'a, u8, System>
+    backend::StorageBackend
+    + Fetch<u8, System>
+    + for<'a> MultiFetch<'a, u8, System>
+    + Insert<u8, System>
+    + for<'a> AsIterator<'a, u8, System>
 {
 }
 
 impl<T> StorageBackend for T where
-    T: backend::StorageBackend + Fetch<u8, System> + for<'a> MultiFetch<'a, u8, System> + Insert<u8, System> /* + for<'a> AsIterator<'a, u8, System> */
+    T: backend::StorageBackend
+        + Fetch<u8, System>
+        + for<'a> MultiFetch<'a, u8, System>
+        + Insert<u8, System>
+        + for<'a> AsIterator<'a, u8, System>
 {
 }
 
@@ -39,6 +48,21 @@ pub fn system_access<B: StorageBackend>(storage: &B) {
     assert_eq!(systems[1].as_ref().unwrap().unwrap(), health);
     assert_eq!(systems[2].as_ref().unwrap(), &None);
 
+    let mut systems = HashMap::new();
+    systems.insert(SYSTEM_VERSION_KEY, version);
+    systems.insert(SYSTEM_HEALTH_KEY, health);
+
+    let iter = AsIterator::<u8, System>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let (key, value) = result.unwrap();
+        assert_eq!(systems.get(&key), Some(&value));
+        count += 1;
+    }
+
+    assert_eq!(count, systems.len());
+
     Insert::<u8, System>::insert(storage, &SYSTEM_VERSION_KEY, &System::Version(StorageVersion(42))).unwrap();
     // assert_eq!(
     //     System::Version(storage.version().unwrap().unwrap()),
@@ -62,16 +86,4 @@ pub fn system_access<B: StorageBackend>(storage: &B) {
             .unwrap(),
         System::Health(StorageHealth::Corrupted)
     );
-
-    // let iter = AsIterator::<u8, System>::iter(storage).unwrap();
-    // let mut count = 0;
-
-    // for result in iter {
-    //     let (message_id, message) = result.unwrap();
-    //     assert!(messages.contains(&(message_id, Some(message))));
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, 10);
-    //
 }
