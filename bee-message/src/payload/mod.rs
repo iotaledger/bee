@@ -62,14 +62,14 @@ pub trait MessagePayload: Packable + Into<Payload> {
     /// Version of the payload.
     const VERSION: u8;
 
-    /// Packs a payload, type and version.
+    /// Packs a payload, its type and version.
     fn pack_payload<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         Self::KIND.pack(packer).infallible()?;
         Self::VERSION.pack(packer).infallible()?;
         self.pack(packer)
     }
 
-    /// Unpacks a payload, its size, type and version.
+    /// Unpacks a payload, its type and version.
     fn unpack_payload<U: Unpacker, E>(unpacker: &mut U) -> Result<Payload, UnpackError<E, U::Error>>
     where
         E: From<MessageUnpackError> + From<ValidationError> + From<Self::UnpackError>,
@@ -85,75 +85,8 @@ pub trait MessagePayload: Packable + Into<Payload> {
         }
 
         let payload = Self::unpack(unpacker).coerce()?;
+
         Ok(payload.into())
-    }
-}
-
-/// Representation of an optional [`Payload`].
-/// Essentially an `Option<Payload>` with a different [`Packable`] implementation, to conform to spec.
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde1",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(tag = "type", content = "data")
-)]
-#[allow(missing_docs)]
-pub enum OptionalPayload {
-    None,
-    Some(Payload),
-}
-
-impl Packable for OptionalPayload {
-    type PackError = Infallible;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        match self {
-            Self::None => 0u32.packed_len(),
-            Self::Some(payload) => 0u32.packed_len() + payload.packed_len(),
-        }
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        match self {
-            Self::None => 0u32.pack(packer),
-            Self::Some(payload) => {
-                (payload.packed_len() as u32).pack(packer)?;
-                payload.pack(packer)
-            }
-        }
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let len = u32::unpack(unpacker).infallible()? as usize;
-
-        if len > 0 {
-            let payload = Payload::unpack(unpacker)?;
-            let actual_len = payload.packed_len();
-
-            if len != actual_len {
-                Err(UnpackError::Packable(
-                    ValidationError::PayloadLengthMismatch {
-                        expected: len,
-                        actual: actual_len,
-                    }
-                    .into(),
-                ))
-            } else {
-                Ok(Self::Some(payload))
-            }
-        } else {
-            Ok(Self::None)
-        }
-    }
-}
-
-impl From<Option<Payload>> for OptionalPayload {
-    fn from(option: Option<Payload>) -> Self {
-        match option {
-            None => Self::None,
-            Some(payload) => Self::Some(payload),
-        }
     }
 }
 
@@ -303,5 +236,73 @@ impl From<SaltDeclarationPayload> for Payload {
 impl From<IndexationPayload> for Payload {
     fn from(payload: IndexationPayload) -> Self {
         Self::Indexation(Box::new(payload))
+    }
+}
+
+/// Representation of an optional [`Payload`].
+/// Essentially an `Option<Payload>` with a different [`Packable`] implementation, to conform to specs.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde1",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(tag = "type", content = "data")
+)]
+#[allow(missing_docs)]
+pub enum OptionalPayload {
+    None,
+    Some(Payload),
+}
+
+impl Packable for OptionalPayload {
+    type PackError = Infallible;
+    type UnpackError = MessageUnpackError;
+
+    fn packed_len(&self) -> usize {
+        match self {
+            Self::None => 0u32.packed_len(),
+            Self::Some(payload) => 0u32.packed_len() + payload.packed_len(),
+        }
+    }
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        match self {
+            Self::None => 0u32.pack(packer),
+            Self::Some(payload) => {
+                (payload.packed_len() as u32).pack(packer)?;
+                payload.pack(packer)
+            }
+        }
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let len = u32::unpack(unpacker).infallible()? as usize;
+
+        if len > 0 {
+            let payload = Payload::unpack(unpacker)?;
+            let actual_len = payload.packed_len();
+
+            if len != actual_len {
+                Err(UnpackError::Packable(
+                    ValidationError::PayloadLengthMismatch {
+                        expected: len,
+                        actual: actual_len,
+                    }
+                    .into(),
+                ))
+            } else {
+                Ok(Self::Some(payload))
+            }
+        } else {
+            Ok(Self::None)
+        }
+    }
+}
+
+impl From<Option<Payload>> for OptionalPayload {
+    fn from(option: Option<Payload>) -> Self {
+        match option {
+            None => Self::None,
+            Some(payload) => Self::Some(payload),
+        }
     }
 }
