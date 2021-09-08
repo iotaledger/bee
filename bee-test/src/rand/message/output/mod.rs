@@ -5,12 +5,12 @@ mod signature_locked_asset;
 mod signature_locked_single;
 
 use crate::rand::{
-    message::{address::rand_address, payload::rand_transaction_id},
+    message::payload::rand_transaction_id,
     number::{rand_number, rand_number_range},
 };
 
 pub use signature_locked_asset::rand_signature_locked_asset_output;
-pub use signature_locked_single::rand_signature_locked_single_output;
+pub use signature_locked_single::{rand_signature_locked_single_output, rand_signature_locked_single_output_amount};
 
 use bee_message::output::{
     Output, OutputId, SignatureLockedAssetOutput, SignatureLockedSingleOutput, OUTPUT_INDEX_RANGE,
@@ -31,7 +31,7 @@ pub fn rand_output() -> Output {
     }
 }
 
-/// Generates a random vector of [`Output`]s, ensuring that the accumulated output is not invalid.
+/// Generates a random [`Vec`] of [`Output`]s, ensuring that the accumulated output is not invalid.
 pub fn rand_outputs(len: usize) -> Vec<Output> {
     let max_amount = *SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT.end() / len as u64;
     let mut outputs = Vec::with_capacity(len);
@@ -39,9 +39,7 @@ pub fn rand_outputs(len: usize) -> Vec<Output> {
     for _ in 0..len {
         let output = match rand_number::<u8>() % 2 {
             SignatureLockedSingleOutput::KIND => {
-                SignatureLockedSingleOutput::new(rand_address(), rand_number_range(1..=max_amount))
-                    .unwrap()
-                    .into()
+                rand_signature_locked_single_output_amount(rand_number_range(1..=max_amount)).into()
             }
             SignatureLockedAssetOutput::KIND => rand_signature_locked_asset_output().into(),
             _ => unreachable!(),
