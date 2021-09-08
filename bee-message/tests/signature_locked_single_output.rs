@@ -61,10 +61,10 @@ fn unpack_invalid_amount() {
         SignatureLockedSingleOutput::unpack_from_slice(vec![
             0, 82, 253, 252, 7, 33, 130, 101, 79, 22, 63, 95, 15, 154, 98, 29, 114, 149, 102, 199, 77, 16, 3, 124, 77,
             123, 187, 4, 7, 209, 226, 198, 73, 0, 0, 0, 0, 0, 0, 0, 0,
-        ])
-        .err()
-        .unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidAmount(0))),
+        ]),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::InvalidAmount(0)
+        ))),
     ));
 }
 

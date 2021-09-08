@@ -90,9 +90,9 @@ fn unpack_invalid_version() {
     let message = Message::unpack_from_slice(bytes);
 
     assert!(matches!(
-        message.err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidMessageVersion(
-            0
+        message,
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::InvalidMessageVersion(0)
         )))
     ));
 }
@@ -114,14 +114,14 @@ fn unpack_invalid_payload_length() {
         138, 254, 248, 226, 27, 75, 64, 65, 70, 179, 143, 249, 27, 85, 91, 169, 46, 237, 98, 213, 205, 27,
     ];
 
-    let message = Message::unpack_from_slice(bytes);
-
     assert!(matches!(
-        message.err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::PayloadLengthMismatch {
-            expected: 108,
-            actual: 109,
-        })),
+        Message::unpack_from_slice(bytes),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::PayloadLengthMismatch {
+                expected: 108,
+                actual: 109,
+            }
+        ))),
     ));
 }
 
@@ -148,10 +148,7 @@ fn invalid_no_strong_parents() {
         .with_signature(rand_bytes_array())
         .finish();
 
-    assert!(matches!(
-        message.err().unwrap(),
-        ValidationError::InvalidStrongParentsCount(0),
-    ));
+    assert!(matches!(message, Err(ValidationError::InvalidStrongParentsCount(0)),));
 }
 
 #[test]
@@ -167,10 +164,7 @@ fn invalid_no_parents_blocks() {
         .with_signature(rand_bytes_array())
         .finish();
 
-    assert!(matches!(
-        message.err().unwrap(),
-        ValidationError::InvalidParentsBlocksCount(0),
-    ));
+    assert!(matches!(message, Err(ValidationError::InvalidParentsBlocksCount(0)),));
 }
 
 #[test]
@@ -205,10 +199,7 @@ fn invalid_parents_blocks_more_than_max() {
         .with_signature(rand_bytes_array())
         .finish();
 
-    assert!(matches!(
-        message.err().unwrap(),
-        ValidationError::InvalidParentsBlocksCount(5),
-    ));
+    assert!(matches!(message, Err(ValidationError::InvalidParentsBlocksCount(5)),));
 }
 
 #[test]

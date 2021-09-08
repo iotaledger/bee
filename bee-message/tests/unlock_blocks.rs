@@ -161,8 +161,10 @@ fn unpack_invalid_unlock_block_kind() {
     let unlock_blocks = UnlockBlocks::unpack_from_slice(bytes);
 
     assert!(matches!(
-        unlock_blocks.err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::UnlockBlock(UnlockBlockUnpackError::InvalidKind(2))),
+        unlock_blocks,
+        Err(UnpackError::Packable(MessageUnpackError::UnlockBlock(
+            UnlockBlockUnpackError::InvalidKind(2)
+        ))),
     ));
 }
 

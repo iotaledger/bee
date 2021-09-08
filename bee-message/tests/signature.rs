@@ -51,10 +51,10 @@ fn unpack_invalid_kind() {
             20, 255, 24, 193, 203, 255, 137, 142, 158, 25, 171, 86, 195, 20, 70, 56, 136, 204, 2, 219, 254, 218, 2,
             234, 91, 56, 50, 122, 112, 200, 110, 181, 15, 166, 100, 53, 115, 124, 220, 90, 50, 188, 45, 124, 67, 30,
             124, 38, 34, 89, 92
-        ])
-        .err()
-        .unwrap(),
-        UnpackError::Packable(MessageUnpackError::Signature(SignatureUnpackError::InvalidKind(4))),
+        ]),
+        Err(UnpackError::Packable(MessageUnpackError::Signature(
+            SignatureUnpackError::InvalidKind(4)
+        ))),
     ));
 }
 

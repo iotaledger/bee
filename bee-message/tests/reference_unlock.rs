@@ -34,8 +34,8 @@ fn new_valid_max_index() {
 #[test]
 fn new_invalid_more_than_max_index() {
     assert!(matches!(
-        ReferenceUnlock::new(127).err().unwrap(),
-        ValidationError::InvalidReferenceIndex(127),
+        ReferenceUnlock::new(127),
+        Err(ValidationError::InvalidReferenceIndex(127)),
     ));
 }
 
@@ -47,17 +47,17 @@ fn try_from_valid() {
 #[test]
 fn try_from_invalid() {
     assert!(matches!(
-        ReferenceUnlock::try_from(127).err().unwrap(),
-        ValidationError::InvalidReferenceIndex(127),
+        ReferenceUnlock::try_from(127),
+        Err(ValidationError::InvalidReferenceIndex(127)),
     ));
 }
 
 #[test]
 fn unpack_invalid_index() {
     assert!(matches!(
-        ReferenceUnlock::unpack_from_slice(vec![0x2a, 0x2a]).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidReferenceIndex(
-            10794
+        ReferenceUnlock::unpack_from_slice(vec![0x2a, 0x2a]),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::InvalidReferenceIndex(10794)
         ))),
     ));
 }
