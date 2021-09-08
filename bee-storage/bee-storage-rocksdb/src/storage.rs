@@ -1,16 +1,16 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{
+use crate::{
     column_families::*,
     config::{RocksDbConfig, RocksDbConfigBuilder, StorageConfig},
     error::Error,
 };
 
-pub use bee_storage::{
+use bee_storage::{
     access::{Fetch, Insert},
-    backend::StorageBackend,
     system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
+    StorageBackend,
 };
 
 use rocksdb::{

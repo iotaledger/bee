@@ -1,12 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::storage::StorageVersion;
+//! Module related to storage backend error handling;
 
-use bee_storage::system::StorageHealth;
+use bee_storage::system::{StorageHealth, StorageVersion};
 
 use thiserror::Error;
 
+/// Error to be raised when a rocksdb ackend operation fails.
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("RocksDb internal error: {0}")]

@@ -3,10 +3,10 @@
 
 //! Truncate access operations.
 
-use crate::{storage::Storage, trees::*};
+use crate::{trees::*, Storage};
 
 use bee_message::{Message, MessageId};
-use bee_storage::{access::Truncate, backend::StorageBackend};
+use bee_storage::{access::Truncate, StorageBackend};
 
 macro_rules! impl_truncate {
     ($key:ty, $value:ty, $cf:expr) => {

@@ -8,5 +8,8 @@
 
 pub mod access;
 pub mod config;
+pub mod error;
 pub mod storage;
 pub mod trees;
+
+pub use storage::Storage;

@@ -3,10 +3,10 @@
 
 //! Delete access operations.
 
-use crate::{storage::Storage, trees::*};
+use crate::{trees::*, Storage};
 
 use bee_message::{Message, MessageId};
-use bee_storage::{access::Delete, backend::StorageBackend};
+use bee_storage::{access::Delete, StorageBackend};
 
 impl Delete<MessageId, Message> for Storage {
     fn delete(&self, message_id: &MessageId) -> Result<(), <Self as StorageBackend>::Error> {

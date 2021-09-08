@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::backend::StorageBackend;
+use crate::StorageBackend;
 
 /// `Fetch<K, V>` trait extends the `StorageBackend` with `fetch` operation for the (key: K, value: V pair);
 /// therefore, it should be explicitly implemented for the corresponding `StorageBackend`.

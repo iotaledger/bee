@@ -3,11 +3,11 @@
 
 //! Multi-fetch access operations.
 
-use crate::{storage::Storage, trees::*};
+use crate::{trees::*, Storage};
 
 use bee_message::{Message, MessageId};
 use bee_packable::Packable;
-use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
+use bee_storage::{access::MultiFetch, system::System, StorageBackend};
 
 use std::{marker::PhantomData, slice::Iter};
 

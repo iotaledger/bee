@@ -20,3 +20,5 @@
 pub mod access;
 pub mod backend;
 pub mod system;
+
+pub use backend::StorageBackend;
