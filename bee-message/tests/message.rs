@@ -22,10 +22,8 @@ const PARENT_5: &str = "f1109e0f2f5532ba8e3ee6838c68d019b4bbf0b5eeb947ff0a7a8154
 #[test]
 fn new_valid() {
     let message = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Weak,
                 vec![
@@ -34,7 +32,7 @@ fn new_valid() {
                 ],
             )
             .unwrap(),
-        )
+        ])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
@@ -55,14 +53,14 @@ fn unpack_valid() {
         2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 238, 142, 220, 195, 72, 99,
         77, 135, 73, 71, 196, 160, 101, 213, 130, 203, 214, 96, 245, 30, 3, 44, 37, 103, 128, 55, 240, 155, 139, 220,
-        142, 178, 216, 230, 192, 191, 209, 104, 112, 20, 2, 0, 0, 0, 1, 104, 0, 0, 0, 8, 0, 0, 0, 0, 32, 0, 0, 0, 132,
-        27, 114, 220, 115, 116, 126, 193, 10, 134, 212, 173, 149, 101, 177, 183, 239, 215, 196, 68, 91, 60, 110, 222,
-        214, 229, 233, 139, 78, 192, 242, 72, 64, 0, 0, 0, 153, 128, 64, 149, 20, 34, 176, 142, 218, 58, 195, 204, 46,
-        40, 206, 2, 5, 166, 147, 196, 253, 226, 199, 30, 119, 83, 20, 169, 249, 80, 123, 20, 163, 123, 208, 238, 69,
-        191, 198, 110, 105, 107, 184, 244, 12, 51, 64, 199, 121, 8, 14, 248, 38, 118, 144, 2, 133, 4, 126, 169, 122,
-        117, 124, 134, 0, 0, 0, 0, 0, 0, 0, 0, 145, 167, 69, 239, 139, 44, 177, 36, 175, 85, 127, 123, 121, 5, 53, 252,
-        47, 72, 99, 133, 46, 48, 76, 67, 166, 136, 216, 171, 49, 120, 150, 197, 94, 234, 36, 251, 59, 102, 43, 196, 54,
-        55, 138, 254, 248, 226, 27, 75, 64, 65, 70, 179, 143, 249, 27, 85, 91, 169, 46, 237, 98, 213, 205, 27,
+        142, 178, 216, 230, 192, 191, 209, 104, 112, 20, 2, 0, 0, 0, 109, 0, 0, 0, 8, 0, 0, 0, 0, 32, 0, 0, 0, 132, 27,
+        114, 220, 115, 116, 126, 193, 10, 134, 212, 173, 149, 101, 177, 183, 239, 215, 196, 68, 91, 60, 110, 222, 214,
+        229, 233, 139, 78, 192, 242, 72, 64, 0, 0, 0, 153, 128, 64, 149, 20, 34, 176, 142, 218, 58, 195, 204, 46, 40,
+        206, 2, 5, 166, 147, 196, 253, 226, 199, 30, 119, 83, 20, 169, 249, 80, 123, 20, 163, 123, 208, 238, 69, 191,
+        198, 110, 105, 107, 184, 244, 12, 51, 64, 199, 121, 8, 14, 248, 38, 118, 144, 2, 133, 4, 126, 169, 122, 117,
+        124, 134, 0, 0, 0, 0, 0, 0, 0, 0, 145, 167, 69, 239, 139, 44, 177, 36, 175, 85, 127, 123, 121, 5, 53, 252, 47,
+        72, 99, 133, 46, 48, 76, 67, 166, 136, 216, 171, 49, 120, 150, 197, 94, 234, 36, 251, 59, 102, 43, 196, 54, 55,
+        138, 254, 248, 226, 27, 75, 64, 65, 70, 179, 143, 249, 27, 85, 91, 169, 46, 237, 98, 213, 205, 27,
     ];
 
     let message = Message::unpack_from_slice(bytes);
@@ -77,30 +75,58 @@ fn unpack_invalid_version() {
         2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 238, 142, 220, 195, 72, 99,
         77, 135, 73, 71, 196, 160, 101, 213, 130, 203, 214, 96, 245, 30, 3, 44, 37, 103, 128, 55, 240, 155, 139, 220,
-        142, 178, 216, 230, 192, 191, 209, 104, 112, 20, 2, 0, 0, 0, 1, 8, 0, 0, 0, 0, 32, 0, 0, 0, 132, 27, 114, 220,
-        115, 116, 126, 193, 10, 134, 212, 173, 149, 101, 177, 183, 239, 215, 196, 68, 91, 60, 110, 222, 214, 229, 233,
-        139, 78, 192, 242, 72, 64, 0, 0, 0, 153, 128, 64, 149, 20, 34, 176, 142, 218, 58, 195, 204, 46, 40, 206, 2, 5,
-        166, 147, 196, 253, 226, 199, 30, 119, 83, 20, 169, 249, 80, 123, 20, 163, 123, 208, 238, 69, 191, 198, 110,
-        105, 107, 184, 244, 12, 51, 64, 199, 121, 8, 14, 248, 38, 118, 144, 2, 133, 4, 126, 169, 122, 117, 124, 134, 0,
-        0, 0, 0, 0, 0, 0, 0, 145, 167, 69, 239, 139, 44, 177, 36, 175, 85, 127, 123, 121, 5, 53, 252, 47, 72, 99, 133,
-        46, 48, 76, 67, 166, 136, 216, 171, 49, 120, 150, 197, 94, 234, 36, 251, 59, 102, 43, 196, 54, 55, 138, 254,
-        248, 226, 27, 75, 64, 65, 70, 179, 143, 249, 27, 85, 91, 169, 46, 237, 98, 213, 205, 27,
+        142, 178, 216, 230, 192, 191, 209, 104, 112, 20, 2, 0, 0, 0, 109, 0, 0, 0, 8, 0, 0, 0, 0, 32, 0, 0, 0, 132, 27,
+        114, 220, 115, 116, 126, 193, 10, 134, 212, 173, 149, 101, 177, 183, 239, 215, 196, 68, 91, 60, 110, 222, 214,
+        229, 233, 139, 78, 192, 242, 72, 64, 0, 0, 0, 153, 128, 64, 149, 20, 34, 176, 142, 218, 58, 195, 204, 46, 40,
+        206, 2, 5, 166, 147, 196, 253, 226, 199, 30, 119, 83, 20, 169, 249, 80, 123, 20, 163, 123, 208, 238, 69, 191,
+        198, 110, 105, 107, 184, 244, 12, 51, 64, 199, 121, 8, 14, 248, 38, 118, 144, 2, 133, 4, 126, 169, 122, 117,
+        124, 134, 0, 0, 0, 0, 0, 0, 0, 0, 145, 167, 69, 239, 139, 44, 177, 36, 175, 85, 127, 123, 121, 5, 53, 252, 47,
+        72, 99, 133, 46, 48, 76, 67, 166, 136, 216, 171, 49, 120, 150, 197, 94, 234, 36, 251, 59, 102, 43, 196, 54, 55,
+        138, 254, 248, 226, 27, 75, 64, 65, 70, 179, 143, 249, 27, 85, 91, 169, 46, 237, 98, 213, 205, 27,
     ];
 
     let message = Message::unpack_from_slice(bytes);
 
     assert!(matches!(
-        message.err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidMessageVersion(
-            0
+        message,
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::InvalidMessageVersion(0)
         )))
+    ));
+}
+
+#[test]
+fn unpack_invalid_payload_length() {
+    let bytes = vec![
+        1, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
+        2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 238, 142, 220, 195, 72, 99,
+        77, 135, 73, 71, 196, 160, 101, 213, 130, 203, 214, 96, 245, 30, 3, 44, 37, 103, 128, 55, 240, 155, 139, 220,
+        142, 178, 216, 230, 192, 191, 209, 104, 112, 20, 2, 0, 0, 0, 108, 0, 0, 0, 8, 0, 0, 0, 0, 32, 0, 0, 0, 132, 27,
+        114, 220, 115, 116, 126, 193, 10, 134, 212, 173, 149, 101, 177, 183, 239, 215, 196, 68, 91, 60, 110, 222, 214,
+        229, 233, 139, 78, 192, 242, 72, 64, 0, 0, 0, 153, 128, 64, 149, 20, 34, 176, 142, 218, 58, 195, 204, 46, 40,
+        206, 2, 5, 166, 147, 196, 253, 226, 199, 30, 119, 83, 20, 169, 249, 80, 123, 20, 163, 123, 208, 238, 69, 191,
+        198, 110, 105, 107, 184, 244, 12, 51, 64, 199, 121, 8, 14, 248, 38, 118, 144, 2, 133, 4, 126, 169, 122, 117,
+        124, 134, 0, 0, 0, 0, 0, 0, 0, 0, 145, 167, 69, 239, 139, 44, 177, 36, 175, 85, 127, 123, 121, 5, 53, 252, 47,
+        72, 99, 133, 46, 48, 76, 67, 166, 136, 216, 171, 49, 120, 150, 197, 94, 234, 36, 251, 59, 102, 43, 196, 54, 55,
+        138, 254, 248, 226, 27, 75, 64, 65, 70, 179, 143, 249, 27, 85, 91, 169, 46, 237, 98, 213, 205, 27,
+    ];
+
+    assert!(matches!(
+        Message::unpack_from_slice(bytes),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::PayloadLengthMismatch {
+                expected: 108,
+                actual: 109,
+            }
+        ))),
     ));
 }
 
 #[test]
 fn invalid_no_strong_parents() {
     let message = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(
                 ParentsKind::Weak,
                 vec![
@@ -109,7 +135,7 @@ fn invalid_no_strong_parents() {
                 ],
             )
             .unwrap(),
-        )
+        ])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
@@ -120,10 +146,7 @@ fn invalid_no_strong_parents() {
         .with_signature(rand_bytes_array())
         .finish();
 
-    assert!(matches!(
-        message.err().unwrap(),
-        ValidationError::InvalidStrongParentsCount(0),
-    ));
+    assert!(matches!(message, Err(ValidationError::InvalidStrongParentsCount(0)),));
 }
 
 #[test]
@@ -139,34 +162,23 @@ fn invalid_no_parents_blocks() {
         .with_signature(rand_bytes_array())
         .finish();
 
-    assert!(matches!(
-        message.err().unwrap(),
-        ValidationError::InvalidParentsBlocksCount(0),
-    ));
+    assert!(matches!(message, Err(ValidationError::InvalidParentsBlocksCount(0)),));
 }
 
 #[test]
 fn invalid_parents_blocks_more_than_max() {
     let message = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(ParentsKind::Weak, vec![MessageId::new(hex_decode(PARENT_2).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(ParentsKind::Liked, vec![MessageId::new(hex_decode(PARENT_3).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Disliked,
                 vec![MessageId::new(hex_decode(PARENT_4).unwrap())],
             )
             .unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_5).unwrap())]).unwrap(),
-        )
+        ])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
@@ -177,10 +189,7 @@ fn invalid_parents_blocks_more_than_max() {
         .with_signature(rand_bytes_array())
         .finish();
 
-    assert!(matches!(
-        message.err().unwrap(),
-        ValidationError::InvalidParentsBlocksCount(5),
-    ));
+    assert!(matches!(message, Err(ValidationError::InvalidParentsBlocksCount(5)),));
 }
 
 #[test]
@@ -193,22 +202,16 @@ fn accessors_eq() {
     let signature = rand_bytes_array::<64>();
 
     let message = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(ParentsKind::Weak, vec![MessageId::new(hex_decode(PARENT_2).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(ParentsKind::Liked, vec![MessageId::new(hex_decode(PARENT_3).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Disliked,
                 vec![MessageId::new(hex_decode(PARENT_4).unwrap())],
             )
             .unwrap(),
-        )
+        ])
         .with_issuer_public_key(issuer_public_key)
         .with_issue_timestamp(issue_timestamp)
         .with_sequence_number(sequence_number)
@@ -221,7 +224,7 @@ fn accessors_eq() {
     assert_eq!(*message.issuer_public_key(), issuer_public_key);
     assert_eq!(message.issue_timestamp(), issue_timestamp);
     assert_eq!(message.sequence_number(), sequence_number);
-    assert_eq!(*message.payload().as_ref().unwrap(), payload);
+    assert_eq!(*message.payload().unwrap(), payload);
     assert_eq!(message.nonce(), nonce);
     assert_eq!(*message.signature(), signature);
 }
@@ -229,10 +232,8 @@ fn accessors_eq() {
 #[test]
 fn packed_len() {
     let message = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Weak,
                 vec![
@@ -241,7 +242,7 @@ fn packed_len() {
                 ],
             )
             .unwrap(),
-        )
+        ])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
@@ -255,17 +256,15 @@ fn packed_len() {
 
     assert_eq!(
         message.packed_len(),
-        1 + 1 + 1 + 1 + 32 + 1 + 1 + 32 + 32 + 32 + 8 + 4 + 1 + 4 + 4 + 1 + 4 + 32 + 4 + 256 + 8 + 64,
+        1 + 1 + 1 + 1 + 32 + 1 + 1 + 32 + 32 + 32 + 8 + 4 + 4 + 4 + 1 + 4 + 32 + 4 + 256 + 8 + 64,
     );
 }
 
 #[test]
 fn packable_round_trip() {
     let message_a = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Weak,
                 vec![
@@ -274,7 +273,7 @@ fn packable_round_trip() {
                 ],
             )
             .unwrap(),
-        )
+        ])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
@@ -294,10 +293,8 @@ fn packable_round_trip() {
 #[test]
 fn serde_round_trip() {
     let message_1 = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Weak,
                 vec![
@@ -306,7 +303,7 @@ fn serde_round_trip() {
                 ],
             )
             .unwrap(),
-        )
+        ])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())

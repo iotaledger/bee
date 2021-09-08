@@ -15,9 +15,9 @@ use alloc::vec::Vec;
 use core::convert::{Infallible, TryFrom, TryInto};
 
 /// Minimum number of parents for a valid [`ParentsBlock`].
-const PREFIXED_PARENTS_LENGTH_MIN: u8 = 1;
+pub const PREFIXED_PARENTS_LENGTH_MIN: u8 = 1;
 /// Maximum number of parents for a valid [`ParentsBlock`].
-const PREFIXED_PARENTS_LENGTH_MAX: u8 = 8;
+pub const PREFIXED_PARENTS_LENGTH_MAX: u8 = 8;
 
 /// An individual message parent, which can be categorized as "strong" or "weak".
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -80,8 +80,8 @@ impl ParentsBlock {
         Ok(Self { kind, references })
     }
 
-    #[allow(clippy::len_without_is_empty)]
     /// Returns the number of [`MessageId`]s in the [`ParentsBlock`] ID collection.
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.references.len()
     }

@@ -56,7 +56,7 @@ fn invalid_input_count() {
         .with_outputs(vec![output])
         .finish();
 
-    assert!(matches!(essence.err().unwrap(), ValidationError::InvalidInputCount(0),));
+    assert!(matches!(essence, Err(ValidationError::InvalidInputCount(0))));
 }
 
 #[test]
@@ -77,8 +77,8 @@ fn invalid_duplicate_utxo() {
         .finish();
 
     assert!(matches!(
-        essence.err().unwrap(),
-        ValidationError::DuplicateUtxo(utxo) if utxo == utxo_input
+        essence,
+        Err(ValidationError::DuplicateUtxo(utxo)) if utxo == utxo_input
     ));
 }
 
@@ -98,10 +98,7 @@ fn invalid_inputs_not_sorted() {
         .with_outputs(vec![output])
         .finish();
 
-    assert!(matches!(
-        essence.err().unwrap(),
-        ValidationError::TransactionInputsNotSorted,
-    ));
+    assert!(matches!(essence, Err(ValidationError::TransactionInputsNotSorted),));
 }
 
 #[test]
@@ -117,7 +114,7 @@ fn invalid_output_count() {
         .with_outputs(vec![])
         .finish();
 
-    assert!(matches!(essence.err().unwrap(), ValidationError::InvalidOutputCount(0),));
+    assert!(matches!(essence, Err(ValidationError::InvalidOutputCount(0))));
 }
 
 #[test]
@@ -138,8 +135,8 @@ fn invalid_output_accumulated_amount() {
         .finish();
 
     assert!(matches!(
-        essence.err().unwrap(),
-        ValidationError::InvalidAccumulatedOutput(amount) if amount == IOTA_SUPPLY as u128 + 1,
+        essence,
+        Err(ValidationError::InvalidAccumulatedOutput(amount)) if amount == IOTA_SUPPLY as u128 + 1,
     ));
 }
 
@@ -160,8 +157,8 @@ fn invalid_duplicate_output_address() {
         .finish();
 
     assert!(matches!(
-        essence.err().unwrap(),
-        ValidationError::DuplicateAddress(duplicate) if duplicate == address,
+        essence,
+        Err(ValidationError::DuplicateAddress(duplicate)) if duplicate == address,
     ));
 }
 
@@ -182,10 +179,7 @@ fn invalid_outputs_not_sorted() {
         .with_outputs(vec![output2, output1])
         .finish();
 
-    assert!(matches!(
-        essence.err().unwrap(),
-        ValidationError::TransactionOutputsNotSorted,
-    ));
+    assert!(matches!(essence, Err(ValidationError::TransactionOutputsNotSorted),));
 }
 
 #[test]
@@ -239,8 +233,8 @@ fn unpack_invalid_input_count() {
     bytes.extend(output.pack_to_vec().unwrap());
 
     assert!(matches!(
-        TransactionEssence::unpack_from_slice(bytes).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidInputCount(n)))
+        TransactionEssence::unpack_from_slice(bytes),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidInputCount(n))))
             if n == inputs_len
     ));
 }
@@ -273,8 +267,8 @@ fn unpack_invalid_output_count() {
     }
 
     assert!(matches!(
-        TransactionEssence::unpack_from_slice(bytes).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidOutputCount(n)))
+        TransactionEssence::unpack_from_slice(bytes),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidOutputCount(n))))
             if n == outputs_len
     ));
 }

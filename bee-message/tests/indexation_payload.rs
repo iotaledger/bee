@@ -84,12 +84,10 @@ fn new_invalid_data_length_more_than_max() {
 #[test]
 fn unpack_invalid_index_length_less_than_min() {
     assert!(matches!(
-        IndexationPayload::unpack_from_slice(vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-            .err()
-            .unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(
+        IndexationPayload::unpack_from_slice(vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidIndexationIndexLength(0)
-        )),
+        ))),
     ));
 }
 
@@ -101,12 +99,10 @@ fn unpack_invalid_index_length_more_than_max() {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        ])
-        .err()
-        .unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(
+        ]),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidIndexationIndexLength(65)
-        )),
+        ))),
     ));
 }
 
@@ -120,10 +116,10 @@ fn unpack_invalid_data_length_more_than_max() {
     bytes.extend(vec![0; data_len]);
 
     assert!(matches!(
-        IndexationPayload::unpack_from_slice(bytes).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(
+        IndexationPayload::unpack_from_slice(bytes),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidIndexationDataLength(n)
-        ))
+        )))
             if n == data_len
     ))
 }

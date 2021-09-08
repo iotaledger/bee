@@ -3,7 +3,10 @@
 
 use crate::rand::bool::rand_bool;
 
-/// Generates a random generic option.
-pub fn rand_option<T>(inner: T) -> Option<T> {
-    if rand_bool() { Some(inner) } else { None }
+/// Generates a random [`Option`] from a given generator.
+pub fn rand_option<T, F>(f: F) -> Option<T>
+where
+    F: FnOnce() -> T,
+{
+    if rand_bool() { Some(f()) } else { None }
 }

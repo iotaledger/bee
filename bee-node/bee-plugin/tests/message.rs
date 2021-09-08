@@ -19,10 +19,8 @@ const PARENT_3: &str = "c3186d4e99c8e10b9529e56a54e6d7052c74b84221394c825f452eba
 #[test]
 fn round_trip_conversion() {
     let message = MessageBuilder::new()
-        .add_parents_block(
+        .with_parents_blocks(vec![
             ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Weak,
                 vec![
@@ -31,7 +29,7 @@ fn round_trip_conversion() {
                 ],
             )
             .unwrap(),
-        )
+        ])
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
