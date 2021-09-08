@@ -78,7 +78,7 @@ impl StorageBackend for Storage {
             _ => panic!("Another system value was inserted on the version key."),
         }
 
-        if let Some(health) = storage.get_health()? {
+        if let Some(health) = storage.health()? {
             if health != StorageHealth::Healthy {
                 return Err(Self::Error::UnhealthyStorage(health));
             }
@@ -99,7 +99,11 @@ impl StorageBackend for Storage {
         Ok(Some(self.inner.size_on_disk()? as usize))
     }
 
-    fn get_health(&self) -> Result<Option<StorageHealth>, Self::Error> {
+    fn version(&self) -> Result<Option<StorageVersion>, Self::Error> {
+        Ok(Some(STORAGE_VERSION))
+    }
+
+    fn health(&self) -> Result<Option<StorageHealth>, Self::Error> {
         Ok(match Fetch::<u8, System>::fetch(self, &SYSTEM_HEALTH_KEY)? {
             Some(System::Health(health)) => Some(health),
             None => None,
