@@ -35,7 +35,7 @@ impl From<&bee_message::Message> for Message {
             issuer_public_key: message.issuer_public_key().to_vec(),
             issue_timestamp: message.issue_timestamp(),
             sequence_number: message.sequence_number(),
-            payload: message.payload().as_ref().map(Payload::from),
+            payload: message.payload().map(Payload::from),
             nonce: message.nonce(),
             signature: message.signature().to_vec(),
         }

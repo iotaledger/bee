@@ -3,7 +3,7 @@
 
 use crate::{
     parents::{ParentsBlock, ParentsKind},
-    payload::Payload,
+    payload::{OptionalPayload, Payload},
     MessageId, MessageUnpackError, ValidationError,
 };
 
@@ -23,7 +23,7 @@ use core::{
 /// Range (in bytes) of a valid message length.
 /// The maximum length is 64KB, and minimum length is calculated from message containing an empty data payload and two
 /// parents.
-pub const MESSAGE_LENGTH_RANGE: RangeInclusive<usize> = 193..=65536;
+pub const MESSAGE_LENGTH_RANGE: RangeInclusive<usize> = 156..=65536;
 
 /// Length (in bytes) of a public key.
 pub const MESSAGE_PUBLIC_KEY_LENGTH: usize = 32;
@@ -54,7 +54,7 @@ pub struct Message {
     /// The sequence number of the message, indicating the marker sequence it belongs to.
     pub(crate) sequence_number: u32,
     /// The optional [Payload] of the message.
-    pub(crate) payload: Option<Payload>,
+    pub(crate) payload: OptionalPayload,
     /// The result of the Proof of Work in order for the message to be accepted into the tangle.
     pub(crate) nonce: u64,
     /// Signature signing the above message fields.
@@ -94,8 +94,11 @@ impl Message {
     }
 
     /// Returns the optional payload of a [`Message`].
-    pub fn payload(&self) -> &Option<Payload> {
-        &self.payload
+    pub fn payload(&self) -> Option<&Payload> {
+        match &self.payload {
+            OptionalPayload::None => None,
+            OptionalPayload::Some(payload) => Some(payload),
+        }
     }
 
     /// Returns the nonce of a [`Message`].
@@ -185,7 +188,7 @@ impl Packable for Message {
         let issuer_public_key = <[u8; MESSAGE_PUBLIC_KEY_LENGTH]>::unpack(unpacker).infallible()?;
         let issue_timestamp = u64::unpack(unpacker).infallible()?;
         let sequence_number = u32::unpack(unpacker).infallible()?;
-        let payload = Option::<Payload>::unpack(unpacker).coerce()?;
+        let payload = OptionalPayload::unpack(unpacker).coerce()?;
         let nonce = u64::unpack(unpacker).infallible()?;
         let signature = <[u8; MESSAGE_SIGNATURE_LENGTH]>::unpack(unpacker).infallible()?;
 

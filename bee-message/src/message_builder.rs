@@ -97,7 +97,7 @@ impl MessageBuilder {
             issuer_public_key,
             issue_timestamp,
             sequence_number,
-            payload: self.payload,
+            payload: self.payload.into(),
             nonce,
             signature,
         };
