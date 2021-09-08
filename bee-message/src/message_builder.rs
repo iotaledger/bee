@@ -30,9 +30,9 @@ impl MessageBuilder {
         Default::default()
     }
 
-    /// Adds a [`ParentsBlock`] to a [`MessageBuilder`].
-    pub fn add_parents_block(mut self, parents_block: ParentsBlock) -> Self {
-        self.parents_blocks.push(parents_block);
+    /// Adds [`ParentsBlock`]s to a [`MessageBuilder`].
+    pub fn with_parents_blocks(mut self, parents_block: Vec<ParentsBlock>) -> Self {
+        self.parents_blocks = parents_block;
         self
     }
 
