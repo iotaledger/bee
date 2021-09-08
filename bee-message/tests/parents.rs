@@ -28,8 +28,10 @@ fn unpack_invalid_length_less_than_min() {
     let bytes = vec![0u8, 0b00000000];
 
     assert!(matches!(
-        ParentsBlock::unpack_from_slice(bytes).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidParentsCount(0))),
+        ParentsBlock::unpack_from_slice(bytes),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::InvalidParentsCount(0)
+        ))),
     ));
 }
 
@@ -47,8 +49,10 @@ fn unpack_invalid_length_more_than_max() {
     ];
 
     assert!(matches!(
-        ParentsBlock::unpack_from_slice(bytes).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidParentsCount(9))),
+        ParentsBlock::unpack_from_slice(bytes),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::InvalidParentsCount(9)
+        ))),
     ));
 }
 
@@ -60,8 +64,10 @@ fn unpack_invalid_not_sorted() {
     ];
 
     assert!(matches!(
-        ParentsBlock::unpack_from_slice(bytes).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::ParentsNotUniqueSorted)),
+        ParentsBlock::unpack_from_slice(bytes),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::ParentsNotUniqueSorted
+        ))),
     ));
 }
 
@@ -73,8 +79,10 @@ fn unpack_invalid_not_unique() {
     ];
 
     assert!(matches!(
-        ParentsBlock::unpack_from_slice(bytes).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::ParentsNotUniqueSorted)),
+        ParentsBlock::unpack_from_slice(bytes),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::ParentsNotUniqueSorted
+        ))),
     ));
 }
 
@@ -87,8 +95,10 @@ fn unpack_invalid_not_unique_not_sorted() {
     ];
 
     assert!(matches!(
-        ParentsBlock::unpack_from_slice(bytes).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::ParentsNotUniqueSorted)),
+        ParentsBlock::unpack_from_slice(bytes),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::ParentsNotUniqueSorted
+        ))),
     ));
 }
 

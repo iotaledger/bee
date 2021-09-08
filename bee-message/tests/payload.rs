@@ -226,11 +226,13 @@ fn unpack_invalid_version() {
     bytes.extend(rand_bytes_array::<64>());
 
     assert!(matches!(
-        Payload::unpack_from_slice(bytes).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidPayloadVersion {
-            version: 1,
-            payload_kind: 8,
-        }))
+        Payload::unpack_from_slice(bytes),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::InvalidPayloadVersion {
+                version: 1,
+                payload_kind: 8,
+            }
+        )))
     ));
 }
 
@@ -243,7 +245,9 @@ fn unpack_invalid_kind() {
     bytes.extend(rand_bytes_array::<64>());
 
     assert!(matches!(
-        Payload::unpack_from_slice(bytes).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Payload(PayloadUnpackError::InvalidKind(18))),
+        Payload::unpack_from_slice(bytes),
+        Err(UnpackError::Packable(MessageUnpackError::Payload(
+            PayloadUnpackError::InvalidKind(18)
+        ))),
     ));
 }
