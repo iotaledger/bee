@@ -7,21 +7,21 @@ use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{
     parse::{Parse, ParseStream},
-    Attribute, Ident, Path, Token, Type,
+    Attribute, Path, Token, Type,
 };
 
 pub(crate) struct TagType {
-    pub(crate) ty: Type,
+    pub(crate) ty: Option<Type>,
     pub(crate) with_err: TokenStream,
 }
 
 impl TagType {
-    pub(crate) fn new(attrs: &[Attribute], enum_name: &Ident) -> syn::Result<Self> {
+    pub(crate) fn new(attrs: &[Attribute]) -> syn::Result<Self> {
         super::parse_attribute::<Self>("tag_type", attrs).unwrap_or_else(|| {
-            Err(syn::Error::new(
-                enum_name.span(),
-                "Enums that derive `Packable` require a `#[packable(tag_type = ...)]` attribute.",
-            ))
+            Ok(Self {
+                ty: None,
+                with_err: quote!(bee_packable::error::UnknownTagError),
+            })
         })
     }
 }
@@ -35,10 +35,10 @@ impl Parse for TagType {
             parse_key("with_error", input)?;
             let with_err = input.parse::<Path>()?.to_token_stream();
 
-            Ok(Self { ty, with_err })
+            Ok(Self { ty: Some(ty), with_err })
         } else {
             Ok(Self {
-                ty,
+                ty: Some(ty),
                 with_err: quote!(bee_packable::error::UnknownTagError),
             })
         }

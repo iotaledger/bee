@@ -9,7 +9,7 @@ use bee_message::{
     payload::{
         data::DataPayload,
         drng::{ApplicationMessagePayload, BeaconPayload, CollectiveBeaconPayload, DkgPayload, EncryptedDeal},
-        fpc::{Conflict, FpcPayload, Timestamp},
+        fpc::{Conflict, FpcPayload, Opinion, Timestamp},
         indexation::IndexationPayload,
         salt_declaration::{Salt, SaltDeclarationPayload},
         transaction::{TransactionEssence, TransactionId, TransactionPayload},
@@ -104,14 +104,14 @@ fn fpc_payload_packable_round_trip() {
     let payload_1 = Payload::from(
         FpcPayload::builder()
             .with_conflicts(vec![
-                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
-                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
-                Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
+                Conflict::new(TransactionId::from(rand_bytes_array()), Opinion::Dislike, 0),
+                Conflict::new(TransactionId::from(rand_bytes_array()), Opinion::Dislike, 1),
+                Conflict::new(TransactionId::from(rand_bytes_array()), Opinion::Like, 2),
             ])
             .with_timestamps(vec![
-                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
-                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
-                Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
+                Timestamp::new(MessageId::from(rand_bytes_array()), Opinion::Dislike, 0),
+                Timestamp::new(MessageId::from(rand_bytes_array()), Opinion::Dislike, 1),
+                Timestamp::new(MessageId::from(rand_bytes_array()), Opinion::Like, 2),
             ])
             .finish()
             .unwrap(),

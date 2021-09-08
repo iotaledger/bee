@@ -4,7 +4,7 @@ error[E0593]: function is expected to take 1 argument, but it takes 0 arguments
 11 | #[packable(pack_error = Impossible, with = Impossible::new)]
    |                                            ^^^^^^^^^^^^^^^ expected function that takes 1 argument
 ...
-21 |     fn new() -> Self {
+22 |     fn new() -> Self {
    |     ---------------- takes 0 arguments
 
 error[E0593]: function is expected to take 1 argument, but it takes 0 arguments
@@ -13,5 +13,5 @@ error[E0593]: function is expected to take 1 argument, but it takes 0 arguments
 12 | #[packable(unpack_error = Impossible, with = Impossible::new)]
    |                                              ^^^^^^^^^^^^^^^ expected function that takes 1 argument
 ...
-21 |     fn new() -> Self {
+22 |     fn new() -> Self {
    |     ---------------- takes 0 arguments
