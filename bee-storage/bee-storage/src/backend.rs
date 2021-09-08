@@ -4,7 +4,7 @@
 //! This module forms the backend layer which holds the contracts of starting and shutting down the backend, as well as
 //! accessing backend properties.
 
-use crate::system::StorageHealth;
+use crate::system::{StorageHealth, StorageVersion};
 
 use serde::de::DeserializeOwned;
 
@@ -28,9 +28,13 @@ pub trait StorageBackend: Send + Sized + Sync + 'static {
     /// Not all backends may be able to provide this operation.
     fn size(&self) -> Result<Option<usize>, Self::Error>;
 
+    /// Returns the version of the database.
+    /// Not all backends may be able to provide this operation.
+    fn version(&self) -> Result<Option<StorageVersion>, Self::Error>;
+
     /// Returns the health status of the database.
     /// Not all backends may be able to provide this operation.
-    fn get_health(&self) -> Result<Option<StorageHealth>, Self::Error>;
+    fn health(&self) -> Result<Option<StorageHealth>, Self::Error>;
 
     /// Sets the health status of the database.
     /// Not all backends may be able to provide this operation.
