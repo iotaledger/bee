@@ -14,7 +14,7 @@ pub trait StorageBackend:
 }
 
 impl<T> StorageBackend for T where
-    T: backend::StorageBackend + Fetch<u8, System> + for<'a> MultiFetch<'a, u8, System> + Insert<u8, System> // + for<'a> AsIterator<'a, u8, System>
+    T: backend::StorageBackend + Fetch<u8, System> + for<'a> MultiFetch<'a, u8, System> + Insert<u8, System> /* + for<'a> AsIterator<'a, u8, System> */
 {
 }
 

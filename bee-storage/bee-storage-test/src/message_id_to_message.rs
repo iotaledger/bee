@@ -40,9 +40,11 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
     let (message_id, message) = (rand_message_id(), rand_message());
 
     assert!(!Exist::<MessageId, Message>::exist(storage, &message_id).unwrap());
-    assert!(Fetch::<MessageId, Message>::fetch(storage, &message_id)
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<MessageId, Message>::fetch(storage, &message_id)
+            .unwrap()
+            .is_none()
+    );
     let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
@@ -67,9 +69,11 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
     Delete::<MessageId, Message>::delete(storage, &message_id).unwrap();
 
     assert!(!Exist::<MessageId, Message>::exist(storage, &message_id).unwrap());
-    assert!(Fetch::<MessageId, Message>::fetch(storage, &message_id)
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<MessageId, Message>::fetch(storage, &message_id)
+            .unwrap()
+            .is_none()
+    );
     let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
