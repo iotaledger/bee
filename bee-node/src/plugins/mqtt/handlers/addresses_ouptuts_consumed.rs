@@ -25,7 +25,7 @@ where
                 message_id: event.message_id.to_string(),
                 transaction_id: event.output_id.transaction_id().to_string(),
                 output_index: event.output_id.index(),
-                is_spent: false,
+                is_spent: true,
                 output: (&event.output).into(),
                 ledger_index: 0, // TODO: set actual ledger-index
             })
