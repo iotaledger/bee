@@ -62,16 +62,15 @@ pub trait MessagePayload: Packable + Into<Payload> {
     /// Version of the payload.
     const VERSION: u8;
 
-    /// Packs a payload, its size, type and version.
+    /// Packs a payload, its type and version.
     fn pack_payload<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        (self.packed_len() as u32).pack(packer).infallible()?;
         Self::KIND.pack(packer).infallible()?;
         Self::VERSION.pack(packer).infallible()?;
         self.pack(packer)
     }
 
-    /// Unpacks a payload, its size, type and version.
-    fn unpack_payload<U: Unpacker, E>(unpacker: &mut U, len: u32) -> Result<Payload, UnpackError<E, U::Error>>
+    /// Unpacks a payload, its type and version.
+    fn unpack_payload<U: Unpacker, E>(unpacker: &mut U) -> Result<Payload, UnpackError<E, U::Error>>
     where
         E: From<MessageUnpackError> + From<ValidationError> + From<Self::UnpackError>,
     {
@@ -86,15 +85,6 @@ pub trait MessagePayload: Packable + Into<Payload> {
         }
 
         let payload = Self::unpack(unpacker).coerce()?;
-        let packed_len = payload.packed_len();
-
-        if len as usize != packed_len {
-            return Err(ValidationError::PayloadLengthMismatch {
-                expected: len as usize,
-                actual: packed_len,
-            })
-            .map_err(|e| UnpackError::Packable(e.into()))?;
-        }
 
         Ok(payload.into())
     }
@@ -151,7 +141,6 @@ impl Packable for Payload {
 
     fn packed_len(&self) -> usize {
         0u32.packed_len()
-            + 0u32.packed_len()
             + 0u8.packed_len()
             + match self {
                 Self::Data(p) => p.packed_len(),
@@ -181,18 +170,16 @@ impl Packable for Payload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let len = u32::unpack(unpacker).infallible()?;
-
         match u32::unpack(unpacker).infallible()? {
-            DataPayload::KIND => DataPayload::unpack_payload(unpacker, len),
-            TransactionPayload::KIND => TransactionPayload::unpack_payload(unpacker, len),
-            FpcPayload::KIND => FpcPayload::unpack_payload(unpacker, len),
-            ApplicationMessagePayload::KIND => ApplicationMessagePayload::unpack_payload(unpacker, len),
-            DkgPayload::KIND => DkgPayload::unpack_payload(unpacker, len),
-            BeaconPayload::KIND => BeaconPayload::unpack_payload(unpacker, len),
-            CollectiveBeaconPayload::KIND => CollectiveBeaconPayload::unpack_payload(unpacker, len),
-            SaltDeclarationPayload::KIND => SaltDeclarationPayload::unpack_payload(unpacker, len),
-            IndexationPayload::KIND => IndexationPayload::unpack_payload(unpacker, len),
+            DataPayload::KIND => DataPayload::unpack_payload(unpacker),
+            TransactionPayload::KIND => TransactionPayload::unpack_payload(unpacker),
+            FpcPayload::KIND => FpcPayload::unpack_payload(unpacker),
+            ApplicationMessagePayload::KIND => ApplicationMessagePayload::unpack_payload(unpacker),
+            DkgPayload::KIND => DkgPayload::unpack_payload(unpacker),
+            BeaconPayload::KIND => BeaconPayload::unpack_payload(unpacker),
+            CollectiveBeaconPayload::KIND => CollectiveBeaconPayload::unpack_payload(unpacker),
+            SaltDeclarationPayload::KIND => SaltDeclarationPayload::unpack_payload(unpacker),
+            IndexationPayload::KIND => IndexationPayload::unpack_payload(unpacker),
             k => Err(UnpackError::Packable(PayloadUnpackError::InvalidKind(k).into())),
         }
     }
@@ -249,5 +236,73 @@ impl From<SaltDeclarationPayload> for Payload {
 impl From<IndexationPayload> for Payload {
     fn from(payload: IndexationPayload) -> Self {
         Self::Indexation(Box::new(payload))
+    }
+}
+
+/// Representation of an optional [`Payload`].
+/// Essentially an `Option<Payload>` with a different [`Packable`] implementation, to conform to specs.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde1",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(tag = "type", content = "data")
+)]
+#[allow(missing_docs)]
+pub enum OptionalPayload {
+    None,
+    Some(Payload),
+}
+
+impl Packable for OptionalPayload {
+    type PackError = Infallible;
+    type UnpackError = MessageUnpackError;
+
+    fn packed_len(&self) -> usize {
+        match self {
+            Self::None => 0u32.packed_len(),
+            Self::Some(payload) => 0u32.packed_len() + payload.packed_len(),
+        }
+    }
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        match self {
+            Self::None => 0u32.pack(packer),
+            Self::Some(payload) => {
+                (payload.packed_len() as u32).pack(packer)?;
+                payload.pack(packer)
+            }
+        }
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let len = u32::unpack(unpacker).infallible()? as usize;
+
+        if len > 0 {
+            let payload = Payload::unpack(unpacker)?;
+            let actual_len = payload.packed_len();
+
+            if len != actual_len {
+                Err(UnpackError::Packable(
+                    ValidationError::PayloadLengthMismatch {
+                        expected: len,
+                        actual: actual_len,
+                    }
+                    .into(),
+                ))
+            } else {
+                Ok(Self::Some(payload))
+            }
+        } else {
+            Ok(Self::None)
+        }
+    }
+}
+
+impl From<Option<Payload>> for OptionalPayload {
+    fn from(option: Option<Payload>) -> Self {
+        match option {
+            None => Self::None,
+            Some(payload) => Self::Some(payload),
+        }
     }
 }
