@@ -13,7 +13,7 @@ use bee_message::parents::{ParentsBlock, ParentsKind, PREFIXED_PARENTS_LENGTH_MA
 pub fn rand_parents_block(block_type: ParentsKind) -> ParentsBlock {
     let mut parent_ids = rand_vec(
         rand_message_id,
-        rand_number_range(PREFIXED_PARENTS_LENGTH_MIN as usize..=PREFIXED_PARENTS_LENGTH_MAX as usize),
+        rand_number_range(PREFIXED_PARENTS_LENGTH_MIN..=PREFIXED_PARENTS_LENGTH_MAX) as usize,
     );
 
     parent_ids.sort();

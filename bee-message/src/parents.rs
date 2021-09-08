@@ -80,8 +80,8 @@ impl ParentsBlock {
         Ok(Self { kind, references })
     }
 
-    #[allow(clippy::len_without_is_empty)]
     /// Returns the number of [`MessageId`]s in the [`ParentsBlock`] ID collection.
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.references.len()
     }
