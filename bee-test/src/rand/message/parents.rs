@@ -23,14 +23,12 @@ pub fn rand_parents_block(block_type: ParentsKind) -> ParentsBlock {
 
 /// Generates a random [`Vec`] of [`ParentsBlock`]s.
 pub fn rand_parents_blocks() -> Vec<ParentsBlock> {
-    let mut parents = Vec::new();
-    let parents_kinds = [ParentsKind::Weak, ParentsKind::Disliked, ParentsKind::Liked];
-
-    parents.push(rand_parents_block(ParentsKind::Strong));
-
-    for i in 0..rand_number::<usize>() % 3 {
-        parents.push(rand_parents_block(parents_kinds[i]))
-    }
-
-    parents
+    std::iter::once(rand_parents_block(ParentsKind::Strong))
+        .chain(
+            [ParentsKind::Weak, ParentsKind::Disliked, ParentsKind::Liked]
+                .iter()
+                .take(rand_number::<usize>() % 3 + 1)
+                .map(|pk| rand_parents_block(*pk)),
+        )
+        .collect()
 }
