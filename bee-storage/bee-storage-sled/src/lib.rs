@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Bee storage backend using [sled](https://sled.rs).
+//! A bee-storage implementation for the [sled](https://docs.rs/sled/latest/sled/) backend.
 
 #![deny(missing_docs)]
 #![deny(warnings)]

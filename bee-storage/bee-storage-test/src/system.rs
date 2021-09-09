@@ -4,7 +4,7 @@
 use bee_storage::{
     access::{AsIterator, Fetch, Insert, MultiFetch},
     backend,
-    system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
+    system::{StorageHealth, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
 
 use std::collections::HashMap;
@@ -27,6 +27,7 @@ impl<T> StorageBackend for T where
 {
 }
 
+/// Generic access tests for the system table.
 pub fn system_access<B: StorageBackend>(storage: &B) {
     let version = Fetch::<u8, System>::fetch(storage, &SYSTEM_VERSION_KEY)
         .unwrap()
@@ -62,18 +63,6 @@ pub fn system_access<B: StorageBackend>(storage: &B) {
     }
 
     assert_eq!(count, systems.len());
-
-    Insert::<u8, System>::insert(storage, &SYSTEM_VERSION_KEY, &System::Version(StorageVersion(42))).unwrap();
-    // assert_eq!(
-    //     System::Version(storage.version().unwrap().unwrap()),
-    //     System::Version(StorageVersion(42))
-    // );
-    assert_eq!(
-        Fetch::<u8, System>::fetch(storage, &SYSTEM_VERSION_KEY)
-            .unwrap()
-            .unwrap(),
-        System::Version(StorageVersion(42))
-    );
 
     Insert::<u8, System>::insert(storage, &SYSTEM_HEALTH_KEY, &System::Health(StorageHealth::Corrupted)).unwrap();
     assert_eq!(

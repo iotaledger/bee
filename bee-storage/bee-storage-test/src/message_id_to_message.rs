@@ -36,6 +36,7 @@ impl<T> StorageBackend for T where
 {
 }
 
+/// Generic access tests for the message_id_to_message table.
 pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
     let (message_id, message) = (rand_message_id(), rand_message());
 

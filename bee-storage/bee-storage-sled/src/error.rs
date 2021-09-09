@@ -13,8 +13,7 @@ pub enum Error {
     /// A sled operation failed.
     #[error("Sled internal error: {0}")]
     Sled(#[from] sled::Error),
-    /// There is a storage version mismatch between the storage folder and this version of the
-    /// storage.
+    /// There is a storage version mismatch between the storage folder and this version of the storage.
     #[error("Storage version mismatch, {0:?} != {1:?}, remove storage folder and restart")]
     VersionMismatch(StorageVersion, StorageVersion),
     /// The storage was not closed properly.
