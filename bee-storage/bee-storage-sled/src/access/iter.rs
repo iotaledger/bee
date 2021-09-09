@@ -3,11 +3,11 @@
 
 //! Iterator access operations.
 
-use crate::{storage::Storage, trees::*};
+use crate::{trees::*, Storage};
 
 use bee_message::{Message, MessageId};
 use bee_packable::packable::Packable;
-use bee_storage::{access::AsIterator, backend::StorageBackend, system::System};
+use bee_storage::{access::AsIterator, system::System, StorageBackend};
 
 use std::marker::PhantomData;
 
@@ -23,6 +23,27 @@ impl<'a, K, V> StorageIterator<'a, K, V> {
             inner,
             marker: PhantomData,
         }
+    }
+}
+
+impl<'a> AsIterator<'a, u8, System> for Storage {
+    type AsIter = StorageIterator<'a, u8, System>;
+
+    fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
+        Ok(StorageIterator::new(self.inner.iter()))
+    }
+}
+
+/// A stream to iterate over all key-value pairs of a column family.
+impl<'a> Iterator for StorageIterator<'a, u8, System> {
+    type Item = Result<(u8, System), <Storage as StorageBackend>::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|result| {
+            result
+                .map(|(key, value)| Self::unpack_key_value(&key, &value))
+                .map_err(From::from)
+        })
     }
 }
 
@@ -51,8 +72,6 @@ macro_rules! impl_stream {
     };
 }
 
-// TODO impl system
-#[allow(dead_code)]
 impl<'a> StorageIterator<'a, u8, System> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (u8, System) {
         (

@@ -3,14 +3,11 @@
 
 //! Iterator access operations.
 
-use crate::{
-    column_families::*,
-    storage::{Storage, StorageBackend},
-};
+use crate::{column_families::*, Storage};
 
 use bee_message::{Message, MessageId};
 use bee_packable::Packable;
-use bee_storage::{access::AsIterator, system::System};
+use bee_storage::{access::AsIterator, system::System, StorageBackend};
 
 use rocksdb::{DBIterator, IteratorMode};
 

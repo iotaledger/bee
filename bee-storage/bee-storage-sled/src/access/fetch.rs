@@ -3,11 +3,11 @@
 
 //! Fetch access operations.
 
-use crate::{storage::Storage, trees::*};
+use crate::{trees::*, Storage};
 
 use bee_message::{Message, MessageId};
 use bee_packable::Packable;
-use bee_storage::{access::Fetch, backend::StorageBackend, system::System};
+use bee_storage::{access::Fetch, system::System, StorageBackend};
 
 impl Fetch<u8, System> for Storage {
     fn fetch(&self, &key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {

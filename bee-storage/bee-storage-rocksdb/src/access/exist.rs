@@ -3,13 +3,10 @@
 
 //! Exist access operations.
 
-use crate::{
-    column_families::*,
-    storage::{Storage, StorageBackend},
-};
+use crate::{column_families::*, Storage};
 
 use bee_message::{Message, MessageId};
-use bee_storage::access::Exist;
+use bee_storage::{access::Exist, StorageBackend};
 
 impl Exist<MessageId, Message> for Storage {
     fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {

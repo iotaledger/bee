@@ -3,14 +3,14 @@
 
 //! Batch access operations.
 
-use crate::{
-    column_families::*,
-    storage::{Storage, StorageBackend},
-};
+use crate::{column_families::*, Storage};
 
 use bee_message::{Message, MessageId};
 use bee_packable::Packable;
-use bee_storage::access::{Batch, BatchBuilder};
+use bee_storage::{
+    access::{Batch, BatchBuilder},
+    StorageBackend,
+};
 
 use rocksdb::{WriteBatch, WriteOptions};
 

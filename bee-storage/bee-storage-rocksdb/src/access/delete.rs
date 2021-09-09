@@ -3,13 +3,10 @@
 
 //! Delete access operations.
 
-use crate::{
-    column_families::*,
-    storage::{Storage, StorageBackend},
-};
+use crate::{column_families::*, Storage};
 
 use bee_message::{Message, MessageId};
-use bee_storage::access::Delete;
+use bee_storage::{access::Delete, StorageBackend};
 
 impl Delete<MessageId, Message> for Storage {
     fn delete(&self, message_id: &MessageId) -> Result<(), <Self as StorageBackend>::Error> {

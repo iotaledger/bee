@@ -3,11 +3,11 @@
 
 //! Insert access operations.
 
-use crate::{storage::Storage, trees::*};
+use crate::{trees::*, Storage};
 
 use bee_message::{Message, MessageId};
 use bee_packable::packable::Packable;
-use bee_storage::{access::Insert, backend::StorageBackend, system::System};
+use bee_storage::{access::Insert, system::System, StorageBackend};
 
 impl Insert<u8, System> for Storage {
     fn insert(&self, key: &u8, value: &System) -> Result<(), <Self as StorageBackend>::Error> {

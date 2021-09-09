@@ -3,13 +3,13 @@
 
 //! Batch access operations.
 
-use crate::{storage::Storage, trees::*};
+use crate::{trees::*, Storage};
 
 use bee_message::{Message, MessageId};
 use bee_packable::packable::Packable;
 use bee_storage::{
     access::{Batch, BatchBuilder},
-    backend::StorageBackend,
+    StorageBackend,
 };
 
 use std::collections::HashMap;

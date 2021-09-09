@@ -3,13 +3,10 @@
 
 //! Truncate access operations.
 
-use crate::{
-    column_families::*,
-    storage::{Storage, StorageBackend},
-};
+use crate::{column_families::*, Storage};
 
 use bee_message::{Message, MessageId};
-use bee_storage::access::Truncate;
+use bee_storage::{access::Truncate, StorageBackend};
 
 fn truncate(storage: &Storage, cf_str: &'static str) -> Result<(), <Storage as StorageBackend>::Error> {
     let cf_handle = storage.cf_handle(cf_str)?;
