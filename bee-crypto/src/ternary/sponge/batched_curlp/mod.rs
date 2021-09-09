@@ -8,7 +8,7 @@ mod bct_curlp;
 
 use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge, HASH_LENGTH};
 
-use bct::{BcTrit, BcTritBuf};
+use bct::{BcTrit, BcTritArr, BcTritBuf};
 use bct_curlp::BctCurlP;
 
 use bee_ternary::{
@@ -31,7 +31,7 @@ pub struct BatchHasher<B: RawEncodingBuf> {
     /// An interleaved representation of the input trits.
     bct_inputs: BcTritBuf,
     /// An interleaved representation of the output trits.
-    bct_hashes: BcTritBuf,
+    bct_hashes: BcTritArr<HASH_LENGTH>,
     /// A buffer for demultiplexing.
     buf_demux: TritBuf,
     /// The CurlP hasher for binary coded trits.
@@ -53,7 +53,7 @@ where
         Self {
             trit_inputs: Vec::with_capacity(BATCH_SIZE),
             bct_inputs: BcTritBuf::zeros(input_length),
-            bct_hashes: BcTritBuf::zeros(HASH_LENGTH),
+            bct_hashes: BcTritArr::<HASH_LENGTH>::zeros(),
             buf_demux: TritBuf::zeros(HASH_LENGTH),
             bct_curlp: BctCurlP::new(rounds),
             curlp: CurlP::new(rounds),

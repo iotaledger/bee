@@ -4,7 +4,7 @@
 use crate::ternary::{
     sponge::{
         batched_curlp::{
-            bct::{BcTrit, BcTritBuf},
+            bct::{BcTrit, BcTritArr, BcTrits},
             HIGH_BITS,
         },
         CurlPRounds,
@@ -14,8 +14,8 @@ use crate::ternary::{
 
 pub(crate) struct BctCurlP {
     rounds: CurlPRounds,
-    state: BcTritBuf,
-    scratch_pad: BcTritBuf,
+    state: BcTritArr<{ 3 * HASH_LENGTH }>,
+    scratch_pad: BcTritArr<{ 3 * HASH_LENGTH }>,
 }
 
 impl BctCurlP {
@@ -25,8 +25,8 @@ impl BctCurlP {
         assert!(3 * HASH_LENGTH > 728);
         Self {
             rounds,
-            state: BcTritBuf::filled(HIGH_BITS, 3 * HASH_LENGTH),
-            scratch_pad: BcTritBuf::filled(HIGH_BITS, 3 * HASH_LENGTH),
+            state: BcTritArr::filled(HIGH_BITS),
+            scratch_pad: BcTritArr::filled(HIGH_BITS),
         }
     }
 
@@ -83,7 +83,7 @@ impl BctCurlP {
         }
     }
 
-    pub(crate) fn absorb(&mut self, bc_trits: &BcTritBuf) {
+    pub(crate) fn absorb(&mut self, bc_trits: &BcTrits) {
         let mut length = bc_trits.len();
         let mut offset = 0;
 
@@ -106,7 +106,7 @@ impl BctCurlP {
 
     // This method shouldn't assume that `result` has any particular content, just that it has an
     // adequate size.
-    pub(crate) fn squeeze_into(&mut self, result: &mut BcTritBuf) {
+    pub(crate) fn squeeze_into(&mut self, result: &mut BcTrits) {
         let trit_count = result.len();
 
         let hash_count = trit_count / HASH_LENGTH;

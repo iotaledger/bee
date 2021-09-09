@@ -31,12 +31,6 @@ impl BcTritBuf {
             inner: vec![BcTrit::zero(); len],
         }
     }
-
-    pub(crate) fn filled(value: usize, len: usize) -> Self {
-        Self {
-            inner: vec![BcTrit(value, value); len],
-        }
-    }
 }
 
 impl Deref for BcTritBuf {
@@ -50,6 +44,39 @@ impl Deref for BcTritBuf {
 impl DerefMut for BcTritBuf {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { &mut *(self.inner.deref_mut() as *mut [BcTrit] as *mut BcTrits) }
+    }
+}
+
+#[derive(Clone)]
+pub(crate) struct BcTritArr<const N: usize> {
+    inner: [BcTrit; N],
+}
+
+impl<const N: usize> BcTritArr<N> {
+    pub(crate) fn zeros() -> Self {
+        Self {
+            inner: [BcTrit::zero(); N],
+        }
+    }
+
+    pub(crate) fn filled(value: usize) -> Self {
+        Self {
+            inner: [BcTrit(value, value); N],
+        }
+    }
+}
+
+impl<const N: usize> Deref for BcTritArr<N> {
+    type Target = BcTrits;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(self.inner.as_ref() as *const [BcTrit] as *const BcTrits) }
+    }
+}
+
+impl<const N: usize> DerefMut for BcTritArr<N> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { &mut *(self.inner.as_mut() as *mut [BcTrit] as *mut BcTrits) }
     }
 }
 
