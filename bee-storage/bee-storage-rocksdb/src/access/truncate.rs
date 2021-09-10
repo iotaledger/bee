@@ -10,7 +10,6 @@ use bee_storage::{access::Truncate, StorageBackend};
 
 fn truncate(storage: &Storage, cf_str: &'static str) -> Result<(), <Storage as StorageBackend>::Error> {
     let cf_handle = storage.cf_handle(cf_str)?;
-
     let mut iter = storage.inner.raw_iterator_cf(cf_handle);
 
     // Seek to the first key.
@@ -23,17 +22,12 @@ fn truncate(storage: &Storage, cf_str: &'static str) -> Result<(), <Storage as S
         return Ok(());
     };
 
+    // Seek to the last key.
     iter.seek_to_last();
-    // Grab the last key if it exists.
-    let last = if let Some(last) = iter.key() {
-        let mut last = last.to_vec();
-        // `delete_range_cf` excludes the last key in the range so a byte is added to be sure the last key is included.
-        last.push(u8::MAX);
-        last
-    } else {
-        // There are no keys to remove.
-        return Ok(());
-    };
+    // Safe, if there is a first key, there is a last key.
+    let mut last = iter.key().unwrap().to_vec();
+    // `delete_range_cf` excludes the last key in the range so a byte is added to be sure the last key is included.
+    last.push(u8::MAX);
 
     storage.inner.delete_range_cf(cf_handle, first, last)?;
 
