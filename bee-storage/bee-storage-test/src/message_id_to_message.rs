@@ -128,4 +128,7 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
     let mut iter = AsIterator::<MessageId, Message>::iter(storage).unwrap();
 
     assert!(iter.next().is_none());
+
+    // Test to truncate an already empty table.
+    Truncate::<MessageId, Message>::truncate(storage).unwrap();
 }
