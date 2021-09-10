@@ -24,7 +24,7 @@ fn truncate(storage: &Storage, cf_str: &'static str) -> Result<(), <Storage as S
 
     // Seek to the last key.
     iter.seek_to_last();
-    // Safe, if there is a first key, there is a last key.
+    // Safety: if there is a first key, there is a last key.
     let mut last = iter.key().unwrap().to_vec();
     // `delete_range_cf` excludes the last key in the range so a byte is added to be sure the last key is included.
     last.push(u8::MAX);
