@@ -33,6 +33,7 @@ pub fn exec(_tool: &PasswordTool) -> Result<(), PasswordError> {
         if password != read_password_from_tty(Some("Re-enter password: "))? {
             return Err(PasswordError::NonMatching);
         }
+
         password
     };
 
