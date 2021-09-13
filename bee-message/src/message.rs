@@ -22,7 +22,7 @@ use core::{
 /// Range (in bytes) of a valid message length.
 /// The maximum length is 64KB, and minimum length is calculated from message containing an empty data payload and two
 /// parents.
-pub const MESSAGE_LENGTH_RANGE: RangeInclusive<usize> = 156..=65536;
+pub const MESSAGE_LENGTH_RANGE: RangeInclusive<usize> = 123..=65536;
 
 /// Length (in bytes) of a public key.
 pub const MESSAGE_PUBLIC_KEY_LENGTH: usize = 32;

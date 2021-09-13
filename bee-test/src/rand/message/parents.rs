@@ -7,15 +7,17 @@ use crate::rand::{
     vec::rand_vec,
 };
 
-use bee_message::parents::{Parent, Parents, PREFIXED_PARENTS_LENGTH_MAX};
+use bee_message::parents::{Parent, Parents, MESSAGE_PARENTS_RANGE};
 
 /// Generates random parents.
 pub fn rand_parents() -> Parents {
     let mut parents_vec = vec![Parent::Strong(rand_message_id())];
     parents_vec.extend(rand_vec(
         rand_parent,
-        rand_number_range(0..=PREFIXED_PARENTS_LENGTH_MAX as usize - 1),
+        rand_number_range(MESSAGE_PARENTS_RANGE.start() - 1..=MESSAGE_PARENTS_RANGE.end() - 1),
     ));
+
+    parents_vec.sort();
 
     Parents::new(parents_vec).unwrap()
 }
