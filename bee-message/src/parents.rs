@@ -7,21 +7,47 @@ use crate::{MessageId, MessageUnpackError, ValidationError};
 
 use bee_ord::is_unique_sorted;
 use bee_packable::{
-    error::UnpackPrefixError, BoundedU8, InvalidBoundedU8, Packable, VecPrefix,
+    coerce::{PackCoerceInfallible, UnpackCoerceInfallible},
+    BoundedU8, InvalidBoundedU8, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
 
-use alloc::vec::Vec;
-use core::{convert::{Infallible, TryInto}, ops::Deref};
+use bitvec::prelude::*;
 
-/// Minimum number of parents for a valid [`ParentsBlock`].
+use alloc::{vec, vec::Vec};
+use core::{
+    convert::{Infallible, TryInto},
+    ops::Deref,
+};
+
+/// Minimum number of parents for a valid message.
 pub const PREFIXED_PARENTS_LENGTH_MIN: u8 = 1;
-/// Maximum number of parents for a valid [`ParentsBlock`].
+/// Maximum number of parents for a valid message.
 pub const PREFIXED_PARENTS_LENGTH_MAX: u8 = 8;
 
-fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> ValidationError {
-    match error {
-        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidParentsCount(len),
-        UnpackPrefixError::Packable(e) => match e {},
+/// Minimum number of strong parents for a valid message.
+pub const MESSAGE_MIN_STRONG_PARENTS: usize = 1;
+
+/// An individual message parent, which can be categorized as "strong" or "weak".
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde1",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(tag = "type", content = "data")
+)]
+#[repr(u8)]
+#[allow(missing_docs)]
+pub enum Parent {
+    Strong(MessageId),
+    Weak(MessageId),
+}
+
+impl Parent {
+    /// Returns the [`MessageId`] of this [`Parent`].
+    pub fn id(&self) -> &MessageId {
+        match self {
+            Self::Strong(id) => id,
+            Self::Weak(id) => id,
+        }
     }
 }
 
@@ -31,39 +57,42 @@ fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> Va
 /// * in the `MESSAGE_PARENTS_RANGE` range;
 /// * lexicographically sorted;
 /// * unique;
-#[derive(Clone, Debug, Eq, PartialEq, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = MessageUnpackError)]
 pub struct Parents {
-    #[packable(unpack_error_with = unpack_prefix_to_validation_error)]
-    inner: VecPrefix<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>
+    inner: VecPrefix<Parent, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>,
 }
 
 impl Deref for Parents {
-    type Target = [MessageId];
+    type Target = [Parent];
 
     fn deref(&self) -> &Self::Target {
-        &self.inner
+        self.inner.as_slice()
     }
 }
 
-#[allow(clippy::clippy::len_without_is_empty)]
+#[allow(clippy::len_without_is_empty)]
 impl Parents {
     /// Creates a new [`Parents`] collection.
-    pub fn new(inner: Vec<MessageId>) -> Result<Self, ValidationError> {
-        if !is_unique_sorted(inner.iter().map(AsRef::as_ref)) {
+    pub fn new(inner: Vec<Parent>) -> Result<Self, ValidationError> {
+        if !is_unique_sorted(inner.iter().map(|parent| parent.id().as_ref())) {
             return Err(ValidationError::ParentsNotUniqueSorted);
         }
 
-        let prefixed = inner
-            .try_into()
-            .map_err(|err: InvalidBoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>| {
-                ValidationError::InvalidParentsCount(err.0 as usize)
-            })?;
+        let strong_count = inner.iter().fold(0usize, |acc, parent| match parent {
+            Parent::Strong(_) => acc + 1,
+            _ => acc,
+        });
 
-        Ok(Self { 
-            inner: prefixed, 
-        })
+        validate_strong_parents_count(strong_count)?;
+
+        let prefixed = inner.try_into().map_err(
+            |err: InvalidBoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>| {
+                ValidationError::InvalidParentsCount(err.0 as usize)
+            },
+        )?;
+
+        Ok(Self { inner: prefixed })
     }
 
     /// Returns the number of parents.
@@ -71,130 +100,78 @@ impl Parents {
         self.inner.len()
     }
 
-    /// Returns an iterator over the parent [`MessageId`]s.
-    pub fn iter(&self) -> impl ExactSizeIterator<Item = &MessageId> {
+    /// Returns an iterator over the parents.
+    pub fn iter(&self) -> impl ExactSizeIterator<Item = &Parent> {
         self.inner.iter()
     }
 }
 
-// /// An individual message parent, which can be categorized as "strong" or "weak".
-// #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-// #[cfg_attr(
-//     feature = "serde1",
-//     derive(serde::Serialize, serde::Deserialize),
-//     serde(tag = "type", content = "data")
-// )]
-// #[repr(u8)]
-// pub enum ParentsKind {
-//     /// Message parents in which the past cone is "Liked".
-//     Strong = 0,
-//     /// Message parents in which the past cone is "Disliked", but the parents themselves are "Liked".
-//     Weak = 1,
-//     /// Message parents that are "Liked".
-//     Disliked = 2,
-//     /// Message parents that are "Disliked".
-//     Liked = 3,
-// }
+impl Packable for Parents {
+    type PackError = Infallible;
+    type UnpackError = MessageUnpackError;
 
-// impl TryFrom<u8> for ParentsKind {
-//     type Error = ValidationError;
+    fn packed_len(&self) -> usize {
+        0u8.packed_len() + self.inner.len() * MessageId::LENGTH
+    }
 
-//     fn try_from(value: u8) -> Result<Self, Self::Error> {
-//         match value {
-//             0 => Ok(Self::Strong),
-//             1 => Ok(Self::Weak),
-//             2 => Ok(Self::Disliked),
-//             3 => Ok(Self::Liked),
-//             _ => Err(ValidationError::InvalidParentsKind(value)),
-//         }
-//     }
-// }
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        (self.len() as u8).pack(packer).infallible()?;
 
-// /// A block of message parent IDs, all of the same [`ParentsKind`].
-// ///
-// /// [`ParentsBlock`]s must:
-// /// * Be of a valid [`ParentsKind`].
-// /// * Contain a valid count of parents (1..=8).
-// /// * IDs must be unique and lexicographically sorted in their serialized forms.
-// #[derive(Clone, Debug, PartialEq, Eq)]
-// #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-// pub struct ParentsBlock {
-//     kind: ParentsKind,
-//     references: VecPrefix<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>,
-// }
+        let mut bits = bitarr![Lsb0, u8; 0; 8];
 
-// impl ParentsBlock {
-//     /// Creates a new [`ParentsBlock`], and validates the ID collection.
-//     pub fn new(kind: ParentsKind, references: Vec<MessageId>) -> Result<Self, ValidationError> {
-//         let references: VecPrefix<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>> =
-//             references.try_into().map_err(
-//                 |err: InvalidBoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>| {
-//                     ValidationError::InvalidParentsCount(err.0 as usize)
-//                 },
-//             )?;
+        for (i, parent) in self.iter().enumerate() {
+            let is_strong = matches!(parent, Parent::Strong(_));
+            bits.set(i, is_strong);
+        }
 
-//         validate_parents_unique_sorted(&references)?;
+        let bits_repr = bits.load::<u8>();
+        bits_repr.pack(packer).infallible()?;
 
-//         Ok(Self { kind, references })
-//     }
+        for id in self.iter().map(Parent::id) {
+            id.pack(packer).infallible()?;
+        }
 
-//     /// Returns the number of [`MessageId`]s in the [`ParentsBlock`] ID collection.
-//     #[allow(clippy::len_without_is_empty)]
-//     pub fn len(&self) -> usize {
-//         self.references.len()
-//     }
+        Ok(())
+    }
 
-//     /// Returns the block type.
-//     pub fn parents_kind(&self) -> ParentsKind {
-//         self.kind
-//     }
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let count = u8::unpack(unpacker).infallible()?;
+        let bits_repr = u8::unpack(unpacker).infallible()?;
 
-//     /// Returns an iterator over the [`ParentsBlock`] ID collection.
-//     pub fn iter(&self) -> impl Iterator<Item = &MessageId> {
-//         self.references.iter()
-//     }
-// }
+        let mut bits = bitarr![Lsb0, u8; 0; 8];
+        bits.store(bits_repr);
 
-// impl Packable for ParentsBlock {
-//     type PackError = Infallible;
-//     type UnpackError = MessageUnpackError;
+        validate_strong_parents_count(bits.count_ones()).map_err(|e| UnpackError::Packable(e.into()))?;
 
-//     fn packed_len(&self) -> usize {
-//         0u8.packed_len() + 0u8.packed_len() + self.references.len() * MessageId::LENGTH
-//     }
+        let mut parents = vec![];
+        parents.reserve(count as usize);
 
-//     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-//         (self.kind as u8).pack(packer).infallible()?;
-//         self.references.pack(packer).infallible()
-//     }
+        for i in 0..count {
+            let id = MessageId::unpack(unpacker).infallible()?;
 
-//     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-//         let kind = u8::unpack(unpacker)
-//             .infallible()?
-//             .try_into()
-//             .map_err(|e: ValidationError| UnpackError::Packable(e.into()))?;
+            if *bits.get(i as usize).unwrap() {
+                parents.push(Parent::Strong(id))
+            } else {
+                parents.push(Parent::Weak(id))
+            }
+        }
 
-//         let references =
-//             VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::unpack(
-//                 unpacker,
-//             )
-//             .map_err(|unpack_err| {
-//                 unpack_err.map(|err| match err {
-//                     UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidParentsCount(len).into(),
-//                     UnpackPrefixError::Packable(e) => match e {},
-//                 })
-//             })?;
+        let prefixed = parents.try_into().map_err(
+            |err: InvalidBoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>| {
+                UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidParentsCount(
+                    err.0 as usize,
+                )))
+            },
+        )?;
 
-//         validate_parents_unique_sorted(&references).map_err(|e| UnpackError::Packable(e.into()))?;
+        Ok(Self { inner: prefixed })
+    }
+}
 
-//         Ok(Self { kind, references })
-//     }
-// }
-
-// fn validate_parents_unique_sorted(parents: &[MessageId]) -> Result<(), ValidationError> {
-//     if !is_unique_sorted(parents.iter()) {
-//         Err(ValidationError::ParentsNotUniqueSorted)
-//     } else {
-//         Ok(())
-//     }
-// }
+fn validate_strong_parents_count(count: usize) -> Result<(), ValidationError> {
+    if count < MESSAGE_MIN_STRONG_PARENTS {
+        Err(ValidationError::InvalidStrongParentsCount(count))
+    } else {
+        Ok(())
+    }
+}

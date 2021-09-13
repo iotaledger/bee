@@ -1,7 +1,12 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{ValidationError, message::{self, Message, MESSAGE_PUBLIC_KEY_LENGTH, MESSAGE_SIGNATURE_LENGTH}, parents::Parents, payload::Payload};
+use crate::{
+    message::{self, Message, MESSAGE_PUBLIC_KEY_LENGTH, MESSAGE_SIGNATURE_LENGTH},
+    parents::Parents,
+    payload::Payload,
+    ValidationError,
+};
 
 use bee_packable::Packable;
 
@@ -67,9 +72,7 @@ impl MessageBuilder {
 
     /// Finishes the [`MessageBuilder`], consuming it to build a [`Message`].
     pub fn finish(self) -> Result<Message, ValidationError> {
-        let parents = self
-            .parents
-            .ok_or(ValidationError::MissingBuilderField("parents"))?;
+        let parents = self.parents.ok_or(ValidationError::MissingBuilderField("parents"))?;
         let issuer_public_key = self
             .issuer_public_key
             .ok_or(ValidationError::MissingBuilderField("issuer_public_key"))?;

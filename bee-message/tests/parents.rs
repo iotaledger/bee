@@ -3,12 +3,10 @@
 
 use bee_message::{
     error::{MessageUnpackError, ValidationError},
-    parents::{ParentsBlock, ParentsKind},
+    parents::Parents,
     MessageId,
 };
 use bee_packable::{Packable, UnpackError};
-
-// TODO: Add MessageId functions to bee-test
 
 #[test]
 fn unpack_valid() {

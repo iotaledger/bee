@@ -45,12 +45,19 @@ message Message {
     bytes signature = 7;
 }
 
-message Parents {
-    repeated MessageId references = 1;
-}
-
 message MessageId {
     bytes inner = 1;
+}
+
+message Parent {
+    oneof kind {
+        MessageId strong = 1;
+        MessageId weak = 2;
+    }
+}
+
+message Parents {
+    repeated Parent parents = 1;
 }
 
 message Payload {

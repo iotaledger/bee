@@ -3,41 +3,28 @@
 
 use crate::rand::{
     message::rand_message_id,
-    number::rand_number_range,
+    number::{rand_number, rand_number_range},
     vec::rand_vec,
 };
 
-use bee_message::parents::{Parents, PREFIXED_PARENTS_LENGTH_MAX, PREFIXED_PARENTS_LENGTH_MIN};
+use bee_message::parents::{Parent, Parents, PREFIXED_PARENTS_LENGTH_MAX};
 
 /// Generates random parents.
 pub fn rand_parents() -> Parents {
-    Parents::new(rand_vec(
-        rand_message_id, 
-        rand_number_range(PREFIXED_PARENTS_LENGTH_MIN as usize..=PREFIXED_PARENTS_LENGTH_MAX as usize),
-    ))
-    .unwrap()
+    let mut parents_vec = vec![Parent::Strong(rand_message_id())];
+    parents_vec.extend(rand_vec(
+        rand_parent,
+        rand_number_range(0..=PREFIXED_PARENTS_LENGTH_MAX as usize - 1),
+    ));
+
+    Parents::new(parents_vec).unwrap()
 }
 
-// /// Generates a random [`ParentsBlock`] of a given [`ParentsKind`].
-// pub fn rand_parents_block(block_type: ParentsKind) -> ParentsBlock {
-//     let mut parent_ids = rand_vec(
-//         rand_message_id,
-//         rand_number_range(PREFIXED_PARENTS_LENGTH_MIN..=PREFIXED_PARENTS_LENGTH_MAX) as usize,
-//     );
-
-//     parent_ids.sort();
-
-//     ParentsBlock::new(block_type, parent_ids).unwrap()
-// }
-
-// /// Generates a random [`Vec`] of [`ParentsBlock`]s.
-// pub fn rand_parents_blocks() -> Vec<ParentsBlock> {
-//     std::iter::once(rand_parents_block(ParentsKind::Strong))
-//         .chain(
-//             [ParentsKind::Weak, ParentsKind::Disliked, ParentsKind::Liked]
-//                 .iter()
-//                 .take(rand_number::<usize>() % 3 + 1)
-//                 .map(|pk| rand_parents_block(*pk)),
-//         )
-//         .collect()
-// }
+/// Generates a random parent.
+pub fn rand_parent() -> Parent {
+    match rand_number::<u8>() % 2 {
+        0 => Parent::Strong(rand_message_id()),
+        1 => Parent::Weak(rand_message_id()),
+        _ => unreachable!(),
+    }
+}
