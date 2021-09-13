@@ -25,16 +25,16 @@ pub enum PasswordError {
 pub struct PasswordTool {}
 
 pub fn exec(_tool: &PasswordTool) -> Result<(), PasswordError> {
-    let password;
-    if let Ok(env_password) = env::var("BEE_TOOL_PASSWORD") {
-        password = env_password;
+    let password = if let Ok(env_password) = env::var("BEE_TOOL_PASSWORD") {
+        env_password
     } else {
-        password = read_password_from_tty(Some("Password: "))?;
+        let password = read_password_from_tty(Some("Password: "))?;
         let password_reenter = read_password_from_tty(Some("Re-enter password: "))?;
         if password != password_reenter {
             return Err(PasswordError::NonMatching);
         }
-    }
+        password
+    };
 
     let salt = password::generate_salt();
     let hash = password::password_hash(password.as_bytes(), &salt)?;
