@@ -30,9 +30,6 @@ pub const MESSAGE_PUBLIC_KEY_LENGTH: usize = 32;
 /// Length (in bytes) of a message signature.
 pub const MESSAGE_SIGNATURE_LENGTH: usize = 64;
 
-/// Valid number of [`ParentBlocks`] for a message.
-// pub(crate) const PARENTS_BLOCKS_COUNT_RANGE: RangeInclusive<usize> = 1..=4;
-
 /// Messages are of version 1.
 const MESSAGE_VERSION: u8 = 1;
 
@@ -199,25 +196,6 @@ pub(crate) fn validate_message_len(len: usize) -> Result<(), ValidationError> {
         Ok(())
     }
 }
-
-// pub(crate) fn validate_parents_blocks_count(count: usize) -> Result<(), ValidationError> {
-//     if !PARENTS_BLOCKS_COUNT_RANGE.contains(&count) {
-//         Err(ValidationError::InvalidParentsBlocksCount(count))
-//     } else {
-//         Ok(())
-//     }
-// }
-
-// pub(crate) fn validate_has_strong_parents(parents_blocks: &[ParentsBlock]) -> Result<(), ValidationError> {
-//     for block in parents_blocks.iter() {
-//         // [`ParentsBlock`]s cannot be empty, so no need to check length here.
-//         if block.parents_kind() == ParentsKind::Strong {
-//             return Ok(());
-//         }
-//     }
-
-//     Err(ValidationError::InvalidStrongParentsCount(0))
-// }
 
 fn validate_message_version(version: u8) -> Result<(), ValidationError> {
     if version != MESSAGE_VERSION {
