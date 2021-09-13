@@ -17,7 +17,7 @@ bee-message = { path = "../../bee-message" }
 log = "0.4"
 prost = "0.8"
 thiserror = "1.0"
-tokio = { version = "1.6", features = [ "macros", "process", "sync", "fs", "time" ] }
+tokio = { version = "1.11", features = [ "macros", "process", "sync", "fs", "time" ] }
 tokio-stream = "0.1"
 tonic = "0.5"
 
@@ -26,7 +26,7 @@ bee-logger = { path = "../../bee-common/bee-logger" }
 bee-test = { path = "../../bee-test" }
 
 async-trait = "0.1"
-tokio = { version = "1.6", features = [ "rt-multi-thread" ] }
+tokio = { version = "1.11", features = [ "rt-multi-thread" ] }
 
 [build-dependencies]
 tonic-build = { version = "0.5", default-features = false, features = [ "transport", "prost" ]}
