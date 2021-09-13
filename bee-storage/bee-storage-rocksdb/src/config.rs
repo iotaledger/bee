@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Types related to the backend configuration.
+
 use crate::{compaction::CompactionStyle, compression::CompressionType};
 
 use serde::Deserialize;
@@ -36,6 +38,7 @@ const DEFAULT_SET_USE_DIRECT_IO_FOR_FLUSH_AND_COMPACTION: bool = true;
 
 const DEFAULT_SET_HIGH_PRIORITY_BACKGROUND_THREADS: i32 = 2;
 
+/// Builder for a [`StorageConfig`].
 #[derive(Default, Deserialize)]
 pub struct StorageConfigBuilder {
     fetch_edge_limit: Option<usize>,
@@ -44,10 +47,12 @@ pub struct StorageConfigBuilder {
 }
 
 impl StorageConfigBuilder {
+    /// Creates a new [`StorageConfigBuilder`].
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Consumes a [`StorageConfigBuilder`] to create a [`StorageConfig`].
     pub fn finish(self) -> StorageConfig {
         StorageConfig {
             fetch_edge_limit: self.fetch_edge_limit.unwrap_or(DEFAULT_FETCH_EDGE_LIMIT),
@@ -57,6 +62,7 @@ impl StorageConfigBuilder {
     }
 }
 
+/// Builder for a [`RocksDbEnvConfig`].
 #[derive(Default, Deserialize)]
 pub struct RocksDbEnvConfigBuilder {
     set_background_threads: Option<i32>,
@@ -64,10 +70,12 @@ pub struct RocksDbEnvConfigBuilder {
 }
 
 impl RocksDbEnvConfigBuilder {
+    /// Creates a new [`RocksDbEnvConfigBuilder`].
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Consumes a [`RocksDbEnvConfigBuilder`] to create a [`RocksDbEnvConfig`].
     pub fn finish(self) -> RocksDbEnvConfig {
         RocksDbEnvConfig {
             set_background_threads: self.set_background_threads.unwrap_or(num_cpus::get() as i32),
@@ -78,6 +86,7 @@ impl RocksDbEnvConfigBuilder {
     }
 }
 
+/// Builder for a [`RocksDbConfig`].
 #[derive(Default, Deserialize)]
 pub struct RocksDbConfigBuilder {
     storage: Option<StorageConfigBuilder>,
@@ -108,15 +117,18 @@ pub struct RocksDbConfigBuilder {
 }
 
 impl RocksDbConfigBuilder {
+    /// Creates a new [`RocksDbConfigBuilder`].
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Sets the path of a [`RocksDbConfigBuilder`].
     pub fn with_path(mut self, path: String) -> Self {
         self.path = Some(path);
         self
     }
 
+    /// Consumes a [`RocksDbConfigBuilder`] to create a [`RocksDbConfig`].
     pub fn finish(self) -> RocksDbConfig {
         RocksDbConfig::from(self)
     }
@@ -176,6 +188,7 @@ impl From<RocksDbConfigBuilder> for RocksDbConfig {
     }
 }
 
+/// Configuration for the rocksdb storage backend.
 #[derive(Clone)]
 pub struct StorageConfig {
     pub(crate) fetch_edge_limit: usize,
@@ -183,12 +196,14 @@ pub struct StorageConfig {
     pub(crate) fetch_output_id_limit: usize,
 }
 
+/// Configuration for rocksdb env fine tuning.
 #[derive(Clone)]
 pub struct RocksDbEnvConfig {
     pub(crate) set_background_threads: i32,
     pub(crate) set_high_priority_background_threads: i32,
 }
 
+/// Configuration for rocksdb fine tuning.
 #[derive(Clone)]
 pub struct RocksDbConfig {
     pub(crate) storage: StorageConfig,

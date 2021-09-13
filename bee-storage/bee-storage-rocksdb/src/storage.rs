@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! The rocksdb storage backend.
+
 use crate::{
     column_families::*,
     config::{RocksDbConfig, RocksDbConfigBuilder, StorageConfig},
@@ -19,6 +21,7 @@ use rocksdb::{
 
 pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(0);
 
+/// The rocksdb database.
 pub struct Storage {
     // TODO remove when fetch limits are starting to be used
     #[allow(dead_code)]
