@@ -1,21 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    message::{self, Message, MESSAGE_PUBLIC_KEY_LENGTH, MESSAGE_SIGNATURE_LENGTH},
-    parents::ParentsBlock,
-    payload::Payload,
-    ValidationError,
-};
+use crate::{ValidationError, message::{self, Message, MESSAGE_PUBLIC_KEY_LENGTH, MESSAGE_SIGNATURE_LENGTH}, parents::Parents, payload::Payload};
 
 use bee_packable::Packable;
-
-use alloc::vec::Vec;
 
 /// A builder to build a [`Message`].
 #[derive(Default)]
 pub struct MessageBuilder {
-    parents_blocks: Vec<ParentsBlock>,
+    parents: Option<Parents>,
     issuer_public_key: Option<[u8; MESSAGE_PUBLIC_KEY_LENGTH]>,
     issue_timestamp: Option<u64>,
     sequence_number: Option<u32>,
@@ -30,9 +23,9 @@ impl MessageBuilder {
         Default::default()
     }
 
-    /// Adds [`ParentsBlock`]s to a [`MessageBuilder`].
-    pub fn with_parents_blocks(mut self, parents_block: Vec<ParentsBlock>) -> Self {
-        self.parents_blocks = parents_block;
+    /// Adds [`Parents`] to a [`MessageBuilder`].
+    pub fn with_parents(mut self, parents: Parents) -> Self {
+        self.parents.replace(parents);
         self
     }
 
@@ -74,9 +67,9 @@ impl MessageBuilder {
 
     /// Finishes the [`MessageBuilder`], consuming it to build a [`Message`].
     pub fn finish(self) -> Result<Message, ValidationError> {
-        message::validate_parents_blocks_count(self.parents_blocks.len())?;
-        message::validate_has_strong_parents(&self.parents_blocks)?;
-
+        let parents = self
+            .parents
+            .ok_or(ValidationError::MissingBuilderField("parents"))?;
         let issuer_public_key = self
             .issuer_public_key
             .ok_or(ValidationError::MissingBuilderField("issuer_public_key"))?;
@@ -93,7 +86,7 @@ impl MessageBuilder {
             .ok_or(ValidationError::MissingBuilderField("signature"))?;
 
         let message = Message {
-            parents_blocks: self.parents_blocks,
+            parents,
             issuer_public_key,
             issue_timestamp,
             sequence_number,

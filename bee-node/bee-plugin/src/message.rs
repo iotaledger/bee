@@ -21,7 +21,7 @@ use crate::grpc::{
     signature::Kind as SignatureKind, unlock_block::Kind as UnlockBlockKind, Address, ApplicationMessagePayload,
     AssetBalance, AssetId, BeaconPayload, BlsAddress, BlsSignature, CollectiveBeaconPayload, Conflict, DataPayload,
     DkgPayload, Ed25519Address, Ed25519Signature, EncryptedDeal, FpcPayload, IndexationPayload, Input, MessageId,
-    Opinion, Output, OutputId, ParentsBlock, ParentsKind, Payload, ReferenceUnlock, Salt, SaltDeclarationPayload,
+    Opinion, Output, OutputId, Parents, Payload, ReferenceUnlock, Salt, SaltDeclarationPayload,
     Signature, SignatureLockedAssetOutput, SignatureLockedSingleOutput, SignatureUnlock, Timestamp, TransactionEssence,
     TransactionId, TransactionPayload, UnlockBlock, UtxoInput,
 };
@@ -31,7 +31,7 @@ use std::convert::TryInto;
 impl From<&bee_message::Message> for Message {
     fn from(message: &bee_message::Message) -> Self {
         Self {
-            parents_blocks: message.parents_blocks().map(ParentsBlock::from).collect(),
+            parents: Some(message.parents().into()),
             issuer_public_key: message.issuer_public_key().to_vec(),
             issue_timestamp: message.issue_timestamp(),
             sequence_number: message.sequence_number(),
@@ -55,54 +55,24 @@ impl Into<bee_message::Message> for Message {
             builder = builder.with_payload(payload.into());
         }
 
-        let mut parents_blocks = Vec::with_capacity(self.parents_blocks.len());
-
-        for parents_block in self.parents_blocks {
-            parents_blocks.push(parents_block.into())
-        }
-
-        builder.with_parents_blocks(parents_blocks).finish().unwrap()
+        builder.with_parents(self.parents.unwrap().into()).finish().unwrap()
     }
 }
 
-impl From<&bee_message::parents::ParentsBlock> for ParentsBlock {
-    fn from(block: &bee_message::parents::ParentsBlock) -> Self {
-        Self {
-            kind: ParentsKind::from(block.parents_kind()).into(),
-            references: block.iter().map(MessageId::from).collect(),
+impl From<&bee_message::parents::Parents> for Parents {
+    fn from(parents: &bee_message::parents::Parents) -> Self {
+        Parents {
+            references: parents.iter().map(MessageId::from).collect(),
         }
     }
 }
 
-impl Into<bee_message::parents::ParentsBlock> for ParentsBlock {
-    fn into(self) -> bee_message::parents::ParentsBlock {
-        bee_message::parents::ParentsBlock::new(
-            ParentsKind::from_i32(self.kind).unwrap().into(),
-            self.references.into_iter().map(MessageId::into).collect(),
+impl Into<bee_message::parents::Parents> for Parents {
+    fn into(self) -> bee_message::parents::Parents {
+        bee_message::parents::Parents::new(
+            self.references.into_iter().map(MessageId::into).collect()
         )
         .unwrap()
-    }
-}
-
-impl From<bee_message::parents::ParentsKind> for ParentsKind {
-    fn from(parents_kind: bee_message::parents::ParentsKind) -> Self {
-        match parents_kind {
-            bee_message::parents::ParentsKind::Strong => ParentsKind::Strong,
-            bee_message::parents::ParentsKind::Weak => ParentsKind::Weak,
-            bee_message::parents::ParentsKind::Disliked => ParentsKind::Disliked,
-            bee_message::parents::ParentsKind::Liked => ParentsKind::Liked,
-        }
-    }
-}
-
-impl Into<bee_message::parents::ParentsKind> for ParentsKind {
-    fn into(self) -> bee_message::parents::ParentsKind {
-        match self {
-            ParentsKind::Strong => bee_message::parents::ParentsKind::Strong,
-            ParentsKind::Weak => bee_message::parents::ParentsKind::Weak,
-            ParentsKind::Disliked => bee_message::parents::ParentsKind::Disliked,
-            ParentsKind::Liked => bee_message::parents::ParentsKind::Liked,
-        }
     }
 }
 
