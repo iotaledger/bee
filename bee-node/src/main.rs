@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![recursion_limit="256"]
+#![recursion_limit = "256"]
 
 use bee_node::{plugins, print_banner_and_version, tools, CliArgs, NodeBuilder, NodeConfigBuilder};
 use bee_runtime::node::NodeBuilder as _;
@@ -47,6 +47,16 @@ fn logger_init(logger: bee_common::logger::LoggerConfig) {
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let cli = CliArgs::new();
 
+    if let Some(tool) = cli.tool() {
+        return tools::exec(tool).map_err(|e| e.into());
+    }
+
+    print_banner_and_version();
+
+    if cli.version() {
+        return Ok(());
+    }
+
     let config = match NodeConfigBuilder::from_file(cli.config().unwrap_or(&CONFIG_PATH.to_owned())) {
         Ok(builder) => builder.with_cli_args(cli.clone()).finish(),
         Err(e) => panic!("Failed to create the node config builder: {}", e),
@@ -57,19 +67,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     #[cfg(not(feature = "console"))]
     logger_init(config.logger.clone());
-
-    if let Some(tool) = cli.tool() {
-        if let Err(e) = tools::exec(tool) {
-            error!("Tool execution failed: {}", e);
-        }
-        return Ok(());
-    }
-
-    print_banner_and_version();
-
-    if cli.version() {
-        return Ok(());
-    }
 
     #[cfg(feature = "rocksdb")]
     let node_builder = NodeBuilder::<RocksDb>::new(config);
