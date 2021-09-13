@@ -29,8 +29,8 @@ pub fn exec(_tool: &PasswordTool) -> Result<(), PasswordError> {
         env_password
     } else {
         let password = read_password_from_tty(Some("Password: "))?;
-        let password_reenter = read_password_from_tty(Some("Re-enter password: "))?;
-        if password != password_reenter {
+
+        if password != read_password_from_tty(Some("Re-enter password: "))? {
             return Err(PasswordError::NonMatching);
         }
         password
