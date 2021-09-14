@@ -8,7 +8,7 @@ use bee_message::{
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
-    message::parents::rand_parents,
+    message::{parents::rand_parents, payload::rand_indexation_payload},
     number::rand_number,
 };
 
@@ -195,4 +195,100 @@ fn serde_round_trip() {
     let message_2 = serde_json::from_str::<Message>(&json).unwrap();
 
     assert_eq!(message_1, message_2);
+}
+
+#[test]
+fn builder_missing_parents() {
+    let message = MessageBuilder::new()
+        .with_issuer_public_key(rand_bytes_array())
+        .with_issue_timestamp(rand_number())
+        .with_sequence_number(rand_number())
+        .with_payload(rand_indexation_payload().into())
+        .with_nonce(rand_number())
+        .with_signature(rand_bytes_array())
+        .finish();
+
+    assert!(matches!(message, Err(ValidationError::MissingBuilderField("parents")),));
+}
+
+#[test]
+fn builder_missing_issuer_public_key() {
+    let message = MessageBuilder::new()
+        .with_parents(rand_parents())
+        .with_issue_timestamp(rand_number())
+        .with_sequence_number(rand_number())
+        .with_payload(rand_indexation_payload().into())
+        .with_nonce(rand_number())
+        .with_signature(rand_bytes_array())
+        .finish();
+
+    assert!(matches!(
+        message,
+        Err(ValidationError::MissingBuilderField("issuer_public_key")),
+    ));
+}
+
+#[test]
+fn builder_missing_issue_timestamp() {
+    let message = MessageBuilder::new()
+        .with_parents(rand_parents())
+        .with_issuer_public_key(rand_bytes_array())
+        .with_sequence_number(rand_number())
+        .with_payload(rand_indexation_payload().into())
+        .with_nonce(rand_number())
+        .with_signature(rand_bytes_array())
+        .finish();
+
+    assert!(matches!(
+        message,
+        Err(ValidationError::MissingBuilderField("issue_timestamp")),
+    ));
+}
+
+#[test]
+fn builder_missing_sequence_number() {
+    let message = MessageBuilder::new()
+        .with_parents(rand_parents())
+        .with_issuer_public_key(rand_bytes_array())
+        .with_issue_timestamp(rand_number())
+        .with_payload(rand_indexation_payload().into())
+        .with_nonce(rand_number())
+        .with_signature(rand_bytes_array())
+        .finish();
+
+    assert!(matches!(
+        message,
+        Err(ValidationError::MissingBuilderField("sequence_number")),
+    ));
+}
+
+#[test]
+fn builder_missing_nonce() {
+    let message = MessageBuilder::new()
+        .with_parents(rand_parents())
+        .with_issuer_public_key(rand_bytes_array())
+        .with_issue_timestamp(rand_number())
+        .with_sequence_number(rand_number())
+        .with_payload(rand_indexation_payload().into())
+        .with_signature(rand_bytes_array())
+        .finish();
+
+    assert!(matches!(message, Err(ValidationError::MissingBuilderField("nonce")),));
+}
+
+#[test]
+fn builder_missing_signature() {
+    let message = MessageBuilder::new()
+        .with_parents(rand_parents())
+        .with_issuer_public_key(rand_bytes_array())
+        .with_issue_timestamp(rand_number())
+        .with_sequence_number(rand_number())
+        .with_payload(rand_indexation_payload().into())
+        .with_nonce(rand_number())
+        .finish();
+
+    assert!(matches!(
+        message,
+        Err(ValidationError::MissingBuilderField("signature")),
+    ));
 }

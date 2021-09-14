@@ -3,7 +3,7 @@
 
 use bee_message::{
     error::{MessageUnpackError, ValidationError},
-    parents::Parents,
+    parents::{Parent, Parents},
 };
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::{
@@ -47,6 +47,17 @@ fn new_invalid_not_unique() {
 }
 
 #[test]
+fn new_invalid_no_strong_parents() {
+    let mut inner = (0..8).map(|_| Parent::Weak(rand_message_id())).collect::<Vec<_>>();
+    inner.sort();
+
+    assert!(matches!(
+        Parents::new(inner),
+        Err(ValidationError::InvalidStrongParentsCount(0)),
+    ));
+}
+
+#[test]
 fn packed_len() {
     let mut inner = rand_vec(rand_parent, 5);
     inner.sort();
@@ -66,12 +77,8 @@ fn pack_unpack_valid() {
 }
 
 #[test]
-fn pack_unpack_invalid_less_than_min() {
-    let bytes = vec![
-        0, 1, 227, 127, 245, 158, 220, 152, 191, 107, 27, 218, 187, 247, 227, 25, 215, 141, 92, 95, 138, 21, 98, 20,
-        83, 206, 92, 26, 62, 9, 221, 81, 191, 4, 96, 54, 232, 50, 83, 49, 236, 80, 189, 251, 191, 192, 122, 206, 202,
-        209, 145, 50, 168, 233, 176, 12, 164, 138, 207, 22, 96, 82, 189, 64, 188, 130,
-    ];
+fn unpack_invalid_less_than_min() {
+    let bytes = vec![0, 1];
 
     assert!(matches!(
         Parents::unpack_from_slice(bytes),
@@ -82,17 +89,37 @@ fn pack_unpack_invalid_less_than_min() {
 }
 
 #[test]
-fn pack_unpack_invalid_more_than_max() {
+fn unpack_invalid_more_than_max() {
     let bytes = vec![
-        9, 1, 227, 127, 245, 158, 220, 152, 191, 107, 27, 218, 187, 247, 227, 25, 215, 141, 92, 95, 138, 21, 98, 20,
-        83, 206, 92, 26, 62, 9, 221, 81, 191, 4, 96, 54, 232, 50, 83, 49, 236, 80, 189, 251, 191, 192, 122, 206, 202,
-        209, 145, 50, 168, 233, 176, 12, 164, 138, 207, 22, 96, 82, 189, 64, 188, 130,
+        9, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9,
     ];
 
     assert!(matches!(
         Parents::unpack_from_slice(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidParentsCount(9)
+        ))),
+    ));
+}
+
+#[test]
+fn unpack_invalid_no_strong_parents() {
+    let bytes = vec![
+        2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+    ];
+
+    assert!(matches!(
+        Parents::unpack_from_slice(bytes),
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::InvalidStrongParentsCount(0)
         ))),
     ));
 }

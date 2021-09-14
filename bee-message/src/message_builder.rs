@@ -78,7 +78,7 @@ impl MessageBuilder {
             .ok_or(ValidationError::MissingBuilderField("issuer_public_key"))?;
         let issue_timestamp = self
             .issue_timestamp
-            .ok_or(ValidationError::MissingBuilderField("issue_timestap"))?;
+            .ok_or(ValidationError::MissingBuilderField("issue_timestamp"))?;
         let sequence_number = self
             .sequence_number
             .ok_or(ValidationError::MissingBuilderField("sequence_number"))?;
