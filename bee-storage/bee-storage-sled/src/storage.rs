@@ -4,7 +4,7 @@
 //! The sled storage backend.
 
 use crate::{
-    config::{SledConfig, SledConfigBuilder},
+    config::{AccessConfig, SledConfig, SledConfigBuilder},
     error::Error,
 };
 
@@ -20,7 +20,7 @@ pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(0);
 pub struct Storage {
     // TODO remove when fetch limits are starting to be used
     #[allow(dead_code)]
-    pub(crate) config: SledConfig,
+    pub(crate) access_config: AccessConfig,
     pub(crate) inner: sled::Db,
 }
 
@@ -42,7 +42,10 @@ impl Storage {
 
         let inner = sled_cfg.open()?;
 
-        Ok(Self { inner, config })
+        Ok(Self {
+            inner,
+            access_config: config.access,
+        })
     }
 }
 

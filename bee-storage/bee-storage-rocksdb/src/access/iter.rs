@@ -13,6 +13,7 @@ use rocksdb::{DBIterator, IteratorMode};
 
 use std::marker::PhantomData;
 
+/// A type to iterate over all key-value pairs of a column family.
 pub struct StorageIterator<'a, K, V> {
     inner: DBIterator<'a>,
     marker: PhantomData<(K, V)>,
@@ -39,7 +40,6 @@ macro_rules! impl_stream {
             }
         }
 
-        /// A stream to iterate over all key-value pairs of a column family.
         impl<'a> Iterator for StorageIterator<'a, $key, $value> {
             type Item = Result<($key, $value), <Storage as StorageBackend>::Error>;
 

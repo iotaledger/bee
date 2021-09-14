@@ -11,6 +11,7 @@ use bee_storage::{access::MultiFetch, system::System, StorageBackend};
 
 use std::{marker::PhantomData, vec::IntoIter};
 
+/// Multi-fetch iterator over the database column family.
 pub struct MultiIter<V, E> {
     iter: IntoIter<Result<Option<Vec<u8>>, rocksdb::Error>>,
     marker: PhantomData<(V, E)>,
