@@ -69,7 +69,7 @@ impl Message {
         MessageId::new(id.into())
     }
 
-    /// Returns the parent blocks of a [`Message`].
+    /// Returns the parents of a [`Message`].
     pub fn parents(&self) -> &Parents {
         &self.parents
     }

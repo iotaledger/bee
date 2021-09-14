@@ -24,7 +24,7 @@ use core::{
 pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 
 /// Minimum number of strong parents for a valid message.
-pub const MESSAGE_MIN_STRONG_PARENTS: usize = 1;
+pub const MESSAGE_STRONG_PARENTS_MIN: usize = 1;
 
 /// An individual message parent, which can be categorized as "strong" or "weak".
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -64,49 +64,48 @@ impl Ord for Parent {
 
 /// A [`Message`](crate::Message)'s `Parents` are the [`MessageId`]s of the messages it directly approves.
 ///
-/// Parents must be:
-/// * in the `MESSAGE_PARENTS_RANGE` range;
-/// * lexicographically sorted;
-/// * unique;
+/// Parents must:
+/// * be in the [`MESSAGE_PARENTS_RANGE`] range;
+/// * contain at least [`MESSAGE_STRONG_PARENTS_MIN`] strong parents;
+/// * be lexicographically sorted;
+/// * be unique;
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Parents {
-    inner: Vec<Parent>,
-}
+pub struct Parents(Vec<Parent>);
 
 impl Deref for Parents {
     type Target = [Parent];
 
     fn deref(&self) -> &Self::Target {
-        self.inner.as_slice()
+        self.0.as_slice()
     }
 }
 
 #[allow(clippy::len_without_is_empty)]
 impl Parents {
     /// Creates a new [`Parents`] collection.
-    pub fn new(inner: Vec<Parent>) -> Result<Self, ValidationError> {
-        validate_parents_count(inner.len())?;
-        validate_unique_sorted(&inner)?;
+    pub fn new(parents: Vec<Parent>) -> Result<Self, ValidationError> {
+        validate_parents_count(parents.len())?;
+        validate_unique_sorted(&parents)?;
 
-        let strong_count = inner.iter().fold(0usize, |acc, parent| match parent {
+        let strong_count = parents.iter().fold(0usize, |acc, parent| match parent {
             Parent::Strong(_) => acc + 1,
             _ => acc,
         });
 
         validate_strong_parents_count(strong_count)?;
 
-        Ok(Self { inner })
+        Ok(Self(parents))
     }
 
     /// Returns the number of parents.
     pub fn len(&self) -> usize {
-        self.inner.len()
+        self.0.len()
     }
 
     /// Returns an iterator over the parents.
     pub fn iter(&self) -> impl ExactSizeIterator<Item = &Parent> {
-        self.inner.iter()
+        self.0.iter()
     }
 }
 
@@ -115,7 +114,7 @@ impl Packable for Parents {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        0u8.packed_len() + 0u8.packed_len() + self.inner.len() * MessageId::LENGTH
+        0u8.packed_len() + 0u8.packed_len() + self.0.len() * MessageId::LENGTH
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
@@ -164,7 +163,7 @@ impl Packable for Parents {
 
         validate_unique_sorted(&parents).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        Ok(Self { inner: parents })
+        Ok(Self(parents))
     }
 }
 
@@ -185,7 +184,7 @@ fn validate_unique_sorted(parents: &[Parent]) -> Result<(), ValidationError> {
 }
 
 fn validate_strong_parents_count(count: usize) -> Result<(), ValidationError> {
-    if count < MESSAGE_MIN_STRONG_PARENTS {
+    if count < MESSAGE_STRONG_PARENTS_MIN {
         Err(ValidationError::InvalidStrongParentsCount(count))
     } else {
         Ok(())
