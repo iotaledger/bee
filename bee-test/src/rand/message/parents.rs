@@ -9,24 +9,22 @@ use crate::rand::{
 
 use bee_message::parents::{Parent, Parents, MESSAGE_PARENTS_RANGE};
 
-/// Generates random parents.
-pub fn rand_parents() -> Parents {
-    let mut parents_vec = vec![Parent::Strong(rand_message_id())];
-    parents_vec.extend(rand_vec(
-        rand_parent,
-        rand_number_range(MESSAGE_PARENTS_RANGE.start() - 1..=MESSAGE_PARENTS_RANGE.end() - 1),
-    ));
-
-    parents_vec.sort();
-
-    Parents::new(parents_vec).unwrap()
-}
-
-/// Generates a random parent.
+/// Generates a random [`Parent`].
 pub fn rand_parent() -> Parent {
     match rand_number::<u8>() % 2 {
         0 => Parent::Strong(rand_message_id()),
         1 => Parent::Weak(rand_message_id()),
         _ => unreachable!(),
     }
+}
+
+/// Generates a [`Vec`] of random [`Parent`]s.
+pub fn rand_parents() -> Parents {
+    let mut parents = vec![Parent::Strong(rand_message_id())];
+
+    parents.extend(rand_vec(rand_parent, rand_number_range(MESSAGE_PARENTS_RANGE) - 1));
+
+    parents.sort();
+
+    Parents::new(parents).unwrap()
 }
