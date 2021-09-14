@@ -11,7 +11,7 @@ use bee_storage::{access::AsIterator, system::System, StorageBackend};
 
 use std::marker::PhantomData;
 
-/// Type used to stream a subtree.
+/// A type to iterate over all key-value pairs of a tree.
 pub struct StorageIterator<'a, K, V> {
     inner: sled::Iter,
     marker: PhantomData<&'a (K, V)>,
@@ -34,7 +34,6 @@ impl<'a> AsIterator<'a, u8, System> for Storage {
     }
 }
 
-/// A stream to iterate over all key-value pairs of a column family.
 impl<'a> Iterator for StorageIterator<'a, u8, System> {
     type Item = Result<(u8, System), <Storage as StorageBackend>::Error>;
 
@@ -57,7 +56,6 @@ macro_rules! impl_stream {
             }
         }
 
-        /// A stream to iterate over all key-value pairs of a column family.
         impl<'a> Iterator for StorageIterator<'a, $key, $value> {
             type Item = Result<($key, $value), <Storage as StorageBackend>::Error>;
 

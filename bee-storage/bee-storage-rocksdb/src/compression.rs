@@ -1,10 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Compression types available with rocksdb.
+
 use rocksdb::DBCompressionType;
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
+#[allow(missing_docs)]
 pub enum CompressionType {
     Bz2,
     Lz4,

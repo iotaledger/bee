@@ -14,8 +14,7 @@
 //! This crate tries to simplify the implementation of various storage backends and provides unified access API for the
 //! application/user space.
 
-#![deny(missing_docs)]
-#![deny(warnings)]
+#![deny(missing_docs, warnings)]
 
 pub mod access;
 pub mod backend;

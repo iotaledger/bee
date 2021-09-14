@@ -14,6 +14,7 @@ use bee_storage::{
 
 use rocksdb::{WriteBatch, WriteOptions};
 
+/// A writing batch that can be applied atomically.
 #[derive(Default)]
 pub struct StorageBatch {
     inner: WriteBatch,

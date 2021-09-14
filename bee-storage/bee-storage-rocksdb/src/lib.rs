@@ -3,6 +3,8 @@
 
 //! A bee-storage implementation for the [rocksdb](https://docs.rs/rocksdb/latest/rocksdb/) backend.
 
+#![deny(missing_docs, warnings)]
+
 pub mod access;
 pub mod column_families;
 pub mod compaction;
