@@ -167,7 +167,7 @@ where
                         } else {
                             error!("Requested milestone {} message not present in the tangle.", index)
                         }
-                    } else {
+                    } else if *index != 0 {
                         error!("Requested milestone {} message id not present in the tangle.", index)
                     }
                 }
