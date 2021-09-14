@@ -1,0 +1,16 @@
+[workspace]
+members = [
+  "bee-common/bee-event-bus",
+  "bee-common/bee-logger",
+  "bee-common/bee-ord",
+  "bee-common/bee-packable",
+  "bee-common/bee-packable-derive",
+  "bee-message",
+  "bee-node/bee-node",
+  "bee-node/bee-plugin",
+  "bee-storage/bee-storage",
+  "bee-storage/bee-storage-rocksdb",
+  "bee-storage/bee-storage-sled",
+  "bee-api/bee-rest-api",
+  "bee-test"
+]
