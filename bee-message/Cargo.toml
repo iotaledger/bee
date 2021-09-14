@@ -19,6 +19,7 @@ bee-packable = { path = "../bee-common/bee-packable", features = ["serde"] }
 bee-packable-derive = { path = "../bee-common/bee-packable-derive" }
 
 bech32 = { version = "0.8", default-features = false }
+bitvec = { version = "0.20", default-features = false }
 digest = { version = "0.9", default-features = false }
 hashbrown = { version = "0.11", default-features = false, features = [ "ahash-compile-time-rng" ] }
 hex = { version = "0.4", default-features = false }

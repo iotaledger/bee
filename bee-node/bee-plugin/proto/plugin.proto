@@ -29,8 +29,8 @@ message MessageRejectedEvent {}
 
 // Represents the object that nodes gossip around the network.
 message Message {
-    // Blocks of message parents. Each block contains a list of parent message IDs grouped by type.
-    repeated ParentsBlock parents_blocks = 1;
+    // Message parent IDs.
+    Parents parents = 1;
     // The public key of the issuing node.
     bytes issuer_public_key = 2;
     // The Unix timestamp at the moment of issue.
@@ -45,20 +45,19 @@ message Message {
     bytes signature = 7;
 }
 
-message ParentsBlock {
-    ParentsKind kind = 1;
-    repeated MessageId references = 2;
-}
-
-enum ParentsKind {
-    STRONG = 0;
-    WEAK = 1;
-    DISLIKED = 2;
-    LIKED = 3;
-}
-
 message MessageId {
     bytes inner = 1;
+}
+
+message Parent {
+    oneof kind {
+        MessageId strong = 1;
+        MessageId weak = 2;
+    }
+}
+
+message Parents {
+    repeated Parent parents = 1;
 }
 
 message Payload {

@@ -28,7 +28,7 @@ pub fn rand_message_id() -> MessageId {
 /// Generates a random [`Message`].
 pub fn rand_message() -> Message {
     let mut builder = MessageBuilder::new()
-        .with_parents_blocks(parents::rand_parents_blocks())
+        .with_parents(parents::rand_parents())
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number());
