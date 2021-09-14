@@ -1,4 +1,5 @@
 pub mod test;
+pub mod messages;
 
 use axum::{
     handler::get,
@@ -21,6 +22,7 @@ pub fn api_routes() -> Router<BoxRoute> {
             let res = Response::new(body);
             Ok(res)
             }))
+        .nest("messages", messages::api_routes())
         .boxed()
 }
 
