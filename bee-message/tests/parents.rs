@@ -3,7 +3,7 @@
 
 use bee_message::{
     error::{MessageUnpackError, ValidationError},
-    parents::{Parent, Parents},
+    parents::{Parent, Parents, MESSAGE_PARENTS_RANGE},
 };
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::{
@@ -15,12 +15,22 @@ use bee_test::rand::{
 };
 
 #[test]
-fn new_invalid_more_than_max() {
-    let inner = rand_vec(rand_parent, 9);
+fn new_invalid_less_than_min() {
+    let min = MESSAGE_PARENTS_RANGE.start() - 1;
 
     assert!(matches!(
-        Parents::new(inner),
-        Err(ValidationError::InvalidParentsCount(9))
+        Parents::new(rand_vec(rand_parent, min)),
+        Err(ValidationError::InvalidParentsCount(m)) if m == min
+    ));
+}
+
+#[test]
+fn new_invalid_more_than_max() {
+    let max = MESSAGE_PARENTS_RANGE.end() + 1;
+
+    assert!(matches!(
+        Parents::new(rand_vec(rand_parent, max)),
+        Err(ValidationError::InvalidParentsCount(m)) if m == max
     ));
 }
 
@@ -38,6 +48,7 @@ fn new_invalid_not_sorted() {
 #[test]
 fn new_invalid_not_unique() {
     let mut inner = rand_vec(rand_parent, 7);
+    inner.sort();
     inner.push(*inner.last().unwrap());
 
     assert!(matches!(
