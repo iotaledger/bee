@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_storage::{
-    access::{AsIterator, Fetch, Insert, MultiFetch},
+    access::{AsIterator, Fetch, MultiFetch},
     backend,
     system::{StorageHealth, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
@@ -10,11 +10,7 @@ use bee_storage::{
 use std::collections::HashMap;
 
 pub trait StorageBackend:
-    backend::StorageBackend
-    + Fetch<u8, System>
-    + for<'a> MultiFetch<'a, u8, System>
-    + Insert<u8, System>
-    + for<'a> AsIterator<'a, u8, System>
+    backend::StorageBackend + Fetch<u8, System> + for<'a> MultiFetch<'a, u8, System> + for<'a> AsIterator<'a, u8, System>
 {
 }
 
@@ -22,7 +18,6 @@ impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Fetch<u8, System>
         + for<'a> MultiFetch<'a, u8, System>
-        + Insert<u8, System>
         + for<'a> AsIterator<'a, u8, System>
 {
 }
@@ -64,7 +59,7 @@ pub fn system_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, systems.len());
 
-    Insert::<u8, System>::insert(storage, &SYSTEM_HEALTH_KEY, &System::Health(StorageHealth::Corrupted)).unwrap();
+    storage.set_health(StorageHealth::Corrupted).unwrap();
     assert_eq!(
         System::Health(storage.health().unwrap().unwrap()),
         System::Health(StorageHealth::Corrupted)
