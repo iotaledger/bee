@@ -7,10 +7,7 @@ use bee_message::{
 };
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::{
-    message::{
-        parents::rand_parents,
-        rand_message_id,
-    },
+    message::{parents::rand_parents, rand_message_id},
     vec::rand_vec,
 };
 
@@ -60,7 +57,7 @@ fn new_invalid_not_sorted() {
 
 #[test]
 fn new_invalid_not_unique() {
-    let mut inner= vec![
+    let mut inner = vec![
         Parent::Strong(rand_message_id()),
         Parent::Weak(rand_message_id()),
         Parent::Weak(rand_message_id()),
@@ -87,7 +84,7 @@ fn new_invalid_no_strong_parents() {
 
 #[test]
 fn packed_len() {
-    let mut inner= vec![
+    let mut inner = vec![
         Parent::Strong(rand_message_id()),
         Parent::Weak(rand_message_id()),
         Parent::Weak(rand_message_id()),
