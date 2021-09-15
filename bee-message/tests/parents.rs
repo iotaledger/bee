@@ -3,41 +3,51 @@
 
 use bee_message::{
     error::{MessageUnpackError, ValidationError},
-    parents::{Parent, Parents, MESSAGE_PARENTS_RANGE},
+    parents::{Parent, Parents},
 };
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::{
-    message::{
-        parents::{rand_parent, rand_parents},
-        rand_message_id,
-    },
+    message::{parents::rand_parents, rand_message_id},
     vec::rand_vec,
 };
 
 #[test]
 fn new_invalid_less_than_min() {
-    let min = MESSAGE_PARENTS_RANGE.start() - 1;
-
     assert!(matches!(
-        Parents::new(rand_vec(rand_parent, min)),
-        Err(ValidationError::InvalidParentsCount(m)) if m == min
+        Parents::new(vec![]),
+        Err(ValidationError::InvalidParentsCount(0)),
     ));
 }
 
 #[test]
 fn new_invalid_more_than_max() {
-    let max = MESSAGE_PARENTS_RANGE.end() + 1;
+    let mut inner = vec![
+        Parent::Strong(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+    ];
+    inner.sort();
 
     assert!(matches!(
-        Parents::new(rand_vec(rand_parent, max)),
-        Err(ValidationError::InvalidParentsCount(m)) if m == max
+        Parents::new(inner),
+        Err(ValidationError::InvalidParentsCount(9)),
     ));
 }
 
 #[test]
 fn new_invalid_not_sorted() {
-    let mut inner = rand_vec(rand_parent, 8);
-    inner.reverse();
+    let mut inner = vec![
+        Parent::Strong(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+    ];
+    inner.sort_by(|a, b| b.cmp(a));
 
     assert!(matches!(
         Parents::new(inner),
@@ -47,9 +57,13 @@ fn new_invalid_not_sorted() {
 
 #[test]
 fn new_invalid_not_unique() {
-    let mut inner = rand_vec(rand_parent, 7);
-    inner.sort();
+    let mut inner = vec![
+        Parent::Strong(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+    ];
     inner.push(*inner.last().unwrap());
+    inner.sort();
 
     assert!(matches!(
         Parents::new(inner),
@@ -70,13 +84,17 @@ fn new_invalid_no_strong_parents() {
 
 #[test]
 fn packed_len() {
-    let mut inner = rand_vec(rand_parent, 5);
+    let mut inner = vec![
+        Parent::Strong(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+        Parent::Weak(rand_message_id()),
+    ];
     inner.sort();
 
     let parents = Parents::new(inner).unwrap();
 
-    assert_eq!(parents.packed_len(), 1 + 1 + 5 * 32);
-    assert_eq!(parents.pack_to_vec().unwrap().len(), 1 + 1 + 5 * 32);
+    assert_eq!(parents.packed_len(), 1 + 1 + 3 * 32);
+    assert_eq!(parents.pack_to_vec().unwrap().len(), 1 + 1 + 3 * 32);
 }
 
 #[test]
