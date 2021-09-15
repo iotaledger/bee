@@ -11,22 +11,22 @@ keywords = [ "iota", "tangle", "bee", "framework", "plugin" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-event-bus = { path = "../../bee-common/bee-event-bus" }
-bee-message = { path = "../../bee-message" }
+bee-event-bus = { path = "../../bee-common/bee-event-bus", default-features = false }
+bee-message = { path = "../../bee-message", default-features = false }
 
-log = "0.4"
-prost = "0.8"
-thiserror = "1.0"
-tokio = { version = "1.11", features = [ "macros", "process", "sync", "fs", "time" ] }
-tokio-stream = "0.1"
-tonic = "0.5"
+log = { version = "0.4", default-features = false }
+prost = { version = "0.8", default-features = false }
+thiserror = { version = "1.0", default-features = false }
+tokio = { version = "1.11", default-features = false, features = [ "macros", "process", "sync", "fs", "time" ] }
+tokio-stream = { version = "0.1", default-features = false }
+tonic = { version = "0.5", default-features = false, features = [ "codegen", "prost", "transport" ] }
 
 [dev-dependencies]
-bee-logger = { path = "../../bee-common/bee-logger" }
-bee-test = { path = "../../bee-test" }
+bee-logger = { path = "../../bee-common/bee-logger", default-features = false }
+bee-test = { path = "../../bee-test", default-features = false }
 
-async-trait = "0.1"
-tokio = { version = "1.11", features = [ "rt-multi-thread" ] }
+async-trait = { version = "0.1", default-features = false }
+tokio = { version = "1.11", default-features = false, features = [ "rt-multi-thread" ] }
 
 [build-dependencies]
 tonic-build = { version = "0.5", default-features = false, features = [ "transport", "prost" ]}
