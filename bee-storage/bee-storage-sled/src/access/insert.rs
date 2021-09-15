@@ -9,13 +9,17 @@ use bee_message::{Message, MessageId};
 use bee_packable::packable::Packable;
 use bee_storage::{access::Insert, system::System, StorageBackend};
 
-impl Insert<u8, System> for Storage {
-    fn insert(&self, key: &u8, value: &System) -> Result<(), <Self as StorageBackend>::Error> {
-        // Packing to bytes can't fail.
-        self.inner.insert(&[*key], value.pack_to_vec().unwrap())?;
+/// This would normally be `impl Insert<u8, System> for Storage` but there is no way to have a private trait impl and
+/// only the [`Storage`] itself should be able to insert system values.
+pub(crate) fn insert_u8_system(
+    storage: &Storage,
+    key: &u8,
+    value: &System,
+) -> Result<(), <Storage as StorageBackend>::Error> {
+    // Packing to bytes can't fail.
+    storage.inner.insert(&[*key], value.pack_to_vec().unwrap())?;
 
-        Ok(())
-    }
+    Ok(())
 }
 
 impl Insert<MessageId, Message> for Storage {

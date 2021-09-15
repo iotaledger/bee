@@ -4,12 +4,13 @@
 //! The sled storage backend.
 
 use crate::{
+    access::insert::insert_u8_system,
     config::{AccessConfig, SledConfig, SledConfigBuilder},
     error::Error,
 };
 
 use bee_storage::{
-    access::{Fetch, Insert},
+    access::Fetch,
     system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
     StorageBackend,
 };
@@ -63,7 +64,7 @@ impl StorageBackend for Storage {
                     return Err(Error::VersionMismatch(version, STORAGE_VERSION));
                 }
             }
-            None => Insert::<u8, System>::insert(&storage, &SYSTEM_VERSION_KEY, &System::Version(STORAGE_VERSION))?,
+            None => insert_u8_system(&storage, &SYSTEM_VERSION_KEY, &System::Version(STORAGE_VERSION))?,
             _ => panic!("Another system value was inserted on the version key."),
         }
 
@@ -101,6 +102,6 @@ impl StorageBackend for Storage {
     }
 
     fn set_health(&self, health: StorageHealth) -> Result<(), Self::Error> {
-        Insert::<u8, System>::insert(self, &SYSTEM_HEALTH_KEY, &System::Health(health))
+        insert_u8_system(self, &SYSTEM_HEALTH_KEY, &System::Health(health))
     }
 }
