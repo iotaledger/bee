@@ -41,6 +41,12 @@ pub enum Opinion {
     Unknown,
 }
 
+impl Default for Opinion {
+    fn default() -> Self {
+        Opinion::Unknown
+    }
+}
+
 impl fmt::Display for Opinion {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self)
