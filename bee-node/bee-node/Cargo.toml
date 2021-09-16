@@ -12,7 +12,10 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-logger = { path = "../../bee-common/bee-logger", default-features = false, features = [ "serde" ] }
+bee-network = { path = "../../bee-network", default-features = false, features = ["backstage"] }
 
+async-trait = { version = "0.1.51", default-features = false }
+backstage = { git = "https://github.com/iotaledger/backstage", default-features = false, branch = "stable" }
 log = { version = "0.4.14", default-features = false }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
 serde_json = { version = "1.0.68", default-features = false, features = [ "std" ] }
