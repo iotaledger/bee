@@ -11,13 +11,13 @@ keywords = ["iota", "tangle", "bee", "framework", "sled"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-message = { path = "../../bee-message" }
-bee-packable = { path = "../../bee-common/bee-packable", features = [ "io" ] }
-bee-storage = { path = "../bee-storage" }
+bee-message = { path = "../../bee-message", default-features = false }
+bee-packable = { path = "../../bee-common/bee-packable", default-features = false, features = [ "io" ] }
+bee-storage = { path = "../bee-storage", default-features = false }
 
-serde = { version = "1.0", features = [ "derive" ] }
-sled = { version = "0.34.6", features = [ "compression" ]}
+serde = { version = "1.0", default-features = false, features = [ "derive" ] }
+sled = { version = "0.34.6", default-features = false, features = [ "compression" ]}
 thiserror = "1.0"
 
 [dev-dependencies]
-bee-storage-test = { path = "../bee-storage-test" }
+bee-storage-test = { path = "../bee-storage-test", default-features = false }

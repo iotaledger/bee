@@ -14,20 +14,20 @@ homepage = "https://www.iota.org"
 serde1 = [ "serde", "serde-big-array" ]
 
 [dependencies]
-bee-ord = { path = "../bee-common/bee-ord" }
-bee-packable = { path = "../bee-common/bee-packable", features = ["serde"] }
-bee-packable-derive = { path = "../bee-common/bee-packable-derive" }
+bee-ord = { path = "../bee-common/bee-ord", default-features = false }
+bee-packable = { path = "../bee-common/bee-packable", default-features = false, features = ["serde"] }
+bee-packable-derive = { path = "../bee-common/bee-packable-derive", default-features = false }
 
 bech32 = { version = "0.8", default-features = false }
 bitvec = { version = "0.20", default-features = false }
 digest = { version = "0.9", default-features = false }
 hashbrown = { version = "0.11", default-features = false, features = [ "ahash-compile-time-rng" ] }
 hex = { version = "0.4", default-features = false }
-iota-crypto = { version = "0.7.0", features = [ "ed25519", "blake2b" ] }
-serde = { version = "1.0", features = [ "derive" ], optional = true }
-serde-big-array = { version = "0.3", features = [ "const-generics" ], optional = true }
+iota-crypto = { version = "0.7.0", default-features = false, features = [ "ed25519", "blake2b" ] }
+serde = { version = "1.0", default-features = false, features = [ "derive" ], optional = true }
+serde-big-array = { version = "0.3", default-features = false, features = [ "const-generics" ], optional = true }
 
 [dev-dependencies]
-bee-test = { path = "../bee-test" }
+bee-test = { path = "../bee-test", default-features = false }
 
-serde_json = "1.0"
+serde_json = { version = "1.0", default-features = false }
