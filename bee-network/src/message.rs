@@ -18,9 +18,9 @@ pub(crate) struct Message(proto::Message);
 #[repr(u8)]
 #[non_exhaustive]
 pub enum MessageType {
-    /// Send a message
+    /// Send a message.
     Message = 20 + IOTA,
-    /// Request a message
+    /// Request a message.
     MessageRequest,
 }
 

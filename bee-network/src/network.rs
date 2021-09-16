@@ -83,7 +83,6 @@ async fn run_server(
         let result = server.accept().await;
         match result {
             Ok((tcp_stream, socket_addr)) => {
-                // let conn_id = NUM_CONNECTIONS.fetch_add(1, Ordering::Relaxed);
                 log::info!("being dialed from address {}", socket_addr);
 
                 // check whether it's okay being dialed from that address.
@@ -144,8 +143,6 @@ async fn run_client(
 
                 match result {
                     Ok(tcp_stream) => {
-                        // let conn_id = NUM_CONNECTIONS.fetch_add(1, Ordering::Relaxed);
-
                         log::info!("dialing address: {}...", socket_addr);
 
                         match handshake(
