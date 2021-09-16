@@ -1,7 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_gossip::backstage::GossipActor;
+use bee_gossip::{backstage::GossipActor, config::GossipConfig};
+use bee_identity::LocalId;
 use bee_logger::logger_init;
 use bee_node::{
     banner::print_logo_and_version,
@@ -104,5 +105,51 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .block_on()
         .await?;
 
-    Ok(())
+    async fn run(&mut self, rt: &mut Rt<Self, S>, _data: Self::Data) -> ActorResult<()> {
+        let cli = NodeCliArgs::new();
+
+        let config = NodeConfigBuilder::from_file(cli.config().unwrap_or(DEFAULT_NODE_CONFIG_PATH))
+            .map_err(ActorError::aborted)?
+            .with_cli_args(cli.clone())
+            .finish();
+
+        logger_init(config.logger).map_err(ActorError::aborted)?;
+
+        print_logo_and_version();
+
+        if cli.version() {
+            return Ok(());
+        }
+
+        let port = cli.port();
+        let identity = cli.identity();
+
+        let local_id = if let Some(identity) = identity {
+            LocalId::from_bs58_secret_key_str(identity)
+        } else {
+            LocalId::new()
+        };
+
+        log::info!("node local id: {:?}", local_id);
+
+        let network_config = GossipConfig::new(port, local_id, "./peers.yaml").map_err(ActorError::exit)?;
+
+        rt.add_resource(network_config).await;
+
+        rt.start(Some("network".into()), NetworkWorker::new()).await?;
+
+        while let Some(event) = rt.inbox_mut().next().await {
+            match event {
+                BeeSupervisorEvent::Eol | BeeSupervisorEvent::Report => {
+                    // TODO: handle network status report events.
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn type_name() -> &'static str {
+        std::any::type_name::<Self>()
+    }
 }
