@@ -11,7 +11,7 @@ keywords = [ "iota", "tangle", "bee", "framework" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-message = { path = "../bee-message" }
+bee-message = { path = "../bee-message", features = [ "metadata" ] }
 
 tokio = { version = "1.11", features = [ "macros", "rt", "sync" ] }
 hashbrown = { version = "0.11" }
