@@ -84,9 +84,7 @@ pub trait MessagePayload: Packable + Into<Payload> {
             .map_err(|e| UnpackError::Packable(e.into()))?;
         }
 
-        let payload = Self::unpack(unpacker).coerce()?;
-
-        Ok(payload.into())
+        Ok(Self::unpack(unpacker).coerce()?.into())
     }
 }
 

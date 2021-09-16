@@ -163,11 +163,11 @@ impl Packable for Message {
         let version = u8::unpack(unpacker).infallible()?;
         validate_message_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let parents = Parents::unpack(unpacker).coerce()?;
+        let parents = Parents::unpack(unpacker)?;
         let issuer_public_key = <[u8; MESSAGE_PUBLIC_KEY_LENGTH]>::unpack(unpacker).infallible()?;
         let issue_timestamp = u64::unpack(unpacker).infallible()?;
         let sequence_number = u32::unpack(unpacker).infallible()?;
-        let payload = OptionalPayload::unpack(unpacker).coerce()?;
+        let payload = OptionalPayload::unpack(unpacker)?;
         let nonce = u64::unpack(unpacker).infallible()?;
         let signature = <[u8; MESSAGE_SIGNATURE_LENGTH]>::unpack(unpacker).infallible()?;
 

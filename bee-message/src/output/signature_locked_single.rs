@@ -57,7 +57,7 @@ impl Packable for SignatureLockedSingleOutput {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let address = Address::unpack(unpacker).coerce()?;
+        let address = Address::unpack(unpacker)?;
 
         let amount = u64::unpack(unpacker).infallible()?;
         validate_amount(amount).map_err(|e| UnpackError::Packable(e.into()))?;

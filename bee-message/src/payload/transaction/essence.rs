@@ -165,8 +165,7 @@ impl Packable for TransactionEssence {
                         UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidInputCount(len).into(),
                         UnpackPrefixError::Packable(err) => err,
                     })
-                })
-                .coerce()?;
+                })?;
 
         validate_inputs_unique_utxos(&inputs).map_err(|e| UnpackError::Packable(e.into()))?;
         validate_inputs_sorted(&inputs).map_err(|e| UnpackError::Packable(e.into()))?;

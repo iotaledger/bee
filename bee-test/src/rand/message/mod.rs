@@ -5,6 +5,8 @@
 pub mod address;
 /// Module providing random input generation utilities.
 pub mod input;
+/// Module providing random metadata generation utilities.
+pub mod metadata;
 /// Module providing random output generation utilities.
 pub mod output;
 /// Module providing random parent generation utilities.
