@@ -45,16 +45,16 @@ pub fn start_incoming_processor(
                     if incoming_tx.send(msg_buf[..len].to_vec()).is_err() {
                         debug!("gossip-in: receiver dropped locally.");
 
-                        // The receiver of this channel was dropped, maybe due to a shutdown. There is nothing we can do to
-                        // salvage this situation, hence we drop the connection.
+                        // The receiver of this channel was dropped, maybe due to a shutdown. There is nothing we can do
+                        // to salvage this situation, hence we drop the connection.
                         break;
                     }
                 } else {
                     debug!("gossip-in: stream closed remotely.");
 
-                    // NB: The network service will not shut down before it has received the `ProtocolDropped` event from
-                    // all once connected peers, hence if the following send fails, then it must be
-                    // considered a bug.
+                    // NB: The network service will not shut down before it has received the `ProtocolDropped` event
+                    // from all once connected peers, hence if the following send fails, then it
+                    // must be considered a bug.
 
                     // The remote peer dropped the connection.
                     internal_event_sender
@@ -94,9 +94,9 @@ pub fn start_outgoing_processor(
                 if message.is_empty() {
                     debug!("gossip-out: received shutdown message.");
 
-                    // NB: The network service will not shut down before it has received the `ConnectionDropped` event from
-                    // all once connected peers, hence if the following send fails, then it must be
-                    // considered a bug.
+                    // NB: The network service will not shut down before it has received the `ConnectionDropped` event
+                    // from all once connected peers, hence if the following send fails, then it
+                    // must be considered a bug.
 
                     internal_event_sender
                         .send(InternalEvent::ProtocolDropped { peer_id })
