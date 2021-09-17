@@ -6,6 +6,7 @@
 use std::future::Future;
 
 /// Spawns a task with or without instrumentation depending on a compile time feature.
+#[track_caller]
 pub fn task_spawn<F>(future: F) -> tokio::task::JoinHandle<<F as futures::Future>::Output>
 where
     F: Future + Send + 'static,
