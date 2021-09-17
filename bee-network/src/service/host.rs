@@ -18,7 +18,10 @@ use crate::{
     swarm::protocols::iota_gossip,
 };
 
-use bee_runtime::shutdown_stream::ShutdownStream;
+use bee_runtime::{
+    shutdown_stream::ShutdownStream,
+    task::{StandaloneSpawner, TaskSpawner},
+};
 
 use futures::{
     channel::oneshot,
@@ -138,26 +141,26 @@ pub mod standalone {
             let (shutdown_tx2, shutdown_rx2) = oneshot::channel::<()>();
             let (shutdown_tx3, shutdown_rx3) = oneshot::channel::<()>();
 
-            tokio::spawn(async move {
+            StandaloneSpawner::spawn(async move {
                 shutdown.await.expect("receiving shutdown signal");
 
                 shutdown_tx1.send(()).expect("receiving shutdown signal");
                 shutdown_tx2.send(()).expect("receiving shutdown signal");
                 shutdown_tx3.send(()).expect("receiving shutdown signal");
             });
-            tokio::spawn(command_processor(
+            StandaloneSpawner::spawn(command_processor(
                 shutdown_rx1,
                 commands,
                 senders.clone(),
                 peerlist.clone(),
             ));
-            tokio::spawn(event_processor(
+            StandaloneSpawner::spawn(event_processor(
                 shutdown_rx2,
                 internal_events,
                 senders.clone(),
                 peerlist.clone(),
             ));
-            tokio::spawn(peerstate_checker(shutdown_rx3, senders, peerlist));
+            StandaloneSpawner::spawn(peerstate_checker(shutdown_rx3, senders, peerlist));
 
             info!("Network service started.");
         }
