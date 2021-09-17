@@ -13,7 +13,7 @@ use thiserror::Error;
 use std::{fs, path::Path};
 
 /// Default path for the node configuration file.
-pub const DEFAULT_NODE_CONFIG_PATH: &str = "./config.toml";
+pub const DEFAULT_NODE_CONFIG_PATH: &str = "./config.json";
 
 /// Errors occurring while parsing the node configuration file.
 #[derive(Debug, Error)]
@@ -23,7 +23,7 @@ pub enum Error {
     ConfigFileReadFailed(#[from] std::io::Error),
     /// Deserializing the node configuration file failed.
     #[error("deserializing the node configuration file failed: {0}")]
-    ConfigFileDeserializationFailed(#[from] toml::de::Error),
+    ConfigFileDeserializationFailed(#[from] serde_json::error::Error),
 }
 
 /// Builder for the [`NodeConfig`].
@@ -36,7 +36,7 @@ impl NodeConfigBuilder {
     /// Creates a [`NodeConfigBuilder`] from a config file.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
         match fs::read_to_string(path) {
-            Ok(toml) => toml::from_str::<Self>(&toml).map_err(Error::ConfigFileDeserializationFailed),
+            Ok(toml) => serde_json::from_str::<Self>(&toml).map_err(Error::ConfigFileDeserializationFailed),
             Err(e) => Err(Error::ConfigFileReadFailed(e)),
         }
     }
