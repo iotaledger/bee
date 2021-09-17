@@ -17,6 +17,7 @@ async-trait = "0.1"
 dashmap = "4.0"
 futures = "0.3"
 log = { version = "0.4", features = [ "serde" ] }
+tokio = "1.11"
 
 [dev-dependencies]
 tokio = { version = "1.11", features = [ "rt", "macros", "time" ] }

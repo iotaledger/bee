@@ -10,3 +10,4 @@ pub mod node;
 pub mod resource;
 pub mod shutdown_stream;
 pub mod worker;
+pub mod task;
