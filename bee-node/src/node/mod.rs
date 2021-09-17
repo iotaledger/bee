@@ -9,7 +9,7 @@ pub use error::Error;
 
 use crate::{config::NodeConfig, storage::StorageBackend};
 
-use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Worker};
+use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, task::TaskSpawner, worker::Worker};
 
 use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;
@@ -78,6 +78,12 @@ impl<B: StorageBackend> BeeNode<B> {
     }
 }
 
+struct NodeSpawner;
+
+impl TaskSpawner for NodeSpawner {
+    const ORIGIN: &'static str = "node";
+}
+
 #[async_trait]
 impl<B: StorageBackend> Node for BeeNode<B> {
     type Builder = BeeNodeBuilder<B>;
@@ -133,24 +139,7 @@ impl<B: StorageBackend> Node for BeeNode<B> {
         let (tx, rx) = oneshot::channel();
         let future = g(rx);
 
-        #[cfg(feature = "console")]
-        let task = {
-            use std::panic::Location;
-            use tracing::Instrument;
-
-            let caller = Location::caller();
-            let span = tracing::info_span!(
-                target: "tokio::task",
-                "task",
-                file = caller.file(),
-                line = caller.line(),
-            );
-
-            tokio::spawn(future.instrument(span))
-        };
-
-        #[cfg(not(feature = "console"))]
-        let task = tokio::spawn(future);
+        let task = NodeSpawner::spawn(future);
 
         self.tasks
             .entry(TypeId::of::<W>())

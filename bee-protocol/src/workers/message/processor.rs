@@ -19,13 +19,18 @@ use crate::{
 use bee_common::packable::Packable;
 use bee_message::{Message, MessageId};
 use bee_network::PeerId;
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_runtime::{
+    node::Node,
+    shutdown_stream::ShutdownStream,
+    task::{StandaloneSpawner, TaskSpawner},
+    worker::Worker,
+};
 use bee_tangle::{metadata::MessageMetadata, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{channel::oneshot::Sender, stream::StreamExt};
 use log::{error, info, trace};
-use tokio::{sync::mpsc, task};
+use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible, time::Instant};
@@ -100,7 +105,7 @@ where
                 let bus = bus.clone();
                 let network_id = config;
 
-                task::spawn(async move {
+                StandaloneSpawner::spawn(async move {
                     while let Ok(ProcessorWorkerEvent {
                         from,
                         message_packet,

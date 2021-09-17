@@ -15,6 +15,7 @@ use crate::{
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder, NodeInfo},
+    task::{StandaloneSpawner, TaskSpawner},
     worker::Worker,
 };
 use bee_storage::system::StorageHealth;
@@ -53,7 +54,7 @@ fn shutdown_procedure(sender: oneshot::Sender<()>) {
 fn shutdown_listener(signals: Vec<SignalKind>) -> oneshot::Receiver<()> {
     let (sender, receiver) = oneshot::channel();
 
-    tokio::spawn(async move {
+    StandaloneSpawner::spawn(async move {
         let mut signals = signals
             .iter()
             .map(|kind| signal(*kind).unwrap())
@@ -76,7 +77,7 @@ fn shutdown_listener(signals: Vec<SignalKind>) -> oneshot::Receiver<()> {
 fn shutdown_listener() -> oneshot::Receiver<()> {
     let (sender, receiver) = oneshot::channel();
 
-    tokio::spawn(async move {
+    StandaloneSpawner::spawn(async move {
         if let Err(e) = tokio::signal::ctrl_c().await {
             panic!("Failed to intercept CTRL-C: {:?}.", e);
         }

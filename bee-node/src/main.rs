@@ -4,7 +4,10 @@
 #![recursion_limit = "256"]
 
 use bee_node::{plugins, print_banner_and_version, tools, CliArgs, NodeBuilder, NodeConfigBuilder};
-use bee_runtime::node::NodeBuilder as _;
+use bee_runtime::{
+    node::NodeBuilder as _,
+    task::{StandaloneSpawner, TaskSpawner},
+};
 #[cfg(feature = "rocksdb")]
 use bee_storage_rocksdb::storage::Storage as RocksDb;
 #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
@@ -31,7 +34,7 @@ fn logger_init() -> tokio::task::JoinHandle<Result<(), Box<dyn std::error::Error
         .with(layer)
         .init();
 
-    tokio::spawn(async move { server.serve().await })
+    StandaloneSpawner::spawn(async move { server.serve().await })
 }
 
 #[cfg(not(feature = "console"))]
@@ -77,7 +80,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Ok(builder) => match builder.with_plugin::<plugins::Mps>().finish().await {
             Ok(node) => {
                 #[cfg(feature = "console")]
-                let res = tokio::try_join!(tokio::spawn(node.run()), console_handle);
+                let res = tokio::try_join!(StandaloneSpawner::spawn(node.run()), console_handle);
 
                 #[cfg(not(feature = "console"))]
                 let res = node.run().await;
