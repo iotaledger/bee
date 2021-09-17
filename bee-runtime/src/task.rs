@@ -7,7 +7,7 @@ use std::future::Future;
 
 /// Spawns a task with or without instrumentation depending on a compile time feature.
 #[track_caller]
-pub fn task_spawn<F>(future: F, origin: &str) -> tokio::task::JoinHandle<<F as futures::Future>::Output>
+pub fn task_spawn<F>(future: F, _origin: &str) -> tokio::task::JoinHandle<<F as futures::Future>::Output>
 where
     F: Future + Send + 'static,
     <F as futures::Future>::Output: Send,
@@ -18,7 +18,7 @@ where
         let span = tracing::info_span!(
             target: "tokio::task",
             "task",
-            origin = origin,
+            origin = _origin,
             file = caller.file(),
             line = caller.line(),
         );
