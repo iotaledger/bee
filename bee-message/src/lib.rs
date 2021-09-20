@@ -4,7 +4,7 @@
 //! Core data types for messages in the Tangle.
 
 #![no_std]
-#![deny(missing_docs, warnings)]
+#![deny(missing_docs)]
 
 extern crate alloc;
 

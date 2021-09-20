@@ -3,7 +3,7 @@
 
 //! A bee-storage implementation for the [sled](https://docs.rs/sled/latest/sled/) backend.
 
-#![deny(missing_docs, warnings)]
+#![deny(missing_docs)]
 
 pub mod access;
 pub mod config;

@@ -3,7 +3,7 @@
 
 //! This crate provides the [`Packable`] derive macro.
 
-#![deny(missing_docs, warnings)]
+#![deny(missing_docs)]
 
 mod attribute;
 mod fragments;

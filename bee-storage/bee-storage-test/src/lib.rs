@@ -3,7 +3,7 @@
 
 //! Generic access tests for key/value storage tables.
 
-#![deny(missing_docs, warnings)]
+#![deny(missing_docs)]
 
 mod message_id_to_message;
 mod system;
