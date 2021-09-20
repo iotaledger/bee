@@ -3,7 +3,7 @@
 
 //! The bee node API for plugins.
 
-#![deny(missing_docs, warnings)]
+#![deny(missing_docs)]
 
 mod handler;
 mod manager;

@@ -3,7 +3,7 @@
 
 //! Crate containing types and functionalities to build nodes for the IOTA networks.
 
-#![deny(missing_docs, warnings)]
+#![deny(missing_docs)]
 
 pub mod banner;
 pub mod cli;

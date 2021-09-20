@@ -4,7 +4,7 @@
 //! A crate that provides features related to ordering.
 
 #![no_std]
-#![deny(missing_docs, warnings)]
+#![deny(missing_docs)]
 
 use core::{cmp::Ordering, iter::Iterator};
 

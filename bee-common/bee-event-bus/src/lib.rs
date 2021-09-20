@@ -3,7 +3,7 @@
 
 //! A crate that provides a generic, type-safe and thread-safe event bus for arbitrary event types.
 
-#![deny(missing_docs, warnings)]
+#![deny(missing_docs)]
 
 mod event_bus;
 mod unique_id;

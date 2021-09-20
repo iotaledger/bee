@@ -3,7 +3,7 @@
 
 //! A crate providing utilities for testing purposes.
 
-#![deny(missing_docs, warnings)]
+#![deny(missing_docs)]
 
 /// A module providing random generation of types of testing purposes.
 pub mod rand;

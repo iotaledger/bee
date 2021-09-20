@@ -3,7 +3,7 @@
 
 //! A logger backend for the [`log`] crate.
 
-#![deny(missing_docs, warnings)]
+#![deny(missing_docs)]
 
 mod config;
 
