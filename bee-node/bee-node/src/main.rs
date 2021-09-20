@@ -67,7 +67,7 @@ impl<S: SupHandle<Self>> Actor<S> for BeeSupervisor {
             return Ok(());
         }
 
-        let port = cli.port();
+        let port = cli.gossip_port();
         let identity = cli.identity();
 
         let local_id = if let Some(identity) = identity {

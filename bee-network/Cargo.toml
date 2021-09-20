@@ -10,16 +10,13 @@ license = "Apache-2.0"
 keywords = [ "iota", "tangle", "bee", "framework", "node" ]
 homepage = "https://www.iota.org"
 
-[lib]
-path = "src/lib.rs"
-
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
 backstage = { git = "https://github.com/iotaledger/backstage", default-features = false, branch = "stable", optional = true }
 base64 = { version = "0.13", default-features = false }
 bs58 = { version = "0.4", default-features = false, features = [ "alloc" ] }
 bytes = { version = "1.0", default-features = false }
-iota-crypto = { version = "0.7.0", default-features = false, features = ["ed25519", "random", "sha" ] }
+iota-crypto = { version = "0.7.0", default-features = false, features = [ "ed25519", "random", "sha" ] }
 log = { version = "0.4", default-features = false }
 num = { version = "0.4", default-features = false }
 num-derive = { version = "0.3", default-features = false }
@@ -27,13 +24,13 @@ num-traits = { version = "0.2", default-features = false }
 prost = { version = "0.8", default-features = false }
 prost-build = { version = "0.8", default-features = false }
 thiserror = { version = "1.0", default-features = false }
-tokio = { version = "1.5", default-features = false, features = ["sync", "time", "rt"] }
+tokio = { version = "1.5", default-features = false, features = [ "sync", "time", "rt" ] }
 yaml-rust = { version = "0.4", default-features = false }
 
 [dev-dependencies]
 anyhow = { version = "1.0", default-features = false }
 env_logger = { version = "0.9", default-features = false }
-tokio = { version = "1.5", default-features = false, features = ["macros", "rt-multi-thread", "signal"] }
+tokio = { version = "1.5", default-features = false, features = [ "macros", "rt-multi-thread", "signal" ] }
 
 [build-dependencies]
 prost-build = { version = "0.8", default-features = false }

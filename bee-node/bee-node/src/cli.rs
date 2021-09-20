@@ -9,8 +9,8 @@ use structopt::StructOpt;
 /// Defines the node CLI arguments.
 #[derive(Clone, Debug, StructOpt)]
 pub struct NodeCliArgs {
-    #[structopt(short, long, help = "The listening port")]
-    port: u16,
+    #[structopt(short, long, help = "The listening port for gossip")]
+    gossip_port: u16,
     #[structopt(short, long, help = "The node's identity")]
     identity: Option<String>,
     #[structopt(short = "c", long = "config", help = "Path of the node configuration file")]
@@ -52,9 +52,9 @@ impl NodeCliArgs {
         self.version
     }
 
-    /// Returns the listening port for peers.
-    pub fn port(&self) -> u16 {
-        self.port
+    /// Returns the listening port for gossip.
+    pub fn gossip_port(&self) -> u16 {
+        self.gossip_port
     }
 
     /// Returns the identity of the node if specified.

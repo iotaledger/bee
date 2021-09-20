@@ -5,7 +5,10 @@
 
 use crate::consts::ID_LENGTH;
 
-use crypto::{hashes::sha, signatures::ed25519::{SecretKey as PrivateKey, PublicKey, Signature}};
+use crypto::{
+    hashes::sha,
+    signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature},
+};
 
 use std::{
     fmt,
@@ -27,7 +30,9 @@ impl LocalIdentity {
 
     /// Creates a local identity from a 'base58' encoded ED25519 private key.
     pub fn from_bs58_encoded_private_key(private_key: impl AsRef<str>) -> Self {
-        let private_key = bs58::decode(private_key.as_ref()).into_vec().expect("error restoring private key");
+        let private_key = bs58::decode(private_key.as_ref())
+            .into_vec()
+            .expect("error restoring private key");
         if private_key.len() != 32 {
             panic!("error restoring private key");
         }
