@@ -5,7 +5,7 @@
 
 use crate::consts::ID_LENGTH;
 
-use crypto::{hashes::sha, signatures::ed25519};
+use crypto::{hashes::sha, signatures::ed25519::{SecretKey as PrivateKey, PublicKey, Signature}};
 
 use std::{
     fmt,
@@ -15,7 +15,7 @@ use std::{
 /// A type that represents a local identity, which is able to sign messages.
 #[derive(Clone)]
 pub struct LocalIdentity {
-    secret_key: Arc<RwLock<ed25519::SecretKey>>,
+    private_key: Arc<RwLock<PrivateKey>>,
     identity: Identity,
 }
 
@@ -26,27 +26,27 @@ impl LocalIdentity {
     }
 
     /// Creates a local identity from a 'base58' encoded ED25519 private key.
-    pub fn from_bs58_secret_key_str(sk: &str) -> Self {
-        let sk = bs58::decode(sk).into_vec().expect("error restoring secret key");
-        if sk.len() != 32 {
-            panic!("error restoring secret key");
+    pub fn from_bs58_encoded_private_key(private_key: impl AsRef<str>) -> Self {
+        let private_key = bs58::decode(private_key.as_ref()).into_vec().expect("error restoring private key");
+        if private_key.len() != 32 {
+            panic!("error restoring private key");
         }
         let mut bytes = [0u8; 32];
-        bytes.copy_from_slice(&sk[..32]);
+        bytes.copy_from_slice(&private_key[..32]);
 
-        let secret_key = ed25519::SecretKey::from_bytes(bytes);
+        let private_key = PrivateKey::from_bytes(bytes);
 
-        let public_key = secret_key.public_key();
+        let public_key = private_key.public_key();
         let identity = Identity::from_public_key(public_key);
 
         Self {
-            secret_key: Arc::new(RwLock::new(secret_key)),
+            private_key: Arc::new(RwLock::new(private_key)),
             identity,
         }
     }
 
     /// Returns the public key of this identity.
-    pub fn public_key(&self) -> ed25519::PublicKey {
+    pub fn public_key(&self) -> PublicKey {
         self.identity.public_key()
     }
 
@@ -56,18 +56,18 @@ impl LocalIdentity {
     }
 
     /// Signs a message using the private key.
-    pub fn sign(&self, msg: &[u8]) -> ed25519::Signature {
-        self.secret_key.read().expect("error getting the lock").sign(msg)
+    pub fn sign(&self, msg: &[u8]) -> Signature {
+        self.private_key.read().expect("error getting the lock").sign(msg)
     }
 }
 
 impl Default for LocalIdentity {
     fn default() -> Self {
-        let secret_key = ed25519::SecretKey::generate().expect("error generating secret key");
-        let identity = Identity::from_public_key(secret_key.public_key());
+        let private_key = PrivateKey::generate().expect("error generating private key");
+        let identity = Identity::from_public_key(private_key.public_key());
 
         Self {
-            secret_key: Arc::new(RwLock::new(secret_key)),
+            private_key: Arc::new(RwLock::new(private_key)),
             identity,
         }
     }
@@ -85,12 +85,12 @@ impl fmt::Debug for LocalIdentity {
 #[derive(Clone)]
 pub struct Identity {
     id: [u8; ID_LENGTH],
-    public_key: Arc<RwLock<ed25519::PublicKey>>,
+    public_key: Arc<RwLock<PublicKey>>,
 }
 
 impl Identity {
     /// Creates an identity from an ED25519 public key.
-    pub fn from_public_key(public_key: ed25519::PublicKey) -> Self {
+    pub fn from_public_key(public_key: PublicKey) -> Self {
         let id = gen_id(&public_key);
         Self {
             id,
@@ -99,12 +99,12 @@ impl Identity {
     }
 
     /// Returns the public key of this identity.
-    pub fn public_key(&self) -> ed25519::PublicKey {
+    pub fn public_key(&self) -> PublicKey {
         let guard = self.public_key.read().expect("error getting the lock");
         let bytes = guard.as_ref();
         let mut pk = [0u8; 32];
         pk.copy_from_slice(bytes);
-        ed25519::PublicKey::try_from_bytes(pk).expect("error cloning public key")
+        PublicKey::try_from_bytes(pk).expect("error cloning public key")
     }
 
     /// Returns the 'base58' string representation (created from of the first 8 bytes of the 32 byte long internal id)
@@ -128,7 +128,7 @@ impl fmt::Debug for Identity {
 }
 
 // id is the SHA-256 hash of the ed25519 public key
-fn gen_id(public_key: &ed25519::PublicKey) -> [u8; ID_LENGTH] {
+fn gen_id(public_key: &PublicKey) -> [u8; ID_LENGTH] {
     let mut digest = [0u8; ID_LENGTH];
     sha::SHA256(public_key.as_ref(), &mut digest);
     digest

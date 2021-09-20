@@ -71,7 +71,7 @@ impl<S: SupHandle<Self>> Actor<S> for BeeSupervisor {
         let identity = cli.identity();
 
         let local_id = if let Some(identity) = identity {
-            LocalIdentity::from_bs58_secret_key_str(identity)
+            LocalIdentity::from_bs58_encoded_private_key(identity)
         } else {
             LocalIdentity::new()
         };
