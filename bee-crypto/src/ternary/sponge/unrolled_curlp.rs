@@ -23,8 +23,8 @@ pub struct UnrolledCurlP81 {
 impl UnrolledCurlP81 {
     pub fn new() -> Self {
         Self {
-            p: [U256::default(); 3],
-            n: [U256::default(); 3],
+            p: Default::default(),
+            n: Default::default(),
             direction: SpongeDirection::Absorb,
         }
     }
@@ -124,7 +124,7 @@ mod u256 {
 
     impl Default for U256 {
         fn default() -> Self {
-            Self([0; 4])
+            Self([u64::default(); 4])
         }
     }
 
@@ -296,8 +296,8 @@ mod transform {
     }
 
     fn rotate_state(p: &mut [U256; 3], n: &mut [U256; 3], offset: usize, shift: usize) -> ([U256; 3], [U256; 3]) {
-        let mut p2 = [U256::default(); 3];
-        let mut n2 = [U256::default(); 3];
+        let mut p2 = <[U256; 3]>::default();
+        let mut n2 = <[U256; 3]>::default();
 
         macro_rules! rotate {
             ($part:expr, $part2:expr, $i:expr) => {
@@ -328,8 +328,8 @@ mod transform {
         const M1: u64 = (M0 << 1) & u64::MAX;
         const M2: u64 = (M0 << 2) & u64::MAX;
 
-        let mut p2 = [U256::default(); 3];
-        let mut n2 = [U256::default(); 3];
+        let mut p2 = <[U256; 3]>::default();
+        let mut n2 = <[U256; 3]>::default();
 
         for i in 0..3 {
             macro_rules! compute {
