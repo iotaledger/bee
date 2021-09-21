@@ -11,10 +11,10 @@ keywords = [ "iota", "tangle", "bee", "framework" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-message = { path = "../bee-message", features = [ "metadata" ] }
+bee-message = { path = "../bee-message", default-features = false, features = [ "metadata" ] }
 
-tokio = { version = "1.11", features = [ "macros", "rt", "sync" ] }
-hashbrown = { version = "0.11" }
+tokio = { version = "1.11", default-features = false, features = [ "macros", "rt", "sync" ] }
+hashbrown = { version = "0.11", default-features = false }
 
 [dev-dependencies]
-bee-test = { path = "../bee-test" }
+bee-test = { path = "../bee-test", default-features = false }
