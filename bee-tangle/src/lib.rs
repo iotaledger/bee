@@ -3,7 +3,7 @@
 
 use bee_message::{Message, MessageId, MessageMetadata};
 
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 
 use std::{collections::HashMap, sync::Arc};
 
@@ -15,7 +15,7 @@ struct MessageData {
 /// Tangle data structure.
 /// Provides a [`HashMap`] of [`MessageId`]s to [`Message`]s.
 #[derive(Default)]
-pub struct Tangle(Mutex<HashMap<MessageId, MessageData>>);
+pub struct Tangle(RwLock<HashMap<MessageId, MessageData>>);
 
 impl Tangle {
     /// Creates a new tangle.
@@ -25,7 +25,7 @@ impl Tangle {
 
     /// Inserts a [`Message`] into the tangle, associating it with a [`MessageId`].
     pub async fn insert(&self, message_id: MessageId, message: Message, metadata: MessageMetadata) {
-        self.0.lock().await.insert(
+        self.0.write().await.insert(
             message_id,
             MessageData {
                 message: Arc::new(message),
@@ -36,31 +36,11 @@ impl Tangle {
 
     /// Retrieves a [`Message`] from the tangle with a given [`MessageId`].
     pub async fn get(&self, message_id: &MessageId) -> Option<Arc<Message>> {
-        self.0.lock().await.get(message_id).map(|data| data.message.clone())
+        self.0.read().await.get(message_id).map(|data| data.message.clone())
     }
 
     /// Retrieves [`MessageMetadata`] from the tangle with a given [`MessageId`].
     pub async fn get_metadata(&self, message_id: &MessageId) -> Option<MessageMetadata> {
-        self.0.lock().await.get(message_id).map(|data| data.metadata.clone())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::Tangle;
-
-    use bee_test::rand::message::{metadata::rand_message_metadata, rand_message};
-
-    #[tokio::test]
-    async fn test_insert() {
-        let message = rand_message();
-        let message_id = message.id();
-        let metadata = rand_message_metadata();
-
-        let tangle = Tangle::new();
-        tangle.insert(message_id, message.clone(), metadata.clone()).await;
-
-        assert_eq!(*tangle.get(&message_id).await.unwrap(), message);
-        assert_eq!(tangle.get_metadata(&message_id).await.unwrap(), metadata);
+        self.0.read().await.get(message_id).map(|data| data.metadata.clone())
     }
 }
