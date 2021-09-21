@@ -7,6 +7,7 @@ mod batched_curlp;
 mod curlp;
 mod kerl;
 mod kind;
+mod unrolled_curlp;
 
 use super::HASH_LENGTH;
 
@@ -14,6 +15,7 @@ pub use batched_curlp::{BatchHasher, BATCH_SIZE};
 pub use curlp::{CurlP, CurlP27, CurlP81, CurlPRounds};
 pub use kerl::Kerl;
 pub use kind::SpongeKind;
+pub use unrolled_curlp::UnrolledCurlP81;
 
 use bee_ternary::{TritBuf, Trits};
 
