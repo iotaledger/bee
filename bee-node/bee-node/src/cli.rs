@@ -10,7 +10,7 @@ use structopt::StructOpt;
 #[derive(Clone, Debug, StructOpt)]
 pub struct NodeCliArgs {
     #[structopt(short, long, help = "The listening port for gossip")]
-    gossip_port: u16,
+    gossip_port: Option<u16>,
     #[structopt(short, long, help = "The node's identity")]
     identity: Option<String>,
     #[structopt(short = "c", long = "config", help = "Path of the node configuration file")]
@@ -53,8 +53,8 @@ impl NodeCliArgs {
     }
 
     /// Returns the listening port for gossip.
-    pub fn gossip_port(&self) -> u16 {
-        self.gossip_port
+    pub fn gossip_port(&self) -> Option<&u16> {
+        self.gossip_port.as_ref()
     }
 
     /// Returns the identity of the node if specified.

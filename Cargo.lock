@@ -202,9 +202,9 @@ dependencies = [
  "num-traits 0.2.14",
  "prost",
  "prost-build",
+ "serde 1.0.130",
  "thiserror",
  "tokio",
- "yaml-rust",
 ]
 
 [[package]]

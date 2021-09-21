@@ -4,7 +4,7 @@
 //! A module that provides the [`Network`] type, which allows establish and maintain network connections with peers.
 
 use crate::{
-    config::{Config, ManualPeerConfig},
+    config::{NetworkConfig, ManualPeeringConfig},
     conn::{ConnectedList, Direction},
     event::NetworkEvent,
     handshake::handshake,
@@ -45,12 +45,11 @@ pub struct Network {}
 
 impl Network {
     /// Starts the network (layer).
-    pub async fn start(config: Config, on_event: impl Fn(NetworkEvent) + Clone + Send + 'static) -> Result<(), Error> {
-        let Config {
+    pub async fn start(network_config: NetworkConfig, manual_peering_config: ManualPeeringConfig, on_event: impl Fn(NetworkEvent) + Clone + Send + 'static) -> Result<(), Error> {
+        let NetworkConfig {
             bind_addr,
             local_id,
-            manual_peer_config,
-        } = config;
+        } = network_config;
 
         let server = TcpListener::bind(bind_addr).await.map_err(|_| Error::BindingToAddr)?;
 
@@ -61,12 +60,12 @@ impl Network {
             server,
             on_event.clone(),
             local_id.clone(),
-            manual_peer_config.clone(),
+            manual_peering_config.clone(),
             connected_list.clone(),
         ));
 
         // Spin up a client actively connecting to peers.
-        spawn(run_client(on_event, local_id, manual_peer_config, connected_list));
+        spawn(run_client(on_event, local_id, manual_peering_config, connected_list));
 
         Ok(())
     }
@@ -76,7 +75,7 @@ async fn run_server(
     server: TcpListener,
     on_event: impl Fn(NetworkEvent),
     local_id: LocalIdentity,
-    manual_peer_config: ManualPeerConfig,
+    manual_peering_config: ManualPeeringConfig,
     connected_list: ConnectedList,
 ) {
     loop {
@@ -91,7 +90,7 @@ async fn run_server(
                     continue;
                 }
 
-                if let Some(peer_info) = manual_peer_config.get(&socket_addr.ip()) {
+                if let Some(peer_info) = manual_peering_config.get(&socket_addr.ip()) {
                     match handshake(
                         tcp_stream,
                         socket_addr,
@@ -127,11 +126,11 @@ async fn run_server(
 async fn run_client(
     on_event: impl Fn(NetworkEvent),
     local_id: LocalIdentity,
-    manual_peer_config: ManualPeerConfig,
+    manual_peering_config: ManualPeeringConfig,
     connected_list: ConnectedList,
 ) {
     loop {
-        for (_ip, peer_info) in manual_peer_config.iter() {
+        for (_ip, peer_info) in manual_peering_config.iter() {
             // continue, if:
             // (a) the peer is already connected, or
             // (b) the peer is supposed to dial *us*.

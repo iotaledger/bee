@@ -3,12 +3,10 @@
 
 //! A module that deals with peers.
 
-use std::sync::atomic::{AtomicBool, Ordering};
-
 use crate::{
     identity::Identity,
     message::{Message, MessageRequest, MessageType},
-    MAX_PACKET_SIZE,
+    consts::MAX_PACKET_SIZE,
 };
 
 use prost::bytes::{Buf, BufMut, BytesMut};
@@ -16,6 +14,8 @@ use tokio::{
     io::{self, AsyncReadExt, AsyncWriteExt, BufReader, BufWriter},
     net::tcp::{OwnedReadHalf, OwnedWriteHalf},
 };
+
+use std::sync::atomic::{AtomicBool, Ordering};
 
 const BUFFER_SIZE: usize = std::mem::size_of::<u32>() + MAX_PACKET_SIZE;
 

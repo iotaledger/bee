@@ -8,44 +8,85 @@ use crate::{
     util,
 };
 
-use thiserror::Error;
-use yaml_rust::{ScanError, Yaml, YamlLoader};
+use serde::{Serialize, Deserialize};
 
 use std::{
     collections::HashMap,
-    fs::File,
-    io::Read,
-    net::{AddrParseError, IpAddr, Ipv4Addr, SocketAddr},
+    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
 };
 
-#[derive(Clone)]
+/// Represents a bind address.
+#[derive(Clone, Debug)]
+pub enum BindAddr {
+    /// IP4 localhost.
+    LocalhostV4{
+        /// The port to bind to at localhost.
+        port: u16
+    },
+    /// IP6 localhost.
+    LocalhostV6 {
+        /// The port to bind to at localhost.
+        port: u16
+    },
+    /// An arbitrary host.
+    Host { 
+        /// The fully specified socket address to bind to.
+        addr: SocketAddr 
+    },
+}
+
+impl BindAddr {
+    /// Converts this type into the corresponding [`SocketAddr`].
+    pub fn into_socket_addr(self) -> SocketAddr {
+        match self {
+            BindAddr::LocalhostV4 { port } => SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), port),
+            BindAddr::LocalhostV6 { port } => SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), port),
+            BindAddr::Host { addr } => addr,
+        }
+    }
+}
+
 /// Network configuration.
-pub struct Config {
+#[derive(Clone)]
+pub struct NetworkConfig {
     /// The bind address for the server accepting peers to exchange gossip.
     pub bind_addr: SocketAddr,
     /// The local identity of the node.
     pub local_id: LocalIdentity,
-    /// The config to set up manual/static/known peers.
-    pub manual_peer_config: ManualPeerConfig,
 }
 
-impl Config {
+impl NetworkConfig {
     /// Creates a new config.
-    pub fn new(port: u16, local_id: LocalIdentity, peers_file_path: &str) -> Result<Self, ManualPeerConfigError> {
-        let bind_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), port);
-        let manual_peer_config = ManualPeerConfig::from_file(&local_id, peers_file_path)?;
-
-        Ok(Self {
-            bind_addr,
+    pub fn new(bind_addr: BindAddr, local_id: LocalIdentity) -> Self {
+        Self {
+            bind_addr: bind_addr.into_socket_addr(),
             local_id,
-            manual_peer_config,
-        })
+        }
+    }
+}
+
+/// Serializable (and therefore persistable) network configuration data.
+#[derive(Serialize, Deserialize)]
+#[serde(rename = "network")]
+pub struct NetworkConfigBuilder {
+    bind_addr: Option<String>,
+    #[serde(rename = "privateKey")]
+    private_key: Option<String>,
+}
+
+impl NetworkConfigBuilder {
+    /// Finishes the builder.
+    pub fn finish(self) -> NetworkConfig {
+        NetworkConfig {
+            bind_addr: self.bind_addr.unwrap().parse().unwrap(),
+            local_id: LocalIdentity::from_bs58_encoded_private_key(self.private_key.unwrap()),
+        }
     }
 }
 
 /// Stores connection and other information about a manual peer.
 #[derive(Debug, Clone)]
-pub struct ManualPeerInfo {
+pub struct ManualPeerConfig {
     /// The identity of the peer.
     pub identity: Identity,
     /// The address of the peer.
@@ -56,121 +97,98 @@ pub struct ManualPeerInfo {
     is_dialer: bool,
 }
 
-impl ManualPeerInfo {
+impl ManualPeerConfig {
     /// Whether the peer is supposed to be the initiator of a connection.
     pub fn is_dialer(&self) -> bool {
         self.is_dialer
     }
 }
 
-/// Error returned when the peer configuration file could not be loaded.
-#[derive(Debug, Error)]
-pub enum ManualPeerConfigError {
-    /// The YAML file has an invalid layout.
-    #[error("invalid config layout: {0}")]
-    InvalidConfig(&'static str),
-    /// Parsing the peer's address failed.
-    #[error("address could not be parsed: {0}")]
-    AddrParse(#[from] AddrParseError),
-    /// Could not load the YAML file after reading it.
-    #[error("YAML file could not be parsed: {0}")]
-    Scan(#[from] ScanError),
-    /// Could not read the YAML file.
-    #[error("YAML file could not be read: {0}")]
-    Io(#[from] std::io::Error),
-}
-
-/// A YAML backed database for manual peers.
+/// Manual peer configuration.
 #[derive(Clone)]
-pub struct ManualPeerConfig {
-    infos: HashMap<IpAddr, ManualPeerInfo>,
+pub struct ManualPeeringConfig {
+    peer_configs: HashMap<IpAddr, ManualPeerConfig>,
 }
 
-impl ManualPeerConfig {
-    /// Restores the database from its backing file.
-    pub fn from_file(local_id: &LocalIdentity, path: &str) -> Result<Self, ManualPeerConfigError> {
-        let mut file = File::open(path)?;
-        let mut s = String::new();
-
-        file.read_to_string(&mut s)?;
-
-        let mut docs = YamlLoader::load_from_str(&s)?;
-
-        if docs.len() != 1 {
-            return Err(ManualPeerConfigError::InvalidConfig("expected a single document"));
-        }
-
-        let doc = docs.remove(0);
-
-        let peers_config = doc
-            .into_vec()
-            .ok_or(ManualPeerConfigError::InvalidConfig("peers YAML is not an array"))?;
-        let mut infos = HashMap::with_capacity(peers_config.len());
-
-        for m in peers_config {
-            let hm = m
-                .into_hash()
-                .ok_or(ManualPeerConfigError::InvalidConfig("invalid YAML file"))?;
-
-            let public_key_str = hm
-                .get(&Yaml::String("public_key".into()))
-                .ok_or(ManualPeerConfigError::InvalidConfig("missing `public_key` key"))?
-                .as_str()
-                .ok_or(ManualPeerConfigError::InvalidConfig(
-                    "`public_key` value is not a string",
-                ))?;
-
-            let public_key = util::from_public_key_string(public_key_str);
-
-            let dialer = public_key < local_id.public_key();
-
-            let identity = Identity::from_public_key(public_key);
-
-            let address = hm
-                .get(&Yaml::String("address".into()))
-                .ok_or(ManualPeerConfigError::InvalidConfig("missing `address` key"))?
-                .as_str()
-                .ok_or(ManualPeerConfigError::InvalidConfig("`address` value is not a string"))?
-                .parse::<SocketAddr>()
-                .map_err(ManualPeerConfigError::AddrParse)?;
-            let ip = address.ip();
-
-            let alias = hm
-                .get(&Yaml::String("alias".into()))
-                .ok_or(ManualPeerConfigError::InvalidConfig("missing `alias` key"))?
-                .as_str()
-                .ok_or(ManualPeerConfigError::InvalidConfig("`alias` value is not a string"))?
-                .to_string();
-
-            let peer_info = ManualPeerInfo {
-                identity,
-                address,
-                alias,
-                is_dialer: dialer,
-            };
-
-            if infos.contains_key(&ip) {
-                unimplemented!("multiple instances with same ip address");
-            }
-
-            infos.insert(ip, peer_info);
-        }
-
-        Ok(Self { infos })
-    }
-
-    /// Returns a [`ManualPeerInfo`] associated with a particular [`IpAddr`].
-    pub fn get(&self, ip_addr: &IpAddr) -> Option<&ManualPeerInfo> {
-        self.infos.get(ip_addr)
+impl ManualPeeringConfig {
+    /// Returns a [`ManualPeerConfig`] associated with a particular [`IpAddr`].
+    pub fn get(&self, ip_addr: &IpAddr) -> Option<&ManualPeerConfig> {
+        self.peer_configs.get(ip_addr)
     }
 
     /// Adds a new static peer.
-    pub fn add(&mut self, _info: ManualPeerInfo) -> bool {
+    pub fn add(&mut self, _config: ManualPeerConfig) -> bool {
         todo!("add manual peers")
     }
 
     /// Iterates over all manual peers.
-    pub fn iter(&self) -> impl Iterator<Item = (&IpAddr, &ManualPeerInfo)> {
-        self.infos.iter()
+    pub fn iter(&self) -> impl Iterator<Item = (&IpAddr, &ManualPeerConfig)> {
+        self.peer_configs.iter()
+    }
+
+    /// TODO: remove
+    pub fn len(&self) -> usize {
+        self.peer_configs.len()
+    }
+}
+
+/// Serializable representation of a manual peer.
+#[derive(Serialize, Deserialize)]
+pub struct ManualPeerConfigBuilder {
+    #[serde(rename = "publicKey")]
+    public_key: Option<String>,
+    address: Option<String>,
+    alias: Option<String>,
+}
+
+impl ManualPeerConfigBuilder {
+    /// Finishes the builder.
+    pub fn finish(self, local_id: &LocalIdentity) -> ManualPeerConfig {
+        let ManualPeerConfigBuilder { public_key, address, alias } = self;
+
+        let alias = alias.unwrap();
+        let public_key = util::from_public_key_str(public_key.unwrap());
+        let is_dialer = public_key < local_id.public_key();
+
+        let address: SocketAddr = address.unwrap().parse().expect("error parsing address");
+
+        let identity = Identity::from_public_key(public_key);
+
+        ManualPeerConfig {
+            identity,
+            address,
+            alias,
+            is_dialer,
+        }
+    }
+}
+
+/// Serializable representation of a list of manual peers.
+#[derive(Default, Serialize, Deserialize)]
+#[serde(rename = "manualPeering")]
+pub struct ManualPeeringConfigBuilder {
+    #[serde(rename = "knownPeers")]
+    peer_config_builders: Vec<ManualPeerConfigBuilder>,
+}
+
+impl ManualPeeringConfigBuilder {
+    /// Finishes the builder.
+    pub fn finish(self, local_id: &LocalIdentity) -> ManualPeeringConfig {
+        let ManualPeeringConfigBuilder { peer_config_builders } = self;
+
+        let mut peer_configs = HashMap::with_capacity(peer_config_builders.len());
+
+        for peer_config_builder in peer_config_builders {
+            let peer_config = peer_config_builder.finish(local_id);
+            let ip = peer_config.address.ip();
+
+            if peer_configs.contains_key(&ip) {
+                unimplemented!("multiple instances with same ip address are intentionally not supported");
+            }
+
+            peer_configs.insert(ip, peer_config);
+        }
+
+         ManualPeeringConfig { peer_configs }
     }
 }

@@ -5,7 +5,7 @@ pub use crate::event::NetworkEvent;
 
 use crate::{
     backstage::peer::{PeerReaderWorker, PeerWriterWorker},
-    config::Config,
+    config::{NetworkConfig, ManualPeeringConfig},
     network::Network,
 };
 
@@ -26,7 +26,7 @@ impl NetworkWorker {
 
 #[async_trait::async_trait]
 impl<S: SupHandle<Self>> Actor<S> for NetworkWorker {
-    type Data = Config;
+    type Data = (NetworkConfig, ManualPeeringConfig);
 
     type Channel = AbortableUnboundedChannel<NetworkEvent>;
 
@@ -41,9 +41,10 @@ impl<S: SupHandle<Self>> Actor<S> for NetworkWorker {
     }
 
     async fn run(&mut self, rt: &mut Rt<Self, S>, config: Self::Data) -> ActorResult<()> {
+        let (network_config, manual_peering_config) = config;
         let handle = rt.handle().clone();
 
-        Network::start(config, move |event| {
+        Network::start(network_config, manual_peering_config, move |event| {
             if let Err(err) = handle.send(event) {
                 log::warn!("could not publish event: {}", err)
             }

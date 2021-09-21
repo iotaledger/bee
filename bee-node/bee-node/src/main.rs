@@ -4,7 +4,7 @@
 use std::error::Error;
 
 use bee_logger::logger_init;
-use bee_network::{backstage::NetworkWorker, config::Config as NetworkConfig, identity::LocalIdentity};
+use bee_network::backstage::NetworkWorker;
 use bee_node::{
     banner::print_logo_and_version,
     cli::NodeCliArgs,
@@ -67,20 +67,13 @@ impl<S: SupHandle<Self>> Actor<S> for BeeSupervisor {
             return Ok(());
         }
 
-        let port = cli.gossip_port();
-        let identity = cli.identity();
+        let network_config = config.network;
+        let manual_peering_config = config.manual_peering;
 
-        let local_id = if let Some(identity) = identity {
-            LocalIdentity::from_bs58_encoded_private_key(identity)
-        } else {
-            LocalIdentity::new()
-        };
-
-        log::info!("node local id: {:?}", local_id);
-
-        let network_config = NetworkConfig::new(port, local_id, "./peers.yaml").map_err(ActorError::exit)?;
+        log::info!("Local Id: {:?}", network_config.local_id);
 
         rt.add_resource(network_config).await;
+        rt.add_resource(manual_peering_config).await;
 
         rt.start(Some("network".into()), NetworkWorker::new()).await?;
 

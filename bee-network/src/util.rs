@@ -9,16 +9,17 @@ pub fn to_public_key_string(pk: &ed25519::PublicKey) -> String {
     bs58::encode(pk.as_ref()).into_string()
 }
 
+// TODO: error handling
 /// Creates an ED25519 public key from its 'base58' string representation.
-pub fn from_public_key_string(pk: &str) -> ed25519::PublicKey {
-    let bytes = bs58::decode(pk).into_vec().expect("error decoding public key string");
+pub fn from_public_key_str(public_key: impl AsRef<str>) -> ed25519::PublicKey {
+    let pk_bytes = bs58::decode(public_key.as_ref()).into_vec().expect("error decoding public key string");
 
-    if bytes.len() != 32 {
+    if pk_bytes.len() != 32 {
         panic!("invalid public key string");
     }
 
-    let mut pk = [0u8; 32];
-    pk.copy_from_slice(&bytes[..32]);
+    let mut public_key = [0u8; 32];
+    public_key.copy_from_slice(&pk_bytes[..32]);
 
-    ed25519::PublicKey::try_from_bytes(pk).expect("error creating public key from bytes")
+    ed25519::PublicKey::try_from_bytes(public_key).expect("error creating public key from bytes")
 }

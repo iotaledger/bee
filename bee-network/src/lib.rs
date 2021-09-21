@@ -20,5 +20,3 @@ pub mod identity;
 pub mod message;
 pub mod network;
 pub mod peer;
-
-pub use consts::MAX_PACKET_SIZE;

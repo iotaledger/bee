@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    config::ManualPeerInfo,
+    config::ManualPeerConfig,
     conn::Direction,
     consts::{HANDSHAKE_TIMEOUT_SECS, MAX_HANDSHAKE_PACKET_SIZE, VERSION},
     identity::{Identity, LocalIdentity},
@@ -34,7 +34,7 @@ pub async fn handshake(
     socket_addr: SocketAddr,
     local_id: &LocalIdentity,
     direction: Direction,
-    peer_info: ManualPeerInfo,
+    peer_config: ManualPeerConfig,
 ) -> Result<(BufReader<OwnedReadHalf>, BufWriter<OwnedWriteHalf>, Identity, Alias), HandshakeError> {
     log::info!("handshaking with {}...", socket_addr);
 
@@ -45,9 +45,9 @@ pub async fn handshake(
     let peer_id = match direction {
         Direction::Outbound => {
             let local_req_data = send_handshake_request(&mut writer, socket_addr.ip(), local_id).await?;
-            await_response(&mut reader, local_req_data, &peer_info).await?
+            await_response(&mut reader, local_req_data, &peer_config).await?
         }
-        Direction::Inbound => await_request(&mut reader, &mut writer, local_id, &peer_info).await?,
+        Direction::Inbound => await_request(&mut reader, &mut writer, local_id, &peer_config).await?,
     };
 
     Ok((reader, writer, peer_id, String::new()))
@@ -106,7 +106,7 @@ async fn await_request(
     reader: &mut BufReader<OwnedReadHalf>,
     writer: &mut BufWriter<OwnedWriteHalf>,
     local_id: &LocalIdentity,
-    _peer_info: &ManualPeerInfo,
+    _peer_config: &ManualPeerConfig,
 ) -> Result<Identity, HandshakeError> {
     let mut buf = vec![0; MAX_HANDSHAKE_PACKET_SIZE];
 
@@ -159,7 +159,7 @@ async fn await_request(
 async fn await_response(
     reader: &mut BufReader<OwnedReadHalf>,
     local_req_data: BytesMut,
-    _peer_info: &ManualPeerInfo,
+    _peer_config: &ManualPeerConfig,
 ) -> Result<Identity, HandshakeError> {
     let mut buf = vec![0; MAX_HANDSHAKE_PACKET_SIZE];
 

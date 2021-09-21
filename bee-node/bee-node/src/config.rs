@@ -6,6 +6,7 @@
 use crate::cli::NodeCliArgs;
 
 use bee_logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
+use bee_network::config::{NetworkConfig, NetworkConfigBuilder, ManualPeeringConfig, ManualPeeringConfigBuilder};
 
 use serde::Deserialize;
 use thiserror::Error;
@@ -30,13 +31,15 @@ pub enum Error {
 #[derive(Default, Deserialize)]
 pub struct NodeConfigBuilder {
     pub(crate) logger: Option<LoggerConfigBuilder>,
+    pub(crate) network: Option<NetworkConfigBuilder>,
+    pub(crate) manual_peering: Option<ManualPeeringConfigBuilder>,
 }
 
 impl NodeConfigBuilder {
     /// Creates a [`NodeConfigBuilder`] from a config file.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
         match fs::read_to_string(path) {
-            Ok(json) => serde_json::from_str::<Self>(&json).map_err(Error::ConfigFileDeserializationFailed),
+            Ok(json) => { println!("{:?}", json); serde_json::from_str::<Self>(&json).map_err(Error::ConfigFileDeserializationFailed)},
             Err(e) => Err(Error::ConfigFileReadFailed(e)),
         }
     }
@@ -55,8 +58,17 @@ impl NodeConfigBuilder {
 
     /// Finished the [`NodeConfigBuilder`] into a [`NodeConfig`].
     pub fn finish(self) -> NodeConfig {
+        let network = self.network.expect("missing network configuration").finish();
+        let manual_peering = self.manual_peering.unwrap_or_default().finish(&network.local_id);
+
+        println!("{:?}", network.bind_addr);
+        println!("{:?}", network.local_id);
+        println!("{:?}", manual_peering.len());
+
         NodeConfig {
             logger: self.logger.unwrap_or_default().finish(),
+            network,
+            manual_peering,
         }
     }
 }
@@ -65,12 +77,18 @@ impl NodeConfigBuilder {
 pub struct NodeConfig {
     /// Logger configuration.
     pub logger: LoggerConfig,
+    /// Network configuration.
+    pub network: NetworkConfig,
+    /// Manual peering configuration.
+    pub manual_peering: ManualPeeringConfig,
 }
 
 impl Clone for NodeConfig {
     fn clone(&self) -> Self {
         Self {
             logger: self.logger.clone(),
+            network: self.network.clone(),
+            manual_peering: self.manual_peering.clone(),
         }
     }
 }

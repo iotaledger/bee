@@ -15,7 +15,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-/// A type that represents a local identity, which is able to sign messages.
+/// A type that represents a local identity, which is also able to sign messages.
 #[derive(Clone)]
 pub struct LocalIdentity {
     private_key: Arc<RwLock<PrivateKey>>,
@@ -86,7 +86,7 @@ impl fmt::Debug for LocalIdentity {
     }
 }
 
-/// A general identity of a peer.
+/// A type that represents the unique identity of a peer in the network.
 #[derive(Clone)]
 pub struct Identity {
     id: [u8; ID_LENGTH],

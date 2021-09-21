@@ -17,5 +17,23 @@
         "targetExclusions": []
       }
     ]
+  },
+  "network": {
+    "bind_addr": "127.0.0.1:15600",
+    "privateKey": ""
+  },
+  "manualPeering": {
+    "knownPeers": [
+      {
+        "publicKey": "ABC",
+        "address": "127.0.0.1:16600",
+        "alias": "GoShimmer1"
+      },
+      {
+        "publicKey": "XYZ",
+        "address": "127.0.0.1:16700",
+        "alias": "GoShimmer2"
+      }
+    ]
   }
 }
