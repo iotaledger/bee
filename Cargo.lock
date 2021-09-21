@@ -226,7 +226,6 @@ version = "0.1.0"
 dependencies = [
  "bee-message",
  "bee-test",
- "hashbrown",
  "tokio",
 ]
 
