@@ -1,28 +1,19 @@
-pub mod test;
 pub mod messages;
+
+use bee_storage_sled::storage::Storage;
 
 use axum::{
     handler::get,
     Router,
     response::Html,
-    routing::BoxRoute,
-    body::Body,
-    http::Request,
+    routing::BoxRoute
 };
-use http::Response;
-use tower::service_fn;
 
-pub fn api_routes() -> Router<BoxRoute> {
+pub fn api_routes(storage: &Storage) -> Router<BoxRoute> {
     Router::new()
         .route("/", get(handler))
         //.nest("/test", test::api_routes())
-        .route("/test/", service_fn(|req: Request<Body>| async move {
-            let body = Body::from(format!("Hi from `/{}`", req.uri()));
-            let body = axum::body::box_body(body);
-            let res = Response::new(body);
-            Ok(res)
-            }))
-        .nest("messages", messages::api_routes())
+        .nest("messages", messages::api_routes(storage))
         .boxed()
 }
 
