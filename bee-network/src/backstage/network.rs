@@ -34,10 +34,15 @@ impl<S: SupHandle<Self>> Actor<S> for NetworkActor {
             .parent_id()
             .ok_or_else(|| ActorError::aborted_msg("network actor has no parent"))?;
 
-        let (network_config, manual_peering_config) = rt
+        let network_config = rt
             .lookup(parent_id)
             .await
             .ok_or_else(|| ActorError::exit_msg("network configuration is not available"))?;
+
+        let manual_peering_config = rt
+            .lookup(parent_id)
+            .await
+            .ok_or_else(|| ActorError::exit_msg("manual peering configuration is not available"))?;
 
         let handle = rt.handle().clone();
 
