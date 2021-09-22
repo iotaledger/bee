@@ -30,20 +30,6 @@ pub enum Error {
     InitialisationFailed,
 }
 
-macro_rules! log_format {
-    ($target:expr, $level:expr, $message:expr, $target_width:expr, $level_width:expr) => {
-        format_args!(
-            "{} {:target_width$} {:level_width$} {}",
-            Local::now().format("%Y-%m-%d %H:%M:%S"),
-            $target,
-            $level,
-            $message,
-            target_width = $target_width,
-            level_width = $level_width
-        )
-    };
-}
-
 /// Initialises a [`fern`] logger backend for the [`log`] crate.
 ///
 /// # Arguments
@@ -52,6 +38,20 @@ macro_rules! log_format {
 pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
     let target_width = config.target_width;
     let level_width = config.level_width;
+
+    macro_rules! log_format {
+        ($target:expr, $level:expr, $message:expr) => {
+            format_args!(
+                "{} {:target_width$} {:level_width$} {}",
+                Local::now().format("%Y-%m-%d %H:%M:%S"),
+                $target,
+                $level,
+                $message,
+                target_width = target_width,
+                level_width = level_width
+            )
+        };
+    }
 
     let mut logger = if config.color_enabled {
         let colors = ColoredLevelConfig::new()
@@ -63,25 +63,12 @@ pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
 
         // Creates a logger dispatch with color support.
         Dispatch::new().format(move |out, message, record| {
-            out.finish(log_format!(
-                record.target(),
-                colors.color(record.level()),
-                message,
-                target_width,
-                level_width
-            ))
+            out.finish(log_format!(record.target(), colors.color(record.level()), message))
         })
     } else {
         // Creates a logger dispatch without color support.
-        Dispatch::new().format(move |out, message, record| {
-            out.finish(log_format!(
-                record.target(),
-                record.level(),
-                message,
-                target_width,
-                level_width
-            ))
-        })
+        Dispatch::new()
+            .format(move |out, message, record| out.finish(log_format!(record.target(), record.level(), message)))
     };
 
     for output in config.outputs {

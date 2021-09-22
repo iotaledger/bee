@@ -28,30 +28,6 @@ use std::{
     time::Duration,
 };
 
-macro_rules! spawn_streamers {
-    ($self:ident, $event_id:ident, $bus:ident, $shutdown:ident, $($event_var:pat => $event_ty:ty),*) => {{
-        match $event_id {
-            $(
-                $event_var => {
-                    let (tx, rx) = unbounded_channel::<$event_ty>();
-                    let client = $self.client.clone();
-
-                    spawn(async move {
-                        PluginStreamer::new(rx, $shutdown, client).run().await;
-                    });
-
-                    debug!("registering `{}` callback for the \"{}\" plugin", type_name::<$event_ty>(), $self.name);
-                    $bus.add_listener_with_id(move |event: &$event_ty| {
-                        if let Err(e) = tx.send(event.clone()) {
-                            warn!("failed to send event: {}", e);
-                        }
-                    }, UniqueId::Object($self.plugin_id));
-                }
-            )*
-        }
-    }};
-}
-
 /// A handler for a plugin.
 pub(crate) struct PluginHandler {
     /// The name of the plugin.
@@ -170,8 +146,31 @@ impl PluginHandler {
             let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
             entry.insert(shutdown_tx);
 
+            macro_rules! spawn_streamers {
+                ($($event_var:pat => $event_ty:ty),*) => {{
+                    match event_id {
+                        $(
+                            $event_var => {
+                                let (tx, rx) = unbounded_channel::<$event_ty>();
+                                let client = self.client.clone();
+
+                                spawn(async move {
+                                    PluginStreamer::new(rx, shutdown_rx, client).run().await;
+                                });
+
+                                debug!("registering `{}` callback for the \"{}\" plugin", type_name::<$event_ty>(), self.name);
+                                bus.add_listener_with_id(move |event: &$event_ty| {
+                                    if let Err(e) = tx.send(event.clone()) {
+                                        warn!("failed to send event: {}", e);
+                                    }
+                                }, UniqueId::Object(self.plugin_id));
+                            }
+                        )*
+                    }
+                }};
+            }
+
             spawn_streamers! {
-                self, event_id, bus, shutdown_rx,
                 EventId::MessageParsed => MessageParsedEvent,
                 EventId::ParsingFailed => ParsingFailedEvent,
                 EventId::MessageRejected => MessageRejectedEvent
