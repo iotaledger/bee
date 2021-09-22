@@ -4,7 +4,7 @@
 use std::error::Error;
 
 use bee_logger::logger_init;
-use bee_network::backstage::NetworkWorker;
+use bee_network::backstage::NetworkActor;
 use bee_node::{
     banner::print_logo_and_version,
     cli::NodeCliArgs,
@@ -75,7 +75,7 @@ impl<S: SupHandle<Self>> Actor<S> for BeeSupervisor {
         rt.add_resource(network_config).await;
         rt.add_resource(manual_peering_config).await;
 
-        rt.start(Some("network".into()), NetworkWorker::new()).await?;
+        rt.start(Some("network".into()), NetworkActor::new()).await?;
 
         while let Some(event) = rt.inbox_mut().next().await {
             match event {

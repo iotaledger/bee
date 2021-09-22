@@ -10,20 +10,20 @@ use backstage::core::{AbortableUnboundedChannel, Actor, ActorResult, NullChannel
 
 use std::sync::Arc;
 
-/// A peer reader worker.
-pub struct PeerReaderWorker {
+/// A peer reader actor.
+pub struct PeerReaderActor {
     reader: PeerReader,
     info: Arc<PeerInfo>,
 }
 
-impl PeerReaderWorker {
+impl PeerReaderActor {
     pub(crate) fn new(reader: PeerReader, info: Arc<PeerInfo>) -> Self {
         Self { reader, info }
     }
 }
 
 #[async_trait::async_trait]
-impl<S: SupHandle<Self>> Actor<S> for PeerReaderWorker {
+impl<S: SupHandle<Self>> Actor<S> for PeerReaderActor {
     type Data = ();
 
     type Channel = NullChannel;
@@ -56,7 +56,7 @@ impl<S: SupHandle<Self>> Actor<S> for PeerReaderWorker {
     }
 }
 
-/// A peer writer worker event.
+/// A peer writer actor event.
 pub enum PeerWriterEvent {
     /// Send a message to the peer.
     SendMessage {
@@ -67,20 +67,20 @@ pub enum PeerWriterEvent {
     },
 }
 
-/// A peer writer worker.
-pub struct PeerWriterWorker {
+/// A peer writer actor.
+pub struct PeerWriterActor {
     writer: PeerWriter,
     info: Arc<PeerInfo>,
 }
 
-impl PeerWriterWorker {
+impl PeerWriterActor {
     pub(crate) fn new(writer: PeerWriter, info: Arc<PeerInfo>) -> Self {
         Self { writer, info }
     }
 }
 
 #[async_trait::async_trait]
-impl<S: SupHandle<Self>> Actor<S> for PeerWriterWorker {
+impl<S: SupHandle<Self>> Actor<S> for PeerWriterActor {
     type Data = ();
 
     type Channel = AbortableUnboundedChannel<PeerWriterEvent>;

@@ -6,7 +6,7 @@
 use crate::cli::NodeCliArgs;
 
 use bee_logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
-use bee_network::config::{NetworkConfig, NetworkConfigBuilder, ManualPeeringConfig, ManualPeeringConfigBuilder};
+use bee_network::config::{ManualPeeringConfig, ManualPeeringConfigBuilder, NetworkConfig, NetworkConfigBuilder};
 
 use serde::Deserialize;
 use thiserror::Error;
@@ -39,7 +39,10 @@ impl NodeConfigBuilder {
     /// Creates a [`NodeConfigBuilder`] from a config file.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
         match fs::read_to_string(path) {
-            Ok(json) => { println!("{:?}", json); serde_json::from_str::<Self>(&json).map_err(Error::ConfigFileDeserializationFailed)},
+            Ok(json) => {
+                println!("{:?}", json);
+                serde_json::from_str::<Self>(&json).map_err(Error::ConfigFileDeserializationFailed)
+            }
             Err(e) => Err(Error::ConfigFileReadFailed(e)),
         }
     }

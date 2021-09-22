@@ -4,7 +4,7 @@
 pub use crate::event::NetworkEvent;
 
 use crate::{
-    backstage::peer::{PeerReaderWorker, PeerWriterWorker},
+    backstage::peer::{PeerReaderActor, PeerWriterActor},
     config::{ManualPeeringConfig, NetworkConfig},
     network::Network,
 };
@@ -13,19 +13,19 @@ use backstage::core::{AbortableUnboundedChannel, Actor, ActorError, ActorResult,
 
 use std::sync::Arc;
 
-/// A network worker.
+/// A network actor.
 #[derive(Default)]
-pub struct NetworkWorker {}
+pub struct NetworkActor {}
 
-impl NetworkWorker {
-    /// Create a new network worker.
+impl NetworkActor {
+    /// Create a new network actor.
     pub fn new() -> Self {
         Self::default()
     }
 }
 
 #[async_trait::async_trait]
-impl<S: SupHandle<Self>> Actor<S> for NetworkWorker {
+impl<S: SupHandle<Self>> Actor<S> for NetworkActor {
     type Data = (NetworkConfig, ManualPeeringConfig);
 
     type Channel = AbortableUnboundedChannel<NetworkEvent>;
@@ -33,7 +33,7 @@ impl<S: SupHandle<Self>> Actor<S> for NetworkWorker {
     async fn init(&mut self, rt: &mut Rt<Self, S>) -> ActorResult<Self::Data> {
         let parent_id = rt
             .parent_id()
-            .ok_or_else(|| ActorError::aborted_msg("network worker has no parent"))?;
+            .ok_or_else(|| ActorError::aborted_msg("network actor has no parent"))?;
 
         rt.lookup(parent_id)
             .await
@@ -60,13 +60,13 @@ impl<S: SupHandle<Self>> Actor<S> for NetworkWorker {
                     let info = Arc::new(peer.info);
                     let id = info.id();
 
-                    let reader = PeerReaderWorker::new(peer.reader, info.clone());
-                    let writer = PeerWriterWorker::new(peer.writer, info);
+                    let reader = PeerReaderActor::new(peer.reader, info.clone());
+                    let writer = PeerWriterActor::new(peer.writer, info);
 
                     rt.start(Some(format!("{}_reader", id)), reader).await?;
                     rt.start(Some(format!("{}_writer", id)), writer).await?;
                 }
-                NetworkEvent::PeerWorkerEol | NetworkEvent::PeerWorkerReport => {
+                NetworkEvent::PeerActorEol | NetworkEvent::PeerActorReport => {
                     // TODO: handle status report for peers
                 }
             }
