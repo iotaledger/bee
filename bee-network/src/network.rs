@@ -4,7 +4,7 @@
 //! A module that provides the [`Network`] type, which allows establish and maintain network connections with peers.
 
 use crate::{
-    config::{NetworkConfig, ManualPeeringConfig},
+    config::{ManualPeeringConfig, NetworkConfig},
     conn::{ConnectedList, Direction},
     event::NetworkEvent,
     handshake::handshake,
@@ -45,11 +45,12 @@ pub struct Network {}
 
 impl Network {
     /// Starts the network (layer).
-    pub async fn start(network_config: NetworkConfig, manual_peering_config: ManualPeeringConfig, on_event: impl Fn(NetworkEvent) + Clone + Send + 'static) -> Result<(), Error> {
-        let NetworkConfig {
-            bind_addr,
-            local_id,
-        } = network_config;
+    pub async fn start(
+        network_config: NetworkConfig,
+        manual_peering_config: ManualPeeringConfig,
+        on_event: impl Fn(NetworkEvent) + Clone + Send + 'static,
+    ) -> Result<(), Error> {
+        let NetworkConfig { bind_addr, local_id } = network_config;
 
         let server = TcpListener::bind(bind_addr).await.map_err(|_| Error::BindingToAddr)?;
 

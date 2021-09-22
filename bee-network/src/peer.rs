@@ -4,9 +4,9 @@
 //! A module that deals with peers.
 
 use crate::{
+    consts::MAX_PACKET_SIZE,
     identity::Identity,
     message::{Message, MessageRequest, MessageType},
-    consts::MAX_PACKET_SIZE,
 };
 
 use prost::bytes::{Buf, BufMut, BytesMut};

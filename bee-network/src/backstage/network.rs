@@ -5,7 +5,7 @@ pub use crate::event::NetworkEvent;
 
 use crate::{
     backstage::peer::{PeerReaderWorker, PeerWriterWorker},
-    config::{NetworkConfig, ManualPeeringConfig},
+    config::{ManualPeeringConfig, NetworkConfig},
     network::Network,
 };
 

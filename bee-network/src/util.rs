@@ -12,7 +12,9 @@ pub fn to_public_key_string(pk: &ed25519::PublicKey) -> String {
 // TODO: error handling
 /// Creates an ED25519 public key from its 'base58' string representation.
 pub fn from_public_key_str(public_key: impl AsRef<str>) -> ed25519::PublicKey {
-    let pk_bytes = bs58::decode(public_key.as_ref()).into_vec().expect("error decoding public key string");
+    let pk_bytes = bs58::decode(public_key.as_ref())
+        .into_vec()
+        .expect("error decoding public key string");
 
     if pk_bytes.len() != 32 {
         panic!("invalid public key string");

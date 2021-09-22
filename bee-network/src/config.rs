@@ -8,7 +8,7 @@ use crate::{
     util,
 };
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use std::{
     collections::HashMap,
@@ -19,19 +19,19 @@ use std::{
 #[derive(Clone, Debug)]
 pub enum BindAddr {
     /// IP4 localhost.
-    LocalhostV4{
+    LocalhostV4 {
         /// The port to bind to at localhost.
-        port: u16
+        port: u16,
     },
     /// IP6 localhost.
     LocalhostV6 {
         /// The port to bind to at localhost.
-        port: u16
+        port: u16,
     },
     /// An arbitrary host.
-    Host { 
+    Host {
         /// The fully specified socket address to bind to.
-        addr: SocketAddr 
+        addr: SocketAddr,
     },
 }
 
@@ -145,7 +145,11 @@ pub struct ManualPeerConfigBuilder {
 impl ManualPeerConfigBuilder {
     /// Finishes the builder.
     pub fn finish(self, local_id: &LocalIdentity) -> ManualPeerConfig {
-        let ManualPeerConfigBuilder { public_key, address, alias } = self;
+        let ManualPeerConfigBuilder {
+            public_key,
+            address,
+            alias,
+        } = self;
 
         let alias = alias.unwrap();
         let public_key = util::from_public_key_str(public_key.unwrap());
@@ -190,6 +194,6 @@ impl ManualPeeringConfigBuilder {
             peer_configs.insert(ip, peer_config);
         }
 
-         ManualPeeringConfig { peer_configs }
+        ManualPeeringConfig { peer_configs }
     }
 }

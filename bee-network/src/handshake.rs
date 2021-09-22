@@ -119,7 +119,6 @@ async fn await_request(
             }
 
             let packet = Packet::from_protobuf(&buf[..num_received]).map_err(HandshakeError::Decode)?;
-
             let packet_type = packet.ty().map_err(HandshakeError::PacketType)?;
 
             if matches!(packet_type, PacketType::Handshake) {
