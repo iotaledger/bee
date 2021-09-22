@@ -1,20 +1,20 @@
 {
   "logger": {
-    "color_enabled": true,
-    "target_width": 42,
-    "level_width": 5,
+    "colorEnabled": true,
+    "targetWidth": 42,
+    "levelWidth": 5,
     "outputs": [
       {
         "name": "stdout",
-        "level_filter": "info",
-        "target_filters": [],
-        "target_exclusions": []
+        "levelFilter": "info",
+        "targetFilters": [],
+        "targetExclusions": []
       },
       {
         "name": "warn.log",
-        "level_filter": "warn",
-        "target_filters": [],
-        "target_exclusions": []
+        "levelFilter": "warn",
+        "targetFilters": [],
+        "targetExclusions": []
       }
     ]
   }
