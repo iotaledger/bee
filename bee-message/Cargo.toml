@@ -2,7 +2,7 @@
 name = "bee-message"
 version = "0.1.3"
 authors = [ "IOTA Stiftung" ]
-edition = "2018"
+edition = "2021"
 description = "Implementation of the IOTA protocol message layouts"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"

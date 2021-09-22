@@ -2,7 +2,7 @@
 name = "bee-plugin"
 version = "0.1.0"
 authors = [ "IOTA Stiftung" ]
-edition = "2018"
+edition = "2021"
 description = "The bee node API for plugins"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
