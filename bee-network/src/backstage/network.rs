@@ -5,7 +5,6 @@ pub use crate::event::NetworkEvent;
 
 use crate::{
     backstage::peer::{PeerReaderActor, PeerWriterActor},
-    config::{ManualPeeringConfig, NetworkConfig},
     network::Network,
 };
 
@@ -26,7 +25,7 @@ impl NetworkActor {
 
 #[async_trait::async_trait]
 impl<S: SupHandle<Self>> Actor<S> for NetworkActor {
-    type Data = (NetworkConfig, ManualPeeringConfig);
+    type Data = ();
 
     type Channel = AbortableUnboundedChannel<NetworkEvent>;
 
@@ -35,13 +34,11 @@ impl<S: SupHandle<Self>> Actor<S> for NetworkActor {
             .parent_id()
             .ok_or_else(|| ActorError::aborted_msg("network actor has no parent"))?;
 
-        rt.lookup(parent_id)
+        let (network_config, manual_peering_config) = rt
+            .lookup(parent_id)
             .await
-            .ok_or_else(|| ActorError::exit_msg("network configuration is not available"))
-    }
+            .ok_or_else(|| ActorError::exit_msg("network configuration is not available"))?;
 
-    async fn run(&mut self, rt: &mut Rt<Self, S>, config: Self::Data) -> ActorResult<()> {
-        let (network_config, manual_peering_config) = config;
         let handle = rt.handle().clone();
 
         Network::start(network_config, manual_peering_config, move |event| {
@@ -52,6 +49,10 @@ impl<S: SupHandle<Self>> Actor<S> for NetworkActor {
         .await
         .map_err(ActorError::aborted)?;
 
+        Ok(())
+    }
+
+    async fn run(&mut self, rt: &mut Rt<Self, S>, _: Self::Data) -> ActorResult<()> {
         while let Some(event) = rt.inbox_mut().next().await {
             match event {
                 NetworkEvent::PeerConnected(peer) => {
