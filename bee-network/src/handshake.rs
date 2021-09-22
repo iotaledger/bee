@@ -243,7 +243,7 @@ impl HandshakeRequest {
             to: to.to_string(),
             timestamp: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
-                .expect("Wake up, NEO. Follow the White Rabbit.")
+                .expect("system clock error")
                 .as_secs() as i64,
         };
 
