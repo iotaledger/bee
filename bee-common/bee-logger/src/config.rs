@@ -20,7 +20,7 @@ const DEFAULT_LEVEL_WIDTH: usize = 5;
 
 /// Builder for a logger output configuration.
 #[derive(Default)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize), serde(rename_all = "camelCase"))]
 pub struct LoggerOutputConfigBuilder {
     /// Name of an output file, or `stdout` for standard output.
     name: Option<String>,
@@ -100,7 +100,7 @@ pub struct LoggerOutputConfig {
 
 /// Builder for a logger configuration.
 #[derive(Default)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize), serde(rename_all = "camelCase"))]
 pub struct LoggerConfigBuilder {
     /// Color flag of the logger.
     color_enabled: Option<bool>,

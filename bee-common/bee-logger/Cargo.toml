@@ -14,5 +14,5 @@ homepage = "https://www.iota.org"
 chrono = { version = "0.4", default-features = false, features = [ "clock" ] }
 fern = { version = "0.6", default-features = false, features = [ "colored" ] }
 log = { version = "0.4", default-features = false, features = [ "serde" ] }
-serde = { version = "1.0", default-features = false, features = [ "derive" ], optional = true }
+serde = { version = "1.0", default-features = false, features = [ "derive", "std" ], optional = true }
 thiserror = { version = "1.0", default-features = false }
