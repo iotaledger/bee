@@ -7,7 +7,7 @@ use super::{Sponge, HASH_LENGTH};
 
 use bee_ternary::{Btrit, Trits};
 
-use std::convert::{Infallible, TryFrom};
+use std::convert::Infallible;
 
 enum SpongeDirection {
     Absorb,
@@ -22,30 +22,7 @@ pub struct UnrolledCurlP81 {
 
 impl UnrolledCurlP81 {
     pub fn new() -> Self {
-        Self {
-            p: Default::default(),
-            n: Default::default(),
-            direction: SpongeDirection::Absorb,
-        }
-    }
-}
-
-impl UnrolledCurlP81 {
-    pub fn copy_state(&self, mut s: &mut Trits) {
-        for i in 0..3 {
-            let _ = s.get(HASH_LENGTH - 1).unwrap();
-
-            for j in 0..HASH_LENGTH {
-                if self.p[i].bit(j) != 0 {
-                    s.set(j, Btrit::PlusOne);
-                } else if self.n[i].bit(j) != 0 {
-                    s.set(j, Btrit::NegOne);
-                } else {
-                    s.set(j, Btrit::Zero);
-                }
-            }
-            s = &mut s[HASH_LENGTH..];
-        }
+        Self::default()
     }
 
     fn squeeze_aux(&mut self, mut hash: &mut Trits) {
@@ -58,12 +35,28 @@ impl UnrolledCurlP81 {
         hash = &mut hash[..HASH_LENGTH];
 
         for i in 0..HASH_LENGTH {
-            hash.set(i, Btrit::try_from((self.p[0].bit(i) - self.n[0].bit(i)) as u8).unwrap());
+            let trit = match (self.p[0].bit(i), self.n[0].bit(i)) {
+                (a, b) if a > b => Btrit::PlusOne,
+                (a, b) if a < b => Btrit::NegOne,
+                _ => Btrit::Zero,
+            };
+
+            hash.set(i, trit);
         }
     }
 
     fn transform(&mut self) {
         transform::transform(&mut self.p, &mut self.n)
+    }
+}
+
+impl Default for UnrolledCurlP81 {
+    fn default() -> Self {
+        Self {
+            p: Default::default(),
+            n: Default::default(),
+            direction: SpongeDirection::Absorb,
+        }
     }
 }
 
@@ -105,12 +98,13 @@ impl Sponge for UnrolledCurlP81 {
     }
 
     fn squeeze_into(&mut self, mut buf: &mut Trits) -> Result<(), Self::Error> {
-        assert_ne!(buf.len() % HASH_LENGTH, 0, "Invalid squeeze length");
+        assert_eq!(buf.len() % HASH_LENGTH, 0, "Invalid squeeze length");
 
-        while buf.len() >= HASH_LENGTH {
+        while {
             self.squeeze_aux(buf);
             buf = &mut buf[HASH_LENGTH..];
-        }
+            buf.len() >= HASH_LENGTH
+        } {}
 
         Ok(())
     }
@@ -119,7 +113,7 @@ impl Sponge for UnrolledCurlP81 {
 mod u256 {
     use std::ops::{Index, IndexMut};
 
-    #[derive(Clone, Copy)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub(super) struct U256([u64; 4]);
 
     impl Default for U256 {
@@ -170,7 +164,7 @@ mod u256 {
                     self[0] |= x[0] >> r | x[1] << l;
                     self[1] |= x[1] >> r | x[2] << l;
                     self[2] |= x[2] >> r | x[3] << l;
-                    self[0] |= x[3] >> r;
+                    self[3] |= x[3] >> r;
                 }
                 1 => {
                     self[0] |= x[1] >> r | x[2] << l;
@@ -192,29 +186,36 @@ mod u256 {
 
         pub(super) fn shl_into(&mut self, x: &Self, shift: usize) -> &mut Self {
             let offset = shift / 64;
-            let r = shift % 64;
+            let l = shift % 64;
 
-            let mut l = 64 - r;
-            l &= 64;
+            if l == 0 {
+                for i in offset..4 {
+                    self[i] |= x[(i - offset) % 4];
+                }
+                return self;
+            }
+
+            let mut r = 64 - l;
+            r &= 63;
 
             match offset {
                 0 => {
-                    self[0] |= x[0] >> r | x[1] << l;
-                    self[1] |= x[1] >> r | x[2] << l;
-                    self[2] |= x[2] >> r | x[3] << l;
-                    self[3] |= x[3] >> r;
+                    self[3] |= x[3] << l | x[2] >> r;
+                    self[2] |= x[2] << l | x[1] >> r;
+                    self[1] |= x[1] << l | x[0] >> r;
+                    self[0] |= x[0] << l;
                 }
                 1 => {
-                    self[0] |= x[1] >> r | x[2] << l;
-                    self[1] |= x[2] >> r | x[3] << l;
-                    self[2] |= x[3] >> r;
+                    self[3] |= x[2] << l | x[1] >> r;
+                    self[2] |= x[1] << l | x[0] >> r;
+                    self[1] |= x[0] << l;
                 }
                 2 => {
-                    self[0] |= x[2] >> r | x[3] << l;
-                    self[1] |= x[3] >> r;
+                    self[3] |= x[1] << l | x[0] >> r;
+                    self[2] |= x[0] << l;
                 }
                 3 => {
-                    self[0] |= x[3] >> r;
+                    self[3] |= x[0] << l;
                 }
                 _ => {}
             }
@@ -223,7 +224,62 @@ mod u256 {
         }
 
         pub(super) fn norm243(&mut self) {
-            self[3] &= 1 << (64 - (256 - 243)) - 1;
+            self[3] &= (1 << (64 - (256 - 243))) - 1;
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::U256;
+
+        #[test]
+        fn get_bits() {
+            let x = U256([1, 0, 0, 0]);
+
+            assert_eq!(x.bit(0), 1, "the first bit should be one");
+
+            for i in 1..256 {
+                assert_eq!(x.bit(i), 0, "bit {} should be zero", i);
+            }
+        }
+
+        #[test]
+        fn set_bits() {
+            let mut x = U256::default();
+            x.set_bit(42);
+
+            assert_eq!(x.bit(42), 1, "the 42th bit should be one");
+
+            for i in (0..42).chain(43..256) {
+                assert_eq!(x.bit(i), 0, "bit {} should be zero", i);
+            }
+        }
+
+        #[test]
+        fn shr_into() {
+            let mut x = U256([1, 2, 3, 4]);
+            let y = U256([5, 6, 7, 8]);
+
+            assert_eq!(
+                U256([216172782113783809, 252201579132747778, 288230376151711747, 4]),
+                *x.shr_into(&y, 9)
+            );
+        }
+
+        #[test]
+        fn shl_into() {
+            let mut x = U256([1, 2, 3, 4]);
+            let y = U256([5, 6, 7, 8]);
+
+            assert_eq!(U256([2561, 3074, 3587, 4100]), *x.shl_into(&y, 9));
+        }
+
+        #[test]
+        fn norm243() {
+            let mut x = U256([u64::MAX; 4]);
+            x.norm243();
+
+            assert_eq!(U256([u64::MAX, u64::MAX, u64::MAX, 2251799813685247]), x);
         }
     }
 }
@@ -295,15 +351,15 @@ mod transform {
         reorder(p, n);
     }
 
-    fn rotate_state(p: &mut [U256; 3], n: &mut [U256; 3], offset: usize, shift: usize) -> ([U256; 3], [U256; 3]) {
+    fn rotate_state(p: &[U256; 3], n: &[U256; 3], offset: usize, shift: usize) -> ([U256; 3], [U256; 3]) {
         let mut p2 = <[U256; 3]>::default();
         let mut n2 = <[U256; 3]>::default();
 
         macro_rules! rotate {
-            ($part:expr, $part2:expr, $i:expr) => {
-                $part2[$i]
-                    .shr_into(&$part[($i + offset) % 3], shift)
-                    .shl_into(&$part[($i + offset) % 3], 243 - shift);
+            ($p:expr, $p2:expr, $i:expr) => {
+                $p2[$i]
+                    .shr_into(&$p[($i + offset) % 3], shift)
+                    .shl_into(&$p[(($i + 1) + offset) % 3], 243 - shift);
             };
         }
 
@@ -333,20 +389,20 @@ mod transform {
 
         for i in 0..3 {
             macro_rules! compute {
-                ($part:expr, $part2:expr, $j:expr) => {
-                    $part2[i][$j] = ($part[i][$j] & M0) | ($part[(1 + i) % 3][$j] & M1) | ($part[(2 + i) % 3][$j] & M2);
+                ($p:expr, $p2:expr, $j:expr, $m0:expr, $m1:expr, $m2:expr) => {
+                    $p2[i][$j] = ($p[i][$j] & $m0) | ($p[(1 + i) % 3][$j] & $m1) | ($p[(2 + i) % 3][$j] & $m2);
                 };
             }
 
-            compute!(p, p2, 0);
-            compute!(p, p2, 1);
-            compute!(p, p2, 2);
-            compute!(p, p2, 3);
+            compute!(p, p2, 0, M0, M1, M2);
+            compute!(p, p2, 1, M2, M0, M1);
+            compute!(p, p2, 2, M1, M2, M0);
+            compute!(p, p2, 3, M0, M1, M2);
 
-            compute!(n, n2, 0);
-            compute!(n, n2, 1);
-            compute!(n, n2, 2);
-            compute!(n, n2, 3);
+            compute!(n, n2, 0, M0, M1, M2);
+            compute!(n, n2, 1, M2, M0, M1);
+            compute!(n, n2, 2, M1, M2, M0);
+            compute!(n, n2, 3, M0, M1, M2);
         }
 
         *p = p2;
