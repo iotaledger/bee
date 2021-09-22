@@ -5,7 +5,7 @@ use bee_tangle::Tangle;
 use bee_test::rand::message::{metadata::rand_message_metadata, rand_message};
 
 #[tokio::test]
-async fn test_insert() {
+async fn insert() {
     let message = rand_message();
     let message_id = message.id();
     let metadata = rand_message_metadata();
