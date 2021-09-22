@@ -95,18 +95,15 @@ impl PeerReader {
                     let mut msg_len_buf = [0u8; 4];
                     msg_len_buf.copy_from_slice(&self.buffer[position..position + 4]);
                     let msg_len = Buf::get_u32(&mut &msg_len_buf[..]) as usize - 1;
-                    // println!("Message length (excl. type specifier byte): {}.", msg_len);
 
                     // Determine the message type
                     let msg_type: MessageType =
                         num::FromPrimitive::from_u8(self.buffer[position + 4]).ok_or(Error::UnknownMessageType)?;
-                    // println!("Message type: {:?}.", msg_type);
 
                     match msg_type {
                         MessageType::Message => {
                             let msg = Message::from_protobuf(&self.buffer[position + 5..position + 5 + msg_len])
                                 .map_err(Error::Decode)?;
-                            // println!("{:#?}", msg);
 
                             let data = msg.into_bytes();
 
@@ -116,7 +113,6 @@ impl PeerReader {
                             let msg_req =
                                 MessageRequest::from_protobuf(&self.buffer[position + 5..position + 5 + msg_len])
                                     .map_err(Error::Decode)?;
-                            // println!("{:#?}", msg_req);
 
                             let id = msg_req.into_bytes();
 

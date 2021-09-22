@@ -88,11 +88,6 @@ async fn send_handshake_response(
     let packet = Packet::new(ty, &data, local_id.public_key().as_ref(), &signature);
     let packet_bytes = packet.protobuf().map_err(HandshakeError::Encode)?;
 
-    // TODO: use logger
-    // println!("Sending handshake response:");
-    // println!("{:#?}", data);
-    // println!("{:#?}", packet);
-
     writer
         .write_all(packet_bytes.as_ref())
         .await
@@ -122,10 +117,8 @@ async fn await_request(
                     max_allowed: MAX_HANDSHAKE_PACKET_SIZE,
                 });
             }
-            // println!("Received {} bytes: {:?}", num_received, &buf[..num_received]);
 
             let packet = Packet::from_protobuf(&buf[..num_received]).map_err(HandshakeError::Decode)?;
-            // println!("{:#?}", packet);
 
             let packet_type = packet.ty().map_err(HandshakeError::PacketType)?;
 
@@ -133,12 +126,9 @@ async fn await_request(
                 log::info!("received handshake request.");
 
                 let req = HandshakeRequest::from_protobuf(packet.data())?;
-                // println!("{:#?}", req);
-
                 let peer_req_data = req.protobuf()?;
 
                 HandshakeValidator::validate_request(&peer_req_data)?;
-                // println!("Received valid handshake request.");
 
                 send_handshake_response(writer, &peer_req_data, local_id).await?;
 
@@ -175,18 +165,14 @@ async fn await_response(
                     max_allowed: MAX_HANDSHAKE_PACKET_SIZE,
                 });
             }
-            // println!("Received {} bytes: {:?}", num_received, &buf[..num_received]);
 
             let packet = Packet::from_protobuf(&buf[..num_received]).map_err(HandshakeError::Decode)?;
-            // println!("{:#?}", packet);
-
             let packet_type = packet.ty().map_err(HandshakeError::PacketType)?;
 
             if matches!(packet_type, PacketType::Handshake) {
                 log::info!("received handshake response.");
 
                 let res = HandshakeResponse::from_protobuf(packet.data())?;
-                // println!("{:#?}", res);
 
                 let peer_res_data = res.protobuf()?;
 
