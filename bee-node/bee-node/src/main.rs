@@ -47,11 +47,7 @@ impl<S: SupHandle<Self>> Actor<S> for BeeSupervisor {
     type Data = ();
     type Channel = AbortableUnboundedChannel<BeeSupervisorEvent>;
 
-    async fn init(&mut self, _rt: &mut Rt<Self, S>) -> ActorResult<Self::Data> {
-        Ok(())
-    }
-
-    async fn run(&mut self, rt: &mut Rt<Self, S>, _data: Self::Data) -> ActorResult<()> {
+    async fn init(&mut self, rt: &mut Rt<Self, S>) -> ActorResult<Self::Data> {
         let cli = NodeCliArgs::new();
 
         let config = NodeConfigBuilder::from_file(cli.config().unwrap_or(DEFAULT_NODE_CONFIG_PATH))
@@ -77,6 +73,10 @@ impl<S: SupHandle<Self>> Actor<S> for BeeSupervisor {
 
         rt.start(Some("network".into()), NetworkActor::new()).await?;
 
+        Ok(())
+    }
+
+    async fn run(&mut self, rt: &mut Rt<Self, S>, _data: Self::Data) -> ActorResult<()> {
         while let Some(event) = rt.inbox_mut().next().await {
             match event {
                 BeeSupervisorEvent::Eol | BeeSupervisorEvent::Report => {
