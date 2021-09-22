@@ -1,0 +1,19 @@
+[package]
+name = "bee-tangle"
+version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
+edition = "2018"
+description = "Implementation of the IOTA tangle"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "framework" ]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-message = { path = "../bee-message", default-features = false, features = [ "metadata" ] }
+
+tokio = { version = "1.11", default-features = false, features = [ "macros", "rt", "sync" ] }
+
+[dev-dependencies]
+bee-test = { path = "../bee-test", default-features = false }

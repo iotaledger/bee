@@ -221,6 +221,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-tangle"
+version = "0.1.0"
+dependencies = [
+ "bee-message",
+ "bee-test",
+ "tokio",
+]
+
+[[package]]
 name = "bee-test"
 version = "0.1.0"
 dependencies = [

@@ -11,5 +11,6 @@ members = [
   "bee-storage/bee-storage",
   "bee-storage/bee-storage-rocksdb",
   "bee-storage/bee-storage-sled",
+  "bee-tangle",
   "bee-test"
 ]
