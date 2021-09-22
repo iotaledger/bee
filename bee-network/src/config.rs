@@ -69,6 +69,7 @@ impl NetworkConfig {
 #[derive(Serialize, Deserialize)]
 #[serde(rename = "network")]
 pub struct NetworkConfigBuilder {
+    #[serde(rename = "bindAddr")]
     bind_addr: Option<String>,
     #[serde(rename = "privateKey")]
     private_key: Option<String>,

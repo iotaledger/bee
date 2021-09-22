@@ -19,7 +19,7 @@
     ]
   },
   "network": {
-    "bind_addr": "127.0.0.1:15600",
+    "bindAddr": "127.0.0.1:15600",
     "privateKey": ""
   },
   "manualPeering": {
