@@ -22,5 +22,5 @@ tiny-keccak = { version = "2.0", features = [ "keccak" ] }
 criterion = "0.3"
 
 [[bench]]
-name = "batched_hash"
+name = "raw_speed"
 harness = false
