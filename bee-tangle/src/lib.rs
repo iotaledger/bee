@@ -18,12 +18,12 @@ struct MessageData {
 pub struct Tangle(RwLock<HashMap<MessageId, MessageData>>);
 
 impl Tangle {
-    /// Creates a new tangle.
+    /// Creates a new [`Tangle`].
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Inserts a [`Message`] into the tangle, associating it with a [`MessageId`].
+    /// Inserts a [`Message`] and its [`MessageMetadata`] into the [`Tangle`], associating it with a [`MessageId`].
     pub async fn insert(&self, message_id: MessageId, message: Message, metadata: MessageMetadata) {
         self.0.write().await.insert(
             message_id,
@@ -34,12 +34,12 @@ impl Tangle {
         );
     }
 
-    /// Retrieves a [`Message`] from the tangle with a given [`MessageId`].
-    pub async fn get(&self, message_id: &MessageId) -> Option<Arc<Message>> {
+    /// Retrieves a [`Message`] from the [`Tangle`] with a given [`MessageId`].
+    pub async fn get_message(&self, message_id: &MessageId) -> Option<Arc<Message>> {
         self.0.read().await.get(message_id).map(|data| data.message.clone())
     }
 
-    /// Retrieves [`MessageMetadata`] from the tangle with a given [`MessageId`].
+    /// Retrieves [`MessageMetadata`] from the [`Tangle`] with a given [`MessageId`].
     pub async fn get_metadata(&self, message_id: &MessageId) -> Option<MessageMetadata> {
         self.0.read().await.get(message_id).map(|data| data.metadata.clone())
     }
