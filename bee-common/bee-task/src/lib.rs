@@ -14,10 +14,10 @@ pub trait TaskSpawner {
 
     /// Spawns a task with or without instrumentation depending on a compile time feature.
     #[cfg_attr(feature = "tokio-console", track_caller)]
-    fn spawn<F>(future: F) -> tokio::task::JoinHandle<<F as futures::Future>::Output>
+    fn spawn<F>(future: F) -> tokio::task::JoinHandle<F::Output>
     where
         F: Future + Send + 'static,
-        <F as futures::Future>::Output: Send,
+        F::Output: Send,
     {
         #[cfg(feature = "tokio-console")]
         {
