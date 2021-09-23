@@ -97,8 +97,8 @@ fn batch_box(x_p: u64, x_n: u64, y_p: u64, y_n: u64) -> (u64, u64) {
 
 fn reorder(p: &mut [U256; 3], n: &mut [U256; 3]) {
     const M0: u64 = 0x9249249249249249;
-    const M1: u64 = (M0 << 1) & u64::MAX;
-    const M2: u64 = (M0 << 2) & u64::MAX;
+    const M1: u64 = M0 << 1;
+    const M2: u64 = M0 << 2;
 
     let mut p2 = <[U256; 3]>::default();
     let mut n2 = <[U256; 3]>::default();

@@ -27,8 +27,8 @@ impl IndexMut<usize> for U256 {
 }
 
 impl U256 {
-    pub(super) fn bit(&self, i: usize) -> u64 {
-        self[(i / 64) % 4] >> (i % 64) & 1
+    pub(super) fn bit(&self, i: usize) -> i8 {
+        (self[(i / 64) % 4] >> (i % 64) & 1) as i8
     }
 
     pub(super) fn set_bit(&mut self, i: usize) {
@@ -46,8 +46,7 @@ impl U256 {
             return self;
         }
 
-        let mut l = 64 - r;
-        l &= 63;
+        let l = 64 - r;
 
         match offset {
             0 => {
@@ -85,8 +84,7 @@ impl U256 {
             return self;
         }
 
-        let mut r = 64 - l;
-        r &= 63;
+        let r = 64 - l;
 
         match offset {
             0 => {
