@@ -156,7 +156,6 @@ impl ManualPeerConfigBuilder {
         let is_dialer = public_key < local_id.public_key();
 
         let address: SocketAddr = address.unwrap().parse().expect("error parsing address");
-
         let identity = Identity::from_public_key(public_key);
 
         ManualPeerConfig {

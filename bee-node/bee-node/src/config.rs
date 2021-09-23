@@ -39,10 +39,7 @@ impl NodeConfigBuilder {
     /// Creates a [`NodeConfigBuilder`] from a config file.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
         match fs::read_to_string(path) {
-            Ok(json) => {
-                println!("{:?}", json);
-                serde_json::from_str::<Self>(&json).map_err(Error::ConfigFileDeserializationFailed)
-            }
+            Ok(json) => serde_json::from_str::<Self>(&json).map_err(Error::ConfigFileDeserializationFailed),
             Err(e) => Err(Error::ConfigFileReadFailed(e)),
         }
     }
@@ -63,10 +60,6 @@ impl NodeConfigBuilder {
     pub fn finish(self) -> NodeConfig {
         let network = self.network.expect("missing network configuration").finish();
         let manual_peering = self.manual_peering.unwrap_or_default().finish(&network.local_id);
-
-        println!("{:?}", network.bind_addr);
-        println!("{:?}", network.local_id);
-        println!("{:?}", manual_peering.len());
 
         NodeConfig {
             logger: self.logger.unwrap_or_default().finish(),
