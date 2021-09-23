@@ -5,6 +5,7 @@ members = [
   "bee-common/bee-ord",
   "bee-common/bee-packable",
   "bee-common/bee-packable-derive",
+  "bee-common/bee-task",
   "bee-message",
   "bee-node/bee-node",
   "bee-node/bee-plugin",

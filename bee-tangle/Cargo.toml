@@ -13,7 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-message = { path = "../bee-message", default-features = false, features = [ "metadata" ] }
 
-tokio = { version = "1.11", default-features = false, features = [ "macros", "rt", "sync" ] }
+tokio = { version = "1.12", default-features = false, features = [ "macros", "rt", "sync" ] }
 
 [dev-dependencies]
 bee-test = { path = "../bee-test", default-features = false }
