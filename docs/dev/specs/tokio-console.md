@@ -31,7 +31,7 @@ let _span = span!(
 **Note**: `tokio-console` is highly unstable, so this feature may be very changeable.
 
 # How do I use it?
-To build/run with the instrumentation, make sure the `tokio-console` feature is enabled, and your `RUSTFLAGS` environment variable contains the `--cfg tokio_unable` options:
+To build/run with the instrumentation, make sure the `tokio-console` feature is enabled, and your `RUSTFLAGS` environment variable contains the `--cfg tokio_unstable` options:
 ```
 $ RUSTFLAGS="--cfg tokio_unstable" cargo run --release --features tokio-console
 ```
