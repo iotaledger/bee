@@ -92,7 +92,7 @@ fn rotate_state(p: &[U256; 3], n: &[U256; 3], offset: usize, shift: usize) -> ([
 
 fn batch_box(x_p: u64, x_n: u64, y_p: u64, y_n: u64) -> (u64, u64) {
     let tmp = x_n ^ y_p;
-    return (tmp & !x_p, !tmp & !(x_p ^ y_n));
+    (tmp & !x_p, !tmp & !(x_p ^ y_n))
 }
 
 fn reorder(p: &mut [U256; 3], n: &mut [U256; 3]) {

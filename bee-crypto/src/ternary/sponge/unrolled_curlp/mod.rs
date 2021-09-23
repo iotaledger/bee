@@ -68,7 +68,7 @@ impl Sponge for UnrolledCurlP81 {
     }
 
     fn absorb(&mut self, input: &Trits) -> Result<(), Self::Error> {
-        if input.len() == 0 || input.len() % HASH_LENGTH != 0 {
+        if input.is_empty() || input.len() % HASH_LENGTH != 0 {
             panic!("trits slice length must be multiple of {}", HASH_LENGTH);
         }
 
