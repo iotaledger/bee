@@ -25,7 +25,6 @@ impl PeerReaderActor {
 #[async_trait::async_trait]
 impl<S: SupHandle<Self>> Actor<S> for PeerReaderActor {
     type Data = ();
-
     type Channel = NullChannel;
 
     async fn init(&mut self, _rt: &mut Rt<Self, S>) -> ActorResult<Self::Data> {
@@ -82,7 +81,6 @@ impl PeerWriterActor {
 #[async_trait::async_trait]
 impl<S: SupHandle<Self>> Actor<S> for PeerWriterActor {
     type Data = ();
-
     type Channel = AbortableUnboundedChannel<PeerWriterEvent>;
 
     async fn init(&mut self, _rt: &mut Rt<Self, S>) -> ActorResult<Self::Data> {
