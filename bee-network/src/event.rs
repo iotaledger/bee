@@ -7,8 +7,8 @@ use crate::peer::ConnectedPeer;
 
 /// Represents a network event.
 pub enum NetworkEvent {
-    /// Fired when a peer has been successfully connected and handshaked.
-    PeerConnected(ConnectedPeer),
+    /// Fired when a gossip peer has been successfully connected and handshaked.
+    GossipPeerConnected(ConnectedPeer),
     /// Fired when a peer actor stops.
     #[cfg(feature = "backstage")]
     PeerActorEol,

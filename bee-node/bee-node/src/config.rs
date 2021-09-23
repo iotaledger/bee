@@ -6,7 +6,7 @@
 use crate::cli::NodeCliArgs;
 
 use bee_logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
-use bee_network::config::{ManualPeeringConfig, ManualPeeringConfigBuilder, NetworkConfig, NetworkConfigBuilder};
+use bee_network::config::{GossipConfig, GossipConfigBuilder, ManualPeeringConfig, ManualPeeringConfigBuilder};
 
 use serde::Deserialize;
 use thiserror::Error;
@@ -31,7 +31,7 @@ pub enum Error {
 #[derive(Default, Deserialize)]
 pub struct NodeConfigBuilder {
     pub(crate) logger: Option<LoggerConfigBuilder>,
-    pub(crate) network: Option<NetworkConfigBuilder>,
+    pub(crate) gossip: Option<GossipConfigBuilder>,
     pub(crate) manual_peering: Option<ManualPeeringConfigBuilder>,
 }
 
@@ -45,7 +45,7 @@ impl NodeConfigBuilder {
     }
 
     /// Applies a [`NodeCliArgs`] to the [`NodeConfigBuilder`].
-    pub fn with_cli_args(mut self, args: NodeCliArgs) -> Self {
+    pub fn with_cli_args(mut self, args: &NodeCliArgs) -> Self {
         if let Some(log_level) = args.log_level {
             if self.logger.is_none() {
                 self.logger = Some(LoggerConfigBuilder::default());
@@ -53,12 +53,29 @@ impl NodeConfigBuilder {
             // Unwrapping is fine because the logger is set to Some if it was None.
             self.logger.as_mut().unwrap().level(LOGGER_STDOUT_NAME, log_level);
         }
+
+        if let Some(gossip_bind_addr) = args.gossip_bind_addr() {
+            if self.gossip.is_none() {
+                self.gossip = Some(GossipConfigBuilder::default());
+            }
+            // Unwrapping is fine because the gossip layer is set to Some if it was None.
+            self.gossip.as_mut().unwrap().bind_addr(gossip_bind_addr);
+        }
+
+        if let Some(private_key) = args.private_key() {
+            if self.gossip.is_none() {
+                self.gossip = Some(GossipConfigBuilder::default());
+            }
+            // Unwrapping is fine because the gossip layer is set to Some if it was None.
+            self.gossip.as_mut().unwrap().private_key(private_key);
+        }
+
         self
     }
 
     /// Finished the [`NodeConfigBuilder`] into a [`NodeConfig`].
     pub fn finish(self) -> NodeConfig {
-        let network = self.network.expect("missing network configuration").finish();
+        let network = self.gossip.expect("missing network configuration").finish();
         let manual_peering = self.manual_peering.unwrap_or_default().finish(&network.local_id);
 
         NodeConfig {
@@ -74,7 +91,7 @@ pub struct NodeConfig {
     /// Logger configuration.
     pub logger: LoggerConfig,
     /// Network configuration.
-    pub network: NetworkConfig,
+    pub network: GossipConfig,
     /// Manual peering configuration.
     pub manual_peering: ManualPeeringConfig,
 }

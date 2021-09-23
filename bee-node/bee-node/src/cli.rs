@@ -9,10 +9,13 @@ use structopt::StructOpt;
 /// Defines the node CLI arguments.
 #[derive(Clone, Debug, StructOpt)]
 pub struct NodeCliArgs {
-    #[structopt(short, long, help = "The listening port for gossip")]
-    gossip_port: Option<u16>,
-    #[structopt(short, long, help = "The node's identity")]
-    identity: Option<String>,
+    #[structopt(short = "k", long = "private-key", help = "The node's private key to sign messages")]
+    private_key: Option<String>,
+    #[structopt(
+        long = "gossip-bind-address",
+        help = "The bind address of the gossip server, e.g. 127.0.0.1:14666"
+    )]
+    gossip_bind_addr: Option<String>,
     #[structopt(short = "c", long = "config", help = "Path of the node configuration file")]
     config: Option<String>,
     #[structopt(
@@ -53,12 +56,12 @@ impl NodeCliArgs {
     }
 
     /// Returns the listening port for gossip.
-    pub fn gossip_port(&self) -> Option<&u16> {
-        self.gossip_port.as_ref()
+    pub fn gossip_bind_addr(&self) -> Option<&String> {
+        self.gossip_bind_addr.as_ref()
     }
 
-    /// Returns the identity of the node if specified.
-    pub fn identity(&self) -> Option<&String> {
-        self.identity.as_ref()
+    /// Returns the private key of the node.
+    pub fn private_key(&self) -> Option<&String> {
+        self.private_key.as_ref()
     }
 }

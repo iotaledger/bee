@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_logger::logger_init;
-use bee_network::backstage::NetworkActor;
+use bee_network::backstage::GossipActor;
 use bee_node::{
     banner::print_logo_and_version,
     cli::NodeCliArgs,
@@ -52,7 +52,7 @@ impl<S: SupHandle<Self>> Actor<S> for BeeSupervisor {
 
         let config = NodeConfigBuilder::from_file(cli.config().unwrap_or(DEFAULT_NODE_CONFIG_PATH))
             .map_err(ActorError::aborted)?
-            .with_cli_args(cli.clone())
+            .with_cli_args(&cli)
             .finish();
 
         logger_init(config.logger).map_err(ActorError::aborted)?;
@@ -71,7 +71,7 @@ impl<S: SupHandle<Self>> Actor<S> for BeeSupervisor {
         rt.add_resource(network_config).await;
         rt.add_resource(manual_peering_config).await;
 
-        rt.start(Some("network".into()), NetworkActor::new()).await?;
+        rt.start(Some("network".into()), GossipActor::new()).await?;
 
         Ok(())
     }

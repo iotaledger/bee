@@ -5,7 +5,7 @@ pub use crate::event::NetworkEvent;
 
 use crate::{
     backstage::peer::{PeerReaderActor, PeerWriterActor},
-    network::Network,
+    network::Gossip,
 };
 
 use backstage::core::{AbortableUnboundedChannel, Actor, ActorError, ActorResult, Rt, StreamExt, SupHandle};
@@ -14,9 +14,9 @@ use std::sync::Arc;
 
 /// A network actor.
 #[derive(Default)]
-pub struct NetworkActor {}
+pub struct GossipActor {}
 
-impl NetworkActor {
+impl GossipActor {
     /// Create a new network actor.
     pub fn new() -> Self {
         Self::default()
@@ -24,9 +24,8 @@ impl NetworkActor {
 }
 
 #[async_trait::async_trait]
-impl<S: SupHandle<Self>> Actor<S> for NetworkActor {
+impl<S: SupHandle<Self>> Actor<S> for GossipActor {
     type Data = ();
-
     type Channel = AbortableUnboundedChannel<NetworkEvent>;
 
     async fn init(&mut self, rt: &mut Rt<Self, S>) -> ActorResult<Self::Data> {
@@ -46,7 +45,7 @@ impl<S: SupHandle<Self>> Actor<S> for NetworkActor {
 
         let handle = rt.handle().clone();
 
-        Network::start(network_config, manual_peering_config, move |event| {
+        Gossip::start(network_config, manual_peering_config, move |event| {
             if let Err(err) = handle.send(event) {
                 log::warn!("could not publish event: {}", err)
             }
@@ -60,7 +59,7 @@ impl<S: SupHandle<Self>> Actor<S> for NetworkActor {
     async fn run(&mut self, rt: &mut Rt<Self, S>, _: Self::Data) -> ActorResult<()> {
         while let Some(event) = rt.inbox_mut().next().await {
             match event {
-                NetworkEvent::PeerConnected(peer) => {
+                NetworkEvent::GossipPeerConnected(peer) => {
                     log::debug!("peer {} connected", peer.id());
 
                     let info = Arc::new(peer.info);

@@ -12,77 +12,58 @@ use serde::{Deserialize, Serialize};
 
 use std::{
     collections::HashMap,
-    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
+    net::{IpAddr, SocketAddr, ToSocketAddrs},
 };
-
-/// Represents a bind address.
-#[derive(Clone, Debug)]
-pub enum BindAddr {
-    /// IP4 localhost.
-    LocalhostV4 {
-        /// The port to bind to at localhost.
-        port: u16,
-    },
-    /// IP6 localhost.
-    LocalhostV6 {
-        /// The port to bind to at localhost.
-        port: u16,
-    },
-    /// An arbitrary host.
-    Host {
-        /// The fully specified socket address to bind to.
-        addr: SocketAddr,
-    },
-}
-
-impl BindAddr {
-    /// Converts this type into the corresponding [`SocketAddr`].
-    pub fn into_socket_addr(self) -> SocketAddr {
-        match self {
-            BindAddr::LocalhostV4 { port } => SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), port),
-            BindAddr::LocalhostV6 { port } => SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), port),
-            BindAddr::Host { addr } => addr,
-        }
-    }
-}
 
 /// Network configuration.
 #[derive(Clone)]
-pub struct NetworkConfig {
+pub struct GossipConfig {
     /// The bind address for the server accepting peers to exchange gossip.
     pub bind_addr: SocketAddr,
     /// The local identity of the node.
     pub local_id: LocalIdentity,
 }
 
-impl NetworkConfig {
-    /// Creates a new config.
-    pub fn new(bind_addr: BindAddr, local_id: LocalIdentity) -> Self {
-        Self {
-            bind_addr: bind_addr.into_socket_addr(),
-            local_id,
-        }
+impl GossipConfig {
+    /// Creates a new gossip config.
+    pub fn new(bind_addr: SocketAddr, local_id: LocalIdentity) -> Self {
+        Self { bind_addr, local_id }
     }
 }
 
 /// Serializable (and therefore persistable) network configuration data.
-#[derive(Serialize, Deserialize)]
-#[serde(rename = "network")]
-pub struct NetworkConfigBuilder {
-    #[serde(rename = "bindAddr")]
+#[derive(Default, Serialize, Deserialize)]
+#[serde(rename = "gossip")]
+pub struct GossipConfigBuilder {
+    #[serde(rename = "bindAddress")]
     bind_addr: Option<String>,
     #[serde(rename = "privateKey")]
     private_key: Option<String>,
 }
 
-impl NetworkConfigBuilder {
+impl GossipConfigBuilder {
+    /// Sets the bind address for the gossip layer.
+    pub fn bind_addr(&mut self, bind_addr: &String) {
+        self.bind_addr.replace(bind_addr.clone());
+    }
+    /// Sets the private key for gossip layer authentication.
+    pub fn private_key(&mut self, private_key: impl ToString) {
+        self.private_key.replace(private_key.to_string());
+    }
     /// Finishes the builder.
-    pub fn finish(self) -> NetworkConfig {
-        NetworkConfig {
-            bind_addr: self.bind_addr.unwrap().parse().unwrap(),
+    pub fn finish(self) -> GossipConfig {
+        GossipConfig {
+            bind_addr: resolve_bind_addr(self.bind_addr.as_ref().unwrap()).expect("faulty bind address"),
             local_id: LocalIdentity::from_bs58_encoded_private_key(self.private_key.unwrap()),
         }
     }
+}
+
+fn resolve_bind_addr(bind_addr: &str) -> Result<SocketAddr, Box<dyn std::error::Error>> {
+    Ok(bind_addr.to_socket_addrs()?.next().ok_or(std::io::Error::new(
+        std::io::ErrorKind::InvalidData,
+        "unresolvable bind address",
+    ))?)
 }
 
 /// Stores connection and other information about a manual peer.
@@ -134,7 +115,7 @@ impl ManualPeeringConfig {
 }
 
 /// Serializable representation of a manual peer.
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct ManualPeerConfigBuilder {
     #[serde(rename = "publicKey")]
     public_key: Option<String>,

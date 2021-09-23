@@ -1,10 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! A module that provides the [`Network`] type, which allows establish and maintain network connections with peers.
+//! A module that provides the [`Gossip`] type, which allows establish and maintain gossip connections with peers.
 
 use crate::{
-    config::{ManualPeeringConfig, NetworkConfig},
+    config::{GossipConfig, ManualPeeringConfig},
     conn::{ConnectedList, Direction},
     event::NetworkEvent,
     handshake::handshake,
@@ -18,9 +18,7 @@ use tokio::{
     time::{sleep, Duration},
 };
 
-use std::{io, sync::atomic::AtomicUsize};
-
-static _NUM_CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
+use std::io;
 
 const RECONNECT_INTERVAL_SECS: u64 = 30;
 
@@ -39,18 +37,19 @@ pub enum Error {
 }
 
 /// A type representing a network layer in order to establish and maintain connections with peers.
-pub struct Network {}
+pub struct Gossip {}
 
-impl Network {
-    /// Starts the network (layer).
+impl Gossip {
+    /// Starts the gossip (layer).
     pub async fn start(
-        network_config: NetworkConfig,
+        gossip_config: GossipConfig,
         manual_peering_config: ManualPeeringConfig,
         on_event: impl Fn(NetworkEvent) + Clone + Send + 'static,
     ) -> Result<(), Error> {
-        let NetworkConfig { bind_addr, local_id } = network_config;
+        let GossipConfig { bind_addr, local_id } = gossip_config;
 
         let server = TcpListener::bind(bind_addr).await.map_err(|_| Error::BindingToAddr)?;
+        log::info!("Listening for gossip at: {}", bind_addr);
 
         let connected_list = ConnectedList::new();
 
@@ -104,7 +103,7 @@ async fn run_server(
 
                             let connected_peer = ConnectedPeer::new(identity, alias, reader, writer);
 
-                            on_event(NetworkEvent::PeerConnected(connected_peer));
+                            on_event(NetworkEvent::GossipPeerConnected(connected_peer));
                         }
                         Err(e) => {
                             log::warn!("handshake error {:?} with {}", e, socket_addr);
@@ -157,7 +156,7 @@ async fn run_client(
 
                                 let connected_peer = ConnectedPeer::new(identity, alias, reader, writer);
 
-                                on_event(NetworkEvent::PeerConnected(connected_peer))
+                                on_event(NetworkEvent::GossipPeerConnected(connected_peer))
                             }
                             Err(e) => {
                                 log::warn!("handshake error {:?} with {}", e, socket_addr);

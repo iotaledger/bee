@@ -18,8 +18,8 @@
       }
     ]
   },
-  "network": {
-    "bindAddr": "127.0.0.1:15600",
+  "gossip": {
+    "bindAddress": "127.0.0.1:15600",
     "privateKey": ""
   },
   "manualPeering": {
