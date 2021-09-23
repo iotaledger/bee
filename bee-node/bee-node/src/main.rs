@@ -1,8 +1,6 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::error::Error;
-
 use bee_logger::logger_init;
 use bee_network::backstage::NetworkActor;
 use bee_node::{
@@ -15,6 +13,8 @@ use backstage::core::{
     AbortableUnboundedChannel, Actor, ActorError, ActorResult, EolEvent, ReportEvent, Rt, Runtime, ScopeId, Service,
     StreamExt, SupHandle,
 };
+
+use std::error::Error;
 
 #[derive(Default)]
 struct BeeSupervisor {}
