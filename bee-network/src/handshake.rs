@@ -12,19 +12,18 @@ use crate::{
 
 use crypto::signatures::ed25519;
 use prost::{bytes::BytesMut, Message as _};
-
-use std::{
-    fmt,
-    net::{IpAddr, SocketAddr},
-    time::{SystemTime, UNIX_EPOCH},
-};
-
 use tokio::{
     io::{self, AsyncReadExt, AsyncWriteExt, BufReader, BufWriter},
     net::{
         tcp::{OwnedReadHalf, OwnedWriteHalf},
         TcpStream,
     },
+};
+
+use std::{
+    fmt,
+    net::{IpAddr, SocketAddr},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 type Alias = String;
