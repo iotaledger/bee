@@ -11,6 +11,8 @@ keywords = [ "iota", "tangle", "bee", "framework", "network" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
+bee-task = { path = "../bee-common/bee-task" }
+
 async-trait = { version = "0.1", default-features = false }
 backstage = { git = "https://github.com/iotaledger/backstage", default-features = false, branch = "stable", optional = true }
 base64 = { version = "0.13", default-features = false, features = [ "std" ] }

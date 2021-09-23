@@ -12,9 +12,10 @@ use crate::{
     peer::ConnectedPeer,
 };
 
+use bee_task::{StandaloneSpawner, TaskSpawner as _};
+
 use tokio::{
     net::{TcpListener, TcpStream},
-    task::spawn,
     time::{sleep, Duration},
 };
 
@@ -54,7 +55,7 @@ impl Gossip {
         let connected_list = ConnectedList::new();
 
         // Spin up a server listening for peers.
-        spawn(run_server(
+        StandaloneSpawner::spawn(run_server(
             server,
             on_event.clone(),
             local_id.clone(),
@@ -63,7 +64,7 @@ impl Gossip {
         ));
 
         // Spin up a client actively connecting to peers.
-        spawn(run_client(on_event, local_id, manual_peering_config, connected_list));
+        StandaloneSpawner::spawn(run_client(on_event, local_id, manual_peering_config, connected_list));
 
         Ok(())
     }

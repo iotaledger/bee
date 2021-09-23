@@ -192,6 +192,7 @@ dependencies = [
  "async-trait",
  "backstage",
  "base64",
+ "bee-task",
  "bs58",
  "bytes",
  "env_logger",
