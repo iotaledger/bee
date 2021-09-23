@@ -43,10 +43,7 @@ pub fn exec(tool: &Ed25519Tool) -> Result<(), Ed25519Error> {
             let public = private.public_key();
 
             println!("Your ed25519 private key:\t{}", hex::encode(private.to_bytes()));
-            println!(
-                "Your ed25519 public key:\t{}",
-                hex::encode(public.to_bytes())
-            );
+            println!("Your ed25519 public key:\t{}", hex::encode(public.to_bytes()));
         }
     }
 

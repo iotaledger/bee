@@ -15,8 +15,10 @@ use crate::{
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder, NodeInfo},
+    task::{StandaloneSpawner, TaskSpawner},
     worker::Worker,
 };
+use bee_storage::system::StorageHealth;
 
 use anymap::Map;
 use async_trait::async_trait;
@@ -52,7 +54,7 @@ fn shutdown_procedure(sender: oneshot::Sender<()>) {
 fn shutdown_listener(signals: Vec<SignalKind>) -> oneshot::Receiver<()> {
     let (sender, receiver) = oneshot::channel();
 
-    tokio::spawn(async move {
+    StandaloneSpawner::spawn(async move {
         let mut signals = signals
             .iter()
             .map(|kind| signal(*kind).unwrap())
@@ -75,7 +77,7 @@ fn shutdown_listener(signals: Vec<SignalKind>) -> oneshot::Receiver<()> {
 fn shutdown_listener() -> oneshot::Receiver<()> {
     let (sender, receiver) = oneshot::channel();
 
-    tokio::spawn(async move {
+    StandaloneSpawner::spawn(async move {
         if let Err(e) = tokio::signal::ctrl_c().await {
             panic!("Failed to intercept CTRL-C: {:?}.", e);
         }
@@ -118,16 +120,6 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
     type Config = NodeConfig<B>;
 
     fn new(config: Self::Config) -> Result<Self, Self::Error> {
-        let version = if BEE_GIT_COMMIT.is_empty() {
-            BEE_VERSION.to_owned()
-        } else {
-            BEE_VERSION.to_owned() + "-" + &BEE_GIT_COMMIT[0..7]
-        };
-        let node_info = NodeInfo {
-            name: "Bee".to_owned(),
-            version,
-        };
-
         Ok(Self {
             deps: HashMap::default(),
             worker_starts: HashMap::default(),
@@ -135,11 +127,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             worker_names: HashMap::default(),
             resource_registers: Vec::default(),
             config: config.clone(),
-        }
-        .with_resource(node_info)
-        // TODO block ? Make new async ?
-        .with_resource((B::start(config.storage)).map_err(|e| Error::StorageBackend(Box::new(e)))?)
-        .with_resource(Bus::<TypeId>::default()))
+        })
     }
 
     fn with_worker<W: Worker<BeeNode<B>> + 'static>(self) -> Self
@@ -186,23 +174,40 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
     }
 
     async fn finish(mut self) -> Result<BeeNode<B>, Error> {
-        if self.config.identity.2 {
-            return Err(Error::InvalidOrNoIdentityPrivateKey(self.config.identity.1));
+        let config = self.config.clone();
+        // TODO block ? Make new async ?
+        let storage = B::start(config.storage.clone()).map_err(|e| Error::StorageBackend(Box::new(e)))?;
+
+        let node_info = NodeInfo {
+            name: "Bee".to_owned(),
+            version: if BEE_GIT_COMMIT.is_empty() {
+                BEE_VERSION.to_owned()
+            } else {
+                BEE_VERSION.to_owned() + "-" + &BEE_GIT_COMMIT[0..7]
+            },
+        };
+
+        if config.identity.2 {
+            storage
+                .set_health(StorageHealth::Healthy)
+                .map_err(|e| Error::StorageBackend(Box::new(e)))?;
+            return Err(Error::InvalidOrNoIdentityPrivateKey(config.identity.1));
         }
+
+        let this = self
+            .with_resource(config.clone())
+            .with_resource(node_info)
+            .with_resource(storage)
+            .with_resource(Bus::<TypeId>::default());
 
         info!(
             "Joining network \"{}\"({}). Bech32 hrp \"{}\".",
-            self.config.network_id.0, self.config.network_id.1, self.config.bech32_hrp
+            config.network_id.0, config.network_id.1, config.bech32_hrp
         );
-
-        let config = self.config.clone();
 
         let network_config = config.network.clone();
         let network_id = config.network_id.1;
-
         let local_keys = config.identity.0.clone();
-
-        let this = self.with_resource(config.clone()); // TODO: Remove clone
 
         info!("Initializing network layer...");
         let (this, events) = bee_network::integrated::init::<BeeNode<B>>(network_config, local_keys, network_id, this)

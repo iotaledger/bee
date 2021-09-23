@@ -1,6 +1,6 @@
 [package]
 name = "bee-node"
-version = "0.2.0-rc1"
+version = "0.2.1"
 authors = [ "IOTA Stiftung" ]
 edition = "2018"
 description = ""
@@ -65,7 +65,7 @@ path = "src/main.rs"
 [features]
 default = [ "rocksdb" ]
 
-console = [ "console-subscriber", "tokio/tracing", "tracing", "tracing-subscriber" ]
+console = [ "console-subscriber", "tokio/tracing", "tracing", "tracing-subscriber", "bee-runtime/console" ]
 dashboard = [ "cap", "mime_guess", "rust-embed", "serde_repr", "warp-reverse-proxy" ]
 rocksdb = [ "bee-storage-rocksdb" ]
 sled = [ "bee-storage-sled" ]

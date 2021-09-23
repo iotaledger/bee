@@ -1,10 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![recursion_limit="256"]
+#![recursion_limit = "256"]
 
 use bee_node::{plugins, print_banner_and_version, tools, CliArgs, NodeBuilder, NodeConfigBuilder};
-use bee_runtime::node::NodeBuilder as _;
+use bee_runtime::{
+    node::NodeBuilder as _,
+    task::{StandaloneSpawner, TaskSpawner},
+};
 #[cfg(feature = "rocksdb")]
 use bee_storage_rocksdb::storage::Storage as RocksDb;
 #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
@@ -31,7 +34,7 @@ fn logger_init() -> tokio::task::JoinHandle<Result<(), Box<dyn std::error::Error
         .with(layer)
         .init();
 
-    tokio::spawn(async move { server.serve().await })
+    StandaloneSpawner::spawn(async move { server.serve().await })
 }
 
 #[cfg(not(feature = "console"))]
@@ -47,6 +50,16 @@ fn logger_init(logger: bee_common::logger::LoggerConfig) {
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let cli = CliArgs::new();
 
+    if let Some(tool) = cli.tool() {
+        return tools::exec(tool).map_err(|e| e.into());
+    }
+
+    print_banner_and_version();
+
+    if cli.version() {
+        return Ok(());
+    }
+
     let config = match NodeConfigBuilder::from_file(cli.config().unwrap_or(&CONFIG_PATH.to_owned())) {
         Ok(builder) => builder.with_cli_args(cli.clone()).finish(),
         Err(e) => panic!("Failed to create the node config builder: {}", e),
@@ -58,19 +71,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     #[cfg(not(feature = "console"))]
     logger_init(config.logger.clone());
 
-    if let Some(tool) = cli.tool() {
-        if let Err(e) = tools::exec(tool) {
-            error!("Tool execution failed: {}", e);
-        }
-        return Ok(());
-    }
-
-    print_banner_and_version();
-
-    if cli.version() {
-        return Ok(());
-    }
-
     #[cfg(feature = "rocksdb")]
     let node_builder = NodeBuilder::<RocksDb>::new(config);
     #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
@@ -80,7 +80,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Ok(builder) => match builder.with_plugin::<plugins::Mps>().finish().await {
             Ok(node) => {
                 #[cfg(feature = "console")]
-                let res = tokio::try_join!(tokio::spawn(node.run()), console_handle);
+                let res = tokio::try_join!(StandaloneSpawner::spawn(node.run()), console_handle);
 
                 #[cfg(not(feature = "console"))]
                 let res = node.run().await;

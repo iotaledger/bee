@@ -7,6 +7,8 @@ use rpassword::read_password_from_tty;
 use structopt::StructOpt;
 use thiserror::Error;
 
+use std::env;
+
 #[derive(Debug, Error)]
 pub enum PasswordError {
     #[error("{0}")]
@@ -23,11 +25,18 @@ pub enum PasswordError {
 pub struct PasswordTool {}
 
 pub fn exec(_tool: &PasswordTool) -> Result<(), PasswordError> {
-    let password = read_password_from_tty(Some("Password: "))?;
-    let password_reenter = read_password_from_tty(Some("Re-enter password: "))?;
-    if password != password_reenter {
-        return Err(PasswordError::NonMatching);
-    }
+    let password = if let Ok(env_password) = env::var("BEE_TOOL_PASSWORD") {
+        env_password
+    } else {
+        let password = read_password_from_tty(Some("Password: "))?;
+
+        if password != read_password_from_tty(Some("Re-enter password: "))? {
+            return Err(PasswordError::NonMatching);
+        }
+
+        password
+    };
+
     let salt = password::generate_salt();
     let hash = password::password_hash(password.as_bytes(), &salt)?;
 
