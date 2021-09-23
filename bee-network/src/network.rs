@@ -18,13 +18,11 @@ use tokio::{
     time::{sleep, Duration},
 };
 
-use std::sync::atomic::AtomicUsize;
+use std::{io, sync::atomic::AtomicUsize};
 
 static _NUM_CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
 
 const RECONNECT_INTERVAL_SECS: u64 = 30;
-
-use std::io;
 
 /// Network errors.
 #[derive(Debug, thiserror::Error)]
