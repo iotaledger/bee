@@ -7,7 +7,7 @@ description = "Utilities to establish and maintain network connections with peer
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = [ "iota", "tangle", "bee", "framework", "node" ]
+keywords = [ "iota", "tangle", "bee", "framework", "network" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
