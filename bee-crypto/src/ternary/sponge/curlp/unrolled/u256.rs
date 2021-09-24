@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::ops::{Index, IndexMut};
@@ -27,8 +27,7 @@ impl IndexMut<usize> for U256 {
 }
 
 impl U256 {
-    // Doing a bitwise and with `1` produces a value between `0` and `1` which fits in an `i8`
-    // without truncation.
+    // Doing a bitwise AND with `1` produces a value between `0` and `1` which fits in an `i8` without truncation.
     #[allow(clippy::cast_possible_truncation)]
     pub(super) fn bit(&self, i: usize) -> i8 {
         (self[(i / 64) % 4] >> (i % 64) & 1) as i8
