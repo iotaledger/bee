@@ -13,7 +13,7 @@ struct MessageData {
 }
 
 /// Tangle data structure.
-/// Provides a [`HashMap`] of [`MessageId`]s to [`Message`]s.
+/// Provides a [`HashMap`] of [`MessageId`]s to [`Message`]s, and their associated [`MessageMetadata`].
 #[derive(Default)]
 pub struct Tangle(RwLock<HashMap<MessageId, MessageData>>);
 
@@ -42,5 +42,14 @@ impl Tangle {
     /// Retrieves [`MessageMetadata`] from the [`Tangle`] with a given [`MessageId`].
     pub async fn get_metadata(&self, message_id: &MessageId) -> Option<MessageMetadata> {
         self.0.read().await.get(message_id).map(|data| data.metadata.clone())
+    }
+
+    /// Retrieves both the [`Message`] and [`Metadata`] from the [`Tangle`] with a given [`MessageId`].
+    pub async fn get(&self, message_id: &MessageId) -> Option<(Arc<Message>, MessageMetadata)> {
+        self.0
+            .read()
+            .await
+            .get(message_id)
+            .map(|data| (data.message.clone(), data.metadata.clone()))
     }
 }

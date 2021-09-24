@@ -15,4 +15,6 @@ async fn insert() {
 
     assert_eq!(*tangle.get_message(&message_id).await.unwrap(), message);
     assert_eq!(tangle.get_metadata(&message_id).await.unwrap(), metadata);
+    assert_eq!(*tangle.get(&message_id).await.unwrap().0, message);
+    assert_eq!(tangle.get(&message_id).await.unwrap().1, metadata);
 }
