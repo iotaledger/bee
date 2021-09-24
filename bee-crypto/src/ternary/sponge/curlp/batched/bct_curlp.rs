@@ -3,7 +3,7 @@
 
 use crate::ternary::{
     sponge::{
-        batched_curlp::{
+        curlp::batched::{
             bct::{BcTrit, BcTritArr, BcTrits},
             HIGH_BITS,
         },
