@@ -1,6 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod transform;
+mod u256;
+
 use u256::U256;
 
 use super::{Sponge, HASH_LENGTH};
@@ -9,15 +12,12 @@ use bee_ternary::{Btrit, Trits};
 
 use std::convert::Infallible;
 
-mod transform;
-mod u256;
-
 enum SpongeDirection {
     Absorb,
     Squeeze,
 }
 
-/// Unrolled `CurlP` with a fixed number of 81 rounds.
+/// Unrolled [`CurlP`] with a fixed number of 81 rounds.
 pub struct UnrolledCurlP81 {
     p: [U256; 3],
     n: [U256; 3],
@@ -25,7 +25,7 @@ pub struct UnrolledCurlP81 {
 }
 
 impl UnrolledCurlP81 {
-    /// Creates a new `UnrolledCurlP81`.
+    /// Creates a new [`UnrolledCurlP81`].
     pub fn new() -> Self {
         Self::default()
     }
@@ -38,8 +38,8 @@ impl UnrolledCurlP81 {
         self.direction = SpongeDirection::Squeeze;
 
         for i in 0..HASH_LENGTH {
-            // SAFETY: `U256::bit` returns an `i8` between `0` and `1`. Substracting two bits will
-            // produce an `i8` between `-1` and `1` and matches the `repr` of `Btrit`.
+            // SAFETY: `U256::bit` returns an `i8` between `0` and `1`.
+            /// Substracting two bits will produce an `i8` between `-1` and `1` and matches the `repr` of `Btrit`.
             let trit = unsafe { std::mem::transmute::<i8, Btrit>(self.p[0].bit(i) - self.n[0].bit(i)) };
             hash.set(i, trit);
         }

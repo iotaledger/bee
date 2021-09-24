@@ -1,13 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const NUM_ROUNDS: usize = 81;
-const ROTATION_OFFSET: usize = 364;
-const STATE_SIZE: usize = HASH_LENGTH * 3;
-
 use super::{u256::U256, HASH_LENGTH};
 
 use lazy_static::lazy_static;
+
+const NUM_ROUNDS: usize = 81;
+const ROTATION_OFFSET: usize = 364;
+const STATE_SIZE: usize = HASH_LENGTH * 3;
 
 #[derive(Clone, Copy)]
 struct StateRotation {
