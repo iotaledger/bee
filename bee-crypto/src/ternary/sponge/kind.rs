@@ -10,6 +10,6 @@ pub enum SpongeKind {
     CurlP27,
     /// CurlP with 81 rounds.
     CurlP81,
-    /// Undrolled CurlP with 81 rounds.
+    /// Unrolled CurlP with 81 rounds.
     UnrolledCurlP81,
 }
