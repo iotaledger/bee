@@ -44,7 +44,7 @@ impl Tangle {
         self.0.read().await.get(message_id).map(|data| data.metadata.clone())
     }
 
-    /// Retrieves both the [`Message`] and [`Metadata`] from the [`Tangle`] with a given [`MessageId`].
+    /// Retrieves both the [`Message`] and [`MessageMetadata`] from the [`Tangle`] with a given [`MessageId`].
     pub async fn get(&self, message_id: &MessageId) -> Option<(Arc<Message>, MessageMetadata)> {
         self.0
             .read()
