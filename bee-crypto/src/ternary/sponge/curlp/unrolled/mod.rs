@@ -39,7 +39,7 @@ impl UnrolledCurlP81 {
 
         for i in 0..HASH_LENGTH {
             // SAFETY: `U256::bit` returns an `i8` between `0` and `1`.
-            /// Substracting two bits will produce an `i8` between `-1` and `1` and matches the `repr` of `Btrit`.
+            // Substracting two bits will produce an `i8` between `-1` and `1` and matches the `repr` of `Btrit`.
             let trit = unsafe { std::mem::transmute::<i8, Btrit>(self.p[0].bit(i) - self.n[0].bit(i)) };
             hash.set(i, trit);
         }
