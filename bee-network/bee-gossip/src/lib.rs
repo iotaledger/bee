@@ -17,6 +17,6 @@ mod proto {
 pub mod backstage;
 pub mod config;
 pub mod event;
+pub mod gossip;
 pub mod message;
-pub mod network;
 pub mod peer;

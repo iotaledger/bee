@@ -5,7 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Manual peer configuration.
+/// Autopeering configuration.
 #[derive(Clone)]
 pub struct AutoPeeringConfig {
     // TODO
@@ -15,7 +15,7 @@ impl AutoPeeringConfig {
     // TODO
 }
 
-/// Serializable representation of a list of manual peers.
+/// TODO
 #[derive(Default, Serialize, Deserialize)]
 #[serde(rename = "manualPeering")]
 pub struct AutoPeeringConfigBuilder {

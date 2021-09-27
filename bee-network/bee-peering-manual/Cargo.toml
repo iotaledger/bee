@@ -1,5 +1,5 @@
 [package]
-name = "bee-manualpeering"
+name = "bee-peering-manual"
 version = "0.1.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2018"
@@ -7,7 +7,7 @@ description = "Utilities to manually configure peers."
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = [ "iota", "tangle", "bee", "framework", "manualpeering" ]
+keywords = [ "iota", "tangle", "bee", "framework", "manual peering" ]
 homepage = "https://www.iota.org"
 
 [dependencies]

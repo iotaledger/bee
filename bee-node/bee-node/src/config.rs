@@ -5,11 +5,11 @@
 
 use crate::cli::NodeCliArgs;
 
-use bee_autopeering::config::{AutoPeeringConfig, AutoPeeringConfigBuilder};
 use bee_gossip::config::{GossipConfig, GossipConfigBuilder};
-use bee_identity::config::{NetworkIdentityConfig, NetworkIdentityConfigBuilder};
+use bee_identity::config::{IdentityConfig, IdentityConfigBuilder};
 use bee_logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
-use bee_manualpeering::config::{ManualPeeringConfig, ManualPeeringConfigBuilder};
+use bee_peering_auto::config::{AutoPeeringConfig, AutoPeeringConfigBuilder};
+use bee_peering_manual::config::{ManualPeeringConfig, ManualPeeringConfigBuilder};
 
 use serde::Deserialize;
 use thiserror::Error;
@@ -34,7 +34,7 @@ pub enum Error {
 #[derive(Default, Deserialize)]
 pub struct NodeConfigBuilder {
     pub(crate) logger: Option<LoggerConfigBuilder>,
-    pub(crate) identity: Option<NetworkIdentityConfigBuilder>,
+    pub(crate) identity: Option<IdentityConfigBuilder>,
     pub(crate) gossip: Option<GossipConfigBuilder>,
     pub(crate) manual_peering: Option<ManualPeeringConfigBuilder>,
     pub(crate) auto_peering: Option<AutoPeeringConfigBuilder>,
@@ -69,7 +69,7 @@ impl NodeConfigBuilder {
 
         if let Some(private_key) = args.private_key() {
             if self.identity.is_none() {
-                self.identity = Some(NetworkIdentityConfigBuilder::default());
+                self.identity = Some(IdentityConfigBuilder::default());
             }
             // Unwrapping is fine because the gossip layer is set to Some if it was None.
             self.identity.as_mut().unwrap().private_key(private_key);
@@ -98,7 +98,7 @@ pub struct NodeConfig {
     /// Logger configuration.
     pub logger: LoggerConfig,
     /// Identity configuration.
-    pub identity: NetworkIdentityConfig,
+    pub identity: IdentityConfig,
     /// Gossip configuration.
     pub gossip: GossipConfig,
     /// Manual peering configuration.

@@ -8,7 +8,7 @@ use crate::{
     proto,
 };
 use bee_identity::identity::{LocalId, PeerId};
-use bee_manualpeering::config::ManualPeerConfig;
+use bee_peering_manual::config::ManualPeerConfig;
 
 use crypto::signatures::ed25519;
 use prost::{bytes::BytesMut, Message as _};

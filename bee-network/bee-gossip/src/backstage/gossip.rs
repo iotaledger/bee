@@ -5,7 +5,7 @@ pub use crate::event::GossipEvent;
 
 use crate::{
     backstage::peer::{GossipReaderActor, GossipWriterActor},
-    network::Gossip,
+    gossip::Gossip,
 };
 
 use backstage::core::{AbortableUnboundedChannel, Actor, ActorError, ActorResult, Rt, StreamExt, SupHandle};

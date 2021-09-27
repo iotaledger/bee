@@ -1,5 +1,5 @@
 [package]
-name = "bee-autopeering"
+name = "bee-peering-auto"
 version = "0.1.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2018"
@@ -7,14 +7,16 @@ description = "Utilities to automatically discover peers."
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = [ "iota", "tangle", "bee", "framework", "autopeering" ]
+keywords = [ "iota", "tangle", "bee", "framework", "automatic peering" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
 bee-identity = { path = "../bee-identity" }
 
+backstage = { git = "https://github.com/iotaledger/backstage", default-features = false, branch = "stable", optional = true }
+iota-crypto = { version = "0.7.0", default-features = false, features = [ "ed25519", "random", "sha" ] }
+prost = { version = "0.8", default-features = false }
 serde = "1.0.130"
-
 
 [dev-dependencies]
 

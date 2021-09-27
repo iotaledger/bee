@@ -11,8 +11,8 @@ use crate::{
     peer::ConnectedPeer,
 };
 
-use bee_identity::{config::NetworkIdentityConfig, identity::LocalId};
-use bee_manualpeering::config::ManualPeeringConfig;
+use bee_identity::{config::IdentityConfig, identity::LocalId};
+use bee_peering_manual::config::ManualPeeringConfig;
 
 use bee_task::{StandaloneSpawner, TaskSpawner as _};
 
@@ -25,7 +25,7 @@ use std::io;
 
 const RECONNECT_INTERVAL_SECS: u64 = 30;
 
-/// Network errors.
+/// Gossip layer errors.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// Binding a TCP listener to an address failed.
@@ -46,12 +46,12 @@ impl Gossip {
     /// Starts the gossip (layer).
     pub async fn start(
         gossip_config: GossipConfig,
-        identity_config: NetworkIdentityConfig,
+        identity_config: IdentityConfig,
         manual_peering_config: ManualPeeringConfig,
         on_event: impl Fn(GossipEvent) + Clone + Send + 'static,
     ) -> Result<(), Error> {
         let GossipConfig { bind_addr } = gossip_config;
-        let NetworkIdentityConfig { local_id } = identity_config;
+        let IdentityConfig { local_id } = identity_config;
 
         let server = TcpListener::bind(bind_addr).await.map_err(|_| Error::BindingToAddr)?;
         log::info!("Listening for gossip at: {}", bind_addr);

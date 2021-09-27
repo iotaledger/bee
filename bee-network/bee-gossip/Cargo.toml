@@ -13,8 +13,8 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-identity = { path = "../bee-identity" }
 bee-task = { path = "../../bee-common/bee-task" }
-bee-manualpeering = { path = "../bee-manualpeering" }
-bee-autopeering = { path = "../bee-autopeering" }
+bee-peering-auto = { path = "../bee-peering-auto" }
+bee-peering-manual = { path = "../bee-peering-manual" }
 
 async-trait = { version = "0.1", default-features = false }
 backstage = { git = "https://github.com/iotaledger/backstage", default-features = false, branch = "stable", optional = true }
