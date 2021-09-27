@@ -14,14 +14,11 @@ pub struct MessageData {
 }
 
 impl MessageData {
-    /// Retrieves both the [`Message`] and the [`MessageMetadata`] from the [`MessageData`].
-    pub fn get(&self) -> (&Message, &MessageMetadata) {
-        (&self.message, &self.metadata)
-    }
     /// Retrieves the [`Message`] from the [`MessageData`].
     pub fn message(&self) -> &Message {
         &self.message
     }
+
     /// Retrieves the [`MessageMetadata`] from the [`MessageData`].
     pub fn metadata(&self) -> &MessageMetadata {
         &self.metadata
