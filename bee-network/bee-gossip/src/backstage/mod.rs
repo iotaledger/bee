@@ -6,5 +6,5 @@
 mod network;
 mod peer;
 
-pub use network::{GossipActor, NetworkEvent};
-pub use peer::{PeerReaderActor, PeerWriterActor, PeerWriterEvent};
+pub use network::{GossipActor, GossipEvent};
+pub use peer::{GossipReaderActor, GossipWriterActor, GossipWriterEvent};

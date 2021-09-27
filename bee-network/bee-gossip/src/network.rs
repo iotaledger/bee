@@ -4,13 +4,15 @@
 //! A module that provides the [`Gossip`] type, which allows establish and maintain gossip connections with peers.
 
 use crate::{
-    config::{GossipConfig, ManualPeeringConfig},
+    config::GossipConfig,
     conn::{ConnectedList, Direction},
-    event::NetworkEvent,
+    event::GossipEvent,
     handshake::handshake,
-    identity::LocalIdentity,
     peer::ConnectedPeer,
 };
+
+use bee_identity::{config::NetworkIdentityConfig, identity::LocalId};
+use bee_manualpeering::config::ManualPeeringConfig;
 
 use bee_task::{StandaloneSpawner, TaskSpawner as _};
 
@@ -37,17 +39,19 @@ pub enum Error {
     SocketWrite(io::Error),
 }
 
-/// A type representing a network layer in order to establish and maintain connections with peers.
+/// A type that realizes and maintains the gossip communication layer in a node.
 pub struct Gossip {}
 
 impl Gossip {
     /// Starts the gossip (layer).
     pub async fn start(
         gossip_config: GossipConfig,
+        identity_config: NetworkIdentityConfig,
         manual_peering_config: ManualPeeringConfig,
-        on_event: impl Fn(NetworkEvent) + Clone + Send + 'static,
+        on_event: impl Fn(GossipEvent) + Clone + Send + 'static,
     ) -> Result<(), Error> {
-        let GossipConfig { bind_addr, local_id } = gossip_config;
+        let GossipConfig { bind_addr } = gossip_config;
+        let NetworkIdentityConfig { local_id } = identity_config;
 
         let server = TcpListener::bind(bind_addr).await.map_err(|_| Error::BindingToAddr)?;
         log::info!("Listening for gossip at: {}", bind_addr);
@@ -72,8 +76,8 @@ impl Gossip {
 
 async fn run_server(
     server: TcpListener,
-    on_event: impl Fn(NetworkEvent),
-    local_id: LocalIdentity,
+    on_event: impl Fn(GossipEvent),
+    local_id: LocalId,
     manual_peering_config: ManualPeeringConfig,
     connected_list: ConnectedList,
 ) {
@@ -104,7 +108,7 @@ async fn run_server(
 
                             let connected_peer = ConnectedPeer::new(identity, alias, reader, writer);
 
-                            on_event(NetworkEvent::GossipPeerConnected(connected_peer));
+                            on_event(GossipEvent::PeerConnected(connected_peer));
                         }
                         Err(e) => {
                             log::warn!("handshake error {:?} with {}", e, socket_addr);
@@ -123,8 +127,8 @@ async fn run_server(
 
 // TODO: realise when a connected peer becomes unhealthy, and allow reconnection!
 async fn run_client(
-    on_event: impl Fn(NetworkEvent),
-    local_id: LocalIdentity,
+    on_event: impl Fn(GossipEvent),
+    local_id: LocalId,
     manual_peering_config: ManualPeeringConfig,
     connected_list: ConnectedList,
 ) {
@@ -157,7 +161,7 @@ async fn run_client(
 
                                 let connected_peer = ConnectedPeer::new(identity, alias, reader, writer);
 
-                                on_event(NetworkEvent::GossipPeerConnected(connected_peer))
+                                on_event(GossipEvent::PeerConnected(connected_peer))
                             }
                             Err(e) => {
                                 log::warn!("handshake error {:?} with {}", e, socket_addr);

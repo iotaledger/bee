@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    config::ManualPeerConfig,
     conn::Direction,
     consts::{HANDSHAKE_TIMEOUT_SECS, MAX_HANDSHAKE_PACKET_SIZE, VERSION},
-    identity::{Identity, LocalIdentity},
     packet::{packet_hash, Packet, PacketType},
     proto,
 };
+use bee_identity::identity::{LocalId, PeerId};
+use bee_manualpeering::config::ManualPeerConfig;
 
 use crypto::signatures::ed25519;
 use prost::{bytes::BytesMut, Message as _};
@@ -31,10 +31,10 @@ type Alias = String;
 pub async fn handshake(
     stream: TcpStream,
     socket_addr: SocketAddr,
-    local_id: &LocalIdentity,
+    local_id: &LocalId,
     direction: Direction,
     peer_config: ManualPeerConfig,
-) -> Result<(BufReader<OwnedReadHalf>, BufWriter<OwnedWriteHalf>, Identity, Alias), HandshakeError> {
+) -> Result<(BufReader<OwnedReadHalf>, BufWriter<OwnedWriteHalf>, PeerId, Alias), HandshakeError> {
     log::info!("handshaking with {}...", socket_addr);
 
     let (reader, writer) = stream.into_split();
@@ -55,7 +55,7 @@ pub async fn handshake(
 async fn send_handshake_request(
     writer: &mut BufWriter<OwnedWriteHalf>,
     to: IpAddr,
-    local_id: &LocalIdentity,
+    local_id: &LocalId,
 ) -> Result<BytesMut, HandshakeError> {
     let ty = PacketType::Handshake;
 
@@ -77,7 +77,7 @@ async fn send_handshake_request(
 async fn send_handshake_response(
     writer: &mut BufWriter<OwnedWriteHalf>,
     req_data: &[u8],
-    local_id: &LocalIdentity,
+    local_id: &LocalId,
 ) -> Result<(), HandshakeError> {
     let ty = PacketType::Handshake;
 
@@ -99,9 +99,9 @@ async fn send_handshake_response(
 async fn await_request(
     reader: &mut BufReader<OwnedReadHalf>,
     writer: &mut BufWriter<OwnedWriteHalf>,
-    local_id: &LocalIdentity,
+    local_id: &LocalId,
     _peer_config: &ManualPeerConfig,
-) -> Result<Identity, HandshakeError> {
+) -> Result<PeerId, HandshakeError> {
     let mut buf = vec![0; MAX_HANDSHAKE_PACKET_SIZE];
 
     let packet = loop {
@@ -139,7 +139,7 @@ async fn await_request(
     let mut pk = [0u8; 32];
     pk.copy_from_slice(&peer_public_key[..32]);
     let peer_public_key = ed25519::PublicKey::try_from_bytes(pk).map_err(HandshakeError::PublicKey)?;
-    let peer_identity = Identity::from_public_key(peer_public_key);
+    let peer_identity = PeerId::from_public_key(peer_public_key);
 
     Ok(peer_identity)
 }
@@ -148,7 +148,7 @@ async fn await_response(
     reader: &mut BufReader<OwnedReadHalf>,
     local_req_data: BytesMut,
     _peer_config: &ManualPeerConfig,
-) -> Result<Identity, HandshakeError> {
+) -> Result<PeerId, HandshakeError> {
     let mut buf = vec![0; MAX_HANDSHAKE_PACKET_SIZE];
 
     let packet = loop {
@@ -187,7 +187,7 @@ async fn await_response(
     let mut pk = [0u8; 32];
     pk.copy_from_slice(&peer_public_key[..32]);
     let peer_public_key = ed25519::PublicKey::try_from_bytes(pk).map_err(HandshakeError::PublicKey)?;
-    let peer_identity = Identity::from_public_key(peer_public_key);
+    let peer_identity = PeerId::from_public_key(peer_public_key);
 
     Ok(peer_identity)
 }

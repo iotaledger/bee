@@ -147,10 +147,55 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 
 [[package]]
+name = "bee-autopeering"
+version = "0.1.0"
+dependencies = [
+ "bee-identity",
+ "prost-build",
+ "serde 1.0.130",
+]
+
+[[package]]
 name = "bee-event-bus"
 version = "0.1.0"
 dependencies = [
  "criterion",
+]
+
+[[package]]
+name = "bee-gossip"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "backstage",
+ "base64",
+ "bee-autopeering",
+ "bee-identity",
+ "bee-manualpeering",
+ "bee-task",
+ "bs58",
+ "bytes",
+ "env_logger",
+ "iota-crypto",
+ "log",
+ "num",
+ "num-derive",
+ "num-traits 0.2.14",
+ "prost",
+ "prost-build",
+ "serde 1.0.130",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "bee-identity"
+version = "0.1.0"
+dependencies = [
+ "bs58",
+ "iota-crypto",
+ "serde 1.0.130",
 ]
 
 [[package]]
@@ -162,6 +207,15 @@ dependencies = [
  "log",
  "serde 1.0.130",
  "thiserror",
+]
+
+[[package]]
+name = "bee-manualpeering"
+version = "0.1.0"
+dependencies = [
+ "bee-identity",
+ "prost-build",
+ "serde 1.0.130",
 ]
 
 [[package]]
@@ -185,37 +239,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-network"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "backstage",
- "base64",
- "bee-task",
- "bs58",
- "bytes",
- "env_logger",
- "iota-crypto",
- "log",
- "num",
- "num-derive",
- "num-traits 0.2.14",
- "prost",
- "prost-build",
- "serde 1.0.130",
- "thiserror",
- "tokio",
-]
-
-[[package]]
 name = "bee-node"
 version = "0.1.0"
 dependencies = [
  "async-trait",
  "backstage",
+ "bee-autopeering",
+ "bee-gossip",
+ "bee-identity",
  "bee-logger",
- "bee-network",
+ "bee-manualpeering",
  "log",
  "serde 1.0.130",
  "serde_json",

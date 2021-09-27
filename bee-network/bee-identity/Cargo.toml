@@ -1,0 +1,17 @@
+[package]
+name = "bee-identity"
+version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
+edition = "2018"
+description = "Utilities to create network identities."
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "framework", "identity" ]
+homepage = "https://www.iota.org"
+
+[dependencies]
+iota-crypto = { version = "0.7.0", default-features = false, features = [ "ed25519", "random", "sha" ] }
+
+bs58 = { version = "0.4", default-features = false, features = [ "alloc" ] }
+serde = "1.0.130"

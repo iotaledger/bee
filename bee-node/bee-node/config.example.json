@@ -18,21 +18,36 @@
       }
     ]
   },
-  "gossip": {
-    "bindAddress": "127.0.0.1:15600",
+  "identity": {
     "privateKey": ""
+  },
+  "gossip": {
+    "bindAddress": "127.0.0.1:15600"
   },
   "manualPeering": {
     "knownPeers": [
       {
-        "publicKey": "ABC",
-        "address": "127.0.0.1:16600",
-        "alias": "GoShimmer1"
+        "publicKey": "KEY1",
+        "address": "x.x.x.x:15600",
+        "alias": "Peer1"
       },
       {
-        "publicKey": "XYZ",
-        "address": "127.0.0.1:16700",
-        "alias": "GoShimmer2"
+        "publicKey": "KEY2",
+        "address": "y.y.y.y:15600",
+        "alias": "Peer2"
+      }
+    ]
+  },
+  "autoPeering": {
+    "bindAddress": "127.0.0.1:16500",
+    "entryNodes": [
+      {
+        "publicKey": "KEY1",
+        "address": "x.x.x.x:16500"
+      },
+      {
+        "publicKey": "KEY2",
+        "address": "y.y.y.y:16500"
       }
     ]
   }

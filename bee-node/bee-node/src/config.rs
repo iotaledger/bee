@@ -5,8 +5,11 @@
 
 use crate::cli::NodeCliArgs;
 
+use bee_autopeering::config::{AutoPeeringConfig, AutoPeeringConfigBuilder};
+use bee_gossip::config::{GossipConfig, GossipConfigBuilder};
+use bee_identity::config::{NetworkIdentityConfig, NetworkIdentityConfigBuilder};
 use bee_logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
-use bee_network::config::{GossipConfig, GossipConfigBuilder, ManualPeeringConfig, ManualPeeringConfigBuilder};
+use bee_manualpeering::config::{ManualPeeringConfig, ManualPeeringConfigBuilder};
 
 use serde::Deserialize;
 use thiserror::Error;
@@ -31,8 +34,10 @@ pub enum Error {
 #[derive(Default, Deserialize)]
 pub struct NodeConfigBuilder {
     pub(crate) logger: Option<LoggerConfigBuilder>,
+    pub(crate) identity: Option<NetworkIdentityConfigBuilder>,
     pub(crate) gossip: Option<GossipConfigBuilder>,
     pub(crate) manual_peering: Option<ManualPeeringConfigBuilder>,
+    pub(crate) auto_peering: Option<AutoPeeringConfigBuilder>,
 }
 
 impl NodeConfigBuilder {
@@ -63,11 +68,11 @@ impl NodeConfigBuilder {
         }
 
         if let Some(private_key) = args.private_key() {
-            if self.gossip.is_none() {
-                self.gossip = Some(GossipConfigBuilder::default());
+            if self.identity.is_none() {
+                self.identity = Some(NetworkIdentityConfigBuilder::default());
             }
             // Unwrapping is fine because the gossip layer is set to Some if it was None.
-            self.gossip.as_mut().unwrap().private_key(private_key);
+            self.identity.as_mut().unwrap().private_key(private_key);
         }
 
         self
@@ -75,13 +80,15 @@ impl NodeConfigBuilder {
 
     /// Finished the [`NodeConfigBuilder`] into a [`NodeConfig`].
     pub fn finish(self) -> NodeConfig {
-        let network = self.gossip.expect("missing network configuration").finish();
-        let manual_peering = self.manual_peering.unwrap_or_default().finish(&network.local_id);
+        let identity = self.identity.expect("missing identity configuration").finish();
+        let manual_peering = self.manual_peering.unwrap_or_default().finish(&identity.local_id);
 
         NodeConfig {
             logger: self.logger.unwrap_or_default().finish(),
-            network,
+            identity,
+            gossip: self.gossip.unwrap_or_default().finish(),
             manual_peering,
+            auto_peering: self.auto_peering.unwrap_or_default().finish(),
         }
     }
 }
@@ -90,18 +97,24 @@ impl NodeConfigBuilder {
 pub struct NodeConfig {
     /// Logger configuration.
     pub logger: LoggerConfig,
-    /// Network configuration.
-    pub network: GossipConfig,
+    /// Identity configuration.
+    pub identity: NetworkIdentityConfig,
+    /// Gossip configuration.
+    pub gossip: GossipConfig,
     /// Manual peering configuration.
     pub manual_peering: ManualPeeringConfig,
+    /// Auto peering configuration.
+    pub auto_peering: AutoPeeringConfig,
 }
 
 impl Clone for NodeConfig {
     fn clone(&self) -> Self {
         Self {
             logger: self.logger.clone(),
-            network: self.network.clone(),
+            identity: self.identity.clone(),
+            gossip: self.gossip.clone(),
             manual_peering: self.manual_peering.clone(),
+            auto_peering: self.auto_peering.clone(),
         }
     }
 }

@@ -5,9 +5,10 @@
 
 use crate::{
     consts::MAX_PACKET_SIZE,
-    identity::Identity,
     message::{Message, MessageRequest, MessageType},
 };
+
+use bee_identity::identity::PeerId;
 
 use prost::bytes::{Buf, BufMut, BytesMut};
 use tokio::{
@@ -20,14 +21,14 @@ use std::sync::atomic::{AtomicBool, Ordering};
 const BUFFER_SIZE: usize = std::mem::size_of::<u32>() + MAX_PACKET_SIZE;
 
 pub(crate) struct PeerInfo {
-    identity: Identity,
+    identity: PeerId,
     alias: String,
     healthy: AtomicBool,
 }
 
 impl PeerInfo {
     /// Creates a new connected peer.
-    pub(crate) fn new(identity: Identity, alias: String) -> Self {
+    pub(crate) fn new(identity: PeerId, alias: String) -> Self {
         Self {
             identity,
             alias,
@@ -51,13 +52,13 @@ impl PeerInfo {
     }
 }
 
-pub(crate) struct PeerReader {
+pub(crate) struct GossipReader {
     reader: BufReader<OwnedReadHalf>,
     // FIXME: do we need to preallocate 64Kb for every peer?
     buffer: Box<[u8; BUFFER_SIZE]>,
 }
 
-impl PeerReader {
+impl GossipReader {
     pub(crate) fn new(reader: BufReader<OwnedReadHalf>) -> Self {
         Self {
             reader,
@@ -131,11 +132,11 @@ impl PeerReader {
     }
 }
 
-pub(crate) struct PeerWriter {
+pub(crate) struct GossipWriter {
     writer: BufWriter<OwnedWriteHalf>,
 }
 
-impl PeerWriter {
+impl GossipWriter {
     pub(crate) fn new(writer: BufWriter<OwnedWriteHalf>) -> Self {
         Self { writer }
     }
@@ -238,22 +239,22 @@ pub enum Error {
 /// Represents a fully connected (i.e. handshaked) peer.
 pub struct ConnectedPeer {
     pub(crate) info: PeerInfo,
-    pub(crate) reader: PeerReader,
-    pub(crate) writer: PeerWriter,
+    pub(crate) reader: GossipReader,
+    pub(crate) writer: GossipWriter,
 }
 
 impl ConnectedPeer {
     /// Creates a new connected peer.
     pub fn new(
-        identity: Identity,
+        identity: PeerId,
         alias: String,
         reader: BufReader<OwnedReadHalf>,
         writer: BufWriter<OwnedWriteHalf>,
     ) -> Self {
         Self {
             info: PeerInfo::new(identity, alias),
-            reader: PeerReader::new(reader),
-            writer: PeerWriter::new(writer),
+            reader: GossipReader::new(reader),
+            writer: GossipWriter::new(writer),
         }
     }
 

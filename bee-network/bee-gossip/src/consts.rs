@@ -13,9 +13,6 @@ pub const MAX_HANDSHAKE_PACKET_SIZE: usize = 256;
 /// The maximum delay for a handshake response to be accepted.
 pub const HANDSHAKE_TIMEOUT_SECS: u64 = 20;
 
-/// The length in bytes of the peer id (32 bytes).
-pub const ID_LENGTH: usize = crypto::hashes::sha::SHA256_LEN;
-
 /// TODO
 pub const _HANDSHAKE_WIRE_TIMEOUT_MILLIS: u64 = 500;
 

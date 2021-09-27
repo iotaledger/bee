@@ -3,74 +3,20 @@
 
 //! A module containing types necessary for network (layer) configuration.
 
-use crate::{
-    identity::{Identity, LocalIdentity},
-    util,
-};
+use bee_identity::identity::{LocalId, PeerId};
 
 use serde::{Deserialize, Serialize};
 
 use std::{
     collections::HashMap,
-    net::{IpAddr, SocketAddr, ToSocketAddrs},
+    net::{IpAddr, SocketAddr},
 };
-
-/// Network configuration.
-#[derive(Clone)]
-pub struct GossipConfig {
-    /// The bind address for the server accepting peers to exchange gossip.
-    pub bind_addr: SocketAddr,
-    /// The local identity of the node.
-    pub local_id: LocalIdentity,
-}
-
-impl GossipConfig {
-    /// Creates a new gossip config.
-    pub fn new(bind_addr: SocketAddr, local_id: LocalIdentity) -> Self {
-        Self { bind_addr, local_id }
-    }
-}
-
-/// Serializable (and therefore persistable) network configuration data.
-#[derive(Default, Serialize, Deserialize)]
-#[serde(rename = "gossip")]
-pub struct GossipConfigBuilder {
-    #[serde(rename = "bindAddress")]
-    bind_addr: Option<String>,
-    #[serde(rename = "privateKey")]
-    private_key: Option<String>,
-}
-
-impl GossipConfigBuilder {
-    /// Sets the bind address for the gossip layer.
-    pub fn bind_addr(&mut self, bind_addr: &String) {
-        self.bind_addr.replace(bind_addr.clone());
-    }
-    /// Sets the private key for gossip layer authentication.
-    pub fn private_key(&mut self, private_key: impl ToString) {
-        self.private_key.replace(private_key.to_string());
-    }
-    /// Finishes the builder.
-    pub fn finish(self) -> GossipConfig {
-        GossipConfig {
-            bind_addr: resolve_bind_addr(self.bind_addr.as_ref().unwrap()).expect("faulty bind address"),
-            local_id: LocalIdentity::from_bs58_encoded_private_key(self.private_key.unwrap()),
-        }
-    }
-}
-
-fn resolve_bind_addr(bind_addr: &str) -> Result<SocketAddr, Box<dyn std::error::Error>> {
-    Ok(bind_addr.to_socket_addrs()?.next().ok_or(std::io::Error::new(
-        std::io::ErrorKind::InvalidData,
-        "unresolvable bind address",
-    ))?)
-}
 
 /// Stores connection and other information about a manual peer.
 #[derive(Debug, Clone)]
 pub struct ManualPeerConfig {
     /// The identity of the peer.
-    pub identity: Identity,
+    pub identity: PeerId,
     /// The address of the peer.
     pub address: SocketAddr,
     /// A human friendly identifier of the peer.
@@ -107,11 +53,6 @@ impl ManualPeeringConfig {
     pub fn iter(&self) -> impl Iterator<Item = (&IpAddr, &ManualPeerConfig)> {
         self.peer_configs.iter()
     }
-
-    /// TODO: remove
-    pub fn len(&self) -> usize {
-        self.peer_configs.len()
-    }
 }
 
 /// Serializable representation of a manual peer.
@@ -125,7 +66,7 @@ pub struct ManualPeerConfigBuilder {
 
 impl ManualPeerConfigBuilder {
     /// Finishes the builder.
-    pub fn finish(self, local_id: &LocalIdentity) -> ManualPeerConfig {
+    pub fn finish(self, local_id: &LocalId) -> ManualPeerConfig {
         let ManualPeerConfigBuilder {
             public_key,
             address,
@@ -133,11 +74,11 @@ impl ManualPeerConfigBuilder {
         } = self;
 
         let alias = alias.unwrap();
-        let public_key = util::from_public_key_str(public_key.unwrap());
+        let public_key = bee_identity::from_public_key_str(public_key.unwrap());
         let is_dialer = public_key < local_id.public_key();
 
         let address: SocketAddr = address.unwrap().parse().expect("error parsing address");
-        let identity = Identity::from_public_key(public_key);
+        let identity = PeerId::from_public_key(public_key);
 
         ManualPeerConfig {
             identity,
@@ -158,7 +99,7 @@ pub struct ManualPeeringConfigBuilder {
 
 impl ManualPeeringConfigBuilder {
     /// Finishes the builder.
-    pub fn finish(self, local_id: &LocalIdentity) -> ManualPeeringConfig {
+    pub fn finish(self, local_id: &LocalId) -> ManualPeeringConfig {
         let ManualPeeringConfigBuilder { peer_config_builders } = self;
 
         let mut peer_configs = HashMap::with_capacity(peer_config_builders.len());

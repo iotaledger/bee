@@ -9,14 +9,14 @@ mod conn;
 mod consts;
 mod handshake;
 mod packet;
-mod proto;
-mod util;
+mod proto {
+    include!(concat!(env!("OUT_DIR"), "/proto.rs"));
+}
 
 #[cfg(feature = "backstage")]
 pub mod backstage;
 pub mod config;
 pub mod event;
-pub mod identity;
 pub mod message;
 pub mod network;
 pub mod peer;

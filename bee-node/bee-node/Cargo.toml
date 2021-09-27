@@ -11,8 +11,11 @@ keywords = [ "iota", "tangle", "bee", "framework", "node" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
+bee-autopeering = { path = "../../bee-network/bee-autopeering" }
 bee-logger = { path = "../../bee-common/bee-logger", default-features = false, features = [ "serde" ] }
-bee-network = { path = "../../bee-network", default-features = false, features = [ "backstage" ] }
+bee-gossip = { path = "../../bee-network/bee-gossip", default-features = false, features = [ "backstage" ] }
+bee-identity = { path = "../../bee-network/bee-identity" }
+bee-manualpeering = { path = "../../bee-network/bee-manualpeering" }
 
 async-trait = { version = "0.1.51", default-features = false }
 backstage = { git = "https://github.com/iotaledger/backstage", default-features = false, branch = "stable" }

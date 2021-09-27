@@ -3,8 +3,6 @@
 
 //! A module that deals with network identities.
 
-use crate::consts::ID_LENGTH;
-
 use crypto::{
     hashes::sha,
     signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature},
@@ -15,14 +13,17 @@ use std::{
     sync::{Arc, RwLock},
 };
 
+/// The length in bytes of the peer id (32 bytes).
+const ID_LENGTH: usize = crypto::hashes::sha::SHA256_LEN;
+
 /// A type that represents a local identity, which is also able to sign messages.
 #[derive(Clone)]
-pub struct LocalIdentity {
+pub struct LocalId {
     private_key: Arc<RwLock<PrivateKey>>,
-    identity: Identity,
+    identity: PeerId,
 }
 
-impl LocalIdentity {
+impl LocalId {
     /// Creates a new local identity.
     pub fn new() -> Self {
         Self::default()
@@ -42,7 +43,7 @@ impl LocalIdentity {
         let private_key = PrivateKey::from_bytes(bytes);
 
         let public_key = private_key.public_key();
-        let identity = Identity::from_public_key(public_key);
+        let identity = PeerId::from_public_key(public_key);
 
         Self {
             private_key: Arc::new(RwLock::new(private_key)),
@@ -66,10 +67,10 @@ impl LocalIdentity {
     }
 }
 
-impl Default for LocalIdentity {
+impl Default for LocalId {
     fn default() -> Self {
         let private_key = PrivateKey::generate().expect("error generating private key");
-        let identity = Identity::from_public_key(private_key.public_key());
+        let identity = PeerId::from_public_key(private_key.public_key());
 
         Self {
             private_key: Arc::new(RwLock::new(private_key)),
@@ -78,7 +79,7 @@ impl Default for LocalIdentity {
     }
 }
 
-impl fmt::Debug for LocalIdentity {
+impl fmt::Debug for LocalId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("LocalIdentity")
             .field("identity", &self.identity)
@@ -88,12 +89,12 @@ impl fmt::Debug for LocalIdentity {
 
 /// A type that represents the unique identity of a peer in the network.
 #[derive(Clone)]
-pub struct Identity {
+pub struct PeerId {
     id: [u8; ID_LENGTH],
     public_key: Arc<RwLock<PublicKey>>,
 }
 
-impl Identity {
+impl PeerId {
     /// Creates an identity from an ED25519 public key.
     pub fn from_public_key(public_key: PublicKey) -> Self {
         let id = gen_id(&public_key);
@@ -118,7 +119,7 @@ impl Identity {
     }
 }
 
-impl fmt::Debug for Identity {
+impl fmt::Debug for PeerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = &bs58::encode(&self.id[..8]).into_string()[..];
 

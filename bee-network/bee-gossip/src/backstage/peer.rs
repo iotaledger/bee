@@ -3,7 +3,7 @@
 
 use crate::{
     message::MessageType,
-    peer::{Error, PeerInfo, PeerReader, PeerWriter},
+    peer::{Error, GossipReader, GossipWriter, PeerInfo},
 };
 
 use backstage::core::{AbortableUnboundedChannel, Actor, ActorResult, NullChannel, Rt, StreamExt, SupHandle};
@@ -11,19 +11,19 @@ use backstage::core::{AbortableUnboundedChannel, Actor, ActorResult, NullChannel
 use std::sync::Arc;
 
 /// A peer reader actor.
-pub struct PeerReaderActor {
-    reader: PeerReader,
+pub struct GossipReaderActor {
+    reader: GossipReader,
     info: Arc<PeerInfo>,
 }
 
-impl PeerReaderActor {
-    pub(crate) fn new(reader: PeerReader, info: Arc<PeerInfo>) -> Self {
+impl GossipReaderActor {
+    pub(crate) fn new(reader: GossipReader, info: Arc<PeerInfo>) -> Self {
         Self { reader, info }
     }
 }
 
 #[async_trait::async_trait]
-impl<S: SupHandle<Self>> Actor<S> for PeerReaderActor {
+impl<S: SupHandle<Self>> Actor<S> for GossipReaderActor {
     type Data = ();
     type Channel = NullChannel;
 
@@ -56,7 +56,7 @@ impl<S: SupHandle<Self>> Actor<S> for PeerReaderActor {
 }
 
 /// A peer writer actor event.
-pub enum PeerWriterEvent {
+pub enum GossipWriterEvent {
     /// Send a message to the peer.
     SendMessage {
         /// The bytes of the message.
@@ -67,21 +67,21 @@ pub enum PeerWriterEvent {
 }
 
 /// A peer writer actor.
-pub struct PeerWriterActor {
-    writer: PeerWriter,
+pub struct GossipWriterActor {
+    writer: GossipWriter,
     info: Arc<PeerInfo>,
 }
 
-impl PeerWriterActor {
-    pub(crate) fn new(writer: PeerWriter, info: Arc<PeerInfo>) -> Self {
+impl GossipWriterActor {
+    pub(crate) fn new(writer: GossipWriter, info: Arc<PeerInfo>) -> Self {
         Self { writer, info }
     }
 }
 
 #[async_trait::async_trait]
-impl<S: SupHandle<Self>> Actor<S> for PeerWriterActor {
+impl<S: SupHandle<Self>> Actor<S> for GossipWriterActor {
     type Data = ();
-    type Channel = AbortableUnboundedChannel<PeerWriterEvent>;
+    type Channel = AbortableUnboundedChannel<GossipWriterEvent>;
 
     async fn init(&mut self, _rt: &mut Rt<Self, S>) -> ActorResult<Self::Data> {
         Ok(())
@@ -90,7 +90,7 @@ impl<S: SupHandle<Self>> Actor<S> for PeerWriterActor {
     async fn run(&mut self, rt: &mut Rt<Self, S>, _data: Self::Data) -> ActorResult<()> {
         while let Some(event) = rt.inbox_mut().next().await {
             match event {
-                PeerWriterEvent::SendMessage { bytes, msg_type } => {
+                GossipWriterEvent::SendMessage { bytes, msg_type } => {
                     if let Err(err) = self.writer.send_msg(&bytes, msg_type, &self.info).await {
                         log::warn!("could not send message: {:?}", err);
                     }

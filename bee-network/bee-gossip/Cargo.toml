@@ -1,17 +1,20 @@
 [package]
-name = "bee-network"
+name = "bee-gossip"
 version = "0.1.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2018"
-description = "Utilities to establish and maintain network connections with peers"
+description = "Utilities to exchange gossip messages with peers."
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = [ "iota", "tangle", "bee", "framework", "network" ]
+keywords = [ "iota", "tangle", "bee", "framework", "gossip" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-task = { path = "../bee-common/bee-task" }
+bee-identity = { path = "../bee-identity" }
+bee-task = { path = "../../bee-common/bee-task" }
+bee-manualpeering = { path = "../bee-manualpeering" }
+bee-autopeering = { path = "../bee-autopeering" }
 
 async-trait = { version = "0.1", default-features = false }
 backstage = { git = "https://github.com/iotaledger/backstage", default-features = false, branch = "stable", optional = true }
