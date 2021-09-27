@@ -7,10 +7,25 @@ use tokio::sync::RwLock;
 
 use std::{collections::HashMap, sync::Arc};
 
-/// Stores a [`Message`] with its [`MessageMetadata`].
+/// Used by the [`Tangle`] to store a [`Message`] with its associated [`MessageMetadata`].
 pub struct MessageData {
-    pub message: Message,
-    pub metadata: MessageMetadata,
+    message: Message,
+    metadata: MessageMetadata,
+}
+
+impl MessageData {
+    /// Retrieves both the [`Message`] and the [`MessageMetadata`] from the [`MessageData`].
+    pub fn get(&self) -> (&Message, &MessageMetadata) {
+        (&self.message, &self.metadata)
+    }
+    /// Retrieves the [`Message`] from the [`MessageData`].
+    pub fn message(&self) -> &Message {
+        &self.message
+    }
+    /// Retrieves the [`MessageMetadata`] from the [`MessageData`].
+    pub fn metadata(&self) -> &MessageMetadata {
+        &self.metadata
+    }
 }
 
 /// Tangle data structure.
@@ -34,6 +49,6 @@ impl Tangle {
 
     /// Retrieves the [`MessageData`] from the [`Tangle`] with a given [`MessageId`].
     pub async fn get(&self, message_id: &MessageId) -> Option<Arc<MessageData>> {
-        self.0.read().await.get(message_id).map(|data| data.clone())
+        self.0.read().await.get(message_id).cloned()
     }
 }
