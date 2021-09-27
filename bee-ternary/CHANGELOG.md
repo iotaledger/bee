@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.5.0 - 2021-09-27
+
+### Added
+
+- `{RawEncodingBuf, TritBuf, T1B1Buf, T2B1Buf, T3B1Buf, T4B1Buf, T5B1Buf}::clear`.
+
 ## 0.4.2-alpha - 2021-03-30
 
 ### Added
