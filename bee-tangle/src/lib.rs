@@ -7,15 +7,16 @@ use tokio::sync::RwLock;
 
 use std::{collections::HashMap, sync::Arc};
 
-struct MessageData {
-    message: Arc<Message>,
-    metadata: MessageMetadata,
+/// Stores a [`Message`] with its [`MessageMetadata`].
+pub struct MessageData {
+    pub message: Message,
+    pub metadata: MessageMetadata,
 }
 
 /// Tangle data structure.
-/// Provides a [`HashMap`] of [`MessageId`]s to [`Message`]s, and their associated [`MessageMetadata`].
+/// Provides a [`HashMap`] of [`MessageId`]s to [`MessageData`]s..
 #[derive(Default)]
-pub struct Tangle(RwLock<HashMap<MessageId, MessageData>>);
+pub struct Tangle(RwLock<HashMap<MessageId, Arc<MessageData>>>);
 
 impl Tangle {
     /// Creates a new [`Tangle`].
@@ -25,31 +26,14 @@ impl Tangle {
 
     /// Inserts a [`Message`] and its [`MessageMetadata`] into the [`Tangle`], associating it with a [`MessageId`].
     pub async fn insert(&self, message_id: MessageId, message: Message, metadata: MessageMetadata) {
-        self.0.write().await.insert(
-            message_id,
-            MessageData {
-                message: Arc::new(message),
-                metadata,
-            },
-        );
-    }
-
-    /// Retrieves a [`Message`] from the [`Tangle`] with a given [`MessageId`].
-    pub async fn get_message(&self, message_id: &MessageId) -> Option<Arc<Message>> {
-        self.0.read().await.get(message_id).map(|data| data.message.clone())
-    }
-
-    /// Retrieves [`MessageMetadata`] from the [`Tangle`] with a given [`MessageId`].
-    pub async fn get_metadata(&self, message_id: &MessageId) -> Option<MessageMetadata> {
-        self.0.read().await.get(message_id).map(|data| data.metadata.clone())
-    }
-
-    /// Retrieves both the [`Message`] and [`MessageMetadata`] from the [`Tangle`] with a given [`MessageId`].
-    pub async fn get(&self, message_id: &MessageId) -> Option<(Arc<Message>, MessageMetadata)> {
         self.0
-            .read()
+            .write()
             .await
-            .get(message_id)
-            .map(|data| (data.message.clone(), data.metadata.clone()))
+            .insert(message_id, Arc::new(MessageData { message, metadata }));
+    }
+
+    /// Retrieves the [`MessageData`] from the [`Tangle`] with a given [`MessageId`].
+    pub async fn get(&self, message_id: &MessageId) -> Option<Arc<MessageData>> {
+        self.0.read().await.get(message_id).map(|data| data.clone())
     }
 }
