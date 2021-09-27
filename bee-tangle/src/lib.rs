@@ -7,7 +7,7 @@ use tokio::sync::RwLock;
 
 use std::{collections::HashMap, sync::Arc};
 
-/// Used by the [`Tangle`] to store a [`Message`] with its associated [`MessageMetadata`].
+/// Data structure used by the [`Tangle`] to store a [`Message`] with its associated [`MessageMetadata`].
 pub struct MessageData {
     message: Message,
     metadata: MessageMetadata,
