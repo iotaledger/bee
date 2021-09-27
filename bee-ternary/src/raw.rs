@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{Trit, TritBuf};
+
 use std::ops::Range;
 
 /// A trait to be implemented by alternative trit encoding scheme slices.
@@ -74,6 +75,10 @@ pub trait RawEncodingBuf {
         }
         this
     }
+
+    /// Clears the buffer, removing all values.
+    /// Note that this method has no effect on the allocated capacity of the buffer.
+    fn clear(&mut self);
 
     /// Push a trit to the back of this buffer.
     fn push(&mut self, trit: <Self::Slice as RawEncoding>::Trit);

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{trit::ShiftTernary, Btrit, RawEncoding, RawEncodingBuf, Trit};
+
 use std::{convert::TryInto, hash, marker::PhantomData, ops::Range};
 
 /// An encoding scheme slice that uses a single byte to represent one trit.
@@ -91,10 +92,7 @@ where
 
 /// An encoding scheme buffer that uses a single byte to represent one trit.
 #[derive(Clone)]
-pub struct T1B1Buf<T: Trit = Btrit> {
-    _phantom: PhantomData<T>,
-    inner: Vec<T>,
-}
+pub struct T1B1Buf<T: Trit = Btrit>(Vec<T>);
 
 impl<T> T1B1Buf<T>
 where
@@ -118,7 +116,7 @@ where
         }
 
         // Take ownership of the inner vector and cast it to a `Vec<T::Target>`
-        let raw_trits = std::mem::ManuallyDrop::new(trit_buf.inner);
+        let raw_trits = std::mem::ManuallyDrop::new(trit_buf.0);
 
         let p = raw_trits.as_ptr();
         let len = raw_trits.len();
@@ -126,10 +124,7 @@ where
 
         let raw_shifted_trits = unsafe { Vec::from_raw_parts(p as *const i8 as *mut _, len, cap) };
 
-        T1B1Buf {
-            _phantom: PhantomData,
-            inner: raw_shifted_trits,
-        }
+        T1B1Buf(raw_shifted_trits)
     }
 }
 
@@ -140,32 +135,30 @@ where
     type Slice = T1B1<T>;
 
     fn new() -> Self {
-        Self {
-            _phantom: PhantomData,
-            inner: Vec::new(),
-        }
+        Self(Vec::new())
     }
 
     fn with_capacity(cap: usize) -> Self {
-        Self {
-            _phantom: PhantomData,
-            inner: Vec::with_capacity(cap),
-        }
+        Self(Vec::with_capacity(cap))
+    }
+
+    fn clear(&mut self) {
+        self.0.clear();
     }
 
     fn push(&mut self, trit: <Self::Slice as RawEncoding>::Trit) {
-        self.inner.push(trit);
+        self.0.push(trit);
     }
 
     fn pop(&mut self) -> Option<<Self::Slice as RawEncoding>::Trit> {
-        self.inner.pop()
+        self.0.pop()
     }
 
     fn as_slice(&self) -> &Self::Slice {
-        unsafe { &*Self::Slice::make(self.inner.as_ptr() as _, 0, self.inner.len()) }
+        unsafe { &*Self::Slice::make(self.0.as_ptr() as _, 0, self.0.len()) }
     }
 
     fn as_slice_mut(&mut self) -> &mut Self::Slice {
-        unsafe { &mut *(Self::Slice::make(self.inner.as_ptr() as _, 0, self.inner.len()) as *mut _) }
+        unsafe { &mut *(Self::Slice::make(self.0.as_ptr() as _, 0, self.0.len()) as *mut _) }
     }
 }

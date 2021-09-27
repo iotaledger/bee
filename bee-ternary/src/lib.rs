@@ -753,6 +753,12 @@ impl<T: RawEncodingBuf> TritBuf<T> {
         Self(T::from_trits(trits))
     }
 
+    /// Clears the buffer, removing all values.
+    /// Note that this method has no effect on the allocated capacity of the buffer.
+    pub fn clear(&mut self) {
+        self.0.clear();
+    }
+
     /// Push a trit to the back of this [`TritBuf`].
     pub fn push(&mut self, trit: <T::Slice as RawEncoding>::Trit) {
         self.0.push(trit);
