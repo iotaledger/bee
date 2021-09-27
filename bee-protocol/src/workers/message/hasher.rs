@@ -73,6 +73,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
             let mut hasher = UnrolledCurlP81::new();
             let mut blake2b = Blake2b256::new();
+            let mut pow_input: TritBuf = TritBuf::with_capacity(243);
 
             info!("Running.");
 
@@ -109,9 +110,9 @@ where
                 let (head, tail) = message_packet.bytes.split_at(message_packet.bytes.len() - 8);
                 blake2b.update(head);
 
-                let mut pow_input: TritBuf = TritBuf::with_capacity(243);
                 let pow_digest = blake2b.finalize_reset();
 
+                pow_input.clear();
                 b1t6::encode::<T1B1Buf>(&pow_digest)
                     .iter()
                     .for_each(|t| pow_input.push(t));
