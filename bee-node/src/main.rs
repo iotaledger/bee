@@ -5,6 +5,8 @@
 
 use bee_node::{plugins, print_banner_and_version, tools, CliArgs, NodeBuilder, NodeConfigBuilder};
 use bee_runtime::node::NodeBuilder as _;
+#[cfg(feature = "console")]
+use bee_runtime::task::{StandaloneSpawner, TaskSpawner};
 #[cfg(feature = "rocksdb")]
 use bee_storage_rocksdb::storage::Storage as RocksDb;
 #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
