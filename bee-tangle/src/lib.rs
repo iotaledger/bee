@@ -26,7 +26,7 @@ impl MessageData {
 }
 
 /// Tangle data structure.
-/// Provides a [`HashMap`] of [`MessageId`]s to [`MessageData`]s..
+/// Provides a [`HashMap`] of [`MessageId`]s to [`MessageData`]s.
 #[derive(Default)]
 pub struct Tangle(RwLock<HashMap<MessageId, Arc<MessageData>>>);
 
