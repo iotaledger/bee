@@ -17,7 +17,7 @@ impl AutoPeeringConfig {
 
 /// TODO
 #[derive(Default, Serialize, Deserialize)]
-#[serde(rename = "manualPeering")]
+#[serde(rename = "autoPeering")]
 pub struct AutoPeeringConfigBuilder {
     #[serde(rename = "bindAddress")]
     bind_addr: Option<()>,

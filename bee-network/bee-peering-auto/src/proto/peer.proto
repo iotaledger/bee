@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package proto;
+
+import "service.proto";
+
+// Minimal encoding of a peer
+message Peer {
+  // public key used for signing
+  bytes public_key = 1;
+  // string form of the peers IP
+  string ip = 2;
+  // services supported by the peer
+  ServiceMap services = 3;
+}
