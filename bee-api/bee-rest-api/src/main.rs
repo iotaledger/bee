@@ -1,4 +1,5 @@
 pub mod endpoints;
+pub mod types;
 
 use bee_storage_sled::{
     storage::Storage,
@@ -14,7 +15,10 @@ async fn main() {
     let storage;
 
     match Storage::new(sled_config) {
-        Err(e) => println!("Error creating storage config {:?}", e),
+        Err(e) => {
+            println!("Error creating storage config {:?}", e);
+            return;
+        }
         Ok(conf) => storage = conf,
     }
     // build our application with a route
