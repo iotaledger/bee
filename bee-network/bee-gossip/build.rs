@@ -8,7 +8,7 @@ fn main() -> Result<()> {
         &[
             "src/proto/handshake.proto",
             "src/proto/packet.proto",
-            "src/proto/message.proto",
+            "src/proto/gossip.proto",
         ],
         &["src/"],
     )?;

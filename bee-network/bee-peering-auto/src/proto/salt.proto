@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package proto;
+
+message Salt {
+    // value of the salt
+    bytes bytes = 1;
+    // expiration time of the salt
+    fixed64 exp_time = 2;
+}
