@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{u256::U256, HASH_LENGTH};
+use super::{bounded::BoundedUsize, u256::U256, HASH_LENGTH};
 
 use lazy_static::lazy_static;
 
@@ -12,18 +12,21 @@ const STATE_SIZE: usize = HASH_LENGTH * 3;
 #[derive(Clone, Copy)]
 struct StateRotation {
     offset: usize,
-    shift: usize,
+    shift: BoundedUsize<256>,
 }
 
 lazy_static! {
     static ref STATE_ROTATIONS: [StateRotation; NUM_ROUNDS] = {
         let mut rotation = ROTATION_OFFSET;
 
-        let mut state_rotations = [StateRotation { offset: 0, shift: 0 }; NUM_ROUNDS];
+        let mut state_rotations = [StateRotation {
+            offset: 0,
+            shift: Default::default(),
+        }; NUM_ROUNDS];
 
         for state_rotation in &mut state_rotations {
             state_rotation.offset = rotation / HASH_LENGTH;
-            state_rotation.shift = rotation % HASH_LENGTH;
+            state_rotation.shift = BoundedUsize::from_usize(rotation % HASH_LENGTH).unwrap();
             rotation = (rotation * ROTATION_OFFSET) % STATE_SIZE;
         }
 
@@ -67,7 +70,7 @@ pub(super) fn transform(p: &mut [U256; 3], n: &mut [U256; 3]) {
     reorder(p, n);
 }
 
-fn rotate_state(p: &[U256; 3], n: &[U256; 3], offset: usize, shift: usize) -> ([U256; 3], [U256; 3]) {
+fn rotate_state(p: &[U256; 3], n: &[U256; 3], offset: usize, shift: BoundedUsize<256>) -> ([U256; 3], [U256; 3]) {
     let mut p2 = <[U256; 3]>::default();
     let mut n2 = <[U256; 3]>::default();
 
@@ -75,7 +78,7 @@ fn rotate_state(p: &[U256; 3], n: &[U256; 3], offset: usize, shift: usize) -> ([
         ($p:expr, $p2:expr, $i:expr) => {
             $p2[$i]
                 .shr_into(&$p[($i + offset) % 3], shift)
-                .shl_into(&$p[(($i + 1) + offset) % 3], 243 - shift);
+                .shl_into(&$p[(($i + 1) + offset) % 3], BoundedUsize::C243 - shift);
         };
     }
 

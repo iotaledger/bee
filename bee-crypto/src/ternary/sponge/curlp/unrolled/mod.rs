@@ -1,10 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod bounded;
 mod transform;
 mod u256;
 
 use u256::U256;
+
+use bounded::BoundedUsize;
 
 use super::{Sponge, HASH_LENGTH};
 
@@ -26,7 +29,10 @@ pub struct UnrolledCurlP81 {
 
 impl UnrolledCurlP81 {
     /// Creates a new [`UnrolledCurlP81`].
+    // Many safety conditions hold only if the `HASH_LENGTH` is smaller than `256`.
+    #[allow(clippy::assertions_on_constants)]
     pub fn new() -> Self {
+        assert!(HASH_LENGTH < 256);
         Self::default()
     }
 
@@ -38,10 +44,11 @@ impl UnrolledCurlP81 {
         self.direction = SpongeDirection::Squeeze;
 
         for i in 0..HASH_LENGTH {
-            // SAFETY: `U256::bit` returns an `i8` between `0` and `1`.
+            // SAFETY: `HASH_LENGTH` is smaller than `256`.
+            let i = unsafe { BoundedUsize::from_usize_unchecked(i) };
             // Substracting two bits will produce an `i8` between `-1` and `1` and matches the `repr` of `Btrit`.
             let trit = unsafe { std::mem::transmute::<i8, Btrit>(self.p[0].bit(i) - self.n[0].bit(i)) };
-            hash.set(i, trit);
+            hash.set(i.into_usize(), trit);
         }
     }
 
@@ -81,6 +88,10 @@ impl Sponge for UnrolledCurlP81 {
             let mut n = U256::default();
 
             for (i, trit) in chunk.iter().enumerate() {
+                // SAFETY: the length of each chunk is as most `HASH_LENGTH` which is smaller than
+                // `256`.
+                let i = unsafe { BoundedUsize::from_usize_unchecked(i) };
+
                 match trit {
                     Btrit::PlusOne => p.set_bit(i),
                     Btrit::Zero => (),
