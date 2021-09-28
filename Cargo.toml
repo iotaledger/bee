@@ -9,6 +9,7 @@ members = [
   "bee-message",
   "bee-network/bee-gossip",
   "bee-network/bee-identity",
+  "bee-network/bee-packet",
   "bee-network/bee-peering-auto",
   "bee-network/bee-peering-manual",
   "bee-node/bee-node",

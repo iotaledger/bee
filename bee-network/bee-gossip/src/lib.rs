@@ -8,7 +8,6 @@
 mod conn;
 mod consts;
 mod handshake;
-mod packet;
 mod proto {
     include!(concat!(env!("OUT_DIR"), "/proto.rs"));
 }

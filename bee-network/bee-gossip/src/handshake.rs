@@ -4,10 +4,10 @@
 use crate::{
     conn::Direction,
     consts::{HANDSHAKE_TIMEOUT_SECS, MAX_HANDSHAKE_PACKET_SIZE, VERSION},
-    packet::{packet_hash, Packet, PacketType},
     proto,
 };
 use bee_identity::identity::{LocalId, PeerId};
+use bee_packet::packet::{packet_hash, Packet, PacketType};
 use bee_peering_manual::config::ManualPeerConfig;
 
 use crypto::signatures::ed25519;

@@ -162,6 +162,7 @@ dependencies = [
  "backstage",
  "base64",
  "bee-identity",
+ "bee-packet",
  "bee-peering-auto",
  "bee-peering-manual",
  "bee-task",
@@ -263,6 +264,33 @@ dependencies = [
  "rustversion",
  "syn",
  "trybuild",
+]
+
+[[package]]
+name = "bee-packet"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "backstage",
+ "base64",
+ "bee-identity",
+ "bee-peering-auto",
+ "bee-peering-manual",
+ "bee-task",
+ "bs58",
+ "bytes",
+ "env_logger",
+ "iota-crypto",
+ "log",
+ "num",
+ "num-derive",
+ "num-traits 0.2.14",
+ "prost",
+ "prost-build",
+ "serde 1.0.130",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]

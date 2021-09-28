@@ -4,7 +4,7 @@
 use std::io::Result;
 
 fn main() -> Result<()> {
-    prost_build::compile_protos(&["src/proto/handshake.proto", "src/proto/gossip.proto"], &["src/"])?;
+    prost_build::compile_protos(&["src/proto/packet.proto"], &["src/"])?;
 
     Ok(())
 }
