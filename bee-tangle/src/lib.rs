@@ -5,8 +5,6 @@
 
 #![deny(missing_docs)]
 
-mod message_data;
 mod tangle;
 
-pub use message_data::MessageData;
 pub use tangle::Tangle;
