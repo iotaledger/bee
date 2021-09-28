@@ -7,6 +7,11 @@
 
 mod consts;
 mod distance;
+mod proto {
+    include!(concat!(env!("OUT_DIR"), "/proto.rs"));
+}
+
+mod selection;
 
 #[cfg(feature = "backstage")]
 pub mod backstage;

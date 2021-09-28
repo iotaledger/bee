@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package proto;
 
-import "service.proto";
+import "proto/service.proto";
 
 // Minimal encoding of a peer
 message Peer {
