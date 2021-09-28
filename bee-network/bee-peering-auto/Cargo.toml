@@ -12,7 +12,7 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-identity = { path = "../bee-identity" }
-bee-packet = { path = "../bee-packet" }
+bee-network-packet = { path = "../bee-network-packet" }
 
 backstage = { git = "https://github.com/iotaledger/backstage", default-features = false, branch = "stable", optional = true }
 iota-crypto = { version = "0.7.0", default-features = false, features = [ "ed25519", "random", "sha" ] }
