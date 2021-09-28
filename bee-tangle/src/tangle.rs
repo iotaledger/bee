@@ -5,7 +5,7 @@ use crate::MessageData;
 
 use bee_message::{Message, MessageId, MessageMetadata};
 
-use tokio::sync::RwLock;
+use parking_lot::RwLock;
 
 use std::{collections::HashMap, sync::Arc};
 
@@ -20,15 +20,14 @@ impl Tangle {
     }
 
     /// Inserts a [`Message`]/[`MessageMetadata`] pair, associated with a [`MessageId`], into the [`Tangle`].
-    pub async fn insert(&self, message_id: MessageId, message: Message, metadata: MessageMetadata) {
+    pub fn insert(&self, message_id: MessageId, message: Message, metadata: MessageMetadata) {
         self.0
             .write()
-            .await
             .insert(message_id, Arc::new(MessageData::new(message, metadata)));
     }
 
     /// Retrieves the [`MessageData`], associated with a [`MessageId`], from the [`Tangle`] .
-    pub async fn get(&self, message_id: &MessageId) -> Option<Arc<MessageData>> {
-        self.0.read().await.get(message_id).cloned()
+    pub fn get(&self, message_id: &MessageId) -> Option<Arc<MessageData>> {
+        self.0.read().get(message_id).cloned()
     }
 }
