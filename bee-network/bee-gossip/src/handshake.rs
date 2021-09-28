@@ -8,7 +8,7 @@ use crate::{
 };
 
 use bee_identity::identity::{LocalId, PeerId};
-use bee_packet::packet::{packet_hash, Packet, PacketType};
+use bee_network_packet::{packet_hash, Packet, PacketType};
 use bee_peering_manual::config::ManualPeerConfig;
 
 use crypto::signatures::ed25519;

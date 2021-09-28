@@ -162,7 +162,7 @@ dependencies = [
  "backstage",
  "base64",
  "bee-identity",
- "bee-packet",
+ "bee-network-packet",
  "bee-peering-auto",
  "bee-peering-manual",
  "bee-task",
@@ -222,6 +222,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-network-packet"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "bs58",
+ "iota-crypto",
+ "num",
+ "num-derive",
+ "num-traits 0.2.14",
+ "prost",
+ "prost-build",
+]
+
+[[package]]
 name = "bee-node"
 version = "0.1.0"
 dependencies = [
@@ -267,26 +281,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-packet"
-version = "0.1.0"
-dependencies = [
- "base64",
- "bs58",
- "iota-crypto",
- "num",
- "num-derive",
- "num-traits 0.2.14",
- "prost",
- "prost-build",
-]
-
-[[package]]
 name = "bee-peering-auto"
 version = "0.1.0"
 dependencies = [
  "backstage",
  "bee-identity",
- "bee-packet",
+ "bee-network-packet",
  "iota-crypto",
  "prost",
  "prost-build",

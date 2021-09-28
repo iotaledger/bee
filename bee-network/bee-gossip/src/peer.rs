@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! A module that deals with peers.
+//! A module that deals with sending gossip to and receiving gossip from peers.
 
 use crate::{
     consts::MAX_PACKET_SIZE,

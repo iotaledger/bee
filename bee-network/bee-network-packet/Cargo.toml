@@ -1,5 +1,5 @@
 [package]
-name = "bee-packet"
+name = "bee-network-packet"
 version = "0.1.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2018"
@@ -7,7 +7,7 @@ description = "Processing of network packets."
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = [ "iota", "tangle", "bee", "framework", "network" ]
+keywords = [ "iota", "tangle", "bee", "framework", "network packets" ]
 homepage = "https://www.iota.org"
 
 [dependencies]

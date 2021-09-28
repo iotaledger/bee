@@ -11,6 +11,8 @@ mod proto {
 
 pub mod packet;
 
+pub use packet::{packet_hash, Packet, PacketType};
+
 /// The current protocol version.
 pub const VERSION: u32 = 0;
 
