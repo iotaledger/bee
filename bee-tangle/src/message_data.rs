@@ -3,7 +3,7 @@
 
 use bee_message::{Message, MessageMetadata};
 
-/// Data structure used by the [`Tangle`] to store a [`Message`] and its associated [`MessageMetadata`].
+/// Data structure used by the [`Tangle`](crate::Tangle) to store a [`Message`] and its associated [`MessageMetadata`].
 pub struct MessageData {
     message: Message,
     metadata: MessageMetadata,
