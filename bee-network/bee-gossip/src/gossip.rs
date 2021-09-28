@@ -11,9 +11,8 @@ use crate::{
     peer::ConnectedPeer,
 };
 
-use bee_identity::{config::IdentityConfig, identity::LocalId};
+use bee_identity::{config::IdentityConfig, LocalId};
 use bee_peering_manual::config::ManualPeeringConfig;
-
 use bee_task::{StandaloneSpawner, TaskSpawner as _};
 
 use tokio::{

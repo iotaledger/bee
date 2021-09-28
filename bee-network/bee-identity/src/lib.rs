@@ -9,4 +9,5 @@ pub mod config;
 pub mod identity;
 mod util;
 
+pub use identity::{LocalId, PeerId};
 pub use util::*;

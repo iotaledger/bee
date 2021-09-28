@@ -14,4 +14,4 @@ homepage = "https://www.iota.org"
 iota-crypto = { version = "0.7.0", default-features = false, features = [ "ed25519", "random", "sha" ] }
 
 bs58 = { version = "0.4", default-features = false, features = [ "alloc" ] }
-serde = "1.0.130"
+serde = { version = "1.0", default-features = false }

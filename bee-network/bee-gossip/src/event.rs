@@ -1,11 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! A module that deals with events published by the network (layer).
+//! A module that deals with events published by the gossip (layer).
 
 use crate::peer::ConnectedPeer;
 
-/// Represents a network event.
+/// Represents a gossip event.
 pub enum GossipEvent {
     /// Fired when a gossip peer has been successfully connected and handshaked.
     PeerConnected(ConnectedPeer),

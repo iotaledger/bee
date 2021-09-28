@@ -17,9 +17,7 @@ bee-packet = { path = "../bee-packet" }
 backstage = { git = "https://github.com/iotaledger/backstage", default-features = false, branch = "stable", optional = true }
 iota-crypto = { version = "0.7.0", default-features = false, features = [ "ed25519", "random", "sha" ] }
 prost = { version = "0.8", default-features = false }
-serde = "1.0.130"
-
-[dev-dependencies]
+serde = { version = "1.0", default-features = false }
 
 [build-dependencies]
 prost-build = { version = "0.8", default-features = false }

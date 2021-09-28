@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 bee-logger = { path = "../../bee-common/bee-logger", default-features = false, features = [ "serde" ] }
 bee-gossip = { path = "../../bee-network/bee-gossip", default-features = false, features = [ "backstage" ] }
 bee-identity = { path = "../../bee-network/bee-identity" }
-bee-peering-auto = { path = "../../bee-network/bee-peering-auto" }
+bee-peering-auto = { path = "../../bee-network/bee-peering-auto", default-features = false, features = [ "backstage" ] }
 bee-peering-manual = { path = "../../bee-network/bee-peering-manual" }
 
 async-trait = { version = "0.1.51", default-features = false }

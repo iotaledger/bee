@@ -12,7 +12,7 @@ use backstage::core::{AbortableUnboundedChannel, Actor, ActorError, ActorResult,
 
 use std::sync::Arc;
 
-/// A network actor.
+/// A gossip actor.
 #[derive(Default)]
 pub struct GossipActor {}
 

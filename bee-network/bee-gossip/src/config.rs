@@ -1,13 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! A module containing types necessary for network (layer) configuration.
+//! Gossip (layer) configuration.
 
 use serde::{Deserialize, Serialize};
 
 use std::net::{SocketAddr, ToSocketAddrs};
 
-/// Network configuration.
+/// Gossip configuration.
 #[derive(Clone)]
 pub struct GossipConfig {
     /// The bind address for the server accepting peers to exchange gossip.
@@ -21,7 +21,7 @@ impl GossipConfig {
     }
 }
 
-/// Serializable (and therefore persistable) network configuration data.
+/// Serializable (and therefore persistable) gossip configuration data.
 #[derive(Default, Serialize, Deserialize)]
 #[serde(rename = "gossip")]
 pub struct GossipConfigBuilder {

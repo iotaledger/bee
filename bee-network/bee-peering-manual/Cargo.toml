@@ -13,9 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-identity = { path = "../bee-identity" }
 
-serde = "1.0.130"
-
-[dev-dependencies]
+serde = { version = "1.0", default-features = false }
 
 [build-dependencies]
 prost-build = { version = "0.8", default-features = false }
