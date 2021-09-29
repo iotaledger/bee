@@ -11,8 +11,11 @@ use fern::{
     colors::{Color, ColoredLevelConfig},
     Dispatch,
 };
+use log::LevelFilter;
 use thiserror::Error;
 
+/// Default log level for an output.
+const DEFAULT_OUTPUT_LEVEL: LevelFilter = LevelFilter::Info;
 /// Name of the standard output.
 pub const LOGGER_STDOUT_NAME: &str = "stdout";
 
@@ -42,11 +45,41 @@ macro_rules! log_format {
     };
 }
 
+/// Initializes a logger backend for running with the `console` feature.
+#[cfg(feature = "console")]
+pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
+    let target_width = config.target_width;
+    let level_width = config.level_width;
+
+    let level_filter = match config
+        .outputs
+        .iter()
+        .find(|output| output.name == LOGGER_STDOUT_NAME)
+    {
+        Ok(output) => {
+            output
+                .level_filter
+                .unwrap_or(DEFAULT_OUTPUT_LEVEL)
+                .parse::<Targets>()
+                .unwrap_or(Targets::default::with_default(DEFAULT_OUTPUT_LEVEL))
+        }
+        Err(e) => Targets::default::with_default(DEFAULT_OUTPUT_LEVEL),
+    };
+
+    console_subscriber::build()
+        .with(tracing_subscriber::fmt::layer().with_filter(level_filter))
+        .init()
+
+    Ok(())
+}
+
+
 /// Initializes a `fern` logger backend for the `log` crate.
 ///
 /// # Arguments
 ///
 /// * `config`  -   Logger configuration
+#[cfg(not(feature = "console"))]
 pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
     let target_width = config.target_width;
     let level_width = config.level_width;

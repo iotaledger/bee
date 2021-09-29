@@ -17,21 +17,6 @@ pub trait TaskSpawner {
         F: Future + Send + 'static,
         <F as futures::Future>::Output: Send,
     {
-        #[cfg(feature = "console")]
-        {
-            let caller = std::panic::Location::caller();
-            let span = tracing::info_span!(
-                target: "tokio::task",
-                "task",
-                origin = Self::ORIGIN,
-                file = caller.file(),
-                line = caller.line(),
-            );
-
-            tokio::spawn(tracing::Instrument::instrument(future, span))
-        }
-
-        #[cfg(not(feature = "console"))]
         tokio::spawn(future)
     }
 }
