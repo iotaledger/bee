@@ -12,8 +12,8 @@ async fn insert_get() {
     let tangle = Tangle::new();
     tangle.insert(message_id, message.clone(), metadata.clone()).await;
 
-    let message_data = tangle.get(&message_id).await.unwrap();
+    let (fetched_message, fetched_metadata) = tangle.get(&message_id).await.unwrap();
 
-    assert_eq!(*message_data.message(), message);
-    assert_eq!(*message_data.metadata(), metadata);
+    assert_eq!(*fetched_message, message);
+    assert_eq!(fetched_metadata, metadata);
 }
