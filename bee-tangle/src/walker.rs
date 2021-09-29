@@ -5,7 +5,7 @@ use crate::{MessageData, Tangle};
 
 use bee_message::MessageId;
 
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::Arc};
 
 pub struct TangleWalkerBuilder<'a> {
     tangle: &'a Tangle,
@@ -60,18 +60,21 @@ impl<'a> TangleWalker<'a> {
 }
 
 impl<'a> Iterator for TangleWalker<'a> {
-    type Item = MessageData;
+    type Item = Arc<MessageData>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             let message_id = self.parents.pop()?;
 
             if !self.visited.contains(&message_id) {
+                self.visited.insert(message_id);
+
                 match self.tangle.get(&message_id) {
-                    Some(ref message_data) => {
-                        if (self.on_message)(message_data) {
+                    Some(message_data) => {
+                        if (self.on_message)(&message_data) {
                             self.parents
                                 .extend(message_data.message().parents().iter().map(|p| p.id()));
+                            return Some(message_data);
                         } else {
                             continue;
                         }
@@ -81,8 +84,6 @@ impl<'a> Iterator for TangleWalker<'a> {
                         continue;
                     }
                 }
-
-                self.visited.insert(message_id);
             }
         }
     }
