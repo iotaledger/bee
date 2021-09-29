@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{plugins::mqtt::broker::MqttBroker, storage::StorageBackend};
@@ -34,14 +34,11 @@ where
             // existing message <=> existing metadata, therefore it's safe to unwrap
             let metadata = tangle.get_metadata(&event.message_id).await.unwrap();
             // the message is referenced by a milestone therefore it's safe to unwrap
-            // TODO: is it safe to access the needed milestone index this way? will it always fetch the correct milestone index?
+            // TODO: is it safe to access the needed milestone index this way? will it always fetch the correct
+            // milestone index?
             let referenced_by_milestone_index = tangle.get_confirmed_milestone_index();
 
-            let (
-                milestone_index,
-                ledger_inclusion_state,
-                conflict_reason,
-            ) = {
+            let (milestone_index, ledger_inclusion_state, conflict_reason) = {
                 let milestone_index;
                 let ledger_inclusion_state;
                 let conflict_reason;
@@ -67,11 +64,7 @@ where
                     };
                 }
 
-                (
-                    milestone_index,
-                    ledger_inclusion_state,
-                    conflict_reason,
-                )
+                (milestone_index, ledger_inclusion_state, conflict_reason)
             };
 
             let response = serde_json::to_string(&MessageMetadataResponse {
@@ -85,7 +78,7 @@ where
                 should_promote: None,
                 should_reattach: None,
             })
-                .expect("error serializing to json");
+            .expect("error serializing to json");
 
             if let Err(e) = messages_referenced_tx.publish("messages/referenced", false, response.clone()) {
                 warn!("Publishing MQTT message failed. Cause: {:?}", e);
@@ -94,7 +87,6 @@ where
             if let Err(e) = messages_referenced_tx.publish("messages/metadata", false, response) {
                 warn!("Publishing MQTT message failed. Cause: {:?}", e);
             }
-
         }
 
         debug!("MQTT 'messages/referenced' topic handler stopped.");

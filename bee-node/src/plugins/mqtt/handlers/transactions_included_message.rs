@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -6,14 +6,13 @@ use crate::{
     storage::StorageBackend,
 };
 
+use bee_common::packable::Packable;
 use bee_ledger::types::CreatedOutput;
-use bee_message::output::OutputId;
+use bee_message::{output::OutputId, payload::transaction::TransactionId};
 use bee_runtime::node::Node;
 use bee_storage::access::Fetch;
-
-use bee_common::packable::Packable;
-use bee_message::payload::transaction::TransactionId;
 use bee_tangle::MsTangle;
+
 use librumqttd::{LinkRx, LinkTx};
 use log::{debug, warn};
 

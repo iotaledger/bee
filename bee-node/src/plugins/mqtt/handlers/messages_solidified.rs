@@ -1,23 +1,23 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{plugins::mqtt::broker::MqttBroker, storage::StorageBackend};
 
-use bee_message::{MessageId};
-use bee_rest_api::types::{responses::MessageMetadataResponse};
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
-use bee_tangle::{MsTangle};
-
+use bee_message::MessageId;
 use bee_protocol::workers::event::MessageSolidified;
+use bee_rest_api::types::responses::MessageMetadataResponse;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
+use bee_tangle::MsTangle;
+
 use librumqttd::LinkTx;
 use log::{debug, warn};
 use tokio::sync::mpsc;
 use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
 
 pub(crate) fn spawn<N>(node: &mut N, mut messages_solidified_tx: LinkTx)
-    where
-        N: Node,
-        N::Backend: StorageBackend,
+where
+    N: Node,
+    N::Backend: StorageBackend,
 {
     let tangle = node.resource::<MsTangle<N::Backend>>();
     let bus = node.bus();
@@ -34,10 +34,7 @@ pub(crate) fn spawn<N>(node: &mut N, mut messages_solidified_tx: LinkTx)
             // existing message <=> existing metadata, therefore it's safe to unwrap
             let metadata = tangle.get_metadata(&message_id).await.unwrap();
 
-            let (
-                should_promote,
-                should_reattach,
-            ) = {
+            let (should_promote, should_reattach) = {
                 let should_promote;
                 let should_reattach;
 
@@ -51,8 +48,7 @@ pub(crate) fn spawn<N>(node: &mut N, mut messages_solidified_tx: LinkTx)
                 if (lmi - *metadata.omrsi().unwrap().index()) > below_max_depth {
                     should_promote = Some(false);
                     should_reattach = Some(true);
-                } else if (lmi - *metadata.ymrsi().unwrap().index()) > ymrsi_delta
-                    || (lmi - omrsi_delta) > omrsi_delta
+                } else if (lmi - *metadata.ymrsi().unwrap().index()) > ymrsi_delta || (lmi - omrsi_delta) > omrsi_delta
                 {
                     should_promote = Some(true);
                     should_reattach = Some(false);
@@ -61,10 +57,7 @@ pub(crate) fn spawn<N>(node: &mut N, mut messages_solidified_tx: LinkTx)
                     should_reattach = Some(false);
                 };
 
-                (
-                    should_reattach,
-                    should_promote,
-                )
+                (should_reattach, should_promote)
             };
 
             let payload = serde_json::to_string(&MessageMetadataResponse {
@@ -78,7 +71,7 @@ pub(crate) fn spawn<N>(node: &mut N, mut messages_solidified_tx: LinkTx)
                 should_promote,
                 should_reattach,
             })
-                .expect("error serializing to json");
+            .expect("error serializing to json");
 
             if let Err(e) = messages_solidified_tx.publish("messages/metadata", false, payload) {
                 warn!("Publishing MQTT message failed. Cause: {:?}", e);

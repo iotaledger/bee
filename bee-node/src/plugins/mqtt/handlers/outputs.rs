@@ -1,7 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{plugins::mqtt::broker::MqttBroker, storage::StorageBackend};
+use crate::{
+    plugins::mqtt::{broker::MqttBroker, handlers::HandlerError},
+    storage::StorageBackend,
+};
 
 use bee_ledger::{
     types::{ConsumedOutput, CreatedOutput, LedgerIndex},
@@ -15,7 +18,6 @@ use bee_rest_api::types::responses::OutputResponse;
 use bee_runtime::node::Node;
 use bee_storage::access::Fetch;
 
-use crate::plugins::mqtt::handlers::HandlerError;
 use futures::channel::oneshot;
 use librumqttd::{LinkRx, LinkTx};
 use log::{debug, warn};

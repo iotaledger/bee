@@ -3,16 +3,14 @@
 
 use crate::{
     types::metrics::NodeMetrics,
-    workers::{storage::StorageBackend, MetricsWorker},
+    workers::{event::IndexationMessage, storage::StorageBackend, MetricsWorker},
 };
-use crate::workers::event::IndexationMessage;
 
 use bee_message::{
     payload::{indexation::PaddedIndex, transaction::Essence, Payload},
     MessageId,
 };
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_runtime::event::Bus;
+use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_storage::access::Insert;
 use bee_tangle::MessageRef;
 
@@ -33,16 +31,30 @@ pub(crate) struct IndexationPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
 }
 
-fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: MessageId, message: MessageRef, bus: &Bus<'_>,) {
+fn process<B: StorageBackend>(
+    storage: &B,
+    metrics: &NodeMetrics,
+    message_id: MessageId,
+    message: MessageRef,
+    bus: &Bus<'_>,
+) {
     let indexation = match message.payload() {
         Some(Payload::Indexation(indexation)) => {
-            bus.dispatch(IndexationMessage { message_id, message: message.clone(), index: indexation.padded_index() });
+            bus.dispatch(IndexationMessage {
+                message_id,
+                message: message.clone(),
+                index: indexation.padded_index(),
+            });
             indexation
-        },
+        }
         Some(Payload::Transaction(transaction)) => {
             let Essence::Regular(essence) = transaction.essence();
             if let Some(Payload::Indexation(indexation)) = essence.payload() {
-                bus.dispatch(IndexationMessage { message_id, message: message.clone(), index: indexation.padded_index() });
+                bus.dispatch(IndexationMessage {
+                    message_id,
+                    message: message.clone(),
+                    index: indexation.padded_index(),
+                });
                 indexation
             } else {
                 error!(

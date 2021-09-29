@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use self::{
@@ -99,9 +99,7 @@ where
     let mut messages_tx = broker.link("messages").expect("linking mqtt sender failed");
     let mut messages_referenced_tx = broker.link("messages-referenced").expect("linking mqtt sender failed");
     let mut messages_indexation_tx = broker.link("messages-indexation").expect("linking mqtt sender failed");
-    let mut messages_solidified_tx = broker
-        .link("messages-metadata")
-        .expect("linking mqtt sender failed");
+    let mut messages_solidified_tx = broker.link("messages-metadata").expect("linking mqtt sender failed");
     let mut outputs_tx = broker.link("outputs").expect("linking mqtt sender failed");
     let mut outputs_created_tx = broker.link("outputs-created").expect("linking mqtt sender failed");
     let mut outputs_consumed_tx = broker.link("outputs-consumed").expect("linking mqtt sender failed");
