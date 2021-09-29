@@ -18,7 +18,7 @@ pub fn rand_parent() -> Parent {
     }
 }
 
-/// Generates a [`Vec`] of random [`Parent`]s.
+/// Generates a random [`Parents`].
 pub fn rand_parents() -> Parents {
     let mut parents = vec![Parent::Strong(rand_message_id())];
 
