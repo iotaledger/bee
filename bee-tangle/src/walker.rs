@@ -7,6 +7,44 @@ use bee_message::MessageId;
 
 use std::collections::HashSet;
 
+pub struct TangleWalkerBuilder<'a> {
+    tangle: &'a Tangle,
+    root: MessageId,
+    on_message: Option<Box<dyn Fn(&MessageData) -> bool>>,
+    on_missing: Option<Box<dyn Fn(&MessageId)>>,
+}
+
+impl<'a> TangleWalkerBuilder<'a> {
+    pub fn new(tangle: &'a Tangle, root: MessageId) -> Self {
+        Self {
+            tangle,
+            root,
+            on_message: None,
+            on_missing: None,
+        }
+    }
+
+    pub fn with_on_message(mut self, on_message: Box<dyn Fn(&MessageData) -> bool>) -> Self {
+        self.on_message.replace(on_message);
+        self
+    }
+
+    pub fn with_on_missing(mut self, on_missing: Box<dyn Fn(&MessageId)>) -> Self {
+        self.on_missing.replace(on_missing);
+        self
+    }
+
+    pub fn finish(self) -> TangleWalker<'a> {
+        TangleWalker {
+            tangle: self.tangle,
+            parents: vec![self.root],
+            visited: HashSet::new(),
+            on_message: self.on_message.unwrap_or_else(|| Box::new(|_| true)),
+            on_missing: self.on_missing.unwrap_or_else(|| Box::new(|_| {})),
+        }
+    }
+}
+
 pub struct TangleWalker<'a> {
     tangle: &'a Tangle,
     parents: Vec<MessageId>,
@@ -17,13 +55,7 @@ pub struct TangleWalker<'a> {
 
 impl<'a> TangleWalker<'a> {
     pub fn new(tangle: &'a Tangle, root: MessageId) -> Self {
-        Self {
-            tangle,
-            parents: vec![root],
-            visited: HashSet::new(),
-            on_message: Box::new(|_| true),
-            on_missing: Box::new(|_| {}),
-        }
+        TangleWalkerBuilder::new(tangle, root).finish()
     }
 }
 
