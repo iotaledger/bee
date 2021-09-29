@@ -35,7 +35,7 @@ impl Tangle {
         );
     }
 
-    /// Retrieves the [`MessageData`], associated with a [`MessageId`], from the [`Tangle`] .
+    /// Retrieves a [`Message`]/[`MessageMetadata`] pair, associated with a [`MessageId`], from the [`Tangle`].
     pub async fn get(&self, message_id: &MessageId) -> Option<(Arc<Message>, MessageMetadata)> {
         self.0
             .read()
