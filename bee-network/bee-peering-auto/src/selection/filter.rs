@@ -3,14 +3,17 @@
 
 use bee_identity::PeerId;
 
+// FIXME: 1:1 Go port
+
 use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
 type Peer = ();
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Filter {
-    _internal: HashMap<PeerId, bool>,
-    _conditions: Vec<Box<dyn Fn(Peer) -> bool>>,
+    internal: Arc<RwLock<HashMap<PeerId, bool>>>,
+    conditions: Arc<RwLock<Vec<Box<dyn Fn(&Peer) -> bool>>>>,
 }
 
 impl Filter {
@@ -19,8 +22,7 @@ impl Filter {
         Default::default()
     }
 
-    #[allow(dead_code)]
-    pub fn add_condition(&mut self, c: Box<dyn Fn(Peer) -> bool>) {
-        self._conditions.push(c);
+    pub fn add_condition(&self, c: Box<dyn Fn(&Peer) -> bool>) {
+        self.conditions.write().expect("lock").push(c);
     }
 }
