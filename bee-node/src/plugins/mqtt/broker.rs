@@ -6,7 +6,6 @@ use crate::{plugins::mqtt::handlers::*, storage::StorageBackend};
 use bee_runtime::{node::Node, worker::Worker};
 
 use async_trait::async_trait;
-
 use librumqttd::{LinkRx, LinkTx};
 use log::*;
 
