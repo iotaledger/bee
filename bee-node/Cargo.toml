@@ -38,8 +38,8 @@ mime_guess = { version = "2.0", optional = true }
 multiaddr = "0.13"
 rand = "0.8"
 rpassword = "5.0"
-rumqttd = "0.7.0"
-rumqttlog = "0.7.0"
+rumqttd = "0.7"
+rumqttlog = "0.7"
 rust-embed = { version = "6.0", features = [ "interpolate-folder-path" ], optional = true }
 serde = { version = "1.0", features = [ "derive" ] }
 serde_json = "1.0"
