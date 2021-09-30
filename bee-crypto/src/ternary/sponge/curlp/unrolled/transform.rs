@@ -26,6 +26,9 @@ lazy_static! {
 
         for state_rotation in &mut state_rotations {
             state_rotation.offset = rotation / HASH_LENGTH;
+            // `STATE_ROTATIONS` is only used by `UnrolledCurlP81` which guarantees that
+            // `HASH_LENGTH` is smaller than `256`. Which means `rotation % HASH_LENGTH` is smaller
+            // than `256`.
             state_rotation.shift = BoundedUsize::from_usize(rotation % HASH_LENGTH).unwrap();
             rotation = (rotation * ROTATION_OFFSET) % STATE_SIZE;
         }
