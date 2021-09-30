@@ -320,7 +320,6 @@ dependencies = [
  "futures",
  "log",
  "tokio",
- "tracing",
 ]
 
 [[package]]
