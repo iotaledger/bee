@@ -48,27 +48,51 @@ macro_rules! log_format {
 /// Initializes a logger backend for running with the `console` feature.
 #[cfg(feature = "console")]
 pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
+    use tracing_subscriber::{prelude::*, filter::{self, Targets}};
+    
     let target_width = config.target_width;
     let level_width = config.level_width;
 
-    let level_filter = match config
+    let targets = match config
         .outputs
         .iter()
         .find(|output| output.name == LOGGER_STDOUT_NAME)
     {
-        Ok(output) => {
-            output
+        Some(output) => {
+            let level_filter = output
                 .level_filter
-                .unwrap_or(DEFAULT_OUTPUT_LEVEL)
-                .parse::<Targets>()
-                .unwrap_or(Targets::default::with_default(DEFAULT_OUTPUT_LEVEL))
+                .to_string()
+                .parse::<filter::LevelFilter>()
+                .unwrap_or(filter::LevelFilter::INFO);
+
+            if output.target_filters.is_empty() && output.target_exclusions.is_empty() {
+                Targets::default().with_default(level_filter)
+            } else {
+                let mut targets = Targets::default();
+                
+                if !output.target_filters.is_empty() {
+                    targets = targets.with_default(level_filter);
+                } else {
+                    for filter in &output.target_filters {
+                        targets = targets.with_target(filter, level_filter);
+                    }
+                }
+                            
+                for exclusion in &output.target_exclusions {
+                    targets = targets.with_target(exclusion, filter::LevelFilter::OFF);
+                }
+
+                targets
+            }
         }
-        Err(e) => Targets::default::with_default(DEFAULT_OUTPUT_LEVEL),
+        None => {
+            Targets::default().with_default(filter::LevelFilter::INFO)
+        }
     };
 
     console_subscriber::build()
-        .with(tracing_subscriber::fmt::layer().with_filter(level_filter))
-        .init()
+        .with(tracing_subscriber::fmt::layer().with_filter(targets))
+        .init();
 
     Ok(())
 }

@@ -671,7 +671,7 @@ dependencies = [
 [[package]]
 name = "console-api"
 version = "0.1.0"
-source = "git+https://github.com/tokio-rs/console.git?branch=main#e0c47897d73424e9138f342d5c006d737c8b81f5"
+source = "git+https://github.com/tokio-rs/console.git?branch=main#5784edac36e140cf3f6a1ca1c0e3dff0af34347a"
 dependencies = [
  "prost",
  "prost-types",
@@ -683,7 +683,7 @@ dependencies = [
 [[package]]
 name = "console-subscriber"
 version = "0.1.0"
-source = "git+https://github.com/tokio-rs/console.git?branch=main#e0c47897d73424e9138f342d5c006d737c8b81f5"
+source = "git+https://github.com/tokio-rs/console.git?branch=main#5784edac36e140cf3f6a1ca1c0e3dff0af34347a"
 dependencies = [
  "console-api",
  "futures",
@@ -3389,9 +3389,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-subscriber"
-version = "0.2.24"
+version = "0.2.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fdd0568dbfe3baf7048b7908d2b32bca0d81cd56bec6d2a8f894b01d74f86be3"
+checksum = "56c42e73a9d277d4d2b6a88389a137ccf3c58599660b17e8f5fc39305e490669"
 dependencies = [
  "ansi_term",
  "chrono",
@@ -3786,9 +3786,9 @@ dependencies = [
 
 [[package]]
 name = "zeroize"
-version = "1.4.1"
+version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "377db0846015f7ae377174787dd452e1c5f5a9050bc6f954911d01f116daa0cd"
+checksum = "bf68b08513768deaa790264a7fac27a58cbf2705cfcdc9448362229217d7e970"
 dependencies = [
  "zeroize_derive",
 ]
