@@ -11,3 +11,4 @@ mod walker;
 
 pub use message_data::MessageData;
 pub use tangle::Tangle;
+pub use walker::TangleWalker;

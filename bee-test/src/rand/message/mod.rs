@@ -18,19 +18,19 @@ pub mod signature;
 /// Module providing random unlock block generation utilities.
 pub mod unlock;
 
-use crate::rand::{bool::rand_bool, bytes::rand_bytes_array, number::rand_number};
+use crate::rand::{bool::rand_bool, bytes::rand_bytes_array, message::parents::parents_from_ids, number::rand_number};
 
-use bee_message::{Message, MessageBuilder, MessageId};
+use bee_message::{parents::Parents, Message, MessageBuilder, MessageId};
 
 /// Generates a random [`MessageId`].
 pub fn rand_message_id() -> MessageId {
     MessageId::new(rand_bytes_array())
 }
 
-/// Generates a random [`Message`].
-pub fn rand_message() -> Message {
+/// Generates a random [`Message`] with a given [`Parents`].
+pub fn rand_message_with_parents(parents: Parents) -> Message {
     let mut builder = MessageBuilder::new()
-        .with_parents(parents::rand_parents())
+        .with_parents(parents)
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number());
@@ -44,4 +44,14 @@ pub fn rand_message() -> Message {
         .with_signature(rand_bytes_array())
         .finish()
         .unwrap()
+}
+
+/// Generates a random [`Message`] with a given [`Vec<MessageId>`].
+pub fn rand_message_with_parents_ids(message_ids: Vec<MessageId>) -> Message {
+    rand_message_with_parents(parents_from_ids(message_ids))
+}
+
+/// Generates a random [`Message`].
+pub fn rand_message() -> Message {
+    rand_message_with_parents(parents::rand_parents())
 }

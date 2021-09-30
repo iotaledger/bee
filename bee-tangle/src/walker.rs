@@ -7,6 +7,7 @@ use bee_message::MessageId;
 
 use std::{collections::HashSet, sync::Arc};
 
+///
 pub struct TangleWalkerBuilder<'a> {
     tangle: &'a Tangle,
     root: MessageId,
@@ -15,6 +16,7 @@ pub struct TangleWalkerBuilder<'a> {
 }
 
 impl<'a> TangleWalkerBuilder<'a> {
+    ///
     pub fn new(tangle: &'a Tangle, root: MessageId) -> Self {
         Self {
             tangle,
@@ -45,6 +47,7 @@ impl<'a> TangleWalkerBuilder<'a> {
     }
 }
 
+///
 pub struct TangleWalker<'a> {
     tangle: &'a Tangle,
     parents: Vec<MessageId>,
@@ -54,13 +57,14 @@ pub struct TangleWalker<'a> {
 }
 
 impl<'a> TangleWalker<'a> {
+    ///
     pub fn new(tangle: &'a Tangle, root: MessageId) -> Self {
         TangleWalkerBuilder::new(tangle, root).finish()
     }
 }
 
 impl<'a> Iterator for TangleWalker<'a> {
-    type Item = Arc<MessageData>;
+    type Item = (MessageId, Arc<MessageData>);
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -74,7 +78,7 @@ impl<'a> Iterator for TangleWalker<'a> {
                         if (self.on_message)(&message_data) {
                             self.parents
                                 .extend(message_data.message().parents().iter().map(|p| p.id()));
-                            return Some(message_data);
+                            return Some((message_id, message_data));
                         } else {
                             continue;
                         }
