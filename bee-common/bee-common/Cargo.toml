@@ -10,6 +10,9 @@ license = "Apache-2.0"
 keywords = ["iota", "tangle", "bee", "framework", "common"]
 homepage = "https://www.iota.org"
 
+[package.metadata.cargo-udeps.ignore]
+normal = [ "fern" ]
+
 [dependencies]
 chrono = "0.4"
 console-subscriber = { git = "https://github.com/tokio-rs/console.git", branch = "main", optional = true }
