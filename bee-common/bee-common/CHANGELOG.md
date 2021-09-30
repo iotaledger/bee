@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `tokio-console` feature, enabling improved logging when using tokio's `console` project.
+- `tokio-console` feature, enabling improved logging when using tokio's `console` project;
 
 ## 0.4.1 - 2021-04-09
 
