@@ -5,8 +5,6 @@ use super::{behavior::SwarmBehavior, error::Error};
 
 use crate::service::event::InternalEventSender;
 
-use bee_runtime::task;
-
 use libp2p::{
     core::{
         connection::ConnectionLimits,
@@ -66,7 +64,7 @@ pub fn build_swarm(
         // We want the connection background tasks to be spawned
         // onto the tokio runtime.
         .executor(Box::new(|fut| {
-            task::spawn(fut);
+            tokio::spawn(fut);
         }))
         .build();
 
