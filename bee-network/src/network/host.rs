@@ -13,7 +13,7 @@ use crate::{
     swarm::behavior::SwarmBehavior,
 };
 
-use bee_runtime::task::{StandaloneSpawner, TaskSpawner};
+use bee_runtime::task;
 
 use futures::{channel::oneshot, StreamExt};
 use libp2p::{swarm::SwarmEvent, Multiaddr, PeerId, Swarm};
@@ -83,7 +83,7 @@ pub mod standalone {
         pub async fn start(self, config: NetworkHostConfig) {
             let NetworkHost { shutdown } = self;
 
-            StandaloneSpawner::spawn(async move {
+            task::spawn(async move {
                 network_host_processor(config, shutdown)
                     .await
                     .expect("network host processor");

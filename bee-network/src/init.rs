@@ -24,7 +24,7 @@ use crate::{
     swarm::builder::build_swarm,
 };
 
-use bee_runtime::task::{StandaloneSpawner, TaskSpawner};
+use bee_runtime::task;
 
 use libp2p::identity;
 use log::info;
@@ -95,7 +95,7 @@ pub mod standalone {
         let (shutdown_signal_tx1, shutdown_signal_rx1) = oneshot::channel::<()>();
         let (shutdown_signal_tx2, shutdown_signal_rx2) = oneshot::channel::<()>();
 
-        StandaloneSpawner::spawn(async move {
+        task::spawn(async move {
             shutdown.await;
 
             shutdown_signal_tx1.send(()).expect("sending shutdown signal");

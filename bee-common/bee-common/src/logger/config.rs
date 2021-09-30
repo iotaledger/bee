@@ -14,10 +14,10 @@ const DEFAULT_COLOR_ENABLED: bool = true;
 const DEFAULT_TARGET_WIDTH: usize = 42;
 /// Default value for the level width.
 const DEFAULT_LEVEL_WIDTH: usize = 5;
-/// Default name for an output.
-const DEFAULT_OUTPUT_NAME: &str = LOGGER_STDOUT_NAME;
 /// Default log level for an output.
 const DEFAULT_OUTPUT_LEVEL: LevelFilter = LevelFilter::Info;
+/// Default name for an output.
+const DEFAULT_OUTPUT_NAME: &str = LOGGER_STDOUT_NAME;
 
 /// Builder for a logger output configuration.
 #[derive(Default, Deserialize)]

@@ -6,7 +6,7 @@ use crate::{
     service::event::{InternalEvent, InternalEventSender},
 };
 
-use bee_runtime::task::{StandaloneSpawner, TaskSpawner};
+use bee_runtime::task;
 
 use futures::{
     io::{BufReader, BufWriter, ReadHalf, WriteHalf},
@@ -36,7 +36,7 @@ pub fn start_incoming_processor(
     incoming_tx: GossipSender,
     internal_event_sender: InternalEventSender,
 ) {
-    StandaloneSpawner::spawn(async move {
+    task::spawn(async move {
         let mut msg_buf = vec![0u8; MSG_BUFFER_LEN];
 
         loop {
@@ -78,7 +78,7 @@ pub fn start_outgoing_processor(
     outgoing_rx: GossipReceiver,
     internal_event_sender: InternalEventSender,
 ) {
-    StandaloneSpawner::spawn(async move {
+    task::spawn(async move {
         let mut outgoing_gossip_receiver = outgoing_rx.fuse();
 
         // If the gossip sender dropped we end the connection.
