@@ -8,11 +8,19 @@ use bee_message::MessageId;
 use std::collections::HashSet;
 
 ///
+#[derive(Debug)]
+pub enum TangleWalkerStatus {
+    ///
+    Known(MessageId, MessageData),
+    ///
+    Unknown(MessageId),
+}
+
+///
 pub struct TangleWalkerBuilder<'a> {
     tangle: &'a Tangle,
     root: MessageId,
     on_message: Option<Box<dyn Fn(&MessageData) -> bool>>,
-    on_missing: Option<Box<dyn Fn(&MessageId)>>,
 }
 
 impl<'a> TangleWalkerBuilder<'a> {
@@ -22,17 +30,11 @@ impl<'a> TangleWalkerBuilder<'a> {
             tangle,
             root,
             on_message: None,
-            on_missing: None,
         }
     }
 
     pub fn with_on_message(mut self, on_message: Box<dyn Fn(&MessageData) -> bool>) -> Self {
         self.on_message.replace(on_message);
-        self
-    }
-
-    pub fn with_on_missing(mut self, on_missing: Box<dyn Fn(&MessageId)>) -> Self {
-        self.on_missing.replace(on_missing);
         self
     }
 
@@ -42,7 +44,6 @@ impl<'a> TangleWalkerBuilder<'a> {
             parents: vec![self.root],
             visited: HashSet::new(),
             on_message: self.on_message.unwrap_or_else(|| Box::new(|_| true)),
-            on_missing: self.on_missing.unwrap_or_else(|| Box::new(|_| {})),
         }
     }
 }
@@ -53,7 +54,6 @@ pub struct TangleWalker<'a> {
     parents: Vec<MessageId>,
     visited: HashSet<MessageId>,
     on_message: Box<dyn Fn(&MessageData) -> bool>,
-    on_missing: Box<dyn Fn(&MessageId)>,
 }
 
 impl<'a> TangleWalker<'a> {
@@ -64,7 +64,7 @@ impl<'a> TangleWalker<'a> {
 }
 
 impl<'a> Iterator for TangleWalker<'a> {
-    type Item = (MessageId, MessageData);
+    type Item = TangleWalkerStatus;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -78,14 +78,13 @@ impl<'a> Iterator for TangleWalker<'a> {
                         if (self.on_message)(&message_data) {
                             self.parents
                                 .extend(message_data.message().parents().iter().map(|p| p.id()));
-                            return Some((message_id, message_data));
+                            return Some(TangleWalkerStatus::Known(message_id, message_data));
                         } else {
                             continue;
                         }
                     }
                     None => {
-                        (self.on_missing)(&message_id);
-                        continue;
+                        return Some(TangleWalkerStatus::Unknown(message_id));
                     }
                 }
             }

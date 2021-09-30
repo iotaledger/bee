@@ -6,7 +6,7 @@ use bee_message::{Message, MessageMetadata};
 use std::sync::Arc;
 
 /// Data structure used by the [`Tangle`](crate::Tangle) to store a [`Message`] and its associated [`MessageMetadata`].
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MessageData {
     message: Arc<Message>,
     metadata: MessageMetadata,
