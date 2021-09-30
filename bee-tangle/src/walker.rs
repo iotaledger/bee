@@ -11,16 +11,18 @@ use std::collections::HashSet;
 #[derive(Debug)]
 pub enum TangleWalkerStatus {
     ///
-    Known(MessageId, MessageData),
+    Matched(MessageId, MessageData),
     ///
-    Unknown(MessageId),
+    Skipped(MessageId, MessageData),
+    ///
+    Missing(MessageId),
 }
 
 ///
 pub struct TangleWalkerBuilder<'a> {
     tangle: &'a Tangle,
     root: MessageId,
-    on_message: Option<Box<dyn Fn(&MessageData) -> bool>>,
+    condition: Option<Box<dyn Fn(&MessageData) -> bool>>,
 }
 
 impl<'a> TangleWalkerBuilder<'a> {
@@ -29,12 +31,12 @@ impl<'a> TangleWalkerBuilder<'a> {
         Self {
             tangle,
             root,
-            on_message: None,
+            condition: None,
         }
     }
 
-    pub fn with_on_message(mut self, on_message: Box<dyn Fn(&MessageData) -> bool>) -> Self {
-        self.on_message.replace(on_message);
+    pub fn with_condition(mut self, condition: Box<dyn Fn(&MessageData) -> bool>) -> Self {
+        self.condition.replace(condition);
         self
     }
 
@@ -43,7 +45,7 @@ impl<'a> TangleWalkerBuilder<'a> {
             tangle: self.tangle,
             parents: vec![self.root],
             visited: HashSet::new(),
-            on_message: self.on_message.unwrap_or_else(|| Box::new(|_| true)),
+            condition: self.condition.unwrap_or_else(|| Box::new(|_| true)),
         }
     }
 }
@@ -53,7 +55,7 @@ pub struct TangleWalker<'a> {
     tangle: &'a Tangle,
     parents: Vec<MessageId>,
     visited: HashSet<MessageId>,
-    on_message: Box<dyn Fn(&MessageData) -> bool>,
+    condition: Box<dyn Fn(&MessageData) -> bool>,
 }
 
 impl<'a> TangleWalker<'a> {
@@ -73,20 +75,18 @@ impl<'a> Iterator for TangleWalker<'a> {
             if !self.visited.contains(&message_id) {
                 self.visited.insert(message_id);
 
-                match self.tangle.get(&message_id) {
+                return match self.tangle.get(&message_id) {
                     Some(message_data) => {
-                        if (self.on_message)(&message_data) {
+                        if (self.condition)(&message_data) {
                             self.parents
                                 .extend(message_data.message().parents().iter().map(|p| p.id()));
-                            return Some(TangleWalkerStatus::Known(message_id, message_data));
+                            Some(TangleWalkerStatus::Matched(message_id, message_data))
                         } else {
-                            continue;
+                            Some(TangleWalkerStatus::Skipped(message_id, message_data))
                         }
                     }
-                    None => {
-                        return Some(TangleWalkerStatus::Unknown(message_id));
-                    }
-                }
+                    None => Some(TangleWalkerStatus::Missing(message_id)),
+                };
             }
         }
     }

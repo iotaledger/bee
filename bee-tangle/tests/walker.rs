@@ -80,7 +80,7 @@ fn walk() {
     let mut walker = TangleWalker::new(&tangle, message_id_14);
 
     while let Some(status) = walker.next() {
-        if let TangleWalkerStatus::Known(message_id, message_data) = status {
+        if let TangleWalkerStatus::Matched(message_id, message_data) = status {
             traversed_order.push(message_id);
         } else {
             println!("{:?}", status);
