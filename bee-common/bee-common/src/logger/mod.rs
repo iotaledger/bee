@@ -70,12 +70,8 @@ pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
             } else {
                 let mut targets = Targets::default();
                 
-                if !output.target_filters.is_empty() {
-                    targets = targets.with_default(level_filter);
-                } else {
-                    for filter in &output.target_filters {
-                        targets = targets.with_target(filter, level_filter);
-                    }
+                for filter in &output.target_filters {
+                    targets = targets.with_target(filter, level_filter);
                 }
                             
                 for exclusion in &output.target_exclusions {
