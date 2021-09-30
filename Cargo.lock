@@ -178,7 +178,7 @@ checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 
 [[package]]
 name = "bee-common"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
  "autocfg",
  "chrono",

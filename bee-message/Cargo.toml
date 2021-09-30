@@ -11,7 +11,7 @@ keywords = ["iota", "tangle", "bee", "framework", "message"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { version = "0.4.1", path = "../bee-common/bee-common" }
+bee-common = { version = "0.5.0", path = "../bee-common/bee-common" }
 bee-pow = { version = "0.1.0", path = "../bee-pow" }
 bee-ternary = { version = "0.5.0", path = "../bee-ternary", features = [ "serde1" ] }
 

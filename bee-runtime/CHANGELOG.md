@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.1.2-alpha - 2021-09-30
+
+### Changed
+
+- `TaskSpawner` method and unnecessary task instrumentation in favour of `tokio::spawn`;
+
 ## 0.1.1-alpha - 2021-02-12
 
 ### Added
