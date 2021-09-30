@@ -20,11 +20,11 @@ rand = { version = "0.8", optional = true }
 rust-argon2 = { version = "0.8", optional = true }
 serde = { version = "1.0", features = [ "derive" ] }
 thiserror = "1.0"
-tracing-subscriber = { version = "0.2.21", optional = true }
+tracing-subscriber = { version = "0.2", optional = true }
 
 [build-dependencies]
 autocfg = "1.0"
 
 [features]
 auth = [ "jsonwebtoken", "rand", "rust-argon2" ]
-console = [ "console-subscriber", "tracing-subscriber" ]
+tokio-console = [ "console-subscriber", "tracing-subscriber" ]

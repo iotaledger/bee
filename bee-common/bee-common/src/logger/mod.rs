@@ -24,7 +24,7 @@ pub enum Error {
     InitializationFailed,
 }
 
-#[cfg(not(feature = "console"))]
+#[cfg(not(feature = "tokio-console"))]
 macro_rules! log_format {
     ($target:expr, $level:expr, $message:expr, $target_width:expr, $level_width:expr) => {
         format_args!(
@@ -40,7 +40,7 @@ macro_rules! log_format {
 }
 
 /// Initializes a logger backend for running with the `console` feature.
-#[cfg(feature = "console")]
+#[cfg(feature = "tokio-console")]
 pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
     use tracing_subscriber::{
         filter::{self, Targets},
@@ -86,7 +86,7 @@ pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
 /// # Arguments
 ///
 /// * `config`  -   Logger configuration
-#[cfg(not(feature = "console"))]
+#[cfg(not(feature = "tokio-console"))]
 pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
     use fern::{
         colors::{Color, ColoredLevelConfig},
