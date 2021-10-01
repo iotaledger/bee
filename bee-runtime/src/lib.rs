@@ -9,5 +9,4 @@ pub mod event;
 pub mod node;
 pub mod resource;
 pub mod shutdown_stream;
-pub mod task;
 pub mod worker;
