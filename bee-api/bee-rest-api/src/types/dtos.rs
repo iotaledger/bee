@@ -1,11 +1,16 @@
 use crate::types::error::Error;
 
 use bee_message::{
-    address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
+    MESSAGE_PUBLIC_KEY_LENGTH,
+    MESSAGE_SIGNATURE_LENGTH,
+    PREFIXED_PARENTS_LENGTH_MIN,
+    PREFIXED_PARENTS_LENGTH_MAX,
+    address::{Address, Ed25519Address, BlsAddress},
+    error::ValidationError,
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
-    output::{Output, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, TreasuryOutput},
-    parents::Parents,
+    output::{Output, SignatureLockedSingleOutput, SignatureLockedAssetOutput, AssetBalance, AssetId, OUTPUT_INDEX_MAX, OutputId},
+    parents::{ParentsBlock, ParentsKind},
     payload::{
         indexation::IndexationPayload,
         milestone::{
@@ -14,51 +19,51 @@ use bee_message::{
         },
         OptionalPayload,
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash, TAIL_TRANSACTION_HASH_LEN},
-        transaction::{TransactionEssence, TransactionId, TransactionPayload},
+        transaction::{TransactionEssence, TransactionId, TransactionPayload, PLEDGE_ID_LENGTH},
         treasury::TreasuryTransactionPayload,
         Payload,
     },
-    signature::{Ed25519Signature, SignatureUnlock},
+    signature::{Ed25519Signature, Signature, BlsSignature, SignatureUnlock},
     unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
     Message, MessageBuilder, MessageId,
 };
 use bee_protocol::types::peer::Peer;
+use bee_packable::{BoundedU8, VecPrefix, InvalidBoundedU8};
 
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
+use std::str::FromStr;
+use std::ops::Deref;
 use std::convert::{TryFrom, TryInto};
 
-pub const MESSAGE_PUBLIC_KEY_LENGTH: usize = 32;
-pub const PLEDGE_ID_LENGTH: usize = 32;
-pub const MESSAGE_SIGNATURE_LENGTH: usize = 64;
-
 /// The message object that nodes gossip around in the network.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MessageDto {
-    #[serde(rename = "parentMessageIds")]
-    pub parents: Vec<Vec<String>>,
-    pub issuer_public_key: [u8; MESSAGE_PUBLIC_KEY_LENGTH],
-    pub issue_timestamp: u64,
-    pub sequence_number: u32,
-    pub payload: OptionalPayloadDto,
+    pub parents: Vec<ParentsBlockDto>,
+    pub issuer_public_key: String,//[u8; MESSAGE_PUBLIC_KEY_LENGTH],
+    pub issue_timestamp: String,
+    pub sequence_number: String,
+    pub payload: Option<PayloadDto>,
     pub nonce: String,
-    pub signature: [u8; MESSAGE_SIGNATURE_LENGTH],
+    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))]
+    pub signature: String,//[u8; MESSAGE_SIGNATURE_LENGTH],
 }
 
 impl From<&Message> for MessageDto {
     fn from(value: &Message) -> Self {
         MessageDto {
-            parents: value.parents_blocks().map(|b| b.iter().map(|p| p.to_string()).collect()).collect(),
-            issuer_public_key: *value.issuer_public_key(),
-            issue_timestamp: value.issue_timestamp(),
-            sequence_number: value.sequence_number(),
-            payload: OptionalPayloadDto::from(match value.payload() {
+            parents: value.parents_blocks().map(|b| b.into()).collect(),
+            issuer_public_key: hex::encode(value.issuer_public_key()),
+            issue_timestamp: value.issue_timestamp().to_string(),
+            sequence_number: value.sequence_number().to_string(),
+            payload: match value.payload() {
                 Some(payload) => Some(PayloadDto::from(payload)),
                 None => None,
-            }),
+            },
             nonce: value.nonce().to_string(),
-            signature: *value.signature(),
+            signature: hex::encode(value.signature()),
         }
     }
 }
@@ -68,22 +73,47 @@ impl TryFrom<&MessageDto> for Message {
 
     fn try_from(value: &MessageDto) -> Result<Self, Self::Error> {
         let mut builder = MessageBuilder::new()
-            .with_parents_blocks(Parents::new(
+            .with_parents_blocks(
                 value
                     .parents
                     .iter()
-                    .map(|m| {
-                        m.parse::<MessageId>()
-                            .map_err(|_| Error::InvalidSyntaxField("parentMessageIds"))
-                    })
-                    .collect::<Result<Vec<MessageId>, Error>>()?,
-            )?)
+                    .map(|p| ParentsBlock::try_from(p))
+                    .collect::<Result<Vec<ParentsBlock>, Error>>()?,
+            )
+            .with_issuer_public_key({
+                    let mut public_key: [u8; MESSAGE_PUBLIC_KEY_LENGTH];
+
+                    hex::decode_to_slice(&value.issuer_public_key, &mut public_key)
+                        .map_err(|_| Error::InvalidSyntaxField("issuerPublicKey"))?;
+                    
+                    public_key
+            })
+            .with_issue_timestamp(
+                value
+                    .issue_timestamp
+                    .parse::<u64>()
+                    .map_err(|_| Error::InvalidSyntaxField("issueTimestamp"))?,
+            )
+            .with_sequence_number(
+                value
+                    .sequence_number
+                    .parse::<u32>()
+                    .map_err(|_| Error::InvalidSyntaxField("sequenceNumber"))?,
+            )
             .with_nonce(
                 value
                     .nonce
                     .parse::<u64>()
                     .map_err(|_| Error::InvalidSyntaxField("nonce"))?,
-            );
+            )
+            .with_signature({
+                let mut signature: [u8; MESSAGE_SIGNATURE_LENGTH];
+
+                hex::decode_to_slice(&value.signature, &mut signature)
+                    .map_err(|_| Error::InvalidSyntaxField("signature"))?;
+                    
+                signature
+            });
         if let Some(p) = value.payload.as_ref() {
             builder = builder.with_payload(p.try_into()?);
         }
@@ -93,21 +123,36 @@ impl TryFrom<&MessageDto> for Message {
 }
 
 #[derive(Clone, Debug)]
-#[cfg_attr(
-    feature = "serde1",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(tag = "type", content = "data")
-)]
-pub enum OptionalPayloadDto {
-    None,
-    Some(PayloadDto),
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct ParentsBlockDto {
+    kind: u8,
+    references: Vec<String>,
 }
 
-impl From<Option<PayloadDto>> for OptionalPayloadDto {
-    fn from(option: Option<PayloadDto>) -> Self {
-        match option {
-            None => Self::None,
-            Some(payload) => Self::Some(payload),
+impl From<&ParentsBlock> for ParentsBlockDto {
+    fn from(value: &ParentsBlock) -> Self {
+        ParentsBlockDto {
+            kind: value.parents_kind() as u8,
+            references: value.iter().map(|p| p.to_string()).collect::<Vec<String>>(),
+        } 
+    }
+}
+
+impl TryFrom<&ParentsBlockDto> for ParentsBlock {
+    type Error = Error;
+
+    fn try_from(value: &ParentsBlockDto) -> Result<Self, Self::Error> {
+        let references = value
+            .references
+            .iter()
+            .map(|m| {
+                m.parse::<MessageId>()
+                    .map_err(|_| Error::InvalidSyntaxField("parentMessageIds"))
+        })
+        .collect::<Result<Vec<MessageId>, Error>>()?;
+        match ParentsBlock::new( ParentsKind::try_from(value.kind)?, references) {
+            Ok(parents_blocks) => Ok(parents_blocks),
+            Err(e) => Err(Error::Message(e)),
         }
     }
 }
@@ -195,9 +240,9 @@ impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionEssenceDto {
-    pub timestamp: u64,
-    pub access_pledge_id: [u8; PLEDGE_ID_LENGTH],
-    pub consensus_pledge_id: [u8; PLEDGE_ID_LENGTH],
+    pub timestamp: String,
+    pub access_pledge_id: String,//[u8; PLEDGE_ID_LENGTH],
+    pub consensus_pledge_id: String,//[u8; PLEDGE_ID_LENGTH],
     pub inputs: Vec<InputDto>,
     pub outputs: Vec<OutputDto>,
     pub payload: Option<PayloadDto>,
@@ -206,12 +251,14 @@ pub struct TransactionEssenceDto {
 impl From<&TransactionEssence> for TransactionEssenceDto {
     fn from(value: &TransactionEssence) -> Self {
         TransactionEssenceDto {
+            timestamp: value.timestamp().to_string(),
+            access_pledge_id: hex::encode(value.access_pledge_id()),
+            consensus_pledge_id: hex::encode(value.consensus_pledge_id()),
             inputs: value.inputs().iter().map(|i| i.into()).collect::<Vec<_>>(),
             outputs: value.outputs().iter().map(|o| o.into()).collect::<Vec<_>>(),
             payload: match value.payload() {
-                Some(Payload::Indexation(i)) => Some(PayloadDto::Indexation(Box::new(i.as_ref().into()))),
-                Some(_) => unimplemented!(),
-                None => None,
+                    Some(p) => Some(PayloadDto::from(p)),
+                    None => None,
             },
         }
     }
@@ -221,7 +268,29 @@ impl TryFrom<&TransactionEssenceDto> for TransactionEssence {
     type Error = Error;
 
     fn try_from(value: &TransactionEssenceDto) -> Result<Self, Self::Error> {
-        let mut builder = TransactionEssence::builder();
+        let mut builder = TransactionEssence::builder()
+            .with_timestamp(
+                value
+                    .timestamp
+                    .parse::<u64>()
+                    .map_err(|_| Error::InvalidSyntaxField("issueTimestamp"))?,
+            )
+            .with_access_pledge_id({
+                    let mut access_pledge_id: [u8; PLEDGE_ID_LENGTH];
+
+                    hex::decode_to_slice(&value.access_pledge_id, &mut access_pledge_id)
+                        .map_err(|_| Error::InvalidSyntaxField("accessPledgeId"))?;
+                    
+                    access_pledge_id
+            })
+            .with_consensus_pledge_id({
+                    let mut consensus_pledge_id: [u8; PLEDGE_ID_LENGTH];
+
+                    hex::decode_to_slice(&value.consensus_pledge_id, &mut consensus_pledge_id)
+                        .map_err(|_| Error::InvalidSyntaxField("consensusPledgeId"))?;
+                    
+                    consensus_pledge_id
+            });
 
         for i in &value.inputs {
             builder = builder.add_input(i.try_into()?);
@@ -232,13 +301,374 @@ impl TryFrom<&TransactionEssenceDto> for TransactionEssence {
         }
 
         if let Some(p) = &value.payload {
-            if let PayloadDto::Indexation(i) = p {
-                builder = builder.with_payload(Payload::Indexation(Box::new((i.as_ref()).try_into()?)));
-            } else {
-                return Err(Error::InvalidSemanticField("payload"));
-            }
+            builder = builder.with_payload(
+                Payload::try_from(p)
+                .map_err(|_| Error::InvalidSemanticField("payload"))?,
+            );
         }
 
         Ok(builder.finish()?)
     }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum UnlockBlockDto {
+    Signature(SignatureUnlockDto),
+    Reference(ReferenceUnlockDto),
+}
+
+impl From<&UnlockBlock> for UnlockBlockDto {
+    fn from(value: &UnlockBlock) -> Self {
+        match value {
+            UnlockBlock::Signature(s) => UnlockBlockDto::Signature(s.into()),
+            UnlockBlock::Reference(r) => UnlockBlockDto::Reference(r.into()),
+        }
+    }
+}
+
+impl TryFrom<&UnlockBlockDto> for UnlockBlock {
+    type Error = Error;
+
+    fn try_from(value: &UnlockBlockDto) -> Result<Self, Self::Error> {
+        match value {
+            UnlockBlockDto::Signature(s) => Ok(UnlockBlock::Signature(s.try_into()?)),
+            UnlockBlockDto::Reference(r) => Ok(UnlockBlock::Reference(r.try_into()?)),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SignatureUnlockDto(SignatureDto);
+
+impl From<&SignatureUnlock> for SignatureUnlockDto {
+    fn from(value: &SignatureUnlock) -> Self {
+        SignatureUnlockDto(value.signature().into())
+    }
+}
+
+impl TryFrom<&SignatureUnlockDto> for SignatureUnlock {
+    type Error = Error;
+
+    fn try_from(value: &SignatureUnlockDto) -> Result<Self, Self::Error> {
+        Ok(SignatureUnlock(value.0.try_into()?))
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReferenceUnlockDto (u16);
+
+impl From<&ReferenceUnlock> for ReferenceUnlockDto {
+    fn from(value: &ReferenceUnlock) -> Self {
+        ReferenceUnlockDto(value.index())
+    }
+}
+
+impl TryFrom<&ReferenceUnlockDto> for ReferenceUnlock {
+    type Error = Error;
+
+    fn try_from(value: &ReferenceUnlockDto) -> Result<Self, Self::Error> {
+        value.0.try_into()
+        .map_err(|_| Error::InvalidSemanticField("index"))
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum SignatureDto {
+    Ed25519(Ed25519SignatureDto),
+    Bls(BlsSignatureDto),
+}
+
+impl From<&Signature> for SignatureDto {
+    fn from(value: &Signature) -> Self {
+        match value {
+            Signature::Ed25519(e) => SignatureDto::Ed25519(e.into()),
+            Signature::Bls(b) => SignatureDto::Bls(b.into()),
+        }
+    }
+}
+
+impl TryFrom<&SignatureDto> for Signature {
+    type Error = Error;
+
+    fn try_from(value: &SignatureDto) -> Result<Self, Self::Error> {
+        match value {
+            SignatureDto::Ed25519(e) => Ok(Signature::Ed25519(e.try_into()?)),
+            SignatureDto::Bls(b) => Ok(Signature::Bls(b.try_into()?)),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Ed25519SignatureDto {
+    public_key: String,//[u8; Self::PUBLIC_KEY_LENGTH],
+    signature: String,//[u8; Self::SIGNATURE_LENGTH],
+}
+
+impl From<&Ed25519Signature> for Ed25519SignatureDto {
+    fn from(value: &Ed25519Signature) -> Self {
+        Ed25519SignatureDto {
+            public_key: hex::encode(value.public_key()),
+            signature: hex::encode(value.signature()),
+        }
+    }
+}
+
+impl TryFrom<&Ed25519SignatureDto> for Ed25519Signature {
+    type Error = Error;
+
+    fn try_from(value: &Ed25519SignatureDto) -> Result<Self, Self::Error> {
+        Ok(Ed25519Signature::new(
+            {
+                let mut public_key: [u8; Ed25519Signature::PUBLIC_KEY_LENGTH];
+
+                hex::decode_to_slice(&value.public_key, &mut public_key)
+                    .map_err(|_| Error::InvalidSyntaxField("publicKey"))?;
+                    
+                public_key
+            },
+            {
+                let mut signature: [u8; Ed25519Signature::SIGNATURE_LENGTH];
+
+                hex::decode_to_slice(&value.signature, &mut signature)
+                    .map_err(|_| Error::InvalidSyntaxField("publicKey"))?;
+                    
+                signature
+            }
+        ))
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BlsSignatureDto(String); //[u8; Self::LENGTH]
+
+impl From<&BlsSignature> for BlsSignatureDto {
+    fn from(value: &BlsSignature) -> Self {
+        BlsSignatureDto(hex::encode(value.as_ref()))
+    }
+}
+
+impl TryFrom<&BlsSignatureDto> for BlsSignature {
+    type Error = Error;
+
+    fn try_from(value: &BlsSignatureDto) -> Result<Self, Self::Error> {
+        Ok(BlsSignature::new({
+            let mut bytes: [u8; BlsSignature::LENGTH];
+
+            hex::decode_to_slice(&value.0, &mut bytes)
+                .map_err(|_| Error::InvalidSyntaxField("bytes"))?;
+                    
+            bytes
+        }))
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum InputDto {
+    Utxo(UtxoInputDto),
+}
+
+impl From<&Input> for InputDto {
+    fn from(value: &Input) -> Self {
+        match value {
+            Input::Utxo(u) => InputDto::Utxo(UtxoInputDto {
+                kind: UtxoInput::KIND,
+                transaction_id: u.output_id().transaction_id().to_string(),
+                transaction_output_index: u.output_id().index(),
+            }),
+        }
+    }
+}
+
+impl TryFrom<&InputDto> for Input {
+    type Error = Error;
+
+    fn try_from(value: &InputDto) -> Result<Self, Self::Error> {
+        match value {
+            InputDto::Utxo(i) => Ok(Input::Utxo(UtxoInput::new(OutputId::new(
+                i.transaction_id
+                    .parse::<TransactionId>()
+                    .map_err(|_| Error::InvalidSyntaxField("transactionId"))?,
+                i.transaction_output_index
+            )?))),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct UtxoInputDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    #[serde(rename = "transactionId")]
+    pub transaction_id: String,
+    #[serde(rename = "transactionOutputIndex")]
+    pub transaction_output_index: u16,
+}
+
+#[derive(Clone, Debug)]
+pub enum OutputDto {
+    SignatureLockedSingle(SignatureLockedSingleOutputDto),
+    SignatureLockedAsset(SignatureLockedAssetOutputDto),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SignatureLockedSingleOutputDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    address: AddressDto,
+    amount: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SignatureLockedAssetOutputDto {
+    address: AddressDto,
+    balances: Vec<AssetBalanceDto>,
+}
+
+impl From<&Output> for OutputDto {
+    fn from(value: &Output) -> Self {
+        match value {
+            Output::SignatureLockedSingle(s) => OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
+                kind: SignatureLockedSingleOutput::KIND,
+                address: s.address().into(),
+                amount: s.amount(),
+            }),
+            Output::SignatureLockedAsset(s) => OutputDto::SignatureLockedAsset( SignatureLockedAssetOutputDto {
+                address: s.address().into(),
+                balances: s.balance_iter().map(|b| AssetBalanceDto {
+                    id: hex::encode(b.id().deref()),
+                    balance: b.balance(),
+                })
+                .collect(),
+            }),
+        }
+    }
+}
+
+impl TryFrom<&OutputDto> for Output {
+    type Error = Error;
+
+    fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
+        match value {
+            OutputDto::SignatureLockedSingle(s) => Ok(Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(
+                (&s.address).try_into()?,
+                s.amount,
+            )?)),
+            OutputDto::SignatureLockedAsset(s) => Ok(Output::SignatureLockedAsset(SignatureLockedAssetOutput::new(
+                (&s.address).try_into()?,
+                s.balances
+                    .iter()
+                    .map(|b| {
+                        let mut asset_id: [u8; AssetId::LENGTH];
+
+                        match hex::decode_to_slice(&b.id, &mut asset_id)
+                            .map_err(|_| Error::InvalidSyntaxField("assetId")) {
+                                Ok(()) => (),
+                                Err(e) => return Err(e),
+                        }
+                    
+                        Ok(AssetBalance::new(asset_id.into(), b.balance))
+                    })
+                    .collect::<Result<Vec<AssetBalance>, _>>()?
+            )?)),
+        }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for OutputDto {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let value = Value::deserialize(d)?;
+        Ok(match value.get("type").and_then(Value::as_u64).unwrap() as u8 {
+            SignatureLockedSingleOutput::KIND => {
+                OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).unwrap())
+            }
+            type_ => panic!("unsupported type {:?}", type_),
+        })
+    }
+}
+
+impl Serialize for OutputDto {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        #[derive(Serialize)]
+        #[serde(untagged)]
+        enum OutputDto_<'a> {
+            T1(&'a SignatureLockedSingleOutputDto),
+        }
+        #[derive(Serialize)]
+        struct TypedOutput<'a> {
+            #[serde(flatten)]
+            output: OutputDto_<'a>,
+        }
+        let output = match self {
+            OutputDto::SignatureLockedSingle(s) => TypedOutput {
+                output: OutputDto_::T1(s),
+            },
+        };
+        output.serialize(serializer)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AddressDto {
+    Ed25519(Ed25519AddressDto),
+    Bls(BlsAddressDto),
+}
+
+impl From<&Address> for AddressDto {
+    fn from(value: &Address) -> Self {
+        match value {
+            Address::Ed25519(ed) => AddressDto::Ed25519(ed.into()),
+            Address::Bls(b) => AddressDto::Bls(BlsAddressDto(hex::encode(b.as_ref()))),
+        }
+    }
+}
+
+impl TryFrom<&AddressDto> for Address {
+    type Error = Error;
+
+    fn try_from(value: &AddressDto) -> Result<Self, Self::Error> {
+        match value {
+            AddressDto::Ed25519(a) => Ok(Address::Ed25519(a.try_into()?)),
+            AddressDto::Bls(b) => Ok(Address::Bls(BlsAddress::from_str(&b.0)?))
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Ed25519AddressDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    pub address: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BlsAddressDto(String);
+
+impl From<&Ed25519Address> for Ed25519AddressDto {
+    fn from(value: &Ed25519Address) -> Self {
+        Self {
+            kind: Ed25519Address::KIND,
+            address: value.to_string(),
+        }
+    }
+}
+
+impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
+    type Error = Error;
+
+    fn try_from(value: &Ed25519AddressDto) -> Result<Self, Self::Error> {
+        value
+            .address
+            .parse::<Ed25519Address>()
+            .map_err(|_| Error::InvalidSyntaxField("address"))
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AssetBalanceDto {
+    id: String, //[u8; Self::LENGTH],
+    balance: u64,
 }

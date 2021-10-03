@@ -8,7 +8,7 @@ mod transaction_id;
 
 use crate::{payload::MessagePayload, unlock::UnlockBlocks, MessageUnpackError, ValidationError};
 
-pub use essence::{TransactionEssence, TransactionEssenceBuilder, TransactionEssenceUnpackError};
+pub use essence::{TransactionEssence, TransactionEssenceBuilder, TransactionEssenceUnpackError, PLEDGE_ID_LENGTH};
 pub use transaction_id::TransactionId;
 
 use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};

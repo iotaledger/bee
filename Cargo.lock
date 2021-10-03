@@ -216,8 +216,10 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "bee-message",
+ "bee-packable",
  "bee-storage",
  "bee-storage-sled",
+ "hex",
  "http",
  "serde",
  "serde_json",

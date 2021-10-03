@@ -107,7 +107,7 @@ impl Message {
     }
 
     /// Returns the [`Message`] signature.
-    pub fn signature(&self) -> &[u8] {
+    pub fn signature(&self) -> &[u8; MESSAGE_SIGNATURE_LENGTH] {
         &self.signature
     }
 

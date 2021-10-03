@@ -7,10 +7,12 @@ publish = false
 
 [dependencies]
 bee-message = { path = "../../bee-message" }
+bee-packable = { path = "../../bee-common/bee-packable" }
 bee-storage-sled = { path = "../../bee-storage/bee-storage-sled" }
 bee-storage = { path = "../../bee-storage/bee-storage" }
 
 axum = { version = "0.2.3" }
+hex = { version = "0.4" }
 http = { version = "0.2.4" }
 serde =  { version = " 1.0.117" }
 serde_json = { version = "1.0.59" }
