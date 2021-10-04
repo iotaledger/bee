@@ -32,13 +32,13 @@ impl_from_infallible!(OpinionUnpackError);
 pub enum Opinion {
     /// Defines a "liked" opinion.
     #[packable(tag = 1)]
-    Like,
+    Like = 1,
     /// Defines a "disliked" opinion.
     #[packable(tag = 2)]
-    Dislike,
+    Dislike = 2,
     /// Defines an "unknown" opinion.
     #[packable(tag = 4)]
-    Unknown,
+    Unknown = 4,
 }
 
 impl fmt::Display for Opinion {
