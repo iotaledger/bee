@@ -4,7 +4,7 @@
 mod common;
 
 use bee_message::MessageId;
-use bee_tangle::{TangleWalker, TangleWalkerStatus};
+use bee_tangle::{TangleDfsWalker, TangleWalkerStatus};
 
 #[test]
 fn walk() {
@@ -42,7 +42,7 @@ fn walk() {
     let mut skipped = Vec::new();
     let mut missing = Vec::new();
 
-    let mut walker = TangleWalker::new(&tangle, ids[&14]);
+    let mut walker = TangleDfsWalker::new(&tangle, ids[&14]);
 
     while let Some(status) = walker.next() {
         match status {

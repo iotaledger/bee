@@ -19,13 +19,13 @@ pub enum TangleWalkerStatus {
 }
 
 ///
-pub struct TangleWalkerBuilder<'a> {
+pub struct TangleDfsWalkerBuilder<'a> {
     tangle: &'a Tangle,
     root: MessageId,
     condition: Option<Box<dyn Fn(&MessageData) -> bool>>,
 }
 
-impl<'a> TangleWalkerBuilder<'a> {
+impl<'a> TangleDfsWalkerBuilder<'a> {
     ///
     pub fn new(tangle: &'a Tangle, root: MessageId) -> Self {
         Self {
@@ -42,8 +42,8 @@ impl<'a> TangleWalkerBuilder<'a> {
     }
 
     ///
-    pub fn finish(self) -> TangleWalker<'a> {
-        TangleWalker {
+    pub fn finish(self) -> TangleDfsWalker<'a> {
+        TangleDfsWalker {
             tangle: self.tangle,
             parents: vec![self.root],
             visited: HashSet::new(),
@@ -53,21 +53,21 @@ impl<'a> TangleWalkerBuilder<'a> {
 }
 
 ///
-pub struct TangleWalker<'a> {
+pub struct TangleDfsWalker<'a> {
     tangle: &'a Tangle,
     parents: Vec<MessageId>,
     visited: HashSet<MessageId>,
     condition: Box<dyn Fn(&MessageData) -> bool>,
 }
 
-impl<'a> TangleWalker<'a> {
+impl<'a> TangleDfsWalker<'a> {
     ///
     pub fn new(tangle: &'a Tangle, root: MessageId) -> Self {
-        TangleWalkerBuilder::new(tangle, root).finish()
+        TangleDfsWalkerBuilder::new(tangle, root).finish()
     }
 }
 
-impl<'a> Iterator for TangleWalker<'a> {
+impl<'a> Iterator for TangleDfsWalker<'a> {
     type Item = TangleWalkerStatus;
 
     fn next(&mut self) -> Option<Self::Item> {
