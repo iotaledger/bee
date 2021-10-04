@@ -1,22 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{MessageData, Tangle};
+use crate::{walkers::TangleWalkerStatus, MessageData, Tangle};
 
 use bee_message::MessageId;
 
 use std::collections::HashSet;
-
-///
-#[derive(Debug)]
-pub enum TangleWalkerStatus {
-    ///
-    Matched(MessageId, MessageData),
-    ///
-    Skipped(MessageId, MessageData),
-    ///
-    Missing(MessageId),
-}
 
 ///
 pub struct TangleDfsWalkerBuilder<'a> {

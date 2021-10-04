@@ -49,7 +49,7 @@ impl TangleBuilder {
         self
     }
 
-    pub fn build(mut self) -> (Tangle, HashMap<usize, MessageId>) {
+    pub fn build(self) -> (Tangle, HashMap<usize, MessageId>) {
         // Check that the graph is a DAG and find a topological order so we can add messages to the tangle in the
         // correct order (parents before children). This `Vec` will hold the nodes in such order.
         let mut ordered_nodes = vec![];
@@ -100,7 +100,7 @@ impl TangleBuilder {
         let unmarked = self.graph.keys().copied().collect::<Vec<_>>();
 
         for node in unmarked {
-            visit(node, &mut perms, &mut temps, &mut self.graph, &mut ordered_nodes);
+            visit(node, &mut perms, &mut temps, &self.graph, &mut ordered_nodes);
         }
 
         let tangle = Tangle::new();
