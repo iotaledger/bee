@@ -31,8 +31,7 @@ impl TangleBuilder {
     }
 
     fn add_node<const M: usize>(&mut self, node: usize, parents: [usize; M]) -> &mut Self {
-        // Get the parents of the node or insert an empty list of parents if the node was not in
-        // the graph.
+        // Get the parents of the node or insert an empty list of parents if the node was not in the graph.
         let existing_parents = self.graph.entry(node).or_default();
 
         for parent in &parents {
@@ -51,9 +50,8 @@ impl TangleBuilder {
     }
 
     fn build(mut self) -> (Tangle, HashMap<usize, MessageId>) {
-        // Check that the graph is a DAG and find a topological order so we can add messages to the
-        // tangle in the correct order (parents before children). This `Vec` will hold the nodes in
-        // such order.
+        // Check that the graph is a DAG and find a topological order so we can add messages to the tangle in the
+        // correct order (parents before children). This `Vec` will hold the nodes in such order.
         let mut ordered_nodes = vec![];
 
         // Tarjan's algorithm for topological sorting.
@@ -176,17 +174,19 @@ fn walk() {
         .map(|node| ids[&node])
         .collect();
 
-    let mut traversed_order = Vec::with_capacity(correct_order.len());
+    let mut matched = Vec::new();
+    let mut skipped = Vec::new();
+    let mut missing = Vec::new();
 
     let mut walker = TangleWalker::new(&tangle, ids[&14]);
 
     while let Some(status) = walker.next() {
-        if let TangleWalkerStatus::Matched(message_id, message_data) = status {
-            traversed_order.push(message_id);
-        } else {
-            println!("{:?}", status);
+        match status {
+            TangleWalkerStatus::Matched(message_id, message_data) => matched.push(message_id),
+            TangleWalkerStatus::Skipped(message_id, message_data) => skipped.push(message_id),
+            TangleWalkerStatus::Missing(message_id) => missing.push(message_id),
         }
     }
 
-    assert_eq!(correct_order, traversed_order);
+    assert_eq!(correct_order, matched);
 }

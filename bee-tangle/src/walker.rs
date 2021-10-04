@@ -35,11 +35,13 @@ impl<'a> TangleWalkerBuilder<'a> {
         }
     }
 
+    ///
     pub fn with_condition(mut self, condition: Box<dyn Fn(&MessageData) -> bool>) -> Self {
         self.condition.replace(condition);
         self
     }
 
+    ///
     pub fn finish(self) -> TangleWalker<'a> {
         TangleWalker {
             tangle: self.tangle,
