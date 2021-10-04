@@ -9,11 +9,11 @@ use bee_tangle::walkers::{TangleDfsWalker, TangleWalkerStatus};
 #[test]
 fn walk() {
     // 0 --
-    //     | -- 8 --
-    // 1 --         |
-    //              | -- 12 --
-    // 2 --         |          |
-    //     | -- 9 --           |
+    //     | --  8 --
+    // 1 --          |
+    //               | -- 12 --
+    // 2 --          |         |
+    //     | --  9 --          |
     // 3 --                    |
     //                         | -- 14
     // 4 --                    |
