@@ -14,35 +14,6 @@ use log::error;
 
 const CONFIG_PATH: &str = "./config.toml";
 
-#[cfg(feature = "tokio-console")]
-fn logger_init() -> tokio::task::JoinHandle<Result<(), Box<dyn std::error::Error + Send + Sync>>> {
-    use tracing_subscriber::prelude::*;
-
-    let (layer, server) = console_subscriber::TasksLayer::new();
-
-    // Unwrap here is fine, since it is known that the string is correct.
-    let filter = tracing_subscriber::EnvFilter::from_default_env()
-        .add_directive(tracing::Level::INFO.into())
-        .add_directive("tokio=info".parse().unwrap());
-
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::fmt::layer())
-        .with(filter)
-        .with(layer)
-        .init();
-
-    tokio::spawn(async move { server.serve().await })
-}
-
-#[cfg(not(feature = "tokio-console"))]
-fn logger_init(logger: bee_common::logger::LoggerConfig) {
-    use bee_common::logger;
-
-    if let Err(e) = logger::logger_init(logger) {
-        panic!("Failed to initialise the logger: {}", e);
-    }
-}
-
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let cli = CliArgs::new();
@@ -62,11 +33,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Err(e) => panic!("Failed to create the node config builder: {}", e),
     };
 
-    #[cfg(feature = "tokio-console")]
-    let console_handle = logger_init();
-
-    #[cfg(not(feature = "tokio-console"))]
-    logger_init(config.logger.clone());
+    if let Err(e) = bee_common::logger::logger_init(config.logger.clone()) {
+        panic!("Failed to initialise the logger: {}", e);
+    }
 
     #[cfg(feature = "rocksdb")]
     let node_builder = NodeBuilder::<RocksDb>::new(config);
@@ -76,10 +45,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     match node_builder {
         Ok(builder) => match builder.with_plugin::<plugins::Mps>().finish().await {
             Ok(node) => {
-                #[cfg(feature = "tokio-console")]
-                let res = tokio::try_join!(tokio::spawn(node.run()), console_handle);
-
-                #[cfg(not(feature = "tokio-console"))]
                 let res = node.run().await;
 
                 if let Err(e) = res {
