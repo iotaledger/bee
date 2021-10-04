@@ -5,8 +5,6 @@
 
 use bee_node::{plugins, print_banner_and_version, tools, CliArgs, NodeBuilder, NodeConfigBuilder};
 use bee_runtime::node::NodeBuilder as _;
-#[cfg(feature = "console")]
-use bee_runtime::task::{StandaloneSpawner, TaskSpawner};
 #[cfg(feature = "rocksdb")]
 use bee_storage_rocksdb::storage::Storage as RocksDb;
 #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
@@ -16,7 +14,7 @@ use log::error;
 
 const CONFIG_PATH: &str = "./config.toml";
 
-#[cfg(feature = "console")]
+#[cfg(feature = "tokio-console")]
 fn logger_init() -> tokio::task::JoinHandle<Result<(), Box<dyn std::error::Error + Send + Sync>>> {
     use tracing_subscriber::prelude::*;
 
@@ -33,10 +31,10 @@ fn logger_init() -> tokio::task::JoinHandle<Result<(), Box<dyn std::error::Error
         .with(layer)
         .init();
 
-    StandaloneSpawner::spawn(async move { server.serve().await })
+    tokio::spawn(async move { server.serve().await })
 }
 
-#[cfg(not(feature = "console"))]
+#[cfg(not(feature = "tokio-console"))]
 fn logger_init(logger: bee_common::logger::LoggerConfig) {
     use bee_common::logger;
 
@@ -64,10 +62,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Err(e) => panic!("Failed to create the node config builder: {}", e),
     };
 
-    #[cfg(feature = "console")]
+    #[cfg(feature = "tokio-console")]
     let console_handle = logger_init();
 
-    #[cfg(not(feature = "console"))]
+    #[cfg(not(feature = "tokio-console"))]
     logger_init(config.logger.clone());
 
     #[cfg(feature = "rocksdb")]
@@ -78,10 +76,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     match node_builder {
         Ok(builder) => match builder.with_plugin::<plugins::Mps>().finish().await {
             Ok(node) => {
-                #[cfg(feature = "console")]
-                let res = tokio::try_join!(StandaloneSpawner::spawn(node.run()), console_handle);
+                #[cfg(feature = "tokio-console")]
+                let res = tokio::try_join!(tokio::spawn(node.run()), console_handle);
 
-                #[cfg(not(feature = "console"))]
+                #[cfg(not(feature = "tokio-console"))]
                 let res = node.run().await;
 
                 if let Err(e) = res {

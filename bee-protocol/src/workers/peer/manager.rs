@@ -13,12 +13,7 @@ use crate::{
 };
 
 use bee_network::{Event, NetworkEventReceiver, ServiceHost};
-use bee_runtime::{
-    node::Node,
-    shutdown_stream::ShutdownStream,
-    task::{StandaloneSpawner, TaskSpawner},
-    worker::Worker,
-};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
@@ -97,7 +92,7 @@ where
                             peer.0.set_connected(true);
                             peer.1 = Some((sender, shutdown_tx));
 
-                            StandaloneSpawner::spawn(
+                            tokio::spawn(
                                 PeerWorker::new(
                                     peer.0.clone(),
                                     metrics.clone(),

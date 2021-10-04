@@ -6,12 +6,7 @@ use crate::workers::{
 };
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
-use bee_runtime::{
-    node::Node,
-    shutdown_stream::ShutdownStream,
-    task::{StandaloneSpawner, TaskSpawner},
-    worker::Worker,
-};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::IndexId, solid_entry_point::SolidEntryPoint, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
@@ -143,7 +138,7 @@ where
 
             let (solidified_tx, solidified_rx) = async_channel::unbounded();
 
-            StandaloneSpawner::spawn({
+            tokio::spawn({
                 let tangle = tangle.clone();
 
                 async move {

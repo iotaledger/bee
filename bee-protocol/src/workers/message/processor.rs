@@ -19,12 +19,7 @@ use crate::{
 use bee_common::packable::Packable;
 use bee_message::{Message, MessageId};
 use bee_network::PeerId;
-use bee_runtime::{
-    node::Node,
-    shutdown_stream::ShutdownStream,
-    task::{StandaloneSpawner, TaskSpawner},
-    worker::Worker,
-};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::MessageMetadata, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
@@ -105,7 +100,7 @@ where
                 let bus = bus.clone();
                 let network_id = config;
 
-                StandaloneSpawner::spawn(async move {
+                tokio::spawn(async move {
                     while let Ok(ProcessorWorkerEvent {
                         from,
                         message_packet,

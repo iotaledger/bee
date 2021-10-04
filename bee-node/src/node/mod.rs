@@ -9,7 +9,7 @@ pub use error::Error;
 
 use crate::{config::NodeConfig, storage::StorageBackend};
 
-use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, task::TaskSpawner, worker::Worker};
+use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Worker};
 
 use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;
@@ -78,12 +78,6 @@ impl<B: StorageBackend> BeeNode<B> {
     }
 }
 
-struct NodeSpawner;
-
-impl TaskSpawner for NodeSpawner {
-    const ORIGIN: &'static str = "node";
-}
-
 #[async_trait]
 impl<B: StorageBackend> Node for BeeNode<B> {
     type Builder = BeeNodeBuilder<B>;
@@ -139,7 +133,7 @@ impl<B: StorageBackend> Node for BeeNode<B> {
         let (tx, rx) = oneshot::channel();
         let future = g(rx);
 
-        let task = NodeSpawner::spawn(future);
+        let task = tokio::spawn(future);
 
         self.tasks
             .entry(TypeId::of::<W>())
