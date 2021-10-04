@@ -5,7 +5,7 @@ use bee_message::{
     MESSAGE_SIGNATURE_LENGTH,
     address::{Address, Ed25519Address, BlsAddress},
     input::{Input, UtxoInput},
-    output::{Output, SignatureLockedSingleOutput, SignatureLockedAssetOutput, AssetBalance, AssetId, OUTPUT_INDEX_MAX, OutputId},
+    output::{Output, SignatureLockedSingleOutput, SignatureLockedAssetOutput, AssetBalance, AssetId, OutputId},
     parents::{ParentsBlock, ParentsKind},
     payload::{
         data::DataPayload,
@@ -346,7 +346,7 @@ impl TryFrom<&SignatureUnlockDto> for SignatureUnlock {
     type Error = Error;
 
     fn try_from(value: &SignatureUnlockDto) -> Result<Self, Self::Error> {
-        Ok(SignatureUnlock(value.0.try_into()?))
+        Ok(SignatureUnlock::new(Signature::try_from(&value.0)?))
     }
 }
 
@@ -870,7 +870,7 @@ impl TryFrom<&DkgPayloadDto> for DkgPayload {
                 .parse::<u32>()
                     .map_err(|_| Error::InvalidSyntaxField("toIndex"))?,
         )
-        .with_deal(value.deal.try_into()?)
+        .with_deal(EncryptedDeal::try_from(&value.deal)?);
 
         Ok(builder.finish()?)
     }
@@ -1107,7 +1107,7 @@ impl TryFrom<&SaltDeclarationPayloadDto> for SaltDeclarationPayload {
                 .parse::<u32>()
                     .map_err(|_| Error::InvalidSyntaxField("nodeId"))?,
         )
-        .with_salt(value.salt.try_into()?)
+        .with_salt(Salt::try_from(&value.salt)?)
         .with_timestamp(
             value
                 .timestamp
