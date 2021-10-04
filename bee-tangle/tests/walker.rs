@@ -6,6 +6,8 @@ mod common;
 use bee_message::MessageId;
 use bee_tangle::walkers::{TangleDfsWalker, TangleWalkerStatus};
 
+use std::collections::HashMap;
+
 #[test]
 fn walk() {
     // 0 --
@@ -24,7 +26,7 @@ fn walk() {
     //     | -- 11 --
     // 7 --
 
-    let (tangle, ids) = tangle! {
+    let (tangle, ids, graph) = tangle! {
         8 => 0, 1;
         9 => 2, 3;
         10 => 4, 5;
@@ -34,15 +36,24 @@ fn walk() {
         14 => 12, 13;
     };
 
-    let correct_order: Vec<MessageId> = IntoIterator::into_iter([14, 12, 8, 0, 1, 9, 2, 3, 13, 10, 4, 5, 11, 6, 7])
-        .map(|node| ids[&node])
-        .collect();
+    let start_id = ids[&14];
+
+    let mut correct_order = Vec::with_capacity(graph.len());
+
+    fn dfs(node: MessageId, graph: &HashMap<MessageId, Vec<MessageId>>, order: &mut Vec<MessageId>) {
+        order.push(node);
+        for &parent in graph[&node].iter().rev() {
+            dfs(parent, graph, order);
+        }
+    }
+
+    dfs(start_id, &graph, &mut correct_order);
 
     let mut matched = Vec::new();
     let mut skipped = Vec::new();
     let mut missing = Vec::new();
 
-    let walker = TangleDfsWalker::new(&tangle, ids[&14]);
+    let mut walker = TangleDfsWalker::new(&tangle, start_id);
 
     for status in walker {
         match status {
