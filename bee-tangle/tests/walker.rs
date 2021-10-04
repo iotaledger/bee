@@ -27,13 +27,13 @@ fn walk() {
     // 7 --
 
     let (tangle, ids, graph) = tangle! {
-        8 => 0, 1;
-        9 => 2, 3;
-        10 => 4, 5;
-        11 => 6, 7;
-        12 => 8, 9;
-        13 => 10, 11;
-        14 => 12, 13;
+        8 => [0, 1]
+        9 => [2, 3]
+        10 => [4, 5]
+        11 => [6, 7]
+        12 => [8, 9]
+        13 => [10, 11]
+        14 => [12, 13]
     };
 
     let start_id = ids[&14];
@@ -41,9 +41,11 @@ fn walk() {
     let mut correct_order = Vec::with_capacity(graph.len());
 
     fn dfs(node: MessageId, graph: &HashMap<MessageId, Vec<MessageId>>, order: &mut Vec<MessageId>) {
-        order.push(node);
-        for &parent in graph[&node].iter().rev() {
-            dfs(parent, graph, order);
+        if let Some(parents) = graph.get(&node) {
+            order.push(node);
+            for &parent in parents.iter().rev() {
+                dfs(parent, graph, order);
+            }
         }
     }
 
@@ -53,7 +55,7 @@ fn walk() {
     let mut skipped = Vec::new();
     let mut missing = Vec::new();
 
-    let mut walker = TangleDfsWalker::new(&tangle, start_id);
+    let walker = TangleDfsWalker::new(&tangle, start_id);
 
     for status in walker {
         match status {
@@ -63,7 +65,12 @@ fn walk() {
         }
     }
 
+    let mut correct_missing = (0..=7).map(|node| ids[&node]).collect::<Vec<MessageId>>();
+
+    correct_missing.sort();
+    missing.sort();
+
     assert_eq!(correct_order, matched);
     assert!(skipped.is_empty());
-    assert_eq!(missing, vec![MessageId::null()]);
+    assert_eq!(correct_missing, missing);
 }

@@ -3,7 +3,7 @@
 
 #[macro_export]
 macro_rules! build_tangle {
-    ($builder:expr, $node:expr => $($parent:expr),* ; $($tail:tt)*) => {
+    ($builder:expr, $node:expr => [$($parent:expr),*] $($tail:tt)*) => {
         $builder.add_node($node, [$($parent),*]);
         build_tangle!{$builder, $($tail)*}
     };

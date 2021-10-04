@@ -3,7 +3,7 @@
 
 use bee_message::{Message, MessageId, MessageMetadata};
 use bee_tangle::Tangle;
-use bee_test::rand::message::{metadata::rand_message_metadata, rand_message_with_parents_ids};
+use bee_test::rand::message::{metadata::rand_message_metadata, rand_message_id, rand_message_with_parents_ids};
 
 use std::collections::HashMap;
 
@@ -41,16 +41,12 @@ impl TangleBuilder {
             }
         }
 
-        for parent in parents {
-            // Insert the parent in the graph.
-            self.graph.entry(parent).or_default();
-        }
-
         self
     }
 
     pub fn build(self) -> (Tangle, HashMap<usize, MessageId>, HashMap<MessageId, Vec<MessageId>>) {
         let num_graph = self.graph.clone();
+        dbg!(&num_graph);
         // Check that the graph is a DAG and find a topological order so we can add messages to the tangle in the
         // correct order (parents before children). This `Vec` will hold the nodes in such order.
         let mut ordered_nodes = vec![];
@@ -74,8 +70,10 @@ impl TangleBuilder {
             temps.insert(i, node);
 
             // Visit each parent of the node.
-            for &edge in &parents[&node] {
-                visit(edge, perms, temps, parents, ordered_nodes);
+            if let Some(edges) = parents.get(&node) {
+                for &edge in edges {
+                    visit(edge, perms, temps, parents, ordered_nodes);
+                }
             }
 
             // Remove the temporary mark for the node.
@@ -108,12 +106,16 @@ impl TangleBuilder {
         let mut ids = HashMap::new();
 
         while let Some(node) = ordered_nodes.pop() {
-            let (_msg, _meta, id) = match self.graph.get(&node) {
-                Some(parents) if !parents.is_empty() => {
-                    let parents = parents.iter().map(|node| ids[node]).collect::<Vec<MessageId>>();
-                    new_node(&tangle, parents)
+            let id = match self.graph.get(&node) {
+                Some(parents) => {
+                    if parents.is_empty() {
+                        new_sep(&tangle).2
+                    } else {
+                        let parents = parents.iter().map(|node| ids[node]).collect::<Vec<MessageId>>();
+                        new_node(&tangle, parents).2
+                    }
                 }
-                _ => new_sep(&tangle),
+                None => rand_message_id(),
             };
 
             assert!(ids.insert(node, id).is_none());
@@ -141,4 +143,3 @@ impl TangleBuilder {
         (tangle, ids, graph)
     }
 }
-
