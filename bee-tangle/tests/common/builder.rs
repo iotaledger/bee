@@ -46,7 +46,6 @@ impl TangleBuilder {
 
     pub fn build(self) -> (Tangle, HashMap<usize, MessageId>, HashMap<MessageId, Vec<MessageId>>) {
         let num_graph = self.graph.clone();
-        dbg!(&num_graph);
         // Check that the graph is a DAG and find a topological order so we can add messages to the tangle in the
         // correct order (parents before children). This `Vec` will hold the nodes in such order.
         let mut ordered_nodes = vec![];

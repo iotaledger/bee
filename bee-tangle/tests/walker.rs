@@ -4,9 +4,9 @@
 mod common;
 
 use bee_message::MessageId;
-use bee_tangle::walkers::{TangleDfsWalker, TangleWalkerStatus};
+use bee_tangle::walkers::{TangleBfsWalker, TangleDfsWalker, TangleWalkerStatus};
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 #[test]
 fn walk() {
@@ -38,7 +38,7 @@ fn walk() {
 
     let start_id = ids[&14];
 
-    let mut correct_order = Vec::with_capacity(graph.len());
+    let mut dfs_order = Vec::with_capacity(graph.len());
 
     fn dfs(node: MessageId, graph: &HashMap<MessageId, Vec<MessageId>>, order: &mut Vec<MessageId>) {
         if let Some(parents) = graph.get(&node) {
@@ -49,7 +49,7 @@ fn walk() {
         }
     }
 
-    dfs(start_id, &graph, &mut correct_order);
+    dfs(start_id, &graph, &mut dfs_order);
 
     let mut matched = Vec::new();
     let mut skipped = Vec::new();
@@ -70,7 +70,46 @@ fn walk() {
     correct_missing.sort();
     missing.sort();
 
-    assert_eq!(correct_order, matched);
+    assert_eq!(dfs_order, matched);
+    assert!(skipped.is_empty());
+    assert_eq!(correct_missing, missing);
+
+    let mut bfs_order = Vec::with_capacity(graph.len());
+
+    fn bfs(node: MessageId, graph: &HashMap<MessageId, Vec<MessageId>>, order: &mut Vec<MessageId>) {
+        let mut queue = VecDeque::new();
+        queue.push_back(node);
+
+        while let Some(node) = queue.pop_front() {
+            if let Some(parents) = graph.get(&node) {
+                order.push(node);
+                for &parent in parents {
+                    queue.push_back(parent);
+                }
+            }
+        }
+    }
+
+    bfs(start_id, &graph, &mut bfs_order);
+
+    matched.clear();
+    skipped.clear();
+    missing.clear();
+
+    let walker = TangleBfsWalker::new(&tangle, start_id);
+
+    for status in walker {
+        match status {
+            TangleWalkerStatus::Matched(message_id, _message_data) => matched.push(message_id),
+            TangleWalkerStatus::Skipped(message_id, _message_data) => skipped.push(message_id),
+            TangleWalkerStatus::Missing(message_id) => missing.push(message_id),
+        }
+    }
+
+    missing.sort();
+
+    dbg!(ids);
+    assert_eq!(bfs_order, matched);
     assert!(skipped.is_empty());
     assert_eq!(correct_missing, missing);
 }

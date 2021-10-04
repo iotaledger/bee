@@ -3,8 +3,10 @@
 
 //!
 
+mod bfs;
 mod dfs;
 mod status;
 
+pub use bfs::{TangleBfsWalker, TangleBfsWalkerBuilder};
 pub use dfs::{TangleDfsWalker, TangleDfsWalkerBuilder};
 pub use status::TangleWalkerStatus;
