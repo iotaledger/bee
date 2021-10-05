@@ -31,9 +31,10 @@ pub struct GossipConfigBuilder {
 
 impl GossipConfigBuilder {
     /// Sets the bind address for the gossip layer.
-    pub fn bind_addr(&mut self, bind_addr: &String) {
-        self.bind_addr.replace(bind_addr.clone());
+    pub fn bind_addr(&mut self, bind_addr: &str) {
+        self.bind_addr.replace(bind_addr.to_owned());
     }
+
     /// Finishes the builder.
     pub fn finish(self) -> GossipConfig {
         GossipConfig {
@@ -43,8 +44,8 @@ impl GossipConfigBuilder {
 }
 
 fn resolve_bind_addr(bind_addr: &str) -> Result<SocketAddr, Box<dyn std::error::Error>> {
-    Ok(bind_addr.to_socket_addrs()?.next().ok_or(std::io::Error::new(
-        std::io::ErrorKind::InvalidData,
-        "unresolvable bind address",
-    ))?)
+    Ok(bind_addr
+        .to_socket_addrs()?
+        .next()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidData, "unresolvable bind address"))?)
 }

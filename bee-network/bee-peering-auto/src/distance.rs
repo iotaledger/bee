@@ -3,13 +3,11 @@
 
 use bee_identity::identity::PeerId;
 
-use crypto::hashes::sha;
-use prost::bytes::{BufMut, BytesMut};
-
 /// Uses the following metric to determine the distance between two peers `a` and `b`:
+/// ```ignore
+/// xor(hash(a), hash(b + salt))[..4]
 /// ```
-/// xor(hash(a), hash(b+salt))[:4]
-/// ```
-pub fn peer_distance(a: PeerId, b: PeerId) -> u32 {
+#[allow(dead_code)]
+pub fn peer_distance(_a: PeerId, _b: PeerId) -> u32 {
     todo!("peer_distance")
 }

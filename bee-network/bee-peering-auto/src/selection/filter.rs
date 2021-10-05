@@ -5,20 +5,22 @@ use bee_identity::PeerId;
 
 use std::collections::HashMap;
 
-struct Peer;
+type Peer = ();
 
 #[derive(Default)]
 pub struct Filter {
-    internal: HashMap<PeerId, bool>,
-    conditions: Vec<Box<dyn Fn(Peer) -> bool>>,
+    _internal: HashMap<PeerId, bool>,
+    _conditions: Vec<Box<dyn Fn(Peer) -> bool>>,
 }
 
 impl Filter {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Default::default()
     }
 
+    #[allow(dead_code)]
     pub fn add_condition(&mut self, c: Box<dyn Fn(Peer) -> bool>) {
-        self.conditions.push(c);
+        self._conditions.push(c);
     }
 }
