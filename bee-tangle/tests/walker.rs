@@ -4,7 +4,7 @@
 mod common;
 
 use bee_message::MessageId;
-use bee_tangle::walkers::{TangleBfsWalker, TangleDfsWalker, TangleWalkerStatus};
+use bee_tangle::walkers::{TangleBfsWalker, TangleDfsWalker, TangleWalkerItem};
 
 #[test]
 fn walk() {
@@ -49,9 +49,9 @@ fn walk() {
 
     for status in walker {
         match status {
-            TangleWalkerStatus::Matched(message_id, _message_data) => matched.push(message_id),
-            TangleWalkerStatus::Skipped(message_id, _message_data) => skipped.push(message_id),
-            TangleWalkerStatus::Missing(message_id) => missing.push(message_id),
+            TangleWalkerItem::Matched(message_id, _message_data) => matched.push(message_id),
+            TangleWalkerItem::Skipped(message_id, _message_data) => skipped.push(message_id),
+            TangleWalkerItem::Missing(message_id) => missing.push(message_id),
         }
     }
 
@@ -74,9 +74,9 @@ fn walk() {
 
     for status in walker {
         match status {
-            TangleWalkerStatus::Matched(message_id, _message_data) => matched.push(message_id),
-            TangleWalkerStatus::Skipped(message_id, _message_data) => skipped.push(message_id),
-            TangleWalkerStatus::Missing(message_id) => missing.push(message_id),
+            TangleWalkerItem::Matched(message_id, _message_data) => matched.push(message_id),
+            TangleWalkerItem::Skipped(message_id, _message_data) => skipped.push(message_id),
+            TangleWalkerItem::Missing(message_id) => missing.push(message_id),
         }
     }
 

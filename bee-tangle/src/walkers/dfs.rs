@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{walkers::TangleWalkerStatus, MessageData, Tangle};
+use crate::{walkers::TangleWalkerItem, MessageData, Tangle};
 
 use bee_message::MessageId;
 
@@ -57,7 +57,7 @@ impl<'a> TangleDfsWalker<'a> {
 }
 
 impl<'a> Iterator for TangleDfsWalker<'a> {
-    type Item = TangleWalkerStatus;
+    type Item = TangleWalkerItem;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -71,12 +71,12 @@ impl<'a> Iterator for TangleDfsWalker<'a> {
                         if (self.condition)(self.tangle, &message_data) {
                             self.parents
                                 .extend(message_data.message().parents().iter().rev().map(|p| p.id()));
-                            Some(TangleWalkerStatus::Matched(message_id, message_data))
+                            Some(TangleWalkerItem::Matched(message_id, message_data))
                         } else {
-                            Some(TangleWalkerStatus::Skipped(message_id, message_data))
+                            Some(TangleWalkerItem::Skipped(message_id, message_data))
                         }
                     }
-                    None => Some(TangleWalkerStatus::Missing(message_id)),
+                    None => Some(TangleWalkerItem::Missing(message_id)),
                 };
             }
         }
