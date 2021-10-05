@@ -4,14 +4,24 @@
 mod common;
 
 use bee_message::MessageId;
-use bee_tangle::walkers::{TangleBfsWalker, TangleDfsWalker, TangleWalkerItem};
+use bee_tangle::{
+    walkers::{TangleBfsWalker, TangleDfsWalker, TangleWalkerItem},
+    Tangle,
+};
+
+use std::collections::HashMap;
 
 fn generic_walker_test<T: Iterator<Item = TangleWalkerItem>>(
     walker: T,
-    expected_matched: Vec<MessageId>,
-    expected_skipped: Vec<MessageId>,
-    expected_missing: Vec<MessageId>,
+    ids: &HashMap<usize, MessageId>,
+    expected_matched: Vec<usize>,
+    expected_skipped: Vec<usize>,
+    expected_missing: Vec<usize>,
 ) {
+    let expected_matched = expected_matched.into_iter().map(|node| ids[&node]).collect::<Vec<_>>();
+    let expected_skipped = expected_skipped.into_iter().map(|node| ids[&node]).collect::<Vec<_>>();
+    let expected_missing = expected_missing.into_iter().map(|node| ids[&node]).collect::<Vec<_>>();
+
     let mut matched = Vec::new();
     let mut skipped = Vec::new();
     let mut missing = Vec::new();
@@ -27,6 +37,40 @@ fn generic_walker_test<T: Iterator<Item = TangleWalkerItem>>(
     assert_eq!(expected_matched, matched);
     assert_eq!(expected_skipped, skipped);
     assert_eq!(expected_missing, missing);
+}
+
+fn dfs_walker_test(
+    tangle: &Tangle,
+    ids: &HashMap<usize, MessageId>,
+    root: usize,
+    matched: Vec<usize>,
+    skipped: Vec<usize>,
+    missing: Vec<usize>,
+) {
+    generic_walker_test(
+        TangleDfsWalker::new(&tangle, ids[&root]),
+        ids,
+        matched,
+        skipped,
+        missing,
+    );
+}
+
+fn bfs_walker_test(
+    tangle: &Tangle,
+    ids: &HashMap<usize, MessageId>,
+    root: usize,
+    matched: Vec<usize>,
+    skipped: Vec<usize>,
+    missing: Vec<usize>,
+) {
+    generic_walker_test(
+        TangleBfsWalker::new(&tangle, ids[&root]),
+        ids,
+        matched,
+        skipped,
+        missing,
+    );
 }
 
 #[test]
@@ -57,27 +101,22 @@ fn binary_tree_no_condition() {
         14 => [12, 13]
     };
 
-    let walker = TangleDfsWalker::new(&tangle, ids[&14]);
-    let dfs_matched = IntoIterator::into_iter([14, 12, 8, 9, 13, 10, 11])
-        .map(|node| ids[&node])
-        .collect();
-    let dfs_skipped = Vec::new();
-    let dfs_missing = IntoIterator::into_iter([0, 1, 2, 3, 4, 5, 6, 7])
-        .map(|node| ids[&node])
-        .collect();
-
-    generic_walker_test(walker, dfs_matched, dfs_skipped, dfs_missing);
-
-    let walker = TangleBfsWalker::new(&tangle, ids[&14]);
-    let bfs_matched = IntoIterator::into_iter([14, 12, 13, 8, 9, 10, 11])
-        .map(|node| ids[&node])
-        .collect();
-    let bfs_skipped = Vec::new();
-    let bfs_missing = IntoIterator::into_iter([0, 1, 2, 3, 4, 5, 6, 7])
-        .map(|node| ids[&node])
-        .collect();
-
-    generic_walker_test(walker, bfs_matched, bfs_skipped, bfs_missing);
+    dfs_walker_test(
+        &tangle,
+        &ids,
+        14,
+        vec![14, 12, 8, 9, 13, 10, 11],
+        vec![],
+        vec![0, 1, 2, 3, 4, 5, 6, 7],
+    );
+    bfs_walker_test(
+        &tangle,
+        &ids,
+        14,
+        vec![14, 12, 13, 8, 9, 10, 11],
+        vec![],
+        vec![0, 1, 2, 3, 4, 5, 6, 7],
+    );
 }
 
 #[test]
@@ -95,27 +134,22 @@ fn tangle_no_condition() {
         15 => [11, 13, 14]
     };
 
-    let walker = TangleDfsWalker::new(&tangle, ids[&15]);
-    let dfs_matched = IntoIterator::into_iter([15, 11, 7, 8, 13, 6, 10, 14, 12, 9])
-        .map(|node| ids[&node])
-        .collect();
-    let dfs_skipped = Vec::new();
-    let dfs_missing = IntoIterator::into_iter([3, 1, 2, 4, 0, 5])
-        .map(|node| ids[&node])
-        .collect();
-
-    generic_walker_test(walker, dfs_matched, dfs_skipped, dfs_missing);
-
-    let walker = TangleBfsWalker::new(&tangle, ids[&15]);
-    let bfs_matched = IntoIterator::into_iter([15, 11, 13, 14, 7, 8, 6, 10, 12, 9])
-        .map(|node| ids[&node])
-        .collect();
-    let bfs_skipped = Vec::new();
-    let bfs_missing = IntoIterator::into_iter([3, 1, 2, 4, 0, 5])
-        .map(|node| ids[&node])
-        .collect();
-
-    generic_walker_test(walker, bfs_matched, bfs_skipped, bfs_missing);
+    dfs_walker_test(
+        &tangle,
+        &ids,
+        15,
+        vec![15, 11, 7, 8, 13, 6, 10, 14, 12, 9],
+        vec![],
+        vec![3, 1, 2, 4, 0, 5],
+    );
+    bfs_walker_test(
+        &tangle,
+        &ids,
+        15,
+        vec![15, 11, 13, 14, 7, 8, 6, 10, 12, 9],
+        vec![],
+        vec![3, 1, 2, 4, 0, 5],
+    );
 }
 
 #[test]
@@ -133,21 +167,6 @@ fn chain_no_condition() {
         1 => [0]
     };
 
-    let walker = TangleDfsWalker::new(&tangle, ids[&8]);
-    let dfs_matched = IntoIterator::into_iter([8, 7, 6, 5, 4, 3, 2, 1])
-        .map(|node| ids[&node])
-        .collect();
-    let dfs_skipped = Vec::new();
-    let dfs_missing = IntoIterator::into_iter([0]).map(|node| ids[&node]).collect();
-
-    generic_walker_test(walker, dfs_matched, dfs_skipped, dfs_missing);
-
-    let walker = TangleBfsWalker::new(&tangle, ids[&8]);
-    let bfs_matched = IntoIterator::into_iter([8, 7, 6, 5, 4, 3, 2, 1])
-        .map(|node| ids[&node])
-        .collect();
-    let bfs_skipped = Vec::new();
-    let bfs_missing = IntoIterator::into_iter([0]).map(|node| ids[&node]).collect();
-
-    generic_walker_test(walker, bfs_matched, bfs_skipped, bfs_missing);
+    dfs_walker_test(&tangle, &ids, 8, vec![8, 7, 6, 5, 4, 3, 2, 1], vec![], vec![0]);
+    bfs_walker_test(&tangle, &ids, 8, vec![8, 7, 6, 5, 4, 3, 2, 1], vec![], vec![0]);
 }
