@@ -47,13 +47,7 @@ fn dfs_walker_test(
     skipped: Vec<usize>,
     missing: Vec<usize>,
 ) {
-    generic_walker_test(
-        TangleDfsWalker::new(&tangle, ids[&root]),
-        ids,
-        matched,
-        skipped,
-        missing,
-    );
+    generic_walker_test(TangleDfsWalker::new(tangle, ids[&root]), ids, matched, skipped, missing);
 }
 
 fn bfs_walker_test(
@@ -64,13 +58,7 @@ fn bfs_walker_test(
     skipped: Vec<usize>,
     missing: Vec<usize>,
 ) {
-    generic_walker_test(
-        TangleBfsWalker::new(&tangle, ids[&root]),
-        ids,
-        matched,
-        skipped,
-        missing,
-    );
+    generic_walker_test(TangleBfsWalker::new(tangle, ids[&root]), ids, matched, skipped, missing);
 }
 
 #[test]
