@@ -104,7 +104,7 @@ impl Parents {
     }
 
     /// Returns an iterator over the parents.
-    pub fn iter(&self) -> impl ExactSizeIterator<Item = &Parent> {
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = &Parent> {
         self.0.iter()
     }
 }

@@ -70,7 +70,7 @@ impl<'a> Iterator for TangleDfsWalker<'a> {
                     Some(message_data) => {
                         if (self.condition)(self.tangle, &message_data) {
                             self.parents
-                                .extend(message_data.message().parents().iter().map(|p| p.id()));
+                                .extend(message_data.message().parents().iter().rev().map(|p| p.id()));
                             Some(TangleWalkerStatus::Matched(message_id, message_data))
                         } else {
                             Some(TangleWalkerStatus::Skipped(message_id, message_data))
