@@ -6,8 +6,6 @@ mod common;
 use bee_message::MessageId;
 use bee_tangle::walkers::{TangleBfsWalker, TangleDfsWalker, TangleWalkerStatus};
 
-use std::collections::{HashMap, VecDeque};
-
 #[test]
 fn walk() {
     // 0 --
@@ -26,7 +24,7 @@ fn walk() {
     //     | -- 11 --
     // 7 --
 
-    let (tangle, ids, graph) = tangle! {
+    let (tangle, ids) = tangle! {
         8 => [0, 1]
         9 => [2, 3]
         10 => [4, 5]
@@ -36,26 +34,18 @@ fn walk() {
         14 => [12, 13]
     };
 
-    let start_id = ids[&14];
-
-    let mut dfs_order = Vec::with_capacity(graph.len());
-
-    fn dfs(node: MessageId, graph: &HashMap<MessageId, Vec<MessageId>>, order: &mut Vec<MessageId>) {
-        if let Some(parents) = graph.get(&node) {
-            order.push(node);
-            for &parent in parents.iter().rev() {
-                dfs(parent, graph, order);
-            }
-        }
-    }
-
-    dfs(start_id, &graph, &mut dfs_order);
+    let walker = TangleDfsWalker::new(&tangle, ids[&14]);
 
     let mut matched = Vec::new();
     let mut skipped = Vec::new();
     let mut missing = Vec::new();
 
-    let walker = TangleDfsWalker::new(&tangle, start_id);
+    let dfs_matched: Vec<MessageId> = IntoIterator::into_iter([14, 12, 8, 9, 13, 10, 11])
+        .map(|node| ids[&node])
+        .collect();
+    let dfs_missing: Vec<MessageId> = IntoIterator::into_iter([0, 1, 2, 3, 4, 5, 6, 7])
+        .map(|node| ids[&node])
+        .collect();
 
     for status in walker {
         match status {
@@ -65,38 +55,22 @@ fn walk() {
         }
     }
 
-    let mut correct_missing = (0..=7).map(|node| ids[&node]).collect::<Vec<MessageId>>();
-
-    correct_missing.sort();
-    missing.sort();
-
-    assert_eq!(dfs_order, matched);
+    assert_eq!(dfs_matched, matched);
     assert!(skipped.is_empty());
-    assert_eq!(correct_missing, missing);
+    assert_eq!(dfs_missing, missing);
 
-    let mut bfs_order = Vec::with_capacity(graph.len());
+    let walker = TangleBfsWalker::new(&tangle, ids[&14]);
 
-    fn bfs(node: MessageId, graph: &HashMap<MessageId, Vec<MessageId>>, order: &mut Vec<MessageId>) {
-        let mut queue = VecDeque::new();
-        queue.push_back(node);
+    let mut matched = Vec::new();
+    let mut skipped = Vec::new();
+    let mut missing = Vec::new();
 
-        while let Some(node) = queue.pop_front() {
-            if let Some(parents) = graph.get(&node) {
-                order.push(node);
-                for &parent in parents {
-                    queue.push_back(parent);
-                }
-            }
-        }
-    }
-
-    bfs(start_id, &graph, &mut bfs_order);
-
-    matched.clear();
-    skipped.clear();
-    missing.clear();
-
-    let walker = TangleBfsWalker::new(&tangle, start_id);
+    let bfs_matched: Vec<MessageId> = IntoIterator::into_iter([14, 12, 13, 8, 9, 10, 11])
+        .map(|node| ids[&node])
+        .collect();
+    let bfs_missing: Vec<MessageId> = IntoIterator::into_iter([0, 1, 2, 3, 4, 5, 6, 7])
+        .map(|node| ids[&node])
+        .collect();
 
     for status in walker {
         match status {
@@ -106,10 +80,7 @@ fn walk() {
         }
     }
 
-    missing.sort();
-
-    dbg!(ids);
-    assert_eq!(bfs_order, matched);
+    assert_eq!(bfs_matched, matched);
     assert!(skipped.is_empty());
-    assert_eq!(correct_missing, missing);
+    assert_eq!(bfs_missing, missing);
 }
