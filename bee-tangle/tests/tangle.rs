@@ -2,7 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_tangle::Tangle;
-use bee_test::rand::message::{metadata::rand_message_metadata, rand_message};
+use bee_test::rand::message::{metadata::rand_message_metadata, rand_message, rand_message_id};
+
+#[test]
+fn get_none() {
+    let tangle = Tangle::new();
+
+    assert!(tangle.get(&rand_message_id()).is_none());
+}
 
 #[test]
 fn insert_get() {
