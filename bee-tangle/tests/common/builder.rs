@@ -18,10 +18,6 @@ fn rand_prefixed_message_id(prefix: u16) -> MessageId {
     MessageId::from(message_id_bytes)
 }
 
-fn new_sep(tangle: &Tangle, message_id: MessageId) -> (Message, MessageMetadata) {
-    new_node(tangle, message_id, vec![MessageId::null()])
-}
-
 fn new_node(tangle: &Tangle, message_id: MessageId, parents_ids: Vec<MessageId>) -> (Message, MessageMetadata) {
     let message = rand_message_with_parents_ids(parents_ids);
     let metadata = rand_message_metadata();
@@ -55,7 +51,6 @@ impl TangleBuilder {
     }
 
     pub fn build(self) -> (Tangle, HashMap<usize, MessageId>) {
-        let num_graph = self.graph.clone();
         // Check that the graph is a DAG and find a topological order so we can add messages to the tangle in the
         // correct order (parents before children). This `Vec` will hold the nodes in such order.
         let mut ordered_nodes = vec![];
@@ -119,7 +114,7 @@ impl TangleBuilder {
 
             if let Some(parents) = self.graph.get(&node) {
                 if parents.is_empty() {
-                    new_sep(&tangle, id);
+                    new_node(&tangle, id, vec![MessageId::null()]);
                 } else {
                     let parents = parents.iter().map(|node| ids[node]).collect::<Vec<MessageId>>();
                     new_node(&tangle, id, parents);
@@ -128,28 +123,6 @@ impl TangleBuilder {
 
             assert!(ids.insert(node, id).is_none());
         }
-
-        let mut graph = HashMap::new();
-
-        for (num_node, num_parents) in num_graph {
-            let node = ids[&num_node];
-
-            let mut parents = Vec::with_capacity(num_parents.len());
-            for num_parent in num_parents {
-                let parent = ids[&num_parent];
-                match parents.binary_search(&parent) {
-                    Ok(_) => unreachable!(),
-                    Err(i) => {
-                        parents.insert(i, parent);
-                    }
-                }
-            }
-
-            graph.insert(node, parents);
-        }
-
-        // dbg!(ids.clone());
-        // dbg!(graph);
 
         (tangle, ids)
     }

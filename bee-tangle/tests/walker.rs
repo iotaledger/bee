@@ -63,22 +63,6 @@ fn bfs_walker_test(
 
 #[test]
 fn binary_tree_no_condition() {
-    // 0 --
-    //     | --  8 --
-    // 1 --          |
-    //               | -- 12 --
-    // 2 --          |         |
-    //     | --  9 --          |
-    // 3 --                    |
-    //                         | -- 14
-    // 4 --                    |
-    //     | -- 10 --          |
-    // 5 --          |         |
-    //               | -- 13 --
-    // 6 --          |
-    //     | -- 11 --
-    // 7 --
-
     let (tangle, ids) = tangle! {
         8  => [0, 1]
         9  => [2, 3]
@@ -142,8 +126,6 @@ fn tangle_no_condition() {
 
 #[test]
 fn chain_no_condition() {
-    // 0 - 1 - 2 - 3 - 4 - 5 - 6 - 7 - 8
-
     let (tangle, ids) = tangle! {
         8 => [7]
         7 => [6]
