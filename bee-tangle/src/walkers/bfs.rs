@@ -65,17 +65,16 @@ impl<'a> Iterator for TangleBfsWalker<'a> {
             let message_id = self.parents.pop_front()?;
 
             if self.visited.insert(message_id) {
-                return match self.tangle.get(&message_id) {
-                    Some(message_data) => {
-                        if (self.condition)(self.tangle, &message_id, &message_data) {
-                            self.parents
-                                .extend(message_data.message().parents().iter().map(|p| p.id()));
-                            Some(TangleWalkerItem::Matched(message_id, message_data))
-                        } else {
-                            Some(TangleWalkerItem::Skipped(message_id, message_data))
-                        }
+                return if let Some(message_data) = self.tangle.get(&message_id) {
+                    if (self.condition)(self.tangle, &message_id, &message_data) {
+                        self.parents
+                            .extend(message_data.message().parents().iter().map(|p| p.id()));
+                        Some(TangleWalkerItem::Matched(message_id, message_data))
+                    } else {
+                        Some(TangleWalkerItem::Skipped(message_id, message_data))
                     }
-                    None => Some(TangleWalkerItem::Missing(message_id)),
+                } else {
+                    Some(TangleWalkerItem::Missing(message_id))
                 };
             }
         }
