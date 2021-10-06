@@ -112,26 +112,26 @@ fn binary_tree() {
 
     // With condition
 
-    fn condition(_tangle: &Tangle, _message_id: &MessageId, _message_data: &MessageData) -> bool {
-        true
+    fn condition(_tangle: &Tangle, message_id: &MessageId, _message_data: &MessageData) -> bool {
+        u16::from_le_bytes(message_id.as_ref()[0..2].try_into().unwrap()) % 2 == 0
     }
 
     dfs_walker_test(
         &tangle,
         &ids,
         14,
-        vec![14, 12, 8, 9, 13, 10, 11], // matched
-        vec![],                         // skipped
-        vec![0, 1, 2, 3, 4, 5, 6, 7],   // missing
+        vec![14, 12, 8], // matched
+        vec![9, 13],     // skipped
+        vec![0, 1],      // missing
         Some(Box::new(condition)),
     );
     bfs_walker_test(
         &tangle,
         &ids,
         14,
-        vec![14, 12, 13, 8, 9, 10, 11], // matched
-        vec![],                         // skipped
-        vec![0, 1, 2, 3, 4, 5, 6, 7],   // missing
+        vec![14, 12, 8], // matched
+        vec![13, 9],     // skipped
+        vec![0, 1],      // missing
         Some(Box::new(condition)),
     );
 }
@@ -174,26 +174,26 @@ fn tangle() {
 
     // With condition
 
-    fn condition(_tangle: &Tangle, _message_id: &MessageId, _message_data: &MessageData) -> bool {
-        true
+    fn condition(_tangle: &Tangle, message_id: &MessageId, _message_data: &MessageData) -> bool {
+        u16::from_le_bytes(message_id.as_ref()[0..2].try_into().unwrap()) % 2 == 1
     }
 
     dfs_walker_test(
         &tangle,
         &ids,
         15,
-        vec![15, 11, 7, 8, 13, 6, 10, 14, 12, 9], // matched
-        vec![],                                   // skipped
-        vec![3, 1, 2, 4, 0, 5],                   // missing
+        vec![15, 11, 7, 13], // matched
+        vec![8, 6, 10, 14],  // skipped
+        vec![3, 1, 2],       // missing
         Some(Box::new(condition)),
     );
     bfs_walker_test(
         &tangle,
         &ids,
         15,
-        vec![15, 11, 13, 14, 7, 8, 6, 10, 12, 9], // matched
-        vec![],                                   // skipped
-        vec![3, 1, 2, 4, 0, 5],                   // missing
+        vec![15, 11, 13, 7], // matched
+        vec![14, 8, 6, 10],  // skipped
+        vec![3, 1, 2],       // missing
         Some(Box::new(condition)),
     );
 }
@@ -235,27 +235,25 @@ fn chain() {
     // With condition
 
     fn condition(_tangle: &Tangle, message_id: &MessageId, _message_data: &MessageData) -> bool {
-        let _id = u16::from_le_bytes(message_id.as_ref()[0..2].try_into().unwrap());
-
-        true
+        u16::from_le_bytes(message_id.as_ref()[0..2].try_into().unwrap()) != 4
     }
 
     dfs_walker_test(
         &tangle,
         &ids,
         8,
-        vec![8, 7, 6, 5, 4, 3, 2, 1], // matched
-        vec![],                       // skipped
-        vec![0],                      // missing
+        vec![8, 7, 6, 5], // matched
+        vec![4],          // skipped
+        vec![],           // missing
         Some(Box::new(condition)),
     );
     bfs_walker_test(
         &tangle,
         &ids,
         8,
-        vec![8, 7, 6, 5, 4, 3, 2, 1], // matched
-        vec![],                       // skipped
-        vec![0],                      // missing
+        vec![8, 7, 6, 5], // matched
+        vec![4],          // skipped
+        vec![],           // missing
         Some(Box::new(condition)),
     );
 }
