@@ -5,8 +5,8 @@ mod common;
 
 use bee_message::MessageId;
 use bee_tangle::{
-    walkers::{TangleBfsWalker, TangleDfsWalker, TangleWalkerItem},
-    Tangle,
+    walkers::{TangleBfsWalkerBuilder, TangleDfsWalkerBuilder, TangleWalkerItem},
+    MessageData, Tangle,
 };
 
 use std::collections::HashMap;
@@ -46,8 +46,15 @@ fn dfs_walker_test(
     matched: Vec<usize>,
     skipped: Vec<usize>,
     missing: Vec<usize>,
+    condition: Option<Box<dyn Fn(&Tangle, &MessageData) -> bool>>,
 ) {
-    generic_walker_test(TangleDfsWalker::new(tangle, ids[&root]), ids, matched, skipped, missing);
+    let mut builder = TangleDfsWalkerBuilder::new(tangle, ids[&root]);
+
+    if let Some(condition) = condition {
+        builder = builder.with_condition(condition);
+    }
+
+    generic_walker_test(builder.finish(), ids, matched, skipped, missing);
 }
 
 fn bfs_walker_test(
@@ -57,8 +64,15 @@ fn bfs_walker_test(
     matched: Vec<usize>,
     skipped: Vec<usize>,
     missing: Vec<usize>,
+    condition: Option<Box<dyn Fn(&Tangle, &MessageData) -> bool>>,
 ) {
-    generic_walker_test(TangleBfsWalker::new(tangle, ids[&root]), ids, matched, skipped, missing);
+    let mut builder = TangleBfsWalkerBuilder::new(tangle, ids[&root]);
+
+    if let Some(condition) = condition {
+        builder = builder.with_condition(condition);
+    }
+
+    generic_walker_test(builder.finish(), ids, matched, skipped, missing);
 }
 
 #[test]
@@ -77,17 +91,19 @@ fn binary_tree_no_condition() {
         &tangle,
         &ids,
         14,
-        vec![14, 12, 8, 9, 13, 10, 11],
-        vec![],
-        vec![0, 1, 2, 3, 4, 5, 6, 7],
+        vec![14, 12, 8, 9, 13, 10, 11], // matched
+        vec![],                         // skipped
+        vec![0, 1, 2, 3, 4, 5, 6, 7],   // missing
+        None,
     );
     bfs_walker_test(
         &tangle,
         &ids,
         14,
-        vec![14, 12, 13, 8, 9, 10, 11],
-        vec![],
-        vec![0, 1, 2, 3, 4, 5, 6, 7],
+        vec![14, 12, 13, 8, 9, 10, 11], // matched
+        vec![],                         // skipped
+        vec![0, 1, 2, 3, 4, 5, 6, 7],   // missing
+        None,
     );
 }
 
@@ -110,17 +126,19 @@ fn tangle_no_condition() {
         &tangle,
         &ids,
         15,
-        vec![15, 11, 7, 8, 13, 6, 10, 14, 12, 9],
-        vec![],
-        vec![3, 1, 2, 4, 0, 5],
+        vec![15, 11, 7, 8, 13, 6, 10, 14, 12, 9], // matched
+        vec![],                                   // skipped
+        vec![3, 1, 2, 4, 0, 5],                   // missing
+        None,
     );
     bfs_walker_test(
         &tangle,
         &ids,
         15,
-        vec![15, 11, 13, 14, 7, 8, 6, 10, 12, 9],
-        vec![],
-        vec![3, 1, 2, 4, 0, 5],
+        vec![15, 11, 13, 14, 7, 8, 6, 10, 12, 9], // matched
+        vec![],                                   // skipped
+        vec![3, 1, 2, 4, 0, 5],                   // missing
+        None,
     );
 }
 
@@ -137,6 +155,22 @@ fn chain_no_condition() {
         1 => [0]
     };
 
-    dfs_walker_test(&tangle, &ids, 8, vec![8, 7, 6, 5, 4, 3, 2, 1], vec![], vec![0]);
-    bfs_walker_test(&tangle, &ids, 8, vec![8, 7, 6, 5, 4, 3, 2, 1], vec![], vec![0]);
+    dfs_walker_test(
+        &tangle,
+        &ids,
+        8,
+        vec![8, 7, 6, 5, 4, 3, 2, 1], // matched
+        vec![],                       // skipped
+        vec![0],                      // missing
+        None,
+    );
+    bfs_walker_test(
+        &tangle,
+        &ids,
+        8,
+        vec![8, 7, 6, 5, 4, 3, 2, 1], // matched
+        vec![],                       // skipped
+        vec![0],                      // missing
+        None,
+    );
 }
