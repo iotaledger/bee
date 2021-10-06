@@ -64,9 +64,7 @@ impl<'a> Iterator for TangleBfsWalker<'a> {
         loop {
             let message_id = self.parents.pop_front()?;
 
-            if !self.visited.contains(&message_id) {
-                self.visited.insert(message_id);
-
+            if self.visited.insert(message_id) {
                 return match self.tangle.get(&message_id) {
                     Some(message_data) => {
                         if (self.condition)(self.tangle, &message_id, &message_data) {
