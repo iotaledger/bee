@@ -7,7 +7,7 @@ use bee_message::MessageId;
 
 use std::collections::{HashSet, VecDeque};
 
-///
+/// A builder for a [`TangleBfsWalker`].
 pub struct TangleBfsWalkerBuilder<'a> {
     tangle: &'a Tangle,
     root: MessageId,
@@ -15,7 +15,7 @@ pub struct TangleBfsWalkerBuilder<'a> {
 }
 
 impl<'a> TangleBfsWalkerBuilder<'a> {
-    ///
+    /// Creates a new [`TangleBfsWalkerBuilder`].
     pub fn new(tangle: &'a Tangle, root: MessageId) -> Self {
         Self {
             tangle,
@@ -24,13 +24,13 @@ impl<'a> TangleBfsWalkerBuilder<'a> {
         }
     }
 
-    ///
+    /// Adds a condition to the [`TangleBfsWalkerBuilder`].
     pub fn with_condition(mut self, condition: Box<dyn Fn(&'a Tangle, &MessageData) -> bool>) -> Self {
         self.condition.replace(condition);
         self
     }
 
-    ///
+    /// Finishes the [`TangleBfsWalkerBuilder`] into a [`TangleBfsWalker`].
     pub fn finish(self) -> TangleBfsWalker<'a> {
         TangleBfsWalker {
             tangle: self.tangle,
@@ -41,7 +41,7 @@ impl<'a> TangleBfsWalkerBuilder<'a> {
     }
 }
 
-///
+/// A walker that goes through the tangle in a Breadth First Search manner.
 pub struct TangleBfsWalker<'a> {
     tangle: &'a Tangle,
     parents: VecDeque<MessageId>,
@@ -50,7 +50,7 @@ pub struct TangleBfsWalker<'a> {
 }
 
 impl<'a> TangleBfsWalker<'a> {
-    ///
+    /// Creates a new [`TangleBfsWalker`].
     pub fn new(tangle: &'a Tangle, root: MessageId) -> Self {
         TangleBfsWalkerBuilder::new(tangle, root).finish()
     }

@@ -7,7 +7,7 @@ use bee_message::MessageId;
 
 use std::collections::HashSet;
 
-///
+/// A builder for a [`TangleDfsWalker`].
 pub struct TangleDfsWalkerBuilder<'a> {
     tangle: &'a Tangle,
     root: MessageId,
@@ -15,7 +15,7 @@ pub struct TangleDfsWalkerBuilder<'a> {
 }
 
 impl<'a> TangleDfsWalkerBuilder<'a> {
-    ///
+    /// Creates a new [`TangleDfsWalkerBuilder`].
     pub fn new(tangle: &'a Tangle, root: MessageId) -> Self {
         Self {
             tangle,
@@ -24,13 +24,13 @@ impl<'a> TangleDfsWalkerBuilder<'a> {
         }
     }
 
-    ///
+    /// Adds a condition to the [`TangleDfsWalkerBuilder`].
     pub fn with_condition(mut self, condition: Box<dyn Fn(&'a Tangle, &MessageData) -> bool>) -> Self {
         self.condition.replace(condition);
         self
     }
 
-    ///
+    /// Finishes the [`TangleDfsWalkerBuilder`] into a [`TangleDfsWalker`].
     pub fn finish(self) -> TangleDfsWalker<'a> {
         TangleDfsWalker {
             tangle: self.tangle,
@@ -41,7 +41,7 @@ impl<'a> TangleDfsWalkerBuilder<'a> {
     }
 }
 
-///
+/// A walker that goes through the tangle in a Depth First Search manner.
 pub struct TangleDfsWalker<'a> {
     tangle: &'a Tangle,
     parents: Vec<MessageId>,
@@ -50,7 +50,7 @@ pub struct TangleDfsWalker<'a> {
 }
 
 impl<'a> TangleDfsWalker<'a> {
-    ///
+    /// Creates a new [`TangleDfsWalker`].
     pub fn new(tangle: &'a Tangle, root: MessageId) -> Self {
         TangleDfsWalkerBuilder::new(tangle, root).finish()
     }
