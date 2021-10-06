@@ -46,7 +46,7 @@ fn dfs_walker_test(
     matched: Vec<usize>,
     skipped: Vec<usize>,
     missing: Vec<usize>,
-    condition: Option<Box<dyn Fn(&Tangle, &MessageData) -> bool>>,
+    condition: Option<Box<dyn Fn(&Tangle, &MessageId, &MessageData) -> bool>>,
 ) {
     let mut builder = TangleDfsWalkerBuilder::new(tangle, ids[&root]);
 
@@ -64,7 +64,7 @@ fn bfs_walker_test(
     matched: Vec<usize>,
     skipped: Vec<usize>,
     missing: Vec<usize>,
-    condition: Option<Box<dyn Fn(&Tangle, &MessageData) -> bool>>,
+    condition: Option<Box<dyn Fn(&Tangle, &MessageId, &MessageData) -> bool>>,
 ) {
     let mut builder = TangleBfsWalkerBuilder::new(tangle, ids[&root]);
 
@@ -75,8 +75,12 @@ fn bfs_walker_test(
     generic_walker_test(builder.finish(), ids, matched, skipped, missing);
 }
 
+fn condition(_tangle: &Tangle, _message_id: &MessageId, _message_data: &MessageData) -> bool {
+    true
+}
+
 #[test]
-fn binary_tree_no_condition() {
+fn binary_tree() {
     let (tangle, ids) = tangle! {
         8  => [0, 1]
         9  => [2, 3]
@@ -86,6 +90,8 @@ fn binary_tree_no_condition() {
         13 => [10, 11]
         14 => [12, 13]
     };
+
+    // Without condition
 
     dfs_walker_test(
         &tangle,
@@ -105,10 +111,31 @@ fn binary_tree_no_condition() {
         vec![0, 1, 2, 3, 4, 5, 6, 7],   // missing
         None,
     );
+
+    // With condition
+
+    dfs_walker_test(
+        &tangle,
+        &ids,
+        14,
+        vec![14, 12, 8, 9, 13, 10, 11], // matched
+        vec![],                         // skipped
+        vec![0, 1, 2, 3, 4, 5, 6, 7],   // missing
+        Some(Box::new(condition)),
+    );
+    bfs_walker_test(
+        &tangle,
+        &ids,
+        14,
+        vec![14, 12, 13, 8, 9, 10, 11], // matched
+        vec![],                         // skipped
+        vec![0, 1, 2, 3, 4, 5, 6, 7],   // missing
+        Some(Box::new(condition)),
+    );
 }
 
 #[test]
-fn tangle_no_condition() {
+fn tangle() {
     let (tangle, ids) = tangle! {
         6  => [0, 1, 2]
         7  => [1, 2]
@@ -121,6 +148,8 @@ fn tangle_no_condition() {
         14 => [8, 11, 12]
         15 => [11, 13, 14]
     };
+
+    // Without condition
 
     dfs_walker_test(
         &tangle,
@@ -140,10 +169,31 @@ fn tangle_no_condition() {
         vec![3, 1, 2, 4, 0, 5],                   // missing
         None,
     );
+
+    // With condition
+
+    dfs_walker_test(
+        &tangle,
+        &ids,
+        15,
+        vec![15, 11, 7, 8, 13, 6, 10, 14, 12, 9], // matched
+        vec![],                                   // skipped
+        vec![3, 1, 2, 4, 0, 5],                   // missing
+        Some(Box::new(condition)),
+    );
+    bfs_walker_test(
+        &tangle,
+        &ids,
+        15,
+        vec![15, 11, 13, 14, 7, 8, 6, 10, 12, 9], // matched
+        vec![],                                   // skipped
+        vec![3, 1, 2, 4, 0, 5],                   // missing
+        Some(Box::new(condition)),
+    );
 }
 
 #[test]
-fn chain_no_condition() {
+fn chain() {
     let (tangle, ids) = tangle! {
         8 => [7]
         7 => [6]
@@ -154,6 +204,8 @@ fn chain_no_condition() {
         2 => [1]
         1 => [0]
     };
+
+    // Without condition
 
     dfs_walker_test(
         &tangle,
@@ -172,5 +224,26 @@ fn chain_no_condition() {
         vec![],                       // skipped
         vec![0],                      // missing
         None,
+    );
+
+    // With condition
+
+    dfs_walker_test(
+        &tangle,
+        &ids,
+        8,
+        vec![8, 7, 6, 5, 4, 3, 2, 1], // matched
+        vec![],                       // skipped
+        vec![0],                      // missing
+        Some(Box::new(condition)),
+    );
+    bfs_walker_test(
+        &tangle,
+        &ids,
+        8,
+        vec![8, 7, 6, 5, 4, 3, 2, 1], // matched
+        vec![],                       // skipped
+        vec![0],                      // missing
+        Some(Box::new(condition)),
     );
 }

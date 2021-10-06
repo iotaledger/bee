@@ -11,7 +11,7 @@ use std::collections::HashSet;
 pub struct TangleDfsWalkerBuilder<'a> {
     tangle: &'a Tangle,
     root: MessageId,
-    condition: Option<Box<dyn Fn(&'a Tangle, &MessageData) -> bool>>,
+    condition: Option<Box<dyn Fn(&'a Tangle, &MessageId, &MessageData) -> bool>>,
 }
 
 impl<'a> TangleDfsWalkerBuilder<'a> {
@@ -25,7 +25,7 @@ impl<'a> TangleDfsWalkerBuilder<'a> {
     }
 
     /// Adds a condition to the [`TangleDfsWalkerBuilder`].
-    pub fn with_condition(mut self, condition: Box<dyn Fn(&'a Tangle, &MessageData) -> bool>) -> Self {
+    pub fn with_condition(mut self, condition: Box<dyn Fn(&'a Tangle, &MessageId, &MessageData) -> bool>) -> Self {
         self.condition.replace(condition);
         self
     }
@@ -36,7 +36,7 @@ impl<'a> TangleDfsWalkerBuilder<'a> {
             tangle: self.tangle,
             parents: vec![self.root],
             visited: HashSet::new(),
-            condition: self.condition.unwrap_or_else(|| Box::new(|_, _| true)),
+            condition: self.condition.unwrap_or_else(|| Box::new(|_, _, _| true)),
         }
     }
 }
@@ -46,7 +46,7 @@ pub struct TangleDfsWalker<'a> {
     tangle: &'a Tangle,
     parents: Vec<MessageId>,
     visited: HashSet<MessageId>,
-    condition: Box<dyn Fn(&'a Tangle, &MessageData) -> bool>,
+    condition: Box<dyn Fn(&'a Tangle, &MessageId, &MessageData) -> bool>,
 }
 
 impl<'a> TangleDfsWalker<'a> {
@@ -68,7 +68,7 @@ impl<'a> Iterator for TangleDfsWalker<'a> {
 
                 return match self.tangle.get(&message_id) {
                     Some(message_data) => {
-                        if (self.condition)(self.tangle, &message_data) {
+                        if (self.condition)(self.tangle, &message_id, &message_data) {
                             self.parents
                                 .extend(message_data.message().parents().iter().rev().map(|p| p.id()));
                             Some(TangleWalkerItem::Matched(message_id, message_data))
