@@ -11,6 +11,7 @@ use std::collections::{HashSet, VecDeque};
 pub struct TangleBfsWalkerBuilder<'a> {
     tangle: &'a Tangle,
     root: MessageId,
+    #[allow(clippy::type_complexity)]
     condition: Option<Box<dyn Fn(&'a Tangle, &MessageId, &MessageData) -> bool>>,
 }
 

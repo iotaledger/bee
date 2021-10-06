@@ -9,7 +9,7 @@ use bee_tangle::{
     MessageData, Tangle,
 };
 
-use std::collections::HashMap;
+use std::{collections::HashMap, convert::TryInto};
 
 fn generic_walker_test<T: Iterator<Item = TangleWalkerItem>>(
     walker: T,
@@ -39,6 +39,7 @@ fn generic_walker_test<T: Iterator<Item = TangleWalkerItem>>(
     assert_eq!(expected_missing, missing);
 }
 
+#[allow(clippy::type_complexity)]
 fn dfs_walker_test(
     tangle: &Tangle,
     ids: &HashMap<usize, MessageId>,
@@ -57,6 +58,7 @@ fn dfs_walker_test(
     generic_walker_test(builder.finish(), ids, matched, skipped, missing);
 }
 
+#[allow(clippy::type_complexity)]
 fn bfs_walker_test(
     tangle: &Tangle,
     ids: &HashMap<usize, MessageId>,
@@ -73,10 +75,6 @@ fn bfs_walker_test(
     }
 
     generic_walker_test(builder.finish(), ids, matched, skipped, missing);
-}
-
-fn condition(_tangle: &Tangle, _message_id: &MessageId, _message_data: &MessageData) -> bool {
-    true
 }
 
 #[test]
@@ -113,6 +111,10 @@ fn binary_tree() {
     );
 
     // With condition
+
+    fn condition(_tangle: &Tangle, _message_id: &MessageId, _message_data: &MessageData) -> bool {
+        true
+    }
 
     dfs_walker_test(
         &tangle,
@@ -172,6 +174,10 @@ fn tangle() {
 
     // With condition
 
+    fn condition(_tangle: &Tangle, _message_id: &MessageId, _message_data: &MessageData) -> bool {
+        true
+    }
+
     dfs_walker_test(
         &tangle,
         &ids,
@@ -227,6 +233,12 @@ fn chain() {
     );
 
     // With condition
+
+    fn condition(_tangle: &Tangle, message_id: &MessageId, _message_data: &MessageData) -> bool {
+        let _id = u16::from_le_bytes(message_id.as_ref()[0..2].try_into().unwrap());
+
+        true
+    }
 
     dfs_walker_test(
         &tangle,
