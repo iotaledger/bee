@@ -2,18 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_tangle::Tangle;
-use bee_test::rand::message::{metadata::rand_message_metadata, rand_message};
+use bee_test::rand::message::{metadata::rand_message_metadata, rand_message, rand_message_id};
 
-#[tokio::test]
-async fn insert_get() {
+#[test]
+fn get_none() {
+    let tangle = Tangle::new();
+
+    assert!(tangle.get(&rand_message_id()).is_none());
+}
+
+#[test]
+fn insert_get() {
     let (message, metadata) = (rand_message(), rand_message_metadata());
     let message_id = message.id();
 
     let tangle = Tangle::new();
-    tangle.insert(message_id, message.clone(), metadata.clone()).await;
+    tangle.insert(message_id, message.clone(), metadata.clone());
 
-    let (fetched_message, fetched_metadata) = tangle.get(&message_id).await.unwrap();
+    let message_data = tangle.get(&message_id).unwrap();
 
-    assert_eq!(*fetched_message, message);
-    assert_eq!(fetched_metadata, metadata);
+    assert_eq!(message_data.message(), &message);
+    assert_eq!(message_data.metadata(), &metadata);
 }

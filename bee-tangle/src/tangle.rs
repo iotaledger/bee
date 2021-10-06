@@ -1,18 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::MessageData;
+
 use bee_message::{Message, MessageId, MessageMetadata};
 
-use tokio::sync::RwLock;
+use parking_lot::RwLock;
 
-use std::{collections::HashMap, sync::Arc};
-
-/// Data structure used by the [`Tangle`](crate::Tangle) to store a [`Message`] and its associated [`MessageMetadata`].
-#[derive(Clone)]
-pub struct MessageData {
-    message: Arc<Message>,
-    metadata: MessageMetadata,
-}
+use std::collections::HashMap;
 
 /// Tangle data structure, providing access to [`Message`]s and [`MessageMetadata`]s.
 #[derive(Default)]
@@ -25,22 +20,12 @@ impl Tangle {
     }
 
     /// Inserts a [`Message`]/[`MessageMetadata`] pair, associated with a [`MessageId`], into the [`Tangle`].
-    pub async fn insert(&self, message_id: MessageId, message: Message, metadata: MessageMetadata) {
-        self.0.write().await.insert(
-            message_id,
-            MessageData {
-                message: Arc::new(message),
-                metadata,
-            },
-        );
+    pub fn insert(&self, message_id: MessageId, message: Message, metadata: MessageMetadata) {
+        self.0.write().insert(message_id, MessageData::new(message, metadata));
     }
 
     /// Retrieves a [`Message`]/[`MessageMetadata`] pair, associated with a [`MessageId`], from the [`Tangle`].
-    pub async fn get(&self, message_id: &MessageId) -> Option<(Arc<Message>, MessageMetadata)> {
-        self.0
-            .read()
-            .await
-            .get(message_id)
-            .map(|data| (data.message.clone(), data.metadata.clone()))
+    pub fn get(&self, message_id: &MessageId) -> Option<MessageData> {
+        self.0.read().get(message_id).cloned()
     }
 }
