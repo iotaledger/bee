@@ -46,7 +46,7 @@ pub fn rand_message_with_parents(parents: Parents) -> Message {
         .unwrap()
 }
 
-/// Generates a random [`Message`] with a given [`Vec<MessageId>`].
+/// Generates a random [`Message`] with a given [`Vec<MessageId>`] as parents.
 pub fn rand_message_with_parents_ids(message_ids: Vec<MessageId>) -> Message {
     rand_message_with_parents(parents_from_ids(message_ids))
 }

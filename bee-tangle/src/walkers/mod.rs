@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//!
+//! Module providing different ways to walk the tangle.
 
 mod bfs;
 mod dfs;
