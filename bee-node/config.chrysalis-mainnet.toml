@@ -95,7 +95,8 @@ white_flag_solidification_timeout = 2
 full_path         = "./snapshots/mainnet/latest-full_snapshot.bin"
 delta_path        = "./snapshots/mainnet/latest-delta_snapshot.bin"
 download_urls     = [
-    "https://chrysalis-dbfiles.iota.org/snapshots/hornet/"
+    "https://chrysalis-dbfiles.iota.org/snapshots/hornet/",
+    "https://cdn.tanglebay.com/snapshots/mainnet/"
 ]
 depth             = 50
 interval_synced   = 50
