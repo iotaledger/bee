@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{Message, MessageId, MessageMetadata};
-use bee_tangle::Tangle;
+use bee_tangle::{Tangle, TangleConfig};
 use bee_test::rand::{
     bytes::rand_bytes_array,
     message::{metadata::rand_message_metadata, rand_message_with_parents_ids},
@@ -106,7 +106,7 @@ impl TangleBuilder {
             visit(node, &mut perms, &mut temps, &self.graph, &mut ordered_nodes);
         }
 
-        let tangle = Tangle::new();
+        let tangle = Tangle::new(TangleConfig::default());
         let mut ids = HashMap::new();
 
         while let Some(node) = ordered_nodes.pop() {
