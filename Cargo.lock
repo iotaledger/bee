@@ -141,6 +141,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 
 [[package]]
+name = "bee-autopeering"
+version = "0.1.0"
+dependencies = [
+ "bs58",
+ "libp2p-core",
+ "log",
+ "serde",
+ "tokio",
+ "tokio-stream",
+]
+
+[[package]]
 name = "bee-common"
 version = "0.5.0"
 dependencies = [

@@ -1,0 +1,19 @@
+[package]
+name = "bee-autopeering"
+version = "0.1.0"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+description = "Automatic peering."
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = ["iota", "bee", "framework", "autopeering", "libp2p"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bs58 = { version = "0.4", default-features = false, features = [ "alloc" ] }
+libp2p-core = { version = "0.29" }
+log = { version = "0.4", optional = true }
+serde = { version = "1.0", features = [ "derive" ], optional = true }
+tokio = { version = "1.11", features = [ "macros", "rt", "time", "net" ], optional = true }
+tokio-stream = { version = "0.1", optional = true }

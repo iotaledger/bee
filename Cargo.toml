@@ -1,6 +1,7 @@
 [workspace]
 members = [
 	"bee-api/bee-rest-api",
+	"bee-autopeering",
 	"bee-common/bee-common",
 	"bee-common/bee-common-derive",
 	"bee-crypto",

@@ -15,7 +15,8 @@ const DEFAULT_BIND_MULTIADDR: &str = "/ip4/0.0.0.0/tcp/15600";
 pub const DEFAULT_RECONNECT_INTERVAL_SECS: u64 = 30;
 const MIN_RECONNECT_INTERVAL_SECS: u64 = 1;
 
-pub const DEFAULT_MAX_UNKOWN_PEERS: usize = 4;
+pub const DEFAULT_MAX_UNKNOWN_PEERS: usize = 4;
+pub const DEFAULT_MAX_DISCOVERED_PEERS: usize = 4;
 
 /// [`NetworkConfigBuilder`] errors.
 #[derive(Debug, thiserror::Error)]
@@ -182,7 +183,7 @@ impl Default for NetworkConfig {
             // Unwrapping is fine, because we made sure that the default is parsable.
             bind_multiaddr: DEFAULT_BIND_MULTIADDR.parse().unwrap(),
             reconnect_interval_secs: DEFAULT_RECONNECT_INTERVAL_SECS,
-            max_unknown_peers: DEFAULT_MAX_UNKOWN_PEERS,
+            max_unknown_peers: DEFAULT_MAX_UNKNOWN_PEERS,
             static_peers: Default::default(),
         }
     }
@@ -288,7 +289,7 @@ impl NetworkConfigBuilder {
                 // We made sure that the default is parsable.
                 .unwrap_or_else(|| DEFAULT_BIND_MULTIADDR.parse().unwrap()),
             reconnect_interval_secs: self.reconnect_interval_secs.unwrap_or(DEFAULT_RECONNECT_INTERVAL_SECS),
-            max_unknown_peers: self.max_unknown_peers.unwrap_or(DEFAULT_MAX_UNKOWN_PEERS),
+            max_unknown_peers: self.max_unknown_peers.unwrap_or(DEFAULT_MAX_UNKNOWN_PEERS),
             static_peers: self.peering.finish()?.peers,
         })
     }
@@ -333,7 +334,7 @@ impl InMemoryNetworkConfigBuilder {
                 .bind_multiaddr
                 .unwrap_or_else(|| DEFAULT_BIND_MULTIADDR_MEM.parse().unwrap()),
             reconnect_interval_secs: DEFAULT_RECONNECT_INTERVAL_SECS,
-            max_unknown_peers: DEFAULT_MAX_UNKOWN_PEERS,
+            max_unknown_peers: DEFAULT_MAX_UNKNOWN_PEERS,
             static_peers: Default::default(),
         }
     }
