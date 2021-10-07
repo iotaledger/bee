@@ -33,8 +33,9 @@ pub struct Storage {
 impl Storage {
     fn new(config: RocksDbConfig) -> Result<Self, Error> {
         let cf_system = ColumnFamilyDescriptor::new(CF_SYSTEM, Options::default());
-
         let cf_message_id_to_message = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE, Options::default());
+        let cf_message_id_to_message_metadata =
+            ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE_METADATA, Options::default());
 
         let mut opts = Options::default();
         opts.create_if_missing(config.create_if_missing);
@@ -67,7 +68,11 @@ impl Storage {
         env.set_high_priority_background_threads(config.env.set_high_priority_background_threads);
         opts.set_env(&env);
 
-        let db = DB::open_cf_descriptors(&opts, config.path, vec![cf_system, cf_message_id_to_message])?;
+        let db = DB::open_cf_descriptors(
+            &opts,
+            config.path,
+            vec![cf_system, cf_message_id_to_message, cf_message_id_to_message_metadata],
+        )?;
 
         let mut flushopts = FlushOptions::new();
         flushopts.set_wait(true);

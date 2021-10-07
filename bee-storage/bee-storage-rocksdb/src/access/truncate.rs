@@ -5,7 +5,7 @@
 
 use crate::{column_families::*, Storage};
 
-use bee_message::{Message, MessageId};
+use bee_message::{Message, MessageId, MessageMetadata};
 use bee_storage::{access::Truncate, StorageBackend};
 
 fn truncate(storage: &Storage, cf_str: &'static str) -> Result<(), <Storage as StorageBackend>::Error> {
@@ -45,3 +45,4 @@ macro_rules! impl_truncate {
 }
 
 impl_truncate!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
+impl_truncate!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_MESSAGE_METADATA);
