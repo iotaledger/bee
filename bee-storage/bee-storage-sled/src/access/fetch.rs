@@ -5,7 +5,7 @@
 
 use crate::{trees::*, Storage};
 
-use bee_message::{Message, MessageId};
+use bee_message::{Message, MessageId, MessageMetadata};
 use bee_packable::Packable;
 use bee_storage::{access::Fetch, system::System, StorageBackend};
 
@@ -27,5 +27,16 @@ impl Fetch<MessageId, Message> for Storage {
             .get(message_id)?
             // Unpacking from storage slice can't fail.
             .map(|v| Message::unpack(&mut v.as_ref()).unwrap()))
+    }
+}
+
+impl Fetch<MessageId, MessageMetadata> for Storage {
+    fn fetch(&self, message_id: &MessageId) -> Result<Option<MessageMetadata>, <Self as StorageBackend>::Error> {
+        Ok(self
+            .inner
+            .open_tree(TREE_MESSAGE_ID_TO_MESSAGE_METADATA)?
+            .get(message_id)?
+            // Unpacking from storage slice can't fail.
+            .map(|v| MessageMetadata::unpack(&mut v.as_ref()).unwrap()))
     }
 }

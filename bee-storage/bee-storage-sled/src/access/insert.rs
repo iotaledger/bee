@@ -5,7 +5,7 @@
 
 use crate::{trees::*, Storage};
 
-use bee_message::{Message, MessageId};
+use bee_message::{Message, MessageId, MessageMetadata};
 use bee_packable::packable::Packable;
 use bee_storage::{access::Insert, system::System, StorageBackend};
 
@@ -28,6 +28,21 @@ impl Insert<MessageId, Message> for Storage {
             .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
             // Packing to bytes can't fail.
             .insert(message_id, message.pack_to_vec().unwrap())?;
+
+        Ok(())
+    }
+}
+
+impl Insert<MessageId, MessageMetadata> for Storage {
+    fn insert(
+        &self,
+        message_id: &MessageId,
+        message_metadata: &MessageMetadata,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        self.inner
+            .open_tree(TREE_MESSAGE_ID_TO_MESSAGE_METADATA)?
+            // Packing to bytes can't fail.
+            .insert(message_id, message_metadata.pack_to_vec().unwrap())?;
 
         Ok(())
     }

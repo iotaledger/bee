@@ -5,7 +5,7 @@
 
 use crate::{trees::*, Storage};
 
-use bee_message::{Message, MessageId};
+use bee_message::{Message, MessageId, MessageMetadata};
 use bee_storage::{access::Truncate, StorageBackend};
 
 macro_rules! impl_truncate {
@@ -21,3 +21,4 @@ macro_rules! impl_truncate {
 }
 
 impl_truncate!(MessageId, Message, TREE_MESSAGE_ID_TO_MESSAGE);
+impl_truncate!(MessageId, MessageMetadata, TREE_MESSAGE_ID_TO_MESSAGE_METADATA);

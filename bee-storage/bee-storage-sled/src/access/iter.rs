@@ -5,7 +5,7 @@
 
 use crate::{trees::*, Storage};
 
-use bee_message::{Message, MessageId};
+use bee_message::{Message, MessageId, MessageMetadata};
 use bee_packable::packable::Packable;
 use bee_storage::{access::AsIterator, system::System, StorageBackend};
 
@@ -92,4 +92,16 @@ impl<'a> StorageIterator<'a, MessageId, Message> {
     }
 }
 
+impl<'a> StorageIterator<'a, MessageId, MessageMetadata> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MessageId, MessageMetadata) {
+        (
+            // Unpacking from storage slice can't fail.
+            MessageId::unpack(&mut key).unwrap(),
+            // Unpacking from storage slice can't fail.
+            MessageMetadata::unpack(&mut value).unwrap(),
+        )
+    }
+}
+
 impl_stream!(MessageId, Message, TREE_MESSAGE_ID_TO_MESSAGE);
+impl_stream!(MessageId, MessageMetadata, TREE_MESSAGE_ID_TO_MESSAGE_METADATA);

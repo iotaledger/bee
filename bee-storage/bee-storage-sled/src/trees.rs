@@ -8,3 +8,5 @@
 
 /// Identifier for the `MessageId` to `Message` tree.
 pub const TREE_MESSAGE_ID_TO_MESSAGE: &str = "message_id_to_message";
+/// Identifier for the `MessageId` to `MessageMetadata` tree.
+pub const TREE_MESSAGE_ID_TO_MESSAGE_METADATA: &str = "message_id_to_message_metadata";
