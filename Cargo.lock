@@ -227,6 +227,7 @@ dependencies = [
  "bee-message",
  "bee-test",
  "parking_lot",
+ "serde",
 ]
 
 [[package]]
