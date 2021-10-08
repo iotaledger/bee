@@ -5,7 +5,7 @@
 
 use crate::{column_families::*, Storage};
 
-use bee_message::{Message, MessageId};
+use bee_message::{Message, MessageId, MessageMetadata};
 use bee_storage::{access::Exist, StorageBackend};
 
 impl Exist<MessageId, Message> for Storage {
@@ -13,6 +13,15 @@ impl Exist<MessageId, Message> for Storage {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id)?
+            .is_some())
+    }
+}
+
+impl Exist<MessageId, MessageMetadata> for Storage {
+    fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_METADATA)?, message_id)?
             .is_some())
     }
 }

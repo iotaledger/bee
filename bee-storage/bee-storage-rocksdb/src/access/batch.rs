@@ -5,7 +5,7 @@
 
 use crate::{column_families::*, Storage};
 
-use bee_message::{Message, MessageId};
+use bee_message::{Message, MessageId, MessageMetadata};
 use bee_packable::Packable;
 use bee_storage::{
     access::{Batch, BatchBuilder},
@@ -62,6 +62,39 @@ impl Batch<MessageId, Message> for Storage {
         batch
             .inner
             .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id);
+
+        Ok(())
+    }
+}
+
+impl Batch<MessageId, MessageMetadata> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        message_id: &MessageId,
+        message_metadata: &MessageMetadata,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        batch.value_buf.clear();
+        // Packing to bytes can't fail.
+        message_metadata.pack(&mut batch.value_buf).unwrap();
+
+        batch.inner.put_cf(
+            self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_METADATA)?,
+            message_id,
+            &batch.value_buf,
+        );
+
+        Ok(())
+    }
+
+    fn batch_delete(
+        &self,
+        batch: &mut Self::Batch,
+        message_id: &MessageId,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        batch
+            .inner
+            .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_METADATA)?, message_id);
 
         Ok(())
     }

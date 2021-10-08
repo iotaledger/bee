@@ -6,7 +6,9 @@
 #![deny(missing_docs)]
 
 mod message_id_to_message;
+mod message_id_to_message_metadata;
 mod system;
 
 pub use message_id_to_message::message_id_to_message_access;
+pub use message_id_to_message_metadata::message_id_to_message_metadata_access;
 pub use system::system_access;

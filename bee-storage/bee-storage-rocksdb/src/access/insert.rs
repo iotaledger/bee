@@ -5,7 +5,7 @@
 
 use crate::{column_families::*, Storage};
 
-use bee_message::{Message, MessageId};
+use bee_message::{Message, MessageId, MessageMetadata};
 use bee_packable::Packable;
 use bee_storage::{access::Insert, system::System, StorageBackend};
 
@@ -31,6 +31,23 @@ impl Insert<MessageId, Message> for Storage {
             message_id,
             // Packing to bytes can't fail.
             message.pack_to_vec().unwrap(),
+        )?;
+
+        Ok(())
+    }
+}
+
+impl Insert<MessageId, MessageMetadata> for Storage {
+    fn insert(
+        &self,
+        message_id: &MessageId,
+        message_metadata: &MessageMetadata,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        self.inner.put_cf(
+            self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_METADATA)?,
+            message_id,
+            // Packing to bytes can't fail.
+            message_metadata.pack_to_vec().unwrap(),
         )?;
 
         Ok(())

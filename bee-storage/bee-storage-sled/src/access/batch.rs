@@ -5,7 +5,7 @@
 
 use crate::{trees::*, Storage};
 
-use bee_message::{Message, MessageId};
+use bee_message::{Message, MessageId, MessageMetadata};
 use bee_packable::packable::Packable;
 use bee_storage::{
     access::{Batch, BatchBuilder},
@@ -63,6 +63,41 @@ impl Batch<MessageId, Message> for Storage {
         batch
             .inner
             .entry(TREE_MESSAGE_ID_TO_MESSAGE)
+            .or_default()
+            .remove(message_id.as_ref());
+
+        Ok(())
+    }
+}
+
+impl Batch<MessageId, MessageMetadata> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        message_id: &MessageId,
+        message_metadata: &MessageMetadata,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        batch.value_buf.clear();
+        // Packing to bytes can't fail.
+        message_metadata.pack(&mut batch.value_buf).unwrap();
+
+        batch
+            .inner
+            .entry(TREE_MESSAGE_ID_TO_MESSAGE_METADATA)
+            .or_default()
+            .insert(message_id.as_ref(), batch.value_buf.as_slice());
+
+        Ok(())
+    }
+
+    fn batch_delete(
+        &self,
+        batch: &mut Self::Batch,
+        message_id: &MessageId,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        batch
+            .inner
+            .entry(TREE_MESSAGE_ID_TO_MESSAGE_METADATA)
             .or_default()
             .remove(message_id.as_ref());
 

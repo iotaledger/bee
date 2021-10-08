@@ -5,7 +5,7 @@
 
 use crate::{trees::*, Storage};
 
-use bee_message::{Message, MessageId};
+use bee_message::{Message, MessageId, MessageMetadata};
 use bee_packable::Packable;
 use bee_storage::{access::MultiFetch, system::System, StorageBackend};
 
@@ -88,3 +88,4 @@ macro_rules! impl_multi_fetch {
 }
 
 impl_multi_fetch!(MessageId, Message, TREE_MESSAGE_ID_TO_MESSAGE);
+impl_multi_fetch!(MessageId, MessageMetadata, TREE_MESSAGE_ID_TO_MESSAGE_METADATA);
