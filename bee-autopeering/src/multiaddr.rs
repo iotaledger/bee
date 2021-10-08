@@ -12,7 +12,11 @@ use serde::{
 
 use std::convert::TryInto;
 use std::hash::Hash;
+use std::ops::{Range, RangeInclusive};
 use std::{borrow::Cow, convert::TryFrom, fmt, str::FromStr};
+
+const AUTOPEERING_MULTIADDR_PROTOCOL_NAME: &str = "autopeering";
+const PUBKEY_BASE58_SIZE_RANGE: RangeInclusive<usize> = 42..=44;
 
 /// Go-libp2p allows Hornet to introduce a custom autopeering [`Protocol`]. In rust-libp2p we unfortunately can't do
 /// that, so what we'll do is to introduce a wrapper type, which understands Hornet's custom multiaddr, and internally
@@ -20,13 +24,13 @@ use std::{borrow::Cow, convert::TryFrom, fmt, str::FromStr};
 /// to a standard libp2p multiaddress.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
 pub struct AutopeeringMultiaddr {
-    address: Multiaddr,
+    host_address: Multiaddr,
     public_key: PublicKey,
 }
 
 impl AutopeeringMultiaddr {
-    pub fn address(&self) -> &Multiaddr {
-        &self.address
+    pub fn host_address(&self) -> &Multiaddr {
+        &self.host_address
     }
 
     pub fn public_key(&self) -> &PublicKey {
@@ -34,13 +38,11 @@ impl AutopeeringMultiaddr {
     }
 }
 
-const AUTOPEERING_MULTIADDR_PROTOCOL_NAME: &str = "autopeering";
-
 #[derive(Debug)]
 pub enum Error {
-    /// Returned, if the dial part wasn't a valid multi address.
-    InvalidAddressPart,
-    /// Returned, if the key part wasn't a base58 encoded ed25519 public key.
+    /// Returned, if the host address part wasn't a valid multi address.
+    InvalidHostAddressPart,
+    /// Returned, if the public key part wasn't a base58 encoded ed25519 public key.
     InvalidPubKeyPart,
     /// Returned, if it's not a valid autopeering multi address.
     InvalidAutopeeringMultiaddr,
@@ -62,7 +64,7 @@ impl Serialize for AutopeeringMultiaddr {
     {
         let s = format!(
             "{}/{}/{}",
-            self.address.to_string(),
+            self.host_address.to_string(),
             AUTOPEERING_MULTIADDR_PROTOCOL_NAME,
             from_pubkey_to_base58(&self.public_key),
         );
@@ -76,7 +78,7 @@ impl fmt::Display for AutopeeringMultiaddr {
         write!(
             f,
             "{}/{}/{}",
-            self.address.to_string(),
+            self.host_address.to_string(),
             AUTOPEERING_MULTIADDR_PROTOCOL_NAME,
             from_pubkey_to_base58(&self.public_key),
         )
@@ -99,10 +101,13 @@ impl FromStr for AutopeeringMultiaddr {
             return Err(Error::InvalidAutopeeringMultiaddr);
         }
 
-        let address = parts[0].parse().map_err(|_| Error::InvalidAddressPart)?;
+        let address = parts[0].parse().map_err(|_| Error::InvalidHostAddressPart)?;
         let public_key = from_base58_to_pubkey(parts[1]);
 
-        Ok(Self { address, public_key })
+        Ok(Self {
+            host_address: address,
+            public_key,
+        })
     }
 }
 
@@ -135,6 +140,8 @@ fn from_pubkey_to_base58(pub_key: &PublicKey) -> String {
 }
 
 fn from_base58_to_pubkey(base58_pubkey: impl AsRef<str>) -> PublicKey {
+    assert!(PUBKEY_BASE58_SIZE_RANGE.contains(&base58_pubkey.as_ref().len()));
+
     let mut bytes = [0u8; PUBLIC_KEY_LENGTH];
     bs58::decode(base58_pubkey.as_ref())
         .into(&mut bytes)

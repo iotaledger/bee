@@ -148,6 +148,8 @@ dependencies = [
  "iota-crypto 0.7.0",
  "libp2p-core",
  "log",
+ "prost",
+ "prost-build",
  "serde",
  "tokio",
  "tokio-stream",

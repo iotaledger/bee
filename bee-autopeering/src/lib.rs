@@ -6,8 +6,13 @@
 #![warn(missing_docs)]
 
 mod config;
+mod identity;
 mod init;
 mod manager;
 mod message;
 mod multiaddr;
+mod peer;
+mod proto {
+    include!(concat!(env!("OUT_DIR"), "/proto.rs"));
+}
 mod store;
