@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use bee_message::{Message, MessageId};
 use bee_tangle::{metadata::MessageMetadata, ConflictReason, NullHooks, Tangle};
 use bee_test::rand::{message::rand_message, metadata::rand_message_metadata, number::rand_number};
