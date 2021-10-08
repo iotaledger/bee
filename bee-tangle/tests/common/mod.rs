@@ -4,4 +4,4 @@
 mod builder;
 mod macros;
 
-pub use builder::TangleBuilder;
+pub use builder::{default_tangle, TangleBuilder};

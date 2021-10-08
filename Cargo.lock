@@ -233,6 +233,7 @@ version = "0.1.0"
 dependencies = [
  "bee-message",
  "bee-storage",
+ "bee-storage-rocksdb",
  "bee-test",
  "parking_lot",
  "serde",

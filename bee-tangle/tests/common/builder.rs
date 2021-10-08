@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{Message, MessageId, MessageMetadata};
+use bee_storage::StorageBackend as _;
+use bee_storage_rocksdb::Storage;
 use bee_tangle::{StorageBackend, Tangle, TangleConfig};
 use bee_test::rand::{
     bytes::rand_bytes_array,
@@ -9,6 +11,17 @@ use bee_test::rand::{
 };
 
 use std::collections::HashMap;
+
+pub fn default_tangle() -> Tangle<Storage> {
+    let path = String::from("./tests/database");
+    // let _ = std::fs::remove_dir_all(&path);
+    let config = bee_storage_rocksdb::config::RocksDbConfigBuilder::default()
+        .with_path((&path).into())
+        .finish();
+    let storage = bee_storage_rocksdb::storage::Storage::start(config).unwrap();
+
+    Tangle::new(TangleConfig::default(), storage)
+}
 
 fn rand_prefixed_message_id(prefix: u16) -> MessageId {
     let mut message_id_bytes = rand_bytes_array();
@@ -31,17 +44,13 @@ fn new_node<T: StorageBackend>(
     (message, metadata)
 }
 
-pub struct TangleBuilder<T> {
+pub struct TangleBuilder {
     graph: HashMap<usize, Vec<usize>>,
-    storage: T,
 }
 
-impl<T: StorageBackend> TangleBuilder<T> {
-    pub fn new(storage: T) -> Self {
-        Self {
-            graph: HashMap::new(),
-            storage,
-        }
+impl TangleBuilder {
+    pub fn new() -> Self {
+        Self { graph: HashMap::new() }
     }
 
     pub fn add_node<const M: usize>(&mut self, node: usize, parents: [usize; M]) -> &mut Self {
@@ -58,7 +67,7 @@ impl<T: StorageBackend> TangleBuilder<T> {
         self
     }
 
-    pub fn build(self) -> (Tangle<T>, HashMap<usize, MessageId>) {
+    pub fn build(self) -> (Tangle<Storage>, HashMap<usize, MessageId>) {
         // Check that the graph is a DAG and find a topological order so we can add messages to the tangle in the
         // correct order (parents before children). This `Vec` will hold the nodes in such order.
         let mut ordered_nodes = vec![];
@@ -114,7 +123,8 @@ impl<T: StorageBackend> TangleBuilder<T> {
             visit(node, &mut perms, &mut temps, &self.graph, &mut ordered_nodes);
         }
 
-        let tangle = Tangle::new(TangleConfig::default(), self.storage);
+        let tangle = default_tangle();
+
         let mut ids = HashMap::new();
 
         while let Some(node) = ordered_nodes.pop() {
