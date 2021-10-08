@@ -40,7 +40,7 @@ fn insert_bench(c: &mut Criterion) {
 
     c.bench_function("insert", |b| {
         b.to_async(&rt).iter_batched(
-            || random_input(),
+            random_input,
             |(id, message, metadata)| insert(&tangle, id, message, metadata),
             BatchSize::SmallInput,
         );
