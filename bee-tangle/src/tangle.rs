@@ -8,7 +8,7 @@ use bee_message::{Message, MessageId};
 use hashbrown::{hash_map::DefaultHashBuilder, HashMap};
 use log::info;
 use lru::LruCache;
-use tokio::sync::{Mutex, RwLock as TRwLock, RwLockWriteGuard as TRwLockWriteGuard};
+use tokio::sync::{Mutex, RwLock, RwLockWriteGuard};
 
 use std::{
     fmt::Debug,
@@ -77,7 +77,7 @@ pub struct Tangle<T, H = NullHooks<T>>
 where
     T: Clone,
 {
-    vertices: TRwLock<HashMap<MessageId, Vertex<T>>>,
+    vertices: RwLock<HashMap<MessageId, Vertex<T>>>,
 
     cache_queue: Mutex<LruCache<MessageId, (), DefaultHashBuilder>>,
     max_len: AtomicUsize,
@@ -103,7 +103,7 @@ where
     /// Creates a new Tangle.
     pub fn new(hooks: H) -> Self {
         Self {
-            vertices: TRwLock::new(HashMap::new()),
+            vertices: RwLock::new(HashMap::new()),
 
             cache_queue: Mutex::new(LruCache::unbounded_with_hasher(DefaultHashBuilder::default())),
             max_len: AtomicUsize::new(DEFAULT_CACHE_LEN),
@@ -209,7 +209,7 @@ where
     }
 
     async fn get_inner(&self, message_id: &MessageId) -> Option<impl DerefMut<Target = Vertex<T>> + '_> {
-        let res = TRwLockWriteGuard::try_map(self.vertices.write().await, |m| m.get_mut(message_id)).ok();
+        let res = RwLockWriteGuard::try_map(self.vertices.write().await, |m| m.get_mut(message_id)).ok();
 
         if res.is_some() {
             // Update message_id priority

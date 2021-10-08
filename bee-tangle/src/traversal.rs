@@ -33,13 +33,11 @@ pub async fn visit_parents_depth_first<Fut, Metadata, Match, Apply, ElseApply, M
     ElseApply: FnMut(&MessageId, &MessageRef, &Metadata),
     MissingApply: FnMut(&MessageId),
 {
-    let mut parents = Vec::new();
+    let mut parents = vec![root];
     let mut visited = HashSet::new();
 
-    parents.push(root);
-
     while let Some(message_id) = parents.pop() {
-        if !visited.contains(&message_id) {
+        if visited.insert(message_id) {
             let msg_meta = tangle
                 .get_vertex(&message_id)
                 .await
@@ -59,7 +57,6 @@ pub async fn visit_parents_depth_first<Fut, Metadata, Match, Apply, ElseApply, M
                     missing_apply(&message_id);
                 }
             }
-            visited.insert(message_id);
         }
     }
 }

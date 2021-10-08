@@ -32,7 +32,6 @@ const CONFIRMED_THRESHOLD: u32 = 2;
 
 /// Tangle hooks that interoperate with Bee's storage layer.
 pub struct StorageHooks<B> {
-    #[allow(dead_code)]
     storage: ResourceHandle<B>,
 }
 

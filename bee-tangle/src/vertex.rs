@@ -38,7 +38,7 @@ where
     }
 
     pub fn parents(&self) -> Option<impl Iterator<Item = &MessageId> + '_> {
-        Some(self.message()?.parents().iter())
+        self.message().map(|m| m.parents().iter())
     }
 
     pub fn message_and_metadata(&self) -> Option<&(MessageRef, T)> {
