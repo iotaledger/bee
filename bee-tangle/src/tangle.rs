@@ -178,9 +178,7 @@ impl<H: Hooks> Tangle<H> {
     ) -> Option<MessageRef> {
         let exists = self.pull_message(&message_id, true).await;
 
-        let msg = self
-            .insert_inner(message_id, message.clone(), metadata.clone(), !exists)
-            .await;
+        let msg = self.insert_inner(message_id, message.clone(), metadata, !exists).await;
 
         self.vertices
             .write()
@@ -199,7 +197,7 @@ impl<H: Hooks> Tangle<H> {
 
             // Insert into backend using hooks
             self.hooks
-                .insert(message_id, message, metadata.clone())
+                .insert(message_id, message, metadata)
                 .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
         }
 
@@ -290,7 +288,7 @@ impl<H: Hooks> Tangle<H> {
             let r = vertex.metadata_mut().map(|m| update(m));
 
             if let Some((msg, meta)) = vertex.message_and_metadata() {
-                let (msg, meta) = ((&**msg).clone(), meta.clone());
+                let (msg, meta) = ((&**msg).clone(), *meta);
 
                 // Insert cache queue entry to track eviction priority
                 self.cache_queue.lock().await.put(*message_id, ());
