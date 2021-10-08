@@ -1,6 +1,6 @@
 [package]
 name = "bee-tangle"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "A distributed, directed, acyclic graph that underpins the DLT for IOTA's Bee node"

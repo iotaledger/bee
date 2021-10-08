@@ -392,7 +392,7 @@ dependencies = [
 
 [[package]]
 name = "bee-tangle"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "bee-common",

@@ -19,13 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.2.0 - 2021-XX-XX
+
+### Removed
+
+- Tangle genericity over metadata type;
+- Storage hooks;
+
 ## 0.1.2 - 2021-05-10
 
 ### Added
 
 - Moved `ConflictReason` from bee-ledger;
-
-### Added
 
 ## 0.1.1 - 2021-05-07
 
