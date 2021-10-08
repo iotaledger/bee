@@ -153,10 +153,10 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the data of a vertex associated with the given `message_id`.
-    pub async fn get_with<R>(&self, message_id: &MessageId, f: impl FnOnce(&mut Vertex) -> Option<R>) -> Option<R> {
+    pub async fn get_with<R>(&self, message_id: &MessageId, f: impl FnOnce(&mut Vertex) -> R) -> Option<R> {
         let exists = self.pull_message(message_id, true).await;
 
-        self.get_inner(message_id).await.and_then(|mut v| {
+        self.get_inner(message_id).await.map(|mut v| {
             if exists {
                 v.allow_eviction();
             }
@@ -166,7 +166,7 @@ impl<B: StorageBackend> Tangle<B> {
 
     /// Get the data of a vertex associated with the given `message_id`.
     pub async fn get(&self, message_id: &MessageId) -> Option<MessageRef> {
-        self.get_with(message_id, |v| v.message().cloned()).await
+        self.get_with(message_id, |v| v.message().cloned()).await.flatten()
     }
 
     async fn contains_inner(&self, message_id: &MessageId) -> bool {
@@ -184,12 +184,7 @@ impl<B: StorageBackend> Tangle<B> {
 
     /// Get the metadata of a vertex associated with the given `message_id`.
     pub async fn get_metadata(&self, message_id: &MessageId) -> Option<MessageMetadata> {
-        self.get_with(message_id, |v| v.metadata().cloned()).await
-    }
-
-    /// Get the metadata of a vertex associated with the given `message_id`, if it's in the cache.
-    pub async fn get_metadata_maybe(&self, message_id: &MessageId) -> Option<MessageMetadata> {
-        self.get_inner(message_id).await.and_then(|v| v.metadata().cloned())
+        self.get_with(message_id, |v| v.metadata().cloned()).await.flatten()
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.
@@ -202,11 +197,6 @@ impl<B: StorageBackend> Tangle<B> {
             }
             v
         })
-    }
-
-    /// Updates the metadata of a particular vertex.
-    pub async fn set_metadata(&self, message_id: &MessageId, metadata: MessageMetadata) {
-        self.update_metadata(message_id, |m| *m = metadata).await;
     }
 
     /// Updates the metadata of a vertex.
@@ -240,17 +230,6 @@ impl<B: StorageBackend> Tangle<B> {
         } else {
             None
         }
-    }
-
-    /// Returns the number of messages in the Tangle.
-    pub async fn len(&self) -> usize {
-        // Does not take GTL because this is effectively atomic
-        self.vertices.read().await.len()
-    }
-
-    /// Checks if the tangle is empty.
-    pub async fn is_empty(&self) -> bool {
-        self.len().await == 0
     }
 
     async fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vec<MessageId>> + '_> {
@@ -319,14 +298,6 @@ impl<B: StorageBackend> Tangle<B> {
     pub async fn get_children(&self, message_id: &MessageId) -> Option<Vec<MessageId>> {
         // Effectively atomic
         self.children_inner(message_id).await.map(|approvers| approvers.clone())
-    }
-
-    /// Returns the number of children of a vertex.
-    pub async fn num_children(&self, message_id: &MessageId) -> usize {
-        // Effectively atomic
-        self.children_inner(message_id)
-            .await
-            .map_or(0, |approvers| approvers.len())
     }
 
     #[cfg(test)]
