@@ -6,7 +6,7 @@ use crate::{
     metadata::{IndexId, MessageMetadata},
     solid_entry_point::SolidEntryPoint,
     storage::StorageBackend,
-    tangle::{Hooks, Tangle, DEFAULT_CACHE_LEN},
+    tangle::{Tangle, DEFAULT_CACHE_LEN},
     urts::UrtsTipPool,
     MessageRef,
 };
@@ -30,64 +30,10 @@ use std::{
 const SYNCED_THRESHOLD: u32 = 2;
 const CONFIRMED_THRESHOLD: u32 = 2;
 
-/// Tangle hooks that interoperate with Bee's storage layer.
-pub struct StorageHooks<B> {
-    storage: ResourceHandle<B>,
-}
-
-impl<B: StorageBackend> Hooks for StorageHooks<B> {
-    type Error = B::Error;
-
-    fn get(&self, id: &MessageId) -> Result<Option<(Message, MessageMetadata)>, Self::Error> {
-        trace!("Attempted to fetch message {:?}", id);
-        let msg = self.storage.fetch(id)?;
-        let meta = self.storage.fetch(id)?;
-        Ok(msg.zip(meta))
-    }
-
-    fn insert(&self, id: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {
-        trace!("Attempted to insert message {:?}", id);
-        self.storage.insert(&id, &tx)?;
-        self.storage.insert(&id, &metadata)?;
-        Ok(())
-    }
-
-    fn fetch_approvers(&self, id: &MessageId) -> Result<Option<Vec<MessageId>>, Self::Error> {
-        trace!("Attempted to fetch approvers for message {:?}", id);
-        self.storage.fetch(id)
-    }
-
-    fn insert_approver(&self, id: MessageId, approver: MessageId) -> Result<(), Self::Error> {
-        trace!("Attempted to insert approver for message {:?}", id);
-        self.storage.insert(&(id, approver), &())
-    }
-
-    fn update_approvers(&self, id: MessageId, approvers: &[MessageId]) -> Result<(), Self::Error> {
-        trace!("Attempted to update approvers for message {:?}", id);
-        for approver in approvers {
-            self.storage.insert(&(id, *approver), &())?;
-        }
-        Ok(())
-    }
-}
-
-impl<B: StorageBackend> StorageHooks<B> {
-    fn get_milestone(&self, idx: &MilestoneIndex) -> Result<Option<Milestone>, B::Error> {
-        trace!("Attempted to fetch milestone {:?}", idx);
-        self.storage.fetch(idx)
-    }
-
-    fn insert_milestone(&self, idx: MilestoneIndex, milestone: &Milestone) -> Result<(), B::Error> {
-        trace!("Attempted to insert milestone {:?}", idx);
-        self.storage.insert(&idx, milestone)?;
-        Ok(())
-    }
-}
-
 /// A Tangle wrapper designed to encapsulate milestone state.
 pub struct MsTangle<B> {
     config: TangleConfig,
-    inner: Tangle<StorageHooks<B>>,
+    inner: Tangle<B>,
     milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
     solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
     latest_milestone_index: AtomicU32,
@@ -100,7 +46,7 @@ pub struct MsTangle<B> {
 }
 
 impl<B> Deref for MsTangle<B> {
-    type Target = Tangle<StorageHooks<B>>;
+    type Target = Tangle<B>;
 
     fn deref(&self) -> &Self::Target {
         &self.inner
@@ -111,7 +57,7 @@ impl<B: StorageBackend> MsTangle<B> {
     /// Create a new `MsTangle` instance with the given configuration and storage handle.
     pub fn new(config: TangleConfig, storage: ResourceHandle<B>) -> Self {
         Self {
-            inner: Tangle::new(StorageHooks { storage }),
+            inner: Tangle::new(storage),
             milestones: Default::default(),
             solid_entry_points: Default::default(),
             latest_milestone_index: Default::default(),
@@ -151,9 +97,7 @@ impl<B: StorageBackend> MsTangle<B> {
                 metadata.set_ymrsi(IndexId::new(idx, *milestone.message_id()));
             })
             .await;
-        self.inner
-            .hooks()
-            .insert_milestone(idx, &milestone)
+        self.storage_insert_milestone(idx, &milestone)
             .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
         self.milestones.lock().await.insert(idx, milestone);
     }
@@ -164,7 +108,7 @@ impl<B: StorageBackend> MsTangle<B> {
     }
 
     async fn pull_milestone(&self, idx: MilestoneIndex) -> Option<MessageId> {
-        if let Some(milestone) = self.inner.hooks().get_milestone(&idx).unwrap_or_else(|e| {
+        if let Some(milestone) = self.storage_get_milestone(&idx).unwrap_or_else(|e| {
             info!("Failed to insert message {:?}", e);
             None
         }) {
@@ -415,5 +359,18 @@ impl<B: StorageBackend> MsTangle<B> {
     /// Return the number of non-lazy tips.
     pub async fn non_lazy_tips_num(&self) -> usize {
         self.tip_pool.lock().await.non_lazy_tips().len()
+    }
+}
+
+impl<B: StorageBackend> MsTangle<B> {
+    fn storage_get_milestone(&self, idx: &MilestoneIndex) -> Result<Option<Milestone>, B::Error> {
+        trace!("Attempted to fetch milestone {:?}", idx);
+        self.inner.storage().fetch(idx)
+    }
+
+    fn storage_insert_milestone(&self, idx: MilestoneIndex, milestone: &Milestone) -> Result<(), B::Error> {
+        trace!("Attempted to insert milestone {:?}", idx);
+        self.inner.storage().insert(&idx, milestone)?;
+        Ok(())
     }
 }
