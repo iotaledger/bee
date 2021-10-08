@@ -35,7 +35,7 @@ pub struct StorageHooks<B> {
     storage: ResourceHandle<B>,
 }
 
-impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
+impl<B: StorageBackend> Hooks for StorageHooks<B> {
     type Error = B::Error;
 
     fn get(&self, id: &MessageId) -> Result<Option<(Message, MessageMetadata)>, Self::Error> {
@@ -87,7 +87,7 @@ impl<B: StorageBackend> StorageHooks<B> {
 /// A Tangle wrapper designed to encapsulate milestone state.
 pub struct MsTangle<B> {
     config: TangleConfig,
-    inner: Tangle<MessageMetadata, StorageHooks<B>>,
+    inner: Tangle<StorageHooks<B>>,
     milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
     solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
     latest_milestone_index: AtomicU32,
@@ -100,7 +100,7 @@ pub struct MsTangle<B> {
 }
 
 impl<B> Deref for MsTangle<B> {
-    type Target = Tangle<MessageMetadata, StorageHooks<B>>;
+    type Target = Tangle<StorageHooks<B>>;
 
     fn deref(&self) -> &Self::Target {
         &self.inner

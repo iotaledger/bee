@@ -1,26 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{MessageRef, VecSet};
+use crate::{metadata::MessageMetadata, MessageRef, VecSet};
 
 use bee_message::{Message, MessageId};
 
 use std::sync::Arc;
 
 #[derive(Clone)]
-pub struct Vertex<T>
-where
-    T: Clone,
-{
-    message: Option<(MessageRef, T)>,
+pub struct Vertex {
+    message: Option<(MessageRef, MessageMetadata)>,
     children: (VecSet<MessageId>, bool), // Exhaustive flag
     eviction_blocks: isize,
 }
 
-impl<T> Vertex<T>
-where
-    T: Clone,
-{
+impl Vertex {
     pub fn empty() -> Self {
         Self {
             message: None,
@@ -29,7 +23,7 @@ where
         }
     }
 
-    pub fn new(message: Message, metadata: T) -> Self {
+    pub fn new(message: Message, metadata: MessageMetadata) -> Self {
         Self {
             message: Some((MessageRef(Arc::new(message)), metadata)),
             children: (VecSet::default(), false),
@@ -41,7 +35,7 @@ where
         self.message().map(|m| m.parents().iter())
     }
 
-    pub fn message_and_metadata(&self) -> Option<&(MessageRef, T)> {
+    pub fn message_and_metadata(&self) -> Option<&(MessageRef, MessageMetadata)> {
         self.message.as_ref()
     }
 
@@ -49,11 +43,11 @@ where
         self.message_and_metadata().map(|(m, _)| m)
     }
 
-    pub fn metadata(&self) -> Option<&T> {
+    pub fn metadata(&self) -> Option<&MessageMetadata> {
         self.message_and_metadata().map(|(_, m)| m)
     }
 
-    pub fn metadata_mut(&mut self) -> Option<&mut T> {
+    pub fn metadata_mut(&mut self) -> Option<&mut MessageMetadata> {
         self.message.as_mut().map(|(_, m)| m)
     }
 
@@ -74,8 +68,8 @@ where
         self.children.1 = true;
     }
 
-    pub(crate) fn insert_message_and_metadata(&mut self, msg: Message, meta: T) {
-        self.message = Some((MessageRef(Arc::new(msg)), meta));
+    pub(crate) fn insert_message_and_metadata(&mut self, message: Message, metadata: MessageMetadata) {
+        self.message = Some((MessageRef(Arc::new(message)), metadata));
     }
 
     pub(crate) fn prevent_eviction(&mut self) {
