@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{Message, MessageId, MessageMetadata};
-use bee_tangle::{Tangle, TangleConfig};
+use bee_tangle::{StorageBackend, Tangle, TangleConfig};
 use bee_test::rand::{
     bytes::rand_bytes_array,
     message::{metadata::rand_message_metadata, rand_message_with_parents_ids},
@@ -18,7 +18,11 @@ fn rand_prefixed_message_id(prefix: u16) -> MessageId {
     MessageId::from(message_id_bytes)
 }
 
-fn new_node(tangle: &Tangle, message_id: MessageId, parents_ids: Vec<MessageId>) -> (Message, MessageMetadata) {
+fn new_node<T: StorageBackend>(
+    tangle: &Tangle<T>,
+    message_id: MessageId,
+    parents_ids: Vec<MessageId>,
+) -> (Message, MessageMetadata) {
     let message = rand_message_with_parents_ids(parents_ids);
     let metadata = rand_message_metadata();
 

@@ -1,23 +1,23 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{walkers::TangleWalkerItem, MessageData, Tangle};
+use crate::{walkers::TangleWalkerItem, MessageData, StorageBackend, Tangle};
 
 use bee_message::MessageId;
 
 use std::collections::HashSet;
 
 /// A builder for a [`TangleDfsWalker`].
-pub struct TangleDfsWalkerBuilder<'a> {
-    tangle: &'a Tangle,
+pub struct TangleDfsWalkerBuilder<'a, T> {
+    tangle: &'a Tangle<T>,
     root: MessageId,
     #[allow(clippy::type_complexity)]
-    condition: Option<Box<dyn Fn(&'a Tangle, &MessageId, &MessageData) -> bool>>,
+    condition: Option<Box<dyn Fn(&'a Tangle<T>, &MessageId, &MessageData) -> bool>>,
 }
 
-impl<'a> TangleDfsWalkerBuilder<'a> {
+impl<'a, T: StorageBackend> TangleDfsWalkerBuilder<'a, T> {
     /// Creates a new [`TangleDfsWalkerBuilder`].
-    pub fn new(tangle: &'a Tangle, root: MessageId) -> Self {
+    pub fn new(tangle: &'a Tangle<T>, root: MessageId) -> Self {
         Self {
             tangle,
             root,
@@ -26,13 +26,13 @@ impl<'a> TangleDfsWalkerBuilder<'a> {
     }
 
     /// Adds a condition to the [`TangleDfsWalkerBuilder`].
-    pub fn with_condition(mut self, condition: Box<dyn Fn(&'a Tangle, &MessageId, &MessageData) -> bool>) -> Self {
+    pub fn with_condition(mut self, condition: Box<dyn Fn(&'a Tangle<T>, &MessageId, &MessageData) -> bool>) -> Self {
         self.condition.replace(condition);
         self
     }
 
     /// Finishes the [`TangleDfsWalkerBuilder`] into a [`TangleDfsWalker`].
-    pub fn finish(self) -> TangleDfsWalker<'a> {
+    pub fn finish(self) -> TangleDfsWalker<'a, T> {
         TangleDfsWalker {
             tangle: self.tangle,
             parents: vec![self.root],
@@ -43,21 +43,21 @@ impl<'a> TangleDfsWalkerBuilder<'a> {
 }
 
 /// A walker that goes through the tangle in a Depth First Search manner.
-pub struct TangleDfsWalker<'a> {
-    tangle: &'a Tangle,
+pub struct TangleDfsWalker<'a, T> {
+    tangle: &'a Tangle<T>,
     parents: Vec<MessageId>,
     visited: HashSet<MessageId>,
-    condition: Box<dyn Fn(&'a Tangle, &MessageId, &MessageData) -> bool>,
+    condition: Box<dyn Fn(&'a Tangle<T>, &MessageId, &MessageData) -> bool>,
 }
 
-impl<'a> TangleDfsWalker<'a> {
+impl<'a, T: StorageBackend> TangleDfsWalker<'a, T> {
     /// Creates a new [`TangleDfsWalker`].
-    pub fn new(tangle: &'a Tangle, root: MessageId) -> Self {
+    pub fn new(tangle: &'a Tangle<T>, root: MessageId) -> Self {
         TangleDfsWalkerBuilder::new(tangle, root).finish()
     }
 }
 
-impl<'a> Iterator for TangleDfsWalker<'a> {
+impl<'a, T: StorageBackend> Iterator for TangleDfsWalker<'a, T> {
     type Item = TangleWalkerItem;
 
     fn next(&mut self) -> Option<Self::Item> {

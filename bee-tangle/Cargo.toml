@@ -12,6 +12,7 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-message = { path = "../bee-message", default-features = false, features = [ "metadata" ] }
+bee-storage = { path = "../bee-storage/bee-storage", default-features = false }
 
 parking_lot = { version = "0.11", default-features = false }
 serde = { version = "1.0", default-features = false, features = [ "derive" ], optional = true }

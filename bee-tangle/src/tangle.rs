@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{MessageData, TangleConfig};
+use crate::{MessageData, StorageBackend, TangleConfig};
 
 use bee_message::{Message, MessageId, MessageMetadata};
 
@@ -10,17 +10,20 @@ use parking_lot::RwLock;
 use std::collections::HashMap;
 
 /// Tangle data structure, providing access to [`Message`]s and [`MessageMetadata`]s.
-pub struct Tangle {
+#[derive(Default)]
+pub struct Tangle<T> {
     _config: TangleConfig,
     cache: RwLock<HashMap<MessageId, MessageData>>,
+    _storage: T,
 }
 
-impl Tangle {
+impl<T: StorageBackend> Tangle<T> {
     /// Creates a new [`Tangle`].
-    pub fn new(config: TangleConfig) -> Self {
+    pub fn new(config: TangleConfig, storage: T) -> Self {
         Self {
             _config: config,
             cache: Default::default(),
+            _storage: storage,
         }
     }
 
