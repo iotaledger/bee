@@ -31,13 +31,17 @@ fn new_node<T: StorageBackend>(
     (message, metadata)
 }
 
-pub struct TangleBuilder {
+pub struct TangleBuilder<T> {
     graph: HashMap<usize, Vec<usize>>,
+    storage: T,
 }
 
-impl TangleBuilder {
-    pub fn new() -> Self {
-        Self { graph: HashMap::new() }
+impl<T: StorageBackend> TangleBuilder<T> {
+    pub fn new(storage: T) -> Self {
+        Self {
+            graph: HashMap::new(),
+            storage,
+        }
     }
 
     pub fn add_node<const M: usize>(&mut self, node: usize, parents: [usize; M]) -> &mut Self {
@@ -54,7 +58,7 @@ impl TangleBuilder {
         self
     }
 
-    pub fn build(self) -> (Tangle, HashMap<usize, MessageId>) {
+    pub fn build(self) -> (Tangle<T>, HashMap<usize, MessageId>) {
         // Check that the graph is a DAG and find a topological order so we can add messages to the tangle in the
         // correct order (parents before children). This `Vec` will hold the nodes in such order.
         let mut ordered_nodes = vec![];
@@ -110,7 +114,7 @@ impl TangleBuilder {
             visit(node, &mut perms, &mut temps, &self.graph, &mut ordered_nodes);
         }
 
-        let tangle = Tangle::new(TangleConfig::default());
+        let tangle = Tangle::new(TangleConfig::default(), self.storage);
         let mut ids = HashMap::new();
 
         while let Some(node) = ordered_nodes.pop() {
