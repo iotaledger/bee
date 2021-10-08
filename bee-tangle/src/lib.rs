@@ -31,13 +31,11 @@ pub mod unreferenced_message;
 pub mod urts;
 
 mod conflict;
-mod tangle;
 mod vec_set;
 mod vertex;
 
 pub use conflict::ConflictReason;
 pub use ms_tangle::MsTangle;
-pub use tangle::Tangle;
 pub use tangle_worker::TangleWorker;
 
 use tip_pool_cleaner_worker::TipPoolCleanerWorker;
