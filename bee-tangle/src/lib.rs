@@ -37,7 +37,7 @@ mod vertex;
 
 pub use conflict::ConflictReason;
 pub use ms_tangle::MsTangle;
-pub use tangle::{Hooks, Tangle};
+pub use tangle::{Hooks, NullHooks, Tangle};
 pub use tangle_worker::TangleWorker;
 
 use tip_pool_cleaner_worker::TipPoolCleanerWorker;
