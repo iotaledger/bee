@@ -46,7 +46,7 @@ async fn heavy_solidification<B: StorageBackend>(
     let mut missing = Vec::new();
 
     traversal::visit_parents_depth_first(
-        &**tangle,
+        tangle,
         target_id,
         |id, _, metadata| async move { !metadata.flags().is_solid() && !requested_messages.contains(&id).await },
         |_, _, _| {},
