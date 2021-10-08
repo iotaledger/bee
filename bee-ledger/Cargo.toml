@@ -15,7 +15,7 @@ bee-common = { version = "0.5.0", path = "../bee-common/bee-common" }
 bee-message = { version = "0.1.5", path = "../bee-message" }
 bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", optional = true }
 bee-storage = { version = "0.9.0", path = "../bee-storage/bee-storage", optional = true }
-bee-tangle = { version = "0.1.2", path = "../bee-tangle", optional = true }
+bee-tangle = { version = "0.2.0", path = "../bee-tangle", optional = true }
 
 async-trait = { version = "0.1", optional = true }
 chrono = { version = "0.4", optional = true }
