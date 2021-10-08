@@ -164,12 +164,26 @@ mod tests {
     }
 
     #[test]
-    fn parse_autopeering_multiaddr() {
+    fn parse_sample_autopeering_multiaddr() {
         let bs58_pubkey = "HmKTkSd9F6nnERBvVbr55FvL1hM5WfcLvsc9bc3hWxWc";
         let autopeering_multiaddr = format!("/ip4/127.0.0.1/udp/14626/autopeering/{}", bs58_pubkey);
 
         let _: AutopeeringMultiaddr = autopeering_multiaddr
             .parse()
             .expect("parsing autopeering multiaddr failed");
+    }
+
+    #[test]
+    fn parse_entrynode_multiaddrs() {
+        let _: AutopeeringMultiaddr =
+            "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM"
+                .parse()
+                .unwrap();
+        let _: AutopeeringMultiaddr = "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb".parse().unwrap();
+        let _: AutopeeringMultiaddr = "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2".parse().unwrap();
+        let _: AutopeeringMultiaddr =
+            "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
+                .parse()
+                .unwrap();
     }
 }
