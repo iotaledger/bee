@@ -21,7 +21,7 @@ use bee_message::{
     unlock::{UnlockBlock, UnlockBlocks},
     Message, MessageId,
 };
-use bee_tangle::{ConflictReason, MsTangle};
+use bee_tangle::{ConflictReason, Tangle};
 
 use crypto::hashes::blake2b::Blake2b256;
 
@@ -205,7 +205,7 @@ fn apply_message<B: StorageBackend>(
 }
 
 async fn traverse_past_cone<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     storage: &B,
     mut message_ids: Vec<MessageId>,
     metadata: &mut WhiteFlagMetadata,
@@ -246,7 +246,7 @@ async fn traverse_past_cone<B: StorageBackend>(
 /// Computes the ledger state according to the White Flag method.
 /// RFC: https://github.com/iotaledger/protocol-rfcs/blob/master/text/0005-white-flag/0005-white-flag.md
 pub async fn white_flag<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     storage: &B,
     message_ids: &[MessageId],
     metadata: &mut WhiteFlagMetadata,

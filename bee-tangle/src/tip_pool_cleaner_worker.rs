@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{storage::StorageBackend, MsTangle, TangleWorker};
+use crate::{storage::StorageBackend, Tangle, TangleWorker};
 
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
@@ -32,7 +32,7 @@ where
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

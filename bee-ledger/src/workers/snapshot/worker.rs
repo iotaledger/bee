@@ -10,7 +10,7 @@ use crate::workers::{
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::{node::Node, worker::Worker};
 use bee_storage::{access::AsIterator, backend::StorageBackend as _, system::StorageHealth};
-use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle, TangleWorker};
+use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
 
 use async_trait::async_trait;
 
@@ -35,7 +35,7 @@ where
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (network_id, snapshot_config) = config;
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let storage = node.storage();
 
         if let Some(info) = storage::fetch_snapshot_info(&*storage)? {

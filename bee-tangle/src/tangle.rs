@@ -35,7 +35,7 @@ const SYNCED_THRESHOLD: u32 = 2;
 const CONFIRMED_THRESHOLD: u32 = 2;
 
 /// A Tangle wrapper designed to encapsulate milestone state.
-pub struct MsTangle<B> {
+pub struct Tangle<B> {
     config: TangleConfig,
     vertices: RwLock<HashMap<MessageId, Vertex>>,
     cache_queue: Mutex<LruCache<MessageId, (), DefaultHashBuilder>>,
@@ -52,8 +52,8 @@ pub struct MsTangle<B> {
     tip_pool: Mutex<UrtsTipPool>,
 }
 
-impl<B: StorageBackend> MsTangle<B> {
-    /// Create a new `MsTangle` instance with the given configuration and storage handle.
+impl<B: StorageBackend> Tangle<B> {
+    /// Create a new `Tangle` instance with the given configuration and storage handle.
     pub fn new(config: TangleConfig, storage: ResourceHandle<B>) -> Self {
         Self {
             vertices: RwLock::new(HashMap::new()),
@@ -667,7 +667,7 @@ impl<B: StorageBackend> MsTangle<B> {
     }
 }
 
-impl<B: StorageBackend> MsTangle<B> {
+impl<B: StorageBackend> Tangle<B> {
     fn storage_get_milestone(&self, idx: &MilestoneIndex) -> Result<Option<Milestone>, B::Error> {
         trace!("Attempted to fetch milestone {:?}", idx);
         self.storage().fetch(idx)

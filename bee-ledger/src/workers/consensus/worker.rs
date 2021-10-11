@@ -21,7 +21,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{ConflictReason, MsTangle, TangleWorker};
+use bee_tangle::{ConflictReason, Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{channel::oneshot, stream::StreamExt};
@@ -88,7 +88,7 @@ pub(crate) async fn migration_from_milestone(
 }
 
 async fn confirm<N: Node>(
-    tangle: &MsTangle<N::Backend>,
+    tangle: &Tangle<N::Backend>,
     storage: &N::Backend,
     bus: &Bus<'static>,
     message_id: MessageId,
@@ -280,7 +280,7 @@ where
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (snapshot_config, pruning_config) = config;
         let (tx, rx) = mpsc::unbounded_channel();
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let storage = node.storage();
         let bus = node.bus();
 

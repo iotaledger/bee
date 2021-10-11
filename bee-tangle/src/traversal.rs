@@ -5,7 +5,7 @@
 
 // TODO: Refactor all of this into methods on `Tangle`.
 
-use crate::{metadata::MessageMetadata, ms_tangle::MsTangle, storage::StorageBackend, MessageRef};
+use crate::{metadata::MessageMetadata, storage::StorageBackend, tangle::Tangle, MessageRef};
 
 use bee_message::MessageId;
 
@@ -16,7 +16,7 @@ use std::{collections::HashSet, future::Future};
 /// condition. For each visited vertex customized logic can be applied depending on the availability of the
 /// vertex. Each traversed vertex provides read access to its associated data and metadata.
 pub async fn visit_parents_depth_first<Fut, Match, Apply, ElseApply, MissingApply, B: StorageBackend>(
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     root: MessageId,
     matches: Match,
     mut apply: Apply,
