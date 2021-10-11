@@ -1,7 +1,6 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bs58::{decode, encode};
 use crypto::{
     hashes::sha::SHA256,
     signatures::ed25519::{PublicKey, PUBLIC_KEY_LENGTH},
@@ -12,14 +11,7 @@ use serde::{
     Deserialize, Serialize, Serializer,
 };
 
-use std::{
-    borrow::Cow,
-    convert::{TryFrom, TryInto},
-    fmt,
-    hash::Hash,
-    ops::{Range, RangeInclusive},
-    str::FromStr,
-};
+use std::{fmt, hash::Hash, ops::RangeInclusive, str::FromStr};
 
 const AUTOPEERING_MULTIADDR_PROTOCOL_NAME: &str = "autopeering";
 const PUBKEY_BASE58_SIZE_RANGE: RangeInclusive<usize> = 42..=44;

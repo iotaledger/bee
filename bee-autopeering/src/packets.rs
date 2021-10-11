@@ -3,7 +3,6 @@
 
 //! IOTA network packets.
 
-use crate::hash;
 use crate::proto;
 
 use base64 as bs64;

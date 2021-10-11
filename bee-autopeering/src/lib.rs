@@ -6,6 +6,7 @@
 #![warn(missing_docs)]
 
 mod config;
+mod distance;
 mod hash;
 mod identity;
 mod init;

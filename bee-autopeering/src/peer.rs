@@ -9,12 +9,7 @@ use libp2p_core::{multiaddr::Protocol, Multiaddr};
 use prost::{DecodeError, EncodeError, Message};
 use serde::{Deserialize, Serialize};
 
-use std::{
-    collections::HashMap,
-    convert::TryInto,
-    fmt,
-    net::{IpAddr, SocketAddr},
-};
+use std::{collections::HashMap, convert::TryInto, fmt, net::IpAddr};
 
 type ServiceName = String;
 

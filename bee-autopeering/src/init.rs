@@ -1,9 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::config::AutopeeringConfig;
-use crate::manager::AutopeeringManager;
-use crate::packets::{IncomingPacket, OutgoingPacket};
+use crate::{
+    config::AutopeeringConfig,
+    manager::AutopeeringManager,
+    packets::{IncomingPacket, OutgoingPacket},
+};
 
 use tokio::{net::UdpSocket, sync::mpsc};
 
