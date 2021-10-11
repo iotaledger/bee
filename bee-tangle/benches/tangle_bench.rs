@@ -18,12 +18,7 @@ fn random_input() -> (Message, MessageId, MessageMetadata) {
     (message, id, rand_message_metadata())
 }
 
-async fn insert(
-    tangle: &Tangle<NullStorage>,
-    message: Message,
-    id: MessageId,
-    metadata: MessageMetadata,
-) {
+async fn insert(tangle: &Tangle<NullStorage>, message: Message, id: MessageId, metadata: MessageMetadata) {
     tangle.insert(message, id, metadata).await;
 }
 
