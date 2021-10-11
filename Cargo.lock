@@ -406,7 +406,10 @@ dependencies = [
  "bee-message",
  "bee-runtime",
  "bee-storage",
+ "bee-storage-null",
+ "bee-test",
  "bitflags",
+ "criterion",
  "dashmap",
  "futures",
  "hashbrown",
@@ -766,6 +769,7 @@ dependencies = [
  "clap",
  "criterion-plot",
  "csv",
+ "futures",
  "itertools",
  "lazy_static",
  "num-traits",
@@ -778,6 +782,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "tinytemplate",
+ "tokio",
  "walkdir",
 ]
 

@@ -27,5 +27,16 @@ rand = "0.8"
 ref-cast = "1.0"
 serde = { version = "1.0", features = [ "derive" ] }
 thiserror = "1.0"
-tokio = { version = "1.11", features = [ "sync", "time" ] }
+tokio = { version = "1.11", features = [ "rt", "rt-multi-thread", "sync", "time" ] }
 tokio-stream = { version = "0.1" }
+
+[dev-dependencies]
+bee-storage-null = { version = "0.1.0", path = "../bee-storage/bee-storage-null" }
+bee-test = { version = "0.1.0", path = "../bee-test" }
+
+criterion = { version = "0.3.5", features = [ "async_tokio" ] }
+rand = "0.8"
+
+[[bench]]
+name = "tangle_bench"
+harness = false
