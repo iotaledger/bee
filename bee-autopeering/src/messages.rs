@@ -12,7 +12,7 @@ pub(crate) struct PeeringRequest(proto::PeeringRequest);
 
 impl PeeringRequest {
     pub fn new(salt_bytes: Vec<u8>, salt_expiration_time: u64) -> Self {
-        let timestamp = crate::time::timestamp();
+        let timestamp = crate::time::unix_now() as i64;
 
         Self(proto::PeeringRequest {
             timestamp,
@@ -106,7 +106,7 @@ pub(crate) struct PeeringDrop(proto::PeeringDrop);
 
 impl PeeringDrop {
     pub fn new() -> Self {
-        let timestamp = crate::time::timestamp();
+        let timestamp = crate::time::unix_now() as i64;
 
         Self(proto::PeeringDrop { timestamp })
     }

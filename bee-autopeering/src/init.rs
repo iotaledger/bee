@@ -9,7 +9,7 @@ use crate::{
 
 use tokio::{net::UdpSocket, sync::mpsc};
 
-use std::{error, net::SocketAddr, sync::Arc};
+use std::{error, sync::Arc};
 
 const READ_BUFFER_SIZE: usize = 1024;
 

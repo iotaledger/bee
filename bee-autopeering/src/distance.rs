@@ -3,10 +3,6 @@
 
 use crate::{hash, identity::PeerId, salt::Salt};
 
-use crypto::{
-    hashes::sha::{self, SHA256},
-    signatures::ed25519::PublicKey,
-};
 use prost::bytes::{Buf, Bytes};
 
 pub(crate) type Distance = u32;
@@ -23,7 +19,7 @@ fn distance_with_salt(id1: &PeerId, id2: &PeerId, salt2: Salt) -> Distance {
     let h1 = hash::sha256(b1);
 
     let b2 = &id2.public_key().to_bytes();
-    let s2 = salt2.rand_bytes();
+    let s2 = salt2.bytes();
     let h2 = hash::sha256(&join(b2, s2));
 
     let h_xored = xor(h1, h2);
@@ -47,4 +43,15 @@ fn xor<const N: usize>(a: [u8; N], b: [u8; N]) -> [u8; N] {
         .for_each(|(i, (a, b))| xored[i] = a ^ b);
 
     xored
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::identity::PeerId;
+
+    #[test]
+    fn zero_distance() {
+        // let peer1 = PeerId::
+    }
 }

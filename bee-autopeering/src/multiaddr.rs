@@ -1,17 +1,20 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::{
-    hashes::sha::SHA256,
-    signatures::ed25519::{PublicKey, PUBLIC_KEY_LENGTH},
-};
-use libp2p_core::multiaddr::Multiaddr;
+use crypto::signatures::ed25519::{PublicKey, PUBLIC_KEY_LENGTH};
+use libp2p_core::multiaddr::{Multiaddr, Protocol};
 use serde::{
     de::{self, Visitor},
     Deserialize, Serialize, Serializer,
 };
 
-use std::{fmt, hash::Hash, ops::RangeInclusive, str::FromStr};
+use std::{
+    fmt,
+    hash::Hash,
+    net::{IpAddr, SocketAddr},
+    ops::RangeInclusive,
+    str::FromStr,
+};
 
 const AUTOPEERING_MULTIADDR_PROTOCOL_NAME: &str = "autopeering";
 const PUBKEY_BASE58_SIZE_RANGE: RangeInclusive<usize> = 42..=44;
@@ -22,13 +25,30 @@ const PUBKEY_BASE58_SIZE_RANGE: RangeInclusive<usize> = 42..=44;
 /// to a standard libp2p multiaddress.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
 pub struct AutopeeringMultiaddr {
-    host_address: Multiaddr,
+    host_multiaddr: Multiaddr,
     public_key: PublicKey,
 }
 
 impl AutopeeringMultiaddr {
-    pub fn host_address(&self) -> &Multiaddr {
-        &self.host_address
+    pub fn host_multiaddr(&self) -> &Multiaddr {
+        &self.host_multiaddr
+    }
+
+    pub fn host_socketaddr(&self) -> SocketAddr {
+        let mut multiaddr_iter = self.host_multiaddr().iter();
+
+        let ip_addr = match multiaddr_iter.next().expect("error extracting ip address") {
+            Protocol::Ip4(ip4_addr) => IpAddr::V4(ip4_addr),
+            Protocol::Ip6(ip6_addr) => IpAddr::V6(ip6_addr),
+            _ => panic!("invalid multiaddr"),
+        };
+
+        let port = match multiaddr_iter.next().expect("error extracting port") {
+            Protocol::Udp(port) => port,
+            _ => panic!("invalid multiaddr"),
+        };
+
+        SocketAddr::new(ip_addr, port)
     }
 
     pub fn public_key(&self) -> &PublicKey {
@@ -62,7 +82,7 @@ impl Serialize for AutopeeringMultiaddr {
     {
         let s = format!(
             "{}/{}/{}",
-            self.host_address.to_string(),
+            self.host_multiaddr.to_string(),
             AUTOPEERING_MULTIADDR_PROTOCOL_NAME,
             from_pubkey_to_base58(&self.public_key),
         );
@@ -76,7 +96,7 @@ impl fmt::Display for AutopeeringMultiaddr {
         write!(
             f,
             "{}/{}/{}",
-            self.host_address.to_string(),
+            self.host_multiaddr.to_string(),
             AUTOPEERING_MULTIADDR_PROTOCOL_NAME,
             from_pubkey_to_base58(&self.public_key),
         )
@@ -103,7 +123,7 @@ impl FromStr for AutopeeringMultiaddr {
         let public_key = from_base58_to_pubkey(parts[1]);
 
         Ok(Self {
-            host_address: address,
+            host_multiaddr: address,
             public_key,
         })
     }

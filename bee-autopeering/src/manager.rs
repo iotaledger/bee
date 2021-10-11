@@ -3,20 +3,23 @@
 
 use crate::{
     config::AutopeeringConfig,
+    messages::PeeringRequest,
     packets::{IncomingPacket, OutgoingPacket},
-    peer::DiscoveredPeer,
+    salt::Salt,
 };
 
 use tokio::sync::mpsc;
+
+use std::time::Duration;
 
 type PacketTx = mpsc::UnboundedSender<OutgoingPacket>;
 type PacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
 
 pub(crate) struct AutopeeringManager {
     // Channel half for receiving autopeering related packets.
-    receiver: PacketRx,
+    rx: PacketRx,
     // Channel half for sending autopeering related packets.
-    sender: PacketTx,
+    tx: PacketTx,
     // Storage for discovered peers
     store: (),
     // Config
@@ -28,23 +31,27 @@ impl AutopeeringManager {
         // TODO: read the store
         let store = ();
 
-        Self {
-            receiver: rx,
-            sender: tx,
-            store,
-            config,
-        }
+        Self { rx, tx, store, config }
     }
 
     pub(crate) async fn run(self) {
-        let AutopeeringManager {
-            receiver: rx,
-            sender: tx,
-            store,
-            config,
-        } = self;
+        let AutopeeringManager { rx, tx, store, config } = self;
+
+        let salt = Salt::new(Duration::from_secs(20));
+
+        let request_bytes = PeeringRequest::new(salt.bytes().to_vec(), salt.expiration_time())
+            .protobuf()
+            .expect("error creating peering request");
 
         // contact the entry nodes
+        for multiaddr in config.entry_nodes {
+            let packet = OutgoingPacket {
+                bytes: request_bytes.to_vec(),
+                target: multiaddr.host_socketaddr(),
+            };
+
+            tx.send(packet);
+        }
     }
 }
 

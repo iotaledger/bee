@@ -1,10 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::{
-    hashes::sha::{self, SHA256_LEN},
-    signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature},
-};
+use crate::hash;
+
+use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature};
 
 use std::{
     convert::TryInto,
@@ -12,8 +11,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-/// The length in bytes of the peer id (32 bytes).
-const ID_LENGTH: usize = crypto::hashes::sha::SHA256_LEN;
+const ID_LENGTH: usize = 8;
 
 /// A type that represents a local identity, which is also able to sign messages.
 #[derive(Clone)]
@@ -80,25 +78,25 @@ impl Default for LocalId {
 
 impl fmt::Debug for LocalId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("LocalIdentity")
-            .field("identity", &self.identity)
-            .finish()
+        f.debug_struct("LocalId").field("identity", &self.identity).finish()
     }
 }
 
 /// A type that represents the unique identity of a peer in the network.
 #[derive(Clone)]
 pub struct PeerId {
-    id: [u8; ID_LENGTH],
+    internal_id: [u8; ID_LENGTH],
     public_key: Arc<RwLock<PublicKey>>,
 }
 
 impl PeerId {
     /// Creates an identity from an ED25519 public key.
     pub fn from_public_key(public_key: PublicKey) -> Self {
-        let id = gen_id(&public_key);
+        let internal_id = *&hash::sha256(&public_key.to_bytes())[..ID_LENGTH]
+            .try_into()
+            .expect("error creating internal id");
         Self {
-            id,
+            internal_id,
             public_key: Arc::new(RwLock::new(public_key)),
         }
     }
@@ -113,7 +111,7 @@ impl PeerId {
 
     /// Returns the 'base58' string representation (created from of the first 8 bytes of the 32 byte long internal id)
     pub fn id_string(&self) -> String {
-        bs58::encode(&self.id[..8]).into_string()
+        bs58::encode(&self.internal_id).into_string()
     }
 
     /// Returns the corresponding `libp2p::PeerId`.
@@ -129,9 +127,9 @@ impl PeerId {
 
 impl fmt::Debug for PeerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = &bs58::encode(&self.id[..8]).into_string()[..];
+        let s = &bs58::encode(&self.internal_id).into_string();
 
-        f.debug_struct("Identity")
+        f.debug_struct("PeerId")
             .field("id", &s)
             .field(
                 "public_key",
@@ -143,7 +141,10 @@ impl fmt::Debug for PeerId {
 
 impl Into<libp2p_core::PeerId> for PeerId {
     fn into(self) -> libp2p_core::PeerId {
-        let PeerId { id, public_key } = self;
+        let PeerId {
+            internal_id: id,
+            public_key,
+        } = self;
         let bytes = public_key.read().unwrap().to_bytes();
         let pubkey = libp2p_core::PublicKey::Ed25519(
             libp2p_core::identity::ed25519::PublicKey::decode(&bytes)
@@ -153,17 +154,16 @@ impl Into<libp2p_core::PeerId> for PeerId {
     }
 }
 
-// id is the SHA-256 hash of the ed25519 public key
-fn gen_id(public_key: &PublicKey) -> [u8; ID_LENGTH] {
-    let mut digest = [0u8; ID_LENGTH];
-    sha::SHA256(public_key.as_ref(), &mut digest);
-    digest
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::multiaddr::from_base58_to_pubkey;
+
+    impl PeerId {
+        pub fn new() -> Self {
+            todo!("random")
+        }
+    }
 
     #[test]
     fn create_peer_id_from_pubkey() {
