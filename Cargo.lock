@@ -155,6 +155,8 @@ dependencies = [
  "num-traits",
  "prost",
  "prost-build",
+ "rand 0.8.4",
+ "ring",
  "serde",
  "thiserror",
  "tokio",

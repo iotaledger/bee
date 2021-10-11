@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crypto::{
-    hashes::sha,
+    hashes::sha::{self, SHA256_LEN},
     signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature},
 };
 

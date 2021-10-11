@@ -21,6 +21,8 @@ num = "0.4.0"
 num-derive = "0.3.3"
 num-traits = "0.2.14"
 prost = { version = "0.8", default-features = false }
+rand = "0.8.4"
+ring = "0.16.20"
 serde = { version = "1.0", features = [ "derive" ] }
 thiserror = "1.0.29"
 tokio = { version = "1.11", features = [ "macros", "rt", "time", "net" ] }

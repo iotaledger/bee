@@ -3,10 +3,10 @@
 
 //! IOTA network packets.
 
+use crate::hash;
 use crate::proto;
 
 use base64 as bs64;
-use crypto::hashes::sha;
 use num_derive::FromPrimitive;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 
@@ -17,13 +17,6 @@ use std::{fmt, io, net::SocketAddr};
 // * packets larger than this will be cut and thus treated as invalid;
 const MAX_PACKET_SIZE: usize = 1280;
 const PACKET_TYPE_MIN: u32 = 20;
-
-/// Returns the hash of the given packet bytes in its byte representation.
-pub(crate) fn packet_hash(packet_bytes: &[u8]) -> Vec<u8> {
-    let mut digest = [0; sha::SHA256_LEN];
-    sha::SHA256(packet_bytes, &mut digest);
-    digest.to_vec()
-}
 
 /// Represents an IOTA packet.
 pub struct Packet(proto::Packet);

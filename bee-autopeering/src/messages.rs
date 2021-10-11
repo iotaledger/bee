@@ -12,7 +12,7 @@ pub(crate) struct PeeringRequest(proto::PeeringRequest);
 
 impl PeeringRequest {
     pub fn new(salt_bytes: Vec<u8>, salt_expiration_time: u64) -> Self {
-        let timestamp = crate::timestamp::timestamp();
+        let timestamp = crate::time::timestamp();
 
         Self(proto::PeeringRequest {
             timestamp,
@@ -68,7 +68,7 @@ pub(crate) struct PeeringResponse(proto::PeeringResponse);
 impl PeeringResponse {
     pub fn new(req_data: &[u8], status: bool) -> Self {
         let res = proto::PeeringResponse {
-            req_hash: crate::packets::packet_hash(req_data),
+            req_hash: crate::hash::sha256(req_data).to_vec(),
             status,
         };
 
@@ -106,7 +106,7 @@ pub(crate) struct PeeringDrop(proto::PeeringDrop);
 
 impl PeeringDrop {
     pub fn new() -> Self {
-        let timestamp = crate::timestamp::timestamp();
+        let timestamp = crate::time::timestamp();
 
         Self(proto::PeeringDrop { timestamp })
     }

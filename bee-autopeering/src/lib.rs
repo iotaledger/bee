@@ -6,6 +6,7 @@
 #![warn(missing_docs)]
 
 mod config;
+mod hash;
 mod identity;
 mod init;
 mod manager;
@@ -16,5 +17,6 @@ mod peer;
 mod proto {
     include!(concat!(env!("OUT_DIR"), "/proto.rs"));
 }
+mod salt;
 mod store;
-mod timestamp;
+mod time;
