@@ -4,7 +4,14 @@
 use std::io::Result;
 
 fn main() -> Result<()> {
-    prost_build::compile_protos(&["src/proto/peer.proto", "src/proto/service.proto"], &["src/"])?;
+    prost_build::compile_protos(
+        &[
+            "src/proto/packet.proto",
+            "src/proto/peer.proto",
+            "src/proto/service.proto",
+        ],
+        &["src/"],
+    )?;
 
     Ok(())
 }

@@ -11,6 +11,7 @@ mod init;
 mod manager;
 mod message;
 mod multiaddr;
+mod packet;
 mod peer;
 mod proto {
     include!(concat!(env!("OUT_DIR"), "/proto.rs"));

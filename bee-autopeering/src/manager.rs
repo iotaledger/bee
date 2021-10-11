@@ -47,3 +47,15 @@ impl AutopeeringManager {
         // contact the entry nodes
     }
 }
+
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum Error {
+    #[error("response timeout")]
+    ResponseTimeout,
+    #[error("socket was closed")]
+    SocketClosed,
+    #[error("packet does not contain a message")]
+    NoMessage,
+    #[error("packet contains an invalid message")]
+    InvalidMessage,
+}
