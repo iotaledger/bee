@@ -415,7 +415,6 @@ dependencies = [
  "futures",
  "hashbrown",
  "log",
- "lru",
  "rand 0.8.4",
  "ref-cast",
  "serde",
@@ -1859,6 +1858,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "lru"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1868,6 +1868,8 @@ dependencies = [
 ]
 
 [[package]]
+=======
+>>>>>>> 7bef9e05 (Bogo eviction)
 name = "lru-cache"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
