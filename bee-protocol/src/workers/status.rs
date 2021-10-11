@@ -5,7 +5,7 @@ use crate::workers::{storage::StorageBackend, MessageRequesterWorker, RequestedM
 
 use bee_ledger::workers::consensus::ConsensusWorker;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::{Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::StreamExt;
@@ -36,7 +36,7 @@ where
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {

@@ -19,7 +19,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{event::LatestMilestoneChanged, MessageRef, MsTangle, TangleWorker};
+use bee_tangle::{event::LatestMilestoneChanged, MessageRef, Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -69,7 +69,7 @@ async fn validate(
 
 #[allow(clippy::too_many_arguments)]
 async fn process<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     message_id: MessageId,
     message: MessageRef,
     peer_manager: &PeerManager,
@@ -140,7 +140,7 @@ where
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
         let milestone_solidifier = node.worker::<MilestoneSolidifierWorker>().unwrap().tx.clone();
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<NodeMetrics>();

@@ -20,7 +20,7 @@ use bee_common::packable::Packable;
 use bee_message::{Message, MessageId};
 use bee_network::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{metadata::MessageMetadata, MsTangle, TangleWorker};
+use bee_tangle::{metadata::MessageMetadata, Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{channel::oneshot::Sender, stream::StreamExt};
@@ -71,7 +71,7 @@ where
         let payload_worker = node.worker::<PayloadWorker>().unwrap().tx.clone();
         let unreferenced_inserted_worker = node.worker::<UnreferencedMessageInserterWorker>().unwrap().tx.clone();
 
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
         let metrics = node.resource::<NodeMetrics>();
         let peer_manager = node.resource::<PeerManager>();

@@ -15,7 +15,7 @@ use bee_ledger::types::CreatedOutput;
 use bee_message::{output::OutputId, payload::transaction::TransactionId};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use warp::{reject, Filter, Rejection, Reply};
 
@@ -33,7 +33,7 @@ pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     storage: ResourceHandle<B>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::get())
@@ -50,7 +50,7 @@ pub(crate) fn filter<B: StorageBackend>(
 pub(crate) async fn transaction_included_message<B: StorageBackend>(
     transaction_id: TransactionId,
     storage: ResourceHandle<B>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     // Safe to unwrap since 0 is a valid index;
     let output_id = OutputId::new(transaction_id, 0).unwrap();

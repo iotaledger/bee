@@ -7,7 +7,7 @@ use crate::workers::{
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{metadata::IndexId, solid_entry_point::SolidEntryPoint, MsTangle, TangleWorker};
+use bee_tangle::{metadata::IndexId, solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -27,7 +27,7 @@ pub(crate) struct PropagatorWorker {
 
 async fn propagate<B: StorageBackend>(
     message_id: MessageId,
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     solidified_tx: &async_channel::Sender<(MessageId, Vec<MessageId>, Option<MilestoneIndex>)>,
 ) {
     let mut children = vec![message_id];
@@ -130,7 +130,7 @@ where
         let (tx, rx) = mpsc::unbounded_channel();
         let milestone_solidifier = node.worker::<MilestoneSolidifierWorker>().unwrap().tx.clone();
 
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let bus = node.bus();
 
         node.spawn::<Self, _, _>(|shutdown| async move {

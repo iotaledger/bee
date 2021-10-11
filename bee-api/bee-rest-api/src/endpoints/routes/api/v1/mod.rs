@@ -31,7 +31,7 @@ use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 use bee_network::NetworkCommandSender;
 use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use warp::{self, Filter, Rejection, Reply};
 
@@ -47,7 +47,7 @@ pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clo
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     storage: ResourceHandle<B>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
