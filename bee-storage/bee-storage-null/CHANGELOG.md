@@ -23,4 +23,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Implementation of `StorageBackend` for `NullStorage`;
+- Implementation of `StorageBackend` for `Storage`;
