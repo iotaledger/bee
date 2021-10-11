@@ -10,7 +10,7 @@ use crypto::hashes::sha;
 use num_derive::FromPrimitive;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 
-use std::{fmt, io};
+use std::{fmt, io, net::SocketAddr};
 
 // From `hive.go` docs:
 // * specifies the maximum allowed size of packets;
@@ -39,11 +39,6 @@ impl Packet {
         })
     }
 
-    /// Restores a packet from its protobuf representation.
-    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
-        Ok(Self(proto::Packet::decode(bytes)?))
-    }
-
     /// Returns the type of this packet.
     pub fn packet_type(&self) -> Result<PacketType, io::Error> {
         num::FromPrimitive::from_u32(self.0.r#type)
@@ -66,6 +61,11 @@ impl Packet {
         &self.0.signature
     }
 
+    /// Restores a packet from its protobuf representation.
+    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
+        Ok(Self(proto::Packet::decode(bytes)?))
+    }
+
     /// Returns the protobuf representation of this packet
     pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
         let mut buf = BytesMut::with_capacity(self.0.encoded_len());
@@ -74,8 +74,8 @@ impl Packet {
         Ok(buf)
     }
 
-    /// Reduces the packet to its data part.
-    pub fn into_data(self) -> Vec<u8> {
+    /// Turns the packet into its contained message (if any) and discards the rest of the metadata.
+    pub fn into_message(self) -> Vec<u8> {
         self.0.data
     }
 }
@@ -83,8 +83,8 @@ impl Packet {
 impl fmt::Debug for Packet {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Packet")
-            .field("type", &self.0.r#type)
-            .field("data", &bs64::encode(&self.0.data))
+            .field("msg_type", &self.0.r#type)
+            .field("msg", &bs64::encode(&self.0.data))
             .field("public_key", &bs58::encode(&self.0.public_key).into_string())
             .field("signature", &bs58::encode(&self.0.signature).into_string())
             .finish()
@@ -99,4 +99,16 @@ pub enum PacketType {
     PeeringRequest = PACKET_TYPE_MIN,
     PeeringResponse,
     PeeringDrop,
+}
+
+#[derive(Debug)]
+pub(crate) struct IncomingPacket {
+    pub(crate) bytes: Vec<u8>,
+    pub(crate) source: SocketAddr,
+}
+
+#[derive(Debug)]
+pub(crate) struct OutgoingPacket {
+    pub(crate) bytes: Vec<u8>,
+    pub(crate) target: SocketAddr,
 }

@@ -9,11 +9,12 @@ mod config;
 mod identity;
 mod init;
 mod manager;
-mod message;
+mod messages;
 mod multiaddr;
-mod packet;
+mod packets;
 mod peer;
 mod proto {
     include!(concat!(env!("OUT_DIR"), "/proto.rs"));
 }
 mod store;
+mod timestamp;

@@ -3,7 +3,7 @@
 
 use crate::config::AutopeeringConfig;
 use crate::manager::AutopeeringManager;
-use crate::message::{IncomingMessage, OutgoingMessage};
+use crate::packets::{IncomingPacket, OutgoingPacket};
 
 use tokio::{net::UdpSocket, sync::mpsc};
 
@@ -11,13 +11,13 @@ use std::{error, net::SocketAddr, sync::Arc};
 
 const READ_BUFFER_SIZE: usize = 1024;
 
-type Tx = mpsc::UnboundedSender<IncomingMessage>;
-type Rx = mpsc::UnboundedReceiver<OutgoingMessage>;
+type Tx = mpsc::UnboundedSender<IncomingPacket>;
+type Rx = mpsc::UnboundedReceiver<OutgoingPacket>;
 
 pub async fn init(config: AutopeeringConfig) -> Result<(), Box<dyn error::Error>> {
     // Create 2 channels for the communication with the UDP socket
-    let (incoming_send, incoming_recv) = mpsc::unbounded_channel::<IncomingMessage>();
-    let (outgoing_send, outgoing_recv) = mpsc::unbounded_channel::<OutgoingMessage>();
+    let (incoming_send, incoming_recv) = mpsc::unbounded_channel::<IncomingPacket>();
+    let (outgoing_send, outgoing_recv) = mpsc::unbounded_channel::<OutgoingPacket>();
 
     // Try to bind the UDP socket
     let socket = UdpSocket::bind(&config.bind_addr).await?;
@@ -42,7 +42,7 @@ async fn incoming_msg_handler(socket: Arc<UdpSocket>, tx: Tx) {
 
     loop {
         if let Ok((len, from_peer)) = socket.recv_from(&mut buf).await {
-            let msg = IncomingMessage {
+            let msg = IncomingPacket {
                 bytes: (&buf[..len]).to_vec(),
                 source: from_peer,
             };
@@ -58,7 +58,7 @@ async fn incoming_msg_handler(socket: Arc<UdpSocket>, tx: Tx) {
 async fn outgoing_msg_handler(socket: Arc<UdpSocket>, mut rx: Rx) {
     loop {
         if let Some(msg) = rx.recv().await {
-            let OutgoingMessage { bytes, target } = msg;
+            let OutgoingPacket { bytes, target } = msg;
             let len = socket.send_to(&bytes, target).await.expect("socket send error");
 
             log::debug!("Sent {} bytes", len);

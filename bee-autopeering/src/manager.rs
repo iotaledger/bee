@@ -3,20 +3,20 @@
 
 use crate::{
     config::AutopeeringConfig,
-    message::{IncomingMessage, OutgoingMessage},
+    packets::{IncomingPacket, OutgoingPacket},
     peer::DiscoveredPeer,
 };
 
 use tokio::sync::mpsc;
 
-type Tx = mpsc::UnboundedSender<OutgoingMessage>;
-type Rx = mpsc::UnboundedReceiver<IncomingMessage>;
+type PacketTx = mpsc::UnboundedSender<OutgoingPacket>;
+type PacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
 
 pub(crate) struct AutopeeringManager {
-    // For receiving discovery responses
-    receiver: Rx,
-    // For sending discorvery requests
-    sender: Tx,
+    // Channel half for receiving autopeering related packets.
+    receiver: PacketRx,
+    // Channel half for sending autopeering related packets.
+    sender: PacketTx,
     // Storage for discovered peers
     store: (),
     // Config
@@ -24,7 +24,7 @@ pub(crate) struct AutopeeringManager {
 }
 
 impl AutopeeringManager {
-    pub(crate) fn new(rx: Rx, tx: Tx, config: AutopeeringConfig) -> Self {
+    pub(crate) fn new(rx: PacketRx, tx: PacketTx, config: AutopeeringConfig) -> Self {
         // TODO: read the store
         let store = ();
 
