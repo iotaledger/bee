@@ -7,7 +7,7 @@ use crate::endpoints::{config::RestApiConfig, storage::StorageBackend};
 
 use bee_protocol::workers::{MessageRequesterWorker, RequestedMessages};
 use bee_runtime::{event::Bus, resource::ResourceHandle};
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use warp::{self, Filter, Rejection, Reply};
 
@@ -22,7 +22,7 @@ pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     storage: ResourceHandle<B>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     bus: ResourceHandle<Bus<'static>>,
     message_requester: MessageRequesterWorker,
     requested_messages: ResourceHandle<RequestedMessages>,

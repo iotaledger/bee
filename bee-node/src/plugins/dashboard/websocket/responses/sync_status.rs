@@ -10,7 +10,7 @@ use crate::{
 };
 
 use bee_ledger::workers::event::MilestoneConfirmed;
-use bee_tangle::{event::LatestMilestoneChanged, MsTangle};
+use bee_tangle::{event::LatestMilestoneChanged, Tangle};
 
 use serde::Serialize;
 
@@ -22,7 +22,7 @@ pub(crate) struct SyncStatusResponse {
 
 pub(crate) fn forward_latest_milestone_changed<B: StorageBackend>(
     latest_milestone: LatestMilestoneChanged,
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
 ) -> WsEvent {
     WsEvent::new(
         WsTopic::SyncStatus,
@@ -35,7 +35,7 @@ pub(crate) fn forward_latest_milestone_changed<B: StorageBackend>(
 
 pub(crate) fn forward_confirmed_milestone_changed<B: StorageBackend>(
     event: &MilestoneConfirmed,
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
 ) -> WsEvent {
     WsEvent::new(
         WsTopic::SyncStatus,

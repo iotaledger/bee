@@ -11,7 +11,7 @@ use crate::{
 
 use bee_message::{payload::Payload, MessageId};
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::{ConflictReason, MsTangle};
+use bee_tangle::{ConflictReason, Tangle};
 
 use warp::{reject, Filter, Rejection, Reply};
 
@@ -28,7 +28,7 @@ fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clon
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::get())
@@ -39,7 +39,7 @@ pub(crate) fn filter<B: StorageBackend>(
 
 pub(crate) async fn message_metadata<B: StorageBackend>(
     message_id: MessageId,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     if !tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
         return Err(reject::custom(CustomRejection::ServiceUnavailable(

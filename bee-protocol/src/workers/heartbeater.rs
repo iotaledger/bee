@@ -11,7 +11,7 @@ use crate::{
 
 use bee_network::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::{Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -27,7 +27,7 @@ const CHECK_HEARTBEATS_INTERVAL: u64 = 5; // In seconds.
 
 pub(crate) async fn new_heartbeat<B: StorageBackend>(
     peer_manager: &PeerManager,
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
 ) -> HeartbeatPacket {
     let connected_peers = peer_manager.connected_peers().await;
     let synced_peers = peer_manager.synced_peers().await;
@@ -53,7 +53,7 @@ pub(crate) async fn send_heartbeat(
 pub(crate) async fn broadcast_heartbeat<B: StorageBackend>(
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
 ) {
     let heartbeat = new_heartbeat(peer_manager, tangle).await;
 
@@ -85,7 +85,7 @@ where
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<NodeMetrics>();
 

@@ -18,7 +18,7 @@ use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_protocol::workers::{event::MessageSolidified, request_message, MessageRequesterWorker, RequestedMessages};
 use bee_runtime::{event::Bus, resource::ResourceHandle};
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use futures::channel::oneshot;
 use serde_json::Value as JsonValue;
@@ -42,7 +42,7 @@ pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     storage: ResourceHandle<B>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     bus: ResourceHandle<Bus<'static>>,
     message_requester: MessageRequesterWorker,
     requested_messages: ResourceHandle<RequestedMessages>,
@@ -64,7 +64,7 @@ pub(crate) fn filter<B: StorageBackend>(
 pub(crate) async fn white_flag<B: StorageBackend>(
     body: JsonValue,
     storage: ResourceHandle<B>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     bus: ResourceHandle<Bus<'static>>,
     message_requester: MessageRequesterWorker,
     requested_messages: ResourceHandle<RequestedMessages>,

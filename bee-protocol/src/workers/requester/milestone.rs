@@ -12,7 +12,7 @@ use crate::{
 use bee_message::milestone::MilestoneIndex;
 use bee_network::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::{Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::StreamExt;
@@ -34,7 +34,7 @@ use std::{
 const RETRY_INTERVAL_MS: u64 = 2500;
 
 pub(crate) async fn request_milestone<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
     requested_milestones: &RequestedMilestones,
     index: MilestoneIndex,
@@ -48,7 +48,7 @@ pub(crate) async fn request_milestone<B: StorageBackend>(
 }
 
 pub(crate) async fn request_latest_milestone<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
     requested_milestones: &RequestedMilestones,
     to: Option<PeerId>,
@@ -159,7 +159,7 @@ async fn retry_requests<B: StorageBackend>(
     requested_milestones: &RequestedMilestones,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     counter: &mut usize,
 ) {
     if peer_manager.is_empty().await {
@@ -217,7 +217,7 @@ where
         let requested_milestones: RequestedMilestones = Default::default();
         node.register_resource(requested_milestones);
 
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<NodeMetrics>();
@@ -246,7 +246,7 @@ where
             info!("Requester stopped.");
         });
 
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<NodeMetrics>();

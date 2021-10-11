@@ -10,7 +10,7 @@ use crate::endpoints::{
 
 use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use warp::{http::StatusCode, Filter, Rejection, Reply};
 
@@ -30,7 +30,7 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     peer_manager: ResourceHandle<PeerManager>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
@@ -42,7 +42,7 @@ pub(crate) fn filter<B: StorageBackend>(
 }
 
 pub(crate) async fn health<B: StorageBackend>(
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     peer_manager: ResourceHandle<PeerManager>,
 ) -> Result<impl Reply, Infallible> {
     if is_healthy(&tangle, &peer_manager).await {
@@ -52,7 +52,7 @@ pub(crate) async fn health<B: StorageBackend>(
     }
 }
 
-pub async fn is_healthy<B: StorageBackend>(tangle: &MsTangle<B>, peer_manager: &PeerManager) -> bool {
+pub async fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &PeerManager) -> bool {
     if !tangle.is_confirmed_threshold(HEALTH_CONFIRMED_THRESHOLD) {
         return false;
     }

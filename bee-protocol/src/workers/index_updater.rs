@@ -8,7 +8,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker};
+use bee_tangle::{metadata::IndexId, Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -40,7 +40,7 @@ where
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -71,7 +71,7 @@ where
     }
 }
 
-async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, index: MilestoneIndex) {
+async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: Milestone, index: MilestoneIndex) {
     if let Some(parents) = tangle
         .get(milestone.message_id())
         .await
@@ -92,7 +92,7 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, 
 }
 
 async fn update_past_cone<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     mut parents: Vec<MessageId>,
     index: MilestoneIndex,
 ) -> HashSet<MessageId> {
@@ -146,7 +146,7 @@ async fn update_past_cone<B: StorageBackend>(
 
 // NOTE: so once a milestone comes in we have to walk the future cones of the root transactions and update their
 // OMRSI and YMRSI; during that time we need to block the propagator, otherwise it will propagate outdated data.
-async fn update_future_cone<B: StorageBackend>(tangle: &MsTangle<B>, roots: HashSet<MessageId>) {
+async fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSet<MessageId>) {
     let mut to_process = roots.into_iter().collect::<Vec<_>>();
     let mut processed = HashSet::new();
 

@@ -14,7 +14,7 @@ use crate::{
 
 use bee_network::{Event, NetworkEventReceiver, ServiceHost};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::{Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{channel::oneshot, StreamExt};
@@ -50,7 +50,7 @@ where
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let peer_manager = node.resource::<PeerManager>();
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let metrics = node.resource::<NodeMetrics>();
         let hasher = node.worker::<HasherWorker>().unwrap().tx.clone();

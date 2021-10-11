@@ -25,7 +25,7 @@ use bee_runtime::{
     node::{Node, NodeBuilder},
     worker::{Error as WorkerError, Worker},
 };
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::{Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use log::{error, info};
@@ -77,7 +77,7 @@ where
         let bech32_hrp = config.3;
 
         let consensus_worker = node.worker::<ConsensusWorker>().unwrap().tx.clone();
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let storage = node.storage();
         let message_submitter = node.worker::<MessageSubmitterWorker>().unwrap().tx.clone();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();

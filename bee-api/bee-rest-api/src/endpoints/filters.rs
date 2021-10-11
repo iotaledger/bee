@@ -9,7 +9,7 @@ use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorkerEvent, PeerManager, RequestedMessages,
 };
 use bee_runtime::{event::Bus, node::NodeInfo, resource::ResourceHandle};
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use tokio::sync::mpsc;
 use warp::Filter;
@@ -41,8 +41,8 @@ pub(crate) fn with_protocol_config(
 }
 
 pub(crate) fn with_tangle<B: StorageBackend>(
-    tangle: ResourceHandle<MsTangle<B>>,
-) -> impl Filter<Extract = (ResourceHandle<MsTangle<B>>,), Error = Infallible> + Clone {
+    tangle: ResourceHandle<Tangle<B>>,
+) -> impl Filter<Extract = (ResourceHandle<Tangle<B>>,), Error = Infallible> + Clone {
     warp::any().map(move || tangle.clone())
 }
 

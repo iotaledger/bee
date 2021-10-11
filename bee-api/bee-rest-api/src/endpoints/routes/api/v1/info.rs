@@ -18,7 +18,7 @@ use crate::{
 
 use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use warp::{Filter, Rejection, Reply};
 
@@ -32,7 +32,7 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
     rest_api_config: RestApiConfig,
@@ -54,7 +54,7 @@ pub(crate) fn filter<B: StorageBackend>(
 }
 
 pub(crate) async fn info<B: StorageBackend>(
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
     rest_api_config: RestApiConfig,
