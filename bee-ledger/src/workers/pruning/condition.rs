@@ -4,7 +4,7 @@
 use crate::{types::LedgerIndex, workers::pruning::config::PruningConfig};
 
 use bee_message::milestone::MilestoneIndex;
-use bee_tangle::{storage::StorageBackend, MsTangle};
+use bee_tangle::{storage::StorageBackend, Tangle};
 
 const PRUNING_BATCH_SIZE_MAX: u32 = 200;
 
@@ -18,7 +18,7 @@ pub enum PruningSkipReason {
 }
 
 pub(crate) fn should_prune<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     ledger_index: LedgerIndex,
     pruning_delay: u32,
     config: &PruningConfig,

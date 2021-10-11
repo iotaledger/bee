@@ -13,12 +13,12 @@ pub mod event;
 pub mod flags;
 /// Message data, including message flags.
 pub mod metadata;
-/// Milestone-enabled tangle type.
-pub mod ms_tangle;
 /// Types used to represent SEPs (Solid Entry Points).
 pub mod solid_entry_point;
 /// Types used for interoperation with a node's storage layer.
 pub mod storage;
+/// Milestone-enabled tangle type.
+pub mod tangle;
 /// The overall `TangleWorker` type. Used as part of the bee runtime in a node.
 pub mod tangle_worker;
 /// A worker that periodically cleans the tip pool.
@@ -31,12 +31,10 @@ pub mod unreferenced_message;
 pub mod urts;
 
 mod conflict;
-mod tangle;
 mod vec_set;
 mod vertex;
 
 pub use conflict::ConflictReason;
-pub use ms_tangle::MsTangle;
 pub use tangle::Tangle;
 pub use tangle_worker::TangleWorker;
 

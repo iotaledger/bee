@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.2.0 - 2021-XX-XX
 
+### Changed
+
+- Merged `Tangle` and `MsTangle`;
+
 ### Removed
 
 - Tangle genericity over metadata type;

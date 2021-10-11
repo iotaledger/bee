@@ -25,7 +25,7 @@ use bee_message::{
 };
 use bee_storage::access::{Batch, Fetch};
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage, MsTangle,
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage, Tangle,
 };
 
 use hashbrown::{HashMap, HashSet};
@@ -44,7 +44,7 @@ pub struct Edge {
 }
 
 pub async fn prune_confirmed_data<S: StorageBackend>(
-    tangle: &MsTangle<S>,
+    tangle: &Tangle<S>,
     storage: &S,
     batch: &mut S::Batch,
     prune_index: MilestoneIndex,
@@ -180,7 +180,7 @@ pub async fn prune_confirmed_data<S: StorageBackend>(
                     // message happens to be the one with the highest confirmation index, then the SEP created from the
                     // current message would be removed too early, i.e. before all of its referrers, and pruning would
                     // fail without a way to ever recover. We suspect the bug to be a race condition in the
-                    // `update_metadata` method of the `MsTangle` implementation.
+                    // `update_metadata` method of the `Tangle` implementation.
                     //
                     // Mitigation strategy:
                     // We rely on the coordinator to not confirm something that attaches to a message that was confirmed
@@ -265,7 +265,7 @@ pub async fn prune_unconfirmed_data<S: StorageBackend>(
                     // In very rare situations the `referenced` flag has not been set for a confirmed message. This
                     // would lead to it being removed as an unconfirmed message causing the past-cone traversal of a
                     // milestone to fail. That would cause pruning to fail without a way to ever recover. We suspect the
-                    // bug to be a race condition in the `update_metadata` method of the `MsTangle` implementation.
+                    // bug to be a race condition in the `update_metadata` method of the `Tangle` implementation.
                     //
                     // Mitigation strategy:
                     // To make occurring this scenario sufficiently unlikely, we only prune a message with

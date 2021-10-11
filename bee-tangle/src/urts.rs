@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::TangleConfig, ms_tangle::MsTangle, storage::StorageBackend};
+use crate::{config::TangleConfig, storage::StorageBackend, tangle::Tangle};
 
 use bee_message::MessageId;
 
@@ -66,7 +66,7 @@ impl UrtsTipPool {
 
     pub(crate) async fn insert<B: StorageBackend>(
         &mut self,
-        tangle: &MsTangle<B>,
+        tangle: &Tangle<B>,
         message_id: MessageId,
         parents: Vec<MessageId>,
     ) {
@@ -119,7 +119,7 @@ impl UrtsTipPool {
         }
     }
 
-    pub(crate) async fn update_scores<B: StorageBackend>(&mut self, tangle: &MsTangle<B>) {
+    pub(crate) async fn update_scores<B: StorageBackend>(&mut self, tangle: &Tangle<B>) {
         let mut to_remove = Vec::new();
 
         for tip in self.tips.keys() {
@@ -139,7 +139,7 @@ impl UrtsTipPool {
         debug!("Non-lazy tips {}", self.non_lazy_tips.len());
     }
 
-    async fn tip_score<B: StorageBackend>(&self, tangle: &MsTangle<B>, message_id: &MessageId) -> Score {
+    async fn tip_score<B: StorageBackend>(&self, tangle: &Tangle<B>, message_id: &MessageId) -> Score {
         // in case the tip was pruned by the node, consider tip as lazy
         if !tangle.contains(message_id).await {
             Score::Lazy

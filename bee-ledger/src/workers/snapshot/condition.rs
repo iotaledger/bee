@@ -3,7 +3,7 @@
 
 use crate::{types::LedgerIndex, workers::snapshot::config::SnapshotConfig};
 
-use bee_tangle::{storage::StorageBackend, MsTangle};
+use bee_tangle::{storage::StorageBackend, Tangle};
 
 /// Reasons for skipping snapshotting.
 #[derive(Debug)]
@@ -15,7 +15,7 @@ pub enum SnapshottingSkipReason {
 }
 
 pub(crate) fn should_snapshot<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     ledger_index: LedgerIndex,
     snapshot_depth: u32,
     snapshot_config: &SnapshotConfig,

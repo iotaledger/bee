@@ -15,7 +15,7 @@ use crate::workers::{
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::event::Bus;
 use bee_storage::access::{Batch, Truncate};
-use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle};
+use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle};
 
 use log::{debug, info};
 
@@ -30,7 +30,7 @@ static NUM_PRUNINGS: AtomicUsize = AtomicUsize::new(0);
 
 /// Performs pruning of data from `start_index` to `target_index`.
 pub async fn prune<S: StorageBackend>(
-    tangle: &MsTangle<S>,
+    tangle: &Tangle<S>,
     storage: &S,
     bus: &Bus<'_>,
     start_index: MilestoneIndex,

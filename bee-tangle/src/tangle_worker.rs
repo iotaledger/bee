@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::TangleConfig, storage::StorageBackend, MsTangle};
+use crate::{config::TangleConfig, storage::StorageBackend, Tangle};
 
 use bee_runtime::{node::Node, worker::Worker};
 
@@ -26,13 +26,13 @@ where
     type Error = Infallible;
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        node.register_resource(MsTangle::<N::Backend>::new(config, node.storage()));
+        node.register_resource(Tangle::<N::Backend>::new(config, node.storage()));
 
         Ok(Self)
     }
 
     async fn stop(self, node: &mut N) -> Result<(), Self::Error> {
-        let tangle = if let Some(tangle) = node.remove_resource::<MsTangle<N::Backend>>() {
+        let tangle = if let Some(tangle) = node.remove_resource::<Tangle<N::Backend>>() {
             tangle
         } else {
             warn!(
@@ -45,7 +45,7 @@ where
             let poll_freq = 20;
             let mut interval = interval(Duration::from_millis(poll_freq));
             loop {
-                match node.remove_resource::<MsTangle<N::Backend>>() {
+                match node.remove_resource::<Tangle<N::Backend>>() {
                     Some(tangle) => break tangle,
                     None => {
                         if Instant::now().duration_since(poll_start) > Duration::from_secs(5) {
