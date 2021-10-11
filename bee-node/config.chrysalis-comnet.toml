@@ -76,6 +76,7 @@ white_flag_solidification_timeout = 2
 
 [snapshot]
 full_path         = "./snapshots/comnet/latest-full_snapshot.bin"
+delta_path        = "./snapshots/comnet/latest-delta_snapshot.bin"
 download_urls     = [
     "https://cdn.tanglebay.com/snapshots/comnet/"
 ]
