@@ -145,6 +145,7 @@ name = "bee-autopeering"
 version = "0.1.0"
 dependencies = [
  "bs58",
+ "bytes",
  "iota-crypto 0.7.0",
  "libp2p-core",
  "log",

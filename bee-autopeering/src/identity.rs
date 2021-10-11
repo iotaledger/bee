@@ -159,3 +159,18 @@ fn gen_id(public_key: &PublicKey) -> [u8; ID_LENGTH] {
     sha::SHA256(public_key.as_ref(), &mut digest);
     digest
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::multiaddr::from_base58_to_pubkey;
+
+    #[test]
+    fn create_peer_id_from_pubkey() {
+        let base58_pubkey = "4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM";
+        let pubkey = from_base58_to_pubkey(base58_pubkey);
+
+        let peer_id = PeerId::from_public_key(pubkey);
+        let _ = peer_id.libp2p_peer_id();
+    }
+}

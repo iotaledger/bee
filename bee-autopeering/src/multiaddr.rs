@@ -135,11 +135,11 @@ impl<'de> Visitor<'de> for AutopeeringMultiaddrVisitor {
     }
 }
 
-fn from_pubkey_to_base58(pub_key: &PublicKey) -> String {
+pub(crate) fn from_pubkey_to_base58(pub_key: &PublicKey) -> String {
     bs58::encode(pub_key.to_bytes()).into_string()
 }
 
-fn from_base58_to_pubkey(base58_pubkey: impl AsRef<str>) -> PublicKey {
+pub(crate) fn from_base58_to_pubkey(base58_pubkey: impl AsRef<str>) -> PublicKey {
     assert!(PUBKEY_BASE58_SIZE_RANGE.contains(&base58_pubkey.as_ref().len()));
 
     let mut bytes = [0u8; PUBLIC_KEY_LENGTH];

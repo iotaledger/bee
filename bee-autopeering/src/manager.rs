@@ -4,7 +4,7 @@
 use crate::{
     config::AutopeeringConfig,
     message::{IncomingMessage, OutgoingMessage},
-    peer::DiscoverablePeer,
+    peer::DiscoveredPeer,
 };
 
 use tokio::sync::mpsc;
