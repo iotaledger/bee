@@ -618,7 +618,7 @@ impl<B: StorageBackend> Tangle<B> {
 
                 if let Some(key) = vertices.iter().next().map(|(k, _)| k).copied() {
                     if vertices.remove(&key).is_some() {
-                        len = self.len.load(Ordering::Relaxed);
+                        len = self.len.fetch_sub(1, Ordering::SeqCst) - 1;
                     }
                 }
             }
