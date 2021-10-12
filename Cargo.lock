@@ -345,6 +345,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-storage-null"
+version = "0.1.0"
+dependencies = [
+ "bee-storage",
+]
+
+[[package]]
 name = "bee-storage-rocksdb"
 version = "0.5.0"
 dependencies = [
@@ -399,7 +406,10 @@ dependencies = [
  "bee-message",
  "bee-runtime",
  "bee-storage",
+ "bee-storage-null",
+ "bee-test",
  "bitflags",
+ "criterion",
  "dashmap",
  "futures",
  "hashbrown",
@@ -759,6 +769,7 @@ dependencies = [
  "clap",
  "criterion-plot",
  "csv",
+ "futures",
  "itertools",
  "lazy_static",
  "num-traits",
@@ -771,6 +782,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "tinytemplate",
+ "tokio",
  "walkdir",
 ]
 
