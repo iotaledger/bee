@@ -10,6 +10,7 @@ members = [
   "bee-node/bee-node",
   "bee-node/bee-plugin",
   "bee-storage/bee-storage",
+  "bee-storage/bee-storage-null",
   "bee-storage/bee-storage-rocksdb",
   "bee-storage/bee-storage-sled",
   "bee-tangle",
