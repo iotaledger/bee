@@ -1,14 +1,22 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(dead_code)]
+
 use bee_message::{Message, MessageId, MessageMetadata};
-use bee_tangle::{Tangle, TangleConfig};
+use bee_storage::StorageBackend as _;
+use bee_storage_null::Storage as NullStorage;
+use bee_tangle::{StorageBackend, Tangle, TangleConfig};
 use bee_test::rand::{
     bytes::rand_bytes_array,
     message::{metadata::rand_message_metadata, rand_message_with_parents_ids},
 };
 
 use std::collections::HashMap;
+
+pub fn test_tangle() -> Tangle<NullStorage> {
+    Tangle::new(TangleConfig::default(), NullStorage::start(()).unwrap())
+}
 
 fn rand_prefixed_message_id(prefix: u16) -> MessageId {
     let mut message_id_bytes = rand_bytes_array();
@@ -18,7 +26,11 @@ fn rand_prefixed_message_id(prefix: u16) -> MessageId {
     MessageId::from(message_id_bytes)
 }
 
-fn new_node(tangle: &Tangle, message_id: MessageId, parents_ids: Vec<MessageId>) -> (Message, MessageMetadata) {
+fn new_node<S: StorageBackend>(
+    tangle: &Tangle<S>,
+    message_id: MessageId,
+    parents_ids: Vec<MessageId>,
+) -> (Message, MessageMetadata) {
     let message = rand_message_with_parents_ids(parents_ids);
     let metadata = rand_message_metadata();
 
@@ -50,7 +62,7 @@ impl TangleBuilder {
         self
     }
 
-    pub fn build(self) -> (Tangle, HashMap<usize, MessageId>) {
+    pub fn build(self) -> (Tangle<NullStorage>, HashMap<usize, MessageId>) {
         // Check that the graph is a DAG and find a topological order so we can add messages to the tangle in the
         // correct order (parents before children). This `Vec` will hold the nodes in such order.
         let mut ordered_nodes = vec![];
@@ -106,7 +118,8 @@ impl TangleBuilder {
             visit(node, &mut perms, &mut temps, &self.graph, &mut ordered_nodes);
         }
 
-        let tangle = Tangle::new(TangleConfig::default());
+        let tangle = test_tangle();
+
         let mut ids = HashMap::new();
 
         while let Some(node) = ordered_nodes.pop() {

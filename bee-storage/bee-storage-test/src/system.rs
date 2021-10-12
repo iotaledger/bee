@@ -14,8 +14,8 @@ pub trait StorageBackend:
 {
 }
 
-impl<T> StorageBackend for T where
-    T: backend::StorageBackend
+impl<S> StorageBackend for S where
+    S: backend::StorageBackend
         + Fetch<u8, System>
         + for<'a> MultiFetch<'a, u8, System>
         + for<'a> AsIterator<'a, u8, System>
@@ -23,7 +23,7 @@ impl<T> StorageBackend for T where
 }
 
 /// Generic access tests for the system table.
-pub fn system_access<B: StorageBackend>(storage: &B) {
+pub fn system_access<S: StorageBackend>(storage: &S) {
     let version = Fetch::<u8, System>::fetch(storage, &SYSTEM_VERSION_KEY)
         .unwrap()
         .unwrap();

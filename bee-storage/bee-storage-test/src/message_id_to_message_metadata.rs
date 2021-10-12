@@ -22,8 +22,8 @@ pub trait StorageBackend:
 {
 }
 
-impl<T> StorageBackend for T where
-    T: backend::StorageBackend
+impl<S> StorageBackend for S where
+    S: backend::StorageBackend
         + Exist<MessageId, MessageMetadata>
         + Fetch<MessageId, MessageMetadata>
         + for<'a> MultiFetch<'a, MessageId, MessageMetadata>
@@ -37,7 +37,7 @@ impl<T> StorageBackend for T where
 }
 
 /// Generic access tests for the message_id_to_message_metadata table.
-pub fn message_id_to_message_metadata_access<B: StorageBackend>(storage: &B) {
+pub fn message_id_to_message_metadata_access<S: StorageBackend>(storage: &S) {
     let (message_id, message_metadata) = (rand_message_id(), rand_message_metadata());
 
     assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
@@ -81,7 +81,7 @@ pub fn message_id_to_message_metadata_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    let mut batch = B::batch_begin();
+    let mut batch = S::batch_begin();
     let mut message_ids = Vec::new();
     let mut message_metadatas = Vec::new();
 

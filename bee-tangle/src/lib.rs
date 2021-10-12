@@ -7,10 +7,12 @@
 
 mod config;
 mod message_data;
+mod storage;
 mod tangle;
 
 pub mod walkers;
 
 pub use config::{TangleConfig, TangleConfigBuilder};
 pub use message_data::MessageData;
+pub use storage::StorageBackend;
 pub use tangle::Tangle;

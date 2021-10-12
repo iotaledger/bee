@@ -6,7 +6,7 @@ mod common;
 use bee_message::MessageId;
 use bee_tangle::{
     walkers::{TangleBfsWalkerBuilder, TangleDfsWalkerBuilder, TangleWalkerItem},
-    MessageData, Tangle,
+    MessageData, StorageBackend, Tangle,
 };
 
 use std::{collections::HashMap, convert::TryInto};
@@ -40,14 +40,14 @@ fn generic_walker_test<T: Iterator<Item = TangleWalkerItem>>(
 }
 
 #[allow(clippy::type_complexity)]
-fn dfs_walker_test(
-    tangle: &Tangle,
+fn dfs_walker_test<S: StorageBackend>(
+    tangle: &Tangle<S>,
     ids: &HashMap<usize, MessageId>,
     root: usize,
     matched: Vec<usize>,
     skipped: Vec<usize>,
     missing: Vec<usize>,
-    condition: Option<Box<dyn Fn(&Tangle, &MessageId, &MessageData) -> bool>>,
+    condition: Option<Box<dyn Fn(&Tangle<S>, &MessageId, &MessageData) -> bool>>,
 ) {
     let mut builder = TangleDfsWalkerBuilder::new(tangle, ids[&root]);
 
@@ -59,14 +59,14 @@ fn dfs_walker_test(
 }
 
 #[allow(clippy::type_complexity)]
-fn bfs_walker_test(
-    tangle: &Tangle,
+fn bfs_walker_test<S: StorageBackend>(
+    tangle: &Tangle<S>,
     ids: &HashMap<usize, MessageId>,
     root: usize,
     matched: Vec<usize>,
     skipped: Vec<usize>,
     missing: Vec<usize>,
-    condition: Option<Box<dyn Fn(&Tangle, &MessageId, &MessageData) -> bool>>,
+    condition: Option<Box<dyn Fn(&Tangle<S>, &MessageId, &MessageData) -> bool>>,
 ) {
     let mut builder = TangleBfsWalkerBuilder::new(tangle, ids[&root]);
 
@@ -112,7 +112,7 @@ fn binary_tree() {
 
     // With condition
 
-    fn condition(_tangle: &Tangle, message_id: &MessageId, _message_data: &MessageData) -> bool {
+    fn condition<S: StorageBackend>(_tangle: &Tangle<S>, message_id: &MessageId, _message_data: &MessageData) -> bool {
         u16::from_le_bytes(message_id.as_ref()[0..2].try_into().unwrap()) % 2 == 0
     }
 
@@ -174,7 +174,7 @@ fn tangle() {
 
     // With condition
 
-    fn condition(_tangle: &Tangle, message_id: &MessageId, _message_data: &MessageData) -> bool {
+    fn condition<S: StorageBackend>(_tangle: &Tangle<S>, message_id: &MessageId, _message_data: &MessageData) -> bool {
         u16::from_le_bytes(message_id.as_ref()[0..2].try_into().unwrap()) % 2 == 1
     }
 
@@ -234,7 +234,7 @@ fn chain() {
 
     // With condition
 
-    fn condition(_tangle: &Tangle, message_id: &MessageId, _message_data: &MessageData) -> bool {
+    fn condition<S: StorageBackend>(_tangle: &Tangle<S>, message_id: &MessageId, _message_data: &MessageData) -> bool {
         u16::from_le_bytes(message_id.as_ref()[0..2].try_into().unwrap()) != 4
     }
 
