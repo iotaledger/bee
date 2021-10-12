@@ -7,7 +7,7 @@ use bee_storage::{
     backend,
 };
 
-///
+/// A blanket-implemented helper trait with all tangle storage requirements.
 pub trait StorageBackend:
     backend::StorageBackend
     + Fetch<MessageId, Message>
