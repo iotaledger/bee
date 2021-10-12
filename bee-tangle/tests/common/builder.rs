@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(dead_code)]
+
 use bee_message::{Message, MessageId, MessageMetadata};
 use bee_storage::StorageBackend as _;
 use bee_storage_null::Storage as NullStorage;
