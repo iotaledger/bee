@@ -15,9 +15,7 @@ use bee_test::rand::{
 use std::collections::HashMap;
 
 pub fn default_tangle() -> Tangle<NullStorage> {
-    let storage = NullStorage::start(()).unwrap();
-
-    Tangle::new(TangleConfig::default(), storage)
+    Tangle::new(TangleConfig::default(), NullStorage::start(()).unwrap())
 }
 
 fn rand_prefixed_message_id(prefix: u16) -> MessageId {
