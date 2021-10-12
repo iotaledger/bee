@@ -20,7 +20,7 @@ use std::net::SocketAddr;
 //     "runAsEntryNode": false
 // }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename = "autopeering")]
 pub struct AutopeeringConfig {
     #[serde(rename = "bindAddress")]

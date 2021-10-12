@@ -19,5 +19,8 @@ mod proto {
     include!(concat!(env!("OUT_DIR"), "/proto.rs"));
 }
 mod salt;
+mod server;
 mod store;
 mod time;
+
+pub use init::init;

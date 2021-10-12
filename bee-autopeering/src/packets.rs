@@ -14,7 +14,7 @@ use std::{fmt, io, net::SocketAddr};
 // From `hive.go` docs:
 // * specifies the maximum allowed size of packets;
 // * packets larger than this will be cut and thus treated as invalid;
-const MAX_PACKET_SIZE: usize = 1280;
+pub(crate) const MAX_PACKET_SIZE: usize = 1280;
 const PACKET_TYPE_MIN: u32 = 20;
 
 /// Represents an IOTA packet.
