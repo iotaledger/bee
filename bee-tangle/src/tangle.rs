@@ -114,9 +114,14 @@ impl<B: StorageBackend> Tangle<B> {
         message_id: MessageId,
         metadata: MessageMetadata,
     ) -> Option<MessageRef> {
-        self.pull_message(&message_id).await;
+        let exists = self.pull_message(&message_id, true).await;
 
-        let msg = self.insert_inner(message_id, message.clone(), metadata).await;
+        self.get_interned_mut(&message_id)
+            .await
+            .expect("Just-inserted message is missing")
+            .allow_eviction();
+
+        let msg = self.insert_inner(message_id, message.clone(), metadata, !exists).await;
 
         if msg.is_some() {
             // Write parents to DB
@@ -421,9 +426,14 @@ impl<B: StorageBackend> Tangle<B> {
         message_id: MessageId,
         message: Message,
         metadata: MessageMetadata,
+        prevent_eviction: bool,
     ) -> Option<MessageRef> {
         let mut vertices = self.get_interned_vertices(&message_id).write().await;
         let vertex = vertices.entry(message_id).or_insert_with(Vertex::empty);
+
+        if prevent_eviction {
+            vertex.prevent_eviction();
+        }
 
         let msg = if vertex.message().is_some() {
             None
@@ -457,9 +467,14 @@ impl<B: StorageBackend> Tangle<B> {
 
     /// Get the data of a vertex associated with the given `message_id`.
     async fn get_with<R>(&self, message_id: &MessageId, f: impl FnOnce(&mut Vertex) -> R) -> Option<R> {
-        self.pull_message(message_id).await;
+        let exists = self.pull_message(message_id, true).await;
 
-        self.get_inner(message_id).await.map(|mut v| f(&mut v))
+        self.get_inner(message_id).await.map(|mut v| {
+            if exists {
+                v.allow_eviction();
+            }
+            f(&mut v)
+        })
     }
 
     /// Get the data of a vertex associated with the given `message_id`.
@@ -475,7 +490,7 @@ impl<B: StorageBackend> Tangle<B> {
 
     /// Returns whether the message is stored in the Tangle.
     pub async fn contains(&self, message_id: &MessageId) -> bool {
-        self.contains_inner(message_id).await || self.pull_message(message_id).await
+        self.contains_inner(message_id).await || self.pull_message(message_id, false).await
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.
@@ -485,9 +500,14 @@ impl<B: StorageBackend> Tangle<B> {
 
     /// Get the metadata of a vertex associated with the given `message_id`.
     pub async fn get_vertex(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex> + '_> {
-        self.pull_message(message_id).await;
+        let exists = self.pull_message(message_id, true).await;
 
-        self.get_inner(message_id).await
+        self.get_inner(message_id).await.map(|mut v| {
+            if exists {
+                v.allow_eviction();
+            }
+            v
+        })
     }
 
     /// Updates the metadata of a vertex.
@@ -495,10 +515,13 @@ impl<B: StorageBackend> Tangle<B> {
     where
         Update: FnOnce(&mut MessageMetadata) -> R,
     {
-        self.pull_message(message_id).await;
+        let exists = self.pull_message(message_id, true).await;
         let mut vertices = self.get_interned_vertices(message_id).write().await;
 
         if let Some(vertex) = vertices.get_mut(message_id) {
+            if exists {
+                vertex.allow_eviction();
+            }
             let r = vertex.metadata_mut().map(|m| update(m));
 
             if let Some((msg, meta)) = vertex.message_and_metadata() {
@@ -588,12 +611,25 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     // Attempts to pull the message from the storage, returns true if successful.
-    async fn pull_message(&self, message_id: &MessageId) -> bool {
+    async fn pull_message(&self, message_id: &MessageId, prevent_eviction: bool) -> bool {
+        let contains_now = if prevent_eviction {
+            self.get_interned_mut(message_id).await.map_or(false, |mut v| {
+                if v.message().is_some() {
+                    v.prevent_eviction();
+                    true
+                } else {
+                    false
+                }
+            })
+        } else {
+            self.contains_inner(message_id).await
+        };
+
         // If the tangle already contains the message, do no more work
-        if self.contains_inner(message_id).await {
+        if contains_now {
             true
         } else if let Ok(Some((msg, metadata))) = self.storage_get(message_id) {
-            self.insert_inner(*message_id, msg, metadata).await;
+            self.insert_inner(*message_id, msg, metadata, prevent_eviction).await;
 
             true
         } else {
@@ -611,8 +647,13 @@ impl<B: StorageBackend> Tangle<B> {
                 let mut vertices = self.vertices[idx].write().await;
 
                 if let Some(key) = vertices.iter().next().map(|(k, _)| k).copied() {
-                    if vertices.remove(&key).is_some() {
-                        len = self.len.fetch_sub(1, Ordering::SeqCst) - 1;
+                    if let Some(vertex) = vertices.remove(&key) {
+                        if !vertex.can_evict() {
+                            // Reinsert it if we're not permitted to evict it yet (because something is using it)
+                            vertices.insert(key, vertex);
+                        } else {
+                            len = self.len.fetch_sub(1, Ordering::SeqCst) - 1;
+                        }
                     }
                 }
             }

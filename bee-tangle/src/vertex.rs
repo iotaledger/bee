@@ -11,6 +11,7 @@ use std::sync::Arc;
 pub struct Vertex {
     message: Option<(MessageRef, MessageMetadata)>,
     children: (VecSet<MessageId>, bool), // Exhaustive flag
+    eviction_blocks: isize,
 }
 
 impl Vertex {
@@ -18,6 +19,7 @@ impl Vertex {
         Self {
             message: None,
             children: (VecSet::default(), false),
+            eviction_blocks: 0,
         }
     }
 
@@ -25,6 +27,7 @@ impl Vertex {
         Self {
             message: Some((MessageRef(Arc::new(message)), metadata)),
             children: (VecSet::default(), false),
+            eviction_blocks: 0,
         }
     }
 
@@ -67,5 +70,18 @@ impl Vertex {
 
     pub(crate) fn insert_message_and_metadata(&mut self, message: Message, metadata: MessageMetadata) {
         self.message = Some((MessageRef(Arc::new(message)), metadata));
+    }
+
+    pub(crate) fn prevent_eviction(&mut self) {
+        self.eviction_blocks += 1;
+    }
+
+    pub(crate) fn allow_eviction(&mut self) {
+        self.eviction_blocks -= 1;
+        assert!(self.eviction_blocks >= 0);
+    }
+
+    pub(crate) fn can_evict(&self) -> bool {
+        self.eviction_blocks == 0
     }
 }
