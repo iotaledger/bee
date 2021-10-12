@@ -14,7 +14,7 @@ use bee_test::rand::{
 
 use std::collections::HashMap;
 
-pub fn default_tangle() -> Tangle<NullStorage> {
+pub fn test_tangle() -> Tangle<NullStorage> {
     Tangle::new(TangleConfig::default(), NullStorage::start(()).unwrap())
 }
 
@@ -118,7 +118,7 @@ impl TangleBuilder {
             visit(node, &mut perms, &mut temps, &self.graph, &mut ordered_nodes);
         }
 
-        let tangle = default_tangle();
+        let tangle = test_tangle();
 
         let mut ids = HashMap::new();
 

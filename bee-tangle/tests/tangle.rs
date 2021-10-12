@@ -3,13 +3,13 @@
 
 mod common;
 
-use common::default_tangle;
+use common::test_tangle;
 
 use bee_test::rand::message::{metadata::rand_message_metadata, rand_message, rand_message_id};
 
 #[test]
 fn get_none() {
-    let tangle = default_tangle();
+    let tangle = test_tangle();
 
     assert!(tangle.get(&rand_message_id()).is_none());
 }
@@ -19,7 +19,7 @@ fn insert_get() {
     let (message, metadata) = (rand_message(), rand_message_metadata());
     let message_id = message.id();
 
-    let tangle = default_tangle();
+    let tangle = test_tangle();
 
     tangle.insert(message_id, message.clone(), metadata.clone());
 
