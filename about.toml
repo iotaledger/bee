@@ -1,0 +1,12 @@
+accepted = [
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "CC0-1.0",
+    "ISC",
+    "MIT",
+    "MPL-2.0",
+]
+# For now we include these so that the number of gathered crates matches the
+# number of crates in `Cargo.lock`.
+ignore-build-dependencies = false
+ignore-dev-dependencies = false
