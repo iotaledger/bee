@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package proto;
+
+import "proto/peer.proto";
+
+message DiscoveryRequest {
+  // unix time
+  int64 timestamp = 1;
+}
+
+message DiscoveryResponse {
+  // hash of the corresponding request
+  bytes req_hash = 1;
+  // list of peers
+  repeated Peer peers = 2;
+}

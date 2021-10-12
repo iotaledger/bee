@@ -15,13 +15,13 @@ type ServiceName = String;
 
 /// Represents a discovered peer.
 // #[derive(Serialize, Deserialize)]
-pub struct DiscoveredPeer {
+pub struct Peer {
     ip_address: IpAddr,
     public_key: PublicKey,
     services: HashMap<ServiceName, Multiaddr>,
 }
 
-impl DiscoveredPeer {
+impl Peer {
     /// Creates a new instance of a discovered peer.
     pub fn new(address: IpAddr, public_key: PublicKey) -> Self {
         Self {
@@ -120,9 +120,9 @@ impl DiscoveredPeer {
     }
 }
 
-impl fmt::Debug for DiscoveredPeer {
+impl fmt::Debug for Peer {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("DiscoveredPeer")
+        f.debug_struct("Peer")
             .field("ip_address", &self.ip_address)
             .field("public_key", &bs58::encode(&self.public_key).into_string())
             .field("services", &self.services.keys().cloned().collect::<Vec<_>>().join(";"))

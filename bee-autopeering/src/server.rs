@@ -1,25 +1,27 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::config::AutopeeringConfig;
-use crate::packets::{IncomingPacket, OutgoingPacket};
+use crate::{
+    config::AutopeeringConfig,
+    packets::{IncomingPacket, OutgoingPacket},
+};
 
 use tokio::{net::UdpSocket, sync::mpsc};
 
-use std::{error, net::SocketAddr, sync::Arc};
+use std::sync::Arc;
 
 const READ_BUFFER_SIZE: usize = crate::packets::MAX_PACKET_SIZE;
 
 type PacketTx = mpsc::UnboundedSender<IncomingPacket>;
 type PacketRx = mpsc::UnboundedReceiver<OutgoingPacket>;
 
-pub(crate) struct AutopeeringServer {
+pub(crate) struct Server {
     config: AutopeeringConfig,
     incoming_send: PacketTx,
     outgoing_recv: PacketRx,
 }
 
-impl AutopeeringServer {
+impl Server {
     pub fn new(incoming_send: PacketTx, outgoing_recv: PacketRx, config: AutopeeringConfig) -> Self {
         Self {
             config,
@@ -29,7 +31,7 @@ impl AutopeeringServer {
     }
 
     pub async fn run(self) {
-        let AutopeeringServer {
+        let Server {
             config,
             incoming_send,
             outgoing_recv,
@@ -40,7 +42,8 @@ impl AutopeeringServer {
             .await
             .expect("error binding udp socket");
 
-        // The Tokio docs explain that there's no split method, and that we have to arc the UdpSocket in order to share it.
+        // The Tokio docs explain that there's no split method, and that we have to arc the UdpSocket in order to share
+        // it.
         let incoming_socket = Arc::new(socket);
         let outgoing_socket = Arc::clone(&incoming_socket);
 

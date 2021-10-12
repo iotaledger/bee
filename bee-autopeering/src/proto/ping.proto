@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package proto;
+
+import "proto/service.proto";
+
+message Ping {
+  // version number and network ID to classify the protocol
+  uint32 version = 1;
+  uint32 network_id = 2;
+
+  // unix time
+  int64 timestamp = 3;
+
+  // endpoint of the sender; port and string form of the return IP address (e.g. "192.0.2.1", "[2001:db8::1]")
+  string src_addr = 4;
+  uint32 src_port = 5;
+
+  // string form of receiver's IP
+  // This provides a way to discover the external address (after NAT).
+  string dst_addr = 6;
+}
+
+message Pong {
+  // hash of the ping packet
+  bytes req_hash = 1;
+
+  // services supported by the sender
+  ServiceMap services = 2;
+
+  // string form of receiver's IP
+  // This should mirror the source IP of the Ping's IP packet. It provides a way to discover the the external address (after NAT).
+  string dst_addr = 3;
+}

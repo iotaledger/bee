@@ -3,9 +3,10 @@
 
 use crate::{
     config::AutopeeringConfig,
-    manager::AutopeeringManager,
+    discovery::DiscoveryManager,
     packets::{IncomingPacket, OutgoingPacket},
-    server::AutopeeringServer,
+    peering::PeeringManager,
+    server::Server,
 };
 
 use tokio::sync::mpsc;
@@ -18,13 +19,17 @@ pub async fn init(config: AutopeeringConfig) -> Result<(), Box<dyn error::Error>
     let (incoming_send, incoming_recv) = mpsc::unbounded_channel::<IncomingPacket>();
     let (outgoing_send, outgoing_recv) = mpsc::unbounded_channel::<OutgoingPacket>();
 
-    // Spawn the autopeering server handling the socket I/O.
-    let srvr = AutopeeringServer::new(incoming_send, outgoing_recv, config.clone());
+    // Spawn the server handling the socket I/O.
+    let srvr = Server::new(incoming_send, outgoing_recv, config.clone());
     tokio::spawn(srvr.run());
 
-    // Spawn the autopeering manager handling the peering requests/responses/drops and the storage I/O.
-    let mngr = AutopeeringManager::new(incoming_recv, outgoing_send, config);
-    tokio::spawn(mngr.run());
+    // Spawn the discovery manager handling discovery requests/responses.
+    let discovery_mngr = DiscoveryManager::new();
+    tokio::spawn(discovery_mngr.run());
+
+    // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
+    let peering_mngr = PeeringManager::new(incoming_recv, outgoing_send, config);
+    tokio::spawn(peering_mngr.run());
 
     Ok(())
 }

@@ -6,15 +6,16 @@
 #![warn(missing_docs)]
 
 mod config;
+mod discovery;
 mod distance;
 mod hash;
 mod identity;
 mod init;
-mod manager;
 mod messages;
 mod multiaddr;
 mod packets;
 mod peer;
+mod peering;
 mod proto {
     include!(concat!(env!("OUT_DIR"), "/proto.rs"));
 }

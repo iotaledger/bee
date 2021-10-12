@@ -15,7 +15,7 @@ use std::time::Duration;
 type PacketTx = mpsc::UnboundedSender<OutgoingPacket>;
 type PacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
 
-pub(crate) struct AutopeeringManager {
+pub(crate) struct PeeringManager {
     // Channel half for receiving autopeering related packets.
     rx: PacketRx,
     // Channel half for sending autopeering related packets.
@@ -26,7 +26,7 @@ pub(crate) struct AutopeeringManager {
     config: AutopeeringConfig,
 }
 
-impl AutopeeringManager {
+impl PeeringManager {
     pub(crate) fn new(rx: PacketRx, tx: PacketTx, config: AutopeeringConfig) -> Self {
         // TODO: read the store
         let store = ();
@@ -35,7 +35,7 @@ impl AutopeeringManager {
     }
 
     pub(crate) async fn run(self) {
-        let AutopeeringManager { rx, tx, store, config } = self;
+        let PeeringManager { rx, tx, store, config } = self;
 
         let salt = Salt::new(Duration::from_secs(20));
 
