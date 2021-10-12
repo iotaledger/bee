@@ -52,6 +52,8 @@ having to fix each one individually.
 
 ## Supporting the project
 
+The [documentation](https://bee.docs.iota.org) provides information about the structure of Bee and instructions on how to setup your own node.
+
 If you want to discuss Bee or have some questions about it, join us on the
 [IOTA Discord server](https://discord.iota.org/) in the `#bee-dev` and
 `#bee-discussion` channels.
