@@ -34,12 +34,12 @@ const DEFAULT_CACHE_LEN: usize = 100_000;
 const CACHE_THRESHOLD_FACTOR: f64 = 0.1;
 const SYNCED_THRESHOLD: u32 = 2;
 const CONFIRMED_THRESHOLD: u32 = 2;
-const PARTITION_LENGTH: u64 = 100;
+const PARTITION_LENGTH: usize = 100;
 
 /// A Tangle wrapper designed to encapsulate milestone state.
 pub struct Tangle<B> {
     config: TangleConfig,
-    vertices: HashMap<u64, RwLock<HashMap<MessageId, Vertex>>>,
+    vertices: Vec<RwLock<HashMap<MessageId, Vertex>>>,
     max_len: AtomicUsize,
     len: AtomicUsize,
     storage: ResourceHandle<B>,
@@ -57,14 +57,8 @@ pub struct Tangle<B> {
 impl<B: StorageBackend> Tangle<B> {
     /// Create a new `Tangle` instance with the given configuration and storage handle.
     pub fn new(config: TangleConfig, storage: ResourceHandle<B>) -> Self {
-        let mut vertices = HashMap::new();
-
-        for i in 0..PARTITION_LENGTH {
-            vertices.insert(i, RwLock::new(HashMap::new()));
-        }
-
         Self {
-            vertices,
+            vertices: (0..PARTITION_LENGTH).map(|_| RwLock::new(HashMap::new())).collect(),
             max_len: AtomicUsize::new(DEFAULT_CACHE_LEN),
             len: AtomicUsize::new(0),
             storage,
@@ -91,12 +85,12 @@ impl<B: StorageBackend> Tangle<B> {
         &self.config
     }
 
-    fn hash_intern(&self, message_id: &MessageId) -> u64 {
-        u64::from_le_bytes(message_id.as_ref()[0..8].try_into().unwrap()) % PARTITION_LENGTH
+    fn hash_intern(&self, message_id: &MessageId) -> usize {
+        usize::from_le_bytes(message_id.as_ref()[0..8].try_into().unwrap()) % PARTITION_LENGTH
     }
 
     fn get_interned_vertices(&self, message_id: &MessageId) -> &RwLock<HashMap<MessageId, Vertex>> {
-        self.vertices.get(&self.hash_intern(message_id)).unwrap()
+        &self.vertices[self.hash_intern(message_id)]
     }
 
     async fn get_interned(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex> + '_> {
@@ -613,8 +607,8 @@ impl<B: StorageBackend> Tangle<B> {
 
         if len > max_len {
             while len > ((1.0 - CACHE_THRESHOLD_FACTOR) * max_len as f64) as usize {
-                let idx = rand::thread_rng().gen_range(0..PARTITION_LENGTH);
-                let mut vertices = self.vertices.get(&idx).unwrap().write().await;
+                let idx = rand::thread_rng().gen_range(0..PARTITION_LENGTH) as usize;
+                let mut vertices = self.vertices[idx].write().await;
 
                 if let Some(key) = vertices.iter().next().map(|(k, _)| k).copied() {
                     if vertices.remove(&key).is_some() {
