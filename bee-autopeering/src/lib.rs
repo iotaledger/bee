@@ -5,6 +5,7 @@
 
 #![warn(missing_docs)]
 
+mod backoff;
 mod config;
 mod discovery;
 mod distance;

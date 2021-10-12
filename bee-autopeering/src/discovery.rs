@@ -15,6 +15,9 @@ const DEFAULT_MAX_MANAGED: usize = 1000;
 // maximum number of peers kept in the replacement list
 const DEFAULT_MAX_REPLACEMENTS: usize = 10;
 
+const BACKOFF_INTERVALL_MILLISECS: u64 = 500;
+const MAX_RETRIES: usize = 2;
+
 #[derive(Debug)]
 pub(crate) enum Event {
     PeerDiscovered { peer: Peer },
