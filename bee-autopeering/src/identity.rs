@@ -6,18 +6,19 @@ use crate::hash;
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature};
 
 use std::{
+    any::Any,
     convert::TryInto,
     fmt,
     sync::{Arc, RwLock},
 };
 
-const ID_LENGTH: usize = 8;
+const INTERNAL_ID_LENGTH: usize = 8;
 
-/// A type that represents a local identity, which is also able to sign messages.
+/// A type that represents a local identity, which is able to sign messages.
 #[derive(Clone)]
 pub struct LocalId {
     private_key: Arc<RwLock<PrivateKey>>,
-    identity: PeerId,
+    peer_id: PeerId,
 }
 
 impl LocalId {
@@ -40,22 +41,17 @@ impl LocalId {
         let private_key = PrivateKey::from_bytes(bytes);
 
         let public_key = private_key.public_key();
-        let identity = PeerId::from_public_key(public_key);
+        let peer_id = PeerId::from_public_key(public_key);
 
         Self {
             private_key: Arc::new(RwLock::new(private_key)),
-            identity,
+            peer_id,
         }
     }
 
     /// Returns the public key of this identity.
     pub fn public_key(&self) -> PublicKey {
-        self.identity.public_key()
-    }
-
-    /// Returns the ID of this local identity.
-    pub fn id_string(&self) -> String {
-        self.identity.id_string()
+        self.peer_id.public_key()
     }
 
     /// Signs a message using the private key.
@@ -71,30 +67,44 @@ impl Default for LocalId {
 
         Self {
             private_key: Arc::new(RwLock::new(private_key)),
-            identity,
+            peer_id: identity,
         }
+    }
+}
+
+impl Eq for LocalId {}
+impl PartialEq for LocalId {
+    fn eq(&self, other: &Self) -> bool {
+        self.peer_id == other.peer_id
     }
 }
 
 impl fmt::Debug for LocalId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("LocalId").field("identity", &self.identity).finish()
+        f.debug_struct("LocalId").field("identity", &self.peer_id).finish()
+    }
+}
+
+impl fmt::Display for LocalId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.peer_id)
     }
 }
 
 /// A type that represents the unique identity of a peer in the network.
 #[derive(Clone)]
 pub struct PeerId {
-    internal_id: [u8; ID_LENGTH],
+    internal_id: [u8; INTERNAL_ID_LENGTH],
     public_key: Arc<RwLock<PublicKey>>,
 }
 
 impl PeerId {
     /// Creates an identity from an ED25519 public key.
     pub fn from_public_key(public_key: PublicKey) -> Self {
-        let internal_id = *&hash::sha256(&public_key.to_bytes())[..ID_LENGTH]
+        let internal_id = *&hash::sha256(&public_key.to_bytes())[..INTERNAL_ID_LENGTH]
             .try_into()
             .expect("error creating internal id");
+
         Self {
             internal_id,
             public_key: Arc::new(RwLock::new(public_key)),
@@ -109,11 +119,6 @@ impl PeerId {
         PublicKey::try_from_bytes(bytes.try_into().unwrap()).unwrap()
     }
 
-    /// Returns the 'base58' string representation (created from of the first 8 bytes of the 32 byte long internal id)
-    pub fn id_string(&self) -> String {
-        bs58::encode(&self.internal_id).into_string()
-    }
-
     /// Returns the corresponding `libp2p::PeerId`.
     pub fn libp2p_peer_id(&self) -> libp2p_core::PeerId {
         let bytes = self.public_key.read().unwrap().to_bytes();
@@ -122,6 +127,20 @@ impl PeerId {
                 .expect("error decoding ed25519 public key from bytes"),
         );
         libp2p_core::PeerId::from_public_key(pubkey)
+    }
+}
+
+impl Default for PeerId {
+    fn default() -> Self {
+        let private_key = PrivateKey::generate().expect("error generating private key");
+        Self::from_public_key(private_key.public_key())
+    }
+}
+
+impl Eq for PeerId {}
+impl PartialEq for PeerId {
+    fn eq(&self, other: &Self) -> bool {
+        self.internal_id == other.internal_id
     }
 }
 
@@ -136,6 +155,12 @@ impl fmt::Debug for PeerId {
                 &bs58::encode(self.public_key.read().expect("error getting the lock").as_ref()).into_string(),
             )
             .finish()
+    }
+}
+
+impl fmt::Display for PeerId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", bs58::encode(&self.internal_id).into_string())
     }
 }
 

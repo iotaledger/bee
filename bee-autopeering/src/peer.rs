@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::proto;
+use crate::{identity::PeerId, proto};
 
 use bytes::BytesMut;
 use crypto::signatures::ed25519::PublicKey;
@@ -22,13 +22,18 @@ pub struct Peer {
 }
 
 impl Peer {
-    /// Creates a new instance of a discovered peer.
+    /// Creates a new instance.
     pub fn new(address: IpAddr, public_key: PublicKey) -> Self {
         Self {
             ip_address: address,
             public_key,
             services: HashMap::default(),
         }
+    }
+
+    /// Returns the [`PeerId`](crate::identity::PeerId) of this peer.
+    pub fn peer_id(&self) -> PeerId {
+        PeerId::from_public_key(self.public_key)
     }
 
     /// Creates a discovered peer from its Protobuf representation/encoding.
