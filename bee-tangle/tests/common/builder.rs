@@ -3,7 +3,7 @@
 
 use bee_message::{Message, MessageId, MessageMetadata};
 use bee_storage::StorageBackend as _;
-use bee_storage_rocksdb::Storage;
+use bee_storage_null::Storage as NullStorage;
 use bee_tangle::{StorageBackend, Tangle, TangleConfig};
 use bee_test::rand::{
     bytes::rand_bytes_array,
@@ -12,13 +12,8 @@ use bee_test::rand::{
 
 use std::collections::HashMap;
 
-pub fn default_tangle() -> Tangle<Storage> {
-    let path = String::from("./tests/database");
-    // let _ = std::fs::remove_dir_all(&path);
-    let config = bee_storage_rocksdb::config::RocksDbConfigBuilder::default()
-        .with_path((&path).into())
-        .finish();
-    let storage = bee_storage_rocksdb::storage::Storage::start(config).unwrap();
+pub fn default_tangle() -> Tangle<NullStorage> {
+    let storage = NullStorage::start(()).unwrap();
 
     Tangle::new(TangleConfig::default(), storage)
 }
@@ -67,7 +62,7 @@ impl TangleBuilder {
         self
     }
 
-    pub fn build(self) -> (Tangle<Storage>, HashMap<usize, MessageId>) {
+    pub fn build(self) -> (Tangle<NullStorage>, HashMap<usize, MessageId>) {
         // Check that the graph is a DAG and find a topological order so we can add messages to the tangle in the
         // correct order (parents before children). This `Vec` will hold the nodes in such order.
         let mut ordered_nodes = vec![];
