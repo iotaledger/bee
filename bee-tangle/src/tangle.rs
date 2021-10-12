@@ -116,12 +116,12 @@ impl<B: StorageBackend> Tangle<B> {
     ) -> Option<MessageRef> {
         let exists = self.pull_message(&message_id, true).await;
 
+        let msg = self.insert_inner(message_id, message.clone(), metadata, !exists).await;
+
         self.get_interned_mut(&message_id)
             .await
             .expect("Just-inserted message is missing")
             .allow_eviction();
-
-        let msg = self.insert_inner(message_id, message.clone(), metadata, !exists).await;
 
         if msg.is_some() {
             // Write parents to DB
