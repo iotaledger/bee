@@ -30,9 +30,9 @@ jobs:
       name: Initialize template
       with:
         command: about
-        args: cargo about --workspace --all-features init
+        args: --workspace --all-features init
     - uses: actions-rs/cargo@v1
       name: Check licenses
       with:
         command: about
-        args: cargo about --workspace --all-features generate about.hbs
+        args: --workspace --all-features --log-level info generate about.hbs
