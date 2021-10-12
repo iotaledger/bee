@@ -11,15 +11,15 @@ use std::collections::HashMap;
 
 /// Tangle data structure, providing access to [`Message`]s and [`MessageMetadata`]s.
 #[derive(Default)]
-pub struct Tangle<T> {
+pub struct Tangle<S> {
     _config: TangleConfig,
     cache: RwLock<HashMap<MessageId, MessageData>>,
-    _storage: T,
+    _storage: S,
 }
 
-impl<T: StorageBackend> Tangle<T> {
+impl<S: StorageBackend> Tangle<S> {
     /// Creates a new [`Tangle`].
-    pub fn new(config: TangleConfig, storage: T) -> Self {
+    pub fn new(config: TangleConfig, storage: S) -> Self {
         Self {
             _config: config,
             cache: Default::default(),

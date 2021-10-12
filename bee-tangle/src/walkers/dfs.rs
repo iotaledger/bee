@@ -8,16 +8,16 @@ use bee_message::MessageId;
 use std::collections::HashSet;
 
 /// A builder for a [`TangleDfsWalker`].
-pub struct TangleDfsWalkerBuilder<'a, T> {
-    tangle: &'a Tangle<T>,
+pub struct TangleDfsWalkerBuilder<'a, S> {
+    tangle: &'a Tangle<S>,
     root: MessageId,
     #[allow(clippy::type_complexity)]
-    condition: Option<Box<dyn Fn(&'a Tangle<T>, &MessageId, &MessageData) -> bool>>,
+    condition: Option<Box<dyn Fn(&'a Tangle<S>, &MessageId, &MessageData) -> bool>>,
 }
 
-impl<'a, T: StorageBackend> TangleDfsWalkerBuilder<'a, T> {
+impl<'a, S: StorageBackend> TangleDfsWalkerBuilder<'a, S> {
     /// Creates a new [`TangleDfsWalkerBuilder`].
-    pub fn new(tangle: &'a Tangle<T>, root: MessageId) -> Self {
+    pub fn new(tangle: &'a Tangle<S>, root: MessageId) -> Self {
         Self {
             tangle,
             root,
@@ -26,13 +26,13 @@ impl<'a, T: StorageBackend> TangleDfsWalkerBuilder<'a, T> {
     }
 
     /// Adds a condition to the [`TangleDfsWalkerBuilder`].
-    pub fn with_condition(mut self, condition: Box<dyn Fn(&'a Tangle<T>, &MessageId, &MessageData) -> bool>) -> Self {
+    pub fn with_condition(mut self, condition: Box<dyn Fn(&'a Tangle<S>, &MessageId, &MessageData) -> bool>) -> Self {
         self.condition.replace(condition);
         self
     }
 
     /// Finishes the [`TangleDfsWalkerBuilder`] into a [`TangleDfsWalker`].
-    pub fn finish(self) -> TangleDfsWalker<'a, T> {
+    pub fn finish(self) -> TangleDfsWalker<'a, S> {
         TangleDfsWalker {
             tangle: self.tangle,
             parents: vec![self.root],
@@ -43,21 +43,21 @@ impl<'a, T: StorageBackend> TangleDfsWalkerBuilder<'a, T> {
 }
 
 /// A walker that goes through the tangle in a Depth First Search manner.
-pub struct TangleDfsWalker<'a, T> {
-    tangle: &'a Tangle<T>,
+pub struct TangleDfsWalker<'a, S> {
+    tangle: &'a Tangle<S>,
     parents: Vec<MessageId>,
     visited: HashSet<MessageId>,
-    condition: Box<dyn Fn(&'a Tangle<T>, &MessageId, &MessageData) -> bool>,
+    condition: Box<dyn Fn(&'a Tangle<S>, &MessageId, &MessageData) -> bool>,
 }
 
-impl<'a, T: StorageBackend> TangleDfsWalker<'a, T> {
+impl<'a, S: StorageBackend> TangleDfsWalker<'a, S> {
     /// Creates a new [`TangleDfsWalker`].
-    pub fn new(tangle: &'a Tangle<T>, root: MessageId) -> Self {
+    pub fn new(tangle: &'a Tangle<S>, root: MessageId) -> Self {
         TangleDfsWalkerBuilder::new(tangle, root).finish()
     }
 }
 
-impl<'a, T: StorageBackend> Iterator for TangleDfsWalker<'a, T> {
+impl<'a, S: StorageBackend> Iterator for TangleDfsWalker<'a, S> {
     type Item = TangleWalkerItem;
 
     fn next(&mut self) -> Option<Self::Item> {

@@ -28,8 +28,8 @@ fn rand_prefixed_message_id(prefix: u16) -> MessageId {
     MessageId::from(message_id_bytes)
 }
 
-fn new_node<T: StorageBackend>(
-    tangle: &Tangle<T>,
+fn new_node<S: StorageBackend>(
+    tangle: &Tangle<S>,
     message_id: MessageId,
     parents_ids: Vec<MessageId>,
 ) -> (Message, MessageMetadata) {

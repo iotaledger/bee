@@ -17,8 +17,8 @@ pub trait StorageBackend:
 {
 }
 
-impl<T> StorageBackend for T where
-    T: backend::StorageBackend
+impl<S> StorageBackend for S where
+    S: backend::StorageBackend
         + Fetch<MessageId, Message>
         + Fetch<MessageId, MessageMetadata>
         + Insert<MessageId, Message>
