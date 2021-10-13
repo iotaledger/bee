@@ -7,29 +7,25 @@ use log::{info, warn};
 
 use std::path::Path;
 
-pub(crate) async fn download_snapshot_file(file_path: &Path, download_urls: &[String]) -> Result<(), Error> {
-    let file_name = file_path
-        .file_name()
-        .ok_or_else(|| Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;
-
+pub(crate) async fn download_snapshot_file(
+    path: &Path,
+    download_urls: impl Iterator<Item = &str>,
+) -> Result<(), Error> {
     tokio::fs::create_dir_all(
-        file_path
-            .parent()
-            .ok_or_else(|| Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?,
+        path.parent()
+            .ok_or_else(|| Error::InvalidFilePath(format!("{}", path.display())))?,
     )
     .await
-    .map_err(|_| Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;
+    .map_err(|_| Error::InvalidFilePath(format!("{}", path.display())))?;
 
     for url in download_urls {
-        let url = url.to_owned() + &file_name.to_string_lossy();
-
         info!("Downloading snapshot file {}...", url);
 
-        match reqwest::get(&url).await.and_then(|res| res.error_for_status()) {
+        match reqwest::get(url).await.and_then(|res| res.error_for_status()) {
             Ok(res) => {
                 tokio::io::copy(
                     &mut res.bytes().await.map_err(|_| Error::DownloadingFailed)?.as_ref(),
-                    &mut tokio::fs::File::create(file_path).await?,
+                    &mut tokio::fs::File::create(path).await?,
                 )
                 .await?;
                 break;
@@ -38,7 +34,7 @@ pub(crate) async fn download_snapshot_file(file_path: &Path, download_urls: &[St
         }
     }
 
-    if !file_path.exists() {
+    if !path.exists() {
         return Err(Error::NoDownloadSourceAvailable);
     }
 

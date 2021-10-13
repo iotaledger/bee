@@ -4,21 +4,41 @@
 //! Module containing snapshot configuration.
 
 use serde::Deserialize;
+use url::Url;
 
 use std::path::{Path, PathBuf};
 
 const DEFAULT_FULL_PATH: &str = "./snapshots/mainnet/latest-full_snapshot.bin";
-const DEFAULT_DOWNLOAD_URLS: Vec<String> = Vec::new();
+const DEFAULT_DOWNLOAD_URLS: Vec<DownloadUrls> = Vec::new();
 const DEFAULT_DEPTH: u32 = 50;
 const DEFAULT_INTERVAL_SYNCED: u32 = 50;
 const DEFAULT_INTERVAL_UNSYNCED: u32 = 1000;
+
+/// Contains URLs to download the full and delta snapshot files.
+#[derive(Clone, Deserialize)]
+pub struct DownloadUrls {
+    full: Url,
+    delta: Url,
+}
+
+impl DownloadUrls {
+    /// Returns the download URL for the full snapshot.
+    pub fn full(&self) -> &str {
+        self.full.as_str()
+    }
+
+    /// Returns the download URL for the delta snapshot.
+    pub fn delta(&self) -> &str {
+        self.delta.as_str()
+    }
+}
 
 /// Builder for a `SnapshotConfig`.
 #[derive(Default, Deserialize)]
 pub struct SnapshotConfigBuilder {
     full_path: Option<PathBuf>,
     delta_path: Option<PathBuf>,
-    download_urls: Option<Vec<String>>,
+    download_urls: Option<Vec<DownloadUrls>>,
     depth: Option<u32>,
     interval_synced: Option<u32>,
     interval_unsynced: Option<u32>,
@@ -43,7 +63,7 @@ impl SnapshotConfigBuilder {
     }
 
     /// Sets the download URLs of the `SnapshotConfigBuilder`.
-    pub fn download_urls(mut self, download_urls: Vec<String>) -> Self {
+    pub fn download_urls(mut self, download_urls: Vec<DownloadUrls>) -> Self {
         self.download_urls.replace(download_urls);
         self
     }
@@ -86,7 +106,7 @@ impl SnapshotConfigBuilder {
 pub struct SnapshotConfig {
     full_path: PathBuf,
     delta_path: Option<PathBuf>,
-    download_urls: Vec<String>,
+    download_urls: Vec<DownloadUrls>,
     depth: u32,
     interval_synced: u32,
     interval_unsynced: u32,
@@ -109,7 +129,7 @@ impl SnapshotConfig {
     }
 
     /// Returns the download URLs of the `SnapshotConfig`.
-    pub fn download_urls(&self) -> &[String] {
+    pub fn download_urls(&self) -> &[DownloadUrls] {
         &self.download_urls
     }
 
