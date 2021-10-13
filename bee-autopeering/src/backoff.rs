@@ -11,7 +11,7 @@ use std::time::Duration;
 pub(crate) struct BackoffBuilder {
     max_retries: Option<usize>,
     timeout: Option<Duration>,
-    jitter: Option<i64>,
+    jitter: Option<f32>,
     mode: BackoffMode,
 }
 
@@ -33,7 +33,9 @@ impl BackoffBuilder {
         self
     }
 
-    pub fn with_jitter(mut self, jitter: i64) -> Self {
+    pub fn with_jitter(mut self, jitter: f32) -> Self {
+        assert!((0.0..=1.0).contains(&jitter));
+
         self.jitter.replace(jitter);
         self
     }
@@ -42,7 +44,7 @@ impl BackoffBuilder {
         Backoff {
             max_retries: self.max_retries.unwrap_or(usize::MAX),
             timeout: self.timeout.unwrap_or(Duration::MAX),
-            jitter: self.jitter.unwrap_or(0),
+            jitter: self.jitter.unwrap_or(1.0),
             mode: self.mode,
             current_retries: 0,
             timestamp: time::unix_now(),
@@ -53,7 +55,7 @@ impl BackoffBuilder {
 pub(crate) struct Backoff {
     max_retries: usize,
     timeout: Duration,
-    jitter: i64,
+    jitter: f32,
     mode: BackoffMode,
     current_retries: usize,
     timestamp: u64,
@@ -68,7 +70,7 @@ impl Iterator for Backoff {
         } else if Duration::from_secs(time::unix_now() - self.timestamp) > self.timeout {
             None
         } else {
-            let next_interval_millis = match &mut self.mode {
+            let mut next_interval_millis = match &mut self.mode {
                 BackoffMode::Zero => 0,
                 BackoffMode::Constant(value) => *value,
                 BackoffMode::Exponential(value, factor) => {
@@ -79,13 +81,12 @@ impl Iterator for Backoff {
             };
             self.current_retries += 1;
 
-            let jitter = if self.jitter != 0 {
-                thread_rng().gen_range(-self.jitter..self.jitter)
-            } else {
-                0
-            };
+            if self.jitter != 1.0 {
+                next_interval_millis =
+                    thread_rng().gen_range(((next_interval_millis as f32 * self.jitter) as u64)..next_interval_millis)
+            }
 
-            Some(Duration::from_millis((next_interval_millis as i64 - jitter) as u64))
+            Some(Duration::from_millis(next_interval_millis))
         }
     }
 }

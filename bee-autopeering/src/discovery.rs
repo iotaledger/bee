@@ -1,7 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{identity::PeerId, peer::Peer};
+use crate::{
+    backoff::{Backoff, BackoffBuilder, BackoffMode},
+    identity::PeerId,
+    peer::Peer,
+};
 
 use std::{collections::VecDeque, fmt};
 
@@ -116,6 +120,9 @@ pub(crate) struct DiscoveryManager {}
 
 impl DiscoveryManager {
     pub(crate) fn new() -> Self {
+        let backoff = BackoffBuilder::new(BackoffMode::Exponential(BACKOFF_INTERVALL_MILLISECS, 1.5))
+            .with_jitter(0.5)
+            .with_max_retries(MAX_RETRIES);
         Self {}
     }
     pub(crate) async fn run(self) {
