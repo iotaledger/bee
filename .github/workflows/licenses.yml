@@ -26,6 +26,8 @@ jobs:
       with:
         command: install
         args: cargo-about
+    - name: Move `about.toml` to project root
+      run: mv .github/workflows/about.toml .
     - uses: actions-rs/cargo@v1
       name: Initialize template
       with:
