@@ -13,7 +13,7 @@ const DEFAULT_DEPTH: u32 = 50;
 const DEFAULT_INTERVAL_SYNCED: u32 = 50;
 const DEFAULT_INTERVAL_UNSYNCED: u32 = 1000;
 
-///
+/// Contains URLs to download the full and delta snapshot files.
 #[derive(Clone, Deserialize)]
 pub struct DownloadUrls {
     full: String,
@@ -21,12 +21,12 @@ pub struct DownloadUrls {
 }
 
 impl DownloadUrls {
-    ///
+    /// Returns the download URL for the full snapshot.
     pub fn full(&self) -> &str {
         &self.full
     }
 
-    ///
+    /// Returns the download URL for the delta snapshot.
     pub fn delta(&self) -> &str {
         &self.delta
     }
