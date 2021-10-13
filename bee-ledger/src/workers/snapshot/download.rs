@@ -13,10 +13,10 @@ pub(crate) async fn download_snapshot_file(
 ) -> Result<(), Error> {
     tokio::fs::create_dir_all(
         path.parent()
-            .ok_or_else(|| Error::InvalidFilePath(path.to_string_lossy().to_string()))?,
+            .ok_or_else(|| Error::InvalidFilePath(format!("{}", path.display())))?,
     )
     .await
-    .map_err(|_| Error::InvalidFilePath(path.to_string_lossy().to_string()))?;
+    .map_err(|_| Error::InvalidFilePath(format!("{}", path.display())))?;
 
     for url in download_urls {
         info!("Downloading snapshot file {}...", url);
