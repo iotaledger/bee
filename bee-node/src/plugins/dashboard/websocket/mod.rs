@@ -20,12 +20,8 @@ use crate::{
 };
 
 use bee_common::auth::jwt::JsonWebToken;
-use bee_runtime::{
-    resource::ResourceHandle,
-    shutdown_stream::ShutdownStream,
-    task::{StandaloneSpawner, TaskSpawner},
-};
-use bee_tangle::MsTangle;
+use bee_runtime::{resource::ResourceHandle, shutdown_stream::ShutdownStream};
+use bee_tangle::Tangle;
 
 use futures::{channel::oneshot, FutureExt, StreamExt};
 use log::{debug, error};
@@ -71,7 +67,7 @@ pub(crate) type WsUsers = Arc<RwLock<HashMap<usize, WsUser>>>;
 pub(crate) async fn user_connected<B: StorageBackend>(
     ws: WebSocket,
     storage: ResourceHandle<B>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     users: WsUsers,
     node_id: String,
     auth_config: DashboardAuthConfig,
@@ -90,7 +86,7 @@ pub(crate) async fn user_connected<B: StorageBackend>(
     let (shutdown_tx, shutdown_rx) = oneshot::channel();
     let receiver = ShutdownStream::new(shutdown_rx, UnboundedReceiverStream::new(rx));
 
-    let task = StandaloneSpawner::spawn(receiver.forward(ws_tx).map(|result| {
+    let task = tokio::spawn(receiver.forward(ws_tx).map(|result| {
         if let Err(e) = result {
             error!("websocket send error: {}", e);
         }
@@ -132,7 +128,7 @@ async fn user_message<B: StorageBackend>(
     user_id: usize,
     msg: Message,
     users: &WsUsers,
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     storage: &B,
     node_id: &str,
     auth_config: &DashboardAuthConfig,
@@ -203,7 +199,7 @@ async fn user_disconnected(user_id: usize, users: &WsUsers) {
     users.write().await.remove(&user_id);
 }
 
-fn send_init_values<B: StorageBackend>(topic: &WsTopic, user: &WsUser, tangle: &MsTangle<B>, storage: &B) {
+fn send_init_values<B: StorageBackend>(topic: &WsTopic, user: &WsUser, tangle: &Tangle<B>, storage: &B) {
     match topic {
         WsTopic::SyncStatus => {
             let event = WsEvent::new(

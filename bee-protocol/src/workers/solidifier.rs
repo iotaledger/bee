@@ -19,7 +19,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{event::SolidMilestoneChanged, traversal, MsTangle, TangleWorker};
+use bee_tangle::{event::SolidMilestoneChanged, traversal, Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::StreamExt;
@@ -36,7 +36,7 @@ pub(crate) struct MilestoneSolidifierWorker {
 }
 
 async fn heavy_solidification<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     message_requester: &MessageRequesterWorker,
     requested_messages: &RequestedMessages,
     target_index: MilestoneIndex,
@@ -46,7 +46,7 @@ async fn heavy_solidification<B: StorageBackend>(
     let mut missing = Vec::new();
 
     traversal::visit_parents_depth_first(
-        &**tangle,
+        tangle,
         target_id,
         |id, _, metadata| async move { !metadata.flags().is_solid() && !requested_messages.contains(&id).await },
         |_, _, _| {},
@@ -66,7 +66,7 @@ async fn heavy_solidification<B: StorageBackend>(
 
 #[allow(clippy::too_many_arguments)]
 async fn solidify<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     consensus_worker: &mpsc::UnboundedSender<ConsensusWorkerCommand>,
     index_updater_worker: &mpsc::UnboundedSender<IndexUpdaterWorkerEvent>,
     peer_manager: &PeerManager,
@@ -126,7 +126,7 @@ where
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
         let consensus_worker = node.worker::<ConsensusWorker>().unwrap().tx.clone();
         let milestone_cone_updater = node.worker::<IndexUpdaterWorker>().unwrap().tx.clone();
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let metrics = node.resource::<NodeMetrics>();

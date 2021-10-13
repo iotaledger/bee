@@ -10,7 +10,7 @@ use crate::{
 };
 
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use warp::{reject, Filter, Rejection, Reply};
 
@@ -23,7 +23,7 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::get())
@@ -32,7 +32,7 @@ pub(crate) fn filter<B: StorageBackend>(
         .and_then(tips)
 }
 
-pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<MsTangle<B>>) -> Result<impl Reply, Rejection> {
+pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<Tangle<B>>) -> Result<impl Reply, Rejection> {
     if !tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
         return Err(reject::custom(CustomRejection::ServiceUnavailable(
             "the node is not synchronized".to_string(),

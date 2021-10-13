@@ -18,7 +18,7 @@ use bee_message::{parents::Parents, payload::Payload, Message, MessageBuilder, M
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
 use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use futures::channel::oneshot;
 use log::error;
@@ -35,7 +35,7 @@ fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
     rest_api_config: RestApiConfig,
@@ -66,7 +66,7 @@ pub(crate) fn filter<B: StorageBackend>(
 
 pub(crate) async fn submit_message<B: StorageBackend>(
     value: JsonValue,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
     rest_api_config: RestApiConfig,
@@ -216,7 +216,7 @@ pub(crate) async fn build_message(
 
 pub(crate) async fn submit_message_raw<B: StorageBackend>(
     buf: warp::hyper::body::Bytes,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<impl Reply, Rejection> {
     let message = Message::unpack(&mut &(*buf)).map_err(|e| {
@@ -236,7 +236,7 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
 
 pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
     message: Message,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<MessageId, Rejection> {
     let (message_id, message_bytes) = message.id();

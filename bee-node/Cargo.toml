@@ -65,7 +65,7 @@ path = "src/main.rs"
 [features]
 default = [ "rocksdb" ]
 
-console = [ "console-subscriber", "tokio/tracing", "tracing", "tracing-subscriber", "bee-runtime/console" ]
+tokio-console = [ "console-subscriber", "tokio/tracing", "tracing", "tracing-subscriber", "bee-common/tokio-console" ]
 dashboard = [ "cap", "mime_guess", "rust-embed", "serde_repr", "warp-reverse-proxy" ]
 rocksdb = [ "bee-storage-rocksdb" ]
 sled = [ "bee-storage-sled" ]

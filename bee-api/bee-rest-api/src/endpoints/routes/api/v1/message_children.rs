@@ -11,7 +11,7 @@ use crate::{
 
 use bee_message::MessageId;
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use warp::{Filter, Rejection, Reply};
 
@@ -28,7 +28,7 @@ fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clon
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::get())
@@ -39,7 +39,7 @@ pub(crate) fn filter<B: StorageBackend>(
 
 pub async fn message_children<B: StorageBackend>(
     message_id: MessageId,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     let mut children = Vec::from_iter(tangle.get_children(&message_id).await.unwrap_or_default());
     let count = children.len();

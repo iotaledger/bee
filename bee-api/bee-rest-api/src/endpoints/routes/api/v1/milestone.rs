@@ -11,7 +11,7 @@ use crate::{
 
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use warp::{reject, Filter, Rejection, Reply};
 
@@ -27,7 +27,7 @@ fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::get())
@@ -38,7 +38,7 @@ pub(crate) fn filter<B: StorageBackend>(
 
 pub(crate) async fn milestone<B: StorageBackend>(
     milestone_index: MilestoneIndex,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     match tangle.get_milestone_message_id(milestone_index).await {
         Some(message_id) => match tangle.get_metadata(&message_id).await {

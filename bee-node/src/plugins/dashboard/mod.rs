@@ -32,7 +32,7 @@ use bee_protocol::workers::{
     MetricsWorker, PeerManagerResWorker,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{event::LatestMilestoneChanged, MsTangle, TangleWorker};
+use bee_tangle::{event::LatestMilestoneChanged, Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -58,7 +58,7 @@ where
     E: Any + Clone + Send + Sync,
     F: 'static + Fn(E) -> WsEvent + Send + Sync,
 {
-    let tangle = node.resource::<MsTangle<N::Backend>>();
+    let tangle = node.resource::<Tangle<N::Backend>>();
     let bus = node.bus();
     let users = users.clone();
     let (tx, rx) = mpsc::unbounded_channel();
@@ -110,7 +110,7 @@ where
         // TODO: load them differently if possible
         let node_config = node.resource::<NodeConfig<N::Backend>>();
         let rest_api_config = node_config.rest_api.clone();
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let storage = node.storage();
 
         // Keep track of all connected users, key is usize, value is a websocket sender.

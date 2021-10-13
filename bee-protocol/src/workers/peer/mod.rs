@@ -25,7 +25,7 @@ use crate::{
 
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use futures::{channel::oneshot, future::FutureExt};
 use log::{debug, error, info, trace};
@@ -76,7 +76,7 @@ impl PeerWorker {
 
     pub(crate) async fn run<B: StorageBackend>(
         mut self,
-        tangle: ResourceHandle<MsTangle<B>>,
+        tangle: ResourceHandle<Tangle<B>>,
         requested_milestones: ResourceHandle<RequestedMilestones>,
         receiver: UnboundedReceiverStream<Vec<u8>>,
         shutdown: oneshot::Receiver<()>,
@@ -113,7 +113,7 @@ impl PeerWorker {
 
     fn process_packet<B: StorageBackend>(
         &mut self,
-        tangle: &MsTangle<B>,
+        tangle: &Tangle<B>,
         header: &HeaderPacket,
         bytes: &[u8],
     ) -> Result<(), Error> {

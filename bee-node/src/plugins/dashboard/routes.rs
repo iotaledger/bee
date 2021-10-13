@@ -15,7 +15,7 @@ use crate::{
 use bee_common::auth::jwt::JsonWebToken;
 use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use log::debug;
 use warp::{
@@ -75,7 +75,7 @@ pub(crate) fn page_routes() -> impl Filter<Extract = impl Reply, Error = Rejecti
 
 pub(crate) fn ws_routes<B: StorageBackend>(
     storage: ResourceHandle<B>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     users: WsUsers,
     node_id: String,
     auth_config: DashboardAuthConfig,
@@ -190,7 +190,7 @@ pub(crate) fn auth_route(
 
 pub(crate) fn routes<B: StorageBackend>(
     storage: ResourceHandle<B>,
-    tangle: ResourceHandle<MsTangle<B>>,
+    tangle: ResourceHandle<Tangle<B>>,
     node_id: String,
     auth_config: DashboardAuthConfig,
     rest_api_config: RestApiConfig,

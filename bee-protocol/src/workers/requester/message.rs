@@ -11,7 +11,7 @@ use crate::{
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::{Tangle, TangleWorker};
 
 use async_priority_queue::PriorityQueue;
 use async_trait::async_trait;
@@ -33,7 +33,7 @@ use std::{
 const RETRY_INTERVAL_MS: u64 = 2500;
 
 pub async fn request_message<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     message_requester: &MessageRequesterWorker,
     requested_messages: &RequestedMessages,
     message_id: MessageId,
@@ -172,7 +172,7 @@ async fn retry_requests<B: StorageBackend>(
     requested_messages: &RequestedMessages,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
-    tangle: &MsTangle<B>,
+    tangle: &Tangle<B>,
     counter: &mut usize,
 ) {
     if peer_manager.is_empty().await {
@@ -260,7 +260,7 @@ where
             }
         });
 
-        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<NodeMetrics>();
