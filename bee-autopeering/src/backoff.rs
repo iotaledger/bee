@@ -68,7 +68,7 @@ impl Iterator for Backoff {
         } else if Duration::from_secs(time::unix_now() - self.timestamp) > self.timeout {
             None
         } else {
-            let next_interval_secs = match &mut self.mode {
+            let next_interval_millis = match &mut self.mode {
                 BackoffMode::Zero => 0,
                 BackoffMode::Constant(value) => *value,
                 BackoffMode::Exponential(value, factor) => {
@@ -85,7 +85,7 @@ impl Iterator for Backoff {
                 0
             };
 
-            Some(Duration::from_secs((next_interval_secs as i64 - jitter) as u64))
+            Some(Duration::from_millis((next_interval_millis as i64 - jitter) as u64))
         }
     }
 }
@@ -110,12 +110,12 @@ mod tests {
     fn zero_backoff() {
         let mut backoff = BackoffBuilder::new(BackoffMode::Zero).with_max_retries(4).finish();
 
-        const ZERO: Duration = Duration::from_secs(0);
+        const MILLIS_0: Duration = Duration::from_millis(0);
 
-        assert_eq!(Some(ZERO), backoff.next());
-        assert_eq!(Some(ZERO), backoff.next());
-        assert_eq!(Some(ZERO), backoff.next());
-        assert_eq!(Some(ZERO), backoff.next());
+        assert_eq!(Some(MILLIS_0), backoff.next());
+        assert_eq!(Some(MILLIS_0), backoff.next());
+        assert_eq!(Some(MILLIS_0), backoff.next());
+        assert_eq!(Some(MILLIS_0), backoff.next());
         assert_eq!(None, backoff.next());
         assert_eq!(None, backoff.next());
     }
@@ -126,12 +126,12 @@ mod tests {
             .with_max_retries(4)
             .finish();
 
-        const FIVE: Duration = Duration::from_secs(5);
+        const MILLIS_500: Duration = Duration::from_millis(500);
 
-        assert_eq!(Some(FIVE), backoff.next());
-        assert_eq!(Some(FIVE), backoff.next());
-        assert_eq!(Some(FIVE), backoff.next());
-        assert_eq!(Some(FIVE), backoff.next());
+        assert_eq!(Some(MILLIS_500), backoff.next());
+        assert_eq!(Some(MILLIS_500), backoff.next());
+        assert_eq!(Some(MILLIS_500), backoff.next());
+        assert_eq!(Some(MILLIS_500), backoff.next());
         assert_eq!(None, backoff.next());
         assert_eq!(None, backoff.next());
     }
