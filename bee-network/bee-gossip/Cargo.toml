@@ -13,7 +13,6 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-identity = { path = "../bee-identity" }
 bee-network-packet = { path = "../bee-network-packet" }
-bee-peering-auto = { path = "../bee-peering-auto", default-features = false, features = [ "backstage" ], optional = true }
 bee-peering-manual = { path = "../bee-peering-manual" }
 bee-task = { path = "../../bee-common/bee-task" }
 

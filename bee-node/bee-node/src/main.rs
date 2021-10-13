@@ -67,14 +67,12 @@ impl<S: SupHandle<Self>> Actor<S> for BeeSupervisor {
         let identity_config = config.identity;
         let gossip_config = config.gossip;
         let manual_peering_config = config.manual_peering;
-        let auto_peering_config = config.auto_peering;
 
         log::info!("Local Id: {:?}", identity_config.local_id);
 
         rt.add_resource(identity_config).await;
         rt.add_resource(gossip_config).await;
         rt.add_resource(manual_peering_config).await;
-        rt.add_resource(auto_peering_config).await;
 
         rt.start(Some("network".into()), GossipActor::new()).await?;
 

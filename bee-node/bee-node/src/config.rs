@@ -8,7 +8,6 @@ use crate::cli::NodeCliArgs;
 use bee_gossip::config::{GossipConfig, GossipConfigBuilder};
 use bee_identity::config::{IdentityConfig, IdentityConfigBuilder};
 use bee_logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
-use bee_peering_auto::config::{AutoPeeringConfig, AutoPeeringConfigBuilder};
 use bee_peering_manual::config::{ManualPeeringConfig, ManualPeeringConfigBuilder};
 
 use serde::Deserialize;
@@ -37,7 +36,6 @@ pub struct NodeConfigBuilder {
     pub(crate) identity: Option<IdentityConfigBuilder>,
     pub(crate) gossip: Option<GossipConfigBuilder>,
     pub(crate) manual_peering: Option<ManualPeeringConfigBuilder>,
-    pub(crate) auto_peering: Option<AutoPeeringConfigBuilder>,
 }
 
 impl NodeConfigBuilder {
@@ -88,7 +86,6 @@ impl NodeConfigBuilder {
             identity,
             gossip: self.gossip.unwrap_or_default().finish(),
             manual_peering,
-            auto_peering: self.auto_peering.unwrap_or_default().finish(),
         }
     }
 }
@@ -103,8 +100,6 @@ pub struct NodeConfig {
     pub gossip: GossipConfig,
     /// Manual peering configuration.
     pub manual_peering: ManualPeeringConfig,
-    /// Auto peering configuration.
-    pub auto_peering: AutoPeeringConfig,
 }
 
 impl Clone for NodeConfig {
@@ -114,7 +109,6 @@ impl Clone for NodeConfig {
             identity: self.identity.clone(),
             gossip: self.gossip.clone(),
             manual_peering: self.manual_peering.clone(),
-            auto_peering: self.auto_peering.clone(),
         }
     }
 }

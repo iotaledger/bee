@@ -10,7 +10,6 @@ members = [
   "bee-network/bee-gossip",
   "bee-network/bee-identity",
   "bee-network/bee-network-packet",
-  "bee-network/bee-peering-auto",
   "bee-network/bee-peering-manual",
   "bee-node/bee-node",
   "bee-node/bee-plugin",
