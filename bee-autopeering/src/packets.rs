@@ -96,11 +96,11 @@ pub enum PacketType {
 #[derive(Debug)]
 pub(crate) struct IncomingPacket {
     pub(crate) bytes: Vec<u8>,
-    pub(crate) source: SocketAddr,
+    pub(crate) source_addr: SocketAddr,
 }
 
 #[derive(Debug)]
 pub(crate) struct OutgoingPacket {
     pub(crate) bytes: Vec<u8>,
-    pub(crate) target: SocketAddr,
+    pub(crate) target_addr: SocketAddr,
 }

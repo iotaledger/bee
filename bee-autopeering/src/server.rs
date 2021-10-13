@@ -8,21 +8,33 @@ use crate::{
 
 use tokio::{net::UdpSocket, sync::mpsc};
 
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 const READ_BUFFER_SIZE: usize = crate::packets::MAX_PACKET_SIZE;
 
 type PacketTx = mpsc::UnboundedSender<IncomingPacket>;
 type PacketRx = mpsc::UnboundedReceiver<OutgoingPacket>;
 
+pub(crate) struct ServerConfig {
+    pub bind_addr: SocketAddr,
+}
+
+impl ServerConfig {
+    pub(crate) fn new(config: &AutopeeringConfig) -> Self {
+        Self {
+            bind_addr: config.bind_addr,
+        }
+    }
+}
+
 pub(crate) struct Server {
-    config: AutopeeringConfig,
+    config: ServerConfig,
     incoming_send: PacketTx,
     outgoing_recv: PacketRx,
 }
 
 impl Server {
-    pub fn new(incoming_send: PacketTx, outgoing_recv: PacketRx, config: AutopeeringConfig) -> Self {
+    pub fn new(config: ServerConfig, incoming_send: PacketTx, outgoing_recv: PacketRx) -> Self {
         Self {
             config,
             incoming_send,
@@ -60,7 +72,7 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, tx: PacketTx) {
         if let Ok((len, from_peer)) = socket.recv_from(&mut buf).await {
             let packet = IncomingPacket {
                 bytes: (&buf[..len]).to_vec(),
-                source: from_peer,
+                source_addr: from_peer,
             };
 
             tx.send(packet).expect("channel send error");
@@ -74,7 +86,10 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, tx: PacketTx) {
 async fn outgoing_packet_handler(socket: Arc<UdpSocket>, mut rx: PacketRx) {
     loop {
         if let Some(packet) = rx.recv().await {
-            let OutgoingPacket { bytes, target } = packet;
+            let OutgoingPacket {
+                bytes,
+                target_addr: target,
+            } = packet;
             let len = socket.send_to(&bytes, target).await.expect("socket send error");
 
             log::debug!("Sent {} bytes", len);

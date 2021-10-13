@@ -3,8 +3,10 @@
 
 use crate::{
     backoff::{Backoff, BackoffBuilder, BackoffMode},
+    config::AutopeeringConfig,
     discovery_messages::{Ping, PingFactory},
     identity::PeerId,
+    multiaddr::AutopeeringMultiaddr,
     packets::{IncomingPacket, OutgoingPacket},
     peer::Peer,
 };
@@ -16,18 +18,47 @@ use std::{collections::VecDeque, fmt, net::SocketAddr};
 type PacketTx = mpsc::UnboundedSender<OutgoingPacket>;
 type PacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
 
-// From `iotaledger/hive.go`:
-// time interval after which the next peer is reverified
+type BootstrapPeer = Peer;
+
+// hive.go: time interval after which the next peer is reverified
 const DEFAULT_REVERIFY_INTERVAL_SECS: u64 = 10;
-// time interval after which peers are queried for new peers
+// hive.go: time interval after which peers are queried for new peers
 const DEFAULT_QUERY_INTERVAL_SECS: u64 = 60;
-// maximum number of peers that can be managed
+// hive.go: maximum number of peers that can be managed
 const DEFAULT_MAX_MANAGED: usize = 1000;
 // maximum number of peers kept in the replacement list
 const DEFAULT_MAX_REPLACEMENTS: usize = 10;
-
+// TODO:
 const BACKOFF_INTERVALL_MILLISECS: u64 = 500;
+// TODO:
 const MAX_RETRIES: usize = 2;
+// hive.go: PingExpiration is the time until a peer verification expires (12 hours)
+const PING_EXPIRATION: u64 = 12 * 60 * 60;
+// hive.go: MaxPeersInResponse is the maximum number of peers returned in DiscoveryResponse.
+const MAX_PEERS_IN_RESPONSE: usize = 6;
+// hive.go: MaxServices is the maximum number of services a peer can support.
+
+pub(crate) struct DiscoveryConfig {
+    pub entry_nodes: Vec<AutopeeringMultiaddr>,
+    pub entry_nodes_prefer_ipv6: bool,
+    pub run_as_entry_node: bool,
+    pub version: u32,
+    pub network_id: u32,
+    pub source_addr: SocketAddr,
+}
+
+impl DiscoveryConfig {
+    pub fn new(config: &AutopeeringConfig, version: u32, network_id: u32) -> Self {
+        Self {
+            entry_nodes: config.entry_nodes.clone(),
+            entry_nodes_prefer_ipv6: config.entry_nodes_prefer_ipv6,
+            run_as_entry_node: config.run_as_entry_node,
+            version,
+            network_id,
+            source_addr: config.bind_addr,
+        }
+    }
+}
 
 #[derive(Debug)]
 pub(crate) enum Event {
@@ -126,6 +157,8 @@ impl DiscoveredPeerlist {
 }
 
 pub(crate) struct DiscoveryManager {
+    // Config.
+    config: DiscoveryConfig,
     // Backoff logic.
     backoff: Backoff,
     // Factory to build `Ping` messages.
@@ -137,15 +170,16 @@ pub(crate) struct DiscoveryManager {
 }
 
 impl DiscoveryManager {
-    pub(crate) fn new(rx: PacketRx, tx: PacketTx) -> Self {
+    pub(crate) fn new(config: DiscoveryConfig, rx: PacketRx, tx: PacketTx) -> Self {
         let backoff = BackoffBuilder::new(BackoffMode::Exponential(BACKOFF_INTERVALL_MILLISECS, 1.5))
             .with_jitter(0.5)
             .with_max_retries(MAX_RETRIES)
             .finish();
 
-        let ping_factory = PingFactory::new(0, 0, "127.0.0.1:1337".parse::<SocketAddr>().unwrap());
+        let ping_factory = PingFactory::new(config.version, config.network_id, config.source_addr);
 
         Self {
+            config,
             backoff,
             ping_factory,
             rx,
@@ -155,16 +189,25 @@ impl DiscoveryManager {
 
     pub(crate) async fn run(self) {
         let DiscoveryManager {
+            config,
             backoff,
             ping_factory,
             rx,
             tx,
         } = self;
 
-        let target: SocketAddr = "255.255.255.255:80".parse().unwrap();
-        let ping = ping_factory.make(target.ip());
-        let bytes = ping.protobuf().unwrap().to_vec();
+        // Send a `Ping` to all entry nodes.
+        let bootstrap_peers = config
+            .entry_nodes
+            .iter()
+            .map(|addr| addr.host_socketaddr())
+            .collect::<Vec<_>>();
 
-        tx.send(OutgoingPacket { bytes, target });
+        for target_addr in bootstrap_peers {
+            let ping = ping_factory.make(target_addr.ip());
+            let bytes = ping.protobuf().unwrap().to_vec();
+
+            tx.send(OutgoingPacket { bytes, target_addr });
+        }
     }
 }

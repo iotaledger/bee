@@ -16,15 +16,15 @@ use std::{
 pub(crate) struct PingFactory {
     version: u32,
     network_id: u32,
-    source: SocketAddr,
+    source_addr: SocketAddr,
 }
 
 impl PingFactory {
-    pub fn new(version: u32, network_id: u32, source: SocketAddr) -> Self {
+    pub fn new(version: u32, network_id: u32, source_addr: SocketAddr) -> Self {
         Self {
             version,
             network_id,
-            source,
+            source_addr,
         }
     }
 
@@ -35,8 +35,8 @@ impl PingFactory {
             version: self.version,
             network_id: self.network_id,
             timestamp,
-            source: self.source,
-            target,
+            source_addr: self.source_addr,
+            target_addr: target,
         }
     }
 }
@@ -44,8 +44,8 @@ pub(crate) struct Ping {
     version: u32,
     network_id: u32,
     timestamp: u64,
-    source: SocketAddr,
-    target: IpAddr,
+    source_addr: SocketAddr,
+    target_addr: IpAddr,
 }
 
 impl Ping {
@@ -80,9 +80,9 @@ impl Ping {
             version: self.version,
             network_id: self.network_id,
             timestamp: self.timestamp as i64,
-            src_addr: self.source.ip().to_string(),
-            src_port: self.source.port() as u32,
-            dst_addr: self.target.to_string(),
+            src_addr: self.source_addr.ip().to_string(),
+            src_port: self.source_addr.port() as u32,
+            dst_addr: self.target_addr.to_string(),
         };
 
         let mut bytes = BytesMut::with_capacity(ping.encoded_len());
@@ -98,8 +98,8 @@ impl fmt::Debug for Ping {
             .field("version", &self.version)
             .field("network_id", &self.network_id)
             .field("timestamp", &self.timestamp)
-            .field("source", &self.source)
-            .field("target", &self.target)
+            .field("source_addr", &self.source_addr)
+            .field("target_addr", &self.target_addr)
             .finish()
     }
 }
@@ -107,15 +107,15 @@ impl fmt::Debug for Ping {
 pub(crate) struct Pong {
     ping_hash: Vec<u8>,
     services: ServiceMap,
-    target: IpAddr,
+    target_addr: IpAddr,
 }
 
 impl Pong {
-    pub fn new(&self, ping_hash: Vec<u8>, services: ServiceMap, target: IpAddr) -> Pong {
+    pub fn new(&self, ping_hash: Vec<u8>, services: ServiceMap, target_addr: IpAddr) -> Pong {
         Pong {
             ping_hash,
             services,
-            target,
+            target_addr,
         }
     }
 
@@ -126,15 +126,18 @@ impl Pong {
             dst_addr,
         } = proto::Pong::decode(bytes)?;
 
-        // Ok(Self {})
-        todo!()
+        Ok(Self {
+            ping_hash: req_hash,
+            services: services.expect("missing services").into(),
+            target_addr: dst_addr.parse().expect("invalid target address"),
+        })
     }
 
     pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
         let pong = proto::Pong {
             req_hash: self.ping_hash.clone(),
             services: Some(self.services.clone().into()),
-            dst_addr: self.target.to_string(),
+            dst_addr: self.target_addr.to_string(),
         };
 
         let mut bytes = BytesMut::with_capacity(pong.encoded_len());
@@ -149,7 +152,7 @@ impl fmt::Debug for Pong {
         f.debug_struct("Pong")
             .field("ping_hash", &bs58::encode(&self.ping_hash).into_string())
             .field("services", &self.services.to_string())
-            .field("target", &self.target.to_string())
+            .field("target_addr", &self.target_addr.to_string())
             .finish()
     }
 }

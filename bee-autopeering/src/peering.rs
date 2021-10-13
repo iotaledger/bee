@@ -46,7 +46,7 @@ impl PeeringManager {
         for multiaddr in config.entry_nodes {
             let packet = OutgoingPacket {
                 bytes: request_bytes.to_vec(),
-                target: multiaddr.host_socketaddr(),
+                target_addr: multiaddr.host_socketaddr(),
             };
 
             tx.send(packet);
