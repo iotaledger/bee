@@ -5,9 +5,11 @@ use crate::proto;
 
 use libp2p_core::{multiaddr::Protocol, Multiaddr};
 
-use std::collections::HashMap;
-use std::fmt;
-use std::net::{IpAddr, SocketAddr};
+use std::{
+    collections::HashMap,
+    fmt,
+    net::{IpAddr, SocketAddr},
+};
 
 pub(crate) type ServiceName = String;
 

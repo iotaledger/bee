@@ -16,14 +16,13 @@ type PacketTx = mpsc::UnboundedSender<OutgoingPacket>;
 type PacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
 
 pub(crate) struct PeeringManager {
-    // Channel half for receiving autopeering related packets.
+    config: AutopeeringConfig,
+    // Channel half for receiving peering related packets.
     rx: PacketRx,
-    // Channel half for sending autopeering related packets.
+    // Channel half for sending peering related packets.
     tx: PacketTx,
     // Storage for discovered peers
     store: (),
-    // Config
-    config: AutopeeringConfig,
 }
 
 impl PeeringManager {

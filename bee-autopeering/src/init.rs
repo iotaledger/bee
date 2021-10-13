@@ -24,12 +24,12 @@ pub async fn init(config: AutopeeringConfig) -> Result<(), Box<dyn error::Error>
     tokio::spawn(srvr.run());
 
     // Spawn the discovery manager handling discovery requests/responses.
-    let discovery_mngr = DiscoveryManager::new();
+    let discovery_mngr = DiscoveryManager::new(incoming_recv, outgoing_send);
     tokio::spawn(discovery_mngr.run());
 
-    // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
-    let peering_mngr = PeeringManager::new(incoming_recv, outgoing_send, config);
-    tokio::spawn(peering_mngr.run());
+    // // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
+    // let peering_mngr = PeeringManager::new(incoming_recv, outgoing_send, config);
+    // tokio::spawn(peering_mngr.run());
 
     Ok(())
 }

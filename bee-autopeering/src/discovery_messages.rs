@@ -1,15 +1,17 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::hash;
-use crate::proto;
-use crate::service_map::{ServiceMap, ServiceName};
+use crate::{
+    hash, proto,
+    service_map::{ServiceMap, ServiceName},
+};
 
-use prost::bytes::BytesMut;
-use prost::{DecodeError, EncodeError, Message as _};
+use prost::{bytes::BytesMut, DecodeError, EncodeError, Message as _};
 
-use std::fmt;
-use std::net::{IpAddr, SocketAddr};
+use std::{
+    fmt,
+    net::{IpAddr, SocketAddr},
+};
 
 pub(crate) struct PingFactory {
     version: u32,

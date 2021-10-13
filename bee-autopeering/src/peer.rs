@@ -1,8 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::service_map::ServiceMap;
-use crate::{identity::PeerId, proto};
+use crate::{identity::PeerId, proto, service_map::ServiceMap};
 
 use bytes::BytesMut;
 use crypto::signatures::ed25519::PublicKey;

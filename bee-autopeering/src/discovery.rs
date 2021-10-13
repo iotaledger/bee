@@ -3,11 +3,18 @@
 
 use crate::{
     backoff::{Backoff, BackoffBuilder, BackoffMode},
+    discovery_messages::{Ping, PingFactory},
     identity::PeerId,
+    packets::{IncomingPacket, OutgoingPacket},
     peer::Peer,
 };
 
-use std::{collections::VecDeque, fmt};
+use tokio::sync::mpsc;
+
+use std::{collections::VecDeque, fmt, net::SocketAddr};
+
+type PacketTx = mpsc::UnboundedSender<OutgoingPacket>;
+type PacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
 
 // From `iotaledger/hive.go`:
 // time interval after which the next peer is reverified
@@ -116,16 +123,46 @@ impl DiscoveredPeerlist {
     }
 }
 
-pub(crate) struct DiscoveryManager {}
+pub(crate) struct DiscoveryManager {
+    // Backoff logic.
+    backoff: Backoff,
+    // Factory to build `Ping` messages.
+    ping_factory: PingFactory,
+    // Channel half for receiving discovery related packets.
+    rx: PacketRx,
+    // Channel half for sending discovery related packets.
+    tx: PacketTx,
+}
 
 impl DiscoveryManager {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(rx: PacketRx, tx: PacketTx) -> Self {
         let backoff = BackoffBuilder::new(BackoffMode::Exponential(BACKOFF_INTERVALL_MILLISECS, 1.5))
             .with_jitter(0.5)
-            .with_max_retries(MAX_RETRIES);
-        Self {}
+            .with_max_retries(MAX_RETRIES)
+            .finish();
+
+        let ping_factory = PingFactory::new(0, 0, "127.0.0.1:1337".parse::<SocketAddr>().unwrap());
+
+        Self {
+            backoff,
+            ping_factory,
+            rx,
+            tx,
+        }
     }
+
     pub(crate) async fn run(self) {
-        todo!()
+        let DiscoveryManager {
+            backoff,
+            ping_factory,
+            rx,
+            tx,
+        } = self;
+
+        let target: SocketAddr = "255.255.255.255:80".parse().unwrap();
+        let ping = ping_factory.make(target.ip());
+        let bytes = ping.protobuf().unwrap().to_vec();
+
+        tx.send(OutgoingPacket { bytes, target });
     }
 }
