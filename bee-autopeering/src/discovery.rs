@@ -59,10 +59,6 @@ impl DiscoveredPeer {
     pub fn last_new_peers(&self) -> usize {
         self.last_new_peers
     }
-
-    pub fn into_peer(self) -> Peer {
-        self.peer
-    }
 }
 
 impl From<Peer> for DiscoveredPeer {
@@ -72,6 +68,12 @@ impl From<Peer> for DiscoveredPeer {
             verified_count: 0,
             last_new_peers: 0,
         }
+    }
+}
+
+impl Into<Peer> for DiscoveredPeer {
+    fn into(self) -> Peer {
+        self.peer
     }
 }
 
