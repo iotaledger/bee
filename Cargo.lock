@@ -205,7 +205,7 @@ checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 [[package]]
 name = "bee-common"
 version = "0.5.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#57d46f86cdb46cf04b5d88deacc16c87ada23456"
+source = "git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls#8bcd7c13960c196a5bb5dc9adbe4897e4136080e"
 dependencies = [
  "autocfg",
  "chrono",
@@ -221,11 +221,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-common"
+version = "0.5.0"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#57d46f86cdb46cf04b5d88deacc16c87ada23456"
+dependencies = [
+ "autocfg",
+ "chrono",
+ "fern",
+ "log",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "bee-crypto"
+version = "0.2.1-alpha"
+source = "git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls#8bcd7c13960c196a5bb5dc9adbe4897e4136080e"
+dependencies = [
+ "bee-ternary 0.5.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "byteorder",
+ "lazy_static",
+ "thiserror",
+ "tiny-keccak",
+]
+
+[[package]]
 name = "bee-crypto"
 version = "0.2.1-alpha"
 source = "git+https://github.com/iotaledger/bee.git?branch=dev#57d46f86cdb46cf04b5d88deacc16c87ada23456"
 dependencies = [
- "bee-ternary",
+ "bee-ternary 0.5.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "byteorder",
  "lazy_static",
  "thiserror",
@@ -235,14 +260,41 @@ dependencies = [
 [[package]]
 name = "bee-ledger"
 version = "0.5.0"
+source = "git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls#8bcd7c13960c196a5bb5dc9adbe4897e4136080e"
+dependencies = [
+ "async-trait",
+ "bee-common 0.5.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-message 0.1.5 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-runtime 0.1.1-alpha (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-storage 0.9.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-tangle 0.2.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "chrono",
+ "digest",
+ "futures",
+ "hashbrown",
+ "hex",
+ "iota-crypto",
+ "log",
+ "ref-cast",
+ "reqwest",
+ "serde",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "url",
+]
+
+[[package]]
+name = "bee-ledger"
+version = "0.5.0"
 source = "git+https://github.com/iotaledger/bee.git?branch=dev#57d46f86cdb46cf04b5d88deacc16c87ada23456"
 dependencies = [
  "async-trait",
- "bee-common",
- "bee-message",
- "bee-runtime",
- "bee-storage",
- "bee-tangle",
+ "bee-common 0.5.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-message 0.1.5 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-runtime 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-storage 0.9.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-tangle 0.2.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "chrono",
  "digest",
  "futures",
@@ -261,12 +313,29 @@ dependencies = [
 [[package]]
 name = "bee-message"
 version = "0.1.5"
+source = "git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls#8bcd7c13960c196a5bb5dc9adbe4897e4136080e"
+dependencies = [
+ "bech32",
+ "bee-common 0.5.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-pow 0.1.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-ternary 0.5.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bytemuck",
+ "digest",
+ "hex",
+ "iota-crypto",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "bee-message"
+version = "0.1.5"
 source = "git+https://github.com/iotaledger/bee.git?branch=dev#57d46f86cdb46cf04b5d88deacc16c87ada23456"
 dependencies = [
  "bech32",
- "bee-common",
- "bee-pow",
- "bee-ternary",
+ "bee-common 0.5.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-pow 0.1.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ternary 0.5.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "bytemuck",
  "digest",
  "hex",
@@ -278,10 +347,30 @@ dependencies = [
 [[package]]
 name = "bee-network"
 version = "0.2.2"
+source = "git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls#8bcd7c13960c196a5bb5dc9adbe4897e4136080e"
+dependencies = [
+ "async-trait",
+ "bee-runtime 0.1.1-alpha (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "futures",
+ "hashbrown",
+ "libp2p",
+ "libp2p-core",
+ "log",
+ "once_cell",
+ "rand 0.8.4",
+ "serde",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+]
+
+[[package]]
+name = "bee-network"
+version = "0.2.2"
 source = "git+https://github.com/iotaledger/bee.git?branch=dev#57d46f86cdb46cf04b5d88deacc16c87ada23456"
 dependencies = [
  "async-trait",
- "bee-runtime",
+ "bee-runtime 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "futures",
  "hashbrown",
  "libp2p",
@@ -301,18 +390,18 @@ version = "0.2.1"
 dependencies = [
  "anymap",
  "async-trait",
- "bee-common",
- "bee-crypto",
- "bee-ledger",
- "bee-message",
- "bee-network",
+ "bee-common 0.5.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-crypto 0.2.1-alpha (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-ledger 0.5.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-message 0.1.5 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-network 0.2.2 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
  "bee-protocol",
  "bee-rest-api",
- "bee-runtime",
- "bee-storage",
+ "bee-runtime 0.1.1-alpha (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-storage 0.9.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
  "bee-storage-rocksdb",
  "bee-storage-sled",
- "bee-tangle",
+ "bee-tangle 0.2.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
  "cap",
  "chrono",
  "console-subscriber",
@@ -344,10 +433,21 @@ dependencies = [
 [[package]]
 name = "bee-pow"
 version = "0.1.0"
+source = "git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls#8bcd7c13960c196a5bb5dc9adbe4897e4136080e"
+dependencies = [
+ "bee-crypto 0.2.1-alpha (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-ternary 0.5.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "iota-crypto",
+ "thiserror",
+]
+
+[[package]]
+name = "bee-pow"
+version = "0.1.0"
 source = "git+https://github.com/iotaledger/bee.git?branch=dev#57d46f86cdb46cf04b5d88deacc16c87ada23456"
 dependencies = [
- "bee-crypto",
- "bee-ternary",
+ "bee-crypto 0.2.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ternary 0.5.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "iota-crypto",
  "thiserror",
 ]
@@ -359,16 +459,16 @@ dependencies = [
  "async-channel",
  "async-priority-queue",
  "async-trait",
- "bee-common",
- "bee-crypto",
- "bee-ledger",
- "bee-message",
- "bee-network",
- "bee-pow",
- "bee-runtime",
- "bee-storage",
- "bee-tangle",
- "bee-ternary",
+ "bee-common 0.5.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-crypto 0.2.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ledger 0.5.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-message 0.1.5 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-network 0.2.2 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-pow 0.1.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-runtime 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-storage 0.9.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-tangle 0.2.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ternary 0.5.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "futures",
  "futures-util",
  "fxhash",
@@ -393,15 +493,15 @@ version = "0.1.0-alpha"
 dependencies = [
  "async-trait",
  "bech32",
- "bee-common",
- "bee-ledger",
- "bee-message",
- "bee-network",
- "bee-pow",
+ "bee-common 0.5.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ledger 0.5.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-message 0.1.5 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-network 0.2.2 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-pow 0.1.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "bee-protocol",
- "bee-runtime",
- "bee-storage",
- "bee-tangle",
+ "bee-runtime 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-storage 0.9.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-tangle 0.2.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "digest",
  "futures",
  "hex",
@@ -419,10 +519,23 @@ dependencies = [
 [[package]]
 name = "bee-runtime"
 version = "0.1.1-alpha"
+source = "git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls#8bcd7c13960c196a5bb5dc9adbe4897e4136080e"
+dependencies = [
+ "async-trait",
+ "bee-storage 0.9.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "dashmap",
+ "futures",
+ "log",
+ "tokio",
+]
+
+[[package]]
+name = "bee-runtime"
+version = "0.1.1-alpha"
 source = "git+https://github.com/iotaledger/bee.git?branch=dev#57d46f86cdb46cf04b5d88deacc16c87ada23456"
 dependencies = [
  "async-trait",
- "bee-storage",
+ "bee-storage 0.9.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "dashmap",
  "futures",
  "log",
@@ -432,9 +545,19 @@ dependencies = [
 [[package]]
 name = "bee-storage"
 version = "0.9.0"
+source = "git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls#8bcd7c13960c196a5bb5dc9adbe4897e4136080e"
+dependencies = [
+ "bee-common 0.5.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "bee-storage"
+version = "0.9.0"
 source = "git+https://github.com/iotaledger/bee.git?branch=dev#57d46f86cdb46cf04b5d88deacc16c87ada23456"
 dependencies = [
- "bee-common",
+ "bee-common 0.5.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "serde",
  "thiserror",
 ]
@@ -442,13 +565,13 @@ dependencies = [
 [[package]]
 name = "bee-storage-rocksdb"
 version = "0.5.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#57d46f86cdb46cf04b5d88deacc16c87ada23456"
+source = "git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls#8bcd7c13960c196a5bb5dc9adbe4897e4136080e"
 dependencies = [
- "bee-common",
- "bee-ledger",
- "bee-message",
- "bee-storage",
- "bee-tangle",
+ "bee-common 0.5.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-ledger 0.5.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-message 0.1.5 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-storage 0.9.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-tangle 0.2.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
  "num_cpus",
  "rocksdb",
  "serde",
@@ -458,13 +581,13 @@ dependencies = [
 [[package]]
 name = "bee-storage-sled"
 version = "0.4.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#57d46f86cdb46cf04b5d88deacc16c87ada23456"
+source = "git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls#8bcd7c13960c196a5bb5dc9adbe4897e4136080e"
 dependencies = [
- "bee-common",
- "bee-ledger",
- "bee-message",
- "bee-storage",
- "bee-tangle",
+ "bee-common 0.5.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-ledger 0.5.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-message 0.1.5 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-storage 0.9.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-tangle 0.2.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
  "num_cpus",
  "serde",
  "sled",
@@ -474,13 +597,13 @@ dependencies = [
 [[package]]
 name = "bee-tangle"
 version = "0.2.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#57d46f86cdb46cf04b5d88deacc16c87ada23456"
+source = "git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls#8bcd7c13960c196a5bb5dc9adbe4897e4136080e"
 dependencies = [
  "async-trait",
- "bee-common",
- "bee-message",
- "bee-runtime",
- "bee-storage",
+ "bee-common 0.5.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-message 0.1.5 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-runtime 0.1.1-alpha (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
+ "bee-storage 0.9.0 (git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls)",
  "bitflags",
  "dashmap",
  "futures",
@@ -493,6 +616,40 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-stream",
+]
+
+[[package]]
+name = "bee-tangle"
+version = "0.2.0"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#57d46f86cdb46cf04b5d88deacc16c87ada23456"
+dependencies = [
+ "async-trait",
+ "bee-common 0.5.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-message 0.1.5 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-runtime 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-storage 0.9.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bitflags",
+ "dashmap",
+ "futures",
+ "hashbrown",
+ "log",
+ "lru",
+ "rand 0.8.4",
+ "ref-cast",
+ "serde",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+]
+
+[[package]]
+name = "bee-ternary"
+version = "0.5.0"
+source = "git+https://github.com/thibault-martinez/bee.git?branch=decouple-snapshot-names-urls#8bcd7c13960c196a5bb5dc9adbe4897e4136080e"
+dependencies = [
+ "autocfg",
+ "num-traits",
+ "serde",
 ]
 
 [[package]]
@@ -3702,6 +3859,7 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]

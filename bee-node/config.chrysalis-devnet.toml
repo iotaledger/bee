@@ -75,14 +75,14 @@ allowed_ips = [
 white_flag_solidification_timeout = 2
 
 [snapshot]
-full_path         = "./snapshots/devnet/latest-full_snapshot.bin"
-delta_path        = "./snapshots/devnet/latest-delta_snapshot.bin"
-download_urls     = [
-    "http://dbfiles.chrysalis-devnet.iota.cafe/snapshots/hornet/"
-]
 depth             = 50
 interval_synced   = 50
 interval_unsynced = 1000
+full_path         = "./snapshots/devnet/full_snapshot.bin"
+delta_path        = "./snapshots/devnet/delta_snapshot.bin"
+[[snapshot.download_urls]]
+full        = "http://dbfiles.chrysalis-devnet.iota.cafe/snapshots/hornet/latest-full_snapshot.bin"
+delta       = "http://dbfiles.chrysalis-devnet.iota.cafe/snapshots/hornet/latest-delta_snapshot.bin"
 
 [pruning]
 enabled         = true
