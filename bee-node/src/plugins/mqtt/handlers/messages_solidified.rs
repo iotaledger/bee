@@ -7,7 +7,7 @@ use bee_message::MessageId;
 use bee_protocol::workers::event::MessageSolidified;
 use bee_rest_api::types::responses::MessageMetadataResponse;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
-use bee_tangle::MsTangle;
+use bee_tangle::Tangle;
 
 use librumqttd::LinkTx;
 use log::{debug, warn};
@@ -19,7 +19,7 @@ where
     N: Node,
     N::Backend: StorageBackend,
 {
-    let tangle = node.resource::<MsTangle<N::Backend>>();
+    let tangle = node.resource::<Tangle<N::Backend>>();
     let bus = node.bus();
     let (tx, rx) = mpsc::unbounded_channel::<MessageId>();
 

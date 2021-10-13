@@ -22,10 +22,8 @@ pub(crate) mod messages_referenced;
 pub(crate) mod messages_solidified;
 pub(crate) mod milestones_confirmed;
 pub(crate) mod milestones_latest;
-pub(crate) mod outputs;
 pub(crate) mod outputs_consumed;
 pub(crate) mod outputs_created;
-pub(crate) mod transactions_included_message;
 
 fn spawn_static_topic_handler<N, E, T, P, F>(node: &mut N, mut tx: LinkTx, handler_name: &'static str, into_mqtt: F)
 where
@@ -61,8 +59,4 @@ where
             warn!("Sending event to MQTT '{}' topic handler failed.", handler_name)
         }
     });
-}
-
-pub(crate) enum HandlerError {
-    InvalidParameterProvided,
 }

@@ -7,7 +7,7 @@ use bee_ledger::workers::event::MessageReferenced;
 use bee_message::payload::Payload;
 use bee_rest_api::types::{dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
-use bee_tangle::{ConflictReason, MsTangle};
+use bee_tangle::{ConflictReason, Tangle};
 
 use librumqttd::LinkTx;
 use log::{debug, warn};
@@ -20,7 +20,7 @@ where
     N::Backend: StorageBackend,
 {
     let bus = node.bus();
-    let tangle = node.resource::<MsTangle<N::Backend>>();
+    let tangle = node.resource::<Tangle<N::Backend>>();
     let (tx, rx) = mpsc::unbounded_channel::<MessageReferenced>();
 
     node.spawn::<MqttBroker, _, _>(|shutdown| async move {
