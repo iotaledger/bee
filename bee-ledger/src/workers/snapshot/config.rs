@@ -4,6 +4,7 @@
 //! Module containing snapshot configuration.
 
 use serde::Deserialize;
+use url::Url;
 
 use std::path::{Path, PathBuf};
 
@@ -16,19 +17,19 @@ const DEFAULT_INTERVAL_UNSYNCED: u32 = 1000;
 /// Contains URLs to download the full and delta snapshot files.
 #[derive(Clone, Deserialize)]
 pub struct DownloadUrls {
-    full: String,
-    delta: String,
+    full: Url,
+    delta: Url,
 }
 
 impl DownloadUrls {
     /// Returns the download URL for the full snapshot.
     pub fn full(&self) -> &str {
-        &self.full
+        self.full.as_str()
     }
 
     /// Returns the download URL for the delta snapshot.
     pub fn delta(&self) -> &str {
-        &self.delta
+        self.delta.as_str()
     }
 }
 
