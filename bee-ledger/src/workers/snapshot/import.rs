@@ -11,7 +11,11 @@ use crate::{
     workers::{
         consensus::worker::migration_from_milestone,
         error::Error,
-        snapshot::{config::SnapshotConfig, download::download_snapshot_file, error::Error as SnapshotError},
+        snapshot::{
+            config::{DownloadUrls, SnapshotConfig},
+            download::download_snapshot_file,
+            error::Error as SnapshotError,
+        },
         storage::{self, apply_balance_diffs, apply_milestone, create_output, rollback_milestone, StorageBackend},
     },
 };
@@ -279,7 +283,11 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
     }
 
     if !full_exists {
-        download_snapshot_file(config.full_path(), config.download_urls()).await?;
+        download_snapshot_file(
+            config.full_path(),
+            config.download_urls().iter().map(DownloadUrls::full),
+        )
+        .await?;
     }
 
     // Full snapshot file exists from now on.
@@ -288,7 +296,7 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
 
     if let Some(delta_path) = config.delta_path() {
         if !delta_exists
-            && download_snapshot_file(delta_path, config.download_urls())
+            && download_snapshot_file(delta_path, config.download_urls().iter().map(DownloadUrls::delta))
                 .await
                 .is_err()
         {

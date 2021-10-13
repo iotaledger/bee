@@ -7,11 +7,10 @@ use log::{info, warn};
 
 use std::path::Path;
 
-pub(crate) async fn download_snapshot_file(file_path: &Path, download_urls: &[String]) -> Result<(), Error> {
-    let file_name = file_path
-        .file_name()
-        .ok_or_else(|| Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;
-
+pub(crate) async fn download_snapshot_file(
+    file_path: &Path,
+    download_urls: impl Iterator<Item = &str>,
+) -> Result<(), Error> {
     tokio::fs::create_dir_all(
         file_path
             .parent()
@@ -21,11 +20,9 @@ pub(crate) async fn download_snapshot_file(file_path: &Path, download_urls: &[St
     .map_err(|_| Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;
 
     for url in download_urls {
-        let url = url.to_owned() + &file_name.to_string_lossy();
-
         info!("Downloading snapshot file {}...", url);
 
-        match reqwest::get(&url).await.and_then(|res| res.error_for_status()) {
+        match reqwest::get(url).await.and_then(|res| res.error_for_status()) {
             Ok(res) => {
                 tokio::io::copy(
                     &mut res.bytes().await.map_err(|_| Error::DownloadingFailed)?.as_ref(),
