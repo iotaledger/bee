@@ -3,8 +3,8 @@
 
 use crate::{
     config::AutopeeringConfig,
-    messages::PeeringRequest,
     packets::{IncomingPacket, OutgoingPacket},
+    peering_messages::PeeringRequest,
     salt::Salt,
 };
 

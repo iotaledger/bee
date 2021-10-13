@@ -9,7 +9,6 @@ fn main() -> Result<()> {
             "src/proto/discovery.proto",
             "src/proto/peering.proto",
             "src/proto/packet.proto",
-            "src/proto/ping.proto",
             "src/proto/peer.proto",
             "src/proto/salt.proto",
             "src/proto/service.proto",

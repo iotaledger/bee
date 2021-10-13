@@ -1,6 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::service_map::ServiceMap;
 use crate::{identity::PeerId, proto};
 
 use bytes::BytesMut;
@@ -9,16 +10,14 @@ use libp2p_core::{multiaddr::Protocol, Multiaddr};
 use prost::{DecodeError, EncodeError, Message};
 use serde::{Deserialize, Serialize};
 
-use std::{collections::HashMap, convert::TryInto, fmt, net::IpAddr};
-
-type ServiceName = String;
+use std::{convert::TryInto, fmt, net::IpAddr};
 
 /// Represents a discovered peer.
 // #[derive(Serialize, Deserialize)]
-pub struct Peer {
+pub(crate) struct Peer {
     ip_address: IpAddr,
     public_key: PublicKey,
-    services: HashMap<ServiceName, Multiaddr>,
+    services: ServiceMap,
 }
 
 impl Peer {
@@ -27,68 +26,13 @@ impl Peer {
         Self {
             ip_address: address,
             public_key,
-            services: HashMap::default(),
+            services: ServiceMap::default(),
         }
     }
 
     /// Returns the [`PeerId`](crate::identity::PeerId) of this peer.
     pub fn peer_id(&self) -> PeerId {
         PeerId::from_public_key(self.public_key)
-    }
-
-    /// Creates a discovered peer from its Protobuf representation/encoding.
-    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
-        let proto::Peer {
-            public_key,
-            ip,
-            services,
-        } = proto::Peer::decode(bytes)?;
-
-        // TODO: resolve DNS addresses
-        let ip_address: IpAddr = ip.parse().expect("error parsing ip address");
-        let public_key = PublicKey::try_from_bytes(public_key.try_into().expect("invalid public key byte length"))
-            .expect("error restoring public key from bytes");
-        let mut services_mapped = HashMap::default();
-
-        let proto::ServiceMap { map } = services.expect("missing service descriptor");
-
-        // From the service.proto description:
-        // e.g., map[autopeering:&{tcp, 198.51.100.1:80}]
-        // The service type (e.g., tcp, upd) and the address (e.g., 198.51.100.1:80)
-        for (service_name, proto::NetworkAddress { network, port }) in map {
-            let port = port as u16;
-            let mut iter = network.split_terminator(", ");
-            let transport = iter.next().expect("error unpacking transport");
-            let ip_addr: IpAddr = iter
-                .next()
-                .expect("error unpacking ip address")
-                .parse()
-                .expect("error parsing ip address");
-
-            // Create libp2p's Multiaddr from the given data.
-            let mut multiaddr = Multiaddr::empty();
-            match ip_addr {
-                IpAddr::V4(ip4_addr) => {
-                    multiaddr.push(Protocol::Ip4(ip4_addr));
-                }
-                IpAddr::V6(ip6_addr) => {
-                    multiaddr.push(Protocol::Ip6(ip6_addr));
-                }
-            }
-            match transport {
-                "udp" => multiaddr.push(Protocol::Udp(port)),
-                "tcp" => multiaddr.push(Protocol::Tcp(port)),
-                _ => unimplemented!("unsupported protocol"),
-            }
-
-            services_mapped.insert(service_name, multiaddr);
-        }
-
-        Ok(Self {
-            ip_address,
-            public_key,
-            services: services_mapped,
-        })
     }
 
     /// Returns the address of the discovered peer.
@@ -102,22 +46,43 @@ impl Peer {
     }
 
     /// Returns the services the discovered peer.
-    pub fn services(&self) -> &HashMap<ServiceName, Multiaddr> {
+    pub fn services(&self) -> &ServiceMap {
         &self.services
+    }
+
+    /// Creates a discovered peer from its Protobuf representation/encoding.
+    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
+        let proto::Peer {
+            public_key,
+            ip,
+            services,
+        } = proto::Peer::decode(bytes)?;
+
+        // TODO: resolve DNS addresses
+        let ip_address: IpAddr = ip.parse().expect("error parsing ip address");
+
+        let public_key = PublicKey::try_from_bytes(public_key.try_into().expect("invalid public key byte length"))
+            .expect("error restoring public key from bytes");
+
+        let services: ServiceMap = services.expect("missing service map").into();
+
+        Ok(Self {
+            ip_address,
+            public_key,
+            services,
+        })
     }
 
     /// Returns the Protobuf representation of this discovered peer.
     pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
-        // From the service.proto description:
-        // e.g., map[autopeering:&{tcp, 198.51.100.1:80}]
-        // The service type (e.g., tcp, upd) and the address (e.g., 198.51.100.1:80)
+        let services: proto::ServiceMap = self.services.clone().into();
 
         let peer = proto::Peer {
             ip: self.ip_address.to_string(),
             public_key: self.public_key.to_bytes().to_vec(),
-            // TODO
-            services: None,
+            services: Some(services),
         };
+
         let mut buf = BytesMut::with_capacity(peer.encoded_len());
         peer.encode(&mut buf)?;
 
@@ -130,7 +95,7 @@ impl fmt::Debug for Peer {
         f.debug_struct("Peer")
             .field("ip_address", &self.ip_address)
             .field("public_key", &bs58::encode(&self.public_key).into_string())
-            .field("services", &self.services.keys().cloned().collect::<Vec<_>>().join(";"))
+            .field("services", &self.services.to_string())
             .finish()
     }
 }
