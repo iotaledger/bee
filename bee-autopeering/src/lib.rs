@@ -17,6 +17,7 @@ mod multiaddr;
 mod packets;
 mod peer;
 mod peering;
+mod ping;
 mod proto {
     include!(concat!(env!("OUT_DIR"), "/proto.rs"));
 }
