@@ -24,34 +24,34 @@ bee-storage-rocksdb = { git = "https://github.com/iotaledger/bee.git", branch = 
 bee-storage-sled = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
-anymap = "0.12"
-async-trait = "0.1"
-cap = { version = "0.1", optional = true }
-chrono = "0.4"
+anymap = "0.12.1"
+async-trait = "0.1.51"
+cap = { version = "0.1.0", optional = true }
+chrono = "0.4.19"
 console-subscriber = { git = "https://github.com/tokio-rs/console.git", branch = "main", optional = true }
-futures = "0.3"
-fxhash = "0.2"
-hex = "0.4"
+futures = "0.3.17"
+fxhash = "0.2.1"
+hex = "0.4.3"
 iota-crypto = { version = "0.7.0", features = [ "ed25519", "random", "blake2b" ] }
-log = "0.4"
-mime_guess = { version = "2.0", optional = true }
-multiaddr = "0.13"
-paho-mqtt = { version = "0.9", default-features = false, features = [ "bundled" ]}
-rand = "0.8"
-rpassword = "5.0"
-rust-embed = { version = "6.0", features = [ "interpolate-folder-path" ], optional = true }
-serde = { version = "1.0", features = [ "derive" ] }
-serde_json = "1.0"
-serde_repr = { version = "0.1", optional = true }
-structopt = { version = "0.3", default-features = false }
-thiserror = "1.0"
-tokio = { version = "1.6", features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
-tokio-stream = "0.1"
-toml = "0.5"
-tracing = { version = "0.1.26", optional = true }
-tracing-subscriber = { version = "0.2.18", features = [ "fmt", "registry", "env-filter" ], optional = true }
-warp = "0.3"
-warp-reverse-proxy = { version = "0.3", optional = true }
+log = "0.4.14"
+mime_guess = { version = "2.0.3", optional = true }
+multiaddr = "0.13.0"
+paho-mqtt = { version = "0.9.1", default-features = false, features = [ "bundled" ]}
+rand = "0.8.4"
+rpassword = "5.0.1"
+rust-embed = { version = "6.2.0", features = [ "interpolate-folder-path" ], optional = true }
+serde = { version = "1.0.130", features = [ "derive" ] }
+serde_json = "1.0.68"
+serde_repr = { version = "0.1.7", optional = true }
+structopt = { version = "0.3.23", default-features = false }
+thiserror = "1.0.30"
+tokio = { version = "1.12.0", features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
+tokio-stream = "0.1.7"
+toml = "0.5.8"
+tracing = { version = "0.1.29", optional = true }
+tracing-subscriber = { version = "0.2.25", features = [ "fmt", "registry", "env-filter" ], optional = true }
+warp = "0.3.1"
+warp-reverse-proxy = { version = "0.4.0", optional = true }
 
 [lib]
 name = "bee_node"

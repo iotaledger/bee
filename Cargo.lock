@@ -377,7 +377,6 @@ dependencies = [
  "iota-crypto",
  "log",
  "num_cpus",
- "pin-project 1.0.8",
  "rand 0.8.4",
  "ref-cast",
  "serde",
@@ -3782,12 +3781,12 @@ dependencies = [
 
 [[package]]
 name = "warp-reverse-proxy"
-version = "0.3.2"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ddb4e2b0778508ed42fb55ec8ea09d49053f41f377c53fe6c022ae40f55846d5"
+checksum = "739e7af2d6331da89ac0f4f0745e6deb9417830530264b719c13f0a507840562"
 dependencies = [
  "hyper",
- "lazy_static",
+ "once_cell",
  "reqwest",
  "thiserror",
  "unicase",
