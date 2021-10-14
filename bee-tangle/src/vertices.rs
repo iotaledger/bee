@@ -11,6 +11,7 @@ use tokio::sync::{RwLock, RwLockMappedWriteGuard, RwLockReadGuard, RwLockWriteGu
 
 use std::{
     hash::{BuildHasher, Hash, Hasher},
+    num::NonZeroUsize,
     sync::atomic::{AtomicUsize, Ordering},
 };
 
@@ -27,10 +28,12 @@ pub(crate) struct Vertices {
 }
 
 impl Vertices {
-    pub(crate) fn new(num_partitions: usize) -> Self {
+    pub(crate) fn new(num_partitions: NonZeroUsize) -> Self {
         Self {
             hash_builder: DefaultHashBuilder::default(),
-            tables: (0..num_partitions).map(|_| RwLock::new(RawTable::default())).collect(),
+            tables: (0..num_partitions.into())
+                .map(|_| RwLock::new(RawTable::default()))
+                .collect(),
             len: AtomicUsize::default(),
         }
     }
