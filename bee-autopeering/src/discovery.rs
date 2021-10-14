@@ -4,16 +4,17 @@
 use crate::{
     backoff::{Backoff, BackoffBuilder, BackoffMode},
     config::AutopeeringConfig,
-    discovery_messages::{Ping, PingFactory},
+    discovery_messages::{Ping, PingFactory, Pong},
+    hash,
     identity::{LocalId, PeerId},
     multiaddr::AutopeeringMultiaddr,
-    packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, Socket},
+    packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, PacketRx, PacketTx, Socket},
     peer::Peer,
+    service_map::ServiceMap,
+    time,
 };
 
-use tokio::sync::mpsc;
-
-use std::{collections::VecDeque, fmt, net::SocketAddr};
+use std::{collections::VecDeque, convert::Infallible, fmt, net::SocketAddr};
 
 type BootstrapPeer = Peer;
 
@@ -28,6 +29,10 @@ const DEFAULT_MAX_REPLACEMENTS: usize = 10;
 // TODO:
 const BACKOFF_INTERVALL_MILLISECS: u64 = 500;
 // TODO:
+const JITTER: f32 = 0.5;
+//
+const EXPONENTIAL_BACKOFF_FACTOR: f32 = 1.5;
+// TODO:
 const MAX_RETRIES: usize = 2;
 // hive.go: PingExpiration is the time until a peer verification expires (12 hours)
 const PING_EXPIRATION: u64 = 12 * 60 * 60;
@@ -36,16 +41,17 @@ const MAX_PEERS_IN_RESPONSE: usize = 6;
 // hive.go: MaxServices is the maximum number of services a peer can support.
 
 pub(crate) struct DiscoveryConfig {
-    pub entry_nodes: Vec<AutopeeringMultiaddr>,
-    pub entry_nodes_prefer_ipv6: bool,
-    pub run_as_entry_node: bool,
-    pub version: u32,
-    pub network_id: u32,
-    pub source_addr: SocketAddr,
+    pub(crate) entry_nodes: Vec<AutopeeringMultiaddr>,
+    pub(crate) entry_nodes_prefer_ipv6: bool,
+    pub(crate) run_as_entry_node: bool,
+    pub(crate) version: u32,
+    pub(crate) network_id: u32,
+    pub(crate) source_addr: SocketAddr,
+    pub(crate) services: ServiceMap,
 }
 
 impl DiscoveryConfig {
-    pub fn new(config: &AutopeeringConfig, version: u32, network_id: u32) -> Self {
+    pub fn new(config: &AutopeeringConfig, version: u32, network_id: u32, services: ServiceMap) -> Self {
         Self {
             entry_nodes: config.entry_nodes.clone(),
             entry_nodes_prefer_ipv6: config.entry_nodes_prefer_ipv6,
@@ -53,6 +59,7 @@ impl DiscoveryConfig {
             version,
             network_id,
             source_addr: config.bind_addr,
+            services,
         }
     }
 }
@@ -168,10 +175,13 @@ pub(crate) struct DiscoveryManager {
 
 impl DiscoveryManager {
     pub(crate) fn new(config: DiscoveryConfig, local_id: LocalId, socket: Socket) -> Self {
-        let backoff = BackoffBuilder::new(BackoffMode::Exponential(BACKOFF_INTERVALL_MILLISECS, 1.5))
-            .with_jitter(0.5)
-            .with_max_retries(MAX_RETRIES)
-            .finish();
+        let backoff = BackoffBuilder::new(BackoffMode::Exponential(
+            BACKOFF_INTERVALL_MILLISECS,
+            EXPONENTIAL_BACKOFF_FACTOR,
+        ))
+        .with_jitter(JITTER)
+        .with_max_retries(MAX_RETRIES)
+        .finish();
 
         let ping_factory = PingFactory::new(config.version, config.network_id, config.source_addr);
 
@@ -193,19 +203,71 @@ impl DiscoveryManager {
             socket,
         } = self;
 
-        // Send a `Ping` to all entry nodes.
-        let bootstrap_peers = config
-            .entry_nodes
-            .iter()
-            .map(|addr| addr.host_socketaddr())
-            .collect::<Vec<_>>();
+        let Socket { mut rx, tx } = socket;
 
-        for target_addr in bootstrap_peers {
-            let ping = ping_factory.make(target_addr.ip());
-            let msg_bytes = ping.protobuf().expect("error encoding ping");
-            let signature = local_id.sign(&msg_bytes);
-            let packet = Packet::new(MessageType::Ping, &msg_bytes, &local_id.public_key(), signature);
-            socket.send(OutgoingPacket { packet, target_addr });
+        loop {
+            if let Some(IncomingPacket {
+                msg_type,
+                msg_bytes,
+                source_addr,
+            }) = rx.recv().await
+            {
+                match msg_type {
+                    MessageType::Ping => {
+                        let ping = Ping::from_protobuf(&msg_bytes).expect("error decoding ping");
+
+                        if !validate_ping(&ping, config.version, config.network_id) {
+                            log::debug!("Received invalid ping");
+                            continue;
+                        }
+
+                        // Send back a corresponding pong.
+                        let ping_hash = hash::sha256(&msg_bytes).to_vec();
+                        let pong = Pong::new(ping_hash, config.services.clone(), source_addr.ip());
+                        let pong_bytes = pong.protobuf().expect("error encoding pong").to_vec();
+
+                        tx.send(OutgoingPacket {
+                            msg_type: MessageType::Pong,
+                            msg_bytes: pong_bytes,
+                            target_addr: source_addr,
+                        })
+                        .expect("error sending ping to server");
+                    }
+                    MessageType::Pong => {
+                        // verifiy Pong
+                    }
+                    MessageType::DiscoveryRequest => {}
+                    MessageType::DiscoveryResponse => {}
+                    _ => panic!("unsupported messasge type"),
+                }
+            }
         }
+
+        // // Send a `Ping` to all entry nodes.
+        // let bootstrap_peers = config
+        //     .entry_nodes
+        //     .iter()
+        //     .map(|addr| addr.host_socketaddr())
+        //     .collect::<Vec<_>>();
+
+        // for target_addr in bootstrap_peers {
+        //     let ping = ping_factory.make(target_addr.ip());
+        //     let msg_bytes = ping.protobuf().expect("error encoding ping");
+        //     let signature = local_id.sign(&msg_bytes);
+        //     let packet = Packet::new(MessageType::Ping, &msg_bytes, &local_id.public_key(), signature);
+        //     // socket.send(OutgoingPacket { packet, target_addr });
+        // }
+    }
+}
+
+fn validate_ping(ping: &Ping, version: u32, network_id: u32) -> bool {
+    if ping.version() != version {
+        false
+    } else if ping.network_id() != network_id {
+        false
+    } else if ping.timestamp() < time::unix_now() - PING_EXPIRATION {
+        false
+    } else {
+        true
     }
 }

@@ -8,6 +8,7 @@ use crate::{
     packet::{IncomingPacket, OutgoingPacket, Socket},
     peering::{PeeringConfig, PeeringManager},
     server::{PacketTxs, Server, ServerConfig},
+    service_map::ServiceMap,
 };
 
 use tokio::sync::mpsc::unbounded_channel as chan;
@@ -20,6 +21,7 @@ pub async fn init(
     version: u32,
     network_id: u32,
     local_id: LocalId,
+    services: ServiceMap,
 ) -> Result<(), Box<dyn error::Error>> {
     // Create 2 channels for inbound/outbound communication with the UDP socket.
     let (discovery_tx, discovery_rx) = chan::<IncomingPacket>();
@@ -33,11 +35,11 @@ pub async fn init(
 
     // Spawn the server handling the socket I/O.
     let server_config = ServerConfig::new(&config);
-    let server = Server::new(server_config, incoming_txs, outgoing_rx);
+    let server = Server::new(server_config, local_id.clone(), incoming_txs, outgoing_rx);
     tokio::spawn(server.run());
 
     // Spawn the discovery manager handling discovery requests/responses.
-    let discovery_config = DiscoveryConfig::new(&config, version, network_id);
+    let discovery_config = DiscoveryConfig::new(&config, version, network_id, services);
     let discovery_socket = Socket::new(discovery_rx, outgoing_tx.clone());
     let discovery_mngr = DiscoveryManager::new(discovery_config, local_id.clone(), discovery_socket);
     tokio::spawn(discovery_mngr.run());

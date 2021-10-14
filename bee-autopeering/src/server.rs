@@ -4,6 +4,7 @@
 use crate::{
     config::AutopeeringConfig,
     packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, PEERING_MSG_TYPE_RANGE},
+    LocalId,
 };
 
 use tokio::{net::UdpSocket, sync::mpsc};
@@ -34,14 +35,16 @@ pub(crate) struct PacketTxs {
 
 pub(crate) struct Server {
     config: ServerConfig,
+    local_id: LocalId,
     incoming_txs: PacketTxs,
     outgoing_rx: PacketRx,
 }
 
 impl Server {
-    pub fn new(config: ServerConfig, incoming_txs: PacketTxs, outgoing_rx: PacketRx) -> Self {
+    pub fn new(config: ServerConfig, local_id: LocalId, incoming_txs: PacketTxs, outgoing_rx: PacketRx) -> Self {
         Self {
             config,
+            local_id,
             incoming_txs,
             outgoing_rx,
         }
@@ -50,6 +53,7 @@ impl Server {
     pub async fn run(self) {
         let Server {
             config,
+            local_id,
             incoming_txs,
             outgoing_rx,
         } = self;
@@ -66,7 +70,7 @@ impl Server {
 
         // Spawn socket handlers
         tokio::spawn(incoming_packet_handler(incoming_socket, incoming_txs));
-        tokio::spawn(outgoing_packet_handler(outgoing_socket, outgoing_rx));
+        tokio::spawn(outgoing_packet_handler(outgoing_socket, outgoing_rx, local_id));
     }
 }
 
@@ -84,18 +88,38 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_txs: PacketTxs
 
             let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
 
-            match packet.message_type().expect("unknown message type") as u32 {
+            // Verify the packet
+            let message = packet.message();
+            let signature = packet.signature();
+            if !packet.public_key().verify(&signature, message) {
+                log::debug!("Received packet with invalid signature");
+                continue;
+            }
+
+            // Depending on the message type, forward it to the appropriate manager.
+            let msg_type = packet.message_type().expect("invalid message type");
+            let msg_bytes = packet.into_message();
+
+            match msg_type as u32 {
                 t if DISCOVERY_MSG_TYPE_RANGE.contains(&t) => {
                     discovery_tx
-                        .send(IncomingPacket { packet, source_addr })
+                        .send(IncomingPacket {
+                            msg_type,
+                            msg_bytes,
+                            source_addr,
+                        })
                         .expect("channel send error: discovery");
                 }
                 t if PEERING_MSG_TYPE_RANGE.contains(&t) => {
                     peering_tx
-                        .send(IncomingPacket { packet, source_addr })
+                        .send(IncomingPacket {
+                            msg_type,
+                            msg_bytes,
+                            source_addr,
+                        })
                         .expect("channel send error: peering");
                 }
-                _ => panic!("unknown message type"),
+                _ => panic!("invalid message type"),
             }
         } else {
             log::error!("udp socket read error; stopping incoming packet handler");
@@ -104,10 +128,18 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_txs: PacketTxs
     }
 }
 
-async fn outgoing_packet_handler(socket: Arc<UdpSocket>, mut outgoing_rx: PacketRx) {
+async fn outgoing_packet_handler(socket: Arc<UdpSocket>, mut outgoing_rx: PacketRx, local_id: LocalId) {
     loop {
         if let Some(packet) = outgoing_rx.recv().await {
-            let OutgoingPacket { packet, target_addr } = packet;
+            let OutgoingPacket {
+                msg_type,
+                msg_bytes,
+                target_addr,
+            } = packet;
+
+            let signature = local_id.sign(&msg_bytes);
+
+            let packet = Packet::new(msg_type, &msg_bytes, &local_id.public_key(), signature);
 
             let bytes = packet.protobuf().expect("error encoding outgoing packet");
             let n = socket.send_to(&bytes, target_addr).await.expect("socket send error");

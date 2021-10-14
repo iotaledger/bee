@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    hash, proto,
+    proto,
     service_map::{ServiceMap, ServiceName},
 };
 
@@ -71,8 +71,19 @@ impl Ping {
             dst_addr,
         } = proto::Ping::decode(bytes)?;
 
-        // Ok(Self {})
-        todo!()
+        let ip_addr: IpAddr = src_addr.parse().expect("error parsing ping source address");
+        let port = src_port as u16;
+
+        let source_addr = SocketAddr::new(ip_addr, port);
+        let target_addr: IpAddr = dst_addr.parse().expect("error parsing ping target address");
+
+        Ok(Self {
+            version,
+            network_id,
+            timestamp: timestamp as u64,
+            source_addr,
+            target_addr,
+        })
     }
 
     pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
@@ -111,7 +122,7 @@ pub(crate) struct Pong {
 }
 
 impl Pong {
-    pub fn new(&self, ping_hash: Vec<u8>, services: ServiceMap, target_addr: IpAddr) -> Pong {
+    pub fn new(ping_hash: Vec<u8>, services: ServiceMap, target_addr: IpAddr) -> Pong {
         Pong {
             ping_hash,
             services,

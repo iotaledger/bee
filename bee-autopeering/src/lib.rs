@@ -29,3 +29,4 @@ mod time;
 
 pub use identity::LocalId;
 pub use init::init;
+pub use service_map::{ServiceMap, ServiceName};

@@ -11,10 +11,16 @@ use std::{
     net::{IpAddr, SocketAddr},
 };
 
-pub(crate) type ServiceName = String;
+pub type ServiceName = String;
 
 #[derive(Clone, Debug, Default)]
-pub(crate) struct ServiceMap(HashMap<ServiceName, Multiaddr>);
+pub struct ServiceMap(HashMap<ServiceName, Multiaddr>);
+
+impl ServiceMap {
+    pub fn insert(&mut self, service_name: ServiceName, multiaddr: Multiaddr) {
+        self.0.insert(service_name, multiaddr);
+    }
+}
 
 impl From<proto::ServiceMap> for ServiceMap {
     fn from(services: proto::ServiceMap) -> Self {

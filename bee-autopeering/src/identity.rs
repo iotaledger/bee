@@ -6,7 +6,6 @@ use crate::hash;
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature};
 
 use std::{
-    any::Any,
     convert::TryInto,
     fmt,
     sync::{Arc, RwLock},

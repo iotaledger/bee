@@ -11,7 +11,7 @@ use num_derive::FromPrimitive;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 use tokio::sync::mpsc::{self, error::SendError, UnboundedReceiver};
 
-use std::{fmt, io, net::SocketAddr, ops::Range};
+use std::{convert::TryInto, fmt, io, net::SocketAddr, ops::Range};
 
 // From `hive.go` docs:
 // * specifies the maximum allowed size of packets;
@@ -49,14 +49,15 @@ impl Packet {
     }
 
     /// Returns the public key belonging to the issuer of this packet.
-    pub fn public_key(&self) -> &Vec<u8> {
-        &self.0.public_key
+    pub fn public_key(&self) -> PublicKey {
+        PublicKey::try_from_bytes(self.0.public_key.clone().try_into().expect("error public key length"))
+            .expect("error restoring public key from bytes")
     }
 
     /// Returns the signature belonging to the issuer of this packet.
     #[allow(dead_code)]
-    pub fn signature(&self) -> &Vec<u8> {
-        &self.0.signature
+    pub fn signature(&self) -> Signature {
+        Signature::from_bytes(self.0.signature.clone().try_into().expect("error signature length"))
     }
 
     /// Restores a packet from its protobuf representation.
@@ -90,7 +91,7 @@ impl fmt::Debug for Packet {
 }
 
 /// The possible types of messages stored in a packet.
-#[derive(Debug, FromPrimitive)]
+#[derive(Clone, Copy, Debug, FromPrimitive)]
 #[repr(u32)]
 #[non_exhaustive]
 pub enum MessageType {
@@ -105,22 +106,24 @@ pub enum MessageType {
 
 #[derive(Debug)]
 pub(crate) struct IncomingPacket {
-    pub(crate) packet: Packet,
+    pub(crate) msg_type: MessageType,
+    pub(crate) msg_bytes: Vec<u8>,
     pub(crate) source_addr: SocketAddr,
 }
 
 #[derive(Debug)]
 pub(crate) struct OutgoingPacket {
-    pub(crate) packet: Packet,
+    pub(crate) msg_type: MessageType,
+    pub(crate) msg_bytes: Vec<u8>,
     pub(crate) target_addr: SocketAddr,
 }
 
-type PacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
-type PacketTx = mpsc::UnboundedSender<OutgoingPacket>;
+pub(crate) type PacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
+pub(crate) type PacketTx = mpsc::UnboundedSender<OutgoingPacket>;
 
 pub(crate) struct Socket {
-    rx: PacketRx,
-    tx: PacketTx,
+    pub(crate) rx: PacketRx,
+    pub(crate) tx: PacketTx,
 }
 
 impl Socket {
@@ -134,5 +137,9 @@ impl Socket {
 
     pub fn send(&self, message: OutgoingPacket) -> Result<(), SendError<OutgoingPacket>> {
         self.tx.send(message)
+    }
+
+    pub fn split(self) -> (PacketRx, PacketTx) {
+        (self.rx, self.tx)
     }
 }

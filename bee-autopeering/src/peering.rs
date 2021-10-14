@@ -9,12 +9,7 @@ use crate::{
     salt::Salt,
 };
 
-use tokio::sync::mpsc;
-
 use std::{net::SocketAddr, time::Duration};
-
-type PacketTx = mpsc::UnboundedSender<OutgoingPacket>;
-type PacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
 
 pub(crate) struct PeeringConfig {
     pub version: u32,
@@ -65,18 +60,12 @@ impl PeeringManager {
         // Create a peering request
         let msg_bytes = PeeringRequest::new(salt.bytes().to_vec(), salt.expiration_time())
             .protobuf()
-            .expect("error encoding peering request");
-
-        // Sign the peering request bytes
-        let signature = local_id.sign(&msg_bytes);
+            .expect("error encoding peering request")
+            .to_vec();
 
         let packet = OutgoingPacket {
-            packet: Packet::new(
-                MessageType::PeeringRequest,
-                &msg_bytes,
-                &local_id.public_key(),
-                signature,
-            ),
+            msg_type: MessageType::PeeringRequest,
+            msg_bytes,
             // FIXME
             target_addr: "127.0.0.1:1337".parse().expect("FIXME"),
         };

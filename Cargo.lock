@@ -144,6 +144,7 @@ checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 name = "bee-autopeering"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "base64 0.13.0",
  "bs58",
  "bytes",
