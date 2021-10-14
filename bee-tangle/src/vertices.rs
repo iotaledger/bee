@@ -81,20 +81,20 @@ impl Vertices {
         // SAFETY: We are holding the lock over the table, which means that no other thread
         // could have modified, added nor deleted any bucket. This applies to all the following
         // `unsafe` blocks.
-        if let Some(bucket) = unsafe { table.iter() }.next() {
+        let mut buckets = unsafe { table.iter() };
+
+        while let Some(bucket) = buckets.next() {
             let (_, vertex) = unsafe { bucket.as_ref() };
 
             if vertex.can_evict() {
                 self.len.fetch_sub(1, Ordering::Relaxed);
                 let (_, vertex) = unsafe { table.remove(bucket) };
 
-                Some(vertex)
-            } else {
-                None
+                return Some(vertex);
             }
-        } else {
-            None
         }
+
+        None
     }
 
     pub(crate) async fn get_mut_or_empty(&self, message_id: MessageId) -> RwLockMappedWriteGuard<'_, Vertex> {
