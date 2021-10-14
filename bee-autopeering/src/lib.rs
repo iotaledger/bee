@@ -14,7 +14,7 @@ mod hash;
 mod identity;
 mod init;
 mod multiaddr;
-mod packets;
+mod packet;
 mod peer;
 mod peering;
 mod peering_messages;
@@ -27,4 +27,5 @@ mod service_map;
 mod store;
 mod time;
 
+pub use identity::LocalId;
 pub use init::init;

@@ -3,14 +3,14 @@
 
 use crate::{
     config::AutopeeringConfig,
-    packets::{IncomingPacket, OutgoingPacket},
+    packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, PEERING_MSG_TYPE_RANGE},
 };
 
 use tokio::{net::UdpSocket, sync::mpsc};
 
 use std::{net::SocketAddr, sync::Arc};
 
-const READ_BUFFER_SIZE: usize = crate::packets::MAX_PACKET_SIZE;
+const READ_BUFFER_SIZE: usize = crate::packet::MAX_PACKET_SIZE;
 
 type PacketTx = mpsc::UnboundedSender<IncomingPacket>;
 type PacketRx = mpsc::UnboundedReceiver<OutgoingPacket>;
@@ -27,29 +27,34 @@ impl ServerConfig {
     }
 }
 
+pub(crate) struct PacketTxs {
+    pub(crate) discovery_tx: PacketTx,
+    pub(crate) peering_tx: PacketTx,
+}
+
 pub(crate) struct Server {
     config: ServerConfig,
-    incoming_send: PacketTx,
-    outgoing_recv: PacketRx,
+    incoming_txs: PacketTxs,
+    outgoing_rx: PacketRx,
 }
 
 impl Server {
-    pub fn new(config: ServerConfig, incoming_send: PacketTx, outgoing_recv: PacketRx) -> Self {
+    pub fn new(config: ServerConfig, incoming_txs: PacketTxs, outgoing_rx: PacketRx) -> Self {
         Self {
             config,
-            incoming_send,
-            outgoing_recv,
+            incoming_txs,
+            outgoing_rx,
         }
     }
 
     pub async fn run(self) {
         let Server {
             config,
-            incoming_send,
-            outgoing_recv,
+            incoming_txs,
+            outgoing_rx,
         } = self;
 
-        // Try to bind the UDP socket
+        // Try to bind the UDP socket to the configured address.
         let socket = UdpSocket::bind(&config.bind_addr)
             .await
             .expect("error binding udp socket");
@@ -60,22 +65,38 @@ impl Server {
         let outgoing_socket = Arc::clone(&incoming_socket);
 
         // Spawn socket handlers
-        tokio::spawn(incoming_packet_handler(incoming_socket, incoming_send));
-        tokio::spawn(outgoing_packet_handler(outgoing_socket, outgoing_recv));
+        tokio::spawn(incoming_packet_handler(incoming_socket, incoming_txs));
+        tokio::spawn(outgoing_packet_handler(outgoing_socket, outgoing_rx));
     }
 }
 
-async fn incoming_packet_handler(socket: Arc<UdpSocket>, tx: PacketTx) {
-    let mut buf = [0; READ_BUFFER_SIZE];
+async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_txs: PacketTxs) {
+    let mut packet_bytes = [0; READ_BUFFER_SIZE];
+
+    let PacketTxs {
+        discovery_tx,
+        peering_tx,
+    } = incoming_txs;
 
     loop {
-        if let Ok((len, from_peer)) = socket.recv_from(&mut buf).await {
-            let packet = IncomingPacket {
-                bytes: (&buf[..len]).to_vec(),
-                source_addr: from_peer,
-            };
+        if let Ok((n, source_addr)) = socket.recv_from(&mut packet_bytes).await {
+            log::debug!("Received {} bytes from {}.", n, source_addr);
 
-            tx.send(packet).expect("channel send error");
+            let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
+
+            match packet.message_type().expect("unknown message type") as u32 {
+                t if DISCOVERY_MSG_TYPE_RANGE.contains(&t) => {
+                    discovery_tx
+                        .send(IncomingPacket { packet, source_addr })
+                        .expect("channel send error: discovery");
+                }
+                t if PEERING_MSG_TYPE_RANGE.contains(&t) => {
+                    peering_tx
+                        .send(IncomingPacket { packet, source_addr })
+                        .expect("channel send error: peering");
+                }
+                _ => panic!("unknown message type"),
+            }
         } else {
             log::error!("udp socket read error; stopping incoming packet handler");
             break;
@@ -83,16 +104,15 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, tx: PacketTx) {
     }
 }
 
-async fn outgoing_packet_handler(socket: Arc<UdpSocket>, mut rx: PacketRx) {
+async fn outgoing_packet_handler(socket: Arc<UdpSocket>, mut outgoing_rx: PacketRx) {
     loop {
-        if let Some(packet) = rx.recv().await {
-            let OutgoingPacket {
-                bytes,
-                target_addr: target,
-            } = packet;
-            let len = socket.send_to(&bytes, target).await.expect("socket send error");
+        if let Some(packet) = outgoing_rx.recv().await {
+            let OutgoingPacket { packet, target_addr } = packet;
 
-            log::debug!("Sent {} bytes", len);
+            let bytes = packet.protobuf().expect("error encoding outgoing packet");
+            let n = socket.send_to(&bytes, target_addr).await.expect("socket send error");
+
+            log::debug!("Sent {} bytes to {}.", n, target_addr);
         } else {
             log::error!("outgoing message channel dropped; stopping outgoing packet handler");
             break;

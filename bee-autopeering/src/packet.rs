@@ -6,33 +6,39 @@
 use crate::proto;
 
 use base64 as bs64;
+use crypto::signatures::ed25519::{PublicKey, Signature};
 use num_derive::FromPrimitive;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
+use tokio::sync::mpsc::{self, error::SendError, UnboundedReceiver};
 
-use std::{fmt, io, net::SocketAddr};
+use std::{fmt, io, net::SocketAddr, ops::Range};
 
 // From `hive.go` docs:
 // * specifies the maximum allowed size of packets;
 // * packets larger than this will be cut and thus treated as invalid;
 pub(crate) const MAX_PACKET_SIZE: usize = 1280;
-const PACKET_TYPE_MIN: u32 = 20;
+
+pub(crate) const DISCOVERY_MSG_TYPE_MIN: u32 = 10;
+pub(crate) const DISCOVERY_MSG_TYPE_RANGE: Range<u32> = DISCOVERY_MSG_TYPE_MIN..(DISCOVERY_MSG_TYPE_MIN + 4);
+pub(crate) const PEERING_MSG_TYPE_MIN: u32 = 20;
+pub(crate) const PEERING_MSG_TYPE_RANGE: Range<u32> = PEERING_MSG_TYPE_MIN..(PEERING_MSG_TYPE_MIN + 3);
 
 /// Represents an IOTA packet.
 pub struct Packet(proto::Packet);
 
 impl Packet {
     /// Creates a new packet.
-    pub fn new(packet_type: PacketType, msg: &[u8], public_key: &[u8], signature: &[u8]) -> Self {
+    pub fn new(msg_type: MessageType, msg_bytes: &[u8], public_key: &PublicKey, signature: Signature) -> Self {
         Self(proto::Packet {
-            r#type: packet_type as u32,
-            data: msg.to_vec(),
-            public_key: public_key.to_vec(),
-            signature: signature.to_vec(),
+            r#type: msg_type as u32,
+            data: msg_bytes.to_vec(),
+            public_key: public_key.to_bytes().to_vec(),
+            signature: signature.to_bytes().to_vec(),
         })
     }
 
     /// Returns the type of this packet.
-    pub fn packet_type(&self) -> Result<PacketType, io::Error> {
+    pub fn message_type(&self) -> Result<MessageType, io::Error> {
         num::FromPrimitive::from_u32(self.0.r#type)
             .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "unknown packet type identifier"))
     }
@@ -83,24 +89,50 @@ impl fmt::Debug for Packet {
     }
 }
 
-/// The possible types of packets.
+/// The possible types of messages stored in a packet.
 #[derive(Debug, FromPrimitive)]
 #[repr(u32)]
 #[non_exhaustive]
-pub enum PacketType {
-    PeeringRequest = PACKET_TYPE_MIN,
+pub enum MessageType {
+    Ping = DISCOVERY_MSG_TYPE_MIN,
+    Pong,
+    DiscoveryRequest,
+    DiscoveryResponse,
+    PeeringRequest = PEERING_MSG_TYPE_MIN,
     PeeringResponse,
     PeeringDrop,
 }
 
 #[derive(Debug)]
 pub(crate) struct IncomingPacket {
-    pub(crate) bytes: Vec<u8>,
+    pub(crate) packet: Packet,
     pub(crate) source_addr: SocketAddr,
 }
 
 #[derive(Debug)]
 pub(crate) struct OutgoingPacket {
-    pub(crate) bytes: Vec<u8>,
+    pub(crate) packet: Packet,
     pub(crate) target_addr: SocketAddr,
+}
+
+type PacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
+type PacketTx = mpsc::UnboundedSender<OutgoingPacket>;
+
+pub(crate) struct Socket {
+    rx: PacketRx,
+    tx: PacketTx,
+}
+
+impl Socket {
+    pub fn new(rx: PacketRx, tx: PacketTx) -> Self {
+        Self { rx, tx }
+    }
+
+    pub async fn recv(&mut self) -> Option<IncomingPacket> {
+        self.rx.recv().await
+    }
+
+    pub fn send(&self, message: OutgoingPacket) -> Result<(), SendError<OutgoingPacket>> {
+        self.tx.send(message)
+    }
 }

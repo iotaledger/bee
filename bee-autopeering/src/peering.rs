@@ -3,54 +3,85 @@
 
 use crate::{
     config::AutopeeringConfig,
-    packets::{IncomingPacket, OutgoingPacket},
+    identity::LocalId,
+    packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, Socket},
     peering_messages::PeeringRequest,
     salt::Salt,
 };
 
 use tokio::sync::mpsc;
 
-use std::time::Duration;
+use std::{net::SocketAddr, time::Duration};
 
 type PacketTx = mpsc::UnboundedSender<OutgoingPacket>;
 type PacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
 
+pub(crate) struct PeeringConfig {
+    pub version: u32,
+    pub network_id: u32,
+    pub source_addr: SocketAddr,
+}
+
+impl PeeringConfig {
+    pub fn new(config: &AutopeeringConfig, version: u32, network_id: u32) -> Self {
+        Self {
+            version,
+            network_id,
+            source_addr: config.bind_addr,
+        }
+    }
+}
+
 pub(crate) struct PeeringManager {
-    config: AutopeeringConfig,
-    // Channel half for receiving peering related packets.
-    rx: PacketRx,
-    // Channel half for sending peering related packets.
-    tx: PacketTx,
+    config: PeeringConfig,
+    // The local id to sign outgoing packets.
+    local_id: LocalId,
+    // Channel halfs for sending/receiving peering related packets.
+    socket: Socket,
     // Storage for discovered peers
     store: (),
 }
 
 impl PeeringManager {
-    pub(crate) fn new(rx: PacketRx, tx: PacketTx, config: AutopeeringConfig) -> Self {
-        // TODO: read the store
-        let store = ();
-
-        Self { rx, tx, store, config }
+    pub(crate) fn new(config: PeeringConfig, local_id: LocalId, socket: Socket) -> Self {
+        Self {
+            config,
+            local_id,
+            socket,
+            store: (),
+        }
     }
 
     pub(crate) async fn run(self) {
-        let PeeringManager { rx, tx, store, config } = self;
+        let PeeringManager {
+            config,
+            local_id,
+            socket,
+            store,
+        } = self;
 
         let salt = Salt::new(Duration::from_secs(20));
 
-        let request_bytes = PeeringRequest::new(salt.bytes().to_vec(), salt.expiration_time())
+        // Create a peering request
+        let msg_bytes = PeeringRequest::new(salt.bytes().to_vec(), salt.expiration_time())
             .protobuf()
-            .expect("error creating peering request");
+            .expect("error encoding peering request");
 
-        // contact the entry nodes
-        for multiaddr in config.entry_nodes {
-            let packet = OutgoingPacket {
-                bytes: request_bytes.to_vec(),
-                target_addr: multiaddr.host_socketaddr(),
-            };
+        // Sign the peering request bytes
+        let signature = local_id.sign(&msg_bytes);
 
-            tx.send(packet);
-        }
+        let packet = OutgoingPacket {
+            packet: Packet::new(
+                MessageType::PeeringRequest,
+                &msg_bytes,
+                &local_id.public_key(),
+                signature,
+            ),
+            // FIXME
+            target_addr: "127.0.0.1:1337".parse().expect("FIXME"),
+        };
+
+        socket.send(packet);
     }
 }
 

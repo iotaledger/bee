@@ -5,18 +5,15 @@ use crate::{
     backoff::{Backoff, BackoffBuilder, BackoffMode},
     config::AutopeeringConfig,
     discovery_messages::{Ping, PingFactory},
-    identity::PeerId,
+    identity::{LocalId, PeerId},
     multiaddr::AutopeeringMultiaddr,
-    packets::{IncomingPacket, OutgoingPacket},
+    packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, Socket},
     peer::Peer,
 };
 
 use tokio::sync::mpsc;
 
 use std::{collections::VecDeque, fmt, net::SocketAddr};
-
-type PacketTx = mpsc::UnboundedSender<OutgoingPacket>;
-type PacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
 
 type BootstrapPeer = Peer;
 
@@ -159,18 +156,18 @@ impl DiscoveredPeerlist {
 pub(crate) struct DiscoveryManager {
     // Config.
     config: DiscoveryConfig,
+    // The local id to sign outgoing packets.
+    local_id: LocalId,
     // Backoff logic.
     backoff: Backoff,
     // Factory to build `Ping` messages.
     ping_factory: PingFactory,
-    // Channel half for receiving discovery related packets.
-    rx: PacketRx,
-    // Channel half for sending discovery related packets.
-    tx: PacketTx,
+    // Channel halfs for sending/receiving discovery related packets.
+    socket: Socket,
 }
 
 impl DiscoveryManager {
-    pub(crate) fn new(config: DiscoveryConfig, rx: PacketRx, tx: PacketTx) -> Self {
+    pub(crate) fn new(config: DiscoveryConfig, local_id: LocalId, socket: Socket) -> Self {
         let backoff = BackoffBuilder::new(BackoffMode::Exponential(BACKOFF_INTERVALL_MILLISECS, 1.5))
             .with_jitter(0.5)
             .with_max_retries(MAX_RETRIES)
@@ -180,20 +177,20 @@ impl DiscoveryManager {
 
         Self {
             config,
+            local_id,
             backoff,
             ping_factory,
-            rx,
-            tx,
+            socket,
         }
     }
 
     pub(crate) async fn run(self) {
         let DiscoveryManager {
             config,
+            local_id,
             backoff,
             ping_factory,
-            rx,
-            tx,
+            socket,
         } = self;
 
         // Send a `Ping` to all entry nodes.
@@ -205,9 +202,10 @@ impl DiscoveryManager {
 
         for target_addr in bootstrap_peers {
             let ping = ping_factory.make(target_addr.ip());
-            let bytes = ping.protobuf().unwrap().to_vec();
-
-            tx.send(OutgoingPacket { bytes, target_addr });
+            let msg_bytes = ping.protobuf().expect("error encoding ping");
+            let signature = local_id.sign(&msg_bytes);
+            let packet = Packet::new(MessageType::Ping, &msg_bytes, &local_id.public_key(), signature);
+            socket.send(OutgoingPacket { packet, target_addr });
         }
     }
 }
