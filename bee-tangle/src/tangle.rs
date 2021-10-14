@@ -33,7 +33,7 @@ const DEFAULT_CACHE_LEN: usize = 100_000;
 const CACHE_THRESHOLD_FACTOR: f64 = 0.1;
 const SYNCED_THRESHOLD: u32 = 2;
 const CONFIRMED_THRESHOLD: u32 = 2;
-const PARTITION_LENGTH: usize = 100;
+const PARTITION_LENGTH: usize = 16;
 
 /// A Tangle wrapper designed to encapsulate milestone state.
 pub struct Tangle<B> {
