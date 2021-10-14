@@ -19,7 +19,7 @@ use bee_message::{
 use bee_runtime::resource::ResourceHandle;
 
 use hashbrown::HashMap;
-use log::{info, trace};
+use log::info;
 use ref_cast::RefCast;
 use tokio::sync::Mutex;
 
@@ -102,7 +102,8 @@ impl<B: StorageBackend> Tangle<B> {
         if msg.is_some() {
             // Write parents to DB
             for &parent in message.parents().iter() {
-                self.storage_insert_approver(parent, message_id)
+                self.storage
+                    .insert(&(parent, message_id), &())
                     .unwrap_or_else(|e| info!("Failed to update approvers for message {:?}", e));
             }
 
@@ -124,7 +125,8 @@ impl<B: StorageBackend> Tangle<B> {
             metadata.set_ymrsi(IndexId::new(idx, *milestone.message_id()));
         })
         .await;
-        self.storage_insert_milestone(idx, &milestone)
+        self.storage()
+            .insert(&idx, &milestone)
             .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
         self.milestones.lock().await.insert(idx, milestone);
     }
@@ -135,7 +137,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     async fn pull_milestone(&self, idx: MilestoneIndex) -> Option<MessageId> {
-        if let Some(milestone) = self.storage_get_milestone(&idx).unwrap_or_else(|e| {
+        if let Some(milestone) = self.storage().fetch(&idx).unwrap_or_else(|e| {
             info!("Failed to insert message {:?}", e);
             None
         }) {
@@ -540,7 +542,7 @@ impl<B: StorageBackend> Tangle<B> {
             }
             None => {
                 drop(vertex);
-                let to_insert = match self.storage_fetch_approvers(message_id) {
+                let to_insert = match self.storage.fetch(message_id) {
                     Err(e) => {
                         info!("Failed to update approvers for message message {:?}", e);
                         Vec::new()
@@ -613,41 +615,18 @@ impl<B: StorageBackend> Tangle<B> {
             }
         }
     }
-}
-
-impl<B: StorageBackend> Tangle<B> {
-    fn storage_get_milestone(&self, idx: &MilestoneIndex) -> Result<Option<Milestone>, B::Error> {
-        trace!("Attempted to fetch milestone {:?}", idx);
-        self.storage().fetch(idx)
-    }
-
-    fn storage_insert_milestone(&self, idx: MilestoneIndex, milestone: &Milestone) -> Result<(), B::Error> {
-        trace!("Attempted to insert milestone {:?}", idx);
-        self.storage().insert(&idx, milestone)?;
-        Ok(())
-    }
 
     fn storage_get(&self, id: &MessageId) -> Result<Option<(Message, MessageMetadata)>, B::Error> {
-        trace!("Attempted to fetch message {:?}", id);
         let msg = self.storage.fetch(id)?;
         let meta = self.storage.fetch(id)?;
+
         Ok(msg.zip(meta))
     }
 
     fn storage_insert(&self, id: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), B::Error> {
-        trace!("Attempted to insert message {:?}", id);
         self.storage.insert(&id, &tx)?;
         self.storage.insert(&id, &metadata)?;
+
         Ok(())
-    }
-
-    fn storage_fetch_approvers(&self, id: &MessageId) -> Result<Option<Vec<MessageId>>, B::Error> {
-        trace!("Attempted to fetch approvers for message {:?}", id);
-        self.storage.fetch(id)
-    }
-
-    fn storage_insert_approver(&self, id: MessageId, approver: MessageId) -> Result<(), B::Error> {
-        trace!("Attempted to insert approver for message {:?}", id);
-        self.storage.insert(&(id, approver), &())
     }
 }
