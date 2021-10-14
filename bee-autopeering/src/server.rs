@@ -88,7 +88,7 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_txs: PacketTxs
 
             let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
 
-            // Verify the packet
+            // Verify the packet.
             let message = packet.message();
             let signature = packet.signature();
             if !packet.public_key().verify(&signature, message) {
@@ -100,24 +100,18 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_txs: PacketTxs
             let msg_type = packet.message_type().expect("invalid message type");
             let msg_bytes = packet.into_message();
 
+            let packet = IncomingPacket {
+                msg_type,
+                msg_bytes,
+                source_addr,
+            };
+
             match msg_type as u32 {
                 t if DISCOVERY_MSG_TYPE_RANGE.contains(&t) => {
-                    discovery_tx
-                        .send(IncomingPacket {
-                            msg_type,
-                            msg_bytes,
-                            source_addr,
-                        })
-                        .expect("channel send error: discovery");
+                    discovery_tx.send(packet).expect("channel send error: discovery");
                 }
                 t if PEERING_MSG_TYPE_RANGE.contains(&t) => {
-                    peering_tx
-                        .send(IncomingPacket {
-                            msg_type,
-                            msg_bytes,
-                            source_addr,
-                        })
-                        .expect("channel send error: peering");
+                    peering_tx.send(packet).expect("channel send error: peering");
                 }
                 _ => panic!("invalid message type"),
             }

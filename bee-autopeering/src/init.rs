@@ -23,7 +23,7 @@ pub async fn init(
     local_id: LocalId,
     services: ServiceMap,
 ) -> Result<(), Box<dyn error::Error>> {
-    // Create 2 channels for inbound/outbound communication with the UDP socket.
+    // Create channels for inbound/outbound communication with the UDP socket.
     let (discovery_tx, discovery_rx) = chan::<IncomingPacket>();
     let (peering_tx, peering_rx) = chan::<IncomingPacket>();
     let (outgoing_tx, outgoing_rx) = chan::<OutgoingPacket>();
