@@ -6,6 +6,7 @@ accepted = [
     "ISC",
     "MIT",
     "MPL-2.0",
+    "OpenSSL",
 ]
 # For now, we include these so that the number of gathered crates matches the number of crates in `Cargo.lock`.
 ignore-build-dependencies = false
