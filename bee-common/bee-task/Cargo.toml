@@ -11,8 +11,8 @@ keywords = [ "iota", "tangle", "bee", "framework", "task" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-tokio = { version = "1.12", default-features = false, features = [ "rt" ] }
-tracing = { version = "0.1", default-features = false, optional = true }
+tokio = { version = "1.12.0", default-features = false, features = [ "rt" ] }
+tracing = { version = "0.1.29", default-features = false, optional = true }
 
 [features]
 tokio-console = [ "tracing" ]
