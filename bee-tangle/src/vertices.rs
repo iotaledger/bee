@@ -84,9 +84,9 @@ impl Vertices {
         // SAFETY: We are holding the lock over the table, which means that no other thread
         // could have modified, added nor deleted any bucket. This applies to all the following
         // `unsafe` blocks.
-        let mut buckets = unsafe { table.iter() };
+        let buckets = unsafe { table.iter() };
 
-        while let Some(bucket) = buckets.next() {
+        for bucket in buckets {
             let (_, vertex) = unsafe { bucket.as_ref() };
 
             if vertex.can_evict() {
