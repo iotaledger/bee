@@ -8,7 +8,7 @@ use crate::{
     storage::StorageBackend,
     urts::UrtsTipPool,
     vertex::Vertex,
-    vertices::{Reason, Vertices},
+    vertices::Vertices,
     MessageRef,
 };
 
