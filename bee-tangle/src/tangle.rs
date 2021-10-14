@@ -8,7 +8,7 @@ use crate::{
     storage::StorageBackend,
     urts::UrtsTipPool,
     vertex::Vertex,
-    vertices::Vertices,
+    vertices::{Reason, Vertices},
     MessageRef,
 };
 
@@ -611,7 +611,20 @@ impl<B: StorageBackend> Tangle<B> {
 
         if self.vertices.len() > max_len {
             while self.vertices.len() > ((1.0 - CACHE_THRESHOLD_FACTOR) * max_len as f64) as usize {
-                self.vertices.pop_random().await;
+                let mut retries = 10;
+                loop {
+                    if self.vertices.pop_random().await.is_none() {
+                        log::warn!("retrying cache eviction");
+                        retries -= 1;
+                    } else {
+                        break;
+                    }
+
+                    if retries == 0 {
+                        log::warn!("could not perform cache eviction");
+                        return;
+                    }
+                }
             }
         }
     }
