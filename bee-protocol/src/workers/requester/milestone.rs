@@ -143,7 +143,7 @@ async fn process_request_unchecked(
                         Sender::<MilestoneRequestPacket>::send(
                             peer_manager,
                             metrics,
-                            &peer_id,
+                            peer_id,
                             MilestoneRequestPacket::new(*index),
                         )
                         .await;

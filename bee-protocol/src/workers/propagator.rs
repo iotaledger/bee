@@ -38,7 +38,7 @@ async fn propagate<B: StorageBackend>(
             continue 'outer;
         }
 
-        if let Some(message) = tangle.get(&message_id).await {
+        if let Some(message) = tangle.get(message_id).await {
             // If one of the parents is not yet solid, we skip the current message.
             for parent in message.parents().iter() {
                 if !tangle.is_solid_message(parent).await {
@@ -58,7 +58,7 @@ async fn propagate<B: StorageBackend>(
 
             for parent in message.parents().iter() {
                 let (parent_omrsi, parent_ymrsi) = match tangle
-                    .get_solid_entry_point_index(SolidEntryPoint::ref_cast(&parent))
+                    .get_solid_entry_point_index(SolidEntryPoint::ref_cast(parent))
                     .await
                 {
                     Some(parent_sepi) => (IndexId::new(parent_sepi, *parent), IndexId::new(parent_sepi, *parent)),
@@ -81,7 +81,7 @@ async fn propagate<B: StorageBackend>(
             let child_ymrsi = parent_ymrsis.iter().max().unwrap();
 
             let ms_index_maybe = tangle
-                .update_metadata(&message_id, |metadata| {
+                .update_metadata(message_id, |metadata| {
                     // The child inherits the solid property from its parents.
                     metadata.mark_solid();
 
@@ -97,7 +97,7 @@ async fn propagate<B: StorageBackend>(
                 .expect("Failed to fetch metadata.");
 
             // Try to propagate as far as possible into the future.
-            if let Some(msg_children) = tangle.get_children(&message_id).await {
+            if let Some(msg_children) = tangle.get_children(message_id).await {
                 for child in msg_children {
                     children.push(child);
                 }

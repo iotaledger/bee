@@ -88,14 +88,14 @@ async fn process<B: StorageBackend>(
             return;
         }
 
-        match validate(message_id, &message, &milestone, &key_manager).await {
+        match validate(message_id, &message, milestone, key_manager).await {
             Ok(milestone) => {
                 tangle.add_milestone(index, milestone.clone()).await;
                 if index > tangle.get_latest_milestone_index() {
                     info!("New milestone {} {}.", index, milestone.message_id());
                     tangle.update_latest_milestone_index(index);
 
-                    broadcast_heartbeat(&peer_manager, &metrics, tangle).await;
+                    broadcast_heartbeat(peer_manager, metrics, tangle).await;
 
                     bus.dispatch(LatestMilestoneChanged { index, milestone });
                 } else {

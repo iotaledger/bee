@@ -121,7 +121,7 @@ impl PeerWorker {
             MilestoneRequestPacket::ID => {
                 trace!("[{}] Reading MilestoneRequestPacket...", self.peer.alias());
 
-                let packet = tlv_from_bytes::<MilestoneRequestPacket>(&header, bytes)?;
+                let packet = tlv_from_bytes::<MilestoneRequestPacket>(header, bytes)?;
 
                 let _ = self.milestone_responder.send(MilestoneResponderWorkerEvent {
                     peer_id: *self.peer.id(),
@@ -134,7 +134,7 @@ impl PeerWorker {
             MessagePacket::ID => {
                 trace!("[{}] Reading MessagePacket...", self.peer.alias());
 
-                let packet = tlv_from_bytes::<MessagePacket>(&header, bytes)?;
+                let packet = tlv_from_bytes::<MessagePacket>(header, bytes)?;
 
                 let _ = self.hasher.send(HasherWorkerEvent {
                     from: Some(*self.peer.id()),
@@ -148,7 +148,7 @@ impl PeerWorker {
             MessageRequestPacket::ID => {
                 trace!("[{}] Reading MessageRequestPacket...", self.peer.alias());
 
-                let packet = tlv_from_bytes::<MessageRequestPacket>(&header, bytes)?;
+                let packet = tlv_from_bytes::<MessageRequestPacket>(header, bytes)?;
 
                 let _ = self.message_responder.send(MessageResponderWorkerEvent {
                     peer_id: *self.peer.id(),
@@ -161,7 +161,7 @@ impl PeerWorker {
             HeartbeatPacket::ID => {
                 trace!("[{}] Reading HeartbeatPacket...", self.peer.alias());
 
-                let packet = tlv_from_bytes::<HeartbeatPacket>(&header, bytes)?;
+                let packet = tlv_from_bytes::<HeartbeatPacket>(header, bytes)?;
 
                 self.peer.set_solid_milestone_index(packet.solid_milestone_index.into());
                 self.peer.set_pruned_index(packet.pruned_index.into());
