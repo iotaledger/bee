@@ -33,6 +33,7 @@ pub mod urts;
 mod conflict;
 mod vec_set;
 mod vertex;
+mod vertices;
 
 pub use conflict::ConflictReason;
 pub use tangle::Tangle;

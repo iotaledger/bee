@@ -8,6 +8,7 @@ use crate::{
     storage::StorageBackend,
     urts::UrtsTipPool,
     vertex::Vertex,
+    vertices::Vertices,
     MessageRef,
 };
 
@@ -19,12 +20,10 @@ use bee_runtime::resource::ResourceHandle;
 
 use hashbrown::HashMap;
 use log::{info, trace};
-use rand::Rng;
 use ref_cast::RefCast;
-use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use tokio::sync::Mutex;
 
 use std::{
-    convert::TryInto,
     marker::PhantomData,
     ops::{Deref, DerefMut},
     sync::atomic::{AtomicU32, AtomicUsize, Ordering},
@@ -39,9 +38,8 @@ const PARTITION_LENGTH: usize = 100;
 /// A Tangle wrapper designed to encapsulate milestone state.
 pub struct Tangle<B> {
     config: TangleConfig,
-    vertices: Vec<RwLock<HashMap<MessageId, Vertex>>>,
+    vertices: Vertices,
     max_len: AtomicUsize,
-    len: AtomicUsize,
     storage: ResourceHandle<B>,
     milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
     solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
@@ -58,9 +56,8 @@ impl<B: StorageBackend> Tangle<B> {
     /// Create a new `Tangle` instance with the given configuration and storage handle.
     pub fn new(config: TangleConfig, storage: ResourceHandle<B>) -> Self {
         Self {
-            vertices: (0..PARTITION_LENGTH).map(|_| RwLock::new(HashMap::new())).collect(),
+            vertices: Vertices::new(PARTITION_LENGTH),
             max_len: AtomicUsize::new(DEFAULT_CACHE_LEN),
-            len: AtomicUsize::new(0),
             storage,
             milestones: Default::default(),
             solid_entry_points: Default::default(),
@@ -85,28 +82,6 @@ impl<B: StorageBackend> Tangle<B> {
         &self.config
     }
 
-    fn hash_intern(&self, message_id: &MessageId) -> usize {
-        usize::from_le_bytes(message_id.as_ref()[0..8].try_into().unwrap()) % PARTITION_LENGTH
-    }
-
-    fn get_interned_vertices(&self, message_id: &MessageId) -> &RwLock<HashMap<MessageId, Vertex>> {
-        &self.vertices[self.hash_intern(message_id)]
-    }
-
-    async fn get_interned(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex> + '_> {
-        RwLockReadGuard::try_map(self.get_interned_vertices(message_id).read().await, |m| {
-            m.get(message_id)
-        })
-        .ok()
-    }
-
-    async fn get_interned_mut(&self, message_id: &MessageId) -> Option<impl DerefMut<Target = Vertex> + '_> {
-        RwLockWriteGuard::try_map(self.get_interned_vertices(message_id).write().await, |m| {
-            m.get_mut(message_id)
-        })
-        .ok()
-    }
-
     /// Insert a message into the tangle.
     pub async fn insert(
         &self,
@@ -118,7 +93,8 @@ impl<B: StorageBackend> Tangle<B> {
 
         let msg = self.insert_inner(message_id, message.clone(), metadata, !exists).await;
 
-        self.get_interned_mut(&message_id)
+        self.vertices
+            .get_mut(&message_id)
             .await
             .expect("Just-inserted message is missing")
             .allow_eviction();
@@ -428,33 +404,29 @@ impl<B: StorageBackend> Tangle<B> {
         metadata: MessageMetadata,
         prevent_eviction: bool,
     ) -> Option<MessageRef> {
-        let mut vertices = self.get_interned_vertices(&message_id).write().await;
-        let vertex = vertices.entry(message_id).or_insert_with(Vertex::empty);
+        let mut vertex = self.vertices.get_mut_or_empty(message_id).await;
 
         if prevent_eviction {
             vertex.prevent_eviction();
         }
 
         let msg = if vertex.message().is_some() {
+            drop(vertex);
             None
         } else {
             let parents = message.parents().clone();
 
             vertex.insert_message_and_metadata(message, metadata);
             let msg = vertex.message().cloned();
+            drop(vertex);
 
             // Insert children for parents
             for &parent in parents.iter() {
-                let children = vertices.entry(parent).or_insert_with(Vertex::empty);
-                children.add_child(message_id);
+                self.vertices.get_mut_or_empty(parent).await.add_child(message_id);
             }
 
             msg
         };
-
-        drop(vertices);
-
-        self.len.fetch_add(1, Ordering::SeqCst);
 
         self.perform_eviction().await;
 
@@ -462,7 +434,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     async fn get_inner(&self, message_id: &MessageId) -> Option<impl DerefMut<Target = Vertex> + '_> {
-        self.get_interned_mut(message_id).await
+        self.vertices.get_mut(message_id).await
     }
 
     /// Get the data of a vertex associated with the given `message_id`.
@@ -483,7 +455,8 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     async fn contains_inner(&self, message_id: &MessageId) -> bool {
-        self.get_interned(message_id)
+        self.vertices
+            .get(message_id)
             .await
             .map_or(false, |v| v.message().is_some())
     }
@@ -516,9 +489,8 @@ impl<B: StorageBackend> Tangle<B> {
         Update: FnOnce(&mut MessageMetadata) -> R,
     {
         let exists = self.pull_message(message_id, true).await;
-        let mut vertices = self.get_interned_vertices(message_id).write().await;
 
-        if let Some(vertex) = vertices.get_mut(message_id) {
+        if let Some(mut vertex) = self.vertices.get_mut(message_id).await {
             if exists {
                 vertex.allow_eviction();
             }
@@ -527,7 +499,7 @@ impl<B: StorageBackend> Tangle<B> {
             if let Some((msg, meta)) = vertex.message_and_metadata() {
                 let (msg, meta) = ((&**msg).clone(), *meta);
 
-                drop(vertices);
+                drop(vertex);
 
                 self.storage_insert(*message_id, msg, meta)
                     .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
@@ -553,20 +525,21 @@ impl<B: StorageBackend> Tangle<B> {
             }
         }
 
-        let vertices = self.get_interned_vertices(message_id).read().await;
-        let v = vertices
+        let vertex = self
+            .vertices
             .get(message_id)
+            .await
             // Skip approver lists that are not exhaustive
             .filter(|v| v.children_exhaustive());
 
-        let children = match v {
-            Some(v) => {
-                let children = v.children().to_vec();
-                drop(vertices);
+        let children = match vertex {
+            Some(vertex) => {
+                let children = vertex.children().to_vec();
+                drop(vertex);
                 children
             }
             None => {
-                drop(vertices);
+                drop(vertex);
                 let to_insert = match self.storage_fetch_approvers(message_id) {
                     Err(e) => {
                         info!("Failed to update approvers for message message {:?}", e);
@@ -576,20 +549,19 @@ impl<B: StorageBackend> Tangle<B> {
                     Ok(Some(approvers)) => approvers,
                 };
 
-                let mut vertices = self.get_interned_vertices(message_id).write().await;
-                let v = vertices.entry(*message_id).or_insert_with(Vertex::empty);
-
-                self.len.fetch_add(1, Ordering::SeqCst);
+                let mut vertex = self.vertices.get_mut_or_empty(*message_id).await;
 
                 // We've just fetched approvers from the database, so we have all the information available to us now.
                 // Therefore, the approvers list is exhaustive (i.e: it contains all knowledge we have).
-                v.set_exhaustive();
+                vertex.set_exhaustive();
 
                 for child in to_insert {
-                    v.add_child(child);
+                    vertex.add_child(child);
                 }
 
-                v.children().to_vec()
+                let children = vertex.children().to_vec();
+                drop(vertex);
+                children
             }
         };
 
@@ -606,14 +578,14 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     #[cfg(test)]
-    pub fn clear(&mut self) {
-        self.vertices.clear();
+    pub async fn clear(&mut self) {
+        self.vertices.clear().await;
     }
 
     // Attempts to pull the message from the storage, returns true if successful.
     async fn pull_message(&self, message_id: &MessageId, prevent_eviction: bool) -> bool {
         let contains_now = if prevent_eviction {
-            self.get_interned_mut(message_id).await.map_or(false, |mut v| {
+            self.vertices.get_mut(message_id).await.map_or(false, |mut v| {
                 if v.message().is_some() {
                     v.prevent_eviction();
                     true
@@ -639,23 +611,10 @@ impl<B: StorageBackend> Tangle<B> {
 
     async fn perform_eviction(&self) {
         let max_len = self.max_len.load(Ordering::Relaxed);
-        let mut len = self.len.load(Ordering::Relaxed);
 
-        if len > max_len {
-            while len > ((1.0 - CACHE_THRESHOLD_FACTOR) * max_len as f64) as usize {
-                let idx = rand::thread_rng().gen_range(0..PARTITION_LENGTH) as usize;
-                let mut vertices = self.vertices[idx].write().await;
-
-                if let Some(key) = vertices.iter().next().map(|(k, _)| k).copied() {
-                    if let Some(vertex) = vertices.remove(&key) {
-                        if !vertex.can_evict() {
-                            // Reinsert it if we're not permitted to evict it yet (because something is using it)
-                            vertices.insert(key, vertex);
-                        } else {
-                            len = self.len.fetch_sub(1, Ordering::SeqCst) - 1;
-                        }
-                    }
-                }
+        if self.vertices.len() > max_len {
+            while self.vertices.len() > ((1.0 - CACHE_THRESHOLD_FACTOR) * max_len as f64) as usize {
+                self.vertices.pop_random().await;
             }
         }
     }
