@@ -119,13 +119,4 @@ impl Vertices {
     pub(crate) fn len(&self) -> usize {
         self.len.load(Ordering::Relaxed)
     }
-
-    #[cfg(test)]
-    pub(crate) async fn clear(&self) {
-        for table in self.tables.iter() {
-            table.write().await.clear();
-        }
-
-        self.len.store(0, Ordering::Relaxed);
-    }
 }

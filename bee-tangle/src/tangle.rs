@@ -577,11 +577,6 @@ impl<B: StorageBackend> Tangle<B> {
         self.children_inner(message_id).await.map(|approvers| approvers.clone())
     }
 
-    #[cfg(test)]
-    pub async fn clear(&mut self) {
-        self.vertices.clear().await;
-    }
-
     // Attempts to pull the message from the storage, returns true if successful.
     async fn pull_message(&self, message_id: &MessageId, prevent_eviction: bool) -> bool {
         let contains_now = if prevent_eviction {
