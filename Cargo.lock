@@ -411,7 +411,6 @@ dependencies = [
  "bee-test",
  "bitflags",
  "criterion",
- "dashmap",
  "futures",
  "hashbrown",
  "log",
@@ -1858,18 +1857,6 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<< HEAD
-name = "lru"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c748cfe47cb8da225c37595b3108bea1c198c84aaae8ea0ba76d01dda9fc803"
-dependencies = [
- "hashbrown",
-]
-
-[[package]]
-=======
->>>>>>> 7bef9e05 (Bogo eviction)
 name = "lru-cache"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
