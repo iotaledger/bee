@@ -1,23 +1,23 @@
 [package]
 name = "bee-runtime"
 version = "0.1.1-alpha"
-authors = ["IOTA Stiftung"]
+authors = [ "IOTA Stiftung" ]
 edition = "2018"
 description = "Runtime components and utilities for the bee framework"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "runtime"]
+keywords = [ "iota", "tangle", "bee", "framework", "runtime" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
 bee-storage = { version = "0.9.0", path = "../bee-storage/bee-storage" }
 
-async-trait = "0.1"
-dashmap = "4.0"
-futures = "0.3"
-log = { version = "0.4", features = [ "serde" ] }
-tokio = "1.11"
+async-trait = "0.1.51"
+dashmap = "4.0.2"
+futures = "0.3.17"
+log = { version = "0.4.14", features = [ "serde" ] }
+tokio = "1.12.0"
 
 [dev-dependencies]
-tokio = { version = "1.11", features = [ "rt", "macros", "time" ] }
+tokio = { version = "1.12.0", features = [ "rt", "macros", "time" ] }
