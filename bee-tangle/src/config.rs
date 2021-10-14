@@ -4,11 +4,13 @@
 use serde::Deserialize;
 
 const DEFAULT_BELOW_MAX_DEPTH: u32 = 15;
+const DEFAULT_NUM_PARTITIONS: usize = 100;
 
 /// A builder type for a tangle configuration.
 #[derive(Default, Deserialize)]
 pub struct TangleConfigBuilder {
     below_max_depth: Option<u32>,
+    num_partitions: Option<usize>,
 }
 
 impl TangleConfigBuilder {
@@ -21,6 +23,7 @@ impl TangleConfigBuilder {
     pub fn finish(self) -> TangleConfig {
         TangleConfig {
             below_max_depth: self.below_max_depth.unwrap_or(DEFAULT_BELOW_MAX_DEPTH),
+            num_partitions: self.num_partitions.unwrap_or(DEFAULT_NUM_PARTITIONS),
         }
     }
 }
@@ -29,6 +32,7 @@ impl TangleConfigBuilder {
 #[derive(Clone)]
 pub struct TangleConfig {
     below_max_depth: u32,
+    num_partitions: usize,
 }
 
 impl TangleConfig {
@@ -40,5 +44,10 @@ impl TangleConfig {
     /// Get the value of `below_max_depth`.
     pub fn below_max_depth(&self) -> u32 {
         self.below_max_depth
+    }
+
+    /// Get the value of `num_partitions`.
+    pub fn num_partitions(&self) -> usize {
+        self.num_partitions
     }
 }
