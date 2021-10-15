@@ -7,7 +7,7 @@ use bee_common::packable::{Packable, Read, Write};
 use bee_message::output::OutputId;
 
 /// A type to record output and treasury changes that happened within a milestone.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct OutputDiff {
     created_outputs: Vec<OutputId>,
     consumed_outputs: Vec<OutputId>,
