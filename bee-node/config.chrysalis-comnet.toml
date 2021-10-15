@@ -94,6 +94,7 @@ path = "./storage/comnet"
 
 [tangle]
 below_max_depth = 15
+num_partitions  = 16
 
 [mqtt]
 address = "tcp://localhost:1883"
