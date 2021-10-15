@@ -58,9 +58,8 @@ impl Vertices {
         let hash = self.make_hash(message_id);
         let table = self.get_table(hash).read().await;
 
-        RwLockReadGuard::try_map(table, |table| match table.get(hash, equivalent_id(message_id)) {
-            Some((_, v)) => Some(v),
-            None => None,
+        RwLockReadGuard::try_map(table, |table| {
+            table.get(hash, equivalent_id(message_id)).map(|(_, v)| v)
         })
         .ok()
     }
@@ -69,9 +68,8 @@ impl Vertices {
         let hash = self.make_hash(message_id);
         let table = self.get_table(hash).write().await;
 
-        RwLockWriteGuard::try_map(table, |table| match table.get_mut(hash, equivalent_id(message_id)) {
-            Some((_, v)) => Some(v),
-            None => None,
+        RwLockWriteGuard::try_map(table, |table| {
+            table.get_mut(hash, equivalent_id(message_id)).map(|(_, v)| v)
         })
         .ok()
     }
@@ -81,9 +79,8 @@ impl Vertices {
         // SAFETY: `index < self.tables.len()` by construction.
         let mut table = unsafe { self.tables.get_unchecked(index) }.write().await;
 
-        // SAFETY: We are holding the lock over the table, which means that no other thread
-        // could have modified, added nor deleted any bucket. This applies to all the following
-        // `unsafe` blocks.
+        // SAFETY: We are holding the lock over the table, which means that no other thread could have modified, added
+        // nor deleted any bucket. This applies to all the following `unsafe` blocks.
         let buckets = unsafe { table.iter() };
 
         for bucket in buckets {
@@ -113,8 +110,8 @@ impl Vertices {
 
                 bucket
             };
-            // SAFETY: We are holding the lock over the table, which means that no other thread
-            // could have modified the table to make this bucket invalid.
+            // SAFETY: We are holding the lock over the table, which means that no other thread could have modified the
+            // table to make this bucket invalid.
             unsafe { &mut bucket.as_mut().1 }
         })
     }
