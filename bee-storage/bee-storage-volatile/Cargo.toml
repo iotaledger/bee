@@ -1,0 +1,26 @@
+[package]
+name = "bee-storage-volatile"
+version = "0.1.0"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+description = "An in-memory bee-storage implementation"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "bee", "framework"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-common = { version = "0.5.0", path = "../../bee-common/bee-common" }
+bee-ledger = { version = "0.5.0", path = "../../bee-ledger" }
+bee-message = { version = "0.1.5", path = "../../bee-message" }
+bee-storage = { version = "0.9.0", path = "../bee-storage" }
+bee-tangle = { version = "0.2.0", path = "../../bee-tangle" }
+
+num_cpus = "1.13"
+serde = { version = "1.0", features = [ "derive" ] }
+thiserror = "1.0"
+
+[dev-dependencies]
+bee-storage-test = { path = "../bee-storage-test" }
+bee-test = { path = "../../bee-test" }

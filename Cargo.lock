@@ -399,6 +399,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-storage-volatile"
+version = "0.1.0"
+dependencies = [
+ "bee-common",
+ "bee-ledger",
+ "bee-message",
+ "bee-storage",
+ "bee-storage-test",
+ "bee-tangle",
+ "bee-test",
+ "num_cpus",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "bee-tangle"
 version = "0.2.0"
 dependencies = [
