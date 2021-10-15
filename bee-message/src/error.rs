@@ -22,6 +22,7 @@ pub enum Error {
     InvalidAmount(u64),
     InvalidDustAllowanceAmount(u64),
     InvalidEssenceKind(u8),
+    InvalidFeatureBlockKind(u8),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength(usize, usize),
     InvalidIndexationDataLength(usize),
@@ -85,6 +86,7 @@ impl fmt::Display for Error {
             Error::InvalidAmount(amount) => write!(f, "Invalid amount: {}.", amount),
             Error::InvalidDustAllowanceAmount(amount) => write!(f, "Invalid dust allowance amount: {}.", amount),
             Error::InvalidEssenceKind(k) => write!(f, "Invalid essence kind: {}.", k),
+            Error::InvalidFeatureBlockKind(k) => write!(f, "Invalid feature block kind: {}.", k),
             Error::InvalidHexadecimalChar(hex) => write!(f, "Invalid hexadecimal character: {}.", hex),
             Error::InvalidHexadecimalLength(expected, actual) => {
                 write!(f, "Invalid hexadecimal length: expected {} got {}.", expected, actual)

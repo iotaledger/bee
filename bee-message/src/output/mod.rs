@@ -3,6 +3,7 @@
 
 mod alias;
 mod extended;
+mod feature_block;
 mod foundry;
 mod nft;
 mod output_id;
@@ -12,6 +13,7 @@ mod treasury;
 
 pub use alias::AliasOutput;
 pub use extended::ExtendedOutput;
+pub use feature_block::FeatureBlock;
 pub use foundry::FoundryOutput;
 pub use nft::NftOutput;
 pub use output_id::{OutputId, OUTPUT_ID_LENGTH};
