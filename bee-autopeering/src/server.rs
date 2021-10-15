@@ -3,6 +3,7 @@
 
 use crate::{
     config::AutopeeringConfig,
+    identity::PeerId,
     packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, PEERING_MSG_TYPE_RANGE},
     LocalId,
 };
@@ -84,9 +85,11 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_txs: PacketTxs
 
     loop {
         if let Ok((n, source_addr)) = socket.recv_from(&mut packet_bytes).await {
-            log::debug!("Received {} bytes from {}.", n, source_addr);
-
             let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
+
+            // Restore the peer id.
+            let peer_id = PeerId::from_public_key(packet.public_key());
+            log::debug!("Received {} bytes from {}.", n, peer_id);
 
             // Verify the packet.
             let message = packet.message();
@@ -104,6 +107,7 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_txs: PacketTxs
                 msg_type,
                 msg_bytes,
                 source_addr,
+                peer_id,
             };
 
             match msg_type as u32 {

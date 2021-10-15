@@ -8,6 +8,7 @@ use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature}
 use std::{
     convert::TryInto,
     fmt,
+    hash::{Hash, Hasher},
     sync::{Arc, RwLock},
 };
 
@@ -140,6 +141,11 @@ impl Eq for PeerId {}
 impl PartialEq for PeerId {
     fn eq(&self, other: &Self) -> bool {
         self.internal_id == other.internal_id
+    }
+}
+impl Hash for PeerId {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.internal_id.hash(state);
     }
 }
 

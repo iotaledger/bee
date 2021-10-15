@@ -3,6 +3,7 @@
 
 use crate::{
     proto,
+    request::Request,
     service_map::{ServiceMap, ServiceName},
 };
 
@@ -130,6 +131,18 @@ impl Pong {
         }
     }
 
+    pub(crate) fn ping_hash(&self) -> &[u8] {
+        &self.ping_hash
+    }
+
+    pub(crate) fn services(&self) -> &ServiceMap {
+        &self.services
+    }
+
+    pub(crate) fn target_addr(&self) -> IpAddr {
+        self.target_addr
+    }
+
     pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
         let proto::Pong {
             req_hash,
@@ -165,5 +178,18 @@ impl fmt::Debug for Pong {
             .field("services", &self.services.to_string())
             .field("target_addr", &self.target_addr.to_string())
             .finish()
+    }
+}
+
+impl Request for Ping {
+    type Data = Vec<u8>;
+    type Response = Pong;
+    type ResponseHandler = Box<dyn Fn()>;
+
+    fn handle_response(&self, data: Self::Data, pong: Self::Response, handler: Self::ResponseHandler) {
+        if data != pong.ping_hash() {
+            return;
+        }
+        handler();
     }
 }

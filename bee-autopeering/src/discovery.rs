@@ -10,6 +10,7 @@ use crate::{
     multiaddr::AutopeeringMultiaddr,
     packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, PacketRx, PacketTx, Socket},
     peer::Peer,
+    request::{Request, RequestManager},
     service_map::ServiceMap,
     time,
 };
@@ -171,6 +172,8 @@ pub(crate) struct DiscoveryManager {
     ping_factory: PingFactory,
     // Channel halfs for sending/receiving discovery related packets.
     socket: Socket,
+    // Handles requests.
+    request_mngr: RequestManager,
 }
 
 impl DiscoveryManager {
@@ -184,6 +187,7 @@ impl DiscoveryManager {
         .finish();
 
         let ping_factory = PingFactory::new(config.version, config.network_id, config.source_addr);
+        let request_mngr = RequestManager::new();
 
         Self {
             config,
@@ -191,6 +195,7 @@ impl DiscoveryManager {
             backoff,
             ping_factory,
             socket,
+            request_mngr,
         }
     }
 
@@ -201,6 +206,7 @@ impl DiscoveryManager {
             backoff,
             ping_factory,
             socket,
+            request_mngr,
         } = self;
 
         let Socket { mut rx, tx } = socket;
@@ -210,6 +216,7 @@ impl DiscoveryManager {
                 msg_type,
                 msg_bytes,
                 source_addr,
+                peer_id,
             }) = rx.recv().await
             {
                 match msg_type {
@@ -234,7 +241,22 @@ impl DiscoveryManager {
                         .expect("error sending ping to server");
                     }
                     MessageType::Pong => {
-                        // verifiy Pong
+                        let pong = Pong::from_protobuf(&msg_bytes).expect("error decoding pong");
+
+                        // Try to find the corresponding 'Ping', that we sent to that peer.
+                        if let Some(ping) = request_mngr.get_request::<Ping>(peer_id.clone()) {
+                            let expected_ping_hash = hash::sha256(&ping.protobuf().expect("error encoding ping"));
+                            if !validate_pong(&pong, &expected_ping_hash) {
+                                log::debug!("Received invalid pong");
+                                continue;
+                            }
+                        } else {
+                            log::debug!(
+                                "Received pong from {}, but 'Ping' was never sent, or is already expired.",
+                                peer_id
+                            );
+                            continue;
+                        }
                     }
                     MessageType::DiscoveryRequest => {}
                     MessageType::DiscoveryResponse => {}
@@ -270,4 +292,8 @@ fn validate_ping(ping: &Ping, version: u32, network_id: u32) -> bool {
     } else {
         true
     }
+}
+
+fn validate_pong(pong: &Pong, expected_ping_hash: &[u8]) -> bool {
+    pong.ping_hash() == expected_ping_hash
 }

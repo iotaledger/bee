@@ -21,6 +21,7 @@ mod peering_messages;
 mod proto {
     include!(concat!(env!("OUT_DIR"), "/proto.rs"));
 }
+mod request;
 mod salt;
 mod server;
 mod service_map;

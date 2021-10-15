@@ -3,7 +3,7 @@
 
 //! IOTA network packets.
 
-use crate::proto;
+use crate::{identity::PeerId, proto};
 
 use base64 as bs64;
 use crypto::signatures::ed25519::{PublicKey, Signature};
@@ -109,6 +109,7 @@ pub(crate) struct IncomingPacket {
     pub(crate) msg_type: MessageType,
     pub(crate) msg_bytes: Vec<u8>,
     pub(crate) source_addr: SocketAddr,
+    pub(crate) peer_id: PeerId,
 }
 
 #[derive(Debug)]
