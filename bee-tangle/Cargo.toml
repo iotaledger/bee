@@ -18,11 +18,9 @@ bee-storage = { version = "0.9.0", path = "../bee-storage/bee-storage" }
 
 async-trait = "0.1.51"
 bitflags = "1.2.1"
-dashmap = "4.0.2"
 futures = "0.3.17"
 hashbrown = "0.11.2"
 log = "0.4.14"
-lru = "0.7.0"
 rand = "0.8.4"
 ref-cast = "1.0.6"
 serde = { version = "1.0.130", features = [ "derive" ] }

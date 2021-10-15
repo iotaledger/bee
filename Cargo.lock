@@ -411,11 +411,9 @@ dependencies = [
  "bee-test",
  "bitflags",
  "criterion",
- "dashmap",
  "futures",
  "hashbrown",
  "log",
- "lru",
  "rand 0.8.4",
  "ref-cast",
  "serde",
@@ -1856,15 +1854,6 @@ checksum = "51b9bbe6c47d51fc3e1a9b945965946b4c44142ab8792c50835a980d362c2710"
 dependencies = [
  "cfg-if",
  "serde",
-]
-
-[[package]]
-name = "lru"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c748cfe47cb8da225c37595b3108bea1c198c84aaae8ea0ba76d01dda9fc803"
-dependencies = [
- "hashbrown",
 ]
 
 [[package]]
