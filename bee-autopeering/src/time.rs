@@ -3,6 +3,8 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
+pub(crate) use tokio::time::interval;
+
 pub(crate) fn unix_now() -> u64 {
     unix(SystemTime::now())
 }

@@ -41,6 +41,7 @@ impl PingFactory {
         }
     }
 }
+#[derive(Clone, Copy)]
 pub(crate) struct Ping {
     version: u32,
     network_id: u32,
@@ -116,6 +117,7 @@ impl fmt::Debug for Ping {
     }
 }
 
+#[derive(Clone)]
 pub(crate) struct Pong {
     ping_hash: Vec<u8>,
     services: ServiceMap,

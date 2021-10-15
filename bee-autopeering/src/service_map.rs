@@ -11,12 +11,15 @@ use std::{
     net::{IpAddr, SocketAddr},
 };
 
+/// Represents the name of a service.
 pub type ServiceName = String;
 
+/// A mapping between a service name and its bind address.
 #[derive(Clone, Debug, Default)]
 pub struct ServiceMap(HashMap<ServiceName, Multiaddr>);
 
 impl ServiceMap {
+    /// Registers a service with its bind address.
     pub fn insert(&mut self, service_name: ServiceName, multiaddr: Multiaddr) {
         self.0.insert(service_name, multiaddr);
     }

@@ -4,18 +4,19 @@
 use crate::{
     backoff::{Backoff, BackoffBuilder, BackoffMode},
     config::AutopeeringConfig,
+    cron::CronJob,
     discovery_messages::{Ping, PingFactory, Pong},
     hash,
     identity::{LocalId, PeerId},
     multiaddr::AutopeeringMultiaddr,
-    packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, PacketRx, PacketTx, Socket},
+    packet::{IncomingPacket, MessageType, OutgoingPacket, Socket},
     peer::Peer,
     request::{Request, RequestManager},
     service_map::ServiceMap,
     time,
 };
 
-use std::{collections::VecDeque, convert::Infallible, fmt, net::SocketAddr};
+use std::{collections::VecDeque, convert::Infallible, fmt, net::SocketAddr, pin::Pin, time::Duration};
 
 type BootstrapPeer = Peer;
 
@@ -188,6 +189,13 @@ impl DiscoveryManager {
 
         let ping_factory = PingFactory::new(config.version, config.network_id, config.source_addr);
         let request_mngr = RequestManager::new();
+        let request_mngr_clone = request_mngr.clone();
+
+        tokio::spawn(request_mngr_clone.cronjob(
+            Duration::from_secs(1),
+            Box::new(|mngr| todo!("remove too old requests")),
+            (),
+        ));
 
         Self {
             config,
@@ -244,7 +252,7 @@ impl DiscoveryManager {
                         let pong = Pong::from_protobuf(&msg_bytes).expect("error decoding pong");
 
                         // Try to find the corresponding 'Ping', that we sent to that peer.
-                        if let Some(ping) = request_mngr.get_request::<Ping>(peer_id.clone()) {
+                        if let Some(ping) = request_mngr.get_request::<Ping>(peer_id.clone()).await {
                             let expected_ping_hash = hash::sha256(&ping.protobuf().expect("error encoding ping"));
                             if !validate_pong(&pong, &expected_ping_hash) {
                                 log::debug!("Received invalid pong");

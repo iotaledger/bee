@@ -7,6 +7,7 @@
 
 mod backoff;
 mod config;
+mod cron;
 mod discovery;
 mod discovery_messages;
 mod distance;
