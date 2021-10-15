@@ -58,8 +58,9 @@ impl Vertices {
         let hash = self.make_hash(message_id);
         let table = self.get_table(hash).read().await;
 
-        RwLockReadGuard::try_map(table, |table| {
-            table.get(hash, equivalent_id(message_id)).map(|(_, v)| v)
+        RwLockReadGuard::try_map(table, |table| match table.get(hash, equivalent_id(message_id)) {
+            Some((_, v)) => Some(v),
+            None => None,
         })
         .ok()
     }
@@ -68,8 +69,9 @@ impl Vertices {
         let hash = self.make_hash(message_id);
         let table = self.get_table(hash).write().await;
 
-        RwLockWriteGuard::try_map(table, |table| {
-            table.get_mut(hash, equivalent_id(message_id)).map(|(_, v)| v)
+        RwLockWriteGuard::try_map(table, |table| match table.get_mut(hash, equivalent_id(message_id)) {
+            Some((_, v)) => Some(v),
+            None => None,
         })
         .ok()
     }
