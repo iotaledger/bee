@@ -33,6 +33,7 @@ const DEFAULT_CACHE_LEN: usize = 100_000;
 const CACHE_THRESHOLD_FACTOR: f64 = 0.1;
 const SYNCED_THRESHOLD: u32 = 2;
 const CONFIRMED_THRESHOLD: u32 = 2;
+const MAX_EVICTION_RETRIES: usize = 10;
 
 /// A Tangle wrapper designed to encapsulate milestone state.
 pub struct Tangle<B> {
@@ -613,13 +614,13 @@ impl<B: StorageBackend> Tangle<B> {
                 let mut retries = 1;
                 loop {
                     if self.vertices.pop_random().await.is_none() {
-                        log::info!("retrying cache eviction (attempt #{})", retries);
+                        log::debug!("retrying cache eviction (attempt #{})", retries);
                         retries += 1;
                     } else {
                         break;
                     }
 
-                    if retries > 10 {
+                    if retries > MAX_EVICTION_RETRIES {
                         log::warn!("could not perform cache eviction after {} attempts", retries);
                         return;
                     }
