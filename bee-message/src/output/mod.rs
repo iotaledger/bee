@@ -1,11 +1,19 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod alias;
+mod extended;
+mod foundry;
+mod nft;
 mod output_id;
 mod signature_locked_dust_allowance;
 mod signature_locked_single;
 mod treasury;
 
+pub use alias::AliasOutput;
+pub use extended::ExtendedOutput;
+pub use foundry::FoundryOutput;
+pub use nft::NftOutput;
 pub use output_id::{OutputId, OUTPUT_ID_LENGTH};
 pub use signature_locked_dust_allowance::{
     dust_outputs_max, SignatureLockedDustAllowanceOutput, DUST_ALLOWANCE_DIVISOR, DUST_OUTPUTS_MAX, DUST_THRESHOLD,
@@ -32,6 +40,14 @@ pub enum Output {
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput),
     /// A treasury output.
     Treasury(TreasuryOutput),
+    /// An extended output.
+    Extended(ExtendedOutput),
+    /// An alias output.
+    Alias(AliasOutput),
+    /// A foundry output.
+    Foundry(FoundryOutput),
+    /// A NFT output.
+    Nft(NftOutput),
 }
 
 impl Output {
@@ -41,6 +57,10 @@ impl Output {
             Self::SignatureLockedSingle(_) => SignatureLockedSingleOutput::KIND,
             Self::SignatureLockedDustAllowance(_) => SignatureLockedDustAllowanceOutput::KIND,
             Self::Treasury(_) => TreasuryOutput::KIND,
+            Self::Extended(_) => ExtendedOutput::KIND,
+            Self::Alias(_) => AliasOutput::KIND,
+            Self::Foundry(_) => FoundryOutput::KIND,
+            Self::Nft(_) => NftOutput::KIND,
         }
     }
 }
@@ -63,6 +83,30 @@ impl From<TreasuryOutput> for Output {
     }
 }
 
+impl From<ExtendedOutput> for Output {
+    fn from(output: ExtendedOutput) -> Self {
+        Self::Extended(output)
+    }
+}
+
+impl From<AliasOutput> for Output {
+    fn from(output: AliasOutput) -> Self {
+        Self::Alias(output)
+    }
+}
+
+impl From<FoundryOutput> for Output {
+    fn from(output: FoundryOutput) -> Self {
+        Self::Foundry(output)
+    }
+}
+
+impl From<NftOutput> for Output {
+    fn from(output: NftOutput) -> Self {
+        Self::Nft(output)
+    }
+}
+
 impl Packable for Output {
     type Error = Error;
 
@@ -73,6 +117,10 @@ impl Packable for Output {
                 SignatureLockedDustAllowanceOutput::KIND.packed_len() + output.packed_len()
             }
             Self::Treasury(output) => TreasuryOutput::KIND.packed_len() + output.packed_len(),
+            Self::Extended(output) => ExtendedOutput::KIND.packed_len() + output.packed_len(),
+            Self::Alias(output) => AliasOutput::KIND.packed_len() + output.packed_len(),
+            Self::Foundry(output) => FoundryOutput::KIND.packed_len() + output.packed_len(),
+            Self::Nft(output) => NftOutput::KIND.packed_len() + output.packed_len(),
         }
     }
 
@@ -90,6 +138,22 @@ impl Packable for Output {
                 TreasuryOutput::KIND.pack(writer)?;
                 output.pack(writer)?;
             }
+            Self::Extended(output) => {
+                ExtendedOutput::KIND.pack(writer)?;
+                output.pack(writer)?;
+            }
+            Self::Alias(output) => {
+                AliasOutput::KIND.pack(writer)?;
+                output.pack(writer)?;
+            }
+            Self::Foundry(output) => {
+                FoundryOutput::KIND.pack(writer)?;
+                output.pack(writer)?;
+            }
+            Self::Nft(output) => {
+                NftOutput::KIND.pack(writer)?;
+                output.pack(writer)?;
+            }
         }
 
         Ok(())
@@ -102,6 +166,10 @@ impl Packable for Output {
                 SignatureLockedDustAllowanceOutput::unpack_inner::<R, CHECK>(reader)?.into()
             }
             TreasuryOutput::KIND => TreasuryOutput::unpack_inner::<R, CHECK>(reader)?.into(),
+            ExtendedOutput::KIND => ExtendedOutput::unpack_inner::<R, CHECK>(reader)?.into(),
+            AliasOutput::KIND => AliasOutput::unpack_inner::<R, CHECK>(reader)?.into(),
+            FoundryOutput::KIND => FoundryOutput::unpack_inner::<R, CHECK>(reader)?.into(),
+            NftOutput::KIND => NftOutput::unpack_inner::<R, CHECK>(reader)?.into(),
             k => return Err(Self::Error::InvalidOutputKind(k)),
         })
     }
