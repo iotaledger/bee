@@ -3,13 +3,11 @@
 
 use crate::{cron::CronJob, identity::PeerId, time};
 
-use tokio::sync::RwLock;
-
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
     pin::Pin,
-    sync::Arc,
+    sync::{Arc, RwLock},
     time::{Duration, SystemTime},
 };
 
@@ -25,19 +23,19 @@ pub(crate) trait Request {
 }
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
-struct RequestKey {
-    peer_id: PeerId,
-    request_id: TypeId,
+pub(crate) struct RequestKey {
+    pub(crate) peer_id: PeerId,
+    pub(crate) request_id: TypeId,
 }
 
-struct RequestValue {
-    request: Box<dyn Any + Send + Sync>,
-    expiration_time: SystemTime,
+pub(crate) struct RequestValue {
+    pub(crate) request: Box<dyn Any + Send + Sync>,
+    pub(crate) expiration_time: u64,
 }
 
 #[derive(Clone)]
 pub(crate) struct RequestManager {
-    requests: Arc<RwLock<HashMap<RequestKey, RequestValue>>>,
+    pub(crate) requests: Arc<RwLock<HashMap<RequestKey, RequestValue>>>,
 }
 
 impl RequestManager {
@@ -47,13 +45,13 @@ impl RequestManager {
         }
     }
 
-    pub(crate) async fn get_request<R: Request + Clone + 'static>(&self, peer_id: PeerId) -> Option<R> {
+    pub(crate) fn get_request<R: Request + Clone + 'static>(&self, peer_id: PeerId) -> Option<R> {
         let key = RequestKey {
             peer_id,
             request_id: TypeId::of::<R>(),
         };
 
-        let requests = self.requests.read().await;
+        let requests = self.requests.read().expect("error getting read lock");
         if let Some(RequestValue { request, .. }) = (*requests).get(&key) {
             if let Some(request) = request.downcast_ref::<R>() {
                 Some(request.clone())

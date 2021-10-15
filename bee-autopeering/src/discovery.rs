@@ -11,12 +11,21 @@ use crate::{
     multiaddr::AutopeeringMultiaddr,
     packet::{IncomingPacket, MessageType, OutgoingPacket, Socket},
     peer::Peer,
-    request::{Request, RequestManager},
+    request::{Request, RequestManager, RequestValue},
     service_map::ServiceMap,
     time,
 };
 
-use std::{collections::VecDeque, convert::Infallible, fmt, net::SocketAddr, pin::Pin, time::Duration};
+use std::{
+    borrow::{Borrow, BorrowMut},
+    collections::VecDeque,
+    convert::Infallible,
+    fmt,
+    net::SocketAddr,
+    ops::DerefMut,
+    pin::Pin,
+    time::Duration,
+};
 
 type BootstrapPeer = Peer;
 
@@ -191,11 +200,15 @@ impl DiscoveryManager {
         let request_mngr = RequestManager::new();
         let request_mngr_clone = request_mngr.clone();
 
-        tokio::spawn(request_mngr_clone.cronjob(
-            Duration::from_secs(1),
-            Box::new(|mngr| todo!("remove too old requests")),
-            (),
-        ));
+        let cmd = Box::new(|mngr: &RequestManager| {
+            let now = time::unix_now();
+            let mut guard = mngr.requests.write().expect("error getting read lock");
+            let requests = guard.deref_mut();
+            requests.retain(|_, v| v.expiration_time > now);
+        });
+
+        // Spawn a cronjob that regularly removes unanswered pings.
+        tokio::spawn(request_mngr_clone.cronjob(Duration::from_secs(1), cmd, ()));
 
         Self {
             config,
@@ -252,7 +265,7 @@ impl DiscoveryManager {
                         let pong = Pong::from_protobuf(&msg_bytes).expect("error decoding pong");
 
                         // Try to find the corresponding 'Ping', that we sent to that peer.
-                        if let Some(ping) = request_mngr.get_request::<Ping>(peer_id.clone()).await {
+                        if let Some(ping) = request_mngr.get_request::<Ping>(peer_id.clone()) {
                             let expected_ping_hash = hash::sha256(&ping.protobuf().expect("error encoding ping"));
                             if !validate_pong(&pong, &expected_ping_hash) {
                                 log::debug!("Received invalid pong");
