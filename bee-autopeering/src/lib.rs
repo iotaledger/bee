@@ -30,6 +30,7 @@ mod service_map;
 mod store;
 mod time;
 
-pub use identity::LocalId;
+pub use identity::{LocalId, PeerId};
 pub use init::init;
+pub use peer::Peer;
 pub use service_map::{ServiceMap, ServiceName};

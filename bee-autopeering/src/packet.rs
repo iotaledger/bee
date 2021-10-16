@@ -9,7 +9,6 @@ use base64 as bs64;
 use crypto::signatures::ed25519::{PublicKey, Signature};
 use num_derive::FromPrimitive;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
-use tokio::sync::mpsc::{self, error::SendError};
 
 use std::{convert::TryInto, fmt, io, net::SocketAddr, ops::Range};
 
@@ -117,30 +116,4 @@ pub(crate) struct OutgoingPacket {
     pub(crate) msg_type: MessageType,
     pub(crate) msg_bytes: Vec<u8>,
     pub(crate) target_addr: SocketAddr,
-}
-
-pub(crate) type PacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
-pub(crate) type PacketTx = mpsc::UnboundedSender<OutgoingPacket>;
-
-pub(crate) struct Socket {
-    pub(crate) rx: PacketRx,
-    pub(crate) tx: PacketTx,
-}
-
-impl Socket {
-    pub fn new(rx: PacketRx, tx: PacketTx) -> Self {
-        Self { rx, tx }
-    }
-
-    pub async fn recv(&mut self) -> Option<IncomingPacket> {
-        self.rx.recv().await
-    }
-
-    pub fn send(&self, message: OutgoingPacket) -> Result<(), SendError<OutgoingPacket>> {
-        self.tx.send(message)
-    }
-
-    pub fn split(self) -> (PacketRx, PacketTx) {
-        (self.rx, self.tx)
-    }
 }

@@ -1,12 +1,15 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use tokio::sync::mpsc;
+
 use crate::{
     config::AutopeeringConfig,
     identity::LocalId,
-    packet::{MessageType, OutgoingPacket, Socket},
+    packet::{MessageType, OutgoingPacket},
     peering_messages::PeeringRequest,
     salt::Salt,
+    server::ServerSocket,
 };
 
 use std::{net::SocketAddr, time::Duration};
@@ -27,24 +30,53 @@ impl PeeringConfig {
     }
 }
 
+/// Peering related events.
+#[derive(Debug)]
+pub enum PeeringEvent {
+    // hive.go: A SaltUpdated event is triggered, when the private and public salt were updated.
+    SaltUpdated,
+    // hive.go: An OutgoingPeering event is triggered, when a valid response of PeeringRequest has been received.
+    OutgoingPeering,
+    // hive.go: An IncomingPeering event is triggered, when a valid PeerRequest has been received.
+    IncomingPeering,
+    // hive.go: A Dropped event is triggered, when a neighbor is dropped or when a drop message is received.
+    Dropped,
+}
+
+/// Esposes discovery related events.
+pub type PeeringEventRx = mpsc::UnboundedReceiver<PeeringEvent>;
+type PeeringEventTx = mpsc::UnboundedSender<PeeringEvent>;
+
+fn peering_chan() -> (PeeringEventTx, PeeringEventRx) {
+    mpsc::unbounded_channel::<PeeringEvent>()
+}
+
 pub(crate) struct PeeringManager {
     config: PeeringConfig,
     // The local id to sign outgoing packets.
     local_id: LocalId,
     // Channel halfs for sending/receiving peering related packets.
-    socket: Socket,
+    socket: ServerSocket,
     // Storage for discovered peers
     store: (),
+    // Publishes peering related events.
+    event_tx: PeeringEventTx,
 }
 
 impl PeeringManager {
-    pub(crate) fn new(config: PeeringConfig, local_id: LocalId, socket: Socket) -> Self {
-        Self {
-            config,
-            local_id,
-            socket,
-            store: (),
-        }
+    pub(crate) fn new(config: PeeringConfig, local_id: LocalId, socket: ServerSocket) -> (Self, PeeringEventRx) {
+        let (event_tx, event_rx) = peering_chan();
+
+        (
+            Self {
+                config,
+                local_id,
+                socket,
+                store: (),
+                event_tx,
+            },
+            event_rx,
+        )
     }
 
     pub(crate) async fn run(self) {
@@ -53,6 +85,7 @@ impl PeeringManager {
             local_id,
             socket,
             store,
+            event_tx,
         } = self;
 
         let salt = Salt::new(Duration::from_secs(20));

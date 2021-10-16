@@ -12,7 +12,7 @@ use std::{convert::TryInto, fmt, net::IpAddr};
 
 /// Represents a discovered peer.
 // #[derive(Serialize, Deserialize)]
-pub(crate) struct Peer {
+pub struct Peer {
     ip_address: IpAddr,
     public_key: PublicKey,
     services: ServiceMap,

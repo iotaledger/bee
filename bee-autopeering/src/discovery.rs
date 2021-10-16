@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use tokio::sync::mpsc;
+
 use crate::{
     backoff::{Backoff, BackoffBuilder, BackoffMode},
     config::AutopeeringConfig,
@@ -9,9 +11,10 @@ use crate::{
     hash,
     identity::{LocalId, PeerId},
     multiaddr::AutopeeringMultiaddr,
-    packet::{IncomingPacket, MessageType, OutgoingPacket, Socket},
+    packet::{IncomingPacket, MessageType, OutgoingPacket},
     peer::Peer,
     request::RequestManager,
+    server::ServerSocket,
     service_map::ServiceMap,
     time,
 };
@@ -64,12 +67,6 @@ impl DiscoveryConfig {
             services,
         }
     }
-}
-
-#[derive(Debug)]
-pub(crate) enum Event {
-    PeerDiscovered { peer: Peer },
-    PeerDeleted { peer_id: PeerId },
 }
 
 pub(crate) struct DiscoveredPeer {
@@ -162,6 +159,23 @@ impl DiscoveredPeerlist {
     }
 }
 
+/// Discovery related events.
+#[derive(Debug)]
+pub enum DiscoveryEvent {
+    /// A new peer has been discovered.
+    PeerDiscovered { peer: Peer },
+    /// A peer has been deleted (e.g. due to a failed re-verification).
+    PeerDeleted { peer_id: PeerId },
+}
+
+/// Esposes discovery related events.
+pub type DiscoveryEventRx = mpsc::UnboundedReceiver<DiscoveryEvent>;
+type DiscoveryEventTx = mpsc::UnboundedSender<DiscoveryEvent>;
+
+fn discovery_chan() -> (DiscoveryEventTx, DiscoveryEventRx) {
+    mpsc::unbounded_channel::<DiscoveryEvent>()
+}
+
 pub(crate) struct DiscoveryManager {
     // Config.
     config: DiscoveryConfig,
@@ -172,13 +186,15 @@ pub(crate) struct DiscoveryManager {
     // Factory to build `Ping` messages.
     ping_factory: PingFactory,
     // Channel halfs for sending/receiving discovery related packets.
-    socket: Socket,
+    socket: ServerSocket,
     // Handles requests.
     request_mngr: RequestManager,
+    // Publishes discovery related events.
+    event_tx: DiscoveryEventTx,
 }
 
 impl DiscoveryManager {
-    pub(crate) fn new(config: DiscoveryConfig, local_id: LocalId, socket: Socket) -> Self {
+    pub(crate) fn new(config: DiscoveryConfig, local_id: LocalId, socket: ServerSocket) -> (Self, DiscoveryEventRx) {
         let backoff = BackoffBuilder::new(BackoffMode::Exponential(
             BACKOFF_INTERVALL_MILLISECS,
             EXPONENTIAL_BACKOFF_FACTOR,
@@ -200,14 +216,19 @@ impl DiscoveryManager {
         });
         tokio::spawn(request_mngr_clone.cronjob(Duration::from_secs(1), cmd, ()));
 
-        Self {
-            config,
-            local_id,
-            backoff,
-            ping_factory,
-            socket,
-            request_mngr,
-        }
+        let (event_tx, event_rx) = discovery_chan();
+        (
+            Self {
+                config,
+                local_id,
+                backoff,
+                ping_factory,
+                socket,
+                request_mngr,
+                event_tx,
+            },
+            event_rx,
+        )
     }
 
     pub(crate) async fn run(self) {
@@ -218,9 +239,10 @@ impl DiscoveryManager {
             ping_factory,
             socket,
             request_mngr,
+            event_tx,
         } = self;
 
-        let Socket { mut rx, tx } = socket;
+        let ServerSocket { mut rx, tx } = socket;
 
         loop {
             if let Some(IncomingPacket {

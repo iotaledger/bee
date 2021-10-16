@@ -8,14 +8,22 @@ use crate::{
     LocalId,
 };
 
-use tokio::{net::UdpSocket, sync::mpsc};
+use tokio::{
+    net::UdpSocket,
+    sync::mpsc::{self, error::SendError},
+};
 
 use std::{net::SocketAddr, sync::Arc};
 
+pub(crate) use tokio::sync::mpsc::unbounded_channel as server_chan;
+
 const READ_BUFFER_SIZE: usize = crate::packet::MAX_PACKET_SIZE;
 
-type PacketTx = mpsc::UnboundedSender<IncomingPacket>;
-type PacketRx = mpsc::UnboundedReceiver<OutgoingPacket>;
+pub(crate) type IncomingPacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
+pub(crate) type OutgoingPacketTx = mpsc::UnboundedSender<OutgoingPacket>;
+
+type IncomingPacketTx = mpsc::UnboundedSender<IncomingPacket>;
+type OutgoingPacketRx = mpsc::UnboundedReceiver<OutgoingPacket>;
 
 pub(crate) struct ServerConfig {
     pub bind_addr: SocketAddr,
@@ -29,33 +37,42 @@ impl ServerConfig {
     }
 }
 
-pub(crate) struct PacketTxs {
-    pub(crate) discovery_tx: PacketTx,
-    pub(crate) peering_tx: PacketTx,
+pub(crate) struct IncomingPacketSenders {
+    pub(crate) discovery_tx: IncomingPacketTx,
+    pub(crate) peering_tx: IncomingPacketTx,
 }
 
 pub(crate) struct Server {
     config: ServerConfig,
     local_id: LocalId,
-    incoming_txs: PacketTxs,
-    outgoing_rx: PacketRx,
+    incoming_senders: IncomingPacketSenders,
+    outgoing_rx: OutgoingPacketRx,
 }
 
 impl Server {
-    pub fn new(config: ServerConfig, local_id: LocalId, incoming_txs: PacketTxs, outgoing_rx: PacketRx) -> Self {
-        Self {
-            config,
-            local_id,
-            incoming_txs,
-            outgoing_rx,
-        }
+    pub fn new(
+        config: ServerConfig,
+        local_id: LocalId,
+        incoming_senders: IncomingPacketSenders,
+    ) -> (Self, OutgoingPacketTx) {
+        let (outgoing_tx, outgoing_rx) = server_chan::<OutgoingPacket>();
+
+        (
+            Self {
+                config,
+                local_id,
+                incoming_senders,
+                outgoing_rx,
+            },
+            outgoing_tx,
+        )
     }
 
     pub async fn run(self) {
         let Server {
             config,
             local_id,
-            incoming_txs,
+            incoming_senders,
             outgoing_rx,
         } = self;
 
@@ -70,18 +87,18 @@ impl Server {
         let outgoing_socket = Arc::clone(&incoming_socket);
 
         // Spawn socket handlers
-        tokio::spawn(incoming_packet_handler(incoming_socket, incoming_txs));
+        tokio::spawn(incoming_packet_handler(incoming_socket, incoming_senders));
         tokio::spawn(outgoing_packet_handler(outgoing_socket, outgoing_rx, local_id));
     }
 }
 
-async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_txs: PacketTxs) {
+async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_senders: IncomingPacketSenders) {
     let mut packet_bytes = [0; READ_BUFFER_SIZE];
 
-    let PacketTxs {
+    let IncomingPacketSenders {
         discovery_tx,
         peering_tx,
-    } = incoming_txs;
+    } = incoming_senders;
 
     loop {
         if let Ok((n, source_addr)) = socket.recv_from(&mut packet_bytes).await {
@@ -126,7 +143,7 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_txs: PacketTxs
     }
 }
 
-async fn outgoing_packet_handler(socket: Arc<UdpSocket>, mut outgoing_rx: PacketRx, local_id: LocalId) {
+async fn outgoing_packet_handler(socket: Arc<UdpSocket>, mut outgoing_rx: OutgoingPacketRx, local_id: LocalId) {
     loop {
         if let Some(packet) = outgoing_rx.recv().await {
             let OutgoingPacket {
@@ -147,5 +164,24 @@ async fn outgoing_packet_handler(socket: Arc<UdpSocket>, mut outgoing_rx: Packet
             log::error!("outgoing message channel dropped; stopping outgoing packet handler");
             break;
         }
+    }
+}
+
+pub(crate) struct ServerSocket {
+    pub(crate) rx: IncomingPacketRx,
+    pub(crate) tx: OutgoingPacketTx,
+}
+
+impl ServerSocket {
+    pub fn new(rx: IncomingPacketRx, tx: OutgoingPacketTx) -> Self {
+        Self { rx, tx }
+    }
+
+    pub async fn recv(&mut self) -> Option<IncomingPacket> {
+        self.rx.recv().await
+    }
+
+    pub fn send(&self, message: OutgoingPacket) -> Result<(), SendError<OutgoingPacket>> {
+        self.tx.send(message)
     }
 }

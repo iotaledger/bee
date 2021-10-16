@@ -3,15 +3,13 @@
 
 use crate::{
     config::AutopeeringConfig,
-    discovery::{DiscoveryConfig, DiscoveryManager},
+    discovery::{DiscoveryConfig, DiscoveryEventRx, DiscoveryManager},
     identity::LocalId,
-    packet::{IncomingPacket, OutgoingPacket, Socket},
-    peering::{PeeringConfig, PeeringManager},
-    server::{PacketTxs, Server, ServerConfig},
+    packet::{IncomingPacket, OutgoingPacket},
+    peering::{PeeringConfig, PeeringEventRx, PeeringManager},
+    server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket},
     service_map::ServiceMap,
 };
-
-use tokio::sync::mpsc::unbounded_channel as chan;
 
 use std::error;
 
@@ -22,33 +20,36 @@ pub async fn init(
     network_id: u32,
     local_id: LocalId,
     services: ServiceMap,
-) -> Result<(), Box<dyn error::Error>> {
+) -> Result<(DiscoveryEventRx, PeeringEventRx), Box<dyn error::Error>> {
     // Create channels for inbound/outbound communication with the UDP socket.
-    let (discovery_tx, discovery_rx) = chan::<IncomingPacket>();
-    let (peering_tx, peering_rx) = chan::<IncomingPacket>();
-    let (outgoing_tx, outgoing_rx) = chan::<OutgoingPacket>();
+    let (discovery_tx, discovery_rx) = server_chan::<IncomingPacket>();
+    let (peering_tx, peering_rx) = server_chan::<IncomingPacket>();
 
-    let incoming_txs = PacketTxs {
+    let incoming_senders = IncomingPacketSenders {
         discovery_tx,
         peering_tx,
     };
 
     // Spawn the server handling the socket I/O.
     let server_config = ServerConfig::new(&config);
-    let server = Server::new(server_config, local_id.clone(), incoming_txs, outgoing_rx);
+    let (server, outgoing_tx) = Server::new(server_config, local_id.clone(), incoming_senders);
+
     tokio::spawn(server.run());
 
     // Spawn the discovery manager handling discovery requests/responses.
     let discovery_config = DiscoveryConfig::new(&config, version, network_id, services);
-    let discovery_socket = Socket::new(discovery_rx, outgoing_tx.clone());
-    let discovery_mngr = DiscoveryManager::new(discovery_config, local_id.clone(), discovery_socket);
+    let discovery_socket = ServerSocket::new(discovery_rx, outgoing_tx.clone());
+    let (discovery_mngr, discovery_event_rx) =
+        DiscoveryManager::new(discovery_config, local_id.clone(), discovery_socket);
+
     tokio::spawn(discovery_mngr.run());
 
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
     let peering_config = PeeringConfig::new(&config, version, network_id);
-    let peering_socket = Socket::new(peering_rx, outgoing_tx);
-    let peering_mngr = PeeringManager::new(peering_config, local_id.clone(), peering_socket);
+    let peering_socket = ServerSocket::new(peering_rx, outgoing_tx);
+    let (peering_mngr, peering_event_rx) = PeeringManager::new(peering_config, local_id.clone(), peering_socket);
+
     tokio::spawn(peering_mngr.run());
 
-    Ok(())
+    Ok((discovery_event_rx, peering_event_rx))
 }
