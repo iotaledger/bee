@@ -159,6 +159,7 @@ dependencies = [
  "rand 0.8.4",
  "ring",
  "serde",
+ "sled",
  "thiserror",
  "tokio",
  "tokio-stream",

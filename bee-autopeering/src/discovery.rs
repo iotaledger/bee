@@ -40,7 +40,7 @@ const EXPONENTIAL_BACKOFF_FACTOR: f32 = 1.5;
 // TODO:
 const MAX_RETRIES: usize = 2;
 // hive.go: PingExpiration is the time until a peer verification expires (12 hours)
-const PING_EXPIRATION: u64 = 12 * 60 * 60;
+pub(crate) const PING_EXPIRATION: u64 = 12 * 60 * 60;
 // hive.go: MaxPeersInResponse is the maximum number of peers returned in DiscoveryResponse.
 const MAX_PEERS_IN_RESPONSE: usize = 6;
 // hive.go: MaxServices is the maximum number of services a peer can support.
@@ -272,7 +272,7 @@ impl DiscoveryManager {
                             msg_bytes: pong_bytes,
                             target_addr: source_addr,
                         })
-                        .expect("error sending ping to server");
+                        .expect("error sending pong to server");
                     }
                     MessageType::Pong => {
                         let pong = Pong::from_protobuf(&msg_bytes).expect("error decoding pong");
@@ -286,7 +286,7 @@ impl DiscoveryManager {
                             }
                         } else {
                             log::debug!(
-                                "Received pong from {}, but 'Ping' was never sent, or is already expired.",
+                                "Received 'Pong' from {}, but 'Ping' was never sent, or has already expired.",
                                 peer_id
                             );
                             continue;
