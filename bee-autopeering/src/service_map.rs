@@ -5,11 +5,7 @@ use crate::proto;
 
 use libp2p_core::{multiaddr::Protocol, Multiaddr};
 
-use std::{
-    collections::HashMap,
-    fmt,
-    net::{IpAddr, SocketAddr},
-};
+use std::{collections::HashMap, fmt, net::IpAddr};
 
 /// Represents the name of a service.
 pub type ServiceName = String;

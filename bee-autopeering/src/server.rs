@@ -4,7 +4,7 @@
 use crate::{
     config::AutopeeringConfig,
     identity::PeerId,
-    packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, PEERING_MSG_TYPE_RANGE},
+    packet::{IncomingPacket, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, PEERING_MSG_TYPE_RANGE},
     LocalId,
 };
 

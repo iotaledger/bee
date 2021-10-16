@@ -1,11 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    proto,
-    request::Request,
-    service_map::{ServiceMap, ServiceName},
-};
+use crate::{proto, request::Request, service_map::ServiceMap};
 
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message as _};
 
@@ -117,6 +113,8 @@ impl fmt::Debug for Ping {
     }
 }
 
+impl Request for Ping {}
+
 #[derive(Clone)]
 pub(crate) struct Pong {
     ping_hash: Vec<u8>,
@@ -180,18 +178,5 @@ impl fmt::Debug for Pong {
             .field("services", &self.services.to_string())
             .field("target_addr", &self.target_addr.to_string())
             .finish()
-    }
-}
-
-impl Request for Ping {
-    type Data = Vec<u8>;
-    type Response = Pong;
-    type ResponseHandler = Box<dyn Fn()>;
-
-    fn handle_response(&self, data: Self::Data, pong: Self::Response, handler: Self::ResponseHandler) {
-        if data != pong.ping_hash() {
-            return;
-        }
-        handler();
     }
 }

@@ -3,7 +3,8 @@
 
 //! Autopeering implementation for the Bee framework.
 
-#![warn(missing_docs)]
+// #![warn(missing_docs)]
+#![allow(warnings)]
 
 mod backoff;
 mod config;

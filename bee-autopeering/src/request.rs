@@ -6,21 +6,17 @@ use crate::{cron::CronJob, identity::PeerId, time};
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
-    pin::Pin,
+    fmt::Debug,
+    ops::DerefMut,
     sync::{Arc, RwLock},
-    time::{Duration, SystemTime},
+    time::Duration,
 };
 
 // If the request is not answered within that time it gets removed from the manager.
 const REQUEST_EXPIRATION_SECS: u64 = 20;
 
-pub(crate) trait Request {
-    type Data;
-    type Response;
-    type ResponseHandler;
-
-    fn handle_response(&self, _: Self::Data, _: Self::Response, _: Self::ResponseHandler);
-}
+// Marker trait for requests.
+pub(crate) trait Request: Debug + Clone {}
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub(crate) struct RequestKey {
@@ -45,13 +41,26 @@ impl RequestManager {
         }
     }
 
-    pub(crate) fn get_request<R: Request + Clone + 'static>(&self, peer_id: PeerId) -> Option<R> {
+    pub(crate) fn insert_request(&self, peer_id: PeerId, request: Box<dyn Any + Send + Sync>) {
+        let mut guard = self.requests.write().expect("error getting write access");
+        let requests = guard.deref_mut();
+        let request_id = request.type_id();
+        let request_key = RequestKey { peer_id, request_id };
+        let request_value = RequestValue {
+            request,
+            expiration_time: time::unix_now() + REQUEST_EXPIRATION_SECS,
+        };
+
+        requests.insert(request_key, request_value);
+    }
+
+    pub(crate) fn get_request<R: Request + 'static>(&self, peer_id: PeerId) -> Option<R> {
         let key = RequestKey {
             peer_id,
             request_id: TypeId::of::<R>(),
         };
 
-        let requests = self.requests.read().expect("error getting read lock");
+        let requests = self.requests.read().expect("error getting read access");
         if let Some(RequestValue { request, .. }) = (*requests).get(&key) {
             if let Some(request) = request.downcast_ref::<R>() {
                 Some(request.clone())

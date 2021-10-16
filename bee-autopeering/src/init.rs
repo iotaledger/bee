@@ -13,7 +13,7 @@ use crate::{
 
 use tokio::sync::mpsc::unbounded_channel as chan;
 
-use std::{error, time::Duration};
+use std::error;
 
 /// Initializes the autopeering service.
 pub async fn init(

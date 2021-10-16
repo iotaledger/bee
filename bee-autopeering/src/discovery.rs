@@ -11,21 +11,12 @@ use crate::{
     multiaddr::AutopeeringMultiaddr,
     packet::{IncomingPacket, MessageType, OutgoingPacket, Socket},
     peer::Peer,
-    request::{Request, RequestManager, RequestValue},
+    request::RequestManager,
     service_map::ServiceMap,
     time,
 };
 
-use std::{
-    borrow::{Borrow, BorrowMut},
-    collections::VecDeque,
-    convert::Infallible,
-    fmt,
-    net::SocketAddr,
-    ops::DerefMut,
-    pin::Pin,
-    time::Duration,
-};
+use std::{collections::VecDeque, fmt, net::SocketAddr, ops::DerefMut, time::Duration};
 
 type BootstrapPeer = Peer;
 
@@ -200,14 +191,13 @@ impl DiscoveryManager {
         let request_mngr = RequestManager::new();
         let request_mngr_clone = request_mngr.clone();
 
+        // Spawn a cronjob that regularly removes unanswered pings.
         let cmd = Box::new(|mngr: &RequestManager| {
             let now = time::unix_now();
-            let mut guard = mngr.requests.write().expect("error getting read lock");
+            let mut guard = mngr.requests.write().expect("error getting write access");
             let requests = guard.deref_mut();
             requests.retain(|_, v| v.expiration_time > now);
         });
-
-        // Spawn a cronjob that regularly removes unanswered pings.
         tokio::spawn(request_mngr_clone.cronjob(Duration::from_secs(1), cmd, ()));
 
         Self {
@@ -244,8 +234,9 @@ impl DiscoveryManager {
                     MessageType::Ping => {
                         let ping = Ping::from_protobuf(&msg_bytes).expect("error decoding ping");
 
+                        // Validate the received ping.
                         if !validate_ping(&ping, config.version, config.network_id) {
-                            log::debug!("Received invalid ping");
+                            log::debug!("Received invalid ping: {:?}", ping);
                             continue;
                         }
 

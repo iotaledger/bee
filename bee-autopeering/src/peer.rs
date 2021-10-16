@@ -5,9 +5,8 @@ use crate::{identity::PeerId, proto, service_map::ServiceMap};
 
 use bytes::BytesMut;
 use crypto::signatures::ed25519::PublicKey;
-use libp2p_core::{multiaddr::Protocol, Multiaddr};
 use prost::{DecodeError, EncodeError, Message};
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 
 use std::{convert::TryInto, fmt, net::IpAddr};
 

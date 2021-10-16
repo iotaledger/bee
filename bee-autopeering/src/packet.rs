@@ -9,7 +9,7 @@ use base64 as bs64;
 use crypto::signatures::ed25519::{PublicKey, Signature};
 use num_derive::FromPrimitive;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
-use tokio::sync::mpsc::{self, error::SendError, UnboundedReceiver};
+use tokio::sync::mpsc::{self, error::SendError};
 
 use std::{convert::TryInto, fmt, io, net::SocketAddr, ops::Range};
 

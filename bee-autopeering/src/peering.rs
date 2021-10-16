@@ -4,7 +4,7 @@
 use crate::{
     config::AutopeeringConfig,
     identity::LocalId,
-    packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, Socket},
+    packet::{MessageType, OutgoingPacket, Socket},
     peering_messages::PeeringRequest,
     salt::Salt,
 };

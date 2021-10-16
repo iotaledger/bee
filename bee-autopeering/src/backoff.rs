@@ -5,7 +5,7 @@ use crate::time;
 
 use rand::{thread_rng, Rng as _};
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 #[derive(Default)]
 pub(crate) struct BackoffBuilder {
@@ -47,7 +47,7 @@ impl BackoffBuilder {
             jitter: self.jitter.unwrap_or(1.0),
             mode: self.mode,
             current_retries: 0,
-            timestamp: time::unix_now(),
+            timestamp: Instant::now(),
         }
     }
 }
@@ -58,7 +58,7 @@ pub(crate) struct Backoff {
     jitter: f32,
     mode: BackoffMode,
     current_retries: usize,
-    timestamp: u64,
+    timestamp: Instant,
 }
 
 impl Iterator for Backoff {
@@ -67,7 +67,11 @@ impl Iterator for Backoff {
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_retries >= self.max_retries {
             None
-        } else if Duration::from_secs(time::unix_now() - self.timestamp) > self.timeout {
+        } else if Instant::now()
+            .checked_duration_since(self.timestamp)
+            .expect("error duration since")
+            > self.timeout
+        {
             None
         } else {
             let mut next_interval_millis = match &mut self.mode {
@@ -111,28 +115,24 @@ mod tests {
     fn zero_backoff() {
         let mut backoff = BackoffBuilder::new(BackoffMode::Zero).with_max_retries(4).finish();
 
-        const MILLIS_0: Duration = Duration::from_millis(0);
-
-        assert_eq!(Some(MILLIS_0), backoff.next());
-        assert_eq!(Some(MILLIS_0), backoff.next());
-        assert_eq!(Some(MILLIS_0), backoff.next());
-        assert_eq!(Some(MILLIS_0), backoff.next());
+        assert_eq!(0, backoff.next().unwrap().as_millis());
+        assert_eq!(0, backoff.next().unwrap().as_millis());
+        assert_eq!(0, backoff.next().unwrap().as_millis());
+        assert_eq!(0, backoff.next().unwrap().as_millis());
         assert_eq!(None, backoff.next());
         assert_eq!(None, backoff.next());
     }
 
     #[test]
     fn constant_backoff() {
-        let mut backoff = BackoffBuilder::new(BackoffMode::Constant(5))
+        let mut backoff = BackoffBuilder::new(BackoffMode::Constant(500))
             .with_max_retries(4)
             .finish();
 
-        const MILLIS_500: Duration = Duration::from_millis(500);
-
-        assert_eq!(Some(MILLIS_500), backoff.next());
-        assert_eq!(Some(MILLIS_500), backoff.next());
-        assert_eq!(Some(MILLIS_500), backoff.next());
-        assert_eq!(Some(MILLIS_500), backoff.next());
+        assert_eq!(500, backoff.next().unwrap().as_millis());
+        assert_eq!(500, backoff.next().unwrap().as_millis());
+        assert_eq!(500, backoff.next().unwrap().as_millis());
+        assert_eq!(500, backoff.next().unwrap().as_millis());
         assert_eq!(None, backoff.next());
         assert_eq!(None, backoff.next());
     }
@@ -143,10 +143,40 @@ mod tests {
             .with_max_retries(4)
             .finish();
 
-        assert_eq!(Some(Duration::from_secs(100)), backoff.next());
-        assert_eq!(Some(Duration::from_secs(200)), backoff.next());
-        assert_eq!(Some(Duration::from_secs(400)), backoff.next());
-        assert_eq!(Some(Duration::from_secs(800)), backoff.next());
+        assert_eq!(100, backoff.next().unwrap().as_millis());
+        assert_eq!(200, backoff.next().unwrap().as_millis());
+        assert_eq!(400, backoff.next().unwrap().as_millis());
+        assert_eq!(800, backoff.next().unwrap().as_millis());
+        assert_eq!(None, backoff.next());
+        assert_eq!(None, backoff.next());
+    }
+
+    #[test]
+    fn constant_backoff_with_jitter() {
+        let mut backoff = BackoffBuilder::new(BackoffMode::Constant(500))
+            .with_max_retries(4)
+            .with_jitter(0.5)
+            .finish();
+
+        assert!((250..=500).contains(&(backoff.next().unwrap().as_millis() as u64)));
+        assert!((250..=500).contains(&(backoff.next().unwrap().as_millis() as u64)));
+        assert!((250..=500).contains(&(backoff.next().unwrap().as_millis() as u64)));
+        assert!((250..=500).contains(&(backoff.next().unwrap().as_millis() as u64)));
+        assert_eq!(None, backoff.next());
+        assert_eq!(None, backoff.next());
+    }
+
+    #[tokio::test]
+    async fn constant_backoff_with_timeout() {
+        let mut backoff = BackoffBuilder::new(BackoffMode::Constant(25))
+            .with_max_retries(4)
+            .with_timeout(Duration::from_millis(50))
+            .finish();
+
+        assert_eq!(25, backoff.next().unwrap().as_millis());
+        tokio::time::sleep(Duration::from_millis(25)).await;
+        assert_eq!(25, backoff.next().unwrap().as_millis());
+        tokio::time::sleep(Duration::from_millis(50)).await;
         assert_eq!(None, backoff.next());
         assert_eq!(None, backoff.next());
     }
