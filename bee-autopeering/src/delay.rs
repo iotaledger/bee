@@ -35,8 +35,8 @@ impl DelayBuilder {
         }
     }
 
-    pub fn with_max_count(mut self, max_retries: usize) -> Self {
-        self.max_count.replace(max_retries);
+    pub fn with_max_count(mut self, max_count: usize) -> Self {
+        self.max_count.replace(max_count);
         self
     }
 
@@ -149,16 +149,16 @@ mod tests {
 
     #[test]
     fn exponential_delay() {
-        let mut backoff = DelayBuilder::new(DelayMode::Exponential(100, 2.0))
+        let mut delay = DelayBuilder::new(DelayMode::Exponential(100, 2.0))
             .with_max_count(4)
             .finish();
 
-        assert_eq!(100, backoff.next().unwrap().as_millis());
-        assert_eq!(200, backoff.next().unwrap().as_millis());
-        assert_eq!(400, backoff.next().unwrap().as_millis());
-        assert_eq!(800, backoff.next().unwrap().as_millis());
-        assert_eq!(None, backoff.next());
-        assert_eq!(None, backoff.next());
+        assert_eq!(100, delay.next().unwrap().as_millis());
+        assert_eq!(200, delay.next().unwrap().as_millis());
+        assert_eq!(400, delay.next().unwrap().as_millis());
+        assert_eq!(800, delay.next().unwrap().as_millis());
+        assert_eq!(None, delay.next());
+        assert_eq!(None, delay.next());
     }
 
     #[test]

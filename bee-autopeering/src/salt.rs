@@ -1,11 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::proto;
-use crate::time::unix;
+use crate::{proto, time::unix};
 
-use prost::{bytes::BytesMut, EncodeError};
-use prost::{DecodeError, Message};
+use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 use ring::rand::{SecureRandom as _, SystemRandom};
 
 use std::{
@@ -14,6 +12,7 @@ use std::{
 };
 
 const SALT_BYTE_SIZE: usize = 20;
+const DEFAULT_SALT_LIFETIME: Duration = Duration::from_secs(2 * 60 * 60); // 2 hours
 
 #[derive(Clone)]
 pub(crate) struct Salt {
@@ -63,6 +62,12 @@ impl Salt {
         salt.encode(&mut bytes)?;
 
         Ok(bytes)
+    }
+}
+
+impl Default for Salt {
+    fn default() -> Self {
+        Self::new(DEFAULT_SALT_LIFETIME)
     }
 }
 

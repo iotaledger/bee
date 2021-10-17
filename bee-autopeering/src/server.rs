@@ -176,12 +176,4 @@ impl ServerSocket {
     pub fn new(rx: IncomingPacketRx, tx: OutgoingPacketTx) -> Self {
         Self { rx, tx }
     }
-
-    pub async fn recv(&mut self) -> Option<IncomingPacket> {
-        self.rx.recv().await
-    }
-
-    pub fn send(&self, message: OutgoingPacket) -> Result<(), SendError<OutgoingPacket>> {
-        self.tx.send(message)
-    }
 }

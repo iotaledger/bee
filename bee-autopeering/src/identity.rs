@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::hash;
+use crate::{delay::Repeat, hash, salt::Salt};
 
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature};
 
@@ -19,6 +19,7 @@ const INTERNAL_ID_LENGTH: usize = 8;
 pub struct LocalId {
     private_key: Arc<RwLock<PrivateKey>>,
     peer_id: PeerId,
+    salt: Arc<RwLock<Salt>>,
 }
 
 impl LocalId {
@@ -46,12 +47,23 @@ impl LocalId {
         Self {
             private_key: Arc::new(RwLock::new(private_key)),
             peer_id,
+            salt: Arc::new(RwLock::new(Salt::default())),
         }
     }
 
     /// Returns the public key of this identity.
     pub fn public_key(&self) -> PublicKey {
         self.peer_id.public_key()
+    }
+
+    /// Returns the peer id of this identity.
+    pub fn peer_id(&self) -> &PeerId {
+        &self.peer_id
+    }
+
+    /// Returns the current salt of this identity.
+    pub(crate) fn salt(&self) -> &Arc<RwLock<Salt>> {
+        &self.salt
     }
 
     /// Signs a message using the private key.
@@ -64,10 +76,12 @@ impl Default for LocalId {
     fn default() -> Self {
         let private_key = PrivateKey::generate().expect("error generating private key");
         let identity = PeerId::from_public_key(private_key.public_key());
+        let salt = Arc::new(RwLock::new(Salt::default()));
 
         Self {
             private_key: Arc::new(RwLock::new(private_key)),
             peer_id: identity,
+            salt,
         }
     }
 }

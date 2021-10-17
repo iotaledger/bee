@@ -6,15 +6,15 @@ use tokio::sync::mpsc;
 use crate::{
     config::AutopeeringConfig,
     delay::{Delay, DelayBuilder, DelayMode, Repeat as _},
-    discovery_messages::{DiscoveryRequest, VerificationRequest, VerificationResponse},
+    discovery_messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
     hash,
     identity::{LocalId, PeerId},
     multiaddr::AutopeeringMultiaddr,
     packet::{IncomingPacket, MessageType, OutgoingPacket},
     peer::Peer,
     request::RequestManager,
-    server::ServerSocket,
-    service_map::ServiceMap,
+    server::{OutgoingPacketTx, ServerSocket},
+    service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
     time,
 };
 
@@ -217,6 +217,16 @@ impl DiscoveryManager {
             event_tx,
         } = self;
 
+        let DiscoveryManagerConfig {
+            entry_nodes,
+            entry_nodes_prefer_ipv6,
+            run_as_entry_node,
+            version,
+            network_id,
+            source_addr,
+            services,
+        } = config;
+
         let ServerSocket { mut rx, tx } = socket;
 
         loop {
@@ -229,21 +239,24 @@ impl DiscoveryManager {
             {
                 match msg_type {
                     MessageType::VerificationRequest => {
-                        let verif_req = VerificationRequest::from_protobuf(&msg_bytes).expect("error decoding ping");
+                        let verif_req = VerificationRequest::from_protobuf(&msg_bytes)
+                            .expect("error decoding verification request");
 
-                        // Validate the received ping.
-                        if !validate_verification_request(&verif_req, config.version, config.network_id) {
-                            log::debug!("Received invalid Ping: {:?}", verif_req);
+                        if !validate_verification_request(&verif_req, version, network_id) {
+                            log::debug!("Received invalid verification request: {:?}", verif_req);
                             continue;
                         }
 
-                        handle_verification_request();
+                        let request_hash = &hash::sha256(&msg_bytes)[..];
+
+                        send_verification_response(request_hash, &tx, &services, source_addr);
                     }
                     MessageType::VerificationResponse => {
-                        let pong = VerificationResponse::from_protobuf(&msg_bytes).expect("error decoding pong");
+                        let verif_res = VerificationResponse::from_protobuf(&msg_bytes)
+                            .expect("error decoding verification response");
 
-                        if !validate_verification_response(&pong, &[0u8]) {
-                            log::debug!("Received invalid Pong: {:?}", pong);
+                        if !validate_verification_response(&verif_res, &request_mngr, &peer_id) {
+                            log::debug!("Received invalid verification response: {:?}", verif_res);
                             continue;
                         }
 
@@ -252,83 +265,124 @@ impl DiscoveryManager {
                     MessageType::DiscoveryRequest => {
                         let disc_req =
                             DiscoveryRequest::from_protobuf(&msg_bytes).expect("error decoding discover request");
+
+                        if !validate_discovery_request(&disc_req) {
+                            log::debug!("Received invalid discovery request: {:?}", disc_req);
+                            continue;
+                        }
+
+                        let request_hash = &hash::sha256(&msg_bytes)[..];
+
+                        send_discovery_response(request_hash, &tx, source_addr);
                     }
-                    MessageType::DiscoveryResponse => {}
-                    _ => panic!("unsupported messasge type"),
+                    MessageType::DiscoveryResponse => {
+                        let disc_res =
+                            DiscoveryResponse::from_protobuf(&msg_bytes).expect("error decoding discovery response");
+
+                        if !validate_discovery_response(&disc_res, &request_mngr, &peer_id) {
+                            log::debug!("Received invalid discovery response: {:?}", disc_res);
+                            continue;
+                        }
+
+                        handle_discovery_response();
+                    }
+                    _ => panic!("unsupported discovery message type"),
                 }
             }
         }
-
-        // // Send a `Ping` to all entry nodes.
-        // let bootstrap_peers = config
-        //     .entry_nodes
-        //     .iter()
-        //     .map(|addr| addr.host_socketaddr())
-        //     .collect::<Vec<_>>();
-
-        // for target_addr in bootstrap_peers {
-        //     let ping = ping_factory.make(target_addr.ip());
-        //     let msg_bytes = ping.protobuf().expect("error encoding ping");
-        //     let signature = local_id.sign(&msg_bytes);
-        //     let packet = Packet::new(MessageType::Ping, &msg_bytes, &local_id.public_key(), signature);
-        //     // socket.send(OutgoingPacket { packet, target_addr });
-        // }
     }
 }
 
-fn send_verification_request() {
-    todo!()
+fn send_verification_request(target: &Peer, req_mngr: &RequestManager, tx: &OutgoingPacketTx) {
+    let verif_req = req_mngr.new_verification_request(target.peer_id(), target.ip_address());
+    let verif_req_bytes = verif_req
+        .protobuf()
+        .expect("error encoding verification request")
+        .to_vec();
+
+    let port = target
+        .services()
+        .port(AUTOPEERING_SERVICE_NAME)
+        .expect("peer doesn't support autopeering");
+
+    tx.send(OutgoingPacket {
+        msg_type: MessageType::VerificationRequest,
+        msg_bytes: verif_req_bytes,
+        target_addr: SocketAddr::new(target.ip_address(), port),
+    })
+    .expect("error sending verification request to server");
 }
 
-fn validate_verification_request(ping: &VerificationRequest, version: u32, network_id: u32) -> bool {
-    if ping.version() != version {
+fn validate_verification_request(verif_req: &VerificationRequest, version: u32, network_id: u32) -> bool {
+    if verif_req.version() != version {
         false
-    } else if ping.network_id() != network_id {
+    } else if verif_req.network_id() != network_id {
         false
-    } else if ping.timestamp() < time::unix_now() - PING_EXPIRATION {
+    } else if verif_req.timestamp() < time::unix_now() - PING_EXPIRATION {
         false
     } else {
         true
     }
 }
 
-fn handle_verification_request() {
-    // // Send back a corresponding pong.
-    // let ping_hash = hash::sha256(&msg_bytes).to_vec();
-    // let pong = VerificationResponse::new(ping_hash, config.services.clone(), source_addr.ip());
-    // let pong_bytes = pong.protobuf().expect("error encoding pong").to_vec();
+fn send_verification_response(
+    request_hash: &[u8],
+    tx: &OutgoingPacketTx,
+    services: &ServiceMap,
+    target_addr: SocketAddr,
+) {
+    let verif_res = VerificationResponse::new(request_hash, services.clone(), target_addr.ip());
+    let verif_res_bytes = verif_res
+        .protobuf()
+        .expect("error encoding verification response")
+        .to_vec();
 
-    // tx.send(OutgoingPacket {
-    //     msg_type: MessageType::VerificationResponse,
-    //     msg_bytes: pong_bytes,
-    //     target_addr: source_addr,
-    // })
-    // .expect("error sending pong to server");
-    todo!()
+    tx.send(OutgoingPacket {
+        msg_type: MessageType::VerificationResponse,
+        msg_bytes: verif_res_bytes,
+        target_addr,
+    })
+    .expect("error sending pong to server");
 }
 
-fn send_verification_response() {
-    todo!()
-}
-
-fn validate_verification_response(pong: &VerificationResponse, expected_ping_hash: &[u8]) -> bool {
-    pong.request_hash() == expected_ping_hash
+fn validate_verification_response(
+    verif_res: &VerificationResponse,
+    request_mngr: &RequestManager,
+    peer_id: &PeerId,
+) -> bool {
+    if let Some(request_hash) = request_mngr.get_request_hash::<VerificationRequest>(peer_id) {
+        verif_res.request_hash() == &request_hash[..]
+    } else {
+        false
+    }
 }
 
 fn handle_verification_response() {
-    // // Try to find the corresponding 'Ping', that we sent to that peer.
-    // if let Some(ping) = request_mngr.get_request::<VerificationRequest>(peer_id.clone()) {
-    //     let expected_ping_hash = hash::sha256(&ping.protobuf().expect("error encoding ping"));
-    //     if !validate_verification_response(&pong, &expected_ping_hash) {
-    //         log::debug!("Received invalid pong");
-    //         continue;
-    //     }
-    // } else {
-    //     log::debug!(
-    //         "Received 'Pong' from {}, but 'Ping' was never sent, or has already expired.",
-    //         peer_id
-    //     );
-    //     continue;
-    // }
+    // things we need to do after we received a valid response to our request
+    todo!()
+}
+
+fn send_discovery_request() {
+    // we initiate a discovery request
+    todo!()
+}
+
+fn validate_discovery_request(disc_req: &DiscoveryRequest) -> bool {
+    // validates an incoming discovery request
+    todo!()
+}
+
+fn send_discovery_response(request_hash: &[u8], tx: &OutgoingPacketTx, target_addr: SocketAddr) {
+    // send a random set of peers as a response
+    todo!()
+}
+
+fn validate_discovery_response(disc_res: &DiscoveryResponse, request_mngr: &RequestManager, peer_id: &PeerId) -> bool {
+    // check the peers we received
+    todo!()
+}
+
+fn handle_discovery_response() {
+    // things we need to do after we received a valid response to our request
     todo!()
 }

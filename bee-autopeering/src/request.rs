@@ -4,10 +4,11 @@
 use crate::{
     delay::{Delay, Repeat},
     discovery_messages::{DiscoveryRequest, VerificationRequest},
+    hash,
     identity::PeerId,
     peering_messages::PeeringRequest,
     salt::Salt,
-    time,
+    time, LocalId,
 };
 
 use std::{
@@ -20,11 +21,11 @@ use std::{
     time::Duration,
 };
 
-// If the request is not answered within that time it gets removed from the manager.
-const REQUEST_EXPIRATION_SECS: u64 = 20;
+type RequestHash = [u8; hash::SHA256_LEN];
 
-// FIXME
-const SALT_DURATION: Duration = Duration::from_secs(3600);
+// If the request is not answered within that time it gets removed from the manager, and any response
+// coming in later will be deemed invalid.
+const REQUEST_EXPIRATION_SECS: u64 = 20;
 
 // Marker trait for requests.
 pub(crate) trait Request: Debug + Clone {}
@@ -36,7 +37,7 @@ pub(crate) struct RequestKey {
 }
 
 pub(crate) struct RequestValue {
-    pub(crate) request: Box<dyn Any + Send + Sync>,
+    pub(crate) request_hash: [u8; hash::SHA256_LEN],
     pub(crate) expiration_time: u64,
 }
 
@@ -45,74 +46,118 @@ pub(crate) struct RequestManager {
     pub(crate) version: u32,
     pub(crate) network_id: u32,
     pub(crate) source_addr: SocketAddr,
-    pub(crate) salt: Arc<RwLock<Salt>>,
+    pub(crate) local_id: LocalId,
     pub(crate) open_requests: Arc<RwLock<HashMap<RequestKey, RequestValue>>>,
 }
 
 impl RequestManager {
-    pub(crate) fn new(version: u32, network_id: u32, source_addr: SocketAddr) -> Self {
+    pub(crate) fn new(version: u32, network_id: u32, source_addr: SocketAddr, local_id: LocalId) -> Self {
         Self {
             version,
             network_id,
             source_addr,
-            salt: Arc::new(RwLock::new(Salt::new(SALT_DURATION))),
+            local_id,
             open_requests: Arc::new(RwLock::new(HashMap::default())),
         }
     }
 
-    pub(crate) fn new_verification_request(&self, target: IpAddr) -> VerificationRequest {
+    pub(crate) fn new_verification_request(&self, peer_id: PeerId, target_addr: IpAddr) -> VerificationRequest {
         let timestamp = crate::time::unix_now();
 
-        VerificationRequest {
+        let key = RequestKey {
+            peer_id,
+            request_id: TypeId::of::<VerificationRequest>(),
+        };
+
+        let verif_req = VerificationRequest {
             version: self.version,
             network_id: self.network_id,
             timestamp,
             source_addr: self.source_addr,
-            target_addr: target,
-        }
-    }
-
-    pub(crate) fn new_discovery_request(&self) -> DiscoveryRequest {
-        let timestamp = crate::time::unix_now();
-
-        DiscoveryRequest { timestamp }
-    }
-
-    pub(crate) fn new_peering_request(&self) -> PeeringRequest {
-        let timestamp = crate::time::unix_now();
-
-        PeeringRequest {
-            timestamp,
-            salt: self.salt.read().expect("error getting read access").clone(),
-        }
-    }
-
-    pub(crate) fn insert_request(&self, peer_id: PeerId, request: Box<dyn Any + Send + Sync>) {
-        let mut guard = self.open_requests.write().expect("error getting write access");
-        let requests = guard.deref_mut();
-        let request_id = request.type_id();
-        let request_key = RequestKey { peer_id, request_id };
-        let request_value = RequestValue {
-            request,
-            expiration_time: time::unix_now() + REQUEST_EXPIRATION_SECS,
+            target_addr,
         };
 
-        requests.insert(request_key, request_value);
+        let request_hash = hash::sha256(&verif_req.protobuf().expect("error encoding verification request"));
+
+        let value = RequestValue {
+            request_hash,
+            expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
+        };
+
+        let _ = self
+            .open_requests
+            .write()
+            .expect("error getting write access")
+            .insert(key, value);
+
+        verif_req
     }
 
-    pub(crate) fn get_request<R: Request + 'static>(&self, peer_id: PeerId) -> Option<R> {
+    pub(crate) fn new_discovery_request(&self, peer_id: PeerId, target_addr: IpAddr) -> DiscoveryRequest {
+        let timestamp = crate::time::unix_now();
+
         let key = RequestKey {
             peer_id,
+            request_id: TypeId::of::<DiscoveryRequest>(),
+        };
+
+        let disc_req = DiscoveryRequest { timestamp };
+
+        let request_hash = hash::sha256(&disc_req.protobuf().expect("error encoding discovery request"));
+
+        let value = RequestValue {
+            request_hash,
+            expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
+        };
+
+        let _ = self
+            .open_requests
+            .write()
+            .expect("error getting write access")
+            .insert(key, value);
+
+        disc_req
+    }
+
+    pub(crate) fn new_peering_request(&self, peer_id: PeerId) -> PeeringRequest {
+        let timestamp = crate::time::unix_now();
+
+        let key = RequestKey {
+            peer_id,
+            request_id: TypeId::of::<PeeringRequest>(),
+        };
+
+        let peer_req = PeeringRequest {
+            timestamp,
+            salt: self.local_id.salt().read().expect("error getting read access").clone(),
+        };
+
+        let request_hash = hash::sha256(&peer_req.protobuf().expect("error encoding peering request"));
+
+        let value = RequestValue {
+            request_hash,
+            expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
+        };
+
+        let _ = self
+            .open_requests
+            .write()
+            .expect("error getting write access")
+            .insert(key, value);
+
+        peer_req
+    }
+
+    pub(crate) fn get_request_hash<R: Request + 'static>(&self, peer_id: &PeerId) -> Option<RequestHash> {
+        // TODO: prevent the unfortunate peer id clone
+        let key = RequestKey {
+            peer_id: peer_id.clone(),
             request_id: TypeId::of::<R>(),
         };
 
         let requests = self.open_requests.read().expect("error getting read access");
-        if let Some(RequestValue { request, .. }) = (*requests).get(&key) {
-            if let Some(request) = request.downcast_ref::<R>() {
-                Some(request.clone())
-            } else {
-                None
-            }
+        if let Some(RequestValue { request_hash, .. }) = (*requests).get(&key) {
+            Some(request_hash.clone())
         } else {
             None
         }

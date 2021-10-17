@@ -5,20 +5,23 @@ use tokio::sync::mpsc;
 
 use crate::{
     config::AutopeeringConfig,
+    hash,
     identity::LocalId,
-    packet::{MessageType, OutgoingPacket},
-    peering_messages::PeeringRequest,
+    packet::{IncomingPacket, MessageType, OutgoingPacket},
+    peering_messages::{PeeringDrop, PeeringRequest, PeeringResponse},
     request::RequestManager,
     salt::Salt,
     server::ServerSocket,
+    store::{InMemoryPeerStore, PeerStore},
+    PeerId,
 };
 
 use std::{net::SocketAddr, time::Duration};
 
 pub(crate) struct PeeringConfig {
-    pub version: u32,
-    pub network_id: u32,
-    pub source_addr: SocketAddr,
+    pub(crate) version: u32,
+    pub(crate) network_id: u32,
+    pub(crate) source_addr: SocketAddr,
 }
 
 impl PeeringConfig {
@@ -52,7 +55,7 @@ fn event_chan() -> (PeeringEventTx, PeeringEventRx) {
     mpsc::unbounded_channel::<PeeringEvent>()
 }
 
-pub(crate) struct PeeringManager {
+pub(crate) struct PeeringManager<S: PeerStore> {
     config: PeeringConfig,
     // The local id to sign outgoing packets.
     local_id: LocalId,
@@ -61,17 +64,18 @@ pub(crate) struct PeeringManager {
     // Handles requests.
     request_mngr: RequestManager,
     // Storage for discovered peers
-    store: (),
+    peer_store: S,
     // Publishes peering related events.
     event_tx: PeeringEventTx,
 }
 
-impl PeeringManager {
+impl<S: PeerStore> PeeringManager<S> {
     pub(crate) fn new(
         config: PeeringConfig,
         local_id: LocalId,
         socket: ServerSocket,
         request_mngr: RequestManager,
+        peer_store: S,
     ) -> (Self, PeeringEventRx) {
         let (event_tx, event_rx) = event_chan();
         (
@@ -80,7 +84,7 @@ impl PeeringManager {
                 local_id,
                 socket,
                 request_mngr,
-                store: (),
+                peer_store,
                 event_tx,
             },
             event_rx,
@@ -93,23 +97,91 @@ impl PeeringManager {
             local_id,
             socket,
             request_mngr,
-            store,
+            peer_store,
             event_tx,
         } = self;
 
-        // Create a peering request
-        let peering_req = request_mngr.new_peering_request();
-        let msg_bytes = peering_req.protobuf().expect("error encoding peering request").to_vec();
+        let PeeringConfig {
+            version,
+            network_id,
+            source_addr,
+        } = config;
 
-        let packet = OutgoingPacket {
-            msg_type: MessageType::PeeringRequest,
-            msg_bytes,
-            // FIXME
-            target_addr: "127.0.0.1:1337".parse().expect("FIXME"),
-        };
+        let ServerSocket { mut rx, tx } = socket;
 
-        socket.send(packet);
+        loop {
+            if let Some(IncomingPacket {
+                msg_type,
+                msg_bytes,
+                source_addr,
+                peer_id,
+            }) = rx.recv().await
+            {
+                match msg_type {
+                    MessageType::PeeringRequest => {
+                        let peer_req =
+                            PeeringRequest::from_protobuf(&msg_bytes).expect("error decoding peering request");
+
+                        if !validate_peering_request(&peer_req) {
+                            log::debug!("Received invalid peering request: {:?}", peer_req);
+                            continue;
+                        }
+
+                        let request_hash = &hash::sha256(&msg_bytes)[..];
+
+                        send_peering_response(request_hash, &tx, source_addr);
+                    }
+                    MessageType::PeeringResponse => {
+                        let peer_res =
+                            PeeringResponse::from_protobuf(&msg_bytes).expect("error decoding peering response");
+
+                        if !validate_peering_response(&peer_res, &request_mngr, &peer_id) {
+                            log::debug!("Received invalid peering response: {:?}", peer_res);
+                            continue;
+                        }
+
+                        handle_peering_response();
+                    }
+                    MessageType::PeeringDrop => {
+                        let peer_drop =
+                            PeeringDrop::from_protobuf(&msg_bytes).expect("error decoding discover request");
+
+                        if !validate_peering_drop(&peer_drop) {
+                            log::debug!("Received invalid peering drop: {:?}", peer_drop);
+                            continue;
+                        }
+
+                        handle_peering_drop();
+                    }
+                    _ => panic!("unsupported peering message type"),
+                }
+            }
+        }
     }
+}
+
+fn validate_peering_request(peer_req: &PeeringRequest) -> bool {
+    todo!()
+}
+
+fn send_peering_response(request_hash: &[u8], tx: &mpsc::UnboundedSender<OutgoingPacket>, source_addr: SocketAddr) {
+    todo!()
+}
+
+fn validate_peering_response(peer_res: &PeeringResponse, request_mngr: &RequestManager, peer_id: &PeerId) -> bool {
+    todo!()
+}
+
+fn handle_peering_response() {
+    todo!()
+}
+
+fn validate_peering_drop(peer_drop: &PeeringDrop) -> bool {
+    todo!()
+}
+
+fn handle_peering_drop() {
+    todo!()
 }
 
 #[derive(Debug, thiserror::Error)]

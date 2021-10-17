@@ -11,11 +11,11 @@ use crate::{
     request::RequestManager,
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket},
     service_map::ServiceMap,
+    store::InMemoryPeerStore,
     time,
 };
 
-use std::error;
-use std::ops::DerefMut as _;
+use std::{error, ops::DerefMut as _};
 
 /// Initializes the autopeering service.
 pub async fn init(
@@ -41,7 +41,7 @@ pub async fn init(
     tokio::spawn(server.run());
 
     // Create a request manager that creates and keeps track of outgoing requests.
-    let request_mngr = RequestManager::new(version, network_id, config.bind_addr);
+    let request_mngr = RequestManager::new(version, network_id, config.bind_addr, local_id.clone());
 
     // Spawn a cronjob that regularly removes unanswered pings.
     let delay = DelayBuilder::new(DelayMode::Constant(1000)).finish();
@@ -62,11 +62,19 @@ pub async fn init(
 
     tokio::spawn(discover_mngr.run());
 
+    // Create a peer store
+    let peer_store = InMemoryPeerStore::default();
+
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
     let peering_config = PeeringConfig::new(&config, version, network_id);
     let peering_socket = ServerSocket::new(peering_rx, outgoing_tx);
-    let (peering_mngr, peering_event_rx) =
-        PeeringManager::new(peering_config, local_id.clone(), peering_socket, request_mngr);
+    let (peering_mngr, peering_event_rx) = PeeringManager::new(
+        peering_config,
+        local_id.clone(),
+        peering_socket,
+        request_mngr,
+        peer_store,
+    );
 
     tokio::spawn(peering_mngr.run());
 

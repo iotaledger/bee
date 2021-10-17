@@ -10,6 +10,8 @@ use std::{collections::HashMap, fmt, net::IpAddr};
 /// Represents the name of a service.
 pub type ServiceName = String;
 
+pub(crate) const AUTOPEERING_SERVICE_NAME: &str = "autopeering";
+
 /// A mapping between a service name and its bind address.
 #[derive(Clone, Debug, Default)]
 pub struct ServiceMap(HashMap<ServiceName, Multiaddr>);
@@ -18,6 +20,17 @@ impl ServiceMap {
     /// Registers a service with its bind address.
     pub fn insert(&mut self, service_name: ServiceName, multiaddr: Multiaddr) {
         self.0.insert(service_name, multiaddr);
+    }
+
+    /// Returns the access port of a given service.
+    pub fn port(&self, service_name: impl AsRef<str>) -> Option<u16> {
+        self.0
+            .get(service_name.as_ref())
+            .map(|multiaddr| match multiaddr.iter().last().expect("invalid multiaddr") {
+                Protocol::Tcp(port) => port,
+                Protocol::Udp(port) => port,
+                _ => panic!("invalid multiaddr"),
+            })
     }
 }
 
@@ -93,7 +106,7 @@ impl From<ServiceMap> for proto::ServiceMap {
             };
 
             let network_addr = proto::NetworkAddress {
-                network: format!("{}, {}:{}", transport, addr, port),
+                network: format!("{}, {}:{}", transport, addr, port), // FIXME: port here?
                 port: port as u32,
             };
 

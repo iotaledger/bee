@@ -35,8 +35,8 @@ impl Peer {
     }
 
     /// Returns the address of the discovered peer.
-    pub fn ip_address(&self) -> &IpAddr {
-        &self.ip_address
+    pub fn ip_address(&self) -> IpAddr {
+        self.ip_address
     }
 
     /// Returns the public key of the discovered peer.
