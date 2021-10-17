@@ -3,15 +3,19 @@
 
 use crate::{
     config::AutopeeringConfig,
-    discovery::{DiscoveryConfig, DiscoveryEventRx, DiscoveryManager},
+    delay::{DelayBuilder, DelayMode, Repeat as _},
+    discovery::{DiscoveryEventRx, DiscoveryManager, DiscoveryManagerConfig},
     identity::LocalId,
     packet::{IncomingPacket, OutgoingPacket},
     peering::{PeeringConfig, PeeringEventRx, PeeringManager},
+    request::RequestManager,
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket},
     service_map::ServiceMap,
+    time,
 };
 
 use std::error;
+use std::ops::DerefMut as _;
 
 /// Initializes the autopeering service.
 pub async fn init(
@@ -22,11 +26,11 @@ pub async fn init(
     services: ServiceMap,
 ) -> Result<(DiscoveryEventRx, PeeringEventRx), Box<dyn error::Error>> {
     // Create channels for inbound/outbound communication with the UDP socket.
-    let (discovery_tx, discovery_rx) = server_chan::<IncomingPacket>();
+    let (discover_tx, discover_rx) = server_chan::<IncomingPacket>();
     let (peering_tx, peering_rx) = server_chan::<IncomingPacket>();
 
     let incoming_senders = IncomingPacketSenders {
-        discovery_tx,
+        discover_tx,
         peering_tx,
     };
 
@@ -36,20 +40,35 @@ pub async fn init(
 
     tokio::spawn(server.run());
 
-    // Spawn the discovery manager handling discovery requests/responses.
-    let discovery_config = DiscoveryConfig::new(&config, version, network_id, services);
-    let discovery_socket = ServerSocket::new(discovery_rx, outgoing_tx.clone());
-    let (discovery_mngr, discovery_event_rx) =
-        DiscoveryManager::new(discovery_config, local_id.clone(), discovery_socket);
+    // Create a request manager that creates and keeps track of outgoing requests.
+    let request_mngr = RequestManager::new(version, network_id, config.bind_addr);
 
-    tokio::spawn(discovery_mngr.run());
+    // Spawn a cronjob that regularly removes unanswered pings.
+    let delay = DelayBuilder::new(DelayMode::Constant(1000)).finish();
+    let cmd = Box::new(|mngr: &RequestManager| {
+        let now = time::unix_now();
+        let mut guard = mngr.open_requests.write().expect("error getting write access");
+        let requests = guard.deref_mut();
+        requests.retain(|_, v| v.expiration_time > now);
+    });
+
+    tokio::spawn(RequestManager::repeat(delay, cmd, request_mngr.clone()));
+
+    // Spawn the discovery manager handling discovery requests/responses.
+    let discover_config = DiscoveryManagerConfig::new(&config, version, network_id, services);
+    let discover_socket = ServerSocket::new(discover_rx, outgoing_tx.clone());
+    let (discover_mngr, discover_event_rx) =
+        DiscoveryManager::new(discover_config, local_id.clone(), discover_socket, request_mngr.clone());
+
+    tokio::spawn(discover_mngr.run());
 
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
     let peering_config = PeeringConfig::new(&config, version, network_id);
     let peering_socket = ServerSocket::new(peering_rx, outgoing_tx);
-    let (peering_mngr, peering_event_rx) = PeeringManager::new(peering_config, local_id.clone(), peering_socket);
+    let (peering_mngr, peering_event_rx) =
+        PeeringManager::new(peering_config, local_id.clone(), peering_socket, request_mngr);
 
     tokio::spawn(peering_mngr.run());
 
-    Ok((discovery_event_rx, peering_event_rx))
+    Ok((discover_event_rx, peering_event_rx))
 }

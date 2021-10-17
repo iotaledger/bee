@@ -38,7 +38,7 @@ impl ServerConfig {
 }
 
 pub(crate) struct IncomingPacketSenders {
-    pub(crate) discovery_tx: IncomingPacketTx,
+    pub(crate) discover_tx: IncomingPacketTx,
     pub(crate) peering_tx: IncomingPacketTx,
 }
 
@@ -96,7 +96,7 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_senders: Incom
     let mut packet_bytes = [0; READ_BUFFER_SIZE];
 
     let IncomingPacketSenders {
-        discovery_tx,
+        discover_tx,
         peering_tx,
     } = incoming_senders;
 
@@ -129,7 +129,7 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_senders: Incom
 
             match msg_type as u32 {
                 t if DISCOVERY_MSG_TYPE_RANGE.contains(&t) => {
-                    discovery_tx.send(packet).expect("channel send error: discovery");
+                    discover_tx.send(packet).expect("channel send error: discovery");
                 }
                 t if PEERING_MSG_TYPE_RANGE.contains(&t) => {
                     peering_tx.send(packet).expect("channel send error: peering");

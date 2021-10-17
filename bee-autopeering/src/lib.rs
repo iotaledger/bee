@@ -6,9 +6,8 @@
 // #![warn(missing_docs)]
 #![allow(warnings)]
 
-mod backoff;
 mod config;
-mod cron;
+mod delay;
 mod discovery;
 mod discovery_messages;
 mod distance;

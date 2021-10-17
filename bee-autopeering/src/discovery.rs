@@ -4,10 +4,9 @@
 use tokio::sync::mpsc;
 
 use crate::{
-    backoff::{Backoff, BackoffBuilder, BackoffMode},
     config::AutopeeringConfig,
-    cron::CronJob,
-    discovery_messages::{Ping, PingFactory, Pong},
+    delay::{Delay, DelayBuilder, DelayMode, Repeat as _},
+    discovery_messages::{DiscoveryRequest, VerificationRequest, VerificationResponse},
     hash,
     identity::{LocalId, PeerId},
     multiaddr::AutopeeringMultiaddr,
@@ -44,30 +43,6 @@ pub(crate) const PING_EXPIRATION: u64 = 12 * 60 * 60;
 // hive.go: MaxPeersInResponse is the maximum number of peers returned in DiscoveryResponse.
 const MAX_PEERS_IN_RESPONSE: usize = 6;
 // hive.go: MaxServices is the maximum number of services a peer can support.
-
-pub(crate) struct DiscoveryConfig {
-    pub(crate) entry_nodes: Vec<AutopeeringMultiaddr>,
-    pub(crate) entry_nodes_prefer_ipv6: bool,
-    pub(crate) run_as_entry_node: bool,
-    pub(crate) version: u32,
-    pub(crate) network_id: u32,
-    pub(crate) source_addr: SocketAddr,
-    pub(crate) services: ServiceMap,
-}
-
-impl DiscoveryConfig {
-    pub fn new(config: &AutopeeringConfig, version: u32, network_id: u32, services: ServiceMap) -> Self {
-        Self {
-            entry_nodes: config.entry_nodes.clone(),
-            entry_nodes_prefer_ipv6: config.entry_nodes_prefer_ipv6,
-            run_as_entry_node: config.run_as_entry_node,
-            version,
-            network_id,
-            source_addr: config.bind_addr,
-            services,
-        }
-    }
-}
 
 pub(crate) struct DiscoveredPeer {
     peer: Peer,
@@ -168,23 +143,43 @@ pub enum DiscoveryEvent {
     PeerDeleted { peer_id: PeerId },
 }
 
-/// Esposes discovery related events.
+/// Exposes peer discovery related events.
 pub type DiscoveryEventRx = mpsc::UnboundedReceiver<DiscoveryEvent>;
 type DiscoveryEventTx = mpsc::UnboundedSender<DiscoveryEvent>;
 
-fn discovery_chan() -> (DiscoveryEventTx, DiscoveryEventRx) {
+fn event_chan() -> (DiscoveryEventTx, DiscoveryEventRx) {
     mpsc::unbounded_channel::<DiscoveryEvent>()
+}
+
+pub(crate) struct DiscoveryManagerConfig {
+    pub(crate) entry_nodes: Vec<AutopeeringMultiaddr>,
+    pub(crate) entry_nodes_prefer_ipv6: bool,
+    pub(crate) run_as_entry_node: bool,
+    pub(crate) version: u32,
+    pub(crate) network_id: u32,
+    pub(crate) source_addr: SocketAddr,
+    pub(crate) services: ServiceMap,
+}
+
+impl DiscoveryManagerConfig {
+    pub fn new(config: &AutopeeringConfig, version: u32, network_id: u32, services: ServiceMap) -> Self {
+        Self {
+            entry_nodes: config.entry_nodes.clone(),
+            entry_nodes_prefer_ipv6: config.entry_nodes_prefer_ipv6,
+            run_as_entry_node: config.run_as_entry_node,
+            version,
+            network_id,
+            source_addr: config.bind_addr,
+            services,
+        }
+    }
 }
 
 pub(crate) struct DiscoveryManager {
     // Config.
-    config: DiscoveryConfig,
+    config: DiscoveryManagerConfig,
     // The local id to sign outgoing packets.
     local_id: LocalId,
-    // Backoff logic.
-    backoff: Backoff,
-    // Factory to build `Ping` messages.
-    ping_factory: PingFactory,
     // Channel halfs for sending/receiving discovery related packets.
     socket: ServerSocket,
     // Handles requests.
@@ -194,35 +189,17 @@ pub(crate) struct DiscoveryManager {
 }
 
 impl DiscoveryManager {
-    pub(crate) fn new(config: DiscoveryConfig, local_id: LocalId, socket: ServerSocket) -> (Self, DiscoveryEventRx) {
-        let backoff = BackoffBuilder::new(BackoffMode::Exponential(
-            BACKOFF_INTERVALL_MILLISECS,
-            EXPONENTIAL_BACKOFF_FACTOR,
-        ))
-        .with_jitter(JITTER)
-        .with_max_retries(MAX_RETRIES)
-        .finish();
-
-        let ping_factory = PingFactory::new(config.version, config.network_id, config.source_addr);
-        let request_mngr = RequestManager::new();
-        let request_mngr_clone = request_mngr.clone();
-
-        // Spawn a cronjob that regularly removes unanswered pings.
-        let cmd = Box::new(|mngr: &RequestManager| {
-            let now = time::unix_now();
-            let mut guard = mngr.requests.write().expect("error getting write access");
-            let requests = guard.deref_mut();
-            requests.retain(|_, v| v.expiration_time > now);
-        });
-        tokio::spawn(request_mngr_clone.cronjob(Duration::from_secs(1), cmd, ()));
-
-        let (event_tx, event_rx) = discovery_chan();
+    pub(crate) fn new(
+        config: DiscoveryManagerConfig,
+        local_id: LocalId,
+        socket: ServerSocket,
+        request_mngr: RequestManager,
+    ) -> (Self, DiscoveryEventRx) {
+        let (event_tx, event_rx) = event_chan();
         (
             Self {
                 config,
                 local_id,
-                backoff,
-                ping_factory,
                 socket,
                 request_mngr,
                 event_tx,
@@ -235,8 +212,6 @@ impl DiscoveryManager {
         let DiscoveryManager {
             config,
             local_id,
-            backoff,
-            ping_factory,
             socket,
             request_mngr,
             event_tx,
@@ -253,46 +228,31 @@ impl DiscoveryManager {
             }) = rx.recv().await
             {
                 match msg_type {
-                    MessageType::Ping => {
-                        let ping = Ping::from_protobuf(&msg_bytes).expect("error decoding ping");
+                    MessageType::VerificationRequest => {
+                        let verif_req = VerificationRequest::from_protobuf(&msg_bytes).expect("error decoding ping");
 
                         // Validate the received ping.
-                        if !validate_ping(&ping, config.version, config.network_id) {
-                            log::debug!("Received invalid ping: {:?}", ping);
+                        if !validate_verification_request(&verif_req, config.version, config.network_id) {
+                            log::debug!("Received invalid Ping: {:?}", verif_req);
                             continue;
                         }
 
-                        // Send back a corresponding pong.
-                        let ping_hash = hash::sha256(&msg_bytes).to_vec();
-                        let pong = Pong::new(ping_hash, config.services.clone(), source_addr.ip());
-                        let pong_bytes = pong.protobuf().expect("error encoding pong").to_vec();
-
-                        tx.send(OutgoingPacket {
-                            msg_type: MessageType::Pong,
-                            msg_bytes: pong_bytes,
-                            target_addr: source_addr,
-                        })
-                        .expect("error sending pong to server");
+                        handle_verification_request();
                     }
-                    MessageType::Pong => {
-                        let pong = Pong::from_protobuf(&msg_bytes).expect("error decoding pong");
+                    MessageType::VerificationResponse => {
+                        let pong = VerificationResponse::from_protobuf(&msg_bytes).expect("error decoding pong");
 
-                        // Try to find the corresponding 'Ping', that we sent to that peer.
-                        if let Some(ping) = request_mngr.get_request::<Ping>(peer_id.clone()) {
-                            let expected_ping_hash = hash::sha256(&ping.protobuf().expect("error encoding ping"));
-                            if !validate_pong(&pong, &expected_ping_hash) {
-                                log::debug!("Received invalid pong");
-                                continue;
-                            }
-                        } else {
-                            log::debug!(
-                                "Received 'Pong' from {}, but 'Ping' was never sent, or has already expired.",
-                                peer_id
-                            );
+                        if !validate_verification_response(&pong, &[0u8]) {
+                            log::debug!("Received invalid Pong: {:?}", pong);
                             continue;
                         }
+
+                        handle_verification_response();
                     }
-                    MessageType::DiscoveryRequest => {}
+                    MessageType::DiscoveryRequest => {
+                        let disc_req =
+                            DiscoveryRequest::from_protobuf(&msg_bytes).expect("error decoding discover request");
+                    }
                     MessageType::DiscoveryResponse => {}
                     _ => panic!("unsupported messasge type"),
                 }
@@ -316,7 +276,11 @@ impl DiscoveryManager {
     }
 }
 
-fn validate_ping(ping: &Ping, version: u32, network_id: u32) -> bool {
+fn send_verification_request() {
+    todo!()
+}
+
+fn validate_verification_request(ping: &VerificationRequest, version: u32, network_id: u32) -> bool {
     if ping.version() != version {
         false
     } else if ping.network_id() != network_id {
@@ -328,6 +292,43 @@ fn validate_ping(ping: &Ping, version: u32, network_id: u32) -> bool {
     }
 }
 
-fn validate_pong(pong: &Pong, expected_ping_hash: &[u8]) -> bool {
-    pong.ping_hash() == expected_ping_hash
+fn handle_verification_request() {
+    // // Send back a corresponding pong.
+    // let ping_hash = hash::sha256(&msg_bytes).to_vec();
+    // let pong = VerificationResponse::new(ping_hash, config.services.clone(), source_addr.ip());
+    // let pong_bytes = pong.protobuf().expect("error encoding pong").to_vec();
+
+    // tx.send(OutgoingPacket {
+    //     msg_type: MessageType::VerificationResponse,
+    //     msg_bytes: pong_bytes,
+    //     target_addr: source_addr,
+    // })
+    // .expect("error sending pong to server");
+    todo!()
+}
+
+fn send_verification_response() {
+    todo!()
+}
+
+fn validate_verification_response(pong: &VerificationResponse, expected_ping_hash: &[u8]) -> bool {
+    pong.request_hash() == expected_ping_hash
+}
+
+fn handle_verification_response() {
+    // // Try to find the corresponding 'Ping', that we sent to that peer.
+    // if let Some(ping) = request_mngr.get_request::<VerificationRequest>(peer_id.clone()) {
+    //     let expected_ping_hash = hash::sha256(&ping.protobuf().expect("error encoding ping"));
+    //     if !validate_verification_response(&pong, &expected_ping_hash) {
+    //         log::debug!("Received invalid pong");
+    //         continue;
+    //     }
+    // } else {
+    //     log::debug!(
+    //         "Received 'Pong' from {}, but 'Ping' was never sent, or has already expired.",
+    //         peer_id
+    //     );
+    //     continue;
+    // }
+    todo!()
 }

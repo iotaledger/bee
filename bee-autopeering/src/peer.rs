@@ -51,25 +51,7 @@ impl Peer {
 
     /// Creates a discovered peer from its Protobuf representation/encoding.
     pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
-        let proto::Peer {
-            public_key,
-            ip,
-            services,
-        } = proto::Peer::decode(bytes)?;
-
-        // TODO: resolve DNS addresses
-        let ip_address: IpAddr = ip.parse().expect("error parsing ip address");
-
-        let public_key = PublicKey::try_from_bytes(public_key.try_into().expect("invalid public key byte length"))
-            .expect("error restoring public key from bytes");
-
-        let services: ServiceMap = services.expect("missing service map").into();
-
-        Ok(Self {
-            ip_address,
-            public_key,
-            services,
-        })
+        Ok(proto::Peer::decode(bytes)?.into())
     }
 
     /// Returns the Protobuf representation of this discovered peer.
@@ -96,5 +78,39 @@ impl fmt::Debug for Peer {
             .field("public_key", &bs58::encode(&self.public_key).into_string())
             .field("services", &self.services.to_string())
             .finish()
+    }
+}
+
+impl From<proto::Peer> for Peer {
+    fn from(peer: proto::Peer) -> Self {
+        let proto::Peer {
+            public_key,
+            ip,
+            services,
+        } = peer;
+
+        // TODO: resolve DNS addresses
+        let ip_address: IpAddr = ip.parse().expect("error parsing ip address");
+
+        let public_key = PublicKey::try_from_bytes(public_key.try_into().expect("invalid public key byte length"))
+            .expect("error restoring public key from bytes");
+
+        let services: ServiceMap = services.expect("missing service map").into();
+
+        Self {
+            ip_address,
+            public_key,
+            services,
+        }
+    }
+}
+
+impl From<Peer> for proto::Peer {
+    fn from(peer: Peer) -> Self {
+        Self {
+            ip: peer.ip_address.to_string(),
+            public_key: peer.public_key.to_bytes().to_vec(),
+            services: Some(peer.services.into()),
+        }
     }
 }

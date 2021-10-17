@@ -8,6 +8,7 @@ use crate::{
     identity::LocalId,
     packet::{MessageType, OutgoingPacket},
     peering_messages::PeeringRequest,
+    request::RequestManager,
     salt::Salt,
     server::ServerSocket,
 };
@@ -47,7 +48,7 @@ pub enum PeeringEvent {
 pub type PeeringEventRx = mpsc::UnboundedReceiver<PeeringEvent>;
 type PeeringEventTx = mpsc::UnboundedSender<PeeringEvent>;
 
-fn peering_chan() -> (PeeringEventTx, PeeringEventRx) {
+fn event_chan() -> (PeeringEventTx, PeeringEventRx) {
     mpsc::unbounded_channel::<PeeringEvent>()
 }
 
@@ -57,6 +58,8 @@ pub(crate) struct PeeringManager {
     local_id: LocalId,
     // Channel halfs for sending/receiving peering related packets.
     socket: ServerSocket,
+    // Handles requests.
+    request_mngr: RequestManager,
     // Storage for discovered peers
     store: (),
     // Publishes peering related events.
@@ -64,14 +67,19 @@ pub(crate) struct PeeringManager {
 }
 
 impl PeeringManager {
-    pub(crate) fn new(config: PeeringConfig, local_id: LocalId, socket: ServerSocket) -> (Self, PeeringEventRx) {
-        let (event_tx, event_rx) = peering_chan();
-
+    pub(crate) fn new(
+        config: PeeringConfig,
+        local_id: LocalId,
+        socket: ServerSocket,
+        request_mngr: RequestManager,
+    ) -> (Self, PeeringEventRx) {
+        let (event_tx, event_rx) = event_chan();
         (
             Self {
                 config,
                 local_id,
                 socket,
+                request_mngr,
                 store: (),
                 event_tx,
             },
@@ -84,17 +92,14 @@ impl PeeringManager {
             config,
             local_id,
             socket,
+            request_mngr,
             store,
             event_tx,
         } = self;
 
-        let salt = Salt::new(Duration::from_secs(20));
-
         // Create a peering request
-        let msg_bytes = PeeringRequest::new(salt.bytes().to_vec(), salt.expiration_time())
-            .protobuf()
-            .expect("error encoding peering request")
-            .to_vec();
+        let peering_req = request_mngr.new_peering_request();
+        let msg_bytes = peering_req.protobuf().expect("error encoding peering request").to_vec();
 
         let packet = OutgoingPacket {
             msg_type: MessageType::PeeringRequest,

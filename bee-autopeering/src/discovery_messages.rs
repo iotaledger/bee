@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{proto, request::Request, service_map::ServiceMap};
+use crate::{peer::Peer, proto, request::Request, service_map::ServiceMap};
 
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message as _};
 
@@ -10,43 +10,16 @@ use std::{
     net::{IpAddr, SocketAddr},
 };
 
-pub(crate) struct PingFactory {
-    version: u32,
-    network_id: u32,
-    source_addr: SocketAddr,
-}
-
-impl PingFactory {
-    pub fn new(version: u32, network_id: u32, source_addr: SocketAddr) -> Self {
-        Self {
-            version,
-            network_id,
-            source_addr,
-        }
-    }
-
-    pub(crate) fn make(&self, target: IpAddr) -> Ping {
-        let timestamp = crate::time::unix_now();
-
-        Ping {
-            version: self.version,
-            network_id: self.network_id,
-            timestamp,
-            source_addr: self.source_addr,
-            target_addr: target,
-        }
-    }
-}
 #[derive(Clone, Copy)]
-pub(crate) struct Ping {
-    version: u32,
-    network_id: u32,
-    timestamp: u64,
-    source_addr: SocketAddr,
-    target_addr: IpAddr,
+pub(crate) struct VerificationRequest {
+    pub(crate) version: u32,
+    pub(crate) network_id: u32,
+    pub(crate) timestamp: u64,
+    pub(crate) source_addr: SocketAddr,
+    pub(crate) target_addr: IpAddr,
 }
 
-impl Ping {
+impl VerificationRequest {
     pub fn version(&self) -> u32 {
         self.version
     }
@@ -101,9 +74,9 @@ impl Ping {
     }
 }
 
-impl fmt::Debug for Ping {
+impl fmt::Debug for VerificationRequest {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Ping")
+        f.debug_struct("VerificationRequest")
             .field("version", &self.version)
             .field("network_id", &self.network_id)
             .field("timestamp", &self.timestamp)
@@ -113,26 +86,26 @@ impl fmt::Debug for Ping {
     }
 }
 
-impl Request for Ping {}
+impl Request for VerificationRequest {}
 
 #[derive(Clone)]
-pub(crate) struct Pong {
-    ping_hash: Vec<u8>,
-    services: ServiceMap,
-    target_addr: IpAddr,
+pub(crate) struct VerificationResponse {
+    pub(crate) request_hash: Vec<u8>,
+    pub(crate) services: ServiceMap,
+    pub(crate) target_addr: IpAddr,
 }
 
-impl Pong {
-    pub fn new(ping_hash: Vec<u8>, services: ServiceMap, target_addr: IpAddr) -> Pong {
-        Pong {
-            ping_hash,
+impl VerificationResponse {
+    pub fn new(request_hash: Vec<u8>, services: ServiceMap, target_addr: IpAddr) -> Self {
+        Self {
+            request_hash,
             services,
             target_addr,
         }
     }
 
-    pub(crate) fn ping_hash(&self) -> &[u8] {
-        &self.ping_hash
+    pub(crate) fn request_hash(&self) -> &[u8] {
+        &self.request_hash
     }
 
     pub(crate) fn services(&self) -> &ServiceMap {
@@ -151,7 +124,7 @@ impl Pong {
         } = proto::Pong::decode(bytes)?;
 
         Ok(Self {
-            ping_hash: req_hash,
+            request_hash: req_hash,
             services: services.expect("missing services").into(),
             target_addr: dst_addr.parse().expect("invalid target address"),
         })
@@ -159,7 +132,7 @@ impl Pong {
 
     pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
         let pong = proto::Pong {
-            req_hash: self.ping_hash.clone(),
+            req_hash: self.request_hash.clone(),
             services: Some(self.services.clone().into()),
             dst_addr: self.target_addr.to_string(),
         };
@@ -171,12 +144,105 @@ impl Pong {
     }
 }
 
-impl fmt::Debug for Pong {
+impl fmt::Debug for VerificationResponse {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Pong")
-            .field("ping_hash", &bs58::encode(&self.ping_hash).into_string())
+        f.debug_struct("VerificationResponse")
+            .field("request_hash", &bs58::encode(&self.request_hash).into_string())
             .field("services", &self.services.to_string())
             .field("target_addr", &self.target_addr.to_string())
+            .finish()
+    }
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct DiscoveryRequest {
+    pub(crate) timestamp: u64,
+}
+
+impl DiscoveryRequest {
+    pub fn timestamp(&self) -> u64 {
+        self.timestamp
+    }
+
+    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
+        let proto::DiscoveryRequest { timestamp } = proto::DiscoveryRequest::decode(bytes)?;
+
+        Ok(Self {
+            timestamp: timestamp as u64,
+        })
+    }
+
+    pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
+        let discover_request = proto::DiscoveryRequest {
+            timestamp: self.timestamp as i64,
+        };
+
+        let mut bytes = BytesMut::with_capacity(discover_request.encoded_len());
+        discover_request.encode(&mut bytes)?;
+
+        Ok(bytes)
+    }
+}
+
+impl fmt::Debug for DiscoveryRequest {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("DiscoveryRequest")
+            .field("timestamp", &self.timestamp)
+            .finish()
+    }
+}
+
+impl Request for DiscoveryRequest {}
+
+#[derive(Clone)]
+pub(crate) struct DiscoveryResponse {
+    pub(crate) request_hash: Vec<u8>,
+    pub(crate) peers: Vec<Peer>,
+}
+
+impl DiscoveryResponse {
+    pub fn new(request_hash: Vec<u8>, peers: Vec<Peer>) -> Self {
+        Self { request_hash, peers }
+    }
+
+    pub(crate) fn request_hash(&self) -> &[u8] {
+        &self.request_hash
+    }
+
+    pub(crate) fn peers(&self) -> &[Peer] {
+        &self.peers
+    }
+
+    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
+        let proto::DiscoveryResponse { req_hash, peers } = proto::DiscoveryResponse::decode(bytes)?;
+        let peers = peers.into_iter().map(|peer| peer.into()).collect();
+
+        Ok(Self {
+            request_hash: req_hash,
+            peers,
+        })
+    }
+
+    pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
+        let peers = self.peers.clone().into_iter().map(|peer| peer.into()).collect();
+
+        let disc_res = proto::DiscoveryResponse {
+            req_hash: self.request_hash.clone(),
+            peers,
+        };
+
+        let mut bytes = BytesMut::with_capacity(disc_res.encoded_len());
+        disc_res.encode(&mut bytes)?;
+
+        Ok(bytes)
+    }
+}
+
+impl fmt::Debug for DiscoveryResponse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("DiscoveryResponse")
+            .field("request_hash", &bs58::encode(&self.request_hash).into_string())
+            .field("peers", &self.peers)
             .finish()
     }
 }

@@ -114,6 +114,7 @@ impl PeerStore for SledPeerStore {
     }
 
     fn last_ping(&self, peer_id: &PeerId) -> Option<Timestamp> {
+        // self.db.get(key)
         todo!()
     }
 

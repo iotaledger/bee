@@ -94,8 +94,8 @@ impl fmt::Debug for Packet {
 #[repr(u32)]
 #[non_exhaustive]
 pub enum MessageType {
-    Ping = DISCOVERY_MSG_TYPE_MIN,
-    Pong,
+    VerificationRequest = DISCOVERY_MSG_TYPE_MIN,
+    VerificationResponse,
     DiscoveryRequest,
     DiscoveryResponse,
     PeeringRequest = PEERING_MSG_TYPE_MIN,
