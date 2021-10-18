@@ -12,7 +12,7 @@ const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7
 #[test]
 fn new_valid() {
     let tth = rand_tail_transaction_hash();
-    let output = SignatureLockedSingleOutput::new(
+    let output = SimpleOutput::new(
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
         42424242,
     )
@@ -28,8 +28,7 @@ fn new_invalid_amount() {
     assert!(matches!(
         MigratedFundsEntry::new(
             rand_tail_transaction_hash(),
-            SignatureLockedSingleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 42)
-                .unwrap()
+            SimpleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 42).unwrap()
         ),
         Err(Error::InvalidMigratedFundsEntryAmount(42))
     ));
@@ -39,7 +38,7 @@ fn new_invalid_amount() {
 fn packed_len() {
     let mge = MigratedFundsEntry::new(
         rand_tail_transaction_hash(),
-        SignatureLockedSingleOutput::new(
+        SimpleOutput::new(
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             42424242,
         )
@@ -55,7 +54,7 @@ fn packed_len() {
 fn pack_unpack_valid() {
     let mfe_1 = MigratedFundsEntry::new(
         rand_tail_transaction_hash(),
-        SignatureLockedSingleOutput::new(
+        SimpleOutput::new(
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             42424242,
         )

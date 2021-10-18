@@ -15,7 +15,7 @@ fn essence_kind() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
+    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
     let essence = Essence::Regular(
         RegularEssence::builder()
             .with_inputs(vec![input1, input2])

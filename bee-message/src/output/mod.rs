@@ -8,7 +8,7 @@ mod foundry;
 mod nft;
 mod output_id;
 mod signature_locked_dust_allowance;
-mod signature_locked_single;
+mod simple;
 mod treasury;
 
 pub use alias::AliasOutput;
@@ -21,7 +21,7 @@ pub use signature_locked_dust_allowance::{
     dust_outputs_max, SignatureLockedDustAllowanceOutput, DUST_ALLOWANCE_DIVISOR, DUST_OUTPUTS_MAX, DUST_THRESHOLD,
     SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT,
 };
-pub use signature_locked_single::{SignatureLockedSingleOutput, SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT};
+pub use simple::{SimpleOutput, SIMPLE_OUTPUT_AMOUNT};
 pub use treasury::{TreasuryOutput, TREASURY_OUTPUT_AMOUNT};
 
 use crate::Error;
@@ -36,8 +36,8 @@ use bee_common::packable::{Packable, Read, Write};
     serde(tag = "type", content = "data")
 )]
 pub enum Output {
-    /// A signature locked single output.
-    SignatureLockedSingle(SignatureLockedSingleOutput),
+    /// A simple output.
+    Simple(SimpleOutput),
     /// A signature locked dust allowance output.
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput),
     /// A treasury output.
@@ -56,7 +56,7 @@ impl Output {
     /// Return the output kind of an `Output`.
     pub fn kind(&self) -> u8 {
         match self {
-            Self::SignatureLockedSingle(_) => SignatureLockedSingleOutput::KIND,
+            Self::Simple(_) => SimpleOutput::KIND,
             Self::SignatureLockedDustAllowance(_) => SignatureLockedDustAllowanceOutput::KIND,
             Self::Treasury(_) => TreasuryOutput::KIND,
             Self::Extended(_) => ExtendedOutput::KIND,
@@ -67,9 +67,9 @@ impl Output {
     }
 }
 
-impl From<SignatureLockedSingleOutput> for Output {
-    fn from(output: SignatureLockedSingleOutput) -> Self {
-        Self::SignatureLockedSingle(output)
+impl From<SimpleOutput> for Output {
+    fn from(output: SimpleOutput) -> Self {
+        Self::Simple(output)
     }
 }
 
@@ -114,7 +114,7 @@ impl Packable for Output {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::SignatureLockedSingle(output) => SignatureLockedSingleOutput::KIND.packed_len() + output.packed_len(),
+            Self::Simple(output) => SimpleOutput::KIND.packed_len() + output.packed_len(),
             Self::SignatureLockedDustAllowance(output) => {
                 SignatureLockedDustAllowanceOutput::KIND.packed_len() + output.packed_len()
             }
@@ -128,8 +128,8 @@ impl Packable for Output {
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
-            Self::SignatureLockedSingle(output) => {
-                SignatureLockedSingleOutput::KIND.pack(writer)?;
+            Self::Simple(output) => {
+                SimpleOutput::KIND.pack(writer)?;
                 output.pack(writer)?;
             }
             Self::SignatureLockedDustAllowance(output) => {
@@ -163,7 +163,7 @@ impl Packable for Output {
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            SignatureLockedSingleOutput::KIND => SignatureLockedSingleOutput::unpack_inner::<R, CHECK>(reader)?.into(),
+            SimpleOutput::KIND => SimpleOutput::unpack_inner::<R, CHECK>(reader)?.into(),
             SignatureLockedDustAllowanceOutput::KIND => {
                 SignatureLockedDustAllowanceOutput::unpack_inner::<R, CHECK>(reader)?.into()
             }

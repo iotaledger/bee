@@ -6,10 +6,7 @@ pub use crate::{
     constants::IOTA_SUPPLY,
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
-    output::{
-        Output, OutputId, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, TreasuryOutput,
-        OUTPUT_ID_LENGTH,
-    },
+    output::{Output, OutputId, SignatureLockedDustAllowanceOutput, SimpleOutput, TreasuryOutput, OUTPUT_ID_LENGTH},
     parents::{Parents, MESSAGE_PARENTS_RANGE},
     payload::{
         indexation::{IndexationPayload, PaddedIndex},

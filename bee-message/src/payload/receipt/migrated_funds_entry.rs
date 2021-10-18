@@ -3,7 +3,7 @@
 
 use crate::{
     constants::IOTA_SUPPLY,
-    output::{SignatureLockedSingleOutput, DUST_THRESHOLD},
+    output::{SimpleOutput, DUST_THRESHOLD},
     payload::receipt::TailTransactionHash,
     Error,
 };
@@ -20,12 +20,12 @@ pub const VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS: RangeInclusive<u64> = DUST_THRESHO
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MigratedFundsEntry {
     tail_transaction_hash: TailTransactionHash,
-    output: SignatureLockedSingleOutput,
+    output: SimpleOutput,
 }
 
 impl MigratedFundsEntry {
     /// Creates a new `MigratedFundsEntry`.
-    pub fn new(tail_transaction_hash: TailTransactionHash, output: SignatureLockedSingleOutput) -> Result<Self, Error> {
+    pub fn new(tail_transaction_hash: TailTransactionHash, output: SimpleOutput) -> Result<Self, Error> {
         if !VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS.contains(&output.amount()) {
             return Err(Error::InvalidMigratedFundsEntryAmount(output.amount()));
         }
@@ -42,7 +42,7 @@ impl MigratedFundsEntry {
     }
 
     /// Returns the output of a `MigratedFundsEntry`.
-    pub fn output(&self) -> &SignatureLockedSingleOutput {
+    pub fn output(&self) -> &SimpleOutput {
         &self.output
     }
 }
@@ -63,7 +63,7 @@ impl Packable for MigratedFundsEntry {
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let tail_transaction_hash = TailTransactionHash::unpack_inner::<R, CHECK>(reader)?;
-        let output = SignatureLockedSingleOutput::unpack_inner::<R, CHECK>(reader)?;
+        let output = SimpleOutput::unpack_inner::<R, CHECK>(reader)?;
 
         Self::new(tail_transaction_hash, output)
     }

@@ -187,12 +187,12 @@ impl RegularEssenceBuilder {
 
         for output in self.outputs.iter() {
             match output {
-                Output::SignatureLockedSingle(single) => {
-                    // The addresses must be unique in the set of SignatureLockedSingleOutputs.
+                Output::Simple(single) => {
+                    // The addresses must be unique in the set of simple outputs.
                     if self
                         .outputs
                         .iter()
-                        .filter(|o| matches!(o, Output::SignatureLockedSingle(s) if s.address() == single.address()))
+                        .filter(|o| matches!(o, Output::Simple(s) if s.address() == single.address()))
                         .count()
                         > 1
                     {
@@ -203,23 +203,17 @@ impl RegularEssenceBuilder {
                         .checked_add(single.amount())
                         .ok_or_else(|| Error::InvalidAccumulatedOutput((total + single.amount()) as u128))?;
                 }
-                Output::SignatureLockedDustAllowance(dust_allowance) => {
-                    // The addresses must be unique in the set of SignatureLockedDustAllowanceOutputs.
-                    if self
-                        .outputs
-                        .iter()
-                        .filter(
-                            |o| matches!(o, Output::SignatureLockedDustAllowance(s) if s.address() == dust_allowance.address()),
-                        )
-                        .count()
-                        > 1
-                    {
-                        return Err(Error::DuplicateAddress(*dust_allowance.address()));
-                    }
-
-                    total = total.checked_add(dust_allowance.amount()).ok_or_else(|| {
-                        Error::InvalidAccumulatedOutput(total as u128 + dust_allowance.amount() as u128)
-                    })?;
+                Output::Extended(_extended) => {
+                    // TODO
+                }
+                Output::Alias(_alias) => {
+                    // TODO
+                }
+                Output::Foundry(_foundry) => {
+                    // TODO
+                }
+                Output::Nft(_nft) => {
+                    // TODO
                 }
                 _ => return Err(Error::InvalidOutputKind(output.kind())),
             }

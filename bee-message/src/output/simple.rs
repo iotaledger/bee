@@ -7,42 +7,42 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::ops::RangeInclusive;
 
-/// Valid amounts for a signature locked single output.
-pub const SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
+/// Valid amounts for a simple output.
+pub const SIMPLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
 
 /// An output type which can be unlocked via a signature. It deposits onto one single address.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SignatureLockedSingleOutput {
+pub struct SimpleOutput {
     address: Address,
     amount: u64,
 }
 
-impl SignatureLockedSingleOutput {
-    /// The output kind of a `SignatureLockedSingleOutput`.
+impl SimpleOutput {
+    /// The output kind of a `SimpleOutput`.
     pub const KIND: u8 = 0;
 
-    /// Creates a new `SignatureLockedSingleOutput`.
+    /// Creates a new `SimpleOutput`.
     pub fn new(address: Address, amount: u64) -> Result<Self, Error> {
-        if !SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT.contains(&amount) {
+        if !SIMPLE_OUTPUT_AMOUNT.contains(&amount) {
             return Err(Error::InvalidAmount(amount));
         }
 
         Ok(Self { address, amount })
     }
 
-    /// Returns the address of a `SignatureLockedSingleOutput`.
+    /// Returns the address of a `SimpleOutput`.
     pub fn address(&self) -> &Address {
         &self.address
     }
 
-    /// Returns the amount of a `SignatureLockedSingleOutput`.
+    /// Returns the amount of a `SimpleOutput`.
     pub fn amount(&self) -> u64 {
         self.amount
     }
 }
 
-impl Packable for SignatureLockedSingleOutput {
+impl Packable for SimpleOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

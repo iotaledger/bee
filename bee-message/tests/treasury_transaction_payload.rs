@@ -40,7 +40,7 @@ fn new_invalid_input() {
 fn new_invalid_output() {
     let input = Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap());
     let output = Output::from(
-        SignatureLockedSingleOutput::new(
+        SimpleOutput::new(
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             IOTA_SUPPLY,
         )
