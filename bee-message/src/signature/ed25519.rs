@@ -5,8 +5,6 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use alloc::boxed::Box;
-
 const ED25519_PUBLIC_KEY_LENGTH: usize = 32;
 const ED25519_SIGNATURE_LENGTH: usize = 64;
 
@@ -15,7 +13,8 @@ const ED25519_SIGNATURE_LENGTH: usize = 64;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Ed25519Signature {
     public_key: [u8; ED25519_PUBLIC_KEY_LENGTH],
-    signature: Box<[u8]>,
+    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))]
+    signature: [u8; ED25519_SIGNATURE_LENGTH],
 }
 
 impl Ed25519Signature {
@@ -24,10 +23,7 @@ impl Ed25519Signature {
 
     /// Creates a new `Ed25519Signature`.
     pub fn new(public_key: [u8; ED25519_PUBLIC_KEY_LENGTH], signature: [u8; ED25519_SIGNATURE_LENGTH]) -> Self {
-        Self {
-            public_key,
-            signature: Box::new(signature),
-        }
+        Self { public_key, signature }
     }
 
     /// Returns the public key of an `Ed25519Signature`.
@@ -36,7 +32,7 @@ impl Ed25519Signature {
     }
 
     /// Return the actual signature of an `Ed25519Signature`.
-    pub fn signature(&self) -> &[u8] {
+    pub fn signature(&self) -> &[u8; ED25519_SIGNATURE_LENGTH] {
         &self.signature
     }
 }
