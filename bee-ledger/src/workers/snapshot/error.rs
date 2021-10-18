@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::snapshot::SnapshotKind;
+use crate::types::{snapshot::SnapshotKind, Error as TypesError};
 
 use bee_message::milestone::MilestoneIndex;
 
@@ -13,6 +13,9 @@ pub enum Error {
     /// I/O error happened.
     #[error("I/O error happened: {0}")]
     Io(#[from] std::io::Error),
+    /// Types error.
+    #[error("Types error: {0}")]
+    Types(#[from] TypesError),
     /// Unexpected snapshot kind.
     #[error("Unexpected snapshot kind: expected {0:?}, read {1:?}")]
     UnexpectedSnapshotKind(SnapshotKind, SnapshotKind),
