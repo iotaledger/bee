@@ -44,7 +44,7 @@ pub(crate) struct IncomingPacketSenders {
 
 pub(crate) struct Server {
     config: ServerConfig,
-    local_id: Local,
+    local: Local,
     incoming_senders: IncomingPacketSenders,
     outgoing_rx: OutgoingPacketRx,
 }
@@ -52,7 +52,7 @@ pub(crate) struct Server {
 impl Server {
     pub fn new(
         config: ServerConfig,
-        local_id: Local,
+        local: Local,
         incoming_senders: IncomingPacketSenders,
     ) -> (Self, OutgoingPacketTx) {
         let (outgoing_tx, outgoing_rx) = server_chan::<OutgoingPacket>();
@@ -60,7 +60,7 @@ impl Server {
         (
             Self {
                 config,
-                local_id,
+                local,
                 incoming_senders,
                 outgoing_rx,
             },
@@ -71,7 +71,7 @@ impl Server {
     pub async fn run(self) {
         let Server {
             config,
-            local_id,
+            local: local_id,
             incoming_senders,
             outgoing_rx,
         } = self;

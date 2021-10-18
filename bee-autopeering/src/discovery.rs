@@ -13,6 +13,7 @@ use crate::{
     multiaddr::AutopeeringMultiaddr,
     packet::{IncomingPacket, MessageType, OutgoingPacket},
     peer::Peer,
+    peerstore::{self, PeerStore},
     request::RequestManager,
     server::{OutgoingPacketTx, ServerSocket},
     service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
@@ -159,11 +160,10 @@ pub(crate) struct DiscoveryManagerConfig {
     pub(crate) version: u32,
     pub(crate) network_id: u32,
     pub(crate) source_addr: SocketAddr,
-    pub(crate) services: ServiceMap,
 }
 
 impl DiscoveryManagerConfig {
-    pub fn new(config: &AutopeeringConfig, version: u32, network_id: u32, services: ServiceMap) -> Self {
+    pub fn new(config: &AutopeeringConfig, version: u32, network_id: u32) -> Self {
         Self {
             entry_nodes: config.entry_nodes.clone(),
             entry_nodes_prefer_ipv6: config.entry_nodes_prefer_ipv6,
@@ -171,39 +171,42 @@ impl DiscoveryManagerConfig {
             version,
             network_id,
             source_addr: config.bind_addr,
-            services,
         }
     }
 }
 
-pub(crate) struct DiscoveryManager {
+pub(crate) struct DiscoveryManager<S> {
     // Config.
     config: DiscoveryManagerConfig,
     // The local id to sign outgoing packets.
-    local_id: Local,
+    local: Local,
     // Channel halfs for sending/receiving discovery related packets.
     socket: ServerSocket,
     // Handles requests.
     request_mngr: RequestManager,
     // Publishes discovery related events.
     event_tx: DiscoveryEventTx,
+    // The storage for discovered peers.
+    peerstore: S,
 }
 
-impl DiscoveryManager {
+impl<S: PeerStore> DiscoveryManager<S> {
     pub(crate) fn new(
         config: DiscoveryManagerConfig,
-        local_id: Local,
+        local: Local,
         socket: ServerSocket,
         request_mngr: RequestManager,
+        peerstore: S,
     ) -> (Self, DiscoveryEventRx) {
         let (event_tx, event_rx) = event_chan();
         (
             Self {
                 config,
-                local_id,
+                local,
                 socket,
                 request_mngr,
                 event_tx,
+                peerstore,
             },
             event_rx,
         )
@@ -212,10 +215,11 @@ impl DiscoveryManager {
     pub(crate) async fn run(self) {
         let DiscoveryManager {
             config,
-            local_id,
+            local,
             socket,
             request_mngr,
             event_tx,
+            peerstore,
         } = self;
 
         let DiscoveryManagerConfig {
@@ -225,7 +229,6 @@ impl DiscoveryManager {
             version,
             network_id,
             source_addr,
-            services,
         } = config;
 
         let ServerSocket { mut rx, tx } = socket;
@@ -250,7 +253,7 @@ impl DiscoveryManager {
 
                         let request_hash = &hash::sha256(&msg_bytes)[..];
 
-                        send_verification_response(request_hash, &tx, &services, source_addr);
+                        send_verification_response(request_hash, &tx, &local.services(), source_addr);
                     }
                     MessageType::VerificationResponse => {
                         let verif_res = VerificationResponse::from_protobuf(&msg_bytes)

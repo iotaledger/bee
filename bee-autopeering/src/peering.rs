@@ -9,10 +9,10 @@ use crate::{
     local::Local,
     packet::{IncomingPacket, MessageType, OutgoingPacket},
     peering_messages::{PeeringDrop, PeeringRequest, PeeringResponse},
+    peerstore::{InMemoryPeerStore, PeerStore},
     request::RequestManager,
     salt::Salt,
     server::ServerSocket,
-    store::{InMemoryPeerStore, PeerStore},
     PeerId,
 };
 
@@ -55,37 +55,37 @@ fn event_chan() -> (PeeringEventTx, PeeringEventRx) {
     mpsc::unbounded_channel::<PeeringEvent>()
 }
 
-pub(crate) struct PeeringManager<S: PeerStore> {
+pub(crate) struct PeeringManager<S> {
     config: PeeringConfig,
-    // The local id to sign outgoing packets.
-    local_id: Local,
+    // The local peer.
+    local: Local,
     // Channel halfs for sending/receiving peering related packets.
     socket: ServerSocket,
     // Handles requests.
     request_mngr: RequestManager,
-    // Storage for discovered peers
-    peer_store: S,
     // Publishes peering related events.
     event_tx: PeeringEventTx,
+    // The storage for discovered peers.
+    peerstore: S,
 }
 
 impl<S: PeerStore> PeeringManager<S> {
     pub(crate) fn new(
         config: PeeringConfig,
-        local_id: Local,
+        local: Local,
         socket: ServerSocket,
         request_mngr: RequestManager,
-        peer_store: S,
+        peerstore: S,
     ) -> (Self, PeeringEventRx) {
         let (event_tx, event_rx) = event_chan();
         (
             Self {
                 config,
-                local_id,
+                local,
                 socket,
                 request_mngr,
-                peer_store,
                 event_tx,
+                peerstore,
             },
             event_rx,
         )
@@ -94,11 +94,11 @@ impl<S: PeerStore> PeeringManager<S> {
     pub(crate) async fn run(self) {
         let PeeringManager {
             config,
-            local_id,
+            local,
             socket,
             request_mngr,
-            peer_store,
             event_tx,
+            peerstore,
         } = self;
 
         let PeeringConfig {

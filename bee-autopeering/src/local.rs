@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{delay::Repeat, hash, identity::PeerId, salt::Salt};
+use crate::{delay::Repeat, hash, identity::PeerId, peerstore::PeerStore, salt::Salt, ServiceMap};
 
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, SECRET_KEY_LENGTH};
 
@@ -16,6 +16,14 @@ use std::{
 #[derive(Clone, Default)]
 pub struct Local {
     inner: Arc<RwLock<LocalInner>>,
+}
+
+struct LocalInner {
+    peer_id: PeerId,
+    public_salt: Option<Salt>,
+    private_key: PrivateKey,
+    private_salt: Option<Salt>,
+    services: ServiceMap,
 }
 
 impl Local {
@@ -42,6 +50,7 @@ impl Local {
                 private_key,
                 private_salt: None,
                 public_salt: None,
+                services: ServiceMap::default(),
             })),
         }
     }
@@ -81,6 +90,11 @@ impl Local {
         self.read_inner().private_key.sign(msg)
     }
 
+    /// Returns the list of services this identity supports.
+    pub fn services(&self) -> ServiceMap {
+        self.read_inner().services.clone()
+    }
+
     fn read_inner(&self) -> RwLockReadGuard<LocalInner> {
         self.inner.read().expect("error getting read access")
     }
@@ -102,13 +116,6 @@ impl fmt::Display for Local {
     }
 }
 
-struct LocalInner {
-    pub(self) peer_id: PeerId,
-    pub(self) public_salt: Option<Salt>,
-    pub(self) private_key: PrivateKey,
-    pub(self) private_salt: Option<Salt>,
-}
-
 impl Eq for Local {}
 impl PartialEq for Local {
     fn eq(&self, other: &Self) -> bool {
@@ -126,6 +133,7 @@ impl Default for LocalInner {
             public_salt: None,
             private_key,
             private_salt: None,
+            services: ServiceMap::default(),
         }
     }
 }

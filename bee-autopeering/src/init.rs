@@ -8,23 +8,26 @@ use crate::{
     local::Local,
     packet::{IncomingPacket, OutgoingPacket},
     peering::{PeeringConfig, PeeringEventRx, PeeringManager},
+    peerstore::{InMemoryPeerStore, PeerStore},
     request::RequestManager,
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket},
     service_map::ServiceMap,
-    store::InMemoryPeerStore,
     time,
 };
 
 use std::{error, ops::DerefMut as _};
 
 /// Initializes the autopeering service.
-pub async fn init(
+pub async fn init<S: PeerStore + 'static>(
     config: AutopeeringConfig,
     version: u32,
     network_id: u32,
-    local_id: Local,
-    services: ServiceMap,
+    local: Local,
+    peerstore_config: <S as PeerStore>::Config,
 ) -> Result<(DiscoveryEventRx, PeeringEventRx), Box<dyn error::Error>> {
+    // Create a peer store.
+    let peerstore = S::new(peerstore_config);
+
     // Create channels for inbound/outbound communication with the UDP socket.
     let (discover_tx, discover_rx) = server_chan::<IncomingPacket>();
     let (peering_tx, peering_rx) = server_chan::<IncomingPacket>();
@@ -36,12 +39,12 @@ pub async fn init(
 
     // Spawn the server handling the socket I/O.
     let server_config = ServerConfig::new(&config);
-    let (server, outgoing_tx) = Server::new(server_config, local_id.clone(), incoming_senders);
+    let (server, outgoing_tx) = Server::new(server_config, local.clone(), incoming_senders);
 
     tokio::spawn(server.run());
 
     // Create a request manager that creates and keeps track of outgoing requests.
-    let request_mngr = RequestManager::new(version, network_id, config.bind_addr, local_id.clone());
+    let request_mngr = RequestManager::new(version, network_id, config.bind_addr, local.clone());
 
     // Spawn a cronjob that regularly removes unanswered pings.
     let delay = DelayBuilder::new(DelayMode::Constant(1000)).finish();
@@ -55,26 +58,23 @@ pub async fn init(
     tokio::spawn(RequestManager::repeat(delay, cmd, request_mngr.clone()));
 
     // Spawn the discovery manager handling discovery requests/responses.
-    let discover_config = DiscoveryManagerConfig::new(&config, version, network_id, services);
+    let discover_config = DiscoveryManagerConfig::new(&config, version, network_id);
     let discover_socket = ServerSocket::new(discover_rx, outgoing_tx.clone());
-    let (discover_mngr, discover_event_rx) =
-        DiscoveryManager::new(discover_config, local_id.clone(), discover_socket, request_mngr.clone());
+    let (discover_mngr, discover_event_rx) = DiscoveryManager::new(
+        discover_config,
+        local.clone(),
+        discover_socket,
+        request_mngr.clone(),
+        peerstore.clone(),
+    );
 
     tokio::spawn(discover_mngr.run());
-
-    // Create a peer store
-    let peer_store = InMemoryPeerStore::default();
 
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
     let peering_config = PeeringConfig::new(&config, version, network_id);
     let peering_socket = ServerSocket::new(peering_rx, outgoing_tx);
-    let (peering_mngr, peering_event_rx) = PeeringManager::new(
-        peering_config,
-        local_id.clone(),
-        peering_socket,
-        request_mngr,
-        peer_store,
-    );
+    let (peering_mngr, peering_event_rx) =
+        PeeringManager::new(peering_config, local.clone(), peering_socket, request_mngr, peerstore);
 
     tokio::spawn(peering_mngr.run());
 

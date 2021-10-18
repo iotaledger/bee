@@ -12,12 +12,9 @@ mod discovery;
 mod discovery_messages;
 mod distance;
 mod hash;
-mod identity;
-mod init;
 mod local;
 mod multiaddr;
 mod packet;
-mod peer;
 mod peering;
 mod peering_messages;
 mod proto {
@@ -27,8 +24,12 @@ mod request;
 mod salt;
 mod server;
 mod service_map;
-mod store;
 mod time;
+
+pub mod identity;
+pub mod init;
+pub mod peer;
+pub mod peerstore;
 
 pub use identity::PeerId;
 pub use init::init;
