@@ -15,9 +15,9 @@ use tokio::sync::mpsc;
 use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
 
 pub(crate) fn spawn<N>(node: &mut N, mut messages_referenced_tx: LinkTx)
-where
-    N: Node,
-    N::Backend: StorageBackend,
+    where
+        N: Node,
+        N::Backend: StorageBackend,
 {
     let bus = node.bus();
     let tangle = node.resource::<Tangle<N::Backend>>();
@@ -29,11 +29,11 @@ where
         let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
         while let Some(event) = receiver.next().await {
-            // the message is newly referenced and therefore it's safe to unwrap
+            // The message is newly referenced and therefore it's safe to unwrap.
             let message = tangle.get(&event.message_id).await.map(|m| (*m).clone()).unwrap();
-            // existing message <=> existing metadata, therefore it's safe to unwrap
+            // Existing message <=> existing metadata, therefore it's safe to unwrap.
             let metadata = tangle.get_metadata(&event.message_id).await.unwrap();
-            // the message is referenced by a milestone therefore it's safe to unwrap
+            // The message is referenced by a milestone therefore it's safe to unwrap.
             // TODO: is it safe to access the needed milestone index this way? will it always fetch the correct
             // milestone index?
             let referenced_by_milestone_index = tangle.get_confirmed_milestone_index();
@@ -78,7 +78,7 @@ where
                 should_promote: None,
                 should_reattach: None,
             })
-            .expect("error serializing to json");
+                .expect("error serializing to json");
 
             if let Err(e) = messages_referenced_tx.publish("messages/referenced", false, response.clone()) {
                 warn!("Publishing MQTT message failed. Cause: {:?}", e);

@@ -36,9 +36,10 @@ iota-crypto = { version = "0.7.0", features = [ "ed25519", "random", "blake2b" ]
 log = "0.4.14"
 mime_guess = { version = "2.0.3", optional = true }
 multiaddr = "0.13.0"
-paho-mqtt = { version = "0.9.1", default-features = false, features = [ "bundled" ]}
 rand = "0.8.4"
 rpassword = "5.0.1"
+rumqttd = "0.8.0"
+rumqttlog = "0.8.0"
 rust-embed = { version = "6.2.0", features = [ "interpolate-folder-path" ], optional = true }
 serde = { version = "1.0.130", features = [ "derive" ] }
 serde_json = "1.0.68"

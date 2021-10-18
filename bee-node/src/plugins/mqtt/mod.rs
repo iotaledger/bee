@@ -54,13 +54,12 @@ where
         max_payload_size: DEFAULT_MAX_PAYLOAD_SIZE,
         max_inflight_count: DEFAULT_MAX_INFLIGHT_COUNT,
         max_inflight_size: DEFAULT_MAX_INFLIGHT_SIZE,
-        username: None, // Option<String>,
-        password: None, // Option<String>,
+        login_credentials: None
     };
 
     let server_settings = mqtt::ServerSettings {
         listen: server_bind_addr.clone(),
-        cert: None, // Option<ServerCert>,
+        cert: None,
         next_connection_delay_ms: DEFAULT_NEXT_CONNECTION_DELAY,
         connections: connection_settings, // ConnectionSettings,
     };
@@ -81,8 +80,8 @@ where
         id: DEFAULT_BROKER_ID,
         router: router_settings,
         servers,
-        cluster: None,    // Option<HashMap<String, MeshSettings>>,
-        replicator: None, // Option<ConnectionSettings>,
+        cluster: None,
+        replicator: None,
         console: ConsoleSettings {
             listen: console_bind_addr,
         },
