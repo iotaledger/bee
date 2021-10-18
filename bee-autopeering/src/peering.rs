@@ -12,6 +12,7 @@ use crate::{
     request::RequestManager,
     salt::Salt,
     server::{OutgoingPacketTx, ServerSocket},
+    service_map::AUTOPEERING_SERVICE_NAME,
     Peer, PeerId,
 };
 
@@ -225,31 +226,43 @@ fn update_salts(
     packet_tx: &OutgoingPacketTx,
     event_tx: &PeeringEventTx,
 ) {
-    // Set new private and public salt for local
-    local.set_private_salt(Salt::default());
-    local.set_public_salt(Salt::default());
+    // Create and set new private and public salts for the local peer.
+    let private_salt = Salt::default();
+    let private_salt_exp_time = private_salt.expiration_time();
+    let public_salt = Salt::default();
+    let public_salt_exp_time = public_salt.expiration_time();
 
-    // Clean the rejection filer
+    local.set_private_salt(private_salt);
+    local.set_public_salt(public_salt);
+
+    // Clean the rejection filter.
     filter.clean();
 
-    //
+    // Either drop, or update the neighborhoods.
     if drop_neighbors_on_salt_update {
-        drop_neighborhood(inbound, packet_tx);
-        drop_neighborhood(outbound, packet_tx);
+        drop_neighborhood(inbound as &InboundNeighborhood, packet_tx);
+        drop_neighborhood(outbound as &OutboundNeighborhood, packet_tx);
+
+        inbound.clear();
+        outbound.clear();
     } else {
         inbound.update_distances();
         outbound.update_distances();
     }
 
-    log::debug!("Salts updated.");
+    log::debug!(
+        "Salts updated: Public: {}, Private: {}",
+        public_salt_exp_time,
+        private_salt_exp_time
+    );
 
-    //
+    // Fire 'SaltUpdated' event.
     event_tx.send(PeeringEvent::SaltUpdated);
 }
 
-fn drop_neighborhood<'a, Nh>(neighborhood: Nh, packet_tx: &OutgoingPacketTx)
+fn drop_neighborhood<'a, Nh>(neighborhood: &'a Nh, packet_tx: &OutgoingPacketTx)
 where
-    Nh: IntoIterator<Item = &'a Peer, IntoIter = vec::IntoIter<&'a Peer>>,
+    &'a Nh: IntoIterator<Item = Peer, IntoIter = std::vec::IntoIter<Peer>>,
 {
     for peer in neighborhood {
         let peering_drop_bytes = PeeringDrop::new()
@@ -257,10 +270,15 @@ where
             .expect("error encoding PeeringDrop message")
             .to_vec();
 
+        let port = peer
+            .services()
+            .port(AUTOPEERING_SERVICE_NAME)
+            .expect("invalid autopeering peer");
+
         packet_tx.send(OutgoingPacket {
             msg_type: MessageType::PeeringDrop,
             msg_bytes: peering_drop_bytes,
-            target_addr: SocketAddr::new(peer.ip_address(), 80),
+            target_addr: SocketAddr::new(peer.ip_address(), port),
         });
     }
 }

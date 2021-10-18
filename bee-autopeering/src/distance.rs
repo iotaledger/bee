@@ -21,36 +21,20 @@ pub(crate) const SIZE_OUTBOUND: usize = 4;
 
 #[derive(Debug)]
 pub(crate) struct PeerDistance {
-    peer: Peer,
-    distance: Distance,
+    pub(crate) peer: Peer,
+    pub(crate) distance: Distance,
 }
 
 impl PeerDistance {
-    pub fn from_private_salt(local: &Local, peer: Peer) -> Self {
-        let distance = salted_distance(
-            &local.peer_id(),
-            &peer.peer_id(),
-            &local.private_salt().expect("missing private salt"),
-        );
-
+    pub(crate) fn new(peer: Peer, distance: Distance) -> Self {
         Self { peer, distance }
     }
 
-    pub fn from_public_salt(local: &Local, peer: Peer) -> Self {
-        let distance = salted_distance(
-            &local.peer_id(),
-            &peer.peer_id(),
-            &local.public_salt().expect("missing public salt"),
-        );
-
-        Self { peer, distance }
-    }
-
-    pub fn peer(&self) -> &Peer {
+    pub(crate) fn peer(&self) -> &Peer {
         &self.peer
     }
 
-    pub fn distance(&self) -> Distance {
+    pub(crate) fn distance(&self) -> Distance {
         self.distance
     }
 }
@@ -182,6 +166,10 @@ impl<const N: usize, const INBOUND: bool> Neighborhood<N, INBOUND> {
     pub(crate) fn num_neighbors(&self) -> usize {
         self.neighbors.len()
     }
+
+    pub(crate) fn clear(&mut self) {
+        self.neighbors.clear();
+    }
 }
 
 impl<const N: usize, const INBOUND: bool> fmt::Display for Neighborhood<N, INBOUND> {
@@ -192,27 +180,14 @@ impl<const N: usize, const INBOUND: bool> fmt::Display for Neighborhood<N, INBOU
 
 // Allows us to iterate the peers in the neighborhood with a for-loop.
 impl<'a, const N: usize, const INBOUND: bool> IntoIterator for &'a Neighborhood<N, INBOUND> {
-    type Item = &'a Peer;
+    type Item = Peer;
     type IntoIter = vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.neighbors
             .iter()
-            .map(|pd| pd.peer())
-            .collect::<Vec<_>>()
-            .into_iter()
-    }
-}
-
-impl<'a, const N: usize, const INBOUND: bool> IntoIterator for &'a mut Neighborhood<N, INBOUND> {
-    type Item = &'a Peer;
-    type IntoIter = vec::IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        // FIXME: refer to the &'a impl
-        self.neighbors
-            .iter()
-            .map(|pd| pd.peer())
+            // FIXME: can we prevent the clone?
+            .map(|pd| pd.peer().clone())
             .collect::<Vec<_>>()
             .into_iter()
     }
