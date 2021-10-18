@@ -6,17 +6,22 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct TimelockUnixFeatureBlock {}
+pub struct TimelockUnixFeatureBlock(u64);
 
 impl TimelockUnixFeatureBlock {
     /// The feature block kind of a `TimelockUnixFeatureBlock`.
     pub const KIND: u8 = 4;
 
     /// Creates a new `TimelockUnixFeatureBlock`.
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(timestamp: u64) -> Self {
+        timestamp.into()
+    }
+
+    /// Returns the timestamp.
+    pub fn timestamp(&self) -> u64 {
+        self.0
     }
 }
 
@@ -24,14 +29,16 @@ impl Packable for TimelockUnixFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        0
+        self.0.packed_len()
     }
 
-    fn pack<W: Write>(&self, _writer: &mut W) -> Result<(), Self::Error> {
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        self.0.pack(writer)?;
+
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(_reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new())
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(Self::new(u64::unpack_inner::<R, CHECK>(reader)?))
     }
 }

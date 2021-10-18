@@ -18,6 +18,11 @@ impl ReturnAmountFeatureBlock {
     pub fn new(amount: u64) -> Self {
         amount.into()
     }
+
+    /// Returns the return amount.
+    pub fn amount(&self) -> u64 {
+        self.0
+    }
 }
 
 impl Packable for ReturnAmountFeatureBlock {

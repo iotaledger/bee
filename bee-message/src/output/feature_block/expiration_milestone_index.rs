@@ -1,22 +1,27 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use crate::{milestone::MilestoneIndex, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct ExpirationMilestoneIndexFeatureBlock {}
+pub struct ExpirationMilestoneIndexFeatureBlock(MilestoneIndex);
 
 impl ExpirationMilestoneIndexFeatureBlock {
     /// The feature block kind of an `ExpirationMilestoneIndexFeatureBlock`.
     pub const KIND: u8 = 5;
 
     /// Creates a new `ExpirationMilestoneIndexFeatureBlock`.
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(index: MilestoneIndex) -> Self {
+        index.into()
+    }
+
+    /// Returns the index.
+    pub fn index(&self) -> MilestoneIndex {
+        self.0
     }
 }
 
@@ -24,14 +29,16 @@ impl Packable for ExpirationMilestoneIndexFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        0
+        self.0.packed_len()
     }
 
-    fn pack<W: Write>(&self, _writer: &mut W) -> Result<(), Self::Error> {
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        self.0.pack(writer)?;
+
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(_reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new())
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(Self::new(MilestoneIndex::unpack_inner::<R, CHECK>(reader)?))
     }
 }
