@@ -23,7 +23,7 @@ const DEFAULT_NONCE: u64 = 0;
 
 /// Represent the object that nodes gossip around the network.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
     /// Specifies which network this message is meant for.
     network_id: u64,

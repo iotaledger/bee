@@ -22,7 +22,7 @@ impl MilestoneId {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(MilestoneId);
 
 impl From<[u8; MILESTONE_ID_LENGTH]> for MilestoneId {

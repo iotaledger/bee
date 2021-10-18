@@ -16,7 +16,7 @@ use alloc::{str::FromStr, string::String};
 /// A generic address supporting different address kinds.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(
-    feature = "serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]

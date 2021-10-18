@@ -8,7 +8,7 @@ use core::ops::{Add, Deref, Sub};
 /// A wrapper around a `u32` that represents a milestone index.
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestoneIndex(pub u32);
 
 impl MilestoneIndex {

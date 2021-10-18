@@ -18,7 +18,7 @@ use alloc::{boxed::Box, vec::Vec};
 
 /// A transaction regular essence consuming inputs, creating outputs and carrying an optional payload.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct RegularEssence {
     inputs: Box<[Input]>,
     outputs: Box<[Output]>,

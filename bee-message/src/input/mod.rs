@@ -14,7 +14,7 @@ use bee_common::packable::{Packable, Read, Write};
 /// A generic input supporting different input kinds.
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 #[cfg_attr(
-    feature = "serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]

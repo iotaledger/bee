@@ -28,7 +28,7 @@ use bee_common::packable::{Packable, Read, Write};
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(
-    feature = "serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]

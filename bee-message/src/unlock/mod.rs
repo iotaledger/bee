@@ -19,7 +19,7 @@ use std::collections::HashSet;
 /// Defines the mechanism by which a transaction input is authorized to be consumed.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(
-    feature = "serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
@@ -118,7 +118,7 @@ impl Packable for UnlockBlock {
 
 /// A collection of unlock blocks.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct UnlockBlocks(Box<[UnlockBlock]>);
 
 impl UnlockBlocks {

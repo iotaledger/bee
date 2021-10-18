@@ -12,7 +12,7 @@ pub const TREASURY_OUTPUT_AMOUNT: RangeInclusive<u64> = 0..=IOTA_SUPPLY;
 
 /// `TreasuryOutput` is an output which holds the treasury of a network.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreasuryOutput {
     amount: u64,
 }

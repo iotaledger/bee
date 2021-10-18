@@ -19,7 +19,7 @@ pub const INDEXATION_INDEX_LENGTH_RANGE: RangeInclusive<usize> = 1..=INDEXATION_
 
 /// A payload which holds an index and associated data.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct IndexationPayload {
     index: Box<[u8]>,
     data: Box<[u8]>,

@@ -57,7 +57,7 @@ impl Ed25519Address {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(Ed25519Address);
 
 impl From<[u8; ED25519_ADDRESS_LENGTH]> for Ed25519Address {

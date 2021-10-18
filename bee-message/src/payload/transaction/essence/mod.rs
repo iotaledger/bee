@@ -14,7 +14,7 @@ use crypto::hashes::{blake2b::Blake2b256, Digest};
 /// A generic essence that can represent different types defining transaction essences.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(
-    feature = "serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]

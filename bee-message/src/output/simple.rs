@@ -12,7 +12,7 @@ pub const SIMPLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
 
 /// An output type which can be unlocked via a signature. It deposits onto one single address.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct SimpleOutput {
     address: Address,
     amount: u64,

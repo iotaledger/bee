@@ -27,7 +27,7 @@ impl MessageId {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(MessageId);
 
 impl From<[u8; MESSAGE_ID_LENGTH]> for MessageId {

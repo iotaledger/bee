@@ -28,7 +28,7 @@ pub const MILESTONE_PUBLIC_KEY_LENGTH: usize = 32;
 /// Essence of a milestone payload.
 /// This is the signed part of a milestone payload.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestonePayloadEssence {
     index: MilestoneIndex,
     timestamp: u64,

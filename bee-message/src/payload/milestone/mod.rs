@@ -46,7 +46,7 @@ impl From<CryptoError> for MilestoneValidationError {
 
 /// A payload which defines the inclusion set of other messages in the Tangle.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestonePayload {
     essence: MilestonePayloadEssence,
     signatures: Vec<Box<[u8]>>,

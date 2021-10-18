@@ -22,7 +22,7 @@ pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 /// * lexicographically sorted;
 /// * unique;
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Parents(Vec<MessageId>);
 
 impl Deref for Parents {

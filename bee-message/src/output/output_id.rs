@@ -47,7 +47,7 @@ impl OutputId {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(OutputId);
 
 impl TryFrom<[u8; OUTPUT_ID_LENGTH]> for OutputId {

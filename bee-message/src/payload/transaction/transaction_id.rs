@@ -22,7 +22,7 @@ impl TransactionId {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(TransactionId);
 
 impl From<[u8; TRANSACTION_ID_LENGTH]> for TransactionId {

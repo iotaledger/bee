@@ -28,7 +28,7 @@ const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = INPUT_OUTPUT_COUNT_RAN
 
 /// Receipt is a listing of migrated funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReceiptPayload {
     migrated_at: MilestoneIndex,
     last: bool,

@@ -26,7 +26,7 @@ impl TreasuryInput {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(TreasuryInput);
 
 impl Deref for TreasuryInput {

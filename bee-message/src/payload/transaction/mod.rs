@@ -17,7 +17,7 @@ use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 /// A transaction to move funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionPayload {
     essence: Essence,
     unlock_blocks: UnlockBlocks,
