@@ -17,7 +17,7 @@ use core::ops::Deref;
 use std::collections::HashSet;
 
 /// Defines the mechanism by which a transaction input is authorized to be consumed.
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, derive_more::From)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
@@ -43,30 +43,6 @@ impl UnlockBlock {
             Self::Alias(_) => AliasUnlock::KIND,
             Self::Nft(_) => NftUnlock::KIND,
         }
-    }
-}
-
-impl From<SignatureUnlock> for UnlockBlock {
-    fn from(signature: SignatureUnlock) -> Self {
-        Self::Signature(signature)
-    }
-}
-
-impl From<ReferenceUnlock> for UnlockBlock {
-    fn from(reference: ReferenceUnlock) -> Self {
-        Self::Reference(reference)
-    }
-}
-
-impl From<AliasUnlock> for UnlockBlock {
-    fn from(reference: AliasUnlock) -> Self {
-        Self::Alias(reference)
-    }
-}
-
-impl From<NftUnlock> for UnlockBlock {
-    fn from(reference: NftUnlock) -> Self {
-        Self::Nft(reference)
     }
 }
 

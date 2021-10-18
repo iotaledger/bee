@@ -12,7 +12,7 @@ use bee_common::packable::{Packable, Read, Write};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 /// A generic essence that can represent different types defining transaction essences.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, derive_more::From)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
@@ -34,12 +34,6 @@ impl Essence {
     /// Return the Blake2b hash of an `Essence`.
     pub fn hash(&self) -> [u8; 32] {
         Blake2b256::digest(&self.pack_new()).into()
-    }
-}
-
-impl From<RegularEssence> for Essence {
-    fn from(essence: RegularEssence) -> Self {
-        Self::Regular(essence)
     }
 }
 

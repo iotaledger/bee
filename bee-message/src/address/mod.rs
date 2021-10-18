@@ -14,7 +14,7 @@ use bech32::{self, FromBase32, ToBase32, Variant};
 use alloc::{str::FromStr, string::String};
 
 /// A generic address supporting different address kinds.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
@@ -58,12 +58,6 @@ impl Address {
                 address.verify(msg, signature)
             }
         }
-    }
-}
-
-impl From<Ed25519Address> for Address {
-    fn from(address: Ed25519Address) -> Self {
-        Self::Ed25519(address)
     }
 }
 

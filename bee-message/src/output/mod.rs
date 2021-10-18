@@ -24,7 +24,7 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 
 /// A generic output that can represent different types defining the deposit of funds.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
@@ -56,42 +56,6 @@ impl Output {
             Self::Foundry(_) => FoundryOutput::KIND,
             Self::Nft(_) => NftOutput::KIND,
         }
-    }
-}
-
-impl From<SimpleOutput> for Output {
-    fn from(output: SimpleOutput) -> Self {
-        Self::Simple(output)
-    }
-}
-
-impl From<TreasuryOutput> for Output {
-    fn from(output: TreasuryOutput) -> Self {
-        Self::Treasury(output)
-    }
-}
-
-impl From<ExtendedOutput> for Output {
-    fn from(output: ExtendedOutput) -> Self {
-        Self::Extended(output)
-    }
-}
-
-impl From<AliasOutput> for Output {
-    fn from(output: AliasOutput) -> Self {
-        Self::Alias(output)
-    }
-}
-
-impl From<FoundryOutput> for Output {
-    fn from(output: FoundryOutput) -> Self {
-        Self::Foundry(output)
-    }
-}
-
-impl From<NftOutput> for Output {
-    fn from(output: NftOutput) -> Self {
-        Self::Nft(output)
     }
 }
 

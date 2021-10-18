@@ -26,7 +26,7 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
@@ -67,60 +67,6 @@ impl FeatureBlock {
             Self::Indexation(_) => IndexationFeatureBlock::KIND,
             Self::Metadata(_) => MetadataFeatureBlock::KIND,
         }
-    }
-}
-
-impl From<SenderFeatureBlock> for FeatureBlock {
-    fn from(output: SenderFeatureBlock) -> Self {
-        Self::Sender(output)
-    }
-}
-
-impl From<IssuerFeatureBlock> for FeatureBlock {
-    fn from(output: IssuerFeatureBlock) -> Self {
-        Self::Issuer(output)
-    }
-}
-
-impl From<ReturnAmountFeatureBlock> for FeatureBlock {
-    fn from(output: ReturnAmountFeatureBlock) -> Self {
-        Self::ReturnAmount(output)
-    }
-}
-
-impl From<TimelockMilestoneIndexFeatureBlock> for FeatureBlock {
-    fn from(output: TimelockMilestoneIndexFeatureBlock) -> Self {
-        Self::TimelockMilestoneIndex(output)
-    }
-}
-
-impl From<TimelockUnixFeatureBlock> for FeatureBlock {
-    fn from(output: TimelockUnixFeatureBlock) -> Self {
-        Self::TimelockUnix(output)
-    }
-}
-
-impl From<ExpirationMilestoneIndexFeatureBlock> for FeatureBlock {
-    fn from(output: ExpirationMilestoneIndexFeatureBlock) -> Self {
-        Self::ExpirationMilestoneIndex(output)
-    }
-}
-
-impl From<ExpirationUnixFeatureBlock> for FeatureBlock {
-    fn from(output: ExpirationUnixFeatureBlock) -> Self {
-        Self::ExpirationUnix(output)
-    }
-}
-
-impl From<IndexationFeatureBlock> for FeatureBlock {
-    fn from(output: IndexationFeatureBlock) -> Self {
-        Self::Indexation(output)
-    }
-}
-
-impl From<MetadataFeatureBlock> for FeatureBlock {
-    fn from(output: MetadataFeatureBlock) -> Self {
-        Self::Metadata(output)
     }
 }
 
