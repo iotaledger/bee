@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    constants::IOTA_SUPPLY,
-    output::{SimpleOutput, DUST_THRESHOLD},
+    constants::{DUST_THRESHOLD, IOTA_SUPPLY},
+    output::SimpleOutput,
     payload::receipt::TailTransactionHash,
     Error,
 };

@@ -259,25 +259,6 @@ fn build_single_output_duplicate_address() {
 }
 
 #[test]
-fn build_dust_allowance_output_duplicate_address() {
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
-    let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let amount = 1_000_000;
-
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
-    let address = Address::from(Ed25519Address::new(bytes));
-    let output =
-        Output::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput::new(address, amount).unwrap());
-
-    let essence = RegularEssence::builder()
-        .with_inputs(vec![input])
-        .with_outputs(vec![output; 2])
-        .finish();
-
-    assert!(matches!(essence, Err(Error::DuplicateAddress(_))));
-}
-
-#[test]
 fn build_invalid_accumulated_output() {
     let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
     let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
