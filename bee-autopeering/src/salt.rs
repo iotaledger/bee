@@ -15,13 +15,13 @@ const SALT_BYTE_SIZE: usize = 20;
 const DEFAULT_SALT_LIFETIME: Duration = Duration::from_secs(2 * 60 * 60); // 2 hours
 
 #[derive(Clone)]
-pub(crate) struct Salt {
+pub struct Salt {
     pub(crate) bytes: [u8; SALT_BYTE_SIZE],
     pub(crate) expiration_time: u64,
 }
 
 impl Salt {
-    pub(crate) fn new(lifetime: Duration) -> Self {
+    pub fn new(lifetime: Duration) -> Self {
         let expiration_time = unix(
             SystemTime::now()
                 .checked_add(lifetime)
@@ -40,11 +40,11 @@ impl Salt {
         }
     }
 
-    pub(crate) fn bytes(&self) -> &[u8; SALT_BYTE_SIZE] {
+    pub fn bytes(&self) -> &[u8; SALT_BYTE_SIZE] {
         &self.bytes
     }
 
-    pub(crate) fn expiration_time(&self) -> u64 {
+    pub fn expiration_time(&self) -> u64 {
         self.expiration_time
     }
 

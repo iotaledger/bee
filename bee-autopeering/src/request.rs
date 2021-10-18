@@ -6,9 +6,10 @@ use crate::{
     discovery_messages::{DiscoveryRequest, VerificationRequest},
     hash,
     identity::PeerId,
+    local::Local,
     peering_messages::PeeringRequest,
     salt::Salt,
-    time, LocalId,
+    time,
 };
 
 use std::{
@@ -46,17 +47,17 @@ pub(crate) struct RequestManager {
     pub(crate) version: u32,
     pub(crate) network_id: u32,
     pub(crate) source_addr: SocketAddr,
-    pub(crate) local_id: LocalId,
+    pub(crate) local: Local,
     pub(crate) open_requests: Arc<RwLock<HashMap<RequestKey, RequestValue>>>,
 }
 
 impl RequestManager {
-    pub(crate) fn new(version: u32, network_id: u32, source_addr: SocketAddr, local_id: LocalId) -> Self {
+    pub(crate) fn new(version: u32, network_id: u32, source_addr: SocketAddr, local: Local) -> Self {
         Self {
             version,
             network_id,
             source_addr,
-            local_id,
+            local,
             open_requests: Arc::new(RwLock::new(HashMap::default())),
         }
     }
@@ -129,7 +130,7 @@ impl RequestManager {
 
         let peer_req = PeeringRequest {
             timestamp,
-            salt: self.local_id.salt().read().expect("error getting read access").clone(),
+            salt: self.local.public_salt().expect("missing public salt"),
         };
 
         let request_hash = hash::sha256(&peer_req.protobuf().expect("error encoding peering request"));

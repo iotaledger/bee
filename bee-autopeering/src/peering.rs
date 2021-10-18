@@ -6,7 +6,7 @@ use tokio::sync::mpsc;
 use crate::{
     config::AutopeeringConfig,
     hash,
-    identity::LocalId,
+    local::Local,
     packet::{IncomingPacket, MessageType, OutgoingPacket},
     peering_messages::{PeeringDrop, PeeringRequest, PeeringResponse},
     request::RequestManager,
@@ -58,7 +58,7 @@ fn event_chan() -> (PeeringEventTx, PeeringEventRx) {
 pub(crate) struct PeeringManager<S: PeerStore> {
     config: PeeringConfig,
     // The local id to sign outgoing packets.
-    local_id: LocalId,
+    local_id: Local,
     // Channel halfs for sending/receiving peering related packets.
     socket: ServerSocket,
     // Handles requests.
@@ -72,7 +72,7 @@ pub(crate) struct PeeringManager<S: PeerStore> {
 impl<S: PeerStore> PeeringManager<S> {
     pub(crate) fn new(
         config: PeeringConfig,
-        local_id: LocalId,
+        local_id: Local,
         socket: ServerSocket,
         request_mngr: RequestManager,
         peer_store: S,

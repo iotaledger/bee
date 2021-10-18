@@ -4,8 +4,8 @@
 use crate::{
     config::AutopeeringConfig,
     identity::PeerId,
+    local::Local,
     packet::{IncomingPacket, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, PEERING_MSG_TYPE_RANGE},
-    LocalId,
 };
 
 use tokio::{
@@ -44,7 +44,7 @@ pub(crate) struct IncomingPacketSenders {
 
 pub(crate) struct Server {
     config: ServerConfig,
-    local_id: LocalId,
+    local_id: Local,
     incoming_senders: IncomingPacketSenders,
     outgoing_rx: OutgoingPacketRx,
 }
@@ -52,7 +52,7 @@ pub(crate) struct Server {
 impl Server {
     pub fn new(
         config: ServerConfig,
-        local_id: LocalId,
+        local_id: Local,
         incoming_senders: IncomingPacketSenders,
     ) -> (Self, OutgoingPacketTx) {
         let (outgoing_tx, outgoing_rx) = server_chan::<OutgoingPacket>();
@@ -143,7 +143,7 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_senders: Incom
     }
 }
 
-async fn outgoing_packet_handler(socket: Arc<UdpSocket>, mut outgoing_rx: OutgoingPacketRx, local_id: LocalId) {
+async fn outgoing_packet_handler(socket: Arc<UdpSocket>, mut outgoing_rx: OutgoingPacketRx, local_id: Local) {
     loop {
         if let Some(packet) = outgoing_rx.recv().await {
             let OutgoingPacket {

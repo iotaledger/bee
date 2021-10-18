@@ -3,7 +3,7 @@
 
 use crate::{delay::Repeat, hash, salt::Salt};
 
-use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature};
+use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, PUBLIC_KEY_LENGTH};
 
 use std::{
     convert::TryInto,
@@ -12,135 +12,43 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-const INTERNAL_ID_LENGTH: usize = 8;
-
-/// A type that represents a local identity, which is able to sign messages.
-#[derive(Clone)]
-pub struct LocalId {
-    private_key: Arc<RwLock<PrivateKey>>,
-    peer_id: PeerId,
-    salt: Arc<RwLock<Salt>>,
-}
-
-impl LocalId {
-    /// Creates a new local identity.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Creates a local identity from a 'base58' encoded ED25519 private key.
-    pub fn from_bs58_encoded_private_key(private_key: impl AsRef<str>) -> Self {
-        let private_key = bs58::decode(private_key.as_ref())
-            .into_vec()
-            .expect("error restoring private key");
-        if private_key.len() != 32 {
-            panic!("error restoring private key");
-        }
-        let mut bytes = [0u8; 32];
-        bytes.copy_from_slice(&private_key[..32]);
-
-        let private_key = PrivateKey::from_bytes(bytes);
-
-        let public_key = private_key.public_key();
-        let peer_id = PeerId::from_public_key(public_key);
-
-        Self {
-            private_key: Arc::new(RwLock::new(private_key)),
-            peer_id,
-            salt: Arc::new(RwLock::new(Salt::default())),
-        }
-    }
-
-    /// Returns the public key of this identity.
-    pub fn public_key(&self) -> PublicKey {
-        self.peer_id.public_key()
-    }
-
-    /// Returns the peer id of this identity.
-    pub fn peer_id(&self) -> &PeerId {
-        &self.peer_id
-    }
-
-    /// Returns the current salt of this identity.
-    pub(crate) fn salt(&self) -> &Arc<RwLock<Salt>> {
-        &self.salt
-    }
-
-    /// Signs a message using the private key.
-    pub fn sign(&self, msg: &[u8]) -> Signature {
-        self.private_key.read().expect("error getting the lock").sign(msg)
-    }
-}
-
-impl Default for LocalId {
-    fn default() -> Self {
-        let private_key = PrivateKey::generate().expect("error generating private key");
-        let identity = PeerId::from_public_key(private_key.public_key());
-        let salt = Arc::new(RwLock::new(Salt::default()));
-
-        Self {
-            private_key: Arc::new(RwLock::new(private_key)),
-            peer_id: identity,
-            salt,
-        }
-    }
-}
-
-impl Eq for LocalId {}
-impl PartialEq for LocalId {
-    fn eq(&self, other: &Self) -> bool {
-        self.peer_id == other.peer_id
-    }
-}
-
-impl fmt::Debug for LocalId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("LocalId").field("identity", &self.peer_id).finish()
-    }
-}
-
-impl fmt::Display for LocalId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.peer_id)
-    }
-}
-
 /// A type that represents the unique identity of a peer in the network.
 #[derive(Clone)]
 pub struct PeerId {
-    internal_id: [u8; INTERNAL_ID_LENGTH],
-    public_key: Arc<RwLock<PublicKey>>,
+    id_bytes: [u8; hash::SHA256_LEN],
+    public_key: [u8; PUBLIC_KEY_LENGTH],
 }
 
 impl PeerId {
     /// Creates an identity from an ED25519 public key.
     pub fn from_public_key(public_key: PublicKey) -> Self {
-        let internal_id = *&hash::sha256(&public_key.to_bytes())[..INTERNAL_ID_LENGTH]
-            .try_into()
-            .expect("error creating internal id");
+        let public_key = public_key.to_bytes();
+        let id_bytes = hash::sha256(&public_key);
 
-        Self {
-            internal_id,
-            public_key: Arc::new(RwLock::new(public_key)),
-        }
+        Self { id_bytes, public_key }
     }
 
     /// Returns a copy of the public key of this identity.
     pub fn public_key(&self) -> PublicKey {
-        let guard = self.public_key.read().expect("error getting the lock");
-        let bytes = guard.as_ref();
         // PANIC: unwrap is safe, because only valid public keys are stored.
-        PublicKey::try_from_bytes(bytes.try_into().unwrap()).unwrap()
+        PublicKey::try_from_bytes(self.public_key).unwrap()
+    }
+
+    pub fn libp2p_public_key(&self) -> libp2p_core::PublicKey {
+        libp2p_core::PublicKey::Ed25519(
+            libp2p_core::identity::ed25519::PublicKey::decode(&self.public_key)
+                .expect("error decoding ed25519 public key from bytes"),
+        )
     }
 
     /// Returns the corresponding `libp2p::PeerId`.
     pub fn libp2p_peer_id(&self) -> libp2p_core::PeerId {
-        let bytes = self.public_key.read().unwrap().to_bytes();
-        let pubkey = libp2p_core::PublicKey::Ed25519(
-            libp2p_core::identity::ed25519::PublicKey::decode(&bytes)
-                .expect("error decoding ed25519 public key from bytes"),
-        );
-        libp2p_core::PeerId::from_public_key(pubkey)
+        libp2p_core::PeerId::from_public_key(self.libp2p_public_key())
+    }
+
+    /// Returns the actual bytes representing this id.
+    pub fn id_bytes(&self) -> &[u8; hash::SHA256_LEN] {
+        &self.id_bytes
     }
 }
 
@@ -154,47 +62,45 @@ impl Default for PeerId {
 impl Eq for PeerId {}
 impl PartialEq for PeerId {
     fn eq(&self, other: &Self) -> bool {
-        self.internal_id == other.internal_id
+        self.id_bytes == other.id_bytes
     }
 }
 impl Hash for PeerId {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.internal_id.hash(state);
+        self.id_bytes.hash(state);
     }
 }
 
 impl fmt::Debug for PeerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = &bs58::encode(&self.internal_id).into_string();
+        let s = &bs58::encode(&self.id_bytes).into_string();
 
         f.debug_struct("PeerId")
             .field("id", &s)
-            .field(
-                "public_key",
-                &bs58::encode(self.public_key.read().expect("error getting the lock").as_ref()).into_string(),
-            )
+            .field("public_key", &bs58::encode(self.public_key).into_string())
             .finish()
     }
 }
 
 impl fmt::Display for PeerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", bs58::encode(&self.internal_id).into_string())
+        write!(f, "{}", bs58::encode(&self.id_bytes).into_string())
     }
 }
 
 impl Into<libp2p_core::PeerId> for PeerId {
     fn into(self) -> libp2p_core::PeerId {
         let PeerId {
-            internal_id: id,
+            id_bytes: id,
             public_key,
         } = self;
-        let bytes = public_key.read().unwrap().to_bytes();
-        let pubkey = libp2p_core::PublicKey::Ed25519(
-            libp2p_core::identity::ed25519::PublicKey::decode(&bytes)
+
+        let public_key = libp2p_core::PublicKey::Ed25519(
+            libp2p_core::identity::ed25519::PublicKey::decode(&public_key)
                 .expect("error decoding ed25519 public key from bytes"),
         );
-        libp2p_core::PeerId::from_public_key(pubkey)
+
+        libp2p_core::PeerId::from_public_key(public_key)
     }
 }
 

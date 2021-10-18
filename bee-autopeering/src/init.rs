@@ -5,7 +5,7 @@ use crate::{
     config::AutopeeringConfig,
     delay::{DelayBuilder, DelayMode, Repeat as _},
     discovery::{DiscoveryEventRx, DiscoveryManager, DiscoveryManagerConfig},
-    identity::LocalId,
+    local::Local,
     packet::{IncomingPacket, OutgoingPacket},
     peering::{PeeringConfig, PeeringEventRx, PeeringManager},
     request::RequestManager,
@@ -22,7 +22,7 @@ pub async fn init(
     config: AutopeeringConfig,
     version: u32,
     network_id: u32,
-    local_id: LocalId,
+    local_id: Local,
     services: ServiceMap,
 ) -> Result<(DiscoveryEventRx, PeeringEventRx), Box<dyn error::Error>> {
     // Create channels for inbound/outbound communication with the UDP socket.

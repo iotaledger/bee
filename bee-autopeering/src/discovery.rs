@@ -8,7 +8,8 @@ use crate::{
     delay::{Delay, DelayBuilder, DelayMode, Repeat as _},
     discovery_messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
     hash,
-    identity::{LocalId, PeerId},
+    identity::PeerId,
+    local::Local,
     multiaddr::AutopeeringMultiaddr,
     packet::{IncomingPacket, MessageType, OutgoingPacket},
     peer::Peer,
@@ -179,7 +180,7 @@ pub(crate) struct DiscoveryManager {
     // Config.
     config: DiscoveryManagerConfig,
     // The local id to sign outgoing packets.
-    local_id: LocalId,
+    local_id: Local,
     // Channel halfs for sending/receiving discovery related packets.
     socket: ServerSocket,
     // Handles requests.
@@ -191,7 +192,7 @@ pub(crate) struct DiscoveryManager {
 impl DiscoveryManager {
     pub(crate) fn new(
         config: DiscoveryManagerConfig,
-        local_id: LocalId,
+        local_id: Local,
         socket: ServerSocket,
         request_mngr: RequestManager,
     ) -> (Self, DiscoveryEventRx) {

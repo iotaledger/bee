@@ -14,6 +14,7 @@ mod distance;
 mod hash;
 mod identity;
 mod init;
+mod local;
 mod multiaddr;
 mod packet;
 mod peer;
@@ -29,7 +30,8 @@ mod service_map;
 mod store;
 mod time;
 
-pub use identity::{LocalId, PeerId};
+pub use identity::PeerId;
 pub use init::init;
+pub use local::Local;
 pub use peer::Peer;
 pub use service_map::{ServiceMap, ServiceName};
