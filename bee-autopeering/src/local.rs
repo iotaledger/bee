@@ -71,7 +71,7 @@ impl Local {
     }
 
     /// Sets a new private salt.
-    pub(crate) fn set_private_salt(&mut self, salt: Salt) {
+    pub(crate) fn set_private_salt(&self, salt: Salt) {
         self.write_inner().private_salt.replace(salt);
     }
 
@@ -81,7 +81,7 @@ impl Local {
     }
 
     /// Sets a new public salt.
-    pub(crate) fn set_public_salt(&mut self, salt: Salt) {
+    pub(crate) fn set_public_salt(&self, salt: Salt) {
         self.write_inner().public_salt.replace(salt);
     }
 
@@ -130,9 +130,9 @@ impl Default for LocalInner {
 
         Self {
             peer_id,
-            public_salt: None,
+            public_salt: Some(Salt::default()),
             private_key,
-            private_salt: None,
+            private_salt: Some(Salt::default()),
             services: ServiceMap::default(),
         }
     }

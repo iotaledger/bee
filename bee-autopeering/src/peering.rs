@@ -1,10 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use tokio::sync::mpsc;
-
 use crate::{
     config::AutopeeringConfig,
+    distance::{Neighborhood, SIZE_INBOUND, SIZE_OUTBOUND},
     hash,
     local::Local,
     packet::{IncomingPacket, MessageType, OutgoingPacket},
@@ -12,27 +11,13 @@ use crate::{
     peerstore::{InMemoryPeerStore, PeerStore},
     request::RequestManager,
     salt::Salt,
-    server::ServerSocket,
-    PeerId,
+    server::{OutgoingPacketTx, ServerSocket},
+    Peer, PeerId,
 };
 
-use std::{net::SocketAddr, time::Duration};
+use tokio::sync::mpsc;
 
-pub(crate) struct PeeringConfig {
-    pub(crate) version: u32,
-    pub(crate) network_id: u32,
-    pub(crate) source_addr: SocketAddr,
-}
-
-impl PeeringConfig {
-    pub fn new(config: &AutopeeringConfig, version: u32, network_id: u32) -> Self {
-        Self {
-            version,
-            network_id,
-            source_addr: config.bind_addr,
-        }
-    }
-}
+use std::{net::SocketAddr, time::Duration, vec};
 
 /// Peering related events.
 #[derive(Debug)]
@@ -51,12 +36,46 @@ pub enum PeeringEvent {
 pub type PeeringEventRx = mpsc::UnboundedReceiver<PeeringEvent>;
 type PeeringEventTx = mpsc::UnboundedSender<PeeringEvent>;
 
+type InboundNeighborhood = Neighborhood<SIZE_INBOUND, true>;
+type OutboundNeighborhood = Neighborhood<SIZE_OUTBOUND, false>;
+
 fn event_chan() -> (PeeringEventTx, PeeringEventRx) {
     mpsc::unbounded_channel::<PeeringEvent>()
 }
 
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum Error {
+    #[error("response timeout")]
+    ResponseTimeout,
+    #[error("socket was closed")]
+    SocketClosed,
+    #[error("packet does not contain a message")]
+    NoMessage,
+    #[error("packet contains an invalid message")]
+    InvalidMessage,
+}
+
+pub(crate) struct PeeringManagerConfig {
+    pub(crate) version: u32,
+    pub(crate) network_id: u32,
+    pub(crate) source_addr: SocketAddr,
+    pub(crate) drop_neighbors_on_salt_update: bool,
+}
+
+impl PeeringManagerConfig {
+    pub fn new(config: &AutopeeringConfig, version: u32, network_id: u32) -> Self {
+        Self {
+            version,
+            network_id,
+            source_addr: config.bind_addr,
+            drop_neighbors_on_salt_update: false,
+        }
+    }
+}
+
 pub(crate) struct PeeringManager<S> {
-    config: PeeringConfig,
+    // The peering config.
+    config: PeeringManagerConfig,
     // The local peer.
     local: Local,
     // Channel halfs for sending/receiving peering related packets.
@@ -67,17 +86,25 @@ pub(crate) struct PeeringManager<S> {
     event_tx: PeeringEventTx,
     // The storage for discovered peers.
     peerstore: S,
+    // Inbound neighborhood.
+    inbound_neighborhood: InboundNeighborhood,
+    // Outbound neighborhood.
+    outbound_neighborhood: OutboundNeighborhood,
 }
 
 impl<S: PeerStore> PeeringManager<S> {
     pub(crate) fn new(
-        config: PeeringConfig,
+        config: PeeringManagerConfig,
         local: Local,
         socket: ServerSocket,
         request_mngr: RequestManager,
         peerstore: S,
     ) -> (Self, PeeringEventRx) {
         let (event_tx, event_rx) = event_chan();
+
+        let inbound_neighborhood = Neighborhood::new(local.clone());
+        let outbound_neighborhood = Neighborhood::new(local.clone());
+
         (
             Self {
                 config,
@@ -86,6 +113,8 @@ impl<S: PeerStore> PeeringManager<S> {
                 request_mngr,
                 event_tx,
                 peerstore,
+                inbound_neighborhood,
+                outbound_neighborhood,
             },
             event_rx,
         )
@@ -99,12 +128,15 @@ impl<S: PeerStore> PeeringManager<S> {
             request_mngr,
             event_tx,
             peerstore,
+            inbound_neighborhood,
+            outbound_neighborhood,
         } = self;
 
-        let PeeringConfig {
+        let PeeringManagerConfig {
             version,
             network_id,
             source_addr,
+            drop_neighbors_on_salt_update,
         } = config;
 
         let ServerSocket { mut rx, tx } = socket;
@@ -184,14 +216,56 @@ fn handle_peering_drop() {
     todo!()
 }
 
-#[derive(Debug, thiserror::Error)]
-pub(crate) enum Error {
-    #[error("response timeout")]
-    ResponseTimeout,
-    #[error("socket was closed")]
-    SocketClosed,
-    #[error("packet does not contain a message")]
-    NoMessage,
-    #[error("packet contains an invalid message")]
-    InvalidMessage,
+fn update_salts(
+    local: &Local,
+    filter: &mut Filter,
+    drop_neighbors_on_salt_update: bool,
+    inbound: &mut InboundNeighborhood,
+    outbound: &mut OutboundNeighborhood,
+    packet_tx: &OutgoingPacketTx,
+    event_tx: &PeeringEventTx,
+) {
+    // Set new private and public salt for local
+    local.set_private_salt(Salt::default());
+    local.set_public_salt(Salt::default());
+
+    // Clean the rejection filer
+    filter.clean();
+
+    //
+    if drop_neighbors_on_salt_update {
+        drop_neighborhood(inbound, packet_tx);
+        drop_neighborhood(outbound, packet_tx);
+    } else {
+        inbound.update_distances();
+        outbound.update_distances();
+    }
+
+    log::debug!("Salts updated.");
+
+    //
+    event_tx.send(PeeringEvent::SaltUpdated);
+}
+
+fn drop_neighborhood<'a, Nh>(neighborhood: Nh, packet_tx: &OutgoingPacketTx)
+where
+    Nh: IntoIterator<Item = &'a Peer, IntoIter = vec::IntoIter<&'a Peer>>,
+{
+    for peer in neighborhood {
+        let peering_drop_bytes = PeeringDrop::new()
+            .protobuf()
+            .expect("error encoding PeeringDrop message")
+            .to_vec();
+
+        packet_tx.send(OutgoingPacket {
+            msg_type: MessageType::PeeringDrop,
+            msg_bytes: peering_drop_bytes,
+            target_addr: SocketAddr::new(peer.ip_address(), 80),
+        });
+    }
+}
+
+struct Filter {}
+impl Filter {
+    fn clean(&mut self) {}
 }

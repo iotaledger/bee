@@ -10,14 +10,14 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fmt,
     fmt::Display,
-    mem,
+    vec,
 };
 
 pub(crate) type Distance = u32;
 
 pub(crate) const MAX_DISTANCE: Distance = 4294967295;
-pub(crate) const MAX_NEIGHBORHOOD_SIZE_INBOUND: usize = 4;
-pub(crate) const MAX_NEIGHBORHOOD_SIZE_OUTBOUND: usize = 4;
+pub(crate) const SIZE_INBOUND: usize = 4;
+pub(crate) const SIZE_OUTBOUND: usize = 4;
 
 #[derive(Debug)]
 pub(crate) struct PeerDistance {
@@ -79,12 +79,12 @@ impl Ord for PeerDistance {
 }
 
 #[derive(Debug, Default)]
-pub(crate) struct Neighborhood<const N: usize> {
+pub(crate) struct Neighborhood<const N: usize, const INBOUND: bool> {
     local: Local,
     neighbors: Vec<PeerDistance>,
 }
 
-impl<const N: usize> Neighborhood<N> {
+impl<const N: usize, const INBOUND: bool> Neighborhood<N, INBOUND> {
     pub(crate) fn new(local: Local) -> Self {
         Self {
             local,
@@ -102,11 +102,19 @@ impl<const N: usize> Neighborhood<N> {
         }
 
         // Calculate the distance to that peer.
-        let distance = salted_distance(
-            &self.local.peer_id(),
-            &peer.peer_id(),
-            &self.local.private_salt().expect("missing private salt"),
-        );
+        let distance = if INBOUND {
+            salted_distance(
+                &self.local.peer_id(),
+                &peer.peer_id(),
+                &self.local.private_salt().expect("missing private salt"),
+            )
+        } else {
+            salted_distance(
+                &self.local.peer_id(),
+                &peer.peer_id(),
+                &self.local.public_salt().expect("missing public salt"),
+            )
+        };
 
         self.neighbors.push(PeerDistance { distance, peer });
 
@@ -151,10 +159,15 @@ impl<const N: usize> Neighborhood<N> {
 
     pub(crate) fn update_distances(&mut self) {
         let local_peer_id = self.local.peer_id();
-        let local_private_salt = self.local.private_salt().expect("missing private salt");
 
-        self.neighbors.iter_mut().for_each(move |pd| {
-            pd.distance = salted_distance(&local_peer_id, &pd.peer().peer_id(), &local_private_salt);
+        let salt = if INBOUND {
+            self.local.private_salt().expect("missing private salt")
+        } else {
+            self.local.public_salt().expect("missing public salt")
+        };
+
+        self.neighbors.iter_mut().for_each(|pd| {
+            pd.distance = salted_distance(&local_peer_id, &pd.peer().peer_id(), &salt);
         });
     }
 
@@ -171,9 +184,37 @@ impl<const N: usize> Neighborhood<N> {
     }
 }
 
-impl<const N: usize> fmt::Display for Neighborhood<N> {
+impl<const N: usize, const INBOUND: bool> fmt::Display for Neighborhood<N, INBOUND> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}/{}", self.neighbors.len(), N)
+    }
+}
+
+// Allows us to iterate the peers in the neighborhood with a for-loop.
+impl<'a, const N: usize, const INBOUND: bool> IntoIterator for &'a Neighborhood<N, INBOUND> {
+    type Item = &'a Peer;
+    type IntoIter = vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.neighbors
+            .iter()
+            .map(|pd| pd.peer())
+            .collect::<Vec<_>>()
+            .into_iter()
+    }
+}
+
+impl<'a, const N: usize, const INBOUND: bool> IntoIterator for &'a mut Neighborhood<N, INBOUND> {
+    type Item = &'a Peer;
+    type IntoIter = vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        // FIXME: refer to the &'a impl
+        self.neighbors
+            .iter()
+            .map(|pd| pd.peer())
+            .collect::<Vec<_>>()
+            .into_iter()
     }
 }
 

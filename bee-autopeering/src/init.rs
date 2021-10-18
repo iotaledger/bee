@@ -7,7 +7,7 @@ use crate::{
     discovery::{DiscoveryEventRx, DiscoveryManager, DiscoveryManagerConfig},
     local::Local,
     packet::{IncomingPacket, OutgoingPacket},
-    peering::{PeeringConfig, PeeringEventRx, PeeringManager},
+    peering::{PeeringEventRx, PeeringManager, PeeringManagerConfig},
     peerstore::{InMemoryPeerStore, PeerStore},
     request::RequestManager,
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket},
@@ -71,7 +71,7 @@ pub async fn init<S: PeerStore + 'static>(
     tokio::spawn(discover_mngr.run());
 
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
-    let peering_config = PeeringConfig::new(&config, version, network_id);
+    let peering_config = PeeringManagerConfig::new(&config, version, network_id);
     let peering_socket = ServerSocket::new(peering_rx, outgoing_tx);
     let (peering_mngr, peering_event_rx) =
         PeeringManager::new(peering_config, local.clone(), peering_socket, request_mngr, peerstore);
