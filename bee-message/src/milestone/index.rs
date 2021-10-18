@@ -7,7 +7,7 @@ use core::ops::{Add, Deref, Sub};
 
 /// A wrapper around a `u32` that represents a milestone index.
 #[repr(transparent)]
-#[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestoneIndex(pub u32);
 
@@ -29,12 +29,6 @@ impl Deref for MilestoneIndex {
 
     fn deref(&self) -> &Self::Target {
         &self.0
-    }
-}
-
-impl From<u32> for MilestoneIndex {
-    fn from(v: u32) -> Self {
-        Self(v)
     }
 }
 

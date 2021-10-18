@@ -5,19 +5,13 @@
 pub const INDEXATION_PADDED_INDEX_LENGTH: usize = 64;
 
 /// An indexation payload index padded with `0` up to the maximum length.
-#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, derive_more::From)]
 pub struct PaddedIndex([u8; INDEXATION_PADDED_INDEX_LENGTH]);
 
 impl PaddedIndex {
     /// Creates a new `PaddedIndex`.
     pub fn new(bytes: [u8; INDEXATION_PADDED_INDEX_LENGTH]) -> Self {
         bytes.into()
-    }
-}
-
-impl From<[u8; INDEXATION_PADDED_INDEX_LENGTH]> for PaddedIndex {
-    fn from(bytes: [u8; INDEXATION_PADDED_INDEX_LENGTH]) -> Self {
-        Self(bytes)
     }
 }
 

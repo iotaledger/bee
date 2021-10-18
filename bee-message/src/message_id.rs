@@ -12,7 +12,7 @@ pub const MESSAGE_ID_LENGTH: usize = 32;
 
 /// A message identifier, the BLAKE2b-256 hash of the message bytes.
 /// See <https://www.blake2.net/> for more information.
-#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, derive_more::From)]
 pub struct MessageId([u8; MESSAGE_ID_LENGTH]);
 
 impl MessageId {
@@ -29,12 +29,6 @@ impl MessageId {
 
 #[cfg(feature = "serde1")]
 string_serde_impl!(MessageId);
-
-impl From<[u8; MESSAGE_ID_LENGTH]> for MessageId {
-    fn from(bytes: [u8; MESSAGE_ID_LENGTH]) -> Self {
-        Self(bytes)
-    }
-}
 
 impl FromStr for MessageId {
     type Err = Error;

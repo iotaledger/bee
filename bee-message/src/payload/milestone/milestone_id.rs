@@ -12,7 +12,7 @@ pub const MILESTONE_ID_LENGTH: usize = 32;
 
 /// A milestone identifier, the BLAKE2b-256 hash of the milestone bytes.
 /// See <https://www.blake2.net/> for more information.
-#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, derive_more::From)]
 pub struct MilestoneId([u8; MILESTONE_ID_LENGTH]);
 
 impl MilestoneId {
@@ -24,12 +24,6 @@ impl MilestoneId {
 
 #[cfg(feature = "serde1")]
 string_serde_impl!(MilestoneId);
-
-impl From<[u8; MILESTONE_ID_LENGTH]> for MilestoneId {
-    fn from(bytes: [u8; MILESTONE_ID_LENGTH]) -> Self {
-        Self(bytes)
-    }
-}
 
 impl FromStr for MilestoneId {
     type Err = Error;

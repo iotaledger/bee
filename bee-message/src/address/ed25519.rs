@@ -17,7 +17,7 @@ use core::str::FromStr;
 pub const ED25519_ADDRESS_LENGTH: usize = 32;
 
 /// An Ed25519 address.
-#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From)]
 pub struct Ed25519Address([u8; ED25519_ADDRESS_LENGTH]);
 
 #[allow(clippy::len_without_is_empty)]
@@ -59,12 +59,6 @@ impl Ed25519Address {
 
 #[cfg(feature = "serde1")]
 string_serde_impl!(Ed25519Address);
-
-impl From<[u8; ED25519_ADDRESS_LENGTH]> for Ed25519Address {
-    fn from(bytes: [u8; ED25519_ADDRESS_LENGTH]) -> Self {
-        Self(bytes)
-    }
-}
 
 impl FromStr for Ed25519Address {
     type Err = Error;
