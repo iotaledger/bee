@@ -171,7 +171,7 @@ async fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSe
 
             // We can update the OMRSI/YMRSI of those children that inherited the value from the current parent.
             for child in &children {
-                if let Some(child_metadata) = tangle.get_metadata(&child).await {
+                if let Some(child_metadata) = tangle.get_metadata(child).await {
                     // We can ignore children that are already confirmed
                     // TODO: resolve ambiguity between `is_confirmed()` and `milestone_index().is_some()`
                     // if child_metadata.flags().is_confirmed() {

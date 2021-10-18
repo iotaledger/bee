@@ -135,7 +135,7 @@ pub(crate) fn filter<B: StorageBackend>(
     .or(outputs_ed25519::filter(
         public_routes.clone(),
         allowed_ips.clone(),
-        consensus_worker.clone(),
+        consensus_worker,
     ))
     .or(peer::filter(
         public_routes.clone(),
@@ -162,7 +162,7 @@ pub(crate) fn filter<B: StorageBackend>(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),
-        message_submitter.clone(),
+        message_submitter,
         network_id,
         rest_api_config,
         protocol_config,

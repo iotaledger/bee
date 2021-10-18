@@ -75,14 +75,14 @@ allowed_ips = [
 white_flag_solidification_timeout = 2
 
 [snapshot]
-full_path         = "./snapshots/comnet/latest-full_snapshot.bin"
-delta_path        = "./snapshots/comnet/latest-delta_snapshot.bin"
-download_urls     = [
-    "https://cdn.tanglebay.com/snapshots/comnet/"
-]
 depth             = 50
 interval_synced   = 50
 interval_unsynced = 1000
+full_path         = "./snapshots/comnet/full_snapshot.bin"
+delta_path        = "./snapshots/comnet/delta_snapshot.bin"
+[[snapshot.download_urls]]
+full        = "https://cdn.tanglebay.com/snapshots/comnet/full_snapshot.bin"
+delta       = "https://cdn.tanglebay.com/snapshots/comnet/delta_snapshot.bin"
 
 [pruning]
 enabled         = true
@@ -94,6 +94,7 @@ path = "./storage/comnet"
 
 [tangle]
 below_max_depth = 15
+num_partitions  = 16
 
 [mqtt]
 address = "tcp://localhost:1883"

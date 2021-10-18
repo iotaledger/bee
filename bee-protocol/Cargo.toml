@@ -1,13 +1,13 @@
 [package]
 name = "bee-protocol"
 version = "0.1.0-alpha"
-authors = ["IOTA Stiftung"]
+authors = [ "IOTA Stiftung" ]
 edition = "2018"
 description = ""
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "protocol"]
+keywords = [ "iota", "tangle", "bee", "framework", "protocol" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
@@ -22,25 +22,24 @@ bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", o
 bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 
-async-channel = { version = "1.6", optional = true }
-async-priority-queue = { version = "0.1", optional = true }
-async-trait = { version = "0.1", optional = true }
-futures = { version = "0.3", optional = true }
-futures-util = { version = "~0.3.14", optional = true }
-fxhash = { version = "0.2", optional = true }
-hex = { version = "0.4", optional = true }
+async-channel = { version = "1.6.1", optional = true }
+async-priority-queue = { version = "0.1.1", optional = true }
+async-trait = { version = "0.1.51", optional = true }
+futures = { version = "0.3.17", optional = true }
+futures-util = { version = "0.3.17", optional = true }
+fxhash = { version = "0.2.1", optional = true }
+hex = { version = "0.4.3", optional = true }
 iota-crypto = { version = "0.7.0", features = [ "blake2b", "ed25519" ], optional = true }
-log = { version = "0.4", optional = true }
-num_cpus = { version = "1.13", optional = true }
-pin-project = { version = "1.0", optional = true }
-rand = { version = "0.8", optional = true }
-ref-cast = { version = "1.0", optional = true }
-serde = { version = "1.0", features = [ "derive" ], optional = true }
-spin = { version = "0.9", optional = true }
-thiserror = { version = "1.0", optional = true }
-tokio = { version = "1.6", features = [ "rt-multi-thread" ], optional = true }
-tokio-stream = { version = "0.1", optional = true }
-twox-hash = { version = "1.6", optional = true }
+log = { version = "0.4.14", optional = true }
+num_cpus = { version = "1.13.0", optional = true }
+rand = { version = "0.8.4", optional = true }
+ref-cast = { version = "1.0.6", optional = true }
+serde = { version = "1.0.130", features = [ "derive" ], optional = true }
+spin = { version = "0.9.2", optional = true }
+thiserror = { version = "1.0.30", optional = true }
+tokio = { version = "1.12.0", features = [ "rt-multi-thread" ], optional = true }
+tokio-stream = { version = "0.1.7", optional = true }
+twox-hash = { version = "1.6.1", optional = true }
 
 [features]
 workers = [
@@ -62,7 +61,6 @@ workers = [
   "iota-crypto",
   "log",
   "num_cpus",
-  "pin-project",
   "rand",
   "ref-cast",
   "serde",
@@ -74,4 +72,4 @@ workers = [
 ]
 
 [dev-dependencies]
-tokio = { version = "1.6", features = ["macros"] }
+tokio = { version = "1.12.0", features = [ "macros" ] }

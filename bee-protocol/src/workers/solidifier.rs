@@ -90,7 +90,7 @@ async fn solidify<B: StorageBackend>(
         warn!("Sending message_id to `IndexUpdater` failed: {:?}.", e);
     }
 
-    broadcast_heartbeat(&peer_manager, &metrics, &tangle).await;
+    broadcast_heartbeat(peer_manager, metrics, tangle).await;
 
     bus.dispatch(SolidMilestoneChanged {
         index,

@@ -58,7 +58,7 @@ pub(crate) async fn output<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     let (cmd_tx, cmd_rx) = oneshot::channel::<(Result<Option<CreatedOutput>, Error>, LedgerIndex)>();
 
-    if let Err(e) = consensus_worker.send(ConsensusWorkerCommand::FetchOutput(output_id.clone(), cmd_tx)) {
+    if let Err(e) = consensus_worker.send(ConsensusWorkerCommand::FetchOutput(output_id, cmd_tx)) {
         error!("request to consensus worker failed: {}.", e);
     }
 
