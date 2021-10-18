@@ -1,8 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod alias;
+mod nft;
 mod reference;
 
+pub use alias::AliasUnlock;
+pub use nft::NftUnlock;
 pub use reference::ReferenceUnlock;
 
 use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, signature::SignatureUnlock, Error};
@@ -24,6 +28,10 @@ pub enum UnlockBlock {
     Signature(SignatureUnlock),
     /// A reference unlock block.
     Reference(ReferenceUnlock),
+    /// An alias unlock block.
+    Alias(AliasUnlock),
+    /// A NFT unlock block.
+    Nft(NftUnlock),
 }
 
 impl UnlockBlock {
@@ -32,6 +40,8 @@ impl UnlockBlock {
         match self {
             Self::Signature(_) => SignatureUnlock::KIND,
             Self::Reference(_) => ReferenceUnlock::KIND,
+            Self::Alias(_) => AliasUnlock::KIND,
+            Self::Nft(_) => NftUnlock::KIND,
         }
     }
 }
@@ -48,6 +58,18 @@ impl From<ReferenceUnlock> for UnlockBlock {
     }
 }
 
+impl From<AliasUnlock> for UnlockBlock {
+    fn from(reference: AliasUnlock) -> Self {
+        Self::Alias(reference)
+    }
+}
+
+impl From<NftUnlock> for UnlockBlock {
+    fn from(reference: NftUnlock) -> Self {
+        Self::Nft(reference)
+    }
+}
+
 impl Packable for UnlockBlock {
     type Error = Error;
 
@@ -55,6 +77,8 @@ impl Packable for UnlockBlock {
         match self {
             Self::Signature(unlock) => SignatureUnlock::KIND.packed_len() + unlock.packed_len(),
             Self::Reference(unlock) => ReferenceUnlock::KIND.packed_len() + unlock.packed_len(),
+            Self::Alias(unlock) => AliasUnlock::KIND.packed_len() + unlock.packed_len(),
+            Self::Nft(unlock) => NftUnlock::KIND.packed_len() + unlock.packed_len(),
         }
     }
 
@@ -68,6 +92,14 @@ impl Packable for UnlockBlock {
                 ReferenceUnlock::KIND.pack(writer)?;
                 unlock.pack(writer)?;
             }
+            Self::Alias(unlock) => {
+                AliasUnlock::KIND.pack(writer)?;
+                unlock.pack(writer)?;
+            }
+            Self::Nft(unlock) => {
+                NftUnlock::KIND.pack(writer)?;
+                unlock.pack(writer)?;
+            }
         }
 
         Ok(())
@@ -77,6 +109,8 @@ impl Packable for UnlockBlock {
         Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
             SignatureUnlock::KIND => SignatureUnlock::unpack_inner::<R, CHECK>(reader)?.into(),
             ReferenceUnlock::KIND => ReferenceUnlock::unpack_inner::<R, CHECK>(reader)?.into(),
+            AliasUnlock::KIND => AliasUnlock::unpack_inner::<R, CHECK>(reader)?.into(),
+            NftUnlock::KIND => NftUnlock::unpack_inner::<R, CHECK>(reader)?.into(),
             k => return Err(Self::Error::InvalidUnlockBlockKind(k)),
         })
     }
@@ -110,6 +144,12 @@ impl UnlockBlocks {
                     if !seen_signatures.insert(s) {
                         return Err(Error::DuplicateSignature(index));
                     }
+                }
+                UnlockBlock::Alias(_a) => {
+                    // TODO
+                }
+                UnlockBlock::Nft(_n) => {
+                    // TODO
                 }
             }
         }
