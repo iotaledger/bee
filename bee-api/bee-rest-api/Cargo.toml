@@ -1,6 +1,6 @@
 [package]
 name = "bee-rest-api"
-version = "0.1.1"
+version = "0.1.2"
 authors = [ "IOTA Stiftung" ]
 edition = "2018"
 description = "The default REST API implementation for the IOTA Bee node software."
@@ -13,9 +13,13 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-ledger = { version = "0.5.0", path = "../../bee-ledger" }
 bee-message = { version = "0.1.5", path = "../../bee-message" }
-bee-protocol = { version = "0.1.1", path = "../../bee-protocol" }
+bee-protocol = { version = "0.1.1", path = "../../bee-protocol", optional = true }
 
 hex = { version = "0.4.3" }
 serde = { version = "1.0.130", features = [ "derive" ] }
 serde_json = { version = "1.0.68" }
 thiserror = { version = "1.0.30" }
+
+[features]
+default = ["bee_protocol"]
+bee_protocol = ["bee-protocol"]

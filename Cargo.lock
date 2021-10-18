@@ -300,7 +300,7 @@ dependencies = [
 
 [[package]]
 name = "bee-rest-api"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bee-ledger",
  "bee-message",
