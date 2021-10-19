@@ -12,27 +12,25 @@ use crypto::{
 
 use core::str::FromStr;
 
-/// The number of bytes in an Ed25519 address.
-/// See <https://en.wikipedia.org/wiki/EdDSA#Ed25519> for more information.
-pub const ED25519_ADDRESS_LENGTH: usize = 32;
-
 /// An Ed25519 address.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From)]
-pub struct Ed25519Address([u8; ED25519_ADDRESS_LENGTH]);
+pub struct Ed25519Address([u8; Self::LENGTH]);
 
 #[allow(clippy::len_without_is_empty)]
 impl Ed25519Address {
     /// The address kind of an Ed25519 address.
     pub const KIND: u8 = 0;
+    /// The length of an Ed25519 address.
+    pub const LENGTH: usize = 32;
 
     /// Creates a new Ed25519 address.
-    pub fn new(address: [u8; ED25519_ADDRESS_LENGTH]) -> Self {
+    pub fn new(address: [u8; Self::LENGTH]) -> Self {
         address.into()
     }
 
     /// Returns the length of an Ed25519 address.
     pub fn len(&self) -> usize {
-        ED25519_ADDRESS_LENGTH
+        Self::LENGTH
     }
 
     /// Verifies a [`Ed25519Signature`] for a message against the [`Ed25519Address`].
@@ -64,10 +62,10 @@ impl FromStr for Ed25519Address {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; ED25519_ADDRESS_LENGTH] = hex::decode(s)
+        let bytes: [u8; Self::LENGTH] = hex::decode(s)
             .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
             .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength(ED25519_ADDRESS_LENGTH * 2, s.len()))?;
+            .map_err(|_| Self::Err::InvalidHexadecimalLength(Self::LENGTH * 2, s.len()))?;
 
         Ok(Ed25519Address::from(bytes))
     }
@@ -95,7 +93,7 @@ impl Packable for Ed25519Address {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        ED25519_ADDRESS_LENGTH
+        Self::LENGTH
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -105,8 +103,6 @@ impl Packable for Ed25519Address {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(<[u8; ED25519_ADDRESS_LENGTH]>::unpack_inner::<R, CHECK>(
-            reader,
-        )?))
+        Ok(Self::new(<[u8; Self::LENGTH]>::unpack_inner::<R, CHECK>(reader)?))
     }
 }
