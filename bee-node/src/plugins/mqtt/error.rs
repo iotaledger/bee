@@ -1,10 +1,12 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use librumqttd as mqtt;
+use librumqttd;
 
 #[derive(thiserror::Error, Debug)]
-pub(crate) enum Error {
-    #[error("Mqtt operation failed: {0}.")]
-    Mqtt(#[from] mqtt::Error),
+pub enum Error {
+    #[error("mqtt operation failed: {0}")]
+    Error(#[from] librumqttd::Error),
+    #[error("mqtt operation failed: {0}")]
+    LinkError(#[from] librumqttd::LinkError),
 }

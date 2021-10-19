@@ -15,9 +15,9 @@ use tokio::sync::mpsc;
 use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
 
 pub(crate) fn spawn<N>(node: &mut N, mut messages_referenced_tx: LinkTx)
-    where
-        N: Node,
-        N::Backend: StorageBackend,
+where
+    N: Node,
+    N::Backend: StorageBackend,
 {
     let bus = node.bus();
     let tangle = node.resource::<Tangle<N::Backend>>();
@@ -78,7 +78,7 @@ pub(crate) fn spawn<N>(node: &mut N, mut messages_referenced_tx: LinkTx)
                 should_promote: None,
                 should_reattach: None,
             })
-                .expect("error serializing to json");
+            .expect("error serializing to json");
 
             if let Err(e) = messages_referenced_tx.publish("messages/referenced", false, response.clone()) {
                 warn!("Publishing MQTT message failed. Cause: {:?}", e);

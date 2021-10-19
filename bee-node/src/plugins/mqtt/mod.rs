@@ -7,9 +7,7 @@ use crate::storage::StorageBackend;
 
 use bee_runtime::node::{Node, NodeBuilder};
 
-use librumqttd as mqtt;
-use librumqttd::ConsoleSettings;
-use rumqttlog::Config as RouterSettings;
+use librumqttd;
 
 use std::collections::HashMap;
 
@@ -47,42 +45,38 @@ where
         console_bind_addr,
     } = config;
 
-    let connection_settings = mqtt::ConnectionSettings {
-        connection_timeout_ms: DEFAULT_CONNECTION_TIMEOUT_MS,
-        max_client_id_len: DEFAULT_MAX_CLIENT_ID_LEN,
-        throttle_delay_ms: DEFAULT_THROTTLE_DELAY_MS,
-        max_payload_size: DEFAULT_MAX_PAYLOAD_SIZE,
-        max_inflight_count: DEFAULT_MAX_INFLIGHT_COUNT,
-        max_inflight_size: DEFAULT_MAX_INFLIGHT_SIZE,
-        login_credentials: None
-    };
-
-    let server_settings = mqtt::ServerSettings {
+    let server_settings = librumqttd::ServerSettings {
         listen: server_bind_addr.clone(),
         cert: None,
         next_connection_delay_ms: DEFAULT_NEXT_CONNECTION_DELAY,
-        connections: connection_settings, // ConnectionSettings,
-    };
-
-    let router_settings = RouterSettings {
-        id: DEFAULT_ROUTER_ID,
-        dir: DEFAULT_ROUTER_DIR.into(),
-        max_segment_size: DEFAULT_MAX_SEGMENT_SIZE,
-        max_segment_count: DEFAULT_MAX_SEGMENT_COUNT,
-        max_connections: DEFAULT_MAX_CONNECTIONS,
+        connections: librumqttd::ConnectionSettings {
+            connection_timeout_ms: DEFAULT_CONNECTION_TIMEOUT_MS,
+            max_client_id_len: DEFAULT_MAX_CLIENT_ID_LEN,
+            throttle_delay_ms: DEFAULT_THROTTLE_DELAY_MS,
+            max_payload_size: DEFAULT_MAX_PAYLOAD_SIZE,
+            max_inflight_count: DEFAULT_MAX_INFLIGHT_COUNT,
+            max_inflight_size: DEFAULT_MAX_INFLIGHT_SIZE,
+            login_credentials: None,
+        },
     };
 
     // TODO: TLS server
     let mut servers = HashMap::with_capacity(1);
     servers.insert("non_tls".into(), server_settings);
 
-    let config = mqtt::Config {
+    let config = librumqttd::Config {
         id: DEFAULT_BROKER_ID,
-        router: router_settings,
+        router: rumqttlog::Config {
+            id: DEFAULT_ROUTER_ID,
+            dir: DEFAULT_ROUTER_DIR.into(),
+            max_segment_size: DEFAULT_MAX_SEGMENT_SIZE,
+            max_segment_count: DEFAULT_MAX_SEGMENT_COUNT,
+            max_connections: DEFAULT_MAX_CONNECTIONS,
+        },
         servers,
         cluster: None,
         replicator: None,
-        console: ConsoleSettings {
+        console: librumqttd::ConsoleSettings {
             listen: console_bind_addr,
         },
     };
