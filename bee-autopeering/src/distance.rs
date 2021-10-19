@@ -225,7 +225,16 @@ fn xor<const N: usize>(a: [u8; N], b: [u8; N]) -> [u8; N] {
 
 #[cfg(test)]
 mod tests {
+    use crypto::signatures::ed25519::SecretKey as PrivateKey;
+
     use super::*;
+
+    fn distance(peer1: &PeerId, peer2: &PeerId) -> Distance {
+        let hash1 = hash::sha256(peer1.id_bytes());
+        let hash2 = hash::sha256(peer2.id_bytes());
+        let xored = xor(hash1, hash2);
+        Bytes::copy_from_slice(&xored[..4]).get_u32_le()
+    }
 
     #[test]
     fn neighborhood_size_limit() {
@@ -238,5 +247,23 @@ mod tests {
     }
 
     #[test]
-    fn zero_distance() {}
+    fn byte_array_concatenation() {
+        let bytes1 = [1, 2, 3, 4];
+        let bytes2 = [5, 6, 7, 8, 9];
+        assert_eq!(vec![1, 2, 3, 4, 5, 6, 7, 8, 9], concat(&bytes1, &bytes2));
+    }
+
+    #[test]
+    fn distance_calculation() {
+        let peer_id1 = PeerId::new_static();
+        let peer_id2 = PeerId::new_static();
+        assert_eq!(peer_id1, peer_id2);
+
+        let distance = distance(&peer_id1, &peer_id2);
+        assert_eq!(0, distance);
+
+        let salt = Salt::new_zero_salt();
+        let salted_distance = salted_distance(&peer_id1, &peer_id2, &salt);
+        assert_eq!(1184183819, salted_distance);
+    }
 }

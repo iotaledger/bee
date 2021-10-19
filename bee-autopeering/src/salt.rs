@@ -11,12 +11,12 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-const SALT_BYTE_SIZE: usize = 20;
+const SALT_BYTE_LEN: usize = 20;
 const DEFAULT_SALT_LIFETIME: Duration = Duration::from_secs(2 * 60 * 60); // 2 hours
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Salt {
-    pub(crate) bytes: [u8; SALT_BYTE_SIZE],
+    pub(crate) bytes: [u8; SALT_BYTE_LEN],
     pub(crate) expiration_time: u64,
 }
 
@@ -28,7 +28,7 @@ impl Salt {
                 .expect("system clock error or lifetime too long"),
         );
 
-        let mut rand_bytes = [0u8; SALT_BYTE_SIZE];
+        let mut rand_bytes = [0u8; SALT_BYTE_LEN];
         let crypto_rng = SystemRandom::new();
         crypto_rng
             .fill(&mut rand_bytes)
@@ -40,7 +40,7 @@ impl Salt {
         }
     }
 
-    pub fn bytes(&self) -> &[u8; SALT_BYTE_SIZE] {
+    pub fn bytes(&self) -> &[u8; SALT_BYTE_LEN] {
         &self.bytes
     }
 
@@ -78,6 +78,25 @@ impl From<proto::Salt> for Salt {
         Self {
             bytes: bytes.try_into().expect("invalid salt length"),
             expiration_time: exp_time,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    impl Salt {
+        pub(crate) fn new_zero_salt() -> Self {
+            let expiration_time = unix(
+                SystemTime::now()
+                    .checked_add(DEFAULT_SALT_LIFETIME)
+                    .expect("system clock error or lifetime too long"),
+            );
+            Self {
+                bytes: [0u8; SALT_BYTE_LEN],
+                expiration_time,
+            }
         }
     }
 }

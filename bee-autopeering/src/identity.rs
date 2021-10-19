@@ -20,7 +20,12 @@ pub struct PeerId {
 }
 
 impl PeerId {
-    /// Creates an identity from an ED25519 public key.
+    /// Creates a new peer identity.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Creates a peer identity from an ED25519 public key.
     pub fn from_public_key(public_key: PublicKey) -> Self {
         let public_key = public_key.to_bytes();
         let id_bytes = hash::sha256(&public_key);
@@ -110,17 +115,24 @@ mod tests {
     use crate::multiaddr::from_base58_to_pubkey;
 
     impl PeerId {
-        pub fn new() -> Self {
-            todo!("random")
+        /// Creates a static peer id.
+        pub(crate) fn new_static() -> Self {
+            let base58_pubkey = "4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM";
+            let pubkey = from_base58_to_pubkey(base58_pubkey);
+            Self::from_public_key(pubkey)
+        }
+
+        /// Creates a deterministic peer id from a generator char.
+        pub fn new_deterministic(gen: char) -> Self {
+            let base58_pubkey = std::iter::repeat(gen).take(44).collect::<String>();
+            let pubkey = from_base58_to_pubkey(base58_pubkey);
+            Self::from_public_key(pubkey)
         }
     }
 
     #[test]
-    fn create_peer_id_from_pubkey() {
-        let base58_pubkey = "4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM";
-        let pubkey = from_base58_to_pubkey(base58_pubkey);
-
-        let peer_id = PeerId::from_public_key(pubkey);
+    fn to_libp2p_peer_id() {
+        let peer_id = PeerId::new_static();
         let _ = peer_id.libp2p_peer_id();
     }
 }
