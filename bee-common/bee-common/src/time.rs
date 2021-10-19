@@ -13,7 +13,7 @@ pub fn now_utc() -> time::OffsetDateTime {
     time::OffsetDateTime::now_utc()
 }
 
-/// Creates a new time from a unix timestamp, at UTC. 
+/// Creates a new time from a unix timestamp, at UTC.
 pub fn from_unix_timestamp(timestamp: i64) -> time::OffsetDateTime {
     time::OffsetDateTime::from_unix_timestamp(timestamp)
 }
