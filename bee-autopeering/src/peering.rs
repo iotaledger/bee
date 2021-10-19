@@ -239,8 +239,8 @@ fn update_salts(
     local.set_private_salt(private_salt);
     local.set_public_salt(public_salt);
 
-    // Clean the rejection filter.
-    filter.clean();
+    // Clear the rejection filter.
+    // filter.clear_peers();
 
     // Either drop, or update the neighborhoods.
     if drop_neighbors_on_salt_update {

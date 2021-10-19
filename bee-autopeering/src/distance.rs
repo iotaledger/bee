@@ -62,6 +62,12 @@ impl Ord for PeerDistance {
     }
 }
 
+impl AsRef<Peer> for PeerDistance {
+    fn as_ref(&self) -> &Peer {
+        &self.peer
+    }
+}
+
 #[derive(Debug, Default)]
 pub(crate) struct Neighborhood<const N: usize, const INBOUND: bool> {
     local: Local,

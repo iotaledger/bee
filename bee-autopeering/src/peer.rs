@@ -115,6 +115,12 @@ impl From<Peer> for proto::Peer {
     }
 }
 
+impl AsRef<Peer> for Peer {
+    fn as_ref(&self) -> &Self {
+        self
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::service_map::AUTOPEERING_SERVICE_NAME;
