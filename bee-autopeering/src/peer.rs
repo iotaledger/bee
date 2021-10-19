@@ -1,14 +1,22 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{identity::PeerId, proto, service_map::ServiceMap};
+use crate::{
+    identity::PeerId,
+    proto,
+    service_map::{ServiceMap, ServiceProtocol},
+};
 
 use bytes::BytesMut;
 use crypto::signatures::ed25519::PublicKey;
 use prost::{DecodeError, EncodeError, Message};
 // use serde::{Deserialize, Serialize};
 
-use std::{convert::TryInto, fmt, net::IpAddr};
+use std::{
+    convert::TryInto,
+    fmt,
+    net::{IpAddr, Ipv4Addr},
+};
 
 /// Represents a peer.
 // #[derive(Serialize, Deserialize)]
@@ -47,6 +55,20 @@ impl Peer {
     /// Returns the services the discovered peer.
     pub fn services(&self) -> &ServiceMap {
         &self.services
+    }
+
+    pub fn add_service(&mut self, service_name: impl ToString, protocol: ServiceProtocol, port: u16) {
+        let ipv = match self.ip_address {
+            IpAddr::V4(ip4) => "ip4",
+            IpAddr::V6(ip6) => "ip6",
+        };
+
+        // Unwrap: we control what is being parsed.
+        let multiaddr = format!("/{}/{}/{}/{}", ipv, self.ip_address, protocol, port)
+            .parse()
+            .unwrap();
+
+        self.services.insert(service_name.to_string(), multiaddr);
     }
 
     /// Creates a discovered peer from its Protobuf representation/encoding.
@@ -142,6 +164,10 @@ mod tests {
                 public_key: PrivateKey::generate().unwrap().public_key(),
                 services,
             }
+        }
+
+        pub(crate) fn num_services(&self) -> usize {
+            self.services().len()
         }
     }
 }

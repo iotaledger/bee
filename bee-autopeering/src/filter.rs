@@ -64,7 +64,7 @@ impl Filter {
 
 #[cfg(test)]
 mod tests {
-    use crate::service_map::AUTOPEERING_SERVICE_NAME;
+    use crate::service_map::{ServiceProtocol, AUTOPEERING_SERVICE_NAME};
 
     use super::*;
 
@@ -75,18 +75,33 @@ mod tests {
     }
 
     #[test]
-    fn add_condition() {
+    fn apply_condition() {
         let mut filter = Filter::new();
         assert_eq!(0, filter.num_conditions());
 
-        let condition = |peer: &Peer| -> bool { peer.services().port(AUTOPEERING_SERVICE_NAME).unwrap() == 8080 };
+        let condition = |peer: &Peer| -> bool { peer.services().port(AUTOPEERING_SERVICE_NAME).unwrap() == 1337 };
         let condition = Box::new(condition);
 
         filter.add_condition(condition);
         assert_eq!(1, filter.num_conditions());
 
+        let mut peer1 = Peer::new_test_peer(1);
+        peer1.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, 6969);
+        assert_eq!(1, peer1.num_services());
+
+        let mut peer2 = Peer::new_test_peer(2);
+        peer2.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, 1337);
+        assert_eq!(1, peer2.num_services());
+
+        let candidates = [peer1, peer2];
+        let filtered = filter.apply(&candidates);
+        assert_eq!(1, filtered.len());
+
         filter.clear_conditions();
         assert_eq!(0, filter.num_conditions());
+
+        let filtered = filter.apply(&candidates);
+        assert_eq!(2, filtered.len());
     }
 
     #[test]

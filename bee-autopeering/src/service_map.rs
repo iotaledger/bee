@@ -133,10 +133,31 @@ impl fmt::Display for ServiceMap {
     }
 }
 
+pub enum ServiceProtocol {
+    Tcp,
+    Udp,
+}
+
+impl fmt::Display for ServiceProtocol {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let protocol = match self {
+            ServiceProtocol::Udp => "udp",
+            ServiceProtocol::Tcp => "tcp",
+        };
+        write!(f, "{}", protocol)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::proto;
+
+    impl ServiceMap {
+        pub(crate) fn len(&self) -> usize {
+            self.0.len()
+        }
+    }
 
     #[test]
     fn convert_service_map() {

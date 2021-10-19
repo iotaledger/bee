@@ -24,16 +24,16 @@ mod proto {
 mod request;
 mod salt;
 mod server;
-mod service_map;
 mod time;
 
 pub mod identity;
 pub mod init;
 pub mod peer;
 pub mod peerstore;
+pub mod service_map;
 
 pub use identity::PeerId;
 pub use init::init;
 pub use local::Local;
 pub use peer::Peer;
-pub use service_map::{ServiceMap, ServiceName};
+pub use service_map::{ServiceMap, ServiceName, ServiceProtocol};
