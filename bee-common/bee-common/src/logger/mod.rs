@@ -7,6 +7,8 @@ mod config;
 
 pub use config::{LoggerConfig, LoggerConfigBuilder, LoggerOutputConfig, LoggerOutputConfigBuilder};
 
+use crate::time as time_util;
+
 use thiserror::Error;
 
 /// Name of the standard output.
@@ -29,7 +31,7 @@ macro_rules! log_format {
     ($target:expr, $level:expr, $message:expr, $target_width:expr, $level_width:expr) => {
         format_args!(
             "{} {:target_width$} {:level_width$} {}",
-            chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
+            time_util::format(&time_util::now_local()),
             $target,
             $level,
             $message,

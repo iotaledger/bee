@@ -20,7 +20,10 @@ use crate::{
     },
 };
 
-use bee_common::packable::{Packable, Read};
+use bee_common::{
+    packable::{Packable, Read},
+    time,
+};
 use bee_message::{
     milestone::MilestoneIndex,
     output::{self, Output, OutputId},
@@ -30,7 +33,6 @@ use bee_message::{
 use bee_storage::access::{Insert, Truncate};
 use bee_tangle::solid_entry_point::SolidEntryPoint;
 
-use chrono::{offset::TimeZone, Utc};
 use log::{info, warn};
 
 use std::{
@@ -205,7 +207,7 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
 
     info!(
         "Imported full snapshot file from {} with sep index {}, ledger index {}, {} solid entry points, {} outputs and {} milestone diffs.",
-        Utc.timestamp(header.timestamp() as i64, 0).format("%d-%m-%Y %H:%M:%S"),
+        time::format(&time::from_unix_timestamp(header.timestamp() as i64)),
         *header.sep_index(),
         *header.ledger_index(),
         full_header.sep_count(),
@@ -260,7 +262,7 @@ async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, netw
 
     info!(
         "Imported delta snapshot file from {} with sep index {}, ledger index {}, {} solid entry points and {} milestone diffs.",
-        Utc.timestamp(header.timestamp() as i64, 0).format("%d-%m-%Y %H:%M:%S"),
+        time::format(&time::now_local()),
         *header.sep_index(),
         *header.ledger_index(),
         delta_header.sep_count(),
