@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    discovery::VERIFICATION_EXPIRATION,
     identity::PeerId,
     proto,
     service_map::{ServiceMap, ServiceProtocol},
+    time::{self, Timestamp},
 };
 
 use bytes::BytesMut;
@@ -144,8 +146,8 @@ impl AsRef<Peer> for Peer {
     }
 }
 
-pub(crate) fn is_verified(peer_id: &PeerId) -> bool {
-    todo!("is_verified")
+pub(crate) fn is_verified(last_verification_response: Timestamp) -> bool {
+    time::since(last_verification_response) <= VERIFICATION_EXPIRATION
 }
 
 #[cfg(test)]

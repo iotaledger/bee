@@ -12,7 +12,7 @@ use crate::{
     packet::{IncomingPacket, MessageType, OutgoingPacket},
     peer::{self, Peer},
     peering_messages::{DropRequest, PeeringRequest, PeeringResponse},
-    peerstore::{InMemoryPeerStore, PeerStore},
+    peerstore::{self, InMemoryPeerStore, PeerStore},
     request::{self, RequestManager},
     salt::{self, Salt},
     server::{ServerSocket, ServerTx},
@@ -170,23 +170,23 @@ impl<S: PeerStore> PeeringManager<S> {
                         let peering_req =
                             PeeringRequest::from_protobuf(&msg_bytes).expect("error decoding peering request");
 
-                        if !validate_peering_request(&peer_id, &peering_req) {
+                        if !validate_peering_request(&peering_req, &peer_id, &peerstore) {
                             log::debug!("Received invalid peering request: {:?}", peering_req);
                             continue;
                         }
 
-                        handle_peering_request(&msg_bytes, &server_tx, source_addr);
+                        handle_peering_request(&peering_req, &msg_bytes, &server_tx, source_addr);
                     }
                     MessageType::PeeringResponse => {
                         let peering_res =
                             PeeringResponse::from_protobuf(&msg_bytes).expect("error decoding peering response");
 
-                        if !validate_peering_response(&peer_id, &peering_res, &request_mngr) {
+                        if !validate_peering_response(&peering_res, &peer_id, &request_mngr) {
                             log::debug!("Received invalid peering response: {:?}", peering_res);
                             continue;
                         }
 
-                        handle_peering_response();
+                        handle_peering_response(&peering_res);
                     }
                     MessageType::DropRequest => {
                         let drop_req = DropRequest::from_protobuf(&msg_bytes).expect("error decoding drop request");
@@ -197,6 +197,7 @@ impl<S: PeerStore> PeeringManager<S> {
                         }
 
                         handle_drop_request(
+                            &drop_req,
                             peer_id,
                             &mut inbound_nh,
                             &mut outbound_nh,
@@ -212,29 +213,29 @@ impl<S: PeerStore> PeeringManager<S> {
     }
 }
 
-fn validate_peering_request(peer_id: &PeerId, peer_req: &PeeringRequest) -> bool {
-    if request::is_expired(peer_req.timestamp()) {
+fn validate_peering_request<S: PeerStore>(peering_req: &PeeringRequest, peer_id: &PeerId, peerstore: &S) -> bool {
+    if request::is_expired(peering_req.timestamp()) {
         false
-    } else if !peer::is_verified(peer_id) {
+    } else if !peer::is_verified(peerstore.last_verification_response(&peer_id).unwrap_or(0)) {
         false
-    } else if salt::is_expired(peer_req.salt_expiration_time()) {
+    } else if salt::is_expired(peering_req.salt_expiration_time()) {
         false
     } else {
         true
     }
 }
 
-fn handle_peering_request(msg_bytes: &[u8], server_tx: &ServerTx, source_addr: SocketAddr) {
+fn handle_peering_request(_: &PeeringRequest, msg_bytes: &[u8], server_tx: &ServerTx, source_addr: SocketAddr) {
     let request_hash = &hash::sha256(&msg_bytes)[..];
 
-    send_peering_response(request_hash, &server_tx, source_addr);
+    reply_with_peering_response(request_hash, &server_tx, source_addr);
 }
 
-fn send_peering_response(request_hash: &[u8], tx: &ServerTx, source_addr: SocketAddr) {
+fn reply_with_peering_response(request_hash: &[u8], tx: &ServerTx, source_addr: SocketAddr) {
     todo!()
 }
 
-fn validate_peering_response(peer_id: &PeerId, peering_res: &PeeringResponse, request_mngr: &RequestManager) -> bool {
+fn validate_peering_response(peering_res: &PeeringResponse, peer_id: &PeerId, request_mngr: &RequestManager) -> bool {
     if let Some(request_hash) = request_mngr.get_request_hash::<PeeringRequest>(peer_id) {
         peering_res.request_hash() == &request_hash
     } else {
@@ -242,7 +243,7 @@ fn validate_peering_response(peer_id: &PeerId, peering_res: &PeeringResponse, re
     }
 }
 
-fn handle_peering_response() {
+fn handle_peering_response(peering_res: &PeeringResponse) {
     // hive.go: PeeringResponse messages are handled in the handleReply function of the validation
     todo!("handle_peering_response")
 }
@@ -252,6 +253,7 @@ fn validate_drop_request(drop_req: &DropRequest) -> bool {
 }
 
 fn handle_drop_request(
+    _: &DropRequest,
     peer_id: PeerId,
     inbound_nh: &mut InboundNeighborhood,
     outbound_nh: &mut OutboundNeighborhood,

@@ -1,7 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{identity::PeerId, peer::Peer, time::Timestamp};
+use crate::{
+    identity::PeerId,
+    peer::Peer,
+    time::{self, Timestamp},
+};
 
 use sled::Db;
 
@@ -16,15 +20,15 @@ pub trait PeerStore: Clone + Send + Sync {
 
     fn new(config: Self::Config) -> Self;
 
-    fn last_ping(&self, peer_id: &PeerId) -> Option<Timestamp>;
-    fn last_pong(&self, peer_id: &PeerId) -> Option<Timestamp>;
+    fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp>;
+    fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp>;
     fn peer(&self, peer_id: &PeerId) -> Option<Peer>;
 
-    fn update_last_ping(&mut self, peer_id: PeerId, timestamp: Timestamp);
-    fn update_last_pong(&mut self, peer_id: PeerId, timestamp: Timestamp);
+    fn update_last_verification_request(&self, peer_id: PeerId);
+    fn update_last_verification_response(&self, peer_id: PeerId);
 
-    fn insert_peer(&mut self, peer: Peer) -> bool;
-    fn remove_peer(&mut self, peer_id: &PeerId) -> bool;
+    fn insert_peer(&self, peer: Peer) -> bool;
+    fn remove_peer(&self, peer_id: &PeerId) -> bool;
 }
 
 #[derive(Clone)]
@@ -34,8 +38,8 @@ pub struct InMemoryPeerStore {
 
 #[derive(Default)]
 struct InMemoryPeerStoreInner {
-    last_pings: HashMap<PeerId, Timestamp>,
-    last_pongs: HashMap<PeerId, Timestamp>,
+    last_verif_requests: HashMap<PeerId, Timestamp>,
+    last_verif_responses: HashMap<PeerId, Timestamp>,
     peers: HashMap<PeerId, Peer>,
 }
 
@@ -57,28 +61,28 @@ impl PeerStore for InMemoryPeerStore {
             inner: Default::default(),
         }
     }
-
-    fn last_ping(&self, peer_id: &PeerId) -> Option<Timestamp> {
-        self.read_inner().last_pings.get(peer_id).map(|v| *v)
+    fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp> {
+        self.read_inner().last_verif_requests.get(peer_id).map(|v| *v)
     }
-
-    fn last_pong(&self, peer_id: &PeerId) -> Option<Timestamp> {
-        self.read_inner().last_pongs.get(peer_id).map(|v| *v)
+    fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp> {
+        self.read_inner().last_verif_responses.get(peer_id).map(|v| *v)
     }
-
     fn peer(&self, peer_id: &PeerId) -> Option<Peer> {
         self.read_inner().peers.get(peer_id).map(|p| p.clone())
     }
-
-    fn update_last_ping(&mut self, peer_id: PeerId, timestamp: Timestamp) {
-        let _ = self.write_inner().last_pings.insert(peer_id, timestamp);
+    fn update_last_verification_request(&self, peer_id: PeerId) {
+        let _ = self
+            .write_inner()
+            .last_verif_requests
+            .insert(peer_id, time::unix_now_secs());
     }
-
-    fn update_last_pong(&mut self, peer_id: PeerId, timestamp: Timestamp) {
-        let _ = self.write_inner().last_pongs.insert(peer_id, timestamp);
+    fn update_last_verification_response(&self, peer_id: PeerId) {
+        let _ = self
+            .write_inner()
+            .last_verif_responses
+            .insert(peer_id, time::unix_now_secs());
     }
-
-    fn insert_peer(&mut self, peer: Peer) -> bool {
+    fn insert_peer(&self, peer: Peer) -> bool {
         let peer_id = peer.peer_id();
         if let Some(_) = self.write_inner().peers.insert(peer_id, peer) {
             false
@@ -87,8 +91,7 @@ impl PeerStore for InMemoryPeerStore {
             true
         }
     }
-
-    fn remove_peer(&mut self, peer_id: &PeerId) -> bool {
+    fn remove_peer(&self, peer_id: &PeerId) -> bool {
         if let Some(_) = self.write_inner().peers.remove(peer_id) {
             true
         } else {
@@ -99,9 +102,6 @@ impl PeerStore for InMemoryPeerStore {
 }
 
 pub(crate) struct SledPeerStoreConfig {
-    // Path docs:
-    // // Note: this example does work on Windows
-    // let path = Path::new("./foo/bar.txt");
     pub(crate) file_path: PathBuf,
 }
 
@@ -131,39 +131,31 @@ impl PeerStore for SledPeerStore {
 
     fn new(config: Self::Config) -> Self {
         let db = sled::open(config.file_path).expect("error opening db");
-        db.open_tree("last_pings");
-        db.open_tree("last_pongs");
+        db.open_tree("last_verification_requests");
+        db.open_tree("last_verification_responses");
         db.open_tree("peers");
 
         Self { db }
     }
-
-    fn last_ping(&self, peer_id: &PeerId) -> Option<Timestamp> {
-        // self.db.get(key)
+    fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp> {
         todo!()
     }
-
-    fn last_pong(&self, peer_id: &PeerId) -> Option<Timestamp> {
+    fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp> {
         todo!()
     }
-
     fn peer(&self, peer_id: &PeerId) -> Option<Peer> {
         todo!()
     }
-
-    fn update_last_ping(&mut self, peer_id: PeerId, timestamp: Timestamp) {
+    fn update_last_verification_request(&self, peer_id: PeerId) {
         todo!()
     }
-
-    fn update_last_pong(&mut self, peer_id: PeerId, timestamp: Timestamp) {
+    fn update_last_verification_response(&self, peer_id: PeerId) {
         todo!()
     }
-
-    fn insert_peer(&mut self, peer: Peer) -> bool {
+    fn insert_peer(&self, peer: Peer) -> bool {
         todo!()
     }
-
-    fn remove_peer(&mut self, peer_id: &PeerId) -> bool {
+    fn remove_peer(&self, peer_id: &PeerId) -> bool {
         todo!()
     }
 }

@@ -12,15 +12,21 @@ use crate::{
     local::Local,
     multiaddr::AutopeeringMultiaddr,
     packet::{IncomingPacket, MessageType, OutgoingPacket},
-    peer::Peer,
+    peer::{self, Peer},
     peerstore::{self, PeerStore},
-    request::RequestManager,
+    request::{self, RequestManager},
     server::{ServerSocket, ServerTx},
     service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
     time,
 };
 
-use std::{collections::VecDeque, fmt, net::SocketAddr, ops::DerefMut, time::Duration};
+use std::{
+    collections::{HashSet, VecDeque},
+    fmt,
+    net::SocketAddr,
+    ops::DerefMut,
+    time::Duration,
+};
 
 type BootstrapPeer = Peer;
 
@@ -40,8 +46,8 @@ const JITTER: f32 = 0.5;
 const EXPONENTIAL_BACKOFF_FACTOR: f32 = 1.5;
 // TODO:
 const MAX_RETRIES: usize = 2;
-// hive.go: PingExpiration is the time until a peer verification expires (12 hours)
-pub(crate) const PING_EXPIRATION: u64 = 12 * 60 * 60;
+// hive.go: is the time until a peer verification expires (12 hours)
+pub(crate) const VERIFICATION_EXPIRATION: u64 = 12 * 60 * 60;
 // hive.go: MaxPeersInResponse is the maximum number of peers returned in DiscoveryResponse.
 const MAX_PEERS_IN_RESPONSE: usize = 6;
 // hive.go: MaxServices is the maximum number of services a peer can support.
@@ -188,6 +194,9 @@ pub(crate) struct DiscoveryManager<S> {
     event_tx: DiscoveryEventTx,
     // The storage for discovered peers.
     peerstore: S,
+    //
+    active_peers: HashSet<Peer>,
+    replacement_peers: HashSet<Peer>,
 }
 
 impl<S: PeerStore> DiscoveryManager<S> {
@@ -207,6 +216,8 @@ impl<S: PeerStore> DiscoveryManager<S> {
                 request_mngr,
                 event_tx,
                 peerstore,
+                active_peers: HashSet::default(),
+                replacement_peers: HashSet::default(),
             },
             event_rx,
         )
@@ -220,6 +231,8 @@ impl<S: PeerStore> DiscoveryManager<S> {
             request_mngr,
             event_tx,
             peerstore,
+            active_peers,
+            replacement_peers,
         } = self;
 
         let DiscoveryManagerConfig {
@@ -254,9 +267,16 @@ impl<S: PeerStore> DiscoveryManager<S> {
                             continue;
                         }
 
-                        let request_hash = &hash::sha256(&msg_bytes)[..];
-
-                        send_verification_response(request_hash, &server_tx, &local.services(), source_addr);
+                        handle_verification_request(
+                            &verif_req,
+                            &peer_id,
+                            &msg_bytes,
+                            &server_tx,
+                            source_addr,
+                            &local,
+                            &peerstore,
+                            &request_mngr,
+                        );
                     }
                     MessageType::VerificationResponse => {
                         let verif_res = VerificationResponse::from_protobuf(&msg_bytes)
@@ -300,8 +320,101 @@ impl<S: PeerStore> DiscoveryManager<S> {
     }
 }
 
-fn send_verification_request(target: &Peer, req_mngr: &RequestManager, tx: &ServerTx) {
-    let verif_req = req_mngr.new_verification_request(target.peer_id(), target.ip_address());
+fn validate_verification_request(verif_req: &VerificationRequest, version: u32, network_id: u32) -> bool {
+    if verif_req.version() != version {
+        false
+    } else if verif_req.network_id() != network_id {
+        false
+    } else if request::is_expired(verif_req.timestamp()) {
+        false
+    } else {
+        // NOTE: the validity of the transmitted source and target addresses is ensured through the `VerificationRequest` type.
+        true
+    }
+}
+
+fn handle_verification_request<S: PeerStore>(
+    verif_req: &VerificationRequest,
+    peer_id: &PeerId,
+    msg_bytes: &[u8],
+    server_tx: &ServerTx,
+    source_addr: SocketAddr,
+    local: &Local,
+    peerstore: &S,
+    request_mngr: &RequestManager,
+) {
+    reply_with_verification_response(verif_req, msg_bytes, &server_tx, &local, source_addr);
+
+    // if the peer is unknown or expired, send a Ping to verify
+    // if !p.IsVerified(from.ID(), dstAddr.IP) {
+    // 	p.sendPing(dstAddr, from.ID())
+    // } else if !p.mgr.isKnown(from.ID()) { // add a discovered peer to the manager if it is new but verified
+    // 	p.mgr.addDiscoveredPeer(newPeer(from, s.LocalAddr().Network(), dstAddr))
+    // }
+    if let Some(last_verif_res) = peerstore.last_verification_response(peer_id) {
+        if !peer::is_verified(last_verif_res) {
+            reply_with_verification_request(peer_id, request_mngr, server_tx, source_addr);
+        }
+    } else {
+        reply_with_verification_request(peer_id, request_mngr, server_tx, source_addr);
+    }
+
+    peerstore.update_last_verification_request(peer_id.clone());
+}
+
+fn reply_with_verification_response(
+    verif_req: &VerificationRequest,
+    msg_bytes: &[u8],
+    tx: &ServerTx,
+    local: &Local,
+    target_addr: SocketAddr,
+) {
+    let request_hash = &hash::sha256(&msg_bytes)[..];
+    let verif_res = VerificationResponse::new(request_hash, local.services(), target_addr.ip());
+    let verif_res_bytes = verif_res
+        .protobuf()
+        .expect("error encoding verification response")
+        .to_vec();
+
+    // hive.go:
+    // ```go
+    // // the destination address uses the source IP address of the packet plus the src_port from the message
+    // dstAddr := &net.UDPAddr{
+    // 	IP:   fromAddr.IP,
+    // 	Port: int(m.SrcPort),
+    // }
+    // ```
+    tx.send(OutgoingPacket {
+        msg_type: MessageType::VerificationResponse,
+        msg_bytes: verif_res_bytes,
+        target_addr: SocketAddr::new(target_addr.ip(), verif_req.source_addr.port()),
+    })
+    .expect("error sending verification response to server");
+}
+
+fn reply_with_verification_request(
+    peer_id: &PeerId,
+    request_mngr: &RequestManager,
+    server_tx: &ServerTx,
+    target_addr: SocketAddr,
+) {
+    let verif_req_bytes = request_mngr
+        .new_verification_request(peer_id.clone(), target_addr.ip())
+        .protobuf()
+        .expect("error encoding verification request")
+        .to_vec();
+
+    server_tx
+        .send(OutgoingPacket {
+            msg_type: MessageType::VerificationRequest,
+            msg_bytes: verif_req_bytes,
+            target_addr,
+        })
+        .expect("error sending verification request to server");
+}
+
+fn send_verification_request(target: &Peer, request_mngr: &RequestManager, server_tx: &ServerTx) {
+    let verif_req = request_mngr.new_verification_request(target.peer_id(), target.ip_address());
     let verif_req_bytes = verif_req
         .protobuf()
         .expect("error encoding verification request")
@@ -312,39 +425,13 @@ fn send_verification_request(target: &Peer, req_mngr: &RequestManager, tx: &Serv
         .port(AUTOPEERING_SERVICE_NAME)
         .expect("peer doesn't support autopeering");
 
-    tx.send(OutgoingPacket {
-        msg_type: MessageType::VerificationRequest,
-        msg_bytes: verif_req_bytes,
-        target_addr: SocketAddr::new(target.ip_address(), port),
-    })
-    .expect("error sending verification request to server");
-}
-
-fn validate_verification_request(verif_req: &VerificationRequest, version: u32, network_id: u32) -> bool {
-    if verif_req.version() != version {
-        false
-    } else if verif_req.network_id() != network_id {
-        false
-    } else if verif_req.timestamp() < time::unix_now_secs() - PING_EXPIRATION {
-        false
-    } else {
-        true
-    }
-}
-
-fn send_verification_response(request_hash: &[u8], tx: &ServerTx, services: &ServiceMap, target_addr: SocketAddr) {
-    let verif_res = VerificationResponse::new(request_hash, services.clone(), target_addr.ip());
-    let verif_res_bytes = verif_res
-        .protobuf()
-        .expect("error encoding verification response")
-        .to_vec();
-
-    tx.send(OutgoingPacket {
-        msg_type: MessageType::VerificationResponse,
-        msg_bytes: verif_res_bytes,
-        target_addr,
-    })
-    .expect("error sending pong to server");
+    server_tx
+        .send(OutgoingPacket {
+            msg_type: MessageType::VerificationRequest,
+            msg_bytes: verif_req_bytes,
+            target_addr: SocketAddr::new(target.ip_address(), port),
+        })
+        .expect("error sending verification request to server");
 }
 
 fn validate_verification_response(
