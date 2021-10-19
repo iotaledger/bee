@@ -100,7 +100,7 @@ pub enum MessageType {
     DiscoveryResponse,
     PeeringRequest = PEERING_MSG_TYPE_MIN,
     PeeringResponse,
-    PeeringDrop,
+    DropRequest,
 }
 
 #[derive(Debug)]

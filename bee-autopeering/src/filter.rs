@@ -5,33 +5,33 @@ use std::{collections::HashMap, iter};
 
 use crate::{distance::PeerDistance, Peer, PeerId};
 
-type Condition = Box<dyn Fn(&Peer) -> bool>;
+type Condition = Box<dyn Fn(&Peer) -> bool + Send>;
 
 #[derive(Default)]
-pub(crate) struct Filter {
-    peers: HashMap<PeerId, bool>,
+pub(crate) struct RejectionFilter {
+    rejected_peers: HashMap<PeerId, bool>,
     conditions: Vec<Condition>,
 }
 
-impl Filter {
+impl RejectionFilter {
     pub(crate) fn new() -> Self {
         Self::default()
     }
-    pub(crate) fn add_peers(&mut self, peers: &[Peer]) {
-        self.peers
+    pub(crate) fn include_peers(&mut self, peers: &[Peer]) {
+        self.rejected_peers
             .extend(peers.iter().map(|p| p.peer_id()).zip(iter::repeat(true)));
     }
-    pub(crate) fn remove_peer(&mut self, peer_id: &PeerId) {
-        let _ = self.peers.remove(peer_id);
-    }
     pub(crate) fn include_peer(&mut self, peer_id: PeerId) {
-        self.peers.insert(peer_id, true);
+        self.rejected_peers.insert(peer_id, true);
     }
     pub(crate) fn exclude_peer(&mut self, peer_id: PeerId) {
-        self.peers.insert(peer_id, false);
+        self.rejected_peers.insert(peer_id, false);
+    }
+    pub(crate) fn remove_peer(&mut self, peer_id: &PeerId) {
+        let _ = self.rejected_peers.remove(peer_id);
     }
     pub(crate) fn clear_peers(&mut self) {
-        self.peers.clear()
+        self.rejected_peers.clear()
     }
     pub(crate) fn add_condition(&mut self, condition: Condition) {
         self.conditions.push(condition);
@@ -45,7 +45,7 @@ impl Filter {
         'candidate: for candidate in candidates {
             let peer = candidate.as_ref();
 
-            if *self.peers.get(&peer.peer_id()).unwrap_or(&false) {
+            if *self.rejected_peers.get(&peer.peer_id()).unwrap_or(&false) {
                 continue 'candidate;
             }
 
@@ -68,7 +68,7 @@ mod tests {
 
     use super::*;
 
-    impl Filter {
+    impl RejectionFilter {
         pub(crate) fn num_conditions(&self) -> usize {
             self.conditions.len()
         }
@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     fn apply_condition() {
-        let mut filter = Filter::new();
+        let mut filter = RejectionFilter::new();
         assert_eq!(0, filter.num_conditions());
 
         let condition = |peer: &Peer| -> bool { peer.services().port(AUTOPEERING_SERVICE_NAME).unwrap() == 1337 };
@@ -103,7 +103,4 @@ mod tests {
         let filtered = filter.apply(&candidates);
         assert_eq!(2, filtered.len());
     }
-
-    #[test]
-    fn add_peers_to_filter() {}
 }

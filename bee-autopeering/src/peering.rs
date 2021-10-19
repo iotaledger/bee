@@ -4,15 +4,15 @@
 use crate::{
     config::AutopeeringConfig,
     distance::{Neighborhood, SIZE_INBOUND, SIZE_OUTBOUND},
-    filter::Filter,
+    filter::RejectionFilter,
     hash,
     local::Local,
     packet::{IncomingPacket, MessageType, OutgoingPacket},
-    peering_messages::{PeeringDrop, PeeringRequest, PeeringResponse},
+    peering_messages::{DropRequest, PeeringRequest, PeeringResponse},
     peerstore::{InMemoryPeerStore, PeerStore},
-    request::RequestManager,
+    request::{self, RequestManager},
     salt::Salt,
-    server::{OutgoingPacketTx, ServerSocket},
+    server::{ServerSocket, ServerTx},
     service_map::AUTOPEERING_SERVICE_NAME,
     Peer, PeerId,
 };
@@ -92,9 +92,11 @@ pub(crate) struct PeeringManager<S> {
     // The storage for discovered peers.
     peerstore: S,
     // Inbound neighborhood.
-    inbound_neighborhood: InboundNeighborhood,
+    inbound_nh: InboundNeighborhood,
     // Outbound neighborhood.
-    outbound_neighborhood: OutboundNeighborhood,
+    outbound_nh: OutboundNeighborhood,
+    // The peer rejection filter.
+    rejection_filter: RejectionFilter,
 }
 
 impl<S: PeerStore> PeeringManager<S> {
@@ -107,8 +109,10 @@ impl<S: PeerStore> PeeringManager<S> {
     ) -> (Self, PeeringEventRx) {
         let (event_tx, event_rx) = event_chan();
 
-        let inbound_neighborhood = Neighborhood::new(local.clone());
-        let outbound_neighborhood = Neighborhood::new(local.clone());
+        let inbound_nh = Neighborhood::new(local.clone());
+        let outbound_nh = Neighborhood::new(local.clone());
+
+        let rejection_filter = RejectionFilter::new();
 
         (
             Self {
@@ -118,8 +122,9 @@ impl<S: PeerStore> PeeringManager<S> {
                 request_mngr,
                 event_tx,
                 peerstore,
-                inbound_neighborhood,
-                outbound_neighborhood,
+                inbound_nh,
+                outbound_nh,
+                rejection_filter,
             },
             event_rx,
         )
@@ -133,8 +138,9 @@ impl<S: PeerStore> PeeringManager<S> {
             request_mngr,
             event_tx,
             peerstore,
-            inbound_neighborhood,
-            outbound_neighborhood,
+            mut inbound_nh,
+            mut outbound_nh,
+            mut rejection_filter,
         } = self;
 
         let PeeringManagerConfig {
@@ -144,7 +150,10 @@ impl<S: PeerStore> PeeringManager<S> {
             drop_neighbors_on_salt_update,
         } = config;
 
-        let ServerSocket { mut rx, tx } = socket;
+        let ServerSocket {
+            mut server_rx,
+            server_tx,
+        } = socket;
 
         loop {
             if let Some(IncomingPacket {
@@ -152,7 +161,7 @@ impl<S: PeerStore> PeeringManager<S> {
                 msg_bytes,
                 source_addr,
                 peer_id,
-            }) = rx.recv().await
+            }) = server_rx.recv().await
             {
                 match msg_type {
                     MessageType::PeeringRequest => {
@@ -166,7 +175,7 @@ impl<S: PeerStore> PeeringManager<S> {
 
                         let request_hash = &hash::sha256(&msg_bytes)[..];
 
-                        send_peering_response(request_hash, &tx, source_addr);
+                        send_peering_response(request_hash, &server_tx, source_addr);
                     }
                     MessageType::PeeringResponse => {
                         let peer_res =
@@ -179,16 +188,21 @@ impl<S: PeerStore> PeeringManager<S> {
 
                         handle_peering_response();
                     }
-                    MessageType::PeeringDrop => {
-                        let peer_drop =
-                            PeeringDrop::from_protobuf(&msg_bytes).expect("error decoding discover request");
+                    MessageType::DropRequest => {
+                        let drop_req = DropRequest::from_protobuf(&msg_bytes).expect("error decoding drop request");
 
-                        if !validate_peering_drop(&peer_drop) {
-                            log::debug!("Received invalid peering drop: {:?}", peer_drop);
+                        if !validate_drop_request(&drop_req) {
+                            log::debug!("Received invalid peering drop: {:?}", drop_req);
                             continue;
                         }
 
-                        handle_peering_drop();
+                        handle_drop_request(
+                            peer_id,
+                            &mut inbound_nh,
+                            &mut outbound_nh,
+                            &mut rejection_filter,
+                            &server_tx,
+                        );
                     }
                     _ => panic!("unsupported peering message type"),
                 }
@@ -213,21 +227,73 @@ fn handle_peering_response() {
     todo!()
 }
 
-fn validate_peering_drop(peer_drop: &PeeringDrop) -> bool {
-    todo!()
+fn validate_drop_request(drop_req: &DropRequest) -> bool {
+    request::is_expired(drop_req.timestamp())
 }
 
-fn handle_peering_drop() {
-    todo!()
+fn handle_drop_request(
+    peer_id: PeerId,
+    inbound_nh: &mut InboundNeighborhood,
+    outbound_nh: &mut OutboundNeighborhood,
+    rejection_filter: &mut RejectionFilter,
+    server_tx: &ServerTx,
+) {
+    // hive.go:
+    // ```go
+    // droppedPeer := m.inbound.RemovePeer(id)
+    // if p := m.outbound.RemovePeer(id); p != nil {
+    //     droppedPeer = p
+    //     m.rejectionFilter.AddPeer(id)
+    //     // if not yet updating, trigger an immediate update
+    //     if updateOutResultChan == nil && updateTimer.Stop() {
+    //         updateTimer.Reset(0)
+    //     }
+    // }
+    // if droppedPeer != nil {
+    //     m.dropPeering(droppedPeer)
+    // }
+    // ```
+
+    let mut maybe_dropped_peer = inbound_nh.remove_peer(&peer_id);
+
+    if let Some(dropped_peer) = outbound_nh.remove_peer(&peer_id) {
+        maybe_dropped_peer.replace(dropped_peer);
+
+        rejection_filter.include_peer(peer_id);
+
+        // TODO: figure out how we do the update timer
+    }
+
+    if let Some(dropped_peer) = maybe_dropped_peer {
+        send_drop_request(dropped_peer, server_tx);
+    }
+}
+
+fn send_drop_request(peer: Peer, server_tx: &ServerTx) {
+    let drop_req_bytes = DropRequest::new()
+        .protobuf()
+        .expect("error encoding drop request")
+        .to_vec();
+
+    let port = peer
+        .services()
+        .port(AUTOPEERING_SERVICE_NAME)
+        .expect("invalid autopeering peer");
+
+    server_tx.send(OutgoingPacket {
+        msg_type: MessageType::DropRequest,
+        msg_bytes: drop_req_bytes,
+        target_addr: SocketAddr::new(peer.ip_address(), port),
+    });
 }
 
 fn update_salts(
     local: &Local,
-    filter: &mut Filter,
+    filter: &mut RejectionFilter,
     drop_neighbors_on_salt_update: bool,
     inbound: &mut InboundNeighborhood,
     outbound: &mut OutboundNeighborhood,
-    packet_tx: &OutgoingPacketTx,
+    packet_tx: &ServerTx,
     event_tx: &PeeringEventTx,
 ) {
     // Create and set new private and public salts for the local peer.
@@ -264,25 +330,11 @@ fn update_salts(
     event_tx.send(PeeringEvent::SaltUpdated);
 }
 
-fn drop_neighborhood<'a, Nh>(neighborhood: &'a Nh, packet_tx: &OutgoingPacketTx)
+fn drop_neighborhood<'a, Nh>(neighborhood: &'a Nh, server_tx: &ServerTx)
 where
     &'a Nh: IntoIterator<Item = Peer, IntoIter = std::vec::IntoIter<Peer>>,
 {
     for peer in neighborhood {
-        let peering_drop_bytes = PeeringDrop::new()
-            .protobuf()
-            .expect("error encoding PeeringDrop message")
-            .to_vec();
-
-        let port = peer
-            .services()
-            .port(AUTOPEERING_SERVICE_NAME)
-            .expect("invalid autopeering peer");
-
-        packet_tx.send(OutgoingPacket {
-            msg_type: MessageType::PeeringDrop,
-            msg_bytes: peering_drop_bytes,
-            target_addr: SocketAddr::new(peer.ip_address(), port),
-        });
+        send_drop_request(peer, server_tx);
     }
 }

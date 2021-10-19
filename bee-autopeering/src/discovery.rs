@@ -15,7 +15,7 @@ use crate::{
     peer::Peer,
     peerstore::{self, PeerStore},
     request::RequestManager,
-    server::{OutgoingPacketTx, ServerSocket},
+    server::{ServerSocket, ServerTx},
     service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
     time,
 };
@@ -231,7 +231,10 @@ impl<S: PeerStore> DiscoveryManager<S> {
             source_addr,
         } = config;
 
-        let ServerSocket { mut rx, tx } = socket;
+        let ServerSocket {
+            mut server_rx,
+            server_tx,
+        } = socket;
 
         loop {
             if let Some(IncomingPacket {
@@ -239,7 +242,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
                 msg_bytes,
                 source_addr,
                 peer_id,
-            }) = rx.recv().await
+            }) = server_rx.recv().await
             {
                 match msg_type {
                     MessageType::VerificationRequest => {
@@ -253,7 +256,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
 
                         let request_hash = &hash::sha256(&msg_bytes)[..];
 
-                        send_verification_response(request_hash, &tx, &local.services(), source_addr);
+                        send_verification_response(request_hash, &server_tx, &local.services(), source_addr);
                     }
                     MessageType::VerificationResponse => {
                         let verif_res = VerificationResponse::from_protobuf(&msg_bytes)
@@ -277,7 +280,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
 
                         let request_hash = &hash::sha256(&msg_bytes)[..];
 
-                        send_discovery_response(request_hash, &tx, source_addr);
+                        send_discovery_response(request_hash, &server_tx, source_addr);
                     }
                     MessageType::DiscoveryResponse => {
                         let disc_res =
@@ -297,7 +300,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
     }
 }
 
-fn send_verification_request(target: &Peer, req_mngr: &RequestManager, tx: &OutgoingPacketTx) {
+fn send_verification_request(target: &Peer, req_mngr: &RequestManager, tx: &ServerTx) {
     let verif_req = req_mngr.new_verification_request(target.peer_id(), target.ip_address());
     let verif_req_bytes = verif_req
         .protobuf()
@@ -322,19 +325,14 @@ fn validate_verification_request(verif_req: &VerificationRequest, version: u32, 
         false
     } else if verif_req.network_id() != network_id {
         false
-    } else if verif_req.timestamp() < time::unix_now() - PING_EXPIRATION {
+    } else if verif_req.timestamp() < time::unix_now_secs() - PING_EXPIRATION {
         false
     } else {
         true
     }
 }
 
-fn send_verification_response(
-    request_hash: &[u8],
-    tx: &OutgoingPacketTx,
-    services: &ServiceMap,
-    target_addr: SocketAddr,
-) {
+fn send_verification_response(request_hash: &[u8], tx: &ServerTx, services: &ServiceMap, target_addr: SocketAddr) {
     let verif_res = VerificationResponse::new(request_hash, services.clone(), target_addr.ip());
     let verif_res_bytes = verif_res
         .protobuf()
@@ -376,7 +374,7 @@ fn validate_discovery_request(disc_req: &DiscoveryRequest) -> bool {
     todo!()
 }
 
-fn send_discovery_response(request_hash: &[u8], tx: &OutgoingPacketTx, target_addr: SocketAddr) {
+fn send_discovery_response(request_hash: &[u8], tx: &ServerTx, target_addr: SocketAddr) {
     // send a random set of peers as a response
     todo!()
 }

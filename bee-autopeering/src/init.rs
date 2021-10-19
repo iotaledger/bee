@@ -49,7 +49,7 @@ pub async fn init<S: PeerStore + 'static>(
     // Spawn a cronjob that regularly removes unanswered pings.
     let delay = DelayBuilder::new(DelayMode::Constant(1000)).finish();
     let cmd = Box::new(|mngr: &RequestManager| {
-        let now = time::unix_now();
+        let now = time::unix_now_secs();
         let mut guard = mngr.open_requests.write().expect("error getting write access");
         let requests = guard.deref_mut();
         requests.retain(|_, v| v.expiration_time > now);

@@ -19,8 +19,8 @@ pub(crate) use tokio::sync::mpsc::unbounded_channel as server_chan;
 
 const READ_BUFFER_SIZE: usize = crate::packet::MAX_PACKET_SIZE;
 
-pub(crate) type IncomingPacketRx = mpsc::UnboundedReceiver<IncomingPacket>;
-pub(crate) type OutgoingPacketTx = mpsc::UnboundedSender<OutgoingPacket>;
+pub(crate) type ServerRx = mpsc::UnboundedReceiver<IncomingPacket>;
+pub(crate) type ServerTx = mpsc::UnboundedSender<OutgoingPacket>;
 
 type IncomingPacketTx = mpsc::UnboundedSender<IncomingPacket>;
 type OutgoingPacketRx = mpsc::UnboundedReceiver<OutgoingPacket>;
@@ -50,11 +50,7 @@ pub(crate) struct Server {
 }
 
 impl Server {
-    pub fn new(
-        config: ServerConfig,
-        local: Local,
-        incoming_senders: IncomingPacketSenders,
-    ) -> (Self, OutgoingPacketTx) {
+    pub fn new(config: ServerConfig, local: Local, incoming_senders: IncomingPacketSenders) -> (Self, ServerTx) {
         let (outgoing_tx, outgoing_rx) = server_chan::<OutgoingPacket>();
 
         (
@@ -168,12 +164,15 @@ async fn outgoing_packet_handler(socket: Arc<UdpSocket>, mut outgoing_rx: Outgoi
 }
 
 pub(crate) struct ServerSocket {
-    pub(crate) rx: IncomingPacketRx,
-    pub(crate) tx: OutgoingPacketTx,
+    pub(crate) server_rx: ServerRx,
+    pub(crate) server_tx: ServerTx,
 }
 
 impl ServerSocket {
-    pub fn new(rx: IncomingPacketRx, tx: OutgoingPacketTx) -> Self {
-        Self { rx, tx }
+    pub fn new(rx: ServerRx, tx: ServerTx) -> Self {
+        Self {
+            server_rx: rx,
+            server_tx: tx,
+        }
     }
 }

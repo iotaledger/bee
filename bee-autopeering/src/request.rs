@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use num::CheckedAdd;
+
 use crate::{
     delay::{Delay, Repeat},
     discovery_messages::{DiscoveryRequest, VerificationRequest},
@@ -9,7 +11,7 @@ use crate::{
     local::Local,
     peering_messages::PeeringRequest,
     salt::Salt,
-    time,
+    time::{self, Timestamp},
 };
 
 use std::{
@@ -26,7 +28,7 @@ type RequestHash = [u8; hash::SHA256_LEN];
 
 // If the request is not answered within that time it gets removed from the manager, and any response
 // coming in later will be deemed invalid.
-const REQUEST_EXPIRATION_SECS: u64 = 20;
+pub(crate) const REQUEST_EXPIRATION_SECS: u64 = 20;
 
 // Marker trait for requests.
 pub(crate) trait Request: Debug + Clone {}
@@ -63,7 +65,7 @@ impl RequestManager {
     }
 
     pub(crate) fn new_verification_request(&self, peer_id: PeerId, target_addr: IpAddr) -> VerificationRequest {
-        let timestamp = crate::time::unix_now();
+        let timestamp = crate::time::unix_now_secs();
 
         let key = RequestKey {
             peer_id,
@@ -95,7 +97,7 @@ impl RequestManager {
     }
 
     pub(crate) fn new_discovery_request(&self, peer_id: PeerId, target_addr: IpAddr) -> DiscoveryRequest {
-        let timestamp = crate::time::unix_now();
+        let timestamp = crate::time::unix_now_secs();
 
         let key = RequestKey {
             peer_id,
@@ -121,7 +123,7 @@ impl RequestManager {
     }
 
     pub(crate) fn new_peering_request(&self, peer_id: PeerId) -> PeeringRequest {
-        let timestamp = crate::time::unix_now();
+        let timestamp = crate::time::unix_now_secs();
 
         let key = RequestKey {
             peer_id,
@@ -176,4 +178,11 @@ impl Repeat for RequestManager {
             cmd(&ctx);
         }
     }
+}
+
+pub(crate) fn is_expired(timestamp: Timestamp) -> bool {
+    timestamp
+        .checked_add(REQUEST_EXPIRATION_SECS)
+        .expect("timestamp checked add")
+        < time::unix_now_secs()
 }

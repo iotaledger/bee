@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{identity::PeerId, peer::Peer};
+use crate::{identity::PeerId, peer::Peer, time::Timestamp};
 
 use sled::Db;
 
@@ -10,8 +10,6 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
-
-type Timestamp = u64;
 
 pub trait PeerStore: Clone + Send + Sync {
     type Config;

@@ -15,7 +15,7 @@ pub(crate) struct PeeringRequest {
 
 impl PeeringRequest {
     pub fn new(salt: Salt) -> Self {
-        let timestamp = crate::time::unix_now();
+        let timestamp = crate::time::unix_now_secs();
 
         Self { timestamp, salt }
     }
@@ -120,13 +120,13 @@ impl fmt::Debug for PeeringResponse {
     }
 }
 
-pub(crate) struct PeeringDrop {
+pub(crate) struct DropRequest {
     pub(crate) timestamp: u64,
 }
 
-impl PeeringDrop {
+impl DropRequest {
     pub fn new() -> Self {
-        let timestamp = crate::time::unix_now();
+        let timestamp = crate::time::unix_now_secs();
 
         Self { timestamp }
     }
@@ -155,9 +155,9 @@ impl PeeringDrop {
     }
 }
 
-impl fmt::Debug for PeeringDrop {
+impl fmt::Debug for DropRequest {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("PeeringDrop")
+        f.debug_struct("DropRequest")
             .field("timestamp", &self.timestamp)
             .finish()
     }
