@@ -1,13 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{proto, salt::Salt};
+use crate::{proto, request::Request, salt::Salt};
 
 use base64 as bs64;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 
 use std::{convert::TryInto, fmt};
 
+#[derive(Clone)]
 pub(crate) struct PeeringRequest {
     pub(crate) timestamp: u64,
     pub(crate) salt: Salt,
@@ -71,6 +72,8 @@ impl fmt::Debug for PeeringRequest {
     }
 }
 
+impl Request for PeeringRequest {}
+
 pub(crate) struct PeeringResponse {
     pub(crate) request_hash: Vec<u8>,
     pub(crate) status: bool,
@@ -120,6 +123,7 @@ impl fmt::Debug for PeeringResponse {
     }
 }
 
+// NOTE: We don't require a response for `DropRequest`, hence it doesn't need to impl `Request`.
 pub(crate) struct DropRequest {
     pub(crate) timestamp: u64,
 }

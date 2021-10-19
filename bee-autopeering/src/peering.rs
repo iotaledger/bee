@@ -3,18 +3,20 @@
 
 use crate::{
     config::AutopeeringConfig,
+    discovery,
     distance::{Neighborhood, SIZE_INBOUND, SIZE_OUTBOUND},
     filter::RejectionFilter,
     hash,
+    identity::PeerId,
     local::Local,
     packet::{IncomingPacket, MessageType, OutgoingPacket},
+    peer::{self, Peer},
     peering_messages::{DropRequest, PeeringRequest, PeeringResponse},
     peerstore::{InMemoryPeerStore, PeerStore},
     request::{self, RequestManager},
-    salt::Salt,
+    salt::{self, Salt},
     server::{ServerSocket, ServerTx},
     service_map::AUTOPEERING_SERVICE_NAME,
-    Peer, PeerId,
 };
 
 use tokio::sync::mpsc;
@@ -165,24 +167,22 @@ impl<S: PeerStore> PeeringManager<S> {
             {
                 match msg_type {
                     MessageType::PeeringRequest => {
-                        let peer_req =
+                        let peering_req =
                             PeeringRequest::from_protobuf(&msg_bytes).expect("error decoding peering request");
 
-                        if !validate_peering_request(&peer_req) {
-                            log::debug!("Received invalid peering request: {:?}", peer_req);
+                        if !validate_peering_request(&peer_id, &peering_req) {
+                            log::debug!("Received invalid peering request: {:?}", peering_req);
                             continue;
                         }
 
-                        let request_hash = &hash::sha256(&msg_bytes)[..];
-
-                        send_peering_response(request_hash, &server_tx, source_addr);
+                        handle_peering_request(&msg_bytes, &server_tx, source_addr);
                     }
                     MessageType::PeeringResponse => {
-                        let peer_res =
+                        let peering_res =
                             PeeringResponse::from_protobuf(&msg_bytes).expect("error decoding peering response");
 
-                        if !validate_peering_response(&peer_res, &request_mngr, &peer_id) {
-                            log::debug!("Received invalid peering response: {:?}", peer_res);
+                        if !validate_peering_response(&peer_id, &peering_res, &request_mngr) {
+                            log::debug!("Received invalid peering response: {:?}", peering_res);
                             continue;
                         }
 
@@ -192,7 +192,7 @@ impl<S: PeerStore> PeeringManager<S> {
                         let drop_req = DropRequest::from_protobuf(&msg_bytes).expect("error decoding drop request");
 
                         if !validate_drop_request(&drop_req) {
-                            log::debug!("Received invalid peering drop: {:?}", drop_req);
+                            log::debug!("Received invalid drop request: {:?}", drop_req);
                             continue;
                         }
 
@@ -202,6 +202,7 @@ impl<S: PeerStore> PeeringManager<S> {
                             &mut outbound_nh,
                             &mut rejection_filter,
                             &server_tx,
+                            source_addr,
                         );
                     }
                     _ => panic!("unsupported peering message type"),
@@ -211,20 +212,39 @@ impl<S: PeerStore> PeeringManager<S> {
     }
 }
 
-fn validate_peering_request(peer_req: &PeeringRequest) -> bool {
+fn validate_peering_request(peer_id: &PeerId, peer_req: &PeeringRequest) -> bool {
+    if request::is_expired(peer_req.timestamp()) {
+        false
+    } else if !peer::is_verified(peer_id) {
+        false
+    } else if salt::is_expired(peer_req.salt_expiration_time()) {
+        false
+    } else {
+        true
+    }
+}
+
+fn handle_peering_request(msg_bytes: &[u8], server_tx: &ServerTx, source_addr: SocketAddr) {
+    let request_hash = &hash::sha256(&msg_bytes)[..];
+
+    send_peering_response(request_hash, &server_tx, source_addr);
+}
+
+fn send_peering_response(request_hash: &[u8], tx: &ServerTx, source_addr: SocketAddr) {
     todo!()
 }
 
-fn send_peering_response(request_hash: &[u8], tx: &mpsc::UnboundedSender<OutgoingPacket>, source_addr: SocketAddr) {
-    todo!()
-}
-
-fn validate_peering_response(peer_res: &PeeringResponse, request_mngr: &RequestManager, peer_id: &PeerId) -> bool {
-    todo!()
+fn validate_peering_response(peer_id: &PeerId, peering_res: &PeeringResponse, request_mngr: &RequestManager) -> bool {
+    if let Some(request_hash) = request_mngr.get_request_hash::<PeeringRequest>(peer_id) {
+        peering_res.request_hash() == &request_hash
+    } else {
+        false
+    }
 }
 
 fn handle_peering_response() {
-    todo!()
+    // hive.go: PeeringResponse messages are handled in the handleReply function of the validation
+    todo!("handle_peering_response")
 }
 
 fn validate_drop_request(drop_req: &DropRequest) -> bool {
@@ -237,23 +257,8 @@ fn handle_drop_request(
     outbound_nh: &mut OutboundNeighborhood,
     rejection_filter: &mut RejectionFilter,
     server_tx: &ServerTx,
+    source_addr: SocketAddr,
 ) {
-    // hive.go:
-    // ```go
-    // droppedPeer := m.inbound.RemovePeer(id)
-    // if p := m.outbound.RemovePeer(id); p != nil {
-    //     droppedPeer = p
-    //     m.rejectionFilter.AddPeer(id)
-    //     // if not yet updating, trigger an immediate update
-    //     if updateOutResultChan == nil && updateTimer.Stop() {
-    //         updateTimer.Reset(0)
-    //     }
-    // }
-    // if droppedPeer != nil {
-    //     m.dropPeering(droppedPeer)
-    // }
-    // ```
-
     let mut maybe_dropped_peer = inbound_nh.remove_peer(&peer_id);
 
     if let Some(dropped_peer) = outbound_nh.remove_peer(&peer_id) {
@@ -261,29 +266,29 @@ fn handle_drop_request(
 
         rejection_filter.include_peer(peer_id);
 
-        // TODO: figure out how we do the update timer
+        // ```go
+        //     // if not yet updating, trigger an immediate update
+        //     if updateOutResultChan == nil && updateTimer.Stop() {
+        //         updateTimer.Reset(0)
+        // ```
     }
 
-    if let Some(dropped_peer) = maybe_dropped_peer {
-        send_drop_request(dropped_peer, server_tx);
+    if maybe_dropped_peer.is_some() {
+        reply_with_drop_request(server_tx, source_addr);
     }
 }
 
-fn send_drop_request(peer: Peer, server_tx: &ServerTx) {
+// Replies to a drop request with a drop request.
+fn reply_with_drop_request(server_tx: &ServerTx, target_addr: SocketAddr) {
     let drop_req_bytes = DropRequest::new()
         .protobuf()
         .expect("error encoding drop request")
         .to_vec();
 
-    let port = peer
-        .services()
-        .port(AUTOPEERING_SERVICE_NAME)
-        .expect("invalid autopeering peer");
-
     server_tx.send(OutgoingPacket {
         msg_type: MessageType::DropRequest,
         msg_bytes: drop_req_bytes,
-        target_addr: SocketAddr::new(peer.ip_address(), port),
+        target_addr,
     });
 }
 
@@ -306,6 +311,7 @@ fn update_salts(
     local.set_public_salt(public_salt);
 
     // Clear the rejection filter.
+    todo!("clear rejection filter");
     // filter.clear_peers();
 
     // Either drop, or update the neighborhoods.
@@ -337,4 +343,23 @@ where
     for peer in neighborhood {
         send_drop_request(peer, server_tx);
     }
+}
+
+// Initiates a drop request.
+fn send_drop_request(peer: Peer, server_tx: &ServerTx) {
+    let drop_req_bytes = DropRequest::new()
+        .protobuf()
+        .expect("error encoding drop request")
+        .to_vec();
+
+    let port = peer
+        .services()
+        .port(AUTOPEERING_SERVICE_NAME)
+        .expect("invalid autopeering peer");
+
+    server_tx.send(OutgoingPacket {
+        msg_type: MessageType::DropRequest,
+        msg_bytes: drop_req_bytes,
+        target_addr: SocketAddr::new(peer.ip_address(), port),
+    });
 }

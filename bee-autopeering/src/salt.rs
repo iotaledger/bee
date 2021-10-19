@@ -1,7 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{proto, time::unix_time_secs};
+use crate::{
+    proto,
+    time::{self, Timestamp},
+};
 
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 use ring::rand::{SecureRandom as _, SystemRandom};
@@ -22,7 +25,7 @@ pub struct Salt {
 
 impl Salt {
     pub fn new(lifetime: Duration) -> Self {
-        let expiration_time = unix_time_secs(
+        let expiration_time = time::unix_time_secs(
             SystemTime::now()
                 .checked_add(lifetime)
                 .expect("system clock error or lifetime too long"),
@@ -80,6 +83,10 @@ impl From<proto::Salt> for Salt {
             expiration_time: exp_time,
         }
     }
+}
+
+pub(crate) fn is_expired(timestamp: Timestamp) -> bool {
+    timestamp < time::unix_now_secs()
 }
 
 #[cfg(test)]

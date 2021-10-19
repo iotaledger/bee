@@ -42,21 +42,22 @@ impl Peer {
         PeerId::from_public_key(self.public_key)
     }
 
-    /// Returns the address of the discovered peer.
+    /// Returns the address of this peer.
     pub fn ip_address(&self) -> IpAddr {
         self.ip_address
     }
 
-    /// Returns the public key of the discovered peer.
+    /// Returns the public key of this peer.
     pub fn public_key(&self) -> &PublicKey {
         &self.public_key
     }
 
-    /// Returns the services the discovered peer.
+    /// Returns the services this peer.
     pub fn services(&self) -> &ServiceMap {
         &self.services
     }
 
+    /// Adds a service with address binding to this peer.
     pub fn add_service(&mut self, service_name: impl ToString, protocol: ServiceProtocol, port: u16) {
         let ipv = match self.ip_address {
             IpAddr::V4(ip4) => "ip4",
@@ -71,12 +72,12 @@ impl Peer {
         self.services.insert(service_name.to_string(), multiaddr);
     }
 
-    /// Creates a discovered peer from its Protobuf representation/encoding.
+    /// Creates a peer from its Protobuf representation/encoding.
     pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
         Ok(proto::Peer::decode(bytes)?.into())
     }
 
-    /// Returns the Protobuf representation of this discovered peer.
+    /// Returns the Protobuf representation of this peer.
     pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
         let services: proto::ServiceMap = self.services.clone().into();
 
@@ -141,6 +142,10 @@ impl AsRef<Peer> for Peer {
     fn as_ref(&self) -> &Self {
         self
     }
+}
+
+pub(crate) fn is_verified(peer_id: &PeerId) -> bool {
+    todo!("is_verified")
 }
 
 #[cfg(test)]
