@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! The sled storage backend.
+//! An in-memory storage backend.
 
 use crate::table::{SingletonTable, Table, VecBinTable, VecTable};
 
@@ -20,10 +20,10 @@ use bee_storage::{
     backend::StorageBackend,
     system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
-
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
+
 use thiserror::Error;
 
 use std::sync::PoisonError;
@@ -51,7 +51,7 @@ impl<T> From<PoisonError<T>> for Error {
 
 pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(0);
 
-/// The sled database.
+/// An in-memory database.
 #[derive(Default)]
 pub struct Storage {
     pub(crate) system: Table<u8, System>,

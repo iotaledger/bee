@@ -5,6 +5,6 @@
 mod access;
 
 impl_access_test!(
-    milestone_index_to_output_diff_access_volatile,
-    milestone_index_to_output_diff_access
+    solid_entry_point_to_milestone_index_access_memory,
+    solid_entry_point_to_milestone_index_access
 );

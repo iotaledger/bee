@@ -6,6 +6,7 @@
 #![deny(missing_docs)]
 #![deny(warnings)]
 
+mod table;
+
 pub mod access;
 pub mod storage;
-mod table;

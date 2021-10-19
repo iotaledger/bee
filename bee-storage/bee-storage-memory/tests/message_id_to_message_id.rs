@@ -5,6 +5,6 @@
 mod access;
 
 impl_access_test!(
-    output_id_to_consumed_output_access_volatile,
-    output_id_to_consumed_output_access
+    message_id_to_message_id_access_memory,
+    message_id_to_message_id_access
 );

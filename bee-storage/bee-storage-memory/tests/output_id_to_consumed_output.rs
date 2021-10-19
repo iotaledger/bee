@@ -5,6 +5,6 @@
 mod access;
 
 impl_access_test!(
-    solid_entry_point_to_milestone_index_access_volatile,
-    solid_entry_point_to_milestone_index_access
+    output_id_to_consumed_output_access_memory,
+    output_id_to_consumed_output_access
 );

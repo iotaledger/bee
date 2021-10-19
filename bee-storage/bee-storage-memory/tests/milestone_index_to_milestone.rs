@@ -5,6 +5,6 @@
 mod access;
 
 impl_access_test!(
-    output_id_to_created_output_access_volatile,
-    output_id_to_created_output_access
+    milestone_index_to_milestone_access_memory,
+    milestone_index_to_milestone_access
 );

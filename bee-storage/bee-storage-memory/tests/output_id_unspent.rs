@@ -4,4 +4,4 @@
 #[macro_use]
 mod access;
 
-impl_access_test!(message_id_to_message_access_volatile, message_id_to_message_access);
+impl_access_test!(output_id_unspent_access_memory, output_id_unspent_access);

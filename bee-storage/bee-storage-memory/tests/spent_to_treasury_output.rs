@@ -5,6 +5,6 @@
 mod access;
 
 impl_access_test!(
-    ed25519_address_to_output_id_access_volatile,
-    ed25519_address_to_output_id_access
+    spent_to_treasury_output_access_memory,
+    spent_to_treasury_output_access
 );

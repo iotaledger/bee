@@ -5,6 +5,6 @@
 mod access;
 
 impl_access_test!(
-    spent_to_treasury_output_access_volatile,
-    spent_to_treasury_output_access
+    milestone_index_to_receipt_access_memory,
+    milestone_index_to_receipt_access
 );

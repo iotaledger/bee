@@ -5,6 +5,6 @@
 mod access;
 
 impl_access_test!(
-    milestone_index_to_unreferenced_message_access_volatile,
+    milestone_index_to_unreferenced_message_access_memory,
     milestone_index_to_unreferenced_message_access
 );

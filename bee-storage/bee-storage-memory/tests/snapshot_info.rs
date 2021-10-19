@@ -4,4 +4,4 @@
 #[macro_use]
 mod access;
 
-impl_access_test!(message_id_to_metadata_access_volatile, message_id_to_metadata_access);
+impl_access_test!(snapshot_info_access_memory, snapshot_info_access);

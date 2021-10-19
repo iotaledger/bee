@@ -3,12 +3,12 @@
 
 #[allow(unused_macros)]
 macro_rules! impl_access_test {
-    ($name_volatile:ident, $name:ident) => {
+    ($name_memory:ident, $name:ident) => {
         #[test]
-        fn $name_volatile() {
+        fn $name_memory() {
             use bee_storage::backend::StorageBackend;
 
-            let storage = bee_storage_volatile::storage::Storage::start(()).unwrap();
+            let storage = bee_storage_memory::storage::Storage::start(()).unwrap();
 
             bee_storage_test::$name(&storage);
         }

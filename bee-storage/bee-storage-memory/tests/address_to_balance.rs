@@ -4,4 +4,4 @@
 #[macro_use]
 mod access;
 
-impl_access_test!(address_to_balance_access_volatile, address_to_balance_access);
+impl_access_test!(address_to_balance_access_memory, address_to_balance_access);
