@@ -17,6 +17,11 @@ pub(crate) const AUTOPEERING_SERVICE_NAME: &str = "autopeering";
 pub struct ServiceMap(HashMap<ServiceName, Multiaddr>);
 
 impl ServiceMap {
+    /// Creates a new empty service map.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Registers a service with its bind address.
     pub fn insert(&mut self, service_name: ServiceName, multiaddr: Multiaddr) {
         self.0.insert(service_name, multiaddr);
@@ -122,6 +127,7 @@ impl fmt::Display for ServiceMap {
         write!(
             f,
             "{}",
+            // TODO: include udp/tcp and port
             self.0.keys().cloned().collect::<Vec<_>>().join(";").to_string()
         )
     }

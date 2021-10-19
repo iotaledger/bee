@@ -114,3 +114,28 @@ impl From<Peer> for proto::Peer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::service_map::AUTOPEERING_SERVICE_NAME;
+
+    use super::*;
+    use crypto::signatures::ed25519::SecretKey as PrivateKey;
+
+    impl Peer {
+        pub(crate) fn new_test_peer(index: u8) -> Self {
+            let mut services = ServiceMap::new();
+
+            services.insert(
+                AUTOPEERING_SERVICE_NAME.into(),
+                format!("/ip4/127.0.0.{}/udp/8080", index).parse().unwrap(),
+            );
+
+            Self {
+                ip_address: format!("127.0.0.{}", index).parse().unwrap(),
+                public_key: PrivateKey::generate().unwrap().public_key(),
+                services,
+            }
+        }
+    }
+}

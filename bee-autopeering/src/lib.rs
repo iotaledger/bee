@@ -11,6 +11,7 @@ mod delay;
 mod discovery;
 mod discovery_messages;
 mod distance;
+mod filter;
 mod hash;
 mod local;
 mod multiaddr;

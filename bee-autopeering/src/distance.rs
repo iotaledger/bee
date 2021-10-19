@@ -206,9 +206,10 @@ fn salted_distance(peer1: &PeerId, peer2: &PeerId, salt: &Salt) -> Distance {
 }
 
 fn concat<const N: usize, const M: usize>(bytes1: &[u8; N], bytes2: &[u8; M]) -> Vec<u8> {
-    let mut bytes = vec![0u8; bytes1.len() + bytes2.len()]; // N + M
+    let l: usize = N + M;
+    let mut bytes = vec![0u8; l];
     bytes[0..N].copy_from_slice(bytes1);
-    bytes[N..M].copy_from_slice(bytes2);
+    bytes[N..l].copy_from_slice(bytes2);
     bytes
 }
 
@@ -227,9 +228,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn create_neighborhood() {
+    fn neighborhood_size_limit() {
         let local = Local::new();
-        let nh = Neighborhood::<2>::new(local);
+        let mut outbound_nh = Neighborhood::<2, false>::new(local);
+        for i in 0u8..5 {
+            outbound_nh.insert_peer(Peer::new_test_peer(i));
+        }
+        assert_eq!(outbound_nh.num_neighbors(), 2);
     }
 
     #[test]

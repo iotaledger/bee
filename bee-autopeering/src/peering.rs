@@ -4,6 +4,7 @@
 use crate::{
     config::AutopeeringConfig,
     distance::{Neighborhood, SIZE_INBOUND, SIZE_OUTBOUND},
+    filter::Filter,
     hash,
     local::Local,
     packet::{IncomingPacket, MessageType, OutgoingPacket},
@@ -19,6 +20,9 @@ use crate::{
 use tokio::sync::mpsc;
 
 use std::{net::SocketAddr, time::Duration, vec};
+
+const DEFAULT_OUTBOUND_UPDATE_INTERVAL_SECS: u64 = 1;
+const DEFAULT_FULL_OUTBOUND_UPDATE_INTERVAL_SECS: u64 = 60;
 
 /// Peering related events.
 #[derive(Debug)]
@@ -281,9 +285,4 @@ where
             target_addr: SocketAddr::new(peer.ip_address(), port),
         });
     }
-}
-
-struct Filter {}
-impl Filter {
-    fn clean(&mut self) {}
 }
