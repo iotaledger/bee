@@ -76,7 +76,7 @@ fn apply_regular_essence<B: StorageBackend>(
         let essence_hash = Essence::from(essence.clone()).hash();
 
         match consumed_output.inner() {
-            Output::SignatureLockedSingle(output) => {
+            Output::Simple(output) => {
                 consumed_amount = consumed_amount
                     .checked_add(output.amount())
                     .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount as u128 + output.amount() as u128))?;
@@ -108,7 +108,7 @@ fn apply_regular_essence<B: StorageBackend>(
 
     for created_output in essence.outputs() {
         match created_output {
-            Output::SignatureLockedSingle(output) => {
+            Output::Simple(output) => {
                 created_amount = created_amount
                     .checked_add(output.amount())
                     .ok_or_else(|| Error::CreatedAmountOverflow(created_amount as u128 + output.amount() as u128))?;

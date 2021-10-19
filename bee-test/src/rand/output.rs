@@ -13,7 +13,7 @@ use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
 use bee_message::{
     constants::INPUT_OUTPUT_INDEX_RANGE,
     output::{
-        self, Output, OutputId, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput,
+        self, Output, OutputId, SignatureLockedDustAllowanceOutput, SimpleOutput,
         SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT, SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT, TREASURY_OUTPUT_AMOUNT,
     },
 };
@@ -28,9 +28,9 @@ pub fn rand_unspent_output_id() -> Unspent {
     Unspent::new(rand_output_id())
 }
 
-/// Generates a random signature locked single output.
-pub fn rand_signature_locked_single_output() -> SignatureLockedSingleOutput {
-    SignatureLockedSingleOutput::new(rand_address(), rand_number_range(SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT)).unwrap()
+/// Generates a random simple output.
+pub fn rand_simple_output() -> SimpleOutput {
+    SimpleOutput::new(rand_address(), rand_number_range(SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT)).unwrap()
 }
 
 /// Generates a random signature locked dust allowance output.
@@ -50,7 +50,7 @@ pub fn rand_treasury_output() -> output::TreasuryOutput {
 /// Generates a random output.
 pub fn rand_output() -> Output {
     match rand_number::<u64>() % 3 {
-        0 => rand_signature_locked_single_output().into(),
+        0 => rand_simple_output().into(),
         1 => rand_signature_locked_dust_allowance_output().into(),
         2 => rand_treasury_output().into(),
         _ => unreachable!(),
@@ -67,7 +67,7 @@ pub fn rand_created_output() -> CreatedOutput {
     CreatedOutput::new(
         rand_message_id(),
         match rand_number::<u64>() % 3 {
-            0 => rand_signature_locked_single_output().into(),
+            0 => rand_simple_output().into(),
             1 => rand_signature_locked_dust_allowance_output().into(),
             2 => rand_treasury_output().into(),
             _ => unreachable!(),

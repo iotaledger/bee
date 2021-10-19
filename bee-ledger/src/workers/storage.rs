@@ -151,9 +151,7 @@ pub(crate) fn insert_created_output_batch<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     match output.inner() {
-        Output::SignatureLockedSingle(output) => {
-            insert_output_id_for_address_batch(storage, batch, output.address(), output_id)
-        }
+        Output::Simple(output) => insert_output_id_for_address_batch(storage, batch, output.address(), output_id),
         Output::SignatureLockedDustAllowance(output) => {
             insert_output_id_for_address_batch(storage, batch, output.address(), output_id)
         }
@@ -173,9 +171,7 @@ pub(crate) fn delete_created_output_batch<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     match output.inner() {
-        Output::SignatureLockedSingle(output) => {
-            delete_output_id_for_address_batch(storage, batch, output.address(), output_id)
-        }
+        Output::Simple(output) => delete_output_id_for_address_batch(storage, batch, output.address(), output_id),
         Output::SignatureLockedDustAllowance(output) => {
             delete_output_id_for_address_batch(storage, batch, output.address(), output_id)
         }

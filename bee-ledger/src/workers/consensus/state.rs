@@ -25,7 +25,7 @@ fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) 
         let output = storage::fetch_output(storage, &*output_id)?.ok_or(Error::MissingUnspentOutput(output_id))?;
 
         let amount = match output.inner() {
-            output::Output::SignatureLockedSingle(output) => output.amount(),
+            output::Output::Simple(output) => output.amount(),
             output::Output::SignatureLockedDustAllowance(output) => output.amount(),
             output::Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(output.kind())),
         };

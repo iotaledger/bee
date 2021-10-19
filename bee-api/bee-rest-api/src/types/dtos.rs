@@ -8,7 +8,7 @@ use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
-    output::{Output, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, TreasuryOutput},
+    output::{Output, SignatureLockedDustAllowanceOutput, SimpleOutput, TreasuryOutput},
     parents::Parents,
     payload::{
         indexation::IndexationPayload,
@@ -309,7 +309,7 @@ pub struct TreasuryInputDto {
 /// Describes all the different output types.
 #[derive(Clone, Debug)]
 pub enum OutputDto {
-    SignatureLockedSingle(SignatureLockedSingleOutputDto),
+    SignatureLockedSingle(SimpleOutputDto),
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto),
     Treasury(TreasuryOutputDto),
 }
@@ -317,8 +317,8 @@ pub enum OutputDto {
 impl From<&Output> for OutputDto {
     fn from(value: &Output) -> Self {
         match value {
-            Output::SignatureLockedSingle(s) => OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
-                kind: SignatureLockedSingleOutput::KIND,
+            Output::SignatureLockedSingle(s) => OutputDto::SignatureLockedSingle(SimpleOutputDto {
+                kind: SimpleOutput::KIND,
                 address: s.address().into(),
                 amount: s.amount(),
             }),
@@ -342,7 +342,7 @@ impl TryFrom<&OutputDto> for Output {
 
     fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
         match value {
-            OutputDto::SignatureLockedSingle(s) => Ok(Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(
+            OutputDto::SignatureLockedSingle(s) => Ok(Output::SignatureLockedSingle(SimpleOutput::new(
                 (&s.address).try_into()?,
                 s.amount,
             )?)),
@@ -363,8 +363,8 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
                 .and_then(Value::as_u64)
                 .ok_or_else(|| serde::de::Error::custom("invalid output type"))? as u8
             {
-                SignatureLockedSingleOutput::KIND => OutputDto::SignatureLockedSingle(
-                    SignatureLockedSingleOutputDto::deserialize(value)
+                SimpleOutput::KIND => OutputDto::SignatureLockedSingle(
+                    SimpleOutputDto::deserialize(value)
                         .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
                 ),
                 SignatureLockedDustAllowanceOutput::KIND => OutputDto::SignatureLockedDustAllowance(
@@ -389,7 +389,7 @@ impl Serialize for OutputDto {
         #[derive(Serialize)]
         #[serde(untagged)]
         enum OutputDto_<'a> {
-            T1(&'a SignatureLockedSingleOutputDto),
+            T1(&'a SimpleOutputDto),
             T2(&'a SignatureLockedDustAllowanceOutputDto),
             T3(&'a TreasuryOutputDto),
         }
@@ -415,7 +415,7 @@ impl Serialize for OutputDto {
 
 /// Describes a deposit to a single address which is unlocked via a signature.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SignatureLockedSingleOutputDto {
+pub struct SimpleOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
     pub address: AddressDto,
@@ -774,7 +774,7 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
             .map_err(|_| Error::InvalidSyntaxField("tailTransactionHash"))?;
         Ok(MigratedFundsEntry::new(
             TailTransactionHash::new(tail_transaction_hash)?,
-            SignatureLockedSingleOutput::new((&value.address).try_into()?, value.deposit)?,
+            SimpleOutput::new((&value.address).try_into()?, value.deposit)?,
         )?)
     }
 }

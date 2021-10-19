@@ -125,7 +125,7 @@ impl BalanceDiffs {
     /// Adds an output to a `BalanceDiffs`.
     pub fn output_add(&mut self, output: &Output) -> Result<(), Error> {
         match output {
-            Output::SignatureLockedSingle(output) => {
+            Output::Simple(output) => {
                 self.amount_add(*output.address(), output.amount())?;
                 if output.amount() < DUST_THRESHOLD {
                     self.dust_outputs_inc(*output.address())?;
@@ -144,7 +144,7 @@ impl BalanceDiffs {
     /// Subtracts an output from a BalanceDiffs`.
     pub fn output_sub(&mut self, output: &Output) -> Result<(), Error> {
         match output {
-            Output::SignatureLockedSingle(output) => {
+            Output::Simple(output) => {
                 self.amount_sub(*output.address(), output.amount())?;
                 if output.amount() < DUST_THRESHOLD {
                     self.dust_outputs_dec(*output.address())?;

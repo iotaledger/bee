@@ -73,7 +73,7 @@ pub(crate) async fn migration_from_milestone(
         match receipt.inner().transaction() {
             Payload::TreasuryTransaction(treasury) => match treasury.output() {
                 Output::Treasury(output) => output.clone(),
-                Output::SignatureLockedDustAllowance(_) | Output::SignatureLockedSingle(_) => {
+                Output::SignatureLockedDustAllowance(_) | Output::Simple(_) => {
                     return Err(Error::UnsupportedOutputKind(treasury.output().kind()));
                 }
             },

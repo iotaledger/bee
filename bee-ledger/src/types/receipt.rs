@@ -69,7 +69,7 @@ impl Receipt {
 
         let created_treasury_output = match transaction.output() {
             Output::Treasury(output) => output,
-            Output::SignatureLockedDustAllowance(_) | Output::SignatureLockedSingle(_) => {
+            Output::SignatureLockedDustAllowance(_) | Output::Simple(_) => {
                 return Err(Error::UnsupportedOutputKind(transaction.output().kind()));
             }
         };
