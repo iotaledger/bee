@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod alias;
+mod alias_id;
 mod extended;
 mod feature_block;
 mod foundry;
@@ -13,6 +14,7 @@ mod token_id;
 mod treasury;
 
 pub use alias::AliasOutput;
+pub use alias_id::AliasId;
 pub use extended::{ExtendedOutput, ExtendedOutputBuilder};
 pub use feature_block::FeatureBlock;
 pub use foundry::FoundryOutput;
