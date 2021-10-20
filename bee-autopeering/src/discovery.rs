@@ -291,7 +291,8 @@ impl<S: PeerStore> DiscoveryManager<S> {
             let mut peer = Peer::new(entry_socketaddr.ip(), entry_addr.public_key().clone());
             peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, entry_socketaddr.port());
 
-            send_verification_request(&peer, &request_mngr, &server_tx);
+            println!("{:?}", peer);
+            // send_verification_request(&peer, &request_mngr, &server_tx);
         }
 
         loop {
@@ -388,7 +389,8 @@ fn validate_verification_request(verif_req: &VerificationRequest, version: u32, 
     } else if request::is_expired(verif_req.timestamp()) {
         false
     } else {
-        // NOTE: the validity of the transmitted source and target addresses is ensured through the `VerificationRequest` type.
+        // NOTE: the validity of the transmitted source and target addresses is ensured through the
+        // `VerificationRequest` type.
         true
     }
 }
