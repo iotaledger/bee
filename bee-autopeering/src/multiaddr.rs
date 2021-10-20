@@ -23,7 +23,7 @@ const PUBKEY_BASE58_SIZE_RANGE: RangeInclusive<usize> = 42..=44;
 /// that, so what we'll do is to introduce a wrapper type, which understands Hornet's custom multiaddr, and internally
 /// stores the address part and the key part separatedly. The details are abstracted away and the behavior identical
 /// to a standard libp2p multiaddress.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
 pub struct AutopeeringMultiaddr {
     host_multiaddr: Multiaddr,
     public_key: PublicKey,
@@ -56,16 +56,6 @@ impl AutopeeringMultiaddr {
     }
 }
 
-#[derive(Debug)]
-pub enum Error {
-    /// Returned, if the host address part wasn't a valid multi address.
-    InvalidHostAddressPart,
-    /// Returned, if the public key part wasn't a base58 encoded ed25519 public key.
-    InvalidPubKeyPart,
-    /// Returned, if it's not a valid autopeering multi address.
-    InvalidAutopeeringMultiaddr,
-}
-
 impl<'de> Deserialize<'de> for AutopeeringMultiaddr {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -80,27 +70,33 @@ impl Serialize for AutopeeringMultiaddr {
     where
         S: Serializer,
     {
-        let s = format!(
-            "{}/{}/{}",
-            self.host_multiaddr.to_string(),
-            AUTOPEERING_MULTIADDR_PROTOCOL_NAME,
-            from_pubkey_to_base58(&self.public_key),
-        );
-
+        let s = format_autopeering_multiaddr(&self.host_multiaddr, &self.public_key);
         serializer.serialize_str(&s)
+    }
+}
+
+impl fmt::Debug for AutopeeringMultiaddr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AutopeeringMultiaddr")
+            .field("host_multiaddr", &self.host_multiaddr)
+            .field("public_key", &from_pubkey_to_base58(&self.public_key))
+            .finish()
     }
 }
 
 impl fmt::Display for AutopeeringMultiaddr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}/{}/{}",
-            self.host_multiaddr.to_string(),
-            AUTOPEERING_MULTIADDR_PROTOCOL_NAME,
-            from_pubkey_to_base58(&self.public_key),
-        )
+        f.write_str(&format_autopeering_multiaddr(&self.host_multiaddr, &self.public_key))
     }
+}
+
+fn format_autopeering_multiaddr(host_multiaddr: &Multiaddr, public_key: &PublicKey) -> String {
+    format!(
+        "{}/{}/{}",
+        host_multiaddr,
+        AUTOPEERING_MULTIADDR_PROTOCOL_NAME,
+        from_pubkey_to_base58(public_key),
+    )
 }
 
 impl FromStr for AutopeeringMultiaddr {
@@ -165,6 +161,16 @@ pub(crate) fn from_base58_to_pubkey(base58_pubkey: impl AsRef<str>) -> PublicKey
         .into(&mut bytes)
         .expect("error decoding base58 pubkey");
     PublicKey::try_from_bytes(bytes).expect("error restoring public key from bytes")
+}
+
+#[derive(Debug)]
+pub enum Error {
+    /// Returned, if the host address part wasn't a valid multi address.
+    InvalidHostAddressPart,
+    /// Returned, if the public key part wasn't a base58 encoded ed25519 public key.
+    InvalidPubKeyPart,
+    /// Returned, if it's not a valid autopeering multi address.
+    InvalidAutopeeringMultiaddr,
 }
 
 #[cfg(test)]
