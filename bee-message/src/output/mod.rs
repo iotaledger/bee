@@ -8,6 +8,7 @@ mod foundry;
 mod nft;
 mod output_id;
 mod simple;
+mod token_id;
 mod treasury;
 
 pub use alias::AliasOutput;
@@ -17,6 +18,7 @@ pub use foundry::FoundryOutput;
 pub use nft::NftOutput;
 pub use output_id::{OutputId, OUTPUT_ID_LENGTH};
 pub use simple::{SimpleOutput, SIMPLE_OUTPUT_AMOUNT};
+pub use token_id::TokenId;
 pub use treasury::{TreasuryOutput, TREASURY_OUTPUT_AMOUNT};
 
 use crate::Error;
