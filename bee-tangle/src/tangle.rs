@@ -616,6 +616,8 @@ impl<B: StorageBackend> Tangle<B> {
                         "could not perform cache eviction after {} attempts",
                         MAX_EVICTION_RETRIES
                     );
+
+                    break;
                 }
             }
         }
