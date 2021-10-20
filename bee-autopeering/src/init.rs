@@ -32,7 +32,7 @@ where
     Q: Future + Send + 'static,
 {
     // Create a bus to distribute the shutdown signal to all spawned tasks.
-    let (shutdown_bus, mut shutdown_rxs) = ShutdownBus::new(4);
+    let (shutdown_bus, mut shutdown_reg) = ShutdownBus::<4>::new();
     tokio::spawn(async move {
         quit_signal.await;
         shutdown_bus.trigger();
@@ -53,8 +53,8 @@ where
     // Spawn the server handling the socket I/O.
     let server_config = ServerConfig::new(&config);
     // Unwrap: we ensured there are enough items in the vec.
-    let incoming_shutdown_rx = shutdown_rxs.pop().unwrap();
-    let outgoing_shutdown_rx = shutdown_rxs.pop().unwrap();
+    let incoming_shutdown_rx = shutdown_reg.register();
+    let outgoing_shutdown_rx = shutdown_reg.register();
     let (server, outgoing_tx) = Server::new(
         server_config,
         local.clone(),
@@ -82,7 +82,7 @@ where
     // Spawn the discovery manager handling discovery requests/responses.
     let discovery_config = DiscoveryManagerConfig::new(&config, version, network_id);
     let discovery_socket = ServerSocket::new(discover_rx, outgoing_tx.clone());
-    let shutdown_rx = shutdown_rxs.pop().unwrap();
+    let shutdown_rx = shutdown_reg.register();
     let (discovery_mngr, discovery_event_rx) = DiscoveryManager::new(
         discovery_config,
         local.clone(),
@@ -97,7 +97,7 @@ where
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
     let peering_config = PeeringManagerConfig::new(&config, version, network_id);
     let peering_socket = ServerSocket::new(peering_rx, outgoing_tx);
-    let shutdown_rx = shutdown_rxs.pop().unwrap();
+    let shutdown_rx = shutdown_reg.register();
     let (peering_mngr, peering_event_rx) = PeeringManager::new(
         peering_config,
         local.clone(),
