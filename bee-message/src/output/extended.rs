@@ -12,7 +12,7 @@ pub struct ExtendedOutput {}
 
 impl ExtendedOutput {
     /// The output kind of an `ExtendedOutput`.
-    pub const KIND: u8 = 3;
+    pub const KIND: u8 = 1;
 
     /// Creates a new `ExtendedOutput`.
     pub fn new() -> Self {

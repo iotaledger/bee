@@ -12,7 +12,7 @@ pub struct FoundryOutput {}
 
 impl FoundryOutput {
     /// The output kind of a `FoundryOutput`.
-    pub const KIND: u8 = 5;
+    pub const KIND: u8 = 4;
 
     /// Creates a new `FoundryOutput`.
     pub fn new() -> Self {

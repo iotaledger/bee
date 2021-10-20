@@ -12,7 +12,7 @@ pub struct NftOutput {}
 
 impl NftOutput {
     /// The output kind of a `NftOutput`.
-    pub const KIND: u8 = 6;
+    pub const KIND: u8 = 5;
 
     /// Creates a new `NftOutput`.
     pub fn new() -> Self {

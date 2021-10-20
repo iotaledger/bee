@@ -12,7 +12,7 @@ pub struct AliasOutput {}
 
 impl AliasOutput {
     /// The output kind of an `AliasOutput`.
-    pub const KIND: u8 = 4;
+    pub const KIND: u8 = 3;
 
     /// Creates a new `AliasOutput`.
     pub fn new() -> Self {
