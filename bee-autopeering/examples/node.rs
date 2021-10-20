@@ -21,17 +21,19 @@ fn setup_fern(level: LevelFilter) {
 }
 
 fn setup_config() -> AutopeeringConfig {
+    /*
     let config_json = r#"
     {
         "bindAddress": "0.0.0.0:14627",
         "entryNodes": [
             "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
             "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
-            "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2", 
+            "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
             "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"     ],
         "entryNodesPreferIPv6": false,
         "runAsEntryNode": false
     }"#;
+    */
 
     /*
     let config_json = r#"
@@ -44,6 +46,16 @@ fn setup_config() -> AutopeeringConfig {
         "runAsEntryNode": false
     }"#;
     */
+
+    let config_json = r#"
+    {
+        "bindAddress": "0.0.0.0:14627",
+        "entryNodes": [
+            "/dns/localhost/udp/14626/autopeering/CFWngmfyHryEFtgaYWmFVnHhMP5ijvuEPQuYN4UkjSyC"
+        ],
+        "entryNodesPreferIPv6": false,
+        "runAsEntryNode": false
+    }"#;
 
     serde_json::from_str(config_json).expect("error deserializing json config")
 }

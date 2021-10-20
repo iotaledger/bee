@@ -291,8 +291,8 @@ impl<S: PeerStore> DiscoveryManager<S> {
             let mut peer = Peer::new(entry_socketaddr.ip(), entry_addr.public_key().clone());
             peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, entry_socketaddr.port());
 
-            println!("{:?}", peer);
-            send_verification_request(&peer, &request_mngr, &server_tx);
+            // send_verification_request(&peer, &request_mngr, &server_tx);
+            send_discovery_request(&peer, &request_mngr, &server_tx);
         }
 
         loop {
@@ -515,9 +515,27 @@ fn handle_verification_response() {
     todo!()
 }
 
-fn send_discovery_request() {
-    // we initiate a discovery request
-    todo!()
+fn send_discovery_request(target: &Peer, request_mngr: &RequestManager, server_tx: &ServerTx) {
+    log::debug!("Sending discovery request to: {:?}", target);
+
+    let disc_req = request_mngr.new_discovery_request(target.peer_id(), target.ip_address());
+    let disc_req_bytes = disc_req
+        .protobuf()
+        .expect("error encoding verification request")
+        .to_vec();
+
+    let port = target
+        .services()
+        .port(AUTOPEERING_SERVICE_NAME)
+        .expect("peer doesn't support autopeering");
+
+    server_tx
+        .send(OutgoingPacket {
+            msg_type: MessageType::DiscoveryRequest,
+            msg_bytes: disc_req_bytes,
+            target_addr: SocketAddr::new(target.ip_address(), port),
+        })
+        .expect("error sending discovery request to server");
 }
 
 fn validate_discovery_request(disc_req: &DiscoveryRequest) -> bool {

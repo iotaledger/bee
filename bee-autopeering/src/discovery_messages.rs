@@ -215,7 +215,7 @@ impl DiscoveryResponse {
 
     pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
         let proto::DiscoveryResponse { req_hash, peers } = proto::DiscoveryResponse::decode(bytes)?;
-        let peers = peers.into_iter().map(|peer| peer.into()).collect();
+        let peers = peers.into_iter().map(proto::Peer::into).collect();
 
         Ok(Self {
             request_hash: req_hash,
@@ -224,7 +224,7 @@ impl DiscoveryResponse {
     }
 
     pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
-        let peers = self.peers.clone().into_iter().map(|peer| peer.into()).collect();
+        let peers = self.peers.clone().into_iter().map(Peer::into).collect();
 
         let disc_res = proto::DiscoveryResponse {
             req_hash: self.request_hash.clone(),
