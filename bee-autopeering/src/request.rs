@@ -9,6 +9,7 @@ use crate::{
     hash,
     identity::PeerId,
     local::Local,
+    packet::{msg_hash, MessageType},
     peering_messages::PeeringRequest,
     salt::Salt,
     time::{self, Timestamp},
@@ -80,7 +81,10 @@ impl RequestManager {
             target_addr,
         };
 
-        let request_hash = hash::sha256(&verif_req.protobuf().expect("error encoding verification request"));
+        let request_hash = msg_hash(
+            MessageType::VerificationRequest,
+            &verif_req.protobuf().expect("error encoding verification request"),
+        );
 
         let value = RequestValue {
             request_hash,
@@ -106,7 +110,10 @@ impl RequestManager {
 
         let disc_req = DiscoveryRequest { timestamp };
 
-        let request_hash = hash::sha256(&disc_req.protobuf().expect("error encoding discovery request"));
+        let request_hash = msg_hash(
+            MessageType::DiscoveryRequest,
+            &disc_req.protobuf().expect("error encoding discovery request"),
+        );
 
         let value = RequestValue {
             request_hash,
@@ -135,7 +142,10 @@ impl RequestManager {
             salt: self.local.public_salt().expect("missing public salt"),
         };
 
-        let request_hash = hash::sha256(&peer_req.protobuf().expect("error encoding peering request"));
+        let request_hash = msg_hash(
+            MessageType::PeeringRequest,
+            &peer_req.protobuf().expect("error encoding peering request"),
+        );
 
         let value = RequestValue {
             request_hash,

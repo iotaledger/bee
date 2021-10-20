@@ -8,9 +8,7 @@ use prost::bytes::{Buf, Bytes};
 use std::{
     cmp,
     collections::{BTreeMap, BTreeSet},
-    fmt,
-    fmt::Display,
-    vec,
+    fmt, vec,
 };
 
 pub(crate) type Distance = u32;
@@ -39,7 +37,7 @@ impl PeerDistance {
     }
 }
 
-impl Display for PeerDistance {
+impl fmt::Display for PeerDistance {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}:{}", self.peer().peer_id(), self.distance())
     }

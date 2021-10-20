@@ -292,7 +292,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
             peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, entry_socketaddr.port());
 
             println!("{:?}", peer);
-            // send_verification_request(&peer, &request_mngr, &server_tx);
+            send_verification_request(&peer, &request_mngr, &server_tx);
         }
 
         loop {
@@ -476,6 +476,8 @@ fn reply_with_verification_request(
 }
 
 fn send_verification_request(target: &Peer, request_mngr: &RequestManager, server_tx: &ServerTx) {
+    log::debug!("Sending verification request to: {:?}", target);
+
     let verif_req = request_mngr.new_verification_request(target.peer_id(), target.ip_address());
     let verif_req_bytes = verif_req
         .protobuf()
