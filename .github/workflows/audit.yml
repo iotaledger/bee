@@ -10,6 +10,7 @@ on:
     paths:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
+      - ".github/workflows/audit.yml"
   pull_request:
     branches:
       - dev
@@ -17,13 +18,14 @@ on:
     paths:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
+      - ".github/workflows/audit.yml"
 
 jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: cp -r .github/Workflows/.cargo .cargo
+      - run: cp -r .github/workflows/.cargo .cargo
       - uses: actions-rs/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
