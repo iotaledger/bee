@@ -8,7 +8,9 @@ use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 
 #[rustfmt::skip]
-// From Hornet config:
+// We adhere to Hornet's autopeering config:
+//
+// ```json
 // "autopeering": {
 //     "bindAddress": "0.0.0.0:14626",
 //     "entryNodes": [
@@ -20,6 +22,7 @@ use std::net::SocketAddr;
 //     "entryNodesPreferIPv6": false,
 //     "runAsEntryNode": false
 // }
+// ```
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename = "autopeering")]

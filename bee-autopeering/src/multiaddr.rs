@@ -7,6 +7,7 @@ use serde::{
     de::{self, Visitor},
     Deserialize, Serialize, Serializer,
 };
+use tokio::net::{lookup_host, ToSocketAddrs};
 
 use std::{
     fmt,
@@ -25,34 +26,74 @@ const PUBKEY_BASE58_SIZE_RANGE: RangeInclusive<usize> = 42..=44;
 /// to a standard libp2p multiaddress.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
 pub struct AutopeeringMultiaddr {
-    host_multiaddr: Multiaddr,
+    address: Multiaddr,
     public_key: PublicKey,
+    resolved_addrs: Vec<SocketAddr>,
 }
 
 impl AutopeeringMultiaddr {
-    pub fn host_multiaddr(&self) -> &Multiaddr {
-        &self.host_multiaddr
+    /// Returns the address part.
+    pub fn address(&self) -> &Multiaddr {
+        &self.address
     }
 
-    pub fn host_socketaddr(&self) -> SocketAddr {
-        let mut multiaddr_iter = self.host_multiaddr().iter();
+    /// Returns the corresponding [`SocketAddr`] iff it contains an IPv4 or IPv6 address.
+    ///
+    /// Note: If the [`Multiaddr`] contains a DNS address, then `None` will be returned. In that case you
+    /// should call `resolve_dns` and then `resolved_addrs` to get the corresponding [`SocketAddr`]s.
+    pub fn socket_addr(&self) -> Option<SocketAddr> {
+        let mut multiaddr_iter = self.address().iter();
 
         let ip_addr = match multiaddr_iter.next().expect("error extracting ip address") {
             Protocol::Ip4(ip4_addr) => IpAddr::V4(ip4_addr),
             Protocol::Ip6(ip6_addr) => IpAddr::V6(ip6_addr),
+            Protocol::Dns(_) => return None,
             _ => panic!("invalid multiaddr"),
         };
 
         let port = match multiaddr_iter.next().expect("error extracting port") {
             Protocol::Udp(port) => port,
-            _ => panic!("invalid multiaddr"),
+            _ => panic!("invalid autopeering multiaddr"),
         };
 
-        SocketAddr::new(ip_addr, port)
+        Some(SocketAddr::new(ip_addr, port))
     }
 
+    /// Returns the [`PublicKey`].
     pub fn public_key(&self) -> &PublicKey {
         &self.public_key
+    }
+
+    /// Returns the resolved [`SocketAddr`]s determined by the last call to `resolve_dns`. If that method
+    /// was never called before, the returned slice will be empty.
+    pub fn resolved_addrs(&self) -> &[SocketAddr] {
+        &self.resolved_addrs[..]
+    }
+
+    /// Performs DNS resolution if this multiaddr contains a DNS address.
+    pub async fn resolve_dns(&mut self) -> bool {
+        self.resolved_addrs.clear();
+
+        let mut address_iter = self.address.iter();
+
+        let dns = match address_iter.next().expect("error extracting ip address") {
+            Protocol::Dns(dns) => dns,
+            _ => return false,
+        };
+
+        let port = match address_iter.next().expect("error extracting port") {
+            Protocol::Udp(port) => port,
+            _ => panic!("invalid autopeering multiaddr"),
+        };
+
+        let host = format!("{}:{}", dns.as_ref(), port);
+
+        if let Ok(socket_addrs) = lookup_host(host).await {
+            self.resolved_addrs.extend(socket_addrs);
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -70,7 +111,7 @@ impl Serialize for AutopeeringMultiaddr {
     where
         S: Serializer,
     {
-        let s = format_autopeering_multiaddr(&self.host_multiaddr, &self.public_key);
+        let s = format_autopeering_multiaddr(&self.address, &self.public_key);
         serializer.serialize_str(&s)
     }
 }
@@ -78,7 +119,7 @@ impl Serialize for AutopeeringMultiaddr {
 impl fmt::Debug for AutopeeringMultiaddr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AutopeeringMultiaddr")
-            .field("host_multiaddr", &self.host_multiaddr)
+            .field("host_multiaddr", &self.address)
             .field("public_key", &from_pubkey_to_base58(&self.public_key))
             .finish()
     }
@@ -86,7 +127,7 @@ impl fmt::Debug for AutopeeringMultiaddr {
 
 impl fmt::Display for AutopeeringMultiaddr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&format_autopeering_multiaddr(&self.host_multiaddr, &self.public_key))
+        f.write_str(&format_autopeering_multiaddr(&self.address, &self.public_key))
     }
 }
 
@@ -117,10 +158,12 @@ impl FromStr for AutopeeringMultiaddr {
 
         let address = parts[0].parse().map_err(|_| Error::InvalidHostAddressPart)?;
         let public_key = from_base58_to_pubkey(parts[1]);
+        let resolved_addrs = Vec::new();
 
         Ok(Self {
-            host_multiaddr: address,
+            address,
             public_key,
+            resolved_addrs,
         })
     }
 }

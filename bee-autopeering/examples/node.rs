@@ -51,7 +51,7 @@ async fn main() {
     let quit_signal = Box::pin(async move { ctrl_c().await });
 
     let (mut discovery_rx, mut peering_rx) = bee_autopeering::init::<InMemoryPeerStore, _>(
-        config,
+        config.clone(),
         version,
         network_id,
         local,
@@ -60,6 +60,8 @@ async fn main() {
     )
     .await
     .expect("initializing autopeering system failed");
+
+    print_resolved_entry_nodes(config).await;
 
     loop {
         tokio::select! {
@@ -83,3 +85,17 @@ async fn main() {
 
 fn handle_discovery_event(discovery_event: DiscoveryEvent) {}
 fn handle_peering_event(peering_event: PeeringEvent) {}
+
+async fn print_resolved_entry_nodes(config: AutopeeringConfig) {
+    let AutopeeringConfig { entry_nodes, .. } = config;
+    for mut entry_node_addr in entry_nodes {
+        if entry_node_addr.resolve_dns().await {
+            let resolved_addrs = entry_node_addr.resolved_addrs();
+            for resolved_addr in resolved_addrs {
+                println!("{} ---> {}", entry_node_addr.address(), resolved_addr);
+            }
+        } else {
+            println!("{} ---> unresolvable", entry_node_addr.address());
+        }
+    }
+}
