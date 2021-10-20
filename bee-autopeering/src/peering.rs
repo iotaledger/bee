@@ -17,6 +17,7 @@ use crate::{
     salt::{self, Salt},
     server::{ServerSocket, ServerTx},
     service_map::AUTOPEERING_SERVICE_NAME,
+    shutdown::ShutdownRx,
 };
 
 use tokio::sync::mpsc;
@@ -99,6 +100,8 @@ pub(crate) struct PeeringManager<S> {
     outbound_nh: OutboundNeighborhood,
     // The peer rejection filter.
     rejection_filter: RejectionFilter,
+    // The shutdown signal receiver.
+    shutdown_rx: ShutdownRx,
 }
 
 impl<S: PeerStore> PeeringManager<S> {
@@ -108,6 +111,7 @@ impl<S: PeerStore> PeeringManager<S> {
         socket: ServerSocket,
         request_mngr: RequestManager,
         peerstore: S,
+        shutdown_rx: ShutdownRx,
     ) -> (Self, PeeringEventRx) {
         let (event_tx, event_rx) = event_chan();
 
@@ -127,6 +131,7 @@ impl<S: PeerStore> PeeringManager<S> {
                 inbound_nh,
                 outbound_nh,
                 rejection_filter,
+                shutdown_rx,
             },
             event_rx,
         )
@@ -143,6 +148,7 @@ impl<S: PeerStore> PeeringManager<S> {
             mut inbound_nh,
             mut outbound_nh,
             mut rejection_filter,
+            mut shutdown_rx,
         } = self;
 
         let PeeringManagerConfig {
@@ -158,55 +164,62 @@ impl<S: PeerStore> PeeringManager<S> {
         } = socket;
 
         loop {
-            if let Some(IncomingPacket {
-                msg_type,
-                msg_bytes,
-                source_addr,
-                peer_id,
-            }) = server_rx.recv().await
-            {
-                match msg_type {
-                    MessageType::PeeringRequest => {
-                        let peering_req =
-                            PeeringRequest::from_protobuf(&msg_bytes).expect("error decoding peering request");
+            tokio::select! {
+                _ = &mut shutdown_rx => {
+                    break;
+                }
+                o = server_rx.recv() => {
+                    if let Some(IncomingPacket {
+                        msg_type,
+                        msg_bytes,
+                        source_addr,
+                        peer_id,
+                    }) = o
+                    {
+                        match msg_type {
+                            MessageType::PeeringRequest => {
+                                let peering_req =
+                                    PeeringRequest::from_protobuf(&msg_bytes).expect("error decoding peering request");
 
-                        if !validate_peering_request(&peering_req, &peer_id, &peerstore) {
-                            log::debug!("Received invalid peering request: {:?}", peering_req);
-                            continue;
+                                if !validate_peering_request(&peering_req, &peer_id, &peerstore) {
+                                    log::debug!("Received invalid peering request: {:?}", peering_req);
+                                    continue;
+                                }
+
+                                handle_peering_request(&peering_req, &msg_bytes, &server_tx, source_addr);
+                            }
+                            MessageType::PeeringResponse => {
+                                let peering_res =
+                                    PeeringResponse::from_protobuf(&msg_bytes).expect("error decoding peering response");
+
+                                if !validate_peering_response(&peering_res, &peer_id, &request_mngr) {
+                                    log::debug!("Received invalid peering response: {:?}", peering_res);
+                                    continue;
+                                }
+
+                                handle_peering_response(&peering_res);
+                            }
+                            MessageType::DropRequest => {
+                                let drop_req = DropRequest::from_protobuf(&msg_bytes).expect("error decoding drop request");
+
+                                if !validate_drop_request(&drop_req) {
+                                    log::debug!("Received invalid drop request: {:?}", drop_req);
+                                    continue;
+                                }
+
+                                handle_drop_request(
+                                    &drop_req,
+                                    peer_id,
+                                    &mut inbound_nh,
+                                    &mut outbound_nh,
+                                    &mut rejection_filter,
+                                    &server_tx,
+                                    source_addr,
+                                );
+                            }
+                            _ => panic!("unsupported peering message type"),
                         }
-
-                        handle_peering_request(&peering_req, &msg_bytes, &server_tx, source_addr);
                     }
-                    MessageType::PeeringResponse => {
-                        let peering_res =
-                            PeeringResponse::from_protobuf(&msg_bytes).expect("error decoding peering response");
-
-                        if !validate_peering_response(&peering_res, &peer_id, &request_mngr) {
-                            log::debug!("Received invalid peering response: {:?}", peering_res);
-                            continue;
-                        }
-
-                        handle_peering_response(&peering_res);
-                    }
-                    MessageType::DropRequest => {
-                        let drop_req = DropRequest::from_protobuf(&msg_bytes).expect("error decoding drop request");
-
-                        if !validate_drop_request(&drop_req) {
-                            log::debug!("Received invalid drop request: {:?}", drop_req);
-                            continue;
-                        }
-
-                        handle_drop_request(
-                            &drop_req,
-                            peer_id,
-                            &mut inbound_nh,
-                            &mut outbound_nh,
-                            &mut rejection_filter,
-                            &server_tx,
-                            source_addr,
-                        );
-                    }
-                    _ => panic!("unsupported peering message type"),
                 }
             }
         }

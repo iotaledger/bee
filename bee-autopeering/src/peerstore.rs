@@ -101,7 +101,7 @@ impl PeerStore for InMemoryPeerStore {
     }
 }
 
-pub(crate) struct SledPeerStoreConfig {
+pub struct SledPeerStoreConfig {
     pub(crate) file_path: PathBuf,
 }
 
@@ -122,7 +122,7 @@ impl Default for SledPeerStoreConfig {
 }
 
 #[derive(Clone)]
-pub(crate) struct SledPeerStore {
+pub struct SledPeerStore {
     db: Db,
 }
 

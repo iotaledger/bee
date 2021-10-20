@@ -17,6 +17,7 @@ use crate::{
     request::{self, RequestManager},
     server::{ServerSocket, ServerTx},
     service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
+    shutdown::ShutdownRx,
     time,
 };
 
@@ -197,6 +198,8 @@ pub(crate) struct DiscoveryManager<S> {
     //
     active_peers: HashSet<Peer>,
     replacement_peers: HashSet<Peer>,
+    // The shutdown signal receiver.
+    shutdown_rx: ShutdownRx,
 }
 
 impl<S: PeerStore> DiscoveryManager<S> {
@@ -206,6 +209,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
         socket: ServerSocket,
         request_mngr: RequestManager,
         peerstore: S,
+        shutdown_rx: ShutdownRx,
     ) -> (Self, DiscoveryEventRx) {
         let (event_tx, event_rx) = event_chan();
         (
@@ -218,6 +222,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
                 peerstore,
                 active_peers: HashSet::default(),
                 replacement_peers: HashSet::default(),
+                shutdown_rx,
             },
             event_rx,
         )
@@ -233,6 +238,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
             peerstore,
             active_peers,
             replacement_peers,
+            mut shutdown_rx,
         } = self;
 
         let DiscoveryManagerConfig {
@@ -250,70 +256,77 @@ impl<S: PeerStore> DiscoveryManager<S> {
         } = socket;
 
         loop {
-            if let Some(IncomingPacket {
-                msg_type,
-                msg_bytes,
-                source_addr,
-                peer_id,
-            }) = server_rx.recv().await
-            {
-                match msg_type {
-                    MessageType::VerificationRequest => {
-                        let verif_req = VerificationRequest::from_protobuf(&msg_bytes)
-                            .expect("error decoding verification request");
+            tokio::select! {
+                _ = &mut shutdown_rx => {
+                    break;
+                }
+                o = server_rx.recv() => {
+                    if let Some(IncomingPacket {
+                        msg_type,
+                        msg_bytes,
+                        source_addr,
+                        peer_id,
+                    }) = o
+                    {
+                        match msg_type {
+                            MessageType::VerificationRequest => {
+                                let verif_req = VerificationRequest::from_protobuf(&msg_bytes)
+                                    .expect("error decoding verification request");
 
-                        if !validate_verification_request(&verif_req, version, network_id) {
-                            log::debug!("Received invalid verification request: {:?}", verif_req);
-                            continue;
+                                if !validate_verification_request(&verif_req, version, network_id) {
+                                    log::debug!("Received invalid verification request: {:?}", verif_req);
+                                    continue;
+                                }
+
+                                handle_verification_request(
+                                    &verif_req,
+                                    &peer_id,
+                                    &msg_bytes,
+                                    &server_tx,
+                                    source_addr,
+                                    &local,
+                                    &peerstore,
+                                    &request_mngr,
+                                );
+                            }
+                            MessageType::VerificationResponse => {
+                                let verif_res = VerificationResponse::from_protobuf(&msg_bytes)
+                                    .expect("error decoding verification response");
+
+                                if !validate_verification_response(&verif_res, &request_mngr, &peer_id) {
+                                    log::debug!("Received invalid verification response: {:?}", verif_res);
+                                    continue;
+                                }
+
+                                handle_verification_response();
+                            }
+                            MessageType::DiscoveryRequest => {
+                                let disc_req =
+                                    DiscoveryRequest::from_protobuf(&msg_bytes).expect("error decoding discover request");
+
+                                if !validate_discovery_request(&disc_req) {
+                                    log::debug!("Received invalid discovery request: {:?}", disc_req);
+                                    continue;
+                                }
+
+                                let request_hash = &hash::sha256(&msg_bytes)[..];
+
+                                send_discovery_response(request_hash, &server_tx, source_addr);
+                            }
+                            MessageType::DiscoveryResponse => {
+                                let disc_res =
+                                    DiscoveryResponse::from_protobuf(&msg_bytes).expect("error decoding discovery response");
+
+                                if !validate_discovery_response(&disc_res, &request_mngr, &peer_id) {
+                                    log::debug!("Received invalid discovery response: {:?}", disc_res);
+                                    continue;
+                                }
+
+                                handle_discovery_response();
+                            }
+                            _ => panic!("unsupported discovery message type"),
                         }
-
-                        handle_verification_request(
-                            &verif_req,
-                            &peer_id,
-                            &msg_bytes,
-                            &server_tx,
-                            source_addr,
-                            &local,
-                            &peerstore,
-                            &request_mngr,
-                        );
                     }
-                    MessageType::VerificationResponse => {
-                        let verif_res = VerificationResponse::from_protobuf(&msg_bytes)
-                            .expect("error decoding verification response");
-
-                        if !validate_verification_response(&verif_res, &request_mngr, &peer_id) {
-                            log::debug!("Received invalid verification response: {:?}", verif_res);
-                            continue;
-                        }
-
-                        handle_verification_response();
-                    }
-                    MessageType::DiscoveryRequest => {
-                        let disc_req =
-                            DiscoveryRequest::from_protobuf(&msg_bytes).expect("error decoding discover request");
-
-                        if !validate_discovery_request(&disc_req) {
-                            log::debug!("Received invalid discovery request: {:?}", disc_req);
-                            continue;
-                        }
-
-                        let request_hash = &hash::sha256(&msg_bytes)[..];
-
-                        send_discovery_response(request_hash, &server_tx, source_addr);
-                    }
-                    MessageType::DiscoveryResponse => {
-                        let disc_res =
-                            DiscoveryResponse::from_protobuf(&msg_bytes).expect("error decoding discovery response");
-
-                        if !validate_discovery_response(&disc_res, &request_mngr, &peer_id) {
-                            log::debug!("Received invalid discovery response: {:?}", disc_res);
-                            continue;
-                        }
-
-                        handle_discovery_response();
-                    }
-                    _ => panic!("unsupported discovery message type"),
                 }
             }
         }

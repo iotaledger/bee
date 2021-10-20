@@ -12,20 +12,33 @@ use crate::{
     request::RequestManager,
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket},
     service_map::ServiceMap,
+    shutdown::ShutdownBus,
     time,
 };
 
-use std::{error, ops::DerefMut as _};
+use std::{error, future::Future, ops::DerefMut as _};
 
 /// Initializes the autopeering service.
-pub async fn init<S: PeerStore + 'static>(
+pub async fn init<S, Q>(
     config: AutopeeringConfig,
     version: u32,
     network_id: u32,
     local: Local,
     peerstore_config: <S as PeerStore>::Config,
-) -> Result<(DiscoveryEventRx, PeeringEventRx), Box<dyn error::Error>> {
-    // Create a peer store.
+    quit_signal: Q,
+) -> Result<(DiscoveryEventRx, PeeringEventRx), Box<dyn error::Error>>
+where
+    S: PeerStore + 'static,
+    Q: Future + Send + 'static,
+{
+    // Create a bus to distribute the shutdown signal to all spawned tasks.
+    let (shutdown_bus, mut shutdown_rxs) = ShutdownBus::new(4);
+    tokio::spawn(async move {
+        quit_signal.await;
+        shutdown_bus.trigger();
+    });
+
+    // Create or load a peer store.
     let peerstore = S::new(peerstore_config);
 
     // Create channels for inbound/outbound communication with the UDP socket.
@@ -39,7 +52,16 @@ pub async fn init<S: PeerStore + 'static>(
 
     // Spawn the server handling the socket I/O.
     let server_config = ServerConfig::new(&config);
-    let (server, outgoing_tx) = Server::new(server_config, local.clone(), incoming_senders);
+    // Unwrap: we ensured there are enough items in the vec.
+    let incoming_shutdown_rx = shutdown_rxs.pop().unwrap();
+    let outgoing_shutdown_rx = shutdown_rxs.pop().unwrap();
+    let (server, outgoing_tx) = Server::new(
+        server_config,
+        local.clone(),
+        incoming_senders,
+        incoming_shutdown_rx,
+        outgoing_shutdown_rx,
+    );
 
     tokio::spawn(server.run());
 
@@ -55,28 +77,39 @@ pub async fn init<S: PeerStore + 'static>(
         requests.retain(|_, v| v.expiration_time > now);
     });
 
-    tokio::spawn(RequestManager::repeat(delay, cmd, request_mngr.clone()));
+    // tokio::spawn(RequestManager::repeat(delay, cmd, request_mngr.clone()));
 
     // Spawn the discovery manager handling discovery requests/responses.
-    let discover_config = DiscoveryManagerConfig::new(&config, version, network_id);
-    let discover_socket = ServerSocket::new(discover_rx, outgoing_tx.clone());
-    let (discover_mngr, discover_event_rx) = DiscoveryManager::new(
-        discover_config,
+    let discovery_config = DiscoveryManagerConfig::new(&config, version, network_id);
+    let discovery_socket = ServerSocket::new(discover_rx, outgoing_tx.clone());
+    let shutdown_rx = shutdown_rxs.pop().unwrap();
+    let (discovery_mngr, discovery_event_rx) = DiscoveryManager::new(
+        discovery_config,
         local.clone(),
-        discover_socket,
+        discovery_socket,
         request_mngr.clone(),
         peerstore.clone(),
+        shutdown_rx,
     );
 
-    tokio::spawn(discover_mngr.run());
+    tokio::spawn(discovery_mngr.run());
 
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
     let peering_config = PeeringManagerConfig::new(&config, version, network_id);
     let peering_socket = ServerSocket::new(peering_rx, outgoing_tx);
-    let (peering_mngr, peering_event_rx) =
-        PeeringManager::new(peering_config, local.clone(), peering_socket, request_mngr, peerstore);
+    let shutdown_rx = shutdown_rxs.pop().unwrap();
+    let (peering_mngr, peering_event_rx) = PeeringManager::new(
+        peering_config,
+        local.clone(),
+        peering_socket,
+        request_mngr,
+        peerstore,
+        shutdown_rx,
+    );
 
     tokio::spawn(peering_mngr.run());
 
-    Ok((discover_event_rx, peering_event_rx))
+    log::debug!("Autopeering initialized.");
+
+    Ok((discovery_event_rx, peering_event_rx))
 }

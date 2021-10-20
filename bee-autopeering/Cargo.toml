@@ -30,5 +30,13 @@ thiserror = "1.0.29"
 tokio = { version = "1.11", features = [ "macros", "rt", "time", "net" ] }
 tokio-stream = { version = "0.1" }
 
+[dev-dependencies]
+fern = "0.6"
+serde_json = "1.0.68"
+tokio = { version = "1.11", features = [ "rt", "rt-multi-thread", "macros", "signal", "time", "io-std", "io-util" ] }
+
 [build-dependencies]
 prost-build = { version = "0.8", default-features = false }
+
+[[example]]
+name = "node"

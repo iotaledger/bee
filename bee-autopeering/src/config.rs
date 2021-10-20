@@ -3,7 +3,7 @@
 
 use crate::multiaddr::AutopeeringMultiaddr;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use std::net::SocketAddr;
 
@@ -21,7 +21,7 @@ use std::net::SocketAddr;
 //     "runAsEntryNode": false
 // }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename = "autopeering")]
 pub struct AutopeeringConfig {
     #[serde(rename = "bindAddress")]

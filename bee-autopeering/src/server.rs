@@ -6,6 +6,7 @@ use crate::{
     identity::PeerId,
     local::Local,
     packet::{IncomingPacket, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, PEERING_MSG_TYPE_RANGE},
+    shutdown::ShutdownRx,
 };
 
 use tokio::{
@@ -47,10 +48,18 @@ pub(crate) struct Server {
     local: Local,
     incoming_senders: IncomingPacketSenders,
     outgoing_rx: OutgoingPacketRx,
+    incoming_shutdown_rx: ShutdownRx,
+    outgoing_shutdown_rx: ShutdownRx,
 }
 
 impl Server {
-    pub fn new(config: ServerConfig, local: Local, incoming_senders: IncomingPacketSenders) -> (Self, ServerTx) {
+    pub fn new(
+        config: ServerConfig,
+        local: Local,
+        incoming_senders: IncomingPacketSenders,
+        incoming_shutdown_rx: ShutdownRx,
+        outgoing_shutdown_rx: ShutdownRx,
+    ) -> (Self, ServerTx) {
         let (outgoing_tx, outgoing_rx) = server_chan::<OutgoingPacket>();
 
         (
@@ -59,6 +68,8 @@ impl Server {
                 local,
                 incoming_senders,
                 outgoing_rx,
+                incoming_shutdown_rx,
+                outgoing_shutdown_rx,
             },
             outgoing_tx,
         )
@@ -70,6 +81,8 @@ impl Server {
             local: local_id,
             incoming_senders,
             outgoing_rx,
+            incoming_shutdown_rx,
+            outgoing_shutdown_rx,
         } = self;
 
         // Try to bind the UDP socket to the configured address.
@@ -83,12 +96,25 @@ impl Server {
         let outgoing_socket = Arc::clone(&incoming_socket);
 
         // Spawn socket handlers
-        tokio::spawn(incoming_packet_handler(incoming_socket, incoming_senders));
-        tokio::spawn(outgoing_packet_handler(outgoing_socket, outgoing_rx, local_id));
+        tokio::spawn(incoming_packet_handler(
+            incoming_socket,
+            incoming_senders,
+            incoming_shutdown_rx,
+        ));
+        tokio::spawn(outgoing_packet_handler(
+            outgoing_socket,
+            outgoing_rx,
+            local_id,
+            outgoing_shutdown_rx,
+        ));
     }
 }
 
-async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_senders: IncomingPacketSenders) {
+async fn incoming_packet_handler(
+    socket: Arc<UdpSocket>,
+    incoming_senders: IncomingPacketSenders,
+    mut incoming_shutdown_rx: ShutdownRx,
+) {
     let mut packet_bytes = [0; READ_BUFFER_SIZE];
 
     let IncomingPacketSenders {
@@ -97,68 +123,87 @@ async fn incoming_packet_handler(socket: Arc<UdpSocket>, incoming_senders: Incom
     } = incoming_senders;
 
     loop {
-        if let Ok((n, source_addr)) = socket.recv_from(&mut packet_bytes).await {
-            let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
-
-            // Restore the peer id.
-            let peer_id = PeerId::from_public_key(packet.public_key());
-            log::debug!("Received {} bytes from {}.", n, peer_id);
-
-            // Verify the packet.
-            let message = packet.message();
-            let signature = packet.signature();
-            if !packet.public_key().verify(&signature, message) {
-                log::debug!("Received packet with invalid signature");
-                continue;
+        tokio::select! {
+            _ = &mut incoming_shutdown_rx => {
+                break;
             }
+            r = socket.recv_from(&mut packet_bytes) => {
+                if let Ok((n, source_addr)) = r {
+                    let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
 
-            // Depending on the message type, forward it to the appropriate manager.
-            let msg_type = packet.message_type().expect("invalid message type");
-            let msg_bytes = packet.into_message();
+                    // Restore the peer id.
+                    let peer_id = PeerId::from_public_key(packet.public_key());
+                    log::debug!("Received {} bytes from {}.", n, peer_id);
 
-            let packet = IncomingPacket {
-                msg_type,
-                msg_bytes,
-                source_addr,
-                peer_id,
-            };
+                    // Verify the packet.
+                    let message = packet.message();
+                    let signature = packet.signature();
+                    if !packet.public_key().verify(&signature, message) {
+                        log::debug!("Received packet with invalid signature");
+                        continue;
+                    }
 
-            match msg_type as u32 {
-                t if DISCOVERY_MSG_TYPE_RANGE.contains(&t) => {
-                    discover_tx.send(packet).expect("channel send error: discovery");
+                    // Depending on the message type, forward it to the appropriate manager.
+                    let msg_type = packet.message_type().expect("invalid message type");
+                    let msg_bytes = packet.into_message();
+
+                    let packet = IncomingPacket {
+                        msg_type,
+                        msg_bytes,
+                        source_addr,
+                        peer_id,
+                    };
+
+                    match msg_type as u32 {
+                        t if DISCOVERY_MSG_TYPE_RANGE.contains(&t) => {
+                            discover_tx.send(packet).expect("channel send error: discovery");
+                        }
+                        t if PEERING_MSG_TYPE_RANGE.contains(&t) => {
+                            peering_tx.send(packet).expect("channel send error: peering");
+                        }
+                        _ => panic!("invalid message type"),
+                    }
+                } else {
+                    log::error!("udp socket read error; stopping incoming packet handler");
+                    break;
                 }
-                t if PEERING_MSG_TYPE_RANGE.contains(&t) => {
-                    peering_tx.send(packet).expect("channel send error: peering");
-                }
-                _ => panic!("invalid message type"),
             }
-        } else {
-            log::error!("udp socket read error; stopping incoming packet handler");
-            break;
         }
     }
 }
 
-async fn outgoing_packet_handler(socket: Arc<UdpSocket>, mut outgoing_rx: OutgoingPacketRx, local_id: Local) {
+async fn outgoing_packet_handler(
+    socket: Arc<UdpSocket>,
+    mut outgoing_rx: OutgoingPacketRx,
+    local_id: Local,
+    mut outgoing_shutdown_rx: ShutdownRx,
+) {
     loop {
-        if let Some(packet) = outgoing_rx.recv().await {
-            let OutgoingPacket {
-                msg_type,
-                msg_bytes,
-                target_addr,
-            } = packet;
+        tokio::select! {
+            _ = &mut outgoing_shutdown_rx => {
+                break;
+            }
+            o = outgoing_rx.recv() => {
+                if let Some(packet) = o {
+                    let OutgoingPacket {
+                        msg_type,
+                        msg_bytes,
+                        target_addr,
+                    } = packet;
 
-            let signature = local_id.sign(&msg_bytes);
+                    let signature = local_id.sign(&msg_bytes);
 
-            let packet = Packet::new(msg_type, &msg_bytes, &local_id.public_key(), signature);
+                    let packet = Packet::new(msg_type, &msg_bytes, &local_id.public_key(), signature);
 
-            let bytes = packet.protobuf().expect("error encoding outgoing packet");
-            let n = socket.send_to(&bytes, target_addr).await.expect("socket send error");
+                    let bytes = packet.protobuf().expect("error encoding outgoing packet");
+                    let n = socket.send_to(&bytes, target_addr).await.expect("socket send error");
 
-            log::debug!("Sent {} bytes to {}.", n, target_addr);
-        } else {
-            log::error!("outgoing message channel dropped; stopping outgoing packet handler");
-            break;
+                    log::debug!("Sent {} bytes to {}.", n, target_addr);
+                } else {
+                    log::error!("outgoing message channel dropped; stopping outgoing packet handler");
+                    break;
+                }
+            }
         }
     }
 }

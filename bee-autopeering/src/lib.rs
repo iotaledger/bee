@@ -6,7 +6,6 @@
 // #![warn(missing_docs)]
 #![allow(warnings)]
 
-mod config;
 mod delay;
 mod discovery;
 mod discovery_messages;
@@ -24,16 +23,21 @@ mod proto {
 mod request;
 mod salt;
 mod server;
+mod shutdown;
 mod time;
 
+pub mod config;
 pub mod identity;
 pub mod init;
 pub mod peer;
 pub mod peerstore;
 pub mod service_map;
 
+pub use config::AutopeeringConfig;
+pub use discovery::DiscoveryEvent;
 pub use identity::PeerId;
 pub use init::init;
 pub use local::Local;
 pub use peer::Peer;
+pub use peering::PeeringEvent;
 pub use service_map::{ServiceMap, ServiceName, ServiceProtocol};
