@@ -13,7 +13,7 @@ mod token_id;
 mod treasury;
 
 pub use alias::AliasOutput;
-pub use extended::ExtendedOutput;
+pub use extended::{ExtendedOutput, ExtendedOutputBuilder};
 pub use feature_block::FeatureBlock;
 pub use foundry::FoundryOutput;
 pub use native_token::NativeToken;
