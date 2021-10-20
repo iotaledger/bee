@@ -611,19 +611,11 @@ impl<B: StorageBackend> Tangle<B> {
 
         if self.vertices.len() > max_len {
             while self.vertices.len() > ((1.0 - CACHE_THRESHOLD_FACTOR) * max_len as f64) as usize {
-                let mut retries = 1;
-                loop {
-                    if self.vertices.pop_random().await.is_none() {
-                        log::debug!("retrying cache eviction (attempt #{})", retries);
-                        retries += 1;
-                    } else {
-                        break;
-                    }
-
-                    if retries > MAX_EVICTION_RETRIES {
-                        log::warn!("could not perform cache eviction after {} attempts", retries);
-                        return;
-                    }
+                if self.vertices.pop_random::<MAX_EVICTION_RETRIES>().await.is_none() {
+                    log::warn!(
+                        "could not perform cache eviction after {} attempts",
+                        MAX_EVICTION_RETRIES
+                    );
                 }
             }
         }

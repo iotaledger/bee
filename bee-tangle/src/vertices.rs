@@ -76,24 +76,32 @@ impl Vertices {
         .ok()
     }
 
-    pub(crate) async fn pop_random(&self) -> Option<Vertex> {
-        let index = rand::thread_rng().gen_range(0..self.tables.len());
-        // SAFETY: `index < self.tables.len()` by construction.
-        let mut table = unsafe { self.tables.get_unchecked(index) }.write().await;
+    pub(crate) async fn pop_random<const RETRIES: usize>(&self) -> Option<Vertex> {
+        let mut retries = 0;
 
-        // SAFETY: We are holding the lock over the table, which means that no other thread could have modified, added
-        // nor deleted any bucket. This applies to all the following `unsafe` blocks.
-        let buckets = unsafe { table.iter() };
+        while retries < RETRIES {
+            let index = rand::thread_rng().gen_range(0..self.tables.len());
 
-        for bucket in buckets {
-            let (_, vertex) = unsafe { bucket.as_ref() };
+            // SAFETY: `index < self.tables.len()` by construction.
+            if let Ok(mut table) = unsafe { self.tables.get_unchecked(index) }.try_write() {
+                // SAFETY: We are holding the lock over the table, which means that no other thread could have modified,
+                // added nor deleted any bucket. This applies to all the following `unsafe` blocks.
+                let buckets = unsafe { table.iter() };
 
-            if vertex.can_evict() {
-                self.len.fetch_sub(1, Ordering::Relaxed);
-                let (_, vertex) = unsafe { table.remove(bucket) };
+                for bucket in buckets {
+                    let (_, vertex) = unsafe { bucket.as_ref() };
 
-                return Some(vertex);
+                    if vertex.can_evict() {
+                        self.len.fetch_sub(1, Ordering::Relaxed);
+                        let (_, vertex) = unsafe { table.remove(bucket) };
+
+                        return Some(vertex);
+                    }
+                }
             }
+
+            retries += 1;
+            log::debug!("retrying cache eviction (attempt #{})", retries);
         }
 
         None
