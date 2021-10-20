@@ -42,25 +42,23 @@ where
     let peerstore = S::new(peerstore_config);
 
     // Create channels for inbound/outbound communication with the UDP socket.
-    let (discover_tx, discover_rx) = server_chan::<IncomingPacket>();
+    let (discovery_tx, discovery_rx) = server_chan::<IncomingPacket>();
     let (peering_tx, peering_rx) = server_chan::<IncomingPacket>();
 
     let incoming_senders = IncomingPacketSenders {
-        discover_tx,
+        discover_tx: discovery_tx,
         peering_tx,
     };
 
     // Spawn the server handling the socket I/O.
     let server_config = ServerConfig::new(&config);
     // Unwrap: we ensured there are enough items in the vec.
-    let incoming_shutdown_rx = shutdown_reg.register();
-    let outgoing_shutdown_rx = shutdown_reg.register();
     let (server, outgoing_tx) = Server::new(
         server_config,
         local.clone(),
         incoming_senders,
-        incoming_shutdown_rx,
-        outgoing_shutdown_rx,
+        shutdown_reg.register(),
+        shutdown_reg.register(),
     );
 
     tokio::spawn(server.run());
@@ -81,15 +79,14 @@ where
 
     // Spawn the discovery manager handling discovery requests/responses.
     let discovery_config = DiscoveryManagerConfig::new(&config, version, network_id);
-    let discovery_socket = ServerSocket::new(discover_rx, outgoing_tx.clone());
-    let shutdown_rx = shutdown_reg.register();
+    let discovery_socket = ServerSocket::new(discovery_rx, outgoing_tx.clone());
     let (discovery_mngr, discovery_event_rx) = DiscoveryManager::new(
         discovery_config,
         local.clone(),
         discovery_socket,
         request_mngr.clone(),
         peerstore.clone(),
-        shutdown_rx,
+        shutdown_reg.register(),
     );
 
     tokio::spawn(discovery_mngr.run());
@@ -97,14 +94,13 @@ where
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
     let peering_config = PeeringManagerConfig::new(&config, version, network_id);
     let peering_socket = ServerSocket::new(peering_rx, outgoing_tx);
-    let shutdown_rx = shutdown_reg.register();
     let (peering_mngr, peering_event_rx) = PeeringManager::new(
         peering_config,
         local.clone(),
         peering_socket,
         request_mngr,
         peerstore,
-        shutdown_rx,
+        shutdown_reg.register(),
     );
 
     tokio::spawn(peering_mngr.run());

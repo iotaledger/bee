@@ -83,8 +83,33 @@ async fn main() {
     }
 }
 
-fn handle_discovery_event(discovery_event: DiscoveryEvent) {}
-fn handle_peering_event(peering_event: PeeringEvent) {}
+fn handle_discovery_event(discovery_event: DiscoveryEvent) {
+    match discovery_event {
+        DiscoveryEvent::PeerDiscovered { peer } => {
+            log::info!("Peer discovered: {:?}.", peer);
+        }
+        DiscoveryEvent::PeerDeleted { peer_id } => {
+            log::info!("Peer deleted: {}.", peer_id);
+        }
+    }
+}
+
+fn handle_peering_event(peering_event: PeeringEvent) {
+    match peering_event {
+        PeeringEvent::SaltUpdated => {
+            log::info!("Salt updated.");
+        }
+        PeeringEvent::IncomingPeering => {
+            log::info!("Incoming peering.");
+        }
+        PeeringEvent::OutgoingPeering => {
+            log::info!("Outgoing peering.");
+        }
+        PeeringEvent::Dropped => {
+            log::info!("Peering dropped.");
+        }
+    }
+}
 
 async fn print_resolved_entry_nodes(config: AutopeeringConfig) {
     let AutopeeringConfig { entry_nodes, .. } = config;

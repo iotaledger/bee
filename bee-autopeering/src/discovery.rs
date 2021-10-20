@@ -10,7 +10,7 @@ use crate::{
     hash,
     identity::PeerId,
     local::Local,
-    multiaddr::AutopeeringMultiaddr,
+    multiaddr::{AddressKind, AutopeeringMultiaddr},
     packet::{IncomingPacket, MessageType, OutgoingPacket},
     peer::{self, Peer},
     peerstore::{self, PeerStore},
@@ -18,7 +18,7 @@ use crate::{
     server::{ServerSocket, ServerTx},
     service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
     shutdown::ShutdownRx,
-    time,
+    time, ServiceProtocol,
 };
 
 use std::{
@@ -255,6 +255,45 @@ impl<S: PeerStore> DiscoveryManager<S> {
             server_tx,
         } = socket;
 
+        // Send verification request to entry nodes
+        for mut entry_addr in entry_nodes {
+            let entry_socketaddr = match entry_addr.address_kind() {
+                AddressKind::Ip4 | AddressKind::Ip6 => {
+                    // Unwrap: for those address kinds the returned option is always `Some`.
+                    entry_addr.socket_addr().unwrap()
+                }
+                AddressKind::Dns => {
+                    if entry_addr.resolve_dns().await {
+                        let entry_socketaddrs = entry_addr.resolved_addrs();
+                        let has_ip4 = entry_socketaddrs.iter().position(|s| s.is_ipv4());
+                        let has_ip6 = entry_socketaddrs.iter().position(|s| s.is_ipv6());
+
+                        match (has_ip4, has_ip6) {
+                            // Only IP4 or only IP6
+                            (Some(index), None) | (None, Some(index)) => entry_socketaddrs[index],
+                            // Both are available
+                            (Some(index1), Some(index2)) => {
+                                if entry_nodes_prefer_ipv6 {
+                                    entry_socketaddrs[index2]
+                                } else {
+                                    entry_socketaddrs[index1]
+                                }
+                            }
+                            // Both being None is not possible.
+                            _ => unreachable!(),
+                        }
+                    } else {
+                        // Ignore that entry node.
+                        continue;
+                    }
+                }
+            };
+            let mut peer = Peer::new(entry_socketaddr.ip(), entry_addr.public_key().clone());
+            peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, entry_socketaddr.port());
+
+            send_verification_request(&peer, &request_mngr, &server_tx);
+        }
+
         loop {
             tokio::select! {
                 _ = &mut shutdown_rx => {
@@ -270,6 +309,8 @@ impl<S: PeerStore> DiscoveryManager<S> {
                     {
                         match msg_type {
                             MessageType::VerificationRequest => {
+                                log::debug!("Received verification request.");
+
                                 let verif_req = VerificationRequest::from_protobuf(&msg_bytes)
                                     .expect("error decoding verification request");
 
@@ -290,6 +331,8 @@ impl<S: PeerStore> DiscoveryManager<S> {
                                 );
                             }
                             MessageType::VerificationResponse => {
+                                log::debug!("Received verification response.");
+
                                 let verif_res = VerificationResponse::from_protobuf(&msg_bytes)
                                     .expect("error decoding verification response");
 
@@ -301,6 +344,8 @@ impl<S: PeerStore> DiscoveryManager<S> {
                                 handle_verification_response();
                             }
                             MessageType::DiscoveryRequest => {
+                                log::debug!("Received discovery request.");
+
                                 let disc_req =
                                     DiscoveryRequest::from_protobuf(&msg_bytes).expect("error decoding discover request");
 
@@ -314,6 +359,8 @@ impl<S: PeerStore> DiscoveryManager<S> {
                                 send_discovery_response(request_hash, &server_tx, source_addr);
                             }
                             MessageType::DiscoveryResponse => {
+                                log::debug!("Received discovery response.");
+
                                 let disc_res =
                                     DiscoveryResponse::from_protobuf(&msg_bytes).expect("error decoding discovery response");
 

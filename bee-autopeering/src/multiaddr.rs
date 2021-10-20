@@ -20,6 +20,12 @@ use std::{
 const AUTOPEERING_MULTIADDR_PROTOCOL_NAME: &str = "autopeering";
 const PUBKEY_BASE58_SIZE_RANGE: RangeInclusive<usize> = 42..=44;
 
+pub enum AddressKind {
+    Ip4,
+    Ip6,
+    Dns,
+}
+
 /// Go-libp2p allows Hornet to introduce a custom autopeering [`Protocol`]. In rust-libp2p we unfortunately can't do
 /// that, so what we'll do is to introduce a wrapper type, which understands Hornet's custom multiaddr, and internally
 /// stores the address part and the key part separatedly. The details are abstracted away and the behavior identical
@@ -35,6 +41,17 @@ impl AutopeeringMultiaddr {
     /// Returns the address part.
     pub fn address(&self) -> &Multiaddr {
         &self.address
+    }
+
+    /// Returns the kind of this address.
+    pub fn address_kind(&self) -> AddressKind {
+        let kind = self.address.iter().next().expect("invalid multiaddress");
+        match kind {
+            Protocol::Ip4(_) => AddressKind::Ip4,
+            Protocol::Ip6(_) => AddressKind::Ip6,
+            Protocol::Dns(_) => AddressKind::Dns,
+            _ => panic!("unsupported address kind"),
+        }
     }
 
     /// Returns the corresponding [`SocketAddr`] iff it contains an IPv4 or IPv6 address.

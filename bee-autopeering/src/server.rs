@@ -129,11 +129,13 @@ async fn incoming_packet_handler(
             }
             r = socket.recv_from(&mut packet_bytes) => {
                 if let Ok((n, source_addr)) = r {
+                    log::debug!("Received {} bytes from {}.", n, source_addr);
+
                     let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
 
                     // Restore the peer id.
                     let peer_id = PeerId::from_public_key(packet.public_key());
-                    log::debug!("Received {} bytes from {}.", n, peer_id);
+                    log::debug!("PeerId: {}.", peer_id);
 
                     // Verify the packet.
                     let message = packet.message();
