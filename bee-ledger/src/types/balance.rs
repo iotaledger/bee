@@ -7,7 +7,7 @@ use bee_common::packable::{Packable, Read, Write};
 use bee_message::{constants::IOTA_SUPPLY, output::dust_outputs_max};
 
 /// Holds the balance of an address.
-#[derive(Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Balance {
     amount: u64,
     dust_allowance: u64,

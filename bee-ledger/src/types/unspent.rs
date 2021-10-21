@@ -9,7 +9,7 @@ use bee_message::output::OutputId;
 use std::ops::Deref;
 
 /// Represents an output id as unspent.
-#[derive(Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct Unspent(OutputId);
 
 impl From<OutputId> for Unspent {
