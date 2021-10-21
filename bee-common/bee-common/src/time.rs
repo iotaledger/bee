@@ -26,3 +26,8 @@ pub fn format(time: &time::OffsetDateTime) -> String {
     // We know this is correct.
     time.format(&format_description).unwrap()
 }
+
+/// Takes a unix timestamp and returns a formatted `String`.
+pub fn format_unix_timestamp(timestamp: i64) -> String {
+    format(&from_unix_timestamp(timestamp))
+}

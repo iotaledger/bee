@@ -207,7 +207,7 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
 
     info!(
         "Imported full snapshot file from {} with sep index {}, ledger index {}, {} solid entry points, {} outputs and {} milestone diffs.",
-        time::format(&time::from_unix_timestamp(header.timestamp() as i64)),
+        time::format_unix_timestamp(header.timestamp() as i64),
         *header.sep_index(),
         *header.ledger_index(),
         full_header.sep_count(),
@@ -262,7 +262,7 @@ async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, netw
 
     info!(
         "Imported delta snapshot file from {} with sep index {}, ledger index {}, {} solid entry points and {} milestone diffs.",
-        time::format(&time::from_unix_timestamp(header.timestamp() as i64)),
+        time::format_unix_timestamp(header.timestamp() as i64),
         *header.sep_index(),
         *header.ledger_index(),
         delta_header.sep_count(),
