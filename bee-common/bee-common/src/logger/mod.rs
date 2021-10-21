@@ -7,9 +7,6 @@ mod config;
 
 pub use config::{LoggerConfig, LoggerConfigBuilder, LoggerOutputConfig, LoggerOutputConfigBuilder};
 
-#[cfg(not(feature = "tokio-console"))]
-use crate::time as time_util;
-
 use thiserror::Error;
 
 /// Name of the standard output.
@@ -30,6 +27,8 @@ pub enum Error {
 #[cfg(not(feature = "tokio-console"))]
 macro_rules! log_format {
     ($target:expr, $level:expr, $message:expr, $target_width:expr, $level_width:expr) => {
+        use crate::time as time_util;
+    
         format_args!(
             "{} {:target_width$} {:level_width$} {}",
             time_util::format(&time_util::now_local()),
