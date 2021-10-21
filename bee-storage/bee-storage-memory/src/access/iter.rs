@@ -5,8 +5,7 @@
 
 use crate::{
     storage::Storage,
-    table::VecTableIter,
-    table::{SingletonTableIter, TableIter},
+    table::{SingletonTableIter, TableIter, VecTableIter},
 };
 
 use bee_ledger::types::{
