@@ -58,7 +58,7 @@ impl Packet {
     }
 
     /// Returns the message contained in this packet.
-    pub(crate) fn message(&self) -> &Vec<u8> {
+    pub(crate) fn message(&self) -> &[u8] {
         &self.0.data
     }
 

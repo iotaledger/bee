@@ -62,10 +62,10 @@ impl PeerStore for InMemoryPeerStore {
         }
     }
     fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp> {
-        self.read_inner().last_verif_requests.get(peer_id).map(|v| *v)
+        self.read_inner().last_verif_requests.get(peer_id).copied()
     }
     fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp> {
-        self.read_inner().last_verif_responses.get(peer_id).map(|v| *v)
+        self.read_inner().last_verif_responses.get(peer_id).copied()
     }
     fn peer(&self, peer_id: &PeerId) -> Option<Peer> {
         self.read_inner().peers.get(peer_id).map(|p| p.clone())

@@ -219,6 +219,7 @@ fn concat<const N: usize, const M: usize>(bytes1: &[u8; N], bytes2: &[u8; M]) ->
 
 fn xor<const N: usize>(a: [u8; N], b: [u8; N]) -> [u8; N] {
     let mut xored = [0u8; N];
+    // TODO: use array_zip when available (rust-lang/rust#80094)
     a.iter()
         .zip(b.iter())
         .enumerate()
