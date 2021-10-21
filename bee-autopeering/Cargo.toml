@@ -3,11 +3,11 @@ name = "bee-autopeering"
 version = "0.1.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = "Automatic peering."
+description = "Allows peers to mutually discover each other automatically."
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "bee", "framework", "autopeering", "libp2p"]
+keywords = ["iota", "bee", "framework", "network", "autopeering"]
 homepage = "https://www.iota.org"
 
 [dependencies]
