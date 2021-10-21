@@ -23,7 +23,7 @@ use std::{error, future::Future, ops::DerefMut as _};
 pub async fn init<S, I, Q>(
     config: AutopeeringConfig,
     version: u32,
-    network_id: I,
+    network_name: I,
     local: Local,
     peerstore_config: <S as PeerStore>::Config,
     quit_signal: Q,
@@ -33,14 +33,14 @@ where
     I: AsRef<str>,
     Q: Future + Send + 'static,
 {
-    let net_id = hash::fnv32(&network_id);
+    let network_id = hash::fnv32(&network_name);
 
     log::info!("---------------------------------------------------------------------------------------------------");
     log::info!("WARNING:");
     log::info!("The autopeering plugin will disclose your public IP address to possibly all nodes and entry points.");
     log::info!("Please disable this plugin if you do not want this to happen!");
     log::info!("---------------------------------------------------------------------------------------------------");
-    log::info!("network_id: {}/{}", network_id.as_ref(), net_id);
+    log::info!("network_name/id: {}/{}", network_name.as_ref(), network_id);
     log::info!("protocol_version: {}", version);
 
     // Create a bus to distribute the shutdown signal to all spawned tasks.
@@ -76,7 +76,7 @@ where
     tokio::spawn(server.run());
 
     // Create a request manager that creates and keeps track of outgoing requests.
-    let request_mngr = RequestManager::new(version, net_id, config.bind_addr, local.clone());
+    let request_mngr = RequestManager::new(version, network_id, config.bind_addr, local.clone());
 
     // Spawn a cronjob that regularly removes unanswered pings.
     let delay = DelayBuilder::new(DelayMode::Constant(1000)).finish();
@@ -90,7 +90,7 @@ where
     // tokio::spawn(RequestManager::repeat(delay, cmd, request_mngr.clone()));
 
     // Spawn the discovery manager handling discovery requests/responses.
-    let discovery_config = DiscoveryManagerConfig::new(&config, version, net_id);
+    let discovery_config = DiscoveryManagerConfig::new(&config, version, network_id);
     let discovery_socket = ServerSocket::new(discovery_rx, outgoing_tx.clone());
     let (discovery_mngr, discovery_event_rx) = DiscoveryManager::new(
         discovery_config,
@@ -104,7 +104,7 @@ where
     tokio::spawn(discovery_mngr.run());
 
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
-    let peering_config = PeeringManagerConfig::new(&config, version, net_id);
+    let peering_config = PeeringManagerConfig::new(&config, version, network_id);
     let peering_socket = ServerSocket::new(peering_rx, outgoing_tx);
     let (peering_mngr, peering_event_rx) = PeeringManager::new(
         peering_config,

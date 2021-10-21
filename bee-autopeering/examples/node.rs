@@ -66,11 +66,12 @@ async fn main() {
 
     let local = Local::new();
     let config = setup_config();
-    println!("{:?}", config);
+    println!("{:#?}", config);
+
     let version = 1;
     let network_id = "chrysalis-mainnet";
-    let peerstore_config = ();
-    let quit_signal = Box::pin(async move { ctrl_c().await });
+    let peerstore_config = (); // no config necessary for the InMemoryPeerStore
+    let quit_signal = ctrl_c();
 
     let (mut discovery_rx, mut peering_rx) = bee_autopeering::init::<InMemoryPeerStore, _, _>(
         config.clone(),
