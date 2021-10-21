@@ -7,6 +7,7 @@ mod config;
 
 pub use config::{LoggerConfig, LoggerConfigBuilder, LoggerOutputConfig, LoggerOutputConfigBuilder};
 
+#[cfg(not(feature = "tokio-console"))]
 use crate::time as time_util;
 
 use thiserror::Error;
