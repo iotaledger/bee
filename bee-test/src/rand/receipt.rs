@@ -15,8 +15,6 @@ use bee_ternary::{T5B1Buf, Tryte, TryteBuf};
 
 use bytemuck::cast_slice;
 
-use std::convert::{TryFrom, TryInto};
-
 /// Generates a random tail transaction hash.
 pub fn rand_tail_transaction_hash() -> TailTransactionHash {
     let bytes = rand_string_charset("ABCDEFGHIJKLMNOPQRSTUVWXYZ9", 81)

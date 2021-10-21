@@ -5,7 +5,7 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{convert::TryInto, str::FromStr};
+use core::str::FromStr;
 
 /// The length of a transaction identifier.
 pub const TRANSACTION_ID_LENGTH: usize = 32;

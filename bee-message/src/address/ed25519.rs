@@ -10,7 +10,7 @@ use crypto::{
     signatures::ed25519::{PublicKey, Signature},
 };
 
-use core::{convert::TryInto, str::FromStr};
+use core::str::FromStr;
 
 /// The number of bytes in an Ed25519 address.
 /// See <https://en.wikipedia.org/wiki/EdDSA#Ed25519> for more information.

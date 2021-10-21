@@ -79,17 +79,6 @@ pub mod tryte;
 mod serde;
 
 use crate::raw::{RawEncoding, RawEncodingBuf};
-use std::{
-    any,
-    borrow::{Borrow, BorrowMut},
-    cmp::Ordering,
-    convert::TryFrom,
-    error, fmt, hash,
-    iter::FromIterator,
-    ops::{
-        Deref, DerefMut, Index, IndexMut, Neg, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
-    },
-};
 
 pub use crate::{
     t1b1::{T1B1Buf, T1B1},
@@ -99,6 +88,16 @@ pub use crate::{
     t5b1::{T5B1Buf, T5B1},
     trit::{Btrit, ShiftTernary, Trit, Utrit},
     tryte::{Tryte, TryteBuf},
+};
+
+use std::{
+    any,
+    borrow::{Borrow, BorrowMut},
+    cmp::Ordering,
+    error, fmt, hash,
+    ops::{
+        Deref, DerefMut, Index, IndexMut, Neg, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+    },
 };
 
 /// An error that may be produced as a result of fallible conversions.

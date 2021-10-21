@@ -6,8 +6,6 @@ use bee_test::ternary::*;
 
 use rand::prelude::*;
 
-use std::convert::{TryFrom, TryInto};
-
 fn get_generic<T: raw::RawEncodingBuf + Clone>() {
     println!("{}", std::any::type_name::<T>());
     fuzz(100, || {

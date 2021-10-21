@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{Btrit, RawEncoding, RawEncodingBuf, TritBuf, Trits, Utrit};
+
 use serde::{
     de::{Error, SeqAccess, Unexpected, Visitor},
     ser::SerializeSeq,
     Deserialize, Deserializer, Serialize, Serializer,
 };
-use std::{convert::TryFrom, fmt, marker::PhantomData};
+
+use std::{fmt, marker::PhantomData};
 
 // Serialisation
 

@@ -5,10 +5,7 @@ use bee_common::packable::Packable;
 
 use serde::{Deserialize, Serialize};
 
-use std::{
-    convert::{TryFrom, TryInto},
-    io::{Read, Write},
-};
+use std::io::{Read, Write};
 
 /// Errors related to ledger types.
 #[derive(Debug, thiserror::Error)]

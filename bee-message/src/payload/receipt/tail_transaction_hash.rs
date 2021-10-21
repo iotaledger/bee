@@ -8,8 +8,6 @@ use bee_ternary::{T5B1Buf, TritBuf, Trits, T5B1};
 
 use bytemuck::cast_slice;
 
-use core::convert::{TryFrom, TryInto};
-
 /// The length of a tail transaction hash.
 pub const TAIL_TRANSACTION_HASH_LEN: usize = 49;
 

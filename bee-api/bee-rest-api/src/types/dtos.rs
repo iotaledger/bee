@@ -31,8 +31,6 @@ use bee_protocol::types::peer::Peer;
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
-use std::convert::{TryFrom, TryInto};
-
 /// The message object that nodes gossip around in the network.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {

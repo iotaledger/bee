@@ -6,8 +6,8 @@ use bee_ternary::{
     trit::{Btrit, Utrit},
     T1B1Buf, TritBuf,
 };
+
 use std::{
-    convert::TryFrom,
     io::{self, Write},
     time::Instant,
 };

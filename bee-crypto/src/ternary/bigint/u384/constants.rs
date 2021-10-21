@@ -13,8 +13,6 @@ use bee_ternary::Utrit;
 
 use lazy_static::lazy_static;
 
-use std::convert::TryFrom;
-
 lazy_static! {
     /// U384 big-endian `u32` represented half of maximum value.
     pub static ref BE_U32_HALF_MAX: U384<BigEndian, U32Repr> = (*LE_U32_HALF_MAX).into();

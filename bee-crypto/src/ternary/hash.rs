@@ -5,7 +5,6 @@ use bee_ternary::{raw::RawEncoding, Btrit, Trits, T1B1};
 
 use std::{
     cmp::PartialEq,
-    convert::TryFrom,
     fmt, hash,
     ops::{Deref, DerefMut},
 };

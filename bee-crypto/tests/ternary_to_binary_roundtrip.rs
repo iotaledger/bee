@@ -4,8 +4,6 @@
 use bee_crypto::ternary::bigint::{binary_representation::U32Repr, endianness::LittleEndian, I384, T242, T243, U384};
 use bee_ternary::{Btrit, Utrit};
 
-use std::convert::TryInto;
-
 #[test]
 fn t243_max_exceeds_u384_range() {
     let t243_max = T243::<Btrit>::max();
