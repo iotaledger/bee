@@ -30,7 +30,7 @@ macro_rules! impl_iter {
             type AsIter = VecTableIter<$key, $value>;
 
             fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
-                self.$field.iter()
+                Ok(self.inner.read()?.$field.iter())
             }
         }
     };
@@ -40,7 +40,7 @@ macro_rules! impl_iter {
             type AsIter = SingletonTableIter<$value>;
 
             fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
-                self.$field.iter()
+                Ok(self.inner.read()?.$field.iter())
             }
         }
     };
@@ -49,7 +49,7 @@ macro_rules! impl_iter {
             type AsIter = TableIter<$key, $value>;
 
             fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
-                self.$field.iter()
+                Ok(self.inner.read()?.$field.iter())
             }
         }
     };

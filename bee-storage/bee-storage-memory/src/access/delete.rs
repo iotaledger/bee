@@ -25,7 +25,9 @@ macro_rules! impl_delete {
     ($key:ty, $value:ty, $field:ident) => {
         impl Delete<$key, $value> for Storage {
             fn delete(&self, k: &$key) -> Result<(), <Self as StorageBackend>::Error> {
-                self.$field.delete(k)
+                self.inner.write()?.$field.delete(k);
+
+                Ok(())
             }
         }
     };

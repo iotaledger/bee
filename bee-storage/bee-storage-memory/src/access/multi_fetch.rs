@@ -26,7 +26,7 @@ macro_rules! impl_multi_fetch {
             >;
 
             fn multi_fetch(&'a self, keys: &'a [$key]) -> Result<Self::Iter, <Self as StorageBackend>::Error> {
-                self.$field.multi_fetch(keys)
+                Ok(self.inner.read()?.$field.multi_fetch(keys))
             }
         }
     };

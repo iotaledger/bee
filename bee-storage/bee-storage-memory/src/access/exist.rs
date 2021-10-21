@@ -25,7 +25,7 @@ macro_rules! impl_exist {
     ($key:ty, $value:ty, $field:ident) => {
         impl Exist<$key, $value> for Storage {
             fn exist(&self, k: &$key) -> Result<bool, <Self as StorageBackend>::Error> {
-                self.$field.exist(k)
+                Ok(self.inner.read()?.$field.exist(k))
             }
         }
     };

@@ -54,9 +54,11 @@ impl BatchBuilder for Storage {
     }
 
     fn batch_commit(&self, batch: Self::Batch, _durability: bool) -> Result<(), <Self as StorageBackend>::Error> {
+        let mut inner = self.inner.write()?;
+
         macro_rules! apply_batch {
             ($field:ident) => {
-                self.$field.batch_commit(batch.$field)?;
+                inner.$field.batch_commit(batch.$field);
             };
         }
 

@@ -26,7 +26,7 @@ use bee_tangle::{
 
 use thiserror::Error;
 
-use std::sync::PoisonError;
+use std::sync::{PoisonError, RwLock};
 
 /// Error to be raised when a backend operation fails.
 #[derive(Debug, Error)]
@@ -53,6 +53,11 @@ pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(0);
 /// An in-memory database.
 #[derive(Default)]
 pub struct Storage {
+    pub(crate) inner: RwLock<InnerStorage>,
+}
+
+#[derive(Default)]
+pub(crate) struct InnerStorage {
     pub(crate) system: Table<u8, System>,
     pub(crate) message_id_to_message: Table<MessageId, Message>,
     pub(crate) message_id_to_metadata: Table<MessageId, MessageMetadata>,

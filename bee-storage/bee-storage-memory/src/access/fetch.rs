@@ -25,7 +25,7 @@ macro_rules! impl_fetch {
     ($key:ty, $value:ty, $field:ident) => {
         impl Fetch<$key, $value> for Storage {
             fn fetch(&self, k: &$key) -> Result<Option<$value>, <Self as StorageBackend>::Error> {
-                self.$field.fetch(k)
+                Ok(self.inner.read()?.$field.fetch(k))
             }
         }
     };

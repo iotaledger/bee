@@ -25,7 +25,9 @@ macro_rules! impl_insert {
     ($key:ty, $value:ty, $field:ident) => {
         impl Insert<$key, $value> for Storage {
             fn insert(&self, k: &$key, v: &$value) -> Result<(), <Self as StorageBackend>::Error> {
-                self.$field.insert(k, v)
+                self.inner.write()?.$field.insert(k, v);
+
+                Ok(())
             }
         }
     };
