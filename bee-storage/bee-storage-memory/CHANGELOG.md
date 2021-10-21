@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.1.0 - 2021-10-15
+## 0.1.0 - 2021-10-21
 
 ### Added
 
@@ -31,5 +31,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `Fetch`;
   - `Insert`;
   - `MultiFetch`;
-  - `AsStream`;
+  - `AsIterator`;
   - `Truncate`;
