@@ -48,7 +48,7 @@ where
 
             info!(
                 "Loaded snapshot from {} with snapshot index {}, entry point index {} and pruning index {}.",
-                time::format(&time::from_unix_timestamp(info.timestamp() as i64)),
+                time::format_unix_timestamp(info.timestamp() as i64),
                 *info.snapshot_index(),
                 *info.entry_point_index(),
                 *info.pruning_index(),
