@@ -1,20 +1,21 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::proto;
+use crate::{multiaddr::AddressKind, proto};
 
-use libp2p_core::{multiaddr::Protocol, Multiaddr};
+use libp2p_core::multiaddr::Protocol;
 
-use std::{collections::HashMap, fmt, net::IpAddr};
+use std::{collections::HashMap, convert::TryFrom, fmt, io, net::IpAddr, str::FromStr};
 
 /// Represents the name of a service.
 pub type ServiceName = String;
+type Port = u16;
 
 pub(crate) const AUTOPEERING_SERVICE_NAME: &str = "autopeering";
 
 /// A mapping between a service name and its bind address.
 #[derive(Clone, Debug, Default)]
-pub struct ServiceMap(HashMap<ServiceName, Multiaddr>);
+pub struct ServiceMap(HashMap<ServiceName, (ServiceTransport, Port)>);
 
 impl ServiceMap {
     /// Creates a new empty service map.
@@ -23,19 +24,21 @@ impl ServiceMap {
     }
 
     /// Registers a service with its bind address.
-    pub fn insert(&mut self, service_name: ServiceName, multiaddr: Multiaddr) {
-        self.0.insert(service_name, multiaddr);
+    pub fn insert(&mut self, service_name: ServiceName, transport: ServiceTransport, port: Port) {
+        self.0.insert(service_name, (transport, port));
+    }
+
+    /// Returns the address kind of a given service.
+    pub fn transport(&self, service_name: impl AsRef<str>) -> Option<ServiceTransport> {
+        self.0
+            .get(service_name.as_ref())
+            .map(|(transport, _)| transport)
+            .copied()
     }
 
     /// Returns the access port of a given service.
-    pub fn port(&self, service_name: impl AsRef<str>) -> Option<u16> {
-        self.0
-            .get(service_name.as_ref())
-            .map(|multiaddr| match multiaddr.iter().last().expect("invalid multiaddr") {
-                Protocol::Tcp(port) => port,
-                Protocol::Udp(port) => port,
-                _ => panic!("invalid multiaddr"),
-            })
+    pub fn port(&self, service_name: impl AsRef<str>) -> Option<Port> {
+        self.0.get(service_name.as_ref()).map(|(_, port)| port).copied()
     }
 }
 
@@ -45,42 +48,11 @@ impl From<proto::ServiceMap> for ServiceMap {
 
         let mut services = HashMap::with_capacity(map.len());
 
-        // From the service.proto description:
-        // e.g., map[autopeering:&{tcp, 198.51.100.1:80}]
-        // The service type (e.g., tcp, upd) and the address (e.g., 198.51.100.1:80)
         for (service_name, proto::NetworkAddress { network, port }) in map {
+            let transport: ServiceTransport = network.parse().expect("error parsing transport protocol");
             let port = port as u16;
 
-            let mut iter = network.split_terminator(',');
-
-            // udp or tcp
-            let transport = iter.next().expect("error unpacking transport").trim();
-
-            // IP address
-            let ip_addr: IpAddr = iter
-                .next()
-                .expect("error unpacking ip address")
-                .trim()
-                .parse()
-                .expect("error parsing ip address");
-
-            // Create libp2p's Multiaddr from the given data.
-            let mut multiaddr = Multiaddr::empty();
-            match ip_addr {
-                IpAddr::V4(ip4_addr) => {
-                    multiaddr.push(Protocol::Ip4(ip4_addr));
-                }
-                IpAddr::V6(ip6_addr) => {
-                    multiaddr.push(Protocol::Ip6(ip6_addr));
-                }
-            }
-            match transport {
-                "udp" => multiaddr.push(Protocol::Udp(port)),
-                "tcp" => multiaddr.push(Protocol::Tcp(port)),
-                _ => unimplemented!("unsupported protocol"),
-            }
-
-            services.insert(service_name, multiaddr);
+            services.insert(service_name, (transport, port));
         }
 
         Self(services)
@@ -89,29 +61,13 @@ impl From<proto::ServiceMap> for ServiceMap {
 
 impl From<ServiceMap> for proto::ServiceMap {
     fn from(services: ServiceMap) -> Self {
-        // From the service.proto description:
-        // e.g., map[autopeering:&{tcp, 198.51.100.1:80}]
-        // The service type (e.g., tcp, upd) and the address (e.g., 198.51.100.1:80)
-
         let ServiceMap(map) = services;
 
         let mut services = HashMap::with_capacity(map.len());
 
-        for (service_name, mut multiaddr) in map {
-            let (port, transport) = match multiaddr.pop().expect("invalid multiaddr: port") {
-                Protocol::Udp(port) => (port, "udp"),
-                Protocol::Tcp(port) => (port, "tcp"),
-                _ => panic!("invalid multiaddr: unsupported transport protocol"),
-            };
-
-            let addr = match multiaddr.pop().expect("invalid multiaddr: address") {
-                Protocol::Ip4(ip4_addr) => ip4_addr.to_string(),
-                Protocol::Ip6(ip6_addr) => ip6_addr.to_string(),
-                _ => panic!("invalid multiaddr: unsupported transport protocol"),
-            };
-
+        for (service_name, (transport, port)) in map {
             let network_addr = proto::NetworkAddress {
-                network: format!("{}, {}:{}", transport, addr, port), // FIXME: port here?
+                network: transport.to_string(),
                 port: port as u32,
             };
 
@@ -133,18 +89,31 @@ impl fmt::Display for ServiceMap {
     }
 }
 
-pub enum ServiceProtocol {
+#[derive(Debug, Clone, Copy)]
+pub enum ServiceTransport {
     Tcp,
     Udp,
 }
 
-impl fmt::Display for ServiceProtocol {
+impl fmt::Display for ServiceTransport {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let protocol = match self {
-            ServiceProtocol::Udp => "udp",
-            ServiceProtocol::Tcp => "tcp",
+            ServiceTransport::Udp => "udp",
+            ServiceTransport::Tcp => "tcp",
         };
         write!(f, "{}", protocol)
+    }
+}
+
+impl FromStr for ServiceTransport {
+    type Err = io::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "tcp" => Ok(Self::Tcp),
+            "udp" => Ok(Self::Udp),
+            _ => Err(io::Error::new(io::ErrorKind::InvalidData, "unsupported transport")),
+        }
     }
 }
 

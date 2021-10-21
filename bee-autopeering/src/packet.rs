@@ -54,7 +54,7 @@ impl Packet {
     /// Returns the type of this packet.
     pub(crate) fn message_type(&self) -> Result<MessageType, io::Error> {
         num::FromPrimitive::from_u32(self.0.r#type)
-            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "unknown packet type identifier"))
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "unknown message type identifier"))
     }
 
     /// Returns the message contained in this packet.

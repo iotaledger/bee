@@ -16,9 +16,9 @@ use crate::{
     peerstore::{self, PeerStore},
     request::{self, RequestManager},
     server::{ServerSocket, ServerTx},
-    service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
+    service_map::{ServiceMap, ServiceTransport, AUTOPEERING_SERVICE_NAME},
     shutdown::ShutdownRx,
-    time, ServiceProtocol,
+    time,
 };
 
 use std::{
@@ -289,10 +289,10 @@ impl<S: PeerStore> DiscoveryManager<S> {
                 }
             };
             let mut peer = Peer::new(entry_socketaddr.ip(), entry_addr.public_key().clone());
-            peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, entry_socketaddr.port());
+            peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, entry_socketaddr.port());
 
-            // send_verification_request(&peer, &request_mngr, &server_tx);
-            send_discovery_request(&peer, &request_mngr, &server_tx);
+            send_verification_request(&peer, &request_mngr, &server_tx);
+            // send_discovery_request(&peer, &request_mngr, &server_tx);
         }
 
         loop {

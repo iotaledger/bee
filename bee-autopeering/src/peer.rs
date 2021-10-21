@@ -5,7 +5,7 @@ use crate::{
     discovery::VERIFICATION_EXPIRATION,
     identity::PeerId,
     proto,
-    service_map::{ServiceMap, ServiceProtocol},
+    service_map::{ServiceMap, ServiceTransport},
     time::{self, Timestamp},
 };
 
@@ -60,18 +60,8 @@ impl Peer {
     }
 
     /// Adds a service with address binding to this peer.
-    pub fn add_service(&mut self, service_name: impl ToString, protocol: ServiceProtocol, port: u16) {
-        let ipv = match self.ip_address {
-            IpAddr::V4(ip4) => "ip4",
-            IpAddr::V6(ip6) => "ip6",
-        };
-
-        // Unwrap: we control what is being parsed.
-        let multiaddr = format!("/{}/{}/{}/{}", ipv, self.ip_address, protocol, port)
-            .parse()
-            .unwrap();
-
-        self.services.insert(service_name.to_string(), multiaddr);
+    pub fn add_service(&mut self, service_name: impl ToString, transport: ServiceTransport, port: u16) {
+        self.services.insert(service_name.to_string(), transport, port);
     }
 
     /// Creates a peer from its Protobuf representation/encoding.

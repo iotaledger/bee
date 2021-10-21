@@ -40,4 +40,4 @@ pub use init::init;
 pub use local::Local;
 pub use peer::Peer;
 pub use peering::PeeringEvent;
-pub use service_map::{ServiceMap, ServiceName, ServiceProtocol};
+pub use service_map::{ServiceMap, ServiceName, ServiceTransport};
