@@ -181,7 +181,6 @@ name = "bee-common"
 version = "0.5.0"
 dependencies = [
  "autocfg",
- "chrono",
  "console-subscriber",
  "fern",
  "jsonwebtoken",
@@ -190,6 +189,7 @@ dependencies = [
  "rust-argon2",
  "serde",
  "thiserror",
+ "time 0.3.3",
  "tracing-subscriber",
 ]
 
@@ -223,7 +223,6 @@ dependencies = [
  "bee-runtime",
  "bee-storage",
  "bee-tangle",
- "chrono",
  "digest",
  "futures",
  "hashbrown",
@@ -630,7 +629,7 @@ dependencies = [
  "libc",
  "num-integer",
  "num-traits",
- "time",
+ "time 0.1.44",
  "winapi",
 ]
 
@@ -3130,6 +3129,16 @@ dependencies = [
  "libc",
  "wasi 0.10.0+wasi-snapshot-preview1",
  "winapi",
+]
+
+[[package]]
+name = "time"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cde1cf55178e0293453ba2cca0d5f8392a922e52aa958aee9c28ed02becc6d03"
+dependencies = [
+ "itoa",
+ "libc",
 ]
 
 [[package]]

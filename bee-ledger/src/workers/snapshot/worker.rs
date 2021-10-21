@@ -7,6 +7,7 @@ use crate::workers::{
     storage::{self, StorageBackend},
 };
 
+use bee_common::time;
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::{node::Node, worker::Worker};
 use bee_storage::{access::AsIterator, backend::StorageBackend as _, system::StorageHealth};
@@ -14,7 +15,6 @@ use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
 
 use async_trait::async_trait;
 
-use chrono::{offset::TimeZone, Utc};
 use log::info;
 
 use std::{any::TypeId, collections::HashMap};
@@ -48,7 +48,7 @@ where
 
             info!(
                 "Loaded snapshot from {} with snapshot index {}, entry point index {} and pruning index {}.",
-                Utc.timestamp(info.timestamp() as i64, 0).format("%d-%m-%Y %H:%M:%S"),
+                time::format_unix_timestamp(info.timestamp() as i64),
                 *info.snapshot_index(),
                 *info.entry_point_index(),
                 *info.pruning_index(),
