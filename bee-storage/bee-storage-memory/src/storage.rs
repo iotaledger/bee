@@ -74,9 +74,9 @@ pub struct Storage {
 }
 
 impl Storage {
-    /// Create a new database from the provided configuration.
-    pub fn new() -> Result<Self, Error> {
-        Ok(Default::default())
+    /// Create a new database.
+    pub fn new() -> Self {
+        Default::default()
     }
 }
 
@@ -86,7 +86,7 @@ impl StorageBackend for Storage {
     type Error = Error;
 
     fn start(_: Self::Config) -> Result<Self, Self::Error> {
-        let storage = Self::new()?;
+        let storage = Self::new();
 
         match Fetch::<u8, System>::fetch(&storage, &SYSTEM_VERSION_KEY)? {
             Some(System::Version(version)) => {
