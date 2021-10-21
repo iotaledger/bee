@@ -40,7 +40,7 @@ impl ServerConfig {
 }
 
 pub(crate) struct IncomingPacketSenders {
-    pub(crate) discover_tx: IncomingPacketTx,
+    pub(crate) discovery_tx: IncomingPacketTx,
     pub(crate) peering_tx: IncomingPacketTx,
 }
 
@@ -119,7 +119,7 @@ async fn incoming_packet_handler(
     let mut packet_bytes = [0; READ_BUFFER_SIZE];
 
     let IncomingPacketSenders {
-        discover_tx,
+        discovery_tx: discover_tx,
         peering_tx,
     } = incoming_senders;
 

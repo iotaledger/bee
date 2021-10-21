@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    delay::Repeat,
+    delay::{Delay, Repeat},
     hash,
     identity::PeerId,
     peerstore::PeerStore,
     salt::Salt,
     service_map::{ServiceMap, ServiceTransport},
+    shutdown::ShutdownRx,
+    time,
 };
 
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, SECRET_KEY_LENGTH};
@@ -134,6 +136,23 @@ impl Eq for Local {}
 impl PartialEq for Local {
     fn eq(&self, other: &Self) -> bool {
         self.peer_id() == other.peer_id()
+    }
+}
+
+#[async_trait::async_trait]
+impl Repeat for Local {
+    type Command = Box<dyn Fn(&Self::Context) + Send>;
+    type Context = Self;
+
+    async fn repeat(mut delay: Delay, cmd: Self::Command, ctx: Self::Context, mut shutdown_rx: ShutdownRx) {
+        while let Some(duration) = delay.next() {
+            tokio::select! {
+                _ = &mut shutdown_rx => break,
+                _ = time::sleep(duration) => {
+                    cmd(&ctx);
+                }
+            }
+        }
     }
 }
 

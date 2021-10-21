@@ -11,13 +11,14 @@ use crate::{
     peering::{PeeringEventRx, PeeringManager, PeeringManagerConfig},
     peerstore::{InMemoryPeerStore, PeerStore},
     request::RequestManager,
+    salt::{Salt, DEFAULT_SALT_LIFETIME},
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket},
     service_map::ServiceMap,
     shutdown::ShutdownBus,
     time,
 };
 
-use std::{error, future::Future, ops::DerefMut as _};
+use std::{error, future::Future, ops::DerefMut as _, time::SystemTime};
 
 /// Initializes the autopeering service.
 pub async fn init<S, I, Q>(
@@ -37,14 +38,15 @@ where
 
     log::info!("---------------------------------------------------------------------------------------------------");
     log::info!("WARNING:");
-    log::info!("The autopeering plugin will disclose your public IP address to possibly all nodes and entry points.");
-    log::info!("Please disable this plugin if you do not want this to happen!");
+    log::info!("The autopeering system will disclose your public IP address to possibly all nodes and entry points.");
+    log::info!("Please disable it if you do not want this to happen!");
     log::info!("---------------------------------------------------------------------------------------------------");
     log::info!("network_name/id: {}/{}", network_name.as_ref(), network_id);
     log::info!("protocol_version: {}", version);
+    // TODO: log the salt expiration time
 
     // Create a bus to distribute the shutdown signal to all spawned tasks.
-    let (shutdown_bus, mut shutdown_reg) = ShutdownBus::<4>::new();
+    let (shutdown_bus, mut shutdown_reg) = ShutdownBus::<6>::new();
     tokio::spawn(async move {
         quit_signal.await;
         shutdown_bus.trigger();
@@ -58,13 +60,12 @@ where
     let (peering_tx, peering_rx) = server_chan::<IncomingPacket>();
 
     let incoming_senders = IncomingPacketSenders {
-        discover_tx: discovery_tx,
+        discovery_tx,
         peering_tx,
     };
 
     // Spawn the server handling the socket I/O.
     let server_config = ServerConfig::new(&config);
-    // Unwrap: we ensured there are enough items in the vec.
     let (server, outgoing_tx) = Server::new(
         server_config,
         local.clone(),
@@ -72,22 +73,40 @@ where
         shutdown_reg.register(),
         shutdown_reg.register(),
     );
-
     tokio::spawn(server.run());
 
     // Create a request manager that creates and keeps track of outgoing requests.
     let request_mngr = RequestManager::new(version, network_id, config.bind_addr, local.clone());
 
     // Spawn a cronjob that regularly removes unanswered pings.
-    let delay = DelayBuilder::new(DelayMode::Constant(1000)).finish();
-    let cmd = Box::new(|mngr: &RequestManager| {
+    let remove_expired_requests = Box::new(|mngr: &RequestManager| {
         let now = time::unix_now_secs();
         let mut guard = mngr.open_requests.write().expect("error getting write access");
         let requests = guard.deref_mut();
+        // Retain only those, which expire in the future.
         requests.retain(|_, v| v.expiration_time > now);
+        log::debug!("Open requests: {}", requests.len());
     });
+    tokio::spawn(RequestManager::repeat(
+        DelayBuilder::new(DelayMode::Constant(1000)).finish(),
+        remove_expired_requests,
+        request_mngr.clone(),
+        shutdown_reg.register(),
+    ));
 
-    // tokio::spawn(RequestManager::repeat(delay, cmd, request_mngr.clone()));
+    // Spawn a cronjob that regularly updates the salts of the local peer.
+    let update_salts = Box::new(|local: &Local| {
+        local.set_private_salt(Salt::default());
+        local.set_public_salt(Salt::default());
+        log::info!("Salts updated");
+        // TODO: publish `SaltUpdated` event
+    });
+    tokio::spawn(Local::repeat(
+        DelayBuilder::new(DelayMode::Constant(DEFAULT_SALT_LIFETIME.as_millis() as u64)).finish(),
+        update_salts,
+        local.clone(),
+        shutdown_reg.register(),
+    ));
 
     // Spawn the discovery manager handling discovery requests/responses.
     let discovery_config = DiscoveryManagerConfig::new(&config, version, network_id);

@@ -558,6 +558,9 @@ fn handle_verification_response<S: PeerStore>(
 ) {
     log::debug!("Handling verification response.");
 
+    // Remove the corresponding request from the request manager.
+    request_mngr.remove_request::<VerificationRequest>(peer_id);
+
     peerstore.update_last_verification_response(peer_id.clone());
 
     // TEMP: on each valid verification response send a discovery request

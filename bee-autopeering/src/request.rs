@@ -12,6 +12,7 @@ use crate::{
     packet::{msg_hash, MessageType},
     peering_messages::PeeringRequest,
     salt::Salt,
+    shutdown::ShutdownRx,
     time::{self, Timestamp},
 };
 
@@ -175,6 +176,17 @@ impl RequestManager {
             None
         }
     }
+
+    pub(crate) fn remove_request<R: Request + 'static>(&self, peer_id: &PeerId) -> bool {
+        // TODO: Can we prevent the clone?
+        let key = RequestKey {
+            peer_id: peer_id.clone(),
+            request_id: TypeId::of::<R>(),
+        };
+
+        let mut requests = self.open_requests.write().expect("error getting read access");
+        (*requests).remove(&key).is_some()
+    }
 }
 
 #[async_trait::async_trait]
@@ -182,15 +194,20 @@ impl Repeat for RequestManager {
     type Command = Box<dyn Fn(&Self::Context) + Send>;
     type Context = Self;
 
-    async fn repeat(mut delay: Delay, cmd: Self::Command, ctx: Self::Context) {
+    async fn repeat(mut delay: Delay, cmd: Self::Command, ctx: Self::Context, mut shutdown_rx: ShutdownRx) {
         while let Some(duration) = delay.next() {
-            time::sleep(duration).await;
-            cmd(&ctx);
+            tokio::select! {
+                _ = &mut shutdown_rx => break,
+                _ = time::sleep(duration) => {
+                    cmd(&ctx);
+                }
+            }
         }
     }
 }
 
 pub(crate) fn is_expired(timestamp: Timestamp) -> bool {
+    // TODO: use time::since instead
     timestamp
         .checked_add(REQUEST_EXPIRATION_SECS)
         .expect("timestamp checked add")

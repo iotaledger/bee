@@ -15,7 +15,7 @@ use std::{
 };
 
 const SALT_BYTE_LEN: usize = 20;
-const DEFAULT_SALT_LIFETIME: Duration = Duration::from_secs(2 * 60 * 60); // 2 hours
+pub(crate) const DEFAULT_SALT_LIFETIME: Duration = Duration::from_secs(2 * 60 * 60); // 2 hours
 
 #[derive(Clone, Debug)]
 pub struct Salt {

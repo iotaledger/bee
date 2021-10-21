@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::time;
+use crate::{shutdown::ShutdownRx, time};
 
 use rand::{thread_rng, Rng as _};
 
@@ -16,7 +16,7 @@ where
     type Command: Send;
     type Context: Send;
 
-    async fn repeat(delay: Delay, cmd: Self::Command, ctx: Self::Context);
+    async fn repeat(delay: Delay, cmd: Self::Command, ctx: Self::Context, shutdown_rx: ShutdownRx);
 }
 
 #[derive(Default)]
