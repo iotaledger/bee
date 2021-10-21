@@ -25,12 +25,14 @@ use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
-use std::collections::HashMap;
+use sled::{transaction::TransactionError, Transactional};
+
+use std::{collections::BTreeMap, convert::Infallible};
 
 /// A writing batch that can be applied atomically.
 #[derive(Default)]
 pub struct StorageBatch {
-    inner: HashMap<&'static str, sled::Batch>,
+    inner: BTreeMap<&'static str, sled::Batch>,
     key_buf: Vec<u8>,
     value_buf: Vec<u8>,
 }
@@ -39,8 +41,27 @@ impl BatchBuilder for Storage {
     type Batch = StorageBatch;
 
     fn batch_commit(&self, batch: Self::Batch, _durability: bool) -> Result<(), <Self as StorageBackend>::Error> {
-        for (tree, batch) in batch.inner {
-            self.inner.open_tree(tree)?.apply_batch(batch)?;
+        let trees = batch
+            .inner
+            .keys()
+            .map(|tree| self.inner.open_tree(tree))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let transaction_result = Transactional::<Infallible>::transaction::<_, ()>(trees.as_slice(), |trees| {
+            for (tree, batch) in trees.iter().zip(batch.inner.values()) {
+                tree.apply_batch(batch)?;
+            }
+
+            Ok(())
+        });
+
+        if let Err(err) = transaction_result {
+            match err {
+                TransactionError::Storage(err) => {
+                    return Err(Self::Error::Sled(err));
+                }
+                TransactionError::Abort(_) => unreachable!(),
+            }
         }
 
         Ok(())
