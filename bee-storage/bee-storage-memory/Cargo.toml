@@ -1,13 +1,13 @@
 [package]
 name = "bee-storage-memory"
 version = "0.1.0"
-authors = ["IOTA Stiftung"]
+authors = [ "IOTA Stiftung" ]
 edition = "2018"
 description = "An in-memory bee-storage implementation"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework"]
+keywords = [ "iota", "tangle", "bee", "framework" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
