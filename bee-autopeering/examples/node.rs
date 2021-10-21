@@ -3,7 +3,9 @@
 
 #![allow(warnings)]
 
-use bee_autopeering::{init, peerstore::InMemoryPeerStore, AutopeeringConfig, DiscoveryEvent, Local, PeeringEvent};
+use bee_autopeering::{
+    init, peerstore::InMemoryPeerStore, AutopeeringConfig, DiscoveryEvent, Local, PeeringEvent, ServiceTransport,
+};
 
 use log::LevelFilter;
 use serde_json::Value;
@@ -20,32 +22,18 @@ fn setup_fern(level: LevelFilter) {
         .expect("fern");
 }
 
-fn setup_config() -> AutopeeringConfig {
-    /*
-    let config_json = r#"
-    {
-        "bindAddress": "0.0.0.0:14627",
-        "entryNodes": [
-            "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
-            "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
-            "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
-            "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"     ],
-        "entryNodesPreferIPv6": false,
-        "runAsEntryNode": false
-    }"#;
-    */
-
-    /*
-    let config_json = r#"
-    {
-        "bindAddress": "0.0.0.0:14627",
-        "entryNodes": [
-            "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM"
-        ],
-        "entryNodesPreferIPv6": false,
-        "runAsEntryNode": false
-    }"#;
-    */
+fn read_config() -> AutopeeringConfig {
+    // let config_json = r#"
+    // {
+    // "bindAddress": "0.0.0.0:14627",
+    // "entryNodes": [
+    // "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
+    // "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/
+    // iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb", "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/
+    // 14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2", "/dns/entry-mainnet.tanglebay.com/udp/14626/
+    // autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"     ], "entryNodesPreferIPv6": false,
+    // "runAsEntryNode": false
+    // }"#;
 
     let config_json = r#"
     {
@@ -62,17 +50,29 @@ fn setup_config() -> AutopeeringConfig {
 
 #[tokio::main]
 async fn main() {
+    // Set up logger.
     setup_fern(LevelFilter::Debug);
 
-    let local = Local::new();
-    let config = setup_config();
+    // Set up a local peer, that provides the Autopeering service.
+    let mut local = Local::new();
+    local.add_service("peering", ServiceTransport::Udp, 14627);
+
+    // Read the config from a JSON file/string.
+    let config = read_config();
     println!("{:#?}", config);
 
+    // Network parameters.
     let version = 1;
     let network_id = "chrysalis-mainnet";
-    let peerstore_config = (); // no config necessary for the InMemoryPeerStore
+
+    // Storage config.
+    // No config is  necessary for the `InMemoryPeerStore`.
+    let peerstore_config = ();
+
+    // Shutdown signal.
     let quit_signal = ctrl_c();
 
+    // Initialize the Autopeering service.
     let (mut discovery_rx, mut peering_rx) = bee_autopeering::init::<InMemoryPeerStore, _, _>(
         config.clone(),
         version,
@@ -84,8 +84,10 @@ async fn main() {
     .await
     .expect("initializing autopeering system failed");
 
+    // Print to what IP addresses the entry nodes resolved to.
     print_resolved_entry_nodes(config).await;
 
+    // Enter event loop.
     loop {
         tokio::select! {
             de = discovery_rx.recv() => {

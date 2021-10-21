@@ -11,11 +11,11 @@ use crate::{
     identity::PeerId,
     local::Local,
     multiaddr::{AddressKind, AutopeeringMultiaddr},
-    packet::{IncomingPacket, MessageType, OutgoingPacket},
+    packet::{msg_hash, IncomingPacket, MessageType, OutgoingPacket},
     peer::{self, Peer},
     peerstore::{self, PeerStore},
     request::{self, RequestManager},
-    server::{ServerSocket, ServerTx},
+    server::{marshal, ServerSocket, ServerTx},
     service_map::{ServiceMap, ServiceTransport, AUTOPEERING_SERVICE_NAME},
     shutdown::ShutdownRx,
     time,
@@ -242,7 +242,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
         } = self;
 
         let DiscoveryManagerConfig {
-            entry_nodes,
+            mut entry_nodes,
             entry_nodes_prefer_ipv6,
             run_as_entry_node,
             version,
@@ -255,45 +255,8 @@ impl<S: PeerStore> DiscoveryManager<S> {
             server_tx,
         } = socket;
 
-        // Send verification request to entry nodes
-        for mut entry_addr in entry_nodes {
-            let entry_socketaddr = match entry_addr.address_kind() {
-                AddressKind::Ip4 | AddressKind::Ip6 => {
-                    // Unwrap: for those address kinds the returned option is always `Some`.
-                    entry_addr.socket_addr().unwrap()
-                }
-                AddressKind::Dns => {
-                    if entry_addr.resolve_dns().await {
-                        let entry_socketaddrs = entry_addr.resolved_addrs();
-                        let has_ip4 = entry_socketaddrs.iter().position(|s| s.is_ipv4());
-                        let has_ip6 = entry_socketaddrs.iter().position(|s| s.is_ipv6());
-
-                        match (has_ip4, has_ip6) {
-                            // Only IP4 or only IP6
-                            (Some(index), None) | (None, Some(index)) => entry_socketaddrs[index],
-                            // Both are available
-                            (Some(index1), Some(index2)) => {
-                                if entry_nodes_prefer_ipv6 {
-                                    entry_socketaddrs[index2]
-                                } else {
-                                    entry_socketaddrs[index1]
-                                }
-                            }
-                            // Both being None is not possible.
-                            _ => unreachable!(),
-                        }
-                    } else {
-                        // Ignore that entry node.
-                        continue;
-                    }
-                }
-            };
-            let mut peer = Peer::new(entry_socketaddr.ip(), entry_addr.public_key().clone());
-            peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, entry_socketaddr.port());
-
-            send_verification_request(&peer, &request_mngr, &server_tx);
-            // send_discovery_request(&peer, &request_mngr, &server_tx);
-        }
+        // Send verification and discovery request to the entry nodes.
+        contact_entry_nodes(&mut entry_nodes, entry_nodes_prefer_ipv6, &request_mngr, &server_tx).await;
 
         loop {
             tokio::select! {
@@ -319,6 +282,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
                                     log::debug!("Received invalid verification request: {:?}", verif_req);
                                     continue;
                                 }
+                                log::debug!("Received valid verification request: {:?}", verif_req);
 
                                 handle_verification_request(
                                     &verif_req,
@@ -342,7 +306,16 @@ impl<S: PeerStore> DiscoveryManager<S> {
                                     continue;
                                 }
 
-                                handle_verification_response();
+                                handle_verification_response(
+                                    &verif_res,
+                                    &peer_id,
+                                    &msg_bytes,
+                                    &server_tx,
+                                    source_addr,
+                                    &local,
+                                    &peerstore,
+                                    &request_mngr,
+                                );
                             }
                             MessageType::DiscoveryRequest => {
                                 log::debug!("Received discovery request.");
@@ -381,7 +354,58 @@ impl<S: PeerStore> DiscoveryManager<S> {
     }
 }
 
+async fn contact_entry_nodes(
+    entry_nodes: &mut Vec<AutopeeringMultiaddr>,
+    entry_nodes_prefer_ipv6: bool,
+    request_mngr: &RequestManager,
+    server_tx: &ServerTx,
+) {
+    log::debug!("Contacting entry nodes.");
+
+    // Send verification request to entry nodes
+    for mut entry_addr in entry_nodes {
+        let entry_socketaddr = match entry_addr.address_kind() {
+            AddressKind::Ip4 | AddressKind::Ip6 => {
+                // Unwrap: for those address kinds the returned option is always `Some`.
+                entry_addr.socket_addr().unwrap()
+            }
+            AddressKind::Dns => {
+                if entry_addr.resolve_dns().await {
+                    let entry_socketaddrs = entry_addr.resolved_addrs();
+                    let has_ip4 = entry_socketaddrs.iter().position(|s| s.is_ipv4());
+                    let has_ip6 = entry_socketaddrs.iter().position(|s| s.is_ipv6());
+
+                    match (has_ip4, has_ip6) {
+                        // Only IP4 or only IP6
+                        (Some(index), None) | (None, Some(index)) => entry_socketaddrs[index],
+                        // Both are available
+                        (Some(index1), Some(index2)) => {
+                            if entry_nodes_prefer_ipv6 {
+                                entry_socketaddrs[index2]
+                            } else {
+                                entry_socketaddrs[index1]
+                            }
+                        }
+                        // Both being None is not possible.
+                        _ => unreachable!(),
+                    }
+                } else {
+                    // Ignore that entry node.
+                    continue;
+                }
+            }
+        };
+
+        let mut peer = Peer::new(entry_socketaddr.ip(), entry_addr.public_key().clone());
+        peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, entry_socketaddr.port());
+
+        send_verification_request(&peer, &request_mngr, &server_tx);
+    }
+}
+
 fn validate_verification_request(verif_req: &VerificationRequest, version: u32, network_id: u32) -> bool {
+    log::debug!("Validating verification request.");
+
     if verif_req.version() != version {
         false
     } else if verif_req.network_id() != network_id {
@@ -405,14 +429,21 @@ fn handle_verification_request<S: PeerStore>(
     peerstore: &S,
     request_mngr: &RequestManager,
 ) {
+    log::debug!("Handling verification request.");
+
+    peerstore.update_last_verification_request(peer_id.clone());
+
     reply_with_verification_response(verif_req, msg_bytes, &server_tx, &local, source_addr);
 
+    // ```go
     // if the peer is unknown or expired, send a Ping to verify
     // if !p.IsVerified(from.ID(), dstAddr.IP) {
-    // 	p.sendPing(dstAddr, from.ID())
-    // } else if !p.mgr.isKnown(from.ID()) { // add a discovered peer to the manager if it is new but verified
-    // 	p.mgr.addDiscoveredPeer(newPeer(from, s.LocalAddr().Network(), dstAddr))
+    //     p.sendPing(dstAddr, from.ID())
+    // } else if !p.mgr.isKnown(from.ID()) {
+    //     // add a discovered peer to the manager if it is new but verified
+    // 	   p.mgr.addDiscoveredPeer(newPeer(from, s.LocalAddr().Network(), dstAddr))
     // }
+    // ```
     if let Some(last_verif_res) = peerstore.last_verification_response(peer_id) {
         if !peer::is_verified(last_verif_res) {
             reply_with_verification_request(peer_id, request_mngr, server_tx, source_addr);
@@ -420,8 +451,6 @@ fn handle_verification_request<S: PeerStore>(
     } else {
         reply_with_verification_request(peer_id, request_mngr, server_tx, source_addr);
     }
-
-    peerstore.update_last_verification_request(peer_id.clone());
 }
 
 fn reply_with_verification_response(
@@ -431,7 +460,10 @@ fn reply_with_verification_response(
     local: &Local,
     target_addr: SocketAddr,
 ) {
-    let request_hash = &hash::sha256(&msg_bytes)[..];
+    log::debug!("Replying with verification response.");
+
+    let request_hash = &msg_hash(MessageType::VerificationRequest, msg_bytes);
+
     let verif_res = VerificationResponse::new(request_hash, local.services(), target_addr.ip());
     let verif_res_bytes = verif_res
         .protobuf()
@@ -460,6 +492,8 @@ fn reply_with_verification_request(
     server_tx: &ServerTx,
     target_addr: SocketAddr,
 ) {
+    log::debug!("Replying with verification request.");
+
     let verif_req_bytes = request_mngr
         .new_verification_request(peer_id.clone(), target_addr.ip())
         .protobuf()
@@ -503,6 +537,8 @@ fn validate_verification_response(
     request_mngr: &RequestManager,
     peer_id: &PeerId,
 ) -> bool {
+    log::debug!("Validating verification response.");
+
     if let Some(request_hash) = request_mngr.get_request_hash::<VerificationRequest>(peer_id) {
         verif_res.request_hash() == &request_hash[..]
     } else {
@@ -510,9 +546,45 @@ fn validate_verification_response(
     }
 }
 
-fn handle_verification_response() {
-    // things we need to do after we received a valid response to our request
-    todo!()
+fn handle_verification_response<S: PeerStore>(
+    verif_res: &VerificationResponse,
+    peer_id: &PeerId,
+    msg_bytes: &[u8],
+    server_tx: &ServerTx,
+    source_addr: SocketAddr,
+    local: &Local,
+    peerstore: &S,
+    request_mngr: &RequestManager,
+) {
+    log::debug!("Handling verification response.");
+
+    peerstore.update_last_verification_response(peer_id.clone());
+
+    // TEMP: on each valid verification response send a discovery request
+    // reply_with_discovery_request(peer_id, request_mngr, server_tx, source_addr);
+}
+
+fn reply_with_discovery_request(
+    peer_id: &PeerId,
+    request_mngr: &RequestManager,
+    server_tx: &ServerTx,
+    target_addr: SocketAddr,
+) {
+    log::debug!("Replying with discovery request.");
+
+    let disc_req_bytes = request_mngr
+        .new_discovery_request(peer_id.clone(), target_addr.ip())
+        .protobuf()
+        .expect("error encoding discovery request")
+        .to_vec();
+
+    server_tx
+        .send(OutgoingPacket {
+            msg_type: MessageType::DiscoveryRequest,
+            msg_bytes: disc_req_bytes,
+            target_addr,
+        })
+        .expect("error sending discovery request to server");
 }
 
 fn send_discovery_request(target: &Peer, request_mngr: &RequestManager, server_tx: &ServerTx) {

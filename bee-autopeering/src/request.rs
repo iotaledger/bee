@@ -5,7 +5,7 @@ use num::CheckedAdd;
 
 use crate::{
     delay::{Delay, Repeat},
-    discovery_messages::{DiscoveryRequest, VerificationRequest},
+    discovery_messages::{DiscoveryRequest, VerificationRequest, VerificationResponse},
     hash,
     identity::PeerId,
     local::Local,
@@ -162,7 +162,7 @@ impl RequestManager {
     }
 
     pub(crate) fn get_request_hash<R: Request + 'static>(&self, peer_id: &PeerId) -> Option<RequestHash> {
-        // TODO: prevent the unfortunate peer id clone
+        // TODO: Can we prevent the clone?
         let key = RequestKey {
             peer_id: peer_id.clone(),
             request_id: TypeId::of::<R>(),

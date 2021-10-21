@@ -6,7 +6,7 @@ use crate::{
     identity::PeerId,
     local::Local,
     multiaddr,
-    packet::{IncomingPacket, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, PEERING_MSG_TYPE_RANGE},
+    packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, PEERING_MSG_TYPE_RANGE},
     shutdown::ShutdownRx,
 };
 
@@ -147,14 +147,8 @@ async fn incoming_packet_handler(
                         continue;
                     }
 
-                    // Depending on the message type, forward it to the appropriate manager.
-                    // NOTE: not actually used by Horneet
                     let marshalled_bytes = packet.into_message();
-
-                    let msg_type = num::FromPrimitive::from_u32(marshalled_bytes[0] as u32).expect("unknown message type");
-                    let mut msg_bytes = vec![0u8; marshalled_bytes.len() - 1];
-                    msg_bytes[..].copy_from_slice(&marshalled_bytes[1..]);
-
+                    let (msg_type, msg_bytes) = unmarshal(&marshalled_bytes);
 
                     let packet = IncomingPacket {
                         msg_type,
@@ -163,6 +157,7 @@ async fn incoming_packet_handler(
                         peer_id,
                     };
 
+                    // Depending on the message type, forward it to the appropriate manager.
                     match msg_type as u32 {
                         t if DISCOVERY_MSG_TYPE_RANGE.contains(&t) => {
                             discover_tx.send(packet).expect("channel send error: discovery");
@@ -200,9 +195,7 @@ async fn outgoing_packet_handler(
                         target_addr,
                     } = packet;
 
-                    let mut marshalled_bytes = vec![0u8; msg_bytes.len() + 1];
-                    marshalled_bytes[0] = msg_type as u8;
-                    marshalled_bytes[1..].copy_from_slice(&msg_bytes);
+                    let marshalled_bytes = marshal(msg_type, &msg_bytes);
 
                     let signature = local_id.sign(&marshalled_bytes);
                     let packet = Packet::new(msg_type, &marshalled_bytes, &local_id.public_key(), signature);
@@ -218,6 +211,20 @@ async fn outgoing_packet_handler(
             }
         }
     }
+}
+
+pub(crate) fn marshal(msg_type: MessageType, msg_bytes: &[u8]) -> Vec<u8> {
+    let mut marshalled_bytes = vec![0u8; msg_bytes.len() + 1];
+    marshalled_bytes[0] = msg_type as u8;
+    marshalled_bytes[1..].copy_from_slice(&msg_bytes);
+    marshalled_bytes
+}
+
+pub(crate) fn unmarshal(marshalled_bytes: &[u8]) -> (MessageType, Vec<u8>) {
+    let msg_type = num::FromPrimitive::from_u32(marshalled_bytes[0] as u32).expect("unknown message type");
+    let mut msg_bytes = vec![0u8; marshalled_bytes.len() - 1];
+    msg_bytes[..].copy_from_slice(&marshalled_bytes[1..]);
+    (msg_type, msg_bytes)
 }
 
 pub(crate) struct ServerSocket {

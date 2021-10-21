@@ -1,7 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{delay::Repeat, hash, identity::PeerId, peerstore::PeerStore, salt::Salt, ServiceMap};
+use crate::{
+    delay::Repeat,
+    hash,
+    identity::PeerId,
+    peerstore::PeerStore,
+    salt::Salt,
+    service_map::{ServiceMap, ServiceTransport},
+};
 
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, SECRET_KEY_LENGTH};
 
@@ -90,8 +97,15 @@ impl Local {
         self.read_inner().private_key.sign(msg)
     }
 
+    /// Adds a service to this local peer.
+    pub fn add_service(&self, service_name: impl ToString, transport: ServiceTransport, port: u16) {
+        self.write_inner().services.insert(service_name, transport, port)
+    }
+
     /// Returns the list of services this identity supports.
-    pub fn services(&self) -> ServiceMap {
+    ///
+    /// Note: The returned [`ServiceMap`] is a clone. Modifying it will not affect the local peer.
+    pub(crate) fn services(&self) -> ServiceMap {
         self.read_inner().services.clone()
     }
 

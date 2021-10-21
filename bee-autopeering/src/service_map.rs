@@ -19,17 +19,17 @@ pub struct ServiceMap(HashMap<ServiceName, (ServiceTransport, Port)>);
 
 impl ServiceMap {
     /// Creates a new empty service map.
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
     /// Registers a service with its bind address.
-    pub fn insert(&mut self, service_name: ServiceName, transport: ServiceTransport, port: Port) {
-        self.0.insert(service_name, (transport, port));
+    pub(crate) fn insert(&mut self, service_name: impl ToString, transport: ServiceTransport, port: Port) {
+        self.0.insert(service_name.to_string(), (transport, port));
     }
 
-    /// Returns the address kind of a given service.
-    pub fn transport(&self, service_name: impl AsRef<str>) -> Option<ServiceTransport> {
+    /// Returns the transport protocol of the given service.
+    pub(crate) fn transport(&self, service_name: impl AsRef<str>) -> Option<ServiceTransport> {
         self.0
             .get(service_name.as_ref())
             .map(|(transport, _)| transport)
@@ -37,7 +37,7 @@ impl ServiceMap {
     }
 
     /// Returns the access port of a given service.
-    pub fn port(&self, service_name: impl AsRef<str>) -> Option<Port> {
+    pub(crate) fn port(&self, service_name: impl AsRef<str>) -> Option<Port> {
         self.0.get(service_name.as_ref()).map(|(_, port)| port).copied()
     }
 }
