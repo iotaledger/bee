@@ -27,11 +27,9 @@ pub enum Error {
 #[cfg(not(feature = "tokio-console"))]
 macro_rules! log_format {
     ($target:expr, $level:expr, $message:expr, $target_width:expr, $level_width:expr) => {
-        use crate::time as time_util;
-    
         format_args!(
             "{} {:target_width$} {:level_width$} {}",
-            time_util::format(&time_util::now_local()),
+            crate::time::format(&crate::time::now_local()),
             $target,
             $level,
             $message,
