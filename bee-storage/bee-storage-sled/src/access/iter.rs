@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Stream access operations.
+//! Iter access operations.
 
 use crate::{storage::Storage, trees::*};
 
@@ -24,7 +24,7 @@ use bee_tangle::{
 
 use std::{convert::TryInto, marker::PhantomData};
 
-/// Type used to stream a subtree.
+/// Type used to iterate a subtree.
 pub struct StorageIterator<'a, K, V> {
     inner: sled::Iter,
     marker: PhantomData<&'a (K, V)>,
@@ -39,7 +39,7 @@ impl<'a, K, V> StorageIterator<'a, K, V> {
     }
 }
 
-macro_rules! impl_stream {
+macro_rules! impl_iter {
     ($key:ty, $value:ty, $cf:expr) => {
         impl<'a> AsIterator<'a, $key, $value> for Storage {
             type AsIter = StorageIterator<'a, $key, $value>;
@@ -49,7 +49,7 @@ macro_rules! impl_stream {
             }
         }
 
-        /// A stream to iterate over all key-value pairs of a column family.
+        /// An iterator over all key-value pairs of a column family.
         impl<'a> Iterator for StorageIterator<'a, $key, $value> {
             type Item = Result<($key, $value), <Storage as StorageBackend>::Error>;
 
@@ -306,7 +306,7 @@ impl<'a> AsIterator<'a, u8, System> for Storage {
     }
 }
 
-/// A stream to iterate over all key-value pairs of a column family.
+/// An iterator over all key-value pairs of a column family.
 impl<'a> Iterator for StorageIterator<'a, u8, System> {
     type Item = Result<(u8, System), <Storage as StorageBackend>::Error>;
 
@@ -316,33 +316,31 @@ impl<'a> Iterator for StorageIterator<'a, u8, System> {
                 .map(|(key, value)| Self::unpack_key_value(&key, &value))
                 .map_err(From::from)
         })
-
-        // Poll::Ready(item)
     }
 }
 
-impl_stream!(MessageId, Message, TREE_MESSAGE_ID_TO_MESSAGE);
-impl_stream!(MessageId, MessageMetadata, TREE_MESSAGE_ID_TO_METADATA);
-impl_stream!((MessageId, MessageId), (), TREE_MESSAGE_ID_TO_MESSAGE_ID);
-impl_stream!((PaddedIndex, MessageId), (), TREE_INDEX_TO_MESSAGE_ID);
-impl_stream!(OutputId, CreatedOutput, TREE_OUTPUT_ID_TO_CREATED_OUTPUT);
-impl_stream!(OutputId, ConsumedOutput, TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT);
-impl_stream!(Unspent, (), TREE_OUTPUT_ID_UNSPENT);
-impl_stream!((Ed25519Address, OutputId), (), TREE_ED25519_ADDRESS_TO_OUTPUT_ID);
-impl_stream!((), LedgerIndex, TREE_LEDGER_INDEX);
-impl_stream!(MilestoneIndex, Milestone, TREE_MILESTONE_INDEX_TO_MILESTONE);
-impl_stream!((), SnapshotInfo, TREE_SNAPSHOT_INFO);
-impl_stream!(
+impl_iter!(MessageId, Message, TREE_MESSAGE_ID_TO_MESSAGE);
+impl_iter!(MessageId, MessageMetadata, TREE_MESSAGE_ID_TO_METADATA);
+impl_iter!((MessageId, MessageId), (), TREE_MESSAGE_ID_TO_MESSAGE_ID);
+impl_iter!((PaddedIndex, MessageId), (), TREE_INDEX_TO_MESSAGE_ID);
+impl_iter!(OutputId, CreatedOutput, TREE_OUTPUT_ID_TO_CREATED_OUTPUT);
+impl_iter!(OutputId, ConsumedOutput, TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT);
+impl_iter!(Unspent, (), TREE_OUTPUT_ID_UNSPENT);
+impl_iter!((Ed25519Address, OutputId), (), TREE_ED25519_ADDRESS_TO_OUTPUT_ID);
+impl_iter!((), LedgerIndex, TREE_LEDGER_INDEX);
+impl_iter!(MilestoneIndex, Milestone, TREE_MILESTONE_INDEX_TO_MILESTONE);
+impl_iter!((), SnapshotInfo, TREE_SNAPSHOT_INFO);
+impl_iter!(
     SolidEntryPoint,
     MilestoneIndex,
     TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX
 );
-impl_stream!(MilestoneIndex, OutputDiff, TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF);
-impl_stream!(Address, Balance, TREE_ADDRESS_TO_BALANCE);
-impl_stream!(
+impl_iter!(MilestoneIndex, OutputDiff, TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF);
+impl_iter!(Address, Balance, TREE_ADDRESS_TO_BALANCE);
+impl_iter!(
     (MilestoneIndex, UnreferencedMessage),
     (),
     TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE
 );
-impl_stream!((MilestoneIndex, Receipt), (), TREE_MILESTONE_INDEX_TO_RECEIPT);
-impl_stream!((bool, TreasuryOutput), (), TREE_SPENT_TO_TREASURY_OUTPUT);
+impl_iter!((MilestoneIndex, Receipt), (), TREE_MILESTONE_INDEX_TO_RECEIPT);
+impl_iter!((bool, TreasuryOutput), (), TREE_SPENT_TO_TREASURY_OUTPUT);

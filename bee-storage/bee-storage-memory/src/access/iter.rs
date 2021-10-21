@@ -1,11 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Stream access operations.
-pub use crate::table::VecTableIter;
+//! Iter access operations.
 
 use crate::{
     storage::Storage,
+    table::VecTableIter,
     table::{SingletonTableIter, TableIter},
 };
 
@@ -25,7 +25,7 @@ use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
-macro_rules! impl_stream {
+macro_rules! impl_iter {
     (($key:ty, $value:ty), (), $field:ident) => {
         impl<'a> AsIterator<'a, ($key, $value), ()> for Storage {
             type AsIter = VecTableIter<$key, $value>;
@@ -56,25 +56,25 @@ macro_rules! impl_stream {
     };
 }
 
-impl_stream!(u8, System, system);
-impl_stream!(MessageId, Message, message_id_to_message);
-impl_stream!(MessageId, MessageMetadata, message_id_to_metadata);
-impl_stream!((MessageId, MessageId), (), message_id_to_message_id);
-impl_stream!((PaddedIndex, MessageId), (), index_to_message_id);
-impl_stream!(OutputId, CreatedOutput, output_id_to_created_output);
-impl_stream!(OutputId, ConsumedOutput, output_id_to_consumed_output);
-impl_stream!(Unspent, (), output_id_unspent);
-impl_stream!((Ed25519Address, OutputId), (), ed25519_address_to_output_id);
-impl_stream!((), LedgerIndex, ledger_index);
-impl_stream!(MilestoneIndex, Milestone, milestone_index_to_milestone);
-impl_stream!((), SnapshotInfo, snapshot_info);
-impl_stream!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
-impl_stream!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);
-impl_stream!(Address, Balance, address_to_balance);
-impl_stream!(
+impl_iter!(u8, System, system);
+impl_iter!(MessageId, Message, message_id_to_message);
+impl_iter!(MessageId, MessageMetadata, message_id_to_metadata);
+impl_iter!((MessageId, MessageId), (), message_id_to_message_id);
+impl_iter!((PaddedIndex, MessageId), (), index_to_message_id);
+impl_iter!(OutputId, CreatedOutput, output_id_to_created_output);
+impl_iter!(OutputId, ConsumedOutput, output_id_to_consumed_output);
+impl_iter!(Unspent, (), output_id_unspent);
+impl_iter!((Ed25519Address, OutputId), (), ed25519_address_to_output_id);
+impl_iter!((), LedgerIndex, ledger_index);
+impl_iter!(MilestoneIndex, Milestone, milestone_index_to_milestone);
+impl_iter!((), SnapshotInfo, snapshot_info);
+impl_iter!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
+impl_iter!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);
+impl_iter!(Address, Balance, address_to_balance);
+impl_iter!(
     (MilestoneIndex, UnreferencedMessage),
     (),
     milestone_index_to_unreferenced_message
 );
-impl_stream!((MilestoneIndex, Receipt), (), milestone_index_to_receipt);
-impl_stream!((bool, TreasuryOutput), (), spent_to_treasury_output);
+impl_iter!((MilestoneIndex, Receipt), (), milestone_index_to_receipt);
+impl_iter!((bool, TreasuryOutput), (), spent_to_treasury_output);

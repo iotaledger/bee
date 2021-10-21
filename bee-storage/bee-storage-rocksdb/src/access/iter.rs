@@ -41,7 +41,7 @@ impl<'a, K, V> StorageIterator<'a, K, V> {
     }
 }
 
-macro_rules! impl_stream {
+macro_rules! impl_iter {
     ($key:ty, $value:ty, $cf:expr) => {
         impl<'a> AsIterator<'a, $key, $value> for Storage {
             type AsIter = StorageIterator<'a, $key, $value>;
@@ -53,7 +53,7 @@ macro_rules! impl_stream {
             }
         }
 
-        /// A stream to iterate over all key-value pairs of a column family.
+        /// An iterator over all key-value pairs of a column family.
         impl<'a> Iterator for StorageIterator<'a, $key, $value> {
             type Item = Result<($key, $value), <Storage as StorageBackend>::Error>;
 
@@ -300,25 +300,25 @@ impl<'a> StorageIterator<'a, (bool, TreasuryOutput), ()> {
     }
 }
 
-impl_stream!(u8, System, CF_SYSTEM);
-impl_stream!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
-impl_stream!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
-impl_stream!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
-impl_stream!((PaddedIndex, MessageId), (), CF_INDEX_TO_MESSAGE_ID);
-impl_stream!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
-impl_stream!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
-impl_stream!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
-impl_stream!((Ed25519Address, OutputId), (), CF_ED25519_ADDRESS_TO_OUTPUT_ID);
-impl_stream!((), LedgerIndex, CF_LEDGER_INDEX);
-impl_stream!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
-impl_stream!((), SnapshotInfo, CF_SNAPSHOT_INFO);
-impl_stream!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
-impl_stream!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
-impl_stream!(Address, Balance, CF_ADDRESS_TO_BALANCE);
-impl_stream!(
+impl_iter!(u8, System, CF_SYSTEM);
+impl_iter!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
+impl_iter!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
+impl_iter!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
+impl_iter!((PaddedIndex, MessageId), (), CF_INDEX_TO_MESSAGE_ID);
+impl_iter!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
+impl_iter!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
+impl_iter!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
+impl_iter!((Ed25519Address, OutputId), (), CF_ED25519_ADDRESS_TO_OUTPUT_ID);
+impl_iter!((), LedgerIndex, CF_LEDGER_INDEX);
+impl_iter!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
+impl_iter!((), SnapshotInfo, CF_SNAPSHOT_INFO);
+impl_iter!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
+impl_iter!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
+impl_iter!(Address, Balance, CF_ADDRESS_TO_BALANCE);
+impl_iter!(
     (MilestoneIndex, UnreferencedMessage),
     (),
     CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE
 );
-impl_stream!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
-impl_stream!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);
+impl_iter!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
+impl_iter!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);
