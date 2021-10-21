@@ -25,7 +25,7 @@ use bee_message::{
     unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
     Message, MessageBuilder, MessageId,
 };
-#[cfg(feature = "bee_protocol")]
+#[cfg(feature = "peer")]
 use bee_protocol::types::peer::Peer;
 
 use serde::{Deserialize, Serialize, Serializer};
@@ -825,7 +825,7 @@ pub struct PeerDto {
     pub gossip: Option<GossipDto>,
 }
 
-#[cfg(feature = "bee_protocol")]
+#[cfg(feature = "peer")]
 impl From<&Peer> for PeerDto {
     fn from(peer: &Peer) -> Self {
         PeerDto {
