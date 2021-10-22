@@ -79,7 +79,7 @@ mod tests {
         let mut filter = RejectionFilter::new();
         assert_eq!(0, filter.num_conditions());
 
-        let condition = |peer: &Peer| -> bool { peer.services().port(AUTOPEERING_SERVICE_NAME).unwrap() == 1337 };
+        let condition = |peer: &Peer| -> bool { peer.services().get(AUTOPEERING_SERVICE_NAME).unwrap().port() == 1337 };
         let condition = Box::new(condition);
 
         filter.add_condition(condition);

@@ -96,9 +96,9 @@ pub(crate) struct VerificationResponse {
 }
 
 impl VerificationResponse {
-    pub fn new(request_hash: &[u8], services: ServiceMap, target_addr: IpAddr) -> Self {
+    pub fn new(request_hash: Vec<u8>, services: ServiceMap, target_addr: IpAddr) -> Self {
         Self {
-            request_hash: request_hash.to_vec(),
+            request_hash,
             services,
             target_addr,
         }

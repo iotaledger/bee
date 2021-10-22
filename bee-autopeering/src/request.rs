@@ -11,7 +11,9 @@ use crate::{
     local::Local,
     packet::{msg_hash, MessageType},
     peering_messages::PeeringRequest,
+    peerstore::PeerStore,
     salt::Salt,
+    server::ServerTx,
     shutdown::ShutdownRx,
     time::{self, Timestamp},
 };
@@ -204,6 +206,16 @@ impl Repeat for RequestManager {
             }
         }
     }
+}
+
+pub(crate) struct HandlerContext<'a, S: PeerStore> {
+    pub(crate) peer_id: &'a PeerId,
+    pub(crate) msg_bytes: &'a [u8],
+    pub(crate) server_tx: &'a ServerTx,
+    pub(crate) local: &'a Local,
+    pub(crate) peerstore: &'a S,
+    pub(crate) request_mngr: &'a RequestManager,
+    pub(crate) source_addr: SocketAddr,
 }
 
 pub(crate) fn is_expired(timestamp: Timestamp) -> bool {

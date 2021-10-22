@@ -369,8 +369,9 @@ fn send_drop_request(peer: Peer, server_tx: &ServerTx) {
 
     let port = peer
         .services()
-        .port(AUTOPEERING_SERVICE_NAME)
-        .expect("invalid autopeering peer");
+        .get(AUTOPEERING_SERVICE_NAME)
+        .expect("invalid autopeering peer")
+        .port();
 
     server_tx.send(OutgoingPacket {
         msg_type: MessageType::DropRequest,

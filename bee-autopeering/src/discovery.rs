@@ -12,9 +12,9 @@ use crate::{
     packet::{msg_hash, IncomingPacket, MessageType, OutgoingPacket},
     peer::{self, Peer},
     peerstore::{self, PeerStore},
-    request::{self, RequestManager},
+    request::{self, HandlerContext, RequestManager},
     server::{marshal, ServerSocket, ServerTx},
-    service_map::{ServiceMap, ServiceTransport, AUTOPEERING_SERVICE_NAME},
+    service_map::{ServiceMap, ServicePort, ServiceTransport, AUTOPEERING_SERVICE_NAME},
     shutdown::ShutdownRx,
     time,
 };
@@ -52,7 +52,7 @@ pub(crate) const VERIFICATION_EXPIRATION: u64 = 12 * 60 * 60;
 // hive.go: MaxPeersInResponse is the maximum number of peers returned in DiscoveryResponse.
 const MAX_PEERS_IN_RESPONSE: usize = 6;
 // hive.go: MaxServices is the maximum number of services a peer can support.
-const MAX_SERVICES: usize = 4;
+const MAX_SERVICES: usize = 5;
 
 pub(crate) struct DiscoveredPeer {
     peer: Peer,
@@ -259,7 +259,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
         // Send verification and discovery request to the entry nodes.
         contact_entry_nodes(&mut entry_nodes, entry_nodes_prefer_ipv6, &request_mngr, &server_tx).await;
 
-        loop {
+        'recv: loop {
             tokio::select! {
                 _ = &mut shutdown_rx => {
                     break;
@@ -272,81 +272,82 @@ impl<S: PeerStore> DiscoveryManager<S> {
                         peer_id,
                     }) = o
                     {
+                        let ctx = HandlerContext {
+                            peer_id: &peer_id,
+                            msg_bytes: &msg_bytes,
+                            server_tx: &server_tx,
+                            local: &local,
+                            peerstore: &peerstore,
+                            request_mngr: &request_mngr,
+                            source_addr,
+                        };
+
                         match msg_type {
                             MessageType::VerificationRequest => {
-                                log::debug!("Received verification request.");
+                                let verif_req = if let Ok(verif_req) = VerificationRequest::from_protobuf(&msg_bytes) {
+                                    verif_req
+                                } else {
+                                    log::debug!("Error decoding verification request from {}.", &peer_id);
+                                    continue 'recv;
+                                };
 
-                                let verif_req = VerificationRequest::from_protobuf(&msg_bytes)
-                                    .expect("error decoding verification request");
-
-                                if !validate_verification_request(&verif_req, version, network_id) {
-                                    log::debug!("Received invalid verification request: {:?}", verif_req);
-                                    continue;
+                                if let Err(e) = validate_verification_request(&verif_req, version, network_id) {
+                                    log::debug!("Received invalid verification request from {}. Reason: {:?}", &peer_id, e);
+                                    continue 'recv;
+                                } else {
+                                    log::debug!("Received valid verification request from {}.", &peer_id);
+                                    handle_verification_request(&verif_req, ctx);
                                 }
-                                log::debug!("Received valid verification request: {:?}", verif_req);
-
-                                handle_verification_request(
-                                    &verif_req,
-                                    &peer_id,
-                                    &msg_bytes,
-                                    &server_tx,
-                                    source_addr,
-                                    &local,
-                                    &peerstore,
-                                    &request_mngr,
-                                );
                             }
                             MessageType::VerificationResponse => {
-                                log::debug!("Received verification response.");
+                                let verif_res = if let Ok(verif_res) = VerificationResponse::from_protobuf(&msg_bytes) {
+                                    verif_res
+                                } else {
+                                    log::debug!("Error decoding verification response from {}.", &peer_id);
+                                    continue 'recv;
+                                };
 
-                                let verif_res = VerificationResponse::from_protobuf(&msg_bytes)
-                                    .expect("error decoding verification response");
-
-                                if !validate_verification_response(&verif_res, &request_mngr, &peer_id) {
-                                    log::debug!("Received invalid verification response: {:?}", verif_res);
-                                    continue;
+                                if let Err(e) = validate_verification_response(&verif_res, &request_mngr, &peer_id, source_addr) {
+                                    log::debug!("Received invalid verification response from {}. Reason: {:?}", &peer_id, e);
+                                    continue 'recv;
+                                } else {
+                                    log::debug!("Received valid verification response from {}.", &peer_id);
+                                    handle_verification_response(&verif_res, ctx);
                                 }
-
-                                handle_verification_response(
-                                    &verif_res,
-                                    &peer_id,
-                                    &msg_bytes,
-                                    &server_tx,
-                                    source_addr,
-                                    &local,
-                                    &peerstore,
-                                    &request_mngr,
-                                );
                             }
                             MessageType::DiscoveryRequest => {
-                                log::debug!("Received discovery request.");
+                                let disc_req = if let Ok(disc_req) = DiscoveryRequest::from_protobuf(&msg_bytes) {
+                                    disc_req
+                                } else {
+                                    log::debug!("Error decoding discovery request from {}.", &peer_id);
+                                    continue 'recv;
+                                };
 
-                                let disc_req =
-                                    DiscoveryRequest::from_protobuf(&msg_bytes).expect("error decoding discover request");
-
-                                if !validate_discovery_request(&disc_req) {
-                                    log::debug!("Received invalid discovery request: {:?}", disc_req);
-                                    continue;
+                                if let Err(e) = validate_discovery_request(&disc_req) {
+                                    log::debug!("Received invalid discovery request from {}. Reason: {:?}", &peer_id, e);
+                                    continue 'recv;
+                                } else {
+                                    log::debug!("Received valid discovery request from {}.", &peer_id);
+                                    handle_discovery_request(&disc_req, ctx);
                                 }
-
-                                let request_hash = &hash::sha256(&msg_bytes)[..];
-
-                                send_discovery_response(request_hash, &server_tx, source_addr);
                             }
                             MessageType::DiscoveryResponse => {
-                                log::debug!("Received discovery response.");
+                                let disc_res = if let Ok(disc_res) = DiscoveryResponse::from_protobuf(&msg_bytes) {
+                                    disc_res
+                                } else {
+                                    log::debug!("Error decoding discovery response from {}.", &peer_id);
+                                    continue 'recv;
+                                };
 
-                                let disc_res =
-                                    DiscoveryResponse::from_protobuf(&msg_bytes).expect("error decoding discovery response");
-
-                                if !validate_discovery_response(&disc_res, &request_mngr, &peer_id) {
-                                    log::debug!("Received invalid discovery response: {:?}", disc_res);
-                                    continue;
+                                if let Err(e) = validate_discovery_response(&disc_res, &request_mngr, &peer_id) {
+                                    log::debug!("Received invalid discovery response from {}. Reason: {:?}", &peer_id, e);
+                                    continue 'recv;
+                                } else {
+                                    log::debug!("Received valid discovery response from {}.", &peer_id);
+                                    handle_discovery_response(&disc_res, ctx);
                                 }
-
-                                handle_discovery_response();
                             }
-                            _ => panic!("unsupported discovery message type"),
+                            _ => log::debug!("Received unsupported discovery message type"),
                         }
                     }
                 }
@@ -404,37 +405,139 @@ async fn contact_entry_nodes(
     }
 }
 
-fn validate_verification_request(verif_req: &VerificationRequest, version: u32, network_id: u32) -> bool {
-    log::debug!("Validating verification request.");
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MESSAGE VALIDATION
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum ValidationError {
+    // The protocol version must match.
+    VersionMismatch {
+        expected: u32,
+        received: u32,
+    },
+    // The network id must match.
+    NetworkIdMismatch {
+        expected: u32,
+        received: u32,
+    },
+    // The request must not be expired.
+    RequestExpired,
+    // The response must arrive in time.
+    ResponseTimeout,
+    // The hash of the corresponding request must be correct.
+    IncorrectRequestHash,
+    // The peer must have an autopeering service.
+    NoAutopeeringService,
+    // The service port must match with the detected port.
+    ServicePortMismatch {
+        expected: ServicePort,
+        received: ServicePort,
+    },
+}
+
+fn validate_verification_request(
+    verif_req: &VerificationRequest,
+    version: u32,
+    network_id: u32,
+) -> Result<(), ValidationError> {
+    use ValidationError::*;
 
     if verif_req.version() != version {
-        false
+        Err(VersionMismatch {
+            expected: version,
+            received: verif_req.version(),
+        })
     } else if verif_req.network_id() != network_id {
-        false
+        Err(NetworkIdMismatch {
+            expected: network_id,
+            received: verif_req.network_id(),
+        })
     } else if request::is_expired(verif_req.timestamp()) {
-        false
+        Err(RequestExpired)
     } else {
         // NOTE: the validity of the transmitted source and target addresses is ensured through the
         // `VerificationRequest` type.
-        true
+        // TODO: maybe add check whether the peer sent the correct source address in the packet.
+        // TODO: store own external IP address as perceived by the peer
+        Ok(())
     }
 }
 
-fn handle_verification_request<S: PeerStore>(
-    verif_req: &VerificationRequest,
-    peer_id: &PeerId,
-    msg_bytes: &[u8],
-    server_tx: &ServerTx,
-    source_addr: SocketAddr,
-    local: &Local,
-    peerstore: &S,
+fn validate_verification_response(
+    verif_res: &VerificationResponse,
     request_mngr: &RequestManager,
-) {
+    peer_id: &PeerId,
+    source_addr: SocketAddr,
+) -> Result<(), ValidationError> {
+    use ValidationError::*;
+
+    if let Some(request_hash) = request_mngr.get_request_hash::<VerificationRequest>(peer_id) {
+        if verif_res.request_hash() == &request_hash[..] {
+            let services = verif_res.services();
+            if let Some(autopeering) = services.get(AUTOPEERING_SERVICE_NAME) {
+                if autopeering.port() == source_addr.port() {
+                    Ok(())
+                } else {
+                    Err(ServicePortMismatch {
+                        expected: autopeering.port(),
+                        received: source_addr.port(),
+                    })
+                }
+            } else {
+                Err(NoAutopeeringService)
+            }
+        } else {
+            Err(IncorrectRequestHash)
+        }
+    } else {
+        Err(ResponseTimeout)
+    }
+}
+
+fn validate_discovery_request(disc_req: &DiscoveryRequest) -> Result<(), ValidationError> {
+    use ValidationError::*;
+
+    if request::is_expired(disc_req.timestamp()) {
+        Err(RequestExpired)
+    } else {
+        Ok(())
+    }
+}
+
+fn validate_discovery_response(
+    disc_res: &DiscoveryResponse,
+    request_mngr: &RequestManager,
+    peer_id: &PeerId,
+) -> Result<(), ValidationError> {
+    use ValidationError::*;
+
+    if let Some(request_hash) = request_mngr.get_request_hash::<DiscoveryRequest>(peer_id) {
+        if disc_res.request_hash() == &request_hash[..] {
+            for peer in disc_res.peers() {
+                // TODO: consider performing some checks on the peers we received, for example:
+                // * does the peer have necessary services (autopeering, gossip, fpc, ...)
+                // * is the ip address valid (not a 0.0.0.0, etc)
+            }
+            Ok(())
+        } else {
+            Err(IncorrectRequestHash)
+        }
+    } else {
+        Err(ResponseTimeout)
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MESSAGE HANDLING
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+fn handle_verification_request<S: PeerStore>(verif_req: &VerificationRequest, ctx: HandlerContext<S>) {
     log::debug!("Handling verification request.");
 
-    peerstore.update_last_verification_request(peer_id.clone());
+    ctx.peerstore.update_last_verification_request(ctx.peer_id.clone());
 
-    reply_with_verification_response(verif_req, msg_bytes, &server_tx, &local, source_addr);
+    reply_with_verification_response(verif_req, ctx.msg_bytes, ctx.server_tx, ctx.local, ctx.source_addr);
 
     // ```go
     // if the peer is unknown or expired, send a Ping to verify
@@ -445,47 +548,41 @@ fn handle_verification_request<S: PeerStore>(
     // 	   p.mgr.addDiscoveredPeer(newPeer(from, s.LocalAddr().Network(), dstAddr))
     // }
     // ```
-    if let Some(last_verif_res) = peerstore.last_verification_response(peer_id) {
+    if let Some(last_verif_res) = ctx.peerstore.last_verification_response(ctx.peer_id) {
         if !peer::is_verified(last_verif_res) {
-            reply_with_verification_request(peer_id, request_mngr, server_tx, source_addr);
+            reply_with_verification_request(ctx.peer_id, ctx.request_mngr, ctx.server_tx, ctx.source_addr);
         }
     } else {
-        reply_with_verification_request(peer_id, request_mngr, server_tx, source_addr);
+        reply_with_verification_request(ctx.peer_id, ctx.request_mngr, ctx.server_tx, ctx.source_addr);
     }
 }
 
-fn reply_with_verification_response(
-    verif_req: &VerificationRequest,
-    msg_bytes: &[u8],
-    tx: &ServerTx,
-    local: &Local,
-    target_addr: SocketAddr,
-) {
-    log::debug!("Replying with verification response.");
+fn handle_verification_response<S: PeerStore>(verif_res: &VerificationResponse, ctx: HandlerContext<S>) {
+    log::debug!("Handling verification response.");
 
-    let request_hash = &msg_hash(MessageType::VerificationRequest, msg_bytes);
+    // Remove the corresponding request from the request manager.
+    ctx.request_mngr.remove_request::<VerificationRequest>(ctx.peer_id);
 
-    let verif_res = VerificationResponse::new(request_hash, local.services(), target_addr.ip());
-    let verif_res_bytes = verif_res
-        .to_protobuf()
-        .expect("error encoding verification response")
-        .to_vec();
+    ctx.peerstore.update_last_verification_response(ctx.peer_id.clone());
 
-    // hive.go:
-    // ```go
-    // // the destination address uses the source IP address of the packet plus the src_port from the message
-    // dstAddr := &net.UDPAddr{
-    // 	IP:   fromAddr.IP,
-    // 	Port: int(m.SrcPort),
-    // }
-    // ```
-    tx.send(OutgoingPacket {
-        msg_type: MessageType::VerificationResponse,
-        msg_bytes: verif_res_bytes,
-        target_addr: SocketAddr::new(target_addr.ip(), verif_req.source_addr.port()),
-    })
-    .expect("error sending verification response to server");
+    // TEMP: on each valid verification response send a discovery request
+    // reply_with_discovery_request(peer_id, request_mngr, server_tx, source_addr);
 }
+
+fn handle_discovery_request<S: PeerStore>(disc_req: &DiscoveryRequest, ctx: HandlerContext<S>) {
+    log::debug!("Handling discovery request.");
+
+    reply_with_discovery_response(disc_req, ctx.msg_bytes, ctx.server_tx, ctx.local, ctx.source_addr);
+}
+
+fn handle_discovery_response<S: PeerStore>(disc_res: &DiscoveryResponse, ctx: HandlerContext<S>) {
+    log::debug!("Handling discovery response.");
+    todo!()
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// REPLY HANDLING
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn reply_with_verification_request(
     peer_id: &PeerId,
@@ -510,62 +607,37 @@ fn reply_with_verification_request(
         .expect("error sending verification request to server");
 }
 
-fn send_verification_request(target: &Peer, request_mngr: &RequestManager, server_tx: &ServerTx) {
-    log::debug!("Sending verification request to: {:?}", target);
+fn reply_with_verification_response(
+    verif_req: &VerificationRequest,
+    msg_bytes: &[u8],
+    tx: &ServerTx,
+    local: &Local,
+    target_addr: SocketAddr,
+) {
+    log::debug!("Replying with verification response.");
 
-    let verif_req = request_mngr.new_verification_request(target.peer_id(), target.ip_address());
-    let verif_req_bytes = verif_req
+    let request_hash = msg_hash(MessageType::VerificationRequest, msg_bytes).to_vec();
+
+    let verif_res = VerificationResponse::new(request_hash, local.services(), target_addr.ip());
+    let verif_res_bytes = verif_res
         .to_protobuf()
-        .expect("error encoding verification request")
+        .expect("error encoding verification response")
         .to_vec();
 
-    let port = target
-        .services()
-        .port(AUTOPEERING_SERVICE_NAME)
-        .expect("peer doesn't support autopeering");
-
-    server_tx
-        .send(OutgoingPacket {
-            msg_type: MessageType::VerificationRequest,
-            msg_bytes: verif_req_bytes,
-            target_addr: SocketAddr::new(target.ip_address(), port),
-        })
-        .expect("error sending verification request to server");
-}
-
-fn validate_verification_response(
-    verif_res: &VerificationResponse,
-    request_mngr: &RequestManager,
-    peer_id: &PeerId,
-) -> bool {
-    log::debug!("Validating verification response.");
-
-    if let Some(request_hash) = request_mngr.get_request_hash::<VerificationRequest>(peer_id) {
-        verif_res.request_hash() == &request_hash[..]
-    } else {
-        false
-    }
-}
-
-fn handle_verification_response<S: PeerStore>(
-    verif_res: &VerificationResponse,
-    peer_id: &PeerId,
-    msg_bytes: &[u8],
-    server_tx: &ServerTx,
-    source_addr: SocketAddr,
-    local: &Local,
-    peerstore: &S,
-    request_mngr: &RequestManager,
-) {
-    log::debug!("Handling verification response.");
-
-    // Remove the corresponding request from the request manager.
-    request_mngr.remove_request::<VerificationRequest>(peer_id);
-
-    peerstore.update_last_verification_response(peer_id.clone());
-
-    // TEMP: on each valid verification response send a discovery request
-    // reply_with_discovery_request(peer_id, request_mngr, server_tx, source_addr);
+    // hive.go:
+    // ```go
+    // // the destination address uses the source IP address of the packet plus the src_port from the message
+    // dstAddr := &net.UDPAddr{
+    // 	IP:   fromAddr.IP,
+    // 	Port: int(m.SrcPort),
+    // }
+    // ```
+    tx.send(OutgoingPacket {
+        msg_type: MessageType::VerificationResponse,
+        msg_bytes: verif_res_bytes,
+        target_addr: SocketAddr::new(target_addr.ip(), verif_req.source_addr.port()),
+    })
+    .expect("error sending verification response to server");
 }
 
 fn reply_with_discovery_request(
@@ -591,6 +663,62 @@ fn reply_with_discovery_request(
         .expect("error sending discovery request to server");
 }
 
+fn reply_with_discovery_response(
+    disc_req: &DiscoveryRequest,
+    msg_bytes: &[u8],
+    tx: &ServerTx,
+    local: &Local,
+    target_addr: SocketAddr,
+) {
+    log::debug!("Replying with discovery response.");
+
+    let request_hash = msg_hash(MessageType::DiscoveryRequest, msg_bytes).to_vec();
+
+    // TODO: create an actual random set of peers.
+    let peers = Vec::new();
+
+    let disc_res = DiscoveryResponse::new(request_hash, peers);
+    let disc_res_bytes = disc_res
+        .to_protobuf()
+        .expect("error encoding discovery response")
+        .to_vec();
+
+    tx.send(OutgoingPacket {
+        msg_type: MessageType::DiscoveryResponse,
+        msg_bytes: disc_res_bytes,
+        target_addr,
+    })
+    .expect("error sending verification response to server");
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SENDING
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+fn send_verification_request(target: &Peer, request_mngr: &RequestManager, server_tx: &ServerTx) {
+    log::debug!("Sending verification request to: {:?}", target);
+
+    let verif_req = request_mngr.new_verification_request(target.peer_id(), target.ip_address());
+    let verif_req_bytes = verif_req
+        .to_protobuf()
+        .expect("error encoding verification request")
+        .to_vec();
+
+    let port = target
+        .services()
+        .get(AUTOPEERING_SERVICE_NAME)
+        .expect("peer doesn't support autopeering")
+        .port();
+
+    server_tx
+        .send(OutgoingPacket {
+            msg_type: MessageType::VerificationRequest,
+            msg_bytes: verif_req_bytes,
+            target_addr: SocketAddr::new(target.ip_address(), port),
+        })
+        .expect("error sending verification request to server");
+}
+
 fn send_discovery_request(target: &Peer, request_mngr: &RequestManager, server_tx: &ServerTx) {
     log::debug!("Sending discovery request to: {:?}", target);
 
@@ -602,8 +730,9 @@ fn send_discovery_request(target: &Peer, request_mngr: &RequestManager, server_t
 
     let port = target
         .services()
-        .port(AUTOPEERING_SERVICE_NAME)
-        .expect("peer doesn't support autopeering");
+        .get(AUTOPEERING_SERVICE_NAME)
+        .expect("peer doesn't support autopeering")
+        .port();
 
     server_tx
         .send(OutgoingPacket {
@@ -612,24 +741,4 @@ fn send_discovery_request(target: &Peer, request_mngr: &RequestManager, server_t
             target_addr: SocketAddr::new(target.ip_address(), port),
         })
         .expect("error sending discovery request to server");
-}
-
-fn validate_discovery_request(disc_req: &DiscoveryRequest) -> bool {
-    // validates an incoming discovery request
-    todo!()
-}
-
-fn send_discovery_response(request_hash: &[u8], tx: &ServerTx, target_addr: SocketAddr) {
-    // send a random set of peers as a response
-    todo!()
-}
-
-fn validate_discovery_response(disc_res: &DiscoveryResponse, request_mngr: &RequestManager, peer_id: &PeerId) -> bool {
-    // check the peers we received
-    todo!()
-}
-
-fn handle_discovery_response() {
-    // things we need to do after we received a valid response to our request
-    todo!()
 }

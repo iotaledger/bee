@@ -85,7 +85,9 @@ where
         let requests = guard.deref_mut();
         // Retain only those, which expire in the future.
         requests.retain(|_, v| v.expiration_time > now);
-        log::debug!("Open requests: {}", requests.len());
+        if !requests.is_empty() {
+            log::debug!("Open requests: {}", requests.len());
+        }
     });
     tokio::spawn(RequestManager::repeat(
         DelayFactoryBuilder::new(DelayFactoryMode::Constant(1000)).finish(),

@@ -118,7 +118,8 @@ impl Iterator for DelayFactory {
 pub(crate) enum DelayFactoryMode {
     /// The factory produces a series of 0-delays.
     Zero,
-    /// The factory produces a series of constant delays. For `Constant(0)` the behavior is identical to the `Zero` mode.
+    /// The factory produces a series of constant delays. For `Constant(0)` the behavior is identical to the `Zero`
+    /// mode.
     Constant(u64),
     /// The factory produces a series of exponentially growing delays.
     Exponential(u64, f32),

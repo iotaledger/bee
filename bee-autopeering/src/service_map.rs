@@ -9,13 +9,13 @@ use std::{collections::HashMap, convert::TryFrom, fmt, io, net::IpAddr, str::Fro
 
 /// Represents the name of a service.
 pub type ServiceName = String;
-type Port = u16;
+pub(crate) type ServicePort = u16;
 
 pub(crate) const AUTOPEERING_SERVICE_NAME: &str = "peering";
 
 /// A mapping between a service name and its bind address.
 #[derive(Clone, Debug, Default)]
-pub struct ServiceMap(HashMap<ServiceName, (ServiceTransport, Port)>);
+pub struct ServiceMap(HashMap<ServiceName, Service>);
 
 impl ServiceMap {
     /// Creates a new empty service map.
@@ -24,22 +24,27 @@ impl ServiceMap {
     }
 
     /// Registers a service with its bind address.
-    pub(crate) fn insert(&mut self, service_name: impl ToString, transport: ServiceTransport, port: Port) {
-        self.0.insert(service_name.to_string(), (transport, port));
+    pub(crate) fn insert(&mut self, service_name: impl ToString, transport: ServiceTransport, port: ServicePort) {
+        self.0.insert(service_name.to_string(), Service { transport, port });
     }
 
-    /// Returns the transport protocol of the given service.
-    pub(crate) fn transport(&self, service_name: impl AsRef<str>) -> Option<ServiceTransport> {
-        self.0
-            .get(service_name.as_ref())
-            .map(|(transport, _)| transport)
-            .copied()
+    /// Returns the connection data associated with the given service.
+    pub(crate) fn get(&self, service_name: impl AsRef<str>) -> Option<Service> {
+        self.0.get(service_name.as_ref()).copied()
     }
 
-    /// Returns the access port of a given service.
-    pub(crate) fn port(&self, service_name: impl AsRef<str>) -> Option<Port> {
-        self.0.get(service_name.as_ref()).map(|(_, port)| port).copied()
-    }
+    // /// Returns the transport protocol of the given service.
+    // pub(crate) fn transport(&self, service_name: impl AsRef<str>) -> Option<ServiceTransport> {
+    //     self.0
+    //         .get(service_name.as_ref())
+    //         .copied()
+    //         .map(|(transport, _)| transport)
+    // }
+
+    // /// Returns the access port of a given service.
+    // pub(crate) fn port(&self, service_name: impl AsRef<str>) -> Option<Port> {
+    //     self.0.get(service_name.as_ref()).copied().map(|(_, port)| port)
+    // }
 }
 
 impl From<proto::ServiceMap> for ServiceMap {
@@ -52,7 +57,7 @@ impl From<proto::ServiceMap> for ServiceMap {
             let transport: ServiceTransport = network.parse().expect("error parsing transport protocol");
             let port = port as u16;
 
-            services.insert(service_name, (transport, port));
+            services.insert(service_name, Service { transport, port });
         }
 
         Self(services)
@@ -65,7 +70,7 @@ impl From<ServiceMap> for proto::ServiceMap {
 
         let mut services = HashMap::with_capacity(map.len());
 
-        for (service_name, (transport, port)) in map {
+        for (service_name, Service { transport, port }) in map {
             let network_addr = proto::NetworkAddress {
                 network: transport.to_string(),
                 port: port as u32,
@@ -86,6 +91,22 @@ impl fmt::Display for ServiceMap {
             // TODO: include udp/tcp and port
             self.0.keys().cloned().collect::<Vec<_>>().join(";").to_string()
         )
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Service {
+    transport: ServiceTransport,
+    port: ServicePort,
+}
+
+impl Service {
+    pub fn transport(&self) -> ServiceTransport {
+        self.transport
+    }
+
+    pub fn port(&self) -> ServicePort {
+        self.port
     }
 }
 
