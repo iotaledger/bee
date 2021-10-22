@@ -57,7 +57,7 @@ impl VerificationRequest {
         })
     }
 
-    pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let ping = proto::Ping {
             version: self.version,
             network_id: self.network_id,
@@ -130,7 +130,7 @@ impl VerificationResponse {
         })
     }
 
-    pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let pong = proto::Pong {
             req_hash: self.request_hash.clone(),
             services: Some(self.services.clone().into()),
@@ -172,7 +172,7 @@ impl DiscoveryRequest {
         })
     }
 
-    pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let discover_request = proto::DiscoveryRequest {
             timestamp: self.timestamp as i64,
         };
@@ -223,7 +223,7 @@ impl DiscoveryResponse {
         })
     }
 
-    pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let peers = self.peers.clone().into_iter().map(Peer::into).collect();
 
         let disc_res = proto::DiscoveryResponse {

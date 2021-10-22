@@ -80,7 +80,7 @@ impl Packet {
     }
 
     /// Returns the protobuf representation of this packet
-    pub(crate) fn protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub(crate) fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let mut buf = BytesMut::with_capacity(self.0.encoded_len());
         self.0.encode(&mut buf)?;
 

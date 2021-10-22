@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    delay::{Delay, Repeat},
+    delay::{DelayFactory, Repeat},
     hash,
     identity::PeerId,
     peerstore::PeerStore,
@@ -144,7 +144,7 @@ impl Repeat for Local {
     type Command = Box<dyn Fn(&Self::Context) + Send>;
     type Context = Self;
 
-    async fn repeat(mut delay: Delay, cmd: Self::Command, ctx: Self::Context, mut shutdown_rx: ShutdownRx) {
+    async fn repeat(mut delay: DelayFactory, cmd: Self::Command, ctx: Self::Context, mut shutdown_rx: ShutdownRx) {
         while let Some(duration) = delay.next() {
             tokio::select! {
                 _ = &mut shutdown_rx => break,

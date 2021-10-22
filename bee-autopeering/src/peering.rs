@@ -296,7 +296,7 @@ fn handle_drop_request(
 // Replies to a drop request with a drop request.
 fn reply_with_drop_request(server_tx: &ServerTx, target_addr: SocketAddr) {
     let drop_req_bytes = DropRequest::new()
-        .protobuf()
+        .to_protobuf()
         .expect("error encoding drop request")
         .to_vec();
 
@@ -363,7 +363,7 @@ where
 // Initiates a drop request.
 fn send_drop_request(peer: Peer, server_tx: &ServerTx) {
     let drop_req_bytes = DropRequest::new()
-        .protobuf()
+        .to_protobuf()
         .expect("error encoding drop request")
         .to_vec();
 

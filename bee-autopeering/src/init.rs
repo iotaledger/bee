@@ -3,7 +3,7 @@
 
 use crate::{
     config::AutopeeringConfig,
-    delay::{DelayBuilder, DelayMode, Repeat as _},
+    delay::{DelayFactoryBuilder, DelayMode, Repeat as _},
     discovery::{DiscoveryEventRx, DiscoveryManager, DiscoveryManagerConfig},
     hash,
     local::Local,
@@ -78,7 +78,7 @@ where
     // Create a request manager that creates and keeps track of outgoing requests.
     let request_mngr = RequestManager::new(version, network_id, config.bind_addr, local.clone());
 
-    // Spawn a cronjob that regularly removes unanswered pings.
+    // Spawn a cronjob that regularly removes unanswered requests.
     let remove_expired_requests = Box::new(|mngr: &RequestManager| {
         let now = time::unix_now_secs();
         let mut guard = mngr.open_requests.write().expect("error getting write access");
@@ -88,7 +88,7 @@ where
         log::debug!("Open requests: {}", requests.len());
     });
     tokio::spawn(RequestManager::repeat(
-        DelayBuilder::new(DelayMode::Constant(1000)).finish(),
+        DelayFactoryBuilder::new(DelayMode::Constant(1000)).finish(),
         remove_expired_requests,
         request_mngr.clone(),
         shutdown_reg.register(),
@@ -102,7 +102,7 @@ where
         // TODO: publish `SaltUpdated` event
     });
     tokio::spawn(Local::repeat(
-        DelayBuilder::new(DelayMode::Constant(DEFAULT_SALT_LIFETIME.as_millis() as u64)).finish(),
+        DelayFactoryBuilder::new(DelayMode::Constant(DEFAULT_SALT_LIFETIME.as_millis() as u64)).finish(),
         update_salts,
         local.clone(),
         shutdown_reg.register(),

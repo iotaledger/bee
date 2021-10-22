@@ -70,7 +70,7 @@ impl Peer {
     }
 
     /// Returns the Protobuf representation of this peer.
-    pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let services: proto::ServiceMap = self.services.clone().into();
 
         let peer = proto::Peer {
@@ -151,10 +151,7 @@ mod tests {
         pub(crate) fn new_test_peer(index: u8) -> Self {
             let mut services = ServiceMap::new();
 
-            services.insert(
-                AUTOPEERING_SERVICE_NAME.into(),
-                format!("/ip4/127.0.0.{}/udp/8080", index).parse().unwrap(),
-            );
+            services.insert(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, 1337);
 
             Self {
                 ip_address: format!("127.0.0.{}", index).parse().unwrap(),

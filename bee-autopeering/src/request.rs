@@ -4,7 +4,7 @@
 use num::CheckedAdd;
 
 use crate::{
-    delay::{Delay, Repeat},
+    delay::{DelayFactory, Repeat},
     discovery_messages::{DiscoveryRequest, VerificationRequest, VerificationResponse},
     hash,
     identity::PeerId,
@@ -84,7 +84,7 @@ impl RequestManager {
 
         let request_hash = msg_hash(
             MessageType::VerificationRequest,
-            &verif_req.protobuf().expect("error encoding verification request"),
+            &verif_req.to_protobuf().expect("error encoding verification request"),
         );
 
         let value = RequestValue {
@@ -113,7 +113,7 @@ impl RequestManager {
 
         let request_hash = msg_hash(
             MessageType::DiscoveryRequest,
-            &disc_req.protobuf().expect("error encoding discovery request"),
+            &disc_req.to_protobuf().expect("error encoding discovery request"),
         );
 
         let value = RequestValue {
@@ -145,7 +145,7 @@ impl RequestManager {
 
         let request_hash = msg_hash(
             MessageType::PeeringRequest,
-            &peer_req.protobuf().expect("error encoding peering request"),
+            &peer_req.to_protobuf().expect("error encoding peering request"),
         );
 
         let value = RequestValue {
@@ -194,7 +194,7 @@ impl Repeat for RequestManager {
     type Command = Box<dyn Fn(&Self::Context) + Send>;
     type Context = Self;
 
-    async fn repeat(mut delay: Delay, cmd: Self::Command, ctx: Self::Context, mut shutdown_rx: ShutdownRx) {
+    async fn repeat(mut delay: DelayFactory, cmd: Self::Command, ctx: Self::Context, mut shutdown_rx: ShutdownRx) {
         while let Some(duration) = delay.next() {
             tokio::select! {
                 _ = &mut shutdown_rx => break,

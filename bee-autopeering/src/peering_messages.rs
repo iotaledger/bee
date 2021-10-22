@@ -46,7 +46,7 @@ impl PeeringRequest {
         })
     }
 
-    pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let peering_req = proto::PeeringRequest {
             timestamp: self.timestamp as i64,
             salt: Some(proto::Salt {
@@ -101,7 +101,7 @@ impl PeeringResponse {
         })
     }
 
-    pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let peering_res = proto::PeeringResponse {
             req_hash: self.request_hash.clone(),
             status: self.status,
@@ -147,7 +147,7 @@ impl DropRequest {
         })
     }
 
-    pub fn protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let peering_drop = proto::PeeringDrop {
             timestamp: self.timestamp as i64,
         };

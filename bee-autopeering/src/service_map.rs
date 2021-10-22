@@ -11,7 +11,7 @@ use std::{collections::HashMap, convert::TryFrom, fmt, io, net::IpAddr, str::Fro
 pub type ServiceName = String;
 type Port = u16;
 
-pub(crate) const AUTOPEERING_SERVICE_NAME: &str = "autopeering";
+pub(crate) const AUTOPEERING_SERVICE_NAME: &str = "peering";
 
 /// A mapping between a service name and its bind address.
 #[derive(Clone, Debug, Default)]

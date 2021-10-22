@@ -119,7 +119,7 @@ async fn incoming_packet_handler(
     let mut packet_bytes = [0; READ_BUFFER_SIZE];
 
     let IncomingPacketSenders {
-        discovery_tx: discover_tx,
+        discovery_tx,
         peering_tx,
     } = incoming_senders;
 
@@ -133,11 +133,11 @@ async fn incoming_packet_handler(
                     log::debug!("Received {} bytes from {}.", n, source_addr);
 
                     let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
-                    log::debug!("Public key: {}.", multiaddr::from_pubkey_to_base58(&packet.public_key()));
+                    log::debug!("{} ---> public key: {}.", source_addr, multiaddr::from_pubkey_to_base58(&packet.public_key()));
 
                     // Restore the peer id.
                     let peer_id = PeerId::from_public_key(packet.public_key());
-                    log::debug!("PeerId: {}.", peer_id);
+                    log::debug!("{} ---> peer id: {}.", source_addr, peer_id);
 
                     // Verify the packet.
                     let message = packet.message();
@@ -160,7 +160,7 @@ async fn incoming_packet_handler(
                     // Depending on the message type, forward it to the appropriate manager.
                     match msg_type as u32 {
                         t if DISCOVERY_MSG_TYPE_RANGE.contains(&t) => {
-                            discover_tx.send(packet).expect("channel send error: discovery");
+                            discovery_tx.send(packet).expect("channel send error: discovery");
                         }
                         t if PEERING_MSG_TYPE_RANGE.contains(&t) => {
                             peering_tx.send(packet).expect("channel send error: peering");
@@ -200,7 +200,7 @@ async fn outgoing_packet_handler(
                     let signature = local_id.sign(&marshalled_bytes);
                     let packet = Packet::new(msg_type, &marshalled_bytes, &local_id.public_key(), signature);
 
-                    let bytes = packet.protobuf().expect("error encoding outgoing packet");
+                    let bytes = packet.to_protobuf().expect("error encoding outgoing packet");
                     let n = socket.send_to(&bytes, target_addr).await.expect("socket send error");
 
                     log::debug!("Sent {} bytes to {}.", n, target_addr);

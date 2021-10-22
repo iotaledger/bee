@@ -55,7 +55,7 @@ impl Salt {
         Ok(proto::Salt::decode(bytes)?.into())
     }
 
-    pub(crate) fn protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub(crate) fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let salt = proto::Salt {
             bytes: self.bytes.to_vec(),
             exp_time: self.expiration_time,
@@ -95,7 +95,7 @@ mod tests {
 
     impl Salt {
         pub(crate) fn new_zero_salt() -> Self {
-            let expiration_time = unix_time_secs(
+            let expiration_time = time::unix_time_secs(
                 SystemTime::now()
                     .checked_add(DEFAULT_SALT_LIFETIME)
                     .expect("system clock error or lifetime too long"),

@@ -1,11 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use tokio::sync::mpsc;
-
 use crate::{
     config::AutopeeringConfig,
-    delay::{Delay, DelayBuilder, DelayMode, Repeat as _},
+    delay::{DelayFactory, DelayFactoryBuilder, DelayMode, Repeat as _},
     discovery_messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
     hash,
     identity::PeerId,
@@ -20,6 +18,8 @@ use crate::{
     shutdown::ShutdownRx,
     time,
 };
+
+use tokio::sync::mpsc;
 
 use std::{
     collections::{HashSet, VecDeque},
@@ -37,21 +37,22 @@ const DEFAULT_REVERIFY_INTERVAL_SECS: u64 = 10;
 const DEFAULT_QUERY_INTERVAL_SECS: u64 = 60;
 // hive.go: maximum number of peers that can be managed
 const DEFAULT_MAX_MANAGED: usize = 1000;
-// maximum number of peers kept in the replacement list
+// hive.go: maximum number of peers kept in the replacement list
 const DEFAULT_MAX_REPLACEMENTS: usize = 10;
-// TODO:
+// The default delay between requests to a single peer.
 const BACKOFF_INTERVALL_MILLISECS: u64 = 500;
-// TODO:
+// A factor that determines the range from which a concrete delay is picked randomly.
 const JITTER: f32 = 0.5;
-//
+// A factor that determines the intervall lengths between repeated requests to a peer.
 const EXPONENTIAL_BACKOFF_FACTOR: f32 = 1.5;
-// TODO:
+// The number of times a request is repeated in case the peer doesn't reply.
 const MAX_RETRIES: usize = 2;
 // hive.go: is the time until a peer verification expires (12 hours)
 pub(crate) const VERIFICATION_EXPIRATION: u64 = 12 * 60 * 60;
 // hive.go: MaxPeersInResponse is the maximum number of peers returned in DiscoveryResponse.
 const MAX_PEERS_IN_RESPONSE: usize = 6;
 // hive.go: MaxServices is the maximum number of services a peer can support.
+const MAX_SERVICES: usize = 4;
 
 pub(crate) struct DiscoveredPeer {
     peer: Peer,
@@ -466,7 +467,7 @@ fn reply_with_verification_response(
 
     let verif_res = VerificationResponse::new(request_hash, local.services(), target_addr.ip());
     let verif_res_bytes = verif_res
-        .protobuf()
+        .to_protobuf()
         .expect("error encoding verification response")
         .to_vec();
 
@@ -496,7 +497,7 @@ fn reply_with_verification_request(
 
     let verif_req_bytes = request_mngr
         .new_verification_request(peer_id.clone(), target_addr.ip())
-        .protobuf()
+        .to_protobuf()
         .expect("error encoding verification request")
         .to_vec();
 
@@ -514,7 +515,7 @@ fn send_verification_request(target: &Peer, request_mngr: &RequestManager, serve
 
     let verif_req = request_mngr.new_verification_request(target.peer_id(), target.ip_address());
     let verif_req_bytes = verif_req
-        .protobuf()
+        .to_protobuf()
         .expect("error encoding verification request")
         .to_vec();
 
@@ -577,7 +578,7 @@ fn reply_with_discovery_request(
 
     let disc_req_bytes = request_mngr
         .new_discovery_request(peer_id.clone(), target_addr.ip())
-        .protobuf()
+        .to_protobuf()
         .expect("error encoding discovery request")
         .to_vec();
 
@@ -595,7 +596,7 @@ fn send_discovery_request(target: &Peer, request_mngr: &RequestManager, server_t
 
     let disc_req = request_mngr.new_discovery_request(target.peer_id(), target.ip_address());
     let disc_req_bytes = disc_req
-        .protobuf()
+        .to_protobuf()
         .expect("error encoding verification request")
         .to_vec();
 

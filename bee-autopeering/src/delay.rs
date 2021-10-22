@@ -7,7 +7,7 @@ use rand::{thread_rng, Rng as _};
 
 use std::time::{Duration, Instant};
 
-// Command run on notice
+/// A trait that allows to implement something similar to Cronjobs (Command run on notice) for single types.
 #[async_trait::async_trait]
 pub(crate) trait Repeat
 where
@@ -16,18 +16,19 @@ where
     type Command: Send;
     type Context: Send;
 
-    async fn repeat(delay: Delay, cmd: Self::Command, ctx: Self::Context, shutdown_rx: ShutdownRx);
+    // TODO: consider making shutdown an assoc. type that implements `Future` + `Send` + `'static`.
+    async fn repeat(delay: DelayFactory, cmd: Self::Command, ctx: Self::Context, shutdown_rx: ShutdownRx);
 }
 
 #[derive(Default)]
-pub(crate) struct DelayBuilder {
+pub(crate) struct DelayFactoryBuilder {
     max_count: Option<usize>,
     timeout: Option<Duration>,
     jitter: Option<f32>,
     mode: DelayMode,
 }
 
-impl DelayBuilder {
+impl DelayFactoryBuilder {
     pub fn new(mode: DelayMode) -> Self {
         Self {
             mode,
@@ -52,32 +53,38 @@ impl DelayBuilder {
         self
     }
 
-    pub fn finish(self) -> Delay {
-        Delay {
+    pub fn finish(self) -> DelayFactory {
+        DelayFactory {
             max_count: self.max_count.unwrap_or(usize::MAX),
             timeout: self.timeout.unwrap_or(Duration::MAX),
             jitter: self.jitter.unwrap_or(1.0),
             mode: self.mode,
-            current_retries: 0,
+            curr_count: 0,
             timestamp: Instant::now(),
         }
     }
 }
 
-pub(crate) struct Delay {
+/// A type that produces a series of delays (i.e. [`Duration`]s) to:
+///
+/// (a) implement a request backoff policy (which specifies the cooldown time between requests to a single peer),
+///
+/// (b) implement the [`Repeat`] trait for types like [`Local`] and [`RequestManager`], that need to run
+///     maintenance in certain intervals.
+pub(crate) struct DelayFactory {
     max_count: usize,
     timeout: Duration,
     jitter: f32,
     mode: DelayMode,
-    current_retries: usize,
+    curr_count: usize,
     timestamp: Instant,
 }
 
-impl Iterator for Delay {
+impl Iterator for DelayFactory {
     type Item = Duration;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current_retries >= self.max_count {
+        if self.curr_count >= self.max_count {
             None
         } else if Instant::now()
             .checked_duration_since(self.timestamp)
@@ -95,7 +102,7 @@ impl Iterator for Delay {
                     prev_value
                 }
             };
-            self.current_retries += 1;
+            self.curr_count += 1;
 
             if self.jitter != 1.0 {
                 next_interval_millis =
@@ -125,7 +132,7 @@ mod tests {
 
     #[test]
     fn zero_delay() {
-        let mut delay = DelayBuilder::new(DelayMode::Zero).with_max_count(4).finish();
+        let mut delay = DelayFactoryBuilder::new(DelayMode::Zero).with_max_count(4).finish();
 
         assert_eq!(0, delay.next().unwrap().as_millis());
         assert_eq!(0, delay.next().unwrap().as_millis());
@@ -137,7 +144,9 @@ mod tests {
 
     #[test]
     fn constant_delay() {
-        let mut delay = DelayBuilder::new(DelayMode::Constant(500)).with_max_count(4).finish();
+        let mut delay = DelayFactoryBuilder::new(DelayMode::Constant(500))
+            .with_max_count(4)
+            .finish();
 
         assert_eq!(500, delay.next().unwrap().as_millis());
         assert_eq!(500, delay.next().unwrap().as_millis());
@@ -149,7 +158,7 @@ mod tests {
 
     #[test]
     fn exponential_delay() {
-        let mut delay = DelayBuilder::new(DelayMode::Exponential(100, 2.0))
+        let mut delay = DelayFactoryBuilder::new(DelayMode::Exponential(100, 2.0))
             .with_max_count(4)
             .finish();
 
@@ -163,7 +172,7 @@ mod tests {
 
     #[test]
     fn constant_delay_with_jitter() {
-        let mut delay = DelayBuilder::new(DelayMode::Constant(500))
+        let mut delay = DelayFactoryBuilder::new(DelayMode::Constant(500))
             .with_max_count(4)
             .with_jitter(0.5)
             .finish();
@@ -178,7 +187,7 @@ mod tests {
 
     #[tokio::test]
     async fn constant_delay_with_timeout() {
-        let mut delay = DelayBuilder::new(DelayMode::Constant(25))
+        let mut delay = DelayFactoryBuilder::new(DelayMode::Constant(25))
             .with_max_count(4)
             .with_timeout(Duration::from_millis(50))
             .finish();
