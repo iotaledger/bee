@@ -25,11 +25,11 @@ pub(crate) struct DelayFactoryBuilder {
     max_count: Option<usize>,
     timeout: Option<Duration>,
     jitter: Option<f32>,
-    mode: DelayMode,
+    mode: DelayFactoryMode,
 }
 
 impl DelayFactoryBuilder {
-    pub fn new(mode: DelayMode) -> Self {
+    pub fn new(mode: DelayFactoryMode) -> Self {
         Self {
             mode,
             ..Default::default()
@@ -75,7 +75,7 @@ pub(crate) struct DelayFactory {
     max_count: usize,
     timeout: Duration,
     jitter: f32,
-    mode: DelayMode,
+    mode: DelayFactoryMode,
     curr_count: usize,
     timestamp: Instant,
 }
@@ -94,9 +94,9 @@ impl Iterator for DelayFactory {
             None
         } else {
             let mut next_interval_millis = match &mut self.mode {
-                DelayMode::Zero => 0,
-                DelayMode::Constant(value) => *value,
-                DelayMode::Exponential(value, factor) => {
+                DelayFactoryMode::Zero => 0,
+                DelayFactoryMode::Constant(value) => *value,
+                DelayFactoryMode::Exponential(value, factor) => {
                     let prev_value = *value;
                     *value = (*value as f32 * *factor) as u64;
                     prev_value
@@ -114,13 +114,17 @@ impl Iterator for DelayFactory {
     }
 }
 
-pub(crate) enum DelayMode {
+/// The differnet "modus operandi" for the [`DelayFactory`].
+pub(crate) enum DelayFactoryMode {
+    /// The factory produces a series of 0-delays.
     Zero,
+    /// The factory produces a series of constant delays. For `Constant(0)` the behavior is identical to the `Zero` mode.
     Constant(u64),
+    /// The factory produces a series of exponentially growing delays.
     Exponential(u64, f32),
 }
 
-impl Default for DelayMode {
+impl Default for DelayFactoryMode {
     fn default() -> Self {
         Self::Zero
     }
@@ -132,7 +136,9 @@ mod tests {
 
     #[test]
     fn zero_delay() {
-        let mut delay = DelayFactoryBuilder::new(DelayMode::Zero).with_max_count(4).finish();
+        let mut delay = DelayFactoryBuilder::new(DelayFactoryMode::Zero)
+            .with_max_count(4)
+            .finish();
 
         assert_eq!(0, delay.next().unwrap().as_millis());
         assert_eq!(0, delay.next().unwrap().as_millis());
@@ -144,7 +150,7 @@ mod tests {
 
     #[test]
     fn constant_delay() {
-        let mut delay = DelayFactoryBuilder::new(DelayMode::Constant(500))
+        let mut delay = DelayFactoryBuilder::new(DelayFactoryMode::Constant(500))
             .with_max_count(4)
             .finish();
 
@@ -158,7 +164,7 @@ mod tests {
 
     #[test]
     fn exponential_delay() {
-        let mut delay = DelayFactoryBuilder::new(DelayMode::Exponential(100, 2.0))
+        let mut delay = DelayFactoryBuilder::new(DelayFactoryMode::Exponential(100, 2.0))
             .with_max_count(4)
             .finish();
 
@@ -172,7 +178,7 @@ mod tests {
 
     #[test]
     fn constant_delay_with_jitter() {
-        let mut delay = DelayFactoryBuilder::new(DelayMode::Constant(500))
+        let mut delay = DelayFactoryBuilder::new(DelayFactoryMode::Constant(500))
             .with_max_count(4)
             .with_jitter(0.5)
             .finish();
@@ -187,7 +193,7 @@ mod tests {
 
     #[tokio::test]
     async fn constant_delay_with_timeout() {
-        let mut delay = DelayFactoryBuilder::new(DelayMode::Constant(25))
+        let mut delay = DelayFactoryBuilder::new(DelayFactoryMode::Constant(25))
             .with_max_count(4)
             .with_timeout(Duration::from_millis(50))
             .finish();

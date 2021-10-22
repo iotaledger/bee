@@ -3,7 +3,7 @@
 
 use crate::{
     config::AutopeeringConfig,
-    delay::{DelayFactoryBuilder, DelayMode, Repeat as _},
+    delay::{DelayFactoryBuilder, DelayFactoryMode, Repeat as _},
     discovery::{DiscoveryEventRx, DiscoveryManager, DiscoveryManagerConfig},
     hash,
     local::Local,
@@ -88,7 +88,7 @@ where
         log::debug!("Open requests: {}", requests.len());
     });
     tokio::spawn(RequestManager::repeat(
-        DelayFactoryBuilder::new(DelayMode::Constant(1000)).finish(),
+        DelayFactoryBuilder::new(DelayFactoryMode::Constant(1000)).finish(),
         remove_expired_requests,
         request_mngr.clone(),
         shutdown_reg.register(),
@@ -102,7 +102,7 @@ where
         // TODO: publish `SaltUpdated` event
     });
     tokio::spawn(Local::repeat(
-        DelayFactoryBuilder::new(DelayMode::Constant(DEFAULT_SALT_LIFETIME.as_millis() as u64)).finish(),
+        DelayFactoryBuilder::new(DelayFactoryMode::Constant(DEFAULT_SALT_LIFETIME.as_millis() as u64)).finish(),
         update_salts,
         local.clone(),
         shutdown_reg.register(),

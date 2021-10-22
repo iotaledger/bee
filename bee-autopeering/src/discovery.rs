@@ -3,7 +3,7 @@
 
 use crate::{
     config::AutopeeringConfig,
-    delay::{DelayFactory, DelayFactoryBuilder, DelayMode, Repeat as _},
+    delay::{DelayFactory, DelayFactoryBuilder, DelayFactoryMode, Repeat as _},
     discovery_messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
     hash,
     identity::PeerId,
