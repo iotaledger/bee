@@ -13,7 +13,7 @@ pub(crate) type ServicePort = u16;
 
 pub(crate) const AUTOPEERING_SERVICE_NAME: &str = "peering";
 
-/// A mapping between a service name and its bind address.
+/// A mapping between a service name and its access configuration.
 #[derive(Clone, Debug, Default)]
 pub struct ServiceMap(HashMap<ServiceName, Service>);
 

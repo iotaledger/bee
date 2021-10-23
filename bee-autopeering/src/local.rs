@@ -21,7 +21,7 @@ use std::{
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
-/// A type that represents a local identity, which is able to sign messages.
+/// A type that represents a local identity - able to sign outgoing messages.
 #[derive(Clone, Default)]
 pub struct Local {
     inner: Arc<RwLock<LocalInner>>,

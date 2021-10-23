@@ -135,7 +135,7 @@ impl Iterator for DelayFactory {
     }
 }
 
-/// The differnet "modus operandi" for the [`DelayFactory`].
+/// The different "Modi operandi" for the [`DelayFactory`].
 pub(crate) enum DelayFactoryMode {
     /// The factory produces a series of 0-delays.
     Zero,
