@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{shutdown::ShutdownRx, time};
+use crate::{task::ShutdownRx, time};
 
 use rand::{thread_rng, Rng as _};
 

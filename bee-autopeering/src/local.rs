@@ -8,7 +8,7 @@ use crate::{
     peerstore::PeerStore,
     salt::Salt,
     service_map::{ServiceMap, ServiceTransport},
-    shutdown::ShutdownRx,
+    task::ShutdownRx,
     time,
 };
 

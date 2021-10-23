@@ -7,7 +7,7 @@ use crate::{
     local::Local,
     multiaddr,
     packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, PEERING_MSG_TYPE_RANGE},
-    shutdown::{Runnable, ShutdownBusRegistry, ShutdownRx, Spawner},
+    task::{Runnable, ShutdownBusRegistry, ShutdownRx, Spawner},
 };
 
 use tokio::{
@@ -95,8 +95,8 @@ impl Server {
             local,
         };
 
-        Spawner::spawn(incoming_packet_handler, shutdown_reg.register());
-        Spawner::spawn(outgoing_packet_handler, shutdown_reg.register());
+        Spawner::spawn_runnable(incoming_packet_handler, shutdown_reg.register());
+        Spawner::spawn_runnable(outgoing_packet_handler, shutdown_reg.register());
     }
 }
 

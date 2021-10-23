@@ -17,7 +17,7 @@ use crate::{
     salt::{self, Salt},
     server::{ServerSocket, ServerTx},
     service_map::AUTOPEERING_SERVICE_NAME,
-    shutdown::{Runnable, ShutdownRx},
+    task::{Runnable, ShutdownRx},
 };
 
 use tokio::sync::mpsc;

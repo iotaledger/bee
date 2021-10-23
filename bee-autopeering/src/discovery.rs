@@ -15,7 +15,7 @@ use crate::{
     request::{self, RequestManager},
     server::{marshal, ServerSocket, ServerTx},
     service_map::{ServiceMap, ServicePort, ServiceTransport, AUTOPEERING_SERVICE_NAME},
-    shutdown::{Runnable, ShutdownRx},
+    task::{Runnable, ShutdownRx},
     time,
 };
 

@@ -14,7 +14,7 @@ use crate::{
     peerstore::PeerStore,
     salt::Salt,
     server::ServerTx,
-    shutdown::ShutdownRx,
+    task::ShutdownRx,
     time::{self, Timestamp},
 };
 

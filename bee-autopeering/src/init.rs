@@ -15,7 +15,7 @@ use crate::{
     salt::{Salt, DEFAULT_SALT_LIFETIME},
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket, ServerTx},
     service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
-    shutdown::{ShutdownBus, Spawner},
+    task::{ShutdownBus, Spawner},
     time,
 };
 
@@ -49,10 +49,13 @@ where
     // Create a bus to distribute the shutdown signal to all spawned tasks. The const generic always matches
     // the number of required permanent tasks.
     let (shutdown_bus, mut shutdown_reg) = ShutdownBus::<7>::new();
-    tokio::spawn(async move {
-        quit_signal.await;
-        shutdown_bus.trigger();
-    });
+    Spawner::spawn(
+        async move {
+            quit_signal.await;
+            shutdown_bus.trigger();
+        },
+        "Quit signal listener",
+    );
 
     // Create or load a peer store.
     let peerstore = S::new(peerstore_config);
@@ -84,13 +87,16 @@ where
             log::debug!("Open requests: {}", requests.len());
         }
     });
-    tokio::spawn(DelayedRepeat::<0>::repeat(
-        request_mngr.clone(),
-        DelayFactoryBuilder::new(DelayFactoryMode::Constant(1000)).finish(),
-        remove_expired_requests,
-        (),
-        shutdown_reg.register(),
-    ));
+    Spawner::spawn(
+        DelayedRepeat::<0>::repeat(
+            request_mngr.clone(),
+            DelayFactoryBuilder::new(DelayFactoryMode::Constant(1000)).finish(),
+            remove_expired_requests,
+            (),
+            shutdown_reg.register(),
+        ),
+        "Expired request removal",
+    );
 
     // Regularly update the salts of the local peer.
     let update_salts = Box::new(|local: &Local, ctx: &_| {
@@ -99,13 +105,16 @@ where
         log::info!("Salts updated");
         // TODO: publish `SaltUpdated` event
     });
-    tokio::spawn(DelayedRepeat::repeat(
-        local.clone(),
-        DelayFactoryBuilder::new(DelayFactoryMode::Constant(DEFAULT_SALT_LIFETIME.as_millis() as u64)).finish(),
-        update_salts,
-        (),
-        shutdown_reg.register(),
-    ));
+    Spawner::spawn(
+        DelayedRepeat::repeat(
+            local.clone(),
+            DelayFactoryBuilder::new(DelayFactoryMode::Constant(DEFAULT_SALT_LIFETIME.as_millis() as u64)).finish(),
+            update_salts,
+            (),
+            shutdown_reg.register(),
+        ),
+        "Salt update",
+    );
 
     // Spawn the discovery manager handling discovery requests/responses.
     let discovery_config = DiscoveryManagerConfig::new(&config, version, network_id);
@@ -117,7 +126,7 @@ where
         request_mngr.clone(),
         peerstore.clone(),
     );
-    Spawner::spawn(discovery_mngr, shutdown_reg.register());
+    Spawner::spawn_runnable(discovery_mngr, shutdown_reg.register());
 
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
     let peering_config = PeeringManagerConfig::new(&config, version, network_id);
@@ -129,9 +138,9 @@ where
         request_mngr.clone(),
         peerstore.clone(),
     );
-    Spawner::spawn(peering_mngr, shutdown_reg.register());
+    Spawner::spawn_runnable(peering_mngr, shutdown_reg.register());
 
-    // Send regular (re-) verification requests.
+    // Send regular (re-)verification requests.
     let send_verification_requests = Box::new(|peerstore: &S, ctx: &(RequestManager, ServerTx)| {
         log::debug!("Sending verification requests to peers.");
 
@@ -161,14 +170,17 @@ where
             });
         }
     });
-    tokio::spawn(DelayedRepeat::<0>::repeat(
-        peerstore.clone(),
-        // DelayFactoryBuilder::new(DelayFactoryMode::Constant(10 * 60 * 1000)).finish(),
-        DelayFactoryBuilder::new(DelayFactoryMode::Constant(60 * 1000)).finish(),
-        send_verification_requests,
-        (request_mngr.clone(), outgoing_tx.clone()),
-        shutdown_reg.register(),
-    ));
+    Spawner::spawn(
+        DelayedRepeat::<0>::repeat(
+            peerstore.clone(),
+            // DelayFactoryBuilder::new(DelayFactoryMode::Constant(10 * 60 * 1000)).finish(),
+            DelayFactoryBuilder::new(DelayFactoryMode::Constant(60 * 1000)).finish(),
+            send_verification_requests,
+            (request_mngr.clone(), outgoing_tx.clone()),
+            shutdown_reg.register(),
+        ),
+        "Send verification requests",
+    );
 
     // TODO: Send discovery requests to all verified peers.
 

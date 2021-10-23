@@ -8,7 +8,7 @@ use crate::{
     peer::Peer,
     request::RequestManager,
     server::ServerTx,
-    shutdown::ShutdownRx,
+    task::ShutdownRx,
     time::{self, Timestamp},
 };
 
