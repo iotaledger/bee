@@ -15,7 +15,7 @@ use crate::{
     request::{self, RequestManager},
     server::{marshal, ServerSocket, ServerTx},
     service_map::{ServiceMap, ServicePort, ServiceTransport, AUTOPEERING_SERVICE_NAME},
-    shutdown::ShutdownRx,
+    shutdown::{Runnable, ShutdownRx},
     time,
 };
 
@@ -196,11 +196,10 @@ pub(crate) struct DiscoveryManager<S> {
     event_tx: DiscoveryEventTx,
     // The storage for discovered peers.
     peerstore: S,
-    //
+    // TODO
     active_peers: HashSet<Peer>,
+    // TODO
     replacement_peers: HashSet<Peer>,
-    // The shutdown signal receiver.
-    shutdown_rx: ShutdownRx,
 }
 
 impl<S: PeerStore> DiscoveryManager<S> {
@@ -210,7 +209,6 @@ impl<S: PeerStore> DiscoveryManager<S> {
         socket: ServerSocket,
         request_mngr: RequestManager,
         peerstore: S,
-        shutdown_rx: ShutdownRx,
     ) -> (Self, DiscoveryEventRx) {
         let (event_tx, event_rx) = event_chan();
         (
@@ -223,13 +221,19 @@ impl<S: PeerStore> DiscoveryManager<S> {
                 peerstore,
                 active_peers: HashSet::default(),
                 replacement_peers: HashSet::default(),
-                shutdown_rx,
             },
             event_rx,
         )
     }
+}
 
-    pub(crate) async fn run(self) {
+#[async_trait::async_trait]
+impl<S: PeerStore> Runnable for DiscoveryManager<S> {
+    const NAME: &'static str = "DiscoveryManager";
+
+    type Cancel = ShutdownRx;
+
+    async fn run(self, mut shutdown_rx: Self::Cancel) {
         let DiscoveryManager {
             config,
             local,
@@ -239,7 +243,6 @@ impl<S: PeerStore> DiscoveryManager<S> {
             peerstore,
             active_peers,
             replacement_peers,
-            mut shutdown_rx,
         } = self;
 
         let DiscoveryManagerConfig {

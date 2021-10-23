@@ -15,7 +15,7 @@ use crate::{
     salt::{Salt, DEFAULT_SALT_LIFETIME},
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket, ServerTx},
     service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
-    shutdown::ShutdownBus,
+    shutdown::{ShutdownBus, Spawner},
     time,
 };
 
@@ -65,16 +65,10 @@ where
         peering_tx,
     };
 
-    // Spawn the server managing the UDP socket I/O. It receives a [`Local`] in order to sign outgoing packets.
+    // Initialize the server managing the UDP socket I/O. It receives a [`Local`] in order to sign outgoing packets.
     let server_config = ServerConfig::new(&config);
-    let (server, outgoing_tx) = Server::new(
-        server_config,
-        local.clone(),
-        incoming_senders,
-        shutdown_reg.register(),
-        shutdown_reg.register(),
-    );
-    tokio::spawn(server.run());
+    let (server, outgoing_tx) = Server::new(server_config, local.clone(), incoming_senders);
+    server.init(&mut shutdown_reg).await;
 
     // Create a request manager that creates and keeps track of outgoing requests.
     let request_mngr = RequestManager::new(version, network_id, config.bind_addr, local.clone());
@@ -122,9 +116,8 @@ where
         discovery_socket,
         request_mngr.clone(),
         peerstore.clone(),
-        shutdown_reg.register(),
     );
-    tokio::spawn(discovery_mngr.run());
+    Spawner::spawn(discovery_mngr, shutdown_reg.register());
 
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
     let peering_config = PeeringManagerConfig::new(&config, version, network_id);
@@ -135,9 +128,8 @@ where
         peering_socket,
         request_mngr.clone(),
         peerstore.clone(),
-        shutdown_reg.register(),
     );
-    tokio::spawn(peering_mngr.run());
+    Spawner::spawn(peering_mngr, shutdown_reg.register());
 
     // Send regular (re-) verification requests.
     let send_verification_requests = Box::new(|peerstore: &S, ctx: &(RequestManager, ServerTx)| {

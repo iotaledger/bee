@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::hash::Hasher;
+use std::{future::Future, hash::Hasher};
 
 use tokio::sync::oneshot;
 
@@ -38,5 +38,26 @@ pub(crate) struct ShutdownBusRegistry(Vec<ShutdownRx>);
 impl ShutdownBusRegistry {
     pub fn register(&mut self) -> ShutdownRx {
         self.0.pop().expect("too many registrees")
+    }
+}
+
+#[async_trait::async_trait]
+pub(crate) trait Runnable {
+    const NAME: &'static str;
+
+    type Cancel: Future + Send + Unpin + 'static;
+
+    async fn run(self, cancels: Self::Cancel);
+}
+
+pub(crate) struct Spawner {}
+
+impl Spawner {
+    pub(crate) fn spawn<R>(runnable: R, cancel: ShutdownRx)
+    where
+        R: Runnable<Cancel = ShutdownRx> + 'static,
+    {
+        log::info!("Spawning `{}` task.", R::NAME);
+        tokio::spawn(runnable.run(cancel));
     }
 }

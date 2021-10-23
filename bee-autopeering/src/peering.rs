@@ -17,7 +17,7 @@ use crate::{
     salt::{self, Salt},
     server::{ServerSocket, ServerTx},
     service_map::AUTOPEERING_SERVICE_NAME,
-    shutdown::ShutdownRx,
+    shutdown::{Runnable, ShutdownRx},
 };
 
 use tokio::sync::mpsc;
@@ -100,8 +100,6 @@ pub(crate) struct PeeringManager<S> {
     outbound_nh: OutboundNeighborhood,
     // The peer rejection filter.
     rejection_filter: RejectionFilter,
-    // The shutdown signal receiver.
-    shutdown_rx: ShutdownRx,
 }
 
 impl<S: PeerStore> PeeringManager<S> {
@@ -111,7 +109,6 @@ impl<S: PeerStore> PeeringManager<S> {
         socket: ServerSocket,
         request_mngr: RequestManager,
         peerstore: S,
-        shutdown_rx: ShutdownRx,
     ) -> (Self, PeeringEventRx) {
         let (event_tx, event_rx) = event_chan();
 
@@ -131,13 +128,19 @@ impl<S: PeerStore> PeeringManager<S> {
                 inbound_nh,
                 outbound_nh,
                 rejection_filter,
-                shutdown_rx,
             },
             event_rx,
         )
     }
+}
 
-    pub(crate) async fn run(self) {
+#[async_trait::async_trait]
+impl<S: PeerStore> Runnable for PeeringManager<S> {
+    const NAME: &'static str = "PeeringManager";
+
+    type Cancel = ShutdownRx;
+
+    async fn run(self, mut shutdown_rx: Self::Cancel) {
         let PeeringManager {
             config,
             local,
@@ -148,7 +151,6 @@ impl<S: PeerStore> PeeringManager<S> {
             mut inbound_nh,
             mut outbound_nh,
             mut rejection_filter,
-            mut shutdown_rx,
         } = self;
 
         let PeeringManagerConfig {
