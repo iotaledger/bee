@@ -231,7 +231,7 @@ impl<S: PeerStore> Runnable for PeeringManager<S> {
 fn validate_peering_request<S: PeerStore>(peering_req: &PeeringRequest, peer_id: &PeerId, peerstore: &S) -> bool {
     if request::is_expired(peering_req.timestamp()) {
         false
-    } else if !peer::is_verified(peerstore.last_verification_response(&peer_id).unwrap_or(0)) {
+    } else if !peer::is_verified(peerstore.last_verification_response(&peer_id)) {
         false
     } else if salt::is_expired(peering_req.salt_expiration_time()) {
         false

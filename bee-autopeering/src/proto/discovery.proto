@@ -30,7 +30,7 @@ message Pong {
   ServiceMap services = 2;
 
   // string form of receiver's IP
-  // This should mirror the source IP of the Ping's IP packet. It provides a way to discover the the external address (after NAT).
+  // This should mirror the source IP of the Ping's IP packet. It provides a way to discover the external address (after NAT).
   string dst_addr = 3;
 }
 

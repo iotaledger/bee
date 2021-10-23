@@ -88,8 +88,13 @@ impl fmt::Display for ServiceMap {
         write!(
             f,
             "{}",
-            // TODO: include udp/tcp and port
-            self.0.keys().cloned().collect::<Vec<_>>().join(";").to_string()
+            // Example: "peering/udp/14626;gossip/tcp/14625"
+            self.0
+                .iter()
+                .map(|(service_name, service)| format!("{}/{}/{}", service_name, service.transport, service.port))
+                .collect::<Vec<_>>()
+                .join(";")
+                .to_string()
         )
     }
 }

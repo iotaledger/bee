@@ -8,7 +8,9 @@ use crate::{
     discovery_messages::VerificationRequest,
     hash,
     local::Local,
+    multiaddr,
     packet::{IncomingPacket, MessageType, OutgoingPacket},
+    peer,
     peering::{PeeringEventRx, PeeringManager, PeeringManagerConfig},
     peerstore::{InMemoryPeerStore, PeerStore},
     request::RequestManager,
@@ -42,13 +44,28 @@ where
     log::info!("The autopeering system will disclose your public IP address to possibly all nodes and entry points.");
     log::info!("Please disable it if you do not want this to happen!");
     log::info!("---------------------------------------------------------------------------------------------------");
-    log::info!("network_name/id: {}/{}", network_name.as_ref(), network_id);
-    log::info!("protocol_version: {}", version);
+    log::info!("Network name/id: {}/{}", network_name.as_ref(), network_id);
+    log::info!("Protocol_version: {}", version);
+    log::info!("Local id: {}", local.peer_id());
+    log::info!(
+        "Local public key: {}",
+        multiaddr::from_pubkey_to_base58(&local.public_key())
+    );
+    log::info!(
+        "Local private salt expiration time: {}",
+        local.private_salt().expect("missing private salt").expiration_time()
+    );
+    log::info!(
+        "Local public salt expiration time: {}",
+        local.public_salt().expect("missing private salt").expiration_time()
+    );
+    log::info!("Bind address: {}", config.bind_addr);
+
     // TODO: log the salt expiration time
 
     // Create a bus to distribute the shutdown signal to all spawned tasks. The const generic always matches
     // the number of required permanent tasks.
-    let (shutdown_bus, mut shutdown_reg) = ShutdownBus::<7>::new();
+    let (shutdown_bus, mut shutdown_reg) = ShutdownBus::<8>::new();
     Spawner::spawn(
         async move {
             quit_signal.await;
@@ -174,7 +191,7 @@ where
         DelayedRepeat::<0>::repeat(
             peerstore.clone(),
             // DelayFactoryBuilder::new(DelayFactoryMode::Constant(10 * 60 * 1000)).finish(),
-            DelayFactoryBuilder::new(DelayFactoryMode::Constant(60 * 1000)).finish(),
+            DelayFactoryBuilder::new(DelayFactoryMode::Constant(23 * 1000)).finish(),
             send_verification_requests,
             (request_mngr.clone(), outgoing_tx.clone()),
             shutdown_reg.register(),
@@ -182,7 +199,50 @@ where
         "Send verification requests",
     );
 
-    // TODO: Send discovery requests to all verified peers.
+    // Send discovery requests to all verified peers.
+    let send_discovery_requests = Box::new(|peerstore: &S, ctx: &(RequestManager, ServerTx)| {
+        log::debug!("Sending discovery requests to peers.");
+
+        let request_mngr = &ctx.0;
+        let server_tx = &ctx.1;
+
+        for peer in peerstore.peers() {
+            let peer_id = peer.peer_id();
+            let target_addr = peer.ip_address();
+
+            if peer::is_verified(peerstore.last_verification_response(&peer_id)) {
+                // TODO: refactor into a function
+                let disc_req = request_mngr.new_discovery_request(peer_id, target_addr);
+                let msg_bytes = disc_req
+                    .to_protobuf()
+                    .expect("error encoding discovery request")
+                    .to_vec();
+
+                let port = peer
+                    .services()
+                    .get(AUTOPEERING_SERVICE_NAME)
+                    .expect("missing autopeering service")
+                    .port();
+
+                server_tx.send(OutgoingPacket {
+                    msg_type: MessageType::DiscoveryRequest,
+                    msg_bytes,
+                    target_socket_addr: SocketAddr::new(target_addr, port),
+                });
+            }
+        }
+    });
+    Spawner::spawn(
+        DelayedRepeat::<0>::repeat(
+            peerstore.clone(),
+            // DelayFactoryBuilder::new(DelayFactoryMode::Constant(10 * 60 * 1000)).finish(),
+            DelayFactoryBuilder::new(DelayFactoryMode::Constant(47 * 1000)).finish(),
+            send_discovery_requests,
+            (request_mngr.clone(), outgoing_tx.clone()),
+            shutdown_reg.register(),
+        ),
+        "Send verification requests",
+    );
 
     log::debug!("Autopeering initialized.");
 

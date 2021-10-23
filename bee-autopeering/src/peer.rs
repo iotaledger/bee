@@ -136,8 +136,12 @@ impl AsRef<Peer> for Peer {
     }
 }
 
-pub(crate) fn is_verified(last_verification_response: Timestamp) -> bool {
-    time::since(last_verification_response) <= VERIFICATION_EXPIRATION
+pub(crate) fn is_verified(last_verification_response: Option<Timestamp>) -> bool {
+    if let Some(last_verification_response) = last_verification_response {
+        time::since(last_verification_response) <= VERIFICATION_EXPIRATION
+    } else {
+        false
+    }
 }
 
 #[cfg(test)]

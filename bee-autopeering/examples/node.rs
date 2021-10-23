@@ -37,7 +37,7 @@ fn read_config() -> AutopeeringConfig {
 
     let config_json = r#"
     {
-        "bindAddress": "0.0.0.0:14627",
+        "bindAddress": "0.0.0.0:15626",
         "entryNodes": [
             "/dns/localhost/udp/14626/autopeering/CFWngmfyHryEFtgaYWmFVnHhMP5ijvuEPQuYN4UkjSyC"
         ],
@@ -53,13 +53,13 @@ async fn main() {
     // Set up logger.
     setup_fern(LevelFilter::Debug);
 
-    // Set up a local peer, that provides the Autopeering service.
-    let mut local = Local::new();
-    local.add_service("peering", ServiceTransport::Udp, 14627);
-
     // Read the config from a JSON file/string.
     let config = read_config();
     println!("{:#?}", config);
+
+    // Set up a local peer, that provides the Autopeering service.
+    let mut local = Local::new();
+    local.add_service("peering", ServiceTransport::Udp, config.bind_addr.port());
 
     // Network parameters.
     let version = 1;

@@ -87,12 +87,14 @@ impl Server {
         let incoming_packet_handler = IncomingPacketHandler {
             incoming_socket,
             incoming_senders,
+            bind_addr: config.bind_addr,
         };
 
         let outgoing_packet_handler = OutgoingPacketHandler {
             outgoing_socket,
             outgoing_rx,
             local,
+            bind_addr: config.bind_addr,
         };
 
         Spawner::spawn_runnable(incoming_packet_handler, shutdown_reg.register());
@@ -103,23 +105,27 @@ impl Server {
 struct IncomingPacketHandler {
     incoming_socket: Arc<UdpSocket>,
     incoming_senders: IncomingPacketSenders,
+    bind_addr: SocketAddr,
 }
 
 struct OutgoingPacketHandler {
     outgoing_socket: Arc<UdpSocket>,
     outgoing_rx: OutgoingPacketRx,
     local: Local,
+    bind_addr: SocketAddr,
 }
 
 #[async_trait::async_trait]
 impl Runnable for IncomingPacketHandler {
     const NAME: &'static str = "IncomingPacketHandler";
+
     type Cancel = ShutdownRx;
 
     async fn run(self, mut shutdown_rx: Self::Cancel) {
         let IncomingPacketHandler {
             incoming_socket,
             incoming_senders,
+            bind_addr,
         } = self;
 
         let mut packet_bytes = [0; READ_BUFFER_SIZE];
@@ -129,13 +135,18 @@ impl Runnable for IncomingPacketHandler {
             peering_tx,
         } = incoming_senders;
 
-        loop {
+        'recv: loop {
             tokio::select! {
                 _ = &mut shutdown_rx => {
                     break;
                 }
                 r = incoming_socket.recv_from(&mut packet_bytes) => {
                     if let Ok((n, source_socket_addr)) = r {
+                        if source_socket_addr == bind_addr {
+                            log::warn!("Tried receiving from self.");
+                            continue 'recv;
+                        }
+
                         log::debug!("Received {} bytes from {}.", n, source_socket_addr);
 
                         let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
@@ -150,7 +161,7 @@ impl Runnable for IncomingPacketHandler {
                         let signature = packet.signature();
                         if !packet.public_key().verify(&signature, message) {
                             log::debug!("Received packet with invalid signature");
-                            continue;
+                            continue 'recv;
                         }
 
                         let marshalled_bytes = packet.into_message();
@@ -175,7 +186,7 @@ impl Runnable for IncomingPacketHandler {
                         }
                     } else {
                         log::error!("udp socket read error; stopping incoming packet handler");
-                        break;
+                        break 'recv;
                     }
                 }
             }
@@ -186,6 +197,7 @@ impl Runnable for IncomingPacketHandler {
 #[async_trait::async_trait]
 impl Runnable for OutgoingPacketHandler {
     const NAME: &'static str = "OutgoingPacketHandler";
+
     type Cancel = ShutdownRx;
 
     async fn run(self, mut shutdown_rx: Self::Cancel) {
@@ -193,9 +205,10 @@ impl Runnable for OutgoingPacketHandler {
             outgoing_socket,
             mut outgoing_rx,
             local,
+            bind_addr,
         } = self;
 
-        loop {
+        'recv: loop {
             tokio::select! {
                 _ = &mut shutdown_rx => {
                     break;
@@ -208,6 +221,11 @@ impl Runnable for OutgoingPacketHandler {
                             target_socket_addr,
                         } = packet;
 
+                        if target_socket_addr == bind_addr {
+                            log::warn!("Tried sending to self.");
+                            continue 'recv;
+                        }
+
                         let marshalled_bytes = marshal(msg_type, &msg_bytes);
 
                         let signature = local.sign(&marshalled_bytes);
@@ -219,7 +237,7 @@ impl Runnable for OutgoingPacketHandler {
                         log::debug!("Sent {} bytes to {}.", n, target_socket_addr);
                     } else {
                         log::error!("outgoing message channel dropped; stopping outgoing packet handler");
-                        break;
+                        break 'recv;
                     }
                 }
             }

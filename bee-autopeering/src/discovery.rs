@@ -167,7 +167,7 @@ pub(crate) struct DiscoveryManagerConfig {
     pub(crate) run_as_entry_node: bool,
     pub(crate) version: u32,
     pub(crate) network_id: u32,
-    pub(crate) source_addr: SocketAddr,
+    pub(crate) bind_addr: SocketAddr,
 }
 
 impl DiscoveryManagerConfig {
@@ -178,7 +178,7 @@ impl DiscoveryManagerConfig {
             run_as_entry_node: config.run_as_entry_node,
             version,
             network_id,
-            source_addr: config.bind_addr,
+            bind_addr: config.bind_addr,
         }
     }
 }
@@ -251,7 +251,7 @@ impl<S: PeerStore> Runnable for DiscoveryManager<S> {
             run_as_entry_node,
             version,
             network_id,
-            source_addr,
+            bind_addr,
         } = config;
 
         let ServerSocket {
@@ -289,7 +289,7 @@ impl<S: PeerStore> Runnable for DiscoveryManager<S> {
                             local: &local,
                             peerstore: &peerstore,
                             request_mngr: &request_mngr,
-                            source_addr,
+                            source_socket_addr,
                             event_tx: &event_tx,
                         };
 
@@ -318,7 +318,7 @@ impl<S: PeerStore> Runnable for DiscoveryManager<S> {
                                     continue 'recv;
                                 };
 
-                                if let Err(e) = validate_verification_response(&verif_res, &request_mngr, &peer_id, source_addr) {
+                                if let Err(e) = validate_verification_response(&verif_res, &request_mngr, &peer_id, source_socket_addr) {
                                     log::debug!("Received invalid verification response from {}. Reason: {:?}", &peer_id, e);
                                     continue 'recv;
                                 } else {
@@ -437,7 +437,7 @@ pub(crate) enum ValidationError {
     // The request must not be expired.
     RequestExpired,
     // The response must arrive in time.
-    ResponseTimeout,
+    NoCorrespondingRequestOrTimeout,
     // The hash of the corresponding request must be correct.
     IncorrectRequestHash,
     // The peer must have an autopeering service.
@@ -481,20 +481,20 @@ fn validate_verification_response(
     verif_res: &VerificationResponse,
     request_mngr: &RequestManager,
     peer_id: &PeerId,
-    source_addr: SocketAddr,
+    source_socket_addr: SocketAddr,
 ) -> Result<(), ValidationError> {
     use ValidationError::*;
 
     if let Some(request_hash) = request_mngr.get_request_hash::<VerificationRequest>(peer_id) {
         if verif_res.request_hash() == &request_hash[..] {
-            let services = verif_res.services();
-            if let Some(autopeering) = services.get(AUTOPEERING_SERVICE_NAME) {
-                if autopeering.port() == source_addr.port() {
+            let res_services = verif_res.services();
+            if let Some(res_peering) = res_services.get(AUTOPEERING_SERVICE_NAME) {
+                if res_peering.port() == source_socket_addr.port() {
                     Ok(())
                 } else {
                     Err(ServicePortMismatch {
-                        expected: autopeering.port(),
-                        received: source_addr.port(),
+                        expected: source_socket_addr.port(),
+                        received: res_peering.port(),
                     })
                 }
             } else {
@@ -504,7 +504,7 @@ fn validate_verification_response(
             Err(IncorrectRequestHash)
         }
     } else {
-        Err(ResponseTimeout)
+        Err(NoCorrespondingRequestOrTimeout)
     }
 }
 
@@ -537,7 +537,7 @@ fn validate_discovery_response(
             Err(IncorrectRequestHash)
         }
     } else {
-        Err(ResponseTimeout)
+        Err(NoCorrespondingRequestOrTimeout)
     }
 }
 
@@ -552,7 +552,7 @@ pub(crate) struct HandlerContext<'a, S: PeerStore> {
     local: &'a Local,
     peerstore: &'a S,
     request_mngr: &'a RequestManager,
-    source_addr: SocketAddr,
+    source_socket_addr: SocketAddr,
     event_tx: &'a DiscoveryEventTx,
 }
 
@@ -561,7 +561,13 @@ fn handle_verification_request<S: PeerStore>(verif_req: &VerificationRequest, ct
 
     ctx.peerstore.update_last_verification_request(ctx.peer_id.clone());
 
-    reply_with_verification_response(verif_req, ctx.msg_bytes, ctx.server_tx, ctx.local, ctx.source_addr);
+    reply_with_verification_response(
+        verif_req,
+        ctx.msg_bytes,
+        ctx.server_tx,
+        ctx.local,
+        ctx.source_socket_addr,
+    );
 
     // ```go
     // if the peer is unknown or expired, send a Ping to verify
@@ -572,12 +578,9 @@ fn handle_verification_request<S: PeerStore>(verif_req: &VerificationRequest, ct
     // 	   p.mgr.addDiscoveredPeer(newPeer(from, s.LocalAddr().Network(), dstAddr))
     // }
     // ```
-    if let Some(last_verif_res) = ctx.peerstore.last_verification_response(ctx.peer_id) {
-        if !peer::is_verified(last_verif_res) {
-            reply_with_verification_request(ctx.peer_id, ctx.request_mngr, ctx.server_tx, ctx.source_addr);
-        }
-    } else {
-        reply_with_verification_request(ctx.peer_id, ctx.request_mngr, ctx.server_tx, ctx.source_addr);
+
+    if !peer::is_verified(ctx.peerstore.last_verification_response(ctx.peer_id)) {
+        reply_with_verification_request(ctx.peer_id, ctx.request_mngr, ctx.server_tx, ctx.source_socket_addr);
     }
 }
 
@@ -596,7 +599,13 @@ fn handle_verification_response<S: PeerStore>(verif_res: &VerificationResponse, 
 fn handle_discovery_request<S: PeerStore>(disc_req: &DiscoveryRequest, ctx: HandlerContext<S>) {
     log::debug!("Handling discovery request.");
 
-    reply_with_discovery_response(disc_req, ctx.msg_bytes, ctx.server_tx, ctx.local, ctx.source_addr);
+    reply_with_discovery_response(
+        disc_req,
+        ctx.msg_bytes,
+        ctx.server_tx,
+        ctx.local,
+        ctx.source_socket_addr,
+    );
 }
 
 fn handle_discovery_response<S: PeerStore>(disc_res: &DiscoveryResponse, ctx: HandlerContext<S>) {

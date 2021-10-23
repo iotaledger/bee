@@ -191,23 +191,6 @@ impl RequestManager {
     }
 }
 
-// #[async_trait::async_trait]
-// impl DelayedRepeat<0> for RequestManager {
-//     type Command = Box<dyn Fn(&Self::Context) + Send>;
-//     type Context = Self;
-
-//     async fn repeat(mut delay: DelayFactory, cmd: Self::Command, ctx: Self::Context, mut shutdown_rx: ShutdownRx) {
-//         while let Some(duration) = delay.next() {
-//             tokio::select! {
-//                 _ = &mut shutdown_rx => break,
-//                 _ = time::sleep(duration) => {
-//                     cmd(&ctx);
-//                 }
-//             }
-//         }
-//     }
-// }
-
 #[async_trait::async_trait]
 impl DelayedRepeat<0> for RequestManager {
     type Context = ();
