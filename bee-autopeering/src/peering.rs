@@ -172,7 +172,7 @@ impl<S: PeerStore> PeeringManager<S> {
                     if let Some(IncomingPacket {
                         msg_type,
                         msg_bytes,
-                        source_addr,
+                        source_socket_addr,
                         peer_id,
                     }) = o
                     {
@@ -303,7 +303,7 @@ fn reply_with_drop_request(server_tx: &ServerTx, target_addr: SocketAddr) {
     server_tx.send(OutgoingPacket {
         msg_type: MessageType::DropRequest,
         msg_bytes: drop_req_bytes,
-        target_addr,
+        target_socket_addr: target_addr,
     });
 }
 
@@ -376,6 +376,6 @@ fn send_drop_request(peer: Peer, server_tx: &ServerTx) {
     server_tx.send(OutgoingPacket {
         msg_type: MessageType::DropRequest,
         msg_bytes: drop_req_bytes,
-        target_addr: SocketAddr::new(peer.ip_address(), port),
+        target_socket_addr: SocketAddr::new(peer.ip_address(), port),
     });
 }

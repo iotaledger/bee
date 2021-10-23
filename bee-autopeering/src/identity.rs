@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{delay::Repeat, hash, salt::Salt};
+use crate::{delay::DelayedRepeat, hash, salt::Salt};
 
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, PUBLIC_KEY_LENGTH};
 

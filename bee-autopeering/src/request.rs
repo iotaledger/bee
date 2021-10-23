@@ -4,7 +4,7 @@
 use num::CheckedAdd;
 
 use crate::{
-    delay::{DelayFactory, Repeat},
+    delay::{DelayFactory, DelayedRepeat},
     discovery_messages::{DiscoveryRequest, VerificationRequest, VerificationResponse},
     hash,
     identity::PeerId,
@@ -191,31 +191,27 @@ impl RequestManager {
     }
 }
 
+// #[async_trait::async_trait]
+// impl DelayedRepeat<0> for RequestManager {
+//     type Command = Box<dyn Fn(&Self::Context) + Send>;
+//     type Context = Self;
+
+//     async fn repeat(mut delay: DelayFactory, cmd: Self::Command, ctx: Self::Context, mut shutdown_rx: ShutdownRx) {
+//         while let Some(duration) = delay.next() {
+//             tokio::select! {
+//                 _ = &mut shutdown_rx => break,
+//                 _ = time::sleep(duration) => {
+//                     cmd(&ctx);
+//                 }
+//             }
+//         }
+//     }
+// }
+
 #[async_trait::async_trait]
-impl Repeat for RequestManager {
-    type Command = Box<dyn Fn(&Self::Context) + Send>;
-    type Context = Self;
-
-    async fn repeat(mut delay: DelayFactory, cmd: Self::Command, ctx: Self::Context, mut shutdown_rx: ShutdownRx) {
-        while let Some(duration) = delay.next() {
-            tokio::select! {
-                _ = &mut shutdown_rx => break,
-                _ = time::sleep(duration) => {
-                    cmd(&ctx);
-                }
-            }
-        }
-    }
-}
-
-pub(crate) struct HandlerContext<'a, S: PeerStore> {
-    pub(crate) peer_id: &'a PeerId,
-    pub(crate) msg_bytes: &'a [u8],
-    pub(crate) server_tx: &'a ServerTx,
-    pub(crate) local: &'a Local,
-    pub(crate) peerstore: &'a S,
-    pub(crate) request_mngr: &'a RequestManager,
-    pub(crate) source_addr: SocketAddr,
+impl DelayedRepeat<0> for RequestManager {
+    type Context = ();
+    type Cancel = ShutdownRx;
 }
 
 pub(crate) fn is_expired(timestamp: Timestamp) -> bool {

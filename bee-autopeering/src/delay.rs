@@ -5,19 +5,40 @@ use crate::{shutdown::ShutdownRx, time};
 
 use rand::{thread_rng, Rng as _};
 
-use std::time::{Duration, Instant};
+use std::{
+    future::Future,
+    time::{Duration, Instant},
+};
 
-/// A trait that allows to implement something similar to Cronjobs (Command run on notice) for single types.
+pub(crate) type Command<T: DelayedRepeat<N>, const N: usize> = Box<dyn for<'a> Fn(&'a T, &'a T::Context) + Send>;
+
+/// A trait that allows to implement something similar to cronjobs for single types.
+///
+/// NOTE: The const generic is used to implement it several times for a type, if it requires several cronjobs.
 #[async_trait::async_trait]
-pub(crate) trait Repeat
+pub(crate) trait DelayedRepeat<const I: usize>
 where
-    Self: Send,
+    Self: Send + Sync + Clone,
 {
-    type Command: Send;
     type Context: Send;
+    type Cancel: Future + Send + Unpin + 'static;
 
-    // TODO: consider making shutdown an assoc. type that implements `Future` + `Send` + `'static`.
-    async fn repeat(delay: DelayFactory, cmd: Self::Command, ctx: Self::Context, shutdown_rx: ShutdownRx);
+    async fn repeat(
+        self,
+        mut delay: DelayFactory,
+        cmd: Command<Self, I>,
+        ctx: Self::Context,
+        mut cancel: Self::Cancel,
+    ) {
+        while let Some(duration) = delay.next() {
+            tokio::select! {
+                _ = &mut cancel => break,
+                _ = time::sleep(duration) => {
+                    cmd(&self, &ctx);
+                }
+            }
+        }
+    }
 }
 
 #[derive(Default)]

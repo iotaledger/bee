@@ -129,15 +129,15 @@ async fn incoming_packet_handler(
                 break;
             }
             r = socket.recv_from(&mut packet_bytes) => {
-                if let Ok((n, source_addr)) = r {
-                    log::debug!("Received {} bytes from {}.", n, source_addr);
+                if let Ok((n, source_socket_addr)) = r {
+                    log::debug!("Received {} bytes from {}.", n, source_socket_addr);
 
                     let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
-                    log::debug!("{} ---> public key: {}.", source_addr, multiaddr::from_pubkey_to_base58(&packet.public_key()));
+                    log::debug!("{} ---> public key: {}.", source_socket_addr, multiaddr::from_pubkey_to_base58(&packet.public_key()));
 
                     // Restore the peer id.
                     let peer_id = PeerId::from_public_key(packet.public_key());
-                    log::debug!("{} ---> peer id: {}.", source_addr, peer_id);
+                    log::debug!("{} ---> peer id: {}.", source_socket_addr, peer_id);
 
                     // Verify the packet.
                     let message = packet.message();
@@ -153,7 +153,7 @@ async fn incoming_packet_handler(
                     let packet = IncomingPacket {
                         msg_type,
                         msg_bytes,
-                        source_addr,
+                        source_socket_addr,
                         peer_id,
                     };
 
@@ -192,7 +192,7 @@ async fn outgoing_packet_handler(
                     let OutgoingPacket {
                         msg_type,
                         msg_bytes,
-                        target_addr,
+                        target_socket_addr,
                     } = packet;
 
                     let marshalled_bytes = marshal(msg_type, &msg_bytes);
@@ -201,9 +201,9 @@ async fn outgoing_packet_handler(
                     let packet = Packet::new(msg_type, &marshalled_bytes, &local_id.public_key(), signature);
 
                     let bytes = packet.to_protobuf().expect("error encoding outgoing packet");
-                    let n = socket.send_to(&bytes, target_addr).await.expect("socket send error");
+                    let n = socket.send_to(&bytes, target_socket_addr).await.expect("socket send error");
 
-                    log::debug!("Sent {} bytes to {}.", n, target_addr);
+                    log::debug!("Sent {} bytes to {}.", n, target_socket_addr);
                 } else {
                     log::error!("outgoing message channel dropped; stopping outgoing packet handler");
                     break;

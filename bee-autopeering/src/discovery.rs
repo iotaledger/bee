@@ -3,7 +3,7 @@
 
 use crate::{
     config::AutopeeringConfig,
-    delay::{DelayFactory, DelayFactoryBuilder, DelayFactoryMode, Repeat as _},
+    delay::{DelayFactory, DelayFactoryBuilder, DelayFactoryMode, DelayedRepeat as _},
     discovery_messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
     hash,
     identity::PeerId,
@@ -12,7 +12,7 @@ use crate::{
     packet::{msg_hash, IncomingPacket, MessageType, OutgoingPacket},
     peer::{self, Peer},
     peerstore::{self, PeerStore},
-    request::{self, HandlerContext, RequestManager},
+    request::{self, RequestManager},
     server::{marshal, ServerSocket, ServerTx},
     service_map::{ServiceMap, ServicePort, ServiceTransport, AUTOPEERING_SERVICE_NAME},
     shutdown::ShutdownRx,
@@ -257,7 +257,14 @@ impl<S: PeerStore> DiscoveryManager<S> {
         } = socket;
 
         // Send verification and discovery request to the entry nodes.
-        contact_entry_nodes(&mut entry_nodes, entry_nodes_prefer_ipv6, &request_mngr, &server_tx).await;
+        add_entry_nodes(
+            &mut entry_nodes,
+            entry_nodes_prefer_ipv6,
+            &request_mngr,
+            &server_tx,
+            &peerstore,
+        )
+        .await;
 
         'recv: loop {
             tokio::select! {
@@ -268,7 +275,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
                     if let Some(IncomingPacket {
                         msg_type,
                         msg_bytes,
-                        source_addr,
+                        source_socket_addr,
                         peer_id,
                     }) = o
                     {
@@ -280,6 +287,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
                             peerstore: &peerstore,
                             request_mngr: &request_mngr,
                             source_addr,
+                            event_tx: &event_tx,
                         };
 
                         match msg_type {
@@ -356,11 +364,12 @@ impl<S: PeerStore> DiscoveryManager<S> {
     }
 }
 
-async fn contact_entry_nodes(
+async fn add_entry_nodes<S: PeerStore>(
     entry_nodes: &mut Vec<AutopeeringMultiaddr>,
     entry_nodes_prefer_ipv6: bool,
     request_mngr: &RequestManager,
     server_tx: &ServerTx,
+    peerstore: &S,
 ) {
     log::debug!("Contacting entry nodes.");
 
@@ -401,7 +410,8 @@ async fn contact_entry_nodes(
         let mut peer = Peer::new(entry_socketaddr.ip(), entry_addr.public_key().clone());
         peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, entry_socketaddr.port());
 
-        send_verification_request(&peer, &request_mngr, &server_tx);
+        peerstore.insert_peer(peer);
+        // send_verification_request(&peer, &request_mngr, &server_tx);
     }
 }
 
@@ -532,6 +542,17 @@ fn validate_discovery_response(
 // MESSAGE HANDLING
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+pub(crate) struct HandlerContext<'a, S: PeerStore> {
+    peer_id: &'a PeerId,
+    msg_bytes: &'a [u8],
+    server_tx: &'a ServerTx,
+    local: &'a Local,
+    peerstore: &'a S,
+    request_mngr: &'a RequestManager,
+    source_addr: SocketAddr,
+    event_tx: &'a DiscoveryEventTx,
+}
+
 fn handle_verification_request<S: PeerStore>(verif_req: &VerificationRequest, ctx: HandlerContext<S>) {
     log::debug!("Handling verification request.");
 
@@ -577,11 +598,15 @@ fn handle_discovery_request<S: PeerStore>(disc_req: &DiscoveryRequest, ctx: Hand
 
 fn handle_discovery_response<S: PeerStore>(disc_res: &DiscoveryResponse, ctx: HandlerContext<S>) {
     log::debug!("Handling discovery response.");
-    todo!()
+
+    // TODO: store the discovered peers; fire `PeerDiscovered` event.
+    for peer in disc_res.peers() {
+        log::debug!("{:?}", peer);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// REPLY HANDLING
+// REPLYING
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn reply_with_verification_request(
@@ -602,7 +627,7 @@ fn reply_with_verification_request(
         .send(OutgoingPacket {
             msg_type: MessageType::VerificationRequest,
             msg_bytes: verif_req_bytes,
-            target_addr,
+            target_socket_addr: target_addr,
         })
         .expect("error sending verification request to server");
 }
@@ -635,7 +660,7 @@ fn reply_with_verification_response(
     tx.send(OutgoingPacket {
         msg_type: MessageType::VerificationResponse,
         msg_bytes: verif_res_bytes,
-        target_addr: SocketAddr::new(target_addr.ip(), verif_req.source_addr.port()),
+        target_socket_addr: SocketAddr::new(target_addr.ip(), verif_req.source_addr.port()),
     })
     .expect("error sending verification response to server");
 }
@@ -658,7 +683,7 @@ fn reply_with_discovery_request(
         .send(OutgoingPacket {
             msg_type: MessageType::DiscoveryRequest,
             msg_bytes: disc_req_bytes,
-            target_addr,
+            target_socket_addr: target_addr,
         })
         .expect("error sending discovery request to server");
 }
@@ -686,7 +711,7 @@ fn reply_with_discovery_response(
     tx.send(OutgoingPacket {
         msg_type: MessageType::DiscoveryResponse,
         msg_bytes: disc_res_bytes,
-        target_addr,
+        target_socket_addr: target_addr,
     })
     .expect("error sending verification response to server");
 }
@@ -714,7 +739,7 @@ fn send_verification_request(target: &Peer, request_mngr: &RequestManager, serve
         .send(OutgoingPacket {
             msg_type: MessageType::VerificationRequest,
             msg_bytes: verif_req_bytes,
-            target_addr: SocketAddr::new(target.ip_address(), port),
+            target_socket_addr: SocketAddr::new(target.ip_address(), port),
         })
         .expect("error sending verification request to server");
 }
@@ -738,7 +763,7 @@ fn send_discovery_request(target: &Peer, request_mngr: &RequestManager, server_t
         .send(OutgoingPacket {
             msg_type: MessageType::DiscoveryRequest,
             msg_bytes: disc_req_bytes,
-            target_addr: SocketAddr::new(target.ip_address(), port),
+            target_socket_addr: SocketAddr::new(target.ip_address(), port),
         })
         .expect("error sending discovery request to server");
 }

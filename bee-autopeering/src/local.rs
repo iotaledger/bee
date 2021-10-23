@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    delay::{DelayFactory, Repeat},
+    delay::{DelayFactory, DelayedRepeat},
     hash,
     identity::PeerId,
     peerstore::PeerStore,
@@ -139,21 +139,11 @@ impl PartialEq for Local {
     }
 }
 
+// Used to update the salts in certain intervals.
 #[async_trait::async_trait]
-impl Repeat for Local {
-    type Command = Box<dyn Fn(&Self::Context) + Send>;
-    type Context = Self;
-
-    async fn repeat(mut delay: DelayFactory, cmd: Self::Command, ctx: Self::Context, mut shutdown_rx: ShutdownRx) {
-        while let Some(duration) = delay.next() {
-            tokio::select! {
-                _ = &mut shutdown_rx => break,
-                _ = time::sleep(duration) => {
-                    cmd(&ctx);
-                }
-            }
-        }
-    }
+impl DelayedRepeat<0> for Local {
+    type Context = ();
+    type Cancel = ShutdownRx;
 }
 
 impl Default for LocalInner {

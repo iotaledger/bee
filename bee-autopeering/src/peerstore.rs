@@ -2,8 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    delay::{DelayFactory, DelayedRepeat},
     identity::PeerId,
+    packet::OutgoingPacket,
     peer::Peer,
+    request::RequestManager,
+    server::ServerTx,
+    shutdown::ShutdownRx,
     time::{self, Timestamp},
 };
 
@@ -15,6 +20,13 @@ use std::{
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
+// Used to send, e.g. (re-)verification and discovery requests in certain intervals.
+#[async_trait::async_trait]
+impl<S: PeerStore> DelayedRepeat<0> for S {
+    type Context = (RequestManager, ServerTx);
+    type Cancel = ShutdownRx;
+}
+
 pub trait PeerStore: Clone + Send + Sync {
     type Config;
 
@@ -23,6 +35,7 @@ pub trait PeerStore: Clone + Send + Sync {
     fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp>;
     fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp>;
     fn peer(&self, peer_id: &PeerId) -> Option<Peer>;
+    fn peers(&self) -> Vec<Peer>;
 
     fn update_last_verification_request(&self, peer_id: PeerId);
     fn update_last_verification_response(&self, peer_id: PeerId);
@@ -69,6 +82,9 @@ impl PeerStore for InMemoryPeerStore {
     }
     fn peer(&self, peer_id: &PeerId) -> Option<Peer> {
         self.read_inner().peers.get(peer_id).map(|p| p.clone())
+    }
+    fn peers(&self) -> Vec<Peer> {
+        self.read_inner().peers.values().cloned().collect::<Vec<Peer>>()
     }
     fn update_last_verification_request(&self, peer_id: PeerId) {
         let _ = self
@@ -144,6 +160,9 @@ impl PeerStore for SledPeerStore {
         todo!()
     }
     fn peer(&self, peer_id: &PeerId) -> Option<Peer> {
+        todo!()
+    }
+    fn peers(&self) -> Vec<Peer> {
         todo!()
     }
     fn update_last_verification_request(&self, peer_id: PeerId) {

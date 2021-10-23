@@ -122,7 +122,7 @@ pub(crate) enum MessageType {
 pub(crate) struct IncomingPacket {
     pub(crate) msg_type: MessageType,
     pub(crate) msg_bytes: Vec<u8>,
-    pub(crate) source_addr: SocketAddr,
+    pub(crate) source_socket_addr: SocketAddr,
     pub(crate) peer_id: PeerId,
 }
 
@@ -130,5 +130,5 @@ pub(crate) struct IncomingPacket {
 pub(crate) struct OutgoingPacket {
     pub(crate) msg_type: MessageType,
     pub(crate) msg_bytes: Vec<u8>,
-    pub(crate) target_addr: SocketAddr,
+    pub(crate) target_socket_addr: SocketAddr,
 }
