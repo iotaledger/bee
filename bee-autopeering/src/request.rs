@@ -218,6 +218,7 @@ pub(crate) fn remove_expired_requests_cmd() -> Command<RequestManager, 0> {
         requests.retain(|_, v| v.expiration_time > now);
         drop(write_guard);
 
+        // TODO: Remove the peers that didn't answer the request!
         use std::ops::Deref;
         let read_guard = mngr.open_requests.read().expect("error getting read access");
         let requests = read_guard.deref();

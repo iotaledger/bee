@@ -20,11 +20,12 @@ use crate::{
     time,
 };
 
+use rand::{seq::index, thread_rng, Rng as _};
 use tokio::sync::mpsc;
 
 use std::{
     collections::{HashSet, VecDeque},
-    fmt,
+    fmt, iter,
     net::SocketAddr,
     ops::DerefMut,
     time::Duration,
@@ -48,28 +49,28 @@ const JITTER: f32 = 0.5;
 const EXPONENTIAL_BACKOFF_FACTOR: f32 = 1.5;
 // The number of times a request is repeated in case the peer doesn't reply.
 const MAX_RETRIES: usize = 2;
-// hive.go: is the time until a peer verification expires (12 hours)
+// is the time until a peer verification expires (12 hours)
 pub(crate) const VERIFICATION_EXPIRATION: u64 = 12 * 60 * 60;
-// hive.go: MaxPeersInResponse is the maximum number of peers returned in DiscoveryResponse.
+// is the maximum number of peers returned in DiscoveryResponse.
 const MAX_PEERS_IN_RESPONSE: usize = 6;
-// hive.go: MaxServices is the maximum number of services a peer can support.
+// is the minimum number of verifications required to be selected in DiscoveryResponse.
+const MIN_VERIFIED_IN_RESPONSE: usize = 1;
+// is the maximum number of services a peer can support.
 const MAX_SERVICES: usize = 5;
 
-pub(crate) struct DiscoveredPeer {
-    peer: Peer,
+#[derive(Clone)]
+pub(crate) struct ActivePeer {
+    // the associated peer id
+    peer_id: PeerId,
     // how often that peer has been re-verified
     verified_count: usize,
     // number of returned new peers when queried the last time
     last_new_peers: usize,
 }
 
-impl DiscoveredPeer {
-    pub fn peer(&self) -> &Peer {
-        &self.peer
-    }
-
-    pub fn peer_id(&self) -> PeerId {
-        self.peer.peer_id()
+impl ActivePeer {
+    pub fn peer_id(&self) -> &PeerId {
+        &self.peer_id
     }
 
     pub fn verified_count(&self) -> usize {
@@ -79,74 +80,97 @@ impl DiscoveredPeer {
     pub fn last_new_peers(&self) -> usize {
         self.last_new_peers
     }
-
-    // TODO: remove trait impl
-    pub fn into_peer(self) -> Peer {
-        self.peer
-    }
 }
 
-impl From<Peer> for DiscoveredPeer {
-    fn from(peer: Peer) -> Self {
-        Self {
-            peer,
-            verified_count: 0,
-            last_new_peers: 0,
-        }
-    }
-}
-
-impl Into<Peer> for DiscoveredPeer {
-    fn into(self) -> Peer {
-        self.peer
-    }
-}
-
-impl fmt::Debug for DiscoveredPeer {
+impl fmt::Debug for ActivePeer {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("DiscoveredPeer")
-            .field("peer", &self.peer)
+        f.debug_struct("ActivePeer")
+            .field("peer_id", &self.peer_id)
             .field("verified_count", &self.verified_count)
             .field("last_new_peers", &self.last_new_peers)
             .finish()
     }
 }
 
-pub(crate) struct DiscoveredPeerlist {
-    peers: VecDeque<DiscoveredPeer>,
+pub(crate) struct ActivePeerlist {
+    peers: VecDeque<ActivePeer>,
 }
 
-impl DiscoveredPeerlist {
+impl ActivePeerlist {
     pub fn new() -> Self {
-        Self {
-            peers: VecDeque::with_capacity(DEFAULT_MAX_MANAGED),
-        }
+        Self::default()
     }
 
-    pub fn remove(&mut self, peer_id: PeerId) {
+    pub(crate) fn remove(&mut self, peer_id: &PeerId) {
         if let Some(index) = self.peers.iter().position(|peer| peer.peer_id() == peer_id) {
             self.remove_at(index)
         }
     }
 
-    pub fn remove_at(&mut self, index: usize) {
+    pub(crate) fn remove_at(&mut self, index: usize) {
         self.peers.remove(index);
     }
 
-    pub fn push_front(&mut self, peer: DiscoveredPeer) {
+    pub(crate) fn push_front(&mut self, peer: ActivePeer) {
         self.peers.push_front(peer)
     }
 
-    pub fn push_back(&mut self, peer: DiscoveredPeer) {
+    pub(crate) fn push_back(&mut self, peer: ActivePeer) {
         self.peers.push_back(peer)
     }
 
-    pub fn pop_front(&mut self) {
+    pub(crate) fn pop_front(&mut self) {
         self.peers.pop_front();
     }
 
-    pub fn pop_back(&mut self) {
+    pub(crate) fn pop_back(&mut self) {
         self.peers.pop_back();
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.peers.len()
+    }
+
+    pub(crate) fn get_n_random_peers(&self, mut n: usize, min_verified_count: usize) -> Vec<&PeerId> {
+        if self.len() <= n {
+            // No randomization possible => return all we got.
+            let mut all_peers = Vec::with_capacity(self.len());
+            all_peers.extend(self.peers.iter().filter_map(|p| {
+                if p.verified_count() >= min_verified_count {
+                    Some(p.peer_id())
+                } else {
+                    None
+                }
+            }));
+            all_peers
+        } else {
+            let mut random_peers = Vec::with_capacity(n);
+            let mut rng = rand::thread_rng();
+            let index_vec = index::sample(&mut rng, self.len(), self.len());
+            random_peers.extend(
+                index_vec
+                    .iter()
+                    // PANIC: unwrapping is safe due to the length check.
+                    .map(|index| self.peers.get(index).unwrap())
+                    .filter_map(|p| {
+                        if p.verified_count() >= min_verified_count {
+                            Some(p.peer_id())
+                        } else {
+                            None
+                        }
+                    })
+                    .take(n),
+            );
+            random_peers
+        }
+    }
+}
+
+impl Default for ActivePeerlist {
+    fn default() -> Self {
+        Self {
+            peers: VecDeque::with_capacity(DEFAULT_MAX_MANAGED),
+        }
     }
 }
 
@@ -186,7 +210,7 @@ pub(crate) struct DiscoveryManager<S> {
     // The storage for discovered peers.
     peerstore: S,
     // TODO
-    active_peers: HashSet<Peer>,
+    active_peers: ActivePeerlist,
     // TODO
     replacement_peers: HashSet<Peer>,
 }
@@ -207,7 +231,7 @@ impl<S: PeerStore> DiscoveryManager<S> {
             request_mngr,
             event_tx,
             peerstore,
-            active_peers: HashSet::default(),
+            active_peers: ActivePeerlist::default(),
             replacement_peers: HashSet::default(),
         }
     }
@@ -277,6 +301,7 @@ impl<S: PeerStore> Runnable for DiscoveryManager<S> {
                             request_mngr: &request_mngr,
                             source_socket_addr,
                             event_tx: &event_tx,
+                            active_peers: &active_peers,
                         };
 
                         match msg_type {
@@ -362,7 +387,6 @@ async fn add_entry_nodes<S: PeerStore>(
 ) {
     let mut num_added = 0;
 
-    // Send verification request to entry nodes
     for mut entry_addr in entry_nodes {
         let entry_socketaddr = match entry_addr.address_kind() {
             AddressKind::Ip4 | AddressKind::Ip6 => {
@@ -543,6 +567,7 @@ pub(crate) struct HandlerContext<'a, S: PeerStore> {
     request_mngr: &'a RequestManager,
     source_socket_addr: SocketAddr,
     event_tx: &'a EventTx,
+    active_peers: &'a ActivePeerlist,
 }
 
 fn handle_verification_request<S: PeerStore>(verif_req: VerificationRequest, ctx: HandlerContext<S>) {
@@ -574,41 +599,66 @@ fn handle_verification_request<S: PeerStore>(verif_req: VerificationRequest, ctx
 }
 
 fn handle_verification_response<S: PeerStore>(verif_res: VerificationResponse, ctx: HandlerContext<S>) {
-    log::debug!("Handling verification response.");
-
     // Remove the corresponding request from the request manager.
-    let _ = ctx.request_mngr.remove_request::<VerificationRequest>(ctx.peer_id);
+    if ctx.request_mngr.remove_request::<VerificationRequest>(ctx.peer_id) {
+        log::debug!("Handling verification response.");
 
-    // Update verification timestamp.
-    ctx.peerstore.update_last_verification_response(ctx.peer_id.clone());
+        // Update verification timestamp.
+        ctx.peerstore.update_last_verification_response(ctx.peer_id.clone());
+    } else {
+        // Either the peer sent a response already, or the response came in too late.
+        log::debug!("Ignoring verification response.");
+    }
 }
 
 fn handle_discovery_request<S: PeerStore>(disc_req: DiscoveryRequest, ctx: HandlerContext<S>) {
     log::debug!("Handling discovery request.");
 
-    reply_with_discovery_response(
-        &disc_req,
-        ctx.msg_bytes,
-        ctx.server_tx,
-        ctx.local,
-        ctx.source_socket_addr,
+    let request_hash = msg_hash(MessageType::DiscoveryRequest, ctx.msg_bytes).to_vec();
+
+    let chosen_peers = ctx
+        .active_peers
+        .get_n_random_peers(MAX_PEERS_IN_RESPONSE, MIN_VERIFIED_IN_RESPONSE);
+
+    let mut peers = Vec::with_capacity(MAX_PEERS_IN_RESPONSE);
+    peers.extend(
+        chosen_peers
+            .into_iter()
+            .filter_map(|peer_id| ctx.peerstore.peer(peer_id)),
     );
+
+    let disc_res = DiscoveryResponse::new(request_hash, peers);
+    let disc_res_bytes = disc_res
+        .to_protobuf()
+        .expect("error encoding discovery response")
+        .to_vec();
+
+    ctx.server_tx
+        .send(OutgoingPacket {
+            msg_type: MessageType::DiscoveryResponse,
+            msg_bytes: disc_res_bytes,
+            target_socket_addr: ctx.source_socket_addr,
+        })
+        .expect("error sending verification response to server");
 }
 
 fn handle_discovery_response<S: PeerStore>(disc_res: DiscoveryResponse, ctx: HandlerContext<S>) {
-    log::debug!("Handling discovery response.");
-
     // Remove the corresponding request from the request manager.
-    let _ = ctx.request_mngr.remove_request::<DiscoveryRequest>(ctx.peer_id);
+    if ctx.request_mngr.remove_request::<DiscoveryRequest>(ctx.peer_id) {
+        log::debug!("Handling discovery response.");
 
-    // TODO: store the discovered peers; fire `PeerDiscovered` event.
-    for peer in disc_res.into_peers() {
-        log::debug!("{:?}", peer);
+        // TODO: store the discovered peers; fire `PeerDiscovered` event.
+        for peer in disc_res.into_peers() {
+            log::debug!("{:?}", peer);
 
-        // TODO: should the peerstore itself make the check?
-        if peer.peer_id() != ctx.local.peer_id() {
-            ctx.peerstore.insert_peer(peer);
+            // TODO: should the peerstore itself make the check?
+            if peer.peer_id() != ctx.local.peer_id() {
+                ctx.peerstore.insert_peer(peer);
+            }
         }
+    } else {
+        // Either the peer sent a response already, or the response came in too late.
+        log::debug!("Ignoring discovery response.");
     }
 }
 
@@ -693,34 +743,6 @@ fn reply_with_discovery_request(
             target_socket_addr: target_addr,
         })
         .expect("error sending discovery request to server");
-}
-
-fn reply_with_discovery_response(
-    disc_req: &DiscoveryRequest,
-    msg_bytes: &[u8],
-    tx: &ServerTx,
-    local: &Local,
-    target_addr: SocketAddr,
-) {
-    log::debug!("Replying with discovery response.");
-
-    let request_hash = msg_hash(MessageType::DiscoveryRequest, msg_bytes).to_vec();
-
-    // TODO: create an actual random set of peers.
-    let peers = Vec::new();
-
-    let disc_res = DiscoveryResponse::new(request_hash, peers);
-    let disc_res_bytes = disc_res
-        .to_protobuf()
-        .expect("error encoding discovery response")
-        .to_vec();
-
-    tx.send(OutgoingPacket {
-        msg_type: MessageType::DiscoveryResponse,
-        msg_bytes: disc_res_bytes,
-        target_socket_addr: target_addr,
-    })
-    .expect("error sending verification response to server");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -204,6 +204,10 @@ impl<S: PeerStore> Runnable for PeeringManager<S> {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MESSAGE VALIDATION
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 fn validate_peering_request<S: PeerStore>(peering_req: &PeeringRequest, peer_id: &PeerId, peerstore: &S) -> bool {
     if request::is_expired(peering_req.timestamp()) {
         false
@@ -216,16 +220,6 @@ fn validate_peering_request<S: PeerStore>(peering_req: &PeeringRequest, peer_id:
     }
 }
 
-fn handle_peering_request(_: &PeeringRequest, msg_bytes: &[u8], server_tx: &ServerTx, source_addr: SocketAddr) {
-    let request_hash = &hash::sha256(&msg_bytes)[..];
-
-    reply_with_peering_response(request_hash, &server_tx, source_addr);
-}
-
-fn reply_with_peering_response(request_hash: &[u8], tx: &ServerTx, source_addr: SocketAddr) {
-    todo!()
-}
-
 fn validate_peering_response(peering_res: &PeeringResponse, peer_id: &PeerId, request_mngr: &RequestManager) -> bool {
     if let Some(request_hash) = request_mngr.get_request_hash::<PeeringRequest>(peer_id) {
         peering_res.request_hash() == &request_hash
@@ -234,13 +228,23 @@ fn validate_peering_response(peering_res: &PeeringResponse, peer_id: &PeerId, re
     }
 }
 
+fn validate_drop_request(drop_req: &DropRequest) -> bool {
+    request::is_expired(drop_req.timestamp())
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MESSAGE HANDLING
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+fn handle_peering_request(_: &PeeringRequest, msg_bytes: &[u8], server_tx: &ServerTx, source_addr: SocketAddr) {
+    let request_hash = &hash::sha256(&msg_bytes)[..];
+
+    reply_with_peering_response(request_hash, &server_tx, source_addr);
+}
+
 fn handle_peering_response(peering_res: &PeeringResponse) {
     // hive.go: PeeringResponse messages are handled in the handleReply function of the validation
     todo!("handle_peering_response")
-}
-
-fn validate_drop_request(drop_req: &DropRequest) -> bool {
-    request::is_expired(drop_req.timestamp())
 }
 
 fn handle_drop_request(
@@ -271,6 +275,14 @@ fn handle_drop_request(
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// REPLYING
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+fn reply_with_peering_response(request_hash: &[u8], tx: &ServerTx, source_addr: SocketAddr) {
+    todo!()
+}
+
 // Replies to a drop request with a drop request.
 fn reply_with_drop_request(server_tx: &ServerTx, target_addr: SocketAddr) {
     let drop_req_bytes = DropRequest::new()
@@ -284,6 +296,10 @@ fn reply_with_drop_request(server_tx: &ServerTx, target_addr: SocketAddr) {
         target_socket_addr: target_addr,
     });
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SENDING
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn update_salts(
     local: &Local,

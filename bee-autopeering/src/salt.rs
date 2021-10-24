@@ -15,8 +15,7 @@ use std::{
 };
 
 const SALT_BYTE_LEN: usize = 20;
-// pub(crate) const DEFAULT_SALT_LIFETIME_SECS: u64 = 2 * 60 * 60; // 2 hours
-pub(crate) const DEFAULT_SALT_LIFETIME_SECS: u64 = 60; // 2 hours
+pub(crate) const DEFAULT_SALT_LIFETIME_SECS: u64 = 2 * 60 * 60; // 2 hours
 
 #[derive(Clone, Debug)]
 pub struct Salt {

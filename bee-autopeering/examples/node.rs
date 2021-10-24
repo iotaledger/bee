@@ -88,8 +88,8 @@ async fn main() {
     // Enter event loop.
     'recv: loop {
         tokio::select! {
-            de = event_rx.recv() => {
-                if let Some(event) = de {
+            e = event_rx.recv() => {
+                if let Some(event) = e {
                     handle_event(event);
                 } else {
                     break 'recv;
