@@ -27,6 +27,7 @@ mod task;
 mod time;
 
 pub mod config;
+pub mod event;
 pub mod identity;
 pub mod init;
 pub mod peer;
@@ -34,10 +35,9 @@ pub mod peerstore;
 pub mod service_map;
 
 pub use config::AutopeeringConfig;
-pub use discovery::DiscoveryEvent;
+pub use event::Event;
 pub use identity::PeerId;
 pub use init::init;
 pub use local::Local;
 pub use peer::Peer;
-pub use peering::PeeringEvent;
 pub use service_map::{ServiceMap, ServiceName, ServiceTransport};

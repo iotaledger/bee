@@ -4,7 +4,7 @@
 use num::CheckedAdd;
 
 use crate::{
-    delay::{DelayFactory, DelayedRepeat},
+    delay::{Command, Cronjob, DelayFactory},
     discovery_messages::{DiscoveryRequest, VerificationRequest, VerificationResponse},
     hash,
     identity::PeerId,
@@ -22,6 +22,7 @@ use std::{
     any::{Any, TypeId},
     collections::HashMap,
     fmt::Debug,
+    iter,
     net::{IpAddr, SocketAddr},
     ops::DerefMut,
     sync::{Arc, RwLock},
@@ -33,6 +34,7 @@ type RequestHash = [u8; hash::SHA256_LEN];
 // If the request is not answered within that time it gets removed from the manager, and any response
 // coming in later will be deemed invalid.
 pub(crate) const REQUEST_EXPIRATION_SECS: u64 = 20;
+pub(crate) const EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS: u64 = 1;
 
 // Marker trait for requests.
 pub(crate) trait Request: Debug + Clone {}
@@ -192,9 +194,10 @@ impl RequestManager {
 }
 
 #[async_trait::async_trait]
-impl DelayedRepeat<0> for RequestManager {
-    type Context = ();
+impl Cronjob<0> for RequestManager {
     type Cancel = ShutdownRx;
+    type Context = ();
+    type DelayIter = iter::Repeat<Duration>;
 }
 
 pub(crate) fn is_expired(timestamp: Timestamp) -> bool {
@@ -203,4 +206,34 @@ pub(crate) fn is_expired(timestamp: Timestamp) -> bool {
         .checked_add(REQUEST_EXPIRATION_SECS)
         .expect("timestamp checked add")
         < time::unix_now_secs()
+}
+
+pub(crate) fn remove_expired_requests_cmd() -> Command<RequestManager, 0> {
+    // Spawn a cronjob that regularly removes unanswered requests.
+    Box::new(|mngr: &RequestManager, ctx: &_| {
+        let now = time::unix_now_secs();
+        let mut write_guard = mngr.open_requests.write().expect("error getting write access");
+        let requests = write_guard.deref_mut();
+        // Retain only those, which expire in the future.
+        requests.retain(|_, v| v.expiration_time > now);
+        drop(write_guard);
+
+        use std::ops::Deref;
+        let read_guard = mngr.open_requests.read().expect("error getting read access");
+        let requests = read_guard.deref();
+
+        if !requests.is_empty() {
+            let a = requests.keys().cloned().last().unwrap();
+            let peer_id = &a.peer_id;
+
+            log::debug!("Open requests: {}", requests.len());
+            if mngr.get_request_hash::<VerificationRequest>(peer_id).is_some() {
+                log::debug!("Verif Req");
+            } else if mngr.get_request_hash::<DiscoveryRequest>(peer_id).is_some() {
+                log::debug!("Disc Req");
+            } else if mngr.get_request_hash::<PeeringRequest>(peer_id).is_some() {
+                log::debug!("Peering Req");
+            }
+        }
+    })
 }

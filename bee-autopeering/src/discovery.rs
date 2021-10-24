@@ -3,8 +3,9 @@
 
 use crate::{
     config::AutopeeringConfig,
-    delay::{DelayFactory, DelayFactoryBuilder, DelayFactoryMode, DelayedRepeat as _},
+    delay::{DelayFactory, DelayFactoryBuilder, DelayFactoryMode},
     discovery_messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
+    event::EventTx,
     hash,
     identity::PeerId,
     local::Local,
@@ -32,9 +33,9 @@ use std::{
 type BootstrapPeer = Peer;
 
 // hive.go: time interval after which the next peer is reverified
-const DEFAULT_REVERIFY_INTERVAL_SECS: u64 = 10;
+pub(crate) const DEFAULT_REVERIFY_INTERVAL_SECS: u64 = 10;
 // hive.go: time interval after which peers are queried for new peers
-const DEFAULT_QUERY_INTERVAL_SECS: u64 = 60;
+pub(crate) const DEFAULT_QUERY_INTERVAL_SECS: u64 = 60;
 // hive.go: maximum number of peers that can be managed
 const DEFAULT_MAX_MANAGED: usize = 1000;
 // hive.go: maximum number of peers kept in the replacement list
@@ -77,6 +78,11 @@ impl DiscoveredPeer {
 
     pub fn last_new_peers(&self) -> usize {
         self.last_new_peers
+    }
+
+    // TODO: remove trait impl
+    pub fn into_peer(self) -> Peer {
+        self.peer
     }
 }
 
@@ -144,23 +150,6 @@ impl DiscoveredPeerlist {
     }
 }
 
-/// Discovery related events.
-#[derive(Debug)]
-pub enum DiscoveryEvent {
-    /// A new peer has been discovered.
-    PeerDiscovered { peer: Peer },
-    /// A peer has been deleted (e.g. due to a failed re-verification).
-    PeerDeleted { peer_id: PeerId },
-}
-
-/// Exposes peer discovery related events.
-pub type DiscoveryEventRx = mpsc::UnboundedReceiver<DiscoveryEvent>;
-type DiscoveryEventTx = mpsc::UnboundedSender<DiscoveryEvent>;
-
-fn event_chan() -> (DiscoveryEventTx, DiscoveryEventRx) {
-    mpsc::unbounded_channel::<DiscoveryEvent>()
-}
-
 pub(crate) struct DiscoveryManagerConfig {
     pub(crate) entry_nodes: Vec<AutopeeringMultiaddr>,
     pub(crate) entry_nodes_prefer_ipv6: bool,
@@ -193,7 +182,7 @@ pub(crate) struct DiscoveryManager<S> {
     // Handles requests.
     request_mngr: RequestManager,
     // Publishes discovery related events.
-    event_tx: DiscoveryEventTx,
+    event_tx: EventTx,
     // The storage for discovered peers.
     peerstore: S,
     // TODO
@@ -209,21 +198,18 @@ impl<S: PeerStore> DiscoveryManager<S> {
         socket: ServerSocket,
         request_mngr: RequestManager,
         peerstore: S,
-    ) -> (Self, DiscoveryEventRx) {
-        let (event_tx, event_rx) = event_chan();
-        (
-            Self {
-                config,
-                local,
-                socket,
-                request_mngr,
-                event_tx,
-                peerstore,
-                active_peers: HashSet::default(),
-                replacement_peers: HashSet::default(),
-            },
-            event_rx,
-        )
+        event_tx: EventTx,
+    ) -> Self {
+        Self {
+            config,
+            local,
+            socket,
+            request_mngr,
+            event_tx,
+            peerstore,
+            active_peers: HashSet::default(),
+            replacement_peers: HashSet::default(),
+        }
     }
 }
 
@@ -307,7 +293,7 @@ impl<S: PeerStore> Runnable for DiscoveryManager<S> {
                                     continue 'recv;
                                 } else {
                                     log::debug!("Received valid verification request from {}.", &peer_id);
-                                    handle_verification_request(&verif_req, ctx);
+                                    handle_verification_request(verif_req, ctx);
                                 }
                             }
                             MessageType::VerificationResponse => {
@@ -323,7 +309,7 @@ impl<S: PeerStore> Runnable for DiscoveryManager<S> {
                                     continue 'recv;
                                 } else {
                                     log::debug!("Received valid verification response from {}.", &peer_id);
-                                    handle_verification_response(&verif_res, ctx);
+                                    handle_verification_response(verif_res, ctx);
                                 }
                             }
                             MessageType::DiscoveryRequest => {
@@ -339,7 +325,7 @@ impl<S: PeerStore> Runnable for DiscoveryManager<S> {
                                     continue 'recv;
                                 } else {
                                     log::debug!("Received valid discovery request from {}.", &peer_id);
-                                    handle_discovery_request(&disc_req, ctx);
+                                    handle_discovery_request(disc_req, ctx);
                                 }
                             }
                             MessageType::DiscoveryResponse => {
@@ -355,7 +341,7 @@ impl<S: PeerStore> Runnable for DiscoveryManager<S> {
                                     continue 'recv;
                                 } else {
                                     log::debug!("Received valid discovery response from {}.", &peer_id);
-                                    handle_discovery_response(&disc_res, ctx);
+                                    handle_discovery_response(disc_res, ctx);
                                 }
                             }
                             _ => log::debug!("Received unsupported discovery message type"),
@@ -374,7 +360,7 @@ async fn add_entry_nodes<S: PeerStore>(
     server_tx: &ServerTx,
     peerstore: &S,
 ) {
-    log::debug!("Contacting entry nodes.");
+    let mut num_added = 0;
 
     // Send verification request to entry nodes
     for mut entry_addr in entry_nodes {
@@ -414,8 +400,11 @@ async fn add_entry_nodes<S: PeerStore>(
         peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, entry_socketaddr.port());
 
         peerstore.insert_peer(peer);
-        // send_verification_request(&peer, &request_mngr, &server_tx);
+
+        num_added += 1;
     }
+
+    log::debug!("Added {} entry node/s.", num_added);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -553,16 +542,16 @@ pub(crate) struct HandlerContext<'a, S: PeerStore> {
     peerstore: &'a S,
     request_mngr: &'a RequestManager,
     source_socket_addr: SocketAddr,
-    event_tx: &'a DiscoveryEventTx,
+    event_tx: &'a EventTx,
 }
 
-fn handle_verification_request<S: PeerStore>(verif_req: &VerificationRequest, ctx: HandlerContext<S>) {
+fn handle_verification_request<S: PeerStore>(verif_req: VerificationRequest, ctx: HandlerContext<S>) {
     log::debug!("Handling verification request.");
 
     ctx.peerstore.update_last_verification_request(ctx.peer_id.clone());
 
     reply_with_verification_response(
-        verif_req,
+        &verif_req,
         ctx.msg_bytes,
         ctx.server_tx,
         ctx.local,
@@ -584,23 +573,21 @@ fn handle_verification_request<S: PeerStore>(verif_req: &VerificationRequest, ct
     }
 }
 
-fn handle_verification_response<S: PeerStore>(verif_res: &VerificationResponse, ctx: HandlerContext<S>) {
+fn handle_verification_response<S: PeerStore>(verif_res: VerificationResponse, ctx: HandlerContext<S>) {
     log::debug!("Handling verification response.");
 
     // Remove the corresponding request from the request manager.
-    ctx.request_mngr.remove_request::<VerificationRequest>(ctx.peer_id);
+    let _ = ctx.request_mngr.remove_request::<VerificationRequest>(ctx.peer_id);
 
+    // Update verification timestamp.
     ctx.peerstore.update_last_verification_response(ctx.peer_id.clone());
-
-    // TEMP: on each valid verification response send a discovery request
-    // reply_with_discovery_request(peer_id, request_mngr, server_tx, source_addr);
 }
 
-fn handle_discovery_request<S: PeerStore>(disc_req: &DiscoveryRequest, ctx: HandlerContext<S>) {
+fn handle_discovery_request<S: PeerStore>(disc_req: DiscoveryRequest, ctx: HandlerContext<S>) {
     log::debug!("Handling discovery request.");
 
     reply_with_discovery_response(
-        disc_req,
+        &disc_req,
         ctx.msg_bytes,
         ctx.server_tx,
         ctx.local,
@@ -608,12 +595,20 @@ fn handle_discovery_request<S: PeerStore>(disc_req: &DiscoveryRequest, ctx: Hand
     );
 }
 
-fn handle_discovery_response<S: PeerStore>(disc_res: &DiscoveryResponse, ctx: HandlerContext<S>) {
+fn handle_discovery_response<S: PeerStore>(disc_res: DiscoveryResponse, ctx: HandlerContext<S>) {
     log::debug!("Handling discovery response.");
 
+    // Remove the corresponding request from the request manager.
+    let _ = ctx.request_mngr.remove_request::<DiscoveryRequest>(ctx.peer_id);
+
     // TODO: store the discovered peers; fire `PeerDiscovered` event.
-    for peer in disc_res.peers() {
+    for peer in disc_res.into_peers() {
         log::debug!("{:?}", peer);
+
+        // TODO: should the peerstore itself make the check?
+        if peer.peer_id() != ctx.local.peer_id() {
+            ctx.peerstore.insert_peer(peer);
+        }
     }
 }
 

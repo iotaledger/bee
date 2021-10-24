@@ -3,9 +3,7 @@
 
 #![allow(warnings)]
 
-use bee_autopeering::{
-    init, peerstore::InMemoryPeerStore, AutopeeringConfig, DiscoveryEvent, Local, PeeringEvent, ServiceTransport,
-};
+use bee_autopeering::{init, peerstore::InMemoryPeerStore, AutopeeringConfig, Event, Local, ServiceTransport};
 
 use log::LevelFilter;
 use serde_json::Value;
@@ -73,7 +71,7 @@ async fn main() {
     let quit_signal = ctrl_c();
 
     // Initialize the Autopeering service.
-    let (mut discovery_rx, mut peering_rx) = bee_autopeering::init::<InMemoryPeerStore, _, _>(
+    let mut event_rx = bee_autopeering::init::<InMemoryPeerStore, _, _>(
         config.clone(),
         version,
         network_id,
@@ -88,49 +86,37 @@ async fn main() {
     print_resolved_entry_nodes(config).await;
 
     // Enter event loop.
-    loop {
+    'recv: loop {
         tokio::select! {
-            de = discovery_rx.recv() => {
-                if let Some(discovery_event) = de {
-                    handle_discovery_event(discovery_event);
+            de = event_rx.recv() => {
+                if let Some(event) = de {
+                    handle_event(event);
                 } else {
-                    break;
-                }
-            }
-            pe = peering_rx.recv() => {
-                if let Some(peering_event) = pe {
-                    handle_peering_event(peering_event);
-                } else {
-                    break;
+                    break 'recv;
                 }
             }
         };
     }
 }
 
-fn handle_discovery_event(discovery_event: DiscoveryEvent) {
-    match discovery_event {
-        DiscoveryEvent::PeerDiscovered { peer } => {
+fn handle_event(event: Event) {
+    match event {
+        Event::PeerDiscovered { peer } => {
             log::info!("Peer discovered: {:?}.", peer);
         }
-        DiscoveryEvent::PeerDeleted { peer_id } => {
+        Event::PeerDeleted { peer_id } => {
             log::info!("Peer deleted: {}.", peer_id);
         }
-    }
-}
-
-fn handle_peering_event(peering_event: PeeringEvent) {
-    match peering_event {
-        PeeringEvent::SaltUpdated => {
+        Event::SaltUpdated => {
             log::info!("Salt updated.");
         }
-        PeeringEvent::IncomingPeering => {
+        Event::IncomingPeering => {
             log::info!("Incoming peering.");
         }
-        PeeringEvent::OutgoingPeering => {
+        Event::OutgoingPeering => {
             log::info!("Outgoing peering.");
         }
-        PeeringEvent::Dropped => {
+        Event::Dropped => {
             log::info!("Peering dropped.");
         }
     }

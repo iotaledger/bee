@@ -164,6 +164,7 @@ dependencies = [
  "serde_json",
  "sled",
  "thiserror",
+ "time 0.3.4",
  "tokio",
  "tokio-stream",
 ]

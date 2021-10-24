@@ -3,25 +3,35 @@
 
 use crate::{
     config::AutopeeringConfig,
-    delay::{DelayFactoryBuilder, DelayFactoryMode, DelayedRepeat},
-    discovery::{DiscoveryEventRx, DiscoveryManager, DiscoveryManagerConfig},
+    delay::{Cronjob, DelayFactoryBuilder, DelayFactoryMode},
+    discovery::{
+        DiscoveryManager, DiscoveryManagerConfig, DEFAULT_QUERY_INTERVAL_SECS, DEFAULT_REVERIFY_INTERVAL_SECS,
+    },
     discovery_messages::VerificationRequest,
+    event::{self, EventRx},
     hash,
-    local::Local,
+    local::{self, Local},
     multiaddr,
     packet::{IncomingPacket, MessageType, OutgoingPacket},
     peer,
-    peering::{PeeringEventRx, PeeringManager, PeeringManagerConfig},
-    peerstore::{InMemoryPeerStore, PeerStore},
-    request::RequestManager,
-    salt::{Salt, DEFAULT_SALT_LIFETIME},
+    peering::{PeeringManager, PeeringManagerConfig},
+    peerstore::{self, InMemoryPeerStore, PeerStore},
+    request::{self, RequestManager, EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS},
+    salt::{Salt, DEFAULT_SALT_LIFETIME_SECS},
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket, ServerTx},
     service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
-    task::{ShutdownBus, Spawner},
+    task::{ShutdownBus, Task},
     time,
 };
 
-use std::{error, future::Future, net::SocketAddr, ops::DerefMut as _, time::SystemTime};
+use std::{
+    error,
+    future::Future,
+    iter,
+    net::SocketAddr,
+    ops::DerefMut as _,
+    time::{Duration, SystemTime},
+};
 
 /// Initializes the autopeering service.
 pub async fn init<S, I, Q>(
@@ -31,7 +41,7 @@ pub async fn init<S, I, Q>(
     local: Local,
     peerstore_config: <S as PeerStore>::Config,
     quit_signal: Q,
-) -> Result<(DiscoveryEventRx, PeeringEventRx), Box<dyn error::Error>>
+) -> Result<EventRx, Box<dyn error::Error>>
 where
     S: PeerStore + 'static,
     I: AsRef<str>,
@@ -51,27 +61,26 @@ where
         "Local public key: {}",
         multiaddr::from_pubkey_to_base58(&local.public_key())
     );
+    log::info!("Current time: {}", time::datetime_now());
     log::info!(
         "Local private salt expiration time: {}",
-        local.private_salt().expect("missing private salt").expiration_time()
+        time::datetime(local.private_salt().expect("missing private salt").expiration_time())
     );
     log::info!(
         "Local public salt expiration time: {}",
-        local.public_salt().expect("missing private salt").expiration_time()
+        time::datetime(local.public_salt().expect("missing private salt").expiration_time())
     );
     log::info!("Bind address: {}", config.bind_addr);
-
-    // TODO: log the salt expiration time
 
     // Create a bus to distribute the shutdown signal to all spawned tasks. The const generic always matches
     // the number of required permanent tasks.
     let (shutdown_bus, mut shutdown_reg) = ShutdownBus::<8>::new();
-    Spawner::spawn(
+    Task::spawn(
         async move {
             quit_signal.await;
             shutdown_bus.trigger();
         },
-        "Quit signal listener",
+        "Shutdown-Listener",
     );
 
     // Create or load a peer store.
@@ -85,6 +94,8 @@ where
         peering_tx,
     };
 
+    let (event_tx, event_rx) = event::event_chan();
+
     // Initialize the server managing the UDP socket I/O. It receives a [`Local`] in order to sign outgoing packets.
     let server_config = ServerConfig::new(&config);
     let (server, outgoing_tx) = Server::new(server_config, local.clone(), incoming_senders);
@@ -93,158 +104,81 @@ where
     // Create a request manager that creates and keeps track of outgoing requests.
     let request_mngr = RequestManager::new(version, network_id, config.bind_addr, local.clone());
 
-    // Spawn a cronjob that regularly removes unanswered requests.
-    let remove_expired_requests = Box::new(|mngr: &RequestManager, ctx: &_| {
-        let now = time::unix_now_secs();
-        let mut guard = mngr.open_requests.write().expect("error getting write access");
-        let requests = guard.deref_mut();
-        // Retain only those, which expire in the future.
-        requests.retain(|_, v| v.expiration_time > now);
-        if !requests.is_empty() {
-            log::debug!("Open requests: {}", requests.len());
-        }
-    });
-    Spawner::spawn(
-        DelayedRepeat::<0>::repeat(
-            request_mngr.clone(),
-            DelayFactoryBuilder::new(DelayFactoryMode::Constant(1000)).finish(),
-            remove_expired_requests,
-            (),
-            shutdown_reg.register(),
-        ),
-        "Expired request removal",
-    );
-
-    // Regularly update the salts of the local peer.
-    let update_salts = Box::new(|local: &Local, ctx: &_| {
-        local.set_private_salt(Salt::default());
-        local.set_public_salt(Salt::default());
-        log::info!("Salts updated");
-        // TODO: publish `SaltUpdated` event
-    });
-    Spawner::spawn(
-        DelayedRepeat::repeat(
-            local.clone(),
-            DelayFactoryBuilder::new(DelayFactoryMode::Constant(DEFAULT_SALT_LIFETIME.as_millis() as u64)).finish(),
-            update_salts,
-            (),
-            shutdown_reg.register(),
-        ),
-        "Salt update",
-    );
-
     // Spawn the discovery manager handling discovery requests/responses.
     let discovery_config = DiscoveryManagerConfig::new(&config, version, network_id);
     let discovery_socket = ServerSocket::new(discovery_rx, outgoing_tx.clone());
-    let (discovery_mngr, discovery_event_rx) = DiscoveryManager::new(
+    let discovery_mngr = DiscoveryManager::new(
         discovery_config,
         local.clone(),
         discovery_socket,
         request_mngr.clone(),
         peerstore.clone(),
+        event_tx.clone(),
     );
-    Spawner::spawn_runnable(discovery_mngr, shutdown_reg.register());
+    Task::spawn_runnable(discovery_mngr, shutdown_reg.register());
 
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
     let peering_config = PeeringManagerConfig::new(&config, version, network_id);
     let peering_socket = ServerSocket::new(peering_rx, outgoing_tx.clone());
-    let (peering_mngr, peering_event_rx) = PeeringManager::new(
+    let peering_mngr = PeeringManager::new(
         peering_config,
         local.clone(),
         peering_socket,
         request_mngr.clone(),
         peerstore.clone(),
+        event_tx.clone(),
     );
-    Spawner::spawn_runnable(peering_mngr, shutdown_reg.register());
+    Task::spawn_runnable(peering_mngr, shutdown_reg.register());
 
-    // Send regular (re-)verification requests.
-    let send_verification_requests = Box::new(|peerstore: &S, ctx: &(RequestManager, ServerTx)| {
-        log::debug!("Sending verification requests to peers.");
+    // Remove unanswered requests regularly.
+    Task::spawn(
+        Cronjob::<0>::repeat(
+            request_mngr.clone(),
+            iter::repeat(Duration::from_secs(EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS)),
+            request::remove_expired_requests_cmd(),
+            (),
+            shutdown_reg.register(),
+        ),
+        "Expired-Request-Removal",
+    );
 
-        let request_mngr = &ctx.0;
-        let server_tx = &ctx.1;
+    // Update salts regularly.
+    Task::spawn(
+        Cronjob::repeat(
+            local.clone(),
+            iter::repeat(Duration::from_secs(DEFAULT_SALT_LIFETIME_SECS)),
+            local::update_salts_cmd(),
+            event_tx.clone(),
+            shutdown_reg.register(),
+        ),
+        "Salt-Update",
+    );
 
-        for peer in peerstore.peers() {
-            let peer_id = peer.peer_id();
-            let target_addr = peer.ip_address();
-
-            let verif_req = request_mngr.new_verification_request(peer_id, target_addr);
-            let msg_bytes = verif_req
-                .to_protobuf()
-                .expect("error encoding verification request")
-                .to_vec();
-
-            let port = peer
-                .services()
-                .get(AUTOPEERING_SERVICE_NAME)
-                .expect("missing autopeering service")
-                .port();
-
-            server_tx.send(OutgoingPacket {
-                msg_type: MessageType::VerificationRequest,
-                msg_bytes,
-                target_socket_addr: SocketAddr::new(target_addr, port),
-            });
-        }
-    });
-    Spawner::spawn(
-        DelayedRepeat::<0>::repeat(
+    // Send (re-)verfication requests regularly.
+    Task::spawn(
+        Cronjob::<0>::repeat(
             peerstore.clone(),
-            // DelayFactoryBuilder::new(DelayFactoryMode::Constant(10 * 60 * 1000)).finish(),
-            DelayFactoryBuilder::new(DelayFactoryMode::Constant(23 * 1000)).finish(),
-            send_verification_requests,
+            iter::repeat(Duration::from_secs(DEFAULT_REVERIFY_INTERVAL_SECS)),
+            peerstore::send_verification_requests_cmd(),
             (request_mngr.clone(), outgoing_tx.clone()),
             shutdown_reg.register(),
         ),
-        "Send verification requests",
+        "Reverification-Requests",
     );
 
-    // Send discovery requests to all verified peers.
-    let send_discovery_requests = Box::new(|peerstore: &S, ctx: &(RequestManager, ServerTx)| {
-        log::debug!("Sending discovery requests to peers.");
-
-        let request_mngr = &ctx.0;
-        let server_tx = &ctx.1;
-
-        for peer in peerstore.peers() {
-            let peer_id = peer.peer_id();
-            let target_addr = peer.ip_address();
-
-            if peer::is_verified(peerstore.last_verification_response(&peer_id)) {
-                // TODO: refactor into a function
-                let disc_req = request_mngr.new_discovery_request(peer_id, target_addr);
-                let msg_bytes = disc_req
-                    .to_protobuf()
-                    .expect("error encoding discovery request")
-                    .to_vec();
-
-                let port = peer
-                    .services()
-                    .get(AUTOPEERING_SERVICE_NAME)
-                    .expect("missing autopeering service")
-                    .port();
-
-                server_tx.send(OutgoingPacket {
-                    msg_type: MessageType::DiscoveryRequest,
-                    msg_bytes,
-                    target_socket_addr: SocketAddr::new(target_addr, port),
-                });
-            }
-        }
-    });
-    Spawner::spawn(
-        DelayedRepeat::<0>::repeat(
+    // Send discovery requests regularly.
+    Task::spawn(
+        Cronjob::<0>::repeat(
             peerstore.clone(),
-            // DelayFactoryBuilder::new(DelayFactoryMode::Constant(10 * 60 * 1000)).finish(),
-            DelayFactoryBuilder::new(DelayFactoryMode::Constant(47 * 1000)).finish(),
-            send_discovery_requests,
+            iter::repeat(Duration::from_secs(DEFAULT_QUERY_INTERVAL_SECS)),
+            peerstore::send_discovery_requests_cmd(),
             (request_mngr.clone(), outgoing_tx.clone()),
             shutdown_reg.register(),
         ),
-        "Send verification requests",
+        "Discovery-Requests",
     );
 
     log::debug!("Autopeering initialized.");
 
-    Ok((discovery_event_rx, peering_event_rx))
+    Ok(event_rx)
 }

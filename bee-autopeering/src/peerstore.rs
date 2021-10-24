@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    delay::{DelayFactory, DelayedRepeat},
+    delay::{Command, Cronjob, DelayFactory},
     identity::PeerId,
-    packet::OutgoingPacket,
-    peer::Peer,
+    packet::{MessageType, OutgoingPacket},
+    peer::{self, Peer},
     request::RequestManager,
     server::ServerTx,
+    service_map::AUTOPEERING_SERVICE_NAME,
     task::ShutdownRx,
     time::{self, Timestamp},
 };
@@ -16,16 +17,12 @@ use sled::Db;
 
 use std::{
     collections::HashMap,
+    iter,
+    net::SocketAddr,
     path::{Path, PathBuf},
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
+    time::Duration,
 };
-
-// Used to send, e.g. (re-)verification and discovery requests in certain intervals.
-#[async_trait::async_trait]
-impl<S: PeerStore> DelayedRepeat<0> for S {
-    type Context = (RequestManager, ServerTx);
-    type Cancel = ShutdownRx;
-}
 
 pub trait PeerStore: Clone + Send + Sync {
     type Config;
@@ -42,6 +39,83 @@ pub trait PeerStore: Clone + Send + Sync {
 
     fn insert_peer(&self, peer: Peer) -> bool;
     fn remove_peer(&self, peer_id: &PeerId) -> bool;
+}
+
+// Used to send, e.g. (re-)verification and discovery requests in certain intervals.
+#[async_trait::async_trait]
+impl<S: PeerStore> Cronjob<0> for S {
+    type Cancel = ShutdownRx;
+    type Context = (RequestManager, ServerTx);
+    type DelayIter = iter::Repeat<Duration>;
+}
+
+// Send regular (re-)verification requests.
+pub(crate) fn send_verification_requests_cmd<S: PeerStore>() -> Command<S, 0> {
+    Box::new(|peerstore: &S, ctx: &(RequestManager, ServerTx)| {
+        log::debug!("Sending verification requests to peers.");
+
+        let request_mngr = &ctx.0;
+        let server_tx = &ctx.1;
+
+        for peer in peerstore.peers() {
+            let peer_id = peer.peer_id();
+            let target_addr = peer.ip_address();
+
+            let verif_req = request_mngr.new_verification_request(peer_id, target_addr);
+            let msg_bytes = verif_req
+                .to_protobuf()
+                .expect("error encoding verification request")
+                .to_vec();
+
+            let port = peer
+                .services()
+                .get(AUTOPEERING_SERVICE_NAME)
+                .expect("missing autopeering service")
+                .port();
+
+            server_tx.send(OutgoingPacket {
+                msg_type: MessageType::VerificationRequest,
+                msg_bytes,
+                target_socket_addr: SocketAddr::new(target_addr, port),
+            });
+        }
+    })
+}
+
+// Send discovery requests to all verified peers.
+pub(crate) fn send_discovery_requests_cmd<S: PeerStore>() -> Command<S, 0> {
+    Box::new(|peerstore: &S, ctx: &(RequestManager, ServerTx)| {
+        log::debug!("Sending discovery requests to peers.");
+
+        let request_mngr = &ctx.0;
+        let server_tx = &ctx.1;
+
+        for peer in peerstore.peers() {
+            let peer_id = peer.peer_id();
+            let target_addr = peer.ip_address();
+
+            if peer::is_verified(peerstore.last_verification_response(&peer_id)) {
+                // TODO: refactor into a function
+                let disc_req = request_mngr.new_discovery_request(peer_id, target_addr);
+                let msg_bytes = disc_req
+                    .to_protobuf()
+                    .expect("error encoding discovery request")
+                    .to_vec();
+
+                let port = peer
+                    .services()
+                    .get(AUTOPEERING_SERVICE_NAME)
+                    .expect("missing autopeering service")
+                    .port();
+
+                server_tx.send(OutgoingPacket {
+                    msg_type: MessageType::DiscoveryRequest,
+                    msg_bytes,
+                    target_socket_addr: SocketAddr::new(target_addr, port),
+                });
+            }
+        }
+    })
 }
 
 #[derive(Clone)]

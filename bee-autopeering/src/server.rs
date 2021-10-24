@@ -6,8 +6,11 @@ use crate::{
     identity::PeerId,
     local::Local,
     multiaddr,
-    packet::{IncomingPacket, MessageType, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, PEERING_MSG_TYPE_RANGE},
-    task::{Runnable, ShutdownBusRegistry, ShutdownRx, Spawner},
+    packet::{
+        IncomingPacket, MessageType, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, MAX_PACKET_SIZE,
+        PEERING_MSG_TYPE_RANGE,
+    },
+    task::{Runnable, ShutdownBusRegistry, ShutdownRx, Task},
 };
 
 use tokio::{
@@ -97,8 +100,8 @@ impl Server {
             bind_addr: config.bind_addr,
         };
 
-        Spawner::spawn_runnable(incoming_packet_handler, shutdown_reg.register());
-        Spawner::spawn_runnable(outgoing_packet_handler, shutdown_reg.register());
+        Task::spawn_runnable(incoming_packet_handler, shutdown_reg.register());
+        Task::spawn_runnable(outgoing_packet_handler, shutdown_reg.register());
     }
 }
 
@@ -141,52 +144,61 @@ impl Runnable for IncomingPacketHandler {
                     break;
                 }
                 r = incoming_socket.recv_from(&mut packet_bytes) => {
-                    if let Ok((n, source_socket_addr)) = r {
-                        if source_socket_addr == bind_addr {
-                            log::warn!("Tried receiving from self.");
-                            continue 'recv;
-                        }
-
-                        log::debug!("Received {} bytes from {}.", n, source_socket_addr);
-
-                        let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
-                        log::debug!("{} ---> public key: {}.", source_socket_addr, multiaddr::from_pubkey_to_base58(&packet.public_key()));
-
-                        // Restore the peer id.
-                        let peer_id = PeerId::from_public_key(packet.public_key());
-                        log::debug!("{} ---> peer id: {}.", source_socket_addr, peer_id);
-
-                        // Verify the packet.
-                        let message = packet.message();
-                        let signature = packet.signature();
-                        if !packet.public_key().verify(&signature, message) {
-                            log::debug!("Received packet with invalid signature");
-                            continue 'recv;
-                        }
-
-                        let marshalled_bytes = packet.into_message();
-                        let (msg_type, msg_bytes) = unmarshal(&marshalled_bytes);
-
-                        let packet = IncomingPacket {
-                            msg_type,
-                            msg_bytes,
-                            source_socket_addr,
-                            peer_id,
-                        };
-
-                        // Depending on the message type, forward it to the appropriate manager.
-                        match msg_type as u32 {
-                            t if DISCOVERY_MSG_TYPE_RANGE.contains(&t) => {
-                                discovery_tx.send(packet).expect("channel send error: discovery");
+                    match r {
+                        Ok((n, source_socket_addr)) => {
+                            if source_socket_addr == bind_addr {
+                                log::warn!("Received bytes from own bind address {}. Ignoring...", source_socket_addr);
+                                continue 'recv;
                             }
-                            t if PEERING_MSG_TYPE_RANGE.contains(&t) => {
-                                peering_tx.send(packet).expect("channel send error: peering");
+
+                            if n > MAX_PACKET_SIZE {
+                                log::warn!("Received too many bytes from {}. Ignoring...", source_socket_addr);
+                                continue 'recv;
                             }
-                            _ => panic!("invalid message type"),
+
+                            log::debug!("Received {} bytes from {}.", n, source_socket_addr);
+
+                            let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
+                            log::debug!("{} ---> public key: {}.", source_socket_addr, multiaddr::from_pubkey_to_base58(&packet.public_key()));
+
+                            // Restore the peer id.
+                            let peer_id = PeerId::from_public_key(packet.public_key());
+                            log::debug!("{} ---> peer id: {}.", source_socket_addr, peer_id);
+
+                            // Verify the packet.
+                            let message = packet.message();
+                            let signature = packet.signature();
+                            if !packet.public_key().verify(&signature, message) {
+                                log::debug!("Received packet with invalid signature");
+                                continue 'recv;
+                            }
+
+                            let marshalled_bytes = packet.into_message();
+                            let (msg_type, msg_bytes) = unmarshal(&marshalled_bytes);
+
+                            let packet = IncomingPacket {
+                                msg_type,
+                                msg_bytes,
+                                source_socket_addr,
+                                peer_id,
+                            };
+
+                            // Depending on the message type, forward it to the appropriate manager.
+                            match msg_type as u32 {
+                                t if DISCOVERY_MSG_TYPE_RANGE.contains(&t) => {
+                                    discovery_tx.send(packet).expect("channel send error: discovery");
+                                }
+                                t if PEERING_MSG_TYPE_RANGE.contains(&t) => {
+                                    peering_tx.send(packet).expect("channel send error: peering");
+                                }
+                                _ => panic!("invalid message type"),
+                            }
                         }
-                    } else {
-                        log::error!("udp socket read error; stopping incoming packet handler");
-                        break 'recv;
+                        Err(e) => {
+                            log::error!("UDP socket read error; stopping incoming packet handler. Cause: {}", e);
+                            // TODO: intiate shutdown of the system
+                            break 'recv;
+                        }
                     }
                 }
             }
@@ -222,7 +234,7 @@ impl Runnable for OutgoingPacketHandler {
                         } = packet;
 
                         if target_socket_addr == bind_addr {
-                            log::warn!("Tried sending to self.");
+                            log::warn!("Trying to send to own bind address: {}. Ignoring...", target_socket_addr);
                             continue 'recv;
                         }
 
@@ -232,11 +244,18 @@ impl Runnable for OutgoingPacketHandler {
                         let packet = Packet::new(msg_type, &marshalled_bytes, &local.public_key(), signature);
 
                         let bytes = packet.to_protobuf().expect("error encoding outgoing packet");
+
+                        if bytes.len() > MAX_PACKET_SIZE {
+                            log::warn!("Trying to send too many bytes to {}. Ignoring...", target_socket_addr);
+                            continue 'recv;
+                        }
+
                         let n = outgoing_socket.send_to(&bytes, target_socket_addr).await.expect("socket send error");
 
                         log::debug!("Sent {} bytes to {}.", n, target_socket_addr);
                     } else {
-                        log::error!("outgoing message channel dropped; stopping outgoing packet handler");
+                        log::error!("Outgoing message channel dropped; Stopping outgoing packet handler.");
+                        // TODO: intiate shutdown of the system
                         break 'recv;
                     }
                 }

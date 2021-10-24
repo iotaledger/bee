@@ -5,6 +5,7 @@ use crate::{
     config::AutopeeringConfig,
     discovery,
     distance::{Neighborhood, SIZE_INBOUND, SIZE_OUTBOUND},
+    event::{Event, EventTx},
     filter::RejectionFilter,
     hash,
     identity::PeerId,
@@ -27,29 +28,8 @@ use std::{net::SocketAddr, time::Duration, vec};
 const DEFAULT_OUTBOUND_UPDATE_INTERVAL_SECS: u64 = 1;
 const DEFAULT_FULL_OUTBOUND_UPDATE_INTERVAL_SECS: u64 = 60;
 
-/// Peering related events.
-#[derive(Debug)]
-pub enum PeeringEvent {
-    // hive.go: A SaltUpdated event is triggered, when the private and public salt were updated.
-    SaltUpdated,
-    // hive.go: An OutgoingPeering event is triggered, when a valid response of PeeringRequest has been received.
-    OutgoingPeering,
-    // hive.go: An IncomingPeering event is triggered, when a valid PeerRequest has been received.
-    IncomingPeering,
-    // hive.go: A Dropped event is triggered, when a neighbor is dropped or when a drop message is received.
-    Dropped,
-}
-
-/// Esposes discovery related events.
-pub type PeeringEventRx = mpsc::UnboundedReceiver<PeeringEvent>;
-type PeeringEventTx = mpsc::UnboundedSender<PeeringEvent>;
-
 type InboundNeighborhood = Neighborhood<SIZE_INBOUND, true>;
 type OutboundNeighborhood = Neighborhood<SIZE_OUTBOUND, false>;
-
-fn event_chan() -> (PeeringEventTx, PeeringEventRx) {
-    mpsc::unbounded_channel::<PeeringEvent>()
-}
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum Error {
@@ -91,7 +71,7 @@ pub(crate) struct PeeringManager<S> {
     // Handles requests.
     request_mngr: RequestManager,
     // Publishes peering related events.
-    event_tx: PeeringEventTx,
+    event_tx: EventTx,
     // The storage for discovered peers.
     peerstore: S,
     // Inbound neighborhood.
@@ -109,28 +89,24 @@ impl<S: PeerStore> PeeringManager<S> {
         socket: ServerSocket,
         request_mngr: RequestManager,
         peerstore: S,
-    ) -> (Self, PeeringEventRx) {
-        let (event_tx, event_rx) = event_chan();
-
+        event_tx: EventTx,
+    ) -> Self {
         let inbound_nh = Neighborhood::new(local.clone());
         let outbound_nh = Neighborhood::new(local.clone());
 
         let rejection_filter = RejectionFilter::new();
 
-        (
-            Self {
-                config,
-                local,
-                socket,
-                request_mngr,
-                event_tx,
-                peerstore,
-                inbound_nh,
-                outbound_nh,
-                rejection_filter,
-            },
-            event_rx,
-        )
+        Self {
+            config,
+            local,
+            socket,
+            request_mngr,
+            event_tx,
+            peerstore,
+            inbound_nh,
+            outbound_nh,
+            rejection_filter,
+        }
     }
 }
 
@@ -316,7 +292,7 @@ fn update_salts(
     inbound: &mut InboundNeighborhood,
     outbound: &mut OutboundNeighborhood,
     packet_tx: &ServerTx,
-    event_tx: &PeeringEventTx,
+    event_tx: &EventTx,
 ) {
     // Create and set new private and public salts for the local peer.
     let private_salt = Salt::default();
@@ -350,7 +326,7 @@ fn update_salts(
     );
 
     // Fire 'SaltUpdated' event.
-    event_tx.send(PeeringEvent::SaltUpdated);
+    event_tx.send(Event::SaltUpdated);
 }
 
 fn drop_neighborhood<'a, Nh>(neighborhood: &'a Nh, server_tx: &ServerTx)

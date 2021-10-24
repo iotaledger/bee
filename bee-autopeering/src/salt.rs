@@ -15,7 +15,8 @@ use std::{
 };
 
 const SALT_BYTE_LEN: usize = 20;
-pub(crate) const DEFAULT_SALT_LIFETIME: Duration = Duration::from_secs(2 * 60 * 60); // 2 hours
+// pub(crate) const DEFAULT_SALT_LIFETIME_SECS: u64 = 2 * 60 * 60; // 2 hours
+pub(crate) const DEFAULT_SALT_LIFETIME_SECS: u64 = 60; // 2 hours
 
 #[derive(Clone, Debug)]
 pub struct Salt {
@@ -70,7 +71,7 @@ impl Salt {
 
 impl Default for Salt {
     fn default() -> Self {
-        Self::new(DEFAULT_SALT_LIFETIME)
+        Self::new(Duration::from_secs(DEFAULT_SALT_LIFETIME_SECS))
     }
 }
 
@@ -97,7 +98,7 @@ mod tests {
         pub(crate) fn new_zero_salt() -> Self {
             let expiration_time = time::unix_time_secs(
                 SystemTime::now()
-                    .checked_add(DEFAULT_SALT_LIFETIME)
+                    .checked_add(Duration::from_secs(DEFAULT_SALT_LIFETIME_SECS))
                     .expect("system clock error or lifetime too long"),
             );
             Self {

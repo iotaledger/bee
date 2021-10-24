@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    delay::{DelayFactory, DelayedRepeat},
+    delay::{Command, Cronjob, DelayFactory},
+    event::{Event, EventTx},
     hash,
     identity::PeerId,
     peerstore::PeerStore,
@@ -18,7 +19,9 @@ use std::{
     convert::TryInto,
     fmt,
     hash::{Hash, Hasher},
+    iter,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
+    time::Duration,
 };
 
 /// A type that represents a local identity - able to sign outgoing messages.
@@ -139,13 +142,6 @@ impl PartialEq for Local {
     }
 }
 
-// Used to update the salts in certain intervals.
-#[async_trait::async_trait]
-impl DelayedRepeat<0> for Local {
-    type Context = ();
-    type Cancel = ShutdownRx;
-}
-
 impl Default for LocalInner {
     fn default() -> Self {
         let private_key = PrivateKey::generate().expect("error generating private key");
@@ -166,4 +162,24 @@ impl PartialEq for LocalInner {
     fn eq(&self, other: &Self) -> bool {
         self.peer_id == other.peer_id
     }
+}
+
+// Used to update the salts in certain intervals.
+#[async_trait::async_trait]
+impl Cronjob<0> for Local {
+    type Cancel = ShutdownRx;
+    type Context = EventTx;
+    type DelayIter = iter::Repeat<Duration>;
+}
+
+// Regularly update the salts of the local peer.
+pub(crate) fn update_salts_cmd() -> Command<Local, 0> {
+    Box::new(|local: &Local, ctx: &EventTx| {
+        local.set_public_salt(Salt::default());
+        local.set_private_salt(Salt::default());
+
+        log::debug!("Public and private salt updated.");
+
+        ctx.send(Event::SaltUpdated).expect("error sending `SaltUpdated` event");
+    })
 }

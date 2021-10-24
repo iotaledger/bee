@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::delay::DelayedRepeat;
+use crate::delay::Cronjob;
 
 use std::{future::Future, hash::Hasher};
 
@@ -19,9 +19,9 @@ pub(crate) trait Runnable {
     async fn run(self, cancel: Self::Cancel);
 }
 
-pub(crate) struct Spawner {}
+pub(crate) struct Task {}
 
-impl Spawner {
+impl Task {
     pub(crate) fn spawn_runnable<R>(runnable: R, cancel: ShutdownRx)
     where
         R: Runnable<Cancel = ShutdownRx> + 'static,

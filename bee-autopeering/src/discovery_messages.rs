@@ -201,7 +201,7 @@ pub(crate) struct DiscoveryResponse {
 }
 
 impl DiscoveryResponse {
-    pub fn new(request_hash: Vec<u8>, peers: Vec<Peer>) -> Self {
+    pub(crate) fn new(request_hash: Vec<u8>, peers: Vec<Peer>) -> Self {
         Self { request_hash, peers }
     }
 
@@ -213,7 +213,7 @@ impl DiscoveryResponse {
         &self.peers
     }
 
-    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
+    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
         let proto::DiscoveryResponse { req_hash, peers } = proto::DiscoveryResponse::decode(bytes)?;
         let peers = peers.into_iter().map(proto::Peer::into).collect();
 
@@ -223,7 +223,7 @@ impl DiscoveryResponse {
         })
     }
 
-    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub(crate) fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let peers = self.peers.clone().into_iter().map(Peer::into).collect();
 
         let disc_res = proto::DiscoveryResponse {
@@ -235,6 +235,10 @@ impl DiscoveryResponse {
         disc_res.encode(&mut bytes)?;
 
         Ok(bytes)
+    }
+
+    pub(crate) fn into_peers(self) -> Vec<Peer> {
+        self.peers
     }
 }
 
