@@ -5,8 +5,8 @@
 //! or their past in the database. They often come from a snapshot file and allow a node to solidify
 //! without needing the full tangle history.
 
-use bee_common::packable::{Packable, Read, Write};
 use bee_message::MessageId;
+use bee_packable::Packable;
 
 use ref_cast::RefCast;
 
@@ -17,7 +17,7 @@ use core::{convert::AsRef, ops::Deref};
 /// without needing the full tangle history.
 #[derive(RefCast)]
 #[repr(transparent)]
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Packable)]
 pub struct SolidEntryPoint(MessageId);
 
 impl SolidEntryPoint {
@@ -54,21 +54,5 @@ impl Deref for SolidEntryPoint {
 
     fn deref(&self) -> &Self::Target {
         &self.0
-    }
-}
-
-impl Packable for SolidEntryPoint {
-    type Error = <MessageId as Packable>::Error;
-
-    fn packed_len(&self) -> usize {
-        self.0.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(MessageId::unpack_inner::<R, CHECK>(reader)?))
     }
 }
