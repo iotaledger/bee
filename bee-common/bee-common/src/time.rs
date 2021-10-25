@@ -5,7 +5,7 @@
 
 /// Retrieves the current timestamp, including UTC offset.
 pub fn now_local() -> time::OffsetDateTime {
-    time::OffsetDateTime::now_local().expect("indeterminate utc offset")
+    time::OffsetDateTime::now_local().unwrap_or(now_utc())
 }
 
 /// Retrieves the current timestamp, at UTC.
