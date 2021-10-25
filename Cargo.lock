@@ -396,6 +396,7 @@ dependencies = [
  "bee-common",
  "bee-ledger",
  "bee-message",
+ "bee-packable",
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",

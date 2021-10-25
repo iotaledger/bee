@@ -6,7 +6,6 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
-use bee_common::packable::Packable;
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
     TreasuryOutput, Unspent,
@@ -18,6 +17,7 @@ use bee_message::{
     payload::indexation::PaddedIndex,
     Message, MessageId,
 };
+use bee_packable::{Packable, PackableExt};
 use bee_storage::access::{Batch, BatchBuilder};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
@@ -292,7 +292,7 @@ impl Batch<(Ed25519Address, OutputId), ()> for Storage {
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(address.as_ref());
-        batch.key_buf.extend_from_slice(&output_id.pack_new());
+        batch.key_buf.extend_from_slice(&output_id.pack_to_vec());
 
         batch
             .inner
@@ -308,7 +308,7 @@ impl Batch<(Ed25519Address, OutputId), ()> for Storage {
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(address.as_ref());
-        batch.key_buf.extend_from_slice(&output_id.pack_new());
+        batch.key_buf.extend_from_slice(&output_id.pack_to_vec());
 
         batch
             .inner
@@ -493,8 +493,8 @@ impl Batch<Address, Balance> for Storage {
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.inner.put_cf(
             self.cf_handle(CF_ADDRESS_TO_BALANCE)?,
-            address.pack_new(),
-            balance.pack_new(),
+            address.pack_to_vec(),
+            balance.pack_to_vec(),
         );
 
         Ok(())
@@ -503,7 +503,7 @@ impl Batch<Address, Balance> for Storage {
     fn batch_delete(&self, batch: &mut Self::Batch, address: &Address) -> Result<(), <Self as StorageBackend>::Error> {
         batch
             .inner
-            .delete_cf(self.cf_handle(CF_ADDRESS_TO_BALANCE)?, address.pack_new());
+            .delete_cf(self.cf_handle(CF_ADDRESS_TO_BALANCE)?, address.pack_to_vec());
 
         Ok(())
     }
@@ -517,7 +517,7 @@ impl Batch<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
         (): &(),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
-        batch.key_buf.extend_from_slice(&index.pack_new());
+        batch.key_buf.extend_from_slice(&index.pack_to_vec());
         batch.key_buf.extend_from_slice(unreferenced_message.as_ref());
 
         batch.inner.put_cf(
@@ -535,7 +535,7 @@ impl Batch<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
         (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
-        batch.key_buf.extend_from_slice(&index.pack_new());
+        batch.key_buf.extend_from_slice(&index.pack_to_vec());
         batch.key_buf.extend_from_slice(unreferenced_message.as_ref());
 
         batch.inner.delete_cf(
@@ -555,8 +555,8 @@ impl Batch<(MilestoneIndex, Receipt), ()> for Storage {
         (): &(),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
-        batch.key_buf.extend_from_slice(&index.pack_new());
-        batch.key_buf.extend_from_slice(&receipt.pack_new());
+        batch.key_buf.extend_from_slice(&index.pack_to_vec());
+        batch.key_buf.extend_from_slice(&receipt.pack_to_vec());
 
         batch
             .inner
@@ -571,8 +571,8 @@ impl Batch<(MilestoneIndex, Receipt), ()> for Storage {
         (index, receipt): &(MilestoneIndex, Receipt),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
-        batch.key_buf.extend_from_slice(&index.pack_new());
-        batch.key_buf.extend_from_slice(&receipt.pack_new());
+        batch.key_buf.extend_from_slice(&index.pack_to_vec());
+        batch.key_buf.extend_from_slice(&receipt.pack_to_vec());
 
         batch
             .inner
@@ -590,8 +590,8 @@ impl Batch<(bool, TreasuryOutput), ()> for Storage {
         (): &(),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
-        batch.key_buf.extend_from_slice(&spent.pack_new());
-        batch.key_buf.extend_from_slice(&output.pack_new());
+        batch.key_buf.extend_from_slice(&spent.pack_to_vec());
+        batch.key_buf.extend_from_slice(&output.pack_to_vec());
 
         batch
             .inner
@@ -606,8 +606,8 @@ impl Batch<(bool, TreasuryOutput), ()> for Storage {
         (spent, output): &(bool, TreasuryOutput),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
-        batch.key_buf.extend_from_slice(&spent.pack_new());
-        batch.key_buf.extend_from_slice(&output.pack_new());
+        batch.key_buf.extend_from_slice(&spent.pack_to_vec());
+        batch.key_buf.extend_from_slice(&output.pack_to_vec());
 
         batch
             .inner
