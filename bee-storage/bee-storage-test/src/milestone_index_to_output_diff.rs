@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_ledger::types::OutputDiff;
 use bee_message::milestone::MilestoneIndex;
+use bee_packable::PackableExt;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
@@ -60,8 +60,8 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
         Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index)
             .unwrap()
             .unwrap()
-            .pack_new(),
-        output_diff.pack_new()
+            .pack_to_vec(),
+        output_diff.pack_to_vec()
     );
     let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index])
         .unwrap()

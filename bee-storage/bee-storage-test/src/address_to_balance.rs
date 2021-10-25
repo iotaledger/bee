@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_ledger::types::Balance;
 use bee_message::address::Address;
+use bee_packable::PackableExt;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
@@ -56,8 +56,8 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
         Fetch::<Address, Balance>::fetch(storage, &address)
             .unwrap()
             .unwrap()
-            .pack_new(),
-        balance.pack_new()
+            .pack_to_vec(),
+        balance.pack_to_vec()
     );
     let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
         .unwrap()
