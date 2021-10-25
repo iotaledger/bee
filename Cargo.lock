@@ -245,6 +245,7 @@ version = "0.1.5"
 dependencies = [
  "bech32",
  "bee-common",
+ "bee-packable",
  "bee-pow",
  "bee-ternary",
  "bee-test",
@@ -254,6 +255,7 @@ dependencies = [
  "iota-crypto",
  "num_cpus",
  "serde",
+ "serde-big-array",
  "thiserror",
 ]
 
@@ -277,6 +279,27 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-stream",
+]
+
+[[package]]
+name = "bee-packable"
+version = "0.1.0"
+source = "git+https://github.com/iotaledger/bee.git?branch=coordicide#22b71c01c4207c77dad4c7ab9ffdb23cb741180b"
+dependencies = [
+ "autocfg",
+ "bee-packable-derive",
+ "serde",
+]
+
+[[package]]
+name = "bee-packable-derive"
+version = "0.1.0"
+source = "git+https://github.com/iotaledger/bee.git?branch=coordicide#22b71c01c4207c77dad4c7ab9ffdb23cb741180b"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -2828,6 +2851,16 @@ version = "1.0.130"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f12d06de37cf59146fbdecab66aa99f9fe4f78722e3607577a5375d66bd0c913"
 dependencies = [
+ "serde_derive",
+]
+
+[[package]]
+name = "serde-big-array"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18b20e7752957bbe9661cff4e0bb04d183d0948cdab2ea58cdb9df36a61dfe62"
+dependencies = [
+ "serde",
  "serde_derive",
 ]
 

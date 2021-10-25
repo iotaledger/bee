@@ -3,12 +3,12 @@
 
 use crate::{payload::milestone::MilestoneId, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::Packable;
 
 use core::{convert::From, ops::Deref, str::FromStr};
 
 /// `TreasuryInput` is an input which references a milestone which generated a `TreasuryOutput`.
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Packable)]
 pub struct TreasuryInput(MilestoneId);
 
 impl TreasuryInput {
@@ -26,7 +26,7 @@ impl TreasuryInput {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(TreasuryInput);
 
 impl Deref for TreasuryInput {
@@ -60,21 +60,5 @@ impl core::fmt::Display for TreasuryInput {
 impl core::fmt::Debug for TreasuryInput {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "TreasuryInput({})", self.0)
-    }
-}
-
-impl Packable for TreasuryInput {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.0.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(MilestoneId::unpack_inner::<R, CHECK>(reader)?))
     }
 }

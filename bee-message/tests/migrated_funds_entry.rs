@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::{error::UnpackError, PackableExt};
 use bee_test::rand::receipt::rand_tail_transaction_hash;
 
 use core::str::FromStr;
@@ -48,7 +48,7 @@ fn packed_len() {
     .unwrap();
 
     assert_eq!(mge.packed_len(), 49 + 1 + 32 + 8);
-    assert_eq!(mge.pack_new().len(), 49 + 1 + 32 + 8);
+    assert_eq!(mge.pack_to_vec().len(), 49 + 1 + 32 + 8);
 }
 
 #[test]
@@ -62,7 +62,7 @@ fn pack_unpack_valid() {
         .unwrap(),
     )
     .unwrap();
-    let mfe_2 = MigratedFundsEntry::unpack(&mut mfe_1.pack_new().as_slice()).unwrap();
+    let mfe_2 = MigratedFundsEntry::unpack_verified(&mut mfe_1.pack_to_vec().as_slice()).unwrap();
 
     assert_eq!(mfe_1.tail_transaction_hash(), mfe_2.tail_transaction_hash());
     assert_eq!(*mfe_1.output(), *mfe_2.output());
@@ -78,7 +78,7 @@ fn pack_unpack_invalid_amount() {
     ];
 
     assert!(matches!(
-        MigratedFundsEntry::unpack(&mut bytes.as_slice()),
-        Err(Error::InvalidMigratedFundsEntryAmount(42))
+        MigratedFundsEntry::unpack_verified(&mut bytes.as_slice()),
+        Err(UnpackError::Packable(Error::InvalidMigratedFundsEntryAmount(42)))
     ));
 }

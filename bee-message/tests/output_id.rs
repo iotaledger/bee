@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::{bounded::InvalidBoundedU16, error::UnpackError, PackableExt};
 
 use core::str::FromStr;
 
@@ -45,7 +45,7 @@ fn new_invalid() {
 
     assert!(matches!(
         OutputId::new(transaction_id, 127),
-        Err(Error::InvalidInputOutputIndex(127))
+        Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(127)))
     ));
 }
 
@@ -65,7 +65,7 @@ fn try_from_invalid() {
 
     assert!(matches!(
         OutputId::try_from(output_id_bytes),
-        Err(Error::InvalidInputOutputIndex(127))
+        Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(127)))
     ));
 }
 
@@ -82,7 +82,7 @@ fn from_str_valid() {
 fn from_str_invalid_index() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_INDEX),
-        Err(Error::InvalidInputOutputIndex(127))
+        Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(127)))
     ));
 }
 
@@ -116,13 +116,13 @@ fn packed_len() {
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
 
     assert_eq!(output_id.packed_len(), 32 + 2);
-    assert_eq!(output_id.pack_new().len(), 32 + 2);
+    assert_eq!(output_id.pack_to_vec().len(), 32 + 2);
 }
 
 #[test]
 fn pack_unpack_valid() {
     let output_id_1 = OutputId::from_str(OUTPUT_ID).unwrap();
-    let output_id_2 = OutputId::unpack(&mut output_id_1.pack_new().as_slice()).unwrap();
+    let output_id_2 = OutputId::unpack_verified(&mut output_id_1.pack_to_vec().as_slice()).unwrap();
 
     assert_eq!(output_id_1, output_id_2);
 }
@@ -135,7 +135,9 @@ fn pack_unpack_invalid() {
     ];
 
     assert!(matches!(
-        OutputId::unpack(&mut bytes.as_slice()),
-        Err(Error::InvalidInputOutputIndex(127))
+        OutputId::unpack_verified(&mut bytes.as_slice()),
+        Err(UnpackError::Packable(Error::InvalidInputOutputIndex(
+            InvalidBoundedU16(127)
+        )))
     ));
 }

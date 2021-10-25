@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::PackableExt;
 
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS_BAD: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64x";
@@ -65,8 +65,11 @@ fn invalid_bech32_string_to_address() {
 fn pack_unpack_valid_ed25519() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
-    let address_packed = address.pack_new();
+    let address_packed = address.pack_to_vec().unwrap();
 
     assert_eq!(address_packed.len(), address.packed_len());
-    assert_eq!(address, Packable::unpack(&mut address_packed.as_slice()).unwrap());
+    assert_eq!(
+        address,
+        PackableExt::unpack_verified(&mut address_packed.as_slice()).unwrap()
+    );
 }

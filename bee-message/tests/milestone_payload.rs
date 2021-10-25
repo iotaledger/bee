@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::PackableExt;
 use bee_test::rand::{self, message::rand_message_ids, parents::rand_parents};
 
 #[test]
@@ -113,7 +113,7 @@ fn packed_len() {
     .unwrap();
 
     assert_eq!(ms.packed_len(), 379);
-    assert_eq!(ms.pack_new().len(), 379);
+    assert_eq!(ms.pack_to_vec().unwrap().len(), 379);
 }
 
 #[test]
@@ -134,10 +134,10 @@ fn pack_unpack_valid() {
     )
     .unwrap();
 
-    let packed = payload.pack_new();
+    let packed = payload.pack_to_vec().unwrap();
 
     assert_eq!(payload.packed_len(), packed.len());
-    assert_eq!(payload, Packable::unpack(&mut packed.as_slice()).unwrap())
+    assert_eq!(payload, PackableExt::unpack_verified(&mut packed.as_slice()).unwrap())
 }
 
 #[test]
@@ -157,11 +157,8 @@ fn getters() {
     let milestone = MilestonePayload::new(essence.clone(), signatures.clone()).unwrap();
 
     assert_eq!(essence, *milestone.essence());
-    assert_eq!(
-        signatures
-            .iter()
-            .map(|s| s.to_vec().into_boxed_slice())
-            .collect::<Vec<Box<[u8]>>>(),
-        *milestone.signatures()
-    );
+    assert_eq!(signatures.len(), milestone.signatures().len());
+    for (expected, found) in signatures.iter().zip(milestone.signatures()) {
+        assert_eq!(expected, &**found);
+    }
 }

@@ -5,15 +5,25 @@
 
 use crate::{Error, MessageId, MESSAGE_ID_LENGTH};
 
-use bee_common::{
-    ord::is_unique_sorted,
-    packable::{Packable, Read, Write},
+use bee_common::ord::is_unique_sorted;
+use bee_packable::{
+    bounded::BoundedU8,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::{TryIntoPrefixError, VecPrefix},
+    unpacker::Unpacker,
+    Packable,
 };
 
 use core::ops::{Deref, RangeInclusive};
+use std::convert::Infallible;
 
 /// The range representing the valid number of parents.
-pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
+pub const MESSAGE_PARENTS_RANGE: RangeInclusive<u8> = MESSAGE_PARENTS_MIN..=MESSAGE_PARENTS_MAX;
+/// The minimum number of parents.
+pub const MESSAGE_PARENTS_MIN: u8 = 1;
+/// The maximum number of parents.
+pub const MESSAGE_PARENTS_MAX: u8 = 8;
 
 /// A [`Message`](crate::Message)'s `Parents` are the [`MessageId`]s of the messages it directly approves.
 ///
@@ -22,8 +32,8 @@ pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 /// * lexicographically sorted;
 /// * unique;
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Parents(Vec<MessageId>);
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Parents(VecPrefix<MessageId, BoundedU8<MESSAGE_PARENTS_MIN, MESSAGE_PARENTS_MAX>>);
 
 impl Deref for Parents {
     type Target = [MessageId];
@@ -37,9 +47,8 @@ impl Deref for Parents {
 impl Parents {
     /// Creates new `Parents`.
     pub fn new(inner: Vec<MessageId>) -> Result<Self, Error> {
-        if !MESSAGE_PARENTS_RANGE.contains(&inner.len()) {
-            return Err(Error::InvalidParentsCount(inner.len()));
-        }
+        let inner = VecPrefix::<MessageId, BoundedU8<MESSAGE_PARENTS_MIN, MESSAGE_PARENTS_MAX>>::try_from(inner)
+            .map_err(Error::InvalidParentsCount)?;
 
         if !is_unique_sorted(inner.iter().map(AsRef::as_ref)) {
             return Err(Error::ParentsNotUniqueSorted);
@@ -60,34 +69,31 @@ impl Parents {
 }
 
 impl Packable for Parents {
-    type Error = Error;
+    type UnpackError = Error;
 
-    fn packed_len(&self) -> usize {
-        0u8.packed_len() + self.len() * MESSAGE_ID_LENGTH
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.len() as u8).pack(writer)?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        (self.len() as u8).pack(packer)?;
 
         for parent in self.iter() {
-            parent.pack(writer)?;
+            parent.pack(packer)?;
         }
 
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let parents_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
-
-        if CHECK && !MESSAGE_PARENTS_RANGE.contains(&parents_len) {
-            return Err(Error::InvalidParentsCount(parents_len));
-        }
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let parents_len: usize = BoundedU8::<MESSAGE_PARENTS_MIN, MESSAGE_PARENTS_MAX>::unpack::<_, VERIFY>(unpacker)
+            .map_packable_err(|err| Error::InvalidParentsCount(TryIntoPrefixError::Invalid(err)))?
+            .get()
+            .into();
 
         let mut inner = Vec::with_capacity(parents_len);
         for _ in 0..parents_len {
-            inner.push(MessageId::unpack_inner::<R, CHECK>(reader)?);
+            inner.push(MessageId::unpack::<_, VERIFY>(unpacker).infallible()?);
         }
 
-        Self::new(inner)
+        Self::new(inner).map_err(UnpackError::Packable)
     }
 }

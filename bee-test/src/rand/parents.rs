@@ -7,5 +7,5 @@ use bee_message::parents::{Parents, MESSAGE_PARENTS_RANGE};
 
 /// Generates random parents.
 pub fn rand_parents() -> Parents {
-    Parents::new(rand_message_ids(rand_number_range(MESSAGE_PARENTS_RANGE))).unwrap()
+    Parents::new(rand_message_ids(rand_number_range(MESSAGE_PARENTS_RANGE).into())).unwrap()
 }

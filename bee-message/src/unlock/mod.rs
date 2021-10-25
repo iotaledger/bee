@@ -5,24 +5,39 @@ mod reference;
 
 pub use reference::ReferenceUnlock;
 
-use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, signature::SignatureUnlock, Error};
+use crate::{
+    constants::{UNLOCK_BLOCK_COUNT_MAX, UNLOCK_BLOCK_COUNT_MIN, UNLOCK_BLOCK_COUNT_RANGE},
+    signature::SignatureUnlock,
+    Error,
+};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::{
+    bounded::BoundedU16,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::{BoxedSlicePrefix, TryIntoPrefixError},
+    unpacker::Unpacker,
+    Packable,
+};
 
 use core::ops::Deref;
-use std::collections::HashSet;
+use std::{collections::HashSet, convert::Infallible};
 
 /// Defines the mechanism by which a transaction input is authorized to be consumed.
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Packable)]
 #[cfg_attr(
-    feature = "serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
+#[packable(tag_type = u8, with_error = Error::InvalidUnlockBlockKind)]
+#[packable(unpack_error = Error)]
 pub enum UnlockBlock {
     /// A signature unlock block.
+    #[packable(tag = SignatureUnlock::KIND)]
     Signature(SignatureUnlock),
     /// A reference unlock block.
+    #[packable(tag = ReferenceUnlock::KIND)]
     Reference(ReferenceUnlock),
 }
 
@@ -48,51 +63,19 @@ impl From<ReferenceUnlock> for UnlockBlock {
     }
 }
 
-impl Packable for UnlockBlock {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        match self {
-            Self::Signature(unlock) => SignatureUnlock::KIND.packed_len() + unlock.packed_len(),
-            Self::Reference(unlock) => ReferenceUnlock::KIND.packed_len() + unlock.packed_len(),
-        }
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        match self {
-            Self::Signature(unlock) => {
-                SignatureUnlock::KIND.pack(writer)?;
-                unlock.pack(writer)?;
-            }
-            Self::Reference(unlock) => {
-                ReferenceUnlock::KIND.pack(writer)?;
-                unlock.pack(writer)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            SignatureUnlock::KIND => SignatureUnlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            ReferenceUnlock::KIND => ReferenceUnlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            k => return Err(Self::Error::InvalidUnlockBlockKind(k)),
-        })
-    }
-}
-
 /// A collection of unlock blocks.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct UnlockBlocks(Box<[UnlockBlock]>);
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct UnlockBlocks(BoxedSlicePrefix<UnlockBlock, BoundedU16<UNLOCK_BLOCK_COUNT_MIN, UNLOCK_BLOCK_COUNT_MAX>>);
 
 impl UnlockBlocks {
     /// Creates a new `UnlockBlocks`.
     pub fn new(unlock_blocks: Vec<UnlockBlock>) -> Result<Self, Error> {
-        if !UNLOCK_BLOCK_COUNT_RANGE.contains(&unlock_blocks.len()) {
-            return Err(Error::InvalidUnlockBlockCount(unlock_blocks.len()));
-        }
+        let unlock_blocks =
+            BoxedSlicePrefix::<_, BoundedU16<UNLOCK_BLOCK_COUNT_MIN, UNLOCK_BLOCK_COUNT_MAX>>::try_from(
+                unlock_blocks.into_boxed_slice(),
+            )
+            .map_err(Error::InvalidUnlockBlockCount)?;
 
         let mut seen_signatures = HashSet::new();
 
@@ -114,7 +97,7 @@ impl UnlockBlocks {
             }
         }
 
-        Ok(Self(unlock_blocks.into_boxed_slice()))
+        Ok(Self(unlock_blocks))
     }
 
     /// Gets an `UnlockBlock` from an `UnlockBlocks`.
@@ -137,33 +120,28 @@ impl Deref for UnlockBlocks {
 }
 
 impl Packable for UnlockBlocks {
-    type Error = Error;
+    type UnpackError = Error;
 
-    fn packed_len(&self) -> usize {
-        0u16.packed_len() + self.0.iter().map(Packable::packed_len).sum::<usize>()
-    }
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        (self.0.len() as u16).pack(packer)?;
 
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.0.len() as u16).pack(writer)?;
         for unlock_block in self.0.as_ref() {
-            unlock_block.pack(writer)?;
+            unlock_block.pack(packer)?;
         }
 
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let unlock_blocks_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let unlock_blocks =
+            BoxedSlicePrefix::<_, BoundedU16<UNLOCK_BLOCK_COUNT_MIN, UNLOCK_BLOCK_COUNT_MAX>>::unpack::<_, VERIFY>(
+                unpacker,
+            )
+            .map_packable_err(|err| err.unwrap_packable_or_else(|err| Error::InvalidUnlockBlockCount(err.into())))?;
 
-        if CHECK && !UNLOCK_BLOCK_COUNT_RANGE.contains(&unlock_blocks_len) {
-            return Err(Error::InvalidUnlockBlockCount(unlock_blocks_len));
-        }
-
-        let mut unlock_blocks = Vec::with_capacity(unlock_blocks_len);
-        for _ in 0..unlock_blocks_len {
-            unlock_blocks.push(UnlockBlock::unpack_inner::<R, CHECK>(reader)?);
-        }
-
-        Self::new(unlock_blocks)
+        // FIXME: avoid redundant checks.
+        Self::new(Into::<Box<[_]>>::into(unlock_blocks).to_vec()).map_err(UnpackError::Packable)
     }
 }

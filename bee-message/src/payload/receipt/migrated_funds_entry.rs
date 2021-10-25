@@ -8,16 +8,17 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
 
 use core::ops::RangeInclusive;
+use std::convert::Infallible;
 
 /// Range of valid amounts for migrated funds entries.
 pub const VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS: RangeInclusive<u64> = DUST_THRESHOLD..=IOTA_SUPPLY;
 
 /// Describes funds which were migrated from a legacy network.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MigratedFundsEntry {
     tail_transaction_hash: TailTransactionHash,
     output: SignatureLockedSingleOutput,
@@ -48,23 +49,21 @@ impl MigratedFundsEntry {
 }
 
 impl Packable for MigratedFundsEntry {
-    type Error = Error;
+    type UnpackError = Error;
 
-    fn packed_len(&self) -> usize {
-        self.tail_transaction_hash.packed_len() + self.output.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.tail_transaction_hash.pack(writer)?;
-        self.output.pack(writer)?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.tail_transaction_hash.pack(packer)?;
+        self.output.pack(packer)?;
 
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let tail_transaction_hash = TailTransactionHash::unpack_inner::<R, CHECK>(reader)?;
-        let output = SignatureLockedSingleOutput::unpack_inner::<R, CHECK>(reader)?;
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let tail_transaction_hash = TailTransactionHash::unpack::<_, VERIFY>(unpacker)?;
+        let output = SignatureLockedSingleOutput::unpack::<_, VERIFY>(unpacker)?;
 
-        Self::new(tail_transaction_hash, output)
+        Self::new(tail_transaction_hash, output).map_err(UnpackError::Packable)
     }
 }

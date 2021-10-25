@@ -3,9 +3,16 @@
 
 use crate::{address::Address, constants::IOTA_SUPPLY, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::{
+    bounded::BoundedU64,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
 
 use core::ops::RangeInclusive;
+use std::convert::Infallible;
 
 /// Amount of tokens below which an output is considered a dust output.
 pub const DUST_THRESHOLD: u64 = 1_000_000;
@@ -26,11 +33,12 @@ pub fn dust_outputs_max(dust_allowance_sum: u64) -> u64 {
 
 /// A `SignatureLockedDustAllowanceOutput` functions like a `SignatureLockedSingleOutput` but as a special property it
 /// is used to increase the allowance/amount of dust outputs on a given address.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct SignatureLockedDustAllowanceOutput {
     address: Address,
-    amount: u64,
+    #[packable(unpack_error_with = Error::InvalidDustAllowanceAmount)]
+    amount: BoundedU64<DUST_THRESHOLD, IOTA_SUPPLY>,
 }
 
 impl SignatureLockedDustAllowanceOutput {
@@ -39,11 +47,10 @@ impl SignatureLockedDustAllowanceOutput {
 
     /// Creates a new `SignatureLockedDustAllowanceOutput`.
     pub fn new(address: Address, amount: u64) -> Result<Self, Error> {
-        if !SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT.contains(&amount) {
-            return Err(Error::InvalidDustAllowanceAmount(amount));
-        }
-
-        Ok(Self { address, amount })
+        Ok(Self {
+            address,
+            amount: amount.try_into().map_err(Error::InvalidDustAllowanceAmount)?,
+        })
     }
 
     /// Returns the address of a `SignatureLockedDustAllowanceOutput`.
@@ -53,28 +60,6 @@ impl SignatureLockedDustAllowanceOutput {
 
     /// Returns the amount of a `SignatureLockedDustAllowanceOutput`.
     pub fn amount(&self) -> u64 {
-        self.amount
-    }
-}
-
-impl Packable for SignatureLockedDustAllowanceOutput {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.address.packed_len() + self.amount.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.address.pack(writer)?;
-        self.amount.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let address = Address::unpack_inner::<R, CHECK>(reader)?;
-        let amount = u64::unpack_inner::<R, CHECK>(reader)?;
-
-        Self::new(address, amount)
+        self.amount.get()
     }
 }

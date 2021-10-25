@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::PackableExt;
 
 use core::str::FromStr;
 
@@ -62,7 +62,7 @@ fn packed_len() {
     .unwrap();
 
     assert_eq!(treasury_transaction.packed_len(), 1 + 32 + 1 + 8);
-    assert_eq!(treasury_transaction.pack_new().len(), 1 + 32 + 1 + 8);
+    assert_eq!(treasury_transaction.pack_to_vec().len(), 1 + 32 + 1 + 8);
 }
 
 #[test]
@@ -72,7 +72,8 @@ fn pack_unpack_valid() {
         Output::from(TreasuryOutput::new(1_000).unwrap()),
     )
     .unwrap();
-    let transaction_2 = TreasuryTransactionPayload::unpack(&mut transaction_1.pack_new().as_slice()).unwrap();
+    let transaction_2 =
+        TreasuryTransactionPayload::unpack_verified(&mut transaction_1.pack_to_vec().as_slice()).unwrap();
 
     assert_eq!(transaction_1, transaction_2);
 }
@@ -87,5 +88,5 @@ fn pack_unpack_invalid() {
 
     // Actual error is not checked because the output type check is done after the output is parsed so the error is not
     // `InvalidOutputKind` but something related to an invalid address, so not really relevant for this test.
-    assert!(TreasuryTransactionPayload::unpack(&mut bytes.as_slice()).is_err());
+    assert!(TreasuryTransactionPayload::unpack_verified(&mut bytes.as_slice()).is_err());
 }

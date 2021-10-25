@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::{error::UnpackError, PackableExt};
 use bee_pow::{
     providers::{
         miner::{Miner, MinerBuilder},
@@ -25,7 +25,7 @@ fn pow_default_provider() {
         .finish()
         .unwrap();
 
-    let message_bytes = message.pack_new();
+    let message_bytes = message.pack_to_vec().unwrap();
     let score = PoWScorer::new().score(&message_bytes);
 
     assert!(score >= 4000f64);
@@ -40,7 +40,7 @@ fn pow_provider() {
         .finish()
         .unwrap();
 
-    let message_bytes = message.pack_new();
+    let message_bytes = message.pack_to_vec().unwrap();
     let score = PoWScorer::new().score(&message_bytes);
 
     assert!(score >= 10000f64);
@@ -76,7 +76,7 @@ fn invalid_payload_kind() {
 #[test]
 fn unpack_valid_no_remaining_bytes() {
     assert!(
-        Message::unpack(
+        Message::unpack_verified(
             &mut vec![
                 42, 0, 0, 0, 0, 0, 0, 0, 2, 140, 28, 186, 52, 147, 145, 96, 9, 105, 89, 78, 139, 3, 71, 249, 97, 149,
                 190, 63, 238, 168, 202, 82, 140, 227, 66, 173, 19, 110, 93, 117, 34, 225, 202, 251, 10, 156, 58, 144,
@@ -92,7 +92,7 @@ fn unpack_valid_no_remaining_bytes() {
 #[test]
 fn unpack_invalid_remaining_bytes() {
     assert!(matches!(
-        Message::unpack(
+        Message::unpack_verified(
             &mut vec![
                 42, 0, 0, 0, 0, 0, 0, 0, 2, 140, 28, 186, 52, 147, 145, 96, 9, 105, 89, 78, 139, 3, 71, 249, 97, 149,
                 190, 63, 238, 168, 202, 82, 140, 227, 66, 173, 19, 110, 93, 117, 34, 225, 202, 251, 10, 156, 58, 144,
@@ -101,7 +101,7 @@ fn unpack_invalid_remaining_bytes() {
             ]
             .as_slice()
         ),
-        Err(Error::RemainingBytesAfterMessage)
+        Err(UnpackError::Packable(Error::RemainingBytesAfterMessage))
     ))
 }
 
@@ -113,10 +113,13 @@ fn pack_unpack_valid() {
         .with_parents(rand_parents())
         .finish()
         .unwrap();
-    let packed_message = message.pack_new();
+    let packed_message = message.pack_to_vec().unwrap();
 
     assert_eq!(packed_message.len(), message.packed_len());
-    assert_eq!(message, Packable::unpack(&mut packed_message.as_slice()).unwrap());
+    assert_eq!(
+        message,
+        PackableExt::unpack_verified(&mut packed_message.as_slice()).unwrap()
+    );
 }
 
 #[test]

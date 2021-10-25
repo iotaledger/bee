@@ -3,7 +3,7 @@
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::Packable;
 
 use alloc::boxed::Box;
 
@@ -11,11 +11,12 @@ const ED25519_PUBLIC_KEY_LENGTH: usize = 32;
 const ED25519_SIGNATURE_LENGTH: usize = 64;
 
 /// An Ed25519 signature.
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Packable)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Ed25519Signature {
     public_key: [u8; ED25519_PUBLIC_KEY_LENGTH],
-    signature: Box<[u8]>,
+    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))]
+    signature: [u8; ED25519_SIGNATURE_LENGTH],
 }
 
 impl Ed25519Signature {
@@ -24,10 +25,7 @@ impl Ed25519Signature {
 
     /// Creates a new `Ed25519Signature`.
     pub fn new(public_key: [u8; ED25519_PUBLIC_KEY_LENGTH], signature: [u8; ED25519_SIGNATURE_LENGTH]) -> Self {
-        Self {
-            public_key,
-            signature: Box::new(signature),
-        }
+        Self { public_key, signature }
     }
 
     /// Returns the public key of an `Ed25519Signature`.
@@ -36,29 +34,7 @@ impl Ed25519Signature {
     }
 
     /// Return the actual signature of an `Ed25519Signature`.
-    pub fn signature(&self) -> &[u8] {
+    pub fn signature(&self) -> &[u8; ED25519_SIGNATURE_LENGTH] {
         &self.signature
-    }
-}
-
-impl Packable for Ed25519Signature {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        ED25519_PUBLIC_KEY_LENGTH + ED25519_SIGNATURE_LENGTH
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.public_key.pack(writer)?;
-        writer.write_all(&self.signature)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let public_key = <[u8; ED25519_PUBLIC_KEY_LENGTH]>::unpack_inner::<R, CHECK>(reader)?;
-        let signature = <[u8; ED25519_SIGNATURE_LENGTH]>::unpack_inner::<R, CHECK>(reader)?;
-
-        Ok(Self::new(public_key, signature))
     }
 }

@@ -16,7 +16,7 @@ use bee_message::payload::{
 /// Generates a random indexation payload.
 pub fn rand_indexation_payload() -> IndexationPayload {
     IndexationPayload::new(
-        &rand_bytes(rand_number_range(INDEXATION_INDEX_LENGTH_RANGE)),
+        &rand_bytes(rand_number_range(INDEXATION_INDEX_LENGTH_RANGE) as usize),
         &rand_bytes(rand_number_range(0..10000)),
     )
     .unwrap()

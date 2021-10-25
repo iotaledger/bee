@@ -1,11 +1,24 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{address::Address, input::UtxoInput};
+use crate::{
+    address::Address,
+    constants::{INPUT_OUTPUT_INDEX_MAX, IOTA_SUPPLY, UNLOCK_BLOCK_COUNT_MAX, UNLOCK_BLOCK_COUNT_MIN},
+    input::UtxoInput,
+    output::DUST_THRESHOLD,
+    parents::{MESSAGE_PARENTS_MAX, MESSAGE_PARENTS_MIN},
+    payload::indexation::{INDEXATION_DATA_LENGTH_MAX, INDEXATION_INDEX_LENGTH_MAX, INDEXATION_INDEX_LENGTH_MIN},
+};
+
+use bee_packable::{
+    bounded::{InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64, InvalidBoundedU8},
+    prefix::TryIntoPrefixError,
+};
 
 use crypto::Error as CryptoError;
 
 use core::fmt;
+use std::convert::Infallible;
 
 /// Error occurring when creating/parsing/validating messages.
 #[derive(Debug)]
@@ -19,33 +32,34 @@ pub enum Error {
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
     InvalidAddressKind(u8),
-    InvalidAmount(u64),
-    InvalidDustAllowanceAmount(u64),
+    InvalidAmount(InvalidBoundedU64<1, IOTA_SUPPLY>),
+    InvalidDustAllowanceAmount(InvalidBoundedU64<DUST_THRESHOLD, IOTA_SUPPLY>),
     InvalidEssenceKind(u8),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength(usize, usize),
-    InvalidIndexationDataLength(usize),
-    InvalidIndexationIndexLength(usize),
+    InvalidIndexationDataLength(TryIntoPrefixError<InvalidBoundedU32<0, INDEXATION_DATA_LENGTH_MAX>>),
+    InvalidIndexationIndexLength(
+        TryIntoPrefixError<InvalidBoundedU16<INDEXATION_INDEX_LENGTH_MIN, INDEXATION_INDEX_LENGTH_MAX>>,
+    ),
     InvalidInputKind(u8),
     InvalidInputOutputCount(usize),
-    InvalidInputOutputIndex(u16),
+    InvalidInputOutputIndex(InvalidBoundedU16<0, INPUT_OUTPUT_INDEX_MAX>),
     InvalidMessageLength(usize),
     InvalidMigratedFundsEntryAmount(u64),
     InvalidOutputKind(u8),
-    InvalidParentsCount(usize),
+    InvalidParentsCount(TryIntoPrefixError<InvalidBoundedU8<MESSAGE_PARENTS_MIN, MESSAGE_PARENTS_MAX>>),
     InvalidPayloadKind(u32),
     InvalidPayloadLength(usize, usize),
     InvalidPowScoreValues(u32, u32),
     InvalidReceiptFundsCount(usize),
-    InvalidReferenceIndex(u16),
+    InvalidReferenceIndex(InvalidBoundedU16<0, INPUT_OUTPUT_INDEX_MAX>),
     InvalidSignature,
     InvalidSignatureKind(u8),
     InvalidTailTransactionHash,
-    InvalidTreasuryAmount(u64),
-    InvalidUnlockBlockCount(usize),
+    InvalidTreasuryAmount(InvalidBoundedU64<0, IOTA_SUPPLY>),
+    InvalidUnlockBlockCount(TryIntoPrefixError<InvalidBoundedU16<UNLOCK_BLOCK_COUNT_MIN, UNLOCK_BLOCK_COUNT_MAX>>),
     InvalidUnlockBlockKind(u8),
     InvalidUnlockBlockReference(usize),
-    Io(std::io::Error),
     MigratedFundsNotSorted,
     MilestoneInvalidPublicKeyCount(usize),
     MilestoneInvalidSignatureCount(usize),
@@ -126,7 +140,6 @@ impl fmt::Display for Error {
             Error::InvalidUnlockBlockReference(index) => {
                 write!(f, "Invalid unlock block reference: {0}", index)
             }
-            Error::Io(e) => write!(f, "I/O error happened: {}.", e),
             Error::MigratedFundsNotSorted => {
                 write!(f, "Migrated funds are not sorted.")
             }
@@ -178,14 +191,14 @@ impl fmt::Display for Error {
     }
 }
 
-impl From<std::io::Error> for Error {
-    fn from(error: std::io::Error) -> Self {
-        Error::Io(error)
-    }
-}
-
 impl From<CryptoError> for Error {
     fn from(error: CryptoError) -> Self {
         Error::CryptoError(error)
+    }
+}
+
+impl From<Infallible> for Error {
+    fn from(err: Infallible) -> Self {
+        match err {}
     }
 }

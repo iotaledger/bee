@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::PackableExt;
 use bee_test::rand::{self, bytes::rand_bytes_32, parents::rand_parents};
 
 #[test]
@@ -220,10 +220,10 @@ fn pack_unpack_valid() {
     )
     .unwrap();
 
-    let packed = milestone_payload.pack_new();
+    let packed = milestone_payload.pack_to_vec().unwrap();
 
     assert_eq!(
-        MilestonePayloadEssence::unpack(&mut packed.as_slice()).unwrap(),
+        MilestonePayloadEssence::unpack_verified(&mut packed.as_slice()).unwrap(),
         milestone_payload,
     );
 }

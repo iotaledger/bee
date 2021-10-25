@@ -1,14 +1,23 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{constants::INPUT_OUTPUT_INDEX_RANGE, Error};
+use crate::{constants::INPUT_OUTPUT_INDEX_MAX, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::{
+    bounded::BoundedU16,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
+
+use core::convert::Infallible;
 
 /// An [`UnlockBlock`](crate::unlock::UnlockBlock) that refers to another unlock block.
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ReferenceUnlock(u16);
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Packable)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = Error, with = Error::InvalidReferenceIndex)]
+pub struct ReferenceUnlock(BoundedU16<0, INPUT_OUTPUT_INDEX_MAX>);
 
 impl ReferenceUnlock {
     /// The unlock kind of a `ReferenceUnlock`.
@@ -16,16 +25,12 @@ impl ReferenceUnlock {
 
     /// Creates a new `ReferenceUnlock`.
     pub fn new(index: u16) -> Result<Self, Error> {
-        if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
-            return Err(Error::InvalidReferenceIndex(index));
-        }
-
-        Ok(Self(index))
+        Ok(Self(index.try_into().map_err(Error::InvalidReferenceIndex)?))
     }
 
     /// Return the index of a `ReferenceUnlock`.
     pub fn index(&self) -> u16 {
-        self.0
+        self.0.into()
     }
 }
 
@@ -34,23 +39,5 @@ impl TryFrom<u16> for ReferenceUnlock {
 
     fn try_from(index: u16) -> Result<Self, Self::Error> {
         Self::new(index)
-    }
-}
-
-impl Packable for ReferenceUnlock {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        0u16.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Self::new(u16::unpack_inner::<R, CHECK>(reader)?)
     }
 }

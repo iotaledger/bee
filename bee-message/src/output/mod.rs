@@ -16,21 +16,26 @@ pub use treasury::{TreasuryOutput, TREASURY_OUTPUT_AMOUNT};
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::Packable;
 
 /// A generic output that can represent different types defining the deposit of funds.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(
-    feature = "serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
+#[packable(tag_type = u8, with_error = Error::InvalidOutputKind)]
+#[packable(unpack_error = Error)]
 pub enum Output {
     /// A signature locked single output.
+    #[packable(tag = SignatureLockedSingleOutput::KIND)]
     SignatureLockedSingle(SignatureLockedSingleOutput),
     /// A signature locked dust allowance output.
+    #[packable(tag = SignatureLockedDustAllowanceOutput::KIND)]
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput),
     /// A treasury output.
+    #[packable(tag = TreasuryOutput::KIND)]
     Treasury(TreasuryOutput),
 }
 
@@ -60,49 +65,5 @@ impl From<SignatureLockedDustAllowanceOutput> for Output {
 impl From<TreasuryOutput> for Output {
     fn from(output: TreasuryOutput) -> Self {
         Self::Treasury(output)
-    }
-}
-
-impl Packable for Output {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        match self {
-            Self::SignatureLockedSingle(output) => SignatureLockedSingleOutput::KIND.packed_len() + output.packed_len(),
-            Self::SignatureLockedDustAllowance(output) => {
-                SignatureLockedDustAllowanceOutput::KIND.packed_len() + output.packed_len()
-            }
-            Self::Treasury(output) => TreasuryOutput::KIND.packed_len() + output.packed_len(),
-        }
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        match self {
-            Self::SignatureLockedSingle(output) => {
-                SignatureLockedSingleOutput::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::SignatureLockedDustAllowance(output) => {
-                SignatureLockedDustAllowanceOutput::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::Treasury(output) => {
-                TreasuryOutput::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            SignatureLockedSingleOutput::KIND => SignatureLockedSingleOutput::unpack_inner::<R, CHECK>(reader)?.into(),
-            SignatureLockedDustAllowanceOutput::KIND => {
-                SignatureLockedDustAllowanceOutput::unpack_inner::<R, CHECK>(reader)?.into()
-            }
-            TreasuryOutput::KIND => TreasuryOutput::unpack_inner::<R, CHECK>(reader)?.into(),
-            k => return Err(Self::Error::InvalidOutputKind(k)),
-        })
     }
 }

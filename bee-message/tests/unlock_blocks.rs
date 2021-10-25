@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::prelude::*;
+use bee_packable::{bounded::InvalidBoundedU16, prefix::TryIntoPrefixError};
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_32};
 
 #[test]
@@ -81,7 +82,9 @@ fn new_invalid_duplicate_signature() {
 fn new_invalid_too_many_blocks() {
     assert!(matches!(
         UnlockBlocks::new(vec![ReferenceUnlock::new(0).unwrap().into(); 300]),
-        Err(Error::InvalidUnlockBlockCount(300)),
+        Err(Error::InvalidUnlockBlockCount(TryIntoPrefixError::Invalid(
+            InvalidBoundedU16(300)
+        ))),
     ));
 }
 

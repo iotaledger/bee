@@ -6,18 +6,20 @@
 mod essence;
 mod transaction_id;
 
+use std::convert::Infallible;
+
 use crate::{unlock::UnlockBlocks, Error};
 
 pub use essence::{Essence, RegularEssence, RegularEssenceBuilder};
 pub use transaction_id::{TransactionId, TRANSACTION_ID_LENGTH};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable, PackableExt};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 /// A transaction to move funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionPayload {
     essence: Essence,
     unlock_blocks: UnlockBlocks,
@@ -37,7 +39,7 @@ impl TransactionPayload {
         let mut hasher = Blake2b256::new();
 
         hasher.update(Self::KIND.to_le_bytes());
-        hasher.update(self.pack_new());
+        hasher.update(self.pack_to_vec().unwrap());
 
         TransactionId::new(hasher.finalize().into())
     }
@@ -54,27 +56,26 @@ impl TransactionPayload {
 }
 
 impl Packable for TransactionPayload {
-    type Error = Error;
+    type UnpackError = Error;
 
-    fn packed_len(&self) -> usize {
-        self.essence.packed_len() + self.unlock_blocks.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.essence.pack(writer)?;
-        self.unlock_blocks.pack(writer)?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.essence.pack(packer)?;
+        self.unlock_blocks.pack(packer)?;
 
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let essence = Essence::unpack_inner::<R, CHECK>(reader)?;
-        let unlock_blocks = UnlockBlocks::unpack_inner::<R, CHECK>(reader)?;
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let essence = Essence::unpack::<_, VERIFY>(unpacker)?;
+        let unlock_blocks = UnlockBlocks::unpack::<_, VERIFY>(unpacker)?;
 
         Self::builder()
             .with_essence(essence)
             .with_unlock_blocks(unlock_blocks)
             .finish()
+            .map_err(UnpackError::Packable)
     }
 }
 

@@ -3,17 +3,24 @@
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
 use bee_ternary::{T5B1Buf, TritBuf, Trits, T5B1};
 
 use bytemuck::cast_slice;
+
+use core::convert::Infallible;
 
 /// The length of a tail transaction hash.
 pub const TAIL_TRANSACTION_HASH_LEN: usize = 49;
 
 /// Represents a tail transaction hash of a legacy bundle.
 #[derive(Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TailTransactionHash(TritBuf<T5B1Buf>);
 
 impl TailTransactionHash {
@@ -54,19 +61,20 @@ impl core::fmt::Debug for TailTransactionHash {
 }
 
 impl Packable for TailTransactionHash {
-    type Error = Error;
+    type UnpackError = Error;
 
-    fn packed_len(&self) -> usize {
-        TAIL_TRANSACTION_HASH_LEN
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        writer.write_all(self.as_ref())?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        // SAFETY: `self.0` can only be created from a byte array of length
+        // `TAIL_TRANSACTION_HASH_LEN` nad no elements can be pushed or popped from it.
+        unsafe { &*(self.as_ref() as *const [u8] as *const [u8; TAIL_TRANSACTION_HASH_LEN]) }.pack(packer)?;
 
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Self::new(<[u8; TAIL_TRANSACTION_HASH_LEN]>::unpack_inner::<R, CHECK>(reader)?)
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Self::new(<[u8; TAIL_TRANSACTION_HASH_LEN]>::unpack::<_, VERIFY>(unpacker).infallible()?)
+            .map_err(UnpackError::Packable)
     }
 }

@@ -5,11 +5,11 @@
 
 use crate::{input::Input, output::Output, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::Packable;
 
 /// `TreasuryTransaction` represents a transaction which moves funds from the treasury.
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreasuryTransactionPayload {
     input: Input,
     output: Output,
@@ -40,27 +40,5 @@ impl TreasuryTransactionPayload {
     /// Returns the output of a `TreasuryTransaction`.
     pub fn output(&self) -> &Output {
         &self.output
-    }
-}
-
-impl Packable for TreasuryTransactionPayload {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.input.packed_len() + self.output.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.input.pack(writer)?;
-        self.output.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let input = Input::unpack_inner::<R, CHECK>(reader)?;
-        let output = Output::unpack_inner::<R, CHECK>(reader)?;
-
-        Self::new(input, output)
     }
 }

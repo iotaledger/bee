@@ -1,14 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::Packable;
 
 use core::ops::{Add, Deref, Sub};
 
 /// A wrapper around a `u32` that represents a milestone index.
 #[repr(transparent)]
-#[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, Packable)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestoneIndex(pub u32);
 
 impl MilestoneIndex {
@@ -67,21 +67,5 @@ impl Sub<u32> for MilestoneIndex {
 
     fn sub(self, other: u32) -> Self {
         Self(*self - other)
-    }
-}
-
-impl Packable for MilestoneIndex {
-    type Error = std::io::Error;
-
-    fn packed_len(&self) -> usize {
-        self.0.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(u32::unpack_inner::<R, CHECK>(reader)?))
     }
 }

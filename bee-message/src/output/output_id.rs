@@ -2,33 +2,43 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    constants::INPUT_OUTPUT_INDEX_RANGE,
+    constants::INPUT_OUTPUT_INDEX_MAX,
     payload::transaction::{TransactionId, TRANSACTION_ID_LENGTH},
     Error,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::{
+    bounded::BoundedU16,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
 
-use core::str::FromStr;
+use core::{
+    convert::{From, Infallible},
+    str::FromStr,
+};
 
 /// The length of an `OutputId`.
 pub const OUTPUT_ID_LENGTH: usize = TRANSACTION_ID_LENGTH + std::mem::size_of::<u16>();
 
 /// The identifier of an `Output`.
-#[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd, Packable)]
+#[packable(unpack_error = Error)]
 pub struct OutputId {
     transaction_id: TransactionId,
-    index: u16,
+    #[packable(unpack_error_with = Error::InvalidInputOutputIndex)]
+    index: BoundedU16<0, INPUT_OUTPUT_INDEX_MAX>,
 }
 
 impl OutputId {
     /// Creates a new `OutputId`.
     pub fn new(transaction_id: TransactionId, index: u16) -> Result<Self, Error> {
-        if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
-            return Err(Error::InvalidInputOutputIndex(index));
-        }
-
-        Ok(Self { transaction_id, index })
+        Ok(Self {
+            transaction_id,
+            index: index.try_into().map_err(Error::InvalidInputOutputIndex)?,
+        })
     }
 
     /// Returns the `TransactionId` of an `OutputId`.
@@ -38,16 +48,16 @@ impl OutputId {
 
     /// Returns the index of an `OutputId`.
     pub fn index(&self) -> u16 {
-        self.index
+        self.index.into()
     }
 
     /// Splits an `OutputId` into its `TransactionId` and index.
     pub fn split(self) -> (TransactionId, u16) {
-        (self.transaction_id, self.index)
+        (self.transaction_id, self.index.into())
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(OutputId);
 
 impl TryFrom<[u8; OUTPUT_ID_LENGTH]> for OutputId {
@@ -80,34 +90,12 @@ impl FromStr for OutputId {
 
 impl core::fmt::Display for OutputId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}{}", self.transaction_id, hex::encode(self.index.to_le_bytes()))
+        write!(f, "{}{}", self.transaction_id, hex::encode(self.index().to_le_bytes()))
     }
 }
 
 impl core::fmt::Debug for OutputId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "OutputId({})", self)
-    }
-}
-
-impl Packable for OutputId {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.transaction_id.packed_len() + self.index.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.transaction_id.pack(writer)?;
-        self.index.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let transaction_id = TransactionId::unpack_inner::<R, CHECK>(reader)?;
-        let index = u16::unpack_inner::<R, CHECK>(reader)?;
-
-        Self::new(transaction_id, index)
     }
 }

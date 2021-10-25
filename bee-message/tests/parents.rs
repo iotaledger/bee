@@ -1,8 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::{
+    bounded::InvalidBoundedU8,
+    error::UnpackError,
+    prefix::{TryIntoPrefixError, VecPrefix},
+    PackableExt,
+};
 use bee_test::rand::message::{rand_message_id, rand_message_ids};
 
 use std::ops::Deref;
@@ -35,7 +40,12 @@ fn new_invalid_more_than_max() {
         inner.sort();
     }
 
-    assert!(matches!(Parents::new(inner), Err(Error::InvalidParentsCount(9))));
+    assert!(matches!(
+        Parents::new(inner),
+        Err(Error::InvalidParentsCount(TryIntoPrefixError::Invalid(
+            InvalidBoundedU8(9)
+        )))
+    ));
 }
 
 #[test]
@@ -59,13 +69,13 @@ fn packed_len() {
     let parents = Parents::new(rand_message_ids(5)).unwrap();
 
     assert_eq!(parents.packed_len(), 1 + 5 * 32);
-    assert_eq!(parents.pack_new().len(), 1 + 5 * 32);
+    assert_eq!(parents.pack_to_vec().len(), 1 + 5 * 32);
 }
 
 #[test]
 fn pack_unpack_valid() {
     let parents_1 = Parents::new(rand_message_ids(8)).unwrap();
-    let parents_2 = Parents::unpack(&mut parents_1.pack_new().as_slice()).unwrap();
+    let parents_2 = Parents::unpack_verified(&mut parents_1.pack_to_vec().as_slice()).unwrap();
 
     assert_eq!(parents_1, parents_2);
 }
@@ -79,8 +89,10 @@ fn pack_unpack_invalid_less_than_min() {
     ];
 
     assert!(matches!(
-        Parents::unpack(&mut bytes.as_slice()),
-        Err(Error::InvalidParentsCount(0))
+        Parents::unpack_verified(&mut bytes.as_slice()),
+        Err(UnpackError::Packable(Error::InvalidParentsCount(
+            TryIntoPrefixError::Invalid(InvalidBoundedU8(0))
+        )))
     ));
 }
 
@@ -93,8 +105,10 @@ fn pack_unpack_invalid_more_than_max() {
     ];
 
     assert!(matches!(
-        Parents::unpack(&mut bytes.as_slice()),
-        Err(Error::InvalidParentsCount(9))
+        Parents::unpack_verified(&mut bytes.as_slice()),
+        Err(UnpackError::Packable(Error::InvalidParentsCount(
+            TryIntoPrefixError::Invalid(InvalidBoundedU8(9))
+        )))
     ));
 }
 
@@ -102,28 +116,36 @@ fn pack_unpack_invalid_more_than_max() {
 fn unpack_invalid_not_sorted() {
     let mut inner = rand_message_ids(8);
     inner.reverse();
+    let inner: VecPrefix<_, u64> = inner.try_into().unwrap();
 
     // Remove 8 byte vector length field and replace with 1 byte, to represent message parents.
-    let mut packed = (8u8).pack_new();
-    let mut packed_messages = inner.pack_new().split_at(core::mem::size_of::<u64>()).1.to_vec();
+    let mut packed = (8u8).pack_to_vec();
+    let mut packed_messages = inner.pack_to_vec().split_at(core::mem::size_of::<u64>()).1.to_vec();
     packed.append(&mut packed_messages);
 
-    let parents = Parents::unpack(&mut packed.as_slice());
+    let parents = Parents::unpack_verified(&mut packed.as_slice());
 
-    assert!(matches!(parents, Err(Error::ParentsNotUniqueSorted)));
+    assert!(matches!(
+        parents,
+        Err(UnpackError::Packable(Error::ParentsNotUniqueSorted))
+    ));
 }
 
 #[test]
 fn upnack_invalid_not_unique() {
     let mut inner = rand_message_ids(7);
     inner.push(*inner.last().unwrap());
+    let inner: VecPrefix<_, u64> = inner.try_into().unwrap();
 
     // Remove 8 byte vector length field and replace with 1 byte, to represent message parents.
-    let mut packed = (8u8).pack_new();
-    let mut packed_messages = inner.pack_new().split_at(std::mem::size_of::<u64>()).1.to_vec();
+    let mut packed = (8u8).pack_to_vec();
+    let mut packed_messages = inner.pack_to_vec().split_at(std::mem::size_of::<u64>()).1.to_vec();
     packed.append(&mut packed_messages);
 
-    let parents = Parents::unpack(&mut packed.as_slice());
+    let parents = Parents::unpack_verified(&mut packed.as_slice());
 
-    assert!(matches!(parents, Err(Error::ParentsNotUniqueSorted)));
+    assert!(matches!(
+        parents,
+        Err(UnpackError::Packable(Error::ParentsNotUniqueSorted))
+    ));
 }

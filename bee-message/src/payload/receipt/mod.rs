@@ -12,23 +12,26 @@ pub use tail_transaction_hash::{TailTransactionHash, TAIL_TRANSACTION_HASH_LEN};
 use crate::{
     constants::INPUT_OUTPUT_COUNT_RANGE,
     milestone::MilestoneIndex,
-    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
+    payload::{option_payload_pack, option_payload_unpack, Payload},
     Error,
 };
 
-use bee_common::{
-    ord::is_unique_sorted,
-    packable::{Packable, Read, Write},
+use bee_common::ord::is_unique_sorted;
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable, PackableExt,
 };
 
 use core::ops::RangeInclusive;
-use std::collections::HashMap;
+use std::{collections::HashMap, convert::Infallible};
 
 const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = INPUT_OUTPUT_COUNT_RANGE;
 
 /// Receipt is a listing of migrated funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReceiptPayload {
     migrated_at: MilestoneIndex,
     last: bool,
@@ -56,7 +59,7 @@ impl ReceiptPayload {
         }
 
         // Funds must be lexicographically sorted and unique in their serialised forms.
-        if !is_unique_sorted(funds.iter().map(Packable::pack_new)) {
+        if !is_unique_sorted(funds.iter().map(PackableExt::pack_to_vec)) {
             return Err(Error::TransactionOutputsNotSorted);
         }
 
@@ -102,40 +105,34 @@ impl ReceiptPayload {
 }
 
 impl Packable for ReceiptPayload {
-    type Error = Error;
+    type UnpackError = Error;
 
-    fn packed_len(&self) -> usize {
-        self.migrated_at.packed_len()
-            + self.last.packed_len()
-            + 0u16.packed_len()
-            + self.funds.iter().map(Packable::packed_len).sum::<usize>()
-            + option_payload_packed_len(Some(&self.transaction))
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.migrated_at.pack(writer)?;
-        self.last.pack(writer)?;
-        (self.funds.len() as u16).pack(writer)?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.migrated_at.pack(packer)?;
+        self.last.pack(packer)?;
+        (self.funds.len() as u16).pack(packer)?;
         for fund in self.funds.iter() {
-            fund.pack(writer)?;
+            fund.pack(packer)?;
         }
-        option_payload_pack(writer, Some(&self.transaction))?;
+        option_payload_pack(packer, Some(&self.transaction))?;
 
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let migrated_at = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
-        let last = bool::unpack_inner::<R, CHECK>(reader)?;
-        let funds_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let migrated_at = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let last = bool::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let funds_len = u16::unpack::<_, VERIFY>(unpacker).infallible()? as usize;
         let mut funds = Vec::with_capacity(funds_len);
         for _ in 0..funds_len {
-            funds.push(MigratedFundsEntry::unpack_inner::<R, CHECK>(reader)?);
+            funds.push(MigratedFundsEntry::unpack::<_, VERIFY>(unpacker)?);
         }
-        let transaction = option_payload_unpack::<R, CHECK>(reader)?
+        let transaction = option_payload_unpack::<_, VERIFY>(unpacker)?
             .1
-            .ok_or(Self::Error::MissingPayload)?;
+            .ok_or(UnpackError::Packable(Error::MissingPayload))?;
 
-        Self::new(migrated_at, last, funds, transaction)
+        Self::new(migrated_at, last, funds, transaction).map_err(UnpackError::Packable)
     }
 }

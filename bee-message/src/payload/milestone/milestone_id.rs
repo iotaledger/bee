@@ -3,7 +3,7 @@
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::Packable;
 
 use core::str::FromStr;
 
@@ -12,7 +12,7 @@ pub const MILESTONE_ID_LENGTH: usize = 32;
 
 /// A milestone identifier, the BLAKE2b-256 hash of the milestone bytes.
 /// See <https://www.blake2.net/> for more information.
-#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, Packable)]
 pub struct MilestoneId([u8; MILESTONE_ID_LENGTH]);
 
 impl MilestoneId {
@@ -22,7 +22,7 @@ impl MilestoneId {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(MilestoneId);
 
 impl From<[u8; MILESTONE_ID_LENGTH]> for MilestoneId {
@@ -59,25 +59,5 @@ impl core::fmt::Display for MilestoneId {
 impl core::fmt::Debug for MilestoneId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "MilestoneId({})", self)
-    }
-}
-
-impl Packable for MilestoneId {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        MILESTONE_ID_LENGTH
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(<[u8; MILESTONE_ID_LENGTH]>::unpack_inner::<R, CHECK>(
-            reader,
-        )?))
     }
 }

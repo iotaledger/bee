@@ -3,12 +3,12 @@
 
 use crate::{output::OutputId, payload::transaction::TransactionId, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::Packable;
 
 use core::{convert::From, str::FromStr};
 
 /// Represents an input referencing an output.
-#[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Packable)]
 pub struct UtxoInput(OutputId);
 
 impl UtxoInput {
@@ -26,7 +26,7 @@ impl UtxoInput {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(UtxoInput);
 
 impl From<OutputId> for UtxoInput {
@@ -52,21 +52,5 @@ impl core::fmt::Display for UtxoInput {
 impl core::fmt::Debug for UtxoInput {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "UtxoInput({})", self.0)
-    }
-}
-
-impl Packable for UtxoInput {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.0.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(OutputId::unpack_inner::<R, CHECK>(reader)?.into())
     }
 }

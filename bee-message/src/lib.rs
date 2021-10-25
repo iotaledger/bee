@@ -3,11 +3,11 @@
 
 //! Core data types for messages in the tangle.
 
-#![deny(missing_docs, warnings)]
+#![allow(missing_docs, warnings)]
 
 extern crate alloc;
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 #[macro_use]
 mod serde;
 mod error;

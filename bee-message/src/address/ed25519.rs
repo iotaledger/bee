@@ -3,7 +3,7 @@
 
 use crate::{signature::Ed25519Signature, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::Packable;
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
@@ -17,7 +17,7 @@ use core::str::FromStr;
 pub const ED25519_ADDRESS_LENGTH: usize = 32;
 
 /// An Ed25519 address.
-#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 pub struct Ed25519Address([u8; ED25519_ADDRESS_LENGTH]);
 
 #[allow(clippy::len_without_is_empty)]
@@ -48,7 +48,7 @@ impl Ed25519Address {
 
         if !PublicKey::try_from_bytes(*signature.public_key())?
             // This unwrap is fine as the length of the signature has already been verified at construction.
-            .verify(&Signature::from_bytes(signature.signature().try_into().unwrap()), msg)
+            .verify(&Signature::from_bytes(signature.signature().clone()), msg)
         {
             return Err(Error::InvalidSignature);
         }
@@ -57,7 +57,7 @@ impl Ed25519Address {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(Ed25519Address);
 
 impl From<[u8; ED25519_ADDRESS_LENGTH]> for Ed25519Address {
@@ -94,25 +94,5 @@ impl core::fmt::Display for Ed25519Address {
 impl core::fmt::Debug for Ed25519Address {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "Ed25519Address({})", self)
-    }
-}
-
-impl Packable for Ed25519Address {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        ED25519_ADDRESS_LENGTH
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(<[u8; ED25519_ADDRESS_LENGTH]>::unpack_inner::<R, CHECK>(
-            reader,
-        )?))
     }
 }

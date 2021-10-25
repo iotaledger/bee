@@ -5,20 +5,24 @@ use crate::{
     constants::{INPUT_OUTPUT_COUNT_RANGE, IOTA_SUPPLY},
     input::Input,
     output::Output,
-    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
+    payload::{option_payload_pack, option_payload_unpack, Payload},
     Error,
 };
 
-use bee_common::{
-    ord::is_sorted,
-    packable::{Packable, Read, Write},
+use bee_common::ord::is_sorted;
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable, PackableExt,
 };
 
 use alloc::{boxed::Box, vec::Vec};
+use core::convert::Infallible;
 
 /// A transaction regular essence consuming inputs, creating outputs and carrying an optional payload.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct RegularEssence {
     inputs: Box<[Input]>,
     outputs: Box<[Output]>,
@@ -51,60 +55,54 @@ impl RegularEssence {
 }
 
 impl Packable for RegularEssence {
-    type Error = Error;
+    type UnpackError = Error;
 
-    fn packed_len(&self) -> usize {
-        0u16.packed_len()
-            + self.inputs.iter().map(Packable::packed_len).sum::<usize>()
-            + 0u16.packed_len()
-            + self.outputs.iter().map(Packable::packed_len).sum::<usize>()
-            + option_payload_packed_len(self.payload.as_ref())
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.inputs.len() as u16).pack(writer)?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        (self.inputs.len() as u16).pack(packer)?;
         for input in self.inputs.iter() {
-            input.pack(writer)?;
+            input.pack(packer)?;
         }
-        (self.outputs.len() as u16).pack(writer)?;
+        (self.outputs.len() as u16).pack(packer)?;
         for output in self.outputs.iter() {
-            output.pack(writer)?;
+            output.pack(packer)?;
         }
-        option_payload_pack(writer, self.payload.as_ref())?;
+        option_payload_pack(packer, self.payload.as_ref())?;
 
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let inputs_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let inputs_len = u16::unpack::<_, VERIFY>(unpacker).infallible()? as usize;
 
-        if CHECK && !INPUT_OUTPUT_COUNT_RANGE.contains(&inputs_len) {
-            return Err(Error::InvalidInputOutputCount(inputs_len));
+        if !INPUT_OUTPUT_COUNT_RANGE.contains(&inputs_len) {
+            return Err(UnpackError::Packable(Error::InvalidInputOutputCount(inputs_len)));
         }
 
         let mut inputs = Vec::with_capacity(inputs_len);
         for _ in 0..inputs_len {
-            inputs.push(Input::unpack_inner::<R, CHECK>(reader)?);
+            inputs.push(Input::unpack::<_, VERIFY>(unpacker)?);
         }
 
-        let outputs_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
+        let outputs_len = u16::unpack::<_, VERIFY>(unpacker).infallible()? as usize;
 
-        if CHECK && !INPUT_OUTPUT_COUNT_RANGE.contains(&outputs_len) {
-            return Err(Error::InvalidInputOutputCount(outputs_len));
+        if !INPUT_OUTPUT_COUNT_RANGE.contains(&outputs_len) {
+            return Err(UnpackError::Packable(Error::InvalidInputOutputCount(outputs_len)));
         }
 
         let mut outputs = Vec::with_capacity(outputs_len);
         for _ in 0..outputs_len {
-            outputs.push(Output::unpack_inner::<R, CHECK>(reader)?);
+            outputs.push(Output::unpack::<_, VERIFY>(unpacker)?);
         }
 
         let mut builder = Self::builder().with_inputs(inputs).with_outputs(outputs);
 
-        if let (_, Some(payload)) = option_payload_unpack::<R, CHECK>(reader)? {
+        if let (_, Some(payload)) = option_payload_unpack::<_, VERIFY>(unpacker)? {
             builder = builder.with_payload(payload);
         }
 
-        builder.finish()
+        builder.finish().map_err(UnpackError::Packable)
     }
 }
 
@@ -179,7 +177,7 @@ impl RegularEssenceBuilder {
         }
 
         // Inputs must be lexicographically sorted in their serialised forms.
-        if !is_sorted(self.inputs.iter().map(Packable::pack_new)) {
+        if !is_sorted(self.inputs.iter().map(PackableExt::pack_to_vec)) {
             return Err(Error::TransactionInputsNotSorted);
         }
 
@@ -201,7 +199,7 @@ impl RegularEssenceBuilder {
 
                     total = total
                         .checked_add(single.amount())
-                        .ok_or_else(|| Error::InvalidAccumulatedOutput((total + single.amount()) as u128))?;
+                        .ok_or_else(|| Error::InvalidAccumulatedOutput(total as u128 + single.amount() as u128))?;
                 }
                 Output::SignatureLockedDustAllowance(dust_allowance) => {
                     // The addresses must be unique in the set of SignatureLockedDustAllowanceOutputs.
@@ -231,7 +229,7 @@ impl RegularEssenceBuilder {
         }
 
         // Outputs must be lexicographically sorted in their serialised forms.
-        if !is_sorted(self.outputs.iter().map(Packable::pack_new)) {
+        if !is_sorted(self.outputs.iter().map(PackableExt::pack_to_vec)) {
             return Err(Error::TransactionOutputsNotSorted);
         }
 

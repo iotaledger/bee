@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::PackableExt;
 
 use core::str::FromStr;
 
@@ -70,15 +70,18 @@ fn packed_len() {
     let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
 
     assert_eq!(message_id.packed_len(), 32);
-    assert_eq!(message_id.pack_new().len(), 32);
+    assert_eq!(message_id.pack_to_vec().unwrap().len(), 32);
 }
 
 // Validate that a `unpack` ∘ `pack` round-trip results in the original message id.
 #[test]
 fn pack_unpack_valid() {
     let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
-    let packed_message_id = message_id.pack_new();
+    let packed_message_id = message_id.pack_to_vec().unwrap();
 
     assert_eq!(packed_message_id.len(), message_id.packed_len());
-    assert_eq!(message_id, Packable::unpack(&mut packed_message_id.as_slice()).unwrap());
+    assert_eq!(
+        message_id,
+        PackableExt::unpack_verified(&mut packed_message_id.as_slice()).unwrap()
+    );
 }

@@ -7,8 +7,8 @@
 //!
 //! The code was adapted from: https://kanejaku.org/posts/2021/01/2021-01-27/ (CC-BY 4.0)
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::PackableExt;
 use bee_pow::{
     providers::{miner::MinerBuilder, NonceProviderBuilder},
     score::PoWScorer,
@@ -46,7 +46,7 @@ fn main() {
         .finish()
         .unwrap();
 
-    let message_bytes = message.pack_new();
+    let message_bytes = message.pack_to_vec();
 
     let before_count = ALLOCATED.load(SeqCst);
     let _score = PoWScorer::new().score(&message_bytes);

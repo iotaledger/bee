@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::{error::UnpackError, PackableExt};
 
 const HASH_TRYTES: &str = "TZTXLMTAURX9DYQICXZEUMCDBPNXVOHNBBZDSSVCNCTWKSMUALAYPMHUCKGOGSTBUHSQIMSY9HQEP9AXJ";
 const HASH_BYTES: [u8; 49] = [
@@ -54,14 +54,14 @@ fn packed_len() {
     let tth = TailTransactionHash::try_from(HASH_BYTES).unwrap();
 
     assert_eq!(tth.packed_len(), TAIL_TRANSACTION_HASH_LEN);
-    assert_eq!(tth.pack_new().len(), TAIL_TRANSACTION_HASH_LEN);
+    assert_eq!(tth.pack_to_vec().len(), TAIL_TRANSACTION_HASH_LEN);
 }
 
 #[test]
 fn pack_unpack_valid() {
     let tth_1 = TailTransactionHash::try_from(HASH_BYTES).unwrap();
-    let tth_1_bytes = tth_1.pack_new();
-    let tth_2 = TailTransactionHash::unpack(&mut tth_1_bytes.as_slice()).unwrap();
+    let tth_1_bytes = tth_1.pack_to_vec();
+    let tth_2 = TailTransactionHash::unpack_verified(&mut tth_1_bytes.as_slice()).unwrap();
 
     assert_eq!(tth_1, tth_2);
 }
@@ -75,7 +75,7 @@ fn pack_unpack_invalid() {
     ];
 
     assert!(matches!(
-        TailTransactionHash::unpack(&mut bytes.as_slice()),
-        Err(Error::InvalidTailTransactionHash)
+        TailTransactionHash::unpack_verified(&mut bytes.as_slice()),
+        Err(UnpackError::Packable(Error::InvalidTailTransactionHash))
     ));
 }
