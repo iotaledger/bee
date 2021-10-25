@@ -3,9 +3,9 @@
 
 //! A module that provides common functions for timestamps.
 
-/// Retrieves the current timestamp, including UTC offset.
+/// Retrieves the current timestamp, including UTC offset. If offset cannot be determined, return UTC time.
 pub fn now_local() -> time::OffsetDateTime {
-    time::OffsetDateTime::now_local().expect("indeterminate utc offset")
+    time::OffsetDateTime::now_local().unwrap_or_else(|_| now_utc())
 }
 
 /// Retrieves the current timestamp, at UTC.
