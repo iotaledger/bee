@@ -8,7 +8,7 @@ use core::convert::Infallible;
 /// Error type raised when [`Packable::unpack`](crate::Packable) fails.
 #[derive(Debug)]
 pub enum UnpackError<T, U> {
-    /// Semantic error. Typically this is [`Packable::UnpackError`](crate::Packable).
+    /// Semantic error. Typically this is [`Packable::UnpackError`](crate::Packable::UnpackError).
     Packable(T),
     /// Error produced by the unpacker. Typically this is [`Unpacker::Error`](crate::unpacker::Unpacker).
     Unpacker(U),
@@ -23,7 +23,7 @@ impl<T, U> UnpackError<T, U> {
         }
     }
 
-    /// Coerces the value by calling `.into()` for the [`Packable`](crate::Packable) variant.
+    /// Coerces the value by calling `.into()` for the [`Packable`](UnpackError::Packable) variant.
     pub(crate) fn coerce<V>(self) -> UnpackError<V, U>
     where
         T: Into<V>,
@@ -39,7 +39,7 @@ impl<T, U> From<U> for UnpackError<T, U> {
 }
 
 impl<U> UnpackError<Infallible, U> {
-    /// Coerces the value if the [`Packable`](crate::Packable) variant is [`Infallible`].
+    /// Coerces the value if the [`Packable`](UnpackError::Packable) variant is [`Infallible`].
     pub(crate) fn infallible<E>(self) -> UnpackError<E, U> {
         UnpackError::Unpacker(self.into_unpacker())
     }
