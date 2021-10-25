@@ -11,30 +11,30 @@ keywords = [ "iota", "tangle", "bee", "framework", "api" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
-bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
-bee-pow = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-protocol = { path = "../../bee-protocol" }
-bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true  }
-bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
-bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
+bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
+bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
+bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
+bee-pow = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
+bee-protocol = { path = "../../bee-protocol", default-features = false }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true  }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
+bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
 
-async-trait = { version = "0.1.51", optional = true }
-bech32 = { version = "0.8.1", optional = true }
-digest = { version = "0.9.0", optional = true }
-futures = { version = "0.3.17", optional = true }
-hex = { version = "0.4.3" }
-iota-crypto = { version = "0.7.0", features = [ "blake2b" ], optional = true }
-log = { version = "0.4.14", optional = true }
-multiaddr = "0.13.0"
-num_cpus = { version = "1.13.0", optional = true }
-serde = { version = "1.0.130", features = [ "derive" ] }
-serde_json = { version = "1.0.68" }
-thiserror = { version = "1.0.30" }
-tokio = { version = "1.12.0", features = [ ], optional = true }
-warp = { version = "0.3.1", optional = true }
+async-trait = { version = "0.1.51", default-features = false, optional = true }
+bech32 = { version = "0.8.1", default-features = false, optional = true }
+digest = { version = "0.9.0", default-features = false, optional = true }
+futures = { version = "0.3.17", default-features = false, optional = true }
+hex = { version = "0.4.3", default-features = false }
+iota-crypto = { version = "0.7.0", default-features = false, features = [ "blake2b" ], optional = true }
+log = { version = "0.4.14", default-features = false, optional = true }
+multiaddr = { version = "0.13.0", default-features = false }
+num_cpus = { version = "1.13.0", default-features = false, optional = true }
+serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
+serde_json = { version = "1.0.68", default-features = false, features = [ "alloc" ] }
+thiserror = { version = "1.0.30", default-features = false }
+tokio = { version = "1.12.0", default-features = false, optional = true }
+warp = { version = "0.3.1", default-features = false, optional = true }
 
 [features]
 endpoints = [
