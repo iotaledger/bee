@@ -362,7 +362,7 @@ dependencies = [
 name = "bee-storage"
 version = "0.9.0"
 dependencies = [
- "bee-common",
+ "bee-packable",
  "serde",
  "thiserror",
 ]

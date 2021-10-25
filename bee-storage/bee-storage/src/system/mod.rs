@@ -6,10 +6,12 @@
 mod health;
 mod version;
 
-pub use health::{Error as StorageHealthError, StorageHealth};
+pub use health::{StorageHealth, StorageHealthError};
 pub use version::StorageVersion;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::Packable;
+
+use std::convert::Infallible;
 
 /// Key used to store the system version.
 pub const SYSTEM_VERSION_KEY: u8 = 0;
@@ -19,9 +21,6 @@ pub const SYSTEM_HEALTH_KEY: u8 = 1;
 /// Errors to be raised if packing/unpacking `System` fails.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    /// I/O error.
-    #[error("I/O error happened: {0}")]
-    Io(#[from] std::io::Error),
     /// Packing/unpacking the `System::Health` variant failed.
     #[error("Storage health error: {0}")]
     Health(#[from] StorageHealthError),
@@ -30,45 +29,21 @@ pub enum Error {
     UnknownSystemKey(u8),
 }
 
-/// System-related information.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum System {
-    /// The current version of the storage.
-    Version(StorageVersion),
-    /// The health status of the storage.
-    Health(StorageHealth),
+impl From<Infallible> for Error {
+    fn from(err: Infallible) -> Self {
+        match err {}
+    }
 }
 
-impl Packable for System {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        match self {
-            System::Version(version) => SYSTEM_VERSION_KEY.packed_len() + version.packed_len(),
-            System::Health(health) => SYSTEM_HEALTH_KEY.packed_len() + health.packed_len(),
-        }
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        match self {
-            System::Version(version) => {
-                SYSTEM_VERSION_KEY.pack(writer)?;
-                version.pack(writer)?;
-            }
-            System::Health(health) => {
-                SYSTEM_HEALTH_KEY.pack(writer)?;
-                health.pack(writer)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        match u8::unpack_inner::<R, CHECK>(reader)? {
-            SYSTEM_VERSION_KEY => Ok(System::Version(StorageVersion::unpack_inner::<R, CHECK>(reader)?)),
-            SYSTEM_HEALTH_KEY => Ok(System::Health(StorageHealth::unpack_inner::<R, CHECK>(reader)?)),
-            s => Err(Error::UnknownSystemKey(s)),
-        }
-    }
+/// System-related information.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Packable)]
+#[packable(tag_type = u8, with_error = Error::UnknownSystemKey)]
+#[packable(unpack_error = Error)]
+pub enum System {
+    /// The current version of the storage.
+    #[packable(tag = SYSTEM_VERSION_KEY)]
+    Version(StorageVersion),
+    /// The health status of the storage.
+    #[packable(tag = SYSTEM_HEALTH_KEY)]
+    Health(StorageHealth),
 }
