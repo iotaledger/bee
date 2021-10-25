@@ -60,7 +60,7 @@ impl BatchBuilder for Storage {
                 TransactionError::Storage(err) => {
                     return Err(Self::Error::Sled(err));
                 }
-                TransactionError::Abort(_) => unreachable!(),
+                TransactionError::Abort(err) => match err {},
             }
         }
 
