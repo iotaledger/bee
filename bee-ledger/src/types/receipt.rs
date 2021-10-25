@@ -3,7 +3,6 @@
 
 use crate::types::{error::Error, TreasuryOutput};
 
-use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
     constants::IOTA_SUPPLY,
     input::Input,
@@ -11,9 +10,10 @@ use bee_message::{
     output::Output,
     payload::{receipt::ReceiptPayload, Payload},
 };
+use bee_packable::Packable;
 
 /// A type that wraps a receipt and the index of the milestone in which it was included.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 pub struct Receipt {
     inner: ReceiptPayload,
     included_in: MilestoneIndex,
@@ -92,27 +92,5 @@ impl Receipt {
         }
 
         Ok(())
-    }
-}
-
-impl Packable for Receipt {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.inner.packed_len() + self.included_in.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.inner.pack(writer)?;
-        self.included_in.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let inner = ReceiptPayload::unpack_inner::<R, CHECK>(reader)?;
-        let included_in = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
-
-        Ok(Self::new(inner, included_in))
     }
 }

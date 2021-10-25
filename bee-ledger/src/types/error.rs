@@ -3,6 +3,8 @@
 
 use bee_message::{payload::milestone::MilestoneId, Error as MessageError};
 
+use std::convert::Infallible;
+
 /// Errors related to ledger types.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -72,4 +74,10 @@ pub enum Error {
     /// Milestone length mismatch.
     #[error("Milestone length mismatch: expected {0}, got {1}")]
     MilestoneLengthMismatch(usize, usize),
+}
+
+impl From<Infallible> for Error {
+    fn from(err: Infallible) -> Self {
+        match err {}
+    }
 }

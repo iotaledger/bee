@@ -3,13 +3,14 @@
 
 use crate::types::error::Error;
 
-use bee_common::packable::{Packable, Read, Write};
 use bee_message::output::OutputId;
+use bee_packable::Packable;
 
 use std::ops::Deref;
 
 /// Represents an output id as unspent.
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq, PartialEq, Hash, Packable)]
+#[packable(unpack_error = Error)]
 pub struct Unspent(OutputId);
 
 impl From<OutputId> for Unspent {
@@ -47,23 +48,5 @@ impl core::fmt::Display for Unspent {
 impl core::fmt::Debug for Unspent {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "Unspent({})", self)
-    }
-}
-
-impl Packable for Unspent {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.0.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(OutputId::unpack_inner::<R, CHECK>(reader)?))
     }
 }

@@ -20,16 +20,14 @@ use crate::{
     },
 };
 
-use bee_common::{
-    packable::{Packable, Read},
-    time,
-};
+use bee_common::time;
 use bee_message::{
     milestone::MilestoneIndex,
     output::{self, Output, OutputId},
     payload::Payload,
     MessageId,
 };
+use bee_packable::Packable;
 use bee_storage::access::{Insert, Truncate};
 use bee_tangle::solid_entry_point::SolidEntryPoint;
 
@@ -38,7 +36,7 @@ use log::{info, warn};
 use std::{
     collections::HashMap,
     fs::{File, OpenOptions},
-    io::BufReader,
+    io::{BufReader, Read},
     path::Path,
 };
 
@@ -51,6 +49,7 @@ fn snapshot_reader(path: &Path) -> Result<BufReader<File>, Error> {
     ))
 }
 
+/// FIXME: use `unpacker  instead.
 fn import_solid_entry_points<R: Read, B: StorageBackend>(
     reader: &mut R,
     storage: &B,
@@ -59,8 +58,12 @@ fn import_solid_entry_points<R: Read, B: StorageBackend>(
 ) -> Result<(), Error> {
     Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage).map_err(|e| Error::Storage(Box::new(e)))?;
     for _ in 0..sep_count {
-        Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &SolidEntryPoint::unpack(reader)?, &index)
-            .map_err(|e| Error::Storage(Box::new(e)))?;
+        Insert::<SolidEntryPoint, MilestoneIndex>::insert(
+            &*storage,
+            &SolidEntryPoint::unpack::<_, true>(reader)?,
+            &index,
+        )
+        .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 
     Ok(())
@@ -70,9 +73,9 @@ fn import_outputs<R: Read, B: StorageBackend>(reader: &mut R, storage: &B, outpu
     let mut balance_diffs = BalanceDiffs::new();
 
     for _ in 0..output_count {
-        let message_id = MessageId::unpack(reader)?;
-        let output_id = OutputId::unpack(reader)?;
-        let output = Output::unpack(reader)?;
+        let message_id = MessageId::unpack::<_, true>(reader)?;
+        let output_id = OutputId::unpack::<_, true>(reader)?;
+        let output = Output::unpack::<_, true>(reader)?;
         let created_output = CreatedOutput::new(message_id, output);
 
         create_output(&*storage, &output_id, &created_output)?;
@@ -88,7 +91,7 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
     milestone_diff_count: u64,
 ) -> Result<(), Error> {
     for _ in 0..milestone_diff_count {
-        let diff = MilestoneDiff::unpack(reader)?;
+        let diff = MilestoneDiff::unpack::<_, true>(reader)?;
         let index = diff.milestone().essence().index();
         // Unwrap is fine because ledger index was inserted just before.
         let ledger_index = *storage::fetch_ledger_index(&*storage)?.unwrap();
@@ -158,11 +161,11 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
     info!("Importing full snapshot file {}...", &path.to_string_lossy());
 
     let mut reader = snapshot_reader(path)?;
-    let header = SnapshotHeader::unpack(&mut reader)?;
+    let header = SnapshotHeader::unpack::<_, true>(&mut reader)?;
 
     check_header(&header, SnapshotKind::Full, network_id)?;
 
-    let full_header = FullSnapshotHeader::unpack(&mut reader)?;
+    let full_header = FullSnapshotHeader::unpack::<_, true>(&mut reader)?;
 
     if header.ledger_index() < header.sep_index() {
         return Err(Error::Snapshot(SnapshotError::LedgerSepIndexesInconsistency(
@@ -222,11 +225,11 @@ async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, netw
     info!("Importing delta snapshot file {}...", &path.to_string_lossy());
 
     let mut reader = snapshot_reader(path)?;
-    let header = SnapshotHeader::unpack(&mut reader)?;
+    let header = SnapshotHeader::unpack::<_, true>(&mut reader)?;
 
     check_header(&header, SnapshotKind::Delta, network_id)?;
 
-    let delta_header = DeltaSnapshotHeader::unpack(&mut reader)?;
+    let delta_header = DeltaSnapshotHeader::unpack::<_, true>(&mut reader)?;
 
     if header.sep_index() < header.ledger_index() {
         return Err(Error::Snapshot(SnapshotError::LedgerSepIndexesInconsistency(

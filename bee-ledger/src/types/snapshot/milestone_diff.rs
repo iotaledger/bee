@@ -3,7 +3,6 @@
 
 use crate::types::{ConsumedOutput, CreatedOutput, Error};
 
-use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
     output::{Output, OutputId, TreasuryOutput},
     payload::{
@@ -12,6 +11,12 @@ use bee_message::{
         Payload,
     },
     MessageId,
+};
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable, PackableExt,
 };
 
 use std::collections::HashMap;
@@ -47,113 +52,93 @@ impl MilestoneDiff {
 }
 
 impl Packable for MilestoneDiff {
-    type Error = Error;
+    type UnpackError = Error;
 
-    fn packed_len(&self) -> usize {
-        0u32.packed_len()
-            + std::mem::size_of_val(&MilestonePayload::KIND)
-            + self.milestone.packed_len()
-            + if let Some((treasury_output, milestone_id)) = self.consumed_treasury.as_ref() {
-                milestone_id.packed_len() + treasury_output.packed_len()
-            } else {
-                0
-            }
-            + 0u64.packed_len()
-            + self
-                .created_outputs
-                .iter()
-                .map(|(output_id, created_output)| output_id.packed_len() + created_output.packed_len())
-                .sum::<usize>()
-            + 0u64.packed_len()
-            + self
-                .consumed_outputs
-                .iter()
-                .map(|(output_id, (created_output, consumed_output))| {
-                    output_id.packed_len() + created_output.packed_len() + consumed_output.target().packed_len()
-                })
-                .sum::<usize>()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.milestone.packed_len() as u32 + MilestonePayload::KIND).pack(writer)?;
-        MilestonePayload::KIND.pack(writer)?;
-        self.milestone.pack(writer)?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        (self.milestone.packed_len() as u32 + MilestonePayload::KIND).pack(packer)?;
+        MilestonePayload::KIND.pack(packer)?;
+        self.milestone.pack(packer)?;
 
         if self.milestone.essence().receipt().is_some() {
+            // The current `unpack` implementation guarantees that `consumed_treasury` is some if
+            // the `receipt` is some and that is the only way to create a `MilestoneDiff`.
             if let Some((treasury_output, milestone_id)) = self.consumed_treasury.as_ref() {
-                milestone_id.pack(writer)?;
-                treasury_output.pack(writer)?;
-            } else {
-                return Err(Error::MissingConsumedTreasury);
+                milestone_id.pack(packer)?;
+                treasury_output.pack(packer)?;
             }
         }
 
-        (self.created_outputs.len() as u64).pack(writer)?;
+        (self.created_outputs.len() as u64).pack(packer)?;
         for (output_id, created) in self.created_outputs.iter() {
-            created.message_id().pack(writer)?;
-            output_id.pack(writer)?;
-            created.pack(writer)?;
+            created.message_id().pack(packer)?;
+            output_id.pack(packer)?;
+            created.pack(packer)?;
         }
 
-        (self.consumed_outputs.len() as u64).pack(writer)?;
+        (self.consumed_outputs.len() as u64).pack(packer)?;
         for (output_id, (created, consumed)) in self.consumed_outputs.iter() {
-            created.message_id().pack(writer)?;
-            output_id.pack(writer)?;
-            created.inner().pack(writer)?;
-            consumed.target().pack(writer)?;
+            created.message_id().pack(packer)?;
+            output_id.pack(packer)?;
+            created.inner().pack(packer)?;
+            consumed.target().pack(packer)?;
         }
 
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let milestone_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
-        let payload = Payload::unpack_inner::<R, CHECK>(reader)?;
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let milestone_len = u32::unpack::<_, VERIFY>(unpacker).infallible()? as usize;
+        let payload = Payload::unpack::<_, VERIFY>(unpacker).coerce()?;
         let milestone = match payload {
             Payload::Milestone(milestone) => milestone,
             Payload::Indexation(_)
             | Payload::Receipt(_)
             | Payload::Transaction(_)
             | Payload::TreasuryTransaction(_) => {
-                return Err(Error::InvalidPayloadKind(payload.kind()));
+                return Err(UnpackError::Packable(Error::InvalidPayloadKind(payload.kind())));
             }
         };
 
         if milestone_len != milestone.packed_len() + std::mem::size_of_val(&MilestonePayload::KIND) {
-            return Err(Error::MilestoneLengthMismatch(
+            return Err(UnpackError::Packable(Error::MilestoneLengthMismatch(
                 milestone_len,
                 milestone.packed_len() + std::mem::size_of_val(&MilestonePayload::KIND),
-            ));
+            )));
         }
 
         let consumed_treasury = if milestone.essence().receipt().is_some() {
-            let milestone_id = MilestoneId::unpack_inner::<R, CHECK>(reader)?;
-            let amount = u64::unpack_inner::<R, CHECK>(reader)?;
+            let milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker).infallible()?;
+            let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
 
-            Some((TreasuryOutput::new(amount)?, milestone_id))
+            Some((
+                TreasuryOutput::new(amount).map_err(UnpackError::from_packable)?,
+                milestone_id,
+            ))
         } else {
             None
         };
 
-        let created_count = u64::unpack_inner::<R, CHECK>(reader)? as usize;
+        let created_count = u64::unpack::<_, VERIFY>(unpacker).infallible()? as usize;
         let mut created_outputs = HashMap::with_capacity(created_count);
 
         for _ in 0..created_count {
-            let message_id = MessageId::unpack_inner::<R, CHECK>(reader)?;
-            let output_id = OutputId::unpack_inner::<R, CHECK>(reader)?;
-            let output = Output::unpack_inner::<R, CHECK>(reader)?;
+            let message_id = MessageId::unpack::<_, VERIFY>(unpacker).infallible()?;
+            let output_id = OutputId::unpack::<_, VERIFY>(unpacker).coerce()?;
+            let output = Output::unpack::<_, VERIFY>(unpacker).coerce()?;
 
             created_outputs.insert(output_id, CreatedOutput::new(message_id, output));
         }
 
-        let consumed_count = u64::unpack_inner::<R, CHECK>(reader)? as usize;
+        let consumed_count = u64::unpack::<_, VERIFY>(unpacker).infallible()? as usize;
         let mut consumed_outputs = HashMap::with_capacity(consumed_count);
 
         for _ in 0..consumed_count {
-            let message_id = MessageId::unpack_inner::<R, CHECK>(reader)?;
-            let output_id = OutputId::unpack_inner::<R, CHECK>(reader)?;
-            let output = Output::unpack_inner::<R, CHECK>(reader)?;
-            let target = TransactionId::unpack_inner::<R, CHECK>(reader)?;
+            let message_id = MessageId::unpack::<_, VERIFY>(unpacker).infallible()?;
+            let output_id = OutputId::unpack::<_, VERIFY>(unpacker).coerce()?;
+            let output = Output::unpack::<_, VERIFY>(unpacker).coerce()?;
+            let target = TransactionId::unpack::<_, VERIFY>(unpacker).infallible()?;
 
             consumed_outputs.insert(
                 output_id,

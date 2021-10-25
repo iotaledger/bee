@@ -3,8 +3,13 @@
 
 use crate::types::{error::Error, TreasuryDiff};
 
-use bee_common::packable::{Packable, Read, Write};
 use bee_message::output::OutputId;
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
 
 /// A type to record output and treasury changes that happened within a milestone.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -45,43 +50,40 @@ impl OutputDiff {
 }
 
 impl Packable for OutputDiff {
-    type Error = Error;
+    type UnpackError = Error;
 
-    fn packed_len(&self) -> usize {
-        self.created_outputs.packed_len() + self.consumed_outputs.packed_len() + self.treasury_diff.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.created_outputs.len() as u32).pack(writer)?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        (self.created_outputs.len() as u32).pack(packer)?;
         for output in self.created_outputs.iter() {
-            output.pack(writer)?;
+            output.pack(packer)?;
         }
 
-        (self.consumed_outputs.len() as u32).pack(writer)?;
+        (self.consumed_outputs.len() as u32).pack(packer)?;
         for output in self.consumed_outputs.iter() {
-            output.pack(writer)?;
+            output.pack(packer)?;
         }
 
-        self.treasury_diff.pack(writer).map_err(|_| Error::PackableOption)?;
+        self.treasury_diff.pack(packer)?;
 
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let created_outputs_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let created_outputs_len = u32::unpack::<_, VERIFY>(unpacker).infallible()? as usize;
         let mut created_outputs = Vec::with_capacity(created_outputs_len);
         for _ in 0..created_outputs_len {
-            created_outputs.push(OutputId::unpack_inner::<R, CHECK>(reader)?);
+            created_outputs.push(OutputId::unpack::<_, VERIFY>(unpacker).coerce()?);
         }
 
-        let consumed_outputs_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
+        let consumed_outputs_len = u32::unpack::<_, VERIFY>(unpacker).infallible()? as usize;
         let mut consumed_outputs = Vec::with_capacity(consumed_outputs_len);
         for _ in 0..consumed_outputs_len {
-            consumed_outputs.push(OutputId::unpack_inner::<R, CHECK>(reader)?);
+            consumed_outputs.push(OutputId::unpack::<_, VERIFY>(unpacker).coerce()?);
         }
-
         let treasury_diff =
-            Option::<TreasuryDiff>::unpack_inner::<R, CHECK>(reader).map_err(|_| Error::PackableOption)?;
+            Option::<TreasuryDiff>::unpack::<_, VERIFY>(unpacker).map_packable_err(|_| Error::PackableOption)?;
 
         Ok(Self {
             created_outputs,
