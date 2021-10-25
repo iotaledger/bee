@@ -11,14 +11,14 @@ keywords = [ "iota", "bee", "framework", "node", "api" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-ledger = { version = "0.5.0", path = "../../bee-ledger" }
-bee-message = { version = "0.1.5", path = "../../bee-message" }
-bee-protocol = { version = "0.1.1", path = "../../bee-protocol", optional = true }
+bee-ledger = { version = "0.5.0", path = "../../bee-ledger", default-features = false }
+bee-message = { version = "0.1.5", path = "../../bee-message", default-features = false }
+bee-protocol = { version = "0.1.1", path = "../../bee-protocol", default-features = false, optional = true }
 
-hex = { version = "0.4.3" }
-serde = { version = "1.0.130", features = [ "derive" ] }
-serde_json = { version = "1.0.68" }
-thiserror = { version = "1.0.30" }
+hex = { version = "0.4.3", default-features = false }
+serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
+serde_json = { version = "1.0.68", default-features = false, features = [ "alloc" ] }
+thiserror = { version = "1.0.30", default-features = false }
 
 [features]
 default = [ "peer" ]

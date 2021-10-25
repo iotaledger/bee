@@ -11,11 +11,11 @@ keywords = [ "iota", "tangle", "bee", "framework", "signing" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common-derive = { version = "0.1.1-alpha", path = "../bee-common/bee-common-derive" }
-bee-crypto = { version = "0.2.1-alpha", path = "../bee-crypto" }
-bee-ternary = { version = "0.5.0", path = "../bee-ternary" }
+bee-common-derive = { version = "0.1.1-alpha", path = "../bee-common/bee-common-derive", default-features = false }
+bee-crypto = { version = "0.2.1-alpha", path = "../bee-crypto", default-features = false }
+bee-ternary = { version = "0.5.0", path = "../bee-ternary", default-features = false }
 
-rand = "0.8.4"
-sha3 = "0.9.1"
-thiserror = "1.0.30"
-zeroize = "1.4.2"
+rand = { version = "0.8.4", default-features = false, features = [ "std", "std_rng" ] }
+sha3 = { version = "0.9.1", default-features = false }
+thiserror = { version = "1.0.30", default-features = false }
+zeroize = { version = "1.4.2", default-features = false }

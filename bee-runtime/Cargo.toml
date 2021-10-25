@@ -11,13 +11,13 @@ keywords = [ "iota", "tangle", "bee", "framework", "runtime" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-storage = { version = "0.9.0", path = "../bee-storage/bee-storage" }
+bee-storage = { version = "0.9.0", path = "../bee-storage/bee-storage", default-features = false }
 
-async-trait = "0.1.51"
-dashmap = "4.0.2"
-futures = "0.3.17"
-log = { version = "0.4.14", features = [ "serde" ] }
-tokio = "1.12.0"
+async-trait = { version = "0.1.51", default-features = false }
+dashmap = { version = "4.0.2", default-features = false }
+futures = { version = "0.3.17", default-features = false, features = [ "std", "alloc" ] }
+log = { version = "0.4.14", default-features = false, features = [ "serde" ] }
+tokio = { version = "1.12.0", default-features = false }
 
 [dev-dependencies]
-tokio = { version = "1.12.0", features = [ "rt", "macros", "time" ] }
+tokio = { version = "1.12.0", default-features = false, features = [ "rt", "macros", "time" ] }
