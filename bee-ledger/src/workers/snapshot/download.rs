@@ -11,37 +11,7 @@ use log::{info, warn};
 
 use std::{io::Read, path::Path};
 
-pub(crate) async fn download_snapshot_file(
-    path: &Path,
-    download_urls: impl Iterator<Item = &str>,
-) -> Result<(), Error> {
-    let url = most_recent_snapshot_url(download_urls).await?;
-    download_full_snapshot(path, url).await?;
-
-    Ok(())
-}
-
-async fn most_recent_snapshot_url<'a>(download_urls: impl Iterator<Item = &'a str>) -> Result<&'a str, Error> {
-    let downloads = join_all(download_urls.map(download_snapshot_header)).await;
-
-    let snapshot_headers = downloads.into_iter().collect::<Result<Vec<_>, Error>>()?;
-
-    let mut snapshot_headers = snapshot_headers.iter().flatten().collect::<Vec<_>>();
-
-    if snapshot_headers.is_empty() {
-        return Err(Error::NoDownloadSourceAvailable);
-    }
-
-    // Sort the headers so that the largest ledger index is in the last element.
-    snapshot_headers.sort_by(|(header_a, _), (header_b, _)| header_a.ledger_index().cmp(&header_b.ledger_index()));
-
-    // We know `snapshot_headers` is not empty, so unwrapping here is fine.
-    let (_, url) = snapshot_headers.pop().unwrap();
-
-    Ok(url)
-}
-
-async fn download_snapshot_header<'a>(download_url: &'a str) -> Result<Option<(SnapshotHeader, &'a str)>, Error> {
+async fn download_snapshot_header(download_url: &str) -> Result<Option<(SnapshotHeader, &str)>, Error> {
     info!("Downloading snapshot header {}...", download_url);
 
     match reqwest::get(download_url).await {
@@ -72,6 +42,24 @@ async fn download_snapshot_header<'a>(download_url: &'a str) -> Result<Option<(S
     Ok(None)
 }
 
+async fn most_recent_snapshot_url<'a>(download_urls: impl Iterator<Item = &'a str>) -> Result<&'a str, Error> {
+    let downloads = join_all(download_urls.map(download_snapshot_header)).await;
+    let snapshot_headers = downloads.into_iter().collect::<Result<Vec<_>, Error>>()?;
+    let mut snapshot_headers = snapshot_headers.iter().flatten().collect::<Vec<_>>();
+
+    if snapshot_headers.is_empty() {
+        return Err(Error::NoDownloadSourceAvailable);
+    }
+
+    // Sort the headers so that the largest ledger index is in the last element.
+    snapshot_headers.sort_by(|(header_a, _), (header_b, _)| header_a.ledger_index().cmp(&header_b.ledger_index()));
+
+    // We know `snapshot_headers` is not empty, so unwrapping here is fine.
+    let (_, url) = snapshot_headers.pop().unwrap();
+
+    Ok(url)
+}
+
 async fn download_full_snapshot(path: &Path, download_url: &str) -> Result<(), Error> {
     tokio::fs::create_dir_all(
         path.parent()
@@ -96,6 +84,16 @@ async fn download_full_snapshot(path: &Path, download_url: &str) -> Result<(), E
     if !path.exists() {
         return Err(Error::NoDownloadSourceAvailable);
     }
+
+    Ok(())
+}
+
+pub(crate) async fn download_snapshot_file(
+    path: &Path,
+    download_urls: impl Iterator<Item = &str>,
+) -> Result<(), Error> {
+    let url = most_recent_snapshot_url(download_urls).await?;
+    download_full_snapshot(path, url).await?;
 
     Ok(())
 }
