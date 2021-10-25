@@ -60,7 +60,12 @@ async fn most_recent_snapshot_url<'a>(download_urls: impl Iterator<Item = &'a st
     Ok(url)
 }
 
-async fn download_full_snapshot(path: &Path, download_url: &str) -> Result<(), Error> {
+pub(crate) async fn download_snapshot_file(
+    path: &Path,
+    download_urls: impl Iterator<Item = &str>,
+) -> Result<(), Error> {
+    let download_url = most_recent_snapshot_url(download_urls).await?;
+
     tokio::fs::create_dir_all(
         path.parent()
             .ok_or_else(|| Error::InvalidFilePath(format!("{}", path.display())))?,
@@ -84,16 +89,6 @@ async fn download_full_snapshot(path: &Path, download_url: &str) -> Result<(), E
     if !path.exists() {
         return Err(Error::NoDownloadSourceAvailable);
     }
-
-    Ok(())
-}
-
-pub(crate) async fn download_snapshot_file(
-    path: &Path,
-    download_urls: impl Iterator<Item = &str>,
-) -> Result<(), Error> {
-    let url = most_recent_snapshot_url(download_urls).await?;
-    download_full_snapshot(path, url).await?;
 
     Ok(())
 }
