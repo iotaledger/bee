@@ -97,7 +97,7 @@ impl Peer {
 impl fmt::Debug for Peer {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Peer")
-            .field("peer_id", &self.peer_id)
+            .field("peer_id", &self.peer_id.to_string())
             .field("public_key", &bs58::encode(&self.public_key).into_string())
             .field("ip_address", &self.ip_address)
             .field("services", &self.services.to_string())
@@ -176,12 +176,15 @@ mod tests {
     impl Peer {
         pub(crate) fn new_test_peer(index: u8) -> Self {
             let mut services = ServiceMap::new();
-
             services.insert(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, 1337);
 
+            let public_key = PrivateKey::generate().unwrap().public_key();
+            let peer_id = PeerId::from_public_key(public_key.clone());
+
             Self {
+                peer_id,
+                public_key,
                 ip_address: format!("127.0.0.{}", index).parse().unwrap(),
-                public_key: PrivateKey::generate().unwrap().public_key(),
                 services,
             }
         }

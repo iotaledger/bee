@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    command::CommandTx,
     config::AutopeeringConfig,
     discovery,
     distance::{Neighborhood, SIZE_INBOUND, SIZE_OUTBOUND},
@@ -90,6 +91,7 @@ impl<S: PeerStore> PeeringManager<S> {
         request_mngr: RequestManager,
         peerstore: S,
         event_tx: EventTx,
+        command_tx: CommandTx,
     ) -> Self {
         let inbound_nh = Neighborhood::new(local.clone());
         let outbound_nh = Neighborhood::new(local.clone());

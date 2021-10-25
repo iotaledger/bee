@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    command::{Command, CommandTx},
     config::AutopeeringConfig,
     delay::{Cronjob, DelayFactoryBuilder, DelayFactoryMode},
     discovery::{
@@ -20,7 +21,7 @@ use crate::{
     salt::{Salt, DEFAULT_SALT_LIFETIME_SECS},
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket, ServerTx},
     service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
-    task::{ShutdownBus, Task},
+    task::{ShutdownBus, ShutdownRx, Task},
     time,
 };
 
@@ -74,7 +75,7 @@ where
 
     // Create a bus to distribute the shutdown signal to all spawned tasks. The const generic always matches
     // the number of required permanent tasks.
-    let (shutdown_bus, mut shutdown_reg) = ShutdownBus::<8>::new();
+    let (shutdown_bus, mut shutdown_reg) = ShutdownBus::<9>::new();
     Task::spawn(
         async move {
             quit_signal.await;
@@ -115,7 +116,7 @@ where
         peerstore.clone(),
         event_tx.clone(),
     );
-    Task::spawn_runnable(discovery_mngr, shutdown_reg.register());
+    let command_tx = discovery_mngr.init(&mut shutdown_reg).await;
 
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
     let peering_config = PeeringManagerConfig::new(&config, version, network_id);
@@ -127,6 +128,7 @@ where
         request_mngr.clone(),
         peerstore.clone(),
         event_tx.clone(),
+        command_tx.clone(),
     );
     Task::spawn_runnable(peering_mngr, shutdown_reg.register());
 
@@ -154,13 +156,22 @@ where
         "Salt-Update",
     );
 
+    impl Cronjob<0> for () {
+        type Cancel = ShutdownRx;
+        type Context = CommandTx;
+        type DelayIter = iter::Repeat<Duration>;
+    }
+
     // Send (re-)verfication requests regularly.
     Task::spawn(
         Cronjob::<0>::repeat(
-            peerstore.clone(),
+            (),
             iter::repeat(Duration::from_secs(DEFAULT_REVERIFY_INTERVAL_SECS)),
-            peerstore::send_verification_requests_cmd(),
-            (request_mngr.clone(), outgoing_tx.clone()),
+            Box::new(|&(), ctx: &_| {
+                ctx.send(Command::SendVerificationRequests)
+                    .expect("error sending verification requests command");
+            }),
+            command_tx.clone(),
             shutdown_reg.register(),
         ),
         "Reverification-Requests",
@@ -169,10 +180,13 @@ where
     // Send discovery requests regularly.
     Task::spawn(
         Cronjob::<0>::repeat(
-            peerstore.clone(),
+            (),
             iter::repeat(Duration::from_secs(DEFAULT_QUERY_INTERVAL_SECS)),
-            peerstore::send_discovery_requests_cmd(),
-            (request_mngr.clone(), outgoing_tx.clone()),
+            Box::new(|&(), ctx: &_| {
+                ctx.send(Command::SendDiscoveryRequests)
+                    .expect("error sending discovery requests command");
+            }),
+            command_tx.clone(),
             shutdown_reg.register(),
         ),
         "Discovery-Requests",

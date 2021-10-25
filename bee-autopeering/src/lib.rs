@@ -6,6 +6,7 @@
 // #![warn(missing_docs)]
 #![allow(warnings)]
 
+mod command;
 mod delay;
 mod discovery;
 mod discovery_messages;
@@ -17,6 +18,7 @@ mod multiaddr;
 mod packet;
 mod peering;
 mod peering_messages;
+mod peerlist;
 mod proto {
     include!(concat!(env!("OUT_DIR"), "/proto.rs"));
 }
