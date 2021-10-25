@@ -44,7 +44,8 @@ impl<U> UnpackError<Infallible, U> {
         UnpackError::Unpacker(self.into_unpacker())
     }
 
-    /// Get the [`Packer`](UnpackError::Unpacker) variant if the [`Packable`](UnpackError::Packable) variant is [`Infallible`].
+    /// Get the [`Packer`](UnpackError::Unpacker) variant if the [`Packable`](UnpackError::Packable) variant is
+    /// [`Infallible`].
     pub fn into_unpacker(self) -> U {
         match self {
             Self::Packable(err) => match err {},
