@@ -44,7 +44,7 @@ This section guides you through reporting a bug. Following these guidelines help
 
 Please check the following list:
 
-- **Do not open a GitHub issue for [security vulnerabilities](.github/SECURITY.MD)**, instead, please contact us at [security@iota.org](mailto:security@iota.org).
+- **Do not open a GitHub issue for [security vulnerabilities](./SECURITY.MD)**, instead, please contact us at [security@iota.org](mailto:security@iota.org).
 
 - **Ensure the bug was not already reported** by searching on GitHub under [**Issues**](https://github.com/iotaledger/bee/issues). If the bug has already been reported **and the issue is still open**, add a comment to the existing issue instead of opening a new one.
 
@@ -152,7 +152,7 @@ example that compiles and passes [documentation tests](https://doc.rust-lang.org
 
 - All code should be well tested, using unit tests and integration tests
 
-- Code must compile and pass our [continuous integration tests](.github/workflows)
+- Code must compile and pass our [continuous integration tests](./workflows)
 
 - To be compatible with the guidelines of the Eclipse foundation, all code must be licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). This license must be referenced in every crate of the workspace (add [`./LICENSE`] to the crate's top level directory). For Rust crates, every `Cargo.toml` must contain the line `license = "Apache-2.0"`.
 
@@ -177,4 +177,4 @@ If all [status checks](https://help.github.com/articles/about-status-checks/) pa
 <summary>Code of Conduct :clipboard:</summary>
 <br>
 
-This project and everyone participating in it is governed by the [IOTA Code of Conduct](.github/CODE_OF_CONDUCT.md).
+This project and everyone participating in it is governed by the [IOTA Code of Conduct](./CODE_OF_CONDUCT.md).
