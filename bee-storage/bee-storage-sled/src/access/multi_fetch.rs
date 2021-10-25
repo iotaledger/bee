@@ -5,7 +5,6 @@
 
 use crate::{storage::Storage, trees::*};
 
-use bee_common::packable::Packable;
 use bee_ledger::types::{Balance, ConsumedOutput, CreatedOutput, OutputDiff};
 use bee_message::{
     address::Address,
@@ -13,6 +12,7 @@ use bee_message::{
     output::OutputId,
     Message, MessageId,
 };
+use bee_packable::{Packable, PackableExt};
 use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
 use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
 
@@ -29,12 +29,12 @@ impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for TreeIter<'
     type Item = Result<Option<V>, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let key = self.keys.next()?.pack_new();
+        let key = self.keys.next()?.pack_to_vec();
 
         Some(
             self.tree
                 .get(key)
-                .map(|option| option.map(|bytes| V::unpack_unchecked(&mut bytes.as_ref()).unwrap()))
+                .map(|option| option.map(|bytes| V::unpack_unverified(&mut bytes.as_ref()).unwrap()))
                 .map_err(E::from),
         )
     }
@@ -51,12 +51,12 @@ impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for DbIter<'a,
     type Item = Result<Option<V>, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let key = self.keys.next()?.pack_new();
+        let key = self.keys.next()?.pack_to_vec();
 
         Some(
             self.db
                 .get(key)
-                .map(|option| option.map(|bytes| V::unpack_unchecked(&mut bytes.as_ref()).unwrap()))
+                .map(|option| option.map(|bytes| V::unpack_unverified(&mut bytes.as_ref()).unwrap()))
                 .map_err(E::from),
         )
     }
