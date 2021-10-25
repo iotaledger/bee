@@ -19,6 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.6.0 - 2021-10-25
+
+### Added
+
+- Download snapshots by most recent ledger index;
+- Derive `Clone` for `Balance`, `OutputDiff`, `TreasuryDiff` and `Unspent`;
+
+### Changed
+
+- Decouple snapshot names and download URLs;
+- Reduced number of dependencies features;
+- Update bee-tangle version and change `MsTangle` to `Tangle`;
+
 ## 0.5.0 - 2021-08-30
 
 ### Added
