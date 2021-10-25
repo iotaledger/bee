@@ -112,7 +112,7 @@ impl<const N: usize, const INBOUND: bool> Neighborhood<N, INBOUND> {
     pub(crate) fn remove_peer(&mut self, peer_id: &PeerId) -> Option<Peer> {
         if self.neighbors.is_empty() {
             None
-        } else if let Some(index) = self.neighbors.iter().position(|pd| &pd.peer().peer_id() == peer_id) {
+        } else if let Some(index) = self.neighbors.iter().position(|pd| pd.peer().peer_id() == peer_id) {
             let PeerDistance { peer, .. } = self.neighbors.remove(index);
             Some(peer)
         } else {

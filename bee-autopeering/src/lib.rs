@@ -21,6 +21,7 @@ mod proto {
     include!(concat!(env!("OUT_DIR"), "/proto.rs"));
 }
 mod request;
+mod ring;
 mod salt;
 mod server;
 mod task;

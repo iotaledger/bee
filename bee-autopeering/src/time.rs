@@ -8,7 +8,9 @@ pub(crate) use tokio::time::sleep;
 pub(crate) type Timestamp = u64;
 pub(crate) type Timespan = u64;
 
-pub(crate) const SECOND: u64 = 1000;
+pub(crate) const SECOND: u64 = 1;
+pub(crate) const MINUTE: u64 = 60 * SECOND;
+pub(crate) const HOUR: u64 = 60 * MINUTE;
 
 pub(crate) fn unix_now_secs() -> Timestamp {
     unix_time_secs(SystemTime::now())

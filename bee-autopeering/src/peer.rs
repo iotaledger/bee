@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    discovery::VERIFICATION_EXPIRATION,
+    discovery::VERIFICATION_EXPIRATION_SECS,
     identity::PeerId,
     proto,
     service_map::{ServiceMap, ServiceTransport},
@@ -24,34 +24,38 @@ use std::{
 // #[derive(Serialize, Deserialize)]
 #[derive(Clone)]
 pub struct Peer {
-    ip_address: IpAddr,
+    peer_id: PeerId,
     public_key: PublicKey,
+    ip_address: IpAddr,
     services: ServiceMap,
 }
 
 impl Peer {
     /// Creates a new instance.
     pub fn new(address: IpAddr, public_key: PublicKey) -> Self {
+        let peer_id = PeerId::from_public_key(public_key);
+
         Self {
-            ip_address: address,
+            peer_id,
             public_key,
+            ip_address: address,
             services: ServiceMap::default(),
         }
     }
 
     /// Returns the [`PeerId`](crate::identity::PeerId) of this peer.
-    pub fn peer_id(&self) -> PeerId {
-        PeerId::from_public_key(self.public_key)
-    }
-
-    /// Returns the address of this peer.
-    pub fn ip_address(&self) -> IpAddr {
-        self.ip_address
+    pub fn peer_id(&self) -> &PeerId {
+        &self.peer_id
     }
 
     /// Returns the public key of this peer.
     pub fn public_key(&self) -> &PublicKey {
         &self.public_key
+    }
+
+    /// Returns the address of this peer.
+    pub fn ip_address(&self) -> IpAddr {
+        self.ip_address
     }
 
     /// Returns the services this peer.
@@ -84,13 +88,18 @@ impl Peer {
 
         Ok(buf)
     }
+
+    pub(crate) fn into_id(self) -> PeerId {
+        self.peer_id
+    }
 }
 
 impl fmt::Debug for Peer {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Peer")
-            .field("ip_address", &self.ip_address)
+            .field("peer_id", &self.peer_id)
             .field("public_key", &bs58::encode(&self.public_key).into_string())
+            .field("ip_address", &self.ip_address)
             .field("services", &self.services.to_string())
             .finish()
     }
@@ -110,11 +119,14 @@ impl From<proto::Peer> for Peer {
         let public_key = PublicKey::try_from_bytes(public_key.try_into().expect("invalid public key byte length"))
             .expect("error restoring public key from bytes");
 
+        let peer_id = PeerId::from_public_key(public_key);
+
         let services: ServiceMap = services.expect("missing service map").into();
 
         Self {
-            ip_address,
+            peer_id,
             public_key,
+            ip_address,
             services,
         }
     }
@@ -136,9 +148,19 @@ impl AsRef<Peer> for Peer {
     }
 }
 
-pub(crate) fn is_verified(last_verification_response: Option<Timestamp>) -> bool {
-    if let Some(last_verification_response) = last_verification_response {
-        time::since(last_verification_response) <= VERIFICATION_EXPIRATION
+// returns whether the local peer has recently verified the given peer.
+pub(crate) fn is_verified(last_verif_res: Option<Timestamp>) -> bool {
+    if let Some(last_verif_res) = last_verif_res {
+        time::since(last_verif_res) <= VERIFICATION_EXPIRATION_SECS
+    } else {
+        false
+    }
+}
+
+// returns whether the given peer has recently verified the local peer.
+pub(crate) fn has_verified(last_verif_req: Option<Timestamp>) -> bool {
+    if let Some(last_verif_req) = last_verif_req {
+        time::since(last_verif_req) <= VERIFICATION_EXPIRATION_SECS
     } else {
         false
     }

@@ -19,7 +19,7 @@ impl RejectionFilter {
     }
     pub(crate) fn include_peers(&mut self, peers: &[Peer]) {
         self.rejected_peers
-            .extend(peers.iter().map(|p| p.peer_id()).zip(iter::repeat(true)));
+            .extend(peers.iter().map(|p| p.peer_id().clone()).zip(iter::repeat(true)));
     }
     pub(crate) fn include_peer(&mut self, peer_id: PeerId) {
         self.rejected_peers.insert(peer_id, true);

@@ -3,6 +3,7 @@
 
 use crate::{
     delay::{Command, Cronjob, DelayFactory},
+    discovery::PeerMetrics,
     identity::PeerId,
     packet::{MessageType, OutgoingPacket},
     peer::{self, Peer},
@@ -29,16 +30,18 @@ pub trait PeerStore: Clone + Send + Sync {
 
     fn new(config: Self::Config) -> Self;
 
-    fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp>;
-    fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp>;
+    fn insert_peer(&self, peer: Peer) -> bool;
+    fn remove_peer(&self, peer_id: &PeerId) -> bool;
+
     fn peer(&self, peer_id: &PeerId) -> Option<Peer>;
     fn peers(&self) -> Vec<Peer>;
 
+    fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp>;
+    fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp>;
+
     fn update_last_verification_request(&self, peer_id: PeerId);
     fn update_last_verification_response(&self, peer_id: PeerId);
-
-    fn insert_peer(&self, peer: Peer) -> bool;
-    fn remove_peer(&self, peer_id: &PeerId) -> bool;
+    fn update_peer_metrics(&self, peer_id: &PeerId, metrics: impl Fn(&mut PeerMetrics));
 }
 
 // Used to send, e.g. (re-)verification and discovery requests in certain intervals.
@@ -61,7 +64,7 @@ pub(crate) fn send_verification_requests_cmd<S: PeerStore>() -> Command<S, 0> {
             let peer_id = peer.peer_id();
             let target_addr = peer.ip_address();
 
-            let verif_req = request_mngr.new_verification_request(peer_id, target_addr);
+            let verif_req = request_mngr.new_verification_request(peer_id.clone(), target_addr);
             let msg_bytes = verif_req
                 .to_protobuf()
                 .expect("error encoding verification request")
@@ -94,9 +97,9 @@ pub(crate) fn send_discovery_requests_cmd<S: PeerStore>() -> Command<S, 0> {
             let peer_id = peer.peer_id();
             let target_addr = peer.ip_address();
 
-            if peer::is_verified(peerstore.last_verification_response(&peer_id)) {
+            if peer::is_verified(peerstore.last_verification_response(peer_id)) {
                 // TODO: refactor into a function
-                let disc_req = request_mngr.new_discovery_request(peer_id, target_addr);
+                let disc_req = request_mngr.new_discovery_request(peer_id.clone(), target_addr);
                 let msg_bytes = disc_req
                     .to_protobuf()
                     .expect("error encoding discovery request")
@@ -118,7 +121,7 @@ pub(crate) fn send_discovery_requests_cmd<S: PeerStore>() -> Command<S, 0> {
     })
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct InMemoryPeerStore {
     inner: Arc<RwLock<InMemoryPeerStoreInner>>,
 }
@@ -128,6 +131,7 @@ struct InMemoryPeerStoreInner {
     last_verif_requests: HashMap<PeerId, Timestamp>,
     last_verif_responses: HashMap<PeerId, Timestamp>,
     peers: HashMap<PeerId, Peer>,
+    metrics: HashMap<PeerId, PeerMetrics>,
 }
 
 impl InMemoryPeerStore {
@@ -148,45 +152,52 @@ impl PeerStore for InMemoryPeerStore {
             inner: Default::default(),
         }
     }
-    fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp> {
-        self.read_inner().last_verif_requests.get(peer_id).copied()
+
+    fn insert_peer(&self, peer: Peer) -> bool {
+        let peer_id = peer.peer_id();
+
+        // Return `true` if the peer is new, otherwise `false`.
+        self.write_inner().peers.insert(peer_id.clone(), peer).is_none()
     }
-    fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp> {
-        self.read_inner().last_verif_responses.get(peer_id).copied()
+
+    fn remove_peer(&self, peer_id: &PeerId) -> bool {
+        // Return `false` if the peer didn't need removing, otherwise `true`.
+        self.write_inner().peers.remove(peer_id).is_some()
     }
+
     fn peer(&self, peer_id: &PeerId) -> Option<Peer> {
         self.read_inner().peers.get(peer_id).map(|p| p.clone())
     }
+
     fn peers(&self) -> Vec<Peer> {
         self.read_inner().peers.values().cloned().collect::<Vec<Peer>>()
     }
+
+    fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp> {
+        self.read_inner().last_verif_requests.get(peer_id).copied()
+    }
+
+    fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp> {
+        self.read_inner().last_verif_responses.get(peer_id).copied()
+    }
+
     fn update_last_verification_request(&self, peer_id: PeerId) {
         let _ = self
             .write_inner()
             .last_verif_requests
             .insert(peer_id, time::unix_now_secs());
     }
+
     fn update_last_verification_response(&self, peer_id: PeerId) {
         let _ = self
             .write_inner()
             .last_verif_responses
             .insert(peer_id, time::unix_now_secs());
     }
-    fn insert_peer(&self, peer: Peer) -> bool {
-        let peer_id = peer.peer_id();
-        if let Some(_) = self.write_inner().peers.insert(peer_id, peer) {
-            false
-        } else {
-            // return `true` if the peer is new
-            true
-        }
-    }
-    fn remove_peer(&self, peer_id: &PeerId) -> bool {
-        if let Some(_) = self.write_inner().peers.remove(peer_id) {
-            true
-        } else {
-            // return `false` if the peer didn't need removing
-            false
+
+    fn update_peer_metrics(&self, peer_id: &PeerId, f: impl Fn(&mut PeerMetrics)) {
+        if let Some(metrics) = self.write_inner().metrics.get_mut(peer_id) {
+            f(metrics);
         }
     }
 }
@@ -227,28 +238,39 @@ impl PeerStore for SledPeerStore {
 
         Self { db }
     }
-    fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp> {
+
+    fn insert_peer(&self, peer: Peer) -> bool {
         todo!()
     }
-    fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp> {
+
+    fn remove_peer(&self, peer_id: &PeerId) -> bool {
         todo!()
     }
+
     fn peer(&self, peer_id: &PeerId) -> Option<Peer> {
         todo!()
     }
+
     fn peers(&self) -> Vec<Peer> {
         todo!()
     }
+
+    fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp> {
+        todo!()
+    }
+
+    fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp> {
+        todo!()
+    }
+
     fn update_last_verification_request(&self, peer_id: PeerId) {
         todo!()
     }
     fn update_last_verification_response(&self, peer_id: PeerId) {
         todo!()
     }
-    fn insert_peer(&self, peer: Peer) -> bool {
-        todo!()
-    }
-    fn remove_peer(&self, peer_id: &PeerId) -> bool {
+
+    fn update_peer_metrics(&self, peer_id: &PeerId, f: impl Fn(&mut PeerMetrics)) {
         todo!()
     }
 }

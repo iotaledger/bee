@@ -136,7 +136,7 @@ impl Serialize for AutopeeringMultiaddr {
 impl fmt::Debug for AutopeeringMultiaddr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AutopeeringMultiaddr")
-            .field("host_multiaddr", &self.address)
+            .field("address", &self.address)
             .field("public_key", &from_pubkey_to_base58(&self.public_key))
             .finish()
     }
