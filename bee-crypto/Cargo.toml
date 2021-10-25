@@ -11,15 +11,15 @@ keywords = [ "iota", "tangle", "bee", "framework", "crypto" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-ternary = { version = "0.5.0", path = "../bee-ternary" }
+bee-ternary = { version = "0.5.0", path = "../bee-ternary", default-features = false }
 
-byteorder = "1.4.3"
-lazy_static = "1.4.0"
-thiserror = "1.0.30"
-tiny-keccak = { version = "2.0.2", features = [ "keccak" ] }
+byteorder = {version = "1.4.3", default-features = false }
+lazy_static = {version = "1.4.0", default-features = false }
+thiserror = {version = "1.0.30", default-features = false }
+tiny-keccak = { version = "2.0.2", default-features = false, features = [ "keccak" ] }
 
 [dev-dependencies]
-criterion = "0.3.5"
+criterion = { version = "0.3.5", default-features = false }
 
 [[bench]]
 name = "raw_speed"

@@ -11,11 +11,11 @@ keywords = [ "iota", "tangle", "bee", "framework", "pow" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-crypto = { version = "0.2.1-alpha", path = "../bee-crypto" }
-bee-ternary = { version = "0.5.0", path = "../bee-ternary" }
+bee-crypto = { version = "0.2.1-alpha", path = "../bee-crypto", default-features = false }
+bee-ternary = { version = "0.5.0", path = "../bee-ternary", default-features = false }
 
-iota-crypto = { version = "0.7.0", features = [ "blake2b", "digest" ] }
-thiserror = "1.0.30"
+iota-crypto = { version = "0.7.0", default-features = false, features = [ "blake2b", "digest" ] }
+thiserror = { version = "1.0.30", default-features = false }
 
 [dev-dependencies]
-bee-test = { path = "../bee-test" }
+bee-test = { path = "../bee-test", default-features = false }

@@ -14,5 +14,5 @@ homepage = "https://www.iota.org"
 proc-macro = true
 
 [dependencies]
-quote = "1.0.10"
-syn = "1.0.80"
+quote = { version = "1.0.10", default-features = false }
+syn = { version = "1.0.80", default-features = false, features = [ "full", "extra-traits", "parsing", "printing", "derive", "proc-macro", "clone-impls" ] }

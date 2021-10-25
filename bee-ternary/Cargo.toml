@@ -11,11 +11,11 @@ keywords = [ "iota", "tangle", "bee", "framework", "ternary" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-num-traits = "0.2.14"
-serde = { version = "1.0.130", optional = true }
+num-traits = { version = "0.2.14", default-features = false }
+serde = { version = "1.0.130", default-features = false, optional = true }
 
 [build-dependencies]
-autocfg = "1.0.0"
+autocfg = { version = "1.0.0", default-features = false }
 
 [features]
 serde1 = [ "serde" ]

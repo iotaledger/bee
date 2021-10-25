@@ -11,15 +11,15 @@ keywords = [ "iota", "tangle", "bee", "framework", "test" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-ledger = { version = "0.5.0", path = "../bee-ledger" }
-bee-message = { version = "0.1.5", path = "../bee-message" }
-bee-tangle = { version = "0.2.0", path = "../bee-tangle" }
-bee-ternary = { version = "0.5.0", features = [ "serde1" ], path = "../bee-ternary" }
+bee-ledger = { version = "0.5.0", path = "../bee-ledger", default-features = false }
+bee-message = { version = "0.1.5", path = "../bee-message", default-features = false }
+bee-tangle = { version = "0.2.0", path = "../bee-tangle", default-features = false }
+bee-ternary = { version = "0.5.0", path = "../bee-ternary", default-features = false, features = [ "serde1" ] }
 
-bytemuck = "1.7.2"
-rand = "0.8.4"
+bytemuck = { version = "1.7.2", default-features = false }
+rand = { version = "0.8.4", default-features = false }
 
 [dev-dependencies]
-hex = "0.4.3"
-serde = "1.0.130"
-serde_json = "1.0.68"
+hex = { version = "0.4.3", default-features = false }
+serde = { version = "1.0.130", default-features = false }
+serde_json = { version = "1.0.68", default-features = false, features = [ "alloc" ] }
