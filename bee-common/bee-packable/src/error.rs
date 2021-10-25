@@ -41,9 +41,14 @@ impl<T, U> From<U> for UnpackError<T, U> {
 impl<U> UnpackError<Infallible, U> {
     /// Coerces the value if the [`Packable`](crate::Packable) variant is [`Infallible`].
     pub(crate) fn infallible<E>(self) -> UnpackError<E, U> {
+        UnpackError::Unpacker(self.into_unpacker())
+    }
+
+    /// Get the [`Packer`](UnpackError::Unpacker) variant if the [`Packable`](UnpackError::Packable) variant is [`Infallible`].
+    pub fn into_unpacker(self) -> U {
         match self {
             Self::Packable(err) => match err {},
-            Self::Unpacker(err) => UnpackError::Unpacker(err),
+            Self::Unpacker(err) => err,
         }
     }
 }
