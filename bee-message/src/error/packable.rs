@@ -38,6 +38,9 @@ pub enum MessageUnpackError {
     Validation(ValidationError),
 }
 
+#[cfg(feature = "std")]
+impl std::error::Error for MessageUnpackError {}
+
 impl_wrapped_validated!(MessageUnpackError, MessageUnpackError::Input, InputUnpackError);
 impl_wrapped_validated!(MessageUnpackError, MessageUnpackError::Output, OutputUnpackError);
 impl_wrapped_validated!(MessageUnpackError, MessageUnpackError::Payload, PayloadUnpackError);
