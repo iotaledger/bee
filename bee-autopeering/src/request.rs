@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use num::CheckedAdd;
+use tokio::sync::oneshot;
 
 use crate::{
-    delay::{Command, Cronjob, DelayFactory},
+    delay::DelayFactory,
     discovery::messages::{DiscoveryRequest, VerificationRequest, VerificationResponse},
     hash,
     identity::PeerId,
@@ -14,7 +15,7 @@ use crate::{
     peerstore::PeerStore,
     salt::Salt,
     server::ServerTx,
-    task::ShutdownRx,
+    task::{Repeat, ShutdownRx},
     time::{self, Timestamp},
 };
 
@@ -30,12 +31,14 @@ use std::{
 };
 
 type RequestHash = [u8; hash::SHA256_LEN];
-type Callback = Box<dyn Fn() + Send + Sync + 'static>;
+pub(crate) type Callback = Box<dyn Fn() + Send + Sync + 'static>;
+pub(crate) type ResponseSignal = oneshot::Sender<()>;
 
 // If the request is not answered within that time it gets removed from the manager, and any response
 // coming in later will be deemed invalid.
 pub(crate) const REQUEST_EXPIRATION_SECS: u64 = 20;
 pub(crate) const EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS: u64 = 1;
+pub(crate) const RESPONSE_TIMEOUT: Duration = Duration::from_millis(500);
 
 // Marker trait for requests.
 pub(crate) trait Request: Debug + Clone {}
@@ -49,7 +52,8 @@ pub(crate) struct RequestKey {
 pub(crate) struct RequestValue {
     pub(crate) request_hash: [u8; hash::SHA256_LEN],
     pub(crate) expiration_time: u64,
-    pub(crate) callback: Callback,
+    pub(crate) callback: Option<Callback>,
+    pub(crate) response_signal: Option<ResponseSignal>,
 }
 
 #[derive(Clone)]
@@ -76,7 +80,8 @@ impl RequestManager {
         &self,
         peer_id: PeerId,
         target_addr: IpAddr,
-        callback: Callback,
+        callback: Option<Callback>,
+        response_signal: Option<ResponseSignal>,
     ) -> VerificationRequest {
         let timestamp = crate::time::unix_now_secs();
 
@@ -102,6 +107,7 @@ impl RequestManager {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
             callback,
+            response_signal,
         };
 
         let _ = self
@@ -117,7 +123,8 @@ impl RequestManager {
         &self,
         peer_id: PeerId,
         target_addr: IpAddr,
-        callback: Callback,
+        callback: Option<Callback>,
+        response_signal: Option<ResponseSignal>,
     ) -> DiscoveryRequest {
         let timestamp = crate::time::unix_now_secs();
 
@@ -137,6 +144,7 @@ impl RequestManager {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
             callback,
+            response_signal,
         };
 
         let _ = self
@@ -148,7 +156,12 @@ impl RequestManager {
         disc_req
     }
 
-    pub(crate) fn new_peering_request(&self, peer_id: PeerId, callback: Callback) -> PeeringRequest {
+    pub(crate) fn new_peering_request(
+        &self,
+        peer_id: PeerId,
+        callback: Option<Callback>,
+        response_signal: Option<ResponseSignal>,
+    ) -> PeeringRequest {
         let timestamp = crate::time::unix_now_secs();
 
         let key = RequestKey {
@@ -170,6 +183,7 @@ impl RequestManager {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
             callback,
+            response_signal,
         };
 
         let _ = self
@@ -194,50 +208,23 @@ impl RequestManager {
     }
 }
 
-#[async_trait::async_trait]
-impl Cronjob<0> for RequestManager {
-    type Cancel = ShutdownRx;
-    type Context = ();
-    type DelayIter = iter::Repeat<Duration>;
-}
-
 pub(crate) fn is_expired(timestamp: Timestamp) -> bool {
-    // TODO: use time::since instead
-    timestamp
-        .checked_add(REQUEST_EXPIRATION_SECS)
-        .expect("timestamp checked add")
-        < time::unix_now_secs()
+    time::since(timestamp).map_or(false, |ts| ts >= REQUEST_EXPIRATION_SECS)
 }
 
-pub(crate) fn remove_expired_requests_cmd() -> Command<RequestManager, 0> {
-    // Spawn a cronjob that regularly removes unanswered requests.
-    Box::new(|mngr: &RequestManager, ctx: &_| {
-        let now = time::unix_now_secs();
-        let mut write_guard = mngr.open_requests.write().expect("error getting write access");
-        let requests = write_guard.deref_mut();
+pub(crate) fn remove_expired_requests_repeat() -> Repeat<RequestManager> {
+    Box::new(|mngr: &RequestManager| {
         // Retain only those, which expire in the future.
-        requests.retain(|_, v| v.expiration_time > now);
-        drop(write_guard);
+        mngr.open_requests
+            .write()
+            .expect("error getting write access")
+            .retain(|_, v| v.expiration_time > time::unix_now_secs());
 
-        // TODO: Remove the peers that didn't answer the request!
-        use std::ops::Deref;
-        let read_guard = mngr.open_requests.read().expect("error getting read access");
-        let requests = read_guard.deref();
-
-        if !requests.is_empty() {
-            let a = requests.keys().cloned().last().unwrap();
-            let peer_id = &a.peer_id;
-
-            log::debug!("Open requests: {}", requests.len());
-
-            // TODO: remove if no longer needed for debugging
-            // if mngr.get::<VerificationRequest>(peer_id).is_some() {
-            //     log::debug!("Verif Req");
-            // } else if mngr.get::<DiscoveryRequest>(peer_id).is_some() {
-            //     log::debug!("Disc Req");
-            // } else if mngr.get::<PeeringRequest>(peer_id).is_some() {
-            //     log::debug!("Peering Req");
-            // }
+        if !mngr.open_requests.read().expect("error getting read access").is_empty() {
+            log::warn!(
+                "Open requests: {}",
+                mngr.open_requests.read().expect("error getting read access").len()
+            );
         }
     })
 }

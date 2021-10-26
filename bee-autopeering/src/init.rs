@@ -4,11 +4,14 @@
 use crate::{
     command::{Command, CommandTx},
     config::AutopeeringConfig,
-    delay::{Cronjob, DelayFactoryBuilder, DelayFactoryMode},
-    discovery::manager::{
-        DiscoveryManager, DiscoveryManagerConfig, DEFAULT_QUERY_INTERVAL_SECS, DEFAULT_REVERIFY_INTERVAL_SECS,
+    delay::{DelayFactoryBuilder, DelayFactoryMode},
+    discovery::{
+        manager::{
+            DiscoveryManager, DiscoveryManagerConfig, DEFAULT_QUERY_INTERVAL_SECS, DEFAULT_REVERIFY_INTERVAL_SECS,
+        },
+        messages::VerificationRequest,
+        query,
     },
-    discovery::messages::VerificationRequest,
     event::{self, EventRx},
     hash,
     local::{self, Local},
@@ -16,12 +19,13 @@ use crate::{
     packet::{IncomingPacket, MessageType, OutgoingPacket},
     peer,
     peering::{PeeringManager, PeeringManagerConfig},
+    peerlist::{self, ActivePeersList},
     peerstore::{self, InMemoryPeerStore, PeerStore},
     request::{self, RequestManager, EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS},
     salt::{Salt, DEFAULT_SALT_LIFETIME_SECS},
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket, ServerTx},
     service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
-    task::{ShutdownBus, ShutdownRx, Task},
+    task::{self, ShutdownRx, TaskManager, MAX_PRIORITY},
     time,
 };
 
@@ -31,6 +35,7 @@ use std::{
     iter,
     net::SocketAddr,
     ops::DerefMut as _,
+    sync::Arc,
     time::{Duration, SystemTime},
 };
 
@@ -51,6 +56,8 @@ where
     Q: Future + Send + 'static,
 {
     let network_id = hash::fnv32(&network_name);
+    let private_salt = time::datetime(local.private_salt().expect("missing private salt").expiration_time());
+    let public_salt = time::datetime(local.public_salt().expect("missing private salt").expiration_time());
 
     log::info!("---------------------------------------------------------------------------------------------------");
     log::info!("WARNING:");
@@ -60,34 +67,18 @@ where
     log::info!("Network name/id: {}/{}", network_name.as_ref(), network_id);
     log::info!("Protocol_version: {}", version);
     log::info!("Local id: {}", local.peer_id());
-    log::info!(
-        "Local public key: {}",
-        multiaddr::from_pubkey_to_base58(&local.public_key())
-    );
+    log::info!("Public key: {}", multiaddr::from_pubkey_to_base58(&local.public_key()));
     log::info!("Current time: {}", time::datetime_now());
-    log::info!(
-        "Local private salt expiration time: {}",
-        time::datetime(local.private_salt().expect("missing private salt").expiration_time())
-    );
-    log::info!(
-        "Local public salt expiration time: {}",
-        time::datetime(local.public_salt().expect("missing private salt").expiration_time())
-    );
+    log::info!("Private salt: {}", private_salt);
+    log::info!("Public salt: {}", public_salt);
     log::info!("Bind address: {}", config.bind_addr);
 
-    // Create a bus to distribute the shutdown signal to all spawned tasks. The const generic always matches
-    // the number of required looping tasks.
-    let (shutdown_bus, mut shutdown_reg) = ShutdownBus::<NUM_TASKS>::new();
-    Task::spawn(
-        async move {
-            quit_signal.await;
-            shutdown_bus.trigger();
-        },
-        "Shutdown-Listener",
-    );
+    // Create a task manager to have good control over the tokio task spawning business.
+    let mut task_mngr = TaskManager::<NUM_TASKS>::new();
 
     // Create or load a peer store.
     let peerstore = S::new(peerstore_config);
+    let active_peers = ActivePeersList::default();
 
     // Create channels for inbound/outbound communication with the UDP server.
     let (discovery_tx, discovery_rx) = server_chan::<IncomingPacket>();
@@ -102,7 +93,7 @@ where
     // Initialize the server managing the UDP socket I/O. It receives a [`Local`] in order to sign outgoing packets.
     let server_config = ServerConfig::new(&config);
     let (server, outgoing_tx) = Server::new(server_config, local.clone(), incoming_senders);
-    server.init(&mut shutdown_reg).await;
+    server.init(&mut task_mngr).await;
 
     // Create a request manager that creates and keeps track of outgoing requests.
     let request_mngr = RequestManager::new(version, network_id, config.bind_addr, local.clone());
@@ -110,19 +101,22 @@ where
     // Spawn the discovery manager handling discovery requests/responses.
     let discovery_config = DiscoveryManagerConfig::new(&config, version, network_id);
     let discovery_socket = ServerSocket::new(discovery_rx, outgoing_tx.clone());
+
     let discovery_mngr = DiscoveryManager::new(
         discovery_config,
         local.clone(),
         discovery_socket,
         request_mngr.clone(),
         peerstore.clone(),
+        active_peers.clone(),
         event_tx.clone(),
     );
-    let command_tx = discovery_mngr.init(&mut shutdown_reg).await;
+    let command_tx = discovery_mngr.init(&mut task_mngr).await;
 
     // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
     let peering_config = PeeringManagerConfig::new(&config, version, network_id);
     let peering_socket = ServerSocket::new(peering_rx, outgoing_tx.clone());
+
     let peering_mngr = PeeringManager::new(
         peering_config,
         local.clone(),
@@ -132,67 +126,32 @@ where
         event_tx.clone(),
         command_tx.clone(),
     );
-    Task::spawn_runnable(peering_mngr, shutdown_reg.register());
+    task_mngr.run(peering_mngr);
 
-    // Remove unanswered requests regularly.
-    Task::spawn(
-        Cronjob::<0>::repeat(
-            request_mngr.clone(),
-            iter::repeat(Duration::from_secs(EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS)),
-            request::remove_expired_requests_cmd(),
-            (),
-            shutdown_reg.register(),
-        ),
-        "Expired-Request-Removal",
-    );
+    let cmd = request::remove_expired_requests_repeat();
+    let delay = iter::repeat(Duration::from_secs(EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS));
+    let ctx = request_mngr.clone();
+    task_mngr.repeat(cmd, delay, ctx, "Expired-Request-Removal", MAX_PRIORITY);
 
-    // Update salts regularly.
-    Task::spawn(
-        Cronjob::repeat(
-            local.clone(),
-            iter::repeat(Duration::from_secs(DEFAULT_SALT_LIFETIME_SECS)),
-            local::update_salts_cmd(),
-            event_tx.clone(),
-            shutdown_reg.register(),
-        ),
-        "Salt-Update",
-    );
+    let cmd = local::update_salts_repeat();
+    let delay = iter::repeat(Duration::from_secs(DEFAULT_SALT_LIFETIME_SECS));
+    let ctx = (local.clone(), event_tx.clone());
+    task_mngr.repeat(cmd, delay, ctx, "Salt-Update", MAX_PRIORITY);
 
-    impl Cronjob<0> for () {
-        type Cancel = ShutdownRx;
-        type Context = CommandTx;
-        type DelayIter = iter::Repeat<Duration>;
-    }
+    let cmd = query::roundrobin_verification();
+    let delay = iter::repeat(Duration::from_secs(DEFAULT_REVERIFY_INTERVAL_SECS));
+    let ctx = (active_peers.clone(), command_tx.clone());
+    task_mngr.repeat(cmd, delay, ctx, "Reverification", MAX_PRIORITY);
 
-    // Send (re-)verfication requests regularly.
-    Task::spawn(
-        Cronjob::<0>::repeat(
-            (),
-            iter::repeat(Duration::from_secs(DEFAULT_REVERIFY_INTERVAL_SECS)),
-            Box::new(|&(), ctx: &_| {
-                ctx.send(Command::SendVerificationRequests)
-                    .expect("error sending verification requests command");
-            }),
-            command_tx.clone(),
-            shutdown_reg.register(),
-        ),
-        "Reverification-Requests",
-    );
+    let cmd = query::oldest_discovery();
+    let delay = iter::repeat(Duration::from_secs(DEFAULT_QUERY_INTERVAL_SECS));
+    let ctx = (active_peers, command_tx.clone());
+    task_mngr.repeat(cmd, delay, ctx, "Discovery", MAX_PRIORITY);
 
-    // Send discovery requests regularly.
-    Task::spawn(
-        Cronjob::<0>::repeat(
-            (),
-            iter::repeat(Duration::from_secs(DEFAULT_QUERY_INTERVAL_SECS)),
-            Box::new(|&(), ctx: &_| {
-                ctx.send(Command::SendDiscoveryRequests)
-                    .expect("error sending discovery requests command");
-            }),
-            command_tx.clone(),
-            shutdown_reg.register(),
-        ),
-        "Discovery-Requests",
-    );
+    tokio::spawn(async move {
+        quit_signal.await;
+        task_mngr.shutdown().await;
+    });
 
     log::debug!("Autopeering initialized.");
 

@@ -10,38 +10,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-pub(crate) type Command<T: Cronjob<N>, const N: usize> = Box<dyn for<'a> Fn(&'a T, &'a T::Context) + Send>;
-
-/// A trait that allows to implement something similar to cronjobs for single types.
-///
-/// NOTE: The const generic is used to implement it several times for a type, if it requires several cronjobs.
-#[async_trait::async_trait]
-pub(crate) trait Cronjob<const I: usize>
-where
-    Self: Send + Sync + Clone,
-{
-    type Cancel: Future + Send + Unpin + 'static;
-    type Context: Send;
-    type DelayIter: Iterator<Item = Duration> + Send;
-
-    async fn repeat(
-        self,
-        mut delay: Self::DelayIter,
-        cmd: Command<Self, I>,
-        ctx: Self::Context,
-        mut cancel: Self::Cancel,
-    ) {
-        while let Some(duration) = delay.next() {
-            tokio::select! {
-                _ = &mut cancel => break,
-                _ = time::sleep(duration) => {
-                    cmd(&self, &ctx);
-                }
-            }
-        }
-    }
-}
-
 #[derive(Default)]
 pub(crate) struct DelayFactoryBuilder {
     max_count: Option<usize>,

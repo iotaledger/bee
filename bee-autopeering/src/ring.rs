@@ -19,14 +19,14 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
             false
         } else {
             if self.is_full() {
-                self.remove_first();
+                self.remove_oldest();
             }
             self.0.push_front(item);
             true
         }
     }
 
-    pub(crate) fn remove_first(&mut self) -> Option<P> {
+    pub(crate) fn remove_oldest(&mut self) -> Option<P> {
         self.0.pop_back()
     }
 
@@ -52,6 +52,22 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
 
     pub(crate) fn get(&self, index: usize) -> Option<&P> {
         self.0.get(index)
+    }
+
+    pub(crate) fn newest(&self) -> Option<&P> {
+        self.0.get(0)
+    }
+
+    pub(crate) fn oldest(&self) -> Option<&P> {
+        self.0.get(self.0.len() - 1)
+    }
+
+    pub(crate) fn rotate_backwards(&mut self) {
+        self.0.rotate_left(1);
+    }
+
+    pub(crate) fn rotate_forwards(&mut self) {
+        self.0.rotate_right(1);
     }
 
     pub(crate) fn len(&self) -> usize {

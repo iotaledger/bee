@@ -10,7 +10,7 @@ use crate::{
         IncomingPacket, MessageType, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, MAX_PACKET_SIZE,
         PEERING_MSG_TYPE_RANGE,
     },
-    task::{Runnable, ShutdownBusRegistry, ShutdownRx, Task},
+    task::{Runnable, ShutdownRx, TaskManager},
 };
 
 use tokio::{
@@ -69,7 +69,7 @@ impl Server {
         )
     }
 
-    pub async fn init(self, shutdown_reg: &mut ShutdownBusRegistry) {
+    pub async fn init<const N: usize>(self, task_mngr: &mut TaskManager<N>) {
         let Server {
             config,
             local,
@@ -100,8 +100,8 @@ impl Server {
             bind_addr: config.bind_addr,
         };
 
-        Task::spawn_runnable(incoming_packet_handler, shutdown_reg.register());
-        Task::spawn_runnable(outgoing_packet_handler, shutdown_reg.register());
+        task_mngr.run::<IncomingPacketHandler>(incoming_packet_handler);
+        task_mngr.run::<OutgoingPacketHandler>(outgoing_packet_handler);
     }
 }
 
@@ -121,10 +121,11 @@ struct OutgoingPacketHandler {
 #[async_trait::async_trait]
 impl Runnable for IncomingPacketHandler {
     const NAME: &'static str = "IncomingPacketHandler";
+    const SHUTDOWN_PRIORITY: u8 = 2;
 
-    type Cancel = ShutdownRx;
+    type ShutdownSignal = ShutdownRx;
 
-    async fn run(self, mut shutdown_rx: Self::Cancel) {
+    async fn run(self, mut shutdown_rx: Self::ShutdownSignal) {
         let IncomingPacketHandler {
             incoming_socket,
             incoming_senders,
@@ -152,7 +153,7 @@ impl Runnable for IncomingPacketHandler {
                             }
 
                             if n > MAX_PACKET_SIZE {
-                                log::warn!("Received too many bytes from {}. Ignoring...", source_socket_addr);
+                                log::warn!("Received too many bytes from {}. Ignoring packet.", source_socket_addr);
                                 continue 'recv;
                             }
 
@@ -209,10 +210,11 @@ impl Runnable for IncomingPacketHandler {
 #[async_trait::async_trait]
 impl Runnable for OutgoingPacketHandler {
     const NAME: &'static str = "OutgoingPacketHandler";
+    const SHUTDOWN_PRIORITY: u8 = 3;
 
-    type Cancel = ShutdownRx;
+    type ShutdownSignal = ShutdownRx;
 
-    async fn run(self, mut shutdown_rx: Self::Cancel) {
+    async fn run(self, mut shutdown_rx: Self::ShutdownSignal) {
         let OutgoingPacketHandler {
             outgoing_socket,
             mut outgoing_rx,
@@ -234,7 +236,7 @@ impl Runnable for OutgoingPacketHandler {
                         } = packet;
 
                         if target_socket_addr == bind_addr {
-                            log::warn!("Trying to send to own bind address: {}. Ignoring...", target_socket_addr);
+                            log::warn!("Trying to send to own bind address: {}. Ignoring packet.", target_socket_addr);
                             continue 'recv;
                         }
 
@@ -254,8 +256,7 @@ impl Runnable for OutgoingPacketHandler {
 
                         log::debug!("Sent {} bytes to {}.", n, target_socket_addr);
                     } else {
-                        log::error!("Outgoing message channel dropped; Stopping outgoing packet handler.");
-                        // TODO: intiate shutdown of the system
+                        // All `outgoing_tx` message senders were dropped.
                         break 'recv;
                     }
                 }

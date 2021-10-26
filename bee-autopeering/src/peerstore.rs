@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    delay::{Command, Cronjob, DelayFactory},
+    delay::DelayFactory,
     identity::PeerId,
     packet::{MessageType, OutgoingPacket},
     peer::{self, Peer},

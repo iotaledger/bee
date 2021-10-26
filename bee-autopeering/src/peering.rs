@@ -115,10 +115,11 @@ impl<S: PeerStore> PeeringManager<S> {
 #[async_trait::async_trait]
 impl<S: PeerStore> Runnable for PeeringManager<S> {
     const NAME: &'static str = "PeeringManager";
+    const SHUTDOWN_PRIORITY: u8 = 1;
 
-    type Cancel = ShutdownRx;
+    type ShutdownSignal = ShutdownRx;
 
-    async fn run(self, mut shutdown_rx: Self::Cancel) {
+    async fn run(self, mut shutdown_rx: Self::ShutdownSignal) {
         let PeeringManager {
             config,
             local,

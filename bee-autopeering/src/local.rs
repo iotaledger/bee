@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    delay::{Command, Cronjob, DelayFactory},
+    delay::DelayFactory,
     event::{Event, EventTx},
     hash,
     identity::PeerId,
     peerstore::PeerStore,
     salt::Salt,
     service_map::{ServiceMap, ServiceTransport},
-    task::ShutdownRx,
+    task::{Repeat, ShutdownRx},
     time,
 };
 
@@ -164,22 +164,14 @@ impl PartialEq for LocalInner {
     }
 }
 
-// Used to update the salts in certain intervals.
-#[async_trait::async_trait]
-impl Cronjob<0> for Local {
-    type Cancel = ShutdownRx;
-    type Context = EventTx;
-    type DelayIter = iter::Repeat<Duration>;
-}
-
 // Regularly update the salts of the local peer.
-pub(crate) fn update_salts_cmd() -> Command<Local, 0> {
-    Box::new(|local: &Local, ctx: &EventTx| {
+pub(crate) fn update_salts_repeat() -> Repeat<(Local, EventTx)> {
+    Box::new(|(local, tx)| {
         local.set_public_salt(Salt::default());
         local.set_private_salt(Salt::default());
 
         log::debug!("Public and private salt updated.");
 
-        ctx.send(Event::SaltUpdated).expect("error sending `SaltUpdated` event");
+        tx.send(Event::SaltUpdated).expect("error sending `SaltUpdated` event");
     })
 }
