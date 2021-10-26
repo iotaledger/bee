@@ -3,7 +3,7 @@
 
 //! Core data types for messages in the Tangle.
 
-#![no_std]
+#![cfg_attr(not(std), no_std)]
 #![deny(missing_docs)]
 
 extern crate alloc;

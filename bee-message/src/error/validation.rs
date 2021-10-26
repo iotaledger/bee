@@ -145,3 +145,6 @@ impl fmt::Display for ValidationError {
         }
     }
 }
+
+#[cfg(std)]
+impl std::error::Error for ValidationError {}
