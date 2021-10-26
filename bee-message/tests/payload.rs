@@ -49,7 +49,7 @@ fn transaction() {
         .unwrap();
 
     let payload: Payload = tx_payload.into();
-    let packed = payload.pack_to_vec().unwrap();
+    let packed = payload.pack_to_vec();
 
     assert_eq!(payload.kind(), 0);
     assert_eq!(payload.packed_len(), packed.len());
@@ -76,7 +76,7 @@ fn milestone() {
     .unwrap()
     .into();
 
-    let packed = payload.pack_to_vec().unwrap();
+    let packed = payload.pack_to_vec();
 
     assert_eq!(payload.kind(), 1);
     assert_eq!(payload.packed_len(), packed.len());
@@ -88,7 +88,7 @@ fn milestone() {
 fn indexation() {
     let payload: Payload = IndexationPayload::new(&rand_bytes_32(), &[]).unwrap().into();
 
-    let packed = payload.pack_to_vec().unwrap();
+    let packed = payload.pack_to_vec();
 
     assert_eq!(payload.kind(), 2);
     assert_eq!(payload.packed_len(), packed.len());
@@ -122,7 +122,7 @@ fn receipt() {
     .unwrap()
     .into();
 
-    let packed = payload.pack_to_vec().unwrap();
+    let packed = payload.pack_to_vec();
 
     assert_eq!(payload.kind(), 3);
     assert_eq!(payload.packed_len(), packed.len());
@@ -139,7 +139,7 @@ fn treasury_transaction() {
     .unwrap()
     .into();
 
-    let packed = payload.pack_to_vec().unwrap();
+    let packed = payload.pack_to_vec();
 
     assert_eq!(payload.kind(), 4);
     assert_eq!(payload.packed_len(), packed.len());

@@ -50,7 +50,7 @@ impl Address {
     /// Encodes this address to a Bech32 string with the hrp (human readable part) argument as prefix.
     #[allow(clippy::wrong_self_convention)]
     pub fn to_bech32(&self, hrp: &str) -> String {
-        bech32::encode(hrp, self.pack_to_vec().unwrap().to_base32(), Variant::Bech32).expect("Invalid address.")
+        bech32::encode(hrp, self.pack_to_vec().to_base32(), Variant::Bech32).expect("Invalid address.")
     }
 
     /// Verifies a [`SignatureUnlock`] for a message against the [`Address`].

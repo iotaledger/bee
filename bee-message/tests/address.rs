@@ -65,7 +65,7 @@ fn invalid_bech32_string_to_address() {
 fn pack_unpack_valid_ed25519() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
-    let address_packed = address.pack_to_vec().unwrap();
+    let address_packed = address.pack_to_vec();
 
     assert_eq!(address_packed.len(), address.packed_len());
     assert_eq!(

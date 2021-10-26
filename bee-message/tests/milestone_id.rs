@@ -72,14 +72,14 @@ fn packed_len() {
     let milestone_id = MilestoneId::from_str(MILESTONE_ID).unwrap();
 
     assert_eq!(milestone_id.packed_len(), 32);
-    assert_eq!(milestone_id.pack_to_vec().unwrap().len(), 32);
+    assert_eq!(milestone_id.pack_to_vec().len(), 32);
 }
 
 // Validate that a `unpack` ∘ `pack` round-trip results in the original milestone id.
 #[test]
 fn pack_unpack_valid() {
     let milestone_id = MilestoneId::from_str(MILESTONE_ID).unwrap();
-    let packed_milestone_id = milestone_id.pack_to_vec().unwrap();
+    let packed_milestone_id = milestone_id.pack_to_vec();
 
     assert_eq!(packed_milestone_id.len(), milestone_id.packed_len());
     assert_eq!(

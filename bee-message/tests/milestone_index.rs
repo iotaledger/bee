@@ -16,7 +16,7 @@ fn display_impl() {
 
 #[test]
 fn unpack() {
-    let packed = 0u32.pack_to_vec().unwrap();
+    let packed = 0u32.pack_to_vec();
     assert_eq!(
         MilestoneIndex::unpack_verified(&mut packed.as_slice()).unwrap(),
         MilestoneIndex(0)

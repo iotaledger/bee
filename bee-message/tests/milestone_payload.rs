@@ -113,7 +113,7 @@ fn packed_len() {
     .unwrap();
 
     assert_eq!(ms.packed_len(), 379);
-    assert_eq!(ms.pack_to_vec().unwrap().len(), 379);
+    assert_eq!(ms.pack_to_vec().len(), 379);
 }
 
 #[test]
@@ -134,7 +134,7 @@ fn pack_unpack_valid() {
     )
     .unwrap();
 
-    let packed = payload.pack_to_vec().unwrap();
+    let packed = payload.pack_to_vec();
 
     assert_eq!(payload.packed_len(), packed.len());
     assert_eq!(payload, PackableExt::unpack_verified(&mut packed.as_slice()).unwrap())

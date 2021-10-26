@@ -25,7 +25,7 @@ fn pow_default_provider() {
         .finish()
         .unwrap();
 
-    let message_bytes = message.pack_to_vec().unwrap();
+    let message_bytes = message.pack_to_vec();
     let score = PoWScorer::new().score(&message_bytes);
 
     assert!(score >= 4000f64);
@@ -40,7 +40,7 @@ fn pow_provider() {
         .finish()
         .unwrap();
 
-    let message_bytes = message.pack_to_vec().unwrap();
+    let message_bytes = message.pack_to_vec();
     let score = PoWScorer::new().score(&message_bytes);
 
     assert!(score >= 10000f64);
@@ -113,7 +113,7 @@ fn pack_unpack_valid() {
         .with_parents(rand_parents())
         .finish()
         .unwrap();
-    let packed_message = message.pack_to_vec().unwrap();
+    let packed_message = message.pack_to_vec();
 
     assert_eq!(packed_message.len(), message.packed_len());
     assert_eq!(

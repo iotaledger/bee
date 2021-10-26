@@ -133,7 +133,7 @@ impl MilestonePayloadEssence {
 
     /// Hashes the `MilestonePayloadEssence to be signed.`
     pub fn hash(&self) -> [u8; 32] {
-        Blake2b256::digest(&self.pack_to_vec().unwrap()).into()
+        Blake2b256::digest(&self.pack_to_vec()).into()
     }
 }
 

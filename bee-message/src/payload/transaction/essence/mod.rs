@@ -36,7 +36,7 @@ impl Essence {
 
     /// Return the Blake2b hash of an `Essence`.
     pub fn hash(&self) -> [u8; 32] {
-        Blake2b256::digest(&self.pack_to_vec().unwrap()).into()
+        Blake2b256::digest(&self.pack_to_vec()).into()
     }
 }
 

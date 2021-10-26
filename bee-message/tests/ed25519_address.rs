@@ -83,13 +83,13 @@ fn packed_len() {
     let address = Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
 
     assert_eq!(address.packed_len(), 32);
-    assert_eq!(address.pack_to_vec().unwrap().len(), 32);
+    assert_eq!(address.pack_to_vec().len(), 32);
 }
 
 #[test]
 fn pack_unpack_valid() {
     let address = Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
-    let packed_address = address.pack_to_vec().unwrap();
+    let packed_address = address.pack_to_vec();
 
     assert_eq!(
         address,

@@ -50,7 +50,7 @@ impl Message {
 
     /// Computes the identifier of the message.
     pub fn id(&self) -> (MessageId, Vec<u8>) {
-        let bytes = self.pack_to_vec().unwrap();
+        let bytes = self.pack_to_vec();
         let id = Blake2b256::digest(&bytes);
 
         (MessageId::new(id.into()), bytes)
@@ -206,7 +206,7 @@ impl<P: NonceProvider> MessageBuilder<P> {
             nonce: 0,
         };
 
-        let message_bytes = message.pack_to_vec().unwrap();
+        let message_bytes = message.pack_to_vec();
 
         if message_bytes.len() > MESSAGE_LENGTH_MAX {
             return Err(Error::InvalidMessageLength(message_bytes.len()));

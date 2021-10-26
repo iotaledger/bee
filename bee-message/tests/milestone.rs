@@ -22,14 +22,14 @@ fn debug_impl() {
 #[test]
 fn packed_len() {
     let milestone = rand_milestone();
-    assert_eq!(milestone.packed_len(), milestone.pack_to_vec().unwrap().len());
+    assert_eq!(milestone.packed_len(), milestone.pack_to_vec().len());
     assert_eq!(milestone.packed_len(), 32 + 8);
 }
 
 #[test]
 fn pack_unpack() {
     let milestone = rand_milestone();
-    let packed = milestone.pack_to_vec().unwrap();
+    let packed = milestone.pack_to_vec();
 
     assert_eq!(Milestone::unpack_verified(&mut packed.as_slice()).unwrap(), milestone);
 }

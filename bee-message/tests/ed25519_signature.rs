@@ -19,7 +19,7 @@ fn packed_len() {
     let sig = Ed25519Signature::new(pub_key_bytes, sig_bytes);
 
     assert_eq!(sig.packed_len(), 32 + 64);
-    assert_eq!(sig.pack_to_vec().unwrap().len(), 32 + 64);
+    assert_eq!(sig.pack_to_vec().len(), 32 + 64);
 }
 
 #[test]
@@ -27,7 +27,7 @@ fn pack_unpack_valid() {
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let sig = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_packed = sig.pack_to_vec().unwrap();
+    let sig_packed = sig.pack_to_vec();
 
     assert_eq!(sig, PackableExt::unpack_verified(&mut sig_packed.as_slice()).unwrap());
 }

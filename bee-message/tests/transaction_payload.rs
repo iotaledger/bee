@@ -153,7 +153,7 @@ fn pack_unpack_valid() {
         .with_unlock_blocks(unlock_blocks)
         .finish()
         .unwrap();
-    let packed_tx_payload = tx_payload.pack_to_vec().unwrap();
+    let packed_tx_payload = tx_payload.pack_to_vec();
 
     assert_eq!(packed_tx_payload.len(), tx_payload.packed_len());
     assert_eq!(

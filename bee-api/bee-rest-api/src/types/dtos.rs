@@ -612,7 +612,7 @@ impl From<&MilestonePayload> for MilestonePayloadDto {
             next_pow_score_milestone_index: value.essence().next_pow_score_milestone_index(),
             public_keys: value.essence().public_keys().iter().map(hex::encode).collect(),
             receipt: value.essence().receipt().map(Into::into),
-            signatures: value.signatures().iter().map(hex::encode).collect(),
+            signatures: value.signatures().iter().map(|sig| hex::encode(&**sig)).collect(),
         }
     }
 }

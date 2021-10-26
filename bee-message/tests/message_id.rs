@@ -70,14 +70,14 @@ fn packed_len() {
     let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
 
     assert_eq!(message_id.packed_len(), 32);
-    assert_eq!(message_id.pack_to_vec().unwrap().len(), 32);
+    assert_eq!(message_id.pack_to_vec().len(), 32);
 }
 
 // Validate that a `unpack` ∘ `pack` round-trip results in the original message id.
 #[test]
 fn pack_unpack_valid() {
     let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
-    let packed_message_id = message_id.pack_to_vec().unwrap();
+    let packed_message_id = message_id.pack_to_vec();
 
     assert_eq!(packed_message_id.len(), message_id.packed_len());
     assert_eq!(

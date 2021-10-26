@@ -39,7 +39,7 @@ impl TransactionPayload {
         let mut hasher = Blake2b256::new();
 
         hasher.update(Self::KIND.to_le_bytes());
-        hasher.update(self.pack_to_vec().unwrap());
+        hasher.update(self.pack_to_vec());
 
         TransactionId::new(hasher.finalize().into())
     }

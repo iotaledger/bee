@@ -217,7 +217,7 @@ fn pack_unpack_valid() {
     )
     .unwrap();
 
-    let packed_receipt = receipt.pack_to_vec().unwrap();
+    let packed_receipt = receipt.pack_to_vec();
 
     assert_eq!(packed_receipt.len(), receipt.packed_len());
     assert_eq!(

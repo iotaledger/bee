@@ -220,7 +220,7 @@ fn pack_unpack_valid() {
     )
     .unwrap();
 
-    let packed = milestone_payload.pack_to_vec().unwrap();
+    let packed = milestone_payload.pack_to_vec();
 
     assert_eq!(
         MilestonePayloadEssence::unpack_verified(&mut packed.as_slice()).unwrap(),
