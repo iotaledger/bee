@@ -88,9 +88,10 @@ where
         peering_tx,
     };
 
+    // Event channel to publish events to the user.
     let (event_tx, event_rx) = event::event_chan();
 
-    // Initialize the server managing the UDP socket I/O. It receives a [`Local`] in order to sign outgoing packets.
+    // Initialize the server managing the UDP socket I/O.
     let server_config = ServerConfig::new(&config);
     let (server, outgoing_tx) = Server::new(server_config, local.clone(), incoming_senders);
     server.init(&mut task_mngr).await;
@@ -98,7 +99,7 @@ where
     // Create a request manager that creates and keeps track of outgoing requests.
     let request_mngr = RequestManager::new(version, network_id, config.bind_addr, local.clone());
 
-    // Spawn the discovery manager handling discovery requests/responses.
+    // Create the discovery manager handling the discovery request/response protocol.
     let discovery_config = DiscoveryManagerConfig::new(&config, version, network_id);
     let discovery_socket = ServerSocket::new(discovery_rx, outgoing_tx.clone());
 
@@ -113,7 +114,7 @@ where
     );
     let command_tx = discovery_mngr.init(&mut task_mngr).await;
 
-    // Spawn the autopeering manager handling peering requests/responses/drops and the storage I/O.
+    // Create the autopeering manager handling the peering request/response protocol.
     let peering_config = PeeringManagerConfig::new(&config, version, network_id);
     let peering_socket = ServerSocket::new(peering_rx, outgoing_tx.clone());
 
@@ -128,26 +129,31 @@ where
     );
     task_mngr.run(peering_mngr);
 
+    // Remove expired requests regularly.
     let cmd = request::remove_expired_requests_repeat();
     let delay = iter::repeat(Duration::from_secs(EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS));
     let ctx = request_mngr.clone();
     task_mngr.repeat(cmd, delay, ctx, "Expired-Request-Removal", MAX_PRIORITY);
 
+    // Update salts regularly.
     let cmd = local::update_salts_repeat();
     let delay = iter::repeat(Duration::from_secs(DEFAULT_SALT_LIFETIME_SECS));
     let ctx = (local.clone(), event_tx.clone());
     task_mngr.repeat(cmd, delay, ctx, "Salt-Update", MAX_PRIORITY);
 
+    // Reverify peers.
     let cmd = query::roundrobin_verification();
     let delay = iter::repeat(Duration::from_secs(DEFAULT_REVERIFY_INTERVAL_SECS));
     let ctx = (active_peers.clone(), command_tx.clone());
     task_mngr.repeat(cmd, delay, ctx, "Reverification", MAX_PRIORITY);
 
+    // Discover peers.
     let cmd = query::oldest_discovery();
     let delay = iter::repeat(Duration::from_secs(DEFAULT_QUERY_INTERVAL_SECS));
     let ctx = (active_peers, command_tx.clone());
     task_mngr.repeat(cmd, delay, ctx, "Discovery", MAX_PRIORITY);
 
+    // Await the shutdown signal (in a separate task).
     tokio::spawn(async move {
         quit_signal.await;
         task_mngr.shutdown().await;
