@@ -223,8 +223,8 @@ fn validate_peering_request<S: PeerStore>(peering_req: &PeeringRequest, peer_id:
 }
 
 fn validate_peering_response(peering_res: &PeeringResponse, peer_id: &PeerId, request_mngr: &RequestManager) -> bool {
-    if let Some(request_hash) = request_mngr.get_request_hash::<PeeringRequest>(peer_id) {
-        peering_res.request_hash() == &request_hash
+    if let Some(req) = request_mngr.pull::<PeeringRequest>(peer_id) {
+        peering_res.request_hash() == &req.request_hash
     } else {
         false
     }

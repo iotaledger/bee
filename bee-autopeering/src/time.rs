@@ -20,8 +20,12 @@ pub(crate) fn unix_time_secs(time: SystemTime) -> Timestamp {
     time.duration_since(UNIX_EPOCH).expect("system clock error").as_secs()
 }
 
-pub(crate) fn since(timestamp: Timestamp) -> Timespan {
-    unix_now_secs() - timestamp
+pub(crate) fn since(timestamp: Timestamp) -> Option<Timespan> {
+    unix_now_secs().checked_sub(timestamp)
+}
+
+pub(crate) fn until(timestamp: Timestamp) -> Option<Timespan> {
+    timestamp.checked_sub(unix_now_secs())
 }
 
 pub(crate) fn datetime_now() -> time::OffsetDateTime {

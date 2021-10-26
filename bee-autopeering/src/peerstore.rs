@@ -33,8 +33,8 @@ pub trait PeerStore: Clone + Send + Sync {
     fn insert_peer(&self, peer: Peer) -> bool;
     fn remove_peer(&self, peer_id: &PeerId) -> bool;
 
-    fn peer(&self, peer_id: &PeerId) -> Option<Peer>;
-    fn peers(&self) -> Vec<Peer>;
+    fn get_peer(&self, peer_id: &PeerId) -> Option<Peer>;
+    fn get_peers(&self) -> Vec<Peer>;
 
     fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp>;
     fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp>;
@@ -88,11 +88,11 @@ impl PeerStore for InMemoryPeerStore {
         self.write_inner().peers.remove(peer_id).is_some()
     }
 
-    fn peer(&self, peer_id: &PeerId) -> Option<Peer> {
+    fn get_peer(&self, peer_id: &PeerId) -> Option<Peer> {
         self.read_inner().peers.get(peer_id).map(|p| p.clone())
     }
 
-    fn peers(&self) -> Vec<Peer> {
+    fn get_peers(&self) -> Vec<Peer> {
         self.read_inner().peers.values().cloned().collect::<Vec<Peer>>()
     }
 
@@ -170,11 +170,11 @@ impl PeerStore for SledPeerStore {
         todo!()
     }
 
-    fn peer(&self, peer_id: &PeerId) -> Option<Peer> {
+    fn get_peer(&self, peer_id: &PeerId) -> Option<Peer> {
         todo!()
     }
 
-    fn peers(&self) -> Vec<Peer> {
+    fn get_peers(&self) -> Vec<Peer> {
         todo!()
     }
 

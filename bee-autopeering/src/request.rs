@@ -5,7 +5,7 @@ use num::CheckedAdd;
 
 use crate::{
     delay::{Command, Cronjob, DelayFactory},
-    discovery_messages::{DiscoveryRequest, VerificationRequest, VerificationResponse},
+    discovery::messages::{DiscoveryRequest, VerificationRequest, VerificationResponse},
     hash,
     identity::PeerId,
     local::Local,
@@ -30,6 +30,7 @@ use std::{
 };
 
 type RequestHash = [u8; hash::SHA256_LEN];
+type Callback = Box<dyn Fn() + Send + Sync + 'static>;
 
 // If the request is not answered within that time it gets removed from the manager, and any response
 // coming in later will be deemed invalid.
@@ -48,6 +49,7 @@ pub(crate) struct RequestKey {
 pub(crate) struct RequestValue {
     pub(crate) request_hash: [u8; hash::SHA256_LEN],
     pub(crate) expiration_time: u64,
+    pub(crate) callback: Callback,
 }
 
 #[derive(Clone)]
@@ -70,7 +72,12 @@ impl RequestManager {
         }
     }
 
-    pub(crate) fn new_verification_request(&self, peer_id: PeerId, target_addr: IpAddr) -> VerificationRequest {
+    pub(crate) fn new_verification_request(
+        &self,
+        peer_id: PeerId,
+        target_addr: IpAddr,
+        callback: Callback,
+    ) -> VerificationRequest {
         let timestamp = crate::time::unix_now_secs();
 
         let key = RequestKey {
@@ -94,6 +101,7 @@ impl RequestManager {
         let value = RequestValue {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
+            callback,
         };
 
         let _ = self
@@ -105,7 +113,12 @@ impl RequestManager {
         verif_req
     }
 
-    pub(crate) fn new_discovery_request(&self, peer_id: PeerId, target_addr: IpAddr) -> DiscoveryRequest {
+    pub(crate) fn new_discovery_request(
+        &self,
+        peer_id: PeerId,
+        target_addr: IpAddr,
+        callback: Callback,
+    ) -> DiscoveryRequest {
         let timestamp = crate::time::unix_now_secs();
 
         let key = RequestKey {
@@ -123,6 +136,7 @@ impl RequestManager {
         let value = RequestValue {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
+            callback,
         };
 
         let _ = self
@@ -134,7 +148,7 @@ impl RequestManager {
         disc_req
     }
 
-    pub(crate) fn new_peering_request(&self, peer_id: PeerId) -> PeeringRequest {
+    pub(crate) fn new_peering_request(&self, peer_id: PeerId, callback: Callback) -> PeeringRequest {
         let timestamp = crate::time::unix_now_secs();
 
         let key = RequestKey {
@@ -155,6 +169,7 @@ impl RequestManager {
         let value = RequestValue {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
+            callback,
         };
 
         let _ = self
@@ -166,22 +181,7 @@ impl RequestManager {
         peer_req
     }
 
-    pub(crate) fn get_request_hash<R: Request + 'static>(&self, peer_id: &PeerId) -> Option<RequestHash> {
-        // TODO: Can we prevent the clone?
-        let key = RequestKey {
-            peer_id: peer_id.clone(),
-            request_id: TypeId::of::<R>(),
-        };
-
-        let requests = self.open_requests.read().expect("error getting read access");
-        if let Some(RequestValue { request_hash, .. }) = (*requests).get(&key) {
-            Some(request_hash.clone())
-        } else {
-            None
-        }
-    }
-
-    pub(crate) fn remove_request<R: Request + 'static>(&self, peer_id: &PeerId) -> bool {
+    pub(crate) fn pull<R: Request + 'static>(&self, peer_id: &PeerId) -> Option<RequestValue> {
         // TODO: Can we prevent the clone?
         let key = RequestKey {
             peer_id: peer_id.clone(),
@@ -189,7 +189,8 @@ impl RequestManager {
         };
 
         let mut requests = self.open_requests.write().expect("error getting read access");
-        (*requests).remove(&key).is_some()
+
+        (*requests).remove(&key)
     }
 }
 
@@ -228,13 +229,15 @@ pub(crate) fn remove_expired_requests_cmd() -> Command<RequestManager, 0> {
             let peer_id = &a.peer_id;
 
             log::debug!("Open requests: {}", requests.len());
-            if mngr.get_request_hash::<VerificationRequest>(peer_id).is_some() {
-                log::debug!("Verif Req");
-            } else if mngr.get_request_hash::<DiscoveryRequest>(peer_id).is_some() {
-                log::debug!("Disc Req");
-            } else if mngr.get_request_hash::<PeeringRequest>(peer_id).is_some() {
-                log::debug!("Peering Req");
-            }
+
+            // TODO: remove if no longer needed for debugging
+            // if mngr.get::<VerificationRequest>(peer_id).is_some() {
+            //     log::debug!("Verif Req");
+            // } else if mngr.get::<DiscoveryRequest>(peer_id).is_some() {
+            //     log::debug!("Disc Req");
+            // } else if mngr.get::<PeeringRequest>(peer_id).is_some() {
+            //     log::debug!("Peering Req");
+            // }
         }
     })
 }

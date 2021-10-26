@@ -5,10 +5,10 @@ use crate::{
     command::{Command, CommandTx},
     config::AutopeeringConfig,
     delay::{Cronjob, DelayFactoryBuilder, DelayFactoryMode},
-    discovery::{
+    discovery::manager::{
         DiscoveryManager, DiscoveryManagerConfig, DEFAULT_QUERY_INTERVAL_SECS, DEFAULT_REVERIFY_INTERVAL_SECS,
     },
-    discovery_messages::VerificationRequest,
+    discovery::messages::VerificationRequest,
     event::{self, EventRx},
     hash,
     local::{self, Local},
@@ -33,6 +33,8 @@ use std::{
     ops::DerefMut as _,
     time::{Duration, SystemTime},
 };
+
+const NUM_TASKS: usize = 9;
 
 /// Initializes the autopeering service.
 pub async fn init<S, I, Q>(
@@ -74,8 +76,8 @@ where
     log::info!("Bind address: {}", config.bind_addr);
 
     // Create a bus to distribute the shutdown signal to all spawned tasks. The const generic always matches
-    // the number of required permanent tasks.
-    let (shutdown_bus, mut shutdown_reg) = ShutdownBus::<9>::new();
+    // the number of required looping tasks.
+    let (shutdown_bus, mut shutdown_reg) = ShutdownBus::<NUM_TASKS>::new();
     Task::spawn(
         async move {
             quit_signal.await;

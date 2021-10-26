@@ -64,11 +64,11 @@ pub(crate) struct ActivePeersList {
 }
 
 impl ActivePeersList {
-    pub(crate) fn read_inner(&self) -> RwLockReadGuard<ActivePeersListInner> {
+    pub(crate) fn read(&self) -> RwLockReadGuard<ActivePeersListInner> {
         self.inner.read().expect("error getting read access")
     }
 
-    pub(crate) fn write_inner(&self) -> RwLockWriteGuard<ActivePeersListInner> {
+    pub(crate) fn write(&self) -> RwLockWriteGuard<ActivePeersListInner> {
         self.inner.write().expect("error getting write access")
     }
 }
