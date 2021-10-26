@@ -90,3 +90,6 @@ impl fmt::Display for MessageUnpackError {
         }
     }
 }
+
+#[cfg(std)]
+impl std::error::Error for MessageUnpackError {}

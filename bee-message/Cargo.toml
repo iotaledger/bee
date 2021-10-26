@@ -28,8 +28,9 @@ serde-big-array = { version = "0.3.2", default-features = false, features = [ "c
 [dev-dependencies]
 bee-test = { path = "../bee-test", default-features = false }
 
-serde_json = { version = "1.0.68", default-features = false }
+serde_json = { version = "1.0.68", default-features = false, features = [ "alloc" ] }
 
 [features]
 metadata = [ "bitflags" ]
 serde1 = [ "serde", "serde-big-array" ]
+std = [ ]
