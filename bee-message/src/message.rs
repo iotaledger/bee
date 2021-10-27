@@ -60,8 +60,8 @@ impl Message {
     }
 
     /// Returns the optional payload of a `Message`.
-    pub fn payload(&self) -> &Option<Payload> {
-        &self.payload
+    pub fn payload(&self) -> Option<&Payload> {
+        self.payload.as_ref()
     }
 
     /// Returns the nonce of a `Message`.

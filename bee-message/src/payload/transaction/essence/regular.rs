@@ -42,8 +42,8 @@ impl RegularEssence {
     }
 
     /// Return the optional payload of a `RegularEssence`.
-    pub fn payload(&self) -> &Option<Payload> {
-        &self.payload
+    pub fn payload(&self) -> Option<&Payload> {
+        self.payload.as_ref()
     }
 }
 
