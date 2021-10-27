@@ -9,7 +9,10 @@ use crate::{
     Packable,
 };
 
-use core::convert::{Infallible, TryFrom, TryInto};
+use core::{
+    convert::{Infallible, TryFrom, TryInto},
+    fmt::{self, Display},
+};
 
 /// Trait that provides an interface for bounded types.
 pub trait Bounded {
@@ -28,6 +31,12 @@ macro_rules! bounded {
         $(#[$error_doc])*
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub struct $error<const MIN: $ty, const MAX: $ty>(pub $ty);
+
+        impl<const MIN: $ty, const MAX: $ty> Display for $error<MIN, MAX> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "integer {} is out of bounds", self.0)
+            }
+        }
 
         impl<const MIN: $ty, const MAX: $ty> Bounded for $error<MIN, MAX> {
             type Bounds = $ty;
@@ -130,3 +139,27 @@ bounded!(
     InvalidBoundedU64,
     u64
 );
+
+impl Bounded for u8 {
+    type Bounds = Self;
+    const MIN: Self::Bounds = u8::MIN;
+    const MAX: Self::Bounds = u8::MAX;
+}
+
+impl Bounded for u16 {
+    type Bounds = Self;
+    const MIN: Self::Bounds = u16::MIN;
+    const MAX: Self::Bounds = u16::MAX;
+}
+
+impl Bounded for u32 {
+    type Bounds = Self;
+    const MIN: Self::Bounds = u32::MIN;
+    const MAX: Self::Bounds = u32::MAX;
+}
+
+impl Bounded for u64 {
+    type Bounds = Self;
+    const MIN: Self::Bounds = u64::MIN;
+    const MAX: Self::Bounds = u64::MAX;
+}

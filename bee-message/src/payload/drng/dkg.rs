@@ -6,17 +6,24 @@ use crate::{
     payload::{MessagePayload, PAYLOAD_LENGTH_MAX},
 };
 
-use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
+use bee_packable::{
+    error::{UnpackPrefixError, VecPrefixLengthError},
+    BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
+};
 
 use alloc::vec::Vec;
 use core::convert::{Infallible, TryInto};
 
 /// All [`Vec`] sizes are unconstrained, so use payload max as upper limit.
-const PREFIXED_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX;
+pub(crate) const PREFIXED_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX;
 
-fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> ValidationError {
+fn unpack_prefix_to_validation_error(
+    error: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>>,
+) -> ValidationError {
     match error {
-        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidEncryptedDealLength(len),
+        UnpackPrefixError::InvalidPrefixLength(len) => {
+            ValidationError::InvalidEncryptedDealLength(VecPrefixLengthError::Invalid(len))
+        }
         UnpackPrefixError::Packable(e) => match e {},
     }
 }
@@ -123,23 +130,17 @@ impl EncryptedDealBuilder {
             .dh_key
             .ok_or(ValidationError::MissingBuilderField("dh_key"))?
             .try_into()
-            .map_err(|err: InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>| {
-                ValidationError::InvalidEncryptedDealLength(err.0 as usize)
-            })?;
+            .map_err(ValidationError::InvalidEncryptedDealLength)?;
         let nonce = self
             .nonce
             .ok_or(ValidationError::MissingBuilderField("nonce"))?
             .try_into()
-            .map_err(|err: InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>| {
-                ValidationError::InvalidEncryptedDealLength(err.0 as usize)
-            })?;
+            .map_err(ValidationError::InvalidEncryptedDealLength)?;
         let encrypted_share = self
             .encrypted_share
             .ok_or(ValidationError::MissingBuilderField("encrypted_share"))?
             .try_into()
-            .map_err(|err: InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>| {
-                ValidationError::InvalidEncryptedDealLength(err.0 as usize)
-            })?;
+            .map_err(ValidationError::InvalidEncryptedDealLength)?;
         let threshold = self
             .threshold
             .ok_or(ValidationError::MissingBuilderField("threshold"))?;
@@ -147,9 +148,7 @@ impl EncryptedDealBuilder {
             .commitments
             .ok_or(ValidationError::MissingBuilderField("commitments"))?
             .try_into()
-            .map_err(|err: InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>| {
-                ValidationError::InvalidEncryptedDealLength(err.0 as usize)
-            })?;
+            .map_err(ValidationError::InvalidEncryptedDealLength)?;
 
         let deal = EncryptedDeal {
             dh_key,
@@ -167,7 +166,9 @@ impl EncryptedDealBuilder {
 
 fn validate_encrypted_deal_length(len: usize) -> Result<(), ValidationError> {
     if len > PREFIXED_LENGTH_MAX as usize {
-        Err(ValidationError::InvalidEncryptedDealLength(len))
+        Err(ValidationError::InvalidEncryptedDealLength(
+            VecPrefixLengthError::Truncated(len),
+        ))
     } else {
         Ok(())
     }

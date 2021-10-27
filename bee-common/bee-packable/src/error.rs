@@ -3,7 +3,10 @@
 
 //! Errors related to packable operations.
 
-use core::convert::Infallible;
+use core::{
+    convert::Infallible,
+    fmt::{self, Display},
+};
 
 /// Error type raised when [`Packable::pack`](crate::Packable) fails.
 #[derive(Debug)]
@@ -123,17 +126,35 @@ impl Into<Infallible> for PackPrefixError<Infallible> {
 /// Semantic error raised while unpacking a dynamically-sized sequences that use a type different
 /// than `usize` for their length-prefix.
 #[derive(Debug)]
-pub enum UnpackPrefixError<T> {
+pub enum UnpackPrefixError<T, E> {
     /// Semantic error raised while unpacking an element of the sequence.
     /// Typically this is [`Packable::UnpackError`](crate::Packable).
     Packable(T),
-    /// Invalid prefix length (larger than maximum specified).
-    InvalidPrefixLength(usize),
+    /// Semantic error raised when the length prefix cannot be unpacked.
+    InvalidPrefixLength(E),
 }
 
-impl<T> From<T> for UnpackPrefixError<T> {
+impl<T, E> From<T> for UnpackPrefixError<T, E> {
     fn from(err: T) -> Self {
         Self::Packable(err)
+    }
+}
+
+/// Semantic error raised when the prefix length cannot be unpacked.
+#[derive(Debug)]
+pub enum VecPrefixLengthError<E> {
+    /// The prefix length was truncated.
+    Truncated(usize),
+    /// The prefix length is invalid.
+    Invalid(E),
+}
+
+impl<E: Display> Display for VecPrefixLengthError<E> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            VecPrefixLengthError::Truncated(len) => write!(f, "length of `{}` was truncated", len),
+            VecPrefixLengthError::Invalid(err) => err.fmt(f),
+        }
     }
 }
 

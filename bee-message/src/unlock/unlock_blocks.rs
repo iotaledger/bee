@@ -7,7 +7,9 @@ use crate::{
 };
 
 use bee_packable::{
-    coerce::*, error::UnpackPrefixError, BoundedU16, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    coerce::*,
+    error::{UnpackPrefixError, VecPrefixLengthError},
+    BoundedU16, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
 
 use hashbrown::HashSet;
@@ -18,8 +20,8 @@ use core::{
     ops::Deref,
 };
 
-const PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN: u16 = *UNLOCK_BLOCK_COUNT_RANGE.start();
-const PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX: u16 = *UNLOCK_BLOCK_COUNT_RANGE.end();
+pub(crate) const PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN: u16 = *UNLOCK_BLOCK_COUNT_RANGE.start();
+pub(crate) const PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX: u16 = *UNLOCK_BLOCK_COUNT_RANGE.end();
 
 /// A collection of unlock blocks.
 ///
@@ -42,7 +44,7 @@ impl UnlockBlocks {
             UnlockBlock,
             BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>,
         >::try_from(unlock_blocks)
-        .map_err(|err| ValidationError::InvalidUnlockBlockCount(err.0 as usize))?;
+        .map_err(ValidationError::InvalidUnlockBlockCount)?;
 
         validate_unlock_block_variants(&unlock_blocks)?;
 
@@ -87,7 +89,9 @@ impl Packable for UnlockBlocks {
         >::unpack(unpacker)
         .map_err(|unpack_err| {
             unpack_err.map(|err| match err {
-                UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidUnlockBlockCount(len).into(),
+                UnpackPrefixError::InvalidPrefixLength(err) => {
+                    ValidationError::InvalidUnlockBlockCount(VecPrefixLengthError::Invalid(err)).into()
+                }
                 UnpackPrefixError::Packable(err) => err,
             })
         })?;

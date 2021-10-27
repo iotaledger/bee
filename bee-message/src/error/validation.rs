@@ -1,8 +1,28 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{address::Address, input::UtxoInput};
+use crate::{
+    address::Address,
+    input::UtxoInput,
+    output::PREFIXED_BALANCES_LENGTH_MAX,
+    payload::{
+        data::PREFIXED_DATA_LENGTH_MAX,
+        drng::PREFIXED_LENGTH_MAX,
+        fpc::{PREFIXED_CONFLICTS_LENGTH_MAX, PREFIXED_TIMESTAMPS_LENGTH_MAX},
+        indexation::{
+            PREFIXED_INDEXATION_DATA_LENGTH_MAX, PREFIXED_INDEXATION_INDEX_LENGTH_MAX,
+            PREFIXED_INDEXATION_INDEX_LENGTH_MIN,
+        },
+        salt_declaration::PREFIXED_BYTES_LENGTH_MAX,
+        transaction::{
+            PREFIXED_INPUTS_LENGTH_MAX, PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX,
+            PREFIXED_OUTPUTS_LENGTH_MIN,
+        },
+    },
+    unlock::{PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX, PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN},
+};
 
+use bee_packable::{error::VecPrefixLengthError, InvalidBoundedU16, InvalidBoundedU32};
 use crypto::Error as CryptoError;
 
 use alloc::string::String;
@@ -11,46 +31,71 @@ use core::fmt;
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum ValidationError {
-    AddressSignatureKindMismatch { expected: u8, actual: u8 },
+    AddressSignatureKindMismatch {
+        expected: u8,
+        actual: u8,
+    },
     CryptoError(CryptoError),
     DuplicateAddress(Address),
     DuplicateSignature(usize),
     DuplicateUtxo(UtxoInput),
-    InputUnlockBlockCountMismatch { inputs: usize, unlock_blocks: usize },
+    InputUnlockBlockCountMismatch {
+        inputs: usize,
+        unlock_blocks: usize,
+    },
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAmount(u64),
-    InvalidAssetBalanceCount(usize),
-    InvalidConflictsCount(usize),
-    InvalidDataPayloadLength(usize),
-    InvalidEncryptedDealLength(usize),
+    InvalidAssetBalanceCount(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_BALANCES_LENGTH_MAX>>),
+    InvalidConflictsCount(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>),
+    InvalidDataPayloadLength(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>),
+    InvalidEncryptedDealLength(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>>),
     InvalidHexadecimalChar(String),
-    InvalidHexadecimalLength { expected: usize, actual: usize },
-    InvalidIndexationDataLength(usize),
-    InvalidIndexationIndexLength(usize),
-    InvalidInputCount(usize),
+    InvalidHexadecimalLength {
+        expected: usize,
+        actual: usize,
+    },
+    InvalidIndexationDataLength(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_INDEXATION_DATA_LENGTH_MAX>>),
+    InvalidIndexationIndexLength(
+        VecPrefixLengthError<
+            InvalidBoundedU32<PREFIXED_INDEXATION_INDEX_LENGTH_MIN, PREFIXED_INDEXATION_INDEX_LENGTH_MAX>,
+        >,
+    ),
+    InvalidInputCount(VecPrefixLengthError<InvalidBoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>),
     InvalidMessageLength(usize),
     InvalidMessageVersion(u8),
-    InvalidOutputCount(usize),
+    InvalidOutputCount(
+        VecPrefixLengthError<InvalidBoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>,
+    ),
     InvalidOutputIndex(u16),
     InvalidParentsBlocksCount(usize),
     InvalidParentsCount(usize),
     InvalidParentsKind(u8),
     InvalidPayloadKind(u32),
-    InvalidPayloadLength(usize),
-    InvalidPayloadVersion { version: u8, payload_kind: u32 },
+    InvalidPayloadVersion {
+        version: u8,
+        payload_kind: u32,
+    },
     InvalidReferenceIndex(u16),
-    InvalidSaltBytesLength(usize),
+    InvalidSaltBytesLength(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>>),
     InvalidSignature,
     InvalidStrongParentsCount(usize),
-    InvalidTimestampsCount(usize),
-    InvalidUnlockBlockCount(usize),
+    InvalidTimestampsCount(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>),
+    InvalidUnlockBlockCount(
+        VecPrefixLengthError<InvalidBoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>>,
+    ),
     InvalidUnlockBlockReference(usize),
     MissingBuilderField(&'static str),
     ParentsNotUniqueSorted,
-    PayloadLengthMismatch { expected: usize, actual: usize },
-    SignaturePublicKeyMismatch { expected: String, actual: String },
+    PayloadLengthMismatch {
+        expected: usize,
+        actual: usize,
+    },
+    SignaturePublicKeyMismatch {
+        expected: String,
+        actual: String,
+    },
     TransactionInputsNotSorted,
     TransactionOutputsNotSorted,
 }
@@ -109,7 +154,6 @@ impl fmt::Display for ValidationError {
             Self::InvalidParentsCount(count) => write!(f, "invalid parents count: {}", count),
             Self::InvalidParentsKind(kind) => write!(f, "invalid parents kind: {}", kind),
             Self::InvalidPayloadKind(kind) => write!(f, "invalid payload kind: {}", kind),
-            Self::InvalidPayloadLength(len) => write!(f, "invalid payload length: {}", len),
             Self::InvalidPayloadVersion { version, payload_kind } => {
                 write!(f, "invalid version {} for payload kind {}", version, payload_kind)
             }

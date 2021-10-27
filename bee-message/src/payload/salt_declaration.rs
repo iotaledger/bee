@@ -9,17 +9,24 @@ use crate::{
     MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
+use bee_packable::{
+    error::{UnpackPrefixError, VecPrefixLengthError},
+    BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
+};
 
 use alloc::vec::Vec;
 use core::convert::{Infallible, TryInto};
 
 /// Maximum size of payload, minus prefix `u32` and timestamp `u64`.
-const PREFIXED_BYTES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - 12;
+pub(crate) const PREFIXED_BYTES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - 12;
 
-fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> ValidationError {
+fn unpack_prefix_to_validation_error(
+    error: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>>,
+) -> ValidationError {
     match error {
-        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidSaltBytesLength(len),
+        UnpackPrefixError::InvalidPrefixLength(len) => {
+            ValidationError::InvalidSaltBytesLength(VecPrefixLengthError::Invalid(len))
+        }
         UnpackPrefixError::Packable(e) => match e {},
     }
 }
@@ -40,11 +47,7 @@ impl Salt {
     /// Creates a new [`Salt`].
     pub fn new(bytes: Vec<u8>, expiry_time: u64) -> Result<Self, ValidationError> {
         Ok(Self {
-            bytes: bytes
-                .try_into()
-                .map_err(|err: InvalidBoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>| {
-                    ValidationError::InvalidSaltBytesLength(err.0 as usize)
-                })?,
+            bytes: bytes.try_into().map_err(ValidationError::InvalidSaltBytesLength)?,
             expiry_time,
         })
     }
