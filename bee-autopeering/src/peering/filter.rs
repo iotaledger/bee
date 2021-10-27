@@ -1,9 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{collections::HashMap, iter};
+use super::distance::PeerDistance;
+use crate::peer::{peer_id::PeerId, Peer};
 
-use crate::{distance::PeerDistance, Peer, PeerId};
+use std::{collections::HashMap, iter};
 
 type Condition = Box<dyn Fn(&Peer) -> bool + Send>;
 
@@ -64,7 +65,7 @@ impl RejectionFilter {
 
 #[cfg(test)]
 mod tests {
-    use crate::service_map::{ServiceTransport, AUTOPEERING_SERVICE_NAME};
+    use crate::local::service_map::{ServiceTransport, AUTOPEERING_SERVICE_NAME};
 
     use super::*;
 

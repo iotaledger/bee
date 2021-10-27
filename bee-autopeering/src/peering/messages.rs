@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{proto, request::Request, salt::Salt};
+use crate::{local::salt::Salt, proto, request::Request};
 
 use base64 as bs64;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};

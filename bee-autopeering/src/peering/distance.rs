@@ -1,7 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{hash, identity::PeerId, local::Local, peer::Peer, salt::Salt};
+use crate::{
+    hash,
+    local::{salt::Salt, Local},
+    peer::{peer_id::PeerId, Peer},
+};
 
 use prost::bytes::{Buf, Bytes};
 

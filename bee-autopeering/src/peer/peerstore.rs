@@ -1,15 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::{peer_id::PeerId, peerlist::PeerMetrics, Peer};
+
 use crate::{
     delay::DelayFactory,
-    identity::PeerId,
+    local::service_map::AUTOPEERING_SERVICE_NAME,
     packet::{MessageType, OutgoingPacket},
-    peer::{self, Peer},
-    peerlist::PeerMetrics,
     request::RequestManager,
     server::ServerTx,
-    service_map::AUTOPEERING_SERVICE_NAME,
     task::ShutdownRx,
     time::{self, Timestamp},
 };

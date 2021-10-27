@@ -1,14 +1,17 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+pub(crate) mod salt;
+pub mod service_map;
+
+use salt::Salt;
+use service_map::{ServiceMap, ServiceTransport};
+
 use crate::{
     delay::DelayFactory,
     event::{Event, EventTx},
     hash,
-    identity::PeerId,
-    peerstore::PeerStore,
-    salt::Salt,
-    service_map::{ServiceMap, ServiceTransport},
+    peer::{peer_id::PeerId, peerstore::PeerStore},
     task::{Repeat, ShutdownRx},
     time,
 };

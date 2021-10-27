@@ -1,12 +1,29 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::protocol;
+
 use crate::{
     command::{Command, CommandTx},
-    peerlist::ActivePeersList,
+    discovery::manager::{add_peer_to_list, delete_peer_from_list, send_discovery_request_expecting_reply},
+    event::EventTx,
+    local::Local,
+    peer::PeerId,
+    peer::{
+        peerlist::{ActivePeerEntry, ActivePeersList, MasterPeersList, ReplacementList},
+        peerstore::PeerStore,
+    },
+    request::RequestManager,
+    server::ServerTx,
     task::Repeat,
 };
 
+use rand::{thread_rng, Rng};
+use tokio::sync::mpsc::Receiver;
+
+use std::{collections::VecDeque, time::Duration};
+
+// A temporary test strategy.
 pub(crate) fn roundrobin_verification() -> Repeat<(ActivePeersList, CommandTx)> {
     Box::new(|(active_peers, command_tx)| {
         if let Some(peer_entry) = active_peers.read().newest() {
@@ -21,6 +38,7 @@ pub(crate) fn roundrobin_verification() -> Repeat<(ActivePeersList, CommandTx)> 
     })
 }
 
+// A temporary test strategy.
 pub(crate) fn oldest_discovery() -> Repeat<(ActivePeersList, CommandTx)> {
     Box::new(|(active_peers, command_tx)| {
         if let Some(peer_entry) = active_peers.read().oldest() {
@@ -31,4 +49,166 @@ pub(crate) fn oldest_discovery() -> Repeat<(ActivePeersList, CommandTx)> {
                 .expect("error sending command");
         }
     })
+}
+
+#[derive(Clone)]
+pub(crate) struct QueryContext<S: PeerStore> {
+    local: Local,
+    peerstore: S,
+    request_mngr: RequestManager,
+    master_peers: MasterPeersList,
+    active_peers: ActivePeersList,
+    replacements: ReplacementList,
+    server_tx: ServerTx,
+    event_tx: EventTx,
+}
+
+impl<S: PeerStore> QueryContext<S> {
+    pub(crate) fn new(
+        local: Local,
+        peerstore: S,
+        request_mngr: RequestManager,
+        master_peers: MasterPeersList,
+        active_peers: ActivePeersList,
+        replacements: ReplacementList,
+        server_tx: ServerTx,
+        event_tx: EventTx,
+    ) -> Self {
+        Self {
+            local,
+            peerstore,
+            request_mngr,
+            master_peers,
+            active_peers,
+            replacements,
+            server_tx,
+            event_tx,
+        }
+    }
+}
+
+// Hive.go:
+// The current strategy is to always select the latest verified peer and one of
+// the peers that returned the most number of peers the last time it was queried.
+pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
+    Box::new(|(ctx)| {
+        log::debug!("Starting query.");
+
+        let peers = peers_to_query(&ctx.active_peers);
+        if peers.is_empty() {
+            log::warn!("No peers to query.");
+        } else {
+            log::debug!("Querying {} peer/s.", peers.len());
+
+            for peer_id in peers.into_iter() {
+                let ctx_ = ctx.clone();
+
+                // TODO: introduce `UnsupervisedTask` type, that always finishes after a timeout.
+                tokio::spawn(async move {
+                    if let Some(peers) = send_discovery_request_expecting_reply(
+                        &peer_id,
+                        &ctx_.request_mngr,
+                        &ctx_.peerstore,
+                        &ctx_.server_tx,
+                    )
+                    .await
+                    {
+                        log::debug!("Query successful. Received {} peers.", peers.len());
+
+                        let mut num_added = 0;
+                        for peer in peers {
+                            if add_peer_to_list(peer.into_id(), &ctx_.local, &ctx_.active_peers, &ctx_.replacements) {
+                                num_added += 1;
+                            }
+                        }
+
+                        ctx_.active_peers
+                            .write()
+                            .find_mut(&peer_id)
+                            .expect("inconsistent active peers list")
+                            .metrics_mut()
+                            .set_last_new_peers(num_added);
+                    } else {
+                        log::debug!("Query unsuccessful. Deleting peer.");
+
+                        delete_peer_from_list(
+                            &peer_id,
+                            &ctx_.master_peers,
+                            &ctx_.active_peers,
+                            &ctx_.replacements,
+                            ctx_.event_tx,
+                        )
+                    }
+                });
+            }
+        }
+    })
+}
+
+// Hive.go: selects the peers that should be queried.
+fn peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
+    let mut verif_peers = protocol::get_verified_peers(active_peers);
+
+    if verif_peers.is_empty() {
+        vec![]
+    } else if verif_peers.len() == 1 {
+        vec![verif_peers.remove(0).into_id()]
+    } else if verif_peers.len() == 2 {
+        vec![verif_peers.remove(0).into_id(), verif_peers.remove(0).into_id()]
+    } else {
+        // Note: this macro is useful to remove some noise from the pattern matching rules.
+        macro_rules! num {
+            ($t:expr) => {
+                // Panic: we made sure, that unwrap is always okay.
+                $t.as_ref().unwrap().metrics().last_new_peers()
+            };
+        }
+
+        fn len<T>(o: &(Option<T>, Option<T>, Option<T>)) -> usize {
+            let a = if o.0.is_some() { 1 } else { 0 };
+            let b = if o.1.is_some() { 1 } else { 0 };
+            let c = if o.2.is_some() { 1 } else { 0 };
+            a + b + c
+        }
+
+        let latest = verif_peers.remove(0).into_id();
+
+        // Note: This loop finds the three "heaviest" peers with one iteration over an unsorted vec of verified peers.
+        let heaviest3 = verif_peers.into_iter().fold((None, None, None), |(x, y, z), p| {
+            let n = p.metrics().last_new_peers();
+
+            match (&x, &y, &z) {
+                // set 1st
+                (None, _, _) => (Some(p), y, z),
+                // shift-right set 1st
+                (t, None, _) if n < num!(t) => (Some(p), t.clone(), z),
+                // set 2nd
+                (t, None, _) if n >= num!(t) => (x, Some(p), z),
+                // shift-right-shift-right set 1st
+                (s, t, None) if n < num!(s) => (Some(p), s.clone(), t.clone()),
+                // shift-right set 1st
+                (_, t, None) if n < num!(t) => (x, Some(p), t.clone()),
+                // set 3rd
+                (_, t, None) if n >= num!(t) => (x, y, Some(p)),
+                // default rules:
+                (t, _, _) if n < num!(t) => (x, y, z),
+                (_, t, _) if n < num!(t) => (Some(p), y, z),
+                (_, _, t) if n < num!(t) => (x, Some(p), z),
+                (_, _, _) => (x, y, Some(p)),
+            }
+        });
+
+        let r = thread_rng().gen_range(0..len(&heaviest3));
+        let heaviest = match r {
+            0 => heaviest3.0,
+            1 => heaviest3.1,
+            2 => heaviest3.2,
+            _ => unreachable!(),
+        }
+        // Panic: we made sure that the unwrap is always possible.
+        .unwrap()
+        .into_id();
+
+        vec![latest, heaviest]
+    }
 }

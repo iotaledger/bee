@@ -10,26 +10,33 @@ use crate::{
             DiscoveryManager, DiscoveryManagerConfig, DEFAULT_QUERY_INTERVAL_SECS, DEFAULT_REVERIFY_INTERVAL_SECS,
         },
         messages::VerificationRequest,
-        query,
+        query::{self, QueryContext},
     },
     event::{self, EventRx},
     hash,
-    local::{self, Local},
+    local::{
+        self,
+        salt::{Salt, DEFAULT_SALT_LIFETIME_SECS},
+        service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
+        Local,
+    },
     multiaddr,
     packet::{IncomingPacket, MessageType, OutgoingPacket},
-    peer,
-    peering::{PeeringManager, PeeringManagerConfig},
-    peerlist::{self, ActivePeersList},
-    peerstore::{self, InMemoryPeerStore, PeerStore},
+    peer::{
+        self,
+        peerlist::{self, ActivePeersList, MasterPeersList, ReplacementList},
+        peerstore::{self, InMemoryPeerStore, PeerStore},
+        PeerId,
+    },
+    peering::manager::{PeeringManager, PeeringManagerConfig},
     request::{self, RequestManager, EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS},
-    salt::{Salt, DEFAULT_SALT_LIFETIME_SECS},
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket, ServerTx},
-    service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
     task::{self, ShutdownRx, TaskManager, MAX_PRIORITY},
     time,
 };
 
 use std::{
+    collections::HashSet,
     error,
     future::Future,
     iter,
@@ -78,7 +85,18 @@ where
 
     // Create or load a peer store.
     let peerstore = S::new(peerstore_config);
+
+    // Create peer lists.
     let active_peers = ActivePeersList::default();
+    let replacements = ReplacementList::default();
+    let mut master_peers = HashSet::with_capacity(config.entry_nodes.len());
+    master_peers.extend(
+        config
+            .entry_nodes
+            .iter()
+            .map(|e| PeerId::from_public_key(e.public_key().clone())),
+    );
+    let master_peers = MasterPeersList::new(master_peers);
 
     // Create channels for inbound/outbound communication with the UDP server.
     let (discovery_tx, discovery_rx) = server_chan::<IncomingPacket>();
@@ -93,7 +111,7 @@ where
 
     // Initialize the server managing the UDP socket I/O.
     let server_config = ServerConfig::new(&config);
-    let (server, outgoing_tx) = Server::new(server_config, local.clone(), incoming_senders);
+    let (server, server_tx) = Server::new(server_config, local.clone(), incoming_senders);
     server.init(&mut task_mngr).await;
 
     // Create a request manager that creates and keeps track of outgoing requests.
@@ -101,7 +119,7 @@ where
 
     // Create the discovery manager handling the discovery request/response protocol.
     let discovery_config = DiscoveryManagerConfig::new(&config, version, network_id);
-    let discovery_socket = ServerSocket::new(discovery_rx, outgoing_tx.clone());
+    let discovery_socket = ServerSocket::new(discovery_rx, server_tx.clone());
 
     let discovery_mngr = DiscoveryManager::new(
         discovery_config,
@@ -109,14 +127,16 @@ where
         discovery_socket,
         request_mngr.clone(),
         peerstore.clone(),
+        master_peers.clone(),
         active_peers.clone(),
+        replacements.clone(),
         event_tx.clone(),
     );
     let command_tx = discovery_mngr.init(&mut task_mngr).await;
 
     // Create the autopeering manager handling the peering request/response protocol.
     let peering_config = PeeringManagerConfig::new(&config, version, network_id);
-    let peering_socket = ServerSocket::new(peering_rx, outgoing_tx.clone());
+    let peering_socket = ServerSocket::new(peering_rx, server_tx.clone());
 
     let peering_mngr = PeeringManager::new(
         peering_config,
@@ -148,9 +168,18 @@ where
     task_mngr.repeat(cmd, delay, ctx, "Reverification", MAX_PRIORITY);
 
     // Discover peers.
-    let cmd = query::oldest_discovery();
+    let cmd = query::do_query();
     let delay = iter::repeat(Duration::from_secs(DEFAULT_QUERY_INTERVAL_SECS));
-    let ctx = (active_peers, command_tx.clone());
+    let ctx = QueryContext::new(
+        local,
+        peerstore,
+        request_mngr,
+        master_peers,
+        active_peers,
+        replacements,
+        server_tx,
+        event_tx,
+    );
     task_mngr.repeat(cmd, delay, ctx, "Discovery", MAX_PRIORITY);
 
     // Await the shutdown signal (in a separate task).

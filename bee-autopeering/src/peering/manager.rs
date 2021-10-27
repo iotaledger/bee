@@ -1,24 +1,32 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::{
+    distance::{Neighborhood, SIZE_INBOUND, SIZE_OUTBOUND},
+    filter::RejectionFilter,
+    messages::{DropRequest, PeeringRequest, PeeringResponse},
+};
+
 use crate::{
     command::CommandTx,
     config::AutopeeringConfig,
     discovery,
-    distance::{Neighborhood, SIZE_INBOUND, SIZE_OUTBOUND},
     event::{Event, EventTx},
-    filter::RejectionFilter,
     hash,
-    identity::PeerId,
-    local::Local,
+    local::{
+        salt::{self, Salt},
+        service_map::AUTOPEERING_SERVICE_NAME,
+        Local,
+    },
     packet::{IncomingPacket, MessageType, OutgoingPacket},
-    peer::{self, Peer},
-    peering_messages::{DropRequest, PeeringRequest, PeeringResponse},
-    peerstore::{self, InMemoryPeerStore, PeerStore},
+    peer::{
+        self,
+        peer_id::PeerId,
+        peerstore::{self, InMemoryPeerStore, PeerStore},
+        Peer,
+    },
     request::{self, RequestManager},
-    salt::{self, Salt},
     server::{ServerSocket, ServerTx},
-    service_map::AUTOPEERING_SERVICE_NAME,
     task::{Runnable, ShutdownRx},
 };
 

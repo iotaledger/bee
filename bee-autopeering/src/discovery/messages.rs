@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{peer::Peer, proto, request::Request, service_map::ServiceMap};
+use crate::{local::service_map::ServiceMap, peer::Peer, proto, request::Request};
 
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message as _};
 
@@ -116,7 +116,7 @@ impl VerificationResponse {
         self.target_addr
     }
 
-    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
+    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
         let proto::Pong {
             req_hash,
             services,
@@ -130,7 +130,7 @@ impl VerificationResponse {
         })
     }
 
-    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub(crate) fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let pong = proto::Pong {
             req_hash: self.request_hash.clone(),
             services: Some(self.services.clone().into()),
@@ -141,6 +141,10 @@ impl VerificationResponse {
         pong.encode(&mut bytes)?;
 
         Ok(bytes)
+    }
+
+    pub(crate) fn into_services(self) -> ServiceMap {
+        self.services
     }
 }
 

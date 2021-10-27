@@ -1,11 +1,17 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+pub(crate) mod peerlist;
+
+pub mod peer_id;
+pub mod peerstore;
+
+pub use peer_id::PeerId;
+
 use crate::{
     discovery::manager::VERIFICATION_EXPIRATION_SECS,
-    identity::PeerId,
+    local::service_map::{ServiceMap, ServiceTransport},
     proto,
-    service_map::{ServiceMap, ServiceTransport},
     time::{self, Timestamp},
 };
 
@@ -176,7 +182,7 @@ pub(crate) fn has_verified(last_verif_req: Option<Timestamp>) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::service_map::AUTOPEERING_SERVICE_NAME;
+    use crate::local::service_map::AUTOPEERING_SERVICE_NAME;
 
     use super::*;
     use crypto::signatures::ed25519::SecretKey as PrivateKey;

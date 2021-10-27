@@ -5,20 +5,22 @@
 // corresponding Go code in `hive.go` with the capabilities provided within this crate. It's not likely to stay
 // around for long.
 
-use std::net::SocketAddr;
-
 use crate::{
     command::{Command, CommandTx},
     discovery::manager::VERIFICATION_EXPIRATION_SECS,
+    local::service_map::AUTOPEERING_SERVICE_NAME,
     packet::{MessageType, OutgoingPacket},
-    peer::Peer,
-    peerlist::{ActivePeersList, MasterPeersList},
-    peerstore::{self, PeerStore},
+    peer::{
+        peerlist::{ActivePeerEntry, ActivePeersList, MasterPeersList},
+        peerstore::{self, PeerStore},
+        Peer,
+    },
     request::RequestManager,
     server::ServerTx,
-    service_map::AUTOPEERING_SERVICE_NAME,
     time, PeerId,
 };
+
+use std::net::SocketAddr;
 
 // Hive.go: whether the peer has recently done an endpoint proof
 pub(crate) fn is_verified<S: PeerStore>(peer_id: &PeerId, peerstore: &S) -> bool {
@@ -36,8 +38,9 @@ pub(crate) fn has_verified<S: PeerStore>(peer_id: &PeerId, peerstore: &S) -> boo
 
 // Hive.go: checks whether the given peer has recently sent a Ping;
 // if not, we send a Ping to trigger a verification.
-pub(crate) fn ensure_verified<S: PeerStore>(peer_id: &PeerId, peerstore: &S, command_tx: &CommandTx) {
+pub(crate) async fn ensure_verified<S: PeerStore>(peer_id: &PeerId, peerstore: &S, command_tx: &CommandTx) {
     if !has_verified(peer_id, peerstore) {
+        // send_verification_request_expecting_reply(peer_id, request_mngr, peerstore, server_tx)
         command_tx.send(Command::SendVerificationRequest {
             peer_id: peer_id.clone(),
         });
@@ -46,8 +49,13 @@ pub(crate) fn ensure_verified<S: PeerStore>(peer_id: &PeerId, peerstore: &S, com
 
 // Hive.go: returns the list of master peers.
 pub(crate) fn get_master_peers<S: PeerStore>(master_peers: &MasterPeersList, peerstore: &S) -> Vec<Peer> {
-    let mut peers = Vec::with_capacity(master_peers.len());
-    peers.extend(master_peers.iter().filter_map(|peer_id| peerstore.get_peer(peer_id)));
+    let mut peers = Vec::with_capacity(master_peers.read().len());
+    peers.extend(
+        master_peers
+            .read()
+            .iter()
+            .filter_map(|peer_id| peerstore.get_peer(peer_id)),
+    );
     peers
 }
 
@@ -60,7 +68,7 @@ pub(crate) fn get_verified_peer<S: PeerStore>(
 ) -> Option<Peer> {
     let verified_peers = get_verified_peers(active_peers);
 
-    if verified_peers.contains(peer_id) {
+    if verified_peers.iter().any(|pe| pe.peer_id() == peer_id) {
         peerstore.get_peer(peer_id)
     } else {
         command_tx
@@ -72,13 +80,13 @@ pub(crate) fn get_verified_peer<S: PeerStore>(
     }
 }
 
-// GetVerifiedPeers returns all the currently managed peers that have been verified at least once.
-pub(crate) fn get_verified_peers(active_peers: &ActivePeersList) -> Vec<PeerId> {
+// Hive.go: returns all the currently managed peers that have been verified at least once.
+pub(crate) fn get_verified_peers(active_peers: &ActivePeersList) -> Vec<ActivePeerEntry> {
     let mut peers = Vec::with_capacity(active_peers.read().len());
 
     peers.extend(active_peers.read().iter().filter_map(|p| {
         if p.metrics().verified_count() > 0 {
-            Some(p.peer_id().clone())
+            Some(p.clone())
         } else {
             None
         }

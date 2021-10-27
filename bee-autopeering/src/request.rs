@@ -1,23 +1,21 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use num::CheckedAdd;
-use tokio::sync::oneshot;
-
 use crate::{
     delay::DelayFactory,
-    discovery::messages::{DiscoveryRequest, VerificationRequest, VerificationResponse},
+    discovery::messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
     hash,
-    identity::PeerId,
-    local::Local,
+    local::{salt::Salt, Local},
     packet::{msg_hash, MessageType},
-    peering_messages::PeeringRequest,
-    peerstore::PeerStore,
-    salt::Salt,
+    peer::{peer_id::PeerId, peerstore::PeerStore},
+    peering::messages::PeeringRequest,
     server::ServerTx,
     task::{Repeat, ShutdownRx},
     time::{self, Timestamp},
 };
+
+use num::CheckedAdd;
+use tokio::sync::oneshot;
 
 use std::{
     any::{Any, TypeId},
@@ -32,7 +30,7 @@ use std::{
 
 type RequestHash = [u8; hash::SHA256_LEN];
 pub(crate) type Callback = Box<dyn Fn() + Send + Sync + 'static>;
-pub(crate) type ResponseSignal = oneshot::Sender<()>;
+pub(crate) type ResponseSignal = oneshot::Sender<Vec<u8>>;
 
 // If the request is not answered within that time it gets removed from the manager, and any response
 // coming in later will be deemed invalid.

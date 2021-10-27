@@ -3,13 +3,13 @@
 
 use crate::{
     config::AutopeeringConfig,
-    identity::PeerId,
     local::Local,
     multiaddr,
     packet::{
         IncomingPacket, MessageType, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, MAX_PACKET_SIZE,
         PEERING_MSG_TYPE_RANGE,
     },
+    peer::peer_id::PeerId,
     task::{Runnable, ShutdownRx, TaskManager},
 };
 
