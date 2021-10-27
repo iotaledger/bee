@@ -57,6 +57,12 @@ macro_rules! bounded {
             const MAX: $ty = MAX;
         }
 
+        impl<const MIN: $ty, const MAX: $ty> Default for $wrapper<MIN, MAX> {
+            fn default() -> Self {
+                Self(MIN)
+            }
+        }
+
         // We cannot provide a [`From`] implementation because primitives are not in this crate.
         #[allow(clippy::from_over_into)]
         impl<const MIN: $ty, const MAX: $ty> Into<$ty> for $wrapper<MIN, MAX> {
