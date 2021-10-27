@@ -33,7 +33,7 @@ pub mod prelude;
 /// A module that provides types and syntactic validations of signatures.
 pub mod signature;
 /// A module that provides types and syntactic validations of unlock blocks.
-pub mod unlock;
+pub mod unlock_block;
 
 pub use error::Error;
 pub use message::{Message, MessageBuilder, MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN};
