@@ -57,7 +57,7 @@ impl ReceiptPayload {
 
         // Funds must be lexicographically sorted and unique in their serialised forms.
         if !is_unique_sorted(funds.iter().map(Packable::pack_new)) {
-            return Err(Error::TransactionOutputsNotSorted);
+            return Err(Error::ReceiptFundsNotUniqueSorted);
         }
 
         let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());

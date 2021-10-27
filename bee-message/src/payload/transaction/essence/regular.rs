@@ -9,10 +9,7 @@ use crate::{
     Error,
 };
 
-use bee_common::{
-    ord::is_sorted,
-    packable::{Packable, Read, Write},
-};
+use bee_common::packable::{Packable, Read, Write};
 
 use alloc::{boxed::Box, vec::Vec};
 
@@ -178,11 +175,6 @@ impl RegularEssenceBuilder {
             }
         }
 
-        // Inputs must be lexicographically sorted in their serialised forms.
-        if !is_sorted(self.inputs.iter().map(Packable::pack_new)) {
-            return Err(Error::TransactionInputsNotSorted);
-        }
-
         let mut total: u64 = 0;
 
         for output in self.outputs.iter() {
@@ -222,11 +214,6 @@ impl RegularEssenceBuilder {
             if total > IOTA_SUPPLY {
                 return Err(Error::InvalidAccumulatedOutput(total as u128));
             }
-        }
-
-        // Outputs must be lexicographically sorted in their serialised forms.
-        if !is_sorted(self.outputs.iter().map(Packable::pack_new)) {
-            return Err(Error::TransactionOutputsNotSorted);
         }
 
         Ok(RegularEssence {

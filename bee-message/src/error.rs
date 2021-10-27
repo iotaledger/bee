@@ -54,11 +54,10 @@ pub enum Error {
     MissingField(&'static str),
     MissingPayload,
     ParentsNotUniqueSorted,
+    ReceiptFundsNotUniqueSorted,
     RemainingBytesAfterMessage,
     SignaturePublicKeyMismatch(String, String),
     TailTransactionHashNotUnique(usize, usize),
-    TransactionInputsNotSorted,
-    TransactionOutputsNotSorted,
 }
 
 impl std::error::Error for Error {}
@@ -149,7 +148,10 @@ impl fmt::Display for Error {
             Error::MissingField(s) => write!(f, "Missing required field: {}.", s),
             Error::MissingPayload => write!(f, "Missing payload."),
             Error::ParentsNotUniqueSorted => {
-                write!(f, "Parents not unique and/or sorted.")
+                write!(f, "Parents are not unique and/or sorted.")
+            }
+            Error::ReceiptFundsNotUniqueSorted => {
+                write!(f, "Receipt funds are not unique and/or sorted.")
             }
             Error::RemainingBytesAfterMessage => {
                 write!(f, "Remaining bytes after message.")
@@ -167,12 +169,6 @@ impl fmt::Display for Error {
                     "Tail transaction hash is not unique at indices: {0} and {1}.",
                     previous, current
                 )
-            }
-            Error::TransactionInputsNotSorted => {
-                write!(f, "Transaction inputs are not sorted.")
-            }
-            Error::TransactionOutputsNotSorted => {
-                write!(f, "Transaction outputs are not sorted.")
             }
         }
     }
