@@ -15,10 +15,7 @@ use bee_packable::{
 };
 
 use alloc::vec::Vec;
-use core::{
-    convert::{Infallible, TryInto},
-    fmt,
-};
+use core::{convert::Infallible, fmt};
 
 /// Length (in bytes) of Transaction Essence pledge IDs (node IDs relating to pledge mana).
 pub const PLEDGE_ID_LENGTH: usize = 32;

@@ -3,8 +3,6 @@
 
 use bee_message::{address::Bech32Address, error::ValidationError};
 
-use core::convert::TryFrom;
-
 const VALID_BECH32: [(&str, &str); 7] = [
     ("A12UEL5L", "a"),
     ("a12uel5l", "a"),

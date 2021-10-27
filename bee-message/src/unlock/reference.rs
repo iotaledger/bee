@@ -5,10 +5,7 @@ use crate::{error::ValidationError, unlock::UNLOCK_BLOCK_INDEX_MAX, MessageUnpac
 
 use bee_packable::{BoundedU16, InvalidBoundedU16, Packable};
 
-use core::{
-    convert::{TryFrom, TryInto},
-    fmt,
-};
+use core::fmt;
 
 /// Error encountered unpacking a [`ReferenceUnlock`].
 #[derive(Debug)]

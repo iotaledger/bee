@@ -14,10 +14,7 @@ use bee_packable::{
 };
 
 use alloc::vec::Vec;
-use core::{
-    convert::{Infallible, TryInto},
-    ops::RangeInclusive,
-};
+use core::{convert::Infallible, ops::RangeInclusive};
 
 /// Valid lengths for an indexation payload index.
 pub const INDEXATION_INDEX_LENGTH_RANGE: RangeInclusive<u32> = 1..=PaddedIndex::LENGTH as u32;

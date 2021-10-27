@@ -5,8 +5,6 @@
 
 pub use crate::grpc::{MessageParsedEvent, MessageRejectedEvent, ParsingFailedEvent};
 
-use std::convert::TryFrom;
-
 /// Error returned while converting an [`u8`] into an [`EventId`].
 #[derive(Debug)]
 pub struct InvalidEventId(pub(crate) u8);

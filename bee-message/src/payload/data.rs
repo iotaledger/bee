@@ -13,7 +13,7 @@ use bee_packable::{
 };
 
 use alloc::vec::Vec;
-use core::convert::{Infallible, TryInto};
+use core::convert::Infallible;
 
 pub(crate) const PREFIXED_DATA_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - core::mem::size_of::<u8>() as u32;
 

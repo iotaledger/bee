@@ -4,7 +4,7 @@
 use crate::{coerce::*, error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
 
 use core::{
-    convert::{TryFrom, TryInto},
+    convert::Infallible,
     fmt::{self, Display},
 };
 

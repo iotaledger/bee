@@ -4,7 +4,7 @@
 use bee_message::address::{Address, Bech32Address, Ed25519Address};
 use bee_packable::Packable;
 
-use core::{convert::TryInto, ops::Deref, str::FromStr};
+use core::{ops::Deref, str::FromStr};
 
 const ED25519_ADDRESS: &str = "1d389ea27a77c91d0840f93861442a95ca5e882e0d9f9c2f9965815409d939e4";
 

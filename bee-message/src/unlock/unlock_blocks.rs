@@ -14,7 +14,7 @@ use bee_packable::{
 use hashbrown::HashSet;
 
 use alloc::vec::Vec;
-use core::{convert::TryFrom, ops::Deref};
+use core::{convert::Infallible, ops::Deref};
 
 pub(crate) const PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN: u16 = *UNLOCK_BLOCK_COUNT_RANGE.start();
 pub(crate) const PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX: u16 = *UNLOCK_BLOCK_COUNT_RANGE.end();

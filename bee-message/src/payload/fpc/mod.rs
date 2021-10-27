@@ -21,7 +21,6 @@ use bee_packable::{
 };
 
 use alloc::vec::Vec;
-use core::convert::TryInto;
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`].
 pub(crate) const PREFIXED_CONFLICTS_LENGTH_MAX: u32 =

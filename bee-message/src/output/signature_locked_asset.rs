@@ -8,10 +8,7 @@ use bee_packable::{
 };
 
 use alloc::vec::Vec;
-use core::{
-    convert::{Infallible, TryInto},
-    ops::Deref,
-};
+use core::{convert::Infallible, ops::Deref};
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / [`AssetId::LENGTH`].
 pub(crate) const PREFIXED_ASSET_BALANCES_LENGTH_MAX: u32 =

@@ -9,7 +9,7 @@ use bee_tangle::{
     MessageData, StorageBackend, Tangle,
 };
 
-use std::{collections::HashMap, convert::TryInto};
+use std::collections::HashMap;
 
 fn generic_walker_test<T: Iterator<Item = TangleWalkerItem>>(
     walker: T,

@@ -13,7 +13,6 @@ use alloc::{
     string::{String, ToString},
     vec::Vec,
 };
-use core::convert::{TryFrom, TryInto};
 
 /// Wrapper for a `Bech32` encoded address string.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
