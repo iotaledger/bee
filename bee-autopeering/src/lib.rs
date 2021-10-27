@@ -34,4 +34,4 @@ pub use local::{
     service_map::{ServiceMap, ServiceName, ServiceTransport},
     Local,
 };
-pub use peer::{peer_id::PeerId, Peer};
+pub use peer::{peer_id, peer_id::PeerId, peerstore, Peer};

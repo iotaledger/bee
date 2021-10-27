@@ -8,10 +8,10 @@ use crate::{
     discovery::manager::{add_peer_to_list, delete_peer_from_list, send_discovery_request_expecting_reply},
     event::EventTx,
     local::Local,
-    peer::PeerId,
     peer::{
         peerlist::{ActivePeerEntry, ActivePeersList, MasterPeersList, ReplacementList},
         peerstore::PeerStore,
+        PeerId,
     },
     request::RequestManager,
     server::ServerTx,

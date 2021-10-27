@@ -11,8 +11,7 @@ use crate::{
 };
 
 use std::{
-    collections::HashSet,
-    collections::{vec_deque, VecDeque},
+    collections::{vec_deque, HashSet, VecDeque},
     fmt,
     ops::{Deref, DerefMut},
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
