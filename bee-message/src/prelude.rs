@@ -22,7 +22,7 @@ pub use crate::{
         treasury::TreasuryTransactionPayload,
         Payload,
     },
-    signature::{Ed25519Signature, SignatureUnlock},
-    unlock_block::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
+    signature::{Ed25519Signature, Signature},
+    unlock_block::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlocks},
     Error, Message, MessageBuilder, MessageId, MESSAGE_ID_LENGTH, MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN,
 };

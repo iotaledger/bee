@@ -11,7 +11,7 @@ pub use bls::BlsAddress;
 pub use ed25519::Ed25519Address;
 pub use nft::NftAddress;
 
-use crate::{signature::SignatureUnlock, Error};
+use crate::{signature::Signature, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -65,11 +65,11 @@ impl Address {
         bech32::encode(hrp, self.pack_new().to_base32(), Variant::Bech32).expect("Invalid address.")
     }
 
-    /// Verifies a [`SignatureUnlock`] for a message against the [`Address`].
-    pub fn verify(&self, msg: &[u8], signature: &SignatureUnlock) -> Result<(), Error> {
+    /// Verifies a [`Signature`] for a message against the [`Address`].
+    pub fn verify(&self, msg: &[u8], signature: &Signature) -> Result<(), Error> {
         match self {
             Address::Ed25519(address) => {
-                let SignatureUnlock::Ed25519(signature) = signature;
+                let Signature::Ed25519(signature) = signature;
                 address.verify(msg, signature)
             }
             Address::Bls(_address) => {

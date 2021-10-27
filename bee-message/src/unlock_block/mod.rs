@@ -4,12 +4,14 @@
 mod alias;
 mod nft;
 mod reference;
+mod signature;
 
 pub use alias::AliasUnlock;
 pub use nft::NftUnlock;
 pub use reference::ReferenceUnlock;
+pub use signature::SignatureUnlock;
 
-use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, signature::SignatureUnlock, Error};
+use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 

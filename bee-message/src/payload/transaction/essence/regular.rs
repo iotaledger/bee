@@ -196,16 +196,16 @@ impl RegularEssenceBuilder {
                         .ok_or_else(|| Error::InvalidAccumulatedOutput((total + single.amount()) as u128))?;
                 }
                 Output::Extended(_extended) => {
-                    // TODO
+                    todo!()
                 }
                 Output::Alias(_alias) => {
-                    // TODO
+                    todo!()
                 }
                 Output::Foundry(_foundry) => {
-                    // TODO
+                    todo!()
                 }
                 Output::Nft(_nft) => {
-                    // TODO
+                    todo!()
                 }
                 _ => return Err(Error::InvalidOutputKind(output.kind())),
             }
