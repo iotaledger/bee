@@ -11,7 +11,7 @@ keywords = [ "iota", "tangle", "bee", "framework", "sled" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-message = { path = "../../bee-message", default-features = false }
+bee-message = { path = "../../bee-message", default-features = false, features = [ "metadata" ] }
 bee-packable = { path = "../../bee-common/bee-packable", default-features = false, features = [ "io" ] }
 bee-storage = { path = "../bee-storage", default-features = false }
 
