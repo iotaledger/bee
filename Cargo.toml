@@ -16,3 +16,5 @@ members = [
   "bee-tangle",
   "bee-test"
 ]
+
+resolver = "2"
