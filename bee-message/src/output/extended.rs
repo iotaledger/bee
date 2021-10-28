@@ -53,7 +53,7 @@ impl ExtendedOutputBuilder {
     }
 
     ///
-    pub fn build(self) -> ExtendedOutput {
+    pub fn finish(self) -> ExtendedOutput {
         ExtendedOutput {
             address: self.address,
             amount: self.amount,
@@ -79,7 +79,7 @@ impl ExtendedOutput {
 
     /// Creates a new `ExtendedOutput`.
     pub fn new(address: Address, amount: u64) -> Self {
-        ExtendedOutputBuilder::new(address, amount).build()
+        ExtendedOutputBuilder::new(address, amount).finish()
     }
 
     ///

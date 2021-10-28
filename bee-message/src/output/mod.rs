@@ -13,7 +13,7 @@ mod simple;
 mod token_id;
 mod treasury;
 
-pub use alias::AliasOutput;
+pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
 pub use extended::{ExtendedOutput, ExtendedOutputBuilder};
 pub use feature_block::FeatureBlock;
