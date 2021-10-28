@@ -10,7 +10,7 @@ mod signature_locked_single;
 use crate::error::{MessageUnpackError, ValidationError};
 
 pub use output_id::{OutputId, OutputIdUnpackError};
-pub(crate) use signature_locked_asset::PREFIXED_BALANCES_LENGTH_MAX;
+pub(crate) use signature_locked_asset::PREFIXED_ASSET_BALANCES_LENGTH_MAX;
 pub use signature_locked_asset::{AssetBalance, AssetId, SignatureLockedAssetOutput};
 pub use signature_locked_single::{SignatureLockedSingleOutput, SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT};
 

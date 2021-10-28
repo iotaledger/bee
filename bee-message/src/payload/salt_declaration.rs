@@ -17,10 +17,10 @@ use alloc::vec::Vec;
 use core::convert::{Infallible, TryInto};
 
 /// Maximum size of payload, minus prefix `u32` and timestamp `u64`.
-pub(crate) const PREFIXED_BYTES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - 12;
+pub(crate) const PREFIXED_SALT_BYTES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - 12;
 
 fn unpack_prefix_to_validation_error(
-    error: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>>,
+    error: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_SALT_BYTES_LENGTH_MAX>>,
 ) -> ValidationError {
     match error {
         UnpackPrefixError::InvalidPrefixLength(len) => {
@@ -37,7 +37,7 @@ fn unpack_prefix_to_validation_error(
 pub struct Salt {
     /// The value of the [`Salt`].
     #[packable(unpack_error_with = unpack_prefix_to_validation_error)]
-    bytes: VecPrefix<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>>,
+    bytes: VecPrefix<u8, BoundedU32<0, PREFIXED_SALT_BYTES_LENGTH_MAX>>,
     /// The expiry time of the [`Salt`].
     expiry_time: u64,
 }

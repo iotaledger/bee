@@ -4,16 +4,16 @@
 use crate::{
     address::Address,
     input::UtxoInput,
-    output::PREFIXED_BALANCES_LENGTH_MAX,
+    output::PREFIXED_ASSET_BALANCES_LENGTH_MAX,
     payload::{
         data::PREFIXED_DATA_LENGTH_MAX,
-        drng::PREFIXED_LENGTH_MAX,
+        drng::PREFIXED_DKG_LENGTH_MAX,
         fpc::{PREFIXED_CONFLICTS_LENGTH_MAX, PREFIXED_TIMESTAMPS_LENGTH_MAX},
         indexation::{
             PREFIXED_INDEXATION_DATA_LENGTH_MAX, PREFIXED_INDEXATION_INDEX_LENGTH_MAX,
             PREFIXED_INDEXATION_INDEX_LENGTH_MIN,
         },
-        salt_declaration::PREFIXED_BYTES_LENGTH_MAX,
+        salt_declaration::PREFIXED_SALT_BYTES_LENGTH_MAX,
         transaction::{
             PREFIXED_INPUTS_LENGTH_MAX, PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX,
             PREFIXED_OUTPUTS_LENGTH_MIN,
@@ -48,10 +48,10 @@ pub enum ValidationError {
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAmount(u64),
-    InvalidAssetBalanceCount(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_BALANCES_LENGTH_MAX>>),
+    InvalidAssetBalanceCount(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_ASSET_BALANCES_LENGTH_MAX>>),
     InvalidConflictsCount(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>),
     InvalidDataPayloadLength(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>),
-    InvalidEncryptedDealLength(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>>),
+    InvalidEncryptedDealLength(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength {
         expected: usize,
@@ -79,7 +79,7 @@ pub enum ValidationError {
         payload_kind: u32,
     },
     InvalidReferenceIndex(u16),
-    InvalidSaltBytesLength(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>>),
+    InvalidSaltBytesLength(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_SALT_BYTES_LENGTH_MAX>>),
     InvalidSignature,
     InvalidStrongParentsCount(usize),
     InvalidTimestampsCount(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>),

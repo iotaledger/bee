@@ -14,10 +14,10 @@ use alloc::vec::Vec;
 use core::convert::{Infallible, TryInto};
 
 /// All [`Vec`] sizes are unconstrained, so use payload max as upper limit.
-pub(crate) const PREFIXED_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX;
+pub(crate) const PREFIXED_DKG_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX;
 
 fn unpack_prefix_to_validation_error(
-    error: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>>,
+    error: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>,
 ) -> ValidationError {
     match error {
         UnpackPrefixError::InvalidPrefixLength(len) => {
@@ -33,16 +33,16 @@ fn unpack_prefix_to_validation_error(
 #[packable(unpack_error = MessageUnpackError, with = unpack_prefix_to_validation_error)]
 pub struct EncryptedDeal {
     /// An ephemeral Diffie-Hellman key.
-    dh_key: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
+    dh_key: VecPrefix<u8, BoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>,
     /// The nonce used.
-    nonce: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
+    nonce: VecPrefix<u8, BoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>,
     /// The ciphertext of the share.
-    encrypted_share: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
+    encrypted_share: VecPrefix<u8, BoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>,
     /// The threshold of the secret sharing protocol.
     #[packable(unpack_error_with = core::convert::identity)]
     threshold: u32,
     /// The commitments of the polynomial used to derive the share.
-    commitments: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
+    commitments: VecPrefix<u8, BoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>,
 }
 
 impl EncryptedDeal {
@@ -164,7 +164,7 @@ impl EncryptedDealBuilder {
 }
 
 fn validate_encrypted_deal_length(len: usize) -> Result<(), ValidationError> {
-    if len > PREFIXED_LENGTH_MAX as usize {
+    if len > PREFIXED_DKG_LENGTH_MAX as usize {
         Err(ValidationError::InvalidEncryptedDealLength(
             VecPrefixLengthError::Truncated(len),
         ))
