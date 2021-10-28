@@ -16,7 +16,8 @@ pub fn from_unix_timestamp(timestamp: i64) -> time::OffsetDateTime {
 /// Produces a formatted `String` from a timestamp, displayed as local time.
 pub fn format(time: &time::OffsetDateTime) -> String {
     // This format string is correct, so unwrapping is fine.
-    let format_description = time::format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second] (UTC)").unwrap();
+    let format_description =
+        time::format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second] (UTC)").unwrap();
 
     // We know this is correct.
     time.format(&format_description).unwrap()
