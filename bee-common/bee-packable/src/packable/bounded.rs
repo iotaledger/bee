@@ -26,8 +26,8 @@ pub trait Bounded {
 }
 
 macro_rules! bounded {
-    ($(#[$wrapper_doc:meta])* $wrapper:ident, $(#[$error_doc:meta])* $error:ident, $ty:ident) => {
-        $(#[$error_doc])*
+    ($wrapper:ident, $error:ident, $ty:ident) => {
+        #[doc = concat!("Error encountered when attempting to wrap a  `", stringify!($ty),"` that is not within the given bounds.")]
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub struct $error<const MIN: $ty, const MAX: $ty>(pub $ty);
 
@@ -51,7 +51,7 @@ macro_rules! bounded {
             }
         }
 
-        $(#[$wrapper_doc])*
+        #[doc = concat!("Wrapper type for a `", stringify!($ty),"`, providing minimum and maximum value bounds.")]
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub struct $wrapper<const MIN: $ty, const MAX: $ty>($ty);
@@ -105,39 +105,10 @@ macro_rules! bounded {
     };
 }
 
-// TODO: replace with #[doc = concat!(<...>)] in macro when CI rust versions are updated.
-
-bounded!(
-    /// Wrapper type for a `u8`, providing minimum and maximum value bounds.
-    BoundedU8,
-    /// Error encountered when attempting to wrap a `u8` that is not within the given bounds.
-    InvalidBoundedU8,
-    u8
-);
-
-bounded!(
-    /// Wrapper type for a `u16`, providing minimum and maximum value bounds.
-    BoundedU16,
-    /// Error encountered when attempting to wrap a `u16` that is not within the given bounds.
-    InvalidBoundedU16,
-    u16
-);
-
-bounded!(
-    /// Wrapper type for a `u32`, providing minimum and maximum value bounds.
-    BoundedU32,
-    /// Error encountered when attempting to wrap a `u32` that is not within the given bounds.
-    InvalidBoundedU32,
-    u32
-);
-
-bounded!(
-    /// Wrapper type for a `u64`, providing minimum and maximum value bounds.
-    BoundedU64,
-    /// Error encountered when attempting to wrap a `u64` that is not within the given bounds.
-    InvalidBoundedU64,
-    u64
-);
+bounded!(BoundedU8, InvalidBoundedU8, u8);
+bounded!(BoundedU16, InvalidBoundedU16, u16);
+bounded!(BoundedU32, InvalidBoundedU32, u32);
+bounded!(BoundedU64, InvalidBoundedU64, u64);
 
 impl Bounded for u8 {
     type Bounds = Self;
