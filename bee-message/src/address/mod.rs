@@ -2,12 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod alias;
-mod bls;
 mod ed25519;
 mod nft;
 
 pub use alias::AliasAddress;
-pub use bls::BlsAddress;
 pub use ed25519::Ed25519Address;
 pub use nft::NftAddress;
 
@@ -29,8 +27,6 @@ use alloc::{str::FromStr, string::String};
 pub enum Address {
     /// An Ed25519 address.
     Ed25519(Ed25519Address),
-    /// A BLS address.
-    Bls(BlsAddress),
     /// An alias address.
     Alias(AliasAddress),
     /// A NFT address.
@@ -42,7 +38,6 @@ impl Address {
     pub fn kind(&self) -> u8 {
         match self {
             Self::Ed25519(_) => Ed25519Address::KIND,
-            Self::Bls(_) => BlsAddress::KIND,
             Self::Alias(_) => AliasAddress::KIND,
             Self::Nft(_) => NftAddress::KIND,
         }
@@ -71,10 +66,6 @@ impl Address {
             Address::Ed25519(address) => {
                 let Signature::Ed25519(signature) = signature;
                 address.verify(msg, signature)
-            }
-            Address::Bls(_address) => {
-                // TODO
-                Ok(())
             }
             Address::Alias(_address) => {
                 // TODO
@@ -110,7 +101,6 @@ impl Packable for Address {
     fn packed_len(&self) -> usize {
         match self {
             Self::Ed25519(address) => Ed25519Address::KIND.packed_len() + address.packed_len(),
-            Self::Bls(address) => BlsAddress::KIND.packed_len() + address.packed_len(),
             Self::Alias(address) => AliasAddress::KIND.packed_len() + address.packed_len(),
             Self::Nft(address) => NftAddress::KIND.packed_len() + address.packed_len(),
         }
@@ -120,10 +110,6 @@ impl Packable for Address {
         match self {
             Self::Ed25519(address) => {
                 Ed25519Address::KIND.pack(writer)?;
-                address.pack(writer)?;
-            }
-            Self::Bls(address) => {
-                BlsAddress::KIND.pack(writer)?;
                 address.pack(writer)?;
             }
             Self::Alias(address) => {
@@ -141,7 +127,6 @@ impl Packable for Address {
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
             Ed25519Address::KIND => Ed25519Address::unpack_inner::<R, CHECK>(reader)?.into(),
-            BlsAddress::KIND => BlsAddress::unpack_inner::<R, CHECK>(reader)?.into(),
             AliasAddress::KIND => AliasAddress::unpack_inner::<R, CHECK>(reader)?.into(),
             NftAddress::KIND => NftAddress::unpack_inner::<R, CHECK>(reader)?.into(),
             k => return Err(Self::Error::InvalidAddressKind(k)),

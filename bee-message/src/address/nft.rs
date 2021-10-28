@@ -14,7 +14,7 @@ pub struct NftAddress([u8; Self::LENGTH]);
 #[allow(clippy::len_without_is_empty)]
 impl NftAddress {
     /// The address kind of a NFT address.
-    pub const KIND: u8 = 16;
+    pub const KIND: u8 = 8;
     /// The length of a NFT address.
     pub const LENGTH: usize = 20;
 
