@@ -33,7 +33,7 @@ jobs:
       name: Initialize template
       with:
         command: about
-        args: --workspace --all-features init
+        args: --all-features init
     - uses: actions-rs/cargo@v1
       name: Check licenses
       with:
