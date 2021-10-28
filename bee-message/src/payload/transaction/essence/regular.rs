@@ -175,10 +175,10 @@ impl RegularEssenceBuilder {
             }
         }
 
-        let mut total: u64 = 0;
+        let mut total_amount: u64 = 0;
 
         for output in self.outputs.iter() {
-            match output {
+            let amount = match output {
                 Output::Simple(single) => {
                     // The addresses must be unique in the set of simple outputs.
                     if self
@@ -191,28 +191,22 @@ impl RegularEssenceBuilder {
                         return Err(Error::DuplicateAddress(*single.address()));
                     }
 
-                    total = total
-                        .checked_add(single.amount())
-                        .ok_or_else(|| Error::InvalidAccumulatedOutput((total + single.amount()) as u128))?;
+                    single.amount()
                 }
-                Output::Extended(_extended) => {
-                    todo!()
-                }
-                Output::Alias(_alias) => {
-                    todo!()
-                }
-                Output::Foundry(_foundry) => {
-                    todo!()
-                }
-                Output::Nft(_nft) => {
-                    todo!()
-                }
+                Output::Extended(extended) => extended.amount(),
+                Output::Alias(alias) => alias.amount(),
+                Output::Foundry(foundry) => foundry.amount(),
+                Output::Nft(nft) => nft.amount(),
                 _ => return Err(Error::InvalidOutputKind(output.kind())),
-            }
+            };
+
+            total_amount = total_amount
+                .checked_add(amount)
+                .ok_or_else(|| Error::InvalidAccumulatedOutput((total_amount + amount) as u128))?;
 
             // Accumulated output balance must not exceed the total supply of tokens.
-            if total > IOTA_SUPPLY {
-                return Err(Error::InvalidAccumulatedOutput(total as u128));
+            if total_amount > IOTA_SUPPLY {
+                return Err(Error::InvalidAccumulatedOutput(total_amount as u128));
             }
         }
 

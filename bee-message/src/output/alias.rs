@@ -8,15 +8,22 @@ use bee_common::packable::{Packable, Read, Write};
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct AliasOutput {}
+pub struct AliasOutput {
+    amount: u64,
+}
 
 impl AliasOutput {
     /// The output kind of an `AliasOutput`.
     pub const KIND: u8 = 3;
 
     /// Creates a new `AliasOutput`.
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(amount: u64) -> Self {
+        Self { amount }
+    }
+
+    /// Returns the amount of an `AliasOutput`.
+    pub fn amount(&self) -> u64 {
+        self.amount
     }
 }
 
@@ -24,14 +31,16 @@ impl Packable for AliasOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        0
+        self.amount.packed_len()
     }
 
-    fn pack<W: Write>(&self, _writer: &mut W) -> Result<(), Self::Error> {
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        self.amount.pack(writer)?;
+
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(_reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new())
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(Self::new(u64::unpack_inner::<R, CHECK>(reader)?))
     }
 }
