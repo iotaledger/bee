@@ -10,7 +10,6 @@ use super::{
 use crate::{
     command::CommandTx,
     config::AutopeeringConfig,
-    discovery,
     event::{Event, EventTx},
     hash,
     local::{
@@ -19,20 +18,13 @@ use crate::{
         Local,
     },
     packet::{IncomingPacket, MessageType, OutgoingPacket},
-    peer::{
-        self,
-        peer_id::PeerId,
-        peerstore::{self, InMemoryPeerStore, PeerStore},
-        Peer,
-    },
+    peer::{self, peer_id::PeerId, peerstore::PeerStore, Peer},
     request::{self, RequestManager},
     server::{ServerSocket, ServerTx},
     task::{Runnable, ShutdownRx},
 };
 
-use tokio::sync::mpsc;
-
-use std::{net::SocketAddr, time::Duration, vec};
+use std::net::SocketAddr;
 
 const DEFAULT_OUTBOUND_UPDATE_INTERVAL_SECS: u64 = 1;
 const DEFAULT_FULL_OUTBOUND_UPDATE_INTERVAL_SECS: u64 = 60;
@@ -70,7 +62,7 @@ impl PeeringManagerConfig {
     }
 }
 
-pub(crate) struct PeeringManager<S> {
+pub(crate) struct PeeringManager<S: PeerStore> {
     // The peering config.
     config: PeeringManagerConfig,
     // The local peer.
@@ -78,7 +70,7 @@ pub(crate) struct PeeringManager<S> {
     // Channel halfs for sending/receiving peering related packets.
     socket: ServerSocket,
     // Handles requests.
-    request_mngr: RequestManager,
+    request_mngr: RequestManager<S>,
     // Publishes peering related events.
     event_tx: EventTx,
     // The storage for discovered peers.
@@ -96,7 +88,7 @@ impl<S: PeerStore> PeeringManager<S> {
         config: PeeringManagerConfig,
         local: Local,
         socket: ServerSocket,
-        request_mngr: RequestManager,
+        request_mngr: RequestManager<S>,
         peerstore: S,
         event_tx: EventTx,
         command_tx: CommandTx,
@@ -161,7 +153,7 @@ impl<S: PeerStore> Runnable for PeeringManager<S> {
                     if let Some(IncomingPacket {
                         msg_type,
                         msg_bytes,
-                        source_socket_addr,
+                        peer_addr,
                         peer_id,
                     }) = o
                     {
@@ -222,7 +214,7 @@ impl<S: PeerStore> Runnable for PeeringManager<S> {
 fn validate_peering_request<S: PeerStore>(peering_req: &PeeringRequest, peer_id: &PeerId, peerstore: &S) -> bool {
     if request::is_expired(peering_req.timestamp()) {
         false
-    } else if !peer::is_verified(peerstore.last_verification_response(&peer_id)) {
+    } else if !peer::is_verified(&peer_id, peerstore) {
         false
     } else if salt::is_expired(peering_req.salt_expiration_time()) {
         false
@@ -231,7 +223,11 @@ fn validate_peering_request<S: PeerStore>(peering_req: &PeeringRequest, peer_id:
     }
 }
 
-fn validate_peering_response(peering_res: &PeeringResponse, peer_id: &PeerId, request_mngr: &RequestManager) -> bool {
+fn validate_peering_response<S: PeerStore>(
+    peering_res: &PeeringResponse,
+    peer_id: &PeerId,
+    request_mngr: &RequestManager<S>,
+) -> bool {
     if let Some(req) = request_mngr.pull::<PeeringRequest>(peer_id) {
         peering_res.request_hash() == &req.request_hash
     } else {
@@ -304,7 +300,7 @@ fn reply_with_drop_request(server_tx: &ServerTx, target_addr: SocketAddr) {
     server_tx.send(OutgoingPacket {
         msg_type: MessageType::DropRequest,
         msg_bytes: drop_req_bytes,
-        target_socket_addr: target_addr,
+        peer_addr: target_addr,
     });
 }
 
@@ -381,6 +377,6 @@ fn send_drop_request(peer: Peer, server_tx: &ServerTx) {
     server_tx.send(OutgoingPacket {
         msg_type: MessageType::DropRequest,
         msg_bytes: drop_req_bytes,
-        target_socket_addr: SocketAddr::new(peer.ip_address(), port),
+        peer_addr: SocketAddr::new(peer.ip_address(), port),
     });
 }

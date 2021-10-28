@@ -22,31 +22,6 @@ use crate::{
 
 use std::net::SocketAddr;
 
-// Hive.go: whether the peer has recently done an endpoint proof
-pub(crate) fn is_verified<S: PeerStore>(peer_id: &PeerId, peerstore: &S) -> bool {
-    peerstore.last_verification_response(peer_id).map_or(false, |ts| {
-        time::since(ts).map_or(false, |since| since < VERIFICATION_EXPIRATION_SECS)
-    })
-}
-
-// Hive.go: whether the given peer has recently verified the local peer
-pub(crate) fn has_verified<S: PeerStore>(peer_id: &PeerId, peerstore: &S) -> bool {
-    peerstore.last_verification_request(peer_id).map_or(false, |ts| {
-        time::since(ts).map_or(false, |since| since < VERIFICATION_EXPIRATION_SECS)
-    })
-}
-
-// Hive.go: checks whether the given peer has recently sent a Ping;
-// if not, we send a Ping to trigger a verification.
-pub(crate) async fn ensure_verified<S: PeerStore>(peer_id: &PeerId, peerstore: &S, command_tx: &CommandTx) {
-    if !has_verified(peer_id, peerstore) {
-        // send_verification_request_expecting_reply(peer_id, request_mngr, peerstore, server_tx)
-        command_tx.send(Command::SendVerificationRequest {
-            peer_id: peer_id.clone(),
-        });
-    }
-}
-
 // Hive.go: returns the list of master peers.
 pub(crate) fn get_master_peers<S: PeerStore>(master_peers: &MasterPeersList, peerstore: &S) -> Vec<Peer> {
     let mut peers = Vec::with_capacity(master_peers.read().len());
@@ -54,7 +29,7 @@ pub(crate) fn get_master_peers<S: PeerStore>(master_peers: &MasterPeersList, pee
         master_peers
             .read()
             .iter()
-            .filter_map(|peer_id| peerstore.get_peer(peer_id)),
+            .filter_map(|peer_id| peerstore.fetch_peer(peer_id)),
     );
     peers
 }
@@ -69,7 +44,7 @@ pub(crate) fn get_verified_peer<S: PeerStore>(
     let verified_peers = get_verified_peers(active_peers);
 
     if verified_peers.iter().any(|pe| pe.peer_id() == peer_id) {
-        peerstore.get_peer(peer_id)
+        peerstore.fetch_peer(peer_id)
     } else {
         command_tx
             .send(Command::SendVerificationRequest {

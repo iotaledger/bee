@@ -3,7 +3,10 @@
 
 use crate::{
     delay::DelayFactory,
-    discovery::messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
+    discovery::{
+        manager::HandlerContext,
+        messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
+    },
     hash,
     local::{salt::Salt, Local},
     packet::{msg_hash, MessageType},
@@ -17,6 +20,8 @@ use crate::{
 use num::CheckedAdd;
 use tokio::sync::oneshot;
 
+pub(crate) use oneshot::channel as response_chan;
+
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
@@ -29,8 +34,8 @@ use std::{
 };
 
 type RequestHash = [u8; hash::SHA256_LEN];
-pub(crate) type Callback = Box<dyn Fn() + Send + Sync + 'static>;
-pub(crate) type ResponseSignal = oneshot::Sender<Vec<u8>>;
+pub(crate) type Handler<S: PeerStore> = Box<dyn Fn(&HandlerContext<S>) + Send + Sync + 'static>;
+pub(crate) type ResponseTx = oneshot::Sender<Vec<u8>>;
 
 // If the request is not answered within that time it gets removed from the manager, and any response
 // coming in later will be deemed invalid.
@@ -47,23 +52,23 @@ pub(crate) struct RequestKey {
     pub(crate) request_id: TypeId,
 }
 
-pub(crate) struct RequestValue {
+pub(crate) struct RequestValue<S: PeerStore> {
     pub(crate) request_hash: [u8; hash::SHA256_LEN],
     pub(crate) expiration_time: u64,
-    pub(crate) callback: Option<Callback>,
-    pub(crate) response_signal: Option<ResponseSignal>,
+    pub(crate) handler: Option<Handler<S>>,
+    pub(crate) response_tx: Option<ResponseTx>,
 }
 
 #[derive(Clone)]
-pub(crate) struct RequestManager {
+pub(crate) struct RequestManager<S: PeerStore> {
     pub(crate) version: u32,
     pub(crate) network_id: u32,
     pub(crate) source_addr: SocketAddr,
     pub(crate) local: Local,
-    pub(crate) open_requests: Arc<RwLock<HashMap<RequestKey, RequestValue>>>,
+    pub(crate) open_requests: Arc<RwLock<HashMap<RequestKey, RequestValue<S>>>>,
 }
 
-impl RequestManager {
+impl<S: PeerStore> RequestManager<S> {
     pub(crate) fn new(version: u32, network_id: u32, source_addr: SocketAddr, local: Local) -> Self {
         Self {
             version,
@@ -78,8 +83,8 @@ impl RequestManager {
         &self,
         peer_id: PeerId,
         target_addr: IpAddr,
-        callback: Option<Callback>,
-        response_signal: Option<ResponseSignal>,
+        handler: Option<Handler<S>>,
+        response_tx: Option<ResponseTx>,
     ) -> VerificationRequest {
         let timestamp = crate::time::unix_now_secs();
 
@@ -104,8 +109,8 @@ impl RequestManager {
         let value = RequestValue {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
-            callback,
-            response_signal,
+            handler,
+            response_tx,
         };
 
         let _ = self
@@ -121,8 +126,8 @@ impl RequestManager {
         &self,
         peer_id: PeerId,
         target_addr: IpAddr,
-        callback: Option<Callback>,
-        response_signal: Option<ResponseSignal>,
+        handler: Option<Handler<S>>,
+        response_tx: Option<ResponseTx>,
     ) -> DiscoveryRequest {
         let timestamp = crate::time::unix_now_secs();
 
@@ -141,8 +146,8 @@ impl RequestManager {
         let value = RequestValue {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
-            callback,
-            response_signal,
+            handler,
+            response_tx,
         };
 
         let _ = self
@@ -157,8 +162,8 @@ impl RequestManager {
     pub(crate) fn new_peering_request(
         &self,
         peer_id: PeerId,
-        callback: Option<Callback>,
-        response_signal: Option<ResponseSignal>,
+        handler: Option<Handler<S>>,
+        response_tx: Option<ResponseTx>,
     ) -> PeeringRequest {
         let timestamp = crate::time::unix_now_secs();
 
@@ -180,8 +185,8 @@ impl RequestManager {
         let value = RequestValue {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
-            callback,
-            response_signal,
+            handler,
+            response_tx,
         };
 
         let _ = self
@@ -193,7 +198,7 @@ impl RequestManager {
         peer_req
     }
 
-    pub(crate) fn pull<R: Request + 'static>(&self, peer_id: &PeerId) -> Option<RequestValue> {
+    pub(crate) fn pull<R: Request + 'static>(&self, peer_id: &PeerId) -> Option<RequestValue<S>> {
         // TODO: Can we prevent the clone?
         let key = RequestKey {
             peer_id: peer_id.clone(),
@@ -210,8 +215,8 @@ pub(crate) fn is_expired(timestamp: Timestamp) -> bool {
     time::since(timestamp).map_or(false, |ts| ts >= REQUEST_EXPIRATION_SECS)
 }
 
-pub(crate) fn remove_expired_requests_repeat() -> Repeat<RequestManager> {
-    Box::new(|mngr: &RequestManager| {
+pub(crate) fn remove_expired_requests_repeat<S: PeerStore>() -> Repeat<RequestManager<S>> {
+    Box::new(|mngr: &RequestManager<S>| {
         // Retain only those, which expire in the future.
         mngr.open_requests
             .write()

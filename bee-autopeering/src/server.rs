@@ -146,25 +146,25 @@ impl Runnable for IncomingPacketHandler {
                 }
                 r = incoming_socket.recv_from(&mut packet_bytes) => {
                     match r {
-                        Ok((n, source_socket_addr)) => {
-                            if source_socket_addr == bind_addr {
-                                log::warn!("Received bytes from own bind address {}. Ignoring...", source_socket_addr);
+                        Ok((n, peer_addr)) => {
+                            if peer_addr == bind_addr {
+                                log::warn!("Received bytes from own bind address {}. Ignoring...", peer_addr);
                                 continue 'recv;
                             }
 
                             if n > MAX_PACKET_SIZE {
-                                log::warn!("Received too many bytes from {}. Ignoring packet.", source_socket_addr);
+                                log::warn!("Received too many bytes from {}. Ignoring packet.", peer_addr);
                                 continue 'recv;
                             }
 
-                            log::debug!("Received {} bytes from {}.", n, source_socket_addr);
+                            log::debug!("Received {} bytes from {}.", n, peer_addr);
 
                             let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
-                            log::debug!("{} ---> public key: {}.", source_socket_addr, multiaddr::from_pubkey_to_base58(&packet.public_key()));
+                            log::debug!("{} ---> public key: {}.", peer_addr, multiaddr::from_pubkey_to_base58(&packet.public_key()));
 
                             // Restore the peer id.
                             let peer_id = PeerId::from_public_key(packet.public_key());
-                            log::debug!("{} ---> peer id: {}.", source_socket_addr, peer_id);
+                            log::debug!("{} ---> peer id: {}.", peer_addr, peer_id);
 
                             // Verify the packet.
                             let message = packet.message();
@@ -180,7 +180,7 @@ impl Runnable for IncomingPacketHandler {
                             let packet = IncomingPacket {
                                 msg_type,
                                 msg_bytes,
-                                source_socket_addr,
+                                peer_addr,
                                 peer_id,
                             };
 
@@ -232,11 +232,11 @@ impl Runnable for OutgoingPacketHandler {
                         let OutgoingPacket {
                             msg_type,
                             msg_bytes,
-                            target_socket_addr,
+                            peer_addr,
                         } = packet;
 
-                        if target_socket_addr == bind_addr {
-                            log::warn!("Trying to send to own bind address: {}. Ignoring packet.", target_socket_addr);
+                        if peer_addr == bind_addr {
+                            log::warn!("Trying to send to own bind address: {}. Ignoring packet.", peer_addr);
                             continue 'recv;
                         }
 
@@ -248,13 +248,13 @@ impl Runnable for OutgoingPacketHandler {
                         let bytes = packet.to_protobuf().expect("error encoding outgoing packet");
 
                         if bytes.len() > MAX_PACKET_SIZE {
-                            log::warn!("Trying to send too many bytes to {}. Ignoring...", target_socket_addr);
+                            log::warn!("Trying to send too many bytes to {}. Ignoring...", peer_addr);
                             continue 'recv;
                         }
 
-                        let n = outgoing_socket.send_to(&bytes, target_socket_addr).await.expect("socket send error");
+                        let n = outgoing_socket.send_to(&bytes, peer_addr).await.expect("socket send error");
 
-                        log::debug!("Sent {} bytes to {}.", n, target_socket_addr);
+                        log::debug!("Sent {} bytes to {}.", n, peer_addr);
                     } else {
                         // All `outgoing_tx` message senders were dropped.
                         break 'recv;

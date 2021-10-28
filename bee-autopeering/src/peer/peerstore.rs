@@ -29,18 +29,19 @@ pub trait PeerStore: Clone + Send + Sync {
 
     fn new(config: Self::Config) -> Self;
 
-    fn insert_peer(&self, peer: Peer) -> bool;
-    fn remove_peer(&self, peer_id: &PeerId) -> bool;
+    fn store_peer(&self, peer: Peer) -> bool;
+    fn store_metrics(&self, peer_id: PeerId, metrics: PeerMetrics);
 
-    fn get_peer(&self, peer_id: &PeerId) -> Option<Peer>;
-    fn get_peers(&self) -> Vec<Peer>;
-
-    fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp>;
-    fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp>;
+    fn fetch_peer(&self, peer_id: &PeerId) -> Option<Peer>;
+    fn fetch_peers(&self) -> Vec<Peer>;
+    fn fetch_metrics(&self, peer_id: &PeerId) -> Option<PeerMetrics>;
+    fn fetch_last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp>;
+    fn fetch_last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp>;
 
     fn update_last_verification_request(&self, peer_id: PeerId);
     fn update_last_verification_response(&self, peer_id: PeerId);
-    fn update_peer_metrics(&self, peer_id: &PeerId, metrics: impl Fn(&mut PeerMetrics));
+
+    fn delete_peer(&self, peer_id: &PeerId) -> bool;
 }
 
 #[derive(Clone, Default)]
@@ -57,11 +58,11 @@ struct InMemoryPeerStoreInner {
 }
 
 impl InMemoryPeerStore {
-    fn read_inner(&self) -> RwLockReadGuard<InMemoryPeerStoreInner> {
+    fn read(&self) -> RwLockReadGuard<InMemoryPeerStoreInner> {
         self.inner.read().expect("error getting read access")
     }
 
-    fn write_inner(&self) -> RwLockWriteGuard<InMemoryPeerStoreInner> {
+    fn write(&self) -> RwLockWriteGuard<InMemoryPeerStoreInner> {
         self.inner.write().expect("error getting write access")
     }
 }
@@ -75,52 +76,48 @@ impl PeerStore for InMemoryPeerStore {
         }
     }
 
-    fn insert_peer(&self, peer: Peer) -> bool {
+    fn store_peer(&self, peer: Peer) -> bool {
         let peer_id = peer.peer_id();
 
         // Return `true` if the peer is new, otherwise `false`.
-        self.write_inner().peers.insert(peer_id.clone(), peer).is_none()
+        self.write().peers.insert(peer_id.clone(), peer).is_none()
     }
 
-    fn remove_peer(&self, peer_id: &PeerId) -> bool {
+    fn delete_peer(&self, peer_id: &PeerId) -> bool {
         // Return `false` if the peer didn't need removing, otherwise `true`.
-        self.write_inner().peers.remove(peer_id).is_some()
+        self.write().peers.remove(peer_id).is_some()
     }
 
-    fn get_peer(&self, peer_id: &PeerId) -> Option<Peer> {
-        self.read_inner().peers.get(peer_id).map(|p| p.clone())
+    fn fetch_peer(&self, peer_id: &PeerId) -> Option<Peer> {
+        self.read().peers.get(peer_id).map(|p| p.clone())
     }
 
-    fn get_peers(&self) -> Vec<Peer> {
-        self.read_inner().peers.values().cloned().collect::<Vec<Peer>>()
+    fn fetch_peers(&self) -> Vec<Peer> {
+        self.read().peers.values().cloned().collect::<Vec<Peer>>()
     }
 
-    fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp> {
-        self.read_inner().last_verif_requests.get(peer_id).copied()
+    fn fetch_last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp> {
+        self.read().last_verif_requests.get(peer_id).copied()
     }
 
-    fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp> {
-        self.read_inner().last_verif_responses.get(peer_id).copied()
+    fn fetch_last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp> {
+        self.read().last_verif_responses.get(peer_id).copied()
     }
 
     fn update_last_verification_request(&self, peer_id: PeerId) {
-        let _ = self
-            .write_inner()
-            .last_verif_requests
-            .insert(peer_id, time::unix_now_secs());
+        let _ = self.write().last_verif_requests.insert(peer_id, time::unix_now_secs());
     }
 
     fn update_last_verification_response(&self, peer_id: PeerId) {
-        let _ = self
-            .write_inner()
-            .last_verif_responses
-            .insert(peer_id, time::unix_now_secs());
+        let _ = self.write().last_verif_responses.insert(peer_id, time::unix_now_secs());
     }
 
-    fn update_peer_metrics(&self, peer_id: &PeerId, f: impl Fn(&mut PeerMetrics)) {
-        if let Some(metrics) = self.write_inner().metrics.get_mut(peer_id) {
-            f(metrics);
-        }
+    fn store_metrics(&self, peer_id: PeerId, peer_metrics: PeerMetrics) {
+        self.write().metrics.insert(peer_id, peer_metrics);
+    }
+
+    fn fetch_metrics(&self, peer_id: &PeerId) -> Option<PeerMetrics> {
+        self.read().metrics.get(peer_id).cloned()
     }
 }
 
@@ -161,27 +158,27 @@ impl PeerStore for SledPeerStore {
         Self { db }
     }
 
-    fn insert_peer(&self, peer: Peer) -> bool {
+    fn store_peer(&self, peer: Peer) -> bool {
         todo!()
     }
 
-    fn remove_peer(&self, peer_id: &PeerId) -> bool {
+    fn delete_peer(&self, peer_id: &PeerId) -> bool {
         todo!()
     }
 
-    fn get_peer(&self, peer_id: &PeerId) -> Option<Peer> {
+    fn fetch_peer(&self, peer_id: &PeerId) -> Option<Peer> {
         todo!()
     }
 
-    fn get_peers(&self) -> Vec<Peer> {
+    fn fetch_peers(&self) -> Vec<Peer> {
         todo!()
     }
 
-    fn last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp> {
+    fn fetch_last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp> {
         todo!()
     }
 
-    fn last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp> {
+    fn fetch_last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp> {
         todo!()
     }
 
@@ -192,7 +189,11 @@ impl PeerStore for SledPeerStore {
         todo!()
     }
 
-    fn update_peer_metrics(&self, peer_id: &PeerId, f: impl Fn(&mut PeerMetrics)) {
+    fn store_metrics(&self, peer_id: PeerId, peer_metrics: PeerMetrics) {
+        todo!()
+    }
+
+    fn fetch_metrics(&self, peer_id: &PeerId) -> Option<PeerMetrics> {
         todo!()
     }
 }

@@ -161,15 +161,6 @@ where
     let ctx = (local.clone(), event_tx.clone());
     task_mngr.repeat(cmd, delay, ctx, "Salt-Update", MAX_PRIORITY);
 
-    // Reverify peers.
-    let cmd = query::roundrobin_verification();
-    let delay = iter::repeat(Duration::from_secs(DEFAULT_REVERIFY_INTERVAL_SECS));
-    let ctx = (active_peers.clone(), command_tx.clone());
-    task_mngr.repeat(cmd, delay, ctx, "Reverification", MAX_PRIORITY);
-
-    // Discover peers.
-    let cmd = query::do_query();
-    let delay = iter::repeat(Duration::from_secs(DEFAULT_QUERY_INTERVAL_SECS));
     let ctx = QueryContext::new(
         local,
         peerstore,
@@ -180,6 +171,15 @@ where
         server_tx,
         event_tx,
     );
+
+    // Reverify old peers.
+    let cmd = query::do_reverify();
+    let delay = iter::repeat(Duration::from_secs(DEFAULT_REVERIFY_INTERVAL_SECS));
+    task_mngr.repeat(cmd, delay, ctx.clone(), "Reverification", MAX_PRIORITY);
+
+    // Discover new peers.
+    let cmd = query::do_query();
+    let delay = iter::repeat(Duration::from_secs(DEFAULT_QUERY_INTERVAL_SECS));
     task_mngr.repeat(cmd, delay, ctx, "Discovery", MAX_PRIORITY);
 
     // Await the shutdown signal (in a separate task).

@@ -20,9 +20,13 @@ use std::{
 const AUTOPEERING_MULTIADDR_PROTOCOL_NAME: &str = "autopeering";
 const PUBKEY_BASE58_SIZE_RANGE: RangeInclusive<usize> = 42..=44;
 
+/// The different supported kinds of addresses.
 pub enum AddressKind {
+    /// Static `IPv4` address.
     Ip4,
+    /// Static `IPv6` address.
     Ip6,
+    /// A domain name that needs to be resolved to an `IPv4`, `IPv6` address (or both) at runtime.
     Dns,
 }
 

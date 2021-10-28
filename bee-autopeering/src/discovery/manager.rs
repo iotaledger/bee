@@ -4,10 +4,8 @@
 use crate::{
     command::{self, Command, CommandRx, CommandTx},
     config::AutopeeringConfig,
-    delay::{DelayFactory, DelayFactoryBuilder, DelayFactoryMode},
     discovery::messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
     event::{Event, EventTx},
-    hash,
     local::{
         service_map::{ServiceMap, ServicePort, ServiceTransport, AUTOPEERING_SERVICE_NAME},
         Local,
@@ -18,27 +16,19 @@ use crate::{
         self,
         peer_id::PeerId,
         peerlist::{ActivePeerEntry, ActivePeersList, MasterPeersList, ReplacementList},
-        peerstore::{self, PeerStore},
+        peerstore::PeerStore,
         Peer,
     },
-    request::{self, Callback, RequestManager, RequestValue, ResponseSignal, RESPONSE_TIMEOUT},
-    server::{marshal, ServerRx, ServerSocket, ServerTx},
+    request::{self, RequestManager, RequestValue, ResponseTx, RESPONSE_TIMEOUT},
+    server::{ServerRx, ServerSocket, ServerTx},
     task::{Runnable, ShutdownRx, TaskManager},
     time::{self, SECOND},
 };
 
-use rand::{seq::index, thread_rng, Rng as _};
-use tokio::sync::{mpsc, oneshot};
+use rand::{seq::index, Rng as _};
+use tokio::sync::oneshot;
 
-use std::{
-    collections::{HashMap, HashSet, VecDeque},
-    fmt, iter,
-    mem::replace,
-    net::{IpAddr, SocketAddr},
-    ops::{Deref, DerefMut},
-    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
-    time::Duration,
-};
+use std::net::{IpAddr, SocketAddr};
 
 // Time interval after which the next peer is reverified.
 pub(crate) const DEFAULT_REVERIFY_INTERVAL_SECS: u64 = 10 * SECOND;
@@ -83,7 +73,7 @@ impl DiscoveryManagerConfig {
     }
 }
 
-pub(crate) struct DiscoveryManager<S> {
+pub(crate) struct DiscoveryManager<S: PeerStore> {
     // Config.
     config: DiscoveryManagerConfig,
     // The local id to sign outgoing packets.
@@ -91,7 +81,7 @@ pub(crate) struct DiscoveryManager<S> {
     // Channel halfs for sending/receiving discovery related packets.
     socket: ServerSocket,
     // Handles requests.
-    request_mngr: RequestManager,
+    request_mngr: RequestManager<S>,
     // Publishes discovery related events.
     event_tx: EventTx,
     // The storage for discovered peers.
@@ -109,7 +99,7 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
         config: DiscoveryManagerConfig,
         local: Local,
         socket: ServerSocket,
-        request_mngr: RequestManager,
+        request_mngr: RequestManager<S>,
         peerstore: S,
         master_peers: MasterPeersList,
         active_peers: ActivePeersList,
@@ -168,7 +158,7 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
         )
         .await;
 
-        add_peers_from_store(&peerstore, &local, &mut active_peers, &mut replacements).await;
+        add_peers_from_store(&peerstore, &local, &active_peers, &replacements).await;
 
         let discovery_recv_handler = DiscoveryRecvHandler {
             server_tx: server_tx.clone(),
@@ -208,7 +198,7 @@ struct DiscoveryRecvHandler<S: PeerStore> {
     peerstore: S,
     version: u32,
     network_id: u32,
-    request_mngr: RequestManager,
+    request_mngr: RequestManager<S>,
     event_tx: EventTx,
     active_peers: ActivePeersList,
     replacements: ReplacementList,
@@ -218,7 +208,7 @@ struct DiscoverySendHandler<S: PeerStore> {
     server_tx: ServerTx,
     local: Local,
     peerstore: S,
-    request_mngr: RequestManager,
+    request_mngr: RequestManager<S>,
     active_peers: ActivePeersList,
     command_rx: CommandRx,
 }
@@ -253,7 +243,7 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
                     if let Some(IncomingPacket {
                         msg_type,
                         msg_bytes,
-                        source_socket_addr,
+                        peer_addr,
                         peer_id,
                     }) = o
                     {
@@ -264,7 +254,7 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
                             local: &local,
                             peerstore: &peerstore,
                             request_mngr: &request_mngr,
-                            source_socket_addr,
+                            peer_addr,
                             event_tx: &event_tx,
                             active_peers: &active_peers,
                             replacements: &mut replacements,
@@ -295,7 +285,7 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
                                     continue 'recv;
                                 };
 
-                                match validate_verification_response(&verif_res, &request_mngr, &peer_id, source_socket_addr) {
+                                match validate_verification_response(&verif_res, &request_mngr, &peer_id, peer_addr) {
                                     Ok(reqv) => {
                                         log::debug!("Received valid verification response from {}.", &peer_id);
                                         handle_verification_response(reqv, verif_res, ctx);
@@ -378,18 +368,18 @@ impl<S: PeerStore> Runnable for DiscoverySendHandler<S> {
                     if let Some(command) = o {
                         match command {
                             Command::SendVerificationRequest { peer_id } => {
-                                send_verification_request(&peer_id, &request_mngr, &peerstore, &server_tx, None);
+                                send_verification_request_to_peer(&peer_id, &request_mngr, &peerstore, &server_tx, None);
                             }
                             Command::SendDiscoveryRequest { peer_id } => {
-                                send_discovery_request(&peer_id, &request_mngr, &peerstore, &server_tx, None);
+                                send_discovery_request_to_peer(&peer_id, &request_mngr, &peerstore, &server_tx, None);
                             }
                             Command::SendVerificationRequests => {
                                 // TODO: For testing purposes only => remove it at some point
-                                send_verification_requests(&active_peers, &request_mngr, &peerstore, &server_tx);
+                                send_verification_request_to_all(&active_peers, &request_mngr, &peerstore, &server_tx);
                             }
                             Command::SendDiscoveryRequests => {
                                 // TODO: For testing purposes only => remove it at some point
-                                send_discovery_requests(&active_peers, &request_mngr, &peerstore, &server_tx);
+                                send_discovery_request_to_all_verified(&active_peers, &request_mngr, &peerstore, &server_tx);
                             }
                         }
                     }
@@ -402,7 +392,7 @@ impl<S: PeerStore> Runnable for DiscoverySendHandler<S> {
 async fn add_entry_nodes<S: PeerStore>(
     entry_nodes: &mut Vec<AutopeeringMultiaddr>,
     entry_nodes_prefer_ipv6: bool,
-    request_mngr: &RequestManager,
+    request_mngr: &RequestManager<S>,
     server_tx: &ServerTx,
     local: &Local,
     peerstore: &S,
@@ -465,11 +455,11 @@ async fn add_peers_from_store<S: PeerStore>(
     peerstore: &S,
     local: &Local,
     active_peers: &ActivePeersList,
-    replacements: &mut ReplacementList,
+    replacements: &ReplacementList,
 ) {
     let mut num_added = 0;
 
-    for peer in peerstore.get_peers() {
+    for peer in peerstore.fetch_peers() {
         if add_new_peer_to_list(peer.into_id(), &local, active_peers, replacements) {
             num_added += 1;
         }
@@ -506,18 +496,20 @@ pub(crate) fn add_new_peer_to_list(
 // Writes the full peer to the storage.
 pub(crate) fn add_peer_to_store<S: PeerStore>(peer: Peer, local: &Local, peerstore: &S) -> bool {
     if peer.peer_id() != &local.peer_id() {
-        peerstore.insert_peer(peer)
+        peerstore.store_peer(peer)
     } else {
         false
     }
 }
 
-pub(crate) fn delete_peer_from_list(
+/// Deletes a peer from the active peerlist if it's not a master peer, and replaces it by a peer
+/// from the replacement list.
+pub(crate) fn delete_peer_from_active_list(
     peer_id: &PeerId,
     master_peers: &MasterPeersList,
     active_peers: &ActivePeersList,
     replacements: &ReplacementList,
-    event_tx: EventTx,
+    event_tx: &EventTx,
 ) {
     if let Some(mut removed_peer) = active_peers.write().remove(peer_id) {
         // hive.go: master peers are never removed
@@ -573,37 +565,43 @@ fn is_known_peer_id(
 
 /// Hive.go: adds a new peer that has just been successfully pinged.
 /// It returns true, if the given peer was new and added, false otherwise.
+///
+/// Fires the `PeerDiscovered` event.
 fn add_verified_peer(
     peer: Peer,
     local: &Local,
     active_peers: &ActivePeersList,
     replacements: &ReplacementList,
-    event_tx: EventTx,
+    event_tx: &EventTx,
 ) -> bool {
+    let peer_id = peer.peer_id();
+
     // Hive.go: never add the local peer
-    if &local.peer_id() == peer.peer_id() {
+    if &local.peer_id() == peer_id {
         false
     } else
     // Hive.go: if already in the list, move it to the front
-    if let Some(verified_count) = update_peer(peer.peer_id(), active_peers) {
+    if let Some(verified_count) = update_peer(&peer_id, active_peers) {
         // Hive.go: trigger the event only for the first time the peer is updated
         if verified_count == 1 {
-            event_tx.send(Event::PeerDiscovered { peer: peer.clone() });
+            event_tx.send(Event::PeerDiscovered { peer });
         }
+
         false
     } else {
-        let mut active_peer = ActivePeerEntry::new(peer.peer_id().clone());
+        let mut active_peer = ActivePeerEntry::new(peer_id.clone());
         active_peer.metrics_mut().increment_verified_count();
 
         if active_peers.read().is_full() {
-            return add_replacement(peer.peer_id(), replacements);
+            return add_replacement(peer_id.clone(), replacements);
         }
 
-        // Hive.go: trigger the event only when the peer is added to active
-        event_tx.send(Event::PeerDiscovered { peer: peer.clone() });
-
         // Hive.go: new nodes are added to the front
-        active_peers.write().set_newest(peer.peer_id());
+        // TODO: can this go wrong?
+        let _ = active_peers.write().set_newest(&peer_id);
+
+        // Hive.go: trigger the event only when the peer is added to active
+        event_tx.send(Event::PeerDiscovered { peer });
 
         true
     }
@@ -640,13 +638,13 @@ fn add_discovered_peer(
         if !active_peers.read().is_full() {
             active_peers.write().insert(active_peer)
         } else {
-            add_replacement(active_peer.peer_id(), replacements)
+            add_replacement(active_peer.peer_id().clone(), replacements)
         }
     }
 }
 
-fn add_replacement(peer_id: &PeerId, replacements: &ReplacementList) -> bool {
-    replacements.write().insert(peer_id.clone())
+fn add_replacement(peer_id: PeerId, replacements: &ReplacementList) -> bool {
+    replacements.write().insert(peer_id)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -708,12 +706,12 @@ fn validate_verification_request(
     }
 }
 
-fn validate_verification_response(
+fn validate_verification_response<S: PeerStore>(
     verif_res: &VerificationResponse,
-    request_mngr: &RequestManager,
+    request_mngr: &RequestManager<S>,
     peer_id: &PeerId,
     source_socket_addr: SocketAddr,
-) -> Result<RequestValue, ValidationError> {
+) -> Result<RequestValue<S>, ValidationError> {
     use ValidationError::*;
 
     if let Some(reqv) = request_mngr.pull::<VerificationRequest>(peer_id) {
@@ -749,11 +747,11 @@ fn validate_discovery_request(disc_req: &DiscoveryRequest) -> Result<(), Validat
     }
 }
 
-fn validate_discovery_response(
+fn validate_discovery_response<S: PeerStore>(
     disc_res: &DiscoveryResponse,
-    request_mngr: &RequestManager,
+    request_mngr: &RequestManager<S>,
     peer_id: &PeerId,
-) -> Result<RequestValue, ValidationError> {
+) -> Result<RequestValue<S>, ValidationError> {
     use ValidationError::*;
 
     if let Some(reqv) = request_mngr.pull::<DiscoveryRequest>(peer_id) {
@@ -782,26 +780,24 @@ pub(crate) struct HandlerContext<'a, S: PeerStore> {
     server_tx: &'a ServerTx,
     local: &'a Local,
     peerstore: &'a S,
-    request_mngr: &'a RequestManager,
-    source_socket_addr: SocketAddr,
+    request_mngr: &'a RequestManager<S>,
+    peer_addr: SocketAddr,
     event_tx: &'a EventTx,
     active_peers: &'a ActivePeersList,
     replacements: &'a mut ReplacementList,
 }
 
+/// * update request timestamp
+/// * send a reply
+/// * if it's not yet verified, send a request, otherwise
 fn handle_verification_request<S: PeerStore>(verif_req: VerificationRequest, ctx: HandlerContext<S>) {
     log::debug!("Handling verification request.");
 
     ctx.peerstore.update_last_verification_request(ctx.peer_id.clone());
 
-    reply_with_verification_response(
-        &verif_req,
-        ctx.msg_bytes,
-        ctx.server_tx,
-        ctx.local,
-        ctx.source_socket_addr,
-    );
+    send_verification_response_to_addr(ctx.peer_addr, &verif_req, ctx.msg_bytes, ctx.server_tx, ctx.local);
 
+    // TODO: the 2nd if-branch is a bit confusing: How come, that a peer can be unknown, but is verified?
     // ```go
     // if the peer is unknown or expired, send a Ping to verify
     // if !p.IsVerified(from.ID(), dstAddr.IP) {
@@ -811,27 +807,27 @@ fn handle_verification_request<S: PeerStore>(verif_req: VerificationRequest, ctx
     // 	   p.mgr.addDiscoveredPeer(newPeer(from, s.LocalAddr().Network(), dstAddr))
     // }
     // ```
-
-    if !peer::is_verified(ctx.peerstore.last_verification_response(ctx.peer_id)) {
-        reply_with_verification_request(ctx.peer_id, ctx.request_mngr, ctx.server_tx, ctx.source_socket_addr);
+    if !peer::is_verified(ctx.peer_id, ctx.peerstore) {
+        send_verification_request_to_addr(ctx.peer_addr, ctx.peer_id, ctx.request_mngr, ctx.server_tx, None);
+    } else if !is_known_peer_id(ctx.peer_id, ctx.local, ctx.active_peers, ctx.replacements) {
+        // Hive.go: add a discovered peer to the manager if it is new/unknown but verified
+        //add_discovered_peer(peer, ctx.local, ctx.active_peers, ctx.replacements);
+        unreachable!("unknown peer which is verified");
     }
 }
 
 fn handle_verification_response<S: PeerStore>(
-    reqv: RequestValue,
+    reqv: RequestValue<S>,
     verif_res: VerificationResponse,
     ctx: HandlerContext<S>,
 ) {
     log::debug!("Handling verification response.");
 
-    // Execute the callback.
-    // TODO: move log message into the callback function.
-    if let Some(callback) = reqv.callback {
-        callback();
-    }
+    // Execute the stored handler. Do nothing by default.
+    (reqv.handler.unwrap_or(Box::new(|ctx| {})))(&ctx);
 
     // Send the response notification.
-    if let Some(tx) = reqv.response_signal {
+    if let Some(tx) = reqv.response_tx {
         tx.send(
             verif_res
                 .to_protobuf()
@@ -840,9 +836,6 @@ fn handle_verification_response<S: PeerStore>(
         )
         .expect("error sending response signal");
     }
-
-    // Update verification timestamp.
-    ctx.peerstore.update_last_verification_response(ctx.peer_id.clone());
 }
 
 fn handle_discovery_request<S: PeerStore>(disc_req: DiscoveryRequest, ctx: HandlerContext<S>) {
@@ -858,7 +851,7 @@ fn handle_discovery_request<S: PeerStore>(disc_req: DiscoveryRequest, ctx: Handl
     peers.extend(
         chosen_peers
             .into_iter()
-            .filter_map(|peer_id| ctx.peerstore.get_peer(&peer_id)),
+            .filter_map(|peer_id| ctx.peerstore.fetch_peer(&peer_id)),
     );
 
     let disc_res = DiscoveryResponse::new(request_hash, peers);
@@ -871,175 +864,54 @@ fn handle_discovery_request<S: PeerStore>(disc_req: DiscoveryRequest, ctx: Handl
         .send(OutgoingPacket {
             msg_type: MessageType::DiscoveryResponse,
             msg_bytes: disc_res_bytes,
-            target_socket_addr: ctx.source_socket_addr,
+            peer_addr: ctx.peer_addr,
         })
         .expect("error sending verification response to server");
 }
 
-fn handle_discovery_response<S: PeerStore>(reqv: RequestValue, disc_res: DiscoveryResponse, ctx: HandlerContext<S>) {
+fn handle_discovery_response<S: PeerStore>(reqv: RequestValue<S>, disc_res: DiscoveryResponse, ctx: HandlerContext<S>) {
     // Remove the corresponding request from the request manager.
     log::debug!("Handling discovery response.");
 
-    // Execute the callback.
-    // TODO: move log message into the callback function.
-    if let Some(callback) = reqv.callback {
-        callback();
-    }
+    // Execute the stored handler if there's any.
+    (reqv.handler.unwrap_or(Box::new(|_| {})))(&ctx);
 
-    // Send the response notification.
-    if let Some(tx) = reqv.response_signal {
-        tx.send(
-            disc_res
-                .to_protobuf()
-                .expect("error encoding discovery response")
-                .to_vec(),
-        )
-        .expect("error sending response signal");
-    }
-
-    // TODO: store the discovered peers; fire `PeerDiscovered` event.
+    // ctx.msg_bytes
+    // Add discovered peers to the peer list and peer store.
     for peer in disc_res.into_peers() {
-        log::debug!("Discovered peer: {:?}", peer);
+        log::debug!("Peer discovered: {}", peer.peer_id());
 
         add_new_peer_to_list(peer.peer_id().clone(), ctx.local, ctx.active_peers, ctx.replacements);
         add_peer_to_store(peer.clone(), ctx.local, ctx.peerstore);
 
         ctx.event_tx.send(Event::PeerDiscovered { peer });
     }
-}
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// REPLYING
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-fn reply_with_verification_request(
-    peer_id: &PeerId,
-    request_mngr: &RequestManager,
-    server_tx: &ServerTx,
-    target_addr: SocketAddr,
-) {
-    log::debug!("Replying with verification request.");
-
-    let verif_req_bytes = request_mngr
-        .new_verification_request(peer_id.clone(), target_addr.ip(), None, None)
-        .to_protobuf()
-        .expect("error encoding verification request")
-        .to_vec();
-
-    server_tx
-        .send(OutgoingPacket {
-            msg_type: MessageType::VerificationRequest,
-            msg_bytes: verif_req_bytes,
-            target_socket_addr: target_addr,
-        })
-        .expect("error sending verification request to server");
-}
-
-fn reply_with_verification_response(
-    verif_req: &VerificationRequest,
-    msg_bytes: &[u8],
-    tx: &ServerTx,
-    local: &Local,
-    target_addr: SocketAddr,
-) {
-    log::debug!("Replying with verification response.");
-
-    let request_hash = msg_hash(MessageType::VerificationRequest, msg_bytes).to_vec();
-
-    let verif_res = VerificationResponse::new(request_hash, local.services(), target_addr.ip());
-    let verif_res_bytes = verif_res
-        .to_protobuf()
-        .expect("error encoding verification response")
-        .to_vec();
-
-    // hive.go:
-    // ```go
-    // // the destination address uses the source IP address of the packet plus the src_port from the message
-    // dstAddr := &net.UDPAddr{
-    // 	IP:   fromAddr.IP,
-    // 	Port: int(m.SrcPort),
-    // }
-    // ```
-    tx.send(OutgoingPacket {
-        msg_type: MessageType::VerificationResponse,
-        msg_bytes: verif_res_bytes,
-        target_socket_addr: SocketAddr::new(target_addr.ip(), verif_req.source_addr.port()),
-    })
-    .expect("error sending verification response to server");
-}
-
-fn reply_with_discovery_request(
-    peer_id: &PeerId,
-    request_mngr: &RequestManager,
-    server_tx: &ServerTx,
-    target_addr: SocketAddr,
-) {
-    log::debug!("Replying with discovery request.");
-
-    let disc_req_bytes = request_mngr
-        .new_discovery_request(peer_id.clone(), target_addr.ip(), None, None)
-        .to_protobuf()
-        .expect("error encoding discovery request")
-        .to_vec();
-
-    server_tx
-        .send(OutgoingPacket {
-            msg_type: MessageType::DiscoveryRequest,
-            msg_bytes: disc_req_bytes,
-            target_socket_addr: target_addr,
-        })
-        .expect("error sending discovery request to server");
+    // Send the response notification.
+    if let Some(tx) = reqv.response_tx {
+        tx.send(ctx.msg_bytes.to_vec()).expect("error sending response signal");
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SENDING
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub(crate) fn send_verification_request<S: PeerStore>(
+/// Initiates a verification request to a peer by fetching its endpoint data from the peer store and waiting
+/// for the peer's response, which must arrive in certain amount of time.
+///
+/// Returns `Some(ServiceMap)` if the request was successful, otherwise `None`.
+pub(crate) async fn begin_verification_request<S: PeerStore>(
     peer_id: &PeerId,
-    request_mngr: &RequestManager,
-    peerstore: &S,
-    server_tx: &ServerTx,
-    response_signal: Option<ResponseSignal>,
-) {
-    log::debug!("Sending verification request to: {}", peer_id);
-
-    let peer = peerstore.get_peer(peer_id).expect("peer not in storage");
-    let peer_addr = peer.ip_address();
-
-    let verif_req = request_mngr.new_verification_request(peer_id.clone(), peer_addr, None, response_signal);
-
-    let msg_bytes = verif_req
-        .to_protobuf()
-        .expect("error encoding verification request")
-        .to_vec();
-
-    let port = peer
-        .services()
-        .get(AUTOPEERING_SERVICE_NAME)
-        .expect("peer doesn't support autopeering")
-        .port();
-
-    server_tx
-        .send(OutgoingPacket {
-            msg_type: MessageType::VerificationRequest,
-            msg_bytes,
-            target_socket_addr: SocketAddr::new(peer_addr, port),
-        })
-        .expect("error sending verification request to server");
-}
-
-pub(crate) async fn send_verification_request_expecting_reply<S: PeerStore>(
-    peer_id: &PeerId,
-    request_mngr: &RequestManager,
+    request_mngr: &RequestManager<S>,
     peerstore: &S,
     server_tx: &ServerTx,
 ) -> Option<ServiceMap> {
-    let (request_tx, request_rx) = oneshot::channel::<Vec<u8>>();
+    let (response_tx, response_rx) = request::response_chan();
 
-    send_verification_request(peer_id, request_mngr, peerstore, server_tx, Some(request_tx));
+    send_verification_request_to_peer(peer_id, request_mngr, peerstore, server_tx, Some(response_tx));
 
-    match tokio::time::timeout(RESPONSE_TIMEOUT, request_rx).await {
+    match tokio::time::timeout(RESPONSE_TIMEOUT, response_rx).await {
         Ok(Ok(bytes)) => {
             let verif_res = VerificationResponse::from_protobuf(&bytes).expect("error decoding verification response");
             Some(verif_res.into_services())
@@ -1055,51 +927,115 @@ pub(crate) async fn send_verification_request_expecting_reply<S: PeerStore>(
     }
 }
 
-pub(crate) fn send_discovery_request<S: PeerStore>(
+/// Sends a verification request to a peer by fetching its endpoint data from the peer store.
+///
+/// The function is non-blocking.
+pub(crate) fn send_verification_request_to_peer<S: PeerStore>(
     peer_id: &PeerId,
-    request_mngr: &RequestManager,
+    request_mngr: &RequestManager<S>,
     peerstore: &S,
     server_tx: &ServerTx,
-    response_signal: Option<ResponseSignal>,
+    response_tx: Option<ResponseTx>,
 ) {
-    log::debug!("Sending discovery request to: {:?}", peer_id);
+    let peer = peerstore.fetch_peer(peer_id).expect("peer not in storage");
 
-    let peer = peerstore.get_peer(peer_id).expect("peer not in storage");
-    let peer_addr = peer.ip_address();
-
-    let disc_req = request_mngr.new_discovery_request(peer_id.clone(), peer_addr, None, response_signal);
-
-    let msg_bytes = disc_req
-        .to_protobuf()
-        .expect("error encoding verification request")
-        .to_vec();
-
-    let port = peer
+    let peer_port = peer
         .services()
         .get(AUTOPEERING_SERVICE_NAME)
         .expect("peer doesn't support autopeering")
         .port();
 
-    server_tx
-        .send(OutgoingPacket {
-            msg_type: MessageType::DiscoveryRequest,
-            msg_bytes,
-            target_socket_addr: SocketAddr::new(peer_addr, port),
-        })
-        .expect("error sending discovery request to server");
+    let peer_addr = SocketAddr::new(peer.ip_address(), peer_port);
+
+    send_verification_request_to_addr(peer_addr, peer_id, request_mngr, server_tx, response_tx);
 }
 
-pub(crate) async fn send_discovery_request_expecting_reply<S: PeerStore>(
+/// Sends a verification request to a peer's address.
+pub(crate) fn send_verification_request_to_addr<S: PeerStore>(
+    peer_addr: SocketAddr,
     peer_id: &PeerId,
-    request_mngr: &RequestManager,
+    request_mngr: &RequestManager<S>,
+    server_tx: &ServerTx,
+    response_tx: Option<ResponseTx>,
+) {
+    log::debug!("Sending verification request to: {}", peer_id);
+
+    // Define what happens when we receive the corresponding response.
+    let handler = Box::new(|ctx: &HandlerContext<S>| {
+        // Fetch the peer from the peer store.
+        let peer = ctx.peerstore.fetch_peer(ctx.peer_id).expect("peer not stored");
+
+        // This will increase the verified count of that peer, and move it to the front of the list.
+        add_verified_peer(peer, ctx.local, ctx.active_peers, ctx.replacements, ctx.event_tx);
+
+        // Update verification timestamp.
+        ctx.peerstore.update_last_verification_response(ctx.peer_id.clone());
+    });
+
+    let verif_req = request_mngr.new_verification_request(peer_id.clone(), peer_addr.ip(), Some(handler), response_tx);
+
+    let msg_bytes = verif_req
+        .to_protobuf()
+        .expect("error encoding verification request")
+        .to_vec();
+
+    server_tx
+        .send(OutgoingPacket {
+            msg_type: MessageType::VerificationRequest,
+            msg_bytes,
+            peer_addr,
+        })
+        .expect("error sending verification request to server");
+}
+
+/// Sends a verification response to a peer's address.
+pub(crate) fn send_verification_response_to_addr(
+    peer_addr: SocketAddr,
+    verif_req: &VerificationRequest,
+    msg_bytes: &[u8],
+    tx: &ServerTx,
+    local: &Local,
+) {
+    let request_hash = msg_hash(MessageType::VerificationRequest, msg_bytes).to_vec();
+
+    let verif_res = VerificationResponse::new(request_hash, local.services(), peer_addr.ip());
+
+    let msg_bytes = verif_res
+        .to_protobuf()
+        .expect("error encoding verification response")
+        .to_vec();
+
+    // hive.go:
+    // ```go
+    // // the destination address uses the source IP address of the packet plus the src_port from the message
+    // dstAddr := &net.UDPAddr{
+    // 	IP:   fromAddr.IP,
+    // 	Port: int(m.SrcPort),
+    // }
+    // ```
+    tx.send(OutgoingPacket {
+        msg_type: MessageType::VerificationResponse,
+        msg_bytes,
+        peer_addr: SocketAddr::new(peer_addr.ip(), verif_req.source_addr.port()),
+    })
+    .expect("error sending verification response to server");
+}
+
+/// Initiates a discovery request to a peer by fetching its endpoint data from the peer store and waiting
+/// for the peer's response, which must arrive in time.
+///
+/// Returns `Some(Vec<Peer>)` of discovered peers, if the request was successful, otherwise `None`.
+pub(crate) async fn begin_discovery_request<S: PeerStore>(
+    peer_id: &PeerId,
+    request_mngr: &RequestManager<S>,
     peerstore: &S,
     server_tx: &ServerTx,
 ) -> Option<Vec<Peer>> {
-    let (request_tx, request_rx) = oneshot::channel::<Vec<u8>>();
+    let (response_tx, response_rx) = request::response_chan();
 
-    send_discovery_request(peer_id, request_mngr, peerstore, server_tx, Some(request_tx));
+    send_discovery_request_to_peer(peer_id, request_mngr, peerstore, server_tx, Some(response_tx));
 
-    match tokio::time::timeout(RESPONSE_TIMEOUT, request_rx).await {
+    match tokio::time::timeout(RESPONSE_TIMEOUT, response_rx).await {
         Ok(Ok(bytes)) => {
             let disc_res = DiscoveryResponse::from_protobuf(&bytes).expect("error decoding discovery response");
             Some(disc_res.into_peers())
@@ -1116,34 +1052,56 @@ pub(crate) async fn send_discovery_request_expecting_reply<S: PeerStore>(
     }
 }
 
-// TEMP: for testing purposes
-pub(crate) fn send_verification_requests<S: PeerStore>(
-    active_peers: &ActivePeersList,
-    request_mngr: &RequestManager,
+/// Sends a discovery request to a peer by fetching its endpoint data from the peer store.
+///
+/// The function is non-blocking.
+pub(crate) fn send_discovery_request_to_peer<S: PeerStore>(
+    peer_id: &PeerId,
+    request_mngr: &RequestManager<S>,
     peerstore: &S,
     server_tx: &ServerTx,
+    response_tx: Option<ResponseTx>,
 ) {
-    log::debug!("Sending verification request to peers.");
+    let peer = peerstore.fetch_peer(peer_id).expect("peer not in storage");
 
-    for active_peer in active_peers.read().iter() {
-        send_verification_request(active_peer.peer_id(), request_mngr, peerstore, server_tx, None);
-    }
+    let peer_port = peer
+        .services()
+        .get(AUTOPEERING_SERVICE_NAME)
+        .expect("peer doesn't support autopeering")
+        .port();
+
+    let peer_addr = SocketAddr::new(peer.ip_address(), peer_port);
+
+    send_discovery_request_to_addr(peer_addr, peer_id, request_mngr, peerstore, server_tx, response_tx);
 }
 
-// TEMP: for testing purposes
-pub(crate) fn send_discovery_requests<S: PeerStore>(
-    active_peers: &ActivePeersList,
-    request_mngr: &RequestManager,
+/// Sends a discovery request to a peer's address.
+pub(crate) fn send_discovery_request_to_addr<S: PeerStore>(
+    peer_addr: SocketAddr,
+    peer_id: &PeerId,
+    request_mngr: &RequestManager<S>,
     peerstore: &S,
     server_tx: &ServerTx,
+    response_tx: Option<ResponseTx>,
 ) {
-    log::debug!("Sending discovery requests to peers.");
+    log::debug!("Sending discovery request to: {:?}", peer_id);
 
-    for active_peer in active_peers.read().iter() {
-        if peer::is_verified(peerstore.last_verification_response(active_peer.peer_id())) {
-            send_discovery_request(active_peer.peer_id(), request_mngr, peerstore, server_tx, None);
-        }
-    }
+    let handler = None;
+
+    let disc_req = request_mngr.new_discovery_request(peer_id.clone(), peer_addr.ip(), handler, response_tx);
+
+    let msg_bytes = disc_req
+        .to_protobuf()
+        .expect("error encoding verification request")
+        .to_vec();
+
+    server_tx
+        .send(OutgoingPacket {
+            msg_type: MessageType::DiscoveryRequest,
+            msg_bytes,
+            peer_addr,
+        })
+        .expect("error sending discovery request to server");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1188,5 +1146,35 @@ fn choose_n_random_active_peers(
                 .take(n),
         );
         random_peers
+    }
+}
+
+// TEMP: for testing purposes
+pub(crate) fn send_verification_request_to_all<S: PeerStore>(
+    active_peers: &ActivePeersList,
+    request_mngr: &RequestManager<S>,
+    peerstore: &S,
+    server_tx: &ServerTx,
+) {
+    log::debug!("Sending verification request to all peers.");
+
+    for active_peer in active_peers.read().iter() {
+        send_verification_request_to_peer(active_peer.peer_id(), request_mngr, peerstore, server_tx, None);
+    }
+}
+
+// TEMP: for testing purposes
+pub(crate) fn send_discovery_request_to_all_verified<S: PeerStore>(
+    active_peers: &ActivePeersList,
+    request_mngr: &RequestManager<S>,
+    peerstore: &S,
+    server_tx: &ServerTx,
+) {
+    log::debug!("Sending discovery request to all verified peers.");
+
+    for active_peer in active_peers.read().iter() {
+        if peer::is_verified(active_peer.peer_id(), peerstore) {
+            send_discovery_request_to_peer(active_peer.peer_id(), request_mngr, peerstore, server_tx, None);
+        }
     }
 }

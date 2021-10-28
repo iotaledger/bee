@@ -7,11 +7,15 @@ pub mod peer_id;
 pub mod peerstore;
 
 pub use peer_id::PeerId;
+pub use peerstore::PeerStore;
 
 use crate::{
-    discovery::manager::VERIFICATION_EXPIRATION_SECS,
+    command::{Command, CommandTx},
+    discovery::manager::{self, VERIFICATION_EXPIRATION_SECS},
     local::service_map::{ServiceMap, ServiceTransport},
     proto,
+    request::RequestManager,
+    server::ServerTx,
     time::{self, Timestamp},
 };
 
@@ -154,29 +158,60 @@ impl AsRef<Peer> for Peer {
     }
 }
 
-// returns whether the local peer has recently verified the given peer.
-pub(crate) fn is_verified(last_verif_res: Option<Timestamp>) -> bool {
-    if let Some(last_verif_res) = last_verif_res {
-        if let Some(since) = time::since(last_verif_res) {
-            since <= VERIFICATION_EXPIRATION_SECS
-        } else {
-            false
-        }
-    } else {
-        false
-    }
+// // returns whether the local peer has recently verified the given peer.
+// pub(crate) fn is_verified(last_verif_res: Option<Timestamp>) -> bool {
+//     if let Some(last_verif_res) = last_verif_res {
+//         if let Some(since) = time::since(last_verif_res) {
+//             since <= VERIFICATION_EXPIRATION_SECS
+//         } else {
+//             false
+//         }
+//     } else {
+//         false
+//     }
+// }
+
+// // returns whether the given peer has recently verified the local peer.
+// pub(crate) fn has_verified(last_verif_req: Option<Timestamp>) -> bool {
+//     if let Some(last_verif_req) = last_verif_req {
+//         if let Some(since) = time::since(last_verif_req) {
+//             since <= VERIFICATION_EXPIRATION_SECS
+//         } else {
+//             false
+//         }
+//     } else {
+//         false
+//     }
+// }
+
+// Hive.go: whether the peer has recently done an endpoint proof
+pub(crate) fn is_verified<S: PeerStore>(peer_id: &PeerId, peerstore: &S) -> bool {
+    peerstore.fetch_last_verification_response(peer_id).map_or(false, |ts| {
+        time::since(ts).map_or(false, |since| since < VERIFICATION_EXPIRATION_SECS)
+    })
 }
 
-// returns whether the given peer has recently verified the local peer.
-pub(crate) fn has_verified(last_verif_req: Option<Timestamp>) -> bool {
-    if let Some(last_verif_req) = last_verif_req {
-        if let Some(since) = time::since(last_verif_req) {
-            since <= VERIFICATION_EXPIRATION_SECS
-        } else {
-            false
-        }
+// Hive.go: whether the given peer has recently verified the local peer
+pub(crate) fn has_verified<S: PeerStore>(peer_id: &PeerId, peerstore: &S) -> bool {
+    peerstore.fetch_last_verification_request(peer_id).map_or(false, |ts| {
+        time::since(ts).map_or(false, |since| since < VERIFICATION_EXPIRATION_SECS)
+    })
+}
+
+// Hive.go: checks whether the given peer has recently sent a Ping;
+// if not, we send a Ping to trigger a verification.
+pub(crate) async fn ensure_verified<S: PeerStore>(
+    peer_id: &PeerId,
+    peerstore: &S,
+    request_mngr: &RequestManager<S>,
+    server_tx: &ServerTx,
+) -> bool {
+    if has_verified(peer_id, peerstore) {
+        true
     } else {
-        false
+        manager::begin_verification_request(peer_id, request_mngr, peerstore, server_tx)
+            .await
+            .is_some()
     }
 }
 
