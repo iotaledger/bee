@@ -75,11 +75,8 @@ fn apply_regular_essence<B: StorageBackend>(
 
         let essence_hash = Essence::from(essence.clone()).hash();
 
-        match consumed_output.inner() {
+        let amount = match consumed_output.inner() {
             Output::Simple(output) => {
-                consumed_amount = consumed_amount
-                    .checked_add(output.amount())
-                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount as u128 + output.amount() as u128))?;
                 balance_diffs.amount_sub(*output.address(), output.amount())?;
                 if output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_outputs_dec(*output.address())?;
@@ -88,44 +85,62 @@ fn apply_regular_essence<B: StorageBackend>(
                 if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
                     return Ok(ConflictReason::InvalidSignature);
                 }
-            }
-            Output::SignatureLockedDustAllowance(output) => {
-                consumed_amount = consumed_amount
-                    .checked_add(output.amount())
-                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount as u128 + output.amount() as u128))?;
-                balance_diffs.amount_sub(*output.address(), output.amount())?;
-                balance_diffs.dust_allowance_sub(*output.address(), output.amount())?;
 
-                if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
-                    return Ok(ConflictReason::InvalidSignature);
-                }
+                output.amount()
             }
+            // Output::SignatureLockedDustAllowance(output) => {
+            //     consumed_amount = consumed_amount
+            //         .checked_add(output.amount())
+            //         .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount as u128 + output.amount() as u128))?;
+            //     balance_diffs.amount_sub(*output.address(), output.amount())?;
+            //     balance_diffs.dust_allowance_sub(*output.address(), output.amount())?;
+            //
+            //     if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
+            //         return Ok(ConflictReason::InvalidSignature);
+            //     }
+            // }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
-        }
+            Output::Extended(output) => output.amount(),
+            Output::Alias(output) => output.amount(),
+            Output::Foundry(output) => output.amount(),
+            Output::Nft(output) => output.amount(),
+        };
+
+        consumed_amount = consumed_amount
+            .checked_add(amount)
+            .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount as u128 + amount as u128))?;
 
         consumed_outputs.insert(*output_id, consumed_output);
     }
 
     for created_output in essence.outputs() {
-        match created_output {
+        let amount = match created_output {
             Output::Simple(output) => {
-                created_amount = created_amount
-                    .checked_add(output.amount())
-                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount as u128 + output.amount() as u128))?;
                 balance_diffs.amount_add(*output.address(), output.amount())?;
+
                 if output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_outputs_inc(*output.address())?;
                 }
+
+                output.amount()
             }
-            Output::SignatureLockedDustAllowance(output) => {
-                created_amount = created_amount
-                    .checked_add(output.amount())
-                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount as u128 + output.amount() as u128))?;
-                balance_diffs.amount_add(*output.address(), output.amount())?;
-                balance_diffs.dust_allowance_add(*output.address(), output.amount())?;
-            }
+            // Output::SignatureLockedDustAllowance(output) => {
+            //     created_amount = created_amount
+            //         .checked_add(output.amount())
+            //         .ok_or_else(|| Error::CreatedAmountOverflow(created_amount as u128 + output.amount() as u128))?;
+            //     balance_diffs.amount_add(*output.address(), output.amount())?;
+            //     balance_diffs.dust_allowance_add(*output.address(), output.amount())?;
+            // }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
-        }
+            Output::Extended(output) => output.amount(),
+            Output::Alias(output) => output.amount(),
+            Output::Foundry(output) => output.amount(),
+            Output::Nft(output) => output.amount(),
+        };
+
+        created_amount = created_amount
+            .checked_add(output.amount())
+            .ok_or_else(|| Error::CreatedAmountOverflow(created_amount as u128 + output.amount() as u128))?;
     }
 
     if created_amount != consumed_amount {
