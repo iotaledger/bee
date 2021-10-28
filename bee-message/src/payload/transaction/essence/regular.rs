@@ -179,24 +179,11 @@ impl RegularEssenceBuilder {
 
         for output in self.outputs.iter() {
             let amount = match output {
-                Output::Simple(single) => {
-                    // The addresses must be unique in the set of simple outputs.
-                    if self
-                        .outputs
-                        .iter()
-                        .filter(|o| matches!(o, Output::Simple(s) if s.address() == single.address()))
-                        .count()
-                        > 1
-                    {
-                        return Err(Error::DuplicateAddress(*single.address()));
-                    }
-
-                    single.amount()
-                }
-                Output::Extended(extended) => extended.amount(),
-                Output::Alias(alias) => alias.amount(),
-                Output::Foundry(foundry) => foundry.amount(),
-                Output::Nft(nft) => nft.amount(),
+                Output::Simple(output) => output.amount(),
+                Output::Extended(output) => output.amount(),
+                Output::Alias(output) => output.amount(),
+                Output::Foundry(output) => output.amount(),
+                Output::Nft(output) => output.amount(),
                 _ => return Err(Error::InvalidOutputKind(output.kind())),
             };
 
