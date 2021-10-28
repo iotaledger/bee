@@ -38,4 +38,4 @@ jobs:
       name: Check licenses
       with:
         command: about
-        args: --workspace --all-features --log-level info generate about.hbs
+        args: generate --workspace --all-features about.hbs
