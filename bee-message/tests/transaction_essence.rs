@@ -14,7 +14,7 @@ use bee_message::{
     util::hex_decode,
     MessageUnpackError, IOTA_SUPPLY,
 };
-use bee_packable::{error::VecPrefixLengthError, InvalidBoundedU32, Packable, UnpackError};
+use bee_packable::{packable::VecPrefixLengthError, InvalidBoundedU32, Packable, UnpackError};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,

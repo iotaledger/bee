@@ -22,7 +22,8 @@ use crate::{
     unlock::{PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX, PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN},
 };
 
-use bee_packable::{error::VecPrefixLengthError, InvalidBoundedU16, InvalidBoundedU32};
+use bee_packable::{packable::VecPrefixLengthError, InvalidBoundedU16, InvalidBoundedU32};
+
 use crypto::Error as CryptoError;
 
 use alloc::string::String;

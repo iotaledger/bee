@@ -10,9 +10,8 @@ use crate::{
 
 use bee_ord::is_sorted;
 use bee_packable::{
-    coerce::*,
-    error::{UnpackPrefixError, VecPrefixLengthError},
-    BoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    coerce::*, error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, PackError, Packable, Packer,
+    UnpackError, Unpacker, VecPrefix,
 };
 
 use alloc::vec::Vec;

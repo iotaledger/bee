@@ -6,7 +6,7 @@ use bee_message::{
     payload::{data::DataPayload, MessagePayload},
     MessageUnpackError,
 };
-use bee_packable::{error::VecPrefixLengthError, InvalidBoundedU32, Packable, UnpackError};
+use bee_packable::{packable::VecPrefixLengthError, InvalidBoundedU32, Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
 
 #[test]

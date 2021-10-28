@@ -5,7 +5,7 @@ extern crate alloc;
 
 use crate::{
     coerce::*,
-    error::{PackError, PackPrefixError, UnpackError, UnpackPrefixError, VecPrefixLengthError},
+    error::{PackError, PackPrefixError, UnpackError, UnpackPrefixError},
     packer::Packer,
     unpacker::Unpacker,
     Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
@@ -13,7 +13,29 @@ use crate::{
 };
 
 use alloc::vec::Vec;
-use core::{convert::TryFrom, marker::PhantomData};
+use core::{
+    convert::TryFrom,
+    fmt::{self, Display},
+    marker::PhantomData,
+};
+
+/// Semantic error raised when the prefix length cannot be unpacked.
+#[derive(Debug)]
+pub enum VecPrefixLengthError<E> {
+    /// The prefix length was truncated.
+    Truncated(usize),
+    /// The prefix length is invalid.
+    Invalid(E),
+}
+
+impl<E: Display> Display for VecPrefixLengthError<E> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            VecPrefixLengthError::Truncated(len) => write!(f, "length of `{}` was truncated", len),
+            VecPrefixLengthError::Invalid(err) => err.fmt(f),
+        }
+    }
+}
 
 /// Wrapper type for [`Vec<T>`] with a length prefix.
 /// The [`Vec<T>`]'s prefix bounds are provided by `B`, where `B` is a [`Bounded`] type.

@@ -6,7 +6,7 @@ use bee_message::{
     payload::{indexation::IndexationPayload, MessagePayload},
     MESSAGE_LENGTH_RANGE,
 };
-use bee_packable::{error::VecPrefixLengthError, InvalidBoundedU32, Packable, UnpackError};
+use bee_packable::{packable::VecPrefixLengthError, InvalidBoundedU32, Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
 
 use core::convert::TryFrom;

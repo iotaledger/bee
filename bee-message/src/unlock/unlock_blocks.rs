@@ -7,9 +7,8 @@ use crate::{
 };
 
 use bee_packable::{
-    coerce::*,
-    error::{UnpackPrefixError, VecPrefixLengthError},
-    BoundedU16, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    coerce::*, error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU16, PackError, Packable, Packer,
+    UnpackError, Unpacker, VecPrefix,
 };
 
 use hashbrown::HashSet;

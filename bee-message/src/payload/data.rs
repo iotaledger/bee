@@ -9,8 +9,7 @@ use crate::{
 };
 
 use bee_packable::{
-    error::{UnpackPrefixError, VecPrefixLengthError},
-    BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
+    error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
 };
 
 use alloc::vec::Vec;

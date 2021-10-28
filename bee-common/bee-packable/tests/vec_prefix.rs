@@ -4,9 +4,8 @@
 mod common;
 
 use bee_packable::{
-    error::{UnpackPrefixError, VecPrefixLengthError},
-    BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
-    InvalidBoundedU8, Packable, UnpackError, VecPrefix,
+    error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU16, BoundedU32, BoundedU64, BoundedU8,
+    InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64, InvalidBoundedU8, Packable, UnpackError, VecPrefix,
 };
 
 use core::convert::TryFrom;
