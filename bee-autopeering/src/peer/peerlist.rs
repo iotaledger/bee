@@ -153,8 +153,9 @@ impl PeerMetrics {
         self.verified_count
     }
 
-    pub fn incr_verified_count(&mut self) {
+    pub fn increment_verified_count(&mut self) -> usize {
         self.verified_count += 1;
+        self.verified_count
     }
 
     pub fn reset_verified_count(&mut self) {
@@ -187,8 +188,10 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
         Self::default()
     }
 
-    // Returns `false`, if the list already contains the id, otherwise `true`.
-    pub(crate) fn append(&mut self, item: P) -> bool {
+    /// Returns `false`, if the list already contains the id, otherwise `true`.
+    ///
+    /// The newest item will be at index `0`, the oldest at index `n`.
+    pub(crate) fn insert(&mut self, item: P) -> bool {
         if self.contains(item.as_ref()) {
             false
         } else {
@@ -245,11 +248,50 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
         self.0.get_mut(index)
     }
 
-    pub(crate) fn newest(&self) -> Option<&P> {
+    pub(crate) fn get_newest(&self) -> Option<&P> {
         self.0.get(0)
     }
 
-    pub(crate) fn oldest(&self) -> Option<&P> {
+    pub(crate) fn get_newest_mut(&mut self) -> Option<&mut P> {
+        self.0.get_mut(0)
+    }
+
+    pub(crate) fn set_newest(&mut self, peer_id: &PeerId) -> bool {
+        if let Some(mid) = self.find_index(peer_id) {
+            if mid > 0 {
+                self.0.rotate_left(mid);
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    // needs to be atomic
+    pub(crate) fn set_newest_and_get(&mut self, peer_id: &PeerId) -> Option<&P> {
+        if let Some(mid) = self.find_index(peer_id) {
+            if mid > 0 {
+                self.0.rotate_left(mid);
+            }
+            self.get_newest()
+        } else {
+            None
+        }
+    }
+
+    // needs to be atomic
+    pub(crate) fn set_newest_and_get_mut(&mut self, peer_id: &PeerId) -> Option<&mut P> {
+        if let Some(mid) = self.find_index(peer_id) {
+            if mid > 0 {
+                self.0.rotate_left(mid);
+            }
+            self.get_newest_mut()
+        } else {
+            None
+        }
+    }
+
+    pub(crate) fn get_oldest(&self) -> Option<&P> {
         self.0.get(self.0.len() - 1)
     }
 

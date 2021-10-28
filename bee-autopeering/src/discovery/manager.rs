@@ -450,7 +450,7 @@ async fn add_entry_nodes<S: PeerStore>(
         let peer_id = peer.peer_id().clone();
 
         // Add peer to peer list/s.
-        if add_peer_to_list(peer_id.clone(), &local, active_peers, replacements) {
+        if add_new_peer_to_list(peer_id.clone(), &local, active_peers, replacements) {
             num_added += 1;
         }
 
@@ -470,7 +470,7 @@ async fn add_peers_from_store<S: PeerStore>(
     let mut num_added = 0;
 
     for peer in peerstore.get_peers() {
-        if add_peer_to_list(peer.into_id(), &local, active_peers, replacements) {
+        if add_new_peer_to_list(peer.into_id(), &local, active_peers, replacements) {
             num_added += 1;
         }
     }
@@ -481,22 +481,24 @@ async fn add_peers_from_store<S: PeerStore>(
 // From hive.go:
 // Adds a newly discovered peer that has never been verified or pinged yet.
 // It returns true, if the given peer was new and added, false otherwise.
-pub(crate) fn add_peer_to_list(
+pub(crate) fn add_new_peer_to_list(
     peer_id: PeerId,
     local: &Local,
     active_peers: &ActivePeersList,
     replacements: &ReplacementList,
 ) -> bool {
-    // Do not add the local peer.
     if peer_id == local.peer_id() {
+        // Do not add the local peer.
         false
     } else if active_peers.read().contains(&peer_id) {
+        // Do not add it if it already exists.
         false
     } else {
-        if active_peers.read().is_full() {
-            replacements.write().append(peer_id)
+        // Prefer adding it to the active list, but if it is already full add the peer to the replacement list.
+        if !active_peers.read().is_full() {
+            active_peers.write().insert(peer_id.into())
         } else {
-            active_peers.write().append(peer_id.into())
+            replacements.write().insert(peer_id)
         }
     }
 }
@@ -522,7 +524,7 @@ pub(crate) fn delete_peer_from_list(
         if master_peers.read().contains(removed_peer.peer_id()) {
             // hive.go: reset verifiedCount and re-add them
             removed_peer.metrics_mut().reset_verified_count();
-            active_peers.write().append(removed_peer);
+            active_peers.write().insert(removed_peer);
         } else {
             // TODO: why is the event only triggered for verified peers?
             // ```go
@@ -552,7 +554,7 @@ pub(crate) fn delete_peer_from_list(
                 // Panic: unwrapping is fine, because we checked that the list isn't empty, and `index` must be in
                 // range.
                 let r = replacements.write().remove_at(index).unwrap();
-                active_peers.write().append(r.into());
+                active_peers.write().insert(r.into());
             }
         }
     }
@@ -567,6 +569,84 @@ fn is_known_peer_id(
 ) -> bool {
     // Note: master peers are always a subset of the active peers.
     peer_id == &local.peer_id() || active_peers.read().contains(&peer_id) || replacements.read().contains(peer_id)
+}
+
+/// Hive.go: adds a new peer that has just been successfully pinged.
+/// It returns true, if the given peer was new and added, false otherwise.
+fn add_verified_peer(
+    peer: Peer,
+    local: &Local,
+    active_peers: &ActivePeersList,
+    replacements: &ReplacementList,
+    event_tx: EventTx,
+) -> bool {
+    // Hive.go: never add the local peer
+    if &local.peer_id() == peer.peer_id() {
+        false
+    } else
+    // Hive.go: if already in the list, move it to the front
+    if let Some(verified_count) = update_peer(peer.peer_id(), active_peers) {
+        // Hive.go: trigger the event only for the first time the peer is updated
+        if verified_count == 1 {
+            event_tx.send(Event::PeerDiscovered { peer: peer.clone() });
+        }
+        false
+    } else {
+        let mut active_peer = ActivePeerEntry::new(peer.peer_id().clone());
+        active_peer.metrics_mut().increment_verified_count();
+
+        if active_peers.read().is_full() {
+            return add_replacement(peer.peer_id(), replacements);
+        }
+
+        // Hive.go: trigger the event only when the peer is added to active
+        event_tx.send(Event::PeerDiscovered { peer: peer.clone() });
+
+        // Hive.go: new nodes are added to the front
+        active_peers.write().set_newest(peer.peer_id());
+
+        true
+    }
+}
+
+/// Hive.go: moves the peer with the given ID to the front of the list of managed peers.
+/// It returns `None` if there was no peer with that id, otherwise the `verified_count` of the updated peer is returned.
+fn update_peer(peer_id: &PeerId, active_peers: &ActivePeersList) -> Option<usize> {
+    if let Some(p) = active_peers.write().set_newest_and_get_mut(&peer_id) {
+        let verified_count = p.metrics_mut().increment_verified_count();
+        Some(verified_count)
+    } else {
+        None
+    }
+}
+
+/// Hive.go: adds a newly discovered peer that has never been verified or pinged yet.
+/// It returns true, if the given peer was new and added, false otherwise.
+fn add_discovered_peer(
+    peer: Peer,
+    local: &Local,
+    active_peers: &ActivePeersList,
+    replacements: &ReplacementList,
+) -> bool {
+    if &local.peer_id() == peer.peer_id() {
+        // Hive.go: never add the local peer
+        false
+    } else if active_peers.read().contains(peer.peer_id()) {
+        // Do not add it if it already exists.
+        false
+    } else {
+        // Prefer adding it to the active list, but if it is already full add the peer to the replacement list.
+        let active_peer = ActivePeerEntry::new(peer.peer_id().clone());
+        if !active_peers.read().is_full() {
+            active_peers.write().insert(active_peer)
+        } else {
+            add_replacement(active_peer.peer_id(), replacements)
+        }
+    }
+}
+
+fn add_replacement(peer_id: &PeerId, replacements: &ReplacementList) -> bool {
+    replacements.write().insert(peer_id.clone())
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -821,7 +901,7 @@ fn handle_discovery_response<S: PeerStore>(reqv: RequestValue, disc_res: Discove
     for peer in disc_res.into_peers() {
         log::debug!("Discovered peer: {:?}", peer);
 
-        add_peer_to_list(peer.peer_id().clone(), ctx.local, ctx.active_peers, ctx.replacements);
+        add_new_peer_to_list(peer.peer_id().clone(), ctx.local, ctx.active_peers, ctx.replacements);
         add_peer_to_store(peer.clone(), ctx.local, ctx.peerstore);
 
         ctx.event_tx.send(Event::PeerDiscovered { peer });

@@ -160,14 +160,14 @@ mod tests {
         map.insert(
             "autopeering".into(),
             proto::NetworkAddress {
-                network: "udp, 198.51.100.1".into(),
+                network: "udp".into(),
                 port: 80,
             },
         );
         map.insert(
             "fpc".into(),
             proto::NetworkAddress {
-                network: "tcp, 198.51.100.1".into(),
+                network: "tcp".into(),
                 port: 8000,
             },
         );

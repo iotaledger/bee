@@ -5,7 +5,7 @@ use super::protocol;
 
 use crate::{
     command::{Command, CommandTx},
-    discovery::manager::{add_peer_to_list, delete_peer_from_list, send_discovery_request_expecting_reply},
+    discovery::manager,
     event::EventTx,
     local::Local,
     peer::{
@@ -26,7 +26,7 @@ use std::{collections::VecDeque, time::Duration};
 // A temporary test strategy.
 pub(crate) fn roundrobin_verification() -> Repeat<(ActivePeersList, CommandTx)> {
     Box::new(|(active_peers, command_tx)| {
-        if let Some(peer_entry) = active_peers.read().newest() {
+        if let Some(peer_entry) = active_peers.read().get_newest() {
             let peer_id = peer_entry.peer_id().clone();
 
             command_tx
@@ -41,7 +41,7 @@ pub(crate) fn roundrobin_verification() -> Repeat<(ActivePeersList, CommandTx)> 
 // A temporary test strategy.
 pub(crate) fn oldest_discovery() -> Repeat<(ActivePeersList, CommandTx)> {
     Box::new(|(active_peers, command_tx)| {
-        if let Some(peer_entry) = active_peers.read().oldest() {
+        if let Some(peer_entry) = active_peers.read().get_oldest() {
             let peer_id = peer_entry.peer_id().clone();
 
             command_tx
@@ -94,7 +94,7 @@ pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
     Box::new(|(ctx)| {
         log::debug!("Starting query.");
 
-        let peers = peers_to_query(&ctx.active_peers);
+        let peers = select_peers_to_query(&ctx.active_peers);
         if peers.is_empty() {
             log::warn!("No peers to query.");
         } else {
@@ -105,7 +105,7 @@ pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
 
                 // TODO: introduce `UnsupervisedTask` type, that always finishes after a timeout.
                 tokio::spawn(async move {
-                    if let Some(peers) = send_discovery_request_expecting_reply(
+                    if let Some(peers) = manager::send_discovery_request_expecting_reply(
                         &peer_id,
                         &ctx_.request_mngr,
                         &ctx_.peerstore,
@@ -117,7 +117,12 @@ pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
 
                         let mut num_added = 0;
                         for peer in peers {
-                            if add_peer_to_list(peer.into_id(), &ctx_.local, &ctx_.active_peers, &ctx_.replacements) {
+                            if manager::add_new_peer_to_list(
+                                peer.into_id(),
+                                &ctx_.local,
+                                &ctx_.active_peers,
+                                &ctx_.replacements,
+                            ) {
                                 num_added += 1;
                             }
                         }
@@ -131,7 +136,7 @@ pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
                     } else {
                         log::debug!("Query unsuccessful. Deleting peer.");
 
-                        delete_peer_from_list(
+                        manager::delete_peer_from_list(
                             &peer_id,
                             &ctx_.master_peers,
                             &ctx_.active_peers,
@@ -146,7 +151,7 @@ pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
 }
 
 // Hive.go: selects the peers that should be queried.
-fn peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
+fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
     let mut verif_peers = protocol::get_verified_peers(active_peers);
 
     if verif_peers.is_empty() {
@@ -161,6 +166,13 @@ fn peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
             ($t:expr) => {
                 // Panic: we made sure, that unwrap is always okay.
                 $t.as_ref().unwrap().metrics().last_new_peers()
+
+                // TODO: remove this when pretty certain about the correctness of the rules.
+                // if let Some(pe) = $t.as_ref() {
+                //     $t.as_ref().unwrap().metrics().last_new_peers()
+                // } else {
+                //     255
+                // }
             };
         }
 
@@ -174,29 +186,49 @@ fn peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
         let latest = verif_peers.remove(0).into_id();
 
         // Note: This loop finds the three "heaviest" peers with one iteration over an unsorted vec of verified peers.
-        let heaviest3 = verif_peers.into_iter().fold((None, None, None), |(x, y, z), p| {
-            let n = p.metrics().last_new_peers();
+        let heaviest3 = verif_peers.into_iter().fold(
+            (None, None, None),
+            |(x, y, z): (
+                Option<ActivePeerEntry>,
+                Option<ActivePeerEntry>,
+                Option<ActivePeerEntry>,
+            ),
+             p| {
+                let n = p.metrics().last_new_peers();
 
-            match (&x, &y, &z) {
-                // set 1st
-                (None, _, _) => (Some(p), y, z),
-                // shift-right set 1st
-                (t, None, _) if n < num!(t) => (Some(p), t.clone(), z),
-                // set 2nd
-                (t, None, _) if n >= num!(t) => (x, Some(p), z),
-                // shift-right-shift-right set 1st
-                (s, t, None) if n < num!(s) => (Some(p), s.clone(), t.clone()),
-                // shift-right set 1st
-                (_, t, None) if n < num!(t) => (x, Some(p), t.clone()),
-                // set 3rd
-                (_, t, None) if n >= num!(t) => (x, y, Some(p)),
-                // default rules:
-                (t, _, _) if n < num!(t) => (x, y, z),
-                (_, t, _) if n < num!(t) => (Some(p), y, z),
-                (_, _, t) if n < num!(t) => (x, Some(p), z),
-                (_, _, _) => (x, y, Some(p)),
-            }
-        });
+                // TODO: remove this when pretty certain about the correctness of the rules.
+                // println!(
+                //     "{} {} {} --- {}",
+                //     num!(x),
+                //     num!(y),
+                //     num!(z),
+                //     p.metrics().last_new_peers()
+                // );
+
+                match (&x, &y, &z) {
+                    // set 1st
+                    (None, _, _) => (Some(p), y, z),
+                    // shift-right + set 1st
+                    (t, None, _) if n < num!(t) => (Some(p), t.clone(), z),
+                    // set 2nd
+                    (t, None, _) if n >= num!(t) => (x, Some(p), z),
+                    // shift-right + shift-right + set 1st
+                    (s, t, None) if n < num!(s) => (Some(p), s.clone(), t.clone()),
+                    // shift-right + set 1st
+                    (_, t, None) if n < num!(t) => (x, Some(p), t.clone()),
+                    // set 3rd
+                    (_, t, None) if n >= num!(t) => (x, y, Some(p)),
+                    // no-op
+                    (t, _, _) if n < num!(t) => (x, y, z),
+                    // set 1st
+                    (_, t, _) if n < num!(t) => (Some(p), y, z),
+                    // shift-left + set 2nd
+                    (_, _, t) if n < num!(t) => (y, Some(p), z),
+                    // shift-left + shift-left + set 3rd
+                    (_, _, _) => (y, z, Some(p)),
+                }
+            },
+        );
 
         let r = thread_rng().gen_range(0..len(&heaviest3));
         let heaviest = match r {
@@ -210,5 +242,101 @@ fn peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
         .into_id();
 
         vec![latest, heaviest]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::peer::{peerlist::ActivePeerEntry, Peer};
+
+    fn create_peerlist_of_size(n: usize) -> ActivePeersList {
+        // Create a set of active peer entries.
+        let mut entries = (0..n)
+            .map(|i| Peer::new_test_peer(i as u8).into_id())
+            .map(|p| ActivePeerEntry::new(p))
+            .collect::<Vec<_>>();
+
+        // Create a peerlist, and insert the peer entries setting the `last_new_peers` metric
+        // equal to its Vec index. We also need to set the `verified_count` to at least 1.
+        let peerlist = ActivePeersList::default();
+        let mut pl = peerlist.write();
+        for (i, mut entry) in entries.into_iter().enumerate() {
+            entry.metrics_mut().set_last_new_peers((n - 1) - i);
+            entry.metrics_mut().increment_verified_count();
+
+            pl.insert(entry);
+        }
+        drop(pl);
+        peerlist
+    }
+
+    #[test]
+    fn find_peers_to_query_in_peerlist_1() {
+        let peerlist = create_peerlist_of_size(1);
+
+        let selected = select_peers_to_query(&peerlist);
+        assert_eq!(1, selected.len());
+    }
+
+    #[test]
+    fn find_peers_to_query_in_peerlist_2() {
+        let peerlist = create_peerlist_of_size(2);
+
+        let selected = select_peers_to_query(&peerlist);
+        assert_eq!(2, selected.len());
+    }
+
+    #[test]
+    fn find_peers_to_query_in_peerlist_3() {
+        let peerlist = create_peerlist_of_size(3);
+
+        macro_rules! equal {
+            ($a:expr, $b:expr) => {{
+                $a == peerlist.read().get($b).unwrap().peer_id()
+            }};
+        }
+
+        let selected = select_peers_to_query(&peerlist);
+        assert_eq!(2, selected.len());
+
+        assert!(equal!(&selected[0], 0));
+        assert!(equal!(&selected[1], 1) || equal!(&selected[1], 2));
+    }
+
+    #[test]
+    fn find_peers_to_query_in_peerlist_10() {
+        let peerlist = create_peerlist_of_size(10);
+
+        macro_rules! equal {
+            ($a:expr, $b:expr) => {{
+                $a == peerlist.read().get($b).unwrap().peer_id()
+            }};
+        }
+
+        // 0 1 2 3 4 ... 7 8 9 (index)
+        // 0 1 2 3 4 ... 7 8 9 (last_new_peers)
+        // ^             ^ ^ ^
+        // 0             1 1 1 (expected)
+        let selected = select_peers_to_query(&peerlist);
+        assert_eq!(2, selected.len());
+
+        // Always the newest peer (index 0) is selected.
+        assert!(equal!(&selected[0], 0));
+        // Either of the 3 "heaviest" peers is selected.
+        assert!(equal!(&selected[1], 7) || equal!(&selected[1], 8) || equal!(&selected[1], 9));
+
+        // 0 1 2 3 4 ... 7 8 9 (index)
+        // 8 9 0 1 2 ... 5 6 7 (last_new_peers)
+        // ^ ^             ^ ^
+        // 0 1             1 1 (expected)
+        peerlist.write().rotate_forwards();
+        peerlist.write().rotate_forwards();
+
+        let selected = select_peers_to_query(&peerlist);
+        assert_eq!(2, selected.len());
+
+        assert!(equal!(&selected[0], 0));
+        assert!(equal!(&selected[1], 1) || equal!(&selected[1], 8) || equal!(&selected[1], 9));
     }
 }
