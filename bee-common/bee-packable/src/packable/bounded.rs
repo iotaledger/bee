@@ -21,7 +21,6 @@ pub trait Bounded {
 
     /// Minimum bounded value.
     const MIN: Self::Bounds;
-
     /// Maximum bounded value.
     const MAX: Self::Bounds;
 }
@@ -142,24 +141,28 @@ bounded!(
 
 impl Bounded for u8 {
     type Bounds = Self;
+
     const MIN: Self::Bounds = u8::MIN;
     const MAX: Self::Bounds = u8::MAX;
 }
 
 impl Bounded for u16 {
     type Bounds = Self;
+
     const MIN: Self::Bounds = u16::MIN;
     const MAX: Self::Bounds = u16::MAX;
 }
 
 impl Bounded for u32 {
     type Bounds = Self;
+
     const MIN: Self::Bounds = u32::MIN;
     const MAX: Self::Bounds = u32::MAX;
 }
 
 impl Bounded for u64 {
     type Bounds = Self;
+
     const MIN: Self::Bounds = u64::MIN;
     const MAX: Self::Bounds = u64::MAX;
 }
