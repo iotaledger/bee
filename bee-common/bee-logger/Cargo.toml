@@ -11,7 +11,8 @@ keywords = [ "iota", "tangle", "bee", "framework", "logger" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-chrono = { version = "0.4.19", default-features = false, features = [ "clock" ] }
+bee-time = { path = "../bee-time", default-features = false }
+
 fern = { version = "0.6.0", default-features = false, features = [ "colored" ] }
 log = { version = "0.4.14", default-features = false, features = [ "serde" ] }
 serde = { version = "1.0.130", default-features = false, features = [ "derive", "std" ], optional = true }
