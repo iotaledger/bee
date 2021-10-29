@@ -1,15 +1,15 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use crate::{output::NftId, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{convert::TryInto, str::FromStr};
+use core::{convert::TryInto, ops::Deref, str::FromStr};
 
 /// A NFT address.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From)]
-pub struct NftAddress([u8; Self::LENGTH]);
+pub struct NftAddress(NftId);
 
 #[allow(clippy::len_without_is_empty)]
 impl NftAddress {
@@ -19,13 +19,18 @@ impl NftAddress {
     pub const LENGTH: usize = 20;
 
     /// Creates a new NFT address.
-    pub fn new(address: [u8; Self::LENGTH]) -> Self {
-        address.into()
+    pub fn new(id: NftId) -> Self {
+        id.into()
     }
 
     /// Returns the length of an NFT address.
     pub fn len(&self) -> usize {
         Self::LENGTH
+    }
+
+    ///
+    pub fn id(&self) -> &NftId {
+        &self.0
     }
 
     // /// Verifies a [`NftSignature`] for a message against the [`NftAddress`].
@@ -46,13 +51,21 @@ impl FromStr for NftAddress {
             .try_into()
             .map_err(|_| Self::Err::InvalidHexadecimalLength(Self::LENGTH * 2, s.len()))?;
 
-        Ok(NftAddress::from(bytes))
+        Ok(NftAddress::from(NftId::from(bytes)))
+    }
+}
+
+impl Deref for NftAddress {
+    type Target = NftId;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
 impl AsRef<[u8]> for NftAddress {
     fn as_ref(&self) -> &[u8] {
-        &self.0
+        self.0.as_ref()
     }
 }
 
@@ -82,6 +95,6 @@ impl Packable for NftAddress {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(<[u8; Self::LENGTH]>::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self::new(NftId::unpack_inner::<R, CHECK>(reader)?))
     }
 }

@@ -1,15 +1,15 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use crate::{output::AliasId, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{convert::TryInto, str::FromStr};
+use core::{convert::TryInto, ops::Deref, str::FromStr};
 
 /// An alias address.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From)]
-pub struct AliasAddress([u8; Self::LENGTH]);
+pub struct AliasAddress(AliasId);
 
 #[allow(clippy::len_without_is_empty)]
 impl AliasAddress {
@@ -19,13 +19,18 @@ impl AliasAddress {
     pub const LENGTH: usize = 20;
 
     /// Creates a new alias address.
-    pub fn new(address: [u8; Self::LENGTH]) -> Self {
-        address.into()
+    pub fn new(id: AliasId) -> Self {
+        id.into()
     }
 
     /// Returns the length of an alias address.
     pub fn len(&self) -> usize {
         Self::LENGTH
+    }
+
+    ///
+    pub fn id(&self) -> &AliasId {
+        &self.0
     }
 
     // /// Verifies a [`AliasSignature`] for a message against the [`AliasAddress`].
@@ -46,13 +51,21 @@ impl FromStr for AliasAddress {
             .try_into()
             .map_err(|_| Self::Err::InvalidHexadecimalLength(Self::LENGTH * 2, s.len()))?;
 
-        Ok(AliasAddress::from(bytes))
+        Ok(AliasAddress::from(AliasId::from(bytes)))
+    }
+}
+
+impl Deref for AliasAddress {
+    type Target = AliasId;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
 impl AsRef<[u8]> for AliasAddress {
     fn as_ref(&self) -> &[u8] {
-        &self.0
+        self.0.as_ref()
     }
 }
 
@@ -82,6 +95,6 @@ impl Packable for AliasAddress {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(<[u8; Self::LENGTH]>::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self::new(AliasId::unpack_inner::<R, CHECK>(reader)?))
     }
 }
