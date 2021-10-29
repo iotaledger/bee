@@ -16,6 +16,7 @@ bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev", de
 bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "workers" ] }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
 bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "full" ] }
+bee-pow = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
 bee-protocol = { path = "../bee-protocol", default-features = false }
 bee-rest-api = { path = "../bee-api/bee-rest-api", default-features = false, features = [ "endpoints" ] }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
@@ -23,6 +24,7 @@ bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", d
 bee-storage-rocksdb = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
 bee-storage-sled = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
 bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
+bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 anymap = { version = "0.12.1", default-features = false }
 async-trait = { version = "0.1.51", default-features = false }
@@ -36,6 +38,7 @@ iota-crypto = { version = "0.7.0", default-features = false, features = [ "ed255
 log = { version = "0.4.14", default-features = false }
 mime_guess = { version = "2.0.3", default-features = false, optional = true }
 multiaddr = { version = "0.13.0", default-features = false }
+num_cpus = "1.13.0"
 paho-mqtt = { version = "0.9.1", default-features = false, features = [ "bundled" ]}
 rand = { version = "0.8.4", default-features = false }
 rpassword = { version = "5.0.1", default-features = false }
