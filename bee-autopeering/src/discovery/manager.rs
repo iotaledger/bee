@@ -51,6 +51,8 @@ const MIN_VERIFIED_IN_RESPONSE: usize = 1;
 // Is the maximum number of services a peer can support.
 const MAX_SERVICES: usize = 5;
 
+pub(crate) type DiscoveryHandler<S: PeerStore> = Box<dyn Fn(&RecvContext<S>) + Send + Sync + 'static>;
+
 pub(crate) struct DiscoveryManagerConfig {
     pub(crate) entry_nodes: Vec<AutopeeringMultiaddr>,
     pub(crate) entry_nodes_prefer_ipv6: bool,
@@ -247,7 +249,7 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
                         peer_id,
                     }) = o
                     {
-                        let ctx = HandlerContext {
+                        let ctx = RecvContext {
                             peer_id: &peer_id,
                             msg_bytes: &msg_bytes,
                             server_tx: &server_tx,
@@ -257,7 +259,7 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
                             peer_addr,
                             event_tx: &event_tx,
                             active_peers: &active_peers,
-                            replacements: &mut replacements,
+                            replacements: &replacements,
                         };
 
                         match msg_type {
@@ -274,6 +276,7 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
                                     continue 'recv;
                                 } else {
                                     log::debug!("Received valid verification request from {}.", &peer_id);
+
                                     handle_verification_request(verif_req, ctx);
                                 }
                             }
@@ -286,9 +289,10 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
                                 };
 
                                 match validate_verification_response(&verif_res, &request_mngr, &peer_id, peer_addr) {
-                                    Ok(reqv) => {
+                                    Ok(verif_reqval) => {
                                         log::debug!("Received valid verification response from {}.", &peer_id);
-                                        handle_verification_response(reqv, verif_res, ctx);
+
+                                        handle_verification_response(verif_res, verif_reqval, ctx);
                                     }
                                     Err(e) => {
                                         log::debug!("Received invalid verification response from {}. Reason: {:?}", &peer_id, e);
@@ -309,6 +313,7 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
                                     continue 'recv;
                                 } else {
                                     log::debug!("Received valid discovery request from {}.", &peer_id);
+
                                     handle_discovery_request(disc_req, ctx);
                                 }
                             }
@@ -321,9 +326,10 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
                                 };
 
                                 match validate_discovery_response(&disc_res, &request_mngr, &peer_id) {
-                                    Ok(disc_req) => {
+                                    Ok(disc_reqval) => {
                                         log::debug!("Received valid discovery response from {}.", &peer_id);
-                                        handle_discovery_response(disc_req, disc_res, ctx);
+
+                                        handle_discovery_response(disc_res, disc_reqval, ctx);
                                     }
                                     Err(e) => {
                                         log::debug!("Received invalid discovery response from {}. Reason: {:?}", &peer_id, e);
@@ -533,15 +539,14 @@ pub(crate) fn delete_peer_from_active_list(
             }
 
             // ```go
-            // // add a random replacement, if available
             // if len(m.replacements) > 0 {
             // 	var r *mpeer
             // 	m.replacements, r = deletePeer(m.replacements, rand.Intn(len(m.replacements)))
             // 	m.active = pushPeer(m.active, r, maxManaged)
             // }
             // ```
-            let is_empty = replacements.read().is_empty(); // dead lock precaution
-            if !is_empty {
+            // Pick a random peer from the replacement list (if not empty)
+            if !replacements.read().is_empty() {
                 let index = rand::thread_rng().gen_range(0..replacements.read().len());
                 // Panic: unwrapping is fine, because we checked that the list isn't empty, and `index` must be in
                 // range.
@@ -647,8 +652,21 @@ fn add_replacement(peer_id: PeerId, replacements: &ReplacementList) -> bool {
     replacements.write().insert(peer_id)
 }
 
+pub(crate) struct RecvContext<'a, S: PeerStore> {
+    peer_id: &'a PeerId,
+    msg_bytes: &'a [u8],
+    server_tx: &'a ServerTx,
+    local: &'a Local,
+    peerstore: &'a S,
+    request_mngr: &'a RequestManager<S>,
+    peer_addr: SocketAddr,
+    event_tx: &'a EventTx,
+    active_peers: &'a ActivePeersList,
+    replacements: &'a ReplacementList,
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// MESSAGE VALIDATION
+// VALIDATION
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #[derive(Debug, Clone, Copy)]
@@ -715,7 +733,7 @@ fn validate_verification_response<S: PeerStore>(
     use ValidationError::*;
 
     if let Some(reqv) = request_mngr.pull::<VerificationRequest>(peer_id) {
-        if verif_res.request_hash() == &reqv.request_hash[..] {
+        if verif_res.request_hash() == &reqv.request_hash {
             let res_services = verif_res.services();
             if let Some(res_peering) = res_services.get(AUTOPEERING_SERVICE_NAME) {
                 if res_peering.port() == source_socket_addr.port() {
@@ -771,26 +789,10 @@ fn validate_discovery_response<S: PeerStore>(
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// MESSAGE HANDLING
+// HANDLING
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub(crate) struct HandlerContext<'a, S: PeerStore> {
-    peer_id: &'a PeerId,
-    msg_bytes: &'a [u8],
-    server_tx: &'a ServerTx,
-    local: &'a Local,
-    peerstore: &'a S,
-    request_mngr: &'a RequestManager<S>,
-    peer_addr: SocketAddr,
-    event_tx: &'a EventTx,
-    active_peers: &'a ActivePeersList,
-    replacements: &'a mut ReplacementList,
-}
-
-/// * update request timestamp
-/// * send a reply
-/// * if it's not yet verified, send a request, otherwise
-fn handle_verification_request<S: PeerStore>(verif_req: VerificationRequest, ctx: HandlerContext<S>) {
+fn handle_verification_request<S: PeerStore>(verif_req: VerificationRequest, ctx: RecvContext<S>) {
     log::debug!("Handling verification request.");
 
     ctx.peerstore.update_last_verification_request(ctx.peer_id.clone());
@@ -817,17 +819,17 @@ fn handle_verification_request<S: PeerStore>(verif_req: VerificationRequest, ctx
 }
 
 fn handle_verification_response<S: PeerStore>(
-    reqv: RequestValue<S>,
     verif_res: VerificationResponse,
-    ctx: HandlerContext<S>,
+    verif_reqval: RequestValue<S>,
+    ctx: RecvContext<S>,
 ) {
     log::debug!("Handling verification response.");
 
     // Execute the stored handler. Do nothing by default.
-    (reqv.handler.unwrap_or(Box::new(|ctx| {})))(&ctx);
+    (verif_reqval.handler.unwrap_or(Box::new(|ctx| {})))(&ctx);
 
     // Send the response notification.
-    if let Some(tx) = reqv.response_tx {
+    if let Some(tx) = verif_reqval.response_tx {
         tx.send(
             verif_res
                 .to_protobuf()
@@ -838,7 +840,7 @@ fn handle_verification_response<S: PeerStore>(
     }
 }
 
-fn handle_discovery_request<S: PeerStore>(disc_req: DiscoveryRequest, ctx: HandlerContext<S>) {
+fn handle_discovery_request<S: PeerStore>(disc_req: DiscoveryRequest, ctx: RecvContext<S>) {
     log::debug!("Handling discovery request.");
 
     let request_hash = msg_hash(MessageType::DiscoveryRequest, ctx.msg_bytes).to_vec();
@@ -869,12 +871,16 @@ fn handle_discovery_request<S: PeerStore>(disc_req: DiscoveryRequest, ctx: Handl
         .expect("error sending verification response to server");
 }
 
-fn handle_discovery_response<S: PeerStore>(reqv: RequestValue<S>, disc_res: DiscoveryResponse, ctx: HandlerContext<S>) {
+fn handle_discovery_response<S: PeerStore>(
+    disc_res: DiscoveryResponse,
+    disc_reqval: RequestValue<S>,
+    ctx: RecvContext<S>,
+) {
     // Remove the corresponding request from the request manager.
     log::debug!("Handling discovery response.");
 
     // Execute the stored handler if there's any.
-    (reqv.handler.unwrap_or(Box::new(|_| {})))(&ctx);
+    (disc_reqval.handler.unwrap_or(Box::new(|_| {})))(&ctx);
 
     // ctx.msg_bytes
     // Add discovered peers to the peer list and peer store.
@@ -888,7 +894,7 @@ fn handle_discovery_response<S: PeerStore>(reqv: RequestValue<S>, disc_res: Disc
     }
 
     // Send the response notification.
-    if let Some(tx) = reqv.response_tx {
+    if let Some(tx) = disc_reqval.response_tx {
         tx.send(ctx.msg_bytes.to_vec()).expect("error sending response signal");
     }
 }
@@ -961,7 +967,7 @@ pub(crate) fn send_verification_request_to_addr<S: PeerStore>(
     log::debug!("Sending verification request to: {}", peer_id);
 
     // Define what happens when we receive the corresponding response.
-    let handler = Box::new(|ctx: &HandlerContext<S>| {
+    let handler = Box::new(|ctx: &RecvContext<S>| {
         // Fetch the peer from the peer store.
         let peer = ctx.peerstore.fetch_peer(ctx.peer_id).expect("peer not stored");
 
@@ -1088,7 +1094,7 @@ pub(crate) fn send_discovery_request_to_addr<S: PeerStore>(
 
     let handler = None;
 
-    let disc_req = request_mngr.new_discovery_request(peer_id.clone(), peer_addr.ip(), handler, response_tx);
+    let disc_req = request_mngr.new_discovery_request(peer_id.clone(), handler, response_tx);
 
     let msg_bytes = disc_req
         .to_protobuf()

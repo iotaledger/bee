@@ -4,13 +4,14 @@
 use crate::{
     delay::DelayFactory,
     discovery::{
-        manager::HandlerContext,
+        manager::DiscoveryHandler,
         messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
     },
     hash,
     local::{salt::Salt, Local},
     packet::{msg_hash, MessageType},
     peer::{peer_id::PeerId, peerstore::PeerStore},
+    peering::manager::PeeringHandler,
     peering::messages::PeeringRequest,
     server::ServerTx,
     task::{Repeat, ShutdownRx},
@@ -34,7 +35,6 @@ use std::{
 };
 
 type RequestHash = [u8; hash::SHA256_LEN];
-pub(crate) type Handler<S: PeerStore> = Box<dyn Fn(&HandlerContext<S>) + Send + Sync + 'static>;
 pub(crate) type ResponseTx = oneshot::Sender<Vec<u8>>;
 
 // If the request is not answered within that time it gets removed from the manager, and any response
@@ -55,7 +55,7 @@ pub(crate) struct RequestKey {
 pub(crate) struct RequestValue<S: PeerStore> {
     pub(crate) request_hash: [u8; hash::SHA256_LEN],
     pub(crate) expiration_time: u64,
-    pub(crate) handler: Option<Handler<S>>,
+    pub(crate) handler: Option<DiscoveryHandler<S>>,
     pub(crate) response_tx: Option<ResponseTx>,
 }
 
@@ -82,8 +82,8 @@ impl<S: PeerStore> RequestManager<S> {
     pub(crate) fn new_verification_request(
         &self,
         peer_id: PeerId,
-        target_addr: IpAddr,
-        handler: Option<Handler<S>>,
+        peer_addr: IpAddr,
+        handler: Option<DiscoveryHandler<S>>,
         response_tx: Option<ResponseTx>,
     ) -> VerificationRequest {
         let timestamp = crate::time::unix_now_secs();
@@ -98,7 +98,7 @@ impl<S: PeerStore> RequestManager<S> {
             network_id: self.network_id,
             timestamp,
             source_addr: self.source_addr,
-            target_addr,
+            target_addr: peer_addr,
         };
 
         let request_hash = msg_hash(
@@ -125,8 +125,7 @@ impl<S: PeerStore> RequestManager<S> {
     pub(crate) fn new_discovery_request(
         &self,
         peer_id: PeerId,
-        target_addr: IpAddr,
-        handler: Option<Handler<S>>,
+        handler: Option<DiscoveryHandler<S>>,
         response_tx: Option<ResponseTx>,
     ) -> DiscoveryRequest {
         let timestamp = crate::time::unix_now_secs();
@@ -162,7 +161,7 @@ impl<S: PeerStore> RequestManager<S> {
     pub(crate) fn new_peering_request(
         &self,
         peer_id: PeerId,
-        handler: Option<Handler<S>>,
+        handler: Option<PeeringHandler<S>>,
         response_tx: Option<ResponseTx>,
     ) -> PeeringRequest {
         let timestamp = crate::time::unix_now_secs();
@@ -185,7 +184,8 @@ impl<S: PeerStore> RequestManager<S> {
         let value = RequestValue {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
-            handler,
+            // TODO: support PeeringHandler
+            handler: None,
             response_tx,
         };
 

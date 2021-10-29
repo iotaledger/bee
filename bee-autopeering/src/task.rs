@@ -1,12 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::time::SECOND;
+use crate::{peer::peerlist::ActivePeersList, time::SECOND};
 
 use priority_queue::PriorityQueue;
 use tokio::{sync::oneshot, task::JoinHandle, time};
 
 use std::{
+    any::Any,
     collections::HashMap,
     future::Future,
     hash::Hasher,
@@ -38,6 +39,7 @@ pub(crate) struct TaskManager<const N: usize> {
     shutdown_handles: HashMap<String, JoinHandle<()>>,
     shutdown_order: PriorityQueue<String, u8>,
     shutdown_senders: HashMap<String, ShutdownTx>,
+    shutdown_fn: HashMap<String, Box<dyn Any + Send>>,
 }
 
 impl<const N: usize> TaskManager<N> {
@@ -46,6 +48,7 @@ impl<const N: usize> TaskManager<N> {
             shutdown_order: PriorityQueue::with_capacity(N),
             shutdown_senders: HashMap::with_capacity(N),
             shutdown_handles: HashMap::with_capacity(N),
+            shutdown_fn: HashMap::default(),
         }
     }
 
@@ -98,11 +101,16 @@ impl<const N: usize> TaskManager<N> {
         self.shutdown_order.push(name.into(), priority);
     }
 
+    pub(crate) fn add_shutdown_fn(&mut self, b: Box<dyn Fn(&ActivePeersList)>) {
+        todo!()
+    }
+
     pub(crate) async fn shutdown(self) {
         let TaskManager {
             mut shutdown_order,
             shutdown_handles: mut runnable_handles,
             mut shutdown_senders,
+            shutdown_fn,
         } = self;
 
         // Send the shutdown signal to all receivers.
@@ -132,5 +140,11 @@ impl<const N: usize> TaskManager<N> {
             }
         })
         .await;
+
+        log::debug!("Dumping data to storage...");
+        for (type_name, f) in shutdown_fn {
+            // TODO: flush data into storage
+        }
+        log::debug!("Finished.");
     }
 }

@@ -17,9 +17,9 @@ use crate::{
         service_map::AUTOPEERING_SERVICE_NAME,
         Local,
     },
-    packet::{IncomingPacket, MessageType, OutgoingPacket},
+    packet::{msg_hash, IncomingPacket, MessageType, OutgoingPacket},
     peer::{self, peer_id::PeerId, peerstore::PeerStore, Peer},
-    request::{self, RequestManager},
+    request::{self, RequestManager, RequestValue, ResponseTx, RESPONSE_TIMEOUT},
     server::{ServerSocket, ServerTx},
     task::{Runnable, ShutdownRx},
 };
@@ -31,6 +31,8 @@ const DEFAULT_FULL_OUTBOUND_UPDATE_INTERVAL_SECS: u64 = 60;
 
 type InboundNeighborhood = Neighborhood<SIZE_INBOUND, true>;
 type OutboundNeighborhood = Neighborhood<SIZE_OUTBOUND, false>;
+
+pub(crate) type PeeringHandler<S: PeerStore> = Box<dyn Fn(&RecvContext<S>) + Send + Sync + 'static>;
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum Error {
@@ -144,7 +146,7 @@ impl<S: PeerStore> Runnable for PeeringManager<S> {
             server_tx,
         } = socket;
 
-        loop {
+        'recv: loop {
             tokio::select! {
                 _ = &mut shutdown_rx => {
                     break;
@@ -157,48 +159,76 @@ impl<S: PeerStore> Runnable for PeeringManager<S> {
                         peer_id,
                     }) = o
                     {
+                        let ctx = RecvContext {
+                            peer_id: &peer_id,
+                            msg_bytes: &msg_bytes,
+                            server_tx: &server_tx,
+                            local: &local,
+                            peerstore: &peerstore,
+                            request_mngr: &request_mngr,
+                            peer_addr,
+                            event_tx: &event_tx,
+                            inbound_nbh: &mut inbound_nh,
+                            outbound_nbh: &mut outbound_nh,
+                            rejection_filter: &mut rejection_filter,
+                        };
+
                         match msg_type {
                             MessageType::PeeringRequest => {
-                                let peering_req =
-                                    PeeringRequest::from_protobuf(&msg_bytes).expect("error decoding peering request");
+                                let peer_req = if let Ok(peer_req) = PeeringRequest::from_protobuf(&msg_bytes) {
+                                    peer_req
+                                } else {
+                                    log::debug!("Error decoding peering request from {}.", &peer_id);
+                                    continue 'recv;
+                                };
 
-                                if !validate_peering_request(&peering_req, &peer_id, &peerstore) {
-                                    log::debug!("Received invalid peering request: {:?}", peering_req);
-                                    continue;
+                                if let Err(e) = validate_peering_request(&peer_req, &ctx) {
+                                    log::debug!("Received invalid peering request from {}. Reason: {:?}", &peer_id, e);
+                                    continue 'recv;
+                                } else {
+                                    log::debug!("Received valid peering request from {}.", &peer_id);
+
+                                    handle_peering_request(peer_req, ctx);
                                 }
-
-                                handle_peering_request(&peering_req, &msg_bytes, &server_tx, source_addr);
                             }
                             MessageType::PeeringResponse => {
-                                let peering_res =
-                                    PeeringResponse::from_protobuf(&msg_bytes).expect("error decoding peering response");
+                                let peer_res = if let Ok(peer_res) = PeeringResponse::from_protobuf(&msg_bytes) {
+                                    peer_res
+                                } else {
+                                    log::debug!("Error decoding peering response from {}.", &peer_id);
+                                    continue 'recv;
+                                };
 
-                                if !validate_peering_response(&peering_res, &peer_id, &request_mngr) {
-                                    log::debug!("Received invalid peering response: {:?}", peering_res);
-                                    continue;
+                                match validate_peering_response(&peer_res, &ctx) {
+                                    Ok(peer_reqval) => {
+                                        log::debug!("Received valid peering response from {}.", &peer_id);
+
+                                        handle_peering_response(peer_res, peer_reqval, ctx);
+                                    }
+                                    Err(e) => {
+                                        log::debug!("Received invalid peering response from {}. Reason: {:?}", &peer_id, e);
+                                        continue 'recv;
+                                    }
                                 }
-
-                                handle_peering_response(&peering_res);
                             }
                             MessageType::DropRequest => {
-                                let drop_req = DropRequest::from_protobuf(&msg_bytes).expect("error decoding drop request");
+                                let drop_req = if let Ok(drop_req) = DropRequest::from_protobuf(&msg_bytes) {
+                                    drop_req
+                                } else {
+                                    log::debug!("Error decoding drop request from {}.", &peer_id);
+                                    continue 'recv;
+                                };
 
-                                if !validate_drop_request(&drop_req) {
-                                    log::debug!("Received invalid drop request: {:?}", drop_req);
-                                    continue;
+                                if let Err(e) = validate_drop_request(&drop_req, &ctx) {
+                                    log::debug!("Received invalid drop request from {}. Reason: {:?}", &peer_id, e);
+                                    continue 'recv;
+                                } else {
+                                    log::debug!("Received valid drop request from {}.", &peer_id);
+
+                                    handle_drop_request(drop_req, ctx);
                                 }
-
-                                handle_drop_request(
-                                    &drop_req,
-                                    peer_id,
-                                    &mut inbound_nh,
-                                    &mut outbound_nh,
-                                    &mut rejection_filter,
-                                    &server_tx,
-                                    source_addr,
-                                );
                             }
-                            _ => panic!("unsupported peering message type"),
+                            _ => log::debug!("Received unsupported peering message type"),
                         }
                     }
                 }
@@ -207,68 +237,107 @@ impl<S: PeerStore> Runnable for PeeringManager<S> {
     }
 }
 
+pub(crate) struct RecvContext<'a, S: PeerStore> {
+    peer_id: &'a PeerId,
+    msg_bytes: &'a [u8],
+    server_tx: &'a ServerTx,
+    local: &'a Local,
+    peerstore: &'a S,
+    request_mngr: &'a RequestManager<S>,
+    peer_addr: SocketAddr,
+    event_tx: &'a EventTx,
+    inbound_nbh: &'a mut InboundNeighborhood,
+    outbound_nbh: &'a mut OutboundNeighborhood,
+    rejection_filter: &'a mut RejectionFilter,
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// MESSAGE VALIDATION
+// VALIDATION
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn validate_peering_request<S: PeerStore>(peering_req: &PeeringRequest, peer_id: &PeerId, peerstore: &S) -> bool {
-    if request::is_expired(peering_req.timestamp()) {
-        false
-    } else if !peer::is_verified(&peer_id, peerstore) {
-        false
-    } else if salt::is_expired(peering_req.salt_expiration_time()) {
-        false
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum ValidationError {
+    // The request must not be expired.
+    RequestExpired,
+    // The response must arrive in time.
+    NoCorrespondingRequestOrTimeout,
+    // The hash of the corresponding request must be correct.
+    IncorrectRequestHash,
+    // The peer has not been verified yet.
+    PeerNotVerified,
+    // The peer's salt is expired.
+    SaltExpired,
+}
+
+fn validate_peering_request<S: PeerStore>(
+    peer_req: &PeeringRequest,
+    ctx: &RecvContext<S>,
+) -> Result<(), ValidationError> {
+    use ValidationError::*;
+
+    if request::is_expired(peer_req.timestamp()) {
+        Err(RequestExpired)
+    } else if !peer::is_verified(ctx.peer_id, ctx.peerstore) {
+        Err(PeerNotVerified)
+    } else if salt::is_expired(peer_req.salt_expiration_time()) {
+        Err(SaltExpired)
     } else {
-        true
+        Ok(())
     }
 }
 
 fn validate_peering_response<S: PeerStore>(
-    peering_res: &PeeringResponse,
-    peer_id: &PeerId,
-    request_mngr: &RequestManager<S>,
-) -> bool {
-    if let Some(req) = request_mngr.pull::<PeeringRequest>(peer_id) {
-        peering_res.request_hash() == &req.request_hash
+    peer_res: &PeeringResponse,
+    ctx: &RecvContext<S>,
+) -> Result<RequestValue<S>, ValidationError> {
+    use ValidationError::*;
+
+    if let Some(reqv) = ctx.request_mngr.pull::<PeeringRequest>(ctx.peer_id) {
+        if peer_res.request_hash() != &reqv.request_hash {
+            Err(IncorrectRequestHash)
+        } else {
+            Ok(reqv)
+        }
     } else {
-        false
+        Err(NoCorrespondingRequestOrTimeout)
     }
 }
 
-fn validate_drop_request(drop_req: &DropRequest) -> bool {
-    request::is_expired(drop_req.timestamp())
+fn validate_drop_request<S: PeerStore>(drop_req: &DropRequest, _: &RecvContext<S>) -> Result<(), ValidationError> {
+    use ValidationError::*;
+
+    if request::is_expired(drop_req.timestamp()) {
+        Err(RequestExpired)
+    } else {
+        Ok(())
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// MESSAGE HANDLING
+// HANDLING
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn handle_peering_request(_: &PeeringRequest, msg_bytes: &[u8], server_tx: &ServerTx, source_addr: SocketAddr) {
-    let request_hash = &hash::sha256(&msg_bytes)[..];
+fn handle_peering_request<S: PeerStore>(peer_req: PeeringRequest, ctx: RecvContext<S>) {
+    log::debug!("Handling peering request.");
 
-    reply_with_peering_response(request_hash, &server_tx, source_addr);
+    send_peering_response_to_addr(ctx.peer_addr, ctx.peer_id, ctx.msg_bytes, ctx.server_tx, ctx.local);
 }
 
-fn handle_peering_response(peering_res: &PeeringResponse) {
+fn handle_peering_response<S: PeerStore>(peer_res: PeeringResponse, peer_reqval: RequestValue<S>, ctx: RecvContext<S>) {
+    log::debug!("Handling peering response.");
+
     // hive.go: PeeringResponse messages are handled in the handleReply function of the validation
-    todo!("handle_peering_response")
 }
 
-fn handle_drop_request(
-    _: &DropRequest,
-    peer_id: PeerId,
-    inbound_nh: &mut InboundNeighborhood,
-    outbound_nh: &mut OutboundNeighborhood,
-    rejection_filter: &mut RejectionFilter,
-    server_tx: &ServerTx,
-    source_addr: SocketAddr,
-) {
-    let mut maybe_dropped_peer = inbound_nh.remove_peer(&peer_id);
+fn handle_drop_request<S: PeerStore>(_drop_req: DropRequest, ctx: RecvContext<S>) {
+    log::debug!("Handling drop request.");
 
-    if let Some(dropped_peer) = outbound_nh.remove_peer(&peer_id) {
-        maybe_dropped_peer.replace(dropped_peer);
+    let mut removed_peer = ctx.inbound_nbh.remove_peer(ctx.peer_id);
 
-        rejection_filter.include_peer(peer_id);
+    if let Some(peer) = ctx.outbound_nbh.remove_peer(ctx.peer_id) {
+        removed_peer.replace(peer);
+
+        ctx.rejection_filter.include_peer(ctx.peer_id.clone());
 
         // ```go
         //     // if not yet updating, trigger an immediate update
@@ -277,35 +346,151 @@ fn handle_drop_request(
         // ```
     }
 
-    if maybe_dropped_peer.is_some() {
-        reply_with_drop_request(server_tx, source_addr);
+    if removed_peer.is_some() {
+        send_drop_request_to_addr(ctx.peer_addr, ctx.peer_id, ctx.server_tx);
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// REPLYING
+// SENDING
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn reply_with_peering_response(request_hash: &[u8], tx: &ServerTx, source_addr: SocketAddr) {
-    todo!()
+pub(crate) async fn begin_peering_request<S: PeerStore>(
+    peer_id: &PeerId,
+    request_mngr: &RequestManager<S>,
+    peerstore: &S,
+    server_tx: &ServerTx,
+) -> Option<bool> {
+    let (response_tx, response_rx) = request::response_chan();
+
+    send_peering_request_to_peer(peer_id, request_mngr, peerstore, server_tx, Some(response_tx));
+
+    match tokio::time::timeout(RESPONSE_TIMEOUT, response_rx).await {
+        Ok(Ok(bytes)) => {
+            let peer_res = PeeringResponse::from_protobuf(&bytes).expect("error decoding peering response");
+            Some(peer_res.status())
+        }
+        Ok(Err(e)) => {
+            log::debug!("Response signal error: {}", e);
+            None
+        }
+        Err(e) => {
+            log::debug!("Peering response timeout: {}", e);
+            None
+        }
+    }
 }
 
-// Replies to a drop request with a drop request.
-fn reply_with_drop_request(server_tx: &ServerTx, target_addr: SocketAddr) {
-    let drop_req_bytes = DropRequest::new()
+pub(crate) fn send_peering_request_to_peer<S: PeerStore>(
+    peer_id: &PeerId,
+    request_mngr: &RequestManager<S>,
+    peerstore: &S,
+    server_tx: &ServerTx,
+    response_tx: Option<ResponseTx>,
+) {
+    let peer = peerstore.fetch_peer(peer_id).expect("peer not in storage");
+
+    let peer_port = peer
+        .services()
+        .get(AUTOPEERING_SERVICE_NAME)
+        .expect("peer doesn't support autopeering")
+        .port();
+
+    let peer_addr = SocketAddr::new(peer.ip_address(), peer_port);
+
+    send_peering_request_to_addr(peer_addr, peer_id, request_mngr, server_tx, response_tx);
+}
+
+pub(crate) fn send_peering_request_to_addr<S: PeerStore>(
+    peer_addr: SocketAddr,
+    peer_id: &PeerId,
+    request_mngr: &RequestManager<S>,
+    server_tx: &ServerTx,
+    response_tx: Option<ResponseTx>,
+) {
+    log::debug!("Sending peering request to: {}", peer_id);
+
+    // Define what happens when we receive the corresponding response.
+    let handler = Box::new(|ctx: &RecvContext<S>| {
+        // TODO
+    });
+
+    let peer_req = request_mngr.new_peering_request(peer_id.clone(), None, response_tx);
+
+    let msg_bytes = peer_req.to_protobuf().expect("error encoding peering request").to_vec();
+
+    server_tx
+        .send(OutgoingPacket {
+            msg_type: MessageType::PeeringRequest,
+            msg_bytes,
+            peer_addr,
+        })
+        .expect("error sending peering request to server");
+}
+
+/// Sends a peering response to a peer's address.
+pub(crate) fn send_peering_response_to_addr(
+    peer_addr: SocketAddr,
+    peer_id: &PeerId,
+    msg_bytes: &[u8],
+    tx: &ServerTx,
+    local: &Local,
+) {
+    log::debug!("Sending peering response to: {}", peer_id);
+
+    let request_hash = msg_hash(MessageType::PeeringRequest, msg_bytes).to_vec();
+
+    // TODO: determine status response
+    let status = true;
+
+    let peer_res = PeeringResponse::new(request_hash, status);
+
+    let msg_bytes = peer_res
+        .to_protobuf()
+        .expect("error encoding peering response")
+        .to_vec();
+
+    tx.send(OutgoingPacket {
+        msg_type: MessageType::VerificationResponse,
+        msg_bytes,
+        peer_addr,
+    })
+    .expect("error sending peering response to server");
+}
+
+// Sends a drop request to a peer.
+fn send_drop_request_to_peer<S: PeerStore>(peer_id: &PeerId, peerstore: &S, server_tx: &ServerTx) {
+    let peer = peerstore.fetch_peer(peer_id).expect("peer not in storage");
+
+    let peer_port = peer
+        .services()
+        .get(AUTOPEERING_SERVICE_NAME)
+        .expect("invalid autopeering peer")
+        .port();
+
+    let peer_addr = SocketAddr::new(peer.ip_address(), peer_port);
+
+    send_drop_request_to_addr(peer_addr, peer_id, server_tx);
+}
+
+// Sends a drop request to a peer's address.
+pub(crate) fn send_drop_request_to_addr(peer_addr: SocketAddr, peer_id: &PeerId, server_tx: &ServerTx) {
+    log::debug!("Sending drop request to: {}", peer_id);
+
+    let msg_bytes = DropRequest::new()
         .to_protobuf()
         .expect("error encoding drop request")
         .to_vec();
 
     server_tx.send(OutgoingPacket {
         msg_type: MessageType::DropRequest,
-        msg_bytes: drop_req_bytes,
-        peer_addr: target_addr,
+        msg_bytes,
+        peer_addr,
     });
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SENDING
+// HELPERS
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn update_salts(
@@ -352,31 +537,19 @@ fn update_salts(
     event_tx.send(Event::SaltUpdated);
 }
 
-fn drop_neighborhood<'a, Nh>(neighborhood: &'a Nh, server_tx: &ServerTx)
+fn drop_neighborhood<'a, H>(neighborhood: &'a H, server_tx: &ServerTx)
 where
-    &'a Nh: IntoIterator<Item = Peer, IntoIter = std::vec::IntoIter<Peer>>,
+    &'a H: IntoIterator<Item = Peer, IntoIter = std::vec::IntoIter<Peer>>,
 {
     for peer in neighborhood {
-        send_drop_request(peer, server_tx);
+        let port = peer
+            .services()
+            .get(AUTOPEERING_SERVICE_NAME)
+            .expect("missing autopeering service")
+            .port();
+
+        let peer_addr = SocketAddr::new(peer.ip_address(), port);
+
+        send_drop_request_to_addr(peer_addr, peer.peer_id(), server_tx);
     }
-}
-
-// Initiates a drop request.
-fn send_drop_request(peer: Peer, server_tx: &ServerTx) {
-    let drop_req_bytes = DropRequest::new()
-        .to_protobuf()
-        .expect("error encoding drop request")
-        .to_vec();
-
-    let port = peer
-        .services()
-        .get(AUTOPEERING_SERVICE_NAME)
-        .expect("invalid autopeering peer")
-        .port();
-
-    server_tx.send(OutgoingPacket {
-        msg_type: MessageType::DropRequest,
-        msg_bytes: drop_req_bytes,
-        peer_addr: SocketAddr::new(peer.ip_address(), port),
-    });
 }
