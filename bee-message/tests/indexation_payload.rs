@@ -6,8 +6,10 @@ use bee_message::{
     payload::{indexation::IndexationPayload, MessagePayload},
     MESSAGE_LENGTH_RANGE,
 };
-use bee_packable::{Packable, UnpackError};
+use bee_packable::{packable::VecPrefixLengthError, InvalidBoundedU32, Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
+
+use core::convert::TryFrom;
 
 #[test]
 fn kind() {
@@ -58,7 +60,9 @@ fn new_valid_padded() {
 fn new_invalid_index_length_less_than_min() {
     assert!(matches!(
         IndexationPayload::new([].to_vec(), [0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2].to_vec()),
-        Err(ValidationError::InvalidIndexationIndexLength(0))
+        Err(ValidationError::InvalidIndexationIndexLength(
+            VecPrefixLengthError::Invalid(InvalidBoundedU32(0))
+        ))
     ));
 }
 
@@ -69,7 +73,9 @@ fn new_invalid_index_length_more_than_max() {
             rand_bytes(65),
             [0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2].to_vec()
         ),
-        Err(ValidationError::InvalidIndexationIndexLength(65))
+        Err(ValidationError::InvalidIndexationIndexLength(
+            VecPrefixLengthError::Invalid(InvalidBoundedU32(65))
+        ))
     ));
 }
 
@@ -77,7 +83,9 @@ fn new_invalid_index_length_more_than_max() {
 fn new_invalid_data_length_more_than_max() {
     assert!(matches!(
         IndexationPayload::new(rand_bytes(32), [0u8; 65540].to_vec()),
-        Err(ValidationError::InvalidIndexationDataLength(65540)),
+        Err(ValidationError::InvalidIndexationDataLength(
+            VecPrefixLengthError::Invalid(InvalidBoundedU32(65540))
+        )),
     ));
 }
 
@@ -86,7 +94,7 @@ fn unpack_invalid_index_length_less_than_min() {
     assert!(matches!(
         IndexationPayload::unpack_from_slice(vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidIndexationIndexLength(0)
+            ValidationError::InvalidIndexationIndexLength(VecPrefixLengthError::Invalid(InvalidBoundedU32(0)))
         ))),
     ));
 }
@@ -101,7 +109,7 @@ fn unpack_invalid_index_length_more_than_max() {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ]),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidIndexationIndexLength(65)
+            ValidationError::InvalidIndexationIndexLength(VecPrefixLengthError::Invalid(InvalidBoundedU32(65)))
         ))),
     ));
 }
@@ -118,9 +126,9 @@ fn unpack_invalid_data_length_more_than_max() {
     assert!(matches!(
         IndexationPayload::unpack_from_slice(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidIndexationDataLength(n)
+            ValidationError::InvalidIndexationDataLength(VecPrefixLengthError::Invalid(InvalidBoundedU32(n)))
         )))
-            if n == data_len
+            if n == u32::try_from(data_len).unwrap()
     ))
 }
 

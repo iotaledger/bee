@@ -101,8 +101,8 @@ impl<T> From<Infallible> for UnknownTagError<T> {
     }
 }
 
-/// Semantic error raised while packing a dynamically-sized sequences that use a type different
-/// than `usize` for their length-prefix.
+/// Semantic error raised while packing a dynamically-sized sequences that use a type different than `usize` for their
+/// length-prefix.
 #[derive(Debug)]
 pub struct PackPrefixError<T>(pub T);
 
@@ -120,26 +120,25 @@ impl Into<Infallible> for PackPrefixError<Infallible> {
     }
 }
 
-/// Semantic error raised while unpacking a dynamically-sized sequences that use a type different
-/// than `usize` for their length-prefix.
+/// Semantic error raised while unpacking a dynamically-sized sequences that use a type different than `usize` for their
+/// length-prefix.
 #[derive(Debug)]
-pub enum UnpackPrefixError<T> {
+pub enum UnpackPrefixError<T, E> {
     /// Semantic error raised while unpacking an element of the sequence.
     /// Typically this is [`Packable::UnpackError`](crate::Packable).
     Packable(T),
-    /// Invalid prefix length (larger than maximum specified).
-    InvalidPrefixLength(usize),
+    /// Semantic error raised when the length prefix cannot be unpacked.
+    InvalidPrefixLength(E),
 }
 
-impl<T> From<T> for UnpackPrefixError<T> {
+impl<T, E> From<T> for UnpackPrefixError<T, E> {
     fn from(err: T) -> Self {
         Self::Packable(err)
     }
 }
 
-/// Error type to be raised when [`SliceUnpacker`](`crate::unpacker::SliceUnpacker`) does not have
-/// enough bytes to unpack something or when [`SlicePacker`]('crate::packer::SlicePacker') does not
-/// have enough space to pack something.
+/// Error type to be raised when [`SliceUnpacker`](`crate::unpacker::SliceUnpacker`) does not have enough bytes to
+/// unpack something or when [`SlicePacker`]('crate::packer::SlicePacker') does not have enough space to pack something.
 #[derive(Debug)]
 pub struct UnexpectedEOF {
     /// The required number of bytes.

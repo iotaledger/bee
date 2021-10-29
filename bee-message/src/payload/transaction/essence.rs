@@ -10,7 +10,7 @@ use crate::{
 
 use bee_ord::is_sorted;
 use bee_packable::{
-    coerce::*, error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnknownTagError,
+    coerce::*, error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, PackError, Packable, Packer,
     UnpackError, Unpacker, VecPrefix,
 };
 
@@ -23,10 +23,10 @@ use core::{
 /// Length (in bytes) of Transaction Essence pledge IDs (node IDs relating to pledge mana).
 pub const PLEDGE_ID_LENGTH: usize = 32;
 
-const PREFIXED_INPUTS_LENGTH_MAX: u32 = *INPUT_COUNT_RANGE.end() as u32;
-const PREFIXED_OUTPUTS_LENGTH_MAX: u32 = *OUTPUT_COUNT_RANGE.end() as u32;
-const PREFIXED_INPUTS_LENGTH_MIN: u32 = *INPUT_COUNT_RANGE.start() as u32;
-const PREFIXED_OUTPUTS_LENGTH_MIN: u32 = *OUTPUT_COUNT_RANGE.start() as u32;
+pub(crate) const PREFIXED_INPUTS_LENGTH_MAX: u32 = *INPUT_COUNT_RANGE.end() as u32;
+pub(crate) const PREFIXED_OUTPUTS_LENGTH_MAX: u32 = *OUTPUT_COUNT_RANGE.end() as u32;
+pub(crate) const PREFIXED_INPUTS_LENGTH_MIN: u32 = *INPUT_COUNT_RANGE.start() as u32;
+pub(crate) const PREFIXED_OUTPUTS_LENGTH_MIN: u32 = *OUTPUT_COUNT_RANGE.start() as u32;
 
 /// Error encountered unpacking a Transaction Essence.
 #[derive(Debug)]
@@ -43,17 +43,6 @@ impl_wrapped_variant!(
     ValidationError
 );
 impl_from_infallible!(TransactionEssenceUnpackError);
-
-impl From<UnpackPrefixError<UnknownTagError<u8>>> for TransactionEssenceUnpackError {
-    fn from(error: UnpackPrefixError<UnknownTagError<u8>>) -> Self {
-        match error {
-            UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidOutputCount(len).into(),
-            UnpackPrefixError::Packable(error) => match error {
-                UnknownTagError(tag) => Self::InvalidOutputKind(tag),
-            },
-        }
-    }
-}
 
 impl fmt::Display for TransactionEssenceUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -162,7 +151,9 @@ impl Packable for TransactionEssence {
             VecPrefix::<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>::unpack(unpacker)
                 .map_err(|unpack_err| {
                     unpack_err.map(|err| match err {
-                        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidInputCount(len).into(),
+                        UnpackPrefixError::InvalidPrefixLength(err) => {
+                            ValidationError::InvalidInputCount(VecPrefixLengthError::Invalid(err)).into()
+                        }
                         UnpackPrefixError::Packable(err) => err,
                     })
                 })?;
@@ -175,7 +166,9 @@ impl Packable for TransactionEssence {
             VecPrefix::<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>::unpack(unpacker)
                 .map_err(|unpack_err| {
                     unpack_err.map(|err| match err {
-                        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidOutputCount(len).into(),
+                        UnpackPrefixError::InvalidPrefixLength(err) => {
+                            ValidationError::InvalidOutputCount(VecPrefixLengthError::Invalid(err)).into()
+                        }
                         UnpackPrefixError::Packable(err) => err,
                     })
                 })?;
@@ -304,16 +297,8 @@ impl TransactionEssenceBuilder {
             timestamp,
             access_pledge_id,
             consensus_pledge_id,
-            inputs: self.inputs.try_into().map_err(
-                |err: InvalidBoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>| {
-                    ValidationError::InvalidInputCount(err.0 as usize)
-                },
-            )?,
-            outputs: self.outputs.try_into().map_err(
-                |err: InvalidBoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>| {
-                    ValidationError::InvalidOutputCount(err.0 as usize)
-                },
-            )?,
+            inputs: self.inputs.try_into().map_err(ValidationError::InvalidInputCount)?,
+            outputs: self.outputs.try_into().map_err(ValidationError::InvalidOutputCount)?,
             payload: self.payload,
         })
     }

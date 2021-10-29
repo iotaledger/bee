@@ -16,29 +16,39 @@ use crate::{
     MessageId, MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
+use bee_packable::{
+    error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
+};
 
 use alloc::vec::Vec;
 use core::convert::TryInto;
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`].
-const PREFIXED_CONFLICTS_LENGTH_MAX: u32 =
+pub(crate) const PREFIXED_CONFLICTS_LENGTH_MAX: u32 =
     PAYLOAD_LENGTH_MAX / (TransactionId::LENGTH + 2 * core::mem::size_of::<u8>()) as u32;
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`].
-const PREFIXED_TIMESTAMPS_LENGTH_MAX: u32 =
+pub(crate) const PREFIXED_TIMESTAMPS_LENGTH_MAX: u32 =
     PAYLOAD_LENGTH_MAX / (MessageId::LENGTH + 2 * core::mem::size_of::<u8>()) as u32;
 
-fn unpack_prefix_to_conflict_validation_error(error: UnpackPrefixError<MessageUnpackError>) -> MessageUnpackError {
+fn unpack_prefix_to_conflict_validation_error(
+    error: UnpackPrefixError<MessageUnpackError, InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>,
+) -> MessageUnpackError {
     match error {
-        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidConflictsCount(len).into(),
+        UnpackPrefixError::InvalidPrefixLength(len) => {
+            ValidationError::InvalidConflictsCount(VecPrefixLengthError::Invalid(len)).into()
+        }
         UnpackPrefixError::Packable(e) => e,
     }
 }
 
-fn unpack_prefix_to_timestamp_validation_error(error: UnpackPrefixError<MessageUnpackError>) -> MessageUnpackError {
+fn unpack_prefix_to_timestamp_validation_error(
+    error: UnpackPrefixError<MessageUnpackError, InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>,
+) -> MessageUnpackError {
     match error {
-        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidTimestampsCount(len).into(),
+        UnpackPrefixError::InvalidPrefixLength(len) => {
+            ValidationError::InvalidTimestampsCount(VecPrefixLengthError::Invalid(len)).into()
+        }
         UnpackPrefixError::Packable(e) => e,
     }
 }
@@ -106,16 +116,14 @@ impl FpcPayloadBuilder {
     /// Finishes an [`FpcPayloadBuilder`] into an [`FpcPayload`].
     pub fn finish(self) -> Result<FpcPayload, ValidationError> {
         Ok(FpcPayload {
-            conflicts: self.conflicts.try_into().map_err(
-                |err: InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>| {
-                    ValidationError::InvalidConflictsCount(err.0 as usize)
-                },
-            )?,
-            timestamps: self.timestamps.try_into().map_err(
-                |err: InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>| {
-                    ValidationError::InvalidTimestampsCount(err.0 as usize)
-                },
-            )?,
+            conflicts: self
+                .conflicts
+                .try_into()
+                .map_err(ValidationError::InvalidConflictsCount)?,
+            timestamps: self
+                .timestamps
+                .try_into()
+                .map_err(ValidationError::InvalidTimestampsCount)?,
         })
     }
 }

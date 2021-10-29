@@ -14,11 +14,13 @@ use bee_message::{
     util::hex_decode,
     MessageUnpackError, IOTA_SUPPLY,
 };
-use bee_packable::{Packable, UnpackError};
+use bee_packable::{packable::VecPrefixLengthError, InvalidBoundedU32, Packable, UnpackError};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,
 };
+
+use core::convert::TryFrom;
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS_1: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
@@ -56,7 +58,12 @@ fn invalid_input_count() {
         .with_outputs(vec![output])
         .finish();
 
-    assert!(matches!(essence, Err(ValidationError::InvalidInputCount(0))));
+    assert!(matches!(
+        essence,
+        Err(ValidationError::InvalidInputCount(VecPrefixLengthError::Invalid(
+            InvalidBoundedU32(0)
+        )))
+    ));
 }
 
 #[test]
@@ -114,7 +121,12 @@ fn invalid_output_count() {
         .with_outputs(vec![])
         .finish();
 
-    assert!(matches!(essence, Err(ValidationError::InvalidOutputCount(0))));
+    assert!(matches!(
+        essence,
+        Err(ValidationError::InvalidOutputCount(VecPrefixLengthError::Invalid(
+            InvalidBoundedU32(0)
+        )))
+    ));
 }
 
 #[test]
@@ -234,8 +246,8 @@ fn unpack_invalid_input_count() {
 
     assert!(matches!(
         TransactionEssence::unpack_from_slice(bytes),
-        Err(UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidInputCount(n))))
-            if n == inputs_len
+        Err(UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidInputCount(VecPrefixLengthError::Invalid(InvalidBoundedU32(n))))))
+            if n == u32::try_from(inputs_len).unwrap()
     ));
 }
 
@@ -268,8 +280,10 @@ fn unpack_invalid_output_count() {
 
     assert!(matches!(
         TransactionEssence::unpack_from_slice(bytes),
-        Err(UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidOutputCount(n))))
-            if n == outputs_len
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::InvalidOutputCount(VecPrefixLengthError::Invalid(InvalidBoundedU32(n)))
+        )))
+        if n == u32::try_from(outputs_len).unwrap()
     ));
 }
 

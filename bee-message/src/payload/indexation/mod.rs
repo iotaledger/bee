@@ -9,7 +9,9 @@ use crate::{payload::MessagePayload, MessageUnpackError, ValidationError, MESSAG
 
 pub use padded::PaddedIndex;
 
-use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
+use bee_packable::{
+    error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
+};
 
 use alloc::vec::Vec;
 use core::{
@@ -20,20 +22,31 @@ use core::{
 /// Valid lengths for an indexation payload index.
 pub const INDEXATION_INDEX_LENGTH_RANGE: RangeInclusive<u32> = 1..=PaddedIndex::LENGTH as u32;
 
-const PREFIXED_INDEX_LENGTH_MIN: u32 = *INDEXATION_INDEX_LENGTH_RANGE.start() as u32;
-const PREFIXED_INDEX_LENGTH_MAX: u32 = *INDEXATION_INDEX_LENGTH_RANGE.end() as u32;
-const PREFIXED_DATA_LENGTH_MAX: u32 = *MESSAGE_LENGTH_RANGE.end() as u32;
+pub(crate) const PREFIXED_INDEXATION_INDEX_LENGTH_MIN: u32 = *INDEXATION_INDEX_LENGTH_RANGE.start() as u32;
+pub(crate) const PREFIXED_INDEXATION_INDEX_LENGTH_MAX: u32 = *INDEXATION_INDEX_LENGTH_RANGE.end() as u32;
+pub(crate) const PREFIXED_INDEXATION_DATA_LENGTH_MAX: u32 = *MESSAGE_LENGTH_RANGE.end() as u32;
 
-fn unpack_prefix_to_invalid_index_length(err: UnpackPrefixError<Infallible>) -> ValidationError {
+fn unpack_prefix_to_invalid_index_length(
+    err: UnpackPrefixError<
+        Infallible,
+        InvalidBoundedU32<PREFIXED_INDEXATION_INDEX_LENGTH_MIN, PREFIXED_INDEXATION_INDEX_LENGTH_MAX>,
+    >,
+) -> ValidationError {
     match err {
-        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidIndexationIndexLength(len),
+        UnpackPrefixError::InvalidPrefixLength(len) => {
+            ValidationError::InvalidIndexationIndexLength(VecPrefixLengthError::Invalid(len))
+        }
         UnpackPrefixError::Packable(e) => match e {},
     }
 }
 
-fn unpack_prefix_to_invalid_data_length(err: UnpackPrefixError<Infallible>) -> ValidationError {
+fn unpack_prefix_to_invalid_data_length(
+    err: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_INDEXATION_DATA_LENGTH_MAX>>,
+) -> ValidationError {
     match err {
-        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidIndexationDataLength(len),
+        UnpackPrefixError::InvalidPrefixLength(len) => {
+            ValidationError::InvalidIndexationDataLength(VecPrefixLengthError::Invalid(len))
+        }
         UnpackPrefixError::Packable(e) => match e {},
     }
 }
@@ -49,10 +62,10 @@ fn unpack_prefix_to_invalid_data_length(err: UnpackPrefixError<Infallible>) -> V
 pub struct IndexationPayload {
     /// The index key of the message.
     #[packable(unpack_error_with = unpack_prefix_to_invalid_index_length)]
-    index: VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>>,
+    index: VecPrefix<u8, BoundedU32<PREFIXED_INDEXATION_INDEX_LENGTH_MIN, PREFIXED_INDEXATION_INDEX_LENGTH_MAX>>,
     /// The data attached to this index.
     #[packable(unpack_error_with = unpack_prefix_to_invalid_data_length)]
-    data: VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>,
+    data: VecPrefix<u8, BoundedU32<0, PREFIXED_INDEXATION_DATA_LENGTH_MAX>>,
 }
 
 impl MessagePayload for IndexationPayload {
@@ -64,16 +77,10 @@ impl IndexationPayload {
     /// Creates a new [`IndexationPayload`].
     pub fn new(index: Vec<u8>, data: Vec<u8>) -> Result<Self, ValidationError> {
         Ok(Self {
-            index: index.try_into().map_err(
-                |err: InvalidBoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>| {
-                    ValidationError::InvalidIndexationIndexLength(err.0 as usize)
-                },
-            )?,
-            data: data
+            index: index
                 .try_into()
-                .map_err(|err: InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>| {
-                    ValidationError::InvalidIndexationDataLength(err.0 as usize)
-                })?,
+                .map_err(ValidationError::InvalidIndexationIndexLength)?,
+            data: data.try_into().map_err(ValidationError::InvalidIndexationDataLength)?,
         })
     }
 

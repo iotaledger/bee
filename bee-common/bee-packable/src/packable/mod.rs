@@ -19,7 +19,7 @@ pub use bounded::{
     InvalidBoundedU8,
 };
 pub use option::UnpackOptionError;
-pub use vec_prefix::VecPrefix;
+pub use vec_prefix::{VecPrefix, VecPrefixLengthError};
 
 pub use crate::{
     error::{PackError, UnexpectedEOF, UnknownTagError, UnpackError},

@@ -9,7 +9,10 @@ use crate::{
     Packable,
 };
 
-use core::convert::{Infallible, TryFrom, TryInto};
+use core::{
+    convert::{Infallible, TryFrom, TryInto},
+    fmt::{self, Display},
+};
 
 /// Trait that provides an interface for bounded types.
 pub trait Bounded {
@@ -18,16 +21,21 @@ pub trait Bounded {
 
     /// Minimum bounded value.
     const MIN: Self::Bounds;
-
     /// Maximum bounded value.
     const MAX: Self::Bounds;
 }
 
 macro_rules! bounded {
-    ($(#[$wrapper_doc:meta])* $wrapper:ident, $(#[$error_doc:meta])* $error:ident, $ty:ident) => {
-        $(#[$error_doc])*
+    ($wrapper:ident, $error:ident, $ty:ident) => {
+        #[doc = concat!("Error encountered when attempting to wrap a  `", stringify!($ty),"` that is not within the given bounds.")]
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub struct $error<const MIN: $ty, const MAX: $ty>(pub $ty);
+
+        impl<const MIN: $ty, const MAX: $ty> Display for $error<MIN, MAX> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "integer {} is out of bounds", self.0)
+            }
+        }
 
         impl<const MIN: $ty, const MAX: $ty> Bounded for $error<MIN, MAX> {
             type Bounds = $ty;
@@ -43,7 +51,7 @@ macro_rules! bounded {
             }
         }
 
-        $(#[$wrapper_doc])*
+        #[doc = concat!("Wrapper type for a `", stringify!($ty),"`, providing minimum and maximum value bounds.")]
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub struct $wrapper<const MIN: $ty, const MAX: $ty>($ty);
@@ -97,36 +105,35 @@ macro_rules! bounded {
     };
 }
 
-// TODO: replace with #[doc = concat!(<...>)] in macro when CI rust versions are updated.
+bounded!(BoundedU8, InvalidBoundedU8, u8);
+bounded!(BoundedU16, InvalidBoundedU16, u16);
+bounded!(BoundedU32, InvalidBoundedU32, u32);
+bounded!(BoundedU64, InvalidBoundedU64, u64);
 
-bounded!(
-    /// Wrapper type for a `u8`, providing minimum and maximum value bounds.
-    BoundedU8,
-    /// Error encountered when attempting to wrap a `u8` that is not within the given bounds.
-    InvalidBoundedU8,
-    u8
-);
+impl Bounded for u8 {
+    type Bounds = Self;
 
-bounded!(
-    /// Wrapper type for a `u16`, providing minimum and maximum value bounds.
-    BoundedU16,
-    /// Error encountered when attempting to wrap a `u16` that is not within the given bounds.
-    InvalidBoundedU16,
-    u16
-);
+    const MIN: Self::Bounds = u8::MIN;
+    const MAX: Self::Bounds = u8::MAX;
+}
 
-bounded!(
-    /// Wrapper type for a `u32`, providing minimum and maximum value bounds.
-    BoundedU32,
-    /// Error encountered when attempting to wrap a `u32` that is not within the given bounds.
-    InvalidBoundedU32,
-    u32
-);
+impl Bounded for u16 {
+    type Bounds = Self;
 
-bounded!(
-    /// Wrapper type for a `u64`, providing minimum and maximum value bounds.
-    BoundedU64,
-    /// Error encountered when attempting to wrap a `u64` that is not within the given bounds.
-    InvalidBoundedU64,
-    u64
-);
+    const MIN: Self::Bounds = u16::MIN;
+    const MAX: Self::Bounds = u16::MAX;
+}
+
+impl Bounded for u32 {
+    type Bounds = Self;
+
+    const MIN: Self::Bounds = u32::MIN;
+    const MAX: Self::Bounds = u32::MAX;
+}
+
+impl Bounded for u64 {
+    type Bounds = Self;
+
+    const MIN: Self::Bounds = u64::MIN;
+    const MAX: Self::Bounds = u64::MAX;
+}

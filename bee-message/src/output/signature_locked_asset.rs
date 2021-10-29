@@ -3,7 +3,9 @@
 
 use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessageUnpackError, ValidationError};
 
-use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
+use bee_packable::{
+    error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
+};
 
 use alloc::vec::Vec;
 use core::{
@@ -12,11 +14,16 @@ use core::{
 };
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / [`AssetId::LENGTH`].
-const PREFIXED_BALANCES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX / (AssetId::LENGTH + core::mem::size_of::<u64>()) as u32;
+pub(crate) const PREFIXED_ASSET_BALANCES_LENGTH_MAX: u32 =
+    PAYLOAD_LENGTH_MAX / (AssetId::LENGTH + core::mem::size_of::<u64>()) as u32;
 
-fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> ValidationError {
+fn unpack_prefix_to_validation_error(
+    error: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_ASSET_BALANCES_LENGTH_MAX>>,
+) -> ValidationError {
     match error {
-        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidAssetBalanceCount(len),
+        UnpackPrefixError::InvalidPrefixLength(len) => {
+            ValidationError::InvalidAssetBalanceCount(VecPrefixLengthError::Invalid(len))
+        }
         UnpackPrefixError::Packable(e) => match e {},
     }
 }
@@ -84,7 +91,7 @@ impl AssetBalance {
 pub struct SignatureLockedAssetOutput {
     address: Address,
     #[packable(unpack_error_with = unpack_prefix_to_validation_error)]
-    balances: VecPrefix<AssetBalance, BoundedU32<0, PREFIXED_BALANCES_LENGTH_MAX>>,
+    balances: VecPrefix<AssetBalance, BoundedU32<0, PREFIXED_ASSET_BALANCES_LENGTH_MAX>>,
 }
 
 impl SignatureLockedAssetOutput {
@@ -95,11 +102,7 @@ impl SignatureLockedAssetOutput {
     pub fn new(address: Address, balances: Vec<AssetBalance>) -> Result<Self, ValidationError> {
         Ok(Self {
             address,
-            balances: balances
-                .try_into()
-                .map_err(|err: InvalidBoundedU32<0, PREFIXED_BALANCES_LENGTH_MAX>| {
-                    ValidationError::InvalidAssetBalanceCount(err.0 as usize)
-                })?,
+            balances: balances.try_into().map_err(ValidationError::InvalidAssetBalanceCount)?,
         })
     }
 

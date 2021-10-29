@@ -12,4 +12,5 @@ pub use beacon::{
     collective_beacon::{CollectiveBeaconPayload, CollectiveBeaconPayloadBuilder},
     regular_beacon::{BeaconPayload, BeaconPayloadBuilder},
 };
+pub(crate) use dkg::PREFIXED_DKG_LENGTH_MAX;
 pub use dkg::{DkgPayload, DkgPayloadBuilder, EncryptedDeal, EncryptedDealBuilder};
