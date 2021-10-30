@@ -16,7 +16,7 @@ use crate::{
     hash,
     local::{
         self,
-        salt::{Salt, DEFAULT_SALT_LIFETIME_SECS},
+        salt::{Salt, SALT_LIFETIME_SECS},
         service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
         Local,
     },
@@ -28,10 +28,17 @@ use crate::{
         peerstore::{self, InMemoryPeerStore, PeerStore},
         PeerId,
     },
-    peering::manager::{PeeringManager, PeeringManagerConfig},
+    peering::{
+        filter::ExclusionFilter,
+        manager::{
+            InboundNeighborhood, OutboundNeighborhood, PeeringManager, PeeringManagerConfig, SaltUpdateContext,
+            SALT_UPDATE_SECS,
+        },
+        NeighborValidator,
+    },
     request::{self, RequestManager, EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS},
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket, ServerTx},
-    task::{self, ShutdownRx, TaskManager, MAX_PRIORITY},
+    task::{self, ShutdownRx, TaskManager, MAX_SHUTDOWN_PRIORITY},
     time,
 };
 
@@ -49,22 +56,36 @@ use std::{
 const NUM_TASKS: usize = 9;
 
 /// Initializes the autopeering service.
-pub async fn init<S, I, Q>(
+pub async fn init<S, I, Q, V>(
     config: AutopeeringConfig,
     version: u32,
     network_name: I,
     local: Local,
     peerstore_config: <S as PeerStore>::Config,
     quit_signal: Q,
+    neighbor_validator: V,
 ) -> Result<EventRx, Box<dyn error::Error>>
 where
     S: PeerStore + 'static,
     I: AsRef<str>,
     Q: Future + Send + 'static,
+    V: NeighborValidator + 'static,
 {
     let network_id = hash::fnv32(&network_name);
-    let private_salt = time::datetime(local.private_salt().expect("missing private salt").expiration_time());
-    let public_salt = time::datetime(local.public_salt().expect("missing private salt").expiration_time());
+    let private_salt = time::datetime(
+        local
+            .read()
+            .private_salt()
+            .expect("missing private salt")
+            .expiration_time(),
+    );
+    let public_salt = time::datetime(
+        local
+            .read()
+            .public_salt()
+            .expect("missing private salt")
+            .expiration_time(),
+    );
 
     log::info!("---------------------------------------------------------------------------------------------------");
     log::info!("WARNING:");
@@ -73,8 +94,11 @@ where
     log::info!("---------------------------------------------------------------------------------------------------");
     log::info!("Network name/id: {}/{}", network_name.as_ref(), network_id);
     log::info!("Protocol_version: {}", version);
-    log::info!("Local id: {}", local.peer_id());
-    log::info!("Public key: {}", multiaddr::from_pubkey_to_base58(&local.public_key()));
+    log::info!("Local id: {}", local.read().peer_id());
+    log::info!(
+        "Public key: {}",
+        multiaddr::from_pubkey_to_base58(&local.read().public_key())
+    );
     log::info!("Current time: {}", time::datetime_now());
     log::info!("Private salt: {}", private_salt);
     log::info!("Public salt: {}", public_salt);
@@ -144,8 +168,10 @@ where
         peering_socket,
         request_mngr.clone(),
         peerstore.clone(),
+        active_peers.clone(),
         event_tx.clone(),
         command_tx.clone(),
+        neighbor_validator,
     );
     task_mngr.run(peering_mngr);
 
@@ -153,14 +179,27 @@ where
     let cmd = request::remove_expired_requests_repeat();
     let delay = iter::repeat(Duration::from_secs(EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS));
     let ctx = request_mngr.clone();
-    task_mngr.repeat(cmd, delay, ctx, "Expired-Request-Removal", MAX_PRIORITY);
+    task_mngr.repeat(cmd, delay, ctx, "Expired-Request-Removal", MAX_SHUTDOWN_PRIORITY);
+
+    // Create neighborhoods and neighbor candidate filter.
+    let inbound_nbh = InboundNeighborhood::new();
+    let outbound_nbh = OutboundNeighborhood::new();
+    let filter = ExclusionFilter::new();
 
     // Update salts regularly.
-    let cmd = local::update_salts_repeat();
-    let delay = iter::repeat(Duration::from_secs(DEFAULT_SALT_LIFETIME_SECS));
-    let ctx = (local.clone(), event_tx.clone());
-    task_mngr.repeat(cmd, delay, ctx, "Salt-Update", MAX_PRIORITY);
+    let ctx = SaltUpdateContext::new(
+        local.clone(),
+        filter,
+        inbound_nbh,
+        outbound_nbh,
+        server_tx.clone(),
+        event_tx.clone(),
+    );
+    let cmd = crate::peering::manager::repeat_update_salts(config.drop_neighbors_on_salt_update);
+    let delay = iter::repeat(SALT_UPDATE_SECS);
+    task_mngr.repeat(cmd, delay, ctx, "Salt-Update", MAX_SHUTDOWN_PRIORITY);
 
+    // Reverify old peers and discovery new peers.
     let ctx = QueryContext::new(
         local,
         peerstore,
@@ -171,16 +210,15 @@ where
         server_tx,
         event_tx,
     );
-
-    // Reverify old peers.
     let cmd = query::do_reverify();
     let delay = iter::repeat(Duration::from_secs(DEFAULT_REVERIFY_INTERVAL_SECS));
-    task_mngr.repeat(cmd, delay, ctx.clone(), "Reverification", MAX_PRIORITY);
+    task_mngr.repeat(cmd, delay, ctx.clone(), "Reverification", MAX_SHUTDOWN_PRIORITY);
 
-    // Discover new peers.
     let cmd = query::do_query();
     let delay = iter::repeat(Duration::from_secs(DEFAULT_QUERY_INTERVAL_SECS));
-    task_mngr.repeat(cmd, delay, ctx, "Discovery", MAX_PRIORITY);
+    task_mngr.repeat(cmd, delay, ctx, "Discovery", MAX_SHUTDOWN_PRIORITY);
+
+    // TODO: Should we reset the verified_count if last verification timestamp is expired?
 
     // Await the shutdown signal (in a separate task).
     tokio::spawn(async move {

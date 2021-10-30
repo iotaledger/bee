@@ -113,6 +113,7 @@ pub(crate) fn do_reverify<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
                         &ctx_.master_peers,
                         &ctx_.active_peers,
                         &ctx_.replacements,
+                        &ctx_.peerstore,
                         &ctx_.event_tx,
                     )
                 }
@@ -152,18 +153,21 @@ pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
                     {
                         log::debug!("Query successful. Received {} peers.", peers.len());
 
+                        // Add the discovered peers to list and store
                         let mut num_added = 0;
                         for peer in peers {
-                            if manager::add_new_peer_to_list(
-                                peer.into_id(),
+                            if manager::add_peer(
+                                peer,
                                 &ctx_.local,
                                 &ctx_.active_peers,
                                 &ctx_.replacements,
+                                &ctx_.peerstore,
                             ) {
                                 num_added += 1;
                             }
                         }
 
+                        // Remember how many new peers were discovered through the queried peer.
                         ctx_.active_peers
                             .write()
                             .find_mut(&peer_id)
@@ -178,6 +182,7 @@ pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
                             &ctx_.master_peers,
                             &ctx_.active_peers,
                             &ctx_.replacements,
+                            &ctx_.peerstore,
                             &ctx_.event_tx,
                         )
                     }
@@ -191,12 +196,12 @@ pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
 fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
     let mut verif_peers = protocol::get_verified_peers(active_peers);
 
-    if verif_peers.is_empty() {
-        vec![]
-    } else if verif_peers.len() == 1 {
-        vec![verif_peers.remove(0).into_id()]
-    } else if verif_peers.len() == 2 {
-        vec![verif_peers.remove(0).into_id(), verif_peers.remove(0).into_id()]
+    // If we have less than 3 verified peers, then we use those for the query.
+    if verif_peers.len() < 3 {
+        verif_peers
+            .into_iter()
+            .map(|ap| ap.peer_id().clone())
+            .collect::<Vec<_>>()
     } else {
         // Note: this macro is useful to remove some noise from the pattern matching rules.
         macro_rules! num {
@@ -220,7 +225,7 @@ fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
             a + b + c
         }
 
-        let latest = verif_peers.remove(0).into_id();
+        let latest = verif_peers.remove(0).peer_id().clone();
 
         // Note: This loop finds the three "heaviest" peers with one iteration over an unsorted vec of verified peers.
         let heaviest3 = verif_peers.into_iter().fold(
@@ -276,7 +281,8 @@ fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
         }
         // Panic: we made sure that the unwrap is always possible.
         .unwrap()
-        .into_id();
+        .peer_id()
+        .clone();
 
         vec![latest, heaviest]
     }
@@ -290,7 +296,7 @@ mod tests {
     fn create_peerlist_of_size(n: usize) -> ActivePeersList {
         // Create a set of active peer entries.
         let mut entries = (0..n)
-            .map(|i| Peer::new_test_peer(i as u8).into_id())
+            .map(|i| Peer::new_test_peer(i as u8))
             .map(|p| ActivePeerEntry::new(p))
             .collect::<Vec<_>>();
 
@@ -329,9 +335,7 @@ mod tests {
         let peerlist = create_peerlist_of_size(3);
 
         macro_rules! equal {
-            ($a:expr, $b:expr) => {{
-                $a == peerlist.read().get($b).unwrap().peer_id()
-            }};
+            ($a:expr, $b:expr) => {{ $a == peerlist.read().get($b).unwrap().peer_id() }};
         }
 
         let selected = select_peers_to_query(&peerlist);
@@ -346,9 +350,7 @@ mod tests {
         let peerlist = create_peerlist_of_size(10);
 
         macro_rules! equal {
-            ($a:expr, $b:expr) => {{
-                $a == peerlist.read().get($b).unwrap().peer_id()
-            }};
+            ($a:expr, $b:expr) => {{ $a == peerlist.read().get($b).unwrap().peer_id() }};
         }
 
         // 0 1 2 3 4 ... 7 8 9 (index)

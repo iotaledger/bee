@@ -3,7 +3,7 @@
 
 use crate::{
     proto,
-    time::{self, Timestamp},
+    time::{self, Timestamp, HOUR},
 };
 
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
@@ -15,7 +15,7 @@ use std::{
 };
 
 const SALT_BYTE_LEN: usize = 20;
-pub(crate) const DEFAULT_SALT_LIFETIME_SECS: u64 = 2 * 60 * 60; // 2 hours
+pub(crate) const SALT_LIFETIME_SECS: Duration = Duration::from_secs(2 * HOUR);
 
 #[derive(Clone, Debug)]
 pub struct Salt {
@@ -70,7 +70,7 @@ impl Salt {
 
 impl Default for Salt {
     fn default() -> Self {
-        Self::new(Duration::from_secs(DEFAULT_SALT_LIFETIME_SECS))
+        Self::new(SALT_LIFETIME_SECS)
     }
 }
 
@@ -97,7 +97,7 @@ mod tests {
         pub(crate) fn new_zero_salt() -> Self {
             let expiration_time = time::unix_time_secs(
                 SystemTime::now()
-                    .checked_add(Duration::from_secs(DEFAULT_SALT_LIFETIME_SECS))
+                    .checked_add(SALT_LIFETIME_SECS)
                     .expect("system clock error or lifetime too long"),
             );
             Self {

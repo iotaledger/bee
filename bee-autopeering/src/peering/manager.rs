@@ -2,37 +2,46 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{
-    distance::{Neighborhood, SIZE_INBOUND, SIZE_OUTBOUND},
-    filter::RejectionFilter,
-    messages::{DropRequest, PeeringRequest, PeeringResponse},
+    filter::ExclusionFilter,
+    messages::{DropPeeringRequest, PeeringRequest, PeeringResponse},
+    neighbor::{Neighborhood, SIZE_INBOUND, SIZE_OUTBOUND},
+    protocol::Direction,
 };
 
 use crate::{
     command::CommandTx,
     config::AutopeeringConfig,
+    discovery,
     event::{Event, EventTx},
     hash,
     local::{
-        salt::{self, Salt},
+        salt::{self, Salt, SALT_LIFETIME_SECS},
         service_map::AUTOPEERING_SERVICE_NAME,
         Local,
     },
     packet::{msg_hash, IncomingPacket, MessageType, OutgoingPacket},
-    peer::{self, peer_id::PeerId, peerstore::PeerStore, Peer},
+    peer::{self, peer_id::PeerId, peerlist::ActivePeersList, peerstore::PeerStore, Peer},
+    peering::neighbor::{salted_distance, NeighborDistance},
     request::{self, RequestManager, RequestValue, ResponseTx, RESPONSE_TIMEOUT},
     server::{ServerSocket, ServerTx},
-    task::{Runnable, ShutdownRx},
+    task::{Repeat, Runnable, ShutdownRx},
+    time::{MINUTE, SECOND},
+    NeighborValidator,
 };
 
-use std::net::SocketAddr;
+use std::{fmt::Display, net::SocketAddr, time::Duration, vec};
 
-const DEFAULT_OUTBOUND_UPDATE_INTERVAL_SECS: u64 = 1;
-const DEFAULT_FULL_OUTBOUND_UPDATE_INTERVAL_SECS: u64 = 60;
+// Note: Ensures we have always valid salts.
+pub(crate) const SALT_UPDATE_SECS: Duration = Duration::from_secs(SALT_LIFETIME_SECS.as_secs() - SECOND);
+const OUTBOUND_UPDATE_INTERVAL_SECS: u64 = 1 * SECOND;
+const FULL_OUTBOUND_UPDATE_INTERVAL_SECS: u64 = 1 * MINUTE;
 
-type InboundNeighborhood = Neighborhood<SIZE_INBOUND, true>;
-type OutboundNeighborhood = Neighborhood<SIZE_OUTBOUND, false>;
+pub(crate) type InboundNeighborhood = Neighborhood<SIZE_INBOUND, true>;
+pub(crate) type OutboundNeighborhood = Neighborhood<SIZE_OUTBOUND, false>;
 
 pub(crate) type PeeringHandler<S: PeerStore> = Box<dyn Fn(&RecvContext<S>) + Send + Sync + 'static>;
+
+pub type Status = bool;
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum Error {
@@ -50,7 +59,6 @@ pub(crate) struct PeeringManagerConfig {
     pub(crate) version: u32,
     pub(crate) network_id: u32,
     pub(crate) source_addr: SocketAddr,
-    pub(crate) drop_neighbors_on_salt_update: bool,
 }
 
 impl PeeringManagerConfig {
@@ -59,12 +67,11 @@ impl PeeringManagerConfig {
             version,
             network_id,
             source_addr: config.bind_addr,
-            drop_neighbors_on_salt_update: false,
         }
     }
 }
 
-pub(crate) struct PeeringManager<S: PeerStore> {
+pub(crate) struct PeeringManager<S: PeerStore, V: NeighborValidator> {
     // The peering config.
     config: PeeringManagerConfig,
     // The local peer.
@@ -75,31 +82,32 @@ pub(crate) struct PeeringManager<S: PeerStore> {
     request_mngr: RequestManager<S>,
     // Publishes peering related events.
     event_tx: EventTx,
-    // The storage for discovered peers.
+    // A user defined storage layer for discovered peers.
     peerstore: S,
+    // The list of managed peers.
+    active_peers: ActivePeersList,
     // Inbound neighborhood.
-    inbound_nh: InboundNeighborhood,
+    inbound_nbh: InboundNeighborhood,
     // Outbound neighborhood.
-    outbound_nh: OutboundNeighborhood,
+    outbound_nbh: OutboundNeighborhood,
     // The peer rejection filter.
-    rejection_filter: RejectionFilter,
+    excl_filter: ExclusionFilter,
+    // A user defined neighbor validator.
+    neighbor_validator: V,
 }
 
-impl<S: PeerStore> PeeringManager<S> {
+impl<S: PeerStore, V: NeighborValidator> PeeringManager<S, V> {
     pub(crate) fn new(
         config: PeeringManagerConfig,
         local: Local,
         socket: ServerSocket,
         request_mngr: RequestManager<S>,
         peerstore: S,
+        active_peers: ActivePeersList,
         event_tx: EventTx,
         command_tx: CommandTx,
+        neighbor_validator: V,
     ) -> Self {
-        let inbound_nh = Neighborhood::new(local.clone());
-        let outbound_nh = Neighborhood::new(local.clone());
-
-        let rejection_filter = RejectionFilter::new();
-
         Self {
             config,
             local,
@@ -107,15 +115,17 @@ impl<S: PeerStore> PeeringManager<S> {
             request_mngr,
             event_tx,
             peerstore,
-            inbound_nh,
-            outbound_nh,
-            rejection_filter,
+            active_peers,
+            inbound_nbh: Neighborhood::new(),
+            outbound_nbh: Neighborhood::new(),
+            excl_filter: ExclusionFilter::new(),
+            neighbor_validator,
         }
     }
 }
 
 #[async_trait::async_trait]
-impl<S: PeerStore> Runnable for PeeringManager<S> {
+impl<S: PeerStore + 'static, V: NeighborValidator> Runnable for PeeringManager<S, V> {
     const NAME: &'static str = "PeeringManager";
     const SHUTDOWN_PRIORITY: u8 = 1;
 
@@ -129,16 +139,17 @@ impl<S: PeerStore> Runnable for PeeringManager<S> {
             request_mngr,
             event_tx,
             peerstore,
-            mut inbound_nh,
-            mut outbound_nh,
-            mut rejection_filter,
+            active_peers,
+            inbound_nbh,
+            outbound_nbh,
+            excl_filter,
+            neighbor_validator,
         } = self;
 
         let PeeringManagerConfig {
             version,
             network_id,
             source_addr,
-            drop_neighbors_on_salt_update,
         } = config;
 
         let ServerSocket {
@@ -165,12 +176,13 @@ impl<S: PeerStore> Runnable for PeeringManager<S> {
                             server_tx: &server_tx,
                             local: &local,
                             peerstore: &peerstore,
+                            active_peers: &active_peers,
                             request_mngr: &request_mngr,
                             peer_addr,
                             event_tx: &event_tx,
-                            inbound_nbh: &mut inbound_nh,
-                            outbound_nbh: &mut outbound_nh,
-                            rejection_filter: &mut rejection_filter,
+                            inbound_nbh: &inbound_nbh,
+                            outbound_nbh: &outbound_nbh,
+                            excl_filter: &excl_filter,
                         };
 
                         match msg_type {
@@ -212,7 +224,7 @@ impl<S: PeerStore> Runnable for PeeringManager<S> {
                                 }
                             }
                             MessageType::DropRequest => {
-                                let drop_req = if let Ok(drop_req) = DropRequest::from_protobuf(&msg_bytes) {
+                                let drop_req = if let Ok(drop_req) = DropPeeringRequest::from_protobuf(&msg_bytes) {
                                     drop_req
                                 } else {
                                     log::debug!("Error decoding drop request from {}.", &peer_id);
@@ -243,12 +255,13 @@ pub(crate) struct RecvContext<'a, S: PeerStore> {
     server_tx: &'a ServerTx,
     local: &'a Local,
     peerstore: &'a S,
+    active_peers: &'a ActivePeersList,
     request_mngr: &'a RequestManager<S>,
     peer_addr: SocketAddr,
     event_tx: &'a EventTx,
-    inbound_nbh: &'a mut InboundNeighborhood,
-    outbound_nbh: &'a mut OutboundNeighborhood,
-    rejection_filter: &'a mut RejectionFilter,
+    inbound_nbh: &'a InboundNeighborhood,
+    outbound_nbh: &'a OutboundNeighborhood,
+    excl_filter: &'a ExclusionFilter,
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -279,7 +292,7 @@ fn validate_peering_request<S: PeerStore>(
         Err(RequestExpired)
     } else if !peer::is_verified(ctx.peer_id, ctx.peerstore) {
         Err(PeerNotVerified)
-    } else if salt::is_expired(peer_req.salt_expiration_time()) {
+    } else if salt::is_expired(peer_req.salt().expiration_time()) {
         Err(SaltExpired)
     } else {
         Ok(())
@@ -303,7 +316,10 @@ fn validate_peering_response<S: PeerStore>(
     }
 }
 
-fn validate_drop_request<S: PeerStore>(drop_req: &DropRequest, _: &RecvContext<S>) -> Result<(), ValidationError> {
+fn validate_drop_request<S: PeerStore>(
+    drop_req: &DropPeeringRequest,
+    _: &RecvContext<S>,
+) -> Result<(), ValidationError> {
     use ValidationError::*;
 
     if request::is_expired(drop_req.timestamp()) {
@@ -317,8 +333,33 @@ fn validate_drop_request<S: PeerStore>(drop_req: &DropRequest, _: &RecvContext<S
 // HANDLING
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn handle_peering_request<S: PeerStore>(peer_req: PeeringRequest, ctx: RecvContext<S>) {
+fn handle_peering_request<S: PeerStore + 'static>(peer_req: PeeringRequest, ctx: RecvContext<S>) {
     log::debug!("Handling peering request.");
+
+    let peer_salt = peer_req.salt();
+
+    let peer_id = ctx.peer_id.clone();
+    let active_peers = ctx.active_peers.clone();
+    let request_mngr = ctx.request_mngr.clone();
+    let peerstore = ctx.peerstore.clone();
+    let server_tx = ctx.server_tx.clone();
+
+    // Note: It is guaranteed, that the spawned future will yield after `RESPONSE_TIMEOUT` milliseconds, so it cannot
+    // block the system from shutting down.
+    tokio::spawn(async move {
+        if let Some(peer) =
+            discovery::get_verified_peer(&peer_id, &active_peers, &request_mngr, &peerstore, &server_tx).await
+        {
+            // request_peering();
+
+            // from := p.disc.GetVerifiedPeer(fromID)
+            // status := p.mgr.requestPeering(from, fromSalt)
+            // res := newPeeringResponse(rawData, status)
+
+            // // p.logSend(from.Address(), res)
+            // s.Send(from.Address(), marshal(res))
+        }
+    });
 
     send_peering_response_to_addr(ctx.peer_addr, ctx.peer_id, ctx.msg_bytes, ctx.server_tx, ctx.local);
 }
@@ -329,25 +370,26 @@ fn handle_peering_response<S: PeerStore>(peer_res: PeeringResponse, peer_reqval:
     // hive.go: PeeringResponse messages are handled in the handleReply function of the validation
 }
 
-fn handle_drop_request<S: PeerStore>(_drop_req: DropRequest, ctx: RecvContext<S>) {
+fn handle_drop_request<S: PeerStore>(_drop_req: DropPeeringRequest, ctx: RecvContext<S>) {
     log::debug!("Handling drop request.");
 
-    let mut removed_peer = ctx.inbound_nbh.remove_peer(ctx.peer_id);
+    let mut removed_nb = ctx.inbound_nbh.write().remove_neighbor(ctx.peer_id);
 
-    if let Some(peer) = ctx.outbound_nbh.remove_peer(ctx.peer_id) {
-        removed_peer.replace(peer);
+    if let Some(nb) = ctx.outbound_nbh.write().remove_neighbor(ctx.peer_id) {
+        removed_nb.replace(nb);
 
-        ctx.rejection_filter.include_peer(ctx.peer_id.clone());
+        ctx.excl_filter.write().exclude_peer(ctx.peer_id.clone());
 
         // ```go
         //     // if not yet updating, trigger an immediate update
         //     if updateOutResultChan == nil && updateTimer.Stop() {
         //         updateTimer.Reset(0)
         // ```
+        todo!("trigger update for outbound neighborhood")
     }
 
-    if removed_peer.is_some() {
-        send_drop_request_to_addr(ctx.peer_addr, ctx.peer_id, ctx.server_tx);
+    if removed_nb.is_some() {
+        send_drop_peering_request_to_addr(ctx.peer_addr, ctx.peer_id.clone(), ctx.server_tx, ctx.event_tx);
     }
 }
 
@@ -355,12 +397,15 @@ fn handle_drop_request<S: PeerStore>(_drop_req: DropRequest, ctx: RecvContext<S>
 // SENDING
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// Initiates a peering request.
+///
+/// This function is blocking, but at most for `RESPONSE_TIMEOUT` seconds.
 pub(crate) async fn begin_peering_request<S: PeerStore>(
     peer_id: &PeerId,
     request_mngr: &RequestManager<S>,
     peerstore: &S,
     server_tx: &ServerTx,
-) -> Option<bool> {
+) -> Option<Status> {
     let (response_tx, response_rx) = request::response_chan();
 
     send_peering_request_to_peer(peer_id, request_mngr, peerstore, server_tx, Some(response_tx));
@@ -381,6 +426,7 @@ pub(crate) async fn begin_peering_request<S: PeerStore>(
     }
 }
 
+/// Sends a peering request to a peer.
 pub(crate) fn send_peering_request_to_peer<S: PeerStore>(
     peer_id: &PeerId,
     request_mngr: &RequestManager<S>,
@@ -401,6 +447,7 @@ pub(crate) fn send_peering_request_to_peer<S: PeerStore>(
     send_peering_request_to_addr(peer_addr, peer_id, request_mngr, server_tx, response_tx);
 }
 
+/// Sends a peering request to a peer's address.
 pub(crate) fn send_peering_request_to_addr<S: PeerStore>(
     peer_addr: SocketAddr,
     peer_id: &PeerId,
@@ -458,26 +505,27 @@ pub(crate) fn send_peering_response_to_addr(
     .expect("error sending peering response to server");
 }
 
-// Sends a drop request to a peer.
-fn send_drop_request_to_peer<S: PeerStore>(peer_id: &PeerId, peerstore: &S, server_tx: &ServerTx) {
-    let peer = peerstore.fetch_peer(peer_id).expect("peer not in storage");
-
+/// Sends a drop-peering request to a peer.
+pub(crate) fn send_drop_peering_request_to_peer(peer: Peer, server_tx: &ServerTx, event_tx: &EventTx) {
     let peer_port = peer
-        .services()
-        .get(AUTOPEERING_SERVICE_NAME)
-        .expect("invalid autopeering peer")
-        .port();
-
+        .port(AUTOPEERING_SERVICE_NAME)
+        .expect("missing autopeering service");
     let peer_addr = SocketAddr::new(peer.ip_address(), peer_port);
+    let peer_id = peer.into_id();
 
-    send_drop_request_to_addr(peer_addr, peer_id, server_tx);
+    send_drop_peering_request_to_addr(peer_addr, peer_id, server_tx, event_tx);
 }
 
-// Sends a drop request to a peer's address.
-pub(crate) fn send_drop_request_to_addr(peer_addr: SocketAddr, peer_id: &PeerId, server_tx: &ServerTx) {
+/// Sends a drop-peering request to a peer's address.
+pub(crate) fn send_drop_peering_request_to_addr(
+    peer_addr: SocketAddr,
+    peer_id: PeerId,
+    server_tx: &ServerTx,
+    event_tx: &EventTx,
+) {
     log::debug!("Sending drop request to: {}", peer_id);
 
-    let msg_bytes = DropRequest::new()
+    let msg_bytes = DropPeeringRequest::new()
         .to_protobuf()
         .expect("error encoding drop request")
         .to_vec();
@@ -487,69 +535,149 @@ pub(crate) fn send_drop_request_to_addr(peer_addr: SocketAddr, peer_id: &PeerId,
         msg_bytes,
         peer_addr,
     });
+
+    publish_drop_peering_event(peer_id, event_tx);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+// EVENTS
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Publishes the corresponding peering event [`IncomingPeering`], or [`OutgoingPeering`].
+fn publish_peering_event(peer: Peer, dir: Direction, status: Status, local: &Local, event_tx: EventTx) {
+    use Direction::*;
+
+    log::debug!(
+        "Peering requested: direction {}, status {}, to {}, #out {}, #in {}",
+        dir,
+        status,
+        peer.peer_id(),
+        0,
+        0 /* outbound_nbh.num_neighbors(),
+           * inbound_nbh.num_neighbors() */
+    );
+
+    let distance = salted_distance(
+        local.read().peer_id(),
+        peer.peer_id(),
+        &match dir {
+            Inbound => local.read().private_salt().expect("missing private salt").clone(),
+            Outbound => local.read().public_salt().expect("missing public salt").clone(),
+        },
+    );
+
+    event_tx.send(match dir {
+        Inbound => Event::IncomingPeering { peer, distance },
+        Outbound => Event::OutgoingPeering { peer, distance },
+    });
+}
+
+fn publish_drop_peering_event(peer_id: PeerId, event_tx: &EventTx) {
+    log::debug!(
+        "Peering dropped with {}; #out_nbh: {} #in_nbh: {}",
+        peer_id,
+        0,
+        0 /* inbound_nbh.num_neighbors(),
+           * outbound_nbh.num_neighbors() */
+    );
+
+    event_tx
+        .send(Event::PeeringDropped { peer_id })
+        .expect("error sending peering-dropped event");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // HELPERS
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#[derive(Clone)]
+pub(crate) struct SaltUpdateContext {
+    local: Local,
+    filter: ExclusionFilter,
+    inbound_nbh: InboundNeighborhood,
+    outbound_nbh: OutboundNeighborhood,
+    server_tx: ServerTx,
+    event_tx: EventTx,
+}
+
+impl SaltUpdateContext {
+    pub(crate) fn new(
+        local: Local,
+        filter: ExclusionFilter,
+        inbound_nbh: InboundNeighborhood,
+        outbound_nbh: OutboundNeighborhood,
+        server_tx: ServerTx,
+        event_tx: EventTx,
+    ) -> Self {
+        Self {
+            local,
+            filter,
+            inbound_nbh,
+            outbound_nbh,
+            server_tx,
+            event_tx,
+        }
+    }
+}
+
+// Regularly update the salts of the local peer.
+pub(crate) fn repeat_update_salts(drop_neighbors_on_salt_update: bool) -> Repeat<SaltUpdateContext> {
+    Box::new(move |ctx| {
+        update_salts(
+            drop_neighbors_on_salt_update,
+            &ctx.local,
+            &ctx.filter,
+            &ctx.inbound_nbh,
+            &ctx.outbound_nbh,
+            &ctx.server_tx,
+            &ctx.event_tx,
+        )
+    })
+}
+
 fn update_salts(
-    local: &Local,
-    filter: &mut RejectionFilter,
     drop_neighbors_on_salt_update: bool,
-    inbound: &mut InboundNeighborhood,
-    outbound: &mut OutboundNeighborhood,
-    packet_tx: &ServerTx,
+    local: &Local,
+    filter: &ExclusionFilter,
+    inbound_nbh: &InboundNeighborhood,
+    outbound_nbh: &OutboundNeighborhood,
+    server_tx: &ServerTx,
     event_tx: &EventTx,
 ) {
-    // Create and set new private and public salts for the local peer.
-    let private_salt = Salt::default();
-    let private_salt_exp_time = private_salt.expiration_time();
-    let public_salt = Salt::default();
-    let public_salt_exp_time = public_salt.expiration_time();
+    // Create a new private salt.
+    let private_salt = Salt::new(SALT_LIFETIME_SECS);
+    let private_salt_lifetime = private_salt.expiration_time();
+    local.write().set_private_salt(private_salt);
 
-    local.set_private_salt(private_salt);
-    local.set_public_salt(public_salt);
+    // Create a new public salt.
+    let public_salt = Salt::new(SALT_LIFETIME_SECS);
+    let public_salt_lifetime = public_salt.expiration_time();
+    local.write().set_public_salt(public_salt);
 
-    // Clear the rejection filter.
-    todo!("clear rejection filter");
-    // filter.clear_peers();
+    // Clear the peer filter.
+    filter.write().clear_excluded();
 
     // Either drop, or update the neighborhoods.
     if drop_neighbors_on_salt_update {
-        drop_neighborhood(inbound as &InboundNeighborhood, packet_tx);
-        drop_neighborhood(outbound as &OutboundNeighborhood, packet_tx);
-
-        inbound.clear();
-        outbound.clear();
+        for peer in inbound_nbh.read().iter().chain(outbound_nbh.read().iter()).cloned() {
+            send_drop_peering_request_to_peer(peer, server_tx, event_tx);
+        }
+        inbound_nbh.write().clear();
+        outbound_nbh.write().clear();
     } else {
-        inbound.update_distances();
-        outbound.update_distances();
+        inbound_nbh.write().update_distances(&local);
+        outbound_nbh.write().update_distances(&local);
     }
 
     log::debug!(
-        "Salts updated: Public: {}, Private: {}",
-        public_salt_exp_time,
-        private_salt_exp_time
+        "Salts updated; private: {}, public: {}",
+        private_salt_lifetime,
+        public_salt_lifetime,
     );
 
-    // Fire 'SaltUpdated' event.
-    event_tx.send(Event::SaltUpdated);
-}
-
-fn drop_neighborhood<'a, H>(neighborhood: &'a H, server_tx: &ServerTx)
-where
-    &'a H: IntoIterator<Item = Peer, IntoIter = std::vec::IntoIter<Peer>>,
-{
-    for peer in neighborhood {
-        let port = peer
-            .services()
-            .get(AUTOPEERING_SERVICE_NAME)
-            .expect("missing autopeering service")
-            .port();
-
-        let peer_addr = SocketAddr::new(peer.ip_address(), port);
-
-        send_drop_request_to_addr(peer_addr, peer.peer_id(), server_tx);
-    }
+    // Publish 'SaltUpdated' event.
+    event_tx.send(Event::SaltUpdated {
+        public_salt_lifetime,
+        private_salt_lifetime,
+    });
 }

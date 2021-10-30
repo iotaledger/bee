@@ -32,6 +32,8 @@ pub trait PeerStore: Clone + Send + Sync {
     fn store_peer(&self, peer: Peer) -> bool;
     fn store_metrics(&self, peer_id: PeerId, metrics: PeerMetrics);
 
+    fn contains_peer(&self, peer_id: &PeerId) -> bool;
+
     fn fetch_peer(&self, peer_id: &PeerId) -> Option<Peer>;
     fn fetch_peers(&self) -> Vec<Peer>;
     fn fetch_metrics(&self, peer_id: &PeerId) -> Option<PeerMetrics>;
@@ -79,8 +81,17 @@ impl PeerStore for InMemoryPeerStore {
     fn store_peer(&self, peer: Peer) -> bool {
         let peer_id = peer.peer_id();
 
-        // Return `true` if the peer is new, otherwise `false`.
-        self.write().peers.insert(peer_id.clone(), peer).is_none()
+        // Return `true` if the peer is indeed new and added, otherwise `false`.
+        if !self.contains_peer(peer.peer_id()) {
+            assert!(self.write().peers.insert(peer_id.clone(), peer).is_none());
+            true
+        } else {
+            false
+        }
+    }
+
+    fn contains_peer(&self, peer_id: &PeerId) -> bool {
+        self.read().peers.contains_key(peer_id)
     }
 
     fn delete_peer(&self, peer_id: &PeerId) -> bool {
@@ -159,6 +170,10 @@ impl PeerStore for SledPeerStore {
     }
 
     fn store_peer(&self, peer: Peer) -> bool {
+        todo!()
+    }
+
+    fn contains_peer(&self, peer_id: &PeerId) -> bool {
         todo!()
     }
 

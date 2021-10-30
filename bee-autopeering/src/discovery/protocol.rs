@@ -22,6 +22,8 @@ use crate::{
 
 use std::net::SocketAddr;
 
+use super::begin_verification_request;
+
 // Hive.go: returns the list of master peers.
 pub(crate) fn get_master_peers<S: PeerStore>(master_peers: &MasterPeersList, peerstore: &S) -> Vec<Peer> {
     let mut peers = Vec::with_capacity(master_peers.read().len());
@@ -35,24 +37,32 @@ pub(crate) fn get_master_peers<S: PeerStore>(master_peers: &MasterPeersList, pee
 }
 
 // Hive.go: returns the verified peer with the given ID, or nil if no such peer exists.
-pub(crate) fn get_verified_peer<S: PeerStore>(
+pub(crate) async fn get_verified_peer<S: PeerStore>(
     peer_id: &PeerId,
     active_peers: &ActivePeersList,
+    request_mngr: &RequestManager<S>,
     peerstore: &S,
-    command_tx: CommandTx,
+    server_tx: &ServerTx,
 ) -> Option<Peer> {
-    let verified_peers = get_verified_peers(active_peers);
-
-    if verified_peers.iter().any(|pe| pe.peer_id() == peer_id) {
-        peerstore.fetch_peer(peer_id)
-    } else {
-        command_tx
-            .send(Command::SendVerificationRequest {
-                peer_id: peer_id.clone(),
-            })
-            .expect("error sending verification request");
-        None
+    // First check if this peer is in the active/managed list and has a positive verified count.
+    if let Some(peer_entry) = active_peers.read().find(peer_id) {
+        if peer_entry.metrics().verified_count() > 0 {
+            return Some(peer_entry.peer().clone());
+        }
     }
+
+    // Enforce re/verification.
+    begin_verification_request(peer_id, request_mngr, peerstore, server_tx)
+        .await
+        .map(|_| {
+            // Panic: since the verification request was successful, the peer *must* now be in the active list.
+            active_peers
+                .read()
+                .find(peer_id)
+                .expect("inconsistent peer list")
+                .peer()
+                .clone()
+        })
 }
 
 // Hive.go: returns all the currently managed peers that have been verified at least once.

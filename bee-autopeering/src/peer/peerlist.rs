@@ -1,7 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{peer_id::PeerId, peerstore::PeerStore};
+use super::{peer_id::PeerId, peerstore::PeerStore, Peer};
+
 use crate::{
     command::{Command, CommandTx},
     discovery,
@@ -23,25 +24,29 @@ const DEFAULT_MAX_MANAGED: usize = 1000;
 const DEFAULT_MAX_REPLACEMENTS: usize = 10;
 
 type ActivePeersListInner = PeerRing<ActivePeerEntry, DEFAULT_MAX_MANAGED>;
-type ReplacementListInner = PeerRing<PeerId, DEFAULT_MAX_REPLACEMENTS>;
+type ReplacementListInner = PeerRing<Peer, DEFAULT_MAX_REPLACEMENTS>;
 type MasterPeersListInner = HashSet<PeerId>;
 
 #[derive(Clone)]
 pub(crate) struct ActivePeerEntry {
-    peer_id: PeerId,
+    peer: Peer,
     metrics: PeerMetrics,
 }
 
 impl ActivePeerEntry {
-    pub(crate) fn new(peer_id: PeerId) -> Self {
+    pub(crate) fn new(peer: Peer) -> Self {
         Self {
-            peer_id,
+            peer,
             metrics: PeerMetrics::default(),
         }
     }
 
+    pub(crate) fn peer(&self) -> &Peer {
+        &self.peer
+    }
+
     pub(crate) fn peer_id(&self) -> &PeerId {
-        &self.peer_id
+        self.peer.peer_id()
     }
 
     pub(crate) fn metrics(&self) -> &PeerMetrics {
@@ -52,21 +57,21 @@ impl ActivePeerEntry {
         &mut self.metrics
     }
 
-    pub(crate) fn into_id(self) -> PeerId {
-        self.peer_id
+    pub(crate) fn into_peer(self) -> Peer {
+        self.peer
     }
 }
 
 impl Eq for ActivePeerEntry {}
 impl PartialEq for ActivePeerEntry {
     fn eq(&self, other: &Self) -> bool {
-        self.peer_id == other.peer_id
+        self.peer.peer_id() == other.peer.peer_id()
     }
 }
 
-impl From<PeerId> for ActivePeerEntry {
-    fn from(peer_id: PeerId) -> Self {
-        Self::new(peer_id)
+impl From<Peer> for ActivePeerEntry {
+    fn from(peer: Peer) -> Self {
+        Self::new(peer)
     }
 }
 
@@ -127,9 +132,15 @@ impl AsRef<PeerId> for PeerId {
     }
 }
 
+impl AsRef<PeerId> for Peer {
+    fn as_ref(&self) -> &PeerId {
+        self.peer_id()
+    }
+}
+
 impl AsRef<PeerId> for ActivePeerEntry {
     fn as_ref(&self) -> &PeerId {
-        &self.peer_id
+        self.peer.peer_id()
     }
 }
 
@@ -256,6 +267,9 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
         self.0.get_mut(0)
     }
 
+    /// Moves `peer_id` to the front of the list.
+    ///
+    /// Returns `false` if the `peer_id` is not found in the list, and thus, cannot be made the newest.
     pub(crate) fn set_newest(&mut self, peer_id: &PeerId) -> bool {
         if let Some(mid) = self.find_index(peer_id) {
             if mid > 0 {

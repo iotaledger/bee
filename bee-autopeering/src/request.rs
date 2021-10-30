@@ -11,8 +11,7 @@ use crate::{
     local::{salt::Salt, Local},
     packet::{msg_hash, MessageType},
     peer::{peer_id::PeerId, peerstore::PeerStore},
-    peering::manager::PeeringHandler,
-    peering::messages::PeeringRequest,
+    peering::{manager::PeeringHandler, messages::PeeringRequest},
     server::ServerTx,
     task::{Repeat, ShutdownRx},
     time::{self, Timestamp},
@@ -86,20 +85,13 @@ impl<S: PeerStore> RequestManager<S> {
         handler: Option<DiscoveryHandler<S>>,
         response_tx: Option<ResponseTx>,
     ) -> VerificationRequest {
-        let timestamp = crate::time::unix_now_secs();
-
         let key = RequestKey {
             peer_id,
             request_id: TypeId::of::<VerificationRequest>(),
         };
 
-        let verif_req = VerificationRequest {
-            version: self.version,
-            network_id: self.network_id,
-            timestamp,
-            source_addr: self.source_addr,
-            target_addr: peer_addr,
-        };
+        let verif_req = VerificationRequest::new(self.version, self.network_id, self.source_addr, peer_addr);
+        let timestamp = verif_req.timestamp();
 
         let request_hash = msg_hash(
             MessageType::VerificationRequest,
@@ -128,14 +120,13 @@ impl<S: PeerStore> RequestManager<S> {
         handler: Option<DiscoveryHandler<S>>,
         response_tx: Option<ResponseTx>,
     ) -> DiscoveryRequest {
-        let timestamp = crate::time::unix_now_secs();
-
         let key = RequestKey {
             peer_id,
             request_id: TypeId::of::<DiscoveryRequest>(),
         };
 
-        let disc_req = DiscoveryRequest { timestamp };
+        let disc_req = DiscoveryRequest::new();
+        let timestamp = disc_req.timestamp();
 
         let request_hash = msg_hash(
             MessageType::DiscoveryRequest,
@@ -164,17 +155,14 @@ impl<S: PeerStore> RequestManager<S> {
         handler: Option<PeeringHandler<S>>,
         response_tx: Option<ResponseTx>,
     ) -> PeeringRequest {
-        let timestamp = crate::time::unix_now_secs();
-
         let key = RequestKey {
             peer_id,
             request_id: TypeId::of::<PeeringRequest>(),
         };
 
-        let peer_req = PeeringRequest {
-            timestamp,
-            salt: self.local.public_salt().expect("missing public salt"),
-        };
+        let peer_req = PeeringRequest::new(self.local.read().public_salt().expect("missing public salt").clone());
+
+        let timestamp = peer_req.timestamp();
 
         let request_hash = msg_hash(
             MessageType::PeeringRequest,

@@ -10,8 +10,8 @@ use std::{convert::TryInto, fmt};
 
 #[derive(Clone)]
 pub(crate) struct PeeringRequest {
-    pub(crate) timestamp: u64,
-    pub(crate) salt: Salt,
+    timestamp: u64,
+    salt: Salt,
 }
 
 impl PeeringRequest {
@@ -25,12 +25,8 @@ impl PeeringRequest {
         self.timestamp
     }
 
-    pub fn salt_bytes(&self) -> &[u8] {
-        &self.salt.bytes()[..]
-    }
-
-    pub fn salt_expiration_time(&self) -> u64 {
-        self.salt.expiration_time()
+    pub fn salt(&self) -> &Salt {
+        &self.salt
     }
 
     pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
@@ -66,8 +62,8 @@ impl fmt::Debug for PeeringRequest {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("PeeringRequest")
             .field("timestamp", &self.timestamp)
-            .field("salt_bytes", &bs64::encode(self.salt_bytes()))
-            .field("salt_expiration_time", &self.salt_expiration_time())
+            .field("salt_bytes", &bs64::encode(self.salt().bytes()))
+            .field("salt_expiration_time", &self.salt().expiration_time())
             .finish()
     }
 }
@@ -124,11 +120,11 @@ impl fmt::Debug for PeeringResponse {
 }
 
 // NOTE: We don't require a response for `DropRequest`, hence it doesn't need to impl `Request`.
-pub(crate) struct DropRequest {
+pub(crate) struct DropPeeringRequest {
     pub(crate) timestamp: u64,
 }
 
-impl DropRequest {
+impl DropPeeringRequest {
     pub fn new() -> Self {
         let timestamp = crate::time::unix_now_secs();
 
@@ -159,9 +155,9 @@ impl DropRequest {
     }
 }
 
-impl fmt::Debug for DropRequest {
+impl fmt::Debug for DropPeeringRequest {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("DropRequest")
+        f.debug_struct("DropPeeringRequest")
             .field("timestamp", &self.timestamp)
             .finish()
     }

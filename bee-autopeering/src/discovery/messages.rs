@@ -12,14 +12,26 @@ use std::{
 
 #[derive(Clone, Copy)]
 pub(crate) struct VerificationRequest {
-    pub(crate) version: u32,
-    pub(crate) network_id: u32,
-    pub(crate) timestamp: u64,
-    pub(crate) source_addr: SocketAddr,
-    pub(crate) target_addr: IpAddr,
+    version: u32,
+    network_id: u32,
+    timestamp: u64,
+    source_addr: SocketAddr,
+    target_addr: IpAddr,
 }
 
 impl VerificationRequest {
+    pub fn new(version: u32, network_id: u32, source_addr: SocketAddr, target_addr: IpAddr) -> Self {
+        let timestamp = crate::time::unix_now_secs();
+
+        Self {
+            version,
+            network_id,
+            timestamp,
+            source_addr,
+            target_addr,
+        }
+    }
+
     pub fn version(&self) -> u32 {
         self.version
     }
@@ -30,6 +42,14 @@ impl VerificationRequest {
 
     pub fn timestamp(&self) -> u64 {
         self.timestamp
+    }
+
+    pub fn source_addr(&self) -> SocketAddr {
+        self.source_addr
+    }
+
+    pub fn target_addr(&self) -> IpAddr {
+        self.target_addr
     }
 
     pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
@@ -160,10 +180,16 @@ impl fmt::Debug for VerificationResponse {
 
 #[derive(Clone, Copy)]
 pub(crate) struct DiscoveryRequest {
-    pub(crate) timestamp: u64,
+    timestamp: u64,
 }
 
 impl DiscoveryRequest {
+    pub fn new() -> Self {
+        let timestamp = crate::time::unix_now_secs();
+
+        Self { timestamp }
+    }
+
     pub fn timestamp(&self) -> u64 {
         self.timestamp
     }

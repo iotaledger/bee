@@ -20,7 +20,8 @@ use std::net::SocketAddr;
 //         "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
 //     ],
 //     "entryNodesPreferIPv6": false,
-//     "runAsEntryNode": false
+//     "runAsEntryNode": false,
+//     "dropNeighborsOnSaltUpdate": false
 // }
 // ```
 
@@ -35,4 +36,6 @@ pub struct AutopeeringConfig {
     pub entry_nodes_prefer_ipv6: bool,
     #[serde(rename = "runAsEntryNode")]
     pub run_as_entry_node: bool,
+    #[serde(rename = "dropNeighborsOnSaltUpdate", default)]
+    pub drop_neighbors_on_salt_update: bool,
 }

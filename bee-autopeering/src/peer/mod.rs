@@ -68,6 +68,11 @@ impl Peer {
         self.ip_address
     }
 
+    /// Returns the port of a service provided by this peer.
+    pub fn port(&self, service_name: impl AsRef<str>) -> Option<u16> {
+        self.services().get(service_name).map(|s| s.port())
+    }
+
     /// Returns the services this peer.
     pub fn services(&self) -> &ServiceMap {
         &self.services

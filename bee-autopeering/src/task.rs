@@ -15,8 +15,8 @@ use std::{
     time::Duration,
 };
 
-pub(crate) const MAX_PRIORITY: u8 = 255;
-pub(crate) const MIN_PRIORITY: u8 = 0;
+pub(crate) const MAX_SHUTDOWN_PRIORITY: u8 = 255;
+pub(crate) const MIN_SHUTDOWN_PRIORITY: u8 = 0;
 const SHUTDOWN_TIMEOUT_SECS: Duration = Duration::from_secs(5 * SECOND);
 
 pub(crate) type ShutdownRx = oneshot::Receiver<()>;
@@ -77,7 +77,7 @@ impl<const N: usize> TaskManager<N> {
         shutdown_rx
     }
 
-    pub(crate) fn repeat<T, D>(&mut self, cmd: Repeat<T>, mut delay: D, ctx: T, name: &str, priority: u8)
+    pub(crate) fn repeat<T, D>(&mut self, cmd: Repeat<T>, mut delay: D, ctx: T, name: &str, shutdown_priority: u8)
     where
         T: Send + Sync + 'static,
         D: Iterator<Item = Duration> + Send + 'static,
@@ -98,7 +98,7 @@ impl<const N: usize> TaskManager<N> {
         assert!(!self.shutdown_handles.contains_key(name));
         self.shutdown_handles.insert(name.into(), handle);
 
-        self.shutdown_order.push(name.into(), priority);
+        self.shutdown_order.push(name.into(), shutdown_priority);
     }
 
     pub(crate) fn add_shutdown_fn(&mut self, b: Box<dyn Fn(&ActivePeersList)>) {

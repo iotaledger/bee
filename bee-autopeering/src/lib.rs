@@ -35,3 +35,4 @@ pub use local::{
     Local,
 };
 pub use peer::{peer_id, peer_id::PeerId, peerstore, Peer};
+pub use peering::{Distance, NeighborValidator, Status};

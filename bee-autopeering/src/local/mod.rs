@@ -33,7 +33,7 @@ pub struct Local {
     inner: Arc<RwLock<LocalInner>>,
 }
 
-struct LocalInner {
+pub struct LocalInner {
     peer_id: PeerId,
     public_salt: Option<Salt>,
     private_key: PrivateKey,
@@ -70,78 +70,80 @@ impl Local {
         }
     }
 
+    pub fn read(&self) -> RwLockReadGuard<LocalInner> {
+        self.inner.read().expect("error getting read access")
+    }
+
+    pub fn write(&self) -> RwLockWriteGuard<LocalInner> {
+        self.inner.write().expect("error getting write access")
+    }
+}
+
+impl LocalInner {
     /// Returns the peer id of this identity.
-    pub fn peer_id(&self) -> PeerId {
-        self.read_inner().peer_id.clone()
+    pub fn peer_id(&self) -> &PeerId {
+        &self.peer_id
     }
 
     /// Returns the public key of this identity.
     pub fn public_key(&self) -> PublicKey {
-        self.read_inner().peer_id.public_key()
+        self.peer_id.public_key()
     }
 
     /// Returns the current private salt of this identity.
-    pub(crate) fn private_salt(&self) -> Option<Salt> {
-        self.read_inner().private_salt.clone()
+    pub(crate) fn private_salt(&self) -> Option<&Salt> {
+        self.private_salt.as_ref()
     }
 
     /// Sets a new private salt.
-    pub(crate) fn set_private_salt(&self, salt: Salt) {
-        self.write_inner().private_salt.replace(salt);
+    pub(crate) fn set_private_salt(&mut self, salt: Salt) {
+        self.private_salt.replace(salt);
     }
 
     /// Returns the current public salt of this identity.
-    pub fn public_salt(&self) -> Option<Salt> {
-        self.read_inner().public_salt.clone()
+    pub fn public_salt(&self) -> Option<&Salt> {
+        self.public_salt.as_ref()
     }
 
     /// Sets a new public salt.
-    pub(crate) fn set_public_salt(&self, salt: Salt) {
-        self.write_inner().public_salt.replace(salt);
+    pub(crate) fn set_public_salt(&mut self, salt: Salt) {
+        self.public_salt.replace(salt);
     }
 
     /// Signs a message using the private key.
     pub fn sign(&self, msg: &[u8]) -> Signature {
-        self.read_inner().private_key.sign(msg)
+        self.private_key.sign(msg)
     }
 
     /// Adds a service to this local peer.
-    pub fn add_service(&self, service_name: impl ToString, transport: ServiceTransport, port: u16) {
-        self.write_inner().services.insert(service_name, transport, port)
+    pub fn add_service(&mut self, service_name: impl ToString, transport: ServiceTransport, port: u16) {
+        self.services.insert(service_name, transport, port)
     }
 
     /// Returns the list of services this identity supports.
-    ///
-    /// Note: The returned [`ServiceMap`] is a clone. Modifying it will not affect the local peer.
-    pub(crate) fn services(&self) -> ServiceMap {
-        self.read_inner().services.clone()
-    }
-
-    fn read_inner(&self) -> RwLockReadGuard<LocalInner> {
-        self.inner.read().expect("error getting read access")
-    }
-
-    fn write_inner(&self) -> RwLockWriteGuard<LocalInner> {
-        self.inner.write().expect("error getting write access")
+    pub(crate) fn services(&self) -> &ServiceMap {
+        &self.services
     }
 }
 
 impl fmt::Debug for Local {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Local").field("peer_id", &self.peer_id()).finish()
+        f.debug_struct("Local")
+            .field("peer_id", &self.read().peer_id())
+            .finish()
     }
 }
 
 impl fmt::Display for Local {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.peer_id())
+        write!(f, "{}", self.read().peer_id())
     }
 }
 
 impl Eq for Local {}
 impl PartialEq for Local {
     fn eq(&self, other: &Self) -> bool {
-        self.peer_id() == other.peer_id()
+        self.read().peer_id() == other.read().peer_id()
     }
 }
 
@@ -165,16 +167,4 @@ impl PartialEq for LocalInner {
     fn eq(&self, other: &Self) -> bool {
         self.peer_id == other.peer_id
     }
-}
-
-// Regularly update the salts of the local peer.
-pub(crate) fn update_salts_repeat() -> Repeat<(Local, EventTx)> {
-    Box::new(|(local, tx)| {
-        local.set_public_salt(Salt::default());
-        local.set_private_salt(Salt::default());
-
-        log::debug!("Public and private salt updated.");
-
-        tx.send(Event::SaltUpdated).expect("error sending `SaltUpdated` event");
-    })
 }

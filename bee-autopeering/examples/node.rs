@@ -3,7 +3,9 @@
 
 #![allow(warnings)]
 
-use bee_autopeering::{init, peerstore::InMemoryPeerStore, AutopeeringConfig, Event, Local, ServiceTransport};
+use bee_autopeering::{
+    init, peerstore::InMemoryPeerStore, AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceTransport,
+};
 
 use log::LevelFilter;
 use serde_json::Value;
@@ -12,7 +14,7 @@ use tokio_stream::StreamExt;
 
 use std::{future::Future, io, net::SocketAddr, pin::Pin};
 
-fn setup_fern(level: LevelFilter) {
+fn setup_logger(level: LevelFilter) {
     fern::Dispatch::new()
         .level(level)
         .chain(io::stdout())
@@ -49,7 +51,7 @@ fn read_config() -> AutopeeringConfig {
 #[tokio::main]
 async fn main() {
     // Set up logger.
-    setup_fern(LevelFilter::Debug);
+    setup_logger(LevelFilter::Debug);
 
     // Read the config from a JSON file/string.
     let config = read_config();
@@ -57,7 +59,9 @@ async fn main() {
 
     // Set up a local peer, that provides the Autopeering service.
     let mut local = Local::new();
-    local.add_service("peering", ServiceTransport::Udp, config.bind_addr.port());
+    local
+        .write()
+        .add_service("peering", ServiceTransport::Udp, config.bind_addr.port());
 
     // Network parameters.
     let version = 1;
@@ -67,17 +71,21 @@ async fn main() {
     // No config is  necessary for the `InMemoryPeerStore`.
     let peerstore_config = ();
 
+    // Neighbor validator.
+    let neighbor_validator = HippieNeighborValidator {};
+
     // Shutdown signal.
     let quit_signal = ctrl_c();
 
     // Initialize the Autopeering service.
-    let mut event_rx = bee_autopeering::init::<InMemoryPeerStore, _, _>(
+    let mut event_rx = bee_autopeering::init::<InMemoryPeerStore, _, _, _>(
         config.clone(),
         version,
         network_id,
         local,
         peerstore_config,
         quit_signal,
+        neighbor_validator,
     )
     .await
     .expect("initializing autopeering system failed");
@@ -101,23 +109,38 @@ async fn main() {
 
 fn handle_event(event: Event) {
     match event {
-        Event::PeerDiscovered { peer } => {
-            log::info!("Peer discovered: {:?}.", peer);
+        Event::PeerDiscovered { peer_id } => {
+            log::info!("Peer discovered: {:?}.", peer_id);
         }
         Event::PeerDeleted { peer_id } => {
             log::info!("Peer deleted: {}.", peer_id);
         }
-        Event::SaltUpdated => {
-            log::info!("Salt updated.");
+        Event::SaltUpdated {
+            public_salt_lifetime,
+            private_salt_lifetime,
+        } => {
+            log::info!(
+                "Salts updated; new public salt lifetime: {}; new private salt lifetime: {}.",
+                public_salt_lifetime,
+                private_salt_lifetime
+            );
         }
-        Event::IncomingPeering => {
-            log::info!("Incoming peering.");
+        Event::IncomingPeering { peer, distance } => {
+            log::info!(
+                "Incoming peering with peer {}; distance = {}.",
+                peer.peer_id(),
+                distance
+            );
         }
-        Event::OutgoingPeering => {
-            log::info!("Outgoing peering.");
+        Event::OutgoingPeering { peer, distance } => {
+            log::info!(
+                "Outgoing peering with peer {}; distance = {}.",
+                peer.peer_id(),
+                distance
+            );
         }
-        Event::Dropped => {
-            log::info!("Peering dropped.");
+        Event::PeeringDropped { peer_id } => {
+            log::info!("Peering dropped with {}.", peer_id);
         }
     }
 }
@@ -133,5 +156,13 @@ async fn print_resolved_entry_nodes(config: AutopeeringConfig) {
         } else {
             println!("{} ---> unresolvable", entry_node_addr.address());
         }
+    }
+}
+
+struct HippieNeighborValidator {}
+
+impl NeighborValidator for HippieNeighborValidator {
+    fn is_valid(&self, _: &Peer) -> bool {
+        true
     }
 }
