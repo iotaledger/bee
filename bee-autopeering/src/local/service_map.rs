@@ -33,6 +33,11 @@ impl ServiceMap {
         self.0.get(service_name.as_ref()).copied()
     }
 
+    /// Returns the number of services.
+    pub(crate) fn len(&self) -> usize {
+        self.0.len()
+    }
+
     // /// Returns the transport protocol of the given service.
     // pub(crate) fn transport(&self, service_name: impl AsRef<str>) -> Option<ServiceTransport> {
     //     self.0
@@ -147,12 +152,6 @@ impl FromStr for ServiceTransport {
 mod tests {
     use super::*;
     use crate::proto;
-
-    impl ServiceMap {
-        pub(crate) fn len(&self) -> usize {
-            self.0.len()
-        }
-    }
 
     #[test]
     fn convert_service_map() {

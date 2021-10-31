@@ -139,7 +139,7 @@ where
     server.init(&mut task_mngr).await;
 
     // Create a request manager that creates and keeps track of outgoing requests.
-    let request_mngr = RequestManager::new(version, network_id, config.bind_addr, local.clone());
+    let request_mngr = RequestManager::new(version, network_id, config.bind_addr);
 
     // Create the discovery manager handling the discovery request/response protocol.
     let discovery_config = DiscoveryManagerConfig::new(&config, version, network_id);

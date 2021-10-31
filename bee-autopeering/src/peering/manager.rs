@@ -305,7 +305,7 @@ fn validate_peering_response<S: PeerStore>(
 ) -> Result<RequestValue<S>, ValidationError> {
     use ValidationError::*;
 
-    if let Some(reqv) = ctx.request_mngr.pull::<PeeringRequest>(ctx.peer_id) {
+    if let Some(reqv) = ctx.request_mngr.write().pull::<PeeringRequest>(ctx.peer_id) {
         if peer_res.request_hash() != &reqv.request_hash {
             Err(IncorrectRequestHash)
         } else {
@@ -405,10 +405,11 @@ pub(crate) async fn begin_peering_request<S: PeerStore>(
     request_mngr: &RequestManager<S>,
     peerstore: &S,
     server_tx: &ServerTx,
+    local: &Local,
 ) -> Option<Status> {
     let (response_tx, response_rx) = request::response_chan();
 
-    send_peering_request_to_peer(peer_id, request_mngr, peerstore, server_tx, Some(response_tx));
+    send_peering_request_to_peer(peer_id, request_mngr, peerstore, server_tx, Some(response_tx), local);
 
     match tokio::time::timeout(RESPONSE_TIMEOUT, response_rx).await {
         Ok(Ok(bytes)) => {
@@ -433,6 +434,7 @@ pub(crate) fn send_peering_request_to_peer<S: PeerStore>(
     peerstore: &S,
     server_tx: &ServerTx,
     response_tx: Option<ResponseTx>,
+    local: &Local,
 ) {
     let peer = peerstore.fetch_peer(peer_id).expect("peer not in storage");
 
@@ -444,7 +446,7 @@ pub(crate) fn send_peering_request_to_peer<S: PeerStore>(
 
     let peer_addr = SocketAddr::new(peer.ip_address(), peer_port);
 
-    send_peering_request_to_addr(peer_addr, peer_id, request_mngr, server_tx, response_tx);
+    send_peering_request_to_addr(peer_addr, peer_id, request_mngr, server_tx, response_tx, local);
 }
 
 /// Sends a peering request to a peer's address.
@@ -454,6 +456,7 @@ pub(crate) fn send_peering_request_to_addr<S: PeerStore>(
     request_mngr: &RequestManager<S>,
     server_tx: &ServerTx,
     response_tx: Option<ResponseTx>,
+    local: &Local,
 ) {
     log::debug!("Sending peering request to: {}", peer_id);
 
@@ -462,7 +465,9 @@ pub(crate) fn send_peering_request_to_addr<S: PeerStore>(
         // TODO
     });
 
-    let peer_req = request_mngr.new_peering_request(peer_id.clone(), None, response_tx);
+    let peer_req = request_mngr
+        .write()
+        .new_peering_request(peer_id.clone(), None, response_tx, local);
 
     let msg_bytes = peer_req.to_protobuf().expect("error encoding peering request").to_vec();
 

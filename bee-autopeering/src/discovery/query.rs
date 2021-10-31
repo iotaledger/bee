@@ -90,14 +90,16 @@ impl<S: PeerStore> QueryContext<S> {
 // Hive.go: pings the oldest active peer.
 pub(crate) fn do_reverify<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
     Box::new(|ctx| {
+        // Determine the next peer to re/verifiy.
         if let Some(active_peer) = peer_to_reverify(&ctx.active_peers) {
             log::debug!("Reverifying {}...", active_peer.peer_id());
 
+            // CHANGE BACK: move to before tokio::spawn
             let ctx_ = ctx.clone();
 
             // TODO: introduce `UnsupervisedTask` type, that always finishes after a timeout.
             let _ = tokio::spawn(async move {
-                if let Some(_) = manager::begin_verification_request(
+                if let Some(services) = manager::begin_verification_request(
                     active_peer.peer_id(),
                     &ctx_.request_mngr,
                     &ctx_.peerstore,
@@ -106,9 +108,11 @@ pub(crate) fn do_reverify<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
                 .await
                 {
                     // Hive.go: no need to do anything here, as the peer is bumped when handling the pong
+                    log::debug!("Reverification successful. Peer offers {} service/s.", services.len());
                 } else {
-                    // Hive.go: could not verify the peer
-                    manager::delete_peer_from_active_list(
+                    log::debug!("Reverification failed. Removing peer {}.", active_peer.peer_id());
+
+                    manager::remove_peer_from_active_list(
                         active_peer.peer_id(),
                         &ctx_.master_peers,
                         &ctx_.active_peers,
@@ -175,9 +179,9 @@ pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
                             .metrics_mut()
                             .set_last_new_peers(num_added);
                     } else {
-                        log::debug!("Query unsuccessful. Deleting peer.");
+                        log::debug!("Query unsuccessful. Removing peer {}.", peer_id);
 
-                        manager::delete_peer_from_active_list(
+                        manager::remove_peer_from_active_list(
                             &peer_id,
                             &ctx_.master_peers,
                             &ctx_.active_peers,
@@ -335,7 +339,9 @@ mod tests {
         let peerlist = create_peerlist_of_size(3);
 
         macro_rules! equal {
-            ($a:expr, $b:expr) => {{ $a == peerlist.read().get($b).unwrap().peer_id() }};
+            ($a:expr, $b:expr) => {{
+                $a == peerlist.read().get($b).unwrap().peer_id()
+            }};
         }
 
         let selected = select_peers_to_query(&peerlist);
@@ -350,7 +356,9 @@ mod tests {
         let peerlist = create_peerlist_of_size(10);
 
         macro_rules! equal {
-            ($a:expr, $b:expr) => {{ $a == peerlist.read().get($b).unwrap().peer_id() }};
+            ($a:expr, $b:expr) => {{
+                $a == peerlist.read().get($b).unwrap().peer_id()
+            }};
         }
 
         // 0 1 2 3 4 ... 7 8 9 (index)

@@ -5,9 +5,11 @@ use crate::{
     hash,
     local::{salt::Salt, Local},
     peer::{peer_id::PeerId, Peer},
+    task::{ShutdownRx, MAX_SHUTDOWN_PRIORITY},
 };
 
 use prost::bytes::{Buf, Bytes};
+use tokio::sync::mpsc::Receiver;
 
 use std::{
     cmp,
@@ -15,6 +17,7 @@ use std::{
     fmt,
     ops::Deref,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
+    time::Duration,
     vec,
 };
 
@@ -305,6 +308,47 @@ fn xor<const N: usize>(a: [u8; N], b: [u8; N]) -> [u8; N] {
         .for_each(|(i, (a, b))| xored[i] = a ^ b);
 
     xored
+}
+
+// Outbound updater => impls Iterator and Runnable to produce a changeable delay
+
+pub(crate) struct OutboundUpdater {
+    curr_delay: Duration,
+    update_rx: Receiver<Duration>,
+}
+
+#[async_trait::async_trait]
+impl crate::task::Runnable for OutboundUpdater {
+    const NAME: &'static str = "OutboundUpdater";
+    const SHUTDOWN_PRIORITY: u8 = MAX_SHUTDOWN_PRIORITY;
+
+    type ShutdownSignal = ShutdownRx;
+
+    async fn run(self, shutdown_rx: Self::ShutdownSignal) {
+        let OutboundUpdater {
+            curr_delay,
+            mut update_rx,
+        } = self;
+
+        tokio::select! {
+            _ = shutdown_rx => {
+                todo!()
+            }
+            o = (&mut update_rx).recv() => {
+                if let Some(delay) = o {
+                    todo!()
+                }
+            }
+        }
+    }
+}
+
+impl Iterator for OutboundUpdater {
+    type Item = Duration;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.curr_delay)
+    }
 }
 
 #[cfg(test)]

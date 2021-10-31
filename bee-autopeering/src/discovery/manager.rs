@@ -130,8 +130,8 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
             event_tx,
             peerstore,
             master_peers,
-            mut active_peers,
-            mut replacements,
+            active_peers,
+            replacements,
         } = self;
 
         let DiscoveryManagerConfig {
@@ -148,13 +148,14 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
             server_tx,
         } = socket;
 
-        add_entry_nodes(
+        add_master_peers(
             &mut entry_nodes,
             entry_nodes_prefer_ipv6,
             &request_mngr,
             &server_tx,
             &local,
             &peerstore,
+            &master_peers,
             &active_peers,
             &replacements,
         )
@@ -233,7 +234,7 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
             request_mngr,
             event_tx,
             active_peers,
-            mut replacements,
+            replacements,
         } = self;
 
         'recv: loop {
@@ -395,13 +396,14 @@ impl<S: PeerStore> Runnable for DiscoverySendHandler<S> {
     }
 }
 
-async fn add_entry_nodes<S: PeerStore>(
+async fn add_master_peers<S: PeerStore>(
     entry_nodes: &mut Vec<AutopeeringMultiaddr>,
     entry_nodes_prefer_ipv6: bool,
     request_mngr: &RequestManager<S>,
     server_tx: &ServerTx,
     local: &Local,
     peerstore: &S,
+    master_peers: &MasterPeersList,
     active_peers: &ActivePeersList,
     replacements: &ReplacementList,
 ) {
@@ -443,7 +445,7 @@ async fn add_entry_nodes<S: PeerStore>(
         let mut peer = Peer::new(entry_socketaddr.ip(), entry_addr.public_key().clone());
         peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, entry_socketaddr.port());
 
-        let peer_id = peer.peer_id().clone();
+        master_peers.write().insert(peer.peer_id().clone());
 
         if add_peer(peer, local, active_peers, replacements, peerstore) {
             num_added += 1;
@@ -465,11 +467,18 @@ pub(crate) fn add_peer<S: PeerStore>(
     replacements: &ReplacementList,
     peerstore: &S,
 ) -> bool {
+    let peer_id = peer.peer_id().clone();
+
     let added_to_list = add_peer_to_list(peer.clone(), local, active_peers, replacements);
     let added_to_store = add_peer_to_store(peer, local, peerstore);
 
     // Return true if it was added "somewhere".
-    added_to_list || added_to_store
+    if added_to_list || added_to_store {
+        log::debug!("Peer added: {}", peer_id);
+        true
+    } else {
+        false
+    }
 }
 
 // From hive.go:
@@ -520,9 +529,11 @@ fn restore_peers<S: PeerStore>(
     log::debug!("Added {} stored peer/s.", num_added);
 }
 
+// Note: this function is dead-lock danger zone!
 /// Deletes a peer from the active peerlist if it's not a master peer, and replaces it by a peer
 /// from the replacement list.
-pub(crate) fn delete_peer_from_active_list<S: PeerStore>(
+#[rustfmt::skip]
+pub(crate) fn remove_peer_from_active_list<S: PeerStore>(
     peer_id: &PeerId,
     master_peers: &MasterPeersList,
     active_peers: &ActivePeersList,
@@ -530,12 +541,14 @@ pub(crate) fn delete_peer_from_active_list<S: PeerStore>(
     peerstore: &S,
     event_tx: &EventTx,
 ) {
-    if let Some(mut removed_peer) = active_peers.write().remove(peer_id) {
+    let mut active_peers = active_peers.write();
+
+    if let Some(mut removed_peer) = active_peers.remove(peer_id) {
         // hive.go: master peers are never removed
         if master_peers.read().contains(removed_peer.peer_id()) {
             // hive.go: reset verifiedCount and re-add them
             removed_peer.metrics_mut().reset_verified_count();
-            active_peers.write().insert(removed_peer);
+            active_peers.insert(removed_peer);
         } else {
             // TODO: why is the event only triggered for verified peers?
             // ```go
@@ -565,7 +578,7 @@ pub(crate) fn delete_peer_from_active_list<S: PeerStore>(
                 // range.
                 let peer = replacements.write().remove_at(index).unwrap();
 
-                active_peers.write().insert(peer.into());
+                active_peers.insert(peer.into());
             }
         }
     }
@@ -747,7 +760,7 @@ fn validate_verification_response<S: PeerStore>(
 ) -> Result<RequestValue<S>, ValidationError> {
     use ValidationError::*;
 
-    if let Some(reqv) = request_mngr.pull::<VerificationRequest>(peer_id) {
+    if let Some(reqv) = request_mngr.write().pull::<VerificationRequest>(peer_id) {
         if verif_res.request_hash() == &reqv.request_hash {
             let res_services = verif_res.services();
             if let Some(res_peering) = res_services.get(AUTOPEERING_SERVICE_NAME) {
@@ -787,7 +800,7 @@ fn validate_discovery_response<S: PeerStore>(
 ) -> Result<RequestValue<S>, ValidationError> {
     use ValidationError::*;
 
-    if let Some(reqv) = request_mngr.pull::<DiscoveryRequest>(peer_id) {
+    if let Some(reqv) = request_mngr.write().pull::<DiscoveryRequest>(peer_id) {
         if disc_res.request_hash() == &reqv.request_hash[..] {
             // TODO: consider performing some checks on the peers we received, for example:
             // * does the peer have necessary services (autopeering, gossip, fpc, ...)
@@ -938,11 +951,11 @@ pub(crate) async fn begin_verification_request<S: PeerStore>(
             Some(verif_res.into_services())
         }
         Ok(Err(e)) => {
-            log::debug!("Response signal error: {}", e);
+            log::debug!("Verification response error: {}", e);
             None
         }
         Err(e) => {
-            log::debug!("Discovery response timeout: {}", e);
+            log::debug!("Verification response timeout: {}", e);
             None
         }
     }
@@ -983,6 +996,8 @@ pub(crate) fn send_verification_request_to_addr<S: PeerStore>(
 
     // Define what happens when we receive the corresponding response.
     let handler = Box::new(|ctx: &RecvContext<S>| {
+        log::trace!("Executing verification handler.");
+
         // Fetch the peer from the peer store.
         let peer = ctx.peerstore.fetch_peer(ctx.peer_id).expect("peer not stored");
 
@@ -993,7 +1008,10 @@ pub(crate) fn send_verification_request_to_addr<S: PeerStore>(
         ctx.peerstore.update_last_verification_response(ctx.peer_id.clone());
     });
 
-    let verif_req = request_mngr.new_verification_request(peer_id.clone(), peer_addr.ip(), Some(handler), response_tx);
+    let verif_req =
+        request_mngr
+            .write()
+            .new_verification_request(peer_id.clone(), peer_addr.ip(), Some(handler), response_tx);
 
     let msg_bytes = verif_req
         .to_protobuf()
@@ -1063,7 +1081,7 @@ pub(crate) async fn begin_discovery_request<S: PeerStore>(
         }
         Ok(Err(e)) => {
             // This shouldn't happen under normal circumstances.
-            log::debug!("Response signal error: {}", e);
+            log::debug!("Discovery response error: {}", e);
             Some(Vec::new())
         }
         Err(e) => {
@@ -1109,7 +1127,9 @@ pub(crate) fn send_discovery_request_to_addr<S: PeerStore>(
 
     let handler = None;
 
-    let disc_req = request_mngr.new_discovery_request(peer_id.clone(), handler, response_tx);
+    let disc_req = request_mngr
+        .write()
+        .new_discovery_request(peer_id.clone(), handler, response_tx);
 
     let msg_bytes = disc_req
         .to_protobuf()

@@ -25,14 +25,25 @@ fn setup_logger(level: LevelFilter) {
 fn read_config() -> AutopeeringConfig {
     // let config_json = r#"
     // {
-    // "bindAddress": "0.0.0.0:14627",
-    // "entryNodes": [
-    // "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
-    // "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/
-    // iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb", "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/
-    // 14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2", "/dns/entry-mainnet.tanglebay.com/udp/14626/
-    // autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"     ], "entryNodesPreferIPv6": false,
-    // "runAsEntryNode": false
+    //     "bindAddress": "0.0.0.0:14627",
+    //     "entryNodes": [
+    //         "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
+    //         "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
+    //         "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
+    //         "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
+    //     ],
+    //     "entryNodesPreferIPv6": false,
+    //     "runAsEntryNode": false
+    // }"#;
+
+    // let config_json = r#"
+    // {
+    //     "bindAddress": "0.0.0.0:14627",
+    //     "entryNodes": [
+    //         "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb"
+    //     ],
+    //     "entryNodesPreferIPv6": false,
+    //     "runAsEntryNode": false
     // }"#;
 
     let config_json = r#"
@@ -91,7 +102,7 @@ async fn main() {
     .expect("initializing autopeering system failed");
 
     // Print to what IP addresses the entry nodes resolved to.
-    print_resolved_entry_nodes(config).await;
+    // print_resolved_entry_nodes(config).await;
 
     // Enter event loop.
     'recv: loop {

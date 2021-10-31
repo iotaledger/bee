@@ -29,7 +29,7 @@ use std::{
     iter,
     net::{IpAddr, SocketAddr},
     ops::DerefMut,
-    sync::{Arc, RwLock},
+    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
     time::Duration,
 };
 
@@ -60,26 +60,40 @@ pub(crate) struct RequestValue<S: PeerStore> {
 
 #[derive(Clone)]
 pub(crate) struct RequestManager<S: PeerStore> {
-    pub(crate) version: u32,
-    pub(crate) network_id: u32,
-    pub(crate) source_addr: SocketAddr,
-    pub(crate) local: Local,
-    pub(crate) open_requests: Arc<RwLock<HashMap<RequestKey, RequestValue<S>>>>,
+    inner: Arc<RwLock<RequestManagerInner<S>>>,
 }
 
 impl<S: PeerStore> RequestManager<S> {
-    pub(crate) fn new(version: u32, network_id: u32, source_addr: SocketAddr, local: Local) -> Self {
+    /// Creates a new request manager.
+    pub(crate) fn new(version: u32, network_id: u32, source_addr: SocketAddr) -> Self {
         Self {
-            version,
-            network_id,
-            source_addr,
-            local,
-            open_requests: Arc::new(RwLock::new(HashMap::default())),
+            inner: Arc::new(RwLock::new(RequestManagerInner {
+                version,
+                network_id,
+                source_addr,
+                open_requests: HashMap::default(),
+            })),
         }
     }
+    pub(crate) fn read(&self) -> RwLockReadGuard<RequestManagerInner<S>> {
+        self.inner.read().expect("error getting read access")
+    }
 
+    pub(crate) fn write(&self) -> RwLockWriteGuard<RequestManagerInner<S>> {
+        self.inner.write().expect("error getting write access")
+    }
+}
+
+pub(crate) struct RequestManagerInner<S: PeerStore> {
+    version: u32,
+    network_id: u32,
+    source_addr: SocketAddr,
+    open_requests: HashMap<RequestKey, RequestValue<S>>,
+}
+
+impl<S: PeerStore> RequestManagerInner<S> {
     pub(crate) fn new_verification_request(
-        &self,
+        &mut self,
         peer_id: PeerId,
         peer_addr: IpAddr,
         handler: Option<DiscoveryHandler<S>>,
@@ -105,17 +119,13 @@ impl<S: PeerStore> RequestManager<S> {
             response_tx,
         };
 
-        let _ = self
-            .open_requests
-            .write()
-            .expect("error getting write access")
-            .insert(key, value);
+        let _ = self.open_requests.insert(key, value);
 
         verif_req
     }
 
     pub(crate) fn new_discovery_request(
-        &self,
+        &mut self,
         peer_id: PeerId,
         handler: Option<DiscoveryHandler<S>>,
         response_tx: Option<ResponseTx>,
@@ -140,27 +150,24 @@ impl<S: PeerStore> RequestManager<S> {
             response_tx,
         };
 
-        let _ = self
-            .open_requests
-            .write()
-            .expect("error getting write access")
-            .insert(key, value);
+        let _ = self.open_requests.insert(key, value);
 
         disc_req
     }
 
     pub(crate) fn new_peering_request(
-        &self,
+        &mut self,
         peer_id: PeerId,
         handler: Option<PeeringHandler<S>>,
         response_tx: Option<ResponseTx>,
+        local: &Local,
     ) -> PeeringRequest {
         let key = RequestKey {
             peer_id,
             request_id: TypeId::of::<PeeringRequest>(),
         };
 
-        let peer_req = PeeringRequest::new(self.local.read().public_salt().expect("missing public salt").clone());
+        let peer_req = PeeringRequest::new(local.read().public_salt().expect("missing public salt").clone());
 
         let timestamp = peer_req.timestamp();
 
@@ -177,25 +184,19 @@ impl<S: PeerStore> RequestManager<S> {
             response_tx,
         };
 
-        let _ = self
-            .open_requests
-            .write()
-            .expect("error getting write access")
-            .insert(key, value);
+        let _ = self.open_requests.insert(key, value);
 
         peer_req
     }
 
-    pub(crate) fn pull<R: Request + 'static>(&self, peer_id: &PeerId) -> Option<RequestValue<S>> {
-        // TODO: Can we prevent the clone?
+    pub(crate) fn pull<R: Request + 'static>(&mut self, peer_id: &PeerId) -> Option<RequestValue<S>> {
+        // TODO: prevent the clone?
         let key = RequestKey {
             peer_id: peer_id.clone(),
             request_id: TypeId::of::<R>(),
         };
 
-        let mut requests = self.open_requests.write().expect("error getting read access");
-
-        (*requests).remove(&key)
+        self.open_requests.remove(&key)
     }
 }
 
@@ -205,17 +206,14 @@ pub(crate) fn is_expired(timestamp: Timestamp) -> bool {
 
 pub(crate) fn remove_expired_requests_repeat<S: PeerStore>() -> Repeat<RequestManager<S>> {
     Box::new(|mngr: &RequestManager<S>| {
-        // Retain only those, which expire in the future.
-        mngr.open_requests
-            .write()
-            .expect("error getting write access")
+        // Retain only those that aren't expired yet, remove all others.
+        mngr.write()
+            .open_requests
             .retain(|_, v| v.expiration_time > time::unix_now_secs());
 
-        if !mngr.open_requests.read().expect("error getting read access").is_empty() {
-            log::warn!(
-                "Open requests: {}",
-                mngr.open_requests.read().expect("error getting read access").len()
-            );
+        let num_open_requests = mngr.read().open_requests.len();
+        if num_open_requests > 0 {
+            log::warn!("Open requests: {}", num_open_requests);
         }
     })
 }
