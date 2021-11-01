@@ -7,6 +7,11 @@ use bee_common::packable::{Packable, Read, Write};
 
 use primitive_types::U256;
 
+use core::{convert::TryFrom, ops::Deref};
+
+///
+pub const NATIVE_TOKEN_COUNT_MAX: u16 = 256;
+
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -42,5 +47,69 @@ impl Packable for NativeToken {
         let amount = U256::from_little_endian(&<[u8; 32]>::unpack_inner::<R, CHECK>(reader)?);
 
         Ok(Self::new(token_id, amount))
+    }
+}
+
+///
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct NativeTokens(Box<[NativeToken]>);
+
+impl TryFrom<Vec<NativeToken>> for NativeTokens {
+    type Error = Error;
+
+    fn try_from(native_tokens: Vec<NativeToken>) -> Result<Self, Self::Error> {
+        if native_tokens.len() as u16 > NATIVE_TOKEN_COUNT_MAX {
+            return Err(Error::InvalidNativeTokenCount(native_tokens.len() as u16));
+        }
+
+        Ok(Self(native_tokens.into_boxed_slice()))
+    }
+}
+
+impl NativeTokens {
+    /// Creates a new `NativeTokens`.
+    pub fn new(native_tokens: Vec<NativeToken>) -> Result<Self, Error> {
+        Self::try_from(native_tokens)
+    }
+}
+
+impl Deref for NativeTokens {
+    type Target = [NativeToken];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Packable for NativeTokens {
+    type Error = Error;
+
+    fn packed_len(&self) -> usize {
+        0u16.packed_len() + self.0.iter().map(Packable::packed_len).sum::<usize>()
+    }
+
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        (self.0.len() as u16).pack(writer)?;
+        for native_token in self.0.iter() {
+            native_token.pack(writer)?
+        }
+
+        Ok(())
+    }
+
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let native_tokens_len = u16::unpack_inner::<R, CHECK>(reader)?;
+
+        if CHECK && native_tokens_len > NATIVE_TOKEN_COUNT_MAX {
+            return Err(Error::InvalidNativeTokenCount(native_tokens_len));
+        }
+
+        let mut native_tokens = Vec::with_capacity(native_tokens_len as usize);
+        for _ in 0..native_tokens_len {
+            native_tokens.push(NativeToken::unpack_inner::<R, CHECK>(reader)?);
+        }
+
+        Self::new(native_tokens)
     }
 }

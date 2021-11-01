@@ -19,7 +19,7 @@ pub use alias_id::AliasId;
 pub use extended::{ExtendedOutput, ExtendedOutputBuilder};
 pub use feature_block::FeatureBlock;
 pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme};
-pub use native_token::NativeToken;
+pub use native_token::{NativeToken, NativeTokens};
 pub use nft::{NftOutput, NftOutputBuilder};
 pub use nft_id::NftId;
 pub use output_id::{OutputId, OUTPUT_ID_LENGTH};

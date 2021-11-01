@@ -3,7 +3,7 @@
 
 use crate::{
     address::Address,
-    output::{FeatureBlock, NativeToken},
+    output::{FeatureBlock, NativeToken, NativeTokens},
     Error,
 };
 
@@ -103,18 +103,18 @@ impl FoundryOutputBuilder {
     }
 
     ///
-    pub fn finish(self) -> FoundryOutput {
-        FoundryOutput {
+    pub fn finish(self) -> Result<FoundryOutput, Error> {
+        Ok(FoundryOutput {
             address: self.address,
             amount: self.amount,
-            native_tokens: self.native_tokens.into_boxed_slice(),
+            native_tokens: NativeTokens::new(self.native_tokens)?,
             serial_number: self.serial_number,
             token_tag: self.token_tag,
             circulating_supply: self.circulating_supply,
             maximum_supply: self.maximum_supply,
             token_scheme: self.token_scheme,
             feature_blocks: self.feature_blocks.into_boxed_slice(),
-        }
+        })
     }
 }
 
@@ -124,7 +124,7 @@ impl FoundryOutputBuilder {
 pub struct FoundryOutput {
     address: Address,
     amount: u64,
-    native_tokens: Box<[NativeToken]>,
+    native_tokens: NativeTokens,
     serial_number: u32,
     token_tag: [u8; 12],
     circulating_supply: U256,
@@ -147,6 +147,7 @@ impl FoundryOutput {
         maximum_supply: U256,
         token_scheme: TokenScheme,
     ) -> Self {
+        // SAFETY: this can't fail as this is a default builder.
         FoundryOutputBuilder::new(
             address,
             amount,
@@ -157,6 +158,7 @@ impl FoundryOutput {
             token_scheme,
         )
         .finish()
+        .unwrap()
     }
 
     ///
@@ -211,8 +213,7 @@ impl Packable for FoundryOutput {
     fn packed_len(&self) -> usize {
         self.address.packed_len()
             + self.amount.packed_len()
-            + 0u16.packed_len()
-            + self.native_tokens.iter().map(Packable::packed_len).sum::<usize>()
+            + self.native_tokens.packed_len()
             + self.serial_number.packed_len()
             + self.token_tag.packed_len()
             + 32
@@ -225,10 +226,7 @@ impl Packable for FoundryOutput {
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.address.pack(writer)?;
         self.amount.pack(writer)?;
-        (self.native_tokens.len() as u16).pack(writer)?;
-        for native_token in self.native_tokens.iter() {
-            native_token.pack(writer)?
-        }
+        self.native_tokens.pack(writer)?;
         self.serial_number.pack(writer)?;
         self.token_tag.pack(writer)?;
         // SAFETY: Reinterpreting a [u64; 4] as a [u8; 32] is fine since they have the same size.
@@ -247,11 +245,7 @@ impl Packable for FoundryOutput {
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let address = Address::unpack_inner::<R, CHECK>(reader)?;
         let amount = u64::unpack_inner::<R, CHECK>(reader)?;
-        let native_tokens_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut native_tokens = Vec::with_capacity(native_tokens_len);
-        for _ in 0..native_tokens_len {
-            native_tokens.push(NativeToken::unpack_inner::<R, CHECK>(reader)?);
-        }
+        let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
         let serial_number = u32::unpack_inner::<R, CHECK>(reader)?;
         let token_tag = <[u8; 12]>::unpack_inner::<R, CHECK>(reader)?;
         let circulating_supply = U256::from_little_endian(&<[u8; 32]>::unpack_inner::<R, CHECK>(reader)?);
@@ -266,7 +260,7 @@ impl Packable for FoundryOutput {
         Ok(Self {
             address,
             amount,
-            native_tokens: native_tokens.into_boxed_slice(),
+            native_tokens,
             serial_number,
             token_tag,
             circulating_supply,

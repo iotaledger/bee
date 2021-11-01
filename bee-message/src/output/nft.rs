@@ -3,7 +3,7 @@
 
 use crate::{
     address::Address,
-    output::{FeatureBlock, NativeToken, NftId},
+    output::{FeatureBlock, NativeToken, NativeTokens, NftId},
     Error,
 };
 
@@ -57,15 +57,15 @@ impl NftOutputBuilder {
     }
 
     ///
-    pub fn finish(self) -> NftOutput {
-        NftOutput {
+    pub fn finish(self) -> Result<NftOutput, Error> {
+        Ok(NftOutput {
             address: self.address,
             amount: self.amount,
-            native_tokens: self.native_tokens.into_boxed_slice(),
+            native_tokens: NativeTokens::new(self.native_tokens)?,
             nft_id: self.nft_id,
             immutable_metadata: self.immutable_metadata.into_boxed_slice(),
             feature_blocks: self.feature_blocks.into_boxed_slice(),
-        }
+        })
     }
 }
 
@@ -75,7 +75,7 @@ impl NftOutputBuilder {
 pub struct NftOutput {
     address: Address,
     amount: u64,
-    native_tokens: Box<[NativeToken]>,
+    native_tokens: NativeTokens,
     nft_id: NftId,
     immutable_metadata: Box<[u8]>,
     feature_blocks: Box<[FeatureBlock]>,
@@ -87,7 +87,10 @@ impl NftOutput {
 
     /// Creates a new `NftOutput`.
     pub fn new(address: Address, amount: u64, nft_id: NftId, immutable_metadata: Vec<u8>) -> Self {
-        NftOutputBuilder::new(address, amount, nft_id, immutable_metadata).finish()
+        // SAFETY: this can't fail as this is a default builder.
+        NftOutputBuilder::new(address, amount, nft_id, immutable_metadata)
+            .finish()
+            .unwrap()
     }
 
     ///
@@ -127,8 +130,7 @@ impl Packable for NftOutput {
     fn packed_len(&self) -> usize {
         self.address.packed_len()
             + self.amount.packed_len()
-            + 0u16.packed_len()
-            + self.native_tokens.iter().map(Packable::packed_len).sum::<usize>()
+            + self.native_tokens.packed_len()
             + self.nft_id.packed_len()
             + 0u32.packed_len()
             + self.immutable_metadata.len()
@@ -139,10 +141,7 @@ impl Packable for NftOutput {
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.address.pack(writer)?;
         self.amount.pack(writer)?;
-        (self.native_tokens.len() as u16).pack(writer)?;
-        for native_token in self.native_tokens.iter() {
-            native_token.pack(writer)?
-        }
+        self.native_tokens.pack(writer)?;
         self.nft_id.pack(writer)?;
         (self.immutable_metadata.len() as u32).pack(writer)?;
         writer.write_all(&self.immutable_metadata)?;
@@ -157,11 +156,7 @@ impl Packable for NftOutput {
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let address = Address::unpack_inner::<R, CHECK>(reader)?;
         let amount = u64::unpack_inner::<R, CHECK>(reader)?;
-        let native_tokens_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut native_tokens = Vec::with_capacity(native_tokens_len);
-        for _ in 0..native_tokens_len {
-            native_tokens.push(NativeToken::unpack_inner::<R, CHECK>(reader)?);
-        }
+        let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
         let nft_id = NftId::unpack_inner::<R, CHECK>(reader)?;
         let immutable_metadata_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut immutable_metadata = vec![0u8; immutable_metadata_len];
@@ -175,7 +170,7 @@ impl Packable for NftOutput {
         Ok(Self {
             address,
             amount,
-            native_tokens: native_tokens.into_boxed_slice(),
+            native_tokens,
             nft_id,
             immutable_metadata: immutable_metadata.into_boxed_slice(),
             feature_blocks: feature_blocks.into_boxed_slice(),

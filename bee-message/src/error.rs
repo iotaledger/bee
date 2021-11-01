@@ -30,6 +30,7 @@ pub enum Error {
     InvalidInputOutputIndex(u16),
     InvalidMessageLength(usize),
     InvalidMigratedFundsEntryAmount(u64),
+    InvalidNativeTokenCount(u16),
     InvalidOutputKind(u8),
     InvalidParentsCount(usize),
     InvalidPayloadKind(u32),
@@ -103,6 +104,7 @@ impl fmt::Display for Error {
             Error::InvalidMigratedFundsEntryAmount(amount) => {
                 write!(f, "Invalid migrated funds entry amount: {}.", amount)
             }
+            Error::InvalidNativeTokenCount(count) => write!(f, "Invalid native token count: {}.", count),
             Error::InvalidOutputKind(k) => write!(f, "Invalid output kind: {}.", k),
             Error::InvalidParentsCount(count) => {
                 write!(f, "Invalid parents count: {}.", count)

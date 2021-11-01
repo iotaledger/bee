@@ -3,7 +3,7 @@
 
 use crate::{
     address::Address,
-    output::{AliasId, FeatureBlock, NativeToken},
+    output::{AliasId, FeatureBlock, NativeToken, NativeTokens},
     Error,
 };
 
@@ -81,10 +81,10 @@ impl AliasOutputBuilder {
     }
 
     ///
-    pub fn finish(self) -> AliasOutput {
-        AliasOutput {
+    pub fn finish(self) -> Result<AliasOutput, Error> {
+        Ok(AliasOutput {
             amount: self.amount,
-            native_tokens: self.native_tokens.into_boxed_slice(),
+            native_tokens: NativeTokens::new(self.native_tokens)?,
             alias_id: self.alias_id,
             state_controller: self.state_controller,
             governance_controller: self.governance_controller,
@@ -92,7 +92,7 @@ impl AliasOutputBuilder {
             state_metadata: self.state_metadata.into_boxed_slice(),
             foundry_counter: self.foundry_counter.unwrap_or(0),
             feature_blocks: self.feature_blocks.into_boxed_slice(),
-        }
+        })
     }
 }
 
@@ -101,7 +101,7 @@ impl AliasOutputBuilder {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct AliasOutput {
     amount: u64,
-    native_tokens: Box<[NativeToken]>,
+    native_tokens: NativeTokens,
     alias_id: AliasId,
     state_controller: Address,
     governance_controller: Address,
@@ -117,7 +117,10 @@ impl AliasOutput {
 
     /// Creates a new `AliasOutput`.
     pub fn new(amount: u64, alias_id: AliasId, state_controller: Address, governance_controller: Address) -> Self {
-        AliasOutputBuilder::new(amount, alias_id, state_controller, governance_controller).finish()
+        // SAFETY: this can't fail as this is a default builder.
+        AliasOutputBuilder::new(amount, alias_id, state_controller, governance_controller)
+            .finish()
+            .unwrap()
     }
 
     ///
@@ -171,8 +174,7 @@ impl Packable for AliasOutput {
 
     fn packed_len(&self) -> usize {
         self.amount.packed_len()
-            + 0u16.packed_len()
-            + self.native_tokens.iter().map(Packable::packed_len).sum::<usize>()
+            + self.native_tokens.packed_len()
             + self.alias_id.packed_len()
             + self.state_controller.packed_len()
             + self.governance_controller.packed_len()
@@ -186,10 +188,7 @@ impl Packable for AliasOutput {
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.amount.pack(writer)?;
-        (self.native_tokens.len() as u16).pack(writer)?;
-        for native_token in self.native_tokens.iter() {
-            native_token.pack(writer)?
-        }
+        self.native_tokens.pack(writer)?;
         self.alias_id.pack(writer)?;
         self.state_controller.pack(writer)?;
         self.governance_controller.pack(writer)?;
@@ -207,11 +206,7 @@ impl Packable for AliasOutput {
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let amount = u64::unpack_inner::<R, CHECK>(reader)?;
-        let native_tokens_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut native_tokens = Vec::with_capacity(native_tokens_len);
-        for _ in 0..native_tokens_len {
-            native_tokens.push(NativeToken::unpack_inner::<R, CHECK>(reader)?);
-        }
+        let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
         let alias_id = AliasId::unpack_inner::<R, CHECK>(reader)?;
         let state_controller = Address::unpack_inner::<R, CHECK>(reader)?;
         let governance_controller = Address::unpack_inner::<R, CHECK>(reader)?;
@@ -228,7 +223,7 @@ impl Packable for AliasOutput {
 
         Ok(Self {
             amount,
-            native_tokens: native_tokens.into_boxed_slice(),
+            native_tokens,
             alias_id,
             state_controller,
             governance_controller,
