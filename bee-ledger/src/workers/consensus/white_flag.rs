@@ -91,8 +91,8 @@ fn apply_regular_essence<B: StorageBackend>(
             // Output::SignatureLockedDustAllowance(output) => {
             //     consumed_amount = consumed_amount
             //         .checked_add(output.amount())
-            //         .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount as u128 + output.amount() as u128))?;
-            //     balance_diffs.amount_sub(*output.address(), output.amount())?;
+            //         .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount as u128 + output.amount() as
+            // u128))?;     balance_diffs.amount_sub(*output.address(), output.amount())?;
             //     balance_diffs.dust_allowance_sub(*output.address(), output.amount())?;
             //
             //     if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {

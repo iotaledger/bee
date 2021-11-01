@@ -65,6 +65,18 @@ impl Output {
             Self::Nft(_) => NftOutput::KIND,
         }
     }
+
+    ///
+    pub fn amount(&self) -> u64 {
+        match self {
+            Self::Simple(output) => output.amount(),
+            Self::Treasury(output) => output.amount(),
+            Self::Extended(output) => output.amount(),
+            Self::Alias(output) => output.amount(),
+            Self::Foundry(output) => output.amount(),
+            Self::Nft(output) => output.amount(),
+        }
+    }
 }
 
 impl Packable for Output {

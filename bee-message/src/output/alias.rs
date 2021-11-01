@@ -3,8 +3,7 @@
 
 use crate::{
     address::Address,
-    output::AliasId,
-    output::{FeatureBlock, NativeToken},
+    output::{AliasId, FeatureBlock, NativeToken},
     Error,
 };
 
