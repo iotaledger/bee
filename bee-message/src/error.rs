@@ -37,6 +37,7 @@ pub enum Error {
     InvalidPowScoreValues(u32, u32),
     InvalidReceiptFundsCount(u16),
     InvalidReferenceIndex(u16),
+    InvalidReturnAmountFeatureBlock(u64),
     InvalidSignature,
     InvalidSignatureKind(u8),
     InvalidTailTransactionHash,
@@ -117,6 +118,9 @@ impl fmt::Display for Error {
             ),
             Error::InvalidReceiptFundsCount(count) => write!(f, "Invalid receipt funds count: {}.", count),
             Error::InvalidReferenceIndex(index) => write!(f, "Invalid reference index: {}.", index),
+            Error::InvalidReturnAmountFeatureBlock(amount) => {
+                write!(f, "Invalid return amount feature block: {}.", amount)
+            }
             Error::InvalidSignature => write!(f, "Invalid signature provided."),
             Error::InvalidSignatureKind(k) => write!(f, "Invalid signature kind: {}.", k),
             Error::InvalidTailTransactionHash => write!(f, "Invalid tail transaction hash."),
