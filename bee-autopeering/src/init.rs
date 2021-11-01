@@ -4,7 +4,7 @@
 use crate::{
     command::{Command, CommandTx},
     config::AutopeeringConfig,
-    delay::{DelayFactoryBuilder, DelayFactoryMode},
+    delay::{self, DelayFactoryBuilder, DelayFactoryMode},
     discovery::{
         manager::{
             DiscoveryManager, DiscoveryManagerConfig, DEFAULT_QUERY_INTERVAL_SECS, DEFAULT_REVERIFY_INTERVAL_SECS,
@@ -28,12 +28,14 @@ use crate::{
         peerstore::{self, InMemoryPeerStore, PeerStore},
         PeerId,
     },
+    peering::update::UpdateContext,
     peering::{
         filter::ExclusionFilter,
         manager::{
             InboundNeighborhood, OutboundNeighborhood, PeeringManager, PeeringManagerConfig, SaltUpdateContext,
             SALT_UPDATE_SECS,
         },
+        update::{self, OPEN_OUTBOUND_NBH_UPDATE_SECS},
         NeighborValidator,
     },
     request::{self, RequestManager, EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS},
@@ -184,14 +186,14 @@ where
     // Create neighborhoods and neighbor candidate filter.
     let inbound_nbh = InboundNeighborhood::new();
     let outbound_nbh = OutboundNeighborhood::new();
-    let filter = ExclusionFilter::new();
+    let excl_filter = ExclusionFilter::new();
 
     // Update salts regularly.
     let ctx = SaltUpdateContext::new(
         local.clone(),
-        filter,
-        inbound_nbh,
-        outbound_nbh,
+        excl_filter.clone(),
+        inbound_nbh.clone(),
+        outbound_nbh.clone(),
         server_tx.clone(),
         event_tx.clone(),
     );
@@ -200,16 +202,16 @@ where
     task_mngr.repeat(cmd, delay, ctx, "Salt-Update", MAX_SHUTDOWN_PRIORITY);
 
     // Reverify old peers and discovery new peers.
-    let ctx = QueryContext::new(
-        local,
-        peerstore,
-        request_mngr,
-        master_peers,
-        active_peers,
-        replacements,
-        server_tx,
-        event_tx,
-    );
+    let ctx = QueryContext {
+        local: local.clone(),
+        peerstore: peerstore.clone(),
+        request_mngr: request_mngr.clone(),
+        master_peers: master_peers.clone(),
+        active_peers: active_peers.clone(),
+        replacements: replacements.clone(),
+        server_tx: server_tx.clone(),
+        event_tx: event_tx.clone(),
+    };
     let cmd = query::do_reverify();
     let delay = iter::repeat(Duration::from_secs(DEFAULT_REVERIFY_INTERVAL_SECS));
     task_mngr.repeat(cmd, delay, ctx.clone(), "Reverification", MAX_SHUTDOWN_PRIORITY);
@@ -217,6 +219,21 @@ where
     let cmd = query::do_query();
     let delay = iter::repeat(Duration::from_secs(DEFAULT_QUERY_INTERVAL_SECS));
     task_mngr.repeat(cmd, delay, ctx, "Discovery", MAX_SHUTDOWN_PRIORITY);
+
+    let ctx = UpdateContext {
+        local,
+        peerstore,
+        request_mngr,
+        active_peers,
+        excl_filter,
+        inbound_nbh,
+        outbound_nbh,
+        server_tx,
+        event_tx,
+    };
+    let cmd = update::do_update();
+    let delay = delay::ManualDelayFactory::new(OPEN_OUTBOUND_NBH_UPDATE_SECS);
+    task_mngr.repeat(cmd, delay, ctx, "Outbound neighborhood update", MAX_SHUTDOWN_PRIORITY);
 
     // TODO: Should we reset the verified_count if last verification timestamp is expired?
 

@@ -8,7 +8,7 @@ use tokio::{sync::oneshot, task::JoinHandle, time};
 
 use std::{
     any::Any,
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     future::Future,
     hash::Hasher,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
@@ -24,7 +24,7 @@ type ShutdownTx = oneshot::Sender<()>;
 
 pub(crate) type Repeat<T: Send + Sync> = Box<dyn for<'a> Fn(&'a T) + Send>;
 
-/// A type implementing `Runnable` executes code whenever
+/// Represents types driving an event loop.
 #[async_trait::async_trait]
 pub(crate) trait Runnable {
     const NAME: &'static str;
@@ -39,7 +39,7 @@ pub(crate) struct TaskManager<const N: usize> {
     shutdown_handles: HashMap<String, JoinHandle<()>>,
     shutdown_order: PriorityQueue<String, u8>,
     shutdown_senders: HashMap<String, ShutdownTx>,
-    shutdown_fn: HashMap<String, Box<dyn Any + Send>>,
+    // shutdown_fn: HashSet<Box<dyn Fn(Box<dyn Any + Send>) + Send>>,
 }
 
 impl<const N: usize> TaskManager<N> {
@@ -48,10 +48,10 @@ impl<const N: usize> TaskManager<N> {
             shutdown_order: PriorityQueue::with_capacity(N),
             shutdown_senders: HashMap::with_capacity(N),
             shutdown_handles: HashMap::with_capacity(N),
-            shutdown_fn: HashMap::default(),
         }
     }
 
+    /// Runs a `Runnable`, which is a type that features an event loop.
     pub(crate) fn run<R>(&mut self, runnable: R)
     where
         R: Runnable<ShutdownSignal = ShutdownRx> + 'static,
@@ -68,6 +68,7 @@ impl<const N: usize> TaskManager<N> {
         self.shutdown_order.push(R::NAME.into(), R::SHUTDOWN_PRIORITY);
     }
 
+    /// Returns a shutdown signal handle registrees can use to stop their event loops.
     pub(crate) fn shutdown_rx(&mut self, name: &str, priority: u8) -> ShutdownRx {
         let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
         self.shutdown_senders.insert(name.into(), shutdown_tx);
@@ -77,6 +78,8 @@ impl<const N: usize> TaskManager<N> {
         shutdown_rx
     }
 
+    /// Repeats a command in certain intervals provided a context `T`. Will be shut down gracefully with the rest of
+    /// spawned task by specifying a `name` and a `shutdown_priority`.
     pub(crate) fn repeat<T, D>(&mut self, cmd: Repeat<T>, mut delay: D, ctx: T, name: &str, shutdown_priority: u8)
     where
         T: Send + Sync + 'static,
@@ -101,16 +104,19 @@ impl<const N: usize> TaskManager<N> {
         self.shutdown_order.push(name.into(), shutdown_priority);
     }
 
-    pub(crate) fn add_shutdown_fn(&mut self, b: Box<dyn Fn(&ActivePeersList)>) {
-        todo!()
-    }
+    // /// A shutdown procedure executed after all spawend tasks have been gracefully shut down. Useful to write data to
+    // /// the storage layer at the end of the program's lifetime.
+    // pub(crate) fn add_shutdown_fn(&mut self, b: Box<dyn Fn(&Box<dyn Any + Send>) + Send>) {
+    //     self.shutdown_fn.insert(b);
+    // }
 
+    /// Executes the system shutdown.
     pub(crate) async fn shutdown(self) {
         let TaskManager {
             mut shutdown_order,
             shutdown_handles: mut runnable_handles,
             mut shutdown_senders,
-            shutdown_fn,
+            // shutdown_fn,
         } = self;
 
         // Send the shutdown signal to all receivers.
@@ -142,9 +148,7 @@ impl<const N: usize> TaskManager<N> {
         .await;
 
         log::debug!("Dumping data to storage...");
-        for (type_name, f) in shutdown_fn {
-            // TODO: flush data into storage
-        }
+        // TODO: write data that should be persisted to storage
         log::debug!("Finished.");
     }
 }

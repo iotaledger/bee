@@ -11,6 +11,7 @@ use super::{
 use crate::{
     command::CommandTx,
     config::AutopeeringConfig,
+    delay::ManualDelayFactory,
     discovery,
     event::{Event, EventTx},
     hash,
@@ -31,10 +32,8 @@ use crate::{
 
 use std::{fmt::Display, net::SocketAddr, time::Duration, vec};
 
-// Note: Ensures we have always valid salts.
+/// Salt update interval.
 pub(crate) const SALT_UPDATE_SECS: Duration = Duration::from_secs(SALT_LIFETIME_SECS.as_secs() - SECOND);
-const OUTBOUND_UPDATE_INTERVAL_SECS: u64 = 1 * SECOND;
-const FULL_OUTBOUND_UPDATE_INTERVAL_SECS: u64 = 1 * MINUTE;
 
 pub(crate) type InboundNeighborhood = Neighborhood<SIZE_INBOUND, true>;
 pub(crate) type OutboundNeighborhood = Neighborhood<SIZE_OUTBOUND, false>;
@@ -549,7 +548,7 @@ pub(crate) fn send_drop_peering_request_to_addr(
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Publishes the corresponding peering event [`IncomingPeering`], or [`OutgoingPeering`].
-fn publish_peering_event(peer: Peer, dir: Direction, status: Status, local: &Local, event_tx: EventTx) {
+pub(crate) fn publish_peering_event(peer: Peer, dir: Direction, status: Status, local: &Local, event_tx: &EventTx) {
     use Direction::*;
 
     log::debug!(

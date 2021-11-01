@@ -163,31 +163,11 @@ impl AsRef<Peer> for Peer {
     }
 }
 
-// // returns whether the local peer has recently verified the given peer.
-// pub(crate) fn is_verified(last_verif_res: Option<Timestamp>) -> bool {
-//     if let Some(last_verif_res) = last_verif_res {
-//         if let Some(since) = time::since(last_verif_res) {
-//             since <= VERIFICATION_EXPIRATION_SECS
-//         } else {
-//             false
-//         }
-//     } else {
-//         false
-//     }
-// }
-
-// // returns whether the given peer has recently verified the local peer.
-// pub(crate) fn has_verified(last_verif_req: Option<Timestamp>) -> bool {
-//     if let Some(last_verif_req) = last_verif_req {
-//         if let Some(since) = time::since(last_verif_req) {
-//             since <= VERIFICATION_EXPIRATION_SECS
-//         } else {
-//             false
-//         }
-//     } else {
-//         false
-//     }
-// }
+impl AsRef<PeerId> for Peer {
+    fn as_ref(&self) -> &PeerId {
+        self.peer_id()
+    }
+}
 
 // Hive.go: whether the peer has recently done an endpoint proof
 pub(crate) fn is_verified<S: PeerStore>(peer_id: &PeerId, peerstore: &S) -> bool {

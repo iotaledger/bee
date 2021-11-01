@@ -265,20 +265,6 @@ impl<const N: usize, const INBOUND: bool> fmt::Display for NeighborhoodInner<N, 
     }
 }
 
-// // Allows us to iterate the neighbors in the neighborhood with a for-loop.
-// impl<'a, const N: usize, const INBOUND: bool> IntoIterator for &'a NeighborhoodInner<N, INBOUND> {
-//     type Item = &'a Peer;
-//     type IntoIter = vec::IntoIter<Self::Item>;
-
-//     fn into_iter(self) -> Self::IntoIter {
-//         self.neighbors
-//             .iter()
-//             .map(|pd| pd.peer())
-//             .collect::<Vec<_>>()
-//             .into_iter()
-//     }
-// }
-
 // hive.go:
 // returns the distance (uint32) between x and y by xoring the hash of x and (y + salt):
 // xor( hash(x), hash(y+salt) )[:4] as little-endian uint32
@@ -308,47 +294,6 @@ fn xor<const N: usize>(a: [u8; N], b: [u8; N]) -> [u8; N] {
         .for_each(|(i, (a, b))| xored[i] = a ^ b);
 
     xored
-}
-
-// Outbound updater => impls Iterator and Runnable to produce a changeable delay
-
-pub(crate) struct OutboundUpdater {
-    curr_delay: Duration,
-    update_rx: Receiver<Duration>,
-}
-
-#[async_trait::async_trait]
-impl crate::task::Runnable for OutboundUpdater {
-    const NAME: &'static str = "OutboundUpdater";
-    const SHUTDOWN_PRIORITY: u8 = MAX_SHUTDOWN_PRIORITY;
-
-    type ShutdownSignal = ShutdownRx;
-
-    async fn run(self, shutdown_rx: Self::ShutdownSignal) {
-        let OutboundUpdater {
-            curr_delay,
-            mut update_rx,
-        } = self;
-
-        tokio::select! {
-            _ = shutdown_rx => {
-                todo!()
-            }
-            o = (&mut update_rx).recv() => {
-                if let Some(delay) = o {
-                    todo!()
-                }
-            }
-        }
-    }
-}
-
-impl Iterator for OutboundUpdater {
-    type Item = Duration;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(self.curr_delay)
-    }
 }
 
 #[cfg(test)]

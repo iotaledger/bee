@@ -93,6 +93,12 @@ impl fmt::Display for PeerId {
     }
 }
 
+impl AsRef<PeerId> for PeerId {
+    fn as_ref(&self) -> &PeerId {
+        self
+    }
+}
+
 impl Into<libp2p_core::PeerId> for PeerId {
     fn into(self) -> libp2p_core::PeerId {
         let PeerId {

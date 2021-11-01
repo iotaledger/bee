@@ -7,8 +7,11 @@ use rand::{thread_rng, Rng as _};
 
 use std::{
     future::Future,
+    sync::atomic::{AtomicU64, Ordering},
     time::{Duration, Instant},
 };
+
+pub(crate) type Delay = Duration;
 
 #[derive(Default)]
 pub(crate) struct DelayFactoryBuilder {
@@ -71,7 +74,7 @@ pub(crate) struct DelayFactory {
 }
 
 impl Iterator for DelayFactory {
-    type Item = Duration;
+    type Item = Delay;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.curr_count >= self.max_count {
@@ -99,7 +102,7 @@ impl Iterator for DelayFactory {
                     thread_rng().gen_range(((next_interval_millis as f32 * self.jitter) as u64)..next_interval_millis)
             }
 
-            Some(Duration::from_millis(next_interval_millis))
+            Some(Delay::from_millis(next_interval_millis))
         }
     }
 }
@@ -118,6 +121,38 @@ pub(crate) enum DelayFactoryMode {
 impl Default for DelayFactoryMode {
     fn default() -> Self {
         Self::Zero
+    }
+}
+
+pub(crate) struct ManualDelayFactory(AtomicU64);
+
+impl ManualDelayFactory {
+    pub const fn new(initial_delay: Duration) -> Self {
+        Self(AtomicU64::new(delay_to_u64(initial_delay)))
+    }
+
+    /// Defines the delays produced by the factory.
+    ///
+    /// There's no corresponding `get` method. Use the `next` method ([`Iterator`] trait impl) to access them.
+    pub fn set(&self, delay: Delay) {
+        self.0.store(delay_to_u64(delay), Ordering::Relaxed);
+    }
+}
+
+const fn delay_to_u64(delay: Delay) -> u64 {
+    // Type cast: for all practical purposes this should be fine.
+    delay.as_millis() as u64
+}
+
+const fn u64_to_delay(delay: u64) -> Delay {
+    Delay::from_millis(delay)
+}
+
+impl Iterator for ManualDelayFactory {
+    type Item = Delay;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(u64_to_delay(self.0.load(Ordering::Relaxed)))
     }
 }
 

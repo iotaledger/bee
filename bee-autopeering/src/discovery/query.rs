@@ -23,68 +23,16 @@ use tokio::sync::mpsc::Receiver;
 
 use std::{collections::VecDeque, time::Duration};
 
-// A temporary test strategy.
-pub(crate) fn roundrobin_verification() -> Repeat<(ActivePeersList, CommandTx)> {
-    Box::new(|(active_peers, command_tx)| {
-        if let Some(peer_entry) = active_peers.read().get_newest() {
-            let peer_id = peer_entry.peer_id().clone();
-
-            command_tx
-                .send(Command::SendVerificationRequest { peer_id })
-                .expect("error sending command");
-        }
-
-        active_peers.write().rotate_forwards();
-    })
-}
-
-// A temporary test strategy.
-pub(crate) fn oldest_discovery() -> Repeat<(ActivePeersList, CommandTx)> {
-    Box::new(|(active_peers, command_tx)| {
-        if let Some(peer_entry) = active_peers.read().get_oldest() {
-            let peer_id = peer_entry.peer_id().clone();
-
-            command_tx
-                .send(Command::SendDiscoveryRequest { peer_id })
-                .expect("error sending command");
-        }
-    })
-}
-
 #[derive(Clone)]
 pub(crate) struct QueryContext<S: PeerStore> {
-    local: Local,
-    peerstore: S,
-    request_mngr: RequestManager<S>,
-    master_peers: MasterPeersList,
-    active_peers: ActivePeersList,
-    replacements: ReplacementList,
-    server_tx: ServerTx,
-    event_tx: EventTx,
-}
-
-impl<S: PeerStore> QueryContext<S> {
-    pub(crate) fn new(
-        local: Local,
-        peerstore: S,
-        request_mngr: RequestManager<S>,
-        master_peers: MasterPeersList,
-        active_peers: ActivePeersList,
-        replacements: ReplacementList,
-        server_tx: ServerTx,
-        event_tx: EventTx,
-    ) -> Self {
-        Self {
-            local,
-            peerstore,
-            request_mngr,
-            master_peers,
-            active_peers,
-            replacements,
-            server_tx,
-            event_tx,
-        }
-    }
+    pub(crate) local: Local,
+    pub(crate) peerstore: S,
+    pub(crate) request_mngr: RequestManager<S>,
+    pub(crate) master_peers: MasterPeersList,
+    pub(crate) active_peers: ActivePeersList,
+    pub(crate) replacements: ReplacementList,
+    pub(crate) server_tx: ServerTx,
+    pub(crate) event_tx: EventTx,
 }
 
 // Hive.go: pings the oldest active peer.

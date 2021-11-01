@@ -126,21 +126,15 @@ impl MasterPeersList {
     }
 }
 
-impl AsRef<PeerId> for PeerId {
-    fn as_ref(&self) -> &PeerId {
-        self
-    }
-}
-
-impl AsRef<PeerId> for Peer {
-    fn as_ref(&self) -> &PeerId {
-        self.peer_id()
-    }
-}
-
 impl AsRef<PeerId> for ActivePeerEntry {
     fn as_ref(&self) -> &PeerId {
         self.peer.peer_id()
+    }
+}
+
+impl AsRef<Peer> for ActivePeerEntry {
+    fn as_ref(&self) -> &Peer {
+        &self.peer
     }
 }
 
