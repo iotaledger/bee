@@ -14,6 +14,7 @@ use primitive_types::U256;
 ///
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum TokenScheme {
     ///
     Simple = 0,
