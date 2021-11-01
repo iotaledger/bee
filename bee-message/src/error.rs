@@ -12,7 +12,7 @@ use core::fmt;
 #[allow(missing_docs)]
 pub enum Error {
     CryptoError(CryptoError),
-    DuplicateSignature(usize),
+    DuplicateSignature(u16),
     DuplicateUtxo(UtxoInput),
     InputUnlockBlockCountMismatch(usize, usize),
     InvalidAccumulatedOutput(u128),
@@ -44,7 +44,9 @@ pub enum Error {
     InvalidTreasuryAmount(u64),
     InvalidUnlockBlockCount(u16),
     InvalidUnlockBlockKind(u8),
-    InvalidUnlockBlockReference(usize),
+    InvalidUnlockBlockReference(u16),
+    InvalidUnlockBlockAlias(u16),
+    InvalidUnlockBlockNft(u16),
     Io(std::io::Error),
     MigratedFundsNotSorted,
     MilestoneInvalidPublicKeyCount(usize),
@@ -124,6 +126,12 @@ impl fmt::Display for Error {
             Error::InvalidUnlockBlockKind(k) => write!(f, "Invalid unlock block kind: {}.", k),
             Error::InvalidUnlockBlockReference(index) => {
                 write!(f, "Invalid unlock block reference: {0}", index)
+            }
+            Error::InvalidUnlockBlockAlias(index) => {
+                write!(f, "Invalid unlock block alias: {0}", index)
+            }
+            Error::InvalidUnlockBlockNft(index) => {
+                write!(f, "Invalid unlock block nft: {0}", index)
             }
             Error::Io(e) => write!(f, "I/O error happened: {}.", e),
             Error::MigratedFundsNotSorted => {

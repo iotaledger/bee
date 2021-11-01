@@ -120,8 +120,13 @@ impl UnlockBlocks {
 
         let mut seen_signatures = HashSet::new();
 
-        for (index, unlock_block) in unlock_blocks.iter().enumerate() {
+        for (index, unlock_block) in (0u16..).zip(unlock_blocks.iter()) {
             match unlock_block {
+                UnlockBlock::Signature(s) => {
+                    if !seen_signatures.insert(s) {
+                        return Err(Error::DuplicateSignature(index));
+                    }
+                }
                 UnlockBlock::Reference(r) => {
                     if index == 0
                         || r.index() >= index as u16
@@ -130,16 +135,15 @@ impl UnlockBlocks {
                         return Err(Error::InvalidUnlockBlockReference(index));
                     }
                 }
-                UnlockBlock::Signature(s) => {
-                    if !seen_signatures.insert(s) {
-                        return Err(Error::DuplicateSignature(index));
+                UnlockBlock::Alias(a) => {
+                    if index == 0 || a.index() >= index as u16 {
+                        return Err(Error::InvalidUnlockBlockAlias(index));
                     }
                 }
-                UnlockBlock::Alias(_a) => {
-                    // TODO
-                }
-                UnlockBlock::Nft(_n) => {
-                    // TODO
+                UnlockBlock::Nft(n) => {
+                    if index == 0 || n.index() >= index as u16 {
+                        return Err(Error::InvalidUnlockBlockNft(index));
+                    }
                 }
             }
         }
