@@ -10,8 +10,8 @@ pub use migrated_funds_entry::{MigratedFundsEntry, VALID_MIGRATED_FUNDS_ENTRY_AM
 pub use tail_transaction_hash::{TailTransactionHash, TAIL_TRANSACTION_HASH_LEN};
 
 use crate::{
-    constants::INPUT_OUTPUT_COUNT_RANGE,
     milestone::MilestoneIndex,
+    output::OUTPUT_COUNT_RANGE,
     payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error,
 };
@@ -24,7 +24,7 @@ use bee_common::{
 use core::ops::RangeInclusive;
 use std::collections::HashMap;
 
-const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = INPUT_OUTPUT_COUNT_RANGE;
+const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<u16> = OUTPUT_COUNT_RANGE;
 
 /// Receipt is a listing of migrated funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -47,8 +47,8 @@ impl ReceiptPayload {
         funds: Vec<MigratedFundsEntry>,
         transaction: Payload,
     ) -> Result<Self, Error> {
-        if !MIGRATED_FUNDS_ENTRY_RANGE.contains(&funds.len()) {
-            return Err(Error::InvalidReceiptFundsCount(funds.len()));
+        if !MIGRATED_FUNDS_ENTRY_RANGE.contains(&(funds.len() as u16)) {
+            return Err(Error::InvalidReceiptFundsCount(funds.len() as u16));
         }
 
         if !matches!(transaction, Payload::TreasuryTransaction(_)) {

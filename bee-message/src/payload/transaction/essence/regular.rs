@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    constants::{INPUT_OUTPUT_COUNT_RANGE, IOTA_SUPPLY},
-    input::Input,
-    output::Output,
+    constants::IOTA_SUPPLY,
+    input::{Input, INPUT_COUNT_RANGE},
+    output::{Output, OUTPUT_COUNT_RANGE},
     payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error,
 };
@@ -73,24 +73,24 @@ impl Packable for RegularEssence {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let inputs_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
+        let inputs_len = u16::unpack_inner::<R, CHECK>(reader)?;
 
-        if CHECK && !INPUT_OUTPUT_COUNT_RANGE.contains(&inputs_len) {
+        if CHECK && !INPUT_COUNT_RANGE.contains(&inputs_len) {
             return Err(Error::InvalidInputOutputCount(inputs_len));
         }
 
-        let mut inputs = Vec::with_capacity(inputs_len);
+        let mut inputs = Vec::with_capacity(inputs_len as usize);
         for _ in 0..inputs_len {
             inputs.push(Input::unpack_inner::<R, CHECK>(reader)?);
         }
 
-        let outputs_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
+        let outputs_len = u16::unpack_inner::<R, CHECK>(reader)?;
 
-        if CHECK && !INPUT_OUTPUT_COUNT_RANGE.contains(&outputs_len) {
+        if CHECK && !OUTPUT_COUNT_RANGE.contains(&outputs_len) {
             return Err(Error::InvalidInputOutputCount(outputs_len));
         }
 
-        let mut outputs = Vec::with_capacity(outputs_len);
+        let mut outputs = Vec::with_capacity(outputs_len as usize);
         for _ in 0..outputs_len {
             outputs.push(Output::unpack_inner::<R, CHECK>(reader)?);
         }
@@ -151,12 +151,12 @@ impl RegularEssenceBuilder {
 
     /// Finishes a `RegularEssenceBuilder` into a `RegularEssence`.
     pub fn finish(self) -> Result<RegularEssence, Error> {
-        if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.inputs.len()) {
-            return Err(Error::InvalidInputOutputCount(self.inputs.len()));
+        if !INPUT_COUNT_RANGE.contains(&(self.inputs.len() as u16)) {
+            return Err(Error::InvalidInputOutputCount(self.inputs.len() as u16));
         }
 
-        if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.outputs.len()) {
-            return Err(Error::InvalidInputOutputCount(self.outputs.len()));
+        if !OUTPUT_COUNT_RANGE.contains(&(self.outputs.len() as u16)) {
+            return Err(Error::InvalidInputOutputCount(self.outputs.len() as u16));
         }
 
         if !matches!(self.payload, None | Some(Payload::Indexation(_))) {

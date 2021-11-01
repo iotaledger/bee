@@ -11,12 +11,24 @@ pub use nft::NftUnlock;
 pub use reference::ReferenceUnlock;
 pub use signature::SignatureUnlock;
 
-use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, Error};
+use crate::{
+    input::{INPUT_COUNT_MAX, INPUT_COUNT_RANGE, INPUT_INDEX_MAX, INPUT_INDEX_RANGE},
+    Error,
+};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::ops::Deref;
+use core::ops::{Deref, RangeInclusive};
 use std::collections::HashSet;
+
+/// The maximum number of unlock blocks of a transaction.
+pub const UNLOCK_BLOCK_COUNT_MAX: u16 = INPUT_COUNT_MAX; //127
+/// The range of valid numbers of unlock blocks of a transaction.
+pub const UNLOCK_BLOCK_COUNT_RANGE: RangeInclusive<u16> = INPUT_COUNT_RANGE; // [1..127]
+/// The maximum index of unlock blocks of a transaction.
+pub const UNLOCK_BLOCK_INDEX_MAX: u16 = INPUT_INDEX_MAX; // 126
+/// The range of valid indices of unlock blocks of a transaction.
+pub const UNLOCK_BLOCK_INDEX_RANGE: RangeInclusive<u16> = INPUT_INDEX_RANGE; // [0..126]
 
 /// Defines the mechanism by which a transaction input is authorized to be consumed.
 #[derive(Clone, Debug, Eq, PartialEq, Hash, derive_more::From)]
@@ -102,8 +114,8 @@ pub struct UnlockBlocks(Box<[UnlockBlock]>);
 impl UnlockBlocks {
     /// Creates a new `UnlockBlocks`.
     pub fn new(unlock_blocks: Vec<UnlockBlock>) -> Result<Self, Error> {
-        if !UNLOCK_BLOCK_COUNT_RANGE.contains(&unlock_blocks.len()) {
-            return Err(Error::InvalidUnlockBlockCount(unlock_blocks.len()));
+        if !UNLOCK_BLOCK_COUNT_RANGE.contains(&(unlock_blocks.len() as u16)) {
+            return Err(Error::InvalidUnlockBlockCount(unlock_blocks.len() as u16));
         }
 
         let mut seen_signatures = HashSet::new();
@@ -171,13 +183,13 @@ impl Packable for UnlockBlocks {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let unlock_blocks_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
+        let unlock_blocks_len = u16::unpack_inner::<R, CHECK>(reader)?;
 
         if CHECK && !UNLOCK_BLOCK_COUNT_RANGE.contains(&unlock_blocks_len) {
             return Err(Error::InvalidUnlockBlockCount(unlock_blocks_len));
         }
 
-        let mut unlock_blocks = Vec::with_capacity(unlock_blocks_len);
+        let mut unlock_blocks = Vec::with_capacity(unlock_blocks_len as usize);
         for _ in 0..unlock_blocks_len {
             unlock_blocks.push(UnlockBlock::unpack_inner::<R, CHECK>(reader)?);
         }

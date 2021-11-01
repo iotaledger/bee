@@ -31,6 +31,17 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
+use core::ops::RangeInclusive;
+
+/// The maximum number of outputs of a transaction.
+pub const OUTPUT_COUNT_MAX: u16 = 127;
+/// The range of valid numbers of outputs of a transaction .
+pub const OUTPUT_COUNT_RANGE: RangeInclusive<u16> = 1..=OUTPUT_COUNT_MAX; //[1..127]
+/// The maximum index of outputs of a transaction.
+pub const OUTPUT_INDEX_MAX: u16 = OUTPUT_COUNT_MAX - 1; //126
+/// The range of valid indices of outputs of a transaction .
+pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; //[0..126]
+
 /// A generic output that can represent different types defining the deposit of funds.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(

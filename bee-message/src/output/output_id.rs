@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    constants::INPUT_OUTPUT_INDEX_RANGE,
+    output::OUTPUT_INDEX_RANGE,
     payload::transaction::{TransactionId, TRANSACTION_ID_LENGTH},
     Error,
 };
@@ -24,7 +24,7 @@ pub struct OutputId {
 impl OutputId {
     /// Creates a new `OutputId`.
     pub fn new(transaction_id: TransactionId, index: u16) -> Result<Self, Error> {
-        if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
+        if !OUTPUT_INDEX_RANGE.contains(&index) {
             return Err(Error::InvalidInputOutputIndex(index));
         }
 
