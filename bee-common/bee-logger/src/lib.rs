@@ -9,7 +9,6 @@ mod config;
 
 pub use config::{LoggerConfig, LoggerConfigBuilder, LoggerOutputConfig, LoggerOutputConfigBuilder};
 
-use chrono::Local;
 use fern::{
     colors::{Color, ColoredLevelConfig},
     Dispatch,
@@ -43,7 +42,7 @@ pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
         ($target:expr, $level:expr, $message:expr) => {
             format_args!(
                 "{} {:target_width$} {:level_width$} {}",
-                Local::now().format("%Y-%m-%d %H:%M:%S"),
+                bee_time::format(&bee_time::now_utc()),
                 $target,
                 $level,
                 $message,
