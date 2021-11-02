@@ -68,9 +68,7 @@ impl Sponge for UnrolledCurlP81 {
     }
 
     fn absorb(&mut self, input: &Trits) -> Result<(), Self::Error> {
-        if input.is_empty() || input.len() % HASH_LENGTH != 0 {
-            panic!("trits slice length must be multiple of {}", HASH_LENGTH);
-        }
+        assert!(!(input.is_empty() || input.len() % HASH_LENGTH != 0), "trits slice length must be multiple of {}", HASH_LENGTH);
 
         if let SpongeDirection::Squeeze = self.direction {
             panic!("absorb after squeeze");
