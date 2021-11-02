@@ -57,9 +57,21 @@ macro_rules! bounded {
             const MAX: $ty = MAX;
         }
 
+        impl<const MIN: $ty, const MAX: $ty> $wrapper<MIN, MAX> {
+            /// Creates a bounded integer without checking wether the value is in-bounds.
+            pub unsafe fn new_unchecked(value: $ty) -> Self {
+                debug_assert!((value >= MIN) && (value <= MAX));
+
+                Self(value)
+            }
+        }
+
+        /// This implementation returns the closest bounded integer to zero.
         impl<const MIN: $ty, const MAX: $ty> Default for $wrapper<MIN, MAX> {
             fn default() -> Self {
-                Self(MIN)
+                // SAFETY: this value is larger or equal than `MIN` and smaller or equal then
+                // `MAX` by construction.
+                unsafe { Self::new_unchecked(0.min(MAX).max(MIN)) }
             }
         }
 
@@ -76,7 +88,8 @@ macro_rules! bounded {
 
             fn try_from(value: $ty) -> Result<Self, Self::Error> {
                 if (MIN..=MAX).contains(&value) {
-                    Ok(Self(value))
+                    // SAFETY: We just checked that the value is in-bounds.
+                    Ok(unsafe { Self::new_unchecked(value) })
                 } else {
                     Err($error(value))
                 }
