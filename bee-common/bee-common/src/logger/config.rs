@@ -177,4 +177,24 @@ impl LoggerConfig {
     pub fn build() -> LoggerConfigBuilder {
         LoggerConfigBuilder::default()
     }
+
+    /// Returns the color flag of the `LoggerConfig`.
+    pub fn color_enabled(&self) -> bool {
+        self.color_enabled
+    }
+
+    /// Returns the width of the target section of the `LoggerConfig`.
+    pub fn target_width(&self) -> usize {
+        self.target_width
+    }
+
+    /// Returns the width of the level section of the `LoggerConfig`.
+    pub fn level_width(&self) -> usize {
+        self.level_width
+    }
+
+    /// Returns the outputs of the `LoggerConfig`.
+    pub fn outputs(&self) -> &[LoggerOutputConfig] {
+        &self.outputs
+    }
 }
