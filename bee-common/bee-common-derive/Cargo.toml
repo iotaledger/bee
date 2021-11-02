@@ -1,18 +1,18 @@
 [package]
 name = "bee-common-derive"
 version = "0.1.1-alpha"
-authors = ["IOTA Stiftung"]
+authors = [ "IOTA Stiftung" ]
 edition = "2018"
 description = "Derive macros for the bee-common crate"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "common"]
+keywords = [ "iota", "tangle", "bee", "framework", "common" ]
 homepage = "https://www.iota.org"
 
 [lib]
 proc-macro = true
 
 [dependencies]
-quote = "1.0"
-syn = "1.0"
+quote = { version = "1.0.10", default-features = false }
+syn = { version = "1.0.80", default-features = false, features = [ "full", "extra-traits", "parsing", "printing", "derive", "proc-macro", "clone-impls" ] }

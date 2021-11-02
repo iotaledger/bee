@@ -10,6 +10,10 @@ use std::borrow::Cow;
 
 /// Default value for the color flag.
 const DEFAULT_COLOR_ENABLED: bool = true;
+/// Default value for the target width.
+const DEFAULT_TARGET_WIDTH: usize = 42;
+/// Default value for the level width.
+const DEFAULT_LEVEL_WIDTH: usize = 5;
 /// Default name for an output.
 const DEFAULT_OUTPUT_NAME: &str = LOGGER_STDOUT_NAME;
 /// Default log level for an output.
@@ -24,6 +28,8 @@ pub struct LoggerOutputConfigBuilder {
     level_filter: Option<LevelFilter>,
     /// Log target filters of an output.
     target_filters: Option<Vec<String>>,
+    /// Log target exclusions of an output.
+    target_exclusions: Option<Vec<String>>,
 }
 
 impl LoggerOutputConfigBuilder {
@@ -62,6 +68,12 @@ impl LoggerOutputConfigBuilder {
                 .iter()
                 .map(|f| f.to_lowercase())
                 .collect(),
+            target_exclusions: self
+                .target_exclusions
+                .unwrap_or_else(Vec::new)
+                .iter()
+                .map(|f| f.to_lowercase())
+                .collect(),
         }
     }
 }
@@ -73,8 +85,10 @@ pub struct LoggerOutputConfig {
     pub(crate) name: String,
     /// Log level of an output.
     pub(crate) level_filter: LevelFilter,
-    /// Log filters of the output.
+    /// Log target filters of the output.
     pub(crate) target_filters: Vec<String>,
+    /// Log target exclusions of the output.
+    pub(crate) target_exclusions: Vec<String>,
 }
 
 /// Builder for a logger configuration.
@@ -82,6 +96,10 @@ pub struct LoggerOutputConfig {
 pub struct LoggerConfigBuilder {
     /// Color flag of the logger.
     color_enabled: Option<bool>,
+    /// Width of the target section of a log.
+    target_width: Option<usize>,
+    /// Width of the level section of a log.
+    level_width: Option<usize>,
     /// Outputs of the logger.
     outputs: Option<Vec<LoggerOutputConfigBuilder>>,
 }
@@ -90,6 +108,18 @@ impl LoggerConfigBuilder {
     /// Sets the color flag of a logger.
     pub fn color_enabled(mut self, color: bool) -> Self {
         self.color_enabled.replace(color);
+        self
+    }
+
+    /// Sets the target width.
+    pub fn with_target_width(mut self, width: usize) -> Self {
+        self.target_width.replace(width);
+        self
+    }
+
+    /// Sets the target width.
+    pub fn with_level_width(mut self, width: usize) -> Self {
+        self.level_width.replace(width);
         self
     }
 
@@ -122,6 +152,8 @@ impl LoggerConfigBuilder {
 
         LoggerConfig {
             color_enabled: self.color_enabled.unwrap_or(DEFAULT_COLOR_ENABLED),
+            target_width: self.target_width.unwrap_or(DEFAULT_TARGET_WIDTH),
+            level_width: self.level_width.unwrap_or(DEFAULT_LEVEL_WIDTH),
             outputs,
         }
     }
@@ -132,6 +164,10 @@ impl LoggerConfigBuilder {
 pub struct LoggerConfig {
     /// Color flag of the logger.
     pub(crate) color_enabled: bool,
+    /// Width of the target section of a log.
+    pub(crate) target_width: usize,
+    /// Width of the level section of a log.
+    pub(crate) level_width: usize,
     /// Outputs of the logger.
     pub(crate) outputs: Vec<LoggerOutputConfig>,
 }

@@ -1,0 +1,14 @@
+[package]
+name = "bee-storage-null"
+version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
+edition = "2018"
+description = "A bee-storage implementation with no backend, for testing purposes"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "framework", "storage" ]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-storage = { version = "0.9.0", path = "../bee-storage", default-features = false }

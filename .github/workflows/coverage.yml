@@ -3,7 +3,13 @@ name: Coverage
 on:
   push:
     branches:
+      - dev
       - stable
+    paths:
+      - '**.rs'
+      - '**.toml'
+      - '.github/workflows/coverage.yml'
+      - '.github/workflows/scripts/coverage.sh'
 
 jobs:
   coverage:
@@ -15,16 +21,18 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
-      - uses: actions-rs/cargo@v1
+          components: llvm-tools-preview
+      - uses: actions-rs/install@v0.1
         with:
-          command: test
-          args: --all-features --no-fail-fast
-        env:
-          CARGO_INCREMENTAL: "0"
-          RUSTFLAGS: "-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests"
-      - id: grcov
-        uses: actions-rs/grcov@v0.1
-      - uses: coverallsapp/github-action@v1
+          crate: cargo-binutils
+          version: 0.3.3
+      - uses: actions-rs/install@v0.1
+        with:
+          crate: rustfilt
+          version: 0.2.1
+      - name: Run test coverage
+        run: bash .github/workflows/scripts/coverage.sh
+      - uses: coverallsapp/github-action@v1.1.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: ${{ steps.grcov.outputs.report }}
+          path-to-lcov: coverage/coverage.info

@@ -1,0 +1,6 @@
+{
+  label: "Bee Node",
+  to: "bee/getting_started/getting_started",
+  className: "icon-bee",
+  activeBaseRegex: 'bee/.*'
+},

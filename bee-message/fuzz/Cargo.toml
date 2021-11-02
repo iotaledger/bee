@@ -1,0 +1,27 @@
+[package]
+name = "bee-message-fuzz"
+version = "0.0.0"
+authors = [ "Automatically generated" ]
+publish = false
+edition = "2018"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+bee-common = { version = "0.5.0", path = "../../bee-common/bee-common", default-features = false }
+
+libfuzzer-sys = { version = "0.4.2", default-features = false }
+
+[dependencies.bee-message]
+path = ".."
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = [ "." ]
+
+[[bin]]
+name = "fuzz_message"
+path = "fuzz_targets/fuzz_message.rs"
+test = false
+doc = false

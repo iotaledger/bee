@@ -1,21 +1,25 @@
 [package]
 name = "bee-test"
-version = "0.1.0-alpha"
-authors = ["IOTA Stiftung"]
+version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
 edition = "2018"
 description = "Test utilities and feature tests for bee"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "test"]
+keywords = [ "iota", "tangle", "bee", "framework", "test" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-ternary = { version = "0.4.0-alpha", features = [ "serde1" ], path = "../bee-ternary" }
+bee-ledger = { version = "0.5.0", path = "../bee-ledger", default-features = false }
+bee-message = { version = "0.1.5", path = "../bee-message", default-features = false }
+bee-tangle = { version = "0.2.0", path = "../bee-tangle", default-features = false }
+bee-ternary = { version = "0.5.0", path = "../bee-ternary", default-features = false, features = [ "serde1" ] }
 
-rand = "0.8"
+bytemuck = { version = "1.7.2", default-features = false }
+rand = { version = "0.8.4", default-features = false }
 
 [dev-dependencies]
-hex = "0.4"
-serde = "1.0"
-serde_json = "1.0"
+hex = { version = "0.4.3", default-features = false }
+serde = { version = "1.0.130", default-features = false }
+serde_json = { version = "1.0.68", default-features = false, features = [ "alloc" ] }

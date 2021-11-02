@@ -12,7 +12,10 @@ fn create_generic<T: raw::RawEncodingBuf>() {
     assert!(TritBuf::<T>::new().len() == 0);
     fuzz(100, || {
         let len = thread_rng().gen_range(0..100);
-        assert!(TritBuf::<T>::zeros(len).len() == len);
+        let mut buf = TritBuf::<T>::zeros(len);
+        assert!(buf.len() == len);
+        buf.clear();
+        assert!(buf.len() == 0);
     });
     fuzz(100, || {
         let trits = gen_buf::<T>(0..1000).1;

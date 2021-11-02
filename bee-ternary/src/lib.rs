@@ -82,7 +82,7 @@ use crate::raw::{RawEncoding, RawEncodingBuf};
 use std::{
     any,
     borrow::{Borrow, BorrowMut},
-    cmp::{self, Ordering},
+    cmp::Ordering,
     convert::TryFrom,
     error, fmt, hash,
     iter::FromIterator,
@@ -552,7 +552,7 @@ impl Trits<T3B1> {
     }
 }
 
-impl<T, U> cmp::PartialEq<Trits<U>> for Trits<T>
+impl<T, U> PartialEq<Trits<U>> for Trits<T>
 where
     T: RawEncoding + ?Sized,
     U: RawEncoding<Trit = T::Trit> + ?Sized,
@@ -562,11 +562,13 @@ where
     }
 }
 
-impl<T, U> cmp::PartialOrd<Trits<U>> for Trits<T>
+impl<T> Eq for Trits<T> where T: RawEncoding + ?Sized {}
+
+impl<T, U> PartialOrd<Trits<U>> for Trits<T>
 where
     T: RawEncoding + ?Sized,
     U: RawEncoding<Trit = T::Trit> + ?Sized,
-    T::Trit: cmp::PartialOrd,
+    T::Trit: PartialOrd,
 {
     fn partial_cmp(&self, other: &Trits<U>) -> Option<Ordering> {
         if self.len() != other.len() {
@@ -751,6 +753,12 @@ impl<T: RawEncodingBuf> TritBuf<T> {
         Self(T::from_trits(trits))
     }
 
+    /// Clears the buffer, removing all values.
+    /// Note that this method has no effect on the allocated capacity of the buffer.
+    pub fn clear(&mut self) {
+        self.0.clear();
+    }
+
     /// Push a trit to the back of this [`TritBuf`].
     pub fn push(&mut self, trit: <T::Slice as RawEncoding>::Trit) {
         self.0.push(trit);
@@ -788,7 +796,7 @@ impl<T: RawEncodingBuf> TritBuf<T> {
 impl TritBuf<T3B1Buf> {
     /// Pad the trit buffer with [`Btrit::Zero`] until the buffer's length is a multiple of 3.
     ///
-    /// This method is often used in conjunction with [`Trites::as_trytes`].
+    /// This method is often used in conjunction with [`Trits::as_trytes`].
     pub fn pad_zeros(&mut self) {
         while self.len() % 3 != 0 {
             self.push(Btrit::Zero);
@@ -797,7 +805,7 @@ impl TritBuf<T3B1Buf> {
 
     /// Pad the trit buffer with [`Btrit::Zero`] until the buffer's length is a multiple of 3.
     ///
-    /// This method is often used in conjunction with [`Trites::as_trytes`].
+    /// This method is often used in conjunction with [`Trits::as_trytes`].
     pub fn padded_zeros(mut self) -> Self {
         self.pad_zeros();
         self
@@ -864,6 +872,8 @@ where
     }
 }
 
+impl<T: RawEncodingBuf> Eq for TritBuf<T> where T::Slice: RawEncoding {}
+
 impl<T: RawEncodingBuf> Deref for TritBuf<T> {
     type Target = Trits<T::Slice>;
 
@@ -927,5 +937,17 @@ impl<T: RawEncodingBuf> Borrow<Trits<T::Slice>> for TritBuf<T> {
 impl<T: RawEncodingBuf> BorrowMut<Trits<T::Slice>> for TritBuf<T> {
     fn borrow_mut(&mut self) -> &mut Trits<T::Slice> {
         self.as_slice_mut()
+    }
+}
+
+impl<T, U> PartialOrd<TritBuf<U>> for TritBuf<T>
+where
+    T: RawEncodingBuf,
+    U: RawEncodingBuf,
+    U::Slice: RawEncoding<Trit = <T::Slice as RawEncoding>::Trit>,
+    <T::Slice as RawEncoding>::Trit: PartialOrd,
+{
+    fn partial_cmp(&self, other: &TritBuf<U>) -> Option<Ordering> {
+        self.as_slice().partial_cmp(other.as_slice())
     }
 }

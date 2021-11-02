@@ -1,0 +1,65 @@
+[package]
+name = "bee-network"
+version = "0.2.2"
+authors = [ "IOTA Stiftung" ]
+edition = "2018"
+description = """
+Networking functionality and types for nodes and clients participating in the IOTA protocol built on top of `libp2p`.
+"""
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "bee", "framework", "network", "libp2p" ]
+homepage = "https://www.iota.org"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[package.metadata.cargo-udeps.ignore]
+development = [ "fern", "hex", "serial_test" ]
+
+[features]
+default = [ ]
+full = [
+  "async-trait",
+  "futures",
+  "libp2p/dns-tokio",
+  "libp2p/identify",
+  "libp2p/mplex",
+  "libp2p/noise",
+  "libp2p/tcp-tokio",
+  "libp2p/yamux",
+  "log",
+  "once_cell",
+  "rand",
+  "serde",
+  "thiserror",
+  "tokio",
+  "tokio-stream",
+]
+
+[dependencies]
+bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", default-features = false }
+
+async-trait = { version = "0.1.51", default-features = false, optional = true }
+futures = { version = "0.3.17", default-features = false, optional = true }
+hashbrown = { version = "0.11.2", default-features = false, features = [ "ahash", "inline-more" ] }
+libp2p = { version = "0.39.1", default-features = false, optional = true }
+libp2p-core = { version = "0.29.0", default-features = false }
+log = { version = "0.4.14", default-features = false, optional = true }
+once_cell = { version = "1.8.0", default-features = false, optional = true }
+rand = { version = "0.8.4", default-features = false, optional = true }
+serde = { version = "1.0.130", default-features = false, features = [ "derive" ], optional = true }
+thiserror = { version = "1.0.30", default-features = false, optional = true }
+tokio = { version = "1.12.0", default-features = false, features = [ "macros", "rt", "time" ], optional = true }
+tokio-stream = { version = "0.1.7", default-features = false, features = [ "time" ], optional = true }
+
+[dev-dependencies]
+fern = { version = "0.6.0", default-features = false }
+hex = { version = "0.4.3", default-features = false, features = [ "alloc" ] }
+serial_test = { version = "0.5.1", default-features = false }
+tokio = { version = "1.12.0", default-features = false, features = [ "rt", "rt-multi-thread", "macros", "signal", "time", "io-std", "io-util" ] }
+
+[[example]]
+name = "chat"
+required-features = [ "full" ]

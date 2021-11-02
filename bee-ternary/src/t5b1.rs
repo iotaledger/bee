@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{Btrit, RawEncoding, RawEncodingBuf, ShiftTernary, Utrit};
+
 use std::ops::Range;
 
 // Trits Per Byte
@@ -128,6 +129,11 @@ impl RawEncodingBuf for T5B1Buf {
     fn with_capacity(cap: usize) -> Self {
         let cap = (cap / TPB) + (cap % TPB != 0) as usize;
         Self(Vec::with_capacity(cap), 0)
+    }
+
+    fn clear(&mut self) {
+        self.0.clear();
+        self.1 = 0;
     }
 
     fn push(&mut self, trit: <Self::Slice as RawEncoding>::Trit) {

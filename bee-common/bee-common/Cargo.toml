@@ -1,21 +1,33 @@
 [package]
 name = "bee-common"
-version = "0.3.0-alpha"
-authors = ["IOTA Stiftung"]
+version = "0.5.0"
+authors = [ "IOTA Stiftung" ]
 edition = "2018"
 description = "Common utilities used across the bee framework"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "common"]
+keywords = [ "iota", "tangle", "bee", "framework", "common" ]
 homepage = "https://www.iota.org"
 
+[package.metadata.cargo-udeps.ignore]
+normal = [ "fern" ]
+
 [dependencies]
-chrono = "0.4"
-fern = { version = "0.6", features = ["colored"] }
-log = { version = "0.4", features = ["serde"] }
-serde = { version = "1.0", features = ["derive" ] }
-thiserror = "1.0"
+console-subscriber = { git = "https://github.com/tokio-rs/console.git", branch = "main", default-features = false, optional = true }
+fern = { version = "0.6.0", default-features = false, features = [ "colored" ] }
+jsonwebtoken = { version = "7.2.0", default-features = false, optional = true }
+log = { version = "0.4.14", default-features = false, features = [ "serde" ] }
+rand = { version = "0.8.4", default-features = false, optional = true }
+rust-argon2 = { version = "0.8.3", default-features = false, optional = true }
+serde = { version = "1.0.130", default-features = false, features = [ "std", "derive" ] }
+thiserror = { version = "1.0.30", default-features = false }
+time = { version = "0.3.0", default-features = false, features = [ "formatting", "local-offset" ] }
+tracing-subscriber = { version = "0.2.25", default-features = false, optional = true }
 
 [build-dependencies]
-autocfg = "1.0"
+autocfg = { version = "1.0.0", default-features = false }
+
+[features]
+auth = [ "jsonwebtoken", "rand", "rust-argon2" ]
+tokio-console = [ "console-subscriber", "tracing-subscriber" ]

@@ -3,15 +3,13 @@
 
 //! Ternary sponge constructions.
 
-mod batched_curlp;
 mod curlp;
 mod kerl;
 mod kind;
 
 use super::HASH_LENGTH;
 
-pub use batched_curlp::{BatchHasher, BATCH_SIZE};
-pub use curlp::{CurlP, CurlP27, CurlP81, CurlPRounds};
+pub use curlp::{BatchHasher, CurlP, CurlP27, CurlP81, CurlPRounds, UnrolledCurlP81, BATCH_SIZE};
 pub use kerl::Kerl;
 pub use kind::SpongeKind;
 

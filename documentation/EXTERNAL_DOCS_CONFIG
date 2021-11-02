@@ -1,0 +1,10 @@
+[
+    "@docusaurus/plugin-content-docs",
+    {
+        id: "bee",
+        path: "external/bee/documentation/docs",
+        routeBasePath: "bee",
+        sidebarPath: require.resolve("./external/bee/documentation/sidebars.js"),
+        remarkPlugins: [require("remark-code-import"), require("remark-import-partial")],
+    }
+],

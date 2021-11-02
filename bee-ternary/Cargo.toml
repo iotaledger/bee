@@ -1,21 +1,21 @@
 [package]
 name = "bee-ternary"
-version = "0.4.0-alpha"
-authors = ["IOTA Stiftung"]
+version = "0.5.0"
+authors = [ "IOTA Stiftung" ]
 edition = "2018"
 description = "Ergonomic ternary manipulation utilities"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "ternary"]
+keywords = [ "iota", "tangle", "bee", "framework", "ternary" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-num-traits = "0.2"
-serde = { version = "1.0", optional = true }
+num-traits = { version = "0.2.14", default-features = false }
+serde = { version = "1.0.130", default-features = false, optional = true }
 
 [build-dependencies]
-autocfg = "1.0"
+autocfg = { version = "1.0.0", default-features = false }
 
 [features]
-serde1 = ["serde"]
+serde1 = [ "serde" ]

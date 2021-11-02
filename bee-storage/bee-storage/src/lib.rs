@@ -17,9 +17,6 @@
 #![deny(missing_docs)]
 #![deny(warnings)]
 
-/// Access module which form the access layer of the backend which holds the contract of unified database access
-/// operations across all the backends and bee types.
 pub mod access;
-/// Backend module which form the backend layer of the backend which holds the contract of starting and shutting down
-// the backend.
 pub mod backend;
+pub mod system;
