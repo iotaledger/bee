@@ -1,5 +1,5 @@
 error: The `Packable` trait cannot be derived for unions.
-  --> $DIR/union.rs:13:11
+  --> tests/fail/union.rs:12:11
    |
-13 | pub union MaybeInt {
+12 | pub union MaybeInt {
    |           ^^^^^^^^

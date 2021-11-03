@@ -5,7 +5,7 @@
 
 use bee_packable::{
     coerce::*,
-    error::{PackError, UnknownTagError, UnpackError},
+    error::{UnknownTagError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
     Packable,
@@ -19,10 +19,9 @@ pub struct Picky(u8);
 pub struct PickyError(u8);
 
 impl Packable for Picky {
-    type PackError = Infallible;
     type UnpackError = PickyError;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.0.pack(packer)
     }
 
@@ -67,7 +66,6 @@ impl From<UnknownTagError<u8>> for PickyOrByteError {
 
 #[derive(Packable)]
 #[packable(tag_type = u8)]
-#[packable(pack_error = Infallible)]
 #[packable(unpack_error = PickyOrByteError)]
 pub enum PickyOrByte {
     #[packable(tag = 0)]
@@ -92,7 +90,6 @@ impl From<PickyError> for PickyAndByteError {
 }
 
 #[derive(Packable)]
-#[packable(pack_error = Infallible)]
 #[packable(unpack_error = PickyAndByteError)]
 pub struct PickyAndByte {
     picky: Picky,
