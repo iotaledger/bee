@@ -233,7 +233,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         self.neighbors.is_empty()
     }
 
-    pub(crate) fn num_neighbors(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.neighbors.len()
     }
 
@@ -311,7 +311,7 @@ mod tests {
         for i in 0u8..5 {
             outbound_nh.write().insert_neighbor(Peer::new_test_peer(i), &local);
         }
-        assert_eq!(outbound_nh.read().num_neighbors(), 2);
+        assert_eq!(outbound_nh.read().len(), 2);
     }
 
     #[test]

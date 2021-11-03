@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{
-    filter::ExclusionFilter,
+    filter::NeighborFilter,
     messages::{DropPeeringRequest, PeeringRequest, PeeringResponse},
     neighbor::{self, Neighborhood, SIZE_INBOUND, SIZE_OUTBOUND},
 };
@@ -90,9 +90,7 @@ pub(crate) struct PeeringManager<V: NeighborValidator> {
     // Outbound neighborhood.
     outbound_nbh: OutboundNeighborhood,
     // The peer rejection filter.
-    excl_filter: ExclusionFilter,
-    // A user defined neighbor validator.
-    nb_validator: Option<V>,
+    nb_filter: NeighborFilter<V>,
 }
 
 impl<V: NeighborValidator> PeeringManager<V> {
@@ -104,7 +102,9 @@ impl<V: NeighborValidator> PeeringManager<V> {
         active_peers: ActivePeersList,
         event_tx: EventTx,
         command_tx: CommandTx,
-        nb_validator: Option<V>,
+        inbound_nbh: InboundNeighborhood,
+        outbound_nbh: OutboundNeighborhood,
+        nb_filter: NeighborFilter<V>,
     ) -> Self {
         Self {
             config,
@@ -113,10 +113,9 @@ impl<V: NeighborValidator> PeeringManager<V> {
             request_mngr,
             event_tx,
             active_peers,
-            inbound_nbh: Neighborhood::new(),
-            outbound_nbh: Neighborhood::new(),
-            excl_filter: ExclusionFilter::new(),
-            nb_validator,
+            inbound_nbh,
+            outbound_nbh,
+            nb_filter,
         }
     }
 }
@@ -138,8 +137,7 @@ impl<V: NeighborValidator> Runnable for PeeringManager<V> {
             active_peers,
             inbound_nbh,
             outbound_nbh,
-            excl_filter,
-            nb_validator,
+            nb_filter,
         } = self;
 
         let PeeringManagerConfig {
@@ -177,7 +175,6 @@ impl<V: NeighborValidator> Runnable for PeeringManager<V> {
                             event_tx: &event_tx,
                             inbound_nbh: &inbound_nbh,
                             outbound_nbh: &outbound_nbh,
-                            excl_filter: &excl_filter,
                         };
 
                         match msg_type {
@@ -195,7 +192,7 @@ impl<V: NeighborValidator> Runnable for PeeringManager<V> {
                                 } else {
                                     log::debug!("Received valid peering request from {}.", &peer_id);
 
-                                    handle_peering_request(peer_req, ctx, nb_validator.as_ref());
+                                    handle_peering_request(peer_req, ctx, &nb_filter);
                                 }
                             }
                             MessageType::PeeringResponse => {
@@ -210,7 +207,7 @@ impl<V: NeighborValidator> Runnable for PeeringManager<V> {
                                     Ok(peer_reqval) => {
                                         log::debug!("Received valid peering response from {}.", &peer_id);
 
-                                        handle_peering_response(peer_res, peer_reqval, ctx);
+                                        handle_peering_response(peer_res, peer_reqval, ctx, &nb_filter);
                                     }
                                     Err(e) => {
                                         log::debug!("Received invalid peering response from {}. Reason: {:?}", &peer_id, e);
@@ -232,7 +229,7 @@ impl<V: NeighborValidator> Runnable for PeeringManager<V> {
                                 } else {
                                     log::debug!("Received valid drop request from {}.", &peer_id);
 
-                                    handle_drop_request(drop_req, ctx);
+                                    handle_drop_request(drop_req, ctx, &nb_filter);
                                 }
                             }
                             _ => log::debug!("Received unsupported peering message type"),
@@ -255,7 +252,6 @@ pub(crate) struct RecvContext<'a> {
     event_tx: &'a EventTx,
     inbound_nbh: &'a InboundNeighborhood,
     outbound_nbh: &'a OutboundNeighborhood,
-    excl_filter: &'a ExclusionFilter,
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -318,7 +314,11 @@ fn validate_drop_request(drop_req: &DropPeeringRequest, _: &RecvContext) -> Resu
 // HANDLING
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn handle_peering_request<V: NeighborValidator>(peer_req: PeeringRequest, ctx: RecvContext, nb_validator: Option<&V>) {
+fn handle_peering_request<V: NeighborValidator>(
+    peer_req: PeeringRequest,
+    ctx: RecvContext,
+    nb_filter: &NeighborFilter<V>,
+) {
     log::debug!("Handling peering request.");
 
     let mut status = false;
@@ -331,8 +331,8 @@ fn handle_peering_request<V: NeighborValidator>(peer_req: PeeringRequest, ctx: R
             .cloned()
             .expect("inconsistent peer list");
 
-        // If there's no validator specified a peer is considered valid by default.
-        if nb_validator.map_or(true, |v| v.is_valid(&active_peer.peer())) {
+        if nb_filter.read().ok(&active_peer.peer()) {
+            // if nb_validator.map_or(true, |v| v.is_valid(&active_peer.peer())) {
             // Calculate the distance between the local peer and the potential neighbor.
             let distance = neighbor::salt_distance(
                 ctx.local.read().peer_id(),
@@ -343,37 +343,40 @@ fn handle_peering_request<V: NeighborValidator>(peer_req: PeeringRequest, ctx: R
             // Create a new neighbor.
             let neighbor = Neighbor::new(active_peer.into_peer(), distance);
 
-            // Create the exclusion filter based on the current situation.
-            let excl_filter = create_exclusion_filter(ctx.local, ctx.inbound_nbh, ctx.outbound_nbh);
+            // Check if the neighbor would be closer than the currently furthest in the inbound neighborhood.
+            if let Some(peer) = ctx.inbound_nbh.write().select(neighbor) {
+                if add_or_replace_neighbor::<INCOMING>(
+                    peer.clone(),
+                    ctx.local,
+                    ctx.inbound_nbh,
+                    ctx.outbound_nbh,
+                    ctx.server_tx,
+                    ctx.event_tx,
+                ) {
+                    // Change peering status to `true`.
+                    status = true;
 
-            // Check the neighbor against the filter.
-            if excl_filter.read().ok(&neighbor) {
-                // Check if the neighbor would be closer than the currently furthest in the inbound neighborhood.
-                if let Some(peer) = ctx.inbound_nbh.write().select(neighbor) {
-                    if add_or_replace_neighbor::<INCOMING>(
-                        peer.clone(),
+                    // Update the neighbor filter.
+                    nb_filter.write().add(peer.peer_id().clone());
+
+                    // Fire `IncomingPeering` event.
+                    publish_peering_event::<INCOMING>(
+                        peer,
+                        status,
                         ctx.local,
+                        ctx.event_tx,
                         ctx.inbound_nbh,
                         ctx.outbound_nbh,
-                        ctx.server_tx,
-                        ctx.event_tx,
-                    ) {
-                        // Change peering status to `true`.
-                        status = true;
-
-                        // Fire `IncomingPeering` event.
-                        publish_peering_event::<INCOMING>(
-                            peer,
-                            status,
-                            ctx.local,
-                            ctx.event_tx,
-                            ctx.inbound_nbh,
-                            ctx.outbound_nbh,
-                        );
-                    }
+                    );
                 }
+            } else {
+                log::debug!("Denying peering request: Peer distance too large.");
             }
+        } else {
+            log::debug!("Denying peering request: Peer filtered.");
         }
+    } else {
+        log::debug!("Denying peering request: Peer not verified.");
     }
 
     // In any case send a response.
@@ -387,7 +390,12 @@ fn handle_peering_request<V: NeighborValidator>(peer_req: PeeringRequest, ctx: R
     );
 }
 
-fn handle_peering_response(peer_res: PeeringResponse, peer_reqval: RequestValue, ctx: RecvContext) {
+fn handle_peering_response<V: NeighborValidator>(
+    peer_res: PeeringResponse,
+    peer_reqval: RequestValue,
+    ctx: RecvContext,
+    nb_filter: &NeighborFilter<V>,
+) {
     log::debug!("Handling peering response.");
 
     let mut status = peer_res.status();
@@ -427,6 +435,9 @@ fn handle_peering_response(peer_res: PeeringResponse, peer_reqval: RequestValue,
         send_drop_peering_request_to_peer(peer, ctx.server_tx, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
     } else {
         if ctx.outbound_nbh.write().insert_neighbor(peer.clone(), ctx.local) {
+            // Update the neighbor filter.
+            nb_filter.write().add(peer.peer_id().clone());
+
             // Fire `OutgoingPeering` event with status = `true`.
             publish_peering_event::<OUTGOING>(peer, status, ctx.local, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
         } else {
@@ -440,7 +451,11 @@ fn handle_peering_response(peer_res: PeeringResponse, peer_reqval: RequestValue,
     }
 }
 
-fn handle_drop_request(_drop_req: DropPeeringRequest, ctx: RecvContext) {
+fn handle_drop_request<V: NeighborValidator>(
+    _drop_req: DropPeeringRequest,
+    ctx: RecvContext,
+    nb_filter: &NeighborFilter<V>,
+) {
     log::debug!("Handling drop request.");
 
     let mut removed_nb = ctx.inbound_nbh.write().remove_neighbor(ctx.peer_id);
@@ -448,9 +463,9 @@ fn handle_drop_request(_drop_req: DropPeeringRequest, ctx: RecvContext) {
     if let Some(nb) = ctx.outbound_nbh.write().remove_neighbor(ctx.peer_id) {
         removed_nb.replace(nb);
 
-        ctx.excl_filter.write().exclude_peer(ctx.peer_id.clone());
+        nb_filter.write().add(ctx.peer_id.clone());
 
-        // TODO: trigger immediate outbound neighborhood update
+        // TODO: trigger immediate outbound neighborhood update; currently we wait for the next interval
     }
 
     if removed_nb.is_some() {
@@ -641,8 +656,8 @@ pub(crate) fn publish_peering_event<const IS_INBOUND: bool>(
         if IS_INBOUND { "in" } else { "out" },
         status,
         peer.peer_id(),
-        outbound_nbh.read().num_neighbors(),
-        inbound_nbh.read().num_neighbors(),
+        outbound_nbh.read().len(),
+        inbound_nbh.read().len(),
     );
 
     let distance = salt_distance(local.read().peer_id(), peer.peer_id(), &{
@@ -669,8 +684,8 @@ fn publish_drop_peering_event(
     log::debug!(
         "Peering dropped with {}; #out_nbh: {} #in_nbh: {}",
         peer_id,
-        inbound_nbh.read().num_neighbors(),
-        outbound_nbh.read().num_neighbors(),
+        inbound_nbh.read().len(),
+        outbound_nbh.read().len(),
     );
 
     event_tx
@@ -682,24 +697,20 @@ fn publish_drop_peering_event(
 // HELPERS
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// fn is_valid_neighbor<V: NeighborValidator>(peer: &Peer, local: &Local, validator: &V) -> bool {
-//     local.read().peer_id() != peer.peer_id() && validator.is_valid(peer)
-// }
-
 #[derive(Clone)]
-pub(crate) struct SaltUpdateContext {
+pub(crate) struct SaltUpdateContext<V: NeighborValidator> {
     local: Local,
-    filter: ExclusionFilter,
+    nb_filter: NeighborFilter<V>,
     inbound_nbh: InboundNeighborhood,
     outbound_nbh: OutboundNeighborhood,
     server_tx: ServerTx,
     event_tx: EventTx,
 }
 
-impl SaltUpdateContext {
+impl<V: NeighborValidator> SaltUpdateContext<V> {
     pub(crate) fn new(
         local: Local,
-        filter: ExclusionFilter,
+        nb_filter: NeighborFilter<V>,
         inbound_nbh: InboundNeighborhood,
         outbound_nbh: OutboundNeighborhood,
         server_tx: ServerTx,
@@ -707,7 +718,7 @@ impl SaltUpdateContext {
     ) -> Self {
         Self {
             local,
-            filter,
+            nb_filter,
             inbound_nbh,
             outbound_nbh,
             server_tx,
@@ -717,12 +728,14 @@ impl SaltUpdateContext {
 }
 
 // Regularly update the salts of the local peer.
-pub(crate) fn repeat_update_salts(drop_neighbors_on_salt_update: bool) -> Repeat<SaltUpdateContext> {
+pub(crate) fn repeat_update_salts<V: NeighborValidator>(
+    drop_neighbors_on_salt_update: bool,
+) -> Repeat<SaltUpdateContext<V>> {
     Box::new(move |ctx| {
         update_salts(
             drop_neighbors_on_salt_update,
             &ctx.local,
-            &ctx.filter,
+            &ctx.nb_filter,
             &ctx.inbound_nbh,
             &ctx.outbound_nbh,
             &ctx.server_tx,
@@ -731,10 +744,10 @@ pub(crate) fn repeat_update_salts(drop_neighbors_on_salt_update: bool) -> Repeat
     })
 }
 
-fn update_salts(
+fn update_salts<V: NeighborValidator>(
     drop_neighbors_on_salt_update: bool,
     local: &Local,
-    filter: &ExclusionFilter,
+    nb_filter: &NeighborFilter<V>,
     inbound_nbh: &InboundNeighborhood,
     outbound_nbh: &OutboundNeighborhood,
     server_tx: &ServerTx,
@@ -750,17 +763,20 @@ fn update_salts(
     let public_salt_lifetime = public_salt.expiration_time();
     local.write().set_public_salt(public_salt);
 
-    // Clear the peer filter.
-    filter.write().clear_excluded();
-
-    // Either drop, or update the neighborhoods.
     if drop_neighbors_on_salt_update {
+        // Drop all neighbors.
         for peer in inbound_nbh.read().iter().chain(outbound_nbh.read().iter()).cloned() {
             send_drop_peering_request_to_peer(peer, server_tx, event_tx, inbound_nbh, outbound_nbh);
         }
+
+        // Erase the neighborhoods.
         inbound_nbh.write().clear();
         outbound_nbh.write().clear();
+
+        // Reset the neighbor filter.
+        nb_filter.write().reset();
     } else {
+        // Update the distances with the new salts.
         inbound_nbh.write().update_distances(&local);
         outbound_nbh.write().update_distances(&local);
     }
@@ -776,23 +792,6 @@ fn update_salts(
         public_salt_lifetime,
         private_salt_lifetime,
     });
-}
-
-#[derive(Debug)]
-pub(crate) enum Direction {
-    Inbound,
-    Outbound,
-}
-
-impl fmt::Display for Direction {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        if matches!(self, Direction::Inbound) {
-            "in"
-        } else {
-            "out"
-        }
-        .fmt(f)
-    }
 }
 
 /// Adds a neighbor to a neighborhood. Possibly even replaces the so far furthest neighbor.
@@ -820,20 +819,24 @@ pub(crate) fn add_or_replace_neighbor<const IS_INBOUND: bool>(
     }
 }
 
-/// Creates the current exclusion filter.
-pub(crate) fn create_exclusion_filter(
+/// Reinitializes the neighbor filter with the current neighborhoods.
+///
+/// Call this function whenever one of the neighborhoods changes.
+pub(crate) fn refresh_neighbor_filter<V: NeighborValidator>(
     local: &Local,
+    neighbor_filter: &NeighborFilter<V>,
     inbound_nbh: &InboundNeighborhood,
     outbound_nbh: &OutboundNeighborhood,
-) -> ExclusionFilter {
-    let mut filter = ExclusionFilter::new();
+) {
+    let mut write = neighbor_filter.write();
 
-    // The exclusion filter consists of the local peer and the members of both neighborhoods.
-    filter.write().exclude_peers(
-        iter::once(local.read().peer_id().clone())
-            .chain(inbound_nbh.read().iter().map(|p| p.peer_id()).cloned())
+    write.reset();
+    write.extend(
+        inbound_nbh
+            .read()
+            .iter()
+            .map(|p| p.peer_id())
+            .cloned()
             .chain(outbound_nbh.read().iter().map(|p| p.peer_id()).cloned()),
     );
-
-    filter
 }

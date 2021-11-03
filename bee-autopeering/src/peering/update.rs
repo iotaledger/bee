@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{
-    filter::ExclusionFilter,
+    filter::NeighborFilter,
     manager::{self, InboundNeighborhood, OutboundNeighborhood},
     neighbor::{salt_distance, Neighbor},
 };
@@ -13,7 +13,7 @@ use crate::{
     event::EventTx,
     local::{salt, Local},
     peer::{peerlist::ActivePeersList, PeerStore},
-    peering::manager::{publish_peering_event, send_drop_peering_request_to_peer, Direction},
+    peering::manager::{publish_peering_event, send_drop_peering_request_to_peer},
     request::RequestManager,
     server::ServerTx,
     task::Repeat,
@@ -36,12 +36,11 @@ pub(crate) struct UpdateContext<V: NeighborValidator> {
     pub(crate) local: Local,
     pub(crate) request_mngr: RequestManager,
     pub(crate) active_peers: ActivePeersList,
-    pub(crate) excl_filter: ExclusionFilter,
+    pub(crate) nb_filter: NeighborFilter<V>,
     pub(crate) inbound_nbh: InboundNeighborhood,
     pub(crate) outbound_nbh: OutboundNeighborhood,
     pub(crate) server_tx: ServerTx,
     pub(crate) event_tx: EventTx,
-    pub(crate) nb_validator: Option<V>,
 }
 
 pub(crate) fn do_update<V: NeighborValidator + 'static>() -> Repeat<UpdateContext<V>> {
@@ -68,24 +67,15 @@ fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
         return;
     }
 
-    // Create the exclusion filter based on current neighbors.
-    let excl_filter = manager::create_exclusion_filter(&ctx.local, &ctx.inbound_nbh, &ctx.outbound_nbh);
-
-    // Inject the neighbor validation into the filter.
-    if let Some(v) = ctx.nb_validator.as_ref() {
-        // TODO: fix lifetime issue
-        // excl_filter.write().add_matcher(Box::new(|peer| v.is_valid(peer)));
-    }
-
     // Apply the filter on the verified peers to yield a set of neighbor candidates.
-    let mut candidates = ctx.excl_filter.read().apply_list(&verif_peers);
+    let mut candidates = ctx.nb_filter.read().apply_list(&verif_peers);
 
     if candidates.is_empty() {
         log::trace!("Currently no suitable candidates.");
         return;
     }
 
-    // Sort candidats by their distance.
+    // Sort candidats by their distance, so that we start with the closest candidate.
     candidates.sort_unstable();
 
     // Hive.go: select new candidate
@@ -113,9 +103,11 @@ fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
                 } else {
                     log::debug!("Peering with {} denied.", candidate.peer_id());
                     // TODO: add this peer to the exclusion list
+                    ctx_.nb_filter.write().add(candidate.peer_id().clone());
                 }
             } else {
                 log::debug!("Peering with {} failed.", candidate.peer_id());
+                ctx_.nb_filter.write().add(candidate.peer_id().clone());
             }
         });
     }

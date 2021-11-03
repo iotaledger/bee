@@ -30,7 +30,7 @@ use crate::{
     },
     peering::update::UpdateContext,
     peering::{
-        filter::ExclusionFilter,
+        filter::NeighborFilter,
         manager::{
             InboundNeighborhood, OutboundNeighborhood, PeeringManager, PeeringManagerConfig, SaltUpdateContext,
             SALT_UPDATE_SECS,
@@ -153,6 +153,11 @@ where
     );
     let command_tx = discovery_mngr.init(&mut task_mngr).await;
 
+    // Create neighborhoods and neighbor candidate filter.
+    let inbound_nbh = InboundNeighborhood::new();
+    let outbound_nbh = OutboundNeighborhood::new();
+    let nb_filter = NeighborFilter::new(local.read().peer_id().clone(), neighbor_validator);
+
     // Create the autopeering manager handling the peering request/response protocol.
     let peering_config = PeeringManagerConfig::new(&config, version, network_id);
     let peering_socket = ServerSocket::new(peering_rx, server_tx.clone());
@@ -165,7 +170,9 @@ where
         active_peers.clone(),
         event_tx.clone(),
         command_tx.clone(),
-        neighbor_validator.clone(),
+        inbound_nbh.clone(),
+        outbound_nbh.clone(),
+        nb_filter.clone(),
     );
     task_mngr.run(peering_mngr);
 
@@ -175,14 +182,9 @@ where
     let ctx = request_mngr.clone();
     task_mngr.repeat(cmd, delay, ctx, "Expired-Request-Removal", MAX_SHUTDOWN_PRIORITY);
 
-    // Create neighborhoods and neighbor candidate filter.
-    let inbound_nbh = InboundNeighborhood::new();
-    let outbound_nbh = OutboundNeighborhood::new();
-    let excl_filter = ExclusionFilter::new();
-
     let ctx = SaltUpdateContext::new(
         local.clone(),
-        excl_filter.clone(),
+        nb_filter.clone(),
         inbound_nbh.clone(),
         outbound_nbh.clone(),
         server_tx.clone(),
@@ -218,12 +220,11 @@ where
         local,
         request_mngr,
         active_peers,
-        excl_filter,
+        nb_filter,
         inbound_nbh,
         outbound_nbh,
         server_tx,
         event_tx,
-        nb_validator: neighbor_validator,
     };
 
     // Update the outbound neighborhood regularly (interval depends on whether slots available or not).
