@@ -75,11 +75,11 @@ pub trait MessagePayload: Packable + Into<Payload> {
     }
 
     /// Unpacks a payload, its type and version.
-    fn unpack_payload<U: Unpacker, E>(unpacker: &mut U) -> Result<Payload, UnpackError<E, U::Error>>
+    fn unpack_payload<U: Unpacker, E, const CHECK: bool>(unpacker: &mut U) -> Result<Payload, UnpackError<E, U::Error>>
     where
         E: From<MessageUnpackError> + From<ValidationError> + From<Self::UnpackError>,
     {
-        let version = u8::unpack(unpacker).infallible()?;
+        let version = u8::unpack::<_, CHECK>(unpacker).infallible()?;
 
         if version != Self::VERSION {
             return Err(ValidationError::InvalidPayloadVersion {
@@ -89,7 +89,7 @@ pub trait MessagePayload: Packable + Into<Payload> {
             .map_err(UnpackError::from_packable)?;
         }
 
-        Ok(Self::unpack(unpacker).coerce()?.into())
+        Ok(Self::unpack::<_, CHECK>(unpacker).coerce()?.into())
     }
 }
 
@@ -171,17 +171,19 @@ impl Packable for Payload {
         }
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        match u32::unpack(unpacker).infallible()? {
-            DataPayload::KIND => DataPayload::unpack_payload(unpacker),
-            TransactionPayload::KIND => TransactionPayload::unpack_payload(unpacker),
-            FpcPayload::KIND => FpcPayload::unpack_payload(unpacker),
-            ApplicationMessagePayload::KIND => ApplicationMessagePayload::unpack_payload(unpacker),
-            DkgPayload::KIND => DkgPayload::unpack_payload(unpacker),
-            BeaconPayload::KIND => BeaconPayload::unpack_payload(unpacker),
-            CollectiveBeaconPayload::KIND => CollectiveBeaconPayload::unpack_payload(unpacker),
-            SaltDeclarationPayload::KIND => SaltDeclarationPayload::unpack_payload(unpacker),
-            IndexationPayload::KIND => IndexationPayload::unpack_payload(unpacker),
+    fn unpack<U: Unpacker, const CHECK: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        match u32::unpack::<_, CHECK>(unpacker).infallible()? {
+            DataPayload::KIND => DataPayload::unpack_payload::<_, _, CHECK>(unpacker),
+            TransactionPayload::KIND => TransactionPayload::unpack_payload::<_, _, CHECK>(unpacker),
+            FpcPayload::KIND => FpcPayload::unpack_payload::<_, _, CHECK>(unpacker),
+            ApplicationMessagePayload::KIND => ApplicationMessagePayload::unpack_payload::<_, _, CHECK>(unpacker),
+            DkgPayload::KIND => DkgPayload::unpack_payload::<_, _, CHECK>(unpacker),
+            BeaconPayload::KIND => BeaconPayload::unpack_payload::<_, _, CHECK>(unpacker),
+            CollectiveBeaconPayload::KIND => CollectiveBeaconPayload::unpack_payload::<_, _, CHECK>(unpacker),
+            SaltDeclarationPayload::KIND => SaltDeclarationPayload::unpack_payload::<_, _, CHECK>(unpacker),
+            IndexationPayload::KIND => IndexationPayload::unpack_payload::<_, _, CHECK>(unpacker),
             k => Err(UnpackError::Packable(PayloadUnpackError::InvalidKind(k).into())),
         }
     }
@@ -275,11 +277,13 @@ impl Packable for OptionalPayload {
         }
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let len = u32::unpack(unpacker).infallible()? as usize;
+    fn unpack<U: Unpacker, const CHECK: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let len = u32::unpack::<_, CHECK>(unpacker).infallible()? as usize;
 
         if len > 0 {
-            let payload = Payload::unpack(unpacker)?;
+            let payload = Payload::unpack::<_, CHECK>(unpacker)?;
             let actual_len = payload.packed_len();
 
             if len != actual_len {

@@ -112,10 +112,12 @@ impl Packable for TransactionPayload {
         self.unlock_blocks.pack(packer)
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let essence = TransactionEssence::unpack(unpacker)?;
+    fn unpack<U: Unpacker, const CHECK: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let essence = TransactionEssence::unpack::<_, CHECK>(unpacker)?;
 
-        let unlock_blocks = UnlockBlocks::unpack(unpacker)?;
+        let unlock_blocks = UnlockBlocks::unpack::<_, CHECK>(unpacker)?;
         validate_unlock_block_count(&essence, &unlock_blocks).map_err(UnpackError::from_packable)?;
 
         Ok(Self { essence, unlock_blocks })
