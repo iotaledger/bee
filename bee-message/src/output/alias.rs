@@ -3,7 +3,7 @@
 
 use crate::{
     address::Address,
-    output::{AliasId, FeatureBlock, NativeToken, NativeTokens},
+    output::{AliasId, FeatureBlock, FeatureBlocks, NativeToken, NativeTokens},
     Error,
 };
 
@@ -91,7 +91,7 @@ impl AliasOutputBuilder {
             state_index: self.state_index.unwrap_or(0),
             state_metadata: self.state_metadata.into_boxed_slice(),
             foundry_counter: self.foundry_counter.unwrap_or(0),
-            feature_blocks: self.feature_blocks.into_boxed_slice(),
+            feature_blocks: FeatureBlocks::new(self.feature_blocks)?,
         })
     }
 }
@@ -108,7 +108,7 @@ pub struct AliasOutput {
     state_index: u32,
     state_metadata: Box<[u8]>,
     foundry_counter: u32,
-    feature_blocks: Box<[FeatureBlock]>,
+    feature_blocks: FeatureBlocks,
 }
 
 impl AliasOutput {
@@ -182,8 +182,7 @@ impl Packable for AliasOutput {
             + 0u32.packed_len()
             + self.state_metadata.len()
             + self.foundry_counter.packed_len()
-            + 0u16.packed_len()
-            + self.feature_blocks.iter().map(Packable::packed_len).sum::<usize>()
+            + self.feature_blocks.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -196,10 +195,7 @@ impl Packable for AliasOutput {
         0u32.pack(writer)?;
         writer.write_all(&self.state_metadata)?;
         self.foundry_counter.pack(writer)?;
-        (self.feature_blocks.len() as u16).pack(writer)?;
-        for feature_block in self.feature_blocks.iter() {
-            feature_block.pack(writer)?
-        }
+        self.feature_blocks.pack(writer)?;
 
         Ok(())
     }
@@ -215,11 +211,7 @@ impl Packable for AliasOutput {
         let mut state_metadata = vec![0u8; state_metadata_len];
         reader.read_exact(&mut state_metadata)?;
         let foundry_counter = u32::unpack_inner::<R, CHECK>(reader)?;
-        let feature_blocks_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut feature_blocks = Vec::with_capacity(feature_blocks_len);
-        for _ in 0..feature_blocks_len {
-            feature_blocks.push(FeatureBlock::unpack_inner::<R, CHECK>(reader)?);
-        }
+        let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
         Ok(Self {
             amount,
@@ -230,7 +222,7 @@ impl Packable for AliasOutput {
             state_index,
             state_metadata: state_metadata.into_boxed_slice(),
             foundry_counter,
-            feature_blocks: feature_blocks.into_boxed_slice(),
+            feature_blocks,
         })
     }
 }

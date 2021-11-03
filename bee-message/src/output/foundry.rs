@@ -3,7 +3,7 @@
 
 use crate::{
     address::Address,
-    output::{FeatureBlock, NativeToken, NativeTokens},
+    output::{FeatureBlock, FeatureBlocks, NativeToken, NativeTokens},
     Error,
 };
 
@@ -113,7 +113,7 @@ impl FoundryOutputBuilder {
             circulating_supply: self.circulating_supply,
             maximum_supply: self.maximum_supply,
             token_scheme: self.token_scheme,
-            feature_blocks: self.feature_blocks.into_boxed_slice(),
+            feature_blocks: FeatureBlocks::new(self.feature_blocks)?,
         })
     }
 }
@@ -130,7 +130,7 @@ pub struct FoundryOutput {
     circulating_supply: U256,
     maximum_supply: U256,
     token_scheme: TokenScheme,
-    feature_blocks: Box<[FeatureBlock]>,
+    feature_blocks: FeatureBlocks,
 }
 
 impl FoundryOutput {
@@ -219,8 +219,7 @@ impl Packable for FoundryOutput {
             + 32
             + 32
             + self.token_scheme.packed_len()
-            + 0u16.packed_len()
-            + self.feature_blocks.iter().map(Packable::packed_len).sum::<usize>()
+            + self.feature_blocks.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -234,10 +233,7 @@ impl Packable for FoundryOutput {
         // SAFETY: Reinterpreting a [u64; 4] as a [u8; 32] is fine since they have the same size.
         writer.write_all(&unsafe { std::mem::transmute::<[u64; 4], [u8; 32]>(self.maximum_supply.0) })?;
         self.token_scheme.pack(writer)?;
-        (self.feature_blocks.len() as u16).pack(writer)?;
-        for feature_block in self.feature_blocks.iter() {
-            feature_block.pack(writer)?
-        }
+        self.feature_blocks.pack(writer)?;
 
         Ok(())
     }
@@ -251,11 +247,7 @@ impl Packable for FoundryOutput {
         let circulating_supply = U256::from_little_endian(&<[u8; 32]>::unpack_inner::<R, CHECK>(reader)?);
         let maximum_supply = U256::from_little_endian(&<[u8; 32]>::unpack_inner::<R, CHECK>(reader)?);
         let token_scheme = TokenScheme::unpack_inner::<R, CHECK>(reader)?;
-        let feature_blocks_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut feature_blocks = Vec::with_capacity(feature_blocks_len);
-        for _ in 0..feature_blocks_len {
-            feature_blocks.push(FeatureBlock::unpack_inner::<R, CHECK>(reader)?);
-        }
+        let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
         Ok(Self {
             address,
@@ -266,7 +258,7 @@ impl Packable for FoundryOutput {
             circulating_supply,
             maximum_supply,
             token_scheme,
-            feature_blocks: feature_blocks.into_boxed_slice(),
+            feature_blocks,
         })
     }
 }

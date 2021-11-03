@@ -3,7 +3,7 @@
 
 use crate::{
     address::Address,
-    output::{FeatureBlock, NativeToken, NativeTokens},
+    output::{FeatureBlock, FeatureBlocks, NativeToken, NativeTokens},
     Error,
 };
 
@@ -58,7 +58,7 @@ impl ExtendedOutputBuilder {
             address: self.address,
             amount: self.amount,
             native_tokens: NativeTokens::new(self.native_tokens)?,
-            feature_blocks: self.feature_blocks.into_boxed_slice(),
+            feature_blocks: FeatureBlocks::new(self.feature_blocks)?,
         })
     }
 }
@@ -70,7 +70,7 @@ pub struct ExtendedOutput {
     address: Address,
     amount: u64,
     native_tokens: NativeTokens,
-    feature_blocks: Box<[FeatureBlock]>,
+    feature_blocks: FeatureBlocks,
 }
 
 impl ExtendedOutput {
@@ -111,18 +111,14 @@ impl Packable for ExtendedOutput {
         self.address.packed_len()
             + self.amount.packed_len()
             + self.native_tokens.packed_len()
-            + 0u16.packed_len()
-            + self.feature_blocks.iter().map(Packable::packed_len).sum::<usize>()
+            + self.feature_blocks.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.address.pack(writer)?;
         self.amount.pack(writer)?;
         self.native_tokens.pack(writer)?;
-        (self.feature_blocks.len() as u16).pack(writer)?;
-        for feature_block in self.feature_blocks.iter() {
-            feature_block.pack(writer)?
-        }
+        self.feature_blocks.pack(writer)?;
 
         Ok(())
     }
@@ -131,17 +127,13 @@ impl Packable for ExtendedOutput {
         let address = Address::unpack_inner::<R, CHECK>(reader)?;
         let amount = u64::unpack_inner::<R, CHECK>(reader)?;
         let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
-        let feature_blocks_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut feature_blocks = Vec::with_capacity(feature_blocks_len);
-        for _ in 0..feature_blocks_len {
-            feature_blocks.push(FeatureBlock::unpack_inner::<R, CHECK>(reader)?);
-        }
+        let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
         Ok(Self {
             address,
             amount,
             native_tokens,
-            feature_blocks: feature_blocks.into_boxed_slice(),
+            feature_blocks,
         })
     }
 }

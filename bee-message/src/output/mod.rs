@@ -17,7 +17,7 @@ mod treasury;
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
 pub use extended::{ExtendedOutput, ExtendedOutputBuilder};
-pub use feature_block::FeatureBlock;
+pub use feature_block::{FeatureBlock, FeatureBlocks};
 pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme};
 pub use native_token::{NativeToken, NativeTokens};
 pub use nft::{NftOutput, NftOutputBuilder};

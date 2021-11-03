@@ -3,7 +3,7 @@
 
 use crate::{
     address::Address,
-    output::{FeatureBlock, NativeToken, NativeTokens, NftId},
+    output::{FeatureBlock, FeatureBlocks, NativeToken, NativeTokens, NftId},
     Error,
 };
 
@@ -64,7 +64,7 @@ impl NftOutputBuilder {
             native_tokens: NativeTokens::new(self.native_tokens)?,
             nft_id: self.nft_id,
             immutable_metadata: self.immutable_metadata.into_boxed_slice(),
-            feature_blocks: self.feature_blocks.into_boxed_slice(),
+            feature_blocks: FeatureBlocks::new(self.feature_blocks)?,
         })
     }
 }
@@ -78,7 +78,7 @@ pub struct NftOutput {
     native_tokens: NativeTokens,
     nft_id: NftId,
     immutable_metadata: Box<[u8]>,
-    feature_blocks: Box<[FeatureBlock]>,
+    feature_blocks: FeatureBlocks,
 }
 
 impl NftOutput {
@@ -134,8 +134,7 @@ impl Packable for NftOutput {
             + self.nft_id.packed_len()
             + 0u32.packed_len()
             + self.immutable_metadata.len()
-            + 0u16.packed_len()
-            + self.feature_blocks.iter().map(Packable::packed_len).sum::<usize>()
+            + self.feature_blocks.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -145,10 +144,7 @@ impl Packable for NftOutput {
         self.nft_id.pack(writer)?;
         (self.immutable_metadata.len() as u32).pack(writer)?;
         writer.write_all(&self.immutable_metadata)?;
-        (self.feature_blocks.len() as u16).pack(writer)?;
-        for feature_block in self.feature_blocks.iter() {
-            feature_block.pack(writer)?
-        }
+        self.feature_blocks.pack(writer)?;
 
         Ok(())
     }
@@ -161,11 +157,7 @@ impl Packable for NftOutput {
         let immutable_metadata_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut immutable_metadata = vec![0u8; immutable_metadata_len];
         reader.read_exact(&mut immutable_metadata)?;
-        let feature_blocks_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut feature_blocks = Vec::with_capacity(feature_blocks_len);
-        for _ in 0..feature_blocks_len {
-            feature_blocks.push(FeatureBlock::unpack_inner::<R, CHECK>(reader)?);
-        }
+        let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
         Ok(Self {
             address,
@@ -173,7 +165,7 @@ impl Packable for NftOutput {
             native_tokens,
             nft_id,
             immutable_metadata: immutable_metadata.into_boxed_slice(),
-            feature_blocks: feature_blocks.into_boxed_slice(),
+            feature_blocks,
         })
     }
 }

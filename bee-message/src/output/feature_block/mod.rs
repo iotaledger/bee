@@ -25,6 +25,11 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
+use core::{convert::TryFrom, ops::Deref};
+
+///
+pub const FEATURE_BLOCK_COUNT_MAX: u16 = 8;
+
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(
@@ -151,5 +156,69 @@ impl Packable for FeatureBlock {
             MetadataFeatureBlock::KIND => MetadataFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into(),
             k => return Err(Self::Error::InvalidFeatureBlockKind(k)),
         })
+    }
+}
+
+///
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct FeatureBlocks(Box<[FeatureBlock]>);
+
+impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
+    type Error = Error;
+
+    fn try_from(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Self::Error> {
+        if feature_blocks.len() as u16 > FEATURE_BLOCK_COUNT_MAX {
+            return Err(Error::InvalidFeatureBlockCount(feature_blocks.len() as u16));
+        }
+
+        Ok(Self(feature_blocks.into_boxed_slice()))
+    }
+}
+
+impl FeatureBlocks {
+    /// Creates a new `FeatureBlocks`.
+    pub fn new(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Error> {
+        Self::try_from(feature_blocks)
+    }
+}
+
+impl Deref for FeatureBlocks {
+    type Target = [FeatureBlock];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Packable for FeatureBlocks {
+    type Error = Error;
+
+    fn packed_len(&self) -> usize {
+        0u16.packed_len() + self.0.iter().map(Packable::packed_len).sum::<usize>()
+    }
+
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        (self.0.len() as u16).pack(writer)?;
+        for feature_block in self.0.iter() {
+            feature_block.pack(writer)?
+        }
+
+        Ok(())
+    }
+
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let feature_blocks_len = u16::unpack_inner::<R, CHECK>(reader)?;
+
+        if CHECK && feature_blocks_len > FEATURE_BLOCK_COUNT_MAX {
+            return Err(Error::InvalidFeatureBlockCount(feature_blocks_len));
+        }
+
+        let mut feature_blocks = Vec::with_capacity(feature_blocks_len as usize);
+        for _ in 0..feature_blocks_len {
+            feature_blocks.push(FeatureBlock::unpack_inner::<R, CHECK>(reader)?);
+        }
+
+        Self::new(feature_blocks)
     }
 }

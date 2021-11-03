@@ -20,6 +20,7 @@ pub enum Error {
     InvalidAddressKind(u8),
     InvalidAmount(u64),
     InvalidEssenceKind(u8),
+    InvalidFeatureBlockCount(u16),
     InvalidFeatureBlockKind(u8),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength(usize, usize),
@@ -86,6 +87,7 @@ impl fmt::Display for Error {
             Error::InvalidAddressKind(k) => write!(f, "Invalid address kind: {}.", k),
             Error::InvalidAmount(amount) => write!(f, "Invalid amount: {}.", amount),
             Error::InvalidEssenceKind(k) => write!(f, "Invalid essence kind: {}.", k),
+            Error::InvalidFeatureBlockCount(count) => write!(f, "Invalid feature block count: {}.", count),
             Error::InvalidFeatureBlockKind(k) => write!(f, "Invalid feature block kind: {}.", k),
             Error::InvalidHexadecimalChar(hex) => write!(f, "Invalid hexadecimal character: {}.", hex),
             Error::InvalidHexadecimalLength(expected, actual) => {
