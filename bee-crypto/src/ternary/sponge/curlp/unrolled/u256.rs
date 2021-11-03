@@ -3,14 +3,8 @@
 
 use std::ops::{Index, IndexMut};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub(super) struct U256([u64; 4]);
-
-impl Default for U256 {
-    fn default() -> Self {
-        Self([u64::default(); 4])
-    }
-}
 
 impl Index<usize> for U256 {
     type Output = u64;
