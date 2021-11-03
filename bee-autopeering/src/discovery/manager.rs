@@ -720,7 +720,7 @@ fn handle_verification_request(verif_req: VerificationRequest, ctx: RecvContext)
         }
     } else {
         // Add it as a new peer.
-        let peer = Peer::new(ctx.peer_addr.ip(), ctx.peer_id.public_key());
+        let peer = Peer::new(ctx.peer_addr.ip(), *ctx.peer_id.public_key());
         add_peer::<true>(peer, ctx.local, ctx.active_peers, ctx.replacements);
     }
 

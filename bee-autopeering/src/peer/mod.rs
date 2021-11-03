@@ -25,7 +25,7 @@ use crate::{
 use bytes::BytesMut;
 use crypto::signatures::ed25519::PublicKey;
 use prost::{DecodeError, EncodeError, Message};
-use serde::{Deserialize, Serialize};
+use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Serialize, Serializer};
 
 use std::{
     convert::TryInto,
@@ -37,7 +37,6 @@ use std::{
 #[derive(Clone)]
 pub struct Peer {
     peer_id: PeerId,
-    public_key: PublicKey,
     ip_address: IpAddr,
     services: ServiceMap,
 }
@@ -49,7 +48,7 @@ impl Peer {
 
         Self {
             peer_id,
-            public_key,
+            // public_key,
             ip_address: address,
             services: ServiceMap::default(),
         }
@@ -62,7 +61,7 @@ impl Peer {
 
     /// Returns the public key of this peer.
     pub fn public_key(&self) -> &PublicKey {
-        &self.public_key
+        &self.peer_id.public_key()
     }
 
     /// Returns the address of this peer.
@@ -101,7 +100,7 @@ impl Peer {
 
         let peer = proto::Peer {
             ip: self.ip_address.to_string(),
-            public_key: self.public_key.to_bytes().to_vec(),
+            public_key: self.public_key().as_ref().to_vec(),
             services: Some(services),
         };
 
@@ -120,7 +119,7 @@ impl fmt::Debug for Peer {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Peer")
             .field("peer_id", &self.peer_id.to_string())
-            .field("public_key", &bs58::encode(&self.public_key).into_string())
+            .field("public_key", &bs58::encode(self.public_key().as_ref()).into_string())
             .field("ip_address", &self.ip_address)
             .field("services", &self.services.to_string())
             .finish()
@@ -147,7 +146,7 @@ impl From<proto::Peer> for Peer {
 
         Self {
             peer_id,
-            public_key,
+            // public_key,
             ip_address,
             services,
         }
@@ -158,7 +157,7 @@ impl From<Peer> for proto::Peer {
     fn from(peer: Peer) -> Self {
         Self {
             ip: peer.ip_address.to_string(),
-            public_key: peer.public_key.to_bytes().to_vec(),
+            public_key: peer.public_key().as_ref().to_vec(),
             services: Some(peer.services.into()),
         }
     }
@@ -178,13 +177,46 @@ impl AsRef<PeerId> for Peer {
 
 impl Into<sled::IVec> for Peer {
     fn into(self) -> sled::IVec {
-        todo!("into IVec")
+        let bytes = bincode::serialize(&self).expect("serialization error");
+        sled::IVec::from_iter(bytes.into_iter())
     }
 }
 
 impl From<sled::IVec> for Peer {
-    fn from(_: sled::IVec) -> Self {
-        todo!("from IVec")
+    fn from(bytes: sled::IVec) -> Self {
+        bincode::deserialize(&bytes).expect("deserialization error")
+    }
+}
+
+impl<'de> Deserialize<'de> for Peer {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_struct("Peer", &["peer_id", "ip_address", "services"], PeerVisitor {})
+    }
+}
+
+impl Serialize for Peer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut this = serializer.serialize_struct("Peer", 3)?;
+        this.serialize_field("peer_id", &self.peer_id)?;
+        this.serialize_field("ip_address", &self.ip_address)?;
+        this.serialize_field("services", &self.services)?;
+        this.end()
+    }
+}
+
+struct PeerVisitor {}
+
+impl<'de> Visitor<'de> for PeerVisitor {
+    type Value = Peer;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a peer")
     }
 }
 
@@ -254,11 +286,10 @@ mod tests {
             services.insert(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, 1337);
 
             let public_key = PrivateKey::generate().unwrap().public_key();
-            let peer_id = PeerId::from_public_key(public_key.clone());
+            let peer_id = PeerId::from_public_key(public_key);
 
             Self {
                 peer_id,
-                public_key,
                 ip_address: format!("127.0.0.{}", index).parse().unwrap(),
                 services,
             }

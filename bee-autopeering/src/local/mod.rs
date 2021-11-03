@@ -86,8 +86,8 @@ impl LocalInner {
     }
 
     /// Returns the public key of this identity.
-    pub fn public_key(&self) -> PublicKey {
-        self.peer_id.public_key()
+    pub fn public_key(&self) -> &PublicKey {
+        self.peer_id().public_key()
     }
 
     /// Returns the current private salt of this identity.

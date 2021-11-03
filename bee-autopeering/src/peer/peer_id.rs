@@ -4,7 +4,8 @@
 use crate::{hash, local::salt::Salt};
 
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, PUBLIC_KEY_LENGTH};
-use serde::{Deserialize, Serialize};
+use ring::signature::KeyPair;
+use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Serialize, Serializer};
 
 use std::{
     convert::TryInto,
@@ -16,10 +17,12 @@ use std::{
 const DISPLAY_LENGTH: usize = 12;
 
 /// A type that represents the unique identity of a peer in the network.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Copy, Clone)]
 pub struct PeerId {
+    // An ED25519 public key.
+    public_key: PublicKey,
+    // The `SHA256` hash of the public key.
     id_bytes: [u8; hash::SHA256_LEN],
-    public_key: [u8; PUBLIC_KEY_LENGTH],
 }
 
 impl PeerId {
@@ -30,21 +33,19 @@ impl PeerId {
 
     /// Creates a peer identity from an ED25519 public key.
     pub fn from_public_key(public_key: PublicKey) -> Self {
-        let public_key = public_key.to_bytes();
-        let id_bytes = hash::sha256(&public_key);
+        let id_bytes = hash::sha256(public_key.as_ref());
 
         Self { id_bytes, public_key }
     }
 
     /// Returns a copy of the public key of this identity.
-    pub fn public_key(&self) -> PublicKey {
-        // PANIC: unwrap is safe, because only valid public keys are stored.
-        PublicKey::try_from_bytes(self.public_key).unwrap()
+    pub fn public_key(&self) -> &PublicKey {
+        &self.public_key
     }
 
     pub fn libp2p_public_key(&self) -> libp2p_core::PublicKey {
         libp2p_core::PublicKey::Ed25519(
-            libp2p_core::identity::ed25519::PublicKey::decode(&self.public_key)
+            libp2p_core::identity::ed25519::PublicKey::decode(self.public_key.as_ref())
                 .expect("error decoding ed25519 public key from bytes"),
         )
     }
@@ -104,13 +105,14 @@ impl AsRef<PeerId> for PeerId {
 
 impl AsRef<[u8]> for PeerId {
     fn as_ref(&self) -> &[u8] {
-        todo!()
+        self.public_key.as_ref()
     }
 }
 
 impl Into<sled::IVec> for PeerId {
     fn into(self) -> sled::IVec {
-        todo!("into IVec")
+        let bytes = self.public_key.to_bytes();
+        sled::IVec::from_iter(bytes.into_iter())
     }
 }
 
@@ -122,11 +124,42 @@ impl Into<libp2p_core::PeerId> for PeerId {
         } = self;
 
         let public_key = libp2p_core::PublicKey::Ed25519(
-            libp2p_core::identity::ed25519::PublicKey::decode(&public_key)
+            libp2p_core::identity::ed25519::PublicKey::decode(public_key.as_ref())
                 .expect("error decoding ed25519 public key from bytes"),
         );
 
         libp2p_core::PeerId::from_public_key(public_key)
+    }
+}
+
+impl Serialize for PeerId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut this = serializer.serialize_struct("PeerId", 2)?;
+        this.serialize_field("public_key", &self.public_key.to_bytes())?;
+        this.serialize_field("id_bytes", &self.id_bytes)?;
+        this.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for PeerId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_struct("PeerId", &["public_key", "id_bytes"], PeerIdVisitor {})
+    }
+}
+
+struct PeerIdVisitor {}
+
+impl<'de> Visitor<'de> for PeerIdVisitor {
+    type Value = PeerId;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a peer id")
     }
 }
 
