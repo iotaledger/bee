@@ -1,22 +1,15 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    coerce::*,
-    error::{PackError, UnpackError},
-    packer::Packer,
-    unpacker::Unpacker,
-    Packable,
-};
+use crate::{coerce::*, error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
 
 use core::convert::Infallible;
 
 impl Packable for bool {
-    type PackError = Infallible;
     type UnpackError = Infallible;
 
     /// Booleans are packed as `u8` integers following Rust's data layout.
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         (*self as u8).pack(packer)
     }
 

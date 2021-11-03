@@ -9,7 +9,6 @@ fn generic_test_pack_to_slice_unpack_from_slice<P>(packable: &P)
 where
     P: Packable + Eq + Debug,
     P::UnpackError: Debug,
-    P::PackError: Debug,
 {
     let mut vec = vec![0; packable.packed_len()];
 
@@ -30,9 +29,8 @@ fn generic_test_pack_to_vec_unpack_from_slice<P>(packable: &P) -> (Vec<u8>, P)
 where
     P: Packable + Eq + Debug,
     P::UnpackError: Debug,
-    P::PackError: Debug,
 {
-    let vec = packable.pack_to_vec().unwrap();
+    let vec = packable.pack_to_vec();
     let unpacked = P::unpack_from_slice(&vec).unwrap();
 
     assert_eq!(packable, &unpacked);
@@ -45,7 +43,6 @@ pub fn generic_test<P>(packable: &P) -> (Vec<u8>, P)
 where
     P: Packable + Eq + Debug,
     P::UnpackError: Debug,
-    P::PackError: Debug,
 {
     // Tests for VecPacker and SliceUnpacker
 

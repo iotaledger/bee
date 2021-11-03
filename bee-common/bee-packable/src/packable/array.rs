@@ -1,20 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    error::{PackError, UnpackError},
-    packer::Packer,
-    unpacker::Unpacker,
-    Packable,
-};
+use crate::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
 
 use core::mem::MaybeUninit;
 
 impl<T: Packable, const N: usize> Packable for [T; N] {
-    type PackError = T::PackError;
     type UnpackError = T::UnpackError;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         for item in self.iter() {
             item.pack(packer)?;
         }
