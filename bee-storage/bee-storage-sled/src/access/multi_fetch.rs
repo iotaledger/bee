@@ -22,7 +22,6 @@ impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for DbIter<'a,
     type Item = Result<Option<V>, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // Packing to bytes can't fail.
         let key = self.keys.next()?.pack_to_vec();
 
         Some(
@@ -58,7 +57,6 @@ impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for TreeIter<'
     type Item = Result<Option<V>, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // Packing to bytes can't fail.
         let key = self.keys.next()?.pack_to_vec();
 
         Some(

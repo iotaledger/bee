@@ -43,7 +43,7 @@ impl Batch<MessageId, Message> for Storage {
         message: &Message,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.value_buf.clear();
-        // Packing to bytes can't fail.
+
         message.pack(&mut batch.value_buf).unwrap();
 
         batch
@@ -78,7 +78,7 @@ impl Batch<MessageId, MessageMetadata> for Storage {
         message_metadata: &MessageMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.value_buf.clear();
-        // Packing to bytes can't fail.
+
         message_metadata.pack(&mut batch.value_buf).unwrap();
 
         batch
