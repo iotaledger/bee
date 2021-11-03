@@ -23,6 +23,11 @@ impl<T, U> UnpackError<T, U> {
         }
     }
 
+    /// Wraps an error in the [`Packable`](UnpackError::Packable) variant.
+    pub fn from_packable(err: impl Into<T>) -> Self {
+        Self::Packable(err.into())
+    }
+
     /// Coerces the value by calling `.into()` for the [`Packable`](UnpackError::Packable) variant.
     pub(crate) fn coerce<V>(self) -> UnpackError<V, U>
     where

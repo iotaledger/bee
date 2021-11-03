@@ -134,14 +134,14 @@ impl Packable for Parents {
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let count = u8::unpack(unpacker).infallible()?;
-        validate_parents_count(count as usize).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_parents_count(count as usize).map_err(UnpackError::from_packable)?;
 
         let bits_repr = u8::unpack(unpacker).infallible()?;
 
         let mut bits = bitarr![Lsb0, u8; 0; 8];
         bits.store(bits_repr);
 
-        validate_strong_parents_count(bits.count_ones()).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_strong_parents_count(bits.count_ones()).map_err(UnpackError::from_packable)?;
 
         let mut parents = vec![];
         parents.reserve(count as usize);
@@ -156,7 +156,7 @@ impl Packable for Parents {
             }
         }
 
-        validate_unique_sorted(&parents).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_unique_sorted(&parents).map_err(UnpackError::from_packable)?;
 
         Ok(Self(parents))
     }

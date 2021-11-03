@@ -81,7 +81,7 @@ pub trait MessagePayload: Packable + Into<Payload> {
                 version,
                 payload_kind: Self::KIND,
             })
-            .map_err(|e| UnpackError::Packable(e.into()))?;
+            .map_err(UnpackError::from_packable)?;
         }
 
         Ok(Self::unpack(unpacker).coerce()?.into())

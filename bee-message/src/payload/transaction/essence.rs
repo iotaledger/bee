@@ -148,8 +148,8 @@ impl Packable for TransactionEssence {
                     })
                 })?;
 
-        validate_inputs_unique_utxos(&inputs).map_err(|e| UnpackError::Packable(e.into()))?;
-        validate_inputs_sorted(&inputs).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_inputs_unique_utxos(&inputs).map_err(UnpackError::from_packable)?;
+        validate_inputs_sorted(&inputs).map_err(UnpackError::from_packable)?;
 
         // Outputs syntactical validation
         let outputs =
@@ -169,13 +169,13 @@ impl Packable for TransactionEssence {
                         .checked_add(amount)
                         .ok_or_else(|| ValidationError::InvalidAccumulatedOutput(total as u128 + amount as u128))
                 })
-                .map_err(|e| UnpackError::Packable(e.into()))?,
+                .map_err(UnpackError::from_packable)?,
         )
-        .map_err(|e| UnpackError::Packable(e.into()))?;
-        validate_outputs_sorted(&outputs).map_err(|e| UnpackError::Packable(e.into()))?;
+        .map_err(UnpackError::from_packable)?;
+        validate_outputs_sorted(&outputs).map_err(UnpackError::from_packable)?;
 
         let payload = Option::<Payload>::unpack(unpacker).coerce()?;
-        validate_payload(&payload).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_payload(&payload).map_err(UnpackError::from_packable)?;
 
         Ok(Self {
             timestamp,

@@ -85,7 +85,7 @@ impl Packable for UnlockBlocks {
             })
         })?;
 
-        validate_unlock_block_variants(&inner).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_unlock_block_variants(&inner).map_err(UnpackError::from_packable)?;
 
         Ok(Self(inner))
     }
