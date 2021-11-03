@@ -59,6 +59,9 @@ macro_rules! bounded {
 
         impl<const MIN: $ty, const MAX: $ty> $wrapper<MIN, MAX> {
             /// Creates a bounded integer without checking wether the value is in-bounds.
+            ///
+            /// # Safety
+            /// The caller must guarantee that the created integer is actually in-bounds.
             pub unsafe fn new_unchecked(value: $ty) -> Self {
                 debug_assert!((value >= MIN) && (value <= MAX));
 
