@@ -496,7 +496,7 @@ impl<B: StorageBackend> Tangle<B> {
             if exists {
                 vertex.allow_eviction();
             }
-            let r = vertex.metadata_mut().map(|m| update(m));
+            let r = vertex.metadata_mut().map(update);
 
             if let Some((msg, meta)) = vertex.message_and_metadata() {
                 let (msg, meta) = ((&**msg).clone(), *meta);
