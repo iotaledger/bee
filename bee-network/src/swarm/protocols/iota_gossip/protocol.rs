@@ -29,21 +29,6 @@ struct ConnectionInfo {
     origin: Origin,
 }
 
-#[derive(Debug)]
-struct SwarmEvent {
-    peer_id: PeerId,
-    peer_addr: Multiaddr,
-    conn_id: ConnectionId,
-    origin: Origin,
-}
-
-#[derive(Debug)]
-struct HandlerEvent {
-    peer_id: PeerId,
-    conn_id: ConnectionId,
-    event: IotaGossipHandlerEvent,
-}
-
 /// Substream upgrade protocol for `/iota-gossip/1.0.0`.
 pub struct IotaGossipProtocol {
     /// The gossip protocol identifier.
