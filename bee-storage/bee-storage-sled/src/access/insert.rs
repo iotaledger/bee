@@ -17,7 +17,7 @@ pub(crate) fn insert_u8_system(
     value: &System,
 ) -> Result<(), <Storage as StorageBackend>::Error> {
     // Packing to bytes can't fail.
-    storage.inner.insert(&[*key], value.pack_to_vec().unwrap())?;
+    storage.inner.insert(&[*key], value.pack_to_vec())?;
 
     Ok(())
 }
@@ -27,7 +27,7 @@ impl Insert<MessageId, Message> for Storage {
         self.inner
             .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
             // Packing to bytes can't fail.
-            .insert(message_id, message.pack_to_vec().unwrap())?;
+            .insert(message_id, message.pack_to_vec())?;
 
         Ok(())
     }
@@ -42,7 +42,7 @@ impl Insert<MessageId, MessageMetadata> for Storage {
         self.inner
             .open_tree(TREE_MESSAGE_ID_TO_MESSAGE_METADATA)?
             // Packing to bytes can't fail.
-            .insert(message_id, message_metadata.pack_to_vec().unwrap())?;
+            .insert(message_id, message_metadata.pack_to_vec())?;
 
         Ok(())
     }
