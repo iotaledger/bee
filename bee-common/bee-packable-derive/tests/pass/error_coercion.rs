@@ -29,8 +29,10 @@ impl Packable for Picky {
         self.0.pack(packer)
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let value = u8::unpack(unpacker).infallible()?;
+    fn unpack<U: Unpacker, const CHECK: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let value = u8::unpack::<_, CHECK>(unpacker).infallible()?;
 
         if value == 42 {
             Ok(Self(value))
