@@ -10,8 +10,8 @@ use crate::{
 
 use bee_ord::is_sorted;
 use bee_packable::{
-    coerce::*, error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, PackError, Packable, Packer,
-    UnpackError, Unpacker, VecPrefix,
+    coerce::*, error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, Packable, Packer, UnpackError,
+    Unpacker, VecPrefix,
 };
 
 use alloc::vec::Vec;
@@ -120,7 +120,6 @@ impl TransactionEssence {
 }
 
 impl Packable for TransactionEssence {
-    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
@@ -132,12 +131,12 @@ impl Packable for TransactionEssence {
             + self.payload.packed_len()
     }
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.timestamp.pack(packer).infallible()?;
-        self.access_pledge_id.pack(packer).infallible()?;
-        self.consensus_pledge_id.pack(packer).infallible()?;
-        self.inputs.pack(packer).infallible()?;
-        self.outputs.pack(packer).infallible()?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.timestamp.pack(packer)?;
+        self.access_pledge_id.pack(packer)?;
+        self.consensus_pledge_id.pack(packer)?;
+        self.inputs.pack(packer)?;
+        self.outputs.pack(packer)?;
         self.payload.pack(packer)
     }
 
@@ -355,8 +354,7 @@ fn validate_output_total(total: u64) -> Result<(), ValidationError> {
 }
 
 fn validate_outputs_sorted(outputs: &[Output]) -> Result<(), ValidationError> {
-    // Unwrap is okay here, since we have just unpacked a valid output collection.
-    if !is_sorted(outputs.iter().map(|o| o.pack_to_vec().unwrap())) {
+    if !is_sorted(outputs.iter().map(|o| o.pack_to_vec())) {
         Err(ValidationError::TransactionOutputsNotSorted)
     } else {
         Ok(())

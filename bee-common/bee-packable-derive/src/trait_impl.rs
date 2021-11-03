@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    attribute::{PackError, Tag, TagType, UnpackError},
+    attribute::{Tag, TagType, UnpackError},
     fragments::Fragments,
 };
 
@@ -13,7 +13,6 @@ use syn::{spanned::Spanned, Attribute, DataEnum, DataStruct, DeriveInput, Fields
 pub(crate) struct TraitImpl {
     type_name: Ident,
     generics: Generics,
-    pack_error: TokenStream,
     unpack_error: TokenStream,
     pack: TokenStream,
     packed_len: TokenStream,
@@ -33,12 +32,6 @@ impl TraitImpl {
     }
 
     fn from_enum(data: DataEnum, generics: Generics, attrs: Vec<Attribute>, type_name: Ident) -> syn::Result<Self> {
-        let first_field_ty = || {
-            data.variants
-                .first()
-                .and_then(|variant| variant.fields.iter().next().map(|field| &field.ty))
-        };
-
         let (tag_ty, tag_with_err) = match TagType::new(&attrs)? {
             TagType { ty: Some(ty), with_err } => (ty, with_err),
             TagType { ty: None, with_err } => {
@@ -59,8 +52,6 @@ impl TraitImpl {
                 }
             }
         };
-
-        let pack_error_attr = PackError::new(&attrs, &first_field_ty)?;
 
         let unpack_error_attr = UnpackError::for_enum(&attrs, &tag_ty)?;
 
@@ -127,18 +118,9 @@ impl TraitImpl {
             let name = quote!(Self::#ident);
 
             let fragments = match fields {
-                Fields::Named(fields) => {
-                    Fragments::new::<true>(name, &fields.named, &pack_error_attr.with, &unpack_error_attr.with)?
-                }
-                Fields::Unnamed(fields) => {
-                    Fragments::new::<false>(name, &fields.unnamed, &pack_error_attr.with, &unpack_error_attr.with)?
-                }
-                Fields::Unit => Fragments::new::<true>(
-                    name,
-                    &Default::default(),
-                    &pack_error_attr.with,
-                    &unpack_error_attr.with,
-                )?,
+                Fields::Named(fields) => Fragments::new::<true>(name, &fields.named, &unpack_error_attr.with)?,
+                Fields::Unnamed(fields) => Fragments::new::<false>(name, &fields.unnamed, &unpack_error_attr.with)?,
+                Fields::Unit => Fragments::new::<true>(name, &Default::default(), &unpack_error_attr.with)?,
             };
 
             let (pack_branch, packed_len_branch, unpack_branch) = fragments.consume_for_variant(&tag_ident, &tag_ty);
@@ -179,7 +161,6 @@ impl TraitImpl {
         Ok(Self {
             type_name,
             generics,
-            pack_error: pack_error_attr.ty.to_token_stream(),
             unpack_error: unpack_error_attr.ty.to_token_stream(),
             pack,
             packed_len,
@@ -190,20 +171,12 @@ impl TraitImpl {
     fn from_struct(data: DataStruct, generics: Generics, attrs: Vec<Attribute>, type_name: Ident) -> syn::Result<Self> {
         let first_field_ty = || data.fields.iter().next().map(|field| &field.ty);
 
-        let pack_error = PackError::new(&attrs, &first_field_ty)?;
-
         let unpack_error = UnpackError::for_struct(&attrs, first_field_ty)?;
 
         let fragments = match data.fields {
-            Fields::Named(fields) => {
-                Fragments::new::<true>(quote!(Self), &fields.named, &pack_error.with, &unpack_error.with)?
-            }
-            Fields::Unnamed(fields) => {
-                Fragments::new::<false>(quote!(Self), &fields.unnamed, &pack_error.with, &unpack_error.with)?
-            }
-            Fields::Unit => {
-                Fragments::new::<true>(quote!(Self), &Default::default(), &pack_error.with, &unpack_error.with)?
-            }
+            Fields::Named(fields) => Fragments::new::<true>(quote!(Self), &fields.named, &unpack_error.with)?,
+            Fields::Unnamed(fields) => Fragments::new::<false>(quote!(Self), &fields.unnamed, &unpack_error.with)?,
+            Fields::Unit => Fragments::new::<true>(quote!(Self), &Default::default(), &unpack_error.with)?,
         };
 
         let (pack, packed_len, unpack) = fragments.consume_for_struct();
@@ -211,7 +184,6 @@ impl TraitImpl {
         Ok(Self {
             type_name,
             generics,
-            pack_error: pack_error.ty.to_token_stream(),
             unpack_error: unpack_error.ty.to_token_stream(),
             pack,
             packed_len,
@@ -225,7 +197,6 @@ impl ToTokens for TraitImpl {
         let Self {
             type_name,
             generics,
-            pack_error,
             unpack_error,
             pack,
             packed_len,
@@ -236,10 +207,9 @@ impl ToTokens for TraitImpl {
 
         let impl_tokens = quote! {
             impl #impl_generics Packable for #type_name #ty_generics #where_clause {
-                type PackError = #pack_error;
                 type UnpackError = #unpack_error;
 
-                fn pack<P: bee_packable::packer::Packer>(&self, packer: &mut P) -> Result<(), bee_packable::error::PackError<Self::PackError, P::Error>> {
+                fn pack<P: bee_packable::packer::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
                     use bee_packable::coerce::*;
                     #pack
                 }

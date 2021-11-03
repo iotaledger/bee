@@ -5,49 +5,6 @@
 
 use core::convert::Infallible;
 
-/// Error type raised when [`Packable::pack`](crate::Packable) fails.
-#[derive(Debug)]
-pub enum PackError<T, P> {
-    /// Semantic error. Typically this is [`Packable::PackError`](crate::Packable).
-    Packable(T),
-    /// Error produced by the packer. Typically this is [`Packer::Error`](crate::packer::Packer).
-    Packer(P),
-}
-
-impl<T, P> PackError<T, P> {
-    /// Map the [`Packable`](crate::Packable) variant of this enum.
-    pub fn map<V, F: Fn(T) -> V>(self, f: F) -> PackError<V, P> {
-        match self {
-            Self::Packable(err) => PackError::Packable(f(err)),
-            Self::Packer(err) => PackError::Packer(err),
-        }
-    }
-
-    /// Coerce the value by calling `.into()` for the [`Packable`](crate::Packable) variant.
-    pub(crate) fn coerce<V>(self) -> PackError<V, P>
-    where
-        T: Into<V>,
-    {
-        self.map(|x| x.into())
-    }
-}
-
-impl<T, P> From<P> for PackError<T, P> {
-    fn from(err: P) -> Self {
-        Self::Packer(err)
-    }
-}
-
-impl<P> PackError<Infallible, P> {
-    /// Coerce the value if the [`Packable`](crate::Packable) variant is [`Infallible`].
-    pub(crate) fn infallible<E>(self) -> PackError<E, P> {
-        match self {
-            Self::Packable(err) => match err {},
-            Self::Packer(err) => PackError::Packer(err),
-        }
-    }
-}
-
 /// Error type raised when [`Packable::unpack`](crate::Packable) fails.
 #[derive(Debug)]
 pub enum UnpackError<T, U> {
@@ -98,25 +55,6 @@ pub struct UnknownTagError<T>(pub T);
 impl<T> From<Infallible> for UnknownTagError<T> {
     fn from(err: Infallible) -> Self {
         match err {}
-    }
-}
-
-/// Semantic error raised while packing a dynamically-sized sequences that use a type different than `usize` for their
-/// length-prefix.
-#[derive(Debug)]
-pub struct PackPrefixError<T>(pub T);
-
-impl<T> From<T> for PackPrefixError<T> {
-    fn from(err: T) -> Self {
-        Self(err)
-    }
-}
-
-// We cannot provide a `From` implementation because `Infallible` is an extern type.
-#[allow(clippy::from_over_into)]
-impl Into<Infallible> for PackPrefixError<Infallible> {
-    fn into(self) -> Infallible {
-        self.0
     }
 }
 

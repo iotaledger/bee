@@ -42,8 +42,7 @@ macro_rules! impl_multi_fetch {
                 Ok(MultiIter {
                     iter: self
                         .inner
-                        // Packing to bytes can't fail.
-                        .multi_get_cf(keys.iter().map(|k| (cf, k.pack_to_vec().unwrap())))
+                        .multi_get_cf(keys.iter().map(|k| (cf, k.pack_to_vec())))
                         .into_iter(),
                     marker: PhantomData,
                 })

@@ -3,9 +3,9 @@
 
 use crate::{address::Address, error::ValidationError, MessageUnpackError, IOTA_SUPPLY};
 
-use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{coerce::*, Packable, Packer, UnpackError, Unpacker};
 
-use core::{convert::Infallible, ops::RangeInclusive};
+use core::ops::RangeInclusive;
 
 /// Valid amounts for a signature locked single output.
 pub const SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
@@ -44,14 +44,13 @@ impl SignatureLockedSingleOutput {
 }
 
 impl Packable for SignatureLockedSingleOutput {
-    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
         self.address.packed_len() + self.amount.packed_len()
     }
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.address.pack(packer)?;
         self.amount.pack(packer)
     }

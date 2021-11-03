@@ -9,7 +9,6 @@ use core::convert::Infallible;
 
 #[derive(Packable)]
 #[packable(tag_type = u8, with_error = InvalidTag::new)]
-#[packable(pack_error = Infallible)]
 #[packable(unpack_error = InvalidTag)]
 pub enum OptI32 {
     #[packable(tag = 0)]

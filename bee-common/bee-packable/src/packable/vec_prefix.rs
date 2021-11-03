@@ -5,7 +5,7 @@ extern crate alloc;
 
 use crate::{
     coerce::*,
-    error::{PackError, PackPrefixError, UnpackError, UnpackPrefixError},
+    error::{UnpackError, UnpackPrefixError},
     packer::Packer,
     unpacker::Unpacker,
     Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
@@ -108,16 +108,15 @@ macro_rules! impl_vec_prefix {
         }
 
         impl<T: Packable, const MIN: $ty, const MAX: $ty> Packable for VecPrefix<T, $bounded<MIN, MAX>> {
-            type PackError = PackPrefixError<T::PackError>;
             type UnpackError = UnpackPrefixError<T::UnpackError, $err<MIN, MAX>>;
 
-            fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+            fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
                 // The length of any dynamically-sized sequence must be prefixed.
                 // This unwrap is fine, since we have already validated the length in `try_from`.
-                <$ty>::try_from(self.len()).unwrap().pack(packer).infallible()?;
+                <$ty>::try_from(self.len()).unwrap().pack(packer)?;
 
                 for item in self.iter() {
-                    item.pack(packer).coerce()?;
+                    item.pack(packer)?;
                 }
 
                 Ok(())

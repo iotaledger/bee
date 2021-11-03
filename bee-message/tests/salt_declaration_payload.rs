@@ -94,8 +94,7 @@ fn packable_round_trip() {
         .finish()
         .unwrap();
 
-    let salt_declaration_b =
-        SaltDeclarationPayload::unpack_from_slice(salt_declaration_a.pack_to_vec().unwrap()).unwrap();
+    let salt_declaration_b = SaltDeclarationPayload::unpack_from_slice(salt_declaration_a.pack_to_vec()).unwrap();
 
     assert_eq!(salt_declaration_a, salt_declaration_b);
 }

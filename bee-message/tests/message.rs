@@ -190,7 +190,7 @@ fn packable_round_trip() {
         .finish()
         .unwrap();
 
-    let message_b = Message::unpack_from_slice(message_a.pack_to_vec().unwrap()).unwrap();
+    let message_b = Message::unpack_from_slice(message_a.pack_to_vec()).unwrap();
 
     assert_eq!(message_a, message_b);
 }

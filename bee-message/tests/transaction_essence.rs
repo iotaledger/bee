@@ -232,17 +232,17 @@ fn unpack_invalid_input_count() {
     let consensus_pledge_id = rand_bytes_array::<32>();
     let inputs = vec![input; inputs_len];
 
-    let mut bytes = timestamp.pack_to_vec().unwrap();
+    let mut bytes = timestamp.pack_to_vec();
     bytes.extend(access_pledge_id);
     bytes.extend(consensus_pledge_id);
     bytes.extend(vec![0x80, 0x00, 0x00, 0x00]);
 
     for input in inputs {
-        bytes.extend(input.pack_to_vec().unwrap());
+        bytes.extend(input.pack_to_vec());
     }
 
     bytes.extend(vec![0x01, 0x00, 0x00, 0x00]);
-    bytes.extend(output.pack_to_vec().unwrap());
+    bytes.extend(output.pack_to_vec());
 
     assert!(matches!(
         TransactionEssence::unpack_from_slice(bytes),
@@ -266,16 +266,16 @@ fn unpack_invalid_output_count() {
     let consensus_pledge_id = rand_bytes_array::<32>();
     let outputs = vec![output; outputs_len];
 
-    let mut bytes = timestamp.pack_to_vec().unwrap();
+    let mut bytes = timestamp.pack_to_vec();
     bytes.extend(access_pledge_id);
     bytes.extend(consensus_pledge_id);
     bytes.extend(vec![0x02, 0x00, 0x00, 0x00]);
-    bytes.extend(input1.pack_to_vec().unwrap());
-    bytes.extend(input2.pack_to_vec().unwrap());
+    bytes.extend(input1.pack_to_vec());
+    bytes.extend(input2.pack_to_vec());
     bytes.extend(vec![0x80, 0x00, 0x00, 0x00]);
 
     for output in outputs {
-        bytes.extend(output.pack_to_vec().unwrap());
+        bytes.extend(output.pack_to_vec());
     }
 
     assert!(matches!(
@@ -357,7 +357,7 @@ fn packable_round_trip() {
         .finish()
         .unwrap();
 
-    let essence_b = TransactionEssence::unpack_from_slice(essence_a.pack_to_vec().unwrap()).unwrap();
+    let essence_b = TransactionEssence::unpack_from_slice(essence_a.pack_to_vec()).unwrap();
 
     assert_eq!(essence_a, essence_b);
 }

@@ -1,24 +1,17 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    coerce::*,
-    error::{PackError, UnpackError},
-    packer::Packer,
-    unpacker::Unpacker,
-    Packable,
-};
+use crate::{coerce::*, error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
 
 use core::convert::Infallible;
 
 macro_rules! impl_packable_for_integer {
     ($ty:ty) => {
         impl Packable for $ty {
-            type PackError = Infallible;
             type UnpackError = Infallible;
 
-            fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-                Ok(packer.pack_bytes(&self.to_le_bytes())?)
+            fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+                packer.pack_bytes(&self.to_le_bytes())
             }
 
             fn packed_len(&self) -> usize {
@@ -44,9 +37,8 @@ impl_packable_for_integer!(u128);
 /// `usize` integers are packed and unpacked as `u64` integers according to the spec.
 impl Packable for usize {
     type UnpackError = Infallible;
-    type PackError = Infallible;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         (*self as u64).pack(packer)
     }
 
@@ -68,10 +60,9 @@ impl_packable_for_integer!(i128);
 
 /// `isize` integers are packed and unpacked as `i64` integers according to the spec.
 impl Packable for isize {
-    type PackError = Infallible;
     type UnpackError = Infallible;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         (*self as i64).pack(packer)
     }
 

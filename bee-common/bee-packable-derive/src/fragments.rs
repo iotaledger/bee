@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::attribute::{PackErrorWith, UnpackErrorWith};
+use crate::attribute::UnpackErrorWith;
 
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
@@ -30,7 +30,6 @@ impl Fragments {
     pub(crate) fn new<const NAMED: bool>(
         name: TokenStream,
         fields: &Punctuated<Field, Comma>,
-        pack_error_with: &TokenStream,
         unpack_error_with: &TokenStream,
     ) -> syn::Result<Self> {
         let len = fields.len();
@@ -40,7 +39,6 @@ impl Fragments {
         let mut labels = Vec::with_capacity(len);
         // The value of each field of the record.
         let mut values = Vec::with_capacity(len);
-        let mut pack_error_withs = Vec::with_capacity(len);
         let mut unpack_error_withs = Vec::with_capacity(len);
 
         for (index, Field { ident, ty, attrs, .. }) in fields.iter().enumerate() {
@@ -58,15 +56,9 @@ impl Fragments {
             // We will use variables called `field_<index>` for the values of each field.
             values.push(format_ident!("field_{}", index));
 
-            pack_error_withs.push(PackErrorWith::new(attrs)?);
             unpack_error_withs.push(UnpackErrorWith::new(attrs)?);
         }
 
-        let pack_error_withs = pack_error_withs.iter().map(|attr| {
-            attr.with
-                .as_ref()
-                .map_or_else(|| pack_error_with.clone(), ToTokens::to_token_stream)
-        });
         let unpack_error_withs = unpack_error_withs.iter().map(|attr| {
             attr.with
                 .as_ref()
@@ -79,12 +71,12 @@ impl Fragments {
             pattern: quote!(#name { #(#labels: #values),* }),
             // This would be
             // ```
-            // <T>::pack(&field_0, packer).map_err(|err| err.map(core::convert::identity).coerce()?;
-            // <V>::pack(&field_1, packer).map_err(|err| err.map(core::convert::identity).coerce()?;
+            // <T>::pack(&field_0, packer)?;
+            // <V>::pack(&field_1, packer)?;
             // Ok(())
             // ```
             pack: quote! {
-                #(<#types>::pack(#values, packer).map_err(|err| err.map(#pack_error_withs)).coerce()?;) *
+                #(<#types>::pack(#values, packer)?;) *
                 Ok(())
             },
             // This would be `0 + <T>::packed_len(&field_0) + <V>::packed_len(&field_1)`. The `0`
@@ -118,8 +110,8 @@ impl Fragments {
         //     bar: field_0,
         //     baz: field_1,
         // } = self;
-        // <T>::pack(&field_0, packer).coerce()?;
-        // <V>::pack(&field_1, packer).coerce()?;
+        // <T>::pack(&field_0, packer)?;
+        // <V>::pack(&field_1, packer)?;
         // Ok(())
         // ```
         // The whole destructuring thing is done so we can do both variants and structs with the
@@ -166,15 +158,15 @@ impl Fragments {
         // ```
         // Foo { bar: field_0 , baz: field_1 } => {
         //     W::pack(&tag, packer).infallible()?;
-        //     <T>::pack(&field_0, packer).map_err(|err| err.map(core::convert::identity).coerce()?;
-        //     <V>::pack(&field_1, packer).map_err(|err| err.map(core::convert::identity).coerce()?;
+        //     <T>::pack(&field_0, packer)?;
+        //     <V>::pack(&field_1, packer)?;
         //     Ok(())
         // }
         // ```
         // The cast to `W` is included because `tag` is an integer without type annotations.
         let pack = quote! {
             #pattern => {
-                #tag_ty::pack(&#tag, packer).infallible()?;
+                #tag_ty::pack(&#tag, packer)?;
                 #pack
             }
         };

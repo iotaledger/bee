@@ -31,13 +31,13 @@ fn packed_len() {
     let signature = Signature::from(Ed25519Signature::new(rand_bytes_array(), rand_bytes_array()));
 
     assert_eq!(signature.packed_len(), 1 + 32 + 64);
-    assert_eq!(signature.pack_to_vec().unwrap().len(), 1 + 32 + 64);
+    assert_eq!(signature.pack_to_vec().len(), 1 + 32 + 64);
 }
 
 #[test]
 fn packable_round_trip() {
     let signature_1 = Signature::from(Ed25519Signature::new(rand_bytes_array(), rand_bytes_array()));
-    let signature_2 = Signature::unpack_from_slice(signature_1.pack_to_vec().unwrap()).unwrap();
+    let signature_2 = Signature::unpack_from_slice(signature_1.pack_to_vec()).unwrap();
 
     assert_eq!(signature_1, signature_2);
 }

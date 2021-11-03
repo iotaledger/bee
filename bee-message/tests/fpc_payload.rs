@@ -135,7 +135,7 @@ fn packable_round_trip() {
         ])
         .finish()
         .unwrap();
-    let fpc_b = FpcPayload::unpack_from_slice(fpc_a.pack_to_vec().unwrap()).unwrap();
+    let fpc_b = FpcPayload::unpack_from_slice(fpc_a.pack_to_vec()).unwrap();
 
     assert_eq!(fpc_a, fpc_b);
 }

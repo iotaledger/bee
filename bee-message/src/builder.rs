@@ -98,8 +98,7 @@ impl MessageBuilder {
             signature,
         };
 
-        // This unwrap is fine, because we have just unpacked a valid message.
-        message::validate_message_len(message.pack_to_vec().unwrap().len())?;
+        message::validate_message_len(message.pack_to_vec().len())?;
 
         Ok(message)
     }

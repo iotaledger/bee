@@ -1,13 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    coerce::*,
-    error::{PackError, UnpackError},
-    packer::Packer,
-    unpacker::Unpacker,
-    Packable,
-};
+use crate::{coerce::*, error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
 
 /// Error type raised when a semantic error occurs while unpacking an option.
 #[derive(Debug)]
@@ -27,14 +21,13 @@ impl<E> From<E> for UnpackOptionError<E> {
 /// Options are packed and unpacked using `0u8` as the prefix for `None` and `1u8` as the prefix
 /// for `Some`.
 impl<T: Packable> Packable for Option<T> {
-    type PackError = T::PackError;
     type UnpackError = UnpackOptionError<T::UnpackError>;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match self {
-            None => Ok(0u8.pack(packer).infallible()?),
+            None => 0u8.pack(packer),
             Some(item) => {
-                1u8.pack(packer).infallible()?;
+                1u8.pack(packer)?;
                 item.pack(packer)
             }
         }

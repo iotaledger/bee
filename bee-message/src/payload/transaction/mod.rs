@@ -14,11 +14,11 @@ pub(crate) use essence::{
 };
 pub use transaction_id::TransactionId;
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{Packable, Packer, UnpackError, Unpacker};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use alloc::boxed::Box;
-use core::{convert::Infallible, fmt};
+use core::fmt;
 
 /// Error encountered unpacking a transaction payload.
 #[derive(Debug)]
@@ -82,8 +82,7 @@ impl TransactionPayload {
         let mut hasher = Blake2b256::new();
         hasher.update(Self::KIND.to_le_bytes());
 
-        // Unwrap is okay, since packing is infallible.
-        let bytes = self.pack_to_vec().unwrap();
+        let bytes = self.pack_to_vec();
 
         hasher.update(bytes);
 
@@ -102,14 +101,13 @@ impl TransactionPayload {
 }
 
 impl Packable for TransactionPayload {
-    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
         self.essence.packed_len() + self.unlock_blocks.packed_len()
     }
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.essence.pack(packer)?;
         self.unlock_blocks.pack(packer)
     }

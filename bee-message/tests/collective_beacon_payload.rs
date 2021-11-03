@@ -97,7 +97,7 @@ fn packable_round_trip() {
         .finish()
         .unwrap();
 
-    let beacon_b = CollectiveBeaconPayload::unpack_from_slice(beacon_a.pack_to_vec().unwrap()).unwrap();
+    let beacon_b = CollectiveBeaconPayload::unpack_from_slice(beacon_a.pack_to_vec()).unwrap();
 
     assert_eq!(beacon_a, beacon_b);
 }

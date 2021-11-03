@@ -94,13 +94,13 @@ fn packed_len() {
     let parents = Parents::new(inner).unwrap();
 
     assert_eq!(parents.packed_len(), 1 + 1 + 3 * 32);
-    assert_eq!(parents.pack_to_vec().unwrap().len(), 1 + 1 + 3 * 32);
+    assert_eq!(parents.pack_to_vec().len(), 1 + 1 + 3 * 32);
 }
 
 #[test]
 fn pack_unpack_valid() {
     let parents_1 = rand_parents();
-    let parents_2 = Parents::unpack_from_slice(parents_1.pack_to_vec().unwrap()).unwrap();
+    let parents_2 = Parents::unpack_from_slice(parents_1.pack_to_vec()).unwrap();
 
     assert_eq!(parents_1, parents_2);
 }
@@ -161,12 +161,7 @@ fn unpack_invalid_not_sorted() {
     // Remove 8 byte vector length field and replace with 1 byte, to represent message parents, and one byte for parent
     // types.
     let mut packed = vec![8, 1];
-    let mut packed_messages = inner
-        .pack_to_vec()
-        .unwrap()
-        .split_at(core::mem::size_of::<u64>())
-        .1
-        .to_vec();
+    let mut packed_messages = inner.pack_to_vec().split_at(core::mem::size_of::<u64>()).1.to_vec();
     packed.append(&mut packed_messages);
 
     assert!(matches!(
@@ -186,12 +181,7 @@ fn unpack_invalid_not_unique() {
     // Remove 8 byte vector length field and replace with 1 byte, to represent message parents, and one byte for parent
     // types.
     let mut packed = vec![8, 1];
-    let mut packed_messages = inner
-        .pack_to_vec()
-        .unwrap()
-        .split_at(core::mem::size_of::<u64>())
-        .1
-        .to_vec();
+    let mut packed_messages = inner.pack_to_vec().split_at(core::mem::size_of::<u64>()).1.to_vec();
     packed.append(&mut packed_messages);
 
     assert!(matches!(

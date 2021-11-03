@@ -3,23 +3,16 @@
 
 extern crate alloc;
 
-use crate::{
-    coerce::*,
-    error::{PackError, UnpackError},
-    packer::Packer,
-    unpacker::Unpacker,
-    Packable,
-};
+use crate::{coerce::*, error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
 
 use alloc::vec::Vec;
 
 impl<T: Packable> Packable for Vec<T> {
-    type PackError = T::PackError;
     type UnpackError = T::UnpackError;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         // The length of any dynamically-sized sequence must be prefixed.
-        (self.len() as u64).pack(packer).infallible()?;
+        (self.len() as u64).pack(packer)?;
 
         for item in self.iter() {
             item.pack(packer)?;

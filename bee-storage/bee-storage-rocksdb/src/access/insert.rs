@@ -18,8 +18,7 @@ pub(crate) fn insert_u8_system(
 ) -> Result<(), <Storage as StorageBackend>::Error> {
     storage
         .inner
-        // Packing to bytes can't fail.
-        .put_cf(storage.cf_handle(CF_SYSTEM)?, [*key], value.pack_to_vec().unwrap())?;
+        .put_cf(storage.cf_handle(CF_SYSTEM)?, [*key], value.pack_to_vec())?;
 
     Ok(())
 }
@@ -29,8 +28,7 @@ impl Insert<MessageId, Message> for Storage {
         self.inner.put_cf(
             self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?,
             message_id,
-            // Packing to bytes can't fail.
-            message.pack_to_vec().unwrap(),
+            message.pack_to_vec(),
         )?;
 
         Ok(())
@@ -46,8 +44,7 @@ impl Insert<MessageId, MessageMetadata> for Storage {
         self.inner.put_cf(
             self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_METADATA)?,
             message_id,
-            // Packing to bytes can't fail.
-            message_metadata.pack_to_vec().unwrap(),
+            message_metadata.pack_to_vec(),
         )?;
 
         Ok(())

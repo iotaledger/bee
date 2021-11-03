@@ -184,7 +184,7 @@ fn packable_round_trip() {
     ])
     .unwrap();
 
-    let blocks_b = UnlockBlocks::unpack_from_slice(blocks_a.pack_to_vec().unwrap()).unwrap();
+    let blocks_b = UnlockBlocks::unpack_from_slice(blocks_a.pack_to_vec()).unwrap();
 
     assert_eq!(blocks_a, blocks_b);
 }

@@ -104,13 +104,13 @@ fn packed_len() {
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
 
     assert_eq!(output_id.packed_len(), 32 + 2);
-    assert_eq!(output_id.pack_to_vec().unwrap().len(), 32 + 2);
+    assert_eq!(output_id.pack_to_vec().len(), 32 + 2);
 }
 
 #[test]
 fn packable_round_trip() {
     let output_id_1 = OutputId::from_str(OUTPUT_ID).unwrap();
-    let output_id_2 = OutputId::unpack_from_slice(output_id_1.pack_to_vec().unwrap()).unwrap();
+    let output_id_2 = OutputId::unpack_from_slice(output_id_1.pack_to_vec()).unwrap();
 
     assert_eq!(output_id_1, output_id_2);
 }

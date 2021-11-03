@@ -1,16 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    coerce::*,
-    error::{PackError, UnpackError},
-    packer::Packer,
-    unpacker::Unpacker,
-    Packable,
-};
+use crate::{coerce::*, error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
 
 use core::{
-    convert::{Infallible, TryFrom, TryInto},
+    convert::{TryFrom, TryInto},
     fmt::{self, Display},
 };
 
@@ -84,14 +78,13 @@ macro_rules! bounded {
         }
 
         impl<const MIN: $ty, const MAX: $ty> Packable for $wrapper<MIN, MAX> {
-            type PackError = Infallible;
             type UnpackError = $error<MIN, MAX>;
 
             fn packed_len(&self) -> usize {
                 self.0.packed_len()
             }
 
-            fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+            fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
                 self.0.pack(packer)
             }
 

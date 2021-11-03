@@ -7,17 +7,14 @@ use crate::{
     MessageId, MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{coerce::*, Packable, Packer, UnpackError, Unpacker};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
     signatures::ed25519,
 };
 
-use core::{
-    convert::{Infallible, TryInto},
-    ops::RangeInclusive,
-};
+use core::{convert::TryInto, ops::RangeInclusive};
 
 /// Range (in bytes) of a valid message length.
 /// The maximum length is 64KB, and minimum length is calculated from message containing an empty data payload and two
@@ -61,8 +58,7 @@ pub struct Message {
 impl Message {
     /// Computes the identifier of the message.
     pub fn id(&self) -> MessageId {
-        // Unwrap is okay here, since packing is infallible.
-        let bytes = self.pack_to_vec().unwrap();
+        let bytes = self.pack_to_vec();
 
         let id = Blake2b256::digest(&bytes);
 
@@ -109,7 +105,7 @@ impl Message {
 
     /// Hashes the [`Message`] contents, excluding the signature.
     pub fn hash(&self) -> [u8; 32] {
-        let mut bytes = self.pack_to_vec().unwrap();
+        let mut bytes = self.pack_to_vec();
 
         bytes = bytes[..bytes.len() - core::mem::size_of::<u64>()].to_vec();
 
@@ -134,7 +130,6 @@ impl Message {
 }
 
 impl Packable for Message {
-    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
@@ -148,15 +143,15 @@ impl Packable for Message {
             + self.signature.packed_len()
     }
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        MESSAGE_VERSION.pack(packer).infallible()?;
-        self.parents.pack(packer).infallible()?;
-        self.issuer_public_key.pack(packer).infallible()?;
-        self.issue_timestamp.pack(packer).infallible()?;
-        self.sequence_number.pack(packer).infallible()?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        MESSAGE_VERSION.pack(packer)?;
+        self.parents.pack(packer)?;
+        self.issuer_public_key.pack(packer)?;
+        self.issue_timestamp.pack(packer)?;
+        self.sequence_number.pack(packer)?;
         self.payload.pack(packer)?;
-        self.nonce.pack(packer).infallible()?;
-        self.signature.pack(packer).infallible()
+        self.nonce.pack(packer)?;
+        self.signature.pack(packer)
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
@@ -181,8 +176,7 @@ impl Packable for Message {
             signature,
         };
 
-        // Unwrap is okay, since we have already unpacked a valid message.
-        let len = message.pack_to_vec().unwrap().len();
+        let len = message.pack_to_vec().len();
         validate_message_len(len).map_err(|e| UnpackError::Packable(e.into()))?;
 
         Ok(message)

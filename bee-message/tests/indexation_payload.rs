@@ -141,7 +141,7 @@ fn packed_len() {
     .unwrap();
 
     assert_eq!(indexation.packed_len(), 10 + 4 + 4 + 8);
-    assert_eq!(indexation.pack_to_vec().unwrap().len(), 10 + 4 + 4 + 8);
+    assert_eq!(indexation.pack_to_vec().len(), 10 + 4 + 4 + 8);
 }
 
 #[test]
@@ -153,7 +153,7 @@ fn packable_round_trip() {
     let indexation_1 =
         IndexationPayload::new(index, [0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2].to_vec()).unwrap();
 
-    let indexation_2 = IndexationPayload::unpack_from_slice(indexation_1.pack_to_vec().unwrap()).unwrap();
+    let indexation_2 = IndexationPayload::unpack_from_slice(indexation_1.pack_to_vec()).unwrap();
 
     assert_eq!(indexation_1, indexation_2);
 }

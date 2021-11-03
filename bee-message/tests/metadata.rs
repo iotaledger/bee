@@ -58,7 +58,7 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let metadata_a = rand_message_metadata();
-    let metadata_b = MessageMetadata::unpack_from_slice(metadata_a.pack_to_vec().unwrap()).unwrap();
+    let metadata_b = MessageMetadata::unpack_from_slice(metadata_a.pack_to_vec()).unwrap();
 
     assert_eq!(metadata_a, metadata_b);
 }

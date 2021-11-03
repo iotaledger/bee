@@ -3,7 +3,7 @@
 
 use crate::{payload::fpc::Opinion, MessageUnpackError};
 
-use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{coerce::*, Packable, Packer, UnpackError, Unpacker};
 
 use bitflags::bitflags;
 
@@ -81,14 +81,13 @@ impl Flags {
 }
 
 impl Packable for Flags {
-    type PackError = Infallible;
     type UnpackError = Infallible;
 
     fn packed_len(&self) -> usize {
         self.bits().packed_len()
     }
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.bits().pack(packer)
     }
 
@@ -174,7 +173,6 @@ impl MessageMetadata {
 }
 
 impl Packable for MessageMetadata {
-    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
@@ -185,12 +183,12 @@ impl Packable for MessageMetadata {
             + self.opinion.packed_len()
     }
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.flags.pack(packer).infallible()?;
-        self.received_timestamp.pack(packer).infallible()?;
-        self.solidification_timestamp.pack(packer).infallible()?;
-        self.branch_id.pack(packer).infallible()?;
-        self.opinion.pack(packer).infallible()
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.flags.pack(packer)?;
+        self.received_timestamp.pack(packer)?;
+        self.solidification_timestamp.pack(packer)?;
+        self.branch_id.pack(packer)?;
+        self.opinion.pack(packer)
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {

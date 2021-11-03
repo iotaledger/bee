@@ -88,7 +88,7 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let data_a = DataPayload::new(rand_bytes(255)).unwrap();
-    let data_b = DataPayload::unpack_from_slice(data_a.pack_to_vec().unwrap()).unwrap();
+    let data_b = DataPayload::unpack_from_slice(data_a.pack_to_vec()).unwrap();
 
     assert_eq!(data_a, data_b);
 }

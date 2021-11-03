@@ -45,7 +45,7 @@ fn packed_len() {
     );
 
     assert_eq!(output.packed_len(), 1 + 1 + 32 + 8);
-    assert_eq!(output.pack_to_vec().unwrap().len(), 1 + 1 + 32 + 8);
+    assert_eq!(output.pack_to_vec().len(), 1 + 1 + 32 + 8);
 }
 
 #[test]
@@ -54,7 +54,7 @@ fn packable_round_trip() {
         SignatureLockedSingleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 1_000)
             .unwrap(),
     );
-    let output_2 = Output::unpack_from_slice(output_1.pack_to_vec().unwrap()).unwrap();
+    let output_2 = Output::unpack_from_slice(output_1.pack_to_vec()).unwrap();
 
     assert_eq!(output_1, output_2);
 }
