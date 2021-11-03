@@ -838,7 +838,7 @@ impl From<&Peer> for PeerDto {
                 } else if peer.relation().is_unknown() {
                     RelationDto::Unknown
                 } else {
-                    RelationDto::Discovered
+                    RelationDto::Autopeered
                 }
             },
             connected: peer.is_connected(),
@@ -882,8 +882,8 @@ pub enum RelationDto {
     Known,
     #[serde(rename = "unknown")]
     Unknown,
-    #[serde(rename = "discovered")]
-    Discovered,
+    #[serde(rename = "autopeered")]
+    Autopeered,
 }
 
 /// Describes the heartbeat of a node.
