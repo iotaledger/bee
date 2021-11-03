@@ -22,6 +22,7 @@ development = [ "fern", "hex", "serial_test" ]
 default = [ ]
 full = [
   "async-trait",
+  "bee-runtime",
   "futures",
   "libp2p/dns-tokio",
   "libp2p/identify",
@@ -39,7 +40,7 @@ full = [
 ]
 
 [dependencies]
-bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", default-features = false }
+bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", default-features = false, optional = true }
 
 async-trait = { version = "0.1.51", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false, optional = true }
