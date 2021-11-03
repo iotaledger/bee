@@ -84,7 +84,7 @@ impl Packable for UnlockBlocks {
         >::unpack(unpacker)
         .map_err(|unpack_err| {
             unpack_err.map_packable(|err| match err {
-                UnpackPrefixError::InvalidPrefixLength(err) => {
+                UnpackPrefixError::Prefix(err) => {
                     ValidationError::InvalidUnlockBlockCount(VecPrefixLengthError::Invalid(err)).into()
                 }
                 UnpackPrefixError::Packable(err) => err,

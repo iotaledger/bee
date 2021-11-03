@@ -72,7 +72,7 @@ pub enum UnpackPrefixError<T, E> {
     /// Typically this is [`Packable::UnpackError`](crate::Packable).
     Packable(T),
     /// Semantic error raised when the length prefix cannot be unpacked.
-    InvalidPrefixLength(E),
+    Prefix(E),
 }
 
 impl<T, E> From<T> for UnpackPrefixError<T, E> {

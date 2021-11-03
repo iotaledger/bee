@@ -34,7 +34,7 @@ fn unpack_prefix_to_conflict_validation_error(
     error: UnpackPrefixError<MessageUnpackError, InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>,
 ) -> MessageUnpackError {
     match error {
-        UnpackPrefixError::InvalidPrefixLength(len) => {
+        UnpackPrefixError::Prefix(len) => {
             ValidationError::InvalidConflictsCount(VecPrefixLengthError::Invalid(len)).into()
         }
         UnpackPrefixError::Packable(e) => e,
@@ -45,7 +45,7 @@ fn unpack_prefix_to_timestamp_validation_error(
     error: UnpackPrefixError<MessageUnpackError, InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>,
 ) -> MessageUnpackError {
     match error {
-        UnpackPrefixError::InvalidPrefixLength(len) => {
+        UnpackPrefixError::Prefix(len) => {
             ValidationError::InvalidTimestampsCount(VecPrefixLengthError::Invalid(len)).into()
         }
         UnpackPrefixError::Packable(e) => e,

@@ -30,7 +30,7 @@ fn unpack_prefix_to_invalid_index_length(
     >,
 ) -> ValidationError {
     match err {
-        UnpackPrefixError::InvalidPrefixLength(len) => {
+        UnpackPrefixError::Prefix(len) => {
             ValidationError::InvalidIndexationIndexLength(VecPrefixLengthError::Invalid(len))
         }
         UnpackPrefixError::Packable(e) => match e {},
@@ -41,7 +41,7 @@ fn unpack_prefix_to_invalid_data_length(
     err: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_INDEXATION_DATA_LENGTH_MAX>>,
 ) -> ValidationError {
     match err {
-        UnpackPrefixError::InvalidPrefixLength(len) => {
+        UnpackPrefixError::Prefix(len) => {
             ValidationError::InvalidIndexationDataLength(VecPrefixLengthError::Invalid(len))
         }
         UnpackPrefixError::Packable(e) => match e {},

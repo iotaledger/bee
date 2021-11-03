@@ -37,9 +37,7 @@ macro_rules! impl_packable_test_for_vec_prefix {
 
             assert!(matches!(
                 prefixed,
-                Err(UnpackError::Packable(UnpackPrefixError::InvalidPrefixLength(
-                    $err(LEN_AS_TY)
-                ))),
+                Err(UnpackError::Packable(UnpackPrefixError::Prefix($err(LEN_AS_TY)))),
             ));
         }
     };

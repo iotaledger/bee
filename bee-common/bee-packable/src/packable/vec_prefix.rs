@@ -128,12 +128,7 @@ macro_rules! impl_vec_prefix {
             fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
                 // The length of any dynamically-sized sequence must be prefixed.
                 let len = <$bounded<MIN, MAX>>::unpack(unpacker)
-                    .map_err(|err| match err {
-                        UnpackError::Packable(err) => {
-                            UnpackError::Packable(UnpackPrefixError::InvalidPrefixLength(err))
-                        }
-                        UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
-                    })?
+                    .map_err(|err| err.map_packable(UnpackPrefixError::Prefix))?
                     .into();
 
                 let mut inner = Vec::with_capacity(len as usize);
