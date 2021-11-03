@@ -146,7 +146,7 @@ impl Packable for TransactionEssence {
         let inputs =
             VecPrefix::<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>::unpack(unpacker)
                 .map_err(|unpack_err| {
-                    unpack_err.map(|err| match err {
+                    unpack_err.map_packable(|err| match err {
                         UnpackPrefixError::InvalidPrefixLength(err) => {
                             ValidationError::InvalidInputCount(VecPrefixLengthError::Invalid(err)).into()
                         }
@@ -161,7 +161,7 @@ impl Packable for TransactionEssence {
         let outputs =
             VecPrefix::<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>::unpack(unpacker)
                 .map_err(|unpack_err| {
-                    unpack_err.map(|err| match err {
+                    unpack_err.map_packable(|err| match err {
                         UnpackPrefixError::InvalidPrefixLength(err) => {
                             ValidationError::InvalidOutputCount(VecPrefixLengthError::Invalid(err)).into()
                         }

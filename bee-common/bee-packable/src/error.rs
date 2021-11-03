@@ -16,7 +16,7 @@ pub enum UnpackError<T, U> {
 
 impl<T, U> UnpackError<T, U> {
     /// Maps the [`Packable`](crate::Packable) variant of this enum.
-    pub fn map<V, F: Fn(T) -> V>(self, f: F) -> UnpackError<V, U> {
+    pub fn map_packable<V, F: Fn(T) -> V>(self, f: F) -> UnpackError<V, U> {
         match self {
             Self::Packable(err) => UnpackError::Packable(f(err)),
             Self::Unpacker(err) => UnpackError::Unpacker(err),
@@ -28,7 +28,7 @@ impl<T, U> UnpackError<T, U> {
     where
         T: Into<V>,
     {
-        self.map(|x| x.into())
+        self.map_packable(|x| x.into())
     }
 }
 

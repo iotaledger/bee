@@ -83,7 +83,7 @@ impl Packable for UnlockBlocks {
             BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>,
         >::unpack(unpacker)
         .map_err(|unpack_err| {
-            unpack_err.map(|err| match err {
+            unpack_err.map_packable(|err| match err {
                 UnpackPrefixError::InvalidPrefixLength(err) => {
                     ValidationError::InvalidUnlockBlockCount(VecPrefixLengthError::Invalid(err)).into()
                 }
