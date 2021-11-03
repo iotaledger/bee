@@ -402,47 +402,53 @@ fn handle_peering_response<V: NeighborValidator>(
 
     if status {
         log::debug!("Peering by {} accepted.", ctx.peer_id);
+
+        let peer = ctx
+            .active_peers
+            .read()
+            .find(ctx.peer_id)
+            .cloned()
+            .expect("inconsistent peer list")
+            .into_peer();
+
+        // Hive.go: if the peer is already in inbound, do not add it and remove it from inbound
+        // TODO: investigate why!
+        if ctx.inbound_nbh.write().remove_neighbor(ctx.peer_id).is_some() {
+            // Change status to `false`.
+            status = false;
+
+            // Fire `OutgoingPeering` event with status = `false`.
+            publish_peering_event::<OUTGOING>(
+                peer.clone(),
+                false,
+                ctx.local,
+                ctx.event_tx,
+                ctx.inbound_nbh,
+                ctx.outbound_nbh,
+            );
+
+            // Drop that peer.
+            send_drop_peering_request_to_peer(peer, ctx.server_tx, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
+        } else {
+            if ctx.outbound_nbh.write().insert_neighbor(peer.clone(), ctx.local) {
+                // Update the neighbor filter.
+                nb_filter.write().add(peer.peer_id().clone());
+
+                // Fire `OutgoingPeering` event with status = `true`.
+                publish_peering_event::<OUTGOING>(
+                    peer,
+                    status,
+                    ctx.local,
+                    ctx.event_tx,
+                    ctx.inbound_nbh,
+                    ctx.outbound_nbh,
+                );
+            } else {
+                log::debug!("Failed to add neighbor to outbound neighborhood after successful peering request");
+            }
+        }
     } else {
         log::debug!("Peering by {} denied.", ctx.peer_id);
-        return;
-    }
-
-    let peer = ctx
-        .active_peers
-        .read()
-        .find(ctx.peer_id)
-        .cloned()
-        .expect("inconsistent peer list")
-        .into_peer();
-
-    // Hive.go: if the peer is already in inbound, do not add it and remove it from inbound
-    // TODO: investigate why!
-    if ctx.inbound_nbh.write().remove_neighbor(ctx.peer_id).is_some() {
-        // Change status to `false`.
-        status = false;
-
-        // Fire `OutgoingPeering` event with status = `false`.
-        publish_peering_event::<OUTGOING>(
-            peer.clone(),
-            false,
-            ctx.local,
-            ctx.event_tx,
-            ctx.inbound_nbh,
-            ctx.outbound_nbh,
-        );
-
-        // Drop that peer.
-        send_drop_peering_request_to_peer(peer, ctx.server_tx, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
-    } else {
-        if ctx.outbound_nbh.write().insert_neighbor(peer.clone(), ctx.local) {
-            // Update the neighbor filter.
-            nb_filter.write().add(peer.peer_id().clone());
-
-            // Fire `OutgoingPeering` event with status = `true`.
-            publish_peering_event::<OUTGOING>(peer, status, ctx.local, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
-        } else {
-            log::debug!("Failed to add neighbor to outbound neighborhood after successful peering request");
-        }
     }
 
     // Send the response notification.

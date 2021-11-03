@@ -12,7 +12,7 @@ use crate::{
     time::{self, Timestamp},
 };
 
-use serde::{Deserialize, Serialize};
+use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Serialize, Serializer};
 
 use std::{
     collections::{vec_deque, HashSet, VecDeque},
@@ -96,13 +96,45 @@ impl AsRef<Peer> for ActivePeer {
 
 impl Into<sled::IVec> for ActivePeer {
     fn into(self) -> sled::IVec {
-        todo!("into IVec")
+        let bytes = bincode::serialize(&self).expect("serialization error");
+        sled::IVec::from_iter(bytes.into_iter())
     }
 }
 
 impl From<sled::IVec> for ActivePeer {
-    fn from(ivec: sled::IVec) -> Self {
-        todo!("from IVec")
+    fn from(bytes: sled::IVec) -> Self {
+        bincode::deserialize(&bytes).expect("deserialization error")
+    }
+}
+
+impl<'de> Deserialize<'de> for ActivePeer {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_struct("ActivePeer", &["peer", "metrics"], ActivePeerVisitor {})
+    }
+}
+
+impl Serialize for ActivePeer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut this = serializer.serialize_struct("ActivePeer", 2)?;
+        this.serialize_field("peer", &self.peer)?;
+        this.serialize_field("metrics", &self.metrics)?;
+        this.end()
+    }
+}
+
+struct ActivePeerVisitor {}
+
+impl<'de> Visitor<'de> for ActivePeerVisitor {
+    type Value = ActivePeer;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("'ActivePeer'")
     }
 }
 

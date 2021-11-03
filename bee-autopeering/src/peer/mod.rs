@@ -216,7 +216,7 @@ impl<'de> Visitor<'de> for PeerVisitor {
     type Value = Peer;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("a peer")
+        formatter.write_str("'Peer'")
     }
 }
 

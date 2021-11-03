@@ -133,23 +133,25 @@ impl PeerStore for InMemoryPeerStore {
     }
 }
 
-pub struct SledPeerStoreConfig {
-    inner: sled::Config,
-}
+pub type SledPeerStoreConfig = sled::Config;
 
-impl SledPeerStoreConfig {
-    pub fn new(file_path: &str) -> Self {
-        Self {
-            inner: sled::Config::new().path(PathBuf::from(file_path)),
-        }
-    }
-}
+// pub struct SledPeerStoreConfig {
+//     inner: sled::Config,
+// }
 
-impl Default for SledPeerStoreConfig {
-    fn default() -> Self {
-        Self::new("./peerstore")
-    }
-}
+// impl SledPeerStoreConfig {
+//     pub fn new(file_path: &str) -> Self {
+//         Self {
+//             inner: sled::Config::new().path(PathBuf::from(file_path)),
+//         }
+//     }
+// }
+
+// impl Default for SledPeerStoreConfig {
+//     fn default() -> Self {
+//         Self::new("./peerstore")
+//     }
+// }
 
 #[derive(Clone)]
 pub struct SledPeerStore {
@@ -157,7 +159,7 @@ pub struct SledPeerStore {
 }
 
 impl PeerStore for SledPeerStore {
-    type Config = sled::Config;
+    type Config = SledPeerStoreConfig;
 
     fn new(config: Self::Config) -> Self {
         let db = config.open().expect("error opening peerstore");

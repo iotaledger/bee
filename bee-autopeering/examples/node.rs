@@ -4,7 +4,10 @@
 #![allow(warnings)]
 
 use bee_autopeering::{
-    init, peerstore::InMemoryPeerStore, AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceTransport,
+    init,
+    peerstore::InMemoryPeerStore,
+    peerstore::{SledPeerStore, SledPeerStoreConfig},
+    AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceTransport,
 };
 
 use log::LevelFilter;
@@ -81,6 +84,9 @@ async fn main() {
     // Storage config.
     // No config is  necessary for the `InMemoryPeerStore`.
     let peerstore_config = ();
+
+    // Sled peerstore:
+    // let peerstore_config = SledPeerStoreConfig::new().path("./peerstore");
 
     // Neighbor validator.
     let neighbor_validator = None; //HippieNeighborValidator {};
