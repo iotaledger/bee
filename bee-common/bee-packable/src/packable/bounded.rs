@@ -58,7 +58,7 @@ macro_rules! bounded {
         }
 
         impl<const MIN: $ty, const MAX: $ty> $wrapper<MIN, MAX> {
-            /// Creates a bounded integer without checking wether the value is in-bounds.
+            /// Creates a bounded integer without checking whether the value is in-bounds.
             ///
             /// # Safety
             /// The caller must guarantee that the created integer is actually in-bounds.
