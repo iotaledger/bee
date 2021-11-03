@@ -10,8 +10,7 @@ use crate::{
 
 use bee_ord::is_sorted;
 use bee_packable::{
-    coerce::*, error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, Packable, Packer, UnpackError,
-    Unpacker, VecPrefix,
+    coerce::*, packable::VecPrefixLengthError, BoundedU32, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
 
 use alloc::vec::Vec;
@@ -146,11 +145,10 @@ impl Packable for TransactionEssence {
         let inputs =
             VecPrefix::<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>::unpack(unpacker)
                 .map_err(|unpack_err| {
-                    unpack_err.map_packable(|err| match err {
-                        UnpackPrefixError::Prefix(err) => {
-                            ValidationError::InvalidInputCount(VecPrefixLengthError::Invalid(err)).into()
-                        }
-                        UnpackPrefixError::Packable(err) => err,
+                    unpack_err.map_packable(|err| {
+                        err.unwrap_packable_or_else(|prefix_err| {
+                            ValidationError::InvalidInputCount(VecPrefixLengthError::Invalid(prefix_err))
+                        })
                     })
                 })?;
 
@@ -161,11 +159,10 @@ impl Packable for TransactionEssence {
         let outputs =
             VecPrefix::<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>::unpack(unpacker)
                 .map_err(|unpack_err| {
-                    unpack_err.map_packable(|err| match err {
-                        UnpackPrefixError::Prefix(err) => {
-                            ValidationError::InvalidOutputCount(VecPrefixLengthError::Invalid(err)).into()
-                        }
-                        UnpackPrefixError::Packable(err) => err,
+                    unpack_err.map_packable(|err| {
+                        err.unwrap_packable_or_else(|prefix_err| {
+                            ValidationError::InvalidOutputCount(VecPrefixLengthError::Invalid(prefix_err))
+                        })
                     })
                 })?;
 

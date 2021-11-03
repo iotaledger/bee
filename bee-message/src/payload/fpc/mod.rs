@@ -31,27 +31,20 @@ pub(crate) const PREFIXED_TIMESTAMPS_LENGTH_MAX: u32 =
     PAYLOAD_LENGTH_MAX / (MessageId::LENGTH + 2 * core::mem::size_of::<u8>()) as u32;
 
 fn unpack_prefix_to_conflict_validation_error(
-    error: UnpackPrefixError<MessageUnpackError, InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>,
+    err: UnpackPrefixError<MessageUnpackError, InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>,
 ) -> MessageUnpackError {
-    match error {
-        UnpackPrefixError::Prefix(len) => {
-            ValidationError::InvalidConflictsCount(VecPrefixLengthError::Invalid(len)).into()
-        }
-        UnpackPrefixError::Packable(e) => e,
-    }
+    err.unwrap_packable_or_else(|prefix_err| {
+        ValidationError::InvalidConflictsCount(VecPrefixLengthError::Invalid(prefix_err))
+    })
 }
 
 fn unpack_prefix_to_timestamp_validation_error(
-    error: UnpackPrefixError<MessageUnpackError, InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>,
+    err: UnpackPrefixError<MessageUnpackError, InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>,
 ) -> MessageUnpackError {
-    match error {
-        UnpackPrefixError::Prefix(len) => {
-            ValidationError::InvalidTimestampsCount(VecPrefixLengthError::Invalid(len)).into()
-        }
-        UnpackPrefixError::Packable(e) => e,
-    }
+    err.unwrap_packable_or_else(|prefix_err| {
+        ValidationError::InvalidTimestampsCount(VecPrefixLengthError::Invalid(prefix_err))
+    })
 }
-
 /// Payload describing opinions on conflicts and timestamps of messages.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

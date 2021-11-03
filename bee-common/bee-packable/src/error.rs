@@ -85,6 +85,17 @@ impl<E> UnpackPrefixError<Infallible, E> {
     }
 }
 
+impl<T, E> UnpackPrefixError<T, E> {
+    /// Returns the contained [`Packable`](UnpackPrefixError::Packable) value or computes it from a
+    /// closure.
+    pub fn unwrap_packable_or_else<V: Into<T>>(self, f: impl FnOnce(E) -> V) -> T {
+        match self {
+            Self::Packable(err) => err,
+            Self::Prefix(err) => f(err).into(),
+        }
+    }
+}
+
 impl<T, E> From<T> for UnpackPrefixError<T, E> {
     fn from(err: T) -> Self {
         Self::Packable(err)
