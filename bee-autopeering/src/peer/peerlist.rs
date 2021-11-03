@@ -5,11 +5,14 @@ use super::{peer_id::PeerId, peerstore::PeerStore, Peer};
 
 use crate::{
     command::{Command, CommandTx},
-    discovery,
+    discovery::{self, manager::VERIFICATION_EXPIRATION_SECS},
     request::RequestManager,
     server::ServerTx,
     task::{Repeat, Runnable, ShutdownRx},
+    time::{self, Timestamp},
 };
+
+use serde::{Deserialize, Serialize};
 
 use std::{
     collections::{vec_deque, HashSet, VecDeque},
@@ -23,17 +26,17 @@ const DEFAULT_MAX_MANAGED: usize = 1000;
 // Maximum number of peers kept in the replacement list.
 const DEFAULT_MAX_REPLACEMENTS: usize = 10;
 
-type ActivePeersListInner = PeerRing<ActivePeerEntry, DEFAULT_MAX_MANAGED>;
+type ActivePeersListInner = PeerRing<ActivePeer, DEFAULT_MAX_MANAGED>;
 type ReplacementListInner = PeerRing<Peer, DEFAULT_MAX_REPLACEMENTS>;
 type MasterPeersListInner = HashSet<PeerId>;
 
 #[derive(Clone)]
-pub(crate) struct ActivePeerEntry {
+pub struct ActivePeer {
     peer: Peer,
     metrics: PeerMetrics,
 }
 
-impl ActivePeerEntry {
+impl ActivePeer {
     pub(crate) fn new(peer: Peer) -> Self {
         Self {
             peer,
@@ -43,6 +46,10 @@ impl ActivePeerEntry {
 
     pub(crate) fn peer(&self) -> &Peer {
         &self.peer
+    }
+
+    pub(crate) fn peer_mut(&mut self) -> &mut Peer {
+        &mut self.peer
     }
 
     pub(crate) fn peer_id(&self) -> &PeerId {
@@ -62,21 +69,45 @@ impl ActivePeerEntry {
     }
 }
 
-impl Eq for ActivePeerEntry {}
-impl PartialEq for ActivePeerEntry {
+impl Eq for ActivePeer {}
+impl PartialEq for ActivePeer {
     fn eq(&self, other: &Self) -> bool {
         self.peer.peer_id() == other.peer.peer_id()
     }
 }
 
-impl From<Peer> for ActivePeerEntry {
+impl From<Peer> for ActivePeer {
     fn from(peer: Peer) -> Self {
         Self::new(peer)
     }
 }
 
+impl AsRef<PeerId> for ActivePeer {
+    fn as_ref(&self) -> &PeerId {
+        self.peer.peer_id()
+    }
+}
+
+impl AsRef<Peer> for ActivePeer {
+    fn as_ref(&self) -> &Peer {
+        &self.peer
+    }
+}
+
+impl Into<sled::IVec> for ActivePeer {
+    fn into(self) -> sled::IVec {
+        todo!("into IVec")
+    }
+}
+
+impl From<sled::IVec> for ActivePeer {
+    fn from(ivec: sled::IVec) -> Self {
+        todo!("from IVec")
+    }
+}
+
 #[derive(Clone, Default)]
-pub(crate) struct ActivePeersList {
+pub struct ActivePeersList {
     inner: Arc<RwLock<ActivePeersListInner>>,
 }
 
@@ -91,7 +122,7 @@ impl ActivePeersList {
 }
 
 #[derive(Clone, Default)]
-pub(crate) struct ReplacementList {
+pub struct ReplacementList {
     inner: Arc<RwLock<ReplacementListInner>>,
 }
 
@@ -126,53 +157,72 @@ impl MasterPeersList {
     }
 }
 
-impl AsRef<PeerId> for ActivePeerEntry {
-    fn as_ref(&self) -> &PeerId {
-        self.peer.peer_id()
-    }
-}
-
-impl AsRef<Peer> for ActivePeerEntry {
-    fn as_ref(&self) -> &Peer {
-        &self.peer
-    }
-}
-
-#[derive(Clone, Copy, Default)]
-pub struct PeerMetrics {
+#[derive(Clone, Copy, Default, Serialize, Deserialize)]
+pub(crate) struct PeerMetrics {
     // how often that peer has been re-verified
     verified_count: usize,
     // number of returned new peers when queried the last time
     last_new_peers: usize,
+    // timestamp of last verification request received
+    last_verif_request: Timestamp,
+    // timestamp of last verification request received
+    last_verif_response: Timestamp,
 }
 
 impl PeerMetrics {
-    pub fn new(peer_id: PeerId) -> Self {
+    pub(crate) fn new(peer_id: PeerId) -> Self {
         Self {
             verified_count: 0,
             last_new_peers: 0,
+            last_verif_request: 0,
+            last_verif_response: 0,
         }
     }
 
-    pub fn verified_count(&self) -> usize {
+    pub(crate) fn verified_count(&self) -> usize {
         self.verified_count
     }
 
-    pub fn increment_verified_count(&mut self) -> usize {
+    /// Inrements the verified counter, and returns the new value.
+    pub(crate) fn increment_verified_count(&mut self) -> usize {
         self.verified_count += 1;
         self.verified_count
     }
 
-    pub fn reset_verified_count(&mut self) {
+    pub(crate) fn reset_verified_count(&mut self) {
         self.verified_count = 0;
     }
 
-    pub fn last_new_peers(&self) -> usize {
+    pub(crate) fn last_new_peers(&self) -> usize {
         self.last_new_peers
     }
 
-    pub fn set_last_new_peers(&mut self, last_new_peers: usize) {
+    pub(crate) fn set_last_new_peers(&mut self, last_new_peers: usize) {
         self.last_new_peers = last_new_peers;
+    }
+
+    pub(crate) fn last_verif_request_timestamp(&self) -> Timestamp {
+        self.last_verif_request
+    }
+
+    pub(crate) fn set_last_verif_request_timestamp(&mut self) {
+        self.last_verif_request = time::unix_now_secs();
+    }
+
+    pub(crate) fn last_verif_response_timestamp(&self) -> Timestamp {
+        self.last_verif_response
+    }
+
+    pub(crate) fn set_last_verif_response_timestamp(&mut self) {
+        self.last_verif_response = time::unix_now_secs();
+    }
+
+    pub(crate) fn is_verified(&self) -> bool {
+        time::since(self.last_verif_response).expect("system clock error") < VERIFICATION_EXPIRATION_SECS
+    }
+
+    pub(crate) fn has_verified(&self) -> bool {
+        time::since(self.last_verif_request).expect("system clock error") < VERIFICATION_EXPIRATION_SECS
     }
 }
 
@@ -181,10 +231,13 @@ impl fmt::Debug for PeerMetrics {
         f.debug_struct("PeerMetrics")
             .field("verified_count", &self.verified_count)
             .field("last_new_peers", &self.last_new_peers)
+            .field("last_verif_request", &self.last_verif_request)
+            .field("last_verif_response", &self.last_verif_response)
             .finish()
     }
 }
 
+/// TODO: consider using `IndexMap` for faster search.
 #[derive(Clone)]
 pub(crate) struct PeerRing<P, const N: usize>(VecDeque<P>);
 
@@ -329,7 +382,7 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
         N
     }
 
-    pub(crate) fn iter(&self) -> vec_deque::Iter<P> {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &P> {
         self.0.iter()
     }
 }

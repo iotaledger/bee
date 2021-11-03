@@ -9,7 +9,7 @@ use crate::{
         IncomingPacket, MessageType, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, MAX_PACKET_SIZE,
         PEERING_MSG_TYPE_RANGE,
     },
-    peer::peer_id::PeerId,
+    peer::{peer_id::PeerId, PeerStore},
     task::{Runnable, ShutdownRx, TaskManager},
 };
 
@@ -69,7 +69,7 @@ impl Server {
         )
     }
 
-    pub async fn init<const N: usize>(self, task_mngr: &mut TaskManager<N>) {
+    pub async fn init<S: PeerStore, const N: usize>(self, task_mngr: &mut TaskManager<S, N>) {
         let Server {
             config,
             local,
@@ -160,11 +160,11 @@ impl Runnable for IncomingPacketHandler {
                             log::debug!("Received {} bytes from {}.", n, peer_addr);
 
                             let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
-                            log::debug!("{} ---> public key: {}.", peer_addr, multiaddr::from_pubkey_to_base58(&packet.public_key()));
+                            // log::trace!("{} ---> public key: {}.", peer_addr, multiaddr::from_pubkey_to_base58(&packet.public_key()));
 
                             // Restore the peer id.
                             let peer_id = PeerId::from_public_key(packet.public_key());
-                            log::debug!("{} ---> peer id: {}.", peer_addr, peer_id);
+                            // log::trace!("{} ---> peer id: {}.", peer_addr, peer_id);
 
                             // Verify the packet.
                             let message = packet.message();

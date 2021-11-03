@@ -4,23 +4,21 @@
 use super::{
     filter::ExclusionFilter,
     manager::{self, InboundNeighborhood, OutboundNeighborhood},
-    neighbor::{salted_distance, NeighborDistance},
+    neighbor::{salt_distance, Neighbor},
 };
 
 use crate::{
     delay::ManualDelayFactory,
-    discovery::get_verified_peers,
+    discovery::manager::get_verified_peers,
     event::EventTx,
     local::{salt, Local},
     peer::{peerlist::ActivePeersList, PeerStore},
-    peering::{
-        manager::{publish_peering_event, send_drop_peering_request_to_peer},
-        protocol::Direction,
-    },
+    peering::manager::{publish_peering_event, send_drop_peering_request_to_peer, Direction},
     request::RequestManager,
     server::ServerTx,
     task::Repeat,
     time::{self, MINUTE, SECOND},
+    NeighborValidator,
 };
 
 use std::time::Duration;
@@ -34,50 +32,61 @@ pub(crate) static OUTBOUND_NBH_UPDATE_INTERVAL: ManualDelayFactory =
     ManualDelayFactory::new(OPEN_OUTBOUND_NBH_UPDATE_SECS);
 
 #[derive(Clone)]
-pub(crate) struct UpdateContext<S: PeerStore> {
+pub(crate) struct UpdateContext<V: NeighborValidator> {
     pub(crate) local: Local,
-    pub(crate) peerstore: S,
-    pub(crate) request_mngr: RequestManager<S>,
+    pub(crate) request_mngr: RequestManager,
     pub(crate) active_peers: ActivePeersList,
     pub(crate) excl_filter: ExclusionFilter,
     pub(crate) inbound_nbh: InboundNeighborhood,
     pub(crate) outbound_nbh: OutboundNeighborhood,
     pub(crate) server_tx: ServerTx,
     pub(crate) event_tx: EventTx,
+    pub(crate) nb_validator: Option<V>,
 }
 
-pub(crate) fn do_update<S: PeerStore + 'static>() -> Repeat<UpdateContext<S>> {
+pub(crate) fn do_update<V: NeighborValidator + 'static>() -> Repeat<UpdateContext<V>> {
     Box::new(|ctx| update_outbound(ctx))
 }
 
 // Hive.go: updateOutbound updates outbound neighbors.
-fn update_outbound<S: PeerStore + 'static>(ctx: &UpdateContext<S>) {
+fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
     let local_id = ctx.local.read().peer_id().clone();
     let local_salt = ctx.local.read().public_salt().expect("missing public salt").clone();
 
     // TODO: write `get_verified_peers_sorted` which collects verified peers into a BTreeSet
-    let mut disc_peers = get_verified_peers(&ctx.active_peers)
+    let verif_peers = get_verified_peers(&ctx.active_peers)
         .into_iter()
         .map(|p| {
             let peer = p.into_peer();
             let peer_id = peer.peer_id().clone();
-            NeighborDistance::new(peer, salted_distance(&local_id, &peer_id, &local_salt))
+            Neighbor::new(peer, salt_distance(&local_id, &peer_id, &local_salt))
         })
         .collect::<Vec<_>>();
 
-    // Hive.go: sort verified peers by distance
-    disc_peers.sort_unstable();
-
-    // TODO: add NeighborValidator as Matcher
-    // ctx.excl_filter.write().add_matcher(matcher)
-
-    // Hive.go: filter out current neighbors
-    let candidates = ctx.excl_filter.read().apply_list(&disc_peers);
-
-    if candidates.is_empty() {
-        log::debug!("Currently no better outbound neighbors available.");
+    if verif_peers.is_empty() {
+        log::trace!("Currently no verified peers.");
         return;
     }
+
+    // Create the exclusion filter based on current neighbors.
+    let excl_filter = manager::create_exclusion_filter(&ctx.local, &ctx.inbound_nbh, &ctx.outbound_nbh);
+
+    // Inject the neighbor validation into the filter.
+    if let Some(v) = ctx.nb_validator.as_ref() {
+        // TODO: fix lifetime issue
+        // excl_filter.write().add_matcher(Box::new(|peer| v.is_valid(peer)));
+    }
+
+    // Apply the filter on the verified peers to yield a set of neighbor candidates.
+    let mut candidates = ctx.excl_filter.read().apply_list(&verif_peers);
+
+    if candidates.is_empty() {
+        log::trace!("Currently no suitable candidates.");
+        return;
+    }
+
+    // Sort candidats by their distance.
+    candidates.sort_unstable();
 
     // Hive.go: select new candidate
     if let Some(candidate) = ctx
@@ -89,48 +98,24 @@ fn update_outbound<S: PeerStore + 'static>(ctx: &UpdateContext<S>) {
         let ctx_ = ctx.clone();
 
         tokio::spawn(async move {
-            if let Some(status) = manager::begin_peering_request(
+            if let Some(status) = manager::begin_peering(
                 candidate.peer_id(),
+                &ctx_.active_peers,
                 &ctx_.request_mngr,
-                &ctx_.peerstore,
                 &ctx_.server_tx,
                 &ctx_.local,
             )
             .await
             {
                 if status {
-                    log::debug!("Peering successfull with {}.", candidate.peer_id());
-
-                    // ```go
-                    // if p := m.inbound.RemovePeer(req.Remote.ID()); p != nil {
-                    //     m.triggerPeeringEvent(true, req.Remote, false)
-                    //     m.dropPeering(p)
-                    // } else {
-                    //     m.addNeighbor(m.outbound, req)
-                    //     m.triggerPeeringEvent(true, req.Remote, true)
-                    // }
-
-                    // Hive.go: if the peer is already in inbound, do not add it and remove it from inbound
-                    if let Some(peer) = ctx_.inbound_nbh.write().remove_neighbor(candidate.peer_id()) {
-                        publish_peering_event(peer.clone(), Direction::Outbound, false, &ctx_.local, &ctx_.event_tx);
-                        send_drop_peering_request_to_peer(peer, &ctx_.server_tx, &ctx_.event_tx);
-                    } else {
-                        if !ctx_.outbound_nbh.write().insert_neighbor(candidate, &ctx_.local) {
-                            log::warn!(
-                                "Failed to add neighbor to outbound neighborhood after successful peering request"
-                            );
-                        }
-                    }
-
-                    // Hive.go: call updateOutbound again after the given interval
+                    log::debug!("Peering with {} successful.", candidate.peer_id());
                     set_outbound_update_interval(&ctx_.outbound_nbh, &ctx_.local);
                 } else {
-                    log::debug!("Peering request denied.");
-                    ctx_.excl_filter.write().exclude_peer(candidate.peer_id().clone());
+                    log::debug!("Peering with {} denied.", candidate.peer_id());
+                    // TODO: add this peer to the exclusion list
                 }
             } else {
-                log::debug!("Peering request failed.");
-                ctx_.excl_filter.write().exclude_peer(candidate.peer_id().clone());
+                log::debug!("Peering with {} failed.", candidate.peer_id());
             }
         });
     }

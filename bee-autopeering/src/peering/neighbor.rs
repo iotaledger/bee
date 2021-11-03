@@ -4,7 +4,7 @@
 use crate::{
     hash,
     local::{salt::Salt, Local},
-    peer::{peer_id::PeerId, Peer},
+    peer::{peer_id::PeerId, peerlist::ActivePeer, Peer},
     task::{ShutdownRx, MAX_SHUTDOWN_PRIORITY},
 };
 
@@ -23,27 +23,25 @@ use std::{
 
 pub type Distance = u32;
 
-// A neighbor is a peer with a (distance) metric.
-pub(crate) type Neighbor = Peer;
-
 pub(crate) const MAX_DISTANCE: Distance = 4294967295;
 pub(crate) const SIZE_INBOUND: usize = 4;
 pub(crate) const SIZE_OUTBOUND: usize = 4;
 
 pub trait NeighborValidator
 where
-    Self: Send,
+    Self: Send + Sync + Clone,
 {
     fn is_valid(&self, peer: &Peer) -> bool;
 }
 
+// A neighbor is a peer with a (distance) metric.
 #[derive(Debug)]
-pub(crate) struct NeighborDistance {
+pub(crate) struct Neighbor {
     peer: Peer,
     distance: Distance,
 }
 
-impl NeighborDistance {
+impl Neighbor {
     pub(crate) fn new(peer: Peer, distance: Distance) -> Self {
         Self { peer, distance }
     }
@@ -65,30 +63,30 @@ impl NeighborDistance {
     }
 }
 
-impl fmt::Display for NeighborDistance {
+impl fmt::Display for Neighbor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}:{}", self.peer().peer_id(), self.distance())
     }
 }
 
-impl Eq for NeighborDistance {}
-impl PartialEq for NeighborDistance {
+impl Eq for Neighbor {}
+impl PartialEq for Neighbor {
     fn eq(&self, other: &Self) -> bool {
         self.distance == other.distance
     }
 }
-impl PartialOrd for NeighborDistance {
+impl PartialOrd for Neighbor {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
         Some(self.cmp(&other))
     }
 }
-impl Ord for NeighborDistance {
+impl Ord for Neighbor {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
         self.distance.cmp(&other.distance)
     }
 }
 
-impl AsRef<Peer> for NeighborDistance {
+impl AsRef<Peer> for Neighbor {
     fn as_ref(&self) -> &Peer {
         &self.peer
     }
@@ -115,7 +113,7 @@ impl<const N: usize, const INBOUND: bool> Neighborhood<N, INBOUND> {
 
 #[derive(Debug)]
 pub(crate) struct NeighborhoodInner<const N: usize, const INBOUND: bool> {
-    neighbors: Vec<NeighborDistance>,
+    neighbors: Vec<Neighbor>,
 }
 
 impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
@@ -133,7 +131,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
 
         // Calculate the distance to that peer.
-        let distance = salted_distance(local.read().peer_id(), peer.peer_id(), &{
+        let distance = salt_distance(local.read().peer_id(), peer.peer_id(), &{
             if INBOUND {
                 local.read().private_salt().expect("missing private salt").clone()
             } else {
@@ -141,7 +139,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
             }
         });
 
-        self.neighbors.push(NeighborDistance { distance, peer });
+        self.neighbors.push(Neighbor { distance, peer });
 
         true
     }
@@ -150,7 +148,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         if self.neighbors.is_empty() {
             None
         } else if let Some(index) = self.neighbors.iter().position(|pd| pd.peer().peer_id() == peer_id) {
-            let NeighborDistance { peer, .. } = self.neighbors.remove(index);
+            let Neighbor { peer, .. } = self.neighbors.remove(index);
             Some(peer)
         } else {
             None
@@ -158,7 +156,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
     }
 
     /// Check whether the candidate is a suitable neighbor.
-    pub(crate) fn select(&mut self, candidate: NeighborDistance) -> Option<Peer> {
+    pub(crate) fn select(&mut self, candidate: Neighbor) -> Option<Peer> {
         if let Some(furthest) = self.find_furthest() {
             if &candidate < furthest {
                 Some(candidate.into_peer())
@@ -171,10 +169,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
     }
 
     /// From the candidate list pick the first, that is closer than the currently furthest neighbor.
-    pub(crate) fn select_from_candidate_list<'a>(
-        &mut self,
-        candidates: &'a [&'a NeighborDistance],
-    ) -> Option<&'a Peer> {
+    pub(crate) fn select_from_candidate_list<'a>(&mut self, candidates: &'a [&'a Neighbor]) -> Option<&'a Peer> {
         if candidates.is_empty() {
             None
         } else if let Some(furthest) = self.find_furthest() {
@@ -190,7 +185,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
     }
 
-    pub(crate) fn find_furthest(&mut self) -> Option<&NeighborDistance> {
+    pub(crate) fn find_furthest(&mut self) -> Option<&Neighbor> {
         if self.neighbors.len() >= N {
             self.neighbors.sort_unstable();
             self.neighbors.last()
@@ -226,7 +221,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         };
 
         self.neighbors.iter_mut().for_each(|pd| {
-            pd.distance = salted_distance(&local_id, &pd.peer().peer_id(), &salt);
+            pd.distance = salt_distance(&local_id, &pd.peer().peer_id(), &salt);
         });
     }
 
@@ -268,7 +263,7 @@ impl<const N: usize, const INBOUND: bool> fmt::Display for NeighborhoodInner<N, 
 // hive.go:
 // returns the distance (uint32) between x and y by xoring the hash of x and (y + salt):
 // xor( hash(x), hash(y+salt) )[:4] as little-endian uint32
-pub(crate) fn salted_distance(peer1: &PeerId, peer2: &PeerId, salt: &Salt) -> Distance {
+pub(crate) fn salt_distance(peer1: &PeerId, peer2: &PeerId, salt: &Salt) -> Distance {
     let hash1 = hash::sha256(peer1.id_bytes());
     let hash2 = hash::sha256(&concat(peer2.id_bytes(), salt.bytes()));
 
@@ -336,7 +331,7 @@ mod tests {
         assert_eq!(0, distance);
 
         let salt = Salt::new_zero_salt();
-        let salted_distance = salted_distance(&peer_id1, &peer_id2, &salt);
+        let salted_distance = salt_distance(&peer_id1, &peer_id2, &salt);
         assert_eq!(1184183819, salted_distance);
     }
 }

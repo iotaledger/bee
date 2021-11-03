@@ -4,6 +4,7 @@
 use crate::{hash, local::salt::Salt};
 
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, PUBLIC_KEY_LENGTH};
+use serde::{Deserialize, Serialize};
 
 use std::{
     convert::TryInto,
@@ -12,8 +13,10 @@ use std::{
     sync::{Arc, RwLock},
 };
 
+const DISPLAY_LENGTH: usize = 12;
+
 /// A type that represents the unique identity of a peer in the network.
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct PeerId {
     id_bytes: [u8; hash::SHA256_LEN],
     public_key: [u8; PUBLIC_KEY_LENGTH],
@@ -89,13 +92,25 @@ impl fmt::Debug for PeerId {
 
 impl fmt::Display for PeerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", bs58::encode(&self.id_bytes).into_string())
+        write!(f, "{}", &bs58::encode(&self.id_bytes).into_string()[..DISPLAY_LENGTH])
     }
 }
 
 impl AsRef<PeerId> for PeerId {
     fn as_ref(&self) -> &PeerId {
         self
+    }
+}
+
+impl AsRef<[u8]> for PeerId {
+    fn as_ref(&self) -> &[u8] {
+        todo!()
+    }
+}
+
+impl Into<sled::IVec> for PeerId {
+    fn into(self) -> sled::IVec {
+        todo!("into IVec")
     }
 }
 

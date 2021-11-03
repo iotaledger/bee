@@ -9,10 +9,13 @@ pub mod peerstore;
 pub use peer_id::PeerId;
 pub use peerstore::PeerStore;
 
+use peerlist::{ActivePeersList, ReplacementList};
+
 use crate::{
     command::{Command, CommandTx},
     discovery::manager::{self, VERIFICATION_EXPIRATION_SECS},
     local::service_map::{ServiceMap, ServiceTransport},
+    local::Local,
     proto,
     request::RequestManager,
     server::ServerTx,
@@ -22,7 +25,7 @@ use crate::{
 use bytes::BytesMut;
 use crypto::signatures::ed25519::PublicKey;
 use prost::{DecodeError, EncodeError, Message};
-// use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use std::{
     convert::TryInto,
@@ -31,7 +34,6 @@ use std::{
 };
 
 /// Represents a peer.
-// #[derive(Serialize, Deserialize)]
 #[derive(Clone)]
 pub struct Peer {
     peer_id: PeerId,
@@ -73,9 +75,14 @@ impl Peer {
         self.services().get(service_name).map(|s| s.port())
     }
 
-    /// Returns the services this peer.
+    /// Returns the services of this peer.
     pub fn services(&self) -> &ServiceMap {
         &self.services
+    }
+
+    /// Sets the services of this peer all at once.
+    pub fn set_services(&mut self, services: ServiceMap) {
+        self.services = services;
     }
 
     /// Adds a service with address binding to this peer.
@@ -169,34 +176,68 @@ impl AsRef<PeerId> for Peer {
     }
 }
 
+impl Into<sled::IVec> for Peer {
+    fn into(self) -> sled::IVec {
+        todo!("into IVec")
+    }
+}
+
+impl From<sled::IVec> for Peer {
+    fn from(_: sled::IVec) -> Self {
+        todo!("from IVec")
+    }
+}
+
+/// Returns whether the given peer id is known locally.
+pub(crate) fn is_known(
+    peer_id: &PeerId,
+    local: &Local,
+    active_peers: &ActivePeersList,
+    replacements: &ReplacementList,
+) -> bool {
+    // The master list doesn't need to be queried, because those always a subset of the active peers.
+    peer_id == local.read().peer_id() || active_peers.read().contains(&peer_id) || replacements.read().contains(peer_id)
+}
+
 // Hive.go: whether the peer has recently done an endpoint proof
-pub(crate) fn is_verified<S: PeerStore>(peer_id: &PeerId, peerstore: &S) -> bool {
-    peerstore.fetch_last_verification_response(peer_id).map_or(false, |ts| {
-        time::since(ts).map_or(false, |since| since < VERIFICATION_EXPIRATION_SECS)
-    })
+// ---
+/// Returns whether the corresponding peer sent a (still valid) verification response.
+///
+/// Also returns `false`, if the provided `peer_id` is not found in the active peer list.
+pub(crate) fn is_verified(peer_id: &PeerId, active_peers: &ActivePeersList) -> bool {
+    active_peers
+        .read()
+        .find(peer_id)
+        .map_or(false, |e| e.metrics().is_verified())
 }
 
 // Hive.go: whether the given peer has recently verified the local peer
-pub(crate) fn has_verified<S: PeerStore>(peer_id: &PeerId, peerstore: &S) -> bool {
-    peerstore.fetch_last_verification_request(peer_id).map_or(false, |ts| {
-        time::since(ts).map_or(false, |since| since < VERIFICATION_EXPIRATION_SECS)
-    })
+// ---
+/// Returns whether the corresponding peer sent a (still valid) verification request.
+///
+/// Also returns `false`, if the provided `peer_id` is not found in the active peer list.
+pub(crate) fn has_verified(peer_id: &PeerId, active_peers: &ActivePeersList) -> bool {
+    active_peers
+        .read()
+        .find(peer_id)
+        .map_or(false, |e| e.metrics().has_verified())
 }
 
-// Hive.go: checks whether the given peer has recently sent a Ping;
-// if not, we send a Ping to trigger a verification.
-pub(crate) async fn ensure_verified<S: PeerStore>(
-    peer_id: &PeerId,
-    peerstore: &S,
-    request_mngr: &RequestManager<S>,
-    server_tx: &ServerTx,
-) -> bool {
-    if has_verified(peer_id, peerstore) {
-        true
+// Hive.go: moves the peer with the given ID to the front of the list of managed peers.
+// ---
+/// Performs 3 operations:
+/// * Rotates the active peer list such that `peer_id` is at the front of the list (index 0);;
+/// * Updates the "last_verification_response" timestamp;
+/// * Increments the "verified" counter;
+pub(crate) fn set_front_and_update(peer_id: &PeerId, active_peers: &ActivePeersList) -> Option<usize> {
+    if let Some(p) = active_peers.write().set_newest_and_get_mut(&peer_id) {
+        let metrics = p.metrics_mut();
+        metrics.set_last_verif_response_timestamp();
+        let new_count = metrics.increment_verified_count();
+
+        Some(new_count)
     } else {
-        manager::begin_verification_request(peer_id, request_mngr, peerstore, server_tx)
-            .await
-            .is_some()
+        None
     }
 }
 

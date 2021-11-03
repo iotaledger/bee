@@ -5,7 +5,6 @@ pub(crate) mod filter;
 pub(crate) mod manager;
 pub(crate) mod messages;
 pub(crate) mod neighbor;
-pub(crate) mod protocol;
 pub(crate) mod update;
 
 pub use manager::Status;

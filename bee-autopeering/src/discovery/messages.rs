@@ -110,13 +110,13 @@ impl Request for VerificationRequest {}
 
 #[derive(Clone)]
 pub(crate) struct VerificationResponse {
-    pub(crate) request_hash: Vec<u8>,
-    pub(crate) services: ServiceMap,
-    pub(crate) target_addr: IpAddr,
+    request_hash: Vec<u8>,
+    services: ServiceMap,
+    target_addr: IpAddr,
 }
 
 impl VerificationResponse {
-    pub fn new(request_hash: Vec<u8>, services: ServiceMap, target_addr: IpAddr) -> Self {
+    pub(crate) fn new(request_hash: Vec<u8>, services: ServiceMap, target_addr: IpAddr) -> Self {
         Self {
             request_hash,
             services,
@@ -132,6 +132,7 @@ impl VerificationResponse {
         &self.services
     }
 
+    /// When sent contains the external addr of the remote peer, when received the external addr of the local peer.
     pub(crate) fn target_addr(&self) -> IpAddr {
         self.target_addr
     }
@@ -184,17 +185,17 @@ pub(crate) struct DiscoveryRequest {
 }
 
 impl DiscoveryRequest {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         let timestamp = crate::time::unix_now_secs();
 
         Self { timestamp }
     }
 
-    pub fn timestamp(&self) -> u64 {
+    pub(crate) fn timestamp(&self) -> u64 {
         self.timestamp
     }
 
-    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
+    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
         let proto::DiscoveryRequest { timestamp } = proto::DiscoveryRequest::decode(bytes)?;
 
         Ok(Self {
@@ -202,7 +203,7 @@ impl DiscoveryRequest {
         })
     }
 
-    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub(crate) fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let discover_request = proto::DiscoveryRequest {
             timestamp: self.timestamp as i64,
         };
@@ -226,8 +227,8 @@ impl Request for DiscoveryRequest {}
 
 #[derive(Clone)]
 pub(crate) struct DiscoveryResponse {
-    pub(crate) request_hash: Vec<u8>,
-    pub(crate) peers: Vec<Peer>,
+    request_hash: Vec<u8>,
+    peers: Vec<Peer>,
 }
 
 impl DiscoveryResponse {

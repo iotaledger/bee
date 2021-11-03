@@ -65,7 +65,7 @@ pub async fn init<S, I, Q, V>(
     local: Local,
     peerstore_config: <S as PeerStore>::Config,
     quit_signal: Q,
-    neighbor_validator: V,
+    neighbor_validator: Option<V>,
 ) -> Result<EventRx, Box<dyn error::Error>>
 where
     S: PeerStore + 'static,
@@ -106,23 +106,16 @@ where
     log::info!("Public salt: {}", public_salt);
     log::info!("Bind address: {}", config.bind_addr);
 
-    // Create a task manager to have good control over the tokio task spawning business.
-    let mut task_mngr = TaskManager::<NUM_TASKS>::new();
-
     // Create or load a peer store.
     let peerstore = S::new(peerstore_config);
 
     // Create peer lists.
+    let master_peers = MasterPeersList::default();
     let active_peers = ActivePeersList::default();
     let replacements = ReplacementList::default();
-    let mut master_peers = HashSet::with_capacity(config.entry_nodes.len());
-    master_peers.extend(
-        config
-            .entry_nodes
-            .iter()
-            .map(|e| PeerId::from_public_key(e.public_key().clone())),
-    );
-    let master_peers = MasterPeersList::new(master_peers);
+
+    // Create a task manager to have good control over the tokio task spawning business.
+    let mut task_mngr = TaskManager::<_, NUM_TASKS>::new(peerstore.clone(), active_peers.clone(), replacements.clone());
 
     // Create channels for inbound/outbound communication with the UDP server.
     let (discovery_tx, discovery_rx) = server_chan::<IncomingPacket>();
@@ -169,11 +162,10 @@ where
         local.clone(),
         peering_socket,
         request_mngr.clone(),
-        peerstore.clone(),
         active_peers.clone(),
         event_tx.clone(),
         command_tx.clone(),
-        neighbor_validator,
+        neighbor_validator.clone(),
     );
     task_mngr.run(peering_mngr);
 
@@ -188,7 +180,6 @@ where
     let outbound_nbh = OutboundNeighborhood::new();
     let excl_filter = ExclusionFilter::new();
 
-    // Update salts regularly.
     let ctx = SaltUpdateContext::new(
         local.clone(),
         excl_filter.clone(),
@@ -197,14 +188,14 @@ where
         server_tx.clone(),
         event_tx.clone(),
     );
+
+    // Update salts regularly.
     let cmd = crate::peering::manager::repeat_update_salts(config.drop_neighbors_on_salt_update);
     let delay = iter::repeat(SALT_UPDATE_SECS);
     task_mngr.repeat(cmd, delay, ctx, "Salt-Update", MAX_SHUTDOWN_PRIORITY);
 
-    // Reverify old peers and discovery new peers.
     let ctx = QueryContext {
         local: local.clone(),
-        peerstore: peerstore.clone(),
         request_mngr: request_mngr.clone(),
         master_peers: master_peers.clone(),
         active_peers: active_peers.clone(),
@@ -212,17 +203,19 @@ where
         server_tx: server_tx.clone(),
         event_tx: event_tx.clone(),
     };
+
+    // Reverify old peers regularly.
     let cmd = query::do_reverify();
     let delay = iter::repeat(Duration::from_secs(DEFAULT_REVERIFY_INTERVAL_SECS));
     task_mngr.repeat(cmd, delay, ctx.clone(), "Reverification", MAX_SHUTDOWN_PRIORITY);
 
+    // Discover new peers regularly.
     let cmd = query::do_query();
     let delay = iter::repeat(Duration::from_secs(DEFAULT_QUERY_INTERVAL_SECS));
     task_mngr.repeat(cmd, delay, ctx, "Discovery", MAX_SHUTDOWN_PRIORITY);
 
     let ctx = UpdateContext {
         local,
-        peerstore,
         request_mngr,
         active_peers,
         excl_filter,
@@ -230,12 +223,13 @@ where
         outbound_nbh,
         server_tx,
         event_tx,
+        nb_validator: neighbor_validator,
     };
+
+    // Update the outbound neighborhood regularly (interval depends on whether slots available or not).
     let cmd = update::do_update();
     let delay = delay::ManualDelayFactory::new(OPEN_OUTBOUND_NBH_UPDATE_SECS);
     task_mngr.repeat(cmd, delay, ctx, "Outbound neighborhood update", MAX_SHUTDOWN_PRIORITY);
-
-    // TODO: Should we reset the verified_count if last verification timestamp is expired?
 
     // Await the shutdown signal (in a separate task).
     tokio::spawn(async move {

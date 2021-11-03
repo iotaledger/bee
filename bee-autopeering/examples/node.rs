@@ -83,13 +83,13 @@ async fn main() {
     let peerstore_config = ();
 
     // Neighbor validator.
-    let neighbor_validator = HippieNeighborValidator {};
+    let neighbor_validator = None; //HippieNeighborValidator {};
 
     // Shutdown signal.
     let quit_signal = ctrl_c();
 
     // Initialize the Autopeering service.
-    let mut event_rx = bee_autopeering::init::<InMemoryPeerStore, _, _, _>(
+    let mut event_rx = bee_autopeering::init::<InMemoryPeerStore, _, _, HippieNeighborValidator>(
         config.clone(),
         version,
         network_id,
@@ -170,6 +170,7 @@ async fn print_resolved_entry_nodes(config: AutopeeringConfig) {
     }
 }
 
+#[derive(Clone)]
 struct HippieNeighborValidator {}
 
 impl NeighborValidator for HippieNeighborValidator {

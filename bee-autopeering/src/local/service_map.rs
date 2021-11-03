@@ -4,6 +4,7 @@
 use crate::{multiaddr::AddressKind, proto};
 
 use libp2p_core::multiaddr::Protocol;
+use serde::{Deserialize, Serialize};
 
 use std::{collections::HashMap, convert::TryFrom, fmt, io, net::IpAddr, str::FromStr};
 
@@ -14,7 +15,7 @@ pub(crate) type ServicePort = u16;
 pub(crate) const AUTOPEERING_SERVICE_NAME: &str = "peering";
 
 /// A mapping between a service name and its access configuration.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ServiceMap(HashMap<ServiceName, Service>);
 
 impl ServiceMap {
@@ -37,19 +38,6 @@ impl ServiceMap {
     pub(crate) fn len(&self) -> usize {
         self.0.len()
     }
-
-    // /// Returns the transport protocol of the given service.
-    // pub(crate) fn transport(&self, service_name: impl AsRef<str>) -> Option<ServiceTransport> {
-    //     self.0
-    //         .get(service_name.as_ref())
-    //         .copied()
-    //         .map(|(transport, _)| transport)
-    // }
-
-    // /// Returns the access port of a given service.
-    // pub(crate) fn port(&self, service_name: impl AsRef<str>) -> Option<Port> {
-    //     self.0.get(service_name.as_ref()).copied().map(|(_, port)| port)
-    // }
 }
 
 impl From<proto::ServiceMap> for ServiceMap {
@@ -104,7 +92,7 @@ impl fmt::Display for ServiceMap {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Service {
     transport: ServiceTransport,
     port: ServicePort,
@@ -120,7 +108,7 @@ impl Service {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum ServiceTransport {
     Tcp,
     Udp,

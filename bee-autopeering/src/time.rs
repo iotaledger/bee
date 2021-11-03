@@ -16,22 +16,22 @@ pub(crate) fn unix_now_secs() -> Timestamp {
     unix_time_secs(SystemTime::now())
 }
 
-pub(crate) fn unix_time_secs(time: SystemTime) -> Timestamp {
-    time.duration_since(UNIX_EPOCH).expect("system clock error").as_secs()
+pub(crate) fn unix_time_secs(t: SystemTime) -> Timestamp {
+    t.duration_since(UNIX_EPOCH).expect("system clock error").as_secs()
 }
 
-pub(crate) fn since(timestamp: Timestamp) -> Option<Timespan> {
-    unix_now_secs().checked_sub(timestamp)
+pub(crate) fn since(past_ts: Timestamp) -> Option<Timespan> {
+    unix_now_secs().checked_sub(past_ts)
 }
 
-pub(crate) fn until(timestamp: Timestamp) -> Option<Timespan> {
-    timestamp.checked_sub(unix_now_secs())
+pub(crate) fn until(future_ts: Timestamp) -> Option<Timespan> {
+    future_ts.checked_sub(unix_now_secs())
 }
 
 pub(crate) fn datetime_now() -> time::OffsetDateTime {
     time::OffsetDateTime::now_utc()
 }
 
-pub(crate) fn datetime(timestamp: Timestamp) -> time::OffsetDateTime {
-    time::OffsetDateTime::from_unix_timestamp(timestamp as i64).expect("error creating datetime")
+pub(crate) fn datetime(ts: Timestamp) -> time::OffsetDateTime {
+    time::OffsetDateTime::from_unix_timestamp(ts as i64).expect("error creating datetime")
 }

@@ -1,7 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{peer_id::PeerId, peerlist::PeerMetrics, Peer};
+use super::{
+    peer_id::PeerId,
+    peerlist::{ActivePeer, ActivePeersList, PeerMetrics, ReplacementList},
+    Peer,
+};
 
 use crate::{
     delay::DelayFactory,
@@ -13,7 +17,7 @@ use crate::{
     time::{self, Timestamp},
 };
 
-use sled::Db;
+use sled::{Batch, Db, IVec};
 
 use std::{
     collections::HashMap,
@@ -24,26 +28,24 @@ use std::{
     time::Duration,
 };
 
+const ACTIVE_PEERS_TREE: &str = "active_peers";
+const REPLACEMENTS_TREE: &str = "replacements";
+
 pub trait PeerStore: Clone + Send + Sync {
     type Config;
 
     fn new(config: Self::Config) -> Self;
-
-    fn store_peer(&self, peer: Peer) -> bool;
-    fn store_metrics(&self, peer_id: PeerId, metrics: PeerMetrics);
-
-    fn contains_peer(&self, peer_id: &PeerId) -> bool;
-
-    fn fetch_peer(&self, peer_id: &PeerId) -> Option<Peer>;
-    fn fetch_peers(&self) -> Vec<Peer>;
-    fn fetch_metrics(&self, peer_id: &PeerId) -> Option<PeerMetrics>;
-    fn fetch_last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp>;
-    fn fetch_last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp>;
-
-    fn update_last_verification_request(&self, peer_id: PeerId);
-    fn update_last_verification_response(&self, peer_id: PeerId);
-
-    fn delete_peer(&self, peer_id: &PeerId) -> bool;
+    fn store_active(&self, peer: ActivePeer);
+    fn store_all_active(&self, peers: &ActivePeersList);
+    fn store_replacement(&self, peer: Peer);
+    fn store_all_replacements(&self, peers: &ReplacementList);
+    fn contains(&self, peer_id: &PeerId) -> bool;
+    fn fetch_active(&self, peer_id: &PeerId) -> Option<ActivePeer>;
+    fn fetch_all_active(&self) -> Vec<ActivePeer>;
+    fn fetch_replacement(&self, peer_id: &PeerId) -> Option<Peer>;
+    fn fetch_all_replacements(&self) -> Vec<Peer>;
+    fn delete(&self, peer_id: &PeerId) -> bool;
+    fn delete_all(&self);
 }
 
 #[derive(Clone, Default)]
@@ -53,17 +55,14 @@ pub struct InMemoryPeerStore {
 
 #[derive(Default)]
 struct InMemoryPeerStoreInner {
-    last_verif_requests: HashMap<PeerId, Timestamp>,
-    last_verif_responses: HashMap<PeerId, Timestamp>,
-    peers: HashMap<PeerId, Peer>,
-    metrics: HashMap<PeerId, PeerMetrics>,
+    active_peers: HashMap<PeerId, ActivePeer>,
+    replacements: HashMap<PeerId, Peer>,
 }
 
 impl InMemoryPeerStore {
     fn read(&self) -> RwLockReadGuard<InMemoryPeerStoreInner> {
         self.inner.read().expect("error getting read access")
     }
-
     fn write(&self) -> RwLockWriteGuard<InMemoryPeerStoreInner> {
         self.inner.write().expect("error getting write access")
     }
@@ -77,78 +76,78 @@ impl PeerStore for InMemoryPeerStore {
             inner: Default::default(),
         }
     }
-
-    fn store_peer(&self, peer: Peer) -> bool {
+    fn store_active(&self, peer: ActivePeer) {
         let peer_id = peer.peer_id();
 
-        // Return `true` if the peer is indeed new and added, otherwise `false`.
-        if !self.contains_peer(peer.peer_id()) {
-            assert!(self.write().peers.insert(peer_id.clone(), peer).is_none());
-            true
-        } else {
-            false
+        let mut write = self.write();
+
+        let _ = write.replacements.remove(peer_id);
+        let _ = write.active_peers.insert(peer_id.clone(), peer);
+    }
+    fn store_all_active(&self, peers: &ActivePeersList) {
+        let read = peers.read();
+        let mut write = self.write();
+
+        for (peer_id, peer) in read.iter().map(|p| (p.peer_id(), p)) {
+            let _ = write.active_peers.insert(peer_id.clone(), peer.clone());
         }
     }
+    fn store_replacement(&self, peer: Peer) {
+        let peer_id = peer.peer_id();
 
-    fn contains_peer(&self, peer_id: &PeerId) -> bool {
-        self.read().peers.contains_key(peer_id)
+        let _ = self.write().active_peers.remove(peer_id);
+        let _ = self.write().replacements.insert(peer_id.clone(), peer);
     }
+    fn store_all_replacements(&self, peers: &ReplacementList) {
+        let read = peers.read();
+        let mut write = self.write();
 
-    fn delete_peer(&self, peer_id: &PeerId) -> bool {
-        // Return `false` if the peer didn't need removing, otherwise `true`.
-        self.write().peers.remove(peer_id).is_some()
+        for (peer_id, peer) in read.iter().map(|p| (p.peer_id(), p)) {
+            let _ = write.replacements.insert(peer_id.clone(), peer.clone());
+        }
     }
-
-    fn fetch_peer(&self, peer_id: &PeerId) -> Option<Peer> {
-        self.read().peers.get(peer_id).map(|p| p.clone())
+    fn contains(&self, peer_id: &PeerId) -> bool {
+        let read = self.read();
+        read.active_peers.contains_key(peer_id) || read.replacements.contains_key(peer_id)
     }
-
-    fn fetch_peers(&self) -> Vec<Peer> {
-        self.read().peers.values().cloned().collect::<Vec<Peer>>()
+    fn fetch_active(&self, peer_id: &PeerId) -> Option<ActivePeer> {
+        self.read().active_peers.get(peer_id).cloned()
     }
-
-    fn fetch_last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp> {
-        self.read().last_verif_requests.get(peer_id).copied()
+    fn fetch_all_active(&self) -> Vec<ActivePeer> {
+        self.read().active_peers.iter().map(|(_, p)| p).cloned().collect()
     }
-
-    fn fetch_last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp> {
-        self.read().last_verif_responses.get(peer_id).copied()
+    fn fetch_replacement(&self, peer_id: &PeerId) -> Option<Peer> {
+        self.read().replacements.get(peer_id).cloned()
     }
-
-    fn update_last_verification_request(&self, peer_id: PeerId) {
-        let _ = self.write().last_verif_requests.insert(peer_id, time::unix_now_secs());
+    fn fetch_all_replacements(&self) -> Vec<Peer> {
+        self.read().replacements.iter().map(|(_, p)| p).cloned().collect()
     }
-
-    fn update_last_verification_response(&self, peer_id: PeerId) {
-        let _ = self.write().last_verif_responses.insert(peer_id, time::unix_now_secs());
+    fn delete(&self, peer_id: &PeerId) -> bool {
+        let mut write = self.write();
+        write.active_peers.remove(peer_id).is_some() || write.replacements.remove(peer_id).is_some()
     }
-
-    fn store_metrics(&self, peer_id: PeerId, peer_metrics: PeerMetrics) {
-        self.write().metrics.insert(peer_id, peer_metrics);
-    }
-
-    fn fetch_metrics(&self, peer_id: &PeerId) -> Option<PeerMetrics> {
-        self.read().metrics.get(peer_id).cloned()
+    fn delete_all(&self) {
+        let mut write = self.write();
+        write.active_peers.clear();
+        write.replacements.clear();
     }
 }
 
 pub struct SledPeerStoreConfig {
-    pub(crate) file_path: PathBuf,
+    inner: sled::Config,
 }
 
 impl SledPeerStoreConfig {
     pub fn new(file_path: &str) -> Self {
         Self {
-            file_path: PathBuf::from(file_path),
+            inner: sled::Config::new().path(PathBuf::from(file_path)),
         }
     }
 }
 
 impl Default for SledPeerStoreConfig {
     fn default() -> Self {
-        Self {
-            file_path: PathBuf::from("./autopeering"),
-        }
+        Self::new("./peerstore")
     }
 }
 
@@ -158,57 +157,104 @@ pub struct SledPeerStore {
 }
 
 impl PeerStore for SledPeerStore {
-    type Config = SledPeerStoreConfig;
+    type Config = sled::Config;
 
     fn new(config: Self::Config) -> Self {
-        let db = sled::open(config.file_path).expect("error opening db");
-        db.open_tree("last_verification_requests");
-        db.open_tree("last_verification_responses");
-        db.open_tree("peers");
+        let db = config.open().expect("error opening peerstore");
+
+        db.open_tree("active_peers");
+        db.open_tree("replacements");
 
         Self { db }
     }
 
-    fn store_peer(&self, peer: Peer) -> bool {
-        todo!()
-    }
+    fn store_active(&self, active_peer: ActivePeer) {
+        let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
+        let key = active_peer.peer_id().clone();
 
-    fn contains_peer(&self, peer_id: &PeerId) -> bool {
-        todo!()
+        tree.insert(key, active_peer).expect("insert error");
     }
+    fn store_all_active(&self, active_peers: &ActivePeersList) {
+        let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
 
-    fn delete_peer(&self, peer_id: &PeerId) -> bool {
-        todo!()
-    }
+        let mut batch = Batch::default();
+        active_peers
+            .read()
+            .iter()
+            .for_each(|p| batch.insert(p.peer_id().clone(), p.clone()));
 
-    fn fetch_peer(&self, peer_id: &PeerId) -> Option<Peer> {
-        todo!()
+        tree.apply_batch(batch).expect("error applying batch");
     }
+    fn store_replacement(&self, peer: Peer) {
+        let tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
+        let key = peer.peer_id().clone();
 
-    fn fetch_peers(&self) -> Vec<Peer> {
-        todo!()
+        tree.insert(key, peer);
     }
+    fn store_all_replacements(&self, replacements: &ReplacementList) {
+        let replacements_tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
 
-    fn fetch_last_verification_request(&self, peer_id: &PeerId) -> Option<Timestamp> {
-        todo!()
-    }
+        let mut batch = Batch::default();
+        replacements
+            .read()
+            .iter()
+            .for_each(|p| batch.insert(p.peer_id().clone(), p.clone()));
 
-    fn fetch_last_verification_response(&self, peer_id: &PeerId) -> Option<Timestamp> {
-        todo!()
+        replacements_tree.apply_batch(batch).expect("error applying batch");
     }
+    fn contains(&self, peer_id: &PeerId) -> bool {
+        let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
+        if tree.contains_key(peer_id).expect("db error") {
+            true
+        } else {
+            let tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
+            if tree.contains_key(peer_id).expect("db error") {
+                true
+            } else {
+                false
+            }
+        }
+    }
+    fn fetch_active(&self, peer_id: &PeerId) -> Option<ActivePeer> {
+        let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
 
-    fn update_last_verification_request(&self, peer_id: PeerId) {
-        todo!()
+        tree.get(peer_id).expect("db error").map(ActivePeer::from)
     }
-    fn update_last_verification_response(&self, peer_id: PeerId) {
-        todo!()
-    }
+    fn fetch_all_active(&self) -> Vec<ActivePeer> {
+        let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
 
-    fn store_metrics(&self, peer_id: PeerId, peer_metrics: PeerMetrics) {
-        todo!()
+        tree.iter()
+            .filter_map(|p| p.ok())
+            .map(|(_, ivec)| ActivePeer::from(ivec))
+            .collect::<Vec<_>>()
     }
+    fn fetch_replacement(&self, peer_id: &PeerId) -> Option<Peer> {
+        let tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
 
-    fn fetch_metrics(&self, peer_id: &PeerId) -> Option<PeerMetrics> {
-        todo!()
+        tree.get(peer_id).expect("db error").map(Peer::from)
+    }
+    fn fetch_all_replacements(&self) -> Vec<Peer> {
+        let tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
+
+        tree.iter()
+            .filter_map(|p| p.ok())
+            .map(|(_, ivec)| Peer::from(ivec))
+            .collect::<Vec<_>>()
+    }
+    fn delete(&self, peer_id: &PeerId) -> bool {
+        unimplemented!("no need for single entry removal at the moment")
+    }
+    fn delete_all(&self) {
+        self.db
+            .open_tree(ACTIVE_PEERS_TREE)
+            .expect("error opening tree")
+            .clear()
+            .expect("error clearing tree");
+
+        self.db
+            .open_tree(REPLACEMENTS_TREE)
+            .expect("error opening tree")
+            .clear()
+            .expect("error clearing tree");
     }
 }

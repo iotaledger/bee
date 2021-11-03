@@ -1,7 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{peer::peerlist::ActivePeersList, time::SECOND};
+use crate::{
+    peer::{
+        peerlist::{ActivePeersList, ReplacementList},
+        PeerStore,
+    },
+    time::SECOND,
+};
 
 use priority_queue::PriorityQueue;
 use tokio::{sync::oneshot, task::JoinHandle, time};
@@ -35,19 +41,24 @@ pub(crate) trait Runnable {
     async fn run(self, shutdown_rx: Self::ShutdownSignal);
 }
 
-pub(crate) struct TaskManager<const N: usize> {
+pub(crate) struct TaskManager<S: PeerStore, const N: usize> {
     shutdown_handles: HashMap<String, JoinHandle<()>>,
     shutdown_order: PriorityQueue<String, u8>,
     shutdown_senders: HashMap<String, ShutdownTx>,
-    // shutdown_fn: HashSet<Box<dyn Fn(Box<dyn Any + Send>) + Send>>,
+    peerstore: S,
+    active_peers: ActivePeersList,
+    replacements: ReplacementList,
 }
 
-impl<const N: usize> TaskManager<N> {
-    pub(crate) fn new() -> Self {
+impl<S: PeerStore, const N: usize> TaskManager<S, N> {
+    pub(crate) fn new(peerstore: S, active_peers: ActivePeersList, replacements: ReplacementList) -> Self {
         Self {
             shutdown_order: PriorityQueue::with_capacity(N),
             shutdown_senders: HashMap::with_capacity(N),
             shutdown_handles: HashMap::with_capacity(N),
+            peerstore,
+            active_peers,
+            replacements,
         }
     }
 
@@ -104,19 +115,15 @@ impl<const N: usize> TaskManager<N> {
         self.shutdown_order.push(name.into(), shutdown_priority);
     }
 
-    // /// A shutdown procedure executed after all spawend tasks have been gracefully shut down. Useful to write data to
-    // /// the storage layer at the end of the program's lifetime.
-    // pub(crate) fn add_shutdown_fn(&mut self, b: Box<dyn Fn(&Box<dyn Any + Send>) + Send>) {
-    //     self.shutdown_fn.insert(b);
-    // }
-
     /// Executes the system shutdown.
     pub(crate) async fn shutdown(self) {
         let TaskManager {
             mut shutdown_order,
             shutdown_handles: mut runnable_handles,
             mut shutdown_senders,
-            // shutdown_fn,
+            peerstore,
+            active_peers,
+            replacements,
         } = self;
 
         // Send the shutdown signal to all receivers.
@@ -147,8 +154,12 @@ impl<const N: usize> TaskManager<N> {
         })
         .await;
 
-        log::debug!("Dumping data to storage...");
-        // TODO: write data that should be persisted to storage
-        log::debug!("Finished.");
+        log::debug!("Flushing data to peerstore...");
+
+        peerstore.delete_all();
+        peerstore.store_all_active(&active_peers);
+        peerstore.store_all_replacements(&replacements);
+
+        log::debug!("Done.");
     }
 }

@@ -3,15 +3,12 @@
 
 use crate::{
     delay::DelayFactory,
-    discovery::{
-        manager::DiscoveryHandler,
-        messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
-    },
+    discovery::messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
     hash,
     local::{salt::Salt, Local},
     packet::{msg_hash, MessageType},
     peer::{peer_id::PeerId, peerstore::PeerStore},
-    peering::{manager::PeeringHandler, messages::PeeringRequest},
+    peering::messages::PeeringRequest,
     server::ServerTx,
     task::{Repeat, ShutdownRx},
     time::{self, Timestamp},
@@ -51,19 +48,18 @@ pub(crate) struct RequestKey {
     pub(crate) request_id: TypeId,
 }
 
-pub(crate) struct RequestValue<S: PeerStore> {
+pub(crate) struct RequestValue {
     pub(crate) request_hash: [u8; hash::SHA256_LEN],
     pub(crate) expiration_time: u64,
-    pub(crate) handler: Option<DiscoveryHandler<S>>,
     pub(crate) response_tx: Option<ResponseTx>,
 }
 
 #[derive(Clone)]
-pub(crate) struct RequestManager<S: PeerStore> {
-    inner: Arc<RwLock<RequestManagerInner<S>>>,
+pub(crate) struct RequestManager {
+    inner: Arc<RwLock<RequestManagerInner>>,
 }
 
-impl<S: PeerStore> RequestManager<S> {
+impl RequestManager {
     /// Creates a new request manager.
     pub(crate) fn new(version: u32, network_id: u32, source_addr: SocketAddr) -> Self {
         Self {
@@ -75,28 +71,28 @@ impl<S: PeerStore> RequestManager<S> {
             })),
         }
     }
-    pub(crate) fn read(&self) -> RwLockReadGuard<RequestManagerInner<S>> {
+    pub(crate) fn read(&self) -> RwLockReadGuard<RequestManagerInner> {
         self.inner.read().expect("error getting read access")
     }
 
-    pub(crate) fn write(&self) -> RwLockWriteGuard<RequestManagerInner<S>> {
+    pub(crate) fn write(&self) -> RwLockWriteGuard<RequestManagerInner> {
         self.inner.write().expect("error getting write access")
     }
 }
 
-pub(crate) struct RequestManagerInner<S: PeerStore> {
+pub(crate) struct RequestManagerInner {
     version: u32,
     network_id: u32,
     source_addr: SocketAddr,
-    open_requests: HashMap<RequestKey, RequestValue<S>>,
+    open_requests: HashMap<RequestKey, RequestValue>,
 }
 
-impl<S: PeerStore> RequestManagerInner<S> {
+impl RequestManagerInner {
     pub(crate) fn new_verification_request(
         &mut self,
         peer_id: PeerId,
         peer_addr: IpAddr,
-        handler: Option<DiscoveryHandler<S>>,
+        // handler: Option<DiscoveryHandler<S>>,
         response_tx: Option<ResponseTx>,
     ) -> VerificationRequest {
         let key = RequestKey {
@@ -115,7 +111,7 @@ impl<S: PeerStore> RequestManagerInner<S> {
         let value = RequestValue {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
-            handler,
+            // handler,
             response_tx,
         };
 
@@ -127,7 +123,7 @@ impl<S: PeerStore> RequestManagerInner<S> {
     pub(crate) fn new_discovery_request(
         &mut self,
         peer_id: PeerId,
-        handler: Option<DiscoveryHandler<S>>,
+        // handler: Option<DiscoveryHandler<S>>,
         response_tx: Option<ResponseTx>,
     ) -> DiscoveryRequest {
         let key = RequestKey {
@@ -146,7 +142,7 @@ impl<S: PeerStore> RequestManagerInner<S> {
         let value = RequestValue {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
-            handler,
+            // handler,
             response_tx,
         };
 
@@ -158,7 +154,6 @@ impl<S: PeerStore> RequestManagerInner<S> {
     pub(crate) fn new_peering_request(
         &mut self,
         peer_id: PeerId,
-        handler: Option<PeeringHandler<S>>,
         response_tx: Option<ResponseTx>,
         local: &Local,
     ) -> PeeringRequest {
@@ -179,8 +174,6 @@ impl<S: PeerStore> RequestManagerInner<S> {
         let value = RequestValue {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
-            // TODO: support PeeringHandler
-            handler: None,
             response_tx,
         };
 
@@ -189,7 +182,7 @@ impl<S: PeerStore> RequestManagerInner<S> {
         peer_req
     }
 
-    pub(crate) fn pull<R: Request + 'static>(&mut self, peer_id: &PeerId) -> Option<RequestValue<S>> {
+    pub(crate) fn pull<R: Request + 'static>(&mut self, peer_id: &PeerId) -> Option<RequestValue> {
         // TODO: prevent the clone?
         let key = RequestKey {
             peer_id: peer_id.clone(),
@@ -204,8 +197,8 @@ pub(crate) fn is_expired(timestamp: Timestamp) -> bool {
     time::since(timestamp).map_or(false, |ts| ts >= REQUEST_EXPIRATION_SECS)
 }
 
-pub(crate) fn remove_expired_requests_repeat<S: PeerStore>() -> Repeat<RequestManager<S>> {
-    Box::new(|mngr: &RequestManager<S>| {
+pub(crate) fn remove_expired_requests_repeat() -> Repeat<RequestManager> {
+    Box::new(|mngr: &RequestManager| {
         // Retain only those that aren't expired yet, remove all others.
         mngr.write()
             .open_requests

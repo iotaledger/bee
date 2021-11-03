@@ -1,15 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::protocol;
-
 use crate::{
     command::{Command, CommandTx},
     discovery::manager,
     event::EventTx,
     local::Local,
     peer::{
-        peerlist::{ActivePeerEntry, ActivePeersList, MasterPeersList, ReplacementList},
+        peerlist::{ActivePeer, ActivePeersList, MasterPeersList, ReplacementList},
         peerstore::PeerStore,
         PeerId,
     },
@@ -24,10 +22,9 @@ use tokio::sync::mpsc::Receiver;
 use std::{collections::VecDeque, time::Duration};
 
 #[derive(Clone)]
-pub(crate) struct QueryContext<S: PeerStore> {
+pub(crate) struct QueryContext {
     pub(crate) local: Local,
-    pub(crate) peerstore: S,
-    pub(crate) request_mngr: RequestManager<S>,
+    pub(crate) request_mngr: RequestManager,
     pub(crate) master_peers: MasterPeersList,
     pub(crate) active_peers: ActivePeersList,
     pub(crate) replacements: ReplacementList,
@@ -36,36 +33,30 @@ pub(crate) struct QueryContext<S: PeerStore> {
 }
 
 // Hive.go: pings the oldest active peer.
-pub(crate) fn do_reverify<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
+pub(crate) fn do_reverify() -> Repeat<QueryContext> {
     Box::new(|ctx| {
         // Determine the next peer to re/verifiy.
-        if let Some(active_peer) = peer_to_reverify(&ctx.active_peers) {
-            log::debug!("Reverifying {}...", active_peer.peer_id());
+        if let Some(peer_id) = peer_to_reverify(&ctx.active_peers) {
+            log::debug!("Reverifying {}...", peer_id);
 
             // CHANGE BACK: move to before tokio::spawn
             let ctx_ = ctx.clone();
 
             // TODO: introduce `UnsupervisedTask` type, that always finishes after a timeout.
             let _ = tokio::spawn(async move {
-                if let Some(services) = manager::begin_verification_request(
-                    active_peer.peer_id(),
-                    &ctx_.request_mngr,
-                    &ctx_.peerstore,
-                    &ctx_.server_tx,
-                )
-                .await
+                if let Some(services) =
+                    manager::begin_verification(&peer_id, &ctx_.active_peers, &ctx_.request_mngr, &ctx_.server_tx).await
                 {
                     // Hive.go: no need to do anything here, as the peer is bumped when handling the pong
                     log::debug!("Reverification successful. Peer offers {} service/s.", services.len());
                 } else {
-                    log::debug!("Reverification failed. Removing peer {}.", active_peer.peer_id());
+                    log::debug!("Reverification failed. Removing peer {}.", peer_id);
 
                     manager::remove_peer_from_active_list(
-                        active_peer.peer_id(),
+                        &peer_id,
                         &ctx_.master_peers,
                         &ctx_.active_peers,
                         &ctx_.replacements,
-                        &ctx_.peerstore,
                         &ctx_.event_tx,
                     )
                 }
@@ -75,18 +66,18 @@ pub(crate) fn do_reverify<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
 }
 
 // Hive.go: returns the oldest peer, or nil if empty.
-fn peer_to_reverify(active_peers: &ActivePeersList) -> Option<ActivePeerEntry> {
+fn peer_to_reverify(active_peers: &ActivePeersList) -> Option<PeerId> {
     if active_peers.read().is_empty() {
         None
     } else {
-        active_peers.read().get_oldest().cloned()
+        active_peers.read().get_oldest().cloned().map(|p| p.peer_id().clone())
     }
 }
 
 // Hive.go:
 // The current strategy is to always select the latest verified peer and one of
 // the peers that returned the most number of peers the last time it was queried.
-pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
+pub(crate) fn do_query() -> Repeat<QueryContext> {
     Box::new(|ctx| {
         let peers = select_peers_to_query(&ctx.active_peers);
         if peers.is_empty() {
@@ -100,32 +91,10 @@ pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
                 // TODO: introduce `UnsupervisedTask` type, that always finishes after a timeout.
                 tokio::spawn(async move {
                     if let Some(peers) =
-                        manager::begin_discovery_request(&peer_id, &ctx_.request_mngr, &ctx_.peerstore, &ctx_.server_tx)
+                        manager::begin_discovery(&peer_id, &ctx_.active_peers, &ctx_.request_mngr, &ctx_.server_tx)
                             .await
                     {
                         log::debug!("Query successful. Received {} peers.", peers.len());
-
-                        // Add the discovered peers to list and store
-                        let mut num_added = 0;
-                        for peer in peers {
-                            if manager::add_peer(
-                                peer,
-                                &ctx_.local,
-                                &ctx_.active_peers,
-                                &ctx_.replacements,
-                                &ctx_.peerstore,
-                            ) {
-                                num_added += 1;
-                            }
-                        }
-
-                        // Remember how many new peers were discovered through the queried peer.
-                        ctx_.active_peers
-                            .write()
-                            .find_mut(&peer_id)
-                            .expect("inconsistent active peers list")
-                            .metrics_mut()
-                            .set_last_new_peers(num_added);
                     } else {
                         log::debug!("Query unsuccessful. Removing peer {}.", peer_id);
 
@@ -134,7 +103,6 @@ pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
                             &ctx_.master_peers,
                             &ctx_.active_peers,
                             &ctx_.replacements,
-                            &ctx_.peerstore,
                             &ctx_.event_tx,
                         )
                     }
@@ -146,7 +114,7 @@ pub(crate) fn do_query<S: PeerStore + 'static>() -> Repeat<QueryContext<S>> {
 
 // Hive.go: selects the peers that should be queried.
 fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
-    let mut verif_peers = protocol::get_verified_peers(active_peers);
+    let mut verif_peers = manager::get_verified_peers(active_peers);
 
     // If we have less than 3 verified peers, then we use those for the query.
     if verif_peers.len() < 3 {
@@ -182,12 +150,7 @@ fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
         // Note: This loop finds the three "heaviest" peers with one iteration over an unsorted vec of verified peers.
         let heaviest3 = verif_peers.into_iter().fold(
             (None, None, None),
-            |(x, y, z): (
-                Option<ActivePeerEntry>,
-                Option<ActivePeerEntry>,
-                Option<ActivePeerEntry>,
-            ),
-             p| {
+            |(x, y, z): (Option<ActivePeer>, Option<ActivePeer>, Option<ActivePeer>), p| {
                 let n = p.metrics().last_new_peers();
 
                 // TODO: remove this when pretty certain about the correctness of the rules.
@@ -243,13 +206,13 @@ fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::peer::{peerlist::ActivePeerEntry, Peer};
+    use crate::peer::{peerlist::ActivePeer, Peer};
 
     fn create_peerlist_of_size(n: usize) -> ActivePeersList {
         // Create a set of active peer entries.
         let mut entries = (0..n)
             .map(|i| Peer::new_test_peer(i as u8))
-            .map(|p| ActivePeerEntry::new(p))
+            .map(|p| ActivePeer::new(p))
             .collect::<Vec<_>>();
 
         // Create a peerlist, and insert the peer entries setting the `last_new_peers` metric
