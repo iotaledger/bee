@@ -29,23 +29,13 @@ fn unpack_prefix_to_invalid_index_length(
         InvalidBoundedU32<PREFIXED_INDEXATION_INDEX_LENGTH_MIN, PREFIXED_INDEXATION_INDEX_LENGTH_MAX>,
     >,
 ) -> ValidationError {
-    match err {
-        UnpackPrefixError::Prefix(len) => {
-            ValidationError::InvalidIndexationIndexLength(VecPrefixLengthError::Invalid(len))
-        }
-        UnpackPrefixError::Packable(e) => match e {},
-    }
+    ValidationError::InvalidIndexationIndexLength(VecPrefixLengthError::Invalid(err.into_prefix()))
 }
 
 fn unpack_prefix_to_invalid_data_length(
     err: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_INDEXATION_DATA_LENGTH_MAX>>,
 ) -> ValidationError {
-    match err {
-        UnpackPrefixError::Prefix(len) => {
-            ValidationError::InvalidIndexationDataLength(VecPrefixLengthError::Invalid(len))
-        }
-        UnpackPrefixError::Packable(e) => match e {},
-    }
+    ValidationError::InvalidIndexationDataLength(VecPrefixLengthError::Invalid(err.into_prefix()))
 }
 
 /// A payload which holds an index and associated data.

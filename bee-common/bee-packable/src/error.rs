@@ -75,6 +75,16 @@ pub enum UnpackPrefixError<T, E> {
     Prefix(E),
 }
 
+impl<E> UnpackPrefixError<Infallible, E> {
+    /// Projects the value to the [`Prefix`](UnpackPrefixError::Prefix) variant.
+    pub fn into_prefix(self) -> E {
+        match self {
+            Self::Packable(err) => match err {},
+            Self::Prefix(err) => err,
+        }
+    }
+}
+
 impl<T, E> From<T> for UnpackPrefixError<T, E> {
     fn from(err: T) -> Self {
         Self::Packable(err)

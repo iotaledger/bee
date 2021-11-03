@@ -20,12 +20,9 @@ use core::convert::Infallible;
 pub(crate) const PREFIXED_SALT_BYTES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - 12;
 
 fn unpack_prefix_to_validation_error(
-    error: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_SALT_BYTES_LENGTH_MAX>>,
+    err: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_SALT_BYTES_LENGTH_MAX>>,
 ) -> ValidationError {
-    match error {
-        UnpackPrefixError::Prefix(len) => ValidationError::InvalidSaltBytesLength(VecPrefixLengthError::Invalid(len)),
-        UnpackPrefixError::Packable(e) => match e {},
-    }
+    ValidationError::InvalidSaltBytesLength(VecPrefixLengthError::Invalid(err.into_prefix()))
 }
 
 /// Represents a [`Salt`] used in a [`SaltDeclarationPayload`].
