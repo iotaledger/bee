@@ -27,6 +27,12 @@ pub enum VecPrefixLengthError<E> {
     Invalid(E),
 }
 
+impl<E> From<E> for VecPrefixLengthError<E> {
+    fn from(err: E) -> Self {
+        Self::Invalid(err)
+    }
+}
+
 impl<E: Display> Display for VecPrefixLengthError<E> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

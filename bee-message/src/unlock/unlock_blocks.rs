@@ -6,7 +6,7 @@ use crate::{
     MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{packable::VecPrefixLengthError, BoundedU16, Packable, Packer, UnpackError, Unpacker, VecPrefix};
+use bee_packable::{BoundedU16, Packable, Packer, UnpackError, Unpacker, VecPrefix};
 
 use hashbrown::HashSet;
 
@@ -81,9 +81,7 @@ impl Packable for UnlockBlocks {
         >::unpack(unpacker)
         .map_err(|unpack_err| {
             unpack_err.map_packable(|err| {
-                err.unwrap_packable_or_else(|prefix_err| {
-                    ValidationError::InvalidUnlockBlockCount(VecPrefixLengthError::Invalid(prefix_err))
-                })
+                err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidUnlockBlockCount(prefix_err.into()))
             })
         })?;
 

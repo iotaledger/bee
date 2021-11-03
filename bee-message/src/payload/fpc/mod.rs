@@ -16,9 +16,7 @@ use crate::{
     MessageId, MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{
-    error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
-};
+use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
 
 use alloc::vec::Vec;
 
@@ -33,18 +31,15 @@ pub(crate) const PREFIXED_TIMESTAMPS_LENGTH_MAX: u32 =
 fn unpack_prefix_to_conflict_validation_error(
     err: UnpackPrefixError<MessageUnpackError, InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>,
 ) -> MessageUnpackError {
-    err.unwrap_packable_or_else(|prefix_err| {
-        ValidationError::InvalidConflictsCount(VecPrefixLengthError::Invalid(prefix_err))
-    })
+    err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidConflictsCount(prefix_err.into()))
 }
 
 fn unpack_prefix_to_timestamp_validation_error(
     err: UnpackPrefixError<MessageUnpackError, InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>,
 ) -> MessageUnpackError {
-    err.unwrap_packable_or_else(|prefix_err| {
-        ValidationError::InvalidTimestampsCount(VecPrefixLengthError::Invalid(prefix_err))
-    })
+    err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidTimestampsCount(prefix_err.into()))
 }
+
 /// Payload describing opinions on conflicts and timestamps of messages.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

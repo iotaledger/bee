@@ -9,9 +9,7 @@ use crate::{
 };
 
 use bee_ord::is_sorted;
-use bee_packable::{
-    coerce::*, packable::VecPrefixLengthError, BoundedU32, Packable, Packer, UnpackError, Unpacker, VecPrefix,
-};
+use bee_packable::{coerce::*, BoundedU32, Packable, Packer, UnpackError, Unpacker, VecPrefix};
 
 use alloc::vec::Vec;
 use core::{convert::Infallible, fmt};
@@ -146,9 +144,7 @@ impl Packable for TransactionEssence {
             VecPrefix::<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>::unpack(unpacker)
                 .map_err(|unpack_err| {
                     unpack_err.map_packable(|err| {
-                        err.unwrap_packable_or_else(|prefix_err| {
-                            ValidationError::InvalidInputCount(VecPrefixLengthError::Invalid(prefix_err))
-                        })
+                        err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidInputCount(prefix_err.into()))
                     })
                 })?;
 
@@ -160,9 +156,7 @@ impl Packable for TransactionEssence {
             VecPrefix::<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>::unpack(unpacker)
                 .map_err(|unpack_err| {
                     unpack_err.map_packable(|err| {
-                        err.unwrap_packable_or_else(|prefix_err| {
-                            ValidationError::InvalidOutputCount(VecPrefixLengthError::Invalid(prefix_err))
-                        })
+                        err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidOutputCount(prefix_err.into()))
                     })
                 })?;
 
