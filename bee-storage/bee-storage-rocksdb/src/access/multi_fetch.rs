@@ -25,7 +25,7 @@ impl<V: Packable, E: From<rocksdb::Error>> Iterator for MultiIter<V, E> {
             self.iter
                 .next()?
                 // Unpacking from storage slice can't fail.
-                .map(|option| option.map(|bytes| V::unpack(&mut bytes.as_slice()).unwrap()))
+                .map(|option| option.map(|bytes| V::unpack_unchecked(&mut bytes.as_slice()).unwrap()))
                 .map_err(E::from),
         )
     }
