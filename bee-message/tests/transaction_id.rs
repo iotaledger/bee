@@ -77,13 +77,13 @@ fn packed_len() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
 
     assert_eq!(transaction_id.packed_len(), TransactionId::LENGTH);
-    assert_eq!(transaction_id.pack_to_vec().unwrap().len(), TransactionId::LENGTH);
+    assert_eq!(transaction_id.pack_to_vec().len(), TransactionId::LENGTH);
 }
 
 #[test]
 fn packable_round_trip() {
     let transaction_id_1 = TransactionId::from_str(TRANSACTION_ID).unwrap();
-    let transaction_id_2 = TransactionId::unpack_from_slice(transaction_id_1.pack_to_vec().unwrap()).unwrap();
+    let transaction_id_2 = TransactionId::unpack_from_slice(transaction_id_1.pack_to_vec()).unwrap();
 
     assert_eq!(transaction_id_1, transaction_id_2);
 }

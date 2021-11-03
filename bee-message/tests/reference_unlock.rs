@@ -67,13 +67,13 @@ fn packed_len() {
     let reference = ReferenceUnlock::new(0).unwrap();
 
     assert_eq!(reference.packed_len(), 2);
-    assert_eq!(reference.pack_to_vec().unwrap().len(), 2);
+    assert_eq!(reference.pack_to_vec().len(), 2);
 }
 
 #[test]
 fn packable_round_trip() {
     let reference_1 = ReferenceUnlock::try_from(42).unwrap();
-    let reference_2 = ReferenceUnlock::unpack_from_slice(reference_1.pack_to_vec().unwrap()).unwrap();
+    let reference_2 = ReferenceUnlock::unpack_from_slice(reference_1.pack_to_vec()).unwrap();
 
     assert_eq!(reference_1, reference_2);
 }

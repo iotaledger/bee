@@ -231,7 +231,7 @@ fn packable_round_trip() {
         .with_unlock_blocks(unlock_blocks)
         .finish()
         .unwrap();
-    let payload_b = TransactionPayload::unpack_from_slice(payload_a.pack_to_vec().unwrap()).unwrap();
+    let payload_b = TransactionPayload::unpack_from_slice(payload_a.pack_to_vec()).unwrap();
 
     assert_eq!(payload_a, payload_b);
     assert_eq!(payload_a.id(), payload_b.id());

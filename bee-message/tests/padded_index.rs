@@ -76,13 +76,13 @@ fn packed_len() {
     let padded_index = PaddedIndex::from_str(PADDED_INDEX).unwrap();
 
     assert_eq!(padded_index.packed_len(), PaddedIndex::LENGTH);
-    assert_eq!(padded_index.pack_to_vec().unwrap().len(), PaddedIndex::LENGTH);
+    assert_eq!(padded_index.pack_to_vec().len(), PaddedIndex::LENGTH);
 }
 
 #[test]
 fn packable_round_trip() {
     let padded_index_1 = PaddedIndex::from_str(PADDED_INDEX).unwrap();
-    let padded_index_2 = PaddedIndex::unpack_from_slice(padded_index_1.pack_to_vec().unwrap()).unwrap();
+    let padded_index_2 = PaddedIndex::unpack_from_slice(padded_index_1.pack_to_vec()).unwrap();
 
     assert_eq!(padded_index_1, padded_index_2);
 }

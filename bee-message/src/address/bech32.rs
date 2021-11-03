@@ -51,8 +51,7 @@ impl Bech32Address {
 
     /// Creates a wrapped [`Bech32Address`] from an [`Address`] and a human-readable part.
     pub fn from_address(hrp: &str, address: &Address) -> Self {
-        // Unwrap is fine since packing to vec can't fail.
-        let bytes = address.pack_to_vec().unwrap();
+        let bytes = address.pack_to_vec();
 
         // Unwrap is fine since we know the [`Address`] is valid.
         Self(bech32::encode(hrp, bytes.to_base32(), bech32::Variant::Bech32).unwrap())

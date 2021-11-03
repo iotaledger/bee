@@ -45,8 +45,7 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let application_msg_1 = ApplicationMessagePayload::new(1);
-    let application_msg_2 =
-        ApplicationMessagePayload::unpack_from_slice(application_msg_1.pack_to_vec().unwrap()).unwrap();
+    let application_msg_2 = ApplicationMessagePayload::unpack_from_slice(application_msg_1.pack_to_vec()).unwrap();
 
     assert_eq!(application_msg_1, application_msg_2);
 }

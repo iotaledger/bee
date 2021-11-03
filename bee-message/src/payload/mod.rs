@@ -19,7 +19,7 @@ use indexation::IndexationPayload;
 use salt_declaration::SaltDeclarationPayload;
 use transaction::{TransactionPayload, TransactionUnpackError};
 
-use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{coerce::*, Packable, Packer, UnpackError, Unpacker};
 
 use alloc::boxed::Box;
 use core::{convert::Infallible, fmt};
@@ -63,9 +63,9 @@ pub trait MessagePayload: Packable + Into<Payload> {
     const VERSION: u8;
 
     /// Packs a payload, its type and version.
-    fn pack_payload<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::KIND.pack(packer).infallible()?;
-        Self::VERSION.pack(packer).infallible()?;
+    fn pack_payload<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        Self::KIND.pack(packer)?;
+        Self::VERSION.pack(packer)?;
         self.pack(packer)
     }
 
@@ -134,7 +134,6 @@ impl Payload {
 }
 
 impl Packable for Payload {
-    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
@@ -153,17 +152,17 @@ impl Packable for Payload {
             }
     }
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match self {
-            Self::Data(p) => p.pack_payload(packer).infallible(),
+            Self::Data(p) => p.pack_payload(packer),
             Self::Transaction(p) => p.pack_payload(packer),
-            Self::Fpc(p) => p.pack_payload(packer).infallible(),
-            Self::ApplicationMessage(p) => p.pack_payload(packer).infallible(),
+            Self::Fpc(p) => p.pack_payload(packer),
+            Self::ApplicationMessage(p) => p.pack_payload(packer),
             Self::Dkg(p) => p.pack_payload(packer),
-            Self::Beacon(p) => p.pack_payload(packer).infallible(),
-            Self::CollectiveBeacon(p) => p.pack_payload(packer).infallible(),
-            Self::SaltDeclaration(p) => p.pack_payload(packer).infallible(),
-            Self::Indexation(p) => p.pack_payload(packer).infallible(),
+            Self::Beacon(p) => p.pack_payload(packer),
+            Self::CollectiveBeacon(p) => p.pack_payload(packer),
+            Self::SaltDeclaration(p) => p.pack_payload(packer),
+            Self::Indexation(p) => p.pack_payload(packer),
         }
     }
 
@@ -252,7 +251,6 @@ pub enum OptionalPayload {
 }
 
 impl Packable for OptionalPayload {
-    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
@@ -262,7 +260,7 @@ impl Packable for OptionalPayload {
         }
     }
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match self {
             Self::None => 0u32.pack(packer),
             Self::Some(payload) => {

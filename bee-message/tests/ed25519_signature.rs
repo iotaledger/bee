@@ -38,7 +38,7 @@ fn packed_len() {
     );
 
     assert_eq!(signature.packed_len(), 32 + 64);
-    assert_eq!(signature.pack_to_vec().unwrap().len(), 32 + 64);
+    assert_eq!(signature.pack_to_vec().len(), 32 + 64);
 }
 
 #[test]
@@ -47,7 +47,7 @@ fn packable_round_trip() {
         hex_decode(ED25519_PUBLIC_KEY).unwrap(),
         hex_decode(ED25519_SIGNATURE).unwrap(),
     );
-    let signature_2 = Ed25519Signature::unpack_from_slice(signature_1.pack_to_vec().unwrap()).unwrap();
+    let signature_2 = Ed25519Signature::unpack_from_slice(signature_1.pack_to_vec()).unwrap();
 
     assert_eq!(signature_1, signature_2);
 }

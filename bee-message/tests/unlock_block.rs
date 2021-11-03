@@ -38,7 +38,7 @@ fn packed_len() {
     ))));
 
     assert_eq!(unlock.packed_len(), 1 + 1 + 32 + 64);
-    assert_eq!(unlock.pack_to_vec().unwrap().len(), 1 + 1 + 32 + 64);
+    assert_eq!(unlock.pack_to_vec().len(), 1 + 1 + 32 + 64);
 }
 
 #[test]
@@ -47,7 +47,7 @@ fn packable_round_trip() {
         rand_bytes_array(),
         rand_bytes_array(),
     ))));
-    let unlock_2 = UnlockBlock::unpack_from_slice(unlock_1.pack_to_vec().unwrap()).unwrap();
+    let unlock_2 = UnlockBlock::unpack_from_slice(unlock_1.pack_to_vec()).unwrap();
 
     assert_eq!(unlock_1, unlock_2);
 }

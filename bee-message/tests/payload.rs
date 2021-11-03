@@ -29,7 +29,7 @@ use bee_test::rand::{
 fn application_message_payload_packable_round_trip() {
     let payload_1 = Payload::from(ApplicationMessagePayload::new(1));
 
-    let bytes = payload_1.pack_to_vec().unwrap();
+    let bytes = payload_1.pack_to_vec();
     let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
@@ -50,7 +50,7 @@ fn collective_beacon_payload_packable_round_trip() {
             .unwrap(),
     );
 
-    let bytes = payload_1.pack_to_vec().unwrap();
+    let bytes = payload_1.pack_to_vec();
     let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
@@ -62,7 +62,7 @@ fn collective_beacon_payload_packable_round_trip() {
 fn data_payload_packable_round_trip() {
     let payload_1 = Payload::from(DataPayload::new(vec![0; 255]).unwrap());
 
-    let bytes = payload_1.pack_to_vec().unwrap();
+    let bytes = payload_1.pack_to_vec();
     let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
@@ -91,7 +91,7 @@ fn dkg_payload_packable_round_trip() {
             .unwrap(),
     );
 
-    let bytes = payload_1.pack_to_vec().unwrap();
+    let bytes = payload_1.pack_to_vec();
     let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
@@ -117,7 +117,7 @@ fn fpc_payload_packable_round_trip() {
             .unwrap(),
     );
 
-    let bytes = payload_1.pack_to_vec().unwrap();
+    let bytes = payload_1.pack_to_vec();
     let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
@@ -129,7 +129,7 @@ fn fpc_payload_packable_round_trip() {
 fn indexation_payload_packable_round_trip() {
     let payload_1 = Payload::from(IndexationPayload::new(rand_bytes(32), rand_bytes(64)).unwrap());
 
-    let bytes = payload_1.pack_to_vec().unwrap();
+    let bytes = payload_1.pack_to_vec();
     let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
@@ -149,7 +149,7 @@ fn regular_beacon_payload_packable_round_trip() {
             .unwrap(),
     );
 
-    let bytes = payload_1.pack_to_vec().unwrap();
+    let bytes = payload_1.pack_to_vec();
     let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
@@ -169,7 +169,7 @@ fn salt_declaration_payload_packable_round_trip() {
             .unwrap(),
     );
 
-    let bytes = payload_1.pack_to_vec().unwrap();
+    let bytes = payload_1.pack_to_vec();
     let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
@@ -209,7 +209,7 @@ fn transaction_payload_packable_round_trip() {
             .unwrap(),
     );
 
-    let bytes = payload_1.pack_to_vec().unwrap();
+    let bytes = payload_1.pack_to_vec();
     let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);

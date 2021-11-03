@@ -7,17 +7,14 @@ use crate::{
 };
 
 use bee_packable::{
-    coerce::*, error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU16, PackError, Packable, Packer,
-    UnpackError, Unpacker, VecPrefix,
+    error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU16, Packable, Packer, UnpackError, Unpacker,
+    VecPrefix,
 };
 
 use hashbrown::HashSet;
 
 use alloc::vec::Vec;
-use core::{
-    convert::{Infallible, TryFrom},
-    ops::Deref,
-};
+use core::{convert::TryFrom, ops::Deref};
 
 pub(crate) const PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN: u16 = *UNLOCK_BLOCK_COUNT_RANGE.start();
 pub(crate) const PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX: u16 = *UNLOCK_BLOCK_COUNT_RANGE.end();
@@ -70,15 +67,14 @@ impl Deref for UnlockBlocks {
 }
 
 impl Packable for UnlockBlocks {
-    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
         self.0.packed_len()
     }
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.0.pack(packer).infallible()
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.0.pack(packer)
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {

@@ -47,7 +47,7 @@ fn packed_len() {
     )));
 
     assert_eq!(signature_unlock.packed_len(), 1 + 32 + 64);
-    assert_eq!(signature_unlock.pack_to_vec().unwrap().len(), 1 + 32 + 64);
+    assert_eq!(signature_unlock.pack_to_vec().len(), 1 + 32 + 64);
 }
 
 #[test]
@@ -56,7 +56,7 @@ fn packable_round_trip() {
         rand_bytes_array(),
         rand_bytes_array(),
     )));
-    let signature_unlock_2 = SignatureUnlock::unpack_from_slice(signature_unlock_1.pack_to_vec().unwrap()).unwrap();
+    let signature_unlock_2 = SignatureUnlock::unpack_from_slice(signature_unlock_1.pack_to_vec()).unwrap();
 
     assert_eq!(signature_unlock_1, signature_unlock_2);
 }

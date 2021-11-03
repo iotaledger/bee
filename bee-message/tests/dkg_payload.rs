@@ -88,7 +88,7 @@ fn encrypted_deal_packable_round_trip() {
         .finish()
         .unwrap();
 
-    let deal_b = EncryptedDeal::unpack_from_slice(deal_a.pack_to_vec().unwrap()).unwrap();
+    let deal_b = EncryptedDeal::unpack_from_slice(deal_a.pack_to_vec()).unwrap();
 
     assert_eq!(deal_a, deal_b);
 }
@@ -191,7 +191,7 @@ fn dkg_packable_round_trip() {
         .finish()
         .unwrap();
 
-    let dkg_b = DkgPayload::unpack_from_slice(dkg_a.pack_to_vec().unwrap()).unwrap();
+    let dkg_b = DkgPayload::unpack_from_slice(dkg_a.pack_to_vec()).unwrap();
 
     assert_eq!(dkg_a, dkg_b);
 }

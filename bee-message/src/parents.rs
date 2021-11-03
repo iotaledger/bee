@@ -6,17 +6,13 @@
 use crate::{MessageId, MessageUnpackError, ValidationError};
 
 use bee_ord::is_unique_sorted;
-use bee_packable::{
-    coerce::{PackCoerceInfallible, UnpackCoerceInfallible},
-    PackError, Packable, Packer, UnpackError, Unpacker,
-};
+use bee_packable::{coerce::*, Packable, Packer, UnpackError, Unpacker};
 
 use bitvec::prelude::*;
 
 use alloc::{vec, vec::Vec};
 use core::{
     cmp,
-    convert::Infallible,
     ops::{Deref, RangeInclusive},
 };
 
@@ -110,15 +106,14 @@ impl Parents {
 }
 
 impl Packable for Parents {
-    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
         0u8.packed_len() + 0u8.packed_len() + self.0.len() * MessageId::LENGTH
     }
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        (self.len() as u8).pack(packer).infallible()?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        (self.len() as u8).pack(packer)?;
 
         let mut bits = bitarr![Lsb0, u8; 0; 8];
 
@@ -128,10 +123,10 @@ impl Packable for Parents {
         }
 
         let bits_repr = bits.load::<u8>();
-        bits_repr.pack(packer).infallible()?;
+        bits_repr.pack(packer)?;
 
         for id in self.iter().map(Parent::id) {
-            id.pack(packer).infallible()?;
+            id.pack(packer)?;
         }
 
         Ok(())

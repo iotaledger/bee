@@ -26,7 +26,7 @@ fn packed_len() {
     ));
 
     assert_eq!(input.packed_len(), 1 + 32 + 2);
-    assert_eq!(input.pack_to_vec().unwrap().len(), 1 + 32 + 2);
+    assert_eq!(input.pack_to_vec().len(), 1 + 32 + 2);
 }
 
 #[test]
@@ -34,7 +34,7 @@ fn packable_round_trip() {
     let input_1 = Input::from(UtxoInput::from(
         OutputId::new(TransactionId::new([42; TransactionId::LENGTH]), 0).unwrap(),
     ));
-    let input_2 = Input::unpack_from_slice(input_1.pack_to_vec().unwrap()).unwrap();
+    let input_2 = Input::unpack_from_slice(input_1.pack_to_vec()).unwrap();
 
     assert_eq!(input_1, input_2);
 }
