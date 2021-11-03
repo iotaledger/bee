@@ -20,13 +20,15 @@ impl<T: Packable, const N: usize> Packable for [T; N] {
         Ok(())
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+    fn unpack<U: Unpacker, const CHECK: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         // Safety: an uninitialized array of [`MaybeUninit`]s is safe to be considered initialized.
         // FIXME: replace with [`MaybeUninit::uninit_array`] when stabilized.
         let mut array = unsafe { MaybeUninit::<[MaybeUninit<T>; N]>::uninit().assume_init() };
 
         for item in array.iter_mut() {
-            let unpacked = T::unpack(unpacker)?;
+            let unpacked = T::unpack::<_, CHECK>(unpacker)?;
             // Safety: each `item` is only visited once so we are never overwriting nor dropping
             // values that are already initialized.
             unsafe {

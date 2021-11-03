@@ -55,11 +55,23 @@ pub trait Packable: Sized {
     }
 
     /// Unpacks this value from the given [`Unpacker`].
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>>;
+    fn unpack<U: Unpacker, const CHECK: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>>;
+
+    /// Unpacks this value from the given [`Unpacker`] doing syntactical checks.
+    fn unpack_checked<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Self::unpack::<U, true>(unpacker)
+    }
+
+    /// Unpacks this value from the given [`Unpacker`] without doing syntactical checks.
+    fn unpack_unchecked<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Self::unpack::<U, false>(unpacker)
+    }
 
     /// Unpacks this value from a type that implements [`AsRef<[u8]>`].
     fn unpack_from_slice<T: AsRef<[u8]>>(bytes: T) -> Result<Self, UnpackError<Self::UnpackError, UnexpectedEOF>> {
         let mut unpacker = SliceUnpacker::new(bytes.as_ref());
-        Packable::unpack(&mut unpacker)
+        Packable::unpack_checked(&mut unpacker)
     }
 }
