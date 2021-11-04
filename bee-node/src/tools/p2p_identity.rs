@@ -10,12 +10,12 @@ pub struct P2pIdentityTool {}
 
 pub fn exec(_tool: &P2pIdentityTool) {
     let keypair = Keypair::generate();
-    let public = keypair.public();
+    let public_key = keypair.public();
 
-    println!("Your p2p private key:\t{}", hex::encode(keypair.encode()));
-    println!("Your p2p public key:\t{}", hex::encode(public.encode()));
+    println!("Your node identity:\t{}", hex::encode(keypair.encode()));
+    println!("Your node public key:\t{}", hex::encode(public_key.encode()));
     println!(
-        "Your p2p PeerID:\t{}",
-        PeerId::from_public_key(PublicKey::Ed25519(public))
+        "Your libp2p peer identity:\t{}",
+        PeerId::from_public_key(PublicKey::Ed25519(public_key))
     );
 }

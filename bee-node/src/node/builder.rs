@@ -12,7 +12,10 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_autopeering::{peerstore::InMemoryPeerStore, AutopeeringConfig, Local, NeighborValidator};
+use bee_autopeering::{
+    peerstore::InMemoryPeerStore, AutopeeringConfig, Local, NeighborValidator, ServiceTransport,
+    AUTOPEERING_SERVICE_NAME,
+};
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder, NodeInfo},
@@ -235,8 +238,18 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             serde_json::from_str(AUTOPEERING_CONFIG).expect("error deserializing json config");
         let peerstore_config = ();
         let network_name = config.network_id.0.clone();
-        let private_key = config.identity.1.clone();
-        let local = Local::from_bs58_encoded_private_key(private_key);
+
+        let keypair = config.identity.0.clone();
+        let local = Local::from_keypair(keypair);
+        let mut write = local.write();
+        write.add_service(
+            AUTOPEERING_SERVICE_NAME,
+            ServiceTransport::Udp,
+            autopeering_config.bind_addr.port(),
+        );
+        write.add_service(network_name.clone(), ServiceTransport::Tcp, 15600);
+        drop(write);
+
         let quit_signal = tokio::signal::ctrl_c();
         let mut peering_events = bee_autopeering::init::<InMemoryPeerStore, _, _, _>(
             autopeering_config,
