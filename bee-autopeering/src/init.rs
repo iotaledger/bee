@@ -96,7 +96,6 @@ where
     log::info!("---------------------------------------------------------------------------------------------------");
     log::info!("Network name/id: {}/{}", network_name.as_ref(), network_id);
     log::info!("Protocol_version: {}", version);
-    log::info!("Local id: {}", local.read().peer_id());
     log::info!(
         "Public key: {}",
         multiaddr::from_pubkey_to_base58(&local.read().public_key())
