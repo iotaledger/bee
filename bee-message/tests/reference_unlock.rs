@@ -4,8 +4,6 @@
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
 
-use core::convert::TryFrom;
-
 #[test]
 fn kind() {
     assert_eq!(ReferenceUnlock::KIND, 1);

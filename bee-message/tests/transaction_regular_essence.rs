@@ -7,8 +7,6 @@ use bee_test::rand::{
     payload::{rand_indexation_payload, rand_treasury_transaction_payload},
 };
 
-use std::convert::TryInto;
-
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS_1: &str = "d56da1eb7726ed482dfe9d457cf548c2ae2a6ce3e053dbf82f11223be476adb9";
 const ED25519_ADDRESS_2: &str = "efda4275375ac3675abff85235fd25a1522a2044cc6027a31b310857246f18c0";

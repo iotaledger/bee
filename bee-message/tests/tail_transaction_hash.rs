@@ -4,8 +4,6 @@
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
 
-use core::convert::TryFrom;
-
 const HASH_TRYTES: &str = "TZTXLMTAURX9DYQICXZEUMCDBPNXVOHNBBZDSSVCNCTWKSMUALAYPMHUCKGOGSTBUHSQIMSY9HQEP9AXJ";
 const HASH_BYTES: [u8; 49] = [
     222, 235, 107, 67, 2, 173, 253, 93, 165, 90, 166, 45, 102, 91, 19, 137, 71, 146, 156, 180, 248, 31, 56, 25, 68,

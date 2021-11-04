@@ -2,7 +2,7 @@
 name = "bee-signing"
 version = "0.1.1-alpha"
 authors = [ "IOTA Stiftung" ]
-edition = "2018"
+edition = "2021"
 description = "IOTA signing primitives"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"

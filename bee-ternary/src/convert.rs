@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{Btrit, RawEncoding, RawEncodingBuf, Trit, TritBuf, Trits, Utrit};
+
 use num_traits::{AsPrimitive, CheckedAdd, CheckedSub, FromPrimitive, Num, Signed};
-use std::{cmp::PartialOrd, convert::TryFrom};
+
+use std::cmp::PartialOrd;
 
 /// An error that may be produced during numeric conversion.
 #[derive(Debug, PartialEq)]

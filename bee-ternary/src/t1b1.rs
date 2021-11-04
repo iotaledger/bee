@@ -3,7 +3,7 @@
 
 use crate::{trit::ShiftTernary, Btrit, RawEncoding, RawEncodingBuf, Trit};
 
-use std::{convert::TryInto, hash, marker::PhantomData, ops::Range};
+use std::{hash, marker::PhantomData, ops::Range};
 
 /// An encoding scheme slice that uses a single byte to represent one trit.
 #[repr(transparent)]

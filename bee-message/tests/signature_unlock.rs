@@ -5,8 +5,6 @@ use bee_common::packable::Packable;
 use bee_message::prelude::*;
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_32};
 
-use std::convert::TryInto;
-
 #[test]
 fn unlock_kind() {
     assert_eq!(SignatureUnlock::KIND, 0);

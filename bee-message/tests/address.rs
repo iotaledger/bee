@@ -4,8 +4,6 @@
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
 
-use core::convert::TryInto;
-
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS_BAD: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64x";
 

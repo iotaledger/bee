@@ -5,7 +5,7 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{convert::TryInto, str::FromStr};
+use core::str::FromStr;
 
 /// The length of a milestone identifier.
 pub const MILESTONE_ID_LENGTH: usize = 32;

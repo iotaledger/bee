@@ -4,8 +4,6 @@
 use bee_crypto::ternary::bigint::{binary_representation::U32Repr, endianness::LittleEndian, I384, T243, U384};
 use bee_ternary::{Btrit, Utrit};
 
-use std::convert::TryInto;
-
 macro_rules! binary_to_ternary_roundtrip {
     ( ( $($binary_type:tt)* ), ( $($ternary_type:tt)* ), $testname:ident, $val_fn:ident ) => {
         #[test]

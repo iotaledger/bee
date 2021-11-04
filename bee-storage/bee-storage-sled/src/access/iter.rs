@@ -22,7 +22,7 @@ use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
-use std::{convert::TryInto, marker::PhantomData};
+use std::marker::PhantomData;
 
 /// Type used to iterate a subtree.
 pub struct StorageIterator<'a, K, V> {

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::convert;
+
 use num_traits::{CheckedAdd, CheckedSub, Num};
-use std::{convert::TryFrom, fmt, hash};
+
+use std::{fmt, hash};
 
 /// Balanced trits.
 pub mod balanced;

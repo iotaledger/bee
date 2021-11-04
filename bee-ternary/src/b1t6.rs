@@ -3,8 +3,6 @@
 
 use crate::{Btrit, RawEncoding, RawEncodingBuf, TritBuf, Trits, Tryte};
 
-use std::convert::TryFrom;
-
 const TRITS_PER_BYTE: usize = 2;
 const TRITS_PER_TRYTE: usize = 3;
 

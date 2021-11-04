@@ -8,8 +8,6 @@ use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, Trits, Tryte, T1B1, T3B1};
 
 use thiserror::Error;
 
-use std::convert::TryFrom;
-
 /// Errors occuring during normalization.
 #[derive(Debug, Error, PartialEq)]
 pub enum Error {

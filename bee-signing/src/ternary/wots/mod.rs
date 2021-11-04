@@ -22,7 +22,6 @@ use thiserror::Error;
 use zeroize::Zeroize;
 
 use std::{
-    convert::TryFrom,
     fmt::{self, Display, Formatter},
     marker::PhantomData,
 };

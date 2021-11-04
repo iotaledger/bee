@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{Btrit, Error, Trits, T3B1};
+
 use std::{
-    convert::TryFrom,
     fmt,
-    iter::FromIterator,
     ops::{Deref, DerefMut},
     str::FromStr,
 };

@@ -29,7 +29,7 @@ use log::{debug, error, info, warn};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, convert::TryInto};
+use std::any::TypeId;
 
 pub(crate) const EXTRA_SNAPSHOT_DEPTH: u32 = 5;
 pub(crate) const EXTRA_PRUNING_DEPTH: u32 = 5;

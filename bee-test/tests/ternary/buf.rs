@@ -6,8 +6,6 @@ use bee_test::ternary::*;
 
 use rand::prelude::*;
 
-use std::convert::{TryFrom, TryInto};
-
 fn create_generic<T: raw::RawEncodingBuf>() {
     assert!(TritBuf::<T>::new().len() == 0);
     fuzz(100, || {
