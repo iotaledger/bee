@@ -12,6 +12,7 @@ use crate::{
     storage::StorageBackend,
 };
 
+use bee_autopeering::{peerstore::InMemoryPeerStore, AutopeeringConfig, Local, NeighborValidator};
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder, NodeInfo},
@@ -36,6 +37,20 @@ use std::{
     marker::PhantomData,
     pin::Pin,
 };
+
+const AUTOPEERING_VERSION: u32 = 1;
+const AUTOPEERING_CONFIG: &str = r#"
+    {
+        "bindAddress": "0.0.0.0:14627",
+        "entryNodes": [
+            "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
+            "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
+            "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
+            "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
+        ],
+        "entryNodesPreferIPv6": false,
+        "runAsEntryNode": false
+    }"#;
 
 type WorkerStart<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + 'a>>;
 type WorkerStop<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> + Send;
@@ -209,9 +224,36 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let local_keys = config.identity.0.clone();
 
         info!("Initializing network layer...");
-        let (this, events) = bee_network::integrated::init::<BeeNode<B>>(network_config, local_keys, network_id, this)
-            .await
-            .map_err(Error::NetworkInitializationFailed)?;
+        let (this, network_events) =
+            bee_network::integrated::init::<BeeNode<B>>(network_config, local_keys, network_id, this)
+                .await
+                .map_err(Error::NetworkInitializationFailed)?;
+
+        info!("Initializing autopeering...");
+        let neighbor_validator = BeeNeighborValidator {};
+        let autopeering_config: AutopeeringConfig =
+            serde_json::from_str(AUTOPEERING_CONFIG).expect("error deserializing json config");
+        let peerstore_config = ();
+        let network_name = config.network_id.0.clone();
+        let private_key = config.identity.1.clone();
+        let local = Local::from_bs58_encoded_private_key(private_key);
+        let quit_signal = tokio::signal::ctrl_c();
+        let mut peering_events = bee_autopeering::init::<InMemoryPeerStore, _, _, _>(
+            autopeering_config,
+            AUTOPEERING_VERSION,
+            network_name,
+            local,
+            peerstore_config,
+            quit_signal,
+            Some(neighbor_validator),
+        )
+        .await
+        .map_err(|e| Error::PeeringInitializationFailed(e))?;
+        tokio::spawn(async move {
+            while let Some(e) = peering_events.recv().await {
+                info!("Autopeering: {}", e);
+            }
+        });
 
         #[cfg(unix)]
         let this = this.with_resource(shutdown_listener(vec![
@@ -226,7 +268,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             bee_ledger::workers::init::<BeeNode<B>>(this, network_id, config.snapshot.clone(), config.pruning.clone());
 
         info!("Initializing protocol layer...");
-        let this = bee_protocol::workers::init::<BeeNode<B>>(config.protocol.clone(), network_id, events, this);
+        let this = bee_protocol::workers::init::<BeeNode<B>>(config.protocol.clone(), network_id, network_events, this);
 
         info!("Initializing REST API...");
         let this = bee_rest_api::endpoints::init::<BeeNode<B>>(
@@ -324,5 +366,14 @@ impl TopologicalOrder {
         }
 
         this.order
+    }
+}
+
+#[derive(Clone)]
+struct BeeNeighborValidator {}
+
+impl NeighborValidator for BeeNeighborValidator {
+    fn is_valid(&self, _: &bee_autopeering::Peer) -> bool {
+        true
     }
 }

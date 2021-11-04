@@ -1,6 +1,6 @@
 [package]
 name = "bee-node"
-version = "0.2.1"
+version = "0.3.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = ""
@@ -11,6 +11,7 @@ keywords = [ "iota", "tangle", "bee", "framework", "node" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
+bee-autopeering = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering" }
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "auth" ] }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
 bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "workers" ] }
