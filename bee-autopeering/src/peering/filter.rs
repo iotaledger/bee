@@ -103,7 +103,7 @@ impl<V: NeighborValidator> NeighborFilterInner<V> {
 
 #[cfg(test)]
 mod tests {
-    use crate::local::service_map::{ServiceTransport, AUTOPEERING_SERVICE_NAME};
+    use crate::local::services::{ServiceTransport, AUTOPEERING_SERVICE_NAME};
     use crate::peer::Peer;
 
     use super::*;

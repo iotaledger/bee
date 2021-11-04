@@ -9,7 +9,7 @@ use super::{
 
 use crate::{
     delay::DelayFactory,
-    local::service_map::AUTOPEERING_SERVICE_NAME,
+    local::services::AUTOPEERING_SERVICE_NAME,
     packet::{MessageType, OutgoingPacket},
     request::RequestManager,
     server::ServerTx,

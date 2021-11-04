@@ -30,8 +30,9 @@ pub mod init;
 pub use config::AutopeeringConfig;
 pub use event::Event;
 pub use init::init;
+pub use local::services::AUTOPEERING_SERVICE_NAME;
 pub use local::{
-    service_map::{ServiceMap, ServiceName, ServiceTransport},
+    services::{ServiceMap, ServiceName, ServiceTransport},
     Local,
 };
 pub use peer::{peer_id, peer_id::PeerId, peerstore, Peer};

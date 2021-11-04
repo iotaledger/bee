@@ -16,7 +16,7 @@ use crate::{
     hash,
     local::{
         salt::{self, Salt, SALT_LIFETIME_SECS},
-        service_map::AUTOPEERING_SERVICE_NAME,
+        services::AUTOPEERING_SERVICE_NAME,
         Local,
     },
     packet::{msg_hash, IncomingPacket, MessageType, OutgoingPacket},

@@ -12,7 +12,7 @@ use std::{collections::HashMap, convert::TryFrom, fmt, io, net::IpAddr, str::Fro
 pub type ServiceName = String;
 pub(crate) type ServicePort = u16;
 
-pub(crate) const AUTOPEERING_SERVICE_NAME: &str = "peering";
+pub const AUTOPEERING_SERVICE_NAME: &str = "peering";
 
 /// A mapping between a service name and its access configuration.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]

@@ -7,7 +7,7 @@ use crate::{
     discovery::messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
     event::{Event, EventTx},
     local::{
-        service_map::{ServiceMap, ServicePort, ServiceTransport, AUTOPEERING_SERVICE_NAME},
+        services::{ServiceMap, ServicePort, ServiceTransport, AUTOPEERING_SERVICE_NAME},
         Local,
     },
     multiaddr::{AddressKind, AutopeeringMultiaddr},

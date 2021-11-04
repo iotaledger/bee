@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub(crate) mod salt;
-pub mod service_map;
+pub mod services;
 
 use salt::Salt;
-use service_map::{ServiceMap, ServiceTransport};
+use services::{ServiceMap, ServiceTransport};
 
 use crate::{
     delay::DelayFactory,
@@ -17,6 +17,7 @@ use crate::{
 };
 
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, SECRET_KEY_LENGTH};
+use libp2p_core::identity::{self, ed25519::Keypair};
 
 use std::{
     convert::TryInto,
@@ -26,6 +27,8 @@ use std::{
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
     time::Duration,
 };
+
+use self::salt::SALT_LIFETIME_SECS;
 
 /// A type that represents a local identity - able to sign outgoing messages.
 #[derive(Clone, Default)]
@@ -45,6 +48,16 @@ impl Local {
     /// Creates a new local identity.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn from_keypair(keypair: Keypair) -> Self {
+        let private_key_bytes: [u8; SECRET_KEY_LENGTH] = keypair
+            .secret()
+            .as_ref()
+            .try_into()
+            .expect("error restoring private key from ed25519 keypair");
+
+        Self::from_private_key_bytes(private_key_bytes)
     }
 
     /// Creates a local identity from a 'base16/hex' encoded ED25519 private key.
@@ -77,8 +90,8 @@ impl Local {
             inner: Arc::new(RwLock::new(LocalInner {
                 peer_id,
                 private_key,
-                private_salt: None,
-                public_salt: None,
+                private_salt: Some(Salt::new(SALT_LIFETIME_SECS)),
+                public_salt: Some(Salt::new(SALT_LIFETIME_SECS)),
                 services: ServiceMap::default(),
             })),
         }

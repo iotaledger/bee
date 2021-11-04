@@ -7,9 +7,10 @@ use bee_autopeering::{
     init,
     peerstore::InMemoryPeerStore,
     peerstore::{SledPeerStore, SledPeerStoreConfig},
-    AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceTransport,
+    AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceTransport, AUTOPEERING_SERVICE_NAME,
 };
 
+use libp2p_core::identity::ed25519::Keypair;
 use log::LevelFilter;
 use serde_json::Value;
 use tokio::signal::ctrl_c;
@@ -19,6 +20,7 @@ use std::{future::Future, io, net::SocketAddr, pin::Pin};
 
 const AUTOPEERING_VERSION: u32 = 1;
 const NETWORK_SERVICE_NAME: &str = "chrysalis-mainnet";
+const BS16_ED25519_PRIVATE_KEY: &str = "1858c941a1c4454f4df77be93481b66e5f4dcff885f30c6a6a4cb214d2fea21072e7dce6a4d4d7b89460e84bb0e3b4475b528524e7ceb741f7646400ef9f2c7b";
 
 fn setup_logger(level: LevelFilter) {
     fern::Dispatch::new()
@@ -75,10 +77,12 @@ async fn main() {
     println!("{:#?}", config);
 
     // Set up a local peer, that provides the Autopeering service.
-    let mut local = Local::new();
-    local
-        .write()
-        .add_service("peering", ServiceTransport::Udp, config.bind_addr.port());
+    let mut keypair = hex::decode(BS16_ED25519_PRIVATE_KEY).expect("error decoding keypair");
+    let mut local = Local::from_keypair(Keypair::decode(&mut keypair).expect("error decoding keypair"));
+    let mut write = local.write();
+    write.add_service(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, config.bind_addr.port());
+    write.add_service(NETWORK_SERVICE_NAME, ServiceTransport::Tcp, 15600);
+    drop(write);
 
     // Network parameters.
     let version = AUTOPEERING_VERSION;

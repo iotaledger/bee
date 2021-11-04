@@ -14,7 +14,7 @@ use peerlist::{ActivePeersList, ReplacementList};
 use crate::{
     command::{Command, CommandTx},
     discovery::manager::{self, VERIFICATION_EXPIRATION_SECS},
-    local::service_map::{ServiceMap, ServiceTransport},
+    local::services::{ServiceMap, ServiceTransport},
     local::Local,
     proto,
     request::RequestManager,
@@ -280,7 +280,7 @@ pub(crate) fn set_front_and_update(peer_id: &PeerId, active_peers: &ActivePeersL
 
 #[cfg(test)]
 mod tests {
-    use crate::local::service_map::AUTOPEERING_SERVICE_NAME;
+    use crate::local::services::AUTOPEERING_SERVICE_NAME;
 
     use super::*;
     use crypto::signatures::ed25519::SecretKey as PrivateKey;

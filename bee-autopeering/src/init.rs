@@ -17,7 +17,7 @@ use crate::{
     local::{
         self,
         salt::{Salt, SALT_LIFETIME_SECS},
-        service_map::{ServiceMap, AUTOPEERING_SERVICE_NAME},
+        services::{ServiceMap, AUTOPEERING_SERVICE_NAME},
         Local,
     },
     multiaddr,
