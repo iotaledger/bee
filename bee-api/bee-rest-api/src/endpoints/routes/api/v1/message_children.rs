@@ -15,7 +15,7 @@ use bee_tangle::Tangle;
 
 use warp::{Filter, Rejection, Reply};
 
-use std::{iter::FromIterator, net::IpAddr};
+use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clone {
     super::path()

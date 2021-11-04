@@ -76,8 +76,6 @@ mod tests {
 
     use rand::Rng;
 
-    use std::convert::TryInto;
-
     fn invalid_advertised_type<P: Packet>() {
         match tlv_from_bytes::<P>(
             &HeaderPacket {

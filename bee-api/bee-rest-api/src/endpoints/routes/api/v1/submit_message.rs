@@ -26,7 +26,7 @@ use serde_json::Value as JsonValue;
 use tokio::sync::mpsc;
 use warp::{http::StatusCode, reject, Filter, Rejection, Reply};
 
-use std::{convert::TryFrom, net::IpAddr};
+use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("messages")).and(warp::path::end())

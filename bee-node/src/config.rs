@@ -21,7 +21,7 @@ use crypto::hashes::{blake2b::Blake2b256, Digest};
 use serde::Deserialize;
 use thiserror::Error;
 
-use std::{convert::TryInto, fs, path::Path};
+use std::{fs, path::Path};
 
 const DEFAULT_ALIAS: &str = "bee";
 const DEFAULT_BECH32_HRP: &str = "iota";
