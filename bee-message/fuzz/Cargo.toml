@@ -25,3 +25,7 @@ name = "fuzz_message"
 path = "fuzz_targets/fuzz_message.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "fuzz_sorter"
+path = "src/main.rs"
