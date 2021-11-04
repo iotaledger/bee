@@ -8,6 +8,8 @@ use crate::{
 
 use tokio::sync::mpsc;
 
+use std::fmt;
+
 /// Autopeering related events.
 #[derive(Debug)]
 pub enum Event {
@@ -53,4 +55,26 @@ pub(crate) type EventTx = mpsc::UnboundedSender<Event>;
 
 pub(crate) fn event_chan() -> (EventTx, EventRx) {
     mpsc::unbounded_channel::<Event>()
+}
+
+impl fmt::Display for Event {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Event::*;
+
+        match self {
+            PeerDiscovered { peer_id } => peer_id.fmt(f),
+            PeerDeleted { peer_id } => peer_id.fmt(f),
+            SaltUpdated {
+                public_salt_lifetime,
+                private_salt_lifetime,
+            } => write!(
+                f,
+                "lifetimes outbound: {}/ inbound: {}",
+                public_salt_lifetime, private_salt_lifetime,
+            ),
+            OutgoingPeering { peer, distance } => peer.peer_id().fmt(f),
+            IncomingPeering { peer, distance } => peer.peer_id().fmt(f),
+            PeeringDropped { peer_id } => peer_id.fmt(f),
+        }
+    }
 }

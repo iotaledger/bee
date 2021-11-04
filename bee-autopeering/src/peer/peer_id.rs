@@ -93,7 +93,9 @@ impl fmt::Debug for PeerId {
 
 impl fmt::Display for PeerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", &bs58::encode(&self.id_bytes).into_string()[..DISPLAY_LENGTH])
+        // TODO: remove commented line
+        // write!(f, "{}", &bs58::encode(&self.id_bytes).into_string()[..DISPLAY_LENGTH])
+        self.libp2p_peer_id().to_base58()[..DISPLAY_LENGTH].fmt(f)
     }
 }
 

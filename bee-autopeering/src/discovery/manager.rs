@@ -817,8 +817,7 @@ fn handle_discovery_response(disc_res: DiscoveryResponse, disc_reqval: RequestVa
 // SENDING
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Initiates a verification request to a peer by fetching its endpoint data from the peer store and waiting
-/// for the peer's response, which must arrive in certain amount of time.
+/// Initiates a verification request to a peer waiting for the peer's response, which must arrive in time.
 ///
 /// Returns `Some(ServiceMap)` if the request was successful, otherwise `None`.
 pub(crate) async fn begin_verification(
@@ -857,16 +856,14 @@ pub(crate) fn send_verification_request_to_all_active(
 
     // Technically it's not necessary, but we create copies of all peer ids in order to release the lock quickly, and
     // not keep it for the whole loop.
-    let peers = active_peers
+    active_peers
         .read()
         .iter()
         .map(|p| p.peer_id())
-        .cloned()
-        .collect::<Vec<_>>();
-
-    for peer_id in peers {
-        send_verification_request_to_peer(&peer_id, active_peers, request_mngr, server_tx, None);
-    }
+        .copied()
+        .for_each(|peer_id| {
+            send_verification_request_to_peer(&peer_id, active_peers, request_mngr, server_tx, None);
+        });
 }
 
 /// Sends a verification request to a peer by fetching its endpoint data from the peer store.
