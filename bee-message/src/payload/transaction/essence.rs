@@ -142,10 +142,8 @@ impl Packable for TransactionEssence {
         // Inputs syntactical validation
         let inputs =
             VecPrefix::<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>::unpack(unpacker)
-                .map_err(|unpack_err| {
-                    unpack_err.map_packable(|err| {
-                        err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidInputCount(prefix_err.into()))
-                    })
+                .map_packable_err(|err| {
+                    err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidInputCount(prefix_err.into()))
                 })?;
 
         validate_inputs_unique_utxos(&inputs).map_err(UnpackError::from_packable)?;
@@ -154,10 +152,8 @@ impl Packable for TransactionEssence {
         // Outputs syntactical validation
         let outputs =
             VecPrefix::<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>::unpack(unpacker)
-                .map_err(|unpack_err| {
-                    unpack_err.map_packable(|err| {
-                        err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidOutputCount(prefix_err.into()))
-                    })
+                .map_packable_err(|err| {
+                    err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidOutputCount(prefix_err.into()))
                 })?;
 
         validate_output_total(

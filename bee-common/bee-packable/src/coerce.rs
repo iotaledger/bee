@@ -16,30 +16,34 @@ use crate::error::UnpackError;
 use core::convert::Infallible;
 
 /// Trait used to convert `Result` values that use `UnpackError` as the `Err` variant.
-pub trait UnpackCoerce<T, U, V>: sealed::Sealed {
-    /// Coerces the value to another result type.
-    fn coerce<W>(self) -> Result<T, UnpackError<W, V>>
-    where
-        U: Into<W>;
-}
+pub trait UnpackCoerce<T, U, V>: sealed::Sealed + Sized {
+    /// Maps the [`Packable`](UnpackError::Packable) variant if the result is an error.
+    fn map_packable_err<W>(self, f: impl Fn(U) -> W) -> Result<T, UnpackError<W, V>>;
 
-impl<T, U, V> UnpackCoerce<T, U, V> for Result<T, UnpackError<U, V>> {
+    /// Coerces the [`Packable`](UnpackError::Packable) variant value using [`Into`].
     fn coerce<W>(self) -> Result<T, UnpackError<W, V>>
     where
         U: Into<W>,
     {
-        self.map_err(UnpackError::<U, V>::coerce::<W>)
+        self.map_packable_err(U::into)
+    }
+
+    /// Coerces the [`Packable`](UnpackError::Packable) variant value to any type assuming the value is
+    /// [`Infallible`].
+    fn infallible<W>(self) -> Result<T, UnpackError<W, V>>
+    where
+        U: Into<Infallible>,
+    {
+        #[allow(unreachable_code)]
+        self.map_packable_err(|err| match err.into() {})
     }
 }
 
-/// Trait used to convert `Result` values that use `UnpackError<Infallible, _>`as the `Err` variant.
-pub trait UnpackCoerceInfallible<T, V>: sealed::Sealed {
-    /// Coerces the value to another result type.
-    fn infallible<U>(self) -> Result<T, UnpackError<U, V>>;
-}
-
-impl<T, V> UnpackCoerceInfallible<T, V> for Result<T, UnpackError<Infallible, V>> {
-    fn infallible<U>(self) -> Result<T, UnpackError<U, V>> {
-        self.map_err(UnpackError::infallible)
+impl<T, U, V> UnpackCoerce<T, U, V> for Result<T, UnpackError<U, V>> {
+    fn map_packable_err<W>(self, f: impl Fn(U) -> W) -> Result<T, UnpackError<W, V>> {
+        self.map_err(|err| match err {
+            UnpackError::Packable(err) => UnpackError::Packable(f(err)),
+            UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
+        })
     }
 }

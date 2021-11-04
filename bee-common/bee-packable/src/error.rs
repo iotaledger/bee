@@ -15,25 +15,9 @@ pub enum UnpackError<T, U> {
 }
 
 impl<T, U> UnpackError<T, U> {
-    /// Maps the [`Packable`](crate::Packable) variant of this enum.
-    pub fn map_packable<V, F: Fn(T) -> V>(self, f: F) -> UnpackError<V, U> {
-        match self {
-            Self::Packable(err) => UnpackError::Packable(f(err)),
-            Self::Unpacker(err) => UnpackError::Unpacker(err),
-        }
-    }
-
     /// Wraps an error in the [`Packable`](UnpackError::Packable) variant.
     pub fn from_packable(err: impl Into<T>) -> Self {
         Self::Packable(err.into())
-    }
-
-    /// Coerces the value by calling `.into()` for the [`Packable`](UnpackError::Packable) variant.
-    pub(crate) fn coerce<V>(self) -> UnpackError<V, U>
-    where
-        T: Into<V>,
-    {
-        self.map_packable(|x| x.into())
     }
 }
 
@@ -44,11 +28,6 @@ impl<T, U> From<U> for UnpackError<T, U> {
 }
 
 impl<U> UnpackError<Infallible, U> {
-    /// Coerces the value if the [`Packable`](UnpackError::Packable) variant is [`Infallible`].
-    pub(crate) fn infallible<E>(self) -> UnpackError<E, U> {
-        UnpackError::Unpacker(self.into_unpacker())
-    }
-
     /// Get the [`Packer`](UnpackError::Unpacker) variant if the [`Packable`](UnpackError::Packable) variant is
     /// [`Infallible`].
     pub fn into_unpacker(self) -> U {

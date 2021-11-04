@@ -85,11 +85,11 @@ impl Fragments {
             // And this would be
             // ```
             // Ok(Foo {
-            //     bar: <T>::unpack(unpacker).map_err(|err| err.map_packable(core::convert::identity).coerce()?,
-            //     baz: <V>::unpack(unpacker).map_err(|err| err.map_packable(core::convert::identity).coerce()?,
+            //     bar: <T>::unpack(unpacker).map_packable_err(core::convert::identity).coerce()?,
+            //     baz: <V>::unpack(unpacker).map_packable_err(core::convert::identity).coerce()?,
             // })```
             unpack: quote! {Ok(#name {
-                #(#labels: <#types>::unpack(unpacker).map_err(|err| err.map_packable(#unpack_error_withs)).coerce()?,)*
+                #(#labels: <#types>::unpack(unpacker).map_packable_err(#unpack_error_withs).coerce()?,)*
             })},
         })
     }
@@ -180,8 +180,8 @@ impl Fragments {
         // And this would be
         // ```
         // tag => Ok(Foo {
-        //     bar: <T>::unpack(unpacker).map_err(|err| err.map_packable(core::convert::identity).coerce()?,
-        //     baz: <V>::unpack(unpacker).map_err(|err| err.map_packable(core::convert::identity).coerce()?,
+        //     bar: <T>::unpack(unpacker).map_packable_err(core::convert::identity).coerce()?,
+        //     baz: <V>::unpack(unpacker).map_packable_err(core::convert::identity).coerce()?,
         // })
         // ```
         let unpack = quote!(#tag => #unpack);
