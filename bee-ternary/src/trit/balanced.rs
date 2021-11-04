@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{ShiftTernary, Trit, Utrit};
+
 use crate::convert;
+
 use num_traits::{CheckedAdd, CheckedSub, Num};
-use std::{convert::TryFrom, fmt, ops::Neg};
+
+use std::{fmt, ops::Neg};
 
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[repr(i8)]

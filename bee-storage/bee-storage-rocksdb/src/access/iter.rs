@@ -25,7 +25,7 @@ use bee_tangle::{
 
 use rocksdb::{DBIterator, IteratorMode};
 
-use std::{convert::TryInto, marker::PhantomData};
+use std::marker::PhantomData;
 
 pub struct StorageIterator<'a, K, V> {
     inner: DBIterator<'a>,

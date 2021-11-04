@@ -20,7 +20,7 @@ use crypto::{
 };
 
 use alloc::{boxed::Box, vec::Vec};
-use core::{convert::TryInto, ops::RangeInclusive};
+use core::ops::RangeInclusive;
 
 /// Range of allowed milestones signatures key numbers.
 pub const MILESTONE_SIGNATURE_COUNT_RANGE: RangeInclusive<usize> = 1..=255;

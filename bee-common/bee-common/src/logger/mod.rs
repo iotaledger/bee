@@ -29,7 +29,7 @@ macro_rules! log_format {
     ($target:expr, $level:expr, $message:expr, $target_width:expr, $level_width:expr) => {
         format_args!(
             "{} {:target_width$} {:level_width$} {}",
-            crate::time::format(&crate::time::now_local()),
+            crate::time::format(&crate::time::now_utc()),
             $target,
             $level,
             $message,

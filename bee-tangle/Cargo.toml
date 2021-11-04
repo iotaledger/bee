@@ -2,7 +2,7 @@
 name = "bee-tangle"
 version = "0.2.0"
 authors = [ "IOTA Stiftung" ]
-edition = "2018"
+edition = "2021"
 description = "A distributed, directed, acyclic graph that underpins the DLT for IOTA's Bee node"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"

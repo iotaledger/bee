@@ -4,8 +4,6 @@
 use bee_crypto::ternary::bigint::{binary_representation::U8Repr, endianness::BigEndian, I384, T243};
 use bee_ternary::{T1B1Buf, TritBuf, TryteBuf};
 
-use std::convert::TryFrom;
-
 #[test]
 fn trytes_to_i384_be_u8_1() {
     const INPUT_TRYTES: &str = "EMIDYNHBWMBCXVDEFOFWINXTERALUKYYPPHKP9JJFGJEIUY9MUDVNFZHMMWZUYUSWAIOWEVTHNWMHANBH";

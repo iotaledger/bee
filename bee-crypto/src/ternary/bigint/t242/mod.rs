@@ -24,10 +24,7 @@ use crate::ternary::bigint::{
 
 use bee_ternary::{Btrit, ShiftTernary, T1B1Buf, Trit, TritBuf, Utrit};
 
-use std::{
-    cmp::Ordering,
-    convert::{TryFrom, TryInto},
-};
+use std::cmp::Ordering;
 
 def_and_impl_ternary!(T242, 242);
 

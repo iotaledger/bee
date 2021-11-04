@@ -11,8 +11,6 @@ use bee_tangle::{
     ConflictReason,
 };
 
-use std::convert::TryInto;
-
 /// Generates a random conflict reason.
 pub fn rand_conflict_reason() -> ConflictReason {
     ((rand_number::<u64>() % 7) as u8).try_into().unwrap()

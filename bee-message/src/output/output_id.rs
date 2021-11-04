@@ -9,10 +9,7 @@ use crate::{
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{
-    convert::{From, TryFrom, TryInto},
-    str::FromStr,
-};
+use core::str::FromStr;
 
 /// The length of an `OutputId`.
 pub const OUTPUT_ID_LENGTH: usize = TRANSACTION_ID_LENGTH + std::mem::size_of::<u16>();

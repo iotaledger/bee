@@ -26,7 +26,6 @@ use byteorder::{self, ByteOrder};
 
 use std::{
     cmp::Ordering,
-    convert::TryFrom,
     fmt,
     marker::PhantomData,
     ops::{Deref, DerefMut},

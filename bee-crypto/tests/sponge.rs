@@ -28,7 +28,7 @@ pub fn sponge_generic_digest_into<S: Sponge + Default>(input: &str, output: &str
 
     assert!(
         sponge
-            .digest_into(input_trit_buf.as_slice(), &mut calculated_hash.as_slice_mut())
+            .digest_into(input_trit_buf.as_slice(), calculated_hash.as_slice_mut())
             .is_ok()
     );
 

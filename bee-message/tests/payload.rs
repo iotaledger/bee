@@ -5,7 +5,7 @@ use bee_common::packable::Packable;
 use bee_message::prelude::*;
 use bee_test::rand::{bytes::rand_bytes_32, parents::rand_parents};
 
-use std::{convert::TryInto, str::FromStr};
+use std::str::FromStr;
 
 const TRANSACTION_ID: &str = "24a1f46bdb6b2bf38f1c59f73cdd4ae5b418804bb231d76d06fbf246498d5883";
 const ED25519_ADDRESS: &str = "e594f9a895c0e0a6760dd12cffc2c3d1e1cbf7269b328091f96ce3d0dd550b75";

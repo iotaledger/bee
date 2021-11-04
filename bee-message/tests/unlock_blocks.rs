@@ -4,8 +4,6 @@
 use bee_message::prelude::*;
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_32};
 
-use core::convert::TryInto;
-
 #[test]
 fn kind() {
     assert_eq!(

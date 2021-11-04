@@ -3,8 +3,6 @@
 
 use bee_ternary::*;
 
-use std::convert::TryFrom;
-
 #[test]
 fn convert_correct() {
     assert_eq!(Utrit::try_from(0i8).unwrap(), Utrit::Zero);

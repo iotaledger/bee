@@ -8,7 +8,7 @@ use bee_ternary::*;
 
 use rand::prelude::*;
 
-use std::{convert::TryFrom, ops::Range};
+use std::ops::Range;
 
 /// Generates a random i8 trit.
 pub fn gen_trit() -> i8 {
