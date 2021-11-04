@@ -206,7 +206,7 @@ pub(crate) fn remove_expired_requests_repeat() -> Repeat<RequestManager> {
 
         let num_open_requests = mngr.read().open_requests.len();
         if num_open_requests > 0 {
-            log::warn!("Open requests: {}", num_open_requests);
+            log::trace!("Open requests: {}", num_open_requests);
         }
     })
 }

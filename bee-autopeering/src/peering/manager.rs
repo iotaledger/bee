@@ -319,7 +319,7 @@ fn handle_peering_request<V: NeighborValidator>(
     ctx: RecvContext,
     nb_filter: &NeighborFilter<V>,
 ) {
-    log::debug!("Handling peering request.");
+    log::trace!("Handling peering request.");
 
     let mut status = false;
 
@@ -396,7 +396,7 @@ fn handle_peering_response<V: NeighborValidator>(
     ctx: RecvContext,
     nb_filter: &NeighborFilter<V>,
 ) {
-    log::debug!("Handling peering response.");
+    log::trace!("Handling peering response.");
 
     let mut status = peer_res.status();
 
@@ -462,7 +462,7 @@ fn handle_drop_request<V: NeighborValidator>(
     ctx: RecvContext,
     nb_filter: &NeighborFilter<V>,
 ) {
-    log::debug!("Handling drop request.");
+    log::trace!("Handling drop request.");
 
     let mut removed_nb = ctx.inbound_nbh.write().remove_neighbor(ctx.peer_id);
 

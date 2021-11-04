@@ -78,7 +78,7 @@ async fn main() {
 
     // Set up a local peer, that provides the Autopeering service.
     let mut keypair = hex::decode(BS16_ED25519_PRIVATE_KEY).expect("error decoding keypair");
-    let mut local = Local::from_keypair(Keypair::decode(&mut keypair).expect("error decoding keypair"));
+    let local = Local::from_keypair(Keypair::decode(&mut keypair).expect("error decoding keypair"));
     let mut write = local.write();
     write.add_service(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, config.bind_addr.port());
     write.add_service(NETWORK_SERVICE_NAME, ServiceTransport::Tcp, 15600);

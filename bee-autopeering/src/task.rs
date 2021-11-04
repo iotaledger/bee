@@ -71,7 +71,7 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
         self.shutdown_senders.insert(R::NAME.into(), shutdown_tx);
 
         let handle = tokio::spawn(runnable.run(shutdown_rx));
-        log::info!("`{}` running.", R::NAME);
+        log::trace!("`{}` running.", R::NAME);
 
         assert!(!self.shutdown_handles.contains_key(R::NAME));
         self.shutdown_handles.insert(R::NAME.into(), handle);
@@ -107,7 +107,7 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
                 }
             }
         });
-        log::info!("`{}` repeating.", name);
+        log::trace!("`{}` repeating.", name);
 
         assert!(!self.shutdown_handles.contains_key(name));
         self.shutdown_handles.insert(name.into(), handle);
@@ -132,7 +132,7 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
         while let Some((task_name, prio)) = shutdown_order_clone.pop() {
             let shutdown_tx = shutdown_senders.remove(&task_name).unwrap();
 
-            log::debug!("Shutting down: {}", task_name);
+            log::trace!("Shutting down: {}", task_name);
             shutdown_tx.send(()).expect("error sending shutdown signal");
         }
 
@@ -144,7 +144,7 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
 
                 match task_handle.await {
                     Ok(_) => {
-                        log::debug!("`{}` stopped.", task_name);
+                        log::trace!("`{}` stopped.", task_name);
                     }
                     Err(e) => {
                         log::error!("Error shutting down `{}`. Cause: {}", task_name, e);
