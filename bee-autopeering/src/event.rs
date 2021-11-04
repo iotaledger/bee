@@ -62,19 +62,19 @@ impl fmt::Display for Event {
         use Event::*;
 
         match self {
-            PeerDiscovered { peer_id } => peer_id.fmt(f),
-            PeerDeleted { peer_id } => peer_id.fmt(f),
+            PeerDiscovered { peer_id } => write!(f, "Discovered: {}.", peer_id),
+            PeerDeleted { peer_id } => write!(f, "Removed offline: {}.", peer_id),
             SaltUpdated {
                 public_salt_lifetime,
                 private_salt_lifetime,
             } => write!(
                 f,
-                "lifetimes outbound: {}/ inbound: {}",
+                "Salts updated => outbound: {}/ inbound: {}.",
                 public_salt_lifetime, private_salt_lifetime,
             ),
-            OutgoingPeering { peer, distance } => peer.peer_id().fmt(f),
-            IncomingPeering { peer, distance } => peer.peer_id().fmt(f),
-            PeeringDropped { peer_id } => peer_id.fmt(f),
+            OutgoingPeering { peer, distance } => write!(f, "Peered: {} (outgoing).", peer.peer_id()),
+            IncomingPeering { peer, distance } => write!(f, "Peered: {} (incoming).", peer.peer_id()),
+            PeeringDropped { peer_id } => write!(f, "Dropped: {}.", peer_id),
         }
     }
 }

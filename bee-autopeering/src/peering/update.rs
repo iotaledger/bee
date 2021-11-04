@@ -98,15 +98,11 @@ fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
             .await
             {
                 if status {
-                    log::debug!("Peering with {} successful.", candidate.peer_id());
                     set_outbound_update_interval(&ctx_.outbound_nbh, &ctx_.local);
                 } else {
-                    log::debug!("Peering with {} denied.", candidate.peer_id());
-                    // TODO: add this peer to the exclusion list
                     ctx_.nb_filter.write().add(candidate.peer_id().clone());
                 }
             } else {
-                log::debug!("Peering with {} failed.", candidate.peer_id());
                 ctx_.nb_filter.write().add(candidate.peer_id().clone());
             }
         });

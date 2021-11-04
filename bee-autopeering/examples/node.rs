@@ -17,6 +17,9 @@ use tokio_stream::StreamExt;
 
 use std::{future::Future, io, net::SocketAddr, pin::Pin};
 
+const AUTOPEERING_VERSION: u32 = 1;
+const NETWORK_SERVICE_NAME: &str = "chrysalis-mainnet";
+
 fn setup_logger(level: LevelFilter) {
     fern::Dispatch::new()
         .level(level)
@@ -78,8 +81,8 @@ async fn main() {
         .add_service("peering", ServiceTransport::Udp, config.bind_addr.port());
 
     // Network parameters.
-    let version = 1;
-    let network_id = "chrysalis-mainnet";
+    let version = AUTOPEERING_VERSION;
+    let network_name = NETWORK_SERVICE_NAME;
 
     // Storage config.
     // No config is  necessary for the `InMemoryPeerStore`.
@@ -89,26 +92,26 @@ async fn main() {
     // let peerstore_config = SledPeerStoreConfig::new().path("./peerstore");
 
     // Neighbor validator.
-    let neighbor_validator = None; //HippieNeighborValidator {};
+    let neighbor_validator = GossipNeighborValidator {};
 
     // Shutdown signal.
     let quit_signal = ctrl_c();
 
     // Initialize the Autopeering service.
-    let mut event_rx = bee_autopeering::init::<InMemoryPeerStore, _, _, HippieNeighborValidator>(
+    let mut event_rx = bee_autopeering::init::<InMemoryPeerStore, _, _, GossipNeighborValidator>(
         config.clone(),
         version,
-        network_id,
+        network_name,
         local,
         peerstore_config,
         quit_signal,
-        neighbor_validator,
+        Some(neighbor_validator),
     )
     .await
     .expect("initializing autopeering system failed");
 
     // Print to what IP addresses the entry nodes resolved to.
-    // print_resolved_entry_nodes(config).await;
+    print_resolved_entry_nodes(config).await;
 
     // Enter event loop.
     'recv: loop {
@@ -125,40 +128,18 @@ async fn main() {
 }
 
 fn handle_event(event: Event) {
+    log::info!("{}", event);
+
     match event {
-        Event::PeerDiscovered { peer_id } => {
-            log::info!("Peer discovered: {:?}.", peer_id);
-        }
-        Event::PeerDeleted { peer_id } => {
-            log::info!("Peer deleted: {}.", peer_id);
-        }
+        Event::PeerDiscovered { peer_id } => {}
+        Event::PeerDeleted { peer_id } => {}
         Event::SaltUpdated {
             public_salt_lifetime,
             private_salt_lifetime,
-        } => {
-            log::info!(
-                "Salts updated; new public salt lifetime: {}; new private salt lifetime: {}.",
-                public_salt_lifetime,
-                private_salt_lifetime
-            );
-        }
-        Event::IncomingPeering { peer, distance } => {
-            log::info!(
-                "Incoming peering with peer {}; distance = {}.",
-                peer.peer_id(),
-                distance
-            );
-        }
-        Event::OutgoingPeering { peer, distance } => {
-            log::info!(
-                "Outgoing peering with peer {}; distance = {}.",
-                peer.peer_id(),
-                distance
-            );
-        }
-        Event::PeeringDropped { peer_id } => {
-            log::info!("Peering dropped with {}.", peer_id);
-        }
+        } => {}
+        Event::IncomingPeering { peer, distance } => {}
+        Event::OutgoingPeering { peer, distance } => {}
+        Event::PeeringDropped { peer_id } => {}
     }
 }
 
@@ -177,10 +158,10 @@ async fn print_resolved_entry_nodes(config: AutopeeringConfig) {
 }
 
 #[derive(Clone)]
-struct HippieNeighborValidator {}
+struct GossipNeighborValidator {}
 
-impl NeighborValidator for HippieNeighborValidator {
-    fn is_valid(&self, _: &Peer) -> bool {
-        true
+impl NeighborValidator for GossipNeighborValidator {
+    fn is_valid(&self, peer: &Peer) -> bool {
+        peer.has_service(NETWORK_SERVICE_NAME)
     }
 }

@@ -80,8 +80,13 @@ impl Peer {
     }
 
     /// Sets the services of this peer all at once.
-    pub fn set_services(&mut self, services: ServiceMap) {
+    pub(crate) fn set_services(&mut self, services: ServiceMap) {
         self.services = services;
+    }
+
+    /// Returns whether the peer provides a corresponding service.
+    pub fn has_service(&self, service_name: impl AsRef<str>) -> bool {
+        self.services.get(service_name).is_some()
     }
 
     /// Adds a service with address binding to this peer.

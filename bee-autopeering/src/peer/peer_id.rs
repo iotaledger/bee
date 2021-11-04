@@ -14,7 +14,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-const DISPLAY_LENGTH: usize = 12;
+const DISPLAY_LENGTH: usize = 16;
 
 /// A type that represents the unique identity of a peer in the network.
 #[derive(Copy, Clone)]

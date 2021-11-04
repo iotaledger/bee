@@ -182,15 +182,15 @@ impl<V: NeighborValidator> Runnable for PeeringManager<V> {
                                 let peer_req = if let Ok(peer_req) = PeeringRequest::from_protobuf(&msg_bytes) {
                                     peer_req
                                 } else {
-                                    log::debug!("Error decoding peering request from {}.", &peer_id);
+                                    log::warn!("Error decoding peering request from {}.", &peer_id);
                                     continue 'recv;
                                 };
 
                                 if let Err(e) = validate_peering_request(&peer_req, &ctx) {
-                                    log::debug!("Received invalid peering request from {}. Reason: {:?}", &peer_id, e);
+                                    log::warn!("Received invalid peering request from {}. Reason: {:?}", &peer_id, e);
                                     continue 'recv;
                                 } else {
-                                    log::debug!("Received valid peering request from {}.", &peer_id);
+                                    log::trace!("Received valid peering request from {}.", &peer_id);
 
                                     handle_peering_request(peer_req, ctx, &nb_filter);
                                 }
@@ -199,18 +199,18 @@ impl<V: NeighborValidator> Runnable for PeeringManager<V> {
                                 let peer_res = if let Ok(peer_res) = PeeringResponse::from_protobuf(&msg_bytes) {
                                     peer_res
                                 } else {
-                                    log::debug!("Error decoding peering response from {}.", &peer_id);
+                                    log::warn!("Error decoding peering response from {}.", &peer_id);
                                     continue 'recv;
                                 };
 
                                 match validate_peering_response(&peer_res, &ctx) {
                                     Ok(peer_reqval) => {
-                                        log::debug!("Received valid peering response from {}.", &peer_id);
+                                        log::trace!("Received valid peering response from {}.", &peer_id);
 
                                         handle_peering_response(peer_res, peer_reqval, ctx, &nb_filter);
                                     }
                                     Err(e) => {
-                                        log::debug!("Received invalid peering response from {}. Reason: {:?}", &peer_id, e);
+                                        log::warn!("Received invalid peering response from {}. Reason: {:?}", &peer_id, e);
                                         continue 'recv;
                                     }
                                 }
@@ -219,20 +219,20 @@ impl<V: NeighborValidator> Runnable for PeeringManager<V> {
                                 let drop_req = if let Ok(drop_req) = DropPeeringRequest::from_protobuf(&msg_bytes) {
                                     drop_req
                                 } else {
-                                    log::debug!("Error decoding drop request from {}.", &peer_id);
+                                    log::warn!("Error decoding drop request from {}.", &peer_id);
                                     continue 'recv;
                                 };
 
                                 if let Err(e) = validate_drop_request(&drop_req, &ctx) {
-                                    log::debug!("Received invalid drop request from {}. Reason: {:?}", &peer_id, e);
+                                    log::warn!("Received invalid drop request from {}. Reason: {:?}", &peer_id, e);
                                     continue 'recv;
                                 } else {
-                                    log::debug!("Received valid drop request from {}.", &peer_id);
+                                    log::trace!("Received valid drop request from {}.", &peer_id);
 
                                     handle_drop_request(drop_req, ctx, &nb_filter);
                                 }
                             }
-                            _ => log::debug!("Received unsupported peering message type"),
+                            _ => log::warn!("Received unsupported peering message type"),
                         }
                     }
                 }
@@ -557,7 +557,7 @@ pub(crate) fn send_peering_request_to_addr(
     response_tx: Option<ResponseTx>,
     local: &Local,
 ) {
-    log::debug!("Sending peering request to: {}", peer_id);
+    log::trace!("Sending peering request to: {}", peer_id);
 
     let peer_req = request_mngr
         .write()
@@ -583,7 +583,7 @@ pub(crate) fn send_peering_response_to_addr(
     local: &Local,
     status: bool,
 ) {
-    log::debug!("Sending peering response to: {}", peer_id);
+    log::trace!("Sending peering response to: {}", peer_id);
 
     let request_hash = msg_hash(MessageType::PeeringRequest, msg_bytes).to_vec();
 
@@ -628,7 +628,7 @@ pub(crate) fn send_drop_peering_request_to_addr(
     inbound_nbh: &InboundNeighborhood,
     outbound_nbh: &OutboundNeighborhood,
 ) {
-    log::debug!("Sending drop request to: {}", peer_id);
+    log::trace!("Sending drop request to: {}", peer_id);
 
     let msg_bytes = DropPeeringRequest::new()
         .to_protobuf()

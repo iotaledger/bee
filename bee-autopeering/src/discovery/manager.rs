@@ -269,15 +269,15 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
                                 let verif_req = if let Ok(verif_req) = VerificationRequest::from_protobuf(&msg_bytes) {
                                     verif_req
                                 } else {
-                                    log::debug!("Error decoding verification request from {}.", &peer_id);
+                                    log::warn!("Error decoding verification request from {}.", &peer_id);
                                     continue 'recv;
                                 };
 
                                 if let Err(e) = validate_verification_request(&verif_req, version, network_id) {
-                                    log::debug!("Received invalid verification request from {}. Reason: {:?}", &peer_id, e);
+                                    log::warn!("Received invalid verification request from {}. Reason: {:?}", &peer_id, e);
                                     continue 'recv;
                                 } else {
-                                    log::debug!("Received valid verification request from {}.", &peer_id);
+                                    log::trace!("Received valid verification request from {}.", &peer_id);
 
                                     handle_verification_request(verif_req, ctx);
                                 }
@@ -286,18 +286,18 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
                                 let verif_res = if let Ok(verif_res) = VerificationResponse::from_protobuf(&msg_bytes) {
                                     verif_res
                                 } else {
-                                    log::debug!("Error decoding verification response from {}.", &peer_id);
+                                    log::warn!("Error decoding verification response from {}.", &peer_id);
                                     continue 'recv;
                                 };
 
                                 match validate_verification_response(&verif_res, &request_mngr, &peer_id, peer_addr) {
                                     Ok(verif_reqval) => {
-                                        log::debug!("Received valid verification response from {}.", &peer_id);
+                                        log::trace!("Received valid verification response from {}.", &peer_id);
 
                                         handle_verification_response(verif_res, verif_reqval, ctx);
                                     }
                                     Err(e) => {
-                                        log::debug!("Received invalid verification response from {}. Reason: {:?}", &peer_id, e);
+                                        log::warn!("Received invalid verification response from {}. Reason: {:?}", &peer_id, e);
                                         continue 'recv;
                                     }
                                 }
@@ -306,15 +306,15 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
                                 let disc_req = if let Ok(disc_req) = DiscoveryRequest::from_protobuf(&msg_bytes) {
                                     disc_req
                                 } else {
-                                    log::debug!("Error decoding discovery request from {}.", &peer_id);
+                                    log::warn!("Error decoding discovery request from {}.", &peer_id);
                                     continue 'recv;
                                 };
 
                                 if let Err(e) = validate_discovery_request(&disc_req) {
-                                    log::debug!("Received invalid discovery request from {}. Reason: {:?}", &peer_id, e);
+                                    log::warn!("Received invalid discovery request from {}. Reason: {:?}", &peer_id, e);
                                     continue 'recv;
                                 } else {
-                                    log::debug!("Received valid discovery request from {}.", &peer_id);
+                                    log::trace!("Received valid discovery request from {}.", &peer_id);
 
                                     handle_discovery_request(disc_req, ctx);
                                 }
@@ -323,23 +323,23 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
                                 let disc_res = if let Ok(disc_res) = DiscoveryResponse::from_protobuf(&msg_bytes) {
                                     disc_res
                                 } else {
-                                    log::debug!("Error decoding discovery response from {}.", &peer_id);
+                                    log::warn!("Error decoding discovery response from {}.", &peer_id);
                                     continue 'recv;
                                 };
 
                                 match validate_discovery_response(&disc_res, &request_mngr, &peer_id) {
                                     Ok(disc_reqval) => {
-                                        log::debug!("Received valid discovery response from {}.", &peer_id);
+                                        log::trace!("Received valid discovery response from {}.", &peer_id);
 
                                         handle_discovery_response(disc_res, disc_reqval, ctx);
                                     }
                                     Err(e) => {
-                                        log::debug!("Received invalid discovery response from {}. Reason: {:?}", &peer_id, e);
+                                        log::warn!("Received invalid discovery response from {}. Reason: {:?}", &peer_id, e);
                                         continue 'recv;
                                     }
                                 }
                             }
-                            _ => log::debug!("Received unsupported discovery message type"),
+                            _ => log::warn!("Received unsupported discovery message type"),
                         }
                     }
                 }
@@ -702,7 +702,7 @@ fn validate_discovery_response(
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn handle_verification_request(verif_req: VerificationRequest, ctx: RecvContext) {
-    log::debug!("Handling verification request.");
+    log::trace!("Handling verification request.");
 
     // In any case send a response.
     send_verification_response_to_addr(ctx.peer_addr, &verif_req, ctx.msg_bytes, ctx.server_tx, ctx.local);
@@ -730,7 +730,7 @@ fn handle_verification_request(verif_req: VerificationRequest, ctx: RecvContext)
 
 // The peer must be known (since it's a valid response). That means that the peer is part of the active list currently.
 fn handle_verification_response(verif_res: VerificationResponse, verif_reqval: RequestValue, ctx: RecvContext) {
-    log::debug!("Handling verification response.");
+    log::trace!("Handling verification response.");
 
     if let Some(verified_count) = peer::set_front_and_update(ctx.peer_id, ctx.active_peers) {
         // If this is the first time the peer was verified:
@@ -761,7 +761,7 @@ fn handle_verification_response(verif_res: VerificationResponse, verif_reqval: R
 }
 
 fn handle_discovery_request(disc_req: DiscoveryRequest, ctx: RecvContext) {
-    log::debug!("Handling discovery request.");
+    log::trace!("Handling discovery request.");
 
     let request_hash = msg_hash(MessageType::DiscoveryRequest, ctx.msg_bytes).to_vec();
 
@@ -785,7 +785,7 @@ fn handle_discovery_request(disc_req: DiscoveryRequest, ctx: RecvContext) {
 
 fn handle_discovery_response(disc_res: DiscoveryResponse, disc_reqval: RequestValue, ctx: RecvContext) {
     // Remove the corresponding request from the request manager.
-    log::debug!("Handling discovery response.");
+    log::trace!("Handling discovery response.");
 
     let mut num_added = 0;
 
@@ -852,7 +852,7 @@ pub(crate) fn send_verification_request_to_all_active(
     request_mngr: &RequestManager,
     server_tx: &ServerTx,
 ) {
-    log::debug!("Sending verification request to all peers.");
+    log::trace!("Sending verification request to all peers.");
 
     // Technically it's not necessary, but we create copies of all peer ids in order to release the lock quickly, and
     // not keep it for the whole loop.
@@ -902,7 +902,7 @@ pub(crate) fn send_verification_request_to_addr(
     server_tx: &ServerTx,
     response_tx: Option<ResponseTx>,
 ) {
-    log::debug!("Sending verification request to: {}", peer_id);
+    log::trace!("Sending verification request to: {}", peer_id);
 
     let verif_req = request_mngr
         .write()
@@ -1019,7 +1019,7 @@ pub(crate) fn send_discovery_request_to_addr(
     server_tx: &ServerTx,
     response_tx: Option<ResponseTx>,
 ) {
-    log::debug!("Sending discovery request to: {:?}", peer_id);
+    log::trace!("Sending discovery request to: {:?}", peer_id);
 
     let disc_req = request_mngr.write().new_discovery_request(peer_id.clone(), response_tx);
 
@@ -1043,7 +1043,7 @@ pub(crate) fn send_discovery_request_to_all_verified(
     request_mngr: &RequestManager,
     server_tx: &ServerTx,
 ) {
-    log::debug!("Sending discovery request to all verified peers.");
+    log::trace!("Sending discovery request to all verified peers.");
 
     // Technically it's not necessary, but we create copies of all peer ids in order to release the lock quickly, and
     // not keep it for the whole loop.

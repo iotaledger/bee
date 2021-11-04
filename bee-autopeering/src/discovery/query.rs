@@ -48,7 +48,11 @@ pub(crate) fn do_reverify() -> Repeat<QueryContext> {
                     manager::begin_verification(&peer_id, &ctx_.active_peers, &ctx_.request_mngr, &ctx_.server_tx).await
                 {
                     // Hive.go: no need to do anything here, as the peer is bumped when handling the pong
-                    log::debug!("Reverification successful. Peer offers {} service/s.", services.len());
+                    log::debug!(
+                        "Reverification successful. Peer offers {} service/s: {}",
+                        services.len(),
+                        services
+                    );
                 } else {
                     log::debug!("Reverification failed. Removing peer {}.", peer_id);
 

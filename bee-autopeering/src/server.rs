@@ -157,7 +157,7 @@ impl Runnable for IncomingPacketHandler {
                                 continue 'recv;
                             }
 
-                            log::debug!("Received {} bytes from {}.", n, peer_addr);
+                            log::trace!("Received {} bytes from {}.", n, peer_addr);
 
                             let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
                             // log::trace!("{} ---> public key: {}.", peer_addr, multiaddr::from_pubkey_to_base58(&packet.public_key()));
@@ -170,7 +170,7 @@ impl Runnable for IncomingPacketHandler {
                             let message = packet.message();
                             let signature = packet.signature();
                             if !packet.public_key().verify(&signature, message) {
-                                log::debug!("Received packet with invalid signature");
+                                log::trace!("Received packet with invalid signature");
                                 continue 'recv;
                             }
 
@@ -254,7 +254,7 @@ impl Runnable for OutgoingPacketHandler {
 
                         let n = outgoing_socket.send_to(&bytes, peer_addr).await.expect("socket send error");
 
-                        log::debug!("Sent {} bytes to {}.", n, peer_addr);
+                        log::trace!("Sent {} bytes to {}.", n, peer_addr);
                     } else {
                         // All `outgoing_tx` message senders were dropped.
                         break 'recv;
