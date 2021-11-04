@@ -5,14 +5,26 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
+// TODO remove
+use core::convert::{TryFrom, TryInto};
+
+///
+const METADATA_LENGTH_MAX: u32 = 1024;
+
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MetadataFeatureBlock(Box<[u8]>);
 
-impl From<&[u8]> for MetadataFeatureBlock {
-    fn from(data: &[u8]) -> Self {
-        MetadataFeatureBlock(data.into())
+impl TryFrom<&[u8]> for MetadataFeatureBlock {
+    type Error = Error;
+
+    fn try_from(data: &[u8]) -> Result<Self, Error> {
+        if data.len() == 0 || data.len() > METADATA_LENGTH_MAX as usize {
+            return Err(Error::InvalidMetadataLength(data.len() as u32));
+        }
+
+        Ok(MetadataFeatureBlock(data.into()))
     }
 }
 
@@ -21,8 +33,8 @@ impl MetadataFeatureBlock {
     pub const KIND: u8 = 8;
 
     /// Creates a new `MetadataFeatureBlock`.
-    pub fn new(data: &[u8]) -> Self {
-        data.into()
+    pub fn new(data: &[u8]) -> Result<Self, Error> {
+        data.try_into()
     }
 
     /// Returns the data.
@@ -46,8 +58,11 @@ impl Packable for MetadataFeatureBlock {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let data_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut data = vec![0u8; data_len];
+        let data_len = u32::unpack_inner::<R, CHECK>(reader)?;
+        if data_len == 0 || data_len > METADATA_LENGTH_MAX {
+            return Err(Error::InvalidMetadataLength(data_len));
+        }
+        let mut data = vec![0u8; data_len as usize];
         reader.read_exact(&mut data)?;
 
         Ok(Self(data.into()))

@@ -30,6 +30,7 @@ pub enum Error {
     InvalidInputOutputCount(u16),
     InvalidInputOutputIndex(u16),
     InvalidMessageLength(usize),
+    InvalidMetadataLength(u32),
     InvalidMigratedFundsEntryAmount(u64),
     InvalidNativeTokenCount(u16),
     InvalidOutputKind(u8),
@@ -103,6 +104,7 @@ impl fmt::Display for Error {
             Error::InvalidInputOutputCount(count) => write!(f, "Invalid input or output count: {}.", count),
             Error::InvalidInputOutputIndex(index) => write!(f, "Invalid input or output index: {}.", index),
             Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),
+            Error::InvalidMetadataLength(length) => write!(f, "Invalid metadata length {}.", length),
             Error::InvalidMigratedFundsEntryAmount(amount) => {
                 write!(f, "Invalid migrated funds entry amount: {}.", amount)
             }

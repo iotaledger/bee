@@ -10,6 +10,9 @@ use crate::{
 use bee_common::packable::{Packable, Read, Write};
 
 ///
+const METADATA_LENGTH_MAX: u32 = 1024;
+
+///
 pub struct NftOutputBuilder {
     address: Address,
     amount: u64,
@@ -58,6 +61,10 @@ impl NftOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<NftOutput, Error> {
+        if self.immutable_metadata.len() > METADATA_LENGTH_MAX as usize {
+            return Err(Error::InvalidMetadataLength(self.immutable_metadata.len() as u32));
+        }
+
         Ok(NftOutput {
             address: self.address,
             amount: self.amount,
@@ -86,11 +93,8 @@ impl NftOutput {
     pub const KIND: u8 = 5;
 
     /// Creates a new `NftOutput`.
-    pub fn new(address: Address, amount: u64, nft_id: NftId, immutable_metadata: Vec<u8>) -> Self {
-        // SAFETY: this can't fail as this is a default builder.
-        NftOutputBuilder::new(address, amount, nft_id, immutable_metadata)
-            .finish()
-            .unwrap()
+    pub fn new(address: Address, amount: u64, nft_id: NftId, immutable_metadata: Vec<u8>) -> Result<Self, Error> {
+        NftOutputBuilder::new(address, amount, nft_id, immutable_metadata).finish()
     }
 
     ///
@@ -154,8 +158,11 @@ impl Packable for NftOutput {
         let amount = u64::unpack_inner::<R, CHECK>(reader)?;
         let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
         let nft_id = NftId::unpack_inner::<R, CHECK>(reader)?;
-        let immutable_metadata_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut immutable_metadata = vec![0u8; immutable_metadata_len];
+        let immutable_metadata_len = u32::unpack_inner::<R, CHECK>(reader)?;
+        if immutable_metadata_len > METADATA_LENGTH_MAX {
+            return Err(Error::InvalidMetadataLength(immutable_metadata_len));
+        }
+        let mut immutable_metadata = vec![0u8; immutable_metadata_len as usize];
         reader.read_exact(&mut immutable_metadata)?;
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
