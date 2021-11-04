@@ -14,13 +14,13 @@ use std::{io::Read, path::Path};
 async fn download_snapshot_header(download_url: &str) -> Result<Option<(SnapshotHeader, &str)>, Error> {
     info!("Downloading snapshot header {}...", download_url);
 
-    match reqwest::get(download_url).await {
+    match reqwest::get(download_url).await.and_then(|res| res.error_for_status()) {
         Ok(res) => {
             let mut stream = res.bytes_stream();
-            let mut bytes = Vec::<u8>::new();
+            let mut bytes = Vec::<u8>::with_capacity(SnapshotHeader::LENGTH);
 
             while let Some(chunk) = stream.next().await {
-                let mut chunk_reader = chunk.unwrap().reader();
+                let mut chunk_reader = chunk.map_err(|_| Error::DownloadingFailed)?.reader();
 
                 let mut buf = Vec::new();
                 chunk_reader.read_to_end(&mut buf)?;
