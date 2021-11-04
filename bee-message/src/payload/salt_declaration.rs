@@ -14,7 +14,7 @@ use bee_packable::{
 };
 
 use alloc::vec::Vec;
-use core::convert::{Infallible, TryInto};
+use core::convert::Infallible;
 
 /// Maximum size of payload, minus prefix `u32` and timestamp `u64`.
 pub(crate) const PREFIXED_SALT_BYTES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - 12;

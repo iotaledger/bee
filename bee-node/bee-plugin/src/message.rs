@@ -26,8 +26,6 @@ use crate::grpc::{
     Timestamp, TransactionEssence, TransactionId, TransactionPayload, UnlockBlock, UtxoInput,
 };
 
-use std::convert::TryInto;
-
 impl From<&bee_message::Message> for Message {
     fn from(message: &bee_message::Message) -> Self {
         Self {

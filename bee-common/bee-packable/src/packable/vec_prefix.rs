@@ -14,7 +14,6 @@ use crate::{
 
 use alloc::vec::Vec;
 use core::{
-    convert::TryFrom,
     fmt::{self, Display},
     marker::PhantomData,
 };

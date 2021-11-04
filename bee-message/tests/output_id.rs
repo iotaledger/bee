@@ -9,7 +9,7 @@ use bee_message::{
 };
 use bee_packable::{Packable, UnpackError};
 
-use core::{convert::TryFrom, str::FromStr};
+use core::str::FromStr;
 
 const TRANSACTION_ID: &str = "d5c8b35f87a915c61f0d1b4af1f5d4a11b2bb4070d5c500074c74c752577b59c";
 const OUTPUT_ID: &str = "d5c8b35f87a915c61f0d1b4af1f5d4a11b2bb4070d5c500074c74c752577b59c2a00";

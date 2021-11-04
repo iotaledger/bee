@@ -14,7 +14,7 @@ use crypto::{
     signatures::ed25519,
 };
 
-use core::{convert::TryInto, ops::RangeInclusive};
+use core::ops::RangeInclusive;
 
 /// Range (in bytes) of a valid message length.
 /// The maximum length is 64KB, and minimum length is calculated from message containing an empty data payload and two

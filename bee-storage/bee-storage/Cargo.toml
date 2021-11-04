@@ -2,7 +2,7 @@
 name = "bee-storage"
 version = "0.9.0"
 authors = [ "IOTA Stiftung" ]
-edition = "2018"
+edition = "2021"
 description = "A general purpose storage backend crate with key value abstraction API."
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"

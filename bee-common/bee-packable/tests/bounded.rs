@@ -8,8 +8,6 @@ use bee_packable::{
     InvalidBoundedU8, Packable, UnpackError,
 };
 
-use core::convert::TryFrom;
-
 macro_rules! impl_bounds_test_for_bounded_integer {
     ($name:ident, $wrapper:ty, $error:ident, $wrapped:ty) => {
         #[test]

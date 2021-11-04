@@ -4,7 +4,7 @@
 use bee_message::address::{Address, Bech32Address, BlsAddress};
 use bee_packable::Packable;
 
-use core::{convert::TryInto, ops::Deref, str::FromStr};
+use core::{ops::Deref, str::FromStr};
 
 const BLS_ADDRESS: &str =
     "f30d5856a165c1cf27d088300e9506858c2f05d307d518be4c08b90935b983f733cfcaa80d6199a0062b4ccbe1c398f265";

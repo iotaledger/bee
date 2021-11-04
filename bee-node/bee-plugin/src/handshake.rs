@@ -8,7 +8,6 @@ use crate::event::{EventId, InvalidEventId};
 use thiserror::Error;
 
 use std::{
-    convert::TryFrom,
     fmt::Write,
     net::{AddrParseError, SocketAddr},
 };

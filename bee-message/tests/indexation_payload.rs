@@ -9,8 +9,6 @@ use bee_message::{
 use bee_packable::{packable::VecPrefixLengthError, InvalidBoundedU32, Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
 
-use core::convert::TryFrom;
-
 #[test]
 fn kind() {
     assert_eq!(IndexationPayload::KIND, 8);

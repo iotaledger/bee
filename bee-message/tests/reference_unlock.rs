@@ -7,8 +7,6 @@ use bee_message::{
 };
 use bee_packable::{Packable, UnpackError};
 
-use core::convert::TryFrom;
-
 #[test]
 fn kind() {
     assert_eq!(ReferenceUnlock::KIND, 1);

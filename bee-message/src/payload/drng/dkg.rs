@@ -11,7 +11,7 @@ use bee_packable::{
 };
 
 use alloc::vec::Vec;
-use core::convert::{Infallible, TryInto};
+use core::convert::Infallible;
 
 /// All [`Vec`] sizes are unconstrained, so use payload max as upper limit.
 pub(crate) const PREFIXED_DKG_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX;

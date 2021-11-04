@@ -8,8 +8,6 @@ use bee_packable::{
     InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64, InvalidBoundedU8, Packable, UnpackError, VecPrefix,
 };
 
-use core::convert::TryFrom;
-
 macro_rules! impl_packable_test_for_vec_prefix {
     ($packable_vec_prefix:ident, $packable_vec_prefix_invalid_length:ident, $ty:ty, $bounded:ident, $err:ident, $min:expr, $max:expr) => {
         #[test]
