@@ -47,14 +47,28 @@ impl Local {
         Self::default()
     }
 
+    /// Creates a local identity from a 'base16/hex' encoded ED25519 private key.
+    pub fn from_bs16_encoded_private_key(private_key: impl AsRef<str>) -> Self {
+        let mut private_key_bytes = [0u8; SECRET_KEY_LENGTH];
+        hex::decode_to_slice(private_key.as_ref(), &mut private_key_bytes)
+            .expect("error restoring private key from base16");
+
+        Self::from_private_key_bytes(private_key_bytes)
+    }
+
     /// Creates a local identity from a 'base58' encoded ED25519 private key.
     pub fn from_bs58_encoded_private_key(private_key: impl AsRef<str>) -> Self {
         // Restore the private key
         let mut private_key_bytes = [0u8; SECRET_KEY_LENGTH];
         bs58::decode(private_key.as_ref())
             .into(&mut private_key_bytes)
-            .expect("error restoring private key");
+            .expect("error restoring private key from base58");
 
+        Self::from_private_key_bytes(private_key_bytes)
+    }
+
+    /// Creates a local identity from bytes representing an ED25519 private key.
+    pub fn from_private_key_bytes(private_key_bytes: [u8; SECRET_KEY_LENGTH]) -> Self {
         let private_key = PrivateKey::from_bytes(private_key_bytes);
         let public_key = private_key.public_key();
         let peer_id = PeerId::from_public_key(public_key);

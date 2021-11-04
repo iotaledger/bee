@@ -151,6 +151,7 @@ dependencies = [
  "bytes",
  "fern",
  "hash32",
+ "hex",
  "iota-crypto 0.7.0",
  "libp2p-core",
  "log",
@@ -167,7 +168,7 @@ dependencies = [
  "sled",
  "slog",
  "thiserror",
- "time 0.3.4",
+ "time 0.3.5",
  "tokio",
  "tokio-stream",
 ]
