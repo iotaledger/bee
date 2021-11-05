@@ -345,7 +345,9 @@ fn handle_peering_request<V: NeighborValidator>(
             let neighbor = Neighbor::new(active_peer.into_peer(), distance);
 
             // Check if the neighbor would be closer than the currently furthest in the inbound neighborhood.
-            if let Some(peer) = ctx.inbound_nbh.write().select(neighbor) {
+            let mut guard = ctx.inbound_nbh.write();
+            if let Some(peer) = guard.select(neighbor) {
+                drop(guard);
                 if add_or_replace_neighbor::<INCOMING>(
                     peer.clone(),
                     ctx.local,
