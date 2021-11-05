@@ -67,7 +67,7 @@ pub async fn init<S, I, Q, V>(
     local: Local,
     peerstore_config: <S as PeerStore>::Config,
     quit_signal: Q,
-    neighbor_validator: Option<V>,
+    neighbor_validator: V,
 ) -> Result<EventRx, Box<dyn error::Error>>
 where
     S: PeerStore + 'static,

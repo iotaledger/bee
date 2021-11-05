@@ -7,7 +7,7 @@ use bee_autopeering::{
     init,
     peerstore::InMemoryPeerStore,
     peerstore::{SledPeerStore, SledPeerStoreConfig},
-    AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceTransport, AUTOPEERING_SERVICE_NAME,
+    AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 
 use libp2p_core::identity::ed25519::Keypair;
@@ -80,8 +80,8 @@ async fn main() {
     let mut keypair = hex::decode(BS16_ED25519_PRIVATE_KEY).expect("error decoding keypair");
     let local = Local::from_keypair(Keypair::decode(&mut keypair).expect("error decoding keypair"));
     let mut write = local.write();
-    write.add_service(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, config.bind_addr.port());
-    write.add_service(NETWORK_SERVICE_NAME, ServiceTransport::Tcp, 15600);
+    write.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, config.bind_addr.port());
+    write.add_service(NETWORK_SERVICE_NAME, ServiceProtocol::Tcp, 15600);
     drop(write);
 
     // Network parameters.
@@ -109,7 +109,7 @@ async fn main() {
         local,
         peerstore_config,
         quit_signal,
-        Some(neighbor_validator),
+        neighbor_validator,
     )
     .await
     .expect("initializing autopeering system failed");

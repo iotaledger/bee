@@ -20,7 +20,7 @@ pub(crate) struct NeighborFilter<V: NeighborValidator> {
 }
 
 impl<V: NeighborValidator> NeighborFilter<V> {
-    pub fn new(local_id: PeerId, validator: Option<V>) -> Self {
+    pub fn new(local_id: PeerId, validator: V) -> Self {
         Self {
             inner: Arc::new(RwLock::new(NeighborFilterInner::new(local_id, validator))),
         }
@@ -38,7 +38,7 @@ impl<V: NeighborValidator> NeighborFilter<V> {
 pub(crate) struct NeighborFilterInner<V: NeighborValidator> {
     local_id: PeerId,
     rejected: HashSet<PeerId>,
-    validator: Option<V>,
+    validator: V,
 }
 
 impl<V: NeighborValidator> NeighborFilterInner<V> {
@@ -46,7 +46,7 @@ impl<V: NeighborValidator> NeighborFilterInner<V> {
     ///
     /// A peer id same as `local_id` will always be rejected. A `validator` can be provided
     /// to inject another filter criterium.
-    pub(crate) fn new(local_id: PeerId, validator: Option<V>) -> Self {
+    pub(crate) fn new(local_id: PeerId, validator: V) -> Self {
         Self {
             local_id,
             rejected: HashSet::new(),
@@ -83,7 +83,7 @@ impl<V: NeighborValidator> NeighborFilterInner<V> {
             false
         } else if self.rejected.contains(peer_id) {
             false
-        } else if !self.validator.as_ref().map_or(true, |v| v.is_valid(peer)) {
+        } else if !self.validator.is_valid(peer) {
             false
         } else {
             true
@@ -118,7 +118,7 @@ mod tests {
 
     fn setup_scenario1() -> (NeighborFilter<DummyValidator>, Peer, Peer) {
         let local_id = Peer::new_test_peer(0).into_id();
-        let filter = NeighborFilter::new(local_id, Some(DummyValidator {}));
+        let filter = NeighborFilter::new(local_id, DummyValidator {});
 
         let mut peer1 = Peer::new_test_peer(1);
         peer1.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, 6969);

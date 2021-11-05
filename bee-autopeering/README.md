@@ -20,6 +20,8 @@ use bee_autopeering::{
     AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 
+const NETWORK: &str = "chrysalis-mainnet";
+
 // An example autopeering config in JSON format:
 fn read_config() -> AutopeeringConfig {
     let config_json = r#"
@@ -41,7 +43,6 @@ async fn main() {
     // Peers will only accept each other as peer if they agree on the protocol version and the
     // network name.
     const VERSION: u32 = 1;
-    const NETWORK: &str = "chrysalis-mainnet";
 
     // Read the config from a JSON file/string.
     let config = read_config();
@@ -52,8 +53,9 @@ async fn main() {
         let mut write = l.write();
         write.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, config.bind_addr.port());
         write.add_service(NETWORK, ServiceProtocol::Tcp, 15600);
+        drop(write)
         l
-    }
+    };
 
     // You can choose between the `InMemoryPeerStore` (non-persistent) and the `SledPeerStore` 
     // (persistent).

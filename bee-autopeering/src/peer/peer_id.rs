@@ -190,6 +190,6 @@ mod tests {
     #[test]
     fn to_libp2p_peer_id() {
         let peer_id = PeerId::new_static();
-        let _ = peer_id.libp2p_peer_id();
+        let _ = peer_id.to_libp2p_peer_id();
     }
 }
