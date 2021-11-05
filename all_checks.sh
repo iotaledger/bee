@@ -14,7 +14,9 @@ print_and_run() {
     return $status_code
 }
 
-#
+# Check if any arguments were provided and use them as the packages to be
+# checked. Use the `--all` flag if there were no arguments to check the whole
+# workspace.
 if [[ $# -eq 0 ]] ; then
     packages=--all
 else
