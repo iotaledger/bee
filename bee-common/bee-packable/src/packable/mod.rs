@@ -22,7 +22,7 @@ pub use option::UnpackOptionError;
 pub use vec_prefix::{VecPrefix, VecPrefixLengthError};
 
 pub use crate::{
-    error::{UnexpectedEOF, UnknownTagError, UnpackError},
+    error::{UnexpectedEOF, UnknownTagError, UnpackError, UnpackErrorExt},
     packer::{Packer, SlicePacker, VecPacker},
     unpacker::{SliceUnpacker, Unpacker},
 };

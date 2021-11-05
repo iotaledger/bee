@@ -6,7 +6,7 @@
 use crate::{MessageId, MessageUnpackError, ValidationError};
 
 use bee_ord::is_unique_sorted;
-use bee_packable::{coerce::*, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{Packable, Packer, UnpackError, UnpackErrorExt, Unpacker};
 
 use bitvec::prelude::*;
 

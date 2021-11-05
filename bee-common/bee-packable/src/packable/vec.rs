@@ -3,7 +3,7 @@
 
 extern crate alloc;
 
-use crate::{coerce::*, error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
+use crate::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable, UnpackErrorExt};
 
 use alloc::vec::Vec;
 

@@ -4,12 +4,11 @@
 extern crate alloc;
 
 use crate::{
-    coerce::*,
     error::{UnpackError, UnpackPrefixError},
     packer::Packer,
     unpacker::Unpacker,
     Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
-    InvalidBoundedU8, Packable,
+    InvalidBoundedU8, Packable, UnpackErrorExt,
 };
 
 use alloc::vec::Vec;

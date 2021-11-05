@@ -210,12 +210,12 @@ impl ToTokens for TraitImpl {
                 type UnpackError = #unpack_error;
 
                 fn pack<P: bee_packable::packer::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-                    use bee_packable::coerce::*;
+                    use bee_packable::UnpackErrorExt;
                     #pack
                 }
 
                 fn unpack<U: bee_packable::unpacker::Unpacker>(unpacker: &mut U) -> Result<Self, bee_packable::error::UnpackError<Self::UnpackError, U::Error>> {
-                    use bee_packable::coerce::*;
+                    use bee_packable::UnpackErrorExt;
                     #unpack
                 }
 
