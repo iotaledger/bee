@@ -42,6 +42,7 @@ const OUTGOING: bool = false;
 pub(crate) type InboundNeighborhood = Neighborhood<SIZE_INBOUND, true>;
 pub(crate) type OutboundNeighborhood = Neighborhood<SIZE_OUTBOUND, false>;
 
+/// Represents the answer of a `PeeringRequest`. Can be either `true` (peering accepted), or `false` (peering denied).
 pub type Status = bool;
 
 #[derive(Debug, thiserror::Error)]

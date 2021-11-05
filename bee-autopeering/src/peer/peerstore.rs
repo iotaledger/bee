@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Persistent storage of discovered peers.
+
 use super::{
     peer_id::PeerId,
     peerlist::{ActivePeer, ActivePeersList, PeerMetrics, ReplacementList},
@@ -31,23 +33,38 @@ use std::{
 const ACTIVE_PEERS_TREE: &str = "active_peers";
 const REPLACEMENTS_TREE: &str = "replacements";
 
+/// Mandatory functionality of any peer store.
 pub trait PeerStore: Clone + Send + Sync {
+    /// The peer store configuration.
     type Config;
 
+    /// Creates a new peer store from config.
     fn new(config: Self::Config) -> Self;
+    /// Stores an active peer.
     fn store_active(&self, peer: ActivePeer);
+    /// Stores all current active peers.
     fn store_all_active(&self, peers: &ActivePeersList);
+    /// Stores a replacement peer.
     fn store_replacement(&self, peer: Peer);
+    /// Stores all current replacement peers.
     fn store_all_replacements(&self, peers: &ReplacementList);
+    /// Whether the store contains the given peer.
     fn contains(&self, peer_id: &PeerId) -> bool;
+    /// Fetches an active peer from its peer identity.
     fn fetch_active(&self, peer_id: &PeerId) -> Option<ActivePeer>;
+    /// Fetches all active peers.
     fn fetch_all_active(&self) -> Vec<ActivePeer>;
+    /// Fetches a replacement peer from its peer identity.
     fn fetch_replacement(&self, peer_id: &PeerId) -> Option<Peer>;
+    /// Fetches all replacement peers.
     fn fetch_all_replacements(&self) -> Vec<Peer>;
+    /// Deletes a stored peer.
     fn delete(&self, peer_id: &PeerId) -> bool;
+    /// Deletes all stored peers.
     fn delete_all(&self);
 }
 
+/// A non-persistent/in-memory peer store.
 #[derive(Clone, Default)]
 pub struct InMemoryPeerStore {
     inner: Arc<RwLock<InMemoryPeerStoreInner>>,
@@ -133,26 +150,10 @@ impl PeerStore for InMemoryPeerStore {
     }
 }
 
+/// The config for the Sled peer store.
 pub type SledPeerStoreConfig = sled::Config;
 
-// pub struct SledPeerStoreConfig {
-//     inner: sled::Config,
-// }
-
-// impl SledPeerStoreConfig {
-//     pub fn new(file_path: &str) -> Self {
-//         Self {
-//             inner: sled::Config::new().path(PathBuf::from(file_path)),
-//         }
-//     }
-// }
-
-// impl Default for SledPeerStoreConfig {
-//     fn default() -> Self {
-//         Self::new("./peerstore")
-//     }
-// }
-
+/// The (persistent) Sled peer store.
 #[derive(Clone)]
 pub struct SledPeerStore {
     db: Db,

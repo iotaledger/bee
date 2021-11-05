@@ -5,7 +5,7 @@ pub(crate) mod salt;
 pub mod services;
 
 use salt::Salt;
-use services::{ServiceMap, ServiceTransport};
+use services::{ServiceMap, ServiceProtocol};
 
 use crate::{
     delay::DelayFactory,
@@ -30,7 +30,12 @@ use std::{
 
 use self::salt::SALT_LIFETIME_SECS;
 
-/// A type that represents a local identity - able to sign outgoing messages.
+/// Represents a local entity.
+///
+/// It allows:
+/// * message signing and verification;
+/// * neighbor distance calculation;
+/// * service announcements;
 #[derive(Clone, Default)]
 pub struct Local {
     inner: Arc<RwLock<LocalInner>>,
@@ -50,6 +55,7 @@ impl Local {
         Self::default()
     }
 
+    /// Creates a local identity from an ED25519 keypair.
     pub fn from_keypair(keypair: Keypair) -> Self {
         let private_key_bytes: [u8; SECRET_KEY_LENGTH] = keypair
             .secret()
@@ -97,10 +103,12 @@ impl Local {
         }
     }
 
+    /// Provides read access to the inner value.
     pub fn read(&self) -> RwLockReadGuard<LocalInner> {
         self.inner.read().expect("error getting read access")
     }
 
+    /// Provides write access to the inner value.
     pub fn write(&self) -> RwLockWriteGuard<LocalInner> {
         self.inner.write().expect("error getting write access")
     }
@@ -143,8 +151,8 @@ impl LocalInner {
     }
 
     /// Adds a service to this local peer.
-    pub fn add_service(&mut self, service_name: impl ToString, transport: ServiceTransport, port: u16) {
-        self.services.insert(service_name, transport, port)
+    pub fn add_service(&mut self, service_name: impl ToString, protocol: ServiceProtocol, port: u16) {
+        self.services.insert(service_name, protocol, port)
     }
 
     /// Returns the list of services this identity supports.

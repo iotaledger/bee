@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Events published to the user.
+
 use crate::{
     peer::{Peer, PeerId},
     peering::{manager::Status, neighbor::Distance},
@@ -25,7 +27,9 @@ pub enum Event {
     },
     /// A SaltUpdated event is triggered, when the private and public salt were updated.
     SaltUpdated {
+        /// Lifetime of the public salt.
         public_salt_lifetime: u64,
+        /// Lifetime of the private salt.
         private_salt_lifetime: u64,
     },
     /// An OutgoingPeering event is triggered, when a valid response of PeeringRequest has been received.

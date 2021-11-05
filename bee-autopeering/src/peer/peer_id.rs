@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Peer identities.
+
 use crate::{hash, local::salt::Salt};
 
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, PUBLIC_KEY_LENGTH};
@@ -16,7 +18,7 @@ use std::{
 
 const DISPLAY_LENGTH: usize = 16;
 
-/// A type that represents the unique identity of a peer in the network.
+/// Represents the unique identity of a peer in the network.
 #[derive(Copy, Clone)]
 pub struct PeerId {
     // An ED25519 public key.
@@ -38,21 +40,22 @@ impl PeerId {
         Self { id_bytes, public_key }
     }
 
-    /// Returns a copy of the public key of this identity.
+    /// Returns the public key associated with this identity.
     pub fn public_key(&self) -> &PublicKey {
         &self.public_key
     }
 
-    pub fn libp2p_public_key(&self) -> libp2p_core::PublicKey {
+    /// Creates the corresponding `libp2p_core::PublicKey` of this identity.
+    pub fn to_libp2p_public_key(&self) -> libp2p_core::PublicKey {
         libp2p_core::PublicKey::Ed25519(
             libp2p_core::identity::ed25519::PublicKey::decode(self.public_key.as_ref())
                 .expect("error decoding ed25519 public key from bytes"),
         )
     }
 
-    /// Returns the corresponding `libp2p::PeerId`.
-    pub fn libp2p_peer_id(&self) -> libp2p_core::PeerId {
-        libp2p_core::PeerId::from_public_key(self.libp2p_public_key())
+    /// Creates the corresponding `libp2p_core::PeerId` of this identity.
+    pub fn to_libp2p_peer_id(&self) -> libp2p_core::PeerId {
+        libp2p_core::PeerId::from_public_key(self.to_libp2p_public_key())
     }
 
     /// Returns the actual bytes representing this id.
@@ -93,9 +96,7 @@ impl fmt::Debug for PeerId {
 
 impl fmt::Display for PeerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // TODO: remove commented line
-        // write!(f, "{}", &bs58::encode(&self.id_bytes).into_string()[..DISPLAY_LENGTH])
-        self.libp2p_peer_id().to_base58()[..DISPLAY_LENGTH].fmt(f)
+        self.to_libp2p_peer_id().to_base58()[..DISPLAY_LENGTH].fmt(f)
     }
 }
 

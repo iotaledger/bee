@@ -12,9 +12,10 @@ use std::{collections::HashMap, convert::TryFrom, fmt, io, net::IpAddr, str::Fro
 pub type ServiceName = String;
 pub(crate) type ServicePort = u16;
 
+/// The announced name of the autopeering service.
 pub const AUTOPEERING_SERVICE_NAME: &str = "peering";
 
-/// A mapping between a service name and its access configuration.
+/// A mapping between a service name and its endpoint data.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ServiceMap(HashMap<ServiceName, Service>);
 
@@ -25,8 +26,8 @@ impl ServiceMap {
     }
 
     /// Registers a service with its bind address.
-    pub(crate) fn insert(&mut self, service_name: impl ToString, transport: ServiceTransport, port: ServicePort) {
-        self.0.insert(service_name.to_string(), Service { transport, port });
+    pub(crate) fn insert(&mut self, service_name: impl ToString, protocol: ServiceProtocol, port: ServicePort) {
+        self.0.insert(service_name.to_string(), Service { protocol, port });
     }
 
     /// Returns the connection data associated with the given service.
@@ -47,10 +48,10 @@ impl From<proto::ServiceMap> for ServiceMap {
         let mut services = HashMap::with_capacity(map.len());
 
         for (service_name, proto::NetworkAddress { network, port }) in map {
-            let transport: ServiceTransport = network.parse().expect("error parsing transport protocol");
+            let protocol: ServiceProtocol = network.parse().expect("error parsing transport protocol");
             let port = port as u16;
 
-            services.insert(service_name, Service { transport, port });
+            services.insert(service_name, Service { protocol, port });
         }
 
         Self(services)
@@ -63,9 +64,9 @@ impl From<ServiceMap> for proto::ServiceMap {
 
         let mut services = HashMap::with_capacity(map.len());
 
-        for (service_name, Service { transport, port }) in map {
+        for (service_name, Service { protocol, port }) in map {
             let network_addr = proto::NetworkAddress {
-                network: transport.to_string(),
+                network: protocol.to_string(),
                 port: port as u32,
             };
 
@@ -84,7 +85,7 @@ impl fmt::Display for ServiceMap {
             // Example: "peering/udp/14626;gossip/tcp/14625"
             self.0
                 .iter()
-                .map(|(service_name, service)| format!("{}/{}/{}", service_name, service.transport, service.port))
+                .map(|(service_name, service)| format!("{}/{}/{}", service_name, service.protocol, service.port))
                 .collect::<Vec<_>>()
                 .join(";")
                 .to_string()
@@ -94,13 +95,13 @@ impl fmt::Display for ServiceMap {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Service {
-    transport: ServiceTransport,
+    protocol: ServiceProtocol,
     port: ServicePort,
 }
 
 impl Service {
-    pub fn transport(&self) -> ServiceTransport {
-        self.transport
+    pub fn protocol(&self) -> ServiceProtocol {
+        self.protocol
     }
 
     pub fn port(&self) -> ServicePort {
@@ -108,30 +109,36 @@ impl Service {
     }
 }
 
+/// Supported protocols of announced services.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum ServiceTransport {
+pub enum ServiceProtocol {
+    /// TCP
     Tcp,
+    /// UDP
     Udp,
 }
 
-impl fmt::Display for ServiceTransport {
+impl fmt::Display for ServiceProtocol {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let protocol = match self {
-            ServiceTransport::Udp => "udp",
-            ServiceTransport::Tcp => "tcp",
+            ServiceProtocol::Udp => "udp",
+            ServiceProtocol::Tcp => "tcp",
         };
         write!(f, "{}", protocol)
     }
 }
 
-impl FromStr for ServiceTransport {
+impl FromStr for ServiceProtocol {
     type Err = io::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "tcp" => Ok(Self::Tcp),
             "udp" => Ok(Self::Udp),
-            _ => Err(io::Error::new(io::ErrorKind::InvalidData, "unsupported transport")),
+            _ => Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "unsupported transport protocol",
+            )),
         }
     }
 }

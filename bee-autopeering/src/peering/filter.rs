@@ -103,7 +103,7 @@ impl<V: NeighborValidator> NeighborFilterInner<V> {
 
 #[cfg(test)]
 mod tests {
-    use crate::local::services::{ServiceTransport, AUTOPEERING_SERVICE_NAME};
+    use crate::local::services::{ServiceProtocol, AUTOPEERING_SERVICE_NAME};
     use crate::peer::Peer;
 
     use super::*;
@@ -121,11 +121,11 @@ mod tests {
         let filter = NeighborFilter::new(local_id, Some(DummyValidator {}));
 
         let mut peer1 = Peer::new_test_peer(1);
-        peer1.add_service(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, 6969);
+        peer1.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, 6969);
         assert_eq!(1, peer1.num_services());
 
         let mut peer2 = Peer::new_test_peer(2);
-        peer2.add_service(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, 1337);
+        peer2.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, 1337);
         assert_eq!(1, peer2.num_services());
 
         (filter, peer1, peer2)

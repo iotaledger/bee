@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Autopeering initialization.
+
 use crate::{
     command::{Command, CommandTx},
     config::AutopeeringConfig,

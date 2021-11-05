@@ -14,7 +14,7 @@ use peerlist::{ActivePeersList, ReplacementList};
 use crate::{
     command::{Command, CommandTx},
     discovery::manager::{self, VERIFICATION_EXPIRATION_SECS},
-    local::services::{ServiceMap, ServiceTransport},
+    local::services::{ServiceMap, ServiceProtocol},
     local::Local,
     proto,
     request::RequestManager,
@@ -90,8 +90,8 @@ impl Peer {
     }
 
     /// Adds a service with address binding to this peer.
-    pub fn add_service(&mut self, service_name: impl ToString, transport: ServiceTransport, port: u16) {
-        self.services.insert(service_name.to_string(), transport, port);
+    pub fn add_service(&mut self, service_name: impl ToString, protocol: ServiceProtocol, port: u16) {
+        self.services.insert(service_name.to_string(), protocol, port);
     }
 
     /// Creates a peer from its Protobuf representation/encoding.
@@ -288,7 +288,7 @@ mod tests {
     impl Peer {
         pub(crate) fn new_test_peer(index: u8) -> Self {
             let mut services = ServiceMap::new();
-            services.insert(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, 1337);
+            services.insert(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, 1337);
 
             let public_key = PrivateKey::generate().unwrap().public_key();
             let peer_id = PeerId::from_public_key(public_key);

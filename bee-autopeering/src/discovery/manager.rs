@@ -7,7 +7,7 @@ use crate::{
     discovery::messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
     event::{Event, EventTx},
     local::{
-        services::{ServiceMap, ServicePort, ServiceTransport, AUTOPEERING_SERVICE_NAME},
+        services::{ServiceMap, ServicePort, ServiceProtocol, AUTOPEERING_SERVICE_NAME},
         Local,
     },
     multiaddr::{AddressKind, AutopeeringMultiaddr},
@@ -465,7 +465,7 @@ async fn add_master_peers(
         };
 
         let mut peer = Peer::new(entry_socketaddr.ip(), entry_addr.public_key().clone());
-        peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceTransport::Udp, entry_socketaddr.port());
+        peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, entry_socketaddr.port());
 
         let peer_id = peer.peer_id().clone();
 

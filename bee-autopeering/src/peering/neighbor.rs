@@ -21,16 +21,19 @@ use std::{
     vec,
 };
 
+/// The distance between the local entity and a neighbor.
 pub type Distance = u32;
 
 pub(crate) const MAX_DISTANCE: Distance = 4294967295;
 pub(crate) const SIZE_INBOUND: usize = 4;
 pub(crate) const SIZE_OUTBOUND: usize = 4;
 
+/// Decides whether a peer is a suitable neighbor, or not.
 pub trait NeighborValidator
 where
     Self: Send + Sync + Clone,
 {
+    /// Returns `true` if the given [`Peer`](crate::peer::Peer) is a valid neighbor.
     fn is_valid(&self, peer: &Peer) -> bool;
 }
 
