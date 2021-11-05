@@ -2,15 +2,15 @@
 
 A system that allows peers in the same IOTA network to automatically discover each other.
 
-## Example
-
-In order to integrate the Autopeering functionality in your node implementation you need to provide the following things to its `init` function:
+In order to integrate the Autopeering functionality in your node implementation you need to provide its `init` function with the following data:
 * an `AutopeeringConfig`;
-* a protocol version (`u32`);
+* the protocol version (`u32`);
 * a network name, e.g. "chrysalis-mainnet";
 * a `Local` entity (either randomly created or from an `Ed25519` keypair), that additionally announces one or more services;
 * a shutdown signal (`Future`);
 * a peer store, e.g. the `InMemoryPeerStore` (non-persistent) or the `SledPeerStore` (persistent), or a custom peer store implementing the `PeerStore` trait;
+
+## Example
 
 ```rust
 
