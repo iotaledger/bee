@@ -1,23 +1,18 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{peer_id::PeerId, peerstore::PeerStore, Peer};
+use super::{peer_id::PeerId, Peer};
 
 use crate::{
-    command::{Command, CommandTx},
-    discovery::{self, manager::VERIFICATION_EXPIRATION_SECS},
-    request::RequestManager,
-    server::ServerTx,
-    task::{Repeat, Runnable, ShutdownRx},
+    discovery::manager::VERIFICATION_EXPIRATION_SECS,
     time::{self, Timestamp},
 };
 
-use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Serialize, Serializer};
+use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Serialize};
 
 use std::{
-    collections::{vec_deque, HashSet, VecDeque},
+    collections::{HashSet, VecDeque},
     fmt,
-    ops::{Deref, DerefMut},
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
@@ -94,9 +89,9 @@ impl AsRef<Peer> for ActivePeer {
     }
 }
 
-impl Into<sled::IVec> for ActivePeer {
-    fn into(self) -> sled::IVec {
-        let bytes = bincode::serialize(&self).expect("serialization error");
+impl From<ActivePeer> for sled::IVec {
+    fn from(peer: ActivePeer) -> Self {
+        let bytes = bincode::serialize(&peer).expect("serialization error");
         sled::IVec::from_iter(bytes.into_iter())
     }
 }
@@ -174,6 +169,8 @@ pub(crate) struct MasterPeersList {
 }
 
 impl MasterPeersList {
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) fn new(peers: MasterPeersListInner) -> Self {
         Self {
             inner: Arc::new(RwLock::new(peers)),
@@ -202,7 +199,9 @@ pub(crate) struct PeerMetrics {
 }
 
 impl PeerMetrics {
-    pub(crate) fn new(peer_id: PeerId) -> Self {
+    // TODO: revisit dead code
+    #[allow(dead_code)]
+    pub(crate) fn new() -> Self {
         Self {
             verified_count: 0,
             last_new_peers: 0,
@@ -233,6 +232,8 @@ impl PeerMetrics {
         self.last_new_peers = last_new_peers;
     }
 
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) fn last_verif_request_timestamp(&self) -> Timestamp {
         self.last_verif_request
     }
@@ -241,6 +242,8 @@ impl PeerMetrics {
         self.last_verif_request = time::unix_now_secs();
     }
 
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) fn last_verif_response_timestamp(&self) -> Timestamp {
         self.last_verif_response
     }
@@ -253,6 +256,8 @@ impl PeerMetrics {
         time::since(self.last_verif_response).expect("system clock error") < VERIFICATION_EXPIRATION_SECS
     }
 
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) fn has_verified(&self) -> bool {
         time::since(self.last_verif_request).expect("system clock error") < VERIFICATION_EXPIRATION_SECS
     }
@@ -274,6 +279,8 @@ impl fmt::Debug for PeerMetrics {
 pub(crate) struct PeerRing<P, const N: usize>(VecDeque<P>);
 
 impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) fn new() -> Self {
         Self::default()
     }
@@ -338,6 +345,8 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
         self.0.get_mut(index)
     }
 
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) fn get_newest(&self) -> Option<&P> {
         self.0.get(0)
     }
@@ -346,9 +355,11 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
         self.0.get_mut(0)
     }
 
+    // TODO: revisit dead code
     /// Moves `peer_id` to the front of the list.
     ///
     /// Returns `false` if the `peer_id` is not found in the list, and thus, cannot be made the newest.
+    #[allow(dead_code)]
     pub(crate) fn set_newest(&mut self, peer_id: &PeerId) -> bool {
         if let Some(mid) = self.find_index(peer_id) {
             if mid > 0 {
@@ -361,6 +372,8 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
     }
 
     // needs to be atomic
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) fn set_newest_and_get(&mut self, peer_id: &PeerId) -> Option<&P> {
         if let Some(mid) = self.find_index(peer_id) {
             if mid > 0 {
@@ -388,14 +401,6 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
         self.0.get(self.0.len() - 1)
     }
 
-    pub(crate) fn rotate_backwards(&mut self) {
-        self.0.rotate_left(1);
-    }
-
-    pub(crate) fn rotate_forwards(&mut self) {
-        self.0.rotate_right(1);
-    }
-
     pub(crate) fn len(&self) -> usize {
         self.0.len()
     }
@@ -408,8 +413,10 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
         self.0.is_empty()
     }
 
+    // TODO: revisit dead code
     // TODO: mark as 'const fn' once stable.
     // Compiler error hints to issue #57563 <https://github.com/rust-lang/rust/issues/57563>.
+    #[allow(dead_code)]
     pub(crate) fn max_size(&self) -> usize {
         N
     }
@@ -422,5 +429,22 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
 impl<P, const N: usize> Default for PeerRing<P, N> {
     fn default() -> Self {
         Self(VecDeque::with_capacity(N))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
+        // TODO: revisit dead code
+        #[allow(dead_code)]
+        pub(crate) fn rotate_backwards(&mut self) {
+            self.0.rotate_left(1);
+        }
+
+        pub(crate) fn rotate_forwards(&mut self) {
+            self.0.rotate_right(1);
+        }
     }
 }

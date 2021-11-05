@@ -7,25 +7,15 @@ pub mod services;
 use salt::Salt;
 use services::{ServiceMap, ServiceProtocol};
 
-use crate::{
-    delay::DelayFactory,
-    event::{Event, EventTx},
-    hash,
-    peer::{peer_id::PeerId, peerstore::PeerStore},
-    task::{Repeat, ShutdownRx},
-    time,
-};
+use crate::peer::peer_id::PeerId;
 
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, SECRET_KEY_LENGTH};
-use libp2p_core::identity::{self, ed25519::Keypair};
+use libp2p_core::identity::ed25519::Keypair;
 
 use std::{
     convert::TryInto,
     fmt,
-    hash::{Hash, Hasher},
-    iter,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
-    time::Duration,
 };
 
 use self::salt::SALT_LIFETIME_SECS;

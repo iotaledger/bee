@@ -4,7 +4,6 @@
 use crate::{
     config::AutopeeringConfig,
     local::Local,
-    multiaddr,
     packet::{
         IncomingPacket, MessageType, OutgoingPacket, Packet, DISCOVERY_MSG_TYPE_RANGE, MAX_PACKET_SIZE,
         PEERING_MSG_TYPE_RANGE,
@@ -13,10 +12,7 @@ use crate::{
     task::{Runnable, ShutdownRx, TaskManager},
 };
 
-use tokio::{
-    net::UdpSocket,
-    sync::mpsc::{self, error::SendError},
-};
+use tokio::{net::UdpSocket, sync::mpsc};
 
 use std::{net::SocketAddr, sync::Arc};
 
@@ -243,7 +239,7 @@ impl Runnable for OutgoingPacketHandler {
                         let marshalled_bytes = marshal(msg_type, &msg_bytes);
 
                         let signature = local.read().sign(&marshalled_bytes);
-                        let packet = Packet::new(msg_type, &marshalled_bytes, &local.read().public_key(), signature);
+                        let packet = Packet::new(msg_type, &marshalled_bytes, local.read().public_key(), signature);
 
                         let bytes = packet.to_protobuf().expect("error encoding outgoing packet");
 
@@ -268,7 +264,7 @@ impl Runnable for OutgoingPacketHandler {
 pub(crate) fn marshal(msg_type: MessageType, msg_bytes: &[u8]) -> Vec<u8> {
     let mut marshalled_bytes = vec![0u8; msg_bytes.len() + 1];
     marshalled_bytes[0] = msg_type as u8;
-    marshalled_bytes[1..].copy_from_slice(&msg_bytes);
+    marshalled_bytes[1..].copy_from_slice(msg_bytes);
     marshalled_bytes
 }
 

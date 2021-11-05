@@ -48,6 +48,8 @@ impl VerificationRequest {
         self.source_addr
     }
 
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub fn target_addr(&self) -> IpAddr {
         self.target_addr
     }
@@ -77,6 +79,7 @@ impl VerificationRequest {
         })
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let ping = proto::Ping {
             version: self.version,
@@ -132,7 +135,9 @@ impl VerificationResponse {
         &self.services
     }
 
+    // TODO: revisit dead code
     /// When sent contains the external addr of the remote peer, when received the external addr of the local peer.
+    #[allow(dead_code)]
     pub(crate) fn target_addr(&self) -> IpAddr {
         self.target_addr
     }
@@ -203,6 +208,7 @@ impl DiscoveryRequest {
         })
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub(crate) fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let discover_request = proto::DiscoveryRequest {
             timestamp: self.timestamp as i64,
@@ -240,6 +246,8 @@ impl DiscoveryResponse {
         &self.request_hash
     }
 
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) fn peers(&self) -> &[Peer] {
         &self.peers
     }

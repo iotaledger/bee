@@ -2,13 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    command::{Command, CommandTx},
     discovery::manager,
     event::EventTx,
     local::Local,
     peer::{
         peerlist::{ActivePeer, ActivePeersList, MasterPeersList, ReplacementList},
-        peerstore::PeerStore,
         PeerId,
     },
     request::RequestManager,
@@ -17,12 +15,11 @@ use crate::{
 };
 
 use rand::{thread_rng, Rng};
-use tokio::sync::mpsc::Receiver;
-
-use std::{collections::VecDeque, time::Duration};
 
 #[derive(Clone)]
 pub(crate) struct QueryContext {
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) local: Local,
     pub(crate) request_mngr: RequestManager,
     pub(crate) master_peers: MasterPeersList,
@@ -74,7 +71,7 @@ fn peer_to_reverify(active_peers: &ActivePeersList) -> Option<PeerId> {
     if active_peers.read().is_empty() {
         None
     } else {
-        active_peers.read().get_oldest().cloned().map(|p| p.peer_id().clone())
+        active_peers.read().get_oldest().cloned().map(|p| *p.peer_id())
     }
 }
 
@@ -122,10 +119,7 @@ fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
 
     // If we have less than 3 verified peers, then we use those for the query.
     if verif_peers.len() < 3 {
-        verif_peers
-            .into_iter()
-            .map(|ap| ap.peer_id().clone())
-            .collect::<Vec<_>>()
+        verif_peers.into_iter().map(|ap| *ap.peer_id()).collect::<Vec<_>>()
     } else {
         // Note: this macro is useful to remove some noise from the pattern matching rules.
         macro_rules! num {
@@ -149,7 +143,7 @@ fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
             a + b + c
         }
 
-        let latest = verif_peers.remove(0).peer_id().clone();
+        let latest = *verif_peers.remove(0).peer_id();
 
         // Note: This loop finds the three "heaviest" peers with one iteration over an unsorted vec of verified peers.
         let heaviest3 = verif_peers.into_iter().fold(
@@ -192,7 +186,7 @@ fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
         );
 
         let r = thread_rng().gen_range(0..len(&heaviest3));
-        let heaviest = match r {
+        let heaviest = *match r {
             0 => heaviest3.0,
             1 => heaviest3.1,
             2 => heaviest3.2,
@@ -200,8 +194,7 @@ fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
         }
         // Panic: we made sure that the unwrap is always possible.
         .unwrap()
-        .peer_id()
-        .clone();
+        .peer_id();
 
         vec![latest, heaviest]
     }
@@ -214,10 +207,7 @@ mod tests {
 
     fn create_peerlist_of_size(n: usize) -> ActivePeersList {
         // Create a set of active peer entries.
-        let mut entries = (0..n)
-            .map(|i| Peer::new_test_peer(i as u8))
-            .map(|p| ActivePeer::new(p))
-            .collect::<Vec<_>>();
+        let entries = (0..n as u8).map(Peer::new_test_peer).map(ActivePeer::new);
 
         // Create a peerlist, and insert the peer entries setting the `last_new_peers` metric
         // equal to its peerlist index. We also need to set the `verified_count` to at least 1.
@@ -254,9 +244,7 @@ mod tests {
         let peerlist = create_peerlist_of_size(3);
 
         macro_rules! equal {
-            ($a:expr, $b:expr) => {{
-                $a == peerlist.read().get($b).unwrap().peer_id()
-            }};
+            ($a:expr, $b:expr) => {{ $a == peerlist.read().get($b).unwrap().peer_id() }};
         }
 
         let selected = select_peers_to_query(&peerlist);
@@ -271,9 +259,7 @@ mod tests {
         let peerlist = create_peerlist_of_size(10);
 
         macro_rules! equal {
-            ($a:expr, $b:expr) => {{
-                $a == peerlist.read().get($b).unwrap().peer_id()
-            }};
+            ($a:expr, $b:expr) => {{ $a == peerlist.read().get($b).unwrap().peer_id() }};
         }
 
         // 0 1 2 3 4 ... 7 8 9 (index)

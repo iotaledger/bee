@@ -4,58 +4,39 @@
 //! Autopeering initialization.
 
 use crate::{
-    command::{Command, CommandTx},
     config::AutopeeringConfig,
-    delay::{self, DelayFactoryBuilder, DelayFactoryMode},
+    delay,
     discovery::{
         manager::{
             DiscoveryManager, DiscoveryManagerConfig, DEFAULT_QUERY_INTERVAL_SECS, DEFAULT_REVERIFY_INTERVAL_SECS,
         },
-        messages::VerificationRequest,
         query::{self, QueryContext},
     },
     event::{self, EventRx},
     hash,
-    local::{
-        self,
-        salt::{Salt, SALT_LIFETIME_SECS},
-        services::{ServiceMap, AUTOPEERING_SERVICE_NAME},
-        Local,
-    },
+    local::Local,
     multiaddr,
-    packet::{IncomingPacket, MessageType, OutgoingPacket},
+    packet::IncomingPacket,
     peer::{
-        self,
-        peerlist::{self, ActivePeersList, MasterPeersList, ReplacementList},
-        peerstore::{self, InMemoryPeerStore, PeerStore},
-        PeerId,
+        peerlist::{ActivePeersList, MasterPeersList, ReplacementList},
+        peerstore::PeerStore,
     },
-    peering::update::UpdateContext,
     peering::{
         filter::NeighborFilter,
         manager::{
             InboundNeighborhood, OutboundNeighborhood, PeeringManager, PeeringManagerConfig, SaltUpdateContext,
             SALT_UPDATE_SECS,
         },
-        update::{self, OPEN_OUTBOUND_NBH_UPDATE_SECS},
+        update::{self, UpdateContext, OPEN_OUTBOUND_NBH_UPDATE_SECS},
         NeighborValidator,
     },
     request::{self, RequestManager, EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS},
-    server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket, ServerTx},
-    task::{self, ShutdownRx, TaskManager, MAX_SHUTDOWN_PRIORITY},
+    server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket},
+    task::{TaskManager, MAX_SHUTDOWN_PRIORITY},
     time,
 };
 
-use std::{
-    collections::HashSet,
-    error,
-    future::Future,
-    iter,
-    net::SocketAddr,
-    ops::DerefMut as _,
-    sync::Arc,
-    time::{Duration, SystemTime},
-};
+use std::{error, future::Future, iter, time::Duration};
 
 const NUM_TASKS: usize = 9;
 
@@ -100,7 +81,7 @@ where
     log::info!("Protocol_version: {}", version);
     log::info!(
         "Public key: {}",
-        multiaddr::from_pubkey_to_base58(&local.read().public_key())
+        multiaddr::from_pubkey_to_base58(local.read().public_key())
     );
     log::info!("Current time: {}", time::datetime_now());
     log::info!("Private salt: {}", private_salt);
@@ -157,7 +138,7 @@ where
     // Create neighborhoods and neighbor candidate filter.
     let inbound_nbh = InboundNeighborhood::new();
     let outbound_nbh = OutboundNeighborhood::new();
-    let nb_filter = NeighborFilter::new(local.read().peer_id().clone(), neighbor_validator);
+    let nb_filter = NeighborFilter::new(*local.read().peer_id(), neighbor_validator);
 
     // Create the autopeering manager handling the peering request/response protocol.
     let peering_config = PeeringManagerConfig::new(&config, version, network_id);
@@ -170,7 +151,7 @@ where
         request_mngr.clone(),
         active_peers.clone(),
         event_tx.clone(),
-        command_tx.clone(),
+        command_tx,
         inbound_nbh.clone(),
         outbound_nbh.clone(),
         nb_filter.clone(),

@@ -2,30 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    delay::DelayFactory,
-    discovery::messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
+    discovery::messages::{DiscoveryRequest, VerificationRequest},
     hash,
-    local::{salt::Salt, Local},
+    local::Local,
     packet::{msg_hash, MessageType},
-    peer::{peer_id::PeerId, peerstore::PeerStore},
+    peer::peer_id::PeerId,
     peering::messages::PeeringRequest,
-    server::ServerTx,
-    task::{Repeat, ShutdownRx},
+    task::Repeat,
     time::{self, Timestamp},
 };
 
-use num::CheckedAdd;
 use tokio::sync::oneshot;
 
 pub(crate) use oneshot::channel as response_chan;
 
 use std::{
-    any::{Any, TypeId},
+    any::TypeId,
     collections::HashMap,
     fmt::Debug,
-    iter,
     net::{IpAddr, SocketAddr},
-    ops::DerefMut,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
     time::Duration,
 };
@@ -49,7 +44,7 @@ pub(crate) struct RequestKey {
 }
 
 pub(crate) struct RequestValue {
-    pub(crate) request_hash: [u8; hash::SHA256_LEN],
+    pub(crate) request_hash: RequestHash,
     pub(crate) expiration_time: u64,
     pub(crate) response_tx: Option<ResponseTx>,
 }
@@ -185,7 +180,7 @@ impl RequestManagerInner {
     pub(crate) fn pull<R: Request + 'static>(&mut self, peer_id: &PeerId) -> Option<RequestValue> {
         // TODO: prevent the clone?
         let key = RequestKey {
-            peer_id: peer_id.clone(),
+            peer_id: *peer_id,
             request_id: TypeId::of::<R>(),
         };
 

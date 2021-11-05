@@ -1,12 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{multiaddr::AddressKind, proto};
+use crate::proto;
 
-use libp2p_core::multiaddr::Protocol;
 use serde::{Deserialize, Serialize};
 
-use std::{collections::HashMap, convert::TryFrom, fmt, io, net::IpAddr, str::FromStr};
+use std::{collections::HashMap, fmt, io, str::FromStr};
 
 /// Represents the name of a service.
 pub type ServiceName = String;
@@ -20,7 +19,9 @@ pub const AUTOPEERING_SERVICE_NAME: &str = "peering";
 pub struct ServiceMap(HashMap<ServiceName, Service>);
 
 impl ServiceMap {
+    // TODO: revisit dead code
     /// Creates a new empty service map.
+    #[allow(dead_code)]
     pub(crate) fn new() -> Self {
         Self::default()
     }
@@ -88,7 +89,6 @@ impl fmt::Display for ServiceMap {
                 .map(|(service_name, service)| format!("{}/{}/{}", service_name, service.protocol, service.port))
                 .collect::<Vec<_>>()
                 .join(";")
-                .to_string()
         )
     }
 }
@@ -100,6 +100,8 @@ pub struct Service {
 }
 
 impl Service {
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub fn protocol(&self) -> ServiceProtocol {
         self.protocol
     }

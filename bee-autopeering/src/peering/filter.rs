@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    peer::{peer_id::PeerId, peerlist::ActivePeer, Peer},
+    peer::{peer_id::PeerId, Peer},
     NeighborValidator,
 };
 
 use std::{
-    collections::{hash_set, HashSet},
+    collections::HashSet,
     iter,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
@@ -64,7 +64,9 @@ impl<V: NeighborValidator> NeighborFilterInner<V> {
         self.rejected.extend(peers)
     }
 
+    // TODO: revisit dead code
     /// Removes a single currently rejected peer id.
+    #[allow(dead_code)]
     pub(crate) fn remove(&mut self, peer_id: &PeerId) {
         let _ = self.rejected.remove(peer_id);
     }
@@ -79,14 +81,10 @@ impl<V: NeighborValidator> NeighborFilterInner<V> {
         let peer = candidate.as_ref();
         let peer_id = peer.peer_id();
 
-        if peer_id == &self.local_id {
-            false
-        } else if self.rejected.contains(peer_id) {
-            false
-        } else if !self.validator.is_valid(peer) {
+        if peer_id == &self.local_id || self.rejected.contains(peer_id) {
             false
         } else {
-            true
+            self.validator.is_valid(peer)
         }
     }
 
@@ -95,7 +93,9 @@ impl<V: NeighborValidator> NeighborFilterInner<V> {
         candidates.iter().filter(|c| self.ok(*c)).collect::<Vec<_>>()
     }
 
+    // TODO: revisit dead code
     /// Returns an iterator over the rejected peer ids (including the local id).
+    #[allow(dead_code)]
     pub(crate) fn iter(&self) -> impl Iterator<Item = &PeerId> {
         iter::once(&self.local_id).chain(self.rejected.iter())
     }
@@ -103,8 +103,10 @@ impl<V: NeighborValidator> NeighborFilterInner<V> {
 
 #[cfg(test)]
 mod tests {
-    use crate::local::services::{ServiceProtocol, AUTOPEERING_SERVICE_NAME};
-    use crate::peer::Peer;
+    use crate::{
+        local::services::{ServiceProtocol, AUTOPEERING_SERVICE_NAME},
+        peer::Peer,
+    };
 
     use super::*;
 

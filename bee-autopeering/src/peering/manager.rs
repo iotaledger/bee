@@ -10,29 +10,23 @@ use super::{
 use crate::{
     command::CommandTx,
     config::AutopeeringConfig,
-    delay::ManualDelayFactory,
-    discovery,
     event::{Event, EventTx},
-    hash,
     local::{
         salt::{self, Salt, SALT_LIFETIME_SECS},
         services::AUTOPEERING_SERVICE_NAME,
         Local,
     },
     packet::{msg_hash, IncomingPacket, MessageType, OutgoingPacket},
-    peer::{self, peer_id::PeerId, peerlist::ActivePeersList, peerstore::PeerStore, Peer},
-    peering::{
-        neighbor::{salt_distance, Neighbor},
-        update::OUTBOUND_NBH_UPDATE_INTERVAL,
-    },
+    peer::{self, peer_id::PeerId, peerlist::ActivePeersList, Peer},
+    peering::neighbor::{salt_distance, Neighbor},
     request::{self, RequestManager, RequestValue, ResponseTx, RESPONSE_TIMEOUT},
     server::{ServerSocket, ServerTx},
     task::{Repeat, Runnable, ShutdownRx},
-    time::{MINUTE, SECOND},
+    time::SECOND,
     NeighborValidator,
 };
 
-use std::{fmt, iter, net::SocketAddr, time::Duration, vec};
+use std::{net::SocketAddr, time::Duration};
 
 /// Salt update interval.
 pub(crate) const SALT_UPDATE_SECS: Duration = Duration::from_secs(SALT_LIFETIME_SECS.as_secs() - SECOND);
@@ -45,6 +39,8 @@ pub(crate) type OutboundNeighborhood = Neighborhood<SIZE_OUTBOUND, false>;
 /// Represents the answer of a `PeeringRequest`. Can be either `true` (peering accepted), or `false` (peering denied).
 pub type Status = bool;
 
+// TODO: revisit dead code
+#[allow(dead_code)]
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum Error {
     #[error("response timeout")]
@@ -57,6 +53,8 @@ pub(crate) enum Error {
     InvalidMessage,
 }
 
+// TODO: revisit dead code
+#[allow(dead_code)]
 pub(crate) struct PeeringManagerConfig {
     pub(crate) version: u32,
     pub(crate) network_id: u32,
@@ -75,6 +73,8 @@ impl PeeringManagerConfig {
 
 pub(crate) struct PeeringManager<V: NeighborValidator> {
     // The peering config.
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     config: PeeringManagerConfig,
     // The local peer.
     local: Local,
@@ -95,6 +95,7 @@ pub(crate) struct PeeringManager<V: NeighborValidator> {
 }
 
 impl<V: NeighborValidator> PeeringManager<V> {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         config: PeeringManagerConfig,
         local: Local,
@@ -102,7 +103,8 @@ impl<V: NeighborValidator> PeeringManager<V> {
         request_mngr: RequestManager,
         active_peers: ActivePeersList,
         event_tx: EventTx,
-        command_tx: CommandTx,
+        // TODO: revisit dead code
+        _command_tx: CommandTx,
         inbound_nbh: InboundNeighborhood,
         outbound_nbh: OutboundNeighborhood,
         nb_filter: NeighborFilter<V>,
@@ -130,7 +132,8 @@ impl<V: NeighborValidator> Runnable for PeeringManager<V> {
 
     async fn run(self, mut shutdown_rx: Self::ShutdownSignal) {
         let PeeringManager {
-            config,
+            // TODO: revisit dead code
+            config: _,
             local,
             socket,
             request_mngr,
@@ -140,12 +143,6 @@ impl<V: NeighborValidator> Runnable for PeeringManager<V> {
             outbound_nbh,
             nb_filter,
         } = self;
-
-        let PeeringManagerConfig {
-            version,
-            network_id,
-            source_addr,
-        } = config;
 
         let ServerSocket {
             mut server_rx,
@@ -291,7 +288,7 @@ fn validate_peering_response(peer_res: &PeeringResponse, ctx: &RecvContext) -> R
     use ValidationError::*;
 
     if let Some(reqv) = ctx.request_mngr.write().pull::<PeeringRequest>(ctx.peer_id) {
-        if peer_res.request_hash() != &reqv.request_hash {
+        if peer_res.request_hash() != reqv.request_hash {
             Err(IncorrectRequestHash)
         } else {
             Ok(reqv)
@@ -321,6 +318,9 @@ fn handle_peering_request<V: NeighborValidator>(
     nb_filter: &NeighborFilter<V>,
 ) {
     log::trace!("Handling peering request.");
+
+    // TODO: revisit peer salt
+    let _peer_salt = peer_req.salt();
 
     let mut status = false;
 
@@ -358,7 +358,7 @@ fn handle_peering_request<V: NeighborValidator>(
                     status = true;
 
                     // Update the neighbor filter.
-                    nb_filter.write().add(peer.peer_id().clone());
+                    nb_filter.write().add(*peer.peer_id());
 
                     // Fire `IncomingPeering` event.
                     publish_peering_event::<INCOMING>(
@@ -381,14 +381,7 @@ fn handle_peering_request<V: NeighborValidator>(
     }
 
     // In any case send a response.
-    send_peering_response_to_addr(
-        ctx.peer_addr,
-        ctx.peer_id,
-        ctx.msg_bytes,
-        ctx.server_tx,
-        ctx.local,
-        status,
-    );
+    send_peering_response_to_addr(ctx.peer_addr, ctx.peer_id, ctx.msg_bytes, ctx.server_tx, status);
 }
 
 fn handle_peering_response<V: NeighborValidator>(
@@ -402,7 +395,7 @@ fn handle_peering_response<V: NeighborValidator>(
     let mut status = peer_res.status();
 
     if status {
-        log::debug!("Peering by {} accepted.", ctx.peer_id);
+        log::debug!("Peering accepted by {}.", ctx.peer_id);
 
         let peer = ctx
             .active_peers
@@ -421,7 +414,7 @@ fn handle_peering_response<V: NeighborValidator>(
             // Fire `OutgoingPeering` event with status = `false`.
             publish_peering_event::<OUTGOING>(
                 peer.clone(),
-                false,
+                status,
                 ctx.local,
                 ctx.event_tx,
                 ctx.inbound_nbh,
@@ -430,23 +423,14 @@ fn handle_peering_response<V: NeighborValidator>(
 
             // Drop that peer.
             send_drop_peering_request_to_peer(peer, ctx.server_tx, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
-        } else {
-            if ctx.outbound_nbh.write().insert_neighbor(peer.clone(), ctx.local) {
-                // Update the neighbor filter.
-                nb_filter.write().add(peer.peer_id().clone());
+        } else if ctx.outbound_nbh.write().insert_neighbor(peer.clone(), ctx.local) {
+            // Update the neighbor filter.
+            nb_filter.write().add(*peer.peer_id());
 
-                // Fire `OutgoingPeering` event with status = `true`.
-                publish_peering_event::<OUTGOING>(
-                    peer,
-                    status,
-                    ctx.local,
-                    ctx.event_tx,
-                    ctx.inbound_nbh,
-                    ctx.outbound_nbh,
-                );
-            } else {
-                log::debug!("Failed to add neighbor to outbound neighborhood after successful peering request");
-            }
+            // Fire `OutgoingPeering` event with status = `true`.
+            publish_peering_event::<OUTGOING>(peer, status, ctx.local, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
+        } else {
+            log::debug!("Failed to add neighbor to outbound neighborhood after successful peering request");
         }
     } else {
         log::debug!("Peering by {} denied.", ctx.peer_id);
@@ -470,7 +454,7 @@ fn handle_drop_request<V: NeighborValidator>(
     if let Some(nb) = ctx.outbound_nbh.write().remove_neighbor(ctx.peer_id) {
         removed_nb.replace(nb);
 
-        nb_filter.write().add(ctx.peer_id.clone());
+        nb_filter.write().add(*ctx.peer_id);
 
         // TODO: trigger immediate outbound neighborhood update; currently we wait for the next interval
     }
@@ -478,7 +462,7 @@ fn handle_drop_request<V: NeighborValidator>(
     if removed_nb.is_some() {
         send_drop_peering_request_to_addr(
             ctx.peer_addr,
-            ctx.peer_id.clone(),
+            *ctx.peer_id,
             ctx.server_tx,
             ctx.event_tx,
             ctx.inbound_nbh,
@@ -560,9 +544,7 @@ pub(crate) fn send_peering_request_to_addr(
 ) {
     log::trace!("Sending peering request to: {}", peer_id);
 
-    let peer_req = request_mngr
-        .write()
-        .new_peering_request(peer_id.clone(), response_tx, local);
+    let peer_req = request_mngr.write().new_peering_request(*peer_id, response_tx, local);
 
     let msg_bytes = peer_req.to_protobuf().expect("error encoding peering request").to_vec();
 
@@ -581,7 +563,6 @@ pub(crate) fn send_peering_response_to_addr(
     peer_id: &PeerId,
     msg_bytes: &[u8],
     tx: &ServerTx,
-    local: &Local,
     status: bool,
 ) {
     log::trace!("Sending peering response to: {}", peer_id);
@@ -636,11 +617,13 @@ pub(crate) fn send_drop_peering_request_to_addr(
         .expect("error encoding drop request")
         .to_vec();
 
-    server_tx.send(OutgoingPacket {
-        msg_type: MessageType::DropRequest,
-        msg_bytes,
-        peer_addr,
-    });
+    server_tx
+        .send(OutgoingPacket {
+            msg_type: MessageType::DropRequest,
+            msg_bytes,
+            peer_addr,
+        })
+        .expect("error sending drop-peering request to server");
 
     publish_drop_peering_event(peer_id, event_tx, inbound_nbh, outbound_nbh);
 }
@@ -675,11 +658,13 @@ pub(crate) fn publish_peering_event<const IS_INBOUND: bool>(
         }
     });
 
-    event_tx.send(if IS_INBOUND {
-        Event::IncomingPeering { peer, distance }
-    } else {
-        Event::OutgoingPeering { peer, distance }
-    });
+    event_tx
+        .send(if IS_INBOUND {
+            Event::IncomingPeering { peer, distance }
+        } else {
+            Event::OutgoingPeering { peer, distance }
+        })
+        .expect("error publishing incoming/outgoing peering event");
 }
 
 fn publish_drop_peering_event(
@@ -784,8 +769,8 @@ fn update_salts<V: NeighborValidator>(
         nb_filter.write().reset();
     } else {
         // Update the distances with the new salts.
-        inbound_nbh.write().update_distances(&local);
-        outbound_nbh.write().update_distances(&local);
+        inbound_nbh.write().update_distances(local);
+        outbound_nbh.write().update_distances(local);
     }
 
     log::debug!(
@@ -795,10 +780,12 @@ fn update_salts<V: NeighborValidator>(
     );
 
     // Publish 'SaltUpdated' event.
-    event_tx.send(Event::SaltUpdated {
-        public_salt_lifetime,
-        private_salt_lifetime,
-    });
+    event_tx
+        .send(Event::SaltUpdated {
+            public_salt_lifetime,
+            private_salt_lifetime,
+        })
+        .expect("error publishing salt-updated event");
 }
 
 /// Adds a neighbor to a neighborhood. Possibly even replaces the so far furthest neighbor.
@@ -826,11 +813,12 @@ pub(crate) fn add_or_replace_neighbor<const IS_INBOUND: bool>(
     }
 }
 
+// TODO: revisit dead code
 /// Reinitializes the neighbor filter with the current neighborhoods.
 ///
 /// Call this function whenever one of the neighborhoods changes.
+#[allow(dead_code)]
 pub(crate) fn refresh_neighbor_filter<V: NeighborValidator>(
-    local: &Local,
     neighbor_filter: &NeighborFilter<V>,
     inbound_nbh: &InboundNeighborhood,
     outbound_nbh: &OutboundNeighborhood,
@@ -843,7 +831,7 @@ pub(crate) fn refresh_neighbor_filter<V: NeighborValidator>(
             .read()
             .iter()
             .map(|p| p.peer_id())
-            .cloned()
-            .chain(outbound_nbh.read().iter().map(|p| p.peer_id()).cloned()),
+            .copied()
+            .chain(outbound_nbh.read().iter().map(|p| p.peer_id()).copied()),
     );
 }

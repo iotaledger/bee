@@ -4,26 +4,22 @@
 use crate::{
     hash,
     local::{salt::Salt, Local},
-    peer::{peer_id::PeerId, peerlist::ActivePeer, Peer},
-    task::{ShutdownRx, MAX_SHUTDOWN_PRIORITY},
+    peer::{peer_id::PeerId, Peer},
 };
 
 use prost::bytes::{Buf, Bytes};
-use tokio::sync::mpsc::Receiver;
 
 use std::{
-    cmp,
-    collections::{BTreeMap, BTreeSet},
-    fmt,
-    ops::Deref,
+    cmp, fmt,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
-    time::Duration,
     vec,
 };
 
 /// The distance between the local entity and a neighbor.
 pub type Distance = u32;
 
+// TODO: revisit dead code
+#[allow(dead_code)]
 pub(crate) const MAX_DISTANCE: Distance = 4294967295;
 pub(crate) const SIZE_INBOUND: usize = 4;
 pub(crate) const SIZE_OUTBOUND: usize = 4;
@@ -61,6 +57,8 @@ impl Neighbor {
         self.peer
     }
 
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) fn into_distance(self) -> Distance {
         self.distance
     }
@@ -80,7 +78,7 @@ impl PartialEq for Neighbor {
 }
 impl PartialOrd for Neighbor {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        Some(self.cmp(&other))
+        Some(self.cmp(other))
     }
 }
 impl Ord for Neighbor {
@@ -120,6 +118,8 @@ pub(crate) struct NeighborhoodInner<const N: usize, const INBOUND: bool> {
 }
 
 impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) fn new() -> Self {
         Self::default()
     }
@@ -127,7 +127,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
     pub(crate) fn insert_neighbor(&mut self, peer: Peer, local: &Local) -> bool {
         // If the peer already exists remove it.
         // NOTE: It's a bit less efficient doing it like this, but the code requires less branching this way.
-        let _ = self.remove_neighbor(&peer.peer_id());
+        let _ = self.remove_neighbor(peer.peer_id());
 
         if self.neighbors.len() >= N {
             return false;
@@ -199,7 +199,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
 
     pub(crate) fn remove_furthest(&mut self) -> Option<Peer> {
         // Note: Both methods require unique access to `self`, so we need to clone the peer id.
-        if let Some(peer_id) = self.find_furthest().map(|d| d.peer().peer_id().clone()) {
+        if let Some(peer_id) = self.find_furthest().map(|d| *d.peer().peer_id()) {
             self.remove_neighbor(&peer_id)
         } else {
             None
@@ -207,16 +207,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
     }
 
     pub(crate) fn update_distances(&mut self, local: &Local) {
-        let (local_id, private_salt, public_salt) = {
-            let guard = local.read();
-
-            let peer_id_ = guard.peer_id().clone();
-            let private_salt_ = guard.private_salt().expect("missing private salt").clone();
-            let public_salt_ = guard.public_salt().expect("missing public salt").clone();
-
-            (peer_id_, private_salt_, public_salt_)
-        };
-
+        let local_id = *local.read().peer_id();
         let salt = if INBOUND {
             local.read().private_salt().expect("missing private salt").clone()
         } else {
@@ -224,7 +215,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         };
 
         self.neighbors.iter_mut().for_each(|pd| {
-            pd.distance = salt_distance(&local_id, &pd.peer().peer_id(), &salt);
+            pd.distance = salt_distance(&local_id, pd.peer().peer_id(), &salt);
         });
     }
 
@@ -232,6 +223,8 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         self.neighbors.len() == N
     }
 
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) fn is_empty(&self) -> bool {
         self.neighbors.is_empty()
     }
@@ -296,8 +289,6 @@ fn xor<const N: usize>(a: [u8; N], b: [u8; N]) -> [u8; N] {
 
 #[cfg(test)]
 mod tests {
-    use crypto::signatures::ed25519::SecretKey as PrivateKey;
-
     use super::*;
 
     fn distance(peer1: &PeerId, peer2: &PeerId) -> Distance {
@@ -310,7 +301,7 @@ mod tests {
     #[test]
     fn neighborhood_size_limit() {
         let local = Local::new();
-        let mut outbound_nh = Neighborhood::<2, false>::new();
+        let outbound_nh = Neighborhood::<2, false>::new();
         for i in 0u8..5 {
             outbound_nh.write().insert_neighbor(Peer::new_test_peer(i), &local);
         }

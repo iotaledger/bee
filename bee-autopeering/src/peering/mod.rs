@@ -9,5 +9,3 @@ pub(crate) mod update;
 
 pub use manager::Status;
 pub use neighbor::{Distance, NeighborValidator};
-
-pub(crate) use manager::{PeeringManager, PeeringManagerConfig};

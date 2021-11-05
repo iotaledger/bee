@@ -5,8 +5,7 @@
 
 use bee_autopeering::{
     init,
-    peerstore::InMemoryPeerStore,
-    peerstore::{SledPeerStore, SledPeerStoreConfig},
+    peerstore::{InMemoryPeerStore, SledPeerStore, SledPeerStoreConfig},
     AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 
@@ -36,10 +35,10 @@ fn read_config() -> AutopeeringConfig {
     //     "bindAddress": "0.0.0.0:14627",
     //     "entryNodes": [
     //         "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
-    //         "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
-    //         "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
-    //         "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
-    //     ],
+    //         "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/
+    // iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",         "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.
+    // net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",         "/dns/entry-mainnet.
+    // tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"     ],
     //     "entryNodesPreferIPv6": false,
     //     "runAsEntryNode": false
     // }"#;
@@ -48,8 +47,8 @@ fn read_config() -> AutopeeringConfig {
     // {
     //     "bindAddress": "0.0.0.0:14627",
     //     "entryNodes": [
-    //         "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb"
-    //     ],
+    //         "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/
+    // iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb"     ],
     //     "entryNodesPreferIPv6": false,
     //     "runAsEntryNode": false
     // }"#;

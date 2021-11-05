@@ -1,18 +1,17 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{task::ShutdownRx, time};
-
 use rand::{thread_rng, Rng as _};
 
 use std::{
-    future::Future,
     sync::atomic::{AtomicU64, Ordering},
     time::{Duration, Instant},
 };
 
 pub(crate) type Delay = Duration;
 
+// TODO: revisit dead code
+#[allow(dead_code)]
 #[derive(Default)]
 pub(crate) struct DelayFactoryBuilder {
     max_count: Option<usize>,
@@ -21,6 +20,8 @@ pub(crate) struct DelayFactoryBuilder {
     mode: DelayFactoryMode,
 }
 
+// TODO: revisit dead code
+#[allow(dead_code)]
 impl DelayFactoryBuilder {
     pub fn new(mode: DelayFactoryMode) -> Self {
         Self {
@@ -77,12 +78,11 @@ impl Iterator for DelayFactory {
     type Item = Delay;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.curr_count >= self.max_count {
-            None
-        } else if Instant::now()
-            .checked_duration_since(self.timestamp)
-            .expect("error duration since")
-            > self.timeout
+        if self.curr_count >= self.max_count
+            || Instant::now()
+                .checked_duration_since(self.timestamp)
+                .expect("error duration since")
+                > self.timeout
         {
             None
         } else {
@@ -97,7 +97,7 @@ impl Iterator for DelayFactory {
             };
             self.curr_count += 1;
 
-            if self.jitter != 1.0 {
+            if (self.jitter - 1.0).abs() > f32::EPSILON {
                 next_interval_millis =
                     thread_rng().gen_range(((next_interval_millis as f32 * self.jitter) as u64)..next_interval_millis)
             }
@@ -107,6 +107,8 @@ impl Iterator for DelayFactory {
     }
 }
 
+// TODO: revisit dead code
+#[allow(dead_code)]
 /// The different "Modi operandi" for the [`DelayFactory`].
 pub(crate) enum DelayFactoryMode {
     /// The factory produces a series of 0-delays.

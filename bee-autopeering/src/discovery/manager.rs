@@ -25,23 +25,29 @@ use crate::{
     time::{self, SECOND},
 };
 
-use crypto::signatures::ed25519::PublicKey;
 use rand::{seq::index, Rng as _};
-use tokio::sync::oneshot;
 
-use std::net::{IpAddr, SocketAddr};
+use std::net::SocketAddr;
 
 // Time interval after which the next peer is reverified.
 pub(crate) const DEFAULT_REVERIFY_INTERVAL_SECS: u64 = 10 * SECOND;
 // Time interval after which peers are queried for new peers.
 pub(crate) const DEFAULT_QUERY_INTERVAL_SECS: u64 = 60 * SECOND;
 // The default delay between requests to a single peer.
+// TODO: revisit dead code
+#[allow(dead_code)]
 const BACKOFF_INTERVALL_MILLISECS: u64 = 500;
 // A factor that determines the range from which a concrete delay is picked randomly.
+// TODO: revisit dead code
+#[allow(dead_code)]
 const JITTER: f32 = 0.5;
 // A factor that determines the intervall lengths between repeated requests to a peer.
+// TODO: revisit dead code
+#[allow(dead_code)]
 const EXPONENTIAL_BACKOFF_FACTOR: f32 = 1.5;
 // The number of times a request is repeated in case the peer doesn't reply.
+// TODO: revisit dead code
+#[allow(dead_code)]
 const MAX_RETRIES: usize = 2;
 // Is the time until a peer verification expires (12 hours).
 pub(crate) const VERIFICATION_EXPIRATION_SECS: u64 = 12 * time::HOUR;
@@ -50,6 +56,8 @@ const MAX_PEERS_IN_RESPONSE: usize = 6;
 // Is the minimum number of verifications required to be selected in DiscoveryResponse.
 const MIN_VERIFIED_IN_RESPONSE: usize = 1;
 // Is the maximum number of services a peer can support.
+// TODO: revisit dead code
+#[allow(dead_code)]
 const MAX_SERVICES: usize = 5;
 
 // pub(crate) type DiscoveryHandler<S: PeerStore> = Box<dyn Fn(&RecvContext<S>) + Send + Sync + 'static>;
@@ -57,9 +65,13 @@ const MAX_SERVICES: usize = 5;
 pub(crate) struct DiscoveryManagerConfig {
     pub(crate) entry_nodes: Vec<AutopeeringMultiaddr>,
     pub(crate) entry_nodes_prefer_ipv6: bool,
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) run_as_entry_node: bool,
     pub(crate) version: u32,
     pub(crate) network_id: u32,
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) bind_addr: SocketAddr,
 }
 
@@ -98,6 +110,7 @@ pub(crate) struct DiscoveryManager<S: PeerStore> {
 }
 
 impl<S: PeerStore + 'static> DiscoveryManager<S> {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         config: DiscoveryManagerConfig,
         local: Local,
@@ -138,26 +151,21 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
         let DiscoveryManagerConfig {
             mut entry_nodes,
             entry_nodes_prefer_ipv6,
-            run_as_entry_node,
+            run_as_entry_node: _,
             version,
             network_id,
-            bind_addr,
+            bind_addr: _,
         } = config;
 
-        let ServerSocket {
-            mut server_rx,
-            server_tx,
-        } = socket;
+        let ServerSocket { server_rx, server_tx } = socket;
 
         // Add previously discovered peers from the peer store.
-        add_peers_from_store(&peerstore, &local, &active_peers, &replacements);
+        add_peers_from_store(&peerstore, &active_peers, &replacements);
 
         // Add master peers from the config.
         add_master_peers(
             &mut entry_nodes,
             entry_nodes_prefer_ipv6,
-            &request_mngr,
-            &server_tx,
             &local,
             &master_peers,
             &active_peers,
@@ -169,7 +177,6 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
             server_tx: server_tx.clone(),
             server_rx,
             local: local.clone(),
-            peerstore: peerstore.clone(),
             version,
             network_id,
             request_mngr: request_mngr.clone(),
@@ -182,25 +189,22 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
 
         let discovery_send_handler = DiscoverySendHandler {
             server_tx,
-            local,
-            peerstore,
             request_mngr,
             active_peers,
             command_rx,
         };
 
-        task_mngr.run::<DiscoveryRecvHandler<S>>(discovery_recv_handler);
-        task_mngr.run::<DiscoverySendHandler<S>>(discovery_send_handler);
+        task_mngr.run::<DiscoveryRecvHandler>(discovery_recv_handler);
+        task_mngr.run::<DiscoverySendHandler>(discovery_send_handler);
 
         command_tx
     }
 }
 
-struct DiscoveryRecvHandler<S: PeerStore> {
+struct DiscoveryRecvHandler {
     server_rx: ServerRx,
     server_tx: ServerTx,
     local: Local,
-    peerstore: S,
     version: u32,
     network_id: u32,
     request_mngr: RequestManager,
@@ -209,17 +213,15 @@ struct DiscoveryRecvHandler<S: PeerStore> {
     replacements: ReplacementList,
 }
 
-struct DiscoverySendHandler<S: PeerStore> {
+struct DiscoverySendHandler {
     server_tx: ServerTx,
-    local: Local,
-    peerstore: S,
     request_mngr: RequestManager,
     active_peers: ActivePeersList,
     command_rx: CommandRx,
 }
 
 #[async_trait::async_trait]
-impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
+impl Runnable for DiscoveryRecvHandler {
     const NAME: &'static str = "DiscoveryRecvHandler";
     const SHUTDOWN_PRIORITY: u8 = 4;
 
@@ -349,7 +351,7 @@ impl<S: PeerStore> Runnable for DiscoveryRecvHandler<S> {
 }
 
 #[async_trait::async_trait]
-impl<S: PeerStore> Runnable for DiscoverySendHandler<S> {
+impl Runnable for DiscoverySendHandler {
     const NAME: &'static str = "DiscoverySendHandler";
     const SHUTDOWN_PRIORITY: u8 = 5;
 
@@ -358,8 +360,6 @@ impl<S: PeerStore> Runnable for DiscoverySendHandler<S> {
     async fn run(self, mut shutdown_rx: Self::ShutdownSignal) {
         let DiscoverySendHandler {
             server_tx,
-            local,
-            peerstore,
             request_mngr,
             active_peers,
             mut command_rx,
@@ -368,25 +368,18 @@ impl<S: PeerStore> Runnable for DiscoverySendHandler<S> {
         'recv: loop {
             tokio::select! {
                 _ = &mut shutdown_rx => {
-                    break;
+                    break 'recv;
                 }
                 o = command_rx.recv() => {
                     if let Some(command) = o {
                         match command {
-                            Command::SendVerificationRequest { peer_id } => {
+                            Command::Verify{ peer_id } => {
                                 send_verification_request_to_peer(&peer_id, &active_peers, &request_mngr, &server_tx, None);
                             }
-                            Command::SendDiscoveryRequest { peer_id } => {
+                            Command::Query{ peer_id } => {
                                 send_discovery_request_to_peer(&peer_id, &active_peers, &request_mngr, &server_tx, None);
                             }
-                            Command::SendVerificationRequests => {
-                                // TODO: For testing purposes only => remove it at some point
-                                send_verification_request_to_all_active(&active_peers, &request_mngr, &server_tx);
-                            }
-                            Command::SendDiscoveryRequests => {
-                                // TODO: For testing purposes only => remove it at some point
-                                send_discovery_request_to_all_verified(&active_peers, &request_mngr, &server_tx);
-                            }
+                            _ => {}
                         }
                     }
                 }
@@ -395,12 +388,7 @@ impl<S: PeerStore> Runnable for DiscoverySendHandler<S> {
     }
 }
 
-fn add_peers_from_store<S: PeerStore>(
-    peerstore: &S,
-    local: &Local,
-    active_peers: &ActivePeersList,
-    replacements: &ReplacementList,
-) {
+fn add_peers_from_store<S: PeerStore>(peerstore: &S, active_peers: &ActivePeersList, replacements: &ReplacementList) {
     let mut num_added = 0;
 
     let mut write = active_peers.write();
@@ -422,8 +410,6 @@ fn add_peers_from_store<S: PeerStore>(
 async fn add_master_peers(
     entry_nodes: &mut Vec<AutopeeringMultiaddr>,
     entry_nodes_prefer_ipv6: bool,
-    request_mngr: &RequestManager,
-    server_tx: &ServerTx,
     local: &Local,
     master_peers: &MasterPeersList,
     active_peers: &ActivePeersList,
@@ -431,7 +417,7 @@ async fn add_master_peers(
 ) {
     let mut num_added = 0;
 
-    for mut entry_addr in entry_nodes {
+    for entry_addr in entry_nodes {
         let entry_socketaddr = match entry_addr.address_kind() {
             AddressKind::Ip4 | AddressKind::Ip6 => {
                 // Unwrap: for those address kinds the returned option is always `Some`.
@@ -464,12 +450,12 @@ async fn add_master_peers(
             }
         };
 
-        let mut peer = Peer::new(entry_socketaddr.ip(), entry_addr.public_key().clone());
+        let mut peer = Peer::new(entry_socketaddr.ip(), *entry_addr.public_key());
         peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, entry_socketaddr.port());
 
-        let peer_id = peer.peer_id().clone();
+        let peer_id = *peer.peer_id();
 
-        master_peers.write().insert(peer_id.clone());
+        master_peers.write().insert(peer_id);
 
         // Also add it as a regular peer.
         if add_peer::<false>(peer, local, active_peers, replacements) {
@@ -536,9 +522,7 @@ pub(crate) fn remove_peer_from_active_list(
             // ```
             if removed_peer.metrics().verified_count() > 0 {
                 event_tx
-                    .send(Event::PeerDeleted {
-                        peer_id: peer_id.clone(),
-                    })
+                    .send(Event::PeerDeleted { peer_id: *peer_id })
                     .expect("error sending `PeerDeleted` event");
             }
 
@@ -581,11 +565,15 @@ pub(crate) struct RecvContext<'a> {
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum ValidationError {
     // The protocol version must match.
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     VersionMismatch {
         expected: u32,
         received: u32,
     },
     // The network id must match.
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     NetworkIdMismatch {
         expected: u32,
         received: u32,
@@ -599,6 +587,8 @@ pub(crate) enum ValidationError {
     // The peer must have an autopeering service.
     NoAutopeeringService,
     // The service port must match with the detected port.
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     ServicePortMismatch {
         expected: ServicePort,
         received: ServicePort,
@@ -642,7 +632,7 @@ fn validate_verification_response(
     use ValidationError::*;
 
     if let Some(reqv) = request_mngr.write().pull::<VerificationRequest>(peer_id) {
-        if verif_res.request_hash() == &reqv.request_hash {
+        if verif_res.request_hash() == reqv.request_hash {
             let res_services = verif_res.services();
             if let Some(res_peering) = res_services.get(AUTOPEERING_SERVICE_NAME) {
                 if res_peering.port() == source_socket_addr.port() {
@@ -710,10 +700,9 @@ fn handle_verification_request(verif_req: VerificationRequest, ctx: RecvContext)
     // Is this a known peer?
     if peer::is_known(ctx.peer_id, ctx.local, ctx.active_peers, ctx.replacements) {
         // Update verification request timestamp
-        ctx.active_peers
-            .write()
-            .find_mut(ctx.peer_id)
-            .map(|peer| peer.metrics_mut().set_last_verif_request_timestamp());
+        if let Some(peer) = ctx.active_peers.write().find_mut(ctx.peer_id) {
+            peer.metrics_mut().set_last_verif_request_timestamp();
+        }
 
         if peer::is_verified(ctx.peer_id, ctx.active_peers) {
             return;
@@ -737,14 +726,13 @@ fn handle_verification_response(verif_res: VerificationResponse, verif_reqval: R
         // * Update its services;
         // * Fire the "peer discovered" event;
         if verified_count == 1 {
-            ctx.active_peers
-                .write()
-                .find_mut(ctx.peer_id)
-                .map(|p| p.peer_mut().set_services(verif_res.services().clone()));
+            if let Some(peer) = ctx.active_peers.write().find_mut(ctx.peer_id) {
+                peer.peer_mut().set_services(verif_res.services().clone())
+            }
 
-            ctx.event_tx.send(Event::PeerDiscovered {
-                peer_id: ctx.peer_id.clone(),
-            });
+            ctx.event_tx
+                .send(Event::PeerDiscovered { peer_id: *ctx.peer_id })
+                .expect("error publishing peer-discovered event");
         }
     }
 
@@ -760,7 +748,7 @@ fn handle_verification_response(verif_res: VerificationResponse, verif_reqval: R
     }
 }
 
-fn handle_discovery_request(disc_req: DiscoveryRequest, ctx: RecvContext) {
+fn handle_discovery_request(_disc_req: DiscoveryRequest, ctx: RecvContext) {
     log::trace!("Handling discovery request.");
 
     let request_hash = msg_hash(MessageType::DiscoveryRequest, ctx.msg_bytes).to_vec();
@@ -791,8 +779,6 @@ fn handle_discovery_response(disc_res: DiscoveryResponse, disc_reqval: RequestVa
 
     // Add discovered peers to the peer list and peer store.
     for peer in disc_res.into_peers() {
-        let peer_id = peer.peer_id().clone();
-
         // Note: we only fire `PeerDiscovered` if it can be verified.
         if add_peer::<false>(peer, ctx.local, ctx.active_peers, ctx.replacements) {
             num_added += 1;
@@ -846,7 +832,9 @@ pub(crate) async fn begin_verification(
     }
 }
 
+// TODO: revisit dead code
 // TEMP: for testing purposes
+#[allow(dead_code)]
 pub(crate) fn send_verification_request_to_all_active(
     active_peers: &ActivePeersList,
     request_mngr: &RequestManager,
@@ -906,7 +894,7 @@ pub(crate) fn send_verification_request_to_addr(
 
     let verif_req = request_mngr
         .write()
-        .new_verification_request(peer_id.clone(), peer_addr.ip(), response_tx);
+        .new_verification_request(*peer_id, peer_addr.ip(), response_tx);
 
     let msg_bytes = verif_req
         .to_protobuf()
@@ -1021,7 +1009,7 @@ pub(crate) fn send_discovery_request_to_addr(
 ) {
     log::trace!("Sending discovery request to: {:?}", peer_id);
 
-    let disc_req = request_mngr.write().new_discovery_request(peer_id.clone(), response_tx);
+    let disc_req = request_mngr.write().new_discovery_request(*peer_id, response_tx);
 
     let msg_bytes = disc_req
         .to_protobuf()
@@ -1037,7 +1025,9 @@ pub(crate) fn send_discovery_request_to_addr(
         .expect("error sending discovery request to server");
 }
 
+// TODO: revisit dead code
 // TEMP: for testing purposes
+#[allow(dead_code)]
 pub(crate) fn send_discovery_request_to_all_verified(
     active_peers: &ActivePeersList,
     request_mngr: &RequestManager,
@@ -1056,7 +1046,7 @@ pub(crate) fn send_discovery_request_to_all_verified(
 
     for peer_id in &peers {
         if peer::is_verified(peer_id, active_peers) {
-            send_discovery_request_to_peer(&peer_id, active_peers, request_mngr, server_tx, None);
+            send_discovery_request_to_peer(peer_id, active_peers, request_mngr, server_tx, None);
         }
     }
 }
@@ -1067,7 +1057,7 @@ pub(crate) fn send_discovery_request_to_all_verified(
 
 fn choose_n_random_peers_from_active_list(
     active_peers: &ActivePeersList,
-    mut n: usize,
+    n: usize,
     min_verified_count: usize,
 ) -> Vec<Peer> {
     let len = active_peers.read().len();
@@ -1106,23 +1096,15 @@ fn choose_n_random_peers_from_active_list(
     }
 }
 
-// pub(crate) fn get_master_peers<S: PeerStore>(master_peers: &MasterPeersList, peerstore: &S) -> Vec<Peer> {
-//     let mut peers = Vec::with_capacity(master_peers.read().len());
-//     peers.extend(
-//         master_peers
-//             .read()
-//             .iter()
-//             .filter_map(|peer_id| peerstore.fetch_peer(peer_id)),
-//     );
-//     peers
-// }
-
 // Hive.go: returns the verified peer with the given ID, or nil if no such peer exists.
+// ---
+// TODO: revisit dead code
 // ---
 /// Returns `Some(Peer)`, if either the corresponding peer is still verified, or - if it isn't -
 /// can be successfully reverified.
 ///
 /// Note: The function is blocking.
+#[allow(dead_code)]
 pub(crate) async fn get_verified_peer(
     peer_id: &PeerId,
     active_peers: &ActivePeersList,
@@ -1162,5 +1144,5 @@ pub(crate) fn get_verified_peers(active_peers: &ActivePeersList) -> Vec<ActivePe
         }
     }));
 
-    return peers;
+    peers
 }

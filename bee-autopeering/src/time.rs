@@ -3,8 +3,6 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub(crate) use tokio::time::sleep;
-
 pub(crate) type Timestamp = u64;
 pub(crate) type Timespan = u64;
 

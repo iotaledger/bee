@@ -5,29 +5,15 @@
 
 use super::{
     peer_id::PeerId,
-    peerlist::{ActivePeer, ActivePeersList, PeerMetrics, ReplacementList},
+    peerlist::{ActivePeer, ActivePeersList, ReplacementList},
     Peer,
 };
 
-use crate::{
-    delay::DelayFactory,
-    local::services::AUTOPEERING_SERVICE_NAME,
-    packet::{MessageType, OutgoingPacket},
-    request::RequestManager,
-    server::ServerTx,
-    task::ShutdownRx,
-    time::{self, Timestamp},
-};
-
-use sled::{Batch, Db, IVec};
+use sled::{Batch, Db};
 
 use std::{
     collections::HashMap,
-    iter,
-    net::SocketAddr,
-    path::{Path, PathBuf},
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
-    time::Duration,
 };
 
 const ACTIVE_PEERS_TREE: &str = "active_peers";
@@ -88,7 +74,7 @@ impl InMemoryPeerStore {
 impl PeerStore for InMemoryPeerStore {
     type Config = ();
 
-    fn new(config: Self::Config) -> Self {
+    fn new(_: Self::Config) -> Self {
         Self {
             inner: Default::default(),
         }
@@ -99,28 +85,28 @@ impl PeerStore for InMemoryPeerStore {
         let mut write = self.write();
 
         let _ = write.replacements.remove(peer_id);
-        let _ = write.active_peers.insert(peer_id.clone(), peer);
+        let _ = write.active_peers.insert(*peer_id, peer);
     }
     fn store_all_active(&self, peers: &ActivePeersList) {
         let read = peers.read();
         let mut write = self.write();
 
         for (peer_id, peer) in read.iter().map(|p| (p.peer_id(), p)) {
-            let _ = write.active_peers.insert(peer_id.clone(), peer.clone());
+            let _ = write.active_peers.insert(*peer_id, peer.clone());
         }
     }
     fn store_replacement(&self, peer: Peer) {
         let peer_id = peer.peer_id();
 
         let _ = self.write().active_peers.remove(peer_id);
-        let _ = self.write().replacements.insert(peer_id.clone(), peer);
+        let _ = self.write().replacements.insert(*peer_id, peer);
     }
     fn store_all_replacements(&self, peers: &ReplacementList) {
         let read = peers.read();
         let mut write = self.write();
 
         for (peer_id, peer) in read.iter().map(|p| (p.peer_id(), p)) {
-            let _ = write.replacements.insert(peer_id.clone(), peer.clone());
+            let _ = write.replacements.insert(*peer_id, peer.clone());
         }
     }
     fn contains(&self, peer_id: &PeerId) -> bool {
@@ -165,15 +151,15 @@ impl PeerStore for SledPeerStore {
     fn new(config: Self::Config) -> Self {
         let db = config.open().expect("error opening peerstore");
 
-        db.open_tree("active_peers");
-        db.open_tree("replacements");
+        db.open_tree("active_peers").expect("error opening tree");
+        db.open_tree("replacements").expect("error opening tree");
 
         Self { db }
     }
 
     fn store_active(&self, active_peer: ActivePeer) {
         let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
-        let key = active_peer.peer_id().clone();
+        let key = *active_peer.peer_id();
 
         tree.insert(key, active_peer).expect("insert error");
     }
@@ -184,15 +170,15 @@ impl PeerStore for SledPeerStore {
         active_peers
             .read()
             .iter()
-            .for_each(|p| batch.insert(p.peer_id().clone(), p.clone()));
+            .for_each(|p| batch.insert(*p.peer_id(), p.clone()));
 
         tree.apply_batch(batch).expect("error applying batch");
     }
     fn store_replacement(&self, peer: Peer) {
         let tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
-        let key = peer.peer_id().clone();
+        let key = *peer.peer_id();
 
-        tree.insert(key, peer);
+        tree.insert(key, peer).expect("error inserting peer");
     }
     fn store_all_replacements(&self, replacements: &ReplacementList) {
         let replacements_tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
@@ -201,7 +187,7 @@ impl PeerStore for SledPeerStore {
         replacements
             .read()
             .iter()
-            .for_each(|p| batch.insert(p.peer_id().clone(), p.clone()));
+            .for_each(|p| batch.insert(*p.peer_id(), p.clone()));
 
         replacements_tree.apply_batch(batch).expect("error applying batch");
     }
@@ -211,11 +197,7 @@ impl PeerStore for SledPeerStore {
             true
         } else {
             let tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
-            if tree.contains_key(peer_id).expect("db error") {
-                true
-            } else {
-                false
-            }
+            tree.contains_key(peer_id).expect("db error")
         }
     }
     fn fetch_active(&self, peer_id: &PeerId) -> Option<ActivePeer> {
@@ -244,7 +226,7 @@ impl PeerStore for SledPeerStore {
             .map(|(_, ivec)| Peer::from(ivec))
             .collect::<Vec<_>>()
     }
-    fn delete(&self, peer_id: &PeerId) -> bool {
+    fn delete(&self, _: &PeerId) -> bool {
         unimplemented!("no need for single entry removal at the moment")
     }
     fn delete_all(&self) {

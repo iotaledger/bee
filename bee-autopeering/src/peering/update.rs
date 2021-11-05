@@ -11,9 +11,8 @@ use crate::{
     delay::ManualDelayFactory,
     discovery::manager::get_verified_peers,
     event::EventTx,
-    local::{salt, Local},
-    peer::{peerlist::ActivePeersList, PeerStore},
-    peering::manager::{publish_peering_event, send_drop_peering_request_to_peer},
+    local::Local,
+    peer::peerlist::ActivePeersList,
     request::RequestManager,
     server::ServerTx,
     task::Repeat,
@@ -24,8 +23,10 @@ use crate::{
 use std::time::Duration;
 
 /// Outbound neighborhood update interval if there are remaining slots.
+#[allow(clippy::identity_op)]
 pub(crate) const OPEN_OUTBOUND_NBH_UPDATE_SECS: Duration = Duration::from_secs(1 * SECOND);
 /// Outbound neighborhood update interval if there are no remaining slots.
+#[allow(clippy::identity_op)]
 const FULL_OUTBOUND_NBH_UPDATE_SECS: Duration = Duration::from_secs(1 * MINUTE);
 
 pub(crate) static OUTBOUND_NBH_UPDATE_INTERVAL: ManualDelayFactory =
@@ -37,9 +38,13 @@ pub(crate) struct UpdateContext<V: NeighborValidator> {
     pub(crate) request_mngr: RequestManager,
     pub(crate) active_peers: ActivePeersList,
     pub(crate) nb_filter: NeighborFilter<V>,
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) inbound_nbh: InboundNeighborhood,
     pub(crate) outbound_nbh: OutboundNeighborhood,
     pub(crate) server_tx: ServerTx,
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) event_tx: EventTx,
 }
 
@@ -49,7 +54,7 @@ pub(crate) fn do_update<V: NeighborValidator + 'static>() -> Repeat<UpdateContex
 
 // Hive.go: updateOutbound updates outbound neighbors.
 fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
-    let local_id = ctx.local.read().peer_id().clone();
+    let local_id = *ctx.local.read().peer_id();
     let local_salt = ctx.local.read().public_salt().expect("missing public salt").clone();
 
     // TODO: write `get_verified_peers_sorted` which collects verified peers into a BTreeSet
@@ -57,7 +62,7 @@ fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
         .into_iter()
         .map(|p| {
             let peer = p.into_peer();
-            let peer_id = peer.peer_id().clone();
+            let peer_id = *peer.peer_id();
             Neighbor::new(peer, salt_distance(&local_id, &peer_id, &local_salt))
         })
         .collect::<Vec<_>>();
@@ -100,10 +105,10 @@ fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
                 if status {
                     set_outbound_update_interval(&ctx_.outbound_nbh, &ctx_.local);
                 } else {
-                    ctx_.nb_filter.write().add(candidate.peer_id().clone());
+                    ctx_.nb_filter.write().add(*candidate.peer_id());
                 }
             } else {
-                ctx_.nb_filter.write().add(candidate.peer_id().clone());
+                ctx_.nb_filter.write().add(*candidate.peer_id());
             }
         });
     }

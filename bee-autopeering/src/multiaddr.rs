@@ -7,7 +7,7 @@ use serde::{
     de::{self, Visitor},
     Deserialize, Serialize, Serializer,
 };
-use tokio::net::{lookup_host, ToSocketAddrs};
+use tokio::net::lookup_host;
 
 use std::{
     fmt,
@@ -165,19 +165,15 @@ impl FromStr for AutopeeringMultiaddr {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let index = s
-            .find(AUTOPEERING_MULTIADDR_PROTOCOL_NAME)
-            .ok_or(Error::InvalidAutopeeringMultiaddr)?;
-
         let parts = s
             .split_terminator(&format!("/{}/", AUTOPEERING_MULTIADDR_PROTOCOL_NAME))
             .collect::<Vec<&str>>();
 
         if parts.len() != 2 {
-            return Err(Error::InvalidAutopeeringMultiaddr);
+            return Err(Error::AutopeeringMultiaddr);
         }
 
-        let address = parts[0].parse().map_err(|_| Error::InvalidHostAddressPart)?;
+        let address = parts[0].parse().map_err(|_| Error::HostAddressPart)?;
         let public_key = from_base58_to_pubkey(parts[1]);
         let resolved_addrs = Vec::new();
 
@@ -199,6 +195,13 @@ impl<'de> Visitor<'de> for AutopeeringMultiaddrVisitor {
     }
 
     fn visit_string<E>(self, value: String) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(value.parse().expect("failed to parse autopeering multiaddr"))
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
     where
         E: de::Error,
     {
@@ -230,17 +233,16 @@ pub(crate) fn from_base58_to_pubkey(base58_pubkey: impl AsRef<str>) -> PublicKey
 #[derive(Debug)]
 pub enum Error {
     /// Returned, if the host address part wasn't a valid multi address.
-    InvalidHostAddressPart,
+    HostAddressPart,
     /// Returned, if the public key part wasn't a base58 encoded ed25519 public key.
-    InvalidPubKeyPart,
+    PubKeyPart,
     /// Returned, if it's not a valid autopeering multi address.
-    InvalidAutopeeringMultiaddr,
+    AutopeeringMultiaddr,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fmt;
 
     // NOTE: example taken from Hornet!
     //

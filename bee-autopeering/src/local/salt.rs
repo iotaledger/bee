@@ -51,10 +51,14 @@ impl Salt {
         self.expiration_time
     }
 
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
         Ok(proto::Salt::decode(bytes)?.into())
     }
 
+    // TODO: revisit dead code
+    #[allow(dead_code)]
     pub(crate) fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
         let salt = proto::Salt {
             bytes: self.bytes.to_vec(),

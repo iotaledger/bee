@@ -4,15 +4,18 @@
 //! A system that allows peers in the same IOTA network to automatically discover each other.
 //! ## Example
 //!
-//! In order to integrate the Autopeering functionality in your node implementation you need to provide the following things to its `init` function:
+//! In order to integrate the Autopeering functionality in your node implementation you need to provide the following
+//! things to its `init` function:
 //! * an `AutopeeringConfig`;
 //! * a protocol version (`u32`);
 //! * a network name, e.g. "chrysalis-mainnet";
-//! * a `Local` entity (either randomly created or from an `Ed25519` keypair), that additionally announces one or more services;
+//! * a `Local` entity (either randomly created or from an `Ed25519` keypair), that additionally announces one or more
+//!   services;
 //! * a shutdown signal (`Future`);
-//! * a peer store, e.g. the `InMemoryPeerStore` (non-persistent) or the `SledPeerStore` (persistent), or a custom peer store implementing the `PeerStore` trait;
+//! * a peer store, e.g. the `InMemoryPeerStore` (non-persistent) or the `SledPeerStore` (persistent), or a custom peer
+//!   store implementing the `PeerStore` trait;
 //!
-//!```no_run
+//! ```no_run
 //! use bee_autopeering::{
 //!     init,
 //!     peerstore::{SledPeerStore, SledPeerStoreConfig},
@@ -106,7 +109,6 @@
 //! ```
 
 #![deny(missing_docs)]
-#![allow(warnings)]
 
 mod command;
 mod delay;
@@ -132,9 +134,8 @@ pub mod init;
 pub use config::AutopeeringConfig;
 pub use event::Event;
 pub use init::init;
-pub use local::services::AUTOPEERING_SERVICE_NAME;
 pub use local::{
-    services::{ServiceMap, ServiceName, ServiceProtocol},
+    services::{ServiceMap, ServiceName, ServiceProtocol, AUTOPEERING_SERVICE_NAME},
     Local,
 };
 pub use peer::{peer_id, peer_id::PeerId, peerstore, Peer};

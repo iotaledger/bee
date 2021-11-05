@@ -5,7 +5,7 @@
 
 use crate::{
     peer::{Peer, PeerId},
-    peering::{manager::Status, neighbor::Distance},
+    peering::neighbor::Distance,
 };
 
 use tokio::sync::mpsc;
@@ -76,8 +76,8 @@ impl fmt::Display for Event {
                 "Salts updated => outbound: {}/ inbound: {}.",
                 public_salt_lifetime, private_salt_lifetime,
             ),
-            OutgoingPeering { peer, distance } => write!(f, "Peered: {} (outgoing).", peer.peer_id()),
-            IncomingPeering { peer, distance } => write!(f, "Peered: {} (incoming).", peer.peer_id()),
+            OutgoingPeering { peer, .. } => write!(f, "Peered: {} (outgoing).", peer.peer_id()),
+            IncomingPeering { peer, .. } => write!(f, "Peered: {} (incoming).", peer.peer_id()),
             PeeringDropped { peer_id } => write!(f, "Dropped: {}.", peer_id),
         }
     }

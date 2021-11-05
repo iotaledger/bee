@@ -12,26 +12,19 @@ pub use peerstore::PeerStore;
 use peerlist::{ActivePeersList, ReplacementList};
 
 use crate::{
-    command::{Command, CommandTx},
-    discovery::manager::{self, VERIFICATION_EXPIRATION_SECS},
-    local::services::{ServiceMap, ServiceProtocol},
-    local::Local,
+    local::{
+        services::{ServiceMap, ServiceProtocol},
+        Local,
+    },
     proto,
-    request::RequestManager,
-    server::ServerTx,
-    time::{self, Timestamp},
 };
 
 use bytes::BytesMut;
 use crypto::signatures::ed25519::PublicKey;
 use prost::{DecodeError, EncodeError, Message};
-use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Serialize, Serializer};
+use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Serialize};
 
-use std::{
-    convert::TryInto,
-    fmt,
-    net::{IpAddr, Ipv4Addr},
-};
+use std::{convert::TryInto, fmt, net::IpAddr};
 
 /// Represents a peer.
 #[derive(Clone)]
@@ -61,7 +54,7 @@ impl Peer {
 
     /// Returns the public key of this peer.
     pub fn public_key(&self) -> &PublicKey {
-        &self.peer_id.public_key()
+        self.peer_id.public_key()
     }
 
     /// Returns the address of this peer.
@@ -180,9 +173,9 @@ impl AsRef<PeerId> for Peer {
     }
 }
 
-impl Into<sled::IVec> for Peer {
-    fn into(self) -> sled::IVec {
-        let bytes = bincode::serialize(&self).expect("serialization error");
+impl From<Peer> for sled::IVec {
+    fn from(peer: Peer) -> Self {
+        let bytes = bincode::serialize(&peer).expect("serialization error");
         sled::IVec::from_iter(bytes.into_iter())
     }
 }
@@ -233,7 +226,7 @@ pub(crate) fn is_known(
     replacements: &ReplacementList,
 ) -> bool {
     // The master list doesn't need to be queried, because those always a subset of the active peers.
-    peer_id == local.read().peer_id() || active_peers.read().contains(&peer_id) || replacements.read().contains(peer_id)
+    peer_id == local.read().peer_id() || active_peers.read().contains(peer_id) || replacements.read().contains(peer_id)
 }
 
 // Hive.go: whether the peer has recently done an endpoint proof
@@ -250,9 +243,12 @@ pub(crate) fn is_verified(peer_id: &PeerId, active_peers: &ActivePeersList) -> b
 
 // Hive.go: whether the given peer has recently verified the local peer
 // ---
+// TODO: revisit dead code
+// ---
 /// Returns whether the corresponding peer sent a (still valid) verification request.
 ///
 /// Also returns `false`, if the provided `peer_id` is not found in the active peer list.
+#[allow(dead_code)]
 pub(crate) fn has_verified(peer_id: &PeerId, active_peers: &ActivePeersList) -> bool {
     active_peers
         .read()
@@ -267,7 +263,7 @@ pub(crate) fn has_verified(peer_id: &PeerId, active_peers: &ActivePeersList) -> 
 /// * Updates the "last_verification_response" timestamp;
 /// * Increments the "verified" counter;
 pub(crate) fn set_front_and_update(peer_id: &PeerId, active_peers: &ActivePeersList) -> Option<usize> {
-    if let Some(p) = active_peers.write().set_newest_and_get_mut(&peer_id) {
+    if let Some(p) = active_peers.write().set_newest_and_get_mut(peer_id) {
         let metrics = p.metrics_mut();
         metrics.set_last_verif_response_timestamp();
         let new_count = metrics.increment_verified_count();

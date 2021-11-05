@@ -3,17 +3,14 @@
 
 //! Peer identities.
 
-use crate::{hash, local::salt::Salt};
+use crate::hash;
 
-use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, PUBLIC_KEY_LENGTH};
-use ring::signature::KeyPair;
-use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Serialize, Serializer};
+use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey};
+use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Serialize};
 
 use std::{
-    convert::TryInto,
     fmt,
     hash::{Hash, Hasher},
-    sync::{Arc, RwLock},
 };
 
 const DISPLAY_LENGTH: usize = 16;
@@ -112,19 +109,19 @@ impl AsRef<[u8]> for PeerId {
     }
 }
 
-impl Into<sled::IVec> for PeerId {
-    fn into(self) -> sled::IVec {
-        let bytes = self.public_key.to_bytes();
+impl From<PeerId> for sled::IVec {
+    fn from(peer: PeerId) -> Self {
+        let bytes = peer.public_key.to_bytes();
         sled::IVec::from_iter(bytes.into_iter())
     }
 }
 
-impl Into<libp2p_core::PeerId> for PeerId {
-    fn into(self) -> libp2p_core::PeerId {
+impl From<PeerId> for libp2p_core::PeerId {
+    fn from(peer_id: PeerId) -> Self {
         let PeerId {
-            id_bytes: id,
+            id_bytes: _,
             public_key,
-        } = self;
+        } = peer_id;
 
         let public_key = libp2p_core::PublicKey::Ed25519(
             libp2p_core::identity::ed25519::PublicKey::decode(public_key.as_ref())
