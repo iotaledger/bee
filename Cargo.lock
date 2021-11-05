@@ -255,7 +255,7 @@ dependencies = [
 
 [[package]]
 name = "bee-network"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "bee-runtime",
@@ -289,6 +289,7 @@ dependencies = [
 name = "bee-protocol"
 version = "0.1.1"
 dependencies = [
+ "bee-autopeering",
  "bee-message",
  "bee-network",
 ]

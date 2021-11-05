@@ -169,7 +169,11 @@ impl PeerList {
         self.peers.iter().fold(
             0,
             |count, (_, (info, state))| {
-                if predicate(info, state) { count + 1 } else { count }
+                if predicate(info, state) {
+                    count + 1
+                } else {
+                    count
+                }
             },
         )
     }
@@ -268,6 +272,10 @@ impl PeerList {
             && self.filter_count(|info, _| info.relation.is_unknown()) >= global::max_unknown_peers()
         {
             Err(Error::ExceedsUnknownPeerLimit(global::max_unknown_peers()))
+        } else if !self.contains(peer_id)
+            && self.filter_count(|info, _| info.relation.is_discovered()) >= global::max_discovered_peers()
+        {
+            Err(Error::ExceedsDiscoveredPeerLimit(global::max_discovered_peers()))
         } else {
             // All checks passed! Accept that peer.
             Ok(())
@@ -305,6 +313,10 @@ impl PeerList {
                 && self.filter_count(|info, _| info.relation.is_unknown()) >= global::max_unknown_peers()
             {
                 Err(Error::ExceedsUnknownPeerLimit(global::max_unknown_peers()))
+            } else if peer_info.relation.is_discovered()
+                && self.filter_count(|info, _| info.relation.is_discovered()) >= global::max_discovered_peers()
+            {
+                Err(Error::ExceedsDiscoveredPeerLimit(global::max_discovered_peers()))
             } else {
                 // All checks passed! Allow dialing that peer.
                 Ok(())
@@ -354,13 +366,12 @@ mod tests {
         let mut pl = PeerList::new(local_id);
 
         for i in 1..=3 {
-            assert!(
-                pl.insert_peer(
+            assert!(pl
+                .insert_peer(
                     gen_random_peer_id(),
                     gen_deterministic_peer_info(i, PeerRelation::Known)
                 )
-                .is_ok()
-            );
+                .is_ok());
             assert_eq!(pl.len(), i as usize);
         }
     }

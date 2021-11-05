@@ -1,6 +1,6 @@
 [package]
 name = "bee-network"
-version = "0.2.2"
+version = "0.3.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = """

@@ -64,6 +64,7 @@ pub struct NetworkConfig {
     pub(crate) bind_multiaddr: Multiaddr,
     pub(crate) reconnect_interval_secs: u64,
     pub(crate) max_unknown_peers: usize,
+    pub(crate) max_discovered_peers: usize,
     pub(crate) static_peers: HashSet<Peer>,
 }
 
@@ -155,6 +156,11 @@ impl NetworkConfig {
         self.max_unknown_peers
     }
 
+    /// Returns the maximum number of discovered peers that are allowed to connect.
+    pub fn max_discovered_peers(&self) -> usize {
+        self.max_discovered_peers
+    }
+
     /// Returns the statically configured peers.
     pub fn static_peers(&self) -> &HashSet<Peer> {
         &self.static_peers
@@ -184,6 +190,7 @@ impl Default for NetworkConfig {
             bind_multiaddr: DEFAULT_BIND_MULTIADDR.parse().unwrap(),
             reconnect_interval_secs: DEFAULT_RECONNECT_INTERVAL_SECS,
             max_unknown_peers: DEFAULT_MAX_UNKNOWN_PEERS,
+            max_discovered_peers: DEFAULT_MAX_DISCOVERED_PEERS,
             static_peers: Default::default(),
         }
     }
@@ -196,7 +203,8 @@ pub struct NetworkConfigBuilder {
     bind_multiaddr: Option<Multiaddr>,
     reconnect_interval_secs: Option<u64>,
     max_unknown_peers: Option<usize>,
-    peering: PeeringConfigBuilder,
+    max_discovered_peers: Option<usize>,
+    peering: ManualPeeringConfigBuilder,
 }
 
 impl NetworkConfigBuilder {
@@ -280,6 +288,12 @@ impl NetworkConfigBuilder {
         self
     }
 
+    /// Specifies the maximum number of gossip connections with discovered peers.
+    pub fn with_max_discovered_peers(mut self, n: usize) -> Self {
+        self.max_discovered_peers.replace(n);
+        self
+    }
+
     /// Builds the network config.
     pub fn finish(self) -> Result<NetworkConfig, Error> {
         Ok(NetworkConfig {
@@ -290,6 +304,7 @@ impl NetworkConfigBuilder {
                 .unwrap_or_else(|| DEFAULT_BIND_MULTIADDR.parse().unwrap()),
             reconnect_interval_secs: self.reconnect_interval_secs.unwrap_or(DEFAULT_RECONNECT_INTERVAL_SECS),
             max_unknown_peers: self.max_unknown_peers.unwrap_or(DEFAULT_MAX_UNKNOWN_PEERS),
+            max_discovered_peers: self.max_discovered_peers.unwrap_or(DEFAULT_MAX_DISCOVERED_PEERS),
             static_peers: self.peering.finish()?.peers,
         })
     }
@@ -335,13 +350,14 @@ impl InMemoryNetworkConfigBuilder {
                 .unwrap_or_else(|| DEFAULT_BIND_MULTIADDR_MEM.parse().unwrap()),
             reconnect_interval_secs: DEFAULT_RECONNECT_INTERVAL_SECS,
             max_unknown_peers: DEFAULT_MAX_UNKNOWN_PEERS,
+            max_discovered_peers: DEFAULT_MAX_DISCOVERED_PEERS,
             static_peers: Default::default(),
         }
     }
 }
 
 #[derive(Clone)]
-pub struct PeeringConfig {
+pub struct ManualPeeringConfig {
     pub peers: HashSet<Peer>,
 }
 
@@ -365,12 +381,12 @@ impl std::hash::Hash for Peer {
 }
 
 #[derive(Default, Deserialize)]
-pub struct PeeringConfigBuilder {
+pub struct ManualPeeringConfigBuilder {
     pub peers: Option<Vec<PeerBuilder>>,
 }
 
-impl PeeringConfigBuilder {
-    pub fn finish(self) -> Result<PeeringConfig, Error> {
+impl ManualPeeringConfigBuilder {
+    pub fn finish(self) -> Result<ManualPeeringConfig, Error> {
         let peers = match self.peers {
             None => Default::default(),
             Some(peer_builders) => {
@@ -393,7 +409,7 @@ impl PeeringConfigBuilder {
             }
         };
 
-        Ok(PeeringConfig { peers })
+        Ok(ManualPeeringConfig { peers })
     }
 }
 

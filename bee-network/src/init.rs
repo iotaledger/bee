@@ -34,6 +34,7 @@ pub mod global {
     static RECONNECT_INTERVAL_SECS: OnceCell<u64> = OnceCell::new();
     static NETWORK_ID: OnceCell<u64> = OnceCell::new();
     static MAX_UNKNOWN_PEERS: OnceCell<usize> = OnceCell::new();
+    static MAX_DISCOVERED_PEERS: OnceCell<usize> = OnceCell::new();
 
     pub fn set_reconnect_interval_secs(reconnect_interval_secs: u64) {
         if cfg!(test) {
@@ -68,6 +69,17 @@ pub mod global {
     }
     pub fn max_unknown_peers() -> usize {
         *MAX_UNKNOWN_PEERS.get().expect("oncecell get")
+    }
+
+    pub fn set_max_discovered_peers(max_discovered_peers: usize) {
+        if cfg!(test) {
+            let _ = MAX_DISCOVERED_PEERS.set(max_discovered_peers);
+        } else {
+            MAX_DISCOVERED_PEERS.set(max_discovered_peers).expect("oncecell set");
+        }
+    }
+    pub fn max_discovered_peers() -> usize {
+        *MAX_DISCOVERED_PEERS.get().expect("oncecell get")
     }
 }
 
@@ -150,12 +162,14 @@ fn init(
         bind_multiaddr,
         reconnect_interval_secs,
         max_unknown_peers,
+        max_discovered_peers,
         static_peers: peers,
     } = config;
 
     global::set_reconnect_interval_secs(reconnect_interval_secs);
     global::set_network_id(network_id);
     global::set_max_unknown_peers(max_unknown_peers);
+    global::set_max_discovered_peers(max_discovered_peers);
 
     let (command_sender, command_receiver) = command_channel();
     let (internal_command_sender, internal_command_receiver) = command_channel();
