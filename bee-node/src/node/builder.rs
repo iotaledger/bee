@@ -13,7 +13,7 @@ use crate::{
 };
 
 use bee_autopeering::{
-    peerstore::InMemoryPeerStore, AutopeeringConfig, Local, NeighborValidator, ServiceTransport,
+    peerstore::InMemoryPeerStore, AutopeeringConfig, Local, NeighborValidator, ServiceProtocol,
     AUTOPEERING_SERVICE_NAME,
 };
 use bee_runtime::{
@@ -244,10 +244,10 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let mut write = local.write();
         write.add_service(
             AUTOPEERING_SERVICE_NAME,
-            ServiceTransport::Udp,
+            ServiceProtocol::Udp,
             autopeering_config.bind_addr.port(),
         );
-        write.add_service(network_name.clone(), ServiceTransport::Tcp, 15600);
+        write.add_service(network_name.clone(), ServiceProtocol::Tcp, 15600);
         drop(write);
 
         let quit_signal = tokio::signal::ctrl_c();
@@ -258,7 +258,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             local,
             peerstore_config,
             quit_signal,
-            Some(neighbor_validator),
+            neighbor_validator,
         )
         .await
         .map_err(|e| Error::PeeringInitializationFailed(e))?;
