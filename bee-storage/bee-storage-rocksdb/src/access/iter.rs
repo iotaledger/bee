@@ -6,7 +6,7 @@
 use crate::{column_families::*, Storage};
 
 use bee_message::{Message, MessageId, MessageMetadata};
-use bee_packable::Packable;
+use bee_packable::PackableExt;
 use bee_storage::{access::AsIterator, system::System, StorageBackend};
 
 use rocksdb::{DBIterator, IteratorMode};

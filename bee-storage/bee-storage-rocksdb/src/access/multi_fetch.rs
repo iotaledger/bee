@@ -6,7 +6,7 @@
 use crate::{column_families::*, Storage};
 
 use bee_message::{Message, MessageId, MessageMetadata};
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 use bee_storage::{access::MultiFetch, system::System, StorageBackend};
 
 use std::{marker::PhantomData, vec::IntoIter};

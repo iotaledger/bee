@@ -44,7 +44,34 @@ pub trait Packable: Sized {
     /// Packs this value into the given [`Packer`].
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
 
+    /// Unpacks this value from the given [`Unpacker`].
+    fn unpack<U: Unpacker, const CHECK: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>>;
+}
+
+/// Extension trait for types that implement `Packable`.
+pub trait PackableExt: Packable {
     /// Convenience method that packs this value into a [`Vec<u8>`].
+    fn pack_to_vec(&self) -> Vec<u8>;
+
+    /// Unpacks this value from the given [`Unpacker`] doing syntactical checks.
+    fn unpack_checked<U: Unpacker>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, U::Error>>;
+
+    /// Unpacks this value from the given [`Unpacker`] without doing syntactical checks.
+    fn unpack_unchecked<U: Unpacker>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, U::Error>>;
+
+    /// Unpacks this value from a type that implements [`AsRef<[u8]>`].
+    fn unpack_from_slice<T: AsRef<[u8]>>(
+        bytes: T,
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>>;
+}
+
+impl<P: Packable> PackableExt for P {
     fn pack_to_vec(&self) -> Vec<u8> {
         let mut packer = VecPacker::with_capacity(self.packed_len());
 
@@ -54,24 +81,22 @@ pub trait Packable: Sized {
         packer.into_vec()
     }
 
-    /// Unpacks this value from the given [`Unpacker`].
-    fn unpack<U: Unpacker, const CHECK: bool>(
+    fn unpack_checked<U: Unpacker>(
         unpacker: &mut U,
-    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>>;
-
-    /// Unpacks this value from the given [`Unpacker`] doing syntactical checks.
-    fn unpack_checked<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, U::Error>> {
         Self::unpack::<U, true>(unpacker)
     }
 
-    /// Unpacks this value from the given [`Unpacker`] without doing syntactical checks.
-    fn unpack_unchecked<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+    fn unpack_unchecked<U: Unpacker>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, U::Error>> {
         Self::unpack::<U, false>(unpacker)
     }
 
-    /// Unpacks this value from a type that implements [`AsRef<[u8]>`].
-    fn unpack_from_slice<T: AsRef<[u8]>>(bytes: T) -> Result<Self, UnpackError<Self::UnpackError, UnexpectedEOF>> {
+    fn unpack_from_slice<T: AsRef<[u8]>>(
+        bytes: T,
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
         let mut unpacker = SliceUnpacker::new(bytes.as_ref());
-        Packable::unpack_checked(&mut unpacker)
+        Self::unpack_checked(&mut unpacker)
     }
 }

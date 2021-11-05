@@ -3,7 +3,7 @@
 
 use crate::{address::Address, error::ValidationError};
 
-use bee_packable::Packable;
+use bee_packable::PackableExt;
 
 use bech32::{self, FromBase32, ToBase32};
 

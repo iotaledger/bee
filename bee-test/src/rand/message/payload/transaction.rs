@@ -13,7 +13,7 @@ use bee_message::{
     payload::transaction::{TransactionEssence, TransactionId, TransactionPayload},
     unlock::UnlockBlocks,
 };
-use bee_packable::Packable;
+use bee_packable::PackableExt;
 
 /// Generates a random [`TransactionId`].
 pub fn rand_transaction_id() -> TransactionId {
@@ -23,10 +23,10 @@ pub fn rand_transaction_id() -> TransactionId {
 /// Generates a random [`TransactionPayload`].
 pub fn rand_transaction_payload() -> TransactionPayload {
     let mut inputs = rand_vec(rand_input, rand_number_range(1..=127));
-    inputs.sort_by(|a, b| Packable::pack_to_vec(a).partial_cmp(&Packable::pack_to_vec(b)).unwrap());
+    inputs.sort_by_key(PackableExt::pack_to_vec);
 
     let mut outputs = rand_outputs(rand_number_range(1..127));
-    outputs.sort_by(|a, b| Packable::pack_to_vec(a).partial_cmp(&Packable::pack_to_vec(b)).unwrap());
+    outputs.sort_by_key(PackableExt::pack_to_vec);
 
     let unlock_blocks = rand_unlocks(inputs.len());
 

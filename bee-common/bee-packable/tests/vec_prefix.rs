@@ -10,7 +10,7 @@ use bee_packable::{
     },
     error::UnpackError,
     prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
-    Packable,
+    PackableExt,
 };
 
 macro_rules! impl_packable_test_for_vec_prefix {

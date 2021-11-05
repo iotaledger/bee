@@ -8,7 +8,7 @@ use crate::{
     ValidationError,
 };
 
-use bee_packable::Packable;
+use bee_packable::PackableExt;
 
 /// A builder to build a [`Message`].
 #[derive(Default)]

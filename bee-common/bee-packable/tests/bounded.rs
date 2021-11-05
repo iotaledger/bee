@@ -9,7 +9,7 @@ use bee_packable::{
         InvalidBoundedU64, InvalidBoundedU8,
     },
     error::UnpackError,
-    Packable,
+    PackableExt,
 };
 
 macro_rules! impl_bounds_test_for_bounded_integer {

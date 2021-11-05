@@ -5,7 +5,7 @@ use bee_message::payload::{
     salt_declaration::{Salt, SaltDeclarationPayload},
     MessagePayload,
 };
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,

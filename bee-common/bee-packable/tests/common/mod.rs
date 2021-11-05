@@ -3,7 +3,7 @@
 
 use bee_packable::{
     packer::{SlicePacker, VecPacker},
-    Packable,
+    Packable, PackableExt,
 };
 
 use core::fmt::Debug;

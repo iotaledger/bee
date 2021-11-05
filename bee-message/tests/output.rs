@@ -8,7 +8,7 @@ use bee_message::{
         AssetBalance, AssetId, Output, OutputUnpackError, SignatureLockedAssetOutput, SignatureLockedSingleOutput,
     },
 };
-use bee_packable::{error::UnpackError, Packable};
+use bee_packable::{error::UnpackError, Packable, PackableExt};
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
 
 use core::str::FromStr;

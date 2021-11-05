@@ -7,7 +7,7 @@ use bee_message::{
     output::SignatureLockedSingleOutput,
     IOTA_SUPPLY,
 };
-use bee_packable::{error::UnpackError, Packable};
+use bee_packable::{error::UnpackError, Packable, PackableExt};
 
 use core::str::FromStr;
 

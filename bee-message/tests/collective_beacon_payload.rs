@@ -5,7 +5,7 @@ use bee_message::{
     payload::{drng::CollectiveBeaconPayload, MessagePayload},
     util::hex_decode,
 };
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 
 const BEACON_SIGNATURE_0: &str = "55914b063d6342d89680c90b3617877c0dd5c1b88fce7e19d24904ebe56aaca9835d458d77f61bb2a250\
     805e25ab6be095f2a498419f89056157b29cb088271c93253e1b420f52d893abe4d76be718964d0f322991a253ef6a66c17ec5862441";

@@ -15,7 +15,7 @@ use bee_packable::{
     packer::Packer,
     prefix::VecPrefix,
     unpacker::Unpacker,
-    Packable,
+    Packable, PackableExt,
 };
 
 use alloc::vec::Vec;
@@ -313,7 +313,7 @@ fn validate_inputs_unique_utxos(inputs: &[Input]) -> Result<(), ValidationError>
 }
 
 fn validate_inputs_sorted(inputs: &[Input]) -> Result<(), ValidationError> {
-    if !is_sorted(inputs.iter().map(Packable::pack_to_vec)) {
+    if !is_sorted(inputs.iter().map(PackableExt::pack_to_vec)) {
         Err(ValidationError::TransactionInputsNotSorted)
     } else {
         Ok(())

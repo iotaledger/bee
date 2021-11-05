@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{signature::BlsSignature, util::hex_decode};
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 
 use core::ops::Deref;
 

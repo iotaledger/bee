@@ -9,7 +9,7 @@ use bee_message::{
     },
     MessageId, MessageUnpackError,
 };
-use bee_packable::{error::UnpackError, Packable};
+use bee_packable::{error::UnpackError, PackableExt};
 use bee_test::rand::bytes::rand_bytes_array;
 
 #[test]

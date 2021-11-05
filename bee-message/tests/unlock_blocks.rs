@@ -6,7 +6,7 @@ use bee_message::{
     signature::{Ed25519Signature, Signature},
     unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlockUnpackError, UnlockBlocks},
 };
-use bee_packable::{bounded::InvalidBoundedU16, error::UnpackError, prefix::TryIntoPrefixError, Packable};
+use bee_packable::{bounded::InvalidBoundedU16, error::UnpackError, prefix::TryIntoPrefixError, PackableExt};
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
 
 #[test]

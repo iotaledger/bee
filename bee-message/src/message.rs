@@ -11,7 +11,7 @@ use bee_packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
-    Packable,
+    Packable, PackableExt,
 };
 
 use crypto::{
