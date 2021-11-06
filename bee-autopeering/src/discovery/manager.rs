@@ -700,7 +700,14 @@ fn handle_verification_request(verif_req: VerificationRequest, ctx: RecvContext)
     log::trace!("Handling verification request.");
 
     // In any case send a response.
-    send_verification_response_to_addr(ctx.peer_addr, &verif_req, ctx.msg_bytes, ctx.server_tx, ctx.local);
+    send_verification_response_to_addr(
+        ctx.peer_addr,
+        ctx.peer_id,
+        &verif_req,
+        ctx.msg_bytes,
+        ctx.server_tx,
+        ctx.local,
+    );
 
     // Is this a known peer?
     if peer::is_known(ctx.peer_id, ctx.local, ctx.active_peers, ctx.replacements) {
@@ -901,7 +908,7 @@ pub(crate) fn send_verification_request_to_addr(
     server_tx: &ServerTx,
     response_tx: Option<ResponseTx>,
 ) {
-    log::trace!("Sending verification request to: {}", peer_id);
+    log::trace!("Sending verification request to: {}/{}", peer_id, peer_addr);
 
     let verif_req = request_mngr
         .write()
@@ -924,11 +931,14 @@ pub(crate) fn send_verification_request_to_addr(
 /// Sends a verification response to a peer's address.
 pub(crate) fn send_verification_response_to_addr(
     peer_addr: SocketAddr,
+    peer_id: &PeerId,
     verif_req: &VerificationRequest,
     msg_bytes: &[u8],
-    tx: &ServerTx,
+    server_tx: &ServerTx,
     local: &Local,
 ) {
+    log::trace!("Sending verification response to: {}/{}", peer_id, peer_addr);
+
     let request_hash = msg_hash(MessageType::VerificationRequest, msg_bytes).to_vec();
 
     let verif_res = VerificationResponse::new(request_hash, local.read().services().clone(), peer_addr.ip());
@@ -946,12 +956,13 @@ pub(crate) fn send_verification_response_to_addr(
     // 	Port: int(m.SrcPort),
     // }
     // ```
-    tx.send(OutgoingPacket {
-        msg_type: MessageType::VerificationResponse,
-        msg_bytes,
-        peer_addr: SocketAddr::new(peer_addr.ip(), verif_req.source_addr().port()),
-    })
-    .expect("error sending verification response to server");
+    server_tx
+        .send(OutgoingPacket {
+            msg_type: MessageType::VerificationResponse,
+            msg_bytes,
+            peer_addr: SocketAddr::new(peer_addr.ip(), verif_req.source_addr().port()),
+        })
+        .expect("error sending verification response to server");
 }
 
 /// Initiates a discovery request to a peer by fetching its endpoint data from the peer store and waiting
