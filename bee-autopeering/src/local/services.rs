@@ -42,6 +42,7 @@ impl ServiceMap {
     }
 }
 
+// TODO: make this TryFrom
 impl From<proto::ServiceMap> for ServiceMap {
     fn from(services: proto::ServiceMap) -> Self {
         let proto::ServiceMap { map } = services;

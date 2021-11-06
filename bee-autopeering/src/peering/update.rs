@@ -73,7 +73,7 @@ fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
     }
 
     // Apply the filter on the verified peers to yield a set of neighbor candidates.
-    let mut candidates = ctx.nb_filter.read().apply_list(&verif_peers);
+    let mut candidates = ctx.nb_filter.apply_list(&verif_peers);
 
     if candidates.is_empty() {
         log::trace!("Currently no suitable candidates.");
@@ -105,10 +105,10 @@ fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
                 if status {
                     set_outbound_update_interval(&ctx_.outbound_nbh, &ctx_.local);
                 } else {
-                    ctx_.nb_filter.write().add(*candidate.peer_id());
+                    ctx_.nb_filter.add(*candidate.peer_id());
                 }
             } else {
-                ctx_.nb_filter.write().add(*candidate.peer_id());
+                ctx_.nb_filter.add(*candidate.peer_id());
             }
         });
     }

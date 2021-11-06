@@ -12,25 +12,82 @@ use std::{
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
-// pub(crate) type Matcher = Box<dyn Fn(&Peer) -> bool + Send + Sync>;
-
 #[derive(Clone)]
 pub(crate) struct NeighborFilter<V: NeighborValidator> {
     inner: Arc<RwLock<NeighborFilterInner<V>>>,
 }
 
 impl<V: NeighborValidator> NeighborFilter<V> {
+    /// Creates a new filter.
+    ///
+    /// A peer id same as `local_id` will always be rejected. A `validator` must be provided
+    /// to inject a user defined criteria.
     pub fn new(local_id: PeerId, validator: V) -> Self {
         Self {
             inner: Arc::new(RwLock::new(NeighborFilterInner::new(local_id, validator))),
         }
     }
 
-    pub fn read(&self) -> RwLockReadGuard<NeighborFilterInner<V>> {
+    /// Adds a single peer id that should be rejected.
+    pub(crate) fn add(&self, peer_id: PeerId) {
+        let mut inner_write = self.write();
+        inner_write.add(peer_id);
+    }
+
+    // TODO: revisit dead code
+    /// Adds a list of to-be-rejected peer ids.
+    #[allow(dead_code)]
+    pub(crate) fn extend(&self, peers: impl Iterator<Item = PeerId>) {
+        let mut inner_write = self.write();
+        inner_write.extend(peers);
+    }
+
+    // TODO: revisit dead code
+    /// Removes a single currently rejected peer id.
+    #[allow(dead_code)]
+    pub(crate) fn remove(&self, peer_id: &PeerId) -> bool {
+        let mut inner_write = self.write();
+        inner_write.remove(peer_id)
+    }
+
+    /// Resets the filter (i.e. removes all currently rejected peer ids).
+    pub(crate) fn clear(&self) {
+        let mut inner_write = self.write();
+        inner_write.clear()
+    }
+
+    /// Returns `true` if the filter is okay with the candidate, otherwise `false`.
+    pub(crate) fn ok(&self, candidate: impl AsRef<Peer>) -> bool {
+        let inner_read = self.read();
+        inner_read.ok(candidate)
+    }
+
+    /// Applies the filter to a list of candidates.
+    pub(crate) fn apply_list<'a, P: AsRef<Peer>>(&self, candidates: &'a [P]) -> Vec<&'a P> {
+        let inner_read = self.read();
+        inner_read.apply_list(candidates)
+    }
+
+    /// Adds a list of to-be-rejected peer ids.
+    pub(crate) fn reset(&self, peers: impl Iterator<Item = PeerId>) {
+        let mut inner_write = self.write();
+        inner_write.clear();
+        inner_write.extend(peers);
+    }
+
+    // TODO: revisit dead code
+    /// Returns an iterator over the rejected peer ids (including the local id).
+    #[allow(dead_code)]
+    pub(crate) fn iter(&self) -> Vec<PeerId> {
+        let inner_read = self.read();
+        inner_read.iter().copied().collect::<Vec<_>>()
+    }
+
+    fn read(&self) -> RwLockReadGuard<NeighborFilterInner<V>> {
         self.inner.read().expect("error getting read access")
     }
 
-    pub fn write(&self) -> RwLockWriteGuard<NeighborFilterInner<V>> {
+    fn write(&self) -> RwLockWriteGuard<NeighborFilterInner<V>> {
         self.inner.write().expect("error getting write access")
     }
 }
@@ -42,11 +99,7 @@ pub(crate) struct NeighborFilterInner<V: NeighborValidator> {
 }
 
 impl<V: NeighborValidator> NeighborFilterInner<V> {
-    /// Creates a new filter.
-    ///
-    /// A peer id same as `local_id` will always be rejected. A `validator` can be provided
-    /// to inject another filter criterium.
-    pub(crate) fn new(local_id: PeerId, validator: V) -> Self {
+    fn new(local_id: PeerId, validator: V) -> Self {
         Self {
             local_id,
             rejected: HashSet::new(),
@@ -55,29 +108,29 @@ impl<V: NeighborValidator> NeighborFilterInner<V> {
     }
 
     /// Adds a single peer id that should be rejected.
-    pub(crate) fn add(&mut self, peer_id: PeerId) {
+    fn add(&mut self, peer_id: PeerId) {
         self.rejected.insert(peer_id);
     }
 
     /// Adds a list of to-be-rejected peer ids.
-    pub(crate) fn extend(&mut self, peers: impl Iterator<Item = PeerId>) {
+    fn extend(&mut self, peers: impl Iterator<Item = PeerId>) {
         self.rejected.extend(peers)
     }
 
     // TODO: revisit dead code
     /// Removes a single currently rejected peer id.
     #[allow(dead_code)]
-    pub(crate) fn remove(&mut self, peer_id: &PeerId) {
-        let _ = self.rejected.remove(peer_id);
+    fn remove(&mut self, peer_id: &PeerId) -> bool {
+        self.rejected.remove(peer_id)
     }
 
     /// Resets the filter (i.e. removes all currently rejected peer ids).
-    pub(crate) fn reset(&mut self) {
+    fn clear(&mut self) {
         self.rejected.clear()
     }
 
     /// Returns `true` if the filter is okay with the candidate, otherwise `false`.
-    pub(crate) fn ok(&self, candidate: impl AsRef<Peer>) -> bool {
+    fn ok(&self, candidate: impl AsRef<Peer>) -> bool {
         let peer = candidate.as_ref();
         let peer_id = peer.peer_id();
 
@@ -89,14 +142,14 @@ impl<V: NeighborValidator> NeighborFilterInner<V> {
     }
 
     /// Applies the filter to a list of candidates.
-    pub(crate) fn apply_list<'a, P: AsRef<Peer>>(&self, candidates: &'a [P]) -> Vec<&'a P> {
+    fn apply_list<'a, P: AsRef<Peer>>(&self, candidates: &'a [P]) -> Vec<&'a P> {
         candidates.iter().filter(|c| self.ok(*c)).collect::<Vec<_>>()
     }
 
     // TODO: revisit dead code
     /// Returns an iterator over the rejected peer ids (including the local id).
     #[allow(dead_code)]
-    pub(crate) fn iter(&self) -> impl Iterator<Item = &PeerId> {
+    fn iter(&self) -> impl Iterator<Item = &PeerId> {
         iter::once(&self.local_id).chain(self.rejected.iter())
     }
 }

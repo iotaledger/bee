@@ -332,7 +332,7 @@ fn handle_peering_request<V: NeighborValidator>(
             .cloned()
             .expect("inconsistent peer list");
 
-        if nb_filter.read().ok(&active_peer.peer()) {
+        if nb_filter.ok(&active_peer.peer()) {
             // if nb_validator.map_or(true, |v| v.is_valid(&active_peer.peer())) {
             // Calculate the distance between the local peer and the potential neighbor.
             let distance = neighbor::salt_distance(
@@ -345,9 +345,9 @@ fn handle_peering_request<V: NeighborValidator>(
             let neighbor = Neighbor::new(active_peer.into_peer(), distance);
 
             // Check if the neighbor would be closer than the currently furthest in the inbound neighborhood.
-            let mut guard = ctx.inbound_nbh.write();
-            if let Some(peer) = guard.select(neighbor) {
-                drop(guard);
+            // let mut write_lock = ctx.inbound_nbh.write();
+            if let Some(peer) = ctx.inbound_nbh.lock_select(neighbor) {
+                // drop(write_lock);
                 if add_or_replace_neighbor::<INCOMING>(
                     peer.clone(),
                     ctx.local,
@@ -360,7 +360,7 @@ fn handle_peering_request<V: NeighborValidator>(
                     status = true;
 
                     // Update the neighbor filter.
-                    nb_filter.write().add(*peer.peer_id());
+                    nb_filter.add(*peer.peer_id());
 
                     // Fire `IncomingPeering` event.
                     publish_peering_event::<INCOMING>(
@@ -427,7 +427,7 @@ fn handle_peering_response<V: NeighborValidator>(
             send_drop_peering_request_to_peer(peer, ctx.server_tx, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
         } else if ctx.outbound_nbh.write().insert_neighbor(peer.clone(), ctx.local) {
             // Update the neighbor filter.
-            nb_filter.write().add(*peer.peer_id());
+            nb_filter.add(*peer.peer_id());
 
             // Fire `OutgoingPeering` event with status = `true`.
             publish_peering_event::<OUTGOING>(peer, status, ctx.local, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
@@ -456,7 +456,7 @@ fn handle_drop_request<V: NeighborValidator>(
     if let Some(nb) = ctx.outbound_nbh.write().remove_neighbor(ctx.peer_id) {
         removed_nb.replace(nb);
 
-        nb_filter.write().add(*ctx.peer_id);
+        nb_filter.add(*ctx.peer_id);
 
         // TODO: trigger immediate outbound neighborhood update; currently we wait for the next interval
     }
@@ -768,7 +768,7 @@ fn update_salts<V: NeighborValidator>(
         outbound_nbh.write().clear();
 
         // Reset the neighbor filter.
-        nb_filter.write().reset();
+        nb_filter.clear();
     } else {
         // Update the distances with the new salts.
         inbound_nbh.write().update_distances(local);
@@ -821,14 +821,11 @@ pub(crate) fn add_or_replace_neighbor<const IS_INBOUND: bool>(
 /// Call this function whenever one of the neighborhoods changes.
 #[allow(dead_code)]
 pub(crate) fn refresh_neighbor_filter<V: NeighborValidator>(
-    neighbor_filter: &NeighborFilter<V>,
+    nb_filter: &NeighborFilter<V>,
     inbound_nbh: &InboundNeighborhood,
     outbound_nbh: &OutboundNeighborhood,
 ) {
-    let mut write = neighbor_filter.write();
-
-    write.reset();
-    write.extend(
+    nb_filter.reset(
         inbound_nbh
             .read()
             .iter()

@@ -103,6 +103,11 @@ impl<const N: usize, const INBOUND: bool> Neighborhood<N, INBOUND> {
         Self::default()
     }
 
+    pub(crate) fn lock_select(&self, candidate: Neighbor) -> Option<Peer> {
+        let mut write = self.write();
+        write.select(candidate)
+    }
+
     pub fn read(&self) -> RwLockReadGuard<NeighborhoodInner<N, INBOUND>> {
         self.inner.read().expect("error getting read access")
     }
