@@ -36,7 +36,6 @@ pub(crate) fn do_reverify() -> Repeat<QueryContext> {
         if let Some(peer_id) = peer_to_reverify(&ctx.active_peers) {
             log::debug!("Reverifying {}...", peer_id);
 
-            // CHANGE BACK: move to before tokio::spawn
             let ctx_ = ctx.clone();
 
             // TODO: introduce `UnsupervisedTask` type, that always finishes after a timeout.
@@ -62,17 +61,15 @@ pub(crate) fn do_reverify() -> Repeat<QueryContext> {
                     )
                 }
             });
+        } else {
+            log::debug!("Currently no peers to reverify.");
         }
     })
 }
 
 // Hive.go: returns the oldest peer, or nil if empty.
 fn peer_to_reverify(active_peers: &ActivePeersList) -> Option<PeerId> {
-    if active_peers.read().is_empty() {
-        None
-    } else {
-        active_peers.read().get_oldest().cloned().map(|p| *p.peer_id())
-    }
+    active_peers.read().get_oldest().map(|p| *p.peer_id())
 }
 
 // Hive.go:
@@ -244,7 +241,9 @@ mod tests {
         let peerlist = create_peerlist_of_size(3);
 
         macro_rules! equal {
-            ($a:expr, $b:expr) => {{ $a == peerlist.read().get($b).unwrap().peer_id() }};
+            ($a:expr, $b:expr) => {{
+                $a == peerlist.read().get($b).unwrap().peer_id()
+            }};
         }
 
         let selected = select_peers_to_query(&peerlist);
@@ -259,7 +258,9 @@ mod tests {
         let peerlist = create_peerlist_of_size(10);
 
         macro_rules! equal {
-            ($a:expr, $b:expr) => {{ $a == peerlist.read().get($b).unwrap().peer_id() }};
+            ($a:expr, $b:expr) => {{
+                $a == peerlist.read().get($b).unwrap().peer_id()
+            }};
         }
 
         // 0 1 2 3 4 ... 7 8 9 (index)

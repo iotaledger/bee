@@ -453,12 +453,10 @@ async fn add_master_peers(
         let mut peer = Peer::new(entry_socketaddr.ip(), *entry_addr.public_key());
         peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, entry_socketaddr.port());
 
-        let peer_id = *peer.peer_id();
-
-        master_peers.write().insert(peer_id);
+        master_peers.write().insert(*peer.peer_id());
 
         // Also add it as a regular peer.
-        if add_peer::<false>(peer, local, active_peers, replacements) {
+        if let Some(peer_id) = add_peer::<false>(peer, local, active_peers, replacements) {
             log::debug!("Added {}.", peer_id);
             num_added += 1;
         }
@@ -468,17 +466,18 @@ async fn add_master_peers(
 }
 
 /// Attempts to add a new peer to a peer list (preferably as active).
-/// If the peer is added inbound, the "last verification timestamp" is added.
+/// If the peer is added inbound, i.e. , the "last verification timestamp" is added.
 pub(crate) fn add_peer<const ON_REQUEST: bool>(
     peer: Peer,
     local: &Local,
     active_peers: &ActivePeersList,
     replacements: &ReplacementList,
-) -> bool {
+) -> Option<PeerId> {
     // Only add new peers.
     if peer::is_known(peer.peer_id(), local, active_peers, replacements) {
-        false
+        None
     } else {
+        let peer_id = *peer.peer_id();
         // First try to add it to the active peer list. If that list is full, add it to the replacement list.
         if !active_peers.read().is_full() {
             let active_peer = if ON_REQUEST {
@@ -488,9 +487,15 @@ pub(crate) fn add_peer<const ON_REQUEST: bool>(
             } else {
                 ActivePeer::from(peer)
             };
-            active_peers.write().insert(active_peer)
+            if active_peers.write().insert(active_peer) {
+                Some(peer_id)
+            } else {
+                None
+            }
+        } else if replacements.write().insert(peer) {
+            Some(peer_id)
         } else {
-            replacements.write().insert(peer)
+            None
         }
     }
 }
@@ -634,13 +639,13 @@ fn validate_verification_response(
     if let Some(reqv) = request_mngr.write().pull::<VerificationRequest>(peer_id) {
         if verif_res.request_hash() == reqv.request_hash {
             let res_services = verif_res.services();
-            if let Some(res_peering) = res_services.get(AUTOPEERING_SERVICE_NAME) {
-                if res_peering.port() == source_socket_addr.port() {
+            if let Some(autopeering_svc) = res_services.get(AUTOPEERING_SERVICE_NAME) {
+                if autopeering_svc.port() == source_socket_addr.port() {
                     Ok(reqv)
                 } else {
                     Err(ServicePortMismatch {
                         expected: source_socket_addr.port(),
-                        received: res_peering.port(),
+                        received: autopeering_svc.port(),
                     })
                 }
             } else {
@@ -704,17 +709,22 @@ fn handle_verification_request(verif_req: VerificationRequest, ctx: RecvContext)
             peer.metrics_mut().set_last_verif_request_timestamp();
         }
 
-        if peer::is_verified(ctx.peer_id, ctx.active_peers) {
-            return;
+        if !peer::is_verified(ctx.peer_id, ctx.active_peers) {
+            // Peer is known, but no longer verified.
+            send_verification_request_to_addr(ctx.peer_addr, ctx.peer_id, ctx.request_mngr, ctx.server_tx, None);
         }
     } else {
-        // Add it as a new peer.
-        let peer = Peer::new(ctx.peer_addr.ip(), *ctx.peer_id.public_key());
-        add_peer::<true>(peer, ctx.local, ctx.active_peers, ctx.replacements);
-    }
+        // Add it as a new peer with autopeering service.
+        let mut peer = Peer::new(ctx.peer_addr.ip(), *ctx.peer_id.public_key());
+        peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, ctx.peer_addr.port());
 
-    // Send a verification request, because the peer is either known/unverfied or unknown=>unverified.
-    send_verification_request_to_addr(ctx.peer_addr, ctx.peer_id, ctx.request_mngr, ctx.server_tx, None);
+        if let Some(peer_id) = add_peer::<true>(peer, ctx.local, ctx.active_peers, ctx.replacements) {
+            log::debug!("Added {}.", peer_id);
+        }
+
+        // Peer is unknown, thus still unverified.
+        send_verification_request_to_addr(ctx.peer_addr, ctx.peer_id, ctx.request_mngr, ctx.server_tx, None);
+    }
 }
 
 // The peer must be known (since it's a valid response). That means that the peer is part of the active list currently.
@@ -780,7 +790,8 @@ fn handle_discovery_response(disc_res: DiscoveryResponse, disc_reqval: RequestVa
     // Add discovered peers to the peer list and peer store.
     for peer in disc_res.into_peers() {
         // Note: we only fire `PeerDiscovered` if it can be verified.
-        if add_peer::<false>(peer, ctx.local, ctx.active_peers, ctx.replacements) {
+        if let Some(peer_id) = add_peer::<false>(peer, ctx.local, ctx.active_peers, ctx.replacements) {
+            log::debug!("Added: {}.", peer_id);
             num_added += 1;
         }
     }

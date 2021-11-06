@@ -41,7 +41,6 @@ impl Peer {
 
         Self {
             peer_id,
-            // public_key,
             ip_address: address,
             services: ServiceMap::default(),
         }
