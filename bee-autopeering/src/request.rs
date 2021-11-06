@@ -87,7 +87,6 @@ impl RequestManagerInner {
         &mut self,
         peer_id: PeerId,
         peer_addr: IpAddr,
-        // handler: Option<DiscoveryHandler<S>>,
         response_tx: Option<ResponseTx>,
     ) -> VerificationRequest {
         let key = RequestKey {
@@ -106,7 +105,6 @@ impl RequestManagerInner {
         let value = RequestValue {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
-            // handler,
             response_tx,
         };
 
@@ -118,7 +116,6 @@ impl RequestManagerInner {
     pub(crate) fn new_discovery_request(
         &mut self,
         peer_id: PeerId,
-        // handler: Option<DiscoveryHandler<S>>,
         response_tx: Option<ResponseTx>,
     ) -> DiscoveryRequest {
         let key = RequestKey {
@@ -137,7 +134,6 @@ impl RequestManagerInner {
         let value = RequestValue {
             request_hash,
             expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
-            // handler,
             response_tx,
         };
 
@@ -178,7 +174,6 @@ impl RequestManagerInner {
     }
 
     pub(crate) fn pull<R: Request + 'static>(&mut self, peer_id: &PeerId) -> Option<RequestValue> {
-        // TODO: prevent the clone?
         let key = RequestKey {
             peer_id: *peer_id,
             request_id: TypeId::of::<R>(),

@@ -158,6 +158,7 @@ where
     );
     task_mngr.run(peering_mngr);
 
+    // TODO: remove this when sure that all open requests are garbage collected.
     // Remove expired requests regularly.
     let cmd = request::remove_expired_requests_repeat();
     let delay = iter::repeat(Duration::from_secs(EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS));

@@ -502,6 +502,10 @@ pub(crate) async fn begin_peering(
         }
         Err(e) => {
             log::debug!("Peering response timeout: {}", e);
+
+            // The response didn't arrive in time => remove the request.
+            let _ = request_mngr.write().pull::<PeeringRequest>(peer_id);
+
             None
         }
     }

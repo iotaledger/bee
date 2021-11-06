@@ -845,6 +845,10 @@ pub(crate) async fn begin_verification(
         }
         Err(e) => {
             log::debug!("Verification response timeout: {}", e);
+
+            // The response didn't arrive in time => remove the request.
+            let _ = request_mngr.write().pull::<VerificationRequest>(peer_id);
+
             None
         }
     }
@@ -991,6 +995,10 @@ pub(crate) async fn begin_discovery(
         }
         Err(e) => {
             log::debug!("Discovery response timeout: {}", e);
+
+            // The response didn't arrive in time => remove the request.
+            let _ = request_mngr.write().pull::<DiscoveryRequest>(peer_id);
+
             None
         }
     }
