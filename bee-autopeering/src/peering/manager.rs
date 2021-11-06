@@ -648,7 +648,7 @@ pub(crate) fn publish_peering_event<const IS_INBOUND: bool>(
     outbound_nbh: &OutboundNeighborhood,
 ) {
     log::debug!(
-        "Peering requested => direction: {}, status: {}, to: {}, #out {}, #in {}",
+        "Peering with {}; status: {}, direction: {}, #out_nbh: {}, #in_nbh: {}",
         if IS_INBOUND { "in" } else { "out" },
         status,
         peer.peer_id(),
@@ -682,8 +682,8 @@ fn publish_drop_peering_event(
     log::debug!(
         "Peering dropped with {}; #out_nbh: {} #in_nbh: {}",
         peer_id,
-        inbound_nbh.read().len(),
         outbound_nbh.read().len(),
+        inbound_nbh.read().len(),
     );
 
     event_tx
