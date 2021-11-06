@@ -136,7 +136,7 @@ pub use config::AutopeeringConfig;
 pub use event::Event;
 pub use init::init;
 pub use local::{
-    services::{ServiceMap, ServiceName, ServiceProtocol, AUTOPEERING_SERVICE_NAME},
+    services::{Service, ServiceMap, ServiceName, ServiceProtocol, AUTOPEERING_SERVICE_NAME},
     Local,
 };
 pub use peer::{peer_id, peer_id::PeerId, peerstore, Peer};

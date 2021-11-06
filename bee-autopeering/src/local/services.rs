@@ -32,7 +32,7 @@ impl ServiceMap {
     }
 
     /// Returns the connection data associated with the given service.
-    pub(crate) fn get(&self, service_name: impl AsRef<str>) -> Option<Service> {
+    pub fn get(&self, service_name: impl AsRef<str>) -> Option<Service> {
         self.0.get(service_name.as_ref()).copied()
     }
 
@@ -94,6 +94,7 @@ impl fmt::Display for ServiceMap {
     }
 }
 
+/// Represents a service provided by a peer.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Service {
     protocol: ServiceProtocol,
@@ -102,11 +103,13 @@ pub struct Service {
 
 impl Service {
     // TODO: revisit dead code
+    /// The transport protocol used to access the service, e.g. TCP or UDP.
     #[allow(dead_code)]
     pub fn protocol(&self) -> ServiceProtocol {
         self.protocol
     }
 
+    /// The access port of the service.
     pub fn port(&self) -> ServicePort {
         self.port
     }
