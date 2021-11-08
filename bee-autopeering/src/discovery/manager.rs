@@ -60,8 +60,6 @@ const MIN_VERIFIED_IN_RESPONSE: usize = 1;
 #[allow(dead_code)]
 const MAX_SERVICES: usize = 5;
 
-// pub(crate) type DiscoveryHandler<S: PeerStore> = Box<dyn Fn(&RecvContext<S>) + Send + Sync + 'static>;
-
 pub(crate) struct DiscoveryManagerConfig {
     pub(crate) entry_nodes: Vec<AutopeeringMultiaddr>,
     pub(crate) entry_nodes_prefer_ipv6: bool,

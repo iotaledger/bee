@@ -8,6 +8,18 @@ use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 
 use std::{convert::TryInto, fmt};
 
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum Error {
+    #[error("Missing salt")]
+    MissingSalt,
+    #[error("Invalid salt")]
+    InvalidSalt,
+    #[error("{0}")]
+    ProtobufDecode(#[from] DecodeError),
+    #[error("{0}")]
+    ProtobufEncode(#[from] EncodeError),
+}
+
 #[derive(Clone)]
 pub(crate) struct PeeringRequest {
     timestamp: u64,
@@ -29,20 +41,20 @@ impl PeeringRequest {
         &self.salt
     }
 
-    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
+    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
         let proto::PeeringRequest { timestamp, salt } = proto::PeeringRequest::decode(bytes)?;
-        let proto::Salt { bytes, exp_time } = salt.expect("missing salt");
+        let proto::Salt { bytes, exp_time } = salt.ok_or(Error::MissingSalt)?;
 
         Ok(Self {
             timestamp: timestamp as u64,
             salt: Salt {
-                bytes: bytes.try_into().expect("invalid salt length"),
+                bytes: bytes.try_into().map_err(|_| Error::InvalidSalt)?,
                 expiration_time: exp_time,
             },
         })
     }
 
-    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub fn to_protobuf(&self) -> Result<BytesMut, Error> {
         let peering_req = proto::PeeringRequest {
             timestamp: self.timestamp as i64,
             salt: Some(proto::Salt {

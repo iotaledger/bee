@@ -1,14 +1,27 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
 use crate::{local::services::ServiceMap, peer::Peer, proto, request::Request};
 
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message as _};
 
 use std::{
     fmt,
-    net::{IpAddr, SocketAddr},
+    net::{AddrParseError, IpAddr, SocketAddr},
 };
+
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum Error {
+    #[error("The peer did not announce any services.")]
+    NoServices,
+    #[error("Invalid source ip address. Cause: {0}.")]
+    InvalidSourceIpAddress(AddrParseError),
+    #[error("Invalid target ip address. Cause: {0}.")]
+    InvalidTargetIpAddress(AddrParseError),
+    #[error("{0}")]
+    ProtobufDecode(#[from] DecodeError),
+    #[error("{0}")]
+    ProtobufEncode(#[from] EncodeError),
+}
 
 #[derive(Clone, Copy)]
 pub(crate) struct VerificationRequest {
@@ -54,7 +67,7 @@ impl VerificationRequest {
         self.target_addr
     }
 
-    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
+    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
         let proto::Ping {
             version,
             network_id,
@@ -64,11 +77,11 @@ impl VerificationRequest {
             dst_addr,
         } = proto::Ping::decode(bytes)?;
 
-        let ip_addr: IpAddr = src_addr.parse().expect("error parsing ping source address");
+        let ip_addr: IpAddr = src_addr.parse().map_err(Error::InvalidSourceIpAddress)?;
         let port = src_port as u16;
 
         let source_addr = SocketAddr::new(ip_addr, port);
-        let target_addr: IpAddr = dst_addr.parse().expect("error parsing ping target address");
+        let target_addr: IpAddr = dst_addr.parse().map_err(Error::InvalidTargetIpAddress)?;
 
         Ok(Self {
             version,
@@ -142,7 +155,7 @@ impl VerificationResponse {
         self.target_addr
     }
 
-    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
+    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
         let proto::Pong {
             req_hash,
             services,
@@ -151,8 +164,8 @@ impl VerificationResponse {
 
         Ok(Self {
             request_hash: req_hash,
-            services: services.expect("missing services").into(),
-            target_addr: dst_addr.parse().expect("invalid target address"),
+            services: services.ok_or(Error::NoServices)?.into(),
+            target_addr: dst_addr.parse().map_err(Error::InvalidTargetIpAddress)?,
         })
     }
 
