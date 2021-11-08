@@ -76,10 +76,10 @@ impl Vertices {
         .ok()
     }
 
-    pub(crate) async fn pop_random<const RETRIES: usize>(&self) -> Option<Vertex> {
+    pub(crate) async fn pop_random(&self, max_retries: usize) -> Option<Vertex> {
         let mut retries = 0;
 
-        while retries < RETRIES {
+        while retries < max_retries {
             let index = rand::thread_rng().gen_range(0..self.tables.len());
 
             // SAFETY: `index < self.tables.len()` by construction.
