@@ -173,12 +173,19 @@ async fn process_internal_command(internal_command: Command, swarm: &mut Swarm<S
     match internal_command {
         Command::DialAddress { address } => {
             if let Err(e) = dial_addr(swarm, address.clone(), peerlist).await {
-                warn!("{:?}", e);
+                warn!("Dialing address {} failed. Cause: {}", address, e);
             }
         }
         Command::DialPeer { peer_id } => {
             if let Err(e) = dial_peer(swarm, peer_id, peerlist).await {
-                warn!("{:?}", e);
+                warn!("Dialing peer {} failed. {}", alias!(peer_id), e);
+
+                // Remove discovered peer if dialing it failed.
+                let _ = peerlist
+                    .0
+                    .write()
+                    .await
+                    .filter_remove(&peer_id, |info, _| info.relation.is_discovered());
             }
         }
         _ => {}
