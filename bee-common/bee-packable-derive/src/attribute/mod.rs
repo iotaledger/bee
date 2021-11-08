@@ -17,10 +17,10 @@ use syn::{
 };
 
 fn parse_attribute<T: Parse>(key: &'static str, attrs: &[Attribute]) -> Option<syn::Result<T>> {
-    find_attr(key, attrs).map(|attr| attr.parse_args::<T>())
+    find_attr(key, attrs).map(|attr| attr?.parse_args::<T>())
 }
 
-fn find_attr<'attr>(key: &'static str, attrs: &'attr [Attribute]) -> Option<&'attr Attribute> {
+fn find_attr<'attr>(key: &'static str, attrs: &'attr [Attribute]) -> Option<syn::Result<&'attr Attribute>> {
     for attr in attrs {
         if attr.path.is_ident("packable") {
             if let Ok(found_key) = attr.parse_args_with(|input: ParseStream| {
@@ -40,8 +40,12 @@ fn find_attr<'attr>(key: &'static str, attrs: &'attr [Attribute]) -> Option<&'at
                 }
                 ident
             }) {
+                if let Err(err) = known_ident(&found_key) {
+                    return Some(Err(err));
+                }
+
                 if found_key == key {
-                    return Some(attr);
+                    return Some(Ok(attr));
                 }
             }
         }
@@ -52,6 +56,9 @@ fn find_attr<'attr>(key: &'static str, attrs: &'attr [Attribute]) -> Option<&'at
 
 fn parse_key(key: &'static str, input: ParseStream) -> syn::Result<()> {
     let found_key = input.parse::<Ident>()?;
+
+    known_ident(&found_key)?;
+
     if found_key == key {
         input.parse::<Token![=]>()?;
         Ok(())
@@ -60,5 +67,15 @@ fn parse_key(key: &'static str, input: ParseStream) -> syn::Result<()> {
             found_key.span(),
             format!("expected key `{}` found `{}`", key, found_key),
         ))
+    }
+}
+
+fn known_ident(ident: &Ident) -> syn::Result<()> {
+    const KNOWN_IDENTS: &[&str] = &["pack_error", "unpack_error", "tag_type", "tag", "with", "with_error"];
+
+    if KNOWN_IDENTS.iter().any(|known_ident| ident == known_ident) {
+        Ok(())
+    } else {
+        Err(syn::Error::new(ident.span(), format!("unknown ident `{}`", ident)))
     }
 }
