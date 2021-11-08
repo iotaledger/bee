@@ -333,7 +333,6 @@ fn handle_peering_request<V: NeighborValidator>(
             .expect("inconsistent peer list");
 
         if nb_filter.ok(&active_peer.peer()) {
-            // if nb_validator.map_or(true, |v| v.is_valid(&active_peer.peer())) {
             // Calculate the distance between the local peer and the potential neighbor.
             let distance = neighbor::salt_distance(
                 ctx.local.read().peer_id(),
@@ -345,9 +344,7 @@ fn handle_peering_request<V: NeighborValidator>(
             let neighbor = Neighbor::new(active_peer.into_peer(), distance);
 
             // Check if the neighbor would be closer than the currently furthest in the inbound neighborhood.
-            // let mut write_lock = ctx.inbound_nbh.write();
             if let Some(peer) = ctx.inbound_nbh.lock_select(neighbor) {
-                // drop(write_lock);
                 if add_or_replace_neighbor::<INCOMING>(
                     peer.clone(),
                     ctx.local,
@@ -520,7 +517,6 @@ pub(crate) fn send_peering_request_to_peer(
     response_tx: Option<ResponseTx>,
     local: &Local,
 ) {
-    // let peer = peerstore.fetch_peer(peer_id).expect("peer not in storage");
     // TEMP: guard and drop
     let guard = active_peers.read();
     if let Some(active_peer) = active_peers.read().find(peer_id) {

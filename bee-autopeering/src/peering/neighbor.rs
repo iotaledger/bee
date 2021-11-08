@@ -108,10 +108,12 @@ impl<const N: usize, const INBOUND: bool> Neighborhood<N, INBOUND> {
         write.select(candidate)
     }
 
+    // TODO: do not expose lock guards, because this leads to dead locks if not very careful.
     pub fn read(&self) -> RwLockReadGuard<NeighborhoodInner<N, INBOUND>> {
         self.inner.read().expect("error getting read access")
     }
 
+    // TODO: do not expose lock guards, because this leads to dead locks if not very careful.
     pub fn write(&self) -> RwLockWriteGuard<NeighborhoodInner<N, INBOUND>> {
         self.inner.write().expect("error getting write access")
     }

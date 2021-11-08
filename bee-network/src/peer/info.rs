@@ -27,7 +27,9 @@ pub enum PeerRelation {
     Unknown,
     /// Represents a discovered peer.
     ///
-    /// If the connection to such a peer drops, the network won't try to reconnect.
+    /// Connections with discovered peers are maintained in the same way as those with
+    /// "known" peers, but - as for "unknown" peers - there's a maximum number in how
+    /// many are allowed simultaneously.
     Discovered,
 }
 
