@@ -9,7 +9,7 @@ use super::{
 
 use crate::{
     alias,
-    init::global::reconnect_interval_secs,
+    init::global::{self, reconnect_interval_secs},
     peer::{
         error::Error as PeerError,
         info::{PeerInfo, PeerRelation},
@@ -221,10 +221,17 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
         let num_connected_known = peerlist.filter_count(|info, state| info.relation.is_known() && state.is_connected());
         let num_connected_unknown =
             peerlist.filter_count(|info, state| info.relation.is_unknown() && state.is_connected());
+        let num_connected_discovered =
+            peerlist.filter_count(|info, state| info.relation.is_discovered() && state.is_connected());
 
         info!(
-            "Connected peers: known {}/{} unknown {}.",
-            num_connected_known, num_known, num_connected_unknown,
+            "Connected peers: known {}/{} unknown {}/{} discovered {}/{}.",
+            num_connected_known,
+            num_known,
+            num_connected_unknown,
+            global::max_unknown_peers(),
+            num_connected_discovered,
+            global::max_discovered_peers()
         );
 
         for (peer_id, info) in peerlist.filter_info(|info, state| info.relation.is_known() && state.is_disconnected()) {
