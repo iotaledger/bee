@@ -234,9 +234,7 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
             global::max_discovered_peers()
         );
 
-        for (peer_id, info) in peerlist.filter_info(|info, state| {
-            (info.relation.is_known() || info.relation.is_discovered()) && state.is_disconnected()
-        }) {
+        for (peer_id, info) in peerlist.filter_info(|info, state| info.relation.is_known() && state.is_disconnected()) {
             info!("Trying to connect to: {} ({}).", info.alias, alias!(peer_id));
 
             // Ignore if the command fails. We can always retry the next time.
@@ -351,8 +349,10 @@ async fn process_internal_event(
             // Try to disconnect, but ignore errors in-case the peer was disconnected already.
             let _ = peerlist.update_state(&peer_id, |state| state.set_disconnected());
 
-            // Try to remove unknown peers.
-            let _ = peerlist.filter_remove(&peer_id, |peer_info, _| peer_info.relation.is_unknown());
+            // Try to remove unknown and discovered peers.
+            let _ = peerlist.filter_remove(&peer_id, |peer_info, _| {
+                peer_info.relation.is_unknown() || peer_info.relation.is_discovered()
+            });
 
             // We no longer need to hold the lock.
             drop(peerlist);
