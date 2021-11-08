@@ -3,6 +3,7 @@
 
 use crate::proto;
 
+use libp2p_core::multiaddr::Protocol;
 use serde::{Deserialize, Serialize};
 
 use std::{collections::HashMap, fmt, io, str::FromStr};
@@ -94,6 +95,7 @@ impl fmt::Display for ServiceMap {
     }
 }
 
+// TODO: consider reducing this into an enum that holds the port number.
 /// Represents a service provided by a peer.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Service {
@@ -112,6 +114,14 @@ impl Service {
     /// The access port of the service.
     pub fn port(&self) -> ServicePort {
         self.port
+    }
+
+    /// Creates the corresponding `libp2p_core::multiaddr::Protocol` of this service endpoint.
+    pub fn to_libp2p_protocol(&self) -> Protocol<'_> {
+        match self.protocol {
+            ServiceProtocol::Tcp => Protocol::Tcp(self.port),
+            ServiceProtocol::Udp => Protocol::Udp(self.port),
+        }
     }
 }
 

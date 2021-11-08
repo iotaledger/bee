@@ -6,6 +6,7 @@ pub(crate) mod peerlist;
 pub mod peer_id;
 pub mod peerstore;
 
+use libp2p_core::{multiaddr::Protocol, Multiaddr};
 pub use peer_id::PeerId;
 pub use peerstore::PeerStore;
 
@@ -84,6 +85,25 @@ impl Peer {
     /// Adds a service with address binding to this peer.
     pub fn add_service(&mut self, service_name: impl ToString, protocol: ServiceProtocol, port: u16) {
         self.services.insert(service_name.to_string(), protocol, port);
+    }
+
+    /// Returns the address, i.e. the `libp2p_core::Multiaddr`, belonging to the given service name.
+    ///
+    /// Example: "peering" => `/ip4/127.0.0.1/udp/14627`.
+    pub fn get_service_multiaddr(&self, service_name: impl AsRef<str>) -> Option<Multiaddr> {
+        if let Some(service) = self.services.get(service_name) {
+            let mut multiaddr = Multiaddr::empty();
+
+            match self.ip_address {
+                IpAddr::V4(ipv4_addr) => multiaddr.push(Protocol::Ip4(ipv4_addr)),
+                IpAddr::V6(ipv6_addr) => multiaddr.push(Protocol::Ip6(ipv6_addr)),
+            };
+
+            multiaddr.push(service.to_libp2p_protocol());
+            Some(multiaddr)
+        } else {
+            None
+        }
     }
 
     /// Creates a peer from its Protobuf representation/encoding.
