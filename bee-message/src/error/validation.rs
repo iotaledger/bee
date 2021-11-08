@@ -191,5 +191,5 @@ impl fmt::Display for ValidationError {
     }
 }
 
-#[cfg(std)]
+#[cfg(feature = "std")]
 impl std::error::Error for ValidationError {}
