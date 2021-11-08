@@ -11,6 +11,7 @@ use rand::seq::IteratorRandom;
 
 use std::time::Instant;
 
+#[allow(clippy::enum_variant_names)]
 enum Score {
     NonLazy,
     SemiLazy,
