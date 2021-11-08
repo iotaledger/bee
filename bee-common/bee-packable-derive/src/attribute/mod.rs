@@ -71,7 +71,14 @@ fn parse_key(key: &'static str, input: ParseStream) -> syn::Result<()> {
 }
 
 fn known_ident(ident: &Ident) -> syn::Result<()> {
-    const KNOWN_IDENTS: &[&str] = &["pack_error", "unpack_error", "tag_type", "tag", "with", "with_error"];
+    const KNOWN_IDENTS: &[&str] = &[
+        "unpack_error",
+        "unpack_error_with",
+        "tag_type",
+        "tag",
+        "with",
+        "with_error",
+    ];
 
     if KNOWN_IDENTS.iter().any(|known_ident| ident == known_ident) {
         Ok(())
