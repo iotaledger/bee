@@ -12,7 +12,11 @@ use crate::{
     },
 };
 
-use bee_network::{Event, NetworkEventReceiver, ServiceHost};
+use bee_autopeering::event::{Event as AutopeeringEvent, EventRx as AutopeeringEventRx};
+use bee_network::{
+    alias, Command, Event as NetworkEvent, NetworkCommandSender, NetworkEventReceiver as NetworkEventRx, PeerRelation,
+    ServiceHost,
+};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{Tangle, TangleWorker};
 
@@ -30,7 +34,7 @@ impl<N: Node> Worker<N> for PeerManagerWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = NetworkEventReceiver;
+    type Config = (NetworkEventRx, AutopeeringEventRx, String);
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -53,33 +57,66 @@ where
         let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let metrics = node.resource::<NodeMetrics>();
+        let network_command_tx = node.resource::<NetworkCommandSender>();
+
         let hasher = node.worker::<HasherWorker>().unwrap().tx.clone();
         let message_responder = node.worker::<MessageResponderWorker>().unwrap().tx.clone();
         let milestone_responder = node.worker::<MilestoneResponderWorker>().unwrap().tx.clone();
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
 
-        node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Running.");
+        let (network_event_rx, autopeering_event_rx, network_name) = config;
 
-            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(config.into()));
+        node.spawn::<Self, _, _>(|shutdown| async move {
+            use AutopeeringEvent::*;
+
+            info!("Autopeering handler running.");
+
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(autopeering_event_rx));
 
             while let Some(event) = receiver.next().await {
                 trace!("Received event {:?}.", event);
 
                 match event {
-                    Event::PeerAdded { peer_id, info } => {
+                    IncomingPeering { peer, .. } => {
+                        handle_new_peering(peer, &network_name, &network_command_tx);
+                    }
+                    OutgoingPeering { peer, .. } => {
+                        handle_new_peering(peer, &network_name, &network_command_tx);
+                    }
+                    PeeringDropped { peer_id } => {
+                        handle_peering_dropped(peer_id, &network_command_tx);
+                    }
+                    _ => {}
+                }
+            }
+
+            info!("Autopeering stopped.");
+        });
+
+        node.spawn::<Self, _, _>(|shutdown| async move {
+            use NetworkEvent::*;
+
+            info!("Network handler running.");
+
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(network_event_rx.into()));
+
+            while let Some(event) = receiver.next().await {
+                trace!("Received event {:?}.", event);
+
+                match event {
+                    PeerAdded { peer_id, info } => {
                         // TODO check if not already added ?
                         info!("Added peer {}.", info.alias);
 
                         let peer = Arc::new(Peer::new(peer_id, info));
                         peer_manager.add(peer).await;
                     }
-                    Event::PeerRemoved { peer_id } => {
+                    PeerRemoved { peer_id } => {
                         if let Some(peer) = peer_manager.remove(&peer_id).await {
                             info!("Removed peer {}.", peer.0.alias());
                         }
                     }
-                    Event::PeerConnected {
+                    PeerConnected {
                         peer_id,
                         info: _,
                         gossip_in: receiver,
@@ -121,7 +158,7 @@ where
                         )
                         .await;
                     }
-                    Event::PeerDisconnected { peer_id } => {
+                    PeerDisconnected { peer_id } => {
                         // TODO write a get_mut peer manager method
                         if let Some(peer) = peer_manager.0.write().await.peers.get_mut(&peer_id) {
                             peer.0.set_connected(false);
@@ -137,9 +174,32 @@ where
                 }
             }
 
-            info!("Stopped.");
+            info!("Network stopped.");
         });
 
         Ok(Self {})
     }
+}
+
+fn handle_new_peering(peer: bee_autopeering::Peer, network_name: &str, command_tx: &NetworkCommandSender) {
+    if let Some(multiaddr) = peer.get_service_multiaddr(network_name) {
+        let peer_id = peer.peer_id().to_libp2p_peer_id();
+
+        command_tx
+            .send(Command::AddPeer {
+                peer_id,
+                alias: Some(alias!(peer_id).to_string()),
+                multiaddr,
+                relation: PeerRelation::Discovered,
+            })
+            .expect("error sending network command");
+    }
+}
+
+fn handle_peering_dropped(peer_id: bee_autopeering::PeerId, command_tx: &NetworkCommandSender) {
+    let peer_id = peer_id.to_libp2p_peer_id();
+
+    command_tx
+        .send(Command::RemovePeer { peer_id })
+        .expect("error sending network command");
 }

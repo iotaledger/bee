@@ -43,13 +43,15 @@ pub(crate) use responder::{
 pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
 pub(crate) use status::StatusWorker;
 
-use bee_network::NetworkEventReceiver;
+use bee_autopeering::event::EventRx as AutopeeringEventRx;
+use bee_network::NetworkEventReceiver as NetworkEventRx;
 use bee_runtime::node::{Node, NodeBuilder};
 
 pub fn init<N: Node>(
     config: config::ProtocolConfig,
-    network_id: u64,
-    events: NetworkEventReceiver,
+    network_id: (String, u64),
+    network_events: NetworkEventRx,
+    autopeering_events: AutopeeringEventRx,
     node_builder: N::Builder,
 ) -> N::Builder
 where
@@ -58,9 +60,9 @@ where
     node_builder
         .with_worker::<MetricsWorker>()
         .with_worker::<PeerManagerResWorker>()
-        .with_worker_cfg::<PeerManagerWorker>(events)
+        .with_worker_cfg::<PeerManagerWorker>((network_events, autopeering_events, network_id.0))
         .with_worker_cfg::<HasherWorker>(config.clone())
-        .with_worker_cfg::<ProcessorWorker>(network_id)
+        .with_worker_cfg::<ProcessorWorker>(network_id.1)
         .with_worker::<MessageResponderWorker>()
         .with_worker::<MilestoneResponderWorker>()
         .with_worker::<MessageRequesterWorker>()

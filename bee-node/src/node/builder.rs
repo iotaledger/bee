@@ -251,7 +251,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         drop(write);
 
         let quit_signal = tokio::signal::ctrl_c();
-        let mut peering_events = bee_autopeering::init::<InMemoryPeerStore, _, _, _>(
+        let autopeering_events = bee_autopeering::init::<InMemoryPeerStore, _, _, _>(
             autopeering_config,
             AUTOPEERING_VERSION,
             network_name,
@@ -262,11 +262,6 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         )
         .await
         .map_err(|e| Error::PeeringInitializationFailed(e))?;
-        tokio::spawn(async move {
-            while let Some(e) = peering_events.recv().await {
-                info!("Autopeering: {}", e);
-            }
-        });
 
         #[cfg(unix)]
         let this = this.with_resource(shutdown_listener(vec![
@@ -281,7 +276,13 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             bee_ledger::workers::init::<BeeNode<B>>(this, network_id, config.snapshot.clone(), config.pruning.clone());
 
         info!("Initializing protocol layer...");
-        let this = bee_protocol::workers::init::<BeeNode<B>>(config.protocol.clone(), network_id, network_events, this);
+        let this = bee_protocol::workers::init::<BeeNode<B>>(
+            config.protocol.clone(),
+            config.network_id.clone(),
+            network_events,
+            autopeering_events,
+            this,
+        );
 
         info!("Initializing REST API...");
         let this = bee_rest_api::endpoints::init::<BeeNode<B>>(
