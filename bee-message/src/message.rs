@@ -31,7 +31,7 @@ pub struct Message {
     parents: Parents,
     /// The optional [Payload] of the message.
     payload: Option<Payload>,
-    /// The result of the Proof of Work in order fot the message to be accepted into the tangle.
+    /// The result of the Proof of Work in order for the message to be accepted into the tangle.
     nonce: u64,
 }
 
