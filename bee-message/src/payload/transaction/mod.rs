@@ -8,7 +8,7 @@ mod transaction_id;
 
 use crate::{payload::MessagePayload, unlock::UnlockBlocks, MessageUnpackError, ValidationError};
 
-pub use essence::{TransactionEssence, TransactionEssenceBuilder, TransactionEssenceUnpackError};
+pub use essence::{TransactionEssence, TransactionEssenceBuilder, TransactionEssenceUnpackError, PLEDGE_ID_LENGTH};
 pub(crate) use essence::{
     PREFIXED_INPUTS_LENGTH_MAX, PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX, PREFIXED_OUTPUTS_LENGTH_MIN,
 };

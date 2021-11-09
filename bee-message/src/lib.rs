@@ -31,7 +31,7 @@ pub mod util;
 
 pub use builder::MessageBuilder;
 pub use error::{MessageUnpackError, ValidationError};
-pub use message::{Message, MESSAGE_LENGTH_RANGE};
+pub use message::{Message, MESSAGE_LENGTH_RANGE, MESSAGE_PUBLIC_KEY_LENGTH, MESSAGE_SIGNATURE_LENGTH};
 pub use message_id::MessageId;
 #[cfg(feature = "metadata")]
 pub use metadata::MessageMetadata;
