@@ -8,24 +8,24 @@ use bee_common::packable::{Packable, Read, Write};
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize, derive_more::From))]
-pub struct AliasUnlock(u16);
+pub struct AliasUnlockBlock(u16);
 
-impl AliasUnlock {
-    /// The unlock kind of an `AliasUnlock`.
+impl AliasUnlockBlock {
+    /// The unlock kind of an `AliasUnlockBlock`.
     pub const KIND: u8 = 2;
 
-    /// Creates a new `AliasUnlock`.
+    /// Creates a new `AliasUnlockBlock`.
     pub fn new(index: u16) -> Self {
         Self(index)
     }
 
-    /// Return the index of an `AliasUnlock`.
+    /// Return the index of an `AliasUnlockBlock`.
     pub fn index(&self) -> u16 {
         self.0
     }
 }
 
-impl Packable for AliasUnlock {
+impl Packable for AliasUnlockBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

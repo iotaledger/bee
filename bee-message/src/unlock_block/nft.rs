@@ -8,24 +8,24 @@ use bee_common::packable::{Packable, Read, Write};
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize, derive_more::From))]
-pub struct NftUnlock(u16);
+pub struct NftUnlockBlock(u16);
 
-impl NftUnlock {
-    /// The unlock kind of a `NftUnlock`.
+impl NftUnlockBlock {
+    /// The unlock kind of a `NftUnlockBlock`.
     pub const KIND: u8 = 3;
 
-    /// Creates a new `NftUnlock`.
+    /// Creates a new `NftUnlockBlock`.
     pub fn new(index: u16) -> Self {
         Self(index)
     }
 
-    /// Return the index of a `NftUnlock`.
+    /// Return the index of a `NftUnlockBlock`.
     pub fn index(&self) -> u16 {
         self.0
     }
 }
 
-impl Packable for NftUnlock {
+impl Packable for NftUnlockBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

@@ -9,24 +9,24 @@ use bee_common::packable::{Packable, Read, Write};
 /// [`Input`](crate::input::Input).
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize, derive_more::From))]
-pub struct SignatureUnlock(Signature);
+pub struct SignatureUnlockBlock(Signature);
 
-impl SignatureUnlock {
-    /// The [`UnlockBlock`](crate::unlock::UnlockBlock) kind of a [`SignatureUnlock`].
+impl SignatureUnlockBlock {
+    /// The [`UnlockBlock`](crate::unlock::UnlockBlock) kind of a [`SignatureUnlockBlock`].
     pub const KIND: u8 = 0;
 
-    /// Creates a new [`SignatureUnlock`].
+    /// Creates a new [`SignatureUnlockBlock`].
     pub fn new(signature: Signature) -> Self {
         Self(signature)
     }
 
-    /// Returns the actual [`Signature`] of the [`SignatureUnlock`].
+    /// Returns the actual [`Signature`] of the [`SignatureUnlockBlock`].
     pub fn signature(&self) -> &Signature {
         &self.0
     }
 }
 
-impl core::ops::Deref for SignatureUnlock {
+impl core::ops::Deref for SignatureUnlockBlock {
     type Target = Signature;
 
     fn deref(&self) -> &Self::Target {
@@ -34,7 +34,7 @@ impl core::ops::Deref for SignatureUnlock {
     }
 }
 
-impl Packable for SignatureUnlock {
+impl Packable for SignatureUnlockBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

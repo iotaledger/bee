@@ -23,6 +23,6 @@ pub use crate::{
         Payload,
     },
     signature::{Ed25519Signature, Signature},
-    unlock_block::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlocks},
+    unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
     Error, Message, MessageBuilder, MessageId, MESSAGE_ID_LENGTH, MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN,
 };

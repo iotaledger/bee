@@ -6,10 +6,10 @@ mod nft;
 mod reference;
 mod signature;
 
-pub use alias::AliasUnlock;
-pub use nft::NftUnlock;
-pub use reference::ReferenceUnlock;
-pub use signature::SignatureUnlock;
+pub use alias::AliasUnlockBlock;
+pub use nft::NftUnlockBlock;
+pub use reference::ReferenceUnlockBlock;
+pub use signature::SignatureUnlockBlock;
 
 use crate::{
     input::{INPUT_COUNT_MAX, INPUT_COUNT_RANGE, INPUT_INDEX_MAX, INPUT_INDEX_RANGE},
@@ -39,23 +39,23 @@ pub const UNLOCK_BLOCK_INDEX_RANGE: RangeInclusive<u16> = INPUT_INDEX_RANGE; // 
 )]
 pub enum UnlockBlock {
     /// A signature unlock block.
-    Signature(SignatureUnlock),
+    Signature(SignatureUnlockBlock),
     /// A reference unlock block.
-    Reference(ReferenceUnlock),
+    Reference(ReferenceUnlockBlock),
     /// An alias unlock block.
-    Alias(AliasUnlock),
+    Alias(AliasUnlockBlock),
     /// A NFT unlock block.
-    Nft(NftUnlock),
+    Nft(NftUnlockBlock),
 }
 
 impl UnlockBlock {
     /// Returns the unlock kind of an `UnlockBlock`.
     pub fn kind(&self) -> u8 {
         match self {
-            Self::Signature(_) => SignatureUnlock::KIND,
-            Self::Reference(_) => ReferenceUnlock::KIND,
-            Self::Alias(_) => AliasUnlock::KIND,
-            Self::Nft(_) => NftUnlock::KIND,
+            Self::Signature(_) => SignatureUnlockBlock::KIND,
+            Self::Reference(_) => ReferenceUnlockBlock::KIND,
+            Self::Alias(_) => AliasUnlockBlock::KIND,
+            Self::Nft(_) => NftUnlockBlock::KIND,
         }
     }
 }
@@ -65,29 +65,29 @@ impl Packable for UnlockBlock {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::Signature(unlock) => SignatureUnlock::KIND.packed_len() + unlock.packed_len(),
-            Self::Reference(unlock) => ReferenceUnlock::KIND.packed_len() + unlock.packed_len(),
-            Self::Alias(unlock) => AliasUnlock::KIND.packed_len() + unlock.packed_len(),
-            Self::Nft(unlock) => NftUnlock::KIND.packed_len() + unlock.packed_len(),
+            Self::Signature(unlock) => SignatureUnlockBlock::KIND.packed_len() + unlock.packed_len(),
+            Self::Reference(unlock) => ReferenceUnlockBlock::KIND.packed_len() + unlock.packed_len(),
+            Self::Alias(unlock) => AliasUnlockBlock::KIND.packed_len() + unlock.packed_len(),
+            Self::Nft(unlock) => NftUnlockBlock::KIND.packed_len() + unlock.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::Signature(unlock) => {
-                SignatureUnlock::KIND.pack(writer)?;
+                SignatureUnlockBlock::KIND.pack(writer)?;
                 unlock.pack(writer)?;
             }
             Self::Reference(unlock) => {
-                ReferenceUnlock::KIND.pack(writer)?;
+                ReferenceUnlockBlock::KIND.pack(writer)?;
                 unlock.pack(writer)?;
             }
             Self::Alias(unlock) => {
-                AliasUnlock::KIND.pack(writer)?;
+                AliasUnlockBlock::KIND.pack(writer)?;
                 unlock.pack(writer)?;
             }
             Self::Nft(unlock) => {
-                NftUnlock::KIND.pack(writer)?;
+                NftUnlockBlock::KIND.pack(writer)?;
                 unlock.pack(writer)?;
             }
         }
@@ -97,10 +97,10 @@ impl Packable for UnlockBlock {
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            SignatureUnlock::KIND => SignatureUnlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            ReferenceUnlock::KIND => ReferenceUnlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            AliasUnlock::KIND => AliasUnlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            NftUnlock::KIND => NftUnlock::unpack_inner::<R, CHECK>(reader)?.into(),
+            SignatureUnlockBlock::KIND => SignatureUnlockBlock::unpack_inner::<R, CHECK>(reader)?.into(),
+            ReferenceUnlockBlock::KIND => ReferenceUnlockBlock::unpack_inner::<R, CHECK>(reader)?.into(),
+            AliasUnlockBlock::KIND => AliasUnlockBlock::unpack_inner::<R, CHECK>(reader)?.into(),
+            NftUnlockBlock::KIND => NftUnlockBlock::unpack_inner::<R, CHECK>(reader)?.into(),
             k => return Err(Self::Error::InvalidUnlockBlockKind(k)),
         })
     }
