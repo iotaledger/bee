@@ -7,7 +7,7 @@ use std::{
     time::{self, Duration},
 };
 
-use bee_crypto::ternary::sponge::{CurlP, CurlPRounds, Sponge, BATCH_SIZE};
+use bee_crypto::ternary::sponge::{CurlP81, CurlPRounds, Sponge, BATCH_SIZE};
 use bee_pow::providers::miner::MinerCancel;
 use bee_ternary::{
     b1t6::{self},
@@ -97,14 +97,16 @@ pub fn exec(tool: &BenchmarkCPUTool) {
 }
 
 fn cpu_benchmark_worker(_pow_digest: &[u8], start_nonce: u64, cancel: MinerCancel, counter: Arc<AtomicU64>) {
-    let mut pow_digest = TritBuf::<T1B1Buf>::new();
+    let HASH_LENGTH = 243;
+    
+    let mut pow_digest = TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH);
     b1t6::encode::<T1B1Buf>(&_pow_digest)
         .iter()
         .for_each(|t| pow_digest.push(t));
 
     let mut nonce = start_nonce;
-    let mut curlp = CurlP::new(CurlPRounds::Rounds81);
-    let mut buffers = TritBuf::<T1B1Buf>::new();
+    let mut curlp = CurlP81::new();
+    let mut buffers = TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH);
 
     for i in 0..BATCH_SIZE {
         let nonce_trits = b1t6::encode::<T1B1Buf>(&(nonce + i as u64).to_le_bytes());
