@@ -7,12 +7,10 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{punctuated::Punctuated, token::Comma, Field};
 
-/// Values of this type contain the information necessary to build either the bodies of the methods
-/// for implementing [`Packable`] for a struct or the bodies of the branches for implementing
-/// [`Packable`] for a variant of an enum.
+/// Values of this type contain the information necessary to build either the bodies of the methods for implementing
+/// [`Packable`] for a struct or the bodies of the branches for implementing [`Packable`] for a variant of an enum.
 ///
-/// Given that this type can be used for either a struct or a variant we will use the term "record"
-/// to refer to both.
+/// Given that this type can be used for either a struct or a variant we will use the term "record" to refer to both.
 pub(crate) struct Fragments {
     // The pattern used to destructure the record.
     pattern: TokenStream,
@@ -25,8 +23,8 @@ pub(crate) struct Fragments {
 }
 
 impl Fragments {
-    /// Create a new set of fragments from the fields of a record with name `name` and fields
-    /// `fields`. The `NAMED` parameter specifies if the fields of the record are named or not.
+    /// Create a new set of fragments from the fields of a record with name `name` and fields `fields`.
+    /// The `NAMED` parameter specifies if the fields of the record are named or not.
     pub(crate) fn new<const NAMED: bool>(
         name: TokenStream,
         fields: &Punctuated<Field, Comma>,
@@ -46,9 +44,8 @@ impl Fragments {
                 // This is a named field, which means its `ident` cannot be `None`.
                 labels.push(ident.as_ref().unwrap().to_token_stream());
             } else {
-                // This is an unnamed field. We push the index because in Rust `Foo(T)` is
-                // equivalent to `Foo { 0: T }`, which allows us to handle both cases
-                // homogeneously.
+                // This is an unnamed field. We push the index because in Rust `Foo(T)` is equivalent to `Foo { 0: T }`,
+                // which allows us to handle both cases homogeneously.
                 labels.push(proc_macro2::Literal::u64_unsuffixed(index as u64).to_token_stream());
             }
 
@@ -79,8 +76,8 @@ impl Fragments {
                 #(<#types>::pack(#values, packer)?;) *
                 Ok(())
             },
-            // This would be `0 + <T>::packed_len(&field_0) + <V>::packed_len(&field_1)`. The `0`
-            // is used in case the record has no fields.
+            // This would be `0 + <T>::packed_len(&field_0) + <V>::packed_len(&field_1)`.
+            // The `0` is used in case the record has no fields.
             packed_len: quote!(0 #(+ <#types>::packed_len(#values))*),
             // And this would be
             // ```
@@ -114,9 +111,8 @@ impl Fragments {
         // <V>::pack(&field_1, packer)?;
         // Ok(())
         // ```
-        // The whole destructuring thing is done so we can do both variants and structs with the
-        // same fragments even though it would be more natural to use `self.bar` and `self.baz`
-        // instead.
+        // The whole destructuring thing is done so we can do both variants and structs with the same fragments even
+        // though it would be more natural to use `self.bar` and `self.baz` instead.
         let pack = quote! {
             let #pattern = self;
             #pack
@@ -139,8 +135,8 @@ impl Fragments {
 
     /// Consumes the fragments assuming that the record is a variant.
     ///
-    /// The returned streams correspond to the branches necessary to implement `pack`, `packed_len`
-    /// and `unpack` for this variant.
+    /// The returned streams correspond to the branches necessary to implement `pack`, `packed_len` and `unpack` for
+    /// this variant.
     pub(crate) fn consume_for_variant(
         self,
         tag: impl ToTokens,
@@ -153,8 +149,8 @@ impl Fragments {
             unpack,
         } = self;
 
-        // Following the example from `new` and assuming that the tag for this variant is `tag` and
-        // the type of the tag is `W`. This would be
+        // Following the example from `new` and assuming that the tag for this variant is `tag` and the type of the tag
+        // is `W`. This would be
         // ```
         // Foo { bar: field_0 , baz: field_1 } => {
         //     W::pack(&tag, packer).infallible()?;

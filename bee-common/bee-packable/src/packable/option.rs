@@ -18,8 +18,7 @@ impl<E> From<E> for UnpackOptionError<E> {
     }
 }
 
-/// Options are packed and unpacked using `0u8` as the prefix for `None` and `1u8` as the prefix
-/// for `Some`.
+/// Options are packed and unpacked using `0u8` as the prefix for `None` and `1u8` as the prefix for `Some`.
 impl<T: Packable> Packable for Option<T> {
     type UnpackError = UnpackOptionError<T::UnpackError>;
 

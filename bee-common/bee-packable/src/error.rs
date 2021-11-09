@@ -13,8 +13,7 @@ mod sealed {
     impl<T, U, V> Sealed for Result<T, UnpackError<U, V>> {}
 }
 
-/// Trait providing utility methods for `Result` values that use `UnpackError` as the `Err`
-/// variant.
+/// Trait providing utility methods for `Result` values that use `UnpackError` as the `Err` variant.
 pub trait UnpackErrorExt<T, U, V>: sealed::Sealed + Sized {
     /// Maps the [`Packable`](UnpackError::Packable) variant if the result is an error.
     fn map_packable_err<W>(self, f: impl Fn(U) -> W) -> Result<T, UnpackError<W, V>>;
@@ -27,8 +26,7 @@ pub trait UnpackErrorExt<T, U, V>: sealed::Sealed + Sized {
         self.map_packable_err(U::into)
     }
 
-    /// Coerces the [`Packable`](UnpackError::Packable) variant value to any type assuming the value is
-    /// [`Infallible`].
+    /// Coerces the [`Packable`](UnpackError::Packable) variant value to any type assuming the value is [`Infallible`].
     fn infallible<W>(self) -> Result<T, UnpackError<W, V>>
     where
         U: Into<Infallible>,
@@ -111,8 +109,7 @@ impl<E> UnpackPrefixError<Infallible, E> {
 }
 
 impl<T, E> UnpackPrefixError<T, E> {
-    /// Returns the contained [`Packable`](UnpackPrefixError::Packable) value or computes it from a
-    /// closure.
+    /// Returns the contained [`Packable`](UnpackPrefixError::Packable) value or computes it from a closure.
     pub fn unwrap_packable_or_else<V: Into<T>>(self, f: impl FnOnce(E) -> V) -> T {
         match self {
             Self::Packable(err) => err,

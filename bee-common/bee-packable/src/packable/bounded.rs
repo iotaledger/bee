@@ -69,8 +69,7 @@ macro_rules! bounded {
         /// This implementation returns the closest bounded integer to zero.
         impl<const MIN: $ty, const MAX: $ty> Default for $wrapper<MIN, MAX> {
             fn default() -> Self {
-                // SAFETY: this value is larger or equal than `MIN` and smaller or equal than
-                // `MAX` by construction.
+                // SAFETY: this value is larger or equal than `MIN` and smaller or equal than `MAX` by construction.
                 unsafe { Self::new_unchecked(0.min(MAX).max(MIN)) }
             }
         }
