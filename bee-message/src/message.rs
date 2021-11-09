@@ -21,6 +21,96 @@ pub const MESSAGE_LENGTH_MAX: usize = 32768;
 const DEFAULT_POW_SCORE: f64 = 4000f64;
 const DEFAULT_NONCE: u64 = 0;
 
+/// A builder to build a `Message`.
+pub struct MessageBuilder<P: NonceProvider = Miner> {
+    network_id: Option<u64>,
+    parents: Option<Parents>,
+    payload: Option<Payload>,
+    nonce_provider: Option<(P, f64)>,
+}
+
+impl<P: NonceProvider> Default for MessageBuilder<P> {
+    fn default() -> Self {
+        Self {
+            network_id: None,
+            parents: None,
+            payload: None,
+            nonce_provider: None,
+        }
+    }
+}
+
+impl<P: NonceProvider> MessageBuilder<P> {
+    /// Creates a new `MessageBuilder`.
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    /// Adds a network id to a `MessageBuilder`.
+    pub fn with_network_id(mut self, network_id: u64) -> Self {
+        self.network_id = Some(network_id);
+        self
+    }
+
+    /// Adds parents to a `MessageBuilder`.
+    pub fn with_parents(mut self, parents: Parents) -> Self {
+        self.parents = Some(parents);
+        self
+    }
+
+    /// Adds a payload to a `MessageBuilder`.
+    pub fn with_payload(mut self, payload: Payload) -> Self {
+        self.payload = Some(payload);
+        self
+    }
+
+    /// Adds a nonce provider to a `MessageBuilder`.
+    pub fn with_nonce_provider(mut self, nonce_provider: P, target_score: f64) -> Self {
+        self.nonce_provider = Some((nonce_provider, target_score));
+        self
+    }
+
+    /// Finishes the `MessageBuilder` into a `Message`.
+    pub fn finish(self) -> Result<Message, Error> {
+        let network_id = self.network_id.ok_or(Error::MissingField("network_id"))?;
+        let parents = self.parents.ok_or(Error::MissingField("parents"))?;
+
+        if !matches!(
+            self.payload,
+            None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::Indexation(_))
+        ) {
+            // Safe to unwrap since it's known not to be None.
+            return Err(Error::InvalidPayloadKind(self.payload.unwrap().kind()));
+        }
+
+        let mut message = Message {
+            network_id,
+            parents,
+            payload: self.payload,
+            nonce: 0,
+        };
+
+        let message_bytes = message.pack_new();
+
+        if message_bytes.len() > MESSAGE_LENGTH_MAX {
+            return Err(Error::InvalidMessageLength(message_bytes.len()));
+        }
+
+        let (nonce_provider, target_score) = self
+            .nonce_provider
+            .unwrap_or((P::Builder::new().finish(), DEFAULT_POW_SCORE));
+
+        message.nonce = nonce_provider
+            .nonce(
+                &message_bytes[..message_bytes.len() - std::mem::size_of::<u64>()],
+                target_score,
+            )
+            .unwrap_or(DEFAULT_NONCE);
+
+        Ok(message)
+    }
+}
+
 /// Represent the object that nodes gossip around the network.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -129,95 +219,5 @@ impl Packable for Message {
             payload,
             nonce,
         })
-    }
-}
-
-/// A builder to build a `Message`.
-pub struct MessageBuilder<P: NonceProvider = Miner> {
-    network_id: Option<u64>,
-    parents: Option<Parents>,
-    payload: Option<Payload>,
-    nonce_provider: Option<(P, f64)>,
-}
-
-impl<P: NonceProvider> Default for MessageBuilder<P> {
-    fn default() -> Self {
-        Self {
-            network_id: None,
-            parents: None,
-            payload: None,
-            nonce_provider: None,
-        }
-    }
-}
-
-impl<P: NonceProvider> MessageBuilder<P> {
-    /// Creates a new `MessageBuilder`.
-    pub fn new() -> Self {
-        Default::default()
-    }
-
-    /// Adds a network id to a `MessageBuilder`.
-    pub fn with_network_id(mut self, network_id: u64) -> Self {
-        self.network_id = Some(network_id);
-        self
-    }
-
-    /// Adds parents to a `MessageBuilder`.
-    pub fn with_parents(mut self, parents: Parents) -> Self {
-        self.parents = Some(parents);
-        self
-    }
-
-    /// Adds a payload to a `MessageBuilder`.
-    pub fn with_payload(mut self, payload: Payload) -> Self {
-        self.payload = Some(payload);
-        self
-    }
-
-    /// Adds a nonce provider to a `MessageBuilder`.
-    pub fn with_nonce_provider(mut self, nonce_provider: P, target_score: f64) -> Self {
-        self.nonce_provider = Some((nonce_provider, target_score));
-        self
-    }
-
-    /// Finishes the `MessageBuilder` into a `Message`.
-    pub fn finish(self) -> Result<Message, Error> {
-        let network_id = self.network_id.ok_or(Error::MissingField("network_id"))?;
-        let parents = self.parents.ok_or(Error::MissingField("parents"))?;
-
-        if !matches!(
-            self.payload,
-            None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::Indexation(_))
-        ) {
-            // Safe to unwrap since it's known not to be None.
-            return Err(Error::InvalidPayloadKind(self.payload.unwrap().kind()));
-        }
-
-        let mut message = Message {
-            network_id,
-            parents,
-            payload: self.payload,
-            nonce: 0,
-        };
-
-        let message_bytes = message.pack_new();
-
-        if message_bytes.len() > MESSAGE_LENGTH_MAX {
-            return Err(Error::InvalidMessageLength(message_bytes.len()));
-        }
-
-        let (nonce_provider, target_score) = self
-            .nonce_provider
-            .unwrap_or((P::Builder::new().finish(), DEFAULT_POW_SCORE));
-
-        message.nonce = nonce_provider
-            .nonce(
-                &message_bytes[..message_bytes.len() - std::mem::size_of::<u64>()],
-                target_score,
-            )
-            .unwrap_or(DEFAULT_NONCE);
-
-        Ok(message)
     }
 }

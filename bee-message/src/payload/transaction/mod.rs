@@ -15,6 +15,53 @@ use bee_common::packable::{Packable, Read, Write};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
+/// A builder to build a `TransactionPayload`.
+#[derive(Debug, Default)]
+pub struct TransactionPayloadBuilder {
+    essence: Option<Essence>,
+    unlock_blocks: Option<UnlockBlocks>,
+}
+
+impl TransactionPayloadBuilder {
+    /// Creates a new `TransactionPayloadBuilder`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Adds an essence to a `TransactionPayloadBuilder`.
+    pub fn with_essence(mut self, essence: Essence) -> Self {
+        self.essence.replace(essence);
+
+        self
+    }
+
+    /// Adds unlock blocks to a `TransactionPayloadBuilder`.
+    pub fn with_unlock_blocks(mut self, unlock_blocks: UnlockBlocks) -> Self {
+        self.unlock_blocks.replace(unlock_blocks);
+
+        self
+    }
+
+    /// Finishes a `TransactionPayloadBuilder` into a `TransactionPayload`.
+    pub fn finish(self) -> Result<TransactionPayload, Error> {
+        let essence = self.essence.ok_or(Error::MissingField("essence"))?;
+        let unlock_blocks = self.unlock_blocks.ok_or(Error::MissingField("unlock_blocks"))?;
+
+        match essence {
+            Essence::Regular(ref essence) => {
+                if essence.inputs().len() != unlock_blocks.len() {
+                    return Err(Error::InputUnlockBlockCountMismatch(
+                        essence.inputs().len(),
+                        unlock_blocks.len(),
+                    ));
+                }
+            }
+        }
+
+        Ok(TransactionPayload { essence, unlock_blocks })
+    }
+}
+
 /// A transaction to move funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -75,52 +122,5 @@ impl Packable for TransactionPayload {
             .with_essence(essence)
             .with_unlock_blocks(unlock_blocks)
             .finish()
-    }
-}
-
-/// A builder to build a `TransactionPayload`.
-#[derive(Debug, Default)]
-pub struct TransactionPayloadBuilder {
-    essence: Option<Essence>,
-    unlock_blocks: Option<UnlockBlocks>,
-}
-
-impl TransactionPayloadBuilder {
-    /// Creates a new `TransactionPayloadBuilder`.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Adds an essence to a `TransactionPayloadBuilder`.
-    pub fn with_essence(mut self, essence: Essence) -> Self {
-        self.essence.replace(essence);
-
-        self
-    }
-
-    /// Adds unlock blocks to a `TransactionPayloadBuilder`.
-    pub fn with_unlock_blocks(mut self, unlock_blocks: UnlockBlocks) -> Self {
-        self.unlock_blocks.replace(unlock_blocks);
-
-        self
-    }
-
-    /// Finishes a `TransactionPayloadBuilder` into a `TransactionPayload`.
-    pub fn finish(self) -> Result<TransactionPayload, Error> {
-        let essence = self.essence.ok_or(Error::MissingField("essence"))?;
-        let unlock_blocks = self.unlock_blocks.ok_or(Error::MissingField("unlock_blocks"))?;
-
-        match essence {
-            Essence::Regular(ref essence) => {
-                if essence.inputs().len() != unlock_blocks.len() {
-                    return Err(Error::InputUnlockBlockCountMismatch(
-                        essence.inputs().len(),
-                        unlock_blocks.len(),
-                    ));
-                }
-            }
-        }
-
-        Ok(TransactionPayload { essence, unlock_blocks })
     }
 }
