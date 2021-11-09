@@ -124,7 +124,7 @@ impl UnlockBlocks {
             match unlock_block {
                 UnlockBlock::Signature(s) => {
                     if !seen_signatures.insert(s) {
-                        return Err(Error::DuplicateSignature(index));
+                        return Err(Error::DuplicateSignatureUnlockBlock(index));
                     }
                 }
                 UnlockBlock::Reference(r) => {

@@ -12,7 +12,7 @@ use core::fmt;
 #[allow(missing_docs)]
 pub enum Error {
     CryptoError(CryptoError),
-    DuplicateSignature(u16),
+    DuplicateSignatureUnlockBlock(u16),
     DuplicateUtxo(UtxoInput),
     InputUnlockBlockCountMismatch(usize, usize),
     InvalidAccumulatedOutput(u128),
@@ -73,8 +73,8 @@ impl fmt::Display for Error {
         match self {
             Error::CryptoError(e) => write!(f, "Cryptographic error: {}.", e),
             Error::DuplicateUtxo(utxo) => write!(f, "Duplicate UTXO {:?} in inputs.", utxo),
-            Error::DuplicateSignature(index) => {
-                write!(f, "Duplicate signature at index: {0}", index)
+            Error::DuplicateSignatureUnlockBlock(index) => {
+                write!(f, "Duplicate signature unlock block at index: {0}", index)
             }
             Error::InputUnlockBlockCountMismatch(input, block) => {
                 write!(
