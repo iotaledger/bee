@@ -32,7 +32,7 @@ impl ProofOfWork {
     /// Panic: expects at least 8 bytes.
     pub fn hash(&mut self, bytes: &[u8]) -> TritBuf<T1B1Buf> {
         debug_assert!(bytes.len() >= std::mem::size_of::<u8>());
-        
+
         // Compute Blake2b-256 hash of the message, excluding the nonce.
         let length = bytes.len() - std::mem::size_of::<u64>();
         let (head, tail) = bytes.split_at(length);
