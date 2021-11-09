@@ -7,7 +7,7 @@ use crate::{
     MessageId, MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{coerce::*, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{Packable, Packer, UnpackError, UnpackErrorExt, Unpacker};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
@@ -156,7 +156,7 @@ impl Packable for Message {
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let version = u8::unpack(unpacker).infallible()?;
-        validate_message_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_message_version(version).map_err(UnpackError::from_packable)?;
 
         let parents = Parents::unpack(unpacker)?;
         let issuer_public_key = <[u8; MESSAGE_PUBLIC_KEY_LENGTH]>::unpack(unpacker).infallible()?;
@@ -177,7 +177,7 @@ impl Packable for Message {
         };
 
         let len = message.pack_to_vec().len();
-        validate_message_len(len).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_message_len(len).map_err(UnpackError::from_packable)?;
 
         Ok(message)
     }

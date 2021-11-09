@@ -19,7 +19,7 @@ use indexation::IndexationPayload;
 use salt_declaration::SaltDeclarationPayload;
 use transaction::{TransactionPayload, TransactionUnpackError};
 
-use bee_packable::{coerce::*, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{Packable, Packer, UnpackError, UnpackErrorExt, Unpacker};
 
 use alloc::boxed::Box;
 use core::{convert::Infallible, fmt};
@@ -81,7 +81,7 @@ pub trait MessagePayload: Packable + Into<Payload> {
                 version,
                 payload_kind: Self::KIND,
             })
-            .map_err(|e| UnpackError::Packable(e.into()))?;
+            .map_err(UnpackError::from_packable)?;
         }
 
         Ok(Self::unpack(unpacker).coerce()?.into())

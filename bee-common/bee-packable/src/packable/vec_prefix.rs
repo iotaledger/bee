@@ -4,12 +4,11 @@
 extern crate alloc;
 
 use crate::{
-    coerce::*,
     error::{UnpackError, UnpackPrefixError},
     packer::Packer,
     unpacker::Unpacker,
     Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
-    InvalidBoundedU8, Packable,
+    InvalidBoundedU8, Packable, UnpackErrorExt,
 };
 
 use alloc::vec::Vec;
@@ -25,6 +24,12 @@ pub enum VecPrefixLengthError<E> {
     Truncated(usize),
     /// The prefix length is invalid.
     Invalid(E),
+}
+
+impl<E> From<E> for VecPrefixLengthError<E> {
+    fn from(err: E) -> Self {
+        Self::Invalid(err)
+    }
 }
 
 impl<E: Display> Display for VecPrefixLengthError<E> {
@@ -128,12 +133,7 @@ macro_rules! impl_vec_prefix {
             fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
                 // The length of any dynamically-sized sequence must be prefixed.
                 let len = <$bounded<MIN, MAX>>::unpack(unpacker)
-                    .map_err(|err| match err {
-                        UnpackError::Packable(err) => {
-                            UnpackError::Packable(UnpackPrefixError::InvalidPrefixLength(err))
-                        }
-                        UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
-                    })?
+                    .map_packable_err(UnpackPrefixError::Prefix)?
                     .into();
 
                 let mut inner = Vec::with_capacity(len as usize);

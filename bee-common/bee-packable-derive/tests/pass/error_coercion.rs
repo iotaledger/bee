@@ -4,7 +4,7 @@
 #![allow(unused_imports)]
 
 use bee_packable::{
-    coerce::*,
+    UnpackErrorExt,
     error::{UnknownTagError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,

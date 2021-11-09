@@ -3,7 +3,7 @@
 
 use crate::{address::Address, error::ValidationError, MessageUnpackError, IOTA_SUPPLY};
 
-use bee_packable::{coerce::*, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{Packable, Packer, UnpackError, UnpackErrorExt, Unpacker};
 
 use core::ops::RangeInclusive;
 
@@ -59,7 +59,7 @@ impl Packable for SignatureLockedSingleOutput {
         let address = Address::unpack(unpacker)?;
 
         let amount = u64::unpack(unpacker).infallible()?;
-        validate_amount(amount).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_amount(amount).map_err(UnpackError::from_packable)?;
 
         Ok(Self { address, amount })
     }

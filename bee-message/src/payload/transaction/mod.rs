@@ -116,7 +116,7 @@ impl Packable for TransactionPayload {
         let essence = TransactionEssence::unpack(unpacker)?;
 
         let unlock_blocks = UnlockBlocks::unpack(unpacker)?;
-        validate_unlock_block_count(&essence, &unlock_blocks).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_unlock_block_count(&essence, &unlock_blocks).map_err(UnpackError::from_packable)?;
 
         Ok(Self { essence, unlock_blocks })
     }

@@ -9,10 +9,7 @@ use crate::{
 };
 
 use bee_ord::is_sorted;
-use bee_packable::{
-    coerce::*, error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, Packable, Packer, UnpackError,
-    Unpacker, VecPrefix,
-};
+use bee_packable::{BoundedU32, Packable, Packer, UnpackError, UnpackErrorExt, Unpacker, VecPrefix};
 
 use alloc::vec::Vec;
 use core::{convert::Infallible, fmt};
@@ -145,28 +142,18 @@ impl Packable for TransactionEssence {
         // Inputs syntactical validation
         let inputs =
             VecPrefix::<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>::unpack(unpacker)
-                .map_err(|unpack_err| {
-                    unpack_err.map(|err| match err {
-                        UnpackPrefixError::InvalidPrefixLength(err) => {
-                            ValidationError::InvalidInputCount(VecPrefixLengthError::Invalid(err)).into()
-                        }
-                        UnpackPrefixError::Packable(err) => err,
-                    })
+                .map_packable_err(|err| {
+                    err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidInputCount(prefix_err.into()))
                 })?;
 
-        validate_inputs_unique_utxos(&inputs).map_err(|e| UnpackError::Packable(e.into()))?;
-        validate_inputs_sorted(&inputs).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_inputs_unique_utxos(&inputs).map_err(UnpackError::from_packable)?;
+        validate_inputs_sorted(&inputs).map_err(UnpackError::from_packable)?;
 
         // Outputs syntactical validation
         let outputs =
             VecPrefix::<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>::unpack(unpacker)
-                .map_err(|unpack_err| {
-                    unpack_err.map(|err| match err {
-                        UnpackPrefixError::InvalidPrefixLength(err) => {
-                            ValidationError::InvalidOutputCount(VecPrefixLengthError::Invalid(err)).into()
-                        }
-                        UnpackPrefixError::Packable(err) => err,
-                    })
+                .map_packable_err(|err| {
+                    err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidOutputCount(prefix_err.into()))
                 })?;
 
         validate_output_total(
@@ -178,13 +165,13 @@ impl Packable for TransactionEssence {
                         .checked_add(amount)
                         .ok_or_else(|| ValidationError::InvalidAccumulatedOutput(total as u128 + amount as u128))
                 })
-                .map_err(|e| UnpackError::Packable(e.into()))?,
+                .map_err(UnpackError::from_packable)?,
         )
-        .map_err(|e| UnpackError::Packable(e.into()))?;
-        validate_outputs_sorted(&outputs).map_err(|e| UnpackError::Packable(e.into()))?;
+        .map_err(UnpackError::from_packable)?;
+        validate_outputs_sorted(&outputs).map_err(UnpackError::from_packable)?;
 
         let payload = Option::<Payload>::unpack(unpacker).coerce()?;
-        validate_payload(&payload).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_payload(&payload).map_err(UnpackError::from_packable)?;
 
         Ok(Self {
             timestamp,

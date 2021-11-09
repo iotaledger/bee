@@ -16,7 +16,7 @@ use proc_macro_error::{abort, proc_macro_error};
 use quote::ToTokens;
 use syn::parse_macro_input;
 
-/// The [`Packable` derive macro.
+/// The [`Packable`] derive macro.
 ///
 /// Please refer to the [`Packable`] spec for how to set this up.
 /// <https://github.com/iotaledger/bee/blob/coordicide/docs/dev/specs/packable.md>

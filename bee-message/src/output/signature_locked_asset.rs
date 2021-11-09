@@ -15,14 +15,9 @@ pub(crate) const PREFIXED_ASSET_BALANCES_LENGTH_MAX: u32 =
     PAYLOAD_LENGTH_MAX / (AssetId::LENGTH + core::mem::size_of::<u64>()) as u32;
 
 fn unpack_prefix_to_validation_error(
-    error: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_ASSET_BALANCES_LENGTH_MAX>>,
+    err: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_ASSET_BALANCES_LENGTH_MAX>>,
 ) -> ValidationError {
-    match error {
-        UnpackPrefixError::InvalidPrefixLength(len) => {
-            ValidationError::InvalidAssetBalanceCount(VecPrefixLengthError::Invalid(len))
-        }
-        UnpackPrefixError::Packable(e) => match e {},
-    }
+    ValidationError::InvalidAssetBalanceCount(VecPrefixLengthError::Invalid(err.into_prefix()))
 }
 
 /// Tokenized asset identifier.

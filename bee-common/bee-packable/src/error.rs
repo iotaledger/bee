@@ -5,6 +5,45 @@
 
 use core::convert::Infallible;
 
+mod sealed {
+    use crate::error::UnpackError;
+
+    pub trait Sealed {}
+
+    impl<T, U, V> Sealed for Result<T, UnpackError<U, V>> {}
+}
+
+/// Trait providing utility methods for `Result` values that use `UnpackError` as the `Err` variant.
+pub trait UnpackErrorExt<T, U, V>: sealed::Sealed + Sized {
+    /// Maps the [`Packable`](UnpackError::Packable) variant if the result is an error.
+    fn map_packable_err<W>(self, f: impl Fn(U) -> W) -> Result<T, UnpackError<W, V>>;
+
+    /// Coerces the [`Packable`](UnpackError::Packable) variant value using [`Into`].
+    fn coerce<W>(self) -> Result<T, UnpackError<W, V>>
+    where
+        U: Into<W>,
+    {
+        self.map_packable_err(U::into)
+    }
+
+    /// Coerces the [`Packable`](UnpackError::Packable) variant value to any type assuming the value is [`Infallible`].
+    fn infallible<W>(self) -> Result<T, UnpackError<W, V>>
+    where
+        U: Into<Infallible>,
+    {
+        #[allow(unreachable_code)]
+        self.map_packable_err(|err| match err.into() {})
+    }
+}
+
+impl<T, U, V> UnpackErrorExt<T, U, V> for Result<T, UnpackError<U, V>> {
+    fn map_packable_err<W>(self, f: impl Fn(U) -> W) -> Result<T, UnpackError<W, V>> {
+        self.map_err(|err| match err {
+            UnpackError::Packable(err) => UnpackError::Packable(f(err)),
+            UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
+        })
+    }
+}
 /// Error type raised when [`Packable::unpack`](crate::Packable) fails.
 #[derive(Debug)]
 pub enum UnpackError<T, U> {
@@ -15,20 +54,9 @@ pub enum UnpackError<T, U> {
 }
 
 impl<T, U> UnpackError<T, U> {
-    /// Maps the [`Packable`](crate::Packable) variant of this enum.
-    pub fn map<V, F: Fn(T) -> V>(self, f: F) -> UnpackError<V, U> {
-        match self {
-            Self::Packable(err) => UnpackError::Packable(f(err)),
-            Self::Unpacker(err) => UnpackError::Unpacker(err),
-        }
-    }
-
-    /// Coerces the value by calling `.into()` for the [`Packable`](UnpackError::Packable) variant.
-    pub(crate) fn coerce<V>(self) -> UnpackError<V, U>
-    where
-        T: Into<V>,
-    {
-        self.map(|x| x.into())
+    /// Wraps an error in the [`Packable`](UnpackError::Packable) variant.
+    pub fn from_packable(err: impl Into<T>) -> Self {
+        Self::Packable(err.into())
     }
 }
 
@@ -39,11 +67,6 @@ impl<T, U> From<U> for UnpackError<T, U> {
 }
 
 impl<U> UnpackError<Infallible, U> {
-    /// Coerces the value if the [`Packable`](UnpackError::Packable) variant is [`Infallible`].
-    pub(crate) fn infallible<E>(self) -> UnpackError<E, U> {
-        UnpackError::Unpacker(self.into_unpacker())
-    }
-
     /// Get the [`Packer`](UnpackError::Unpacker) variant if the [`Packable`](UnpackError::Packable) variant is
     /// [`Infallible`].
     pub fn into_unpacker(self) -> U {
@@ -72,7 +95,27 @@ pub enum UnpackPrefixError<T, E> {
     /// Typically this is [`Packable::UnpackError`](crate::Packable).
     Packable(T),
     /// Semantic error raised when the length prefix cannot be unpacked.
-    InvalidPrefixLength(E),
+    Prefix(E),
+}
+
+impl<E> UnpackPrefixError<Infallible, E> {
+    /// Projects the value to the [`Prefix`](UnpackPrefixError::Prefix) variant.
+    pub fn into_prefix(self) -> E {
+        match self {
+            Self::Packable(err) => match err {},
+            Self::Prefix(err) => err,
+        }
+    }
+}
+
+impl<T, E> UnpackPrefixError<T, E> {
+    /// Returns the contained [`Packable`](UnpackPrefixError::Packable) value or computes it from a closure.
+    pub fn unwrap_packable_or_else<V: Into<T>>(self, f: impl FnOnce(E) -> V) -> T {
+        match self {
+            Self::Packable(err) => err,
+            Self::Prefix(err) => f(err).into(),
+        }
+    }
 }
 
 impl<T, E> From<T> for UnpackPrefixError<T, E> {

@@ -29,8 +29,7 @@ impl<'a, T: PartialEq> EventBus<'a, T> {
         Self::default()
     }
 
-    /// Adds an event listener bound to a specific event type `E` and registered with the given
-    /// identifier.
+    /// Adds an event listener bound to a specific event type `E` and registered with the given identifier.
     pub fn add_listener_with_id<E: Any, F: Fn(&E) + Send + Sync + 'a>(&self, handler: F, id: T) {
         self.listeners
             .lock()

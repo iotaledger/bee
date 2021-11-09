@@ -6,7 +6,6 @@
 #![no_std]
 #![deny(missing_docs)]
 
-pub mod coerce;
 pub mod error;
 pub mod packable;
 pub mod packer;
