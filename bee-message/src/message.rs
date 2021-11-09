@@ -42,11 +42,8 @@ impl Message {
     }
 
     /// Computes the identifier of the message.
-    pub fn id(&self) -> (MessageId, Vec<u8>) {
-        let bytes = self.pack_new();
-        let id = Blake2b256::digest(&bytes);
-
-        (MessageId::new(id.into()), bytes)
+    pub fn id(&self) -> MessageId {
+        MessageId::new(Blake2b256::digest(&self.pack_new()).into())
     }
 
     /// Returns the network id of a `Message`.
