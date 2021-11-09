@@ -122,26 +122,26 @@ impl UnlockBlocks {
 
         for (index, unlock_block) in (0u16..).zip(unlock_blocks.iter()) {
             match unlock_block {
-                UnlockBlock::Signature(s) => {
-                    if !seen_signatures.insert(s) {
+                UnlockBlock::Signature(signature) => {
+                    if !seen_signatures.insert(signature) {
                         return Err(Error::DuplicateSignatureUnlockBlock(index));
                     }
                 }
-                UnlockBlock::Reference(r) => {
+                UnlockBlock::Reference(reference) => {
                     if index == 0
-                        || r.index() >= index as u16
-                        || matches!(unlock_blocks[r.index() as usize], UnlockBlock::Reference(_))
+                        || reference.index() >= index as u16
+                        || matches!(unlock_blocks[reference.index() as usize], UnlockBlock::Reference(_))
                     {
                         return Err(Error::InvalidUnlockBlockReference(index));
                     }
                 }
-                UnlockBlock::Alias(a) => {
-                    if index == 0 || a.index() >= index as u16 {
+                UnlockBlock::Alias(alias) => {
+                    if index == 0 || alias.index() >= index as u16 {
                         return Err(Error::InvalidUnlockBlockAlias(index));
                     }
                 }
-                UnlockBlock::Nft(n) => {
-                    if index == 0 || n.index() >= index as u16 {
+                UnlockBlock::Nft(nft) => {
+                    if index == 0 || nft.index() >= index as u16 {
                         return Err(Error::InvalidUnlockBlockNft(index));
                     }
                 }
