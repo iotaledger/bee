@@ -71,120 +71,120 @@ impl std::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::CryptoError(e) => write!(f, "Cryptographic error: {}.", e),
-            Error::DuplicateUtxo(utxo) => write!(f, "Duplicate UTXO {:?} in inputs.", utxo),
+            Error::CryptoError(e) => write!(f, "cryptographic error: {}.", e),
+            Error::DuplicateUtxo(utxo) => write!(f, "duplicate UTXO {:?} in inputs.", utxo),
             Error::DuplicateSignatureUnlockBlock(index) => {
-                write!(f, "Duplicate signature unlock block at index: {0}", index)
+                write!(f, "duplicate signature unlock block at index: {0}", index)
             }
             Error::InputUnlockBlockCountMismatch(input, block) => {
                 write!(
                     f,
-                    "Input count and unlock block count mismatch: {} != {}.",
+                    "input count and unlock block count mismatch: {} != {}.",
                     input, block
                 )
             }
-            Error::InvalidAccumulatedOutput(value) => write!(f, "Invalid accumulated output balance: {}.", value),
-            Error::InvalidAddress => write!(f, "Invalid address provided."),
-            Error::InvalidAddressKind(k) => write!(f, "Invalid address kind: {}.", k),
-            Error::InvalidAmount(amount) => write!(f, "Invalid amount: {}.", amount),
-            Error::InvalidEssenceKind(k) => write!(f, "Invalid essence kind: {}.", k),
-            Error::InvalidFeatureBlockCount(count) => write!(f, "Invalid feature block count: {}.", count),
-            Error::InvalidFeatureBlockKind(k) => write!(f, "Invalid feature block kind: {}.", k),
-            Error::InvalidHexadecimalChar(hex) => write!(f, "Invalid hexadecimal character: {}.", hex),
+            Error::InvalidAccumulatedOutput(value) => write!(f, "invalid accumulated output balance: {}.", value),
+            Error::InvalidAddress => write!(f, "invalid address provided."),
+            Error::InvalidAddressKind(k) => write!(f, "invalid address kind: {}.", k),
+            Error::InvalidAmount(amount) => write!(f, "invalid amount: {}.", amount),
+            Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}.", k),
+            Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}.", count),
+            Error::InvalidFeatureBlockKind(k) => write!(f, "invalid feature block kind: {}.", k),
+            Error::InvalidHexadecimalChar(hex) => write!(f, "invalid hexadecimal character: {}.", hex),
             Error::InvalidHexadecimalLength(expected, actual) => {
-                write!(f, "Invalid hexadecimal length: expected {} got {}.", expected, actual)
+                write!(f, "invalid hexadecimal length: expected {} got {}.", expected, actual)
             }
             Error::InvalidIndexationDataLength(length) => {
-                write!(f, "Invalid indexation data length {}.", length)
+                write!(f, "invalid indexation data length {}.", length)
             }
             Error::InvalidIndexationIndexLength(length) => {
-                write!(f, "Invalid indexation index length {}.", length)
+                write!(f, "invalid indexation index length {}.", length)
             }
-            Error::InvalidInputKind(k) => write!(f, "Invalid input kind: {}.", k),
-            Error::InvalidInputOutputCount(count) => write!(f, "Invalid input or output count: {}.", count),
-            Error::InvalidInputOutputIndex(index) => write!(f, "Invalid input or output index: {}.", index),
-            Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),
-            Error::InvalidMetadataLength(length) => write!(f, "Invalid metadata length {}.", length),
+            Error::InvalidInputKind(k) => write!(f, "invalid input kind: {}.", k),
+            Error::InvalidInputOutputCount(count) => write!(f, "invalid input or output count: {}.", count),
+            Error::InvalidInputOutputIndex(index) => write!(f, "invalid input or output index: {}.", index),
+            Error::InvalidMessageLength(length) => write!(f, "invalid message length {}.", length),
+            Error::InvalidMetadataLength(length) => write!(f, "invalid metadata length {}.", length),
             Error::InvalidMigratedFundsEntryAmount(amount) => {
-                write!(f, "Invalid migrated funds entry amount: {}.", amount)
+                write!(f, "invalid migrated funds entry amount: {}.", amount)
             }
-            Error::InvalidNativeTokenCount(count) => write!(f, "Invalid native token count: {}.", count),
-            Error::InvalidOutputKind(k) => write!(f, "Invalid output kind: {}.", k),
+            Error::InvalidNativeTokenCount(count) => write!(f, "invalid native token count: {}.", count),
+            Error::InvalidOutputKind(k) => write!(f, "invalid output kind: {}.", k),
             Error::InvalidParentsCount(count) => {
-                write!(f, "Invalid parents count: {}.", count)
+                write!(f, "invalid parents count: {}.", count)
             }
-            Error::InvalidPayloadKind(k) => write!(f, "Invalid payload kind: {}.", k),
+            Error::InvalidPayloadKind(k) => write!(f, "invalid payload kind: {}.", k),
             Error::InvalidPayloadLength(expected, actual) => {
-                write!(f, "Invalid payload length: expected {}, got {}.", expected, actual)
+                write!(f, "invalid payload length: expected {}, got {}.", expected, actual)
             }
             Error::InvalidPowScoreValues(nps, npsmi) => write!(
                 f,
-                "Invalid pow score values: next pow score {} and next pow score milestone index {}.",
+                "invalid pow score values: next pow score {} and next pow score milestone index {}.",
                 nps, npsmi
             ),
-            Error::InvalidReceiptFundsCount(count) => write!(f, "Invalid receipt funds count: {}.", count),
-            Error::InvalidReferenceIndex(index) => write!(f, "Invalid reference index: {}.", index),
+            Error::InvalidReceiptFundsCount(count) => write!(f, "invalid receipt funds count: {}.", count),
+            Error::InvalidReferenceIndex(index) => write!(f, "invalid reference index: {}.", index),
             Error::InvalidReturnAmountFeatureBlock(amount) => {
-                write!(f, "Invalid return amount feature block: {}.", amount)
+                write!(f, "invalid return amount feature block: {}.", amount)
             }
-            Error::InvalidSignature => write!(f, "Invalid signature provided."),
-            Error::InvalidSignatureKind(k) => write!(f, "Invalid signature kind: {}.", k),
-            Error::InvalidTailTransactionHash => write!(f, "Invalid tail transaction hash."),
-            Error::InvalidTokenSchemeKind(k) => write!(f, "Invalid token scheme kind {}.", k),
-            Error::InvalidTreasuryAmount(amount) => write!(f, "Invalid treasury amount: {}.", amount),
-            Error::InvalidUnlockBlockCount(count) => write!(f, "Invalid unlock block count: {}.", count),
-            Error::InvalidUnlockBlockKind(k) => write!(f, "Invalid unlock block kind: {}.", k),
+            Error::InvalidSignature => write!(f, "invalid signature provided."),
+            Error::InvalidSignatureKind(k) => write!(f, "invalid signature kind: {}.", k),
+            Error::InvalidTailTransactionHash => write!(f, "invalid tail transaction hash."),
+            Error::InvalidTokenSchemeKind(k) => write!(f, "invalid token scheme kind {}.", k),
+            Error::InvalidTreasuryAmount(amount) => write!(f, "invalid treasury amount: {}.", amount),
+            Error::InvalidUnlockBlockCount(count) => write!(f, "invalid unlock block count: {}.", count),
+            Error::InvalidUnlockBlockKind(k) => write!(f, "invalid unlock block kind: {}.", k),
             Error::InvalidUnlockBlockReference(index) => {
-                write!(f, "Invalid unlock block reference: {0}", index)
+                write!(f, "invalid unlock block reference: {0}", index)
             }
             Error::InvalidUnlockBlockAlias(index) => {
-                write!(f, "Invalid unlock block alias: {0}", index)
+                write!(f, "invalid unlock block alias: {0}", index)
             }
             Error::InvalidUnlockBlockNft(index) => {
-                write!(f, "Invalid unlock block nft: {0}", index)
+                write!(f, "invalid unlock block nft: {0}", index)
             }
-            Error::Io(e) => write!(f, "I/O error happened: {}.", e),
+            Error::Io(e) => write!(f, "i/o error happened: {}.", e),
             Error::MigratedFundsNotSorted => {
-                write!(f, "Migrated funds are not sorted.")
+                write!(f, "migrated funds are not sorted.")
             }
             Error::MilestoneInvalidPublicKeyCount(count) => {
-                write!(f, "Invalid milestone public key count: {}.", count)
+                write!(f, "invalid milestone public key count: {}.", count)
             }
             Error::MilestoneInvalidSignatureCount(count) => {
-                write!(f, "Invalid milestone signature count: {}.", count)
+                write!(f, "invalid milestone signature count: {}.", count)
             }
             Error::MilestonePublicKeysNotUniqueSorted => {
-                write!(f, "Milestone public keys are not unique and/or sorted.")
+                write!(f, "milestone public keys are not unique and/or sorted.")
             }
             Error::MilestonePublicKeysSignaturesCountMismatch(kcount, scount) => {
                 write!(
                     f,
-                    "Milestone public keys and signatures count mismatch: {0} != {1}.",
+                    "milestone public keys and signatures count mismatch: {0} != {1}.",
                     kcount, scount
                 )
             }
-            Error::MissingField(s) => write!(f, "Missing required field: {}.", s),
-            Error::MissingPayload => write!(f, "Missing payload."),
+            Error::MissingField(s) => write!(f, "missing required field: {}.", s),
+            Error::MissingPayload => write!(f, "missing payload."),
             Error::ParentsNotUniqueSorted => {
-                write!(f, "Parents are not unique and/or sorted.")
+                write!(f, "parents are not unique and/or sorted.")
             }
             Error::ReceiptFundsNotUniqueSorted => {
-                write!(f, "Receipt funds are not unique and/or sorted.")
+                write!(f, "receipt funds are not unique and/or sorted.")
             }
             Error::RemainingBytesAfterMessage => {
-                write!(f, "Remaining bytes after message.")
+                write!(f, "remaining bytes after message.")
             }
             Error::SignaturePublicKeyMismatch(expected, actual) => {
                 write!(
                     f,
-                    "Signature public key mismatch: expected {0}, got {1}.",
+                    "signature public key mismatch: expected {0}, got {1}.",
                     expected, actual
                 )
             }
             Error::TailTransactionHashNotUnique(previous, current) => {
                 write!(
                     f,
-                    "Tail transaction hash is not unique at indices: {0} and {1}.",
+                    "tail transaction hash is not unique at indices: {0} and {1}.",
                     previous, current
                 )
             }
