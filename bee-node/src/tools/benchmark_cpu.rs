@@ -7,7 +7,7 @@ use std::{
     time::{self, Duration},
 };
 
-use bee_crypto::ternary::sponge::{CurlP81, CurlPRounds, Sponge, BATCH_SIZE};
+use bee_crypto::ternary::sponge::{CurlP81, CurlPRounds, Sponge, BATCH_SIZE, HASH_LENGTH};
 use bee_pow::providers::miner::MinerCancel;
 use bee_ternary::{
     b1t6::{self},
@@ -97,7 +97,6 @@ pub fn exec(tool: &BenchmarkCPUTool) {
 }
 
 fn cpu_benchmark_worker(_pow_digest: &[u8], start_nonce: u64, cancel: MinerCancel, counter: Arc<AtomicU64>) {
-    let HASH_LENGTH = 243;
     
     let mut pow_digest = TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH);
     b1t6::encode::<T1B1Buf>(&_pow_digest)
