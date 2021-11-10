@@ -52,7 +52,7 @@ impl PeerId {
 
     /// Creates the corresponding `libp2p_core::PeerId` of this identity.
     pub fn to_libp2p_peer_id(&self) -> libp2p_core::PeerId {
-        libp2p_core::PeerId::from_public_key(&self.to_libp2p_public_key())
+        libp2p_core::PeerId::from_public_key(self.to_libp2p_public_key())
     }
 
     /// Returns the actual bytes representing this id.
@@ -128,7 +128,7 @@ impl From<PeerId> for libp2p_core::PeerId {
                 .expect("error decoding ed25519 public key from bytes"),
         );
 
-        libp2p_core::PeerId::from_public_key(&public_key)
+        libp2p_core::PeerId::from_public_key(public_key)
     }
 }
 

@@ -4,6 +4,7 @@
 #![allow(warnings)]
 
 use bee_autopeering::{
+    config::AutopeeringJsonConfig,
     init,
     peerstore::{InMemoryPeerStore, SledPeerStore, SledPeerStoreConfig},
     AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
@@ -29,7 +30,7 @@ fn setup_logger(level: LevelFilter) {
         .expect("fern");
 }
 
-fn read_config() -> AutopeeringConfig {
+fn read_config() -> AutopeeringJsonConfig {
     let config_json = r#"
     {
         "bindAddress": "0.0.0.0:14627",
@@ -52,7 +53,7 @@ async fn main() {
     setup_logger(LevelFilter::Debug);
 
     // Read the config from a JSON file/string.
-    let config = read_config();
+    let config = read_config().finish();
     println!("{:#?}", config);
 
     // Set up a local peer, that provides the Autopeering service.
