@@ -33,6 +33,7 @@ fn setup_logger(level: LevelFilter) {
 fn read_config() -> AutopeeringJsonConfig {
     let config_json = r#"
     {
+        "enabled": true,
         "bindAddress": "0.0.0.0:14627",
         "entryNodes": [
             "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",

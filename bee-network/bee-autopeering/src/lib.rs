@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! A system that allows peers in the same IOTA network to automatically discover each other.
+//! Allows peers in the same IOTA network to automatically discover each other.
 //!
 //! In order to integrate the Autopeering functionality in your node implementation you need to provide its `init`
 //! function with the following data:
@@ -19,6 +19,7 @@
 //! ```no_run
 //! use bee_autopeering::{
 //!     init,
+//!     config::AutopeeringJsonConfig,
 //!     peerstore::{SledPeerStore, SledPeerStoreConfig},
 //!     AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 //! };
@@ -29,6 +30,7 @@
 //! fn read_config() -> AutopeeringConfig {
 //!     let config_json = r#"
 //!     {
+//!         "enabled": true,
 //!         "bindAddress": "0.0.0.0:14627",
 //!         "entryNodes": [
 //!             "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
@@ -38,7 +40,7 @@
 //!         "runAsEntryNode": false
 //!     }"#;
 //!
-//!     serde_json::from_str(config_json).expect("error deserializing json config")
+//!     serde_json::from_str::<AutopeeringJsonConfig>(config_json).expect("error deserializing json config").finish()
 //! }
 
 //! #[tokio::main]

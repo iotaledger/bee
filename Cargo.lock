@@ -210,6 +210,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-gossip"
+version = "0.3.0"
+dependencies = [
+ "async-trait",
+ "bee-runtime",
+ "fern",
+ "futures",
+ "hashbrown",
+ "hex",
+ "libp2p",
+ "libp2p-core",
+ "log",
+ "once_cell",
+ "rand 0.8.4",
+ "serde",
+ "serial_test",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+]
+
+[[package]]
 name = "bee-ledger"
 version = "0.6.0"
 dependencies = [
@@ -254,28 +276,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-network"
-version = "0.3.0"
-dependencies = [
- "async-trait",
- "bee-runtime",
- "fern",
- "futures",
- "hashbrown",
- "hex",
- "libp2p",
- "libp2p-core",
- "log",
- "once_cell",
- "rand 0.8.4",
- "serde",
- "serial_test",
- "thiserror",
- "tokio",
- "tokio-stream",
-]
-
-[[package]]
 name = "bee-pow"
 version = "0.2.0"
 dependencies = [
@@ -289,9 +289,8 @@ dependencies = [
 name = "bee-protocol"
 version = "0.1.1"
 dependencies = [
- "bee-autopeering",
+ "bee-gossip",
  "bee-message",
- "bee-network",
 ]
 
 [[package]]

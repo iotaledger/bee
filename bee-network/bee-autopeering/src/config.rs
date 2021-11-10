@@ -6,6 +6,7 @@
 //! ## JSON Example
 //! ```json
 //! "autopeering": {
+//!     "enabled": true,
 //!     "bindAddress": "0.0.0.0:14626",
 //!     "entryNodes": [
 //!          "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
@@ -21,6 +22,7 @@
 //!
 //! ```toml
 //! [autopeering]
+//! enabled = true
 //! bind_address = "0.0.0.0:15626"
 //! entry_nodes = [
 //!     "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
@@ -44,6 +46,8 @@ const DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT: bool = false;
 ///
 #[derive(Clone, Debug)]
 pub struct AutopeeringConfig {
+    /// Wether autopeering should be enabled.
+    pub enabled: bool,
     /// The bind address for the server.
     pub bind_addr: SocketAddr,
     /// The entry nodes for bootstrapping.
@@ -60,6 +64,7 @@ impl AutopeeringConfig {
     /// Turns the [`AutopeeringConfig`] into its JSON representation.
     pub fn into_json_config(self) -> AutopeeringJsonConfig {
         AutopeeringJsonConfig {
+            enabled: self.enabled,
             bind_addr: self.bind_addr,
             entry_nodes: self.entry_nodes,
             entry_nodes_prefer_ipv6: Some(self.entry_nodes_prefer_ipv6),
@@ -71,6 +76,7 @@ impl AutopeeringConfig {
     /// Turns the [`AutopeeringConfig`] into its TOML representation.
     pub fn into_toml_config(self) -> AutopeeringTomlConfig {
         AutopeeringTomlConfig {
+            enabled: self.enabled,
             bind_addr: self.bind_addr,
             entry_nodes: self.entry_nodes,
             entry_nodes_prefer_ipv6: Some(self.entry_nodes_prefer_ipv6),
@@ -87,6 +93,8 @@ impl AutopeeringConfig {
 #[cfg_attr(test, derive(Eq, PartialEq))]
 #[serde(rename = "autopeering")]
 pub struct AutopeeringJsonConfig {
+    /// Wether autopeering should be enabled.
+    pub enabled: bool,
     /// The bind address for the server.
     #[serde(rename = "bindAddress")]
     pub bind_addr: SocketAddr,
@@ -108,6 +116,7 @@ impl AutopeeringJsonConfig {
     /// Builds the actual `AutopeeringConfig`.
     pub fn finish(self) -> AutopeeringConfig {
         AutopeeringConfig {
+            enabled: self.enabled,
             bind_addr: self.bind_addr,
             entry_nodes: self.entry_nodes,
             entry_nodes_prefer_ipv6: self.entry_nodes_prefer_ipv6.unwrap_or(ENTRYNODES_PREFER_IPV6_DEFAULT),
@@ -126,6 +135,8 @@ impl AutopeeringJsonConfig {
 #[cfg_attr(test, derive(Eq, PartialEq))]
 #[serde(rename = "autopeering")]
 pub struct AutopeeringTomlConfig {
+    /// Wether autopeering should be enabled.
+    pub enabled: bool,
     /// The bind address for the server.
     #[serde(rename = "bind_address")]
     pub bind_addr: SocketAddr,
@@ -143,6 +154,7 @@ impl AutopeeringTomlConfig {
     /// Builds the actual `AutopeeringConfig`.
     pub fn finish(self) -> AutopeeringConfig {
         AutopeeringConfig {
+            enabled: self.enabled,
             bind_addr: self.bind_addr,
             entry_nodes: self.entry_nodes,
             entry_nodes_prefer_ipv6: self.entry_nodes_prefer_ipv6.unwrap_or(ENTRYNODES_PREFER_IPV6_DEFAULT),
@@ -174,6 +186,7 @@ mod tests {
     fn create_json_config_from_str() -> AutopeeringJsonConfig {
         let config_json_str = r#"
         {
+            "enabled": true,
             "bindAddress": "0.0.0.0:15626",
             "entryNodes": [
                 "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
@@ -191,6 +204,7 @@ mod tests {
 
     fn create_toml_config_from_str() -> AutopeeringTomlConfig {
         let toml_config_str = r#"
+            enabled = true
             bind_address = "0.0.0.0:15626"
             entry_nodes = [
                 "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
@@ -208,6 +222,7 @@ mod tests {
 
     fn create_config() -> AutopeeringConfig {
         AutopeeringConfig {
+            enabled: true,
             bind_addr: "0.0.0.0:15626".parse().unwrap(),
             entry_nodes: vec![
                 "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM".parse().unwrap(),

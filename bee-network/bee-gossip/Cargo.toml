@@ -1,15 +1,15 @@
 [package]
-name = "bee-network"
+name = "bee-gossip"
 version = "0.3.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = """
-Networking functionality and types for nodes and clients participating in the IOTA protocol built on top of `libp2p`.
+Networking functionality and types for nodes and clients participating in the IOTA gossip protocol built on top of `libp2p`.
 """
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = [ "iota", "bee", "framework", "network", "libp2p" ]
+keywords = [ "iota", "bee", "framework", "network", "gossip" ]
 homepage = "https://www.iota.org"
 
 [package.metadata.docs.rs]
@@ -40,7 +40,7 @@ full = [
 ]
 
 [dependencies]
-bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", default-features = false, optional = true }
+bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true }
 
 async-trait = { version = "0.1.51", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false, optional = true }
