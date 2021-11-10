@@ -6,6 +6,7 @@ use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder}
 
 use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
 
+use bee_autopeering::config::{AutopeeringConfig, AutopeeringTomlConfig};
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
 use bee_ledger::workers::{
     pruning::config::{PruningConfig, PruningConfigBuilder},
@@ -43,6 +44,7 @@ pub struct NodeConfigBuilder<B: StorageBackend> {
     pub(crate) network_id: Option<String>,
     pub(crate) logger: Option<LoggerConfigBuilder>,
     pub(crate) network: Option<NetworkConfigBuilder>,
+    pub(crate) autopeering: Option<AutopeeringTomlConfig>,
     pub(crate) protocol: Option<ProtocolConfigBuilder>,
     pub(crate) rest_api: Option<RestApiConfigBuilder>,
     pub(crate) snapshot: Option<SnapshotConfigBuilder>,
@@ -102,6 +104,7 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
                 .unwrap_or_default()
                 .finish()
                 .expect("faulty network configuration"),
+            autopeering: self.autopeering.map(|c| c.finish()),
             protocol: self.protocol.unwrap_or_default().finish(),
             rest_api: self.rest_api.unwrap_or_default().finish(),
             snapshot: self.snapshot.unwrap_or_default().finish(),
@@ -130,6 +133,7 @@ pub struct NodeConfig<B: StorageBackend> {
     pub network_id: (String, u64),
     pub logger: LoggerConfig,
     pub network: NetworkConfig,
+    pub autopeering: Option<AutopeeringConfig>,
     pub protocol: ProtocolConfig,
     pub rest_api: RestApiConfig,
     pub snapshot: SnapshotConfig,
@@ -151,6 +155,7 @@ impl<B: StorageBackend> Clone for NodeConfig<B> {
             network_id: self.network_id.clone(),
             logger: self.logger.clone(),
             network: self.network.clone(),
+            autopeering: self.autopeering.clone(),
             protocol: self.protocol.clone(),
             rest_api: self.rest_api.clone(),
             snapshot: self.snapshot.clone(),

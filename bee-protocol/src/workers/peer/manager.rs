@@ -27,6 +27,12 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible, sync::Arc};
 
+pub(crate) struct PeerManagerConfig {
+    pub(crate) network_rx: NetworkEventRx,
+    pub(crate) peering_rx: Option<AutopeeringEventRx>,
+    pub(crate) network_name: String,
+}
+
 pub(crate) struct PeerManagerWorker {}
 
 #[async_trait]
@@ -34,7 +40,7 @@ impl<N: Node> Worker<N> for PeerManagerWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = (NetworkEventRx, AutopeeringEventRx, String);
+    type Config = PeerManagerConfig;
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -64,41 +70,47 @@ where
         let milestone_responder = node.worker::<MilestoneResponderWorker>().unwrap().tx.clone();
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
 
-        let (network_event_rx, autopeering_event_rx, network_name) = config;
+        let PeerManagerConfig {
+            network_rx,
+            peering_rx,
+            network_name,
+        } = config;
 
-        node.spawn::<Self, _, _>(|shutdown| async move {
-            use AutopeeringEvent::*;
+        if let Some(peering_rx) = peering_rx {
+            node.spawn::<Self, _, _>(|shutdown| async move {
+                use AutopeeringEvent::*;
 
-            info!("Autopeering handler running.");
+                info!("Autopeering handler running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(autopeering_event_rx));
+                let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(peering_rx));
 
-            while let Some(event) = receiver.next().await {
-                trace!("Received event {:?}.", event);
+                while let Some(event) = receiver.next().await {
+                    trace!("Received event {:?}.", event);
 
-                match event {
-                    IncomingPeering { peer, .. } => {
-                        handle_new_peering(peer, &network_name, &network_command_tx);
+                    match event {
+                        IncomingPeering { peer, .. } => {
+                            handle_new_peering(peer, &network_name, &network_command_tx);
+                        }
+                        OutgoingPeering { peer, .. } => {
+                            handle_new_peering(peer, &network_name, &network_command_tx);
+                        }
+                        PeeringDropped { peer_id } => {
+                            handle_peering_dropped(peer_id, &network_command_tx);
+                        }
+                        _ => {}
                     }
-                    OutgoingPeering { peer, .. } => {
-                        handle_new_peering(peer, &network_name, &network_command_tx);
-                    }
-                    PeeringDropped { peer_id } => {
-                        handle_peering_dropped(peer_id, &network_command_tx);
-                    }
-                    _ => {}
                 }
-            }
 
-            info!("Autopeering stopped.");
-        });
+                info!("Autopeering stopped.");
+            });
+        }
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             use NetworkEvent::*;
 
             info!("Network handler running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(network_event_rx.into()));
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(network_rx.into()));
 
             while let Some(event) = receiver.next().await {
                 trace!("Received event {:?}.", event);

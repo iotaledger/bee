@@ -205,7 +205,7 @@ checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 [[package]]
 name = "bee-autopeering"
 version = "0.1.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#7ed874fb6160736f2d5556c18a327ee9a9d7c6d4"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#6ff69840f513e9b9ef65d637e86e5c47fe713873"
 dependencies = [
  "async-trait",
  "base64 0.13.0",
@@ -227,7 +227,6 @@ dependencies = [
  "ring",
  "serde",
  "sled",
- "slog",
  "thiserror",
  "time 0.3.3",
  "tokio",
@@ -237,7 +236,7 @@ dependencies = [
 [[package]]
 name = "bee-common"
 version = "0.5.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#7ed874fb6160736f2d5556c18a327ee9a9d7c6d4"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#6ff69840f513e9b9ef65d637e86e5c47fe713873"
 dependencies = [
  "autocfg",
  "console-subscriber",
@@ -255,7 +254,7 @@ dependencies = [
 [[package]]
 name = "bee-crypto"
 version = "0.2.1-alpha"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#7ed874fb6160736f2d5556c18a327ee9a9d7c6d4"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#6ff69840f513e9b9ef65d637e86e5c47fe713873"
 dependencies = [
  "bee-ternary",
  "byteorder",
@@ -267,7 +266,7 @@ dependencies = [
 [[package]]
 name = "bee-ledger"
 version = "0.5.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#7ed874fb6160736f2d5556c18a327ee9a9d7c6d4"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#6ff69840f513e9b9ef65d637e86e5c47fe713873"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -293,7 +292,7 @@ dependencies = [
 [[package]]
 name = "bee-message"
 version = "0.1.5"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#7ed874fb6160736f2d5556c18a327ee9a9d7c6d4"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#6ff69840f513e9b9ef65d637e86e5c47fe713873"
 dependencies = [
  "bech32",
  "bee-common",
@@ -310,7 +309,7 @@ dependencies = [
 [[package]]
 name = "bee-network"
 version = "0.3.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#7ed874fb6160736f2d5556c18a327ee9a9d7c6d4"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#6ff69840f513e9b9ef65d637e86e5c47fe713873"
 dependencies = [
  "async-trait",
  "bee-runtime",
@@ -377,7 +376,7 @@ dependencies = [
 [[package]]
 name = "bee-pow"
 version = "0.1.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#7ed874fb6160736f2d5556c18a327ee9a9d7c6d4"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#6ff69840f513e9b9ef65d637e86e5c47fe713873"
 dependencies = [
  "bee-crypto",
  "bee-ternary",
@@ -452,7 +451,7 @@ dependencies = [
 [[package]]
 name = "bee-runtime"
 version = "0.1.1-alpha"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#7ed874fb6160736f2d5556c18a327ee9a9d7c6d4"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#6ff69840f513e9b9ef65d637e86e5c47fe713873"
 dependencies = [
  "async-trait",
  "bee-storage",
@@ -465,7 +464,7 @@ dependencies = [
 [[package]]
 name = "bee-storage"
 version = "0.9.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#7ed874fb6160736f2d5556c18a327ee9a9d7c6d4"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#6ff69840f513e9b9ef65d637e86e5c47fe713873"
 dependencies = [
  "bee-common",
  "serde",
@@ -475,7 +474,7 @@ dependencies = [
 [[package]]
 name = "bee-storage-rocksdb"
 version = "0.5.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#7ed874fb6160736f2d5556c18a327ee9a9d7c6d4"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#6ff69840f513e9b9ef65d637e86e5c47fe713873"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -491,7 +490,7 @@ dependencies = [
 [[package]]
 name = "bee-storage-sled"
 version = "0.4.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#7ed874fb6160736f2d5556c18a327ee9a9d7c6d4"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#6ff69840f513e9b9ef65d637e86e5c47fe713873"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -507,7 +506,7 @@ dependencies = [
 [[package]]
 name = "bee-tangle"
 version = "0.2.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#7ed874fb6160736f2d5556c18a327ee9a9d7c6d4"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#6ff69840f513e9b9ef65d637e86e5c47fe713873"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -529,7 +528,7 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.5.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#7ed874fb6160736f2d5556c18a327ee9a9d7c6d4"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#6ff69840f513e9b9ef65d637e86e5c47fe713873"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -1983,9 +1982,9 @@ checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
 name = "memchr"
-version = "2.3.4"
+version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
+checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
 
 [[package]]
 name = "memoffset"
@@ -2153,9 +2152,9 @@ checksum = "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451"
 
 [[package]]
 name = "nom"
-version = "6.2.1"
+version = "6.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c5c51b9083a3c620fa67a2a635d1ce7d95b897e957d6b28ff9a5da960a103a6"
+checksum = "e7413f999671bd4745a7b624bd370a569fb6bc574b23c83a3c5ed2e453f3d5e2"
 dependencies = [
  "bitvec",
  "funty",
@@ -3181,12 +3180,6 @@ dependencies = [
  "parking_lot",
  "zstd",
 ]
-
-[[package]]
-name = "slog"
-version = "2.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8347046d4ebd943127157b94d63abb990fcf729dc4e9978927fdf4ac3c998d06"
 
 [[package]]
 name = "smallvec"

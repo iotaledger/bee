@@ -13,8 +13,7 @@ use crate::{
 };
 
 use bee_autopeering::{
-    peerstore::InMemoryPeerStore, AutopeeringConfig, Local, NeighborValidator, ServiceProtocol,
-    AUTOPEERING_SERVICE_NAME,
+    peerstore::InMemoryPeerStore, Local, NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 use bee_runtime::{
     event::Bus,
@@ -42,18 +41,6 @@ use std::{
 };
 
 const AUTOPEERING_VERSION: u32 = 1;
-const AUTOPEERING_CONFIG: &str = r#"
-    {
-        "bindAddress": "0.0.0.0:14627",
-        "entryNodes": [
-            "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
-            "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
-            "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
-            "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
-        ],
-        "entryNodesPreferIPv6": false,
-        "runAsEntryNode": false
-    }"#;
 
 type WorkerStart<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + 'a>>;
 type WorkerStop<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> + Send;
@@ -232,36 +219,40 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
                 .await
                 .map_err(Error::NetworkInitializationFailed)?;
 
-        info!("Initializing autopeering...");
-        let neighbor_validator = BeeNeighborValidator {};
-        let autopeering_config: AutopeeringConfig =
-            serde_json::from_str(AUTOPEERING_CONFIG).expect("error deserializing json config");
-        let peerstore_config = ();
-        let network_name = config.network_id.0.clone();
+        let autopeering_events = if let Some(autopeering_config) = config.autopeering {
+            info!("Initializing autopeering...");
+            let neighbor_validator = BeeNeighborValidator {};
+            let peerstore_config = ();
+            let network_name = config.network_id.0.clone();
+            let keypair = config.identity.0.clone();
+            let local = Local::from_keypair(keypair);
+            let mut write = local.write();
+            write.add_service(
+                AUTOPEERING_SERVICE_NAME,
+                ServiceProtocol::Udp,
+                autopeering_config.bind_addr.port(),
+            );
+            write.add_service(network_name.clone(), ServiceProtocol::Tcp, 15600);
+            drop(write);
 
-        let keypair = config.identity.0.clone();
-        let local = Local::from_keypair(keypair);
-        let mut write = local.write();
-        write.add_service(
-            AUTOPEERING_SERVICE_NAME,
-            ServiceProtocol::Udp,
-            autopeering_config.bind_addr.port(),
-        );
-        write.add_service(network_name.clone(), ServiceProtocol::Tcp, 15600);
-        drop(write);
+            let quit_signal = tokio::signal::ctrl_c();
 
-        let quit_signal = tokio::signal::ctrl_c();
-        let autopeering_events = bee_autopeering::init::<InMemoryPeerStore, _, _, _>(
-            autopeering_config,
-            AUTOPEERING_VERSION,
-            network_name,
-            local,
-            peerstore_config,
-            quit_signal,
-            neighbor_validator,
-        )
-        .await
-        .map_err(|e| Error::PeeringInitializationFailed(e))?;
+            let autopeering_events = bee_autopeering::init::<InMemoryPeerStore, _, _, _>(
+                autopeering_config,
+                AUTOPEERING_VERSION,
+                network_name,
+                local,
+                peerstore_config,
+                quit_signal,
+                neighbor_validator,
+            )
+            .await
+            .map_err(|e| Error::PeeringInitializationFailed(e))?;
+
+            Some(autopeering_events)
+        } else {
+            None
+        };
 
         #[cfg(unix)]
         let this = this.with_resource(shutdown_listener(vec![

@@ -46,12 +46,13 @@ pub(crate) use status::StatusWorker;
 use bee_autopeering::event::EventRx as AutopeeringEventRx;
 use bee_network::NetworkEventReceiver as NetworkEventRx;
 use bee_runtime::node::{Node, NodeBuilder};
+use peer::PeerManagerConfig;
 
 pub fn init<N: Node>(
     config: config::ProtocolConfig,
     network_id: (String, u64),
     network_events: NetworkEventRx,
-    autopeering_events: AutopeeringEventRx,
+    autopeering_events: Option<AutopeeringEventRx>,
     node_builder: N::Builder,
 ) -> N::Builder
 where
@@ -60,7 +61,11 @@ where
     node_builder
         .with_worker::<MetricsWorker>()
         .with_worker::<PeerManagerResWorker>()
-        .with_worker_cfg::<PeerManagerWorker>((network_events, autopeering_events, network_id.0))
+        .with_worker_cfg::<PeerManagerWorker>(PeerManagerConfig {
+            network_rx: network_events,
+            peering_rx: autopeering_events,
+            network_name: network_id.0,
+        })
         .with_worker_cfg::<HasherWorker>(config.clone())
         .with_worker_cfg::<ProcessorWorker>(network_id.1)
         .with_worker::<MessageResponderWorker>()
