@@ -11,7 +11,7 @@ use bee_ledger::types::{
     TreasuryOutput,
 };
 use bee_message::{
-    address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
+    address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
     output::{OutputId, OUTPUT_ID_LENGTH},
     payload::indexation::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH},
@@ -122,7 +122,7 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
                 .scan_prefix(address)
                 .map(|result| {
                     let (key, _) = result?;
-                    let (_, output_id) = key.split_at(ED25519_ADDRESS_LENGTH);
+                    let (_, output_id) = key.split_at(Ed25519Address::LENGTH);
                     // Unpacking from storage is fine.
                     Ok((<[u8; OUTPUT_ID_LENGTH]>::try_from(output_id).unwrap())
                         .try_into()

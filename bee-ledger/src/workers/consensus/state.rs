@@ -9,11 +9,7 @@ use crate::{
     },
 };
 
-use bee_message::{
-    address::Address,
-    constants::IOTA_SUPPLY,
-    output::{self, dust_outputs_max},
-};
+use bee_message::{address::Address, constants::IOTA_SUPPLY, output::Output};
 use bee_storage::access::AsIterator;
 
 fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
@@ -25,9 +21,12 @@ fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) 
         let output = storage::fetch_output(storage, &*output_id)?.ok_or(Error::MissingUnspentOutput(output_id))?;
 
         let amount = match output.inner() {
-            output::Output::Simple(output) => output.amount(),
-            output::Output::SignatureLockedDustAllowance(output) => output.amount(),
-            output::Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(output.kind())),
+            Output::Simple(output) => output.amount(),
+            Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(output.kind())),
+            Output::Extended(output) => output.amount(),
+            Output::Alias(output) => output.amount(),
+            Output::Foundry(output) => output.amount(),
+            Output::Nft(output) => output.amount(),
         };
 
         supply = supply
@@ -51,10 +50,8 @@ fn validate_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u64) 
     let mut supply: u64 = 0;
 
     for result in iterator {
-        let (address, balance) = result.map_err(|e| Error::Storage(Box::new(e)))?;
-        if balance.dust_outputs() > dust_outputs_max(balance.dust_allowance()) {
-            return Err(Error::InvalidLedgerDustState(address, balance));
-        }
+        let (_, balance) = result.map_err(|e| Error::Storage(Box::new(e)))?;
+
         supply = supply
             .checked_add(balance.amount())
             .ok_or_else(|| Error::LedgerStateOverflow(supply as u128 + balance.amount() as u128))?;

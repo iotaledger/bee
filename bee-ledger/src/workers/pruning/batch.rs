@@ -106,7 +106,7 @@ pub async fn prune_confirmed_data<S: StorageBackend>(
         };
 
         // Delete its `Indexation` payload (if existent).
-        let payload = msg.payload().as_ref();
+        let payload = msg.payload();
         if let Some(indexation) = unwrap_indexation(payload) {
             let padded_index = indexation.padded_index();
 
@@ -300,7 +300,7 @@ pub async fn prune_unconfirmed_data<S: StorageBackend>(
         // Delete those messages that remained unconfirmed.
         match Fetch::<MessageId, Message>::fetch(storage, unconf_msg_id).map_err(|e| Error::Storage(Box::new(e)))? {
             Some(msg) => {
-                let payload = msg.payload().as_ref();
+                let payload = msg.payload();
                 let parents = msg.parents();
 
                 // Add message data to the delete batch.

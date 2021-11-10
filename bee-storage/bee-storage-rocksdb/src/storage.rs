@@ -14,7 +14,7 @@ pub use bee_storage::{
 };
 
 use bee_message::{
-    address::ED25519_ADDRESS_LENGTH, milestone::MilestoneIndex, payload::indexation::INDEXATION_PADDED_INDEX_LENGTH,
+    address::Ed25519Address, milestone::MilestoneIndex, payload::indexation::INDEXATION_PADDED_INDEX_LENGTH,
     MESSAGE_ID_LENGTH,
 };
 
@@ -55,7 +55,7 @@ impl Storage {
         let cf_output_id_unspent = ColumnFamilyDescriptor::new(CF_OUTPUT_ID_UNSPENT, Options::default());
 
         let mut options = Options::default();
-        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(ED25519_ADDRESS_LENGTH));
+        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(Ed25519Address::LENGTH));
         let cf_ed25519_address_to_output_id = ColumnFamilyDescriptor::new(CF_ED25519_ADDRESS_TO_OUTPUT_ID, options);
 
         let cf_ledger_index = ColumnFamilyDescriptor::new(CF_LEDGER_INDEX, Options::default());

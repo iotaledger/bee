@@ -73,11 +73,11 @@ pub(crate) async fn migration_from_milestone(
         match receipt.inner().transaction() {
             Payload::TreasuryTransaction(treasury) => match treasury.output() {
                 Output::Treasury(output) => output.clone(),
-                Output::SignatureLockedDustAllowance(_) | Output::Simple(_) => {
+                 _=> {
                     return Err(Error::UnsupportedOutputKind(treasury.output().kind()));
                 }
             },
-            Payload::Milestone(_) | Payload::Indexation(_) | Payload::Receipt(_) | Payload::Transaction(_) => {
+            _ => {
                 return Err(Error::UnsupportedPayloadKind(receipt.inner().transaction().kind()));
             }
         },
@@ -388,6 +388,8 @@ where
                                 error!("Error while sending output: {:?}", e);
                             }
                         }
+                        Address::Alias(_) => todo!(),
+                        Address::Nft(_) => todo!(),
                     },
                 }
             }

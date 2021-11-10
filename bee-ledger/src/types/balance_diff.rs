@@ -3,11 +3,7 @@
 
 use crate::types::Error;
 
-use bee_message::{
-    address::Address,
-    constants::IOTA_SUPPLY,
-    output::{Output, DUST_THRESHOLD},
-};
+use bee_message::{address::Address, constants::IOTA_SUPPLY, output::Output};
 
 use std::collections::{
     hash_map::{IntoIter, Iter, IterMut},
@@ -18,26 +14,16 @@ use std::collections::{
 #[derive(Clone, Debug, Default)]
 pub struct BalanceDiff {
     amount: i64,
-    dust_allowance: i64,
-    dust_outputs: i64,
 }
 
 impl BalanceDiff {
     /// Creates a new `BalanceDiff`.
-    pub fn new(amount: i64, dust_allowance: i64, dust_outputs: i64) -> Result<Self, Error> {
+    pub fn new(amount: i64) -> Result<Self, Error> {
         if amount.abs() as u64 > IOTA_SUPPLY {
-            Err(Error::InvalidBalanceDiff(amount))
-        } else if dust_allowance.abs() as u64 > IOTA_SUPPLY {
-            Err(Error::InvalidBalanceDiff(dust_allowance))
-        } else if dust_outputs.abs() as u64 > IOTA_SUPPLY {
-            Err(Error::InvalidBalanceDiff(dust_outputs))
-        } else {
-            Ok(Self {
-                amount,
-                dust_allowance,
-                dust_outputs,
-            })
+            return Err(Error::InvalidBalanceDiff(amount));
         }
+
+        Ok(Self { amount })
     }
 
     /// Returns the amount of a `BalanceDiff`.
@@ -45,26 +31,9 @@ impl BalanceDiff {
         self.amount
     }
 
-    /// Returns the dust allowance of a `BalanceDiff`.
-    pub fn dust_allowance(&self) -> i64 {
-        self.dust_allowance
-    }
-
-    /// Returns the number of dust outputs of a `BalanceDiff`.
-    pub fn dust_outputs(&self) -> i64 {
-        self.dust_outputs
-    }
-
-    /// Returns whether dust allowance has been decreased or dust outputs has been increased.
-    pub fn is_dust_mutating(&self) -> bool {
-        self.dust_allowance < 0 || self.dust_outputs > 0
-    }
-
     /// Negates a `BalanceDiff`.
     pub fn negate(&mut self) {
         self.amount = -self.amount;
-        self.dust_allowance = -self.dust_allowance;
-        self.dust_outputs = -self.dust_outputs;
     }
 }
 
@@ -85,19 +54,7 @@ impl BalanceDiffs {
             e.amount = e
                 .amount
                 .checked_add(diff.amount)
-                .ok_or(Error::BalanceDiffOverflow(e.amount as i128 + diff.amount as i128))?;
-            e.dust_allowance = e
-                .dust_allowance
-                .checked_add(diff.dust_allowance)
-                .ok_or(Error::BalanceDiffOverflow(
-                    e.dust_allowance as i128 + diff.dust_allowance as i128,
-                ))?;
-            e.dust_outputs = e
-                .dust_outputs
-                .checked_add(diff.dust_outputs)
-                .ok_or(Error::BalanceDiffOverflow(
-                    e.dust_outputs as i128 + diff.dust_outputs as i128,
-                ))?;
+                .ok_or_else(|| Error::BalanceDiffOverflow(e.amount as i128 + diff.amount as i128))?;
         }
 
         Ok(())
@@ -127,15 +84,12 @@ impl BalanceDiffs {
         match output {
             Output::Simple(output) => {
                 self.amount_add(*output.address(), output.amount())?;
-                if output.amount() < DUST_THRESHOLD {
-                    self.dust_outputs_inc(*output.address())?;
-                }
-            }
-            Output::SignatureLockedDustAllowance(output) => {
-                self.amount_add(*output.address(), output.amount())?;
-                self.dust_allowance_add(*output.address(), output.amount())?;
             }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(output.kind())),
+            Output::Extended(_) => todo!(),
+            Output::Alias(_) => todo!(),
+            Output::Foundry(_) => todo!(),
+            Output::Nft(_) => todo!(),
         }
 
         Ok(())
@@ -146,15 +100,12 @@ impl BalanceDiffs {
         match output {
             Output::Simple(output) => {
                 self.amount_sub(*output.address(), output.amount())?;
-                if output.amount() < DUST_THRESHOLD {
-                    self.dust_outputs_dec(*output.address())?;
-                }
-            }
-            Output::SignatureLockedDustAllowance(output) => {
-                self.amount_sub(*output.address(), output.amount())?;
-                self.dust_allowance_sub(*output.address(), output.amount())?;
             }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(output.kind())),
+            Output::Extended(_) => todo!(),
+            Output::Alias(_) => todo!(),
+            Output::Foundry(_) => todo!(),
+            Output::Nft(_) => todo!(),
         }
 
         Ok(())
@@ -177,50 +128,6 @@ impl BalanceDiffs {
             .amount
             .checked_sub(amount as i64)
             .ok_or(Error::BalanceDiffOverflow(entry.amount as i128 + amount as i128))?;
-        Ok(())
-    }
-
-    /// Adds a given dust allowance to a given address.
-    pub fn dust_allowance_add(&mut self, address: Address, amount: u64) -> Result<(), Error> {
-        let entry = self.0.entry(address).or_default();
-        entry.dust_allowance = entry
-            .dust_allowance
-            .checked_add(amount as i64)
-            .ok_or(Error::BalanceDiffOverflow(
-                entry.dust_allowance as i128 + amount as i128,
-            ))?;
-        Ok(())
-    }
-
-    /// Subtracts a given dust allowance from a given address.
-    pub fn dust_allowance_sub(&mut self, address: Address, amount: u64) -> Result<(), Error> {
-        let entry = self.0.entry(address).or_default();
-        entry.dust_allowance = entry
-            .dust_allowance
-            .checked_sub(amount as i64)
-            .ok_or(Error::BalanceDiffOverflow(
-                entry.dust_allowance as i128 + amount as i128,
-            ))?;
-        Ok(())
-    }
-
-    /// Increments the number of dust outputs of a given address.
-    pub fn dust_outputs_inc(&mut self, address: Address) -> Result<(), Error> {
-        let entry = self.0.entry(address).or_default();
-        entry.dust_outputs = entry
-            .dust_outputs
-            .checked_add(1)
-            .ok_or(Error::BalanceDiffOverflow(entry.dust_outputs as i128 + 1))?;
-        Ok(())
-    }
-
-    /// Decrements the number of dust outputs of a given address.
-    pub fn dust_outputs_dec(&mut self, address: Address) -> Result<(), Error> {
-        let entry = self.0.entry(address).or_default();
-        entry.dust_outputs = entry
-            .dust_outputs
-            .checked_sub(1)
-            .ok_or(Error::BalanceDiffOverflow(entry.dust_outputs as i128 + 1))?;
         Ok(())
     }
 

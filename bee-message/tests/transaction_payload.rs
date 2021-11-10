@@ -70,7 +70,7 @@ fn builder_no_essence_too_few_unlock_blocks() {
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::Ed25519(signature));
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block]).unwrap();
 
     let builder = TransactionPayload::builder()
@@ -106,8 +106,8 @@ fn builder_no_essence_too_many_unlock_blocks() {
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
-    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::Ed25519(signature));
+    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
 
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
 
@@ -144,8 +144,8 @@ fn pack_unpack_valid() {
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
-    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::Ed25519(signature));
+    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
 
     let tx_payload = TransactionPayload::builder()
@@ -181,8 +181,8 @@ fn getters() {
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
-    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::Ed25519(signature));
+    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
 
     let tx_payload = TransactionPayloadBuilder::new()

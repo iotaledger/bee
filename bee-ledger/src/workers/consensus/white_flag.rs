@@ -13,12 +13,12 @@ use crate::{
 use bee_message::{
     address::Address,
     input::Input,
-    output::{dust_outputs_max, Output, OutputId, DUST_THRESHOLD},
+    output::{ Output, OutputId},
     payload::{
         transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
         Payload,
     },
-    unlock::{UnlockBlock, UnlockBlocks},
+    unlock_block::{UnlockBlock, UnlockBlocks},
     Message, MessageId,
 };
 use bee_tangle::{ConflictReason, Tangle};
@@ -78,9 +78,6 @@ fn apply_regular_essence<B: StorageBackend>(
         let amount = match consumed_output.inner() {
             Output::Simple(output) => {
                 balance_diffs.amount_sub(*output.address(), output.amount())?;
-                if output.amount() < DUST_THRESHOLD {
-                    balance_diffs.dust_outputs_dec(*output.address())?;
-                }
 
                 if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
                     return Ok(ConflictReason::InvalidSignature);
@@ -88,17 +85,6 @@ fn apply_regular_essence<B: StorageBackend>(
 
                 output.amount()
             }
-            // Output::SignatureLockedDustAllowance(output) => {
-            //     consumed_amount = consumed_amount
-            //         .checked_add(output.amount())
-            //         .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount as u128 + output.amount() as
-            // u128))?;     balance_diffs.amount_sub(*output.address(), output.amount())?;
-            //     balance_diffs.dust_allowance_sub(*output.address(), output.amount())?;
-            //
-            //     if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
-            //         return Ok(ConflictReason::InvalidSignature);
-            //     }
-            // }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
             Output::Extended(output) => output.amount(),
             Output::Alias(output) => output.amount(),
@@ -118,19 +104,8 @@ fn apply_regular_essence<B: StorageBackend>(
             Output::Simple(output) => {
                 balance_diffs.amount_add(*output.address(), output.amount())?;
 
-                if output.amount() < DUST_THRESHOLD {
-                    balance_diffs.dust_outputs_inc(*output.address())?;
-                }
-
                 output.amount()
             }
-            // Output::SignatureLockedDustAllowance(output) => {
-            //     created_amount = created_amount
-            //         .checked_add(output.amount())
-            //         .ok_or_else(|| Error::CreatedAmountOverflow(created_amount as u128 + output.amount() as u128))?;
-            //     balance_diffs.amount_add(*output.address(), output.amount())?;
-            //     balance_diffs.dust_allowance_add(*output.address(), output.amount())?;
-            // }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
             Output::Extended(output) => output.amount(),
             Output::Alias(output) => output.amount(),
@@ -139,27 +114,15 @@ fn apply_regular_essence<B: StorageBackend>(
         };
 
         created_amount = created_amount
-            .checked_add(output.amount())
-            .ok_or_else(|| Error::CreatedAmountOverflow(created_amount as u128 + output.amount() as u128))?;
+            .checked_add(amount)
+            .ok_or_else(|| Error::CreatedAmountOverflow(created_amount as u128 + amount as u128))?;
     }
 
     if created_amount != consumed_amount {
         return Ok(ConflictReason::InputOutputSumMismatch);
     }
 
-    for (address, diff) in balance_diffs.iter() {
-        if diff.is_dust_mutating() {
-            let mut balance = storage::fetch_balance_or_default(storage, address)?.apply_diff(diff)?;
 
-            if let Some(diff) = metadata.balance_diffs.get(address) {
-                balance = balance.apply_diff(diff)?;
-            }
-
-            if balance.dust_outputs() > dust_outputs_max(balance.dust_allowance()) {
-                return Ok(ConflictReason::InvalidDustAllowance);
-            }
-        }
-    }
 
     for (output_id, created_output) in consumed_outputs {
         metadata.consumed_outputs.insert(

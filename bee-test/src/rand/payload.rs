@@ -23,10 +23,8 @@ pub fn rand_indexation_payload() -> IndexationPayload {
 }
 
 /// Generates a random treasury transaction payload.
-pub fn rand_treasury_transaction_payload() -> Payload {
-    TreasuryTransactionPayload::new(rand_treasury_input().into(), rand_treasury_output().into())
-        .unwrap()
-        .into()
+pub fn rand_treasury_transaction_payload() -> TreasuryTransactionPayload {
+    TreasuryTransactionPayload::new(rand_treasury_input().into(), rand_treasury_output().into()).unwrap()
 }
 
 /// Generates a random receipt payload.
@@ -35,12 +33,13 @@ pub fn rand_receipt_payload() -> ReceiptPayload {
         rand_milestone_index(),
         rand_bool(),
         vec![rand_migrated_funds_entry()],
-        rand_treasury_transaction_payload(),
+        Box::new(rand_treasury_transaction_payload()).into(),
     )
     .unwrap()
 }
 
 /// Generates a random payload for a message.
 pub fn rand_payload_for_message() -> Payload {
-    rand_indexation_payload().into()
+    // TODO complete
+    Box::new(rand_indexation_payload()).into()
 }

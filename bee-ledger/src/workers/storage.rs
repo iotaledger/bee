@@ -122,6 +122,8 @@ pub(crate) fn insert_output_id_for_address_batch<B: StorageBackend>(
             Batch::<(Ed25519Address, OutputId), ()>::batch_insert(storage, batch, &(*address, *output_id), &())
                 .map_err(|e| Error::Storage(Box::new(e)))
         }
+        Address::Alias(_) => todo!(),
+        Address::Nft(_) => todo!(),
     }
 }
 
@@ -136,6 +138,8 @@ pub(crate) fn delete_output_id_for_address_batch<B: StorageBackend>(
             Batch::<(Ed25519Address, OutputId), ()>::batch_delete(storage, batch, &(*address, *output_id))
                 .map_err(|e| Error::Storage(Box::new(e)))
         }
+        Address::Alias(_) => todo!(),
+        Address::Nft(_) => todo!(),
     }
 }
 
@@ -152,10 +156,11 @@ pub(crate) fn insert_created_output_batch<B: StorageBackend>(
 
     match output.inner() {
         Output::Simple(output) => insert_output_id_for_address_batch(storage, batch, output.address(), output_id),
-        Output::SignatureLockedDustAllowance(output) => {
-            insert_output_id_for_address_batch(storage, batch, output.address(), output_id)
-        }
         Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
+        Output::Extended(_) => todo!(),
+        Output::Alias(_) => todo!(),
+        Output::Foundry(_) => todo!(),
+        Output::Nft(_) => todo!(),
     }
 }
 
@@ -172,10 +177,11 @@ pub(crate) fn delete_created_output_batch<B: StorageBackend>(
 
     match output.inner() {
         Output::Simple(output) => delete_output_id_for_address_batch(storage, batch, output.address(), output_id),
-        Output::SignatureLockedDustAllowance(output) => {
-            delete_output_id_for_address_batch(storage, batch, output.address(), output_id)
-        }
         Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
+        Output::Extended(_) => todo!(),
+        Output::Alias(_) => todo!(),
+        Output::Foundry(_) => todo!(),
+        Output::Nft(_) => todo!(),
     }
 }
 
