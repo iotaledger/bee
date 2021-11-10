@@ -13,7 +13,7 @@ use crate::{
 use bee_message::{
     address::Address,
     input::Input,
-    output::{ Output, OutputId},
+    output::{Output, OutputId},
     payload::{
         transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
         Payload,
@@ -27,11 +27,24 @@ use crypto::hashes::blake2b::Blake2b256;
 
 use std::collections::{HashMap, HashSet};
 
-fn verify_signature(address: &Address, unlock_blocks: &UnlockBlocks, index: usize, essence_hash: &[u8; 32]) -> bool {
-    if let Some(UnlockBlock::Signature(signature)) = unlock_blocks.get(index) {
-        address.verify(essence_hash, signature).is_ok()
-    } else {
-        false
+fn unlock_input(
+    address: &Address,
+    unlock_blocks: &UnlockBlocks,
+    index: usize,
+    essence_hash: &[u8; 32],
+) -> Result<(), ConflictReason> {
+    // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
+    match unlock_blocks.get(index).unwrap() {
+        UnlockBlock::Signature(signature) => {
+            if address.verify(essence_hash, signature).is_ok() {
+                Ok(())
+            } else {
+                Err(ConflictReason::InvalidSignature)
+            }
+        }
+        UnlockBlock::Reference(_) => todo!(),
+        UnlockBlock::Alias(_) => todo!(),
+        UnlockBlock::Nft(_) => todo!(),
     }
 }
 
@@ -79,8 +92,8 @@ fn apply_regular_essence<B: StorageBackend>(
             Output::Simple(output) => {
                 balance_diffs.amount_sub(*output.address(), output.amount())?;
 
-                if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
-                    return Ok(ConflictReason::InvalidSignature);
+                if let Err(conflict) = unlock_input(output.address(), unlock_blocks, index, &essence_hash) {
+                    return Ok(conflict);
                 }
 
                 output.amount()
@@ -121,8 +134,6 @@ fn apply_regular_essence<B: StorageBackend>(
     if created_amount != consumed_amount {
         return Ok(ConflictReason::InputOutputSumMismatch);
     }
-
-
 
     for (output_id, created_output) in consumed_outputs {
         metadata.consumed_outputs.insert(
