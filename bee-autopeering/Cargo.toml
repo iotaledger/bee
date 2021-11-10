@@ -19,18 +19,17 @@ bytes = { version = "1.0", default-features = false }
 hash32 = "0.2.1"
 hex = "0.4.3"
 iota-crypto = { version = "0.7.0", default-features = false, features = [ "ed25519", "random", "sha" ] }
-libp2p-core = { version = "0.29" }
+libp2p-core = { version = "0.30" }
 log = { version = "0.4" }
 num = "0.4.0"
 num-derive = "0.3.3"
 num-traits = "0.2.14"
 priority-queue = "1.2.0"
-prost = { version = "0.8", default-features = false }
+prost = { version = "0.9", default-features = false }
 rand = "0.8.4"
 ring = "0.16.20"
 serde = { version = "1.0", features = [ "derive" ] }
 sled = "0.34.7"
-slog = "2.7.0"
 thiserror = "1.0.29"
 time = "0.3.3"
 tokio = { version = "1.11", features = [ "macros", "rt", "time", "net" ] }
@@ -40,9 +39,11 @@ tokio-stream = { version = "0.1" }
 fern = "0.6"
 serde_json = "1.0.68"
 tokio = { version = "1.11", features = [ "rt", "rt-multi-thread", "macros", "signal", "time", "io-std", "io-util" ] }
+toml = "0.5.8"
 
 [build-dependencies]
 prost-build = { version = "0.8", default-features = false }
 
 [[example]]
 name = "node"
+
