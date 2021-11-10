@@ -13,7 +13,7 @@ use crate::{
 use bee_message::{
     address::Address,
     input::Input,
-    output::{Output, OutputId},
+    output::{Output, OutputId, TokenId},
     payload::{
         transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
         Payload,
@@ -24,6 +24,7 @@ use bee_message::{
 use bee_tangle::{ConflictReason, Tangle};
 
 use crypto::hashes::blake2b::Blake2b256;
+use primitive_types::U256;
 
 use std::collections::{HashMap, HashSet};
 
@@ -58,6 +59,7 @@ fn apply_regular_essence<B: StorageBackend>(
 ) -> Result<ConflictReason, Error> {
     let mut consumed_outputs = HashMap::with_capacity(essence.inputs().len());
     let mut balance_diffs = BalanceDiffs::new();
+    let mut native_tokens = HashMap::<TokenId, U256>::new();
     let mut consumed_amount: u64 = 0;
     let mut created_amount: u64 = 0;
 
@@ -88,7 +90,7 @@ fn apply_regular_essence<B: StorageBackend>(
 
         let essence_hash = Essence::from(essence.clone()).hash();
 
-        let amount = match consumed_output.inner() {
+        let (amount, consumed_native_tokens) = match consumed_output.inner() {
             Output::Simple(output) => {
                 balance_diffs.amount_sub(*output.address(), output.amount())?;
 
@@ -96,44 +98,55 @@ fn apply_regular_essence<B: StorageBackend>(
                     return Ok(conflict);
                 }
 
-                output.amount()
+                (output.amount(), None)
             }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
-            Output::Extended(output) => output.amount(),
-            Output::Alias(output) => output.amount(),
-            Output::Foundry(output) => output.amount(),
-            Output::Nft(output) => output.amount(),
+            Output::Extended(output) => (output.amount(), Some(output.native_tokens())),
+            Output::Alias(output) => (output.amount(), Some(output.native_tokens())),
+            Output::Foundry(output) => (output.amount(), Some(output.native_tokens())),
+            Output::Nft(output) => (output.amount(), Some(output.native_tokens())),
         };
 
         consumed_amount = consumed_amount
             .checked_add(amount)
             .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount as u128 + amount as u128))?;
+        if let Some(consumed_native_tokens) = consumed_native_tokens {
+            for native_token in consumed_native_tokens {
+                *native_tokens.entry(*native_token.token_id()).or_default() += *native_token.amount();
+            }
+        }
 
         consumed_outputs.insert(*output_id, consumed_output);
     }
 
     for created_output in essence.outputs() {
-        let amount = match created_output {
+        let (amount, created_native_tokens) = match created_output {
             Output::Simple(output) => {
                 balance_diffs.amount_add(*output.address(), output.amount())?;
 
-                output.amount()
+                (output.amount(), None)
             }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
-            Output::Extended(output) => output.amount(),
-            Output::Alias(output) => output.amount(),
-            Output::Foundry(output) => output.amount(),
-            Output::Nft(output) => output.amount(),
+            Output::Extended(output) => (output.amount(), Some(output.native_tokens())),
+            Output::Alias(output) => (output.amount(), Some(output.native_tokens())),
+            Output::Foundry(output) => (output.amount(), Some(output.native_tokens())),
+            Output::Nft(output) => (output.amount(), Some(output.native_tokens())),
         };
 
         created_amount = created_amount
             .checked_add(amount)
             .ok_or_else(|| Error::CreatedAmountOverflow(created_amount as u128 + amount as u128))?;
+        if let Some(created_native_tokens) = created_native_tokens {
+            for native_token in created_native_tokens {
+                *native_tokens.entry(*native_token.token_id()).or_default() -= *native_token.amount();
+            }
+        }
     }
 
     if created_amount != consumed_amount {
         return Ok(ConflictReason::InputOutputSumMismatch);
     }
+    // TODO compare native tokens amount
 
     for (output_id, created_output) in consumed_outputs {
         metadata.consumed_outputs.insert(

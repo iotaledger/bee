@@ -25,6 +25,7 @@ hashbrown = { version = "0.11.2", default-features = false, optional = true }
 hex = { version = "0.4.3", default-features = false, optional = true }
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "blake2b" ], optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
+primitive-types = { version = "0.10.1", default-features = false, features = [ "serde_no_std" ], optional = true }
 ref-cast = { version = "1.0.6", default-features = false, optional = true }
 reqwest = { version = "0.11.5", default-features = false, features = [ "default-tls", "stream" ], optional = true }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ], optional = true }
@@ -46,6 +47,7 @@ workers = [
   "hex",
   "iota-crypto",
   "log",
+  "primitive-types",
   "ref-cast",
   "reqwest",
   "serde",

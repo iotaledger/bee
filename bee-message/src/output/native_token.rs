@@ -25,6 +25,16 @@ impl NativeToken {
     pub fn new(token_id: TokenId, amount: U256) -> Self {
         Self { token_id, amount }
     }
+
+    /// Returns the token ID of the `NativeToken`.
+    pub fn token_id(&self) -> &TokenId {
+        &self.token_id
+    }
+
+    /// Returns the amount of the `NativeToken`.
+    pub fn amount(&self) -> &U256 {
+        &self.amount
+    }
 }
 
 impl Packable for NativeToken {

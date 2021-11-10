@@ -193,6 +193,7 @@ dependencies = [
  "hex",
  "iota-crypto",
  "log",
+ "primitive-types",
  "ref-cast",
  "reqwest",
  "serde",
