@@ -7,7 +7,7 @@ use std::{
     time::{self, Duration},
 };
 
-use bee_crypto::ternary::sponge::{CurlP81, CurlPRounds, Sponge, BATCH_SIZE, HASH_LENGTH};
+use bee_crypto::ternary::{HASH_LENGTH, sponge::{CurlP81, Sponge, BATCH_SIZE}};
 use bee_pow::providers::miner::MinerCancel;
 use bee_ternary::{
     b1t6::{self},
@@ -15,6 +15,9 @@ use bee_ternary::{
 };
 use structopt::StructOpt;
 use thiserror::Error;
+
+const PRINT_STATUS_INTERVAL: std::time::Duration = Duration::from_secs(2);
+const DURATION: std::time::Duration = Duration::from_secs(60);
 
 #[derive(Debug, Error)]
 pub enum BenchmarkCPUError {
@@ -32,8 +35,7 @@ pub fn exec(tool: &BenchmarkCPUTool) {
         Some(threads) => threads,
         None => num_cpus::get(),
     };
-    let duration = Duration::from_secs(60);
-
+    
     println!("Benchmarking CPU with {} threads", threads);
 
     let cancel = MinerCancel::new();
@@ -48,19 +50,19 @@ pub fn exec(tool: &BenchmarkCPUTool) {
 
     let mut workers = Vec::with_capacity(threads + 2);
 
-    //Stop if the timeout has exceeded
+    // Stop if the timeout has exceeded
     let time_thread = thread::spawn(move || {
-        std::thread::sleep(duration);
+        std::thread::sleep(DURATION);
         cancel.trigger();
     });
 
     let process_thread = thread::spawn(move || {
         while !cancel_2.is_cancelled() {
-            std::thread::sleep(Duration::from_secs(2));
+            std::thread::sleep(PRINT_STATUS_INTERVAL);
 
             let elapsed = time_start.elapsed();
             let (percentage, remaining) =
-                estimate_remaining_time(time_start, elapsed.as_millis() as i64, duration.as_millis() as i64);
+                estimate_remaining_time(time_start, elapsed.as_millis() as i64, DURATION.as_millis() as i64);
             let megahashes_per_second =
                 counter.load(Ordering::Relaxed) as f64 / (elapsed.as_secs_f64() * 1_000_000 as f64);
             println!(
@@ -89,10 +91,10 @@ pub fn exec(tool: &BenchmarkCPUTool) {
         worker.join().expect("Couldn't stop thread");
     }
 
-    let megahashes_per_second = counter_2.load(Ordering::Relaxed) as f64 / (duration.as_secs_f64() * 1_000_000 as f64);
+    let megahashes_per_second = counter_2.load(Ordering::Relaxed) as f64 / (DURATION.as_secs_f64() * 1_000_000 as f64);
     println!(
         "Average CPU speed: {:.2}MH/s ({} thread(s), took {:.2?})",
-        megahashes_per_second, threads, duration
+        megahashes_per_second, threads, DURATION
     );
 }
 
