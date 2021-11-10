@@ -11,15 +11,15 @@ use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf, Trits, T1B1};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
-/// Encapsulates the different steps that are used for performing proof of work.
-pub struct ProofOfWork {
+/// Encapsulates the different steps that are used for scoring Proof of Work.
+pub struct PoWScorer {
     blake2b: Blake2b256,
     pow_input: TritBuf<T1B1Buf>,
     curl: CurlP81,
 }
 
-impl ProofOfWork {
-    /// Creates an new instance of the proof of work algorithm that holds internal state.
+impl PoWScorer {
+    /// Creates an new `PoWScorer` that holds the required hash functions as internal state.
     pub fn new() -> Self {
         Self {
             blake2b: Blake2b256::new(),
@@ -66,14 +66,14 @@ impl ProofOfWork {
 
 /// Returns the Proof of Work hash of given bytes.
 /// Panic: expects at least 8 bytes.
-#[deprecated(note = "Use `ProofOfWork::hash` instead.")]
+#[deprecated(note = "Use `PoWScorer::hash` instead.")]
 pub fn pow_hash(bytes: &[u8]) -> TritBuf<T1B1Buf> {
-    ProofOfWork::new().hash(bytes)
+    PoWScorer::new().hash(bytes)
 }
 
 /// Computes the Proof of Work score of given bytes.
 /// Panic: expects at least 8 bytes.
-#[deprecated(note = "Use `ProofOfWork::score` instead.")]
+#[deprecated(note = "Use `PoWScorer::score` instead.")]
 pub fn compute_pow_score(bytes: &[u8]) -> f64 {
     debug_assert!(bytes.len() >= std::mem::size_of::<u8>());
 
