@@ -227,7 +227,7 @@ dependencies = [
  "futures",
  "hashbrown",
  "hex",
- "iota-crypto",
+ "iota-crypto 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log",
  "ref-cast",
  "reqwest",
@@ -250,7 +250,7 @@ dependencies = [
  "bytemuck",
  "digest",
  "hex",
- "iota-crypto",
+ "iota-crypto 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "num_cpus",
  "serde",
  "thiserror",
@@ -285,7 +285,7 @@ dependencies = [
  "bee-crypto",
  "bee-ternary 0.5.0",
  "bee-test",
- "iota-crypto",
+ "iota-crypto 0.7.0 (git+https://github.com/iotaledger/crypto.rs.git)",
  "thiserror",
 ]
 
@@ -439,24 +439,33 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "0.5.1"
 =======
 version = "0.4.2-alpha"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ec0259535d34f1bfd0c41bf5a6f0e3e33268dc9433e2ac3707e66715b51ce05"
+=======
+version = "0.5.0"
+>>>>>>> 9b7fe42b (Get `iota-crypto` directly from git repo)
 dependencies = [
  "autocfg",
  "num-traits",
+ "serde",
 ]
 
 [[package]]
 name = "bee-ternary"
 version = "0.5.0"
+<<<<<<< HEAD
 >>>>>>> 43feede7 (Start deprecating Bee's `CurlP` wrapper)
+=======
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ab61228a3ad56b46689099733577df7b7f11d2c5eb131b7acc7e300ef748836"
+>>>>>>> 9b7fe42b (Get `iota-crypto` directly from git repo)
 dependencies = [
  "autocfg",
  "num-traits",
- "serde",
 ]
 
 [[package]]
@@ -1497,10 +1506,19 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c13594128939830ac9d9b8b44f9d073349cc6e10c30eb76c18ec89f0602ebe6"
 dependencies = [
- "bee-ternary 0.4.2-alpha",
  "blake2",
  "digest",
  "ed25519-zebra",
+]
+
+[[package]]
+name = "iota-crypto"
+version = "0.7.0"
+source = "git+https://github.com/iotaledger/crypto.rs.git#799634504fec83b85708dc00cfb9e48a9d17a100"
+dependencies = [
+ "bee-ternary 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "blake2",
+ "digest",
 ]
 
 [[package]]

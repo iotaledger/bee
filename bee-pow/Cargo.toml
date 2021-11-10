@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 bee-crypto = { version = "0.2.1-alpha", path = "../bee-crypto", default-features = false }
 bee-ternary = { version = "0.5.1", path = "../bee-ternary", default-features = false }
 
-iota-crypto = { version = "0.7.0", default-features = false, features = [ "blake2b", "digest", "curl-p"] }
+iota-crypto = { git = "https://github.com/iotaledger/crypto.rs.git", default-features = false, features = [ "blake2b", "digest", "curl-p"] }
 thiserror = { version = "1.0.30", default-features = false }
 
 # `iota-crypto` uses bee-ternary. We patch it to use our local version to avoid importing it twice.
