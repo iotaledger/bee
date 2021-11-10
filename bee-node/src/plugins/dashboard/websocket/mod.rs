@@ -31,7 +31,6 @@ use warp::ws::{Message, WebSocket};
 
 use std::{
     collections::{HashMap, HashSet},
-    convert::TryInto,
     sync::{
         atomic::{AtomicUsize, Ordering},
         Arc,

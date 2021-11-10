@@ -5,7 +5,7 @@
 
 use crate::workers::packets::Packet;
 
-use std::{convert::TryInto, ops::Range};
+use std::ops::Range;
 
 const SOLID_MILESTONE_INDEX_SIZE: usize = 4;
 const PRUNED_INDEX_SIZE: usize = 4;

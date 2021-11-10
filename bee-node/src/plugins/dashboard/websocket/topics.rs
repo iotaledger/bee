@@ -3,8 +3,6 @@
 
 use serde_repr::Serialize_repr;
 
-use std::convert::TryFrom;
-
 #[repr(u8)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize_repr)]
 pub(crate) enum WsTopic {

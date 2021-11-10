@@ -34,7 +34,6 @@ impl Hasher for CustomHasher {
         CustomHasher::finish(self)
     }
     fn write(&mut self, bytes: &[u8]) {
-        use std::convert::TryInto;
         let (int_bytes, _rest) = bytes.split_at(std::mem::size_of::<u64>());
         let i = u64::from_ne_bytes(int_bytes.try_into().unwrap());
         CustomHasher::write(self, i);

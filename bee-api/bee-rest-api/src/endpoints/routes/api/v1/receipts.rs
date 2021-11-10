@@ -16,7 +16,7 @@ use bee_storage::access::AsIterator;
 
 use warp::{Filter, Rejection, Reply};
 
-use std::{convert::TryFrom, net::IpAddr};
+use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("receipts")).and(warp::path::end())

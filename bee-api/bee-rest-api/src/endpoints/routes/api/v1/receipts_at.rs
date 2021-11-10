@@ -16,7 +16,7 @@ use bee_storage::access::Fetch;
 
 use warp::{Filter, Rejection, Reply};
 
-use std::{convert::TryFrom, net::IpAddr};
+use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
     super::path()

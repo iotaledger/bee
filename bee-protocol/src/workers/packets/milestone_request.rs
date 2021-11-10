@@ -5,7 +5,7 @@
 
 use crate::workers::packets::Packet;
 
-use std::{convert::TryInto, ops::Range};
+use std::ops::Range;
 
 const INDEX_SIZE: usize = 4;
 const CONSTANT_SIZE: usize = INDEX_SIZE;
