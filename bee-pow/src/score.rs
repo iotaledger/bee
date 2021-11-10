@@ -3,19 +3,19 @@
 
 //! Contains utilities to score Proof of Work.
 
-use bee_crypto::ternary::{
-    sponge::{CurlP81, Sponge},
-    HASH_LENGTH,
-};
 use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf, Trits, T1B1};
 
-use crypto::hashes::{blake2b::Blake2b256, Digest};
+use crypto::hashes::{
+    blake2b::Blake2b256,
+    ternary::{curl_p::CurlP, HASH_LENGTH},
+    Digest,
+};
 
 /// Encapsulates the different steps that are used for scoring Proof of Work.
 pub struct PoWScorer {
     blake2b: Blake2b256,
     pow_input: TritBuf<T1B1Buf>,
-    curl: CurlP81,
+    curl: CurlP,
 }
 
 impl PoWScorer {
@@ -23,14 +23,14 @@ impl PoWScorer {
     pub fn new() -> Self {
         Self {
             blake2b: Blake2b256::new(),
-            pow_input: TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH),
-            curl: CurlP81::new(),
+            pow_input: bee_ternary::TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH),
+            curl: CurlP::new(),
         }
     }
 
     /// Returns the Proof of Work hash of given bytes.
     /// Panic: expects at least 8 bytes.
-    pub fn hash(&mut self, bytes: &[u8]) -> TritBuf<T1B1Buf> {
+    pub fn hash(&mut self, bytes: &[u8]) -> bee_ternary::TritBuf<T1B1Buf> {
         debug_assert!(bytes.len() >= std::mem::size_of::<u8>());
 
         // Compute Blake2b-256 hash of the message, excluding the nonce.
@@ -41,10 +41,10 @@ impl PoWScorer {
 
         // Encode message as trits
         self.pow_input.clear();
-        b1t6::encode::<T1B1Buf>(&pow_digest)
+        bee_ternary::b1t6::encode::<T1B1Buf>(&pow_digest)
             .iter()
             .for_each(|t| self.pow_input.push(t));
-        b1t6::encode::<T1B1Buf>(tail)
+        bee_ternary::b1t6::encode::<T1B1Buf>(tail)
             .iter()
             .for_each(|t| self.pow_input.push(t));
 
@@ -54,7 +54,7 @@ impl PoWScorer {
         self.pow_input.push(Btrit::Zero);
 
         // TODO: Consider using an output buffer here, for example by using the `Sponge` mechanism?
-        self.curl.digest(&self.pow_input).unwrap()
+        self.curl.digest(self.pow_input.as_slice())
     }
 
     /// Computes the Proof of Work score of given bytes.
