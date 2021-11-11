@@ -4,8 +4,8 @@
 use bee_crypto::ternary::sponge::{BatchHasher, CurlPRounds, Sponge, UnrolledCurlP81, BATCH_SIZE};
 use bee_ternary::{T1B1Buf, T5B1Buf, TritBuf, TryteBuf};
 
-use crypto::hashes::ternary::curl_p::CurlP;
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use crypto::hashes::ternary::curl_p::CurlP;
 
 fn batched_hasher_t5b1(input: &TritBuf<T5B1Buf>) {
     let mut hasher = BatchHasher::new(input.len(), CurlPRounds::Rounds81);

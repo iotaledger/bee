@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::ternary::{
-    sponge::{
-        curlp::batched::{
-            bct::{BcTrit, BcTritArr, BcTrits},
-            HIGH_BITS,
-        },
+    sponge::curlp::batched::{
+        bct::{BcTrit, BcTritArr, BcTrits},
+        HIGH_BITS,
     },
     HASH_LENGTH,
 };
@@ -19,7 +17,7 @@ pub(crate) struct BctCurlP {
 }
 
 impl BctCurlP {
-    #[allow(clippy::assertions_on_constants,deprecated)]
+    #[allow(clippy::assertions_on_constants, deprecated)]
     pub(crate) fn new(rounds: crate::ternary::sponge::CurlPRounds) -> Self {
         // Ensure that changing the hash length will not cause undefined behaviour.
         assert!(3 * HASH_LENGTH > 728);
