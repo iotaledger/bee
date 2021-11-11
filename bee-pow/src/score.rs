@@ -90,3 +90,9 @@ pub fn count_trailing_zeros(pow_hash: &Trits<T1B1>) -> usize {
 pub fn pow_score_for_hash(pow_hash: &Trits<T1B1>, len: usize) -> f64 {
     3u128.pow(count_trailing_zeros(pow_hash) as u32) as f64 / len as f64
 }
+
+impl Default for PoWScorer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
