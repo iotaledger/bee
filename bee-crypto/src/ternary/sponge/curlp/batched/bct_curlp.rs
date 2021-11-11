@@ -7,20 +7,20 @@ use crate::ternary::{
             bct::{BcTrit, BcTritArr, BcTrits},
             HIGH_BITS,
         },
-        CurlPRounds,
     },
     HASH_LENGTH,
 };
 
 pub(crate) struct BctCurlP {
-    rounds: CurlPRounds,
+    #[allow(deprecated)]
+    rounds: crate::ternary::sponge::CurlPRounds,
     state: BcTritArr<{ 3 * HASH_LENGTH }>,
     scratch_pad: BcTritArr<{ 3 * HASH_LENGTH }>,
 }
 
 impl BctCurlP {
-    #[allow(clippy::assertions_on_constants)]
-    pub(crate) fn new(rounds: CurlPRounds) -> Self {
+    #[allow(clippy::assertions_on_constants,deprecated)]
+    pub(crate) fn new(rounds: crate::ternary::sponge::CurlPRounds) -> Self {
         // Ensure that changing the hash length will not cause undefined behaviour.
         assert!(3 * HASH_LENGTH > 728);
         Self {

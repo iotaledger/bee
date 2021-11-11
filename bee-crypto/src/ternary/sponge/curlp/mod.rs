@@ -33,6 +33,7 @@ const TRUTH_TABLE: [Btrit; 9] = [
 
 /// Available round numbers for `CurlP`.
 #[derive(Copy, Clone)]
+#[deprecated(note = "We will only support CurlP with 81 rounds in future versions.")]
 pub enum CurlPRounds {
     /// 27 rounds.
     Rounds27 = 27,
@@ -44,6 +45,7 @@ pub enum CurlPRounds {
 #[deprecated(note = "Use functions from `crypto.rs` instead.")]
 pub struct CurlP {
     /// The number of rounds of hashing to apply to the state.
+    #[allow(deprecated)]
     rounds: CurlPRounds,
     /// The internal state.
     state: TritBuf,

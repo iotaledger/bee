@@ -6,7 +6,7 @@
 use crate::providers::{NonceProvider, NonceProviderBuilder};
 
 use bee_crypto::ternary::{
-    sponge::{BatchHasher, CurlPRounds, BATCH_SIZE},
+    sponge::{BatchHasher, BATCH_SIZE},
     HASH_LENGTH,
 };
 use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf};
@@ -110,7 +110,8 @@ impl Miner {
         target_zeros: usize,
     ) -> Result<u64, Error> {
         let mut nonce = start_nonce;
-        let mut hasher = BatchHasher::<T1B1Buf>::new(HASH_LENGTH, CurlPRounds::Rounds81);
+        #[allow(deprecated)] // We will only support 81 rounds in the future, so everything is fine here.
+        let mut hasher = BatchHasher::<T1B1Buf>::new(HASH_LENGTH,bee_crypto::ternary::sponge::CurlPRounds::Rounds81);
         let mut buffers = Vec::<TritBuf<T1B1Buf>>::with_capacity(BATCH_SIZE);
 
         for _ in 0..BATCH_SIZE {

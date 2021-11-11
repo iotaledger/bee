@@ -6,6 +6,7 @@
 mod bct;
 mod bct_curlp;
 
+#[allow(deprecated)]
 use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge, HASH_LENGTH};
 
 use bct::{BcTrit, BcTritArr, BcTritBuf};
@@ -19,6 +20,9 @@ use bee_ternary::{
 /// The number of inputs that can be processed in a single batch.
 pub const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();
 const HIGH_BITS: usize = usize::max_value();
+
+#[allow(deprecated)]
+struct CurlPLegacy(CurlP);
 
 /// A hasher that can process several inputs at the same time in batches.
 ///
@@ -37,7 +41,7 @@ pub struct BatchHasher<B: RawEncodingBuf> {
     /// The CurlP hasher for binary coded trits.
     bct_curlp: BctCurlP,
     /// The regular CurlP hasher.
-    curlp: CurlP,
+    curlp: CurlPLegacy,
 }
 
 impl<B> BatchHasher<B>
@@ -49,6 +53,8 @@ where
     ///
     /// It requires the length of the input, the length of the output hash and the number of
     /// rounds.
+    #[deprecated(note = "We will only support CurlP with 81 rounds in future versions.")]
+    #[allow(deprecated)] 
     pub fn new(input_length: usize, rounds: CurlPRounds) -> Self {
         Self {
             trit_inputs: Vec::with_capacity(BATCH_SIZE),
@@ -56,7 +62,7 @@ where
             bct_hashes: BcTritArr::<HASH_LENGTH>::zeros(),
             buf_demux: TritBuf::zeros(HASH_LENGTH),
             bct_curlp: BctCurlP::new(rounds),
-            curlp: CurlP::new(rounds),
+            curlp: CurlPLegacy(CurlP::new(rounds)),
         }
     }
 
@@ -171,7 +177,7 @@ where
     /// care of cleaning the `trit_inputs` buffer and resets the regular CurlP hasher so it can be
     /// called at any time.
     pub fn hash_unbatched(&mut self) -> impl Iterator<Item = TritBuf> + '_ {
-        self.curlp.reset();
+        self.curlp.0.reset();
         UnbatchedHashes {
             curl: &mut self.curlp,
             trit_inputs: self.trit_inputs.drain(..),
@@ -200,7 +206,7 @@ where
 
 /// A helper iterator type for the output of the `hash_unbatched` method.
 struct UnbatchedHashes<'a, B: RawEncodingBuf> {
-    curl: &'a mut CurlP,
+    curl: &'a mut CurlPLegacy,
     trit_inputs: std::vec::Drain<'a, TritBuf<B>>,
 }
 
@@ -214,6 +220,6 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         let buf = self.trit_inputs.next()?;
         // FIXME: Could we make regular `CurlP` generic too?`
-        Some(self.curl.digest(&buf.encode::<T1B1Buf>()).unwrap())
+        Some(self.curl.0.digest(&buf.encode::<T1B1Buf>()).unwrap())
     }
 }
