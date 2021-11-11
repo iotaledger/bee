@@ -23,14 +23,14 @@ impl PoWScorer {
     pub fn new() -> Self {
         Self {
             blake2b: Blake2b256::new(),
-            pow_input: bee_ternary::TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH),
+            pow_input: TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH),
             curl: CurlP::new(),
         }
     }
 
     /// Returns the Proof of Work hash of given bytes.
     /// Panic: expects at least 8 bytes.
-    pub fn hash(&mut self, bytes: &[u8]) -> bee_ternary::TritBuf<T1B1Buf> {
+    pub fn hash(&mut self, bytes: &[u8]) -> TritBuf<T1B1Buf> {
         debug_assert!(bytes.len() >= std::mem::size_of::<u8>());
 
         // Compute Blake2b-256 hash of the message, excluding the nonce.
@@ -41,10 +41,10 @@ impl PoWScorer {
 
         // Encode message as trits
         self.pow_input.clear();
-        bee_ternary::b1t6::encode::<T1B1Buf>(&pow_digest)
+        b1t6::encode::<T1B1Buf>(&pow_digest)
             .iter()
             .for_each(|t| self.pow_input.push(t));
-        bee_ternary::b1t6::encode::<T1B1Buf>(tail)
+        b1t6::encode::<T1B1Buf>(tail)
             .iter()
             .for_each(|t| self.pow_input.push(t));
 
