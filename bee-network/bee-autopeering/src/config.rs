@@ -37,8 +37,14 @@ use crate::multiaddr::AutopeeringMultiaddr;
 
 use serde::{Deserialize, Serialize};
 
-use std::{fmt::Debug, net::SocketAddr};
+use std::{
+    fmt::Debug,
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+};
 
+// TODO: watch out for possible constification regarding `SocketAddr::new()`.
+const AUTOPEERING_BIND_ADDR_DEFAULT: IpAddr = IpAddr::V4(Ipv4Addr::UNSPECIFIED);
+const AUTOPEERING_BIND_PORT_DEFAULT: u16 = 0;
 const ENTRYNODES_PREFER_IPV6_DEFAULT: bool = false;
 const RUN_AS_ENTRYNODE_DEFAULT: bool = false;
 const DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT: bool = false;
@@ -82,6 +88,15 @@ impl AutopeeringConfig {
             entry_nodes_prefer_ipv6: Some(self.entry_nodes_prefer_ipv6),
             run_as_entry_node: Some(self.run_as_entry_node),
             drop_neighbors_on_salt_update: Some(self.drop_neighbors_on_salt_update),
+        }
+    }
+}
+
+impl Default for AutopeeringConfig {
+    fn default() -> Self {
+        Self {
+            bind_addr: SocketAddr::new(AUTOPEERING_BIND_ADDR_DEFAULT, AUTOPEERING_BIND_PORT_DEFAULT),
+            ..Default::default()
         }
     }
 }
