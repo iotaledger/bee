@@ -26,9 +26,11 @@ pub fn sponge_generic_digest_into<S: Sponge + Default>(input: &str, output: &str
     let output_len = expected_hash.as_trits().len();
     let mut calculated_hash = TritBuf::<T1B1Buf>::zeros(output_len);
 
-    assert!(sponge
-        .digest_into(input_trit_buf.as_slice(), calculated_hash.as_slice_mut())
-        .is_ok());
+    assert!(
+        sponge
+            .digest_into(input_trit_buf.as_slice(), calculated_hash.as_slice_mut())
+            .is_ok()
+    );
 
     let calculated_hash = calculated_hash.encode::<T3B1Buf>();
 
