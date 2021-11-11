@@ -59,11 +59,17 @@ pub enum Error {
     #[error("Invalid ledger dust state: {0:?} {1:?}")]
     InvalidLedgerDustState(Address, Balance),
     /// Consumed amount overflow.
-    #[error("Consumed amount overflow: {0}.")]
-    ConsumedAmountOverflow(u128),
+    #[error("Consumed amount overflow.")]
+    ConsumedAmountOverflow,
     /// Created amount overflow.
-    #[error("Created amount overflow: {0}.")]
-    CreatedAmountOverflow(u128),
+    #[error("Created amount overflow.")]
+    CreatedAmountOverflow,
+    /// Consumed native tokens amount overflow.
+    #[error("Consumed native tokens amount overflow.")]
+    ConsumedNativeTokensAmountOverflow,
+    /// Created native tokens amount overflow.
+    #[error("Created native tokens amount overflow.")]
+    CreatedNativeTokensAmountOverflow,
     /// Ledger state overflow.
     #[error("Ledger state overflow: {0}")]
     LedgerStateOverflow(u128),

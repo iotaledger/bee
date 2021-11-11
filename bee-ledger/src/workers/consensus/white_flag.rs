@@ -109,10 +109,13 @@ fn apply_regular_essence<B: StorageBackend>(
 
         consumed_amount = consumed_amount
             .checked_add(amount)
-            .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount as u128 + amount as u128))?;
+            .ok_or(Error::ConsumedAmountOverflow)?;
         if let Some(consumed_native_tokens) = consumed_native_tokens {
             for native_token in consumed_native_tokens {
-                *native_tokens.entry(*native_token.token_id()).or_default() += *native_token.amount();
+                let native_token_amount = native_tokens.entry(*native_token.token_id()).or_default();
+                *native_token_amount = native_token_amount
+                    .checked_add(*native_token.amount())
+                    .ok_or(Error::ConsumedNativeTokensAmountOverflow)?;
             }
         }
 
@@ -133,12 +136,14 @@ fn apply_regular_essence<B: StorageBackend>(
             Output::Nft(output) => (output.amount(), Some(output.native_tokens())),
         };
 
-        created_amount = created_amount
-            .checked_add(amount)
-            .ok_or_else(|| Error::CreatedAmountOverflow(created_amount as u128 + amount as u128))?;
+        created_amount = created_amount.checked_add(amount).ok_or(Error::CreatedAmountOverflow)?;
         if let Some(created_native_tokens) = created_native_tokens {
             for native_token in created_native_tokens {
-                *native_tokens.entry(*native_token.token_id()).or_default() -= *native_token.amount();
+                let native_token_amount = *native_tokens.entry(*native_token.token_id()).or_default();
+                // TODO actually overflow ?
+                native_token_amount
+                    .checked_sub(*native_token.amount())
+                    .ok_or(Error::CreatedNativeTokensAmountOverflow)?;
             }
         }
     }
