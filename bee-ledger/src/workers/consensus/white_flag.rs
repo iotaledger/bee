@@ -151,7 +151,11 @@ fn apply_regular_essence<B: StorageBackend>(
     if created_amount != consumed_amount {
         return Ok(ConflictReason::InputOutputSumMismatch);
     }
-    // TODO compare native tokens amount
+
+    // TODO The transaction is balanced in terms of native tokens, meaning the amount of native tokens present in inputs
+    // equals to that of outputs. Otherwise, the foundry outputs controlling outstanding native token balances must be
+    // present in the transaction. The validation of the foundry output(s) determines if the outstanding balances are
+    // valid.
 
     for (output_id, created_output) in consumed_outputs {
         metadata.consumed_outputs.insert(
