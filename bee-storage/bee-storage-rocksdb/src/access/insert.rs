@@ -12,7 +12,7 @@ use bee_ledger::types::{
     TreasuryOutput, Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::{Address, AliasAddress, Ed25519Address, NftAddress},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -131,6 +131,38 @@ impl Insert<(Ed25519Address, OutputId), ()> for Storage {
 
         self.inner
             .put_cf(self.cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)?, key, [])?;
+
+        Ok(())
+    }
+}
+
+impl Insert<(AliasAddress, OutputId), ()> for Storage {
+    fn insert(
+        &self,
+        (address, output_id): &(AliasAddress, OutputId),
+        (): &(),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        let mut key = address.as_ref().to_vec();
+        key.extend_from_slice(&output_id.pack_new());
+
+        self.inner
+            .put_cf(self.cf_handle(CF_ALIAS_ADDRESS_TO_OUTPUT_ID)?, key, [])?;
+
+        Ok(())
+    }
+}
+
+impl Insert<(NftAddress, OutputId), ()> for Storage {
+    fn insert(
+        &self,
+        (address, output_id): &(NftAddress, OutputId),
+        (): &(),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        let mut key = address.as_ref().to_vec();
+        key.extend_from_slice(&output_id.pack_new());
+
+        self.inner
+            .put_cf(self.cf_handle(CF_NFT_ADDRESS_TO_OUTPUT_ID)?, key, [])?;
 
         Ok(())
     }

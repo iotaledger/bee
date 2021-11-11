@@ -10,7 +10,7 @@ use bee_ledger::types::{
     TreasuryOutput, Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::{Address, AliasAddress, Ed25519Address, NftAddress},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -42,6 +42,8 @@ impl_insert!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_insert!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_insert!(Unspent, (), output_id_unspent);
 impl_insert!((Ed25519Address, OutputId), (), ed25519_address_to_output_id);
+impl_insert!((AliasAddress, OutputId), (), alias_address_to_output_id);
+impl_insert!((NftAddress, OutputId), (), nft_address_to_output_id);
 impl_insert!((), LedgerIndex, ledger_index);
 impl_insert!(MilestoneIndex, Milestone, milestone_index_to_milestone);
 impl_insert!((), SnapshotInfo, snapshot_info);

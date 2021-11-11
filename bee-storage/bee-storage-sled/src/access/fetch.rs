@@ -11,7 +11,7 @@ use bee_ledger::types::{
     TreasuryOutput,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::{Address, AliasAddress, Ed25519Address, NftAddress},
     milestone::{Milestone, MilestoneIndex},
     output::{OutputId, OUTPUT_ID_LENGTH},
     payload::indexation::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH},
@@ -123,6 +123,46 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
                 .map(|result| {
                     let (key, _) = result?;
                     let (_, output_id) = key.split_at(Ed25519Address::LENGTH);
+                    // Unpacking from storage is fine.
+                    Ok((<[u8; OUTPUT_ID_LENGTH]>::try_from(output_id).unwrap())
+                        .try_into()
+                        .unwrap())
+                })
+                .take(self.config.storage.fetch_output_id_limit)
+                .collect::<Result<Vec<OutputId>, Self::Error>>()?,
+        ))
+    }
+}
+
+impl Fetch<AliasAddress, Vec<OutputId>> for Storage {
+    fn fetch(&self, address: &AliasAddress) -> Result<Option<Vec<OutputId>>, <Self as StorageBackend>::Error> {
+        Ok(Some(
+            self.inner
+                .open_tree(TREE_ALIAS_ADDRESS_TO_OUTPUT_ID)?
+                .scan_prefix(address)
+                .map(|result| {
+                    let (key, _) = result?;
+                    let (_, output_id) = key.split_at(AliasAddress::LENGTH);
+                    // Unpacking from storage is fine.
+                    Ok((<[u8; OUTPUT_ID_LENGTH]>::try_from(output_id).unwrap())
+                        .try_into()
+                        .unwrap())
+                })
+                .take(self.config.storage.fetch_output_id_limit)
+                .collect::<Result<Vec<OutputId>, Self::Error>>()?,
+        ))
+    }
+}
+
+impl Fetch<NftAddress, Vec<OutputId>> for Storage {
+    fn fetch(&self, address: &NftAddress) -> Result<Option<Vec<OutputId>>, <Self as StorageBackend>::Error> {
+        Ok(Some(
+            self.inner
+                .open_tree(TREE_NFT_ADDRESS_TO_OUTPUT_ID)?
+                .scan_prefix(address)
+                .map(|result| {
+                    let (key, _) = result?;
+                    let (_, output_id) = key.split_at(NftAddress::LENGTH);
                     // Unpacking from storage is fine.
                     Ok((<[u8; OUTPUT_ID_LENGTH]>::try_from(output_id).unwrap())
                         .try_into()

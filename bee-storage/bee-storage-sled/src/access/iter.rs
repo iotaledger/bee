@@ -11,7 +11,7 @@ use bee_ledger::types::{
     Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::{Address, AliasAddress, Ed25519Address, NftAddress},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH},
@@ -172,12 +172,44 @@ impl<'a> StorageIterator<'a, Unspent, ()> {
 
 impl<'a> StorageIterator<'a, (Ed25519Address, OutputId), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((Ed25519Address, OutputId), ()) {
-        let (mut address, mut output_id) = key.split_at(MESSAGE_ID_LENGTH);
+        let (mut address, mut output_id) = key.split_at(Ed25519Address::LENGTH);
 
         (
             (
                 // Unpacking from storage is fine.
                 Ed25519Address::unpack_unchecked(&mut address).unwrap(),
+                // Unpacking from storage is fine.
+                OutputId::unpack_unchecked(&mut output_id).unwrap(),
+            ),
+            (),
+        )
+    }
+}
+
+impl<'a> StorageIterator<'a, (AliasAddress, OutputId), ()> {
+    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((AliasAddress, OutputId), ()) {
+        let (mut address, mut output_id) = key.split_at(AliasAddress::LENGTH);
+
+        (
+            (
+                // Unpacking from storage is fine.
+                AliasAddress::unpack_unchecked(&mut address).unwrap(),
+                // Unpacking from storage is fine.
+                OutputId::unpack_unchecked(&mut output_id).unwrap(),
+            ),
+            (),
+        )
+    }
+}
+
+impl<'a> StorageIterator<'a, (NftAddress, OutputId), ()> {
+    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((NftAddress, OutputId), ()) {
+        let (mut address, mut output_id) = key.split_at(NftAddress::LENGTH);
+
+        (
+            (
+                // Unpacking from storage is fine.
+                NftAddress::unpack_unchecked(&mut address).unwrap(),
                 // Unpacking from storage is fine.
                 OutputId::unpack_unchecked(&mut output_id).unwrap(),
             ),
@@ -327,6 +359,8 @@ impl_iter!(OutputId, CreatedOutput, TREE_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_iter!(OutputId, ConsumedOutput, TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_iter!(Unspent, (), TREE_OUTPUT_ID_UNSPENT);
 impl_iter!((Ed25519Address, OutputId), (), TREE_ED25519_ADDRESS_TO_OUTPUT_ID);
+impl_iter!((AliasAddress, OutputId), (), TREE_ALIAS_ADDRESS_TO_OUTPUT_ID);
+impl_iter!((NftAddress, OutputId), (), TREE_NFT_ADDRESS_TO_OUTPUT_ID);
 impl_iter!((), LedgerIndex, TREE_LEDGER_INDEX);
 impl_iter!(MilestoneIndex, Milestone, TREE_MILESTONE_INDEX_TO_MILESTONE);
 impl_iter!((), SnapshotInfo, TREE_SNAPSHOT_INFO);

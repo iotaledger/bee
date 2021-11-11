@@ -35,12 +35,13 @@ pub fn rand_treasury_output() -> output::TreasuryOutput {
 }
 
 /// Generates a random output.
+// TODO finish
 pub fn rand_output() -> Output {
     match rand_number::<u64>() % 3 {
         0 => rand_simple_output().into(),
-        1 => todo!(),
-        2 => rand_treasury_output().into(),
-        _ => unreachable!(),
+        // 1 => todo!(),
+        _ => rand_treasury_output().into(),
+        // _ => unreachable!(),
     }
 }
 
@@ -50,14 +51,15 @@ pub fn rand_consumed_output() -> ConsumedOutput {
 }
 
 /// Generates a random creates output.
+// TODO finish
 pub fn rand_created_output() -> CreatedOutput {
     CreatedOutput::new(
         rand_message_id(),
         match rand_number::<u64>() % 3 {
             0 => rand_simple_output().into(),
-            1 => todo!(),
-            2 => rand_treasury_output().into(),
-            _ => unreachable!(),
+            // 1 => todo!(),
+            _ => rand_treasury_output().into(),
+            // _ => unreachable!(),
         },
     )
 }

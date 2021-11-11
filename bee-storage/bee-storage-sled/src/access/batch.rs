@@ -11,7 +11,7 @@ use bee_ledger::types::{
     TreasuryOutput, Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::{Address, AliasAddress, Ed25519Address, NftAddress},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -362,6 +362,84 @@ impl Batch<(Ed25519Address, OutputId), ()> for Storage {
         batch
             .inner
             .entry(TREE_ED25519_ADDRESS_TO_OUTPUT_ID)
+            .or_default()
+            .remove(batch.key_buf.as_slice());
+
+        Ok(())
+    }
+}
+
+impl Batch<(AliasAddress, OutputId), ()> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        (address, output_id): &(AliasAddress, OutputId),
+        (): &(),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        batch.key_buf.clear();
+        batch.key_buf.extend_from_slice(address.as_ref());
+        batch.key_buf.extend_from_slice(&output_id.pack_new());
+
+        batch
+            .inner
+            .entry(TREE_ALIAS_ADDRESS_TO_OUTPUT_ID)
+            .or_default()
+            .insert(batch.key_buf.as_slice(), &[]);
+
+        Ok(())
+    }
+
+    fn batch_delete(
+        &self,
+        batch: &mut Self::Batch,
+        (address, output_id): &(AliasAddress, OutputId),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        batch.key_buf.clear();
+        batch.key_buf.extend_from_slice(address.as_ref());
+        batch.key_buf.extend_from_slice(&output_id.pack_new());
+
+        batch
+            .inner
+            .entry(TREE_ALIAS_ADDRESS_TO_OUTPUT_ID)
+            .or_default()
+            .remove(batch.key_buf.as_slice());
+
+        Ok(())
+    }
+}
+
+impl Batch<(NftAddress, OutputId), ()> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        (address, output_id): &(NftAddress, OutputId),
+        (): &(),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        batch.key_buf.clear();
+        batch.key_buf.extend_from_slice(address.as_ref());
+        batch.key_buf.extend_from_slice(&output_id.pack_new());
+
+        batch
+            .inner
+            .entry(TREE_NFT_ADDRESS_TO_OUTPUT_ID)
+            .or_default()
+            .insert(batch.key_buf.as_slice(), &[]);
+
+        Ok(())
+    }
+
+    fn batch_delete(
+        &self,
+        batch: &mut Self::Batch,
+        (address, output_id): &(NftAddress, OutputId),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        batch.key_buf.clear();
+        batch.key_buf.extend_from_slice(address.as_ref());
+        batch.key_buf.extend_from_slice(&output_id.pack_new());
+
+        batch
+            .inner
+            .entry(TREE_NFT_ADDRESS_TO_OUTPUT_ID)
             .or_default()
             .remove(batch.key_buf.as_slice());
 

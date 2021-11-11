@@ -12,7 +12,7 @@ use bee_ledger::types::{
     TreasuryOutput, Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::{Address, AliasAddress, Ed25519Address, NftAddress},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -103,6 +103,30 @@ impl Exist<(Ed25519Address, OutputId), ()> for Storage {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)?, key)?
+            .is_some())
+    }
+}
+
+impl Exist<(AliasAddress, OutputId), ()> for Storage {
+    fn exist(&self, (address, output_id): &(AliasAddress, OutputId)) -> Result<bool, <Self as StorageBackend>::Error> {
+        let mut key = address.as_ref().to_vec();
+        key.extend_from_slice(&output_id.pack_new());
+
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_ALIAS_ADDRESS_TO_OUTPUT_ID)?, key)?
+            .is_some())
+    }
+}
+
+impl Exist<(NftAddress, OutputId), ()> for Storage {
+    fn exist(&self, (address, output_id): &(NftAddress, OutputId)) -> Result<bool, <Self as StorageBackend>::Error> {
+        let mut key = address.as_ref().to_vec();
+        key.extend_from_slice(&output_id.pack_new());
+
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_NFT_ADDRESS_TO_OUTPUT_ID)?, key)?
             .is_some())
     }
 }

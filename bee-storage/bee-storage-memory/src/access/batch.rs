@@ -10,7 +10,7 @@ use bee_ledger::types::{
     TreasuryOutput, Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::{Address, AliasAddress, Ed25519Address, NftAddress},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -35,6 +35,8 @@ pub struct StorageBatch {
     output_id_to_consumed_output: TableBatch<OutputId, ConsumedOutput>,
     output_id_unspent: TableBatch<Unspent, ()>,
     ed25519_address_to_output_id: TableBatch<(Ed25519Address, OutputId), ()>,
+    alias_address_to_output_id: TableBatch<(AliasAddress, OutputId), ()>,
+    nft_address_to_output_id: TableBatch<(NftAddress, OutputId), ()>,
     ledger_index: TableBatch<(), LedgerIndex>,
     milestone_index_to_milestone: TableBatch<MilestoneIndex, Milestone>,
     snapshot_info: TableBatch<(), SnapshotInfo>,
@@ -70,6 +72,8 @@ impl BatchBuilder for Storage {
         apply_batch!(output_id_to_consumed_output);
         apply_batch!(output_id_unspent);
         apply_batch!(ed25519_address_to_output_id);
+        apply_batch!(alias_address_to_output_id);
+        apply_batch!(nft_address_to_output_id);
         apply_batch!(ledger_index);
         apply_batch!(milestone_index_to_milestone);
         apply_batch!(snapshot_info);
@@ -115,6 +119,8 @@ impl_batch!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_batch!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_batch!(Unspent, (), output_id_unspent);
 impl_batch!((Ed25519Address, OutputId), (), ed25519_address_to_output_id);
+impl_batch!((AliasAddress, OutputId), (), alias_address_to_output_id);
+impl_batch!((NftAddress, OutputId), (), nft_address_to_output_id);
 impl_batch!((), LedgerIndex, ledger_index);
 impl_batch!(MilestoneIndex, Milestone, milestone_index_to_milestone);
 impl_batch!((), SnapshotInfo, snapshot_info);

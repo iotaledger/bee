@@ -22,6 +22,10 @@ pub const TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT: &str = "output_id_to_consumed_outpu
 pub const TREE_OUTPUT_ID_UNSPENT: &str = "output_id_unspent";
 /// Identifier for the `Ed25519Address` to `OutputId` tree.
 pub const TREE_ED25519_ADDRESS_TO_OUTPUT_ID: &str = "ed25519_address_to_output_id";
+/// Identifier for the `AliasAddress` to `OutputId` tree.
+pub const TREE_ALIAS_ADDRESS_TO_OUTPUT_ID: &str = "alias_address_to_output_id";
+/// Identifier for the `NftAddress` to `OutputId` tree.
+pub const TREE_NFT_ADDRESS_TO_OUTPUT_ID: &str = "nft_address_to_output_id";
 /// Identifier for the `LedgerIndex` tree.
 pub const TREE_LEDGER_INDEX: &str = "ledger_index";
 /// Identifier for the `MIlestoneIndex` to `Milestone` tree.

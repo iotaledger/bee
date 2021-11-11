@@ -13,7 +13,7 @@ use bee_ledger::types::{
     Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::{Address, AliasAddress, Ed25519Address, NftAddress},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -64,6 +64,8 @@ impl_iter!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_iter!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_iter!(Unspent, (), output_id_unspent);
 impl_iter!((Ed25519Address, OutputId), (), ed25519_address_to_output_id);
+impl_iter!((AliasAddress, OutputId), (), alias_address_to_output_id);
+impl_iter!((NftAddress, OutputId), (), nft_address_to_output_id);
 impl_iter!((), LedgerIndex, ledger_index);
 impl_iter!(MilestoneIndex, Milestone, milestone_index_to_milestone);
 impl_iter!((), SnapshotInfo, snapshot_info);

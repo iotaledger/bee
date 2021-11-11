@@ -10,7 +10,7 @@ use bee_ledger::types::{
     Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::{Address, AliasAddress, Ed25519Address, NftAddress},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -41,6 +41,8 @@ impl_truncate!(OutputId, CreatedOutput, TREE_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_truncate!(OutputId, ConsumedOutput, TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_truncate!(Unspent, (), TREE_OUTPUT_ID_UNSPENT);
 impl_truncate!((Ed25519Address, OutputId), (), TREE_ED25519_ADDRESS_TO_OUTPUT_ID);
+impl_truncate!((AliasAddress, OutputId), (), TREE_ALIAS_ADDRESS_TO_OUTPUT_ID);
+impl_truncate!((NftAddress, OutputId), (), TREE_NFT_ADDRESS_TO_OUTPUT_ID);
 impl_truncate!((), LedgerIndex, TREE_LEDGER_INDEX);
 impl_truncate!(MilestoneIndex, Milestone, TREE_MILESTONE_INDEX_TO_MILESTONE);
 impl_truncate!((), SnapshotInfo, TREE_SNAPSHOT_INFO);

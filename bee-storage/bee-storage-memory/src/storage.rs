@@ -10,7 +10,7 @@ use bee_ledger::types::{
     Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::{Address, AliasAddress, Ed25519Address, NftAddress},
     milestone::Milestone,
     prelude::{MilestoneIndex, OutputId, PaddedIndex},
     Message, MessageId,
@@ -67,6 +67,8 @@ pub(crate) struct InnerStorage {
     pub(crate) output_id_to_consumed_output: Table<OutputId, ConsumedOutput>,
     pub(crate) output_id_unspent: Table<Unspent, ()>,
     pub(crate) ed25519_address_to_output_id: VecBinTable<Ed25519Address, OutputId>,
+    pub(crate) alias_address_to_output_id: VecBinTable<AliasAddress, OutputId>,
+    pub(crate) nft_address_to_output_id: VecBinTable<NftAddress, OutputId>,
     pub(crate) ledger_index: SingletonTable<LedgerIndex>,
     pub(crate) milestone_index_to_milestone: Table<MilestoneIndex, Milestone>,
     pub(crate) snapshot_info: SingletonTable<SnapshotInfo>,
