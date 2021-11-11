@@ -9,7 +9,7 @@ use crate::{
     types::{body::SuccessBody, dtos::PeerDto, responses::PeerResponse},
 };
 
-use bee_network::PeerId;
+use bee_gossip::PeerId;
 use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 

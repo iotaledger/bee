@@ -6,7 +6,7 @@ use crate::{
     workers::{packets::MessagePacket, peer::PeerManager, sender::Sender, MetricsWorker, PeerManagerResWorker},
 };
 
-use bee_network::PeerId;
+use bee_gossip::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;

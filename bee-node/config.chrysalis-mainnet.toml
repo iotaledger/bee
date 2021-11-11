@@ -28,18 +28,19 @@ max_unknown_peers       = 4
 #address  = ""
 #alias    = ""
 
-# Uncomment to enable autopeering.
-#[autopeering]
-#bind_address = "0.0.0.0:15626"
-#entry_nodes = [
-#    "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
-#    "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
-#    "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
-#    "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC",
-#]
-#entry_nodes_prefer_ipv6 = false
-#run_as_entry_node = false
-#drop_neighbors_on_salt_update = false
+
+[autopeering]
+enabled = false
+bind_address = "0.0.0.0:15626"
+entry_nodes = [
+    "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
+    "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
+    "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
+    "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC",
+]
+entry_nodes_prefer_ipv6 = false
+run_as_entry_node = false
+drop_neighbors_on_salt_update = false
 
 [protocol]
 minimum_pow_score = 4000

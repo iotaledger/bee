@@ -28,13 +28,13 @@ max_unknown_peers       = 4
 #address  = ""
 #alias    = ""
 
-# Uncomment to enable autopeering.
-#[autopeering]
-#bind_address = "0.0.0.0:15626"
-#entry_nodes = []
-#entry_nodes_prefer_ipv6 = false
-#run_as_entry_node = false
-#drop_neighbors_on_salt_update = false
+[autopeering]
+enabled = false
+bind_address = "0.0.0.0:15626"
+entry_nodes = []
+entry_nodes_prefer_ipv6 = false
+run_as_entry_node = false
+drop_neighbors_on_salt_update = false
 
 [protocol]
 minimum_pow_score = 2000

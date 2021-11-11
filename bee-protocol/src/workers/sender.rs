@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use bee_network::PeerId;
+use bee_gossip::PeerId;
 
 use log::warn;
 

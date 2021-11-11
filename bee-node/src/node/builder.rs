@@ -213,13 +213,13 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let network_id = config.network_id.1;
         let local_keys = config.identity.0.clone();
 
-        info!("Initializing network layer...");
+        info!("Initializing gossip...");
         let (this, network_events) =
-            bee_network::integrated::init::<BeeNode<B>>(network_config, local_keys, network_id, this)
+            bee_gossip::integrated::init::<BeeNode<B>>(network_config, local_keys, network_id, this)
                 .await
                 .map_err(Error::NetworkInitializationFailed)?;
 
-        let autopeering_events = if let Some(autopeering_config) = config.autopeering {
+        let autopeering_events = if config.autopeering.enabled {
             info!("Initializing autopeering...");
             let neighbor_validator = BeeNeighborValidator {};
             let peerstore_config = ();
@@ -230,7 +230,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             write.add_service(
                 AUTOPEERING_SERVICE_NAME,
                 ServiceProtocol::Udp,
-                autopeering_config.bind_addr.port(),
+                config.autopeering.bind_addr.port(),
             );
             write.add_service(network_name.clone(), ServiceProtocol::Tcp, 15600);
             drop(write);
@@ -238,7 +238,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             let quit_signal = tokio::signal::ctrl_c();
 
             let autopeering_events = bee_autopeering::init::<InMemoryPeerStore, _, _, _>(
-                autopeering_config,
+                config.autopeering,
                 AUTOPEERING_VERSION,
                 network_name,
                 local,

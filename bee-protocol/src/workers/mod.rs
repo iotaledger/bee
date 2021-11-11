@@ -44,7 +44,7 @@ pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorker
 pub(crate) use status::StatusWorker;
 
 use bee_autopeering::event::EventRx as AutopeeringEventRx;
-use bee_network::NetworkEventReceiver as NetworkEventRx;
+use bee_gossip::NetworkEventReceiver as NetworkEventRx;
 use bee_runtime::node::{Node, NodeBuilder};
 use peer::PeerManagerConfig;
 

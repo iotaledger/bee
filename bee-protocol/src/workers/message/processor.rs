@@ -17,8 +17,8 @@ use crate::{
 };
 
 use bee_common::packable::Packable;
+use bee_gossip::PeerId;
 use bee_message::{Message, MessageId};
-use bee_network::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::MessageMetadata, Tangle, TangleWorker};
 

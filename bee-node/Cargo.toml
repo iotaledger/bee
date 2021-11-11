@@ -16,7 +16,7 @@ bee-common = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autop
 bee-crypto = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false }
 bee-ledger = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false, features = [ "workers" ] }
 bee-message = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false }
-bee-network = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false, features = [ "full" ] }
+bee-gossip = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false, features = [ "full" ] }
 bee-protocol = { path = "../bee-protocol", default-features = false }
 bee-rest-api = { path = "../bee-api/bee-rest-api", default-features = false, features = [ "endpoints" ] }
 bee-runtime = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false }

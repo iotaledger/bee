@@ -8,11 +8,11 @@ use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
 
 use bee_autopeering::config::{AutopeeringConfig, AutopeeringTomlConfig};
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
+use bee_gossip::{Keypair, NetworkConfig, NetworkConfigBuilder, PeerId, PublicKey};
 use bee_ledger::workers::{
     pruning::config::{PruningConfig, PruningConfigBuilder},
     snapshot::config::{SnapshotConfig, SnapshotConfigBuilder},
 };
-use bee_network::{Keypair, NetworkConfig, NetworkConfigBuilder, PeerId, PublicKey};
 use bee_protocol::workers::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::endpoints::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_storage::backend::StorageBackend;
@@ -98,13 +98,13 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
             network_id: (network_id_string, network_id_numeric),
             logger: self.logger.unwrap_or_default().finish(),
             // TODO: Create specific error types for each config section, e.g.
-            // Error::NetworkConfigError(bee_network::config::Error)
+            // Error::NetworkConfigError(bee_gossip::config::Error)
             network: self
                 .network
                 .unwrap_or_default()
                 .finish()
                 .expect("faulty network configuration"),
-            autopeering: self.autopeering.map(|c| c.finish()),
+            autopeering: self.autopeering.map_or(AutopeeringConfig::default(), |c| c.finish()),
             protocol: self.protocol.unwrap_or_default().finish(),
             rest_api: self.rest_api.unwrap_or_default().finish(),
             snapshot: self.snapshot.unwrap_or_default().finish(),
@@ -133,7 +133,7 @@ pub struct NodeConfig<B: StorageBackend> {
     pub network_id: (String, u64),
     pub logger: LoggerConfig,
     pub network: NetworkConfig,
-    pub autopeering: Option<AutopeeringConfig>,
+    pub autopeering: AutopeeringConfig,
     pub protocol: ProtocolConfig,
     pub rest_api: RestApiConfig,
     pub snapshot: SnapshotConfig,

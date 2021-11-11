@@ -16,7 +16,7 @@ use storage::StorageBackend;
 
 use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
-use bee_network::NetworkCommandSender;
+use bee_gossip::NetworkCommandSender;
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorker, PeerManager, PeerManagerResWorker,
     RequestedMessages,

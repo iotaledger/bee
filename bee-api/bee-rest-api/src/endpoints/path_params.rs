@@ -10,7 +10,7 @@ use bee_message::{
     payload::transaction::TransactionId,
     MessageId,
 };
-use bee_network::PeerId;
+use bee_gossip::PeerId;
 
 use warp::{reject, Filter, Rejection};
 

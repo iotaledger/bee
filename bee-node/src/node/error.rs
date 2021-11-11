@@ -14,7 +14,7 @@ pub enum Error {
     StorageBackend(Box<dyn std::error::Error>),
 
     #[error("Network initialization failed. Cause: {0}")]
-    NetworkInitializationFailed(#[from] bee_network::Error),
+    NetworkInitializationFailed(#[from] bee_gossip::Error),
 
     #[error("Peering initialization failed. Cause: {0}")]
     PeeringInitializationFailed(Box<dyn std::error::Error>),

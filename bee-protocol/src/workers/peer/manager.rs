@@ -13,7 +13,7 @@ use crate::{
 };
 
 use bee_autopeering::event::{Event as AutopeeringEvent, EventRx as AutopeeringEventRx};
-use bee_network::{
+use bee_gossip::{
     alias, Command, Event as NetworkEvent, NetworkCommandSender, NetworkEventReceiver as NetworkEventRx, PeerRelation,
     ServiceHost,
 };
