@@ -1,7 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_crypto::ternary::sponge::{CurlP27, CurlP81, Kerl, Sponge, SpongeKind, UnrolledCurlP81};
+#[allow(deprecated)]
+use bee_crypto::ternary::sponge::{CurlP27, CurlP81};
+use bee_crypto::ternary::sponge::{Kerl, Sponge, SpongeKind, UnrolledCurlP81};
 use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, TryteBuf};
 
 pub fn sponge_generic_digest<S: Sponge + Default>(input: &str, output: &str) {
@@ -170,7 +172,9 @@ fn sponge_input_243_output_243(sponge_type: SpongeKind) {
     for test in tests.iter() {
         match sponge_type {
             SpongeKind::Kerl => sponge_generic_digest::<Kerl>(test.0, test.1),
+            #[allow(deprecated)]
             SpongeKind::CurlP27 => sponge_generic_digest::<CurlP27>(test.0, test.2),
+            #[allow(deprecated)]
             SpongeKind::CurlP81 => sponge_generic_digest::<CurlP81>(test.0, test.3),
             SpongeKind::UnrolledCurlP81 => sponge_generic_digest::<UnrolledCurlP81>(test.0, test.3),
         }
@@ -260,7 +264,9 @@ fn sponge_input_243_output_486(sponge_type: SpongeKind) {
     for test in tests.iter() {
         match sponge_type {
             SpongeKind::Kerl => sponge_generic_digest_into::<Kerl>(test.0, test.1),
+            #[allow(deprecated)]
             SpongeKind::CurlP27 => sponge_generic_digest_into::<CurlP27>(test.0, test.2),
+            #[allow(deprecated)]
             SpongeKind::CurlP81 => sponge_generic_digest_into::<CurlP81>(test.0, test.3),
             SpongeKind::UnrolledCurlP81 => sponge_generic_digest_into::<UnrolledCurlP81>(test.0, test.3),
         }
@@ -320,7 +326,9 @@ fn sponge_input_243_output_6561(sponge_type: SpongeKind) {
     for test in tests.iter() {
         match sponge_type {
             SpongeKind::Kerl => sponge_generic_digest_into::<Kerl>(test.0, test.1),
+            #[allow(deprecated)]
             SpongeKind::CurlP27 => sponge_generic_digest_into::<CurlP27>(test.0, test.2),
+            #[allow(deprecated)]
             SpongeKind::CurlP81 => sponge_generic_digest_into::<CurlP81>(test.0, test.3),
             SpongeKind::UnrolledCurlP81 => sponge_generic_digest_into::<UnrolledCurlP81>(test.0, test.3),
         }
@@ -410,7 +418,9 @@ fn sponge_input_486_output_486(sponge_type: SpongeKind) {
     for test in tests.iter() {
         match sponge_type {
             SpongeKind::Kerl => sponge_generic_digest_into::<Kerl>(test.0, test.1),
+            #[allow(deprecated)]
             SpongeKind::CurlP27 => sponge_generic_digest_into::<CurlP27>(test.0, test.2),
+            #[allow(deprecated)]
             SpongeKind::CurlP81 => sponge_generic_digest_into::<CurlP81>(test.0, test.3),
             SpongeKind::UnrolledCurlP81 => sponge_generic_digest_into::<UnrolledCurlP81>(test.0, test.3),
         }
@@ -470,7 +480,9 @@ fn sponge_input_6561_output_6561(sponge_type: SpongeKind) {
     for test in tests.iter() {
         match sponge_type {
             SpongeKind::Kerl => sponge_generic_digest_into::<Kerl>(test.0, test.1),
+            #[allow(deprecated)]
             SpongeKind::CurlP27 => sponge_generic_digest_into::<CurlP27>(test.0, test.2),
+            #[allow(deprecated)]
             SpongeKind::CurlP81 => sponge_generic_digest_into::<CurlP81>(test.0, test.3),
             SpongeKind::UnrolledCurlP81 => sponge_generic_digest_into::<UnrolledCurlP81>(test.0, test.3),
         }
@@ -530,7 +542,9 @@ fn sponge_input_6561_output_243(sponge_type: SpongeKind) {
     for test in tests.iter() {
         match sponge_type {
             SpongeKind::Kerl => sponge_generic_digest_into::<Kerl>(test.0, test.1),
+            #[allow(deprecated)]
             SpongeKind::CurlP27 => sponge_generic_digest_into::<CurlP27>(test.0, test.2),
+            #[allow(deprecated)]
             SpongeKind::CurlP81 => sponge_generic_digest_into::<CurlP81>(test.0, test.3),
             SpongeKind::UnrolledCurlP81 => sponge_generic_digest_into::<UnrolledCurlP81>(test.0, test.3),
         }

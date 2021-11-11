@@ -1,8 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[allow(deprecated)]
+use bee_crypto::ternary::sponge::CurlPRounds;
 use bee_crypto::ternary::{
-    sponge::{BatchHasher, CurlPRounds, BATCH_SIZE},
+    sponge::{BatchHasher, BATCH_SIZE},
     HASH_LENGTH,
 };
 
@@ -287,6 +289,7 @@ where
 
     assert_eq!(expected_hash.len(), HASH_LENGTH);
 
+    #[allow(deprecated)]
     let mut batch_hasher = BatchHasher::new(input_trit_buf.len(), CurlPRounds::Rounds81);
 
     for _ in 0..BATCH_SIZE {
@@ -303,6 +306,7 @@ where
     B: RawEncodingBuf<Slice = S> + Clone,
     S: RawEncoding<Trit = Btrit, Buf = B> + ?Sized,
 {
+    #[allow(deprecated)]
     let mut batch_hasher = BatchHasher::new(8019, CurlPRounds::Rounds81);
 
     let mut expected_hashes = vec![];

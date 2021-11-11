@@ -1,7 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_crypto::ternary::sponge::{CurlP27, CurlP81, Kerl, Sponge};
+#[allow(deprecated)]
+use bee_crypto::ternary::sponge::{CurlP27, CurlP81};
+use bee_crypto::ternary::sponge::{Kerl, Sponge};
 use bee_signing::ternary::{
     seed::Seed,
     wots::{Error as WotsError, WotsSecurityLevel, WotsSpongePrivateKeyGeneratorBuilder},
@@ -71,11 +73,13 @@ fn kerl_roundtrip() {
 
 #[test]
 fn curl27_roundtrip() {
+    #[allow(deprecated)]
     roundtrip::<CurlP27>();
 }
 
 #[test]
 fn curl81_roundtrip() {
+    #[allow(deprecated)]
     roundtrip::<CurlP81>();
 }
 

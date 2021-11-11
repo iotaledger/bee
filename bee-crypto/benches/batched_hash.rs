@@ -1,12 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_crypto::ternary::sponge::{BatchHasher, CurlPRounds, BATCH_SIZE};
+#[allow(deprecated)]
+use bee_crypto::ternary::sponge::CurlPRounds;
+use bee_crypto::ternary::sponge::{BatchHasher, BATCH_SIZE};
 use bee_ternary::{T1B1Buf, T5B1Buf, TritBuf, TryteBuf};
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 fn batched_hasher_t5b1(input: &TritBuf<T5B1Buf>) {
+    #[allow(deprecated)]
     let mut hasher = BatchHasher::new(input.len(), CurlPRounds::Rounds81);
 
     for _ in 0..BATCH_SIZE {
@@ -16,6 +19,7 @@ fn batched_hasher_t5b1(input: &TritBuf<T5B1Buf>) {
 }
 
 fn unbatched_hasher_t5b1(input: &TritBuf<T5B1Buf>) {
+    #[allow(deprecated)]
     let mut hasher = BatchHasher::new(input.len(), CurlPRounds::Rounds81);
 
     for _ in 0..BATCH_SIZE {
@@ -25,6 +29,7 @@ fn unbatched_hasher_t5b1(input: &TritBuf<T5B1Buf>) {
 }
 
 fn batched_hasher_encoding_t5b1(input: &TritBuf<T5B1Buf>) {
+    #[allow(deprecated)]
     let mut hasher = BatchHasher::new(input.len(), CurlPRounds::Rounds81);
 
     for _ in 0..BATCH_SIZE {
@@ -34,6 +39,7 @@ fn batched_hasher_encoding_t5b1(input: &TritBuf<T5B1Buf>) {
 }
 
 fn unbatched_hasher_encoding_t5b1(input: &TritBuf<T5B1Buf>) {
+    #[allow(deprecated)]
     let mut hasher = BatchHasher::new(input.len(), CurlPRounds::Rounds81);
 
     for _ in 0..BATCH_SIZE {
@@ -43,6 +49,7 @@ fn unbatched_hasher_encoding_t5b1(input: &TritBuf<T5B1Buf>) {
 }
 
 fn batched_hasher_t1b1(input: &TritBuf<T1B1Buf>) {
+    #[allow(deprecated)]
     let mut hasher = BatchHasher::new(input.len(), CurlPRounds::Rounds81);
 
     for _ in 0..BATCH_SIZE {
@@ -52,6 +59,7 @@ fn batched_hasher_t1b1(input: &TritBuf<T1B1Buf>) {
 }
 
 fn unbatched_hasher_t1b1(input: &TritBuf<T1B1Buf>) {
+    #[allow(deprecated)]
     let mut hasher = BatchHasher::new(input.len(), CurlPRounds::Rounds81);
 
     for _ in 0..BATCH_SIZE {
