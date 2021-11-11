@@ -21,22 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## Unreleased - 2021-11-11
-
-### Added
-
-### Changed
-
-- Scoring of Proof of Work can now reuse hash functions
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ## 0.1.0 - 2021-04-13
 
 ### Added
