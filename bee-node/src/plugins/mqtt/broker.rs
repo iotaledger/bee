@@ -36,16 +36,16 @@ where
         let mut messages_solidified_tx = broker.link("messages-metadata").expect("linking mqtt sender failed");
         let mut outputs_created_tx = broker.link("outputs-created").expect("linking mqtt sender failed");
         let mut outputs_consumed_tx = broker.link("outputs-consumed").expect("linking mqtt sender failed");
-        let mut addresses_ouptuts_created_tx = broker
+        let mut addresses_outputs_created_tx = broker
             .link("addresses-outputs-created")
             .expect("linking mqtt sender failed");
-        let mut addresses_ouptuts_consumed_tx = broker
+        let mut addresses_outputs_consumed_tx = broker
             .link("addresses-outputs-consumed")
             .expect("linking mqtt sender failed");
-        let mut addresses_ed25519_ouptuts_created_tx = broker
+        let mut addresses_ed25519_outputs_created_tx = broker
             .link("addresses-ed25519-outputs-created")
             .expect("linking mqtt sender failed");
-        let mut addresses_ed25519_ouptuts_consumed_tx = broker
+        let mut addresses_ed25519_outputs_consumed_tx = broker
             .link("addresses-ed25519-outputs-consumed")
             .expect("linking mqtt sender failed");
 
@@ -67,10 +67,10 @@ where
         let _ = messages_solidified_tx.connect(DEFAULT_MAX_INFLIGHT_REQUESTS)?;
         let _ = outputs_created_tx.connect(DEFAULT_MAX_INFLIGHT_REQUESTS)?;
         let _ = outputs_consumed_tx.connect(DEFAULT_MAX_INFLIGHT_REQUESTS)?;
-        let _ = addresses_ouptuts_created_tx.connect(DEFAULT_MAX_INFLIGHT_REQUESTS)?;
-        let _ = addresses_ouptuts_consumed_tx.connect(DEFAULT_MAX_INFLIGHT_REQUESTS)?;
-        let _ = addresses_ed25519_ouptuts_created_tx.connect(DEFAULT_MAX_INFLIGHT_REQUESTS)?;
-        let _ = addresses_ed25519_ouptuts_consumed_tx.connect(DEFAULT_MAX_INFLIGHT_REQUESTS)?;
+        let _ = addresses_outputs_created_tx.connect(DEFAULT_MAX_INFLIGHT_REQUESTS)?;
+        let _ = addresses_outputs_consumed_tx.connect(DEFAULT_MAX_INFLIGHT_REQUESTS)?;
+        let _ = addresses_ed25519_outputs_created_tx.connect(DEFAULT_MAX_INFLIGHT_REQUESTS)?;
+        let _ = addresses_ed25519_outputs_consumed_tx.connect(DEFAULT_MAX_INFLIGHT_REQUESTS)?;
 
         milestones_latest::spawn(node, milestones_latest_tx);
         milestones_confirmed::spawn(node, milestones_confirmed_tx);
@@ -84,10 +84,10 @@ where
         outputs_consumed::spawn(node, outputs_consumed_tx);
         // TODO: currently it's not possible to publish the `transactions_included_message` on subscription since the rumqttd lib doesn't expose information about subscriptions. Relevant issue: https://github.com/bytebeamio/rumqtt/issues/304
         // transactions_included_message::spawn(...);
-        addresses_ouptuts_created::spawn(node, addresses_ouptuts_created_tx);
-        addresses_ouptuts_consumed::spawn(node, addresses_ouptuts_consumed_tx);
-        addresses_ed25519_ouptuts_created::spawn(node, addresses_ed25519_ouptuts_created_tx);
-        addresses_ed25519_ouptuts_consumed::spawn(node, addresses_ed25519_ouptuts_consumed_tx);
+        addresses_ouptuts_created::spawn(node, addresses_outputs_created_tx);
+        addresses_ouptuts_consumed::spawn(node, addresses_outputs_consumed_tx);
+        addresses_ed25519_ouptuts_created::spawn(node, addresses_ed25519_outputs_created_tx);
+        addresses_ed25519_ouptuts_consumed::spawn(node, addresses_ed25519_outputs_consumed_tx);
 
         info!("MQTT worker started.");
 
