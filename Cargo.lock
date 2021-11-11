@@ -208,6 +208,7 @@ dependencies = [
  "bee-ternary",
  "byteorder",
  "criterion",
+ "iota-crypto 0.7.0 (git+https://github.com/iotaledger/crypto.rs.git)",
  "lazy_static",
  "thiserror",
  "tiny-keccak",
