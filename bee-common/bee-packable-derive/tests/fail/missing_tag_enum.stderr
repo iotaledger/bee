@@ -1,4 +1,4 @@
-error: All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute.
+error: All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute or an explicitly set discriminant.
   --> tests/fail/missing_tag_enum.rs:14:5
    |
 14 |     None,
