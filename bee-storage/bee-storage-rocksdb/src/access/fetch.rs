@@ -15,7 +15,7 @@ impl Fetch<u8, System> for Storage {
             .inner
             .get_cf(self.cf_handle(CF_SYSTEM)?, [*key])?
             // Unpacking from storage slice can't fail.
-            .map(|v| System::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| System::unpack_unverified(&mut v.as_slice()).unwrap()))
     }
 }
 
@@ -25,7 +25,7 @@ impl Fetch<MessageId, Message> for Storage {
             .inner
             .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id)?
             // Unpacking from storage slice can't fail.
-            .map(|v| Message::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| Message::unpack_unverified(&mut v.as_slice()).unwrap()))
     }
 }
 
@@ -35,6 +35,6 @@ impl Fetch<MessageId, MessageMetadata> for Storage {
             .inner
             .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_METADATA)?, message_id)?
             // Unpacking from storage slice can't fail.
-            .map(|v| MessageMetadata::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| MessageMetadata::unpack_unverified(&mut v.as_slice()).unwrap()))
     }
 }

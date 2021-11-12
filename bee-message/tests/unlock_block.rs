@@ -47,7 +47,7 @@ fn packable_round_trip() {
         rand_bytes_array(),
         rand_bytes_array(),
     ))));
-    let unlock_2 = UnlockBlock::unpack_from_slice(unlock_1.pack_to_vec()).unwrap();
+    let unlock_2 = UnlockBlock::unpack_verified(unlock_1.pack_to_vec()).unwrap();
 
     assert_eq!(unlock_1, unlock_2);
 }
@@ -58,7 +58,7 @@ fn unpack_invalid_tag() {
     bytes.extend(rand_bytes(32));
     bytes.extend(rand_bytes(64));
 
-    let unlock_block = UnlockBlock::unpack_from_slice(bytes);
+    let unlock_block = UnlockBlock::unpack_verified(bytes);
 
     assert!(matches!(
         unlock_block,

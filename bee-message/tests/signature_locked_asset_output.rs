@@ -87,7 +87,7 @@ fn packable_round_trip() {
     )
     .unwrap();
 
-    let output_b = SignatureLockedAssetOutput::unpack_from_slice(output_a.pack_to_vec()).unwrap();
+    let output_b = SignatureLockedAssetOutput::unpack_verified(output_a.pack_to_vec()).unwrap();
 
     assert_eq!(output_a, output_b);
 }

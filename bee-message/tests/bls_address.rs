@@ -92,7 +92,7 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let address_1 = BlsAddress::from_str(BLS_ADDRESS).unwrap();
-    let address_2 = BlsAddress::unpack_from_slice(address_1.pack_to_vec()).unwrap();
+    let address_2 = BlsAddress::unpack_verified(address_1.pack_to_vec()).unwrap();
 
     assert_eq!(address_1, address_2);
 }

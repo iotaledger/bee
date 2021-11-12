@@ -61,7 +61,7 @@ impl TryInto<Address> for Bech32Address {
     type Error = ValidationError;
 
     fn try_into(self) -> Result<Address, Self::Error> {
-        Address::unpack_from_slice(self.data()).map_err(|_| ValidationError::InvalidAddress)
+        Address::unpack_verified(self.data()).map_err(|_| ValidationError::InvalidAddress)
     }
 }
 

@@ -51,7 +51,7 @@ macro_rules! impl_packable_test_for_bounded_integer {
         #[test]
         fn $packable_invalid_name() {
             let bytes = vec![0u8; core::mem::size_of::<$wrapped>()];
-            let unpacked = <$wrapper>::unpack_from_slice(&bytes);
+            let unpacked = <$wrapper>::unpack_verified(&bytes);
 
             assert!(
                 matches!(unpacked, Err(UnpackError::Packable($error(0)))),

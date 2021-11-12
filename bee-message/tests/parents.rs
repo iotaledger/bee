@@ -100,7 +100,7 @@ fn packed_len() {
 #[test]
 fn pack_unpack_valid() {
     let parents_1 = rand_parents();
-    let parents_2 = Parents::unpack_from_slice(parents_1.pack_to_vec()).unwrap();
+    let parents_2 = Parents::unpack_verified(parents_1.pack_to_vec()).unwrap();
 
     assert_eq!(parents_1, parents_2);
 }
@@ -110,7 +110,7 @@ fn unpack_invalid_less_than_min() {
     let bytes = vec![0, 1];
 
     assert!(matches!(
-        Parents::unpack_from_slice(bytes),
+        Parents::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidParentsCount(0)
         ))),
@@ -131,7 +131,7 @@ fn unpack_invalid_more_than_max() {
     ];
 
     assert!(matches!(
-        Parents::unpack_from_slice(bytes),
+        Parents::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidParentsCount(9)
         ))),
@@ -146,7 +146,7 @@ fn unpack_invalid_no_strong_parents() {
     ];
 
     assert!(matches!(
-        Parents::unpack_from_slice(bytes),
+        Parents::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidStrongParentsCount(0)
         ))),
@@ -165,7 +165,7 @@ fn unpack_invalid_not_sorted() {
     packed.append(&mut packed_messages);
 
     assert!(matches!(
-        Parents::unpack_from_slice(packed),
+        Parents::unpack_verified(packed),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::ParentsNotUniqueSorted
         ))),
@@ -185,7 +185,7 @@ fn unpack_invalid_not_unique() {
     packed.append(&mut packed_messages);
 
     assert!(matches!(
-        Parents::unpack_from_slice(packed),
+        Parents::unpack_verified(packed),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::ParentsNotUniqueSorted
         ))),

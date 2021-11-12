@@ -8,7 +8,7 @@ use bee_packable::{
 
 use core::fmt::Debug;
 
-fn generic_test_pack_to_slice_unpack_from_slice<P>(packable: &P)
+fn generic_test_pack_to_slice_unpack_verified<P>(packable: &P)
 where
     P: Packable + Eq + Debug,
     P::UnpackError: Debug,
@@ -18,7 +18,7 @@ where
     let mut packer = SlicePacker::new(&mut vec);
     packable.pack(&mut packer).unwrap();
 
-    let unpacked = P::unpack_from_slice(&vec).unwrap();
+    let unpacked = P::unpack_verified(&vec).unwrap();
 
     assert_eq!(packable, &unpacked);
 
@@ -28,13 +28,13 @@ where
     }
 }
 
-fn generic_test_pack_to_vec_unpack_from_slice<P>(packable: &P) -> (Vec<u8>, P)
+fn generic_test_pack_to_vec_unpack_verified<P>(packable: &P) -> (Vec<u8>, P)
 where
     P: Packable + Eq + Debug,
     P::UnpackError: Debug,
 {
     let vec = packable.pack_to_vec();
-    let unpacked = P::unpack_from_slice(&vec).unwrap();
+    let unpacked = P::unpack_verified(&vec).unwrap();
 
     assert_eq!(packable, &unpacked);
     assert_eq!(packable.packed_len(), vec.len());
@@ -51,16 +51,16 @@ where
 
     let mut vec_packer = VecPacker::new();
     packable.pack(&mut vec_packer).unwrap();
-    let unpacked = P::unpack_checked(&mut vec_packer.as_slice()).unwrap();
+    let unpacked = P::unpack_verified(&mut vec_packer.as_slice()).unwrap();
     assert_eq!(packable, &unpacked);
 
     // Tests for Read and Write
 
     let mut vec = Vec::new();
     packable.pack(&mut vec).unwrap();
-    let unpacked = P::unpack_checked(&mut vec_packer.as_slice()).unwrap();
+    let unpacked = P::unpack_verified(&mut vec_packer.as_slice()).unwrap();
     assert_eq!(packable, &unpacked);
 
-    generic_test_pack_to_slice_unpack_from_slice(packable);
-    generic_test_pack_to_vec_unpack_from_slice(packable)
+    generic_test_pack_to_slice_unpack_verified(packable);
+    generic_test_pack_to_vec_unpack_verified(packable)
 }

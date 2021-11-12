@@ -36,7 +36,7 @@ macro_rules! impl_packable_test_for_vec_prefix {
             let mut bytes = vec![0u8; LEN + 1];
             bytes[0] = LEN as u8;
 
-            let prefixed = VecPrefix::<u8, $bounded<$min, $max>>::unpack_from_slice(bytes);
+            let prefixed = VecPrefix::<u8, $bounded<$min, $max>>::unpack_verified(bytes);
 
             const LEN_AS_TY: $ty = LEN as $ty;
 

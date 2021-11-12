@@ -43,7 +43,7 @@ fn unpack_valid() {
     bytes.extend(hex::decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap());
     bytes.extend(hex::decode(BEACON_SIGNATURE).unwrap());
 
-    assert!(BeaconPayload::unpack_from_slice(bytes).is_ok());
+    assert!(BeaconPayload::unpack_verified(bytes).is_ok());
 }
 
 #[test]
@@ -88,7 +88,7 @@ fn packable_round_trip() {
         .finish()
         .unwrap();
 
-    let beacon_b = BeaconPayload::unpack_from_slice(beacon_a.pack_to_vec()).unwrap();
+    let beacon_b = BeaconPayload::unpack_verified(beacon_a.pack_to_vec()).unwrap();
 
     assert_eq!(beacon_a, beacon_b);
 }

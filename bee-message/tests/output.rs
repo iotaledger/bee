@@ -54,7 +54,7 @@ fn packable_round_trip() {
         SignatureLockedSingleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 1_000)
             .unwrap(),
     );
-    let output_2 = Output::unpack_from_slice(output_1.pack_to_vec()).unwrap();
+    let output_2 = Output::unpack_verified(output_1.pack_to_vec()).unwrap();
 
     assert_eq!(output_1, output_2);
 }
@@ -65,7 +65,7 @@ fn unpack_invalid_tag() {
     bytes.extend(rand_bytes(32));
     bytes.extend(vec![128, 0, 0, 0, 0, 0, 0, 0]);
 
-    let output = Output::unpack_from_slice(bytes);
+    let output = Output::unpack_verified(bytes);
 
     assert!(matches!(
         output,

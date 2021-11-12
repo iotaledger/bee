@@ -160,7 +160,7 @@ fn unpack_invalid_unlock_block_kind() {
     bytes.extend(rand_bytes(32));
     bytes.extend(rand_bytes(64));
 
-    let unlock_blocks = UnlockBlocks::unpack_from_slice(bytes);
+    let unlock_blocks = UnlockBlocks::unpack_verified(bytes);
 
     assert!(matches!(
         unlock_blocks,
@@ -184,7 +184,7 @@ fn packable_round_trip() {
     ])
     .unwrap();
 
-    let blocks_b = UnlockBlocks::unpack_from_slice(blocks_a.pack_to_vec()).unwrap();
+    let blocks_b = UnlockBlocks::unpack_verified(blocks_a.pack_to_vec()).unwrap();
 
     assert_eq!(blocks_a, blocks_b);
 }

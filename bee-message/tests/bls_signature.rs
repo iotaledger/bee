@@ -54,7 +54,7 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let signature_1 = BlsSignature::new(hex_decode(BLS_SIGNATURE).unwrap());
-    let signature_2 = BlsSignature::unpack_from_slice(signature_1.pack_to_vec()).unwrap();
+    let signature_2 = BlsSignature::unpack_verified(signature_1.pack_to_vec()).unwrap();
 
     assert_eq!(signature_1, signature_2);
 }

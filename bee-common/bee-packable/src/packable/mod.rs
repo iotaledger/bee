@@ -55,18 +55,13 @@ pub trait PackableExt: Packable {
     /// Convenience method that packs this value into a [`Vec<u8>`].
     fn pack_to_vec(&self) -> Vec<u8>;
 
-    /// Unpacks this value from the given [`Unpacker`] doing syntactical checks.
-    fn unpack_checked<U: Unpacker>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, U::Error>>;
+    /// Unpacks this value from a sequence of bytes doing syntactical checks.
+    fn unpack_verified<T: AsRef<[u8]>>(
+        bytes: T,
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>>;
 
-    /// Unpacks this value from the given [`Unpacker`] without doing syntactical checks.
-    fn unpack_unchecked<U: Unpacker>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, U::Error>>;
-
-    /// Unpacks this value from a type that implements [`AsRef<[u8]>`].
-    fn unpack_from_slice<T: AsRef<[u8]>>(
+    /// Unpacks this value from a sequence of bytes without doing syntactical checks.
+    fn unpack_unverified<T: AsRef<[u8]>>(
         bytes: T,
     ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>>;
 }
@@ -81,22 +76,15 @@ impl<P: Packable> PackableExt for P {
         packer.into_vec()
     }
 
-    fn unpack_checked<U: Unpacker>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, U::Error>> {
-        Self::unpack::<U, true>(unpacker)
-    }
-
-    fn unpack_unchecked<U: Unpacker>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, U::Error>> {
-        Self::unpack::<U, false>(unpacker)
-    }
-
-    fn unpack_from_slice<T: AsRef<[u8]>>(
+    fn unpack_verified<T: AsRef<[u8]>>(
         bytes: T,
     ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
-        let mut unpacker = SliceUnpacker::new(bytes.as_ref());
-        Self::unpack_checked(&mut unpacker)
+        Self::unpack::<_, true>(&mut SliceUnpacker::new(bytes.as_ref()))
+    }
+
+    fn unpack_unverified<T: AsRef<[u8]>>(
+        bytes: T,
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
+        Self::unpack::<_, false>(&mut SliceUnpacker::new(bytes.as_ref()))
     }
 }

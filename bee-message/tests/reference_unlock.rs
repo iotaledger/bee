@@ -53,7 +53,7 @@ fn try_from_invalid() {
 #[test]
 fn unpack_invalid_index() {
     assert!(matches!(
-        ReferenceUnlock::unpack_from_slice(vec![0x2a, 0x2a]),
+        ReferenceUnlock::unpack_verified(vec![0x2a, 0x2a]),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidReferenceIndex(10794)
         ))),
@@ -71,7 +71,7 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let reference_1 = ReferenceUnlock::try_from(42).unwrap();
-    let reference_2 = ReferenceUnlock::unpack_from_slice(reference_1.pack_to_vec()).unwrap();
+    let reference_2 = ReferenceUnlock::unpack_verified(reference_1.pack_to_vec()).unwrap();
 
     assert_eq!(reference_1, reference_2);
 }

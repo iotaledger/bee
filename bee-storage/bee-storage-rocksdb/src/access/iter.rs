@@ -63,9 +63,9 @@ impl<'a> StorageIterator<'a, u8, System> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (u8, System) {
         (
             // Unpacking from storage slice can't fail.
-            u8::unpack_unchecked(&mut key).unwrap(),
+            u8::unpack_unverified(&mut key).unwrap(),
             // Unpacking from storage slice can't fail.
-            System::unpack_unchecked(&mut value).unwrap(),
+            System::unpack_unverified(&mut value).unwrap(),
         )
     }
 }
@@ -74,9 +74,9 @@ impl<'a> StorageIterator<'a, MessageId, Message> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MessageId, Message) {
         (
             // Unpacking from storage slice can't fail.
-            MessageId::unpack_unchecked(&mut key).unwrap(),
+            MessageId::unpack_unverified(&mut key).unwrap(),
             // Unpacking from storage slice can't fail.
-            Message::unpack_unchecked(&mut value).unwrap(),
+            Message::unpack_unverified(&mut value).unwrap(),
         )
     }
 }
@@ -85,9 +85,9 @@ impl<'a> StorageIterator<'a, MessageId, MessageMetadata> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MessageId, MessageMetadata) {
         (
             // Unpacking from storage slice can't fail.
-            MessageId::unpack_unchecked(&mut key).unwrap(),
+            MessageId::unpack_unverified(&mut key).unwrap(),
             // Unpacking from storage slice can't fail.
-            MessageMetadata::unpack_unchecked(&mut value).unwrap(),
+            MessageMetadata::unpack_unverified(&mut value).unwrap(),
         )
     }
 }

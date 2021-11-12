@@ -83,7 +83,7 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let transaction_id_1 = TransactionId::from_str(TRANSACTION_ID).unwrap();
-    let transaction_id_2 = TransactionId::unpack_from_slice(transaction_id_1.pack_to_vec()).unwrap();
+    let transaction_id_2 = TransactionId::unpack_verified(transaction_id_1.pack_to_vec()).unwrap();
 
     assert_eq!(transaction_id_1, transaction_id_2);
 }

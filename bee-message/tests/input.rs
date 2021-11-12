@@ -34,7 +34,7 @@ fn packable_round_trip() {
     let input_1 = Input::from(UtxoInput::from(
         OutputId::new(TransactionId::new([42; TransactionId::LENGTH]), 0).unwrap(),
     ));
-    let input_2 = Input::unpack_from_slice(input_1.pack_to_vec()).unwrap();
+    let input_2 = Input::unpack_verified(input_1.pack_to_vec()).unwrap();
 
     assert_eq!(input_1, input_2);
 }
@@ -46,7 +46,7 @@ fn unpack_invalid_tag() {
     bytes.extend(vec![0, 0]);
 
     assert!(matches!(
-        Input::unpack_from_slice(bytes),
+        Input::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Input(
             InputUnpackError::InvalidKind(1)
         ))),

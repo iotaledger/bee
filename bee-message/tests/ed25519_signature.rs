@@ -47,7 +47,7 @@ fn packable_round_trip() {
         hex_decode(ED25519_PUBLIC_KEY).unwrap(),
         hex_decode(ED25519_SIGNATURE).unwrap(),
     );
-    let signature_2 = Ed25519Signature::unpack_from_slice(signature_1.pack_to_vec()).unwrap();
+    let signature_2 = Ed25519Signature::unpack_verified(signature_1.pack_to_vec()).unwrap();
 
     assert_eq!(signature_1, signature_2);
 }

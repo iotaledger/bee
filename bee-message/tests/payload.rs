@@ -30,7 +30,7 @@ fn application_message_payload_packable_round_trip() {
     let payload_1 = Payload::from(ApplicationMessagePayload::new(1));
 
     let bytes = payload_1.pack_to_vec();
-    let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
+    let payload_2 = Payload::unpack_verified(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
     assert_eq!(payload_1.kind(), ApplicationMessagePayload::KIND);
@@ -51,7 +51,7 @@ fn collective_beacon_payload_packable_round_trip() {
     );
 
     let bytes = payload_1.pack_to_vec();
-    let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
+    let payload_2 = Payload::unpack_verified(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
     assert_eq!(payload_1.kind(), CollectiveBeaconPayload::KIND);
@@ -63,7 +63,7 @@ fn data_payload_packable_round_trip() {
     let payload_1 = Payload::from(DataPayload::new(vec![0; 255]).unwrap());
 
     let bytes = payload_1.pack_to_vec();
-    let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
+    let payload_2 = Payload::unpack_verified(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
     assert_eq!(payload_1.kind(), DataPayload::KIND);
@@ -92,7 +92,7 @@ fn dkg_payload_packable_round_trip() {
     );
 
     let bytes = payload_1.pack_to_vec();
-    let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
+    let payload_2 = Payload::unpack_verified(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
     assert_eq!(payload_1.kind(), DkgPayload::KIND);
@@ -118,7 +118,7 @@ fn fpc_payload_packable_round_trip() {
     );
 
     let bytes = payload_1.pack_to_vec();
-    let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
+    let payload_2 = Payload::unpack_verified(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
     assert_eq!(payload_1.kind(), FpcPayload::KIND);
@@ -130,7 +130,7 @@ fn indexation_payload_packable_round_trip() {
     let payload_1 = Payload::from(IndexationPayload::new(rand_bytes(32), rand_bytes(64)).unwrap());
 
     let bytes = payload_1.pack_to_vec();
-    let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
+    let payload_2 = Payload::unpack_verified(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
     assert_eq!(payload_1.kind(), IndexationPayload::KIND);
@@ -150,7 +150,7 @@ fn regular_beacon_payload_packable_round_trip() {
     );
 
     let bytes = payload_1.pack_to_vec();
-    let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
+    let payload_2 = Payload::unpack_verified(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
     assert_eq!(payload_1.kind(), BeaconPayload::KIND);
@@ -170,7 +170,7 @@ fn salt_declaration_payload_packable_round_trip() {
     );
 
     let bytes = payload_1.pack_to_vec();
-    let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
+    let payload_2 = Payload::unpack_verified(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
     assert_eq!(payload_1.kind(), SaltDeclarationPayload::KIND);
@@ -210,7 +210,7 @@ fn transaction_payload_packable_round_trip() {
     );
 
     let bytes = payload_1.pack_to_vec();
-    let payload_2 = Payload::unpack_from_slice(bytes.clone()).unwrap();
+    let payload_2 = Payload::unpack_verified(bytes.clone()).unwrap();
 
     assert_eq!(payload_1, payload_2);
     assert_eq!(payload_1.kind(), TransactionPayload::KIND);
@@ -226,7 +226,7 @@ fn unpack_invalid_version() {
     bytes.extend(rand_bytes_array::<64>());
 
     assert!(matches!(
-        Payload::unpack_from_slice(bytes),
+        Payload::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidPayloadVersion {
                 version: 1,
@@ -245,7 +245,7 @@ fn unpack_invalid_kind() {
     bytes.extend(rand_bytes_array::<64>());
 
     assert!(matches!(
-        Payload::unpack_from_slice(bytes),
+        Payload::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Payload(
             PayloadUnpackError::InvalidKind(18)
         ))),

@@ -102,7 +102,7 @@ fn unpack_valid() {
     bytes.extend(rand_bytes_array::<32>());
     bytes.extend(vec![2, 2]);
 
-    assert!(FpcPayload::unpack_from_slice(bytes).is_ok());
+    assert!(FpcPayload::unpack_verified(bytes).is_ok());
 }
 
 #[test]
@@ -113,7 +113,7 @@ fn unpack_invalid_opinion() {
     bytes.extend(vec![0, 0]);
 
     assert!(matches!(
-        FpcPayload::unpack_from_slice(bytes),
+        FpcPayload::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Opinion(
             OpinionUnpackError::InvalidKind(0)
         ))),
@@ -135,7 +135,7 @@ fn packable_round_trip() {
         ])
         .finish()
         .unwrap();
-    let fpc_b = FpcPayload::unpack_from_slice(fpc_a.pack_to_vec()).unwrap();
+    let fpc_b = FpcPayload::unpack_verified(fpc_a.pack_to_vec()).unwrap();
 
     assert_eq!(fpc_a, fpc_b);
 }
