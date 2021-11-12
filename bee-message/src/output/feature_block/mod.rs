@@ -23,7 +23,10 @@ pub use timelock_unix::TimelockUnixFeatureBlock;
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::{
+    ord::is_unique_sorted,
+    packable::{Packable, Read, Write},
+};
 
 use core::{convert::TryFrom, ops::Deref};
 
@@ -170,6 +173,10 @@ impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
     fn try_from(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Self::Error> {
         if feature_blocks.len() as u16 > FEATURE_BLOCK_COUNT_MAX {
             return Err(Error::InvalidFeatureBlockCount(feature_blocks.len() as u16));
+        }
+
+        if !is_unique_sorted(feature_blocks.iter().map(|b| b.kind())) {
+            return Err(Error::FeatureBlocksNotUniqueSorted);
         }
 
         Ok(Self(feature_blocks.into_boxed_slice()))

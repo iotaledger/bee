@@ -14,6 +14,7 @@ pub enum Error {
     CryptoError(CryptoError),
     DuplicateSignatureUnlockBlock(u16),
     DuplicateUtxo(UtxoInput),
+    FeatureBlocksNotUniqueSorted,
     InputUnlockBlockCountMismatch(usize, usize),
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
@@ -72,10 +73,12 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::CryptoError(e) => write!(f, "cryptographic error: {}.", e),
-            Error::DuplicateUtxo(utxo) => write!(f, "duplicate UTXO {:?} in inputs.", utxo),
+
             Error::DuplicateSignatureUnlockBlock(index) => {
                 write!(f, "duplicate signature unlock block at index: {0}", index)
             }
+            Error::DuplicateUtxo(utxo) => write!(f, "duplicate UTXO {:?} in inputs.", utxo),
+            Error::FeatureBlocksNotUniqueSorted => write!(f, "feature blocks are not unique and/or sorted."),
             Error::InputUnlockBlockCountMismatch(input, block) => {
                 write!(
                     f,
