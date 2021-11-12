@@ -44,11 +44,11 @@ pub trait Packable: Sized {
     /// [`UnknownTagError`] when implementing this trait for an enum.
     type UnpackError: Debug;
 
-    /// Packs this value into the given [`Packer`].
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
-
     /// The size of the value in bytes after being packed.
     fn packed_len(&self) -> usize;
+
+    /// Packs this value into the given [`Packer`].
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
 
     /// Convenience method that packs this value into a [`Vec<u8>`].
     fn pack_to_vec(&self) -> Vec<u8> {

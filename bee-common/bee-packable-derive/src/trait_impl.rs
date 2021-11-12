@@ -14,8 +14,8 @@ pub(crate) struct TraitImpl {
     ident: Ident,
     generics: Generics,
     unpack_error: TokenStream,
-    pack: TokenStream,
     packed_len: TokenStream,
+    pack: TokenStream,
     unpack: TokenStream,
 }
 
@@ -29,8 +29,8 @@ impl TraitImpl {
 
                 let Fragments {
                     pattern,
-                    pack,
                     mut packed_len,
+                    pack,
                     unpack,
                 }: Fragments = Fragments::new(info.inner);
 
@@ -42,13 +42,13 @@ impl TraitImpl {
                     ident: input.ident,
                     generics: input.generics,
                     unpack_error,
-                    pack: quote! {
-                        let #pattern = self;
-                        #pack
-                    },
                     packed_len: quote! {
                         let #pattern = self;
                         #packed_len
+                    },
+                    pack: quote! {
+                        let #pattern = self;
+                        #pack
                     },
                     unpack,
                 })
@@ -64,16 +64,16 @@ impl TraitImpl {
                 let unpack_error = info.unpack_error.unpack_error.into_token_stream();
 
                 let len = info.variants_info.len();
-                let mut pack_arms = Vec::with_capacity(len);
                 let mut packed_len_arms = Vec::with_capacity(len);
+                let mut pack_arms = Vec::with_capacity(len);
                 let mut unpack_arms = Vec::with_capacity(len);
                 let mut tag_decls = Vec::with_capacity(len);
 
                 for (index, VariantInfo { tag, inner }) in info.variants_info.into_iter().enumerate() {
                     let Fragments {
                         pattern,
-                        pack,
                         mut packed_len,
+                        pack,
                         unpack,
                     } = Fragments::new(inner);
 
@@ -88,13 +88,13 @@ impl TraitImpl {
                         quote!(<#tag_type>::packed_len(&#tag) + #packed_len)
                     };
 
+                    packed_len_arms.push(quote!(#pattern => {
+                        #packed_len
+                    }));
+
                     pack_arms.push(quote!(#pattern => {
                         <#tag_type>::pack(&#tag, packer)?;
                         #pack
-                    }));
-
-                    packed_len_arms.push(quote!(#pattern => {
-                        #packed_len
                     }));
 
                     unpack_arms.push(quote!(#tag_ident => {
@@ -107,11 +107,11 @@ impl TraitImpl {
                     ident: input.ident,
                     generics: input.generics,
                     unpack_error,
-                    pack: quote!(match self {
-                        #(#pack_arms)*
-                    }),
                     packed_len: quote!(match self {
                         #(#packed_len_arms)*
+                    }),
+                    pack: quote!(match self {
+                        #(#pack_arms)*
                     }),
                     unpack: quote! {
                         #(#tag_decls)*
@@ -138,8 +138,8 @@ impl ToTokens for TraitImpl {
             ident: type_name,
             generics,
             unpack_error,
-            pack,
             packed_len,
+            pack,
             unpack,
         } = &self;
 
@@ -149,6 +149,10 @@ impl ToTokens for TraitImpl {
             impl #impl_generics Packable for #type_name #ty_generics #where_clause {
                 type UnpackError = #unpack_error;
 
+                fn packed_len(&self) -> usize {
+                    #packed_len
+                }
+
                 fn pack<P: bee_packable::packer::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
                     use bee_packable::UnpackErrorExt;
                     #pack
@@ -157,10 +161,6 @@ impl ToTokens for TraitImpl {
                 fn unpack<U: bee_packable::unpacker::Unpacker>(unpacker: &mut U) -> Result<Self, bee_packable::error::UnpackError<Self::UnpackError, U::Error>> {
                     use bee_packable::UnpackErrorExt;
                     #unpack
-                }
-
-                fn packed_len(&self) -> usize {
-                    #packed_len
                 }
             }
         };
