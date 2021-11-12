@@ -8,7 +8,7 @@ use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf, Trits, T1B1};
 use bee_crypto::ternary::sponge::{Sponge, UnrolledCurlP81};
 use crypto::hashes::{
     blake2b::Blake2b256,
-    ternary::{curl_p::CurlP, HASH_LENGTH},
+    ternary::HASH_LENGTH,
     Digest,
 };
 
