@@ -10,6 +10,10 @@ use alloc::vec::Vec;
 impl<T: Packable> Packable for Vec<T> {
     type UnpackError = T::UnpackError;
 
+    fn packed_len(&self) -> usize {
+        0u64.packed_len() + self.iter().map(T::packed_len).sum::<usize>()
+    }
+
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         // The length of any dynamically-sized sequence must be prefixed.
         (self.len() as u64).pack(packer)?;
@@ -19,10 +23,6 @@ impl<T: Packable> Packable for Vec<T> {
         }
 
         Ok(())
-    }
-
-    fn packed_len(&self) -> usize {
-        0u64.packed_len() + self.iter().map(T::packed_len).sum::<usize>()
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {

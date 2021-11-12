@@ -8,16 +8,16 @@ use core::mem::MaybeUninit;
 impl<T: Packable, const N: usize> Packable for [T; N] {
     type UnpackError = T::UnpackError;
 
+    fn packed_len(&self) -> usize {
+        self.iter().map(T::packed_len).sum::<usize>()
+    }
+
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         for item in self.iter() {
             item.pack(packer)?;
         }
 
         Ok(())
-    }
-
-    fn packed_len(&self) -> usize {
-        self.iter().map(T::packed_len).sum::<usize>()
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {

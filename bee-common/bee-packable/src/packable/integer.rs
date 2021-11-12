@@ -10,12 +10,12 @@ macro_rules! impl_packable_for_integer {
         impl Packable for $ty {
             type UnpackError = Infallible;
 
-            fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-                packer.pack_bytes(&self.to_le_bytes())
-            }
-
             fn packed_len(&self) -> usize {
                 core::mem::size_of::<Self>()
+            }
+
+            fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+                packer.pack_bytes(&self.to_le_bytes())
             }
 
             fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
@@ -38,12 +38,12 @@ impl_packable_for_integer!(u128);
 impl Packable for usize {
     type UnpackError = Infallible;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        (*self as u64).pack(packer)
-    }
-
     fn packed_len(&self) -> usize {
         core::mem::size_of::<u64>()
+    }
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        (*self as u64).pack(packer)
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
@@ -62,12 +62,12 @@ impl_packable_for_integer!(i128);
 impl Packable for isize {
     type UnpackError = Infallible;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        (*self as i64).pack(packer)
-    }
-
     fn packed_len(&self) -> usize {
         core::mem::size_of::<i64>()
+    }
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        (*self as i64).pack(packer)
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {

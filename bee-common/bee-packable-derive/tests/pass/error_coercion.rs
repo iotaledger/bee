@@ -4,11 +4,10 @@
 #![allow(unused_imports)]
 
 use bee_packable::{
-    UnpackErrorExt,
     error::{UnknownTagError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
-    Packable,
+    Packable, UnpackErrorExt,
 };
 
 use core::convert::Infallible;
@@ -21,12 +20,12 @@ pub struct PickyError(u8);
 impl Packable for Picky {
     type UnpackError = PickyError;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.0.pack(packer)
-    }
-
     fn packed_len(&self) -> usize {
         self.0.packed_len()
+    }
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.0.pack(packer)
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {

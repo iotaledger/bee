@@ -18,9 +18,9 @@ The proposed trait was the following
 pub trait Packable {
     type Error: Debug;
 
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error>;
-
     fn packed_len(&self) -> usize;
+
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error>;
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error>
     where
@@ -96,9 +96,9 @@ pub trait Packable: Sized {
     type PackError;
     type UnpackError;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::Error, P::Error>>;
-
     fn packed_len(&self) -> usize;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::Error, P::Error>>;
 
     fn pack_to_vec(&self) -> Result<Vec<u8>, Self::PackError> { ... }
 
@@ -111,12 +111,12 @@ pub trait Packable: Sized {
 - The `PackError` and `UnpackError` associated types represent semantic errors
   while packing and unpacking respectively.
 
-- The `pack` method serializes the current value using a `Packer` to write the
-  bytes.
-
 - The `packed_len` method returns the length in bytes of the serialized value.
   This has to match the number of bytes written using `pack` to avoid
   inconsistencies.
+
+- The `pack` method serializes the current value using a `Packer` to write the
+  bytes.
 
 - The `pack_to_vec` method provides convenience functionality to easily serialize the current value into a `Vec<u8>`.
 
@@ -190,6 +190,13 @@ impl Packable for Maybe {
     type PackError = Infallible;
     type UnpackError = UnknownTagError<u8>;
 
+    fn packed_len(&self) -> usize {
+        match self {
+            Self::Nothing => 0u8.packed_len(),
+            Self::Just(value) => 1u8.packed_len() + value.packed_len(),
+        }
+    }
+
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         match self {
             Self::Nothing => 0u8.pack(packer),
@@ -197,13 +204,6 @@ impl Packable for Maybe {
                 1u8.pack(packer)?;
                 value.pack(packer)
             },
-        }
-    }
-
-    fn packed_len(&self) -> usize {
-        match self {
-            Self::Nothing => 0u8.packed_len(),
-            Self::Just(value) => 1u8.packed_len() + value.packed_len(),
         }
     }
 
