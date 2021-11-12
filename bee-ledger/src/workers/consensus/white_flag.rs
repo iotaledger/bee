@@ -28,6 +28,26 @@ use primitive_types::U256;
 
 use std::collections::{HashMap, HashSet};
 
+struct ValidationContext {
+    consumed_amount: u64,
+    created_amount: u64,
+    consumed_outputs: HashMap<OutputId, CreatedOutput>,
+    balance_diffs: BalanceDiffs,
+    native_tokens: HashMap<TokenId, U256>,
+}
+
+impl ValidationContext {
+    fn new(inputs_len: usize) -> Self {
+        Self {
+            consumed_amount: 0,
+            created_amount: 0,
+            consumed_outputs: HashMap::with_capacity(inputs_len),
+            balance_diffs: BalanceDiffs::new(),
+            native_tokens: HashMap::<TokenId, U256>::new(),
+        }
+    }
+}
+
 fn unlock_input(
     address: &Address,
     unlock_blocks: &UnlockBlocks,
@@ -57,11 +77,7 @@ fn apply_regular_essence<B: StorageBackend>(
     unlock_blocks: &UnlockBlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
-    let mut consumed_outputs = HashMap::with_capacity(essence.inputs().len());
-    let mut balance_diffs = BalanceDiffs::new();
-    let mut native_tokens = HashMap::<TokenId, U256>::new();
-    let mut consumed_amount: u64 = 0;
-    let mut created_amount: u64 = 0;
+    let mut context = ValidationContext::new(essence.inputs().len());
 
     for (index, input) in essence.inputs().iter().enumerate() {
         let (output_id, consumed_output) = match input {
@@ -92,7 +108,7 @@ fn apply_regular_essence<B: StorageBackend>(
 
         let (amount, consumed_native_tokens) = match consumed_output.inner() {
             Output::Simple(output) => {
-                balance_diffs.amount_sub(*output.address(), output.amount())?;
+                context.balance_diffs.amount_sub(*output.address(), output.amount())?;
 
                 if let Err(conflict) = unlock_input(output.address(), unlock_blocks, index, &essence_hash) {
                     return Ok(conflict);
@@ -107,25 +123,26 @@ fn apply_regular_essence<B: StorageBackend>(
             Output::Nft(output) => (output.amount(), Some(output.native_tokens())),
         };
 
-        consumed_amount = consumed_amount
+        context.consumed_amount = context
+            .consumed_amount
             .checked_add(amount)
             .ok_or(Error::ConsumedAmountOverflow)?;
         if let Some(consumed_native_tokens) = consumed_native_tokens {
             for native_token in consumed_native_tokens {
-                let native_token_amount = native_tokens.entry(*native_token.token_id()).or_default();
+                let native_token_amount = context.native_tokens.entry(*native_token.token_id()).or_default();
                 *native_token_amount = native_token_amount
                     .checked_add(*native_token.amount())
                     .ok_or(Error::ConsumedNativeTokensAmountOverflow)?;
             }
         }
 
-        consumed_outputs.insert(*output_id, consumed_output);
+        context.consumed_outputs.insert(*output_id, consumed_output);
     }
 
     for created_output in essence.outputs() {
         let (amount, created_native_tokens) = match created_output {
             Output::Simple(output) => {
-                balance_diffs.amount_add(*output.address(), output.amount())?;
+                context.balance_diffs.amount_add(*output.address(), output.amount())?;
 
                 (output.amount(), None)
             }
@@ -136,10 +153,13 @@ fn apply_regular_essence<B: StorageBackend>(
             Output::Nft(output) => (output.amount(), Some(output.native_tokens())),
         };
 
-        created_amount = created_amount.checked_add(amount).ok_or(Error::CreatedAmountOverflow)?;
+        context.created_amount = context
+            .created_amount
+            .checked_add(amount)
+            .ok_or(Error::CreatedAmountOverflow)?;
         if let Some(created_native_tokens) = created_native_tokens {
             for native_token in created_native_tokens {
-                let native_token_amount = *native_tokens.entry(*native_token.token_id()).or_default();
+                let native_token_amount = *context.native_tokens.entry(*native_token.token_id()).or_default();
                 // TODO actually overflow ?
                 native_token_amount
                     .checked_sub(*native_token.amount())
@@ -148,7 +168,7 @@ fn apply_regular_essence<B: StorageBackend>(
         }
     }
 
-    if created_amount != consumed_amount {
+    if context.created_amount != context.consumed_amount {
         return Ok(ConflictReason::InputOutputSumMismatch);
     }
 
@@ -157,7 +177,7 @@ fn apply_regular_essence<B: StorageBackend>(
     // present in the transaction. The validation of the foundry output(s) determines if the outstanding balances are
     // valid.
 
-    for (output_id, created_output) in consumed_outputs {
+    for (output_id, created_output) in context.consumed_outputs {
         metadata.consumed_outputs.insert(
             output_id,
             (created_output, ConsumedOutput::new(*transaction_id, metadata.index)),
@@ -171,7 +191,7 @@ fn apply_regular_essence<B: StorageBackend>(
         );
     }
 
-    metadata.balance_diffs.merge(balance_diffs)?;
+    metadata.balance_diffs.merge(context.balance_diffs)?;
 
     Ok(ConflictReason::None)
 }
