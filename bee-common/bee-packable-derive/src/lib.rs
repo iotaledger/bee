@@ -5,13 +5,20 @@
 
 #![deny(missing_docs)]
 
-mod attribute;
+mod enum_info;
+mod field_info;
 mod fragments;
+mod parse;
+mod record_info;
+mod struct_info;
+mod tag_type_info;
 mod trait_impl;
+mod unpack_error_info;
+mod variant_info;
 
 use trait_impl::TraitImpl;
 
-use proc_macro::{self, TokenStream};
+use proc_macro::TokenStream;
 use proc_macro_error::{abort, proc_macro_error};
 use quote::ToTokens;
 use syn::parse_macro_input;

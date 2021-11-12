@@ -1,4 +1,4 @@
-error: Enums that derive `Packable` require a `#[packable(tag_type = ...)]` attribute.
+error: Enums that derive `Packable` require a `#[packable(tag_type = ...)]` or `#[repr(...)]` attribute.
   --> tests/fail/missing_tag_type_enum.rs:12:10
    |
 12 | pub enum OptI32 {
