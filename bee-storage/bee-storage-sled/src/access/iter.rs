@@ -6,7 +6,7 @@
 use crate::{trees::*, Storage};
 
 use bee_message::{Message, MessageId, MessageMetadata};
-use bee_packable::packable::Packable;
+use bee_packable::Packable;
 use bee_storage::{access::AsIterator, system::System, StorageBackend};
 
 use std::marker::PhantomData;
