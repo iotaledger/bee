@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_crypto::ternary::sponge::Sponge;
 #[allow(deprecated)]
-use bee_crypto::ternary::sponge::{CurlP27, CurlP81};
-use bee_crypto::ternary::sponge::{Kerl, Sponge};
+use bee_crypto::ternary::sponge::{CurlP27, CurlP81, Kerl};
 use bee_signing::ternary::{
     mss::{Error as MssError, MssPrivateKeyGeneratorBuilder, MssPublicKey, MssSignature},
     seed::Seed,
@@ -15,6 +15,7 @@ use bee_ternary::{T1B1Buf, TryteBuf};
 use std::str::FromStr;
 
 #[test]
+#[allow(deprecated)]
 fn generator_missing_depth() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Low)
@@ -30,6 +31,7 @@ fn generator_missing_depth() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn generator_invalid_depth() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Low)
@@ -46,6 +48,7 @@ fn generator_invalid_depth() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn generator_missing_generator() {
     assert_eq!(
         MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
@@ -87,6 +90,7 @@ fn wots_kerl_sec_1_signature_verify() {
     const DEPTH: u8 = 7;
     const INDEX: usize = 0;
 
+    #[allow(deprecated)]
     wots_generic_signature_verify::<Kerl>(PUBLIC_KEY, MESSAGE, SIGNATURE, DEPTH, INDEX);
 }
 
@@ -98,6 +102,7 @@ fn wots_kerl_sec_3_signature_verify() {
     const DEPTH: u8 = 7;
     const INDEX: usize = 4;
 
+    #[allow(deprecated)]
     wots_generic_signature_verify::<Kerl>(PUBLIC_KEY, MESSAGE, SIGNATURE, DEPTH, INDEX);
 }
 
@@ -154,10 +159,13 @@ where
 
 #[test]
 fn kerl_wots_kerl_roundtrip() {
+    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
+
+    #[allow(deprecated)]
     wots_generic_roundtrip::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>(wots_private_key_generator);
 }
 
@@ -185,6 +193,7 @@ fn kerl_wots_curl81_roundtrip() {
 
 #[test]
 fn curl27_wots_kerl_roundtrip() {
+    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
@@ -217,6 +226,7 @@ fn curl27_wots_curl81_roundtrip() {
 
 #[test]
 fn curl81_wots_kerl_roundtrip() {
+    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
@@ -249,6 +259,7 @@ fn curl81_wots_curl81_roundtrip() {
 
 #[test]
 fn signatures_exhausted() {
+    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
@@ -260,6 +271,7 @@ fn signatures_exhausted() {
     let seed = Seed::from_str(SEED).unwrap();
     let message_trits = TryteBuf::try_from_str(MESSAGE).unwrap().as_trits().encode::<T1B1Buf>();
 
+    #[allow(deprecated)]
     let private_key_generator = MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
         .with_depth(DEPTH)
         .with_generator(wots_private_key_generator)

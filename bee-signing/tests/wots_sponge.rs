@@ -3,6 +3,7 @@
 
 #[allow(deprecated)]
 use bee_crypto::ternary::sponge::{CurlP27, CurlP81};
+#[allow(deprecated)]
 use bee_crypto::ternary::sponge::{Kerl, Sponge};
 use bee_signing::ternary::{
     seed::Seed,
@@ -17,6 +18,7 @@ const SEED: &str = "NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 const MESSAGE: &str = "CHXHLHQLOPYP9NSUXTMWWABIBSBLUFXFRNWOZXJPVJPBCIDI99YBSCFYILCHPXHTSEYSYWIGQFERCRVDD";
 
 #[test]
+#[allow(deprecated)]
 fn generator_missing_security_level() {
     assert_eq!(
         WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default().build().err(),
@@ -31,6 +33,7 @@ fn generator_valid() {
         WotsSecurityLevel::Medium,
         WotsSecurityLevel::High,
     ];
+    #[allow(deprecated)]
     for security in security_levels {
         assert!(
             WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
@@ -68,6 +71,7 @@ fn roundtrip<S: Sponge + Default>() {
 
 #[test]
 fn kerl_roundtrip() {
+    #[allow(deprecated)]
     roundtrip::<Kerl>();
 }
 
@@ -95,6 +99,7 @@ fn example() {
         .unwrap()
         .as_trits()
         .encode::<T1B1Buf>();
+    #[allow(deprecated)]
     let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Medium)
         .build()
@@ -110,6 +115,7 @@ fn invalid_entropy_length() {
         .unwrap()
         .as_trits()
         .encode::<T1B1Buf>();
+    #[allow(deprecated)]
     let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Medium)
         .build()
@@ -128,6 +134,7 @@ fn non_null_last_entropy_trit() {
             .unwrap()
             .as_trits()
             .encode::<T1B1Buf>();
+    #[allow(deprecated)]
     let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Medium)
         .build()

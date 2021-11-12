@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[allow(deprecated)]
 use bee_crypto::ternary::sponge::Kerl;
 use bee_signing::ternary::{
     wots::{Error as WotsError, WotsSecurityLevel, WotsShakePrivateKeyGeneratorBuilder},
@@ -9,6 +10,7 @@ use bee_signing::ternary::{
 use bee_ternary::{T1B1Buf, TryteBuf};
 
 #[test]
+#[allow(deprecated)]
 fn generator_missing_security_level() {
     assert_eq!(
         WotsShakePrivateKeyGeneratorBuilder::<Kerl>::default().build().err(),
@@ -17,6 +19,7 @@ fn generator_missing_security_level() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn generator_valid() {
     let security_levels = vec![
         WotsSecurityLevel::Low,
@@ -536,6 +539,7 @@ fn input_output() {
     for test in tests.iter() {
         let entropy = TryteBuf::try_from_str(test.0).unwrap().as_trits().encode::<T1B1Buf>();
         let key = TryteBuf::try_from_str(test.2).unwrap().as_trits().encode::<T1B1Buf>();
+        #[allow(deprecated)]
         let private_key_generator = WotsShakePrivateKeyGeneratorBuilder::<Kerl>::default()
             .with_security_level(test.1)
             .build()
@@ -558,6 +562,7 @@ fn example() {
         .unwrap()
         .as_trits()
         .encode::<T1B1Buf>();
+    #[allow(deprecated)]
     let private_key_generator = WotsShakePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Medium)
         .build()
@@ -573,6 +578,7 @@ fn invalid_entropy_length() {
         .unwrap()
         .as_trits()
         .encode::<T1B1Buf>();
+    #[allow(deprecated)]
     let private_key_generator = WotsShakePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Medium)
         .build()
@@ -591,6 +597,7 @@ fn non_null_last_entropy_trit() {
             .unwrap()
             .as_trits()
             .encode::<T1B1Buf>();
+    #[allow(deprecated)]
     let private_key_generator = WotsShakePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Medium)
         .build()

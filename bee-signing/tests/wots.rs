@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[allow(deprecated)]
 use bee_crypto::ternary::sponge::Kerl;
 use bee_signing::ternary::{
     wots::{Error as WotsError, WotsPublicKey, WotsSecurityLevel, WotsSignature, WotsSpongePrivateKeyGeneratorBuilder},
@@ -19,6 +20,7 @@ fn invalid_message_length() {
             .unwrap()
             .as_trits()
             .encode::<T1B1Buf>();
+    #[allow(deprecated)]
     let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Medium)
         .build()
@@ -46,6 +48,7 @@ fn invalid_message_length() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn invalid_public_key_length() {
     let entropy = TryteBuf::try_from_str("YSWMNXPYNGFAKHQDY9ABGGQZHEFTXKWKWZXEIUD")
         .unwrap()
@@ -59,6 +62,7 @@ fn invalid_public_key_length() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn invalid_signature_length() {
     let entropy = TryteBuf::try_from_str("YSWMNXPYNGFAKHQDY9ABGGQZHEFTXKWKWZXEIUD")
         .unwrap()
