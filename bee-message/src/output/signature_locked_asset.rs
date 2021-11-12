@@ -4,7 +4,9 @@
 use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessageUnpackError, ValidationError};
 
 use bee_packable::{
-    error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
+    bounded::{BoundedU32, InvalidBoundedU32},
+    prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
+    Packable,
 };
 
 use alloc::vec::Vec;
@@ -17,7 +19,7 @@ pub(crate) const PREFIXED_ASSET_BALANCES_LENGTH_MAX: u32 =
 fn unpack_prefix_to_validation_error(
     err: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_ASSET_BALANCES_LENGTH_MAX>>,
 ) -> ValidationError {
-    ValidationError::InvalidAssetBalanceCount(VecPrefixLengthError::Invalid(err.into_prefix()))
+    ValidationError::InvalidAssetBalanceCount(TryIntoPrefixError::Invalid(err.into_prefix()))
 }
 
 /// Tokenized asset identifier.

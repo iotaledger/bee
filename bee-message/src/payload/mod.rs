@@ -19,7 +19,12 @@ use indexation::IndexationPayload;
 use salt_declaration::SaltDeclarationPayload;
 use transaction::{TransactionPayload, TransactionUnpackError};
 
-use bee_packable::{Packable, Packer, UnpackError, UnpackErrorExt, Unpacker};
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
 
 use alloc::boxed::Box;
 use core::{convert::Infallible, fmt};

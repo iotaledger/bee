@@ -3,7 +3,12 @@
 
 use crate::{address::Address, error::ValidationError, MessageUnpackError, IOTA_SUPPLY};
 
-use bee_packable::{Packable, Packer, UnpackError, UnpackErrorExt, Unpacker};
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
 
 use core::ops::RangeInclusive;
 

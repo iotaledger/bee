@@ -7,7 +7,9 @@ use crate::{
 };
 
 use bee_packable::{
-    error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
+    bounded::{BoundedU32, InvalidBoundedU32},
+    prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
+    Packable,
 };
 
 use alloc::vec::Vec;
@@ -19,7 +21,7 @@ pub(crate) const PREFIXED_DKG_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX;
 fn unpack_prefix_to_validation_error(
     err: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>,
 ) -> ValidationError {
-    ValidationError::InvalidEncryptedDealLength(VecPrefixLengthError::Invalid(err.into_prefix()))
+    ValidationError::InvalidEncryptedDealLength(TryIntoPrefixError::Invalid(err.into_prefix()))
 }
 
 /// Encrypted share structure for a [`DkgPayload`].
@@ -161,7 +163,7 @@ impl EncryptedDealBuilder {
 fn validate_encrypted_deal_length(len: usize) -> Result<(), ValidationError> {
     if len > PREFIXED_DKG_LENGTH_MAX as usize {
         Err(ValidationError::InvalidEncryptedDealLength(
-            VecPrefixLengthError::Truncated(len),
+            TryIntoPrefixError::Truncated(len),
         ))
     } else {
         Ok(())

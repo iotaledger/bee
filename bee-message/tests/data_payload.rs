@@ -6,7 +6,7 @@ use bee_message::{
     payload::{data::DataPayload, MessagePayload},
     MessageUnpackError,
 };
-use bee_packable::{packable::VecPrefixLengthError, InvalidBoundedU32, Packable, UnpackError};
+use bee_packable::{bounded::InvalidBoundedU32, error::UnpackError, prefix::TryIntoPrefixError, Packable};
 use bee_test::rand::bytes::rand_bytes;
 
 #[test]
@@ -35,9 +35,9 @@ fn new_invalid_length() {
 
     assert!(matches!(
         data,
-        Err(ValidationError::InvalidDataPayloadLength(
-            VecPrefixLengthError::Invalid(InvalidBoundedU32(65160))
-        )),
+        Err(ValidationError::InvalidDataPayloadLength(TryIntoPrefixError::Invalid(
+            InvalidBoundedU32(65160)
+        ))),
     ));
 }
 
@@ -65,7 +65,7 @@ fn unpack_invalid_length() {
     assert!(matches!(
         data,
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidDataPayloadLength(VecPrefixLengthError::Invalid(InvalidBoundedU32(65160)))
+            ValidationError::InvalidDataPayloadLength(TryIntoPrefixError::Invalid(InvalidBoundedU32(65160)))
         )))
     ));
 }

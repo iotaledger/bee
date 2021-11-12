@@ -9,7 +9,9 @@ use crate::{
 };
 
 use bee_packable::{
-    error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
+    bounded::{BoundedU32, InvalidBoundedU32},
+    prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
+    Packable,
 };
 
 use alloc::vec::Vec;
@@ -20,7 +22,7 @@ pub(crate) const PREFIXED_DATA_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - core::mem:
 fn unpack_prefix_to_validation_error(
     err: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>,
 ) -> ValidationError {
-    ValidationError::InvalidDataPayloadLength(VecPrefixLengthError::Invalid(err.into_prefix()))
+    ValidationError::InvalidDataPayloadLength(TryIntoPrefixError::Invalid(err.into_prefix()))
 }
 
 /// Generic data payload, containing a collection of bytes.

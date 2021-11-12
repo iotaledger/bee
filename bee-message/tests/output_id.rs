@@ -7,7 +7,7 @@ use bee_message::{
     payload::transaction::TransactionId,
     util::hex_decode,
 };
-use bee_packable::{Packable, UnpackError};
+use bee_packable::{error::UnpackError, Packable};
 
 use core::str::FromStr;
 

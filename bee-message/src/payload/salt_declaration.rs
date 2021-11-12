@@ -10,7 +10,9 @@ use crate::{
 };
 
 use bee_packable::{
-    error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
+    bounded::{BoundedU32, InvalidBoundedU32},
+    prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
+    Packable,
 };
 
 use alloc::vec::Vec;
@@ -22,7 +24,7 @@ pub(crate) const PREFIXED_SALT_BYTES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - 12;
 fn unpack_prefix_to_validation_error(
     err: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_SALT_BYTES_LENGTH_MAX>>,
 ) -> ValidationError {
-    ValidationError::InvalidSaltBytesLength(VecPrefixLengthError::Invalid(err.into_prefix()))
+    ValidationError::InvalidSaltBytesLength(TryIntoPrefixError::Invalid(err.into_prefix()))
 }
 
 /// Represents a [`Salt`] used in a [`SaltDeclarationPayload`].

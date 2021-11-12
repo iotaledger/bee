@@ -14,7 +14,7 @@ pub(crate) use essence::{
 };
 pub use transaction_id::TransactionId;
 
-use bee_packable::{Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use alloc::boxed::Box;
