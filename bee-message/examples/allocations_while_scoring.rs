@@ -1,19 +1,24 @@
-// Adapted from: https://kanejaku.org/posts/2021/01/2021-01-27/
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+//! This script aims at counting the number of allocations that are performed when we score the Proof of Work of a
+//! message by wrapping `GlobalAlloc`. Ideally, this method should not allocate at all, which would lead to a better
+//! performance.
+//!
+//! The code was adapted from: https://kanejaku.org/posts/2021/01/2021-01-27/ (CC-BY 4.0)
+
+use bee_common::packable::Packable;
 use bee_message::prelude::*;
 use bee_pow::{
-    providers::{
-        miner::{MinerBuilder},
-        NonceProviderBuilder,
-    },
+    providers::{miner::MinerBuilder, NonceProviderBuilder},
     score::PoWScorer,
 };
-use bee_common::packable::Packable;
-use bee_test::rand::{
-    parents::rand_parents,
-};
+use bee_test::rand::parents::rand_parents;
 
-use std::alloc::{GlobalAlloc, Layout, System};
-use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
+use std::{
+    alloc::{GlobalAlloc, Layout, System},
+    sync::atomic::{AtomicUsize, Ordering::SeqCst},
+};
 
 struct CheckAlloc;
 
