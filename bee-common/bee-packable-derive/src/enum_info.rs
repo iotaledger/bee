@@ -1,12 +1,12 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use quote::quote;
-use syn::{parse2, Attribute, DataEnum, Ident, Result, Type};
-
 use crate::{
     parse::filter_attrs, tag_type_info::TagTypeInfo, unpack_error_info::UnpackErrorInfo, variant_info::VariantInfo,
 };
+
+use quote::quote;
+use syn::{parse2, Attribute, DataEnum, Ident, Result, Type};
 
 pub(crate) struct EnumInfo {
     pub(crate) unpack_error: UnpackErrorInfo,

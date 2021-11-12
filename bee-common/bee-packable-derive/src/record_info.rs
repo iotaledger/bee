@@ -1,9 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use syn::{Expr, Fields, Ident, Path, Result, Type};
-
 use crate::field_info::{FieldInfo, IdentOrIndex};
+
+use syn::{Expr, Fields, Ident, Path, Result, Type};
 
 pub(crate) struct RecordInfo {
     pub(crate) path: Path,
