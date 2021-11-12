@@ -30,16 +30,16 @@ impl<T: Packable> Packable for Vec<T> {
         Ok(())
     }
 
-    fn unpack<U: Unpacker, const CHECK: bool>(
+    fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         // The length of any dynamically-sized sequence must be prefixed.
-        let len = u64::unpack::<_, CHECK>(unpacker).infallible()?;
+        let len = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
 
         let mut vec = Self::with_capacity(len as usize);
 
         for _ in 0..len {
-            let item = T::unpack::<_, CHECK>(unpacker)?;
+            let item = T::unpack::<_, VERIFY>(unpacker)?;
             vec.push(item);
         }
 

@@ -172,18 +172,18 @@ macro_rules! impl_vec_prefix {
                 Ok(())
             }
 
-            fn unpack<U: Unpacker, const CHECK: bool>(
+            fn unpack<U: Unpacker, const VERIFY: bool>(
                 unpacker: &mut U,
             ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
                 // The length of any dynamically-sized sequence must be prefixed.
-                let len = <$bounded<MIN, MAX>>::unpack::<_, CHECK>(unpacker)
+                let len = <$bounded<MIN, MAX>>::unpack::<_, VERIFY>(unpacker)
                     .map_packable_err(UnpackPrefixError::Prefix)?
                     .into();
 
                 let mut inner = Vec::with_capacity(len as usize);
 
                 for _ in 0..len {
-                    let item = T::unpack::<_, CHECK>(unpacker).coerce()?;
+                    let item = T::unpack::<_, VERIFY>(unpacker).coerce()?;
                     inner.push(item);
                 }
 
@@ -290,18 +290,18 @@ macro_rules! impl_boxed_slice_prefix {
                 Ok(())
             }
 
-            fn unpack<U: Unpacker, const CHECK: bool>(
+            fn unpack<U: Unpacker, const VERIFY: bool>(
                 unpacker: &mut U,
             ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
                 // The length of any dynamically-sized sequence must be prefixed.
-                let len = <$bounded<MIN, MAX>>::unpack::<_, CHECK>(unpacker)
+                let len = <$bounded<MIN, MAX>>::unpack::<_, VERIFY>(unpacker)
                     .map_packable_err(UnpackPrefixError::Prefix)?
                     .into();
 
                 let mut inner = Vec::with_capacity(len as usize);
 
                 for _ in 0..len {
-                    let item = T::unpack::<_, CHECK>(unpacker).coerce()?;
+                    let item = T::unpack::<_, VERIFY>(unpacker).coerce()?;
                     inner.push(item);
                 }
 

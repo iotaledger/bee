@@ -21,10 +21,10 @@ impl<T: Packable> Packable for Box<T> {
         Ok(())
     }
 
-    fn unpack<U: Unpacker, const CHECK: bool>(
+    fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        Ok(Box::new(T::unpack::<_, CHECK>(unpacker)?))
+        Ok(Box::new(T::unpack::<_, VERIFY>(unpacker)?))
     }
 }
 
@@ -46,9 +46,9 @@ impl<T: Packable> Packable for Box<[T]> {
         Ok(())
     }
 
-    fn unpack<U: Unpacker, const CHECK: bool>(
+    fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        Ok(Vec::<T>::unpack::<_, CHECK>(unpacker)?.into_boxed_slice())
+        Ok(Vec::<T>::unpack::<_, VERIFY>(unpacker)?.into_boxed_slice())
     }
 }

@@ -45,7 +45,7 @@ pub trait Packable: Sized {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
 
     /// Unpacks this value from the given [`Unpacker`].
-    fn unpack<U: Unpacker, const CHECK: bool>(
+    fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>>;
 }

@@ -137,13 +137,13 @@ impl Packable for Parents {
         Ok(())
     }
 
-    fn unpack<U: Unpacker, const CHECK: bool>(
+    fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let count = u8::unpack::<_, CHECK>(unpacker).infallible()?;
+        let count = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
         validate_parents_count(count as usize).map_err(UnpackError::from_packable)?;
 
-        let bits_repr = u8::unpack::<_, CHECK>(unpacker).infallible()?;
+        let bits_repr = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
 
         let mut bits = bitarr![Lsb0, u8; 0; 8];
         bits.store(bits_repr);
@@ -154,7 +154,7 @@ impl Packable for Parents {
         parents.reserve(count as usize);
 
         for i in 0..count {
-            let id = MessageId::unpack::<_, CHECK>(unpacker).infallible()?;
+            let id = MessageId::unpack::<_, VERIFY>(unpacker).infallible()?;
 
             if *bits.get(i as usize).unwrap() {
                 parents.push(Parent::Strong(id))

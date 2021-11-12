@@ -35,7 +35,7 @@ impl Fragments {
                 Ok(())
             },
             unpack: quote! {Ok(#path {
-                #(#fields_pattern_ident: <#fields_type>::unpack::<_, CHECK>(unpacker).map_packable_err(#fields_unpack_error_with).coerce()?,)*
+                #(#fields_pattern_ident: <#fields_type>::unpack::<_, VERIFY>(unpacker).map_packable_err(#fields_unpack_error_with).coerce()?,)*
             })},
         }
     }

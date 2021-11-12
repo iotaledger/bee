@@ -141,17 +141,17 @@ impl Packable for TransactionEssence {
         self.payload.pack(packer)
     }
 
-    fn unpack<U: Unpacker, const CHECK: bool>(
+    fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let timestamp = u64::unpack::<_, CHECK>(unpacker).infallible()?;
-        let access_pledge_id = <[u8; PLEDGE_ID_LENGTH]>::unpack::<_, CHECK>(unpacker).infallible()?;
-        let consensus_pledge_id = <[u8; PLEDGE_ID_LENGTH]>::unpack::<_, CHECK>(unpacker).infallible()?;
+        let timestamp = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let access_pledge_id = <[u8; PLEDGE_ID_LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let consensus_pledge_id = <[u8; PLEDGE_ID_LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?;
 
         // Inputs syntactical validation
         let inputs = VecPrefix::<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>::unpack::<
             _,
-            CHECK,
+            VERIFY,
         >(unpacker)
         .map_packable_err(|err| {
             err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidInputCount(prefix_err.into()))
@@ -162,10 +162,13 @@ impl Packable for TransactionEssence {
 
         // Outputs syntactical validation
         let outputs =
-            VecPrefix::<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>::unpack::<_, CHECK>(unpacker)
-                .map_packable_err(|err| {
-                    err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidOutputCount(prefix_err.into()))
-                })?;
+            VecPrefix::<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>::unpack::<
+                _,
+                VERIFY,
+            >(unpacker)
+            .map_packable_err(|err| {
+                err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidOutputCount(prefix_err.into()))
+            })?;
 
         validate_output_total(
             outputs
@@ -181,7 +184,7 @@ impl Packable for TransactionEssence {
         .map_err(UnpackError::from_packable)?;
         validate_outputs_sorted(&outputs).map_err(UnpackError::from_packable)?;
 
-        let payload = Option::<Payload>::unpack::<_, CHECK>(unpacker).coerce()?;
+        let payload = Option::<Payload>::unpack::<_, VERIFY>(unpacker).coerce()?;
         validate_payload(&payload).map_err(UnpackError::from_packable)?;
 
         Ok(Self {

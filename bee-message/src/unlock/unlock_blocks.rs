@@ -81,13 +81,13 @@ impl Packable for UnlockBlocks {
         self.0.pack(packer)
     }
 
-    fn unpack<U: Unpacker, const CHECK: bool>(
+    fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let inner = VecPrefix::<
             UnlockBlock,
             BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>,
-        >::unpack::<_, CHECK>(unpacker)
+        >::unpack::<_, VERIFY>(unpacker)
         .map_packable_err(|err| {
             err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidUnlockBlockCount(prefix_err.into()))
         })?;

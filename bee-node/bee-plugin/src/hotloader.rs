@@ -19,7 +19,7 @@ use std::{
     time::SystemTime,
 };
 
-const PLUGIN_CHECK_INTERVAL_MILLIS: u64 = 1000;
+const PLUGIN_VERIFY_INTERVAL_MILLIS: u64 = 1000;
 
 struct PluginInfo {
     id: PluginId,
@@ -98,7 +98,7 @@ impl PluginHotloader {
             // Removes info for files that no longer exist and loads plugins whose files did not exist before.
             self.sync_plugin_info(to_remove, last_writes).await?;
 
-            sleep(Duration::from_millis(PLUGIN_CHECK_INTERVAL_MILLIS)).await;
+            sleep(Duration::from_millis(PLUGIN_VERIFY_INTERVAL_MILLIS)).await;
         }
     }
 
