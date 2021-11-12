@@ -53,7 +53,7 @@ where
     ///
     /// It requires the length of the input, the length of the output hash and the number of
     /// rounds.
-    #[deprecated(note = "We will only support CurlP with 81 rounds in future versions.")]
+    #[deprecated(note = "Only CurlP with 81 rounds will be supported in future versions.")]
     #[allow(deprecated)]
     pub fn new(input_length: usize, rounds: CurlPRounds) -> Self {
         Self {

@@ -12,6 +12,7 @@ use super::HASH_LENGTH;
 pub use curlp::{BatchHasher, UnrolledCurlP81, BATCH_SIZE};
 #[allow(deprecated)]
 pub use curlp::{CurlP, CurlP27, CurlP81, CurlPRounds};
+#[allow(deprecated)]
 pub use kerl::Kerl;
 pub use kind::SpongeKind;
 
