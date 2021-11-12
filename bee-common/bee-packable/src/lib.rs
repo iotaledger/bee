@@ -6,8 +6,9 @@
 #![no_std]
 #![deny(missing_docs)]
 
+mod packable;
+
 pub mod error;
-pub mod packable;
 pub mod packer;
 pub mod unpacker;
 

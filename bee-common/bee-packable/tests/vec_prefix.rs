@@ -4,8 +4,13 @@
 mod common;
 
 use bee_packable::{
-    error::UnpackPrefixError, packable::VecPrefixLengthError, BoundedU16, BoundedU32, BoundedU64, BoundedU8,
-    InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64, InvalidBoundedU8, Packable, UnpackError, VecPrefix,
+    bounded::{
+        BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
+        InvalidBoundedU8,
+    },
+    error::UnpackError,
+    prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
+    Packable,
 };
 
 macro_rules! impl_packable_test_for_vec_prefix {
@@ -87,6 +92,6 @@ fn packable_vec_prefix_from_vec_error() {
 
     assert!(matches!(
         prefixed,
-        Err(VecPrefixLengthError::Invalid(InvalidBoundedU32(16)))
+        Err(TryIntoPrefixError::Invalid(InvalidBoundedU32(16)))
     ));
 }

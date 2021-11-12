@@ -7,23 +7,16 @@ extern crate alloc;
 
 mod array;
 mod bool;
-mod bounded;
+pub mod bounded;
 mod r#box;
 mod integer;
-mod option;
+pub mod option;
+pub mod prefix;
 mod vec;
-mod vec_prefix;
 
-pub use bounded::{
-    Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
-    InvalidBoundedU8,
-};
-pub use option::UnpackOptionError;
-pub use vec_prefix::{VecPrefix, VecPrefixLengthError};
-
-pub use crate::{
-    error::{UnexpectedEOF, UnknownTagError, UnpackError, UnpackErrorExt},
-    packer::{Packer, SlicePacker, VecPacker},
+use crate::{
+    error::{UnexpectedEOF, UnpackError},
+    packer::{Packer, VecPacker},
     unpacker::{SliceUnpacker, Unpacker},
 };
 
