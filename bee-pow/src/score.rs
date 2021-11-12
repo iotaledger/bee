@@ -10,12 +10,13 @@ use crypto::hashes::{
     ternary::{curl_p::CurlP, HASH_LENGTH},
     Digest,
 };
+use bee_crypto::ternary::sponge::{Sponge, UnrolledCurlP81};
 
 /// Encapsulates the different steps that are used for scoring Proof of Work.
 pub struct PoWScorer {
     blake2b: Blake2b256,
     pow_input: TritBuf<T1B1Buf>,
-    curl: CurlP,
+    curl: UnrolledCurlP81,
 }
 
 impl PoWScorer {
@@ -24,7 +25,7 @@ impl PoWScorer {
         Self {
             blake2b: Blake2b256::new(),
             pow_input: TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH),
-            curl: CurlP::new(),
+            curl: UnrolledCurlP81::new(),
         }
     }
 
@@ -54,7 +55,7 @@ impl PoWScorer {
         self.pow_input.push(Btrit::Zero);
 
         // TODO: Consider using an output buffer here, for example by using the `Sponge` mechanism?
-        self.curl.digest(self.pow_input.as_slice())
+        self.curl.digest(self.pow_input.as_slice()).unwrap()
     }
 
     /// Computes the Proof of Work score of given bytes.

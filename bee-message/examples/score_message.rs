@@ -1,0 +1,51 @@
+// Adapted from: https://kanejaku.org/posts/2021/01/2021-01-27/
+use bee_message::prelude::*;
+use bee_pow::{
+    providers::{
+        miner::{MinerBuilder},
+        NonceProviderBuilder,
+    },
+    score::PoWScorer,
+};
+use bee_common::packable::Packable;
+use bee_test::rand::{
+    parents::rand_parents,
+};
+
+use std::alloc::{GlobalAlloc, Layout, System};
+use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
+
+struct CheckAlloc;
+
+static ALLOCATED: AtomicUsize = AtomicUsize::new(0);
+
+unsafe impl GlobalAlloc for CheckAlloc {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        ALLOCATED.fetch_add(1, SeqCst);
+        System.alloc(layout)
+    }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        System.dealloc(ptr, layout);
+    }
+}
+
+#[global_allocator]
+static A: CheckAlloc = CheckAlloc;
+
+fn main() {
+    let message = MessageBuilder::new()
+        .with_network_id(0)
+        .with_parents(rand_parents())
+        .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64)
+        .finish()
+        .unwrap();
+
+    let message_bytes = message.pack_new();
+
+    let before_count = ALLOCATED.load(SeqCst);
+    let _score = PoWScorer::new().score(&message_bytes);
+    let after_count = ALLOCATED.load(SeqCst);
+
+    println!("Number of allocations: {}", after_count - before_count);
+}
