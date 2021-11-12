@@ -14,8 +14,7 @@ homepage = "https://www.iota.org"
 bee-crypto = { version = "0.2.1-alpha", path = "../bee-crypto", default-features = false }
 bee-ternary = { version = "0.5.1", path = "../bee-ternary", default-features = false }
 
-# Wait for new release of `iota-crypto` that uses `bee-node:0.5.0`.
-iota-crypto = { git = "https://github.com/iotaledger/crypto.rs.git", default-features = false, features = [ "blake2b", "digest", "curl-p"] }
+iota-crypto = { version = "0.8.0", default-features = false, features = [ "blake2b", "digest", "curl-p"] }
 thiserror = { version = "1.0.30", default-features = false }
 
 [dev-dependencies]

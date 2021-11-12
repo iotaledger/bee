@@ -208,7 +208,7 @@ dependencies = [
  "bee-ternary",
  "byteorder",
  "criterion",
- "iota-crypto 0.7.0 (git+https://github.com/iotaledger/crypto.rs.git)",
+ "iota-crypto 0.8.0",
  "lazy_static",
  "thiserror",
  "tiny-keccak",
@@ -228,7 +228,7 @@ dependencies = [
  "futures",
  "hashbrown",
  "hex",
- "iota-crypto 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "iota-crypto 0.7.0",
  "log",
  "ref-cast",
  "reqwest",
@@ -251,7 +251,7 @@ dependencies = [
  "bytemuck",
  "digest",
  "hex",
- "iota-crypto 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "iota-crypto 0.7.0",
  "num_cpus",
  "serde",
  "thiserror",
@@ -286,7 +286,7 @@ dependencies = [
  "bee-crypto",
  "bee-ternary",
  "bee-test",
- "iota-crypto 0.7.0 (git+https://github.com/iotaledger/crypto.rs.git)",
+ "iota-crypto 0.8.0",
  "thiserror",
 ]
 
@@ -1517,8 +1517,9 @@ dependencies = [
 
 [[package]]
 name = "iota-crypto"
-version = "0.7.0"
-source = "git+https://github.com/iotaledger/crypto.rs.git#799634504fec83b85708dc00cfb9e48a9d17a100"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee273ae67ff1bc7c59317c0ab280e0e76259e6bd83e140ac4c2ecebec994f740"
 dependencies = [
  "bee-ternary",
  "blake2",
