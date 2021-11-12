@@ -38,6 +38,7 @@ fn main() -> io::Result<()> {
                     .create(true)
                     .open(format!("./corpus/errors/{}", file_name))?;
                 file.write_all(&buffer)?;
+                println!("{:?}", err);
             }
         }
     }
