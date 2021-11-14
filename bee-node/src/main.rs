@@ -22,11 +22,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         return tools::exec(tool).map_err(|e| e.into());
     }
 
-    print_banner_and_version();
-
     if cli.version() {
+        print_banner_and_version(false);
         return Ok(());
     }
+
+    print_banner_and_version(true);
 
     let config = match NodeConfigBuilder::from_file(cli.config().unwrap_or(&CONFIG_PATH.to_owned())) {
         Ok(builder) => builder.with_cli_args(cli.clone()).finish(),
