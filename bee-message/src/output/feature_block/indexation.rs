@@ -35,18 +35,18 @@ impl Packable for IndexationFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        0u32.packed_len() + self.0.len()
+        0u8.packed_len() + self.0.len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.0.len() as u32).pack(writer)?;
+        (self.0.len() as u8).pack(writer)?;
         writer.write_all(&self.0)?;
 
         Ok(())
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let tag_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
+        let tag_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut tag = vec![0u8; tag_len];
         reader.read_exact(&mut tag)?;
 
