@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::AppStorage;
 use crate::types::{
     dtos::MessageDto,
@@ -134,7 +137,7 @@ pub async fn get_id_children_handler(Path(messageid): Path<String>, Extension(ap
         ) {
             Ok(message) => match message {
                 Some(message) => Json(match serde_json::to_value(&SuccessBody::new( {
-                    let message_dto = MessageDto::from(&message);
+                    let _message_dto = MessageDto::from(&message);
                     MessageChildrenResponse {
                         message_id: message.id().to_string(),
                         max_results: 0, // TODO

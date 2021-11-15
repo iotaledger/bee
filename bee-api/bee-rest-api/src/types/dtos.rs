@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::types::error::Error;
 
 use bee_message::{
@@ -27,7 +30,7 @@ use bee_message::{
 use bee_message::payload::MessagePayload;
 use bee_packable::{Packable};
 
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer, de::Error as DeError};
 use serde_json::Value;
 
 use std::str::FromStr;
@@ -53,7 +56,7 @@ pub struct MessageDto {
 impl From<&Message> for MessageDto {
     fn from(value: &Message) -> Self {
         MessageDto {
-            parents: value.parents().iter().map(|b| b.into()).collect(),
+            parents: value.parents().iter().map(Into::into).collect(),
             issuer_public_key: hex::encode(value.issuer_public_key()),
             issue_timestamp: value.issue_timestamp().to_string(),
             sequence_number: value.sequence_number().to_string(),
@@ -76,7 +79,7 @@ impl TryFrom<&MessageDto> for Message {
                 value
                     .parents
                     .iter()
-                    .map(|p| Parent::try_from(p))
+                    .map(TryInto::try_into)
                     .collect::<Result<Vec<Parent>, Error>>()?
             )?)
             .with_issuer_public_key({
@@ -215,7 +218,7 @@ impl From<&TransactionPayload> for TransactionPayloadDto {
         TransactionPayloadDto {
             kind: TransactionPayload::KIND,
             transaction_essence: value.essence().into(),
-            unlock_blocks: value.unlock_blocks().iter().map(|u| u.into()).collect::<Vec<_>>(),
+            unlock_blocks: value.unlock_blocks().iter().map(Into::into).collect::<Vec<_>>(),
         }
     }
 }
@@ -252,8 +255,8 @@ impl From<&TransactionEssence> for TransactionEssenceDto {
             timestamp: value.timestamp().to_string(),
             access_pledge_id: hex::encode(value.access_pledge_id()),
             consensus_pledge_id: hex::encode(value.consensus_pledge_id()),
-            inputs: value.inputs().iter().map(|i| i.into()).collect::<Vec<_>>(),
-            outputs: value.outputs().iter().map(|o| o.into()).collect::<Vec<_>>(),
+            inputs: value.inputs().iter().map(Into::into).collect::<Vec<_>>(),
+            outputs: value.outputs().iter().map(Into::into).collect::<Vec<_>>(),
             payload: match value.payload() {
                     Some(p) => Some(PayloadDto::from(p)),
                     None => None,
@@ -353,7 +356,7 @@ impl TryFrom<&SignatureUnlockDto> for SignatureUnlock {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ReferenceUnlockDto (u16);
+pub struct ReferenceUnlockDto(u16);
 
 impl From<&ReferenceUnlock> for ReferenceUnlockDto {
     fn from(value: &ReferenceUnlock) -> Self {
@@ -587,7 +590,7 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
             SignatureLockedAssetOutput::KIND => {
                 OutputDto::SignatureLockedAsset(SignatureLockedAssetOutputDto::deserialize(value).unwrap())
             }
-            type_ => panic!("unsupported type {:?}", type_),
+            type_ => return Err(DeError::custom(format!("unsupported type {:?}", type_))),
         })
     }
 }
@@ -729,8 +732,8 @@ impl From<&FpcPayload> for FpcPayloadDto {
     fn from(value: &FpcPayload) -> Self {
         FpcPayloadDto {
             kind: FpcPayload::KIND,
-            conflicts: value.conflicts().map(|c| c.into()).collect(),
-            timestamps: value.timestamps().map(|t| t.into()).collect(),
+            conflicts: value.conflicts().map(Into::into).collect(),
+            timestamps: value.timestamps().map(Into::into).collect(),
         }
     }
 }
@@ -741,11 +744,11 @@ impl TryFrom<&FpcPayloadDto> for FpcPayload {
     fn try_from(value: &FpcPayloadDto) -> Result<Self, Self::Error> {
         let builder = FpcPayload::builder()
         .with_conflicts(
-            value.conflicts.iter().map(|c| c.try_into())
+            value.conflicts.iter().map(TryInto::try_into)
             .collect::<Result<Vec<Conflict>, Error>>()?,
         )
         .with_timestamps(
-            value.timestamps.iter().map(|c| c.try_into())
+            value.timestamps.iter().map(TryInto::try_into)
             .collect::<Result<Vec<Timestamp>, Error>>()?,
         );
 
