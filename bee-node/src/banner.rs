@@ -17,8 +17,11 @@ pub fn print_banner_and_version(print_banner: bool) {
 ██████╦╝█████╗  █████╗
 ██╔══██╗██╔══╝  ██╔══╝
 ██████╦╝███████╗███████╗
-╚═════╝ ╚══════╝╚══════╝"
-        )
+╚═════╝ ╚══════╝╚══════╝
+{: ^24}\n",
+            version
+        );
+    } else {
+        println!("{}", version);
     }
-    println!("{: ^24}\n", version);
 }
