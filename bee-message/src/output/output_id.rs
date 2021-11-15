@@ -8,7 +8,10 @@ use crate::{
     util::hex_decode,
 };
 
-use bee_packable::{BoundedU16, InvalidBoundedU16, Packable};
+use bee_packable::{
+    bounded::{BoundedU16, InvalidBoundedU16},
+    Packable,
+};
 
 use core::{convert::Infallible, fmt};
 

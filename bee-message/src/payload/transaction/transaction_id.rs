@@ -3,7 +3,7 @@
 
 use crate::{error::ValidationError, util::hex_decode};
 
-use bee_packable::packable::Packable;
+use bee_packable::Packable;
 
 /// A [`TransactionPayload`](crate::payload::transaction::TransactionPayload) identifier, the BLAKE2b-256 hash of the
 /// transaction payload bytes.

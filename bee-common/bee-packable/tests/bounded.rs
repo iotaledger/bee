@@ -4,8 +4,12 @@
 mod common;
 
 use bee_packable::{
-    Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
-    InvalidBoundedU8, Packable, UnpackError,
+    bounded::{
+        Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32,
+        InvalidBoundedU64, InvalidBoundedU8,
+    },
+    error::UnpackError,
+    Packable,
 };
 
 macro_rules! impl_bounds_test_for_bounded_integer {

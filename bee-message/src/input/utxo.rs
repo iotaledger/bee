@@ -3,7 +3,7 @@
 
 use crate::output::OutputId;
 
-use bee_packable::packable::Packable;
+use bee_packable::Packable;
 
 /// An [`Input`](crate::input::Input) referencing an [`Output`](crate::output::Output).
 #[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Packable, Debug)]

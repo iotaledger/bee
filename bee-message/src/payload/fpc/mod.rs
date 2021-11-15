@@ -16,7 +16,11 @@ use crate::{
     MessageId, MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
+use bee_packable::{
+    bounded::{BoundedU32, InvalidBoundedU32},
+    prefix::{UnpackPrefixError, VecPrefix},
+    Packable,
+};
 
 use alloc::vec::Vec;
 

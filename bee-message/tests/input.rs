@@ -7,7 +7,7 @@ use bee_message::{
     output::OutputId,
     payload::transaction::TransactionId,
 };
-use bee_packable::{Packable, UnpackError};
+use bee_packable::{error::UnpackError, Packable};
 use bee_test::rand::bytes::rand_bytes;
 
 #[test]

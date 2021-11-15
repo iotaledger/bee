@@ -3,7 +3,7 @@
 
 use crate::{error::ValidationError, signature::Ed25519Signature, util::hex_decode};
 
-use bee_packable::packable::Packable;
+use bee_packable::Packable;
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},

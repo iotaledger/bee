@@ -22,7 +22,10 @@ use crate::{
     unlock::{PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX, PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN},
 };
 
-use bee_packable::{packable::VecPrefixLengthError, InvalidBoundedU16, InvalidBoundedU32};
+use bee_packable::{
+    bounded::{InvalidBoundedU16, InvalidBoundedU32},
+    prefix::TryIntoPrefixError,
+};
 
 use crypto::Error as CryptoError;
 
@@ -48,27 +51,25 @@ pub enum ValidationError {
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAmount(u64),
-    InvalidAssetBalanceCount(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_ASSET_BALANCES_LENGTH_MAX>>),
-    InvalidConflictsCount(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>),
-    InvalidDataPayloadLength(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>),
-    InvalidEncryptedDealLength(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>),
+    InvalidAssetBalanceCount(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_ASSET_BALANCES_LENGTH_MAX>>),
+    InvalidConflictsCount(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>),
+    InvalidDataPayloadLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>),
+    InvalidEncryptedDealLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength {
         expected: usize,
         actual: usize,
     },
-    InvalidIndexationDataLength(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_INDEXATION_DATA_LENGTH_MAX>>),
+    InvalidIndexationDataLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_INDEXATION_DATA_LENGTH_MAX>>),
     InvalidIndexationIndexLength(
-        VecPrefixLengthError<
+        TryIntoPrefixError<
             InvalidBoundedU32<PREFIXED_INDEXATION_INDEX_LENGTH_MIN, PREFIXED_INDEXATION_INDEX_LENGTH_MAX>,
         >,
     ),
-    InvalidInputCount(VecPrefixLengthError<InvalidBoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>),
+    InvalidInputCount(TryIntoPrefixError<InvalidBoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>),
     InvalidMessageLength(usize),
     InvalidMessageVersion(u8),
-    InvalidOutputCount(
-        VecPrefixLengthError<InvalidBoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>,
-    ),
+    InvalidOutputCount(TryIntoPrefixError<InvalidBoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>),
     InvalidOutputIndex(u16),
     InvalidParentsBlocksCount(usize),
     InvalidParentsCount(usize),
@@ -79,12 +80,12 @@ pub enum ValidationError {
         payload_kind: u32,
     },
     InvalidReferenceIndex(u16),
-    InvalidSaltBytesLength(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_SALT_BYTES_LENGTH_MAX>>),
+    InvalidSaltBytesLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_SALT_BYTES_LENGTH_MAX>>),
     InvalidSignature,
     InvalidStrongParentsCount(usize),
-    InvalidTimestampsCount(VecPrefixLengthError<InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>),
+    InvalidTimestampsCount(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>),
     InvalidUnlockBlockCount(
-        VecPrefixLengthError<InvalidBoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>>,
+        TryIntoPrefixError<InvalidBoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>>,
     ),
     InvalidUnlockBlockReference(usize),
     MissingBuilderField(&'static str),

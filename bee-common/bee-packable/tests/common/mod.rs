@@ -1,7 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_packable::{packer::VecPacker, Packable, SlicePacker};
+use bee_packable::{
+    packer::{SlicePacker, VecPacker},
+    Packable,
+};
 
 use core::fmt::Debug;
 

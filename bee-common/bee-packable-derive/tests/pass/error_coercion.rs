@@ -4,10 +4,11 @@
 #![allow(unused_imports)]
 
 use bee_packable::{
+    error::UnpackErrorExt,
     error::{UnknownTagError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
-    Packable, UnpackErrorExt,
+    Packable,
 };
 
 use core::convert::Infallible;

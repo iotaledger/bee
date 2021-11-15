@@ -14,7 +14,7 @@ use bee_message::{
     util::hex_decode,
     MessageUnpackError, IOTA_SUPPLY,
 };
-use bee_packable::{packable::VecPrefixLengthError, InvalidBoundedU32, Packable, UnpackError};
+use bee_packable::{bounded::InvalidBoundedU32, error::UnpackError, prefix::TryIntoPrefixError, Packable};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,
@@ -58,7 +58,7 @@ fn invalid_input_count() {
 
     assert!(matches!(
         essence,
-        Err(ValidationError::InvalidInputCount(VecPrefixLengthError::Invalid(
+        Err(ValidationError::InvalidInputCount(TryIntoPrefixError::Invalid(
             InvalidBoundedU32(0)
         )))
     ));
@@ -121,7 +121,7 @@ fn invalid_output_count() {
 
     assert!(matches!(
         essence,
-        Err(ValidationError::InvalidOutputCount(VecPrefixLengthError::Invalid(
+        Err(ValidationError::InvalidOutputCount(TryIntoPrefixError::Invalid(
             InvalidBoundedU32(0)
         )))
     ));
@@ -244,7 +244,7 @@ fn unpack_invalid_input_count() {
 
     assert!(matches!(
         TransactionEssence::unpack_from_slice(bytes),
-        Err(UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidInputCount(VecPrefixLengthError::Invalid(InvalidBoundedU32(n))))))
+        Err(UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidInputCount(TryIntoPrefixError::Invalid(InvalidBoundedU32(n))))))
             if n == u32::try_from(inputs_len).unwrap()
     ));
 }
@@ -279,7 +279,7 @@ fn unpack_invalid_output_count() {
     assert!(matches!(
         TransactionEssence::unpack_from_slice(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidOutputCount(VecPrefixLengthError::Invalid(InvalidBoundedU32(n)))
+            ValidationError::InvalidOutputCount(TryIntoPrefixError::Invalid(InvalidBoundedU32(n)))
         )))
         if n == u32::try_from(outputs_len).unwrap()
     ));

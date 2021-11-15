@@ -3,7 +3,12 @@
 
 extern crate alloc;
 
-use crate::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable, UnpackErrorExt};
+use crate::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
 
 use alloc::vec::Vec;
 

@@ -5,25 +5,19 @@
 
 extern crate alloc;
 
+pub mod bounded;
+pub mod option;
+pub mod prefix;
+
 mod array;
 mod bool;
-mod bounded;
 mod r#box;
 mod integer;
-mod option;
 mod vec;
-mod vec_prefix;
 
-pub use bounded::{
-    Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
-    InvalidBoundedU8,
-};
-pub use option::UnpackOptionError;
-pub use vec_prefix::{VecPrefix, VecPrefixLengthError};
-
-pub use crate::{
-    error::{UnexpectedEOF, UnknownTagError, UnpackError, UnpackErrorExt},
-    packer::{Packer, SlicePacker, VecPacker},
+use crate::{
+    error::{UnexpectedEOF, UnpackError},
+    packer::{Packer, VecPacker},
     unpacker::{SliceUnpacker, Unpacker},
 };
 
@@ -41,7 +35,7 @@ pub trait Packable: Sized {
     /// The error type that can be returned if some semantic error occurs while unpacking.
     ///
     /// It is recommended to use [`Infallible`](core::convert::Infallible) if this kind of error cannot happen or
-    /// [`UnknownTagError`] when implementing this trait for an enum.
+    /// [`UnknownTagError`](crate::error::UnknownTagError) when implementing this trait for an enum.
     type UnpackError: Debug;
 
     /// The size of the value in bytes after being packed.

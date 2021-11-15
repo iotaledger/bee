@@ -19,7 +19,7 @@ use bee_message::{
     unlock::{SignatureUnlock, UnlockBlock, UnlockBlocks},
     MessageId,
 };
-use bee_packable::{Packable, UnpackError};
+use bee_packable::{error::UnpackError, Packable};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,

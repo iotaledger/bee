@@ -3,7 +3,12 @@
 
 use crate::{payload::fpc::Opinion, MessageUnpackError};
 
-use bee_packable::{Packable, Packer, UnpackError, UnpackErrorExt, Unpacker};
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
 
 use bitflags::bitflags;
 

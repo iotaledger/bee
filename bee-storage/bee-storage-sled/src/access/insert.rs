@@ -6,7 +6,7 @@
 use crate::{trees::*, Storage};
 
 use bee_message::{Message, MessageId, MessageMetadata};
-use bee_packable::packable::Packable;
+use bee_packable::Packable;
 use bee_storage::{access::Insert, system::System, StorageBackend};
 
 /// This would normally be `impl Insert<u8, System> for Storage` but there is no way to have a private trait impl and

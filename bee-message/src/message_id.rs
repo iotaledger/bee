@@ -3,7 +3,7 @@
 
 use crate::{error::ValidationError, util::hex_decode};
 
-use bee_packable::packable::Packable;
+use bee_packable::Packable;
 
 /// A [`Message`](crate::Message) identifier, the BLAKE2b-256 hash of the message bytes.
 /// See <https://www.blake2.net/> for more information.

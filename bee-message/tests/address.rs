@@ -6,7 +6,7 @@ use bee_message::{
     util::hex_decode,
     MessageUnpackError,
 };
-use bee_packable::{Packable, UnpackError};
+use bee_packable::{error::UnpackError, Packable};
 use bee_test::rand::bytes::rand_bytes_array;
 
 use core::str::FromStr;

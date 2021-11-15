@@ -7,7 +7,12 @@ use crate::{
     MessageId, MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{Packable, Packer, UnpackError, UnpackErrorExt, Unpacker};
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},

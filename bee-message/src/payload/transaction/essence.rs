@@ -9,7 +9,14 @@ use crate::{
 };
 
 use bee_ord::is_sorted;
-use bee_packable::{BoundedU32, Packable, Packer, UnpackError, UnpackErrorExt, Unpacker, VecPrefix};
+use bee_packable::{
+    bounded::BoundedU32,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::VecPrefix,
+    unpacker::Unpacker,
+    Packable,
+};
 
 use alloc::vec::Vec;
 use core::{convert::Infallible, fmt};

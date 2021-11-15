@@ -3,7 +3,7 @@
 
 mod common;
 
-use bee_packable::{Packable, VecPacker};
+use bee_packable::{packer::VecPacker, Packable};
 
 #[test]
 fn packable_bool() {
