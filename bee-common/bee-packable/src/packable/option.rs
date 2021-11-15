@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Types and utilities related to packing and unpacking [`Option`] values.
+
 use crate::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,

@@ -1,8 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Types and utilities used to pack and unpack dynamic sequences of values with restricted length
-//! prefixes.
+//! Types and utilities used to pack and unpack dynamic sequences of values with restricted length prefixes.
+
 extern crate alloc;
 
 use crate::{

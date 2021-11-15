@@ -5,13 +5,14 @@
 
 extern crate alloc;
 
-mod array;
-mod bool;
 pub mod bounded;
-mod r#box;
-mod integer;
 pub mod option;
 pub mod prefix;
+
+mod array;
+mod bool;
+mod r#box;
+mod integer;
 mod vec;
 
 use crate::{
