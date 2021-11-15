@@ -20,6 +20,7 @@ pub enum Error {
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAmount(u64),
+    InvalidDustDepositReturnFeatureBlock(u64),
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(u8),
     InvalidFeatureBlockKind(u8),
@@ -41,7 +42,6 @@ pub enum Error {
     InvalidPowScoreValues(u32, u32),
     InvalidReceiptFundsCount(u16),
     InvalidReferenceIndex(u16),
-    InvalidReturnAmountFeatureBlock(u64),
     InvalidSignature,
     InvalidSignatureKind(u8),
     InvalidTailTransactionHash,
@@ -90,6 +90,9 @@ impl fmt::Display for Error {
             Error::InvalidAddress => write!(f, "invalid address provided."),
             Error::InvalidAddressKind(k) => write!(f, "invalid address kind: {}.", k),
             Error::InvalidAmount(amount) => write!(f, "invalid amount: {}.", amount),
+            Error::InvalidDustDepositReturnFeatureBlock(amount) => {
+                write!(f, "invalid dust deposit return feature block: {}.", amount)
+            }
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}.", k),
             Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}.", count),
             Error::InvalidFeatureBlockKind(k) => write!(f, "invalid feature block kind: {}.", k),
@@ -127,9 +130,6 @@ impl fmt::Display for Error {
             ),
             Error::InvalidReceiptFundsCount(count) => write!(f, "invalid receipt funds count: {}.", count),
             Error::InvalidReferenceIndex(index) => write!(f, "invalid reference index: {}.", index),
-            Error::InvalidReturnAmountFeatureBlock(amount) => {
-                write!(f, "invalid return amount feature block: {}.", amount)
-            }
             Error::InvalidSignature => write!(f, "invalid signature provided."),
             Error::InvalidSignatureKind(k) => write!(f, "invalid signature kind: {}.", k),
             Error::InvalidTailTransactionHash => write!(f, "invalid tail transaction hash."),

@@ -10,36 +10,36 @@ use core::convert::TryFrom;
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct ReturnAmountFeatureBlock(u64);
+pub struct DustDepositReturnFeatureBlock(u64);
 
-impl TryFrom<u64> for ReturnAmountFeatureBlock {
+impl TryFrom<u64> for DustDepositReturnFeatureBlock {
     type Error = Error;
 
     fn try_from(amount: u64) -> Result<Self, Self::Error> {
         if amount < DUST_THRESHOLD {
-            return Err(Error::InvalidReturnAmountFeatureBlock(amount));
+            return Err(Error::InvalidDustDepositReturnFeatureBlock(amount));
         }
 
         Ok(Self(amount))
     }
 }
 
-impl ReturnAmountFeatureBlock {
-    /// The feature block kind of a `ReturnAmountFeatureBlock`.
+impl DustDepositReturnFeatureBlock {
+    /// The feature block kind of a `DustDepositReturnFeatureBlock`.
     pub const KIND: u8 = 2;
 
-    /// Creates a new `ReturnAmountFeatureBlock`.
+    /// Creates a new `DustDepositReturnFeatureBlock`.
     pub fn new(amount: u64) -> Result<Self, Error> {
         Self::try_from(amount)
     }
 
-    /// Returns the return amount.
+    /// Returns the amount.
     pub fn amount(&self) -> u64 {
         self.0
     }
 }
 
-impl Packable for ReturnAmountFeatureBlock {
+impl Packable for DustDepositReturnFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
