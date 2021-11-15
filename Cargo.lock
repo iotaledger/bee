@@ -325,7 +325,7 @@ dependencies = [
 
 [[package]]
 name = "bee-signing"
-version = "0.1.1-alpha"
+version = "0.2.0"
 dependencies = [
  "bee-common-derive",
  "bee-crypto",

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #[allow(deprecated)]
-use bee_crypto::ternary::sponge::Kerl;
-use bee_crypto::ternary::sponge::Sponge;
+use bee_crypto::ternary::sponge::{Kerl,Sponge};
+#[allow(deprecated)]
 use bee_signing::ternary::seed::{Error, Seed};
 use bee_ternary::{T1B1Buf, TritBuf, TryteBuf};
 
@@ -11,6 +11,7 @@ use std::str::FromStr;
 
 const SEED: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9";
 
+#[allow(deprecated)]
 fn subseed_generic<S: Sponge + Default>(seed_string: &str, subseed_strings: &[&str]) {
     let seed = Seed::from_str(seed_string).unwrap();
 
@@ -46,6 +47,7 @@ fn subseed_kerl() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn from_str_invalid_length() {
     let trytes = "VBAZOIZIWGBRAXMFDUBLP";
 
@@ -56,6 +58,7 @@ fn from_str_invalid_length() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn from_str_invalid_trytes() {
     let trytes = "APSNZAPL@NAGSXGZMZYCSXROJ9KUX9HVOPODQHMWNJOCGBKRIOOQKYGPFAIQBYNIODMIWMFKJGKRWFFPY";
 
@@ -63,6 +66,7 @@ fn from_str_invalid_trytes() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn from_trits_invalid_length() {
     let trits = TritBuf::zeros(42);
 
@@ -73,6 +77,7 @@ fn from_trits_invalid_length() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn to_trits_from_trits() {
     for _ in 0..10 {
         let seed_1 = Seed::rand();

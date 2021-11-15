@@ -177,6 +177,7 @@ where
     /// care of cleaning the `trit_inputs` buffer and resets the regular CurlP hasher so it can be
     /// called at any time.
     pub fn hash_unbatched(&mut self) -> impl Iterator<Item = TritBuf> + '_ {
+        #[allow(deprecated)]
         self.curlp.0.reset();
         UnbatchedHashes {
             curl: &mut self.curlp,
@@ -220,6 +221,7 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         let buf = self.trit_inputs.next()?;
         // FIXME: Could we make regular `CurlP` generic too?`
+        #[allow(deprecated)]
         Some(self.curl.0.digest(&buf.encode::<T1B1Buf>()).unwrap())
     }
 }

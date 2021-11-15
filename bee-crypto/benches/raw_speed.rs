@@ -1,9 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_crypto::ternary::sponge::{BatchHasher, Sponge, UnrolledCurlP81, BATCH_SIZE};
+use bee_crypto::ternary::sponge::{BatchHasher, UnrolledCurlP81, BATCH_SIZE};
 #[allow(deprecated)]
-use bee_crypto::ternary::sponge::{CurlP81, CurlPRounds};
+use bee_crypto::ternary::sponge::{CurlP81, CurlPRounds, Sponge};
 use bee_ternary::{T1B1Buf, T5B1Buf, TritBuf, TryteBuf};
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
@@ -33,6 +33,7 @@ fn regular_hasher_t5b1_legacy(input: &TritBuf<T5B1Buf>) {
     let mut hasher = CurlP81::new();
 
     for _ in 0..BATCH_SIZE {
+        #[allow(deprecated)]
         hasher.digest(&input.encode::<T1B1Buf>()).unwrap();
     }
 }
@@ -41,6 +42,7 @@ fn unrolled_hasher_t5b1(input: &TritBuf<T5B1Buf>) {
     let mut hasher = UnrolledCurlP81::new();
 
     for _ in 0..BATCH_SIZE {
+        #[allow(deprecated)]
         hasher.digest(&input.encode::<T1B1Buf>()).unwrap();
     }
 }

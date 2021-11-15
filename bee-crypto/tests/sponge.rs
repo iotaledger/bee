@@ -1,11 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_crypto::ternary::sponge::UnrolledCurlP81;
 #[allow(deprecated)]
-use bee_crypto::ternary::sponge::{CurlP27, CurlP81, Kerl};
-use bee_crypto::ternary::sponge::{Sponge, SpongeKind, UnrolledCurlP81};
+use bee_crypto::ternary::sponge::{CurlP27, CurlP81, Kerl, Sponge, SpongeKind};
 use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, TryteBuf};
 
+#[allow(deprecated)]
 pub fn sponge_generic_digest<S: Sponge + Default>(input: &str, output: &str) {
     let mut sponge = S::default();
 
@@ -19,6 +20,7 @@ pub fn sponge_generic_digest<S: Sponge + Default>(input: &str, output: &str) {
     assert_eq!(calculated_hash.as_slice(), expected_hash.as_trits());
 }
 
+#[allow(deprecated)]
 pub fn sponge_generic_digest_into<S: Sponge + Default>(input: &str, output: &str) {
     let mut sponge = S::default();
 
@@ -28,11 +30,9 @@ pub fn sponge_generic_digest_into<S: Sponge + Default>(input: &str, output: &str
     let output_len = expected_hash.as_trits().len();
     let mut calculated_hash = TritBuf::<T1B1Buf>::zeros(output_len);
 
-    assert!(
-        sponge
-            .digest_into(input_trit_buf.as_slice(), calculated_hash.as_slice_mut())
-            .is_ok()
-    );
+    assert!(sponge
+        .digest_into(input_trit_buf.as_slice(), calculated_hash.as_slice_mut())
+        .is_ok());
 
     let calculated_hash = calculated_hash.encode::<T3B1Buf>();
 
@@ -45,6 +45,7 @@ pub fn sponge_generic_digest_into<S: Sponge + Default>(input: &str, output: &str
 // * CurlP27 output
 // * CurlP81 output
 
+#[allow(deprecated)]
 fn sponge_input_243_output_243(sponge_type: SpongeKind) {
     let tests = [
         (
@@ -184,20 +185,25 @@ fn sponge_input_243_output_243(sponge_type: SpongeKind) {
 
 #[test]
 fn kerl_input_243_output_243() {
+    #[allow(deprecated)]
     sponge_input_243_output_243(SpongeKind::Kerl);
 }
 
 #[test]
 fn curlp27_input_243_output_243() {
+    #[allow(deprecated)]
     sponge_input_243_output_243(SpongeKind::CurlP27);
 }
 
 #[test]
 fn curlp81_input_243_output_243() {
+    #[allow(deprecated)]
     sponge_input_243_output_243(SpongeKind::CurlP81);
+    #[allow(deprecated)]
     sponge_input_243_output_243(SpongeKind::UnrolledCurlP81);
 }
 
+#[allow(deprecated)]
 fn sponge_input_243_output_486(sponge_type: SpongeKind) {
     let tests = [
         (
@@ -277,20 +283,25 @@ fn sponge_input_243_output_486(sponge_type: SpongeKind) {
 
 #[test]
 fn kerl_input_243_output_486() {
+    #[allow(deprecated)]
     sponge_input_243_output_486(SpongeKind::Kerl);
 }
 
 #[test]
 fn curlp27_input_243_output_486() {
+    #[allow(deprecated)]
     sponge_input_243_output_486(SpongeKind::CurlP27);
 }
 
 #[test]
 fn curlp81_input_243_output_486() {
+    #[allow(deprecated)]
     sponge_input_243_output_486(SpongeKind::CurlP81);
+    #[allow(deprecated)]
     sponge_input_243_output_486(SpongeKind::UnrolledCurlP81);
 }
 
+#[allow(deprecated)]
 fn sponge_input_243_output_6561(sponge_type: SpongeKind) {
     let tests = [
         (
@@ -340,20 +351,25 @@ fn sponge_input_243_output_6561(sponge_type: SpongeKind) {
 
 #[test]
 fn kerl_input_243_output_6561() {
+    #[allow(deprecated)]
     sponge_input_243_output_6561(SpongeKind::Kerl);
 }
 
 #[test]
 fn curlp27_input_243_output_6561() {
+    #[allow(deprecated)]
     sponge_input_243_output_6561(SpongeKind::CurlP27);
 }
 
 #[test]
 fn curlp81_input_243_output_6561() {
+    #[allow(deprecated)]
     sponge_input_243_output_6561(SpongeKind::CurlP81);
+    #[allow(deprecated)]
     sponge_input_243_output_6561(SpongeKind::UnrolledCurlP81);
 }
 
+#[allow(deprecated)]
 fn sponge_input_486_output_486(sponge_type: SpongeKind) {
     let tests = [
         (
@@ -433,20 +449,25 @@ fn sponge_input_486_output_486(sponge_type: SpongeKind) {
 
 #[test]
 fn kerl_input_486_output_486() {
+    #[allow(deprecated)]
     sponge_input_486_output_486(SpongeKind::Kerl);
 }
 
 #[test]
 fn curlp27_input_486_output_486() {
+    #[allow(deprecated)]
     sponge_input_486_output_486(SpongeKind::CurlP27);
 }
 
 #[test]
 fn curlp81_input_486_output_486() {
+    #[allow(deprecated)]
     sponge_input_486_output_486(SpongeKind::CurlP81);
+    #[allow(deprecated)]
     sponge_input_486_output_486(SpongeKind::UnrolledCurlP81);
 }
 
+#[allow(deprecated)]
 fn sponge_input_6561_output_6561(sponge_type: SpongeKind) {
     let tests = [
         (
@@ -489,6 +510,7 @@ fn sponge_input_6561_output_6561(sponge_type: SpongeKind) {
             SpongeKind::CurlP27 => sponge_generic_digest_into::<CurlP27>(test.0, test.2),
             #[allow(deprecated)]
             SpongeKind::CurlP81 => sponge_generic_digest_into::<CurlP81>(test.0, test.3),
+            #[allow(deprecated)]
             SpongeKind::UnrolledCurlP81 => sponge_generic_digest_into::<UnrolledCurlP81>(test.0, test.3),
         }
     }
@@ -496,20 +518,25 @@ fn sponge_input_6561_output_6561(sponge_type: SpongeKind) {
 
 #[test]
 fn kerl_input_6561_output_6561() {
+    #[allow(deprecated)]
     sponge_input_6561_output_6561(SpongeKind::Kerl);
 }
 
 #[test]
 fn curlp27_input_6561_output_6561() {
+    #[allow(deprecated)]
     sponge_input_6561_output_6561(SpongeKind::CurlP27);
 }
 
 #[test]
 fn curlp81_input_6561_output_6561() {
+    #[allow(deprecated)]
     sponge_input_6561_output_6561(SpongeKind::CurlP81);
+    #[allow(deprecated)]
     sponge_input_6561_output_6561(SpongeKind::UnrolledCurlP81);
 }
 
+#[allow(deprecated)]
 fn sponge_input_6561_output_243(sponge_type: SpongeKind) {
     let tests = [
         (
@@ -559,17 +586,21 @@ fn sponge_input_6561_output_243(sponge_type: SpongeKind) {
 
 #[test]
 fn kerl_input_6561_output_243() {
+    #[allow(deprecated)]
     sponge_input_6561_output_243(SpongeKind::Kerl);
 }
 
 #[test]
 fn curlp27_input_6561_output_243() {
+    #[allow(deprecated)]
     sponge_input_6561_output_243(SpongeKind::CurlP27);
 }
 
 #[test]
 fn curlp81_input_6561_output_243() {
+    #[allow(deprecated)]
     sponge_input_6561_output_243(SpongeKind::CurlP81);
+    #[allow(deprecated)]
     sponge_input_6561_output_243(SpongeKind::UnrolledCurlP81);
 }
 

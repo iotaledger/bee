@@ -22,7 +22,6 @@ pub struct Kerl {
     ternary_state: T243<Btrit>,
 }
 
-#[allow(deprecated)]
 impl Default for Kerl {
     fn default() -> Self {
         Self {
@@ -33,7 +32,6 @@ impl Default for Kerl {
     }
 }
 
-#[allow(deprecated)]
 impl Kerl {
     /// Creates a new `Kerl`.
     pub fn new() -> Self {
@@ -53,7 +51,6 @@ impl From<ConversionError> for Error {
     }
 }
 
-#[allow(deprecated)]
 impl Sponge for Kerl {
     type Error = Error;
 

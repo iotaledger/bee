@@ -3,6 +3,7 @@
 
 #[allow(deprecated)]
 use bee_crypto::ternary::sponge::Kerl;
+#[allow(deprecated)]
 use bee_signing::ternary::{
     wots::{Error as WotsError, WotsPublicKey, WotsSecurityLevel, WotsSignature, WotsSpongePrivateKeyGeneratorBuilder},
     PrivateKey, PrivateKeyGenerator, PublicKey, RecoverableSignature, Signature,
@@ -10,6 +11,7 @@ use bee_signing::ternary::{
 use bee_ternary::{T1B1Buf, TryteBuf};
 
 #[test]
+#[allow(deprecated)]
 fn invalid_message_length() {
     let message = TryteBuf::try_from_str("CEFLDDLMF9TO9ZNYIDZCTHQDY9ABGGQZHEFTXKWKWZ")
         .unwrap()

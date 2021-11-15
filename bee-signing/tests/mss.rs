@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_crypto::ternary::sponge::Sponge;
 #[allow(deprecated)]
-use bee_crypto::ternary::sponge::{CurlP27, CurlP81, Kerl};
+use bee_crypto::ternary::sponge::{CurlP27, CurlP81, Kerl, Sponge};
+#[allow(deprecated)]
 use bee_signing::ternary::{
     mss::{Error as MssError, MssPrivateKeyGeneratorBuilder, MssPublicKey, MssSignature},
     seed::Seed,
@@ -59,6 +59,7 @@ fn generator_missing_generator() {
     );
 }
 
+#[allow(deprecated)]
 fn wots_generic_signature_verify<S>(public_key: &str, message: &str, signature: &str, depth: u8, index: usize)
 where
     S: Sponge + Default,
@@ -130,6 +131,7 @@ fn wots_curl27_sec_3_signature_verify() {
     wots_generic_signature_verify::<CurlP27>(PUBLIC_KEY, MESSAGE, SIGNATURE, DEPTH, INDEX);
 }
 
+#[allow(deprecated)]
 fn wots_generic_roundtrip<S, G>(generator: G)
 where
     S: Sponge + Default,
@@ -258,6 +260,7 @@ fn curl81_wots_curl81_roundtrip() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn signatures_exhausted() {
     #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
