@@ -6,9 +6,9 @@ mod u256;
 
 use u256::U256;
 
-use crate::ternary::HASH_LENGTH;
 #[allow(deprecated)]
 use crate::ternary::sponge::Sponge;
+use crate::ternary::HASH_LENGTH;
 
 use bee_ternary::{Btrit, Trits};
 

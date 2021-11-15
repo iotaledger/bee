@@ -6,8 +6,8 @@
 use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf, Trits, T1B1};
 
 #[allow(deprecated)]
-use bee_crypto::ternary::sponge::{Sponge};
-use bee_crypto::ternary::sponge::{UnrolledCurlP81};
+use bee_crypto::ternary::sponge::Sponge;
+use bee_crypto::ternary::sponge::UnrolledCurlP81;
 use crypto::hashes::{blake2b::Blake2b256, ternary::HASH_LENGTH, Digest};
 
 /// Encapsulates the different steps that are used for scoring Proof of Work.

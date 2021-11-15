@@ -7,9 +7,9 @@ mod unrolled;
 pub use batched::{BatchHasher, BATCH_SIZE};
 pub use unrolled::UnrolledCurlP81;
 
-use crate::ternary::HASH_LENGTH;
 #[allow(deprecated)]
 use crate::ternary::sponge::Sponge;
+use crate::ternary::HASH_LENGTH;
 
 use bee_ternary::{Btrit, TritBuf, Trits};
 
