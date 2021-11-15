@@ -53,11 +53,7 @@ macro_rules! impl_packable_test_for_bounded_integer {
             let bytes = vec![0u8; core::mem::size_of::<$wrapped>()];
             let unpacked = <$wrapper>::unpack_verified(&bytes);
 
-            assert!(
-                matches!(unpacked, Err(UnpackError::Packable($error(0)))),
-                "found {:?}",
-                unpacked
-            )
+            assert!(matches!(unpacked, Err(UnpackError::Packable($error(0)))))
         }
     };
 }

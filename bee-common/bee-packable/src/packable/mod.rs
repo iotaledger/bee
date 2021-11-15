@@ -50,7 +50,7 @@ pub trait Packable: Sized {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>>;
 }
 
-/// Extension trait for types that implement `Packable`.
+/// Extension trait for types that implement [`Packable`].
 pub trait PackableExt: Packable {
     /// Convenience method that packs this value into a [`Vec<u8>`].
     fn pack_to_vec(&self) -> Vec<u8>;
