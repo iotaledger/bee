@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Preallocate `TritBuf` in `b1t6::encode`
-
 ### Deprecated
 
 ### Removed
@@ -20,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security -->
+
+## 0.5.1 - 2021-11-15
+
+### Changed
+
+- Preallocate `TritBuf` in `b1t6::encode` for better performance
 
 ## 0.5.0 - 2021-09-27
 
