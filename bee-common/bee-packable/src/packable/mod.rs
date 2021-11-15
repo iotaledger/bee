@@ -34,7 +34,7 @@ pub trait Packable: Sized {
     /// The error type that can be returned if some semantic error occurs while unpacking.
     ///
     /// It is recommended to use [`Infallible`](core::convert::Infallible) if this kind of error cannot happen or
-    /// [`UnknownTagError`] when implementing this trait for an enum.
+    /// [`UnknownTagError`](crate::error::UnknownTagError) when implementing this trait for an enum.
     type UnpackError: Debug;
 
     /// The size of the value in bytes after being packed.
