@@ -31,7 +31,7 @@ use bee_common::{
 use core::{convert::TryFrom, ops::Deref};
 
 ///
-pub const FEATURE_BLOCK_COUNT_MAX: u16 = 8;
+pub const FEATURE_BLOCK_COUNT_MAX: u8 = 8;
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
@@ -171,8 +171,8 @@ impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
     type Error = Error;
 
     fn try_from(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Self::Error> {
-        if feature_blocks.len() as u16 > FEATURE_BLOCK_COUNT_MAX {
-            return Err(Error::InvalidFeatureBlockCount(feature_blocks.len() as u16));
+        if feature_blocks.len() as u8 > FEATURE_BLOCK_COUNT_MAX {
+            return Err(Error::InvalidFeatureBlockCount(feature_blocks.len() as u8));
         }
 
         if !is_unique_sorted(feature_blocks.iter().map(|b| b.kind())) {

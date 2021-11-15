@@ -21,7 +21,7 @@ pub enum Error {
     InvalidAddressKind(u8),
     InvalidAmount(u64),
     InvalidEssenceKind(u8),
-    InvalidFeatureBlockCount(u16),
+    InvalidFeatureBlockCount(u8),
     InvalidFeatureBlockKind(u8),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength(usize, usize),
