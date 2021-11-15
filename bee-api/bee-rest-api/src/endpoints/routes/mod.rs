@@ -3,11 +3,8 @@
 
 pub mod api;
 
-use axum::{
-    Router,
-};
+use axum::Router;
 
 pub fn api_routes() -> Router {
-    Router::new()
-        .nest("/api", api::api_routes())
+    Router::new().nest("/api", api::api_routes())
 }

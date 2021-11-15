@@ -4,38 +4,38 @@
 use crate::types::error::Error;
 
 use bee_message::{
-    MESSAGE_PUBLIC_KEY_LENGTH,
-    MESSAGE_SIGNATURE_LENGTH,
-    address::{Address, Ed25519Address, BlsAddress},
+    address::{Address, BlsAddress, Ed25519Address},
     input::{Input, UtxoInput},
-    output::{Output, SignatureLockedSingleOutput, SignatureLockedAssetOutput, AssetBalance, AssetId, OutputId},
-    parents::{Parents, Parent},
+    output::{AssetBalance, AssetId, Output, OutputId, SignatureLockedAssetOutput, SignatureLockedSingleOutput},
+    parents::{Parent, Parents},
     payload::{
         data::DataPayload,
         drng::{
-            ApplicationMessagePayload, DkgPayload, EncryptedDeal, BeaconPayload, CollectiveBeaconPayload,
-            BEACON_PARTIAL_PUBLIC_KEY_LENGTH, BEACON_SIGNATURE_LENGTH, BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH,
+            ApplicationMessagePayload, BeaconPayload, CollectiveBeaconPayload, DkgPayload, EncryptedDeal,
+            BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH, BEACON_PARTIAL_PUBLIC_KEY_LENGTH, BEACON_SIGNATURE_LENGTH,
         },
-        fpc::{FpcPayload, Conflict, Timestamp, Opinion},
+        fpc::{Conflict, FpcPayload, Opinion, Timestamp},
         indexation::IndexationPayload,
-        salt_declaration::{SaltDeclarationPayload, Salt},
+        salt_declaration::{Salt, SaltDeclarationPayload},
         transaction::{TransactionEssence, TransactionId, TransactionPayload, PLEDGE_ID_LENGTH},
         Payload,
     },
-    signature::{Ed25519Signature, Signature, BlsSignature},
+    signature::{BlsSignature, Ed25519Signature, Signature},
     unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlocks},
-    Message, MessageBuilder, MessageId,
+    Message, MessageBuilder, MessageId, MESSAGE_PUBLIC_KEY_LENGTH, MESSAGE_SIGNATURE_LENGTH,
 };
 
 use bee_message::payload::MessagePayload;
-use bee_packable::{Packable};
+use bee_packable::Packable;
 
-use serde::{Deserialize, Serialize, Serializer, de::Error as DeError};
+use serde::{de::Error as DeError, Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
-use std::str::FromStr;
-use std::ops::Deref;
-use std::convert::{TryFrom, TryInto};
+use std::{
+    convert::{TryFrom, TryInto},
+    ops::Deref,
+    str::FromStr,
+};
 
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -43,14 +43,14 @@ pub struct MessageDto {
     #[serde(rename = "parentMessageIds")]
     pub parents: Vec<ParentDto>,
     #[serde(rename = "issuerPublicKey")]
-    pub issuer_public_key: String,//[u8; MESSAGE_PUBLIC_KEY_LENGTH],
+    pub issuer_public_key: String, //[u8; MESSAGE_PUBLIC_KEY_LENGTH],
     #[serde(rename = "issueTimestamp")]
     pub issue_timestamp: String,
     #[serde(rename = "sequenceNumber")]
     pub sequence_number: String,
     pub payload: Option<PayloadDto>,
     pub nonce: String,
-    pub signature: String,//[u8; MESSAGE_SIGNATURE_LENGTH],
+    pub signature: String, //[u8; MESSAGE_SIGNATURE_LENGTH],
 }
 
 impl From<&Message> for MessageDto {
@@ -60,10 +60,7 @@ impl From<&Message> for MessageDto {
             issuer_public_key: hex::encode(value.issuer_public_key()),
             issue_timestamp: value.issue_timestamp().to_string(),
             sequence_number: value.sequence_number().to_string(),
-            payload: match value.payload() {
-                Some(payload) => Some(PayloadDto::from(payload)),
-                None => None,
-            },
+            payload: value.payload().map(PayloadDto::from),
             nonce: value.nonce().to_string(),
             signature: hex::encode(value.signature()),
         }
@@ -80,15 +77,15 @@ impl TryFrom<&MessageDto> for Message {
                     .parents
                     .iter()
                     .map(TryInto::try_into)
-                    .collect::<Result<Vec<Parent>, Error>>()?
+                    .collect::<Result<Vec<Parent>, Error>>()?,
             )?)
             .with_issuer_public_key({
-                    let mut public_key: [u8; MESSAGE_PUBLIC_KEY_LENGTH] = [0u8; MESSAGE_PUBLIC_KEY_LENGTH];
+                let mut public_key: [u8; MESSAGE_PUBLIC_KEY_LENGTH] = [0u8; MESSAGE_PUBLIC_KEY_LENGTH];
 
-                    hex::decode_to_slice(&value.issuer_public_key, &mut public_key)
-                        .map_err(|_| Error::InvalidSyntaxField("issuerPublicKey"))?;
-                    
-                    public_key
+                hex::decode_to_slice(&value.issuer_public_key, &mut public_key)
+                    .map_err(|_| Error::InvalidSyntaxField("issuerPublicKey"))?;
+
+                public_key
             })
             .with_issue_timestamp(
                 value
@@ -113,7 +110,7 @@ impl TryFrom<&MessageDto> for Message {
 
                 hex::decode_to_slice(&value.signature, &mut signature)
                     .map_err(|_| Error::InvalidSyntaxField("signature"))?;
-                    
+
                 signature
             });
         if let Some(p) = value.payload.as_ref() {
@@ -135,8 +132,14 @@ pub struct ParentDto {
 impl From<&Parent> for ParentDto {
     fn from(value: &Parent) -> Self {
         match value {
-            Parent::Strong(m) => ParentDto {kind: 0, message_id: hex::encode(m)},
-            Parent::Weak(m) => ParentDto {kind: 1, message_id: hex::encode(m)},
+            Parent::Strong(m) => ParentDto {
+                kind: 0,
+                message_id: hex::encode(m),
+            },
+            Parent::Weak(m) => ParentDto {
+                kind: 1,
+                message_id: hex::encode(m),
+            },
         }
     }
 }
@@ -145,12 +148,14 @@ impl TryFrom<&ParentDto> for Parent {
     type Error = Error;
 
     fn try_from(value: &ParentDto) -> Result<Self, Self::Error> {
-        let message_id = value.message_id.parse::<MessageId>()
-                .map_err(|_| Error::InvalidSyntaxField("messageId"))?;
+        let message_id = value
+            .message_id
+            .parse::<MessageId>()
+            .map_err(|_| Error::InvalidSyntaxField("messageId"))?;
         match value.kind {
             0 => Ok(Parent::Strong(message_id)),
             1 => Ok(Parent::Weak(message_id)),
-            _ => Err(Error::InvalidSyntaxField("kind"))
+            _ => Err(Error::InvalidSyntaxField("kind")),
         }
     }
 }
@@ -176,12 +181,18 @@ impl From<&Payload> for PayloadDto {
             Payload::Data(d) => PayloadDto::Data(Box::new(DataPayloadDto::from(d.as_ref()))),
             Payload::Transaction(t) => PayloadDto::Transaction(Box::new(TransactionPayloadDto::from(t.as_ref()))),
             Payload::Fpc(f) => PayloadDto::Fpc(Box::new(FpcPayloadDto::from(f.as_ref()))),
-            Payload::ApplicationMessage(a) => PayloadDto::ApplicationMessage(Box::new(ApplicationMessagePayloadDto::from(a.as_ref()))),
+            Payload::ApplicationMessage(a) => {
+                PayloadDto::ApplicationMessage(Box::new(ApplicationMessagePayloadDto::from(a.as_ref())))
+            }
             Payload::Dkg(d) => PayloadDto::Dkg(Box::new(DkgPayloadDto::from(d.as_ref()))),
             Payload::Beacon(b) => PayloadDto::Beacon(Box::new(BeaconPayloadDto::from(b.as_ref()))),
-            Payload::CollectiveBeacon(c) => PayloadDto::CollectiveBeacon(Box::new(CollectiveBeaconPayloadDto::from(c.as_ref()))),
-            Payload::SaltDeclaration(s) => PayloadDto::SaltDeclaration(Box::new(SaltDeclarationPayloadDto::from(s.as_ref()))),
-            Payload::Indexation(i) => PayloadDto::Indexation(Box::new(IndexationPayloadDto::from(i.as_ref())))
+            Payload::CollectiveBeacon(c) => {
+                PayloadDto::CollectiveBeacon(Box::new(CollectiveBeaconPayloadDto::from(c.as_ref())))
+            }
+            Payload::SaltDeclaration(s) => {
+                PayloadDto::SaltDeclaration(Box::new(SaltDeclarationPayloadDto::from(s.as_ref())))
+            }
+            Payload::Indexation(i) => PayloadDto::Indexation(Box::new(IndexationPayloadDto::from(i.as_ref()))),
         }
     }
 }
@@ -193,12 +204,18 @@ impl TryFrom<&PayloadDto> for Payload {
             PayloadDto::Data(d) => Payload::Data(Box::new(DataPayload::try_from(d.as_ref())?)),
             PayloadDto::Transaction(t) => Payload::Transaction(Box::new(TransactionPayload::try_from(t.as_ref())?)),
             PayloadDto::Fpc(f) => Payload::Fpc(Box::new(FpcPayload::try_from(f.as_ref())?)),
-            PayloadDto::ApplicationMessage(a) => Payload::ApplicationMessage(Box::new(ApplicationMessagePayload::try_from(a.as_ref())?)),
+            PayloadDto::ApplicationMessage(a) => {
+                Payload::ApplicationMessage(Box::new(ApplicationMessagePayload::try_from(a.as_ref())?))
+            }
             PayloadDto::Dkg(d) => Payload::Dkg(Box::new(DkgPayload::try_from(d.as_ref())?)),
             PayloadDto::Beacon(b) => Payload::Beacon(Box::new(BeaconPayload::try_from(b.as_ref())?)),
-            PayloadDto::CollectiveBeacon(c) => Payload::CollectiveBeacon(Box::new(CollectiveBeaconPayload::try_from(c.as_ref())?)),
-            PayloadDto::SaltDeclaration(s) => Payload::SaltDeclaration(Box::new(SaltDeclarationPayload::try_from(s.as_ref())?)),
-            PayloadDto::Indexation(i) => Payload::Indexation(Box::new(IndexationPayload::try_from(i.as_ref())?))
+            PayloadDto::CollectiveBeacon(c) => {
+                Payload::CollectiveBeacon(Box::new(CollectiveBeaconPayload::try_from(c.as_ref())?))
+            }
+            PayloadDto::SaltDeclaration(s) => {
+                Payload::SaltDeclaration(Box::new(SaltDeclarationPayload::try_from(s.as_ref())?))
+            }
+            PayloadDto::Indexation(i) => Payload::Indexation(Box::new(IndexationPayload::try_from(i.as_ref())?)),
         })
     }
 }
@@ -242,8 +259,8 @@ impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionEssenceDto {
     pub timestamp: String,
-    pub access_pledge_id: String,//[u8; PLEDGE_ID_LENGTH],
-    pub consensus_pledge_id: String,//[u8; PLEDGE_ID_LENGTH],
+    pub access_pledge_id: String,    //[u8; PLEDGE_ID_LENGTH],
+    pub consensus_pledge_id: String, //[u8; PLEDGE_ID_LENGTH],
     pub inputs: Vec<InputDto>,
     pub outputs: Vec<OutputDto>,
     pub payload: Option<PayloadDto>,
@@ -257,10 +274,7 @@ impl From<&TransactionEssence> for TransactionEssenceDto {
             consensus_pledge_id: hex::encode(value.consensus_pledge_id()),
             inputs: value.inputs().iter().map(Into::into).collect::<Vec<_>>(),
             outputs: value.outputs().iter().map(Into::into).collect::<Vec<_>>(),
-            payload: match value.payload() {
-                    Some(p) => Some(PayloadDto::from(p)),
-                    None => None,
-            },
+            payload: value.payload().as_ref().map(PayloadDto::from),
         }
     }
 }
@@ -277,20 +291,20 @@ impl TryFrom<&TransactionEssenceDto> for TransactionEssence {
                     .map_err(|_| Error::InvalidSyntaxField("issueTimestamp"))?,
             )
             .with_access_pledge_id({
-                    let mut access_pledge_id: [u8; PLEDGE_ID_LENGTH] = [0; PLEDGE_ID_LENGTH];
+                let mut access_pledge_id: [u8; PLEDGE_ID_LENGTH] = [0; PLEDGE_ID_LENGTH];
 
-                    hex::decode_to_slice(&value.access_pledge_id, &mut access_pledge_id)
-                        .map_err(|_| Error::InvalidSyntaxField("accessPledgeId"))?;
-                    
-                    access_pledge_id
+                hex::decode_to_slice(&value.access_pledge_id, &mut access_pledge_id)
+                    .map_err(|_| Error::InvalidSyntaxField("accessPledgeId"))?;
+
+                access_pledge_id
             })
             .with_consensus_pledge_id({
-                    let mut consensus_pledge_id: [u8; PLEDGE_ID_LENGTH] = [0; PLEDGE_ID_LENGTH];
+                let mut consensus_pledge_id: [u8; PLEDGE_ID_LENGTH] = [0; PLEDGE_ID_LENGTH];
 
-                    hex::decode_to_slice(&value.consensus_pledge_id, &mut consensus_pledge_id)
-                        .map_err(|_| Error::InvalidSyntaxField("consensusPledgeId"))?;
-                    
-                    consensus_pledge_id
+                hex::decode_to_slice(&value.consensus_pledge_id, &mut consensus_pledge_id)
+                    .map_err(|_| Error::InvalidSyntaxField("consensusPledgeId"))?;
+
+                consensus_pledge_id
             });
 
         for i in &value.inputs {
@@ -302,10 +316,7 @@ impl TryFrom<&TransactionEssenceDto> for TransactionEssence {
         }
 
         if let Some(p) = &value.payload {
-            builder = builder.with_payload(
-                Payload::try_from(p)
-                .map_err(|_| Error::InvalidSemanticField("payload"))?,
-            );
+            builder = builder.with_payload(Payload::try_from(p).map_err(|_| Error::InvalidSemanticField("payload"))?);
         }
 
         Ok(builder.finish()?)
@@ -368,8 +379,7 @@ impl TryFrom<&ReferenceUnlockDto> for ReferenceUnlock {
     type Error = Error;
 
     fn try_from(value: &ReferenceUnlockDto) -> Result<Self, Self::Error> {
-        value.0.try_into()
-        .map_err(|_| Error::InvalidSemanticField("index"))
+        value.0.try_into().map_err(|_| Error::InvalidSemanticField("index"))
     }
 }
 
@@ -403,8 +413,8 @@ impl TryFrom<&SignatureDto> for Signature {
 pub struct Ed25519SignatureDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    public_key: String,//[u8; Self::PUBLIC_KEY_LENGTH],
-    signature: String,//[u8; Self::SIGNATURE_LENGTH],
+    public_key: String, //[u8; Self::PUBLIC_KEY_LENGTH],
+    signature: String,  //[u8; Self::SIGNATURE_LENGTH],
 }
 
 impl From<&Ed25519Signature> for Ed25519SignatureDto {
@@ -423,11 +433,12 @@ impl TryFrom<&Ed25519SignatureDto> for Ed25519Signature {
     fn try_from(value: &Ed25519SignatureDto) -> Result<Self, Self::Error> {
         Ok(Ed25519Signature::new(
             {
-                let mut public_key: [u8; Ed25519Signature::PUBLIC_KEY_LENGTH] = [0; Ed25519Signature::PUBLIC_KEY_LENGTH];
+                let mut public_key: [u8; Ed25519Signature::PUBLIC_KEY_LENGTH] =
+                    [0; Ed25519Signature::PUBLIC_KEY_LENGTH];
 
                 hex::decode_to_slice(&value.public_key, &mut public_key)
                     .map_err(|_| Error::InvalidSyntaxField("publicKey"))?;
-                    
+
                 public_key
             },
             {
@@ -435,9 +446,9 @@ impl TryFrom<&Ed25519SignatureDto> for Ed25519Signature {
 
                 hex::decode_to_slice(&value.signature, &mut signature)
                     .map_err(|_| Error::InvalidSyntaxField("publicKey"))?;
-                    
+
                 signature
-            }
+            },
         ))
     }
 }
@@ -458,9 +469,8 @@ impl TryFrom<&BlsSignatureDto> for BlsSignature {
         Ok(BlsSignature::new({
             let mut bytes: [u8; BlsSignature::LENGTH] = [0; BlsSignature::LENGTH];
 
-            hex::decode_to_slice(&value.0, &mut bytes)
-                .map_err(|_| Error::InvalidSyntaxField("bytes"))?;
-                    
+            hex::decode_to_slice(&value.0, &mut bytes).map_err(|_| Error::InvalidSyntaxField("bytes"))?;
+
             bytes
         }))
     }
@@ -492,7 +502,7 @@ impl TryFrom<&InputDto> for Input {
                 i.transaction_id
                     .parse::<TransactionId>()
                     .map_err(|_| Error::InvalidSyntaxField("transactionId"))?,
-                i.transaction_output_index
+                i.transaction_output_index,
             )?))),
         }
     }
@@ -538,13 +548,16 @@ impl From<&Output> for OutputDto {
                 address: s.address().into(),
                 amount: s.amount(),
             }),
-            Output::SignatureLockedAsset(s) => OutputDto::SignatureLockedAsset( SignatureLockedAssetOutputDto {
+            Output::SignatureLockedAsset(s) => OutputDto::SignatureLockedAsset(SignatureLockedAssetOutputDto {
                 kind: SignatureLockedAssetOutput::KIND,
                 address: s.address().into(),
-                balances: s.balance_iter().map(|b| AssetBalanceDto {
-                id: hex::encode(b.id().deref()),
-                balance: b.balance(),
-            }).collect(),
+                balances: s
+                    .balance_iter()
+                    .map(|b| AssetBalanceDto {
+                        id: hex::encode(b.id().deref()),
+                        balance: b.balance(),
+                    })
+                    .collect(),
             }),
         }
     }
@@ -567,14 +580,15 @@ impl TryFrom<&OutputDto> for Output {
                         let mut asset_id: [u8; AssetId::LENGTH] = [0; AssetId::LENGTH];
 
                         match hex::decode_to_slice(&b.id, &mut asset_id)
-                            .map_err(|_| Error::InvalidSyntaxField("assetId")) {
-                                Ok(()) => (),
-                                Err(e) => return Err(e),
+                            .map_err(|_| Error::InvalidSyntaxField("assetId"))
+                        {
+                            Ok(()) => (),
+                            Err(e) => return Err(e),
                         }
-                    
+
                         Ok(AssetBalance::new(asset_id.into(), b.balance))
                     })
-                    .collect::<Result<Vec<AssetBalance>, _>>()?
+                    .collect::<Result<Vec<AssetBalance>, _>>()?,
             )?)),
         }
     }
@@ -645,7 +659,7 @@ impl TryFrom<&AddressDto> for Address {
     fn try_from(value: &AddressDto) -> Result<Self, Self::Error> {
         match value {
             AddressDto::Ed25519(a) => Ok(Address::Ed25519(a.try_into()?)),
-            AddressDto::Bls(b) => Ok(Address::Bls(BlsAddress::from_str(&b.0)?))
+            AddressDto::Bls(b) => Ok(Address::Bls(BlsAddress::from_str(&b.0)?)),
         }
     }
 }
@@ -697,7 +711,7 @@ impl From<&DataPayload> for DataPayloadDto {
     fn from(value: &DataPayload) -> Self {
         DataPayloadDto {
             kind: DataPayload::KIND,
-            data: hex::encode(value.data())
+            data: hex::encode(value.data()),
         }
     }
 }
@@ -711,11 +725,16 @@ impl TryFrom<&DataPayloadDto> for DataPayload {
         }
         match (0..value.data.len())
             .step_by(2)
-            .map(|i| value.data.get(i..i + 2)
-            .and_then(|sub| u8::from_str_radix(sub, 16).ok()))
-            .collect() {
-                Some(data) => Ok(DataPayload::new(data).map_err(|_| Error::InvalidSyntaxField("data"))?),
-                None => Err(Error::InvalidSyntaxField("data")),
+            .map(|i| {
+                value
+                    .data
+                    .get(i..i + 2)
+                    .and_then(|sub| u8::from_str_radix(sub, 16).ok())
+            })
+            .collect()
+        {
+            Some(data) => Ok(DataPayload::new(data).map_err(|_| Error::InvalidSyntaxField("data"))?),
+            None => Err(Error::InvalidSyntaxField("data")),
         }
     }
 }
@@ -743,14 +762,20 @@ impl TryFrom<&FpcPayloadDto> for FpcPayload {
 
     fn try_from(value: &FpcPayloadDto) -> Result<Self, Self::Error> {
         let builder = FpcPayload::builder()
-        .with_conflicts(
-            value.conflicts.iter().map(TryInto::try_into)
-            .collect::<Result<Vec<Conflict>, Error>>()?,
-        )
-        .with_timestamps(
-            value.timestamps.iter().map(TryInto::try_into)
-            .collect::<Result<Vec<Timestamp>, Error>>()?,
-        );
+            .with_conflicts(
+                value
+                    .conflicts
+                    .iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<Vec<Conflict>, Error>>()?,
+            )
+            .with_timestamps(
+                value
+                    .timestamps
+                    .iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<Vec<Timestamp>, Error>>()?,
+            );
 
         Ok(builder.finish()?)
     }
@@ -786,9 +811,9 @@ impl TryFrom<&ConflictDto> for Conflict {
                 Ok(Opinion::Like) => Ok(Opinion::Like),
                 Ok(Opinion::Dislike) => Ok(Opinion::Dislike),
                 Ok(Opinion::Unknown) => Ok(Opinion::Unknown),
-                _ => Err(Error::InvalidSyntaxField("opinion"))
+                _ => Err(Error::InvalidSyntaxField("opinion")),
             }?,
-            value.round
+            value.round,
         ))
     }
 }
@@ -823,7 +848,7 @@ impl TryFrom<&TimestampDto> for Timestamp {
                 Ok(Opinion::Like) => Ok(Opinion::Like),
                 Ok(Opinion::Dislike) => Ok(Opinion::Dislike),
                 Ok(Opinion::Unknown) => Ok(Opinion::Unknown),
-                _ => Err(Error::InvalidSyntaxField("opinion"))
+                _ => Err(Error::InvalidSyntaxField("opinion")),
             }?,
             value.round,
         ))
@@ -834,7 +859,7 @@ impl TryFrom<&TimestampDto> for Timestamp {
 pub struct ApplicationMessagePayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    instance_id: String,//u32,
+    instance_id: String, // u32,
 }
 
 impl From<&ApplicationMessagePayload> for ApplicationMessagePayloadDto {
@@ -850,7 +875,12 @@ impl TryFrom<&ApplicationMessagePayloadDto> for ApplicationMessagePayload {
     type Error = Error;
 
     fn try_from(value: &ApplicationMessagePayloadDto) -> Result<Self, Self::Error> {
-        Ok(ApplicationMessagePayload::new(value.instance_id.parse::<u32>().map_err(|_| Error::InvalidSyntaxField("instanceId"))?))
+        Ok(ApplicationMessagePayload::new(
+            value
+                .instance_id
+                .parse::<u32>()
+                .map_err(|_| Error::InvalidSyntaxField("instanceId"))?,
+        ))
     }
 }
 
@@ -881,25 +911,25 @@ impl TryFrom<&DkgPayloadDto> for DkgPayload {
 
     fn try_from(value: &DkgPayloadDto) -> Result<Self, Self::Error> {
         let builder = DkgPayload::builder()
-        .with_instance_id(
-            value
-                .instance_id
-                .parse::<u32>()
+            .with_instance_id(
+                value
+                    .instance_id
+                    .parse::<u32>()
                     .map_err(|_| Error::InvalidSyntaxField("instanceId"))?,
-        )
-        .with_from_index(
-            value
-                .from_index
-                .parse::<u32>()
+            )
+            .with_from_index(
+                value
+                    .from_index
+                    .parse::<u32>()
                     .map_err(|_| Error::InvalidSyntaxField("fromIndex"))?,
-        )
-        .with_to_index(
-            value
-                .to_index
-                .parse::<u32>()
+            )
+            .with_to_index(
+                value
+                    .to_index
+                    .parse::<u32>()
                     .map_err(|_| Error::InvalidSyntaxField("toIndex"))?,
-        )
-        .with_deal(EncryptedDeal::try_from(&value.deal)?);
+            )
+            .with_deal(EncryptedDeal::try_from(&value.deal)?);
 
         Ok(builder.finish()?)
     }
@@ -907,11 +937,11 @@ impl TryFrom<&DkgPayloadDto> for DkgPayload {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EncryptedDealDto {
-    dh_key: String, //VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
-    nonce: String, //VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
-    encrypted_share: String, //VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
-    threshold: String, //u32,
-    commitments: String, //VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
+    dh_key: String,          // VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
+    nonce: String,           // VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
+    encrypted_share: String, // VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
+    threshold: String,       // u32,
+    commitments: String,     // VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
 }
 
 impl From<&EncryptedDeal> for EncryptedDealDto {
@@ -931,52 +961,64 @@ impl TryFrom<&EncryptedDealDto> for EncryptedDeal {
 
     fn try_from(value: &EncryptedDealDto) -> Result<Self, Self::Error> {
         let builder = EncryptedDeal::builder()
-        .with_dh_key(
-            match (0..value.dh_key.len())
+            .with_dh_key(match (0..value.dh_key.len())
                 .step_by(2)
-                .map(|i| value.dh_key.get(i..i + 2)
-                .and_then(|sub| u8::from_str_radix(sub, 16).ok()))
-                .collect() {
-                    Some(dh_key) => Ok(dh_key),
-                    None => Err(Error::InvalidSyntaxField("dhKey")),
-            }?
-        )
-        .with_nonce(
-            match (0..value.nonce.len())
+                .map(|i| {
+                    value
+                        .dh_key
+                        .get(i..i + 2)
+                        .and_then(|sub| u8::from_str_radix(sub, 16).ok())
+                })
+                .collect()
+            {
+                Some(dh_key) => Ok(dh_key),
+                None => Err(Error::InvalidSyntaxField("dhKey")),
+            }?)
+            .with_nonce(match (0..value.nonce.len())
                 .step_by(2)
-                .map(|i| value.nonce.get(i..i + 2)
-                .and_then(|sub| u8::from_str_radix(sub, 16).ok()))
-                .collect() {
-                    Some(nonce) => Ok(nonce),
-                    None => Err(Error::InvalidSyntaxField("nonce")),
-            }?
-        )
-        .with_encrypted_share(
-            match (0..value.encrypted_share.len())
+                .map(|i| {
+                    value
+                        .nonce
+                        .get(i..i + 2)
+                        .and_then(|sub| u8::from_str_radix(sub, 16).ok())
+                })
+                .collect()
+            {
+                Some(nonce) => Ok(nonce),
+                None => Err(Error::InvalidSyntaxField("nonce")),
+            }?)
+            .with_encrypted_share(match (0..value.encrypted_share.len())
                 .step_by(2)
-                .map(|i| value.encrypted_share.get(i..i + 2)
-                .and_then(|sub| u8::from_str_radix(sub, 16).ok()))
-                .collect() {
-                    Some(encrypted_share) => Ok(encrypted_share),
-                    None => Err(Error::InvalidSyntaxField("encryptedShare")),
-            }?
-        )
-        .with_threshold(
-            value
-                .threshold
-                .parse::<u32>()
+                .map(|i| {
+                    value
+                        .encrypted_share
+                        .get(i..i + 2)
+                        .and_then(|sub| u8::from_str_radix(sub, 16).ok())
+                })
+                .collect()
+            {
+                Some(encrypted_share) => Ok(encrypted_share),
+                None => Err(Error::InvalidSyntaxField("encryptedShare")),
+            }?)
+            .with_threshold(
+                value
+                    .threshold
+                    .parse::<u32>()
                     .map_err(|_| Error::InvalidSyntaxField("threshold"))?,
-        )
-        .with_commitments(
-            match (0..value.commitments.len())
+            )
+            .with_commitments(match (0..value.commitments.len())
                 .step_by(2)
-                .map(|i| value.commitments.get(i..i + 2)
-                .and_then(|sub| u8::from_str_radix(sub, 16).ok()))
-                .collect() {
-                    Some(commitments) => Ok(commitments),
-                    None => Err(Error::InvalidSyntaxField("commitments")),
-            }?
-        );
+                .map(|i| {
+                    value
+                        .commitments
+                        .get(i..i + 2)
+                        .and_then(|sub| u8::from_str_radix(sub, 16).ok())
+                })
+                .collect()
+            {
+                Some(commitments) => Ok(commitments),
+                None => Err(Error::InvalidSyntaxField("commitments")),
+            }?);
 
         Ok(builder.finish()?)
     }
@@ -986,10 +1028,10 @@ impl TryFrom<&EncryptedDealDto> for EncryptedDeal {
 pub struct BeaconPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    instance_id: String, //u32,
-    round: String, //u64,
+    instance_id: String,        // u32,
+    round: String,              // u64,
     partial_public_key: String, //[u8; BEACON_PARTIAL_PUBLIC_KEY_LENGTH],
-    partial_signature: String, //[u8; BEACON_SIGNATURE_LENGTH],
+    partial_signature: String,  //[u8; BEACON_SIGNATURE_LENGTH],
 }
 
 impl From<&BeaconPayload> for BeaconPayloadDto {
@@ -1009,34 +1051,35 @@ impl TryFrom<&BeaconPayloadDto> for BeaconPayload {
 
     fn try_from(value: &BeaconPayloadDto) -> Result<Self, Self::Error> {
         let builder = BeaconPayload::builder()
-        .with_instance_id(
-            value
-                .instance_id
-                .parse::<u32>()
+            .with_instance_id(
+                value
+                    .instance_id
+                    .parse::<u32>()
                     .map_err(|_| Error::InvalidSyntaxField("instanceId"))?,
-        )
-        .with_round(
-            value
-                .round
-                .parse::<u64>()
+            )
+            .with_round(
+                value
+                    .round
+                    .parse::<u64>()
                     .map_err(|_| Error::InvalidSyntaxField("round"))?,
-        )
-        .with_partial_public_key({
-            let mut partial_public_key: [u8; BEACON_PARTIAL_PUBLIC_KEY_LENGTH] = [0; BEACON_PARTIAL_PUBLIC_KEY_LENGTH];
+            )
+            .with_partial_public_key({
+                let mut partial_public_key: [u8; BEACON_PARTIAL_PUBLIC_KEY_LENGTH] =
+                    [0; BEACON_PARTIAL_PUBLIC_KEY_LENGTH];
 
-            hex::decode_to_slice(&value.partial_public_key, &mut partial_public_key)
-                .map_err(|_| Error::InvalidSyntaxField("partialPublicKey"))?;
-                    
-            partial_public_key
-        })
-        .with_partial_signature({
-            let mut partial_signature: [u8; BEACON_SIGNATURE_LENGTH] = [0; BEACON_SIGNATURE_LENGTH];
+                hex::decode_to_slice(&value.partial_public_key, &mut partial_public_key)
+                    .map_err(|_| Error::InvalidSyntaxField("partialPublicKey"))?;
 
-            hex::decode_to_slice(&value.partial_signature, &mut partial_signature)
-                .map_err(|_| Error::InvalidSyntaxField("partialSignature"))?;
-                    
-            partial_signature
-        });
+                partial_public_key
+            })
+            .with_partial_signature({
+                let mut partial_signature: [u8; BEACON_SIGNATURE_LENGTH] = [0; BEACON_SIGNATURE_LENGTH];
+
+                hex::decode_to_slice(&value.partial_signature, &mut partial_signature)
+                    .map_err(|_| Error::InvalidSyntaxField("partialSignature"))?;
+
+                partial_signature
+            });
 
         Ok(builder.finish()?)
     }
@@ -1046,10 +1089,10 @@ impl TryFrom<&BeaconPayloadDto> for BeaconPayload {
 pub struct CollectiveBeaconPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    instance_id: String, //u32,
-    round: String, //u64,
-    prev_signature: String, //[u8; BEACON_SIGNATURE_LENGTH],
-    signature: String, //[u8; BEACON_SIGNATURE_LENGTH],
+    instance_id: String,            // u32,
+    round: String,                  // u64,
+    prev_signature: String,         //[u8; BEACON_SIGNATURE_LENGTH],
+    signature: String,              //[u8; BEACON_SIGNATURE_LENGTH],
     distributed_public_key: String, //[u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH],
 }
 
@@ -1071,42 +1114,43 @@ impl TryFrom<&CollectiveBeaconPayloadDto> for CollectiveBeaconPayload {
 
     fn try_from(value: &CollectiveBeaconPayloadDto) -> Result<Self, Self::Error> {
         let builder = CollectiveBeaconPayload::builder()
-        .with_instance_id(
-            value
-                .instance_id
-                .parse::<u32>()
+            .with_instance_id(
+                value
+                    .instance_id
+                    .parse::<u32>()
                     .map_err(|_| Error::InvalidSyntaxField("instanceId"))?,
-        )
-        .with_round(
-            value
-                .round
-                .parse::<u64>()
+            )
+            .with_round(
+                value
+                    .round
+                    .parse::<u64>()
                     .map_err(|_| Error::InvalidSyntaxField("round"))?,
-        )
-        .with_prev_signature({
-            let mut prev_signature: [u8; BEACON_SIGNATURE_LENGTH] = [0; BEACON_SIGNATURE_LENGTH];
+            )
+            .with_prev_signature({
+                let mut prev_signature: [u8; BEACON_SIGNATURE_LENGTH] = [0; BEACON_SIGNATURE_LENGTH];
 
-            hex::decode_to_slice(&value.prev_signature, &mut prev_signature)
-                .map_err(|_| Error::InvalidSyntaxField("prevSignature"))?;
-                    
-            prev_signature
-        })
-        .with_signature({
-            let mut signature: [u8; BEACON_SIGNATURE_LENGTH] = [0; BEACON_SIGNATURE_LENGTH];
+                hex::decode_to_slice(&value.prev_signature, &mut prev_signature)
+                    .map_err(|_| Error::InvalidSyntaxField("prevSignature"))?;
 
-            hex::decode_to_slice(&value.signature, &mut signature)
-                .map_err(|_| Error::InvalidSyntaxField("signature"))?;
-                    
-            signature
-        })
-        .with_distributed_public_key({
-            let mut distributed_public_key: [u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH] = [0; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH];
+                prev_signature
+            })
+            .with_signature({
+                let mut signature: [u8; BEACON_SIGNATURE_LENGTH] = [0; BEACON_SIGNATURE_LENGTH];
 
-            hex::decode_to_slice(&value.distributed_public_key, &mut distributed_public_key)
-                .map_err(|_| Error::InvalidSyntaxField("distributedPublicKey"))?;
-                    
-            distributed_public_key
-        });
+                hex::decode_to_slice(&value.signature, &mut signature)
+                    .map_err(|_| Error::InvalidSyntaxField("signature"))?;
+
+                signature
+            })
+            .with_distributed_public_key({
+                let mut distributed_public_key: [u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH] =
+                    [0; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH];
+
+                hex::decode_to_slice(&value.distributed_public_key, &mut distributed_public_key)
+                    .map_err(|_| Error::InvalidSyntaxField("distributedPublicKey"))?;
+
+                distributed_public_key
+            });
 
         Ok(builder.finish()?)
     }
@@ -1116,9 +1160,9 @@ impl TryFrom<&CollectiveBeaconPayloadDto> for CollectiveBeaconPayload {
 pub struct SaltDeclarationPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    node_id: String, //u32,
+    node_id: String, // u32,
     salt: SaltDto,
-    timestamp: String, //u64,
+    timestamp: String, // u64,
     signature: String, //[u8; Ed25519Signature::SIGNATURE_LENGTH],
 }
 
@@ -1139,27 +1183,27 @@ impl TryFrom<&SaltDeclarationPayloadDto> for SaltDeclarationPayload {
 
     fn try_from(value: &SaltDeclarationPayloadDto) -> Result<Self, Self::Error> {
         let builder = SaltDeclarationPayload::builder()
-        .with_node_id(
-            value
-                .node_id
-                .parse::<u32>()
+            .with_node_id(
+                value
+                    .node_id
+                    .parse::<u32>()
                     .map_err(|_| Error::InvalidSyntaxField("nodeId"))?,
-        )
-        .with_salt(Salt::try_from(&value.salt)?)
-        .with_timestamp(
-            value
-                .timestamp
-                .parse::<u64>()
+            )
+            .with_salt(Salt::try_from(&value.salt)?)
+            .with_timestamp(
+                value
+                    .timestamp
+                    .parse::<u64>()
                     .map_err(|_| Error::InvalidSyntaxField("timestamp"))?,
-        )
-        .with_signature({
-            let mut signature: [u8; Ed25519Signature::SIGNATURE_LENGTH] = [0; Ed25519Signature::SIGNATURE_LENGTH];
+            )
+            .with_signature({
+                let mut signature: [u8; Ed25519Signature::SIGNATURE_LENGTH] = [0; Ed25519Signature::SIGNATURE_LENGTH];
 
-            hex::decode_to_slice(&value.signature, &mut signature)
-                .map_err(|_| Error::InvalidSyntaxField("signature"))?;
-                    
-            signature
-        });
+                hex::decode_to_slice(&value.signature, &mut signature)
+                    .map_err(|_| Error::InvalidSyntaxField("signature"))?;
+
+                signature
+            });
 
         Ok(builder.finish()?)
     }
@@ -1167,8 +1211,8 @@ impl TryFrom<&SaltDeclarationPayloadDto> for SaltDeclarationPayload {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SaltDto {
-    bytes: String, //VecPrefix<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>>,
-    expiry_time: String, //u64,
+    bytes: String,       // VecPrefix<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>>,
+    expiry_time: String, // u64,
 }
 
 impl From<&Salt> for SaltDto {
@@ -1187,16 +1231,21 @@ impl TryFrom<&SaltDto> for Salt {
         Ok(Salt::new(
             match (0..value.bytes.len())
                 .step_by(2)
-                .map(|i| value.bytes.get(i..i + 2)
-                .and_then(|sub| u8::from_str_radix(sub, 16).ok()))
-                .collect() {
-                    Some(bytes) => Ok(bytes),
-                    None => Err(Error::InvalidSyntaxField("bytes")),
+                .map(|i| {
+                    value
+                        .bytes
+                        .get(i..i + 2)
+                        .and_then(|sub| u8::from_str_radix(sub, 16).ok())
+                })
+                .collect()
+            {
+                Some(bytes) => Ok(bytes),
+                None => Err(Error::InvalidSyntaxField("bytes")),
             }?,
             value
                 .expiry_time
                 .parse::<u64>()
-                    .map_err(|_| Error::InvalidSyntaxField("expiryTime"))?,
+                .map_err(|_| Error::InvalidSyntaxField("expiryTime"))?,
         )?)
     }
 }
@@ -1205,8 +1254,8 @@ impl TryFrom<&SaltDto> for Salt {
 pub struct IndexationPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    index: String, //VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>>,
-    data: String, //VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>,
+    index: String, // VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>>,
+    data: String,  // VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>,
 }
 
 impl From<&IndexationPayload> for IndexationPayloadDto {
@@ -1226,20 +1275,30 @@ impl TryFrom<&IndexationPayloadDto> for IndexationPayload {
         Ok(IndexationPayload::new(
             match (0..value.index.len())
                 .step_by(2)
-                .map(|i| value.index.get(i..i + 2)
-                .and_then(|sub| u8::from_str_radix(sub, 16).ok()))
-                .collect() {
-                    Some(index) => Ok(index),
-                    None => Err(Error::InvalidSyntaxField("index")),
+                .map(|i| {
+                    value
+                        .index
+                        .get(i..i + 2)
+                        .and_then(|sub| u8::from_str_radix(sub, 16).ok())
+                })
+                .collect()
+            {
+                Some(index) => Ok(index),
+                None => Err(Error::InvalidSyntaxField("index")),
             }?,
             match (0..value.data.len())
                 .step_by(2)
-                .map(|i| value.data.get(i..i + 2)
-                .and_then(|sub| u8::from_str_radix(sub, 16).ok()))
-                .collect() {
-                    Some(data) => Ok(data),
-                    None => Err(Error::InvalidSyntaxField("data")),
-            }?
+                .map(|i| {
+                    value
+                        .data
+                        .get(i..i + 2)
+                        .and_then(|sub| u8::from_str_radix(sub, 16).ok())
+                })
+                .collect()
+            {
+                Some(data) => Ok(data),
+                None => Err(Error::InvalidSyntaxField("data")),
+            }?,
         )?)
     }
 }

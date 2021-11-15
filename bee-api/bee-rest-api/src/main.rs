@@ -4,15 +4,9 @@
 pub mod endpoints;
 pub mod types;
 
-use bee_storage_sled::{
-    storage::Storage,
-    config::SledConfigBuilder,
-};
+use bee_storage_sled::{config::SledConfigBuilder, storage::Storage};
 
-use axum::{
-    AddExtensionLayer,
-    Router
-};
+use axum::{AddExtensionLayer, Router};
 use std::{
     net::SocketAddr,
     sync::{Arc, Mutex},
@@ -34,7 +28,9 @@ async fn main() {
         }
         Ok(conf) => storage = conf,
     }
-    let app_storage = Arc::new(AppStorage {storage: Mutex::new(storage)});
+    let app_storage = Arc::new(AppStorage {
+        storage: Mutex::new(storage),
+    });
     let app = Router::new()
         .nest("/api", endpoints::routes::api::api_routes())
         .layer(AddExtensionLayer::new(app_storage));
@@ -42,8 +38,5 @@ async fn main() {
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     println!("listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
 }
