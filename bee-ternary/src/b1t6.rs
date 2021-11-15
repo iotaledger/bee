@@ -32,7 +32,7 @@ pub fn encode<T: RawEncodingBuf>(bytes: &[u8]) -> TritBuf<T>
 where
     T::Slice: RawEncoding<Trit = Btrit>,
 {
-    let mut trits = TritBuf::new();
+    let mut trits = TritBuf::with_capacity(bytes.len() * 6);
 
     for byte in bytes {
         let (t1, t2) = encode_group(*byte);
