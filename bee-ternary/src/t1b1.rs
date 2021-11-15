@@ -161,4 +161,8 @@ where
     fn as_slice_mut(&mut self) -> &mut Self::Slice {
         unsafe { &mut *(Self::Slice::make(self.0.as_ptr() as _, 0, self.0.len()) as *mut _) }
     }
+
+    fn capacity(&self) -> usize {
+        self.0.capacity()
+    }
 }

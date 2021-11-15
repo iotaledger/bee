@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.5.1 - 2021-11-15
 
+### Added
+
+- `.capacity()` for `TritBuf`;
+
 ### Changed
 
 - Preallocate `TritBuf` in `b1t6::encode` for better performance;

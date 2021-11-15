@@ -92,6 +92,9 @@ pub trait RawEncodingBuf {
     /// View the trits in this buffer as a mutable slice.
     fn as_slice_mut(&mut self) -> &mut Self::Slice;
 
+    /// Returns the number of trits the buffer can hold.
+    fn capacity(&self) -> usize;
+
     /// Convert this encoding into another encoding.
     /// TODO: Rename this `reencode`
     #[allow(clippy::wrong_self_convention)]
