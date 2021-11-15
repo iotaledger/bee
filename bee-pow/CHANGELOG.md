@@ -23,8 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Example that counts the number of allocations while scoring PoWs
-
 ### Changed
 
 - Scoring of Proof of Work can now reuse hash functions
