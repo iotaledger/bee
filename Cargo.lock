@@ -203,7 +203,7 @@ dependencies = [
 
 [[package]]
 name = "bee-crypto"
-version = "0.2.1-alpha"
+version = "0.3.0"
 dependencies = [
  "bee-ternary",
  "byteorder",
@@ -281,7 +281,7 @@ dependencies = [
 
 [[package]]
 name = "bee-pow"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bee-crypto",
  "bee-ternary",

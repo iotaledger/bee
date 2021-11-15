@@ -13,13 +13,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
+### Removed
+
+### Fixed
+
+### Security -->
+
+## 0.3.0 - 2021-11-17
+
+### Added
+
+### Changed
+
+### Deprecated
+
 - Deprecated `CurlP` from `bee-crypto` (now uses `iota-crypto` instead)
 
 ### Removed
 
 ### Fixed
 
-### Security -->
+### Security
 
 ## 0.2.1-alpha - 2021-04-07
 

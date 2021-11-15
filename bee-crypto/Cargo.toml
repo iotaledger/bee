@@ -1,6 +1,6 @@
 [package]
 name = "bee-crypto"
-version = "0.2.1-alpha"
+version = "0.3.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Cryptographic primitives of the IOTA protocol"
