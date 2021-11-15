@@ -3,7 +3,7 @@ name = "bee-node"
 version = "0.3.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
-description = ""
+description = "Default node implementations."
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
@@ -21,6 +21,7 @@ bee-protocol = { path = "../bee-protocol", default-features = false }
 bee-rest-api = { path = "../bee-api/bee-rest-api", default-features = false, features = [ "endpoints" ] }
 bee-runtime = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false }
 bee-storage = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false }
+bee-storage-null = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false }
 bee-storage-rocksdb = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false, optional = true }
 bee-storage-sled = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false, optional = true }
 bee-tangle = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false }

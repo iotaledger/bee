@@ -11,7 +11,7 @@ mod websocket;
 mod workers;
 
 use crate::{
-    config::NodeConfig,
+    fullnode::config::FullNodeConfig,
     plugins::dashboard::{
         config::DashboardConfig,
         websocket::{
@@ -108,7 +108,7 @@ where
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         // TODO: load them differently if possible
-        let node_config = node.resource::<NodeConfig<N::Backend>>();
+        let node_config = node.resource::<FullNodeConfig<N::Backend>>();
         let rest_api_config = node_config.rest_api.clone();
         let tangle = node.resource::<Tangle<N::Backend>>();
         let storage = node.storage();
@@ -172,7 +172,7 @@ where
             let routes = routes::routes(
                 storage.clone(),
                 tangle.clone(),
-                node_config.node_id.to_string(),
+                node_config.local().peer_id().to_string(),
                 config.auth().clone(),
                 rest_api_config.clone(),
                 users.clone(),

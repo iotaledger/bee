@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    config::NodeConfig,
+    fullnode::config::FullNodeConfig,
     plugins::dashboard::{broadcast, websocket::WsUsers, Dashboard},
     storage::StorageBackend,
 };
@@ -36,7 +36,7 @@ where
 {
     let tangle = node.resource::<Tangle<N::Backend>>();
     let peer_manager = node.resource::<PeerManager>();
-    let node_config = node.resource::<NodeConfig<N::Backend>>();
+    let node_config = node.resource::<FullNodeConfig<N::Backend>>();
     let metrics = node.resource::<NodeMetrics>();
     let node_info = node.info();
     let users = users.clone();
@@ -62,9 +62,9 @@ where
                 version: node_info.version.clone(),
                 latest_version: node_info.version.clone(),
                 uptime: uptime.elapsed().as_millis() as u64,
-                node_id: node_config.node_id.to_string(),
-                node_alias: node_config.alias.clone(),
-                bech32_hrp: node_config.bech32_hrp.clone(),
+                node_id: node_config.local().peer_id().to_string(),
+                node_alias: node_config.local().alias().to_string(),
+                bech32_hrp: node_config.network_spec().hrp().to_string(),
                 connected_peers_count: 0,
                 current_requested_ms: 0,
                 request_queue_queued: 0,

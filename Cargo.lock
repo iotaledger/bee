@@ -342,6 +342,7 @@ dependencies = [
  "bee-rest-api",
  "bee-runtime",
  "bee-storage",
+ "bee-storage-null",
  "bee-storage-rocksdb",
  "bee-storage-sled",
  "bee-tangle",
@@ -469,6 +470,14 @@ dependencies = [
  "bee-common",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "bee-storage-null"
+version = "0.1.0"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+dependencies = [
+ "bee-storage",
 ]
 
 [[package]]

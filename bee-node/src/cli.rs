@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::NodeConfigBuilder, tools::Tool};
+use crate::tools::Tool;
 
 use bee_common::logger::{LoggerConfigBuilder, LOGGER_STDOUT_NAME};
 use bee_storage::backend::StorageBackend;
@@ -50,17 +50,5 @@ impl CliArgs {
 
     pub fn version(&self) -> bool {
         self.version
-    }
-}
-
-impl<B: StorageBackend> NodeConfigBuilder<B> {
-    pub fn with_cli_args(mut self, args: CliArgs) -> Self {
-        if let Some(log_level) = args.log_level {
-            if self.logger.is_none() {
-                self.logger = Some(LoggerConfigBuilder::default());
-            }
-            self.logger.as_mut().unwrap().level(LOGGER_STDOUT_NAME, log_level);
-        }
-        self
     }
 }
