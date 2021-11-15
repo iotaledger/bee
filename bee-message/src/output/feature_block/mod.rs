@@ -202,11 +202,11 @@ impl Packable for FeatureBlocks {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        0u16.packed_len() + self.0.iter().map(Packable::packed_len).sum::<usize>()
+        0u8.packed_len() + self.0.iter().map(Packable::packed_len).sum::<usize>()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.0.len() as u16).pack(writer)?;
+        (self.0.len() as u8).pack(writer)?;
         for feature_block in self.0.iter() {
             feature_block.pack(writer)?
         }
@@ -215,7 +215,7 @@ impl Packable for FeatureBlocks {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let feature_blocks_len = u16::unpack_inner::<R, CHECK>(reader)?;
+        let feature_blocks_len = u8::unpack_inner::<R, CHECK>(reader)?;
 
         if CHECK && feature_blocks_len > FEATURE_BLOCK_COUNT_MAX {
             return Err(Error::InvalidFeatureBlockCount(feature_blocks_len));
