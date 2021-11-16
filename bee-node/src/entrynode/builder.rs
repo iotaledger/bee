@@ -6,9 +6,7 @@ use super::{config::EntryNodeConfig, EntryNode, EntryNodeError};
 use crate::{
     core::{Core, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
     plugins::VersionChecker,
-    shutdown,
-    storage::StorageBackend,
-    util, AUTOPEERING_VERSION, PEERSTORE_PATH,
+    shutdown, util, AUTOPEERING_VERSION, PEERSTORE_PATH,
 };
 
 use bee_autopeering::{
@@ -23,7 +21,6 @@ use bee_runtime::{
     worker::Worker,
 };
 
-use anymap::Map;
 use async_trait::async_trait;
 use futures::StreamExt;
 use fxhash::FxBuildHasher;
@@ -31,12 +28,12 @@ use tokio::signal::unix::SignalKind;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{
-    any::{Any, TypeId},
+    any::{type_name, Any, TypeId},
     collections::HashMap,
     convert::Infallible,
 };
 
-/// A builder to create an autopeering entry node.
+/// A builder to create a Bee entry node (autopeering).
 pub struct EntryNodeBuilder {
     config: EntryNodeConfig,
     deps: HashMap<TypeId, &'static [TypeId], FxBuildHasher>,
@@ -58,6 +55,7 @@ impl NodeBuilder<EntryNode> for EntryNodeBuilder {
     type Error = EntryNodeError;
     type Config = EntryNodeConfig;
 
+    /// Creates an entry node builder from the provided config.
     fn new(config: Self::Config) -> Result<Self, Self::Error> {
         Ok(Self {
             config: config.clone(),
@@ -69,17 +67,45 @@ impl NodeBuilder<EntryNode> for EntryNodeBuilder {
         })
     }
 
+    /// Adds a worker (without config) to the entry node builder.
     fn with_worker<W: Worker<EntryNode> + 'static>(self) -> Self
     where
         W::Config: Default,
     {
-        self
+        self.with_worker_cfg::<W>(W::Config::default())
     }
 
+    /// Adds a worker (with config) to the entry node builder.
     fn with_worker_cfg<W: Worker<EntryNode> + 'static>(mut self, config: W::Config) -> Self {
+        self.deps.insert(TypeId::of::<W>(), W::dependencies());
+        self.worker_starts.insert(
+            TypeId::of::<W>(),
+            Box::new(|node| {
+                Box::pin(async move {
+                    log::debug!("Starting worker {}...", type_name::<W>());
+                    match W::start(node, config).await {
+                        Ok(w) => node.core.add_worker(w),
+                        Err(e) => panic!("Worker `{}` failed to start: {:?}.", type_name::<W>(), e),
+                    }
+                })
+            }),
+        );
+        self.worker_stops.insert(
+            TypeId::of::<W>(),
+            Box::new(|node| {
+                Box::pin(async move {
+                    match node.core.remove_worker::<W>().stop(node).await {
+                        Ok(()) => {}
+                        Err(e) => panic!("Worker `{}` failed to stop: {:?}.", type_name::<W>(), e),
+                    }
+                })
+            }),
+        );
+        self.worker_names.insert(TypeId::of::<W>(), type_name::<W>());
         self
     }
 
+    /// Adds a resource to the entry node builder.
     fn with_resource<R: Any + Send + Sync>(mut self, res: R) -> Self {
         self.resource_registers.push(Box::new(move |node| {
             node.register_resource(res);
@@ -87,8 +113,9 @@ impl NodeBuilder<EntryNode> for EntryNodeBuilder {
         self
     }
 
+    /// Returns the built entry node.
     async fn finish(mut self) -> Result<EntryNode, Self::Error> {
-        let mut builder = self;
+        let builder = self;
 
         if !builder.config().autopeering.enabled {
             return Err(EntryNodeError::DisabledAutopeering);
@@ -188,7 +215,7 @@ async fn initialize_autopeering(
     let network_name = builder.config().network_spec().name().to_string();
 
     // The neighbor validator that includes/excludes certain peers by applying custom criteria.
-    let neighbor_validator = EntryNodeNeighborValidator {};
+    let neighbor_validator = EntryNodeNeighborValidator::new();
 
     // The peer store for persisting discovered peers.
     let peerstore_cfg = SledPeerStoreConfig::new().path(PEERSTORE_PATH);
@@ -242,7 +269,7 @@ impl EntryNodeNeighborValidator {
 }
 
 impl NeighborValidator for EntryNodeNeighborValidator {
-    fn is_valid(&self, peer: &bee_autopeering::Peer) -> bool {
+    fn is_valid(&self, _peer: &bee_autopeering::Peer) -> bool {
         // Deny any peering attempt.
         false
     }

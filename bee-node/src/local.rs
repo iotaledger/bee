@@ -11,7 +11,6 @@ use crate::{KEYPAIR_STR_LENGTH, LOCAL_ALIAS_DEFAULT};
 pub enum LocalError {
     InvalidKeypair,
     HexDecode,
-    HexEncode,
     KeypairDecode,
 }
 
@@ -81,7 +80,7 @@ impl Local {
     }
 
     pub(crate) fn alias(&self) -> &str {
-        &self.alias()
+        &self.alias
     }
 
     pub(crate) fn is_new(&self) -> bool {

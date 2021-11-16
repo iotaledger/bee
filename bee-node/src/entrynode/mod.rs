@@ -7,24 +7,18 @@ pub mod config;
 use self::{builder::EntryNodeBuilder, config::EntryNodeConfig};
 
 use crate::{
-    core::{Core, CoreError, WorkerStop},
-    shutdown::{ShutdownRx, ShutdownTx},
+    core::{Core, CoreError},
+    shutdown::ShutdownRx,
 };
 
 use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Worker};
 use bee_storage::backend::StorageBackend as _;
 use bee_storage_null::Storage as NullStorage;
 
-use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;
 use futures::{channel::oneshot, Future};
 
-use std::{
-    any::{type_name, Any, TypeId},
-    collections::HashMap,
-    marker::PhantomData,
-    ops::Deref,
-};
+use std::any::{type_name, Any, TypeId};
 
 /// Entry node related errors.
 #[derive(Debug, thiserror::Error)]
@@ -37,7 +31,7 @@ pub enum EntryNodeError {
     Core(#[from] CoreError),
 }
 
-/// Represents a Bee entry node.
+/// Represents a Bee entry node (autopeering).
 pub struct EntryNode {
     pub(crate) config: EntryNodeConfig,
     pub(crate) core: Core<Self>,
@@ -45,9 +39,6 @@ pub struct EntryNode {
 
 impl EntryNode {
     /// Returns the node config.
-    // pub fn config(&self) -> impl Deref<Target = EntryNodeConfig> + Clone {
-    //     self.inner.resource()
-    // }
     pub fn config(&self) -> &EntryNodeConfig {
         &self.config
     }

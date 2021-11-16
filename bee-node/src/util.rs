@@ -31,7 +31,7 @@ pub(crate) fn create_node_info() -> NodeInfo {
     }
 }
 
-/// Prints the Bee logo to the terminal.
+/// Prints the Bee banner and the commit version to stdout.
 pub fn print_banner_and_version(print_banner: bool) {
     let version = if BEE_GIT_COMMIT.is_empty() {
         BEE_VERSION.to_owned()

@@ -1,13 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Contains the default node implementations of the Bee framework:
-//! * Bee full node;
-//! * Bee (autopeering) entry node;
+//! Contains the following default node implementations:
+//! * A Bee full node;
+//! * A Bee entry node (autopeering);
 
-#![allow(warnings)]
+#![deny(missing_docs)]
 
-mod cli;
+mod cl;
 mod config;
 mod core;
 mod entrynode;
@@ -20,15 +20,11 @@ mod util;
 pub mod plugins;
 pub mod tools;
 
-pub use cli::CliArgs;
+pub use cl::ClArgs;
 pub use config::{NodeConfig, NodeConfigBuilder};
 pub use entrynode::{builder::EntryNodeBuilder, config::EntryNodeConfig, EntryNode};
-pub use fullnode::{builder::FullNodeBuilder, FullNode, config::FullNodeConfig};
+pub use fullnode::{builder::FullNodeBuilder, config::FullNodeConfig, FullNode};
 pub use util::print_banner_and_version;
-
-use futures::future::Future;
-
-use std::pin::Pin;
 
 pub(crate) const BEE_NAME: &str = "Bee";
 pub(crate) const BEE_VERSION: &str = env!("CARGO_PKG_VERSION");

@@ -4,45 +4,39 @@
 use super::{config::FullNodeConfig, FullNode, FullNodeError};
 
 use crate::{
-    config::{NetworkSpec, NodeConfigBuilder},
+    config::NetworkSpec,
     core::{Core, CoreError, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
     plugins::{self, Mqtt, VersionChecker},
     shutdown,
     storage::StorageBackend,
-    util, AUTOPEERING_VERSION, BEE_GIT_COMMIT, BEE_NAME, BEE_VERSION, PEERSTORE_PATH,
+    util, AUTOPEERING_VERSION, PEERSTORE_PATH,
 };
 
 #[cfg(feature = "dashboard")]
 use crate::plugins::Dashboard;
 
 use bee_autopeering::{
-    event::EventRx,
-    peerstore::{InMemoryPeerStore, SledPeerStore, SledPeerStoreConfig},
-    AutopeeringConfig, Local, NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
+    peerstore::{SledPeerStore, SledPeerStoreConfig},
+    NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
-use bee_gossip::{Keypair, NetworkConfig, NetworkEventReceiver, Protocol};
-use bee_ledger::workers::{pruning::config::PruningConfig, snapshot::config::SnapshotConfig};
-use bee_protocol::workers::config::ProtocolConfig;
+use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
 use bee_runtime::{
     event::Bus,
-    node::{Node, NodeBuilder, NodeInfo},
+    node::{Node, NodeBuilder},
     worker::Worker,
 };
 use bee_storage::system::StorageHealth;
 
-use anymap::Map;
 use async_trait::async_trait;
-use futures::{channel::oneshot, future::Future};
 use fxhash::FxBuildHasher;
 use tokio::signal::unix::SignalKind;
 
 use std::{
     any::{type_name, Any, TypeId},
-    collections::{HashMap, HashSet},
-    marker::PhantomData,
-    pin::Pin,
+    collections::HashMap,
 };
 
+/// A builder to create a Bee full node.
 pub struct FullNodeBuilder<B: StorageBackend> {
     config: FullNodeConfig<B>,
     deps: HashMap<TypeId, &'static [TypeId], FxBuildHasher>,
@@ -77,7 +71,7 @@ impl<S: StorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
     type Error = FullNodeError;
     type Config = FullNodeConfig<S>;
 
-    /// Creates a fullnode builder from the provided config.
+    /// Creates a full node builder from the provided config.
     fn new(config: Self::Config) -> Result<Self, Self::Error> {
         Ok(Self {
             config,
@@ -89,7 +83,7 @@ impl<S: StorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
         })
     }
 
-    /// Adds a worker (without config) to the node.
+    /// Adds a worker (without config) to the full node.
     fn with_worker<W: Worker<FullNode<S>> + 'static>(self) -> Self
     where
         W::Config: Default,
@@ -97,7 +91,7 @@ impl<S: StorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
         self.with_worker_cfg::<W>(W::Config::default())
     }
 
-    /// Adds a worker (with config) to the node.
+    /// Adds a worker (with config) to the full node.
     fn with_worker_cfg<W: Worker<FullNode<S>> + 'static>(mut self, config: W::Config) -> Self {
         self.deps.insert(TypeId::of::<W>(), W::dependencies());
         self.worker_starts.insert(
@@ -127,7 +121,7 @@ impl<S: StorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
         self
     }
 
-    /// Adds a resource to the node.
+    /// Adds a resource to the full node.
     fn with_resource<R: Any + Send + Sync>(mut self, res: R) -> Self {
         self.resource_registers.push(Box::new(move |node| {
             node.register_resource(res);
@@ -135,9 +129,9 @@ impl<S: StorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
         self
     }
 
-    /// Finishes the builder, and either returns a full node instance, or an error explaining why it couldn't be built.
+    /// Returns the built full node.
     async fn finish(self) -> Result<FullNode<S>, Self::Error> {
-        let mut builder = self;
+        let builder = self;
 
         // Print the network info the node is trying to connect to.
         let network_name = builder.config().network_spec().name();
@@ -338,9 +332,7 @@ async fn initialize_autopeering<S: StorageBackend>(
         let network_name = config.network_spec().name().to_string();
 
         // The neighbor validator that includes/excludes certain peers by applying custom criteria.
-        let neighbor_validator = FullNodeNeighborValidator {
-            network_name: network_name.clone(),
-        };
+        let neighbor_validator = FullNodeNeighborValidator::new(network_name.clone());
 
         // The peer store for persisting discovered peers.
         let peerstore_cfg = SledPeerStoreConfig::new().path(PEERSTORE_PATH);

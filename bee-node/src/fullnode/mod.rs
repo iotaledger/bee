@@ -7,25 +7,17 @@ pub mod config;
 use self::{builder::FullNodeBuilder, config::FullNodeConfig};
 
 use crate::{
-    core::{Core, CoreError, WorkerStop},
+    core::{Core, CoreError},
     shutdown::ShutdownRx,
     storage::StorageBackend,
 };
 
 use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Worker};
 
-use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;
 use futures::{channel::oneshot, future::Future};
-use log::{debug, info, warn};
 
-use std::{
-    any::{type_name, Any, TypeId},
-    collections::HashMap,
-    marker::PhantomData,
-    ops::Deref,
-    pin::Pin,
-};
+use std::any::{type_name, Any, TypeId};
 
 /// Full node related errors.
 #[derive(Debug, thiserror::Error)]
@@ -50,9 +42,6 @@ pub struct FullNode<S: StorageBackend> {
 
 impl<S: StorageBackend> FullNode<S> {
     /// Returns the node config.
-    // pub fn config(&self) -> impl Deref<Target = FullNodeConfig<B>> + Clone {
-    //     self.inner.resource()
-    // }
     pub fn config(&self) -> &FullNodeConfig<S> {
         &self.config
     }

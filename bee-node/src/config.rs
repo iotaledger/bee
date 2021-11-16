@@ -8,7 +8,7 @@
 //! Each node type grabs the information it needs from the config, and discards the rest.
 
 use crate::{
-    cli::CliArgs,
+    cl::ClArgs,
     local::Local,
     plugins::mqtt::config::{MqttConfig, MqttConfigBuilder},
     util, BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT,
@@ -19,7 +19,7 @@ use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder}
 
 use bee_autopeering::config::{AutopeeringConfig, AutopeeringTomlConfig};
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
-use bee_gossip::{Keypair, NetworkConfig, NetworkConfigBuilder, PeerId, PublicKey};
+use bee_gossip::{NetworkConfig, NetworkConfigBuilder};
 use bee_ledger::workers::{
     pruning::config::{PruningConfig, PruningConfigBuilder},
     snapshot::config::{SnapshotConfig, SnapshotConfigBuilder},
@@ -29,11 +29,11 @@ use bee_rest_api::endpoints::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_storage::backend::StorageBackend;
 use bee_tangle::config::{TangleConfig, TangleConfigBuilder};
 
-use crypto::hashes::{blake2b::Blake2b256, Digest};
 use serde::Deserialize;
 
 use std::{fs, path::Path};
 
+/// Config file errors.
 #[derive(Debug, thiserror::Error)]
 pub enum NodeConfigError {
     #[error("Reading the config file failed. Caused by: {0}.")]
@@ -42,30 +42,37 @@ pub enum NodeConfigError {
     ConfigBuilderDeserialization(#[from] toml::de::Error),
 }
 
+/// Entails all data that can be stored in a Bee config file.
 pub struct NodeConfig<S: StorageBackend> {
-    pub local: Local,
-    pub network: NetworkSpec,
-    pub logger: LoggerConfig,
-    pub gossip: NetworkConfig,
-    pub autopeering: AutopeeringConfig,
-    pub protocol: ProtocolConfig,
-    pub rest_api: RestApiConfig,
-    pub snapshot: SnapshotConfig,
-    pub pruning: PruningConfig,
-    pub storage: S::Config,
-    pub tangle: TangleConfig,
-    pub mqtt: MqttConfig,
+    pub(crate) local: Local,
+    pub(crate) network_spec: NetworkSpec,
+    pub(crate) logger: LoggerConfig,
+    pub(crate) gossip: NetworkConfig,
+    pub(crate) autopeering: AutopeeringConfig,
+    pub(crate) protocol: ProtocolConfig,
+    pub(crate) rest_api: RestApiConfig,
+    pub(crate) snapshot: SnapshotConfig,
+    pub(crate) pruning: PruningConfig,
+    pub(crate) storage: S::Config,
+    pub(crate) tangle: TangleConfig,
+    pub(crate) mqtt: MqttConfig,
     #[cfg(feature = "dashboard")]
-    pub dashboard: DashboardConfig,
+    pub(crate) dashboard: DashboardConfig,
 }
 
 impl<S: StorageBackend> NodeConfig<S> {
+    /// Returns the logger config.
+    pub fn logger(&self) -> &LoggerConfig {
+        &self.logger
+    }
+
     /// Returns whether this node should run as an autopeering entry node.
     pub fn run_as_entry_node(&self) -> bool {
         self.autopeering.run_as_entry_node
     }
 }
 
+/// A builder for a Bee config, that can be deserialized from a corresponding config file.
 #[derive(Default, Deserialize)]
 pub struct NodeConfigBuilder<S: StorageBackend> {
     pub(crate) identity: Option<String>,
@@ -96,8 +103,8 @@ impl<S: StorageBackend> NodeConfigBuilder<S> {
     }
 
     /// Applies CLI arguments to the builder.
-    pub fn with_cli_args(mut self, args: CliArgs) -> Self {
-        if let Some(log_level) = args.log_level().copied() {
+    pub fn with_cli_args(mut self, args: ClArgs) -> Self {
+        if let Some(log_level) = args.log_level() {
             if self.logger.is_none() {
                 self.logger = Some(LoggerConfigBuilder::default());
             }
@@ -128,7 +135,7 @@ impl<S: StorageBackend> NodeConfigBuilder<S> {
 
         NodeConfig {
             local,
-            network: network_spec,
+            network_spec,
             logger: self.logger.unwrap_or_default().finish(),
             // TODO: Create specific error types for each config section, e.g.
             // Error::NetworkConfigError(bee_gossip::config::Error)

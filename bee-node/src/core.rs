@@ -3,29 +3,18 @@
 
 //! Contains the base types to build a Bee node.
 
-use crate::{
-    shutdown::{ShutdownRx, ShutdownTx},
-    storage::StorageBackend,
-};
+use crate::shutdown::ShutdownTx;
 
-use bee_runtime::{
-    event::Bus,
-    node::{Node, NodeBuilder},
-    resource::ResourceHandle,
-    worker::Worker,
-};
+use bee_runtime::{node::Node, worker::Worker};
 
 use anymap::{any::Any as AnyMapAny, Map};
-use async_trait::async_trait;
-use futures::{channel::oneshot, Future};
+use futures::Future;
 use fxhash::FxBuildHasher;
 use tokio::task;
 
 use std::{
-    any::{type_name, Any, TypeId},
+    any::{type_name, TypeId},
     collections::{HashMap, HashSet},
-    marker::PhantomData,
-    ops::Deref,
     pin::Pin,
 };
 
