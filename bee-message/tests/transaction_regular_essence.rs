@@ -3,7 +3,7 @@
 
 use bee_message::prelude::*;
 use bee_test::rand::{
-    bytes::rand_bytes_32,
+    bytes::rand_bytes_array,
     payload::{rand_indexation_payload, rand_treasury_transaction_payload},
 };
 
@@ -87,7 +87,7 @@ fn build_invalid_payload_kind() {
     let essence = RegularEssence::builder()
         .with_inputs(vec![input1, input2])
         .with_outputs(vec![output])
-        .with_payload(payload)
+        .with_payload(payload.into())
         .finish();
 
     assert!(matches!(essence, Err(Error::InvalidPayloadKind(4))));
@@ -171,7 +171,7 @@ fn build_invalid_duplicate_utxo() {
 
 #[test]
 fn build_invalid_input_kind() {
-    let input = Input::Treasury(TreasuryInput::new(MilestoneId::new(rand_bytes_32())));
+    let input = Input::Treasury(TreasuryInput::new(MilestoneId::new(rand_bytes_array())));
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
@@ -198,46 +198,6 @@ fn build_invalid_output_kind() {
         .finish();
 
     assert!(matches!(essence, Err(Error::InvalidOutputKind(2))));
-}
-
-#[test]
-fn build_transaction_inputs_not_sorted() {
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
-    let address = Address::from(Ed25519Address::new(bytes));
-    let amount = 1_000_000;
-    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-
-    let essence = RegularEssence::builder()
-        .with_inputs(vec![input2, input1])
-        .with_outputs(vec![output])
-        .finish();
-
-    assert!(matches!(essence, Err(Error::TransactionInputsNotSorted)));
-}
-
-#[test]
-fn build_transaction_outputs_not_sorted() {
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
-    let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let amount = 1_000_000;
-
-    let bytes1: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
-    let address1 = Address::from(Ed25519Address::new(bytes1));
-    let output1 = Output::Simple(SimpleOutput::new(address1, amount).unwrap());
-
-    let bytes2: [u8; 32] = hex::decode(ED25519_ADDRESS_2).unwrap().try_into().unwrap();
-    let address2 = Address::from(Ed25519Address::new(bytes2));
-    let output2 = Output::Simple(SimpleOutput::new(address2, amount).unwrap());
-
-    let essence = RegularEssence::builder()
-        .with_inputs(vec![input])
-        .with_outputs(vec![output2, output1])
-        .finish();
-
-    assert!(matches!(essence, Err(Error::TransactionOutputsNotSorted)));
 }
 
 #[test]
@@ -282,5 +242,5 @@ fn getters() {
         .unwrap();
 
     assert_eq!(essence.outputs(), outputs.as_slice());
-    assert_eq!(*essence.payload().as_ref().unwrap(), payload);
+    assert_eq!(essence.payload().unwrap(), &payload);
 }

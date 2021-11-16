@@ -3,7 +3,7 @@
 
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
-use bee_test::rand::bytes::{rand_bytes, rand_bytes_32};
+use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
 
 const PADDED_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64952fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
@@ -81,7 +81,7 @@ fn new_invalid_index_length_more_than_max() {
 #[test]
 fn new_invalid_data_length_more_than_max() {
     assert!(matches!(
-        IndexationPayload::new(&rand_bytes_32(), &[0u8; MESSAGE_LENGTH_MAX + 42]),
+        IndexationPayload::new(&rand_bytes_array::<32>(), &[0u8; MESSAGE_LENGTH_MAX + 42]),
         Err(Error::InvalidIndexationDataLength(l)) if l == MESSAGE_LENGTH_MAX + 42
     ));
 }
@@ -97,8 +97,11 @@ fn packed_len() {
 
 #[test]
 fn pack_unpack_valid() {
-    let indexation_1 =
-        IndexationPayload::new(&rand_bytes_32(), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).unwrap();
+    let indexation_1 = IndexationPayload::new(
+        &rand_bytes_array::<32>(),
+        &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2],
+    )
+    .unwrap();
     let indexation_2 = IndexationPayload::unpack(&mut indexation_1.pack_new().as_slice()).unwrap();
 
     assert_eq!(indexation_1.index(), indexation_2.index());

@@ -33,7 +33,7 @@ pub fn rand_receipt_payload() -> ReceiptPayload {
         rand_milestone_index(),
         rand_bool(),
         vec![rand_migrated_funds_entry()],
-        Box::new(rand_treasury_transaction_payload()).into(),
+        rand_treasury_transaction_payload().into(),
     )
     .unwrap()
 }
@@ -41,5 +41,5 @@ pub fn rand_receipt_payload() -> ReceiptPayload {
 /// Generates a random payload for a message.
 pub fn rand_payload_for_message() -> Payload {
     // TODO complete
-    Box::new(rand_indexation_payload()).into()
+    rand_indexation_payload().into()
 }

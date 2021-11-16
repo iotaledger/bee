@@ -28,6 +28,7 @@ fn debug_impl() {
 fn generate_address() {
     match Address::from(Ed25519Address::new([1; 32])) {
         Address::Ed25519(a) => assert_eq!(a.len(), 32),
+        _ => unreachable!(),
     }
 }
 

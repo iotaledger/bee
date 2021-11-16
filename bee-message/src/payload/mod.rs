@@ -22,7 +22,7 @@ use bee_common::packable::{Packable, Read, Write};
 use alloc::boxed::Box;
 
 /// A generic payload that can represent different types defining message payloads.
-#[derive(Clone, Debug, Eq, PartialEq, derive_more::From)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
@@ -39,6 +39,36 @@ pub enum Payload {
     Receipt(Box<ReceiptPayload>),
     /// A treasury transaction payload.
     TreasuryTransaction(Box<TreasuryTransactionPayload>),
+}
+
+impl From<TransactionPayload> for Payload {
+    fn from(payload: TransactionPayload) -> Self {
+        Self::Transaction(Box::new(payload))
+    }
+}
+
+impl From<MilestonePayload> for Payload {
+    fn from(payload: MilestonePayload) -> Self {
+        Self::Milestone(Box::new(payload))
+    }
+}
+
+impl From<IndexationPayload> for Payload {
+    fn from(payload: IndexationPayload) -> Self {
+        Self::Indexation(Box::new(payload))
+    }
+}
+
+impl From<ReceiptPayload> for Payload {
+    fn from(payload: ReceiptPayload) -> Self {
+        Self::Receipt(Box::new(payload))
+    }
+}
+
+impl From<TreasuryTransactionPayload> for Payload {
+    fn from(payload: TreasuryTransactionPayload) -> Self {
+        Self::TreasuryTransaction(Box::new(payload))
+    }
 }
 
 impl Payload {
@@ -96,13 +126,11 @@ impl Packable for Payload {
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u32::unpack_inner::<R, CHECK>(reader)? {
-            TransactionPayload::KIND => Box::new(TransactionPayload::unpack_inner::<R, CHECK>(reader)?).into(),
-            MilestonePayload::KIND => Box::new(MilestonePayload::unpack_inner::<R, CHECK>(reader)?).into(),
-            IndexationPayload::KIND => Box::new(IndexationPayload::unpack_inner::<R, CHECK>(reader)?).into(),
-            ReceiptPayload::KIND => Box::new(ReceiptPayload::unpack_inner::<R, CHECK>(reader)?).into(),
-            TreasuryTransactionPayload::KIND => {
-                Box::new(TreasuryTransactionPayload::unpack_inner::<R, CHECK>(reader)?).into()
-            }
+            TransactionPayload::KIND => TransactionPayload::unpack_inner::<R, CHECK>(reader)?.into(),
+            MilestonePayload::KIND => MilestonePayload::unpack_inner::<R, CHECK>(reader)?.into(),
+            IndexationPayload::KIND => IndexationPayload::unpack_inner::<R, CHECK>(reader)?.into(),
+            ReceiptPayload::KIND => ReceiptPayload::unpack_inner::<R, CHECK>(reader)?.into(),
+            TreasuryTransactionPayload::KIND => TreasuryTransactionPayload::unpack_inner::<R, CHECK>(reader)?.into(),
             k => return Err(Self::Error::InvalidPayloadKind(k)),
         })
     }

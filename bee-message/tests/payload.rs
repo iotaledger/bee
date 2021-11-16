@@ -3,7 +3,7 @@
 
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
-use bee_test::rand::{bytes::rand_bytes_32, parents::rand_parents};
+use bee_test::rand::{bytes::rand_bytes_array, parents::rand_parents};
 
 use std::str::FromStr;
 
@@ -38,8 +38,8 @@ fn transaction() {
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
-    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
+    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
 
     let tx_payload = TransactionPayloadBuilder::new()
@@ -86,7 +86,7 @@ fn milestone() {
 
 #[test]
 fn indexation() {
-    let payload: Payload = IndexationPayload::new(&rand_bytes_32(), &[]).unwrap().into();
+    let payload: Payload = IndexationPayload::new(&rand_bytes_array::<32>(), &[]).unwrap().into();
 
     let packed = payload.pack_new();
 
@@ -100,17 +100,15 @@ fn receipt() {
     let payload: Payload = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SimpleOutput::new(
-                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                    1_000_000,
-                )
-                .unwrap(),
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            SimpleOutput::new(
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                1_000_000,
             )
             .unwrap(),
-        ],
+        )
+        .unwrap()],
         Payload::TreasuryTransaction(Box::new(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
