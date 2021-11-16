@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! A module to unpack any value that implements [`Packable`](crate::Packable).
+//!
+//! The [`Unpacker`] trait represents types that can be used to read bytes from it. It can be
+//! thought as a `no_std` friendly alternative to the [`Read`](std::io::Read) trait.
 
 #[cfg(feature = "io")]
 mod io;
@@ -11,9 +14,11 @@ pub use slice::SliceUnpacker;
 
 /// A type that can unpack any value that implements [`Packable`](crate::Packable).
 pub trait Unpacker: Sized {
-    /// The error type that can be returned if some error occurs while unpacking.
+    /// An error type representing any error related to reading bytes.
     type Error;
 
-    /// Unpacks a sequence of bytes from the [`Unpacker`].
+    /// Reads a sequence of bytes from the [`Unpacker`]. This sequence must be long enough to fill
+    /// `bytes` completely. This method **must** fail if the unpacker does not have enough bytes to
+    /// fulfill the request.
     fn unpack_bytes<B: AsMut<[u8]>>(&mut self, bytes: B) -> Result<(), Self::Error>;
 }
