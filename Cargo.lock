@@ -55,6 +55,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ansi_term"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d52a9bb7ec0cf484c551830a7ce27bd20d67eac647e1befb56b0be4ee39a55d2"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -196,7 +205,7 @@ checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 [[package]]
 name = "bee-common"
 version = "0.5.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#af3df9e9578d945f58e227a30e9317ea0fb21846"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#cb131f1007d21605b1e91811bae5f35f2ecf2513"
 dependencies = [
  "autocfg",
  "console-subscriber",
@@ -208,13 +217,13 @@ dependencies = [
  "serde",
  "thiserror",
  "time 0.3.3",
- "tracing-subscriber",
+ "tracing-subscriber 0.3.1",
 ]
 
 [[package]]
 name = "bee-crypto"
 version = "0.2.1-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#af3df9e9578d945f58e227a30e9317ea0fb21846"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#cb131f1007d21605b1e91811bae5f35f2ecf2513"
 dependencies = [
  "bee-ternary",
  "byteorder",
@@ -226,7 +235,7 @@ dependencies = [
 [[package]]
 name = "bee-ledger"
 version = "0.5.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#af3df9e9578d945f58e227a30e9317ea0fb21846"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#cb131f1007d21605b1e91811bae5f35f2ecf2513"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -252,7 +261,7 @@ dependencies = [
 [[package]]
 name = "bee-message"
 version = "0.1.5"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#af3df9e9578d945f58e227a30e9317ea0fb21846"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#cb131f1007d21605b1e91811bae5f35f2ecf2513"
 dependencies = [
  "bech32",
  "bee-common",
@@ -269,7 +278,7 @@ dependencies = [
 [[package]]
 name = "bee-network"
 version = "0.2.2"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#af3df9e9578d945f58e227a30e9317ea0fb21846"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#cb131f1007d21605b1e91811bae5f35f2ecf2513"
 dependencies = [
  "async-trait",
  "bee-runtime",
@@ -327,7 +336,7 @@ dependencies = [
  "tokio-stream",
  "toml",
  "tracing",
- "tracing-subscriber",
+ "tracing-subscriber 0.2.25",
  "warp",
  "warp-reverse-proxy",
 ]
@@ -335,7 +344,7 @@ dependencies = [
 [[package]]
 name = "bee-pow"
 version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#af3df9e9578d945f58e227a30e9317ea0fb21846"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#cb131f1007d21605b1e91811bae5f35f2ecf2513"
 dependencies = [
  "bee-crypto",
  "bee-ternary",
@@ -409,7 +418,7 @@ dependencies = [
 [[package]]
 name = "bee-runtime"
 version = "0.1.1-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#af3df9e9578d945f58e227a30e9317ea0fb21846"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#cb131f1007d21605b1e91811bae5f35f2ecf2513"
 dependencies = [
  "async-trait",
  "bee-storage",
@@ -422,7 +431,7 @@ dependencies = [
 [[package]]
 name = "bee-storage"
 version = "0.9.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#af3df9e9578d945f58e227a30e9317ea0fb21846"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#cb131f1007d21605b1e91811bae5f35f2ecf2513"
 dependencies = [
  "bee-common",
  "serde",
@@ -432,7 +441,7 @@ dependencies = [
 [[package]]
 name = "bee-storage-rocksdb"
 version = "0.5.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#af3df9e9578d945f58e227a30e9317ea0fb21846"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#cb131f1007d21605b1e91811bae5f35f2ecf2513"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -448,7 +457,7 @@ dependencies = [
 [[package]]
 name = "bee-storage-sled"
 version = "0.4.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#af3df9e9578d945f58e227a30e9317ea0fb21846"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#cb131f1007d21605b1e91811bae5f35f2ecf2513"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -464,7 +473,7 @@ dependencies = [
 [[package]]
 name = "bee-tangle"
 version = "0.2.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#af3df9e9578d945f58e227a30e9317ea0fb21846"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#cb131f1007d21605b1e91811bae5f35f2ecf2513"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -485,8 +494,8 @@ dependencies = [
 
 [[package]]
 name = "bee-ternary"
-version = "0.5.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#af3df9e9578d945f58e227a30e9317ea0fb21846"
+version = "0.5.1"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#cb131f1007d21605b1e91811bae5f35f2ecf2513"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -738,7 +747,7 @@ dependencies = [
 [[package]]
 name = "console-api"
 version = "0.1.0"
-source = "git+https://github.com/tokio-rs/console.git?branch=main#3d80c4b68b97db9c20cb496a2e3df0ccc1336b38"
+source = "git+https://github.com/tokio-rs/console.git?branch=main#a30264e0b5469ea596430b846b05e6e3541915d1"
 dependencies = [
  "prost",
  "prost-types",
@@ -750,7 +759,7 @@ dependencies = [
 [[package]]
 name = "console-subscriber"
 version = "0.1.0"
-source = "git+https://github.com/tokio-rs/console.git?branch=main#3d80c4b68b97db9c20cb496a2e3df0ccc1336b38"
+source = "git+https://github.com/tokio-rs/console.git?branch=main#a30264e0b5469ea596430b846b05e6e3541915d1"
 dependencies = [
  "console-api",
  "futures",
@@ -764,7 +773,7 @@ dependencies = [
  "tonic",
  "tracing",
  "tracing-core",
- "tracing-subscriber",
+ "tracing-subscriber 0.3.1",
 ]
 
 [[package]]
@@ -3250,9 +3259,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.12.0"
+version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2c2416fdedca8443ae44b4527de1ea633af61d8f7169ffa6e72c5b53d24efcc"
+checksum = "70e992e41e0d2fb9f755b37446f20900f64446ef54874f40a60c78f021ac6144"
 dependencies = [
  "autocfg",
  "bytes",
@@ -3280,9 +3289,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-macros"
-version = "1.5.0"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2dd85aeaba7b68df939bd357c6afb36c87951be9e80bf9c859f2fc3e9fca0fd"
+checksum = "c9efc1aba077437943f7515666aa2b882dfabfbfdf89c819ea75a8d6e9eaba5e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3476,6 +3485,18 @@ dependencies = [
  "sharded-slab",
  "thread_local",
  "tracing",
+ "tracing-core",
+]
+
+[[package]]
+name = "tracing-subscriber"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80a4ddde70311d8da398062ecf6fc2c309337de6b0f77d6c27aff8d53f6fca52"
+dependencies = [
+ "ansi_term",
+ "sharded-slab",
+ "thread_local",
  "tracing-core",
 ]
 
