@@ -29,14 +29,6 @@ impl<E> From<E> for UnpackOptionError<E> {
 impl<T: Packable> Packable for Option<T> {
     type UnpackError = UnpackOptionError<T::UnpackError>;
 
-    fn packed_len(&self) -> usize {
-        0u8.packed_len()
-            + match self {
-                Some(item) => item.packed_len(),
-                None => 0,
-            }
-    }
-
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match self {
             None => 0u8.pack(packer),

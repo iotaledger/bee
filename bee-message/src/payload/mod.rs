@@ -23,7 +23,7 @@ use bee_packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
-    Packable,
+    Packable, PackableExt,
 };
 
 use alloc::boxed::Box;
@@ -141,22 +141,6 @@ impl Payload {
 impl Packable for Payload {
     type UnpackError = MessageUnpackError;
 
-    fn packed_len(&self) -> usize {
-        0u32.packed_len()
-            + 0u8.packed_len()
-            + match self {
-                Self::Data(p) => p.packed_len(),
-                Self::Transaction(p) => p.packed_len(),
-                Self::Fpc(p) => p.packed_len(),
-                Self::ApplicationMessage(p) => p.packed_len(),
-                Self::Dkg(p) => p.packed_len(),
-                Self::Beacon(p) => p.packed_len(),
-                Self::CollectiveBeacon(p) => p.packed_len(),
-                Self::SaltDeclaration(p) => p.packed_len(),
-                Self::Indexation(p) => p.packed_len(),
-            }
-    }
-
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match self {
             Self::Data(p) => p.pack_payload(packer),
@@ -259,13 +243,6 @@ pub enum OptionalPayload {
 
 impl Packable for OptionalPayload {
     type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        match self {
-            Self::None => 0u32.packed_len(),
-            Self::Some(payload) => 0u32.packed_len() + payload.packed_len(),
-        }
-    }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match self {

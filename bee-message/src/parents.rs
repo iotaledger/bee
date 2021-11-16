@@ -113,10 +113,6 @@ impl Parents {
 impl Packable for Parents {
     type UnpackError = MessageUnpackError;
 
-    fn packed_len(&self) -> usize {
-        0u8.packed_len() + 0u8.packed_len() + self.0.len() * MessageId::LENGTH
-    }
-
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         (self.len() as u8).pack(packer)?;
 

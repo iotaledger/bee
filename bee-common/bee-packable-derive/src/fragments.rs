@@ -9,8 +9,6 @@ use quote::quote;
 pub(crate) struct Fragments {
     // The pattern used to destructure the record.
     pub(crate) pattern: TokenStream,
-    // An expression that returns the packed length of the record.
-    pub(crate) packed_len: TokenStream,
     // An expression that packs the record.
     pub(crate) pack: TokenStream,
     // An expresion that unpacks the record.
@@ -29,7 +27,6 @@ impl Fragments {
 
         Self {
             pattern: quote!(#path { #(#fields_pattern_ident: #fields_ident),* }),
-            packed_len: quote!(#(<#fields_type>::packed_len(#fields_ident))+*),
             pack: quote! {
                 #(<#fields_type>::pack(#fields_ident, packer)?;) *
                 Ok(())

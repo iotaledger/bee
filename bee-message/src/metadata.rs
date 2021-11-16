@@ -88,10 +88,6 @@ impl Flags {
 impl Packable for Flags {
     type UnpackError = Infallible;
 
-    fn packed_len(&self) -> usize {
-        self.bits().packed_len()
-    }
-
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.bits().pack(packer)
     }
@@ -183,14 +179,6 @@ impl MessageMetadata {
 
 impl Packable for MessageMetadata {
     type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.flags.packed_len()
-            + self.received_timestamp.packed_len()
-            + self.solidification_timestamp.packed_len()
-            + self.branch_id.packed_len()
-            + self.opinion.packed_len()
-    }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.flags.pack(packer)?;

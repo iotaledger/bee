@@ -5,7 +5,7 @@ use bee_message::{
     error::{MessageUnpackError, ValidationError},
     parents::{Parent, Parents},
 };
-use bee_packable::{error::UnpackError, Packable, PackableExt};
+use bee_packable::{error::UnpackError, PackableExt};
 use bee_test::rand::{
     message::{parents::rand_parents, rand_message_id},
     vec::rand_vec,

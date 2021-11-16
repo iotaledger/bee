@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::payload::{drng::ApplicationMessagePayload, MessagePayload};
-use bee_packable::{Packable, PackableExt};
+use bee_packable::PackableExt;
 
 #[test]
 fn kind() {

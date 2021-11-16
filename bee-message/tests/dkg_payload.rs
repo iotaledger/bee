@@ -5,7 +5,7 @@ use bee_message::payload::{
     drng::{DkgPayload, EncryptedDeal},
     MessagePayload,
 };
-use bee_packable::{Packable, PackableExt};
+use bee_packable::PackableExt;
 use bee_test::rand::bytes::rand_bytes;
 
 #[test]

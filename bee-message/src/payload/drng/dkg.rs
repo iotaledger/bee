@@ -9,7 +9,7 @@ use crate::{
 use bee_packable::{
     bounded::{BoundedU32, InvalidBoundedU32},
     prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
-    Packable,
+    Packable, PackableExt,
 };
 
 use alloc::vec::Vec;

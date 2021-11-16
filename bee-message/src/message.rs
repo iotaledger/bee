@@ -137,17 +137,6 @@ impl Message {
 impl Packable for Message {
     type UnpackError = MessageUnpackError;
 
-    fn packed_len(&self) -> usize {
-        MESSAGE_VERSION.packed_len()
-            + self.parents.packed_len()
-            + self.issuer_public_key.packed_len()
-            + self.issue_timestamp.packed_len()
-            + self.sequence_number.packed_len()
-            + self.payload.packed_len()
-            + self.nonce.packed_len()
-            + self.signature.packed_len()
-    }
-
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         MESSAGE_VERSION.pack(packer)?;
         self.parents.pack(packer)?;

@@ -5,7 +5,7 @@ use bee_message::{
     error::{MessageUnpackError, ValidationError},
     unlock::ReferenceUnlock,
 };
-use bee_packable::{error::UnpackError, Packable, PackableExt};
+use bee_packable::{error::UnpackError, PackableExt};
 
 #[test]
 fn kind() {

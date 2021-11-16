@@ -6,7 +6,7 @@ use bee_message::{
     output::{AssetBalance, AssetId, SignatureLockedAssetOutput},
     util::hex_decode,
 };
-use bee_packable::{Packable, PackableExt};
+use bee_packable::PackableExt;
 use bee_test::rand::bytes::rand_bytes_array;
 
 use core::str::FromStr;

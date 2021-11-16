@@ -156,10 +156,6 @@ macro_rules! impl_vec_prefix {
         impl<T: Packable, const MIN: $ty, const MAX: $ty> Packable for VecPrefix<T, $bounded<MIN, MAX>> {
             type UnpackError = UnpackPrefixError<T::UnpackError, $err<MIN, MAX>>;
 
-            fn packed_len(&self) -> usize {
-                (0 as $ty).packed_len() + self.iter().map(T::packed_len).sum::<usize>()
-            }
-
             fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
                 // The length of any dynamically-sized sequence must be prefixed.
                 // This unwrap is fine, since we have already validated the length in `try_from`.
@@ -273,10 +269,6 @@ macro_rules! impl_boxed_slice_prefix {
 
         impl<T: Packable, const MIN: $ty, const MAX: $ty> Packable for BoxedSlicePrefix<T, $bounded<MIN, MAX>> {
             type UnpackError = UnpackPrefixError<T::UnpackError, $err<MIN, MAX>>;
-
-            fn packed_len(&self) -> usize {
-                (0 as $ty).packed_len() + self.iter().map(T::packed_len).sum::<usize>()
-            }
 
             fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
                 // The length of any dynamically-sized sequence must be prefixed.
