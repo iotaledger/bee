@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `.capacity()` for `TritBuf`;
+- Expose `TRITS_PER_BYTE` for `RawEncoding`s;
 
 ### Changed
 
