@@ -3,8 +3,9 @@
 
 use crate::{Btrit, RawEncoding, RawEncodingBuf, TritBuf, Trits, Tryte};
 
-const TRITS_PER_BYTE: usize = 2;
+const TRYTES_PER_BYTE: usize = 2;
 const TRITS_PER_TRYTE: usize = 3;
+const TRITS_PER_BYTE: usize = TRYTES_PER_BYTE * TRITS_PER_TRYTE;
 
 /// An error that may be emitted when decoding a B1T6 trit slice.
 #[derive(Debug)]
@@ -17,8 +18,8 @@ pub enum DecodeError {
 pub fn decode(src: &Trits) -> Result<Vec<u8>, DecodeError> {
     assert!(src.len() % TRITS_PER_BYTE == 0);
     src.iter_trytes()
-        .step_by(2)
-        .zip(src[TRITS_PER_TRYTE..].iter_trytes().step_by(2))
+        .step_by(TRYTES_PER_BYTE)
+        .zip(src[TRITS_PER_TRYTE..].iter_trytes().step_by(TRYTES_PER_BYTE))
         .map(|(a, b)| decode_group(a, b).ok_or(DecodeError::InvalidTrytes([a, b])))
         .collect()
 }
@@ -32,7 +33,7 @@ pub fn encode<T: RawEncodingBuf>(bytes: &[u8]) -> TritBuf<T>
 where
     T::Slice: RawEncoding<Trit = Btrit>,
 {
-    let mut trits = TritBuf::new();
+    let mut trits = TritBuf::with_capacity(bytes.len() * TRITS_PER_BYTE);
 
     for byte in bytes {
         let (t1, t2) = encode_group(*byte);

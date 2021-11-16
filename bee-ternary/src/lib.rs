@@ -790,6 +790,11 @@ impl<T: RawEncodingBuf> TritBuf<T> {
     pub fn as_slice_mut(&mut self) -> &mut Trits<T::Slice> {
         unsafe { &mut *(self.0.as_slice_mut() as *mut T::Slice as *mut Trits<T::Slice>) }
     }
+
+    /// Returns the number of trits the `TritBuf` can hold without reallocating.
+    pub fn capacity(&self) -> usize {
+        self.0.capacity()
+    }
 }
 
 impl TritBuf<T3B1Buf> {
