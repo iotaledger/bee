@@ -71,6 +71,12 @@ macro_rules! bounded {
 
                 Self(value)
             }
+
+            /// Returns the value as a primitive type.
+            #[inline(always)]
+            pub const fn get(self) -> $ty {
+                self.0
+            }
         }
 
         /// This implementation returns the closest bounded integer to zero.
@@ -85,7 +91,7 @@ macro_rules! bounded {
         #[allow(clippy::from_over_into)]
         impl<const MIN: $ty, const MAX: $ty> Into<$ty> for $wrapper<MIN, MAX> {
             fn into(self) -> $ty {
-                self.0
+                self.get()
             }
         }
 

@@ -5,6 +5,7 @@ use crate::{
     address::Address,
     input::UtxoInput,
     output::PREFIXED_ASSET_BALANCES_LENGTH_MAX,
+    parents::{MESSAGE_PARENTS_MAX, MESSAGE_PARENTS_MIN},
     payload::{
         data::PREFIXED_DATA_LENGTH_MAX,
         drng::PREFIXED_DKG_LENGTH_MAX,
@@ -23,7 +24,7 @@ use crate::{
 };
 
 use bee_packable::{
-    bounded::{InvalidBoundedU16, InvalidBoundedU32},
+    bounded::{InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU8},
     prefix::TryIntoPrefixError,
 };
 
@@ -72,7 +73,7 @@ pub enum ValidationError {
     InvalidOutputCount(TryIntoPrefixError<InvalidBoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>),
     InvalidOutputIndex(u16),
     InvalidParentsBlocksCount(usize),
-    InvalidParentsCount(usize),
+    InvalidParentsCount(TryIntoPrefixError<InvalidBoundedU8<MESSAGE_PARENTS_MIN, MESSAGE_PARENTS_MAX>>),
     InvalidParentsKind(u8),
     InvalidPayloadKind(u32),
     InvalidPayloadVersion {

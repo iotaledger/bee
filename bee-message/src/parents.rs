@@ -7,8 +7,10 @@ use crate::{MessageId, MessageUnpackError, ValidationError};
 
 use bee_ord::is_unique_sorted;
 use bee_packable::{
+    bounded::BoundedU8,
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
+    prefix::{TryIntoPrefixError, VecPrefix},
     unpacker::Unpacker,
     Packable,
 };
@@ -22,7 +24,11 @@ use core::{
 };
 
 /// The range representing the valid number of parents.
-pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
+pub const MESSAGE_PARENTS_RANGE: RangeInclusive<u8> = MESSAGE_PARENTS_MIN..=MESSAGE_PARENTS_MAX;
+/// The minimum valid number of parents.
+pub const MESSAGE_PARENTS_MIN: u8 = 1;
+/// The maximum valid number of parents.
+pub const MESSAGE_PARENTS_MAX: u8 = 8;
 
 /// Minimum number of strong parents for a valid message.
 pub const MESSAGE_STRONG_PARENTS_MIN: usize = 1;
@@ -72,7 +78,7 @@ impl Ord for Parent {
 /// * be unique;
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Parents(Vec<Parent>);
+pub struct Parents(VecPrefix<Parent, BoundedU8<MESSAGE_PARENTS_MIN, MESSAGE_PARENTS_MAX>>);
 
 impl Deref for Parents {
     type Target = [Parent];
@@ -86,13 +92,15 @@ impl Deref for Parents {
 impl Parents {
     /// Creates a new [`Parents`] collection.
     pub fn new(parents: Vec<Parent>) -> Result<Self, ValidationError> {
-        validate_parents_count(parents.len())?;
+        let parents: VecPrefix<_, BoundedU8<MESSAGE_PARENTS_MIN, MESSAGE_PARENTS_MAX>> =
+            parents.try_into().map_err(ValidationError::InvalidParentsCount)?;
+
         validate_unique_sorted(&parents)?;
 
-        let strong_count = parents.iter().fold(0usize, |acc, parent| match parent {
-            Parent::Strong(_) => acc + 1,
-            _ => acc,
-        });
+        let strong_count = parents
+            .iter()
+            .filter(|parent| matches!(parent, Parent::Strong(_)))
+            .count();
 
         validate_strong_parents_count(strong_count)?;
 
@@ -136,8 +144,12 @@ impl Packable for Parents {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let count = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
-        validate_parents_count(count as usize).map_err(UnpackError::from_packable)?;
+        let count: usize = BoundedU8::<MESSAGE_PARENTS_MIN, MESSAGE_PARENTS_MAX>::unpack::<_, VERIFY>(unpacker)
+            .map_packable_err(|err| {
+                MessageUnpackError::Validation(ValidationError::InvalidParentsCount(TryIntoPrefixError::Invalid(err)))
+            })?
+            .get()
+            .into();
 
         let bits_repr = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
 
@@ -147,12 +159,12 @@ impl Packable for Parents {
         validate_strong_parents_count(bits.count_ones()).map_err(UnpackError::from_packable)?;
 
         let mut parents = vec![];
-        parents.reserve(count as usize);
+        parents.reserve(count);
 
         for i in 0..count {
             let id = MessageId::unpack::<_, VERIFY>(unpacker).infallible()?;
 
-            if *bits.get(i as usize).unwrap() {
+            if *bits.get(i).unwrap() {
                 parents.push(Parent::Strong(id))
             } else {
                 parents.push(Parent::Weak(id))
@@ -161,15 +173,8 @@ impl Packable for Parents {
 
         validate_unique_sorted(&parents).map_err(UnpackError::from_packable)?;
 
-        Ok(Self(parents))
-    }
-}
-
-fn validate_parents_count(count: usize) -> Result<(), ValidationError> {
-    if !MESSAGE_PARENTS_RANGE.contains(&count) {
-        Err(ValidationError::InvalidParentsCount(count))
-    } else {
-        Ok(())
+        // `count` was already inbounds.
+        Ok(Self(parents.try_into().unwrap()))
     }
 }
 
