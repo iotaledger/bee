@@ -7,7 +7,7 @@ use std::ops::Range;
 
 const TRITS_PER_BYTE: usize = 2;
 // Number required to push a byte between balanced and unbalanced representations
-const BAL: i8 = 4;
+const BALANCE_DIFF: i8 = 4;
 
 /// An encoding scheme slice that uses a single byte to represent two trits.
 #[repr(transparent)]
@@ -35,7 +35,7 @@ fn extract(x: i8, elem: usize) -> Btrit {
         "Attempted to extract invalid element {} from balanced T2B1 trit",
         elem
     );
-    Utrit::from_u8((((x + BAL) / 3i8.pow(elem as u32)) % 3) as u8).shift()
+    Utrit::from_u8((((x + BALANCE_DIFF) / 3i8.pow(elem as u32)) % 3) as u8).shift()
 }
 
 fn insert(x: i8, elem: usize, trit: Btrit) -> i8 {
@@ -45,9 +45,9 @@ fn insert(x: i8, elem: usize, trit: Btrit) -> i8 {
         elem
     );
     let utrit = trit.shift();
-    let ux = x + BAL;
+    let ux = x + BALANCE_DIFF;
     let ux = ux + (utrit.into_u8() as i8 - (ux / 3i8.pow(elem as u32)) % 3) * 3i8.pow(elem as u32);
-    ux - BAL
+    ux - BALANCE_DIFF
 }
 
 impl RawEncoding for T2B1 {
@@ -110,7 +110,7 @@ impl RawEncoding for T2B1 {
     }
 
     fn is_valid(b: i8) -> bool {
-        b >= -BAL && b <= BAL
+        b >= -BALANCE_DIFF && b <= BALANCE_DIFF
     }
 
     unsafe fn from_raw_unchecked(b: &[i8], num_trits: usize) -> &Self {

@@ -19,7 +19,7 @@ pub fn decode(src: &Trits) -> Result<Vec<u8>, DecodeError> {
     assert!(src.len() % TRITS_PER_BYTE == 0);
     src.iter_trytes()
         .step_by(TRYTES_PER_BYTE)
-        .zip(src[TRITS_PER_TRYTE..].iter_trytes().step_by(2))
+        .zip(src[TRITS_PER_TRYTE..].iter_trytes().step_by(TRYTES_PER_BYTE))
         .map(|(a, b)| decode_group(a, b).ok_or(DecodeError::InvalidTrytes([a, b])))
         .collect()
 }
