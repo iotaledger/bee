@@ -122,6 +122,7 @@ fn with_capacity_generic<T: raw::RawEncodingBuf>() {
     for _ in 0..cap {
         buf.push(<T::Slice as raw::RawEncoding>::Trit::zero());
     }
+    assert!(buf.capacity() >= cap);
     assert!(buf.capacity() < (cap + <T::Slice as raw::RawEncoding>::TRITS_PER_BYTE));
 }
 
