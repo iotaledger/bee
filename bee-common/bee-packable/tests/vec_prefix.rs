@@ -12,8 +12,23 @@ use bee_packable::{
     prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
     PackableExt,
 };
-
 macro_rules! impl_packable_test_for_vec_prefix {
+    ($packable_vec_prefix:ident, $packable_vec_prefix_invalid_length:ident, $ty:ty) => {
+        #[test]
+        fn $packable_vec_prefix() {
+            assert_eq!(
+                common::generic_test(<&VecPrefix<Option<u32>, $ty>>::try_from(&vec![Some(0u32), None]).unwrap())
+                    .0
+                    .len(),
+                core::mem::size_of::<$ty>()
+                    + (core::mem::size_of::<u8>() + core::mem::size_of::<u32>())
+                    + core::mem::size_of::<u8>()
+            );
+        }
+    };
+}
+
+macro_rules! impl_packable_test_for_bounded_vec_prefix {
     ($packable_vec_prefix:ident, $packable_vec_prefix_invalid_length:ident, $ty:ty, $bounded:ident, $err:ident, $min:expr, $max:expr) => {
         #[test]
         fn $packable_vec_prefix() {
@@ -31,7 +46,7 @@ macro_rules! impl_packable_test_for_vec_prefix {
 
         #[test]
         fn $packable_vec_prefix_invalid_length() {
-            const LEN: usize = 65;
+            const LEN: usize = $max + 1;
 
             let mut bytes = vec![0u8; LEN + 1];
             bytes[0] = LEN as u8;
@@ -48,36 +63,41 @@ macro_rules! impl_packable_test_for_vec_prefix {
     };
 }
 
-impl_packable_test_for_vec_prefix!(
-    packable_vec_prefix_u8,
-    packable_vec_prefix_invalid_length_u8,
+impl_packable_test_for_vec_prefix!(packable_vec_prefix_u8, packable_vec_prefix_invalid_length_u8, u8);
+impl_packable_test_for_vec_prefix!(packable_vec_prefix_u16, packable_vec_prefix_invalid_length_u16, u16);
+impl_packable_test_for_vec_prefix!(packable_vec_prefix_u32, packable_vec_prefix_invalid_length_u32, u32);
+impl_packable_test_for_vec_prefix!(packable_vec_prefix_u64, packable_vec_prefix_invalid_length_u64, u64);
+
+impl_packable_test_for_bounded_vec_prefix!(
+    packable_vec_prefix_bounded_u8,
+    packable_vec_prefix_invalid_length_bounded_u8,
     u8,
     BoundedU8,
     InvalidBoundedU8,
     1,
     64
 );
-impl_packable_test_for_vec_prefix!(
-    packable_vec_prefix_u16,
-    packable_vec_prefix_invalid_length_u16,
+impl_packable_test_for_bounded_vec_prefix!(
+    packable_vec_prefix_bounded_u16,
+    packable_vec_prefix_invalid_length_bounded_u16,
     u16,
     BoundedU16,
     InvalidBoundedU16,
     1,
     64
 );
-impl_packable_test_for_vec_prefix!(
-    packable_vec_prefix_u32,
-    packable_vec_prefix_invalid_length_u32,
+impl_packable_test_for_bounded_vec_prefix!(
+    packable_vec_prefix_bounded_u32,
+    packable_vec_prefix_invalid_length_bounded_u32,
     u32,
     BoundedU32,
     InvalidBoundedU32,
     1,
     64
 );
-impl_packable_test_for_vec_prefix!(
-    packable_vec_prefix_u64,
-    packable_vec_prefix_invalid_length_u64,
+impl_packable_test_for_bounded_vec_prefix!(
+    packable_vec_prefix_bounded_u64,
+    packable_vec_prefix_invalid_length_bounded_u64,
     u64,
     BoundedU64,
     InvalidBoundedU64,
@@ -86,7 +106,7 @@ impl_packable_test_for_vec_prefix!(
 );
 
 #[test]
-fn packable_vec_prefix_from_vec_error() {
+fn packable_vec_prefix_from_vec_invalid_error() {
     let vec = vec![0u8; 16];
     let prefixed = VecPrefix::<u8, BoundedU32<1, 8>>::try_from(vec);
 
@@ -94,4 +114,12 @@ fn packable_vec_prefix_from_vec_error() {
         prefixed,
         Err(TryIntoPrefixError::Invalid(InvalidBoundedU32(16)))
     ));
+}
+
+#[test]
+fn packable_vec_prefix_from_vec_truncated_error() {
+    let vec = vec![0u8; 257];
+    let prefixed = VecPrefix::<u8, u8>::try_from(vec);
+
+    assert!(matches!(prefixed, Err(TryIntoPrefixError::Truncated(257))));
 }
