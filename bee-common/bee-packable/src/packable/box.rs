@@ -11,10 +11,9 @@ use core::ops::Deref;
 impl<T: Packable> Packable for Box<T> {
     type UnpackError = T::UnpackError;
 
+    #[inline(always)]
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.deref().pack(packer)?;
-
-        Ok(())
+        self.deref().pack(packer)
     }
 
     fn unpack<U: Unpacker, const VERIFY: bool>(

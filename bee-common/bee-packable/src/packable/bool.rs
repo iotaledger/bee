@@ -14,6 +14,7 @@ impl Packable for bool {
     type UnpackError = Infallible;
 
     /// Booleans are packed as `u8` integers following Rust's data layout.
+    #[inline(always)]
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         (*self as u8).pack(packer)
     }

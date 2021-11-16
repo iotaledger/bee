@@ -105,6 +105,7 @@ macro_rules! bounded {
         impl<const MIN: $ty, const MAX: $ty> Packable for $wrapper<MIN, MAX> {
             type UnpackError = $error<MIN, MAX>;
 
+            #[inline(always)]
             fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
                 self.0.pack(packer)
             }

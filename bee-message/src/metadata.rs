@@ -88,6 +88,7 @@ impl Flags {
 impl Packable for Flags {
     type UnpackError = Infallible;
 
+    #[inline(always)]
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.bits().pack(packer)
     }
