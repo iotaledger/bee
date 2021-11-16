@@ -5,6 +5,8 @@ use crate::{trit::ShiftTernary, Btrit, RawEncoding, RawEncodingBuf, Trit};
 
 use std::{hash, marker::PhantomData, ops::Range};
 
+const TRITS_PER_BYTE: usize = 1;
+
 /// An encoding scheme slice that uses a single byte to represent one trit.
 #[repr(transparent)]
 pub struct T1B1<T: Trit = Btrit> {
@@ -163,6 +165,6 @@ where
     }
 
     fn capacity(&self) -> usize {
-        self.0.capacity()
+        self.0.capacity() * TRITS_PER_BYTE
     }
 }

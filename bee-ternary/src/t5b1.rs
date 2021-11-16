@@ -5,8 +5,7 @@ use crate::{Btrit, RawEncoding, RawEncodingBuf, ShiftTernary, Utrit};
 
 use std::ops::Range;
 
-// Trits Per Byte
-const TPB: usize = 5;
+const TRITS_PER_BYTE: usize = 5;
 // Number required to push a byte between balanced and unbalanced representations
 const BAL: i8 = 121;
 
@@ -16,12 +15,12 @@ pub struct T5B1([()]);
 
 impl T5B1 {
     unsafe fn make(ptr: *const i8, offset: usize, len: usize) -> *const Self {
-        let len = (len << 3) | (offset % TPB);
-        std::mem::transmute((ptr.add(offset / TPB), len))
+        let len = (len << 3) | (offset % TRITS_PER_BYTE);
+        std::mem::transmute((ptr.add(offset / TRITS_PER_BYTE), len))
     }
 
     unsafe fn ptr(&self, index: usize) -> *const i8 {
-        let byte_offset = (self.len_offset().1 + index) / TPB;
+        let byte_offset = (self.len_offset().1 + index) / TRITS_PER_BYTE;
         (self.0.as_ptr() as *const i8).add(byte_offset)
     }
 
@@ -32,7 +31,7 @@ impl T5B1 {
 
 fn extract(x: i8, elem: usize) -> Btrit {
     debug_assert!(
-        elem < TPB,
+        elem < TRITS_PER_BYTE,
         "Attempted to extract invalid element {} from balanced T5B1 trit",
         elem
     );
@@ -41,7 +40,7 @@ fn extract(x: i8, elem: usize) -> Btrit {
 
 fn insert(x: i8, elem: usize, trit: Btrit) -> i8 {
     debug_assert!(
-        elem < TPB,
+        elem < TRITS_PER_BYTE,
         "Attempted to insert invalid element {} into balanced T5B1 trit",
         elem
     );
@@ -65,29 +64,29 @@ impl RawEncoding for T5B1 {
 
     fn as_i8_slice(&self) -> &[i8] {
         assert!(self.len_offset().1 == 0);
-        unsafe { std::slice::from_raw_parts(self as *const _ as *const _, (self.len() + TPB - 1) / TPB) }
+        unsafe { std::slice::from_raw_parts(self as *const _ as *const _, (self.len() + TRITS_PER_BYTE - 1) / TRITS_PER_BYTE) }
     }
 
     unsafe fn as_i8_slice_mut(&mut self) -> &mut [i8] {
         assert!(self.len_offset().1 == 0);
-        std::slice::from_raw_parts_mut(self as *mut _ as *mut _, (self.len() + TPB - 1) / TPB)
+        std::slice::from_raw_parts_mut(self as *mut _ as *mut _, (self.len() + TRITS_PER_BYTE - 1) / TRITS_PER_BYTE)
     }
 
     unsafe fn get_unchecked(&self, index: usize) -> Self::Trit {
         let b = self.ptr(index).read();
-        extract(b, (self.len_offset().1 + index) % TPB)
+        extract(b, (self.len_offset().1 + index) % TRITS_PER_BYTE)
     }
 
     unsafe fn set_unchecked(&mut self, index: usize, trit: Self::Trit) {
         let b = self.ptr(index).read();
-        let b = insert(b, (self.len_offset().1 + index) % TPB, trit);
+        let b = insert(b, (self.len_offset().1 + index) % TRITS_PER_BYTE, trit);
         (self.ptr(index) as *mut i8).write(b);
     }
 
     unsafe fn slice_unchecked(&self, range: Range<usize>) -> &Self {
         &*Self::make(
             self.ptr(range.start),
-            (self.len_offset().1 + range.start) % TPB,
+            (self.len_offset().1 + range.start) % TRITS_PER_BYTE,
             range.end - range.start,
         )
     }
@@ -95,7 +94,7 @@ impl RawEncoding for T5B1 {
     unsafe fn slice_unchecked_mut(&mut self, range: Range<usize>) -> &mut Self {
         &mut *(Self::make(
             self.ptr(range.start),
-            (self.len_offset().1 + range.start) % TPB,
+            (self.len_offset().1 + range.start) % TRITS_PER_BYTE,
             range.end - range.start,
         ) as *mut Self)
     }
@@ -105,12 +104,12 @@ impl RawEncoding for T5B1 {
     }
 
     unsafe fn from_raw_unchecked(b: &[i8], num_trits: usize) -> &Self {
-        assert!(num_trits <= b.len() * TPB);
+        assert!(num_trits <= b.len() * TRITS_PER_BYTE);
         &*Self::make(b.as_ptr() as *const _, 0, num_trits)
     }
 
     unsafe fn from_raw_unchecked_mut(b: &mut [i8], num_trits: usize) -> &mut Self {
-        assert!(num_trits <= b.len() * TPB);
+        assert!(num_trits <= b.len() * TRITS_PER_BYTE);
         &mut *(Self::make(b.as_ptr() as *const _, 0, num_trits) as *mut _)
     }
 }
@@ -127,7 +126,7 @@ impl RawEncodingBuf for T5B1Buf {
     }
 
     fn with_capacity(cap: usize) -> Self {
-        let cap = (cap / TPB) + (cap % TPB != 0) as usize;
+        let cap = (cap / TRITS_PER_BYTE) + (cap % TRITS_PER_BYTE != 0) as usize;
         Self(Vec::with_capacity(cap), 0)
     }
 
@@ -137,12 +136,12 @@ impl RawEncodingBuf for T5B1Buf {
     }
 
     fn push(&mut self, trit: <Self::Slice as RawEncoding>::Trit) {
-        if self.1 % TPB == 0 {
+        if self.1 % TRITS_PER_BYTE == 0 {
             self.0.push(insert(0, 0, trit));
         } else {
             let last_index = self.0.len() - 1;
             let b = unsafe { self.0.get_unchecked_mut(last_index) };
-            *b = insert(*b, self.1 % TPB, trit);
+            *b = insert(*b, self.1 % TRITS_PER_BYTE, trit);
         }
         self.1 += 1;
     }
@@ -150,11 +149,11 @@ impl RawEncodingBuf for T5B1Buf {
     fn pop(&mut self) -> Option<<Self::Slice as RawEncoding>::Trit> {
         let val = if self.1 == 0 {
             return None;
-        } else if self.1 % TPB == 1 {
+        } else if self.1 % TRITS_PER_BYTE == 1 {
             self.0.pop().map(|b| extract(b, 0))
         } else {
             let last_index = self.0.len() - 1;
-            unsafe { Some(extract(*self.0.get_unchecked(last_index), (self.1 + TPB - 1) % TPB)) }
+            unsafe { Some(extract(*self.0.get_unchecked(last_index), (self.1 + TRITS_PER_BYTE - 1) % TRITS_PER_BYTE)) }
         };
         self.1 -= 1;
         val
@@ -169,6 +168,6 @@ impl RawEncodingBuf for T5B1Buf {
     }
 
     fn capacity(&self) -> usize {
-        self.0.capacity()
+        self.0.capacity() * TRITS_PER_BYTE
     }
 }
