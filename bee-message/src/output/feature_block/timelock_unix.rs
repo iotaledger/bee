@@ -5,10 +5,13 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-///
+/// Defines a unix time until which the output can not be unlocked.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct TimelockUnixFeatureBlock(u32);
+pub struct TimelockUnixFeatureBlock {
+    // Unix time (seconds since Unix epoch) starting from which the output can be consumed.
+    timestamp: u32,
+}
 
 impl TimelockUnixFeatureBlock {
     /// The feature block kind of a `TimelockUnixFeatureBlock`.
@@ -21,7 +24,7 @@ impl TimelockUnixFeatureBlock {
 
     /// Returns the timestamp.
     pub fn timestamp(&self) -> u32 {
-        self.0
+        self.timestamp
     }
 }
 
@@ -29,11 +32,11 @@ impl Packable for TimelockUnixFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.0.packed_len()
+        self.timestamp.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
+        self.timestamp.pack(writer)?;
 
         Ok(())
     }

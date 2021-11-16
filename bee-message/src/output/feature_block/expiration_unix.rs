@@ -5,10 +5,15 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-///
+/// Defines a unix time until which only Address is allowed to unlock the output.
+/// After the expiration time, only Sender can unlock it.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct ExpirationUnixFeatureBlock(u32);
+pub struct ExpirationUnixFeatureBlock {
+    // Before this unix time (seconds since Unix epoch), Address is allowed to unlock the output.
+    // After that, only the address defined in SenderBlock.
+    timestamp: u32,
+}
 
 impl ExpirationUnixFeatureBlock {
     /// The feature block kind of an `ExpirationUnixFeatureBlock`.
@@ -21,7 +26,7 @@ impl ExpirationUnixFeatureBlock {
 
     /// Returns the timestamp.
     pub fn timestamp(&self) -> u32 {
-        self.0
+        self.timestamp
     }
 }
 
@@ -29,11 +34,11 @@ impl Packable for ExpirationUnixFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.0.packed_len()
+        self.timestamp.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
+        self.timestamp.pack(writer)?;
 
         Ok(())
     }

@@ -215,7 +215,7 @@ impl Packable for AliasOutput {
         let governance_controller = Address::unpack_inner::<R, CHECK>(reader)?;
         let state_index = u32::unpack_inner::<R, CHECK>(reader)?;
         let state_metadata_len = u32::unpack_inner::<R, CHECK>(reader)?;
-        if state_metadata_len > METADATA_LENGTH_MAX {
+        if CHECK && state_metadata_len > METADATA_LENGTH_MAX {
             return Err(Error::InvalidMetadataLength(state_metadata_len));
         }
         let mut state_metadata = vec![0u8; state_metadata_len as usize];

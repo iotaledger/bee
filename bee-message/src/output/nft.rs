@@ -76,14 +76,17 @@ impl NftOutputBuilder {
     }
 }
 
-///
+/// Describes an NFT output, a globally unique token with metadata attached.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct NftOutput {
     address: Address,
+    // The amount of IOTA tokens held by the output.
     amount: u64,
     native_tokens: NativeTokens,
+    // Unique identifier of the NFT.
     nft_id: NftId,
+    // Binary metadata attached immutably to the NFT.
     immutable_metadata: Box<[u8]>,
     feature_blocks: FeatureBlocks,
 }
@@ -159,7 +162,7 @@ impl Packable for NftOutput {
         let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
         let nft_id = NftId::unpack_inner::<R, CHECK>(reader)?;
         let immutable_metadata_len = u32::unpack_inner::<R, CHECK>(reader)?;
-        if immutable_metadata_len > METADATA_LENGTH_MAX {
+        if CHECK && immutable_metadata_len > METADATA_LENGTH_MAX {
             return Err(Error::InvalidMetadataLength(immutable_metadata_len));
         }
         let mut immutable_metadata = vec![0u8; immutable_metadata_len as usize];

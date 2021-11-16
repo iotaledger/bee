@@ -16,7 +16,9 @@ pub const NATIVE_TOKEN_COUNT_MAX: u16 = 256;
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct NativeToken {
+    // Identifier of the native token.
     token_id: TokenId,
+    // Amount of native tokens of the given token ID.
     amount: U256,
 }
 

@@ -5,10 +5,13 @@ use crate::{milestone::MilestoneIndex, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-///
+/// Defines a milestone index until which the output can not be unlocked.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct TimelockMilestoneIndexFeatureBlock(MilestoneIndex);
+pub struct TimelockMilestoneIndexFeatureBlock {
+    // The milestone index starting from which the output can be consumed.
+    index: MilestoneIndex,
+}
 
 impl TimelockMilestoneIndexFeatureBlock {
     /// The feature block kind of a `TimelockMilestoneIndexFeatureBlock`.
@@ -21,7 +24,7 @@ impl TimelockMilestoneIndexFeatureBlock {
 
     /// Returns the index.
     pub fn index(&self) -> MilestoneIndex {
-        self.0
+        self.index
     }
 }
 
@@ -29,11 +32,11 @@ impl Packable for TimelockMilestoneIndexFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.0.packed_len()
+        self.index.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
+        self.index.pack(writer)?;
 
         Ok(())
     }

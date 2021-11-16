@@ -14,7 +14,7 @@ pub struct AliasAddress(AliasId);
 #[allow(clippy::len_without_is_empty)]
 impl AliasAddress {
     /// The address kind of an alias address.
-    pub const KIND: u8 = 1;
+    pub const KIND: u8 = 8;
     /// The length of an alias address.
     pub const LENGTH: usize = 20;
 
