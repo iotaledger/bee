@@ -16,7 +16,7 @@ fn create_generic<T: raw::RawEncodingBuf>() {
         assert!(buf.len() == 0);
     });
     fuzz(100, || {
-        let trits = gen_buf::<T>(0..1000).1;
+        let trits = gen_buf_balanced::<T>(0..1000).1;
         let buf: TritBuf<T> = trits
             .iter()
             .map(|t| <T::Slice as raw::RawEncoding>::Trit::try_from(*t).ok().unwrap())
@@ -43,11 +43,11 @@ fn create_unbalanced<T: raw::RawEncodingBuf>() {
 
 fn push_pop_generic<T: raw::RawEncodingBuf>() {
     fuzz(100, || {
-        let (mut a, mut b) = gen_buf::<T>(0..100);
+        let (mut a, mut b) = gen_buf_balanced::<T>(0..100);
 
         for _ in 0..1000 {
             if thread_rng().gen() {
-                let trit = gen_trit();
+                let trit = gen_trit_balanced();
                 a.push(trit.try_into().unwrap_or_else(|_| unreachable!()));
                 b.push(trit);
             } else {
@@ -66,7 +66,7 @@ fn push_pop_generic_unbalanced<T: raw::RawEncodingBuf>() {
 
         for _ in 0..1000 {
             if thread_rng().gen() {
-                let trit = gen_trit() + 1;
+                let trit = gen_trit_unbalanced();
                 a.push(trit.try_into().unwrap_or_else(|_| unreachable!()));
                 b.push(trit);
             } else {
@@ -81,7 +81,7 @@ fn push_pop_generic_unbalanced<T: raw::RawEncodingBuf>() {
 
 fn eq_generic<T: raw::RawEncodingBuf + Clone>() {
     fuzz(100, || {
-        let a = gen_buf::<T>(0..1000).0;
+        let a = gen_buf_balanced::<T>(0..1000).0;
         let b = a.clone();
 
         assert_eq!(a, b);
@@ -102,7 +102,7 @@ where
     U::Slice: raw::RawEncoding<Trit = <T::Slice as raw::RawEncoding>::Trit>,
 {
     fuzz(100, || {
-        let a = gen_buf::<T>(0..100).0;
+        let a = gen_buf_balanced::<T>(0..100).0;
         let b = a.encode::<U>();
 
         assert_eq!(a, b);
