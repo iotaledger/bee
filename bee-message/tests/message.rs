@@ -5,7 +5,7 @@ use bee_message::{
     payload::{indexation::IndexationPayload, Payload},
     Message, MessageBuilder, MessageUnpackError, ValidationError,
 };
-use bee_packable::{error::UnpackError, Packable, PackableExt};
+use bee_packable::{error::UnpackError, PackableExt};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     message::{parents::rand_parents, payload::rand_indexation_payload},

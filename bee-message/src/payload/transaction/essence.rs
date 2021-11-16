@@ -123,15 +123,6 @@ impl TransactionEssence {
 impl Packable for TransactionEssence {
     type UnpackError = MessageUnpackError;
 
-    fn packed_len(&self) -> usize {
-        self.timestamp.packed_len()
-            + self.access_pledge_id.packed_len()
-            + self.consensus_pledge_id.packed_len()
-            + self.inputs.packed_len()
-            + self.outputs.packed_len()
-            + self.payload.packed_len()
-    }
-
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.timestamp.pack(packer)?;
         self.access_pledge_id.pack(packer)?;

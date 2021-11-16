@@ -6,7 +6,7 @@ use bee_message::{
     payload::{indexation::IndexationPayload, MessagePayload},
     MESSAGE_LENGTH_RANGE,
 };
-use bee_packable::{bounded::InvalidBoundedU32, error::UnpackError, prefix::TryIntoPrefixError, Packable, PackableExt};
+use bee_packable::{bounded::InvalidBoundedU32, error::UnpackError, prefix::TryIntoPrefixError, PackableExt};
 use bee_test::rand::bytes::rand_bytes;
 
 #[test]

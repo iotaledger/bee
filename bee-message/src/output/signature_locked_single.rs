@@ -51,10 +51,6 @@ impl SignatureLockedSingleOutput {
 impl Packable for SignatureLockedSingleOutput {
     type UnpackError = MessageUnpackError;
 
-    fn packed_len(&self) -> usize {
-        self.address.packed_len() + self.amount.packed_len()
-    }
-
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.address.pack(packer)?;
         self.amount.pack(packer)

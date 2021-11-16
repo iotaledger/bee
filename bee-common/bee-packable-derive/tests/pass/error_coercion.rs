@@ -21,10 +21,6 @@ pub struct PickyError(u8);
 impl Packable for Picky {
     type UnpackError = PickyError;
 
-    fn packed_len(&self) -> usize {
-        self.0.packed_len()
-    }
-
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.0.pack(packer)
     }

@@ -17,7 +17,7 @@ mod vec;
 
 use crate::{
     error::{UnexpectedEOF, UnpackError},
-    packer::{Packer, VecPacker},
+    packer::{LenPacker, Packer, VecPacker},
     unpacker::{SliceUnpacker, Unpacker},
 };
 
@@ -38,9 +38,6 @@ pub trait Packable: Sized {
     /// [`UnknownTagError`](crate::error::UnknownTagError) when implementing this trait for an enum.
     type UnpackError: Debug;
 
-    /// The size of the value in bytes after being packed.
-    fn packed_len(&self) -> usize;
-
     /// Packs this value into the given [`Packer`].
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
 
@@ -52,6 +49,9 @@ pub trait Packable: Sized {
 
 /// Extension trait for types that implement [`Packable`].
 pub trait PackableExt: Packable {
+    /// Returns the size of the value in bytes after being packed.
+    fn packed_len(&self) -> usize;
+
     /// Convenience method that packs this value into a [`Vec<u8>`].
     fn pack_to_vec(&self) -> Vec<u8>;
 
@@ -67,6 +67,15 @@ pub trait PackableExt: Packable {
 }
 
 impl<P: Packable> PackableExt for P {
+    fn packed_len(&self) -> usize {
+        let mut packer = LenPacker(0);
+
+        match self.pack(&mut packer) {
+            Ok(_) => packer.0,
+            Err(e) => match e {},
+        }
+    }
+
     fn pack_to_vec(&self) -> Vec<u8> {
         let mut packer = VecPacker::with_capacity(self.packed_len());
 

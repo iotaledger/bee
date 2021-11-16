@@ -104,10 +104,6 @@ impl TransactionPayload {
 impl Packable for TransactionPayload {
     type UnpackError = MessageUnpackError;
 
-    fn packed_len(&self) -> usize {
-        self.essence.packed_len() + self.unlock_blocks.packed_len()
-    }
-
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.essence.pack(packer)?;
         self.unlock_blocks.pack(packer)

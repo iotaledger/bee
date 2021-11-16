@@ -73,10 +73,7 @@ impl Deref for UnlockBlocks {
 impl Packable for UnlockBlocks {
     type UnpackError = MessageUnpackError;
 
-    fn packed_len(&self) -> usize {
-        self.0.packed_len()
-    }
-
+    #[inline(always)]
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.0.pack(packer)
     }
