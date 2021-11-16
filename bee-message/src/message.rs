@@ -11,7 +11,7 @@ use bee_packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
-    Packable,
+    Packable, PackableExt,
 };
 
 use crypto::{
@@ -159,17 +159,19 @@ impl Packable for Message {
         self.signature.pack(packer)
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).infallible()?;
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let version = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
         validate_message_version(version).map_err(UnpackError::from_packable)?;
 
-        let parents = Parents::unpack(unpacker)?;
-        let issuer_public_key = <[u8; MESSAGE_PUBLIC_KEY_LENGTH]>::unpack(unpacker).infallible()?;
-        let issue_timestamp = u64::unpack(unpacker).infallible()?;
-        let sequence_number = u32::unpack(unpacker).infallible()?;
-        let payload = OptionalPayload::unpack(unpacker)?;
-        let nonce = u64::unpack(unpacker).infallible()?;
-        let signature = <[u8; MESSAGE_SIGNATURE_LENGTH]>::unpack(unpacker).infallible()?;
+        let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
+        let issuer_public_key = <[u8; MESSAGE_PUBLIC_KEY_LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let issue_timestamp = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let sequence_number = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
+        let nonce = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let signature = <[u8; MESSAGE_SIGNATURE_LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?;
 
         let message = Self {
             parents,

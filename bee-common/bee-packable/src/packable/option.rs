@@ -47,10 +47,12 @@ impl<T: Packable> Packable for Option<T> {
         }
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        match u8::unpack(unpacker).infallible()? {
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        match u8::unpack::<_, VERIFY>(unpacker).infallible()? {
             0 => Ok(None),
-            1 => Ok(Some(T::unpack(unpacker).coerce()?)),
+            1 => Ok(Some(T::unpack::<_, VERIFY>(unpacker).coerce()?)),
             n => Err(UnpackError::Packable(Self::UnpackError::UnknownTag(n))),
         }
     }

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::MessageId;
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 
 use core::{ops::Deref, str::FromStr};
 
@@ -82,7 +82,7 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let message_id_1 = MessageId::from_str(MESSAGE_ID).unwrap();
-    let message_id_2 = MessageId::unpack_from_slice(message_id_1.pack_to_vec()).unwrap();
+    let message_id_2 = MessageId::unpack_verified(message_id_1.pack_to_vec()).unwrap();
 
     assert_eq!(message_id_1, message_id_2);
 }

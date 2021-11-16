@@ -6,7 +6,7 @@ use bee_message::{
     output::{AssetBalance, AssetId, SignatureLockedAssetOutput},
     util::hex_decode,
 };
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 use bee_test::rand::bytes::rand_bytes_array;
 
 use core::str::FromStr;
@@ -87,7 +87,7 @@ fn packable_round_trip() {
     )
     .unwrap();
 
-    let output_b = SignatureLockedAssetOutput::unpack_from_slice(output_a.pack_to_vec()).unwrap();
+    let output_b = SignatureLockedAssetOutput::unpack_verified(output_a.pack_to_vec()).unwrap();
 
     assert_eq!(output_a, output_b);
 }

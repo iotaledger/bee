@@ -7,7 +7,7 @@ use bee_message::{
     payload::transaction::TransactionId,
     util::hex_decode,
 };
-use bee_packable::{error::UnpackError, Packable};
+use bee_packable::{error::UnpackError, Packable, PackableExt};
 
 use core::str::FromStr;
 
@@ -110,7 +110,7 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let output_id_1 = OutputId::from_str(OUTPUT_ID).unwrap();
-    let output_id_2 = OutputId::unpack_from_slice(output_id_1.pack_to_vec()).unwrap();
+    let output_id_2 = OutputId::unpack_verified(output_id_1.pack_to_vec()).unwrap();
 
     assert_eq!(output_id_1, output_id_2);
 }
@@ -123,7 +123,7 @@ fn unpack_invalid_index() {
     ];
 
     assert!(matches!(
-        OutputId::unpack_from_slice(bytes),
+        OutputId::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidOutputIndex(127)
         ))),

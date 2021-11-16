@@ -117,7 +117,7 @@ impl TraitImpl {
                         #(#tag_decls)*
 
                         #[deny(unreachable_patterns)]
-                        match <#tag_type>::unpack(unpacker).infallible()? {
+                        match <#tag_type>::unpack::<_, VERIFY>(unpacker).infallible()? {
                             #(#unpack_arms)*
                             tag => Err(bee_packable::error::UnpackError::from_packable(#tag_with_error(tag)))
                         }
@@ -158,7 +158,7 @@ impl ToTokens for TraitImpl {
                     #pack
                 }
 
-                fn unpack<U: bee_packable::unpacker::Unpacker>(unpacker: &mut U) -> Result<Self, bee_packable::error::UnpackError<Self::UnpackError, U::Error>> {
+                fn unpack<U: bee_packable::unpacker::Unpacker, const VERIFY: bool>(unpacker: &mut U) -> Result<Self, bee_packable::error::UnpackError<Self::UnpackError, U::Error>> {
                     use bee_packable::error::UnpackErrorExt;
                     #unpack
                 }

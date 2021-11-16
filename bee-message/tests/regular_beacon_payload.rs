@@ -5,7 +5,7 @@ use bee_message::{
     payload::{drng::BeaconPayload, MessagePayload},
     util::hex_decode,
 };
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 
 const BEACON_PARTIAL_PUBLIC_KEY: &str = "55914b063d6342d89680c90b3617877c0dd5c1b88fce7e19d24904ebe56aaca9835d458d77f61\
     bb2a250805e25ab6be095f2a498419f89056157b29cb088271c93253e1b420f52d893abe4d76be718964d0f322991a253ef6a66c17ec586244\
@@ -43,7 +43,7 @@ fn unpack_valid() {
     bytes.extend(hex::decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap());
     bytes.extend(hex::decode(BEACON_SIGNATURE).unwrap());
 
-    assert!(BeaconPayload::unpack_from_slice(bytes).is_ok());
+    assert!(BeaconPayload::unpack_verified(bytes).is_ok());
 }
 
 #[test]
@@ -88,7 +88,7 @@ fn packable_round_trip() {
         .finish()
         .unwrap();
 
-    let beacon_b = BeaconPayload::unpack_from_slice(beacon_a.pack_to_vec()).unwrap();
+    let beacon_b = BeaconPayload::unpack_verified(beacon_a.pack_to_vec()).unwrap();
 
     assert_eq!(beacon_a, beacon_b);
 }

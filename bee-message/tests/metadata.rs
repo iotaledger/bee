@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::MessageMetadata;
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 use bee_test::rand::{
     bytes::rand_bytes_array,
     message::{metadata::rand_message_metadata, payload::rand_opinion},
@@ -58,7 +58,7 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let metadata_a = rand_message_metadata();
-    let metadata_b = MessageMetadata::unpack_from_slice(metadata_a.pack_to_vec()).unwrap();
+    let metadata_b = MessageMetadata::unpack_verified(metadata_a.pack_to_vec()).unwrap();
 
     assert_eq!(metadata_a, metadata_b);
 }

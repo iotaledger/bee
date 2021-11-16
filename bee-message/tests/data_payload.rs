@@ -6,7 +6,7 @@ use bee_message::{
     payload::{data::DataPayload, MessagePayload},
     MessageUnpackError,
 };
-use bee_packable::{bounded::InvalidBoundedU32, error::UnpackError, prefix::TryIntoPrefixError, Packable};
+use bee_packable::{bounded::InvalidBoundedU32, error::UnpackError, prefix::TryIntoPrefixError, Packable, PackableExt};
 use bee_test::rand::bytes::rand_bytes;
 
 #[test]
@@ -47,7 +47,7 @@ fn unpack_valid() {
 
     bytes.extend(rand_bytes(255));
 
-    let data = DataPayload::unpack_from_slice(bytes);
+    let data = DataPayload::unpack_verified(bytes);
 
     assert!(data.is_ok());
 }
@@ -60,7 +60,7 @@ fn unpack_invalid_length() {
 
     bytes.extend(rand_bytes(data_bytes));
 
-    let data = DataPayload::unpack_from_slice(bytes);
+    let data = DataPayload::unpack_verified(bytes);
 
     assert!(matches!(
         data,
@@ -88,7 +88,7 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let data_a = DataPayload::new(rand_bytes(255)).unwrap();
-    let data_b = DataPayload::unpack_from_slice(data_a.pack_to_vec()).unwrap();
+    let data_b = DataPayload::unpack_verified(data_a.pack_to_vec()).unwrap();
 
     assert_eq!(data_a, data_b);
 }

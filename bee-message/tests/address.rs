@@ -6,7 +6,7 @@ use bee_message::{
     util::hex_decode,
     MessageUnpackError,
 };
-use bee_packable::{error::UnpackError, Packable};
+use bee_packable::{error::UnpackError, Packable, PackableExt};
 use bee_test::rand::bytes::rand_bytes_array;
 
 use core::str::FromStr;
@@ -75,7 +75,7 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let address_1 = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
-    let address_2 = Address::unpack_from_slice(address_1.pack_to_vec()).unwrap();
+    let address_2 = Address::unpack_verified(address_1.pack_to_vec()).unwrap();
 
     assert_eq!(address_1, address_2);
 }
@@ -83,7 +83,7 @@ fn packable_round_trip() {
 #[test]
 fn unpack_invalid_kind() {
     assert!(matches!(
-        Address::unpack_from_slice(vec![
+        Address::unpack_verified(vec![
             0x04, 0x1d, 0x38, 0x9e, 0xa2, 0x7a, 0x77, 0xc9, 0x1d, 0x08, 0x40, 0xf9, 0x38, 0x61, 0x44, 0x2a, 0x95, 0xca,
             0x5e, 0x88, 0x2e, 0x0d, 0x9f, 0x9c, 0x2f, 0x99, 0x65, 0x81, 0x54, 0x09, 0xd9, 0x39, 0xe4
         ]),

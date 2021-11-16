@@ -5,7 +5,7 @@ use bee_message::{
     payload::{indexation::IndexationPayload, Payload},
     Message, MessageBuilder, MessageUnpackError, ValidationError,
 };
-use bee_packable::{error::UnpackError, Packable};
+use bee_packable::{error::UnpackError, Packable, PackableExt};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     message::{parents::rand_parents, payload::rand_indexation_payload},
@@ -190,7 +190,7 @@ fn packable_round_trip() {
         .finish()
         .unwrap();
 
-    let message_b = Message::unpack_from_slice(message_a.pack_to_vec()).unwrap();
+    let message_b = Message::unpack_verified(message_a.pack_to_vec()).unwrap();
 
     assert_eq!(message_a, message_b);
 }
@@ -212,7 +212,7 @@ fn unpack_valid() {
         248, 226, 27, 75, 64, 65, 70, 179, 143, 249, 27, 85, 91, 169, 46, 237, 98, 213, 205, 27,
     ];
 
-    Message::unpack_from_slice(bytes).unwrap();
+    Message::unpack_verified(bytes).unwrap();
 }
 
 #[test]
@@ -233,7 +233,7 @@ fn unpack_invalid_version() {
     ];
 
     assert!(matches!(
-        Message::unpack_from_slice(bytes),
+        Message::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidMessageVersion(0)
         )))
@@ -258,7 +258,7 @@ fn unpack_invalid_payload_length() {
     ];
 
     assert!(matches!(
-        Message::unpack_from_slice(bytes),
+        Message::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::PayloadLengthMismatch {
                 expected: 108,

@@ -60,10 +60,12 @@ impl Packable for SignatureLockedSingleOutput {
         self.amount.pack(packer)
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let address = Address::unpack(unpacker)?;
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let address = Address::unpack::<_, VERIFY>(unpacker)?;
 
-        let amount = u64::unpack(unpacker).infallible()?;
+        let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
         validate_amount(amount).map_err(UnpackError::from_packable)?;
 
         Ok(Self { address, amount })

@@ -5,7 +5,7 @@ use bee_message::payload::{
     drng::{DkgPayload, EncryptedDeal},
     MessagePayload,
 };
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 use bee_test::rand::bytes::rand_bytes;
 
 #[test]
@@ -72,7 +72,7 @@ fn encrypted_deal_packed_len() {
 fn encryped_deal_unwrap() {
     let bytes = vec![0u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0];
 
-    let deal = EncryptedDeal::unpack_from_slice(bytes);
+    let deal = EncryptedDeal::unpack_verified(bytes);
 
     assert!(deal.is_ok());
 }
@@ -88,7 +88,7 @@ fn encrypted_deal_packable_round_trip() {
         .finish()
         .unwrap();
 
-    let deal_b = EncryptedDeal::unpack_from_slice(deal_a.pack_to_vec()).unwrap();
+    let deal_b = EncryptedDeal::unpack_verified(deal_a.pack_to_vec()).unwrap();
 
     assert_eq!(deal_a, deal_b);
 }
@@ -120,7 +120,7 @@ fn dkg_unpack_valid() {
         0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0,
     ];
 
-    let dkg = DkgPayload::unpack_from_slice(bytes);
+    let dkg = DkgPayload::unpack_verified(bytes);
 
     assert!(dkg.is_ok());
 }
@@ -191,7 +191,7 @@ fn dkg_packable_round_trip() {
         .finish()
         .unwrap();
 
-    let dkg_b = DkgPayload::unpack_from_slice(dkg_a.pack_to_vec()).unwrap();
+    let dkg_b = DkgPayload::unpack_verified(dkg_a.pack_to_vec()).unwrap();
 
     assert_eq!(dkg_a, dkg_b);
 }

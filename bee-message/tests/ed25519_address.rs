@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::address::{Address, Bech32Address, Ed25519Address};
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 
 use core::{ops::Deref, str::FromStr};
 
@@ -98,7 +98,7 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let address_1 = Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
-    let address_2 = Ed25519Address::unpack_from_slice(address_1.pack_to_vec()).unwrap();
+    let address_2 = Ed25519Address::unpack_verified(address_1.pack_to_vec()).unwrap();
 
     assert_eq!(address_1, address_2);
 }

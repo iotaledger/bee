@@ -113,11 +113,17 @@ macro_rules! bounded {
                 self.0.pack(packer)
             }
 
-            fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-                $ty::unpack(unpacker)
-                    .infallible()?
-                    .try_into()
-                    .map_err(UnpackError::Packable)
+
+            fn unpack<U: Unpacker, const VERIFY: bool>(
+                unpacker: &mut U,
+            ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+                let value = $ty::unpack::<_, VERIFY>(unpacker).infallible()?;
+
+                if VERIFY && !(MIN..=MAX).contains(&value) {
+                    return Err(UnpackError::Packable($error(value)));
+                }
+
+                Ok(Self(value))
             }
         }
     };

@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 
 // repr type is used as tag type and discriminant values are used as tags.
 #[derive(Packable)]

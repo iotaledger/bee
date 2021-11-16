@@ -23,7 +23,9 @@ macro_rules! impl_packable_for_integer {
                 packer.pack_bytes(&self.to_le_bytes())
             }
 
-            fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+            fn unpack<U: Unpacker, const VERIFY: bool>(
+                unpacker: &mut U,
+            ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
                 let mut bytes = [0u8; core::mem::size_of::<Self>()];
                 unpacker.unpack_bytes(&mut bytes)?;
                 Ok(Self::from_le_bytes(bytes))
@@ -51,8 +53,10 @@ impl Packable for usize {
         (*self as u64).pack(packer)
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        Ok(u64::unpack(unpacker).infallible()? as usize)
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Ok(u64::unpack::<_, VERIFY>(unpacker).infallible()? as usize)
     }
 }
 
@@ -75,7 +79,9 @@ impl Packable for isize {
         (*self as i64).pack(packer)
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        Ok(i64::unpack(unpacker).infallible()? as isize)
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Ok(i64::unpack::<_, VERIFY>(unpacker).infallible()? as isize)
     }
 }

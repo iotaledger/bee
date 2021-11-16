@@ -5,7 +5,7 @@ use bee_message::{
     signature::{Ed25519Signature, Signature},
     unlock::SignatureUnlock,
 };
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 use bee_test::rand::bytes::rand_bytes_array;
 
 use core::ops::Deref;
@@ -56,7 +56,7 @@ fn packable_round_trip() {
         rand_bytes_array(),
         rand_bytes_array(),
     )));
-    let signature_unlock_2 = SignatureUnlock::unpack_from_slice(signature_unlock_1.pack_to_vec()).unwrap();
+    let signature_unlock_2 = SignatureUnlock::unpack_verified(signature_unlock_1.pack_to_vec()).unwrap();
 
     assert_eq!(signature_unlock_1, signature_unlock_2);
 }

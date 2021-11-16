@@ -14,7 +14,8 @@ pub(crate) use essence::{
 };
 pub use transaction_id::TransactionId;
 
-use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
+use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable, PackableExt};
+
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use alloc::boxed::Box;
@@ -112,10 +113,12 @@ impl Packable for TransactionPayload {
         self.unlock_blocks.pack(packer)
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let essence = TransactionEssence::unpack(unpacker)?;
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let essence = TransactionEssence::unpack::<_, VERIFY>(unpacker)?;
 
-        let unlock_blocks = UnlockBlocks::unpack(unpacker)?;
+        let unlock_blocks = UnlockBlocks::unpack::<_, VERIFY>(unpacker)?;
         validate_unlock_block_count(&essence, &unlock_blocks).map_err(UnpackError::from_packable)?;
 
         Ok(Self { essence, unlock_blocks })

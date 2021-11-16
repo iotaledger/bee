@@ -14,7 +14,7 @@ use bee_message::{
     unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlocks},
     util::hex_decode,
 };
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 use bee_test::rand::{bytes::rand_bytes_array, number::rand_number};
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
@@ -231,7 +231,7 @@ fn packable_round_trip() {
         .with_unlock_blocks(unlock_blocks)
         .finish()
         .unwrap();
-    let payload_b = TransactionPayload::unpack_from_slice(payload_a.pack_to_vec()).unwrap();
+    let payload_b = TransactionPayload::unpack_verified(payload_a.pack_to_vec()).unwrap();
 
     assert_eq!(payload_a, payload_b);
     assert_eq!(payload_a.id(), payload_b.id());

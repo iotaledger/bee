@@ -5,7 +5,7 @@ use bee_message::payload::{
     salt_declaration::{Salt, SaltDeclarationPayload},
     MessagePayload,
 };
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,
@@ -42,7 +42,7 @@ fn unpack_valid() {
     bytes.extend(vec![0, 0, 0, 0, 0, 0, 0, 0]);
     bytes.extend(rand_bytes_array::<64>());
 
-    let salt_declaration = SaltDeclarationPayload::unpack_from_slice(bytes);
+    let salt_declaration = SaltDeclarationPayload::unpack_verified(bytes);
 
     assert!(salt_declaration.is_ok());
 }
@@ -94,7 +94,7 @@ fn packable_round_trip() {
         .finish()
         .unwrap();
 
-    let salt_declaration_b = SaltDeclarationPayload::unpack_from_slice(salt_declaration_a.pack_to_vec()).unwrap();
+    let salt_declaration_b = SaltDeclarationPayload::unpack_verified(salt_declaration_a.pack_to_vec()).unwrap();
 
     assert_eq!(salt_declaration_a, salt_declaration_b);
 }

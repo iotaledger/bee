@@ -44,7 +44,29 @@ pub trait Packable: Sized {
     /// Packs this value into the given [`Packer`].
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
 
+    /// Unpacks this value from the given [`Unpacker`].
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>>;
+}
+
+/// Extension trait for types that implement [`Packable`].
+pub trait PackableExt: Packable {
     /// Convenience method that packs this value into a [`Vec<u8>`].
+    fn pack_to_vec(&self) -> Vec<u8>;
+
+    /// Unpacks this value from a sequence of bytes doing syntactical checks.
+    fn unpack_verified<T: AsRef<[u8]>>(
+        bytes: T,
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>>;
+
+    /// Unpacks this value from a sequence of bytes without doing syntactical checks.
+    fn unpack_unverified<T: AsRef<[u8]>>(
+        bytes: T,
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>>;
+}
+
+impl<P: Packable> PackableExt for P {
     fn pack_to_vec(&self) -> Vec<u8> {
         let mut packer = VecPacker::with_capacity(self.packed_len());
 
@@ -54,12 +76,15 @@ pub trait Packable: Sized {
         packer.into_vec()
     }
 
-    /// Unpacks this value from the given [`Unpacker`].
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>>;
+    fn unpack_verified<T: AsRef<[u8]>>(
+        bytes: T,
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
+        Self::unpack::<_, true>(&mut SliceUnpacker::new(bytes.as_ref()))
+    }
 
-    /// Unpacks this value from a type that implements [`AsRef<[u8]>`].
-    fn unpack_from_slice<T: AsRef<[u8]>>(bytes: T) -> Result<Self, UnpackError<Self::UnpackError, UnexpectedEOF>> {
-        let mut unpacker = SliceUnpacker::new(bytes.as_ref());
-        Packable::unpack(&mut unpacker)
+    fn unpack_unverified<T: AsRef<[u8]>>(
+        bytes: T,
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
+        Self::unpack::<_, false>(&mut SliceUnpacker::new(bytes.as_ref()))
     }
 }

@@ -7,7 +7,7 @@ use bee_message::{
     output::SignatureLockedSingleOutput,
     IOTA_SUPPLY,
 };
-use bee_packable::{error::UnpackError, Packable};
+use bee_packable::{error::UnpackError, Packable, PackableExt};
 
 use core::str::FromStr;
 
@@ -58,7 +58,7 @@ fn new_invalid_more_than_max_amount() {
 #[test]
 fn unpack_invalid_amount() {
     assert!(matches!(
-        SignatureLockedSingleOutput::unpack_from_slice(vec![
+        SignatureLockedSingleOutput::unpack_verified(vec![
             0, 82, 253, 252, 7, 33, 130, 101, 79, 22, 63, 95, 15, 154, 98, 29, 114, 149, 102, 199, 77, 16, 3, 124, 77,
             123, 187, 4, 7, 209, 226, 198, 73, 0, 0, 0, 0, 0, 0, 0, 0,
         ]),
@@ -82,7 +82,7 @@ fn packable_round_trip() {
     let output_1 =
         SignatureLockedSingleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 1_000)
             .unwrap();
-    let output_2 = SignatureLockedSingleOutput::unpack_from_slice(output_1.pack_to_vec()).unwrap();
+    let output_2 = SignatureLockedSingleOutput::unpack_verified(output_1.pack_to_vec()).unwrap();
 
     assert_eq!(output_1, output_2);
 }

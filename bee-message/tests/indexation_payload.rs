@@ -6,7 +6,7 @@ use bee_message::{
     payload::{indexation::IndexationPayload, MessagePayload},
     MESSAGE_LENGTH_RANGE,
 };
-use bee_packable::{bounded::InvalidBoundedU32, error::UnpackError, prefix::TryIntoPrefixError, Packable};
+use bee_packable::{bounded::InvalidBoundedU32, error::UnpackError, prefix::TryIntoPrefixError, Packable, PackableExt};
 use bee_test::rand::bytes::rand_bytes;
 
 #[test]
@@ -90,7 +90,7 @@ fn new_invalid_data_length_more_than_max() {
 #[test]
 fn unpack_invalid_index_length_less_than_min() {
     assert!(matches!(
-        IndexationPayload::unpack_from_slice(vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
+        IndexationPayload::unpack_verified(vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidIndexationIndexLength(TryIntoPrefixError::Invalid(InvalidBoundedU32(0)))
         ))),
@@ -100,7 +100,7 @@ fn unpack_invalid_index_length_less_than_min() {
 #[test]
 fn unpack_invalid_index_length_more_than_max() {
     assert!(matches!(
-        IndexationPayload::unpack_from_slice(vec![
+        IndexationPayload::unpack_verified(vec![
             0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -122,7 +122,7 @@ fn unpack_invalid_data_length_more_than_max() {
     bytes.extend(vec![0; data_len]);
 
     assert!(matches!(
-        IndexationPayload::unpack_from_slice(bytes),
+        IndexationPayload::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidIndexationDataLength(TryIntoPrefixError::Invalid(InvalidBoundedU32(n)))
         )))
@@ -151,7 +151,7 @@ fn packable_round_trip() {
     let indexation_1 =
         IndexationPayload::new(index, [0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2].to_vec()).unwrap();
 
-    let indexation_2 = IndexationPayload::unpack_from_slice(indexation_1.pack_to_vec()).unwrap();
+    let indexation_2 = IndexationPayload::unpack_verified(indexation_1.pack_to_vec()).unwrap();
 
     assert_eq!(indexation_1, indexation_2);
 }

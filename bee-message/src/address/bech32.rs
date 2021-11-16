@@ -3,7 +3,7 @@
 
 use crate::{address::Address, error::ValidationError};
 
-use bee_packable::Packable;
+use bee_packable::PackableExt;
 
 use bech32::{self, FromBase32, ToBase32};
 
@@ -61,7 +61,7 @@ impl TryInto<Address> for Bech32Address {
     type Error = ValidationError;
 
     fn try_into(self) -> Result<Address, Self::Error> {
-        Address::unpack_from_slice(self.data()).map_err(|_| ValidationError::InvalidAddress)
+        Address::unpack_verified(self.data()).map_err(|_| ValidationError::InvalidAddress)
     }
 }
 

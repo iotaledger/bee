@@ -14,7 +14,7 @@ use bee_message::{
     util::hex_decode,
     MessageUnpackError, IOTA_SUPPLY,
 };
-use bee_packable::{bounded::InvalidBoundedU32, error::UnpackError, prefix::TryIntoPrefixError, Packable};
+use bee_packable::{bounded::InvalidBoundedU32, error::UnpackError, prefix::TryIntoPrefixError, Packable, PackableExt};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,
@@ -243,7 +243,7 @@ fn unpack_invalid_input_count() {
     bytes.extend(output.pack_to_vec());
 
     assert!(matches!(
-        TransactionEssence::unpack_from_slice(bytes),
+        TransactionEssence::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidInputCount(TryIntoPrefixError::Invalid(InvalidBoundedU32(n))))))
             if n == u32::try_from(inputs_len).unwrap()
     ));
@@ -277,7 +277,7 @@ fn unpack_invalid_output_count() {
     }
 
     assert!(matches!(
-        TransactionEssence::unpack_from_slice(bytes),
+        TransactionEssence::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidOutputCount(TryIntoPrefixError::Invalid(InvalidBoundedU32(n)))
         )))
@@ -355,7 +355,7 @@ fn packable_round_trip() {
         .finish()
         .unwrap();
 
-    let essence_b = TransactionEssence::unpack_from_slice(essence_a.pack_to_vec()).unwrap();
+    let essence_b = TransactionEssence::unpack_verified(essence_a.pack_to_vec()).unwrap();
 
     assert_eq!(essence_a, essence_b);
 }

@@ -6,7 +6,7 @@
 use crate::{column_families::*, Storage};
 
 use bee_message::{Message, MessageId, MessageMetadata};
-use bee_packable::Packable;
+use bee_packable::{Packable, PackableExt};
 use bee_storage::{access::MultiFetch, system::System, StorageBackend};
 
 use std::{marker::PhantomData, vec::IntoIter};
@@ -25,7 +25,7 @@ impl<V: Packable, E: From<rocksdb::Error>> Iterator for MultiIter<V, E> {
             self.iter
                 .next()?
                 // Unpacking from storage slice can't fail.
-                .map(|option| option.map(|bytes| V::unpack(&mut bytes.as_slice()).unwrap()))
+                .map(|option| option.map(|bytes| V::unpack_unverified(&mut bytes.as_slice()).unwrap()))
                 .map_err(E::from),
         )
     }

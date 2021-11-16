@@ -96,8 +96,12 @@ impl Packable for Flags {
         self.bits().pack(packer)
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        Ok(Self::from_bits_truncate(u8::unpack(unpacker).infallible()?))
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Ok(Self::from_bits_truncate(
+            u8::unpack::<_, VERIFY>(unpacker).infallible()?,
+        ))
     }
 }
 
@@ -196,12 +200,14 @@ impl Packable for MessageMetadata {
         self.opinion.pack(packer)
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let flags = Flags::unpack(unpacker).infallible()?;
-        let received_timestamp = u64::unpack(unpacker).infallible()?;
-        let solidification_timestamp = u64::unpack(unpacker).infallible()?;
-        let branch_id = <[u8; 32]>::unpack(unpacker).infallible()?;
-        let opinion = Opinion::unpack(unpacker)?;
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let flags = Flags::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let received_timestamp = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let solidification_timestamp = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let branch_id = <[u8; 32]>::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let opinion = Opinion::unpack::<_, VERIFY>(unpacker)?;
 
         Ok(Self {
             flags,
