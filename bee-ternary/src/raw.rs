@@ -15,6 +15,9 @@ pub trait RawEncoding {
     /// The trit buffer encoding associated with this trit slice encoding.
     type Buf: RawEncodingBuf<Slice = Self>;
 
+    /// The number of trits that fit into this trit slice encoding.
+    const TRITS_PER_BYTE: usize;
+
     /// Get an empty slice of this encoding
     fn empty() -> &'static Self;
 

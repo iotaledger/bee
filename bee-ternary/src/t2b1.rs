@@ -54,6 +54,8 @@ impl RawEncoding for T2B1 {
     type Trit = Btrit;
     type Buf = T2B1Buf;
 
+    const TRITS_PER_BYTE: usize = TRITS_PER_BYTE;
+
     fn empty() -> &'static Self {
         unsafe { &*Self::make(&[] as *const _, 0, 0) }
     }
@@ -64,12 +66,20 @@ impl RawEncoding for T2B1 {
 
     fn as_i8_slice(&self) -> &[i8] {
         assert!(self.len_offset().1 == 0);
-        unsafe { std::slice::from_raw_parts(self as *const _ as *const _, (self.len() + TRITS_PER_BYTE - 1) / TRITS_PER_BYTE) }
+        unsafe {
+            std::slice::from_raw_parts(
+                self as *const _ as *const _,
+                (self.len() + TRITS_PER_BYTE - 1) / TRITS_PER_BYTE,
+            )
+        }
     }
 
     unsafe fn as_i8_slice_mut(&mut self) -> &mut [i8] {
         assert!(self.len_offset().1 == 0);
-        std::slice::from_raw_parts_mut(self as *mut _ as *mut _, (self.len() + TRITS_PER_BYTE - 1) / TRITS_PER_BYTE)
+        std::slice::from_raw_parts_mut(
+            self as *mut _ as *mut _,
+            (self.len() + TRITS_PER_BYTE - 1) / TRITS_PER_BYTE,
+        )
     }
 
     unsafe fn get_unchecked(&self, index: usize) -> Self::Trit {
@@ -153,7 +163,12 @@ impl RawEncodingBuf for T2B1Buf {
             self.0.pop().map(|b| extract(b, 0))
         } else {
             let last_index = self.0.len() - 1;
-            unsafe { Some(extract(*self.0.get_unchecked(last_index), (self.1 + TRITS_PER_BYTE - 1) % TRITS_PER_BYTE)) }
+            unsafe {
+                Some(extract(
+                    *self.0.get_unchecked(last_index),
+                    (self.1 + TRITS_PER_BYTE - 1) % TRITS_PER_BYTE,
+                ))
+            }
         };
         self.1 -= 1;
         val

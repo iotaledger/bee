@@ -45,6 +45,8 @@ where
     type Trit = T;
     type Buf = T1B1Buf<T>;
 
+    const TRITS_PER_BYTE: usize = TRITS_PER_BYTE;
+
     fn empty() -> &'static Self {
         unsafe { &*Self::make(&[] as *const _, 0, 0) }
     }
@@ -165,6 +167,6 @@ where
     }
 
     fn capacity(&self) -> usize {
-        self.0.capacity() * TRITS_PER_BYTE
+        self.0.capacity() * Self::Slice::TRITS_PER_BYTE
     }
 }

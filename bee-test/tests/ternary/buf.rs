@@ -116,13 +116,13 @@ where
 }
 
 fn with_capacity_generic<T: raw::RawEncodingBuf>() {
-    let cap = 243; // TODO: Use random capacity
+    let cap = thread_rng().gen_range(1..1000);
     let mut buf = TritBuf::<T>::with_capacity(cap);
-    assert_eq!(buf.capacity(), cap);
+    assert!(buf.capacity() < (cap + <T::Slice as raw::RawEncoding>::TRITS_PER_BYTE));
     for _ in 0..cap {
         buf.push(<T::Slice as raw::RawEncoding>::Trit::zero());
     }
-    assert_eq!(buf.capacity(), cap);
+    assert!(buf.capacity() < (cap + <T::Slice as raw::RawEncoding>::TRITS_PER_BYTE));
 }
 
 #[test]
