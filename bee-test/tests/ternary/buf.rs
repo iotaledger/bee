@@ -115,6 +115,16 @@ where
     });
 }
 
+fn with_capacity_generic<T: raw::RawEncodingBuf>() {
+    let cap = 243; // TODO: Use random capacity
+    let mut buf = TritBuf::<T>::with_capacity(cap);
+    assert_eq!(buf.capacity(), cap);
+    for _ in 0..cap {
+        buf.push(<T::Slice as raw::RawEncoding>::Trit::zero());
+    }
+    assert_eq!(buf.capacity(), cap);
+}
+
 #[test]
 fn create() {
     create_generic::<T1B1Buf<Btrit>>();
@@ -170,4 +180,14 @@ fn encode() {
     encode_generic::<T4B1Buf, T3B1Buf>();
     encode_generic::<T5B1Buf, T2B1Buf>();
     encode_generic::<T5B1Buf, T3B1Buf>();
+}
+
+#[test]
+fn with_capacity() {
+    with_capacity_generic::<T1B1Buf<Btrit>>();
+    with_capacity_generic::<T1B1Buf<Utrit>>();
+    with_capacity_generic::<T2B1Buf>();
+    with_capacity_generic::<T3B1Buf>();
+    with_capacity_generic::<T4B1Buf>();
+    with_capacity_generic::<T5B1Buf>();
 }
