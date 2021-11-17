@@ -12,6 +12,7 @@ use bee_packable::{
     prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
     PackableExt,
 };
+
 macro_rules! impl_packable_test_for_vec_prefix {
     ($packable_vec_prefix:ident, $packable_vec_prefix_invalid_length:ident, $ty:ty) => {
         #[test]
