@@ -28,8 +28,8 @@ use core::{convert::AsRef, fmt::Debug};
 /// A type that can be packed and unpacked.
 ///
 /// Almost all basic sized types implement this trait. This trait can be derived using the
-/// [`Packable`](bee_packable_derive::Packable) macro. If you require to implement this trait
-/// manually check the following example and the existing implementations as well.
+/// [`Packable`](bee_packable_derive::Packable) macro. The following example shows how to implement
+/// this trait manually.
 ///
 /// # Example
 ///

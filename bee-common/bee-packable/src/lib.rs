@@ -54,8 +54,8 @@
 //!
 //! # Types that implement [`Packable`]
 //!
-//! The Packable trait is implemented for every integer type by encoding the value as an array of
-//! bytes in little-endian order. Booleans are packed following Rust's data layout, meaning that
+//! The [`Packable`] trait is implemented for every integer type by encoding the value as an array
+//! of bytes in little-endian order. Booleans are packed following Rust's data layout, meaning that
 //! `true` is packed as a `1` byte and `false` as a `0` byte. However, boolean unpacking is less
 //! strict and unpacks any non-zero byte as `true`. Additional implementations of [`Packable`] are
 //! provided for [`Vec<T>`](std::vec::Vec), `Box<[T]>`, `[T; N]` and [`Option<T>`] if T implements
