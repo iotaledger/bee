@@ -7,10 +7,10 @@ use std::{
     time::{self, Duration},
 };
 
-use bee_crypto::ternary::{HASH_LENGTH, sponge::{CurlP81, Sponge, BATCH_SIZE}};
+use bee_crypto::ternary::{HASH_LENGTH, sponge::{BatchHasher, CurlP81, CurlPRounds, Sponge, BATCH_SIZE}};
 use bee_pow::providers::miner::MinerCancel;
 use bee_ternary::{
-    b1t6::{self},
+    b1t6::{self}, Btrit,
     T1B1Buf, TritBuf,
 };
 use structopt::StructOpt;
@@ -106,20 +106,26 @@ fn cpu_benchmark_worker(_pow_digest: &[u8], start_nonce: u64, cancel: MinerCance
         .for_each(|t| pow_digest.push(t));
 
     let mut nonce = start_nonce;
-    let mut curlp = CurlP81::new();
-    let mut buffers = TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH);
+    let mut hasher = BatchHasher::<T1B1Buf>::new(HASH_LENGTH, CurlPRounds::Rounds81);
+    let mut buffers = Vec::<TritBuf<T1B1Buf>>::with_capacity(BATCH_SIZE);
 
-    for i in 0..BATCH_SIZE {
-        let nonce_trits = b1t6::encode::<T1B1Buf>(&(nonce + i as u64).to_le_bytes());
-        buffers.append(&pow_digest);
-        buffers.append(&nonce_trits);
+    for _ in 0..BATCH_SIZE {
+        let mut buffer = TritBuf::<T1B1Buf>::zeros(HASH_LENGTH);
+        buffer[..pow_digest.len()].copy_from(&pow_digest);
+        buffers.push(buffer);
     }
 
     while !cancel.is_cancelled() {
-        curlp.reset();
-        curlp.absorb(&*buffers).unwrap();
+        for (i, buffer) in buffers.iter_mut().enumerate() {
+            let nonce_trits = b1t6::encode::<T1B1Buf>(&(nonce + i as u64).to_le_bytes());
+            buffer[pow_digest.len()..pow_digest.len() + nonce_trits.len()].copy_from(&nonce_trits);
+            hasher.add(buffer.clone());
+        }
 
-        counter.fetch_add(BATCH_SIZE as u64, Ordering::Release);
+        for (_i, hash) in hasher.hash_batched().enumerate() {
+            let _trailing_zeros = hash.iter().rev().take_while(|t| *t == Btrit::Zero).count();
+            counter.fetch_add(BATCH_SIZE as u64, Ordering::Release);
+        }
 
         nonce += BATCH_SIZE as u64;
     }
