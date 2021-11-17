@@ -11,5 +11,63 @@ keywords = [ "iota", "tangle", "bee", "framework", "protocol" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
+bee-common = { version = "0.6.0", path = "../bee-common/bee-common", default-features = false, optional = true }
 bee-gossip = { version = "0.4.0", path = "../bee-network/bee-gossip", default-features = false }
+bee-ledger = { version = "0.6.0", path = "../bee-ledger", default-features = false, features = [ "workers" ], optional = true }
 bee-message = { version = "0.1.6", path = "../bee-message", default-features = false, features = [ "serde" ] }
+bee-pow = { version = "0.2.0", path = "../bee-pow", default-features = false }
+bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", default-features = false, optional = true }
+bee-storage = { version = "0.9.0", path = "../bee-storage/bee-storage", default-features = false, optional = true }
+bee-tangle = { version = "0.2.0", path = "../bee-tangle", default-features = false, optional = true }
+bee-ternary = { version = "0.5.1", path = "../bee-ternary", default-features = false, optional = true }
+
+async-channel = { version = "1.6.1", default-features = false, optional = true }
+async-priority-queue = { version = "0.1.1", default-features = false, optional = true }
+async-trait = { version = "0.1.51", default-features = false, optional = true }
+futures = { version = "0.3.17", default-features = false, optional = true }
+futures-util = { version = "0.3.17", default-features = false, optional = true }
+fxhash = { version = "0.2.1", default-features = false, optional = true }
+hex = { version = "0.4.3", default-features = false, optional = true }
+iota-crypto = { version = "0.7.0", default-features = false, features = [ "blake2b", "ed25519" ], optional = true }
+log = { version = "0.4.14", default-features = false, optional = true }
+num_cpus = { version = "1.13.0", default-features = false, optional = true }
+rand = { version = "0.8.4", default-features = false, optional = true }
+ref-cast = { version = "1.0.6", default-features = false, optional = true }
+serde = { version = "1.0.130", default-features = false, features = [ "derive" ], optional = true }
+spin = { version = "0.9.2", default-features = false, optional = true }
+thiserror = { version = "1.0.30", default-features = false, optional = true }
+tokio = { version = "1.12.0", default-features = false, features = [ "rt-multi-thread" ], optional = true }
+tokio-stream = { version = "0.1.7", default-features = false, optional = true }
+twox-hash = { version = "1.6.1", default-features = false, optional = true }
+
+[features]
+workers = [
+  "bee-common",
+  "bee-gossip/full",
+  "bee-ledger",
+  "bee-runtime",
+  "bee-storage",
+  "bee-tangle",
+  "bee-ternary",
+  "async-channel",
+  "async-priority-queue",
+  "async-trait",
+  "futures",
+  "futures-util",
+  "fxhash",
+  "hex",
+  "iota-crypto",
+  "log",
+  "num_cpus",
+  "rand",
+  "ref-cast",
+  "serde",
+  "spin",
+  "thiserror",
+  "tokio",
+  "tokio-stream",
+  "twox-hash",
+]
+
+[dev-dependencies]
+tokio = { version = "1.12.0", default-features = false, features = [ "macros" ] }

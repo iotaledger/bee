@@ -6,3 +6,5 @@
 #![deny(missing_docs, warnings)]
 
 pub mod types;
+#[cfg(feature = "workers")]
+pub mod workers;
