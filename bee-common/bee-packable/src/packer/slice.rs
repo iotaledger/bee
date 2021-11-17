@@ -3,7 +3,7 @@
 
 use crate::{error::UnexpectedEOF, packer::Packer};
 
-/// A [`Packer`] backed by a [`&mut [u8]`].
+/// A [`Packer`] backed by a `&mut [u8]`.
 pub struct SlicePacker<'a> {
     slice: &'a mut [u8],
     offset: usize,

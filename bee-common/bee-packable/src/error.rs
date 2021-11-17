@@ -13,7 +13,12 @@ mod sealed {
     impl<T, U, V> Sealed for Result<T, UnpackError<U, V>> {}
 }
 
-/// Trait providing utility methods for `Result` values that use `UnpackError` as the `Err` variant.
+/// Trait providing utility methods for [`Result`] values that use [`UnpackError`] as the `Err` variant.
+///
+/// The main disadvantage of using `Result<_, UnpackError<_, _>>` is that error coercion must be
+/// done explicitly. This trait attempts to ease these conversions.
+///
+/// This trait is sealed and cannot be implemented by any other type.
 pub trait UnpackErrorExt<T, U, V>: sealed::Sealed + Sized {
     /// Maps the [`Packable`](UnpackError::Packable) variant if the result is an error.
     fn map_packable_err<W>(self, f: impl Fn(U) -> W) -> Result<T, UnpackError<W, V>>;
@@ -44,12 +49,14 @@ impl<T, U, V> UnpackErrorExt<T, U, V> for Result<T, UnpackError<U, V>> {
         })
     }
 }
-/// Error type raised when [`Packable::unpack`](crate::Packable) fails.
+/// Error type raised when [`Packable::unpack`](crate::Packable::unpack) fails.
+///
+/// If you need to do error coercion use [`UnpackErrorExt`].
 #[derive(Debug)]
 pub enum UnpackError<T, U> {
     /// Semantic error. Typically this is [`Packable::UnpackError`](crate::Packable::UnpackError).
     Packable(T),
-    /// Error produced by the unpacker. Typically this is [`Unpacker::Error`](crate::unpacker::Unpacker).
+    /// Error produced by the unpacker. Typically this is [`Unpacker::Error`](crate::unpacker::Unpacker::Error).
     Unpacker(U),
 }
 

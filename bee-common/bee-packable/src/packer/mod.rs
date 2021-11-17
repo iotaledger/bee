@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! A module to pack any value that implements [`Packable`](crate::Packable).
+//!
+//! The [`Packer`] trait represents types that can be used to write bytes into it. It can be
+//! thought as a `no_std` friendly alternative to the [`Write`](std::io::Write) trait.
 
 #[cfg(feature = "io")]
 mod io;
@@ -16,9 +19,11 @@ pub use vec::VecPacker;
 
 /// A type that can pack any value that implements [`Packable`](crate::Packable).
 pub trait Packer {
-    /// The error type that can be returned if some error occurs while packing.
+    /// An error type representing any error related to writing bytes.
     type Error;
 
-    /// Packs a sequence of bytes into the [`Packer`].
+    /// Writes a sequence of bytes into the [`Packer`]. The totality of `bytes` must be written
+    /// into the packer. This method **must** fail if the packer does not have enough space to
+    /// fulfill the request.
     fn pack_bytes<B: AsRef<[u8]>>(&mut self, bytes: B) -> Result<(), Self::Error>;
 }
