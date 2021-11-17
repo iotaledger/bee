@@ -94,7 +94,7 @@ pub trait Packable: Sized {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
 
     /// Unpacks this value from the given [`Unpacker`]. The `VERIFY` generic parameter can be used
-    /// to skip additional semantic checks.
+    /// to skip additional syntactic checks.
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>>;
