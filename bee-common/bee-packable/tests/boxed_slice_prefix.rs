@@ -13,6 +13,25 @@ use bee_packable::{
     PackableExt,
 };
 
+#[test]
+fn boxed_slice_prefix_from_boxed_slice_invalid_error() {
+    let boxed_slice = vec![0u8; 16].into_boxed_slice();
+    let prefixed = BoxedSlicePrefix::<u8, BoundedU32<1, 8>>::try_from(boxed_slice);
+
+    assert!(matches!(
+        prefixed,
+        Err(TryIntoPrefixError::Invalid(InvalidBoundedU32(16)))
+    ));
+}
+
+#[test]
+fn boxed_slice_prefix_from_boxed_slice_truncated_error() {
+    let boxed_slice = vec![0u8; 257].into_boxed_slice();
+    let prefixed = BoxedSlicePrefix::<u8, u8>::try_from(boxed_slice);
+
+    assert!(matches!(prefixed, Err(TryIntoPrefixError::Truncated(257))));
+}
+
 macro_rules! impl_packable_test_for_boxed_slice_prefix {
     ($packable_boxed_slice_prefix:ident, $packable_boxed_slice_prefix_invalid_length:ident, $ty:ty) => {
         #[test]
@@ -127,22 +146,3 @@ impl_packable_test_for_bounded_boxed_slice_prefix!(
     1,
     64
 );
-
-#[test]
-fn packable_boxed_slice_prefix_from_boxed_slice_invalid_error() {
-    let boxed_slice = vec![0u8; 16].into_boxed_slice();
-    let prefixed = BoxedSlicePrefix::<u8, BoundedU32<1, 8>>::try_from(boxed_slice);
-
-    assert!(matches!(
-        prefixed,
-        Err(TryIntoPrefixError::Invalid(InvalidBoundedU32(16)))
-    ));
-}
-
-#[test]
-fn packable_boxed_slice_prefix_from_boxed_slice_truncated_error() {
-    let boxed_slice = vec![0u8; 257].into_boxed_slice();
-    let prefixed = BoxedSlicePrefix::<u8, u8>::try_from(boxed_slice);
-
-    assert!(matches!(prefixed, Err(TryIntoPrefixError::Truncated(257))));
-}

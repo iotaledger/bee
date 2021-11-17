@@ -13,6 +13,25 @@ use bee_packable::{
     PackableExt,
 };
 
+#[test]
+fn packable_vec_prefix_from_vec_invalid_error() {
+    let vec = vec![0u8; 16];
+    let prefixed = VecPrefix::<u8, BoundedU32<1, 8>>::try_from(vec);
+
+    assert!(matches!(
+        prefixed,
+        Err(TryIntoPrefixError::Invalid(InvalidBoundedU32(16)))
+    ));
+}
+
+#[test]
+fn packable_vec_prefix_from_vec_truncated_error() {
+    let vec = vec![0u8; 257];
+    let prefixed = VecPrefix::<u8, u8>::try_from(vec);
+
+    assert!(matches!(prefixed, Err(TryIntoPrefixError::Truncated(257))));
+}
+
 macro_rules! impl_packable_test_for_vec_prefix {
     ($packable_vec_prefix:ident, $packable_vec_prefix_invalid_length:ident, $ty:ty) => {
         #[test]
@@ -105,22 +124,3 @@ impl_packable_test_for_bounded_vec_prefix!(
     1,
     64
 );
-
-#[test]
-fn packable_vec_prefix_from_vec_invalid_error() {
-    let vec = vec![0u8; 16];
-    let prefixed = VecPrefix::<u8, BoundedU32<1, 8>>::try_from(vec);
-
-    assert!(matches!(
-        prefixed,
-        Err(TryIntoPrefixError::Invalid(InvalidBoundedU32(16)))
-    ));
-}
-
-#[test]
-fn packable_vec_prefix_from_vec_truncated_error() {
-    let vec = vec![0u8; 257];
-    let prefixed = VecPrefix::<u8, u8>::try_from(vec);
-
-    assert!(matches!(prefixed, Err(TryIntoPrefixError::Truncated(257))));
-}
