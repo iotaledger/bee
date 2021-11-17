@@ -25,7 +25,10 @@ pub fn rand_parent() -> Parent {
 pub fn rand_parents() -> Parents {
     let mut parents = vec![Parent::Strong(rand_message_id())];
 
-    parents.extend(rand_vec(rand_parent, rand_number_range(MESSAGE_PARENTS_RANGE) - 1));
+    parents.extend(rand_vec(
+        rand_parent,
+        (rand_number_range(MESSAGE_PARENTS_RANGE) - 1).into(),
+    ));
 
     parents.sort();
 

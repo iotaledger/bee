@@ -13,7 +13,6 @@ mod array;
 mod bool;
 mod r#box;
 mod integer;
-mod vec;
 
 use crate::{
     error::{UnexpectedEOF, UnpackError},

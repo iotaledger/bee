@@ -21,8 +21,6 @@ impl_packable_test_for_integer!(packable_i16, i16, 0x6F7B);
 impl_packable_test_for_integer!(packable_u16, u16, 0x6F7B);
 impl_packable_test_for_integer!(packable_i32, i32, 0x6F7BD423);
 impl_packable_test_for_integer!(packable_u32, u32, 0x6F7BD423);
-impl_packable_test_for_integer!(packable_isize, isize, 0x6F7BD423);
-impl_packable_test_for_integer!(packable_usize, usize, 0x6F7BD423);
 impl_packable_test_for_integer!(packable_i64, i64, 0x6F7BD423100423DB);
 impl_packable_test_for_integer!(packable_u64, u64, 0x6F7BD423100423DB);
 #[cfg(has_i128)]

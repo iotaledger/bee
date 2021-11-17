@@ -14,19 +14,3 @@ fn packable_box() {
         (core::mem::size_of::<u8>() + 5 * core::mem::size_of::<u8>())
     );
 }
-
-#[test]
-fn packable_box_slice() {
-    assert_eq!(
-        common::generic_test(&(Box::new([]) as Box::<[u32]>)).0.len(),
-        core::mem::size_of::<u64>()
-    );
-    assert_eq!(
-        common::generic_test(&(Box::new([Some(0u32), None]) as Box::<[Option<u32>]>))
-            .0
-            .len(),
-        core::mem::size_of::<u64>()
-            + (core::mem::size_of::<u8>() + core::mem::size_of::<u32>())
-            + core::mem::size_of::<u8>()
-    );
-}

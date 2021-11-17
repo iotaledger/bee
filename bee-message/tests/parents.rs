@@ -5,7 +5,12 @@ use bee_message::{
     error::{MessageUnpackError, ValidationError},
     parents::{Parent, Parents},
 };
-use bee_packable::{error::UnpackError, PackableExt};
+use bee_packable::{
+    bounded::InvalidBoundedU8,
+    error::UnpackError,
+    prefix::{TryIntoPrefixError, VecPrefix},
+    PackableExt,
+};
 use bee_test::rand::{
     message::{parents::rand_parents, rand_message_id},
     vec::rand_vec,
@@ -15,7 +20,9 @@ use bee_test::rand::{
 fn new_invalid_less_than_min() {
     assert!(matches!(
         Parents::new(vec![]),
-        Err(ValidationError::InvalidParentsCount(0)),
+        Err(ValidationError::InvalidParentsCount(TryIntoPrefixError::Invalid(
+            InvalidBoundedU8(0)
+        ))),
     ));
 }
 
@@ -36,7 +43,9 @@ fn new_invalid_more_than_max() {
 
     assert!(matches!(
         Parents::new(inner),
-        Err(ValidationError::InvalidParentsCount(9)),
+        Err(ValidationError::InvalidParentsCount(TryIntoPrefixError::Invalid(
+            InvalidBoundedU8(9)
+        ))),
     ));
 }
 
@@ -112,7 +121,7 @@ fn unpack_invalid_less_than_min() {
     assert!(matches!(
         Parents::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidParentsCount(0)
+            ValidationError::InvalidParentsCount(TryIntoPrefixError::Invalid(InvalidBoundedU8(0)))
         ))),
     ));
 }
@@ -133,7 +142,7 @@ fn unpack_invalid_more_than_max() {
     assert!(matches!(
         Parents::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidParentsCount(9)
+            ValidationError::InvalidParentsCount(TryIntoPrefixError::Invalid(InvalidBoundedU8(9)))
         ))),
     ));
 }
@@ -157,6 +166,7 @@ fn unpack_invalid_no_strong_parents() {
 fn unpack_invalid_not_sorted() {
     let mut inner = rand_vec(rand_message_id, 8);
     inner.reverse();
+    let inner = VecPrefix::<_, u64>::try_from(inner).unwrap();
 
     // Remove 8 byte vector length field and replace with 1 byte, to represent message parents, and one byte for parent
     // types.
@@ -164,12 +174,17 @@ fn unpack_invalid_not_sorted() {
     let mut packed_messages = inner.pack_to_vec().split_at(core::mem::size_of::<u64>()).1.to_vec();
     packed.append(&mut packed_messages);
 
-    assert!(matches!(
-        Parents::unpack_verified(packed),
-        Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::ParentsNotUniqueSorted
-        ))),
-    ));
+    let r = Parents::unpack_verified(packed);
+    assert!(
+        matches!(
+            r,
+            Err(UnpackError::Packable(MessageUnpackError::Validation(
+                ValidationError::ParentsNotUniqueSorted
+            ))),
+        ),
+        "found {:?}",
+        r
+    );
 }
 
 #[test]
@@ -177,6 +192,7 @@ fn unpack_invalid_not_unique() {
     let mut inner = rand_vec(rand_message_id, 7);
     inner.sort();
     inner.push(*inner.last().unwrap());
+    let inner = VecPrefix::<_, u64>::try_from(inner).unwrap();
 
     // Remove 8 byte vector length field and replace with 1 byte, to represent message parents, and one byte for parent
     // types.
