@@ -95,8 +95,12 @@ impl AutopeeringConfig {
 impl Default for AutopeeringConfig {
     fn default() -> Self {
         Self {
+            enabled: bool::default(),
             bind_addr: SocketAddr::new(AUTOPEERING_BIND_ADDR_DEFAULT, AUTOPEERING_BIND_PORT_DEFAULT),
-            ..Default::default()
+            entry_nodes: Vec::default(),
+            entry_nodes_prefer_ipv6: bool::default(),
+            run_as_entry_node: bool::default(),
+            drop_neighbors_on_salt_update: bool::default(),
         }
     }
 }
