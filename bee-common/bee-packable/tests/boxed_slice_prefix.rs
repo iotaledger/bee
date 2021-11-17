@@ -13,6 +13,7 @@ use bee_packable::{
     PackableExt,
 };
 macro_rules! impl_packable_test_for_boxed_slice_prefix {
+
     ($packable_boxed_slice_prefix:ident, $packable_boxed_slice_prefix_invalid_length:ident, $ty:ty) => {
         #[test]
         fn $packable_boxed_slice_prefix() {
