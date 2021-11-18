@@ -33,7 +33,7 @@ pub(crate) struct ServerConfig {
 impl ServerConfig {
     pub(crate) fn new(config: &AutopeeringConfig) -> Self {
         Self {
-            bind_addr: config.bind_addr,
+            bind_addr: config.bind_addr(),
         }
     }
 }

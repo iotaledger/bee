@@ -66,7 +66,7 @@ impl PeeringManagerConfig {
         Self {
             version,
             network_id,
-            source_addr: config.bind_addr,
+            source_addr: config.bind_addr(),
         }
     }
 }

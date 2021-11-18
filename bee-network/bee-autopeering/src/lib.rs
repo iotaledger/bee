@@ -56,7 +56,7 @@
 //!     let local = {
 //!         let l = Local::default();
 //!         let mut write = l.write();
-//!         write.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, config.bind_addr.port());
+//!         write.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, config.bind_addr().port());
 //!         write.add_service(NETWORK, ServiceProtocol::Tcp, 15600);
 //!         drop(write);
 //!         l

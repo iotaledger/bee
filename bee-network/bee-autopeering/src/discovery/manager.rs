@@ -76,12 +76,12 @@ pub(crate) struct DiscoveryManagerConfig {
 impl DiscoveryManagerConfig {
     pub fn new(config: &AutopeeringConfig, version: u32, network_id: u32) -> Self {
         Self {
-            entry_nodes: config.entry_nodes.clone(),
-            entry_nodes_prefer_ipv6: config.entry_nodes_prefer_ipv6,
-            run_as_entry_node: config.run_as_entry_node,
+            entry_nodes: config.entry_nodes().to_vec(),
+            entry_nodes_prefer_ipv6: config.entry_nodes_prefer_ipv6(),
+            run_as_entry_node: config.run_as_entry_node(),
             version,
             network_id,
-            bind_addr: config.bind_addr,
+            bind_addr: config.bind_addr(),
         }
     }
 }

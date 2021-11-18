@@ -52,21 +52,50 @@ const DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT: bool = false;
 /// The autopeering config.
 #[derive(Clone, Debug)]
 pub struct AutopeeringConfig {
-    /// Wether autopeering should be enabled.
-    pub enabled: bool,
-    /// The bind address for the server.
-    pub bind_addr: SocketAddr,
-    /// The entry nodes for bootstrapping.
-    pub entry_nodes: Vec<AutopeeringMultiaddr>,
-    /// Whether `Ipv4` or `Ipv6` should be preferred in case a hostname supports both.
-    pub entry_nodes_prefer_ipv6: bool,
-    /// Whether the node should run as an entry node.
-    pub run_as_entry_node: bool,
-    /// Whether all neighbors should be disconnected from when the salts are updated.
-    pub drop_neighbors_on_salt_update: bool,
+    enabled: bool,
+    bind_addr: SocketAddr,
+    entry_nodes: Vec<AutopeeringMultiaddr>,
+    entry_nodes_prefer_ipv6: bool,
+    run_as_entry_node: bool,
+    drop_neighbors_on_salt_update: bool,
 }
 
 impl AutopeeringConfig {
+    /// Wether autopeering should be enabled.
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+
+    /// The bind address for the server.
+    pub fn bind_addr(&self) -> SocketAddr {
+        self.bind_addr
+    }
+
+    /// The entry nodes for bootstrapping.
+    pub fn entry_nodes(&self) -> &[AutopeeringMultiaddr] {
+        &self.entry_nodes
+    }
+
+    /// Whether `Ipv4` or `Ipv6` should be preferred in case a hostname supports both.
+    pub fn entry_nodes_prefer_ipv6(&self) -> bool {
+        self.entry_nodes_prefer_ipv6
+    }
+
+    /// Whether the node should run as an entry node.
+    pub fn run_as_entry_node(&self) -> bool {
+        self.run_as_entry_node
+    }
+
+    /// Whether all neighbors should be disconnected from when the salts are updated.
+    pub fn drop_neighbors_on_salt_update(&self) -> bool {
+        self.drop_neighbors_on_salt_update
+    }
+
+    /// Reduces this config to its list of entry node addresses.
+    pub fn into_entry_nodes(self) -> Vec<AutopeeringMultiaddr> {
+        self.entry_nodes
+    }
+
     /// Turns the [`AutopeeringConfig`] into its JSON representation.
     pub fn into_json_config(self) -> AutopeeringConfigJsonBuilder {
         AutopeeringConfigJsonBuilder {
@@ -88,19 +117,6 @@ impl AutopeeringConfig {
             entry_nodes_prefer_ipv6: Some(self.entry_nodes_prefer_ipv6),
             run_as_entry_node: Some(self.run_as_entry_node),
             drop_neighbors_on_salt_update: Some(self.drop_neighbors_on_salt_update),
-        }
-    }
-}
-
-impl Default for AutopeeringConfig {
-    fn default() -> Self {
-        Self {
-            enabled: bool::default(),
-            bind_addr: SocketAddr::new(AUTOPEERING_BIND_ADDR_DEFAULT, AUTOPEERING_BIND_PORT_DEFAULT),
-            entry_nodes: Vec::default(),
-            entry_nodes_prefer_ipv6: bool::default(),
-            run_as_entry_node: bool::default(),
-            drop_neighbors_on_salt_update: bool::default(),
         }
     }
 }
@@ -151,6 +167,19 @@ impl AutopeeringConfigJsonBuilder {
     }
 }
 
+impl Default for AutopeeringConfigJsonBuilder {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            bind_addr: SocketAddr::new(AUTOPEERING_BIND_ADDR_DEFAULT, AUTOPEERING_BIND_PORT_DEFAULT),
+            entry_nodes: Vec::default(),
+            entry_nodes_prefer_ipv6: Some(false),
+            run_as_entry_node: Some(false),
+            drop_neighbors_on_salt_update: Some(false),
+        }
+    }
+}
+
 /// The autopeering config TOML builder.
 ///
 /// Note: Fields will be snake-case formatted.
@@ -185,6 +214,20 @@ impl AutopeeringConfigTomlBuilder {
             drop_neighbors_on_salt_update: self
                 .drop_neighbors_on_salt_update
                 .unwrap_or(DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT),
+        }
+    }
+}
+
+impl Default for AutopeeringConfigTomlBuilder {
+    fn default() -> Self {
+        let json_builder = AutopeeringConfigJsonBuilder::default();
+        Self {
+            enabled: json_builder.enabled,
+            bind_addr: json_builder.bind_addr,
+            entry_nodes: json_builder.entry_nodes,
+            entry_nodes_prefer_ipv6: json_builder.entry_nodes_prefer_ipv6,
+            run_as_entry_node: json_builder.run_as_entry_node,
+            drop_neighbors_on_salt_update: json_builder.drop_neighbors_on_salt_update,
         }
     }
 }

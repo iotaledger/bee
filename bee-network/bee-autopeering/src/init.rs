@@ -86,7 +86,7 @@ where
     log::info!("Current time: {}", time::datetime_now());
     log::info!("Private salt: {}", private_salt);
     log::info!("Public salt: {}", public_salt);
-    log::info!("Bind address: {}", config.bind_addr);
+    log::info!("Bind address: {}", config.bind_addr());
 
     // Create or load a peer store.
     let peerstore = S::new(peerstore_config);
@@ -116,7 +116,7 @@ where
     server.init(&mut task_mngr).await;
 
     // Create a request manager that creates and keeps track of outgoing requests.
-    let request_mngr = RequestManager::new(version, network_id, config.bind_addr);
+    let request_mngr = RequestManager::new(version, network_id, config.bind_addr());
 
     // Create the discovery manager handling the discovery request/response protocol.
     let discovery_config = DiscoveryManagerConfig::new(&config, version, network_id);
@@ -175,7 +175,7 @@ where
     );
 
     // Update salts regularly.
-    let cmd = crate::peering::manager::repeat_update_salts(config.drop_neighbors_on_salt_update);
+    let cmd = crate::peering::manager::repeat_update_salts(config.drop_neighbors_on_salt_update());
     let delay = iter::repeat(SALT_UPDATE_SECS);
     task_mngr.repeat(cmd, delay, ctx, "Salt-Update", MAX_SHUTDOWN_PRIORITY);
 

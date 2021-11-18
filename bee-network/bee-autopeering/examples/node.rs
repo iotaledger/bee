@@ -61,7 +61,11 @@ async fn main() {
     let mut keypair = hex::decode(BS16_ED25519_PRIVATE_KEY).expect("error decoding keypair");
     let local = Local::from_keypair(Keypair::decode(&mut keypair).expect("error decoding keypair"));
     let mut write = local.write();
-    write.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, config.bind_addr.port());
+    write.add_service(
+        AUTOPEERING_SERVICE_NAME,
+        ServiceProtocol::Udp,
+        config.bind_addr().port(),
+    );
     write.add_service(NETWORK_SERVICE_NAME, ServiceProtocol::Tcp, 15600);
     drop(write);
 
@@ -117,7 +121,7 @@ fn handle_event(event: Event) {
 }
 
 async fn print_resolved_entry_nodes(config: AutopeeringConfig) {
-    let AutopeeringConfig { entry_nodes, .. } = config;
+    let entry_nodes = config.into_entry_nodes();
     for mut entry_node_addr in entry_nodes {
         if entry_node_addr.resolve_dns().await {
             let resolved_addrs = entry_node_addr.resolved_addrs();
