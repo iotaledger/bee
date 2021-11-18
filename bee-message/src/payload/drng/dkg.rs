@@ -7,7 +7,7 @@ use crate::{
 };
 
 use bee_packable::{
-    bounded::{BoundedU32, InvalidBoundedU32},
+    bounded::{Bounded, BoundedU32},
     prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
     Packable, PackableExt,
 };
@@ -15,11 +15,11 @@ use bee_packable::{
 use alloc::vec::Vec;
 use core::convert::Infallible;
 
-/// All [`Vec`] sizes are unconstrained, so use payload max as upper limit.
-pub(crate) const PREFIXED_DKG_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX;
+/// A valid `EncryptedDeal` length.
+pub(crate) type EncryptedDealLength = BoundedU32<0, PAYLOAD_LENGTH_MAX>;
 
 fn unpack_prefix_to_validation_error(
-    err: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>,
+    err: UnpackPrefixError<Infallible, <EncryptedDealLength as TryFrom<u32>>::Error>,
 ) -> ValidationError {
     ValidationError::InvalidEncryptedDealLength(TryIntoPrefixError::Invalid(err.into_prefix()))
 }
@@ -30,16 +30,16 @@ fn unpack_prefix_to_validation_error(
 #[packable(unpack_error = MessageUnpackError, with = unpack_prefix_to_validation_error)]
 pub struct EncryptedDeal {
     /// An ephemeral Diffie-Hellman key.
-    dh_key: VecPrefix<u8, BoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>,
+    dh_key: VecPrefix<u8, EncryptedDealLength>,
     /// The nonce used.
-    nonce: VecPrefix<u8, BoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>,
+    nonce: VecPrefix<u8, EncryptedDealLength>,
     /// The ciphertext of the share.
-    encrypted_share: VecPrefix<u8, BoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>,
+    encrypted_share: VecPrefix<u8, EncryptedDealLength>,
     /// The threshold of the secret sharing protocol.
     #[packable(unpack_error_with = core::convert::identity)]
     threshold: u32,
     /// The commitments of the polynomial used to derive the share.
-    commitments: VecPrefix<u8, BoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>,
+    commitments: VecPrefix<u8, EncryptedDealLength>,
 }
 
 impl EncryptedDeal {
@@ -161,7 +161,7 @@ impl EncryptedDealBuilder {
 }
 
 fn validate_encrypted_deal_length(len: usize) -> Result<(), ValidationError> {
-    if len > PREFIXED_DKG_LENGTH_MAX as usize {
+    if len > EncryptedDealLength::MAX as usize {
         Err(ValidationError::InvalidEncryptedDealLength(
             TryIntoPrefixError::Truncated(len),
         ))
