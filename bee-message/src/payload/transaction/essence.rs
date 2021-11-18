@@ -24,10 +24,8 @@ use core::{convert::Infallible, fmt};
 /// Length (in bytes) of Transaction Essence pledge IDs (node IDs relating to pledge mana).
 pub const PLEDGE_ID_LENGTH: usize = 32;
 
-pub(crate) const PREFIXED_INPUTS_LENGTH_MAX: u32 = *INPUT_COUNT_RANGE.end() as u32;
-pub(crate) const PREFIXED_OUTPUTS_LENGTH_MAX: u32 = *OUTPUT_COUNT_RANGE.end() as u32;
-pub(crate) const PREFIXED_INPUTS_LENGTH_MIN: u32 = *INPUT_COUNT_RANGE.start() as u32;
-pub(crate) const PREFIXED_OUTPUTS_LENGTH_MIN: u32 = *OUTPUT_COUNT_RANGE.start() as u32;
+pub(crate) type InputCount = BoundedU32<{ *INPUT_COUNT_RANGE.start() as u32 }, { *INPUT_COUNT_RANGE.end() as u32 }>;
+pub(crate) type OutputCount = BoundedU32<{ *OUTPUT_COUNT_RANGE.start() as u32 }, { *OUTPUT_COUNT_RANGE.end() as u32 }>;
 
 /// Error encountered unpacking a Transaction Essence.
 #[derive(Debug)]
@@ -76,9 +74,9 @@ pub struct TransactionEssence {
     /// Node ID to which the consensus mana of the transaction is pledged.
     consensus_pledge_id: [u8; PLEDGE_ID_LENGTH],
     /// Collection of transaction [`Input`]s.
-    inputs: VecPrefix<Input, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>,
+    inputs: VecPrefix<Input, InputCount>,
     /// Collection of transaction [`Output`]s.
-    outputs: VecPrefix<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>,
+    outputs: VecPrefix<Output, OutputCount>,
     /// Optional additional payload.
     payload: Option<Payload>,
 }
@@ -140,11 +138,7 @@ impl Packable for TransactionEssence {
         let consensus_pledge_id = <[u8; PLEDGE_ID_LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?;
 
         // Inputs syntactical validation
-        let inputs = VecPrefix::<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>::unpack::<
-            _,
-            VERIFY,
-        >(unpacker)
-        .map_packable_err(|err| {
+        let inputs = VecPrefix::<Input, InputCount>::unpack::<_, VERIFY>(unpacker).map_packable_err(|err| {
             err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidInputCount(prefix_err.into()))
         })?;
 
@@ -152,14 +146,9 @@ impl Packable for TransactionEssence {
         validate_inputs_sorted(&inputs).map_err(UnpackError::from_packable)?;
 
         // Outputs syntactical validation
-        let outputs =
-            VecPrefix::<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>::unpack::<
-                _,
-                VERIFY,
-            >(unpacker)
-            .map_packable_err(|err| {
-                err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidOutputCount(prefix_err.into()))
-            })?;
+        let outputs = VecPrefix::<Output, OutputCount>::unpack::<_, VERIFY>(unpacker).map_packable_err(|err| {
+            err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidOutputCount(prefix_err.into()))
+        })?;
 
         validate_output_total(
             outputs
