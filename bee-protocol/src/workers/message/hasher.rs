@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![allow(clippy::assertions_on_constants)]
-
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
@@ -16,7 +14,10 @@ use crate::{
     },
 };
 
-use bee_crypto::ternary::sponge::{Sponge, UnrolledCurlP81};
+use bee_crypto::ternary::{
+    sponge::{Sponge, UnrolledCurlP81},
+    HASH_LENGTH,
+};
 use bee_message::MessageId;
 use bee_network::PeerId;
 use bee_pow::score;
@@ -73,7 +74,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
             let mut hasher = UnrolledCurlP81::new();
             let mut blake2b = Blake2b256::new();
-            let mut pow_input: TritBuf = TritBuf::with_capacity(243);
+            let mut pow_input: TritBuf = TritBuf::with_capacity(HASH_LENGTH);
 
             info!("Running.");
 

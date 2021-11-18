@@ -148,9 +148,8 @@ where
                         }
 
                         match requested_messages.remove(&message_id).await {
+                            // Message was requested.
                             Some((index, instant)) => {
-                                // Message was requested.
-
                                 latency_num += 1;
                                 latency_sum += (Instant::now() - instant).as_millis() as u64;
                                 metrics.messages_average_latency_set(latency_sum / latency_num);
@@ -160,8 +159,8 @@ where
                                         .await;
                                 }
                             }
+                            // Message was not requested.
                             None => {
-                                // Message was not requested.
                                 if let Err(e) = broadcaster.send(BroadcasterWorkerEvent {
                                     source: from,
                                     message: message_packet,

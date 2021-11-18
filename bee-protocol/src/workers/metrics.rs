@@ -14,8 +14,7 @@ use tokio_stream::wrappers::IntervalStream;
 
 use std::{convert::Infallible, time::Duration};
 
-// In seconds.
-const METRICS_INTERVAL: u64 = 60;
+const METRICS_INTERVAL: Duration = Duration::from_secs(60);
 
 pub struct MetricsWorker {}
 
@@ -55,7 +54,7 @@ impl<N: Node> Worker<N> for MetricsWorker {
 
             let mut ticker = ShutdownStream::new(
                 shutdown,
-                IntervalStream::new(interval(Duration::from_secs(METRICS_INTERVAL))),
+                IntervalStream::new(interval(METRICS_INTERVAL)),
             );
 
             while ticker.next().await.is_some() {

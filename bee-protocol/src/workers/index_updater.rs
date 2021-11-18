@@ -80,8 +80,8 @@ async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: Milestone, in
         // Update the past cone of this milestone by setting its milestone index, and return them.
         let roots = update_past_cone(tangle, parents, index).await;
 
-        // Note: For tip-selection only the most recent tangle is relevent. That means that during
-        // synchronization we do not need to update xMRSI values or tip scores before (LMI - BELOW_MAX_DEPTH).
+        // Note: For tip-selection only the most recent tangle is relevent. That means that during synchronization we do
+        // not need to update xMRSI values or tip scores before (LATEST_MILESTONE_INDEX - BELOW_MAX_DEPTH).
         if index > tangle.get_latest_milestone_index() - tangle.config().below_max_depth() {
             update_future_cone(tangle, roots).await;
 
@@ -120,8 +120,8 @@ async fn update_past_cone<B: StorageBackend>(
         tangle
             .update_metadata(&parent_id, |metadata| {
                 metadata.set_milestone_index(index);
-                // TODO: That was fine in a synchronous scenario, where this algo had the newest information,
-                // but probably isn't the case in the now asynchronous scenario. Investigate!
+                // TODO: That was fine in a synchronous scenario, where this algo had the newest information, but
+                // probably isn't the case in the now asynchronous scenario. Investigate!
                 metadata.set_omrsi(IndexId::new(index, parent_id));
                 metadata.set_ymrsi(IndexId::new(index, parent_id));
             })
@@ -144,8 +144,8 @@ async fn update_past_cone<B: StorageBackend>(
     updated
 }
 
-// NOTE: so once a milestone comes in we have to walk the future cones of the root transactions and update their
-// OMRSI and YMRSI; during that time we need to block the propagator, otherwise it will propagate outdated data.
+// NOTE: Once a milestone comes in we have to walk the future cones of the root transactions and update their OMRSI and
+// YMRSI; during that time we need to block the propagator, otherwise it will propagate outdated data.
 async fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSet<MessageId>) {
     let mut to_process = roots.into_iter().collect::<Vec<_>>();
     let mut processed = HashSet::new();
