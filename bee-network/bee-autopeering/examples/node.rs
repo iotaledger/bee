@@ -4,7 +4,7 @@
 #![allow(warnings)]
 
 use bee_autopeering::{
-    config::AutopeeringJsonConfig,
+    config::AutopeeringConfigJsonBuilder,
     init,
     peerstore::{InMemoryPeerStore, SledPeerStore, SledPeerStoreConfig},
     AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
@@ -30,7 +30,7 @@ fn setup_logger(level: LevelFilter) {
         .expect("fern");
 }
 
-fn read_config() -> AutopeeringJsonConfig {
+fn read_config() -> AutopeeringConfigJsonBuilder {
     let config_json = r#"
     {
         "enabled": true,

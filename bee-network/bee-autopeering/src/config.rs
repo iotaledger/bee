@@ -49,7 +49,7 @@ const ENTRYNODES_PREFER_IPV6_DEFAULT: bool = false;
 const RUN_AS_ENTRYNODE_DEFAULT: bool = false;
 const DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT: bool = false;
 
-///
+/// The autopeering config.
 #[derive(Clone, Debug)]
 pub struct AutopeeringConfig {
     /// Wether autopeering should be enabled.
@@ -68,8 +68,8 @@ pub struct AutopeeringConfig {
 
 impl AutopeeringConfig {
     /// Turns the [`AutopeeringConfig`] into its JSON representation.
-    pub fn into_json_config(self) -> AutopeeringJsonConfig {
-        AutopeeringJsonConfig {
+    pub fn into_json_config(self) -> AutopeeringConfigJsonBuilder {
+        AutopeeringConfigJsonBuilder {
             enabled: self.enabled,
             bind_addr: self.bind_addr,
             entry_nodes: self.entry_nodes,
@@ -80,8 +80,8 @@ impl AutopeeringConfig {
     }
 
     /// Turns the [`AutopeeringConfig`] into its TOML representation.
-    pub fn into_toml_config(self) -> AutopeeringTomlConfig {
-        AutopeeringTomlConfig {
+    pub fn into_toml_config(self) -> AutopeeringConfigTomlBuilder {
+        AutopeeringConfigTomlBuilder {
             enabled: self.enabled,
             bind_addr: self.bind_addr,
             entry_nodes: self.entry_nodes,
@@ -105,13 +105,17 @@ impl Default for AutopeeringConfig {
     }
 }
 
-/// The JSON config representation.
+// Note: In case someone wonders why we use `Option<bool>`: Although serde actually provides a way to allow for the default
+// of a boolean parameter to be `true` - so that missing config parameters could be created on the fly - it felt too awkward
+// and also a bit too cumbersome to me: serde(default = "default_providing_function_name").
+
+/// The autopeering config JSON builder.
 ///
 /// Note: Fields will be camel-case formatted.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
 #[serde(rename = "autopeering")]
-pub struct AutopeeringJsonConfig {
+pub struct AutopeeringConfigJsonBuilder {
     /// Wether autopeering should be enabled.
     pub enabled: bool,
     /// The bind address for the server.
@@ -131,7 +135,7 @@ pub struct AutopeeringJsonConfig {
     pub drop_neighbors_on_salt_update: Option<bool>,
 }
 
-impl AutopeeringJsonConfig {
+impl AutopeeringConfigJsonBuilder {
     /// Builds the actual `AutopeeringConfig`.
     pub fn finish(self) -> AutopeeringConfig {
         AutopeeringConfig {
@@ -147,13 +151,13 @@ impl AutopeeringJsonConfig {
     }
 }
 
-/// The TOML config builder.
+/// The autopeering config TOML builder.
 ///
 /// Note: Fields will be snake-case formatted.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
 #[serde(rename = "autopeering")]
-pub struct AutopeeringTomlConfig {
+pub struct AutopeeringConfigTomlBuilder {
     /// Wether autopeering should be enabled.
     pub enabled: bool,
     /// The bind address for the server.
@@ -169,7 +173,7 @@ pub struct AutopeeringTomlConfig {
     pub drop_neighbors_on_salt_update: Option<bool>,
 }
 
-impl AutopeeringTomlConfig {
+impl AutopeeringConfigTomlBuilder {
     /// Builds the actual `AutopeeringConfig`.
     pub fn finish(self) -> AutopeeringConfig {
         AutopeeringConfig {
@@ -190,19 +194,19 @@ mod tests {
     use super::*;
     use std::fmt;
 
-    impl fmt::Display for AutopeeringJsonConfig {
+    impl fmt::Display for AutopeeringConfigJsonBuilder {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             serde_json::to_string_pretty(self).fmt(f)
         }
     }
 
-    impl fmt::Display for AutopeeringTomlConfig {
+    impl fmt::Display for AutopeeringConfigTomlBuilder {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             toml::to_string_pretty(self).fmt(f)
         }
     }
 
-    fn create_json_config_from_str() -> AutopeeringJsonConfig {
+    fn create_json_config_from_str() -> AutopeeringConfigJsonBuilder {
         let config_json_str = r#"
         {
             "enabled": true,
@@ -221,7 +225,7 @@ mod tests {
         serde_json::from_str(config_json_str).expect("error deserializing json config")
     }
 
-    fn create_toml_config_from_str() -> AutopeeringTomlConfig {
+    fn create_toml_config_from_str() -> AutopeeringConfigTomlBuilder {
         let toml_config_str = r#"
             enabled = true
             bind_address = "0.0.0.0:15626"

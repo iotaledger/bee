@@ -19,7 +19,7 @@
 //! ```no_run
 //! use bee_autopeering::{
 //!     init,
-//!     config::AutopeeringJsonConfig,
+//!     config::AutopeeringConfigJsonBuilder,
 //!     peerstore::{SledPeerStore, SledPeerStoreConfig},
 //!     AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 //! };
@@ -40,7 +40,7 @@
 //!         "runAsEntryNode": false
 //!     }"#;
 //!
-//!     serde_json::from_str::<AutopeeringJsonConfig>(config_json).expect("error deserializing json config").finish()
+//!     serde_json::from_str::<AutopeeringConfigJsonBuilder>(config_json).expect("error deserializing json config builder").finish()
 //! }
 
 //! #[tokio::main]
