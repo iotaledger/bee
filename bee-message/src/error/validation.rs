@@ -11,16 +11,13 @@ use crate::{
         drng::EncryptedDealLength,
         fpc::{ConflictsCount, TimestampsCount},
         indexation::{IndexationDataLength, IndexationIndexLength},
-        salt_declaration::PREFIXED_SALT_BYTES_LENGTH_MAX,
+        salt_declaration::SaltBytesLength,
         transaction::{InputCount, OutputCount},
     },
     unlock::{PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX, PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN},
 };
 
-use bee_packable::{
-    bounded::{InvalidBoundedU16, InvalidBoundedU32},
-    prefix::TryIntoPrefixError,
-};
+use bee_packable::{bounded::InvalidBoundedU16, prefix::TryIntoPrefixError};
 
 use crypto::Error as CryptoError;
 
@@ -71,7 +68,7 @@ pub enum ValidationError {
         payload_kind: u32,
     },
     InvalidReferenceIndex(u16),
-    InvalidSaltBytesLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_SALT_BYTES_LENGTH_MAX>>),
+    InvalidSaltBytesLength(TryIntoPrefixError<<SaltBytesLength as TryFrom<u32>>::Error>),
     InvalidSignature,
     InvalidStrongParentsCount(usize),
     InvalidTimestampsCount(TryIntoPrefixError<<TimestampsCount as TryFrom<u32>>::Error>),
