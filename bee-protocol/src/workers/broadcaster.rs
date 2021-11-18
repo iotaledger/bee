@@ -47,13 +47,11 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(BroadcasterWorkerEvent { source, message }) = receiver.next().await {
-                // TODO bring it back
-                // peer_manager.for_each_peer(|peer_id, _| {
-                for (peer_id, _) in peer_manager.0.read().peers.iter() {
+                peer_manager.for_each(|peer_id, _| {
                     if source.map_or(true, |ref source| source != peer_id) {
                         Sender::<MessagePacket>::send(&peer_manager, &metrics, peer_id, message.clone());
                     }
-                }
+                });
             }
 
             info!("Stopped.");

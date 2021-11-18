@@ -46,7 +46,7 @@ impl<N: Node> Worker<N> for PeerManagerResWorker {
 pub struct PeerManagerInner {
     // TODO private
     #[allow(clippy::type_complexity)] // TODO
-    pub(crate) peers: HashMap<PeerId, (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)>,
+    peers: HashMap<PeerId, (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)>,
     // This is needed to ensure message distribution fairness as iterating over a HashMap is random.
     pub(crate) keys: Vec<PeerId>,
 }
@@ -97,12 +97,9 @@ impl PeerManager {
         lock.peers.remove(id)
     }
 
-    // TODO bring it back
-    // pub(crate) async fn for_each_peer<F: Fn(&PeerId, &Peer)>(&self, f: F) {
-    //     for (id, (peer, _, _)) in self.peers.read().await.iter() {
-    //         f(id, peer);
-    //     }
-    // }
+    pub(crate) fn for_each<F: Fn(&PeerId, &Peer)>(&self, f: F) {
+        self.0.read().peers.iter().for_each(|(id, (peer, _))| f(id, peer));
+    }
 
     pub fn is_connected(&self, id: &PeerId) -> bool {
         self.0.read().peers.get(id).map_or(false, |p| p.1.is_some())

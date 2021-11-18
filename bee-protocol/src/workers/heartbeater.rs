@@ -54,11 +54,7 @@ pub(crate) fn broadcast_heartbeat<B: StorageBackend>(
 ) {
     let heartbeat = new_heartbeat(peer_manager, tangle);
 
-    // TODO bring it back
-    //    peer_manager.for_each_peer(|peer_id, _| async {
-    for (peer_id, _) in peer_manager.0.read().peers.iter() {
-        send_heartbeat(peer_manager, metrics, peer_id, heartbeat.clone())
-    }
+    peer_manager.for_each(|peer_id, _| send_heartbeat(peer_manager, metrics, peer_id, heartbeat.clone()));
 }
 
 #[derive(Default)]
