@@ -31,10 +31,10 @@ pub(crate) struct TransactionPayloadWorker {
 }
 
 async fn process(
-    metrics: &NodeMetrics,
-    indexation_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
     message_id: MessageId,
     message: MessageRef,
+    indexation_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
+    metrics: &NodeMetrics,
 ) {
     let transaction = if let Some(Payload::Transaction(transaction)) = message.payload() {
         transaction
@@ -74,9 +74,10 @@ where
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = mpsc::unbounded_channel();
+        // SAFETY: unwrapping is fine because IndexationPayloadWorker is in the dependencies.
         let indexation_payload_worker = node.worker::<IndexationPayloadWorker>().unwrap().tx.clone();
         let metrics = node.resource::<NodeMetrics>();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -84,18 +85,18 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(TransactionPayloadWorkerEvent { message_id, message }) = receiver.next().await {
-                process(&metrics, &indexation_payload_worker, message_id, message).await;
+                process(message_id, message, &indexation_payload_worker, &metrics).await;
             }
 
             // Before the worker completely stops, the receiver needs to be drained for transaction payloads to be
-            // analysed. Otherwise, information would be lost and not easily recoverable.
+            // analysed; otherwise, they would be lost and not easily recoverable.
 
             let (_, mut receiver) = receiver.split();
             let mut count: usize = 0;
 
             while let Some(Some(TransactionPayloadWorkerEvent { message_id, message })) = receiver.next().now_or_never()
             {
-                process(&metrics, &indexation_payload_worker, message_id, message).await;
+                process(message_id, message, &indexation_payload_worker, &metrics).await;
                 count += 1;
             }
 

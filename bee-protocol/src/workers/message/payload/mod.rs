@@ -87,10 +87,10 @@ where
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = mpsc::unbounded_channel();
         let transaction_payload_worker = node.worker::<TransactionPayloadWorker>().unwrap().tx.clone();
         let milestone_payload_worker = node.worker::<MilestonePayloadWorker>().unwrap().tx.clone();
         let indexation_payload_worker = node.worker::<IndexationPayloadWorker>().unwrap().tx.clone();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

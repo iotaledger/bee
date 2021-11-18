@@ -138,7 +138,6 @@ where
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = mpsc::unbounded_channel();
         let milestone_solidifier = node.worker::<MilestoneSolidifierWorker>().unwrap().tx.clone();
         let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
@@ -149,6 +148,7 @@ where
             config.coordinator.public_key_ranges.into_boxed_slice(),
         );
         let bus = node.bus();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
