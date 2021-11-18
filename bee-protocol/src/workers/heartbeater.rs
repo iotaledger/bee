@@ -25,12 +25,9 @@ const _HEARTBEAT_SEND_INTERVAL: Duration = Duration::from_secs(30);
 const _HEARTBEAT_RECEIVE_INTERVAL: Duration = Duration::from_secs(100);
 const CHECK_HEARTBEATS_INTERVAL: Duration = Duration::from_secs(5);
 
-pub(crate) async fn new_heartbeat<B: StorageBackend>(
-    peer_manager: &PeerManager,
-    tangle: &Tangle<B>,
-) -> HeartbeatPacket {
-    let connected_peers = peer_manager.connected_peers().await;
-    let synced_peers = peer_manager.synced_peers().await;
+pub(crate) fn new_heartbeat<B: StorageBackend>(peer_manager: &PeerManager, tangle: &Tangle<B>) -> HeartbeatPacket {
+    let connected_peers = peer_manager.connected_peers();
+    let synced_peers = peer_manager.synced_peers();
 
     HeartbeatPacket::new(
         *tangle.get_solid_milestone_index(),
@@ -41,26 +38,26 @@ pub(crate) async fn new_heartbeat<B: StorageBackend>(
     )
 }
 
-pub(crate) async fn send_heartbeat(
+pub(crate) fn send_heartbeat(
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     to: &PeerId,
     heartbeat: HeartbeatPacket,
 ) {
-    Sender::<HeartbeatPacket>::send(peer_manager, metrics, to, heartbeat).await;
+    Sender::<HeartbeatPacket>::send(peer_manager, metrics, to, heartbeat);
 }
 
-pub(crate) async fn broadcast_heartbeat<B: StorageBackend>(
+pub(crate) fn broadcast_heartbeat<B: StorageBackend>(
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     tangle: &Tangle<B>,
 ) {
-    let heartbeat = new_heartbeat(peer_manager, tangle).await;
+    let heartbeat = new_heartbeat(peer_manager, tangle);
 
     // TODO bring it back
     //    peer_manager.for_each_peer(|peer_id, _| async {
-    for (peer_id, _) in peer_manager.0.read().await.peers.iter() {
-        send_heartbeat(peer_manager, metrics, peer_id, heartbeat.clone()).await
+    for (peer_id, _) in peer_manager.0.read().peers.iter() {
+        send_heartbeat(peer_manager, metrics, peer_id, heartbeat.clone())
     }
 }
 
@@ -96,7 +93,7 @@ where
 
             while ticker.next().await.is_some() {
                 // TODO real impl
-                broadcast_heartbeat(&peer_manager, &metrics, &tangle).await;
+                broadcast_heartbeat(&peer_manager, &metrics, &tangle);
             }
 
             info!("Stopped.");

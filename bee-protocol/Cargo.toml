@@ -31,6 +31,7 @@ hex = { version = "0.4.3", default-features = false, optional = true }
 iota-crypto = { version = "0.7.0", default-features = false, features = [ "blake2b", "ed25519" ], optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 num_cpus = { version = "1.13.0", default-features = false, optional = true }
+parking_lot = { version = "0.11.2", default-features = false, optional = true }
 rand = { version = "0.8.4", default-features = false, optional = true }
 ref-cast = { version = "1.0.6", default-features = false, optional = true }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ], optional = true }
@@ -59,6 +60,7 @@ workers = [
   "iota-crypto",
   "log",
   "num_cpus",
+  "parking_lot",
   "rand",
   "ref-cast",
   "serde",

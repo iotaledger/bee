@@ -11,7 +11,7 @@ use bee_runtime::{node::Node, worker::Worker};
 use async_trait::async_trait;
 use futures::channel::oneshot;
 use log::debug;
-use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use std::{collections::HashMap, convert::Infallible, sync::Arc};
 
@@ -60,46 +60,39 @@ impl PeerManager {
         Self::default()
     }
 
-    pub async fn is_empty(&self) -> bool {
-        self.0.read().await.peers.is_empty()
+    pub fn is_empty(&self) -> bool {
+        self.0.read().peers.is_empty()
     }
 
     // TODO find a way to only return a ref to the peer.
-    pub async fn get(
+    pub fn get(
         &self,
         id: &PeerId,
     ) -> Option<impl std::ops::Deref<Target = (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)> + '_> {
-        RwLockReadGuard::try_map(self.0.read().await, |map| map.peers.get(id)).ok()
+        RwLockReadGuard::try_map(self.0.read(), |map| map.peers.get(id)).ok()
     }
 
-    pub async fn get_mut(
+    pub fn get_mut(
         &self,
         id: &PeerId,
     ) -> Option<impl std::ops::DerefMut<Target = (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)> + '_> {
-        RwLockWriteGuard::try_map(self.0.write().await, |map| map.peers.get_mut(id)).ok()
+        RwLockWriteGuard::try_map(self.0.write(), |map| map.peers.get_mut(id)).ok()
     }
 
-    pub async fn get_all(&self) -> Vec<Arc<Peer>> {
-        self.0
-            .read()
-            .await
-            .peers
-            .iter()
-            .map(|(_, (peer, _))| peer)
-            .cloned()
-            .collect()
+    pub fn get_all(&self) -> Vec<Arc<Peer>> {
+        self.0.read().peers.iter().map(|(_, (peer, _))| peer).cloned().collect()
     }
 
-    pub(crate) async fn add(&self, peer: Arc<Peer>) {
+    pub(crate) fn add(&self, peer: Arc<Peer>) {
         debug!("Added peer {}.", peer.id());
-        let mut lock = self.0.write().await;
+        let mut lock = self.0.write();
         lock.keys.push(*peer.id());
         lock.peers.insert(*peer.id(), (peer, None));
     }
 
-    pub(crate) async fn remove(&self, id: &PeerId) -> Option<(Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)> {
+    pub(crate) fn remove(&self, id: &PeerId) -> Option<(Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)> {
         debug!("Removed peer {}.", id);
-        let mut lock = self.0.write().await;
+        let mut lock = self.0.write();
         lock.keys.retain(|peer_id| peer_id != id);
         lock.peers.remove(id)
     }
@@ -111,24 +104,17 @@ impl PeerManager {
     //     }
     // }
 
-    pub async fn is_connected(&self, id: &PeerId) -> bool {
-        self.0.read().await.peers.get(id).map_or(false, |p| p.1.is_some())
+    pub fn is_connected(&self, id: &PeerId) -> bool {
+        self.0.read().peers.get(id).map_or(false, |p| p.1.is_some())
     }
 
-    pub async fn connected_peers(&self) -> u8 {
-        self.0
-            .read()
-            .await
-            .peers
-            .iter()
-            .filter(|(_, (_, ctx))| ctx.is_some())
-            .count() as u8
+    pub fn connected_peers(&self) -> u8 {
+        self.0.read().peers.iter().filter(|(_, (_, ctx))| ctx.is_some()).count() as u8
     }
 
-    pub async fn synced_peers(&self) -> u8 {
+    pub fn synced_peers(&self) -> u8 {
         self.0
             .read()
-            .await
             .peers
             .iter()
             .filter(|(_, (peer, ctx))| (ctx.is_some() && peer.is_synced()))

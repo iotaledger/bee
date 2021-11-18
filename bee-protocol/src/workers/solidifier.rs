@@ -48,7 +48,7 @@ async fn heavy_solidification<B: StorageBackend>(
     traversal::visit_parents_depth_first(
         tangle,
         target_id,
-        |id, _, metadata| async move { !metadata.flags().is_solid() && !requested_messages.contains(&id).await },
+        |id, _, metadata| !metadata.flags().is_solid() && !requested_messages.contains(&id),
         |_, _, _| {},
         |_, _, _| {},
         |missing_id| missing.push(*missing_id),
@@ -65,7 +65,7 @@ async fn heavy_solidification<B: StorageBackend>(
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn solidify<B: StorageBackend>(
+fn solidify<B: StorageBackend>(
     tangle: &Tangle<B>,
     consensus_worker: &mpsc::UnboundedSender<ConsensusWorkerCommand>,
     index_updater_worker: &mpsc::UnboundedSender<IndexUpdaterWorkerEvent>,
@@ -90,7 +90,7 @@ async fn solidify<B: StorageBackend>(
         warn!("Sending message_id to `IndexUpdater` failed: {:?}.", e);
     }
 
-    broadcast_heartbeat(peer_manager, metrics, tangle).await;
+    broadcast_heartbeat(peer_manager, metrics, tangle);
 
     bus.dispatch(SolidMilestoneChanged {
         index,
@@ -186,8 +186,7 @@ where
                                 &bus,
                                 id,
                                 target,
-                            )
-                            .await;
+                            );
                         } else {
                             // TODO Is this actually necessary ?
                             let missing_len =

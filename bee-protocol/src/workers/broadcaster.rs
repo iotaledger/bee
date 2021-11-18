@@ -49,9 +49,9 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
             while let Some(BroadcasterWorkerEvent { source, message }) = receiver.next().await {
                 // TODO bring it back
                 // peer_manager.for_each_peer(|peer_id, _| {
-                for (peer_id, _) in peer_manager.0.read().await.peers.iter() {
+                for (peer_id, _) in peer_manager.0.read().peers.iter() {
                     if source.map_or(true, |ref source| source != peer_id) {
-                        Sender::<MessagePacket>::send(&peer_manager, &metrics, peer_id, message.clone()).await;
+                        Sender::<MessagePacket>::send(&peer_manager, &metrics, peer_id, message.clone());
                     }
                 }
             }

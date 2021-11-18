@@ -18,10 +18,8 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use fxhash::FxBuildHasher;
 use log::{debug, info, warn};
-use tokio::{
-    sync::{mpsc, RwLock},
-    time::interval,
-};
+use parking_lot::RwLock;
+use tokio::{sync::mpsc, time::interval};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
 use std::{
@@ -40,7 +38,7 @@ pub(crate) async fn request_milestone<B: StorageBackend>(
     index: MilestoneIndex,
     to: Option<PeerId>,
 ) {
-    if !requested_milestones.contains(&index).await && !tangle.contains_milestone(index).await {
+    if !requested_milestones.contains(&index) && !tangle.contains_milestone(index).await {
         if let Err(e) = milestone_requester.send(MilestoneRequesterWorkerEvent(index, to)) {
             warn!("Requesting milestone failed: {}.", e);
         }
@@ -61,25 +59,25 @@ pub struct RequestedMilestones(RwLock<HashMap<MilestoneIndex, Instant, FxBuildHa
 
 #[allow(clippy::len_without_is_empty)]
 impl RequestedMilestones {
-    pub async fn contains(&self, index: &MilestoneIndex) -> bool {
-        self.0.read().await.contains_key(index)
+    pub fn contains(&self, index: &MilestoneIndex) -> bool {
+        self.0.read().contains_key(index)
     }
 
-    pub(crate) async fn insert(&self, index: MilestoneIndex) {
+    pub(crate) fn insert(&self, index: MilestoneIndex) {
         let now = Instant::now();
-        self.0.write().await.insert(index, now);
+        self.0.write().insert(index, now);
     }
 
-    pub async fn len(&self) -> usize {
-        self.0.read().await.len()
+    pub fn len(&self) -> usize {
+        self.0.read().len()
     }
 
-    pub async fn is_empty(&self) -> bool {
-        self.0.read().await.is_empty()
+    pub fn is_empty(&self) -> bool {
+        self.0.read().is_empty()
     }
 
-    pub(crate) async fn remove(&self, index: &MilestoneIndex) -> Option<Instant> {
-        self.0.write().await.remove(index)
+    pub(crate) fn remove(&self, index: &MilestoneIndex) -> Option<Instant> {
+        self.0.write().remove(index)
     }
 }
 
@@ -97,22 +95,22 @@ async fn process_request(
     requested_milestones: &RequestedMilestones,
     counter: &mut usize,
 ) {
-    if requested_milestones.contains(&index).await {
+    if requested_milestones.contains(&index) {
         return;
     }
 
-    if peer_manager.is_empty().await {
+    if peer_manager.is_empty() {
         return;
     }
 
     if index.0 != 0 {
-        requested_milestones.insert(index).await;
+        requested_milestones.insert(index);
     }
 
-    process_request_unchecked(index, peer_id, peer_manager, metrics, counter).await;
+    process_request_unchecked(index, peer_id, peer_manager, metrics, counter);
 }
 
-async fn process_request_unchecked(
+fn process_request_unchecked(
     index: MilestoneIndex,
     peer_id: Option<PeerId>,
     peer_manager: &PeerManager,
@@ -126,18 +124,17 @@ async fn process_request_unchecked(
                 metrics,
                 &peer_id,
                 MilestoneRequestPacket::new(*index),
-            )
-            .await;
+            );
         }
         None => {
-            let guard = peer_manager.0.read().await;
+            let guard = peer_manager.0.read();
 
             for _ in 0..guard.keys.len() {
                 let peer_id = &guard.keys[*counter % guard.keys.len()];
 
                 *counter += 1;
 
-                if let Some(peer) = peer_manager.get(peer_id).await {
+                if let Some(peer) = peer_manager.get(peer_id) {
                     // TODO also request if has_data ?
                     if (*peer).0.maybe_has_data(index) {
                         Sender::<MilestoneRequestPacket>::send(
@@ -145,8 +142,7 @@ async fn process_request_unchecked(
                             metrics,
                             peer_id,
                             MilestoneRequestPacket::new(*index),
-                        )
-                        .await;
+                        );
                         return;
                     }
                 }
@@ -162,7 +158,7 @@ async fn retry_requests<B: StorageBackend>(
     tangle: &Tangle<B>,
     counter: &mut usize,
 ) {
-    if peer_manager.is_empty().await {
+    if peer_manager.is_empty() {
         return;
     }
 
@@ -171,7 +167,7 @@ async fn retry_requests<B: StorageBackend>(
     let mut to_retry = Vec::with_capacity(1024);
 
     // TODO this needs abstraction
-    for (index, instant) in requested_milestones.0.read().await.iter() {
+    for (index, instant) in requested_milestones.0.read().iter() {
         if now
             .checked_duration_since(*instant)
             .map_or(false, |d| d.as_millis() as u64 > RETRY_INTERVAL_MS)
@@ -183,9 +179,9 @@ async fn retry_requests<B: StorageBackend>(
 
     for index in to_retry {
         if tangle.contains_milestone(index).await {
-            requested_milestones.remove(&index).await;
+            requested_milestones.remove(&index);
         } else {
-            process_request_unchecked(index, None, peer_manager, metrics, counter).await;
+            process_request_unchecked(index, None, peer_manager, metrics, counter);
         }
     }
 

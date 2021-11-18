@@ -72,10 +72,10 @@ where
                         info!("Added peer {}.", info.alias);
 
                         let peer = Arc::new(Peer::new(peer_id, info));
-                        peer_manager.add(peer).await;
+                        peer_manager.add(peer);
                     }
                     Event::PeerRemoved { peer_id } => {
-                        if let Some(peer) = peer_manager.remove(&peer_id).await {
+                        if let Some(peer) = peer_manager.remove(&peer_id) {
                             info!("Removed peer {}.", peer.0.alias());
                         }
                     }
@@ -86,7 +86,7 @@ where
                         gossip_out: sender,
                     } => {
                         // TODO write a get_mut peer manager method
-                        if let Some(mut peer) = peer_manager.get_mut(&peer_id).await {
+                        if let Some(mut peer) = peer_manager.get_mut(&peer_id) {
                             let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
                             peer.0.set_connected(true);
@@ -117,13 +117,12 @@ where
                             &*peer_manager,
                             &*metrics,
                             &peer_id,
-                            new_heartbeat(&*peer_manager, &*tangle).await,
-                        )
-                        .await;
+                            new_heartbeat(&*peer_manager, &*tangle),
+                        );
                     }
                     Event::PeerDisconnected { peer_id } => {
                         // TODO write a get_mut peer manager method
-                        if let Some(peer) = peer_manager.0.write().await.peers.get_mut(&peer_id) {
+                        if let Some(peer) = peer_manager.0.write().peers.get_mut(&peer_id) {
                             peer.0.set_connected(false);
                             if let Some((_, shutdown)) = peer.1.take() {
                                 if let Err(e) = shutdown.send(()) {

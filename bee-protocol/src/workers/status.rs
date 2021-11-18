@@ -67,7 +67,7 @@ where
                         confirmed_progress,
                         solid_milestone_index,
                         solid_progress,
-                        requested_messages.len().await,
+                        requested_messages.len(),
                     )
                 };
 

@@ -44,7 +44,7 @@ pub(crate) struct MilestonePayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<MilestonePayloadWorkerEvent>,
 }
 
-async fn validate(
+fn validate(
     message_id: MessageId,
     message: &Message,
     milestone: &MilestonePayload,
@@ -88,21 +88,21 @@ async fn process<B: StorageBackend>(
             return;
         }
 
-        match validate(message_id, &message, milestone, key_manager).await {
+        match validate(message_id, &message, milestone, key_manager) {
             Ok(milestone) => {
                 tangle.add_milestone(index, milestone.clone()).await;
                 if index > tangle.get_latest_milestone_index() {
                     info!("New milestone {} {}.", index, milestone.message_id());
                     tangle.update_latest_milestone_index(index);
 
-                    broadcast_heartbeat(peer_manager, metrics, tangle).await;
+                    broadcast_heartbeat(peer_manager, metrics, tangle);
 
                     bus.dispatch(LatestMilestoneChanged { index, milestone });
                 } else {
                     debug!("New milestone {} {}.", *index, milestone.message_id());
                 }
 
-                requested_milestones.remove(&index).await;
+                requested_milestones.remove(&index);
 
                 if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
                     error!("Sending solidification event failed: {}.", e);

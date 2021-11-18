@@ -18,7 +18,8 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use fxhash::FxBuildHasher;
 use log::{debug, info, trace};
-use tokio::{sync::RwLock, time::interval};
+use parking_lot::RwLock;
+use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
 use std::{
@@ -41,7 +42,7 @@ pub async fn request_message<B: StorageBackend>(
 ) {
     if !tangle.contains(&message_id).await
         && !tangle.is_solid_entry_point(&message_id).await
-        && !requested_messages.contains(&message_id).await
+        && !requested_messages.contains(&message_id)
     {
         message_requester.request(MessageRequesterWorkerEvent(message_id, index));
     }
@@ -52,25 +53,25 @@ pub struct RequestedMessages(RwLock<HashMap<MessageId, (MilestoneIndex, Instant)
 
 #[allow(clippy::len_without_is_empty)]
 impl RequestedMessages {
-    pub async fn contains(&self, message_id: &MessageId) -> bool {
-        self.0.read().await.contains_key(message_id)
+    pub fn contains(&self, message_id: &MessageId) -> bool {
+        self.0.read().contains_key(message_id)
     }
 
-    pub(crate) async fn insert(&self, message_id: MessageId, index: MilestoneIndex) {
+    pub(crate) fn insert(&self, message_id: MessageId, index: MilestoneIndex) {
         let now = Instant::now();
-        self.0.write().await.insert(message_id, (index, now));
+        self.0.write().insert(message_id, (index, now));
     }
 
-    pub async fn len(&self) -> usize {
-        self.0.read().await.len()
+    pub fn len(&self) -> usize {
+        self.0.read().len()
     }
 
-    pub async fn is_empty(&self) -> bool {
-        self.0.read().await.is_empty()
+    pub fn is_empty(&self) -> bool {
+        self.0.read().is_empty()
     }
 
-    pub(crate) async fn remove(&self, message_id: &MessageId) -> Option<(MilestoneIndex, Instant)> {
-        self.0.write().await.remove(message_id)
+    pub(crate) fn remove(&self, message_id: &MessageId) -> Option<(MilestoneIndex, Instant)> {
+        self.0.write().remove(message_id)
     }
 }
 
@@ -100,7 +101,7 @@ impl MessageRequesterWorker {
     }
 }
 
-async fn process_request(
+fn process_request(
     message_id: MessageId,
     index: MilestoneIndex,
     peer_manager: &PeerManager,
@@ -108,42 +109,41 @@ async fn process_request(
     requested_messages: &RequestedMessages,
     counter: &mut usize,
 ) {
-    if requested_messages.contains(&message_id).await {
+    if requested_messages.contains(&message_id) {
         return;
     }
 
-    if peer_manager.is_empty().await {
+    if peer_manager.is_empty() {
         return;
     }
 
-    requested_messages.insert(message_id, index).await;
+    requested_messages.insert(message_id, index);
 
-    process_request_unchecked(message_id, index, peer_manager, metrics, counter).await;
+    process_request_unchecked(message_id, index, peer_manager, metrics, counter);
 }
 
-async fn process_request_unchecked(
+fn process_request_unchecked(
     message_id: MessageId,
     index: MilestoneIndex,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     counter: &mut usize,
 ) {
-    let guard = peer_manager.0.read().await;
+    let guard = peer_manager.0.read();
 
     for _ in 0..guard.keys.len() {
         let peer_id = &guard.keys[*counter % guard.keys.len()];
 
         *counter += 1;
 
-        if let Some(peer) = peer_manager.get(peer_id).await {
+        if let Some(peer) = peer_manager.get(peer_id) {
             if (*peer).0.has_data(index) {
                 Sender::<MessageRequestPacket>::send(
                     peer_manager,
                     metrics,
                     peer_id,
                     MessageRequestPacket::new(message_id),
-                )
-                .await;
+                );
                 return;
             }
         }
@@ -154,15 +154,14 @@ async fn process_request_unchecked(
 
         *counter += 1;
 
-        if let Some(peer) = peer_manager.get(peer_id).await {
+        if let Some(peer) = peer_manager.get(peer_id) {
             if (*peer).0.maybe_has_data(index) {
                 Sender::<MessageRequestPacket>::send(
                     peer_manager,
                     metrics,
                     peer_id,
                     MessageRequestPacket::new(message_id),
-                )
-                .await;
+                );
             }
         }
     }
@@ -175,7 +174,7 @@ async fn retry_requests<B: StorageBackend>(
     tangle: &Tangle<B>,
     counter: &mut usize,
 ) {
-    if peer_manager.is_empty().await {
+    if peer_manager.is_empty() {
         return;
     }
 
@@ -184,7 +183,7 @@ async fn retry_requests<B: StorageBackend>(
     let mut to_retry = Vec::with_capacity(1024);
 
     // TODO this needs abstraction
-    for (message_id, (index, instant)) in requested_messages.0.read().await.iter() {
+    for (message_id, (index, instant)) in requested_messages.0.read().iter() {
         if now
             .checked_duration_since(*instant)
             .map_or(false, |d| d.as_millis() as u64 > RETRY_INTERVAL_MS)
@@ -196,9 +195,9 @@ async fn retry_requests<B: StorageBackend>(
 
     for (message_id, index) in to_retry {
         if tangle.contains(&message_id).await {
-            requested_messages.remove(&message_id).await;
+            requested_messages.remove(&message_id);
         } else {
-            process_request_unchecked(message_id, index, peer_manager, metrics, counter).await;
+            process_request_unchecked(message_id, index, peer_manager, metrics, counter);
         }
     }
 
@@ -252,8 +251,7 @@ where
                         &metrics,
                         &requested_messages,
                         &mut counter,
-                    )
-                    .await
+                    );
                 }
 
                 info!("Requester stopped.");

@@ -136,7 +136,6 @@ where
                             if let Some(ref peer_id) = from {
                                 peer_manager
                                     .get(peer_id)
-                                    .await
                                     .map(|peer| (*peer).0.metrics().known_messages_inc());
                             }
                             continue;
@@ -147,7 +146,7 @@ where
                             error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
                         }
 
-                        match requested_messages.remove(&message_id).await {
+                        match requested_messages.remove(&message_id) {
                             // Message was requested.
                             Some((index, instant)) => {
                                 latency_num += 1;

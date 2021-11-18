@@ -316,6 +316,7 @@ dependencies = [
  "iota-crypto 0.7.0",
  "log",
  "num_cpus",
+ "parking_lot",
  "rand 0.8.4",
  "ref-cast",
  "serde",

@@ -22,13 +22,8 @@ pub(crate) struct Sender<P: Packet> {
 }
 
 impl Sender<MilestoneRequestPacket> {
-    pub(crate) async fn send(
-        peer_manager: &PeerManager,
-        metrics: &NodeMetrics,
-        id: &PeerId,
-        packet: MilestoneRequestPacket,
-    ) {
-        if let Some(ref peer) = peer_manager.get(id).await {
+    pub(crate) fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: MilestoneRequestPacket) {
+        if let Some(ref peer) = peer_manager.get(id) {
             if let Some(ref sender) = peer.1 {
                 match sender.0.send(tlv_into_bytes(packet)) {
                     Ok(_) => {
@@ -45,8 +40,8 @@ impl Sender<MilestoneRequestPacket> {
 }
 
 impl Sender<MessagePacket> {
-    pub(crate) async fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: MessagePacket) {
-        if let Some(ref peer) = peer_manager.get(id).await {
+    pub(crate) fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: MessagePacket) {
+        if let Some(ref peer) = peer_manager.get(id) {
             if let Some(ref sender) = peer.1 {
                 match sender.0.send(tlv_into_bytes(packet)) {
                     Ok(_) => {
@@ -63,13 +58,8 @@ impl Sender<MessagePacket> {
 }
 
 impl Sender<MessageRequestPacket> {
-    pub(crate) async fn send(
-        peer_manager: &PeerManager,
-        metrics: &NodeMetrics,
-        id: &PeerId,
-        packet: MessageRequestPacket,
-    ) {
-        if let Some(ref peer) = peer_manager.get(id).await {
+    pub(crate) fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: MessageRequestPacket) {
+        if let Some(ref peer) = peer_manager.get(id) {
             if let Some(ref sender) = peer.1 {
                 match sender.0.send(tlv_into_bytes(packet)) {
                     Ok(_) => {
@@ -86,8 +76,8 @@ impl Sender<MessageRequestPacket> {
 }
 
 impl Sender<HeartbeatPacket> {
-    pub(crate) async fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: HeartbeatPacket) {
-        if let Some(ref peer) = peer_manager.get(id).await {
+    pub(crate) fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: HeartbeatPacket) {
+        if let Some(ref peer) = peer_manager.get(id) {
             if let Some(ref sender) = peer.1 {
                 match sender.0.send(tlv_into_bytes(packet)) {
                     Ok(_) => {
