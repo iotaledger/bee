@@ -10,10 +10,7 @@ use crate::{
         data::DataPayloadLength,
         drng::EncryptedDealLength,
         fpc::{ConflictsCount, TimestampsCount},
-        indexation::{
-            PREFIXED_INDEXATION_DATA_LENGTH_MAX, PREFIXED_INDEXATION_INDEX_LENGTH_MAX,
-            PREFIXED_INDEXATION_INDEX_LENGTH_MIN,
-        },
+        indexation::{IndexationDataLength, IndexationIndexLength},
         salt_declaration::PREFIXED_SALT_BYTES_LENGTH_MAX,
         transaction::{
             PREFIXED_INPUTS_LENGTH_MAX, PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX,
@@ -61,12 +58,8 @@ pub enum ValidationError {
         expected: usize,
         actual: usize,
     },
-    InvalidIndexationDataLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_INDEXATION_DATA_LENGTH_MAX>>),
-    InvalidIndexationIndexLength(
-        TryIntoPrefixError<
-            InvalidBoundedU32<PREFIXED_INDEXATION_INDEX_LENGTH_MIN, PREFIXED_INDEXATION_INDEX_LENGTH_MAX>,
-        >,
-    ),
+    InvalidIndexationDataLength(TryIntoPrefixError<<IndexationDataLength as TryFrom<u32>>::Error>),
+    InvalidIndexationIndexLength(TryIntoPrefixError<<IndexationIndexLength as TryFrom<u32>>::Error>),
     InvalidInputCount(TryIntoPrefixError<InvalidBoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>),
     InvalidMessageLength(usize),
     InvalidMessageVersion(u8),

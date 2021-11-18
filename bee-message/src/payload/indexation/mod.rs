@@ -10,7 +10,7 @@ use crate::{payload::MessagePayload, MessageUnpackError, ValidationError, MESSAG
 pub use padded::PaddedIndex;
 
 use bee_packable::{
-    bounded::{BoundedU32, InvalidBoundedU32},
+    bounded::{Bounded, BoundedU32},
     prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
     Packable,
 };
@@ -19,23 +19,19 @@ use alloc::vec::Vec;
 use core::{convert::Infallible, ops::RangeInclusive};
 
 /// Valid lengths for an indexation payload index.
-pub const INDEXATION_INDEX_LENGTH_RANGE: RangeInclusive<u32> = 1..=PaddedIndex::LENGTH as u32;
+pub const INDEXATION_INDEX_LENGTH_RANGE: RangeInclusive<u32> = IndexationIndexLength::MIN..=IndexationIndexLength::MAX;
 
-pub(crate) const PREFIXED_INDEXATION_INDEX_LENGTH_MIN: u32 = *INDEXATION_INDEX_LENGTH_RANGE.start() as u32;
-pub(crate) const PREFIXED_INDEXATION_INDEX_LENGTH_MAX: u32 = *INDEXATION_INDEX_LENGTH_RANGE.end() as u32;
-pub(crate) const PREFIXED_INDEXATION_DATA_LENGTH_MAX: u32 = *MESSAGE_LENGTH_RANGE.end() as u32;
+pub(crate) type IndexationIndexLength = BoundedU32<1, { PaddedIndex::LENGTH as u32 }>;
+pub(crate) type IndexationDataLength = BoundedU32<0, { *MESSAGE_LENGTH_RANGE.end() as u32 }>;
 
 fn unpack_prefix_to_invalid_index_length(
-    err: UnpackPrefixError<
-        Infallible,
-        InvalidBoundedU32<PREFIXED_INDEXATION_INDEX_LENGTH_MIN, PREFIXED_INDEXATION_INDEX_LENGTH_MAX>,
-    >,
+    err: UnpackPrefixError<Infallible, <IndexationIndexLength as TryFrom<u32>>::Error>,
 ) -> ValidationError {
     ValidationError::InvalidIndexationIndexLength(TryIntoPrefixError::Invalid(err.into_prefix()))
 }
 
 fn unpack_prefix_to_invalid_data_length(
-    err: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_INDEXATION_DATA_LENGTH_MAX>>,
+    err: UnpackPrefixError<Infallible, <IndexationDataLength as TryFrom<u32>>::Error>,
 ) -> ValidationError {
     ValidationError::InvalidIndexationDataLength(TryIntoPrefixError::Invalid(err.into_prefix()))
 }
@@ -51,10 +47,10 @@ fn unpack_prefix_to_invalid_data_length(
 pub struct IndexationPayload {
     /// The index key of the message.
     #[packable(unpack_error_with = unpack_prefix_to_invalid_index_length)]
-    index: VecPrefix<u8, BoundedU32<PREFIXED_INDEXATION_INDEX_LENGTH_MIN, PREFIXED_INDEXATION_INDEX_LENGTH_MAX>>,
+    index: VecPrefix<u8, IndexationIndexLength>,
     /// The data attached to this index.
     #[packable(unpack_error_with = unpack_prefix_to_invalid_data_length)]
-    data: VecPrefix<u8, BoundedU32<0, PREFIXED_INDEXATION_DATA_LENGTH_MAX>>,
+    data: VecPrefix<u8, IndexationDataLength>,
 }
 
 impl MessagePayload for IndexationPayload {
