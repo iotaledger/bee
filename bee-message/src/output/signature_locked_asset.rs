@@ -4,7 +4,7 @@
 use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessageUnpackError, ValidationError};
 
 use bee_packable::{
-    bounded::{BoundedU32, InvalidBoundedU32},
+    bounded::BoundedU32,
     prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
     Packable,
 };
@@ -13,11 +13,11 @@ use alloc::vec::Vec;
 use core::{convert::Infallible, ops::Deref};
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / [`AssetId::LENGTH`].
-pub(crate) const PREFIXED_ASSET_BALANCES_LENGTH_MAX: u32 =
-    PAYLOAD_LENGTH_MAX / (AssetId::LENGTH + core::mem::size_of::<u64>()) as u32;
+pub(crate) type AssetBalanceCount =
+    BoundedU32<0, { PAYLOAD_LENGTH_MAX / (AssetId::LENGTH + core::mem::size_of::<u64>()) as u32 }>;
 
 fn unpack_prefix_to_validation_error(
-    err: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_ASSET_BALANCES_LENGTH_MAX>>,
+    err: UnpackPrefixError<Infallible, <AssetBalanceCount as TryFrom<u32>>::Error>,
 ) -> ValidationError {
     ValidationError::InvalidAssetBalanceCount(TryIntoPrefixError::Invalid(err.into_prefix()))
 }
@@ -85,7 +85,7 @@ impl AssetBalance {
 pub struct SignatureLockedAssetOutput {
     address: Address,
     #[packable(unpack_error_with = unpack_prefix_to_validation_error)]
-    balances: VecPrefix<AssetBalance, BoundedU32<0, PREFIXED_ASSET_BALANCES_LENGTH_MAX>>,
+    balances: VecPrefix<AssetBalance, AssetBalanceCount>,
 }
 
 impl SignatureLockedAssetOutput {

@@ -4,7 +4,7 @@
 use crate::{
     address::Address,
     input::UtxoInput,
-    output::PREFIXED_ASSET_BALANCES_LENGTH_MAX,
+    output::AssetBalanceCount,
     parents::ParentsCount,
     payload::{
         data::PREFIXED_DATA_LENGTH_MAX,
@@ -52,7 +52,7 @@ pub enum ValidationError {
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAmount(u64),
-    InvalidAssetBalanceCount(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_ASSET_BALANCES_LENGTH_MAX>>),
+    InvalidAssetBalanceCount(TryIntoPrefixError<<AssetBalanceCount as TryFrom<u32>>::Error>),
     InvalidConflictsCount(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>),
     InvalidDataPayloadLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>),
     InvalidEncryptedDealLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>),
