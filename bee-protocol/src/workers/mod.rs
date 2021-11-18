@@ -69,7 +69,6 @@ where
         .with_worker::<TransactionPayloadWorker>()
         .with_worker_cfg::<MilestonePayloadWorker>(config.clone())
         .with_worker::<IndexationPayloadWorker>()
-        .with_worker::<PayloadWorker>()
         .with_worker::<BroadcasterWorker>()
         .with_worker::<PropagatorWorker>()
         .with_worker::<MpsWorker>()
