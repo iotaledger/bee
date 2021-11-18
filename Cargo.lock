@@ -439,16 +439,7 @@ dependencies = [
 
 [[package]]
 name = "bee-ternary"
-<<<<<<< HEAD
-<<<<<<< HEAD
 version = "0.5.1"
-=======
-version = "0.4.2-alpha"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ec0259535d34f1bfd0c41bf5a6f0e3e33268dc9433e2ac3707e66715b51ce05"
-=======
-version = "0.5.0"
->>>>>>> 9b7fe42b (Get `iota-crypto` directly from git repo)
 dependencies = [
  "autocfg",
  "num-traits",
@@ -456,23 +447,6 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<< HEAD
-name = "bee-ternary"
-version = "0.5.0"
-<<<<<<< HEAD
->>>>>>> 43feede7 (Start deprecating Bee's `CurlP` wrapper)
-=======
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ab61228a3ad56b46689099733577df7b7f11d2c5eb131b7acc7e300ef748836"
->>>>>>> 9b7fe42b (Get `iota-crypto` directly from git repo)
-dependencies = [
- "autocfg",
- "num-traits",
-]
-
-[[package]]
-=======
->>>>>>> 1ea46843 (Patch `bee-ternary` to local version)
 name = "bee-test"
 version = "0.1.0"
 dependencies = [
