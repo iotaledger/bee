@@ -7,7 +7,7 @@ use crate::{
     output::AssetBalanceCount,
     parents::ParentsCount,
     payload::{
-        data::PREFIXED_DATA_LENGTH_MAX,
+        data::DataPayloadLength,
         drng::PREFIXED_DKG_LENGTH_MAX,
         fpc::{ConflictsCount, TimestampsCount},
         indexation::{
@@ -54,7 +54,7 @@ pub enum ValidationError {
     InvalidAmount(u64),
     InvalidAssetBalanceCount(TryIntoPrefixError<<AssetBalanceCount as TryFrom<u32>>::Error>),
     InvalidConflictsCount(TryIntoPrefixError<<ConflictsCount as TryFrom<u32>>::Error>),
-    InvalidDataPayloadLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>),
+    InvalidDataPayloadLength(TryIntoPrefixError<<DataPayloadLength as TryFrom<u32>>::Error>),
     InvalidEncryptedDealLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength {
