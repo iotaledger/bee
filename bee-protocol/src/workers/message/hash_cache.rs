@@ -73,13 +73,9 @@ impl HashCache {
         true
     }
 
+    #[inline(always)]
     fn contains(&self, hash: u64) -> bool {
         self.cache.contains(&hash)
-    }
-
-    #[allow(dead_code)]
-    fn len(&self) -> usize {
-        self.cache.len()
     }
 }
 

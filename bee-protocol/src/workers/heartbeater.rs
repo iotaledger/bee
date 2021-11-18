@@ -21,9 +21,9 @@ use tokio_stream::wrappers::IntervalStream;
 
 use std::{any::TypeId, convert::Infallible, time::Duration};
 
-const _HEARTBEAT_SEND_INTERVAL: u64 = 30; // In seconds.
-const _HEARTBEAT_RECEIVE_INTERVAL: u64 = 100; // In seconds.
-const CHECK_HEARTBEATS_INTERVAL: u64 = 5; // In seconds.
+const _HEARTBEAT_SEND_INTERVAL: Duration = Duration::from_secs(30);
+const _HEARTBEAT_RECEIVE_INTERVAL: Duration = Duration::from_secs(100);
+const CHECK_HEARTBEATS_INTERVAL: Duration = Duration::from_secs(5);
 
 pub(crate) async fn new_heartbeat<B: StorageBackend>(
     peer_manager: &PeerManager,
@@ -92,10 +92,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut ticker = ShutdownStream::new(
-                shutdown,
-                IntervalStream::new(interval(Duration::from_secs(CHECK_HEARTBEATS_INTERVAL))),
-            );
+            let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(CHECK_HEARTBEATS_INTERVAL)));
 
             while ticker.next().await.is_some() {
                 // TODO real impl

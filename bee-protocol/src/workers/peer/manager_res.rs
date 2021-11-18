@@ -112,13 +112,7 @@ impl PeerManager {
     // }
 
     pub async fn is_connected(&self, id: &PeerId) -> bool {
-        self.0
-            .read()
-            .await
-            .peers
-            .get(id)
-            .map(|p| p.1.is_some())
-            .unwrap_or(false)
+        self.0.read().await.peers.get(id).map_or(false, |p| p.1.is_some())
     }
 
     pub async fn connected_peers(&self) -> u8 {
@@ -127,12 +121,17 @@ impl PeerManager {
             .await
             .peers
             .iter()
-            .fold(0, |acc, (_, (_, ctx))| acc + ctx.is_some() as u8)
+            .filter(|(_, (_, ctx))| ctx.is_some())
+            .count() as u8
     }
 
     pub async fn synced_peers(&self) -> u8 {
-        self.0.read().await.peers.iter().fold(0, |acc, (_, (peer, ctx))| {
-            acc + (ctx.is_some() && peer.is_synced()) as u8
-        })
+        self.0
+            .read()
+            .await
+            .peers
+            .iter()
+            .filter(|(_, (peer, ctx))| (ctx.is_some() && peer.is_synced()))
+            .count() as u8
     }
 }

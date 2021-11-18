@@ -97,8 +97,8 @@ where
 
                     metrics.known_messages_inc();
                     if let Some(peer_id) = from {
-                        if let Some(peer) = peer_manager.get(&peer_id).await {
-                            (*peer).0.metrics().known_messages_inc();
+                        if let Some(ref peer) = peer_manager.get(&peer_id).await {
+                            peer.0.metrics().known_messages_inc();
                         }
                     }
                     continue;

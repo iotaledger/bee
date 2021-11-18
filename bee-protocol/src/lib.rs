@@ -3,7 +3,8 @@
 
 //! A crate that provides types and workers enabling the IOTA protocol.
 
-#![deny(missing_docs, warnings)]
+// TODO
+// #![deny(missing_docs, warnings)]
 
 pub mod types;
 #[cfg(feature = "workers")]

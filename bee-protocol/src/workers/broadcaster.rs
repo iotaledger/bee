@@ -50,10 +50,7 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
                 // TODO bring it back
                 // peer_manager.for_each_peer(|peer_id, _| {
                 for (peer_id, _) in peer_manager.0.read().await.peers.iter() {
-                    if match source {
-                        Some(ref source) => source != peer_id,
-                        None => true,
-                    } {
+                    if source.map_or(true, |ref source| source != peer_id) {
                         Sender::<MessagePacket>::send(&peer_manager, &metrics, peer_id, message.clone()).await;
                     }
                 }
