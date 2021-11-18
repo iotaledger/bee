@@ -100,7 +100,7 @@ mod tests {
 
         assert!(cache.insert(first_buf));
         assert!(!cache.insert(second_buf));
-        assert_eq!(cache.len(), 1);
+        assert_eq!(cache.cache.len(), 1);
     }
 
     #[test]
@@ -112,7 +112,7 @@ mod tests {
 
         assert!(cache.insert(first_buf));
         assert!(cache.insert(second_buf));
-        assert_eq!(cache.len(), 2);
+        assert_eq!(cache.cache.len(), 2);
     }
 
     #[test]
@@ -124,7 +124,7 @@ mod tests {
 
         assert!(cache.insert(first_buf));
         assert!(cache.insert(second_buf));
-        assert_eq!(cache.len(), 1);
+        assert_eq!(cache.cache.len(), 1);
         assert!(!cache.insert(second_buf));
     }
 }
