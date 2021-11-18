@@ -20,8 +20,8 @@ use hashbrown::HashSet;
 use alloc::vec::Vec;
 use core::ops::Deref;
 
-pub(crate) const PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN: u16 = *UNLOCK_BLOCK_COUNT_RANGE.start();
-pub(crate) const PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX: u16 = *UNLOCK_BLOCK_COUNT_RANGE.end();
+pub(crate) type UnlockBlockCount =
+    BoundedU16<{ *UNLOCK_BLOCK_COUNT_RANGE.start() }, { *UNLOCK_BLOCK_COUNT_RANGE.end() }>;
 
 /// A collection of unlock blocks.
 ///
@@ -33,18 +33,13 @@ pub(crate) const PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX: u16 = *UNLOCK_BLOCK_COUNT_RA
 /// [`SignatureUnlock`](crate::unlock::SignatureUnlock) block.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct UnlockBlocks(
-    VecPrefix<UnlockBlock, BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>>,
-);
+pub struct UnlockBlocks(VecPrefix<UnlockBlock, UnlockBlockCount>);
 
 impl UnlockBlocks {
     /// Creates a new [`UnlockBlocks`].
     pub fn new(unlock_blocks: Vec<UnlockBlock>) -> Result<Self, ValidationError> {
-        let unlock_blocks = VecPrefix::<
-            UnlockBlock,
-            BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>,
-        >::try_from(unlock_blocks)
-        .map_err(ValidationError::InvalidUnlockBlockCount)?;
+        let unlock_blocks = VecPrefix::<UnlockBlock, UnlockBlockCount>::try_from(unlock_blocks)
+            .map_err(ValidationError::InvalidUnlockBlockCount)?;
 
         validate_unlock_block_variants(&unlock_blocks)?;
 
@@ -81,13 +76,10 @@ impl Packable for UnlockBlocks {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let inner = VecPrefix::<
-            UnlockBlock,
-            BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>,
-        >::unpack::<_, VERIFY>(unpacker)
-        .map_packable_err(|err| {
-            err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidUnlockBlockCount(prefix_err.into()))
-        })?;
+        let inner =
+            VecPrefix::<UnlockBlock, UnlockBlockCount>::unpack::<_, VERIFY>(unpacker).map_packable_err(|err| {
+                err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidUnlockBlockCount(prefix_err.into()))
+            })?;
 
         validate_unlock_block_variants(&inner).map_err(UnpackError::from_packable)?;
 
