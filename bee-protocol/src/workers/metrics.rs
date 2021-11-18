@@ -52,10 +52,7 @@ impl<N: Node> Worker<N> for MetricsWorker {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut ticker = ShutdownStream::new(
-                shutdown,
-                IntervalStream::new(interval(METRICS_INTERVAL)),
-            );
+            let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(METRICS_INTERVAL)));
 
             while ticker.next().await.is_some() {
                 info!("{:?}", *metrics);

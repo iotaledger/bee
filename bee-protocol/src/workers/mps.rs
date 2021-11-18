@@ -37,10 +37,7 @@ impl<N: Node> Worker<N> for MpsWorker {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut ticker = ShutdownStream::new(
-                shutdown,
-                IntervalStream::new(interval(MPS_INTERVAL)),
-            );
+            let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(MPS_INTERVAL)));
 
             let mut total_incoming = 0u64;
             let mut total_new = 0u64;
