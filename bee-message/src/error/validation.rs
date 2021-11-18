@@ -9,7 +9,7 @@ use crate::{
     payload::{
         data::PREFIXED_DATA_LENGTH_MAX,
         drng::PREFIXED_DKG_LENGTH_MAX,
-        fpc::{PREFIXED_CONFLICTS_LENGTH_MAX, PREFIXED_TIMESTAMPS_LENGTH_MAX},
+        fpc::{ConflictsCount, TimestampsCount},
         indexation::{
             PREFIXED_INDEXATION_DATA_LENGTH_MAX, PREFIXED_INDEXATION_INDEX_LENGTH_MAX,
             PREFIXED_INDEXATION_INDEX_LENGTH_MIN,
@@ -53,7 +53,7 @@ pub enum ValidationError {
     InvalidAddressKind(u8),
     InvalidAmount(u64),
     InvalidAssetBalanceCount(TryIntoPrefixError<<AssetBalanceCount as TryFrom<u32>>::Error>),
-    InvalidConflictsCount(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>),
+    InvalidConflictsCount(TryIntoPrefixError<<ConflictsCount as TryFrom<u32>>::Error>),
     InvalidDataPayloadLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>),
     InvalidEncryptedDealLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>),
     InvalidHexadecimalChar(String),
@@ -84,7 +84,7 @@ pub enum ValidationError {
     InvalidSaltBytesLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_SALT_BYTES_LENGTH_MAX>>),
     InvalidSignature,
     InvalidStrongParentsCount(usize),
-    InvalidTimestampsCount(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>),
+    InvalidTimestampsCount(TryIntoPrefixError<<TimestampsCount as TryFrom<u32>>::Error>),
     InvalidUnlockBlockCount(
         TryIntoPrefixError<InvalidBoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>>,
     ),
