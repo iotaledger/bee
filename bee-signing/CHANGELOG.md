@@ -21,21 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.2.0 - 2021-11-17
 
-### Added
-
-### Changed
-
 ### Deprecated
 
 The whole `bee-signing` crate is deprecated and will not be supported in the future.
 
 ### Removed
 
-PrivateKey: Drop bound
-
-### Fixed
-
-### Security -->
+- PrivateKey: Drop bound;
 
 ## 0.1.1-alpha - 2020-09-09
 

@@ -23,8 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-- Deprecated `CurlP` from `bee-crypto` (now uses `iota-crypto` instead);
-- Deprecated `Sponge` and `SpongeKind`;
+The whole `bee-signing` crate is deprecated and will not be supported in the future.
 
 ## 0.2.1-alpha - 2021-04-07
 

@@ -27,10 +27,12 @@ fn generator_valid() {
         WotsSecurityLevel::High,
     ];
     for security in security_levels {
-        assert!(WotsShakePrivateKeyGeneratorBuilder::<Kerl>::default()
-            .with_security_level(security)
-            .build()
-            .is_ok(),);
+        assert!(
+            WotsShakePrivateKeyGeneratorBuilder::<Kerl>::default()
+                .with_security_level(security)
+                .build()
+                .is_ok(),
+        );
     }
 }
 
@@ -537,7 +539,6 @@ fn input_output() {
     for test in tests.iter() {
         let entropy = TryteBuf::try_from_str(test.0).unwrap().as_trits().encode::<T1B1Buf>();
         let key = TryteBuf::try_from_str(test.2).unwrap().as_trits().encode::<T1B1Buf>();
-
         let private_key_generator = WotsShakePrivateKeyGeneratorBuilder::<Kerl>::default()
             .with_security_level(test.1)
             .build()
@@ -560,7 +561,6 @@ fn example() {
         .unwrap()
         .as_trits()
         .encode::<T1B1Buf>();
-
     let private_key_generator = WotsShakePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Medium)
         .build()
@@ -576,7 +576,6 @@ fn invalid_entropy_length() {
         .unwrap()
         .as_trits()
         .encode::<T1B1Buf>();
-
     let private_key_generator = WotsShakePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Medium)
         .build()
@@ -595,7 +594,6 @@ fn non_null_last_entropy_trit() {
             .unwrap()
             .as_trits()
             .encode::<T1B1Buf>();
-
     let private_key_generator = WotsShakePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Medium)
         .build()
