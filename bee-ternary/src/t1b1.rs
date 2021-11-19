@@ -1,9 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+extern crate alloc;
+
 use crate::{trit::ShiftTernary, Btrit, RawEncoding, RawEncodingBuf, Trit};
 
-use std::{hash, marker::PhantomData, ops::Range};
+use alloc::vec::Vec;
+use core::{hash, marker::PhantomData, ops::Range};
 
 const TRITS_PER_BYTE: usize = 1;
 
@@ -16,7 +19,7 @@ pub struct T1B1<T: Trit = Btrit> {
 
 impl<T: Trit> T1B1<T> {
     unsafe fn make(ptr: *const T, offset: usize, len: usize) -> *const Self {
-        std::mem::transmute((ptr.add(offset), len))
+        core::mem::transmute((ptr.add(offset), len))
     }
 
     unsafe fn ptr(&self, index: usize) -> *const T {
@@ -120,7 +123,7 @@ where
         }
 
         // Take ownership of the inner vector and cast it to a `Vec<T::Target>`
-        let raw_trits = std::mem::ManuallyDrop::new(trit_buf.0);
+        let raw_trits = core::mem::ManuallyDrop::new(trit_buf.0);
 
         let p = raw_trits.as_ptr();
         let len = raw_trits.len();

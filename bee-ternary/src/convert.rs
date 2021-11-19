@@ -5,7 +5,7 @@ use crate::{Btrit, RawEncoding, RawEncodingBuf, Trit, TritBuf, Trits, Utrit};
 
 use num_traits::{AsPrimitive, CheckedAdd, CheckedSub, FromPrimitive, Num, Signed};
 
-use std::cmp::PartialOrd;
+use core::cmp::PartialOrd;
 
 /// An error that may be produced during numeric conversion.
 #[derive(Debug, PartialEq)]
@@ -130,7 +130,7 @@ where
 
     let radix = I::from_i8(3).unwrap();
 
-    std::iter::from_fn(move || {
+    core::iter::from_fn(move || {
         if x.is_zero() {
             None
         } else {
@@ -153,7 +153,7 @@ where
 {
     let radix = I::from_u8(3).unwrap();
 
-    std::iter::from_fn(move || {
+    core::iter::from_fn(move || {
         if x.is_zero() {
             None
         } else {
