@@ -6,9 +6,7 @@ mod u256;
 
 use u256::U256;
 
-#[allow(deprecated)]
-use crate::ternary::sponge::Sponge;
-use crate::ternary::HASH_LENGTH;
+use crate::ternary::sponge::{Sponge, HASH_LENGTH};
 
 use bee_ternary::{Btrit, Trits};
 
@@ -62,7 +60,6 @@ impl Default for UnrolledCurlP81 {
     }
 }
 
-#[allow(deprecated)]
 impl Sponge for UnrolledCurlP81 {
     type Error = Infallible;
 

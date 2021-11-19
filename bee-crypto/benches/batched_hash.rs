@@ -3,7 +3,7 @@
 
 #![allow(deprecated)]
 
-use bee_crypto::ternary::sponge::{CurlPRounds,BatchHasher, BATCH_SIZE};
+use bee_crypto::ternary::sponge::{BatchHasher, CurlPRounds, BATCH_SIZE};
 use bee_ternary::{T1B1Buf, T5B1Buf, TritBuf, TryteBuf};
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};

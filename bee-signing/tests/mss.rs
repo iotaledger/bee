@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#[allow(deprecated)]
+#![allow(deprecated)]
+
 use bee_crypto::ternary::sponge::{CurlP27, CurlP81, Kerl, Sponge};
-#[allow(deprecated)]
 use bee_signing::ternary::{
     mss::{Error as MssError, MssPrivateKeyGeneratorBuilder, MssPublicKey, MssSignature},
     seed::Seed,
@@ -15,7 +15,6 @@ use bee_ternary::{T1B1Buf, TryteBuf};
 use std::str::FromStr;
 
 #[test]
-#[allow(deprecated)]
 fn generator_missing_depth() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Low)
@@ -31,7 +30,6 @@ fn generator_missing_depth() {
 }
 
 #[test]
-#[allow(deprecated)]
 fn generator_invalid_depth() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Low)
@@ -48,7 +46,6 @@ fn generator_invalid_depth() {
 }
 
 #[test]
-#[allow(deprecated)]
 fn generator_missing_generator() {
     assert_eq!(
         MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
@@ -59,7 +56,6 @@ fn generator_missing_generator() {
     );
 }
 
-#[allow(deprecated)]
 fn wots_generic_signature_verify<S>(public_key: &str, message: &str, signature: &str, depth: u8, index: usize)
 where
     S: Sponge + Default,
@@ -91,7 +87,6 @@ fn wots_kerl_sec_1_signature_verify() {
     const DEPTH: u8 = 7;
     const INDEX: usize = 0;
 
-    #[allow(deprecated)]
     wots_generic_signature_verify::<Kerl>(PUBLIC_KEY, MESSAGE, SIGNATURE, DEPTH, INDEX);
 }
 
@@ -103,7 +98,6 @@ fn wots_kerl_sec_3_signature_verify() {
     const DEPTH: u8 = 7;
     const INDEX: usize = 4;
 
-    #[allow(deprecated)]
     wots_generic_signature_verify::<Kerl>(PUBLIC_KEY, MESSAGE, SIGNATURE, DEPTH, INDEX);
 }
 
@@ -115,7 +109,6 @@ fn wots_curl27_sec_1_signature_verify() {
     const DEPTH: u8 = 7;
     const INDEX: usize = 4;
 
-    #[allow(deprecated)]
     wots_generic_signature_verify::<CurlP27>(PUBLIC_KEY, MESSAGE, SIGNATURE, DEPTH, INDEX);
 }
 
@@ -127,11 +120,9 @@ fn wots_curl27_sec_3_signature_verify() {
     const DEPTH: u8 = 7;
     const INDEX: usize = 4;
 
-    #[allow(deprecated)]
     wots_generic_signature_verify::<CurlP27>(PUBLIC_KEY, MESSAGE, SIGNATURE, DEPTH, INDEX);
 }
 
-#[allow(deprecated)]
 fn wots_generic_roundtrip<S, G>(generator: G)
 where
     S: Sponge + Default,
@@ -161,108 +152,88 @@ where
 
 #[test]
 fn kerl_wots_kerl_roundtrip() {
-    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
 
-    #[allow(deprecated)]
     wots_generic_roundtrip::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>(wots_private_key_generator);
 }
 
 #[test]
 fn kerl_wots_curl27_roundtrip() {
-    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<CurlP27>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
-    #[allow(deprecated)]
     wots_generic_roundtrip::<Kerl, WotsSpongePrivateKeyGenerator<CurlP27>>(wots_private_key_generator);
 }
 
 #[test]
 fn kerl_wots_curl81_roundtrip() {
-    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<CurlP81>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
-    #[allow(deprecated)]
     wots_generic_roundtrip::<Kerl, WotsSpongePrivateKeyGenerator<CurlP81>>(wots_private_key_generator);
 }
 
 #[test]
 fn curl27_wots_kerl_roundtrip() {
-    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
-    #[allow(deprecated)]
     wots_generic_roundtrip::<CurlP27, WotsSpongePrivateKeyGenerator<Kerl>>(wots_private_key_generator);
 }
 
 #[test]
 fn curl27_wots_curl27_roundtrip() {
-    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<CurlP27>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
-    #[allow(deprecated)]
     wots_generic_roundtrip::<CurlP27, WotsSpongePrivateKeyGenerator<CurlP27>>(wots_private_key_generator);
 }
 
 #[test]
 fn curl27_wots_curl81_roundtrip() {
-    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<CurlP81>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
-    #[allow(deprecated)]
     wots_generic_roundtrip::<CurlP27, WotsSpongePrivateKeyGenerator<CurlP81>>(wots_private_key_generator);
 }
 
 #[test]
 fn curl81_wots_kerl_roundtrip() {
-    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
-    #[allow(deprecated)]
     wots_generic_roundtrip::<CurlP81, WotsSpongePrivateKeyGenerator<Kerl>>(wots_private_key_generator);
 }
 
 #[test]
 fn curl81_wots_curl27_roundtrip() {
-    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<CurlP27>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
-    #[allow(deprecated)]
     wots_generic_roundtrip::<CurlP81, WotsSpongePrivateKeyGenerator<CurlP27>>(wots_private_key_generator);
 }
 
 #[test]
 fn curl81_wots_curl81_roundtrip() {
-    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<CurlP81>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
-    #[allow(deprecated)]
     wots_generic_roundtrip::<CurlP81, WotsSpongePrivateKeyGenerator<CurlP81>>(wots_private_key_generator);
 }
 
 #[test]
-#[allow(deprecated)]
 fn signatures_exhausted() {
-    #[allow(deprecated)]
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
         .with_security_level(WotsSecurityLevel::Low)
         .build()
@@ -274,7 +245,6 @@ fn signatures_exhausted() {
     let seed = Seed::from_str(SEED).unwrap();
     let message_trits = TryteBuf::try_from_str(MESSAGE).unwrap().as_trits().encode::<T1B1Buf>();
 
-    #[allow(deprecated)]
     let private_key_generator = MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
         .with_depth(DEPTH)
         .with_generator(wots_private_key_generator)

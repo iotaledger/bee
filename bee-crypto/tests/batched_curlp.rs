@@ -3,9 +3,8 @@
 
 #![allow(deprecated)]
 
-use bee_crypto::ternary::sponge::CurlPRounds;
 use bee_crypto::ternary::{
-    sponge::{BatchHasher, BATCH_SIZE},
+    sponge::{BatchHasher, CurlPRounds, BATCH_SIZE},
     HASH_LENGTH,
 };
 

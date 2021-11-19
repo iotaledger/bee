@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#[allow(deprecated)]
+#![allow(deprecated)]
+
 use bee_crypto::ternary::sponge::{Kerl, Sponge};
-#[allow(deprecated)]
 use bee_signing::ternary::seed::{Error, Seed};
 use bee_ternary::{T1B1Buf, TritBuf, TryteBuf};
 
@@ -28,7 +28,6 @@ fn subseed_generic<S: Sponge + Default>(seed_string: &str, subseed_strings: &[&s
 
 #[test]
 fn subseed_kerl() {
-    #[allow(deprecated)]
     subseed_generic::<Kerl>(
         SEED,
         &[

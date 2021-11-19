@@ -1,13 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#[allow(deprecated)]
+#![allow(deprecated)]
+
 use bee_signing::ternary::wots::{normalize, NormalizeError};
 
 use bee_ternary::{T1B1Buf, TryteBuf};
 
 #[test]
-#[allow(deprecated)]
 fn invalid_message_length() {
     let hash = TryteBuf::try_from_str("CEFLDDLMF9TO9ZLLTYXINXPYZHEFTXKWKWZXEIUD")
         .unwrap()
@@ -21,7 +21,6 @@ fn invalid_message_length() {
 }
 
 #[test]
-#[allow(deprecated)]
 fn input_output() {
     let tests = [
         (

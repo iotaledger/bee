@@ -113,7 +113,6 @@ impl Miner {
         target_zeros: usize,
     ) -> Result<u64, Error> {
         let mut nonce = start_nonce;
-        #[allow(deprecated)] // We will only support 81 rounds in the future, so everything is fine here.
         let mut hasher = CurlPBatchHasher::<T1B1Buf>::new(HASH_LENGTH);
         let mut buffers = Vec::<TritBuf<T1B1Buf>>::with_capacity(BATCH_SIZE);
 

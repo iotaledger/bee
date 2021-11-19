@@ -4,9 +4,10 @@
 //! Ternary seed to derive private keys, public keys and signatures from.
 
 use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
-#[allow(deprecated)]
-use bee_crypto::ternary::sponge::Kerl;
-use bee_crypto::ternary::{sponge::Sponge, HASH_LENGTH};
+use bee_crypto::ternary::{
+    sponge::{Kerl, Sponge},
+    HASH_LENGTH,
+};
 use bee_ternary::{Btrit, T1B1Buf, Trit, TritBuf, Trits, TryteBuf, T1B1};
 
 use rand::distributions::{Distribution, Uniform};
@@ -73,7 +74,6 @@ impl Seed {
         }
 
         // Safe to unwrap since the size is known to be valid.
-        #[allow(deprecated)]
         Self(Kerl::default().digest(&subseed).unwrap())
     }
 
