@@ -156,7 +156,6 @@ fn kerl_wots_kerl_roundtrip() {
         .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
-
     wots_generic_roundtrip::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>(wots_private_key_generator);
 }
 

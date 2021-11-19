@@ -170,9 +170,7 @@ fn sponge_input_243_output_243(sponge_type: SpongeKind) {
     for test in tests.iter() {
         match sponge_type {
             SpongeKind::Kerl => sponge_generic_digest::<Kerl>(test.0, test.1),
-
             SpongeKind::CurlP27 => sponge_generic_digest::<CurlP27>(test.0, test.2),
-
             SpongeKind::CurlP81 => sponge_generic_digest::<CurlP81>(test.0, test.3),
             SpongeKind::UnrolledCurlP81 => sponge_generic_digest::<UnrolledCurlP81>(test.0, test.3),
         }
@@ -192,7 +190,6 @@ fn curlp27_input_243_output_243() {
 #[test]
 fn curlp81_input_243_output_243() {
     sponge_input_243_output_243(SpongeKind::CurlP81);
-
     sponge_input_243_output_243(SpongeKind::UnrolledCurlP81);
 }
 
