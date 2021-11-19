@@ -9,7 +9,7 @@ use self::{builder::FullNodeBuilder, config::FullNodeConfig};
 use crate::{
     core::{Core, CoreError},
     shutdown::ShutdownRx,
-    storage::StorageBackend,
+    storage::NodeStorageBackend,
 };
 
 use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Worker};
@@ -35,12 +35,12 @@ pub enum FullNodeError {
 }
 
 /// Represents a Bee full node.
-pub struct FullNode<S: StorageBackend> {
+pub struct FullNode<S: NodeStorageBackend> {
     pub(crate) config: FullNodeConfig<S>,
     pub(crate) core: Core<Self>,
 }
 
-impl<S: StorageBackend> FullNode<S> {
+impl<S: NodeStorageBackend> FullNode<S> {
     /// Returns the node config.
     pub fn config(&self) -> &FullNodeConfig<S> {
         &self.config
@@ -66,7 +66,7 @@ impl<S: StorageBackend> FullNode<S> {
 }
 
 #[async_trait]
-impl<S: StorageBackend> Node for FullNode<S> {
+impl<S: NodeStorageBackend> Node for FullNode<S> {
     type Builder = FullNodeBuilder<S>;
     type Backend = S;
     type Error = FullNodeError;

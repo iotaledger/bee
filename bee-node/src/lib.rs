@@ -24,6 +24,7 @@ pub use cl::ClArgs;
 pub use config::{NodeConfig, NodeConfigBuilder};
 pub use entrynode::{builder::EntryNodeBuilder, config::EntryNodeConfig, EntryNode};
 pub use fullnode::{builder::FullNodeBuilder, config::FullNodeConfig, FullNode};
+pub use storage::NodeStorageBackend;
 pub use util::print_banner_and_version;
 
 pub(crate) const BEE_NAME: &str = "Bee";

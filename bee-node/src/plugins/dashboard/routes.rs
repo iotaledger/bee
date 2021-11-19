@@ -9,7 +9,7 @@ use crate::{
         rejection::CustomRejection,
         websocket::{user_connected, WsUsers},
     },
-    storage::StorageBackend,
+    storage::NodeStorageBackend,
 };
 
 use bee_common::auth::jwt::JsonWebToken;
@@ -73,9 +73,9 @@ pub(crate) fn page_routes() -> impl Filter<Extract = impl Reply, Error = Rejecti
         .or(warp::path!("login" / ..).and_then(serve_index))
 }
 
-pub(crate) fn ws_routes<B: StorageBackend>(
-    storage: ResourceHandle<B>,
-    tangle: ResourceHandle<Tangle<B>>,
+pub(crate) fn ws_routes<S: NodeStorageBackend>(
+    storage: ResourceHandle<S>,
+    tangle: ResourceHandle<Tangle<S>>,
     users: WsUsers,
     node_id: String,
     auth_config: DashboardAuthConfig,
@@ -188,9 +188,9 @@ pub(crate) fn auth_route(
         .and_then(auth)
 }
 
-pub(crate) fn routes<B: StorageBackend>(
-    storage: ResourceHandle<B>,
-    tangle: ResourceHandle<Tangle<B>>,
+pub(crate) fn routes<S: NodeStorageBackend>(
+    storage: ResourceHandle<S>,
+    tangle: ResourceHandle<Tangle<S>>,
     node_id: String,
     auth_config: DashboardAuthConfig,
     rest_api_config: RestApiConfig,

@@ -23,7 +23,7 @@ use crate::{
             node_status::node_status_worker, peer_metric::peer_metric_worker,
         },
     },
-    storage::StorageBackend,
+    storage::NodeStorageBackend,
 };
 
 use bee_ledger::workers::event::MilestoneConfirmed;
@@ -54,7 +54,7 @@ pub struct Dashboard {}
 fn topic_handler<N, E, F>(node: &mut N, topic: &'static str, users: &WsUsers, require_node_confirmed: bool, f: F)
 where
     N: Node,
-    N::Backend: StorageBackend,
+    N::Backend: NodeStorageBackend,
     E: Any + Clone + Send + Sync,
     F: 'static + Fn(E) -> WsEvent + Send + Sync,
 {
@@ -92,7 +92,7 @@ where
 #[async_trait]
 impl<N: Node> Worker<N> for Dashboard
 where
-    N::Backend: StorageBackend,
+    N::Backend: NodeStorageBackend,
 {
     type Config = DashboardConfig;
     type Error = Infallible;
@@ -109,7 +109,7 @@ where
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         // TODO: load them differently if possible
         let node_config = node.resource::<FullNodeConfig<N::Backend>>();
-        let rest_api_config = node_config.rest_api.clone();
+        let rest_api_config = node_config.rest_api_config.clone();
         let tangle = node.resource::<Tangle<N::Backend>>();
         let storage = node.storage();
 

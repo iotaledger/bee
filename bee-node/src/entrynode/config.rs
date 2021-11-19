@@ -4,7 +4,7 @@
 use crate::{
     config::{NetworkSpec, NodeConfig},
     local::Local,
-    storage::StorageBackend,
+    storage::NodeStorageBackend,
 };
 
 use bee_autopeering::AutopeeringConfig;
@@ -18,9 +18,9 @@ pub struct EntryNodeConfig {
     /// The specification of the network the node wants to participate in.
     pub network_spec: NetworkSpec,
     /// Logger.
-    pub logger: LoggerConfig,
+    pub logger_config: LoggerConfig,
     /// Autopeering.
-    pub autopeering: AutopeeringConfig,
+    pub autopeering_config: AutopeeringConfig,
 }
 
 impl EntryNodeConfig {
@@ -35,13 +35,13 @@ impl EntryNodeConfig {
     }
 }
 
-impl<S: StorageBackend> From<NodeConfig<S>> for EntryNodeConfig {
+impl<S: NodeStorageBackend> From<NodeConfig<S>> for EntryNodeConfig {
     fn from(node_cfg: NodeConfig<S>) -> Self {
         Self {
             local: node_cfg.local,
             network_spec: node_cfg.network_spec,
-            logger: node_cfg.logger,
-            autopeering: node_cfg.autopeering,
+            logger_config: node_cfg.logger_config,
+            autopeering_config: node_cfg.autopeering_config,
         }
     }
 }

@@ -12,7 +12,6 @@ use crate::{
 };
 
 use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Worker};
-use bee_storage::backend::StorageBackend as _;
 use bee_storage_null::Storage as NullStorage;
 
 use async_trait::async_trait;
@@ -126,12 +125,6 @@ impl Node for EntryNode {
             self.core.worker_stops.remove(&worker_id).unwrap()(&mut self).await;
             self.resource::<Bus>().remove_listeners_by_id(worker_id);
         }
-
-        // Panic: unwrapping is fine since the node register the backend itself.
-        self.remove_resource::<Self::Backend>()
-            .unwrap()
-            .shutdown()
-            .map_err(|e| CoreError::StorageBackend(Box::new(e)))?;
 
         Ok(())
     }

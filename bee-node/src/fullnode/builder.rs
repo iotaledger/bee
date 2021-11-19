@@ -8,7 +8,7 @@ use crate::{
     core::{Core, CoreError, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
     plugins::{self, Mqtt, VersionChecker},
     shutdown,
-    storage::StorageBackend,
+    storage::NodeStorageBackend,
     util, AUTOPEERING_VERSION, PEERSTORE_PATH,
 };
 
@@ -37,18 +37,18 @@ use std::{
 };
 
 /// A builder to create a Bee full node.
-pub struct FullNodeBuilder<B: StorageBackend> {
-    config: FullNodeConfig<B>,
+pub struct FullNodeBuilder<S: NodeStorageBackend> {
+    config: FullNodeConfig<S>,
     deps: HashMap<TypeId, &'static [TypeId], FxBuildHasher>,
-    worker_starts: HashMap<TypeId, Box<WorkerStart<FullNode<B>>>>,
-    worker_stops: HashMap<TypeId, Box<WorkerStop<FullNode<B>>>>,
+    worker_starts: HashMap<TypeId, Box<WorkerStart<FullNode<S>>>>,
+    worker_stops: HashMap<TypeId, Box<WorkerStop<FullNode<S>>>>,
     worker_names: HashMap<TypeId, &'static str>,
-    resource_registers: Vec<Box<ResourceRegister<FullNode<B>>>>,
+    resource_registers: Vec<Box<ResourceRegister<FullNode<S>>>>,
 }
 
-impl<B: StorageBackend> FullNodeBuilder<B> {
+impl<S: NodeStorageBackend> FullNodeBuilder<S> {
     /// Returns the full node config.
-    pub fn config(&self) -> &FullNodeConfig<B> {
+    pub fn config(&self) -> &FullNodeConfig<S> {
         &self.config
     }
 
@@ -67,7 +67,7 @@ impl<B: StorageBackend> FullNodeBuilder<B> {
 }
 
 #[async_trait(?Send)]
-impl<S: StorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
+impl<S: NodeStorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
     type Error = FullNodeError;
     type Config = FullNodeConfig<S>;
 
@@ -133,19 +133,18 @@ impl<S: StorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
     async fn finish(self) -> Result<FullNode<S>, Self::Error> {
         let builder = self;
 
+        let network_spec = builder.config().network_spec();
+
         // Print the network info the node is trying to connect to.
-        let network_name = builder.config().network_spec().name();
-        let network_id = builder.config().network_spec().id();
-        let bech32_hrp = builder.config().network_spec().hrp();
         log::info!(
             "Joining network \"{}\"({}). Bech32 hrp \"{}\".",
-            network_name,
-            network_id,
-            bech32_hrp
+            network_spec.name(),
+            network_spec.id(),
+            network_spec.hrp()
         );
 
         // Print the local entity data.
-        log::info!("Local: {}", builder.config().local());
+        log::info!("{}", builder.config().local());
 
         // Add the resources that are shared throughout the node.
         let builder = add_node_resources(builder)?;
@@ -172,13 +171,13 @@ impl<S: StorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
         let builder = builder.with_worker::<VersionChecker>();
 
         // Start the MQTT broker.
-        let mqtt_cfg = builder.config().mqtt.clone();
+        let mqtt_cfg = builder.config().mqtt_config.clone();
         let builder = builder.with_worker_cfg::<Mqtt>(mqtt_cfg);
 
         // Start serving the dashboard (if enabled).
         #[cfg(feature = "dashboard")]
         let builder = {
-            let dashboard_cfg = builder.config().dashboard.clone();
+            let dashboard_cfg = builder.config().dashboard_config.clone();
             builder.with_worker_cfg::<Dashboard>(dashboard_cfg)
         };
 
@@ -221,11 +220,11 @@ impl<S: StorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
 /// * the storage
 /// * the event bus
 /// * the shutdown signal receiver
-fn add_node_resources<S: StorageBackend>(builder: FullNodeBuilder<S>) -> Result<FullNodeBuilder<S>, FullNodeError> {
+fn add_node_resources<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Result<FullNodeBuilder<S>, FullNodeError> {
     let config = builder.config().clone();
 
     let node_info = util::create_node_info();
-    let storage_cfg = config.storage.clone();
+    let storage_cfg = config.storage_config.clone();
 
     // TODO block ? Make new async ?
     let storage = S::start(storage_cfg).map_err(|e| CoreError::StorageBackend(Box::new(e)))?;
@@ -258,7 +257,7 @@ fn add_node_resources<S: StorageBackend>(builder: FullNodeBuilder<S>) -> Result<
 }
 
 /// Initializes the gossip layer.
-async fn initialize_gossip_layer<S: StorageBackend>(
+async fn initialize_gossip_layer<S: NodeStorageBackend>(
     builder: FullNodeBuilder<S>,
 ) -> Result<(NetworkEventReceiver, FullNodeBuilder<S>), FullNodeError> {
     log::info!("Initializing gossip protocol...");
@@ -267,7 +266,7 @@ async fn initialize_gossip_layer<S: StorageBackend>(
 
     let keypair = config.local().keypair().clone();
     let network_id = config.network_spec().id();
-    let gossip_cfg = config.gossip.clone();
+    let gossip_cfg = config.gossip_config.clone();
 
     let (builder, network_events) =
         bee_gossip::integrated::init::<FullNode<S>>(gossip_cfg, keypair, network_id, builder)
@@ -278,20 +277,20 @@ async fn initialize_gossip_layer<S: StorageBackend>(
 }
 
 /// Initializes the ledger.
-fn initialize_ledger<S: StorageBackend>(builder: FullNodeBuilder<S>) -> FullNodeBuilder<S> {
+fn initialize_ledger<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> FullNodeBuilder<S> {
     log::info!("Initializing ledger...");
 
     let config = builder.config();
 
     let network_id = config.network_spec().id();
-    let snapshot_cfg = config.snapshot.clone();
-    let pruning_cfg = config.pruning.clone();
+    let snapshot_cfg = config.snapshot_config.clone();
+    let pruning_cfg = config.pruning_config.clone();
 
     bee_ledger::workers::init::<FullNode<S>>(builder, network_id, snapshot_cfg, pruning_cfg)
 }
 
 /// Initializes the protocol.
-fn initialize_protocol<S: StorageBackend>(
+fn initialize_protocol<S: NodeStorageBackend>(
     builder: FullNodeBuilder<S>,
     gossip_events: NetworkEventReceiver,
     autopeering_events: Option<bee_autopeering::event::EventRx>,
@@ -306,7 +305,7 @@ fn initialize_protocol<S: StorageBackend>(
         hrp: _,
     } = config.network_spec().clone();
 
-    let protocol_cfg = config.protocol.clone();
+    let protocol_cfg = config.protocol_config.clone();
 
     bee_protocol::workers::init::<FullNode<S>>(
         protocol_cfg,
@@ -318,17 +317,17 @@ fn initialize_protocol<S: StorageBackend>(
 }
 
 /// Initializes the (optional) autopeering service.
-async fn initialize_autopeering<S: StorageBackend>(
+async fn initialize_autopeering<S: NodeStorageBackend>(
     builder: FullNodeBuilder<S>,
 ) -> Result<(Option<bee_autopeering::event::EventRx>, FullNodeBuilder<S>), FullNodeError> {
     let config = builder.config();
 
-    if !config.autopeering.enabled {
+    if !config.autopeering_config.enabled() {
         Ok((None, builder))
     } else {
         log::info!("Initializing autopeering...");
 
-        let autopeering_cfg = config.autopeering.clone();
+        let autopeering_cfg = config.autopeering_config.clone();
         let network_name = config.network_spec().name().to_string();
 
         // The neighbor validator that includes/excludes certain peers by applying custom criteria.
@@ -360,7 +359,7 @@ async fn initialize_autopeering<S: StorageBackend>(
 }
 
 /// Creates the local entity from a ED25519 keypair and a set of provided services.
-fn create_local_autopeering_entity<S: StorageBackend>(
+fn create_local_autopeering_entity<S: NodeStorageBackend>(
     keypair: Keypair,
     config: &FullNodeConfig<S>,
 ) -> bee_autopeering::Local {
@@ -372,12 +371,12 @@ fn create_local_autopeering_entity<S: StorageBackend>(
     write.add_service(
         AUTOPEERING_SERVICE_NAME,
         ServiceProtocol::Udp,
-        config.autopeering.bind_addr.port(),
+        config.autopeering_config.bind_addr().port(),
     );
 
     // Announce the gossip service.
     // TODO: Make the bind address a SocketAddr instead of a Multiaddr
-    let mut bind_addr = config.gossip.bind_multiaddr().clone();
+    let mut bind_addr = config.gossip_config.bind_multiaddr().clone();
     if let Some(Protocol::Tcp(port)) = bind_addr.pop() {
         write.add_service(config.network_spec().name(), ServiceProtocol::Tcp, port);
     } else {
@@ -390,7 +389,7 @@ fn create_local_autopeering_entity<S: StorageBackend>(
 }
 
 /// Initializes the API.
-async fn initialize_api<S: StorageBackend>(builder: FullNodeBuilder<S>) -> FullNodeBuilder<S> {
+async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> FullNodeBuilder<S> {
     log::info!("Initializing REST API...");
 
     let config = builder.config();
@@ -402,8 +401,8 @@ async fn initialize_api<S: StorageBackend>(builder: FullNodeBuilder<S>) -> FullN
     } = config.network_spec().clone();
 
     let network_id = (network_name, network_id);
-    let rest_api_cfg = config.rest_api.clone();
-    let protocol_cfg = config.protocol.clone();
+    let rest_api_cfg = config.rest_api_config.clone();
+    let protocol_cfg = config.protocol_config.clone();
 
     let builder =
         bee_rest_api::endpoints::init::<FullNode<S>>(rest_api_cfg, protocol_cfg, network_id, hrp, builder).await;
@@ -412,10 +411,10 @@ async fn initialize_api<S: StorageBackend>(builder: FullNodeBuilder<S>) -> FullN
 }
 
 /// Initializes the Tangle.
-fn initialize_tangle<S: StorageBackend>(builder: FullNodeBuilder<S>) -> FullNodeBuilder<S> {
+fn initialize_tangle<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> FullNodeBuilder<S> {
     log::info!("Initializing tangle...");
 
-    let tangle_cfg = builder.config().tangle.clone();
+    let tangle_cfg = builder.config().tangle_config.clone();
 
     // TODO: `init` should probably just consume the config as any other crate does.
     bee_tangle::init::<FullNode<S>>(&tangle_cfg, builder)

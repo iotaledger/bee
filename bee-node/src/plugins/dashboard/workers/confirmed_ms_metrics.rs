@@ -3,7 +3,7 @@
 
 use crate::{
     plugins::dashboard::{broadcast, websocket::WsUsers, Dashboard},
-    storage::StorageBackend,
+    storage::NodeStorageBackend,
 };
 
 use bee_ledger::workers::event::MilestoneConfirmed;
@@ -18,7 +18,7 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 pub(crate) fn confirmed_ms_metrics_worker<N>(node: &mut N, users: &WsUsers)
 where
     N: Node,
-    N::Backend: StorageBackend,
+    N::Backend: NodeStorageBackend,
 {
     let metrics = node.resource::<NodeMetrics>();
     let bus = node.bus();

@@ -8,7 +8,8 @@ use structopt::StructOpt;
 
 use std::path::{Path, PathBuf};
 
-/// A type that holds the data passed to the binary via the command line.
+// BEWARE: `structopt` puts any doc comment for this struct into the output of `--help`. We don't want that.
+#[allow(missing_docs)]
 #[derive(Clone, Debug, StructOpt)]
 pub struct ClArgs {
     // The config file location.
@@ -31,6 +32,9 @@ pub struct ClArgs {
     // Whether the exact commit version should be printed.
     #[structopt(short = "v", long = "commit_version", help = "Prints exact commit version")]
     commit_version: bool,
+    // Whether the node should run as an (autopeering) entry node.
+    #[structopt(long = "entry_node", help = "Runs as autopeering entry node")]
+    entry_node: bool,
 }
 
 impl Default for ClArgs {
@@ -63,8 +67,13 @@ impl ClArgs {
     }
 
     /// Returns whether the exact commit version should be printed.
-    pub fn commit_version(&self) -> bool {
+    pub fn print_commit_version(&self) -> bool {
         self.commit_version
+    }
+
+    /// Returns whether the node should run as an (autopeering) entry node.
+    pub fn run_as_entry_node(&self) -> bool {
+        self.entry_node
     }
 }
 

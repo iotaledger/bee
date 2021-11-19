@@ -117,23 +117,22 @@ impl NodeBuilder<EntryNode> for EntryNodeBuilder {
     async fn finish(mut self) -> Result<EntryNode, Self::Error> {
         let builder = self;
 
-        if !builder.config().autopeering.enabled {
+        if !builder.config().autopeering_config.enabled() {
             return Err(EntryNodeError::DisabledAutopeering);
         }
 
+        let network_spec = builder.config().network_spec();
+
         // Print the network info the node is trying to connect to.
-        let network_name = builder.config().network_spec().name();
-        let network_id = builder.config().network_spec().id();
-        let bech32_hrp = builder.config().network_spec().hrp();
         log::info!(
             "Joining network \"{}\"({}). Bech32 hrp \"{}\".",
-            network_name,
-            network_id,
-            bech32_hrp
+            network_spec.name(),
+            network_spec.id(),
+            network_spec.hrp()
         );
 
         // Print the local entity data.
-        log::info!("Local: {}", builder.config().local());
+        log::info!("{}", builder.config().local());
 
         // Add the resources that are shared throughout the node.
         let builder = add_node_resources(builder)?;
@@ -227,7 +226,7 @@ async fn initialize_autopeering(
     let quit_signal = tokio::signal::ctrl_c();
 
     let autopeering_rx = bee_autopeering::init::<SledPeerStore, _, _, _>(
-        builder.config().autopeering.clone(),
+        builder.config().autopeering_config.clone(),
         AUTOPEERING_VERSION,
         network_name,
         local,
@@ -251,7 +250,7 @@ fn create_local_autopeering_entity(keypair: Keypair, config: &EntryNodeConfig) -
     write.add_service(
         AUTOPEERING_SERVICE_NAME,
         ServiceProtocol::Udp,
-        config.autopeering.bind_addr.port(),
+        config.autopeering_config.bind_addr().port(),
     );
 
     drop(write);

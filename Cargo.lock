@@ -160,9 +160,9 @@ dependencies = [
 
 [[package]]
 name = "atomic"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3410529e8288c463bedb5930f82833bc0c90e5d2fe639a56582a4d09220b281"
+checksum = "b88d82667eca772c4aa12f0f1348b3ae643424c8876448f3f7bd5787032e234c"
 dependencies = [
  "autocfg",
 ]
@@ -205,7 +205,7 @@ checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 [[package]]
 name = "bee-autopeering"
 version = "0.1.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "async-trait",
  "base64 0.13.0",
@@ -228,7 +228,7 @@ dependencies = [
  "serde",
  "sled",
  "thiserror",
- "time 0.3.4",
+ "time 0.3.5",
  "tokio",
  "tokio-stream",
 ]
@@ -236,7 +236,7 @@ dependencies = [
 [[package]]
 name = "bee-common"
 version = "0.5.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "autocfg",
  "console-subscriber",
@@ -247,14 +247,14 @@ dependencies = [
  "rust-argon2",
  "serde",
  "thiserror",
- "time 0.3.4",
+ "time 0.3.5",
  "tracing-subscriber 0.3.1",
 ]
 
 [[package]]
 name = "bee-crypto"
 version = "0.2.1-alpha"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "bee-ternary",
  "byteorder",
@@ -266,7 +266,7 @@ dependencies = [
 [[package]]
 name = "bee-gossip"
 version = "0.3.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "async-trait",
  "bee-runtime",
@@ -286,7 +286,7 @@ dependencies = [
 [[package]]
 name = "bee-ledger"
 version = "0.5.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -312,7 +312,7 @@ dependencies = [
 [[package]]
 name = "bee-message"
 version = "0.1.5"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "bech32",
  "bee-common",
@@ -377,7 +377,7 @@ dependencies = [
 [[package]]
 name = "bee-pow"
 version = "0.1.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "bee-crypto",
  "bee-ternary",
@@ -452,7 +452,7 @@ dependencies = [
 [[package]]
 name = "bee-runtime"
 version = "0.1.1-alpha"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "async-trait",
  "bee-storage",
@@ -465,7 +465,7 @@ dependencies = [
 [[package]]
 name = "bee-storage"
 version = "0.9.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "bee-common",
  "serde",
@@ -475,7 +475,7 @@ dependencies = [
 [[package]]
 name = "bee-storage-null"
 version = "0.1.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "bee-storage",
 ]
@@ -483,7 +483,7 @@ dependencies = [
 [[package]]
 name = "bee-storage-rocksdb"
 version = "0.5.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -499,7 +499,7 @@ dependencies = [
 [[package]]
 name = "bee-storage-sled"
 version = "0.4.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -515,7 +515,7 @@ dependencies = [
 [[package]]
 name = "bee-tangle"
 version = "0.2.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -537,7 +537,7 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.5.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#f41fc86273a991beeeb4bac393547d4ee75bdcf7"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#9ae9e39dcc1063278fec605cc5a973499f763063"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -675,9 +675,9 @@ checksum = "dfb342bc1e95bfb9b3eb80593701657580f1606df8c5563003e6fc1cd8f09ba1"
 
 [[package]]
 name = "cc"
-version = "1.0.71"
+version = "1.0.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79c2681d6594606957bbb8631c4b90a7fcaaa72cdb714743a437b156d6a7eedd"
+checksum = "22a9137b95ea06864e018375b72adfb7db6e6f68cfc8df5a04d00288050485ee"
 dependencies = [
  "jobserver",
 ]
@@ -1439,9 +1439,9 @@ checksum = "acd94fdbe1d4ff688b67b04eee2e17bd50995534a61539e45adfefb45e5e5503"
 
 [[package]]
 name = "httpdate"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6456b8a6c8f33fee7d958fcd1b60d55b11940a79e63ae87013e6d22e26034440"
+checksum = "c4a1e36c821dbe04574f602848a19f742f4fb3c98d40449f11bcad18d6b17421"
 
 [[package]]
 name = "humantime"
@@ -1451,9 +1451,9 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "hyper"
-version = "0.14.14"
+version = "0.14.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b91bb1f221b6ea1f1e4371216b70f40748774c2fb5971b450c07773fb92d26b"
+checksum = "436ec0091e4f20e655156a30a0df3770fe2900aa301e548e08446ec794b6953c"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -1659,9 +1659,9 @@ checksum = "fbe5e23404da5b4f555ef85ebed98fb4083e55a00c317800bc2a50ede9f3d219"
 
 [[package]]
 name = "libloading"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0cf036d15402bea3c5d4de17b3fce76b3e4a56ebc1f577be0e7a72f7c607cf0"
+checksum = "afe203d669ec979b7128619bae5a63b7b42e9203c1b29146079ee05e2f604b52"
 dependencies = [
  "cfg-if",
  "winapi",
@@ -2317,9 +2317,9 @@ checksum = "28988d872ab76095a6e6ac88d99b54fd267702734fd7ffe610ca27f533ddb95a"
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.70"
+version = "0.9.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6517987b3f8226b5da3661dad65ff7f300cc59fb5ea8333ca191fc65fde3edf"
+checksum = "7df13d165e607909b363a4757a6f133f8a818a74e9d3a98d09c6128e15fa4c73"
 dependencies = [
  "autocfg",
  "cc",
@@ -3053,9 +3053,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.69"
+version = "1.0.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e466864e431129c7e0d3476b92f20458e5879919a0596c6472738d9fa2d342f8"
+checksum = "063bf466a64011ac24040a49009724ee60a57da1b437617ceb32e53ad61bfb19"
 dependencies = [
  "itoa",
  "ryu",
@@ -3370,9 +3370,9 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.3.4"
+version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99beeb0daeac2bd1e86ac2c21caddecb244b39a093594da1a661ec2060c7aedd"
+checksum = "41effe7cfa8af36f439fac33861b66b049edc6f9a32331e2312660529c1c24ad"
 dependencies = [
  "itoa",
  "libc",
@@ -3404,9 +3404,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.13.0"
+version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "588b2d10a336da58d877567cd8fb8a14b463e2104910f8132cd054b4b96e29ee"
+checksum = "70e992e41e0d2fb9f755b37446f20900f64446ef54874f40a60c78f021ac6144"
 dependencies = [
  "autocfg",
  "bytes",
@@ -3434,9 +3434,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-macros"
-version = "1.5.1"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "114383b041aa6212c579467afa0075fbbdd0718de036100bc0ba7961d8cb9095"
+checksum = "c9efc1aba077437943f7515666aa2b882dfabfbfdf89c819ea75a8d6e9eaba5e"
 dependencies = [
  "proc-macro2",
  "quote",

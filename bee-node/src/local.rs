@@ -75,10 +75,12 @@ impl Local {
         &self.encoded
     }
 
+    #[allow(dead_code)]
     pub(crate) fn peer_id(&self) -> PeerId {
         self.peer_id
     }
 
+    #[allow(dead_code)]
     pub(crate) fn alias(&self) -> &str {
         &self.alias
     }

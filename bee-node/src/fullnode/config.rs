@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    config::NetworkSpec, local::Local, plugins::mqtt::config::MqttConfig, storage::StorageBackend, NodeConfig,
+    config::NetworkSpec, local::Local, plugins::mqtt::config::MqttConfig, storage::NodeStorageBackend, NodeConfig,
 };
 
 #[cfg(feature = "dashboard")]
@@ -17,37 +17,37 @@ use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_tangle::config::TangleConfig;
 
 /// The config of a Bee full node.
-pub struct FullNodeConfig<B: StorageBackend> {
+pub struct FullNodeConfig<S: NodeStorageBackend> {
     /// The local entity.
     pub local: Local,
     /// The specification of the network the node wants to participate in.
     pub network_spec: NetworkSpec,
     /// Logger.
-    pub logger: LoggerConfig,
+    pub logger_config: LoggerConfig,
     /// Gossip layer.
-    pub gossip: NetworkConfig,
+    pub gossip_config: NetworkConfig,
     /// Autopeering.
-    pub autopeering: AutopeeringConfig,
+    pub autopeering_config: AutopeeringConfig,
     /// Protocol layer.
-    pub protocol: ProtocolConfig,
+    pub protocol_config: ProtocolConfig,
     /// Node REST API.
-    pub rest_api: RestApiConfig,
+    pub rest_api_config: RestApiConfig,
     /// Snapshots.
-    pub snapshot: SnapshotConfig,
+    pub snapshot_config: SnapshotConfig,
     /// Pruning.
-    pub pruning: PruningConfig,
+    pub pruning_config: PruningConfig,
     /// Storage layer.
-    pub storage: B::Config,
+    pub storage_config: S::Config,
     /// Tangle.
-    pub tangle: TangleConfig,
+    pub tangle_config: TangleConfig,
     /// MQTT broker.
-    pub mqtt: MqttConfig,
+    pub mqtt_config: MqttConfig,
     /// Node dashboard.
     #[cfg(feature = "dashboard")]
-    pub dashboard: DashboardConfig,
+    pub dashboard_config: DashboardConfig,
 }
 
-impl<B: StorageBackend> FullNodeConfig<B> {
+impl<S: NodeStorageBackend> FullNodeConfig<S> {
     /// Returns the local entity associated with the node.
     pub fn local(&self) -> &Local {
         &self.local
@@ -59,44 +59,44 @@ impl<B: StorageBackend> FullNodeConfig<B> {
     }
 }
 
-impl<B: StorageBackend> Clone for FullNodeConfig<B> {
+impl<S: NodeStorageBackend> Clone for FullNodeConfig<S> {
     fn clone(&self) -> Self {
         Self {
             local: self.local.clone(),
             network_spec: self.network_spec.clone(),
-            logger: self.logger.clone(),
-            gossip: self.gossip.clone(),
-            autopeering: self.autopeering.clone(),
-            protocol: self.protocol.clone(),
-            rest_api: self.rest_api.clone(),
-            snapshot: self.snapshot.clone(),
-            pruning: self.pruning.clone(),
-            storage: self.storage.clone(),
-            tangle: self.tangle.clone(),
-            mqtt: self.mqtt.clone(),
+            logger_config: self.logger_config.clone(),
+            gossip_config: self.gossip_config.clone(),
+            autopeering_config: self.autopeering_config.clone(),
+            protocol_config: self.protocol_config.clone(),
+            rest_api_config: self.rest_api_config.clone(),
+            snapshot_config: self.snapshot_config.clone(),
+            pruning_config: self.pruning_config.clone(),
+            storage_config: self.storage_config.clone(),
+            tangle_config: self.tangle_config.clone(),
+            mqtt_config: self.mqtt_config.clone(),
             #[cfg(feature = "dashboard")]
-            dashboard: self.dashboard.clone(),
+            dashboard_config: self.dashboard_config.clone(),
         }
     }
 }
 
-impl<S: StorageBackend> From<NodeConfig<S>> for FullNodeConfig<S> {
+impl<S: NodeStorageBackend> From<NodeConfig<S>> for FullNodeConfig<S> {
     fn from(node_cfg: NodeConfig<S>) -> Self {
         Self {
             local: node_cfg.local,
             network_spec: node_cfg.network_spec,
-            logger: node_cfg.logger,
-            gossip: node_cfg.gossip,
-            autopeering: node_cfg.autopeering,
-            protocol: node_cfg.protocol,
-            rest_api: node_cfg.rest_api,
-            snapshot: node_cfg.snapshot,
-            pruning: node_cfg.pruning,
-            storage: node_cfg.storage,
-            tangle: node_cfg.tangle,
-            mqtt: node_cfg.mqtt,
+            logger_config: node_cfg.logger_config,
+            gossip_config: node_cfg.gossip_config,
+            autopeering_config: node_cfg.autopeering_config,
+            protocol_config: node_cfg.protocol_config,
+            rest_api_config: node_cfg.rest_api_config,
+            snapshot_config: node_cfg.snapshot_config,
+            pruning_config: node_cfg.pruning_config,
+            storage_config: node_cfg.storage_config,
+            tangle_config: node_cfg.tangle_config,
+            mqtt_config: node_cfg.mqtt_config,
             #[cfg(feature = "dashboard")]
-            dashboard: node_cfg.dashboard,
+            dashboard_config: node_cfg.dashboard_config,
         }
     }
 }
