@@ -3,8 +3,6 @@
 
 //! Ternary sponge constructions.
 
-#![allow(deprecated)]
-
 mod curlp;
 mod kerl;
 mod kind;
@@ -20,7 +18,6 @@ use bee_ternary::{TritBuf, Trits};
 use std::ops::DerefMut;
 
 /// The common interface of ternary cryptographic hash functions that follow the sponge construction.
-#[deprecated(note = "Sponge and SpongeKind are deprecated because `iota-crypto` doesn't implement this trait.")]
 pub trait Sponge {
     /// An error indicating that a failure has occured during a sponge operation.
     type Error;

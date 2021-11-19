@@ -1,13 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![allow(deprecated)]
-
 mod batched;
 mod unrolled;
 
 pub use batched::{BatchHasher, BATCH_SIZE};
-
 pub use unrolled::UnrolledCurlP81;
 
 use crate::ternary::{sponge::Sponge, HASH_LENGTH};

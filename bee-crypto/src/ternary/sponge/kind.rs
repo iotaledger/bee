@@ -3,7 +3,6 @@
 
 /// The different kinds of Sponges.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-#[deprecated(note = "Sponge and SpongeKind are deprecated because `iota-crypto` doesn't implement this trait.")]
 pub enum SpongeKind {
     /// Kerl.
     Kerl,

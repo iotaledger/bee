@@ -12,7 +12,6 @@ use tiny_keccak::{Hasher, Keccak};
 
 /// State of the ternary cryptographic function `Kerl`.
 #[derive(Clone)]
-#[deprecated(note = "Kerl will not be supported in future versions.")]
 pub struct Kerl {
     /// Actual keccak hash function.
     keccak: Keccak,
