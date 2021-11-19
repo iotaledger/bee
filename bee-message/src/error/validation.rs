@@ -14,7 +14,7 @@ use crate::{
         salt_declaration::SaltBytesLength,
         transaction::{InputCount, OutputCount},
     },
-    unlock::UnlockBlockCount,
+    unlock::{ReferenceIndex, UnlockBlockCount},
 };
 
 use crypto::Error as CryptoError;
@@ -53,7 +53,7 @@ pub enum ValidationError {
     InvalidParentsKind(u8),
     InvalidPayloadKind(u32),
     InvalidPayloadVersion { version: u8, payload_kind: u32 },
-    InvalidReferenceIndex(u16),
+    InvalidReferenceIndex(<ReferenceIndex as TryFrom<u16>>::Error),
     InvalidSaltBytesLength(<SaltBytesLength as TryFrom<usize>>::Error),
     InvalidSignature,
     InvalidStrongParentsCount(usize),

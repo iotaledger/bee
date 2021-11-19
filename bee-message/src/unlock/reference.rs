@@ -3,12 +3,11 @@
 
 use crate::{error::ValidationError, unlock::UNLOCK_BLOCK_INDEX_MAX, MessageUnpackError};
 
-use bee_packable::{
-    bounded::{BoundedU16, InvalidBoundedU16},
-    Packable,
-};
+use bee_packable::{bounded::BoundedU16, Packable};
 
 use core::fmt;
+
+pub(crate) type ReferenceIndex = BoundedU16<0, UNLOCK_BLOCK_INDEX_MAX>;
 
 /// Error encountered unpacking a [`ReferenceUnlock`].
 #[derive(Debug)]
@@ -31,16 +30,11 @@ impl fmt::Display for ReferenceUnlockUnpackError {
     }
 }
 
-// TODO would be better as a From but conflicts with OutputId impl
-fn invalid_u16_to_validation_error(err: InvalidBoundedU16<0, UNLOCK_BLOCK_INDEX_MAX>) -> ValidationError {
-    ValidationError::InvalidReferenceIndex(err.0)
-}
-
 /// An [`UnlockBlock`](crate::unlock::UnlockBlock) that refers to another [`UnlockBlock`](crate::unlock::UnlockBlock).
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = MessageUnpackError, with = invalid_u16_to_validation_error)]
-pub struct ReferenceUnlock(BoundedU16<0, UNLOCK_BLOCK_INDEX_MAX>);
+#[packable(unpack_error = MessageUnpackError, with = ValidationError::InvalidReferenceIndex)]
+pub struct ReferenceUnlock(ReferenceIndex);
 
 impl ReferenceUnlock {
     /// The [`UnlockBlock`](crate::unlock::UnlockBlock) kind of a [`ReferenceUnlock`].
@@ -48,7 +42,9 @@ impl ReferenceUnlock {
 
     /// Creates a new [`ReferenceUnlock`].
     pub fn new(index: u16) -> Result<Self, ValidationError> {
-        Ok(Self(index.try_into().map_err(invalid_u16_to_validation_error)?))
+        Ok(Self(
+            ReferenceIndex::try_from(index).map_err(ValidationError::InvalidReferenceIndex)?,
+        ))
     }
 
     /// Returns the index of a [`ReferenceUnlock`].

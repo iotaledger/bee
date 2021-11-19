@@ -5,7 +5,7 @@ use bee_message::{
     error::{MessageUnpackError, ValidationError},
     unlock::ReferenceUnlock,
 };
-use bee_packable::{error::UnpackError, PackableExt};
+use bee_packable::{bounded::InvalidBoundedU16, error::UnpackError, PackableExt};
 
 #[test]
 fn kind() {
@@ -33,7 +33,7 @@ fn new_valid_max_index() {
 fn new_invalid_more_than_max_index() {
     assert!(matches!(
         ReferenceUnlock::new(127),
-        Err(ValidationError::InvalidReferenceIndex(127)),
+        Err(ValidationError::InvalidReferenceIndex(InvalidBoundedU16(127))),
     ));
 }
 
@@ -46,7 +46,7 @@ fn try_from_valid() {
 fn try_from_invalid() {
     assert!(matches!(
         ReferenceUnlock::try_from(127),
-        Err(ValidationError::InvalidReferenceIndex(127)),
+        Err(ValidationError::InvalidReferenceIndex(InvalidBoundedU16(127))),
     ));
 }
 
@@ -55,7 +55,7 @@ fn unpack_invalid_index() {
     assert!(matches!(
         ReferenceUnlock::unpack_verified(vec![0x2a, 0x2a]),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidReferenceIndex(10794)
+            ValidationError::InvalidReferenceIndex(InvalidBoundedU16(10794))
         ))),
     ));
 }

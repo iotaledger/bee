@@ -7,6 +7,7 @@ mod reference;
 mod signature;
 mod unlock_blocks;
 
+pub(crate) use reference::ReferenceIndex;
 pub use reference::{ReferenceUnlock, ReferenceUnlockUnpackError};
 pub use signature::SignatureUnlock;
 pub(crate) use unlock_blocks::UnlockBlockCount;
