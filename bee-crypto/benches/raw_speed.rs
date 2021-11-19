@@ -1,10 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(deprecated)]
+
 use bee_crypto::ternary::sponge::{BatchHasher, CurlP81, CurlPRounds, Sponge, UnrolledCurlP81, BATCH_SIZE};
 use bee_ternary::{T1B1Buf, T5B1Buf, TritBuf, TryteBuf};
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use crypto::hashes::ternary::curl_p::CurlP;
 
 fn batched_hasher_t5b1(input: &TritBuf<T5B1Buf>) {
     let mut hasher = BatchHasher::new(input.len(), CurlPRounds::Rounds81);
@@ -17,6 +20,14 @@ fn batched_hasher_t5b1(input: &TritBuf<T5B1Buf>) {
 }
 
 fn regular_hasher_t5b1(input: &TritBuf<T5B1Buf>) {
+    let mut hasher = CurlP::new();
+
+    for _ in 0..BATCH_SIZE {
+        hasher.digest(&input.encode::<T1B1Buf>());
+    }
+}
+
+fn regular_hasher_t5b1_legacy(input: &TritBuf<T5B1Buf>) {
     let mut hasher = CurlP81::new();
 
     for _ in 0..BATCH_SIZE {
@@ -60,6 +71,11 @@ fn bench_hasher(c: &mut Criterion) {
             BenchmarkId::new("Regular", format!("{} T5B1", length)),
             input,
             |b, i| b.iter(|| regular_hasher_t5b1(i)),
+        );
+        group.bench_with_input(
+            BenchmarkId::new("Regular (legacy)", format!("{} T5B1", length)),
+            input,
+            |b, i| b.iter(|| regular_hasher_t5b1_legacy(i)),
         );
         group.bench_with_input(
             BenchmarkId::new("Unrolled", format!("{} T5B1", length)),

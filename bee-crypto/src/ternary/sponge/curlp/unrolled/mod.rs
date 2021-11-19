@@ -6,7 +6,7 @@ mod u256;
 
 use u256::U256;
 
-use super::{Sponge, HASH_LENGTH};
+use crate::ternary::sponge::{Sponge, HASH_LENGTH};
 
 use bee_ternary::{Btrit, Trits};
 

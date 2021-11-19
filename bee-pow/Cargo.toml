@@ -1,6 +1,6 @@
 [package]
 name = "bee-pow"
-version = "0.1.0"
+version = "0.2.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Provides Proof of Work utilities for the IOTA protocol"
@@ -11,10 +11,9 @@ keywords = [ "iota", "tangle", "bee", "framework", "pow" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-crypto = { version = "0.2.1-alpha", path = "../bee-crypto", default-features = false }
 bee-ternary = { version = "0.5.2", path = "../bee-ternary", default-features = false }
 
-iota-crypto = { version = "0.7.0", default-features = false, features = [ "blake2b", "digest" ] }
+iota-crypto = { version = "0.9.1", default-features = false, features = [ "blake2b", "digest", "curl-p" ] }
 thiserror = { version = "1.0.30", default-features = false }
 
 [dev-dependencies]
