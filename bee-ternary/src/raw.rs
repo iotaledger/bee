@@ -3,7 +3,7 @@
 
 use crate::{Trit, TritBuf};
 
-use std::ops::Range;
+use core::ops::Range;
 
 /// A trait to be implemented by alternative trit encoding scheme slices.
 #[allow(clippy::len_without_is_empty)]
@@ -107,10 +107,6 @@ pub trait RawEncodingBuf {
         T: RawEncodingBuf,
         T::Slice: RawEncoding<Trit = <Self::Slice as RawEncoding>::Trit>,
     {
-        // if TypeId::of::<Self>() == TypeId::of::<T>() {
-        //     unsafe { std::mem::transmute(this) }
-        // } else {
         this.iter().collect()
-        // }
     }
 }

@@ -1,9 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+extern crate alloc;
+
 use crate::{Btrit, RawEncoding, RawEncodingBuf, ShiftTernary, Utrit};
 
-use std::ops::Range;
+use alloc::vec::Vec;
+use core::ops::Range;
 
 const TRITS_PER_BYTE: usize = 4;
 // Number required to push a byte between balanced and unbalanced representationsconst TPB: usize = 4;
@@ -16,7 +19,7 @@ pub struct T4B1([()]);
 impl T4B1 {
     unsafe fn make(ptr: *const i8, offset: usize, len: usize) -> *const Self {
         let len = (len << 2) | (offset % TRITS_PER_BYTE);
-        std::mem::transmute((ptr.add(offset / TRITS_PER_BYTE), len))
+        core::mem::transmute((ptr.add(offset / TRITS_PER_BYTE), len))
     }
 
     unsafe fn ptr(&self, index: usize) -> *const i8 {
@@ -67,7 +70,7 @@ impl RawEncoding for T4B1 {
     fn as_i8_slice(&self) -> &[i8] {
         assert!(self.len_offset().1 == 0);
         unsafe {
-            std::slice::from_raw_parts(
+            core::slice::from_raw_parts(
                 self as *const _ as *const _,
                 (self.len() + TRITS_PER_BYTE - 1) / TRITS_PER_BYTE,
             )
@@ -76,7 +79,7 @@ impl RawEncoding for T4B1 {
 
     unsafe fn as_i8_slice_mut(&mut self) -> &mut [i8] {
         assert!(self.len_offset().1 == 0);
-        std::slice::from_raw_parts_mut(
+        core::slice::from_raw_parts_mut(
             self as *mut _ as *mut _,
             (self.len() + TRITS_PER_BYTE - 1) / TRITS_PER_BYTE,
         )
