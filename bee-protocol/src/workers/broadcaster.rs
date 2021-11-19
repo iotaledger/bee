@@ -36,10 +36,10 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = mpsc::unbounded_channel();
-
         let metrics = node.resource::<NodeMetrics>();
         let peer_manager = node.resource::<PeerManager>();
+
+        let (tx, rx) = mpsc::unbounded_channel();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -48,7 +48,7 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
 
             while let Some(BroadcasterWorkerEvent { source, message }) = receiver.next().await {
                 peer_manager.for_each(|peer_id, _| {
-                    if source.map_or(true, |ref source| source != peer_id) {
+                    if source.map_or(true, |ref source| peer_id != source) {
                         Sender::<MessagePacket>::send(&peer_manager, &metrics, peer_id, message.clone());
                     }
                 });
