@@ -6,6 +6,7 @@
 use crate::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
+    prefix::TryIntoPrefixError,
     unpacker::Unpacker,
     Packable,
 };
@@ -105,6 +106,17 @@ macro_rules! bounded {
                 } else {
                     Err($error(value))
                 }
+            }
+        }
+
+        impl<const MIN: $ty, const MAX: $ty> TryFrom<usize> for $wrapper<MIN, MAX> {
+            type Error = TryIntoPrefixError<$error<MIN, MAX>>;
+
+            fn try_from(value: usize) -> Result<Self, Self::Error> {
+                <$ty>::try_from(value)
+                    .map_err(|_| TryIntoPrefixError::Truncated(value))?
+                    .try_into()
+                    .map_err(TryIntoPrefixError::Invalid)
             }
         }
 
