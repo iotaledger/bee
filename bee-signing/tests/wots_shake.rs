@@ -4,7 +4,6 @@
 #![allow(deprecated)]
 
 use bee_crypto::ternary::sponge::Kerl;
-
 use bee_signing::ternary::{
     wots::{Error as WotsError, WotsSecurityLevel, WotsShakePrivateKeyGeneratorBuilder},
     PrivateKeyGenerator,
