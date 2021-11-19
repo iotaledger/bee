@@ -5,16 +5,13 @@
 
 use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf, Trits, T1B1};
 
-#[allow(deprecated)]
-use bee_crypto::ternary::sponge::Sponge;
-use bee_crypto::ternary::sponge::UnrolledCurlP81;
-use crypto::hashes::{blake2b::Blake2b256, ternary::HASH_LENGTH, Digest};
+use crypto::hashes::{blake2b::Blake2b256, ternary::{curl_p::CurlP, HASH_LENGTH}, Digest};
 
 /// Encapsulates the different steps that are used for scoring Proof of Work.
 pub struct PoWScorer {
     blake2b: Blake2b256,
     pow_input: TritBuf<T1B1Buf>,
-    curl: UnrolledCurlP81,
+    curl: CurlP,
 }
 
 impl PoWScorer {
@@ -23,7 +20,7 @@ impl PoWScorer {
         Self {
             blake2b: Blake2b256::new(),
             pow_input: TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH),
-            curl: UnrolledCurlP81::new(),
+            curl: CurlP::new(),
         }
     }
 
@@ -52,9 +49,7 @@ impl PoWScorer {
         self.pow_input.push(Btrit::Zero);
         self.pow_input.push(Btrit::Zero);
 
-        // TODO: Consider using an output buffer here, for example by using the `Sponge` mechanism?
-        #[allow(deprecated)]
-        self.curl.digest(self.pow_input.as_slice()).unwrap()
+        self.curl.digest(self.pow_input.as_slice())
     }
 
     /// Computes the Proof of Work score of given bytes.
