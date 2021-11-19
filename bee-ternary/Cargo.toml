@@ -1,6 +1,6 @@
 [package]
 name = "bee-ternary"
-version = "0.5.1"
+version = "0.5.2"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Ergonomic ternary manipulation utilities"
@@ -19,3 +19,4 @@ autocfg = { version = "1.0.0", default-features = false }
 
 [features]
 serde1 = [ "serde" ]
+std = [ ]

@@ -1,9 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+extern crate alloc;
+
 use crate::{Btrit, Error, Trits, T3B1};
 
-use std::{
+use alloc::vec::Vec;
+use core::{
     fmt,
     ops::{Deref, DerefMut},
     str::FromStr,
@@ -102,8 +105,8 @@ impl TryFrom<char> for Tryte {
     fn try_from(c: char) -> Result<Self, Self::Error> {
         match c {
             '9' => Ok(Tryte::Nine),
-            'N'..='Z' => Ok(unsafe { std::mem::transmute((c as u8 - b'N') as i8 - 13) }),
-            'A'..='M' => Ok(unsafe { std::mem::transmute((c as u8 - b'A') as i8 + 1) }),
+            'N'..='Z' => Ok(unsafe { core::mem::transmute((c as u8 - b'N') as i8 - 13) }),
+            'A'..='M' => Ok(unsafe { core::mem::transmute((c as u8 - b'A') as i8 + 1) }),
             _ => Err(Error::InvalidRepr),
         }
     }
@@ -114,7 +117,7 @@ impl TryFrom<i8> for Tryte {
 
     fn try_from(x: i8) -> Result<Self, Self::Error> {
         match x {
-            -13..=13 => Ok(unsafe { std::mem::transmute(x) }),
+            -13..=13 => Ok(unsafe { core::mem::transmute(x) }),
             _ => Err(Error::InvalidRepr),
         }
     }
