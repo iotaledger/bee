@@ -20,6 +20,7 @@ members = [
 	"bee-tangle",
 	"bee-ternary",
 	"bee-test",
+	"bee-tools/bee-bench-cpu",
 ]
 
 [profile.dev]

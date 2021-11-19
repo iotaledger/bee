@@ -1,0 +1,24 @@
+[package]
+name = "bee-bench-cpu"
+description = "Benchmarks the maximal hash rate on the current CPU."
+authors = [ "IOTA Stiftung" ]
+version = "0.1.0"
+edition = "2021"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "framework", "ternary" ]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-ternary = { version = "0.5.1", path = "../../bee-ternary", default-features = false }
+bee-crypto = { version = "0.2.1-alpha", path = "../../bee-crypto", default-features = false }
+bee-pow = { version = "0.1.0", path = "../../bee-pow", default-features = false }
+
+structopt = { version = "0.3.23", default-features = false }
+thiserror = { version = "1.0.30", default-features = false }
+num_cpus = { version = "1.13.0", default-features = false }
+rand = { version = "0.8.4", default-features = false }
+
+[[bin]]
+name = "bee-bench-cpu"
+path = "src/main.rs"
