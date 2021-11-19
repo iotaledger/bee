@@ -20,7 +20,7 @@ tiny-keccak = { version = "2.0.2", default-features = false, features = [ "kecca
 
 [dev-dependencies]
 criterion = { version = "0.3.5", default-features = false }
-iota-crypto = { version = "0.8.0", default-features = false, features = [ "blake2b", "digest", "curl-p" ] }
+iota-crypto = { version = "0.9.0", default-features = false, features = [ "blake2b", "digest", "curl-p" ] }
 
 [[bench]]
 name = "raw_speed"

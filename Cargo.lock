@@ -1480,14 +1480,15 @@ dependencies = [
 
 [[package]]
 name = "iota-crypto"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee273ae67ff1bc7c59317c0ab280e0e76259e6bd83e140ac4c2ecebec994f740"
+checksum = "6f9f5ce237aa2dfb17b5e5edefd4016e51b1527620fe2e653a7932c9fc5c486a"
 dependencies = [
  "bee-ternary",
  "blake2",
  "digest",
  "ed25519-zebra",
+ "lazy_static",
 ]
 
 [[package]]
