@@ -41,12 +41,8 @@ impl PoWScorer {
 
         // Encode message as trits
         self.pow_input.clear();
-        b1t6::encode::<T1B1Buf>(&pow_digest)
-            .iter()
-            .for_each(|t| self.pow_input.push(t));
-        b1t6::encode::<T1B1Buf>(tail)
-            .iter()
-            .for_each(|t| self.pow_input.push(t));
+        self.pow_input.append(b1t6::encode::<T1B1Buf>(&pow_digest).as_slice());
+        self.pow_input.append(b1t6::encode::<T1B1Buf>(tail).as_slice());
 
         // Pad to 243 trits
         self.pow_input.push(Btrit::Zero);
