@@ -11,7 +11,7 @@ use crate::{
 
 use bee_packable::{
     bounded::BoundedU32,
-    prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
+    prefix::{UnpackPrefixError, VecPrefix},
     Packable,
 };
 
@@ -24,7 +24,7 @@ pub(crate) type SaltBytesLength = BoundedU32<0, { PAYLOAD_LENGTH_MAX - 12 }>;
 fn unpack_prefix_to_validation_error(
     err: UnpackPrefixError<Infallible, <SaltBytesLength as TryFrom<u32>>::Error>,
 ) -> ValidationError {
-    ValidationError::InvalidSaltBytesLength(TryIntoPrefixError::Invalid(err.into_prefix()))
+    ValidationError::InvalidSaltBytesLength(err.into_prefix().into())
 }
 
 /// Represents a [`Salt`] used in a [`SaltDeclarationPayload`].

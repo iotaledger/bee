@@ -5,7 +5,7 @@ use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessageUnpackError, V
 
 use bee_packable::{
     bounded::BoundedU32,
-    prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
+    prefix::{UnpackPrefixError, VecPrefix},
     Packable,
 };
 
@@ -19,7 +19,7 @@ pub(crate) type AssetBalanceCount =
 fn unpack_prefix_to_validation_error(
     err: UnpackPrefixError<Infallible, <AssetBalanceCount as TryFrom<u32>>::Error>,
 ) -> ValidationError {
-    ValidationError::InvalidAssetBalanceCount(TryIntoPrefixError::Invalid(err.into_prefix()))
+    ValidationError::InvalidAssetBalanceCount(err.into_prefix().into())
 }
 
 /// Tokenized asset identifier.

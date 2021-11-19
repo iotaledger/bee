@@ -14,36 +14,7 @@ use crate::{
 };
 
 use alloc::{boxed::Box, vec::Vec};
-use core::{
-    convert::Infallible,
-    fmt::{self, Debug, Display},
-    marker::PhantomData,
-    ops::Deref,
-};
-
-/// Semantic error raised when converting a [`Vec`] into a [`VecPrefix`] or `Box<[_]>` into a [`BoxedSlicePrefix`].
-#[derive(Debug)]
-pub enum TryIntoPrefixError<E> {
-    /// The prefix length was truncated.
-    Truncated(usize),
-    /// The prefix length is invalid.
-    Invalid(E),
-}
-
-impl<E> From<E> for TryIntoPrefixError<E> {
-    fn from(err: E) -> Self {
-        Self::Invalid(err)
-    }
-}
-
-impl<E: Display> Display for TryIntoPrefixError<E> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Truncated(len) => write!(f, "length of `{}` was truncated", len),
-            Self::Invalid(err) => err.fmt(f),
-        }
-    }
-}
+use core::{convert::Infallible, fmt::Debug, marker::PhantomData, ops::Deref};
 
 /// Semantic error raised while unpacking a dynamically-sized sequences that use a type different than `usize` for their
 /// length-prefix.

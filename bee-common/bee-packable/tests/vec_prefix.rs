@@ -6,10 +6,10 @@ mod common;
 use bee_packable::{
     bounded::{
         BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
-        InvalidBoundedU8,
+        InvalidBoundedU8, TryIntoBoundedU32Error,
     },
     error::UnpackError,
-    prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
+    prefix::{UnpackPrefixError, VecPrefix},
     PackableExt,
 };
 
@@ -18,10 +18,7 @@ fn packable_vec_prefix_from_vec_invalid_error() {
     let vec = vec![0u8; 16];
     let prefixed = VecPrefix::<u8, BoundedU32<1, 8>>::try_from(vec);
 
-    assert!(matches!(
-        prefixed,
-        Err(TryIntoPrefixError::Invalid(InvalidBoundedU32(16)))
-    ));
+    assert!(matches!(prefixed, Err(TryIntoBoundedU32Error::Invalid(16))));
 }
 
 #[test]

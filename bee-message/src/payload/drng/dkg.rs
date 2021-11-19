@@ -7,8 +7,8 @@ use crate::{
 };
 
 use bee_packable::{
-    bounded::{Bounded, BoundedU32},
-    prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
+    bounded::BoundedU32,
+    prefix::{UnpackPrefixError, VecPrefix},
     Packable, PackableExt,
 };
 
@@ -21,7 +21,7 @@ pub(crate) type EncryptedDealLength = BoundedU32<0, PAYLOAD_LENGTH_MAX>;
 fn unpack_prefix_to_validation_error(
     err: UnpackPrefixError<Infallible, <EncryptedDealLength as TryFrom<u32>>::Error>,
 ) -> ValidationError {
-    ValidationError::InvalidEncryptedDealLength(TryIntoPrefixError::Invalid(err.into_prefix()))
+    ValidationError::InvalidEncryptedDealLength(err.into_prefix().into())
 }
 
 /// Encrypted share structure for a [`DkgPayload`].
@@ -161,13 +161,9 @@ impl EncryptedDealBuilder {
 }
 
 fn validate_encrypted_deal_length(len: usize) -> Result<(), ValidationError> {
-    if len > EncryptedDealLength::MAX as usize {
-        Err(ValidationError::InvalidEncryptedDealLength(
-            TryIntoPrefixError::Truncated(len),
-        ))
-    } else {
-        Ok(())
-    }
+    EncryptedDealLength::try_from(len).map_err(ValidationError::InvalidEncryptedDealLength)?;
+
+    Ok(())
 }
 
 /// The deal messages exchanged to produce a public/private collective key during the DKG phase of dRNG.

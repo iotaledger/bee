@@ -6,10 +6,10 @@ mod common;
 use bee_packable::{
     bounded::{
         BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
-        InvalidBoundedU8,
+        InvalidBoundedU8, TryIntoBoundedU32Error,
     },
     error::UnpackError,
-    prefix::{BoxedSlicePrefix, TryIntoPrefixError, UnpackPrefixError},
+    prefix::{BoxedSlicePrefix, UnpackPrefixError},
     PackableExt,
 };
 
@@ -18,10 +18,7 @@ fn boxed_slice_prefix_from_boxed_slice_invalid_error() {
     let boxed_slice = vec![0u8; 16].into_boxed_slice();
     let prefixed = BoxedSlicePrefix::<u8, BoundedU32<1, 8>>::try_from(boxed_slice);
 
-    assert!(matches!(
-        prefixed,
-        Err(TryIntoPrefixError::Invalid(InvalidBoundedU32(16)))
-    ));
+    assert!(matches!(prefixed, Err(TryIntoBoundedU32Error::Invalid(16))));
 }
 
 #[test]

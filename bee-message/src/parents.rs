@@ -10,7 +10,7 @@ use bee_packable::{
     bounded::BoundedU8,
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
-    prefix::{TryIntoPrefixError, VecPrefix},
+    prefix::VecPrefix,
     unpacker::Unpacker,
     Packable,
 };
@@ -147,9 +147,7 @@ impl Packable for Parents {
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let count: usize = ParentsCount::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| {
-                MessageUnpackError::Validation(ValidationError::InvalidParentsCount(TryIntoPrefixError::Invalid(err)))
-            })?
+            .map_packable_err(|err| MessageUnpackError::Validation(ValidationError::InvalidParentsCount(err.into())))?
             .get()
             .into();
 
