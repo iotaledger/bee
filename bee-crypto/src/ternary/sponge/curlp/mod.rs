@@ -1,13 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(deprecated)]
+
 mod batched;
 mod unrolled;
 
 pub use batched::{BatchHasher, BATCH_SIZE};
+
 pub use unrolled::UnrolledCurlP81;
 
-#[allow(deprecated)]
 use crate::ternary::sponge::Sponge;
 use crate::ternary::HASH_LENGTH;
 
@@ -35,7 +37,6 @@ const TRUTH_TABLE: [Btrit; 9] = [
 
 /// Available round numbers for `CurlP`.
 #[derive(Copy, Clone)]
-#[deprecated(note = "We will only support CurlP with 81 rounds in future versions.")]
 pub enum CurlPRounds {
     /// 27 rounds.
     Rounds27 = 27,
@@ -44,10 +45,8 @@ pub enum CurlPRounds {
 }
 
 /// State of the ternary cryptographic function `CurlP`.
-#[deprecated(note = "Use functions from `crypto.rs` instead.")]
 pub struct CurlP {
     /// The number of rounds of hashing to apply to the state.
-    #[allow(deprecated)]
     rounds: CurlPRounds,
     /// The internal state.
     state: TritBuf,
@@ -55,7 +54,6 @@ pub struct CurlP {
     work_state: TritBuf,
 }
 
-#[allow(deprecated)]
 impl CurlP {
     /// Create a new `CurlP` sponge with `rounds` of iterations.
     pub fn new(rounds: CurlPRounds) -> Self {
@@ -116,7 +114,6 @@ impl CurlP {
     }
 }
 
-#[allow(deprecated)]
 impl Sponge for CurlP {
     type Error = Infallible;
 
@@ -154,11 +151,8 @@ impl Sponge for CurlP {
 }
 
 /// `CurlP` with a fixed number of 27 rounds.
-#[deprecated(note = "Use functions from `crypto.rs` instead.")]
-#[allow(deprecated)]
 pub struct CurlP27(CurlP);
 
-#[allow(deprecated)]
 impl CurlP27 {
     /// Creates a new `CurlP27`.
     pub fn new() -> Self {
@@ -166,14 +160,12 @@ impl CurlP27 {
     }
 }
 
-#[allow(deprecated)]
 impl Default for CurlP27 {
     fn default() -> Self {
         CurlP27::new()
     }
 }
 
-#[allow(deprecated)]
 impl Deref for CurlP27 {
     type Target = CurlP;
 
@@ -182,7 +174,6 @@ impl Deref for CurlP27 {
     }
 }
 
-#[allow(deprecated)]
 impl DerefMut for CurlP27 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
@@ -190,11 +181,8 @@ impl DerefMut for CurlP27 {
 }
 
 /// `CurlP` with a fixed number of 81 rounds.
-#[deprecated(note = "Use functions from `crypto.rs` instead.")]
-#[allow(deprecated)]
 pub struct CurlP81(CurlP);
 
-#[allow(deprecated)]
 impl CurlP81 {
     /// Creates a new `CurlP81`.
     pub fn new() -> Self {
@@ -202,14 +190,12 @@ impl CurlP81 {
     }
 }
 
-#[allow(deprecated)]
 impl Default for CurlP81 {
     fn default() -> Self {
         CurlP81::new()
     }
 }
 
-#[allow(deprecated)]
 impl Deref for CurlP81 {
     type Target = CurlP;
 
@@ -218,7 +204,6 @@ impl Deref for CurlP81 {
     }
 }
 
-#[allow(deprecated)]
 impl DerefMut for CurlP81 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0

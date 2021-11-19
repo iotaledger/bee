@@ -3,10 +3,11 @@
 
 //! A batched version of the `CurlP` hash.
 
+#![allow(deprecated)]
+
 mod bct;
 mod bct_curlp;
 
-#[allow(deprecated)]
 use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge, HASH_LENGTH};
 
 use bct::{BcTrit, BcTritArr, BcTritBuf};
@@ -21,7 +22,6 @@ use bee_ternary::{
 pub const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();
 const HIGH_BITS: usize = usize::max_value();
 
-#[allow(deprecated)]
 struct CurlPLegacy(CurlP);
 
 /// A hasher that can process several inputs at the same time in batches.
@@ -53,8 +53,6 @@ where
     ///
     /// It requires the length of the input, the length of the output hash and the number of
     /// rounds.
-    #[deprecated(note = "Only CurlP with 81 rounds will be supported in future versions.")]
-    #[allow(deprecated)]
     pub fn new(input_length: usize, rounds: CurlPRounds) -> Self {
         Self {
             trit_inputs: Vec::with_capacity(BATCH_SIZE),
@@ -177,7 +175,6 @@ where
     /// care of cleaning the `trit_inputs` buffer and resets the regular CurlP hasher so it can be
     /// called at any time.
     pub fn hash_unbatched(&mut self) -> impl Iterator<Item = TritBuf> + '_ {
-        #[allow(deprecated)]
         self.curlp.0.reset();
         UnbatchedHashes {
             curl: &mut self.curlp,
@@ -221,7 +218,7 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         let buf = self.trit_inputs.next()?;
         // FIXME: Could we make regular `CurlP` generic too?`
-        #[allow(deprecated)]
+
         Some(self.curl.0.digest(&buf.encode::<T1B1Buf>()).unwrap())
     }
 }

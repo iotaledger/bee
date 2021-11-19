@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(deprecated)]
+
 use crate::ternary::{
     sponge::curlp::batched::{
         bct::{BcTrit, BcTritArr, BcTrits},
@@ -10,7 +12,6 @@ use crate::ternary::{
 };
 
 pub(crate) struct BctCurlP {
-    #[allow(deprecated)]
     rounds: crate::ternary::sponge::CurlPRounds,
     state: BcTritArr<{ 3 * HASH_LENGTH }>,
     scratch_pad: BcTritArr<{ 3 * HASH_LENGTH }>,

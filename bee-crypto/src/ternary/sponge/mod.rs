@@ -3,20 +3,17 @@
 
 //! Ternary sponge constructions.
 
+#![allow(deprecated)]
+
 mod curlp;
-#[allow(deprecated)]
 mod kerl;
-#[allow(deprecated)]
 mod kind;
 
 use super::HASH_LENGTH;
 
 pub use curlp::{BatchHasher, UnrolledCurlP81, BATCH_SIZE};
-#[allow(deprecated)]
 pub use curlp::{CurlP, CurlP27, CurlP81, CurlPRounds};
-#[allow(deprecated)]
 pub use kerl::Kerl;
-#[allow(deprecated)]
 pub use kind::SpongeKind;
 
 use bee_ternary::{TritBuf, Trits};
@@ -62,7 +59,6 @@ pub trait Sponge {
     }
 }
 
-#[allow(deprecated)]
 impl<T: Sponge, U: DerefMut<Target = T>> Sponge for U {
     type Error = T::Error;
 
