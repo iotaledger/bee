@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(deprecated)]
+
 #[macro_use]
 mod test_macros;
 
