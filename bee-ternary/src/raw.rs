@@ -107,10 +107,6 @@ pub trait RawEncodingBuf {
         T: RawEncodingBuf,
         T::Slice: RawEncoding<Trit = <Self::Slice as RawEncoding>::Trit>,
     {
-        // if TypeId::of::<Self>() == TypeId::of::<T>() {
-        //     unsafe { core::mem::transmute(this) }
-        // } else {
         this.iter().collect()
-        // }
     }
 }
