@@ -283,7 +283,6 @@ dependencies = [
 name = "bee-pow"
 version = "0.2.0"
 dependencies = [
- "bee-crypto",
  "bee-ternary",
  "bee-test",
  "iota-crypto",
