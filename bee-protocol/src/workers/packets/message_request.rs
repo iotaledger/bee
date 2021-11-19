@@ -46,7 +46,7 @@ impl Packet for MessageRequestPacket {
         CONSTANT_SIZE
     }
 
-    fn into_bytes(self, bytes: &mut [u8]) {
+    fn to_bytes(&self, bytes: &mut [u8]) {
         bytes.copy_from_slice(self.message_id.as_ref())
     }
 }
@@ -84,7 +84,7 @@ mod tests {
     fn into_from() {
         let packet_from = MessageRequestPacket::new(MessageId::from(MESSAGE_ID));
         let mut bytes = vec![0u8; packet_from.size()];
-        packet_from.into_bytes(&mut bytes);
+        packet_from.to_bytes(&mut bytes);
         let packet_to = MessageRequestPacket::from_bytes(&bytes);
 
         assert!(packet_to.message_id.as_ref().eq(&MESSAGE_ID));

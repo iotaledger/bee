@@ -45,12 +45,12 @@ pub(crate) fn tlv_from_bytes<P: Packet>(header: &HeaderPacket, bytes: &[u8]) -> 
     Ok(P::from_bytes(bytes))
 }
 
-/// Serializes a TLV header and a packet into a byte buffer.
+/// Serializes a TLV header and a packet to a byte buffer.
 ///
 /// # Arguments
 ///
 /// * `packet` -   The packet to serialize.
-pub(crate) fn tlv_into_bytes<P: Packet>(packet: P) -> Vec<u8> {
+pub(crate) fn tlv_to_bytes<P: Packet>(packet: &P) -> Vec<u8> {
     let size = packet.size();
     let mut bytes = vec![0u8; HEADER_SIZE + size];
     let (header, payload) = bytes.split_at_mut(HEADER_SIZE);
@@ -60,7 +60,7 @@ pub(crate) fn tlv_into_bytes<P: Packet>(packet: P) -> Vec<u8> {
         packet_length: size as u16,
     }
     .to_bytes(header);
-    packet.into_bytes(payload);
+    packet.to_bytes(payload);
 
     bytes
 }
@@ -153,7 +153,7 @@ mod tests {
                 &bytes_from,
             )
             .unwrap();
-            let bytes_to = tlv_into_bytes(packet);
+            let bytes_to = tlv_to_bytes(&packet);
 
             assert_eq!(bytes_to[0], P::ID);
             assert_eq!(u16::from_le_bytes(bytes_to[1..3].try_into().unwrap()), length as u16);

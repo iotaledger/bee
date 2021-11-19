@@ -37,7 +37,7 @@ impl Packet for MessagePacket {
         self.bytes.len()
     }
 
-    fn into_bytes(self, bytes: &mut [u8]) {
+    fn to_bytes(&self, bytes: &mut [u8]) {
         bytes.copy_from_slice(&self.bytes)
     }
 }
@@ -98,7 +98,7 @@ mod tests {
     fn into_from() {
         let packet_from = MessagePacket::new(MESSAGE.to_vec());
         let mut bytes = vec![0u8; packet_from.size()];
-        packet_from.into_bytes(&mut bytes);
+        packet_from.to_bytes(&mut bytes);
         let packet_to = MessagePacket::from_bytes(&bytes);
 
         assert!(packet_to.bytes.eq(&MESSAGE));

@@ -40,7 +40,7 @@ impl Packet for MilestoneRequestPacket {
         CONSTANT_SIZE
     }
 
-    fn into_bytes(self, bytes: &mut [u8]) {
+    fn to_bytes(&self, bytes: &mut [u8]) {
         bytes.copy_from_slice(&self.index.to_le_bytes())
     }
 }
@@ -75,7 +75,7 @@ mod tests {
     fn into_from() {
         let packet_from = MilestoneRequestPacket::new(INDEX);
         let mut bytes = vec![0u8; packet_from.size()];
-        packet_from.into_bytes(&mut bytes);
+        packet_from.to_bytes(&mut bytes);
         let packet_to = MilestoneRequestPacket::from_bytes(&bytes);
 
         assert_eq!(packet_to.index, INDEX);

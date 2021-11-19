@@ -117,13 +117,15 @@ fn process_request_unchecked(
     metrics: &NodeMetrics,
     counter: &mut usize,
 ) {
+    let milestone_request=MilestoneRequestPacket::new(*index);
+
     match peer_id {
         Some(peer_id) => {
             Sender::<MilestoneRequestPacket>::send(
                 peer_manager,
                 metrics,
                 &peer_id,
-                MilestoneRequestPacket::new(*index),
+                &milestone_request
             );
         }
         None => {
@@ -141,7 +143,7 @@ fn process_request_unchecked(
                             peer_manager,
                             metrics,
                             peer_id,
-                            MilestoneRequestPacket::new(*index),
+                            &milestone_request
                         );
                         return;
                     }

@@ -15,7 +15,7 @@ pub(crate) use heartbeat::HeartbeatPacket;
 pub(crate) use message::MessagePacket;
 pub(crate) use message_request::MessageRequestPacket;
 pub(crate) use milestone_request::MilestoneRequestPacket;
-pub(crate) use tlv::{tlv_from_bytes, tlv_into_bytes, Error as TlvError};
+pub(crate) use tlv::{tlv_from_bytes, tlv_to_bytes, Error as TlvError};
 
 use std::ops::Range;
 
@@ -46,7 +46,7 @@ pub(crate) trait Packet {
     /// Returns the size of the packet.
     fn size(&self) -> usize;
 
-    /// Serializes a packet into a byte buffer.
+    /// Serializes a packet to a byte buffer.
     ///
     /// # Arguments
     ///
@@ -56,5 +56,5 @@ pub(crate) trait Packet {
     ///
     /// Panics if the provided buffer has an invalid size.
     /// The size of the buffer should be equal to the one returned by the `size` method.
-    fn into_bytes(self, bytes: &mut [u8]);
+    fn to_bytes(&self, bytes: &mut [u8]);
 }

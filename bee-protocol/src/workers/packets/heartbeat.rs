@@ -92,7 +92,7 @@ impl Packet for HeartbeatPacket {
         CONSTANT_SIZE
     }
 
-    fn into_bytes(self, bytes: &mut [u8]) {
+    fn to_bytes(&self, bytes: &mut [u8]) {
         let (bytes, next) = bytes.split_at_mut(SOLID_MILESTONE_INDEX_SIZE);
         bytes.copy_from_slice(&self.solid_milestone_index.to_le_bytes());
         let (bytes, next) = next.split_at_mut(PRUNED_INDEX_SIZE);
@@ -152,7 +152,7 @@ mod tests {
             SYNCED_PEERS,
         );
         let mut bytes = vec![0u8; packet_from.size()];
-        packet_from.into_bytes(&mut bytes);
+        packet_from.to_bytes(&mut bytes);
         let packet_to = HeartbeatPacket::from_bytes(&bytes);
 
         assert_eq!(packet_to.solid_milestone_index, SOLID_MILESTONE_INDEX);

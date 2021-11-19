@@ -49,7 +49,7 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
             while let Some(BroadcasterWorkerEvent { source, message }) = receiver.next().await {
                 peer_manager.for_each(|peer_id, _| {
                     if source.map_or(true, |ref source| peer_id != source) {
-                        Sender::<MessagePacket>::send(&peer_manager, &metrics, peer_id, message.clone());
+                        Sender::<MessagePacket>::send(&peer_manager, &metrics, peer_id, &message);
                     }
                 });
             }

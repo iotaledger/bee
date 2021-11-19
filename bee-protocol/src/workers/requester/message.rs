@@ -129,6 +129,7 @@ fn process_request_unchecked(
     metrics: &NodeMetrics,
     counter: &mut usize,
 ) {
+    let message_request = MessageRequestPacket::new(message_id);
     let guard = peer_manager.0.read();
 
     for _ in 0..guard.keys.len() {
@@ -142,7 +143,7 @@ fn process_request_unchecked(
                     peer_manager,
                     metrics,
                     peer_id,
-                    MessageRequestPacket::new(message_id),
+                    &message_request
                 );
                 return;
             }
@@ -160,7 +161,7 @@ fn process_request_unchecked(
                     peer_manager,
                     metrics,
                     peer_id,
-                    MessageRequestPacket::new(message_id),
+                    &message_request,
                 );
             }
         }

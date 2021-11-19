@@ -42,7 +42,7 @@ pub(crate) fn send_heartbeat(
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     to: &PeerId,
-    heartbeat: HeartbeatPacket,
+    heartbeat: &HeartbeatPacket,
 ) {
     Sender::<HeartbeatPacket>::send(peer_manager, metrics, to, heartbeat);
 }
@@ -54,7 +54,7 @@ pub(crate) fn broadcast_heartbeat<B: StorageBackend>(
 ) {
     let heartbeat = new_heartbeat(peer_manager, tangle);
 
-    peer_manager.for_each(|peer_id, _| send_heartbeat(peer_manager, metrics, peer_id, heartbeat.clone()));
+    peer_manager.for_each(|peer_id, _| send_heartbeat(peer_manager, metrics, peer_id, &heartbeat));
 }
 
 #[derive(Default)]

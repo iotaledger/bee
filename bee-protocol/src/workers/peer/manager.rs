@@ -117,7 +117,7 @@ where
                             &*peer_manager,
                             &*metrics,
                             &peer_id,
-                            new_heartbeat(&*peer_manager, &*tangle),
+                            &new_heartbeat(&*peer_manager, &*tangle),
                         );
                     }
                     Event::PeerDisconnected { peer_id } => {
