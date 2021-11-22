@@ -31,7 +31,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-const RETRY_INTERVAL_MS: u64 = 2500;
+const RETRY_INTERVAL: Duration = Duration::from_millis(2500);
 
 pub async fn request_message<B: StorageBackend>(
     tangle: &Tangle<B>,
@@ -177,7 +177,7 @@ async fn retry_requests<B: StorageBackend>(
     for (message_id, (index, instant)) in requested_messages.0.read().iter() {
         if now
             .checked_duration_since(*instant)
-            .map_or(false, |d| d.as_millis() as u64 > RETRY_INTERVAL_MS)
+            .map_or(false, |d| d > RETRY_INTERVAL)
         {
             to_retry.push((*message_id, *index));
             retry_counts += 1;
@@ -257,10 +257,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Retryer running.");
 
-            let mut ticker = ShutdownStream::new(
-                shutdown,
-                IntervalStream::new(interval(Duration::from_millis(RETRY_INTERVAL_MS))),
-            );
+            let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(RETRY_INTERVAL)));
             let mut counter: usize = 0;
 
             while ticker.next().await.is_some() {
