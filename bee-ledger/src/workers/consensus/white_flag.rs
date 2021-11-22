@@ -109,33 +109,32 @@ fn apply_regular_essence<B: StorageBackend>(
         let essence_hash = Essence::from(essence.clone()).hash();
 
         let (amount, consumed_native_tokens) = match consumed_output.inner() {
-            Output::Simple(output) => {
-                context.balance_diffs.amount_sub(*output.address(), output.amount())?;
-
-                if let Err(conflict) = unlock_input(output.address(), unlock_blocks, index, &essence_hash) {
-                    return Ok(conflict);
-                }
-
-                (output.amount(), None)
-            }
+            // Output::Simple(output) => {
+            //     context.balance_diffs.amount_sub(*output.address(), output.amount())?;
+            //
+            //     if let Err(conflict) = unlock_input(output.address(), unlock_blocks, index, &essence_hash) {
+            //         return Ok(conflict);
+            //     }
+            //
+            //     (output.amount(), None)
+            // }
+            Output::Simple(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
-            Output::Extended(output) => (output.amount(), Some(output.native_tokens())),
-            Output::Alias(output) => (output.amount(), Some(output.native_tokens())),
-            Output::Foundry(output) => (output.amount(), Some(output.native_tokens())),
-            Output::Nft(output) => (output.amount(), Some(output.native_tokens())),
+            Output::Extended(output) => (output.amount(), output.native_tokens()),
+            Output::Alias(output) => (output.amount(), output.native_tokens()),
+            Output::Foundry(output) => (output.amount(), output.native_tokens()),
+            Output::Nft(output) => (output.amount(), output.native_tokens()),
         };
 
         context.consumed_amount = context
             .consumed_amount
             .checked_add(amount)
             .ok_or(Error::ConsumedAmountOverflow)?;
-        if let Some(consumed_native_tokens) = consumed_native_tokens {
-            for native_token in consumed_native_tokens {
-                let native_token_amount = context.native_tokens.entry(*native_token.token_id()).or_default();
-                *native_token_amount = native_token_amount
-                    .checked_add(*native_token.amount())
-                    .ok_or(Error::ConsumedNativeTokensAmountOverflow)?;
-            }
+        for native_token in consumed_native_tokens {
+            let native_token_amount = context.native_tokens.entry(*native_token.token_id()).or_default();
+            *native_token_amount = native_token_amount
+                .checked_add(*native_token.amount())
+                .ok_or(Error::ConsumedNativeTokensAmountOverflow)?;
         }
 
         context.consumed_outputs.insert(*output_id, consumed_output);
@@ -143,30 +142,29 @@ fn apply_regular_essence<B: StorageBackend>(
 
     for created_output in essence.outputs() {
         let (amount, created_native_tokens) = match created_output {
-            Output::Simple(output) => {
-                context.balance_diffs.amount_add(*output.address(), output.amount())?;
-
-                (output.amount(), None)
-            }
+            // Output::Simple(output) => {
+            //     context.balance_diffs.amount_add(*output.address(), output.amount())?;
+            //
+            //     (output.amount(), None)
+            // }
+            Output::Simple(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
-            Output::Extended(output) => (output.amount(), Some(output.native_tokens())),
-            Output::Alias(output) => (output.amount(), Some(output.native_tokens())),
-            Output::Foundry(output) => (output.amount(), Some(output.native_tokens())),
-            Output::Nft(output) => (output.amount(), Some(output.native_tokens())),
+            Output::Extended(output) => (output.amount(), output.native_tokens()),
+            Output::Alias(output) => (output.amount(), output.native_tokens()),
+            Output::Foundry(output) => (output.amount(), output.native_tokens()),
+            Output::Nft(output) => (output.amount(), output.native_tokens()),
         };
 
         context.created_amount = context
             .created_amount
             .checked_add(amount)
             .ok_or(Error::CreatedAmountOverflow)?;
-        if let Some(created_native_tokens) = created_native_tokens {
-            for native_token in created_native_tokens {
-                let native_token_amount = *context.native_tokens.entry(*native_token.token_id()).or_default();
-                // TODO actually overflow ?
-                native_token_amount
-                    .checked_sub(*native_token.amount())
-                    .ok_or(Error::CreatedNativeTokensAmountOverflow)?;
-            }
+        for native_token in created_native_tokens {
+            let native_token_amount = *context.native_tokens.entry(*native_token.token_id()).or_default();
+            // TODO actually overflow ?
+            native_token_amount
+                .checked_sub(*native_token.amount())
+                .ok_or(Error::CreatedNativeTokensAmountOverflow)?;
         }
     }
 
