@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::{
     sync::{
         atomic::{AtomicU64, Ordering},
@@ -53,6 +56,7 @@ pub fn main() {
 
     let time_start = std::time::Instant::now();
 
+    // TODO: Use `bee-test`
     let pow_digest: [u8; 32] = rand::random();
 
     let mut workers = Vec::with_capacity(threads + 2);

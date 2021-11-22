@@ -283,8 +283,10 @@ dependencies = [
 name = "bee-pow"
 version = "0.2.0"
 dependencies = [
+ "bee-common",
  "bee-ternary",
  "bee-test",
+ "criterion",
  "iota-crypto",
  "num_cpus",
  "rand 0.8.4",

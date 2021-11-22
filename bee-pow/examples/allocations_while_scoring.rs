@@ -8,12 +8,8 @@
 //! The code was adapted from: https://kanejaku.org/posts/2021/01/2021-01-27/ (CC-BY 4.0)
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
-use bee_pow::{
-    providers::{miner::MinerBuilder, NonceProviderBuilder},
-    score::PoWScorer,
-};
-use bee_test::rand::parents::rand_parents;
+use bee_pow::score::PoWScorer;
+use bee_test::rand::message::rand_message;
 
 use std::{
     alloc::{GlobalAlloc, Layout, System},
@@ -39,12 +35,7 @@ unsafe impl GlobalAlloc for CheckAlloc {
 static A: CheckAlloc = CheckAlloc;
 
 fn main() {
-    let message = MessageBuilder::new()
-        .with_network_id(0)
-        .with_parents(rand_parents())
-        .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64)
-        .finish()
-        .unwrap();
+    let message = rand_message();
 
     let message_bytes = message.pack_new();
 
