@@ -68,7 +68,8 @@ impl PacketHandler {
                         .fetch_bytes_or_shutdown(&mut self.shutdown, HEADER_SIZE)
                         .await?;
                     trace!("[{}] Reading Header...", self.address);
-                    let header = HeaderPacket::from_bytes(bytes);
+                    // This never panics because we fetch exactly `HEADER_SIZE` bytes.
+                    let header = HeaderPacket::from_bytes(bytes.try_into().unwrap());
                     // Now we are ready to read a payload.
                     self.state = ReadState::Payload(header);
                 }

@@ -17,12 +17,14 @@ pub(crate) struct HeaderPacket {
 }
 
 impl HeaderPacket {
-    // TODO impl try_from
-    pub(crate) fn from_bytes(bytes: &[u8]) -> Self {
+    pub(crate) fn from_bytes(bytes: &[u8; HEADER_SIZE]) -> Self {
+        // This never panics because `HEADER_TYPE_SIZE < HEADER_SIZE`.
+        let (packet_type_bytes, packet_length_bytes) = bytes.split_at(HEADER_TYPE_SIZE);
         Self {
-            packet_type: bytes[0],
-            // TODO propagate error
-            packet_length: u16::from_le_bytes(bytes[HEADER_TYPE_SIZE..HEADER_SIZE].try_into().unwrap()),
+            packet_type: packet_type_bytes[0],
+            // This never panics because `packet_length_bytes` has exactly
+            // `HEADER_SIZE - HEADER_TYPE_SIZE` bytes by construction.
+            packet_length: u16::from_le_bytes(packet_length_bytes.try_into().unwrap()),
         }
     }
 
