@@ -32,7 +32,7 @@ console-subscriber = { git = "https://github.com/tokio-rs/console.git", branch =
 futures = { version = "0.3.17", default-features = false }
 fxhash = { version = "0.2.1", default-features = false }
 hex = { version = "0.4.3", default-features = false }
-iota-crypto = { version = "0.7.0", default-features = false, features = [ "ed25519", "random", "blake2b" ] }
+iota-crypto = { version = "0.9.1", default-features = false, features = [ "ed25519", "random", "blake2b" ] }
 log = { version = "0.4.14", default-features = false }
 mime_guess = { version = "2.0.3", default-features = false, optional = true }
 multiaddr = { version = "0.13.0", default-features = false }
