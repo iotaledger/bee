@@ -4,9 +4,7 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::{
-            tlv_to_bytes, HeartbeatPacket, MessagePacket, MessageRequestPacket, MilestoneRequestPacket, Packet,
-        },
+        packets::{tlv_to_bytes, HeartbeatPacket, MessagePacket, MessageRequestPacket, MilestoneRequestPacket, Packet},
         peer::PeerManager,
     },
 };
