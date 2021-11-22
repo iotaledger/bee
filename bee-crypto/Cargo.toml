@@ -1,6 +1,6 @@
 [package]
 name = "bee-crypto"
-version = "0.2.1-alpha"
+version = "0.3.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Cryptographic primitives of the IOTA protocol"
@@ -11,9 +11,10 @@ keywords = [ "iota", "tangle", "bee", "framework", "crypto" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-ternary = { version = "0.5.1", path = "../bee-ternary", default-features = false }
+bee-ternary = { version = "0.5.2", path = "../bee-ternary", default-features = false }
 
 byteorder = {version = "1.4.3", default-features = false }
+iota-crypto = { version = "0.9.1", default-features = false, features = [ "curl-p" ] }
 lazy_static = {version = "1.4.0", default-features = false }
 thiserror = {version = "1.0.30", default-features = false }
 tiny-keccak = { version = "2.0.2", default-features = false, features = [ "keccak" ] }

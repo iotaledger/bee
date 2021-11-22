@@ -8,7 +8,7 @@ use bee_pow::{
         miner::{Miner, MinerBuilder},
         NonceProviderBuilder,
     },
-    score::compute_pow_score,
+    score::PoWScorer,
 };
 use bee_test::rand::{
     message::rand_message_ids,
@@ -26,7 +26,7 @@ fn pow_default_provider() {
         .unwrap();
 
     let message_bytes = message.pack_new();
-    let score = compute_pow_score(&message_bytes);
+    let score = PoWScorer::new().score(&message_bytes);
 
     assert!(score >= 4000f64);
 }
@@ -41,7 +41,7 @@ fn pow_provider() {
         .unwrap();
 
     let message_bytes = message.pack_new();
-    let score = compute_pow_score(&message_bytes);
+    let score = PoWScorer::new().score(&message_bytes);
 
     assert!(score >= 10000f64);
 }

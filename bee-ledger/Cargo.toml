@@ -22,7 +22,7 @@ digest = { version = "0.9.0", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false, optional = true }
 hashbrown = { version = "0.11.2", default-features = false, optional = true }
 hex = { version = "0.4.3", default-features = false, optional = true }
-iota-crypto = { version = "0.7.0", default-features = false, features = [ "blake2b" ], optional = true }
+iota-crypto = { version = "0.9.1", default-features = false, features = [ "blake2b" ], optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 ref-cast = { version = "1.0.6", default-features = false, optional = true }
 reqwest = { version = "0.11.5", default-features = false, features = [ "default-tls", "stream" ], optional = true }

@@ -6,7 +6,7 @@ use bee_pow::{
         miner::{MinerBuilder, MinerCancel},
         NonceProvider, NonceProviderBuilder,
     },
-    score::compute_pow_score,
+    score::PoWScorer,
 };
 use bee_test::rand::bytes::rand_bytes;
 
@@ -18,7 +18,7 @@ fn miner_provide() {
     let nonce = miner.nonce(&bytes[0..248], 4000f64).unwrap();
     bytes[248..].copy_from_slice(&nonce.to_le_bytes());
 
-    assert!(compute_pow_score(&bytes) >= 4000f64);
+    assert!(PoWScorer::new().score(&bytes) >= 4000f64);
 }
 
 #[test]

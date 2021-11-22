@@ -1,7 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+extern crate alloc;
+
 use crate::{Btrit, RawEncoding, RawEncodingBuf, TritBuf, Trits, Tryte};
+
+use alloc::vec::Vec;
 
 const TRYTES_PER_BYTE: usize = 2;
 const TRITS_PER_TRYTE: usize = 3;

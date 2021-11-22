@@ -5,13 +5,16 @@
 
 use crate::providers::{NonceProvider, NonceProviderBuilder};
 
-use bee_crypto::ternary::{
-    sponge::{BatchHasher, CurlPRounds, BATCH_SIZE},
-    HASH_LENGTH,
-};
 use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf};
 
-use crypto::hashes::{blake2b::Blake2b256, Digest};
+use crypto::hashes::{
+    blake2b::Blake2b256,
+    ternary::{
+        curl_p::{CurlPBatchHasher, BATCH_SIZE},
+        HASH_LENGTH,
+    },
+    Digest,
+};
 use thiserror::Error;
 
 use std::{
@@ -110,7 +113,7 @@ impl Miner {
         target_zeros: usize,
     ) -> Result<u64, Error> {
         let mut nonce = start_nonce;
-        let mut hasher = BatchHasher::<T1B1Buf>::new(HASH_LENGTH, CurlPRounds::Rounds81);
+        let mut hasher = CurlPBatchHasher::<T1B1Buf>::new(HASH_LENGTH);
         let mut buffers = Vec::<TritBuf<T1B1Buf>>::with_capacity(BATCH_SIZE);
 
         for _ in 0..BATCH_SIZE {
@@ -126,7 +129,7 @@ impl Miner {
                 hasher.add(buffer.clone());
             }
 
-            for (i, hash) in hasher.hash_batched().enumerate() {
+            for (i, hash) in hasher.hash().enumerate() {
                 let trailing_zeros = hash.iter().rev().take_while(|t| *t == Btrit::Zero).count();
 
                 if trailing_zeros >= target_zeros {

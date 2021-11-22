@@ -5,7 +5,7 @@ use crate::convert;
 
 use num_traits::{CheckedAdd, CheckedSub, Num};
 
-use std::{fmt, hash};
+use core::{fmt, hash};
 
 /// Balanced trits.
 pub mod balanced;

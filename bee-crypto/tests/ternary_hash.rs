@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(deprecated)]
+
 use bee_crypto::ternary::{Hash, HASH_LENGTH};
 use bee_ternary::Btrit;
 
