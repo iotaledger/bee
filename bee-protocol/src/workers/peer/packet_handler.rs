@@ -122,11 +122,7 @@ impl EventHandler {
         // Reset the offset.
         self.offset = 0;
         // Append the bytes of the new event
-        if self.buffer.is_empty() {
-            self.buffer = bytes;
-        } else {
-            self.buffer.append(&mut bytes);
-        }
+        self.buffer.append(&mut bytes);
     }
     /// Fetch a slice of bytes of a determined length.
     ///
