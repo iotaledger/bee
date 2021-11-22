@@ -115,7 +115,7 @@ where
         ));
     }
 
-    let mut metadata = WhiteFlagMetadata::new(milestone.essence().index());
+    let mut metadata = WhiteFlagMetadata::new(milestone.essence().index(), milestone.essence().timestamp());
 
     white_flag(tangle, storage, message.parents(), &mut metadata).await?;
 
