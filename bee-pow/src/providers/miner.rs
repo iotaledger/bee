@@ -153,7 +153,7 @@ impl NonceProvider for Miner {
         self.cancel.reset();
 
         let mut nonce = 0;
-        let mut pow_digest = TritBuf::<T1B1Buf>::new();
+        let mut pow_digest = TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH);
         let target_zeros =
             (((bytes.len() + std::mem::size_of::<u64>()) as f64 * target_score).ln() / LN_3).ceil() as usize;
 
