@@ -139,7 +139,7 @@ impl EventHandler {
         }
         // Get the requested bytes. This will not panic because the loop above only exists if we
         // have enough bytes to do this step.
-        let bytes = &self.buffer[self.offset..(self.offset + len)];
+        let bytes = &self.buffer[self.offset..][..len];
         // Increase the offset by the length of the byte slice.
         self.offset += len;
         bytes
