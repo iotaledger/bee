@@ -8,9 +8,19 @@ use crate::workers::packets::{HeaderPacket, Packet, HEADER_SIZE};
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug)]
 pub(crate) enum Error {
-    InvalidAdvertisedType(u8, u8),
-    InvalidAdvertisedLength(u8, usize, usize),
-    InvalidLength(u8, usize),
+    InvalidAdvertisedType {
+        found: u8,
+        advertised: u8,
+    },
+    InvalidAdvertisedLength {
+        type_id: u8,
+        advertised: usize,
+        found: usize,
+    },
+    InvalidLength {
+        type_id: u8,
+        len: usize,
+    },
 }
 
 /// Deserializes a TLV header and a byte buffer into a packet.
@@ -27,19 +37,25 @@ pub(crate) enum Error {
 /// * The buffer length is not within the allowed size range of the required packet type.
 pub(crate) fn tlv_from_bytes<P: Packet>(header: &HeaderPacket, bytes: &[u8]) -> Result<P, Error> {
     if header.packet_type != P::ID {
-        return Err(Error::InvalidAdvertisedType(header.packet_type, P::ID));
+        return Err(Error::InvalidAdvertisedType {
+            advertised: header.packet_type,
+            found: P::ID,
+        });
     }
 
     if header.packet_length as usize != bytes.len() {
-        return Err(Error::InvalidAdvertisedLength(
-            header.packet_type,
-            header.packet_length as usize,
-            bytes.len(),
-        ));
+        return Err(Error::InvalidAdvertisedLength {
+            type_id: header.packet_type,
+            advertised: header.packet_length as usize,
+            found: bytes.len(),
+        });
     }
 
     if !P::size_range().contains(&bytes.len()) {
-        return Err(Error::InvalidLength(header.packet_type, bytes.len()));
+        return Err(Error::InvalidLength {
+            type_id: header.packet_type,
+            len: bytes.len(),
+        });
     }
 
     Ok(P::from_bytes(bytes))
@@ -84,9 +100,9 @@ mod tests {
             },
             &Vec::with_capacity(P::size_range().start),
         ) {
-            Err(Error::InvalidAdvertisedType(advertised_type, actual_type)) => {
-                assert_eq!(advertised_type, P::ID + 1);
-                assert_eq!(actual_type, P::ID);
+            Err(Error::InvalidAdvertisedType { advertised, found }) => {
+                assert_eq!(advertised, P::ID + 1);
+                assert_eq!(found, P::ID);
             }
             _ => unreachable!(),
         }
@@ -100,10 +116,14 @@ mod tests {
             },
             &vec![0u8; P::size_range().start + 1],
         ) {
-            Err(Error::InvalidAdvertisedLength(id, advertised_length, actual_length)) => {
-                assert_eq!(id, P::ID);
-                assert_eq!(advertised_length, P::size_range().start);
-                assert_eq!(actual_length, P::size_range().start + 1);
+            Err(Error::InvalidAdvertisedLength {
+                type_id,
+                advertised,
+                found,
+            }) => {
+                assert_eq!(type_id, P::ID);
+                assert_eq!(advertised, P::size_range().start);
+                assert_eq!(found, P::size_range().start + 1);
             }
             _ => unreachable!(),
         }
@@ -117,9 +137,9 @@ mod tests {
             },
             &vec![0u8; P::size_range().start - 1],
         ) {
-            Err(Error::InvalidLength(id, length)) => {
-                assert_eq!(id, P::ID);
-                assert_eq!(length, P::size_range().start - 1);
+            Err(Error::InvalidLength { type_id, len }) => {
+                assert_eq!(type_id, P::ID);
+                assert_eq!(len, P::size_range().start - 1);
             }
             _ => unreachable!(),
         }
@@ -131,9 +151,9 @@ mod tests {
             },
             &vec![0u8; P::size_range().end],
         ) {
-            Err(Error::InvalidLength(id, length)) => {
-                assert_eq!(id, P::ID);
-                assert_eq!(length, P::size_range().end);
+            Err(Error::InvalidLength { type_id, len }) => {
+                assert_eq!(type_id, P::ID);
+                assert_eq!(len, P::size_range().end);
             }
             _ => unreachable!(),
         }
