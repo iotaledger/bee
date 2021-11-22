@@ -29,7 +29,7 @@ futures = { version = "0.3.17", default-features = false, optional = true }
 futures-util = { version = "0.3.17", default-features = false, optional = true }
 fxhash = { version = "0.2.1", default-features = false, optional = true }
 hex = { version = "0.4.3", default-features = false, optional = true }
-iota-crypto = { version = "0.7.0", default-features = false, features = [ "blake2b", "ed25519" ], optional = true }
+iota-crypto = { version = "0.9.1", default-features = false, features = [ "blake2b", "ed25519" ], optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 num_cpus = { version = "1.13.0", default-features = false, optional = true }
 rand = { version = "0.8.4", default-features = false, optional = true }
