@@ -21,7 +21,7 @@ use axum::{
 };
 use serde_json::{json, Value};
 
-use rand::Rng;
+use rand::{Rng, SeedableRng, prelude::StdRng};
 use std::{convert::TryFrom, str::FromStr, sync::Arc};
 
 pub(crate) fn api_routes() -> Router {
@@ -44,7 +44,7 @@ async fn post_handler(
     Extension(app_storage): Extension<Arc<AppStorage>>,
     Json(payload): Json<MessageDto>,
 ) -> Json<Value> {
-    let mut rng = rand::thread_rng();
+    let mut rng = StdRng::from_entropy();
 
     let rand_part1: u128 = rng.gen();
     let rand_part2: u128 = rng.gen();
