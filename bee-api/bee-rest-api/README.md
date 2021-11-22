@@ -1,3 +1,3 @@
-# bee-tangle
+# bee-rest-api
 
-Implementation of the rest API for coordicide.
+Implementation of the REST API for coordicide.

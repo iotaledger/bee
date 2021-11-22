@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod endpoints;
@@ -9,8 +9,9 @@ use bee_storage_sled::{config::SledConfigBuilder, storage::Storage};
 use axum::{AddExtensionLayer, Router};
 use std::{
     net::SocketAddr,
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
+use tokio::sync::Mutex;
 
 pub struct AppStorage {
     storage: Mutex<Storage>,

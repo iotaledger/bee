@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -24,7 +24,7 @@ use serde_json::{json, Value};
 use rand::Rng;
 use std::{convert::TryFrom, str::FromStr, sync::Arc};
 
-pub fn api_routes() -> Router {
+pub(crate) fn api_routes() -> Router {
     Router::new()
         .route("/", post(post_handler))
         .route("/:messageId", get(get_id_handler))
@@ -33,7 +33,14 @@ pub fn api_routes() -> Router {
         .route("/:messageId/children", get(get_id_children_handler))
 }
 
-pub async fn post_handler(
+fn err_to_json(message: String, code: String) -> Json<Value> {
+    Json(json!(ErrorBody::new(DefaultErrorResponse {
+        code: code,
+        message: message
+    })))
+}
+
+async fn post_handler(
     Extension(app_storage): Extension<Arc<AppStorage>>,
     Json(payload): Json<MessageDto>,
 ) -> Json<Value> {
@@ -43,23 +50,15 @@ pub async fn post_handler(
     let rand_part2: u128 = rng.gen();
     let rand_id = format!("{:x}{:x}", rand_part1, rand_part2);
     match Insert::<MessageId, Message>::insert(
-        &*(app_storage.storage.lock().unwrap()),
+        &*(app_storage.storage.lock().await),
         match &MessageId::from_str(&rand_id) {
-            Ok(message_id) => message_id,
-            Err(e) => {
-                return Json(json!(ErrorBody::new(DefaultErrorResponse {
-                    code: "400".to_string(),
-                    message: format!("could not parse message ID. {}", e)
-                })));
-            }
+            Ok(message) => message,
+            Err(e) => return err_to_json(format!("could not parse message ID. {}", e), "400".to_string()),
         },
         &match Message::try_from(&payload) {
             Ok(message) => message,
             Err(e) => {
-                return Json(json!(ErrorBody::new(DefaultErrorResponse {
-                    code: "400".to_string(),
-                    message: format!("could not parse message data. {}", e)
-                })));
+                return err_to_json(format!("could not parse message data. {}", e), "400".to_string());
             }
         },
     ) {
@@ -76,14 +75,11 @@ async fn get_id_handler(
     Extension(app_storage): Extension<Arc<AppStorage>>,
 ) -> Json<Value> {
     match Fetch::<MessageId, Message>::fetch(
-        &*(app_storage.storage.lock().unwrap()),
+        &*(app_storage.storage.lock().await),
         match &MessageId::from_str(&messageid) {
             Ok(message_id) => message_id,
             Err(e) => {
-                return Json(json!(ErrorBody::new(DefaultErrorResponse {
-                    code: "400".to_string(),
-                    message: format!("could not parse message ID. {}", e)
-                })));
+                return err_to_json(format!("could not parse message ID. {}", e), "400".to_string());
             }
         },
     ) {
@@ -97,31 +93,23 @@ async fn get_id_handler(
                     })),
                 },
             ),
-            None => Json(json!(ErrorBody::new(DefaultErrorResponse {
-                code: "400".to_string(),
-                message: "could find message.".to_string()
-            }))),
+            None => err_to_json("could find message.".to_string(), "400".to_string()),
+
         },
-        Err(e) => Json(json!(ErrorBody::new(DefaultErrorResponse {
-            code: "400".to_string(),
-            message: format!("could not fetch message from storage. {}", e)
-        }))),
+        Err(e) => err_to_json(format!("could not fetch message from storage. {}", e), "400".to_string()),
     }
 }
 
-pub async fn get_id_metadata_handler(
+async fn get_id_metadata_handler(
     Path(messageid): Path<String>,
     Extension(app_storage): Extension<Arc<AppStorage>>,
 ) -> Json<Value> {
     match Fetch::<MessageId, Message>::fetch(
-        &*(app_storage.storage.lock().unwrap()),
+        &*(app_storage.storage.lock().await),
         match &MessageId::from_str(&messageid) {
             Ok(message_id) => message_id,
             Err(e) => {
-                return Json(json!(ErrorBody::new(DefaultErrorResponse {
-                    code: "400".to_string(),
-                    message: format!("could not parse message ID. {}", e)
-                })));
+                return err_to_json(format!("could not parse message ID. {}", e), "400".to_string());
             }
         },
     ) {
@@ -141,31 +129,22 @@ pub async fn get_id_metadata_handler(
                     })),
                 },
             ),
-            None => Json(json!(ErrorBody::new(DefaultErrorResponse {
-                code: "400".to_string(),
-                message: "could find message.".to_string()
-            }))),
+            None => err_to_json("could find message.".to_string(), "400".to_string()),
         },
-        Err(e) => Json(json!(ErrorBody::new(DefaultErrorResponse {
-            code: "400".to_string(),
-            message: format!("could not fetch message from storage. {}", e)
-        }))),
+        Err(e) => err_to_json(format!("could not fetch message from storage. {}", e), "400".to_string()),
     }
 }
 
-pub async fn get_id_raw_handler(
+async fn get_id_raw_handler(
     Path(messageid): Path<String>,
     Extension(app_storage): Extension<Arc<AppStorage>>,
 ) -> Json<Value> {
     match Fetch::<MessageId, Message>::fetch(
-        &*(app_storage.storage.lock().unwrap()),
+        &*(app_storage.storage.lock().await),
         match &MessageId::from_str(&messageid) {
             Ok(message_id) => message_id,
             Err(e) => {
-                return Json(json!(ErrorBody::new(DefaultErrorResponse {
-                    code: "400".to_string(),
-                    message: format!("could not parse message ID. {}", e)
-                })));
+                return err_to_json(format!("could not parse message ID. {}", e), "400".to_string());
             }
         },
     ) {
@@ -186,31 +165,22 @@ pub async fn get_id_raw_handler(
                     })),
                 },
             ),
-            None => Json(json!(ErrorBody::new(DefaultErrorResponse {
-                code: "400".to_string(),
-                message: "could find message.".to_string()
-            }))),
+            None => err_to_json("could find message.".to_string(), "400".to_string()),
         },
-        Err(e) => Json(json!(ErrorBody::new(DefaultErrorResponse {
-            code: "400".to_string(),
-            message: format!("could not fetch message from storage. {}", e)
-        }))),
+        Err(e) => err_to_json(format!("could not fetch message from storage. {}", e), "400".to_string()),
     }
 }
 
-pub async fn get_id_children_handler(
+async fn get_id_children_handler(
     Path(messageid): Path<String>,
     Extension(app_storage): Extension<Arc<AppStorage>>,
 ) -> Json<Value> {
     match Fetch::<MessageId, Message>::fetch(
-        &*(app_storage.storage.lock().unwrap()),
+        &*(app_storage.storage.lock().await),
         match &MessageId::from_str(&messageid) {
             Ok(message_id) => message_id,
             Err(e) => {
-                return Json(json!(ErrorBody::new(DefaultErrorResponse {
-                    code: "400".to_string(),
-                    message: format!("could not parse message ID. {}", e)
-                })));
+                return err_to_json(format!("could not parse message ID. {}", e), "400".to_string());
             }
         },
     ) {
@@ -232,14 +202,8 @@ pub async fn get_id_children_handler(
                     })),
                 },
             ),
-            None => Json(json!(ErrorBody::new(DefaultErrorResponse {
-                code: "400".to_string(),
-                message: "could find message.".to_string()
-            }))),
+            None => err_to_json("could find message.".to_string(), "400".to_string()),
         },
-        Err(e) => Json(json!(ErrorBody::new(DefaultErrorResponse {
-            code: "400".to_string(),
-            message: format!("could not fetch message from storage. {}", e)
-        }))),
+        Err(e) => err_to_json(format!("could not fetch message from storage. {}", e), "400".to_string()),
     }
 }
