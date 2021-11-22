@@ -39,7 +39,7 @@ macro_rules! bounded {
 
         impl<const MIN: $ty, const MAX: $ty> Display for $error<MIN, MAX> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "integer {} is out of bounds", self.0)
+                write!(f, "the integer `{}` is out of bounds (`{}..={}`)", self.0, MIN, MAX)
             }
         }
 
@@ -61,7 +61,7 @@ macro_rules! bounded {
         impl<const MIN: $ty, const MAX: $ty> Display for $try_error<MIN, MAX> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                Self::Truncated(len) => write!(f, "length of `{}` was truncated", len),
+                Self::Truncated(len) => write!(f, "the integer `{}` was truncated while casting it into a `{}`", len, core::any::type_name::<$ty>()),
                 Self::Invalid(err) => $error::<MIN, MAX>(*err).fmt(f),
             }
         }
