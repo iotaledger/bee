@@ -5,10 +5,13 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-///
+/// Points to the unlock block of a consumed alias output.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize, derive_more::From))]
-pub struct AliasUnlockBlock(u16);
+pub struct AliasUnlockBlock {
+    // Index of input and unlock block corresponding to an alias output.
+    index: u16,
+}
 
 impl AliasUnlockBlock {
     /// The unlock kind of an `AliasUnlockBlock`.
@@ -16,12 +19,12 @@ impl AliasUnlockBlock {
 
     /// Creates a new `AliasUnlockBlock`.
     pub fn new(index: u16) -> Self {
-        Self(index)
+        Self { index }
     }
 
     /// Return the index of an `AliasUnlockBlock`.
     pub fn index(&self) -> u16 {
-        self.0
+        self.index
     }
 }
 
@@ -33,7 +36,7 @@ impl Packable for AliasUnlockBlock {
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
+        self.index.pack(writer)?;
 
         Ok(())
     }

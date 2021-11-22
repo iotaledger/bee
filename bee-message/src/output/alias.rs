@@ -103,18 +103,27 @@ impl AliasOutputBuilder {
     }
 }
 
-///
+/// Describes an alias account in the ledger that can be controlled by the state and governance controllers.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct AliasOutput {
+    // The amount of IOTA tokens held by the output.
     amount: u64,
+    // Native tokens held by the output.
     native_tokens: NativeTokens,
+    // Unique identifier of the alias.
     alias_id: AliasId,
+    //
     state_controller: Address,
+    //
     governance_controller: Address,
+    // A counter that must increase by 1 every time the alias is state transitioned.
     state_index: u32,
+    // Metadata that can only be changed by the state controller.
     state_metadata: Box<[u8]>,
+    // A counter that denotes the number of foundries created by this alias account.
     foundry_counter: u32,
+    //
     feature_blocks: FeatureBlocks,
 }
 
