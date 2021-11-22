@@ -29,6 +29,7 @@ use primitive_types::U256;
 use std::collections::{HashMap, HashSet};
 
 struct ValidationContext {
+    timestamp: u64,
     consumed_amount: u64,
     created_amount: u64,
     consumed_outputs: HashMap<OutputId, CreatedOutput>,
@@ -37,8 +38,9 @@ struct ValidationContext {
 }
 
 impl ValidationContext {
-    fn new(inputs_len: usize) -> Self {
+    fn new(timestamp: u64, inputs_len: usize) -> Self {
         Self {
+            timestamp,
             consumed_amount: 0,
             created_amount: 0,
             consumed_outputs: HashMap::with_capacity(inputs_len),
@@ -77,7 +79,7 @@ fn apply_regular_essence<B: StorageBackend>(
     unlock_blocks: &UnlockBlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
-    let mut context = ValidationContext::new(essence.inputs().len());
+    let mut context = ValidationContext::new(metadata.timestamp, essence.inputs().len());
 
     for (index, input) in essence.inputs().iter().enumerate() {
         let (output_id, consumed_output) = match input {
