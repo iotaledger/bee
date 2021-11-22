@@ -149,6 +149,7 @@ impl NonceProvider for Miner {
     type Builder = MinerBuilder;
     type Error = Error;
 
+    // `bytes` are all bytes of the message, without the `nonce`.
     fn nonce(&self, bytes: &[u8], target_score: f64) -> Result<u64, Self::Error> {
         self.cancel.reset();
 

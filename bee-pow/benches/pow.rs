@@ -36,12 +36,11 @@ fn mining_benchmark(c: &mut Criterion) {
     g.measurement_time(Duration::from_secs(120));
     g.throughput(Throughput::Elements(1));
 
-    g.bench_function("random message (single-threaded)", |b| {
+    g.bench_function("rando message (single-threaded)", |b| {
         let miner = MinerBuilder::default().with_num_workers(1).finish();
         b.iter_batched(
-            // TODO: Something is odd here `rand_message` takes forever.
-            rand::random::<[u8; 32]>, 
-            |bytes| miner.nonce(&bytes, MINIMUM_POW_SCORE),
+            || rand_message().pack_new(),
+            |bytes| miner.nonce(&bytes[..bytes.len() - std::mem::size_of::<u64>()], MINIMUM_POW_SCORE),
             BatchSize::SmallInput,
         )
     });
@@ -49,8 +48,15 @@ fn mining_benchmark(c: &mut Criterion) {
     g.bench_function("random message (multi-threaded)", |b| {
         let miner = MinerBuilder::default().with_num_workers(num_cpus::get()).finish();
         b.iter_batched(
-            rand::random::<[u8; 32]>,
-            |bytes| miner.nonce(&bytes, MINIMUM_POW_SCORE),
+            // TODO why is `rand::random::<[u8; 32]>` so much faster?
+            rand_message,
+            |msg| {
+                let msg_bytes = msg.pack_new();
+                miner.nonce(
+                    &msg_bytes[..msg_bytes.len() - std::mem::size_of::<u64>()],
+                    MINIMUM_POW_SCORE,
+                )
+            },
             BatchSize::SmallInput,
         )
     });
