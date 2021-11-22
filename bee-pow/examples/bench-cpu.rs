@@ -7,14 +7,14 @@ use std::{
     time::{self, Duration},
 };
 
-use bee_crypto::ternary::{
-    sponge::{BatchHasher, CurlPRounds, BATCH_SIZE},
-    HASH_LENGTH,
-};
 use bee_pow::providers::miner::MinerCancel;
 use bee_ternary::{
     b1t6::{self},
     Btrit, T1B1Buf, TritBuf,
+};
+use crypto::hashes::ternary::{
+    curl_p::{CurlPBatchHasher, BATCH_SIZE},
+    HASH_LENGTH,
 };
 use structopt::StructOpt;
 use thiserror::Error;
@@ -112,7 +112,7 @@ fn cpu_benchmark_worker(_pow_digest: &[u8], start_nonce: u64, cancel: MinerCance
         .for_each(|t| pow_digest.push(t));
 
     let mut nonce = start_nonce;
-    let mut hasher = BatchHasher::<T1B1Buf>::new(HASH_LENGTH, CurlPRounds::Rounds81);
+    let mut hasher = CurlPBatchHasher::<T1B1Buf>::new(HASH_LENGTH);
     let mut buffers = Vec::<TritBuf<T1B1Buf>>::with_capacity(BATCH_SIZE);
 
     for _ in 0..BATCH_SIZE {
@@ -128,7 +128,7 @@ fn cpu_benchmark_worker(_pow_digest: &[u8], start_nonce: u64, cancel: MinerCance
             hasher.add(buffer.clone());
         }
 
-        for (_i, hash) in hasher.hash_batched().enumerate() {
+        for (_i, hash) in hasher.hash().enumerate() {
             let _trailing_zeros = hash.iter().rev().take_while(|t| *t == Btrit::Zero).count();
             counter.fetch_add(BATCH_SIZE as u64, Ordering::Release);
         }

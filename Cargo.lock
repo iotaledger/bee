@@ -177,19 +177,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 
 [[package]]
-name = "bee-bench-cpu"
-version = "0.1.0"
-dependencies = [
- "bee-crypto",
- "bee-pow",
- "bee-ternary",
- "num_cpus",
- "rand 0.8.4",
- "structopt",
- "thiserror",
-]
-
-[[package]]
 name = "bee-common"
 version = "0.5.0"
 dependencies = [
@@ -299,6 +286,9 @@ dependencies = [
  "bee-ternary",
  "bee-test",
  "iota-crypto",
+ "num_cpus",
+ "rand 0.8.4",
+ "structopt",
  "thiserror",
 ]
 

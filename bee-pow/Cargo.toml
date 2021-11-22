@@ -18,3 +18,8 @@ thiserror = { version = "1.0.30", default-features = false }
 
 [dev-dependencies]
 bee-test = { path = "../bee-test", default-features = false }
+
+structopt = { version = "0.3.23", default-features = false }
+thiserror = { version = "1.0.30", default-features = false }
+num_cpus = { version = "1.13.0", default-features = false }
+rand = { version = "0.8.4", default-features = false }
