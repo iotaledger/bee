@@ -10,6 +10,12 @@ pub(crate) const FILE_FIELD_NAME: &'static str = "loc.file";
 /// The field name of the [`Span`](tracing::Span) location line.
 pub(crate) const LINE_FIELD_NAME: &'static str = "loc.line";
 
+/// The target of the wrapping [`Span`](tracing::Span).
+pub const SPAN_TARGET: &'static str = "bee::observe";
+
+/// The name of the wrapping [`Span`](tracing::Span).
+pub const SPAN_NAME: &'static str = "observed";
+
 /// Instruments a future with a `tracing` span.
 /// 
 /// This span is given the `bee::observe` target, so that it can be more easily filtered 
@@ -27,8 +33,8 @@ impl<T: Instrument> Observe for T {
         let location = std::panic::Location::caller();
 
         let span = trace_span!(
-            target: "bee::observe",
-            "observed",
+            target: SPAN_TARGET,
+            SPAN_NAME,
             observed.name = name,
             loc.file = location.file(),
             loc.line = location.line(),

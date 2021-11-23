@@ -20,7 +20,6 @@ pub(crate) struct LocationVisitor {
 }
 
 impl LocationVisitor {
-
     pub(crate) fn new() -> Self {
         Self::default()
     }

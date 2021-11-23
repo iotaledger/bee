@@ -10,6 +10,54 @@ use syn::{
     Attribute, Signature, Visibility,
 };
 
+/// Attribute macro for extending functions and futures with the `Observe` trait.
+/// 
+/// This instruments the function or future with a `tracing` span with the `bee::observe` target, so that
+/// it can be filtered by subscribers. It also records the location of the calling code to the span as
+/// fields. This is assigned to `loc.file`, `loc.line` and `loc.col` fields, similar to how `tokio` instruments
+/// tasks internally.
+/// 
+/// As such, `tokio` tasks, any functions or futures instrumented with `tracing`, and any functions or futures
+/// instrumented with the `Observe` trait or macro will be wrapped in spans that contain similarly structured 
+/// information for diagnostics. The only difference should be the span target and the span name (if 
+/// available).
+/// 
+/// # Examples
+/// 
+/// A future or function can be wrapped in a `tracing` span with the following:
+/// ```rust
+/// use bee_trace::observe;
+/// 
+/// #[observe]
+/// pub async fn say_hello() {
+///     println!("hello");
+/// }
+/// ```
+/// 
+/// This will generate a span equivalent to the following:
+/// ```ignore
+/// // Location of the function signature.
+/// let location = std::panic::Location::caller();
+/// 
+/// tracing::trace_span!(
+///     "bee::observe",
+///     "observed",
+///     observed.name = "say_hello",
+///     loc.file = location.file(),
+///     loc.line = location.line(),
+///     loc.col = location.column(),
+/// );
+/// ```
+/// 
+/// The future or function will then run inside the context of the generated span:
+/// ```ignore
+/// let _guard = span.enter();
+/// 
+/// async move {
+///     println!("hello");
+/// }
+/// .await;
+/// ```
 #[proc_macro_attribute]
 pub fn observe(_args: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let observe_impl = parse_macro_input!(input as ObserveImpl);
@@ -119,7 +167,7 @@ mod tests {
         let output_tokens = observe_impl.unwrap().gen_tokens();
         let expected_tokens: TokenStream = quote! {
             async fn test_observe_fn() {
-                bee_subscriber::Observe::observe(
+                bee_trace::Observe::observe(
                     async move {
                         println!("observing this function");
                     },

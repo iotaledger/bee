@@ -95,6 +95,10 @@ impl SubscriberBuilder {
     ///  - Creation of the [`FlamegraphFilteredLayer`](layer::FlamegraphFilteredLayer) failed.
     ///  - Creation of the [`LogLayer`](layer::LogLayer) failed.
     /// 
+    /// # Panics
+    /// This method will panic if the flamegraph layer is enabled and the program is not built with 
+    /// `--cfg tokio_unstable`.
+    /// 
     /// # Notes
     ///  - This method calls the [`collect_logs`] function. Any [`log`] records emitted will be converting
     /// into [`tracing`] events, and therefore any external functionality that deals with [`log`] records
