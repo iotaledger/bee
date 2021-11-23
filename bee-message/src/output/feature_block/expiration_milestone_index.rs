@@ -16,7 +16,7 @@ pub struct ExpirationMilestoneIndexFeatureBlock {
 }
 
 impl ExpirationMilestoneIndexFeatureBlock {
-    /// The feature block kind of an [`ExpirationMilestoneIndexFeatureBlock`].
+    /// The [`FeatureBlock`] kind of an [`ExpirationMilestoneIndexFeatureBlock`].
     pub const KIND: u8 = 5;
 
     /// Creates a new [`ExpirationMilestoneIndexFeatureBlock`].

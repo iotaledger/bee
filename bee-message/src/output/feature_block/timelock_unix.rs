@@ -14,10 +14,10 @@ pub struct TimelockUnixFeatureBlock {
 }
 
 impl TimelockUnixFeatureBlock {
-    /// The feature block kind of a `TimelockUnixFeatureBlock`.
+    /// The [`FeatureBlock`] kind of a [`TimelockUnixFeatureBlock`].
     pub const KIND: u8 = 4;
 
-    /// Creates a new `TimelockUnixFeatureBlock`.
+    /// Creates a new [`TimelockUnixFeatureBlock`].
     pub fn new(timestamp: u32) -> Self {
         timestamp.into()
     }

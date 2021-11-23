@@ -14,10 +14,10 @@ pub struct TimelockMilestoneIndexFeatureBlock {
 }
 
 impl TimelockMilestoneIndexFeatureBlock {
-    /// The feature block kind of a `TimelockMilestoneIndexFeatureBlock`.
+    /// The [`FeatureBlock`] kind of a [`TimelockMilestoneIndexFeatureBlock`].
     pub const KIND: u8 = 3;
 
-    /// Creates a new `TimelockMilestoneIndexFeatureBlock`.
+    /// Creates a new [`TimelockMilestoneIndexFeatureBlock`].
     pub fn new(index: MilestoneIndex) -> Self {
         index.into()
     }

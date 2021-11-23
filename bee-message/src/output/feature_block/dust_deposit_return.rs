@@ -28,10 +28,10 @@ impl TryFrom<u64> for DustDepositReturnFeatureBlock {
 }
 
 impl DustDepositReturnFeatureBlock {
-    /// The feature block kind of a `DustDepositReturnFeatureBlock`.
+    /// The [`FeatureBlock`] kind of a [`DustDepositReturnFeatureBlock`].
     pub const KIND: u8 = 2;
 
-    /// Creates a new `DustDepositReturnFeatureBlock`.
+    /// Creates a new [`DustDepositReturnFeatureBlock`].
     pub fn new(amount: u64) -> Result<Self, Error> {
         Self::try_from(amount)
     }

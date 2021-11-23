@@ -17,10 +17,10 @@ impl From<&[u8]> for IndexationFeatureBlock {
 }
 
 impl IndexationFeatureBlock {
-    /// The feature block kind of an `IndexationFeatureBlock`.
-    pub const KIND: u8 = 7;
+    /// The [`FeatureBlock`] kind of an [`IndexationFeatureBlock`].
+    pub const KIND: u8 = 8;
 
-    /// Creates a new `IndexationFeatureBlock`.
+    /// Creates a new [`IndexationFeatureBlock`].
     pub fn new(tag: &[u8]) -> Self {
         tag.into()
     }

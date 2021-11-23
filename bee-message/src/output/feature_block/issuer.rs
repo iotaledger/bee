@@ -11,10 +11,10 @@ use bee_common::packable::{Packable, Read, Write};
 pub struct IssuerFeatureBlock(Address);
 
 impl IssuerFeatureBlock {
-    /// The feature block kind of an `IssuerFeatureBlock`.
+    /// The [`FeatureBlock`] kind of an [`IssuerFeatureBlock`].
     pub const KIND: u8 = 1;
 
-    /// Creates a new `IssuerFeatureBlock`.
+    /// Creates a new [`IssuerFeatureBlock`].
     pub fn new(address: Address) -> Self {
         address.into()
     }

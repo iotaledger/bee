@@ -16,10 +16,10 @@ pub struct ExpirationUnixFeatureBlock {
 }
 
 impl ExpirationUnixFeatureBlock {
-    /// The feature block kind of an `ExpirationUnixFeatureBlock`.
+    /// The [`FeatureBlock`] kind of an [`ExpirationUnixFeatureBlock`].
     pub const KIND: u8 = 6;
 
-    /// Creates a new `ExpirationUnixFeatureBlock`.
+    /// Creates a new [`ExpirationUnixFeatureBlock`].
     pub fn new(timestamp: u32) -> Self {
         timestamp.into()
     }
