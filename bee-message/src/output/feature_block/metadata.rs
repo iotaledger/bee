@@ -5,9 +5,6 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-///
-const METADATA_LENGTH_MAX: u32 = 1024;
-
 /// Defines metadata (arbitrary binary data) that will be stored in the output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -20,9 +17,7 @@ impl TryFrom<&[u8]> for MetadataFeatureBlock {
     type Error = Error;
 
     fn try_from(data: &[u8]) -> Result<Self, Error> {
-        if data.len() == 0 || data.len() > METADATA_LENGTH_MAX as usize {
-            return Err(Error::InvalidMetadataLength(data.len() as u32));
-        }
+        validate_length(data.len())?;
 
         Ok(MetadataFeatureBlock { data: data.into() })
     }
@@ -31,6 +26,8 @@ impl TryFrom<&[u8]> for MetadataFeatureBlock {
 impl MetadataFeatureBlock {
     /// The [`FeatureBlock`] kind of [`MetadataFeatureBlock`].
     pub const KIND: u8 = 7;
+    ///
+    pub const LENGTH_MAX: usize = 1024;
 
     /// Creates a new [`MetadataFeatureBlock`].
     pub fn new(data: &[u8]) -> Result<Self, Error> {
@@ -58,13 +55,24 @@ impl Packable for MetadataFeatureBlock {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let data_len = u32::unpack_inner::<R, CHECK>(reader)?;
-        if data_len == 0 || data_len > METADATA_LENGTH_MAX {
-            return Err(Error::InvalidMetadataLength(data_len));
+        let data_length = u32::unpack_inner::<R, CHECK>(reader)? as usize;
+
+        if CHECK {
+            validate_length(data_length)?;
         }
-        let mut data = vec![0u8; data_len as usize];
+
+        let mut data = vec![0u8; data_length];
         reader.read_exact(&mut data)?;
 
         Ok(Self { data: data.into() })
     }
+}
+
+#[inline]
+fn validate_length(data_length: usize) -> Result<(), Error> {
+    if data_length == 0 || data_length > MetadataFeatureBlock::LENGTH_MAX {
+        return Err(Error::InvalidMetadataLength(data_length));
+    }
+
+    Ok(())
 }

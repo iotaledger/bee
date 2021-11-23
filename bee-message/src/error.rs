@@ -33,7 +33,7 @@ pub enum Error {
     InvalidInputOutputCount(u16),
     InvalidInputOutputIndex(u16),
     InvalidMessageLength(usize),
-    InvalidMetadataLength(u32),
+    InvalidMetadataLength(usize),
     InvalidMigratedFundsEntryAmount(u64),
     InvalidNativeTokenCount(usize),
     InvalidOutputKind(u8),

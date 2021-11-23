@@ -10,7 +10,7 @@ use crate::{
 use bee_common::packable::{Packable, Read, Write};
 
 ///
-const METADATA_LENGTH_MAX: u32 = 1024;
+const METADATA_LENGTH_MAX: usize = 1024;
 
 ///
 pub struct AliasOutputBuilder {
@@ -85,8 +85,8 @@ impl AliasOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<AliasOutput, Error> {
-        if self.state_metadata.len() > METADATA_LENGTH_MAX as usize {
-            return Err(Error::InvalidMetadataLength(self.state_metadata.len() as u32));
+        if self.state_metadata.len() > METADATA_LENGTH_MAX {
+            return Err(Error::InvalidMetadataLength(self.state_metadata.len()));
         }
 
         Ok(AliasOutput {
@@ -223,11 +223,11 @@ impl Packable for AliasOutput {
         let state_controller = Address::unpack_inner::<R, CHECK>(reader)?;
         let governance_controller = Address::unpack_inner::<R, CHECK>(reader)?;
         let state_index = u32::unpack_inner::<R, CHECK>(reader)?;
-        let state_metadata_len = u32::unpack_inner::<R, CHECK>(reader)?;
+        let state_metadata_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
         if CHECK && state_metadata_len > METADATA_LENGTH_MAX {
             return Err(Error::InvalidMetadataLength(state_metadata_len));
         }
-        let mut state_metadata = vec![0u8; state_metadata_len as usize];
+        let mut state_metadata = vec![0u8; state_metadata_len];
         reader.read_exact(&mut state_metadata)?;
         let foundry_counter = u32::unpack_inner::<R, CHECK>(reader)?;
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
