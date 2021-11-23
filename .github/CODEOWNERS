@@ -7,7 +7,7 @@
 /bee-common/      thibault@iota.org           alexander.schmidt@iota.org
 /bee-crypto/      thibault@iota.org           alexander.schmidt@iota.org
 /bee-ledger/      thibault@iota.org           samuel.rufinatscha@iota.org joshua.barretto@iota.org
-/bee-gossip/     alexander.schmidt@iota.org  joshua.barretto@iota.org
+/bee-gossip/      alexander.schmidt@iota.org  joshua.barretto@iota.org
 /bee-node/        thibault@iota.org           alexander.schmidt@iota.org
 /bee-peering/     samuel.rufinatscha@iota.org thibault@iota.org alexander.schmidt@iota.org
 /bee-protocol/    thibault@iota.org           samuel.rufinatscha@iota.org joshua.barretto@iota.org
