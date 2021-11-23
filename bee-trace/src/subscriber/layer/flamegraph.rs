@@ -136,7 +136,7 @@ where
         subscriber::Interest::always()
     }
 
-    fn on_new_span(&self, attrs: &span::Attributes<'_>, id: &span::Id, _ctx: Context<'_, S>) {
+    fn new_span(&self, attrs: &span::Attributes<'_>, id: &span::Id, _ctx: Context<'_, S>) {
         if !self.is_tracked_callsite(&attrs.metadata().callsite()) {
             return;
         }

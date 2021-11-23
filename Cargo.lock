@@ -190,7 +190,7 @@ name = "bee-common"
 version = "0.5.0"
 dependencies = [
  "autocfg",
- "console-subscriber 0.1.0 (git+https://github.com/tokio-rs/console.git?branch=main)",
+ "console-subscriber",
  "fern",
  "jsonwebtoken",
  "log",
@@ -199,7 +199,7 @@ dependencies = [
  "serde",
  "thiserror",
  "time 0.3.4",
- "tracing-subscriber",
+ "tracing-subscriber 0.3.1",
 ]
 
 [[package]]
@@ -476,8 +476,6 @@ dependencies = [
  "bee-common",
  "bee-trace-attributes",
  "colored 2.0.0",
- "console-subscriber 0.1.0 (git+https://github.com/tokio-rs/console.git)",
- "futures 0.3.17",
  "inferno",
  "lazy_static",
  "log",
@@ -486,7 +484,7 @@ dependencies = [
  "tracing",
  "tracing-futures",
  "tracing-log",
- "tracing-subscriber",
+ "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
@@ -500,7 +498,7 @@ dependencies = [
  "tokio 1.13.0",
  "tracing",
  "tracing-futures",
- "tracing-subscriber",
+ "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
@@ -782,23 +780,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "console-api"
-version = "0.1.0"
-source = "git+https://github.com/tokio-rs/console.git#a30264e0b5469ea596430b846b05e6e3541915d1"
-dependencies = [
- "prost",
- "prost-types",
- "tonic",
- "tonic-build",
- "tracing-core",
-]
-
-[[package]]
 name = "console-subscriber"
 version = "0.1.0"
 source = "git+https://github.com/tokio-rs/console.git?branch=main#c1111bc72a616f17c67e546a035d513214dd52e4"
 dependencies = [
- "console-api 0.1.0 (git+https://github.com/tokio-rs/console.git?branch=main)",
+ "console-api",
  "futures 0.3.17",
  "hdrhistogram",
  "humantime",
@@ -810,27 +796,7 @@ dependencies = [
  "tonic",
  "tracing",
  "tracing-core",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "console-subscriber"
-version = "0.1.0"
-source = "git+https://github.com/tokio-rs/console.git#a30264e0b5469ea596430b846b05e6e3541915d1"
-dependencies = [
- "console-api 0.1.0 (git+https://github.com/tokio-rs/console.git)",
- "futures 0.3.17",
- "hdrhistogram",
- "humantime",
- "serde",
- "serde_json",
- "thread_local",
- "tokio 1.13.0",
- "tokio-stream",
- "tonic",
- "tracing",
- "tracing-core",
- "tracing-subscriber",
+ "tracing-subscriber 0.3.1",
 ]
 
 [[package]]
@@ -3987,12 +3953,24 @@ dependencies = [
 
 [[package]]
 name = "tracing-subscriber"
+version = "0.2.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e0d2eaa99c3c2e41547cfa109e910a68ea03823cccad4a0525dcbc9b01e8c71"
+dependencies = [
+ "ansi_term",
+ "parking_lot 0.11.2",
+ "sharded-slab",
+ "thread_local",
+ "tracing-core",
+]
+
+[[package]]
+name = "tracing-subscriber"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80a4ddde70311d8da398062ecf6fc2c309337de6b0f77d6c27aff8d53f6fca52"
 dependencies = [
  "ansi_term",
- "parking_lot 0.11.2",
  "sharded-slab",
  "thread_local",
  "tracing-core",

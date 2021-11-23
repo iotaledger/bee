@@ -70,10 +70,10 @@ impl LogTargetMakeWriter {
     }
 }
 
-impl<'a> MakeWriter<'a> for LogTargetMakeWriter {
+impl<'a> MakeWriter for &'a LogTargetMakeWriter {
     type Writer = LogOutput<'a>;
 
-    fn make_writer(&'a self) -> Self::Writer {
+    fn make_writer(&self) -> Self::Writer {
         match &self.target.dest {
             LogDest::Stdout => LogOutput::Stdout(self.stdout.lock()),
             LogDest::File(file) => LogOutput::File(file.lock()),
