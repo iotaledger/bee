@@ -5,20 +5,20 @@ use tracing::trace_span;
 use tracing_futures::{Instrument, Instrumented};
 
 /// The field name of the [`Span`](tracing::Span) location file.
-pub(crate) const FILE_FIELD_NAME: &'static str = "loc.file";
+pub(crate) const FILE_FIELD_NAME: &str = "loc.file";
 
 /// The field name of the [`Span`](tracing::Span) location line.
-pub(crate) const LINE_FIELD_NAME: &'static str = "loc.line";
+pub(crate) const LINE_FIELD_NAME: &str = "loc.line";
 
 /// The target of the wrapping [`Span`](tracing::Span).
-pub const SPAN_TARGET: &'static str = "bee::observe";
+pub const SPAN_TARGET: &str = "bee::observe";
 
 /// The name of the wrapping [`Span`](tracing::Span).
-pub const SPAN_NAME: &'static str = "observed";
+pub const SPAN_NAME: &str = "observed";
 
 /// Instruments a future with a `tracing` span.
-/// 
-/// This span is given the `bee::observe` target, so that it can be more easily filtered 
+///
+/// This span is given the `bee::observe` target, so that it can be more easily filtered
 /// in any subscribers or subscriber layers. It also records the future's calling location
 /// in its fields.
 pub trait Observe: Sized {

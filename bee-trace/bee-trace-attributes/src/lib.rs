@@ -1,6 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Attribute macro for extending functions and futures with the `Observe` trait.
+
+#![deny(missing_docs, warnings)]
+
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned};
 use syn::{
@@ -11,34 +15,34 @@ use syn::{
 };
 
 /// Attribute macro for extending functions and futures with the `Observe` trait.
-/// 
+///
 /// This instruments the function or future with a `tracing` span with the `bee::observe` target, so that
 /// it can be filtered by subscribers. It also records the location of the calling code to the span as
 /// fields. This is assigned to `loc.file`, `loc.line` and `loc.col` fields, similar to how `tokio` instruments
 /// tasks internally.
-/// 
+///
 /// As such, `tokio` tasks, any functions or futures instrumented with `tracing`, and any functions or futures
-/// instrumented with the `Observe` trait or macro will be wrapped in spans that contain similarly structured 
-/// information for diagnostics. The only difference should be the span target and the span name (if 
+/// instrumented with the `Observe` trait or macro will be wrapped in spans that contain similarly structured
+/// information for diagnostics. The only difference should be the span target and the span name (if
 /// available).
-/// 
+///
 /// # Examples
-/// 
+///
 /// A future or function can be wrapped in a `tracing` span with the following:
 /// ```rust
 /// use bee_trace::observe;
-/// 
+///
 /// #[observe]
 /// pub async fn say_hello() {
 ///     println!("hello");
 /// }
 /// ```
-/// 
+///
 /// This will generate a span equivalent to the following:
 /// ```ignore
 /// // Location of the function signature.
 /// let location = std::panic::Location::caller();
-/// 
+///
 /// tracing::trace_span!(
 ///     "bee::observe",
 ///     "observed",
@@ -48,11 +52,11 @@ use syn::{
 ///     loc.col = location.column(),
 /// );
 /// ```
-/// 
+///
 /// The future or function will then run inside the context of the generated span:
 /// ```ignore
 /// let _guard = span.enter();
-/// 
+///
 /// async move {
 ///     println!("hello");
 /// }

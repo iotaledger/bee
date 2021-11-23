@@ -24,9 +24,9 @@ impl Flamegrapher {
     }
 
     /// Returns a [`Flamegrapher`] with the given folded stack file name.
-    /// 
+    ///
     /// This file will be given the extension of `.folded`.
-    /// 
+    ///
     /// # Errors
     /// This method may fail in the following ways:
     ///  - The given stack file does not exist.
@@ -44,9 +44,9 @@ impl Flamegrapher {
     }
 
     /// Returns a [`Flamegrapher`] with the given flamegraph file name.
-    /// 
+    ///
     /// This file will be given the extension of `.svg`.
-    /// 
+    ///
     /// # Errors
     /// This method may fail in the following ways:
     ///  - The given graph filename is invalid (it does not belong to a directory that exists).
@@ -68,7 +68,7 @@ impl Flamegrapher {
 
     /// Uses [`inferno`] to generate a flamegraph from the given folded stack file, and writes it to the given
     /// output image file.
-    /// 
+    ///
     /// # Errors
     /// This method may fail in the following ways:
     ///  - This [`Flamegrapher`] does not have a stack or graph file associated with it.
