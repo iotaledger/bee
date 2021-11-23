@@ -14,6 +14,7 @@ pub enum Error {
     CryptoError(CryptoError),
     DuplicateSignatureUnlockBlock(u16),
     DuplicateUtxo(UtxoInput),
+    ExpirationUnixFeatureBlockWithoutSenderFeatureBlock,
     FeatureBlocksNotUniqueSorted,
     InputUnlockBlockCountMismatch(usize, usize),
     InvalidAccumulatedOutput(u128),
@@ -22,7 +23,7 @@ pub enum Error {
     InvalidAmount(u64),
     InvalidDustDepositReturnFeatureBlock(u64),
     InvalidEssenceKind(u8),
-    InvalidFeatureBlockCount(u8),
+    InvalidFeatureBlockCount(usize),
     InvalidFeatureBlockKind(u8),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength(usize, usize),
@@ -78,6 +79,10 @@ impl fmt::Display for Error {
                 write!(f, "duplicate signature unlock block at index: {0}", index)
             }
             Error::DuplicateUtxo(utxo) => write!(f, "duplicate UTXO {:?} in inputs.", utxo),
+            Error::ExpirationUnixFeatureBlockWithoutSenderFeatureBlock => write!(
+                f,
+                "expiration, milestone index or unix, feature block without sender feature block"
+            ),
             Error::FeatureBlocksNotUniqueSorted => write!(f, "feature blocks are not unique and/or sorted."),
             Error::InputUnlockBlockCountMismatch(input, block) => {
                 write!(

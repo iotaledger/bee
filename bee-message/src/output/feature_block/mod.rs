@@ -31,7 +31,7 @@ use bee_common::{
 use core::{convert::TryFrom, ops::Deref};
 
 ///
-pub const FEATURE_BLOCK_COUNT_MAX: u8 = 8;
+pub const FEATURE_BLOCK_COUNT_MAX: usize = 8;
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
@@ -173,16 +173,13 @@ impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
     type Error = Error;
 
     fn try_from(mut feature_blocks: Vec<FeatureBlock>) -> Result<Self, Self::Error> {
-        if feature_blocks.len() as u8 > FEATURE_BLOCK_COUNT_MAX {
-            return Err(Error::InvalidFeatureBlockCount(feature_blocks.len() as u8));
-        }
+        validate_length(feature_blocks.len())?;
 
         feature_blocks.sort_by_key(FeatureBlock::kind);
 
         // Sort is obviously fine now but uniqueness still needs to be checked.
-        if !is_unique_sorted(feature_blocks.iter().map(FeatureBlock::kind)) {
-            return Err(Error::FeatureBlocksNotUniqueSorted);
-        }
+        validate_unique_sorted(&feature_blocks)?;
+        validate_dependencies(&feature_blocks)?;
 
         Ok(Self(feature_blocks.into_boxed_slice()))
     }
@@ -234,21 +231,58 @@ impl Packable for FeatureBlocks {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let feature_blocks_len = u8::unpack_inner::<R, CHECK>(reader)?;
+        let feature_blocks_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
 
-        if CHECK && feature_blocks_len > FEATURE_BLOCK_COUNT_MAX {
-            return Err(Error::InvalidFeatureBlockCount(feature_blocks_len));
+        if CHECK {
+            validate_length(feature_blocks_len)?;
         }
 
-        let mut feature_blocks = Vec::with_capacity(feature_blocks_len as usize);
+        let mut feature_blocks = Vec::with_capacity(feature_blocks_len);
         for _ in 0..feature_blocks_len {
             feature_blocks.push(FeatureBlock::unpack_inner::<R, CHECK>(reader)?);
         }
 
-        if CHECK && !is_unique_sorted(feature_blocks.iter().map(FeatureBlock::kind)) {
-            return Err(Error::FeatureBlocksNotUniqueSorted);
-        }
+        if CHECK {
+            validate_unique_sorted(&feature_blocks)?;
+            validate_dependencies(&feature_blocks)?;
+        };
 
         Ok(Self(feature_blocks.into_boxed_slice()))
     }
+}
+
+#[inline]
+fn validate_length(feature_blocks_len: usize) -> Result<(), Error> {
+    if feature_blocks_len > FEATURE_BLOCK_COUNT_MAX {
+        return Err(Error::InvalidFeatureBlockCount(feature_blocks_len));
+    }
+
+    Ok(())
+}
+
+#[inline]
+fn validate_unique_sorted(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
+    if !is_unique_sorted(feature_blocks.iter().map(FeatureBlock::kind)) {
+        return Err(Error::FeatureBlocksNotUniqueSorted);
+    }
+
+    Ok(())
+}
+
+#[inline]
+fn validate_dependencies(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
+    if (feature_blocks
+        .binary_search_by_key(&ExpirationMilestoneIndexFeatureBlock::KIND, FeatureBlock::kind)
+        .is_ok()
+        || feature_blocks
+            .binary_search_by_key(&ExpirationUnixFeatureBlock::KIND, FeatureBlock::kind)
+            .is_ok())
+        && feature_blocks
+            .binary_search_by_key(&SenderFeatureBlock::KIND, FeatureBlock::kind)
+            .is_err()
+    {
+        return Err(Error::ExpirationUnixFeatureBlockWithoutSenderFeatureBlock);
+    }
+
+    Ok(())
 }
