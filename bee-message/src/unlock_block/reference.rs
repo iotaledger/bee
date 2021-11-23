@@ -5,16 +5,16 @@ use crate::{unlock_block::UNLOCK_BLOCK_INDEX_RANGE, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-/// An [`UnlockBlock`](crate::unlock::UnlockBlock) that refers to another unlock block.
+/// An [`UnlockBlock`](crate::unlock_block::UnlockBlock) that refers to another unlock block.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReferenceUnlockBlock(u16);
 
 impl ReferenceUnlockBlock {
-    /// The unlock kind of a `ReferenceUnlockBlock`.
+    /// The [`UnlockBlock`](crate::unlock_block::UnlockBlock) kind of a [`ReferenceUnlockBlock`].
     pub const KIND: u8 = 1;
 
-    /// Creates a new `ReferenceUnlockBlock`.
+    /// Creates a new [`ReferenceUnlockBlock`].
     pub fn new(index: u16) -> Result<Self, Error> {
         if !UNLOCK_BLOCK_INDEX_RANGE.contains(&index) {
             return Err(Error::InvalidReferenceIndex(index));
@@ -23,7 +23,7 @@ impl ReferenceUnlockBlock {
         Ok(Self(index))
     }
 
-    /// Return the index of a `ReferenceUnlockBlock`.
+    /// Return the index of a [`ReferenceUnlockBlock`].
     pub fn index(&self) -> u16 {
         self.0
     }

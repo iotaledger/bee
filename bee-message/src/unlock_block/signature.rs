@@ -5,14 +5,14 @@ use crate::{signature::Signature, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-/// An [`UnlockBlock`](crate::unlock::UnlockBlock) which is used to unlock a signature locked
+/// An [`UnlockBlock`](crate::unlock_block::UnlockBlock) which is used to unlock a signature locked
 /// [`Input`](crate::input::Input).
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize, derive_more::From))]
 pub struct SignatureUnlockBlock(Signature);
 
 impl SignatureUnlockBlock {
-    /// The [`UnlockBlock`](crate::unlock::UnlockBlock) kind of a [`SignatureUnlockBlock`].
+    /// The [`UnlockBlock`](crate::unlock_block::UnlockBlock) kind of a [`SignatureUnlockBlock`].
     pub const KIND: u8 = 0;
 
     /// Creates a new [`SignatureUnlockBlock`].

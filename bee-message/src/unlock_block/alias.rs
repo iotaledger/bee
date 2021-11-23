@@ -9,20 +9,20 @@ use bee_common::packable::{Packable, Read, Write};
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize, derive_more::From))]
 pub struct AliasUnlockBlock {
-    // Index of input and unlock block corresponding to an alias output.
+    // Index of input and unlock block corresponding to an [`AliasOutput`].
     index: u16,
 }
 
 impl AliasUnlockBlock {
-    /// The unlock kind of an `AliasUnlockBlock`.
+    /// The [`UnlockBlock`](crate::unlock_block::UnlockBlock) kind of an [`AliasUnlockBlock`].
     pub const KIND: u8 = 2;
 
-    /// Creates a new `AliasUnlockBlock`.
+    /// Creates a new [`AliasUnlockBlock`].
     pub fn new(index: u16) -> Self {
         Self { index }
     }
 
-    /// Return the index of an `AliasUnlockBlock`.
+    /// Return the index of an [`AliasUnlockBlock`].
     pub fn index(&self) -> u16 {
         self.index
     }
