@@ -5,13 +5,13 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-/// Defines a unix time until which only Address is allowed to unlock the output.
-/// After the expiration time, only Sender can unlock it.
+/// Defines a unix time until which only the deposit [`Address`] is allowed to unlock the output.
+/// After the expiration time, only the [`Address`] defined in the [`Sender`] can unlock it.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExpirationUnixFeatureBlock {
-    // Before this unix time (seconds since Unix epoch), Address is allowed to unlock the output.
-    // After that, only the address defined in SenderBlock.
+    // Before this unix time (seconds since Unix epoch), [`Address`] is allowed to unlock the output.
+    // After that, only the [`Address`] defined in [`Sender`] can.
     timestamp: u32,
 }
 
