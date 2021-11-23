@@ -32,7 +32,7 @@ pub enum CoreError {
     Shutdown,
 }
 
-/// Combines worker, resource, task management and shutdown logic.
+/// Encapsulates worker, resource, task management and shutdown logic.
 #[allow(clippy::type_complexity)]
 pub struct Core<N: Node> {
     pub(crate) workers: Map<dyn AnyMapAny + Send + Sync>,
@@ -48,11 +48,10 @@ pub struct Core<N: Node> {
     pub(crate) worker_stops: HashMap<TypeId, Box<WorkerStop<N>>>,
     pub(crate) worker_order: Vec<TypeId>,
     pub(crate) worker_names: HashMap<TypeId, &'static str>,
-    // phantom: PhantomData<(B, S)>,
 }
 
 impl<N: Node> Core<N> {
-    /// Creates a new base node.
+    /// Creates a new node core.
     pub(crate) fn new(worker_stops: WorkerStopMap<N>, worker_order: Vec<TypeId>, worker_names: WorkerNameMap) -> Self {
         log_topological_order(&worker_order, &worker_names);
 
@@ -63,16 +62,15 @@ impl<N: Node> Core<N> {
             worker_stops,
             worker_order,
             worker_names,
-            // phantom: PhantomData,
         }
     }
 
-    /// Adds a worker to the node.
+    /// Adds a worker to the node core.
     pub(crate) fn add_worker<W: Worker<N> + Send + Sync>(&mut self, worker: W) {
         self.workers.insert(worker);
     }
 
-    /// Removes a worker from the node.
+    /// Removes a worker from the node core.
     pub(crate) fn remove_worker<W: Worker<N> + Send + Sync>(&mut self) -> W {
         self.workers
             .remove()
