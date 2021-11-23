@@ -5,8 +5,12 @@
 
 use crate::hash;
 
-use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey};
-use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Serialize};
+use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, PUBLIC_KEY_LENGTH};
+use serde::{
+    de::{SeqAccess, Visitor},
+    ser::SerializeStruct,
+    Deserialize, Serialize,
+};
 
 use std::{
     fmt,
@@ -159,7 +163,24 @@ impl<'de> Visitor<'de> for PeerIdVisitor {
     type Value = PeerId;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("a peer id")
+        formatter.write_str("'PeerId'")
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
+        let bytes = seq
+            .next_element::<[u8; PUBLIC_KEY_LENGTH]>()?
+            .ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+
+        let public_key = PublicKey::try_from_bytes(bytes).map_err(|_| serde::de::Error::invalid_length(0, &self))?;
+
+        let id_bytes = seq
+            .next_element::<[u8; hash::SHA256_LEN]>()?
+            .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
+
+        Ok(PeerId { public_key, id_bytes })
     }
 }
 

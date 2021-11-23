@@ -121,9 +121,9 @@ impl AutopeeringConfig {
     }
 }
 
-// Note: In case someone wonders why we use `Option<bool>`: Although serde actually provides a way to allow for the default
-// of a boolean parameter to be `true` - so that missing config parameters could be created on the fly - it felt too awkward
-// and also a bit too cumbersome to me: serde(default = "default_providing_function_name").
+// Note: In case someone wonders why we use `Option<bool>`: Although serde actually provides a way to allow for the
+// default of a boolean parameter to be `true` - so that missing config parameters could be created on the fly - it felt
+// too awkward and also a bit too cumbersome to me: serde(default = "default_providing_function_name").
 
 /// The autopeering config JSON builder.
 ///

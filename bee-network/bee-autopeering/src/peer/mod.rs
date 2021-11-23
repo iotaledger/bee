@@ -23,7 +23,11 @@ use crate::{
 use bytes::BytesMut;
 use crypto::signatures::ed25519::PublicKey;
 use prost::{DecodeError, EncodeError, Message};
-use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Serialize};
+use serde::{
+    de::{SeqAccess, Visitor},
+    ser::SerializeStruct,
+    Deserialize, Serialize,
+};
 
 use std::{convert::TryInto, fmt, net::IpAddr};
 
@@ -234,6 +238,29 @@ impl<'de> Visitor<'de> for PeerVisitor {
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("'Peer'")
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
+        let peer_id = seq
+            .next_element::<PeerId>()?
+            .ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+
+        let ip_address = seq
+            .next_element::<IpAddr>()?
+            .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
+
+        let services = seq
+            .next_element::<ServiceMap>()?
+            .ok_or_else(|| serde::de::Error::invalid_length(2, &self))?;
+
+        Ok(Peer {
+            peer_id,
+            ip_address,
+            services,
+        })
     }
 }
 

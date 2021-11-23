@@ -8,7 +8,11 @@ use crate::{
     time::{self, Timestamp},
 };
 
-use serde::{de::Visitor, ser::SerializeStruct, Deserialize, Serialize};
+use serde::{
+    de::{SeqAccess, Visitor},
+    ser::SerializeStruct,
+    Deserialize, Serialize,
+};
 
 use std::{
     collections::{HashSet, VecDeque},
@@ -62,6 +66,14 @@ impl ActivePeer {
     pub(crate) fn into_peer(self) -> Peer {
         self.peer
     }
+
+    pub(crate) fn to_vec(&self) -> Vec<u8> {
+        bincode::serialize(self).expect("serialization error")
+    }
+
+    pub(crate) fn from_bytes(bytes: &[u8]) -> Self {
+        bincode::deserialize(bytes).expect("deserialization error")
+    }
 }
 
 impl Eq for ActivePeer {}
@@ -91,14 +103,13 @@ impl AsRef<Peer> for ActivePeer {
 
 impl From<ActivePeer> for sled::IVec {
     fn from(peer: ActivePeer) -> Self {
-        let bytes = bincode::serialize(&peer).expect("serialization error");
-        sled::IVec::from_iter(bytes.into_iter())
+        bincode::serialize(&peer).expect("serialization error").into()
     }
 }
 
 impl From<sled::IVec> for ActivePeer {
     fn from(bytes: sled::IVec) -> Self {
-        bincode::deserialize(&bytes).expect("deserialization error")
+        bincode::deserialize(bytes.as_ref()).expect("deserialization error")
     }
 }
 
@@ -130,6 +141,21 @@ impl<'de> Visitor<'de> for ActivePeerVisitor {
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("'ActivePeer'")
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
+        let peer = seq
+            .next_element::<Peer>()?
+            .ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+
+        let metrics = seq
+            .next_element::<PeerMetrics>()?
+            .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
+
+        Ok(ActivePeer { peer, metrics })
     }
 }
 
