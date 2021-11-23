@@ -1,7 +1,6 @@
 use bee_trace::observe;
 
 use tokio::{task, time::timeout};
-use tracing_subscriber::prelude::*;
 
 use std::{path::PathBuf, time::Duration};
 
@@ -15,9 +14,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "Creating flamegraph layer, recording to {}.folded",
         stack_filename.to_string_lossy()
     );
-    let (flamegraph_layer, flamegrapher) = bee_subscriber::subscriber::layer::flamegraph_layer(stack_filename)?;
 
-    tracing_subscriber::registry().with(flamegraph_layer).init();
+    let flamegrapher = bee_trace::subscriber::build()
+        .with_flamegraph_layer(stack_filename)
+        .init()?
+        .unwrap();
 
     println!("Running tasks for 5 seconds...");
     let task1 = task::spawn(timeout(Duration::from_secs(5), run_tasks(500)));

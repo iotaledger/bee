@@ -1,9 +1,8 @@
 mod flamegraph;
 mod log;
 
-pub use flamegraph::FlamegraphLayer;
+pub use self::{flamegraph::FlamegraphLayer, log::LogLayer};
 
-use self::log::LogLayer;
 use crate::{util::Flamegrapher, Error};
 
 use bee_common::logger::LoggerConfig;
@@ -17,7 +16,7 @@ use tracing_subscriber::{
 
 use std::path::Path;
 
-type FlamegraphFilteredLayer = Filtered<FlamegraphLayer, FilterFn, Registry>;
+pub type FlamegraphFilteredLayer = Filtered<FlamegraphLayer, FilterFn, Registry>;
 
 pub fn flamegraph_layer<P: AsRef<Path>>(stack_filename: P) -> Result<(FlamegraphFilteredLayer, Flamegrapher), Error> {
     #![allow(clippy::assertions_on_constants)]

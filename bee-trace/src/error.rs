@@ -4,18 +4,20 @@ use std::{error, fmt, io, path::PathBuf};
 pub enum Error {
     FlamegraphLayer(io::Error),
     Flamegrapher(FlamegrapherErrorKind),
-    LogLayer(io::Error),
+    LogLayer(LogLayerErrorKind),
 }
 
 #[derive(Debug)]
 pub enum LogLayerErrorKind {
     Io(io::Error),
+    SetLogger(log::SetLoggerError),
 }
 
 impl fmt::Display for LogLayerErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
             Self::Io(err) => write!(f, "{}", err),
+            Self::SetLogger(err) => write!(f, "{}", err),
         }
     }
 }
@@ -23,6 +25,12 @@ impl fmt::Display for LogLayerErrorKind {
 impl From<io::Error> for LogLayerErrorKind {
     fn from(err: io::Error) -> Self {
         Self::Io(err)
+    }
+}
+
+impl From<log::SetLoggerError> for LogLayerErrorKind {
+    fn from(err: log::SetLoggerError) -> Self {
+        Self::SetLogger(err)
     }
 }
 
@@ -97,7 +105,8 @@ impl error::Error for Error {
         match &self {
             Self::FlamegraphLayer(err) => Some(err),
             Self::Flamegrapher(FlamegrapherErrorKind::Io(err)) => Some(err),
-            Self::LogLayer(err) => Some(err),
+            Self::LogLayer(LogLayerErrorKind::Io(err)) => Some(err),
+            Self::LogLayer(LogLayerErrorKind::SetLogger(err)) => Some(err),
             _ => None,
         }
     }

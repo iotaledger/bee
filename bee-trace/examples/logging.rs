@@ -1,12 +1,8 @@
 use bee_common::logger::{LoggerConfig, LoggerOutputConfigBuilder};
 
-use tracing_subscriber::prelude::*;
-
 use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    bee_trace::subscriber::collect_logs();
-
     let stdout = LoggerOutputConfigBuilder::new()
         .name("stdout")
         .level_filter(log::LevelFilter::Info)
@@ -21,8 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = LoggerConfig::build().with_output(stdout).with_output(warn).finish();
 
-    let log_layer = bee_trace::subscriber::layer::log_layer(config)?;
-    tracing_subscriber::registry().with(log_layer).init();
+    let _ = bee_trace::subscriber::build().with_log_layer(config).init().unwrap();
 
     log();
     filtered::log();

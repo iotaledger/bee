@@ -93,7 +93,7 @@ impl ObserveImpl {
         };
 
         quote! {
-            bee_subscriber::Observe::observe(#observed_future, #fn_name).await
+            bee_trace::Observe::observe(#observed_future, #fn_name).await
         }
     }
 }
