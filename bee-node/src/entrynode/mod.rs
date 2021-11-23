@@ -22,9 +22,9 @@ use std::any::{type_name, Any, TypeId};
 /// Entry node related errors.
 #[derive(Debug, thiserror::Error)]
 pub enum EntryNodeError {
-    #[error("Entry node with disabled autopeering.")]
+    #[error("entry node with disabled autopeering")]
     DisabledAutopeering,
-    #[error("Cause: {0}")]
+    #[error("{0}")]
     AutopeeringInitialization(Box<dyn std::error::Error>),
     #[error("{0}")]
     Core(#[from] CoreError),

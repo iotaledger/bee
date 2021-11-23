@@ -36,9 +36,9 @@ use std::{fs, path::Path};
 /// Config file errors.
 #[derive(Debug, thiserror::Error)]
 pub enum NodeConfigError {
-    #[error("Reading the config file failed. Caused by: {0}.")]
+    #[error("reading the config file failed: {0}")]
     FileRead(#[from] std::io::Error),
-    #[error("Deserializing the config builder failed. Caused by: {0}.")]
+    #[error("deserializing the config builder failed: {0}")]
     ConfigBuilderDeserialization(#[from] toml::de::Error),
 }
 
@@ -170,8 +170,6 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
             local,
             network_spec,
             logger_config: self.logger_builder.unwrap_or_default().finish(),
-            // TODO: Create specific error types for each config section, e.g.
-            // Error::NetworkConfigError(bee_gossip::config::Error)
             gossip_config: self
                 .gossip_builder
                 .unwrap_or_default()

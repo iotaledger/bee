@@ -7,10 +7,13 @@ use bee_gossip::{Keypair, PeerId, PublicKey};
 
 use crate::{KEYPAIR_STR_LENGTH, LOCAL_ALIAS_DEFAULT};
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum LocalError {
+    #[error("invalid ed25519 keypair")]
     InvalidKeypair,
+    #[error("cannot decode from hex representation")]
     HexDecode,
+    #[error("cannot decode ed25519 keypair")]
     KeypairDecode,
 }
 

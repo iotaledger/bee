@@ -234,7 +234,7 @@ fn add_node_resources<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Res
             .set_health(StorageHealth::Healthy)
             .map_err(|e| CoreError::StorageBackend(Box::new(e)))?;
 
-        return Err(FullNodeError::InvalidOrNoIdentityPrivateKey(
+        return Err(FullNodeError::InvalidIdentityPrivateKey(
             builder.config().local().encoded().to_string(),
         ));
     }

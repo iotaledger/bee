@@ -26,9 +26,9 @@ pub(crate) type WorkerNameMap = HashMap<TypeId, &'static str>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CoreError {
-    #[error("Storage backend operation failed. Cause: {0}.")]
+    #[error("storage backend operation failed: {0}")]
     StorageBackend(Box<dyn std::error::Error>),
-    #[error("Shutdown error")]
+    #[error("shutdown error")]
     Shutdown,
 }
 

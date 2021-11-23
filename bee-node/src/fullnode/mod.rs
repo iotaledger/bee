@@ -22,13 +22,11 @@ use std::any::{type_name, Any, TypeId};
 /// Full node related errors.
 #[derive(Debug, thiserror::Error)]
 pub enum FullNodeError {
-    #[error(
-        "Invalid or no identity private key provided. Add the newly generated {0} (or generate one with `bee p2p-identity`) to the configuration file and re-run the node."
-    )]
-    InvalidOrNoIdentityPrivateKey(String),
-    #[error("Cause: {0}")]
+    #[error("invalid identity private key '{0}'")]
+    InvalidIdentityPrivateKey(String),
+    #[error("{0}")]
     GossipLayerInitialization(#[from] bee_gossip::Error),
-    #[error("Cause: {0}")]
+    #[error("{0}")]
     AutopeeringInitialization(Box<dyn std::error::Error>),
     #[error("{0}")]
     Core(#[from] CoreError),
