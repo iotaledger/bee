@@ -59,7 +59,7 @@ impl ClArgs {
 
     /// Returns the config file path.
     pub fn config_path(&self) -> Option<&Path> {
-        self.cli.config_path.as_ref().map(|path| path.as_path())
+        self.cli.config_path.as_deref()
     }
 
     /// Returns the chosen log level.

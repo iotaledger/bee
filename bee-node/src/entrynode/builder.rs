@@ -58,7 +58,7 @@ impl NodeBuilder<EntryNode> for EntryNodeBuilder {
     /// Creates an entry node builder from the provided config.
     fn new(config: Self::Config) -> Result<Self, Self::Error> {
         Ok(Self {
-            config: config.clone(),
+            config,
             deps: HashMap::default(),
             worker_starts: HashMap::default(),
             worker_stops: HashMap::default(),

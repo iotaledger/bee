@@ -69,9 +69,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut stream = AsIterator::<u8, System>::iter(storage)?;
+                let stream = AsIterator::<u8, System>::iter(storage)?;
 
-                while let Some(result) = stream.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -85,9 +85,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut stream = AsIterator::<MessageId, Message>::iter(storage)?;
+                let stream = AsIterator::<MessageId, Message>::iter(storage)?;
 
-                while let Some(result) = stream.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -101,9 +101,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut stream = AsIterator::<MessageId, MessageMetadata>::iter(storage)?;
+                let stream = AsIterator::<MessageId, MessageMetadata>::iter(storage)?;
 
-                while let Some(result) = stream.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -117,9 +117,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut stream = AsIterator::<(MessageId, MessageId), ()>::iter(storage)?;
+                let stream = AsIterator::<(MessageId, MessageId), ()>::iter(storage)?;
 
-                while let Some(result) = stream.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -138,9 +138,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut stream = AsIterator::<(PaddedIndex, MessageId), ()>::iter(storage)?;
+                let stream = AsIterator::<(PaddedIndex, MessageId), ()>::iter(storage)?;
 
-                while let Some(result) = stream.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -154,9 +154,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut stream = AsIterator::<OutputId, CreatedOutput>::iter(storage)?;
+                let stream = AsIterator::<OutputId, CreatedOutput>::iter(storage)?;
 
-                while let Some(result) = stream.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -170,9 +170,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut stream = AsIterator::<OutputId, ConsumedOutput>::iter(storage)?;
+                let stream = AsIterator::<OutputId, ConsumedOutput>::iter(storage)?;
 
-                while let Some(result) = stream.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -186,9 +186,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut stream = AsIterator::<Unspent, ()>::iter(storage)?;
+                let stream = AsIterator::<Unspent, ()>::iter(storage)?;
 
-                while let Some(result) = stream.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -202,9 +202,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut stream = AsIterator::<(Ed25519Address, OutputId), ()>::iter(storage)?;
+                let stream = AsIterator::<(Ed25519Address, OutputId), ()>::iter(storage)?;
 
-                while let Some(result) = stream.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -213,9 +213,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_LEDGER_INDEX => match &tool.command {
             RocksdbCommand::Fetch { key: _key } => return Err(RocksdbError::UnsupportedCommand),
             RocksdbCommand::Iterator => {
-                let mut stream = AsIterator::<(), LedgerIndex>::iter(storage)?;
+                let stream = AsIterator::<(), LedgerIndex>::iter(storage)?;
 
-                while let Some(result) = stream.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -229,9 +229,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut stream = AsIterator::<MilestoneIndex, Milestone>::iter(storage)?;
+                let stream = AsIterator::<MilestoneIndex, Milestone>::iter(storage)?;
 
-                while let Some(result) = stream.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -240,9 +240,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
         CF_SNAPSHOT_INFO => match &tool.command {
             RocksdbCommand::Fetch { key: _key } => return Err(RocksdbError::UnsupportedCommand),
             RocksdbCommand::Iterator => {
-                let mut iterator = AsIterator::<(), SnapshotInfo>::iter(storage)?;
+                let stream = AsIterator::<(), SnapshotInfo>::iter(storage)?;
 
-                while let Some(result) = iterator.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -257,9 +257,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut iterator = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter(storage)?;
+                let stream = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter(storage)?;
 
-                while let Some(result) = iterator.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -273,9 +273,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut iterator = AsIterator::<MilestoneIndex, OutputDiff>::iter(storage)?;
+                let stream = AsIterator::<MilestoneIndex, OutputDiff>::iter(storage)?;
 
-                while let Some(result) = iterator.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -290,9 +290,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut iterator = AsIterator::<Address, Balance>::iter(storage)?;
+                let stream = AsIterator::<Address, Balance>::iter(storage)?;
 
-                while let Some(result) = iterator.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -306,9 +306,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut iterator = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter(storage)?;
+                let stream = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter(storage)?;
 
-                while let Some(result) = iterator.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -322,9 +322,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut iterator = AsIterator::<(MilestoneIndex, Receipt), ()>::iter(storage)?;
+                let stream = AsIterator::<(MilestoneIndex, Receipt), ()>::iter(storage)?;
 
-                while let Some(result) = iterator.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -338,9 +338,9 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let mut stream = AsIterator::<(bool, TreasuryOutput), ()>::iter(storage)?;
+                let stream = AsIterator::<(bool, TreasuryOutput), ()>::iter(storage)?;
 
-                while let Some(result) = stream.next() {
+                for result in stream {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }

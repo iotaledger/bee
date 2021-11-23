@@ -54,8 +54,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 fn deserialize_config(cl_args: ClArgs) -> NodeConfig<Storage> {
     #[cfg(feature = "rocksdb")]
-    let config = match NodeConfigBuilder::<Storage>::from_file(cl_args.config_path().unwrap_or(Path::new(CONFIG_PATH)))
-    {
+    let config = match NodeConfigBuilder::<Storage>::from_file(
+        cl_args.config_path().unwrap_or_else(|| Path::new(CONFIG_PATH)),
+    ) {
         Ok(builder) => builder.apply_args(&cl_args).finish(),
         Err(e) => panic!("Failed to create the node config builder: {}", e),
     };
