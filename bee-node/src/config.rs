@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Handles node configuration from a file.
+//! Handles the proper configuration of a node from a single config file.
 //!
-//! Note:
-//! The idea is to have a common config file for all Bee node types to keep things as simple as possible.
-//! Each node type grabs the information it needs from the config, and discards the rest.
+//! ## Note
+//! All node types use a common config file (i.e. config.toml), and simply ignore
+//! those parameters they don't actually require.
 
 use crate::{
     cli::ClArgs,
