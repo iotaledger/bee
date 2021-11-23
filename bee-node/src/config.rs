@@ -8,7 +8,7 @@
 //! Each node type grabs the information it needs from the config, and discards the rest.
 
 use crate::{
-    cl::ClArgs,
+    cli::ClArgs,
     local::Local,
     plugins::mqtt::config::{MqttConfig, MqttConfigBuilder},
     storage::NodeStorageBackend,

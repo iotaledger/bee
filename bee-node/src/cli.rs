@@ -8,10 +8,15 @@ use structopt::StructOpt;
 
 use std::path::{Path, PathBuf};
 
-// BEWARE: `structopt` puts any doc comment for this struct into the output of `--help`. We don't want that.
-#[allow(missing_docs)]
-#[derive(Clone, Debug, StructOpt)]
+/// Holds the command line arguments that were passed to the binary.
 pub struct ClArgs {
+    cli: Cli,
+}
+
+// The command-line interface.
+// BEWARE: `structopt` puts any doc comment for this struct into the output of `--help`. We don't want that.
+#[derive(Clone, Debug, StructOpt)]
+struct Cli {
     // The config file location.
     #[structopt(
         short = "c",
@@ -46,34 +51,35 @@ impl Default for ClArgs {
 impl ClArgs {
     /// Creates an instance of this type from the arguments passed to the binary via the command line.
     pub fn load() -> Self {
-        let args = <Self as StructOpt>::from_args();
+        let cli = <Cli as StructOpt>::from_args();
+        let args = Self { cli };
         validate_args(&args);
         args
     }
 
     /// Returns the config file path.
     pub fn config_path(&self) -> Option<&Path> {
-        self.config_path.as_ref().map(|path| path.as_path())
+        self.cli.config_path.as_ref().map(|path| path.as_path())
     }
 
     /// Returns the chosen log level.
     pub fn log_level(&self) -> Option<LevelFilter> {
-        self.log_level
+        self.cli.log_level
     }
 
     /// Returns the chosen tool (subcommand).
     pub fn tool(&self) -> Option<&Tool> {
-        self.tool.as_ref()
+        self.cli.tool.as_ref()
     }
 
     /// Returns whether the exact commit version should be printed.
     pub fn print_commit_version(&self) -> bool {
-        self.commit_version
+        self.cli.commit_version
     }
 
     /// Returns whether the node should run as an (autopeering) entry node.
     pub fn run_as_entry_node(&self) -> bool {
-        self.entry_node
+        self.cli.entry_node
     }
 }
 
