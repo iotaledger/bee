@@ -19,12 +19,12 @@ impl NftUnlockBlock {
 
     /// Creates a new [`NftUnlockBlock`].
     pub fn new(index: u16) -> Self {
-        Self(index)
+        Self { index }
     }
 
     /// Return the index of a [`NftUnlockBlock`].
     pub fn index(&self) -> u16 {
-        self.0
+        self.index
     }
 }
 
@@ -36,7 +36,7 @@ impl Packable for NftUnlockBlock {
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
+        self.index.pack(writer)?;
 
         Ok(())
     }
