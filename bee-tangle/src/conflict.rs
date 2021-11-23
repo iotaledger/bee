@@ -30,12 +30,14 @@ pub enum ConflictReason {
     InputUtxoAlreadySpentInThisMilestone = 2,
     /// The referenced Utxo cannot be found.
     InputUtxoNotFound = 3,
-    /// The sum of the inputs and output values does not match.
-    InputOutputSumMismatch = 4,
+    /// The created amount does not match the consumed amount.
+    CreatedConsumedAmountMismatch = 4,
     /// The unlock block signature is invalid.
     InvalidSignature = 5,
     /// The dust allowance for the address is invalid.
     InvalidDustAllowance = 6,
+    /// The created native tokens amount does not match the consumed native tokens amount.
+    CreatedConsumedNativeTokensAmountMismatch = 7,
     /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
 }
@@ -55,10 +57,12 @@ impl TryFrom<u8> for ConflictReason {
             1 => Self::InputUtxoAlreadySpent,
             2 => Self::InputUtxoAlreadySpentInThisMilestone,
             3 => Self::InputUtxoNotFound,
-            4 => Self::InputOutputSumMismatch,
+            4 => Self::CreatedConsumedAmountMismatch,
             5 => Self::InvalidSignature,
             6 => Self::InvalidDustAllowance,
+            7 => Self::CreatedConsumedNativeTokensAmountMismatch,
             255 => Self::SemanticValidationFailed,
+
             x => return Err(Self::Error::InvalidConflict(x)),
         })
     }

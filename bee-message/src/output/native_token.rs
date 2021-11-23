@@ -15,7 +15,7 @@ use core::{convert::TryFrom, ops::Deref};
 pub struct NativeToken {
     // Identifier of the native token.
     token_id: TokenId,
-    // Amount of native tokens of the given token ID.
+    // Amount of native tokens.
     amount: U256,
 }
 

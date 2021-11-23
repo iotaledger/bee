@@ -30,22 +30,20 @@ use std::collections::{HashMap, HashSet};
 
 struct ValidationContext {
     timestamp: u64,
-    consumed_amount: u64,
-    created_amount: u64,
+    amount: u64,
+    native_tokens_amount: HashMap<TokenId, U256>,
     consumed_outputs: HashMap<OutputId, CreatedOutput>,
     balance_diffs: BalanceDiffs,
-    native_tokens: HashMap<TokenId, U256>,
 }
 
 impl ValidationContext {
     fn new(timestamp: u64, inputs_len: usize) -> Self {
         Self {
             timestamp,
-            consumed_amount: 0,
-            created_amount: 0,
+            amount: 0,
+            native_tokens_amount: HashMap::<TokenId, U256>::new(),
             consumed_outputs: HashMap::with_capacity(inputs_len),
             balance_diffs: BalanceDiffs::new(),
-            native_tokens: HashMap::<TokenId, U256>::new(),
         }
     }
 }
@@ -161,12 +159,15 @@ fn apply_regular_essence<B: StorageBackend>(
             }
         };
 
-        context.consumed_amount = context
-            .consumed_amount
+        context.amount = context
+            .amount
             .checked_add(amount)
             .ok_or(Error::ConsumedAmountOverflow)?;
         for native_token in consumed_native_tokens {
-            let native_token_amount = context.native_tokens.entry(*native_token.token_id()).or_default();
+            let native_token_amount = context
+                .native_tokens_amount
+                .entry(*native_token.token_id())
+                .or_default();
             *native_token_amount = native_token_amount
                 .checked_add(*native_token.amount())
                 .ok_or(Error::ConsumedNativeTokensAmountOverflow)?;
@@ -190,27 +191,32 @@ fn apply_regular_essence<B: StorageBackend>(
             Output::Nft(output) => (output.amount(), output.native_tokens()),
         };
 
-        context.created_amount = context
-            .created_amount
-            .checked_add(amount)
-            .ok_or(Error::CreatedAmountOverflow)?;
+        context.amount = context.amount.checked_sub(amount).ok_or(Error::CreatedAmountOverflow)?;
         for native_token in created_native_tokens {
-            let native_token_amount = *context.native_tokens.entry(*native_token.token_id()).or_default();
-            // TODO actually overflow ?
+            let native_token_amount = *context
+                .native_tokens_amount
+                .entry(*native_token.token_id())
+                .or_default();
             native_token_amount
                 .checked_sub(*native_token.amount())
                 .ok_or(Error::CreatedNativeTokensAmountOverflow)?;
         }
     }
 
-    if context.created_amount != context.consumed_amount {
-        return Ok(ConflictReason::InputOutputSumMismatch);
+    if context.amount != 0 {
+        return Ok(ConflictReason::CreatedConsumedAmountMismatch);
     }
 
-    // TODO The transaction is balanced in terms of native tokens, meaning the amount of native tokens present in inputs
-    // equals to that of outputs. Otherwise, the foundry outputs controlling outstanding native token balances must be
-    // present in the transaction. The validation of the foundry output(s) determines if the outstanding balances are
-    // valid.
+    for (_, amount) in context.native_tokens_amount {
+        if amount.is_zero() {
+            return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
+        }
+
+        // TODO The transaction is balanced in terms of native tokens, meaning the amount of native tokens present in
+        // inputs equals to that of outputs. Otherwise, the foundry outputs controlling outstanding native token
+        // balances must be present in the transaction. The validation of the foundry output(s) determines if
+        // the outstanding balances are valid.
+    }
 
     for (output_id, created_output) in context.consumed_outputs {
         metadata.consumed_outputs.insert(
