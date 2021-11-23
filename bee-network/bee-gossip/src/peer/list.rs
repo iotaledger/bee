@@ -169,11 +169,7 @@ impl PeerList {
         self.peers.iter().fold(
             0,
             |count, (_, (info, state))| {
-                if predicate(info, state) {
-                    count + 1
-                } else {
-                    count
-                }
+                if predicate(info, state) { count + 1 } else { count }
             },
         )
     }
@@ -366,12 +362,13 @@ mod tests {
         let mut pl = PeerList::new(local_id);
 
         for i in 1..=3 {
-            assert!(pl
-                .insert_peer(
+            assert!(
+                pl.insert_peer(
                     gen_random_peer_id(),
                     gen_deterministic_peer_info(i, PeerRelation::Known)
                 )
-                .is_ok());
+                .is_ok()
+            );
             assert_eq!(pl.len(), i as usize);
         }
     }
