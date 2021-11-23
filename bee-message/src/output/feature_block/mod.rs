@@ -172,12 +172,15 @@ pub struct FeatureBlocks(Box<[FeatureBlock]>);
 impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
     type Error = Error;
 
-    fn try_from(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Self::Error> {
+    fn try_from(mut feature_blocks: Vec<FeatureBlock>) -> Result<Self, Self::Error> {
         if feature_blocks.len() as u8 > FEATURE_BLOCK_COUNT_MAX {
             return Err(Error::InvalidFeatureBlockCount(feature_blocks.len() as u8));
         }
 
-        if !is_unique_sorted(feature_blocks.iter().map(|b| b.kind())) {
+        feature_blocks.sort_by_key(FeatureBlock::kind);
+
+        // Sort is obviously fine now but uniqueness still needs to be checked.
+        if !is_unique_sorted(feature_blocks.iter().map(FeatureBlock::kind)) {
             return Err(Error::FeatureBlocksNotUniqueSorted);
         }
 
@@ -189,6 +192,20 @@ impl FeatureBlocks {
     /// Creates a new `FeatureBlocks`.
     pub fn new(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Error> {
         Self::try_from(feature_blocks)
+    }
+
+    /// Gets a reference to a feature block from a feature block kind, if found.
+    pub fn get(&self, key: u8) -> Option<&FeatureBlock> {
+        self.0
+            .binary_search_by_key(&key, FeatureBlock::kind)
+            // SAFETY: indexation is fine since the index has been found.
+            .map(|index| &self.0[index])
+            .ok()
+    }
+
+    /// Returns the length of the feature blocks.
+    pub fn len(&self) -> usize {
+        self.0.len()
     }
 }
 
@@ -228,6 +245,10 @@ impl Packable for FeatureBlocks {
             feature_blocks.push(FeatureBlock::unpack_inner::<R, CHECK>(reader)?);
         }
 
-        Self::new(feature_blocks)
+        if CHECK && !is_unique_sorted(feature_blocks.iter().map(FeatureBlock::kind)) {
+            return Err(Error::FeatureBlocksNotUniqueSorted);
+        }
+
+        Ok(Self(feature_blocks.into_boxed_slice()))
     }
 }
