@@ -10,9 +10,6 @@ use primitive_types::U256;
 use core::{convert::TryFrom, ops::Deref};
 
 ///
-pub const NATIVE_TOKEN_COUNT_MAX: u16 = 256;
-
-///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct NativeToken {
@@ -71,15 +68,16 @@ impl TryFrom<Vec<NativeToken>> for NativeTokens {
     type Error = Error;
 
     fn try_from(native_tokens: Vec<NativeToken>) -> Result<Self, Self::Error> {
-        if native_tokens.len() as u16 > NATIVE_TOKEN_COUNT_MAX {
-            return Err(Error::InvalidNativeTokenCount(native_tokens.len() as u16));
-        }
+        validate_count(native_tokens.len())?;
 
         Ok(Self(native_tokens.into_boxed_slice()))
     }
 }
 
 impl NativeTokens {
+    ///
+    pub const COUNT_MAX: usize = 256;
+
     /// Creates a new `NativeTokens`.
     pub fn new(native_tokens: Vec<NativeToken>) -> Result<Self, Error> {
         Self::try_from(native_tokens)
@@ -111,17 +109,26 @@ impl Packable for NativeTokens {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let native_tokens_len = u16::unpack_inner::<R, CHECK>(reader)?;
+        let native_tokens_count = u16::unpack_inner::<R, CHECK>(reader)? as usize;
 
-        if CHECK && native_tokens_len > NATIVE_TOKEN_COUNT_MAX {
-            return Err(Error::InvalidNativeTokenCount(native_tokens_len));
+        if CHECK {
+            validate_count(native_tokens_count)?;
         }
 
-        let mut native_tokens = Vec::with_capacity(native_tokens_len as usize);
-        for _ in 0..native_tokens_len {
+        let mut native_tokens = Vec::with_capacity(native_tokens_count);
+        for _ in 0..native_tokens_count {
             native_tokens.push(NativeToken::unpack_inner::<R, CHECK>(reader)?);
         }
 
         Self::new(native_tokens)
     }
+}
+
+#[inline]
+fn validate_count(native_tokens_count: usize) -> Result<(), Error> {
+    if native_tokens_count > NativeTokens::COUNT_MAX {
+        return Err(Error::InvalidNativeTokenCount(native_tokens_count));
+    }
+
+    Ok(())
 }

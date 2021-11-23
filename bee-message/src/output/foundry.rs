@@ -122,8 +122,11 @@ impl FoundryOutputBuilder {
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct FoundryOutput {
+    // Deposit address of the output.
     address: Address,
+    // Amount of IOTA tokens held by the output.
     amount: u64,
+    // Native tokens held by the output.
     native_tokens: NativeTokens,
     serial_number: u32,
     token_tag: [u8; 12],

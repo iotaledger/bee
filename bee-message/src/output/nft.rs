@@ -80,9 +80,11 @@ impl NftOutputBuilder {
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct NftOutput {
+    // Deposit address of the output.
     address: Address,
-    // The amount of IOTA tokens held by the output.
+    // Amount of IOTA tokens held by the output.
     amount: u64,
+    // Native tokens held by the output.
     native_tokens: NativeTokens,
     // Unique identifier of the NFT.
     nft_id: NftId,

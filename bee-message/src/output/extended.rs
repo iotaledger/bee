@@ -63,12 +63,15 @@ impl ExtendedOutputBuilder {
     }
 }
 
-///
+/// Describes an extended output with optional features.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExtendedOutput {
+    // Deposit address of the output.
     address: Address,
+    // Amount of IOTA tokens held by the output.
     amount: u64,
+    // Native tokens held by the output.
     native_tokens: NativeTokens,
     feature_blocks: FeatureBlocks,
 }

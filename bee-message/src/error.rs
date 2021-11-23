@@ -35,7 +35,7 @@ pub enum Error {
     InvalidMessageLength(usize),
     InvalidMetadataLength(u32),
     InvalidMigratedFundsEntryAmount(u64),
-    InvalidNativeTokenCount(u16),
+    InvalidNativeTokenCount(usize),
     InvalidOutputKind(u8),
     InvalidParentsCount(usize),
     InvalidPayloadKind(u32),

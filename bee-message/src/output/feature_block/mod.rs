@@ -31,9 +31,6 @@ use bee_common::{
 use core::{convert::TryFrom, ops::Deref};
 
 ///
-pub const FEATURE_BLOCK_COUNT_MAX: usize = 8;
-
-///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(
     feature = "serde1",
@@ -173,7 +170,7 @@ impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
     type Error = Error;
 
     fn try_from(mut feature_blocks: Vec<FeatureBlock>) -> Result<Self, Self::Error> {
-        validate_length(feature_blocks.len())?;
+        validate_count(feature_blocks.len())?;
 
         feature_blocks.sort_by_key(FeatureBlock::kind);
 
@@ -186,6 +183,9 @@ impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
 }
 
 impl FeatureBlocks {
+    ///
+    pub const COUNT_MAX: usize = 8;
+
     /// Creates a new `FeatureBlocks`.
     pub fn new(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Error> {
         Self::try_from(feature_blocks)
@@ -231,14 +231,14 @@ impl Packable for FeatureBlocks {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let feature_blocks_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
+        let feature_blocks_count = u8::unpack_inner::<R, CHECK>(reader)? as usize;
 
         if CHECK {
-            validate_length(feature_blocks_len)?;
+            validate_count(feature_blocks_count)?;
         }
 
-        let mut feature_blocks = Vec::with_capacity(feature_blocks_len);
-        for _ in 0..feature_blocks_len {
+        let mut feature_blocks = Vec::with_capacity(feature_blocks_count);
+        for _ in 0..feature_blocks_count {
             feature_blocks.push(FeatureBlock::unpack_inner::<R, CHECK>(reader)?);
         }
 
@@ -252,9 +252,9 @@ impl Packable for FeatureBlocks {
 }
 
 #[inline]
-fn validate_length(feature_blocks_len: usize) -> Result<(), Error> {
-    if feature_blocks_len > FEATURE_BLOCK_COUNT_MAX {
-        return Err(Error::InvalidFeatureBlockCount(feature_blocks_len));
+fn validate_count(feature_blocks_count: usize) -> Result<(), Error> {
+    if feature_blocks_count > FeatureBlocks::COUNT_MAX {
+        return Err(Error::InvalidFeatureBlockCount(feature_blocks_count));
     }
 
     Ok(())

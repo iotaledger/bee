@@ -107,7 +107,7 @@ impl AliasOutputBuilder {
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct AliasOutput {
-    // The amount of IOTA tokens held by the output.
+    // Amount of IOTA tokens held by the output.
     amount: u64,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
