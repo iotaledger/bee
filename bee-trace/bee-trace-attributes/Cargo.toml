@@ -2,6 +2,12 @@
 name = "bee-trace-attributes"
 version = "0.1.0"
 edition = "2021"
+description = "Procedural macros for bee-trace"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "framework", "trace", "tracing", "attribute", "proc-macro" ]
+homepage = "https://www.iota.org"
 
 [lib]
 proc-macro = true
