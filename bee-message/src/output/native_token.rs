@@ -7,7 +7,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use primitive_types::U256;
 
-use core::{convert::TryFrom, ops::Deref};
+use core::ops::Deref;
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]

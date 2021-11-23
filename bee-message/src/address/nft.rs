@@ -5,7 +5,7 @@ use crate::{output::NftId, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{convert::TryInto, ops::Deref, str::FromStr};
+use core::{ops::Deref, str::FromStr};
 
 /// A NFT address.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From)]

@@ -5,7 +5,7 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{convert::TryInto, str::FromStr};
+use core::str::FromStr;
 
 ///
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, derive_more::From)]

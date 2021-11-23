@@ -28,7 +28,7 @@ use bee_common::{
     packable::{Packable, Read, Write},
 };
 
-use core::{convert::TryFrom, ops::Deref};
+use core::ops::Deref;
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]

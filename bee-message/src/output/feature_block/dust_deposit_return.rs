@@ -5,8 +5,6 @@ use crate::{constants::DUST_THRESHOLD, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::convert::TryFrom;
-
 /// Defines the amount of IOTAs used as dust deposit that have to be returned to Sender.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
