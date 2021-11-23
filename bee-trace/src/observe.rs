@@ -1,8 +1,23 @@
+// Copyright 2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use tracing::trace_span;
 use tracing_futures::{Instrument, Instrumented};
 
+/// The field name of the [`Span`](tracing::Span) location file.
+pub(crate) const FILE_FIELD_NAME: &'static str = "loc.file";
+
+/// The field name of the [`Span`](tracing::Span) location line.
+pub(crate) const LINE_FIELD_NAME: &'static str = "loc.line";
+
+/// Instruments a future with a `tracing` span.
+/// 
+/// This span is given the `bee::observe` target, so that it can be more easily filtered 
+/// in any subscribers or subscriber layers. It also records the future's calling location
+/// in its fields.
 pub trait Observe: Sized {
     #[track_caller]
+    /// Instruments `Self` with a `tracing` span, returning [`Instrumented<Self>`].
     fn observe(self, name: &str) -> Instrumented<Self>;
 }
 

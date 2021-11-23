@@ -1,15 +1,25 @@
+// Copyright 2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::{error, fmt, io, path::PathBuf};
 
+/// Error `enum` containing variants for any errors that could potentially occur in this crate.
 #[derive(Debug)]
 pub enum Error {
+    /// Error originating from the [`FlamegraphLayer`](crate::subscriber::layer::FlamegraphFilteredLayer).
     FlamegraphLayer(io::Error),
+    /// Error originating from the [`Flamegrapher`](crate::util::Flamegrapher).
     Flamegrapher(FlamegrapherErrorKind),
+    /// Error originating from the [`LogLayer`](crate::subscriber::layer::LogLayer).
     LogLayer(LogLayerErrorKind),
 }
 
+/// An error originating from the [`LogLayer`](crate::subscriber::layer::LogLayer).
 #[derive(Debug)]
 pub enum LogLayerErrorKind {
+    /// Encountered an [`io::Error`].
     Io(io::Error),
+    /// Error setting the default logger/subscriber.
     SetLogger(log::SetLoggerError),
 }
 
@@ -34,8 +44,10 @@ impl From<log::SetLoggerError> for LogLayerErrorKind {
     }
 }
 
+/// An error originating from the [`FlamegraphLayer`](crate::subscriber::layer::FlamegraphFilteredLayer).
 #[derive(Debug)]
 pub enum FlamegraphLayerErrorKind {
+    /// Encountered an [`io::Error`].
     Io(io::Error),
 }
 
@@ -53,12 +65,18 @@ impl From<io::Error> for FlamegraphLayerErrorKind {
     }
 }
 
+/// An error originating from the [`Flamegrapher`](crate::util::Flamegrapher).
 #[derive(Debug)]
 pub enum FlamegrapherErrorKind {
+    /// The provided graph file is invalid.
     GraphFileInvalid(PathBuf),
+    /// Usage of [`inferno`] resulted in an error.
     Inferno(Box<dyn error::Error>),
+    /// Encountered an [`io::Error`].
     Io(io::Error),
+    /// The [`Flamegrapher`](crate::util::Flamegrapher) is missing a required field.
     MissingField(String),
+    /// Could not find the provided folded stack file.
     StackFileNotFound(PathBuf),
 }
 

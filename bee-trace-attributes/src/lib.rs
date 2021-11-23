@@ -1,3 +1,6 @@
+// Copyright 2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned};
 use syn::{

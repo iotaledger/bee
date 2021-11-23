@@ -1,3 +1,6 @@
+// Copyright 2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::error::{Error, FlamegrapherErrorKind};
 
 use std::{
@@ -6,6 +9,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// Helper struct that uses [`inferno`] internally to programatically produce a flamegraph from a folded
+/// stack trace file.
 #[derive(Default)]
 pub struct Flamegrapher {
     stack_filename: Option<PathBuf>,
@@ -13,10 +18,18 @@ pub struct Flamegrapher {
 }
 
 impl Flamegrapher {
+    /// Creates a new [`Flamegrapher`] with no associated files.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Returns a [`Flamegrapher`] with the given folded stack file name.
+    /// 
+    /// This file will be given the extension of `.folded`.
+    /// 
+    /// # Errors
+    /// This method may fail in the following ways:
+    ///  - The given stack file does not exist.
     pub fn with_stack_file<P: AsRef<Path>>(mut self, stack_filename: P) -> Result<Self, Error> {
         let stack_filename = stack_filename.as_ref().to_path_buf();
 
@@ -30,6 +43,13 @@ impl Flamegrapher {
         Ok(self)
     }
 
+    /// Returns a [`Flamegrapher`] with the given flamegraph file name.
+    /// 
+    /// This file will be given the extension of `.svg`.
+    /// 
+    /// # Errors
+    /// This method may fail in the following ways:
+    ///  - The given graph filename is invalid (it does not belong to a directory that exists).
     pub fn with_graph_file<P: AsRef<Path>>(mut self, graph_filename: P) -> Result<Self, Error> {
         let graph_filename = graph_filename.as_ref().with_extension("svg");
 
@@ -46,6 +66,14 @@ impl Flamegrapher {
         Ok(self)
     }
 
+    /// Uses [`inferno`] to generate a flamegraph from the given folded stack file, and writes it to the given
+    /// output image file.
+    /// 
+    /// # Errors
+    /// This method may fail in the following ways:
+    ///  - This [`Flamegrapher`] does not have a stack or graph file associated with it.
+    ///  - An error was encountered when opening the folded stack file for reading.
+    ///  - An error was encountered when creating the graph file.
     pub fn write_flamegraph(&self) -> Result<(), Error> {
         let stack_filename = self
             .stack_filename

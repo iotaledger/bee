@@ -8,7 +8,7 @@ use std::{path::PathBuf, time::Duration};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples");
 
-    let stack_filename = examples_dir.clone().join("trace.folded");
+    let stack_filename = examples_dir.clone().join("trace");
 
     println!(
         "Creating flamegraph layer, recording to {}.folded",
