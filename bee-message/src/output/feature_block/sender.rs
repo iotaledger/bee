@@ -8,7 +8,9 @@ use bee_common::packable::{Packable, Read, Write};
 /// Identifies the validated sender of the output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct SenderFeatureBlock(Address);
+pub struct SenderFeatureBlock {
+    address: Address,
+}
 
 impl SenderFeatureBlock {
     /// The [`FeatureBlock`] kind of a [`SenderFeatureBlock`].
@@ -21,7 +23,7 @@ impl SenderFeatureBlock {
 
     /// Returns the sender address.
     pub fn address(&self) -> &Address {
-        &self.0
+        &self.address
     }
 }
 
@@ -29,11 +31,11 @@ impl Packable for SenderFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.0.packed_len()
+        self.address.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)
+        self.address.pack(writer)
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
