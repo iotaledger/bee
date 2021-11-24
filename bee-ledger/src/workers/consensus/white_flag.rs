@@ -218,6 +218,8 @@ fn apply_regular_essence<B: StorageBackend>(
         // the outstanding balances are valid.
     }
 
+    // TODO check chain constraints
+
     for (output_id, created_output) in context.consumed_outputs {
         metadata.consumed_outputs.insert(
             output_id,

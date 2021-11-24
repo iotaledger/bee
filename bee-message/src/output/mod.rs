@@ -3,6 +3,7 @@
 
 mod alias;
 mod alias_id;
+mod chain_id;
 mod extended;
 mod feature_block;
 mod foundry;
@@ -16,6 +17,7 @@ mod treasury;
 
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
+pub use chain_id::ChainId;
 pub use extended::{ExtendedOutput, ExtendedOutputBuilder};
 pub use feature_block::{FeatureBlock, FeatureBlocks};
 pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme};
