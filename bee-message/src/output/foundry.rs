@@ -125,7 +125,7 @@ impl FoundryOutputBuilder {
     }
 }
 
-///
+/// Describes a foundry output that is controlled by an alias.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct FoundryOutput {

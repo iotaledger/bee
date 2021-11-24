@@ -272,8 +272,11 @@ fn validate_unique_sorted(feature_blocks: &[FeatureBlock]) -> Result<(), Error> 
 #[inline]
 fn validate_dependencies(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
     if (feature_blocks
-        .binary_search_by_key(&ExpirationMilestoneIndexFeatureBlock::KIND, FeatureBlock::kind)
+        .binary_search_by_key(&DustDepositReturnFeatureBlock::KIND, FeatureBlock::kind)
         .is_ok()
+        || feature_blocks
+            .binary_search_by_key(&ExpirationMilestoneIndexFeatureBlock::KIND, FeatureBlock::kind)
+            .is_ok()
         || feature_blocks
             .binary_search_by_key(&ExpirationUnixFeatureBlock::KIND, FeatureBlock::kind)
             .is_ok())
@@ -281,7 +284,7 @@ fn validate_dependencies(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
             .binary_search_by_key(&SenderFeatureBlock::KIND, FeatureBlock::kind)
             .is_err()
     {
-        return Err(Error::ExpirationUnixFeatureBlockWithoutSenderFeatureBlock);
+        return Err(Error::MissingRequiredSenderBlock);
     }
 
     Ok(())
