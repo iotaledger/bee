@@ -30,7 +30,7 @@ pub(crate) use message::{
     UnreferencedMessageInserterWorkerEvent,
 };
 pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
-pub use metrics::MetricsWorker;
+pub use metrics::{MetricsActor, MetricsWorker};
 pub(crate) use mps::MpsWorker;
 pub use peer::{PeerManager, PeerManagerResWorker};
 pub(crate) use peer::{PeerManagerWorker, PeerWorker};

@@ -4,6 +4,7 @@
 mod builder;
 mod error;
 
+use bee_protocol::{types::metrics::NodeMetrics, workers::MetricsActor};
 pub use builder::BeeNodeBuilder;
 pub use error::Error;
 
@@ -13,7 +14,9 @@ use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Work
 
 use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;
-use backstage::core::{AbortableUnboundedChannel, AbortableUnboundedHandle, Actor, ActorResult, Deserialize, Rt, Runtime, Serialize, SupHandle};
+use backstage::core::{
+    AbortableUnboundedChannel, Actor, ActorResult, EolEvent, ReportEvent, Rt, ScopeId, Service, SupHandle,
+};
 use futures::{channel::oneshot, future::Future, StreamExt};
 use log::{debug, info, warn};
 
@@ -43,7 +46,6 @@ pub struct BeeNode<B> {
     worker_order: Vec<TypeId>,
     worker_names: HashMap<TypeId, &'static str>,
     phantom: PhantomData<B>,
-    backstage_runtime: Option<Runtime<AbortableUnboundedHandle<String>>>,
 }
 
 impl<B: StorageBackend> BeeNode<B> {
@@ -151,9 +153,27 @@ impl<B: StorageBackend> Node for BeeNode<B> {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Default, Clone)]
-struct NodeSupervisor{
-    config: u64
+#[derive(Debug)]
+enum NodeSupervisorEvent {
+    StatusChanged,
+}
+
+// Events triggered when there is a change of state in one of the supervisor's children.
+impl<T> EolEvent<T> for NodeSupervisorEvent {
+    fn eol_event(_scope: ScopeId, _service: Service, _actor: T, _r: ActorResult<()>) -> Self {
+        Self::StatusChanged
+    }
+}
+
+impl<T> ReportEvent<T> for NodeSupervisorEvent {
+    fn report_event(_scope: ScopeId, _service: Service) -> Self {
+        Self::StatusChanged
+    }
+}
+
+struct NodeSupervisor {
+    bus: ResourceHandle<Bus<'static>>,
+    metrics: ResourceHandle<NodeMetrics>,
 }
 
 #[async_trait::async_trait]
@@ -162,20 +182,29 @@ where
     S: SupHandle<Self>,
 {
     type Data = ();
-    type Channel = AbortableUnboundedChannel<String>;
+    type Channel = AbortableUnboundedChannel<NodeSupervisorEvent>;
 
     async fn init(&mut self, rt: &mut Rt<Self, S>) -> ActorResult<Self::Data> {
         log::info!("Root: {}", rt.service().status());
+
+        // Add the event bus as a resource under the supervisor's ID.
+        rt.add_resource(self.bus.clone()).await;
+        // Add the node metrics as a resource under the supervisor's ID.
+        rt.add_resource(self.metrics.clone()).await;
+        // Spawn the metrics actor.
+        rt.start(Some("metrics".into()), MetricsActor::default()).await?;
+
         Ok(())
     }
+
     async fn run(&mut self, rt: &mut Rt<Self, S>, _data: Self::Data) -> ActorResult<()> {
         log::info!("Root: {}", rt.service().status());
-        self.config = 42;
-        log::error!("HELLO FORM BACKSTAGE!!!!!!");
-        rt.publish(self.clone()).await;
+        log::error!("HELLO FR0M BACKSTAGE!!!!!!");
+
         while let Some(event) = rt.inbox_mut().next().await {
-            log::info!("Root: Received {}", event);
+            log::info!("Root: Received {:?}", event);
         }
         Ok(())
     }
 }
+

@@ -406,6 +406,7 @@ dependencies = [
  "async-channel",
  "async-priority-queue",
  "async-trait",
+ "backstage",
  "bee-common",
  "bee-crypto",
  "bee-ledger",

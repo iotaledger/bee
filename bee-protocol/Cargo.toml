@@ -25,6 +25,7 @@ bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev", d
 async-channel = { version = "1.6.1", default-features = false, optional = true }
 async-priority-queue = { version = "0.1.1", default-features = false, optional = true }
 async-trait = { version = "0.1.51", default-features = false, optional = true }
+backstage = { git = "https://github.com/iotaledger/backstage.git", branch = "stable", default-features = false, features = [ "toml_config", "config" ] }
 futures = { version = "0.3.17", default-features = false, optional = true }
 futures-util = { version = "0.3.17", default-features = false, optional = true }
 fxhash = { version = "0.2.1", default-features = false, optional = true }
