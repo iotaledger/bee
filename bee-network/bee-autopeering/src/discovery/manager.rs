@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    command::{self, Command, CommandRx, CommandTx},
     config::AutopeeringConfig,
     discovery::messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
     event::{Event, EventTx},
@@ -133,7 +132,7 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
         }
     }
 
-    pub async fn init<const N: usize>(self, task_mngr: &mut TaskManager<S, N>) -> CommandTx {
+    pub async fn init<const N: usize>(self, task_mngr: &mut TaskManager<S, N>) {
         let DiscoveryManager {
             config,
             local,
@@ -183,19 +182,7 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
             replacements,
         };
 
-        let (command_tx, command_rx) = command::command_chan();
-
-        let discovery_send_handler = DiscoverySendHandler {
-            server_tx,
-            request_mngr,
-            active_peers,
-            command_rx,
-        };
-
         task_mngr.run::<DiscoveryRecvHandler>(discovery_recv_handler);
-        task_mngr.run::<DiscoverySendHandler>(discovery_send_handler);
-
-        command_tx
     }
 }
 
@@ -209,13 +196,6 @@ struct DiscoveryRecvHandler {
     event_tx: EventTx,
     active_peers: ActivePeersList,
     replacements: ReplacementList,
-}
-
-struct DiscoverySendHandler {
-    server_tx: ServerTx,
-    request_mngr: RequestManager,
-    active_peers: ActivePeersList,
-    command_rx: CommandRx,
 }
 
 #[async_trait::async_trait]
@@ -340,44 +320,6 @@ impl Runnable for DiscoveryRecvHandler {
                                 }
                             }
                             _ => log::warn!("Received unsupported discovery message type"),
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-#[async_trait::async_trait]
-impl Runnable for DiscoverySendHandler {
-    const NAME: &'static str = "DiscoverySendHandler";
-    const SHUTDOWN_PRIORITY: u8 = 5;
-
-    type ShutdownSignal = ShutdownRx;
-
-    async fn run(self, mut shutdown_rx: Self::ShutdownSignal) {
-        let DiscoverySendHandler {
-            server_tx,
-            request_mngr,
-            active_peers,
-            mut command_rx,
-        } = self;
-
-        'recv: loop {
-            tokio::select! {
-                _ = &mut shutdown_rx => {
-                    break 'recv;
-                }
-                o = command_rx.recv() => {
-                    if let Some(command) = o {
-                        match command {
-                            Command::Verify{ peer_id } => {
-                                send_verification_request_to_peer(&peer_id, &active_peers, &request_mngr, &server_tx, None);
-                            }
-                            Command::Query{ peer_id } => {
-                                send_discovery_request_to_peer(&peer_id, &active_peers, &request_mngr, &server_tx, None);
-                            }
-                            _ => {}
                         }
                     }
                 }

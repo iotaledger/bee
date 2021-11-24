@@ -133,7 +133,7 @@ where
         replacements.clone(),
         event_tx.clone(),
     );
-    let command_tx = discovery_mngr.init(&mut task_mngr).await;
+    discovery_mngr.init(&mut task_mngr).await;
 
     // Create neighborhoods and neighbor candidate filter.
     let inbound_nbh = InboundNeighborhood::new();
@@ -151,7 +151,6 @@ where
         request_mngr.clone(),
         active_peers.clone(),
         event_tx.clone(),
-        command_tx,
         inbound_nbh.clone(),
         outbound_nbh.clone(),
         nb_filter.clone(),

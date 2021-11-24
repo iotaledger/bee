@@ -10,8 +10,6 @@ use std::{
 
 pub(crate) type Delay = Duration;
 
-// TODO: revisit dead code
-#[allow(dead_code)]
 #[derive(Default)]
 pub(crate) struct DelayFactoryBuilder {
     max_count: Option<usize>,
@@ -88,12 +86,6 @@ impl Iterator for DelayFactory {
         } else {
             let mut next_interval_millis = match &mut self.mode {
                 DelayFactoryMode::Zero => 0,
-                DelayFactoryMode::Constant(value) => *value,
-                DelayFactoryMode::Exponential(value, factor) => {
-                    let prev_value = *value;
-                    *value = (*value as f32 * *factor) as u64;
-                    prev_value
-                }
             };
             self.curr_count += 1;
 
@@ -107,17 +99,10 @@ impl Iterator for DelayFactory {
     }
 }
 
-// TODO: revisit dead code
-#[allow(dead_code)]
 /// The different "Modi operandi" for the [`DelayFactory`].
 pub(crate) enum DelayFactoryMode {
     /// The factory produces a series of 0-delays.
     Zero,
-    /// The factory produces a series of constant delays. For `Constant(0)` the behavior is identical to the `Zero`
-    /// mode.
-    Constant(u64),
-    /// The factory produces a series of exponentially growing delays.
-    Exponential(u64, f32),
 }
 
 impl Default for DelayFactoryMode {
@@ -172,64 +157,6 @@ mod tests {
         assert_eq!(0, delay.next().unwrap().as_millis());
         assert_eq!(0, delay.next().unwrap().as_millis());
         assert_eq!(0, delay.next().unwrap().as_millis());
-        assert_eq!(None, delay.next());
-        assert_eq!(None, delay.next());
-    }
-
-    #[test]
-    fn constant_delay() {
-        let mut delay = DelayFactoryBuilder::new(DelayFactoryMode::Constant(500))
-            .with_max_count(4)
-            .finish();
-
-        assert_eq!(500, delay.next().unwrap().as_millis());
-        assert_eq!(500, delay.next().unwrap().as_millis());
-        assert_eq!(500, delay.next().unwrap().as_millis());
-        assert_eq!(500, delay.next().unwrap().as_millis());
-        assert_eq!(None, delay.next());
-        assert_eq!(None, delay.next());
-    }
-
-    #[test]
-    fn exponential_delay() {
-        let mut delay = DelayFactoryBuilder::new(DelayFactoryMode::Exponential(100, 2.0))
-            .with_max_count(4)
-            .finish();
-
-        assert_eq!(100, delay.next().unwrap().as_millis());
-        assert_eq!(200, delay.next().unwrap().as_millis());
-        assert_eq!(400, delay.next().unwrap().as_millis());
-        assert_eq!(800, delay.next().unwrap().as_millis());
-        assert_eq!(None, delay.next());
-        assert_eq!(None, delay.next());
-    }
-
-    #[test]
-    fn constant_delay_with_jitter() {
-        let mut delay = DelayFactoryBuilder::new(DelayFactoryMode::Constant(500))
-            .with_max_count(4)
-            .with_jitter(0.5)
-            .finish();
-
-        assert!((250..=500).contains(&(delay.next().unwrap().as_millis() as u64)));
-        assert!((250..=500).contains(&(delay.next().unwrap().as_millis() as u64)));
-        assert!((250..=500).contains(&(delay.next().unwrap().as_millis() as u64)));
-        assert!((250..=500).contains(&(delay.next().unwrap().as_millis() as u64)));
-        assert_eq!(None, delay.next());
-        assert_eq!(None, delay.next());
-    }
-
-    #[tokio::test]
-    async fn constant_delay_with_timeout() {
-        let mut delay = DelayFactoryBuilder::new(DelayFactoryMode::Constant(25))
-            .with_max_count(4)
-            .with_timeout(Duration::from_millis(50))
-            .finish();
-
-        assert_eq!(25, delay.next().unwrap().as_millis());
-        tokio::time::sleep(Duration::from_millis(25)).await;
-        assert_eq!(25, delay.next().unwrap().as_millis());
-        tokio::time::sleep(Duration::from_millis(50)).await;
         assert_eq!(None, delay.next());
         assert_eq!(None, delay.next());
     }

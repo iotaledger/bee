@@ -113,7 +113,6 @@
 
 #![deny(missing_docs)]
 
-mod command;
 mod delay;
 mod discovery;
 mod hash;

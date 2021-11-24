@@ -8,7 +8,6 @@ use super::{
 };
 
 use crate::{
-    command::CommandTx,
     config::AutopeeringConfig,
     event::{Event, EventTx},
     local::{
@@ -103,8 +102,6 @@ impl<V: NeighborValidator> PeeringManager<V> {
         request_mngr: RequestManager,
         active_peers: ActivePeersList,
         event_tx: EventTx,
-        // TODO: revisit dead code
-        _command_tx: CommandTx,
         inbound_nbh: InboundNeighborhood,
         outbound_nbh: OutboundNeighborhood,
         nb_filter: NeighborFilter<V>,

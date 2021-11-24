@@ -13,12 +13,8 @@ pub(crate) fn sha256(bytes: &[u8]) -> [u8; SHA256_LEN] {
     digest
 }
 
-pub(crate) fn fnv32(network_name: &impl AsRef<str>) -> u32 {
-    // ```go
-    // gossipServiceKeyHash := fnv.New32a()
-    // gossipServiceKeyHash.Write([]byte(a.p2pServiceKey))
-    // networkID := gossipServiceKeyHash.Sum32()
-    // ```
+/// Returns the 32bit fnv hash of the network name.
+pub(crate) fn fnv32(network_name: impl AsRef<str>) -> u32 {
     let mut hasher = FnvHasher::default();
     hasher.write(network_name.as_ref().as_bytes());
     hasher.finish()
