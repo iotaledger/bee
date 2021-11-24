@@ -13,7 +13,8 @@ use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Work
 
 use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;
-use futures::{channel::oneshot, future::Future};
+use backstage::core::{AbortableUnboundedChannel, AbortableUnboundedHandle, Actor, ActorResult, Deserialize, Rt, Runtime, Serialize, SupHandle};
+use futures::{channel::oneshot, future::Future, StreamExt};
 use log::{debug, info, warn};
 
 use std::{
@@ -42,6 +43,7 @@ pub struct BeeNode<B> {
     worker_order: Vec<TypeId>,
     worker_names: HashMap<TypeId, &'static str>,
     phantom: PhantomData<B>,
+    backstage_runtime: Option<Runtime<AbortableUnboundedHandle<String>>>,
 }
 
 impl<B: StorageBackend> BeeNode<B> {
@@ -146,5 +148,34 @@ impl<B: StorageBackend> Node for BeeNode<B> {
         W: Worker<Self> + Send + Sync,
     {
         self.workers.get::<W>()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Default, Clone)]
+struct NodeSupervisor{
+    config: u64
+}
+
+#[async_trait::async_trait]
+impl<S> Actor<S> for NodeSupervisor
+where
+    S: SupHandle<Self>,
+{
+    type Data = ();
+    type Channel = AbortableUnboundedChannel<String>;
+
+    async fn init(&mut self, rt: &mut Rt<Self, S>) -> ActorResult<Self::Data> {
+        log::info!("Root: {}", rt.service().status());
+        Ok(())
+    }
+    async fn run(&mut self, rt: &mut Rt<Self, S>, _data: Self::Data) -> ActorResult<()> {
+        log::info!("Root: {}", rt.service().status());
+        self.config = 42;
+        log::error!("HELLO FORM BACKSTAGE!!!!!!");
+        rt.publish(self.clone()).await;
+        while let Some(event) = rt.inbox_mut().next().await {
+            log::info!("Root: Received {}", event);
+        }
+        Ok(())
     }
 }

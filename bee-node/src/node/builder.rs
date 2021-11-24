@@ -4,14 +4,9 @@
 #[cfg(feature = "dashboard")]
 use crate::plugins::Dashboard;
 
-use crate::{
-    config::NodeConfig,
-    constants::{BEE_GIT_COMMIT, BEE_VERSION},
-    node::{BeeNode, Error},
-    plugins::{self, Mqtt, VersionChecker},
-    storage::StorageBackend,
-};
+use crate::{config::NodeConfig, constants::{BEE_GIT_COMMIT, BEE_VERSION}, node::{BeeNode, Error, NodeSupervisor}, plugins::{self, Mqtt, VersionChecker}, storage::StorageBackend};
 
+use backstage::core::Runtime;
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder, NodeInfo},
@@ -248,6 +243,11 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             this = this.with_worker_cfg::<Dashboard>(config.dashboard);
         }
 
+        let supervisor = NodeSupervisor{config: 42};
+        let backstage_runtime = Runtime::new(Some("supervisor".into()), supervisor)
+        .await
+        .expect("Runtime to build");
+
         let mut node = BeeNode {
             workers: Map::new(),
             tasks: HashMap::new(),
@@ -256,6 +256,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             worker_order: TopologicalOrder::sort(this.deps),
             worker_names: this.worker_names,
             phantom: PhantomData,
+            backstage_runtime: Some(backstage_runtime),
         };
 
         if true {
@@ -277,7 +278,9 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             this.worker_starts.remove(&id).unwrap()(&mut node).await;
         }
 
-        info!("Initialized.");
+        node.backstage_runtime.take().unwrap().block_on().await.expect("Runtime to shutdown gracefully");
+
+        info!("Initialized (NODE).");
 
         Ok(node)
     }
