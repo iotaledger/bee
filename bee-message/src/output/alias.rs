@@ -3,7 +3,13 @@
 
 use crate::{
     address::Address,
-    output::{AliasId, FeatureBlock, FeatureBlocks, NativeToken, NativeTokens},
+    output::{
+        feature_block::{
+            validate_allowed_feature_blocks, FeatureBlock, FeatureBlocks, IssuerFeatureBlock, MetadataFeatureBlock,
+            SenderFeatureBlock,
+        },
+        AliasId, NativeToken, NativeTokens,
+    },
     Error,
 };
 
@@ -89,6 +95,10 @@ impl AliasOutputBuilder {
             return Err(Error::InvalidMetadataLength(self.state_metadata.len()));
         }
 
+        let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
+
+        validate_allowed_feature_blocks(&feature_blocks, &AliasOutput::ALLOWED_FEATURE_BLOCKS)?;
+
         Ok(AliasOutput {
             amount: self.amount,
             native_tokens: NativeTokens::new(self.native_tokens)?,
@@ -98,7 +108,7 @@ impl AliasOutputBuilder {
             state_index: self.state_index.unwrap_or(0),
             state_metadata: self.state_metadata.into_boxed_slice(),
             foundry_counter: self.foundry_counter.unwrap_or(0),
-            feature_blocks: FeatureBlocks::new(self.feature_blocks)?,
+            feature_blocks,
         })
     }
 }
@@ -130,6 +140,12 @@ pub struct AliasOutput {
 impl AliasOutput {
     /// The [`Output`](crate::output::Output) kind of an [`AliasOutput`].
     pub const KIND: u8 = 3;
+    ///
+    const ALLOWED_FEATURE_BLOCKS: [u8; 3] = [
+        SenderFeatureBlock::KIND,
+        IssuerFeatureBlock::KIND,
+        MetadataFeatureBlock::KIND,
+    ];
 
     /// Creates a new [`AliasOutput`].
     pub fn new(amount: u64, alias_id: AliasId, state_controller: Address, governance_controller: Address) -> Self {
@@ -231,6 +247,10 @@ impl Packable for AliasOutput {
         reader.read_exact(&mut state_metadata)?;
         let foundry_counter = u32::unpack_inner::<R, CHECK>(reader)?;
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
+
+        if CHECK {
+            validate_allowed_feature_blocks(&feature_blocks, &AliasOutput::ALLOWED_FEATURE_BLOCKS)?;
+        }
 
         Ok(Self {
             amount,

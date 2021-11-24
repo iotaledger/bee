@@ -66,6 +66,8 @@ pub enum Error {
     RemainingBytesAfterMessage,
     SignaturePublicKeyMismatch(String, String),
     TailTransactionHashNotUnique(usize, usize),
+    UnallowedFeatureBlock(usize, u8),
+    TooManyFeatureBlocks(usize, usize),
 }
 
 impl std::error::Error for Error {}
@@ -195,6 +197,12 @@ impl fmt::Display for Error {
                     "tail transaction hash is not unique at indices: {0} and {1}.",
                     previous, current
                 )
+            }
+            Error::UnallowedFeatureBlock(index, kind) => {
+                write!(f, "unallowed feature block at index {} with kind {}.", index, kind)
+            }
+            Error::TooManyFeatureBlocks(max, actual) => {
+                write!(f, "too many feature blocks, max {}, got {}.", max, actual)
             }
         }
     }

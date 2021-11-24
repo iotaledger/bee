@@ -3,7 +3,10 @@
 
 use crate::{
     address::Address,
-    output::{FeatureBlock, FeatureBlocks, NativeToken, NativeTokens},
+    output::{
+        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlocks, MetadataFeatureBlock},
+        NativeToken, NativeTokens,
+    },
     Error,
 };
 
@@ -104,6 +107,10 @@ impl FoundryOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<FoundryOutput, Error> {
+        let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
+
+        validate_allowed_feature_blocks(&feature_blocks, &FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
+
         Ok(FoundryOutput {
             address: self.address,
             amount: self.amount,
@@ -113,7 +120,7 @@ impl FoundryOutputBuilder {
             circulating_supply: self.circulating_supply,
             maximum_supply: self.maximum_supply,
             token_scheme: self.token_scheme,
-            feature_blocks: FeatureBlocks::new(self.feature_blocks)?,
+            feature_blocks,
         })
     }
 }
@@ -139,6 +146,8 @@ pub struct FoundryOutput {
 impl FoundryOutput {
     /// The output kind of a `FoundryOutput`.
     pub const KIND: u8 = 4;
+    ///
+    const ALLOWED_FEATURE_BLOCKS: [u8; 1] = [MetadataFeatureBlock::KIND];
 
     /// Creates a new `FoundryOutput`.
     pub fn new(
@@ -251,6 +260,10 @@ impl Packable for FoundryOutput {
         let maximum_supply = U256::from_little_endian(&<[u8; 32]>::unpack_inner::<R, CHECK>(reader)?);
         let token_scheme = TokenScheme::unpack_inner::<R, CHECK>(reader)?;
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
+
+        if CHECK {
+            validate_allowed_feature_blocks(&feature_blocks, &FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
+        }
 
         Ok(Self {
             address,

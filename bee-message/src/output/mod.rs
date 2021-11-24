@@ -5,7 +5,6 @@ mod alias;
 mod alias_id;
 mod chain_id;
 mod extended;
-mod feature_block;
 mod foundry;
 mod native_token;
 mod nft;
@@ -14,6 +13,9 @@ mod output_id;
 mod simple;
 mod token_id;
 mod treasury;
+
+///
+pub mod feature_block;
 
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;

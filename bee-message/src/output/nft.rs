@@ -3,7 +3,14 @@
 
 use crate::{
     address::Address,
-    output::{FeatureBlock, FeatureBlocks, NativeToken, NativeTokens, NftId},
+    output::{
+        feature_block::{
+            validate_allowed_feature_blocks, DustDepositReturnFeatureBlock, ExpirationMilestoneIndexFeatureBlock,
+            ExpirationUnixFeatureBlock, FeatureBlock, FeatureBlocks, IndexationFeatureBlock, IssuerFeatureBlock,
+            MetadataFeatureBlock, SenderFeatureBlock, TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
+        },
+        NativeToken, NativeTokens, NftId,
+    },
     Error,
 };
 
@@ -65,13 +72,17 @@ impl NftOutputBuilder {
             return Err(Error::InvalidMetadataLength(self.immutable_metadata.len()));
         }
 
+        let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
+
+        validate_allowed_feature_blocks(&feature_blocks, &NftOutput::ALLOWED_FEATURE_BLOCKS)?;
+
         Ok(NftOutput {
             address: self.address,
             amount: self.amount,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             nft_id: self.nft_id,
             immutable_metadata: self.immutable_metadata.into_boxed_slice(),
-            feature_blocks: FeatureBlocks::new(self.feature_blocks)?,
+            feature_blocks,
         })
     }
 }
@@ -96,6 +107,18 @@ pub struct NftOutput {
 impl NftOutput {
     /// The [`Output`](crate::output::Output) kind of a [`NftOutput`].
     pub const KIND: u8 = 5;
+    ///
+    const ALLOWED_FEATURE_BLOCKS: [u8; 9] = [
+        SenderFeatureBlock::KIND,
+        IssuerFeatureBlock::KIND,
+        DustDepositReturnFeatureBlock::KIND,
+        TimelockMilestoneIndexFeatureBlock::KIND,
+        TimelockUnixFeatureBlock::KIND,
+        ExpirationMilestoneIndexFeatureBlock::KIND,
+        ExpirationUnixFeatureBlock::KIND,
+        MetadataFeatureBlock::KIND,
+        IndexationFeatureBlock::KIND,
+    ];
 
     /// Creates a new [`NftOutput`].
     pub fn new(address: Address, amount: u64, nft_id: NftId, immutable_metadata: Vec<u8>) -> Result<Self, Error> {
@@ -170,6 +193,10 @@ impl Packable for NftOutput {
         let mut immutable_metadata = vec![0u8; immutable_metadata_len];
         reader.read_exact(&mut immutable_metadata)?;
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
+
+        if CHECK {
+            validate_allowed_feature_blocks(&feature_blocks, &NftOutput::ALLOWED_FEATURE_BLOCKS)?;
+        }
 
         Ok(Self {
             address,

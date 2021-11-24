@@ -3,7 +3,14 @@
 
 use crate::{
     address::Address,
-    output::{FeatureBlock, FeatureBlocks, NativeToken, NativeTokens},
+    output::{
+        feature_block::{
+            validate_allowed_feature_blocks, DustDepositReturnFeatureBlock, ExpirationMilestoneIndexFeatureBlock,
+            ExpirationUnixFeatureBlock, FeatureBlock, FeatureBlocks, IndexationFeatureBlock, MetadataFeatureBlock,
+            SenderFeatureBlock, TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
+        },
+        NativeToken, NativeTokens,
+    },
     Error,
 };
 
@@ -54,11 +61,15 @@ impl ExtendedOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<ExtendedOutput, Error> {
+        let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
+
+        validate_allowed_feature_blocks(&feature_blocks, &ExtendedOutput::ALLOWED_FEATURE_BLOCKS)?;
+
         Ok(ExtendedOutput {
             address: self.address,
             amount: self.amount,
             native_tokens: NativeTokens::new(self.native_tokens)?,
-            feature_blocks: FeatureBlocks::new(self.feature_blocks)?,
+            feature_blocks,
         })
     }
 }
@@ -79,6 +90,17 @@ pub struct ExtendedOutput {
 impl ExtendedOutput {
     /// The [`Output`](crate::output::Output) kind of an [`ExtendedOutput`].
     pub const KIND: u8 = 1;
+    ///
+    const ALLOWED_FEATURE_BLOCKS: [u8; 8] = [
+        SenderFeatureBlock::KIND,
+        DustDepositReturnFeatureBlock::KIND,
+        TimelockMilestoneIndexFeatureBlock::KIND,
+        TimelockUnixFeatureBlock::KIND,
+        ExpirationMilestoneIndexFeatureBlock::KIND,
+        ExpirationUnixFeatureBlock::KIND,
+        MetadataFeatureBlock::KIND,
+        IndexationFeatureBlock::KIND,
+    ];
 
     /// Creates a new [`ExtendedOutput`].
     pub fn new(address: Address, amount: u64) -> Self {
@@ -131,6 +153,10 @@ impl Packable for ExtendedOutput {
         let amount = u64::unpack_inner::<R, CHECK>(reader)?;
         let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
+
+        if CHECK {
+            validate_allowed_feature_blocks(&feature_blocks, &ExtendedOutput::ALLOWED_FEATURE_BLOCKS)?;
+        }
 
         Ok(Self {
             address,

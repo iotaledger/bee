@@ -286,3 +286,25 @@ fn validate_dependencies(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
 
     Ok(())
 }
+
+pub(crate) fn validate_allowed_feature_blocks(
+    feature_blocks: &FeatureBlocks,
+    allowed_feature_blocks_kind: &[u8],
+) -> Result<(), Error> {
+    if feature_blocks.len() > allowed_feature_blocks_kind.len() {
+        return Err(Error::TooManyFeatureBlocks(
+            allowed_feature_blocks_kind.len(),
+            feature_blocks.len(),
+        ));
+    }
+
+    let mut index = 0;
+
+    for feature_block in feature_blocks.iter() {
+        index = allowed_feature_blocks_kind[index..]
+            .binary_search(&feature_block.kind())
+            .map_err(|index| Error::UnallowedFeatureBlock(index, feature_block.kind()))?;
+    }
+
+    Ok(())
+}
