@@ -6,7 +6,6 @@ use crate::{
     time::{self, Timestamp, HOUR},
 };
 
-use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 use ring::rand::{SecureRandom as _, SystemRandom};
 
 use std::{
@@ -49,26 +48,6 @@ impl Salt {
 
     pub fn expiration_time(&self) -> u64 {
         self.expiration_time
-    }
-
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
-        Ok(proto::Salt::decode(bytes)?.into())
-    }
-
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
-        let salt = proto::Salt {
-            bytes: self.bytes.to_vec(),
-            exp_time: self.expiration_time,
-        };
-
-        let mut bytes = BytesMut::with_capacity(salt.encoded_len());
-        salt.encode(&mut bytes)?;
-
-        Ok(bytes)
     }
 }
 

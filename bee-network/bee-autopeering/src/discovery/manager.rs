@@ -32,22 +32,6 @@ use std::net::SocketAddr;
 pub(crate) const DEFAULT_REVERIFY_INTERVAL_SECS: u64 = 10 * SECOND;
 // Time interval after which peers are queried for new peers.
 pub(crate) const DEFAULT_QUERY_INTERVAL_SECS: u64 = 60 * SECOND;
-// The default delay between requests to a single peer.
-// TODO: revisit dead code
-#[allow(dead_code)]
-const BACKOFF_INTERVALL_MILLISECS: u64 = 500;
-// A factor that determines the range from which a concrete delay is picked randomly.
-// TODO: revisit dead code
-#[allow(dead_code)]
-const JITTER: f32 = 0.5;
-// A factor that determines the intervall lengths between repeated requests to a peer.
-// TODO: revisit dead code
-#[allow(dead_code)]
-const EXPONENTIAL_BACKOFF_FACTOR: f32 = 1.5;
-// The number of times a request is repeated in case the peer doesn't reply.
-// TODO: revisit dead code
-#[allow(dead_code)]
-const MAX_RETRIES: usize = 2;
 // Is the time until a peer verification expires (12 hours).
 pub(crate) const VERIFICATION_EXPIRATION_SECS: u64 = 12 * time::HOUR;
 // Is the maximum number of peers returned in DiscoveryResponse.
@@ -55,21 +39,12 @@ const MAX_PEERS_IN_RESPONSE: usize = 6;
 // Is the minimum number of verifications required to be selected in DiscoveryResponse.
 const MIN_VERIFIED_IN_RESPONSE: usize = 1;
 // Is the maximum number of services a peer can support.
-// TODO: revisit dead code
-#[allow(dead_code)]
-const MAX_SERVICES: usize = 5;
 
 pub(crate) struct DiscoveryManagerConfig {
     pub(crate) entry_nodes: Vec<AutopeeringMultiaddr>,
     pub(crate) entry_nodes_prefer_ipv6: bool,
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) run_as_entry_node: bool,
     pub(crate) version: u32,
     pub(crate) network_id: u32,
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) bind_addr: SocketAddr,
 }
 
 impl DiscoveryManagerConfig {
@@ -77,10 +52,8 @@ impl DiscoveryManagerConfig {
         Self {
             entry_nodes: config.entry_nodes().to_vec(),
             entry_nodes_prefer_ipv6: config.entry_nodes_prefer_ipv6(),
-            run_as_entry_node: config.run_as_entry_node(),
             version,
             network_id,
-            bind_addr: config.bind_addr(),
         }
     }
 }
@@ -148,10 +121,8 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
         let DiscoveryManagerConfig {
             mut entry_nodes,
             entry_nodes_prefer_ipv6,
-            run_as_entry_node: _,
             version,
             network_id,
-            bind_addr: _,
         } = config;
 
         let ServerSocket { server_rx, server_tx } = socket;
@@ -510,15 +481,11 @@ pub(crate) struct RecvContext<'a> {
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum ValidationError {
     // The protocol version must match.
-    // TODO: revisit dead code
-    #[allow(dead_code)]
     VersionMismatch {
         expected: u32,
         received: u32,
     },
     // The network id must match.
-    // TODO: revisit dead code
-    #[allow(dead_code)]
     NetworkIdMismatch {
         expected: u32,
         received: u32,
@@ -532,8 +499,6 @@ pub(crate) enum ValidationError {
     // The peer must have an autopeering service.
     NoAutopeeringService,
     // The service port must match with the detected port.
-    // TODO: revisit dead code
-    #[allow(dead_code)]
     ServicePortMismatch {
         expected: ServicePort,
         received: ServicePort,
@@ -794,28 +759,6 @@ pub(crate) async fn begin_verification(
     }
 }
 
-// TODO: revisit dead code
-// TEMP: for testing purposes
-#[allow(dead_code)]
-pub(crate) fn send_verification_request_to_all_active(
-    active_peers: &ActivePeersList,
-    request_mngr: &RequestManager,
-    server_tx: &ServerTx,
-) {
-    log::trace!("Sending verification request to all peers.");
-
-    // Technically it's not necessary, but we create copies of all peer ids in order to release the lock quickly, and
-    // not keep it for the whole loop.
-    active_peers
-        .read()
-        .iter()
-        .map(|p| p.peer_id())
-        .copied()
-        .for_each(|peer_id| {
-            send_verification_request_to_peer(&peer_id, active_peers, request_mngr, server_tx, None);
-        });
-}
-
 /// Sends a verification request to a peer by fetching its endpoint data from the peer store.
 ///
 /// The function is non-blocking.
@@ -995,32 +938,6 @@ pub(crate) fn send_discovery_request_to_addr(
         .expect("error sending discovery request to server");
 }
 
-// TODO: revisit dead code
-// TEMP: for testing purposes
-#[allow(dead_code)]
-pub(crate) fn send_discovery_request_to_all_verified(
-    active_peers: &ActivePeersList,
-    request_mngr: &RequestManager,
-    server_tx: &ServerTx,
-) {
-    log::trace!("Sending discovery request to all verified peers.");
-
-    // Technically it's not necessary, but we create copies of all peer ids in order to release the lock quickly, and
-    // not keep it for the whole loop.
-    let peers = active_peers
-        .read()
-        .iter()
-        .map(|p| p.peer_id())
-        .cloned()
-        .collect::<Vec<_>>();
-
-    for peer_id in &peers {
-        if peer::is_verified(peer_id, active_peers) {
-            send_discovery_request_to_peer(peer_id, active_peers, request_mngr, server_tx, None);
-        }
-    }
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // HELPERS
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1064,42 +981,6 @@ fn choose_n_random_peers_from_active_list(
         );
         random_peers
     }
-}
-
-// Hive.go: returns the verified peer with the given ID, or nil if no such peer exists.
-// ---
-// TODO: revisit dead code
-// ---
-/// Returns `Some(Peer)`, if either the corresponding peer is still verified, or - if it isn't -
-/// can be successfully reverified.
-///
-/// Note: The function is blocking.
-#[allow(dead_code)]
-pub(crate) async fn get_verified_peer(
-    peer_id: &PeerId,
-    active_peers: &ActivePeersList,
-    request_mngr: &RequestManager,
-    server_tx: &ServerTx,
-) -> Option<Peer> {
-    if let Some(active_peer) = active_peers.read().find(peer_id).cloned() {
-        if active_peer.metrics().verified_count() > 0 {
-            return Some(active_peer.peer().clone());
-        }
-    } else {
-        return None;
-    };
-
-    // Enforce re/verification.
-    begin_verification(peer_id, active_peers, request_mngr, server_tx)
-        .await
-        .map(|_services| {
-            active_peers
-                .read()
-                .find(peer_id)
-                .expect("inconsistent peer list")
-                .peer()
-                .clone()
-        })
 }
 
 // Hive.go: returns all the currently managed peers that have been verified at least once.

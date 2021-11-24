@@ -195,14 +195,6 @@ pub(crate) struct MasterPeersList {
 }
 
 impl MasterPeersList {
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn new(peers: MasterPeersListInner) -> Self {
-        Self {
-            inner: Arc::new(RwLock::new(peers)),
-        }
-    }
-
     pub(crate) fn read(&self) -> RwLockReadGuard<MasterPeersListInner> {
         self.inner.read().expect("error getting read access")
     }
@@ -225,17 +217,6 @@ pub(crate) struct PeerMetrics {
 }
 
 impl PeerMetrics {
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn new() -> Self {
-        Self {
-            verified_count: 0,
-            last_new_peers: 0,
-            last_verif_request: 0,
-            last_verif_response: 0,
-        }
-    }
-
     pub(crate) fn verified_count(&self) -> usize {
         self.verified_count
     }
@@ -258,20 +239,8 @@ impl PeerMetrics {
         self.last_new_peers = last_new_peers;
     }
 
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn last_verif_request_timestamp(&self) -> Timestamp {
-        self.last_verif_request
-    }
-
     pub(crate) fn set_last_verif_request_timestamp(&mut self) {
         self.last_verif_request = time::unix_now_secs();
-    }
-
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn last_verif_response_timestamp(&self) -> Timestamp {
-        self.last_verif_response
     }
 
     pub(crate) fn set_last_verif_response_timestamp(&mut self) {
@@ -280,12 +249,6 @@ impl PeerMetrics {
 
     pub(crate) fn is_verified(&self) -> bool {
         time::since(self.last_verif_response).expect("system clock error") < VERIFICATION_EXPIRATION_SECS
-    }
-
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn has_verified(&self) -> bool {
-        time::since(self.last_verif_request).expect("system clock error") < VERIFICATION_EXPIRATION_SECS
     }
 }
 
@@ -305,12 +268,6 @@ impl fmt::Debug for PeerMetrics {
 pub(crate) struct PeerRing<P, const N: usize>(VecDeque<P>);
 
 impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn new() -> Self {
-        Self::default()
-    }
-
     /// Returns `false`, if the list already contains the id, otherwise `true`.
     ///
     /// The newest item will be at index `0`, the oldest at index `n`.
@@ -371,47 +328,11 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
         self.0.get_mut(index)
     }
 
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn get_newest(&self) -> Option<&P> {
-        self.0.get(0)
-    }
-
     pub(crate) fn get_newest_mut(&mut self) -> Option<&mut P> {
         self.0.get_mut(0)
     }
 
-    // TODO: revisit dead code
-    /// Moves `peer_id` to the front of the list.
-    ///
-    /// Returns `false` if the `peer_id` is not found in the list, and thus, cannot be made the newest.
-    #[allow(dead_code)]
-    pub(crate) fn set_newest(&mut self, peer_id: &PeerId) -> bool {
-        if let Some(mid) = self.find_index(peer_id) {
-            if mid > 0 {
-                self.0.rotate_left(mid);
-            }
-            true
-        } else {
-            false
-        }
-    }
-
-    // needs to be atomic
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn set_newest_and_get(&mut self, peer_id: &PeerId) -> Option<&P> {
-        if let Some(mid) = self.find_index(peer_id) {
-            if mid > 0 {
-                self.0.rotate_left(mid);
-            }
-            self.get_newest()
-        } else {
-            None
-        }
-    }
-
-    // needs to be atomic
+    // NOTE: need to be atomic operations
     pub(crate) fn set_newest_and_get_mut(&mut self, peer_id: &PeerId) -> Option<&mut P> {
         if let Some(mid) = self.find_index(peer_id) {
             if mid > 0 {
@@ -443,14 +364,6 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
         self.0.is_empty()
     }
 
-    // TODO: revisit dead code
-    // TODO: mark as 'const fn' once stable.
-    // Compiler error hints to issue #57563 <https://github.com/rust-lang/rust/issues/57563>.
-    #[allow(dead_code)]
-    pub(crate) fn max_size(&self) -> usize {
-        N
-    }
-
     pub(crate) fn iter(&self) -> impl Iterator<Item = &P> {
         self.0.iter()
     }
@@ -467,8 +380,6 @@ mod tests {
     use super::*;
 
     impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
-        // TODO: revisit dead code
-        #[allow(dead_code)]
         pub(crate) fn rotate_backwards(&mut self) {
             self.0.rotate_left(1);
         }

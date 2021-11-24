@@ -18,9 +18,6 @@ use std::{
 /// The distance between the local entity and a neighbor.
 pub type Distance = u32;
 
-// TODO: revisit dead code
-#[allow(dead_code)]
-pub(crate) const MAX_DISTANCE: Distance = 4294967295;
 pub(crate) const SIZE_INBOUND: usize = 4;
 pub(crate) const SIZE_OUTBOUND: usize = 4;
 
@@ -55,12 +52,6 @@ impl Neighbor {
 
     pub(crate) fn into_peer(self) -> Peer {
         self.peer
-    }
-
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn into_distance(self) -> Distance {
-        self.distance
     }
 }
 
@@ -228,12 +219,6 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
 
     pub(crate) fn is_full(&self) -> bool {
         self.neighbors.len() == N
-    }
-
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn is_empty(&self) -> bool {
-        self.neighbors.is_empty()
     }
 
     pub(crate) fn len(&self) -> usize {

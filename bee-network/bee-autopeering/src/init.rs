@@ -24,7 +24,7 @@ use crate::{
     peering::{
         filter::NeighborFilter,
         manager::{
-            InboundNeighborhood, OutboundNeighborhood, PeeringManager, PeeringManagerConfig, SaltUpdateContext,
+            InboundNeighborhood, OutboundNeighborhood, PeeringManager, SaltUpdateContext,
             SALT_UPDATE_SECS,
         },
         update::{self, UpdateContext, OPEN_OUTBOUND_NBH_UPDATE_SECS},
@@ -141,11 +141,9 @@ where
     let nb_filter = NeighborFilter::new(*local.read().peer_id(), neighbor_validator);
 
     // Create the autopeering manager handling the peering request/response protocol.
-    let peering_config = PeeringManagerConfig::new(&config, version, network_id);
     let peering_socket = ServerSocket::new(peering_rx, server_tx.clone());
 
     let peering_mngr = PeeringManager::new(
-        peering_config,
         local.clone(),
         peering_socket,
         request_mngr.clone(),

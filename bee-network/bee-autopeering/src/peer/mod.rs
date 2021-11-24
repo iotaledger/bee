@@ -287,21 +287,6 @@ pub(crate) fn is_verified(peer_id: &PeerId, active_peers: &ActivePeersList) -> b
         .map_or(false, |e| e.metrics().is_verified())
 }
 
-// Hive.go: whether the given peer has recently verified the local peer
-// ---
-// TODO: revisit dead code
-// ---
-/// Returns whether the corresponding peer sent a (still valid) verification request.
-///
-/// Also returns `false`, if the provided `peer_id` is not found in the active peer list.
-#[allow(dead_code)]
-pub(crate) fn has_verified(peer_id: &PeerId, active_peers: &ActivePeersList) -> bool {
-    active_peers
-        .read()
-        .find(peer_id)
-        .map_or(false, |e| e.metrics().has_verified())
-}
-
 // Hive.go: moves the peer with the given ID to the front of the list of managed peers.
 // ---
 /// Performs 3 operations:

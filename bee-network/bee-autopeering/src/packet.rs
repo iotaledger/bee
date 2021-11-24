@@ -13,7 +13,7 @@ use crypto::{
 use num_derive::FromPrimitive;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 
-use std::{convert::TryInto, fmt, io, net::SocketAddr, ops::Range};
+use std::{convert::TryInto, fmt, net::SocketAddr, ops::Range};
 
 // From `hive.go` docs:
 // * specifies the maximum allowed size of packets;
@@ -51,14 +51,6 @@ impl Packet {
         })
     }
 
-    // TODO: revisit dead code
-    /// Returns the type of this packet.
-    #[allow(dead_code)]
-    pub(crate) fn message_type(&self) -> Result<MessageType, io::Error> {
-        num::FromPrimitive::from_u32(self.0.r#type)
-            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "unknown message type identifier"))
-    }
-
     /// Returns the message contained in this packet.
     pub(crate) fn message(&self) -> &[u8] {
         &self.0.data
@@ -71,7 +63,6 @@ impl Packet {
     }
 
     /// Returns the signature belonging to the issuer of this packet.
-    #[allow(dead_code)]
     pub(crate) fn signature(&self) -> Signature {
         Signature::from_bytes(self.0.signature.clone().try_into().expect("error signature length"))
     }

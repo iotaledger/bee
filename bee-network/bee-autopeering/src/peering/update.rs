@@ -38,13 +38,9 @@ pub(crate) struct UpdateContext<V: NeighborValidator> {
     pub(crate) request_mngr: RequestManager,
     pub(crate) active_peers: ActivePeersList,
     pub(crate) nb_filter: NeighborFilter<V>,
-    // TODO: revisit dead code
-    #[allow(dead_code)]
     pub(crate) inbound_nbh: InboundNeighborhood,
     pub(crate) outbound_nbh: OutboundNeighborhood,
     pub(crate) server_tx: ServerTx,
-    // TODO: revisit dead code
-    #[allow(dead_code)]
     pub(crate) event_tx: EventTx,
 }
 

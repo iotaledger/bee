@@ -61,12 +61,6 @@ impl VerificationRequest {
         self.source_addr
     }
 
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub fn target_addr(&self) -> IpAddr {
-        self.target_addr
-    }
-
     pub fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
         let proto::Ping {
             version,
@@ -146,13 +140,6 @@ impl VerificationResponse {
 
     pub(crate) fn services(&self) -> &ServiceMap {
         &self.services
-    }
-
-    // TODO: revisit dead code
-    /// When sent contains the external addr of the remote peer, when received the external addr of the local peer.
-    #[allow(dead_code)]
-    pub(crate) fn target_addr(&self) -> IpAddr {
-        self.target_addr
     }
 
     pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
@@ -257,12 +244,6 @@ impl DiscoveryResponse {
 
     pub(crate) fn request_hash(&self) -> &[u8] {
         &self.request_hash
-    }
-
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn peers(&self) -> &[Peer] {
-        &self.peers
     }
 
     pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {

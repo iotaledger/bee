@@ -15,9 +15,6 @@ use tokio::{sync::oneshot, task::JoinHandle, time};
 use std::{collections::HashMap, future::Future, time::Duration};
 
 pub(crate) const MAX_SHUTDOWN_PRIORITY: u8 = 255;
-// TODO: revisit dead code
-#[allow(dead_code)]
-pub(crate) const MIN_SHUTDOWN_PRIORITY: u8 = 0;
 const SHUTDOWN_TIMEOUT_SECS: Duration = Duration::from_secs(5 * SECOND);
 
 pub(crate) type ShutdownRx = oneshot::Receiver<()>;
@@ -72,18 +69,6 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
         self.shutdown_handles.insert(R::NAME.into(), handle);
 
         self.shutdown_order.push(R::NAME.into(), R::SHUTDOWN_PRIORITY);
-    }
-
-    // TODO: revisit dead code
-    /// Returns a shutdown signal handle registrees can use to stop their event loops.
-    #[allow(dead_code)]
-    pub(crate) fn shutdown_rx(&mut self, name: &str, priority: u8) -> ShutdownRx {
-        let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
-        self.shutdown_senders.insert(name.into(), shutdown_tx);
-
-        self.shutdown_order.push(name.into(), priority);
-
-        shutdown_rx
     }
 
     /// Repeats a command in certain intervals provided a context `T`. Will be shut down gracefully with the rest of

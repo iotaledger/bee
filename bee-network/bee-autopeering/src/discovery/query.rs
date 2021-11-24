@@ -18,8 +18,6 @@ use rand::{thread_rng, Rng};
 
 #[derive(Clone)]
 pub(crate) struct QueryContext {
-    // TODO: revisit dead code
-    #[allow(dead_code)]
     pub(crate) local: Local,
     pub(crate) request_mngr: RequestManager,
     pub(crate) master_peers: MasterPeersList,

@@ -20,13 +20,6 @@ pub const AUTOPEERING_SERVICE_NAME: &str = "peering";
 pub struct ServiceMap(HashMap<ServiceName, Service>);
 
 impl ServiceMap {
-    // TODO: revisit dead code
-    /// Creates a new empty service map.
-    #[allow(dead_code)]
-    pub(crate) fn new() -> Self {
-        Self::default()
-    }
-
     /// Registers a service with its bind address.
     pub(crate) fn insert(&mut self, service_name: impl ToString, protocol: ServiceProtocol, port: ServicePort) {
         self.0.insert(service_name.to_string(), Service { protocol, port });
@@ -104,9 +97,7 @@ pub struct Service {
 }
 
 impl Service {
-    // TODO: revisit dead code
     /// The transport protocol used to access the service, e.g. TCP or UDP.
-    #[allow(dead_code)]
     pub fn protocol(&self) -> ServiceProtocol {
         self.protocol
     }

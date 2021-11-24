@@ -8,7 +8,6 @@ use super::{
 };
 
 use crate::{
-    config::AutopeeringConfig,
     event::{Event, EventTx},
     local::{
         salt::{self, Salt, SALT_LIFETIME_SECS},
@@ -38,43 +37,7 @@ pub(crate) type OutboundNeighborhood = Neighborhood<SIZE_OUTBOUND, false>;
 /// Represents the answer of a `PeeringRequest`. Can be either `true` (peering accepted), or `false` (peering denied).
 pub type Status = bool;
 
-// TODO: revisit dead code
-#[allow(dead_code)]
-#[derive(Debug, thiserror::Error)]
-pub(crate) enum Error {
-    #[error("response timeout")]
-    ResponseTimeout,
-    #[error("socket was closed")]
-    SocketClosed,
-    #[error("packet does not contain a message")]
-    NoMessage,
-    #[error("packet contains an invalid message")]
-    InvalidMessage,
-}
-
-// TODO: revisit dead code
-#[allow(dead_code)]
-pub(crate) struct PeeringManagerConfig {
-    pub(crate) version: u32,
-    pub(crate) network_id: u32,
-    pub(crate) source_addr: SocketAddr,
-}
-
-impl PeeringManagerConfig {
-    pub fn new(config: &AutopeeringConfig, version: u32, network_id: u32) -> Self {
-        Self {
-            version,
-            network_id,
-            source_addr: config.bind_addr(),
-        }
-    }
-}
-
 pub(crate) struct PeeringManager<V: NeighborValidator> {
-    // The peering config.
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    config: PeeringManagerConfig,
     // The local peer.
     local: Local,
     // Channel halfs for sending/receiving peering related packets.
@@ -96,7 +59,6 @@ pub(crate) struct PeeringManager<V: NeighborValidator> {
 impl<V: NeighborValidator> PeeringManager<V> {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
-        config: PeeringManagerConfig,
         local: Local,
         socket: ServerSocket,
         request_mngr: RequestManager,
@@ -107,7 +69,6 @@ impl<V: NeighborValidator> PeeringManager<V> {
         nb_filter: NeighborFilter<V>,
     ) -> Self {
         Self {
-            config,
             local,
             socket,
             request_mngr,
@@ -129,8 +90,6 @@ impl<V: NeighborValidator> Runnable for PeeringManager<V> {
 
     async fn run(self, mut shutdown_rx: Self::ShutdownSignal) {
         let PeeringManager {
-            // TODO: revisit dead code
-            config: _,
             local,
             socket,
             request_mngr,
@@ -810,24 +769,4 @@ pub(crate) fn add_or_replace_neighbor<const IS_INBOUND: bool>(
     } else {
         outbound_nbh.write().insert_neighbor(peer, local)
     }
-}
-
-// TODO: revisit dead code
-/// Reinitializes the neighbor filter with the current neighborhoods.
-///
-/// Call this function whenever one of the neighborhoods changes.
-#[allow(dead_code)]
-pub(crate) fn refresh_neighbor_filter<V: NeighborValidator>(
-    nb_filter: &NeighborFilter<V>,
-    inbound_nbh: &InboundNeighborhood,
-    outbound_nbh: &OutboundNeighborhood,
-) {
-    nb_filter.reset(
-        inbound_nbh
-            .read()
-            .iter()
-            .map(|p| p.peer_id())
-            .copied()
-            .chain(outbound_nbh.read().iter().map(|p| p.peer_id()).copied()),
-    );
 }
