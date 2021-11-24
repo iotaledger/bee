@@ -152,7 +152,7 @@ dependencies = [
  "fern",
  "hash32",
  "hex",
- "iota-crypto 0.7.0",
+ "iota-crypto",
  "libp2p-core",
  "log",
  "num",
@@ -203,7 +203,7 @@ dependencies = [
  "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder",
  "criterion",
- "iota-crypto 0.9.1",
+ "iota-crypto",
  "lazy_static",
  "thiserror",
  "tiny-keccak",
@@ -246,7 +246,7 @@ dependencies = [
  "futures",
  "hashbrown",
  "hex",
- "iota-crypto 0.9.1",
+ "iota-crypto",
  "log",
  "ref-cast",
  "reqwest",
@@ -269,7 +269,7 @@ dependencies = [
  "bytemuck",
  "digest",
  "hex",
- "iota-crypto 0.9.1",
+ "iota-crypto",
  "num_cpus",
  "serde",
  "thiserror",
@@ -281,7 +281,7 @@ version = "0.2.0"
 dependencies = [
  "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
- "iota-crypto 0.9.1",
+ "iota-crypto",
  "thiserror",
 ]
 
@@ -1408,18 +1408,6 @@ dependencies = [
 
 [[package]]
 name = "iota-crypto"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c13594128939830ac9d9b8b44f9d073349cc6e10c30eb76c18ec89f0602ebe6"
-dependencies = [
- "digest",
- "ed25519-zebra",
- "getrandom 0.2.3",
- "sha2",
-]
-
-[[package]]
-name = "iota-crypto"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c98a3248cde6b42cb479a52089fe4fc20d12de51b8edd923294cd5240ec89b0"
@@ -1428,7 +1416,9 @@ dependencies = [
  "blake2",
  "digest",
  "ed25519-zebra",
+ "getrandom 0.2.3",
  "lazy_static",
+ "sha2",
 ]
 
 [[package]]
@@ -1994,7 +1984,6 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43db66d1170d347f9a065114077f7dccb00c1b9478c89384490a3425279a4606"
 dependencies = [
- "num-bigint 0.4.3",
  "num-complex",
  "num-integer",
  "num-iter",
@@ -2007,17 +1996,6 @@ name = "num-bigint"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "090c7f9998ee0ff65aa5b723e4009f7b217707f1fb5ea551329cc4d6231fb304"
-dependencies = [
- "autocfg",
- "num-integer",
- "num-traits",
-]
-
-[[package]]
-name = "num-bigint"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f93ab6289c7b344a8a9f60f88d80aa20032336fe78da341afc91c8a2341fc75f"
 dependencies = [
  "autocfg",
  "num-integer",
@@ -2072,7 +2050,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d41702bd167c2df5520b384281bc111a4b5efcf7fbc4c9c222c815b07e0a6a6a"
 dependencies = [
  "autocfg",
- "num-bigint 0.4.3",
  "num-integer",
  "num-traits",
 ]
@@ -2936,7 +2913,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "692ca13de57ce0613a363c8c2f1de925adebc81b04c923ac60c5488bb44abe4b"
 dependencies = [
  "chrono",
- "num-bigint 0.2.6",
+ "num-bigint",
  "num-traits",
 ]
 
