@@ -128,10 +128,10 @@ pub struct AliasOutput {
 }
 
 impl AliasOutput {
-    /// The output kind of an `AliasOutput`.
+    /// The [`Output`](crate::output::Output) kind of an [`AliasOutput`].
     pub const KIND: u8 = 3;
 
-    /// Creates a new `AliasOutput`.
+    /// Creates a new [`AliasOutput`].
     pub fn new(amount: u64, alias_id: AliasId, state_controller: Address, governance_controller: Address) -> Self {
         // SAFETY: this can't fail as this is a default builder.
         AliasOutputBuilder::new(amount, alias_id, state_controller, governance_controller)

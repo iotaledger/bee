@@ -77,10 +77,10 @@ pub struct ExtendedOutput {
 }
 
 impl ExtendedOutput {
-    /// The output kind of an `ExtendedOutput`.
+    /// The [`Output`](crate::output::Output) kind of an [`ExtendedOutput`].
     pub const KIND: u8 = 1;
 
-    /// Creates a new `ExtendedOutput`.
+    /// Creates a new [`ExtendedOutput`].
     pub fn new(address: Address, amount: u64) -> Self {
         // SAFETY: this can't fail as this is a default builder.
         ExtendedOutputBuilder::new(address, amount).finish().unwrap()

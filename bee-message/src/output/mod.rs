@@ -23,7 +23,7 @@ pub use native_token::{NativeToken, NativeTokens};
 pub use nft::{NftOutput, NftOutputBuilder};
 pub use nft_id::NftId;
 pub use output_id::{OutputId, OUTPUT_ID_LENGTH};
-pub use simple::{SimpleOutput, SIMPLE_OUTPUT_AMOUNT};
+pub use simple::SimpleOutput;
 pub use token_id::TokenId;
 pub use treasury::{TreasuryOutput, TREASURY_OUTPUT_AMOUNT};
 

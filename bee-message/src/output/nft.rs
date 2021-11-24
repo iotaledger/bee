@@ -94,10 +94,10 @@ pub struct NftOutput {
 }
 
 impl NftOutput {
-    /// The output kind of a `NftOutput`.
+    /// The [`Output`](crate::output::Output) kind of a [`NftOutput`].
     pub const KIND: u8 = 5;
 
-    /// Creates a new `NftOutput`.
+    /// Creates a new [`NftOutput`].
     pub fn new(address: Address, amount: u64, nft_id: NftId, immutable_metadata: Vec<u8>) -> Result<Self, Error> {
         NftOutputBuilder::new(address, amount, nft_id, immutable_metadata).finish()
     }
