@@ -133,10 +133,9 @@ impl SubscriberBuilder {
     ) -> Result<(Option<layer::FlamegraphFilteredLayer>, Option<Flamegrapher>), Error> {
         self.flamegraph_stack_file
             .take()
-            .map_or(Ok((None, None)), |stack_file| 
-                layer::flamegraph_layer(stack_file)
-                    .map(|(layer, flamegrapher)| (Some(layer), Some(flamegrapher)))
-            )
+            .map_or(Ok((None, None)), |stack_file| {
+                layer::flamegraph_layer(stack_file).map(|(layer, flamegrapher)| (Some(layer), Some(flamegrapher)))
+            })
     }
 }
 
