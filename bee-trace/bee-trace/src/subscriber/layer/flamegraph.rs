@@ -44,6 +44,8 @@ pub struct FlamegraphLayer {
 
 impl FlamegraphLayer {
     pub(crate) fn new<P: AsRef<Path>>(stack_filename: P) -> Result<(Self, Flamegrapher), Error> {
+        // This does not need to be used, but dereferencing here initialises to the current time, rather
+        // than evaluating later.
         let _ = *START;
 
         let stack_filename = stack_filename.as_ref().with_extension("folded");

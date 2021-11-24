@@ -185,8 +185,8 @@ impl LogLayer {
 
                 Ok(LogTargetMakeWriter::new(LogTarget { filter: targets, dest }))
             })
-            .collect::<Result<_, _>>()
-            .map_err(|err: io::Error| Error::LogLayer(err.into()))?;
+            .collect::<Result<_, io::Error>>()
+            .map_err(|err| Error::LogLayer(err.into()))?;
 
         Ok(Self {
             make_writers,

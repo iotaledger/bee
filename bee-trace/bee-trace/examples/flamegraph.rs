@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!(
         "Creating flamegraph layer, recording to {}.folded",
-        stack_filename.to_string_lossy()
+        stack_filename.display()
     );
 
     let flamegrapher = bee_trace::subscriber::build()
@@ -28,9 +28,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let task2 = task::spawn(timeout(Duration::from_secs(5), run_tasks(200)));
     let _ = tokio::join!(task1, task2);
 
-    let graph_filename = examples_dir.clone().join("flamegraph");
+    let graph_filename = examples_dir.join("flamegraph");
 
-    println!("Creating flamegraph at {}.svg", graph_filename.to_string_lossy());
+    println!("Creating flamegraph at {}.svg", graph_filename.display());
     flamegrapher.with_graph_file(graph_filename)?.write_flamegraph()?;
 
     Ok(())

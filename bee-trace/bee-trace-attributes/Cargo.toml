@@ -19,8 +19,3 @@ syn = { version = "1.0.75", default-features = false, features = [ "full", "extr
 
 [dev-dependencies]
 bee-trace = { path = "../bee-trace" }
-
-tokio = { version = "1.13", features = [ "full", "rt-multi-thread", "tracing" ] }
-tracing = { version = "0.1.26", default-features = false }
-tracing-futures = { version = "0.2.5", default-features = false, features = [ "std", "std-future", "tokio" ] }
-tracing-subscriber = { version = "0.2.20", default-features = false, features = [ "ansi", "fmt", "parking_lot", "registry" ] }

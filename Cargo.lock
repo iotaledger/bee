@@ -495,10 +495,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
- "tokio 1.14.0",
- "tracing",
- "tracing-futures",
- "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
