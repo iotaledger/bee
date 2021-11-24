@@ -10,9 +10,7 @@ use crate::rand::{
 };
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
-use bee_message::output::{
-    self, Output, OutputId, SimpleOutput, OUTPUT_INDEX_RANGE, SIMPLE_OUTPUT_AMOUNT, TREASURY_OUTPUT_AMOUNT,
-};
+use bee_message::output::{self, Output, OutputId, SimpleOutput, OUTPUT_INDEX_RANGE, TREASURY_OUTPUT_AMOUNT};
 
 /// Generates a random output id.
 pub fn rand_output_id() -> OutputId {
@@ -26,7 +24,7 @@ pub fn rand_unspent_output_id() -> Unspent {
 
 /// Generates a random simple output.
 pub fn rand_simple_output() -> SimpleOutput {
-    SimpleOutput::new(rand_address(), rand_number_range(SIMPLE_OUTPUT_AMOUNT)).unwrap()
+    SimpleOutput::new(rand_address(), rand_number_range(SimpleOutput::AMOUNT_RANGE)).unwrap()
 }
 
 /// Generates a random treasury output.
