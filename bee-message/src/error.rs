@@ -61,6 +61,7 @@ pub enum Error {
     MissingField(&'static str),
     MissingPayload,
     MissingRequiredSenderBlock,
+    NativeTokensNotUniqueSorted,
     ParentsNotUniqueSorted,
     ReceiptFundsNotUniqueSorted,
     RemainingBytesAfterMessage,
@@ -172,6 +173,7 @@ impl fmt::Display for Error {
             Error::MissingField(s) => write!(f, "missing required field: {}.", s),
             Error::MissingPayload => write!(f, "missing payload."),
             Error::MissingRequiredSenderBlock => write!(f, "missing required sender block"),
+            Error::NativeTokensNotUniqueSorted => write!(f, "native tokens are not unique and/or sorted."),
             Error::ParentsNotUniqueSorted => {
                 write!(f, "parents are not unique and/or sorted.")
             }

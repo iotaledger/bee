@@ -3,7 +3,10 @@
 
 use crate::{output::TokenId, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::{
+    ord::is_unique_sorted,
+    packable::{Packable, Read, Write},
+};
 
 use primitive_types::U256;
 
@@ -26,7 +29,7 @@ impl NativeToken {
     }
 
     /// Returns the token ID of the [`NativeToken`].
-    pub fn token_id(&self) -> &TokenId {
+    pub fn token_id<'heyyy>(&'heyyy self) -> &'heyyy TokenId {
         &self.token_id
     }
 
@@ -67,8 +70,13 @@ pub struct NativeTokens(Box<[NativeToken]>);
 impl TryFrom<Vec<NativeToken>> for NativeTokens {
     type Error = Error;
 
-    fn try_from(native_tokens: Vec<NativeToken>) -> Result<Self, Self::Error> {
+    fn try_from(mut native_tokens: Vec<NativeToken>) -> Result<Self, Self::Error> {
         validate_count(native_tokens.len())?;
+
+        native_tokens.sort_by(|a, b| a.token_id().cmp(b.token_id()));
+
+        // Sort is obviously fine now but uniqueness still needs to be checked.
+        validate_unique_sorted(&native_tokens)?;
 
         Ok(Self(native_tokens.into_boxed_slice()))
     }
@@ -120,7 +128,11 @@ impl Packable for NativeTokens {
             native_tokens.push(NativeToken::unpack_inner::<R, CHECK>(reader)?);
         }
 
-        Self::new(native_tokens)
+        if CHECK {
+            validate_unique_sorted(&native_tokens)?;
+        }
+
+        Ok(Self(native_tokens.into_boxed_slice()))
     }
 }
 
@@ -128,6 +140,15 @@ impl Packable for NativeTokens {
 fn validate_count(native_tokens_count: usize) -> Result<(), Error> {
     if native_tokens_count > NativeTokens::COUNT_MAX {
         return Err(Error::InvalidNativeTokenCount(native_tokens_count));
+    }
+
+    Ok(())
+}
+
+#[inline]
+fn validate_unique_sorted(native_tokens: &[NativeToken]) -> Result<(), Error> {
+    if !is_unique_sorted(native_tokens.iter().map(NativeToken::token_id)) {
+        return Err(Error::NativeTokensNotUniqueSorted);
     }
 
     Ok(())
