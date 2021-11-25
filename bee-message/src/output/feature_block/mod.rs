@@ -184,7 +184,7 @@ impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
 
 impl FeatureBlocks {
     ///
-    pub const COUNT_MAX: usize = 8;
+    pub const COUNT_MAX: usize = 9;
 
     /// Creates a new `FeatureBlocks`.
     pub fn new(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Error> {
