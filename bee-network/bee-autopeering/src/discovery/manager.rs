@@ -225,7 +225,7 @@ impl Runnable for DiscoveryRecvHandler {
                                 };
 
                                 if let Err(e) = validate_verification_request(&verif_req, version, network_id) {
-                                    log::warn!("Received invalid verification request from {}. Reason: {:?}", &peer_id, e);
+                                    log::warn!("Received invalid verification request from {}. Reason: {}", &peer_id, e);
                                     continue 'recv;
                                 } else {
                                     log::trace!("Received valid verification request from {}.", &peer_id);
@@ -478,27 +478,34 @@ pub(crate) struct RecvContext<'a> {
 // VALIDATION
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, thiserror::Error)]
 pub(crate) enum ValidationError {
     // The protocol version must match.
+    #[error("version mismatch; expected: {expected}, received: {received}")]
     VersionMismatch {
         expected: u32,
         received: u32,
     },
     // The network id must match.
+    #[error("network id mismatch; expected: {expected}, received: {received}")]
     NetworkIdMismatch {
         expected: u32,
         received: u32,
     },
     // The request must not be expired.
+    #[error("request expired")]
     RequestExpired,
     // The response must arrive in time.
+    #[error("no corresponding request, or timeout")]
     NoCorrespondingRequestOrTimeout,
     // The hash of the corresponding request must be correct.
+    #[error("incorrect request hash")]
     IncorrectRequestHash,
     // The peer must have an autopeering service.
+    #[error("no autopeering service")]
     NoAutopeeringService,
     // The service port must match with the detected port.
+    #[error("service port mismatch; expected: {expected}, received: {received}")]
     ServicePortMismatch {
         expected: ServicePort,
         received: ServicePort,
