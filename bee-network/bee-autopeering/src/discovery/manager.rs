@@ -482,16 +482,10 @@ pub(crate) struct RecvContext<'a> {
 pub(crate) enum ValidationError {
     // The protocol version must match.
     #[error("version mismatch; expected: {expected}, received: {received}")]
-    VersionMismatch {
-        expected: u32,
-        received: u32,
-    },
+    VersionMismatch { expected: u32, received: u32 },
     // The network id must match.
     #[error("network id mismatch; expected: {expected}, received: {received}")]
-    NetworkIdMismatch {
-        expected: u32,
-        received: u32,
-    },
+    NetworkIdMismatch { expected: u32, received: u32 },
     // The request must not be expired.
     #[error("request expired")]
     RequestExpired,
