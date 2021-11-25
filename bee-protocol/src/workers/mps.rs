@@ -13,10 +13,9 @@ use backstage::core::{Actor, ActorError, ActorResult, IntervalChannel, Rt, SupHa
 use futures::StreamExt;
 use log::info;
 
-use std::{any::TypeId, convert::Infallible};
+use std::{any::TypeId, convert::Infallible, time::Duration};
 
-// TODO: It feels like the MpsActor is being run a lot more than just once per second.
-const MPS_INTERVAL: u64 = 1; // In seconds
+const MPS_INTERVAL: u64 = Duration::from_secs(1).as_millis() as u64;
 
 #[derive(Default)]
 pub struct MpsActor {}

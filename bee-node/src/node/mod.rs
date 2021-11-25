@@ -205,7 +205,7 @@ where
 
     async fn run(&mut self, rt: &mut Rt<Self, S>, _data: Self::Data) -> ActorResult<()> {
         log::info!("Root: {}", rt.service().status());
-        log::error!("HELLO FR0M BACKSTAGE!!!!!!");
+        log::error!("H3LLO FR0M BACKSTAGE!!!!!!");
 
         while let Some(event) = rt.inbox_mut().next().await {
             log::info!("Root: Received {:?}", event);
