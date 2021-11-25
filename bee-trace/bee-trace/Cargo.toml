@@ -7,22 +7,22 @@ description = "Tracing and diagnostic tools for the bee node"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = [ "iota", "tangle", "bee", "framework", "trace", "tracing" ]
+keywords = [ "iota", "tangle", "bee", "framework", "trace" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { path = "../../bee-common/bee-common" }
-bee-trace-attributes = { path = "../bee-trace-attributes" }
+bee-common = { path = "../../bee-common/bee-common", default-features = false }
+bee-trace-attributes = { path = "../bee-trace-attributes", default-features = false }
 
 colored = { version = "2.0.0", default-features = false }
 inferno = { version = "0.10.6", default-features = false }
-lazy_static = "1.4.0"
+lazy_static = { version = "1.4.0", default-features = false }
 log = { version = "0.4.14", default-features = false }
 parking_lot = { version = "0.11.1", default-features = false }
 tracing = { version = "0.1.26", default-features = false }
-tracing-futures = { version = "0.2.5", default-features = false, features = [ "futures-01", "futures-03", "std", "std-future", "tokio" ] }
+tracing-futures = { version = "0.2.5", default-features = false, features = [ "futures-01", "futures-03", "std", "std-future" ] }
 tracing-log = { version = "0.1.2", default-features = false, features = [ "log-tracer", "std" ] }
 tracing-subscriber = { version = "0.2.20", default-features = false, features = [ "ansi", "fmt", "parking_lot", "registry" ] }
 
 [dev-dependencies]
-tokio = { version = "1.13", features = [ "full", "rt", "tracing" ] }
+tokio = { version = "1.13.0", features = [ "full", "rt", "tracing" ], default-features = false }

@@ -22,5 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 0.1.0 - 2021-11-23
 
 ### Added
+
  - Initial crate:
    - `#[observe]` attribute macro

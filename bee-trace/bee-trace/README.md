@@ -1,3 +1,3 @@
 # bee-trace
 
-Tracing and diagnostic tools for the bee node.
+Tracing and diagnostic tools for the bee framework.
