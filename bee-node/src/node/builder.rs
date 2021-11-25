@@ -277,6 +277,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             this.worker_starts.remove(&id).unwrap()(&mut node).await;
         }
 
+        // TODO: Proper initialization of resources in respective actors
         let bus = node.bus();
         let metrics = node.resource();
 

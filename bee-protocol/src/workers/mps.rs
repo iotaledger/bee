@@ -36,13 +36,13 @@ where
 
         // The event bus should be under the supervisor's ID.
         let bus = rt
-            .lookup(parent_id)
+            .lookup::<ResourceHandle<Bus>>(parent_id)
             .await
             .ok_or_else(|| ActorError::exit_msg("event bus is not available"))?;
 
         // The node metrics should be under the supervisor's ID.
         let node_metrics = rt
-            .lookup(parent_id)
+            .lookup::<ResourceHandle<NodeMetrics>>(parent_id)
             .await
             .ok_or_else(|| ActorError::exit_msg("event bus is not available"))?;
 
