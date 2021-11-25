@@ -13,4 +13,4 @@ panic = "abort"
 
 # `iota-crypto` uses bee-ternary. We patch it to use our local version to avoid importing it twice.
 [patch.crates-io]
-bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-ternary = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering" }

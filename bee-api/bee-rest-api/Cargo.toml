@@ -11,15 +11,15 @@ keywords = [ "iota", "tangle", "bee", "framework", "api" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
-bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
-bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
+bee-common = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false, optional = true }
+bee-ledger = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false }
+bee-message = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false }
 bee-gossip = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false, optional = true }
-bee-pow = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
+bee-pow = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false }
 bee-protocol = { path = "../../bee-protocol", default-features = false }
-bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true  }
-bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
-bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
+bee-runtime = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false, optional = true  }
+bee-storage = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false, optional = true }
+bee-tangle = { git = "https://github.com/alex6323/bee.git", branch = "cpt2-autopeering", default-features = false, optional = true }
 
 async-trait = { version = "0.1.51", default-features = false, optional = true }
 bech32 = { version = "0.8.1", default-features = false, optional = true }
