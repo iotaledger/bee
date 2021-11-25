@@ -20,7 +20,7 @@ pub enum Error {
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAmount(u64),
-    InvalidDustDepositReturnFeatureBlock(u64),
+    InvalidDustDepositAmount(u64),
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(usize),
     InvalidFeatureBlockKind(u8),
@@ -94,8 +94,8 @@ impl fmt::Display for Error {
             Error::InvalidAddress => write!(f, "invalid address provided."),
             Error::InvalidAddressKind(k) => write!(f, "invalid address kind: {}.", k),
             Error::InvalidAmount(amount) => write!(f, "invalid amount: {}.", amount),
-            Error::InvalidDustDepositReturnFeatureBlock(amount) => {
-                write!(f, "invalid dust deposit return feature block: {}.", amount)
+            Error::InvalidDustDepositAmount(amount) => {
+                write!(f, "invalid dust deposit amount: {}.", amount)
             }
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}.", k),
             Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}.", count),

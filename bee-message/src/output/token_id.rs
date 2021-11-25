@@ -12,10 +12,10 @@ use core::str::FromStr;
 pub struct TokenId([u8; Self::LENGTH]);
 
 impl TokenId {
-    ///
+    /// Length of a [`TokenId`].
     pub const LENGTH: usize = 38;
 
-    /// Creates a new `TokenId`.
+    /// Creates a new [`TokenId`].
     pub fn new(bytes: [u8; Self::LENGTH]) -> Self {
         bytes.into()
     }

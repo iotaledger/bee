@@ -83,7 +83,7 @@ impl TryFrom<Vec<NativeToken>> for NativeTokens {
 }
 
 impl NativeTokens {
-    ///
+    /// Maximum possible number of different native tokens that can reside in one output.
     pub const COUNT_MAX: usize = 256;
 
     /// Creates a new `NativeTokens`.

@@ -1,15 +1,16 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{constants::DUST_THRESHOLD, Error};
+use crate::{constants::DUST_DEPOSIT_MIN, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-/// Defines the amount of IOTAs used as dust deposit that have to be returned to Sender.
+/// Defines the amount of IOTAs used as dust deposit that have to be returned to the sender [`Address`].
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct DustDepositReturnFeatureBlock {
-    // Amount of IOTA coins the consuming transaction should deposit to the address defined in SenderFeatureBlock.
+    // Amount of IOTA coins the consuming transaction should deposit to the [`Address`] defined in
+    // [`SenderFeatureBlock`].
     amount: u64,
 }
 
@@ -17,9 +18,7 @@ impl TryFrom<u64> for DustDepositReturnFeatureBlock {
     type Error = Error;
 
     fn try_from(amount: u64) -> Result<Self, Self::Error> {
-        if amount < DUST_THRESHOLD {
-            return Err(Error::InvalidDustDepositReturnFeatureBlock(amount));
-        }
+        validate_amount(amount)?;
 
         Ok(Self { amount })
     }
@@ -54,6 +53,21 @@ impl Packable for DustDepositReturnFeatureBlock {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Self::try_from(u64::unpack_inner::<R, CHECK>(reader)?)
+        let amount = u64::unpack_inner::<R, CHECK>(reader)?;
+
+        if CHECK {
+            validate_amount(amount)?;
+        }
+
+        Ok(Self { amount })
     }
+}
+
+#[inline]
+fn validate_amount(amount: u64) -> Result<(), Error> {
+    if amount < DUST_DEPOSIT_MIN {
+        return Err(Error::InvalidDustDepositAmount(amount));
+    }
+
+    Ok(())
 }

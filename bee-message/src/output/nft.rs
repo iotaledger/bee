@@ -187,9 +187,11 @@ impl Packable for NftOutput {
         let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
         let nft_id = NftId::unpack_inner::<R, CHECK>(reader)?;
         let immutable_metadata_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
+
         if CHECK && immutable_metadata_len > METADATA_LENGTH_MAX {
             return Err(Error::InvalidMetadataLength(immutable_metadata_len));
         }
+
         let mut immutable_metadata = vec![0u8; immutable_metadata_len];
         reader.read_exact(&mut immutable_metadata)?;
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;

@@ -5,7 +5,7 @@ use crate::{address::Address, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-/// Identifies the validated issuer of the output.
+/// Identifies the validated issuer of an output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct IssuerFeatureBlock {
@@ -21,7 +21,7 @@ impl IssuerFeatureBlock {
         address.into()
     }
 
-    /// Returns the issuer address.
+    /// Returns the issuer [`Address`].
     pub fn address(&self) -> &Address {
         &self.address
     }

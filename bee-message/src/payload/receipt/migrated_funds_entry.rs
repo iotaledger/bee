@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    constants::{DUST_THRESHOLD, IOTA_SUPPLY},
+    constants::{DUST_DEPOSIT_MIN, IOTA_SUPPLY},
     output::SimpleOutput,
     payload::receipt::TailTransactionHash,
     Error,
@@ -13,7 +13,7 @@ use bee_common::packable::{Packable, Read, Write};
 use core::ops::RangeInclusive;
 
 /// Range of valid amounts for migrated funds entries.
-pub const VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS: RangeInclusive<u64> = DUST_THRESHOLD..=IOTA_SUPPLY;
+pub const VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS: RangeInclusive<u64> = DUST_DEPOSIT_MIN..=IOTA_SUPPLY;
 
 /// Describes funds which were migrated from a legacy network.
 #[derive(Clone, Debug, Eq, PartialEq)]
