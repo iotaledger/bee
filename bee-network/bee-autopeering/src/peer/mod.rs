@@ -314,7 +314,7 @@ mod tests {
 
     impl Peer {
         pub(crate) fn new_test_peer(index: u8) -> Self {
-            let mut services = ServiceMap::new();
+            let mut services = ServiceMap::default();
             services.insert(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, 1337);
 
             let public_key = PrivateKey::generate().unwrap().public_key();

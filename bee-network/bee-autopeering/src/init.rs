@@ -162,7 +162,7 @@ where
     let ctx = SaltUpdateContext::new(
         local.clone(),
         nb_filter.clone(),
-        inbound_nbh.clone(),
+        inbound_nbh,
         outbound_nbh.clone(),
         server_tx.clone(),
         event_tx.clone(),
@@ -174,7 +174,6 @@ where
     task_mngr.repeat(cmd, delay, ctx, "Salt-Update", MAX_SHUTDOWN_PRIORITY);
 
     let ctx = QueryContext {
-        local: local.clone(),
         request_mngr: request_mngr.clone(),
         master_peers: master_peers.clone(),
         active_peers: active_peers.clone(),
@@ -198,10 +197,8 @@ where
         request_mngr,
         active_peers,
         nb_filter,
-        inbound_nbh,
         outbound_nbh,
         server_tx,
-        event_tx,
     };
 
     // Update the outbound neighborhood regularly (interval depends on whether slots available or not).

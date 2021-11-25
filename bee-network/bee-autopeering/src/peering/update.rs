@@ -3,14 +3,13 @@
 
 use super::{
     filter::NeighborFilter,
-    manager::{self, InboundNeighborhood, OutboundNeighborhood},
+    manager::{self, OutboundNeighborhood},
     neighbor::{salt_distance, Neighbor},
 };
 
 use crate::{
     delay::ManualDelayFactory,
     discovery::manager::get_verified_peers,
-    event::EventTx,
     local::Local,
     peer::peerlist::ActivePeersList,
     request::RequestManager,
@@ -38,10 +37,8 @@ pub(crate) struct UpdateContext<V: NeighborValidator> {
     pub(crate) request_mngr: RequestManager,
     pub(crate) active_peers: ActivePeersList,
     pub(crate) nb_filter: NeighborFilter<V>,
-    pub(crate) inbound_nbh: InboundNeighborhood,
     pub(crate) outbound_nbh: OutboundNeighborhood,
     pub(crate) server_tx: ServerTx,
-    pub(crate) event_tx: EventTx,
 }
 
 pub(crate) fn do_update<V: NeighborValidator + 'static>() -> Repeat<UpdateContext<V>> {

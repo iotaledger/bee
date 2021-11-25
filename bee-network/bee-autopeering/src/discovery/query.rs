@@ -4,7 +4,6 @@
 use crate::{
     discovery::manager,
     event::EventTx,
-    local::Local,
     peer::{
         peerlist::{ActivePeer, ActivePeersList, MasterPeersList, ReplacementList},
         PeerId,
@@ -18,7 +17,6 @@ use rand::{thread_rng, Rng};
 
 #[derive(Clone)]
 pub(crate) struct QueryContext {
-    pub(crate) local: Local,
     pub(crate) request_mngr: RequestManager,
     pub(crate) master_peers: MasterPeersList,
     pub(crate) active_peers: ActivePeersList,
