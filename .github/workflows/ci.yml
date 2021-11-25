@@ -17,7 +17,8 @@ on:
       - '**.md'
 
 jobs:
-  build:
+  build-and-test:
+    name: Build and Test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -79,63 +80,6 @@ jobs:
         command: build
         args: --all --release
 
-  test:
-    needs: build
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        rust: [nightly, beta, stable]
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Install LLVM and Clang (Windows)
-      uses: KyleMayes/install-llvm-action@32c4866ebb71e0949e8833eb49beeebed48532bd
-      if: matrix.os == 'windows-latest'
-      with:
-        version: "11.0"
-        directory: ${{ runner.temp }}/llvm
-
-    - name: Set LIBCLANG_PATH (Windows)
-      run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
-      if: matrix.os == 'windows-latest'
-
-    - name: Install ${{ matrix.rust }}
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: ${{ matrix.rust }}
-        override: true
-
-    - name: Cache cargo state
-      uses: actions/cache@v2
-      env:
-        cache-name: cache-cargo
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-        key: ${{ matrix.os }}-${{ matrix.rust }}-build-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}
-        restore-keys: |
-          ${{ matrix.os }}-${{ matrix.rust }}-build-${{ env.cache-name }}-
-          ${{ matrix.os }}-${{ matrix.rust }}-build-
-          ${{ matrix.os }}-${{ matrix.rust }}-
-          ${{ matrix.os }}-
-
-    - name: Cache target dir
-      uses: actions/cache@v2
-      env:
-        cache-name: cache-target
-      with:
-        path: |
-          target/
-        key: ${{ matrix.os }}-${{ matrix.rust }}-build-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}
-        restore-keys: |
-          ${{ matrix.os }}-${{ matrix.rust }}-build-${{ env.cache-name }}-
-          ${{ matrix.os }}-${{ matrix.rust }}-build-
-          ${{ matrix.os }}-${{ matrix.rust }}-
-          ${{ matrix.os }}-
-
     - name: Test
       uses: actions-rs/cargo@v1
       with:
@@ -143,7 +87,7 @@ jobs:
         args: --all --all-features --release
 
   clippy:
-    needs: test
+    needs: build-and-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -190,7 +134,7 @@ jobs:
           args: --all-targets --all-features -- -D warnings
 
   format:
-    needs: test
+    needs: build-and-test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
