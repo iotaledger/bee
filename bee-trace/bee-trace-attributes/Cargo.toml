@@ -20,3 +20,6 @@ syn = { version = "1.0.75", default-features = false, features = [ "full", "extr
 
 [dev-dependencies]
 bee-trace = { path = "../bee-trace", default-features = false }
+
+[package.metadata.cargo-udeps.ignore]
+development = [ "bee-trace" ]
