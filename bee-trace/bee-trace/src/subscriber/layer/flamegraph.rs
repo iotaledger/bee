@@ -164,38 +164,30 @@ where
     }
 
     fn new_span(&self, attrs: &span::Attributes<'_>, id: &span::Id, _ctx: Context<'_, S>) {
-        if !self.is_tracked_callsite(&attrs.metadata().callsite()) {
-            return;
+        if self.is_tracked_callsite(&attrs.metadata().callsite()) {
+            let location = SpanLocation::from_attributes(attrs);
+            self.span_locations.write().insert(id.clone(), location);
         }
-
-        let location = SpanLocation::from_attributes(attrs);
-        self.span_locations.write().insert(id.clone(), location);
     }
 
     fn on_enter(&self, id: &span::Id, ctx: Context<'_, S>) {
-        if !self.is_tracked(id, &ctx) {
-            return;
+        if self.is_tracked(id, &ctx) {
+            let stack_str = self.stack_string_on_enter(id, &ctx);
+            let _ = writeln!(*self.out_file.write(), "{}", stack_str);
         }
-
-        let stack_str = self.stack_string_on_enter(id, &ctx);
-        let _ = writeln!(*self.out_file.write(), "{}", stack_str);
     }
 
     fn on_exit(&self, id: &span::Id, ctx: Context<'_, S>) {
-        if !self.is_tracked(id, &ctx) {
-            return;
+        if self.is_tracked(id, &ctx) {
+            let stack_str = self.stack_string_on_exit(id, &ctx);
+            let _ = writeln!(*self.out_file.write(), "{}", stack_str);
         }
-
-        let stack_str = self.stack_string_on_exit(id, &ctx);
-        let _ = writeln!(*self.out_file.write(), "{}", stack_str);
     }
 
     fn on_close(&self, id: span::Id, ctx: Context<'_, S>) {
-        if !self.is_tracked(&id, &ctx) {
-            return;
+        if self.is_tracked(&id, &ctx) {
+            let _ = self.span_locations.write().remove(&id);
         }
-
-        let _ = self.span_locations.write().remove(&id);
     }
 }
 
