@@ -11,7 +11,7 @@ use backstage::core::{Actor, ActorError, ActorResult, IntervalChannel, Rt, SupHa
 use futures::StreamExt;
 use log::info;
 
-use std::{time::Duration, convert::Infallible};
+use std::{convert::Infallible, time::Duration};
 
 const METRICS_INTERVAL: u64 = Duration::from_secs(60).as_millis() as u64;
 

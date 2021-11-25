@@ -6,8 +6,9 @@ mod error;
 
 use bee_protocol::{
     types::metrics::NodeMetrics,
-    workers::{MetricsActor, MpsActor},
+    workers::{MetricsActor, MpsActor, RequestedMessages, StatusActor},
 };
+use bee_tangle::Tangle;
 pub use builder::BeeNodeBuilder;
 pub use error::Error;
 
@@ -174,15 +175,18 @@ impl<T> ReportEvent<T> for NodeSupervisorEvent {
     }
 }
 
-struct NodeSupervisor {
+struct NodeSupervisor<B: StorageBackend> {
     bus: ResourceHandle<Bus<'static>>,
     metrics: ResourceHandle<NodeMetrics>,
+    tangle: ResourceHandle<Tangle<B>>,
+    requested_messages: ResourceHandle<RequestedMessages>,
 }
 
 #[async_trait::async_trait]
-impl<S> Actor<S> for NodeSupervisor
+impl<S, B> Actor<S> for NodeSupervisor<B>
 where
     S: SupHandle<Self>,
+    B: StorageBackend,
 {
     type Data = ();
     type Channel = AbortableUnboundedChannel<NodeSupervisorEvent>;
@@ -194,11 +198,17 @@ where
         rt.add_resource(self.bus.clone()).await;
         // Add the node metrics as a resource under the supervisor's ID.
         rt.add_resource(self.metrics.clone()).await;
+
+        rt.add_resource(self.tangle.clone()).await;
+        rt.add_resource(self.requested_messages.clone()).await;
+
         // Spawn the metrics actor.
         rt.start(Some("metrics".into()), MetricsActor::default()).await?;
         // Spawn the `MpsActor` actor.
         // TODO: This could maybe be done right from the metrics actor.
         rt.start(Some("mps".into()), MpsActor::default()).await?;
+
+        rt.start(Some("status".into()), StatusActor::<B>::default()).await?;
 
         Ok(())
     }

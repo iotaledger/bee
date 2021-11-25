@@ -21,6 +21,8 @@ mod sender;
 mod solidifier;
 mod status;
 
+use backstage::core::SupHandle;
+use bee_ledger::workers::StorageBackend;
 pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
 pub(crate) use heartbeater::HeartbeaterWorker;
 pub(crate) use index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
@@ -43,6 +45,7 @@ pub(crate) use responder::{
     MessageResponderWorker, MessageResponderWorkerEvent, MilestoneResponderWorker, MilestoneResponderWorkerEvent,
 };
 pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
+pub use status::StatusActor;
 pub(crate) use status::StatusWorker;
 
 use bee_network::NetworkEventReceiver;
@@ -81,4 +84,8 @@ where
         .with_worker::<HeartbeaterWorker>()
         .with_worker::<MessageSubmitterWorker>()
         .with_worker::<UnreferencedMessageInserterWorker>()
+}
+
+pub trait BeeSupHandle<T: Send>: SupHandle<T> {
+    type Backend: StorageBackend;
 }

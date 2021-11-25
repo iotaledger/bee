@@ -278,10 +278,12 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         }
 
         // TODO: Proper initialization of resources in respective actors
-        let bus = node.bus();
-        let metrics = node.resource();
-
-        let supervisor = NodeSupervisor { bus, metrics };
+        let supervisor = NodeSupervisor::<B> {
+            bus: node.bus(),
+            metrics: node.resource(),
+            tangle: node.resource(),
+            requested_messages: node.resource(),
+        };
 
         let backstage_runtime = Runtime::new(Some("supervisor".into()), supervisor)
             .await
