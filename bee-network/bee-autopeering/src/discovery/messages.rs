@@ -1,5 +1,6 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
 use crate::{local::services::ServiceMap, peer::Peer, proto, request::Request};
 
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message as _};

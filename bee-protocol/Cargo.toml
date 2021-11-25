@@ -11,6 +11,6 @@ keywords = [ "iota", "tangle", "bee", "framework", "protocol" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-autopeering = { version = "0.1.0", path = "../bee-autopeering", default-features = false }
+bee-autopeering = { version = "0.1.0", path = "../bee-network/bee-autopeering", default-features = false }
+bee-gossip = { version = "0.3.0", path = "../bee-network/bee-gossip", default-features = false }
 bee-message = { version = "0.1.6", path = "../bee-message", default-features = false, features = [ "serde" ] }
-bee-network = { version = "0.3.0", path = "../bee-network", default-features = false }

@@ -26,26 +26,37 @@ pub trait PeerStore: Clone + Send + Sync {
 
     /// Creates a new peer store from config.
     fn new(config: Self::Config) -> Self;
+
     /// Stores an active peer.
     fn store_active(&self, peer: ActivePeer);
+
     /// Stores all current active peers.
     fn store_all_active(&self, peers: &ActivePeersList);
+
     /// Stores a replacement peer.
     fn store_replacement(&self, peer: Peer);
+
     /// Stores all current replacement peers.
     fn store_all_replacements(&self, peers: &ReplacementList);
+
     /// Whether the store contains the given peer.
     fn contains(&self, peer_id: &PeerId) -> bool;
+
     /// Fetches an active peer from its peer identity.
     fn fetch_active(&self, peer_id: &PeerId) -> Option<ActivePeer>;
+
     /// Fetches all active peers.
     fn fetch_all_active(&self) -> Vec<ActivePeer>;
+
     /// Fetches a replacement peer from its peer identity.
     fn fetch_replacement(&self, peer_id: &PeerId) -> Option<Peer>;
+
     /// Fetches all replacement peers.
     fn fetch_all_replacements(&self) -> Vec<Peer>;
+
     /// Deletes a stored peer.
     fn delete(&self, peer_id: &PeerId) -> bool;
+
     /// Deletes all stored peers.
     fn delete_all(&self);
 }
@@ -79,6 +90,7 @@ impl PeerStore for InMemoryPeerStore {
             inner: Default::default(),
         }
     }
+
     fn store_active(&self, peer: ActivePeer) {
         let peer_id = peer.peer_id();
 
@@ -87,6 +99,7 @@ impl PeerStore for InMemoryPeerStore {
         let _ = write.replacements.remove(peer_id);
         let _ = write.active_peers.insert(*peer_id, peer);
     }
+
     fn store_all_active(&self, peers: &ActivePeersList) {
         let read = peers.read();
         let mut write = self.write();
@@ -95,12 +108,14 @@ impl PeerStore for InMemoryPeerStore {
             let _ = write.active_peers.insert(*peer_id, peer.clone());
         }
     }
+
     fn store_replacement(&self, peer: Peer) {
         let peer_id = peer.peer_id();
 
         let _ = self.write().active_peers.remove(peer_id);
         let _ = self.write().replacements.insert(*peer_id, peer);
     }
+
     fn store_all_replacements(&self, peers: &ReplacementList) {
         let read = peers.read();
         let mut write = self.write();
@@ -109,26 +124,33 @@ impl PeerStore for InMemoryPeerStore {
             let _ = write.replacements.insert(*peer_id, peer.clone());
         }
     }
+
     fn contains(&self, peer_id: &PeerId) -> bool {
         let read = self.read();
         read.active_peers.contains_key(peer_id) || read.replacements.contains_key(peer_id)
     }
+
     fn fetch_active(&self, peer_id: &PeerId) -> Option<ActivePeer> {
         self.read().active_peers.get(peer_id).cloned()
     }
+
     fn fetch_all_active(&self) -> Vec<ActivePeer> {
         self.read().active_peers.iter().map(|(_, p)| p).cloned().collect()
     }
+
     fn fetch_replacement(&self, peer_id: &PeerId) -> Option<Peer> {
         self.read().replacements.get(peer_id).cloned()
     }
+
     fn fetch_all_replacements(&self) -> Vec<Peer> {
         self.read().replacements.iter().map(|(_, p)| p).cloned().collect()
     }
+
     fn delete(&self, peer_id: &PeerId) -> bool {
         let mut write = self.write();
         write.active_peers.remove(peer_id).is_some() || write.replacements.remove(peer_id).is_some()
     }
+
     fn delete_all(&self) {
         let mut write = self.write();
         write.active_peers.clear();
@@ -163,6 +185,7 @@ impl PeerStore for SledPeerStore {
 
         tree.insert(key, active_peer.to_vec()).expect("insert error");
     }
+
     fn store_all_active(&self, active_peers: &ActivePeersList) {
         let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
 
@@ -174,12 +197,14 @@ impl PeerStore for SledPeerStore {
 
         tree.apply_batch(batch).expect("error applying batch");
     }
+
     fn store_replacement(&self, peer: Peer) {
         let tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
         let key = *peer.peer_id();
 
         tree.insert(key, peer).expect("error inserting peer");
     }
+
     fn store_all_replacements(&self, replacements: &ReplacementList) {
         let replacements_tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
 
@@ -191,6 +216,7 @@ impl PeerStore for SledPeerStore {
 
         replacements_tree.apply_batch(batch).expect("error applying batch");
     }
+
     fn contains(&self, peer_id: &PeerId) -> bool {
         let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
         if tree.contains_key(peer_id).expect("db error") {
@@ -200,11 +226,13 @@ impl PeerStore for SledPeerStore {
             tree.contains_key(peer_id).expect("db error")
         }
     }
+
     fn fetch_active(&self, peer_id: &PeerId) -> Option<ActivePeer> {
         let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
 
         tree.get(peer_id).expect("db error").map(|b| ActivePeer::from_bytes(&b))
     }
+
     fn fetch_all_active(&self) -> Vec<ActivePeer> {
         let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
 
@@ -213,11 +241,13 @@ impl PeerStore for SledPeerStore {
             .map(|(_, b)| ActivePeer::from_bytes(&b))
             .collect::<Vec<_>>()
     }
+
     fn fetch_replacement(&self, peer_id: &PeerId) -> Option<Peer> {
         let tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
 
         tree.get(peer_id).expect("db error").map(Peer::from)
     }
+
     fn fetch_all_replacements(&self) -> Vec<Peer> {
         let tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
 
@@ -226,9 +256,11 @@ impl PeerStore for SledPeerStore {
             .map(|(_, ivec)| Peer::from(ivec))
             .collect::<Vec<_>>()
     }
+
     fn delete(&self, _: &PeerId) -> bool {
         unimplemented!("no need for single entry removal at the moment")
     }
+
     fn delete_all(&self) {
         self.db
             .open_tree(ACTIVE_PEERS_TREE)

@@ -56,7 +56,7 @@ pub enum Error {
     #[error("Tried to add more unknown peers than defined in the config ({0}).")]
     ExceedsUnknownPeerLimit(usize),
 
-    /// A failure due to hitting the maximum number of allowed unknown peers.
+    /// A failure due to hitting the maximum number of allowed discovered peers.
     #[error("Tried to add more discovered peers than defined in the config ({0}).")]
     ExceedsDiscoveredPeerLimit(usize),
 }

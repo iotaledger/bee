@@ -121,13 +121,6 @@ fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
             ($t:expr) => {
                 // Panic: we made sure, that unwrap is always okay.
                 $t.as_ref().unwrap().metrics().last_new_peers()
-
-                // TODO: remove this when pretty certain about the correctness of the rules.
-                // if let Some(pe) = $t.as_ref() {
-                //     $t.as_ref().unwrap().metrics().last_new_peers()
-                // } else {
-                //     255
-                // }
             };
         }
 
@@ -145,15 +138,6 @@ fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
             (None, None, None),
             |(x, y, z): (Option<ActivePeer>, Option<ActivePeer>, Option<ActivePeer>), p| {
                 let n = p.metrics().last_new_peers();
-
-                // TODO: remove this when pretty certain about the correctness of the rules.
-                // println!(
-                //     "{} {} {} --- {}",
-                //     num!(x),
-                //     num!(y),
-                //     num!(z),
-                //     p.metrics().last_new_peers()
-                // );
 
                 match (&x, &y, &z) {
                     // set 1st

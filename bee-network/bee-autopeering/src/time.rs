@@ -27,9 +27,9 @@ pub(crate) fn until(future_ts: Timestamp) -> Option<Timespan> {
 }
 
 pub(crate) fn datetime_now() -> time::OffsetDateTime {
-    time::OffsetDateTime::now_utc()
+    bee_common::time::now_utc()
 }
 
 pub(crate) fn datetime(ts: Timestamp) -> time::OffsetDateTime {
-    time::OffsetDateTime::from_unix_timestamp(ts as i64).expect("error creating datetime")
+    bee_common::time::from_unix_timestamp(ts as i64)
 }

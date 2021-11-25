@@ -19,10 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.3.0 - 2021-11-xx
+## 0.3.0 - 2021-11-25
+
+### Added
 
 - New PeerRelation variant: Discovered;
-- Renamed crate to `bee-gossip`;
+- Handling of discovered peers;
+
+### Changed
+- Renamed crate to `bee-gossip` and moved into `bee-network` parent directory;
 
 ## 0.2.2 - 2021-08-26
 

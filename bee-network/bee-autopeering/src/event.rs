@@ -17,12 +17,12 @@ use std::fmt;
 pub enum Event {
     /// A new peer has been discovered.
     PeerDiscovered {
-        /// The discovered peer.
+        /// The identity of the discovered peer.
         peer_id: PeerId,
     },
     /// A peer has been deleted (e.g. due to a failed re-verification).
     PeerDeleted {
-        /// The corresponding peer identity.
+        /// The identity of the deleted peer.
         peer_id: PeerId,
     },
     /// A SaltUpdated event is triggered, when the private and public salt were updated.
@@ -34,21 +34,21 @@ pub enum Event {
     },
     /// An OutgoingPeering event is triggered, when a valid response of PeeringRequest has been received.
     OutgoingPeering {
-        /// The corresponding peer.
+        /// The associated peer.
         peer: Peer,
         /// The distance between the local and the remote peer.
         distance: Distance,
     },
     /// An IncomingPeering event is triggered, when a valid PeerRequest has been received.
     IncomingPeering {
-        /// The corresponding peer.
+        /// The associated peer.
         peer: Peer,
         /// The distance between the local and the remote peer.
         distance: Distance,
     },
     /// A Dropped event is triggered, when a neighbor is dropped or when a drop message is received.
     PeeringDropped {
-        /// The dropped peer.
+        /// The identity of the dropped peer.
         peer_id: PeerId,
     },
 }

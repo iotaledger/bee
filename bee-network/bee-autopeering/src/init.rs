@@ -23,10 +23,7 @@ use crate::{
     },
     peering::{
         filter::NeighborFilter,
-        manager::{
-            InboundNeighborhood, OutboundNeighborhood, PeeringManager, SaltUpdateContext,
-            SALT_UPDATE_SECS,
-        },
+        manager::{InboundNeighborhood, OutboundNeighborhood, PeeringManager, SaltUpdateContext, SALT_UPDATE_SECS},
         update::{self, UpdateContext, OPEN_OUTBOUND_NBH_UPDATE_SECS},
         NeighborValidator,
     },
