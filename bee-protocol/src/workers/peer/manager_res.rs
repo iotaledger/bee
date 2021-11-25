@@ -42,12 +42,13 @@ impl<N: Node> Worker<N> for PeerManagerResWorker {
     }
 }
 
+type PeerTuple = (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>);
+
 #[derive(Default)]
 pub struct PeerManagerInner {
-    // TODO private
-    #[allow(clippy::type_complexity)] // TODO
-    peers: HashMap<PeerId, (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)>,
+    peers: HashMap<PeerId, PeerTuple>,
     // This is needed to ensure message distribution fairness as iterating over a HashMap is random.
+    // TODO private
     pub(crate) keys: Vec<PeerId>,
 }
 
@@ -65,17 +66,11 @@ impl PeerManager {
     }
 
     // TODO find a way to only return a ref to the peer.
-    pub fn get(
-        &self,
-        id: &PeerId,
-    ) -> Option<impl std::ops::Deref<Target = (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)> + '_> {
+    pub fn get(&self, id: &PeerId) -> Option<impl std::ops::Deref<Target = PeerTuple> + '_> {
         RwLockReadGuard::try_map(self.0.read(), |map| map.peers.get(id)).ok()
     }
 
-    pub fn get_mut(
-        &self,
-        id: &PeerId,
-    ) -> Option<impl std::ops::DerefMut<Target = (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)> + '_> {
+    pub fn get_mut(&self, id: &PeerId) -> Option<impl std::ops::DerefMut<Target = PeerTuple> + '_> {
         RwLockWriteGuard::try_map(self.0.write(), |map| map.peers.get_mut(id)).ok()
     }
 
@@ -90,7 +85,7 @@ impl PeerManager {
         lock.peers.insert(*peer.id(), (peer, None));
     }
 
-    pub(crate) fn remove(&self, id: &PeerId) -> Option<(Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)> {
+    pub(crate) fn remove(&self, id: &PeerId) -> Option<PeerTuple> {
         debug!("Removed peer {}.", id);
         let mut lock = self.0.write();
         lock.keys.retain(|peer_id| peer_id != id);
