@@ -367,25 +367,15 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
     pub(crate) fn iter(&self) -> impl Iterator<Item = &P> {
         self.0.iter()
     }
+
+    #[cfg(test)]
+    pub(crate) fn rotate_forwards(&mut self) {
+        self.0.rotate_right(1);
+    }
 }
 
 impl<P, const N: usize> Default for PeerRing<P, N> {
     fn default() -> Self {
         Self(VecDeque::with_capacity(N))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
-        pub(crate) fn rotate_backwards(&mut self) {
-            self.0.rotate_left(1);
-        }
-
-        pub(crate) fn rotate_forwards(&mut self) {
-            self.0.rotate_right(1);
-        }
     }
 }
