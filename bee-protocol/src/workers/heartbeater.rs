@@ -22,6 +22,8 @@ use tokio_stream::wrappers::IntervalStream;
 use std::{any::TypeId, convert::Infallible, time::Duration};
 
 const CHECK_HEARTBEATS_INTERVAL: Duration = Duration::from_secs(5);
+const _HEARTBEAT_SEND_INTERVAL: Duration = Duration::from_secs(30);
+const _HEARTBEAT_RECEIVE_INTERVAL: Duration = Duration::from_secs(100);
 
 pub(crate) fn new_heartbeat<B: StorageBackend>(peer_manager: &PeerManager, tangle: &Tangle<B>) -> HeartbeatPacket {
     let connected_peers = peer_manager.connected_peers();
