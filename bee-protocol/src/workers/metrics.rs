@@ -25,7 +25,6 @@ where
     S: SupHandle<Self>,
 {
     type Data = (ResourceHandle<Bus<'static>>, ResourceHandle<NodeMetrics>);
-
     type Channel = IntervalChannel<METRICS_INTERVAL>;
 
     async fn init(&mut self, rt: &mut Rt<Self, S>) -> ActorResult<Self::Data> {

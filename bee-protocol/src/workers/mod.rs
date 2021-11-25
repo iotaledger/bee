@@ -31,6 +31,8 @@ pub(crate) use message::{
 };
 pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
 pub use metrics::{MetricsActor, MetricsWorker};
+// TODO: There is no need to expose this if we move `MpsActor` into `MetricsActor`.
+pub use mps::MpsActor;
 pub(crate) use mps::MpsWorker;
 pub use peer::{PeerManager, PeerManagerResWorker};
 pub(crate) use peer::{PeerManagerWorker, PeerWorker};

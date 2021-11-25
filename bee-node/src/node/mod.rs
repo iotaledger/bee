@@ -4,7 +4,10 @@
 mod builder;
 mod error;
 
-use bee_protocol::{types::metrics::NodeMetrics, workers::MetricsActor};
+use bee_protocol::{
+    types::metrics::NodeMetrics,
+    workers::{MetricsActor, MpsActor},
+};
 pub use builder::BeeNodeBuilder;
 pub use error::Error;
 
@@ -193,6 +196,9 @@ where
         rt.add_resource(self.metrics.clone()).await;
         // Spawn the metrics actor.
         rt.start(Some("metrics".into()), MetricsActor::default()).await?;
+        // Spawn the `MpsActor` actor.
+        // TODO: This could maybe be done right from the metrics actor.
+        rt.start(Some("mps".into()), MpsActor::default()).await?;
 
         Ok(())
     }
@@ -207,4 +213,3 @@ where
         Ok(())
     }
 }
-
