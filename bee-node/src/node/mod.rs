@@ -4,7 +4,12 @@
 mod builder;
 mod error;
 
-use bee_protocol::{types::metrics::NodeMetrics, workers::{HeartbeaterActor, MetricsActor, MpsActor, PeerManager, RequestedMessages, StatusActor}};
+use bee_protocol::{
+    types::metrics::NodeMetrics,
+    workers::{
+        HeartbeaterActor, MessageRetryerActor, MetricsActor, MpsActor, PeerManager, RequestedMessages, StatusActor,
+    },
+};
 use bee_tangle::Tangle;
 pub use builder::BeeNodeBuilder;
 pub use error::Error;
@@ -202,7 +207,10 @@ where
         // TODO: This could maybe be done right from the metrics actor.
         rt.start(Some("mps".into()), MpsActor::default()).await?;
         rt.start(Some("status".into()), StatusActor::<B>::default()).await?;
-        rt.start(Some("heartbeater".into()), HeartbeaterActor::<B>::default()).await?;
+        rt.start(Some("heartbeater".into()), HeartbeaterActor::<B>::default())
+            .await?;
+        rt.start(Some("message_retryer".into()), MessageRetryerActor::<B>::default())
+            .await?;
 
         Ok(())
     }

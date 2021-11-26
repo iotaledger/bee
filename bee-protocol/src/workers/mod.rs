@@ -24,8 +24,8 @@ mod status;
 use backstage::core::SupHandle;
 use bee_ledger::workers::StorageBackend;
 pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
-pub use heartbeater::{HeartbeaterActor};
-pub(crate) use heartbeater::{HeartbeaterWorker};
+pub use heartbeater::HeartbeaterActor;
+pub(crate) use heartbeater::HeartbeaterWorker;
 pub(crate) use index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
 pub(crate) use message::{
     HasherWorker, HasherWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker,
@@ -40,7 +40,9 @@ pub(crate) use mps::MpsWorker;
 pub use peer::{PeerManager, PeerManagerResWorker};
 pub(crate) use peer::{PeerManagerWorker, PeerWorker};
 pub(crate) use propagator::{PropagatorWorker, PropagatorWorkerEvent};
-pub use requester::{request_message, MessageRequesterWorker, RequestedMessages, RequestedMilestones};
+pub use requester::{
+    request_message, MessageRequesterWorker, MessageRetryerActor, RequestedMessages, RequestedMilestones,
+};
 pub(crate) use requester::{MilestoneRequesterWorker, MilestoneRequesterWorkerEvent};
 pub(crate) use responder::{
     MessageResponderWorker, MessageResponderWorkerEvent, MilestoneResponderWorker, MilestoneResponderWorkerEvent,

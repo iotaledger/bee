@@ -10,24 +10,25 @@ use crate::{
 };
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_runtime::{node::Node, resource::ResourceHandle, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{Tangle, TangleWorker};
 
 use async_priority_queue::PriorityQueue;
 use async_trait::async_trait;
+use backstage::core::{Actor, ActorError, ActorResult, IntervalChannel, Rt, SupHandle};
 use futures::StreamExt;
 use fxhash::FxBuildHasher;
 use log::{debug, info, trace};
-use tokio::{sync::RwLock, time::interval};
-use tokio_stream::wrappers::IntervalStream;
+use tokio::sync::RwLock;
 
 use std::{
     any::TypeId,
     cmp::{Ord, Ordering, PartialOrd},
     collections::HashMap,
     convert::Infallible,
+    marker::PhantomData,
     sync::Arc,
-    time::{Duration, Instant},
+    time::Instant,
 };
 
 const RETRY_INTERVAL_MS: u64 = 2500;
@@ -207,6 +208,79 @@ async fn retry_requests<B: StorageBackend>(
     }
 }
 
+pub struct MessageRetryerActor<B: StorageBackend> {
+    _marker: PhantomData<B>,
+}
+
+impl<B: StorageBackend> Default for MessageRetryerActor<B> {
+    fn default() -> Self {
+        Self { _marker: PhantomData }
+    }
+}
+
+#[async_trait]
+impl<S, B: StorageBackend> Actor<S> for MessageRetryerActor<B>
+where
+    S: SupHandle<Self>,
+{
+    type Data = (
+        ResourceHandle<Tangle<B>>,
+        ResourceHandle<RequestedMessages>,
+        ResourceHandle<PeerManager>,
+        ResourceHandle<NodeMetrics>,
+    );
+    type Channel = IntervalChannel<RETRY_INTERVAL_MS>;
+
+    async fn init(&mut self, rt: &mut Rt<Self, S>) -> ActorResult<Self::Data> {
+        // This should be the ID of the supervisor.
+        let parent_id = rt
+            .parent_id()
+            .ok_or_else(|| ActorError::aborted_msg("gossip actor has no parent"))?;
+
+        // The event bus should be under the supervisor's ID.
+        let tangle = rt
+            .lookup::<ResourceHandle<Tangle<B>>>(parent_id)
+            .await
+            .ok_or_else(|| ActorError::exit_msg("tangle is not available"))?;
+
+        // The requested messages should be under the supervisor's ID.
+        let requested_messages = rt
+            .lookup::<ResourceHandle<RequestedMessages>>(parent_id)
+            .await
+            .ok_or_else(|| ActorError::exit_msg("requested messages is not available"))?;
+
+        // The peer manager should be under the supervisor's ID.
+        let peer_manager = rt
+            .lookup::<ResourceHandle<PeerManager>>(parent_id)
+            .await
+            .ok_or_else(|| ActorError::exit_msg("peer manager is not available"))?;
+
+        // The node metrics should be under the supervisor's ID.
+        let node_metrics = rt
+            .lookup::<ResourceHandle<NodeMetrics>>(parent_id)
+            .await
+            .ok_or_else(|| ActorError::exit_msg("node metrics is not available"))?;
+
+        Ok((tangle, requested_messages, peer_manager, node_metrics))
+    }
+
+    async fn run(&mut self, rt: &mut Rt<Self, S>, data: Self::Data) -> ActorResult<()> {
+        info!("Running.");
+
+        let (tangle, requested_messages, peer_manager, metrics) = data;
+
+        let mut counter: usize = 0;
+
+        while rt.inbox_mut().next().await.is_some() {
+            retry_requests(&requested_messages, &peer_manager, &metrics, &tangle, &mut counter).await;
+        }
+
+        info!("Stopped.");
+
+        Ok(())
+    }
+}
+
 #[async_trait]
 impl<N: Node> Worker<N> for MessageRequesterWorker
 where
@@ -260,23 +334,10 @@ where
             }
         });
 
-        let tangle = node.resource::<Tangle<N::Backend>>();
-        let requested_messages = node.resource::<RequestedMessages>();
-        let peer_manager = node.resource::<PeerManager>();
-        let metrics = node.resource::<NodeMetrics>();
-
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Retryer running.");
 
-            let mut ticker = ShutdownStream::new(
-                shutdown,
-                IntervalStream::new(interval(Duration::from_millis(RETRY_INTERVAL_MS))),
-            );
-            let mut counter: usize = 0;
-
-            while ticker.next().await.is_some() {
-                retry_requests(&requested_messages, &peer_manager, &metrics, &tangle, &mut counter).await;
-            }
+            shutdown.await.unwrap();
 
             info!("Retryer stopped.");
         });
