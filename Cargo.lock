@@ -196,7 +196,7 @@ checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 [[package]]
 name = "backstage"
 version = "0.2.0"
-source = "git+https://github.com/iotaledger/backstage.git?branch=stable#f65b19be1b17fe14aadad17689d7926f4655d8c1"
+source = "git+https://github.com/iotaledger/backstage.git?branch=stable#6cec9ef1fb2ac79f5a40e4db63629bf762cf7edb"
 dependencies = [
  "anyhow",
  "anymap",
@@ -224,7 +224,7 @@ dependencies = [
 [[package]]
 name = "backstage-macros"
 version = "0.1.0"
-source = "git+https://github.com/iotaledger/backstage.git?branch=stable#f65b19be1b17fe14aadad17689d7926f4655d8c1"
+source = "git+https://github.com/iotaledger/backstage.git?branch=stable#6cec9ef1fb2ac79f5a40e4db63629bf762cf7edb"
 dependencies = [
  "quote",
  "syn",
