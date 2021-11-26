@@ -24,7 +24,8 @@ mod status;
 use backstage::core::SupHandle;
 use bee_ledger::workers::StorageBackend;
 pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
-pub(crate) use heartbeater::HeartbeaterWorker;
+pub use heartbeater::{HeartbeaterActor};
+pub(crate) use heartbeater::{HeartbeaterWorker};
 pub(crate) use index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
 pub(crate) use message::{
     HasherWorker, HasherWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker,

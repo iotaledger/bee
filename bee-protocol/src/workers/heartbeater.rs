@@ -4,26 +4,25 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::HeartbeatPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
+        packets::HeartbeatPacket, peer::PeerManager, sender::Sender, MetricsWorker,
         PeerManagerResWorker,
     },
 };
 
 use bee_network::PeerId;
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{Tangle, TangleWorker};
+use bee_runtime::{node::Node, resource::ResourceHandle, worker::Worker};
+use bee_tangle::{Tangle, TangleWorker, storage::StorageBackend};
 
 use async_trait::async_trait;
+use backstage::core::{Actor, ActorError, ActorResult, IntervalChannel, Rt, SupHandle};
 use futures::stream::StreamExt;
 use log::info;
-use tokio::time::interval;
-use tokio_stream::wrappers::IntervalStream;
 
-use std::{any::TypeId, convert::Infallible, time::Duration};
+use std::{any::TypeId, convert::Infallible, marker::PhantomData, time::Duration};
 
 const _HEARTBEAT_SEND_INTERVAL: u64 = 30; // In seconds.
 const _HEARTBEAT_RECEIVE_INTERVAL: u64 = 100; // In seconds.
-const CHECK_HEARTBEATS_INTERVAL: u64 = 5; // In seconds.
+const CHECK_HEARTBEATS_INTERVAL: u64 = Duration::from_secs(5).as_millis() as u64;
 
 pub(crate) async fn new_heartbeat<B: StorageBackend>(
     peer_manager: &PeerManager,
@@ -64,6 +63,68 @@ pub(crate) async fn broadcast_heartbeat<B: StorageBackend>(
     }
 }
 
+pub struct HeartbeaterActor<B: StorageBackend> {
+    _marker: PhantomData<(B,)>,
+}
+
+impl<B: StorageBackend> Default for HeartbeaterActor<B> {
+    fn default() -> Self {
+        Self { _marker: PhantomData }
+    }
+}
+
+#[async_trait]
+impl<S, B: StorageBackend> Actor<S> for HeartbeaterActor<B>
+where
+    S: SupHandle<Self>,
+{
+    type Data = (
+        ResourceHandle<PeerManager>,
+        ResourceHandle<NodeMetrics>,
+    );
+    type Channel = IntervalChannel<CHECK_HEARTBEATS_INTERVAL>;
+
+    async fn init(&mut self, rt: &mut Rt<Self, S>) -> ActorResult<Self::Data> {
+        // This should be the ID of the supervisor.
+        let parent_id = rt
+            .parent_id()
+            .ok_or_else(|| ActorError::aborted_msg("gossip actor has no parent"))?;
+
+        // The peer manager should be under the supervisor's ID.
+        let peer_manager = rt
+            .lookup::<ResourceHandle<PeerManager>>(parent_id)
+            .await
+            .ok_or_else(|| ActorError::exit_msg("peer manager is not available"))?;
+
+        // The node metrics should be under the supervisor's ID.
+        let node_metrics = rt
+            .lookup::<ResourceHandle<NodeMetrics>>(parent_id)
+            .await
+            .ok_or_else(|| ActorError::exit_msg("node metrics is not available"))?;
+
+        Ok((peer_manager, node_metrics))
+    }
+
+    async fn run(&mut self, rt: &mut Rt<Self, S>, (peer_manager, metrics): Self::Data) -> ActorResult<()> {
+        // This should be the ID of the supervisor.
+        let parent_id = rt
+            .parent_id()
+            .ok_or_else(|| ActorError::aborted_msg("gossip actor has no parent"))?;
+        
+        // The event bus should be under the supervisor's ID.
+        let tangle = rt
+            .lookup::<ResourceHandle<_>>(parent_id)
+            .await
+            .ok_or_else(|| ActorError::exit_msg("tangle is not available"))?;
+        
+        while rt.inbox_mut().next().await.is_some() {
+            broadcast_heartbeat::<B>(&peer_manager, &metrics, &tangle).await;
+        }
+
+        Ok(())
+    }
+}
+
 #[derive(Default)]
 pub(crate) struct HeartbeaterWorker {}
 
@@ -85,26 +146,14 @@ where
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let tangle = node.resource::<Tangle<N::Backend>>();
-        let peer_manager = node.resource::<PeerManager>();
-        let metrics = node.resource::<NodeMetrics>();
-
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut ticker = ShutdownStream::new(
-                shutdown,
-                IntervalStream::new(interval(Duration::from_secs(CHECK_HEARTBEATS_INTERVAL))),
-            );
-
-            while ticker.next().await.is_some() {
-                // TODO real impl
-                broadcast_heartbeat(&peer_manager, &metrics, &tangle).await;
-            }
+            shutdown.await.unwrap();
 
             info!("Stopped.");
         });
 
-        Ok(Self::default())
+        Ok(Self {})
     }
 }

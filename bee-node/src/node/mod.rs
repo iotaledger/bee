@@ -6,7 +6,7 @@ mod error;
 
 use bee_protocol::{
     types::metrics::NodeMetrics,
-    workers::{MetricsActor, MpsActor, RequestedMessages, StatusActor},
+    workers::{HeartbeaterActor, MetricsActor, MpsActor, RequestedMessages, StatusActor},
 };
 use bee_tangle::Tangle;
 pub use builder::BeeNodeBuilder;
@@ -209,6 +209,7 @@ where
         rt.start(Some("mps".into()), MpsActor::default()).await?;
 
         rt.start(Some("status".into()), StatusActor::<B>::default()).await?;
+        rt.start(Some("heartbeater".into()), HeartbeaterActor::<B>::default()).await?;
 
         Ok(())
     }
