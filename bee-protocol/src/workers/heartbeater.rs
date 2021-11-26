@@ -3,15 +3,12 @@
 
 use crate::{
     types::metrics::NodeMetrics,
-    workers::{
-        packets::HeartbeatPacket, peer::PeerManager, sender::Sender, MetricsWorker,
-        PeerManagerResWorker,
-    },
+    workers::{packets::HeartbeatPacket, peer::PeerManager, sender::Sender, MetricsWorker, PeerManagerResWorker},
 };
 
 use bee_network::PeerId;
 use bee_runtime::{node::Node, resource::ResourceHandle, worker::Worker};
-use bee_tangle::{Tangle, TangleWorker, storage::StorageBackend};
+use bee_tangle::{storage::StorageBackend, Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use backstage::core::{Actor, ActorError, ActorResult, IntervalChannel, Rt, SupHandle};
@@ -79,6 +76,7 @@ where
     S: SupHandle<Self>,
 {
     type Data = (
+        ResourceHandle<Tangle<B>>,
         ResourceHandle<PeerManager>,
         ResourceHandle<NodeMetrics>,
     );
@@ -89,6 +87,12 @@ where
         let parent_id = rt
             .parent_id()
             .ok_or_else(|| ActorError::aborted_msg("gossip actor has no parent"))?;
+
+        // The event bus should be under the supervisor's ID.
+        let tangle = rt
+            .lookup::<ResourceHandle<Tangle<B>>>(parent_id)
+            .await
+            .ok_or_else(|| ActorError::exit_msg("tangle is not available"))?;
 
         // The peer manager should be under the supervisor's ID.
         let peer_manager = rt
@@ -102,24 +106,17 @@ where
             .await
             .ok_or_else(|| ActorError::exit_msg("node metrics is not available"))?;
 
-        Ok((peer_manager, node_metrics))
+        Ok((tangle, peer_manager, node_metrics))
     }
 
-    async fn run(&mut self, rt: &mut Rt<Self, S>, (peer_manager, metrics): Self::Data) -> ActorResult<()> {
-        // This should be the ID of the supervisor.
-        let parent_id = rt
-            .parent_id()
-            .ok_or_else(|| ActorError::aborted_msg("gossip actor has no parent"))?;
-        
-        // The event bus should be under the supervisor's ID.
-        let tangle = rt
-            .lookup::<ResourceHandle<_>>(parent_id)
-            .await
-            .ok_or_else(|| ActorError::exit_msg("tangle is not available"))?;
-        
+    async fn run(&mut self, rt: &mut Rt<Self, S>, (tangle, peer_manager, metrics): Self::Data) -> ActorResult<()> {
+        info!("Running.");
+
         while rt.inbox_mut().next().await.is_some() {
             broadcast_heartbeat::<B>(&peer_manager, &metrics, &tangle).await;
         }
+
+        info!("Stopped.");
 
         Ok(())
     }

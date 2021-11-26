@@ -283,6 +283,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             metrics: node.resource(),
             tangle: node.resource(),
             requested_messages: node.resource(),
+            peer_manager: node.resource(),
         };
 
         let backstage_runtime = Runtime::new(Some("supervisor".into()), supervisor)
