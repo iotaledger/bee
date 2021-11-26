@@ -16,15 +16,12 @@ use crate::{
     },
 };
 
-use bee_crypto::ternary::sponge::{Sponge, UnrolledCurlP81};
 use bee_message::MessageId;
 use bee_network::PeerId;
 use bee_pow::score;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf};
 
 use async_trait::async_trait;
-use crypto::hashes::{blake2b::Blake2b256, Digest};
 use futures::{channel::oneshot::Sender, StreamExt};
 use log::{error, info, trace, warn};
 use tokio::sync::mpsc;
@@ -71,9 +68,7 @@ where
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
-            let mut hasher = UnrolledCurlP81::new();
-            let mut blake2b = Blake2b256::new();
-            let mut pow_input: TritBuf = TritBuf::with_capacity(243);
+            let mut pow = score::PoWScorer::new();
 
             info!("Running.");
 
@@ -104,28 +99,7 @@ where
                     continue;
                 }
 
-                // TODO const
-                // TODO check
-                // TODO see if there is something we can reuse from pow crate
-                let (head, tail) = message_packet.bytes.split_at(message_packet.bytes.len() - 8);
-                blake2b.update(head);
-
-                let pow_digest = blake2b.finalize_reset();
-
-                pow_input.clear();
-                b1t6::encode::<T1B1Buf>(&pow_digest)
-                    .iter()
-                    .for_each(|t| pow_input.push(t));
-                b1t6::encode::<T1B1Buf>(tail).iter().for_each(|t| pow_input.push(t));
-
-                // Pad to 243 trits.
-                pow_input.push(Btrit::Zero);
-                pow_input.push(Btrit::Zero);
-                pow_input.push(Btrit::Zero);
-
-                let hash = hasher.digest(&pow_input).unwrap();
-
-                let pow_score = score::pow_score(&hash, message_packet.bytes.len());
+                let pow_score = pow.score(&message_packet.bytes);
 
                 if pow_score < minimum_pow_score {
                     notify_invalid_message(

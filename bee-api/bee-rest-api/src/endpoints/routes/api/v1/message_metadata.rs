@@ -111,13 +111,13 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                     ledger_inclusion_state = None;
                     conflict_reason = None;
 
-                    let lmi = *tangle.get_solid_milestone_index();
+                    let cmi = *tangle.get_confirmed_milestone_index();
                     // unwrap() of OMRSI/YMRSI is safe since message is solid
-                    if (lmi - *metadata.omrsi().unwrap().index()) > below_max_depth {
+                    if (cmi - *metadata.omrsi().unwrap().index()) > below_max_depth {
                         should_promote = Some(false);
                         should_reattach = Some(true);
-                    } else if (lmi - *metadata.ymrsi().unwrap().index()) > ymrsi_delta
-                        || (lmi - omrsi_delta) > omrsi_delta
+                    } else if (cmi - *metadata.ymrsi().unwrap().index()) > ymrsi_delta
+                        || (cmi - *metadata.omrsi().unwrap().index()) > omrsi_delta
                     {
                         should_promote = Some(true);
                         should_reattach = Some(false);
