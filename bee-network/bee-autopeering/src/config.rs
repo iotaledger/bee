@@ -23,7 +23,7 @@
 //! ```toml
 //! [autopeering]
 //! enabled = true
-//! bind_address = "0.0.0.0:15626"
+//! bind_address = "0.0.0.0:14626"
 //! entry_nodes = [
 //!     "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
 //!     "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
@@ -253,7 +253,7 @@ mod tests {
         let config_json_str = r#"
         {
             "enabled": true,
-            "bindAddress": "0.0.0.0:15626",
+            "bindAddress": "0.0.0.0:14626",
             "entryNodes": [
                 "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
                 "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
@@ -271,7 +271,7 @@ mod tests {
     fn create_toml_config_from_str() -> AutopeeringConfigTomlBuilder {
         let toml_config_str = r#"
             enabled = true
-            bind_address = "0.0.0.0:15626"
+            bind_address = "0.0.0.0:14626"
             entry_nodes = [
                 "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
                 "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
@@ -289,7 +289,7 @@ mod tests {
     fn create_config() -> AutopeeringConfig {
         AutopeeringConfig {
             enabled: true,
-            bind_addr: "0.0.0.0:15626".parse().unwrap(),
+            bind_addr: "0.0.0.0:14626".parse().unwrap(),
             entry_nodes: vec![
                 "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM".parse().unwrap(),
                 "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb".parse().unwrap(),

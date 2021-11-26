@@ -34,7 +34,7 @@ fn read_config() -> AutopeeringConfigJsonBuilder {
     let config_json = r#"
     {
         "enabled": true,
-        "bindAddress": "0.0.0.0:14627",
+        "bindAddress": "0.0.0.0:14626",
         "entryNodes": [
             "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
             "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",

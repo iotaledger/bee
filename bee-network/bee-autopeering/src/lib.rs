@@ -42,14 +42,14 @@
 //!
 //!     serde_json::from_str::<AutopeeringConfigJsonBuilder>(config_json).expect("error deserializing json config builder").finish()
 //! }
-
+//!
 //! #[tokio::main]
 //! async fn main() {
 //!     // Peers will only accept each other as peer if they agree on the protocol version and the
 //!     // network name.
 //!     const VERSION: u32 = 1;
 //!
-//!     // Read the config from a JSON file/string.
+//!     // Read the config from a JSON file/string (TOML is also supported).
 //!     let config = read_config();
 //!
 //!     // Create a random local entity, that announces two services:
@@ -62,17 +62,18 @@
 //!         l
 //!     };
 //!
-//!     // You can choose between the `InMemoryPeerStore` (non-persistent) and the `SledPeerStore`
-//!     // (persistent).
+//!     // You can choose between the `InMemoryPeerStore` (non-persistent), the `SledPeerStore`
+//!     // (persistent), or your own implementation that implements the `PeerStore` trait.
 //!     let peerstore_config = SledPeerStoreConfig::new().path("./peerstore");
 //!
-//!     // The `NeighborValidator` allows you to customize the peer selection.
+//!     // The `NeighborValidator` allows you to accept only certain peers as neighbors, e.g. only those
+//!     // with enabled Gossip service.
 //!     let neighbor_validator = GossipNeighborValidator {};
 //!
-//!     // We need to provide a shutdown signal (can basically be any `Future`).
+//!     // You need to provide some form of shutdown signal (any `Future` impl is allowed).
 //!     let term_signal = tokio::signal::ctrl_c();
 //!
-//!     // Initialize the autopeering functionality.
+//!     // With initializing the autopeering system you receive an event stream receiver.
 //!     let mut event_rx = bee_autopeering::init::<SledPeerStore, _, _, GossipNeighborValidator>(
 //!         config.clone(),
 //!         VERSION,
@@ -85,7 +86,7 @@
 //!     .await
 //!     .expect("initializing autopeering system failed");
 //!
-//!     // Process autopeering events.
+//!     // You can then process autopeering events.
 //!     loop {
 //!         tokio::select! {
 //!             e = event_rx.recv() => {

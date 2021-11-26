@@ -51,7 +51,7 @@ impl Peer {
         }
     }
 
-    /// Returns the [`PeerId`](crate::identity::PeerId) of this peer.
+    /// Returns the [`PeerId`] of this peer.
     pub fn peer_id(&self) -> &PeerId {
         &self.peer_id
     }
