@@ -22,21 +22,23 @@ target_exclusions = []
 bind_address            = "/ip4/0.0.0.0/tcp/15600"
 reconnect_interval_secs = 30
 max_unknown_peers       = 4
+max_discovered_peers    = 4
 
 [network.peering]
 #[[network.peering.peers]]
 #address  = ""
 #alias    = ""
 
-
 [autopeering]
 enabled = false
-bind_address = "0.0.0.0:15626"
+bind_address = "0.0.0.0:14626"
 entry_nodes = [
     "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
     "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
     "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
     "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC",
+    "/dns/entry-0.mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC",
+    "/dns/entry-1.mainnet.tanglebay.com/udp/14636/autopeering/CATsx21mFVvQQPXeDineGs9DDeKvoBBQdzcmR6ffCkVA",
 ]
 entry_nodes_prefer_ipv6 = false
 run_as_entry_node = false

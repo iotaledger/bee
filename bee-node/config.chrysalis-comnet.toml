@@ -22,6 +22,7 @@ target_exclusions = []
 bind_address            = "/ip4/0.0.0.0/tcp/15600"
 reconnect_interval_secs = 30
 max_unknown_peers       = 4
+max_discovered_peers    = 4
 
 [network.peering]
 #[[network.peering.peers]]
@@ -30,8 +31,10 @@ max_unknown_peers       = 4
 
 [autopeering]
 enabled = false
-bind_address = "0.0.0.0:15626"
-entry_nodes = []
+bind_address = "0.0.0.0:14626"
+entry_nodes = [
+    "/dns/entry.comnet.tanglebay.com/udp/14636/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC",
+]
 entry_nodes_prefer_ipv6 = false
 run_as_entry_node = false
 drop_neighbors_on_salt_update = false
