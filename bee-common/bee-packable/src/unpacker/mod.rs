@@ -10,7 +10,8 @@
 mod io;
 mod slice;
 
-pub use slice::SliceUnpacker;
+#[cfg(feature = "io")]
+pub use io::IoUnpacker;
 
 /// A type that can unpack any value that implements [`Packable`](crate::Packable).
 pub trait Unpacker: Sized {

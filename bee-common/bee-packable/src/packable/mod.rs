@@ -16,8 +16,8 @@ mod integer;
 
 use crate::{
     error::{UnexpectedEOF, UnpackError},
-    packer::{LenPacker, Packer, VecPacker},
-    unpacker::{SliceUnpacker, Unpacker},
+    packer::{LenPacker, Packer},
+    unpacker::Unpacker,
 };
 
 pub use bee_packable_derive::Packable;
@@ -131,19 +131,19 @@ impl<P: Packable> PackableExt for P {
     }
 
     fn pack_to_vec(&self) -> Vec<u8> {
-        let mut packer = VecPacker::with_capacity(self.packed_len());
+        let mut packer = Vec::with_capacity(self.packed_len());
 
         // Packing to a `VecPacker` cannot fail.
         self.pack(&mut packer).unwrap();
 
-        packer.into_vec()
+        packer
     }
 
     /// Unpacks this value from a type that implements [`AsRef<[u8]>`].
     fn unpack_verified<T: AsRef<[u8]>>(
         bytes: T,
     ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
-        Self::unpack::<_, true>(&mut SliceUnpacker::new(bytes.as_ref()))
+        Self::unpack::<_, true>(&mut bytes.as_ref())
     }
 
     /// Unpacks this value from a type that implements [`AsRef<[u8]>`] skipping some syntatical
@@ -151,6 +151,6 @@ impl<P: Packable> PackableExt for P {
     fn unpack_unverified<T: AsRef<[u8]>>(
         bytes: T,
     ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
-        Self::unpack::<_, false>(&mut SliceUnpacker::new(bytes.as_ref()))
+        Self::unpack::<_, false>(&mut bytes.as_ref())
     }
 }

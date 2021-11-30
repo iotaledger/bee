@@ -14,8 +14,9 @@ mod vec;
 
 pub(crate) use len::LenPacker;
 
+#[cfg(feature = "io")]
+pub use io::IoPacker;
 pub use slice::SlicePacker;
-pub use vec::VecPacker;
 
 /// A type that can pack any value that implements [`Packable`](crate::Packable).
 pub trait Packer {

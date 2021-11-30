@@ -1,10 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_packable::{
-    packer::{SlicePacker, VecPacker},
-    Packable, PackableExt,
-};
+use bee_packable::{packer::SlicePacker, Packable, PackableExt};
 
 use core::fmt::Debug;
 
@@ -49,16 +46,16 @@ where
 {
     // Tests for VecPacker and SliceUnpacker
 
-    let mut vec_packer = VecPacker::new();
-    packable.pack(&mut vec_packer).unwrap();
-    let unpacked = P::unpack_verified(&mut vec_packer.as_slice()).unwrap();
+    let mut vec = Vec::new();
+    packable.pack(&mut vec).unwrap();
+    let unpacked = P::unpack_verified(&mut vec.as_slice()).unwrap();
     assert_eq!(packable, &unpacked);
 
     // Tests for Read and Write
 
     let mut vec = Vec::new();
     packable.pack(&mut vec).unwrap();
-    let unpacked = P::unpack_verified(&mut vec_packer.as_slice()).unwrap();
+    let unpacked = P::unpack_verified(&mut vec.as_slice()).unwrap();
     assert_eq!(packable, &unpacked);
 
     generic_test_pack_to_slice_unpack_verified(packable);

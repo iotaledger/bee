@@ -3,7 +3,7 @@
 
 mod common;
 
-use bee_packable::{packer::VecPacker, Packable, PackableExt};
+use bee_packable::{Packable, PackableExt};
 
 #[test]
 fn packable_bool() {
@@ -13,7 +13,7 @@ fn packable_bool() {
 
 #[test]
 fn packable_bool_packed_non_zero_bytes_are_truthy() {
-    let mut packer = VecPacker::default();
+    let mut packer = Vec::default();
     42u8.pack(&mut packer).unwrap();
 
     let is_true = bool::unpack_verified(&mut packer.as_slice()).unwrap();

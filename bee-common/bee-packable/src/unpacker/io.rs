@@ -5,12 +5,38 @@ extern crate std;
 
 use crate::unpacker::Unpacker;
 
-use std::io::{self, Read};
+use std::{
+    io::{self, Read},
+    ops::Deref,
+};
 
-impl<R: Read> Unpacker for R {
+/// An [`Unpacker`] backed by [`Read`].
+pub struct IoUnpacker<R: Read>(R);
+
+impl<R: Read> IoUnpacker<R> {
+    /// Create a new [`Unpacker`] from a value that implements [`Read`].
+    pub fn new(writer: R) -> Self {
+        Self(writer)
+    }
+
+    /// Consume the value to return the inner value that implements [`Read`].
+    pub fn into_inner(self) -> R {
+        self.0
+    }
+}
+
+impl<R: Read> Deref for IoUnpacker<R> {
+    type Target = R;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<R: Read> Unpacker for IoUnpacker<R> {
     type Error = io::Error;
 
     fn unpack_bytes<B: AsMut<[u8]>>(&mut self, mut bytes: B) -> Result<(), Self::Error> {
-        self.read_exact(bytes.as_mut())
+        self.0.read_exact(bytes.as_mut())
     }
 }

@@ -94,8 +94,8 @@ impl<T> From<Infallible> for UnknownTagError<T> {
     }
 }
 
-/// Error type to be raised when [`SliceUnpacker`](`crate::unpacker::SliceUnpacker`) does not have enough bytes to
-/// unpack something or when [`SlicePacker`]('crate::packer::SlicePacker') does not have enough space to pack something.
+/// Error type to be raised when [`&[u8]`] does not have enough bytes to unpack something or when
+/// [`SlicePacker`]('crate::packer::SlicePacker') does not have enough space to pack something.
 #[derive(Debug)]
 pub struct UnexpectedEOF {
     /// The required number of bytes.
