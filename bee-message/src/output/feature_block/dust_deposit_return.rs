@@ -10,8 +10,8 @@ use bee_common::packable::{Packable, Read, Write};
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct DustDepositReturnFeatureBlock {
-    // Amount of IOTA coins the consuming transaction should deposit to the [`Address`](crate::address::Address) defined
-    // in [`SenderFeatureBlock`].
+    // Amount of IOTA coins the consuming transaction should deposit to the [`Address`](crate::address::Address)
+    // defined in [`SenderFeatureBlock`].
     amount: u64,
 }
 

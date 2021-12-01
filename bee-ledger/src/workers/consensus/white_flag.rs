@@ -34,29 +34,31 @@ struct ValidationContext {
     native_tokens_amount: HashMap<TokenId, U256>,
     consumed_outputs: HashMap<OutputId, CreatedOutput>,
     balance_diffs: BalanceDiffs,
+    essence_hash: [u8; 32],
 }
 
 impl ValidationContext {
-    fn new(timestamp: u64, inputs_len: usize) -> Self {
+    fn new(timestamp: u64, essence: &RegularEssence) -> Self {
         Self {
             timestamp,
             amount: 0,
             native_tokens_amount: HashMap::<TokenId, U256>::new(),
-            consumed_outputs: HashMap::with_capacity(inputs_len),
+            consumed_outputs: HashMap::with_capacity(essence.inputs().len()),
             balance_diffs: BalanceDiffs::new(),
+            essence_hash: Essence::from(essence.clone()).hash(),
         }
     }
 }
 
-fn unlock_extended_input(
+fn unlock_extended_output(
     output: &ExtendedOutput,
     unlock_blocks: &UnlockBlocks,
     index: usize,
-    essence_hash: &[u8; 32],
+    context: &ValidationContext,
 ) -> Result<(), ConflictReason> {
     // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
     if let UnlockBlock::Signature(signature) = unlock_blocks.get(index).unwrap() {
-        if output.address().verify(essence_hash, signature).is_ok() {
+        if output.address().verify(&context.essence_hash, signature).is_ok() {
             Ok(())
         } else {
             Err(ConflictReason::InvalidSignature)
@@ -66,7 +68,12 @@ fn unlock_extended_input(
     }
 }
 
-fn unlock_alias_input(output: &AliasOutput, unlock_blocks: &UnlockBlocks, index: usize) -> Result<(), ConflictReason> {
+fn unlock_alias_output(
+    output: &AliasOutput,
+    unlock_blocks: &UnlockBlocks,
+    index: usize,
+    context: &ValidationContext,
+) -> Result<(), ConflictReason> {
     // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
     match unlock_blocks.get(index).unwrap() {
         UnlockBlock::Signature(_) => todo!(),
@@ -76,7 +83,12 @@ fn unlock_alias_input(output: &AliasOutput, unlock_blocks: &UnlockBlocks, index:
     }
 }
 
-fn unlock_nft_input(output: &NftOutput, unlock_blocks: &UnlockBlocks, index: usize) -> Result<(), ConflictReason> {
+fn unlock_nft_output(
+    output: &NftOutput,
+    unlock_blocks: &UnlockBlocks,
+    index: usize,
+    context: &ValidationContext,
+) -> Result<(), ConflictReason> {
     // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
     match unlock_blocks.get(index).unwrap() {
         UnlockBlock::Signature(_) => todo!(),
@@ -94,7 +106,7 @@ fn apply_regular_essence<B: StorageBackend>(
     unlock_blocks: &UnlockBlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
-    let mut context = ValidationContext::new(metadata.timestamp, essence.inputs().len());
+    let mut context = ValidationContext::new(metadata.timestamp, &essence);
 
     for (index, input) in essence.inputs().iter().enumerate() {
         let (output_id, consumed_output) = match input {
@@ -121,8 +133,6 @@ fn apply_regular_essence<B: StorageBackend>(
             }
         };
 
-        let essence_hash = Essence::from(essence.clone()).hash();
-
         let (amount, consumed_native_tokens) = match consumed_output.inner() {
             // Output::Simple(output) => {
             //     context.balance_diffs.amount_sub(*output.address(), output.amount())?;
@@ -136,14 +146,14 @@ fn apply_regular_essence<B: StorageBackend>(
             Output::Simple(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
             Output::Extended(output) => {
-                if let Err(conflict) = unlock_extended_input(output, unlock_blocks, index, &essence_hash) {
+                if let Err(conflict) = unlock_extended_output(output, unlock_blocks, index, &context) {
                     return Ok(conflict);
                 }
 
                 (output.amount(), output.native_tokens())
             }
             Output::Alias(output) => {
-                if let Err(conflict) = unlock_alias_input(output, unlock_blocks, index) {
+                if let Err(conflict) = unlock_alias_output(output, unlock_blocks, index, &context) {
                     return Ok(conflict);
                 }
 
@@ -151,7 +161,7 @@ fn apply_regular_essence<B: StorageBackend>(
             }
             Output::Foundry(output) => (output.amount(), output.native_tokens()),
             Output::Nft(output) => {
-                if let Err(conflict) = unlock_nft_input(output, unlock_blocks, index) {
+                if let Err(conflict) = unlock_nft_output(output, unlock_blocks, index, &context) {
                     return Ok(conflict);
                 }
 
