@@ -19,14 +19,14 @@ impl TryFrom<&[u8]> for IndexationFeatureBlock {
     fn try_from(tag: &[u8]) -> Result<Self, Error> {
         validate_length(tag.len())?;
 
-        Ok(IndexationFeatureBlock { tag: tag.into() })
+        Ok(Self { tag: tag.into() })
     }
 }
 
 impl IndexationFeatureBlock {
     /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of an [`IndexationFeatureBlock`].
     pub const KIND: u8 = 8;
-    ///
+    /// Maximum possible length in bytes of an indexation tag.
     pub const LENGTH_MAX: usize = 64;
 
     /// Creates a new [`IndexationFeatureBlock`].
