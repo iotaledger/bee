@@ -10,30 +10,28 @@ use bee_common::packable::{Packable, Read, Write};
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReferenceUnlockBlock(u16);
 
+impl TryFrom<u16> for ReferenceUnlockBlock {
+    type Error = Error;
+
+    fn try_from(index: u16) -> Result<Self, Self::Error> {
+        validate_index(index)?;
+
+        Ok(Self(index))
+    }
+}
+
 impl ReferenceUnlockBlock {
     /// The [`UnlockBlock`](crate::unlock_block::UnlockBlock) kind of a [`ReferenceUnlockBlock`].
     pub const KIND: u8 = 1;
 
     /// Creates a new [`ReferenceUnlockBlock`].
     pub fn new(index: u16) -> Result<Self, Error> {
-        if !UNLOCK_BLOCK_INDEX_RANGE.contains(&index) {
-            return Err(Error::InvalidReferenceIndex(index));
-        }
-
-        Ok(Self(index))
+        index.try_into()
     }
 
     /// Return the index of a [`ReferenceUnlockBlock`].
     pub fn index(&self) -> u16 {
         self.0
-    }
-}
-
-impl TryFrom<u16> for ReferenceUnlockBlock {
-    type Error = Error;
-
-    fn try_from(index: u16) -> Result<Self, Self::Error> {
-        Self::new(index)
     }
 }
 
@@ -51,6 +49,21 @@ impl Packable for ReferenceUnlockBlock {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Self::new(u16::unpack_inner::<R, CHECK>(reader)?)
+        let index = u16::unpack_inner::<R, CHECK>(reader)?;
+
+        if CHECK {
+            validate_index(index)?;
+        }
+
+        Ok(Self(index))
     }
+}
+
+#[inline]
+fn validate_index(index: u16) -> Result<(), Error> {
+    if !UNLOCK_BLOCK_INDEX_RANGE.contains(&index) {
+        return Err(Error::InvalidReferenceIndex(index));
+    }
+
+    Ok(())
 }

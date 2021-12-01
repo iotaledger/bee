@@ -22,6 +22,7 @@ pub enum Error {
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
     InvalidAddressKind(u8),
+    InvalidAliasIndex(u16),
     InvalidAmount(u64),
     InvalidControllerKind(u8),
     InvalidDustDepositAmount(u64),
@@ -39,6 +40,7 @@ pub enum Error {
     InvalidMetadataLength(usize),
     InvalidMigratedFundsEntryAmount(u64),
     InvalidNativeTokenCount(usize),
+    InvalidNftIndex(u16),
     InvalidOutputKind(u8),
     InvalidParentsCount(usize),
     InvalidPayloadKind(u32),
@@ -99,6 +101,7 @@ impl fmt::Display for Error {
             Error::InvalidAccumulatedOutput(value) => write!(f, "invalid accumulated output balance: {}.", value),
             Error::InvalidAddress => write!(f, "invalid address provided."),
             Error::InvalidAddressKind(k) => write!(f, "invalid address kind: {}.", k),
+            Error::InvalidAliasIndex(index) => write!(f, "invalid alias index: {}.", index),
             Error::InvalidAmount(amount) => write!(f, "invalid amount: {}.", amount),
             Error::InvalidControllerKind(k) => write!(f, "invalid controller kind: {}.", k),
             Error::InvalidDustDepositAmount(amount) => {
@@ -126,6 +129,7 @@ impl fmt::Display for Error {
                 write!(f, "invalid migrated funds entry amount: {}.", amount)
             }
             Error::InvalidNativeTokenCount(count) => write!(f, "invalid native token count: {}.", count),
+            Error::InvalidNftIndex(index) => write!(f, "invalid nft index: {}.", index),
             Error::InvalidOutputKind(k) => write!(f, "invalid output kind: {}.", k),
             Error::InvalidParentsCount(count) => {
                 write!(f, "invalid parents count: {}.", count)

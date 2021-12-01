@@ -5,7 +5,7 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-/// Defines metadata (arbitrary binary data) that will be stored in the output.
+/// Defines metadata, arbitrary binary data, that will be stored in the output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MetadataFeatureBlock {
@@ -26,7 +26,7 @@ impl TryFrom<&[u8]> for MetadataFeatureBlock {
 impl MetadataFeatureBlock {
     /// The [`FeatureBlock`] kind of [`MetadataFeatureBlock`].
     pub const KIND: u8 = 7;
-    ///
+    /// Maximum possible length in bytes of the data field.
     pub const LENGTH_MAX: usize = 1024;
 
     /// Creates a new [`MetadataFeatureBlock`].

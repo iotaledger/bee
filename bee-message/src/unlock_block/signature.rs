@@ -48,6 +48,6 @@ impl Packable for SignatureUnlockBlock {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(Signature::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self(Signature::unpack_inner::<R, CHECK>(reader)?))
     }
 }
