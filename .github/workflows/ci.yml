@@ -86,8 +86,26 @@ jobs:
         command: test
         args: --all --all-features --release
 
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions-rs/toolchain@v1
+      with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rustfmt
+
+    - uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: --all -- --check
+
+
   clippy:
-    needs: build-and-test
+    needs: format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -133,26 +151,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-targets --all-features -- -D warnings
 
-  format:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-
-    - uses: actions-rs/toolchain@v1
-      with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-          components: rustfmt
-
-    - uses: actions-rs/cargo@v1
-      with:
-        command: fmt
-        args: --all -- --check
-
   udeps:
-    needs: [clippy, format]
+    needs: [build-and-test,clippy]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -203,7 +203,7 @@ jobs:
         args: --all-targets --all-features --backend=depinfo
 
   licenses:
-    needs: [clippy, format]
+    needs: [build-and-test,clippy]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
