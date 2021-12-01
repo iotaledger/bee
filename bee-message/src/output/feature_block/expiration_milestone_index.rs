@@ -45,7 +45,7 @@ impl Packable for ExpirationMilestoneIndexFeatureBlock {
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self {
-            timestamp: MilestoneIndex::unpack_inner::<R, CHECK>(reader)?,
+            index: MilestoneIndex::unpack_inner::<R, CHECK>(reader)?,
         })
     }
 }
