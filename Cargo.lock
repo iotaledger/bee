@@ -166,7 +166,7 @@ dependencies = [
  "fern",
  "hash32",
  "hex",
- "iota-crypto 0.9.1",
+ "iota-crypto",
  "libp2p-core",
  "log",
  "num",
@@ -209,7 +209,7 @@ dependencies = [
  "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder",
  "criterion",
- "iota-crypto 0.9.1",
+ "iota-crypto",
  "lazy_static",
  "thiserror",
  "tiny-keccak",
@@ -252,7 +252,7 @@ dependencies = [
  "futures",
  "hashbrown",
  "hex",
- "iota-crypto 0.9.1",
+ "iota-crypto",
  "log",
  "ref-cast",
  "reqwest",
@@ -276,7 +276,7 @@ dependencies = [
  "bytemuck",
  "digest",
  "hex",
- "iota-crypto 0.9.1",
+ "iota-crypto",
  "iterator-sorted",
  "num_cpus",
  "serde",
@@ -289,7 +289,7 @@ version = "0.2.0"
 dependencies = [
  "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
- "iota-crypto 0.9.1",
+ "iota-crypto",
  "thiserror",
 ]
 
@@ -313,7 +313,6 @@ dependencies = [
  "futures-util",
  "fxhash",
  "hex",
- "iota-crypto 0.7.0",
  "log",
  "num_cpus",
  "parking_lot",
@@ -1426,17 +1425,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "iota-crypto"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c13594128939830ac9d9b8b44f9d073349cc6e10c30eb76c18ec89f0602ebe6"
-dependencies = [
- "blake2",
- "digest",
- "ed25519-zebra",
 ]
 
 [[package]]
