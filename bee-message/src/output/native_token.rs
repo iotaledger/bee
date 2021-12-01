@@ -29,7 +29,7 @@ impl NativeToken {
     }
 
     /// Returns the token ID of the [`NativeToken`].
-    pub fn token_id<'heyyy>(&'heyyy self) -> &'heyyy TokenId {
+    pub fn token_id(&self) -> &TokenId {
         &self.token_id
     }
 
