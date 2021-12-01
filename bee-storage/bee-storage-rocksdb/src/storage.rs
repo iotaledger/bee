@@ -16,7 +16,7 @@ pub use bee_storage::{
 use bee_message::{
     address::{AliasAddress, Ed25519Address, NftAddress},
     milestone::MilestoneIndex,
-    payload::indexation::INDEXATION_PADDED_INDEX_LENGTH,
+    payload::indexation::PaddedIndex,
     MESSAGE_ID_LENGTH,
 };
 
@@ -45,7 +45,7 @@ impl Storage {
         let cf_message_id_to_message_id = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE_ID, options);
 
         let mut options = Options::default();
-        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(INDEXATION_PADDED_INDEX_LENGTH));
+        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(PaddedIndex::LENGTH));
         let cf_index_to_message_id = ColumnFamilyDescriptor::new(CF_INDEX_TO_MESSAGE_ID, options);
 
         let cf_output_id_to_created_output =

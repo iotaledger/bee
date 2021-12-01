@@ -14,7 +14,7 @@ use bee_message::{
     address::{Address, AliasAddress, Ed25519Address, NftAddress},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH},
+    payload::indexation::PaddedIndex,
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
 use bee_storage::{access::AsIterator, backend::StorageBackend, system::System};
@@ -123,9 +123,9 @@ impl<'a> StorageIterator<'a, (MessageId, MessageId), ()> {
 
 impl<'a> StorageIterator<'a, (PaddedIndex, MessageId), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((PaddedIndex, MessageId), ()) {
-        let (index, mut message_id) = key.split_at(INDEXATION_PADDED_INDEX_LENGTH);
+        let (index, mut message_id) = key.split_at(PaddedIndex::LENGTH);
         // Unpacking from storage is fine.
-        let index: [u8; INDEXATION_PADDED_INDEX_LENGTH] = index.try_into().unwrap();
+        let index: [u8; PaddedIndex::LENGTH] = index.try_into().unwrap();
 
         (
             (

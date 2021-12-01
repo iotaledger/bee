@@ -9,7 +9,7 @@ mod transaction_id;
 use crate::{unlock_block::UnlockBlocks, Error};
 
 pub use essence::{Essence, RegularEssence, RegularEssenceBuilder};
-pub use transaction_id::{TransactionId, TRANSACTION_ID_LENGTH};
+pub use transaction_id::TransactionId;
 
 use bee_common::packable::{Packable, Read, Write};
 

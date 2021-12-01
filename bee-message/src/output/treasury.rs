@@ -7,9 +7,6 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::ops::RangeInclusive;
 
-/// The allowed range of the amount of a [`TreasuryOutput`].
-pub const TREASURY_OUTPUT_AMOUNT: RangeInclusive<u64> = 0..=IOTA_SUPPLY;
-
 /// [`TreasuryOutput`] is an output which holds the treasury of a network.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -20,10 +17,12 @@ pub struct TreasuryOutput {
 impl TreasuryOutput {
     /// The [`Output`](crate::output::Output) kind of a [`TreasuryOutput`].
     pub const KIND: u8 = 2;
+    /// The allowed range of the amount of a [`TreasuryOutput`].
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = 0..=IOTA_SUPPLY;
 
     /// Creates a new [`TreasuryOutput`].
     pub fn new(amount: u64) -> Result<Self, Error> {
-        if !TREASURY_OUTPUT_AMOUNT.contains(&amount) {
+        if !TreasuryOutput::AMOUNT_RANGE.contains(&amount) {
             return Err(Error::InvalidTreasuryAmount(amount));
         }
 

@@ -13,8 +13,8 @@ use bee_ledger::types::{
 use bee_message::{
     address::{Address, AliasAddress, Ed25519Address, NftAddress},
     milestone::{Milestone, MilestoneIndex},
-    output::{OutputId, OUTPUT_ID_LENGTH},
-    payload::indexation::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH},
+    output::OutputId,
+    payload::indexation::PaddedIndex,
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
 use bee_storage::{access::Fetch, backend::StorageBackend, system::System};
@@ -81,7 +81,7 @@ impl Fetch<PaddedIndex, Vec<MessageId>> for Storage {
                 .scan_prefix(index)
                 .map(|result| {
                     let (key, _) = result?;
-                    let (_, message_id) = key.split_at(INDEXATION_PADDED_INDEX_LENGTH);
+                    let (_, message_id) = key.split_at(PaddedIndex::LENGTH);
                     // Unpacking from storage is fine.
                     let message_id: [u8; MESSAGE_ID_LENGTH] = message_id.try_into().unwrap();
                     Ok(MessageId::from(message_id))
@@ -124,7 +124,7 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
                     let (key, _) = result?;
                     let (_, output_id) = key.split_at(Ed25519Address::LENGTH);
                     // Unpacking from storage is fine.
-                    Ok((<[u8; OUTPUT_ID_LENGTH]>::try_from(output_id).unwrap())
+                    Ok((<[u8; OutputId::LENGTH]>::try_from(output_id).unwrap())
                         .try_into()
                         .unwrap())
                 })
@@ -144,7 +144,7 @@ impl Fetch<AliasAddress, Vec<OutputId>> for Storage {
                     let (key, _) = result?;
                     let (_, output_id) = key.split_at(AliasAddress::LENGTH);
                     // Unpacking from storage is fine.
-                    Ok((<[u8; OUTPUT_ID_LENGTH]>::try_from(output_id).unwrap())
+                    Ok((<[u8; OutputId::LENGTH]>::try_from(output_id).unwrap())
                         .try_into()
                         .unwrap())
                 })
@@ -164,7 +164,7 @@ impl Fetch<NftAddress, Vec<OutputId>> for Storage {
                     let (key, _) = result?;
                     let (_, output_id) = key.split_at(NftAddress::LENGTH);
                     // Unpacking from storage is fine.
-                    Ok((<[u8; OUTPUT_ID_LENGTH]>::try_from(output_id).unwrap())
+                    Ok((<[u8; OutputId::LENGTH]>::try_from(output_id).unwrap())
                         .try_into()
                         .unwrap())
                 })
