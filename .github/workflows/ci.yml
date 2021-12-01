@@ -124,12 +124,12 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
+          key: ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
           restore-keys: |
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-
-            ${{ matrix.os }}-
+            ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ubuntu-latest-nightly-${{ env.cache-name }}-
+            ubuntu-latest-nightly-
+            ubuntu-latest-
 
       - uses: actions-rs/clippy-check@v1
         with:
@@ -156,12 +156,12 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
+          key: ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
           restore-keys: |
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-
-            ${{ matrix.os }}-
+            ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ubuntu-latest-nightly-${{ env.cache-name }}-
+            ubuntu-latest-nightly-
+            ubuntu-latest-
 
       - uses: actions-rs/cargo@v1
         with:
@@ -193,12 +193,12 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
+          key: ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
           restore-keys: |
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-
-            ${{ matrix.os }}-
+            ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ubuntu-latest-nightly-${{ env.cache-name }}-
+            ubuntu-latest-nightly-
+            ubuntu-latest-
 
       - uses: actions-rs/cargo@v1
         name: Install cargo-about
