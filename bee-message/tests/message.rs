@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    parents::Parents,
+    payload::{IndexationPayload, Payload},
+    Error, Message, MessageBuilder, MESSAGE_LENGTH_MAX,
+};
 use bee_pow::{
     providers::{
         miner::{Miner, MinerBuilder},
@@ -75,18 +79,16 @@ fn invalid_payload_kind() {
 
 #[test]
 fn unpack_valid_no_remaining_bytes() {
-    assert!(
-        Message::unpack(
-            &mut vec![
-                42, 0, 0, 0, 0, 0, 0, 0, 2, 140, 28, 186, 52, 147, 145, 96, 9, 105, 89, 78, 139, 3, 71, 249, 97, 149,
-                190, 63, 238, 168, 202, 82, 140, 227, 66, 173, 19, 110, 93, 117, 34, 225, 202, 251, 10, 156, 58, 144,
-                225, 54, 79, 62, 38, 20, 121, 95, 90, 112, 109, 6, 166, 126, 145, 13, 62, 52, 68, 248, 135, 223, 119,
-                137, 13, 0, 0, 0, 0, 21, 205, 91, 7, 0, 0, 0, 0,
-            ]
-            .as_slice()
-        )
-        .is_ok()
+    assert!(Message::unpack(
+        &mut vec![
+            42, 0, 0, 0, 0, 0, 0, 0, 2, 140, 28, 186, 52, 147, 145, 96, 9, 105, 89, 78, 139, 3, 71, 249, 97, 149, 190,
+            63, 238, 168, 202, 82, 140, 227, 66, 173, 19, 110, 93, 117, 34, 225, 202, 251, 10, 156, 58, 144, 225, 54,
+            79, 62, 38, 20, 121, 95, 90, 112, 109, 6, 166, 126, 145, 13, 62, 52, 68, 248, 135, 223, 119, 137, 13, 0, 0,
+            0, 0, 21, 205, 91, 7, 0, 0, 0, 0,
+        ]
+        .as_slice()
     )
+    .is_ok())
 }
 
 #[test]

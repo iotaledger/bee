@@ -9,11 +9,11 @@ pub mod receipt;
 pub mod transaction;
 pub mod treasury;
 
-use indexation::IndexationPayload;
-use milestone::MilestonePayload;
-use receipt::ReceiptPayload;
-use transaction::TransactionPayload;
-use treasury::TreasuryTransactionPayload;
+pub use indexation::IndexationPayload;
+pub use milestone::MilestonePayload;
+pub use receipt::ReceiptPayload;
+pub use transaction::TransactionPayload;
+pub use treasury::TreasuryTransactionPayload;
 
 use crate::Error;
 

@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    payload::receipt::{TailTransactionHash, TAIL_TRANSACTION_HASH_LEN},
+    Error,
+};
 
 const HASH_TRYTES: &str = "TZTXLMTAURX9DYQICXZEUMCDBPNXVOHNBBZDSSVCNCTWKSMUALAYPMHUCKGOGSTBUHSQIMSY9HQEP9AXJ";
 const HASH_BYTES: [u8; 49] = [

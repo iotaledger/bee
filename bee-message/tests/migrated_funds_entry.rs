@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    address::{Address, Ed25519Address},
+    output::SimpleOutput,
+    payload::receipt::MigratedFundsEntry,
+    Error,
+};
 use bee_test::rand::receipt::rand_tail_transaction_hash;
 
 use core::str::FromStr;

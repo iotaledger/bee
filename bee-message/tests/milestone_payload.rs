@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    milestone::MilestoneIndex,
+    parents::Parents,
+    payload::milestone::{MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH},
+    Error,
+};
 use bee_test::rand::{self, message::rand_message_ids, parents::rand_parents};
 
 #[test]
@@ -12,23 +17,21 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    assert!(
-        MilestonePayload::new(
-            MilestonePayloadEssence::new(
-                MilestoneIndex(0),
-                0,
-                rand_parents(),
-                [0; MILESTONE_MERKLE_PROOF_LENGTH],
-                0,
-                0,
-                vec![[0; 32]],
-                None,
-            )
-            .unwrap(),
-            vec![[0; 64]],
+    assert!(MilestonePayload::new(
+        MilestonePayloadEssence::new(
+            MilestoneIndex(0),
+            0,
+            rand_parents(),
+            [0; MILESTONE_MERKLE_PROOF_LENGTH],
+            0,
+            0,
+            vec![[0; 32]],
+            None,
         )
-        .is_ok()
-    );
+        .unwrap(),
+        vec![[0; 64]],
+    )
+    .is_ok());
 }
 
 #[test]

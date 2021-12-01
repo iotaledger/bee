@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    payload::indexation::{IndexationPayload, PaddedIndex},
+    Error, MESSAGE_LENGTH_MAX,
+};
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
 
 const PADDED_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64952fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";

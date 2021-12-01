@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{unlock_block::ReferenceUnlockBlock, Error};
 
 #[test]
 fn kind() {

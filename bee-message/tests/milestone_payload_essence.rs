@@ -2,7 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    input::{Input, TreasuryInput},
+    milestone::MilestoneIndex,
+    output::{Output, TreasuryOutput},
+    payload::{
+        milestone::{MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH},
+        IndexationPayload, Payload, ReceiptPayload, TreasuryTransactionPayload,
+    },
+    Error,
+};
 use bee_test::rand::{self, bytes::rand_bytes_array, parents::rand_parents};
 
 #[test]
@@ -75,21 +84,17 @@ fn new_invalid_too_many_public_keys() {
 
 #[test]
 fn new_valid_sorted_unique_public_keys() {
-    assert!(
-        MilestonePayloadEssence::new(
-            MilestoneIndex(0),
-            0,
-            rand_parents(),
-            [0; MILESTONE_MERKLE_PROOF_LENGTH],
-            0,
-            0,
-            vec![
-                [0; 32], [1; 32], [2; 32], [3; 32], [4; 32], [5; 32], [6; 32], [7; 32], [8; 32], [9; 32]
-            ],
-            None,
-        )
-        .is_ok()
-    );
+    assert!(MilestonePayloadEssence::new(
+        MilestoneIndex(0),
+        0,
+        rand_parents(),
+        [0; MILESTONE_MERKLE_PROOF_LENGTH],
+        0,
+        0,
+        vec![[0; 32], [1; 32], [2; 32], [3; 32], [4; 32], [5; 32], [6; 32], [7; 32], [8; 32], [9; 32]],
+        None,
+    )
+    .is_ok());
 }
 
 #[test]
@@ -102,9 +107,7 @@ fn new_invalid_sorted_not_unique_public_keys() {
             [0; MILESTONE_MERKLE_PROOF_LENGTH],
             0,
             0,
-            vec![
-                [0; 32], [1; 32], [2; 32], [3; 32], [4; 32], [4; 32], [6; 32], [7; 32], [8; 32], [9; 32]
-            ],
+            vec![[0; 32], [1; 32], [2; 32], [3; 32], [4; 32], [4; 32], [6; 32], [7; 32], [8; 32], [9; 32]],
             None,
         ),
         Err(Error::MilestonePublicKeysNotUniqueSorted)
@@ -121,9 +124,7 @@ fn new_invalid_not_sorted_unique_public_keys() {
             [0; MILESTONE_MERKLE_PROOF_LENGTH],
             0,
             0,
-            vec![
-                [0; 32], [1; 32], [3; 32], [2; 32], [4; 32], [5; 32], [6; 32], [7; 32], [8; 32], [9; 32]
-            ],
+            vec![[0; 32], [1; 32], [3; 32], [2; 32], [4; 32], [5; 32], [6; 32], [7; 32], [8; 32], [9; 32]],
             None,
         ),
         Err(Error::MilestonePublicKeysNotUniqueSorted)
@@ -140,9 +141,7 @@ fn new_invalid_payload_kind() {
             [0; MILESTONE_MERKLE_PROOF_LENGTH],
             0,
             0,
-            vec![
-                [0; 32], [1; 32], [2; 32], [3; 32], [4; 32], [5; 32], [6; 32], [7; 32], [8; 32], [9; 32]
-            ],
+            vec![[0; 32], [1; 32], [2; 32], [3; 32], [4; 32], [5; 32], [6; 32], [7; 32], [8; 32], [9; 32]],
             Some(Payload::Indexation(Box::new(
                 IndexationPayload::new(&rand_bytes_array::<32>(), &[]).unwrap()
             ))),

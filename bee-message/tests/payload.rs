@@ -2,7 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    address::{Address, Ed25519Address},
+    input::{Input, TreasuryInput, UtxoInput},
+    milestone::MilestoneIndex,
+    output::{Output, SimpleOutput, TreasuryOutput},
+    payload::{
+        milestone::{MilestoneId, MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH},
+        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
+        transaction::{Essence, RegularEssenceBuilder, TransactionId, TransactionPayloadBuilder},
+        IndexationPayload, Payload, TreasuryTransactionPayload,
+    },
+    signature::{Ed25519Signature, Signature},
+    unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
+};
 use bee_test::rand::{bytes::rand_bytes_array, parents::rand_parents};
 
 use std::str::FromStr;
@@ -100,17 +113,15 @@ fn receipt() {
     let payload: Payload = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SimpleOutput::new(
-                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                    1_000_000,
-                )
-                .unwrap(),
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            SimpleOutput::new(
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                1_000_000,
             )
             .unwrap(),
-        ],
+        )
+        .unwrap()],
         Payload::TreasuryTransaction(Box::new(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),

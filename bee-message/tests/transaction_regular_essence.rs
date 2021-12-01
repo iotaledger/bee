@@ -1,7 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::prelude::*;
+use bee_message::{
+    address::{Address, Ed25519Address},
+    constants::IOTA_SUPPLY,
+    input::{Input, TreasuryInput, UtxoInput},
+    output::{Output, SimpleOutput, TreasuryOutput},
+    payload::{
+        milestone::MilestoneId,
+        transaction::{RegularEssence, TransactionId},
+        Payload,
+    },
+    Error,
+};
 use bee_test::rand::{
     bytes::rand_bytes_array,
     payload::{rand_indexation_payload, rand_treasury_transaction_payload},

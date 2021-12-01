@@ -2,7 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::{input::Input, payload::transaction::Essence, prelude::*};
+use bee_message::{
+    address::{Address, Ed25519Address},
+    input::{Input, UtxoInput},
+    output::{Output, SimpleOutput},
+    payload::transaction::{
+        Essence, RegularEssence, RegularEssenceBuilder, TransactionId, TransactionPayload, TransactionPayloadBuilder,
+    },
+    signature::{Ed25519Signature, Signature},
+    unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
+    Error,
+};
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";

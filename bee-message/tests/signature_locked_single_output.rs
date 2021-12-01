@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    address::{Address, Ed25519Address},
+    constants::IOTA_SUPPLY,
+    output::SimpleOutput,
+    Error,
+};
 
 use core::str::FromStr;
 

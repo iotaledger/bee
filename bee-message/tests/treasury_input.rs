@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{input::TreasuryInput, payload::milestone::MilestoneId, Error, MESSAGE_ID_LENGTH};
 
 use core::str::FromStr;
 

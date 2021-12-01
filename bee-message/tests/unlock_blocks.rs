@@ -1,7 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::prelude::*;
+use bee_message::{
+    signature::{Ed25519Signature, Signature},
+    unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
+    Error,
+};
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
 
 #[test]
@@ -87,37 +91,34 @@ fn new_invalid_too_many_blocks() {
 
 #[test]
 fn new_valid() {
-    assert!(
-        UnlockBlocks::new(vec![
-            SignatureUnlockBlock::from(Signature::from(Ed25519Signature::new([0; 32], [0; 64]))).into(),
-            ReferenceUnlockBlock::new(0).unwrap().into(),
-            ReferenceUnlockBlock::new(0).unwrap().into(),
-            SignatureUnlockBlock::from(Signature::from(Ed25519Signature::new([1; 32], [1; 64]))).into(),
-            SignatureUnlockBlock::from(Signature::from(Ed25519Signature::new([2; 32], [2; 64]))).into(),
-            SignatureUnlockBlock::from(Signature::from(Ed25519Signature::new([3; 32], [3; 64]))).into(),
-            ReferenceUnlockBlock::new(3).unwrap().into(),
-            ReferenceUnlockBlock::new(4).unwrap().into(),
-            ReferenceUnlockBlock::new(3).unwrap().into(),
-            ReferenceUnlockBlock::new(4).unwrap().into(),
-            ReferenceUnlockBlock::new(5).unwrap().into(),
-            SignatureUnlockBlock::from(Signature::from(Ed25519Signature::new([4; 32], [4; 64]))).into(),
-            ReferenceUnlockBlock::new(11).unwrap().into(),
-            SignatureUnlockBlock::from(Signature::from(Ed25519Signature::new([5; 32], [5; 64]))).into(),
-        ])
-        .is_ok()
-    );
+    assert!(UnlockBlocks::new(vec![
+        SignatureUnlockBlock::from(Signature::from(Ed25519Signature::new([0; 32], [0; 64]))).into(),
+        ReferenceUnlockBlock::new(0).unwrap().into(),
+        ReferenceUnlockBlock::new(0).unwrap().into(),
+        SignatureUnlockBlock::from(Signature::from(Ed25519Signature::new([1; 32], [1; 64]))).into(),
+        SignatureUnlockBlock::from(Signature::from(Ed25519Signature::new([2; 32], [2; 64]))).into(),
+        SignatureUnlockBlock::from(Signature::from(Ed25519Signature::new([3; 32], [3; 64]))).into(),
+        ReferenceUnlockBlock::new(3).unwrap().into(),
+        ReferenceUnlockBlock::new(4).unwrap().into(),
+        ReferenceUnlockBlock::new(3).unwrap().into(),
+        ReferenceUnlockBlock::new(4).unwrap().into(),
+        ReferenceUnlockBlock::new(5).unwrap().into(),
+        SignatureUnlockBlock::from(Signature::from(Ed25519Signature::new([4; 32], [4; 64]))).into(),
+        ReferenceUnlockBlock::new(11).unwrap().into(),
+        SignatureUnlockBlock::from(Signature::from(Ed25519Signature::new([5; 32], [5; 64]))).into(),
+    ])
+    .is_ok());
 }
 
 #[test]
 fn get_none() {
-    assert!(
-        UnlockBlocks::new(vec![
-            SignatureUnlockBlock::from(Signature::from(Ed25519Signature::new([0; 32], [0; 64]))).into()
-        ])
-        .unwrap()
-        .get(42)
-        .is_none()
-    );
+    assert!(UnlockBlocks::new(vec![SignatureUnlockBlock::from(Signature::from(
+        Ed25519Signature::new([0; 32], [0; 64])
+    ))
+    .into()])
+    .unwrap()
+    .get(42)
+    .is_none());
 }
 
 #[test]

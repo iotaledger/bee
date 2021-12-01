@@ -2,7 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    address::{Address, Ed25519Address},
+    input::{Input, TreasuryInput},
+    milestone::MilestoneIndex,
+    output::{Output, SimpleOutput, TreasuryOutput},
+    payload::{
+        milestone::MilestoneId,
+        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
+        IndexationPayload, Payload, TreasuryTransactionPayload,
+    },
+    Error,
+};
 use bee_test::rand::{bytes::rand_bytes_array, number::rand_number};
 
 use std::str::FromStr;
@@ -25,17 +36,15 @@ fn new_valid() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SimpleOutput::new(
-                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                    AMOUNT,
-                )
-                .unwrap(),
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            SimpleOutput::new(
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                AMOUNT,
             )
             .unwrap(),
-        ],
+        )
+        .unwrap()],
         Payload::from(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
@@ -101,17 +110,15 @@ fn new_invalid_payload_kind() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SimpleOutput::new(
-                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                    AMOUNT,
-                )
-                .unwrap(),
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            SimpleOutput::new(
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                AMOUNT,
             )
             .unwrap(),
-        ],
+        )
+        .unwrap()],
         Payload::from(IndexationPayload::new(&rand_bytes_array::<32>(), &[]).unwrap()),
     );
 
@@ -196,17 +203,15 @@ fn pack_unpack_valid() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SimpleOutput::new(
-                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                    AMOUNT,
-                )
-                .unwrap(),
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            SimpleOutput::new(
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                AMOUNT,
             )
             .unwrap(),
-        ],
+        )
+        .unwrap()],
         Payload::from(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
@@ -227,17 +232,15 @@ fn pack_unpack_valid() {
 fn getters() {
     let migrated_at = MilestoneIndex::new(rand_number());
     let last = true;
-    let funds = vec![
-        MigratedFundsEntry::new(
-            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-            SimpleOutput::new(
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                AMOUNT,
-            )
-            .unwrap(),
+    let funds = vec![MigratedFundsEntry::new(
+        TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+        SimpleOutput::new(
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            AMOUNT,
         )
         .unwrap(),
-    ];
+    )
+    .unwrap()];
     let payload: Payload = TreasuryTransactionPayload::new(
         Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
         Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
