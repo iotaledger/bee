@@ -33,8 +33,16 @@ pub struct AliasOutputBuilder {
 
 impl AliasOutputBuilder {
     ///
-    pub fn new(amount: u64, alias_id: AliasId, state_controller: Address, governance_controller: Address) -> Self {
-        Self {
+    pub fn new(
+        amount: u64,
+        alias_id: AliasId,
+        state_controller: Address,
+        governance_controller: Address,
+    ) -> Result<AliasOutputBuilder, Error> {
+        validate_controller(&state_controller, &alias_id)?;
+        validate_controller(&governance_controller, &alias_id)?;
+
+        Ok(Self {
             amount,
             native_tokens: Vec::new(),
             alias_id,
@@ -44,7 +52,7 @@ impl AliasOutputBuilder {
             state_metadata: Vec::new(),
             foundry_counter: None,
             feature_blocks: Vec::new(),
-        }
+        })
     }
 
     ///
@@ -91,9 +99,6 @@ impl AliasOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<AliasOutput, Error> {
-        validate_controller(&self.state_controller, &self.alias_id)?;
-        validate_controller(&self.governance_controller, &self.alias_id)?;
-
         if self.state_metadata.len() > METADATA_LENGTH_MAX {
             return Err(Error::InvalidMetadataLength(self.state_metadata.len()));
         }
@@ -151,11 +156,23 @@ impl AliasOutput {
     ];
 
     /// Creates a new [`AliasOutput`].
-    pub fn new(amount: u64, alias_id: AliasId, state_controller: Address, governance_controller: Address) -> Self {
+    pub fn new(
+        amount: u64,
+        alias_id: AliasId,
+        state_controller: Address,
+        governance_controller: Address,
+    ) -> Result<Self, Error> {
+        AliasOutputBuilder::new(amount, alias_id, state_controller, governance_controller)?.finish()
+    }
+
+    /// Creates a new [`AliasOutputBuilder`].
+    pub fn build(
+        amount: u64,
+        alias_id: AliasId,
+        state_controller: Address,
+        governance_controller: Address,
+    ) -> Result<AliasOutputBuilder, Error> {
         AliasOutputBuilder::new(amount, alias_id, state_controller, governance_controller)
-            .finish()
-            // SAFETY: this can't fail as this is a default builder.
-            .unwrap()
     }
 
     ///

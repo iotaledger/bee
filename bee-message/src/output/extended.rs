@@ -108,6 +108,11 @@ impl ExtendedOutput {
         ExtendedOutputBuilder::new(address, amount).finish().unwrap()
     }
 
+    /// Creates a new [`ExtendedOutputBuilder`].
+    pub fn build(address: Address, amount: u64) -> ExtendedOutputBuilder {
+        ExtendedOutputBuilder::new(address, amount)
+    }
+
     ///
     pub fn address(&self) -> &Address {
         &self.address

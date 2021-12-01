@@ -67,8 +67,10 @@ impl FoundryOutputBuilder {
         circulating_supply: U256,
         maximum_supply: U256,
         token_scheme: TokenScheme,
-    ) -> Self {
-        Self {
+    ) -> Result<FoundryOutputBuilder, Error> {
+        validate_address(&address)?;
+
+        Ok(Self {
             address,
             amount,
             native_tokens: Vec::new(),
@@ -78,7 +80,7 @@ impl FoundryOutputBuilder {
             maximum_supply,
             token_scheme,
             feature_blocks: Vec::new(),
-        }
+        })
     }
 
     ///
@@ -107,8 +109,6 @@ impl FoundryOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<FoundryOutput, Error> {
-        validate_address(&self.address)?;
-
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
         validate_allowed_feature_blocks(&feature_blocks, &FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
@@ -150,12 +150,12 @@ pub struct FoundryOutput {
 }
 
 impl FoundryOutput {
-    /// The output kind of a `FoundryOutput`.
+    /// The [`Output`](crate::output::Output) kind of a [`FoundryOutput`].
     pub const KIND: u8 = 5;
     ///
     const ALLOWED_FEATURE_BLOCKS: [u8; 1] = [MetadataFeatureBlock::KIND];
 
-    /// Creates a new `FoundryOutput`.
+    /// Creates a new [`FoundryOutput`].
     pub fn new(
         address: Address,
         amount: u64,
@@ -164,7 +164,29 @@ impl FoundryOutput {
         circulating_supply: U256,
         maximum_supply: U256,
         token_scheme: TokenScheme,
-    ) -> Self {
+    ) -> Result<Self, Error> {
+        FoundryOutputBuilder::new(
+            address,
+            amount,
+            serial_number,
+            token_tag,
+            circulating_supply,
+            maximum_supply,
+            token_scheme,
+        )?
+        .finish()
+    }
+
+    /// Creates a new [`FoundryOutputBuilder`].
+    pub fn build(
+        address: Address,
+        amount: u64,
+        serial_number: u32,
+        token_tag: [u8; 12],
+        circulating_supply: U256,
+        maximum_supply: U256,
+        token_scheme: TokenScheme,
+    ) -> Result<FoundryOutputBuilder, Error> {
         FoundryOutputBuilder::new(
             address,
             amount,
@@ -174,9 +196,6 @@ impl FoundryOutput {
             maximum_supply,
             token_scheme,
         )
-        .finish()
-        // SAFETY: this can't fail as this is a default builder.
-        .unwrap()
     }
 
     ///

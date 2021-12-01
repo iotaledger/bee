@@ -31,15 +31,26 @@ pub struct NftOutputBuilder {
 
 impl NftOutputBuilder {
     ///
-    pub fn new(address: Address, amount: u64, nft_id: NftId, immutable_metadata: Vec<u8>) -> Self {
-        Self {
+    pub fn new(
+        address: Address,
+        amount: u64,
+        nft_id: NftId,
+        immutable_metadata: Vec<u8>,
+    ) -> Result<NftOutputBuilder, Error> {
+        validate_address(&address, &nft_id)?;
+
+        if immutable_metadata.len() > METADATA_LENGTH_MAX {
+            return Err(Error::InvalidMetadataLength(immutable_metadata.len()));
+        }
+
+        Ok(Self {
             address,
             amount,
             native_tokens: Vec::new(),
             nft_id,
             immutable_metadata,
             feature_blocks: Vec::new(),
-        }
+        })
     }
 
     ///
@@ -68,12 +79,6 @@ impl NftOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<NftOutput, Error> {
-        validate_address(&self.address, &self.nft_id)?;
-
-        if self.immutable_metadata.len() > METADATA_LENGTH_MAX {
-            return Err(Error::InvalidMetadataLength(self.immutable_metadata.len()));
-        }
-
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
         validate_allowed_feature_blocks(&feature_blocks, &NftOutput::ALLOWED_FEATURE_BLOCKS)?;
@@ -124,7 +129,17 @@ impl NftOutput {
 
     /// Creates a new [`NftOutput`].
     pub fn new(address: Address, amount: u64, nft_id: NftId, immutable_metadata: Vec<u8>) -> Result<Self, Error> {
-        NftOutputBuilder::new(address, amount, nft_id, immutable_metadata).finish()
+        NftOutputBuilder::new(address, amount, nft_id, immutable_metadata)?.finish()
+    }
+
+    /// Creates a new [`NftOutputBuilder`].
+    pub fn build(
+        address: Address,
+        amount: u64,
+        nft_id: NftId,
+        immutable_metadata: Vec<u8>,
+    ) -> Result<NftOutputBuilder, Error> {
+        NftOutputBuilder::new(address, amount, nft_id, immutable_metadata)
     }
 
     ///
