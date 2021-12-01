@@ -14,12 +14,12 @@ use std::{
 pub struct IoUnpacker<R: Read>(R);
 
 impl<R: Read> IoUnpacker<R> {
-    /// Create a new [`Unpacker`] from a value that implements [`Read`].
+    /// Creates a new [`Unpacker`] from a value that implements [`Read`].
     pub fn new(writer: R) -> Self {
         Self(writer)
     }
 
-    /// Consume the value to return the inner value that implements [`Read`].
+    /// Consumes the value to return the inner value that implements [`Read`].
     pub fn into_inner(self) -> R {
         self.0
     }

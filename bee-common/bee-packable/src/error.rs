@@ -15,8 +15,8 @@ mod sealed {
 
 /// Trait providing utility methods for [`Result`] values that use [`UnpackError`] as the `Err` variant.
 ///
-/// The main disadvantage of using `Result<_, UnpackError<_, _>>` is that error coercion must be
-/// done explicitly. This trait attempts to ease these conversions.
+/// The main disadvantage of using `Result<_, UnpackError<_, _>>` is that error coercion must be done explicitly.
+/// This trait attempts to ease these conversions.
 ///
 /// This trait is sealed and cannot be implemented by any other type.
 pub trait UnpackErrorExt<T, U, V>: sealed::Sealed + Sized {

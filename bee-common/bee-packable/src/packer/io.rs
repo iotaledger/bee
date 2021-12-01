@@ -14,12 +14,12 @@ use std::{
 pub struct IoPacker<W: Write>(W);
 
 impl<W: Write> IoPacker<W> {
-    /// Create a new [`Packer`] from a value that implements [`Write`].
+    /// Creates a new [`Packer`] from a value that implements [`Write`].
     pub fn new(writer: W) -> Self {
         Self(writer)
     }
 
-    /// Consume the value to return the inner value that implements [`Write`].
+    /// Consumes the value to return the inner value that implements [`Write`].
     pub fn into_inner(self) -> W {
         self.0
     }

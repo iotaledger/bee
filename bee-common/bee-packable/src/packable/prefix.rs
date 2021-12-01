@@ -23,8 +23,7 @@ use core::{
     marker::PhantomData,
 };
 
-/// Semantic error raised when converting a [`Vec`] into a [`VecPrefix`] or `Box<[_]>` into a
-/// [`BoxedSlicePrefix`].
+/// Semantic error raised when converting a [`Vec`] into a [`VecPrefix`] or `Box<[_]>` into a [`BoxedSlicePrefix`].
 #[derive(Debug)]
 pub enum TryIntoPrefixError<E> {
     /// The prefix length was truncated.
