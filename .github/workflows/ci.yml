@@ -152,7 +152,7 @@ jobs:
           args: --all-targets --all-features -- -D warnings
 
   udeps:
-    needs: [build-and-test,clippy]
+    needs: clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -203,7 +203,7 @@ jobs:
           args: --all-targets --all-features --backend=depinfo
 
   licenses:
-    needs: [build-and-test,clippy]
+    needs: clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
