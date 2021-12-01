@@ -106,7 +106,7 @@ pub struct NftOutput {
 
 impl NftOutput {
     /// The [`Output`](crate::output::Output) kind of a [`NftOutput`].
-    pub const KIND: u8 = 5;
+    pub const KIND: u8 = 6;
     ///
     const ALLOWED_FEATURE_BLOCKS: [u8; 9] = [
         SenderFeatureBlock::KIND,

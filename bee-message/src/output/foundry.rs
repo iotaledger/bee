@@ -145,7 +145,7 @@ pub struct FoundryOutput {
 
 impl FoundryOutput {
     /// The output kind of a `FoundryOutput`.
-    pub const KIND: u8 = 4;
+    pub const KIND: u8 = 5;
     ///
     const ALLOWED_FEATURE_BLOCKS: [u8; 1] = [MetadataFeatureBlock::KIND];
 

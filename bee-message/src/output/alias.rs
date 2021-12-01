@@ -139,7 +139,7 @@ pub struct AliasOutput {
 
 impl AliasOutput {
     /// The [`Output`](crate::output::Output) kind of an [`AliasOutput`].
-    pub const KIND: u8 = 3;
+    pub const KIND: u8 = 4;
     ///
     const ALLOWED_FEATURE_BLOCKS: [u8; 3] = [
         SenderFeatureBlock::KIND,

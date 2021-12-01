@@ -89,7 +89,7 @@ pub struct ExtendedOutput {
 
 impl ExtendedOutput {
     /// The [`Output`](crate::output::Output) kind of an [`ExtendedOutput`].
-    pub const KIND: u8 = 1;
+    pub const KIND: u8 = 3;
     ///
     const ALLOWED_FEATURE_BLOCKS: [u8; 8] = [
         SenderFeatureBlock::KIND,
