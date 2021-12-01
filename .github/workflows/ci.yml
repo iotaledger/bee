@@ -78,13 +78,13 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: build
-        args: --all --release
+        args: --workspace --all-targets --all-features --release
 
     - name: Test
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --all --all-features --release
+        args: --workspace --all-targets --all-features --release
 
   format:
     runs-on: ubuntu-latest
