@@ -69,6 +69,7 @@ impl FoundryOutputBuilder {
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
         validate_address(&address)?;
+        validate_supply(&circulating_supply, &maximum_supply)?;
 
         Ok(Self {
             address,
@@ -288,6 +289,11 @@ impl Packable for FoundryOutput {
         let token_tag = <[u8; 12]>::unpack_inner::<R, CHECK>(reader)?;
         let circulating_supply = U256::from_little_endian(&<[u8; 32]>::unpack_inner::<R, CHECK>(reader)?);
         let maximum_supply = U256::from_little_endian(&<[u8; 32]>::unpack_inner::<R, CHECK>(reader)?);
+
+        if CHECK {
+            validate_supply(&circulating_supply, &maximum_supply)?;
+        }
+
         let token_scheme = TokenScheme::unpack_inner::<R, CHECK>(reader)?;
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
@@ -315,6 +321,19 @@ fn validate_address(address: &Address) -> Result<(), Error> {
         Address::Alias(_) => {}
         _ => return Err(Error::InvalidAddressKind(address.kind())),
     };
+
+    Ok(())
+}
+
+#[inline]
+fn validate_supply(circulating_supply: &U256, maximum_supply: &U256) -> Result<(), Error> {
+    if maximum_supply.is_zero() {
+        return Err(Error::InvalidFoundryOutputSupply(*circulating_supply, *maximum_supply));
+    }
+
+    if circulating_supply > maximum_supply {
+        return Err(Error::InvalidFoundryOutputSupply(*circulating_supply, *maximum_supply));
+    }
 
     Ok(())
 }

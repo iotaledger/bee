@@ -7,6 +7,7 @@ use crate::{
 };
 
 use crypto::Error as CryptoError;
+use primitive_types::U256;
 
 use core::fmt;
 
@@ -29,6 +30,7 @@ pub enum Error {
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(usize),
     InvalidFeatureBlockKind(u8),
+    InvalidFoundryOutputSupply(U256, U256),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength(usize, usize),
     InvalidIndexationDataLength(usize),
@@ -110,6 +112,11 @@ impl fmt::Display for Error {
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}.", k),
             Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}.", count),
             Error::InvalidFeatureBlockKind(k) => write!(f, "invalid feature block kind: {}.", k),
+            Error::InvalidFoundryOutputSupply(circulating, max) => write!(
+                f,
+                "invalid foundry output supply: circulating {}, max {}.",
+                circulating, max
+            ),
             Error::InvalidHexadecimalChar(hex) => write!(f, "invalid hexadecimal character: {}.", hex),
             Error::InvalidHexadecimalLength(expected, actual) => {
                 write!(f, "invalid hexadecimal length: expected {} got {}.", expected, actual)
