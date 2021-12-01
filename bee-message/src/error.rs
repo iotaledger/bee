@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::input::UtxoInput;
+use crate::{input::UtxoInput, output::AliasId};
 
 use crypto::Error as CryptoError;
 
@@ -20,6 +20,7 @@ pub enum Error {
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAmount(u64),
+    InvalidControllerKind(u8),
     InvalidDustDepositAmount(u64),
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(usize),
@@ -65,6 +66,7 @@ pub enum Error {
     ParentsNotUniqueSorted,
     ReceiptFundsNotUniqueSorted,
     RemainingBytesAfterMessage,
+    SelfControlledAliasOutput(AliasId),
     SignaturePublicKeyMismatch(String, String),
     TailTransactionHashNotUnique(usize, usize),
     UnallowedFeatureBlock(usize, u8),
@@ -94,6 +96,7 @@ impl fmt::Display for Error {
             Error::InvalidAddress => write!(f, "invalid address provided."),
             Error::InvalidAddressKind(k) => write!(f, "invalid address kind: {}.", k),
             Error::InvalidAmount(amount) => write!(f, "invalid amount: {}.", amount),
+            Error::InvalidControllerKind(k) => write!(f, "invalid controller kind: {}.", k),
             Error::InvalidDustDepositAmount(amount) => {
                 write!(f, "invalid dust deposit amount: {}.", amount)
             }
@@ -182,6 +185,9 @@ impl fmt::Display for Error {
             }
             Error::RemainingBytesAfterMessage => {
                 write!(f, "remaining bytes after message.")
+            }
+            Error::SelfControlledAliasOutput(alias_id) => {
+                write!(f, "self controlled alias output, alias ID {}", alias_id)
             }
             Error::SignaturePublicKeyMismatch(expected, actual) => {
                 write!(

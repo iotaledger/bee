@@ -159,7 +159,6 @@ impl FoundryOutput {
         maximum_supply: U256,
         token_scheme: TokenScheme,
     ) -> Self {
-        // SAFETY: this can't fail as this is a default builder.
         FoundryOutputBuilder::new(
             address,
             amount,
@@ -170,6 +169,7 @@ impl FoundryOutput {
             token_scheme,
         )
         .finish()
+        // SAFETY: this can't fail as this is a default builder.
         .unwrap()
     }
 

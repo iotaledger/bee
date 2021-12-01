@@ -91,6 +91,9 @@ impl AliasOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<AliasOutput, Error> {
+        validate_controller(&self.state_controller, &self.alias_id)?;
+        validate_controller(&self.governance_controller, &self.alias_id)?;
+
         if self.state_metadata.len() > METADATA_LENGTH_MAX {
             return Err(Error::InvalidMetadataLength(self.state_metadata.len()));
         }
@@ -149,9 +152,9 @@ impl AliasOutput {
 
     /// Creates a new [`AliasOutput`].
     pub fn new(amount: u64, alias_id: AliasId, state_controller: Address, governance_controller: Address) -> Self {
-        // SAFETY: this can't fail as this is a default builder.
         AliasOutputBuilder::new(amount, alias_id, state_controller, governance_controller)
             .finish()
+            // SAFETY: this can't fail as this is a default builder.
             .unwrap()
     }
 
@@ -237,13 +240,25 @@ impl Packable for AliasOutput {
         let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
         let alias_id = AliasId::unpack_inner::<R, CHECK>(reader)?;
         let state_controller = Address::unpack_inner::<R, CHECK>(reader)?;
-        let governance_controller = Address::unpack_inner::<R, CHECK>(reader)?;
-        let state_index = u32::unpack_inner::<R, CHECK>(reader)?;
-        let state_metadata_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
-        if CHECK && state_metadata_len > METADATA_LENGTH_MAX {
-            return Err(Error::InvalidMetadataLength(state_metadata_len));
+
+        if CHECK {
+            validate_controller(&state_controller, &alias_id)?;
         }
-        let mut state_metadata = vec![0u8; state_metadata_len];
+
+        let governance_controller = Address::unpack_inner::<R, CHECK>(reader)?;
+
+        if CHECK {
+            validate_controller(&governance_controller, &alias_id)?;
+        }
+
+        let state_index = u32::unpack_inner::<R, CHECK>(reader)?;
+        let state_metadata_length = u32::unpack_inner::<R, CHECK>(reader)? as usize;
+
+        if CHECK && state_metadata_length > METADATA_LENGTH_MAX {
+            return Err(Error::InvalidMetadataLength(state_metadata_length));
+        }
+
+        let mut state_metadata = vec![0u8; state_metadata_length];
         reader.read_exact(&mut state_metadata)?;
         let foundry_counter = u32::unpack_inner::<R, CHECK>(reader)?;
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
@@ -264,4 +279,19 @@ impl Packable for AliasOutput {
             feature_blocks,
         })
     }
+}
+
+#[inline]
+fn validate_controller(controller: &Address, alias_id: &AliasId) -> Result<(), Error> {
+    match controller {
+        Address::Ed25519(_) => {}
+        Address::Alias(address) => {
+            if address.id() == alias_id {
+                return Err(Error::SelfControlledAliasOutput(*alias_id));
+            }
+        }
+        _ => return Err(Error::InvalidControllerKind(controller.kind())),
+    };
+
+    Ok(())
 }
