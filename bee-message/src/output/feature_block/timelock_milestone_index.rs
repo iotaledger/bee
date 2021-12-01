@@ -42,6 +42,8 @@ impl Packable for TimelockMilestoneIndexFeatureBlock {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(MilestoneIndex::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self {
+            index: MilestoneIndex::unpack_inner::<R, CHECK>(reader)?,
+        })
     }
 }

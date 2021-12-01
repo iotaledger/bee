@@ -9,7 +9,7 @@ use bee_common::packable::{Packable, Read, Write};
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TimelockUnixFeatureBlock {
-    // Unix time (seconds since Unix epoch) starting from which the output can be consumed.
+    // Unix time, seconds since unix epoch, starting from which the output can be consumed.
     timestamp: u32,
 }
 
@@ -42,6 +42,8 @@ impl Packable for TimelockUnixFeatureBlock {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(u32::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self {
+            timestamp: u32::unpack_inner::<R, CHECK>(reader)?,
+        })
     }
 }

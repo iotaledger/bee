@@ -39,6 +39,8 @@ impl Packable for IssuerFeatureBlock {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(Address::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self {
+            address: Address::unpack_inner::<R, CHECK>(reader)?,
+        })
     }
 }

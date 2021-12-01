@@ -6,12 +6,12 @@ use crate::{milestone::MilestoneIndex, Error};
 use bee_common::packable::{Packable, Read, Write};
 
 /// Defines a milestone index until which only the deposit [`Address`] is allowed to unlock the output.
-/// After the milestone index, only the [`Address`] defined in the [`Sender`] can unlock it.
+/// After the milestone index, only the [`Address`] defined in the [`SenderFeatureBlock`] can unlock it.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExpirationMilestoneIndexFeatureBlock {
     // Before this milestone index, [`Address`] is allowed to unlock the output.
-    // After that, only the [`Address`] defined in [`Sender`] can.
+    // After that, only the [`Address`] defined in the [`SenderFeatureBlock`] can.
     index: MilestoneIndex,
 }
 
@@ -44,6 +44,8 @@ impl Packable for ExpirationMilestoneIndexFeatureBlock {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(MilestoneIndex::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self {
+            timestamp: MilestoneIndex::unpack_inner::<R, CHECK>(reader)?,
+        })
     }
 }
