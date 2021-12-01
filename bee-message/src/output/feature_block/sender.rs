@@ -13,7 +13,7 @@ pub struct SenderFeatureBlock {
 }
 
 impl SenderFeatureBlock {
-    /// The [`FeatureBlock`] kind of a [`SenderFeatureBlock`].
+    /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of a [`SenderFeatureBlock`].
     pub const KIND: u8 = 0;
 
     /// Creates a new [`SenderFeatureBlock`].

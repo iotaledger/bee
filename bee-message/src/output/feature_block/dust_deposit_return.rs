@@ -5,12 +5,13 @@ use crate::{constants::DUST_DEPOSIT_MIN, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-/// Defines the amount of IOTAs used as dust deposit that have to be returned to the sender [`Address`].
+/// Defines the amount of IOTAs used as dust deposit that have to be returned to the sender
+/// [`Address`](crate::address::Address).
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct DustDepositReturnFeatureBlock {
-    // Amount of IOTA coins the consuming transaction should deposit to the [`Address`] defined in
-    // [`SenderFeatureBlock`].
+    // Amount of IOTA coins the consuming transaction should deposit to the [`Address`](crate::address::Address) defined
+    // in [`SenderFeatureBlock`].
     amount: u64,
 }
 
@@ -25,7 +26,7 @@ impl TryFrom<u64> for DustDepositReturnFeatureBlock {
 }
 
 impl DustDepositReturnFeatureBlock {
-    /// The [`FeatureBlock`] kind of a [`DustDepositReturnFeatureBlock`].
+    /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of a [`DustDepositReturnFeatureBlock`].
     pub const KIND: u8 = 2;
 
     /// Creates a new [`DustDepositReturnFeatureBlock`].

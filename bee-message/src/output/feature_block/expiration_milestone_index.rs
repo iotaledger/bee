@@ -5,18 +5,20 @@ use crate::{milestone::MilestoneIndex, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-/// Defines a milestone index until which only the deposit [`Address`] is allowed to unlock the output.
-/// After the milestone index, only the [`Address`] defined in the [`SenderFeatureBlock`] can unlock it.
+/// Defines a milestone index until which only the deposit [`Address`](crate::address::Address) is allowed to unlock the
+/// output. After the milestone index, only the [`Address`](crate::address::Address) defined in the
+/// [`SenderFeatureBlock`](crate::output::feature_block::SenderFeatureBlock) can unlock it.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExpirationMilestoneIndexFeatureBlock {
-    // Before this milestone index, [`Address`] is allowed to unlock the output.
-    // After that, only the [`Address`] defined in the [`SenderFeatureBlock`] can.
+    // Before this milestone index, [`Address`](crate::address::Address) is allowed to unlock the output.
+    // After that, only the [`Address`](crate::address::Address) defined in the
+    // [`SenderFeatureBlock`](crate::output::feature_block::SenderFeatureBlock) can.
     index: MilestoneIndex,
 }
 
 impl ExpirationMilestoneIndexFeatureBlock {
-    /// The [`FeatureBlock`] kind of an [`ExpirationMilestoneIndexFeatureBlock`].
+    /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of an [`ExpirationMilestoneIndexFeatureBlock`].
     pub const KIND: u8 = 5;
 
     /// Creates a new [`ExpirationMilestoneIndexFeatureBlock`].

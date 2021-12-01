@@ -13,7 +13,7 @@ pub struct IssuerFeatureBlock {
 }
 
 impl IssuerFeatureBlock {
-    /// The [`FeatureBlock`] kind of an [`IssuerFeatureBlock`].
+    /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of an [`IssuerFeatureBlock`].
     pub const KIND: u8 = 1;
 
     /// Creates a new [`IssuerFeatureBlock`].

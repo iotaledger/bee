@@ -14,7 +14,7 @@ pub struct TimelockUnixFeatureBlock {
 }
 
 impl TimelockUnixFeatureBlock {
-    /// The [`FeatureBlock`] kind of a [`TimelockUnixFeatureBlock`].
+    /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of a [`TimelockUnixFeatureBlock`].
     pub const KIND: u8 = 4;
 
     /// Creates a new [`TimelockUnixFeatureBlock`].

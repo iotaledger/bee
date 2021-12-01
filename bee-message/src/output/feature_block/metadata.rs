@@ -24,7 +24,7 @@ impl TryFrom<&[u8]> for MetadataFeatureBlock {
 }
 
 impl MetadataFeatureBlock {
-    /// The [`FeatureBlock`] kind of [`MetadataFeatureBlock`].
+    /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of [`MetadataFeatureBlock`].
     pub const KIND: u8 = 7;
     /// Maximum possible length in bytes of the data field.
     pub const LENGTH_MAX: usize = 1024;

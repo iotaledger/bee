@@ -14,7 +14,7 @@ pub struct TimelockMilestoneIndexFeatureBlock {
 }
 
 impl TimelockMilestoneIndexFeatureBlock {
-    /// The [`FeatureBlock`] kind of a [`TimelockMilestoneIndexFeatureBlock`].
+    /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of a [`TimelockMilestoneIndexFeatureBlock`].
     pub const KIND: u8 = 3;
 
     /// Creates a new [`TimelockMilestoneIndexFeatureBlock`].

@@ -24,7 +24,7 @@ impl TryFrom<&[u8]> for IndexationFeatureBlock {
 }
 
 impl IndexationFeatureBlock {
-    /// The [`FeatureBlock`] kind of an [`IndexationFeatureBlock`].
+    /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of an [`IndexationFeatureBlock`].
     pub const KIND: u8 = 8;
     ///
     pub const LENGTH_MAX: usize = 64;
