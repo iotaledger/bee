@@ -68,6 +68,8 @@ impl NftOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<NftOutput, Error> {
+        validate_address(&self.address, &self.nft_id)?;
+
         if self.immutable_metadata.len() > METADATA_LENGTH_MAX {
             return Err(Error::InvalidMetadataLength(self.immutable_metadata.len()));
         }
@@ -186,6 +188,11 @@ impl Packable for NftOutput {
         let amount = u64::unpack_inner::<R, CHECK>(reader)?;
         let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
         let nft_id = NftId::unpack_inner::<R, CHECK>(reader)?;
+
+        if CHECK {
+            validate_address(&address, &nft_id)?;
+        }
+
         let immutable_metadata_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
 
         if CHECK && immutable_metadata_len > METADATA_LENGTH_MAX {
@@ -209,4 +216,19 @@ impl Packable for NftOutput {
             feature_blocks,
         })
     }
+}
+
+#[inline]
+fn validate_address(address: &Address, nft_id: &NftId) -> Result<(), Error> {
+    match address {
+        Address::Ed25519(_) => {}
+        Address::Alias(_) => {}
+        Address::Nft(address) => {
+            if address.id() == nft_id {
+                return Err(Error::SelfDepositNft(*nft_id));
+            }
+        }
+    };
+
+    Ok(())
 }

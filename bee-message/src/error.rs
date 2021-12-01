@@ -1,7 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{input::UtxoInput, output::AliasId};
+use crate::{
+    input::UtxoInput,
+    output::{AliasId, NftId},
+};
 
 use crypto::Error as CryptoError;
 
@@ -67,6 +70,7 @@ pub enum Error {
     ReceiptFundsNotUniqueSorted,
     RemainingBytesAfterMessage,
     SelfControlledAliasOutput(AliasId),
+    SelfDepositNft(NftId),
     SignaturePublicKeyMismatch(String, String),
     TailTransactionHashNotUnique(usize, usize),
     UnallowedFeatureBlock(usize, u8),
@@ -188,6 +192,9 @@ impl fmt::Display for Error {
             }
             Error::SelfControlledAliasOutput(alias_id) => {
                 write!(f, "self controlled alias output, alias ID {}", alias_id)
+            }
+            Error::SelfDepositNft(nft_id) => {
+                write!(f, "self deposit nft output, NFT ID {}", nft_id)
             }
             Error::SignaturePublicKeyMismatch(expected, actual) => {
                 write!(
