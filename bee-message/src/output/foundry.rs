@@ -107,6 +107,8 @@ impl FoundryOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<FoundryOutput, Error> {
+        validate_address(&self.address)?;
+
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
         validate_allowed_feature_blocks(&feature_blocks, &FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
@@ -135,9 +137,13 @@ pub struct FoundryOutput {
     amount: u64,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
+    // The serial number of the foundry with respect to the controlling alias.
     serial_number: u32,
+    // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
     token_tag: [u8; 12],
+    // Circulating supply of tokens controlled by this foundry.
     circulating_supply: U256,
+    // Maximum supply of tokens controlled by this foundry.
     maximum_supply: U256,
     token_scheme: TokenScheme,
     feature_blocks: FeatureBlocks,
@@ -252,6 +258,11 @@ impl Packable for FoundryOutput {
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let address = Address::unpack_inner::<R, CHECK>(reader)?;
+
+        if CHECK {
+            validate_address(&address)?;
+        }
+
         let amount = u64::unpack_inner::<R, CHECK>(reader)?;
         let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
         let serial_number = u32::unpack_inner::<R, CHECK>(reader)?;
@@ -277,4 +288,14 @@ impl Packable for FoundryOutput {
             feature_blocks,
         })
     }
+}
+
+#[inline]
+fn validate_address(address: &Address) -> Result<(), Error> {
+    match address {
+        Address::Alias(_) => {}
+        _ => return Err(Error::InvalidAddressKind(address.kind())),
+    };
+
+    Ok(())
 }
