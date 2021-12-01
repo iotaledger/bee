@@ -29,3 +29,7 @@ doc = false
 [[bin]]
 name = "fuzz_sorter"
 path = "src/main.rs"
+
+# `iota-crypto` uses bee-ternary. We patch it to use our local version to avoid importing it twice.
+[patch.crates-io]
+bee-ternary = { path = "../../bee-ternary" }
