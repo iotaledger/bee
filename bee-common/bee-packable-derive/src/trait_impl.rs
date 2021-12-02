@@ -40,7 +40,8 @@ impl TraitImpl {
                 })
             }
             Data::Enum(data) => {
-                let info = EnumInfo::new(input.ident.clone(), data, &input.attrs)?;
+                let enum_ident = &input.ident;
+                let info = EnumInfo::new(enum_ident.clone(), data, &input.attrs)?;
 
                 let TagTypeInfo {
                     tag_type,
@@ -53,8 +54,11 @@ impl TraitImpl {
                 let mut pack_arms = Vec::with_capacity(len);
                 let mut unpack_arms = Vec::with_capacity(len);
                 let mut tag_decls = Vec::with_capacity(len);
+                let mut tag_idents_and_variants = Vec::with_capacity(len);
 
                 for (index, VariantInfo { tag, inner }) in info.variants_info.into_iter().enumerate() {
+                    let variant_ident = inner.path.segments.last().unwrap().clone();
+
                     let Fragments { pattern, pack, unpack } = Fragments::new(inner);
 
                     // @pvdrz: The span here is very important, otherwise the compiler won't detect
@@ -71,10 +75,26 @@ impl TraitImpl {
                         #unpack
                     }));
 
-                    tag_decls.push(quote!(const #tag_ident: #tag_type = #tag;))
+                    tag_decls.push(quote!(const #tag_ident: #tag_type = #tag;));
+
+                    tag_idents_and_variants.push((tag_ident, variant_ident));
                 }
+
+                let mut tag_asserts = Vec::with_capacity(len * (len - 1) / 2);
+
+                for (i, (fst, fst_variant)) in tag_idents_and_variants.iter().enumerate() {
+                    if let Some(idents_and_variants) = tag_idents_and_variants.get((i + 1)..) {
+                        for (snd, snd_variant) in idents_and_variants {
+                            let tag_assert = quote!(
+                                const _: () = assert!(#fst != #snd, concat!("The tags for the variants `", stringify!(#fst_variant), "` and `", stringify!(#snd_variant) ,"` of enum `", stringify!(#enum_ident), "` are equal"));
+                            );
+                            tag_asserts.push(tag_assert);
+                        }
+                    }
+                }
+
                 Ok(Self {
-                    ident: input.ident,
+                    ident: enum_ident.clone(),
                     generics: input.generics,
                     unpack_error,
                     pack: quote!(match self {
@@ -82,8 +102,8 @@ impl TraitImpl {
                     }),
                     unpack: quote! {
                         #(#tag_decls)*
+                        #(#tag_asserts)*
 
-                        #[deny(unreachable_patterns)]
                         match <#tag_type>::unpack::<_, VERIFY>(unpacker).infallible()? {
                             #(#unpack_arms)*
                             tag => Err(bee_packable::error::UnpackError::from_packable(#tag_with_error(tag)))
