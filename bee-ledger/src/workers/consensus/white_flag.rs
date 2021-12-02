@@ -37,6 +37,7 @@ struct ValidationContext {
     consumed_outputs: HashMap<OutputId, CreatedOutput>,
     balance_diffs: BalanceDiffs,
     essence_hash: [u8; 32],
+    verified_addresses: HashSet<Address>,
 }
 
 impl ValidationContext {
@@ -49,6 +50,7 @@ impl ValidationContext {
             consumed_outputs: HashMap::with_capacity(essence.inputs().len()),
             balance_diffs: BalanceDiffs::new(),
             essence_hash: Essence::from(essence.clone()).hash(),
+            verified_addresses: HashSet::new(),
         }
     }
 }
@@ -59,7 +61,6 @@ fn check_input_feature_blocks(
 ) -> Result<(), ConflictReason> {
     for feature_block in feature_blocks {
         match feature_block {
-            FeatureBlock::Sender(_) => {}
             FeatureBlock::Issuer(_) => {}
             FeatureBlock::DustDepositReturn(_) => {}
             FeatureBlock::TimelockMilestoneIndex(timelock) => {
@@ -90,7 +91,11 @@ fn check_output_feature_blocks(
 ) -> Result<(), ConflictReason> {
     for feature_block in feature_blocks {
         match feature_block {
-            FeatureBlock::Sender(_) => {}
+            FeatureBlock::Sender(sender) => {
+                if !context.verified_addresses.contains(sender.address()) {
+                    return Err(ConflictReason::UnverifiedSender);
+                }
+            }
             FeatureBlock::Issuer(_) => {}
             FeatureBlock::DustDepositReturn(_) => {}
             FeatureBlock::TimelockMilestoneIndex(_) => {}
@@ -111,11 +116,13 @@ fn unlock_extended_output(
     output: &ExtendedOutput,
     unlock_blocks: &UnlockBlocks,
     index: usize,
-    context: &ValidationContext,
+    context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
     // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
     if let UnlockBlock::Signature(signature) = unlock_blocks.get(index).unwrap() {
         if output.address().verify(&context.essence_hash, signature).is_ok() {
+            // TODO another place where this should be done ?
+            context.verified_addresses.insert(*output.address());
             check_input_feature_blocks(output.feature_blocks(), context)
         } else {
             Err(ConflictReason::InvalidSignature)
@@ -203,7 +210,7 @@ fn apply_regular_essence<B: StorageBackend>(
             Output::Simple(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
             Output::Extended(output) => {
-                if let Err(conflict) = unlock_extended_output(output, unlock_blocks, index, &context) {
+                if let Err(conflict) = unlock_extended_output(output, unlock_blocks, index, &mut context) {
                     return Ok(conflict);
                 }
 

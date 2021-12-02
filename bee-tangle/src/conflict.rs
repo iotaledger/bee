@@ -42,6 +42,8 @@ pub enum ConflictReason {
     TimelockMilestoneIndex = 8,
     /// The unix timelock was no satisfied.
     TimelockUnix = 9,
+    /// The sender was not verified.
+    UnverifiedSender = 10,
     /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
 }
@@ -67,6 +69,7 @@ impl TryFrom<u8> for ConflictReason {
             7 => Self::CreatedConsumedNativeTokensAmountMismatch,
             8 => Self::TimelockMilestoneIndex,
             9 => Self::TimelockUnix,
+            10 => Self::UnverifiedSender,
             255 => Self::SemanticValidationFailed,
 
             x => return Err(Self::Error::InvalidConflict(x)),
