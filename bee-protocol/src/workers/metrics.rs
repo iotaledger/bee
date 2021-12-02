@@ -87,6 +87,7 @@ where
     }
 }
 
+#[deprecated]
 pub struct MetricsWorker {}
 
 #[async_trait]

@@ -86,6 +86,7 @@ where
     }
 }
 
+#[deprecated]
 #[derive(Default)]
 pub(crate) struct MpsWorker {}
 

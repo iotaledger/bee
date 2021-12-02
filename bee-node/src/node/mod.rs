@@ -207,10 +207,8 @@ where
         // TODO: This could maybe be done right from the metrics actor.
         rt.start(Some("mps".into()), MpsActor::default()).await?;
         rt.start(Some("status".into()), StatusActor::<B>::default()).await?;
-        rt.start(Some("heartbeater".into()), HeartbeaterActor::<B>::default())
-            .await?;
-        rt.start(Some("message_retryer".into()), MessageRetryerActor::<B>::default())
-            .await?;
+        rt.start(Some("heartbeater".into()), HeartbeaterActor::<B>::default()).await?;
+        rt.start(Some("message_retryer".into()), MessageRetryerActor::<B>::default()).await?;
 
         Ok(())
     }

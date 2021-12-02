@@ -15,6 +15,7 @@ use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use std::{collections::HashMap, convert::Infallible, sync::Arc};
 
+#[deprecated]
 pub struct PeerManagerResWorker {}
 
 #[async_trait]
