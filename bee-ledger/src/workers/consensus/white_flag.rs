@@ -119,11 +119,13 @@ fn unlock_extended_output(
     index: usize,
     context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
+    // SAFETY: index is fine as it is already known that there is the same amount of inputs and unlock blocks.
+    let unlock_block = unlock_blocks.get(index).unwrap();
+
     match output.address() {
         Address::Ed25519(address) => {
-            // SAFETY: index is fine as it is already known that there is the same amount of inputs and unlock blocks.
-            if let UnlockBlock::Signature(signature) = unlock_blocks.get(index).unwrap() {
-                if let Signature::Ed25519(signature) = signature.signature() {
+            if let UnlockBlock::Signature(unlock) = unlock_block {
+                if let Signature::Ed25519(signature) = unlock.signature() {
                     if address.verify(&context.essence_hash, signature).is_ok() {
                         // TODO another place where this should be done ?
                         context.verified_addresses.insert(*output.address());
@@ -138,8 +140,20 @@ fn unlock_extended_output(
                 Err(ConflictReason::IncorrectUnlockMethod)
             }
         }
-        Address::Alias(_) => todo!(),
-        Address::Nft(_) => todo!(),
+        Address::Alias(_) => {
+            if let UnlockBlock::Alias(unlock) = unlock_block {
+                todo!();
+            } else {
+                Err(ConflictReason::IncorrectUnlockMethod)
+            }
+        }
+        Address::Nft(_) => {
+            if let UnlockBlock::Nft(unlock) = unlock_block {
+                todo!();
+            } else {
+                Err(ConflictReason::IncorrectUnlockMethod)
+            }
+        }
     }
 }
 
