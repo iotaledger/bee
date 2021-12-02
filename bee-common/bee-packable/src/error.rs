@@ -15,8 +15,8 @@ mod sealed {
 
 /// Trait providing utility methods for [`Result`] values that use [`UnpackError`] as the `Err` variant.
 ///
-/// The main disadvantage of using `Result<_, UnpackError<_, _>>` is that error coercion must be
-/// done explicitly. This trait attempts to ease these conversions.
+/// The main disadvantage of using `Result<_, UnpackError<_, _>>` is that error coercion must be done explicitly.
+/// This trait attempts to ease these conversions.
 ///
 /// This trait is sealed and cannot be implemented by any other type.
 pub trait UnpackErrorExt<T, U, V>: sealed::Sealed + Sized {
@@ -94,8 +94,8 @@ impl<T> From<Infallible> for UnknownTagError<T> {
     }
 }
 
-/// Error type to be raised when [`SliceUnpacker`](`crate::unpacker::SliceUnpacker`) does not have enough bytes to
-/// unpack something or when [`SlicePacker`]('crate::packer::SlicePacker') does not have enough space to pack something.
+/// Error type to be raised when [`&[u8]`] does not have enough bytes to unpack something or when
+/// [`SlicePacker`]('crate::packer::SlicePacker') does not have enough space to pack something.
 #[derive(Debug)]
 pub struct UnexpectedEOF {
     /// The required number of bytes.

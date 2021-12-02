@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_packable::{
-    packer::{SlicePacker, VecPacker},
+    packer::{IoPacker, SlicePacker},
+    unpacker::IoUnpacker,
     Packable, PackableExt,
 };
 
@@ -47,18 +48,19 @@ where
     P: Packable + Eq + Debug,
     P::UnpackError: Debug,
 {
-    // Tests for VecPacker and SliceUnpacker
-
-    let mut vec_packer = VecPacker::new();
-    packable.pack(&mut vec_packer).unwrap();
-    let unpacked = P::unpack_verified(&mut vec_packer.as_slice()).unwrap();
-    assert_eq!(packable, &unpacked);
-
-    // Tests for Read and Write
+    // Tests for `Vec` and `&[u8]`
 
     let mut vec = Vec::new();
     packable.pack(&mut vec).unwrap();
-    let unpacked = P::unpack_verified(&mut vec_packer.as_slice()).unwrap();
+    let unpacked = P::unpack_verified(&mut vec.as_slice()).unwrap();
+    assert_eq!(packable, &unpacked);
+
+    // Tests for `Read` and `Write`
+
+    let mut packer = IoPacker::new(Vec::new());
+    packable.pack(&mut packer).unwrap();
+    let mut unpacker = IoUnpacker::new(packer.as_slice());
+    let unpacked = P::unpack::<_, true>(&mut unpacker).unwrap();
     assert_eq!(packable, &unpacked);
 
     generic_test_pack_to_slice_unpack_verified(packable);

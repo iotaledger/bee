@@ -1,6 +1,8 @@
 error[E0593]: function is expected to take 1 argument, but it takes 0 arguments
   --> tests/fail/invalid_packable_with.rs:11:46
    |
+10 | #[derive(Packable)]
+   |          -------- required by a bound introduced by this call
 11 | #[packable(unpack_error = Impossible, with = Impossible::new)]
    |                                              ^^^^^^^^^^^^^^^ expected function that takes 1 argument
 ...

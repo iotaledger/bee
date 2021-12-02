@@ -10,7 +10,7 @@ pub struct SlicePacker<'a> {
 }
 
 impl<'a> SlicePacker<'a> {
-    /// Create a new [`SlicePacker`] from a `&mut [u8]`.
+    /// Creates a new [`SlicePacker`] from a `&mut [u8]`.
     pub fn new(slice: &'a mut [u8]) -> Self {
         Self { slice, offset: 0 }
     }
