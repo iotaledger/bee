@@ -53,7 +53,10 @@ impl ValidationContext {
     }
 }
 
-fn check_feature_blocks(feature_blocks: &[FeatureBlock], context: &ValidationContext) -> Result<(), ConflictReason> {
+fn check_input_feature_blocks(
+    feature_blocks: &[FeatureBlock],
+    context: &ValidationContext,
+) -> Result<(), ConflictReason> {
     for feature_block in feature_blocks {
         match feature_block {
             FeatureBlock::Sender(_) => {}
@@ -74,7 +77,30 @@ fn check_feature_blocks(feature_blocks: &[FeatureBlock], context: &ValidationCon
             FeatureBlock::Indexation(_) => {
                 // TODO map index-output
             }
-            FeatureBlock::Metadata(_) => {}
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
+fn check_output_feature_blocks(
+    feature_blocks: &[FeatureBlock],
+    context: &ValidationContext,
+) -> Result<(), ConflictReason> {
+    for feature_block in feature_blocks {
+        match feature_block {
+            FeatureBlock::Sender(_) => {}
+            FeatureBlock::Issuer(_) => {}
+            FeatureBlock::DustDepositReturn(_) => {}
+            FeatureBlock::TimelockMilestoneIndex(_) => {}
+            FeatureBlock::TimelockUnix(_) => {}
+            FeatureBlock::ExpirationMilestoneIndex(_) => {}
+            FeatureBlock::ExpirationUnix(_) => {}
+            FeatureBlock::Indexation(_) => {
+                // TODO map index-output
+            }
+            _ => {}
         }
     }
 
@@ -90,7 +116,7 @@ fn unlock_extended_output(
     // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
     if let UnlockBlock::Signature(signature) = unlock_blocks.get(index).unwrap() {
         if output.address().verify(&context.essence_hash, signature).is_ok() {
-            check_feature_blocks(output.feature_blocks(), context)
+            check_input_feature_blocks(output.feature_blocks(), context)
         } else {
             Err(ConflictReason::InvalidSignature)
         }
