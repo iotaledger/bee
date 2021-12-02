@@ -16,9 +16,6 @@ use crate::{
 use bee_common::packable::{Packable, Read, Write};
 
 ///
-const METADATA_LENGTH_MAX: usize = 1024;
-
-///
 pub struct AliasOutputBuilder {
     amount: u64,
     native_tokens: Vec<NativeToken>,
@@ -99,9 +96,7 @@ impl AliasOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<AliasOutput, Error> {
-        if self.state_metadata.len() > METADATA_LENGTH_MAX {
-            return Err(Error::InvalidMetadataLength(self.state_metadata.len()));
-        }
+        validate_state_metadata_length(self.state_metadata.len())?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
@@ -148,6 +143,9 @@ pub struct AliasOutput {
 impl AliasOutput {
     /// The [`Output`](crate::output::Output) kind of an [`AliasOutput`].
     pub const KIND: u8 = 4;
+    /// Maximum possible length in bytes of the state metadata.
+    pub const STATE_METADATA_LENGTH_MAX: usize = 1024;
+
     ///
     const ALLOWED_FEATURE_BLOCKS: [u8; 3] = [
         SenderFeatureBlock::KIND,
@@ -271,8 +269,8 @@ impl Packable for AliasOutput {
         let state_index = u32::unpack_inner::<R, CHECK>(reader)?;
         let state_metadata_length = u32::unpack_inner::<R, CHECK>(reader)? as usize;
 
-        if CHECK && state_metadata_length > METADATA_LENGTH_MAX {
-            return Err(Error::InvalidMetadataLength(state_metadata_length));
+        if CHECK {
+            validate_state_metadata_length(state_metadata_length)?;
         }
 
         let mut state_metadata = vec![0u8; state_metadata_length];
@@ -296,6 +294,15 @@ impl Packable for AliasOutput {
             feature_blocks,
         })
     }
+}
+
+#[inline]
+fn validate_state_metadata_length(state_metadata_length: usize) -> Result<(), Error> {
+    if state_metadata_length > AliasOutput::STATE_METADATA_LENGTH_MAX {
+        return Err(Error::InvalidMetadataLength(state_metadata_length));
+    }
+
+    Ok(())
 }
 
 #[inline]

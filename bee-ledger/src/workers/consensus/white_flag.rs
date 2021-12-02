@@ -258,6 +258,7 @@ fn apply_regular_essence<B: StorageBackend>(
             //
             //     (output.amount(), None)
             // }
+            // TODO chain constraints
             Output::Simple(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
             Output::Extended(output) => (output.amount(), output.native_tokens()),
