@@ -17,9 +17,6 @@ use crate::{
 use bee_common::packable::{Packable, Read, Write};
 
 ///
-const METADATA_LENGTH_MAX: usize = 1024;
-
-///
 pub struct NftOutputBuilder {
     address: Address,
     amount: u64,
@@ -38,10 +35,7 @@ impl NftOutputBuilder {
         immutable_metadata: Vec<u8>,
     ) -> Result<NftOutputBuilder, Error> {
         validate_address(&address, &nft_id)?;
-
-        if immutable_metadata.len() > METADATA_LENGTH_MAX {
-            return Err(Error::InvalidMetadataLength(immutable_metadata.len()));
-        }
+        validate_immutable_metadata_length(immutable_metadata.len())?;
 
         Ok(Self {
             address,
@@ -114,6 +108,9 @@ pub struct NftOutput {
 impl NftOutput {
     /// The [`Output`](crate::output::Output) kind of a [`NftOutput`].
     pub const KIND: u8 = 6;
+    ///
+    pub const IMMUTABLE_METADATA_LENGTH_MAX: usize = 1024;
+
     ///
     const ALLOWED_FEATURE_BLOCKS: [u8; 9] = [
         SenderFeatureBlock::KIND,
@@ -208,13 +205,13 @@ impl Packable for NftOutput {
             validate_address(&address, &nft_id)?;
         }
 
-        let immutable_metadata_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
+        let immutable_metadata_length = u32::unpack_inner::<R, CHECK>(reader)? as usize;
 
-        if CHECK && immutable_metadata_len > METADATA_LENGTH_MAX {
-            return Err(Error::InvalidMetadataLength(immutable_metadata_len));
+        if CHECK {
+            validate_immutable_metadata_length(immutable_metadata_length)?;
         }
 
-        let mut immutable_metadata = vec![0u8; immutable_metadata_len];
+        let mut immutable_metadata = vec![0u8; immutable_metadata_length];
         reader.read_exact(&mut immutable_metadata)?;
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
@@ -244,6 +241,15 @@ fn validate_address(address: &Address, nft_id: &NftId) -> Result<(), Error> {
             }
         }
     };
+
+    Ok(())
+}
+
+#[inline]
+fn validate_immutable_metadata_length(immutable_metadata_length: usize) -> Result<(), Error> {
+    if immutable_metadata_length > NftOutput::IMMUTABLE_METADATA_LENGTH_MAX {
+        return Err(Error::InvalidMetadataLength(immutable_metadata_length));
+    }
 
     Ok(())
 }
