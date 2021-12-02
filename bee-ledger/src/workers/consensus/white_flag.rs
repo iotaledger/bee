@@ -19,6 +19,7 @@ use bee_message::{
         transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
         Payload,
     },
+    signature::Signature,
     unlock_block::{UnlockBlock, UnlockBlocks},
     Message, MessageId,
 };
@@ -118,17 +119,27 @@ fn unlock_extended_output(
     index: usize,
     context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
-    // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
-    if let UnlockBlock::Signature(signature) = unlock_blocks.get(index).unwrap() {
-        if output.address().verify(&context.essence_hash, signature).is_ok() {
-            // TODO another place where this should be done ?
-            context.verified_addresses.insert(*output.address());
-            check_input_feature_blocks(output.feature_blocks(), context)
-        } else {
-            Err(ConflictReason::InvalidSignature)
+    match output.address() {
+        Address::Ed25519(address) => {
+            // SAFETY: index is fine as it is already known that there is the same amount of inputs and unlock blocks.
+            if let UnlockBlock::Signature(signature) = unlock_blocks.get(index).unwrap() {
+                if let Signature::Ed25519(signature) = signature.signature() {
+                    if address.verify(&context.essence_hash, signature).is_ok() {
+                        // TODO another place where this should be done ?
+                        context.verified_addresses.insert(*output.address());
+                        check_input_feature_blocks(output.feature_blocks(), context)
+                    } else {
+                        Err(ConflictReason::InvalidSignature)
+                    }
+                } else {
+                    Err(ConflictReason::InvalidSignature)
+                }
+            } else {
+                Err(ConflictReason::IncorrectUnlockMethod)
+            }
         }
-    } else {
-        todo!();
+        Address::Alias(_) => todo!(),
+        Address::Nft(_) => todo!(),
     }
 }
 

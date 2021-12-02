@@ -9,7 +9,7 @@ pub use alias::AliasAddress;
 pub use ed25519::Ed25519Address;
 pub use nft::NftAddress;
 
-use crate::{signature::Signature, Error};
+use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -58,24 +58,6 @@ impl Address {
     #[allow(clippy::wrong_self_convention)]
     pub fn to_bech32(&self, hrp: &str) -> String {
         bech32::encode(hrp, self.pack_new().to_base32(), Variant::Bech32).expect("Invalid address.")
-    }
-
-    /// Verifies a [`Signature`] for a message against the [`Address`].
-    pub fn verify(&self, msg: &[u8], signature: &Signature) -> Result<(), Error> {
-        match self {
-            Address::Ed25519(address) => {
-                let Signature::Ed25519(signature) = signature;
-                address.verify(msg, signature)
-            }
-            Address::Alias(_address) => {
-                // TODO
-                Ok(())
-            }
-            Address::Nft(_address) => {
-                // TODO
-                Ok(())
-            }
-        }
     }
 }
 
