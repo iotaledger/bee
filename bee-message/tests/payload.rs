@@ -8,7 +8,7 @@ use bee_message::{
     milestone::MilestoneIndex,
     output::{Output, SimpleOutput, TreasuryOutput},
     payload::{
-        milestone::{MilestoneId, MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH},
+        milestone::{MilestoneId, MilestonePayload, MilestonePayloadEssence},
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
         transaction::{Essence, RegularEssenceBuilder, TransactionId, TransactionPayloadBuilder},
         IndexationPayload, Payload, TreasuryTransactionPayload,
@@ -77,7 +77,7 @@ fn milestone() {
             MilestoneIndex(0),
             0,
             rand_parents(),
-            [0; MILESTONE_MERKLE_PROOF_LENGTH],
+            [0; MilestonePayloadEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
             vec![[0; 32]],

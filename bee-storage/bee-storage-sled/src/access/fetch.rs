@@ -15,7 +15,7 @@ use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
-    Message, MessageId, MESSAGE_ID_LENGTH,
+    Message, MessageId,
 };
 use bee_storage::{access::Fetch, backend::StorageBackend, system::System};
 use bee_tangle::{
@@ -62,9 +62,9 @@ impl Fetch<MessageId, Vec<MessageId>> for Storage {
                 .scan_prefix(parent)
                 .map(|result| {
                     let (key, _) = result?;
-                    let (_, child) = key.split_at(MESSAGE_ID_LENGTH);
+                    let (_, child) = key.split_at(MessageId::LENGTH);
                     // Unpacking from storage is fine.
-                    let child: [u8; MESSAGE_ID_LENGTH] = child.try_into().unwrap();
+                    let child: [u8; MessageId::LENGTH] = child.try_into().unwrap();
                     Ok(MessageId::from(child))
                 })
                 .take(self.config.storage.fetch_edge_limit)
@@ -83,7 +83,7 @@ impl Fetch<PaddedIndex, Vec<MessageId>> for Storage {
                     let (key, _) = result?;
                     let (_, message_id) = key.split_at(PaddedIndex::LENGTH);
                     // Unpacking from storage is fine.
-                    let message_id: [u8; MESSAGE_ID_LENGTH] = message_id.try_into().unwrap();
+                    let message_id: [u8; MessageId::LENGTH] = message_id.try_into().unwrap();
                     Ok(MessageId::from(message_id))
                 })
                 .take(self.config.storage.fetch_index_limit)
@@ -253,7 +253,7 @@ impl Fetch<MilestoneIndex, Vec<UnreferencedMessage>> for Storage {
                     let (key, _) = result?;
                     let (_, unreferenced_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
                     // Unpacking from storage is fine.
-                    let unreferenced_message: [u8; MESSAGE_ID_LENGTH] = unreferenced_message.try_into().unwrap();
+                    let unreferenced_message: [u8; MessageId::LENGTH] = unreferenced_message.try_into().unwrap();
                     Ok(UnreferencedMessage::from(MessageId::from(unreferenced_message)))
                 })
                 .collect::<Result<Vec<UnreferencedMessage>, Self::Error>>()?,

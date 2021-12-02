@@ -12,11 +12,8 @@ use bee_message::{
     parents::Parents,
     payload::{
         indexation::IndexationPayload,
-        milestone::{
-            MilestoneId, MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH,
-            MILESTONE_PUBLIC_KEY_LENGTH,
-        },
-        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash, TAIL_TRANSACTION_HASH_LEN},
+        milestone::{MilestoneId, MilestonePayload, MilestonePayloadEssence},
+        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
         transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
         treasury::TreasuryTransactionPayload,
         Payload,
@@ -611,7 +608,7 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
                 );
             }
             let merkle_proof = {
-                let mut buf = [0u8; MILESTONE_MERKLE_PROOF_LENGTH];
+                let mut buf = [0u8; MilestonePayloadEssence::MERKLE_PROOF_LENGTH];
                 hex::decode_to_slice(&value.inclusion_merkle_proof, &mut buf)
                     .map_err(|_| Error::InvalidSyntaxField("inclusionMerkleProof"))?;
                 buf
@@ -621,7 +618,7 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
             let mut public_keys = Vec::new();
             for v in &value.public_keys {
                 let key = {
-                    let mut buf = [0u8; MILESTONE_PUBLIC_KEY_LENGTH];
+                    let mut buf = [0u8; MilestonePayloadEssence::PUBLIC_KEY_LENGTH];
                     hex::decode_to_slice(v, &mut buf).map_err(|_| Error::InvalidSyntaxField("publicKeys"))?;
                     buf
                 };
@@ -747,7 +744,7 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
     type Error = Error;
 
     fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
-        let mut tail_transaction_hash = [0u8; TAIL_TRANSACTION_HASH_LEN];
+        let mut tail_transaction_hash = [0u8; TailTransactionHash::LENGTH];
         hex::decode_to_slice(&value.tail_transaction_hash, &mut tail_transaction_hash)
             .map_err(|_| Error::InvalidSyntaxField("tailTransactionHash"))?;
         Ok(MigratedFundsEntry::new(

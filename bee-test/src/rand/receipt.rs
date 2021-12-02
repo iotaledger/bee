@@ -9,7 +9,7 @@ use crate::rand::{
 use bee_ledger::types::Receipt;
 use bee_message::{
     output::SimpleOutput,
-    payload::receipt::{MigratedFundsEntry, TailTransactionHash, VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS},
+    payload::receipt::{MigratedFundsEntry, TailTransactionHash},
 };
 use bee_ternary::{T5B1Buf, Tryte, TryteBuf};
 
@@ -32,7 +32,7 @@ pub fn rand_tail_transaction_hash() -> TailTransactionHash {
 pub fn rand_migrated_funds_entry() -> MigratedFundsEntry {
     MigratedFundsEntry::new(
         rand_tail_transaction_hash(),
-        SimpleOutput::new(rand_address(), rand_number_range(VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS)).unwrap(),
+        SimpleOutput::new(rand_address(), rand_number_range(MigratedFundsEntry::AMOUNT_RANGE)).unwrap(),
     )
     .unwrap()
 }

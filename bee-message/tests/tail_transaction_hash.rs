@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::{
-    payload::receipt::{TailTransactionHash, TAIL_TRANSACTION_HASH_LEN},
-    Error,
-};
+use bee_message::{payload::receipt::TailTransactionHash, Error};
 
 const HASH_TRYTES: &str = "TZTXLMTAURX9DYQICXZEUMCDBPNXVOHNBBZDSSVCNCTWKSMUALAYPMHUCKGOGSTBUHSQIMSY9HQEP9AXJ";
 const HASH_BYTES: [u8; 49] = [
@@ -34,7 +31,7 @@ fn try_from_valid() {
 #[test]
 fn new_invalid() {
     assert!(matches!(
-        TailTransactionHash::new([0x7a; TAIL_TRANSACTION_HASH_LEN]),
+        TailTransactionHash::new([0x7a; TailTransactionHash::LENGTH]),
         Err(Error::InvalidTailTransactionHash)
     ));
 }
@@ -56,8 +53,8 @@ fn to_str_valid() {
 fn packed_len() {
     let tth = TailTransactionHash::try_from(HASH_BYTES).unwrap();
 
-    assert_eq!(tth.packed_len(), TAIL_TRANSACTION_HASH_LEN);
-    assert_eq!(tth.pack_new().len(), TAIL_TRANSACTION_HASH_LEN);
+    assert_eq!(tth.packed_len(), TailTransactionHash::LENGTH);
+    assert_eq!(tth.pack_new().len(), TailTransactionHash::LENGTH);
 }
 
 #[test]

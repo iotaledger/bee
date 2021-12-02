@@ -5,7 +5,7 @@ use bee_common::packable::Packable;
 use bee_message::{
     parents::Parents,
     payload::{IndexationPayload, Payload},
-    Error, Message, MessageBuilder, MESSAGE_LENGTH_MAX,
+    Error, Message, MessageBuilder,
 };
 use bee_pow::{
     providers::{
@@ -57,13 +57,13 @@ fn invalid_length() {
         .with_parents(Parents::new(rand_message_ids(2)).unwrap())
         .with_nonce_provider(42, 10000f64)
         .with_payload(
-            IndexationPayload::new(&[42], &[0u8; MESSAGE_LENGTH_MAX])
+            IndexationPayload::new(&[42], &[0u8; Message::LENGTH_MAX])
                 .unwrap()
                 .into(),
         )
         .finish();
 
-    assert!(matches!(res, Err(Error::InvalidMessageLength(len)) if len == MESSAGE_LENGTH_MAX + 96));
+    assert!(matches!(res, Err(Error::InvalidMessageLength(len)) if len == Message::LENGTH_MAX + 96));
 }
 
 #[test]

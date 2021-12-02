@@ -4,7 +4,7 @@
 use bee_common::packable::Packable;
 use bee_message::{
     payload::indexation::{IndexationPayload, PaddedIndex},
-    Error, MESSAGE_LENGTH_MAX,
+    Error, Message,
 };
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
 
@@ -84,8 +84,8 @@ fn new_invalid_index_length_more_than_max() {
 #[test]
 fn new_invalid_data_length_more_than_max() {
     assert!(matches!(
-        IndexationPayload::new(&rand_bytes_array::<32>(), &[0u8; MESSAGE_LENGTH_MAX + 42]),
-        Err(Error::InvalidIndexationDataLength(l)) if l == MESSAGE_LENGTH_MAX + 42
+        IndexationPayload::new(&rand_bytes_array::<32>(), &[0u8; Message::LENGTH_MAX + 42]),
+        Err(Error::InvalidIndexationDataLength(l)) if l == Message::LENGTH_MAX + 42
     ));
 }
 

@@ -17,7 +17,7 @@ use bee_message::{
     address::{AliasAddress, Ed25519Address, NftAddress},
     milestone::MilestoneIndex,
     payload::indexation::PaddedIndex,
-    MESSAGE_ID_LENGTH,
+    MessageId,
 };
 
 use rocksdb::{
@@ -41,7 +41,7 @@ impl Storage {
         let cf_message_id_to_metadata = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_METADATA, Options::default());
 
         let mut options = Options::default();
-        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(MESSAGE_ID_LENGTH));
+        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(MessageId::LENGTH));
         let cf_message_id_to_message_id = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE_ID, options);
 
         let mut options = Options::default();

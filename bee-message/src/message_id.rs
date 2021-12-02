@@ -7,23 +7,23 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::str::FromStr;
 
-/// The length of a message identifier.
-pub const MESSAGE_ID_LENGTH: usize = 32;
-
 /// A message identifier, the BLAKE2b-256 hash of the message bytes.
 /// See <https://www.blake2.net/> for more information.
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, derive_more::From)]
-pub struct MessageId([u8; MESSAGE_ID_LENGTH]);
+pub struct MessageId([u8; MessageId::LENGTH]);
 
 impl MessageId {
-    /// Creates a new `MessageId`.
-    pub fn new(bytes: [u8; MESSAGE_ID_LENGTH]) -> Self {
+    /// The length of a [`MessageId`].
+    pub const LENGTH: usize = 32;
+
+    /// Creates a new [`MessageId`].
+    pub fn new(bytes: [u8; MessageId::LENGTH]) -> Self {
         bytes.into()
     }
 
-    /// Create a null `MessageId`.
+    /// Create a null [`MessageId`].
     pub fn null() -> Self {
-        Self([0u8; MESSAGE_ID_LENGTH])
+        Self([0u8; MessageId::LENGTH])
     }
 }
 
@@ -34,10 +34,10 @@ impl FromStr for MessageId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; MESSAGE_ID_LENGTH] = hex::decode(s)
+        let bytes: [u8; MessageId::LENGTH] = hex::decode(s)
             .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
             .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength(MESSAGE_ID_LENGTH * 2, s.len()))?;
+            .map_err(|_| Self::Err::InvalidHexadecimalLength(MessageId::LENGTH * 2, s.len()))?;
 
         Ok(MessageId::from(bytes))
     }
@@ -65,7 +65,7 @@ impl Packable for MessageId {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        MESSAGE_ID_LENGTH
+        MessageId::LENGTH
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -75,6 +75,6 @@ impl Packable for MessageId {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(<[u8; MESSAGE_ID_LENGTH]>::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self::new(<[u8; MessageId::LENGTH]>::unpack_inner::<R, CHECK>(reader)?))
     }
 }

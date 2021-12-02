@@ -34,5 +34,5 @@ pub mod signature;
 pub mod unlock_block;
 
 pub use error::Error;
-pub use message::{Message, MessageBuilder, MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN};
-pub use message_id::{MessageId, MESSAGE_ID_LENGTH};
+pub use message::{Message, MessageBuilder};
+pub use message_id::MessageId;

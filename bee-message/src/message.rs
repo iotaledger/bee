@@ -12,16 +12,7 @@ use bee_pow::providers::{miner::Miner, NonceProvider, NonceProviderBuilder};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
-/// The minimum number of bytes in a message.
-pub const MESSAGE_LENGTH_MIN: usize = 53;
-
-/// The maximum number of bytes in a message.
-pub const MESSAGE_LENGTH_MAX: usize = 32768;
-
-const DEFAULT_POW_SCORE: f64 = 4000f64;
-const DEFAULT_NONCE: u64 = 0;
-
-/// A builder to build a `Message`.
+/// A builder to build a [`Message`].
 pub struct MessageBuilder<P: NonceProvider = Miner> {
     network_id: Option<u64>,
     parents: Option<Parents>,
@@ -41,6 +32,9 @@ impl<P: NonceProvider> Default for MessageBuilder<P> {
 }
 
 impl<P: NonceProvider> MessageBuilder<P> {
+    const DEFAULT_POW_SCORE: f64 = 4000f64;
+    const DEFAULT_NONCE: u64 = 0;
+
     /// Creates a new `MessageBuilder`.
     pub fn new() -> Self {
         Default::default()
@@ -70,7 +64,7 @@ impl<P: NonceProvider> MessageBuilder<P> {
         self
     }
 
-    /// Finishes the `MessageBuilder` into a `Message`.
+    /// Finishes the `MessageBuilder` into a [`Message`].
     pub fn finish(self) -> Result<Message, Error> {
         let network_id = self.network_id.ok_or(Error::MissingField("network_id"))?;
         let parents = self.parents.ok_or(Error::MissingField("parents"))?;
@@ -92,20 +86,20 @@ impl<P: NonceProvider> MessageBuilder<P> {
 
         let message_bytes = message.pack_new();
 
-        if message_bytes.len() > MESSAGE_LENGTH_MAX {
+        if message_bytes.len() > Message::LENGTH_MAX {
             return Err(Error::InvalidMessageLength(message_bytes.len()));
         }
 
         let (nonce_provider, target_score) = self
             .nonce_provider
-            .unwrap_or((P::Builder::new().finish(), DEFAULT_POW_SCORE));
+            .unwrap_or((P::Builder::new().finish(), Self::DEFAULT_POW_SCORE));
 
         message.nonce = nonce_provider
             .nonce(
                 &message_bytes[..message_bytes.len() - std::mem::size_of::<u64>()],
                 target_score,
             )
-            .unwrap_or(DEFAULT_NONCE);
+            .unwrap_or(Self::DEFAULT_NONCE);
 
         Ok(message)
     }
@@ -126,7 +120,12 @@ pub struct Message {
 }
 
 impl Message {
-    /// Creates a new `MessageBuilder` to construct an instance of a `Message`.
+    /// The minimum number of bytes in a message.
+    pub const LENGTH_MIN: usize = 53;
+    /// The maximum number of bytes in a message.
+    pub const LENGTH_MAX: usize = 32768;
+
+    /// Creates a new `MessageBuilder` to construct an instance of a [`Message`].
     pub fn builder() -> MessageBuilder {
         MessageBuilder::new()
     }
@@ -136,27 +135,27 @@ impl Message {
         MessageId::new(Blake2b256::digest(&self.pack_new()).into())
     }
 
-    /// Returns the network id of a `Message`.
+    /// Returns the network id of a [`Message`].
     pub fn network_id(&self) -> u64 {
         self.network_id
     }
 
-    /// Returns the parents of a `Message`.
+    /// Returns the parents of a [`Message`].
     pub fn parents(&self) -> &Parents {
         &self.parents
     }
 
-    /// Returns the optional payload of a `Message`.
+    /// Returns the optional payload of a [`Message`].
     pub fn payload(&self) -> Option<&Payload> {
         self.payload.as_ref()
     }
 
-    /// Returns the nonce of a `Message`.
+    /// Returns the nonce of a [`Message`].
     pub fn nonce(&self) -> u64 {
         self.nonce
     }
 
-    /// Consumes the [`Message`], and returns ownership over its [`Parents`].
+    /// Consumes the [[`Message`]], and returns ownership over its [`Parents`].
     pub fn into_parents(self) -> Parents {
         self.parents
     }
@@ -204,7 +203,7 @@ impl Packable for Message {
         // expensive to call `payload.packed_len()` twice.
         let message_len = network_id.packed_len() + parents.packed_len() + payload_len + nonce.packed_len();
 
-        if CHECK && message_len > MESSAGE_LENGTH_MAX {
+        if CHECK && message_len > Message::LENGTH_MAX {
             return Err(Error::InvalidMessageLength(message_len));
         }
 

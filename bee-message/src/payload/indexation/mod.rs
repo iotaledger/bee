@@ -5,7 +5,7 @@
 
 mod padded;
 
-use crate::{Error, MESSAGE_LENGTH_MAX};
+use crate::{Error, Message};
 
 pub use padded::PaddedIndex;
 
@@ -13,9 +13,6 @@ use bee_common::packable::{Packable, Read, Write};
 
 use alloc::boxed::Box;
 use core::ops::RangeInclusive;
-
-/// Valid lengths for an indexation payload index.
-pub const INDEXATION_INDEX_LENGTH_RANGE: RangeInclusive<usize> = 1..=PaddedIndex::LENGTH;
 
 /// A payload which holds an index and associated data.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -28,14 +25,16 @@ pub struct IndexationPayload {
 impl IndexationPayload {
     /// The payload kind of an `IndexationPayload`.
     pub const KIND: u32 = 2;
+    /// Valid lengths for an indexation payload index.
+    pub const LENGTH_RANGE: RangeInclusive<usize> = 1..=PaddedIndex::LENGTH;
 
     /// Creates a new `IndexationPayload`.
     pub fn new(index: &[u8], data: &[u8]) -> Result<Self, Error> {
-        if !INDEXATION_INDEX_LENGTH_RANGE.contains(&index.len()) {
+        if !IndexationPayload::LENGTH_RANGE.contains(&index.len()) {
             return Err(Error::InvalidIndexationIndexLength(index.len()));
         }
 
-        if data.len() > MESSAGE_LENGTH_MAX {
+        if data.len() > Message::LENGTH_MAX {
             return Err(Error::InvalidIndexationDataLength(data.len()));
         }
 
@@ -83,7 +82,7 @@ impl Packable for IndexationPayload {
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let index_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
 
-        if CHECK && !INDEXATION_INDEX_LENGTH_RANGE.contains(&index_len) {
+        if CHECK && !IndexationPayload::LENGTH_RANGE.contains(&index_len) {
             return Err(Error::InvalidIndexationIndexLength(index_len));
         }
 
@@ -92,7 +91,7 @@ impl Packable for IndexationPayload {
 
         let data_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
 
-        if CHECK && data_len > MESSAGE_LENGTH_MAX {
+        if CHECK && data_len > Message::LENGTH_MAX {
             return Err(Error::InvalidIndexationDataLength(data_len));
         }
 

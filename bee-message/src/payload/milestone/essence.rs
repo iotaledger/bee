@@ -18,13 +18,6 @@ use crypto::hashes::{blake2b::Blake2b256, Digest};
 use alloc::vec::Vec;
 use core::ops::RangeInclusive;
 
-/// Range of allowed milestones public key numbers.
-pub const MILESTONE_PUBLIC_KEY_COUNT_RANGE: RangeInclusive<usize> = 1..=255;
-/// Length of a milestone merkle proof.
-pub const MILESTONE_MERKLE_PROOF_LENGTH: usize = 32;
-/// Length of a milestone public key.
-pub const MILESTONE_PUBLIC_KEY_LENGTH: usize = 32;
-
 /// Essence of a milestone payload.
 /// This is the signed part of a milestone payload.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -33,24 +26,31 @@ pub struct MilestonePayloadEssence {
     index: MilestoneIndex,
     timestamp: u64,
     parents: Parents,
-    merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
+    merkle_proof: [u8; MilestonePayloadEssence::MERKLE_PROOF_LENGTH],
     next_pow_score: u32,
     next_pow_score_milestone_index: u32,
-    public_keys: Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]>,
+    public_keys: Vec<[u8; MilestonePayloadEssence::PUBLIC_KEY_LENGTH]>,
     receipt: Option<Payload>,
 }
 
 impl MilestonePayloadEssence {
+    /// Length of a milestone merkle proof.
+    pub const MERKLE_PROOF_LENGTH: usize = 32;
+    /// Range of allowed milestones public key numbers.
+    pub const PUBLIC_KEY_COUNT_RANGE: RangeInclusive<usize> = 1..=255;
+    /// Length of a milestone public key.
+    pub const PUBLIC_KEY_LENGTH: usize = 32;
+
     /// Creates a new `MilestonePayloadEssence`.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         index: MilestoneIndex,
         timestamp: u64,
         parents: Parents,
-        merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
+        merkle_proof: [u8; MilestonePayloadEssence::MERKLE_PROOF_LENGTH],
         next_pow_score: u32,
         next_pow_score_milestone_index: u32,
-        public_keys: Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]>,
+        public_keys: Vec<[u8; MilestonePayloadEssence::PUBLIC_KEY_LENGTH]>,
         receipt: Option<Payload>,
     ) -> Result<Self, Error> {
         if next_pow_score == 0 && next_pow_score_milestone_index != 0
@@ -62,7 +62,7 @@ impl MilestonePayloadEssence {
             ));
         }
 
-        if !MILESTONE_PUBLIC_KEY_COUNT_RANGE.contains(&public_keys.len()) {
+        if !MilestonePayloadEssence::PUBLIC_KEY_COUNT_RANGE.contains(&public_keys.len()) {
             return Err(Error::MilestoneInvalidPublicKeyCount(public_keys.len()));
         }
 
@@ -118,7 +118,7 @@ impl MilestonePayloadEssence {
     }
 
     /// Returns the public keys of a `MilestonePayloadEssence`.
-    pub fn public_keys(&self) -> &Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]> {
+    pub fn public_keys(&self) -> &Vec<[u8; MilestonePayloadEssence::PUBLIC_KEY_LENGTH]> {
         &self.public_keys
     }
 
@@ -140,11 +140,11 @@ impl Packable for MilestonePayloadEssence {
         self.index.packed_len()
             + self.timestamp.packed_len()
             + self.parents.packed_len()
-            + MILESTONE_MERKLE_PROOF_LENGTH
+            + MilestonePayloadEssence::MERKLE_PROOF_LENGTH
             + self.next_pow_score.packed_len()
             + self.next_pow_score_milestone_index.packed_len()
             + 0u8.packed_len()
-            + self.public_keys.len() * MILESTONE_PUBLIC_KEY_LENGTH
+            + self.public_keys.len() * MilestonePayloadEssence::PUBLIC_KEY_LENGTH
             + option_payload_packed_len(self.receipt.as_ref())
     }
 
@@ -169,7 +169,7 @@ impl Packable for MilestonePayloadEssence {
         let timestamp = u64::unpack_inner::<R, CHECK>(reader)?;
         let parents = Parents::unpack_inner::<R, CHECK>(reader)?;
 
-        let merkle_proof = <[u8; MILESTONE_MERKLE_PROOF_LENGTH]>::unpack_inner::<R, CHECK>(reader)?;
+        let merkle_proof = <[u8; MilestonePayloadEssence::MERKLE_PROOF_LENGTH]>::unpack_inner::<R, CHECK>(reader)?;
 
         let next_pow_score = u32::unpack_inner::<R, CHECK>(reader)?;
         let next_pow_score_milestone_index = u32::unpack_inner::<R, CHECK>(reader)?;
@@ -177,7 +177,10 @@ impl Packable for MilestonePayloadEssence {
         let public_keys_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut public_keys = Vec::with_capacity(public_keys_len);
         for _ in 0..public_keys_len {
-            public_keys.push(<[u8; MILESTONE_PUBLIC_KEY_LENGTH]>::unpack_inner::<R, CHECK>(reader)?);
+            public_keys.push(<[u8; MilestonePayloadEssence::PUBLIC_KEY_LENGTH]>::unpack_inner::<
+                R,
+                CHECK,
+            >(reader)?);
         }
 
         let (_, receipt) = option_payload_unpack::<R, CHECK>(reader)?;

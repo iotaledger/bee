@@ -16,7 +16,7 @@ use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
-    Message, MessageId, MESSAGE_ID_LENGTH,
+    Message, MessageId,
 };
 use bee_storage::{access::AsIterator, system::System};
 use bee_tangle::{
@@ -109,7 +109,7 @@ impl<'a> StorageIterator<'a, MessageId, MessageMetadata> {
 
 impl<'a> StorageIterator<'a, (MessageId, MessageId), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MessageId, MessageId), ()) {
-        let (mut parent, mut child) = key.split_at(MESSAGE_ID_LENGTH);
+        let (mut parent, mut child) = key.split_at(MessageId::LENGTH);
 
         (
             (
