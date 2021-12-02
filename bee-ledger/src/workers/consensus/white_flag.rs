@@ -13,7 +13,8 @@ use crate::{
 use bee_message::{
     address::Address,
     input::Input,
-    output::{AliasOutput, ExtendedOutput, NftOutput, Output, OutputId, TokenId},
+    milestone::MilestoneIndex,
+    output::{AliasOutput, ExtendedOutput, FeatureBlock, NftOutput, Output, OutputId, TokenId},
     payload::{
         transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
         Payload,
@@ -29,6 +30,7 @@ use primitive_types::U256;
 use std::collections::{HashMap, HashSet};
 
 struct ValidationContext {
+    index: MilestoneIndex,
     timestamp: u64,
     amount: u64,
     native_tokens_amount: HashMap<TokenId, U256>,
@@ -38,8 +40,9 @@ struct ValidationContext {
 }
 
 impl ValidationContext {
-    fn new(timestamp: u64, essence: &RegularEssence) -> Self {
+    fn new(index: MilestoneIndex, timestamp: u64, essence: &RegularEssence) -> Self {
         Self {
+            index,
             timestamp,
             amount: 0,
             native_tokens_amount: HashMap::<TokenId, U256>::new(),
@@ -48,6 +51,32 @@ impl ValidationContext {
             essence_hash: Essence::from(essence.clone()).hash(),
         }
     }
+}
+
+fn check_feature_blocks(feature_blocks: &[FeatureBlock], context: &ValidationContext) -> Result<(), ConflictReason> {
+    for feature_block in feature_blocks {
+        match feature_block {
+            FeatureBlock::Sender(_) => {}
+            FeatureBlock::Issuer(_) => {}
+            FeatureBlock::DustDepositReturn(_) => {}
+            FeatureBlock::TimelockMilestoneIndex(timelock) => {
+                if context.index < timelock.index() {
+                    return Err(ConflictReason::TimelockMilestoneIndex);
+                }
+            }
+            FeatureBlock::TimelockUnix(timelock) => {
+                if context.timestamp < timelock.timestamp() as u64 {
+                    return Err(ConflictReason::TimelockUnix);
+                }
+            }
+            FeatureBlock::ExpirationMilestoneIndex(_) => {}
+            FeatureBlock::ExpirationUnix(_) => {}
+            FeatureBlock::Indexation(_) => {}
+            FeatureBlock::Metadata(_) => {}
+        }
+    }
+
+    Ok(())
 }
 
 fn unlock_extended_output(
@@ -59,7 +88,7 @@ fn unlock_extended_output(
     // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
     if let UnlockBlock::Signature(signature) = unlock_blocks.get(index).unwrap() {
         if output.address().verify(&context.essence_hash, signature).is_ok() {
-            Ok(())
+            check_feature_blocks(output.feature_blocks(), context)
         } else {
             Err(ConflictReason::InvalidSignature)
         }
@@ -106,7 +135,7 @@ fn apply_regular_essence<B: StorageBackend>(
     unlock_blocks: &UnlockBlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
-    let mut context = ValidationContext::new(metadata.timestamp, &essence);
+    let mut context = ValidationContext::new(metadata.index, metadata.timestamp, &essence);
 
     for (index, input) in essence.inputs().iter().enumerate() {
         let (output_id, consumed_output) = match input {

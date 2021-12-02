@@ -38,6 +38,10 @@ pub enum ConflictReason {
     InvalidDustAllowance = 6,
     /// The created native tokens amount does not match the consumed native tokens amount.
     CreatedConsumedNativeTokensAmountMismatch = 7,
+    /// The milestone index timelock was no satisfied.
+    TimelockMilestoneIndex = 8,
+    /// The unix timelock was no satisfied.
+    TimelockUnix = 9,
     /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
 }
@@ -61,6 +65,8 @@ impl TryFrom<u8> for ConflictReason {
             5 => Self::InvalidSignature,
             6 => Self::InvalidDustAllowance,
             7 => Self::CreatedConsumedNativeTokensAmountMismatch,
+            8 => Self::TimelockMilestoneIndex,
+            9 => Self::TimelockUnix,
             255 => Self::SemanticValidationFailed,
 
             x => return Err(Self::Error::InvalidConflict(x)),

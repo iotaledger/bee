@@ -8,10 +8,10 @@ use bee_common::packable::{Packable, Read, Write};
 /// Defines a unix time until which the output can not be unlocked.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct TimelockUnixFeatureBlock {
+pub struct TimelockUnixFeatureBlock(
     // Unix time, seconds since unix epoch, starting from which the output can be consumed.
-    timestamp: u32,
-}
+    u32,
+);
 
 impl TimelockUnixFeatureBlock {
     /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of a [`TimelockUnixFeatureBlock`].
@@ -24,7 +24,7 @@ impl TimelockUnixFeatureBlock {
 
     /// Returns the timestamp.
     pub fn timestamp(&self) -> u32 {
-        self.timestamp
+        self.0
     }
 }
 
@@ -32,18 +32,16 @@ impl Packable for TimelockUnixFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.timestamp.packed_len()
+        self.0.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.timestamp.pack(writer)?;
+        self.0.pack(writer)?;
 
         Ok(())
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self {
-            timestamp: u32::unpack_inner::<R, CHECK>(reader)?,
-        })
+        Ok(Self(u32::unpack_inner::<R, CHECK>(reader)?))
     }
 }
