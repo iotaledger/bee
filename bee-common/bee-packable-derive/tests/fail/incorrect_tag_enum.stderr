@@ -7,7 +7,7 @@ error[E0308]: mismatched types
 help: change the type of the numeric literal from `u32` to `u8`
    |
 14 |     #[packable(tag = 0u8)]
-   |                      ~~~
+   |                       ~~
 
 error[E0308]: mismatched types
   --> tests/fail/incorrect_tag_enum.rs:10:10
