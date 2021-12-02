@@ -71,7 +71,9 @@ fn check_feature_blocks(feature_blocks: &[FeatureBlock], context: &ValidationCon
             }
             FeatureBlock::ExpirationMilestoneIndex(_) => {}
             FeatureBlock::ExpirationUnix(_) => {}
-            FeatureBlock::Indexation(_) => {}
+            FeatureBlock::Indexation(_) => {
+                // TODO map index-output
+            }
             FeatureBlock::Metadata(_) => {}
         }
     }
@@ -216,6 +218,7 @@ fn apply_regular_essence<B: StorageBackend>(
     }
 
     for created_output in essence.outputs() {
+        // TODO also check feature blocks ?
         let (amount, created_native_tokens) = match created_output {
             // Output::Simple(output) => {
             //     context.balance_diffs.amount_add(*output.address(), output.amount())?;
@@ -247,7 +250,7 @@ fn apply_regular_essence<B: StorageBackend>(
     }
 
     for (_, amount) in context.native_tokens_amount {
-        if amount.is_zero() {
+        if !amount.is_zero() {
             return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
         }
 
