@@ -8,10 +8,10 @@ use bee_common::packable::{Packable, Read, Write};
 /// Defines an indexation tag to which the output will be indexed.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct IndexationFeatureBlock {
+pub struct IndexationFeatureBlock(
     // Binary indexation tag.
-    tag: Box<[u8]>,
-}
+    Box<[u8]>,
+);
 
 impl TryFrom<&[u8]> for IndexationFeatureBlock {
     type Error = Error;
@@ -19,7 +19,7 @@ impl TryFrom<&[u8]> for IndexationFeatureBlock {
     fn try_from(tag: &[u8]) -> Result<Self, Error> {
         validate_length(tag.len())?;
 
-        Ok(Self { tag: tag.into() })
+        Ok(Self(tag.into()))
     }
 }
 
@@ -36,7 +36,7 @@ impl IndexationFeatureBlock {
 
     /// Returns the tag.
     pub fn tag(&self) -> &[u8] {
-        &self.tag
+        &self.0
     }
 }
 
@@ -44,12 +44,12 @@ impl Packable for IndexationFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        0u8.packed_len() + self.tag.len()
+        0u8.packed_len() + self.0.len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.tag.len() as u8).pack(writer)?;
-        writer.write_all(&self.tag)?;
+        (self.0.len() as u8).pack(writer)?;
+        writer.write_all(&self.0)?;
 
         Ok(())
     }
@@ -64,7 +64,7 @@ impl Packable for IndexationFeatureBlock {
         let mut tag = vec![0u8; tag_length];
         reader.read_exact(&mut tag)?;
 
-        Ok(Self { tag: tag.into() })
+        Ok(Self(tag.into()))
     }
 }
 

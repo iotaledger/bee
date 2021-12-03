@@ -10,12 +10,12 @@ use bee_common::packable::{Packable, Read, Write};
 /// [`SenderFeatureBlock`](crate::output::feature_block::SenderFeatureBlock) can unlock it.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct ExpirationUnixFeatureBlock {
+pub struct ExpirationUnixFeatureBlock(
     // Before this unix time, seconds since unix epoch, [`Address`](crate::address::Address) is allowed to unlock the
     // output. After that, only the [`Address`](crate::address::Address) defined in the
     // [`SenderFeatureBlock`](crate::output::feature_block::SenderFeatureBlock) can.
-    timestamp: u32,
-}
+    u32,
+);
 
 impl ExpirationUnixFeatureBlock {
     /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of an [`ExpirationUnixFeatureBlock`].
@@ -28,7 +28,7 @@ impl ExpirationUnixFeatureBlock {
 
     /// Returns the timestamp.
     pub fn timestamp(&self) -> u32 {
-        self.timestamp
+        self.0
     }
 }
 
@@ -36,18 +36,16 @@ impl Packable for ExpirationUnixFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.timestamp.packed_len()
+        self.0.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.timestamp.pack(writer)?;
+        self.0.pack(writer)?;
 
         Ok(())
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self {
-            timestamp: u32::unpack_inner::<R, CHECK>(reader)?,
-        })
+        Ok(Self(u32::unpack_inner::<R, CHECK>(reader)?))
     }
 }

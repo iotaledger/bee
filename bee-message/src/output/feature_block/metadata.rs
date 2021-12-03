@@ -8,10 +8,10 @@ use bee_common::packable::{Packable, Read, Write};
 /// Defines metadata, arbitrary binary data, that will be stored in the output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct MetadataFeatureBlock {
+pub struct MetadataFeatureBlock(
     // Binary data.
-    data: Box<[u8]>,
-}
+    Box<[u8]>,
+);
 
 impl TryFrom<&[u8]> for MetadataFeatureBlock {
     type Error = Error;
@@ -19,7 +19,7 @@ impl TryFrom<&[u8]> for MetadataFeatureBlock {
     fn try_from(data: &[u8]) -> Result<Self, Error> {
         validate_length(data.len())?;
 
-        Ok(MetadataFeatureBlock { data: data.into() })
+        Ok(MetadataFeatureBlock(data.into()))
     }
 }
 
@@ -36,7 +36,7 @@ impl MetadataFeatureBlock {
 
     /// Returns the data.
     pub fn data(&self) -> &[u8] {
-        &self.data
+        &self.0
     }
 }
 
@@ -44,12 +44,12 @@ impl Packable for MetadataFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        0u32.packed_len() + self.data.len()
+        0u32.packed_len() + self.0.len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.data.len() as u32).pack(writer)?;
-        writer.write_all(&self.data)?;
+        (self.0.len() as u32).pack(writer)?;
+        writer.write_all(&self.0)?;
 
         Ok(())
     }
@@ -64,7 +64,7 @@ impl Packable for MetadataFeatureBlock {
         let mut data = vec![0u8; data_length];
         reader.read_exact(&mut data)?;
 
-        Ok(Self { data: data.into() })
+        Ok(Self(data.into()))
     }
 }
 

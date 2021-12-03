@@ -8,9 +8,7 @@ use bee_common::packable::{Packable, Read, Write};
 /// Identifies the validated issuer of an output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct IssuerFeatureBlock {
-    address: Address,
-}
+pub struct IssuerFeatureBlock(Address);
 
 impl IssuerFeatureBlock {
     /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of an [`IssuerFeatureBlock`].
@@ -23,7 +21,7 @@ impl IssuerFeatureBlock {
 
     /// Returns the issuer [`Address`].
     pub fn address(&self) -> &Address {
-        &self.address
+        &self.0
     }
 }
 
@@ -31,16 +29,14 @@ impl Packable for IssuerFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.address.packed_len()
+        self.0.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.address.pack(writer)
+        self.0.pack(writer)
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self {
-            address: Address::unpack_inner::<R, CHECK>(reader)?,
-        })
+        Ok(Self(Address::unpack_inner::<R, CHECK>(reader)?))
     }
 }
