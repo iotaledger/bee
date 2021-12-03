@@ -291,16 +291,18 @@ fn handle_peering_request<V: NeighborValidator>(
         if nb_filter.ok(&active_peer.peer()) {
             // Calculate the distance between the local peer and the potential neighbor.
             let distance = neighbor::salt_distance(
-                ctx.local.read().peer_id(),
+                &ctx.local.peer_id(),
                 active_peer.peer_id(),
-                ctx.local.read().private_salt().expect("missing private salt"),
+                &ctx.local.private_salt().expect("missing private salt"),
             );
 
             // Create a new neighbor.
             let neighbor = Neighbor::new(active_peer.into_peer(), distance);
 
             // Check if the neighbor would be closer than the currently furthest in the inbound neighborhood.
-            if let Some(peer) = ctx.inbound_nbh.lock_select(neighbor) {
+            if ctx.inbound_nbh.is_preferred(&neighbor) {
+                let peer = neighbor.peer().clone();
+
                 if add_or_replace_neighbor::<INCOMING>(
                     peer.clone(),
                     ctx.local,
@@ -362,7 +364,7 @@ fn handle_peering_response<V: NeighborValidator>(
 
         // Hive.go: if the peer is already in inbound, do not add it and remove it from inbound
         // TODO: investigate why!
-        if ctx.inbound_nbh.write().remove_neighbor(ctx.peer_id).is_some() {
+        if ctx.inbound_nbh.remove_neighbor(ctx.peer_id).is_some() {
             // Change status to `false`.
             status = false;
 
@@ -378,7 +380,7 @@ fn handle_peering_response<V: NeighborValidator>(
 
             // Drop that peer.
             send_drop_peering_request_to_peer(peer, ctx.server_tx, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
-        } else if ctx.outbound_nbh.write().insert_neighbor(peer.clone(), ctx.local) {
+        } else if ctx.outbound_nbh.insert_neighbor(peer.clone(), ctx.local) {
             // Update the neighbor filter.
             nb_filter.add(*peer.peer_id());
 
@@ -404,9 +406,9 @@ fn handle_drop_request<V: NeighborValidator>(
 ) {
     log::trace!("Handling drop request.");
 
-    let mut removed_nb = ctx.inbound_nbh.write().remove_neighbor(ctx.peer_id);
+    let mut removed_nb = ctx.inbound_nbh.remove_neighbor(ctx.peer_id);
 
-    if let Some(nb) = ctx.outbound_nbh.write().remove_neighbor(ctx.peer_id) {
+    if let Some(nb) = ctx.outbound_nbh.remove_neighbor(ctx.peer_id) {
         removed_nb.replace(nb);
 
         nb_filter.add(*ctx.peer_id);
@@ -604,15 +606,15 @@ pub(crate) fn publish_peering_event<const IS_INBOUND: bool>(
         if IS_INBOUND { "in" } else { "out" },
         status,
         peer.peer_id(),
-        outbound_nbh.read().len(),
-        inbound_nbh.read().len(),
+        outbound_nbh.len(),
+        inbound_nbh.len(),
     );
 
-    let distance = salt_distance(local.read().peer_id(), peer.peer_id(), &{
+    let distance = salt_distance(&local.peer_id(), peer.peer_id(), &{
         if IS_INBOUND {
-            local.read().private_salt().expect("missing private salt").clone()
+            local.private_salt().expect("missing private salt")
         } else {
-            local.read().public_salt().expect("missing public salt").clone()
+            local.public_salt().expect("missing public salt")
         }
     });
 
@@ -634,8 +636,8 @@ fn publish_drop_peering_event(
     log::debug!(
         "Peering dropped with {}; #out_nbh: {} #in_nbh: {}",
         peer_id,
-        outbound_nbh.read().len(),
-        inbound_nbh.read().len(),
+        outbound_nbh.len(),
+        inbound_nbh.len(),
     );
 
     event_tx
@@ -706,29 +708,29 @@ fn update_salts<V: NeighborValidator>(
     // Create a new private salt.
     let private_salt = Salt::new(SALT_LIFETIME_SECS);
     let private_salt_lifetime = private_salt.expiration_time();
-    local.write().set_private_salt(private_salt);
+    local.set_private_salt(private_salt);
 
     // Create a new public salt.
     let public_salt = Salt::new(SALT_LIFETIME_SECS);
     let public_salt_lifetime = public_salt.expiration_time();
-    local.write().set_public_salt(public_salt);
+    local.set_public_salt(public_salt);
 
     if drop_neighbors_on_salt_update {
         // Drop all neighbors.
-        for peer in inbound_nbh.read().iter().chain(outbound_nbh.read().iter()).cloned() {
+        for peer in inbound_nbh.peers().into_iter().chain(outbound_nbh.peers().into_iter()) {
             send_drop_peering_request_to_peer(peer, server_tx, event_tx, inbound_nbh, outbound_nbh);
         }
 
         // Erase the neighborhoods.
-        inbound_nbh.write().clear();
-        outbound_nbh.write().clear();
+        inbound_nbh.clear();
+        outbound_nbh.clear();
 
         // Reset the neighbor filter.
         nb_filter.clear();
     } else {
         // Update the distances with the new salts.
-        inbound_nbh.write().update_distances(local);
-        outbound_nbh.write().update_distances(local);
+        inbound_nbh.update_distances(local);
+        outbound_nbh.update_distances(local);
     }
 
     log::debug!(
@@ -757,16 +759,16 @@ pub(crate) fn add_or_replace_neighbor<const IS_INBOUND: bool>(
 ) -> bool {
     // Hive.go: drop furthest neighbor if necessary
     if let Some(peer) = if IS_INBOUND {
-        inbound_nbh.write().remove_furthest()
+        inbound_nbh.remove_furthest()
     } else {
-        outbound_nbh.write().remove_furthest()
+        outbound_nbh.remove_furthest()
     } {
         send_drop_peering_request_to_peer(peer, server_tx, event_tx, inbound_nbh, outbound_nbh);
     }
 
     if IS_INBOUND {
-        inbound_nbh.write().insert_neighbor(peer, local)
+        inbound_nbh.insert_neighbor(peer, local)
     } else {
-        outbound_nbh.write().insert_neighbor(peer, local)
+        outbound_nbh.insert_neighbor(peer, local)
     }
 }

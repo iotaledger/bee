@@ -54,20 +54,8 @@ where
     V: NeighborValidator + 'static,
 {
     let network_id = hash::fnv32(&network_name);
-    let private_salt = time::datetime(
-        local
-            .read()
-            .private_salt()
-            .expect("missing private salt")
-            .expiration_time(),
-    );
-    let public_salt = time::datetime(
-        local
-            .read()
-            .public_salt()
-            .expect("missing private salt")
-            .expiration_time(),
-    );
+    let private_salt = time::datetime(local.private_salt().expect("missing private salt").expiration_time());
+    let public_salt = time::datetime(local.public_salt().expect("missing private salt").expiration_time());
 
     log::info!("---------------------------------------------------------------------------------------------------");
     log::info!("WARNING:");
@@ -76,10 +64,7 @@ where
     log::info!("---------------------------------------------------------------------------------------------------");
     log::info!("Network name/id: {}/{}", network_name.as_ref(), network_id);
     log::info!("Protocol_version: {}", version);
-    log::info!(
-        "Public key: {}",
-        multiaddr::from_pubkey_to_base58(local.read().public_key())
-    );
+    log::info!("Public key: {}", multiaddr::from_pubkey_to_base58(&local.public_key()));
     log::info!("Current time: {}", time::datetime_now());
     log::info!("Private salt: {}", private_salt);
     log::info!("Public salt: {}", public_salt);
@@ -135,7 +120,7 @@ where
     // Create neighborhoods and neighbor candidate filter.
     let inbound_nbh = InboundNeighborhood::new();
     let outbound_nbh = OutboundNeighborhood::new();
-    let nb_filter = NeighborFilter::new(*local.read().peer_id(), neighbor_validator);
+    let nb_filter = NeighborFilter::new(local.peer_id(), neighbor_validator);
 
     // Create the autopeering manager handling the peering request/response protocol.
     let peering_socket = ServerSocket::new(peering_rx, server_tx.clone());

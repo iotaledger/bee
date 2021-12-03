@@ -4,10 +4,12 @@
 pub(crate) mod salt;
 pub mod services;
 
-use salt::Salt;
-use services::{ServiceMap, ServiceProtocol};
+use self::{
+    salt::{Salt, SALT_LIFETIME_SECS},
+    services::{ServiceMap, ServiceProtocol},
+};
 
-use crate::peer::peer_id::PeerId;
+use crate::peer::PeerId;
 
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, SECRET_KEY_LENGTH};
 use libp2p_core::identity::ed25519::Keypair;
@@ -17,7 +19,17 @@ use std::{
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
-use self::salt::SALT_LIFETIME_SECS;
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("could not create Salt from ED25519 keypair")]
+    SaltFromEd25519Keypair,
+    #[error("could not create Salt from Base16/Hex private key")]
+    SaltFromBase16EncodedPrivateKey,
+    #[error("could not create Salt from Base58 private key")]
+    SaltFromBase58EncodedPrivateKey,
+    #[error("could not deserialize Salt from Protobuf")]
+    DeserializeFromProtobuf,
+}
 
 /// Represents a local entity.
 ///
@@ -45,34 +57,35 @@ impl Local {
     }
 
     /// Creates a local identity from an ED25519 keypair.
-    pub fn from_keypair(keypair: Keypair) -> Self {
+    pub fn from_keypair(keypair: Keypair) -> Result<Self, Error> {
         let private_key_bytes: [u8; SECRET_KEY_LENGTH] = keypair
             .secret()
             .as_ref()
             .try_into()
+            .map_err(|_| Error::SaltFromEd25519Keypair)
             .expect("error restoring private key from ed25519 keypair");
 
-        Self::from_private_key_bytes(private_key_bytes)
+        Ok(Self::from_private_key_bytes(private_key_bytes))
     }
 
     /// Creates a local identity from a 'base16/hex' encoded ED25519 private key.
-    pub fn from_bs16_encoded_private_key(private_key: impl AsRef<str>) -> Self {
+    pub fn from_bs16_encoded_private_key(private_key: impl AsRef<str>) -> Result<Self, Error> {
         let mut private_key_bytes = [0u8; SECRET_KEY_LENGTH];
         hex::decode_to_slice(private_key.as_ref(), &mut private_key_bytes)
-            .expect("error restoring private key from base16");
+            .map_err(|_| Error::SaltFromBase16EncodedPrivateKey)?;
 
-        Self::from_private_key_bytes(private_key_bytes)
+        Ok(Self::from_private_key_bytes(private_key_bytes))
     }
 
     /// Creates a local identity from a 'base58' encoded ED25519 private key.
-    pub fn from_bs58_encoded_private_key(private_key: impl AsRef<str>) -> Self {
+    pub fn from_bs58_encoded_private_key(private_key: impl AsRef<str>) -> Result<Self, Error> {
         // Restore the private key
         let mut private_key_bytes = [0u8; SECRET_KEY_LENGTH];
         bs58::decode(private_key.as_ref())
             .into(&mut private_key_bytes)
-            .expect("error restoring private key from base58");
+            .map_err(|_| Error::SaltFromBase58EncodedPrivateKey)?;
 
-        Self::from_private_key_bytes(private_key_bytes)
+        Ok(Self::from_private_key_bytes(private_key_bytes))
     }
 
     /// Creates a local identity from bytes representing an ED25519 private key.
@@ -92,60 +105,94 @@ impl Local {
         }
     }
 
-    /// Provides read access to the inner value.
-    pub fn read(&self) -> RwLockReadGuard<LocalInner> {
+    /// Returns the peer id of this identity.
+    pub(crate) fn peer_id(&self) -> PeerId {
+        *self.read().peer_id()
+    }
+
+    /// Returns the public key of this identity.
+    pub(crate) fn public_key(&self) -> PublicKey {
+        *self.read().public_key()
+    }
+
+    /// Returns the current private salt of this identity.
+    pub(crate) fn private_salt(&self) -> Option<Salt> {
+        self.read().private_salt().cloned()
+    }
+
+    /// Sets a new private salt.
+    pub(crate) fn set_private_salt(&self, salt: Salt) {
+        self.write().set_private_salt(salt);
+    }
+
+    /// Returns the current public salt of this identity.
+    pub(crate) fn public_salt(&self) -> Option<Salt> {
+        self.read().public_salt().cloned()
+    }
+
+    /// Sets a new public salt.
+    pub(crate) fn set_public_salt(&self, salt: Salt) {
+        self.write().set_public_salt(salt);
+    }
+
+    /// Signs a message using the private key.
+    pub(crate) fn sign(&self, msg: &[u8]) -> Signature {
+        self.read().sign(msg)
+    }
+
+    /// Adds a service to this local peer.
+    pub fn add_service(&self, service_name: impl ToString, protocol: ServiceProtocol, port: u16) {
+        self.write().add_service(service_name, protocol, port);
+    }
+
+    /// Returns the list of services this identity supports.
+    pub(crate) fn services(&self) -> ServiceMap {
+        self.read().services().clone()
+    }
+
+    fn read(&self) -> RwLockReadGuard<LocalInner> {
         self.inner.read().expect("error getting read access")
     }
 
-    /// Provides write access to the inner value.
-    pub fn write(&self) -> RwLockWriteGuard<LocalInner> {
+    fn write(&self) -> RwLockWriteGuard<LocalInner> {
         self.inner.write().expect("error getting write access")
     }
 }
 
 impl LocalInner {
-    /// Returns the peer id of this identity.
-    pub fn peer_id(&self) -> &PeerId {
+    fn peer_id(&self) -> &PeerId {
         &self.peer_id
     }
 
-    /// Returns the public key of this identity.
-    pub fn public_key(&self) -> &PublicKey {
+    fn public_key(&self) -> &PublicKey {
         self.peer_id().public_key()
     }
 
-    /// Returns the current private salt of this identity.
-    pub(crate) fn private_salt(&self) -> Option<&Salt> {
+    fn private_salt(&self) -> Option<&Salt> {
         self.private_salt.as_ref()
     }
 
-    /// Sets a new private salt.
-    pub(crate) fn set_private_salt(&mut self, salt: Salt) {
+    fn set_private_salt(&mut self, salt: Salt) {
         self.private_salt.replace(salt);
     }
 
-    /// Returns the current public salt of this identity.
-    pub fn public_salt(&self) -> Option<&Salt> {
+    fn public_salt(&self) -> Option<&Salt> {
         self.public_salt.as_ref()
     }
 
-    /// Sets a new public salt.
-    pub(crate) fn set_public_salt(&mut self, salt: Salt) {
+    fn set_public_salt(&mut self, salt: Salt) {
         self.public_salt.replace(salt);
     }
 
-    /// Signs a message using the private key.
-    pub fn sign(&self, msg: &[u8]) -> Signature {
+    fn sign(&self, msg: &[u8]) -> Signature {
         self.private_key.sign(msg)
     }
 
-    /// Adds a service to this local peer.
-    pub fn add_service(&mut self, service_name: impl ToString, protocol: ServiceProtocol, port: u16) {
+    fn add_service(&mut self, service_name: impl ToString, protocol: ServiceProtocol, port: u16) {
         self.services.insert(service_name, protocol, port)
     }
 
-    /// Returns the list of services this identity supports.
-    pub(crate) fn services(&self) -> &ServiceMap {
+    fn services(&self) -> &ServiceMap {
         &self.services
     }
 }

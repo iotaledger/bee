@@ -47,8 +47,8 @@ pub(crate) fn do_update<V: NeighborValidator + 'static>() -> Repeat<UpdateContex
 
 // Hive.go: updateOutbound updates outbound neighbors.
 fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
-    let local_id = *ctx.local.read().peer_id();
-    let local_salt = ctx.local.read().public_salt().expect("missing public salt").clone();
+    let local_id = ctx.local.peer_id();
+    let local_salt = ctx.local.public_salt().expect("missing public salt");
 
     // TODO: write `get_verified_peers_sorted` which collects verified peers into a BTreeSet
     let verif_peers = get_verified_peers(&ctx.active_peers)
@@ -65,7 +65,7 @@ fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
         return;
     }
 
-    // Apply the filter on the verified peers to yield a set of neighbor candidates.
+    // Apply the filter to the verified peers to yield a set of neighbor candidates.
     let mut candidates = ctx.nb_filter.apply_list(&verif_peers);
 
     if candidates.is_empty() {
@@ -77,12 +77,7 @@ fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
     candidates.sort_unstable();
 
     // Hive.go: select new candidate
-    if let Some(candidate) = ctx
-        .outbound_nbh
-        .write()
-        .select_from_candidate_list(&candidates)
-        .cloned()
-    {
+    if let Some(candidate) = ctx.outbound_nbh.select_from_candidate_list(&candidates).cloned() {
         let ctx_ = ctx.clone();
 
         tokio::spawn(async move {
@@ -110,19 +105,12 @@ fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
 fn set_outbound_update_interval(outbound_nbh: &OutboundNeighborhood, local: &Local) {
     let mut delay = OPEN_OUTBOUND_NBH_UPDATE_SECS;
 
-    if outbound_nbh.read().is_full() {
+    if outbound_nbh.is_full() {
         delay = FULL_OUTBOUND_NBH_UPDATE_SECS
     };
 
     let salt_expiration = Duration::from_secs(
-        time::until(
-            local
-                .read()
-                .public_salt()
-                .expect("missing public salt")
-                .expiration_time(),
-        )
-        .expect("time until error"),
+        time::until(local.public_salt().expect("missing public salt").expiration_time()).expect("time until error"),
     );
 
     if salt_expiration < delay {

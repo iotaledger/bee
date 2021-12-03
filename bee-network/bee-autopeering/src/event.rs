@@ -73,7 +73,7 @@ impl fmt::Display for Event {
                 private_salt_lifetime,
             } => write!(
                 f,
-                "Salts updated => outbound: {}/ inbound: {}.",
+                "Salts updated => outbound: {} / inbound: {}.",
                 public_salt_lifetime, private_salt_lifetime,
             ),
             OutgoingPeering { peer, .. } => write!(f, "Peered: {} (outgoing).", peer.peer_id()),

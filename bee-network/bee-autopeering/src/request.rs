@@ -153,7 +153,7 @@ impl RequestManagerInner {
             request_id: TypeId::of::<PeeringRequest>(),
         };
 
-        let peer_req = PeeringRequest::new(local.read().public_salt().expect("missing public salt").clone());
+        let peer_req = PeeringRequest::new(local.public_salt().expect("missing public salt"));
 
         let timestamp = peer_req.timestamp();
 

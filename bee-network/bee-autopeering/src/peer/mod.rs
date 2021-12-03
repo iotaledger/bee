@@ -20,8 +20,8 @@ use crate::{
 };
 
 use bytes::BytesMut;
-use libp2p_core::{multiaddr::Protocol, Multiaddr};
 use crypto::signatures::ed25519::PublicKey;
+use libp2p_core::{multiaddr::Protocol, Multiaddr};
 use prost::{DecodeError, EncodeError, Message};
 use serde::{
     de::{SeqAccess, Visitor},
@@ -272,7 +272,7 @@ pub(crate) fn is_known(
     replacements: &ReplacementList,
 ) -> bool {
     // The master list doesn't need to be queried, because those always a subset of the active peers.
-    peer_id == local.read().peer_id() || active_peers.read().contains(peer_id) || replacements.read().contains(peer_id)
+    peer_id == &local.peer_id() || active_peers.read().contains(peer_id) || replacements.read().contains(peer_id)
 }
 
 // Hive.go: whether the peer has recently done an endpoint proof

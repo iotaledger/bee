@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::Error;
+
 use crate::{
     proto,
     time::{self, Timestamp, HOUR},
@@ -54,14 +56,16 @@ impl Default for Salt {
     }
 }
 
-impl From<proto::Salt> for Salt {
-    fn from(salt: proto::Salt) -> Self {
+impl TryFrom<proto::Salt> for Salt {
+    type Error = Error;
+
+    fn try_from(salt: proto::Salt) -> Result<Self, Self::Error> {
         let proto::Salt { bytes, exp_time } = salt;
 
-        Self {
-            bytes: bytes.try_into().expect("invalid salt length"),
+        Ok(Self {
+            bytes: bytes.try_into().map_err(|_| Error::DeserializeFromProtobuf)?,
             expiration_time: exp_time,
-        }
+        })
     }
 }
 

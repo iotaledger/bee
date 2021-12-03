@@ -24,21 +24,41 @@ const DISPLAY_LENGTH: usize = 16;
 pub struct PeerId {
     // An ED25519 public key.
     public_key: PublicKey,
-    // The `SHA256` hash of the public key.
+    // The SHA256 hash of the ED25519 public key.
     id_bytes: [u8; hash::SHA256_LEN],
+    // The corresponding `libp2p` PeerId.
+    libp2p_peer_id: libp2p_core::PeerId,
+    // The displayed Base58 representation.
+    base58_peer_id: [char; DISPLAY_LENGTH],
 }
 
 impl PeerId {
-    /// Creates a new peer identity.
-    pub fn new() -> Self {
-        Self::default()
+    /// Generates a new random `PeerId`.
+    pub fn generate() -> Self {
+        let private_key = PrivateKey::generate().expect("error generating private key");
+
+        Self::from_public_key(private_key.public_key())
     }
 
     /// Creates a peer identity from an ED25519 public key.
     pub fn from_public_key(public_key: PublicKey) -> Self {
         let id_bytes = hash::sha256(public_key.as_ref());
+        let libp2p_peer_id = to_libp2p_peer_id(public_key);
 
-        Self { id_bytes, public_key }
+        let mut base58_peer_id: [char; DISPLAY_LENGTH] = Default::default();
+        base58_peer_id.copy_from_slice(
+            libp2p_peer_id.to_base58()[..DISPLAY_LENGTH]
+                .chars()
+                .collect::<Vec<_>>()
+                .as_slice(),
+        );
+
+        Self {
+            id_bytes,
+            public_key,
+            libp2p_peer_id,
+            base58_peer_id,
+        }
     }
 
     /// Returns the public key associated with this identity.
@@ -46,30 +66,28 @@ impl PeerId {
         &self.public_key
     }
 
-    /// Creates the corresponding `libp2p_core::PublicKey` of this identity.
-    pub fn to_libp2p_public_key(&self) -> libp2p_core::PublicKey {
-        libp2p_core::PublicKey::Ed25519(
-            libp2p_core::identity::ed25519::PublicKey::decode(self.public_key.as_ref())
-                .expect("error decoding ed25519 public key from bytes"),
-        )
-    }
-
-    /// Creates the corresponding `libp2p_core::PeerId` of this identity.
-    pub fn to_libp2p_peer_id(&self) -> libp2p_core::PeerId {
-        libp2p_core::PeerId::from_public_key(self.to_libp2p_public_key())
-    }
-
     /// Returns the actual bytes representing this id.
     pub fn id_bytes(&self) -> &[u8; hash::SHA256_LEN] {
         &self.id_bytes
     }
+
+    /// Turns this `PeerId` into a `libp2p_core::PeerId`.
+    pub fn into_libp2p_peer_id(self) -> libp2p_core::PeerId {
+        self.libp2p_peer_id
+    }
 }
 
-impl Default for PeerId {
-    fn default() -> Self {
-        let private_key = PrivateKey::generate().expect("error generating private key");
-        Self::from_public_key(private_key.public_key())
-    }
+/// Creates the corresponding `libp2p_core::PeerId` from a crypto.rs ED25519 public key.
+pub fn to_libp2p_peer_id(public_key: PublicKey) -> libp2p_core::PeerId {
+    libp2p_core::PeerId::from_public_key(to_libp2p_public_key(public_key))
+}
+
+/// Creates the corresponding `libp2p_core::PublicKey` from a crypto.rs ED25519 public key.
+pub fn to_libp2p_public_key(public_key: PublicKey) -> libp2p_core::PublicKey {
+    libp2p_core::PublicKey::Ed25519(
+        libp2p_core::identity::ed25519::PublicKey::decode(public_key.as_ref())
+            .expect("error decoding ed25519 public key from bytes"),
+    )
 }
 
 impl Eq for PeerId {}
@@ -89,15 +107,15 @@ impl fmt::Debug for PeerId {
         let s = &bs58::encode(&self.id_bytes).into_string();
 
         f.debug_struct("PeerId")
-            .field("id", &s)
             .field("public_key", &bs58::encode(self.public_key).into_string())
+            .field("id", &s)
             .finish()
     }
 }
 
 impl fmt::Display for PeerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.to_libp2p_peer_id().to_base58()[..DISPLAY_LENGTH].fmt(f)
+        self.base58_peer_id.iter().collect::<String>().fmt(f)
     }
 }
 
@@ -122,17 +140,9 @@ impl From<PeerId> for sled::IVec {
 
 impl From<PeerId> for libp2p_core::PeerId {
     fn from(peer_id: PeerId) -> Self {
-        let PeerId {
-            id_bytes: _,
-            public_key,
-        } = peer_id;
+        let PeerId { public_key, .. } = peer_id;
 
-        let public_key = libp2p_core::PublicKey::Ed25519(
-            libp2p_core::identity::ed25519::PublicKey::decode(public_key.as_ref())
-                .expect("error decoding ed25519 public key from bytes"),
-        );
-
-        libp2p_core::PeerId::from_public_key(public_key)
+        to_libp2p_peer_id(public_key)
     }
 }
 
@@ -143,7 +153,6 @@ impl Serialize for PeerId {
     {
         let mut this = serializer.serialize_struct("PeerId", 2)?;
         this.serialize_field("public_key", &self.public_key.to_bytes())?;
-        this.serialize_field("id_bytes", &self.id_bytes)?;
         this.end()
     }
 }
@@ -153,7 +162,7 @@ impl<'de> Deserialize<'de> for PeerId {
     where
         D: serde::Deserializer<'de>,
     {
-        deserializer.deserialize_struct("PeerId", &["public_key", "id_bytes"], PeerIdVisitor {})
+        deserializer.deserialize_struct("PeerId", &["public_key"], PeerIdVisitor {})
     }
 }
 
@@ -176,11 +185,7 @@ impl<'de> Visitor<'de> for PeerIdVisitor {
 
         let public_key = PublicKey::try_from_bytes(bytes).map_err(|_| serde::de::Error::invalid_length(0, &self))?;
 
-        let id_bytes = seq
-            .next_element::<[u8; hash::SHA256_LEN]>()?
-            .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
-
-        Ok(PeerId { public_key, id_bytes })
+        Ok(PeerId::from_public_key(public_key))
     }
 }
 
@@ -206,8 +211,8 @@ mod tests {
     }
 
     #[test]
-    fn to_libp2p_peer_id() {
+    fn into_libp2p_peer_id() {
         let peer_id = PeerId::new_static();
-        let _ = peer_id.to_libp2p_peer_id();
+        let _ = peer_id.into_libp2p_peer_id();
     }
 }

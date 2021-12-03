@@ -238,8 +238,8 @@ impl Runnable for OutgoingPacketHandler {
 
                         let marshalled_bytes = marshal(msg_type, &msg_bytes);
 
-                        let signature = local.read().sign(&marshalled_bytes);
-                        let packet = Packet::new(msg_type, &marshalled_bytes, local.read().public_key(), signature);
+                        let signature = local.sign(&marshalled_bytes);
+                        let packet = Packet::new(msg_type, &marshalled_bytes, &local.public_key(), signature);
 
                         let bytes = packet.to_protobuf().expect("error encoding outgoing packet");
 

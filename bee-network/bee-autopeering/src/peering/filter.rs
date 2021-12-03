@@ -29,26 +29,22 @@ impl<V: NeighborValidator> NeighborFilter<V> {
 
     /// Adds a single peer id that should be rejected.
     pub(crate) fn add(&self, peer_id: PeerId) {
-        let mut inner_write = self.write();
-        inner_write.add(peer_id);
+        self.write().add(peer_id);
     }
 
     /// Resets the filter (i.e. removes all currently rejected peer ids).
     pub(crate) fn clear(&self) {
-        let mut inner_write = self.write();
-        inner_write.clear()
+        self.write().clear();
     }
 
     /// Returns `true` if the filter is okay with the candidate, otherwise `false`.
     pub(crate) fn ok(&self, candidate: impl AsRef<Peer>) -> bool {
-        let inner_read = self.read();
-        inner_read.ok(candidate)
+        self.read().ok(candidate)
     }
 
     /// Applies the filter to a list of candidates.
     pub(crate) fn apply_list<'a, P: AsRef<Peer>>(&self, candidates: &'a [P]) -> Vec<&'a P> {
-        let inner_read = self.read();
-        inner_read.apply_list(candidates)
+        self.read().apply_list(candidates)
     }
 
     fn read(&self) -> RwLockReadGuard<NeighborFilterInner<V>> {

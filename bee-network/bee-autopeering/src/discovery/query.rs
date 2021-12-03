@@ -221,9 +221,7 @@ mod tests {
         let peerlist = create_peerlist_of_size(3);
 
         macro_rules! equal {
-            ($a:expr, $b:expr) => {{
-                $a == peerlist.read().get($b).unwrap().peer_id()
-            }};
+            ($a:expr, $b:expr) => {{ $a == peerlist.read().get($b).unwrap().peer_id() }};
         }
 
         let selected = select_peers_to_query(&peerlist);
@@ -238,9 +236,7 @@ mod tests {
         let peerlist = create_peerlist_of_size(10);
 
         macro_rules! equal {
-            ($a:expr, $b:expr) => {{
-                $a == peerlist.read().get($b).unwrap().peer_id()
-            }};
+            ($a:expr, $b:expr) => {{ $a == peerlist.read().get($b).unwrap().peer_id() }};
         }
 
         // 0 1 2 3 4 ... 7 8 9 (index)

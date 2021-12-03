@@ -20,7 +20,7 @@
 //! use bee_autopeering::{
 //!     config::AutopeeringConfigJsonBuilder,
 //!     init,
-//!     peerstore::{SledPeerStore, SledPeerStoreConfig},
+//!     stores::{SledPeerStore, SledPeerStoreConfig},
 //!     AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 //! };
 //!
@@ -57,14 +57,13 @@
 //!     // Create a random local entity, that announces two services:
 //!     let local = {
 //!         let l = Local::default();
-//!         let mut write = l.write();
-//!         write.add_service(
+//!
+//!         l.add_service(
 //!             AUTOPEERING_SERVICE_NAME,
 //!             ServiceProtocol::Udp,
 //!             config.bind_addr().port(),
 //!         );
-//!         write.add_service(NETWORK, ServiceProtocol::Tcp, 15600);
-//!         drop(write);
+//!         l.add_service(NETWORK, ServiceProtocol::Tcp, 15600);
 //!         l
 //!     };
 //!

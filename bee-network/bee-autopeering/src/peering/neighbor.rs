@@ -30,8 +30,8 @@ where
     fn is_valid(&self, peer: &Peer) -> bool;
 }
 
-// A neighbor is a peer with a (distance) metric.
-#[derive(Debug)]
+// A neighbor is a peer with a distance) metric.
+#[derive(Clone, Debug)]
 pub(crate) struct Neighbor {
     peer: Peer,
     distance: Distance,
@@ -48,10 +48,6 @@ impl Neighbor {
 
     pub(crate) fn distance(&self) -> Distance {
         self.distance
-    }
-
-    pub(crate) fn into_peer(self) -> Peer {
-        self.peer
     }
 }
 
@@ -90,22 +86,66 @@ pub(crate) struct Neighborhood<const N: usize, const INBOUND: bool> {
 }
 
 impl<const N: usize, const INBOUND: bool> Neighborhood<N, INBOUND> {
-    pub fn new() -> Self {
+    /// Creates a new empty neighborhood.
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
-    pub(crate) fn lock_select(&self, candidate: Neighbor) -> Option<Peer> {
-        let mut write = self.write();
-        write.select(candidate)
+    /// Inserts a peer to the neighborhood.
+    pub(crate) fn insert_neighbor(&self, peer: Peer, local: &Local) -> bool {
+        self.write().insert_neighbor(peer, local)
     }
 
-    // TODO: do not expose lock guards, because this leads to dead locks if not very careful.
-    pub fn read(&self) -> RwLockReadGuard<NeighborhoodInner<N, INBOUND>> {
+    /// Removes a peer from the neighborhood.
+    pub(crate) fn remove_neighbor(&self, peer_id: &PeerId) -> Option<Peer> {
+        self.write().remove_neighbor(peer_id)
+    }
+
+    /// Checks whether the candidate is a suitable neighbor.
+    pub(crate) fn is_preferred(&self, candidate: &Neighbor) -> bool {
+        self.write().is_preferred(candidate)
+    }
+
+    /// Picks the first candidate, that is closer than the currently furthest neighbor.
+    pub(crate) fn select_from_candidate_list<'a>(&self, candidates: &'a [&'a Neighbor]) -> Option<&'a Peer> {
+        self.write().select_from_candidate_list(candidates)
+    }
+
+    /// Removes the furthest neighbor from the neighborhood.
+    pub(crate) fn remove_furthest(&self) -> Option<Peer> {
+        self.write().remove_furthest()
+    }
+
+    /// Updates all distances to the neighbors (e.g. after a salt update).
+    pub(crate) fn update_distances(&self, local: &Local) {
+        self.write().update_distances(local);
+    }
+
+    /// Clears the neighborhood, removing all neighbors.
+    pub(crate) fn clear(&self) {
+        self.write().clear();
+    }
+
+    /// Returns the number of neighbors with the neighborhood.
+    pub(crate) fn len(&self) -> usize {
+        self.read().len()
+    }
+
+    /// Returns whether the neighborhood is full, i.e. the upper bound is reached.
+    pub(crate) fn is_full(&self) -> bool {
+        self.read().is_full()
+    }
+
+    /// Collect all peers belonging to the neighborhood into a `Vec`.
+    pub(crate) fn peers(&self) -> Vec<Peer> {
+        self.read().neighbors.iter().map(|d| d.peer()).cloned().collect()
+    }
+
+    fn read(&self) -> RwLockReadGuard<NeighborhoodInner<N, INBOUND>> {
         self.inner.read().expect("error getting read access")
     }
 
-    // TODO: do not expose lock guards, because this leads to dead locks if not very careful.
-    pub fn write(&self) -> RwLockWriteGuard<NeighborhoodInner<N, INBOUND>> {
+    fn write(&self) -> RwLockWriteGuard<NeighborhoodInner<N, INBOUND>> {
         self.inner.write().expect("error getting write access")
     }
 }
@@ -116,13 +156,7 @@ pub(crate) struct NeighborhoodInner<const N: usize, const INBOUND: bool> {
 }
 
 impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
-    // TODO: revisit dead code
-    #[allow(dead_code)]
-    pub(crate) fn new() -> Self {
-        Self::default()
-    }
-
-    pub(crate) fn insert_neighbor(&mut self, peer: Peer, local: &Local) -> bool {
+    fn insert_neighbor(&mut self, peer: Peer, local: &Local) -> bool {
         // If the peer already exists remove it.
         // NOTE: It's a bit less efficient doing it like this, but the code requires less branching this way.
         let _ = self.remove_neighbor(peer.peer_id());
@@ -132,11 +166,11 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
 
         // Calculate the distance to that peer.
-        let distance = salt_distance(local.read().peer_id(), peer.peer_id(), &{
+        let distance = salt_distance(&local.peer_id(), peer.peer_id(), &{
             if INBOUND {
-                local.read().private_salt().expect("missing private salt").clone()
+                local.private_salt().expect("missing private salt")
             } else {
-                local.read().public_salt().expect("missing public salt").clone()
+                local.public_salt().expect("missing public salt")
             }
         });
 
@@ -145,7 +179,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         true
     }
 
-    pub(crate) fn remove_neighbor(&mut self, peer_id: &PeerId) -> Option<Peer> {
+    fn remove_neighbor(&mut self, peer_id: &PeerId) -> Option<Peer> {
         if self.neighbors.is_empty() {
             None
         } else if let Some(index) = self.neighbors.iter().position(|pd| pd.peer().peer_id() == peer_id) {
@@ -156,21 +190,15 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
     }
 
-    /// Check whether the candidate is a suitable neighbor.
-    pub(crate) fn select(&mut self, candidate: Neighbor) -> Option<Peer> {
+    fn is_preferred(&mut self, candidate: &Neighbor) -> bool {
         if let Some(furthest) = self.find_furthest() {
-            if &candidate < furthest {
-                Some(candidate.into_peer())
-            } else {
-                None
-            }
+            candidate < furthest
         } else {
-            Some(candidate.into_peer())
+            true
         }
     }
 
-    /// From the candidate list pick the first, that is closer than the currently furthest neighbor.
-    pub(crate) fn select_from_candidate_list<'a>(&mut self, candidates: &'a [&'a Neighbor]) -> Option<&'a Peer> {
+    fn select_from_candidate_list<'a>(&mut self, candidates: &'a [&'a Neighbor]) -> Option<&'a Peer> {
         if candidates.is_empty() {
             None
         } else if let Some(furthest) = self.find_furthest() {
@@ -186,7 +214,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
     }
 
-    pub(crate) fn find_furthest(&mut self) -> Option<&Neighbor> {
+    fn find_furthest(&mut self) -> Option<&Neighbor> {
         if self.neighbors.len() >= N {
             self.neighbors.sort_unstable();
             self.neighbors.last()
@@ -195,7 +223,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
     }
 
-    pub(crate) fn remove_furthest(&mut self) -> Option<Peer> {
+    fn remove_furthest(&mut self) -> Option<Peer> {
         // Note: Both methods require unique access to `self`, so we need to copy the peer id.
         if let Some(peer_id) = self.find_furthest().map(|d| *d.peer().peer_id()) {
             self.remove_neighbor(&peer_id)
@@ -204,12 +232,12 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
     }
 
-    pub(crate) fn update_distances(&mut self, local: &Local) {
-        let local_id = *local.read().peer_id();
+    fn update_distances(&mut self, local: &Local) {
+        let local_id = local.peer_id();
         let salt = if INBOUND {
-            local.read().private_salt().expect("missing private salt").clone()
+            local.private_salt().expect("missing private salt")
         } else {
-            local.read().public_salt().expect("missing public salt").clone()
+            local.public_salt().expect("missing public salt")
         };
 
         self.neighbors.iter_mut().for_each(|pd| {
@@ -217,20 +245,16 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         });
     }
 
-    pub(crate) fn is_full(&self) -> bool {
-        self.neighbors.len() == N
-    }
-
-    pub(crate) fn len(&self) -> usize {
+    fn len(&self) -> usize {
         self.neighbors.len()
     }
 
-    pub(crate) fn clear(&mut self) {
-        self.neighbors.clear();
+    fn is_full(&self) -> bool {
+        self.neighbors.len() == N
     }
 
-    pub(crate) fn iter(&self) -> impl Iterator<Item = &Peer> {
-        self.neighbors.iter().map(|d| d.peer())
+    fn clear(&mut self) {
+        self.neighbors.clear();
     }
 }
 

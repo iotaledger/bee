@@ -829,7 +829,7 @@ pub(crate) fn send_verification_response_to_addr(
 
     let request_hash = msg_hash(MessageType::VerificationRequest, msg_bytes).to_vec();
 
-    let verif_res = VerificationResponse::new(request_hash, local.read().services().clone(), peer_addr.ip());
+    let verif_res = VerificationResponse::new(request_hash, local.services(), peer_addr.ip());
 
     let msg_bytes = verif_res
         .to_protobuf()

@@ -36,7 +36,6 @@ fn read_config() -> AutopeeringConfigJsonBuilder {
         "enabled": true,
         "bindAddress": "0.0.0.0:14626",
         "entryNodes": [
-            "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
             "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
             "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
             "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
@@ -59,15 +58,15 @@ async fn main() {
 
     // Set up a local peer, that provides the Autopeering service.
     let mut keypair = hex::decode(BS16_ED25519_PRIVATE_KEY).expect("error decoding keypair");
-    let local = Local::from_keypair(Keypair::decode(&mut keypair).expect("error decoding keypair"));
-    let mut write = local.write();
-    write.add_service(
+    let local = Local::from_keypair(Keypair::decode(&mut keypair).expect("error decoding keypair"))
+        .expect("error creating local");
+
+    local.add_service(
         AUTOPEERING_SERVICE_NAME,
         ServiceProtocol::Udp,
         config.bind_addr().port(),
     );
-    write.add_service(NETWORK_SERVICE_NAME, ServiceProtocol::Tcp, 15600);
-    drop(write);
+    local.add_service(NETWORK_SERVICE_NAME, ServiceProtocol::Tcp, 15600);
 
     // Network parameters.
     let version = AUTOPEERING_VERSION;
