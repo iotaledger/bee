@@ -96,7 +96,11 @@ impl AliasOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<AliasOutput, Error> {
+        let state_index = self.state_index.unwrap_or(0);
+        let foundry_counter = self.foundry_counter.unwrap_or(0);
+
         validate_state_metadata_length(self.state_metadata.len())?;
+        validate_index_counter(&self.alias_id, state_index, foundry_counter)?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
@@ -108,9 +112,9 @@ impl AliasOutputBuilder {
             alias_id: self.alias_id,
             state_controller: self.state_controller,
             governance_controller: self.governance_controller,
-            state_index: self.state_index.unwrap_or(0),
+            state_index,
             state_metadata: self.state_metadata.into_boxed_slice(),
-            foundry_counter: self.foundry_counter.unwrap_or(0),
+            foundry_counter,
             feature_blocks,
         })
     }
@@ -276,6 +280,11 @@ impl Packable for AliasOutput {
         let mut state_metadata = vec![0u8; state_metadata_length];
         reader.read_exact(&mut state_metadata)?;
         let foundry_counter = u32::unpack_inner::<R, CHECK>(reader)?;
+
+        if CHECK {
+            validate_index_counter(&alias_id, state_index, foundry_counter)?;
+        }
+
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
         if CHECK {
@@ -300,6 +309,15 @@ impl Packable for AliasOutput {
 fn validate_state_metadata_length(state_metadata_length: usize) -> Result<(), Error> {
     if state_metadata_length > AliasOutput::STATE_METADATA_LENGTH_MAX {
         return Err(Error::InvalidMetadataLength(state_metadata_length));
+    }
+
+    Ok(())
+}
+
+#[inline]
+fn validate_index_counter(alias_id: &AliasId, state_index: u32, foundry_counter: u32) -> Result<(), Error> {
+    if alias_id.as_ref().iter().all(|&b| b == 0) && (state_index != 0 || foundry_counter != 0) {
+        return Err(Error::NonZeroStateIndexOrFoundryCounter);
     }
 
     Ok(())

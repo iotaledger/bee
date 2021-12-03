@@ -70,6 +70,7 @@ pub enum Error {
     MissingPayload,
     MissingRequiredSenderBlock,
     NativeTokensNotUniqueSorted,
+    NonZeroStateIndexOrFoundryCounter,
     ParentsNotUniqueSorted,
     ReceiptFundsNotUniqueSorted,
     RemainingBytesAfterMessage,
@@ -192,6 +193,9 @@ impl fmt::Display for Error {
             Error::MissingPayload => write!(f, "missing payload."),
             Error::MissingRequiredSenderBlock => write!(f, "missing required sender block"),
             Error::NativeTokensNotUniqueSorted => write!(f, "native tokens are not unique and/or sorted."),
+            Error::NonZeroStateIndexOrFoundryCounter => {
+                write!(f, "non zero state index or foundry counter while alias ID is all zero.")
+            }
             Error::ParentsNotUniqueSorted => {
                 write!(f, "parents are not unique and/or sorted.")
             }
