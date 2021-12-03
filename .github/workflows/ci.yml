@@ -1,0 +1,330 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - dev
+      - stable
+      - coordicide
+    paths-ignore:
+      - 'documentation/**'
+      - '**.md'
+  pull_request:
+    branches:
+      - dev
+      - stable
+      - coordicide
+    paths-ignore:
+      - 'documentation/**'
+      - '**.md'
+
+jobs:
+  build-and-test:
+    name: build and test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: [nightly, beta, stable]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install LLVM and Clang (Windows)
+        uses: KyleMayes/install-llvm-action@32c4866ebb71e0949e8833eb49beeebed48532bd
+        if: matrix.os == 'windows-latest'
+        with:
+          version: "11.0"
+          directory: ${{ runner.temp }}/llvm
+
+      - name: Set LIBCLANG_PATH (Windows)
+        run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
+        if: matrix.os == 'windows-latest'
+
+      - name: Install ${{ matrix.rust }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+
+      - name: Cache cargo state
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-cargo
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+          key: ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-build
+          restore-keys: |
+            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-
+            ${{ matrix.os }}-${{ matrix.rust }}-
+            ${{ matrix.os }}-
+
+      - name: Cache target dir
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-target
+        with:
+          path: |
+            target/
+          key: ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-build
+          restore-keys: |
+            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-
+            ${{ matrix.os }}-${{ matrix.rust }}-
+            ${{ matrix.os }}-
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --workspace --all-targets --all-features --release
+
+      - name: Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --workspace --all-targets --all-features --release
+
+  no_std:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [nightly, beta, stable]
+        crates: [
+          "bee-common/bee-ord",
+          "bee-common/bee-packable",
+        ]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install ${{ matrix.rust }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          target: riscv64gc-unknown-none-elf
+          override: true
+
+      - name: Cache cargo state
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-cargo
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+          key: ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-build
+          restore-keys: |
+            ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-
+            ubuntu-latest-${{ matrix.rust }}-
+            ubuntu-latest-
+
+      - name: Cache target dir
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-target
+        with:
+          path: |
+            target/
+          key: ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-build
+          restore-keys: |
+            ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-
+            ubuntu-latest-${{ matrix.rust }}-
+            ubuntu-latest-
+
+      - name: Check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --release --target=riscv64gc-unknown-none-elf --manifest-path ${{ matrix.crates }}/Cargo.toml
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+            profile: minimal
+            toolchain: nightly
+            override: true
+            components: rustfmt
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  clippy:
+    needs: format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: clippy
+
+      - name: Cache cargo state
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-cargo
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+          key: ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
+          restore-keys: |
+            ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ubuntu-latest-nightly-${{ env.cache-name }}-
+            ubuntu-latest-nightly-
+            ubuntu-latest-
+
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-targets --all-features -- -D warnings
+
+  udeps:
+    needs: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+
+      - name: Cache cargo state
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-cargo
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+          key: ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
+          restore-keys: |
+            ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ubuntu-latest-nightly-${{ env.cache-name }}-
+            ubuntu-latest-nightly-
+            ubuntu-latest-
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-udeps
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: udeps
+          args: --all-targets --all-features --backend=depinfo
+
+  licenses:
+    needs: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+            profile: minimal
+            toolchain: nightly
+            override: true
+
+      - name: Cache cargo state
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-cargo
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+          key: ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
+          restore-keys: |
+            ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ubuntu-latest-nightly-${{ env.cache-name }}-
+            ubuntu-latest-nightly-
+            ubuntu-latest-
+
+      - uses: actions-rs/cargo@v1
+        name: Install cargo-about
+        with:
+          command: install
+          args: cargo-about
+
+      - name: Move `about.toml` to project root
+        run: mv .github/workflows/about.toml .
+
+      - uses: actions-rs/cargo@v1
+        name: Initialize template
+        with:
+          command: about
+          args: init
+
+      - uses: actions-rs/cargo@v1
+        name: Check licenses
+        with:
+          command: about
+          args: generate --workspace --all-features about.hbs
+
+  docs:
+    needs: clippy
+    runs-on: ubuntu-latest
+    env:
+      RUSTDOCFLAGS: "-D warnings"
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+            profile: minimal
+            toolchain: nightly
+            override: true
+
+      - name: Cache cargo state
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-cargo
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+          key: ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
+          restore-keys: |
+            ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ubuntu-latest-nightly-${{ env.cache-name }}-
+            ubuntu-latest-nightly-
+            ubuntu-latest-
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --no-deps
+
+  missing-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run missing files check
+        run: >
+          bash .github/workflows/scripts/missing_files.sh 
+          bee-message/fuzz
