@@ -320,7 +320,6 @@ jobs:
           args: --no-deps
 
   missing-files:
-    needs: clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
