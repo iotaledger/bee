@@ -12,9 +12,9 @@ use bee_message::{
     parents::Parents,
     payload::{
         indexation::IndexationPayload,
-        milestone::{MilestoneId, MilestonePayload, MilestonePayloadEssence},
+        milestone::{MilestoneEssence, MilestoneId, MilestonePayload},
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
-        transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
+        transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         treasury::TreasuryTransactionPayload,
         Payload,
     },
@@ -131,7 +131,7 @@ impl TryFrom<&PayloadDto> for Payload {
 pub struct TransactionPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    pub essence: EssenceDto,
+    pub essence: TransactionEssenceDto,
     #[serde(rename = "unlockBlocks")]
     pub unlock_blocks: Vec<UnlockBlockDto>,
 }
@@ -165,31 +165,31 @@ impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
 /// Describes all the different essence types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum EssenceDto {
-    Regular(RegularEssenceDto),
+pub enum TransactionEssenceDto {
+    Regular(RegularTransactionEssenceDto),
 }
 
-impl From<&Essence> for EssenceDto {
-    fn from(value: &Essence) -> Self {
+impl From<&TransactionEssence> for TransactionEssenceDto {
+    fn from(value: &TransactionEssence) -> Self {
         match value {
-            Essence::Regular(r) => EssenceDto::Regular(r.into()),
+            TransactionEssence::Regular(r) => TransactionEssenceDto::Regular(r.into()),
         }
     }
 }
 
-impl TryFrom<&EssenceDto> for Essence {
+impl TryFrom<&TransactionEssenceDto> for TransactionEssence {
     type Error = Error;
 
-    fn try_from(value: &EssenceDto) -> Result<Self, Self::Error> {
+    fn try_from(value: &TransactionEssenceDto) -> Result<Self, Self::Error> {
         match value {
-            EssenceDto::Regular(r) => Ok(Essence::Regular(r.try_into()?)),
+            TransactionEssenceDto::Regular(r) => Ok(TransactionEssence::Regular(r.try_into()?)),
         }
     }
 }
 
 /// Describes the essence data making up a transaction by defining its inputs and outputs and an optional payload.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct RegularEssenceDto {
+pub struct RegularTransactionEssenceDto {
     #[serde(rename = "type")]
     pub kind: u8,
     pub inputs: Vec<InputDto>,
@@ -197,10 +197,10 @@ pub struct RegularEssenceDto {
     pub payload: Option<PayloadDto>,
 }
 
-impl From<&RegularEssence> for RegularEssenceDto {
-    fn from(value: &RegularEssence) -> Self {
-        RegularEssenceDto {
-            kind: RegularEssence::KIND,
+impl From<&RegularTransactionEssence> for RegularTransactionEssenceDto {
+    fn from(value: &RegularTransactionEssence) -> Self {
+        RegularTransactionEssenceDto {
+            kind: RegularTransactionEssence::KIND,
             inputs: value.inputs().iter().map(|i| i.into()).collect::<Vec<_>>(),
             outputs: value.outputs().iter().map(|o| o.into()).collect::<Vec<_>>(),
             payload: match value.payload() {
@@ -212,11 +212,11 @@ impl From<&RegularEssence> for RegularEssenceDto {
     }
 }
 
-impl TryFrom<&RegularEssenceDto> for RegularEssence {
+impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
     type Error = Error;
 
-    fn try_from(value: &RegularEssenceDto) -> Result<Self, Self::Error> {
-        let mut builder = RegularEssence::builder();
+    fn try_from(value: &RegularTransactionEssenceDto) -> Result<Self, Self::Error> {
+        let mut builder = RegularTransactionEssence::builder();
 
         for i in &value.inputs {
             builder = builder.add_input(i.try_into()?);
@@ -608,7 +608,7 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
                 );
             }
             let merkle_proof = {
-                let mut buf = [0u8; MilestonePayloadEssence::MERKLE_PROOF_LENGTH];
+                let mut buf = [0u8; MilestoneEssence::MERKLE_PROOF_LENGTH];
                 hex::decode_to_slice(&value.inclusion_merkle_proof, &mut buf)
                     .map_err(|_| Error::InvalidSyntaxField("inclusionMerkleProof"))?;
                 buf
@@ -618,7 +618,7 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
             let mut public_keys = Vec::new();
             for v in &value.public_keys {
                 let key = {
-                    let mut buf = [0u8; MilestonePayloadEssence::PUBLIC_KEY_LENGTH];
+                    let mut buf = [0u8; MilestoneEssence::PUBLIC_KEY_LENGTH];
                     hex::decode_to_slice(v, &mut buf).map_err(|_| Error::InvalidSyntaxField("publicKeys"))?;
                     buf
                 };
@@ -629,7 +629,7 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
             } else {
                 None
             };
-            MilestonePayloadEssence::new(
+            MilestoneEssence::new(
                 MilestoneIndex(index),
                 timestamp,
                 Parents::new(parent_ids)?,

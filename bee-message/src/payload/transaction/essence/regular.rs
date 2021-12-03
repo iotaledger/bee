@@ -13,52 +13,52 @@ use bee_common::packable::{Packable, Read, Write};
 
 use alloc::{boxed::Box, vec::Vec};
 
-/// A builder to build a `RegularEssence`.
+/// A builder to build a [`RegularTransactionEssence`].
 #[derive(Debug, Default)]
-pub struct RegularEssenceBuilder {
+pub struct RegularTransactionEssenceBuilder {
     inputs: Vec<Input>,
     outputs: Vec<Output>,
     payload: Option<Payload>,
 }
 
-impl RegularEssenceBuilder {
-    /// Creates a new `RegularEssenceBuilder`.
+impl RegularTransactionEssenceBuilder {
+    /// Creates a new [`RegularTransactionEssenceBuilder`].
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Adds inputs to a `RegularEssenceBuilder`
+    /// Adds inputs to a [`RegularTransactionEssenceBuilder`]
     pub fn with_inputs(mut self, inputs: Vec<Input>) -> Self {
         self.inputs = inputs;
         self
     }
 
-    /// Add an input to a `RegularEssenceBuilder`.
+    /// Add an input to a [`RegularTransactionEssenceBuilder`].
     pub fn add_input(mut self, input: Input) -> Self {
         self.inputs.push(input);
         self
     }
 
-    /// Add outputs to a `RegularEssenceBuilder`.
+    /// Add outputs to a [`RegularTransactionEssenceBuilder`].
     pub fn with_outputs(mut self, outputs: Vec<Output>) -> Self {
         self.outputs = outputs;
         self
     }
 
-    /// Add an output to a `RegularEssenceBuilder`.
+    /// Add an output to a [`RegularTransactionEssenceBuilder`].
     pub fn add_output(mut self, output: Output) -> Self {
         self.outputs.push(output);
         self
     }
 
-    /// Add a payload to a `RegularEssenceBuilder`.
+    /// Add a payload to a [`RegularTransactionEssenceBuilder`].
     pub fn with_payload(mut self, payload: Payload) -> Self {
         self.payload = Some(payload);
         self
     }
 
-    /// Finishes a `RegularEssenceBuilder` into a `RegularEssence`.
-    pub fn finish(self) -> Result<RegularEssence, Error> {
+    /// Finishes a [`RegularTransactionEssenceBuilder`] into a [`RegularTransactionEssence`].
+    pub fn finish(self) -> Result<RegularTransactionEssence, Error> {
         if !INPUT_COUNT_RANGE.contains(&(self.inputs.len() as u16)) {
             return Err(Error::InvalidInputOutputCount(self.inputs.len() as u16));
         }
@@ -105,7 +105,7 @@ impl RegularEssenceBuilder {
             }
         }
 
-        Ok(RegularEssence {
+        Ok(RegularTransactionEssence {
             inputs: self.inputs.into_boxed_slice(),
             outputs: self.outputs.into_boxed_slice(),
             payload: self.payload,
@@ -116,38 +116,38 @@ impl RegularEssenceBuilder {
 /// A transaction regular essence consuming inputs, creating outputs and carrying an optional payload.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct RegularEssence {
+pub struct RegularTransactionEssence {
     inputs: Box<[Input]>,
     outputs: Box<[Output]>,
     payload: Option<Payload>,
 }
 
-impl RegularEssence {
-    /// The essence kind of a `RegularEssence`
+impl RegularTransactionEssence {
+    /// The essence kind of a [`RegularTransactionEssence`].
     pub const KIND: u8 = 0;
 
-    /// Create a new `RegularEssenceBuilder` to build a `RegularEssence`.
-    pub fn builder() -> RegularEssenceBuilder {
-        RegularEssenceBuilder::new()
+    /// Create a new [`RegularTransactionEssenceBuilder`] to build a [`RegularTransactionEssence`].
+    pub fn builder() -> RegularTransactionEssenceBuilder {
+        RegularTransactionEssenceBuilder::new()
     }
 
-    /// Return the inputs of a `RegularEssence`.
+    /// Return the inputs of a [`RegularTransactionEssence`].
     pub fn inputs(&self) -> &[Input] {
         &self.inputs
     }
 
-    /// Return the outputs of a `RegularEssence`.
+    /// Return the outputs of a [`RegularTransactionEssence`].
     pub fn outputs(&self) -> &[Output] {
         &self.outputs
     }
 
-    /// Return the optional payload of a `RegularEssence`.
+    /// Return the optional payload of a [`RegularTransactionEssence`].
     pub fn payload(&self) -> Option<&Payload> {
         self.payload.as_ref()
     }
 }
 
-impl Packable for RegularEssence {
+impl Packable for RegularTransactionEssence {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

@@ -6,7 +6,7 @@
 mod essence;
 mod milestone_id;
 
-pub use essence::MilestonePayloadEssence;
+pub use essence::MilestoneEssence;
 pub use milestone_id::MilestoneId;
 
 use crate::Error;
@@ -43,7 +43,7 @@ impl From<CryptoError> for MilestoneValidationError {
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestonePayload {
-    essence: MilestonePayloadEssence,
+    essence: MilestoneEssence,
     signatures: Vec<Box<[u8]>>,
 }
 
@@ -57,7 +57,7 @@ impl MilestonePayload {
 
     /// Creates a new `MilestonePayload`.
     pub fn new(
-        essence: MilestonePayloadEssence,
+        essence: MilestoneEssence,
         signatures: Vec<[u8; MilestonePayload::SIGNATURE_LENGTH]>,
     ) -> Result<Self, Error> {
         if !MilestonePayload::SIGNATURE_COUNT_RANGE.contains(&signatures.len()) {
@@ -91,7 +91,7 @@ impl MilestonePayload {
     }
 
     /// Returns the essence of a `MilestonePayload`.
-    pub fn essence(&self) -> &MilestonePayloadEssence {
+    pub fn essence(&self) -> &MilestoneEssence {
         &self.essence
     }
 
@@ -173,7 +173,7 @@ impl Packable for MilestonePayload {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let essence = MilestonePayloadEssence::unpack_inner::<R, CHECK>(reader)?;
+        let essence = MilestoneEssence::unpack_inner::<R, CHECK>(reader)?;
         let signatures_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut signatures = Vec::with_capacity(signatures_len);
         for _ in 0..signatures_len {

@@ -8,9 +8,9 @@ use bee_message::{
     milestone::MilestoneIndex,
     output::{Output, SimpleOutput, TreasuryOutput},
     payload::{
-        milestone::{MilestoneId, MilestonePayload, MilestonePayloadEssence},
+        milestone::{MilestoneEssence, MilestoneId, MilestonePayload},
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
-        transaction::{Essence, RegularEssenceBuilder, TransactionId, TransactionPayloadBuilder},
+        transaction::{RegularTransactionEssenceBuilder, TransactionEssence, TransactionId, TransactionPayloadBuilder},
         IndexationPayload, Payload, TreasuryTransactionPayload,
     },
     signature::{Ed25519Signature, Signature},
@@ -40,8 +40,8 @@ fn transaction() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-    let essence = Essence::Regular(
-        RegularEssenceBuilder::new()
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssenceBuilder::new()
             .with_inputs(vec![input1, input2])
             .with_outputs(vec![output])
             .finish()
@@ -73,11 +73,11 @@ fn transaction() {
 #[test]
 fn milestone() {
     let payload: Payload = MilestonePayload::new(
-        MilestonePayloadEssence::new(
+        MilestoneEssence::new(
             MilestoneIndex(0),
             0,
             rand_parents(),
-            [0; MilestonePayloadEssence::MERKLE_PROOF_LENGTH],
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
             vec![[0; 32]],
@@ -113,17 +113,15 @@ fn receipt() {
     let payload: Payload = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SimpleOutput::new(
-                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                    1_000_000,
-                )
-                .unwrap(),
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            SimpleOutput::new(
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                1_000_000,
             )
             .unwrap(),
-        ],
+        )
+        .unwrap()],
         Payload::TreasuryTransaction(Box::new(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),

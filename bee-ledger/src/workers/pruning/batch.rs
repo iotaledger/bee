@@ -18,7 +18,7 @@ use bee_message::{
     output::OutputId,
     payload::{
         indexation::{IndexationPayload, PaddedIndex},
-        transaction::Essence,
+        transaction::TransactionEssence,
         Payload,
     },
     Message, MessageId,
@@ -460,7 +460,7 @@ fn unwrap_indexation(payload: Option<&Payload>) -> Option<&IndexationPayload> {
         Some(Payload::Transaction(transaction)) =>
         {
             #[allow(irrefutable_let_patterns)]
-            if let Essence::Regular(essence) = transaction.essence() {
+            if let TransactionEssence::Regular(essence) = transaction.essence() {
                 if let Some(Payload::Indexation(indexation)) = essence.payload() {
                     Some(indexation)
                 } else {

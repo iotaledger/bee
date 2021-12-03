@@ -16,7 +16,7 @@ use bee_message::{
     milestone::MilestoneIndex,
     output::{AliasOutput, ExtendedOutput, FeatureBlock, NftOutput, Output, OutputId, TokenId},
     payload::{
-        transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
+        transaction::{TransactionEssence, RegularTransactionEssence, TransactionId, TransactionPayload},
         Payload,
     },
     signature::Signature,
@@ -42,7 +42,7 @@ struct ValidationContext {
 }
 
 impl ValidationContext {
-    fn new(index: MilestoneIndex, timestamp: u64, essence: &RegularEssence) -> Self {
+    fn new(index: MilestoneIndex, timestamp: u64, essence: &RegularTransactionEssence) -> Self {
         Self {
             index,
             timestamp,
@@ -50,7 +50,7 @@ impl ValidationContext {
             native_tokens_amount: HashMap::<TokenId, U256>::new(),
             consumed_outputs: HashMap::with_capacity(essence.inputs().len()),
             balance_diffs: BalanceDiffs::new(),
-            essence_hash: Essence::from(essence.clone()).hash(),
+            essence_hash: TransactionEssence::from(essence.clone()).hash(),
             verified_addresses: HashSet::new(),
         }
     }
@@ -191,7 +191,7 @@ fn apply_regular_essence<B: StorageBackend>(
     storage: &B,
     message_id: &MessageId,
     transaction_id: &TransactionId,
-    essence: &RegularEssence,
+    essence: &RegularTransactionEssence,
     unlock_blocks: &UnlockBlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
@@ -347,7 +347,7 @@ fn apply_transaction<B: StorageBackend>(
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
     match transaction.essence() {
-        Essence::Regular(essence) => apply_regular_essence(
+        TransactionEssence::Regular(essence) => apply_regular_essence(
             storage,
             message_id,
             &transaction.id(),

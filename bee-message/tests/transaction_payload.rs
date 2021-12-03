@@ -7,7 +7,8 @@ use bee_message::{
     input::{Input, UtxoInput},
     output::{Output, SimpleOutput},
     payload::transaction::{
-        Essence, RegularEssence, RegularEssenceBuilder, TransactionId, TransactionPayload, TransactionPayloadBuilder,
+        RegularTransactionEssence, RegularTransactionEssenceBuilder, TransactionEssence, TransactionId,
+        TransactionPayload, TransactionPayloadBuilder,
     },
     signature::{Ed25519Signature, Signature},
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
@@ -42,8 +43,8 @@ fn builder_no_essence_no_unlock_blocks() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-    let essence = Essence::Regular(
-        RegularEssence::builder()
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
             .with_inputs(vec![input])
             .with_outputs(vec![output])
             .finish()
@@ -68,8 +69,8 @@ fn builder_no_essence_too_few_unlock_blocks() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-    let essence = Essence::Regular(
-        RegularEssence::builder()
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
             .with_inputs(vec![input1, input2])
             .with_outputs(vec![output])
             .finish()
@@ -104,8 +105,8 @@ fn builder_no_essence_too_many_unlock_blocks() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-    let essence = Essence::Regular(
-        RegularEssence::builder()
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
             .with_inputs(vec![input1])
             .with_outputs(vec![output])
             .finish()
@@ -142,8 +143,8 @@ fn pack_unpack_valid() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-    let essence = Essence::Regular(
-        RegularEssence::builder()
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
             .with_inputs(vec![input1, input2])
             .with_outputs(vec![output])
             .finish()
@@ -179,8 +180,8 @@ fn getters() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-    let essence = Essence::Regular(
-        RegularEssenceBuilder::new()
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssenceBuilder::new()
             .with_inputs(vec![input1, input2])
             .with_outputs(vec![output])
             .finish()
