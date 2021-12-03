@@ -18,8 +18,8 @@ use crate::{
     multiaddr,
     packet::IncomingPacket,
     peer::{
-        peerlist::{ActivePeersList, MasterPeersList, ReplacementList},
-        peerstore::PeerStore,
+        lists::{ActivePeersList, MasterPeersList, ReplacementList},
+        stores::PeerStore,
     },
     peering::{
         filter::NeighborFilter,

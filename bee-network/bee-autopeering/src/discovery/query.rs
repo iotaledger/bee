@@ -5,7 +5,7 @@ use crate::{
     discovery::manager,
     event::EventTx,
     peer::{
-        peerlist::{ActivePeer, ActivePeersList, MasterPeersList, ReplacementList},
+        lists::{ActivePeer, ActivePeersList, MasterPeersList, ReplacementList},
         PeerId,
     },
     request::RequestManager,
@@ -180,7 +180,7 @@ fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::peer::{peerlist::ActivePeer, Peer};
+    use crate::peer::{lists::ActivePeer, Peer};
 
     fn create_peerlist_of_size(n: usize) -> ActivePeersList {
         // Create a set of active peer entries.
@@ -221,7 +221,9 @@ mod tests {
         let peerlist = create_peerlist_of_size(3);
 
         macro_rules! equal {
-            ($a:expr, $b:expr) => {{ $a == peerlist.read().get($b).unwrap().peer_id() }};
+            ($a:expr, $b:expr) => {{
+                $a == peerlist.read().get($b).unwrap().peer_id()
+            }};
         }
 
         let selected = select_peers_to_query(&peerlist);
@@ -236,7 +238,9 @@ mod tests {
         let peerlist = create_peerlist_of_size(10);
 
         macro_rules! equal {
-            ($a:expr, $b:expr) => {{ $a == peerlist.read().get($b).unwrap().peer_id() }};
+            ($a:expr, $b:expr) => {{
+                $a == peerlist.read().get($b).unwrap().peer_id()
+            }};
         }
 
         // 0 1 2 3 4 ... 7 8 9 (index)

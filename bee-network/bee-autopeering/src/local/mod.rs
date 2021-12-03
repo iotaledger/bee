@@ -13,7 +13,6 @@ use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature,
 use libp2p_core::identity::ed25519::Keypair;
 
 use std::{
-    convert::TryInto,
     fmt,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };

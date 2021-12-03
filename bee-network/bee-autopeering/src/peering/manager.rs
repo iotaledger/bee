@@ -15,7 +15,7 @@ use crate::{
         Local,
     },
     packet::{msg_hash, IncomingPacket, MessageType, OutgoingPacket},
-    peer::{self, peer_id::PeerId, peerlist::ActivePeersList, Peer},
+    peer::{self, lists::ActivePeersList, peer_id::PeerId, Peer},
     peering::neighbor::{salt_distance, Neighbor},
     request::{self, RequestManager, RequestValue, ResponseTx, RESPONSE_TIMEOUT},
     server::{ServerSocket, ServerTx},

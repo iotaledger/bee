@@ -11,7 +11,7 @@ use crate::{
     delay::ManualDelayFactory,
     discovery::manager::get_verified_peers,
     local::Local,
-    peer::peerlist::ActivePeersList,
+    peer::lists::ActivePeersList,
     request::RequestManager,
     server::ServerTx,
     task::Repeat,

@@ -1,16 +1,15 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub(crate) mod peerlist;
+pub(crate) mod lists;
 
 pub mod peer_id;
-pub mod peerstore;
+pub mod stores;
 
-use libp2p_core::{multiaddr::Protocol, Multiaddr};
 pub use peer_id::PeerId;
-pub use peerstore::PeerStore;
+pub use stores::PeerStore;
 
-use peerlist::{ActivePeersList, ReplacementList};
+use lists::{ActivePeersList, ReplacementList};
 
 use crate::{
     local::{
@@ -21,6 +20,7 @@ use crate::{
 };
 
 use bytes::BytesMut;
+use libp2p_core::{multiaddr::Protocol, Multiaddr};
 use crypto::signatures::ed25519::PublicKey;
 use prost::{DecodeError, EncodeError, Message};
 use serde::{
@@ -29,7 +29,7 @@ use serde::{
     Deserialize, Serialize,
 };
 
-use std::{convert::TryInto, fmt, net::IpAddr};
+use std::{fmt, net::IpAddr};
 
 /// Represents a peer.
 #[derive(Clone)]

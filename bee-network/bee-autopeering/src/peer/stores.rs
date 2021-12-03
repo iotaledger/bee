@@ -4,8 +4,8 @@
 //! Persistent storage of discovered peers.
 
 use super::{
+    lists::{ActivePeer, ActivePeersList, ReplacementList},
     peer_id::PeerId,
-    peerlist::{ActivePeer, ActivePeersList, ReplacementList},
     Peer,
 };
 

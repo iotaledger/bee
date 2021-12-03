@@ -25,28 +25,28 @@ pub enum Event {
         /// The identity of the deleted peer.
         peer_id: PeerId,
     },
-    /// A SaltUpdated event is triggered, when the private and public salt were updated.
+    /// Private and public salt were updated.
     SaltUpdated {
         /// Lifetime of the public salt.
         public_salt_lifetime: u64,
         /// Lifetime of the private salt.
         private_salt_lifetime: u64,
     },
-    /// An OutgoingPeering event is triggered, when a valid response of PeeringRequest has been received.
+    /// An outgoing peering request has been accepted remotely.
     OutgoingPeering {
         /// The associated peer.
         peer: Peer,
         /// The distance between the local and the remote peer.
         distance: Distance,
     },
-    /// An IncomingPeering event is triggered, when a valid PeerRequest has been received.
+    /// An incoming peering request has been accepted locally.
     IncomingPeering {
         /// The associated peer.
         peer: Peer,
         /// The distance between the local and the remote peer.
         distance: Distance,
     },
-    /// A Dropped event is triggered, when a neighbor is dropped or when a drop message is received.
+    /// A peering was dropped due to one end sending a drop message to the other.
     PeeringDropped {
         /// The identity of the dropped peer.
         peer_id: PeerId,

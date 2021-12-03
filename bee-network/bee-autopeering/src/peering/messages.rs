@@ -6,7 +6,7 @@ use crate::{local::salt::Salt, proto, request::Request};
 use base64 as bs64;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 
-use std::{convert::TryInto, fmt};
+use std::fmt;
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum Error {

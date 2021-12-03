@@ -13,7 +13,7 @@ use crypto::{
 use num_derive::FromPrimitive;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 
-use std::{convert::TryInto, fmt, net::SocketAddr, ops::Range};
+use std::{fmt, net::SocketAddr, ops::Range};
 
 // From `hive.go` docs:
 // * specifies the maximum allowed size of packets;

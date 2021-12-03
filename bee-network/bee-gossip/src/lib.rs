@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Networking layer for the Bee framework.
+//! Allows peers in the same IOTA network to exchange gossip messages with each other.
 
 #![warn(missing_docs)]
 

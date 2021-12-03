@@ -18,8 +18,8 @@
 //!
 //! ```no_run
 //! use bee_autopeering::{
-//!     init,
 //!     config::AutopeeringConfigJsonBuilder,
+//!     init,
 //!     peerstore::{SledPeerStore, SledPeerStoreConfig},
 //!     AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 //! };
@@ -40,7 +40,9 @@
 //!         "runAsEntryNode": false
 //!     }"#;
 //!
-//!     serde_json::from_str::<AutopeeringConfigJsonBuilder>(config_json).expect("error deserializing json config builder").finish()
+//!     serde_json::from_str::<AutopeeringConfigJsonBuilder>(config_json)
+//!         .expect("error deserializing json config builder")
+//!         .finish()
 //! }
 //!
 //! #[tokio::main]
@@ -56,7 +58,11 @@
 //!     let local = {
 //!         let l = Local::default();
 //!         let mut write = l.write();
-//!         write.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, config.bind_addr().port());
+//!         write.add_service(
+//!             AUTOPEERING_SERVICE_NAME,
+//!             ServiceProtocol::Udp,
+//!             config.bind_addr().port(),
+//!         );
 //!         write.add_service(NETWORK, ServiceProtocol::Tcp, 15600);
 //!         drop(write);
 //!         l
@@ -109,7 +115,6 @@
 //!         peer.has_service(NETWORK)
 //!     }
 //! }
-//!
 //! ```
 
 #![deny(missing_docs)]
@@ -141,5 +146,5 @@ pub use local::{
     services::{Service, ServiceMap, ServiceName, ServiceProtocol, AUTOPEERING_SERVICE_NAME},
     Local,
 };
-pub use peer::{peer_id, peer_id::PeerId, peerstore, Peer};
+pub use peer::{peer_id, peer_id::PeerId, stores, Peer};
 pub use peering::{Distance, NeighborValidator, Status};

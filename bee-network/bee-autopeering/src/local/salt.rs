@@ -8,10 +8,7 @@ use crate::{
 
 use ring::rand::{SecureRandom as _, SystemRandom};
 
-use std::{
-    convert::TryInto,
-    time::{Duration, SystemTime},
-};
+use std::time::{Duration, SystemTime};
 
 const SALT_BYTE_LEN: usize = 20;
 pub(crate) const SALT_LIFETIME_SECS: Duration = Duration::from_secs(2 * HOUR);

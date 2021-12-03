@@ -6,7 +6,7 @@
 use bee_autopeering::{
     config::AutopeeringConfigJsonBuilder,
     init,
-    peerstore::{InMemoryPeerStore, SledPeerStore, SledPeerStoreConfig},
+    stores::{InMemoryPeerStore, SledPeerStore, SledPeerStoreConfig},
     AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 

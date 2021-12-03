@@ -45,6 +45,7 @@ pub mod global {
                 .expect("oncecell set");
         }
     }
+
     pub fn reconnect_interval_secs() -> u64 {
         *RECONNECT_INTERVAL_SECS.get().expect("oncecell get")
     }
@@ -56,6 +57,7 @@ pub mod global {
             NETWORK_ID.set(network_id).expect("oncecell set");
         }
     }
+
     pub fn network_id() -> u64 {
         *NETWORK_ID.get().expect("oncecell get")
     }
@@ -67,6 +69,7 @@ pub mod global {
             MAX_UNKNOWN_PEERS.set(max_unknown_peers).expect("oncecell set");
         }
     }
+
     pub fn max_unknown_peers() -> usize {
         *MAX_UNKNOWN_PEERS.get().expect("oncecell get")
     }
@@ -78,6 +81,7 @@ pub mod global {
             MAX_DISCOVERED_PEERS.set(max_discovered_peers).expect("oncecell set");
         }
     }
+
     pub fn max_discovered_peers() -> usize {
         *MAX_DISCOVERED_PEERS.get().expect("oncecell get")
     }

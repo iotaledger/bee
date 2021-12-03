@@ -196,7 +196,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
     }
 
     pub(crate) fn remove_furthest(&mut self) -> Option<Peer> {
-        // Note: Both methods require unique access to `self`, so we need to clone the peer id.
+        // Note: Both methods require unique access to `self`, so we need to copy the peer id.
         if let Some(peer_id) = self.find_furthest().map(|d| *d.peer().peer_id()) {
             self.remove_neighbor(&peer_id)
         } else {

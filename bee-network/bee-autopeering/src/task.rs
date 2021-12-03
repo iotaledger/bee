@@ -3,7 +3,7 @@
 
 use crate::{
     peer::{
-        peerlist::{ActivePeersList, ReplacementList},
+        lists::{ActivePeersList, ReplacementList},
         PeerStore,
     },
     time::SECOND,
@@ -72,7 +72,7 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
     }
 
     /// Repeats a command in certain intervals provided a context `T`. Will be shut down gracefully with the rest of
-    /// spawned task by specifying a `name` and a `shutdown_priority`.
+    /// all spawned tasks by specifying a `name` and a `shutdown_priority`.
     pub(crate) fn repeat<T, D>(&mut self, cmd: Repeat<T>, mut delay: D, ctx: T, name: &str, shutdown_priority: u8)
     where
         T: Send + Sync + 'static,
@@ -112,6 +112,8 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
         // TODO: clone necessary?
         let mut shutdown_order_clone = shutdown_order.clone();
         while let Some((task_name, _)) = shutdown_order_clone.pop() {
+            // Panic: unwrapping is fine since for every entry in `shutdown_order` there's
+            // a corresponding entry in `shutdown_senders`.
             let shutdown_tx = shutdown_senders.remove(&task_name).unwrap();
 
             log::trace!("Shutting down: {}", task_name);

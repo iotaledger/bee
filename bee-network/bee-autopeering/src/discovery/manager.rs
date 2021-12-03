@@ -13,9 +13,9 @@ use crate::{
     packet::{msg_hash, IncomingPacket, MessageType, OutgoingPacket},
     peer::{
         self,
+        lists::{ActivePeer, ActivePeersList, MasterPeersList, ReplacementList},
         peer_id::PeerId,
-        peerlist::{ActivePeer, ActivePeersList, MasterPeersList, ReplacementList},
-        peerstore::PeerStore,
+        stores::PeerStore,
         Peer,
     },
     request::{self, RequestManager, RequestValue, ResponseTx, RESPONSE_TIMEOUT},

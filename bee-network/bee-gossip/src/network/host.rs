@@ -178,7 +178,7 @@ async fn process_internal_command(internal_command: Command, swarm: &mut Swarm<S
         }
         Command::DialPeer { peer_id } => {
             if let Err(e) = dial_peer(swarm, peer_id, peerlist).await {
-                warn!("Dialing peer {} failed. {}", alias!(peer_id), e);
+                warn!("Dialing peer {} failed. Cause: {}", alias!(peer_id), e);
 
                 // Remove discovered peer if dialing it failed.
                 let _ = peerlist
