@@ -263,6 +263,7 @@ pub(crate) fn apply_milestone<B: StorageBackend>(
 
     insert_ledger_index_batch(storage, &mut batch, &index.into())?;
 
+    // TODO map index-output
     let created_output_ids = created_outputs
         .iter()
         .map::<Result<_, Error>, _>(|(output_id, output)| {

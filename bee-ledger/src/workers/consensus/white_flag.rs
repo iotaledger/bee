@@ -62,7 +62,6 @@ fn check_input_feature_blocks(
 ) -> Result<(), ConflictReason> {
     for feature_block in feature_blocks {
         match feature_block {
-            FeatureBlock::Issuer(_) => {}
             FeatureBlock::DustDepositReturn(_) => {}
             FeatureBlock::TimelockMilestoneIndex(timelock) => {
                 if context.index < timelock.index() {
@@ -76,9 +75,6 @@ fn check_input_feature_blocks(
             }
             FeatureBlock::ExpirationMilestoneIndex(_) => {}
             FeatureBlock::ExpirationUnix(_) => {}
-            FeatureBlock::Indexation(_) => {
-                // TODO map index-output
-            }
             _ => {}
         }
     }
@@ -103,9 +99,6 @@ fn check_output_feature_blocks(
             FeatureBlock::TimelockUnix(_) => {}
             FeatureBlock::ExpirationMilestoneIndex(_) => {}
             FeatureBlock::ExpirationUnix(_) => {}
-            FeatureBlock::Indexation(_) => {
-                // TODO map index-output
-            }
             _ => {}
         }
     }
