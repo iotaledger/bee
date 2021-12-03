@@ -119,12 +119,12 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             ~/.cargo/bin
-          key: ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-build
+          key: ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-build
           restore-keys: |
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-
-            ${{ matrix.os }}-
+            ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-
+            ubuntu-latest-${{ matrix.rust }}-
+            ubuntu-latest-
 
       - name: Cache target dir
         uses: actions/cache@v2
@@ -133,12 +133,12 @@ jobs:
         with:
           path: |
             target/
-          key: ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-build
+          key: ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-build
           restore-keys: |
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-
-            ${{ matrix.os }}-
+            ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-
+            ubuntu-latest-${{ matrix.rust }}-
+            ubuntu-latest-
 
       - name: Check
         uses: actions-rs/cargo@v1
@@ -324,7 +324,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Run missing files check
         run: >
           bash .github/workflows/scripts/missing_files.sh 
