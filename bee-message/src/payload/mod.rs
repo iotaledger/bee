@@ -260,17 +260,7 @@ impl Packable for OptionalPayload {
         let len = u32::unpack::<_, VERIFY>(unpacker).infallible()? as usize;
 
         if len > 0 {
-            if let Some(remaining_bytes) = unpacker.remaining_bytes() {
-                if len > remaining_bytes {
-                    return Err(UnpackError::Packable(
-                        ValidationError::PayloadLengthMismatch {
-                            expected: len,
-                            actual: remaining_bytes,
-                        }
-                        .into(),
-                    ));
-                }
-            }
+            unpacker.ensure_bytes(len)?;
 
             let payload = Payload::unpack::<_, VERIFY>(unpacker)?;
             let actual_len = payload.packed_len();

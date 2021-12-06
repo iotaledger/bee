@@ -24,7 +24,14 @@ impl<'u> Unpacker for &'u [u8] {
     }
 
     #[inline]
-    fn remaining_bytes(&self) -> Option<usize> {
-        Some(self.len())
+    fn ensure_bytes(&self, len: usize) -> Result<(), Self::Error> {
+        if self.len() < len {
+            Err(UnexpectedEOF {
+                required: len,
+                had: self.len(),
+            })
+        } else {
+            Ok(())
+        }
     }
 }

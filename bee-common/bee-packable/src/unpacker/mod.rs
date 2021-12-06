@@ -23,8 +23,11 @@ pub trait Unpacker: Sized {
     fn unpack_bytes<B: AsMut<[u8]>>(&mut self, bytes: B) -> Result<(), Self::Error>;
 
     #[inline]
-    /// Returns the **exact** number of bytes that the [`Unpacker`] has left.
-    fn remaining_bytes(&self) -> Option<usize> {
-        None
+    /// Tries to guarantee that the [`Unpacker`] has at least `len` bytes.
+    ///
+    /// This method **must** fail if and only if it is certain that there are not enough bytes and
+    /// it is allowed to return `Ok(())` in any other case.
+    fn ensure_bytes(&self, _len: usize) -> Result<(), Self::Error> {
+        Ok(())
     }
 }
