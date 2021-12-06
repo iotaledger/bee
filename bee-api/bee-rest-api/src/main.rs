@@ -7,10 +7,7 @@ pub mod types;
 use bee_storage_sled::{config::SledConfigBuilder, storage::Storage};
 
 use axum::{AddExtensionLayer, Router};
-use std::{
-    net::SocketAddr,
-    sync::Arc,
-};
+use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::Mutex;
 
 pub struct AppStorage {

@@ -21,7 +21,7 @@ use axum::{
 };
 use serde_json::{json, Value};
 
-use rand::{Rng, SeedableRng, prelude::StdRng};
+use rand::{prelude::StdRng, Rng, SeedableRng};
 use std::{convert::TryFrom, str::FromStr, sync::Arc};
 
 pub(crate) fn api_routes() -> Router {
@@ -94,9 +94,11 @@ async fn get_id_handler(
                 },
             ),
             None => err_to_json("could find message.".to_string(), "400".to_string()),
-
         },
-        Err(e) => err_to_json(format!("could not fetch message from storage. {}", e), "400".to_string()),
+        Err(e) => err_to_json(
+            format!("could not fetch message from storage. {}", e),
+            "400".to_string(),
+        ),
     }
 }
 
@@ -131,7 +133,10 @@ async fn get_id_metadata_handler(
             ),
             None => err_to_json("could find message.".to_string(), "400".to_string()),
         },
-        Err(e) => err_to_json(format!("could not fetch message from storage. {}", e), "400".to_string()),
+        Err(e) => err_to_json(
+            format!("could not fetch message from storage. {}", e),
+            "400".to_string(),
+        ),
     }
 }
 
@@ -167,7 +172,10 @@ async fn get_id_raw_handler(
             ),
             None => err_to_json("could find message.".to_string(), "400".to_string()),
         },
-        Err(e) => err_to_json(format!("could not fetch message from storage. {}", e), "400".to_string()),
+        Err(e) => err_to_json(
+            format!("could not fetch message from storage. {}", e),
+            "400".to_string(),
+        ),
     }
 }
 
@@ -204,6 +212,9 @@ async fn get_id_children_handler(
             ),
             None => err_to_json("could find message.".to_string(), "400".to_string()),
         },
-        Err(e) => err_to_json(format!("could not fetch message from storage. {}", e), "400".to_string()),
+        Err(e) => err_to_json(
+            format!("could not fetch message from storage. {}", e),
+            "400".to_string(),
+        ),
     }
 }
