@@ -5,7 +5,10 @@ use bee_message::{
     payload::{indexation::IndexationPayload, Payload},
     Message, MessageBuilder, MessageUnpackError, ValidationError,
 };
-use bee_packable::{error::UnpackError, PackableExt};
+use bee_packable::{
+    error::{UnexpectedEOF, UnpackError},
+    PackableExt,
+};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     message::{parents::rand_parents, payload::rand_indexation_payload},
@@ -237,6 +240,25 @@ fn unpack_invalid_version() {
         Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidMessageVersion(0)
         )))
+    ));
+}
+
+#[test]
+fn unpack_not_enough_bytes() {
+    let bytes = vec![
+        1, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 238, 142, 220, 195, 72, 99, 77, 135,
+        73, 71, 196, 160, 101, 213, 130, 203, 214, 96, 245, 30, 3, 44, 37, 103, 128, 55, 240, 155, 139, 220, 142, 178,
+        216, 230, 192, 191, 209, 104, 112, 20, 2, 0, 0, 0, 109, 0, 0, 0, 0, 0, 0, 0, 0, 145, 167, 69, 239, 139, 44,
+        177, 36, 175, 85, 127, 123, 121, 5, 53, 252, 47, 72, 99, 133, 46, 48, 76, 67, 166, 136, 216, 171, 49, 120, 150,
+        197, 94, 234, 36, 251, 59, 102, 43, 196, 54, 55, 138, 254, 248, 226, 27, 75, 64, 65, 70, 179, 143, 249, 27, 85,
+        91, 169, 46, 237, 98, 213, 205, 27,
+    ];
+
+    assert!(matches!(
+        dbg!(Message::unpack_verified(bytes)),
+        Err(UnpackError::Unpacker(UnexpectedEOF { required: 109, had: 69 })),
     ));
 }
 
