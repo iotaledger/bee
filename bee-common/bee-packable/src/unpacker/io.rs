@@ -15,8 +15,8 @@ pub struct IoUnpacker<R: Read>(R);
 
 impl<R: Read> IoUnpacker<R> {
     /// Creates a new [`Unpacker`] from a value that implements [`Read`].
-    pub fn new(writer: R) -> Self {
-        Self(writer)
+    pub fn new(reader: R) -> Self {
+        Self(reader)
     }
 
     /// Consumes the value to return the inner value that implements [`Read`].
