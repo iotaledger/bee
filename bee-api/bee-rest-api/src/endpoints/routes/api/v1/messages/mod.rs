@@ -34,10 +34,7 @@ pub(crate) fn api_routes() -> Router {
 }
 
 fn err_to_json(message: String, code: String) -> Json<Value> {
-    Json(json!(ErrorBody::new(DefaultErrorResponse {
-        code: code,
-        message: message
-    })))
+    Json(json!(ErrorBody::new(DefaultErrorResponse { code, message })))
 }
 
 async fn post_handler(
