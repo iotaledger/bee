@@ -51,8 +51,11 @@
 //! buffer will always start on an index of the *original* buffer that is a multiple of 3.
 
 #![deny(missing_docs)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
-use std::slice;
+extern crate alloc;
+
+use core::slice;
 
 /// Utility functions for encoding and decoding B1T6 encoding.
 pub mod b1t6;
@@ -90,11 +93,12 @@ pub use crate::{
     tryte::{Tryte, TryteBuf},
 };
 
-use std::{
+use alloc::borrow::ToOwned;
+use core::{
     any,
     borrow::{Borrow, BorrowMut},
     cmp::Ordering,
-    error, fmt, hash,
+    fmt, hash,
     ops::{
         Deref, DerefMut, Index, IndexMut, Neg, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
     },
@@ -115,7 +119,8 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {}
+#[cfg(feature = "std")]
+impl std::error::Error for Error {}
 
 /// A type that represents a buffer of trits of unknown length.
 ///
@@ -135,7 +140,7 @@ where
         unsafe { &*(T::empty() as *const _ as *const Self) }
     }
 
-    /// Interpret an (`std::i8`) slice as a trit slice with the given encoding without first
+    /// Interpret an (`core::i8`) slice as a trit slice with the given encoding without first
     /// checking that the slice is valid in the given encoding. The `num_trits` parameter is used
     /// to specify the exact length, in trits, that the slice should be taken to have. Providing a
     /// slice that is not valid for this encoding is undefined behaviour.
@@ -159,7 +164,7 @@ where
         &*(T::from_raw_unchecked(raw, num_trits) as *const _ as *const _)
     }
 
-    /// Interpret a mutable (`std::i8`) slice as a mutable trit slice with the given encoding
+    /// Interpret a mutable (`core::i8`) slice as a mutable trit slice with the given encoding
     /// without first checking that the slice is valid in the given encoding. The `num_trits`
     /// parameter is used to specify the exact length, in trits, that the slice should be taken to
     /// have. Providing a slice that is not valid for this encoding is undefined behaviour.
@@ -183,7 +188,7 @@ where
         &mut *(T::from_raw_unchecked_mut(raw, num_trits) as *mut _ as *mut _)
     }
 
-    /// Interpret an (`std::i8`) slice as a trit slice with the given encoding, checking to ensure
+    /// Interpret an (`core::i8`) slice as a trit slice with the given encoding, checking to ensure
     /// that the slice is valid in the given encoding. The `num_trits` parameter is used to specify
     /// the exact length, in trits, that the slice should be taken to have.
     ///
@@ -199,7 +204,7 @@ where
         }
     }
 
-    /// Interpret a mutable (`std::i8`) slice as a mutable trit slice with the given encoding,
+    /// Interpret a mutable (`core::i8`) slice as a mutable trit slice with the given encoding,
     /// checking to ensure that the slice is valid in the given encoding. The `num_trits` parameter
     /// is used to specify the exact length, in trits, that the slice should be taken to have.
     ///
@@ -225,7 +230,7 @@ where
         self.0.len()
     }
 
-    /// Interpret this slice as an (`std::i8`) slice.
+    /// Interpret this slice as an (`core::i8`) slice.
     ///
     /// # Panics
     ///
@@ -234,7 +239,7 @@ where
         self.0.as_i8_slice()
     }
 
-    /// Interpret this slice as a mutable (`std::i8`) slice.
+    /// Interpret this slice as a mutable (`core::i8`) slice.
     ///
     /// # Panics
     ///
@@ -789,6 +794,11 @@ impl<T: RawEncodingBuf> TritBuf<T> {
     /// explicitly calling this method first.
     pub fn as_slice_mut(&mut self) -> &mut Trits<T::Slice> {
         unsafe { &mut *(self.0.as_slice_mut() as *mut T::Slice as *mut Trits<T::Slice>) }
+    }
+
+    /// Returns the number of trits the `TritBuf` can hold without reallocating.
+    pub fn capacity(&self) -> usize {
+        self.0.capacity()
     }
 }
 

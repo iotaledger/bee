@@ -9,7 +9,7 @@ use rand::prelude::*;
 fn get_generic<T: raw::RawEncodingBuf + Clone>() {
     println!("{}", std::any::type_name::<T>());
     fuzz(100, || {
-        let (a, a_i8) = gen_buf::<T>(1..1000);
+        let (a, a_i8) = gen_buf_balanced::<T>(1..1000);
 
         fuzz(25, || {
             assert_eq!(a.get(a.len() + thread_rng().gen_range(0..20)), None);
@@ -66,7 +66,7 @@ fn get_generic_unbalanced<T: raw::RawEncodingBuf + Clone>() {
 fn set_generic<T: raw::RawEncodingBuf + Clone>() {
     println!("{}", std::any::type_name::<T>());
     fuzz(100, || {
-        let (mut a, mut a_i8) = gen_buf::<T>(1..1000);
+        let (mut a, mut a_i8) = gen_buf_balanced::<T>(1..1000);
 
         fuzz(100, || {
             let mut sl = a.as_slice_mut();
@@ -147,7 +147,7 @@ fn set_generic_unbalanced<T: raw::RawEncodingBuf + Clone>() {
 
 fn chunks_generic<T: raw::RawEncodingBuf + Clone>() {
     fuzz(100, || {
-        let (a, a_i8) = gen_buf::<T>(2..1000);
+        let (a, a_i8) = gen_buf_balanced::<T>(2..1000);
 
         let chunk_len = thread_rng().gen_range(1..a.len());
         for (a, a_i8) in a.chunks(chunk_len).zip(a_i8.chunks(chunk_len)) {
@@ -178,7 +178,7 @@ fn chunks_generic_unbalanced<T: raw::RawEncodingBuf + Clone>() {
 }
 
 fn set_panic_generic<T: raw::RawEncodingBuf + Clone>() {
-    let mut a = gen_buf::<T>(0..1000).0;
+    let mut a = gen_buf_balanced::<T>(0..1000).0;
     let len = a.len();
     a.set(len, <T::Slice as raw::RawEncoding>::Trit::zero());
 }
@@ -233,7 +233,7 @@ fn chunks() {
 #[test]
 fn chunks_mut() {
     fuzz(100, || {
-        let (mut a, mut a_i8) = gen_buf::<T1B1Buf>(2..1000);
+        let (mut a, mut a_i8) = gen_buf_balanced::<T1B1Buf>(2..1000);
 
         let chunk_len = thread_rng().gen_range(1..a.len());
         for (a, a_i8) in a.chunks_mut(chunk_len).zip(a_i8.chunks_mut(chunk_len)) {

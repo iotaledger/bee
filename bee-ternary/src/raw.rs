@@ -3,7 +3,7 @@
 
 use crate::{Trit, TritBuf};
 
-use std::ops::Range;
+use core::ops::Range;
 
 /// A trait to be implemented by alternative trit encoding scheme slices.
 #[allow(clippy::len_without_is_empty)]
@@ -14,6 +14,9 @@ pub trait RawEncoding {
 
     /// The trit buffer encoding associated with this trit slice encoding.
     type Buf: RawEncodingBuf<Slice = Self>;
+
+    /// The number of trits that fit into this trit slice encoding.
+    const TRITS_PER_BYTE: usize;
 
     /// Get an empty slice of this encoding
     fn empty() -> &'static Self;
@@ -92,6 +95,9 @@ pub trait RawEncodingBuf {
     /// View the trits in this buffer as a mutable slice.
     fn as_slice_mut(&mut self) -> &mut Self::Slice;
 
+    /// Returns the number of trits the buffer can hold.
+    fn capacity(&self) -> usize;
+
     /// Convert this encoding into another encoding.
     /// TODO: Rename this `reencode`
     #[allow(clippy::wrong_self_convention)]
@@ -101,10 +107,6 @@ pub trait RawEncodingBuf {
         T: RawEncodingBuf,
         T::Slice: RawEncoding<Trit = <Self::Slice as RawEncoding>::Trit>,
     {
-        // if TypeId::of::<Self>() == TypeId::of::<T>() {
-        //     unsafe { std::mem::transmute(this) }
-        // } else {
         this.iter().collect()
-        // }
     }
 }

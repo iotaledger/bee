@@ -9,7 +9,7 @@ use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
 };
 
-use std::{fmt, marker::PhantomData};
+use core::{fmt, marker::PhantomData};
 
 // Serialisation
 

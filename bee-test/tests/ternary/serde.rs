@@ -10,7 +10,7 @@ fn serialize_generic<T: raw::RawEncodingBuf>()
 where
     <T::Slice as RawEncoding>::Trit: Serialize,
 {
-    let (a, a_i8) = gen_buf::<T>(0..1000);
+    let (a, a_i8) = gen_buf_balanced::<T>(0..1000);
     assert_eq!(
         serde_json::to_string(&a).unwrap(),
         format!("[{}]", a_i8.iter().map(|t| t.to_string()).collect::<Vec<_>>().join(",")),
@@ -32,7 +32,7 @@ fn deserialize_generic<T: raw::RawEncodingBuf>()
 where
     <T::Slice as RawEncoding>::Trit: DeserializeOwned,
 {
-    let (a, a_i8) = gen_buf::<T>(0..1000);
+    let (a, a_i8) = gen_buf_balanced::<T>(0..1000);
     assert_eq!(
         serde_json::from_str::<TritBuf<T>>(&format!(
             "[{}]",

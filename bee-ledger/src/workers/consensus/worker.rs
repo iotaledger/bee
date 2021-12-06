@@ -104,7 +104,7 @@ where
         .ok_or(Error::MilestoneMessageNotFound(message_id))?;
 
     let milestone = match message.payload() {
-        Some(Payload::Milestone(milestone)) => milestone.clone(),
+        Some(Payload::Milestone(milestone)) => milestone,
         _ => return Err(Error::NoMilestonePayload),
     };
 

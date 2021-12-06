@@ -7,7 +7,7 @@ use crate::convert;
 
 use num_traits::{CheckedAdd, CheckedSub, Num};
 
-use std::{fmt, ops::Neg};
+use core::{fmt, ops::Neg};
 
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[repr(i8)]

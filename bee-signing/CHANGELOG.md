@@ -15,11 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-PrivateKey: Drop bound
-
 ### Fixed
 
 ### Security -->
+
+## 0.2.0 - 2021-11-19
+
+### Deprecated
+
+The whole `bee-signing` crate is deprecated and will not be supported in the future.
+
+### Removed
+
+- PrivateKey: Drop bound;
 
 ## 0.1.1-alpha - 2020-09-09
 
