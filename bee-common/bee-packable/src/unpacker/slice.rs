@@ -22,4 +22,9 @@ impl<'u> Unpacker for &'u [u8] {
             })
         }
     }
+
+    #[inline]
+    fn remaining_bytes(&self) -> Option<usize> {
+        Some(self.len())
+    }
 }
