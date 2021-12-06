@@ -53,7 +53,7 @@ impl BodyInner for TipsResponse {}
 
 /// Response of POST /api/v1/messages.
 /// Returns the message identifier of the submitted message.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SubmitMessageResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,
