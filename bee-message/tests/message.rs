@@ -257,7 +257,7 @@ fn unpack_not_enough_bytes() {
     ];
 
     assert!(matches!(
-        dbg!(Message::unpack_verified(bytes)),
+        Message::unpack_verified(bytes),
         Err(UnpackError::Unpacker(UnexpectedEOF { required: 109, had: 69 })),
     ));
 }
