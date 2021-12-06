@@ -26,7 +26,7 @@ use bee_message::{
 };
 
 use bee_message::payload::MessagePayload;
-use bee_packable::Packable;
+use bee_packable::PackableExt;
 
 use serde::{de::Error as DeError, Deserialize, Serialize, Serializer};
 use serde_json::Value;
@@ -807,7 +807,7 @@ impl TryFrom<&ConflictDto> for Conflict {
     fn try_from(value: &ConflictDto) -> Result<Self, Self::Error> {
         Ok(Conflict::new(
             TransactionId::from_str(&value.transaction_id).map_err(|_| Error::InvalidSyntaxField("transactionId"))?,
-            match Opinion::unpack_from_slice(&[value.opinion]) {
+            match Opinion::unpack_verified(&[value.opinion]) {
                 Ok(Opinion::Like) => Ok(Opinion::Like),
                 Ok(Opinion::Dislike) => Ok(Opinion::Dislike),
                 Ok(Opinion::Unknown) => Ok(Opinion::Unknown),
@@ -844,7 +844,7 @@ impl TryFrom<&TimestampDto> for Timestamp {
     fn try_from(value: &TimestampDto) -> Result<Self, Self::Error> {
         Ok(Timestamp::new(
             MessageId::from_str(&value.message_id).map_err(|_| Error::InvalidSyntaxField("messageId"))?,
-            match Opinion::unpack_from_slice(&[value.opinion]) {
+            match Opinion::unpack_verified(&[value.opinion]) {
                 Ok(Opinion::Like) => Ok(Opinion::Like),
                 Ok(Opinion::Dislike) => Ok(Opinion::Dislike),
                 Ok(Opinion::Unknown) => Ok(Opinion::Unknown),
