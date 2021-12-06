@@ -180,7 +180,9 @@ impl BodyInner for OutputsAddressResponse {}
 /// * GET /api/v1/receipts/{milestone_index}, returns all stored receipts for the given milestone index.
 /// * GET /api/v1/receipts, returns all stored receipts, independent of a milestone index.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ReceiptsResponse(pub Vec<ReceiptDto>);
+pub struct ReceiptsResponse {
+    pub receipts: Vec<ReceiptDto>,
+}
 
 impl BodyInner for ReceiptsResponse {}
 

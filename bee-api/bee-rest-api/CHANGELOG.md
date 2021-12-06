@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.1.6 - 2021-12-06
+
+### Fixed
+
+- Add `receipts` field to `ReceiptsResponse`;
+
 ## 0.1.5 - 2021-12-06
 
 ### Added
