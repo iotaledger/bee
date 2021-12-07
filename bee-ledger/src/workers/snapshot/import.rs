@@ -11,11 +11,7 @@ use crate::{
     workers::{
         consensus::worker::migration_from_milestone,
         error::Error,
-        snapshot::{
-            config::{DownloadUrls, SnapshotConfig},
-            download::download_snapshot_file,
-            error::Error as SnapshotError,
-        },
+        snapshot::{config::SnapshotConfig, download::download_latest_snapshot_files, error::Error as SnapshotError},
         storage::{self, apply_balance_diffs, apply_milestone, create_output, rollback_milestone, StorageBackend},
     },
 };
@@ -33,7 +29,7 @@ use bee_message::{
 use bee_storage::access::{Insert, Truncate};
 use bee_tangle::solid_entry_point::SolidEntryPoint;
 
-use log::{info, warn};
+use log::info;
 
 use std::{
     collections::HashMap,
@@ -282,32 +278,20 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
 
     if !full_exists && delta_exists {
         return Err(Error::Snapshot(SnapshotError::OnlyDeltaSnapshotFileExists));
-    }
-
-    if !full_exists {
-        download_snapshot_file(
+    } else if !full_exists && !delta_exists {
+        download_latest_snapshot_files(
+            network_id,
             config.full_path(),
-            config.download_urls().iter().map(DownloadUrls::full),
+            config.delta_path(),
+            config.download_urls(),
         )
         .await?;
     }
 
-    // Full snapshot file exists from now on.
-
     import_full_snapshot(storage, config.full_path(), network_id).await?;
 
-    if let Some(delta_path) = config.delta_path() {
-        if !delta_exists
-            && download_snapshot_file(delta_path, config.download_urls().iter().map(DownloadUrls::delta))
-                .await
-                .is_err()
-        {
-            warn!("Could not download the delta snapshot file and it will not be imported.");
-        }
-
-        if delta_path.exists() {
-            import_delta_snapshot(storage, delta_path, network_id).await?;
-        }
+    if config.delta_path().map(Path::exists).is_some() {
+        import_delta_snapshot(storage, config.delta_path().unwrap(), network_id).await?;
     }
 
     Ok(())

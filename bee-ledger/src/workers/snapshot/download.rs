@@ -1,20 +1,24 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{types::snapshot::SnapshotHeader, workers::snapshot::error::Error};
+use crate::{
+    types::snapshot::SnapshotHeader,
+    workers::snapshot::{config::DownloadUrls, error::Error},
+};
 
 use bee_common::packable::Packable;
 
 use bytes::Buf;
 use futures::{future::join_all, StreamExt};
 use log::{info, warn};
+use reqwest::Response;
 
 use std::{io::Read, path::Path};
 
-async fn download_snapshot_header(download_url: &str) -> Result<(SnapshotHeader, &str), Error> {
+async fn download_snapshot_header(download_url: &str) -> Result<SnapshotHeader, Error> {
     info!("Downloading snapshot header {}...", download_url);
 
-    match reqwest::get(download_url).await.and_then(|res| res.error_for_status()) {
+    match reqwest::get(download_url).await.and_then(Response::error_for_status) {
         Ok(res) => {
             let mut stream = res.bytes_stream();
             let mut bytes = Vec::<u8>::with_capacity(SnapshotHeader::LENGTH);
@@ -31,7 +35,7 @@ async fn download_snapshot_header(download_url: &str) -> Result<(SnapshotHeader,
 
                     let mut slice: &[u8] = &bytes[..SnapshotHeader::LENGTH];
 
-                    return Ok((SnapshotHeader::unpack(&mut slice)?, download_url));
+                    return Ok(SnapshotHeader::unpack(&mut slice)?);
                 }
             }
         }
@@ -41,27 +45,139 @@ async fn download_snapshot_header(download_url: &str) -> Result<(SnapshotHeader,
     Err(Error::DownloadingFailed)
 }
 
-async fn most_recent_snapshot_url<'a>(download_urls: impl Iterator<Item = &'a str>) -> Result<&'a str, Error> {
-    let downloads = join_all(download_urls.map(download_snapshot_header)).await;
-    let snapshot_headers = downloads.iter().flatten();
+struct SourceInformation<'a> {
+    urls: &'a DownloadUrls,
+    full_header: SnapshotHeader,
+    delta_header: Option<SnapshotHeader>,
+}
 
-    // Find header with largest index.
-    let largest_index = snapshot_headers.max_by_key(|(header, _)| header.ledger_index());
+impl<'a> SourceInformation<'a> {
+    async fn download_snapshots(
+        &self,
+        full_snapshot_path: &Path,
+        delta_snapshot_path: Option<&Path>,
+    ) -> Result<(), Error> {
+        download_snapshot_file(full_snapshot_path, self.urls.full()).await?;
 
-    // We know `snapshot_headers` is not empty, so unwrapping here is fine.
-    if let Some((_, url)) = largest_index {
-        Ok(url)
-    } else {
-        Err(Error::NoDownloadSourceAvailable)
+        if delta_snapshot_path.is_some() {
+            // Safety: We just checked for `is_some`.
+            download_snapshot_file(delta_snapshot_path.unwrap(), self.urls.delta()).await?;
+        }
+
+        Ok(())
+    }
+
+    fn consistent(&self, wanted_network_id: u64) -> bool {
+        if self.full_header.network_id() != wanted_network_id {
+            warn!(
+                "full snapshot network ID does not match ({} != {}): {}",
+                self.full_header.network_id(),
+                wanted_network_id,
+                self.urls.full()
+            );
+            return false;
+        };
+
+        if let Some(delta_header) = self.delta_header.as_ref() {
+            if delta_header.network_id() != wanted_network_id {
+                warn!(
+                    "delta snapshot network ID does not match ({} != {}): {}",
+                    delta_header.network_id(),
+                    wanted_network_id,
+                    self.urls.delta()
+                );
+                return false;
+            };
+
+            if self.full_header.sep_index() > delta_header.sep_index() {
+                warn!(
+                    "full snapshot SEP index is bigger than delta snapshot SEP index ({} > {}): {}",
+                    self.full_header.sep_index(),
+                    delta_header.sep_index(),
+                    self.urls.full()
+                );
+                return false;
+            }
+
+            if self.full_header.sep_index() != delta_header.ledger_index() {
+                warn!(
+                    "full snapshot SEP index does not match the delta snapshot ledger index ({} > {}): {}",
+                    self.full_header.sep_index(),
+                    delta_header.ledger_index(),
+                    self.urls.full()
+                );
+                return false;
+            }
+        }
+
+        true
     }
 }
 
-pub(crate) async fn download_snapshot_file(
-    path: &Path,
-    download_urls: impl Iterator<Item = &str>,
-) -> Result<(), Error> {
-    let download_url = most_recent_snapshot_url(download_urls).await?;
+async fn gather_source_information(
+    download_delta: bool,
+    urls: &'_ DownloadUrls,
+) -> Result<SourceInformation<'_>, Error> {
+    let full_header = download_snapshot_header(urls.full()).await?;
+    let delta_header = if download_delta {
+        Some(download_snapshot_header(urls.delta()).await?)
+    } else {
+        None
+    };
 
+    Ok(SourceInformation {
+        urls,
+        full_header,
+        delta_header,
+    })
+}
+
+pub(crate) async fn download_latest_snapshot_files(
+    wanted_network_id: u64,
+    full_snapshot_path: &Path,
+    delta_snapshot_path: Option<&Path>,
+    download_urls: &[DownloadUrls],
+) -> Result<(), Error> {
+    let download_delta = delta_snapshot_path.is_some();
+
+    let all_sources = join_all(
+        download_urls
+            .iter()
+            .map(|source| gather_source_information(download_delta, source)),
+    )
+    .await;
+
+    let mut available_sources = all_sources
+        .into_iter()
+        .flatten()
+        .filter(|source| source.consistent(wanted_network_id))
+        .collect::<Vec<SourceInformation>>();
+
+    // Sort all available sources so that the freshest is at the end.
+    available_sources.sort_by(|a, b| {
+        let cmp_full_index = a.full_header.ledger_index().cmp(&b.full_header.ledger_index());
+        let cmp_delta_index = a
+            .delta_header
+            .as_ref()
+            .map(|x| x.ledger_index())
+            .cmp(&b.delta_header.as_ref().map(|x| x.ledger_index()));
+        cmp_full_index.then(cmp_delta_index)
+    });
+
+    while let Some(source) = available_sources.pop() {
+        if source
+            .download_snapshots(full_snapshot_path, delta_snapshot_path)
+            .await
+            .is_ok()
+        {
+            return Ok(());
+        }
+    }
+
+    Err(Error::NoDownloadSourceAvailable)
+}
+
+async fn download_snapshot_file(path: &Path, download_url: &str) -> Result<(), Error> {
     tokio::fs::create_dir_all(
         path.parent()
             .ok_or_else(|| Error::InvalidFilePath(format!("{}", path.display())))?,
@@ -80,10 +196,6 @@ pub(crate) async fn download_snapshot_file(
             .await?;
         }
         Err(e) => warn!("Downloading snapshot file failed with status code {:?}.", e.status()),
-    }
-
-    if !path.exists() {
-        return Err(Error::NoDownloadSourceAvailable);
     }
 
     Ok(())
