@@ -290,8 +290,10 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
 
     import_full_snapshot(storage, config.full_path(), network_id).await?;
 
-    if config.delta_path().map(Path::exists).is_some() {
-        import_delta_snapshot(storage, config.delta_path().unwrap(), network_id).await?;
+    if let Some(delta_path) = config.delta_path() {
+        if delta_path.exists() {
+            import_delta_snapshot(storage, delta_path, network_id).await?;
+        }
     }
 
     Ok(())

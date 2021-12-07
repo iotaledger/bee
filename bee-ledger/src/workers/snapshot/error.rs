@@ -11,44 +11,44 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum Error {
     /// I/O error happened.
-    #[error("I/O error: {0}.")]
+    #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
     /// Types error.
-    #[error("types error: {0}.")]
+    #[error("types error: {0}")]
     Types(#[from] TypesError),
     /// Unexpected snapshot kind.
-    #[error("unexpected snapshot kind: expected {0:?}, read {1:?}.")]
+    #[error("unexpected snapshot kind: expected {0:?}, read {1:?}")]
     UnexpectedSnapshotKind(SnapshotKind, SnapshotKind),
     /// Downloading failed.
-    #[error("downloading failed.")]
+    #[error("downloading failed")]
     DownloadingFailed,
     /// No snapshot download source available.
-    #[error("no snapshot download source available.")]
+    #[error("no snapshot download source available")]
     NoDownloadSourceAvailable,
     /// Invalid file path.
-    #[error("invalid file path: {0}.")]
+    #[error("invalid file path: {0}")]
     InvalidFilePath(String),
     /// Network id mismatch between configuration and snapshot.
-    #[error("network id mismatch between configuration and snapshot: {0} != {1}.")]
+    #[error("network id mismatch between configuration and snapshot: {0} != {1}")]
     NetworkIdMismatch(u64, u64),
     /// Inconsistency between ledger index and sep index.
-    #[error("inconsistency between ledger index {0} and sep index {1}.")]
+    #[error("inconsistency between ledger index {0} and sep index {1}")]
     LedgerSepIndexesInconsistency(MilestoneIndex, MilestoneIndex),
     /// Invalid milestone diffs count.
-    #[error("invalid milestone diffs count: expected {0}, read {1}.")]
+    #[error("invalid milestone diffs count: expected {0}, read {1}")]
     InvalidMilestoneDiffsCount(usize, usize),
     /// Only a delta snapshot file exists without a full snapshot file.
     #[error(
-        "only a delta snapshot file exists without a full snapshot file. Remove the delta snapshot file and restart."
+        "only a delta snapshot file exists without a full snapshot file (remove the delta snapshot file and restart)"
     )]
     OnlyDeltaSnapshotFileExists,
     /// Unexpected milestone diff index.
-    #[error("unexpected milestone diff index: {0:?}.")]
+    #[error("unexpected milestone diff index: {0:?}")]
     UnexpectedMilestoneDiffIndex(MilestoneIndex),
     /// Missing consumed treasury.
-    #[error("missing consumed treasury.")]
+    #[error("missing consumed treasury")]
     MissingConsumedTreasury,
     /// Remaining bytes in file.
-    #[error("remaining bytes in file.")]
+    #[error("remaining bytes in file")]
     RemainingBytes,
 }
