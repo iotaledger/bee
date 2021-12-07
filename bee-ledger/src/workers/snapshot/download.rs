@@ -163,7 +163,7 @@ async fn download_snapshot_file(path: &Path, download_url: &str) -> Result<(), E
 }
 
 /// Tries to download the latest snapshot files from the sources specified in the `SnapshotConfig`.
-/// 
+///
 /// * `wanted_network_id` - The id of the current network (typically the hash of the network name).
 /// * `full_snapshot_path` - The location where the full snapshot will be stored.
 /// * `full_snapshot_path` - The location where the delta snapshot will be stored.
@@ -204,4 +204,3 @@ pub(crate) async fn download_latest_snapshot_files(
 
     Err(Error::NoDownloadSourceAvailable)
 }
-
