@@ -19,11 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.5.0 - 2021-09-30
+## 0.5.0 - 2021-12-07
 
 ### Added
 
-- `tokio-console` feature, enabling improved logging when using tokio's `console` project;
+- `time` module;
+- `LoggerConfig::{color_enabled, target_width, level_width, outputs}` methods;
 
 ## 0.4.1 - 2021-04-09
 
