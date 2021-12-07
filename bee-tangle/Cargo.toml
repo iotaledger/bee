@@ -30,7 +30,7 @@ tokio-stream = { version = "0.1.7", default-features = false, features = [ "time
 
 [dev-dependencies]
 bee-storage-null = { version = "0.1.0", path = "../bee-storage/bee-storage-null", default-features = false }
-bee-test = { version = "0.1.0", path = "../bee-test", default-features = false }
+bee-test = { path = "../bee-test", default-features = false }
 
 criterion = { version = "0.3.5", default-features = false, features = [ "async_tokio" ] }
 rand = { version = "0.8.4", default-features = false }
