@@ -66,7 +66,7 @@ impl<'a> SourceInformation<'a> {
         Ok(())
     }
 
-    fn consistent(&self, wanted_network_id: u64) -> bool {
+    fn is_consistent(&self, wanted_network_id: u64) -> bool {
         if self.full_header.network_id() != wanted_network_id {
             warn!(
                 "full snapshot network ID does not match ({} != {}): {}",
@@ -149,7 +149,7 @@ pub(crate) async fn download_latest_snapshot_files(
     let mut available_sources = all_sources
         .into_iter()
         .flatten()
-        .filter(|source| source.consistent(wanted_network_id))
+        .filter(|source| source.is_consistent(wanted_network_id))
         .collect::<Vec<SourceInformation>>();
 
     // Sort all available sources so that the freshest is at the end.
