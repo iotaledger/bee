@@ -7,16 +7,17 @@ use crate::{
 };
 
 use bee_common::packable::Packable;
+use bee_message::milestone::MilestoneIndex;
 
 use bytes::Buf;
 use futures::{future::join_all, StreamExt};
-use log::{info, warn};
+use log::{debug, info, warn};
 use reqwest::Response;
 
 use std::{io::Read, path::Path};
 
 async fn download_snapshot_header(download_url: &str) -> Result<SnapshotHeader, Error> {
-    info!("Downloading snapshot header {}...", download_url);
+    debug!("Downloading snapshot header {}...", download_url);
 
     match reqwest::get(download_url).await.and_then(Response::error_for_status) {
         Ok(res) => {
@@ -28,10 +29,10 @@ async fn download_snapshot_header(download_url: &str) -> Result<SnapshotHeader, 
 
                 let mut buf = Vec::new();
                 chunk_reader.read_to_end(&mut buf)?;
-                bytes.extend(buf.iter());
+                bytes.extend_from_slice(&buf);
 
                 if bytes.len() >= SnapshotHeader::LENGTH {
-                    info!("Downloaded snapshot header from {}.", download_url);
+                    debug!("Downloaded snapshot header from {}.", download_url);
 
                     let mut slice: &[u8] = &bytes[..SnapshotHeader::LENGTH];
 
@@ -66,10 +67,16 @@ impl<'a> SourceInformation<'a> {
         Ok(())
     }
 
+    fn index(&self) -> MilestoneIndex {
+        self.delta_header
+            .as_ref()
+            .map_or(self.full_header.sep_index(), SnapshotHeader::sep_index)
+    }
+
     fn is_consistent(&self, wanted_network_id: u64) -> bool {
         if self.full_header.network_id() != wanted_network_id {
             warn!(
-                "full snapshot network ID does not match ({} != {}): {}",
+                "Full snapshot network ID does not match ({} != {}): {}.",
                 self.full_header.network_id(),
                 wanted_network_id,
                 self.urls.full()
@@ -80,7 +87,7 @@ impl<'a> SourceInformation<'a> {
         if let Some(delta_header) = self.delta_header.as_ref() {
             if delta_header.network_id() != wanted_network_id {
                 warn!(
-                    "delta snapshot network ID does not match ({} != {}): {}",
+                    "Delta snapshot network ID does not match ({} != {}): {}.",
                     delta_header.network_id(),
                     wanted_network_id,
                     self.urls.delta()
@@ -90,7 +97,7 @@ impl<'a> SourceInformation<'a> {
 
             if self.full_header.sep_index() > delta_header.sep_index() {
                 warn!(
-                    "full snapshot SEP index is bigger than delta snapshot SEP index ({} > {}): {}",
+                    "Full snapshot SEP index is bigger than delta snapshot SEP index ({} > {}): {}.",
                     self.full_header.sep_index(),
                     delta_header.sep_index(),
                     self.urls.full()
@@ -100,7 +107,7 @@ impl<'a> SourceInformation<'a> {
 
             if self.full_header.sep_index() != delta_header.ledger_index() {
                 warn!(
-                    "full snapshot SEP index does not match the delta snapshot ledger index ({} > {}): {}",
+                    "Full snapshot SEP index does not match the delta snapshot ledger index ({} != {}): {}.",
                     self.full_header.sep_index(),
                     delta_header.ledger_index(),
                     self.urls.full()
@@ -153,15 +160,7 @@ pub(crate) async fn download_latest_snapshot_files(
         .collect::<Vec<SourceInformation>>();
 
     // Sort all available sources so that the freshest is at the end.
-    available_sources.sort_by(|a, b| {
-        let cmp_full_index = a.full_header.ledger_index().cmp(&b.full_header.ledger_index());
-        let cmp_delta_index = a
-            .delta_header
-            .as_ref()
-            .map(|x| x.ledger_index())
-            .cmp(&b.delta_header.as_ref().map(|x| x.ledger_index()));
-        cmp_full_index.then(cmp_delta_index)
-    });
+    available_sources.sort_by_key(SourceInformation::index);
 
     while let Some(source) = available_sources.pop() {
         if source
