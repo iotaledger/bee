@@ -59,9 +59,8 @@ impl<'a> SourceInformation<'a> {
     ) -> Result<(), Error> {
         download_snapshot_file(full_snapshot_path, self.urls.full()).await?;
 
-        if delta_snapshot_path.is_some() {
-            // Safety: We just checked for `is_some`.
-            download_snapshot_file(delta_snapshot_path.unwrap(), self.urls.delta()).await?;
+        if let Some(delta_path) = delta_snapshot_path {
+            download_snapshot_file(delta_path, self.urls.delta()).await?;
         }
 
         Ok(())
