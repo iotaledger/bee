@@ -138,6 +138,36 @@ async fn gather_source_information(
     })
 }
 
+async fn download_snapshot_file(path: &Path, download_url: &str) -> Result<(), Error> {
+    tokio::fs::create_dir_all(
+        path.parent()
+            .ok_or_else(|| Error::InvalidFilePath(format!("{}", path.display())))?,
+    )
+    .await
+    .map_err(|_| Error::InvalidFilePath(format!("{}", path.display())))?;
+
+    info!("Downloading snapshot file {}...", download_url);
+
+    match reqwest::get(download_url).await {
+        Ok(res) => {
+            tokio::io::copy(
+                &mut res.bytes().await.map_err(|_| Error::DownloadingFailed)?.as_ref(),
+                &mut tokio::fs::File::create(path).await?,
+            )
+            .await?;
+        }
+        Err(e) => warn!("Downloading snapshot file failed with status code {:?}.", e.status()),
+    }
+
+    Ok(())
+}
+
+/// Tries to download the latest snapshot files from the sources specified in the `SnapshotConfig`.
+/// 
+/// * `wanted_network_id` - The id of the current network (typically the hash of the network name).
+/// * `full_snapshot_path` - The location where the full snapshot will be stored.
+/// * `full_snapshot_path` - The location where the delta snapshot will be stored.
+/// * `download_urls` - The list of snapshot sources.
 pub(crate) async fn download_latest_snapshot_files(
     wanted_network_id: u64,
     full_snapshot_path: &Path,
@@ -175,26 +205,3 @@ pub(crate) async fn download_latest_snapshot_files(
     Err(Error::NoDownloadSourceAvailable)
 }
 
-async fn download_snapshot_file(path: &Path, download_url: &str) -> Result<(), Error> {
-    tokio::fs::create_dir_all(
-        path.parent()
-            .ok_or_else(|| Error::InvalidFilePath(format!("{}", path.display())))?,
-    )
-    .await
-    .map_err(|_| Error::InvalidFilePath(format!("{}", path.display())))?;
-
-    info!("Downloading snapshot file {}...", download_url);
-
-    match reqwest::get(download_url).await {
-        Ok(res) => {
-            tokio::io::copy(
-                &mut res.bytes().await.map_err(|_| Error::DownloadingFailed)?.as_ref(),
-                &mut tokio::fs::File::create(path).await?,
-            )
-            .await?;
-        }
-        Err(e) => warn!("Downloading snapshot file failed with status code {:?}.", e.status()),
-    }
-
-    Ok(())
-}
