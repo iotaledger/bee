@@ -95,7 +95,7 @@ impl U384<BigEndian, U32Repr> {
         let other_iter = other.inner.iter().rev();
 
         for (s, o) in self_iter.zip(other_iter) {
-            let (sum, still_overflown) = s.overflowing_add_with_carry(*o, overflown as u32);
+            let (sum, still_overflown) = s.overflowing_add_with_carry(*o, u32::from(overflown));
             *s = sum;
             overflown = still_overflown;
         }
@@ -154,7 +154,7 @@ impl U384<BigEndian, U32Repr> {
         let mut borrow = true;
 
         for (s, o) in self.inner.iter_mut().rev().zip(other.inner.iter().rev()) {
-            let (sum, has_overflown) = s.overflowing_add_with_carry(!*o, borrow as u32);
+            let (sum, has_overflown) = s.overflowing_add_with_carry(!*o, u32::from(borrow));
             *s = sum;
             borrow = has_overflown;
         }
@@ -210,7 +210,7 @@ impl U384<LittleEndian, U32Repr> {
         let other_iter = other.inner.iter();
 
         for (s, o) in self_iter.zip(other_iter) {
-            let (sum, still_overflown) = s.overflowing_add_with_carry(*o, overflown as u32);
+            let (sum, still_overflown) = s.overflowing_add_with_carry(*o, u32::from(overflown));
             *s = sum;
             overflown = still_overflown;
         }
@@ -279,7 +279,7 @@ impl U384<LittleEndian, U32Repr> {
         let mut borrow = true;
 
         for (s, o) in self_iter.zip(other_iter) {
-            let (sum, has_overflown) = s.overflowing_add_with_carry(!*o, borrow as u32);
+            let (sum, has_overflown) = s.overflowing_add_with_carry(!*o, u32::from(borrow));
             *s = sum;
             borrow = has_overflown;
         }

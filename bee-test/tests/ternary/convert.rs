@@ -80,10 +80,10 @@ fn unsigned_range_to_trits() {
 #[test]
 fn error_on_num_too_big() {
     let buf = TritBuf::<T1B1Buf>::filled(41, Btrit::PlusOne);
-    assert!(!i64::try_from(buf.as_slice()).is_ok());
+    assert!(i64::try_from(buf.as_slice()).is_err());
 
     let buf = TritBuf::<T1B1Buf<_>>::filled(42, Utrit::One);
-    assert!(!u64::try_from(buf.as_slice()).is_ok());
+    assert!(u64::try_from(buf.as_slice()).is_err());
 }
 
 #[test]
