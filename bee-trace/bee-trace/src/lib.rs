@@ -3,7 +3,7 @@
 
 //! Diagnostics components for `bee`.
 
-#![deny(missing_docs, warnings)]
+#![deny(missing_docs)]
 
 /// Contains [`tracing::Subscriber`] implementation for `bee` node diagnostics.
 pub mod subscriber;

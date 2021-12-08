@@ -53,7 +53,7 @@ impl LoggerOutputConfigBuilder {
     /// Sets a collection of filters of a logger output.
     /// A message is logged only if one of the filters is part of the log's metadata target.
     pub fn target_filters(mut self, target_filters: &[&str]) -> Self {
-        self.target_filters = Some(target_filters.iter().map(ToString::to_string).collect::<Vec<String>>());
+        self.target_filters = Some(target_filters.iter().map(ToString::to_string).collect::<Vec<_>>());
         self
     }
 
@@ -64,7 +64,7 @@ impl LoggerOutputConfigBuilder {
             target_exclusions
                 .iter()
                 .map(ToString::to_string)
-                .collect::<Vec<String>>(),
+                .collect::<Vec<_>>(),
         );
         self
     }
@@ -105,7 +105,7 @@ pub struct LoggerOutputConfig {
 
 impl LoggerOutputConfig {
     /// Returns the name of the output file, or `stdout` for standard output.
-    pub fn name(&self) -> &String {
+    pub fn name(&self) -> &str {
         &self.name
     }
 

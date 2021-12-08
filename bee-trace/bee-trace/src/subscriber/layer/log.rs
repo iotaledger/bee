@@ -175,7 +175,7 @@ impl LogLayer {
                     targets = targets.with_target(exclusion.clone().to_lowercase(), LevelFilter::OFF);
                 }
 
-                let dest = match output_config.name().as_str() {
+                let dest = match output_config.name() {
                     Self::STDOUT_NAME => LogDest::Stdout,
                     name => {
                         let file = OpenOptions::new().write(true).create(true).append(true).open(name)?;
