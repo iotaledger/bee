@@ -53,7 +53,7 @@ impl BodyInner for TipsResponse {}
 
 /// Response of POST /api/v1/messages.
 /// Returns the message identifier of the submitted message.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SubmitMessageResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,
@@ -180,7 +180,9 @@ impl BodyInner for OutputsAddressResponse {}
 /// * GET /api/v1/receipts/{milestone_index}, returns all stored receipts for the given milestone index.
 /// * GET /api/v1/receipts, returns all stored receipts, independent of a milestone index.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ReceiptsResponse(pub Vec<ReceiptDto>);
+pub struct ReceiptsResponse {
+    pub receipts: Vec<ReceiptDto>,
+}
 
 impl BodyInner for ReceiptsResponse {}
 

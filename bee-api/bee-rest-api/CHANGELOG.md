@@ -19,6 +19,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.1.7 - 2021-12-08
+
+### Changed
+
+- Update `bee-ledger` dependency;
+
+## 0.1.6 - 2021-12-06
+
+### Fixed
+
+- Add `receipts` field to `ReceiptsResponse`;
+
+## 0.1.5 - 2021-12-06
+
+### Added
+
+- `Deserialize` to `SubmitMessageResponse`;
+
+## 0.1.4 - 2021-12-03
+
+### Added
+
+- `Deserialize` to `SuccessBody`;
+
 ## 0.1.3 - 2021-11-03
 
 ### Removed

@@ -19,6 +19,9 @@ pub struct SnapshotHeader {
 }
 
 impl SnapshotHeader {
+    /// The length, in bytes, of a `SnapshotHeader`.
+    pub const LENGTH: usize = 26;
+
     /// Returns the kind of a `SnapshotHeader`.
     pub fn kind(&self) -> SnapshotKind {
         self.kind

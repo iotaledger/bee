@@ -85,15 +85,19 @@ impl BalanceDiffs {
             e.amount = e
                 .amount
                 .checked_add(diff.amount)
-                .ok_or_else(|| Error::BalanceDiffOverflow(e.amount as i128 + diff.amount as i128))?;
+                .ok_or(Error::BalanceDiffOverflow(e.amount as i128 + diff.amount as i128))?;
             e.dust_allowance = e
                 .dust_allowance
                 .checked_add(diff.dust_allowance)
-                .ok_or_else(|| Error::BalanceDiffOverflow(e.dust_allowance as i128 + diff.dust_allowance as i128))?;
+                .ok_or(Error::BalanceDiffOverflow(
+                    e.dust_allowance as i128 + diff.dust_allowance as i128,
+                ))?;
             e.dust_outputs = e
                 .dust_outputs
                 .checked_add(diff.dust_outputs)
-                .ok_or_else(|| Error::BalanceDiffOverflow(e.dust_outputs as i128 + diff.dust_outputs as i128))?;
+                .ok_or(Error::BalanceDiffOverflow(
+                    e.dust_outputs as i128 + diff.dust_outputs as i128,
+                ))?;
         }
 
         Ok(())
@@ -162,7 +166,7 @@ impl BalanceDiffs {
         entry.amount = entry
             .amount
             .checked_add(amount as i64)
-            .ok_or_else(|| Error::BalanceDiffOverflow(entry.amount as i128 + amount as i128))?;
+            .ok_or(Error::BalanceDiffOverflow(entry.amount as i128 + amount as i128))?;
         Ok(())
     }
 
@@ -172,7 +176,7 @@ impl BalanceDiffs {
         entry.amount = entry
             .amount
             .checked_sub(amount as i64)
-            .ok_or_else(|| Error::BalanceDiffOverflow(entry.amount as i128 + amount as i128))?;
+            .ok_or(Error::BalanceDiffOverflow(entry.amount as i128 + amount as i128))?;
         Ok(())
     }
 
@@ -182,7 +186,9 @@ impl BalanceDiffs {
         entry.dust_allowance = entry
             .dust_allowance
             .checked_add(amount as i64)
-            .ok_or_else(|| Error::BalanceDiffOverflow(entry.dust_allowance as i128 + amount as i128))?;
+            .ok_or(Error::BalanceDiffOverflow(
+                entry.dust_allowance as i128 + amount as i128,
+            ))?;
         Ok(())
     }
 
@@ -192,7 +198,9 @@ impl BalanceDiffs {
         entry.dust_allowance = entry
             .dust_allowance
             .checked_sub(amount as i64)
-            .ok_or_else(|| Error::BalanceDiffOverflow(entry.dust_allowance as i128 + amount as i128))?;
+            .ok_or(Error::BalanceDiffOverflow(
+                entry.dust_allowance as i128 + amount as i128,
+            ))?;
         Ok(())
     }
 
@@ -202,7 +210,7 @@ impl BalanceDiffs {
         entry.dust_outputs = entry
             .dust_outputs
             .checked_add(1)
-            .ok_or_else(|| Error::BalanceDiffOverflow(entry.dust_outputs as i128 + 1))?;
+            .ok_or(Error::BalanceDiffOverflow(entry.dust_outputs as i128 + 1))?;
         Ok(())
     }
 
@@ -212,7 +220,7 @@ impl BalanceDiffs {
         entry.dust_outputs = entry
             .dust_outputs
             .checked_sub(1)
-            .ok_or_else(|| Error::BalanceDiffOverflow(entry.dust_outputs as i128 + 1))?;
+            .ok_or(Error::BalanceDiffOverflow(entry.dust_outputs as i128 + 1))?;
         Ok(())
     }
 

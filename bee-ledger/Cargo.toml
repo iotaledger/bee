@@ -1,6 +1,6 @@
 [package]
 name = "bee-ledger"
-version = "0.5.0"
+version = "0.6.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "All types and features required to compute and maintain the ledger state"
@@ -12,12 +12,13 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-common = { version = "0.5.0", path = "../bee-common/bee-common", default-features = false }
-bee-message = { version = "0.1.5", path = "../bee-message", default-features = false }
+bee-message = { version = "0.1.6", path = "../bee-message", default-features = false }
 bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", default-features = false, optional = true }
 bee-storage = { version = "0.9.0", path = "../bee-storage/bee-storage", default-features = false, optional = true }
 bee-tangle = { version = "0.2.0", path = "../bee-tangle", default-features = false, optional = true }
 
 async-trait = { version = "0.1.51", default-features = false, optional = true }
+bytes = { version = "1.0.1", default-features = false, optional = true }
 digest = { version = "0.9.0", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false, optional = true }
 hashbrown = { version = "0.11.2", default-features = false, optional = true }
@@ -38,6 +39,7 @@ workers = [
   "bee-storage",
   "bee-tangle",
   "async-trait",
+  "bytes",
   "digest",
   "futures",
   "hashbrown",

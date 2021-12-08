@@ -99,10 +99,7 @@ impl PeerList {
     }
 
     pub fn remove(&mut self, peer_id: &PeerId) -> Result<PeerInfo, Error> {
-        let (info, _) = self
-            .peers
-            .remove(peer_id)
-            .ok_or_else(|| Error::PeerNotPresent(*peer_id))?;
+        let (info, _) = self.peers.remove(peer_id).ok_or(Error::PeerNotPresent(*peer_id))?;
 
         Ok(info)
     }
@@ -114,7 +111,7 @@ impl PeerList {
     pub fn info(&self, peer_id: &PeerId) -> Result<PeerInfo, Error> {
         self.peers
             .get(peer_id)
-            .ok_or_else(|| Error::PeerNotPresent(*peer_id))
+            .ok_or(Error::PeerNotPresent(*peer_id))
             .map(|(peer_info, _)| peer_info.clone())
     }
 
@@ -126,10 +123,7 @@ impl PeerList {
     where
         U: FnMut(&mut PeerInfo),
     {
-        let (info, _) = self
-            .peers
-            .get_mut(peer_id)
-            .ok_or_else(|| Error::PeerNotPresent(*peer_id))?;
+        let (info, _) = self.peers.get_mut(peer_id).ok_or(Error::PeerNotPresent(*peer_id))?;
 
         update(info);
 
@@ -140,10 +134,7 @@ impl PeerList {
     where
         U: FnMut(&mut PeerState) -> Option<GossipSender>,
     {
-        let (_, state) = self
-            .peers
-            .get_mut(peer_id)
-            .ok_or_else(|| Error::PeerNotPresent(*peer_id))?;
+        let (_, state) = self.peers.get_mut(peer_id).ok_or(Error::PeerNotPresent(*peer_id))?;
 
         Ok(update(state))
     }
@@ -154,7 +145,7 @@ impl PeerList {
     {
         self.peers
             .get(peer_id)
-            .ok_or_else(|| Error::PeerNotPresent(*peer_id))
+            .ok_or(Error::PeerNotPresent(*peer_id))
             .map(|(info, state)| predicate(info, state))
     }
 

@@ -10,4 +10,4 @@ keywords:
 
 # API Reference
 
-You can find specifications for the REST API for the IOTA node software in the [IOTA REST API reference](https://editor.swagger.io/?url=https://raw.githubusercontent.com/rufsam/protocol-rfcs/master/text/0026-rest-api/rest-api.yaml)
+You can find specifications for the REST API for the IOTA node software in the [IOTA REST API reference](https://editor.swagger.io/?url=https://raw.githubusercontent.com/rufsam/protocol-rfcs/master/text/0026-rest-api/0026-rest-api.yaml)
