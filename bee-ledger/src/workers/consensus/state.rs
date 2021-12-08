@@ -32,12 +32,12 @@ fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) 
 
         supply = supply
             .checked_add(amount)
-            .ok_or_else(|| Error::LedgerStateOverflow(supply as u128 + amount as u128))?;
+            .ok_or(Error::LedgerStateOverflow(supply as u128 + amount as u128))?;
     }
 
     if supply
         .checked_add(treasury)
-        .ok_or_else(|| Error::LedgerStateOverflow(supply as u128 + treasury as u128))?
+        .ok_or(Error::LedgerStateOverflow(supply as u128 + treasury as u128))?
         != IOTA_SUPPLY
     {
         Err(Error::InvalidLedgerUnspentState(supply))
@@ -62,7 +62,7 @@ fn validate_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u64) 
 
     if supply
         .checked_add(treasury)
-        .ok_or_else(|| Error::LedgerStateOverflow(supply as u128 + treasury as u128))?
+        .ok_or(Error::LedgerStateOverflow(supply as u128 + treasury as u128))?
         != IOTA_SUPPLY
     {
         Err(Error::InvalidLedgerBalanceState(supply))
