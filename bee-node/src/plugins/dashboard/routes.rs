@@ -66,11 +66,12 @@ pub(crate) fn asset_routes() -> impl Filter<Extract = impl Reply, Error = Reject
 pub(crate) fn page_routes() -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path!("analytics" / ..)
         .and_then(serve_index)
-        .or(warp::path!("peers" / ..).and_then(serve_index))
+        .or(warp::path!("dashboard" / ..).and_then(serve_index))
         .or(warp::path!("explorer" / ..).and_then(serve_index))
-        .or(warp::path!("visualizer" / ..).and_then(serve_index))
-        .or(warp::path!("settings" / ..).and_then(serve_index))
         .or(warp::path!("login" / ..).and_then(serve_index))
+        .or(warp::path!("peers" / ..).and_then(serve_index))
+        .or(warp::path!("settings" / ..).and_then(serve_index))
+        .or(warp::path!("visualizer" / ..).and_then(serve_index))
 }
 
 pub(crate) fn ws_routes<B: StorageBackend>(
