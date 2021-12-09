@@ -1,0 +1,5 @@
+error: weight types cannot be applied to variants of an enum
+  --> tests/fail/tagged_enum_variants.rs:11:5
+   |
+11 |     SingleKey(u32),
+   |     ^^^^^^^^^

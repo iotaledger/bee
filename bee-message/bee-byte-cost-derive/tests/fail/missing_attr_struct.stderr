@@ -1,0 +1,11 @@
+error[E0277]: the trait bound `u32: ByteCost` is not satisfied
+  --> tests/fail/missing_attr_struct.rs:10:5
+   |
+10 |     a: u32,
+   |     ^ the trait `ByteCost` is not implemented for `u32`
+   |
+note: required by `weighted_bytes`
+  --> $WORKSPACE/bee-message/bee-byte-cost/src/lib.rs
+   |
+   |     fn weighted_bytes(&self, config: &ByteCostConfig) -> u64;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

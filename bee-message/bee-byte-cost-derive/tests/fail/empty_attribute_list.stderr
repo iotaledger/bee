@@ -1,0 +1,5 @@
+error: field attribute requires one or more weight specifiers such as `key` or `data`
+  --> tests/fail/empty_attribute_list.rs:10:16
+   |
+10 |     #[byte_cost()]
+   |                ^^

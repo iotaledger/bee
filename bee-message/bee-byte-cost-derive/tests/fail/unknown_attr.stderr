@@ -1,0 +1,5 @@
+error: unknown weight identifier `unknown_attr`.
+  --> tests/fail/unknown_attr.rs:10:17
+   |
+10 |     #[byte_cost(unknown_attr)]
+   |                 ^^^^^^^^^^^^

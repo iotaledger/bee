@@ -1,0 +1,5 @@
+error: there can be at most one `#[byte_cost(...)]` attribute per field
+  --> tests/fail/duplicated_attr_struct.rs:10:5
+   |
+10 |     #[byte_cost(key)]
+   |     ^

@@ -5,6 +5,8 @@ members = [
 	"bee-api/bee-rest-api",
 	"bee-ledger",
 	"bee-message",
+	"bee-message/bee-byte-cost",
+	"bee-message/bee-byte-cost-derive",
 	"bee-network/bee-autopeering",
 	"bee-network/bee-gossip",
 	"bee-node",
