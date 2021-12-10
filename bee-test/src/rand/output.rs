@@ -3,8 +3,6 @@
 
 use crate::rand::{
     address::rand_address,
-    // message::rand_message_id,
-    // milestone::{rand_milestone_id, rand_milestone_index},
     number::{rand_number, rand_number_range},
     transaction::rand_transaction_id,
 };

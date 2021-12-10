@@ -1,11 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::{
-    address::rand_address,
-    /* milestone::rand_milestone_index, */ number::rand_number_range, /* payload::rand_receipt_payload, */
-    string::rand_string_charset,
-};
+use crate::rand::{address::rand_address, number::rand_number_range, string::rand_string_charset};
 
 // use bee_ledger::types::Receipt;
 use bee_message::{
