@@ -172,7 +172,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: beta
           override: true
           components: clippy
 
@@ -185,11 +185,11 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             ~/.cargo/bin
-          key: ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
+          key: ubuntu-latest-beta-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
           restore-keys: |
-            ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ubuntu-latest-nightly-${{ env.cache-name }}-
-            ubuntu-latest-nightly-
+            ubuntu-latest-beta-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
+            ubuntu-latest-beta-${{ env.cache-name }}-
+            ubuntu-latest-beta-
             ubuntu-latest-
 
       - uses: actions-rs/clippy-check@v1
