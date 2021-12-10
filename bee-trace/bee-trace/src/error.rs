@@ -6,7 +6,7 @@ use std::{error, fmt, io, path::PathBuf};
 /// Error `enum` containing variants for any errors that could potentially occur in this crate.
 #[derive(Debug)]
 pub enum Error {
-    /// Error originating from the [`FlamegraphLayer`](crate::subscriber::layer::FlamegraphFilteredLayer).
+    /// Error originating from the [`FlamegraphLayer`](crate::subscriber::layer::FlamegraphLayer).
     FlamegraphLayer(io::Error),
     /// Error originating from the [`Flamegrapher`](crate::util::Flamegrapher).
     Flamegrapher(FlamegrapherErrorKind),
@@ -44,7 +44,7 @@ impl From<log::SetLoggerError> for LogLayerErrorKind {
     }
 }
 
-/// An error originating from the [`FlamegraphLayer`](crate::subscriber::layer::FlamegraphFilteredLayer).
+/// An error originating from the [`FlamegraphLayer`](crate::subscriber::layer::FlamegraphLayer).
 #[derive(Debug)]
 pub enum FlamegraphLayerErrorKind {
     /// Encountered an [`io::Error`].
