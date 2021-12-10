@@ -3,7 +3,7 @@
 
 mod regular;
 
-pub use regular::{RegularEssence, RegularEssenceBuilder};
+pub use regular::{RegularTransactionEssence, RegularTransactionEssenceBuilder};
 
 use crate::Error;
 
@@ -12,50 +12,44 @@ use bee_common::packable::{Packable, Read, Write};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 /// A generic essence that can represent different types defining transaction essences.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, derive_more::From)]
 #[cfg_attr(
-    feature = "serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-pub enum Essence {
+pub enum TransactionEssence {
     /// A regular transaction essence.
-    Regular(RegularEssence),
+    Regular(RegularTransactionEssence),
 }
 
-impl Essence {
-    /// Returns the essence kind of an `Essence`.
+impl TransactionEssence {
+    /// Returns the essence kind of an [`Essence`].
     pub fn kind(&self) -> u8 {
         match self {
-            Self::Regular(_) => RegularEssence::KIND,
+            Self::Regular(_) => RegularTransactionEssence::KIND,
         }
     }
 
-    /// Return the Blake2b hash of an `Essence`.
+    /// Return the Blake2b hash of an [`Essence`].
     pub fn hash(&self) -> [u8; 32] {
         Blake2b256::digest(&self.pack_new()).into()
     }
 }
 
-impl From<RegularEssence> for Essence {
-    fn from(essence: RegularEssence) -> Self {
-        Self::Regular(essence)
-    }
-}
-
-impl Packable for Essence {
+impl Packable for TransactionEssence {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::Regular(essence) => RegularEssence::KIND.packed_len() + essence.packed_len(),
+            Self::Regular(essence) => RegularTransactionEssence::KIND.packed_len() + essence.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::Regular(essence) => {
-                RegularEssence::KIND.pack(writer)?;
+                RegularTransactionEssence::KIND.pack(writer)?;
                 essence.pack(writer)?;
             }
         }
@@ -65,7 +59,7 @@ impl Packable for Essence {
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            RegularEssence::KIND => RegularEssence::unpack_inner::<R, CHECK>(reader)?.into(),
+            RegularTransactionEssence::KIND => RegularTransactionEssence::unpack_inner::<R, CHECK>(reader)?.into(),
             k => return Err(Self::Error::InvalidEssenceKind(k)),
         })
     }

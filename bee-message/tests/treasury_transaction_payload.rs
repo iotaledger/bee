@@ -2,7 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    address::{Address, Ed25519Address},
+    constants::IOTA_SUPPLY,
+    input::{Input, TreasuryInput, UtxoInput},
+    output::{Output, SimpleOutput, TreasuryOutput},
+    payload::TreasuryTransactionPayload,
+    Error,
+};
 
 use core::str::FromStr;
 
@@ -40,7 +47,7 @@ fn new_invalid_input() {
 fn new_invalid_output() {
     let input = Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap());
     let output = Output::from(
-        SignatureLockedSingleOutput::new(
+        SimpleOutput::new(
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             IOTA_SUPPLY,
         )

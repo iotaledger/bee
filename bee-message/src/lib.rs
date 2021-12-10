@@ -7,7 +7,7 @@
 
 extern crate alloc;
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 #[macro_use]
 mod serde;
 mod error;
@@ -28,13 +28,11 @@ pub mod output;
 pub mod parents;
 /// A module that provides types and syntactic validations of payloads.
 pub mod payload;
-/// A prelude for the `bee-message` crate.
-pub mod prelude;
 /// A module that provides types and syntactic validations of signatures.
 pub mod signature;
 /// A module that provides types and syntactic validations of unlock blocks.
-pub mod unlock;
+pub mod unlock_block;
 
 pub use error::Error;
-pub use message::{Message, MessageBuilder, MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN};
-pub use message_id::{MessageId, MESSAGE_ID_LENGTH};
+pub use message::{Message, MessageBuilder};
+pub use message_id::MessageId;

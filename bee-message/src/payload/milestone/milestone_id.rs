@@ -7,38 +7,32 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::str::FromStr;
 
-/// The length of a milestone identifier.
-pub const MILESTONE_ID_LENGTH: usize = 32;
-
 /// A milestone identifier, the BLAKE2b-256 hash of the milestone bytes.
 /// See <https://www.blake2.net/> for more information.
-#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
-pub struct MilestoneId([u8; MILESTONE_ID_LENGTH]);
+#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, derive_more::From)]
+pub struct MilestoneId([u8; MilestoneId::LENGTH]);
 
 impl MilestoneId {
-    /// Creates a new `MilestoneId`.
-    pub fn new(bytes: [u8; MILESTONE_ID_LENGTH]) -> Self {
+    /// The length of a [`MilestoneId`].
+    pub const LENGTH: usize = 32;
+
+    /// Creates a new [`MilestoneId`].
+    pub fn new(bytes: [u8; MilestoneId::LENGTH]) -> Self {
         bytes.into()
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(MilestoneId);
-
-impl From<[u8; MILESTONE_ID_LENGTH]> for MilestoneId {
-    fn from(bytes: [u8; MILESTONE_ID_LENGTH]) -> Self {
-        Self(bytes)
-    }
-}
 
 impl FromStr for MilestoneId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; MILESTONE_ID_LENGTH] = hex::decode(s)
+        let bytes: [u8; MilestoneId::LENGTH] = hex::decode(s)
             .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
             .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength(MILESTONE_ID_LENGTH * 2, s.len()))?;
+            .map_err(|_| Self::Err::InvalidHexadecimalLength(MilestoneId::LENGTH * 2, s.len()))?;
 
         Ok(MilestoneId::from(bytes))
     }
@@ -66,7 +60,7 @@ impl Packable for MilestoneId {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        MILESTONE_ID_LENGTH
+        MilestoneId::LENGTH
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -76,7 +70,7 @@ impl Packable for MilestoneId {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(<[u8; MILESTONE_ID_LENGTH]>::unpack_inner::<R, CHECK>(
+        Ok(Self::new(<[u8; MilestoneId::LENGTH]>::unpack_inner::<R, CHECK>(
             reader,
         )?))
     }

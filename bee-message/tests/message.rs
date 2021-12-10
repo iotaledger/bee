@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    parents::Parents,
+    payload::{IndexationPayload, Payload},
+    Error, Message, MessageBuilder,
+};
 use bee_pow::{
     providers::{
         miner::{Miner, MinerBuilder},
@@ -53,13 +57,13 @@ fn invalid_length() {
         .with_parents(Parents::new(rand_message_ids(2)).unwrap())
         .with_nonce_provider(42, 10000f64)
         .with_payload(
-            IndexationPayload::new(&[42], &[0u8; MESSAGE_LENGTH_MAX])
+            IndexationPayload::new(&[42], &[0u8; Message::LENGTH_MAX])
                 .unwrap()
                 .into(),
         )
         .finish();
 
-    assert!(matches!(res, Err(Error::InvalidMessageLength(len)) if len == MESSAGE_LENGTH_MAX + 96));
+    assert!(matches!(res, Err(Error::InvalidMessageLength(len)) if len == Message::LENGTH_MAX + 96));
 }
 
 #[test]
@@ -67,7 +71,7 @@ fn invalid_payload_kind() {
     let res = MessageBuilder::<Miner>::new()
         .with_network_id(0)
         .with_parents(rand_parents())
-        .with_payload(rand_treasury_transaction_payload())
+        .with_payload(rand_treasury_transaction_payload().into())
         .finish();
 
     assert!(matches!(res, Err(Error::InvalidPayloadKind(4))))
@@ -135,6 +139,6 @@ fn getters() {
 
     assert_eq!(message.network_id(), 1);
     assert_eq!(*message.parents(), parents);
-    assert_eq!(*message.payload().as_ref().unwrap(), payload);
+    assert_eq!(*message.payload().as_ref().unwrap(), &payload);
     assert_eq!(message.nonce(), nonce);
 }

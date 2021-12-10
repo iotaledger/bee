@@ -2,7 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::{input::Input, payload::transaction::Essence, prelude::*};
+use bee_message::{
+    address::{Address, Ed25519Address},
+    input::{Input, UtxoInput},
+    output::{Output, SimpleOutput},
+    payload::transaction::{
+        RegularTransactionEssence, RegularTransactionEssenceBuilder, TransactionEssence, TransactionId,
+        TransactionPayload, TransactionPayloadBuilder,
+    },
+    signature::{Ed25519Signature, Signature},
+    unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
+    Error,
+};
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
@@ -31,9 +42,9 @@ fn builder_no_essence_no_unlock_blocks() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-    let essence = Essence::Regular(
-        RegularEssence::builder()
+    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
             .with_inputs(vec![input])
             .with_outputs(vec![output])
             .finish()
@@ -57,9 +68,9 @@ fn builder_no_essence_too_few_unlock_blocks() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-    let essence = Essence::Regular(
-        RegularEssence::builder()
+    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
             .with_inputs(vec![input1, input2])
             .with_outputs(vec![output])
             .finish()
@@ -70,7 +81,7 @@ fn builder_no_essence_too_few_unlock_blocks() {
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block]).unwrap();
 
     let builder = TransactionPayload::builder()
@@ -93,9 +104,9 @@ fn builder_no_essence_too_many_unlock_blocks() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-    let essence = Essence::Regular(
-        RegularEssence::builder()
+    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
             .with_inputs(vec![input1])
             .with_outputs(vec![output])
             .finish()
@@ -106,8 +117,8 @@ fn builder_no_essence_too_many_unlock_blocks() {
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
-    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
+    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
 
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
 
@@ -131,9 +142,9 @@ fn pack_unpack_valid() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-    let essence = Essence::Regular(
-        RegularEssence::builder()
+    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
             .with_inputs(vec![input1, input2])
             .with_outputs(vec![output])
             .finish()
@@ -144,8 +155,8 @@ fn pack_unpack_valid() {
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
-    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
+    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
 
     let tx_payload = TransactionPayload::builder()
@@ -168,9 +179,9 @@ fn getters() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-    let essence = Essence::Regular(
-        RegularEssenceBuilder::new()
+    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssenceBuilder::new()
             .with_inputs(vec![input1, input2])
             .with_outputs(vec![output])
             .finish()
@@ -181,8 +192,8 @@ fn getters() {
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
-    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
+    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
 
     let tx_payload = TransactionPayloadBuilder::new()

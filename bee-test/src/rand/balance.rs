@@ -8,10 +8,5 @@ use bee_message::constants::IOTA_SUPPLY;
 
 /// Generates a random balance.
 pub fn rand_balance() -> Balance {
-    Balance::new(
-        rand_number_range(0..=IOTA_SUPPLY),
-        rand_number_range(0..=IOTA_SUPPLY),
-        rand_number_range(0..=IOTA_SUPPLY),
-    )
-    .unwrap()
+    Balance::new(rand_number_range(0..=IOTA_SUPPLY)).unwrap()
 }

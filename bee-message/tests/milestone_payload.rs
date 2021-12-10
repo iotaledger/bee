@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    milestone::MilestoneIndex,
+    parents::Parents,
+    payload::milestone::{MilestoneEssence, MilestonePayload},
+    Error,
+};
 use bee_test::rand::{self, message::rand_message_ids, parents::rand_parents};
 
 #[test]
@@ -12,34 +17,32 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    assert!(
-        MilestonePayload::new(
-            MilestonePayloadEssence::new(
-                MilestoneIndex(0),
-                0,
-                rand_parents(),
-                [0; MILESTONE_MERKLE_PROOF_LENGTH],
-                0,
-                0,
-                vec![[0; 32]],
-                None,
-            )
-            .unwrap(),
-            vec![[0; 64]],
+    assert!(MilestonePayload::new(
+        MilestoneEssence::new(
+            MilestoneIndex(0),
+            0,
+            rand_parents(),
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+            0,
+            0,
+            vec![[0; 32]],
+            None,
         )
-        .is_ok()
-    );
+        .unwrap(),
+        vec![[0; 64]],
+    )
+    .is_ok());
 }
 
 #[test]
 fn new_invalid_no_signature() {
     assert!(matches!(
         MilestonePayload::new(
-            MilestonePayloadEssence::new(
+            MilestoneEssence::new(
                 MilestoneIndex(0),
                 0,
                 rand_parents(),
-                [0; MILESTONE_MERKLE_PROOF_LENGTH],
+                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 0,
                 0,
                 vec![[0; 32]],
@@ -56,11 +59,11 @@ fn new_invalid_no_signature() {
 fn new_invalid_too_many_signatures() {
     assert!(matches!(
         MilestonePayload::new(
-            MilestonePayloadEssence::new(
+            MilestoneEssence::new(
                 MilestoneIndex(0),
                 0,
                 rand_parents(),
-                [0; MILESTONE_MERKLE_PROOF_LENGTH],
+                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 0,
                 0,
                 vec![[0; 32]],
@@ -77,11 +80,11 @@ fn new_invalid_too_many_signatures() {
 fn new_invalid_public_keys_sgnatures_count_mismatch() {
     assert!(matches!(
         MilestonePayload::new(
-            MilestonePayloadEssence::new(
+            MilestoneEssence::new(
                 MilestoneIndex(0),
                 0,
                 rand_parents(),
-                [0; MILESTONE_MERKLE_PROOF_LENGTH],
+                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 0,
                 0,
                 vec![[0; 32], [1; 32]],
@@ -97,11 +100,11 @@ fn new_invalid_public_keys_sgnatures_count_mismatch() {
 #[test]
 fn packed_len() {
     let ms = MilestonePayload::new(
-        MilestonePayloadEssence::new(
+        MilestoneEssence::new(
             MilestoneIndex(0),
             0,
             Parents::new(rand_message_ids(4)).unwrap(),
-            [0; MILESTONE_MERKLE_PROOF_LENGTH],
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
             vec![[0; 32], [1; 32]],
@@ -119,11 +122,11 @@ fn packed_len() {
 #[test]
 fn pack_unpack_valid() {
     let payload = MilestonePayload::new(
-        MilestonePayloadEssence::new(
+        MilestoneEssence::new(
             MilestoneIndex(0),
             0,
             rand_parents(),
-            [0; MILESTONE_MERKLE_PROOF_LENGTH],
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
             vec![[0; 32]],
@@ -142,11 +145,11 @@ fn pack_unpack_valid() {
 
 #[test]
 fn getters() {
-    let essence = MilestonePayloadEssence::new(
+    let essence = MilestoneEssence::new(
         rand::milestone::rand_milestone_index(),
         rand::number::rand_number::<u64>(),
         rand_parents(),
-        [0; MILESTONE_MERKLE_PROOF_LENGTH],
+        [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
         0,
         0,
         vec![[0; 32]],

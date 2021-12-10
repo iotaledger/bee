@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{constants::IOTA_SUPPLY, output::TreasuryOutput, Error};
 
 #[test]
 fn kind() {

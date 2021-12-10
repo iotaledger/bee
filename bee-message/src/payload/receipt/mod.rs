@@ -6,12 +6,12 @@
 mod migrated_funds_entry;
 mod tail_transaction_hash;
 
-pub use migrated_funds_entry::{MigratedFundsEntry, VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS};
-pub use tail_transaction_hash::{TailTransactionHash, TAIL_TRANSACTION_HASH_LEN};
+pub use migrated_funds_entry::MigratedFundsEntry;
+pub use tail_transaction_hash::TailTransactionHash;
 
 use crate::{
-    constants::INPUT_OUTPUT_COUNT_RANGE,
     milestone::MilestoneIndex,
+    output::OUTPUT_COUNT_RANGE,
     payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error,
 };
@@ -24,11 +24,11 @@ use bee_common::{
 use core::ops::RangeInclusive;
 use std::collections::HashMap;
 
-const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = INPUT_OUTPUT_COUNT_RANGE;
+const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<u16> = OUTPUT_COUNT_RANGE;
 
 /// Receipt is a listing of migrated funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReceiptPayload {
     migrated_at: MilestoneIndex,
     last: bool,
@@ -47,8 +47,8 @@ impl ReceiptPayload {
         funds: Vec<MigratedFundsEntry>,
         transaction: Payload,
     ) -> Result<Self, Error> {
-        if !MIGRATED_FUNDS_ENTRY_RANGE.contains(&funds.len()) {
-            return Err(Error::InvalidReceiptFundsCount(funds.len()));
+        if !MIGRATED_FUNDS_ENTRY_RANGE.contains(&(funds.len() as u16)) {
+            return Err(Error::InvalidReceiptFundsCount(funds.len() as u16));
         }
 
         if !matches!(transaction, Payload::TreasuryTransaction(_)) {
@@ -57,7 +57,7 @@ impl ReceiptPayload {
 
         // Funds must be lexicographically sorted and unique in their serialised forms.
         if !is_unique_sorted(funds.iter().map(Packable::pack_new)) {
-            return Err(Error::TransactionOutputsNotSorted);
+            return Err(Error::ReceiptFundsNotUniqueSorted);
         }
 
         let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());

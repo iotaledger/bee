@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{Error, MessageId};
 
 use core::str::FromStr;
 
@@ -46,7 +46,7 @@ fn from_str_invalid_len_too_short() {
     assert!(matches!(
         MessageId::from_str(MESSAGE_ID_INVALID_LEN_TOO_SHORT),
         Err(Error::InvalidHexadecimalLength(expected, actual))
-            if expected == MESSAGE_ID_LENGTH * 2 && actual == MESSAGE_ID_LENGTH * 2 - 2
+            if expected == MessageId::LENGTH * 2 && actual == MessageId::LENGTH * 2 - 2
     ));
 }
 
@@ -55,7 +55,7 @@ fn from_str_invalid_len_too_long() {
     assert!(matches!(
         MessageId::from_str(MESSAGE_ID_INVALID_LEN_TOO_LONG),
         Err(Error::InvalidHexadecimalLength(expected, actual))
-            if expected == MESSAGE_ID_LENGTH * 2 && actual == MESSAGE_ID_LENGTH * 2 + 2
+            if expected == MessageId::LENGTH * 2 && actual == MessageId::LENGTH * 2 + 2
     ));
 }
 

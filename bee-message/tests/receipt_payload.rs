@@ -2,8 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
-use bee_test::rand::{bytes::rand_bytes_32, number::rand_number};
+use bee_message::{
+    address::{Address, Ed25519Address},
+    input::{Input, TreasuryInput},
+    milestone::MilestoneIndex,
+    output::{Output, SimpleOutput, TreasuryOutput},
+    payload::{
+        milestone::MilestoneId,
+        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
+        IndexationPayload, Payload, TreasuryTransactionPayload,
+    },
+    Error,
+};
+use bee_test::rand::{bytes::rand_bytes_array, number::rand_number};
 
 use std::str::FromStr;
 
@@ -28,7 +39,7 @@ fn new_valid() {
         vec![
             MigratedFundsEntry::new(
                 TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SignatureLockedSingleOutput::new(
+                SimpleOutput::new(
                     Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                     AMOUNT,
                 )
@@ -75,7 +86,7 @@ fn new_invalid_receipt_funds_count_high() {
             .map(|_| {
                 MigratedFundsEntry::new(
                     TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                    SignatureLockedSingleOutput::new(
+                    SimpleOutput::new(
                         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                         AMOUNT,
                     )
@@ -104,7 +115,7 @@ fn new_invalid_payload_kind() {
         vec![
             MigratedFundsEntry::new(
                 TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SignatureLockedSingleOutput::new(
+                SimpleOutput::new(
                     Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                     AMOUNT,
                 )
@@ -112,7 +123,7 @@ fn new_invalid_payload_kind() {
             )
             .unwrap(),
         ],
-        Payload::from(IndexationPayload::new(&rand_bytes_32(), &[]).unwrap()),
+        Payload::from(IndexationPayload::new(&rand_bytes_array::<32>(), &[]).unwrap()),
     );
 
     assert!(matches!(
@@ -129,7 +140,7 @@ fn new_invalid_transaction_outputs_not_sorted() {
     let migrated_funds = vec![
         MigratedFundsEntry::new(
             TailTransactionHash::new(new_tail_transaction_hash).unwrap(),
-            SignatureLockedSingleOutput::new(
+            SimpleOutput::new(
                 Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                 AMOUNT,
             )
@@ -138,7 +149,7 @@ fn new_invalid_transaction_outputs_not_sorted() {
         .unwrap(),
         MigratedFundsEntry::new(
             TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-            SignatureLockedSingleOutput::new(
+            SimpleOutput::new(
                 Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                 AMOUNT,
             )
@@ -160,14 +171,14 @@ fn new_invalid_transaction_outputs_not_sorted() {
         ),
     );
 
-    assert!(matches!(receipt, Err(Error::TransactionOutputsNotSorted)));
+    assert!(matches!(receipt, Err(Error::ReceiptFundsNotUniqueSorted)));
 }
 
 #[test]
 fn new_invalid_tail_transaction_hashes_not_unique() {
     let migrated_funds = MigratedFundsEntry::new(
         TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-        SignatureLockedSingleOutput::new(
+        SimpleOutput::new(
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             AMOUNT,
         )
@@ -188,7 +199,7 @@ fn new_invalid_tail_transaction_hashes_not_unique() {
         ),
     );
 
-    assert!(matches!(receipt, Err(Error::TransactionOutputsNotSorted)));
+    assert!(matches!(receipt, Err(Error::ReceiptFundsNotUniqueSorted)));
 }
 
 #[test]
@@ -199,7 +210,7 @@ fn pack_unpack_valid() {
         vec![
             MigratedFundsEntry::new(
                 TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SignatureLockedSingleOutput::new(
+                SimpleOutput::new(
                     Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                     AMOUNT,
                 )
@@ -230,7 +241,7 @@ fn getters() {
     let funds = vec![
         MigratedFundsEntry::new(
             TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-            SignatureLockedSingleOutput::new(
+            SimpleOutput::new(
                 Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                 AMOUNT,
             )

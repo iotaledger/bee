@@ -6,8 +6,8 @@
 mod essence;
 mod milestone_id;
 
-pub use essence::{MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH};
-pub use milestone_id::{MilestoneId, MILESTONE_ID_LENGTH};
+pub use essence::MilestoneEssence;
+pub use milestone_id::MilestoneId;
 
 use crate::Error;
 
@@ -21,11 +21,6 @@ use crypto::{
 
 use alloc::{boxed::Box, vec::Vec};
 use core::ops::RangeInclusive;
-
-/// Range of allowed milestones signatures key numbers.
-pub const MILESTONE_SIGNATURE_COUNT_RANGE: RangeInclusive<usize> = 1..=255;
-/// Length of a milestone signature.
-pub const MILESTONE_SIGNATURE_LENGTH: usize = 64;
 
 #[derive(Debug)]
 #[allow(missing_docs)]
@@ -46,22 +41,26 @@ impl From<CryptoError> for MilestoneValidationError {
 
 /// A payload which defines the inclusion set of other messages in the Tangle.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestonePayload {
-    essence: MilestonePayloadEssence,
+    essence: MilestoneEssence,
     signatures: Vec<Box<[u8]>>,
 }
 
 impl MilestonePayload {
     /// The payload kind of a `MilestonePayload`.
     pub const KIND: u32 = 1;
+    /// Range of allowed milestones signatures key numbers.
+    pub const SIGNATURE_COUNT_RANGE: RangeInclusive<usize> = 1..=255;
+    /// Length of a milestone signature.
+    pub const SIGNATURE_LENGTH: usize = 64;
 
     /// Creates a new `MilestonePayload`.
     pub fn new(
-        essence: MilestonePayloadEssence,
-        signatures: Vec<[u8; MILESTONE_SIGNATURE_LENGTH]>,
+        essence: MilestoneEssence,
+        signatures: Vec<[u8; MilestonePayload::SIGNATURE_LENGTH]>,
     ) -> Result<Self, Error> {
-        if !MILESTONE_SIGNATURE_COUNT_RANGE.contains(&signatures.len()) {
+        if !MilestonePayload::SIGNATURE_COUNT_RANGE.contains(&signatures.len()) {
             return Err(Error::MilestoneInvalidSignatureCount(signatures.len()));
         }
 
@@ -92,7 +91,7 @@ impl MilestonePayload {
     }
 
     /// Returns the essence of a `MilestonePayload`.
-    pub fn essence(&self) -> &MilestonePayloadEssence {
+    pub fn essence(&self) -> &MilestoneEssence {
         &self.essence
     }
 
@@ -159,7 +158,7 @@ impl Packable for MilestonePayload {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.essence.packed_len() + 0u8.packed_len() + self.signatures.len() * MILESTONE_SIGNATURE_LENGTH
+        self.essence.packed_len() + 0u8.packed_len() + self.signatures.len() * MilestonePayload::SIGNATURE_LENGTH
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -174,11 +173,13 @@ impl Packable for MilestonePayload {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let essence = MilestonePayloadEssence::unpack_inner::<R, CHECK>(reader)?;
+        let essence = MilestoneEssence::unpack_inner::<R, CHECK>(reader)?;
         let signatures_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut signatures = Vec::with_capacity(signatures_len);
         for _ in 0..signatures_len {
-            signatures.push(<[u8; MILESTONE_SIGNATURE_LENGTH]>::unpack_inner::<R, CHECK>(reader)?);
+            signatures.push(<[u8; MilestonePayload::SIGNATURE_LENGTH]>::unpack_inner::<R, CHECK>(
+                reader,
+            )?);
         }
 
         Self::new(essence, signatures)

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{payload::milestone::MilestoneId, Error};
 
 use core::str::FromStr;
 
@@ -48,7 +48,7 @@ fn from_str_invalid_len_too_short() {
     assert!(matches!(
         MilestoneId::from_str(MILESTONE_ID_INVALID_LEN_TOO_SHORT),
         Err(Error::InvalidHexadecimalLength(expected, actual))
-            if expected == MILESTONE_ID_LENGTH * 2 && actual == MILESTONE_ID_LENGTH * 2 - 2
+            if expected == MilestoneId::LENGTH * 2 && actual == MilestoneId::LENGTH * 2 - 2
     ));
 }
 
@@ -57,7 +57,7 @@ fn from_str_invalid_len_too_long() {
     assert!(matches!(
         MilestoneId::from_str(MILESTONE_ID_INVALID_LEN_TOO_LONG),
         Err(Error::InvalidHexadecimalLength(expected, actual))
-            if expected == MILESTONE_ID_LENGTH * 2 && actual == MILESTONE_ID_LENGTH * 2 + 2
+            if expected == MilestoneId::LENGTH * 2 && actual == MilestoneId::LENGTH * 2 + 2
     ));
 }
 
