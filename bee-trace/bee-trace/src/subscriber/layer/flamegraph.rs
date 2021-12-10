@@ -163,7 +163,7 @@ where
         subscriber::Interest::always()
     }
 
-    fn new_span(&self, attrs: &span::Attributes<'_>, id: &span::Id, _ctx: Context<'_, S>) {
+    fn on_new_span(&self, attrs: &span::Attributes<'_>, id: &span::Id, _ctx: Context<'_, S>) {
         if self.is_tracked_callsite(&attrs.metadata().callsite()) {
             let location = SpanLocation::from_attributes(attrs);
             self.span_locations.write().insert(id.clone(), location);

@@ -15,14 +15,19 @@ bee-common = { path = "../../bee-common/bee-common", default-features = false }
 bee-trace-attributes = { path = "../bee-trace-attributes", default-features = false }
 
 colored = { version = "2.0.0", default-features = false }
+console-subscriber = { git = "https://github.com/tokio-rs/console.git", rev = "c4e3302", default-features = false, features = [ "parking_lot" ], optional = true }
 inferno = { version = "0.10.6", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false }
 log = { version = "0.4.14", default-features = false }
 parking_lot = { version = "0.11.1", default-features = false }
+tokio = { version = "1.13.0", default-features = false, features = [ "full", "rt", "tracing" ], optional = true }
 tracing = { version = "0.1.26", default-features = false }
 tracing-futures = { version = "0.2.5", default-features = false, features = [ "futures-01", "futures-03", "std", "std-future" ] }
 tracing-log = { version = "0.1.2", default-features = false, features = [ "log-tracer", "std" ] }
-tracing-subscriber = { version = "0.2.20", default-features = false, features = [ "ansi", "fmt", "parking_lot", "registry" ] }
+tracing-subscriber = { version = "0.3.0", default-features = false, features = [ "ansi", "fmt", "parking_lot", "registry" ] }
 
 [dev-dependencies]
-tokio = { version = "1.13.0", features = [ "full", "rt", "tracing" ], default-features = false }
+tokio = { version = "1.13.0", default-features = false, features = [ "full", "rt", "tracing" ] }
+
+[features]
+tokio-console = [ "console-subscriber", "tokio" ]
