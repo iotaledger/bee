@@ -37,7 +37,7 @@ pub fn flamegraph_layer<P: AsRef<Path>>(stack_filename: P) -> Result<(Flamegraph
         "task tracing requires building with RUSTFLAGS=\"--cfg tokio_unstable\"!"
     );
 
-    Ok(FlamegraphLayer::new(stack_filename)?)
+    Ok(FlamegraphLayer::new(stack_filename))
 }
 
 /// Filter function for the [`FlamegraphLayer`].

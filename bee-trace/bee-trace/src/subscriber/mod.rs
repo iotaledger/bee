@@ -151,6 +151,7 @@ impl SubscriberBuilder {
             )));
 
         #[cfg(feature = "tokio-console")]
+        #[allow(clippy::needless_return)]
         {
             let console_layer = if self.console_enabled {
                 Some(layer::console_layer()?)
