@@ -4,14 +4,20 @@ on:
   push:
     branches:
       - dev
-      - stable
+      - mainnet
+      - mainnet-develop
+      - shimmer
+      - shimmer-develop
     paths-ignore:
       - 'documentation/**'
       - '**.md'
   pull_request:
     branches:
       - dev
-      - stable
+      - mainnet
+      - mainnet-develop
+      - shimmer
+      - shimmer-develop
     paths-ignore:
       - 'documentation/**'
       - '**.md'
