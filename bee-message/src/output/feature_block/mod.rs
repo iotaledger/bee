@@ -204,6 +204,11 @@ impl FeatureBlocks {
     pub fn len(&self) -> usize {
         self.0.len()
     }
+
+    /// Returns whether the [`FeatureBlocks`] is empty or not.
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
 }
 
 impl Deref for FeatureBlocks {
