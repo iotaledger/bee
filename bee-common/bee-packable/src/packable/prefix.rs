@@ -14,7 +14,12 @@ use crate::{
 };
 
 use alloc::{boxed::Box, vec::Vec};
-use core::{convert::Infallible, fmt::Debug, marker::PhantomData, ops::Deref};
+use core::{
+    convert::Infallible,
+    fmt::Debug,
+    marker::PhantomData,
+    ops::{Deref, Range},
+};
 
 /// Semantic error raised while unpacking a dynamically-sized sequences that use a type different than `usize` for their
 /// length-prefix.
@@ -111,6 +116,7 @@ where
     B: Bounded + Packable,
     <B::Bounds as TryInto<B>>::Error: Debug,
     <B as TryFrom<usize>>::Error: Debug,
+    Range<B::Bounds>: Iterator<Item = B::Bounds>,
 {
     type UnpackError = UnpackPrefixError<T::UnpackError, B::UnpackError>;
 
@@ -136,7 +142,7 @@ where
 
         let mut inner = Vec::with_capacity(len.try_into().unwrap_or(0));
 
-        for _ in B::range(Default::default(), len) {
+        for _ in Default::default()..len {
             let item = T::unpack::<_, VERIFY>(unpacker).coerce()?;
             inner.push(item);
         }
@@ -206,6 +212,7 @@ where
     B: Bounded + Packable,
     <B::Bounds as TryInto<B>>::Error: Debug,
     <B as TryFrom<usize>>::Error: Debug,
+    Range<B::Bounds>: Iterator<Item = B::Bounds>,
 {
     type UnpackError = <VecPrefix<T, B> as Packable>::UnpackError;
 

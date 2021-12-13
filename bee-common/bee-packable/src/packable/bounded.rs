@@ -10,25 +10,17 @@ use crate::{
     Packable,
 };
 
-use core::{
-    fmt::{self, Display},
-    ops::Range,
-};
+use core::fmt::{self, Display};
 
 /// Trait that provides an interface for bounded types.
 pub trait Bounded: TryFrom<usize> + Into<Self::Bounds> {
     /// The type used to define the bounds.
     type Bounds: PartialOrd + TryInto<Self> + TryInto<usize> + Default + Copy;
-    /// The type used to define ranges over bounds.
-    type Range: Iterator<Item = Self::Bounds>;
 
     /// Minimum bounded value.
     const MIN: Self::Bounds;
     /// Maximum bounded value.
     const MAX: Self::Bounds;
-
-    /// Returns a range iterator over elements of type [`Bounds`](Self::Bounds).
-    fn range(start: Self::Bounds, end: Self::Bounds) -> Self::Range;
 }
 
 macro_rules! bounded {
@@ -80,14 +72,9 @@ macro_rules! bounded {
 
         impl<const MIN: $ty, const MAX: $ty> Bounded for $wrapper<MIN, MAX> {
             type Bounds = $ty;
-            type Range = Range<$ty>;
 
             const MIN: $ty = MIN;
             const MAX: $ty = MAX;
-
-            fn range(start: Self::Bounds, end: Self::Bounds) -> Self::Range {
-                start..end
-            }
         }
 
         impl<const MIN: $ty, const MAX: $ty> $wrapper<MIN, MAX> {
@@ -178,48 +165,28 @@ bounded!(BoundedU64, InvalidBoundedU64, TryIntoBoundedU64Error, u64);
 
 impl Bounded for u8 {
     type Bounds = Self;
-    type Range = Range<Self>;
 
     const MIN: Self::Bounds = u8::MIN;
     const MAX: Self::Bounds = u8::MAX;
-
-    fn range(start: Self::Bounds, end: Self::Bounds) -> Self::Range {
-        start..end
-    }
 }
 
 impl Bounded for u16 {
     type Bounds = Self;
-    type Range = Range<Self>;
 
     const MIN: Self::Bounds = u16::MIN;
     const MAX: Self::Bounds = u16::MAX;
-
-    fn range(start: Self::Bounds, end: Self::Bounds) -> Self::Range {
-        start..end
-    }
 }
 
 impl Bounded for u32 {
     type Bounds = Self;
-    type Range = Range<Self>;
 
     const MIN: Self::Bounds = u32::MIN;
     const MAX: Self::Bounds = u32::MAX;
-
-    fn range(start: Self::Bounds, end: Self::Bounds) -> Self::Range {
-        start..end
-    }
 }
 
 impl Bounded for u64 {
     type Bounds = Self;
-    type Range = Range<Self>;
 
     const MIN: Self::Bounds = u64::MIN;
     const MAX: Self::Bounds = u64::MAX;
-
-    fn range(start: Self::Bounds, end: Self::Bounds) -> Self::Range {
-        start..end
-    }
 }
