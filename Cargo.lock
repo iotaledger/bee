@@ -167,7 +167,7 @@ dependencies = [
 name = "bee-crypto"
 version = "0.3.0"
 dependencies = [
- "bee-ternary",
+ "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder",
  "criterion",
  "iota-crypto",
@@ -209,7 +209,7 @@ dependencies = [
  "bech32",
  "bee-common",
  "bee-pow",
- "bee-ternary",
+ "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
  "bytemuck",
  "digest",
@@ -246,7 +246,7 @@ dependencies = [
 name = "bee-pow"
 version = "0.2.0"
 dependencies = [
- "bee-ternary",
+ "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
  "iota-crypto",
  "thiserror",
@@ -291,7 +291,7 @@ version = "0.2.0"
 dependencies = [
  "bee-common-derive",
  "bee-crypto",
- "bee-ternary",
+ "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.8.4",
  "sha3",
  "thiserror",
@@ -409,13 +409,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-ternary"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e8479555c8e9bf3cad36daf16e6a2f77771774e977276a08df4d8ac5f1dda66"
+dependencies = [
+ "autocfg",
+ "num-traits",
+ "serde",
+]
+
+[[package]]
 name = "bee-test"
 version = "0.1.0"
 dependencies = [
  "bee-ledger",
  "bee-message",
  "bee-tangle",
- "bee-ternary",
+ "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytemuck",
  "hex",
  "rand 0.8.4",
@@ -1371,7 +1382,7 @@ version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c98a3248cde6b42cb479a52089fe4fc20d12de51b8edd923294cd5240ec89b0"
 dependencies = [
- "bee-ternary",
+ "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "blake2",
  "digest",
  "ed25519-zebra",
