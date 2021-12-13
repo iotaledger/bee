@@ -54,7 +54,7 @@ impl TraitImpl {
                 let mut pack_arms = Vec::with_capacity(len);
                 let mut unpack_arms = Vec::with_capacity(len);
                 let mut tag_decls = Vec::with_capacity(len);
-                let mut tag_idents_and_variants = Vec::with_capacity(len);
+                let mut tag_variants_and_idents = Vec::with_capacity(len);
 
                 for (index, VariantInfo { tag, inner }) in info.variants_info.into_iter().enumerate() {
                     let variant_ident = inner.path.segments.last().unwrap().clone();
@@ -77,13 +77,13 @@ impl TraitImpl {
 
                     tag_decls.push(quote!(const #tag_ident: #tag_type = #tag;));
 
-                    tag_idents_and_variants.push((tag_ident, variant_ident));
+                    tag_variants_and_idents.push((tag_ident, variant_ident));
                 }
 
                 let mut tag_asserts = Vec::with_capacity(len * (len - 1) / 2);
 
-                for (i, (fst, fst_variant)) in tag_idents_and_variants.iter().enumerate() {
-                    if let Some(idents_and_variants) = tag_idents_and_variants.get((i + 1)..) {
+                for (index, (fst, fst_variant)) in tag_variants_and_idents.iter().enumerate() {
+                    if let Some(idents_and_variants) = tag_variants_and_idents.get((index + 1)..) {
                         for (snd, snd_variant) in idents_and_variants {
                             let tag_assert = quote!(
                                 const _: () = assert!(#fst != #snd, concat!("The tags for the variants `", stringify!(#fst_variant), "` and `", stringify!(#snd_variant) ,"` of enum `", stringify!(#enum_ident), "` are equal"));
