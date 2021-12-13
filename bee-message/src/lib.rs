@@ -7,9 +7,8 @@
 
 extern crate alloc;
 
-#[cfg(feature = "serde1")]
 #[macro_use]
-mod serde;
+mod macros;
 mod error;
 mod message;
 mod message_id;
