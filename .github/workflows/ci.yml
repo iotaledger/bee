@@ -228,7 +228,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: install
-          args: cargo-udeps
+          args: --force cargo-udeps
 
       - uses: actions-rs/cargo@v1
         with:
@@ -267,7 +267,7 @@ jobs:
         name: Install cargo-about
         with:
           command: install
-          args: cargo-about
+          args: --force cargo-about
 
       - name: Move `about.toml` to project root
         run: mv .github/workflows/about.toml .
