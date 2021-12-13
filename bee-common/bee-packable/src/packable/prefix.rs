@@ -121,8 +121,8 @@ where
     type UnpackError = UnpackPrefixError<T::UnpackError, B::UnpackError>;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        // The length of any dynamically-sized sequence must be prefixed.
-        // This unwrap is fine, since we have already validated the length in `try_from`.
+        // The length of any dynamically-sized sequence must be prefixed. This unwrap is fine since
+        // the length of the inner `Vec` has been validated while creating this `VecPrefix`.
         B::try_from(self.len()).unwrap().pack(packer)?;
 
         for item in self.iter() {
@@ -140,9 +140,17 @@ where
             .map_packable_err(UnpackPrefixError::Prefix)?
             .into();
 
+        // If `len` fits in a `usize`, we use it as the capacity of the inner `Vec` to avoid extra
+        // allocations.
+        //
+        // If that is not the case, we avoid assuming anything about the memory capacity of the
+        // current platform and initialize `inner` with capacity zero. Most of the time this will
+        // cause the program to panic due to memory exhaustion or capacity overflow while calling
+        // `inner.push` but that is a platform limitation and not an error that the `Packable`
+        // infrastructure should handle.
         let mut inner = Vec::with_capacity(len.try_into().unwrap_or(0));
 
-        for _ in Default::default()..len {
+        for _ in B::Bounds::default()..len {
             let item = T::unpack::<_, VERIFY>(unpacker).coerce()?;
             inner.push(item);
         }
@@ -217,8 +225,8 @@ where
     type UnpackError = <VecPrefix<T, B> as Packable>::UnpackError;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        // The length of any dynamically-sized sequence must be prefixed.
-        // This unwrap is fine, since we have already validated the length in `try_from`.
+        // The length of any dynamically-sized sequence must be prefixed. This unwrap is fine since
+        // the length of the inner slice has been validated while creating this `BoxedSlicePrefix`.
         B::try_from(self.len()).unwrap().pack(packer)?;
 
         for item in self.iter() {
