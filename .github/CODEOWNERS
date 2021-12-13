@@ -5,7 +5,6 @@
 /.github/         thibault@iota.org           alexander.schmidt@iota.org
 /bee-api/         samuel.rufinatscha@iota.org yuwei.wu@iota.org thibault@iota.org
 /bee-common/      thibault@iota.org           alexander.schmidt@iota.org
-/bee-crypto/      thibault@iota.org           alexander.schmidt@iota.org
 /bee-ledger/      thibault@iota.org           samuel.rufinatscha@iota.org joshua.barretto@iota.org
 /bee-network/     alexander.schmidt@iota.org  joshua.barretto@iota.org
 /bee-node/        thibault@iota.org           alexander.schmidt@iota.org
