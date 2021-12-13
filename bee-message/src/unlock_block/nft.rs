@@ -28,11 +28,13 @@ impl NftUnlockBlock {
     pub const KIND: u8 = 3;
 
     /// Creates a new [`NftUnlockBlock`].
+    #[inline(always)]
     pub fn new(index: u16) -> Result<Self, Error> {
-        index.try_into()
+        Self::try_from(index)
     }
 
     /// Return the index of a [`NftUnlockBlock`].
+    #[inline(always)]
     pub fn index(&self) -> u16 {
         self.0
     }

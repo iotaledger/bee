@@ -16,8 +16,9 @@ impl TokenId {
     pub const LENGTH: usize = 38;
 
     /// Creates a new [`TokenId`].
+    #[inline(always)]
     pub fn new(bytes: [u8; Self::LENGTH]) -> Self {
-        bytes.into()
+        Self::from(bytes)
     }
 }
 

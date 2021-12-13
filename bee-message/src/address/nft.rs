@@ -13,30 +13,22 @@ pub struct NftAddress(NftId);
 
 #[allow(clippy::len_without_is_empty)]
 impl NftAddress {
-    /// The address kind of a NFT address.
+    /// The [`Address`](crate::address::Address) kind of a NFT address.
     pub const KIND: u8 = 16;
-    /// The length of a NFT address.
+    /// The length of a [`NftAddress`].
     pub const LENGTH: usize = 20;
 
-    /// Creates a new NFT address.
+    /// Creates a new [`NftAddress`].
+    #[inline(always)]
     pub fn new(id: NftId) -> Self {
-        id.into()
+        Self::from(id)
     }
 
-    /// Returns the length of an NFT address.
-    pub fn len(&self) -> usize {
-        Self::LENGTH
-    }
-
-    ///
+    /// Returns the [`NftId`] of an [`NftAddress`].
+    #[inline(always)]
     pub fn id(&self) -> &NftId {
         &self.0
     }
-
-    // /// Verifies a [`NftSignature`] for a message against the [`NftAddress`].
-    // pub fn verify(&self, msg: &[u8], signature: &NftSignature) -> Result<(), Error> {
-    //     Ok(())
-    // }
 }
 
 #[cfg(feature = "serde1")]

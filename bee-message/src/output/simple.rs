@@ -31,11 +31,13 @@ impl SimpleOutput {
     }
 
     /// Returns the address of a [`SimpleOutput`].
+    #[inline(always)]
     pub fn address(&self) -> &Address {
         &self.address
     }
 
     /// Returns the amount of a [`SimpleOutput`].
+    #[inline(always)]
     pub fn amount(&self) -> u64 {
         self.amount
     }

@@ -30,11 +30,13 @@ impl DustDepositReturnFeatureBlock {
     pub const KIND: u8 = 2;
 
     /// Creates a new [`DustDepositReturnFeatureBlock`].
+    #[inline(always)]
     pub fn new(amount: u64) -> Result<Self, Error> {
         Self::try_from(amount)
     }
 
     /// Returns the amount.
+    #[inline(always)]
     pub fn amount(&self) -> u64 {
         self.0
     }

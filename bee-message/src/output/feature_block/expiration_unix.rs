@@ -22,11 +22,13 @@ impl ExpirationUnixFeatureBlock {
     pub const KIND: u8 = 6;
 
     /// Creates a new [`ExpirationUnixFeatureBlock`].
+    #[inline(always)]
     pub fn new(timestamp: u32) -> Self {
-        timestamp.into()
+        Self(timestamp)
     }
 
     /// Returns the timestamp.
+    #[inline(always)]
     pub fn timestamp(&self) -> u32 {
         self.0
     }

@@ -24,16 +24,19 @@ pub struct NativeToken {
 
 impl NativeToken {
     /// Creates a new [`NativeToken`].
+    #[inline(always)]
     pub fn new(token_id: TokenId, amount: U256) -> Self {
         Self { token_id, amount }
     }
 
     /// Returns the token ID of the [`NativeToken`].
+    #[inline(always)]
     pub fn token_id(&self) -> &TokenId {
         &self.token_id
     }
 
     /// Returns the amount of the [`NativeToken`].
+    #[inline(always)]
     pub fn amount(&self) -> &U256 {
         &self.amount
     }
@@ -87,6 +90,7 @@ impl NativeTokens {
     pub const COUNT_MAX: usize = 256;
 
     /// Creates a new `NativeTokens`.
+    #[inline(always)]
     pub fn new(native_tokens: Vec<NativeToken>) -> Result<Self, Error> {
         Self::try_from(native_tokens)
     }

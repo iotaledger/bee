@@ -48,24 +48,28 @@ impl NftOutputBuilder {
     }
 
     ///
+    #[inline(always)]
     pub fn add_native_token(mut self, native_token: NativeToken) -> Self {
         self.native_tokens.push(native_token);
         self
     }
 
     ///
+    #[inline(always)]
     pub fn with_native_tokens(mut self, native_tokens: Vec<NativeToken>) -> Self {
         self.native_tokens = native_tokens;
         self
     }
 
     ///
+    #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
         self
     }
 
     ///
+    #[inline(always)]
     pub fn with_feature_blocks(mut self, feature_blocks: Vec<FeatureBlock>) -> Self {
         self.feature_blocks = feature_blocks;
         self
@@ -125,11 +129,13 @@ impl NftOutput {
     ];
 
     /// Creates a new [`NftOutput`].
+    #[inline(always)]
     pub fn new(address: Address, amount: u64, nft_id: NftId, immutable_metadata: Vec<u8>) -> Result<Self, Error> {
         NftOutputBuilder::new(address, amount, nft_id, immutable_metadata)?.finish()
     }
 
     /// Creates a new [`NftOutputBuilder`].
+    #[inline(always)]
     pub fn build(
         address: Address,
         amount: u64,
@@ -140,31 +146,37 @@ impl NftOutput {
     }
 
     ///
+    #[inline(always)]
     pub fn address(&self) -> &Address {
         &self.address
     }
 
     ///
+    #[inline(always)]
     pub fn amount(&self) -> u64 {
         self.amount
     }
 
     ///
+    #[inline(always)]
     pub fn native_tokens(&self) -> &[NativeToken] {
         &self.native_tokens
     }
 
     ///
+    #[inline(always)]
     pub fn nft_id(&self) -> &NftId {
         &self.nft_id
     }
 
     ///
+    #[inline(always)]
     pub fn immutable_metadata(&self) -> &[u8] {
         &self.immutable_metadata
     }
 
     ///
+    #[inline(always)]
     pub fn feature_blocks(&self) -> &[FeatureBlock] {
         &self.feature_blocks
     }

@@ -15,9 +15,10 @@ impl NftId {
     ///
     pub const LENGTH: usize = 20;
 
-    /// Creates a new `NftId`.
+    /// Creates a new [`NftId`].
+    #[inline(always)]
     pub fn new(bytes: [u8; Self::LENGTH]) -> Self {
-        bytes.into()
+        Self::from(bytes)
     }
 }
 

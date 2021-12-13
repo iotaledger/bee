@@ -29,8 +29,10 @@ fn debug_impl() {
 
 #[test]
 fn generate_address() {
-    match Address::from(Ed25519Address::new([1; 32])) {
-        Address::Ed25519(a) => assert_eq!(a.len(), 32),
+    let bytes = [1; 32];
+
+    match Address::from(Ed25519Address::new(bytes)) {
+        Address::Ed25519(a) => assert_eq!(a.as_ref(), bytes),
         _ => unreachable!(),
     }
 }

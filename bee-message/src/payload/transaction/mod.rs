@@ -31,14 +31,12 @@ impl TransactionPayloadBuilder {
     /// Adds an essence to a [`TransactionPayloadBuilder`].
     pub fn with_essence(mut self, essence: TransactionEssence) -> Self {
         self.essence.replace(essence);
-
         self
     }
 
     /// Adds unlock blocks to a [`TransactionPayloadBuilder`].
     pub fn with_unlock_blocks(mut self, unlock_blocks: UnlockBlocks) -> Self {
         self.unlock_blocks.replace(unlock_blocks);
-
         self
     }
 

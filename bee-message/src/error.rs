@@ -169,7 +169,7 @@ impl fmt::Display for Error {
             Error::InvalidUnlockBlockNft(index) => {
                 write!(f, "invalid unlock block nft: {0}", index)
             }
-            Error::Io(e) => write!(f, "i/o error happened: {}.", e),
+            Error::Io(e) => write!(f, "IO error happened: {}.", e),
             Error::MigratedFundsNotSorted => {
                 write!(f, "migrated funds are not sorted.")
             }

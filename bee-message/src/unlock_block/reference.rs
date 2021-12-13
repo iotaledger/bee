@@ -25,11 +25,13 @@ impl ReferenceUnlockBlock {
     pub const KIND: u8 = 1;
 
     /// Creates a new [`ReferenceUnlockBlock`].
+    #[inline(always)]
     pub fn new(index: u16) -> Result<Self, Error> {
-        index.try_into()
+        Self::try_from(index)
     }
 
     /// Return the index of a [`ReferenceUnlockBlock`].
+    #[inline(always)]
     pub fn index(&self) -> u16 {
         self.0
     }

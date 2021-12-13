@@ -24,14 +24,14 @@ pub enum TransactionEssence {
 }
 
 impl TransactionEssence {
-    /// Returns the essence kind of an [`Essence`].
+    /// Returns the essence kind of an [`TransactionEssence`].
     pub fn kind(&self) -> u8 {
         match self {
             Self::Regular(_) => RegularTransactionEssence::KIND,
         }
     }
 
-    /// Return the Blake2b hash of an [`Essence`].
+    /// Return the Blake2b hash of an [`TransactionEssence`].
     pub fn hash(&self) -> [u8; 32] {
         Blake2b256::digest(&self.pack_new()).into()
     }

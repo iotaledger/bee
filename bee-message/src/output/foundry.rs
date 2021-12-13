@@ -85,24 +85,28 @@ impl FoundryOutputBuilder {
     }
 
     ///
+    #[inline(always)]
     pub fn add_native_token(mut self, native_token: NativeToken) -> Self {
         self.native_tokens.push(native_token);
         self
     }
 
     ///
+    #[inline(always)]
     pub fn with_native_tokens(mut self, native_tokens: Vec<NativeToken>) -> Self {
         self.native_tokens = native_tokens;
         self
     }
 
     ///
+    #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
         self
     }
 
     ///
+    #[inline(always)]
     pub fn with_feature_blocks(mut self, feature_blocks: Vec<FeatureBlock>) -> Self {
         self.feature_blocks = feature_blocks;
         self
@@ -157,6 +161,7 @@ impl FoundryOutput {
     const ALLOWED_FEATURE_BLOCKS: [u8; 1] = [MetadataFeatureBlock::KIND];
 
     /// Creates a new [`FoundryOutput`].
+    #[inline(always)]
     pub fn new(
         address: Address,
         amount: u64,
@@ -179,6 +184,7 @@ impl FoundryOutput {
     }
 
     /// Creates a new [`FoundryOutputBuilder`].
+    #[inline(always)]
     pub fn build(
         address: Address,
         amount: u64,
@@ -200,46 +206,55 @@ impl FoundryOutput {
     }
 
     ///
+    #[inline(always)]
     pub fn address(&self) -> &Address {
         &self.address
     }
 
     ///
+    #[inline(always)]
     pub fn amount(&self) -> u64 {
         self.amount
     }
 
     ///
+    #[inline(always)]
     pub fn native_tokens(&self) -> &[NativeToken] {
         &self.native_tokens
     }
 
     ///
+    #[inline(always)]
     pub fn serial_number(&self) -> u32 {
         self.serial_number
     }
 
     ///
+    #[inline(always)]
     pub fn token_tag(&self) -> &[u8; 12] {
         &self.token_tag
     }
 
     ///
+    #[inline(always)]
     pub fn circulating_supply(&self) -> &U256 {
         &self.circulating_supply
     }
 
     ///
+    #[inline(always)]
     pub fn maximum_supply(&self) -> &U256 {
         &self.maximum_supply
     }
 
     ///
+    #[inline(always)]
     pub fn token_scheme(&self) -> TokenScheme {
         self.token_scheme
     }
 
     ///
+    #[inline(always)]
     pub fn feature_blocks(&self) -> &[FeatureBlock] {
         &self.feature_blocks
     }

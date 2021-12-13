@@ -28,11 +28,13 @@ impl AliasUnlockBlock {
     pub const KIND: u8 = 2;
 
     /// Creates a new [`AliasUnlockBlock`].
+    #[inline(always)]
     pub fn new(index: u16) -> Result<Self, Error> {
-        index.try_into()
+        Self::try_from(index)
     }
 
     /// Return the index of an [`AliasUnlockBlock`].
+    #[inline(always)]
     pub fn index(&self) -> u16 {
         self.0
     }

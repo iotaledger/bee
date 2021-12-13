@@ -15,11 +15,13 @@ impl SenderFeatureBlock {
     pub const KIND: u8 = 0;
 
     /// Creates a new [`SenderFeatureBlock`].
+    #[inline(always)]
     pub fn new(address: Address) -> Self {
-        address.into()
+        Self(address)
     }
 
     /// Returns the sender [`Address`].
+    #[inline(always)]
     pub fn address(&self) -> &Address {
         &self.0
     }

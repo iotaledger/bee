@@ -53,42 +53,49 @@ impl AliasOutputBuilder {
     }
 
     ///
+    #[inline(always)]
     pub fn add_native_token(mut self, native_token: NativeToken) -> Self {
         self.native_tokens.push(native_token);
         self
     }
 
     ///
+    #[inline(always)]
     pub fn with_native_tokens(mut self, native_tokens: Vec<NativeToken>) -> Self {
         self.native_tokens = native_tokens;
         self
     }
 
     ///
+    #[inline(always)]
     pub fn with_state_index(mut self, state_index: u32) -> Self {
         self.state_index.replace(state_index);
         self
     }
 
     ///
+    #[inline(always)]
     pub fn with_state_metadata(mut self, state_metadata: Vec<u8>) -> Self {
         self.state_metadata = state_metadata;
         self
     }
 
     ///
+    #[inline(always)]
     pub fn with_foundry_counter(mut self, foundry_counter: u32) -> Self {
         self.foundry_counter.replace(foundry_counter);
         self
     }
 
     ///
+    #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
         self
     }
 
     ///
+    #[inline(always)]
     pub fn with_feature_blocks(mut self, feature_blocks: Vec<FeatureBlock>) -> Self {
         self.feature_blocks = feature_blocks;
         self
@@ -158,6 +165,7 @@ impl AliasOutput {
     ];
 
     /// Creates a new [`AliasOutput`].
+    #[inline(always)]
     pub fn new(
         amount: u64,
         alias_id: AliasId,
@@ -168,6 +176,7 @@ impl AliasOutput {
     }
 
     /// Creates a new [`AliasOutputBuilder`].
+    #[inline(always)]
     pub fn build(
         amount: u64,
         alias_id: AliasId,
@@ -178,46 +187,55 @@ impl AliasOutput {
     }
 
     ///
+    #[inline(always)]
     pub fn amount(&self) -> u64 {
         self.amount
     }
 
     ///
+    #[inline(always)]
     pub fn native_tokens(&self) -> &[NativeToken] {
         &self.native_tokens
     }
 
     ///
+    #[inline(always)]
     pub fn alias_id(&self) -> &AliasId {
         &self.alias_id
     }
 
     ///
+    #[inline(always)]
     pub fn state_controller(&self) -> &Address {
         &self.state_controller
     }
 
     ///
+    #[inline(always)]
     pub fn governance_controller(&self) -> &Address {
         &self.governance_controller
     }
 
     ///
+    #[inline(always)]
     pub fn state_index(&self) -> u32 {
         self.state_index
     }
 
     ///
+    #[inline(always)]
     pub fn state_metadata(&self) -> &[u8] {
         &self.state_metadata
     }
 
     ///
+    #[inline(always)]
     pub fn foundry_counter(&self) -> u32 {
         self.foundry_counter
     }
 
     ///
+    #[inline(always)]
     pub fn feature_blocks(&self) -> &[FeatureBlock] {
         &self.feature_blocks
     }

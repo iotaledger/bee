@@ -18,11 +18,13 @@ impl TimelockMilestoneIndexFeatureBlock {
     pub const KIND: u8 = 3;
 
     /// Creates a new [`TimelockMilestoneIndexFeatureBlock`].
+    #[inline(always)]
     pub fn new(index: MilestoneIndex) -> Self {
-        index.into()
+        Self(index)
     }
 
     /// Returns the index.
+    #[inline(always)]
     pub fn index(&self) -> MilestoneIndex {
         self.0
     }

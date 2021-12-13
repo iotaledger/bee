@@ -187,11 +187,13 @@ impl FeatureBlocks {
     pub const COUNT_MAX: usize = 9;
 
     /// Creates a new `FeatureBlocks`.
+    #[inline(always)]
     pub fn new(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Error> {
         Self::try_from(feature_blocks)
     }
 
     /// Gets a reference to a feature block from a feature block kind, if found.
+    #[inline(always)]
     pub fn get(&self, key: u8) -> Option<&FeatureBlock> {
         self.0
             .binary_search_by_key(&key, FeatureBlock::kind)
@@ -201,11 +203,13 @@ impl FeatureBlocks {
     }
 
     /// Returns the length of the feature blocks.
+    #[inline(always)]
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
     /// Returns whether the [`FeatureBlocks`] is empty or not.
+    #[inline(always)]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }

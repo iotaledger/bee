@@ -30,11 +30,13 @@ impl MetadataFeatureBlock {
     pub const LENGTH_MAX: usize = 1024;
 
     /// Creates a new [`MetadataFeatureBlock`].
+    #[inline(always)]
     pub fn new(data: &[u8]) -> Result<Self, Error> {
-        data.try_into()
+        Self::try_from(data)
     }
 
     /// Returns the data.
+    #[inline(always)]
     pub fn data(&self) -> &[u8] {
         &self.0
     }

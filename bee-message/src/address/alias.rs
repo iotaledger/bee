@@ -13,30 +13,22 @@ pub struct AliasAddress(AliasId);
 
 #[allow(clippy::len_without_is_empty)]
 impl AliasAddress {
-    /// The address kind of an alias address.
+    /// The [`Address`](crate::address::Address) kind of an [`AliasAddress`].
     pub const KIND: u8 = 8;
-    /// The length of an alias address.
+    /// The length of an [`AliasAddress`].
     pub const LENGTH: usize = 20;
 
-    /// Creates a new alias address.
+    /// Creates a new [`AliasAddress`].
+    #[inline(always)]
     pub fn new(id: AliasId) -> Self {
-        id.into()
+        Self::from(id)
     }
 
-    /// Returns the length of an alias address.
-    pub fn len(&self) -> usize {
-        Self::LENGTH
-    }
-
-    ///
+    /// Returns the [`AliasId`] of an [`AliasAddress`].
+    #[inline(always)]
     pub fn id(&self) -> &AliasId {
         &self.0
     }
-
-    // /// Verifies a [`AliasSignature`] for a message against the [`AliasAddress`].
-    // pub fn verify(&self, msg: &[u8], signature: &AliasSignature) -> Result<(), Error> {
-    //     Ok(())
-    // }
 }
 
 #[cfg(feature = "serde1")]

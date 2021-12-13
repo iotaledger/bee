@@ -22,11 +22,13 @@ impl ExpirationMilestoneIndexFeatureBlock {
     pub const KIND: u8 = 5;
 
     /// Creates a new [`ExpirationMilestoneIndexFeatureBlock`].
+    #[inline(always)]
     pub fn new(index: MilestoneIndex) -> Self {
-        index.into()
+        Self(index)
     }
 
     /// Returns the index.
+    #[inline(always)]
     pub fn index(&self) -> MilestoneIndex {
         self.0
     }

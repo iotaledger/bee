@@ -15,11 +15,13 @@ impl IssuerFeatureBlock {
     pub const KIND: u8 = 1;
 
     /// Creates a new [`IssuerFeatureBlock`].
+    #[inline(always)]
     pub fn new(address: Address) -> Self {
-        address.into()
+        Self(address)
     }
 
     /// Returns the issuer [`Address`].
+    #[inline(always)]
     pub fn address(&self) -> &Address {
         &self.0
     }

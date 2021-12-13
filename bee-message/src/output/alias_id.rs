@@ -15,9 +15,10 @@ impl AliasId {
     ///
     pub const LENGTH: usize = 20;
 
-    /// Creates a new `AliasId`.
+    /// Creates a new [`AliasId`].
+    #[inline(always)]
     pub fn new(bytes: [u8; Self::LENGTH]) -> Self {
-        bytes.into()
+        Self::from(bytes)
     }
 }
 

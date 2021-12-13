@@ -26,6 +26,7 @@ pub struct ExtendedOutputBuilder {
 
 impl ExtendedOutputBuilder {
     ///
+    #[inline(always)]
     pub fn new(address: Address, amount: u64) -> Self {
         Self {
             address,
@@ -36,24 +37,28 @@ impl ExtendedOutputBuilder {
     }
 
     ///
+    #[inline(always)]
     pub fn add_native_token(mut self, native_token: NativeToken) -> Self {
         self.native_tokens.push(native_token);
         self
     }
 
     ///
+    #[inline(always)]
     pub fn with_native_tokens(mut self, native_tokens: Vec<NativeToken>) -> Self {
         self.native_tokens = native_tokens;
         self
     }
 
     ///
+    #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
         self
     }
 
     ///
+    #[inline(always)]
     pub fn with_feature_blocks(mut self, feature_blocks: Vec<FeatureBlock>) -> Self {
         self.feature_blocks = feature_blocks;
         self
@@ -103,32 +108,38 @@ impl ExtendedOutput {
     ];
 
     /// Creates a new [`ExtendedOutput`].
+    #[inline(always)]
     pub fn new(address: Address, amount: u64) -> Self {
         // SAFETY: this can't fail as this is a default builder.
         ExtendedOutputBuilder::new(address, amount).finish().unwrap()
     }
 
     /// Creates a new [`ExtendedOutputBuilder`].
+    #[inline(always)]
     pub fn build(address: Address, amount: u64) -> ExtendedOutputBuilder {
         ExtendedOutputBuilder::new(address, amount)
     }
 
     ///
+    #[inline(always)]
     pub fn address(&self) -> &Address {
         &self.address
     }
 
     ///
+    #[inline(always)]
     pub fn amount(&self) -> u64 {
         self.amount
     }
 
     ///
+    #[inline(always)]
     pub fn native_tokens(&self) -> &[NativeToken] {
         &self.native_tokens
     }
 
     ///
+    #[inline(always)]
     pub fn feature_blocks(&self) -> &[FeatureBlock] {
         &self.feature_blocks
     }

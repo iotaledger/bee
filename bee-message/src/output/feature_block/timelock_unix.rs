@@ -18,11 +18,13 @@ impl TimelockUnixFeatureBlock {
     pub const KIND: u8 = 4;
 
     /// Creates a new [`TimelockUnixFeatureBlock`].
+    #[inline(always)]
     pub fn new(timestamp: u32) -> Self {
-        timestamp.into()
+        Self(timestamp)
     }
 
     /// Returns the timestamp.
+    #[inline(always)]
     pub fn timestamp(&self) -> u32 {
         self.0
     }

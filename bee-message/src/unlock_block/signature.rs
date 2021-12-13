@@ -16,11 +16,13 @@ impl SignatureUnlockBlock {
     pub const KIND: u8 = 0;
 
     /// Creates a new [`SignatureUnlockBlock`].
+    #[inline(always)]
     pub fn new(signature: Signature) -> Self {
         Self(signature)
     }
 
     /// Returns the actual [`Signature`] of the [`SignatureUnlockBlock`].
+    #[inline(always)]
     pub fn signature(&self) -> &Signature {
         &self.0
     }

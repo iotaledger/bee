@@ -30,11 +30,13 @@ impl IndexationFeatureBlock {
     pub const LENGTH_MAX: usize = 64;
 
     /// Creates a new [`IndexationFeatureBlock`].
+    #[inline(always)]
     pub fn new(tag: &[u8]) -> Result<Self, Error> {
-        tag.try_into()
+        Self::try_from(tag)
     }
 
     /// Returns the tag.
+    #[inline(always)]
     pub fn tag(&self) -> &[u8] {
         &self.0
     }

@@ -18,19 +18,15 @@ pub struct Ed25519Address([u8; Self::LENGTH]);
 
 #[allow(clippy::len_without_is_empty)]
 impl Ed25519Address {
-    /// The address kind of an Ed25519 address.
+    /// The [`Address`](crate::address::Address) kind of an [`Ed25519Signature`].
     pub const KIND: u8 = 0;
-    /// The length of an Ed25519 address.
+    /// The length of an [`Ed25519Signature`].
     pub const LENGTH: usize = 32;
 
     /// Creates a new Ed25519 address.
+    #[inline(always)]
     pub fn new(address: [u8; Self::LENGTH]) -> Self {
-        address.into()
-    }
-
-    /// Returns the length of an Ed25519 address.
-    pub fn len(&self) -> usize {
-        Self::LENGTH
+        Self::from(address)
     }
 
     /// Verifies a [`Ed25519Signature`] for a message against the [`Ed25519Address`].
