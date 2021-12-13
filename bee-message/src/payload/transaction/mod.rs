@@ -48,10 +48,10 @@ impl TransactionPayloadBuilder {
         match essence {
             TransactionEssence::Regular(ref essence) => {
                 if essence.inputs().len() != unlock_blocks.len() {
-                    return Err(Error::InputUnlockBlockCountMismatch(
-                        essence.inputs().len(),
-                        unlock_blocks.len(),
-                    ));
+                    return Err(Error::InputUnlockBlockCountMismatch {
+                        input: essence.inputs().len(),
+                        block: unlock_blocks.len(),
+                    });
                 }
             }
         }

@@ -29,7 +29,10 @@ macro_rules! impl_id {
                 let bytes: [u8; $name::LENGTH] = hex::decode(s)
                     .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
                     .try_into()
-                    .map_err(|_| Self::Err::InvalidHexadecimalLength($name::LENGTH * 2, s.len()))?;
+                    .map_err(|_| Self::Err::InvalidHexadecimalLength {
+                        expected: $name::LENGTH * 2,
+                        actual: s.len(),
+                    })?;
 
                 Ok($name::from(bytes))
             }

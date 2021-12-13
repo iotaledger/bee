@@ -19,7 +19,7 @@ pub enum Error {
     DuplicateSignatureUnlockBlock(u16),
     DuplicateUtxo(UtxoInput),
     FeatureBlocksNotUniqueSorted,
-    InputUnlockBlockCountMismatch(usize, usize),
+    InputUnlockBlockCountMismatch { input: usize, block: usize },
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
     InvalidAddressKind(u8),
@@ -30,9 +30,9 @@ pub enum Error {
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(usize),
     InvalidFeatureBlockKind(u8),
-    InvalidFoundryOutputSupply(U256, U256),
+    InvalidFoundryOutputSupply { circulating: U256, max: U256 },
     InvalidHexadecimalChar(String),
-    InvalidHexadecimalLength(usize, usize),
+    InvalidHexadecimalLength { expected: usize, actual: usize },
     InvalidIndexationDataLength(usize),
     InvalidIndexationIndexLength(usize),
     InvalidInputKind(u8),
@@ -46,8 +46,8 @@ pub enum Error {
     InvalidOutputKind(u8),
     InvalidParentsCount(usize),
     InvalidPayloadKind(u32),
-    InvalidPayloadLength(usize, usize),
-    InvalidPowScoreValues(u32, u32),
+    InvalidPayloadLength { expected: usize, actual: usize },
+    InvalidPowScoreValues { nps: u32, npsmi: u32 },
     InvalidReceiptFundsCount(u16),
     InvalidReferenceIndex(u16),
     InvalidSignature,
@@ -65,7 +65,7 @@ pub enum Error {
     MilestoneInvalidPublicKeyCount(usize),
     MilestoneInvalidSignatureCount(usize),
     MilestonePublicKeysNotUniqueSorted,
-    MilestonePublicKeysSignaturesCountMismatch(usize, usize),
+    MilestonePublicKeysSignaturesCountMismatch { kcount: usize, scount: usize },
     MissingField(&'static str),
     MissingPayload,
     MissingRequiredSenderBlock,
@@ -76,10 +76,10 @@ pub enum Error {
     RemainingBytesAfterMessage,
     SelfControlledAliasOutput(AliasId),
     SelfDepositNft(NftId),
-    SignaturePublicKeyMismatch(String, String),
-    TailTransactionHashNotUnique(usize, usize),
-    UnallowedFeatureBlock(usize, u8),
-    TooManyFeatureBlocks(usize, usize),
+    SignaturePublicKeyMismatch { expected: String, actual: String },
+    TailTransactionHashNotUnique { previous: usize, current: usize },
+    UnallowedFeatureBlock { index: usize, kind: u8 },
+    TooManyFeatureBlocks { max: usize, actual: usize },
 }
 
 impl std::error::Error for Error {}
@@ -94,7 +94,7 @@ impl fmt::Display for Error {
             }
             Error::DuplicateUtxo(utxo) => write!(f, "duplicate UTXO {:?} in inputs.", utxo),
             Error::FeatureBlocksNotUniqueSorted => write!(f, "feature blocks are not unique and/or sorted."),
-            Error::InputUnlockBlockCountMismatch(input, block) => {
+            Error::InputUnlockBlockCountMismatch { input, block } => {
                 write!(
                     f,
                     "input count and unlock block count mismatch: {} != {}.",
@@ -113,13 +113,13 @@ impl fmt::Display for Error {
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}.", k),
             Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}.", count),
             Error::InvalidFeatureBlockKind(k) => write!(f, "invalid feature block kind: {}.", k),
-            Error::InvalidFoundryOutputSupply(circulating, max) => write!(
+            Error::InvalidFoundryOutputSupply { circulating, max } => write!(
                 f,
                 "invalid foundry output supply: circulating {}, max {}.",
                 circulating, max
             ),
             Error::InvalidHexadecimalChar(hex) => write!(f, "invalid hexadecimal character: {}.", hex),
-            Error::InvalidHexadecimalLength(expected, actual) => {
+            Error::InvalidHexadecimalLength { expected, actual } => {
                 write!(f, "invalid hexadecimal length: expected {} got {}.", expected, actual)
             }
             Error::InvalidIndexationDataLength(length) => {
@@ -143,10 +143,10 @@ impl fmt::Display for Error {
                 write!(f, "invalid parents count: {}.", count)
             }
             Error::InvalidPayloadKind(k) => write!(f, "invalid payload kind: {}.", k),
-            Error::InvalidPayloadLength(expected, actual) => {
+            Error::InvalidPayloadLength { expected, actual } => {
                 write!(f, "invalid payload length: expected {}, got {}.", expected, actual)
             }
-            Error::InvalidPowScoreValues(nps, npsmi) => write!(
+            Error::InvalidPowScoreValues { nps, npsmi } => write!(
                 f,
                 "invalid pow score values: next pow score {} and next pow score milestone index {}.",
                 nps, npsmi
@@ -182,7 +182,7 @@ impl fmt::Display for Error {
             Error::MilestonePublicKeysNotUniqueSorted => {
                 write!(f, "milestone public keys are not unique and/or sorted.")
             }
-            Error::MilestonePublicKeysSignaturesCountMismatch(kcount, scount) => {
+            Error::MilestonePublicKeysSignaturesCountMismatch { kcount, scount } => {
                 write!(
                     f,
                     "milestone public keys and signatures count mismatch: {0} != {1}.",
@@ -211,24 +211,24 @@ impl fmt::Display for Error {
             Error::SelfDepositNft(nft_id) => {
                 write!(f, "self deposit nft output, NFT ID {}", nft_id)
             }
-            Error::SignaturePublicKeyMismatch(expected, actual) => {
+            Error::SignaturePublicKeyMismatch { expected, actual } => {
                 write!(
                     f,
                     "signature public key mismatch: expected {0}, got {1}.",
                     expected, actual
                 )
             }
-            Error::TailTransactionHashNotUnique(previous, current) => {
+            Error::TailTransactionHashNotUnique { previous, current } => {
                 write!(
                     f,
                     "tail transaction hash is not unique at indices: {0} and {1}.",
                     previous, current
                 )
             }
-            Error::UnallowedFeatureBlock(index, kind) => {
+            Error::UnallowedFeatureBlock { index, kind } => {
                 write!(f, "unallowed feature block at index {} with kind {}.", index, kind)
             }
-            Error::TooManyFeatureBlocks(max, actual) => {
+            Error::TooManyFeatureBlocks { max, actual } => {
                 write!(f, "too many feature blocks, max {}, got {}.", max, actual)
             }
         }

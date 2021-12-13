@@ -162,7 +162,10 @@ pub fn option_payload_unpack<R: Read + ?Sized, const CHECK: bool>(
     if payload_len > 0 {
         let payload = Payload::unpack_inner::<R, CHECK>(reader)?;
         if payload_len != payload.packed_len() {
-            Err(Error::InvalidPayloadLength(payload_len, payload.packed_len()))
+            Err(Error::InvalidPayloadLength {
+                expected: payload_len,
+                actual: payload.packed_len(),
+            })
         } else {
             Ok((payload_len, Some(payload)))
         }

@@ -36,7 +36,7 @@ fn from_str_invalid_hex() {
 fn from_str_invalid_len() {
     assert!(matches!(
         TransactionId::from_str(TRANSACTION_ID_INVALID_LEN),
-        Err(Error::InvalidHexadecimalLength(expected, actual))
+        Err(Error::InvalidHexadecimalLength{expected, actual})
             if expected == TransactionId::LENGTH * 2 && actual == TransactionId::LENGTH * 2 - 2
     ));
 }

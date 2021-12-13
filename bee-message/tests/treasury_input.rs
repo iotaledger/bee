@@ -53,7 +53,7 @@ fn from_str_valid() {
 fn from_str_invalid() {
     assert!(matches!(
         TreasuryInput::from_str(MILESTONE_ID_INVALID),
-        Err(Error::InvalidHexadecimalLength(expected, actual))
+        Err(Error::InvalidHexadecimalLength{expected, actual})
             if expected == MilestoneId::LENGTH * 2 && actual == MilestoneId::LENGTH * 2 - 2
     ));
 }

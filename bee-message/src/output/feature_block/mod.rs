@@ -304,10 +304,10 @@ pub(crate) fn validate_allowed_feature_blocks(
     allowed_feature_blocks_kind: &[u8],
 ) -> Result<(), Error> {
     if feature_blocks.len() > allowed_feature_blocks_kind.len() {
-        return Err(Error::TooManyFeatureBlocks(
-            allowed_feature_blocks_kind.len(),
-            feature_blocks.len(),
-        ));
+        return Err(Error::TooManyFeatureBlocks {
+            max: allowed_feature_blocks_kind.len(),
+            actual: feature_blocks.len(),
+        });
     }
 
     let mut index = 0;
@@ -315,7 +315,10 @@ pub(crate) fn validate_allowed_feature_blocks(
     for feature_block in feature_blocks.iter() {
         index = allowed_feature_blocks_kind[index..]
             .binary_search(&feature_block.kind())
-            .map_err(|index| Error::UnallowedFeatureBlock(index, feature_block.kind()))?;
+            .map_err(|index| Error::UnallowedFeatureBlock {
+                index,
+                kind: feature_block.kind(),
+            })?;
     }
 
     Ok(())

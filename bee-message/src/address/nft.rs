@@ -41,7 +41,10 @@ impl FromStr for NftAddress {
         let bytes: [u8; Self::LENGTH] = hex::decode(s)
             .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
             .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength(Self::LENGTH * 2, s.len()))?;
+            .map_err(|_| Self::Err::InvalidHexadecimalLength {
+                expected: Self::LENGTH * 2,
+                actual: s.len(),
+            })?;
 
         Ok(NftAddress::from(NftId::from(bytes)))
     }

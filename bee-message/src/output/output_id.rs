@@ -71,7 +71,10 @@ impl FromStr for OutputId {
         let bytes: [u8; OutputId::LENGTH] = hex::decode(s)
             .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
             .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength(OutputId::LENGTH * 2, s.len()))?;
+            .map_err(|_| Self::Err::InvalidHexadecimalLength {
+                expected: OutputId::LENGTH * 2,
+                actual: s.len(),
+            })?;
 
         bytes.try_into()
     }

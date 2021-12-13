@@ -17,23 +17,21 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    assert!(
-        MilestonePayload::new(
-            MilestoneEssence::new(
-                MilestoneIndex(0),
-                0,
-                rand_parents(),
-                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-                0,
-                0,
-                vec![[0; 32]],
-                None,
-            )
-            .unwrap(),
-            vec![[0; 64]],
+    assert!(MilestonePayload::new(
+        MilestoneEssence::new(
+            MilestoneIndex(0),
+            0,
+            rand_parents(),
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+            0,
+            0,
+            vec![[0; 32]],
+            None,
         )
-        .is_ok()
-    );
+        .unwrap(),
+        vec![[0; 64]],
+    )
+    .is_ok());
 }
 
 #[test]
@@ -95,7 +93,7 @@ fn new_invalid_public_keys_sgnatures_count_mismatch() {
             .unwrap(),
             vec![[0; 64], [1; 64], [3; 64]],
         ),
-        Err(Error::MilestonePublicKeysSignaturesCountMismatch(2, 3))
+        Err(Error::MilestonePublicKeysSignaturesCountMismatch { kcount: 2, scount: 3 })
     ));
 }
 

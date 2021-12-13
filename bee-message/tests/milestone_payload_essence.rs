@@ -24,7 +24,7 @@ fn new_invalid_pow_score_non_zero() {
             vec![],
             None,
         ),
-        Err(Error::InvalidPowScoreValues(0, 4242))
+        Err(Error::InvalidPowScoreValues { nps: 0, npsmi: 4242 })
     ));
 }
 
@@ -41,7 +41,7 @@ fn new_invalid_pow_score_lower_than_index() {
             vec![],
             None,
         ),
-        Err(Error::InvalidPowScoreValues(4000, 4241))
+        Err(Error::InvalidPowScoreValues { nps: 4000, npsmi: 4241 })
     ));
 }
 

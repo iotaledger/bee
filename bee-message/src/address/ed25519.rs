@@ -34,10 +34,10 @@ impl Ed25519Address {
         let address = Blake2b256::digest(signature.public_key());
 
         if self.0 != *address {
-            return Err(Error::SignaturePublicKeyMismatch(
-                hex::encode(self.0),
-                hex::encode(address),
-            ));
+            return Err(Error::SignaturePublicKeyMismatch {
+                expected: hex::encode(self.0),
+                actual: hex::encode(address),
+            });
         }
 
         if !PublicKey::try_from_bytes(*signature.public_key())?
@@ -61,7 +61,10 @@ impl FromStr for Ed25519Address {
         let bytes: [u8; Self::LENGTH] = hex::decode(s)
             .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
             .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength(Self::LENGTH * 2, s.len()))?;
+            .map_err(|_| Self::Err::InvalidHexadecimalLength {
+                expected: Self::LENGTH * 2,
+                actual: s.len(),
+            })?;
 
         Ok(Ed25519Address::from(bytes))
     }

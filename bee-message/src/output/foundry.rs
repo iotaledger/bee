@@ -343,11 +343,17 @@ fn validate_address(address: &Address) -> Result<(), Error> {
 #[inline]
 fn validate_supply(circulating_supply: &U256, maximum_supply: &U256) -> Result<(), Error> {
     if maximum_supply.is_zero() {
-        return Err(Error::InvalidFoundryOutputSupply(*circulating_supply, *maximum_supply));
+        return Err(Error::InvalidFoundryOutputSupply {
+            circulating: *circulating_supply,
+            max: *maximum_supply,
+        });
     }
 
     if circulating_supply > maximum_supply {
-        return Err(Error::InvalidFoundryOutputSupply(*circulating_supply, *maximum_supply));
+        return Err(Error::InvalidFoundryOutputSupply {
+            circulating: *circulating_supply,
+            max: *maximum_supply,
+        });
     }
 
     Ok(())

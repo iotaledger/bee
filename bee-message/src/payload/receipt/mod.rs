@@ -63,7 +63,10 @@ impl ReceiptPayload {
         let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
         for (index, funds) in funds.iter().enumerate() {
             if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash().as_ref(), index) {
-                return Err(Error::TailTransactionHashNotUnique(previous, index));
+                return Err(Error::TailTransactionHashNotUnique {
+                    previous,
+                    current: index,
+                });
             }
         }
 

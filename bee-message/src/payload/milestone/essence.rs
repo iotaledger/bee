@@ -56,10 +56,10 @@ impl MilestoneEssence {
         if next_pow_score == 0 && next_pow_score_milestone_index != 0
             || next_pow_score != 0 && next_pow_score_milestone_index <= *index
         {
-            return Err(Error::InvalidPowScoreValues(
-                next_pow_score,
-                next_pow_score_milestone_index,
-            ));
+            return Err(Error::InvalidPowScoreValues {
+                nps: next_pow_score,
+                npsmi: next_pow_score_milestone_index,
+            });
         }
 
         if !MilestoneEssence::PUBLIC_KEY_COUNT_RANGE.contains(&public_keys.len()) {

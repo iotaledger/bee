@@ -99,7 +99,7 @@ fn from_str_invalid_hex() {
 fn from_str_invalid_len() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_LEN),
-        Err(Error::InvalidHexadecimalLength(expected, actual))
+        Err(Error::InvalidHexadecimalLength{expected, actual})
             if expected == OutputId::LENGTH * 2 && actual == OutputId::LENGTH * 2 - 2
     ));
 }
