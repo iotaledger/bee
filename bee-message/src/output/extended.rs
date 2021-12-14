@@ -45,8 +45,8 @@ impl ExtendedOutputBuilder {
 
     ///
     #[inline(always)]
-    pub fn with_native_tokens(mut self, native_tokens: Vec<NativeToken>) -> Self {
-        self.native_tokens = native_tokens;
+    pub fn with_native_tokens(mut self, native_tokens: impl IntoIterator<Item = NativeToken>) -> Self {
+        self.native_tokens = native_tokens.into_iter().collect();
         self
     }
 
@@ -59,8 +59,8 @@ impl ExtendedOutputBuilder {
 
     ///
     #[inline(always)]
-    pub fn with_feature_blocks(mut self, feature_blocks: Vec<FeatureBlock>) -> Self {
-        self.feature_blocks = feature_blocks;
+    pub fn with_feature_blocks(mut self, feature_blocks: impl IntoIterator<Item = FeatureBlock>) -> Self {
+        self.feature_blocks = feature_blocks.into_iter().collect();
         self
     }
 
