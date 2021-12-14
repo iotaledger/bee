@@ -6,3 +6,6 @@ impl_id!(
     32,
     "A transaction identifier, the BLAKE2b-256 hash of the transaction bytes. See <https://www.blake2.net/> for more information."
 );
+
+#[cfg(feature = "serde1")]
+string_serde_impl!(TransactionId);

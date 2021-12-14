@@ -19,9 +19,6 @@ macro_rules! impl_id {
             }
         }
 
-        #[cfg(feature = "serde1")]
-        string_serde_impl!($name);
-
         impl core::str::FromStr for $name {
             type Err = crate::Error;
 

@@ -13,3 +13,6 @@ impl MessageId {
         Self([0u8; MessageId::LENGTH])
     }
 }
+
+#[cfg(feature = "serde1")]
+string_serde_impl!(MessageId);
