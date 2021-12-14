@@ -20,7 +20,8 @@ use core::ops::RangeInclusive;
 /// * unique;
 #[derive(Clone, Debug, Eq, PartialEq, derive_more::Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Parents(Vec<MessageId>);
+#[deref(forward)]
+pub struct Parents(Box<[MessageId]>);
 
 #[allow(clippy::len_without_is_empty)]
 impl Parents {
@@ -37,7 +38,7 @@ impl Parents {
             return Err(Error::ParentsNotUniqueSorted);
         }
 
-        Ok(Self(inner))
+        Ok(Self(inner.into_boxed_slice()))
     }
 
     /// Returns the number of parents.
