@@ -5,7 +5,7 @@ use crate::rand::{
     bytes::rand_bytes_array, number::rand_number, parents::rand_parents, payload::rand_payload_for_message,
 };
 
-use bee_message::{parents::Parents, Message, MessageBuilder, MessageId};
+use bee_message::{parent::Parents, Message, MessageBuilder, MessageId};
 
 /// Generates a random message id.
 pub fn rand_message_id() -> MessageId {

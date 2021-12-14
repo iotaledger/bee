@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    parents::Parents,
+    parent::Parents,
     payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error, MessageId,
 };

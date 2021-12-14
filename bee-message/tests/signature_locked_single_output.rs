@@ -4,7 +4,7 @@
 use bee_common::packable::Packable;
 use bee_message::{
     address::{Address, Ed25519Address},
-    constants::IOTA_SUPPLY,
+    constant::IOTA_SUPPLY,
     output::SimpleOutput,
     Error,
 };

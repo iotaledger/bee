@@ -3,7 +3,7 @@
 
 use crate::rand::{message::rand_message_ids, number::rand_number_range};
 
-use bee_message::parents::Parents;
+use bee_message::parent::Parents;
 
 /// Generates random parents.
 pub fn rand_parents() -> Parents {

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::{parents::Parents, Error, MessageId};
+use bee_message::{parent::Parents, Error, MessageId};
 use bee_test::rand::message::{rand_message_id, rand_message_ids};
 
 use std::ops::Deref;

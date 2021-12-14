@@ -3,7 +3,7 @@
 
 use bee_common::packable::Packable;
 use bee_message::{
-    parents::Parents,
+    parent::Parents,
     payload::{IndexationPayload, Payload},
     Error, Message, MessageBuilder,
 };

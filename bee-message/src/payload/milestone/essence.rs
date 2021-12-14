@@ -3,7 +3,7 @@
 
 use crate::{
     milestone::MilestoneIndex,
-    parents::Parents,
+    parent::Parents,
     payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error,
 };

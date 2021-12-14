@@ -24,7 +24,7 @@ macro_rules! impl_id {
             type Err = crate::Error;
 
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                Ok($name::from(crate::utils::hex_decode(s)?))
+                Ok($name::from(crate::util::hex_decode(s)?))
             }
         }
 

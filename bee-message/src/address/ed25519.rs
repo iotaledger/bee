@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{signature::Ed25519Signature, utils::hex_decode, Error};
+use crate::{signature::Ed25519Signature, util::hex_decode, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 

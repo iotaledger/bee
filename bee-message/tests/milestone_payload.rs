@@ -4,7 +4,7 @@
 use bee_common::packable::Packable;
 use bee_message::{
     milestone::MilestoneIndex,
-    parents::Parents,
+    parent::Parents,
     payload::milestone::{MilestoneEssence, MilestonePayload},
     Error,
 };
@@ -17,23 +17,21 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    assert!(
-        MilestonePayload::new(
-            MilestoneEssence::new(
-                MilestoneIndex(0),
-                0,
-                rand_parents(),
-                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-                0,
-                0,
-                vec![[0; 32]],
-                None,
-            )
-            .unwrap(),
-            vec![[0; 64]],
+    assert!(MilestonePayload::new(
+        MilestoneEssence::new(
+            MilestoneIndex(0),
+            0,
+            rand_parents(),
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+            0,
+            0,
+            vec![[0; 32]],
+            None,
         )
-        .is_ok()
-    );
+        .unwrap(),
+        vec![[0; 64]],
+    )
+    .is_ok());
 }
 
 #[test]
