@@ -1,6 +1,6 @@
 [package]
 name = "bee-message"
-version = "0.1.6"
+version = "0.2.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Implementation of the IOTA protocol message layouts"
