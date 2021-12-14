@@ -1,13 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_common::packable::Packable;
+use bee_message::{Error, Message};
+
 use std::{
     fs::{self, File, OpenOptions},
     io::{self, prelude::*},
 };
-
-use bee_common::packable::Packable;
-use bee_message::{Error, Message};
 
 fn main() -> io::Result<()> {
     let paths = fs::read_dir("./corpus/fuzz_message")?;
@@ -16,14 +16,7 @@ fn main() -> io::Result<()> {
     for path in paths {
         let file_name = format!(
             "{}",
-            path.as_ref()
-                .unwrap()
-                .path()
-                .file_name()
-                .unwrap()
-                .to_os_string()
-                .into_string()
-                .unwrap()
+            path.as_ref().unwrap().path().file_name().unwrap().to_str().unwrap()
         );
         let mut file = File::open(path?.path())?;
         let mut buffer = Vec::new();
