@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{output::NftId, Error};
+use crate::{output::NftId, utils::hex_decode, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -41,15 +41,7 @@ impl FromStr for NftAddress {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; Self::LENGTH] = hex::decode(s)
-            .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
-            .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength {
-                expected: Self::LENGTH * 2,
-                actual: s.len(),
-            })?;
-
-        Ok(NftAddress::from(NftId::from(bytes)))
+        Ok(NftAddress::from(NftId::from(hex_decode(s)?)))
     }
 }
 

@@ -24,15 +24,7 @@ macro_rules! impl_id {
             type Err = crate::Error;
 
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                let bytes: [u8; $name::LENGTH] = hex::decode(s)
-                    .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
-                    .try_into()
-                    .map_err(|_| Self::Err::InvalidHexadecimalLength {
-                        expected: $name::LENGTH * 2,
-                        actual: s.len(),
-                    })?;
-
-                Ok($name::from(bytes))
+                Ok($name::from(crate::utils::hex_decode(s)?))
             }
         }
 

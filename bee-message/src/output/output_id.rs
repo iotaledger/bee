@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{output::OUTPUT_INDEX_RANGE, payload::transaction::TransactionId, Error};
+use crate::{output::OUTPUT_INDEX_RANGE, payload::transaction::TransactionId, utils::hex_decode, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -68,15 +68,7 @@ impl FromStr for OutputId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; OutputId::LENGTH] = hex::decode(s)
-            .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
-            .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength {
-                expected: OutputId::LENGTH * 2,
-                actual: s.len(),
-            })?;
-
-        bytes.try_into()
+        Self::try_from(hex_decode(s)?)
     }
 }
 
