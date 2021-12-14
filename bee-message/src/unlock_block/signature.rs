@@ -7,7 +7,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 /// An [`UnlockBlock`](crate::unlock_block::UnlockBlock) which is used to unlock a signature locked
 /// [`Input`](crate::input::Input).
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize, derive_more::From))]
 pub struct SignatureUnlockBlock(Signature);
 
@@ -24,14 +24,6 @@ impl SignatureUnlockBlock {
     /// Returns the actual [`Signature`] of the [`SignatureUnlockBlock`].
     #[inline(always)]
     pub fn signature(&self) -> &Signature {
-        &self.0
-    }
-}
-
-impl core::ops::Deref for SignatureUnlockBlock {
-    type Target = Signature;
-
-    fn deref(&self) -> &Self::Target {
         &self.0
     }
 }

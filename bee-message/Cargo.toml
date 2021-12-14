@@ -17,7 +17,7 @@ bee-ternary = { version = "0.5.2", default-features = false, features = [ "serde
 
 bech32 = { version = "0.8.1", default-features = false }
 bytemuck = { version = "1.7.2", default-features = false }
-derive_more = { version = "0.99.16", default-features = false, features = [ "from" ] }
+derive_more = { version = "0.99.16", default-features = false, features = [ "from", "as_ref", "deref" ] }
 digest = { version = "0.9.0", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "ed25519", "blake2b" ] }

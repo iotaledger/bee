@@ -10,7 +10,7 @@ use bee_common::{
     packable::{Packable, Read, Write},
 };
 
-use core::ops::{Deref, RangeInclusive};
+use core::ops::RangeInclusive;
 
 /// A [`Message`](crate::Message)'s [`Parents`] are the [`MessageId`]s of the messages it directly approves.
 ///
@@ -18,17 +18,9 @@ use core::ops::{Deref, RangeInclusive};
 /// * in the `Parents::COUNT_RANGE` range;
 /// * lexicographically sorted;
 /// * unique;
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, derive_more::Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Parents(Vec<MessageId>);
-
-impl Deref for Parents {
-    type Target = [MessageId];
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
 
 #[allow(clippy::len_without_is_empty)]
 impl Parents {

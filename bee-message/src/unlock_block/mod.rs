@@ -18,7 +18,7 @@ use crate::{
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::ops::{Deref, RangeInclusive};
+use core::ops::RangeInclusive;
 use std::collections::HashSet;
 
 /// The maximum number of unlock blocks of a transaction.
@@ -107,7 +107,7 @@ impl Packable for UnlockBlock {
 }
 
 /// A collection of unlock blocks.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, derive_more::Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct UnlockBlocks(Box<[UnlockBlock]>);
 
@@ -159,14 +159,6 @@ impl UnlockBlocks {
             Some(unlock_block) => Some(unlock_block),
             None => None,
         }
-    }
-}
-
-impl Deref for UnlockBlocks {
-    type Target = [UnlockBlock];
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }
 

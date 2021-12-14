@@ -36,29 +36,34 @@ impl<P: NonceProvider> MessageBuilder<P> {
     const DEFAULT_NONCE: u64 = 0;
 
     /// Creates a new `MessageBuilder`.
+    #[inline(always)]
     pub fn new() -> Self {
         Default::default()
     }
 
     /// Adds a network id to a `MessageBuilder`.
+    #[inline(always)]
     pub fn with_network_id(mut self, network_id: u64) -> Self {
         self.network_id = Some(network_id);
         self
     }
 
     /// Adds parents to a `MessageBuilder`.
+    #[inline(always)]
     pub fn with_parents(mut self, parents: Parents) -> Self {
         self.parents = Some(parents);
         self
     }
 
     /// Adds a payload to a `MessageBuilder`.
+    #[inline(always)]
     pub fn with_payload(mut self, payload: Payload) -> Self {
         self.payload = Some(payload);
         self
     }
 
     /// Adds a nonce provider to a `MessageBuilder`.
+    #[inline(always)]
     pub fn with_nonce_provider(mut self, nonce_provider: P, target_score: f64) -> Self {
         self.nonce_provider = Some((nonce_provider, target_score));
         self
@@ -126,36 +131,43 @@ impl Message {
     pub const LENGTH_MAX: usize = 32768;
 
     /// Creates a new `MessageBuilder` to construct an instance of a [`Message`].
+    #[inline(always)]
     pub fn builder() -> MessageBuilder {
         MessageBuilder::new()
     }
 
     /// Computes the identifier of the message.
+    #[inline(always)]
     pub fn id(&self) -> MessageId {
         MessageId::new(Blake2b256::digest(&self.pack_new()).into())
     }
 
     /// Returns the network id of a [`Message`].
+    #[inline(always)]
     pub fn network_id(&self) -> u64 {
         self.network_id
     }
 
     /// Returns the parents of a [`Message`].
+    #[inline(always)]
     pub fn parents(&self) -> &Parents {
         &self.parents
     }
 
     /// Returns the optional payload of a [`Message`].
+    #[inline(always)]
     pub fn payload(&self) -> Option<&Payload> {
         self.payload.as_ref()
     }
 
     /// Returns the nonce of a [`Message`].
+    #[inline(always)]
     pub fn nonce(&self) -> u64 {
         self.nonce
     }
 
     /// Consumes the [[`Message`]], and returns ownership over its [`Parents`].
+    #[inline(always)]
     pub fn into_parents(self) -> Parents {
         self.parents
     }

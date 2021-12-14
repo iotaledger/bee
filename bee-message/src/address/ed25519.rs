@@ -13,7 +13,8 @@ use crypto::{
 use core::str::FromStr;
 
 /// An Ed25519 address.
-#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From, derive_more::AsRef)]
+#[as_ref(forward)]
 pub struct Ed25519Address([u8; Self::LENGTH]);
 
 #[allow(clippy::len_without_is_empty)]
@@ -67,12 +68,6 @@ impl FromStr for Ed25519Address {
             })?;
 
         Ok(Ed25519Address::from(bytes))
-    }
-}
-
-impl AsRef<[u8]> for Ed25519Address {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
     }
 }
 

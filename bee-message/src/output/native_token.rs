@@ -10,8 +10,6 @@ use bee_common::{
 
 use primitive_types::U256;
 
-use core::ops::Deref;
-
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -66,7 +64,7 @@ impl Packable for NativeToken {
 }
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct NativeTokens(Box<[NativeToken]>);
 
@@ -93,14 +91,6 @@ impl NativeTokens {
     #[inline(always)]
     pub fn new(native_tokens: Vec<NativeToken>) -> Result<Self, Error> {
         Self::try_from(native_tokens)
-    }
-}
-
-impl Deref for NativeTokens {
-    type Target = [NativeToken];
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }
 

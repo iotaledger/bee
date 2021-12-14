@@ -6,7 +6,8 @@
 macro_rules! impl_id {
     ($name:ident, $length:literal, $doc:literal) => {
         #[doc = $doc]
-        #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, derive_more::From)]
+        #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, derive_more::From, derive_more::AsRef)]
+        #[as_ref(forward)]
         pub struct $name([u8; $name::LENGTH]);
 
         impl $name {
@@ -32,12 +33,6 @@ macro_rules! impl_id {
                     })?;
 
                 Ok($name::from(bytes))
-            }
-        }
-
-        impl AsRef<[u8]> for $name {
-            fn as_ref(&self) -> &[u8] {
-                &self.0
             }
         }
 

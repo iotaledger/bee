@@ -5,10 +5,13 @@ use crate::{output::NftId, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{ops::Deref, str::FromStr};
+use core::str::FromStr;
 
 /// A NFT address.
-#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From)]
+#[derive(
+    Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From, derive_more::AsRef, derive_more::Deref,
+)]
+#[as_ref(forward)]
 pub struct NftAddress(NftId);
 
 #[allow(clippy::len_without_is_empty)]
@@ -47,20 +50,6 @@ impl FromStr for NftAddress {
             })?;
 
         Ok(NftAddress::from(NftId::from(bytes)))
-    }
-}
-
-impl Deref for NftAddress {
-    type Target = NftId;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl AsRef<[u8]> for NftAddress {
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
     }
 }
 

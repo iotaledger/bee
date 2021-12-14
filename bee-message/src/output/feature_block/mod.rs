@@ -28,8 +28,6 @@ use bee_common::{
     packable::{Packable, Read, Write},
 };
 
-use core::ops::Deref;
-
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
 #[cfg_attr(
@@ -162,7 +160,7 @@ impl Packable for FeatureBlock {
 }
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct FeatureBlocks(Box<[FeatureBlock]>);
 
@@ -212,14 +210,6 @@ impl FeatureBlocks {
     #[inline(always)]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
-    }
-}
-
-impl Deref for FeatureBlocks {
-    type Target = [FeatureBlock];
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }
 
