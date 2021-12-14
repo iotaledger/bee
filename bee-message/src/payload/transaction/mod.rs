@@ -8,10 +8,8 @@ mod transaction_id;
 
 use crate::{payload::MessagePayload, unlock::UnlockBlocks, MessageUnpackError, ValidationError};
 
+pub(crate) use essence::{InputCount, OutputCount};
 pub use essence::{TransactionEssence, TransactionEssenceBuilder, TransactionEssenceUnpackError};
-pub(crate) use essence::{
-    PREFIXED_INPUTS_LENGTH_MAX, PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX, PREFIXED_OUTPUTS_LENGTH_MIN,
-};
 pub use transaction_id::TransactionId;
 
 use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable, PackableExt};

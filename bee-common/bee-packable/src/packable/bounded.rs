@@ -13,9 +13,9 @@ use crate::{
 use core::fmt::{self, Display};
 
 /// Trait that provides an interface for bounded types.
-pub trait Bounded {
+pub trait Bounded: TryFrom<usize> + Into<Self::Bounds> {
     /// The type used to define the bounds.
-    type Bounds: PartialOrd;
+    type Bounds: PartialOrd + TryInto<Self> + TryInto<usize> + Default + Copy;
 
     /// Minimum bounded value.
     const MIN: Self::Bounds;
@@ -24,22 +24,15 @@ pub trait Bounded {
 }
 
 macro_rules! bounded {
-    ($wrapper:ident, $error:ident, $ty:ident) => {
-        #[doc = concat!("Error encountered when attempting to wrap a  `", stringify!($ty),"` that is not within the given bounds.")]
+    ($wrapper:ident, $error:ident, $try_error:ident, $ty:ident) => {
+        #[doc = concat!("Error encountered when attempting to wrap a  [`", stringify!($ty),"`] that is not within the given bounds.")]
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub struct $error<const MIN: $ty, const MAX: $ty>(pub $ty);
 
         impl<const MIN: $ty, const MAX: $ty> Display for $error<MIN, MAX> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "integer {} is out of bounds", self.0)
+                write!(f, "the integer `{}` is out of bounds (`{}..={}`)", self.0, MIN, MAX)
             }
-        }
-
-        impl<const MIN: $ty, const MAX: $ty> Bounded for $error<MIN, MAX> {
-            type Bounds = $ty;
-
-            const MIN: $ty = MIN;
-            const MAX: $ty = MAX;
         }
 
         #[allow(clippy::from_over_into)]
@@ -49,7 +42,30 @@ macro_rules! bounded {
             }
         }
 
-        #[doc = concat!("Wrapper type for a `", stringify!($ty),"`, providing minimum and maximum value bounds.")]
+        #[doc = concat!("Error encountered when attempting to convert a [`usize`] into a [`", stringify!($wrapper),"`].")]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+        pub enum $try_error<const MIN: $ty, const MAX: $ty>{
+            #[doc = concat!("The `usize` could be converted into a [`", stringify!($ty),"`] but it is not within the given bounds.")]
+            Invalid($ty),
+            #[doc = concat!("The `usize` could not be converted into a [`", stringify!($ty),"`].")]
+            Truncated(usize),
+        }
+        impl<const MIN: $ty, const MAX: $ty> Display for $try_error<MIN, MAX> {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Self::Truncated(len) => write!(f, "the integer `{}` was truncated while casting it into a `{}`", len, core::any::type_name::<$ty>()),
+                Self::Invalid(err) => $error::<MIN, MAX>(*err).fmt(f),
+            }
+        }
+}
+
+        impl<const MIN: $ty, const MAX: $ty> From<$error<MIN, MAX>> for $try_error<MIN, MAX> {
+            fn from(err: $error<MIN, MAX>) -> Self {
+                Self::Invalid(err.0)
+            }
+        }
+
+        #[doc = concat!("Wrapper type for a [`", stringify!($ty),"`], providing minimum and maximum value bounds.")]
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub struct $wrapper<const MIN: $ty, const MAX: $ty>($ty);
@@ -108,6 +124,16 @@ macro_rules! bounded {
             }
         }
 
+        impl<const MIN: $ty, const MAX: $ty> TryFrom<usize> for $wrapper<MIN, MAX> {
+            type Error = $try_error<MIN, MAX>;
+
+            fn try_from(value: usize) -> Result<Self, Self::Error> {
+                Ok(<$ty>::try_from(value)
+                    .map_err(|_| $try_error::Truncated(value))?
+                    .try_into()?)
+            }
+        }
+
         impl<const MIN: $ty, const MAX: $ty> Packable for $wrapper<MIN, MAX> {
             type UnpackError = $error<MIN, MAX>;
 
@@ -132,10 +158,10 @@ macro_rules! bounded {
     };
 }
 
-bounded!(BoundedU8, InvalidBoundedU8, u8);
-bounded!(BoundedU16, InvalidBoundedU16, u16);
-bounded!(BoundedU32, InvalidBoundedU32, u32);
-bounded!(BoundedU64, InvalidBoundedU64, u64);
+bounded!(BoundedU8, InvalidBoundedU8, TryIntoBoundedU8Error, u8);
+bounded!(BoundedU16, InvalidBoundedU16, TryIntoBoundedU16Error, u16);
+bounded!(BoundedU32, InvalidBoundedU32, TryIntoBoundedU32Error, u32);
+bounded!(BoundedU64, InvalidBoundedU64, TryIntoBoundedU64Error, u64);
 
 impl Bounded for u8 {
     type Bounds = Self;

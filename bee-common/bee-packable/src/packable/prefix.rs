@@ -7,10 +7,7 @@ extern crate alloc;
 
 use crate::{
     error::{UnpackError, UnpackErrorExt},
-    packable::bounded::{
-        Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32,
-        InvalidBoundedU64, InvalidBoundedU8,
-    },
+    packable::bounded::Bounded,
     packer::Packer,
     unpacker::Unpacker,
     Packable,
@@ -19,33 +16,10 @@ use crate::{
 use alloc::{boxed::Box, vec::Vec};
 use core::{
     convert::Infallible,
-    fmt::{self, Display},
+    fmt::Debug,
     marker::PhantomData,
+    ops::{Deref, Range},
 };
-
-/// Semantic error raised when converting a [`Vec`] into a [`VecPrefix`] or `Box<[_]>` into a [`BoxedSlicePrefix`].
-#[derive(Debug)]
-pub enum TryIntoPrefixError<E> {
-    /// The prefix length was truncated.
-    Truncated(usize),
-    /// The prefix length is invalid.
-    Invalid(E),
-}
-
-impl<E> From<E> for TryIntoPrefixError<E> {
-    fn from(err: E) -> Self {
-        Self::Invalid(err)
-    }
-}
-
-impl<E: Display> Display for TryIntoPrefixError<E> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Truncated(len) => write!(f, "length of `{}` was truncated", len),
-            Self::Invalid(err) => err.fmt(f),
-        }
-    }
-}
 
 /// Semantic error raised while unpacking a dynamically-sized sequences that use a type different than `usize` for their
 /// length-prefix.
@@ -104,102 +78,89 @@ impl<T, B: Bounded> Default for VecPrefix<T, B> {
     }
 }
 
-macro_rules! impl_vec_prefix {
-    ($ty:ty, $bounded:ty, $err:ty, $unpack_err:ty, $map_err:expr, $($generics:tt)*) => {
-        impl<T, $($generics)*> TryFrom<Vec<T>> for VecPrefix<T, $bounded> {
-            type Error = TryIntoPrefixError<$err>;
+impl<T, B: Bounded> Deref for VecPrefix<T, B> {
+    type Target = Vec<T>;
 
-            fn try_from(vec: Vec<T>) -> Result<Self, Self::Error> {
-                let len = vec.len();
-                let _ =
-                    <$bounded>::try_from(<$ty>::try_from(len).map_err(|_| TryIntoPrefixError::Truncated(len))?)
-                        .map_err(TryIntoPrefixError::Invalid)?;
-
-                Ok(Self {
-                    inner: vec,
-                    bounded: PhantomData,
-                })
-            }
-        }
-
-        impl<'a, T, $($generics)*> TryFrom<&'a Vec<T>> for &'a VecPrefix<T, $bounded> {
-            type Error = TryIntoPrefixError<$err>;
-
-            fn try_from(vec: &Vec<T>) -> Result<Self, Self::Error> {
-                let len = vec.len();
-                let _ =
-                    <$bounded>::try_from(<$ty>::try_from(len).map_err(|_| TryIntoPrefixError::Truncated(len))?)
-                        .map_err(TryIntoPrefixError::Invalid)?;
-
-                // SAFETY: `Vec<T>` and `VecPrefix<T, B>` have the same layout.
-                Ok(unsafe { &*(vec as *const Vec<T> as *const VecPrefix<T, $bounded>) })
-            }
-        }
-
-        /// We cannot provide a [`From`] implementation because [`Vec`] is not from this crate.
-        #[allow(clippy::from_over_into)]
-        impl<T, $($generics)*> Into<Vec<T>> for VecPrefix<T, $bounded> {
-            fn into(self) -> Vec<T> {
-                self.inner
-            }
-        }
-
-        impl<T, $($generics)*> core::ops::Deref for VecPrefix<T, $bounded> {
-            type Target = Vec<T>;
-
-            fn deref(&self) -> &Self::Target {
-                &self.inner
-            }
-        }
-
-        impl<T: Packable, $($generics)*> Packable for VecPrefix<T, $bounded> {
-            type UnpackError = $unpack_err;
-
-            fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-                // The length of any dynamically-sized sequence must be prefixed.
-                // This unwrap is fine, since we have already validated the length in `try_from`.
-                <$ty>::try_from(self.len()).unwrap().pack(packer)?;
-
-                for item in self.iter() {
-                    item.pack(packer)?;
-                }
-
-                Ok(())
-            }
-
-            fn unpack<U: Unpacker, const VERIFY: bool>(
-                unpacker: &mut U,
-            ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-                // The length of any dynamically-sized sequence must be prefixed.
-                let len: $ty = <$bounded>::unpack::<_, VERIFY>(unpacker)
-                    .map_packable_err($map_err)?
-                    .into();
-
-                let mut inner = Vec::with_capacity(len as usize);
-
-                for _ in 0..len {
-                    let item = T::unpack::<_, VERIFY>(unpacker).coerce()?;
-                    inner.push(item);
-                }
-
-                Ok(VecPrefix {
-                    inner,
-                    bounded: PhantomData,
-                })
-            }
-        }
-    };
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
 }
 
-impl_vec_prefix!(u8, u8, Infallible, T::UnpackError, |err| match err {},);
-impl_vec_prefix!(u16, u16, Infallible, T::UnpackError, |err| match err {},);
-impl_vec_prefix!(u32, u32, Infallible, T::UnpackError, |err| match err {},);
-impl_vec_prefix!(u64, u64, Infallible, T::UnpackError, |err| match err {},);
+/// We cannot provide a [`From`] implementation because [`Vec`] is not from this crate.
+#[allow(clippy::from_over_into)]
+impl<T, B: Bounded> Into<Vec<T>> for VecPrefix<T, B> {
+    fn into(self) -> Vec<T> {
+        self.inner
+    }
+}
 
-impl_vec_prefix!(u8, BoundedU8<MIN, MAX>, InvalidBoundedU8<MIN, MAX>, UnpackPrefixError<T::UnpackError, InvalidBoundedU8<MIN, MAX>>, UnpackPrefixError::Prefix, const MIN: u8, const MAX: u8);
-impl_vec_prefix!(u16, BoundedU16<MIN, MAX>, InvalidBoundedU16<MIN, MAX>, UnpackPrefixError<T::UnpackError, InvalidBoundedU16<MIN, MAX>>, UnpackPrefixError::Prefix, const MIN: u16, const MAX: u16);
-impl_vec_prefix!(u32, BoundedU32<MIN, MAX>, InvalidBoundedU32<MIN, MAX>, UnpackPrefixError<T::UnpackError, InvalidBoundedU32<MIN, MAX>>, UnpackPrefixError::Prefix, const MIN: u32, const MAX: u32);
-impl_vec_prefix!(u64, BoundedU64<MIN, MAX>, InvalidBoundedU64<MIN, MAX>, UnpackPrefixError<T::UnpackError, InvalidBoundedU64<MIN, MAX>>, UnpackPrefixError::Prefix, const MIN: u64, const MAX: u64);
+impl<T, B> TryFrom<Vec<T>> for VecPrefix<T, B>
+where
+    B: Bounded,
+{
+    type Error = <B as TryFrom<usize>>::Error;
+
+    fn try_from(vec: Vec<T>) -> Result<Self, Self::Error> {
+        B::try_from(vec.len())?;
+
+        Ok(Self {
+            inner: vec,
+            bounded: PhantomData,
+        })
+    }
+}
+
+impl<T, B> Packable for VecPrefix<T, B>
+where
+    T: Packable,
+    B: Bounded + Packable,
+    <B::Bounds as TryInto<B>>::Error: Debug,
+    <B as TryFrom<usize>>::Error: Debug,
+    Range<B::Bounds>: Iterator<Item = B::Bounds>,
+{
+    type UnpackError = UnpackPrefixError<T::UnpackError, B::UnpackError>;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        // The length of any dynamically-sized sequence must be prefixed. This unwrap is fine since
+        // the length of the inner `Vec` has been validated while creating this `VecPrefix`.
+        B::try_from(self.len()).unwrap().pack(packer)?;
+
+        for item in self.iter() {
+            item.pack(packer)?;
+        }
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        // The length of any dynamically-sized sequence must be prefixed.
+        let len = B::unpack::<_, VERIFY>(unpacker)
+            .map_packable_err(UnpackPrefixError::Prefix)?
+            .into();
+
+        // If `len` fits in a `usize`, we use it as the capacity of the inner `Vec` to avoid extra
+        // allocations.
+        //
+        // If that is not the case, we avoid assuming anything about the memory capacity of the
+        // current platform and initialize `inner` with capacity zero. Most of the time this will
+        // cause the program to panic due to memory exhaustion or capacity overflow while calling
+        // `inner.push` but that is a platform limitation and not an error that the `Packable`
+        // infrastructure should handle.
+        let mut inner = Vec::with_capacity(len.try_into().unwrap_or(0));
+
+        for _ in B::Bounds::default()..len {
+            let item = T::unpack::<_, VERIFY>(unpacker).coerce()?;
+            inner.push(item);
+        }
+
+        Ok(VecPrefix {
+            inner,
+            bounded: PhantomData,
+        })
+    }
+}
 
 /// Wrapper type for `Box<[T]>` with a length prefix.
 /// The boxed slice's prefix bounds are provided by `B`, where `B` is a [`Bounded`] type.
@@ -221,101 +182,68 @@ impl<T, B: Bounded> Default for BoxedSlicePrefix<T, B> {
     }
 }
 
-macro_rules! impl_boxed_slice_prefix {
-    ($ty:ty, $bounded:ty, $err:ty, $unpack_err:ty, $map_err:expr, $($generics:tt)*) => {
-        impl<T, $($generics)*> TryFrom<Box<[T]>> for BoxedSlicePrefix<T, $bounded> {
-            type Error = TryIntoPrefixError<$err>;
+impl<T, B: Bounded> Deref for BoxedSlicePrefix<T, B> {
+    type Target = Box<[T]>;
 
-            fn try_from(boxed_slice: Box<[T]>) -> Result<Self, Self::Error> {
-                let len = boxed_slice.len();
-                let _ =
-                    <$bounded>::try_from(<$ty>::try_from(len).map_err(|_| TryIntoPrefixError::Truncated(len))?)
-                        .map_err(TryIntoPrefixError::Invalid)?;
-
-                Ok(Self {
-                    inner: boxed_slice,
-                    bounded: PhantomData,
-                })
-            }
-        }
-
-        impl<'a, T, $($generics)*> TryFrom<&'a Box<[T]>>
-            for &'a BoxedSlicePrefix<T, $bounded>
-        {
-            type Error = TryIntoPrefixError<$err>;
-
-            fn try_from(boxed_slice: &Box<[T]>) -> Result<Self, Self::Error> {
-                let len = boxed_slice.len();
-                let _ =
-                    <$bounded>::try_from(<$ty>::try_from(len).map_err(|_| TryIntoPrefixError::Truncated(len))?)
-                        .map_err(TryIntoPrefixError::Invalid)?;
-
-                // SAFETY: `Box<[T]>` and `BoxedSlicePrefix<T, B>` have the same layout.
-                Ok(unsafe { &*(boxed_slice as *const Box<[T]> as *const BoxedSlicePrefix<T, $bounded>) })
-            }
-        }
-
-        /// We cannot provide a [`From`] implementation because [`Vec`] is not from this crate.
-        #[allow(clippy::from_over_into)]
-        impl<T, $($generics)*> Into<Box<[T]>> for BoxedSlicePrefix<T, $bounded> {
-            fn into(self) -> Box<[T]> {
-                self.inner
-            }
-        }
-
-        impl<T, $($generics)*> core::ops::Deref for BoxedSlicePrefix<T, $bounded> {
-            type Target = Box<[T]>;
-
-            fn deref(&self) -> &Self::Target {
-                &self.inner
-            }
-        }
-
-        impl<T: Packable, $($generics)*> Packable for BoxedSlicePrefix<T, $bounded> {
-            type UnpackError = $unpack_err;
-
-            fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-                // The length of any dynamically-sized sequence must be prefixed.
-                // This unwrap is fine, since we have already validated the length in `try_from`.
-                <$ty>::try_from(self.len()).unwrap().pack(packer)?;
-
-                for item in self.iter() {
-                    item.pack(packer)?;
-                }
-
-                Ok(())
-            }
-
-            fn unpack<U: Unpacker, const VERIFY: bool>(
-                unpacker: &mut U,
-            ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-                // The length of any dynamically-sized sequence must be prefixed.
-                let len: $ty = <$bounded>::unpack::<_, VERIFY>(unpacker)
-                    .map_packable_err($map_err)?
-                    .into();
-
-                let mut inner = Vec::with_capacity(len as usize);
-
-                for _ in 0..len {
-                    let item = T::unpack::<_, VERIFY>(unpacker).coerce()?;
-                    inner.push(item);
-                }
-
-                Ok(BoxedSlicePrefix {
-                    inner: inner.into_boxed_slice(),
-                    bounded: PhantomData,
-                })
-            }
-        }
-    };
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
 }
 
-impl_boxed_slice_prefix!(u8, u8, Infallible, T::UnpackError, |err| match err {},);
-impl_boxed_slice_prefix!(u16, u16, Infallible, T::UnpackError, |err| match err {},);
-impl_boxed_slice_prefix!(u32, u32, Infallible, T::UnpackError, |err| match err {},);
-impl_boxed_slice_prefix!(u64, u64, Infallible, T::UnpackError, |err| match err {},);
+/// We cannot provide a [`From`] implementation because [`Vec`] is not from this crate.
+#[allow(clippy::from_over_into)]
+impl<T, B: Bounded> Into<Box<[T]>> for BoxedSlicePrefix<T, B> {
+    fn into(self) -> Box<[T]> {
+        self.inner
+    }
+}
 
-impl_boxed_slice_prefix!(u8, BoundedU8<MIN, MAX>, InvalidBoundedU8<MIN, MAX>, UnpackPrefixError<T::UnpackError, InvalidBoundedU8<MIN, MAX>>, UnpackPrefixError::Prefix, const MIN: u8, const MAX: u8);
-impl_boxed_slice_prefix!(u16, BoundedU16<MIN, MAX>, InvalidBoundedU16<MIN, MAX>, UnpackPrefixError<T::UnpackError, InvalidBoundedU16<MIN, MAX>>, UnpackPrefixError::Prefix, const MIN: u16, const MAX: u16);
-impl_boxed_slice_prefix!(u32, BoundedU32<MIN, MAX>, InvalidBoundedU32<MIN, MAX>, UnpackPrefixError<T::UnpackError, InvalidBoundedU32<MIN, MAX>>, UnpackPrefixError::Prefix, const MIN: u32, const MAX: u32);
-impl_boxed_slice_prefix!(u64, BoundedU64<MIN, MAX>, InvalidBoundedU64<MIN, MAX>, UnpackPrefixError<T::UnpackError, InvalidBoundedU64<MIN, MAX>>, UnpackPrefixError::Prefix, const MIN: u64, const MAX: u64);
+impl<T, B> TryFrom<Box<[T]>> for BoxedSlicePrefix<T, B>
+where
+    B: Bounded,
+{
+    type Error = <B as TryFrom<usize>>::Error;
+
+    fn try_from(boxed_slice: Box<[T]>) -> Result<Self, Self::Error> {
+        B::try_from(boxed_slice.len())?;
+
+        Ok(Self {
+            inner: boxed_slice,
+            bounded: PhantomData,
+        })
+    }
+}
+
+impl<T, B> Packable for BoxedSlicePrefix<T, B>
+where
+    T: Packable,
+    B: Bounded + Packable,
+    <B::Bounds as TryInto<B>>::Error: Debug,
+    <B as TryFrom<usize>>::Error: Debug,
+    Range<B::Bounds>: Iterator<Item = B::Bounds>,
+{
+    type UnpackError = <VecPrefix<T, B> as Packable>::UnpackError;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        // The length of any dynamically-sized sequence must be prefixed. This unwrap is fine since
+        // the length of the inner slice has been validated while creating this `BoxedSlicePrefix`.
+        B::try_from(self.len()).unwrap().pack(packer)?;
+
+        for item in self.iter() {
+            item.pack(packer)?;
+        }
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let vec: Vec<T> = VecPrefix::<T, B>::unpack::<_, VERIFY>(unpacker)?.into();
+
+        Ok(Self {
+            inner: vec.into_boxed_slice(),
+            bounded: PhantomData,
+        })
+    }
+}

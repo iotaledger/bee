@@ -6,10 +6,10 @@ mod common;
 use bee_packable::{
     bounded::{
         BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
-        InvalidBoundedU8,
+        InvalidBoundedU8, TryIntoBoundedU32Error,
     },
     error::UnpackError,
-    prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
+    prefix::{UnpackPrefixError, VecPrefix},
     PackableExt,
 };
 
@@ -18,10 +18,7 @@ fn packable_vec_prefix_from_vec_invalid_error() {
     let vec = vec![0u8; 16];
     let prefixed = VecPrefix::<u8, BoundedU32<1, 8>>::try_from(vec);
 
-    assert!(matches!(
-        prefixed,
-        Err(TryIntoPrefixError::Invalid(InvalidBoundedU32(16)))
-    ));
+    assert!(matches!(prefixed, Err(TryIntoBoundedU32Error::Invalid(16))));
 }
 
 #[test]
@@ -29,7 +26,7 @@ fn packable_vec_prefix_from_vec_truncated_error() {
     let vec = vec![0u8; 257];
     let prefixed = VecPrefix::<u8, u8>::try_from(vec);
 
-    assert!(matches!(prefixed, Err(TryIntoPrefixError::Truncated(257))));
+    assert!(prefixed.is_err());
 }
 
 macro_rules! impl_packable_test_for_vec_prefix {
@@ -37,7 +34,7 @@ macro_rules! impl_packable_test_for_vec_prefix {
         #[test]
         fn $packable_vec_prefix() {
             assert_eq!(
-                common::generic_test(<&VecPrefix<Option<u32>, $ty>>::try_from(&vec![Some(0u32), None]).unwrap())
+                common::generic_test(&<VecPrefix<Option<u32>, $ty>>::try_from(vec![Some(0u32), None]).unwrap())
                     .0
                     .len(),
                 core::mem::size_of::<$ty>()
@@ -54,7 +51,7 @@ macro_rules! impl_packable_test_for_bounded_vec_prefix {
         fn $packable_vec_prefix() {
             assert_eq!(
                 common::generic_test(
-                    <&VecPrefix<Option<u32>, $bounded<$min, $max>>>::try_from(&vec![Some(0u32), None]).unwrap()
+                    &<VecPrefix<Option<u32>, $bounded<$min, $max>>>::try_from(vec![Some(0u32), None]).unwrap()
                 )
                 .0
                 .len(),

@@ -6,7 +6,7 @@ use bee_message::{
     signature::{Ed25519Signature, Signature},
     unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlockUnpackError, UnlockBlocks},
 };
-use bee_packable::{bounded::InvalidBoundedU16, error::UnpackError, prefix::TryIntoPrefixError, PackableExt};
+use bee_packable::{bounded::TryIntoBoundedU16Error, error::UnpackError, PackableExt};
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
 
 #[test]
@@ -86,9 +86,9 @@ fn new_invalid_duplicate_signature() {
 fn new_invalid_too_many_blocks() {
     assert!(matches!(
         UnlockBlocks::new(vec![ReferenceUnlock::new(0).unwrap().into(); 300]),
-        Err(ValidationError::InvalidUnlockBlockCount(TryIntoPrefixError::Invalid(
-            InvalidBoundedU16(300)
-        ))),
+        Err(ValidationError::InvalidUnlockBlockCount(
+            TryIntoBoundedU16Error::Invalid(300)
+        )),
     ));
 }
 

@@ -7,10 +7,11 @@ mod reference;
 mod signature;
 mod unlock_blocks;
 
+pub(crate) use reference::ReferenceIndex;
 pub use reference::{ReferenceUnlock, ReferenceUnlockUnpackError};
 pub use signature::SignatureUnlock;
+pub(crate) use unlock_blocks::UnlockBlockCount;
 pub use unlock_blocks::UnlockBlocks;
-pub(crate) use unlock_blocks::{PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX, PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN};
 
 use crate::{
     input::{INPUT_COUNT_MAX, INPUT_COUNT_RANGE, INPUT_INDEX_MAX, INPUT_INDEX_RANGE},

@@ -6,7 +6,7 @@ use bee_message::{
     payload::{indexation::IndexationPayload, MessagePayload},
     MESSAGE_LENGTH_RANGE,
 };
-use bee_packable::{bounded::InvalidBoundedU32, error::UnpackError, prefix::TryIntoPrefixError, PackableExt};
+use bee_packable::{bounded::TryIntoBoundedU32Error, error::UnpackError, PackableExt};
 use bee_test::rand::bytes::rand_bytes;
 
 #[test]
@@ -59,7 +59,7 @@ fn new_invalid_index_length_less_than_min() {
     assert!(matches!(
         IndexationPayload::new([].to_vec(), [0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2].to_vec()),
         Err(ValidationError::InvalidIndexationIndexLength(
-            TryIntoPrefixError::Invalid(InvalidBoundedU32(0))
+            TryIntoBoundedU32Error::Invalid(0)
         ))
     ));
 }
@@ -72,7 +72,7 @@ fn new_invalid_index_length_more_than_max() {
             [0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2].to_vec()
         ),
         Err(ValidationError::InvalidIndexationIndexLength(
-            TryIntoPrefixError::Invalid(InvalidBoundedU32(65))
+            TryIntoBoundedU32Error::Invalid(65)
         ))
     ));
 }
@@ -82,7 +82,7 @@ fn new_invalid_data_length_more_than_max() {
     assert!(matches!(
         IndexationPayload::new(rand_bytes(32), [0u8; 65540].to_vec()),
         Err(ValidationError::InvalidIndexationDataLength(
-            TryIntoPrefixError::Invalid(InvalidBoundedU32(65540))
+            TryIntoBoundedU32Error::Invalid(65540)
         )),
     ));
 }
@@ -92,7 +92,7 @@ fn unpack_invalid_index_length_less_than_min() {
     assert!(matches!(
         IndexationPayload::unpack_verified(vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidIndexationIndexLength(TryIntoPrefixError::Invalid(InvalidBoundedU32(0)))
+            ValidationError::InvalidIndexationIndexLength(TryIntoBoundedU32Error::Invalid(0))
         ))),
     ));
 }
@@ -107,7 +107,7 @@ fn unpack_invalid_index_length_more_than_max() {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ]),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidIndexationIndexLength(TryIntoPrefixError::Invalid(InvalidBoundedU32(65)))
+            ValidationError::InvalidIndexationIndexLength(TryIntoBoundedU32Error::Invalid(65))
         ))),
     ));
 }
@@ -124,7 +124,7 @@ fn unpack_invalid_data_length_more_than_max() {
     assert!(matches!(
         IndexationPayload::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidIndexationDataLength(TryIntoPrefixError::Invalid(InvalidBoundedU32(n)))
+            ValidationError::InvalidIndexationDataLength(TryIntoBoundedU32Error::Invalid(n))
         )))
             if n == u32::try_from(data_len).unwrap()
     ))

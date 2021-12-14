@@ -4,28 +4,17 @@
 use crate::{
     address::Address,
     input::UtxoInput,
-    output::PREFIXED_ASSET_BALANCES_LENGTH_MAX,
-    parents::{MESSAGE_PARENTS_MAX, MESSAGE_PARENTS_MIN},
+    output::AssetBalanceCount,
+    parents::ParentCount,
     payload::{
-        data::PREFIXED_DATA_LENGTH_MAX,
-        drng::PREFIXED_DKG_LENGTH_MAX,
-        fpc::{PREFIXED_CONFLICTS_LENGTH_MAX, PREFIXED_TIMESTAMPS_LENGTH_MAX},
-        indexation::{
-            PREFIXED_INDEXATION_DATA_LENGTH_MAX, PREFIXED_INDEXATION_INDEX_LENGTH_MAX,
-            PREFIXED_INDEXATION_INDEX_LENGTH_MIN,
-        },
-        salt_declaration::PREFIXED_SALT_BYTES_LENGTH_MAX,
-        transaction::{
-            PREFIXED_INPUTS_LENGTH_MAX, PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX,
-            PREFIXED_OUTPUTS_LENGTH_MIN,
-        },
+        data::DataPayloadLength,
+        drng::EncryptedDealLength,
+        fpc::{ConflictCount, TimestampCount},
+        indexation::{IndexationDataLength, IndexationIndexLength},
+        salt_declaration::SaltBytesLength,
+        transaction::{InputCount, OutputCount},
     },
-    unlock::{PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX, PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN},
-};
-
-use bee_packable::{
-    bounded::{InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU8},
-    prefix::TryIntoPrefixError,
+    unlock::{ReferenceIndex, UnlockBlockCount},
 };
 
 use crypto::Error as CryptoError;
@@ -36,69 +25,45 @@ use core::fmt;
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum ValidationError {
-    AddressSignatureKindMismatch {
-        expected: u8,
-        actual: u8,
-    },
+    AddressSignatureKindMismatch { expected: u8, actual: u8 },
     CryptoError(CryptoError),
     DuplicateAddress(Address),
     DuplicateSignature(usize),
     DuplicateUtxo(UtxoInput),
-    InputUnlockBlockCountMismatch {
-        inputs: usize,
-        unlock_blocks: usize,
-    },
+    InputUnlockBlockCountMismatch { inputs: usize, unlock_blocks: usize },
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAmount(u64),
-    InvalidAssetBalanceCount(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_ASSET_BALANCES_LENGTH_MAX>>),
-    InvalidConflictsCount(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>),
-    InvalidDataPayloadLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>),
-    InvalidEncryptedDealLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_DKG_LENGTH_MAX>>),
+    InvalidAssetBalanceCount(<AssetBalanceCount as TryFrom<usize>>::Error),
+    InvalidConflictsCount(<ConflictCount as TryFrom<usize>>::Error),
+    InvalidDataPayloadLength(<DataPayloadLength as TryFrom<usize>>::Error),
+    InvalidEncryptedDealLength(<EncryptedDealLength as TryFrom<usize>>::Error),
     InvalidHexadecimalChar(String),
-    InvalidHexadecimalLength {
-        expected: usize,
-        actual: usize,
-    },
-    InvalidIndexationDataLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_INDEXATION_DATA_LENGTH_MAX>>),
-    InvalidIndexationIndexLength(
-        TryIntoPrefixError<
-            InvalidBoundedU32<PREFIXED_INDEXATION_INDEX_LENGTH_MIN, PREFIXED_INDEXATION_INDEX_LENGTH_MAX>,
-        >,
-    ),
-    InvalidInputCount(TryIntoPrefixError<InvalidBoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>),
+    InvalidHexadecimalLength { expected: usize, actual: usize },
+    InvalidIndexationDataLength(<IndexationDataLength as TryFrom<usize>>::Error),
+    InvalidIndexationIndexLength(<IndexationIndexLength as TryFrom<usize>>::Error),
+    InvalidInputCount(<InputCount as TryFrom<usize>>::Error),
     InvalidMessageLength(usize),
     InvalidMessageVersion(u8),
-    InvalidOutputCount(TryIntoPrefixError<InvalidBoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>),
+    InvalidOutputCount(<OutputCount as TryFrom<usize>>::Error),
     InvalidOutputIndex(u16),
     InvalidParentsBlocksCount(usize),
-    InvalidParentsCount(TryIntoPrefixError<InvalidBoundedU8<MESSAGE_PARENTS_MIN, MESSAGE_PARENTS_MAX>>),
+    InvalidParentsCount(<ParentCount as TryFrom<usize>>::Error),
     InvalidParentsKind(u8),
     InvalidPayloadKind(u32),
-    InvalidPayloadVersion {
-        version: u8,
-        payload_kind: u32,
-    },
-    InvalidReferenceIndex(u16),
-    InvalidSaltBytesLength(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_SALT_BYTES_LENGTH_MAX>>),
+    InvalidPayloadVersion { version: u8, payload_kind: u32 },
+    InvalidReferenceIndex(<ReferenceIndex as TryFrom<u16>>::Error),
+    InvalidSaltBytesLength(<SaltBytesLength as TryFrom<usize>>::Error),
     InvalidSignature,
     InvalidStrongParentsCount(usize),
-    InvalidTimestampsCount(TryIntoPrefixError<InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>),
-    InvalidUnlockBlockCount(
-        TryIntoPrefixError<InvalidBoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>>,
-    ),
+    InvalidTimestampsCount(<TimestampCount as TryFrom<usize>>::Error),
+    InvalidUnlockBlockCount(<UnlockBlockCount as TryFrom<usize>>::Error),
     InvalidUnlockBlockReference(usize),
     MissingBuilderField(&'static str),
     ParentsNotUniqueSorted,
-    PayloadLengthMismatch {
-        expected: usize,
-        actual: usize,
-    },
-    SignaturePublicKeyMismatch {
-        expected: String,
-        actual: String,
-    },
+    PayloadLengthMismatch { expected: usize, actual: usize },
+    SignaturePublicKeyMismatch { expected: String, actual: String },
     TransactionInputsNotSorted,
     TransactionOutputsNotSorted,
 }

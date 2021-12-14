@@ -5,12 +5,7 @@ use bee_message::{
     error::{MessageUnpackError, ValidationError},
     parents::{Parent, Parents},
 };
-use bee_packable::{
-    bounded::InvalidBoundedU8,
-    error::UnpackError,
-    prefix::{TryIntoPrefixError, VecPrefix},
-    PackableExt,
-};
+use bee_packable::{bounded::TryIntoBoundedU8Error, error::UnpackError, prefix::VecPrefix, PackableExt};
 use bee_test::rand::{
     message::{parents::rand_parents, rand_message_id},
     vec::rand_vec,
@@ -20,9 +15,7 @@ use bee_test::rand::{
 fn new_invalid_less_than_min() {
     assert!(matches!(
         Parents::new(vec![]),
-        Err(ValidationError::InvalidParentsCount(TryIntoPrefixError::Invalid(
-            InvalidBoundedU8(0)
-        ))),
+        Err(ValidationError::InvalidParentsCount(TryIntoBoundedU8Error::Invalid(0))),
     ));
 }
 
@@ -43,9 +36,7 @@ fn new_invalid_more_than_max() {
 
     assert!(matches!(
         Parents::new(inner),
-        Err(ValidationError::InvalidParentsCount(TryIntoPrefixError::Invalid(
-            InvalidBoundedU8(9)
-        ))),
+        Err(ValidationError::InvalidParentsCount(TryIntoBoundedU8Error::Invalid(9))),
     ));
 }
 
@@ -121,7 +112,7 @@ fn unpack_invalid_less_than_min() {
     assert!(matches!(
         Parents::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidParentsCount(TryIntoPrefixError::Invalid(InvalidBoundedU8(0)))
+            ValidationError::InvalidParentsCount(TryIntoBoundedU8Error::Invalid(0))
         ))),
     ));
 }
@@ -142,7 +133,7 @@ fn unpack_invalid_more_than_max() {
     assert!(matches!(
         Parents::unpack_verified(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidParentsCount(TryIntoPrefixError::Invalid(InvalidBoundedU8(9)))
+            ValidationError::InvalidParentsCount(TryIntoBoundedU8Error::Invalid(9))
         ))),
     ));
 }

@@ -17,7 +17,7 @@ use crate::{
 };
 
 use bee_packable::{
-    bounded::{BoundedU32, InvalidBoundedU32},
+    bounded::BoundedU32,
     prefix::{UnpackPrefixError, VecPrefix},
     Packable,
 };
@@ -25,21 +25,20 @@ use bee_packable::{
 use alloc::vec::Vec;
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`].
-pub(crate) const PREFIXED_CONFLICTS_LENGTH_MAX: u32 =
-    PAYLOAD_LENGTH_MAX / (TransactionId::LENGTH + 2 * core::mem::size_of::<u8>()) as u32;
-
-/// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`].
-pub(crate) const PREFIXED_TIMESTAMPS_LENGTH_MAX: u32 =
-    PAYLOAD_LENGTH_MAX / (MessageId::LENGTH + 2 * core::mem::size_of::<u8>()) as u32;
+pub(crate) type ConflictCount =
+    BoundedU32<0, { PAYLOAD_LENGTH_MAX / (TransactionId::LENGTH + 2 * core::mem::size_of::<u8>()) as u32 }>;
+/// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Timestamp`].
+pub(crate) type TimestampCount =
+    BoundedU32<0, { PAYLOAD_LENGTH_MAX / (MessageId::LENGTH + 2 * core::mem::size_of::<u8>()) as u32 }>;
 
 fn unpack_prefix_to_conflict_validation_error(
-    err: UnpackPrefixError<MessageUnpackError, InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>,
+    err: UnpackPrefixError<MessageUnpackError, <ConflictCount as TryFrom<u32>>::Error>,
 ) -> MessageUnpackError {
     err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidConflictsCount(prefix_err.into()))
 }
 
 fn unpack_prefix_to_timestamp_validation_error(
-    err: UnpackPrefixError<MessageUnpackError, InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>,
+    err: UnpackPrefixError<MessageUnpackError, <TimestampCount as TryFrom<u32>>::Error>,
 ) -> MessageUnpackError {
     err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidTimestampsCount(prefix_err.into()))
 }
@@ -51,10 +50,10 @@ fn unpack_prefix_to_timestamp_validation_error(
 pub struct FpcPayload {
     /// Collection of opinions on conflicting transactions.
     #[packable(unpack_error_with = unpack_prefix_to_conflict_validation_error)]
-    conflicts: VecPrefix<Conflict, BoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>,
+    conflicts: VecPrefix<Conflict, ConflictCount>,
     /// Collection of opinions on message timestamps.
     #[packable(unpack_error_with = unpack_prefix_to_timestamp_validation_error)]
-    timestamps: VecPrefix<Timestamp, BoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>,
+    timestamps: VecPrefix<Timestamp, TimestampCount>,
 }
 
 impl MessagePayload for FpcPayload {

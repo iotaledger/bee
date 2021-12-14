@@ -9,20 +9,20 @@ use crate::{
 };
 
 use bee_packable::{
-    bounded::{BoundedU32, InvalidBoundedU32},
-    prefix::{TryIntoPrefixError, UnpackPrefixError, VecPrefix},
+    bounded::BoundedU32,
+    prefix::{UnpackPrefixError, VecPrefix},
     Packable,
 };
 
 use alloc::vec::Vec;
 use core::convert::Infallible;
 
-pub(crate) const PREFIXED_DATA_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - core::mem::size_of::<u8>() as u32;
+pub(crate) type DataPayloadLength = BoundedU32<0, { PAYLOAD_LENGTH_MAX - core::mem::size_of::<u8>() as u32 }>;
 
 fn unpack_prefix_to_validation_error(
-    err: UnpackPrefixError<Infallible, InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>,
+    err: UnpackPrefixError<Infallible, <DataPayloadLength as TryFrom<u32>>::Error>,
 ) -> ValidationError {
-    ValidationError::InvalidDataPayloadLength(TryIntoPrefixError::Invalid(err.into_prefix()))
+    ValidationError::InvalidDataPayloadLength(err.into_prefix().into())
 }
 
 /// Generic data payload, containing a collection of bytes.
@@ -34,7 +34,7 @@ fn unpack_prefix_to_validation_error(
 #[packable(unpack_error = MessageUnpackError, with = unpack_prefix_to_validation_error)]
 pub struct DataPayload {
     /// The raw data in bytes.
-    data: VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>,
+    data: VecPrefix<u8, DataPayloadLength>,
 }
 
 impl MessagePayload for DataPayload {

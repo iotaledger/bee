@@ -6,10 +6,10 @@ mod common;
 use bee_packable::{
     bounded::{
         BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
-        InvalidBoundedU8,
+        InvalidBoundedU8, TryIntoBoundedU32Error,
     },
     error::UnpackError,
-    prefix::{BoxedSlicePrefix, TryIntoPrefixError, UnpackPrefixError},
+    prefix::{BoxedSlicePrefix, UnpackPrefixError},
     PackableExt,
 };
 
@@ -18,10 +18,7 @@ fn boxed_slice_prefix_from_boxed_slice_invalid_error() {
     let boxed_slice = vec![0u8; 16].into_boxed_slice();
     let prefixed = BoxedSlicePrefix::<u8, BoundedU32<1, 8>>::try_from(boxed_slice);
 
-    assert!(matches!(
-        prefixed,
-        Err(TryIntoPrefixError::Invalid(InvalidBoundedU32(16)))
-    ));
+    assert!(matches!(prefixed, Err(TryIntoBoundedU32Error::Invalid(16))));
 }
 
 #[test]
@@ -29,7 +26,7 @@ fn boxed_slice_prefix_from_boxed_slice_truncated_error() {
     let boxed_slice = vec![0u8; 257].into_boxed_slice();
     let prefixed = BoxedSlicePrefix::<u8, u8>::try_from(boxed_slice);
 
-    assert!(matches!(prefixed, Err(TryIntoPrefixError::Truncated(257))));
+    assert!(prefixed.is_err());
 }
 
 macro_rules! impl_packable_test_for_boxed_slice_prefix {
@@ -38,8 +35,7 @@ macro_rules! impl_packable_test_for_boxed_slice_prefix {
         fn $packable_boxed_slice_prefix() {
             assert_eq!(
                 common::generic_test(
-                    <&BoxedSlicePrefix<Option<u32>, $ty>>::try_from(&vec![Some(0u32), None].into_boxed_slice())
-                        .unwrap()
+                    &<BoxedSlicePrefix<Option<u32>, $ty>>::try_from(vec![Some(0u32), None].into_boxed_slice()).unwrap()
                 )
                 .0
                 .len(),
@@ -57,8 +53,8 @@ macro_rules! impl_packable_test_for_bounded_boxed_slice_prefix {
         fn $packable_boxed_slice_prefix() {
             assert_eq!(
                 common::generic_test(
-                    <&BoxedSlicePrefix<Option<u32>, $bounded<$min, $max>>>::try_from(
-                        &vec![Some(0u32), None].into_boxed_slice()
+                    &<BoxedSlicePrefix<Option<u32>, $bounded<$min, $max>>>::try_from(
+                        vec![Some(0u32), None].into_boxed_slice()
                     )
                     .unwrap()
                 )
