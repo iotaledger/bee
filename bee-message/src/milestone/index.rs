@@ -3,11 +3,13 @@
 
 use bee_common::packable::{Packable, Read, Write};
 
+use derive_more::{Deref, From};
+
 use core::ops::{Add, Sub};
 
 /// A wrapper around a `u32` that represents a milestone index.
 #[repr(transparent)]
-#[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, derive_more::From, derive_more::Deref)]
+#[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, From, Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestoneIndex(pub u32);
 

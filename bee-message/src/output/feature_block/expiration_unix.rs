@@ -5,10 +5,12 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
+use derive_more::From;
+
 /// Defines a unix time until which only the deposit [`Address`](crate::address::Address) is allowed to unlock the
 /// output. After the expiration time, only the [`Address`](crate::address::Address) defined in the
 /// [`SenderFeatureBlock`](crate::output::feature_block::SenderFeatureBlock) can unlock it.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExpirationUnixFeatureBlock(
     // Before this unix time, seconds since unix epoch, [`Address`](crate::address::Address) is allowed to unlock the

@@ -5,8 +5,10 @@ use crate::{address::Address, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
+use derive_more::From;
+
 /// Identifies the validated sender of an output.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct SenderFeatureBlock(Address);
 

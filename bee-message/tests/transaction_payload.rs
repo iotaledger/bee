@@ -90,8 +90,8 @@ fn builder_no_essence_too_few_unlock_blocks() {
 
     assert!(matches!(
             builder.finish(),
-            Err(Error::InputUnlockBlockCountMismatch{input, block})
-            if input == 2 && block == 1));
+            Err(Error::InputUnlockBlockCountMismatch{input_count, block_count})
+            if input_count == 2 && block_count == 1));
 }
 
 // Validate that attempting to construct a `TransactionPayload` with too many unlock blocks is an
@@ -128,8 +128,8 @@ fn builder_no_essence_too_many_unlock_blocks() {
 
     assert!(matches!(
             builder.finish(),
-            Err(Error::InputUnlockBlockCountMismatch{input, block})
-            if input == 1 && block == 2));
+            Err(Error::InputUnlockBlockCountMismatch{input_count, block_count})
+            if input_count == 1 && block_count == 2));
 }
 
 // Validate that a `unpack` ∘ `pack` round-trip results in the original message.

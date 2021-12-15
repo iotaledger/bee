@@ -66,8 +66,8 @@ impl MilestonePayload {
 
         if essence.public_keys().len() != signatures.len() {
             return Err(Error::MilestonePublicKeysSignaturesCountMismatch {
-                kcount: essence.public_keys().len(),
-                scount: signatures.len(),
+                key_count: essence.public_keys().len(),
+                sig_count: signatures.len(),
             });
         };
 

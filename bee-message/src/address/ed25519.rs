@@ -9,11 +9,12 @@ use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
     signatures::ed25519::{PublicKey, Signature},
 };
+use derive_more::{AsRef, From};
 
 use core::str::FromStr;
 
 /// An Ed25519 address.
-#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From, derive_more::AsRef)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef)]
 #[as_ref(forward)]
 pub struct Ed25519Address([u8; Self::LENGTH]);
 

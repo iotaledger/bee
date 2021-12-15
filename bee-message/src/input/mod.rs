@@ -11,6 +11,8 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
+use derive_more::From;
+
 use core::ops::RangeInclusive;
 
 /// The maximum number of inputs of a transaction.
@@ -23,7 +25,7 @@ pub const INPUT_INDEX_MAX: u16 = INPUT_COUNT_MAX - 1; // 126
 pub const INPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=INPUT_INDEX_MAX; // [0..126]
 
 /// A generic input supporting different input kinds.
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd, derive_more::From)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd, From)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),

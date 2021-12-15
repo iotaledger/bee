@@ -18,6 +18,8 @@ use crate::{
 
 use bee_common::packable::{Packable, Read, Write};
 
+use derive_more::{Deref, From};
+
 use core::ops::RangeInclusive;
 use std::collections::HashSet;
 
@@ -31,7 +33,7 @@ pub const UNLOCK_BLOCK_INDEX_MAX: u16 = INPUT_INDEX_MAX; // 126
 pub const UNLOCK_BLOCK_INDEX_RANGE: RangeInclusive<u16> = INPUT_INDEX_RANGE; // [0..126]
 
 /// Defines the mechanism by which a transaction input is authorized to be consumed.
-#[derive(Clone, Debug, Eq, PartialEq, Hash, derive_more::From)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, From)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
@@ -107,7 +109,7 @@ impl Packable for UnlockBlock {
 }
 
 /// A collection of unlock blocks.
-#[derive(Clone, Debug, Eq, PartialEq, derive_more::Deref)]
+#[derive(Clone, Debug, Eq, PartialEq, Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct UnlockBlocks(Box<[UnlockBlock]>);
 

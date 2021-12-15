@@ -10,9 +10,10 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
+use derive_more::From;
 
 /// A generic essence that can represent different types defining transaction essences.
-#[derive(Clone, Debug, Eq, PartialEq, derive_more::From)]
+#[derive(Clone, Debug, Eq, PartialEq, From)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),

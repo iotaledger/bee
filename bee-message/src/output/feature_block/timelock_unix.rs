@@ -5,8 +5,10 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
+use derive_more::From;
+
 /// Defines a unix time until which the output can not be unlocked.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TimelockUnixFeatureBlock(
     // Unix time, seconds since unix epoch, starting from which the output can be consumed.

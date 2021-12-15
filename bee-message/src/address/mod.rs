@@ -14,11 +14,12 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 
 use bech32::{self, FromBase32, ToBase32, Variant};
+use derive_more::From;
 
 use alloc::{str::FromStr, string::String};
 
 /// A generic address supporting different address kinds.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),

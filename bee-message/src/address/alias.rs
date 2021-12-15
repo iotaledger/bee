@@ -5,12 +5,12 @@ use crate::{output::AliasId, util::hex_decode, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
+use derive_more::{AsRef, Deref, From};
+
 use core::str::FromStr;
 
 /// An alias address.
-#[derive(
-    Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From, derive_more::AsRef, derive_more::Deref,
-)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, Deref)]
 #[as_ref(forward)]
 pub struct AliasAddress(AliasId);
 

@@ -1,8 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use derive_more::{AsRef, Deref, From};
+
 /// An indexation payload index padded with `0` up to the maximum length.
-#[derive(Clone, Copy, Eq, PartialEq, Hash, derive_more::From, derive_more::AsRef, derive_more::Deref)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, From, AsRef, Deref)]
 #[as_ref(forward)]
 pub struct PaddedIndex([u8; PaddedIndex::LENGTH]);
 

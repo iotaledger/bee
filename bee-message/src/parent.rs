@@ -10,6 +10,8 @@ use bee_common::{
     packable::{Packable, Read, Write},
 };
 
+use derive_more::Deref;
+
 use core::ops::RangeInclusive;
 
 /// A [`Message`](crate::Message)'s [`Parents`] are the [`MessageId`]s of the messages it directly approves.
@@ -18,7 +20,7 @@ use core::ops::RangeInclusive;
 /// * in the `Parents::COUNT_RANGE` range;
 /// * lexicographically sorted;
 /// * unique;
-#[derive(Clone, Debug, Eq, PartialEq, derive_more::Deref)]
+#[derive(Clone, Debug, Eq, PartialEq, Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[deref(forward)]
 pub struct Parents(Box<[MessageId]>);

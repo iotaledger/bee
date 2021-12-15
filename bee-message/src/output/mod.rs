@@ -35,6 +35,8 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
+use derive_more::From;
+
 use core::ops::RangeInclusive;
 
 /// The maximum number of outputs of a transaction.
@@ -47,7 +49,7 @@ pub const OUTPUT_INDEX_MAX: u16 = OUTPUT_COUNT_MAX - 1; // 126
 pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; // [0..126]
 
 /// A generic output that can represent different types defining the deposit of funds.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::From)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),

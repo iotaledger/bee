@@ -19,7 +19,7 @@ pub enum Error {
     DuplicateSignatureUnlockBlock(u16),
     DuplicateUtxo(UtxoInput),
     FeatureBlocksNotUniqueSorted,
-    InputUnlockBlockCountMismatch { input: usize, block: usize },
+    InputUnlockBlockCountMismatch { input_count: usize, block_count: usize },
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
     InvalidAddressKind(u8),
@@ -65,7 +65,7 @@ pub enum Error {
     MilestoneInvalidPublicKeyCount(usize),
     MilestoneInvalidSignatureCount(usize),
     MilestonePublicKeysNotUniqueSorted,
-    MilestonePublicKeysSignaturesCountMismatch { kcount: usize, scount: usize },
+    MilestonePublicKeysSignaturesCountMismatch { key_count: usize, sig_count: usize },
     MissingField(&'static str),
     MissingPayload,
     MissingRequiredSenderBlock,
@@ -94,11 +94,14 @@ impl fmt::Display for Error {
             }
             Error::DuplicateUtxo(utxo) => write!(f, "duplicate UTXO {:?} in inputs.", utxo),
             Error::FeatureBlocksNotUniqueSorted => write!(f, "feature blocks are not unique and/or sorted."),
-            Error::InputUnlockBlockCountMismatch { input, block } => {
+            Error::InputUnlockBlockCountMismatch {
+                input_count,
+                block_count,
+            } => {
                 write!(
                     f,
                     "input count and unlock block count mismatch: {} != {}.",
-                    input, block
+                    input_count, block_count
                 )
             }
             Error::InvalidAccumulatedOutput(value) => write!(f, "invalid accumulated output balance: {}.", value),
@@ -182,11 +185,11 @@ impl fmt::Display for Error {
             Error::MilestonePublicKeysNotUniqueSorted => {
                 write!(f, "milestone public keys are not unique and/or sorted.")
             }
-            Error::MilestonePublicKeysSignaturesCountMismatch { kcount, scount } => {
+            Error::MilestonePublicKeysSignaturesCountMismatch { key_count, sig_count } => {
                 write!(
                     f,
                     "milestone public keys and signatures count mismatch: {0} != {1}.",
-                    kcount, scount
+                    key_count, sig_count
                 )
             }
             Error::MissingField(s) => write!(f, "missing required field: {}.", s),

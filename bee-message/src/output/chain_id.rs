@@ -3,8 +3,10 @@
 
 use crate::output::{AliasId, NftId};
 
+use derive_more::From;
+
 ///
-#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, derive_more::From)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, From)]
 pub enum ChainId {
     ///
     Alias(AliasId),

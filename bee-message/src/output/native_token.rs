@@ -8,6 +8,7 @@ use bee_common::{
     packable::{Packable, Read, Write},
 };
 
+use derive_more::Deref;
 use primitive_types::U256;
 
 ///
@@ -64,7 +65,7 @@ impl Packable for NativeToken {
 }
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, derive_more::Deref)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct NativeTokens(Box<[NativeToken]>);
 

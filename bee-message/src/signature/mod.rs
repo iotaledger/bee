@@ -7,6 +7,8 @@ pub use ed25519::Ed25519Signature;
 
 use crate::Error;
 
+use derive_more::From;
+
 use bee_common::packable::{Packable, Read, Write};
 
 /// A `Signature` contains a signature which is used to unlock a transaction input.
@@ -14,7 +16,7 @@ use bee_common::packable::{Packable, Read, Write};
 /// This is defined as part of the Unspent Transaction Output (UTXO) transaction protocol.
 ///
 /// RFC: <https://github.com/luca-moser/protocol-rfcs/blob/signed-tx-payload/text/0000-transaction-payload/0000-transaction-payload.md#signature-unlock-block>
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, derive_more::From)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),

@@ -95,7 +95,10 @@ fn new_invalid_public_keys_sgnatures_count_mismatch() {
             .unwrap(),
             vec![[0; 64], [1; 64], [3; 64]],
         ),
-        Err(Error::MilestonePublicKeysSignaturesCountMismatch { kcount: 2, scount: 3 })
+        Err(Error::MilestonePublicKeysSignaturesCountMismatch {
+            key_count: 2,
+            sig_count: 3
+        })
     ));
 }
 
