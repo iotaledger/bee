@@ -304,37 +304,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-storage-memory"
-version = "0.1.0"
-dependencies = [
- "bee-common",
- "bee-ledger",
- "bee-message",
- "bee-storage",
- "bee-storage-test",
- "bee-tangle",
- "bee-test",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "bee-storage-null"
 version = "0.1.0"
 dependencies = [
  "bee-storage",
-]
-
-[[package]]
-name = "bee-storage-test"
-version = "0.3.0"
-dependencies = [
- "bee-common",
- "bee-ledger",
- "bee-message",
- "bee-storage",
- "bee-tangle",
- "bee-test",
 ]
 
 [[package]]

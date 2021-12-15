@@ -13,7 +13,7 @@ use bee_tangle::{
 
 /// Generates a random conflict reason.
 pub fn rand_conflict_reason() -> ConflictReason {
-    ((rand_number::<u64>() % 7) as u8).try_into().unwrap()
+    ((rand_number::<u64>() % 6) as u8).try_into().unwrap()
 }
 
 /// Generates a random message metadata.
