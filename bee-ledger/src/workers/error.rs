@@ -4,11 +4,11 @@
 //! Module containing the errors that can occur during ledger operations.
 
 use crate::{
-    types::{Balance, Error as TypesError, Unspent},
+    types::{Error as TypesError, Unspent},
     workers::snapshot::error::Error as SnapshotError,
 };
 
-use bee_message::{address::Address, milestone::MilestoneIndex, Error as MessageError, MessageId};
+use bee_message::{milestone::MilestoneIndex, Error as MessageError, MessageId};
 
 /// Errors occurring during ledger workers operations.
 #[derive(Debug, thiserror::Error)]
@@ -55,9 +55,6 @@ pub enum Error {
     /// Invalid ledger balance state.
     #[error("Invalid ledger balance state: {0}")]
     InvalidLedgerBalanceState(u64),
-    /// Invalid ledger dust state.
-    #[error("Invalid ledger dust state: {0:?} {1:?}")]
-    InvalidLedgerDustState(Address, Balance),
     /// Consumed amount overflow.
     #[error("Consumed amount overflow: {0}.")]
     ConsumedAmountOverflow(u128),

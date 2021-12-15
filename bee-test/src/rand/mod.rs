@@ -1,12 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-// TODO reimport all commented modules
-
 /// Module providing random address generation utilities.
 pub mod address;
-// Module providing random balance generation utilities.
-// pub mod balance;
+/// Module providing random balance generation utilities.
+pub mod balance;
 /// Module providing random boolean generation utilities.
 pub mod bool;
 /// Module providing random byte generation utilities.
@@ -25,16 +23,16 @@ pub mod number;
 pub mod option;
 /// Module providing random output generation utilities.
 pub mod output;
-// Module providing random output diff generation utilities.
-// pub mod output_diff;
+/// Module providing random output diff generation utilities.
+pub mod output_diff;
 /// Module providing random parents generation utilities.
 pub mod parents;
 /// Module providing random payload generation utilities.
 pub mod payload;
 /// Module providing random receipt generation utilities.
 pub mod receipt;
-// Module providing random snapshot generation utilities.
-// pub mod snapshot;
+/// Module providing random snapshot generation utilities.
+pub mod snapshot;
 /// Module providing random solid entry point generation utilities.
 pub mod solid_entry_point;
 /// Module providing random string generation utilities.

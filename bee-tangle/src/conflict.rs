@@ -34,8 +34,6 @@ pub enum ConflictReason {
     InputOutputSumMismatch = 4,
     /// The unlock block signature is invalid.
     InvalidSignature = 5,
-    /// The dust allowance for the address is invalid.
-    InvalidDustAllowance = 6,
     /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
 }
@@ -57,7 +55,6 @@ impl TryFrom<u8> for ConflictReason {
             3 => Self::InputUtxoNotFound,
             4 => Self::InputOutputSumMismatch,
             5 => Self::InvalidSignature,
-            6 => Self::InvalidDustAllowance,
             255 => Self::SemanticValidationFailed,
             x => return Err(Self::Error::InvalidConflict(x)),
         })

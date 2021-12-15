@@ -4,7 +4,7 @@ members = [
 	"bee-common/bee-common",
 	"bee-common/bee-common-derive",
 	"bee-crypto",
-	# "bee-ledger",
+	"bee-ledger",
 	"bee-message",
 	"bee-network",
 	"bee-pow",

@@ -13,12 +13,12 @@ use crate::{
 use bee_message::{
     address::Address,
     input::Input,
-    output::{dust_outputs_max, Output, OutputId, DUST_THRESHOLD},
+    output::{Output, OutputId},
     payload::{
-        transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
+        transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
     },
-    unlock::{UnlockBlock, UnlockBlocks},
+    unlock_block::{UnlockBlock, UnlockBlocks},
     Message, MessageId,
 };
 use bee_tangle::{ConflictReason, Tangle};
@@ -27,9 +27,11 @@ use crypto::hashes::blake2b::Blake2b256;
 
 use std::collections::{HashMap, HashSet};
 
-fn verify_signature(address: &Address, unlock_blocks: &UnlockBlocks, index: usize, essence_hash: &[u8; 32]) -> bool {
-    if let Some(UnlockBlock::Signature(signature)) = unlock_blocks.get(index) {
-        address.verify(essence_hash, signature).is_ok()
+fn _verify_signature(_address: &Address, unlock_blocks: &UnlockBlocks, index: usize, _essence_hash: &[u8; 32]) -> bool {
+    if let Some(UnlockBlock::Signature(_signature)) = unlock_blocks.get(index) {
+        true
+        // TODO
+        // address.verify(essence_hash, signature).is_ok()
     } else {
         false
     }
@@ -39,16 +41,16 @@ fn apply_regular_essence<B: StorageBackend>(
     storage: &B,
     message_id: &MessageId,
     transaction_id: &TransactionId,
-    essence: &RegularEssence,
-    unlock_blocks: &UnlockBlocks,
+    essence: &RegularTransactionEssence,
+    _unlock_blocks: &UnlockBlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
     let mut consumed_outputs = HashMap::with_capacity(essence.inputs().len());
-    let mut balance_diffs = BalanceDiffs::new();
-    let mut consumed_amount: u64 = 0;
-    let mut created_amount: u64 = 0;
+    let balance_diffs = BalanceDiffs::new();
+    let consumed_amount: u64 = 0;
+    let created_amount: u64 = 0;
 
-    for (index, input) in essence.inputs().iter().enumerate() {
+    for (_index, input) in essence.inputs().iter().enumerate() {
         let (output_id, consumed_output) = match input {
             Input::Utxo(input) => {
                 let output_id = input.output_id();
@@ -73,34 +75,25 @@ fn apply_regular_essence<B: StorageBackend>(
             }
         };
 
-        let essence_hash = Essence::from(essence.clone()).hash();
+        let _essence_hash = TransactionEssence::from(essence.clone()).hash();
 
         match consumed_output.inner() {
-            Output::SignatureLockedSingle(output) => {
-                consumed_amount = consumed_amount
-                    .checked_add(output.amount())
-                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount as u128 + output.amount() as u128))?;
-                balance_diffs.amount_sub(*output.address(), output.amount())?;
-                if output.amount() < DUST_THRESHOLD {
-                    balance_diffs.dust_outputs_dec(*output.address())?;
-                }
-
-                if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
-                    return Ok(ConflictReason::InvalidSignature);
-                }
-            }
-            Output::SignatureLockedDustAllowance(output) => {
-                consumed_amount = consumed_amount
-                    .checked_add(output.amount())
-                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount as u128 + output.amount() as u128))?;
-                balance_diffs.amount_sub(*output.address(), output.amount())?;
-                balance_diffs.dust_allowance_sub(*output.address(), output.amount())?;
-
-                if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
-                    return Ok(ConflictReason::InvalidSignature);
-                }
+            Output::Simple(_) => {
+                // TODO
             }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
+            Output::Extended(_) => {
+                // TODO
+            }
+            Output::Alias(_) => {
+                // TODO
+            }
+            Output::Foundry(_) => {
+                // TODO
+            }
+            Output::Nft(_) => {
+                // TODO
+            }
         }
 
         consumed_outputs.insert(*output_id, consumed_output);
@@ -108,42 +101,27 @@ fn apply_regular_essence<B: StorageBackend>(
 
     for created_output in essence.outputs() {
         match created_output {
-            Output::SignatureLockedSingle(output) => {
-                created_amount = created_amount
-                    .checked_add(output.amount())
-                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount as u128 + output.amount() as u128))?;
-                balance_diffs.amount_add(*output.address(), output.amount())?;
-                if output.amount() < DUST_THRESHOLD {
-                    balance_diffs.dust_outputs_inc(*output.address())?;
-                }
-            }
-            Output::SignatureLockedDustAllowance(output) => {
-                created_amount = created_amount
-                    .checked_add(output.amount())
-                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount as u128 + output.amount() as u128))?;
-                balance_diffs.amount_add(*output.address(), output.amount())?;
-                balance_diffs.dust_allowance_add(*output.address(), output.amount())?;
+            Output::Simple(_) => {
+                // TODO
             }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
+            Output::Extended(_) => {
+                // TODO
+            }
+            Output::Alias(_) => {
+                // TODO
+            }
+            Output::Foundry(_) => {
+                // TODO
+            }
+            Output::Nft(_) => {
+                // TODO
+            }
         }
     }
 
     if created_amount != consumed_amount {
         return Ok(ConflictReason::InputOutputSumMismatch);
-    }
-
-    for (address, diff) in balance_diffs.iter() {
-        if diff.is_dust_mutating() {
-            let mut balance = storage::fetch_balance_or_default(storage, address)?.apply_diff(diff)?;
-
-            if let Some(diff) = metadata.balance_diffs.get(address) {
-                balance = balance.apply_diff(diff)?;
-            }
-
-            if balance.dust_outputs() > dust_outputs_max(balance.dust_allowance()) {
-                return Ok(ConflictReason::InvalidDustAllowance);
-            }
-        }
     }
 
     for (output_id, created_output) in consumed_outputs {
@@ -172,7 +150,7 @@ fn apply_transaction<B: StorageBackend>(
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
     match transaction.essence() {
-        Essence::Regular(essence) => apply_regular_essence(
+        TransactionEssence::Regular(essence) => apply_regular_essence(
             storage,
             message_id,
             &transaction.id(),
