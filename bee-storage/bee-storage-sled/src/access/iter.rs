@@ -14,8 +14,8 @@ use bee_message::{
     address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH},
-    Message, MessageId, MESSAGE_ID_LENGTH,
+    payload::indexation::PaddedIndex,
+    Message, MessageId,
 };
 use bee_storage::{access::AsIterator, backend::StorageBackend, system::System};
 use bee_tangle::{
@@ -107,7 +107,7 @@ impl<'a> StorageIterator<'a, MessageId, MessageMetadata> {
 
 impl<'a> StorageIterator<'a, (MessageId, MessageId), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MessageId, MessageId), ()) {
-        let (mut parent, mut child) = key.split_at(MESSAGE_ID_LENGTH);
+        let (mut parent, mut child) = key.split_at(MessageId::LENGTH);
 
         (
             (
@@ -123,9 +123,9 @@ impl<'a> StorageIterator<'a, (MessageId, MessageId), ()> {
 
 impl<'a> StorageIterator<'a, (PaddedIndex, MessageId), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((PaddedIndex, MessageId), ()) {
-        let (index, mut message_id) = key.split_at(INDEXATION_PADDED_INDEX_LENGTH);
+        let (index, mut message_id) = key.split_at(PaddedIndex::LENGTH);
         // Unpacking from storage is fine.
-        let index: [u8; INDEXATION_PADDED_INDEX_LENGTH] = index.try_into().unwrap();
+        let index: [u8; PaddedIndex::LENGTH] = index.try_into().unwrap();
 
         (
             (
@@ -172,7 +172,7 @@ impl<'a> StorageIterator<'a, Unspent, ()> {
 
 impl<'a> StorageIterator<'a, (Ed25519Address, OutputId), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((Ed25519Address, OutputId), ()) {
-        let (mut address, mut output_id) = key.split_at(MESSAGE_ID_LENGTH);
+        let (mut address, mut output_id) = key.split_at(MessageId::LENGTH);
 
         (
             (
