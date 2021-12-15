@@ -11,14 +11,13 @@ use crate::{
 };
 
 use bee_message::{
-    address::Address,
     input::Input,
     output::{Output, OutputId},
     payload::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
     },
-    unlock_block::{UnlockBlock, UnlockBlocks},
+    unlock_block::UnlockBlocks,
     Message, MessageId,
 };
 use bee_tangle::{ConflictReason, Tangle};
@@ -27,15 +26,15 @@ use crypto::hashes::blake2b::Blake2b256;
 
 use std::collections::{HashMap, HashSet};
 
-fn _verify_signature(_address: &Address, unlock_blocks: &UnlockBlocks, index: usize, _essence_hash: &[u8; 32]) -> bool {
-    if let Some(UnlockBlock::Signature(_signature)) = unlock_blocks.get(index) {
-        true
-        // TODO
-        // address.verify(essence_hash, signature).is_ok()
-    } else {
-        false
-    }
-}
+// TODO
+// fn _verify_signature(_address: &Address, unlock_blocks: &UnlockBlocks, index: usize, _essence_hash: &[u8; 32]) ->
+// bool {     if let Some(UnlockBlock::Signature(_signature)) = unlock_blocks.get(index) {
+//         true
+//         // address.verify(essence_hash, signature).is_ok()
+//     } else {
+//         false
+//     }
+// }
 
 fn apply_regular_essence<B: StorageBackend>(
     storage: &B,
