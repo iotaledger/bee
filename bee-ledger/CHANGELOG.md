@@ -19,6 +19,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.7.0 - 2022-XX-XX
+
+### Changed
+
+- Complete refactoring of White Flag with Tokenization and Smart Contracts layouts;
+- `BalanceDiff` is now an `u64` tuple struct;
+- `Balance` is now an `u64` tuple struct;
+
+### Removed
+
+- `Balance::{dust_allowance, dust_outputs}` and related methods;
+- `BalanceDiff::{dust_allowance, dust_outputs}` and related methods;
+- `Error::InvalidLedgerDustState`;
+
 ## 0.6.0 - 2021-12-07
 
 ### Added

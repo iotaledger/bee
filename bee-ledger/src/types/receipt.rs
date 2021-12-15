@@ -5,7 +5,7 @@ use crate::types::{error::Error, TreasuryOutput};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
-    constants::IOTA_SUPPLY,
+    constant::IOTA_SUPPLY,
     input::Input,
     milestone::MilestoneIndex,
     output::Output,
@@ -38,11 +38,10 @@ impl Receipt {
     /// Semantically validates the `Receipt`.
     pub fn validate(&self, consumed_treasury_output: &TreasuryOutput) -> Result<(), Error> {
         let mut migrated_amount: u64 = 0;
-        let transaction = match self.inner().transaction() {
-            Payload::TreasuryTransaction(transaction) => transaction,
-            Payload::Indexation(_) | Payload::Milestone(_) | Payload::Receipt(_) | Payload::Transaction(_) => {
-                return Err(Error::UnsupportedPayloadKind(self.inner().transaction().kind()));
-            }
+        let transaction = if let Payload::TreasuryTransaction(transaction) = self.inner().transaction() {
+            transaction
+        } else {
+            return Err(Error::UnsupportedPayloadKind(self.inner().transaction().kind()));
         };
 
         for funds in self.inner().funds() {
@@ -55,23 +54,21 @@ impl Receipt {
             return Err(Error::InvalidMigratedFundsAmount(migrated_amount));
         }
 
-        match transaction.input() {
-            Input::Treasury(input) => {
-                if input.milestone_id() != consumed_treasury_output.milestone_id() {
-                    return Err(Error::ConsumedTreasuryOutputMismatch(
-                        *input.milestone_id(),
-                        *consumed_treasury_output.milestone_id(),
-                    ));
-                }
+        if let Input::Treasury(input) = transaction.input() {
+            if input.milestone_id() != consumed_treasury_output.milestone_id() {
+                return Err(Error::ConsumedTreasuryOutputMismatch(
+                    *input.milestone_id(),
+                    *consumed_treasury_output.milestone_id(),
+                ));
             }
-            Input::Utxo(_) => return Err(Error::UnsupportedInputKind(transaction.input().kind())),
-        };
+        } else {
+            return Err(Error::UnsupportedInputKind(transaction.input().kind()));
+        }
 
-        let created_treasury_output = match transaction.output() {
-            Output::Treasury(output) => output,
-            Output::SignatureLockedDustAllowance(_) | Output::SignatureLockedSingle(_) => {
-                return Err(Error::UnsupportedOutputKind(transaction.output().kind()));
-            }
+        let created_treasury_output = if let Output::Treasury(output) = transaction.output() {
+            output
+        } else {
+            return Err(Error::UnsupportedOutputKind(transaction.output().kind()));
         };
 
         let created_amount = consumed_treasury_output
