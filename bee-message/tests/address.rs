@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    address::{Address, Ed25519Address},
+    Error,
+};
 
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS_BAD: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64x";
@@ -45,12 +48,18 @@ fn bech32_string_to_address() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
 
     let address = Address::try_from_bech32(&Address::from(Ed25519Address::new(bytes)).to_bech32("iota")).unwrap();
-    let Address::Ed25519(ed) = address;
+    let ed = match address {
+        Address::Ed25519(ed) => ed,
+        _ => unreachable!(),
+    };
 
     assert_eq!(ed.to_string(), ED25519_ADDRESS);
 
     let address = Address::try_from_bech32(&Address::from(Ed25519Address::new(bytes)).to_bech32("atoi")).unwrap();
-    let Address::Ed25519(ed) = address;
+    let ed = match address {
+        Address::Ed25519(ed) => ed,
+        _ => unreachable!(),
+    };
 
     assert_eq!(ed.to_string(), ED25519_ADDRESS);
 }

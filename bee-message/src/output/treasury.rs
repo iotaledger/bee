@@ -1,36 +1,36 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{constants::IOTA_SUPPLY, Error};
+use crate::{constant::IOTA_SUPPLY, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
 use core::ops::RangeInclusive;
 
-/// The allowed range of the amount of a `TreasuryOutput`.
-pub const TREASURY_OUTPUT_AMOUNT: RangeInclusive<u64> = 0..=IOTA_SUPPLY;
-
-/// `TreasuryOutput` is an output which holds the treasury of a network.
+/// [`TreasuryOutput`] is an output which holds the treasury of a network.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreasuryOutput {
     amount: u64,
 }
 
 impl TreasuryOutput {
-    /// The output kind of a `TreasuryOutput`.
+    /// The [`Output`](crate::output::Output) kind of a [`TreasuryOutput`].
     pub const KIND: u8 = 2;
+    /// The allowed range of the amount of a [`TreasuryOutput`].
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = 0..=IOTA_SUPPLY;
 
-    /// Creates a new `TreasuryOutput`.
+    /// Creates a new [`TreasuryOutput`].
     pub fn new(amount: u64) -> Result<Self, Error> {
-        if !TREASURY_OUTPUT_AMOUNT.contains(&amount) {
+        if !TreasuryOutput::AMOUNT_RANGE.contains(&amount) {
             return Err(Error::InvalidTreasuryAmount(amount));
         }
 
         Ok(Self { amount })
     }
 
-    /// Returns the amount of a `TreasuryOutput`.
+    /// Returns the amount of a [`TreasuryOutput`].
+    #[inline(always)]
     pub fn amount(&self) -> u64 {
         self.amount
     }

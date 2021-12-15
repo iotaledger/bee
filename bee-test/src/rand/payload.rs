@@ -7,26 +7,21 @@ use crate::rand::{
 };
 
 use bee_message::payload::{
-    indexation::{IndexationPayload, INDEXATION_INDEX_LENGTH_RANGE},
-    receipt::ReceiptPayload,
-    treasury::TreasuryTransactionPayload,
-    Payload,
+    indexation::IndexationPayload, receipt::ReceiptPayload, treasury::TreasuryTransactionPayload, Payload,
 };
 
 /// Generates a random indexation payload.
 pub fn rand_indexation_payload() -> IndexationPayload {
     IndexationPayload::new(
-        &rand_bytes(rand_number_range(INDEXATION_INDEX_LENGTH_RANGE)),
+        &rand_bytes(rand_number_range(IndexationPayload::LENGTH_RANGE)),
         &rand_bytes(rand_number_range(0..10000)),
     )
     .unwrap()
 }
 
 /// Generates a random treasury transaction payload.
-pub fn rand_treasury_transaction_payload() -> Payload {
-    TreasuryTransactionPayload::new(rand_treasury_input().into(), rand_treasury_output().into())
-        .unwrap()
-        .into()
+pub fn rand_treasury_transaction_payload() -> TreasuryTransactionPayload {
+    TreasuryTransactionPayload::new(rand_treasury_input().into(), rand_treasury_output().into()).unwrap()
 }
 
 /// Generates a random receipt payload.
@@ -35,12 +30,13 @@ pub fn rand_receipt_payload() -> ReceiptPayload {
         rand_milestone_index(),
         rand_bool(),
         vec![rand_migrated_funds_entry()],
-        rand_treasury_transaction_payload(),
+        rand_treasury_transaction_payload().into(),
     )
     .unwrap()
 }
 
 /// Generates a random payload for a message.
 pub fn rand_payload_for_message() -> Payload {
+    // TODO complete
     rand_indexation_payload().into()
 }

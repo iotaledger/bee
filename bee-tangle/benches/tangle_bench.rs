@@ -13,7 +13,7 @@ use tokio::runtime::Runtime;
 
 fn random_input() -> (Message, MessageId, MessageMetadata) {
     let message = rand_message();
-    let id = message.id().0;
+    let id = message.id();
 
     (message, id, rand_message_metadata())
 }

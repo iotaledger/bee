@@ -9,11 +9,11 @@ pub mod receipt;
 pub mod transaction;
 pub mod treasury;
 
-use indexation::IndexationPayload;
-use milestone::MilestonePayload;
-use receipt::ReceiptPayload;
-use transaction::TransactionPayload;
-use treasury::TreasuryTransactionPayload;
+pub use indexation::IndexationPayload;
+pub use milestone::MilestonePayload;
+pub use receipt::ReceiptPayload;
+pub use transaction::TransactionPayload;
+pub use treasury::TreasuryTransactionPayload;
 
 use crate::Error;
 
@@ -24,7 +24,7 @@ use alloc::boxed::Box;
 /// A generic payload that can represent different types defining message payloads.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(
-    feature = "serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
@@ -39,19 +39,6 @@ pub enum Payload {
     Receipt(Box<ReceiptPayload>),
     /// A treasury transaction payload.
     TreasuryTransaction(Box<TreasuryTransactionPayload>),
-}
-
-impl Payload {
-    /// Returns the payload kind of a `Payload`.
-    pub fn kind(&self) -> u32 {
-        match self {
-            Self::Transaction(_) => TransactionPayload::KIND,
-            Self::Milestone(_) => MilestonePayload::KIND,
-            Self::Indexation(_) => IndexationPayload::KIND,
-            Self::Receipt(_) => ReceiptPayload::KIND,
-            Self::TreasuryTransaction(_) => TreasuryTransactionPayload::KIND,
-        }
-    }
 }
 
 impl From<TransactionPayload> for Payload {
@@ -81,6 +68,19 @@ impl From<ReceiptPayload> for Payload {
 impl From<TreasuryTransactionPayload> for Payload {
     fn from(payload: TreasuryTransactionPayload) -> Self {
         Self::TreasuryTransaction(Box::new(payload))
+    }
+}
+
+impl Payload {
+    /// Returns the payload kind of a `Payload`.
+    pub fn kind(&self) -> u32 {
+        match self {
+            Self::Transaction(_) => TransactionPayload::KIND,
+            Self::Milestone(_) => MilestonePayload::KIND,
+            Self::Indexation(_) => IndexationPayload::KIND,
+            Self::Receipt(_) => ReceiptPayload::KIND,
+            Self::TreasuryTransaction(_) => TreasuryTransactionPayload::KIND,
+        }
     }
 }
 
@@ -162,7 +162,10 @@ pub fn option_payload_unpack<R: Read + ?Sized, const CHECK: bool>(
     if payload_len > 0 {
         let payload = Payload::unpack_inner::<R, CHECK>(reader)?;
         if payload_len != payload.packed_len() {
-            Err(Error::InvalidPayloadLength(payload_len, payload.packed_len()))
+            Err(Error::InvalidPayloadLength {
+                expected: payload_len,
+                actual: payload.packed_len(),
+            })
         } else {
             Ok((payload_len, Some(payload)))
         }

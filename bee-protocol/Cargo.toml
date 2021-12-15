@@ -12,4 +12,4 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-gossip = { version = "0.3.0", path = "../bee-network/bee-gossip", default-features = false }
-bee-message = { version = "0.1.6", path = "../bee-message", default-features = false, features = [ "serde" ] }
+bee-message = { version = "0.2.0", path = "../bee-message", default-features = false, features = [ "serde" ] }
