@@ -11,8 +11,7 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::{Address, Ed25519Address},
-    milestone::Milestone,
-    milestone::MilestoneIndex,
+    milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
     Message, MessageId,
