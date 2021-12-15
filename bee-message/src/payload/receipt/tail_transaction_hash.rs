@@ -8,25 +8,25 @@ use bee_ternary::{T5B1Buf, TritBuf, Trits, T5B1};
 
 use bytemuck::cast_slice;
 
-/// The length of a tail transaction hash.
-pub const TAIL_TRANSACTION_HASH_LEN: usize = 49;
-
 /// Represents a tail transaction hash of a legacy bundle.
 #[derive(Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TailTransactionHash(TritBuf<T5B1Buf>);
 
 impl TailTransactionHash {
-    /// Creates a new `TailTransactionHash`.
-    pub fn new(bytes: [u8; TAIL_TRANSACTION_HASH_LEN]) -> Result<Self, Error> {
+    /// The length of a [`TailTransactionHash`].
+    pub const LENGTH: usize = 49;
+
+    /// Creates a new [`TailTransactionHash`].
+    pub fn new(bytes: [u8; TailTransactionHash::LENGTH]) -> Result<Self, Error> {
         bytes.try_into()
     }
 }
 
-impl TryFrom<[u8; TAIL_TRANSACTION_HASH_LEN]> for TailTransactionHash {
+impl TryFrom<[u8; TailTransactionHash::LENGTH]> for TailTransactionHash {
     type Error = Error;
 
-    fn try_from(bytes: [u8; TAIL_TRANSACTION_HASH_LEN]) -> Result<Self, Error> {
+    fn try_from(bytes: [u8; TailTransactionHash::LENGTH]) -> Result<Self, Error> {
         Ok(TailTransactionHash(
             Trits::<T5B1>::try_from_raw(cast_slice(&bytes), 243)
                 .map_err(|_| Error::InvalidTailTransactionHash)?
@@ -57,7 +57,7 @@ impl Packable for TailTransactionHash {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        TAIL_TRANSACTION_HASH_LEN
+        TailTransactionHash::LENGTH
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -67,6 +67,6 @@ impl Packable for TailTransactionHash {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Self::new(<[u8; TAIL_TRANSACTION_HASH_LEN]>::unpack_inner::<R, CHECK>(reader)?)
+        Self::new(<[u8; TailTransactionHash::LENGTH]>::unpack_inner::<R, CHECK>(reader)?)
     }
 }

@@ -11,13 +11,13 @@ keywords = [ "iota", "tangle", "bee", "framework", "test" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-ledger = { version = "0.6.0", path = "../bee-ledger", default-features = false }
-bee-message = { version = "0.1.6", path = "../bee-message", default-features = false }
+# bee-ledger = { version = "0.6.0", path = "../bee-ledger", default-features = false }
+bee-message = { version = "0.2.0", path = "../bee-message", default-features = false }
 bee-tangle = { version = "0.2.0", path = "../bee-tangle", default-features = false }
 bee-ternary = { version = "0.5.2", default-features = false, features = [ "serde1" ] }
 
 bytemuck = { version = "1.7.2", default-features = false }
-rand = { version = "0.8.4", default-features = false }
+rand = { version = "0.8.4", default-features = false, features = [ "min_const_gen" ] }
 
 [dev-dependencies]
 hex = { version = "0.4.3", default-features = false }

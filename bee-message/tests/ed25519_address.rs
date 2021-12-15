@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    address::{Address, Ed25519Address},
+    Error,
+};
 
 use core::str::FromStr;
 
@@ -26,8 +29,11 @@ fn debug_impl() {
 
 #[test]
 fn generate_address() {
-    match Address::from(Ed25519Address::new([1; 32])) {
-        Address::Ed25519(a) => assert_eq!(a.len(), 32),
+    let bytes = [1; 32];
+
+    match Address::from(Ed25519Address::new(bytes)) {
+        Address::Ed25519(a) => assert_eq!(a.as_ref(), bytes),
+        _ => unreachable!(),
     }
 }
 
@@ -49,8 +55,8 @@ fn from_str_invalid_hex() {
 fn from_str_invalid_len_too_short() {
     assert!(matches!(
         Ed25519Address::from_str(ED25519_ADDRESS_INVALID_LEN_TOO_SHORT),
-        Err(Error::InvalidHexadecimalLength(expected, actual))
-            if expected == ED25519_ADDRESS_LENGTH * 2 && actual == ED25519_ADDRESS_LENGTH * 2 - 2
+        Err(Error::InvalidHexadecimalLength{expected, actual})
+            if expected == Ed25519Address::LENGTH * 2 && actual == Ed25519Address::LENGTH * 2 - 2
     ));
 }
 
@@ -58,8 +64,8 @@ fn from_str_invalid_len_too_short() {
 fn from_str_invalid_len_too_long() {
     assert!(matches!(
         Ed25519Address::from_str(ED25519_ADDRESS_INVALID_LEN_TOO_LONG),
-        Err(Error::InvalidHexadecimalLength(expected, actual))
-            if expected == ED25519_ADDRESS_LENGTH * 2 && actual == ED25519_ADDRESS_LENGTH * 2 + 2
+        Err(Error::InvalidHexadecimalLength{expected, actual})
+            if expected == Ed25519Address::LENGTH * 2 && actual == Ed25519Address::LENGTH * 2 + 2
     ));
 }
 

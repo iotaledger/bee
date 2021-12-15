@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{input::TreasuryInput, payload::milestone::MilestoneId, Error};
 
 use core::str::FromStr;
 
@@ -53,8 +53,8 @@ fn from_str_valid() {
 fn from_str_invalid() {
     assert!(matches!(
         TreasuryInput::from_str(MILESTONE_ID_INVALID),
-        Err(Error::InvalidHexadecimalLength(expected, actual))
-            if expected == MESSAGE_ID_LENGTH * 2 && actual == MESSAGE_ID_LENGTH * 2 - 2
+        Err(Error::InvalidHexadecimalLength{expected, actual})
+            if expected == MilestoneId::LENGTH * 2 && actual == MilestoneId::LENGTH * 2 - 2
     ));
 }
 

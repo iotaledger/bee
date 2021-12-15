@@ -5,10 +5,12 @@ use crate::{payload::milestone::MilestoneId, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{convert::From, ops::Deref, str::FromStr};
+use derive_more::{Deref, From};
+
+use core::str::FromStr;
 
 /// `TreasuryInput` is an input which references a milestone which generated a `TreasuryOutput`.
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, From, Deref)]
 pub struct TreasuryInput(MilestoneId);
 
 impl TreasuryInput {
@@ -26,22 +28,8 @@ impl TreasuryInput {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(TreasuryInput);
-
-impl Deref for TreasuryInput {
-    type Target = MilestoneId;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<MilestoneId> for TreasuryInput {
-    fn from(id: MilestoneId) -> Self {
-        TreasuryInput(id)
-    }
-}
 
 impl FromStr for TreasuryInput {
     type Err = Error;

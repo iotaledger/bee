@@ -2,8 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
-use bee_test::rand::{bytes::rand_bytes_32, parents::rand_parents};
+use bee_message::{
+    address::{Address, Ed25519Address},
+    input::{Input, TreasuryInput, UtxoInput},
+    milestone::MilestoneIndex,
+    output::{Output, SimpleOutput, TreasuryOutput},
+    payload::{
+        milestone::{MilestoneEssence, MilestoneId, MilestonePayload},
+        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
+        transaction::{RegularTransactionEssenceBuilder, TransactionEssence, TransactionId, TransactionPayloadBuilder},
+        IndexationPayload, Payload, TreasuryTransactionPayload,
+    },
+    signature::{Ed25519Signature, Signature},
+    unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
+};
+use bee_test::rand::{bytes::rand_bytes_array, parents::rand_parents};
 
 use std::str::FromStr;
 
@@ -26,9 +39,9 @@ fn transaction() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-    let essence = Essence::Regular(
-        RegularEssenceBuilder::new()
+    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssenceBuilder::new()
             .with_inputs(vec![input1, input2])
             .with_outputs(vec![output])
             .finish()
@@ -38,8 +51,8 @@ fn transaction() {
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
-    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
+    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
 
     let tx_payload = TransactionPayloadBuilder::new()
@@ -60,11 +73,11 @@ fn transaction() {
 #[test]
 fn milestone() {
     let payload: Payload = MilestonePayload::new(
-        MilestonePayloadEssence::new(
+        MilestoneEssence::new(
             MilestoneIndex(0),
             0,
             rand_parents(),
-            [0; MILESTONE_MERKLE_PROOF_LENGTH],
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
             vec![[0; 32]],
@@ -86,7 +99,7 @@ fn milestone() {
 
 #[test]
 fn indexation() {
-    let payload: Payload = IndexationPayload::new(&rand_bytes_32(), &[]).unwrap().into();
+    let payload: Payload = IndexationPayload::new(&rand_bytes_array::<32>(), &[]).unwrap().into();
 
     let packed = payload.pack_new();
 
@@ -103,7 +116,7 @@ fn receipt() {
         vec![
             MigratedFundsEntry::new(
                 TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SignatureLockedSingleOutput::new(
+                SimpleOutput::new(
                     Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                     1_000_000,
                 )

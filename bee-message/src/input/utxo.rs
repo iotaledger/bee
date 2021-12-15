@@ -5,10 +5,12 @@ use crate::{output::OutputId, payload::transaction::TransactionId, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{convert::From, str::FromStr};
+use derive_more::From;
+
+use core::str::FromStr;
 
 /// Represents an input referencing an output.
-#[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd, From)]
 pub struct UtxoInput(OutputId);
 
 impl UtxoInput {
@@ -26,14 +28,8 @@ impl UtxoInput {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde1")]
 string_serde_impl!(UtxoInput);
-
-impl From<OutputId> for UtxoInput {
-    fn from(id: OutputId) -> Self {
-        UtxoInput(id)
-    }
-}
 
 impl FromStr for UtxoInput {
     type Err = Error;

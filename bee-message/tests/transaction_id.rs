@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{payload::transaction::TransactionId, Error};
 
 use core::str::FromStr;
 
@@ -36,8 +36,8 @@ fn from_str_invalid_hex() {
 fn from_str_invalid_len() {
     assert!(matches!(
         TransactionId::from_str(TRANSACTION_ID_INVALID_LEN),
-        Err(Error::InvalidHexadecimalLength(expected, actual))
-            if expected == MESSAGE_ID_LENGTH * 2 && actual == MESSAGE_ID_LENGTH * 2 - 2
+        Err(Error::InvalidHexadecimalLength{expected, actual})
+            if expected == TransactionId::LENGTH * 2 && actual == TransactionId::LENGTH * 2 - 2
     ));
 }
 

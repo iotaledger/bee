@@ -2,7 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::{
+    address::{Address, Ed25519Address},
+    input::{Input, UtxoInput},
+    output::{Output, SimpleOutput},
+    payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
+    Error,
+};
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
@@ -15,22 +21,22 @@ fn essence_kind() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-    let essence = Essence::Regular(
-        RegularEssence::builder()
+    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
             .with_inputs(vec![input1, input2])
             .with_outputs(vec![output])
             .finish()
             .unwrap(),
     );
 
-    assert_eq!(essence.kind(), RegularEssence::KIND);
+    assert_eq!(essence.kind(), RegularTransactionEssence::KIND);
 }
 
 #[test]
 fn essence_unpack_invalid_kind() {
     assert!(matches!(
-        Essence::unpack(&mut vec![1u8; 32].as_slice()),
+        TransactionEssence::unpack(&mut vec![1u8; 32].as_slice()),
         Err(Error::InvalidEssenceKind(1))
     ));
 }
