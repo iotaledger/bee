@@ -5,24 +5,21 @@ use crate::types::error::Error;
 
 use bee_ledger::types::Receipt;
 use bee_message::{
-    address::{Address, Ed25519Address, Ed25519Address::LENGTH},
+    address::{Address, Ed25519Address},
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
-    output::{Output, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, TreasuryOutput},
-    parents::Parents,
+    output::{Output, SimpleOutput, TreasuryOutput},
+    parent::Parents,
     payload::{
         indexation::IndexationPayload,
-        milestone::{
-            MilestoneId, MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH,
-            MILESTONE_PUBLIC_KEY_LENGTH,
-        },
-        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash, TAIL_TRANSACTION_HASH_LEN},
-        transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
+        milestone::{MilestoneEssence, MilestoneId, MilestonePayload},
+        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
+        transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         treasury::TreasuryTransactionPayload,
         Payload,
     },
-    signature::{Ed25519Signature, SignatureUnlock},
-    unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
+    signature::{Ed25519Signature, Signature},
+    unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
     Message, MessageBuilder, MessageId,
 };
 #[cfg(feature = "peer")]
@@ -47,7 +44,7 @@ impl From<&Message> for MessageDto {
         MessageDto {
             network_id: value.network_id().to_string(),
             parents: value.parents().iter().map(|p| p.to_string()).collect(),
-            payload: value.payload().as_ref().map(Into::into),
+            payload: value.payload().map(Into::into),
             nonce: value.nonce().to_string(),
         }
     }
@@ -134,7 +131,7 @@ impl TryFrom<&PayloadDto> for Payload {
 pub struct TransactionPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    pub essence: EssenceDto,
+    pub essence: TransactionEssenceDto,
     #[serde(rename = "unlockBlocks")]
     pub unlock_blocks: Vec<UnlockBlockDto>,
 }
@@ -168,31 +165,31 @@ impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
 /// Describes all the different essence types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum EssenceDto {
-    Regular(RegularEssenceDto),
+pub enum TransactionEssenceDto {
+    Regular(RegularTransactionEssenceDto),
 }
 
-impl From<&Essence> for EssenceDto {
-    fn from(value: &Essence) -> Self {
+impl From<&TransactionEssence> for TransactionEssenceDto {
+    fn from(value: &TransactionEssence) -> Self {
         match value {
-            Essence::Regular(r) => EssenceDto::Regular(r.into()),
+            TransactionEssence::Regular(r) => TransactionEssenceDto::Regular(r.into()),
         }
     }
 }
 
-impl TryFrom<&EssenceDto> for Essence {
+impl TryFrom<&TransactionEssenceDto> for TransactionEssence {
     type Error = Error;
 
-    fn try_from(value: &EssenceDto) -> Result<Self, Self::Error> {
+    fn try_from(value: &TransactionEssenceDto) -> Result<Self, Self::Error> {
         match value {
-            EssenceDto::Regular(r) => Ok(Essence::Regular(r.try_into()?)),
+            TransactionEssenceDto::Regular(r) => Ok(TransactionEssence::Regular(r.try_into()?)),
         }
     }
 }
 
 /// Describes the essence data making up a transaction by defining its inputs and outputs and an optional payload.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct RegularEssenceDto {
+pub struct RegularTransactionEssenceDto {
     #[serde(rename = "type")]
     pub kind: u8,
     pub inputs: Vec<InputDto>,
@@ -200,10 +197,10 @@ pub struct RegularEssenceDto {
     pub payload: Option<PayloadDto>,
 }
 
-impl From<&RegularEssence> for RegularEssenceDto {
-    fn from(value: &RegularEssence) -> Self {
-        RegularEssenceDto {
-            kind: RegularEssence::KIND,
+impl From<&RegularTransactionEssence> for RegularTransactionEssenceDto {
+    fn from(value: &RegularTransactionEssence) -> Self {
+        RegularTransactionEssenceDto {
+            kind: RegularTransactionEssence::KIND,
             inputs: value.inputs().iter().map(|i| i.into()).collect::<Vec<_>>(),
             outputs: value.outputs().iter().map(|o| o.into()).collect::<Vec<_>>(),
             payload: match value.payload() {
@@ -215,11 +212,11 @@ impl From<&RegularEssence> for RegularEssenceDto {
     }
 }
 
-impl TryFrom<&RegularEssenceDto> for RegularEssence {
+impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
     type Error = Error;
 
-    fn try_from(value: &RegularEssenceDto) -> Result<Self, Self::Error> {
-        let mut builder = RegularEssence::builder();
+    fn try_from(value: &RegularTransactionEssenceDto) -> Result<Self, Self::Error> {
+        let mut builder = RegularTransactionEssence::builder();
 
         for i in &value.inputs {
             builder = builder.add_input(i.try_into()?);
@@ -309,30 +306,26 @@ pub struct TreasuryInputDto {
 /// Describes all the different output types.
 #[derive(Clone, Debug)]
 pub enum OutputDto {
-    SignatureLockedSingle(SignatureLockedSingleOutputDto),
-    SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto),
+    Simple(SimpleOutputDto),
     Treasury(TreasuryOutputDto),
 }
 
 impl From<&Output> for OutputDto {
     fn from(value: &Output) -> Self {
         match value {
-            Output::SignatureLockedSingle(s) => OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
-                kind: SignatureLockedSingleOutput::KIND,
+            Output::Simple(s) => OutputDto::Simple(SimpleOutputDto {
+                kind: SimpleOutput::KIND,
                 address: s.address().into(),
                 amount: s.amount(),
             }),
-            Output::SignatureLockedDustAllowance(s) => {
-                OutputDto::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto {
-                    kind: SignatureLockedDustAllowanceOutput::KIND,
-                    address: s.address().into(),
-                    amount: s.amount(),
-                })
-            }
             Output::Treasury(t) => OutputDto::Treasury(TreasuryOutputDto {
                 kind: TreasuryOutput::KIND,
                 amount: t.amount(),
             }),
+            Output::Extended(_) => todo!(),
+            Output::Alias(_) => todo!(),
+            Output::Foundry(_) => todo!(),
+            Output::Nft(_) => todo!(),
         }
     }
 }
@@ -342,13 +335,7 @@ impl TryFrom<&OutputDto> for Output {
 
     fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
         match value {
-            OutputDto::SignatureLockedSingle(s) => Ok(Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(
-                (&s.address).try_into()?,
-                s.amount,
-            )?)),
-            OutputDto::SignatureLockedDustAllowance(s) => Ok(Output::SignatureLockedDustAllowance(
-                SignatureLockedDustAllowanceOutput::new((&s.address).try_into()?, s.amount)?,
-            )),
+            OutputDto::Simple(s) => Ok(Output::Simple(SimpleOutput::new((&s.address).try_into()?, s.amount)?)),
             OutputDto::Treasury(t) => Ok(Output::Treasury(TreasuryOutput::new(t.amount)?)),
         }
     }
@@ -363,12 +350,8 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
                 .and_then(Value::as_u64)
                 .ok_or_else(|| serde::de::Error::custom("invalid output type"))? as u8
             {
-                SignatureLockedSingleOutput::KIND => OutputDto::SignatureLockedSingle(
-                    SignatureLockedSingleOutputDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
-                ),
-                SignatureLockedDustAllowanceOutput::KIND => OutputDto::SignatureLockedDustAllowance(
-                    SignatureLockedDustAllowanceOutputDto::deserialize(value)
+                SimpleOutput::KIND => OutputDto::Simple(
+                    SimpleOutputDto::deserialize(value)
                         .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
                 ),
                 TreasuryOutput::KIND => OutputDto::Treasury(
@@ -389,8 +372,7 @@ impl Serialize for OutputDto {
         #[derive(Serialize)]
         #[serde(untagged)]
         enum OutputDto_<'a> {
-            T1(&'a SignatureLockedSingleOutputDto),
-            T2(&'a SignatureLockedDustAllowanceOutputDto),
+            T1(&'a SimpleOutputDto),
             T3(&'a TreasuryOutputDto),
         }
         #[derive(Serialize)]
@@ -399,11 +381,8 @@ impl Serialize for OutputDto {
             output: OutputDto_<'a>,
         }
         let output = match self {
-            OutputDto::SignatureLockedSingle(s) => TypedOutput {
+            OutputDto::Simple(s) => TypedOutput {
                 output: OutputDto_::T1(s),
-            },
-            OutputDto::SignatureLockedDustAllowance(s) => TypedOutput {
-                output: OutputDto_::T2(s),
             },
             OutputDto::Treasury(t) => TypedOutput {
                 output: OutputDto_::T3(t),
@@ -415,17 +394,7 @@ impl Serialize for OutputDto {
 
 /// Describes a deposit to a single address which is unlocked via a signature.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SignatureLockedSingleOutputDto {
-    #[serde(rename = "type")]
-    pub kind: u8,
-    pub address: AddressDto,
-    pub amount: u64,
-}
-
-/// Output type for deposits that enables an address to receive dust outputs. It can be consumed as an input like a
-/// regular SigLockedSingleOutput.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SignatureLockedDustAllowanceOutputDto {
+pub struct SimpleOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
     pub address: AddressDto,
@@ -443,6 +412,8 @@ impl From<&Address> for AddressDto {
     fn from(value: &Address) -> Self {
         match value {
             Address::Ed25519(ed) => AddressDto::Ed25519(ed.into()),
+            Address::Alias(_) => todo!(),
+            Address::Nft(_) => todo!(),
         }
     }
 }
@@ -497,25 +468,29 @@ pub struct TreasuryOutputDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum UnlockBlockDto {
-    Signature(SignatureUnlockDto),
-    Reference(ReferenceUnlockDto),
+    Signature(SignatureUnlockBlockDto),
+    Reference(ReferenceUnlockBlockDto),
 }
 
 impl From<&UnlockBlock> for UnlockBlockDto {
     fn from(value: &UnlockBlock) -> Self {
         match value {
-            UnlockBlock::Signature(SignatureUnlock::Ed25519(ed)) => UnlockBlockDto::Signature(SignatureUnlockDto {
-                kind: SignatureUnlock::KIND,
-                signature: SignatureDto::Ed25519(Ed25519SignatureDto {
-                    kind: Ed25519Signature::KIND,
-                    public_key: hex::encode(ed.public_key()),
-                    signature: hex::encode(ed.signature()),
+            UnlockBlock::Signature(signature) => match signature.signature() {
+                Signature::Ed25519(ed) => UnlockBlockDto::Signature(SignatureUnlockBlockDto {
+                    kind: SignatureUnlockBlock::KIND,
+                    signature: SignatureDto::Ed25519(Ed25519SignatureDto {
+                        kind: Ed25519Signature::KIND,
+                        public_key: hex::encode(ed.public_key()),
+                        signature: hex::encode(ed.signature()),
+                    }),
                 }),
-            }),
-            UnlockBlock::Reference(r) => UnlockBlockDto::Reference(ReferenceUnlockDto {
-                kind: ReferenceUnlock::KIND,
+            },
+            UnlockBlock::Reference(r) => UnlockBlockDto::Reference(ReferenceUnlockBlockDto {
+                kind: ReferenceUnlockBlock::KIND,
                 index: r.index(),
             }),
+            UnlockBlock::Alias(_) => todo!(),
+            UnlockBlock::Nft(_) => todo!(),
         }
     }
 }
@@ -534,19 +509,19 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
                     let mut signature = [0u8; 64];
                     hex::decode_to_slice(&ed.signature, &mut signature)
                         .map_err(|_| Error::InvalidSyntaxField("signature"))?;
-                    Ok(UnlockBlock::Signature(SignatureUnlock::Ed25519(Ed25519Signature::new(
-                        public_key, signature,
+                    Ok(UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(
+                        Ed25519Signature::new(public_key, signature),
                     ))))
                 }
             },
-            UnlockBlockDto::Reference(r) => Ok(UnlockBlock::Reference(ReferenceUnlock::new(r.index)?)),
+            UnlockBlockDto::Reference(r) => Ok(UnlockBlock::Reference(ReferenceUnlockBlock::new(r.index)?)),
         }
     }
 }
 
 /// Defines an unlock block containing signature(s) unlocking input(s).
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SignatureUnlockDto {
+pub struct SignatureUnlockBlockDto {
     #[serde(rename = "type")]
     pub kind: u8,
     pub signature: SignatureDto,
@@ -572,7 +547,7 @@ pub struct Ed25519SignatureDto {
 /// References a previous unlock block in order to substitute the duplication of the same unlock block data for inputs
 /// which unlock through the same data.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ReferenceUnlockDto {
+pub struct ReferenceUnlockBlockDto {
     #[serde(rename = "type")]
     pub kind: u8,
     #[serde(rename = "reference")]
@@ -633,7 +608,7 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
                 );
             }
             let merkle_proof = {
-                let mut buf = [0u8; MILESTONE_MERKLE_PROOF_LENGTH];
+                let mut buf = [0u8; MilestoneEssence::MERKLE_PROOF_LENGTH];
                 hex::decode_to_slice(&value.inclusion_merkle_proof, &mut buf)
                     .map_err(|_| Error::InvalidSyntaxField("inclusionMerkleProof"))?;
                 buf
@@ -643,7 +618,7 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
             let mut public_keys = Vec::new();
             for v in &value.public_keys {
                 let key = {
-                    let mut buf = [0u8; MILESTONE_PUBLIC_KEY_LENGTH];
+                    let mut buf = [0u8; MilestoneEssence::PUBLIC_KEY_LENGTH];
                     hex::decode_to_slice(v, &mut buf).map_err(|_| Error::InvalidSyntaxField("publicKeys"))?;
                     buf
                 };
@@ -654,7 +629,7 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
             } else {
                 None
             };
-            MilestonePayloadEssence::new(
+            MilestoneEssence::new(
                 MilestoneIndex(index),
                 timestamp,
                 Parents::new(parent_ids)?,
@@ -769,12 +744,12 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
     type Error = Error;
 
     fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
-        let mut tail_transaction_hash = [0u8; TAIL_TRANSACTION_HASH_LEN];
+        let mut tail_transaction_hash = [0u8; TailTransactionHash::LENGTH];
         hex::decode_to_slice(&value.tail_transaction_hash, &mut tail_transaction_hash)
             .map_err(|_| Error::InvalidSyntaxField("tailTransactionHash"))?;
         Ok(MigratedFundsEntry::new(
             TailTransactionHash::new(tail_transaction_hash)?,
-            SignatureLockedSingleOutput::new((&value.address).try_into()?, value.deposit)?,
+            SimpleOutput::new((&value.address).try_into()?, value.deposit)?,
         )?)
     }
 }
