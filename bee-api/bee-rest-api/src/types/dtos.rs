@@ -5,7 +5,7 @@ use crate::types::error::Error;
 
 use bee_ledger::types::Receipt;
 use bee_message::{
-    address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
+    address::{Address, Ed25519Address, Ed25519Address::LENGTH},
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
     output::{Output, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, TreasuryOutput},
@@ -527,7 +527,7 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
         match value {
             UnlockBlockDto::Signature(s) => match &s.signature {
                 SignatureDto::Ed25519(ed) => {
-                    let mut public_key = [0u8; ED25519_ADDRESS_LENGTH];
+                    let mut public_key = [0u8; Ed25519Address::LENGTH];
                     hex::decode_to_slice(&ed.public_key, &mut public_key)
                         .map_err(|_| Error::InvalidSyntaxField("publicKey"))?;
                     // TODO const
