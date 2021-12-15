@@ -31,6 +31,7 @@ impl BalanceDiff {
 
     /// Negates a [`BalanceDiff`].
     pub fn negate(&mut self) {
+        // TODO this can overflow
         self.0 = -self.0;
     }
 }
