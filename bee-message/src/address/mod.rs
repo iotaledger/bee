@@ -1,28 +1,37 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod alias;
 mod ed25519;
+mod nft;
 
-pub use ed25519::{Ed25519Address, ED25519_ADDRESS_LENGTH};
+pub use alias::AliasAddress;
+pub use ed25519::Ed25519Address;
+pub use nft::NftAddress;
 
-use crate::{signature::SignatureUnlock, Error};
+use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
 use bech32::{self, FromBase32, ToBase32, Variant};
+use derive_more::From;
 
 use alloc::{str::FromStr, string::String};
 
 /// A generic address supporting different address kinds.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From)]
 #[cfg_attr(
-    feature = "serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
 pub enum Address {
     /// An Ed25519 address.
     Ed25519(Ed25519Address),
+    /// An alias address.
+    Alias(AliasAddress),
+    /// A NFT address.
+    Nft(NftAddress),
 }
 
 impl Address {
@@ -30,6 +39,8 @@ impl Address {
     pub fn kind(&self) -> u8 {
         match self {
             Self::Ed25519(_) => Ed25519Address::KIND,
+            Self::Alias(_) => AliasAddress::KIND,
+            Self::Nft(_) => NftAddress::KIND,
         }
     }
 
@@ -48,22 +59,6 @@ impl Address {
     #[allow(clippy::wrong_self_convention)]
     pub fn to_bech32(&self, hrp: &str) -> String {
         bech32::encode(hrp, self.pack_new().to_base32(), Variant::Bech32).expect("Invalid address.")
-    }
-
-    /// Verifies a [`SignatureUnlock`] for a message against the [`Address`].
-    pub fn verify(&self, msg: &[u8], signature: &SignatureUnlock) -> Result<(), Error> {
-        match self {
-            Address::Ed25519(address) => {
-                let SignatureUnlock::Ed25519(signature) = signature;
-                address.verify(msg, signature)
-            }
-        }
-    }
-}
-
-impl From<Ed25519Address> for Address {
-    fn from(address: Ed25519Address) -> Self {
-        Self::Ed25519(address)
     }
 }
 
@@ -89,6 +84,8 @@ impl Packable for Address {
     fn packed_len(&self) -> usize {
         match self {
             Self::Ed25519(address) => Ed25519Address::KIND.packed_len() + address.packed_len(),
+            Self::Alias(address) => AliasAddress::KIND.packed_len() + address.packed_len(),
+            Self::Nft(address) => NftAddress::KIND.packed_len() + address.packed_len(),
         }
     }
 
@@ -98,6 +95,14 @@ impl Packable for Address {
                 Ed25519Address::KIND.pack(writer)?;
                 address.pack(writer)?;
             }
+            Self::Alias(address) => {
+                AliasAddress::KIND.pack(writer)?;
+                address.pack(writer)?;
+            }
+            Self::Nft(address) => {
+                NftAddress::KIND.pack(writer)?;
+                address.pack(writer)?;
+            }
         }
         Ok(())
     }
@@ -105,6 +110,8 @@ impl Packable for Address {
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
             Ed25519Address::KIND => Ed25519Address::unpack_inner::<R, CHECK>(reader)?.into(),
+            AliasAddress::KIND => AliasAddress::unpack_inner::<R, CHECK>(reader)?.into(),
+            NftAddress::KIND => NftAddress::unpack_inner::<R, CHECK>(reader)?.into(),
             k => return Err(Self::Error::InvalidAddressKind(k)),
         })
     }

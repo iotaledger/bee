@@ -1,6 +1,6 @@
 [package]
 name = "bee-message"
-version = "0.1.6"
+version = "0.2.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Implementation of the IOTA protocol message layouts"
@@ -17,13 +17,19 @@ bee-ternary = { version = "0.5.2", default-features = false, features = [ "serde
 
 bech32 = { version = "0.8.1", default-features = false }
 bytemuck = { version = "1.7.2", default-features = false }
+derive_more = { version = "0.99.16", default-features = false, features = [ "from", "as_ref", "deref" ] }
 digest = { version = "0.9.0", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "ed25519", "blake2b" ] }
+primitive-types = { version = "0.10.1", default-features = false, features = [ "serde" ] }
 serde = { version = "1.0.130", default-features = false, optional = true }
+serde-big-array = { version = "0.3.2", default-features = false, features = [ "const-generics" ], optional = true }
 thiserror = { version = "1.0.30", default-features = false }
 
 [dev-dependencies]
 bee-test = { path = "../bee-test", default-features = false }
 
 num_cpus = { version = "1.13.0", default-features = false }
+
+[features]
+serde1 = [ "serde", "serde-big-array" ]

@@ -9,7 +9,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 /// `TreasuryTransaction` represents a transaction which moves funds from the treasury.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreasuryTransactionPayload {
     input: Input,
     output: Output,

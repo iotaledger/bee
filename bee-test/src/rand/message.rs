@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::rand::{
-    bytes::rand_bytes_32, number::rand_number, parents::rand_parents, payload::rand_payload_for_message,
+    bytes::rand_bytes_array, number::rand_number, parents::rand_parents, payload::rand_payload_for_message,
 };
 
-use bee_message::{parents::Parents, Message, MessageBuilder, MessageId};
+use bee_message::{parent::Parents, Message, MessageBuilder, MessageId};
 
 /// Generates a random message id.
 pub fn rand_message_id() -> MessageId {
-    MessageId::new(rand_bytes_32())
+    MessageId::new(rand_bytes_array())
 }
 
 /// Generates a vector of random message ids of a given length.
