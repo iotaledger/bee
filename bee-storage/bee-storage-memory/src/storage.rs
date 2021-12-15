@@ -12,7 +12,9 @@ use bee_ledger::types::{
 use bee_message::{
     address::{Address, Ed25519Address},
     milestone::Milestone,
-    prelude::{MilestoneIndex, OutputId, PaddedIndex},
+    milestone::MilestoneIndex,
+    output::OutputId,
+    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{
