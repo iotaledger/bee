@@ -1,9 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::{address::rand_address, number::rand_number_range, string::rand_string_charset};
+use crate::rand::{
+    address::rand_address, milestone::rand_milestone_index, number::rand_number_range, payload::rand_receipt_payload,
+    string::rand_string_charset,
+};
 
-// use bee_ledger::types::Receipt;
+use bee_ledger::types::Receipt;
 use bee_message::{
     output::SimpleOutput,
     payload::receipt::{MigratedFundsEntry, TailTransactionHash},
@@ -34,7 +37,7 @@ pub fn rand_migrated_funds_entry() -> MigratedFundsEntry {
     .unwrap()
 }
 
-// /// Generates a random ledger receipt.
-// pub fn rand_ledger_receipt() -> Receipt {
-//     Receipt::new(rand_receipt_payload(), rand_milestone_index())
-// }
+/// Generates a random ledger receipt.
+pub fn rand_ledger_receipt() -> Receipt {
+    Receipt::new(rand_receipt_payload(), rand_milestone_index())
+}

@@ -13,10 +13,7 @@ pub use bee_storage::{
     system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
 
-use bee_message::{
-    address::ED25519_ADDRESS_LENGTH, milestone::MilestoneIndex, payload::indexation::INDEXATION_PADDED_INDEX_LENGTH,
-    MESSAGE_ID_LENGTH,
-};
+use bee_message::{address::Ed25519Address, milestone::MilestoneIndex, payload::indexation::PaddedIndex, MessageId};
 
 use rocksdb::{
     ColumnFamily, ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, FlushOptions, Options,
@@ -39,11 +36,11 @@ impl Storage {
         let cf_message_id_to_metadata = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_METADATA, Options::default());
 
         let mut options = Options::default();
-        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(MESSAGE_ID_LENGTH));
+        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(MessageId::LENGTH));
         let cf_message_id_to_message_id = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE_ID, options);
 
         let mut options = Options::default();
-        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(INDEXATION_PADDED_INDEX_LENGTH));
+        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(PaddedIndex::LENGTH));
         let cf_index_to_message_id = ColumnFamilyDescriptor::new(CF_INDEX_TO_MESSAGE_ID, options);
 
         let cf_output_id_to_created_output =
@@ -55,7 +52,7 @@ impl Storage {
         let cf_output_id_unspent = ColumnFamilyDescriptor::new(CF_OUTPUT_ID_UNSPENT, Options::default());
 
         let mut options = Options::default();
-        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(ED25519_ADDRESS_LENGTH));
+        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(Ed25519Address::LENGTH));
         let cf_ed25519_address_to_output_id = ColumnFamilyDescriptor::new(CF_ED25519_ADDRESS_TO_OUTPUT_ID, options);
 
         let cf_ledger_index = ColumnFamilyDescriptor::new(CF_LEDGER_INDEX, Options::default());
