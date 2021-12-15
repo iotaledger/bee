@@ -4,7 +4,7 @@
 use crate::rand::number::rand_number_range;
 
 use bee_ledger::types::Balance;
-use bee_message::constants::IOTA_SUPPLY;
+use bee_message::constant::IOTA_SUPPLY;
 
 /// Generates a random balance.
 pub fn rand_balance() -> Balance {

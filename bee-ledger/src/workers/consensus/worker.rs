@@ -70,16 +70,14 @@ pub(crate) async fn migration_from_milestone(
     receipt.validate(&consumed_treasury)?;
 
     let created_treasury = TreasuryOutput::new(
-        match receipt.inner().transaction() {
-            Payload::TreasuryTransaction(treasury) => match treasury.output() {
-                Output::Treasury(output) => output.clone(),
-                Output::SignatureLockedDustAllowance(_) | Output::SignatureLockedSingle(_) => {
-                    return Err(Error::UnsupportedOutputKind(treasury.output().kind()));
-                }
-            },
-            Payload::Milestone(_) | Payload::Indexation(_) | Payload::Receipt(_) | Payload::Transaction(_) => {
-                return Err(Error::UnsupportedPayloadKind(receipt.inner().transaction().kind()));
+        if let Payload::TreasuryTransaction(treasury) = receipt.inner().transaction() {
+            if let Output::Treasury(output) = treasury.output() {
+                output.clone()
+            } else {
+                return Err(Error::UnsupportedOutputKind(treasury.output().kind()));
             }
+        } else {
+            return Err(Error::UnsupportedPayloadKind(receipt.inner().transaction().kind()));
         },
         milestone_id,
     );
@@ -388,6 +386,8 @@ where
                                 error!("Error while sending output: {:?}", e);
                             }
                         }
+                        Address::Alias(_address) => todo!(),
+                        Address::Nft(_address) => todo!(),
                     },
                 }
             }
