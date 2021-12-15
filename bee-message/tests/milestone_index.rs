@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use bee_common::packable::Packable;
-pub use bee_message::prelude::*;
+pub use bee_message::milestone::MilestoneIndex;
 
 #[test]
 fn debug_impl() {

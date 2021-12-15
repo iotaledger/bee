@@ -1,37 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-/// Length of an indexation padded index.
-pub const INDEXATION_PADDED_INDEX_LENGTH: usize = 64;
+use derive_more::{AsRef, Deref, From};
 
 /// An indexation payload index padded with `0` up to the maximum length.
-#[derive(Clone, Copy, Eq, PartialEq, Hash)]
-pub struct PaddedIndex([u8; INDEXATION_PADDED_INDEX_LENGTH]);
+#[derive(Clone, Copy, Eq, PartialEq, Hash, From, AsRef, Deref)]
+#[as_ref(forward)]
+pub struct PaddedIndex([u8; PaddedIndex::LENGTH]);
 
 impl PaddedIndex {
-    /// Creates a new `PaddedIndex`.
-    pub fn new(bytes: [u8; INDEXATION_PADDED_INDEX_LENGTH]) -> Self {
+    /// Length of a [`PaddedIndex`].
+    pub const LENGTH: usize = 64;
+
+    /// Creates a new [`PaddedIndex`].
+    pub fn new(bytes: [u8; PaddedIndex::LENGTH]) -> Self {
         bytes.into()
-    }
-}
-
-impl From<[u8; INDEXATION_PADDED_INDEX_LENGTH]> for PaddedIndex {
-    fn from(bytes: [u8; INDEXATION_PADDED_INDEX_LENGTH]) -> Self {
-        Self(bytes)
-    }
-}
-
-impl AsRef<[u8]> for PaddedIndex {
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
-    }
-}
-
-impl std::ops::Deref for PaddedIndex {
-    type Target = [u8; INDEXATION_PADDED_INDEX_LENGTH];
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }
 
