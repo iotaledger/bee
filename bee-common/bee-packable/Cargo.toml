@@ -19,4 +19,5 @@ autocfg = { version = "1.0.1", default-features = false }
 [dependencies]
 bee-packable-derive = { path = "../bee-packable-derive", default-features = false }
 
+primitive-types = { version = "0.10.1", default-features = false, optional = true }
 serde = { version = "1.0.130", default-features = false, features = [ "derive", "std" ], optional = true }

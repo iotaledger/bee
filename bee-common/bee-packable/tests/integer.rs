@@ -3,6 +3,9 @@
 
 mod common;
 
+#[cfg(feature = "primitive-types")]
+use primitive_types::U256;
+
 macro_rules! impl_packable_test_for_integer {
     ($name:ident, $ty:ident, $value:expr) => {
         #[test]
@@ -27,3 +30,14 @@ impl_packable_test_for_integer!(packable_u64, u64, 0x6F7BD423100423DB);
 impl_packable_test_for_integer!(packable_i128, i128, 0x6F7BD423100423DBFF127B91CA0AB123);
 #[cfg(has_u128)]
 impl_packable_test_for_integer!(packable_u128, u128, 0x6F7BD423100423DBFF127B91CA0AB123);
+#[cfg(feature = "primitive-types")]
+impl_packable_test_for_integer!(
+    packable_u256,
+    U256,
+    U256([
+        0x6F7BD423100423DB,
+        0x6F7BD423100423DB,
+        0x6F7BD423100423DB,
+        0x6F7BD423100423DB
+    ])
+);

@@ -13,6 +13,8 @@ mod array;
 mod bool;
 mod r#box;
 mod integer;
+#[cfg(feature = "primitive-types")]
+mod primitive_types;
 
 use crate::{
     error::{UnexpectedEOF, UnpackError},
