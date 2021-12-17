@@ -16,11 +16,6 @@ use core::fmt::{self, Display};
 pub trait Bounded: TryFrom<usize> + Into<Self::Bounds> {
     /// The type used to define the bounds.
     type Bounds: PartialOrd + TryInto<Self> + TryInto<usize> + Default + Copy;
-
-    /// Minimum bounded value.
-    const MIN: Self::Bounds;
-    /// Maximum bounded value.
-    const MAX: Self::Bounds;
 }
 
 macro_rules! bounded {
@@ -72,12 +67,14 @@ macro_rules! bounded {
 
         impl<const MIN: $ty, const MAX: $ty> Bounded for $wrapper<MIN, MAX> {
             type Bounds = $ty;
-
-            const MIN: $ty = MIN;
-            const MAX: $ty = MAX;
         }
 
         impl<const MIN: $ty, const MAX: $ty> $wrapper<MIN, MAX> {
+            /// Minimum bounded value.
+            pub const MIN: $ty = MIN;
+            /// Maximum bounded value.
+            pub const MAX: $ty = MAX;
+
             /// Creates a bounded integer without checking whether the value is in-bounds.
             ///
             /// # Safety
@@ -165,28 +162,16 @@ bounded!(BoundedU64, InvalidBoundedU64, TryIntoBoundedU64Error, u64);
 
 impl Bounded for u8 {
     type Bounds = Self;
-
-    const MIN: Self::Bounds = u8::MIN;
-    const MAX: Self::Bounds = u8::MAX;
 }
 
 impl Bounded for u16 {
     type Bounds = Self;
-
-    const MIN: Self::Bounds = u16::MIN;
-    const MAX: Self::Bounds = u16::MAX;
 }
 
 impl Bounded for u32 {
     type Bounds = Self;
-
-    const MIN: Self::Bounds = u32::MIN;
-    const MAX: Self::Bounds = u32::MAX;
 }
 
 impl Bounded for u64 {
     type Bounds = Self;
-
-    const MIN: Self::Bounds = u64::MIN;
-    const MAX: Self::Bounds = u64::MAX;
 }
