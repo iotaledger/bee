@@ -317,6 +317,7 @@ pub struct TreasuryInputDto {
 pub enum OutputDto {
     Simple(SimpleOutputDto),
     Treasury(TreasuryOutputDto),
+    Extended(ExtendedOutputDto),
 }
 
 impl From<&Output> for OutputDto {
@@ -331,7 +332,12 @@ impl From<&Output> for OutputDto {
                 kind: TreasuryOutput::KIND,
                 amount: t.amount(),
             }),
-            Output::Extended(_) => todo!(),
+            Output::Extended(e) => OutputDto::Extended(ExtendedOutputDto {
+                address: e.address().into(),
+                amount: e.amount(),
+                native_tokens: e.native_tokens().iter().map(|o| o.into()).collect(),
+                feature_blocks: e.feature_blocks().iter().map(|o| o.into()).collect(),
+            }),
             Output::Alias(_) => todo!(),
             Output::Foundry(_) => todo!(),
             Output::Nft(_) => todo!(),
@@ -346,6 +352,7 @@ impl TryFrom<&OutputDto> for Output {
         match value {
             OutputDto::Simple(s) => Ok(Output::Simple(SimpleOutput::new((&s.address).try_into()?, s.amount)?)),
             OutputDto::Treasury(t) => Ok(Output::Treasury(TreasuryOutput::new(t.amount)?)),
+            OutputDto::Extended(e) => Ok(Output::Extended(e.try_into()?)),
         }
     }
 }
@@ -367,7 +374,11 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
                     TreasuryOutputDto::deserialize(value)
                         .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
                 ),
-                _ => unimplemented!(),
+                ExtendedOutput::KIND => OutputDto::Extended(
+                    ExtendedOutputDto::deserialize(value)
+                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
+                ),
+                _ => unimplemented!()
             },
         )
     }
@@ -382,7 +393,8 @@ impl Serialize for OutputDto {
         #[serde(untagged)]
         enum OutputDto_<'a> {
             T1(&'a SimpleOutputDto),
-            T3(&'a TreasuryOutputDto),
+            T2(&'a TreasuryOutputDto),
+            T3(&'a ExtendedOutputDto),
         }
         #[derive(Serialize)]
         struct TypedOutput<'a> {
@@ -390,11 +402,14 @@ impl Serialize for OutputDto {
             output: OutputDto_<'a>,
         }
         let output = match self {
-            OutputDto::Simple(s) => TypedOutput {
-                output: OutputDto_::T1(s),
+            OutputDto::Simple(o) => TypedOutput {
+                output: OutputDto_::T1(o),
             },
-            OutputDto::Treasury(t) => TypedOutput {
-                output: OutputDto_::T3(t),
+            OutputDto::Treasury(o) => TypedOutput {
+                output: OutputDto_::T2(o),
+            },
+            OutputDto::Extended(o) => TypedOutput {
+                output: OutputDto_::T3(o),
             },
         };
         output.serialize(serializer)
