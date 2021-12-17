@@ -4,11 +4,19 @@
 use crate::types::error::Error;
 
 use bee_ledger::types::Receipt;
+pub use bee_message::output::feature_block::{
+    DustDepositReturnFeatureBlock, ExpirationMilestoneIndexFeatureBlock, ExpirationUnixFeatureBlock,
+    IndexationFeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock,
+    TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
+};
 use bee_message::{
     address::{Address, AliasAddress, Ed25519Address, NftAddress},
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
-    output::{ExtendedOutput, ExtendedOutputBuilder, NativeToken, Output, SimpleOutput, TokenId, TreasuryOutput},
+    output::{
+        feature_block::FeatureBlock, ExtendedOutput, ExtendedOutputBuilder, NativeToken, Output, SimpleOutput, TokenId,
+        TreasuryOutput,
+    },
     parent::Parents,
     payload::{
         indexation::IndexationPayload,
@@ -23,16 +31,8 @@ use bee_message::{
     Message, MessageBuilder, MessageId,
 };
 
-pub use bee_message::output::feature_block::{
-    DustDepositReturnFeatureBlock, ExpirationMilestoneIndexFeatureBlock, ExpirationUnixFeatureBlock,
-    IndexationFeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock,
-    TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
-};
-
 #[cfg(feature = "peer")]
 use bee_protocol::types::peer::Peer;
-
-use bee_message::output::feature_block::FeatureBlock;
 
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
@@ -378,7 +378,7 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
                     ExtendedOutputDto::deserialize(value)
                         .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
                 ),
-                _ => unimplemented!()
+                _ => unimplemented!(),
             },
         )
     }

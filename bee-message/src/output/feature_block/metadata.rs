@@ -5,8 +5,6 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::fmt::Display;
-
 /// Defines metadata, arbitrary binary data, that will be stored in the output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -44,9 +42,15 @@ impl MetadataFeatureBlock {
     }
 }
 
-impl Display for MetadataFeatureBlock {
+impl core::fmt::Display for MetadataFeatureBlock {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}", hex::encode(&self.0))
+    }
+}
+
+impl core::fmt::Debug for MetadataFeatureBlock {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "MetadataFeatureBlock({})", self)
     }
 }
 
