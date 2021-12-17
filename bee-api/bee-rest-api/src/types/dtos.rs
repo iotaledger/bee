@@ -33,7 +33,7 @@ pub use bee_message::output::feature_block::{
 use bee_protocol::types::peer::Peer;
 
 use bee_message::output::feature_block::FeatureBlock;
-use primitive_types::U256;
+
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
@@ -704,10 +704,10 @@ impl TryFrom<&TokenIdDto> for TokenId {
     type Error = Error;
 
     fn try_from(value: &TokenIdDto) -> Result<Self, Self::Error> {
-        Ok(value
+        value
             .0
             .parse::<TokenId>()
-            .map_err(|_| Error::InvalidSemanticField("token id"))?)
+            .map_err(|_| Error::InvalidSemanticField("token id"))
     }
 }
 
@@ -810,10 +810,10 @@ impl TryFrom<&FeatureBlockDto> for FeatureBlock {
             }
             FeatureBlockDto::ExpirationUnix(v) => Self::ExpirationUnix(ExpirationUnixFeatureBlock::new(v.0)),
             FeatureBlockDto::Indexation(v) => Self::Indexation(IndexationFeatureBlock::new(
-                &hex::decode(&v.0).map_err(|e| Error::InvalidSemanticField("IndexationFeatureBlock"))?,
+                &hex::decode(&v.0).map_err(|_e| Error::InvalidSemanticField("IndexationFeatureBlock"))?,
             )?),
             FeatureBlockDto::Metadata(v) => Self::Metadata(MetadataFeatureBlock::new(
-                &hex::decode(&v.0).map_err(|e| Error::InvalidSemanticField("MetadataFeatureBlock"))?,
+                &hex::decode(&v.0).map_err(|_e| Error::InvalidSemanticField("MetadataFeatureBlock"))?,
             )?),
         })
     }
