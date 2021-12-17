@@ -5,10 +5,10 @@ use crate::types::error::Error;
 
 use bee_ledger::types::Receipt;
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::{Address, AliasAddress, Ed25519Address, NftAddress},
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
-    output::{Output, SimpleOutput, TreasuryOutput},
+    output::{ExtendedOutput, ExtendedOutputBuilder, NativeToken, Output, SimpleOutput, TokenId, TreasuryOutput},
     parent::Parents,
     payload::{
         indexation::IndexationPayload,
@@ -22,9 +22,18 @@ use bee_message::{
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
     Message, MessageBuilder, MessageId,
 };
+
+pub use bee_message::output::feature_block::{
+    DustDepositReturnFeatureBlock, ExpirationMilestoneIndexFeatureBlock, ExpirationUnixFeatureBlock,
+    IndexationFeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock,
+    TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
+};
+
 #[cfg(feature = "peer")]
 use bee_protocol::types::peer::Peer;
 
+use bee_message::output::feature_block::FeatureBlock;
+use primitive_types::U256;
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
@@ -405,15 +414,20 @@ pub struct SimpleOutputDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AddressDto {
+    /// An Ed25519 address.
     Ed25519(Ed25519AddressDto),
+    /// An alias address.
+    Alias(AliasAddressDto),
+    /// A NFT address.
+    Nft(NftAddressDto),
 }
 
 impl From<&Address> for AddressDto {
     fn from(value: &Address) -> Self {
         match value {
-            Address::Ed25519(ed) => AddressDto::Ed25519(ed.into()),
-            Address::Alias(_) => todo!(),
-            Address::Nft(_) => todo!(),
+            Address::Ed25519(a) => AddressDto::Ed25519(a.into()),
+            Address::Alias(a) => AddressDto::Alias(a.into()),
+            Address::Nft(a) => AddressDto::Nft(a.into()),
         }
     }
 }
@@ -424,6 +438,8 @@ impl TryFrom<&AddressDto> for Address {
     fn try_from(value: &AddressDto) -> Result<Self, Self::Error> {
         match value {
             AddressDto::Ed25519(a) => Ok(Address::Ed25519(a.try_into()?)),
+            AddressDto::Alias(a) => Ok(Address::Alias(a.try_into()?)),
+            AddressDto::Nft(a) => Ok(Address::Nft(a.try_into()?)),
         }
     }
 }
@@ -452,6 +468,62 @@ impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
         value
             .address
             .parse::<Ed25519Address>()
+            .map_err(|_| Error::InvalidSyntaxField("address"))
+    }
+}
+
+/// Describes an Ed25519 address.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AliasAddressDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    pub id: String,
+}
+
+impl From<&AliasAddress> for AliasAddressDto {
+    fn from(value: &AliasAddress) -> Self {
+        Self {
+            kind: AliasAddress::KIND,
+            id: value.to_string(),
+        }
+    }
+}
+
+impl TryFrom<&AliasAddressDto> for AliasAddress {
+    type Error = Error;
+
+    fn try_from(value: &AliasAddressDto) -> Result<Self, Self::Error> {
+        value
+            .id
+            .parse::<AliasAddress>()
+            .map_err(|_| Error::InvalidSyntaxField("address"))
+    }
+}
+
+/// Describes an Ed25519 address.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct NftAddressDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    pub id: String,
+}
+
+impl From<&NftAddress> for NftAddressDto {
+    fn from(value: &NftAddress) -> Self {
+        Self {
+            kind: NftAddress::KIND,
+            id: value.to_string(),
+        }
+    }
+}
+
+impl TryFrom<&NftAddressDto> for NftAddress {
+    type Error = Error;
+
+    fn try_from(value: &NftAddressDto) -> Result<Self, Self::Error> {
+        value
+            .id
+            .parse::<NftAddress>()
             .map_err(|_| Error::InvalidSyntaxField("address"))
     }
 }
@@ -552,6 +624,199 @@ pub struct ReferenceUnlockBlockDto {
     pub kind: u8,
     #[serde(rename = "reference")]
     pub index: u16,
+}
+
+/// Describes an extended output.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ExtendedOutputDto {
+    // Deposit address of the output.
+    pub address: AddressDto,
+    // Amount of IOTA tokens held by the output.
+    pub amount: u64,
+    // Native tokens held by the output.
+    pub native_tokens: Vec<NativeTokenDto>,
+    pub feature_blocks: Vec<FeatureBlockDto>,
+}
+
+impl From<&ExtendedOutput> for ExtendedOutputDto {
+    fn from(value: &ExtendedOutput) -> Self {
+        Self {
+            address: value.address().into(),
+            amount: value.amount(),
+            native_tokens: value.native_tokens().iter().map(|x| x.into()).collect::<_>(),
+            feature_blocks: value.feature_blocks().iter().map(|x| x.into()).collect::<_>(),
+        }
+    }
+}
+
+impl TryFrom<&ExtendedOutputDto> for ExtendedOutput {
+    type Error = Error;
+
+    fn try_from(value: &ExtendedOutputDto) -> Result<Self, Self::Error> {
+        let mut builder = ExtendedOutputBuilder::new((&value.address).try_into()?, value.amount);
+        for t in &value.native_tokens {
+            builder = builder.add_native_token(t.try_into()?);
+        }
+        for b in &value.feature_blocks {
+            builder = builder.add_feature_block(b.try_into()?);
+        }
+        Ok(builder.finish()?)
+    }
+}
+
+/// Describes a native token.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+pub struct NativeTokenDto {
+    // Identifier of the native token.
+    pub token_id: TokenIdDto,
+    // Amount of native tokens.
+    pub amount: U256Dto,
+}
+
+impl From<&NativeToken> for NativeTokenDto {
+    fn from(value: &NativeToken) -> Self {
+        Self {
+            token_id: TokenIdDto(value.token_id().to_string()),
+            amount: U256Dto(value.amount().to_string()),
+        }
+    }
+}
+
+impl TryFrom<&NativeTokenDto> for NativeToken {
+    type Error = Error;
+
+    fn try_from(value: &NativeTokenDto) -> Result<Self, Self::Error> {
+        value.try_into()
+    }
+}
+
+/// Describes a token id.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+pub struct TokenIdDto(pub String);
+
+impl From<&TokenId> for TokenIdDto {
+    fn from(value: &TokenId) -> Self {
+        Self(value.to_string())
+    }
+}
+
+impl TryFrom<&TokenIdDto> for TokenId {
+    type Error = Error;
+
+    fn try_from(value: &TokenIdDto) -> Result<Self, Self::Error> {
+        Ok(value
+            .0
+            .parse::<TokenId>()
+            .map_err(|_| Error::InvalidSemanticField("token id"))?)
+    }
+}
+
+/// Describes an U256.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+pub struct U256Dto(pub String);
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum FeatureBlockDto {
+    /// A sender feature block.
+    Sender(SenderFeatureBlockDto),
+    /// An issuer feature block.
+    Issuer(IssuerFeatureBlockDto),
+    /// A dust deposit return feature block.
+    DustDepositReturn(DustDepositReturnFeatureBlockDto),
+    /// A timelock milestone index feature block.
+    TimelockMilestoneIndex(TimelockMilestoneIndexFeatureBlockDto),
+    /// A timelock unix feature block.
+    TimelockUnix(TimelockUnixFeatureBlockDto),
+    /// An expiration milestone index feature block.
+    ExpirationMilestoneIndex(ExpirationMilestoneIndexFeatureBlockDto),
+    /// An expiration unix feature block.
+    ExpirationUnix(ExpirationUnixFeatureBlockDto),
+    /// An indexation feature block.
+    Indexation(IndexationFeatureBlockDto),
+    /// A metadata feature block.
+    Metadata(MetadataFeatureBlockDto),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SenderFeatureBlockDto(pub AddressDto);
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct IssuerFeatureBlockDto(pub AddressDto);
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct DustDepositReturnFeatureBlockDto(pub u64);
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TimelockMilestoneIndexFeatureBlockDto(pub MilestoneIndex);
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TimelockUnixFeatureBlockDto(pub u32);
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ExpirationMilestoneIndexFeatureBlockDto(pub MilestoneIndex);
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ExpirationUnixFeatureBlockDto(pub u32);
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct IndexationFeatureBlockDto(pub String);
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MetadataFeatureBlockDto(pub String);
+
+impl FeatureBlockDto {
+    /// Return the output kind of an `Output`.
+    pub fn kind(&self) -> u8 {
+        match self {
+            Self::Sender(_) => SenderFeatureBlock::KIND,
+            Self::Issuer(_) => IssuerFeatureBlock::KIND,
+            Self::DustDepositReturn(_) => DustDepositReturnFeatureBlock::KIND,
+            Self::TimelockMilestoneIndex(_) => TimelockMilestoneIndexFeatureBlock::KIND,
+            Self::TimelockUnix(_) => TimelockUnixFeatureBlock::KIND,
+            Self::ExpirationMilestoneIndex(_) => ExpirationMilestoneIndexFeatureBlock::KIND,
+            Self::ExpirationUnix(_) => ExpirationUnixFeatureBlock::KIND,
+            Self::Indexation(_) => IndexationFeatureBlock::KIND,
+            Self::Metadata(_) => MetadataFeatureBlock::KIND,
+        }
+    }
+}
+
+impl From<&FeatureBlock> for FeatureBlockDto {
+    fn from(value: &FeatureBlock) -> Self {
+        match value {
+            FeatureBlock::Sender(v) => Self::Sender(SenderFeatureBlockDto(v.address().into())),
+            FeatureBlock::Issuer(v) => Self::Issuer(IssuerFeatureBlockDto(v.address().into())),
+            FeatureBlock::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnFeatureBlockDto(v.amount())),
+            FeatureBlock::TimelockMilestoneIndex(v) => {
+                Self::TimelockMilestoneIndex(TimelockMilestoneIndexFeatureBlockDto(v.index()))
+            }
+            FeatureBlock::TimelockUnix(v) => Self::TimelockUnix(TimelockUnixFeatureBlockDto(v.timestamp())),
+            FeatureBlock::ExpirationMilestoneIndex(v) => {
+                Self::ExpirationMilestoneIndex(ExpirationMilestoneIndexFeatureBlockDto(v.index()))
+            }
+            FeatureBlock::ExpirationUnix(v) => Self::ExpirationUnix(ExpirationUnixFeatureBlockDto(v.timestamp())),
+            FeatureBlock::Indexation(v) => Self::Indexation(IndexationFeatureBlockDto(v.to_string())),
+            FeatureBlock::Metadata(v) => Self::Metadata(MetadataFeatureBlockDto(v.to_string())),
+        }
+    }
+}
+
+impl TryFrom<&FeatureBlockDto> for FeatureBlock {
+    type Error = Error;
+
+    fn try_from(value: &FeatureBlockDto) -> Result<Self, Self::Error> {
+        Ok(match value {
+            FeatureBlockDto::Sender(v) => Self::Sender(SenderFeatureBlock::new((&v.0).try_into()?)),
+            FeatureBlockDto::Issuer(v) => Self::Issuer(IssuerFeatureBlock::new((&v.0).try_into()?)),
+            FeatureBlockDto::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnFeatureBlock::new(v.0)?),
+            FeatureBlockDto::TimelockMilestoneIndex(v) => {
+                Self::TimelockMilestoneIndex(TimelockMilestoneIndexFeatureBlock::new(v.0))
+            }
+            FeatureBlockDto::TimelockUnix(v) => Self::TimelockUnix(TimelockUnixFeatureBlock::new(v.0)),
+            FeatureBlockDto::ExpirationMilestoneIndex(v) => {
+                Self::ExpirationMilestoneIndex(ExpirationMilestoneIndexFeatureBlock::new(v.0))
+            }
+            FeatureBlockDto::ExpirationUnix(v) => Self::ExpirationUnix(ExpirationUnixFeatureBlock::new(v.0)),
+            FeatureBlockDto::Indexation(v) => Self::Indexation(IndexationFeatureBlock::new(
+                &hex::decode(&v.0).map_err(|e| Error::InvalidSemanticField("IndexationFeatureBlock"))?,
+            )?),
+            FeatureBlockDto::Metadata(v) => Self::Metadata(MetadataFeatureBlock::new(
+                &hex::decode(&v.0).map_err(|e| Error::InvalidSemanticField("MetadataFeatureBlock"))?,
+            )?),
+        })
+    }
 }
 
 /// The payload type to define a milestone.

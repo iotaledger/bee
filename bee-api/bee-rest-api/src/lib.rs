@@ -3,4 +3,6 @@
 
 // #![deny(missing_docs, warnings)]
 
+extern crate bee_message;
+
 pub mod types;

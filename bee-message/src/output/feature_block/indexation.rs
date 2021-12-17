@@ -5,6 +5,8 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
+use core::fmt::Display;
+
 /// Defines an indexation tag to which the output will be indexed.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -39,6 +41,12 @@ impl IndexationFeatureBlock {
     #[inline(always)]
     pub fn tag(&self) -> &[u8] {
         &self.0
+    }
+}
+
+impl Display for IndexationFeatureBlock {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", hex::encode(&self.0))
     }
 }
 
