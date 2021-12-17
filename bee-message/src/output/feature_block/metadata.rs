@@ -6,7 +6,7 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 
 /// Defines metadata, arbitrary binary data, that will be stored in the output.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MetadataFeatureBlock(
     // Binary data.
