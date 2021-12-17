@@ -483,7 +483,7 @@ impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
         value
             .address
             .parse::<Ed25519Address>()
-            .map_err(|_| Error::InvalidSyntaxField("address"))
+            .map_err(|_| Error::InvalidSyntaxField("Ed25519 address"))
     }
 }
 
@@ -511,7 +511,7 @@ impl TryFrom<&AliasAddressDto> for AliasAddress {
         value
             .id
             .parse::<AliasAddress>()
-            .map_err(|_| Error::InvalidSyntaxField("address"))
+            .map_err(|_| Error::InvalidSyntaxField("alias address"))
     }
 }
 
@@ -539,7 +539,7 @@ impl TryFrom<&NftAddressDto> for NftAddress {
         value
             .id
             .parse::<NftAddress>()
-            .map_err(|_| Error::InvalidSyntaxField("address"))
+            .map_err(|_| Error::InvalidSyntaxField("NFT address"))
     }
 }
 
