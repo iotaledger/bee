@@ -132,7 +132,7 @@ impl ToTokens for TraitImpl {
         let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
         let impl_tokens = quote! {
-            impl #impl_generics Packable for #type_name #ty_generics #where_clause {
+            impl #impl_generics bee_packable::Packable for #type_name #ty_generics #where_clause {
                 type UnpackError = #unpack_error;
 
                 fn pack<P: bee_packable::packer::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
