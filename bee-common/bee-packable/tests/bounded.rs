@@ -5,8 +5,8 @@ mod common;
 
 use bee_packable::{
     bounded::{
-        Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32,
-        InvalidBoundedU64, InvalidBoundedU8,
+        BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
+        InvalidBoundedU8,
     },
     error::UnpackError,
     PackableExt,

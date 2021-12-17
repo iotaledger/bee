@@ -10,7 +10,7 @@ use crate::{payload::MessagePayload, MessageUnpackError, ValidationError, MESSAG
 pub use padded::PaddedIndex;
 
 use bee_packable::{
-    bounded::{Bounded, BoundedU32},
+    bounded::BoundedU32,
     prefix::{UnpackPrefixError, VecPrefix},
     Packable,
 };
