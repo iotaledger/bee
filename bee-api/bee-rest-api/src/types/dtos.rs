@@ -487,7 +487,7 @@ impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
     }
 }
 
-/// Describes an Ed25519 address.
+/// Describes an alias address.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AliasAddressDto {
     #[serde(rename = "type")]
@@ -515,7 +515,7 @@ impl TryFrom<&AliasAddressDto> for AliasAddress {
     }
 }
 
-/// Describes an Ed25519 address.
+/// Describes an NFT address.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NftAddressDto {
     #[serde(rename = "type")]
