@@ -214,11 +214,10 @@ checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 [[package]]
 name = "bee-autopeering"
 version = "0.1.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "async-trait",
  "base64 0.13.0",
- "bee-common",
  "bincode",
  "bs58",
  "bytes",
@@ -246,7 +245,7 @@ dependencies = [
 [[package]]
 name = "bee-common"
 version = "0.5.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "autocfg",
  "console-subscriber",
@@ -264,7 +263,7 @@ dependencies = [
 [[package]]
 name = "bee-crypto"
 version = "0.3.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "bee-ternary",
  "byteorder",
@@ -277,7 +276,7 @@ dependencies = [
 [[package]]
 name = "bee-gossip"
 version = "0.3.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "async-trait",
  "bee-runtime",
@@ -297,7 +296,7 @@ dependencies = [
 [[package]]
 name = "bee-ledger"
 version = "0.5.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -323,7 +322,7 @@ dependencies = [
 [[package]]
 name = "bee-message"
 version = "0.1.5"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "bech32",
  "bee-common",
@@ -388,7 +387,7 @@ dependencies = [
 [[package]]
 name = "bee-pow"
 version = "0.2.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "bee-ternary",
  "iota-crypto",
@@ -462,7 +461,7 @@ dependencies = [
 [[package]]
 name = "bee-runtime"
 version = "0.1.1-alpha"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "async-trait",
  "bee-storage",
@@ -475,7 +474,7 @@ dependencies = [
 [[package]]
 name = "bee-storage"
 version = "0.9.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "bee-common",
  "serde",
@@ -485,7 +484,7 @@ dependencies = [
 [[package]]
 name = "bee-storage-null"
 version = "0.1.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "bee-storage",
 ]
@@ -493,7 +492,7 @@ dependencies = [
 [[package]]
 name = "bee-storage-rocksdb"
 version = "0.5.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -509,7 +508,7 @@ dependencies = [
 [[package]]
 name = "bee-storage-sled"
 version = "0.4.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -525,7 +524,7 @@ dependencies = [
 [[package]]
 name = "bee-tangle"
 version = "0.2.0"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -547,7 +546,7 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.5.2"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#0b5cde0b072d536ffe5fa25bf16fd00ec9c3fdba"
+source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#5775e1578437a4aae6a6f38432a56b8d56d824e6"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -808,7 +807,7 @@ dependencies = [
 [[package]]
 name = "console-api"
 version = "0.1.0"
-source = "git+https://github.com/tokio-rs/console.git?branch=main#042c1f78447839bed54538ed89b9277e437ed6b4"
+source = "git+https://github.com/tokio-rs/console.git?branch=main#ef4150725476942784f1ad4cacfb21c3bed17c54"
 dependencies = [
  "prost 0.9.0",
  "prost-types 0.9.0",
@@ -820,7 +819,7 @@ dependencies = [
 [[package]]
 name = "console-subscriber"
 version = "0.1.0"
-source = "git+https://github.com/tokio-rs/console.git?branch=main#042c1f78447839bed54538ed89b9277e437ed6b4"
+source = "git+https://github.com/tokio-rs/console.git?branch=main#ef4150725476942784f1ad4cacfb21c3bed17c54"
 dependencies = [
  "console-api",
  "futures",
@@ -3448,11 +3447,10 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.14.0"
+version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70e992e41e0d2fb9f755b37446f20900f64446ef54874f40a60c78f021ac6144"
+checksum = "fbbf1c778ec206785635ce8ad57fe52b3009ae9e0c9f574a728f3049d3e55838"
 dependencies = [
- "autocfg",
  "bytes",
  "libc",
  "memchr",
@@ -3478,9 +3476,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-macros"
-version = "1.6.0"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9efc1aba077437943f7515666aa2b882dfabfbfdf89c819ea75a8d6e9eaba5e"
+checksum = "b557f72f448c511a979e2564e55d74e6c4432fc96ff4f6241bc6bded342643b7"
 dependencies = [
  "proc-macro2",
  "quote",

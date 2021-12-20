@@ -16,7 +16,7 @@ use crate::{
 use crate::plugins::Dashboard;
 
 use bee_autopeering::{
-    peerstore::{SledPeerStore, SledPeerStoreConfig},
+    stores::{SledPeerStore, SledPeerStoreConfig},
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
@@ -363,12 +363,10 @@ fn create_local_autopeering_entity<S: NodeStorageBackend>(
     keypair: Keypair,
     config: &FullNodeConfig<S>,
 ) -> bee_autopeering::Local {
-    let local = bee_autopeering::Local::from_keypair(keypair);
-
-    let mut write = local.write();
+    let local = bee_autopeering::Local::from_keypair(keypair).expect("failed to create local entity");
 
     // Announce the autopeering service.
-    write.add_service(
+    local.add_service(
         AUTOPEERING_SERVICE_NAME,
         ServiceProtocol::Udp,
         config.autopeering_config.bind_addr().port(),
@@ -378,12 +376,10 @@ fn create_local_autopeering_entity<S: NodeStorageBackend>(
     // TODO: Make the bind address a SocketAddr instead of a Multiaddr
     let mut bind_addr = config.gossip_config.bind_multiaddr().clone();
     if let Some(Protocol::Tcp(port)) = bind_addr.pop() {
-        write.add_service(config.network_spec().name(), ServiceProtocol::Tcp, port);
+        local.add_service(config.network_spec().name(), ServiceProtocol::Tcp, port);
     } else {
         panic!("invalid gossip bind address");
     }
-
-    drop(write);
 
     local
 }

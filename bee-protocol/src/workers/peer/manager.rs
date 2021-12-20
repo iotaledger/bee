@@ -194,8 +194,8 @@ where
 }
 
 fn handle_new_peering(peer: bee_autopeering::Peer, network_name: &str, command_tx: &NetworkCommandSender) {
-    if let Some(multiaddr) = peer.get_service_multiaddr(network_name) {
-        let peer_id = peer.peer_id().to_libp2p_peer_id();
+    if let Some(multiaddr) = peer.service_multiaddr(network_name) {
+        let peer_id = peer.peer_id().libp2p_peer_id();
 
         command_tx
             .send(Command::AddPeer {
@@ -209,7 +209,7 @@ fn handle_new_peering(peer: bee_autopeering::Peer, network_name: &str, command_t
 }
 
 fn handle_peering_dropped(peer_id: bee_autopeering::PeerId, command_tx: &NetworkCommandSender) {
-    let peer_id = peer_id.to_libp2p_peer_id();
+    let peer_id = peer_id.libp2p_peer_id();
 
     command_tx
         .send(Command::RemovePeer { peer_id })

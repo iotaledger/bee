@@ -10,7 +10,7 @@ use crate::{
 };
 
 use bee_autopeering::{
-    peerstore::{SledPeerStore, SledPeerStoreConfig},
+    stores::{SledPeerStore, SledPeerStoreConfig},
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 use bee_gossip::Keypair;
@@ -242,18 +242,14 @@ async fn initialize_autopeering(
 
 /// Creates the local entity from a ED25519 keypair and a set of provided services.
 fn create_local_autopeering_entity(keypair: Keypair, config: &EntryNodeConfig) -> bee_autopeering::Local {
-    let local = bee_autopeering::Local::from_keypair(keypair);
-
-    let mut write = local.write();
+    let local = bee_autopeering::Local::from_keypair(keypair).expect("failed to create local entity");
 
     // Announce the autopeering service.
-    write.add_service(
+    local.add_service(
         AUTOPEERING_SERVICE_NAME,
         ServiceProtocol::Udp,
         config.autopeering_config.bind_addr().port(),
     );
-
-    drop(write);
 
     local
 }
