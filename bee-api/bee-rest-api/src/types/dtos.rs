@@ -4,18 +4,19 @@
 use crate::types::error::Error;
 
 use bee_ledger::types::Receipt;
-pub use bee_message::output::feature_block::{
-    DustDepositReturnFeatureBlock, ExpirationMilestoneIndexFeatureBlock, ExpirationUnixFeatureBlock,
-    IndexationFeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock,
-    TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
-};
+
 use bee_message::{
     address::{Address, AliasAddress, Ed25519Address, NftAddress},
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
     output::{
-        feature_block::FeatureBlock, ExtendedOutput, ExtendedOutputBuilder, NativeToken, Output, SimpleOutput, TokenId,
-        TreasuryOutput,
+        feature_block::{
+            DustDepositReturnFeatureBlock, ExpirationMilestoneIndexFeatureBlock, ExpirationUnixFeatureBlock,
+            FeatureBlock, IndexationFeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock,
+            TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
+        },
+        AliasId, AliasOutput, AliasOutputBuilder, ExtendedOutput, ExtendedOutputBuilder, NativeToken, Output,
+        SimpleOutput, TokenId, TreasuryOutput,
     },
     parent::Parents,
     payload::{
@@ -34,6 +35,7 @@ use bee_message::{
 #[cfg(feature = "peer")]
 use bee_protocol::types::peer::Peer;
 
+use primitive_types::U256;
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
@@ -318,6 +320,7 @@ pub enum OutputDto {
     Simple(SimpleOutputDto),
     Treasury(TreasuryOutputDto),
     Extended(ExtendedOutputDto),
+    Alias(AliasOutputDto),
 }
 
 impl From<&Output> for OutputDto {
@@ -353,6 +356,7 @@ impl TryFrom<&OutputDto> for Output {
             OutputDto::Simple(s) => Ok(Output::Simple(SimpleOutput::new((&s.address).try_into()?, s.amount)?)),
             OutputDto::Treasury(t) => Ok(Output::Treasury(TreasuryOutput::new(t.amount)?)),
             OutputDto::Extended(e) => Ok(Output::Extended(e.try_into()?)),
+            OutputDto::Alias(a) => Ok(Output::Alias(a.try_into()?)),
         }
     }
 }
@@ -378,6 +382,10 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
                     ExtendedOutputDto::deserialize(value)
                         .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
                 ),
+                AliasOutput::KIND => OutputDto::Alias(
+                    AliasOutputDto::deserialize(value)
+                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
+                ),
                 _ => unimplemented!(),
             },
         )
@@ -395,6 +403,7 @@ impl Serialize for OutputDto {
             T1(&'a SimpleOutputDto),
             T2(&'a TreasuryOutputDto),
             T3(&'a ExtendedOutputDto),
+            T4(&'a AliasOutputDto),
         }
         #[derive(Serialize)]
         struct TypedOutput<'a> {
@@ -410,6 +419,9 @@ impl Serialize for OutputDto {
             },
             OutputDto::Extended(o) => TypedOutput {
                 output: OutputDto_::T3(o),
+            },
+            OutputDto::Alias(o) => TypedOutput {
+                output: OutputDto_::T4(o),
             },
         };
         output.serialize(serializer)
@@ -680,7 +692,7 @@ impl TryFrom<&ExtendedOutputDto> for ExtendedOutput {
 }
 
 /// Describes a native token.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NativeTokenDto {
     // Identifier of the native token.
     pub token_id: TokenIdDto,
@@ -701,12 +713,19 @@ impl TryFrom<&NativeTokenDto> for NativeToken {
     type Error = Error;
 
     fn try_from(value: &NativeTokenDto) -> Result<Self, Self::Error> {
-        value.try_into()
+        Ok(Self::new(
+            (&value.token_id).try_into()?,
+            value
+                .amount
+                .0
+                .parse::<U256>()
+                .map_err(|_| Error::InvalidSyntaxField("amount"))?,
+        ))
     }
 }
 
 /// Describes a token id.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TokenIdDto(pub String);
 
 impl From<&TokenId> for TokenIdDto {
@@ -831,6 +850,91 @@ impl TryFrom<&FeatureBlockDto> for FeatureBlock {
                 &hex::decode(&v.0).map_err(|_e| Error::InvalidSemanticField("MetadataFeatureBlock"))?,
             )?),
         })
+    }
+}
+
+/// Describes an alias account in the ledger that can be controlled by the state and governance controllers.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AliasOutputDto {
+    // Amount of IOTA tokens held by the output.
+    pub amount: u64,
+    // Native tokens held by the output.
+    pub native_tokens: Vec<NativeTokenDto>,
+    // Unique identifier of the alias.
+    pub alias_id: AliasIdDto,
+    //
+    pub state_controller: AddressDto,
+    //
+    pub governance_controller: AddressDto,
+    // A counter that must increase by 1 every time the alias is state transitioned.
+    pub state_index: u32,
+    // Metadata that can only be changed by the state controller.
+    pub state_metadata: String,
+    // A counter that denotes the number of foundries created by this alias account.
+    pub foundry_counter: u32,
+    //
+    pub feature_blocks: Vec<FeatureBlockDto>,
+}
+
+impl From<&AliasOutput> for AliasOutputDto {
+    fn from(value: &AliasOutput) -> Self {
+        Self {
+            amount: value.amount(),
+            native_tokens: value.native_tokens().iter().map(|x| x.into()).collect::<_>(),
+            alias_id: AliasIdDto(value.alias_id().to_string()),
+            state_controller: value.state_controller().into(),
+            governance_controller: value.governance_controller().into(),
+            state_index: value.state_index(),
+            state_metadata: hex::encode(value.state_metadata()),
+            foundry_counter: value.foundry_counter(),
+            feature_blocks: value.feature_blocks().iter().map(|x| x.into()).collect::<_>(),
+        }
+    }
+}
+
+impl TryFrom<&AliasOutputDto> for AliasOutput {
+    type Error = Error;
+
+    fn try_from(value: &AliasOutputDto) -> Result<Self, Self::Error> {
+        let mut builder = AliasOutputBuilder::new(
+            value.amount,
+            (&value.alias_id).try_into()?,
+            (&value.state_controller).try_into()?,
+            (&value.governance_controller).try_into()?,
+        )?;
+        builder = builder.with_state_index(value.state_index);
+        builder = builder.with_state_metadata(
+            hex::decode(&value.state_metadata).map_err(|_| Error::InvalidSyntaxField("state_metadata"))?,
+        );
+        builder = builder.with_foundry_counter(value.foundry_counter);
+
+        for t in &value.native_tokens {
+            builder = builder.add_native_token(t.try_into()?);
+        }
+        for b in &value.feature_blocks {
+            builder = builder.add_feature_block(b.try_into()?);
+        }
+        Ok(builder.finish()?)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AliasIdDto(pub String);
+
+impl From<&AliasId> for AliasIdDto {
+    fn from(value: &AliasId) -> Self {
+        Self(value.to_string())
+    }
+}
+
+impl TryFrom<&AliasIdDto> for AliasId {
+    type Error = Error;
+
+    fn try_from(value: &AliasIdDto) -> Result<Self, Self::Error> {
+        value
+            .0
+            .parse::<AliasId>()
+            .map_err(|_| Error::InvalidSemanticField("alias id"))
     }
 }
 
