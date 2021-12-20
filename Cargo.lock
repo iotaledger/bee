@@ -146,7 +146,6 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "base64 0.13.0",
- "bee-runtime",
  "bincode",
  "bs58",
  "bytes",
@@ -168,7 +167,6 @@ dependencies = [
  "serde_json",
  "sled",
  "thiserror",
- "time 0.3.5",
  "tokio",
  "tokio-stream",
  "toml",
@@ -290,7 +288,6 @@ dependencies = [
 name = "bee-protocol"
 version = "0.1.1"
 dependencies = [
- "bee-autopeering",
  "bee-gossip",
  "bee-message",
 ]
