@@ -12,7 +12,7 @@ pub(crate) struct ManualDelayFactory(AtomicU64);
 
 impl ManualDelayFactory {
     /// Creates a new `ManualDelayFactory` from an initial delay.
-    pub(crate) const fn new(initial_delay: Duration) -> Self {
+    pub(crate) const fn new(initial_delay: Delay) -> Self {
         Self(AtomicU64::new(delay_to_millis(initial_delay)))
     }
 

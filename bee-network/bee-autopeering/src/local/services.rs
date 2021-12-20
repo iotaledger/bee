@@ -17,16 +17,17 @@ pub const AUTOPEERING_SERVICE_NAME: &str = "peering";
 
 /// A mapping between a service name and its endpoint data.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
-pub struct ServiceMap(HashMap<ServiceName, Service>);
+pub struct ServiceMap(HashMap<ServiceName, ServiceEndpoint>);
 
 impl ServiceMap {
     /// Registers a service with its bind address.
     pub(crate) fn insert(&mut self, service_name: impl ToString, protocol: ServiceProtocol, port: ServicePort) {
-        self.0.insert(service_name.to_string(), Service { protocol, port });
+        self.0
+            .insert(service_name.to_string(), ServiceEndpoint { protocol, port });
     }
 
-    /// Returns the connection data associated with the given service.
-    pub fn get(&self, service_name: impl AsRef<str>) -> Option<Service> {
+    /// Returns the connection data associated with the given service name.
+    pub fn get(&self, service_name: impl AsRef<str>) -> Option<ServiceEndpoint> {
         self.0.get(service_name.as_ref()).copied()
     }
 
@@ -36,54 +37,59 @@ impl ServiceMap {
     }
 }
 
-// TODO: make this TryFrom
-impl From<proto::ServiceMap> for ServiceMap {
-    fn from(services: proto::ServiceMap) -> Self {
+impl TryFrom<proto::ServiceMap> for ServiceMap {
+    type Error = Error;
+
+    fn try_from(services: proto::ServiceMap) -> Result<Self, Self::Error> {
         let proto::ServiceMap { map } = services;
 
         let mut services = HashMap::with_capacity(map.len());
 
         for (service_name, proto::NetworkAddress { network, port }) in map {
-            let protocol: ServiceProtocol = network.parse().expect("error parsing transport protocol");
+            let protocol: ServiceProtocol = network.parse().map_err(|_| Error::ServiceProtocol)?;
+
+            if port > u16::MAX as u32 {
+                return Err(Error::PortNumber);
+            }
             let port = port as u16;
 
-            services.insert(service_name, Service { protocol, port });
+            services.insert(service_name, ServiceEndpoint { protocol, port });
         }
 
-        Self(services)
+        Ok(Self(services))
     }
 }
 
-impl From<ServiceMap> for proto::ServiceMap {
-    fn from(services: ServiceMap) -> Self {
+impl From<&ServiceMap> for proto::ServiceMap {
+    fn from(services: &ServiceMap) -> Self {
         let ServiceMap(map) = services;
 
         let mut services = HashMap::with_capacity(map.len());
 
-        for (service_name, Service { protocol, port }) in map {
+        for (service_name, ServiceEndpoint { protocol, port }) in map {
             let network_addr = proto::NetworkAddress {
                 network: protocol.to_string(),
-                port: port as u32,
+                port: *port as u32,
             };
 
-            services.insert(service_name, network_addr);
+            services.insert(service_name.to_owned(), network_addr);
         }
 
         Self { map: services }
     }
 }
 
+// Example: "peering/udp/14626;gossip/tcp/14625"
 impl fmt::Display for ServiceMap {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}",
-            // Example: "peering/udp/14626;gossip/tcp/14625"
             self.0
                 .iter()
                 .map(|(service_name, service)| format!("{}/{}/{}", service_name, service.protocol, service.port))
-                .collect::<Vec<_>>()
-                .join(";")
+                .reduce(|acc, service_spec| acc + ";" + &service_spec)
+                .unwrap_or_default()
         )
     }
 }
@@ -91,12 +97,12 @@ impl fmt::Display for ServiceMap {
 // TODO: consider reducing this into an enum that holds the port number.
 /// Represents a service provided by a peer.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub struct Service {
+pub struct ServiceEndpoint {
     protocol: ServiceProtocol,
     port: ServicePort,
 }
 
-impl Service {
+impl ServiceEndpoint {
     /// The transport protocol used to access the service, e.g. TCP or UDP.
     pub fn protocol(&self) -> ServiceProtocol {
         self.protocol
@@ -150,6 +156,14 @@ impl FromStr for ServiceProtocol {
     }
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("parsing service protocol failed")]
+    ServiceProtocol,
+    #[error("invalid port number")]
+    PortNumber,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -174,7 +188,7 @@ mod tests {
         );
         let proto_services = proto::ServiceMap { map };
 
-        let services: ServiceMap = proto_services.into();
+        let services: &ServiceMap = &proto_services.try_into().unwrap();
         let _: proto::ServiceMap = services.into();
     }
 }

@@ -27,7 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Handling of discovered peers;
 
 ### Changed
-- Renamed crate to `bee-gossip` and moved into `bee-network` parent directory;
+
+- Renamed crate to `bee-gossip` and moved it into `bee-network` parent directory;
 
 ## 0.2.2 - 2021-08-26
 

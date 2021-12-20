@@ -5,7 +5,7 @@ use crate::{
     discovery::manager,
     event::EventTx,
     peer::{
-        lists::{ActivePeer, ActivePeersList, MasterPeersList, ReplacementList},
+        lists::{ActivePeer, ActivePeersList, EntryPeersList, ReplacementPeersList},
         PeerId,
     },
     request::RequestManager,
@@ -18,15 +18,15 @@ use rand::{thread_rng, Rng};
 #[derive(Clone)]
 pub(crate) struct QueryContext {
     pub(crate) request_mngr: RequestManager,
-    pub(crate) master_peers: MasterPeersList,
+    pub(crate) entry_peers: EntryPeersList,
     pub(crate) active_peers: ActivePeersList,
-    pub(crate) replacements: ReplacementList,
+    pub(crate) replacements: ReplacementPeersList,
     pub(crate) server_tx: ServerTx,
     pub(crate) event_tx: EventTx,
 }
 
 // Hive.go: pings the oldest active peer.
-pub(crate) fn do_reverify() -> Repeat<QueryContext> {
+pub(crate) fn reverify_fn() -> Repeat<QueryContext> {
     Box::new(|ctx| {
         // Determine the next peer to re/verifiy.
         if let Some(peer_id) = peer_to_reverify(&ctx.active_peers) {
@@ -50,7 +50,7 @@ pub(crate) fn do_reverify() -> Repeat<QueryContext> {
 
                     manager::remove_peer_from_active_list(
                         &peer_id,
-                        &ctx_.master_peers,
+                        &ctx_.entry_peers,
                         &ctx_.active_peers,
                         &ctx_.replacements,
                         &ctx_.event_tx,
@@ -71,7 +71,7 @@ fn peer_to_reverify(active_peers: &ActivePeersList) -> Option<PeerId> {
 // Hive.go:
 // The current strategy is to always select the latest verified peer and one of
 // the peers that returned the most number of peers the last time it was queried.
-pub(crate) fn do_query() -> Repeat<QueryContext> {
+pub(crate) fn query_fn() -> Repeat<QueryContext> {
     Box::new(|ctx| {
         let peers = select_peers_to_query(&ctx.active_peers);
         if peers.is_empty() {
@@ -94,7 +94,7 @@ pub(crate) fn do_query() -> Repeat<QueryContext> {
 
                         manager::remove_peer_from_active_list(
                             &peer_id,
-                            &ctx_.master_peers,
+                            &ctx_.entry_peers,
                             &ctx_.active_peers,
                             &ctx_.replacements,
                             &ctx_.event_tx,
@@ -122,14 +122,8 @@ fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
             };
         }
 
-        fn len<T>(o: &(Option<T>, Option<T>, Option<T>)) -> usize {
-            let a = if o.0.is_some() { 1 } else { 0 };
-            let b = if o.1.is_some() { 1 } else { 0 };
-            let c = if o.2.is_some() { 1 } else { 0 };
-            a + b + c
-        }
-
         let latest = *verif_peers.remove(0).peer_id();
+        let len = verif_peers.len().min(3);
 
         // Note: This loop finds the three "heaviest" peers with one iteration over an unsorted vec of verified peers.
         let heaviest3 = verif_peers.into_iter().fold(
@@ -162,7 +156,7 @@ fn select_peers_to_query(active_peers: &ActivePeersList) -> Vec<PeerId> {
             },
         );
 
-        let r = thread_rng().gen_range(0..len(&heaviest3));
+        let r = thread_rng().gen_range(0..len);
         let heaviest = *match r {
             0 => heaviest3.0,
             1 => heaviest3.1,

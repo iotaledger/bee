@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Peer identities.
+//! A module for creating peer identities.
 
 use crate::hash;
 
@@ -22,14 +22,10 @@ const DISPLAY_LENGTH: usize = 16;
 /// Represents the unique identity of a peer in the network.
 #[derive(Copy, Clone)]
 pub struct PeerId {
-    // An ED25519 public key.
+    // The wrapped ED25519 public key actually representing the ID.
     public_key: PublicKey,
-    // The SHA256 hash of the ED25519 public key.
+    // The corresponding SHA256 hash of the ED25519 public key.
     id_bytes: [u8; hash::SHA256_LEN],
-    // The corresponding `libp2p` PeerId.
-    libp2p_peer_id: libp2p_core::PeerId,
-    // The displayed Base58 representation.
-    base58_peer_id: [char; DISPLAY_LENGTH],
 }
 
 impl PeerId {
@@ -42,23 +38,9 @@ impl PeerId {
 
     /// Creates a peer identity from an ED25519 public key.
     pub fn from_public_key(public_key: PublicKey) -> Self {
-        let id_bytes = hash::sha256(public_key.as_ref());
-        let libp2p_peer_id = to_libp2p_peer_id(public_key);
+        let id_bytes = hash::data_hash(public_key.as_ref());
 
-        let mut base58_peer_id: [char; DISPLAY_LENGTH] = Default::default();
-        base58_peer_id.copy_from_slice(
-            libp2p_peer_id.to_base58()[..DISPLAY_LENGTH]
-                .chars()
-                .collect::<Vec<_>>()
-                .as_slice(),
-        );
-
-        Self {
-            id_bytes,
-            public_key,
-            libp2p_peer_id,
-            base58_peer_id,
-        }
+        Self { id_bytes, public_key }
     }
 
     /// Returns the public key associated with this identity.
@@ -71,19 +53,19 @@ impl PeerId {
         &self.id_bytes
     }
 
-    /// Turns this `PeerId` into a `libp2p_core::PeerId`.
-    pub fn into_libp2p_peer_id(self) -> libp2p_core::PeerId {
-        self.libp2p_peer_id
+    /// Creates the corresponding `libp2p::PeerId`.
+    pub fn libp2p_peer_id(&self) -> libp2p_core::PeerId {
+        libp2p_peer_id(self.public_key())
     }
 }
 
 /// Creates the corresponding `libp2p_core::PeerId` from a crypto.rs ED25519 public key.
-pub fn to_libp2p_peer_id(public_key: PublicKey) -> libp2p_core::PeerId {
-    libp2p_core::PeerId::from_public_key(to_libp2p_public_key(public_key))
+pub fn libp2p_peer_id(public_key: &PublicKey) -> libp2p_core::PeerId {
+    libp2p_core::PeerId::from_public_key(libp2p_public_key(public_key))
 }
 
 /// Creates the corresponding `libp2p_core::PublicKey` from a crypto.rs ED25519 public key.
-pub fn to_libp2p_public_key(public_key: PublicKey) -> libp2p_core::PublicKey {
+pub fn libp2p_public_key(public_key: &PublicKey) -> libp2p_core::PublicKey {
     libp2p_core::PublicKey::Ed25519(
         libp2p_core::identity::ed25519::PublicKey::decode(public_key.as_ref())
             .expect("error decoding ed25519 public key from bytes"),
@@ -115,7 +97,7 @@ impl fmt::Debug for PeerId {
 
 impl fmt::Display for PeerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.base58_peer_id.iter().collect::<String>().fmt(f)
+        self.libp2p_peer_id().to_base58()[..DISPLAY_LENGTH].fmt(f)
     }
 }
 
@@ -131,18 +113,16 @@ impl AsRef<[u8]> for PeerId {
     }
 }
 
-impl From<PeerId> for sled::IVec {
-    fn from(peer: PeerId) -> Self {
-        let bytes = peer.public_key.to_bytes();
+impl From<&PeerId> for sled::IVec {
+    fn from(peer: &PeerId) -> Self {
+        let bytes = peer.public_key().to_bytes();
         sled::IVec::from_iter(bytes.into_iter())
     }
 }
 
-impl From<PeerId> for libp2p_core::PeerId {
-    fn from(peer_id: PeerId) -> Self {
-        let PeerId { public_key, .. } = peer_id;
-
-        to_libp2p_peer_id(public_key)
+impl From<&PeerId> for libp2p_core::PeerId {
+    fn from(peer_id: &PeerId) -> Self {
+        libp2p_peer_id(peer_id.public_key())
     }
 }
 
@@ -192,20 +172,20 @@ impl<'de> Visitor<'de> for PeerIdVisitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::multiaddr::from_base58_to_pubkey;
+    use crate::multiaddr::base58_to_pubkey;
 
     impl PeerId {
         /// Creates a static peer id.
         pub(crate) fn new_static() -> Self {
             let base58_pubkey = "4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM";
-            let pubkey = from_base58_to_pubkey(base58_pubkey);
+            let pubkey = base58_to_pubkey(base58_pubkey).unwrap();
             Self::from_public_key(pubkey)
         }
 
         /// Creates a deterministic peer id from a generator char.
         pub fn new_deterministic(gen: char) -> Self {
             let base58_pubkey = std::iter::repeat(gen).take(44).collect::<String>();
-            let pubkey = from_base58_to_pubkey(base58_pubkey);
+            let pubkey = base58_to_pubkey(base58_pubkey).unwrap();
             Self::from_public_key(pubkey)
         }
     }
@@ -213,6 +193,6 @@ mod tests {
     #[test]
     fn into_libp2p_peer_id() {
         let peer_id = PeerId::new_static();
-        let _ = peer_id.into_libp2p_peer_id();
+        let _ = peer_id.libp2p_peer_id();
     }
 }

@@ -9,12 +9,13 @@ use super::{
 
 use crate::{
     event::{Event, EventTx},
+    hash::message_hash,
     local::{
         salt::{self, Salt, SALT_LIFETIME_SECS},
         services::AUTOPEERING_SERVICE_NAME,
         Local,
     },
-    packet::{msg_hash, IncomingPacket, MessageType, OutgoingPacket},
+    packet::{IncomingPacket, MessageType, OutgoingPacket},
     peer::{self, lists::ActivePeersList, peer_id::PeerId, Peer},
     peering::neighbor::{salt_distance, Neighbor},
     request::{self, RequestManager, RequestValue, ResponseTx, RESPONSE_TIMEOUT},
@@ -28,11 +29,11 @@ use std::{net::SocketAddr, time::Duration};
 
 /// Salt update interval.
 pub(crate) const SALT_UPDATE_SECS: Duration = Duration::from_secs(SALT_LIFETIME_SECS.as_secs() - SECOND);
-const INCOMING: bool = true;
-const OUTGOING: bool = false;
+const INBOUND: bool = true;
+const OUTBOUND: bool = false;
 
-pub(crate) type InboundNeighborhood = Neighborhood<SIZE_INBOUND, true>;
-pub(crate) type OutboundNeighborhood = Neighborhood<SIZE_OUTBOUND, false>;
+pub(crate) type InboundNeighborhood = Neighborhood<SIZE_INBOUND, INBOUND>;
+pub(crate) type OutboundNeighborhood = Neighborhood<SIZE_OUTBOUND, OUTBOUND>;
 
 /// Represents the answer of a `PeeringRequest`. Can be either `true` (peering accepted), or `false` (peering denied).
 pub type Status = bool;
@@ -40,7 +41,7 @@ pub type Status = bool;
 pub(crate) struct PeeringManager<V: NeighborValidator> {
     // The local peer.
     local: Local,
-    // Channel halfs for sending/receiving peering related packets.
+    // Channel halves for sending/receiving peering related packets.
     socket: ServerSocket,
     // Handles requests.
     request_mngr: RequestManager,
@@ -110,13 +111,13 @@ impl<V: NeighborValidator> Runnable for PeeringManager<V> {
                 _ = &mut shutdown_rx => {
                     break;
                 }
-                o = server_rx.recv() => {
+                p = server_rx.recv() => {
                     if let Some(IncomingPacket {
                         msg_type,
                         msg_bytes,
                         peer_addr,
                         peer_id,
-                    }) = o
+                    }) = p
                     {
                         let ctx = RecvContext {
                             peer_id: &peer_id,
@@ -243,7 +244,7 @@ fn validate_peering_request(peer_req: &PeeringRequest, ctx: &RecvContext) -> Res
 fn validate_peering_response(peer_res: &PeeringResponse, ctx: &RecvContext) -> Result<RequestValue, ValidationError> {
     use ValidationError::*;
 
-    if let Some(reqv) = ctx.request_mngr.write().pull::<PeeringRequest>(ctx.peer_id) {
+    if let Some(reqv) = ctx.request_mngr.write().remove::<PeeringRequest>(ctx.peer_id) {
         if peer_res.request_hash() != reqv.request_hash {
             Err(IncorrectRequestHash)
         } else {
@@ -269,14 +270,11 @@ fn validate_drop_request(drop_req: &DropPeeringRequest, _: &RecvContext) -> Resu
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn handle_peering_request<V: NeighborValidator>(
-    peer_req: PeeringRequest,
+    _peer_req: PeeringRequest,
     ctx: RecvContext,
     nb_filter: &NeighborFilter<V>,
 ) {
     log::trace!("Handling peering request.");
-
-    // TODO: revisit peer salt
-    let _peer_salt = peer_req.salt();
 
     let mut status = false;
 
@@ -290,20 +288,17 @@ fn handle_peering_request<V: NeighborValidator>(
 
         if nb_filter.ok(&active_peer.peer()) {
             // Calculate the distance between the local peer and the potential neighbor.
-            let distance = neighbor::salt_distance(
-                &ctx.local.peer_id(),
-                active_peer.peer_id(),
-                &ctx.local.private_salt().expect("missing private salt"),
-            );
+            let distance =
+                neighbor::salt_distance(&ctx.local.peer_id(), active_peer.peer_id(), &ctx.local.private_salt());
 
             // Create a new neighbor.
             let neighbor = Neighbor::new(active_peer.into_peer(), distance);
 
             // Check if the neighbor would be closer than the currently furthest in the inbound neighborhood.
             if ctx.inbound_nbh.is_preferred(&neighbor) {
-                let peer = neighbor.peer().clone();
+                let peer = neighbor.into_peer();
 
-                if add_or_replace_neighbor::<INCOMING>(
+                if add_or_replace_neighbor::<INBOUND>(
                     peer.clone(),
                     ctx.local,
                     ctx.inbound_nbh,
@@ -318,7 +313,7 @@ fn handle_peering_request<V: NeighborValidator>(
                     nb_filter.add(*peer.peer_id());
 
                     // Fire `IncomingPeering` event.
-                    publish_peering_event::<INCOMING>(
+                    publish_peering_event::<INBOUND>(
                         peer,
                         status,
                         ctx.local,
@@ -369,7 +364,7 @@ fn handle_peering_response<V: NeighborValidator>(
             status = false;
 
             // Fire `OutgoingPeering` event with status = `false`.
-            publish_peering_event::<OUTGOING>(
+            publish_peering_event::<OUTBOUND>(
                 peer.clone(),
                 status,
                 ctx.local,
@@ -385,7 +380,7 @@ fn handle_peering_response<V: NeighborValidator>(
             nb_filter.add(*peer.peer_id());
 
             // Fire `OutgoingPeering` event with status = `true`.
-            publish_peering_event::<OUTGOING>(peer, status, ctx.local, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
+            publish_peering_event::<OUTBOUND>(peer, status, ctx.local, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
         } else {
             log::debug!("Failed to add neighbor to outbound neighborhood after successful peering request");
         }
@@ -447,19 +442,22 @@ pub(crate) async fn begin_peering(
     send_peering_request_to_peer(peer_id, active_peers, request_mngr, server_tx, Some(response_tx), local);
 
     match tokio::time::timeout(RESPONSE_TIMEOUT, response_rx).await {
-        Ok(Ok(bytes)) => {
-            let peer_res = PeeringResponse::from_protobuf(&bytes).expect("error decoding peering response");
-            Some(peer_res.status())
-        }
+        Ok(Ok(bytes)) => match PeeringResponse::from_protobuf(&bytes).map(|r| r.status()) {
+            Ok(status) => Some(status),
+            Err(e) => {
+                log::debug!("Peering response decode error: {}", e);
+                None
+            }
+        },
         Ok(Err(e)) => {
-            log::debug!("Response signal error: {}", e);
+            log::debug!("Peering response signal error: {}", e);
             None
         }
         Err(e) => {
             log::debug!("Peering response timeout: {}", e);
 
             // The response didn't arrive in time => remove the request.
-            let _ = request_mngr.write().pull::<PeeringRequest>(peer_id);
+            let _ = request_mngr.write().remove::<PeeringRequest>(peer_id);
 
             None
         }
@@ -475,22 +473,18 @@ pub(crate) fn send_peering_request_to_peer(
     response_tx: Option<ResponseTx>,
     local: &Local,
 ) {
-    // TEMP: guard and drop
-    let guard = active_peers.read();
-    if let Some(active_peer) = active_peers.read().find(peer_id) {
-        drop(guard);
+    let peer_addr = active_peers
+        .read()
+        .find(peer_id)
+        .map(|p| {
+            p.peer()
+                .service_socketaddr(AUTOPEERING_SERVICE_NAME)
+                .expect("peer doesn't support autopeering")
+        })
+        // Panic: Requests are sent to listed peers only
+        .expect("peer not in active peers list");
 
-        let peer_port = active_peer
-            .peer()
-            .services()
-            .get(AUTOPEERING_SERVICE_NAME)
-            .expect("peer doesn't support autopeering")
-            .port();
-
-        let peer_addr = SocketAddr::new(active_peer.peer().ip_address(), peer_port);
-
-        send_peering_request_to_addr(peer_addr, peer_id, request_mngr, server_tx, response_tx, local);
-    }
+    send_peering_request_to_addr(peer_addr, peer_id, request_mngr, server_tx, response_tx, local);
 }
 
 /// Sends a peering request to a peer's address.
@@ -506,7 +500,7 @@ pub(crate) fn send_peering_request_to_addr(
 
     let peer_req = request_mngr.write().new_peering_request(*peer_id, response_tx, local);
 
-    let msg_bytes = peer_req.to_protobuf().expect("error encoding peering request").to_vec();
+    let msg_bytes = peer_req.to_protobuf().to_vec();
 
     server_tx
         .send(OutgoingPacket {
@@ -527,14 +521,11 @@ pub(crate) fn send_peering_response_to_addr(
 ) {
     log::trace!("Sending peering response to: {}", peer_id);
 
-    let request_hash = msg_hash(MessageType::PeeringRequest, msg_bytes).to_vec();
+    let request_hash = message_hash(MessageType::PeeringRequest, msg_bytes);
 
     let peer_res = PeeringResponse::new(request_hash, status);
 
-    let msg_bytes = peer_res
-        .to_protobuf()
-        .expect("error encoding peering response")
-        .to_vec();
+    let msg_bytes = peer_res.to_protobuf().to_vec();
 
     tx.send(OutgoingPacket {
         msg_type: MessageType::VerificationResponse,
@@ -552,10 +543,9 @@ pub(crate) fn send_drop_peering_request_to_peer(
     inbound_nbh: &InboundNeighborhood,
     outbound_nbh: &OutboundNeighborhood,
 ) {
-    let peer_port = peer
-        .port(AUTOPEERING_SERVICE_NAME)
-        .expect("missing autopeering service");
-    let peer_addr = SocketAddr::new(peer.ip_address(), peer_port);
+    let peer_addr = peer
+        .service_socketaddr(AUTOPEERING_SERVICE_NAME)
+        .expect("peer doesn't support autopeering");
     let peer_id = peer.into_id();
 
     send_drop_peering_request_to_addr(peer_addr, peer_id, server_tx, event_tx, inbound_nbh, outbound_nbh);
@@ -572,10 +562,7 @@ pub(crate) fn send_drop_peering_request_to_addr(
 ) {
     log::trace!("Sending drop request to: {}", peer_id);
 
-    let msg_bytes = DropPeeringRequest::new()
-        .to_protobuf()
-        .expect("error encoding drop request")
-        .to_vec();
+    let msg_bytes = DropPeeringRequest::new().to_protobuf().to_vec();
 
     server_tx
         .send(OutgoingPacket {
@@ -612,12 +599,13 @@ pub(crate) fn publish_peering_event<const IS_INBOUND: bool>(
 
     let distance = salt_distance(&local.peer_id(), peer.peer_id(), &{
         if IS_INBOUND {
-            local.private_salt().expect("missing private salt")
+            local.private_salt()
         } else {
-            local.public_salt().expect("missing public salt")
+            local.public_salt()
         }
     });
 
+    // Panic: We don't allow channel send failures.
     event_tx
         .send(if IS_INBOUND {
             Event::IncomingPeering { peer, distance }
@@ -640,6 +628,7 @@ fn publish_drop_peering_event(
         inbound_nbh.len(),
     );
 
+    // Panic: We don't allow channel send failures.
     event_tx
         .send(Event::PeeringDropped { peer_id })
         .expect("error sending peering-dropped event");
@@ -680,7 +669,7 @@ impl<V: NeighborValidator> SaltUpdateContext<V> {
 }
 
 // Regularly update the salts of the local peer.
-pub(crate) fn repeat_update_salts<V: NeighborValidator>(
+pub(crate) fn update_salts_fn<V: NeighborValidator>(
     drop_neighbors_on_salt_update: bool,
 ) -> Repeat<SaltUpdateContext<V>> {
     Box::new(move |ctx| {
@@ -759,9 +748,9 @@ pub(crate) fn add_or_replace_neighbor<const IS_INBOUND: bool>(
 ) -> bool {
     // Hive.go: drop furthest neighbor if necessary
     if let Some(peer) = if IS_INBOUND {
-        inbound_nbh.remove_furthest()
+        inbound_nbh.remove_furthest_if_full()
     } else {
-        outbound_nbh.remove_furthest()
+        outbound_nbh.remove_furthest_if_full()
     } {
         send_drop_peering_request_to_peer(peer, server_tx, event_tx, inbound_nbh, outbound_nbh);
     }

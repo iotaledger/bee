@@ -41,14 +41,14 @@ pub(crate) struct UpdateContext<V: NeighborValidator> {
     pub(crate) server_tx: ServerTx,
 }
 
-pub(crate) fn do_update<V: NeighborValidator + 'static>() -> Repeat<UpdateContext<V>> {
+pub(crate) fn update_outbound_neighborhood_fn<V: NeighborValidator + 'static>() -> Repeat<UpdateContext<V>> {
     Box::new(|ctx| update_outbound(ctx))
 }
 
 // Hive.go: updateOutbound updates outbound neighbors.
 fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
     let local_id = ctx.local.peer_id();
-    let local_salt = ctx.local.public_salt().expect("missing public salt");
+    let local_salt = ctx.local.public_salt();
 
     // TODO: write `get_verified_peers_sorted` which collects verified peers into a BTreeSet
     let verif_peers = get_verified_peers(&ctx.active_peers)
@@ -109,9 +109,9 @@ fn set_outbound_update_interval(outbound_nbh: &OutboundNeighborhood, local: &Loc
         delay = FULL_OUTBOUND_NBH_UPDATE_SECS
     };
 
-    let salt_expiration = Duration::from_secs(
-        time::until(local.public_salt().expect("missing public salt").expiration_time()).expect("time until error"),
-    );
+    // Panic: We don't allow invalid salts.
+    let salt_expiration =
+        Duration::from_secs(time::until(local.public_salt().expiration_time()).expect("time until error"));
 
     if salt_expiration < delay {
         delay = salt_expiration;

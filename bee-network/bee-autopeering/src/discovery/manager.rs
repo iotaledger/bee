@@ -5,15 +5,16 @@ use crate::{
     config::AutopeeringConfig,
     discovery::messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
     event::{Event, EventTx},
+    hash::message_hash,
     local::{
         services::{ServiceMap, ServicePort, ServiceProtocol, AUTOPEERING_SERVICE_NAME},
         Local,
     },
     multiaddr::{AddressKind, AutopeeringMultiaddr},
-    packet::{msg_hash, IncomingPacket, MessageType, OutgoingPacket},
+    packet::{IncomingPacket, MessageType, OutgoingPacket},
     peer::{
         self,
-        lists::{ActivePeer, ActivePeersList, MasterPeersList, ReplacementList},
+        lists::{ActivePeer, ActivePeersList, EntryPeersList, ReplacementPeersList},
         peer_id::PeerId,
         stores::PeerStore,
         Peer,
@@ -21,19 +22,19 @@ use crate::{
     request::{self, RequestManager, RequestValue, ResponseTx, RESPONSE_TIMEOUT},
     server::{ServerRx, ServerSocket, ServerTx},
     task::{Runnable, ShutdownRx, TaskManager},
-    time::{self, SECOND},
+    time::{HOUR, SECOND},
 };
 
 use rand::{seq::index, Rng as _};
 
-use std::net::SocketAddr;
+use std::{net::SocketAddr, time::Duration};
 
 // Time interval after which the next peer is reverified.
-pub(crate) const DEFAULT_REVERIFY_INTERVAL_SECS: u64 = 10 * SECOND;
+pub(crate) const DEFAULT_REVERIFY_INTERVAL: Duration = Duration::from_secs(10 * SECOND);
 // Time interval after which peers are queried for new peers.
-pub(crate) const DEFAULT_QUERY_INTERVAL_SECS: u64 = 60 * SECOND;
+pub(crate) const DEFAULT_QUERY_INTERVAL: Duration = Duration::from_secs(60 * SECOND);
 // Is the time until a peer verification expires (12 hours).
-pub(crate) const VERIFICATION_EXPIRATION_SECS: u64 = 12 * time::HOUR;
+pub(crate) const VERIFICATION_EXPIRATION: Duration = Duration::from_secs(12 * HOUR);
 // Is the maximum number of peers returned in DiscoveryResponse.
 const MAX_PEERS_IN_RESPONSE: usize = 6;
 // Is the minimum number of verifications required to be selected in DiscoveryResponse.
@@ -63,20 +64,20 @@ pub(crate) struct DiscoveryManager<S: PeerStore> {
     config: DiscoveryManagerConfig,
     // The local id to sign outgoing packets.
     local: Local,
-    // Channel halfs for sending/receiving discovery related packets.
+    // Channel halves for sending/receiving discovery related packets.
     socket: ServerSocket,
-    // Handles requests.
+    // Handles incoming and outgoing requests.
     request_mngr: RequestManager,
     // Publishes discovery related events.
     event_tx: EventTx,
     // The storage for discovered peers.
-    peerstore: S,
-    // The list of master peers.
-    master_peers: MasterPeersList,
+    peer_store: S,
+    // The list of entry peers.
+    entry_peers: EntryPeersList,
     // The list of managed peers.
     active_peers: ActivePeersList,
     // The list of replacement peers.
-    replacements: ReplacementList,
+    replacements: ReplacementPeersList,
 }
 
 impl<S: PeerStore + 'static> DiscoveryManager<S> {
@@ -86,10 +87,10 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
         local: Local,
         socket: ServerSocket,
         request_mngr: RequestManager,
-        peerstore: S,
-        master_peers: MasterPeersList,
+        peer_store: S,
+        entry_peers: EntryPeersList,
         active_peers: ActivePeersList,
-        replacements: ReplacementList,
+        replacements: ReplacementPeersList,
         event_tx: EventTx,
     ) -> Self {
         Self {
@@ -98,8 +99,8 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
             socket,
             request_mngr,
             event_tx,
-            peerstore,
-            master_peers,
+            peer_store,
+            entry_peers,
             active_peers,
             replacements,
         }
@@ -112,8 +113,8 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
             socket,
             request_mngr,
             event_tx,
-            peerstore,
-            master_peers,
+            peer_store,
+            entry_peers,
             active_peers,
             replacements,
         } = self;
@@ -128,14 +129,14 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
         let ServerSocket { server_rx, server_tx } = socket;
 
         // Add previously discovered peers from the peer store.
-        add_peers_from_store(&peerstore, &active_peers, &replacements);
+        add_peers_from_store(&peer_store, &active_peers, &replacements);
 
-        // Add master peers from the config.
-        add_master_peers(
+        // Add entry peers from the config.
+        add_entry_peers(
             &mut entry_nodes,
             entry_nodes_prefer_ipv6,
             &local,
-            &master_peers,
+            &entry_peers,
             &active_peers,
             &replacements,
         )
@@ -166,7 +167,7 @@ struct DiscoveryRecvHandler {
     request_mngr: RequestManager,
     event_tx: EventTx,
     active_peers: ActivePeersList,
-    replacements: ReplacementList,
+    replacements: ReplacementPeersList,
 }
 
 #[async_trait::async_trait]
@@ -195,13 +196,13 @@ impl Runnable for DiscoveryRecvHandler {
                 _ = &mut shutdown_rx => {
                     break;
                 }
-                o = server_rx.recv() => {
+                p = server_rx.recv() => {
                     if let Some(IncomingPacket {
                         msg_type,
                         msg_bytes,
                         peer_addr,
                         peer_id,
-                    }) = o
+                    }) = p
                     {
                         let ctx = RecvContext {
                             peer_id: &peer_id,
@@ -299,46 +300,53 @@ impl Runnable for DiscoveryRecvHandler {
     }
 }
 
-fn add_peers_from_store<S: PeerStore>(peerstore: &S, active_peers: &ActivePeersList, replacements: &ReplacementList) {
+fn add_peers_from_store<S: PeerStore>(
+    peer_store: &S,
+    active_peers: &ActivePeersList,
+    replacements: &ReplacementPeersList,
+) {
     let mut num_added = 0;
 
     let mut write = active_peers.write();
-    for active_peer in peerstore.fetch_all_active() {
-        write.insert(active_peer);
-        num_added += 1;
+    for active_peer in peer_store.fetch_all_active() {
+        if write.insert(active_peer) {
+            num_added += 1;
+        }
     }
     drop(write);
+
     let mut write = replacements.write();
-    for replacement in peerstore.fetch_all_replacements() {
-        write.insert(replacement);
-        num_added += 1;
+    for replacement in peer_store.fetch_all_replacements() {
+        if write.insert(replacement) {
+            num_added += 1;
+        }
     }
     drop(write);
 
     log::debug!("Restored {} peer/s.", num_added);
 }
 
-async fn add_master_peers(
+async fn add_entry_peers(
     entry_nodes: &mut Vec<AutopeeringMultiaddr>,
     entry_nodes_prefer_ipv6: bool,
     local: &Local,
-    master_peers: &MasterPeersList,
+    entry_peers: &EntryPeersList,
     active_peers: &ActivePeersList,
-    replacements: &ReplacementList,
+    replacements: &ReplacementPeersList,
 ) {
     let mut num_added = 0;
 
     for entry_addr in entry_nodes {
         let entry_socketaddr = match entry_addr.address_kind() {
             AddressKind::Ip4 | AddressKind::Ip6 => {
-                // Unwrap: for those address kinds the returned option is always `Some`.
+                // Panic: for those address kinds the returned option is always `Some`.
                 entry_addr.socket_addr().unwrap()
             }
             AddressKind::Dns => {
                 if entry_addr.resolve_dns().await {
                     let entry_socketaddrs = entry_addr.resolved_addrs();
-                    let has_ip4 = entry_socketaddrs.iter().position(|s| s.is_ipv4());
-                    let has_ip6 = entry_socketaddrs.iter().position(|s| s.is_ipv6());
+                    let has_ip4 = entry_socketaddrs.iter().position(SocketAddr::is_ipv4);
+                    let has_ip6 = entry_socketaddrs.iter().position(SocketAddr::is_ipv6);
 
                     match (has_ip4, has_ip6) {
                         // Only IP4 or only IP6
@@ -364,7 +372,7 @@ async fn add_master_peers(
         let mut peer = Peer::new(entry_socketaddr.ip(), *entry_addr.public_key());
         peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, entry_socketaddr.port());
 
-        master_peers.write().insert(*peer.peer_id());
+        entry_peers.write().insert(*peer.peer_id());
 
         // Also add it as a regular peer.
         if let Some(peer_id) = add_peer::<false>(peer, local, active_peers, replacements) {
@@ -382,7 +390,7 @@ pub(crate) fn add_peer<const ON_REQUEST: bool>(
     peer: Peer,
     local: &Local,
     active_peers: &ActivePeersList,
-    replacements: &ReplacementList,
+    replacements: &ReplacementPeersList,
 ) -> Option<PeerId> {
     // Only add new peers.
     if peer::is_known(peer.peer_id(), local, active_peers, replacements) {
@@ -412,20 +420,20 @@ pub(crate) fn add_peer<const ON_REQUEST: bool>(
 }
 
 // Note: this function is dead-lock danger zone!
-/// Deletes a peer from the active peerlist if it's not a master peer, and replaces it by a peer
+/// Deletes a peer from the active peerlist if it's not an entry peer, and replaces it by a peer
 /// from the replacement list.
 pub(crate) fn remove_peer_from_active_list(
     peer_id: &PeerId,
-    master_peers: &MasterPeersList,
+    entry_peers: &EntryPeersList,
     active_peers: &ActivePeersList,
-    replacements: &ReplacementList,
+    replacements: &ReplacementPeersList,
     event_tx: &EventTx,
 ) {
     let mut active_peers = active_peers.write();
 
     if let Some(mut removed_peer) = active_peers.remove(peer_id) {
-        // hive.go: master peers are never removed
-        if master_peers.read().contains(removed_peer.peer_id()) {
+        // entry peers are never removed
+        if entry_peers.read().contains(removed_peer.peer_id()) {
             // hive.go: reset verifiedCount and re-add them
             removed_peer.metrics_mut().reset_verified_count();
             active_peers.insert(removed_peer);
@@ -437,6 +445,7 @@ pub(crate) fn remove_peer_from_active_list(
             // }
             // ```
             if removed_peer.metrics().verified_count() > 0 {
+                // Panic: we don't allow channel send errors.
                 event_tx
                     .send(Event::PeerDeleted { peer_id: *peer_id })
                     .expect("error sending `PeerDeleted` event");
@@ -471,7 +480,7 @@ pub(crate) struct RecvContext<'a> {
     peer_addr: SocketAddr,
     event_tx: &'a EventTx,
     active_peers: &'a ActivePeersList,
-    replacements: &'a ReplacementList,
+    replacements: &'a ReplacementPeersList,
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -542,7 +551,7 @@ fn validate_verification_response(
 ) -> Result<RequestValue, ValidationError> {
     use ValidationError::*;
 
-    if let Some(reqv) = request_mngr.write().pull::<VerificationRequest>(peer_id) {
+    if let Some(reqv) = request_mngr.write().remove::<VerificationRequest>(peer_id) {
         if verif_res.request_hash() == reqv.request_hash {
             let res_services = verif_res.services();
             if let Some(autopeering_svc) = res_services.get(AUTOPEERING_SERVICE_NAME) {
@@ -582,7 +591,7 @@ fn validate_discovery_response(
 ) -> Result<RequestValue, ValidationError> {
     use ValidationError::*;
 
-    if let Some(reqv) = request_mngr.write().pull::<DiscoveryRequest>(peer_id) {
+    if let Some(reqv) = request_mngr.write().remove::<DiscoveryRequest>(peer_id) {
         if disc_res.request_hash() == &reqv.request_hash[..] {
             // TODO: consider performing some checks on the peers we received, for example:
             // * does the peer have necessary services (autopeering, gossip, fpc, ...)
@@ -661,30 +670,24 @@ fn handle_verification_response(verif_res: VerificationResponse, verif_reqval: R
 
     // Send the response notification.
     if let Some(tx) = verif_reqval.response_tx {
-        tx.send(
-            verif_res
-                .to_protobuf()
-                .expect("error encoding discovery response")
-                .to_vec(),
-        )
-        .expect("error sending response signal");
+        // Panic: we don't allow channel send errors.
+        tx.send(verif_res.to_protobuf().to_vec())
+            .expect("error sending response signal");
     }
 }
 
 fn handle_discovery_request(_disc_req: DiscoveryRequest, ctx: RecvContext) {
     log::trace!("Handling discovery request.");
 
-    let request_hash = msg_hash(MessageType::DiscoveryRequest, ctx.msg_bytes).to_vec();
+    let request_hash = message_hash(MessageType::DiscoveryRequest, ctx.msg_bytes);
 
     let chosen_peers =
         choose_n_random_peers_from_active_list(ctx.active_peers, MAX_PEERS_IN_RESPONSE, MIN_VERIFIED_IN_RESPONSE);
 
     let disc_res = DiscoveryResponse::new(request_hash, chosen_peers);
-    let disc_res_bytes = disc_res
-        .to_protobuf()
-        .expect("error encoding discovery response")
-        .to_vec();
+    let disc_res_bytes = disc_res.to_protobuf().to_vec();
 
+    // Panic: we don't allow channel send errors.
     ctx.server_tx
         .send(OutgoingPacket {
             msg_type: MessageType::DiscoveryResponse,
@@ -710,6 +713,7 @@ fn handle_discovery_response(disc_res: DiscoveryResponse, disc_reqval: RequestVa
     }
 
     // Remember how many new peers were discovered thanks to that peer.
+    // Panic: we don't allow internal data inconsistencies.
     ctx.active_peers
         .write()
         .find_mut(ctx.peer_id)
@@ -719,6 +723,7 @@ fn handle_discovery_response(disc_res: DiscoveryResponse, disc_reqval: RequestVa
 
     // Send the response notification.
     if let Some(tx) = disc_reqval.response_tx {
+        // Panic: we don't allow channel send errors.
         tx.send(ctx.msg_bytes.to_vec()).expect("error sending response signal");
     }
 }
@@ -741,10 +746,13 @@ pub(crate) async fn begin_verification(
     send_verification_request_to_peer(peer_id, active_peers, request_mngr, server_tx, Some(response_tx));
 
     match tokio::time::timeout(RESPONSE_TIMEOUT, response_rx).await {
-        Ok(Ok(bytes)) => {
-            let verif_res = VerificationResponse::from_protobuf(&bytes).expect("error decoding verification response");
-            Some(verif_res.into_services())
-        }
+        Ok(Ok(bytes)) => match VerificationResponse::from_protobuf(&bytes).map(|r| r.into_services()) {
+            Ok(services) => Some(services),
+            Err(e) => {
+                log::debug!("Verification response decode error: {}", e);
+                None
+            }
+        },
         Ok(Err(e)) => {
             log::debug!("Verification response error: {}", e);
             None
@@ -753,14 +761,14 @@ pub(crate) async fn begin_verification(
             log::debug!("Verification response timeout: {}", e);
 
             // The response didn't arrive in time => remove the request.
-            let _ = request_mngr.write().pull::<VerificationRequest>(peer_id);
+            let _ = request_mngr.write().remove::<VerificationRequest>(peer_id);
 
             None
         }
     }
 }
 
-/// Sends a verification request to a peer by fetching its endpoint data from the peer store.
+/// Sends a verification request to a peer.
 ///
 /// The function is non-blocking.
 pub(crate) fn send_verification_request_to_peer(
@@ -770,25 +778,21 @@ pub(crate) fn send_verification_request_to_peer(
     server_tx: &ServerTx,
     response_tx: Option<ResponseTx>,
 ) {
-    // TEMP: guard and drop
-    let guard = active_peers.read();
-    if let Some(active_peer) = active_peers.read().find(peer_id) {
-        drop(guard);
+    let peer_addr = active_peers
+        .read()
+        .find(peer_id)
+        .map(|p| {
+            p.peer()
+                .service_socketaddr(AUTOPEERING_SERVICE_NAME)
+                .expect("peer doesn't support autopeering")
+        })
+        // Panic: Requests are sent to listed peers only
+        .expect("peer not in active peers list");
 
-        let peer_port = active_peer
-            .peer()
-            .services()
-            .get(AUTOPEERING_SERVICE_NAME)
-            .expect("peer doesn't support autopeering")
-            .port();
-
-        let peer_addr = SocketAddr::new(active_peer.peer().ip_address(), peer_port);
-
-        send_verification_request_to_addr(peer_addr, active_peer.peer_id(), request_mngr, server_tx, response_tx);
-    }
+    send_verification_request_to_addr(peer_addr, peer_id, request_mngr, server_tx, response_tx);
 }
 
-/// Sends a verification request to a peer's address.
+/// Sends a verification request to a peer.
 pub(crate) fn send_verification_request_to_addr(
     peer_addr: SocketAddr,
     peer_id: &PeerId,
@@ -802,11 +806,9 @@ pub(crate) fn send_verification_request_to_addr(
         .write()
         .new_verification_request(*peer_id, peer_addr.ip(), response_tx);
 
-    let msg_bytes = verif_req
-        .to_protobuf()
-        .expect("error encoding verification request")
-        .to_vec();
+    let msg_bytes = verif_req.to_protobuf().to_vec();
 
+    // Panic: we don't allow channel send errors.
     server_tx
         .send(OutgoingPacket {
             msg_type: MessageType::VerificationRequest,
@@ -816,7 +818,7 @@ pub(crate) fn send_verification_request_to_addr(
         .expect("error sending verification request to server");
 }
 
-/// Sends a verification response to a peer's address.
+/// Sends a verification response to a peer.
 pub(crate) fn send_verification_response_to_addr(
     peer_addr: SocketAddr,
     peer_id: &PeerId,
@@ -827,23 +829,16 @@ pub(crate) fn send_verification_response_to_addr(
 ) {
     log::trace!("Sending verification response to: {}/{}", peer_id, peer_addr);
 
-    let request_hash = msg_hash(MessageType::VerificationRequest, msg_bytes).to_vec();
+    let request_hash = message_hash(MessageType::VerificationRequest, msg_bytes);
 
     let verif_res = VerificationResponse::new(request_hash, local.services(), peer_addr.ip());
 
-    let msg_bytes = verif_res
-        .to_protobuf()
-        .expect("error encoding verification response")
-        .to_vec();
+    let msg_bytes = verif_res.to_protobuf().to_vec();
 
-    // hive.go:
-    // ```go
-    // // the destination address uses the source IP address of the packet plus the src_port from the message
-    // dstAddr := &net.UDPAddr{
-    // 	IP:   fromAddr.IP,
-    // 	Port: int(m.SrcPort),
-    // }
-    // ```
+    // Note: the destination address uses the source IP address of the packet plus the src_port from the message
+    // (see hive.go for reference)
+
+    // Panic: we don't allow channel send errors.
     server_tx
         .send(OutgoingPacket {
             msg_type: MessageType::VerificationResponse,
@@ -869,8 +864,14 @@ pub(crate) async fn begin_discovery(
 
     match tokio::time::timeout(RESPONSE_TIMEOUT, response_rx).await {
         Ok(Ok(bytes)) => {
-            let disc_res = DiscoveryResponse::from_protobuf(&bytes).expect("error decoding discovery response");
-            Some(disc_res.into_peers())
+            match DiscoveryResponse::from_protobuf(&bytes) {
+                Ok(disc_res) => Some(disc_res.into_peers()),
+                Err(e) => {
+                    // The peer sent a faulty response.
+                    log::debug!("Discovery response error: {}", e);
+                    Some(Vec::new())
+                }
+            }
         }
         Ok(Err(e)) => {
             // This shouldn't happen under normal circumstances.
@@ -881,14 +882,14 @@ pub(crate) async fn begin_discovery(
             log::debug!("Discovery response timeout: {}", e);
 
             // The response didn't arrive in time => remove the request.
-            let _ = request_mngr.write().pull::<DiscoveryRequest>(peer_id);
+            let _ = request_mngr.write().remove::<DiscoveryRequest>(peer_id);
 
             None
         }
     }
 }
 
-/// Sends a discovery request to a peer by fetching its endpoint data from the peer store.
+/// Sends a discovery request to a peer.
 ///
 /// The function is non-blocking.
 pub(crate) fn send_discovery_request_to_peer(
@@ -898,17 +899,16 @@ pub(crate) fn send_discovery_request_to_peer(
     server_tx: &ServerTx,
     response_tx: Option<ResponseTx>,
 ) {
-    let guard = active_peers.read();
-    let active_peer = guard.find(peer_id).expect("peer not in active peers list");
-
-    let peer_port = active_peer
-        .peer()
-        .services()
-        .get(AUTOPEERING_SERVICE_NAME)
-        .expect("peer doesn't support autopeering")
-        .port();
-
-    let peer_addr = SocketAddr::new(active_peer.peer().ip_address(), peer_port);
+    let peer_addr = active_peers
+        .read()
+        .find(peer_id)
+        .map(|p| {
+            p.peer()
+                .service_socketaddr(AUTOPEERING_SERVICE_NAME)
+                .expect("peer doesn't support autopeering")
+        })
+        // Panic: Requests are sent to listed peers only
+        .expect("peer not in active peers list");
 
     send_discovery_request_to_addr(peer_addr, peer_id, request_mngr, server_tx, response_tx);
 }
@@ -925,10 +925,7 @@ pub(crate) fn send_discovery_request_to_addr(
 
     let disc_req = request_mngr.write().new_discovery_request(*peer_id, response_tx);
 
-    let msg_bytes = disc_req
-        .to_protobuf()
-        .expect("error encoding verification request")
-        .to_vec();
+    let msg_bytes = disc_req.to_protobuf().to_vec();
 
     server_tx
         .send(OutgoingPacket {
@@ -948,11 +945,11 @@ fn choose_n_random_peers_from_active_list(
     n: usize,
     min_verified_count: usize,
 ) -> Vec<Peer> {
-    let len = active_peers.read().len();
+    let num_active_peers = active_peers.read().len();
 
-    if active_peers.read().len() <= n {
+    if num_active_peers <= n {
         // No randomization required => return all we got - if possible.
-        let mut all_peers = Vec::with_capacity(len);
+        let mut all_peers = Vec::with_capacity(num_active_peers);
         all_peers.extend(active_peers.read().iter().filter_map(|active| {
             if active.metrics().verified_count() >= min_verified_count {
                 Some(active.peer().clone())
@@ -965,7 +962,7 @@ fn choose_n_random_peers_from_active_list(
         // TODO: should this better be a `CryptoRng`?
         let mut random_peers = Vec::with_capacity(n);
         let mut rng = rand::thread_rng();
-        let index_vec = index::sample(&mut rng, len, len);
+        let index_vec = index::sample(&mut rng, num_active_peers, num_active_peers);
         random_peers.extend(
             index_vec
                 .iter()

@@ -4,7 +4,7 @@
 use super::{peer_id::PeerId, Peer};
 
 use crate::{
-    discovery::manager::VERIFICATION_EXPIRATION_SECS,
+    discovery::manager::VERIFICATION_EXPIRATION,
     time::{self, Timestamp},
 };
 
@@ -26,8 +26,8 @@ const DEFAULT_MAX_MANAGED: usize = 1000;
 const DEFAULT_MAX_REPLACEMENTS: usize = 10;
 
 type ActivePeersListInner = PeerRing<ActivePeer, DEFAULT_MAX_MANAGED>;
-type ReplacementListInner = PeerRing<Peer, DEFAULT_MAX_REPLACEMENTS>;
-type MasterPeersListInner = HashSet<PeerId>;
+type ReplacementPeersListInner = PeerRing<Peer, DEFAULT_MAX_REPLACEMENTS>;
+type EntryPeersListInner = HashSet<PeerId>;
 
 #[derive(Clone)]
 pub struct ActivePeer {
@@ -67,7 +67,7 @@ impl ActivePeer {
         self.peer
     }
 
-    pub(crate) fn to_vec(&self) -> Vec<u8> {
+    pub(crate) fn to_bytes(&self) -> Vec<u8> {
         bincode::serialize(self).expect("serialization error")
     }
 
@@ -159,6 +159,7 @@ impl<'de> Visitor<'de> for ActivePeerVisitor {
     }
 }
 
+// TODO: stop exposing lock guards.
 #[derive(Clone, Default)]
 pub struct ActivePeersList {
     inner: Arc<RwLock<ActivePeersListInner>>,
@@ -166,40 +167,42 @@ pub struct ActivePeersList {
 
 impl ActivePeersList {
     pub(crate) fn read(&self) -> RwLockReadGuard<ActivePeersListInner> {
+        // Panice: we don't allow poisened locks.
         self.inner.read().expect("error getting read access")
     }
 
     pub(crate) fn write(&self) -> RwLockWriteGuard<ActivePeersListInner> {
+        // Panice: we don't allow poisened locks.
         self.inner.write().expect("error getting write access")
     }
 }
 
 #[derive(Clone, Default)]
-pub struct ReplacementList {
-    inner: Arc<RwLock<ReplacementListInner>>,
+pub struct ReplacementPeersList {
+    inner: Arc<RwLock<ReplacementPeersListInner>>,
 }
 
-impl ReplacementList {
-    pub(crate) fn read(&self) -> RwLockReadGuard<ReplacementListInner> {
+impl ReplacementPeersList {
+    pub(crate) fn read(&self) -> RwLockReadGuard<ReplacementPeersListInner> {
         self.inner.read().expect("error getting read access")
     }
 
-    pub(crate) fn write(&self) -> RwLockWriteGuard<ReplacementListInner> {
+    pub(crate) fn write(&self) -> RwLockWriteGuard<ReplacementPeersListInner> {
         self.inner.write().expect("error getting write access")
     }
 }
 
 #[derive(Clone, Default)]
-pub(crate) struct MasterPeersList {
-    inner: Arc<RwLock<MasterPeersListInner>>,
+pub(crate) struct EntryPeersList {
+    inner: Arc<RwLock<EntryPeersListInner>>,
 }
 
-impl MasterPeersList {
-    pub(crate) fn read(&self) -> RwLockReadGuard<MasterPeersListInner> {
+impl EntryPeersList {
+    pub(crate) fn read(&self) -> RwLockReadGuard<EntryPeersListInner> {
         self.inner.read().expect("error getting read access")
     }
 
-    pub(crate) fn write(&self) -> RwLockWriteGuard<MasterPeersListInner> {
+    pub(crate) fn write(&self) -> RwLockWriteGuard<EntryPeersListInner> {
         self.inner.write().expect("error getting write access")
     }
 }
@@ -221,7 +224,7 @@ impl PeerMetrics {
         self.verified_count
     }
 
-    /// Inrements the verified counter, and returns the new value.
+    /// Increments the verified counter, and returns the new value.
     pub(crate) fn increment_verified_count(&mut self) -> usize {
         self.verified_count += 1;
         self.verified_count
@@ -248,7 +251,7 @@ impl PeerMetrics {
     }
 
     pub(crate) fn is_verified(&self) -> bool {
-        time::since(self.last_verif_response).expect("system clock error") < VERIFICATION_EXPIRATION_SECS
+        time::since(self.last_verif_response).expect("system clock error") < VERIFICATION_EXPIRATION.as_secs()
     }
 }
 

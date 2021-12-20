@@ -11,7 +11,7 @@ keywords = [ "iota", "bee", "framework", "network", "autopeering" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { path = "../../bee-common/bee-common", default-features = false }
+bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true }
 
 async-trait = { version = "0.1.51", default-features = false }
 base64 = { version = "0.13.0", default-features = false, features = [ "alloc" ] }

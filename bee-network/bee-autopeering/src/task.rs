@@ -3,7 +3,7 @@
 
 use crate::{
     peer::{
-        lists::{ActivePeersList, ReplacementList},
+        lists::{ActivePeersList, ReplacementPeersList},
         PeerStore,
     },
     time::SECOND,
@@ -15,13 +15,14 @@ use tokio::{sync::oneshot, task::JoinHandle, time};
 use std::{collections::HashMap, future::Future, time::Duration};
 
 pub(crate) const MAX_SHUTDOWN_PRIORITY: u8 = 255;
-const SHUTDOWN_TIMEOUT_SECS: Duration = Duration::from_secs(5 * SECOND);
+const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(5 * SECOND);
 
 pub(crate) type ShutdownRx = oneshot::Receiver<()>;
 type ShutdownTx = oneshot::Sender<()>;
 
 pub(crate) type Repeat<T> = Box<dyn for<'a> Fn(&'a T) + Send>;
 
+// TODO: @thibault-martinez mentioned that we should consider using `backstage` instead.
 /// Represents types driving an event loop.
 #[async_trait::async_trait]
 pub(crate) trait Runnable {
@@ -35,20 +36,20 @@ pub(crate) trait Runnable {
 
 pub(crate) struct TaskManager<S: PeerStore, const N: usize> {
     shutdown_handles: HashMap<String, JoinHandle<()>>,
-    shutdown_order: PriorityQueue<String, u8>,
     shutdown_senders: HashMap<String, ShutdownTx>,
-    peerstore: S,
+    shutdown_order: PriorityQueue<String, u8>,
+    peer_store: S,
     active_peers: ActivePeersList,
-    replacements: ReplacementList,
+    replacements: ReplacementPeersList,
 }
 
 impl<S: PeerStore, const N: usize> TaskManager<S, N> {
-    pub(crate) fn new(peerstore: S, active_peers: ActivePeersList, replacements: ReplacementList) -> Self {
+    pub(crate) fn new(peer_store: S, active_peers: ActivePeersList, replacements: ReplacementPeersList) -> Self {
         Self {
-            shutdown_order: PriorityQueue::with_capacity(N),
-            shutdown_senders: HashMap::with_capacity(N),
             shutdown_handles: HashMap::with_capacity(N),
-            peerstore,
+            shutdown_senders: HashMap::with_capacity(N),
+            shutdown_order: PriorityQueue::with_capacity(N),
+            peer_store,
             active_peers,
             replacements,
         }
@@ -73,7 +74,7 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
 
     /// Repeats a command in certain intervals provided a context `T`. Will be shut down gracefully with the rest of
     /// all spawned tasks by specifying a `name` and a `shutdown_priority`.
-    pub(crate) fn repeat<T, D>(&mut self, cmd: Repeat<T>, mut delay: D, ctx: T, name: &str, shutdown_priority: u8)
+    pub(crate) fn repeat<T, D>(&mut self, f: Repeat<T>, mut delay: D, ctx: T, name: &str, shutdown_priority: u8)
     where
         T: Send + Sync + 'static,
         D: Iterator<Item = Duration> + Send + 'static,
@@ -85,7 +86,7 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
             for duration in &mut delay {
                 tokio::select! {
                     _ = &mut shutdown_rx => break,
-                    _ = time::sleep(duration) => cmd(&ctx),
+                    _ = time::sleep(duration) => f(&ctx),
                 }
             }
         });
@@ -101,15 +102,14 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
     pub(crate) async fn shutdown(self) {
         let TaskManager {
             mut shutdown_order,
-            shutdown_handles: mut runnable_handles,
+            mut shutdown_handles,
             mut shutdown_senders,
-            peerstore,
+            peer_store,
             active_peers,
             replacements,
         } = self;
 
         // Send the shutdown signal to all receivers.
-        // TODO: clone necessary?
         let mut shutdown_order_clone = shutdown_order.clone();
         while let Some((task_name, _)) = shutdown_order_clone.pop() {
             // Panic: unwrapping is fine since for every entry in `shutdown_order` there's
@@ -121,10 +121,10 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
         }
 
         // Wait for all tasks to shutdown down in a certain order and maximum amount of time.
-        time::timeout(SHUTDOWN_TIMEOUT_SECS, async {
+        if let Err(e) = time::timeout(SHUTDOWN_TIMEOUT, async {
             while let Some((task_name, _)) = shutdown_order.pop() {
                 // Panic: unwrapping is fine, because we are in control of the data.
-                let task_handle = runnable_handles.remove(&task_name).unwrap();
+                let task_handle = shutdown_handles.remove(&task_name).unwrap();
 
                 match task_handle.await {
                     Ok(_) => {
@@ -137,14 +137,16 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
             }
         })
         .await
-        .expect("error awaiting shutdown");
+        {
+            log::warn!("Not all spawned tasks were shut down in time: {}.", e);
+        }
 
-        log::debug!("Flushing data to peerstore...");
+        log::info!("Flushing data to peer store...");
 
-        peerstore.delete_all();
-        peerstore.store_all_active(&active_peers);
-        peerstore.store_all_replacements(&replacements);
+        peer_store.delete_all();
+        peer_store.store_all_active(&active_peers);
+        peer_store.store_all_replacements(&replacements);
 
-        log::debug!("Done.");
+        log::info!("Done.");
     }
 }

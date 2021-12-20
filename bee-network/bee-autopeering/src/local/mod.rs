@@ -37,23 +37,37 @@ pub enum Error {
 /// * message signing and verification;
 /// * neighbor distance calculation;
 /// * service announcements;
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct Local {
     inner: Arc<RwLock<LocalInner>>,
 }
 
 pub struct LocalInner {
     peer_id: PeerId,
-    public_salt: Option<Salt>,
+    public_salt: Salt,
     private_key: PrivateKey,
-    private_salt: Option<Salt>,
+    private_salt: Salt,
     services: ServiceMap,
 }
 
 impl Local {
-    /// Creates a new local identity.
-    pub fn new() -> Self {
-        Self::default()
+    /// Generates a new random local identity.
+    pub fn generate() -> Self {
+        // Panic: will only fail if there's an OS issue.
+        let private_key = PrivateKey::generate().expect("error generating private key");
+        let peer_id = PeerId::from_public_key(private_key.public_key());
+
+        let inner = LocalInner {
+            peer_id,
+            public_salt: Salt::default(),
+            private_key,
+            private_salt: Salt::default(),
+            services: ServiceMap::default(),
+        };
+
+        Self {
+            inner: Arc::new(RwLock::new(inner)),
+        }
     }
 
     /// Creates a local identity from an ED25519 keypair.
@@ -62,8 +76,7 @@ impl Local {
             .secret()
             .as_ref()
             .try_into()
-            .map_err(|_| Error::SaltFromEd25519Keypair)
-            .expect("error restoring private key from ed25519 keypair");
+            .map_err(|_| Error::SaltFromEd25519Keypair)?;
 
         Ok(Self::from_private_key_bytes(private_key_bytes))
     }
@@ -98,8 +111,8 @@ impl Local {
             inner: Arc::new(RwLock::new(LocalInner {
                 peer_id,
                 private_key,
-                private_salt: Some(Salt::new(SALT_LIFETIME_SECS)),
-                public_salt: Some(Salt::new(SALT_LIFETIME_SECS)),
+                private_salt: Salt::new(SALT_LIFETIME_SECS),
+                public_salt: Salt::new(SALT_LIFETIME_SECS),
                 services: ServiceMap::default(),
             })),
         }
@@ -116,8 +129,8 @@ impl Local {
     }
 
     /// Returns the current private salt of this identity.
-    pub(crate) fn private_salt(&self) -> Option<Salt> {
-        self.read().private_salt().cloned()
+    pub(crate) fn private_salt(&self) -> Salt {
+        self.read().private_salt().clone()
     }
 
     /// Sets a new private salt.
@@ -126,8 +139,8 @@ impl Local {
     }
 
     /// Returns the current public salt of this identity.
-    pub(crate) fn public_salt(&self) -> Option<Salt> {
-        self.read().public_salt().cloned()
+    pub(crate) fn public_salt(&self) -> Salt {
+        self.read().public_salt().clone()
     }
 
     /// Sets a new public salt.
@@ -151,10 +164,12 @@ impl Local {
     }
 
     fn read(&self) -> RwLockReadGuard<LocalInner> {
+        // Panic: we do not allow the lock to be poisened.
         self.inner.read().expect("error getting read access")
     }
 
     fn write(&self) -> RwLockWriteGuard<LocalInner> {
+        // Panic: we do not allow the lock to be poisened.
         self.inner.write().expect("error getting write access")
     }
 }
@@ -168,20 +183,20 @@ impl LocalInner {
         self.peer_id().public_key()
     }
 
-    fn private_salt(&self) -> Option<&Salt> {
-        self.private_salt.as_ref()
+    fn private_salt(&self) -> &Salt {
+        &self.private_salt
     }
 
     fn set_private_salt(&mut self, salt: Salt) {
-        self.private_salt.replace(salt);
+        self.private_salt = salt;
     }
 
-    fn public_salt(&self) -> Option<&Salt> {
-        self.public_salt.as_ref()
+    fn public_salt(&self) -> &Salt {
+        &self.public_salt
     }
 
     fn set_public_salt(&mut self, salt: Salt) {
-        self.public_salt.replace(salt);
+        self.public_salt = salt;
     }
 
     fn sign(&self, msg: &[u8]) -> Signature {
@@ -215,21 +230,6 @@ impl Eq for Local {}
 impl PartialEq for Local {
     fn eq(&self, other: &Self) -> bool {
         self.read().peer_id() == other.read().peer_id()
-    }
-}
-
-impl Default for LocalInner {
-    fn default() -> Self {
-        let private_key = PrivateKey::generate().expect("error generating private key");
-        let peer_id = PeerId::from_public_key(private_key.public_key());
-
-        Self {
-            peer_id,
-            public_salt: Some(Salt::default()),
-            private_key,
-            private_salt: Some(Salt::default()),
-            services: ServiceMap::default(),
-        }
     }
 }
 

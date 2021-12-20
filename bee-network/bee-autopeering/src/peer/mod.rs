@@ -9,7 +9,7 @@ pub mod stores;
 pub use peer_id::PeerId;
 pub use stores::PeerStore;
 
-use lists::{ActivePeersList, ReplacementList};
+use lists::{ActivePeersList, ReplacementPeersList};
 
 use crate::{
     local::{
@@ -29,7 +29,10 @@ use serde::{
     Deserialize, Serialize,
 };
 
-use std::{fmt, net::IpAddr};
+use std::{
+    fmt,
+    net::{IpAddr, SocketAddr},
+};
 
 /// Represents a peer.
 #[derive(Clone)]
@@ -91,11 +94,20 @@ impl Peer {
         self.services.insert(service_name.to_string(), protocol, port);
     }
 
-    /// Returns the address, i.e. the `libp2p_core::Multiaddr`, belonging to the given service name.
+    /// Returns the [`SocketAddr`](std::net::SocketAddr) associated with the given service name.
+    ///
+    /// Example: "peering" => `127.0.0.1:14627`.
+    pub fn service_socketaddr(&self, service_name: impl AsRef<str>) -> Option<SocketAddr> {
+        self.services
+            .get(service_name)
+            .map(|endpoint| SocketAddr::new(self.ip_address, endpoint.port()))
+    }
+
+    /// Returns the [`Multiaddr`](libp2p_core::Multiaddr) associated with the given service name.
     ///
     /// Example: "peering" => `/ip4/127.0.0.1/udp/14627`.
-    pub fn get_service_multiaddr(&self, service_name: impl AsRef<str>) -> Option<Multiaddr> {
-        if let Some(service) = self.services.get(service_name) {
+    pub fn service_multiaddr(&self, service_name: impl AsRef<str>) -> Option<Multiaddr> {
+        self.services.get(service_name).map(|endpoint| {
             let mut multiaddr = Multiaddr::empty();
 
             match self.ip_address {
@@ -103,21 +115,20 @@ impl Peer {
                 IpAddr::V6(ipv6_addr) => multiaddr.push(Protocol::Ip6(ipv6_addr)),
             };
 
-            multiaddr.push(service.to_libp2p_protocol());
-            Some(multiaddr)
-        } else {
-            None
-        }
+            multiaddr.push(endpoint.to_libp2p_protocol());
+
+            multiaddr
+        })
     }
 
     /// Creates a peer from its Protobuf representation/encoding.
-    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
-        Ok(proto::Peer::decode(bytes)?.into())
+    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
+        proto::Peer::decode(bytes)?.try_into()
     }
 
     /// Returns the Protobuf representation of this peer.
     pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
-        let services: proto::ServiceMap = self.services.clone().into();
+        let services: proto::ServiceMap = self.services().into();
 
         let peer = proto::Peer {
             ip: self.ip_address.to_string(),
@@ -147,39 +158,39 @@ impl fmt::Debug for Peer {
     }
 }
 
-impl From<proto::Peer> for Peer {
-    fn from(peer: proto::Peer) -> Self {
+impl TryFrom<proto::Peer> for Peer {
+    type Error = Error;
+
+    fn try_from(peer: proto::Peer) -> Result<Self, Self::Error> {
         let proto::Peer {
             public_key,
             ip,
             services,
         } = peer;
 
-        // TODO: resolve DNS addresses
-        let ip_address: IpAddr = ip.parse().expect("error parsing ip address");
+        let ip_address: IpAddr = ip.parse().map_err(|_| Error::ParseIpAddr)?;
 
-        let public_key = PublicKey::try_from_bytes(public_key.try_into().expect("invalid public key byte length"))
-            .expect("error restoring public key from bytes");
+        let public_key = PublicKey::try_from_bytes(public_key.try_into().map_err(|_| Error::PublicKeyBytes)?)
+            .map_err(|_| Error::PublicKeyBytes)?;
 
         let peer_id = PeerId::from_public_key(public_key);
 
-        let services: ServiceMap = services.expect("missing service map").into();
+        let services: ServiceMap = services.ok_or(Error::MissingServices)?.try_into()?;
 
-        Self {
+        Ok(Self {
             peer_id,
-            // public_key,
             ip_address,
             services,
-        }
+        })
     }
 }
 
-impl From<Peer> for proto::Peer {
-    fn from(peer: Peer) -> Self {
+impl From<&Peer> for proto::Peer {
+    fn from(peer: &Peer) -> Self {
         Self {
-            ip: peer.ip_address.to_string(),
+            ip: peer.ip_address().to_string(),
             public_key: peer.public_key().as_ref().to_vec(),
-            services: Some(peer.services.into()),
+            services: Some(peer.services().into()),
         }
     }
 }
@@ -269,9 +280,9 @@ pub(crate) fn is_known(
     peer_id: &PeerId,
     local: &Local,
     active_peers: &ActivePeersList,
-    replacements: &ReplacementList,
+    replacements: &ReplacementPeersList,
 ) -> bool {
-    // The master list doesn't need to be queried, because those always a subset of the active peers.
+    // The entry peer list doesn't need to be queried, because those are always a subset of the active peers.
     peer_id == &local.peer_id() || active_peers.read().contains(peer_id) || replacements.read().contains(peer_id)
 }
 
@@ -290,7 +301,7 @@ pub(crate) fn is_verified(peer_id: &PeerId, active_peers: &ActivePeersList) -> b
 // Hive.go: moves the peer with the given ID to the front of the list of managed peers.
 // ---
 /// Performs 3 operations:
-/// * Rotates the active peer list such that `peer_id` is at the front of the list (index 0);;
+/// * Rotates the active peer list such that `peer_id` is at the front of the list (index 0);
 /// * Updates the "last_verification_response" timestamp;
 /// * Increments the "verified" counter;
 pub(crate) fn set_front_and_update(peer_id: &PeerId, active_peers: &ActivePeersList) -> Option<usize> {
@@ -303,6 +314,22 @@ pub(crate) fn set_front_and_update(peer_id: &PeerId, active_peers: &ActivePeersL
     } else {
         None
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("parsing peer ip address failed")]
+    ParseIpAddr,
+    #[error("peer services missing")]
+    MissingServices,
+    #[error("invalid service description")]
+    Service(#[from] crate::local::services::Error),
+    #[error("invalid public key bytes")]
+    PublicKeyBytes,
+    #[error("{0}")]
+    ProtobufDecode(#[from] DecodeError),
+    #[error("{0}")]
+    ProtobufEncode(#[from] EncodeError),
 }
 
 #[cfg(test)]

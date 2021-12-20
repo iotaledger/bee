@@ -3,26 +3,13 @@
 
 use crate::{local::services::ServiceMap, peer::Peer, proto, request::Request};
 
+use crypto::hashes::sha::SHA256_LEN;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message as _};
 
 use std::{
     fmt,
     net::{AddrParseError, IpAddr, SocketAddr},
 };
-
-#[derive(Debug, thiserror::Error)]
-pub(crate) enum Error {
-    #[error("The peer did not announce any services.")]
-    NoServices,
-    #[error("Invalid source ip address. Cause: {0}.")]
-    InvalidSourceIpAddress(AddrParseError),
-    #[error("Invalid target ip address. Cause: {0}.")]
-    InvalidTargetIpAddress(AddrParseError),
-    #[error("{0}")]
-    ProtobufDecode(#[from] DecodeError),
-    #[error("{0}")]
-    ProtobufEncode(#[from] EncodeError),
-}
 
 #[derive(Clone, Copy)]
 pub(crate) struct VerificationRequest {
@@ -34,7 +21,7 @@ pub(crate) struct VerificationRequest {
 }
 
 impl VerificationRequest {
-    pub fn new(version: u32, network_id: u32, source_addr: SocketAddr, target_addr: IpAddr) -> Self {
+    pub(crate) fn new(version: u32, network_id: u32, source_addr: SocketAddr, target_addr: IpAddr) -> Self {
         let timestamp = crate::time::unix_now_secs();
 
         Self {
@@ -46,23 +33,23 @@ impl VerificationRequest {
         }
     }
 
-    pub fn version(&self) -> u32 {
+    pub(crate) fn version(&self) -> u32 {
         self.version
     }
 
-    pub fn network_id(&self) -> u32 {
+    pub(crate) fn network_id(&self) -> u32 {
         self.network_id
     }
 
-    pub fn timestamp(&self) -> u64 {
+    pub(crate) fn timestamp(&self) -> u64 {
         self.timestamp
     }
 
-    pub fn source_addr(&self) -> SocketAddr {
+    pub(crate) fn source_addr(&self) -> SocketAddr {
         self.source_addr
     }
 
-    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
+    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
         let proto::Ping {
             version,
             network_id,
@@ -88,7 +75,7 @@ impl VerificationRequest {
     }
 
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub(crate) fn to_protobuf(&self) -> BytesMut {
         let ping = proto::Ping {
             version: self.version,
             network_id: self.network_id,
@@ -99,9 +86,11 @@ impl VerificationRequest {
         };
 
         let mut bytes = BytesMut::with_capacity(ping.encoded_len());
-        ping.encode(&mut bytes)?;
 
-        Ok(bytes)
+        // Panic: we have allocated a properly sized buffer.
+        ping.encode(&mut bytes).expect("encoding discovery request failed");
+
+        bytes
     }
 }
 
@@ -121,13 +110,13 @@ impl Request for VerificationRequest {}
 
 #[derive(Clone)]
 pub(crate) struct VerificationResponse {
-    request_hash: Vec<u8>,
+    request_hash: [u8; SHA256_LEN],
     services: ServiceMap,
     target_addr: IpAddr,
 }
 
 impl VerificationResponse {
-    pub(crate) fn new(request_hash: Vec<u8>, services: ServiceMap, target_addr: IpAddr) -> Self {
+    pub(crate) fn new(request_hash: [u8; SHA256_LEN], services: ServiceMap, target_addr: IpAddr) -> Self {
         Self {
             request_hash,
             services,
@@ -151,23 +140,26 @@ impl VerificationResponse {
         } = proto::Pong::decode(bytes)?;
 
         Ok(Self {
-            request_hash: req_hash,
-            services: services.ok_or(Error::NoServices)?.into(),
+            request_hash: req_hash.try_into().map_err(|_| Error::RestoreRequestHash)?,
+            services: services.ok_or(Error::MissingServices)?.try_into()?,
             target_addr: dst_addr.parse().map_err(Error::InvalidTargetIpAddress)?,
         })
     }
 
-    pub(crate) fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
+    #[allow(clippy::wrong_self_convention)]
+    pub(crate) fn to_protobuf(&self) -> BytesMut {
         let pong = proto::Pong {
-            req_hash: self.request_hash.clone(),
-            services: Some(self.services.clone().into()),
+            req_hash: self.request_hash.to_vec(),
+            services: Some(self.services().into()),
             dst_addr: self.target_addr.to_string(),
         };
 
         let mut bytes = BytesMut::with_capacity(pong.encoded_len());
-        pong.encode(&mut bytes)?;
 
-        Ok(bytes)
+        // Panic: we have allocated a properly sized buffer.
+        pong.encode(&mut bytes).expect("encoding discovery response failed");
+
+        bytes
     }
 
     pub(crate) fn into_services(self) -> ServiceMap {
@@ -210,15 +202,19 @@ impl DiscoveryRequest {
     }
 
     #[allow(clippy::wrong_self_convention)]
-    pub(crate) fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
+    pub(crate) fn to_protobuf(&self) -> BytesMut {
         let discover_request = proto::DiscoveryRequest {
             timestamp: self.timestamp as i64,
         };
 
         let mut bytes = BytesMut::with_capacity(discover_request.encoded_len());
-        discover_request.encode(&mut bytes)?;
 
-        Ok(bytes)
+        // Panic: we have allocated a properly sized buffer.
+        discover_request
+            .encode(&mut bytes)
+            .expect("encoding discovery request failed");
+
+        bytes
     }
 }
 
@@ -234,12 +230,12 @@ impl Request for DiscoveryRequest {}
 
 #[derive(Clone)]
 pub(crate) struct DiscoveryResponse {
-    request_hash: Vec<u8>,
+    request_hash: [u8; SHA256_LEN],
     peers: Vec<Peer>,
 }
 
 impl DiscoveryResponse {
-    pub(crate) fn new(request_hash: Vec<u8>, peers: Vec<Peer>) -> Self {
+    pub(crate) fn new(request_hash: [u8; SHA256_LEN], peers: Vec<Peer>) -> Self {
         Self { request_hash, peers }
     }
 
@@ -247,28 +243,34 @@ impl DiscoveryResponse {
         &self.request_hash
     }
 
-    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
+    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
         let proto::DiscoveryResponse { req_hash, peers } = proto::DiscoveryResponse::decode(bytes)?;
-        let peers = peers.into_iter().map(proto::Peer::into).collect();
+        let peers = peers
+            .into_iter()
+            .filter_map(|p| proto::Peer::try_into(p).ok())
+            .collect();
 
         Ok(Self {
-            request_hash: req_hash,
+            request_hash: req_hash.try_into().expect("todo: error type"),
             peers,
         })
     }
 
-    pub(crate) fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
-        let peers = self.peers.clone().into_iter().map(Peer::into).collect();
+    #[allow(clippy::wrong_self_convention)]
+    pub(crate) fn to_protobuf(&self) -> BytesMut {
+        let peers = self.peers.iter().map(Into::into).collect();
 
         let disc_res = proto::DiscoveryResponse {
-            req_hash: self.request_hash.clone(),
+            req_hash: self.request_hash.to_vec(),
             peers,
         };
 
         let mut bytes = BytesMut::with_capacity(disc_res.encoded_len());
-        disc_res.encode(&mut bytes)?;
 
-        Ok(bytes)
+        // Panic: we have allocated a properly sized buffer.
+        disc_res.encode(&mut bytes).expect("encoding discovery response failed");
+
+        bytes
     }
 
     pub(crate) fn into_peers(self) -> Vec<Peer> {
@@ -283,4 +285,22 @@ impl fmt::Debug for DiscoveryResponse {
             .field("peers", &self.peers)
             .finish()
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum Error {
+    #[error("the peer did not announce any services")]
+    MissingServices,
+    #[error("invalid source ip address due to: {0}.")]
+    InvalidSourceIpAddress(AddrParseError),
+    #[error("invalid target ip address due to: {0}.")]
+    InvalidTargetIpAddress(AddrParseError),
+    #[error("invalid service description")]
+    Service(#[from] crate::local::services::Error),
+    #[error("{0}")]
+    ProtobufDecode(#[from] DecodeError),
+    #[error("{0}")]
+    ProtobufEncode(#[from] EncodeError),
+    #[error("restore request hash")]
+    RestoreRequestHash,
 }

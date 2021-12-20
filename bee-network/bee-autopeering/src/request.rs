@@ -4,8 +4,9 @@
 use crate::{
     discovery::messages::{DiscoveryRequest, VerificationRequest},
     hash,
+    hash::message_hash,
     local::Local,
-    packet::{msg_hash, MessageType},
+    packet::MessageType,
     peer::peer_id::PeerId,
     peering::messages::PeeringRequest,
     task::Repeat,
@@ -30,8 +31,8 @@ pub(crate) type ResponseTx = oneshot::Sender<Vec<u8>>;
 
 // If the request is not answered within that time it gets removed from the manager, and any response
 // coming in later will be deemed invalid.
-pub(crate) const REQUEST_EXPIRATION_SECS: u64 = 20;
-pub(crate) const EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS: u64 = 1;
+pub(crate) const REQUEST_EXPIRATION: Duration = Duration::from_secs(20);
+pub(crate) const EXPIRED_REQUEST_REMOVAL_INTERVAL: Duration = Duration::from_secs(1);
 pub(crate) const RESPONSE_TIMEOUT: Duration = Duration::from_millis(500);
 
 // Marker trait for requests.
@@ -45,7 +46,7 @@ pub(crate) struct RequestKey {
 
 pub(crate) struct RequestValue {
     pub(crate) request_hash: RequestHash,
-    pub(crate) expiration_time: u64,
+    pub(crate) issue_time: u64,
     pub(crate) response_tx: Option<ResponseTx>,
 }
 
@@ -66,11 +67,14 @@ impl RequestManager {
             })),
         }
     }
+
     pub(crate) fn read(&self) -> RwLockReadGuard<RequestManagerInner> {
+        // Panic: We don't allow poisened locks.
         self.inner.read().expect("error getting read access")
     }
 
     pub(crate) fn write(&self) -> RwLockWriteGuard<RequestManagerInner> {
+        // Panic: We don't allow poisened locks.
         self.inner.write().expect("error getting write access")
     }
 }
@@ -97,14 +101,11 @@ impl RequestManagerInner {
         let verif_req = VerificationRequest::new(self.version, self.network_id, self.source_addr, peer_addr);
         let timestamp = verif_req.timestamp();
 
-        let request_hash = msg_hash(
-            MessageType::VerificationRequest,
-            &verif_req.to_protobuf().expect("error encoding verification request"),
-        );
+        let request_hash = message_hash(MessageType::VerificationRequest, &verif_req.to_protobuf());
 
         let value = RequestValue {
             request_hash,
-            expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
+            issue_time: timestamp,
             response_tx,
         };
 
@@ -126,14 +127,11 @@ impl RequestManagerInner {
         let disc_req = DiscoveryRequest::new();
         let timestamp = disc_req.timestamp();
 
-        let request_hash = msg_hash(
-            MessageType::DiscoveryRequest,
-            &disc_req.to_protobuf().expect("error encoding discovery request"),
-        );
+        let request_hash = message_hash(MessageType::DiscoveryRequest, &disc_req.to_protobuf());
 
         let value = RequestValue {
             request_hash,
-            expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
+            issue_time: timestamp,
             response_tx,
         };
 
@@ -153,18 +151,15 @@ impl RequestManagerInner {
             request_id: TypeId::of::<PeeringRequest>(),
         };
 
-        let peer_req = PeeringRequest::new(local.public_salt().expect("missing public salt"));
+        let peer_req = PeeringRequest::new(local.public_salt());
 
         let timestamp = peer_req.timestamp();
 
-        let request_hash = msg_hash(
-            MessageType::PeeringRequest,
-            &peer_req.to_protobuf().expect("error encoding peering request"),
-        );
+        let request_hash = message_hash(MessageType::PeeringRequest, &peer_req.to_protobuf());
 
         let value = RequestValue {
             request_hash,
-            expiration_time: timestamp + REQUEST_EXPIRATION_SECS,
+            issue_time: timestamp,
             response_tx,
         };
 
@@ -173,7 +168,7 @@ impl RequestManagerInner {
         peer_req
     }
 
-    pub(crate) fn pull<R: Request + 'static>(&mut self, peer_id: &PeerId) -> Option<RequestValue> {
+    pub(crate) fn remove<R: Request + 'static>(&mut self, peer_id: &PeerId) -> Option<RequestValue> {
         let key = RequestKey {
             peer_id: *peer_id,
             request_id: TypeId::of::<R>(),
@@ -183,16 +178,25 @@ impl RequestManagerInner {
     }
 }
 
-pub(crate) fn is_expired(timestamp: Timestamp) -> bool {
-    time::since(timestamp).map_or(false, |ts| ts >= REQUEST_EXPIRATION_SECS)
+pub(crate) fn is_expired(past_ts: Timestamp) -> bool {
+    is_expired_internal(past_ts, time::unix_now_secs())
 }
 
-pub(crate) fn remove_expired_requests_repeat() -> Repeat<RequestManager> {
+fn is_expired_internal(past_ts: Timestamp, now_ts: Timestamp) -> bool {
+    // Note: `time::since` returns `None` for a timestamp that lies in the future, hence it cannot be expired yet,
+    // and must therefore be mapped to `false` (not expired).
+    time::delta(past_ts, now_ts).map_or(false, |span| span >= REQUEST_EXPIRATION.as_secs())
+}
+
+pub(crate) fn remove_expired_requests_fn() -> Repeat<RequestManager> {
     Box::new(|mngr: &RequestManager| {
+        let now_ts = time::unix_now_secs();
+
+        // TODO: measure current time only once and reuse it.
         // Retain only those that aren't expired yet, remove all others.
         mngr.write()
             .open_requests
-            .retain(|_, v| v.expiration_time > time::unix_now_secs());
+            .retain(|_, v| !is_expired_internal(v.issue_time, now_ts));
 
         let num_open_requests = mngr.read().open_requests.len();
         if num_open_requests > 0 {

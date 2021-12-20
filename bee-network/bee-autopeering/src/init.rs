@@ -7,9 +7,7 @@ use crate::{
     config::AutopeeringConfig,
     delay,
     discovery::{
-        manager::{
-            DiscoveryManager, DiscoveryManagerConfig, DEFAULT_QUERY_INTERVAL_SECS, DEFAULT_REVERIFY_INTERVAL_SECS,
-        },
+        manager::{DiscoveryManager, DiscoveryManagerConfig, DEFAULT_QUERY_INTERVAL, DEFAULT_REVERIFY_INTERVAL},
         query::{self, QueryContext},
     },
     event::{self, EventRx},
@@ -18,7 +16,7 @@ use crate::{
     multiaddr,
     packet::IncomingPacket,
     peer::{
-        lists::{ActivePeersList, MasterPeersList, ReplacementList},
+        lists::{ActivePeersList, EntryPeersList, ReplacementPeersList},
         stores::PeerStore,
     },
     peering::{
@@ -27,13 +25,12 @@ use crate::{
         update::{self, UpdateContext, OPEN_OUTBOUND_NBH_UPDATE_SECS},
         NeighborValidator,
     },
-    request::{self, RequestManager, EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS},
+    request::{self, RequestManager, EXPIRED_REQUEST_REMOVAL_INTERVAL},
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket},
     task::{TaskManager, MAX_SHUTDOWN_PRIORITY},
-    time,
 };
 
-use std::{error, future::Future, iter, time::Duration};
+use std::{error, future::Future, iter};
 
 const NUM_TASKS: usize = 9;
 
@@ -43,8 +40,8 @@ pub async fn init<S, I, Q, V>(
     version: u32,
     network_name: I,
     local: Local,
-    peerstore_config: <S as PeerStore>::Config,
-    quit_signal: Q,
+    peer_store_config: <S as PeerStore>::Config,
+    term_signal: Q,
     neighbor_validator: V,
 ) -> Result<EventRx, Box<dyn error::Error>>
 where
@@ -53,33 +50,29 @@ where
     Q: Future + Send + 'static,
     V: NeighborValidator + 'static,
 {
-    let network_id = hash::fnv32(&network_name);
-    let private_salt = time::datetime(local.private_salt().expect("missing private salt").expiration_time());
-    let public_salt = time::datetime(local.public_salt().expect("missing private salt").expiration_time());
+    let network_id = hash::network_hash(&network_name);
 
     log::info!("---------------------------------------------------------------------------------------------------");
     log::info!("WARNING:");
-    log::info!("The autopeering system will disclose your public IP address to possibly all nodes and entry points.");
+    log::info!("Autopeering will disclose your public IP address to possibly all nodes and entry points.");
     log::info!("Please disable it if you do not want this to happen!");
     log::info!("---------------------------------------------------------------------------------------------------");
     log::info!("Network name/id: {}/{}", network_name.as_ref(), network_id);
     log::info!("Protocol_version: {}", version);
-    log::info!("Public key: {}", multiaddr::from_pubkey_to_base58(&local.public_key()));
-    log::info!("Current time: {}", time::datetime_now());
-    log::info!("Private salt: {}", private_salt);
-    log::info!("Public salt: {}", public_salt);
+    log::info!("Public key: {}", multiaddr::pubkey_to_base58(&local.public_key()));
     log::info!("Bind address: {}", config.bind_addr());
 
     // Create or load a peer store.
-    let peerstore = S::new(peerstore_config);
+    let peer_store = S::new(peer_store_config);
 
     // Create peer lists.
-    let master_peers = MasterPeersList::default();
+    let entry_peers = EntryPeersList::default();
     let active_peers = ActivePeersList::default();
-    let replacements = ReplacementList::default();
+    let replacements = ReplacementPeersList::default();
 
     // Create a task manager to have good control over the tokio task spawning business.
-    let mut task_mngr = TaskManager::<_, NUM_TASKS>::new(peerstore.clone(), active_peers.clone(), replacements.clone());
+    let mut task_mngr =
+        TaskManager::<_, NUM_TASKS>::new(peer_store.clone(), active_peers.clone(), replacements.clone());
 
     // Create channels for inbound/outbound communication with the UDP server.
     let (discovery_tx, discovery_rx) = server_chan::<IncomingPacket>();
@@ -109,8 +102,8 @@ where
         local.clone(),
         discovery_socket,
         request_mngr.clone(),
-        peerstore.clone(),
-        master_peers.clone(),
+        peer_store.clone(),
+        entry_peers.clone(),
         active_peers.clone(),
         replacements.clone(),
         event_tx.clone(),
@@ -139,10 +132,10 @@ where
 
     // TODO: remove this when sure that all open requests are garbage collected.
     // Remove expired requests regularly.
-    let cmd = request::remove_expired_requests_repeat();
-    let delay = iter::repeat(Duration::from_secs(EXPIRED_REQUEST_REMOVAL_INTERVAL_CHECK_SECS));
+    let f = request::remove_expired_requests_fn();
+    let delay = iter::repeat(EXPIRED_REQUEST_REMOVAL_INTERVAL);
     let ctx = request_mngr.clone();
-    task_mngr.repeat(cmd, delay, ctx, "Expired-Request-Removal", MAX_SHUTDOWN_PRIORITY);
+    task_mngr.repeat(f, delay, ctx, "Expired-Request-Removal", MAX_SHUTDOWN_PRIORITY);
 
     let ctx = SaltUpdateContext::new(
         local.clone(),
@@ -154,13 +147,13 @@ where
     );
 
     // Update salts regularly.
-    let cmd = crate::peering::manager::repeat_update_salts(config.drop_neighbors_on_salt_update());
+    let f = crate::peering::manager::update_salts_fn(config.drop_neighbors_on_salt_update());
     let delay = iter::repeat(SALT_UPDATE_SECS);
-    task_mngr.repeat(cmd, delay, ctx, "Salt-Update", MAX_SHUTDOWN_PRIORITY);
+    task_mngr.repeat(f, delay, ctx, "Salt-Update", MAX_SHUTDOWN_PRIORITY);
 
     let ctx = QueryContext {
         request_mngr: request_mngr.clone(),
-        master_peers: master_peers.clone(),
+        entry_peers: entry_peers.clone(),
         active_peers: active_peers.clone(),
         replacements: replacements.clone(),
         server_tx: server_tx.clone(),
@@ -168,14 +161,14 @@ where
     };
 
     // Reverify old peers regularly.
-    let cmd = query::do_reverify();
-    let delay = iter::repeat(Duration::from_secs(DEFAULT_REVERIFY_INTERVAL_SECS));
-    task_mngr.repeat(cmd, delay, ctx.clone(), "Reverification", MAX_SHUTDOWN_PRIORITY);
+    let f = query::reverify_fn();
+    let delay = iter::repeat(DEFAULT_REVERIFY_INTERVAL);
+    task_mngr.repeat(f, delay, ctx.clone(), "Reverification", MAX_SHUTDOWN_PRIORITY);
 
     // Discover new peers regularly.
-    let cmd = query::do_query();
-    let delay = iter::repeat(Duration::from_secs(DEFAULT_QUERY_INTERVAL_SECS));
-    task_mngr.repeat(cmd, delay, ctx, "Discovery", MAX_SHUTDOWN_PRIORITY);
+    let f = query::query_fn();
+    let delay = iter::repeat(DEFAULT_QUERY_INTERVAL);
+    task_mngr.repeat(f, delay, ctx, "Discovery", MAX_SHUTDOWN_PRIORITY);
 
     let ctx = UpdateContext {
         local,
@@ -187,13 +180,13 @@ where
     };
 
     // Update the outbound neighborhood regularly (interval depends on whether slots available or not).
-    let cmd = update::do_update();
+    let f = update::update_outbound_neighborhood_fn();
     let delay = delay::ManualDelayFactory::new(OPEN_OUTBOUND_NBH_UPDATE_SECS);
-    task_mngr.repeat(cmd, delay, ctx, "Outbound neighborhood update", MAX_SHUTDOWN_PRIORITY);
+    task_mngr.repeat(f, delay, ctx, "Outbound neighborhood update", MAX_SHUTDOWN_PRIORITY);
 
     // Await the shutdown signal (in a separate task).
     tokio::spawn(async move {
-        quit_signal.await;
+        term_signal.await;
         task_mngr.shutdown().await;
     });
 

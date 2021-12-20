@@ -3,13 +3,10 @@
 
 //! IOTA network packets.
 
-use crate::{hash, peer::peer_id::PeerId, proto};
+use crate::{peer::peer_id::PeerId, proto};
 
 use base64 as bs64;
-use crypto::{
-    hashes::sha::SHA256_LEN,
-    signatures::ed25519::{PublicKey, Signature},
-};
+use crypto::signatures::ed25519::{PublicKey, Signature};
 use num_derive::FromPrimitive;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 
@@ -20,86 +17,115 @@ use std::{fmt, net::SocketAddr, ops::Range};
 // * packets larger than this will be cut and thus treated as invalid;
 pub(crate) const MAX_PACKET_SIZE: usize = 1280;
 
-pub(crate) const DISCOVERY_MSG_TYPE_MIN: u32 = 10;
-pub(crate) const DISCOVERY_MSG_TYPE_RANGE: Range<u32> = DISCOVERY_MSG_TYPE_MIN..(DISCOVERY_MSG_TYPE_MIN + 4);
-pub(crate) const PEERING_MSG_TYPE_MIN: u32 = 20;
-pub(crate) const PEERING_MSG_TYPE_RANGE: Range<u32> = PEERING_MSG_TYPE_MIN..(PEERING_MSG_TYPE_MIN + 3);
-
-pub(crate) fn msg_hash(msg_type: MessageType, msg_data: &[u8]) -> [u8; SHA256_LEN] {
-    let mut bytes = vec![0u8; msg_data.len() + 1];
-    let msg_type = msg_type as u32;
-    if msg_type > 0xFF {
-        panic!("invalid message type");
-    }
-    bytes[0] = msg_type as u8;
-    bytes[1..].copy_from_slice(msg_data);
-
-    hash::sha256(&bytes)
-}
+pub(crate) const DISCOVERY_MSG_TYPE_MIN: u8 = 10;
+pub(crate) const DISCOVERY_MSG_TYPE_RANGE: Range<u8> = DISCOVERY_MSG_TYPE_MIN..(DISCOVERY_MSG_TYPE_MIN + 4);
+pub(crate) const PEERING_MSG_TYPE_MIN: u8 = 20;
+pub(crate) const PEERING_MSG_TYPE_RANGE: Range<u8> = PEERING_MSG_TYPE_MIN..(PEERING_MSG_TYPE_MIN + 3);
 
 /// Represents an IOTA packet.
-pub(crate) struct Packet(proto::Packet);
+pub(crate) struct Packet {
+    msg_type: MessageType,
+    msg_bytes: Vec<u8>,
+    public_key: PublicKey,
+    signature: Signature,
+}
 
 impl Packet {
     /// Creates a new packet.
-    pub(crate) fn new(msg_type: MessageType, msg_bytes: &[u8], public_key: &PublicKey, signature: Signature) -> Self {
-        Self(proto::Packet {
-            r#type: msg_type as u32,
-            data: msg_bytes.to_vec(),
-            public_key: public_key.to_bytes().to_vec(),
-            signature: signature.to_bytes().to_vec(),
-        })
+    pub(crate) fn new(msg_type: MessageType, msg_bytes: &[u8], public_key: PublicKey, signature: Signature) -> Self {
+        Self {
+            msg_type,
+            msg_bytes: msg_bytes.to_vec(),
+            public_key,
+            signature,
+        }
     }
 
-    /// Returns the message contained in this packet.
-    pub(crate) fn message(&self) -> &[u8] {
-        &self.0.data
+    /// Returns the message bytes contained in this packet.
+    pub(crate) fn msg_bytes(&self) -> &[u8] {
+        // &self.0.data
+        &self.msg_bytes
     }
 
     /// Returns the public key belonging to the issuer of this packet.
-    pub(crate) fn public_key(&self) -> PublicKey {
-        PublicKey::try_from_bytes(self.0.public_key.clone().try_into().expect("error public key length"))
-            .expect("error restoring public key from bytes")
+    pub(crate) fn public_key(&self) -> &PublicKey {
+        &self.public_key
     }
 
     /// Returns the signature belonging to the issuer of this packet.
-    pub(crate) fn signature(&self) -> Signature {
-        Signature::from_bytes(self.0.signature.clone().try_into().expect("error signature length"))
+    pub(crate) fn signature(&self) -> &Signature {
+        &self.signature
     }
 
     /// Restores a packet from its protobuf representation.
-    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
-        Ok(Self(proto::Packet::decode(bytes)?))
+    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
+        let proto::Packet {
+            r#type,
+            data,
+            public_key,
+            signature,
+        } = proto::Packet::decode(bytes)?;
+
+        let public_key = PublicKey::try_from_bytes(public_key.try_into().map_err(|_| Error::RestorePublicKey)?)
+            .map_err(|_| Error::RestorePublicKey)?;
+
+        let signature = Signature::from_bytes(signature.try_into().map_err(|_| Error::RestoreSignature)?);
+
+        Ok(Self {
+            msg_type: num::FromPrimitive::from_u8(r#type as u8).ok_or(Error::UnknownMessageType)?,
+            msg_bytes: data.to_vec(),
+            public_key,
+            signature,
+        })
     }
 
     /// Returns the protobuf representation of this packet
-    pub(crate) fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
-        let mut buf = BytesMut::with_capacity(self.0.encoded_len());
-        self.0.encode(&mut buf)?;
+    #[allow(clippy::wrong_self_convention)]
+    pub(crate) fn to_protobuf(&self) -> BytesMut {
+        let proto_packet = proto::Packet {
+            r#type: self.msg_type as u32,
+            data: self.msg_bytes.to_vec(),
+            public_key: self.public_key.to_bytes().to_vec(),
+            signature: self.signature.to_bytes().to_vec(),
+        };
 
-        Ok(buf)
-    }
+        let mut buf = BytesMut::with_capacity(proto_packet.encoded_len());
 
-    /// Turns the packet into its contained message (if any) and discards the rest of the metadata.
-    pub(crate) fn into_message(self) -> Vec<u8> {
-        self.0.data
+        // Panic: we have allocated a properly sized buffer.
+        proto_packet.encode(&mut buf).expect("encoding packet failed");
+
+        buf
     }
 }
 
 impl fmt::Debug for Packet {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Packet")
-            .field("msg_type", &self.0.r#type)
-            .field("msg", &bs64::encode(&self.0.data))
-            .field("public_key", &bs58::encode(&self.0.public_key).into_string())
-            .field("signature", &bs58::encode(&self.0.signature).into_string())
+            .field("msg_type", &self.msg_type)
+            .field("msg_bytes", &bs64::encode(&self.msg_bytes))
+            .field("public_key", &bs58::encode(&self.public_key).into_string())
+            .field("signature", &bs58::encode(&self.signature.to_bytes()).into_string())
             .finish()
     }
 }
 
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum Error {
+    #[error("prost decode error")]
+    ProtobufDecode(#[from] DecodeError),
+    #[error("prost encode error")]
+    ProtobufEncode(#[from] EncodeError),
+    #[error("failed to restore public key")]
+    RestorePublicKey,
+    #[error("failed to restore signature")]
+    RestoreSignature,
+    #[error("unknown message type")]
+    UnknownMessageType,
+}
+
 /// The possible types of messages stored in a packet.
 #[derive(Clone, Copy, Debug, FromPrimitive)]
-#[repr(u32)]
+#[repr(u8)]
 #[non_exhaustive]
 pub(crate) enum MessageType {
     VerificationRequest = DISCOVERY_MSG_TYPE_MIN,

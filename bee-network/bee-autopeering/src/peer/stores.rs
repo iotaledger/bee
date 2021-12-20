@@ -4,7 +4,7 @@
 //! Persistent storage of discovered peers.
 
 use super::{
-    lists::{ActivePeer, ActivePeersList, ReplacementList},
+    lists::{ActivePeer, ActivePeersList, ReplacementPeersList},
     peer_id::PeerId,
     Peer,
 };
@@ -37,7 +37,7 @@ pub trait PeerStore: Clone + Send + Sync {
     fn store_replacement(&self, peer: Peer);
 
     /// Stores all current replacement peers.
-    fn store_all_replacements(&self, peers: &ReplacementList);
+    fn store_all_replacements(&self, peers: &ReplacementPeersList);
 
     /// Whether the store contains the given peer.
     fn contains(&self, peer_id: &PeerId) -> bool;
@@ -77,6 +77,7 @@ impl InMemoryPeerStore {
     fn read(&self) -> RwLockReadGuard<InMemoryPeerStoreInner> {
         self.inner.read().expect("error getting read access")
     }
+
     fn write(&self) -> RwLockWriteGuard<InMemoryPeerStoreInner> {
         self.inner.write().expect("error getting write access")
     }
@@ -116,7 +117,7 @@ impl PeerStore for InMemoryPeerStore {
         let _ = self.write().replacements.insert(*peer_id, peer);
     }
 
-    fn store_all_replacements(&self, peers: &ReplacementList) {
+    fn store_all_replacements(&self, peers: &ReplacementPeersList) {
         let read = peers.read();
         let mut write = self.write();
 
@@ -171,7 +172,7 @@ impl PeerStore for SledPeerStore {
     type Config = SledPeerStoreConfig;
 
     fn new(config: Self::Config) -> Self {
-        let db = config.open().expect("error opening peerstore");
+        let db = config.open().expect("error opening peer store");
 
         db.open_tree("active_peers").expect("error opening tree");
         db.open_tree("replacements").expect("error opening tree");
@@ -183,7 +184,7 @@ impl PeerStore for SledPeerStore {
         let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
         let key = *active_peer.peer_id();
 
-        tree.insert(key, active_peer.to_vec()).expect("insert error");
+        tree.insert(key, active_peer.to_bytes()).expect("insert error");
     }
 
     fn store_all_active(&self, active_peers: &ActivePeersList) {
@@ -193,7 +194,7 @@ impl PeerStore for SledPeerStore {
         active_peers
             .read()
             .iter()
-            .for_each(|p| batch.insert(*p.peer_id(), p.clone()));
+            .for_each(|p| batch.insert(p.peer_id(), p.clone()));
 
         tree.apply_batch(batch).expect("error applying batch");
     }
@@ -205,14 +206,14 @@ impl PeerStore for SledPeerStore {
         tree.insert(key, peer).expect("error inserting peer");
     }
 
-    fn store_all_replacements(&self, replacements: &ReplacementList) {
+    fn store_all_replacements(&self, replacements: &ReplacementPeersList) {
         let replacements_tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
 
         let mut batch = Batch::default();
         replacements
             .read()
             .iter()
-            .for_each(|p| batch.insert(*p.peer_id(), p.clone()));
+            .for_each(|p| batch.insert(p.peer_id(), p.clone()));
 
         replacements_tree.apply_batch(batch).expect("error applying batch");
     }
@@ -280,35 +281,35 @@ impl PeerStore for SledPeerStore {
 mod tests {
     use super::*;
 
-    fn create_temporary_sled_peerstore() -> SledPeerStore {
+    fn create_temporary_sled_peer_store() -> SledPeerStore {
         let config = SledPeerStoreConfig::new().temporary(true);
         SledPeerStore::new(config)
     }
 
     #[test]
     fn store_and_fetch_active_peer() {
-        let peerstore = create_temporary_sled_peerstore();
+        let peer_store = create_temporary_sled_peer_store();
 
         let peer = ActivePeer::new(Peer::new_test_peer(0));
         let peer_id = *peer.peer_id();
 
-        peerstore.store_active(peer);
+        peer_store.store_active(peer);
 
-        let fetched_active_peer = peerstore.fetch_active(&peer_id).expect("missing peer");
+        let fetched_active_peer = peer_store.fetch_active(&peer_id).expect("missing peer");
 
         assert_eq!(peer_id, *fetched_active_peer.peer_id());
     }
 
     #[test]
     fn store_and_fetch_replacement_peer() {
-        let peerstore = create_temporary_sled_peerstore();
+        let peer_store = create_temporary_sled_peer_store();
 
         let peer = Peer::new_test_peer(0);
         let peer_id = *peer.peer_id();
 
-        peerstore.store_replacement(peer);
+        peer_store.store_replacement(peer);
 
-        let fetched_peer = peerstore.fetch_replacement(&peer_id).expect("missing peer");
+        let fetched_peer = peer_store.fetch_replacement(&peer_id).expect("missing peer");
 
         assert_eq!(peer_id, *fetched_peer.peer_id());
     }

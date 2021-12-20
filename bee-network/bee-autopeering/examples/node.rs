@@ -39,18 +39,18 @@ fn read_config() -> AutopeeringConfigJsonBuilder {
             "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
             "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
             "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
-        ],
-        "entryNodesPreferIPv6": false,
-        "runAsEntryNode": false
+        ]
     }"#;
 
+    // "entryNodesPreferIPv6": false,
+    // "runAsEntryNode": false
     serde_json::from_str(config_json).expect("error deserializing json config")
 }
 
 #[tokio::main]
 async fn main() {
     // Set up logger.
-    setup_logger(LevelFilter::Debug);
+    setup_logger(LevelFilter::Info);
 
     // Read the config from a JSON file/string.
     let config = read_config().finish();
@@ -74,16 +74,16 @@ async fn main() {
 
     // Storage config.
     // No config is  necessary for the `InMemoryPeerStore`.
-    // let peerstore_config = ();
+    // let peer_store_config = ();
 
-    // Sled peerstore:
-    let peerstore_config = SledPeerStoreConfig::new().path("./peerstore");
+    // Sled peer store:
+    let peer_store_config = SledPeerStoreConfig::new().path("./peerstore");
 
     // Neighbor validator.
     let neighbor_validator = GossipNeighborValidator {};
 
     // Shutdown signal.
-    let quit_signal = ctrl_c();
+    let term_signal = ctrl_c();
 
     // Initialize the Autopeering service.
     let mut event_rx = bee_autopeering::init::<SledPeerStore, _, _, GossipNeighborValidator>(
@@ -91,8 +91,8 @@ async fn main() {
         version,
         network_name,
         local,
-        peerstore_config,
-        quit_signal,
+        peer_store_config,
+        term_signal,
         neighbor_validator,
     )
     .await

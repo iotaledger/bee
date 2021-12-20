@@ -56,7 +56,7 @@
 //!
 //!     // Create a random local entity, that announces two services:
 //!     let local = {
-//!         let l = Local::default();
+//!         let l = Local::generate();
 //!
 //!         l.add_service(
 //!             AUTOPEERING_SERVICE_NAME,
@@ -69,7 +69,7 @@
 //!
 //!     // You can choose between the `InMemoryPeerStore` (non-persistent), the `SledPeerStore`
 //!     // (persistent), or your own implementation that implements the `PeerStore` trait.
-//!     let peerstore_config = SledPeerStoreConfig::new().path("./peerstore");
+//!     let peer_store_config = SledPeerStoreConfig::new().path("./peerstore");
 //!
 //!     // The `NeighborValidator` allows you to accept only certain peers as neighbors, e.g. only those
 //!     // with enabled Gossip service.
@@ -84,7 +84,7 @@
 //!         VERSION,
 //!         NETWORK,
 //!         local,
-//!         peerstore_config,
+//!         peer_store_config,
 //!         term_signal,
 //!         neighbor_validator,
 //!     )
@@ -142,7 +142,7 @@ pub use config::AutopeeringConfig;
 pub use event::Event;
 pub use init::init;
 pub use local::{
-    services::{Service, ServiceMap, ServiceName, ServiceProtocol, AUTOPEERING_SERVICE_NAME},
+    services::{ServiceEndpoint, ServiceMap, ServiceName, ServiceProtocol, AUTOPEERING_SERVICE_NAME},
     Local,
 };
 pub use peer::{peer_id, peer_id::PeerId, stores, Peer};

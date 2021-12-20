@@ -73,7 +73,8 @@ impl Server {
             outgoing_rx,
         } = self;
 
-        // Try to bind the UDP socket to the configured address.
+        // Bind the UDP socket to the configured address.
+        // Panic: We don't allow UDP socket binding to fail.
         let socket = UdpSocket::bind(&config.bind_addr)
             .await
             .expect("error binding udp socket");
@@ -114,6 +115,7 @@ struct OutgoingPacketHandler {
     bind_addr: SocketAddr,
 }
 
+// Note: Invalid packets from peers are not logged as warnings because the fault is not on our side.
 #[async_trait::async_trait]
 impl Runnable for IncomingPacketHandler {
     const NAME: &'static str = "IncomingPacketHandler";
@@ -144,34 +146,45 @@ impl Runnable for IncomingPacketHandler {
                     match r {
                         Ok((n, peer_addr)) => {
                             if peer_addr == bind_addr {
-                                log::warn!("Received bytes from own bind address {}. Ignoring...", peer_addr);
+                                log::trace!("Received bytes from own bind address {}. Ignoring packet.", peer_addr);
                                 continue 'recv;
                             }
 
                             if n > MAX_PACKET_SIZE {
-                                log::warn!("Received too many bytes from {}. Ignoring packet.", peer_addr);
+                                log::trace!("Received too many bytes from {}. Ignoring packet.", peer_addr);
                                 continue 'recv;
                             }
 
                             log::trace!("Received {} bytes from {}.", n, peer_addr);
 
-                            let packet = Packet::from_protobuf(&packet_bytes[..n]).expect("error decoding incoming packet");
-                            // log::trace!("{} ---> public key: {}.", peer_addr, multiaddr::from_pubkey_to_base58(&packet.public_key()));
+                            // Decode the packet.
+                            let packet = match Packet::from_protobuf(&packet_bytes[..n]) {
+                                Ok(packet) => packet,
+                                Err(_) => {
+                                    log::trace!("Error decoding incoming packet from {}. Ignoring packet.", peer_addr);
+                                    continue 'recv;
+                                }
+                            };
+
+                            // Unmarshal the message.
+                            let (msg_type, msg_bytes) = match unmarshal(packet.msg_bytes()) {
+                                Ok((msg_type, msg_bytes)) => (msg_type, msg_bytes),
+                                Err(_) => {
+                                    log::trace!("Error unmarshalling incoming message from {}. Ignoring packet.", peer_addr);
+                                    continue 'recv;
+                                }
+                            };
 
                             // Restore the peer id.
-                            let peer_id = PeerId::from_public_key(packet.public_key());
-                            // log::trace!("{} ---> peer id: {}.", peer_addr, peer_id);
+                            let peer_id = PeerId::from_public_key(*packet.public_key());
 
                             // Verify the packet.
-                            let message = packet.message();
+                            let message = packet.msg_bytes();
                             let signature = packet.signature();
-                            if !packet.public_key().verify(&signature, message) {
+                            if !packet.public_key().verify(signature, message) {
                                 log::trace!("Received packet with invalid signature");
                                 continue 'recv;
                             }
-
-                            let marshalled_bytes = packet.into_message();
-                            let (msg_type, msg_bytes) = unmarshal(&marshalled_bytes);
 
                             let packet = IncomingPacket {
                                 msg_type,
@@ -181,19 +194,21 @@ impl Runnable for IncomingPacketHandler {
                             };
 
                             // Depending on the message type, forward it to the appropriate manager.
-                            match msg_type as u32 {
+                            match msg_type as u8 {
                                 t if DISCOVERY_MSG_TYPE_RANGE.contains(&t) => {
+                                    // Panic: We don't allow channel send failures.
                                     discovery_tx.send(packet).expect("channel send error: discovery");
                                 }
                                 t if PEERING_MSG_TYPE_RANGE.contains(&t) => {
+                                    // Panic: We don't allow channel send failures.
                                     peering_tx.send(packet).expect("channel send error: peering");
                                 }
-                                _ => panic!("invalid message type"),
+                                _ => log::trace!("Received invalid message type. Ignoring packet."),
                             }
                         }
                         Err(e) => {
                             log::error!("UDP socket read error; stopping incoming packet handler. Cause: {}", e);
-                            // TODO: intiate shutdown of the system
+                            // TODO: initiate graceful shutdown
                             break 'recv;
                         }
                     }
@@ -239,15 +254,16 @@ impl Runnable for OutgoingPacketHandler {
                         let marshalled_bytes = marshal(msg_type, &msg_bytes);
 
                         let signature = local.sign(&marshalled_bytes);
-                        let packet = Packet::new(msg_type, &marshalled_bytes, &local.public_key(), signature);
+                        let packet = Packet::new(msg_type, &marshalled_bytes, local.public_key(), signature);
 
-                        let bytes = packet.to_protobuf().expect("error encoding outgoing packet");
+                        let bytes = packet.to_protobuf();
 
                         if bytes.len() > MAX_PACKET_SIZE {
                             log::warn!("Trying to send too many bytes to {}. Ignoring...", peer_addr);
                             continue 'recv;
                         }
 
+                        // TODO: Make sure this won't occur by introducing IPv4 and IPv6 outgoing packet handler.
                         let n = outgoing_socket.send_to(&bytes, peer_addr).await.expect("socket send error");
 
                         log::trace!("Sent {} bytes to {}.", n, peer_addr);
@@ -261,6 +277,7 @@ impl Runnable for OutgoingPacketHandler {
     }
 }
 
+// TODO: @pvdrz wants to optimize this.
 pub(crate) fn marshal(msg_type: MessageType, msg_bytes: &[u8]) -> Vec<u8> {
     let mut marshalled_bytes = vec![0u8; msg_bytes.len() + 1];
     marshalled_bytes[0] = msg_type as u8;
@@ -268,11 +285,14 @@ pub(crate) fn marshal(msg_type: MessageType, msg_bytes: &[u8]) -> Vec<u8> {
     marshalled_bytes
 }
 
-pub(crate) fn unmarshal(marshalled_bytes: &[u8]) -> (MessageType, Vec<u8>) {
-    let msg_type = num::FromPrimitive::from_u32(marshalled_bytes[0] as u32).expect("unknown message type");
+// TODO: @pvdrz wants to optimize this.
+pub(crate) fn unmarshal(marshalled_bytes: &[u8]) -> Result<(MessageType, Vec<u8>), ()> {
+    let msg_type = num::FromPrimitive::from_u8(marshalled_bytes[0]).ok_or(())?;
+
     let mut msg_bytes = vec![0u8; marshalled_bytes.len() - 1];
     msg_bytes[..].copy_from_slice(&marshalled_bytes[1..]);
-    (msg_type, msg_bytes)
+
+    Ok((msg_type, msg_bytes))
 }
 
 pub(crate) struct ServerSocket {

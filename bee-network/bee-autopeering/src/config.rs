@@ -4,12 +4,12 @@
 //! Autopeering configuration.
 //!
 //! ## JSON Example
+//!
 //! ```json
 //! "autopeering": {
 //!     "enabled": true,
 //!     "bindAddress": "0.0.0.0:14626",
 //!     "entryNodes": [
-//!          "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
 //!          "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
 //!          "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
 //!          "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
@@ -25,7 +25,6 @@
 //! enabled = true
 //! bind_address = "0.0.0.0:14626"
 //! entry_nodes = [
-//!     "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
 //!     "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
 //!     "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
 //!     "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
@@ -42,9 +41,10 @@ use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
 };
 
+const AUTOPEERING_ENABLED_DEFAULT: bool = false;
 // TODO: watch out for possible constification regarding `SocketAddr::new()`.
 const AUTOPEERING_BIND_ADDR_DEFAULT: IpAddr = IpAddr::V4(Ipv4Addr::UNSPECIFIED);
-const AUTOPEERING_BIND_PORT_DEFAULT: u16 = 0;
+const AUTOPEERING_BIND_PORT_DEFAULT: u16 = 14626;
 const ENTRYNODES_PREFER_IPV6_DEFAULT: bool = false;
 const RUN_AS_ENTRYNODE_DEFAULT: bool = false;
 const DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT: bool = false;
@@ -61,7 +61,7 @@ pub struct AutopeeringConfig {
 }
 
 impl AutopeeringConfig {
-    /// Wether autopeering should be enabled.
+    /// Whether autopeering should be enabled.
     pub fn enabled(&self) -> bool {
         self.enabled
     }
@@ -132,7 +132,7 @@ impl AutopeeringConfig {
 #[cfg_attr(test, derive(Eq, PartialEq))]
 #[serde(rename = "autopeering")]
 pub struct AutopeeringConfigJsonBuilder {
-    /// Wether autopeering should be enabled.
+    /// Whether autopeering should be enabled.
     pub enabled: bool,
     /// The bind address for the server.
     #[serde(rename = "bindAddress")]
@@ -170,12 +170,12 @@ impl AutopeeringConfigJsonBuilder {
 impl Default for AutopeeringConfigJsonBuilder {
     fn default() -> Self {
         Self {
-            enabled: false,
+            enabled: AUTOPEERING_ENABLED_DEFAULT,
             bind_addr: SocketAddr::new(AUTOPEERING_BIND_ADDR_DEFAULT, AUTOPEERING_BIND_PORT_DEFAULT),
             entry_nodes: Vec::default(),
-            entry_nodes_prefer_ipv6: Some(false),
-            run_as_entry_node: Some(false),
-            drop_neighbors_on_salt_update: Some(false),
+            entry_nodes_prefer_ipv6: Some(ENTRYNODES_PREFER_IPV6_DEFAULT),
+            run_as_entry_node: Some(RUN_AS_ENTRYNODE_DEFAULT),
+            drop_neighbors_on_salt_update: Some(DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT),
         }
     }
 }
@@ -220,14 +220,13 @@ impl AutopeeringConfigTomlBuilder {
 
 impl Default for AutopeeringConfigTomlBuilder {
     fn default() -> Self {
-        let json_builder = AutopeeringConfigJsonBuilder::default();
         Self {
-            enabled: json_builder.enabled,
-            bind_addr: json_builder.bind_addr,
-            entry_nodes: json_builder.entry_nodes,
-            entry_nodes_prefer_ipv6: json_builder.entry_nodes_prefer_ipv6,
-            run_as_entry_node: json_builder.run_as_entry_node,
-            drop_neighbors_on_salt_update: json_builder.drop_neighbors_on_salt_update,
+            enabled: AUTOPEERING_ENABLED_DEFAULT,
+            bind_addr: SocketAddr::new(AUTOPEERING_BIND_ADDR_DEFAULT, AUTOPEERING_BIND_PORT_DEFAULT),
+            entry_nodes: Vec::default(),
+            entry_nodes_prefer_ipv6: Some(ENTRYNODES_PREFER_IPV6_DEFAULT),
+            run_as_entry_node: Some(RUN_AS_ENTRYNODE_DEFAULT),
+            drop_neighbors_on_salt_update: Some(DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT),
         }
     }
 }

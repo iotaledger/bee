@@ -95,7 +95,7 @@ impl<V: NeighborValidator> NeighborFilterInner<V> {
 
     /// Applies the filter to a list of candidates.
     fn apply_list<'a, P: AsRef<Peer>>(&self, candidates: &'a [P]) -> Vec<&'a P> {
-        candidates.iter().filter(|c| self.ok(*c)).collect::<Vec<_>>()
+        candidates.iter().filter(|c| self.ok(c)).collect::<Vec<_>>()
     }
 }
 

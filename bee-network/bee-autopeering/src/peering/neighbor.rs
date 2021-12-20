@@ -30,7 +30,7 @@ where
     fn is_valid(&self, peer: &Peer) -> bool;
 }
 
-// A neighbor is a peer with a distance) metric.
+// A neighbor is a peer with a distance metric.
 #[derive(Clone, Debug)]
 pub(crate) struct Neighbor {
     peer: Peer,
@@ -48,6 +48,10 @@ impl Neighbor {
 
     pub(crate) fn distance(&self) -> Distance {
         self.distance
+    }
+
+    pub(crate) fn into_peer(self) -> Peer {
+        self.peer
     }
 }
 
@@ -101,19 +105,19 @@ impl<const N: usize, const INBOUND: bool> Neighborhood<N, INBOUND> {
         self.write().remove_neighbor(peer_id)
     }
 
-    /// Checks whether the candidate is a suitable neighbor.
+    /// Checks whether the candidate is a preferred neighbor.
     pub(crate) fn is_preferred(&self, candidate: &Neighbor) -> bool {
         self.write().is_preferred(candidate)
     }
 
-    /// Picks the first candidate, that is closer than the currently furthest neighbor.
+    /// Picks the first candidate that is closer than the currently furthest neighbor.
     pub(crate) fn select_from_candidate_list<'a>(&self, candidates: &'a [&'a Neighbor]) -> Option<&'a Peer> {
         self.write().select_from_candidate_list(candidates)
     }
 
     /// Removes the furthest neighbor from the neighborhood.
-    pub(crate) fn remove_furthest(&self) -> Option<Peer> {
-        self.write().remove_furthest()
+    pub(crate) fn remove_furthest_if_full(&self) -> Option<Peer> {
+        self.write().remove_furthest_if_full()
     }
 
     /// Updates all distances to the neighbors (e.g. after a salt update).
@@ -126,7 +130,7 @@ impl<const N: usize, const INBOUND: bool> Neighborhood<N, INBOUND> {
         self.write().clear();
     }
 
-    /// Returns the number of neighbors with the neighborhood.
+    /// Returns the number of neighbors within the neighborhood.
     pub(crate) fn len(&self) -> usize {
         self.read().len()
     }
@@ -168,9 +172,9 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         // Calculate the distance to that peer.
         let distance = salt_distance(&local.peer_id(), peer.peer_id(), &{
             if INBOUND {
-                local.private_salt().expect("missing private salt")
+                local.private_salt()
             } else {
-                local.public_salt().expect("missing public salt")
+                local.public_salt()
             }
         });
 
@@ -191,7 +195,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
     }
 
     fn is_preferred(&mut self, candidate: &Neighbor) -> bool {
-        if let Some(furthest) = self.find_furthest() {
+        if let Some(furthest) = self.find_furthest_if_full() {
             candidate < furthest
         } else {
             true
@@ -201,7 +205,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
     fn select_from_candidate_list<'a>(&mut self, candidates: &'a [&'a Neighbor]) -> Option<&'a Peer> {
         if candidates.is_empty() {
             None
-        } else if let Some(furthest) = self.find_furthest() {
+        } else if let Some(furthest) = self.find_furthest_if_full() {
             for candidate in candidates {
                 if *candidate < furthest {
                     return Some(candidate.peer());
@@ -214,7 +218,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
     }
 
-    fn find_furthest(&mut self) -> Option<&Neighbor> {
+    fn find_furthest_if_full(&mut self) -> Option<&Neighbor> {
         if self.neighbors.len() >= N {
             self.neighbors.sort_unstable();
             self.neighbors.last()
@@ -223,9 +227,9 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
     }
 
-    fn remove_furthest(&mut self) -> Option<Peer> {
+    fn remove_furthest_if_full(&mut self) -> Option<Peer> {
         // Note: Both methods require unique access to `self`, so we need to copy the peer id.
-        if let Some(peer_id) = self.find_furthest().map(|d| *d.peer().peer_id()) {
+        if let Some(peer_id) = self.find_furthest_if_full().map(|d| *d.peer().peer_id()) {
             self.remove_neighbor(&peer_id)
         } else {
             None
@@ -235,9 +239,9 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
     fn update_distances(&mut self, local: &Local) {
         let local_id = local.peer_id();
         let salt = if INBOUND {
-            local.private_salt().expect("missing private salt")
+            local.private_salt()
         } else {
-            local.public_salt().expect("missing public salt")
+            local.public_salt()
         };
 
         self.neighbors.iter_mut().for_each(|pd| {
@@ -276,8 +280,8 @@ impl<const N: usize, const INBOUND: bool> fmt::Display for NeighborhoodInner<N, 
 // returns the distance (uint32) between x and y by xoring the hash of x and (y + salt):
 // xor( hash(x), hash(y+salt) )[:4] as little-endian uint32
 pub(crate) fn salt_distance(peer1: &PeerId, peer2: &PeerId, salt: &Salt) -> Distance {
-    let hash1 = hash::sha256(peer1.id_bytes());
-    let hash2 = hash::sha256(&concat(peer2.id_bytes(), salt.bytes()));
+    let hash1 = hash::data_hash(peer1.id_bytes());
+    let hash2 = hash::data_hash(&concat(peer2.id_bytes(), salt.bytes()));
 
     let xored = xor(hash1, hash2);
 
@@ -308,15 +312,15 @@ mod tests {
     use super::*;
 
     fn distance(peer1: &PeerId, peer2: &PeerId) -> Distance {
-        let hash1 = hash::sha256(peer1.id_bytes());
-        let hash2 = hash::sha256(peer2.id_bytes());
+        let hash1 = hash::data_hash(peer1.id_bytes());
+        let hash2 = hash::data_hash(peer2.id_bytes());
         let xored = xor(hash1, hash2);
         Bytes::copy_from_slice(&xored[..4]).get_u32_le()
     }
 
     #[test]
     fn neighborhood_size_limit() {
-        let local = Local::new();
+        let local = Local::generate();
         let outbound_nh = Neighborhood::<2, false>::new();
         for i in 0u8..5 {
             outbound_nh.write().insert_neighbor(Peer::new_test_peer(i), &local);

@@ -4,21 +4,10 @@
 use crate::{local::salt::Salt, proto, request::Request};
 
 use base64 as bs64;
+use crypto::hashes::sha::SHA256_LEN;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 
 use std::fmt;
-
-#[derive(Debug, thiserror::Error)]
-pub(crate) enum Error {
-    #[error("Missing salt")]
-    MissingSalt,
-    #[error("Invalid salt")]
-    InvalidSalt,
-    #[error("{0}")]
-    ProtobufDecode(#[from] DecodeError),
-    #[error("{0}")]
-    ProtobufEncode(#[from] EncodeError),
-}
 
 #[derive(Clone)]
 pub(crate) struct PeeringRequest {
@@ -27,21 +16,21 @@ pub(crate) struct PeeringRequest {
 }
 
 impl PeeringRequest {
-    pub fn new(salt: Salt) -> Self {
+    pub(crate) fn new(salt: Salt) -> Self {
         let timestamp = crate::time::unix_now_secs();
 
         Self { timestamp, salt }
     }
 
-    pub fn timestamp(&self) -> u64 {
+    pub(crate) fn timestamp(&self) -> u64 {
         self.timestamp
     }
 
-    pub fn salt(&self) -> &Salt {
+    pub(crate) fn salt(&self) -> &Salt {
         &self.salt
     }
 
-    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
+    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
         let proto::PeeringRequest { timestamp, salt } = proto::PeeringRequest::decode(bytes)?;
         let proto::Salt { bytes, exp_time } = salt.ok_or(Error::MissingSalt)?;
 
@@ -54,7 +43,8 @@ impl PeeringRequest {
         })
     }
 
-    pub fn to_protobuf(&self) -> Result<BytesMut, Error> {
+    #[allow(clippy::wrong_self_convention)]
+    pub(crate) fn to_protobuf(&self) -> BytesMut {
         let peering_req = proto::PeeringRequest {
             timestamp: self.timestamp as i64,
             salt: Some(proto::Salt {
@@ -64,9 +54,11 @@ impl PeeringRequest {
         };
 
         let mut bytes = BytesMut::with_capacity(peering_req.encoded_len());
-        peering_req.encode(&mut bytes)?;
 
-        Ok(bytes)
+        // Panic: we have allocated a properly sized buffer.
+        peering_req.encode(&mut bytes).expect("encoding peering request failed");
+
+        bytes
     }
 }
 
@@ -83,42 +75,47 @@ impl fmt::Debug for PeeringRequest {
 impl Request for PeeringRequest {}
 
 pub(crate) struct PeeringResponse {
-    pub(crate) request_hash: Vec<u8>,
-    pub(crate) status: bool,
+    request_hash: [u8; SHA256_LEN],
+    status: bool,
 }
 
 impl PeeringResponse {
-    pub fn new(request_hash: Vec<u8>, status: bool) -> Self {
+    pub(crate) fn new(request_hash: [u8; SHA256_LEN], status: bool) -> Self {
         Self { request_hash, status }
     }
 
-    pub fn request_hash(&self) -> &[u8] {
+    pub(crate) fn request_hash(&self) -> &[u8] {
         &self.request_hash
     }
 
-    pub fn status(&self) -> bool {
+    pub(crate) fn status(&self) -> bool {
         self.status
     }
 
-    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
+    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
         let proto::PeeringResponse { req_hash, status } = proto::PeeringResponse::decode(bytes)?;
 
         Ok(Self {
-            request_hash: req_hash,
+            request_hash: req_hash.try_into().map_err(|_| Error::RestoreRequestHash)?,
             status,
         })
     }
 
-    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
+    #[allow(clippy::wrong_self_convention)]
+    pub(crate) fn to_protobuf(&self) -> BytesMut {
         let peering_res = proto::PeeringResponse {
-            req_hash: self.request_hash.clone(),
+            req_hash: self.request_hash.to_vec(),
             status: self.status,
         };
 
         let mut bytes = BytesMut::with_capacity(peering_res.encoded_len());
-        peering_res.encode(&mut bytes)?;
 
-        Ok(bytes)
+        // Panic: we have allocated a properly sized buffer.
+        peering_res
+            .encode(&mut bytes)
+            .expect("encoding peering response failed");
+
+        bytes
     }
 }
 
@@ -137,17 +134,17 @@ pub(crate) struct DropPeeringRequest {
 }
 
 impl DropPeeringRequest {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         let timestamp = crate::time::unix_now_secs();
 
         Self { timestamp }
     }
 
-    pub fn timestamp(&self) -> u64 {
+    pub(crate) fn timestamp(&self) -> u64 {
         self.timestamp
     }
 
-    pub fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
+    pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, DecodeError> {
         let proto::PeeringDrop { timestamp } = proto::PeeringDrop::decode(bytes)?;
 
         Ok(Self {
@@ -155,15 +152,20 @@ impl DropPeeringRequest {
         })
     }
 
-    pub fn to_protobuf(&self) -> Result<BytesMut, EncodeError> {
+    #[allow(clippy::wrong_self_convention)]
+    pub(crate) fn to_protobuf(&self) -> BytesMut {
         let peering_drop = proto::PeeringDrop {
             timestamp: self.timestamp as i64,
         };
 
         let mut bytes = BytesMut::with_capacity(peering_drop.encoded_len());
-        peering_drop.encode(&mut bytes)?;
 
-        Ok(bytes)
+        // Panic: we have allocated a properly sized buffer.
+        peering_drop
+            .encode(&mut bytes)
+            .expect("encoding drop-peering request failed");
+
+        bytes
     }
 }
 
@@ -173,4 +175,18 @@ impl fmt::Debug for DropPeeringRequest {
             .field("timestamp", &self.timestamp)
             .finish()
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum Error {
+    #[error("missing salt")]
+    MissingSalt,
+    #[error("invalid salt")]
+    InvalidSalt,
+    #[error("{0}")]
+    ProtobufDecode(#[from] DecodeError),
+    #[error("{0}")]
+    ProtobufEncode(#[from] EncodeError),
+    #[error("restore request hash")]
+    RestoreRequestHash,
 }

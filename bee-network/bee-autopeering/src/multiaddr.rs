@@ -30,10 +30,18 @@ pub enum AddressKind {
     Dns,
 }
 
-/// Go-libp2p allows Hornet to introduce a custom autopeering [`Protocol`]. In rust-libp2p we unfortunately can't do
-/// that, so what we'll do is to introduce a wrapper type, which understands Hornet's custom multiaddr, and internally
-/// stores the address part and the key part separatedly. The details are abstracted away and the behavior identical
-/// to a standard libp2p multiaddress.
+// Note:
+// Go-libp2p allows Hornet to introduce a custom autopeering [`Protocol`]. In rust-libp2p we unfortunately can't do
+// that, so what we'll do is to introduce a wrapper type, which understands Hornet's custom multiaddr, and internally
+// stores the address part and the key part separatedly. The details are abstracted away and the behavior identical
+// to a standard libp2p multiaddress.
+
+/// Represents a special type of [`Multiaddr`] used to describe peers that particpate in autopeering, i.e. make
+/// themselves discoverable by other peers.
+///
+/// Example:
+///
+/// "/dns/chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb"
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
 pub struct AutopeeringMultiaddr {
     address: Multiaddr,
@@ -49,6 +57,7 @@ impl AutopeeringMultiaddr {
 
     /// Returns the kind of this address.
     pub fn address_kind(&self) -> AddressKind {
+        // Panic: `self` must always contain a valid address.
         let kind = self.address.iter().next().expect("invalid multiaddress");
         match kind {
             Protocol::Ip4(_) => AddressKind::Ip4,
@@ -65,6 +74,7 @@ impl AutopeeringMultiaddr {
     pub fn socket_addr(&self) -> Option<SocketAddr> {
         let mut multiaddr_iter = self.address().iter();
 
+        // Panic: `self` must always contain a valid address.
         let ip_addr = match multiaddr_iter.next().expect("error extracting ip address") {
             Protocol::Ip4(ip4_addr) => IpAddr::V4(ip4_addr),
             Protocol::Ip6(ip6_addr) => IpAddr::V6(ip6_addr),
@@ -72,6 +82,7 @@ impl AutopeeringMultiaddr {
             _ => panic!("invalid multiaddr"),
         };
 
+        // Panic: `self` must always contain a valid address.
         let port = match multiaddr_iter.next().expect("error extracting port") {
             Protocol::Udp(port) => port,
             _ => panic!("invalid autopeering multiaddr"),
@@ -97,11 +108,13 @@ impl AutopeeringMultiaddr {
 
         let mut address_iter = self.address.iter();
 
+        // Panic: `self` must always contain a valid address.
         let dns = match address_iter.next().expect("error extracting ip address") {
             Protocol::Dns(dns) => dns,
             _ => return false,
         };
 
+        // Panic: `self` must always contain a valid address.
         let port = match address_iter.next().expect("error extracting port") {
             Protocol::Udp(port) => port,
             _ => panic!("invalid autopeering multiaddr"),
@@ -141,7 +154,7 @@ impl fmt::Debug for AutopeeringMultiaddr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AutopeeringMultiaddr")
             .field("address", &self.address)
-            .field("public_key", &from_pubkey_to_base58(&self.public_key))
+            .field("public_key", &pubkey_to_base58(&self.public_key))
             .finish()
     }
 }
@@ -157,7 +170,7 @@ fn format_autopeering_multiaddr(host_multiaddr: &Multiaddr, public_key: &PublicK
         "{}/{}/{}",
         host_multiaddr,
         AUTOPEERING_MULTIADDR_PROTOCOL_NAME,
-        from_pubkey_to_base58(public_key),
+        pubkey_to_base58(public_key),
     )
 }
 
@@ -173,8 +186,8 @@ impl FromStr for AutopeeringMultiaddr {
             return Err(Error::AutopeeringMultiaddr);
         }
 
-        let address = parts[0].parse().map_err(|_| Error::HostAddressPart)?;
-        let public_key = from_base58_to_pubkey(parts[1]);
+        let address = parts[0].parse().map_err(|_| Error::AutopeeringMultiaddrAddressPart)?;
+        let public_key = base58_to_pubkey(parts[1])?;
         let resolved_addrs = Vec::new();
 
         Ok(Self {
@@ -191,73 +204,75 @@ impl<'de> Visitor<'de> for AutopeeringMultiaddrVisitor {
     type Value = AutopeeringMultiaddr;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("an autopeering multiaddr")
+        formatter.write_str("autopeering multiaddr")
     }
 
     fn visit_string<E>(self, value: String) -> Result<Self::Value, E>
     where
         E: de::Error,
     {
-        Ok(value.parse().expect("failed to parse autopeering multiaddr"))
+        value.parse().map_err(de::Error::custom)
     }
 
     fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
     where
         E: de::Error,
     {
-        Ok(value.parse().expect("failed to parse autopeering multiaddr"))
+        value.parse().map_err(de::Error::custom)
     }
 
     fn visit_borrowed_str<E>(self, value: &str) -> Result<Self::Value, E>
     where
         E: de::Error,
     {
-        Ok(value.parse().expect("failed to parse autopeering multiaddr"))
+        value.parse().map_err(de::Error::custom)
     }
 }
 
-pub(crate) fn from_pubkey_to_base58(pub_key: &PublicKey) -> String {
+pub(crate) fn pubkey_to_base58(pub_key: &PublicKey) -> String {
     bs58::encode(pub_key.to_bytes()).into_string()
 }
 
-pub(crate) fn from_base58_to_pubkey(base58_pubkey: impl AsRef<str>) -> PublicKey {
-    assert!(PUBKEY_BASE58_SIZE_RANGE.contains(&base58_pubkey.as_ref().len()));
+pub(crate) fn base58_to_pubkey(base58_pubkey: impl AsRef<str>) -> Result<PublicKey, Error> {
+    if !PUBKEY_BASE58_SIZE_RANGE.contains(&base58_pubkey.as_ref().len()) {
+        return Err(Error::Base58PublicKeyEncoding);
+    }
 
     let mut bytes = [0u8; PUBLIC_KEY_LENGTH];
+
     bs58::decode(base58_pubkey.as_ref())
         .into(&mut bytes)
-        .expect("error decoding base58 pubkey");
-    PublicKey::try_from_bytes(bytes).expect("error restoring public key from bytes")
+        .map_err(|_| Error::Base58PublicKeyEncoding)?;
+
+    PublicKey::try_from_bytes(bytes).map_err(|_| Error::Base58PublicKeyEncoding)
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// Returned, if the host address part wasn't a valid multi address.
-    HostAddressPart,
+    #[error("invalid autopeering multi address address part")]
+    AutopeeringMultiaddrAddressPart,
     /// Returned, if the public key part wasn't a base58 encoded ed25519 public key.
-    PubKeyPart,
-    /// Returned, if it's not a valid autopeering multi address.
+    #[error("invalid autopeering multi address public key part")]
+    AutopeeringMultiaddrPubKeyPart,
+    /// Returned, if it's not a valid autopeering multi address for any other reason.
+    #[error("invalid autopeering multi address")]
     AutopeeringMultiaddr,
+    /// Returned, if the base58 encoding of the public key was invalid.
+    #[error("invalid base58 encoded public key")]
+    Base58PublicKeyEncoding,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    // NOTE: example taken from Hornet!
-    //
-    // ```go
-    // base58PubKey := "HmKTkSd9F6nnERBvVbr55FvL1hM5WfcLvsc9bc3hWxWc"
-    // smpl := fmt.Sprintf("/ip4/127.0.0.1/udp/14626/autopeering/%s", base58PubKey)
-    // ma, err := multiaddr.NewMultiaddr(smpl)
-    // ```
-
     #[test]
     fn convert_between_base58_and_pubkey() {
         let base58_pubkey = "4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM";
-        let pubkey = from_base58_to_pubkey(base58_pubkey);
+        let pubkey = base58_to_pubkey(base58_pubkey).unwrap();
 
-        assert_eq!(base58_pubkey, from_pubkey_to_base58(&pubkey))
+        assert_eq!(base58_pubkey, pubkey_to_base58(&pubkey))
     }
 
     #[test]
@@ -272,10 +287,6 @@ mod tests {
 
     #[test]
     fn parse_entrynode_multiaddrs() {
-        let _: AutopeeringMultiaddr =
-            "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM"
-                .parse()
-                .unwrap();
         let _: AutopeeringMultiaddr = "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb".parse().unwrap();
         let _: AutopeeringMultiaddr = "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2".parse().unwrap();
         let _: AutopeeringMultiaddr =
