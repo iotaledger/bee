@@ -167,12 +167,12 @@ pub struct ActivePeersList {
 
 impl ActivePeersList {
     pub(crate) fn read(&self) -> RwLockReadGuard<ActivePeersListInner> {
-        // Panice: we don't allow poisened locks.
+        // Panic: we don't allow poisened locks.
         self.inner.read().expect("error getting read access")
     }
 
     pub(crate) fn write(&self) -> RwLockWriteGuard<ActivePeersListInner> {
-        // Panice: we don't allow poisened locks.
+        // Panic: we don't allow poisened locks.
         self.inner.write().expect("error getting write access")
     }
 }
