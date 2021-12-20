@@ -372,19 +372,19 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
             {
                 SimpleOutput::KIND => OutputDto::Simple(
                     SimpleOutputDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
+                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize simple output: {}", e)))?,
                 ),
                 TreasuryOutput::KIND => OutputDto::Treasury(
                     TreasuryOutputDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
+                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize treasury output: {}", e)))?,
                 ),
                 ExtendedOutput::KIND => OutputDto::Extended(
                     ExtendedOutputDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
+                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize extended output: {}", e)))?,
                 ),
                 AliasOutput::KIND => OutputDto::Alias(
                     AliasOutputDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
+                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize alias output: {}", e)))?,
                 ),
                 _ => unimplemented!(),
             },
