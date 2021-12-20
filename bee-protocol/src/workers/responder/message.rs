@@ -20,7 +20,7 @@ use bee_tangle::{Tangle, TangleWorker};
 use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::info;
-use tokio::sync::mpsc;
+use tokio::sync::mpsc::{self, UnboundedSender};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible};
@@ -31,7 +31,7 @@ pub(crate) struct MessageResponderWorkerEvent {
 }
 
 pub(crate) struct MessageResponderWorker {
-    pub(crate) tx: mpsc::UnboundedSender<MessageResponderWorkerEvent>,
+    pub(crate) tx: UnboundedSender<MessageResponderWorkerEvent>,
 }
 
 #[async_trait]
@@ -53,6 +53,7 @@ where
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
+
         let tangle = node.resource::<Tangle<N::Backend>>();
         let metrics = node.resource::<NodeMetrics>();
         let peer_manager = node.resource::<PeerManager>();
@@ -65,10 +66,10 @@ where
             while let Some(MessageResponderWorkerEvent { peer_id, request }) = receiver.next().await {
                 if let Some(message) = tangle.get(&request.message_id).await {
                     Sender::<MessagePacket>::send(
+                        &MessagePacket::new(message.pack_new()),
+                        &peer_id,
                         &peer_manager,
                         &metrics,
-                        &peer_id,
-                        &MessagePacket::new(message.pack_new()),
                     );
                 }
             }

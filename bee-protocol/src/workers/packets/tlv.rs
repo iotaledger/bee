@@ -38,8 +38,8 @@ pub(crate) enum Error {
 pub(crate) fn tlv_from_bytes<P: Packet>(header: &HeaderPacket, bytes: &[u8]) -> Result<P, Error> {
     if header.packet_type != P::ID {
         return Err(Error::InvalidAdvertisedType {
-            advertised: header.packet_type,
             found: P::ID,
+            advertised: header.packet_type,
         });
     }
 

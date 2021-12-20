@@ -139,7 +139,7 @@ fn process_request_unchecked(
 
         if let Some(peer) = peer_manager.get(peer_id) {
             if (*peer).0.has_data(index) {
-                Sender::<MessageRequestPacket>::send(peer_manager, metrics, peer_id, &message_request);
+                Sender::<MessageRequestPacket>::send(&message_request, peer_id, peer_manager, metrics);
                 return;
             }
         }
@@ -152,7 +152,7 @@ fn process_request_unchecked(
 
         if let Some(peer) = peer_manager.get(peer_id) {
             if (*peer).0.maybe_has_data(index) {
-                Sender::<MessageRequestPacket>::send(peer_manager, metrics, peer_id, &message_request);
+                Sender::<MessageRequestPacket>::send(&message_request, peer_id, peer_manager, metrics);
             }
         }
     }

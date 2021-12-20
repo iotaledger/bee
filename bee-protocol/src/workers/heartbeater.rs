@@ -41,10 +41,10 @@ pub(crate) fn new_heartbeat<B: StorageBackend>(peer_manager: &PeerManager, tangl
 pub(crate) fn send_heartbeat(
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
-    to: &PeerId,
+    peer_id: &PeerId,
     heartbeat: &HeartbeatPacket,
 ) {
-    Sender::<HeartbeatPacket>::send(peer_manager, metrics, to, heartbeat);
+    Sender::<HeartbeatPacket>::send(heartbeat, peer_id, peer_manager, metrics);
 }
 
 pub(crate) fn broadcast_heartbeat<B: StorageBackend>(
