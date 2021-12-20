@@ -535,7 +535,8 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.5.2"
-source = "git+https://github.com/alex6323/bee.git?branch=cpt2-autopeering#831da6f24197a7af40f1e0a1c94945ae9510c283"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e8479555c8e9bf3cad36daf16e6a2f77771774e977276a08df4d8ac5f1dda66"
 dependencies = [
  "autocfg",
  "num-traits",

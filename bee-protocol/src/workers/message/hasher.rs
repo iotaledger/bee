@@ -16,7 +16,6 @@ use crate::{
     },
 };
 
-use bee_crypto::ternary::sponge::{Sponge, UnrolledCurlP81};
 use bee_gossip::PeerId;
 use bee_message::MessageId;
 use bee_pow::score;
