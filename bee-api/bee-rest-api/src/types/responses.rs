@@ -135,9 +135,13 @@ pub struct OutputResponse {
     pub output_index: u16,
     #[serde(rename = "isSpent")]
     pub is_spent: bool,
-    pub output: OutputDto,
+    #[serde(rename = "milestoneIndex")]
+    pub milestone_index: bool,
+    #[serde(rename = "milestoneTimestamp")]
+    pub milestone_timestamp: bool,
     #[serde(rename = "ledgerIndex", default)]
     pub ledger_index: u32,
+    pub output: OutputDto,
 }
 
 impl BodyInner for OutputResponse {}
