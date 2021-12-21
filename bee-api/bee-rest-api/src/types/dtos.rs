@@ -4,7 +4,6 @@
 use crate::types::error::Error;
 
 use bee_ledger::types::Receipt;
-
 use bee_message::{
     address::{Address, AliasAddress, Ed25519Address, NftAddress},
     input::{Input, TreasuryInput, UtxoInput},
@@ -32,7 +31,6 @@ use bee_message::{
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
     Message, MessageBuilder, MessageId,
 };
-
 #[cfg(feature = "peer")]
 use bee_protocol::types::peer::Peer;
 
@@ -112,12 +110,12 @@ pub enum PayloadDto {
 impl From<&Payload> for PayloadDto {
     fn from(value: &Payload) -> Self {
         match value {
-            Payload::Transaction(t) => PayloadDto::Transaction(Box::new(TransactionPayloadDto::from(t.as_ref()))),
-            Payload::Milestone(m) => PayloadDto::Milestone(Box::new(MilestonePayloadDto::from(m.as_ref()))),
-            Payload::Indexation(i) => PayloadDto::Indexation(Box::new(IndexationPayloadDto::from(i.as_ref()))),
-            Payload::Receipt(r) => PayloadDto::Receipt(Box::new(ReceiptPayloadDto::from(r.as_ref()))),
-            Payload::TreasuryTransaction(t) => {
-                PayloadDto::TreasuryTransaction(Box::new(TreasuryTransactionPayloadDto::from(t.as_ref())))
+            Payload::Transaction(p) => PayloadDto::Transaction(Box::new(TransactionPayloadDto::from(p.as_ref()))),
+            Payload::Milestone(p) => PayloadDto::Milestone(Box::new(MilestonePayloadDto::from(p.as_ref()))),
+            Payload::Indexation(p) => PayloadDto::Indexation(Box::new(IndexationPayloadDto::from(p.as_ref()))),
+            Payload::Receipt(p) => PayloadDto::Receipt(Box::new(ReceiptPayloadDto::from(p.as_ref()))),
+            Payload::TreasuryTransaction(p) => {
+                PayloadDto::TreasuryTransaction(Box::new(TreasuryTransactionPayloadDto::from(p.as_ref())))
             }
         }
     }
@@ -127,12 +125,12 @@ impl TryFrom<&PayloadDto> for Payload {
     type Error = Error;
     fn try_from(value: &PayloadDto) -> Result<Self, Self::Error> {
         Ok(match value {
-            PayloadDto::Transaction(t) => Payload::Transaction(Box::new(TransactionPayload::try_from(t.as_ref())?)),
-            PayloadDto::Milestone(m) => Payload::Milestone(Box::new(MilestonePayload::try_from(m.as_ref())?)),
-            PayloadDto::Indexation(i) => Payload::Indexation(Box::new(IndexationPayload::try_from(i.as_ref())?)),
-            PayloadDto::Receipt(r) => Payload::Receipt(Box::new(ReceiptPayload::try_from(r.as_ref())?)),
-            PayloadDto::TreasuryTransaction(t) => {
-                Payload::TreasuryTransaction(Box::new(TreasuryTransactionPayload::try_from(t.as_ref())?))
+            PayloadDto::Transaction(p) => Payload::Transaction(Box::new(TransactionPayload::try_from(p.as_ref())?)),
+            PayloadDto::Milestone(p) => Payload::Milestone(Box::new(MilestonePayload::try_from(p.as_ref())?)),
+            PayloadDto::Indexation(p) => Payload::Indexation(Box::new(IndexationPayload::try_from(p.as_ref())?)),
+            PayloadDto::Receipt(p) => Payload::Receipt(Box::new(ReceiptPayload::try_from(p.as_ref())?)),
+            PayloadDto::TreasuryTransaction(p) => {
+                Payload::TreasuryTransaction(Box::new(TreasuryTransactionPayload::try_from(p.as_ref())?))
             }
         })
     }
@@ -1070,20 +1068,20 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NftOutputDto {
     // Deposit address of the output.
-    address: AddressDto,
+    pub address: AddressDto,
     // Amount of IOTA tokens held by the output.
-    amount: u64,
+    pub amount: u64,
     // Native tokens held by the output.
-    native_tokens: Vec<NativeTokenDto>,
+    pub native_tokens: Vec<NativeTokenDto>,
     // Unique identifier of the NFT.
-    nft_id: NftIdDto,
+    pub nft_id: NftIdDto,
     // Binary metadata attached immutably to the NFT.
-    immutable_metadata: String,
-    feature_blocks: Vec<FeatureBlockDto>,
+    pub immutable_metadata: String,
+    pub feature_blocks: Vec<FeatureBlockDto>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct NftIdDto(String);
+pub struct NftIdDto(pub String);
 
 impl From<&NftId> for NftIdDto {
     fn from(value: &NftId) -> Self {
