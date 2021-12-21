@@ -5,8 +5,8 @@
 
 use crate::types::metrics::PeerMetrics;
 
+use bee_gossip::{Multiaddr, PeerId, PeerInfo, PeerRelation};
 use bee_message::milestone::MilestoneIndex;
-use bee_network::{Multiaddr, PeerId, PeerInfo, PeerRelation};
 
 use std::{
     sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicU8, Ordering},
