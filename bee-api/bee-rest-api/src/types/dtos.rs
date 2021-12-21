@@ -16,7 +16,8 @@ use bee_message::{
             TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
         },
         AliasId, AliasOutput, AliasOutputBuilder, ExtendedOutput, ExtendedOutputBuilder, FoundryOutput,
-        FoundryOutputBuilder, NativeToken, Output, SimpleOutput, TokenId, TokenScheme, TreasuryOutput,
+        FoundryOutputBuilder, NativeToken, NftId, NftOutput, NftOutputBuilder, Output, SimpleOutput, TokenId,
+        TokenScheme, TreasuryOutput,
     },
     parent::Parents,
     payload::{
@@ -322,6 +323,7 @@ pub enum OutputDto {
     Extended(ExtendedOutputDto),
     Alias(AliasOutputDto),
     Foundry(FoundryOutputDto),
+    Nft(NftOutputDto),
 }
 
 impl From<&Output> for OutputDto {
@@ -332,7 +334,7 @@ impl From<&Output> for OutputDto {
             Output::Extended(o) => OutputDto::Extended(o.into()),
             Output::Alias(o) => OutputDto::Alias(o.into()),
             Output::Foundry(o) => OutputDto::Foundry(o.into()),
-            Output::Nft(_) => todo!(),
+            Output::Nft(o) => OutputDto::Nft(o.into()),
         }
     }
 }
@@ -347,6 +349,7 @@ impl TryFrom<&OutputDto> for Output {
             OutputDto::Extended(o) => Ok(Output::Extended(o.try_into()?)),
             OutputDto::Alias(o) => Ok(Output::Alias(o.try_into()?)),
             OutputDto::Foundry(o) => Ok(Output::Foundry(o.try_into()?)),
+            OutputDto::Nft(o) => Ok(Output::Nft(o.try_into()?)),
         }
     }
 }
@@ -380,6 +383,10 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
                     FoundryOutputDto::deserialize(value)
                         .map_err(|e| serde::de::Error::custom(format!("can not deserialize foundry output: {}", e)))?,
                 ),
+                NftOutput::KIND => OutputDto::Nft(
+                    NftOutputDto::deserialize(value)
+                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize foundry output: {}", e)))?,
+                ),
                 _ => unimplemented!(),
             },
         )
@@ -399,6 +406,7 @@ impl Serialize for OutputDto {
             T3(&'a ExtendedOutputDto),
             T4(&'a AliasOutputDto),
             T5(&'a FoundryOutputDto),
+            T6(&'a NftOutputDto),
         }
         #[derive(Serialize)]
         struct TypedOutput<'a> {
@@ -420,6 +428,9 @@ impl Serialize for OutputDto {
             },
             OutputDto::Foundry(o) => TypedOutput {
                 output: OutputDto_::T5(o),
+            },
+            OutputDto::Nft(o) => TypedOutput {
+                output: OutputDto_::T6(o),
             },
         };
         output.serialize(serializer)
@@ -1042,6 +1053,77 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
             match value.token_scheme {
                 TokenSchemeDto::Simple => TokenScheme::Simple,
             },
+        )?;
+
+        for t in &value.native_tokens {
+            builder = builder.add_native_token(t.try_into()?);
+        }
+        for b in &value.feature_blocks {
+            builder = builder.add_feature_block(b.try_into()?);
+        }
+
+        Ok(builder.finish()?)
+    }
+}
+
+/// Describes an NFT output, a globally unique token with metadata attached.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct NftOutputDto {
+    // Deposit address of the output.
+    address: AddressDto,
+    // Amount of IOTA tokens held by the output.
+    amount: u64,
+    // Native tokens held by the output.
+    native_tokens: Vec<NativeTokenDto>,
+    // Unique identifier of the NFT.
+    nft_id: NftIdDto,
+    // Binary metadata attached immutably to the NFT.
+    immutable_metadata: String,
+    feature_blocks: Vec<FeatureBlockDto>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct NftIdDto(String);
+
+impl From<&NftId> for NftIdDto {
+    fn from(value: &NftId) -> Self {
+        Self(value.to_string())
+    }
+}
+
+impl TryFrom<&NftIdDto> for NftId {
+    type Error = Error;
+
+    fn try_from(value: &NftIdDto) -> Result<Self, Self::Error> {
+        value
+            .0
+            .parse::<NftId>()
+            .map_err(|_| Error::InvalidSemanticField("NFT id"))
+    }
+}
+
+impl From<&NftOutput> for NftOutputDto {
+    fn from(value: &NftOutput) -> Self {
+        Self {
+            address: value.address().into(),
+            amount: value.amount(),
+            native_tokens: value.native_tokens().iter().map(|x| x.into()).collect::<_>(),
+            nft_id: NftIdDto(value.nft_id().to_string()),
+            immutable_metadata: hex::encode(&value.immutable_metadata()),
+            feature_blocks: value.feature_blocks().iter().map(|x| x.into()).collect::<_>(),
+        }
+    }
+}
+
+impl TryFrom<&NftOutputDto> for NftOutput {
+    type Error = Error;
+
+    fn try_from(value: &NftOutputDto) -> Result<Self, Self::Error> {
+        let mut builder = NftOutputBuilder::new(
+            (&value.address).try_into()?,
+            value.amount,
+            (&value.nft_id).try_into()?,
+            hex::decode(&value.immutable_metadata).map_err(|_| Error::InvalidSyntaxField("immutable_metadata"))?,
         )?;
 
         for t in &value.native_tokens {
