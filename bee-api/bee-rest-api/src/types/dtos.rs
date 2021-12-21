@@ -385,7 +385,7 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
                     NftOutputDto::deserialize(value)
                         .map_err(|e| serde::de::Error::custom(format!("can not deserialize foundry output: {}", e)))?,
                 ),
-                _ => unimplemented!(),
+                _ => return Err(serde::de::Error::custom("unsupported output type")),
             },
         )
     }
@@ -698,6 +698,8 @@ pub struct ReferenceUnlockBlockDto {
 /// Describes an extended output.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ExtendedOutputDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
     // Deposit address of the output.
     pub address: AddressDto,
     // Amount of IOTA tokens held by the output.
@@ -710,6 +712,7 @@ pub struct ExtendedOutputDto {
 impl From<&ExtendedOutput> for ExtendedOutputDto {
     fn from(value: &ExtendedOutput) -> Self {
         Self {
+            kind: ExtendedOutput::KIND,
             address: value.address().into(),
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(|x| x.into()).collect::<_>(),
@@ -898,6 +901,8 @@ impl TryFrom<&FeatureBlockDto> for FeatureBlock {
 /// Describes an alias account in the ledger that can be controlled by the state and governance controllers.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AliasOutputDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
     // Amount of IOTA tokens held by the output.
     pub amount: u64,
     // Native tokens held by the output.
@@ -921,6 +926,7 @@ pub struct AliasOutputDto {
 impl From<&AliasOutput> for AliasOutputDto {
     fn from(value: &AliasOutput) -> Self {
         Self {
+            kind: AliasOutput::KIND,
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(|x| x.into()).collect::<_>(),
             alias_id: AliasIdDto(value.alias_id().to_string()),
@@ -983,6 +989,8 @@ impl TryFrom<&AliasIdDto> for AliasId {
 /// Describes a foundry output that is controlled by an alias.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FoundryOutputDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
     // Deposit address of the output.
     address: AddressDto,
     // Amount of IOTA tokens held by the output.
@@ -1009,6 +1017,7 @@ pub enum TokenSchemeDto {
 impl From<&FoundryOutput> for FoundryOutputDto {
     fn from(value: &FoundryOutput) -> Self {
         Self {
+            kind: FoundryOutput::KIND,
             address: value.address().into(),
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(|x| x.into()).collect::<_>(),
@@ -1067,6 +1076,8 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
 /// Describes an NFT output, a globally unique token with metadata attached.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NftOutputDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
     // Deposit address of the output.
     pub address: AddressDto,
     // Amount of IOTA tokens held by the output.
@@ -1103,6 +1114,7 @@ impl TryFrom<&NftIdDto> for NftId {
 impl From<&NftOutput> for NftOutputDto {
     fn from(value: &NftOutput) -> Self {
         Self {
+            kind: NftOutput::KIND,
             address: value.address().into(),
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(|x| x.into()).collect::<_>(),
