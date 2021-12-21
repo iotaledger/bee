@@ -149,22 +149,12 @@ impl<S: NodeStorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
         // Add the resources that are shared throughout the node.
         let builder = add_node_resources(builder)?;
 
-        // Initialize the gossip layer.
+        // Initialize everything.
         let (gossip_rx, builder) = initialize_gossip_layer(builder).await?;
-
-        // Initialize autopeering (if enabled).
         let (autopeering_rx, builder) = initialize_autopeering(builder).await?;
-
-        // Initialize the ledger.
         let builder = initialize_ledger(builder);
-
-        // Initialize the protocol.
         let builder = initialize_protocol(builder, gossip_rx, autopeering_rx);
-
-        // Initialize the node API.
         let builder = initialize_api(builder).await;
-
-        // Initialize the Tangle.
         let builder = initialize_tangle(builder);
 
         // Start the version checker.

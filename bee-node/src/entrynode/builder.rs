@@ -168,6 +168,7 @@ impl NodeBuilder<EntryNode> for EntryNodeBuilder {
 
         // Start all workers in topological order.
         for id in &entry_node.core.worker_order.clone() {
+            // Panic: unwrap cannot fail by design.
             worker_starts.remove(id).unwrap()(&mut entry_node).await;
         }
 

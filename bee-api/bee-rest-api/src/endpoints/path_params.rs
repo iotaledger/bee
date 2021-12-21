@@ -3,6 +3,7 @@
 
 use crate::endpoints::rejection::CustomRejection;
 
+use bee_gossip::PeerId;
 use bee_message::{
     address::{Address, Ed25519Address},
     milestone::MilestoneIndex,
@@ -10,7 +11,6 @@ use bee_message::{
     payload::transaction::TransactionId,
     MessageId,
 };
-use bee_gossip::PeerId;
 
 use warp::{reject, Filter, Rejection};
 

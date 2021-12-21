@@ -123,7 +123,7 @@ impl<S: NodeStorageBackend> Node for FullNode<S> {
                 let _ = task_fut.await;
             }
 
-            // Panic: TODO unwrap
+            // Panic: unwrapping cannot fail by design.
             self.core.worker_stops.remove(&worker_id).unwrap()(&mut self).await;
             self.resource::<Bus>().remove_listeners_by_id(worker_id);
         }

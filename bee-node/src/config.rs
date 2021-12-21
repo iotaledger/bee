@@ -120,27 +120,23 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
 
     /// Applies commandline arguments to the builder.
     pub fn apply_args(mut self, args: &ClArgs) -> Self {
-        // Overrride the log level.
+        // Override the log level.
         if let Some(log_level) = args.log_level() {
-            if self.logger_builder.is_none() {
-                self.logger_builder = Some(LoggerConfigBuilder::default());
-            }
-            // Panic: logger cannot be none at this point.
-            self.logger_builder
-                .as_mut()
-                .unwrap()
-                .level(LOGGER_STDOUT_NAME, log_level);
+            // TODO: use 'option_get_or_insert_default' once stable (see issue #82901)
+            let logger = self.logger_builder.get_or_insert(LoggerConfigBuilder::default());
+
+            logger.level(LOGGER_STDOUT_NAME, log_level);
         }
 
         // Override the entry node mode.
         if args.run_as_entry_node() {
-            if self.autopeering_builder.is_none() {
-                self.autopeering_builder = Some(AutopeeringConfigTomlBuilder::default());
-            }
-            // Panic: autopeering cannot be none at this point.
-            let autopeering_builder = self.autopeering_builder.as_mut().unwrap();
-            autopeering_builder.enabled = true;
-            autopeering_builder.run_as_entry_node = Some(true);
+            // TODO: use 'option_get_or_insert_default' once stable (see issue #82901)
+            let autopeering = self
+                .autopeering_builder
+                .get_or_insert(AutopeeringConfigTomlBuilder::default());
+
+            autopeering.enabled = true;
+            autopeering.run_as_entry_node = Some(true);
         }
 
         self
