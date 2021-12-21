@@ -15,8 +15,8 @@ use bee_message::{
             FeatureBlock, IndexationFeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock,
             TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
         },
-        AliasId, AliasOutput, AliasOutputBuilder, ExtendedOutput, ExtendedOutputBuilder, NativeToken, Output,
-        SimpleOutput, TokenId, TreasuryOutput,
+        AliasId, AliasOutput, AliasOutputBuilder, ExtendedOutput, ExtendedOutputBuilder, FoundryOutput,
+        FoundryOutputBuilder, NativeToken, Output, SimpleOutput, TokenId, TokenScheme, TreasuryOutput,
     },
     parent::Parents,
     payload::{
@@ -321,28 +321,17 @@ pub enum OutputDto {
     Treasury(TreasuryOutputDto),
     Extended(ExtendedOutputDto),
     Alias(AliasOutputDto),
+    Foundry(FoundryOutputDto),
 }
 
 impl From<&Output> for OutputDto {
     fn from(value: &Output) -> Self {
         match value {
-            Output::Simple(s) => OutputDto::Simple(SimpleOutputDto {
-                kind: SimpleOutput::KIND,
-                address: s.address().into(),
-                amount: s.amount(),
-            }),
-            Output::Treasury(t) => OutputDto::Treasury(TreasuryOutputDto {
-                kind: TreasuryOutput::KIND,
-                amount: t.amount(),
-            }),
-            Output::Extended(e) => OutputDto::Extended(ExtendedOutputDto {
-                address: e.address().into(),
-                amount: e.amount(),
-                native_tokens: e.native_tokens().iter().map(|o| o.into()).collect(),
-                feature_blocks: e.feature_blocks().iter().map(|o| o.into()).collect(),
-            }),
-            Output::Alias(_) => todo!(),
-            Output::Foundry(_) => todo!(),
+            Output::Simple(o) => OutputDto::Simple(o.into()),
+            Output::Treasury(o) => OutputDto::Treasury(o.into()),
+            Output::Extended(o) => OutputDto::Extended(o.into()),
+            Output::Alias(o) => OutputDto::Alias(o.into()),
+            Output::Foundry(o) => OutputDto::Foundry(o.into()),
             Output::Nft(_) => todo!(),
         }
     }
@@ -353,10 +342,11 @@ impl TryFrom<&OutputDto> for Output {
 
     fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
         match value {
-            OutputDto::Simple(s) => Ok(Output::Simple(SimpleOutput::new((&s.address).try_into()?, s.amount)?)),
-            OutputDto::Treasury(t) => Ok(Output::Treasury(TreasuryOutput::new(t.amount)?)),
-            OutputDto::Extended(e) => Ok(Output::Extended(e.try_into()?)),
-            OutputDto::Alias(a) => Ok(Output::Alias(a.try_into()?)),
+            OutputDto::Simple(o) => Ok(Output::Simple(o.try_into()?)),
+            OutputDto::Treasury(o) => Ok(Output::Treasury(o.try_into()?)),
+            OutputDto::Extended(o) => Ok(Output::Extended(o.try_into()?)),
+            OutputDto::Alias(o) => Ok(Output::Alias(o.try_into()?)),
+            OutputDto::Foundry(o) => Ok(Output::Foundry(o.try_into()?)),
         }
     }
 }
@@ -386,6 +376,10 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
                     AliasOutputDto::deserialize(value)
                         .map_err(|e| serde::de::Error::custom(format!("can not deserialize alias output: {}", e)))?,
                 ),
+                FoundryOutput::KIND => OutputDto::Foundry(
+                    FoundryOutputDto::deserialize(value)
+                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize foundry output: {}", e)))?,
+                ),
                 _ => unimplemented!(),
             },
         )
@@ -404,6 +398,7 @@ impl Serialize for OutputDto {
             T2(&'a TreasuryOutputDto),
             T3(&'a ExtendedOutputDto),
             T4(&'a AliasOutputDto),
+            T5(&'a FoundryOutputDto),
         }
         #[derive(Serialize)]
         struct TypedOutput<'a> {
@@ -423,6 +418,9 @@ impl Serialize for OutputDto {
             OutputDto::Alias(o) => TypedOutput {
                 output: OutputDto_::T4(o),
             },
+            OutputDto::Foundry(o) => TypedOutput {
+                output: OutputDto_::T5(o),
+            },
         };
         output.serialize(serializer)
     }
@@ -435,6 +433,24 @@ pub struct SimpleOutputDto {
     pub kind: u8,
     pub address: AddressDto,
     pub amount: u64,
+}
+
+impl From<&SimpleOutput> for SimpleOutputDto {
+    fn from(value: &SimpleOutput) -> Self {
+        Self {
+            kind: SimpleOutput::KIND,
+            address: value.address().into(),
+            amount: value.amount(),
+        }
+    }
+}
+
+impl TryFrom<&SimpleOutputDto> for SimpleOutput {
+    type Error = Error;
+
+    fn try_from(value: &SimpleOutputDto) -> Result<Self, Self::Error> {
+        Ok(SimpleOutput::new((&value.address).try_into()?, value.amount)?)
+    }
 }
 
 /// Describes all the different address types.
@@ -561,6 +577,23 @@ pub struct TreasuryOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
     pub amount: u64,
+}
+
+impl From<&TreasuryOutput> for TreasuryOutputDto {
+    fn from(value: &TreasuryOutput) -> Self {
+        Self {
+            kind: TreasuryOutput::KIND,
+            amount: value.amount(),
+        }
+    }
+}
+
+impl TryFrom<&TreasuryOutputDto> for TreasuryOutput {
+    type Error = Error;
+
+    fn try_from(value: &TreasuryOutputDto) -> Result<Self, Self::Error> {
+        Ok(Self::new(value.amount)?)
+    }
 }
 
 /// Describes all the different unlock types.
@@ -935,6 +968,90 @@ impl TryFrom<&AliasIdDto> for AliasId {
             .0
             .parse::<AliasId>()
             .map_err(|_| Error::InvalidSemanticField("alias id"))
+    }
+}
+
+/// Describes a foundry output that is controlled by an alias.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct FoundryOutputDto {
+    // Deposit address of the output.
+    address: AddressDto,
+    // Amount of IOTA tokens held by the output.
+    amount: u64,
+    // Native tokens held by the output.
+    native_tokens: Vec<NativeTokenDto>,
+    // The serial number of the foundry with respect to the controlling alias.
+    serial_number: u32,
+    // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
+    token_tag: String,
+    // Circulating supply of tokens controlled by this foundry.
+    circulating_supply: U256Dto,
+    // Maximum supply of tokens controlled by this foundry.
+    maximum_supply: U256Dto,
+    token_scheme: TokenSchemeDto,
+    feature_blocks: Vec<FeatureBlockDto>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum TokenSchemeDto {
+    Simple = 0,
+}
+
+impl From<&FoundryOutput> for FoundryOutputDto {
+    fn from(value: &FoundryOutput) -> Self {
+        Self {
+            address: value.address().into(),
+            amount: value.amount(),
+            native_tokens: value.native_tokens().iter().map(|x| x.into()).collect::<_>(),
+            serial_number: value.serial_number(),
+            token_tag: hex::encode(value.token_tag()),
+            circulating_supply: U256Dto(value.circulating_supply().to_string()),
+            maximum_supply: U256Dto(value.maximum_supply().to_string()),
+            token_scheme: match value.token_scheme() {
+                TokenScheme::Simple => TokenSchemeDto::Simple,
+            },
+            feature_blocks: value.feature_blocks().iter().map(|x| x.into()).collect::<_>(),
+        }
+    }
+}
+
+impl TryFrom<&FoundryOutputDto> for FoundryOutput {
+    type Error = Error;
+
+    fn try_from(value: &FoundryOutputDto) -> Result<Self, Self::Error> {
+        let mut builder = FoundryOutputBuilder::new(
+            (&value.address).try_into()?,
+            value.amount,
+            value.serial_number,
+            {
+                let mut decoded_token_tag = [0u8; 12];
+                hex::decode_to_slice(&value.token_tag, &mut decoded_token_tag as &mut [u8])
+                    .map_err(|_| Error::InvalidSyntaxField("token_tag"))?;
+                decoded_token_tag
+            },
+            value
+                .circulating_supply
+                .0
+                .parse::<U256>()
+                .map_err(|_| Error::InvalidSyntaxField("circulating_supply"))?,
+            value
+                .maximum_supply
+                .0
+                .parse::<U256>()
+                .map_err(|_| Error::InvalidSyntaxField("maximum_supply"))?,
+            match value.token_scheme {
+                TokenSchemeDto::Simple => TokenScheme::Simple,
+            },
+        )?;
+
+        for t in &value.native_tokens {
+            builder = builder.add_native_token(t.try_into()?);
+        }
+        for b in &value.feature_blocks {
+            builder = builder.add_feature_block(b.try_into()?);
+        }
+
+        Ok(builder.finish()?)
     }
 }
 
