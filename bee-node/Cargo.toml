@@ -13,7 +13,6 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-autopeering = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "auth" ] }
-bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
 bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "workers" ] }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
 bee-gossip = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "full" ] }
@@ -30,7 +29,6 @@ anymap = { version = "0.12.1", default-features = false }
 async-trait = { version = "0.1.51", default-features = false }
 cap = { version = "0.1.0", default-features = false, optional = true }
 chrono = { version = "0.4.19", default-features = false }
-console-subscriber = { git = "https://github.com/tokio-rs/console.git", branch = "main", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false }
 fxhash = { version = "0.2.1", default-features = false }
 hex = { version = "0.4.3", default-features = false }
@@ -51,7 +49,6 @@ tokio = { version = "1.12.0", default-features = false, features = [ "signal", "
 tokio-stream = { version = "0.1.7", default-features = false }
 toml = { version = "0.5.8", default-features = false }
 tracing = { version = "0.1.29", default-features = false, optional = true }
-tracing-subscriber = { version = "0.2.25", default-features = false, features = [ "fmt", "registry", "env-filter" ], optional = true }
 warp = { version = "0.3.1", default-features = false }
 warp-reverse-proxy = { version = "0.4.0", default-features = false, optional = true }
 
@@ -66,7 +63,6 @@ path = "src/main.rs"
 [features]
 default = [ "rocksdb" ]
 
-tokio-console = [ "console-subscriber", "tokio/tracing", "tracing", "tracing-subscriber" ]
 dashboard = [ "cap", "mime_guess", "rust-embed", "serde_repr", "warp-reverse-proxy" ]
 rocksdb = [ "bee-storage-rocksdb" ]
 sled = [ "bee-storage-sled" ]
