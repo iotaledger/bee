@@ -17,7 +17,7 @@ use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 use bee_tangle::Tangle;
 
-use warp::{reject, Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
@@ -34,7 +34,7 @@ pub(crate) fn filter<B: StorageBackend>(
     allowed_ips: Box<[IpAddr]>,
     storage: ResourceHandle<B>,
     tangle: ResourceHandle<Tangle<B>>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(has_permission(
@@ -45,6 +45,7 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(with_storage(storage))
         .and(with_tangle(tangle))
         .and_then(transaction_included_message)
+        .boxed()
 }
 
 pub(crate) async fn transaction_included_message<B: StorageBackend>(

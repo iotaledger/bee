@@ -14,7 +14,7 @@ use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::AsIterator;
 
-use warp::{Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
@@ -26,12 +26,13 @@ pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     storage: ResourceHandle<B>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_RECEIPTS, public_routes, allowed_ips))
         .and(with_storage(storage))
         .and_then(|storage| async move { receipts(storage) })
+        .boxed()
 }
 
 pub(crate) fn receipts<B: StorageBackend>(storage: ResourceHandle<B>) -> Result<impl Reply, Rejection> {

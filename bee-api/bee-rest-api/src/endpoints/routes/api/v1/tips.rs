@@ -12,7 +12,7 @@ use crate::{
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 
-use warp::{reject, Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
@@ -24,12 +24,13 @@ pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     tangle: ResourceHandle<Tangle<B>>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_TIPS, public_routes, allowed_ips))
         .and(with_tangle(tangle))
         .and_then(tips)
+        .boxed()
 }
 
 pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<Tangle<B>>) -> Result<impl Reply, Rejection> {
