@@ -20,7 +20,7 @@ use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
 use serde_json::Value as JsonValue;
-use warp::{http::StatusCode, reject, Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
@@ -33,7 +33,7 @@ pub(crate) fn filter(
     allowed_ips: Box<[IpAddr]>,
     peer_manager: ResourceHandle<PeerManager>,
     network_command_sender: ResourceHandle<NetworkCommandSender>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::post())
         .and(has_permission(ROUTE_ADD_PEER, public_routes, allowed_ips))
@@ -41,6 +41,7 @@ pub(crate) fn filter(
         .and(with_peer_manager(peer_manager))
         .and(with_network_command_sender(network_command_sender))
         .and_then(add_peer)
+        .boxed()
 }
 
 pub(crate) async fn add_peer(

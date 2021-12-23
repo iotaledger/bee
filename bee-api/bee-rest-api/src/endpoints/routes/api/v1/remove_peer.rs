@@ -9,7 +9,7 @@ use crate::endpoints::{
 use bee_gossip::{Command::RemovePeer, NetworkCommandSender, PeerId};
 use bee_runtime::resource::ResourceHandle;
 
-use warp::{http::StatusCode, reject, Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
@@ -24,12 +24,13 @@ pub(crate) fn filter(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     network_command_sender: ResourceHandle<NetworkCommandSender>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::delete())
         .and(has_permission(ROUTE_REMOVE_PEER, public_routes, allowed_ips))
         .and(with_network_command_sender(network_command_sender))
         .and_then(remove_peer)
+        .boxed()
 }
 
 pub(crate) async fn remove_peer(

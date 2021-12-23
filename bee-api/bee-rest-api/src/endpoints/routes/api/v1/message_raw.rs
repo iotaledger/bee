@@ -11,7 +11,7 @@ use bee_message::MessageId;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 
-use warp::{http::Response, reject, Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, http::Response, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
@@ -27,12 +27,13 @@ pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     tangle: ResourceHandle<Tangle<B>>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_RAW, public_routes, allowed_ips))
         .and(with_tangle(tangle))
         .and_then(message_raw)
+        .boxed()
 }
 
 pub async fn message_raw<B: StorageBackend>(

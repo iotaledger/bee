@@ -24,7 +24,7 @@ use futures::channel::oneshot;
 use log::error;
 use serde_json::Value as JsonValue;
 use tokio::sync::mpsc;
-use warp::{http::StatusCode, reject, Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
@@ -40,28 +40,31 @@ pub(crate) fn filter<B: StorageBackend>(
     network_id: NetworkId,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    self::path().and(warp::post()).and(
-        (warp::header::exact("content-type", "application/json")
-            .and(has_permission(
-                ROUTE_SUBMIT_MESSAGE,
-                public_routes.clone(),
-                allowed_ips.clone(),
-            ))
-            .and(warp::body::json())
-            .and(with_tangle(tangle.clone()))
-            .and(with_message_submitter(message_submitter.clone()))
-            .and(with_network_id(network_id))
-            .and(with_rest_api_config(rest_api_config))
-            .and(with_protocol_config(protocol_config))
-            .and_then(submit_message))
-        .or(warp::header::exact("content-type", "application/octet-stream")
-            .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
-            .and(warp::body::bytes())
-            .and(with_tangle(tangle))
-            .and(with_message_submitter(message_submitter))
-            .and_then(submit_message_raw)),
-    )
+) -> BoxedFilter<(impl Reply,)> {
+    self::path()
+        .and(warp::post())
+        .and(
+            (warp::header::exact("content-type", "application/json")
+                .and(has_permission(
+                    ROUTE_SUBMIT_MESSAGE,
+                    public_routes.clone(),
+                    allowed_ips.clone(),
+                ))
+                .and(warp::body::json())
+                .and(with_tangle(tangle.clone()))
+                .and(with_message_submitter(message_submitter.clone()))
+                .and(with_network_id(network_id))
+                .and(with_rest_api_config(rest_api_config))
+                .and(with_protocol_config(protocol_config))
+                .and_then(submit_message))
+            .or(warp::header::exact("content-type", "application/octet-stream")
+                .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
+                .and(warp::body::bytes())
+                .and(with_tangle(tangle))
+                .and(with_message_submitter(message_submitter))
+                .and_then(submit_message_raw)),
+        )
+        .boxed()
 }
 
 pub(crate) async fn submit_message<B: StorageBackend>(

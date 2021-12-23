@@ -18,7 +18,7 @@ use bee_message::{address::Ed25519Address, output::OutputId, prelude::Address};
 use futures::channel::oneshot;
 use log::error;
 use tokio::sync::mpsc;
-use warp::{reject, Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
@@ -35,12 +35,13 @@ pub(crate) fn filter(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_OUTPUTS_ED25519, public_routes, allowed_ips))
         .and(with_consensus_worker(consensus_worker))
         .and_then(|addr, consensus_worker| async move { outputs_ed25519(addr, consensus_worker).await })
+        .boxed()
 }
 
 pub(crate) async fn outputs_ed25519(

@@ -23,7 +23,7 @@ use bee_tangle::Tangle;
 use futures::channel::oneshot;
 use serde_json::Value as JsonValue;
 use tokio::time::timeout;
-use warp::{reject, Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::{
     any::TypeId,
@@ -47,7 +47,7 @@ pub(crate) fn filter<B: StorageBackend>(
     message_requester: MessageRequesterWorker,
     requested_messages: ResourceHandle<RequestedMessages>,
     rest_api_config: RestApiConfig,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::post())
         .and(has_permission(ROUTE_WHITE_FLAG, public_routes, allowed_ips))
@@ -59,6 +59,7 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(with_requested_messages(requested_messages))
         .and(with_rest_api_config(rest_api_config))
         .and_then(white_flag)
+        .boxed()
 }
 
 pub(crate) async fn white_flag<B: StorageBackend>(

@@ -16,7 +16,7 @@ use bee_message::{
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
-use warp::{reject, Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::{collections::HashMap, net::IpAddr};
 
@@ -28,7 +28,7 @@ pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     storage: ResourceHandle<B>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGES_FIND, public_routes, allowed_ips))
@@ -42,6 +42,7 @@ pub(crate) fn filter<B: StorageBackend>(
         }))
         .and(with_storage(storage))
         .and_then(|index, storage| async move { messages_find(index, storage) })
+        .boxed()
 }
 
 pub(crate) fn messages_find<B: StorageBackend>(

@@ -13,7 +13,7 @@ use bee_gossip::PeerId;
 use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
-use warp::{reject, Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
@@ -28,12 +28,13 @@ pub(crate) fn filter(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     peer_manager: ResourceHandle<PeerManager>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_PEER, public_routes, allowed_ips))
         .and(with_peer_manager(peer_manager))
         .and_then(peer)
+        .boxed()
 }
 
 pub(crate) async fn peer(peer_id: PeerId, peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Rejection> {

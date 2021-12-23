@@ -12,7 +12,7 @@ use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 
-use warp::{http::StatusCode, Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, http::StatusCode, Filter, Reply};
 
 use std::{
     convert::Infallible,
@@ -32,13 +32,14 @@ pub(crate) fn filter<B: StorageBackend>(
     allowed_ips: Box<[IpAddr]>,
     tangle: ResourceHandle<Tangle<B>>,
     peer_manager: ResourceHandle<PeerManager>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_HEALTH, public_routes, allowed_ips))
         .and(with_tangle(tangle))
         .and(with_peer_manager(peer_manager))
         .and_then(health)
+        .boxed()
 }
 
 pub(crate) async fn health<B: StorageBackend>(

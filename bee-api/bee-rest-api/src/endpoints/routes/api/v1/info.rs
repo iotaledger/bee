@@ -20,7 +20,7 @@ use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
 
-use warp::{Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, Filter, Reply};
 
 use std::{convert::Infallible, net::IpAddr};
 
@@ -39,7 +39,7 @@ pub(crate) fn filter<B: StorageBackend>(
     protocol_config: ProtocolConfig,
     node_info: ResourceHandle<NodeInfo>,
     peer_manager: ResourceHandle<PeerManager>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_INFO, public_routes, allowed_ips))
@@ -51,6 +51,7 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(with_node_info(node_info))
         .and(with_peer_manager(peer_manager))
         .and_then(info)
+        .boxed()
 }
 
 pub(crate) async fn info<B: StorageBackend>(

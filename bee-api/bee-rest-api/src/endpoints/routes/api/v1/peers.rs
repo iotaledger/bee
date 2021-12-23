@@ -9,7 +9,7 @@ use crate::{
 use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
-use warp::{Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
 use std::{convert::Infallible, net::IpAddr};
 
@@ -21,12 +21,13 @@ pub(crate) fn filter(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     peer_manager: ResourceHandle<PeerManager>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_PEERS, public_routes, allowed_ips))
         .and(with_peer_manager(peer_manager))
         .and_then(peers)
+        .boxed()
 }
 
 pub(crate) async fn peers(peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Infallible> {
