@@ -160,8 +160,8 @@ impl Runnable for IncomingPacketHandler {
                             // Decode the packet.
                             let packet = match Packet::from_protobuf(&packet_bytes[..n]) {
                                 Ok(packet) => packet,
-                                Err(_) => {
-                                    log::trace!("Error decoding incoming packet from {}. Ignoring packet.", peer_addr);
+                                Err(e) => {
+                                    log::trace!("Error decoding incoming packet from {}. {:?}. Ignoring packet.", peer_addr, e);
                                     continue 'recv;
                                 }
                             };
@@ -169,8 +169,8 @@ impl Runnable for IncomingPacketHandler {
                             // Unmarshal the message.
                             let (msg_type, msg_bytes) = match unmarshal(packet.msg_bytes()) {
                                 Ok((msg_type, msg_bytes)) => (msg_type, msg_bytes),
-                                Err(_) => {
-                                    log::trace!("Error unmarshalling incoming message from {}. Ignoring packet.", peer_addr);
+                                Err(e) => {
+                                    log::trace!("Error unmarshalling incoming message from {}. {:?}. Ignoring packet.", peer_addr, e);
                                     continue 'recv;
                                 }
                             };
