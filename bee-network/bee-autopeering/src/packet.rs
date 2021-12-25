@@ -72,7 +72,7 @@ impl Packet {
         let signature = Signature::from_bytes(signature.try_into().map_err(|_| Error::RestoreSignature)?);
 
         Ok(Self {
-            msg_type: num::FromPrimitive::from_u8(r#type as u8).ok_or(Error::UnknownMessageType)?,
+            msg_type: num::FromPrimitive::from_u8(r#type as u8).ok_or(Error::UnknownMessageType(r#type as u8))?,
             msg_bytes: data.to_vec(),
             public_key,
             signature,
@@ -119,8 +119,8 @@ pub(crate) enum Error {
     RestorePublicKey,
     #[error("failed to restore signature")]
     RestoreSignature,
-    #[error("unknown message type")]
-    UnknownMessageType,
+    #[error("unknown message type {0}")]
+    UnknownMessageType(u8),
 }
 
 /// The possible types of messages stored in a packet.
