@@ -3,6 +3,7 @@
 
 use bee_common::packable::Packable as OldPackable;
 use bee_message::{parent::Parents, Error, MessageId};
+use bee_packable::bounded::TryIntoBoundedU8Error;
 use bee_test::rand::message::{rand_message_id, rand_message_ids};
 
 use std::ops::Deref;
@@ -22,7 +23,7 @@ fn new_valid_deref() {
     let inner = rand_message_ids(8);
     let parents = Parents::new(inner.clone()).unwrap();
 
-    assert_eq!(parents.deref(), &inner);
+    assert_eq!(parents.deref(), &inner.into_boxed_slice());
 }
 
 #[test]
@@ -35,7 +36,10 @@ fn new_invalid_more_than_max() {
         inner.sort();
     }
 
-    assert!(matches!(Parents::new(inner), Err(Error::InvalidParentsCount(9))));
+    assert!(matches!(
+        Parents::new(inner),
+        Err(Error::InvalidParentCount(TryIntoBoundedU8Error::Invalid(9)))
+    ));
 }
 
 #[test]
@@ -80,7 +84,7 @@ fn pack_unpack_invalid_less_than_min() {
 
     assert!(matches!(
         Parents::unpack(&mut bytes.as_slice()),
-        Err(Error::InvalidParentsCount(0))
+        Err(Error::InvalidParentCount(TryIntoBoundedU8Error::Invalid(0)))
     ));
 }
 
@@ -94,7 +98,7 @@ fn pack_unpack_invalid_more_than_max() {
 
     assert!(matches!(
         Parents::unpack(&mut bytes.as_slice()),
-        Err(Error::InvalidParentsCount(9))
+        Err(Error::InvalidParentCount(TryIntoBoundedU8Error::Invalid(9)))
     ));
 }
 

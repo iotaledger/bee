@@ -9,10 +9,13 @@ use bee_common::{
     ord::is_unique_sorted,
     packable::{Packable as OldPackable, Read, Write},
 };
+use bee_packable::{bounded::BoundedU8, error::UnpackErrorExt, prefix::BoxedSlicePrefix};
 
 use derive_more::Deref;
 
 use core::ops::RangeInclusive;
+
+pub(crate) type ParentCount = BoundedU8<{ *Parents::COUNT_RANGE.start() }, { *Parents::COUNT_RANGE.end() }>;
 
 /// A [`Message`](crate::Message)'s [`Parents`] are the [`MessageId`]s of the messages it directly approves.
 ///
@@ -23,24 +26,23 @@ use core::ops::RangeInclusive;
 #[derive(Clone, Debug, Eq, PartialEq, Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[deref(forward)]
-pub struct Parents(Box<[MessageId]>);
+pub struct Parents(BoxedSlicePrefix<MessageId, ParentCount>);
 
 #[allow(clippy::len_without_is_empty)]
 impl Parents {
     /// The range representing the valid number of parents.
-    pub const COUNT_RANGE: RangeInclusive<usize> = 1..=8;
+    pub const COUNT_RANGE: RangeInclusive<u8> = 1..=8;
 
     /// Creates new [`Parents`].
     pub fn new(inner: Vec<MessageId>) -> Result<Self, Error> {
-        if !Parents::COUNT_RANGE.contains(&inner.len()) {
-            return Err(Error::InvalidParentsCount(inner.len()));
-        }
+        let inner: BoxedSlicePrefix<MessageId, ParentCount> =
+            inner.into_boxed_slice().try_into().map_err(Error::InvalidParentCount)?;
 
         if !is_unique_sorted(inner.iter().map(AsRef::as_ref)) {
             return Err(Error::ParentsNotUniqueSorted);
         }
 
-        Ok(Self(inner.into_boxed_slice()))
+        Ok(Self(inner))
     }
 
     /// Returns the number of parents.
@@ -51,6 +53,29 @@ impl Parents {
     /// Returns an iterator over the parents.
     pub fn iter(&self) -> impl ExactSizeIterator<Item = &MessageId> + '_ {
         self.0.iter()
+    }
+}
+
+impl bee_packable::Packable for Parents {
+    type UnpackError = Error;
+
+    fn pack<P: bee_packable::packer::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.0.pack(packer)
+    }
+
+    fn unpack<U: bee_packable::unpacker::Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, bee_packable::error::UnpackError<Self::UnpackError, U::Error>> {
+        let inner = BoxedSlicePrefix::<MessageId, ParentCount>::unpack::<_, VERIFY>(unpacker)
+            .map_packable_err(|err| Error::InvalidParentCount(err.into_prefix().into()))?;
+
+        if !is_unique_sorted(inner.iter().map(AsRef::as_ref)) {
+            return Err(bee_packable::error::UnpackError::Packable(
+                Error::ParentsNotUniqueSorted,
+            ));
+        }
+
+        Ok(Self(inner))
     }
 }
 
@@ -72,13 +97,15 @@ impl OldPackable for Parents {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let parents_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
+        let parents_len = u8::unpack_inner::<R, CHECK>(reader)?;
 
         if CHECK && !Parents::COUNT_RANGE.contains(&parents_len) {
-            return Err(Error::InvalidParentsCount(parents_len));
+            return Err(Error::InvalidParentCount(
+                ParentCount::try_from(usize::from(parents_len)).unwrap_err(),
+            ));
         }
 
-        let mut inner = Vec::with_capacity(parents_len);
+        let mut inner = Vec::with_capacity(parents_len.into());
         for _ in 0..parents_len {
             inner.push(MessageId::unpack_inner::<R, CHECK>(reader)?);
         }
