@@ -3,7 +3,7 @@
 
 use crate::{payload::milestone::MilestoneId, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use derive_more::{Deref, From};
 
@@ -51,7 +51,7 @@ impl core::fmt::Debug for TreasuryInput {
     }
 }
 
-impl Packable for TreasuryInput {
+impl OldPackable for TreasuryInput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

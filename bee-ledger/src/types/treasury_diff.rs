@@ -3,7 +3,7 @@
 
 use crate::types::error::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::payload::milestone::MilestoneId;
 
 /// Wraps together the identifiers of the milestones that created and consumed treasury outputs.
@@ -30,7 +30,7 @@ impl TreasuryDiff {
     }
 }
 
-impl Packable for TreasuryDiff {
+impl OldPackable for TreasuryDiff {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

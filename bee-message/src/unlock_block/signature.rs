@@ -5,7 +5,7 @@ use crate::{signature::Signature, Error};
 
 use derive_more::{Deref, From};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// An [`UnlockBlock`](crate::unlock_block::UnlockBlock) which is used to unlock a signature locked
 /// [`Input`](crate::input::Input).
@@ -30,7 +30,7 @@ impl SignatureUnlockBlock {
     }
 }
 
-impl Packable for SignatureUnlockBlock {
+impl OldPackable for SignatureUnlockBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

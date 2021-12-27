@@ -6,7 +6,7 @@ use crate::{
     flags::Flags,
 };
 
-use bee_common::packable::{OptionError, Packable, Read, Write};
+use bee_common::packable::{OptionError, Packable as OldPackable, Read, Write};
 use bee_message::{milestone::MilestoneIndex, MessageId};
 
 use serde::Serialize;
@@ -152,9 +152,9 @@ pub enum MessageMetadataError {
     /// An IO error occurred.
     Io(std::io::Error),
     /// A packing error occurred.
-    OptionIndex(<Option<MilestoneIndex> as Packable>::Error),
+    OptionIndex(<Option<MilestoneIndex> as OldPackable>::Error),
     /// A packing error occurred.
-    OptionIndexId(<Option<IndexId> as Packable>::Error),
+    OptionIndexId(<Option<IndexId> as OldPackable>::Error),
     /// An error relating to a conflict reason occurred.
     Conflict(ConflictError),
 }
@@ -177,7 +177,7 @@ impl From<OptionError<IndexIdError>> for MessageMetadataError {
     }
 }
 
-impl Packable for MessageMetadata {
+impl OldPackable for MessageMetadata {
     type Error = MessageMetadataError;
 
     fn packed_len(&self) -> usize {
@@ -265,7 +265,7 @@ impl PartialEq for IndexId {
     }
 }
 
-impl Packable for IndexId {
+impl OldPackable for IndexId {
     type Error = IndexIdError;
 
     fn packed_len(&self) -> usize {

@@ -3,7 +3,7 @@
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 const ED25519_PUBLIC_KEY_LENGTH: usize = 32;
 const ED25519_SIGNATURE_LENGTH: usize = 64;
@@ -37,7 +37,7 @@ impl Ed25519Signature {
     }
 }
 
-impl Packable for Ed25519Signature {
+impl OldPackable for Ed25519Signature {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

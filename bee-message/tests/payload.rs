@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
+use bee_common::packable::Packable as OldPackable;
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput, UtxoInput},
@@ -67,7 +67,7 @@ fn transaction() {
     assert_eq!(payload.kind(), 0);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::Transaction(_)));
-    assert_eq!(payload, Packable::unpack(&mut packed.as_slice()).unwrap());
+    assert_eq!(payload, OldPackable::unpack(&mut packed.as_slice()).unwrap());
 }
 
 #[test]
@@ -94,7 +94,7 @@ fn milestone() {
     assert_eq!(payload.kind(), 1);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::Milestone(_)));
-    assert_eq!(payload, Packable::unpack(&mut packed.as_slice()).unwrap());
+    assert_eq!(payload, OldPackable::unpack(&mut packed.as_slice()).unwrap());
 }
 
 #[test]
@@ -140,7 +140,7 @@ fn receipt() {
     assert_eq!(payload.kind(), 3);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::Receipt(_)));
-    assert_eq!(payload, Packable::unpack(&mut packed.as_slice()).unwrap());
+    assert_eq!(payload, OldPackable::unpack(&mut packed.as_slice()).unwrap());
 }
 
 #[test]
@@ -157,5 +157,5 @@ fn treasury_transaction() {
     assert_eq!(payload.kind(), 4);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::TreasuryTransaction(_)));
-    assert_eq!(payload, Packable::unpack(&mut packed.as_slice()).unwrap());
+    assert_eq!(payload, OldPackable::unpack(&mut packed.as_slice()).unwrap());
 }

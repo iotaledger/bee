@@ -10,7 +10,7 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 ///
 pub struct ExtendedOutputBuilder {
@@ -140,7 +140,7 @@ impl ExtendedOutput {
     }
 }
 
-impl Packable for ExtendedOutput {
+impl OldPackable for ExtendedOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

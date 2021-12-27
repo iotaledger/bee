@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
+use bee_common::packable::Packable as OldPackable;
 use bee_message::signature::Ed25519Signature;
 
 const ED25519_PUBLIC_KEY: &str = "1da5ddd11ba3f961acab68fafee3177d039875eaa94ac5fdbff8b53f0c50bfb9";
@@ -29,5 +29,5 @@ fn pack_unpack_valid() {
     let sig = Ed25519Signature::new(pub_key_bytes, sig_bytes);
     let sig_packed = sig.pack_new();
 
-    assert_eq!(sig, Packable::unpack(&mut sig_packed.as_slice()).unwrap());
+    assert_eq!(sig, OldPackable::unpack(&mut sig_packed.as_slice()).unwrap());
 }

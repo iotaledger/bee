@@ -6,7 +6,7 @@ use crate::{
     workers::snapshot::{config::DownloadUrls, error::Error},
 };
 
-use bee_common::packable::Packable;
+use bee_common::packable::Packable as OldPackable;
 use bee_message::milestone::MilestoneIndex;
 
 use bytes::Buf;

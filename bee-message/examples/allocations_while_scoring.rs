@@ -7,7 +7,7 @@
 //!
 //! The code was adapted from: https://kanejaku.org/posts/2021/01/2021-01-27/ (CC-BY 4.0)
 
-use bee_common::packable::Packable;
+use bee_common::packable::Packable as OldPackable;
 use bee_message::MessageBuilder;
 use bee_pow::{
     providers::{miner::MinerBuilder, NonceProviderBuilder},

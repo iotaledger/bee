@@ -5,7 +5,7 @@
 //! or their past in the database. They often come from a snapshot file and allow a node to solidify
 //! without needing the full tangle history.
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::MessageId;
 
 use ref_cast::RefCast;
@@ -57,8 +57,8 @@ impl Deref for SolidEntryPoint {
     }
 }
 
-impl Packable for SolidEntryPoint {
-    type Error = <MessageId as Packable>::Error;
+impl OldPackable for SolidEntryPoint {
+    type Error = <MessageId as OldPackable>::Error;
 
     fn packed_len(&self) -> usize {
         self.0.packed_len()

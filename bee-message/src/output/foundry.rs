@@ -10,7 +10,7 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use primitive_types::U256;
 
@@ -23,7 +23,7 @@ pub enum TokenScheme {
     Simple = 0,
 }
 
-impl Packable for TokenScheme {
+impl OldPackable for TokenScheme {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -261,7 +261,7 @@ impl FoundryOutput {
     }
 }
 
-impl Packable for FoundryOutput {
+impl OldPackable for FoundryOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

@@ -9,7 +9,7 @@ mod version;
 pub use health::{Error as StorageHealthError, StorageHealth};
 pub use version::StorageVersion;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// Key used to store the system version.
 pub const SYSTEM_VERSION_KEY: u8 = 0;
@@ -39,7 +39,7 @@ pub enum System {
     Health(StorageHealth),
 }
 
-impl Packable for System {
+impl OldPackable for System {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

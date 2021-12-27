@@ -6,7 +6,7 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
-use bee_common::packable::Packable;
+use bee_common::packable::Packable as OldPackable;
 use bee_ledger::types::{Balance, ConsumedOutput, CreatedOutput, OutputDiff};
 use bee_message::{
     address::Address,
@@ -24,7 +24,7 @@ pub struct MultiIter<V, E> {
     marker: PhantomData<(V, E)>,
 }
 
-impl<V: Packable, E: From<rocksdb::Error>> Iterator for MultiIter<V, E> {
+impl<V: OldPackable, E: From<rocksdb::Error>> Iterator for MultiIter<V, E> {
     type Item = Result<Option<V>, E>;
 
     fn next(&mut self) -> Option<Self::Item> {

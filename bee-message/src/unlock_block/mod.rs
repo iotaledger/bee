@@ -16,7 +16,7 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use derive_more::{Deref, From};
 
@@ -62,7 +62,7 @@ impl UnlockBlock {
     }
 }
 
-impl Packable for UnlockBlock {
+impl OldPackable for UnlockBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -164,11 +164,11 @@ impl UnlockBlocks {
     }
 }
 
-impl Packable for UnlockBlocks {
+impl OldPackable for UnlockBlocks {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        0u16.packed_len() + self.0.iter().map(Packable::packed_len).sum::<usize>()
+        0u16.packed_len() + self.0.iter().map(OldPackable::packed_len).sum::<usize>()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {

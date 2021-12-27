@@ -7,7 +7,7 @@ pub use regular::{RegularTransactionEssence, RegularTransactionEssenceBuilder};
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 use derive_more::From;
@@ -38,7 +38,7 @@ impl TransactionEssence {
     }
 }
 
-impl Packable for TransactionEssence {
+impl OldPackable for TransactionEssence {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

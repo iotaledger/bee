@@ -3,7 +3,7 @@
 
 use crate::types::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// The kind of a snapshot.
 #[repr(u8)]
@@ -17,7 +17,7 @@ pub enum SnapshotKind {
     Delta = 1,
 }
 
-impl Packable for SnapshotKind {
+impl OldPackable for SnapshotKind {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

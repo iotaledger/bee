@@ -9,7 +9,7 @@ pub use utxo::UtxoInput;
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use derive_more::From;
 
@@ -48,7 +48,7 @@ impl Input {
     }
 }
 
-impl Packable for Input {
+impl OldPackable for Input {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

@@ -3,7 +3,7 @@
 
 use crate::types::error::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::{milestone::MilestoneIndex, payload::transaction::TransactionId};
 
 /// Represents a newly consumed output.
@@ -30,7 +30,7 @@ impl ConsumedOutput {
     }
 }
 
-impl Packable for ConsumedOutput {
+impl OldPackable for ConsumedOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

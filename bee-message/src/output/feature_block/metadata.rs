@@ -3,7 +3,7 @@
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use core::ops::RangeInclusive;
 
@@ -44,7 +44,7 @@ impl MetadataFeatureBlock {
     }
 }
 
-impl Packable for MetadataFeatureBlock {
+impl OldPackable for MetadataFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

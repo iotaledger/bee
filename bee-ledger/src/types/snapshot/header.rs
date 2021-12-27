@@ -3,7 +3,7 @@
 
 use crate::types::{error::Error, snapshot::SnapshotKind};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::{milestone::MilestoneIndex, payload::milestone::MilestoneId};
 
 const SNAPSHOT_VERSION: u8 = 1;
@@ -48,7 +48,7 @@ impl SnapshotHeader {
     }
 }
 
-impl Packable for SnapshotHeader {
+impl OldPackable for SnapshotHeader {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -131,7 +131,7 @@ impl FullSnapshotHeader {
     }
 }
 
-impl Packable for FullSnapshotHeader {
+impl OldPackable for FullSnapshotHeader {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -188,7 +188,7 @@ impl DeltaSnapshotHeader {
     }
 }
 
-impl Packable for DeltaSnapshotHeader {
+impl OldPackable for DeltaSnapshotHeader {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
+use bee_common::packable::Packable as OldPackable;
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput},
@@ -231,7 +231,7 @@ fn pack_unpack_valid() {
     let packed_receipt = receipt.pack_new();
 
     assert_eq!(packed_receipt.len(), receipt.packed_len());
-    assert_eq!(receipt, Packable::unpack(&mut packed_receipt.as_slice()).unwrap());
+    assert_eq!(receipt, OldPackable::unpack(&mut packed_receipt.as_slice()).unwrap());
 }
 
 #[test]

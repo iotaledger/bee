@@ -7,7 +7,7 @@ use crate::{
     Error, MessageId,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_pow::providers::{miner::Miner, NonceProvider, NonceProviderBuilder};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
@@ -173,7 +173,7 @@ impl Message {
     }
 }
 
-impl Packable for Message {
+impl OldPackable for Message {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

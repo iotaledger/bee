@@ -33,7 +33,7 @@ pub use treasury::TreasuryOutput;
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use derive_more::From;
 
@@ -96,7 +96,7 @@ impl Output {
     }
 }
 
-impl Packable for Output {
+impl OldPackable for Output {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

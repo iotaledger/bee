@@ -5,7 +5,7 @@
 
 use crate::{input::Input, output::Output, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// `TreasuryTransaction` represents a transaction which moves funds from the treasury.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -43,7 +43,7 @@ impl TreasuryTransactionPayload {
     }
 }
 
-impl Packable for TreasuryTransactionPayload {
+impl OldPackable for TreasuryTransactionPayload {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

@@ -3,7 +3,7 @@
 
 use crate::types::{error::Error, TreasuryOutput};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::{
     constant::IOTA_SUPPLY,
     input::Input,
@@ -92,7 +92,7 @@ impl Receipt {
     }
 }
 
-impl Packable for Receipt {
+impl OldPackable for Receipt {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

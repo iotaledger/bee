@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::milestone::MilestoneIndex;
 
 use core::ops::Deref;
@@ -31,7 +31,7 @@ impl Deref for LedgerIndex {
     }
 }
 
-impl Packable for LedgerIndex {
+impl OldPackable for LedgerIndex {
     type Error = std::io::Error;
 
     fn packed_len(&self) -> usize {

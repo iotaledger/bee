@@ -10,7 +10,7 @@ use crate::{
 
 use bee_common::{
     ord::is_unique_sorted,
-    packable::{Packable, Read, Write},
+    packable::{Packable as OldPackable, Read, Write},
 };
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
@@ -133,7 +133,7 @@ impl MilestoneEssence {
     }
 }
 
-impl Packable for MilestoneEssence {
+impl OldPackable for MilestoneEssence {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

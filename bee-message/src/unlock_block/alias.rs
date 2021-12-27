@@ -3,7 +3,7 @@
 
 use crate::{unlock_block::UNLOCK_BLOCK_INDEX_RANGE, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// Points to the unlock block of a consumed alias output.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -40,7 +40,7 @@ impl AliasUnlockBlock {
     }
 }
 
-impl Packable for AliasUnlockBlock {
+impl OldPackable for AliasUnlockBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

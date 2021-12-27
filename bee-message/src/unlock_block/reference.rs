@@ -3,7 +3,7 @@
 
 use crate::{unlock_block::UNLOCK_BLOCK_INDEX_RANGE, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// An [`UnlockBlock`](crate::unlock_block::UnlockBlock) that refers to another unlock block.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -37,7 +37,7 @@ impl ReferenceUnlockBlock {
     }
 }
 
-impl Packable for ReferenceUnlockBlock {
+impl OldPackable for ReferenceUnlockBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

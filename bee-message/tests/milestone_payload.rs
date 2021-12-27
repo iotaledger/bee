@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
+use bee_common::packable::Packable as OldPackable;
 use bee_message::{
     milestone::MilestoneIndex,
     parent::Parents,
@@ -145,7 +145,7 @@ fn pack_unpack_valid() {
     let packed = payload.pack_new();
 
     assert_eq!(payload.packed_len(), packed.len());
-    assert_eq!(payload, Packable::unpack(&mut packed.as_slice()).unwrap())
+    assert_eq!(payload, OldPackable::unpack(&mut packed.as_slice()).unwrap())
 }
 
 #[test]

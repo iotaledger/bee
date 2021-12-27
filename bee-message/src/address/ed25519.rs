@@ -3,7 +3,7 @@
 
 use crate::{signature::Ed25519Signature, util::hex_decode, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
@@ -76,7 +76,7 @@ impl core::fmt::Debug for Ed25519Address {
     }
 }
 
-impl Packable for Ed25519Address {
+impl OldPackable for Ed25519Address {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

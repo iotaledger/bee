@@ -11,7 +11,7 @@ pub use nft::NftAddress;
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use bech32::{self, FromBase32, ToBase32, Variant};
 use derive_more::From;
@@ -78,7 +78,7 @@ impl TryFrom<String> for Address {
     }
 }
 
-impl Packable for Address {
+impl OldPackable for Address {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

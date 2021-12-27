@@ -3,7 +3,7 @@
 
 use crate::types::error::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::output::OutputId;
 
 use std::ops::Deref;
@@ -50,7 +50,7 @@ impl core::fmt::Debug for Unspent {
     }
 }
 
-impl Packable for Unspent {
+impl OldPackable for Unspent {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

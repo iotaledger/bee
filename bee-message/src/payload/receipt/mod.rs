@@ -18,7 +18,7 @@ use crate::{
 
 use bee_common::{
     ord::is_unique_sorted,
-    packable::{Packable, Read, Write},
+    packable::{Packable as OldPackable, Read, Write},
 };
 
 use core::ops::RangeInclusive;
@@ -56,7 +56,7 @@ impl ReceiptPayload {
         }
 
         // Funds must be lexicographically sorted and unique in their serialised forms.
-        if !is_unique_sorted(funds.iter().map(Packable::pack_new)) {
+        if !is_unique_sorted(funds.iter().map(OldPackable::pack_new)) {
             return Err(Error::ReceiptFundsNotUniqueSorted);
         }
 
@@ -104,14 +104,14 @@ impl ReceiptPayload {
     }
 }
 
-impl Packable for ReceiptPayload {
+impl OldPackable for ReceiptPayload {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
         self.migrated_at.packed_len()
             + self.last.packed_len()
             + 0u16.packed_len()
-            + self.funds.iter().map(Packable::packed_len).sum::<usize>()
+            + self.funds.iter().map(OldPackable::packed_len).sum::<usize>()
             + option_payload_packed_len(Some(&self.transaction))
     }
 
