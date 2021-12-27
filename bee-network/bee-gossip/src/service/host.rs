@@ -234,7 +234,9 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
             global::max_discovered_peers()
         );
 
-        for (peer_id, info) in peerlist.filter_info(|info, state| info.relation.is_known() && state.is_disconnected()) {
+        for (peer_id, info) in peerlist.filter_info(|info, state| {
+            (info.relation.is_known() || info.relation.is_discovered()) && state.is_disconnected()
+        }) {
             info!("Trying to connect to: {} ({}).", info.alias, alias!(peer_id));
 
             // Ignore if the command fails. We can always retry the next time.
