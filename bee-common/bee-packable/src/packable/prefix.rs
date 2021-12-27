@@ -18,7 +18,7 @@ use core::{
     convert::Infallible,
     fmt::Debug,
     marker::PhantomData,
-    ops::{Deref, Range},
+    ops::{Deref, DerefMut, Range},
 };
 
 /// Semantic error raised while unpacking a dynamically-sized sequences that use a type different than `usize` for their
@@ -187,6 +187,13 @@ impl<T, B: Bounded> Deref for BoxedSlicePrefix<T, B> {
 
     fn deref(&self) -> &Self::Target {
         &self.inner
+    }
+}
+
+/// This is fine as slices cannot be resized.
+impl<T, B: Bounded> DerefMut for BoxedSlicePrefix<T, B> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
     }
 }
 
