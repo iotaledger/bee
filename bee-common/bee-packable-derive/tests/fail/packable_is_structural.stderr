@@ -1,27 +1,25 @@
-error[E0599]: no function or associated item named `pack` found for struct `NonPackable` in the current scope
+error[E0277]: the trait bound `NonPackable: bee_packable::Packable` is not satisfied
   --> tests/fail/packable_is_structural.rs:12:10
    |
-10 | struct NonPackable;
-   | ------------------- function or associated item `pack` not found for this
-11 |
 12 | #[derive(Packable)]
-   |          ^^^^^^^^ function or associated item not found in `NonPackable`
+   |          ^^^^^^^^ the trait `bee_packable::Packable` is not implemented for `NonPackable`
    |
-   = help: items from traits can only be used if the trait is implemented and in scope
-   = note: the following trait defines an item `pack`, perhaps you need to implement it:
-           candidate #1: `bee_packable::Packable`
+note: required by a bound in `pack`
+  --> $WORKSPACE/bee-common/bee-packable/src/packable/mod.rs
+   |
+   |     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
+   |                ^^^^^^ required by this bound in `pack`
    = note: this error originates in the derive macro `Packable` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0599]: no function or associated item named `unpack` found for struct `NonPackable` in the current scope
+error[E0277]: the trait bound `NonPackable: bee_packable::Packable` is not satisfied
   --> tests/fail/packable_is_structural.rs:12:10
    |
-10 | struct NonPackable;
-   | ------------------- function or associated item `unpack` not found for this
-11 |
 12 | #[derive(Packable)]
-   |          ^^^^^^^^ function or associated item not found in `NonPackable`
+   |          ^^^^^^^^ the trait `bee_packable::Packable` is not implemented for `NonPackable`
    |
-   = help: items from traits can only be used if the trait is implemented and in scope
-   = note: the following trait defines an item `unpack`, perhaps you need to implement it:
-           candidate #1: `bee_packable::Packable`
+note: required by a bound in `unpack`
+  --> $WORKSPACE/bee-common/bee-packable/src/packable/mod.rs
+   |
+   |     fn unpack<U: Unpacker, const VERIFY: bool>(
+   |                  ^^^^^^^^ required by this bound in `unpack`
    = note: this error originates in the derive macro `Packable` (in Nightly builds, run with -Z macro-backtrace for more info)
