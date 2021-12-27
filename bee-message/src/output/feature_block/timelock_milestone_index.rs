@@ -3,7 +3,7 @@
 
 use crate::{milestone::MilestoneIndex, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use derive_more::From;
 
@@ -32,7 +32,7 @@ impl TimelockMilestoneIndexFeatureBlock {
     }
 }
 
-impl Packable for TimelockMilestoneIndexFeatureBlock {
+impl OldPackable for TimelockMilestoneIndexFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

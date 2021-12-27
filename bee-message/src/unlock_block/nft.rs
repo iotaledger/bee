@@ -3,7 +3,7 @@
 
 use crate::{unlock_block::UNLOCK_BLOCK_INDEX_RANGE, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// Points to the unlock block of a consumed NFT output.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -40,7 +40,7 @@ impl NftUnlockBlock {
     }
 }
 
-impl Packable for NftUnlockBlock {
+impl OldPackable for NftUnlockBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

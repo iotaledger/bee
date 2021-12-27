@@ -3,7 +3,7 @@
 
 use crate::types::{ConsumedOutput, CreatedOutput, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::{
     output::{Output, OutputId, TreasuryOutput},
     payload::{
@@ -46,7 +46,7 @@ impl MilestoneDiff {
     }
 }
 
-impl Packable for MilestoneDiff {
+impl OldPackable for MilestoneDiff {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

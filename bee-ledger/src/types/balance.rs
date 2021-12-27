@@ -3,7 +3,7 @@
 
 use crate::types::{error::Error, BalanceDiff};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::constant::IOTA_SUPPLY;
 
 /// Holds the balance of an address.
@@ -40,7 +40,7 @@ impl Balance {
     }
 }
 
-impl Packable for Balance {
+impl OldPackable for Balance {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

@@ -9,7 +9,7 @@ use crate::Error;
 
 use derive_more::From;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// A `Signature` contains a signature which is used to unlock a transaction input.
 ///
@@ -36,7 +36,7 @@ impl Signature {
     }
 }
 
-impl Packable for Signature {
+impl OldPackable for Signature {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

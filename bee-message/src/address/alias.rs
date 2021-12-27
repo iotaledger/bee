@@ -3,7 +3,7 @@
 
 use crate::{output::AliasId, util::hex_decode, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use derive_more::{AsRef, Deref, From};
 
@@ -57,7 +57,7 @@ impl core::fmt::Debug for AliasAddress {
     }
 }
 
-impl Packable for AliasAddress {
+impl OldPackable for AliasAddress {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

@@ -3,7 +3,7 @@
 
 use crate::{address::Address, constant::IOTA_SUPPLY, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use core::ops::RangeInclusive;
 
@@ -43,7 +43,7 @@ impl SimpleOutput {
     }
 }
 
-impl Packable for SimpleOutput {
+impl OldPackable for SimpleOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

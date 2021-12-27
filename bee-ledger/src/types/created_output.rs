@@ -3,7 +3,7 @@
 
 use crate::types::error::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::{output::Output, MessageId};
 
 use core::ops::Deref;
@@ -40,7 +40,7 @@ impl Deref for CreatedOutput {
     }
 }
 
-impl Packable for CreatedOutput {
+impl OldPackable for CreatedOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

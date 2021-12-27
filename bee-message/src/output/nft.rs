@@ -10,7 +10,7 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 ///
 pub struct NftOutputBuilder {
@@ -176,7 +176,7 @@ impl NftOutput {
     }
 }
 
-impl Packable for NftOutput {
+impl OldPackable for NftOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

@@ -3,7 +3,7 @@
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// Defines metadata, arbitrary binary data, that will be stored in the output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -42,7 +42,7 @@ impl MetadataFeatureBlock {
     }
 }
 
-impl Packable for MetadataFeatureBlock {
+impl OldPackable for MetadataFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

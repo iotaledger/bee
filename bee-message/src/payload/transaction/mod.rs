@@ -11,7 +11,7 @@ use crate::{unlock_block::UnlockBlocks, Error};
 pub use essence::{RegularTransactionEssence, RegularTransactionEssenceBuilder, TransactionEssence};
 pub use transaction_id::TransactionId;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
@@ -98,7 +98,7 @@ impl TransactionPayload {
     }
 }
 
-impl Packable for TransactionPayload {
+impl OldPackable for TransactionPayload {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

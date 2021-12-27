@@ -9,7 +9,7 @@ use crate::{Error, Message};
 
 pub use padded::PaddedIndex;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use alloc::boxed::Box;
 use core::ops::RangeInclusive;
@@ -62,7 +62,7 @@ impl IndexationPayload {
     }
 }
 
-impl Packable for IndexationPayload {
+impl OldPackable for IndexationPayload {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

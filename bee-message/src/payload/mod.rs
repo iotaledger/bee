@@ -17,7 +17,7 @@ pub use treasury::TreasuryTransactionPayload;
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use alloc::boxed::Box;
 
@@ -84,7 +84,7 @@ impl Payload {
     }
 }
 
-impl Packable for Payload {
+impl OldPackable for Payload {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -138,7 +138,7 @@ impl Packable for Payload {
 
 /// Returns the packed length of an optional payload.
 pub fn option_payload_packed_len(payload: Option<&Payload>) -> usize {
-    0u32.packed_len() + payload.map_or(0, Packable::packed_len)
+    0u32.packed_len() + payload.map_or(0, OldPackable::packed_len)
 }
 
 /// Packs an optional payload to a writer.

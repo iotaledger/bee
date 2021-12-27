@@ -9,7 +9,7 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use alloc::{boxed::Box, vec::Vec};
 
@@ -147,14 +147,14 @@ impl RegularTransactionEssence {
     }
 }
 
-impl Packable for RegularTransactionEssence {
+impl OldPackable for RegularTransactionEssence {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
         0u16.packed_len()
-            + self.inputs.iter().map(Packable::packed_len).sum::<usize>()
+            + self.inputs.iter().map(OldPackable::packed_len).sum::<usize>()
             + 0u16.packed_len()
-            + self.outputs.iter().map(Packable::packed_len).sum::<usize>()
+            + self.outputs.iter().map(OldPackable::packed_len).sum::<usize>()
             + option_payload_packed_len(self.payload.as_ref())
     }
 

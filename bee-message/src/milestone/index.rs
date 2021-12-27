@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use derive_more::{Deref, From};
 
@@ -58,7 +58,7 @@ impl Sub<u32> for MilestoneIndex {
     }
 }
 
-impl Packable for MilestoneIndex {
+impl OldPackable for MilestoneIndex {
     type Error = std::io::Error;
 
     fn packed_len(&self) -> usize {

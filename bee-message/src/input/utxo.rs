@@ -3,7 +3,7 @@
 
 use crate::{output::OutputId, payload::transaction::TransactionId, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use derive_more::From;
 
@@ -51,7 +51,7 @@ impl core::fmt::Debug for UtxoInput {
     }
 }
 
-impl Packable for UtxoInput {
+impl OldPackable for UtxoInput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

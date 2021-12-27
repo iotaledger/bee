@@ -7,7 +7,7 @@ use crate::{Error, MessageId};
 
 use bee_common::{
     ord::is_unique_sorted,
-    packable::{Packable, Read, Write},
+    packable::{Packable as OldPackable, Read, Write},
 };
 
 use derive_more::Deref;
@@ -54,7 +54,7 @@ impl Parents {
     }
 }
 
-impl Packable for Parents {
+impl OldPackable for Parents {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

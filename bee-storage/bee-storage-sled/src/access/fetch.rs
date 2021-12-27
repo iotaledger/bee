@@ -5,7 +5,7 @@
 
 use crate::{storage::Storage, trees::*};
 
-use bee_common::packable::Packable;
+use bee_common::packable::Packable as OldPackable;
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
     TreasuryOutput,

@@ -3,7 +3,7 @@
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_ternary::{T5B1Buf, TritBuf, Trits, T5B1};
 
 use bytemuck::cast_slice;
@@ -53,7 +53,7 @@ impl core::fmt::Debug for TailTransactionHash {
     }
 }
 
-impl Packable for TailTransactionHash {
+impl OldPackable for TailTransactionHash {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

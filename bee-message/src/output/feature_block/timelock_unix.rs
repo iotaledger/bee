@@ -3,7 +3,7 @@
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use derive_more::From;
 
@@ -32,7 +32,7 @@ impl TimelockUnixFeatureBlock {
     }
 }
 
-impl Packable for TimelockUnixFeatureBlock {
+impl OldPackable for TimelockUnixFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

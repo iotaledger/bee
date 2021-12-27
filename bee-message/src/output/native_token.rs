@@ -5,7 +5,7 @@ use crate::{output::TokenId, Error};
 
 use bee_common::{
     ord::is_unique_sorted,
-    packable::{Packable, Read, Write},
+    packable::{Packable as OldPackable, Read, Write},
 };
 
 use derive_more::Deref;
@@ -41,7 +41,7 @@ impl NativeToken {
     }
 }
 
-impl Packable for NativeToken {
+impl OldPackable for NativeToken {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -95,11 +95,11 @@ impl NativeTokens {
     }
 }
 
-impl Packable for NativeTokens {
+impl OldPackable for NativeTokens {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        0u16.packed_len() + self.0.iter().map(Packable::packed_len).sum::<usize>()
+        0u16.packed_len() + self.0.iter().map(OldPackable::packed_len).sum::<usize>()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {

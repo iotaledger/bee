@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use bitflags::bitflags;
 use serde::Serialize;
@@ -75,7 +75,7 @@ impl Flags {
     }
 }
 
-impl Packable for Flags {
+impl OldPackable for Flags {
     type Error = std::io::Error;
 
     fn packed_len(&self) -> usize {

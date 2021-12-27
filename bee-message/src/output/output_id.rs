@@ -3,7 +3,7 @@
 
 use crate::{output::OUTPUT_INDEX_RANGE, payload::transaction::TransactionId, util::hex_decode, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use core::str::FromStr;
 
@@ -84,7 +84,7 @@ impl core::fmt::Debug for OutputId {
     }
 }
 
-impl Packable for OutputId {
+impl OldPackable for OutputId {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

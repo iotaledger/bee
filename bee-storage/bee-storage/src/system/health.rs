@@ -3,7 +3,7 @@
 
 //! Defines a type to represent different health states in which the storage backend can be.
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// Errors related to storage health statuses.
 #[derive(Debug, thiserror::Error)]
@@ -28,7 +28,7 @@ pub enum StorageHealth {
     Corrupted = 2,
 }
 
-impl Packable for StorageHealth {
+impl OldPackable for StorageHealth {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

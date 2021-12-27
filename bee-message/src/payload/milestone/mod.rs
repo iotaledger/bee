@@ -11,7 +11,7 @@ pub use milestone_id::MilestoneId;
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
@@ -154,7 +154,7 @@ impl MilestonePayload {
     }
 }
 
-impl Packable for MilestonePayload {
+impl OldPackable for MilestonePayload {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

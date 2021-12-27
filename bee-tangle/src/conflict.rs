@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
+use bee_common::packable::Packable as OldPackable;
 
 use serde::{Deserialize, Serialize};
 
@@ -61,7 +61,7 @@ impl TryFrom<u8> for ConflictReason {
     }
 }
 
-impl Packable for ConflictReason {
+impl OldPackable for ConflictReason {
     type Error = ConflictError;
 
     fn packed_len(&self) -> usize {

@@ -3,7 +3,7 @@
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// Defines an indexation tag to which the output will be indexed.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -42,7 +42,7 @@ impl IndexationFeatureBlock {
     }
 }
 
-impl Packable for IndexationFeatureBlock {
+impl OldPackable for IndexationFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

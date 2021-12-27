@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::MessageId;
 
 use std::ops::Deref;
@@ -36,8 +36,8 @@ impl UnreferencedMessage {
     }
 }
 
-impl Packable for UnreferencedMessage {
-    type Error = <MessageId as Packable>::Error;
+impl OldPackable for UnreferencedMessage {
+    type Error = <MessageId as OldPackable>::Error;
 
     fn packed_len(&self) -> usize {
         self.0.packed_len()

@@ -3,7 +3,7 @@
 
 use crate::{constant::DUST_DEPOSIT_MIN, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// Defines the amount of IOTAs used as dust deposit that have to be returned to the sender
 /// [`Address`](crate::address::Address).
@@ -42,7 +42,7 @@ impl DustDepositReturnFeatureBlock {
     }
 }
 
-impl Packable for DustDepositReturnFeatureBlock {
+impl OldPackable for DustDepositReturnFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

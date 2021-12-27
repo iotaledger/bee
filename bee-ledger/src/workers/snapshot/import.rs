@@ -17,7 +17,7 @@ use crate::{
 };
 
 use bee_common::{
-    packable::{Packable, Read},
+    packable::{Packable as OldPackable, Read},
     time,
 };
 use bee_message::{

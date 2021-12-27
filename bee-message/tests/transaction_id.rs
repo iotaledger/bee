@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
+use bee_common::packable::Packable as OldPackable;
 use bee_message::{payload::transaction::TransactionId, Error};
 
 use core::str::FromStr;
@@ -64,6 +64,6 @@ fn pack_unpack_valid() {
 
     assert_eq!(
         transaction_id,
-        Packable::unpack(&mut packed_transaction_id.as_slice()).unwrap()
+        OldPackable::unpack(&mut packed_transaction_id.as_slice()).unwrap()
     );
 }

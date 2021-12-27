@@ -9,7 +9,7 @@ pub use index::MilestoneIndex;
 
 use crate::MessageId;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// Defines a coordinator milestone.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -35,7 +35,7 @@ impl Milestone {
     }
 }
 
-impl Packable for Milestone {
+impl OldPackable for Milestone {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

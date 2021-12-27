@@ -5,7 +5,7 @@
 
 use crate::{storage::Storage, trees::*};
 
-use bee_common::packable::Packable;
+use bee_common::packable::Packable as OldPackable;
 use bee_ledger::types::{Balance, ConsumedOutput, CreatedOutput, OutputDiff};
 use bee_message::{
     address::Address,
@@ -25,7 +25,7 @@ pub struct TreeIter<'a, K, V, E> {
     marker: PhantomData<(V, E)>,
 }
 
-impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for TreeIter<'a, K, V, E> {
+impl<'a, K: OldPackable, V: OldPackable, E: From<sled::Error>> Iterator for TreeIter<'a, K, V, E> {
     type Item = Result<Option<V>, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -47,7 +47,7 @@ pub struct DbIter<'a, K, V, E> {
     marker: PhantomData<(V, E)>,
 }
 
-impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for DbIter<'a, K, V, E> {
+impl<'a, K: OldPackable, V: OldPackable, E: From<sled::Error>> Iterator for DbIter<'a, K, V, E> {
     type Item = Result<Option<V>, E>;
 
     fn next(&mut self) -> Option<Self::Item> {

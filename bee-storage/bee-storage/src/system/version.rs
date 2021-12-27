@@ -1,13 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// Version of the storage.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct StorageVersion(pub u64);
 
-impl Packable for StorageVersion {
+impl OldPackable for StorageVersion {
     type Error = std::io::Error;
 
     fn packed_len(&self) -> usize {

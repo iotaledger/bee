@@ -25,7 +25,7 @@ use crate::Error;
 
 use bee_common::{
     ord::is_unique_sorted,
-    packable::{Packable, Read, Write},
+    packable::{Packable as OldPackable, Read, Write},
 };
 
 use bitflags::bitflags;
@@ -91,7 +91,7 @@ impl FeatureBlock {
     }
 }
 
-impl Packable for FeatureBlock {
+impl OldPackable for FeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -231,11 +231,11 @@ impl FeatureBlocks {
     }
 }
 
-impl Packable for FeatureBlocks {
+impl OldPackable for FeatureBlocks {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        0u8.packed_len() + self.0.iter().map(Packable::packed_len).sum::<usize>()
+        0u8.packed_len() + self.0.iter().map(OldPackable::packed_len).sum::<usize>()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
