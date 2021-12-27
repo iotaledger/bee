@@ -3,6 +3,7 @@
 
 use bee_common::packable::Packable as OldPackable;
 use bee_message::{unlock_block::ReferenceUnlockBlock, Error};
+use bee_packable::bounded::InvalidBoundedU16;
 
 #[test]
 fn kind() {
@@ -23,7 +24,7 @@ fn new_valid_max_index() {
 fn new_invalid_more_than_max_index() {
     assert!(matches!(
         ReferenceUnlockBlock::new(127),
-        Err(Error::InvalidReferenceIndex(127))
+        Err(Error::InvalidReferenceIndex(InvalidBoundedU16(127)))
     ));
 }
 
@@ -36,7 +37,7 @@ fn try_from_valid() {
 fn try_from_invalid() {
     assert!(matches!(
         ReferenceUnlockBlock::try_from(127),
-        Err(Error::InvalidReferenceIndex(127))
+        Err(Error::InvalidReferenceIndex(InvalidBoundedU16(127)))
     ));
 }
 
@@ -60,6 +61,6 @@ fn pack_unpack_valid() {
 fn pack_unpack_invalid_index() {
     assert!(matches!(
         ReferenceUnlockBlock::unpack(&mut vec![0x2a, 0x2a].as_slice()),
-        Err(Error::InvalidReferenceIndex(10794))
+        Err(Error::InvalidReferenceIndex(InvalidBoundedU16(10794)))
     ));
 }
