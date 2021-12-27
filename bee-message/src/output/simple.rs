@@ -4,17 +4,23 @@
 use crate::{address::Address, constant::IOTA_SUPPLY, Error};
 
 use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_packable::bounded::BoundedU64;
 
 use core::ops::RangeInclusive;
 
+pub(crate) type SimpleOutputAmount =
+    BoundedU64<{ *SimpleOutput::AMOUNT_RANGE.start() }, { *SimpleOutput::AMOUNT_RANGE.end() }>;
+
 /// Describes a simple output that can only hold IOTAs.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = Error)]
 pub struct SimpleOutput {
     // Deposit address of the output.
     address: Address,
     // Amount of IOTA tokens held by the output.
-    amount: u64,
+    #[packable(unpack_error_with = Error::InvalidAmount)]
+    amount: SimpleOutputAmount,
 }
 
 impl SimpleOutput {
@@ -25,9 +31,10 @@ impl SimpleOutput {
 
     /// Creates a new [`SimpleOutput`].
     pub fn new(address: Address, amount: u64) -> Result<Self, Error> {
-        validate_amount(amount)?;
-
-        Ok(Self { address, amount })
+        amount
+            .try_into()
+            .map(|amount| Self { address, amount })
+            .map_err(Error::InvalidAmount)
     }
 
     /// Returns the address of a [`SimpleOutput`].
@@ -39,7 +46,7 @@ impl SimpleOutput {
     /// Returns the amount of a [`SimpleOutput`].
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount
+        self.amount.get()
     }
 }
 
@@ -47,12 +54,12 @@ impl OldPackable for SimpleOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.address.packed_len() + self.amount.packed_len()
+        self.address.packed_len() + self.amount().packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.address.pack(writer)?;
-        self.amount.pack(writer)?;
+        self.amount().pack(writer)?;
 
         Ok(())
     }
@@ -65,15 +72,13 @@ impl OldPackable for SimpleOutput {
             validate_amount(amount)?;
         }
 
-        Ok(Self { address, amount })
+        Self::new(address, amount)
     }
 }
 
 #[inline]
 fn validate_amount(amount: u64) -> Result<(), Error> {
-    if !SimpleOutput::AMOUNT_RANGE.contains(&amount) {
-        return Err(Error::InvalidAmount(amount));
-    }
+    SimpleOutputAmount::try_from(amount).map_err(Error::InvalidAmount)?;
 
     Ok(())
 }

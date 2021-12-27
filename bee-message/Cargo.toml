@@ -11,7 +11,7 @@ keywords = [ "iota", "tangle", "bee", "framework", "message" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-packable = { git = "https://github.com/iotaledger/bee", branch = "coordicide", default-features = false, features = ["serde"] }
+bee-packable = { git = "https://github.com/iotaledger/bee", branch = "coordicide", default-features = false, features = ["serde", "primitive-types"] }
 bee-common = { version = "0.5.0", path = "../bee-common/bee-common", default-features = false }
 bee-pow = { version = "0.2.0", path = "../bee-pow", default-features = false }
 bee-ternary = { version = "0.5.2", default-features = false, features = [ "serde1" ] }

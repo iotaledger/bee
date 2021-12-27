@@ -8,6 +8,7 @@ use bee_message::{
     output::SimpleOutput,
     Error,
 };
+use bee_packable::bounded::InvalidBoundedU64;
 
 use core::str::FromStr;
 
@@ -40,7 +41,7 @@ fn new_valid_max_amount() {
 fn new_invalid_less_than_min_amount() {
     assert!(matches!(
         SimpleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 0),
-        Err(Error::InvalidAmount(0))
+        Err(Error::InvalidAmount(InvalidBoundedU64(0)))
     ));
 }
 
@@ -51,7 +52,7 @@ fn new_invalid_more_than_max_amount() {
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             3_333_333_333_333_333
         ),
-        Err(Error::InvalidAmount(3_333_333_333_333_333))
+        Err(Error::InvalidAmount(InvalidBoundedU64(3_333_333_333_333_333)))
     ));
 }
 
@@ -81,6 +82,6 @@ fn pack_unpack_invalid() {
             ]
             .as_slice()
         ),
-        Err(Error::InvalidAmount(0))
+        Err(Error::InvalidAmount(InvalidBoundedU64(0)))
     ));
 }

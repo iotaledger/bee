@@ -10,20 +10,27 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_common::packable::{Read, Write};
 
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+};
 use primitive_types::U256;
 
 ///
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = Error)]
+#[packable(tag_type = u8, with_error = Error::InvalidTokenSchemeKind)]
 pub enum TokenScheme {
     ///
     Simple = 0,
 }
 
-impl OldPackable for TokenScheme {
+impl bee_common::packable::Packable for TokenScheme {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -261,7 +268,66 @@ impl FoundryOutput {
     }
 }
 
-impl OldPackable for FoundryOutput {
+impl bee_packable::Packable for FoundryOutput {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.address.pack(packer)?;
+        self.amount.pack(packer)?;
+        self.native_tokens.pack(packer)?;
+        self.serial_number.pack(packer)?;
+        self.token_tag.pack(packer)?;
+        self.circulating_supply.pack(packer)?;
+        self.maximum_supply.pack(packer)?;
+        self.token_scheme.pack(packer)?;
+        self.feature_blocks.pack(packer)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let address = Address::unpack::<_, VERIFY>(unpacker)?;
+
+        if VERIFY {
+            validate_address(&address).map_err(UnpackError::Packable)?;
+        }
+
+        let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
+        let serial_number = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let token_tag = <[u8; 12]>::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let circulating_supply = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let maximum_supply = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
+
+        if VERIFY {
+            validate_supply(&circulating_supply, &maximum_supply).map_err(UnpackError::Packable)?;
+        }
+
+        let token_scheme = TokenScheme::unpack::<_, VERIFY>(unpacker)?;
+        let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
+
+        if VERIFY {
+            validate_allowed_feature_blocks(&feature_blocks, FoundryOutput::ALLOWED_FEATURE_BLOCKS)
+                .map_err(UnpackError::Packable)?;
+        }
+
+        Ok(Self {
+            address,
+            amount,
+            native_tokens,
+            serial_number,
+            token_tag,
+            circulating_supply,
+            maximum_supply,
+            token_scheme,
+            feature_blocks,
+        })
+    }
+}
+
+impl bee_common::packable::Packable for FoundryOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
