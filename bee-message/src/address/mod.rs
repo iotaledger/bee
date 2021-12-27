@@ -19,18 +19,23 @@ use derive_more::From;
 use alloc::{str::FromStr, string::String};
 
 /// A generic address supporting different address kinds.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From, bee_packable::Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
+#[packable(tag_type = u8, with_error = Error::InvalidAddressKind)]
+#[packable(unpack_error = Error)]
 pub enum Address {
     /// An Ed25519 address.
+    #[packable(tag = Ed25519Address::KIND)]
     Ed25519(Ed25519Address),
     /// An alias address.
+    #[packable(tag = AliasAddress::KIND)]
     Alias(AliasAddress),
     /// An NFT address.
+    #[packable(tag = NftAddress::KIND)]
     Nft(NftAddress),
 }
 

@@ -6,7 +6,18 @@
 macro_rules! impl_id {
     ($name:ident, $length:literal, $doc:literal) => {
         #[doc = $doc]
-        #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, derive_more::From, derive_more::AsRef)]
+        #[derive(
+            Clone,
+            Copy,
+            Eq,
+            Hash,
+            PartialEq,
+            Ord,
+            PartialOrd,
+            derive_more::From,
+            derive_more::AsRef,
+            bee_packable::Packable,
+        )]
         #[as_ref(forward)]
         pub struct $name([u8; $name::LENGTH]);
 
@@ -48,7 +59,7 @@ macro_rules! impl_id {
             }
 
             fn pack<W: bee_common::packable::Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-                self.0.pack(writer)?;
+                bee_common::packable::Packable::pack(&self.0, writer)?;
 
                 Ok(())
             }
