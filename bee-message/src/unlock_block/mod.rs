@@ -6,8 +6,11 @@ mod nft;
 mod reference;
 mod signature;
 
+pub(crate) use alias::AliasIndex;
 pub use alias::AliasUnlockBlock;
+pub(crate) use nft::NftIndex;
 pub use nft::NftUnlockBlock;
+pub(crate) use reference::ReferenceIndex;
 pub use reference::ReferenceUnlockBlock;
 pub use signature::SignatureUnlockBlock;
 
@@ -17,6 +20,13 @@ use crate::{
 };
 
 use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_packable::{
+    bounded::BoundedU16,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::BoxedSlicePrefix,
+    unpacker::Unpacker,
+};
 
 use derive_more::{Deref, From};
 
@@ -33,20 +43,26 @@ pub const UNLOCK_BLOCK_INDEX_MAX: u16 = INPUT_INDEX_MAX; // 126
 pub const UNLOCK_BLOCK_INDEX_RANGE: RangeInclusive<u16> = INPUT_INDEX_RANGE; // [0..126]
 
 /// Defines the mechanism by which a transaction input is authorized to be consumed.
-#[derive(Clone, Debug, Eq, PartialEq, Hash, From)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, From, bee_packable::Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
+#[packable(unpack_error = Error)]
+#[packable(tag_type = u8, with_error = Error::InvalidUnlockBlockKind)]
 pub enum UnlockBlock {
     /// A signature unlock block.
+    #[packable(tag = SignatureUnlockBlock::KIND)]
     Signature(SignatureUnlockBlock),
     /// A reference unlock block.
+    #[packable(tag = ReferenceUnlockBlock::KIND)]
     Reference(ReferenceUnlockBlock),
     /// An alias unlock block.
+    #[packable(tag = AliasUnlockBlock::KIND)]
     Alias(AliasUnlockBlock),
     /// A NFT unlock block.
+    #[packable(tag = NftUnlockBlock::KIND)]
     Nft(NftUnlockBlock),
 }
 
@@ -108,18 +124,25 @@ impl OldPackable for UnlockBlock {
     }
 }
 
+pub(crate) type UnlockBlockCount =
+    BoundedU16<{ *UNLOCK_BLOCK_COUNT_RANGE.start() }, { *UNLOCK_BLOCK_COUNT_RANGE.end() }>;
 /// A collection of unlock blocks.
 #[derive(Clone, Debug, Eq, PartialEq, Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct UnlockBlocks(Box<[UnlockBlock]>);
+pub struct UnlockBlocks(BoxedSlicePrefix<UnlockBlock, UnlockBlockCount>);
 
 impl UnlockBlocks {
     /// Creates a new `UnlockBlocks`.
     pub fn new(unlock_blocks: Vec<UnlockBlock>) -> Result<Self, Error> {
-        if !UNLOCK_BLOCK_COUNT_RANGE.contains(&(unlock_blocks.len() as u16)) {
-            return Err(Error::InvalidUnlockBlockCount(unlock_blocks.len() as u16));
-        }
+        let unlock_blocks: BoxedSlicePrefix<UnlockBlock, UnlockBlockCount> = unlock_blocks
+            .into_boxed_slice()
+            .try_into()
+            .map_err(Error::InvalidUnlockBlockCount)?;
 
+        Self::from_boxed_slice(unlock_blocks)
+    }
+
+    fn from_boxed_slice(unlock_blocks: BoxedSlicePrefix<UnlockBlock, UnlockBlockCount>) -> Result<Self, Error> {
         let mut seen_signatures = HashSet::new();
 
         for (index, unlock_block) in (0u16..).zip(unlock_blocks.iter()) {
@@ -150,7 +173,7 @@ impl UnlockBlocks {
             }
         }
 
-        Ok(Self(unlock_blocks.into_boxed_slice()))
+        Ok(Self(unlock_blocks))
     }
 
     /// Gets an `UnlockBlock` from an `UnlockBlocks`.
@@ -161,6 +184,25 @@ impl UnlockBlocks {
             Some(unlock_block) => Some(unlock_block),
             None => None,
         }
+    }
+}
+
+impl bee_packable::Packable for UnlockBlocks {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.0.pack(packer)
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let unlock_blocks = BoxedSlicePrefix::<UnlockBlock, UnlockBlockCount>::unpack::<_, VERIFY>(unpacker)
+            .map_packable_err(|err| {
+                err.unwrap_packable_or_else(|prefix_err| Error::InvalidUnlockBlockCount(prefix_err.into()))
+            })?;
+
+        Self::from_boxed_slice(unlock_blocks).map_err(UnpackError::Packable)
     }
 }
 
@@ -184,7 +226,9 @@ impl OldPackable for UnlockBlocks {
         let unlock_blocks_len = u16::unpack_inner::<R, CHECK>(reader)?;
 
         if CHECK && !UNLOCK_BLOCK_COUNT_RANGE.contains(&unlock_blocks_len) {
-            return Err(Error::InvalidUnlockBlockCount(unlock_blocks_len));
+            return Err(Error::InvalidUnlockBlockCount(
+                UnlockBlockCount::try_from(unlock_blocks_len).unwrap_err().into(),
+            ));
         }
 
         let mut unlock_blocks = Vec::with_capacity(unlock_blocks_len as usize);
