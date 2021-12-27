@@ -28,7 +28,9 @@ use bee_message::{
         Payload,
     },
     signature::{Ed25519Signature, Signature},
-    unlock_block::{AliasUnlockBlock, NftUnlockBlock, ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
+    unlock_block::{
+        AliasUnlockBlock, NftUnlockBlock, ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks,
+    },
     Message, MessageBuilder, MessageId,
 };
 #[cfg(feature = "peer")]
@@ -383,7 +385,7 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
                 ),
                 NftOutput::KIND => OutputDto::Nft(
                     NftOutputDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize foundry output: {}", e)))?,
+                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize NFT output: {}", e)))?,
                 ),
                 _ => return Err(serde::de::Error::custom("unsupported output type")),
             },
@@ -612,7 +614,7 @@ pub enum UnlockBlockDto {
     Signature(SignatureUnlockBlockDto),
     Reference(ReferenceUnlockBlockDto),
     Alias(AliasUnlockBlockDto),
-    Nft(NftUnlockBlockDto)
+    Nft(NftUnlockBlockDto),
 }
 
 impl From<&UnlockBlock> for UnlockBlockDto {
@@ -632,8 +634,14 @@ impl From<&UnlockBlock> for UnlockBlockDto {
                 kind: ReferenceUnlockBlock::KIND,
                 index: r.index(),
             }),
-            UnlockBlock::Alias(_) => todo!(),
-            UnlockBlock::Nft(_) => todo!(),
+            UnlockBlock::Alias(a) => UnlockBlockDto::Alias(AliasUnlockBlockDto {
+                kind: AliasUnlockBlock::KIND,
+                index: a.index(),
+            }),
+            UnlockBlock::Nft(n) => UnlockBlockDto::Nft(NftUnlockBlockDto {
+                kind: NftUnlockBlock::KIND,
+                index: n.index(),
+            }),
         }
     }
 }

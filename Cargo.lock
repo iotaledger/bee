@@ -309,6 +309,7 @@ dependencies = [
  "bee-message",
  "bee-protocol",
  "hex",
+ "primitive-types",
  "serde",
  "serde_json",
  "thiserror",
