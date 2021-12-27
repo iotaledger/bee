@@ -12,7 +12,7 @@ use crate::MessageId;
 use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// Defines a coordinator milestone.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
 pub struct Milestone {
     message_id: MessageId,
     timestamp: u64,
