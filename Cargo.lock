@@ -268,6 +268,7 @@ version = "0.2.0"
 dependencies = [
  "bech32",
  "bee-common",
+ "bee-packable",
  "bee-pow",
  "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
@@ -282,6 +283,27 @@ dependencies = [
  "serde",
  "serde-big-array",
  "thiserror",
+]
+
+[[package]]
+name = "bee-packable"
+version = "0.1.0"
+source = "git+https://github.com/iotaledger/bee?branch=coordicide#60b754333040ae2b1897419cd623de905fa39fd1"
+dependencies = [
+ "autocfg",
+ "bee-packable-derive",
+ "serde",
+]
+
+[[package]]
+name = "bee-packable-derive"
+version = "0.1.0"
+source = "git+https://github.com/iotaledger/bee?branch=coordicide#60b754333040ae2b1897419cd623de905fa39fd1"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

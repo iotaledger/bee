@@ -9,7 +9,7 @@ use crate::{
 use crypto::Error as CryptoError;
 use primitive_types::U256;
 
-use core::fmt;
+use core::{convert::Infallible, fmt};
 
 /// Error occurring when creating/parsing/validating messages.
 #[derive(Debug)]
@@ -242,5 +242,11 @@ impl From<std::io::Error> for Error {
 impl From<CryptoError> for Error {
     fn from(error: CryptoError) -> Self {
         Error::CryptoError(error)
+    }
+}
+
+impl From<Infallible> for Error {
+    fn from(err: Infallible) -> Self {
+        match err {}
     }
 }

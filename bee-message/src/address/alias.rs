@@ -10,7 +10,7 @@ use derive_more::{AsRef, Deref, From};
 use core::str::FromStr;
 
 /// An alias address.
-#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, Deref)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, Deref, bee_packable::Packable)]
 #[as_ref(forward)]
 pub struct AliasAddress(AliasId);
 
