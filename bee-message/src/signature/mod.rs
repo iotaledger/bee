@@ -16,14 +16,17 @@ use bee_common::packable::{Packable as OldPackable, Read, Write};
 /// This is defined as part of the Unspent Transaction Output (UTXO) transaction protocol.
 ///
 /// RFC: <https://github.com/luca-moser/protocol-rfcs/blob/signed-tx-payload/text/0000-transaction-payload/0000-transaction-payload.md#signature-unlock-block>
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From, bee_packable::Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
+#[packable(unpack_error = Error)]
+#[packable(tag_type = u8, with_error = Error::InvalidSignatureKind)]
 pub enum Signature {
     /// An Ed25519 signature.
+    #[packable(tag = Ed25519Signature::KIND)]
     Ed25519(Ed25519Signature),
 }
 
