@@ -37,7 +37,7 @@ All types and features required to compute and maintain the ledger state.
 
 Implementation of [RFC: Message](https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md).
 
-## bee-network
+## bee-gossip
 
 Networking functionality and types for nodes and clients participating in the IOTA protocol built on top of `libp2p`.
 
