@@ -17,18 +17,25 @@ mod treasury;
 ///
 pub mod feature_block;
 
+pub(crate) use alias::StateMetadataLength;
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
 pub use chain_id::ChainId;
 pub use extended::{ExtendedOutput, ExtendedOutputBuilder};
+pub(crate) use feature_block::{DustDepositAmount, IndexationFeatureBlockLength, MetadataFeatureBlockLength};
 pub use feature_block::{FeatureBlock, FeatureBlocks};
 pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme};
+pub(crate) use native_token::NativeTokenCount;
 pub use native_token::{NativeToken, NativeTokens};
+pub(crate) use nft::ImmutableMetadataLength;
 pub use nft::{NftOutput, NftOutputBuilder};
 pub use nft_id::NftId;
+pub(crate) use output_id::InputOutputIndex;
 pub use output_id::OutputId;
 pub use simple::SimpleOutput;
+pub(crate) use simple::SimpleOutputAmount;
 pub use token_id::TokenId;
+pub(crate) use treasury::TreasuryAmount;
 pub use treasury::TreasuryOutput;
 
 use crate::Error;
@@ -49,24 +56,32 @@ pub const OUTPUT_INDEX_MAX: u16 = OUTPUT_COUNT_MAX - 1; // 126
 pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; // [0..126]
 
 /// A generic output that can represent different types defining the deposit of funds.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, bee_packable::Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
+#[packable(unpack_error = Error)]
+#[packable(tag_type = u8, with_error = Error::InvalidOutputKind)]
 pub enum Output {
     /// A simple output.
+    #[packable(tag = SimpleOutput::KIND)]
     Simple(SimpleOutput),
     /// A treasury output.
+    #[packable(tag = TreasuryOutput::KIND)]
     Treasury(TreasuryOutput),
     /// An extended output.
+    #[packable(tag = ExtendedOutput::KIND)]
     Extended(ExtendedOutput),
     /// An alias output.
+    #[packable(tag = AliasOutput::KIND)]
     Alias(AliasOutput),
     /// A foundry output.
+    #[packable(tag = FoundryOutput::KIND)]
     Foundry(FoundryOutput),
     /// A NFT output.
+    #[packable(tag = NftOutput::KIND)]
     Nft(NftOutput),
 }
 

@@ -3,6 +3,7 @@
 
 use bee_common::packable::Packable as OldPackable;
 use bee_message::{constant::IOTA_SUPPLY, output::TreasuryOutput, Error};
+use bee_packable::bounded::InvalidBoundedU64;
 
 #[test]
 fn kind() {
@@ -23,7 +24,9 @@ fn new_valid_max_amount() {
 fn invalid_more_than_max_amount() {
     assert!(matches!(
         TreasuryOutput::new(3_038_287_259_199_220_266),
-        Err(Error::InvalidTreasuryAmount(3_038_287_259_199_220_266))
+        Err(Error::InvalidTreasuryAmount(InvalidBoundedU64(
+            3_038_287_259_199_220_266
+        )))
     ));
 }
 
@@ -47,6 +50,8 @@ fn pack_unpack_valid() {
 fn pack_unpack_invalid() {
     assert!(matches!(
         TreasuryOutput::unpack(&mut vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a].as_slice()),
-        Err(Error::InvalidTreasuryAmount(3_038_287_259_199_220_266))
+        Err(Error::InvalidTreasuryAmount(InvalidBoundedU64(
+            3_038_287_259_199_220_266
+        )))
     ));
 }

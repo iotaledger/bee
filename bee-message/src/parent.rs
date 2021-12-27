@@ -9,7 +9,13 @@ use bee_common::{
     ord::is_unique_sorted,
     packable::{Packable as OldPackable, Read, Write},
 };
-use bee_packable::{bounded::BoundedU8, error::UnpackErrorExt, prefix::BoxedSlicePrefix};
+use bee_packable::{
+    bounded::BoundedU8,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::BoxedSlicePrefix,
+    unpacker::Unpacker,
+};
 
 use derive_more::Deref;
 
@@ -38,7 +44,11 @@ impl Parents {
         let inner: BoxedSlicePrefix<MessageId, ParentCount> =
             inner.into_boxed_slice().try_into().map_err(Error::InvalidParentCount)?;
 
-        if !is_unique_sorted(inner.iter().map(AsRef::as_ref)) {
+        Self::from_boxed_slice::<true>(inner)
+    }
+
+    fn from_boxed_slice<const VERIFY: bool>(inner: BoxedSlicePrefix<MessageId, ParentCount>) -> Result<Self, Error> {
+        if VERIFY && !is_unique_sorted(inner.iter().map(AsRef::as_ref)) {
             return Err(Error::ParentsNotUniqueSorted);
         }
 
@@ -59,23 +69,17 @@ impl Parents {
 impl bee_packable::Packable for Parents {
     type UnpackError = Error;
 
-    fn pack<P: bee_packable::packer::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.0.pack(packer)
     }
 
-    fn unpack<U: bee_packable::unpacker::Unpacker, const VERIFY: bool>(
+    fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
-    ) -> Result<Self, bee_packable::error::UnpackError<Self::UnpackError, U::Error>> {
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let inner = BoxedSlicePrefix::<MessageId, ParentCount>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|err| Error::InvalidParentCount(err.into_prefix().into()))?;
 
-        if !is_unique_sorted(inner.iter().map(AsRef::as_ref)) {
-            return Err(bee_packable::error::UnpackError::Packable(
-                Error::ParentsNotUniqueSorted,
-            ));
-        }
-
-        Ok(Self(inner))
+        Self::from_boxed_slice::<VERIFY>(inner).map_err(UnpackError::Packable)
     }
 }
 

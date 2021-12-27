@@ -4,24 +4,26 @@
 use crate::{constant::DUST_DEPOSIT_MIN, Error};
 
 use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_packable::bounded::BoundedU64;
+
+pub(crate) type DustDepositAmount = BoundedU64<DUST_DEPOSIT_MIN, { u64::MAX }>;
 
 /// Defines the amount of IOTAs used as dust deposit that have to be returned to the sender
 /// [`Address`](crate::address::Address).
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = Error, with = Error::InvalidDustDepositAmount)]
 pub struct DustDepositReturnFeatureBlock(
     // Amount of IOTA coins the consuming transaction should deposit to the [`Address`](crate::address::Address)
     // defined in [`SenderFeatureBlock`].
-    u64,
+    DustDepositAmount,
 );
 
 impl TryFrom<u64> for DustDepositReturnFeatureBlock {
     type Error = Error;
 
     fn try_from(amount: u64) -> Result<Self, Self::Error> {
-        validate_amount(amount)?;
-
-        Ok(Self(amount))
+        amount.try_into().map(Self).map_err(Error::InvalidDustDepositAmount)
     }
 }
 
@@ -38,7 +40,7 @@ impl DustDepositReturnFeatureBlock {
     /// Returns the amount.
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.0
+        self.0.get()
     }
 }
 
@@ -46,11 +48,11 @@ impl OldPackable for DustDepositReturnFeatureBlock {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.0.packed_len()
+        self.amount().packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
+        self.amount().pack(writer)?;
 
         Ok(())
     }
@@ -62,15 +64,13 @@ impl OldPackable for DustDepositReturnFeatureBlock {
             validate_amount(amount)?;
         }
 
-        Ok(Self(amount))
+        Self::new(amount)
     }
 }
 
 #[inline]
 fn validate_amount(amount: u64) -> Result<(), Error> {
-    if amount < DUST_DEPOSIT_MIN {
-        return Err(Error::InvalidDustDepositAmount(amount));
-    }
+    DustDepositReturnFeatureBlock::try_from(amount)?;
 
     Ok(())
 }

@@ -4,22 +4,27 @@
 use crate::Error;
 
 use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_packable::{bounded::BoundedU32, prefix::BoxedSlicePrefix};
+
+pub(crate) type MetadataFeatureBlockLength = BoundedU32<1, { MetadataFeatureBlock::LENGTH_MAX }>;
 
 /// Defines metadata, arbitrary binary data, that will be stored in the output.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = Error, with = |err| Error::InvalidMetadataFeatureBlockLength(err.into_prefix().into()))]
 pub struct MetadataFeatureBlock(
     // Binary data.
-    Box<[u8]>,
+    BoxedSlicePrefix<u8, MetadataFeatureBlockLength>,
 );
 
-impl TryFrom<&[u8]> for MetadataFeatureBlock {
+impl TryFrom<Vec<u8>> for MetadataFeatureBlock {
     type Error = Error;
 
-    fn try_from(data: &[u8]) -> Result<Self, Error> {
-        validate_length(data.len())?;
-
-        Ok(MetadataFeatureBlock(data.into()))
+    fn try_from(data: Vec<u8>) -> Result<Self, Error> {
+        data.into_boxed_slice()
+            .try_into()
+            .map(Self)
+            .map_err(Error::InvalidMetadataFeatureBlockLength)
     }
 }
 
@@ -27,11 +32,11 @@ impl MetadataFeatureBlock {
     /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of [`MetadataFeatureBlock`].
     pub const KIND: u8 = 7;
     /// Maximum possible length in bytes of the data field.
-    pub const LENGTH_MAX: usize = 1024;
+    pub const LENGTH_MAX: u32 = 1024;
 
     /// Creates a new [`MetadataFeatureBlock`].
     #[inline(always)]
-    pub fn new(data: &[u8]) -> Result<Self, Error> {
+    pub fn new(data: Vec<u8>) -> Result<Self, Error> {
         Self::try_from(data)
     }
 
@@ -66,15 +71,13 @@ impl OldPackable for MetadataFeatureBlock {
         let mut data = vec![0u8; data_length];
         reader.read_exact(&mut data)?;
 
-        Ok(Self(data.into()))
+        Self::new(data)
     }
 }
 
 #[inline]
 fn validate_length(data_length: usize) -> Result<(), Error> {
-    if data_length == 0 || data_length > MetadataFeatureBlock::LENGTH_MAX {
-        return Err(Error::InvalidMetadataLength(data_length));
-    }
+    MetadataFeatureBlockLength::try_from(data_length).map_err(Error::InvalidMetadataFeatureBlockLength)?;
 
     Ok(())
 }

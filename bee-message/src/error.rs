@@ -3,7 +3,11 @@
 
 use crate::{
     input::UtxoInput,
-    output::{AliasId, NftId},
+    output::{
+        feature_block::FeatureBlockCount, AliasId, DustDepositAmount, ImmutableMetadataLength,
+        IndexationFeatureBlockLength, InputOutputIndex, MetadataFeatureBlockLength, NativeTokenCount, NftId,
+        SimpleOutputAmount, StateMetadataLength, TreasuryAmount,
+    },
     parent::ParentCount,
     unlock_block::{AliasIndex, NftIndex, ReferenceIndex, UnlockBlockCount},
 };
@@ -26,24 +30,27 @@ pub enum Error {
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAliasIndex(<AliasIndex as TryFrom<u16>>::Error),
-    InvalidAmount(u64),
+    InvalidAmount(<SimpleOutputAmount as TryFrom<u64>>::Error),
     InvalidControllerKind(u8),
-    InvalidDustDepositAmount(u64),
+    InvalidDustDepositAmount(<DustDepositAmount as TryFrom<u64>>::Error),
     InvalidEssenceKind(u8),
-    InvalidFeatureBlockCount(usize),
+    InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
     InvalidFeatureBlockKind(u8),
     InvalidFoundryOutputSupply { circulating: U256, max: U256 },
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength { expected: usize, actual: usize },
     InvalidIndexationDataLength(usize),
+    InvalidIndexationFeatureBlockLength(<IndexationFeatureBlockLength as TryFrom<usize>>::Error),
     InvalidIndexationIndexLength(usize),
     InvalidInputKind(u8),
     InvalidInputOutputCount(u16),
-    InvalidInputOutputIndex(u16),
+    InvalidInputOutputIndex(<InputOutputIndex as TryFrom<u16>>::Error),
     InvalidMessageLength(usize),
-    InvalidMetadataLength(usize),
+    InvalidImmutableMetadataLength(<ImmutableMetadataLength as TryFrom<usize>>::Error),
+    InvalidStateMetadataLength(<StateMetadataLength as TryFrom<usize>>::Error),
+    InvalidMetadataFeatureBlockLength(<MetadataFeatureBlockLength as TryFrom<usize>>::Error),
     InvalidMigratedFundsEntryAmount(u64),
-    InvalidNativeTokenCount(usize),
+    InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
     InvalidNftIndex(<NftIndex as TryFrom<u16>>::Error),
     InvalidOutputKind(u8),
     InvalidParentCount(<ParentCount as TryFrom<usize>>::Error),
@@ -56,7 +63,7 @@ pub enum Error {
     InvalidSignatureKind(u8),
     InvalidTailTransactionHash,
     InvalidTokenSchemeKind(u8),
-    InvalidTreasuryAmount(u64),
+    InvalidTreasuryAmount(<TreasuryAmount as TryFrom<u64>>::Error),
     InvalidUnlockBlockCount(<UnlockBlockCount as TryFrom<usize>>::Error),
     InvalidUnlockBlockKind(u8),
     InvalidUnlockBlockReference(u16),
@@ -128,6 +135,9 @@ impl fmt::Display for Error {
             Error::InvalidIndexationDataLength(length) => {
                 write!(f, "invalid indexation data length {}.", length)
             }
+            Error::InvalidIndexationFeatureBlockLength(length) => {
+                write!(f, "invalid indexation feature block length {}.", length)
+            }
             Error::InvalidIndexationIndexLength(length) => {
                 write!(f, "invalid indexation index length {}.", length)
             }
@@ -135,7 +145,11 @@ impl fmt::Display for Error {
             Error::InvalidInputOutputCount(count) => write!(f, "invalid input or output count: {}.", count),
             Error::InvalidInputOutputIndex(index) => write!(f, "invalid input or output index: {}.", index),
             Error::InvalidMessageLength(length) => write!(f, "invalid message length {}.", length),
-            Error::InvalidMetadataLength(length) => write!(f, "invalid metadata length {}.", length),
+            Error::InvalidStateMetadataLength(length) => write!(f, "invalid state metadata length {}.", length),
+            Error::InvalidImmutableMetadataLength(length) => write!(f, "invalid immutable metadata length {}.", length),
+            Error::InvalidMetadataFeatureBlockLength(length) => {
+                write!(f, "invalid metadata feature block length {}.", length)
+            }
             Error::InvalidMigratedFundsEntryAmount(amount) => {
                 write!(f, "invalid migrated funds entry amount: {}.", amount)
             }

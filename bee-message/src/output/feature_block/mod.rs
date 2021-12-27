@@ -11,12 +11,15 @@ mod sender;
 mod timelock_milestone_index;
 mod timelock_unix;
 
+pub(crate) use dust_deposit_return::DustDepositAmount;
 pub use dust_deposit_return::DustDepositReturnFeatureBlock;
 pub use expiration_milestone_index::ExpirationMilestoneIndexFeatureBlock;
 pub use expiration_unix::ExpirationUnixFeatureBlock;
 pub use indexation::IndexationFeatureBlock;
+pub(crate) use indexation::IndexationFeatureBlockLength;
 pub use issuer::IssuerFeatureBlock;
 pub use metadata::MetadataFeatureBlock;
+pub(crate) use metadata::MetadataFeatureBlockLength;
 pub use sender::SenderFeatureBlock;
 pub use timelock_milestone_index::TimelockMilestoneIndexFeatureBlock;
 pub use timelock_unix::TimelockUnixFeatureBlock;
@@ -27,35 +30,52 @@ use bee_common::{
     ord::is_unique_sorted,
     packable::{Packable as OldPackable, Read, Write},
 };
+use bee_packable::{
+    bounded::BoundedU8,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::BoxedSlicePrefix,
+};
 
 use bitflags::bitflags;
 use derive_more::{Deref, From};
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, bee_packable::Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
+#[packable(unpack_error = Error)]
+#[packable(tag_type = u8, with_error = Error::InvalidFeatureBlockKind)]
 pub enum FeatureBlock {
     /// A sender feature block.
+    #[packable(tag = SenderFeatureBlock::KIND)]
     Sender(SenderFeatureBlock),
     /// An issuer feature block.
+    #[packable(tag = IssuerFeatureBlock::KIND)]
     Issuer(IssuerFeatureBlock),
     /// A dust deposit return feature block.
+    #[packable(tag = DustDepositReturnFeatureBlock::KIND)]
     DustDepositReturn(DustDepositReturnFeatureBlock),
     /// A timelock milestone index feature block.
+    #[packable(tag = TimelockMilestoneIndexFeatureBlock::KIND)]
     TimelockMilestoneIndex(TimelockMilestoneIndexFeatureBlock),
     /// A timelock unix feature block.
+    #[packable(tag = TimelockUnixFeatureBlock::KIND)]
     TimelockUnix(TimelockUnixFeatureBlock),
     /// An expiration milestone index feature block.
+    #[packable(tag = ExpirationMilestoneIndexFeatureBlock::KIND)]
     ExpirationMilestoneIndex(ExpirationMilestoneIndexFeatureBlock),
     /// An expiration unix feature block.
+    #[packable(tag = ExpirationUnixFeatureBlock::KIND)]
     ExpirationUnix(ExpirationUnixFeatureBlock),
     /// A metadata feature block.
+    #[packable(tag = MetadataFeatureBlock::KIND)]
     Metadata(MetadataFeatureBlock),
     /// An indexation feature block.
+    #[packable(tag = IndexationFeatureBlock::KIND)]
     Indexation(IndexationFeatureBlock),
 }
 
@@ -177,35 +197,46 @@ impl OldPackable for FeatureBlock {
     }
 }
 
+pub(crate) type FeatureBlockCount = BoundedU8<0, { FeatureBlocks::COUNT_MAX }>;
+
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct FeatureBlocks(Box<[FeatureBlock]>);
+pub struct FeatureBlocks(BoxedSlicePrefix<FeatureBlock, FeatureBlockCount>);
 
 impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
     type Error = Error;
 
-    fn try_from(mut feature_blocks: Vec<FeatureBlock>) -> Result<Self, Self::Error> {
-        validate_count(feature_blocks.len())?;
-
-        feature_blocks.sort_by_key(FeatureBlock::kind);
-
-        // Sort is obviously fine now but uniqueness still needs to be checked.
-        validate_unique_sorted(&feature_blocks)?;
-        validate_dependencies(&feature_blocks)?;
-
-        Ok(Self(feature_blocks.into_boxed_slice()))
+    #[inline(always)]
+    fn try_from(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Self::Error> {
+        Self::new(feature_blocks)
     }
 }
 
 impl FeatureBlocks {
     ///
-    pub const COUNT_MAX: usize = 9;
+    pub const COUNT_MAX: u8 = 9;
 
     /// Creates a new `FeatureBlocks`.
-    #[inline(always)]
     pub fn new(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Error> {
-        Self::try_from(feature_blocks)
+        let mut feature_blocks =
+            BoxedSlicePrefix::<FeatureBlock, FeatureBlockCount>::try_from(feature_blocks.into_boxed_slice())
+                .map_err(Error::InvalidFeatureBlockCount)?;
+
+        feature_blocks.sort_by_key(FeatureBlock::kind);
+        // Sort is obviously fine now but uniqueness still needs to be checked.
+        Self::from_boxed_slice::<true>(feature_blocks)
+    }
+
+    fn from_boxed_slice<const VERIFY: bool>(
+        feature_blocks: BoxedSlicePrefix<FeatureBlock, FeatureBlockCount>,
+    ) -> Result<Self, Error> {
+        if VERIFY {
+            validate_unique_sorted(&feature_blocks)?;
+            validate_dependencies(&feature_blocks)?;
+        }
+
+        Ok(Self(feature_blocks))
     }
 
     /// Gets a reference to a feature block from a feature block kind, if found.
@@ -228,6 +259,25 @@ impl FeatureBlocks {
     #[inline(always)]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
+    }
+}
+
+impl bee_packable::Packable for FeatureBlocks {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.0.pack(packer)
+    }
+
+    fn unpack<U: bee_packable::unpacker::Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let feature_blocks = BoxedSlicePrefix::<FeatureBlock, FeatureBlockCount>::unpack::<_, VERIFY>(unpacker)
+            .map_packable_err(|err| {
+                err.unwrap_packable_or_else(|prefix_err| Error::InvalidFeatureBlockCount(prefix_err.into()))
+            })?;
+
+        Self::from_boxed_slice::<VERIFY>(feature_blocks).map_err(UnpackError::Packable)
     }
 }
 
@@ -264,15 +314,13 @@ impl OldPackable for FeatureBlocks {
             validate_dependencies(&feature_blocks)?;
         };
 
-        Ok(Self(feature_blocks.into_boxed_slice()))
+        Self::new(feature_blocks)
     }
 }
 
 #[inline]
 fn validate_count(feature_blocks_count: usize) -> Result<(), Error> {
-    if feature_blocks_count > FeatureBlocks::COUNT_MAX {
-        return Err(Error::InvalidFeatureBlockCount(feature_blocks_count));
-    }
+    FeatureBlockCount::try_from(feature_blocks_count).map_err(Error::InvalidFeatureBlockCount)?;
 
     Ok(())
 }

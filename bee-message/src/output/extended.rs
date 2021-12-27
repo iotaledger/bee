@@ -10,7 +10,12 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_common::packable::{Read, Write};
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+};
 
 ///
 pub struct ExtendedOutputBuilder {
@@ -140,7 +145,41 @@ impl ExtendedOutput {
     }
 }
 
-impl OldPackable for ExtendedOutput {
+impl bee_packable::Packable for ExtendedOutput {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.address.pack(packer)?;
+        self.amount.pack(packer)?;
+        self.native_tokens.pack(packer)?;
+        self.feature_blocks.pack(packer)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let address = Address::unpack::<_, VERIFY>(unpacker)?;
+        let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
+        let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
+
+        if VERIFY {
+            validate_allowed_feature_blocks(&feature_blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)
+                .map_err(UnpackError::Packable)?;
+        }
+
+        Ok(Self {
+            address,
+            amount,
+            native_tokens,
+            feature_blocks,
+        })
+    }
+}
+
+impl bee_common::packable::Packable for ExtendedOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

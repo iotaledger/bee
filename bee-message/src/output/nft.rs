@@ -10,7 +10,14 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_common::packable::{Read, Write};
+use bee_packable::{
+    bounded::BoundedU32,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::BoxedSlicePrefix,
+    unpacker::Unpacker,
+};
 
 ///
 pub struct NftOutputBuilder {
@@ -82,11 +89,17 @@ impl NftOutputBuilder {
             amount: self.amount,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             nft_id: self.nft_id,
-            immutable_metadata: self.immutable_metadata.into_boxed_slice(),
+            immutable_metadata: self
+                .immutable_metadata
+                .into_boxed_slice()
+                .try_into()
+                .map_err(Error::InvalidImmutableMetadataLength)?,
             feature_blocks,
         })
     }
 }
+
+pub(crate) type ImmutableMetadataLength = BoundedU32<0, { NftOutput::IMMUTABLE_METADATA_LENGTH_MAX }>;
 
 /// Describes an NFT output, a globally unique token with metadata attached.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -101,7 +114,7 @@ pub struct NftOutput {
     // Unique identifier of the NFT.
     nft_id: NftId,
     // Binary metadata attached immutably to the NFT.
-    immutable_metadata: Box<[u8]>,
+    immutable_metadata: BoxedSlicePrefix<u8, ImmutableMetadataLength>,
     feature_blocks: FeatureBlocks,
 }
 
@@ -109,7 +122,7 @@ impl NftOutput {
     /// The [`Output`](crate::output::Output) kind of a [`NftOutput`].
     pub const KIND: u8 = 6;
     ///
-    pub const IMMUTABLE_METADATA_LENGTH_MAX: usize = 1024;
+    pub const IMMUTABLE_METADATA_LENGTH_MAX: u32 = 1024;
 
     /// The set of allowed [`FeatureBlock`]s for an [`NftOutput`].
     const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
@@ -176,7 +189,54 @@ impl NftOutput {
     }
 }
 
-impl OldPackable for NftOutput {
+impl bee_packable::Packable for NftOutput {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.address.pack(packer)?;
+        self.amount.pack(packer)?;
+        self.native_tokens.pack(packer)?;
+        self.nft_id.pack(packer)?;
+        self.immutable_metadata.pack(packer)?;
+        self.feature_blocks.pack(packer)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let address = Address::unpack::<_, VERIFY>(unpacker)?;
+        let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
+        let nft_id = NftId::unpack::<_, VERIFY>(unpacker).infallible()?;
+
+        if VERIFY {
+            validate_address(&address, &nft_id).map_err(UnpackError::Packable)?;
+        }
+
+        let immutable_metadata = BoxedSlicePrefix::<u8, ImmutableMetadataLength>::unpack::<_, VERIFY>(unpacker)
+            .map_packable_err(|err| Error::InvalidImmutableMetadataLength(err.into_prefix().into()))?;
+
+        let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
+
+        if VERIFY {
+            validate_allowed_feature_blocks(&feature_blocks, NftOutput::ALLOWED_FEATURE_BLOCKS)
+                .map_err(UnpackError::Packable)?;
+        }
+
+        Ok(Self {
+            address,
+            amount,
+            native_tokens,
+            nft_id,
+            immutable_metadata,
+            feature_blocks,
+        })
+    }
+}
+
+impl bee_common::packable::Packable for NftOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -230,7 +290,10 @@ impl OldPackable for NftOutput {
             amount,
             native_tokens,
             nft_id,
-            immutable_metadata: immutable_metadata.into_boxed_slice(),
+            immutable_metadata: immutable_metadata
+                .into_boxed_slice()
+                .try_into()
+                .map_err(Error::InvalidImmutableMetadataLength)?,
             feature_blocks,
         })
     }
@@ -253,9 +316,7 @@ fn validate_address(address: &Address, nft_id: &NftId) -> Result<(), Error> {
 
 #[inline]
 fn validate_immutable_metadata_length(immutable_metadata_length: usize) -> Result<(), Error> {
-    if immutable_metadata_length > NftOutput::IMMUTABLE_METADATA_LENGTH_MAX {
-        return Err(Error::InvalidMetadataLength(immutable_metadata_length));
-    }
+    ImmutableMetadataLength::try_from(immutable_metadata_length).map_err(Error::InvalidImmutableMetadataLength)?;
 
     Ok(())
 }

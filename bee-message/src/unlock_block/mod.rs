@@ -126,6 +126,7 @@ impl OldPackable for UnlockBlock {
 
 pub(crate) type UnlockBlockCount =
     BoundedU16<{ *UNLOCK_BLOCK_COUNT_RANGE.start() }, { *UNLOCK_BLOCK_COUNT_RANGE.end() }>;
+
 /// A collection of unlock blocks.
 #[derive(Clone, Debug, Eq, PartialEq, Deref)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

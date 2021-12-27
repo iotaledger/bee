@@ -10,7 +10,14 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_common::packable::{Read, Write};
+use bee_packable::{
+    bounded::BoundedU32,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::BoxedSlicePrefix,
+    unpacker::Unpacker,
+};
 
 ///
 pub struct AliasOutputBuilder {
@@ -103,7 +110,12 @@ impl AliasOutputBuilder {
         let state_index = self.state_index.unwrap_or(0);
         let foundry_counter = self.foundry_counter.unwrap_or(0);
 
-        validate_state_metadata_length(self.state_metadata.len())?;
+        let state_metadata = self
+            .state_metadata
+            .into_boxed_slice()
+            .try_into()
+            .map_err(Error::InvalidStateMetadataLength)?;
+
         validate_index_counter(&self.alias_id, state_index, foundry_counter)?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
@@ -117,12 +129,14 @@ impl AliasOutputBuilder {
             state_controller: self.state_controller,
             governance_controller: self.governance_controller,
             state_index,
-            state_metadata: self.state_metadata.into_boxed_slice(),
+            state_metadata,
             foundry_counter,
             feature_blocks,
         })
     }
 }
+
+pub(crate) type StateMetadataLength = BoundedU32<0, { AliasOutput::STATE_METADATA_LENGTH_MAX }>;
 
 /// Describes an alias account in the ledger that can be controlled by the state and governance controllers.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -141,7 +155,7 @@ pub struct AliasOutput {
     // A counter that must increase by 1 every time the alias is state transitioned.
     state_index: u32,
     // Metadata that can only be changed by the state controller.
-    state_metadata: Box<[u8]>,
+    state_metadata: BoxedSlicePrefix<u8, StateMetadataLength>,
     // A counter that denotes the number of foundries created by this alias account.
     foundry_counter: u32,
     //
@@ -152,7 +166,7 @@ impl AliasOutput {
     /// The [`Output`](crate::output::Output) kind of an [`AliasOutput`].
     pub const KIND: u8 = 4;
     /// Maximum possible length in bytes of the state metadata.
-    const STATE_METADATA_LENGTH_MAX: usize = 1024;
+    pub const STATE_METADATA_LENGTH_MAX: u32 = 1024;
 
     /// The set of allowed [`FeatureBlock`]s for an [`AliasOutput`].
     const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
@@ -236,7 +250,73 @@ impl AliasOutput {
     }
 }
 
-impl OldPackable for AliasOutput {
+impl bee_packable::Packable for AliasOutput {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.amount.pack(packer)?;
+        self.native_tokens.pack(packer)?;
+        self.alias_id.pack(packer)?;
+        self.state_controller.pack(packer)?;
+        self.governance_controller.pack(packer)?;
+        self.state_index.pack(packer)?;
+        self.state_metadata.pack(packer)?;
+        self.foundry_counter.pack(packer)?;
+        self.feature_blocks.pack(packer)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
+        let alias_id = AliasId::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let state_controller = Address::unpack::<_, VERIFY>(unpacker)?;
+
+        if VERIFY {
+            validate_controller(&state_controller, &alias_id).map_err(UnpackError::Packable)?;
+        }
+
+        let governance_controller = Address::unpack::<_, VERIFY>(unpacker)?;
+
+        if VERIFY {
+            validate_controller(&governance_controller, &alias_id).map_err(UnpackError::Packable)?;
+        }
+
+        let state_index = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let state_metadata = BoxedSlicePrefix::<u8, StateMetadataLength>::unpack::<_, VERIFY>(unpacker)
+            .map_packable_err(|err| Error::InvalidStateMetadataLength(err.into_prefix().into()))?;
+
+        let foundry_counter = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+
+        if VERIFY {
+            validate_index_counter(&alias_id, state_index, foundry_counter).map_err(UnpackError::Packable)?;
+        }
+
+        let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
+
+        if VERIFY {
+            validate_allowed_feature_blocks(&feature_blocks, AliasOutput::ALLOWED_FEATURE_BLOCKS)
+                .map_err(UnpackError::Packable)?;
+        }
+
+        Ok(Self {
+            amount,
+            native_tokens,
+            alias_id,
+            state_controller,
+            governance_controller,
+            state_index,
+            state_metadata,
+            foundry_counter,
+            feature_blocks,
+        })
+    }
+}
+
+impl bee_common::packable::Packable for AliasOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -311,7 +391,10 @@ impl OldPackable for AliasOutput {
             state_controller,
             governance_controller,
             state_index,
-            state_metadata: state_metadata.into_boxed_slice(),
+            state_metadata: state_metadata
+                .into_boxed_slice()
+                .try_into()
+                .map_err(Error::InvalidStateMetadataLength)?,
             foundry_counter,
             feature_blocks,
         })
@@ -320,9 +403,7 @@ impl OldPackable for AliasOutput {
 
 #[inline]
 fn validate_state_metadata_length(state_metadata_length: usize) -> Result<(), Error> {
-    if state_metadata_length > AliasOutput::STATE_METADATA_LENGTH_MAX {
-        return Err(Error::InvalidMetadataLength(state_metadata_length));
-    }
+    StateMetadataLength::try_from(state_metadata_length).map_err(Error::InvalidStateMetadataLength)?;
 
     Ok(())
 }

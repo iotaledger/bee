@@ -3,6 +3,7 @@
 
 use bee_common::packable::Packable as OldPackable;
 use bee_message::{output::OutputId, payload::transaction::TransactionId, Error};
+use bee_packable::bounded::InvalidBoundedU16;
 
 use core::str::FromStr;
 
@@ -45,7 +46,7 @@ fn new_invalid() {
 
     assert!(matches!(
         OutputId::new(transaction_id, 127),
-        Err(Error::InvalidInputOutputIndex(127))
+        Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(127)))
     ));
 }
 
@@ -65,7 +66,7 @@ fn try_from_invalid() {
 
     assert!(matches!(
         OutputId::try_from(output_id_bytes),
-        Err(Error::InvalidInputOutputIndex(127))
+        Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(127)))
     ));
 }
 
@@ -82,7 +83,7 @@ fn from_str_valid() {
 fn from_str_invalid_index() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_INDEX),
-        Err(Error::InvalidInputOutputIndex(127))
+        Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(127)))
     ));
 }
 
@@ -136,6 +137,6 @@ fn pack_unpack_invalid() {
 
     assert!(matches!(
         OutputId::unpack(&mut bytes.as_slice()),
-        Err(Error::InvalidInputOutputIndex(127))
+        Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(127)))
     ));
 }

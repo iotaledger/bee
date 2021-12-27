@@ -288,17 +288,18 @@ dependencies = [
 [[package]]
 name = "bee-packable"
 version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee?branch=coordicide#60b754333040ae2b1897419cd623de905fa39fd1"
+source = "git+https://github.com/iotaledger/bee?branch=coordicide#389c0122479eba0618b1103517c70a0dc18f8b93"
 dependencies = [
  "autocfg",
  "bee-packable-derive",
+ "primitive-types",
  "serde",
 ]
 
 [[package]]
 name = "bee-packable-derive"
 version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee?branch=coordicide#60b754333040ae2b1897419cd623de905fa39fd1"
+source = "git+https://github.com/iotaledger/bee?branch=coordicide#389c0122479eba0618b1103517c70a0dc18f8b93"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
