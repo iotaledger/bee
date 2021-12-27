@@ -4,6 +4,7 @@
 use crate::{
     input::UtxoInput,
     output::{AliasId, NftId},
+    parent::ParentCount,
 };
 
 use crypto::Error as CryptoError;
@@ -44,7 +45,7 @@ pub enum Error {
     InvalidNativeTokenCount(usize),
     InvalidNftIndex(u16),
     InvalidOutputKind(u8),
-    InvalidParentsCount(usize),
+    InvalidParentCount(<ParentCount as TryFrom<usize>>::Error),
     InvalidPayloadKind(u32),
     InvalidPayloadLength { expected: usize, actual: usize },
     InvalidPowScoreValues { nps: u32, npsmi: u32 },
@@ -140,7 +141,7 @@ impl fmt::Display for Error {
             Error::InvalidNativeTokenCount(count) => write!(f, "invalid native token count: {}.", count),
             Error::InvalidNftIndex(index) => write!(f, "invalid nft index: {}.", index),
             Error::InvalidOutputKind(k) => write!(f, "invalid output kind: {}.", k),
-            Error::InvalidParentsCount(count) => {
+            Error::InvalidParentCount(count) => {
                 write!(f, "invalid parents count: {}.", count)
             }
             Error::InvalidPayloadKind(k) => write!(f, "invalid payload kind: {}.", k),
