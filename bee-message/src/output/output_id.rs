@@ -8,7 +8,7 @@ use bee_common::packable::{Packable as OldPackable, Read, Write};
 use core::str::FromStr;
 
 /// The identifier of an `Output`.
-#[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd, bee_packable::Packable)]
 pub struct OutputId {
     transaction_id: TransactionId,
     index: u16,
