@@ -28,7 +28,7 @@ use bee_message::{
         Payload,
     },
     signature::{Ed25519Signature, Signature},
-    unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
+    unlock_block::{AliasUnlockBlock, NftUnlockBlock, ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
     Message, MessageBuilder, MessageId,
 };
 #[cfg(feature = "peer")]
@@ -611,6 +611,8 @@ impl TryFrom<&TreasuryOutputDto> for TreasuryOutput {
 pub enum UnlockBlockDto {
     Signature(SignatureUnlockBlockDto),
     Reference(ReferenceUnlockBlockDto),
+    Alias(AliasUnlockBlockDto),
+    Nft(NftUnlockBlockDto)
 }
 
 impl From<&UnlockBlock> for UnlockBlockDto {
@@ -656,6 +658,8 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
                 }
             },
             UnlockBlockDto::Reference(r) => Ok(UnlockBlock::Reference(ReferenceUnlockBlock::new(r.index)?)),
+            UnlockBlockDto::Alias(a) => Ok(UnlockBlock::Alias(AliasUnlockBlock::new(a.index)?)),
+            UnlockBlockDto::Nft(n) => Ok(UnlockBlock::Nft(NftUnlockBlock::new(n.index)?)),
         }
     }
 }
@@ -689,6 +693,24 @@ pub struct Ed25519SignatureDto {
 /// which unlock through the same data.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReferenceUnlockBlockDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    #[serde(rename = "reference")]
+    pub index: u16,
+}
+
+/// Points to the unlock block of a consumed alias output.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AliasUnlockBlockDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    #[serde(rename = "reference")]
+    pub index: u16,
+}
+
+/// Points to the unlock block of a consumed NFT output.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct NftUnlockBlockDto {
     #[serde(rename = "type")]
     pub kind: u8,
     #[serde(rename = "reference")]
