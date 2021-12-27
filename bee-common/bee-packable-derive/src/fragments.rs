@@ -28,11 +28,11 @@ impl Fragments {
         Self {
             pattern: quote!(#path { #(#fields_pattern_ident: #fields_ident),* }),
             pack: quote! {
-                #(<#fields_type>::pack(#fields_ident, packer)?;) *
+                #(<#fields_type as bee_packable::Packable>::pack(#fields_ident, packer)?;) *
                 Ok(())
             },
             unpack: quote! {Ok(#path {
-                #(#fields_pattern_ident: <#fields_type>::unpack::<_, VERIFY>(unpacker).map_packable_err(#fields_unpack_error_with).coerce()?,)*
+                #(#fields_pattern_ident: <#fields_type as bee_packable::Packable>::unpack::<_, VERIFY>(unpacker).map_packable_err(#fields_unpack_error_with).coerce()?,)*
             })},
         }
     }

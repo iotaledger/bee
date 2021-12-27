@@ -67,7 +67,7 @@ impl TraitImpl {
                     let tag_ident = format_ident!("__TAG_{}", index, span = tag.span());
 
                     pack_arms.push(quote!(#pattern => {
-                        <#tag_type>::pack(&#tag, packer)?;
+                        <#tag_type as bee_packable::Packable>::pack(&#tag, packer)?;
                         #pack
                     }));
 
@@ -104,7 +104,7 @@ impl TraitImpl {
                         #(#tag_decls)*
                         #(#tag_asserts)*
 
-                        match <#tag_type>::unpack::<_, VERIFY>(unpacker).infallible()? {
+                        match <#tag_type as bee_packable::Packable>::unpack::<_, VERIFY>(unpacker).infallible()? {
                             #(#unpack_arms)*
                             tag => Err(bee_packable::error::UnpackError::from_packable(#tag_with_error(tag)))
                         }
