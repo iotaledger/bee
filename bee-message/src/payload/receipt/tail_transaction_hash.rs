@@ -3,7 +3,12 @@
 
 use crate::Error;
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_common::packable::{Read, Write};
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+};
 use bee_ternary::{T5B1Buf, TritBuf, Trits, T5B1};
 
 use bytemuck::cast_slice;
@@ -52,8 +57,22 @@ impl core::fmt::Debug for TailTransactionHash {
         write!(f, "TailTransactionHash({})", self)
     }
 }
+impl bee_packable::Packable for TailTransactionHash {
+    type UnpackError = Error;
 
-impl OldPackable for TailTransactionHash {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        packer.pack_bytes(self.as_ref())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Self::new(<[u8; TailTransactionHash::LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?)
+            .map_err(UnpackError::Packable)
+    }
+}
+
+impl bee_common::packable::Packable for TailTransactionHash {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

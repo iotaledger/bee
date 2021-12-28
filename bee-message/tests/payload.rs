@@ -10,13 +10,13 @@ use bee_message::{
     payload::{
         milestone::{MilestoneEssence, MilestoneId, MilestonePayload},
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
-        transaction::{RegularTransactionEssenceBuilder, TransactionEssence, TransactionId, TransactionPayloadBuilder},
+        transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayloadBuilder},
         IndexationPayload, Payload, TreasuryTransactionPayload,
     },
     signature::{Ed25519Signature, Signature},
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
 };
-use bee_test::rand::{bytes::rand_bytes_array, parents::rand_parents};
+use bee_test::rand::{bytes::rand_bytes, parents::rand_parents};
 
 use std::str::FromStr;
 
@@ -40,13 +40,8 @@ fn transaction() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-    let essence = TransactionEssence::Regular(
-        RegularTransactionEssenceBuilder::new()
-            .with_inputs(vec![input1, input2])
-            .with_outputs(vec![output])
-            .finish()
-            .unwrap(),
-    );
+    let essence =
+        TransactionEssence::Regular(RegularTransactionEssence::new(vec![input1, input2], vec![output], None).unwrap());
 
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
@@ -99,7 +94,7 @@ fn milestone() {
 
 #[test]
 fn indexation() {
-    let payload: Payload = IndexationPayload::new(&rand_bytes_array::<32>(), &[]).unwrap().into();
+    let payload: Payload = IndexationPayload::new(rand_bytes(32), vec![]).unwrap().into();
 
     let packed = payload.pack_new();
 

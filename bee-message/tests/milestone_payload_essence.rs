@@ -9,7 +9,8 @@ use bee_message::{
     payload::{milestone::MilestoneEssence, IndexationPayload, Payload, ReceiptPayload, TreasuryTransactionPayload},
     Error,
 };
-use bee_test::rand::{self, bytes::rand_bytes_array, parents::rand_parents};
+use bee_packable::bounded::TryIntoBoundedU8Error;
+use bee_test::rand::{self, bytes::rand_bytes, parents::rand_parents};
 
 #[test]
 fn new_invalid_pow_score_non_zero() {
@@ -21,7 +22,7 @@ fn new_invalid_pow_score_non_zero() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             4242,
-            vec![],
+            vec![[0u8; 32]; 1],
             None,
         ),
         Err(Error::InvalidPowScoreValues { nps: 0, npsmi: 4242 })
@@ -38,7 +39,7 @@ fn new_invalid_pow_score_lower_than_index() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             4000,
             4241,
-            vec![],
+            vec![[0u8; 32]; 1],
             None,
         ),
         Err(Error::InvalidPowScoreValues { nps: 4000, npsmi: 4241 })
@@ -58,7 +59,7 @@ fn new_invalid_no_public_key() {
             vec![],
             None,
         ),
-        Err(Error::MilestoneInvalidPublicKeyCount(0))
+        Err(Error::MilestoneInvalidPublicKeyCount(TryIntoBoundedU8Error::Invalid(0)))
     ));
 }
 
@@ -75,7 +76,9 @@ fn new_invalid_too_many_public_keys() {
             vec![[0u8; 32]; 300],
             None,
         ),
-        Err(Error::MilestoneInvalidPublicKeyCount(300))
+        Err(Error::MilestoneInvalidPublicKeyCount(TryIntoBoundedU8Error::Truncated(
+            300
+        )))
     ));
 }
 
@@ -150,7 +153,7 @@ fn new_invalid_payload_kind() {
                 [0; 32], [1; 32], [2; 32], [3; 32], [4; 32], [5; 32], [6; 32], [7; 32], [8; 32], [9; 32]
             ],
             Some(Payload::Indexation(Box::new(
-                IndexationPayload::new(&rand_bytes_array::<32>(), &[]).unwrap()
+                IndexationPayload::new(rand_bytes(32), vec![]).unwrap()
             ))),
         ),
         Err(Error::InvalidPayloadKind(2))

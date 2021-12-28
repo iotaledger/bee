@@ -171,6 +171,11 @@ impl Message {
     pub fn into_parents(self) -> Parents {
         self.parents
     }
+
+    /// Consumes the [[`Message`]], and returns ownership over its [`Parents`] and [`Payload`].
+    pub fn into_parents_and_payload(self) -> (Parents, Option<Payload>) {
+        (self.parents, self.payload)
+    }
 }
 
 impl OldPackable for Message {
