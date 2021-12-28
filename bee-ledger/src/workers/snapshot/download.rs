@@ -129,7 +129,7 @@ async fn gather_source_information(
         match download_snapshot_header(urls.delta()).await {
             Ok(header) => Some(header),
             Err(Error::DownloadingFailed) => {
-                debug!("Downloading delta snapshot failed: {}", urls.delta());
+                debug!("Downloading delta snapshot header failed: {}", urls.delta());
                 None
             }
             Err(error) => return Err(error),
