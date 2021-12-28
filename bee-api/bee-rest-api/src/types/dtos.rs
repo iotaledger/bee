@@ -153,7 +153,7 @@ impl From<&TransactionPayload> for TransactionPayloadDto {
         TransactionPayloadDto {
             kind: TransactionPayload::KIND,
             essence: value.essence().into(),
-            unlock_blocks: value.unlock_blocks().iter().map(|u| u.into()).collect::<Vec<_>>(),
+            unlock_blocks: value.unlock_blocks().iter().map(Into::into).collect::<Vec<_>>(),
         }
     }
 }
@@ -213,8 +213,8 @@ impl From<&RegularTransactionEssence> for RegularTransactionEssenceDto {
     fn from(value: &RegularTransactionEssence) -> Self {
         RegularTransactionEssenceDto {
             kind: RegularTransactionEssence::KIND,
-            inputs: value.inputs().iter().map(|i| i.into()).collect::<Vec<_>>(),
-            outputs: value.outputs().iter().map(|o| o.into()).collect::<Vec<_>>(),
+            inputs: value.inputs().iter().map(Into::into).collect::<Vec<_>>(),
+            outputs: value.outputs().iter().map(Into::into).collect::<Vec<_>>(),
             payload: match value.payload() {
                 Some(Payload::Indexation(i)) => Some(PayloadDto::Indexation(Box::new(i.as_ref().into()))),
                 Some(_) => unimplemented!(),
@@ -1326,7 +1326,7 @@ impl From<&ReceiptPayload> for ReceiptPayloadDto {
             kind: ReceiptPayload::KIND,
             migrated_at: *value.migrated_at(),
             last: value.last(),
-            funds: value.funds().iter().map(|m| m.into()).collect::<_>(),
+            funds: value.funds().iter().map(Into::into).collect::<_>(),
             transaction: value.transaction().into(),
         }
     }
@@ -1339,7 +1339,7 @@ impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
         Ok(ReceiptPayload::new(
             MilestoneIndex(value.migrated_at),
             value.last,
-            value.funds.iter().map(|m| m.try_into()).collect::<Result<_, _>>()?,
+            value.funds.iter().map(TryInto::try_into).collect::<Result<_, _>>()?,
             (&value.transaction).try_into()?,
         )?)
     }
