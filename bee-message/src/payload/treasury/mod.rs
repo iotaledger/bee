@@ -8,7 +8,7 @@ use crate::{input::Input, output::Output, Error};
 use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// `TreasuryTransaction` represents a transaction which moves funds from the treasury.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreasuryTransactionPayload {
     input: Input,

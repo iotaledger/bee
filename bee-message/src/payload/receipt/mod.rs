@@ -12,13 +12,20 @@ pub use tail_transaction_hash::TailTransactionHash;
 use crate::{
     milestone::MilestoneIndex,
     output::OUTPUT_COUNT_RANGE,
-    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
+    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, OptionalPayload, Payload},
     Error,
 };
 
 use bee_common::{
     ord::is_unique_sorted,
-    packable::{Packable as OldPackable, Read, Write},
+    packable::{Read, Write},
+};
+use bee_packable::{
+    bounded::BoundedU16,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::VecPrefix,
+    unpacker::Unpacker,
 };
 
 use core::ops::RangeInclusive;
@@ -26,13 +33,16 @@ use std::collections::HashMap;
 
 const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<u16> = OUTPUT_COUNT_RANGE;
 
+pub(crate) type ReceiptFundsCount =
+    BoundedU16<{ *MIGRATED_FUNDS_ENTRY_RANGE.start() }, { *MIGRATED_FUNDS_ENTRY_RANGE.end() }>;
+
 /// Receipt is a listing of migrated funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReceiptPayload {
     migrated_at: MilestoneIndex,
     last: bool,
-    funds: Vec<MigratedFundsEntry>,
+    funds: VecPrefix<MigratedFundsEntry, ReceiptFundsCount>,
     transaction: Payload,
 }
 
@@ -47,16 +57,24 @@ impl ReceiptPayload {
         funds: Vec<MigratedFundsEntry>,
         transaction: Payload,
     ) -> Result<Self, Error> {
-        if !MIGRATED_FUNDS_ENTRY_RANGE.contains(&(funds.len() as u16)) {
-            return Err(Error::InvalidReceiptFundsCount(funds.len() as u16));
-        }
+        let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::try_from(funds)
+            .map_err(Error::InvalidReceiptFundsCount)?;
 
+        Self::from_vec_prefix(migrated_at, last, funds, transaction)
+    }
+
+    fn from_vec_prefix(
+        migrated_at: MilestoneIndex,
+        last: bool,
+        funds: VecPrefix<MigratedFundsEntry, ReceiptFundsCount>,
+        transaction: Payload,
+    ) -> Result<Self, Error> {
         if !matches!(transaction, Payload::TreasuryTransaction(_)) {
             return Err(Error::InvalidPayloadKind(transaction.kind()));
         }
 
         // Funds must be lexicographically sorted and unique in their serialised forms.
-        if !is_unique_sorted(funds.iter().map(OldPackable::pack_new)) {
+        if !is_unique_sorted(funds.iter().map(bee_common::packable::Packable::pack_new)) {
             return Err(Error::ReceiptFundsNotUniqueSorted);
         }
 
@@ -104,14 +122,46 @@ impl ReceiptPayload {
     }
 }
 
-impl OldPackable for ReceiptPayload {
+impl bee_packable::Packable for ReceiptPayload {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.migrated_at.pack(packer)?;
+        self.last.pack(packer)?;
+        self.funds.pack(packer)?;
+        OptionalPayload::pack_ref(&self.transaction, packer)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let migrated_at = MilestoneIndex::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let last = bool::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::unpack::<_, VERIFY>(unpacker)
+            .map_packable_err(|err| {
+                err.unwrap_packable_or_else(|prefix_err| Error::InvalidReceiptFundsCount(prefix_err.into()))
+            })?;
+        let transaction = Into::<Option<Payload>>::into(OptionalPayload::unpack::<_, VERIFY>(unpacker)?)
+            .ok_or(UnpackError::Packable(Error::MissingPayload))?;
+
+        Self::from_vec_prefix(migrated_at, last, funds, transaction).map_err(UnpackError::Packable)
+    }
+}
+
+impl bee_common::packable::Packable for ReceiptPayload {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
         self.migrated_at.packed_len()
             + self.last.packed_len()
             + 0u16.packed_len()
-            + self.funds.iter().map(OldPackable::packed_len).sum::<usize>()
+            + self
+                .funds
+                .iter()
+                .map(bee_common::packable::Packable::packed_len)
+                .sum::<usize>()
             + option_payload_packed_len(Some(&self.transaction))
     }
 

@@ -4,19 +4,31 @@
 use crate::{
     milestone::MilestoneIndex,
     parent::Parents,
-    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
+    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, OptionalPayload, Payload},
     Error,
 };
 
 use bee_common::{
     ord::is_unique_sorted,
-    packable::{Packable as OldPackable, Read, Write},
+    packable::{Read, Write},
+};
+use bee_packable::{
+    bounded::BoundedU8,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::VecPrefix,
+    unpacker::Unpacker,
 };
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use alloc::vec::Vec;
 use core::ops::RangeInclusive;
+
+pub(crate) type PublicKeyCount = BoundedU8<
+    { *MilestoneEssence::PUBLIC_KEY_COUNT_RANGE.start() },
+    { *MilestoneEssence::PUBLIC_KEY_COUNT_RANGE.end() },
+>;
 
 /// Essence of a milestone payload.
 /// This is the signed part of a milestone payload.
@@ -29,15 +41,15 @@ pub struct MilestoneEssence {
     merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
     next_pow_score: u32,
     next_pow_score_milestone_index: u32,
-    public_keys: Vec<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH]>,
-    receipt: Option<Payload>,
+    public_keys: VecPrefix<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH], PublicKeyCount>,
+    receipt: OptionalPayload,
 }
 
 impl MilestoneEssence {
     /// Length of a milestone merkle proof.
     pub const MERKLE_PROOF_LENGTH: usize = 32;
     /// Range of allowed milestones public key numbers.
-    pub const PUBLIC_KEY_COUNT_RANGE: RangeInclusive<usize> = 1..=255;
+    pub const PUBLIC_KEY_COUNT_RANGE: RangeInclusive<u8> = 1..=255;
     /// Length of a milestone public key.
     pub const PUBLIC_KEY_LENGTH: usize = 32;
 
@@ -53,6 +65,32 @@ impl MilestoneEssence {
         public_keys: Vec<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH]>,
         receipt: Option<Payload>,
     ) -> Result<Self, Error> {
+        let public_keys = VecPrefix::<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH], PublicKeyCount>::try_from(public_keys)
+            .map_err(Error::MilestoneInvalidPublicKeyCount)?;
+
+        Self::from_vec_prefix(
+            index,
+            timestamp,
+            parents,
+            merkle_proof,
+            next_pow_score,
+            next_pow_score_milestone_index,
+            public_keys,
+            receipt.into(),
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn from_vec_prefix(
+        index: MilestoneIndex,
+        timestamp: u64,
+        parents: Parents,
+        merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
+        next_pow_score: u32,
+        next_pow_score_milestone_index: u32,
+        public_keys: VecPrefix<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH], PublicKeyCount>,
+        receipt: OptionalPayload,
+    ) -> Result<Self, Error> {
         if next_pow_score == 0 && next_pow_score_milestone_index != 0
             || next_pow_score != 0 && next_pow_score_milestone_index <= *index
         {
@@ -62,17 +100,15 @@ impl MilestoneEssence {
             });
         }
 
-        if !MilestoneEssence::PUBLIC_KEY_COUNT_RANGE.contains(&public_keys.len()) {
-            return Err(Error::MilestoneInvalidPublicKeyCount(public_keys.len()));
-        }
-
         if !is_unique_sorted(public_keys.iter()) {
             return Err(Error::MilestonePublicKeysNotUniqueSorted);
         }
 
-        if !matches!(receipt, None | Some(Payload::Receipt(_))) {
+        if !matches!(*receipt, None | Some(Payload::Receipt(_))) {
             // Safe to unwrap since it's known not to be None.
-            return Err(Error::InvalidPayloadKind(receipt.unwrap().kind()));
+            return Err(Error::InvalidPayloadKind(
+                Into::<Option<Payload>>::into(receipt).unwrap().kind(),
+            ));
         }
 
         Ok(Self {
@@ -129,11 +165,59 @@ impl MilestoneEssence {
 
     /// Hashes the [`MilestoneEssence`] to be signed.
     pub fn hash(&self) -> [u8; 32] {
+        use bee_common::packable::Packable;
         Blake2b256::digest(&self.pack_new()).into()
     }
 }
 
-impl OldPackable for MilestoneEssence {
+impl bee_packable::Packable for MilestoneEssence {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.index.pack(packer)?;
+        self.timestamp.pack(packer)?;
+        self.parents.pack(packer)?;
+        self.merkle_proof.pack(packer)?;
+        self.next_pow_score.pack(packer)?;
+        self.next_pow_score_milestone_index.pack(packer)?;
+        self.public_keys.pack(packer)?;
+        self.receipt.pack(packer)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let timestamp = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
+
+        let merkle_proof = <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?;
+
+        let next_pow_score = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let next_pow_score_milestone_index = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+
+        let public_keys = VecPrefix::<[u8; Self::PUBLIC_KEY_LENGTH], PublicKeyCount>::unpack::<_, VERIFY>(unpacker)
+            .map_packable_err(|err| Error::MilestoneInvalidSignatureCount(err.into_prefix().into()))?;
+
+        let receipt = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
+
+        Self::from_vec_prefix(
+            index,
+            timestamp,
+            parents,
+            merkle_proof,
+            next_pow_score,
+            next_pow_score_milestone_index,
+            public_keys,
+            receipt,
+        )
+        .map_err(UnpackError::Packable)
+    }
+}
+
+impl bee_common::packable::Packable for MilestoneEssence {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -156,7 +240,7 @@ impl OldPackable for MilestoneEssence {
         self.next_pow_score.pack(writer)?;
         self.next_pow_score_milestone_index.pack(writer)?;
         (self.public_keys.len() as u8).pack(writer)?;
-        for public_key in &self.public_keys {
+        for public_key in self.public_keys.iter() {
             public_key.pack(writer)?;
         }
         option_payload_pack(writer, self.receipt.as_ref())?;

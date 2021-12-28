@@ -8,7 +8,8 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_common::packable::{Read, Write};
+use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker};
 
 use core::ops::RangeInclusive;
 
@@ -41,13 +42,33 @@ impl MigratedFundsEntry {
         &self.tail_transaction_hash
     }
 
-    /// Returns the output of a [`MigratedFundsEntry`].
+    /// Returns the output of a [`MigratedFundsEntry`]._
     pub fn output(&self) -> &SimpleOutput {
         &self.output
     }
 }
 
-impl OldPackable for MigratedFundsEntry {
+impl bee_packable::Packable for MigratedFundsEntry {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.tail_transaction_hash.pack(packer)?;
+        self.output.pack(packer)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let tail_transaction_hash = TailTransactionHash::unpack::<_, VERIFY>(unpacker)?;
+        let output = SimpleOutput::unpack::<_, VERIFY>(unpacker)?;
+
+        Self::new(tail_transaction_hash, output).map_err(UnpackError::Packable)
+    }
+}
+
+impl bee_common::packable::Packable for MigratedFundsEntry {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

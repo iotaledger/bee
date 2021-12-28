@@ -7,11 +7,19 @@ mod essence;
 mod milestone_id;
 
 pub use essence::MilestoneEssence;
+pub(crate) use essence::PublicKeyCount;
 pub use milestone_id::MilestoneId;
 
 use crate::Error;
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_common::packable::{Read, Write};
+use bee_packable::{
+    bounded::BoundedU8,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::VecPrefix,
+    unpacker::Unpacker,
+};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
@@ -20,7 +28,7 @@ use crypto::{
 };
 
 use alloc::{boxed::Box, vec::Vec};
-use core::ops::RangeInclusive;
+use core::{fmt::Debug, ops::RangeInclusive};
 
 #[derive(Debug)]
 #[allow(missing_docs)]
@@ -39,19 +47,28 @@ impl From<CryptoError> for MilestoneValidationError {
     }
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+struct Signature(
+    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))] [u8; MilestonePayload::SIGNATURE_LENGTH],
+);
+
+pub(crate) type SignatureCount =
+    BoundedU8<{ *MilestonePayload::SIGNATURE_COUNT_RANGE.start() }, { *MilestonePayload::SIGNATURE_COUNT_RANGE.end() }>;
+
 /// A payload which defines the inclusion set of other messages in the Tangle.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestonePayload {
     essence: MilestoneEssence,
-    signatures: Vec<Box<[u8]>>,
+    signatures: VecPrefix<Box<Signature>, SignatureCount>,
 }
 
 impl MilestonePayload {
     /// The payload kind of a `MilestonePayload`.
     pub const KIND: u32 = 1;
     /// Range of allowed milestones signatures key numbers.
-    pub const SIGNATURE_COUNT_RANGE: RangeInclusive<usize> = 1..=255;
+    pub const SIGNATURE_COUNT_RANGE: RangeInclusive<u8> = 1..=255;
     /// Length of a milestone signature.
     pub const SIGNATURE_LENGTH: usize = 64;
 
@@ -60,10 +77,22 @@ impl MilestonePayload {
         essence: MilestoneEssence,
         signatures: Vec<[u8; MilestonePayload::SIGNATURE_LENGTH]>,
     ) -> Result<Self, Error> {
-        if !MilestonePayload::SIGNATURE_COUNT_RANGE.contains(&signatures.len()) {
-            return Err(Error::MilestoneInvalidSignatureCount(signatures.len()));
-        }
+        // FIXME: can this be done in a more performant way?
+        let signatures = VecPrefix::<Box<Signature>, SignatureCount>::try_from(
+            signatures
+                .into_iter()
+                .map(|s| Box::new(Signature(s)))
+                .collect::<Vec<_>>(),
+        )
+        .map_err(Error::MilestoneInvalidSignatureCount)?;
 
+        Self::from_vec_prefix(essence, signatures)
+    }
+
+    fn from_vec_prefix(
+        essence: MilestoneEssence,
+        signatures: VecPrefix<Box<Signature>, SignatureCount>,
+    ) -> Result<Self, Error> {
         if essence.public_keys().len() != signatures.len() {
             return Err(Error::MilestonePublicKeysSignaturesCountMismatch {
                 key_count: essence.public_keys().len(),
@@ -71,17 +100,13 @@ impl MilestonePayload {
             });
         };
 
-        Ok(Self {
-            essence,
-            signatures: signatures
-                .iter()
-                .map(|s| s.to_vec().into_boxed_slice())
-                .collect::<Vec<Box<[u8]>>>(),
-        })
+        Ok(Self { essence, signatures })
     }
 
     /// Computes the identifier of a `MilestonePayload`.
     pub fn id(&self) -> MilestoneId {
+        use bee_common::packable::Packable;
+
         let mut hasher = Blake2b256::new();
 
         hasher.update(Self::KIND.to_le_bytes());
@@ -96,8 +121,8 @@ impl MilestonePayload {
     }
 
     /// Returns the signatures of a `MilestonePayload`.
-    pub fn signatures(&self) -> &Vec<Box<[u8]>> {
-        &self.signatures
+    pub fn signatures(&self) -> impl Iterator<Item = &[u8; Self::SIGNATURE_LENGTH]> + '_ {
+        self.signatures.iter().map(|s| &s.0)
     }
 
     /// Semantically validate a `MilestonePayload`.
@@ -117,10 +142,10 @@ impl MilestonePayload {
             ));
         }
 
-        if self.signatures().len() < min_threshold {
+        if self.signatures.len() < min_threshold {
             return Err(MilestoneValidationError::TooFewSignatures(
                 min_threshold,
-                self.signatures().len(),
+                self.signatures.len(),
             ));
         }
 
@@ -139,8 +164,7 @@ impl MilestonePayload {
 
             let ed25519_public_key =
                 ed25519::PublicKey::try_from_bytes(*public_key).map_err(MilestoneValidationError::Crypto)?;
-            // This unwrap is fine as the length of the signature has already been verified.
-            let ed25519_signature = ed25519::Signature::from_bytes(signature.as_ref().try_into().unwrap());
+            let ed25519_signature = ed25519::Signature::from_bytes(signature.as_ref().0);
 
             if !ed25519_public_key.verify(&ed25519_signature, &essence_hash) {
                 return Err(MilestoneValidationError::InvalidSignature(
@@ -154,7 +178,28 @@ impl MilestonePayload {
     }
 }
 
-impl OldPackable for MilestonePayload {
+impl bee_packable::Packable for MilestonePayload {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.essence.pack(packer)?;
+        self.signatures.pack(packer)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let essence = MilestoneEssence::unpack::<_, VERIFY>(unpacker)?;
+        let signatures = VecPrefix::<Box<Signature>, SignatureCount>::unpack::<_, VERIFY>(unpacker)
+            .map_packable_err(|err| Error::MilestoneInvalidSignatureCount(err.into_prefix().into()))?;
+
+        Self::from_vec_prefix(essence, signatures).map_err(UnpackError::Packable)
+    }
+}
+
+impl bee_common::packable::Packable for MilestonePayload {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -165,8 +210,8 @@ impl OldPackable for MilestonePayload {
         self.essence.pack(writer)?;
 
         (self.signatures.len() as u8).pack(writer)?;
-        for signature in &self.signatures {
-            writer.write_all(signature)?;
+        for signature in self.signatures.iter() {
+            writer.write_all(&signature.0)?;
         }
 
         Ok(())

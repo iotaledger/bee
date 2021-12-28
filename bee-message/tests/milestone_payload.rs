@@ -8,6 +8,7 @@ use bee_message::{
     payload::milestone::{MilestoneEssence, MilestonePayload},
     Error,
 };
+use bee_packable::bounded::TryIntoBoundedU8Error;
 use bee_test::rand::{self, message::rand_message_ids, parents::rand_parents};
 
 #[test]
@@ -53,7 +54,7 @@ fn new_invalid_no_signature() {
             .unwrap(),
             vec![]
         ),
-        Err(Error::MilestoneInvalidSignatureCount(0))
+        Err(Error::MilestoneInvalidSignatureCount(TryIntoBoundedU8Error::Invalid(0)))
     ));
 }
 
@@ -74,7 +75,9 @@ fn new_invalid_too_many_signatures() {
             .unwrap(),
             vec![[0u8; 64]; 300],
         ),
-        Err(Error::MilestoneInvalidSignatureCount(300))
+        Err(Error::MilestoneInvalidSignatureCount(TryIntoBoundedU8Error::Truncated(
+            300
+        )))
     ));
 }
 
@@ -165,11 +168,9 @@ fn getters() {
     let milestone = MilestonePayload::new(essence.clone(), signatures.clone()).unwrap();
 
     assert_eq!(essence, *milestone.essence());
-    assert_eq!(
-        signatures
-            .iter()
-            .map(|s| s.to_vec().into_boxed_slice())
-            .collect::<Vec<Box<[u8]>>>(),
-        *milestone.signatures()
-    );
+
+    assert_eq!(signatures.len(), milestone.signatures().count());
+    for (s1, s2) in signatures.iter().zip(milestone.signatures()) {
+        assert_eq!(s1, s2);
+    }
 }

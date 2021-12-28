@@ -57,7 +57,7 @@ fn invalid_length() {
         .with_parents(Parents::new(rand_message_ids(2)).unwrap())
         .with_nonce_provider(42, 10000f64)
         .with_payload(
-            IndexationPayload::new(&[42], &[0u8; Message::LENGTH_MAX])
+            IndexationPayload::new(vec![42], vec![0u8; Message::LENGTH_MAX])
                 .unwrap()
                 .into(),
         )

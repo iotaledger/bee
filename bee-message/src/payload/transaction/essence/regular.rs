@@ -5,77 +5,62 @@ use crate::{
     constant::IOTA_SUPPLY,
     input::{Input, INPUT_COUNT_RANGE},
     output::{Output, OUTPUT_COUNT_RANGE},
-    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
+    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, OptionalPayload, Payload},
     Error,
 };
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_common::packable::{Read, Write};
+use bee_packable::{
+    bounded::BoundedU16,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::BoxedSlicePrefix,
+    unpacker::Unpacker,
+};
 
-use alloc::{boxed::Box, vec::Vec};
+use alloc::vec::Vec;
 
-/// A builder to build a [`RegularTransactionEssence`].
-#[derive(Debug, Default)]
-pub struct RegularTransactionEssenceBuilder {
-    inputs: Vec<Input>,
-    outputs: Vec<Output>,
-    payload: Option<Payload>,
+pub(crate) type InputCount = BoundedU16<{ *INPUT_COUNT_RANGE.start() }, { *INPUT_COUNT_RANGE.end() }>;
+pub(crate) type OutputCount = BoundedU16<{ *OUTPUT_COUNT_RANGE.start() }, { *OUTPUT_COUNT_RANGE.end() }>;
+
+/// A transaction regular essence consuming inputs, creating outputs and carrying an optional payload.
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct RegularTransactionEssence {
+    inputs: BoxedSlicePrefix<Input, InputCount>,
+    outputs: BoxedSlicePrefix<Output, OutputCount>,
+    payload: OptionalPayload,
 }
 
-impl RegularTransactionEssenceBuilder {
-    /// Creates a new [`RegularTransactionEssenceBuilder`].
-    pub fn new() -> Self {
-        Self::default()
+impl RegularTransactionEssence {
+    /// The essence kind of a [`RegularTransactionEssence`].
+    pub const KIND: u8 = 0;
+
+    /// Create a new [`RegularTransactionEssence`].
+    pub fn new(inputs: Vec<Input>, outputs: Vec<Output>, payload: Option<Payload>) -> Result<Self, Error> {
+        let inputs = inputs.into_boxed_slice().try_into().map_err(Error::InvalidInputCount)?;
+        let outputs = outputs
+            .into_boxed_slice()
+            .try_into()
+            .map_err(Error::InvalidOutputCount)?;
+
+        Self::from_boxed_slice_prefixes(inputs, outputs, payload)
     }
 
-    /// Adds inputs to a [`RegularTransactionEssenceBuilder`]
-    pub fn with_inputs(mut self, inputs: Vec<Input>) -> Self {
-        self.inputs = inputs;
-        self
-    }
-
-    /// Add an input to a [`RegularTransactionEssenceBuilder`].
-    pub fn add_input(mut self, input: Input) -> Self {
-        self.inputs.push(input);
-        self
-    }
-
-    /// Add outputs to a [`RegularTransactionEssenceBuilder`].
-    pub fn with_outputs(mut self, outputs: Vec<Output>) -> Self {
-        self.outputs = outputs;
-        self
-    }
-
-    /// Add an output to a [`RegularTransactionEssenceBuilder`].
-    pub fn add_output(mut self, output: Output) -> Self {
-        self.outputs.push(output);
-        self
-    }
-
-    /// Add a payload to a [`RegularTransactionEssenceBuilder`].
-    pub fn with_payload(mut self, payload: Payload) -> Self {
-        self.payload = Some(payload);
-        self
-    }
-
-    /// Finishes a [`RegularTransactionEssenceBuilder`] into a [`RegularTransactionEssence`].
-    pub fn finish(self) -> Result<RegularTransactionEssence, Error> {
-        if !INPUT_COUNT_RANGE.contains(&(self.inputs.len() as u16)) {
-            return Err(Error::InvalidInputOutputCount(self.inputs.len() as u16));
-        }
-
-        if !OUTPUT_COUNT_RANGE.contains(&(self.outputs.len() as u16)) {
-            return Err(Error::InvalidInputOutputCount(self.outputs.len() as u16));
-        }
-
-        if !matches!(self.payload, None | Some(Payload::Indexation(_))) {
+    fn from_boxed_slice_prefixes(
+        inputs: BoxedSlicePrefix<Input, InputCount>,
+        outputs: BoxedSlicePrefix<Output, OutputCount>,
+        payload: Option<Payload>,
+    ) -> Result<Self, Error> {
+        if !matches!(payload, None | Some(Payload::Indexation(_))) {
             // Unwrap is fine because we just checked that the Option is not None.
-            return Err(Error::InvalidPayloadKind(self.payload.unwrap().kind()));
+            return Err(Error::InvalidPayloadKind(payload.unwrap().kind()));
         }
 
-        for input in self.inputs.iter() {
+        for input in inputs.iter() {
             match input {
                 Input::Utxo(u) => {
-                    if self.inputs.iter().filter(|i| *i == input).count() > 1 {
+                    if inputs.iter().filter(|i| *i == input).count() > 1 {
                         return Err(Error::DuplicateUtxo(u.clone()));
                     }
                 }
@@ -85,7 +70,7 @@ impl RegularTransactionEssenceBuilder {
 
         let mut total_amount: u64 = 0;
 
-        for output in self.outputs.iter() {
+        for output in outputs.iter() {
             let amount = match output {
                 Output::Simple(output) => output.amount(),
                 Output::Extended(output) => output.amount(),
@@ -106,29 +91,10 @@ impl RegularTransactionEssenceBuilder {
         }
 
         Ok(RegularTransactionEssence {
-            inputs: self.inputs.into_boxed_slice(),
-            outputs: self.outputs.into_boxed_slice(),
-            payload: self.payload,
+            inputs,
+            outputs,
+            payload: payload.into(),
         })
-    }
-}
-
-/// A transaction regular essence consuming inputs, creating outputs and carrying an optional payload.
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct RegularTransactionEssence {
-    inputs: Box<[Input]>,
-    outputs: Box<[Output]>,
-    payload: Option<Payload>,
-}
-
-impl RegularTransactionEssence {
-    /// The essence kind of a [`RegularTransactionEssence`].
-    pub const KIND: u8 = 0;
-
-    /// Create a new [`RegularTransactionEssenceBuilder`] to build a [`RegularTransactionEssence`].
-    pub fn builder() -> RegularTransactionEssenceBuilder {
-        RegularTransactionEssenceBuilder::new()
     }
 
     /// Return the inputs of a [`RegularTransactionEssence`].
@@ -147,14 +113,42 @@ impl RegularTransactionEssence {
     }
 }
 
-impl OldPackable for RegularTransactionEssence {
+impl bee_packable::Packable for RegularTransactionEssence {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.inputs.pack(packer)?;
+        self.outputs.pack(packer)?;
+        self.payload.pack(packer)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let inputs = BoxedSlicePrefix::<Input, InputCount>::unpack::<_, VERIFY>(unpacker).map_packable_err(|err| {
+            err.unwrap_packable_or_else(|prefix_err| Error::InvalidInputCount(prefix_err.into()))
+        })?;
+        let outputs =
+            BoxedSlicePrefix::<Output, OutputCount>::unpack::<_, VERIFY>(unpacker).map_packable_err(|err| {
+                err.unwrap_packable_or_else(|prefix_err| Error::InvalidOutputCount(prefix_err.into()))
+            })?;
+        let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker)?.into();
+
+        Self::from_boxed_slice_prefixes(inputs, outputs, payload).map_err(UnpackError::Packable)
+    }
+}
+
+impl bee_common::packable::Packable for RegularTransactionEssence {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
+        use bee_common::packable::Packable;
         0u16.packed_len()
-            + self.inputs.iter().map(OldPackable::packed_len).sum::<usize>()
+            + self.inputs.iter().map(Packable::packed_len).sum::<usize>()
             + 0u16.packed_len()
-            + self.outputs.iter().map(OldPackable::packed_len).sum::<usize>()
+            + self.outputs.iter().map(Packable::packed_len).sum::<usize>()
             + option_payload_packed_len(self.payload.as_ref())
     }
 
@@ -175,8 +169,8 @@ impl OldPackable for RegularTransactionEssence {
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let inputs_len = u16::unpack_inner::<R, CHECK>(reader)?;
 
-        if CHECK && !INPUT_COUNT_RANGE.contains(&inputs_len) {
-            return Err(Error::InvalidInputOutputCount(inputs_len));
+        if CHECK {
+            InputCount::try_from(inputs_len).map_err(|err| Error::InvalidInputCount(err.into()))?;
         }
 
         let mut inputs = Vec::with_capacity(inputs_len as usize);
@@ -186,8 +180,8 @@ impl OldPackable for RegularTransactionEssence {
 
         let outputs_len = u16::unpack_inner::<R, CHECK>(reader)?;
 
-        if CHECK && !OUTPUT_COUNT_RANGE.contains(&outputs_len) {
-            return Err(Error::InvalidInputOutputCount(outputs_len));
+        if CHECK {
+            OutputCount::try_from(outputs_len).map_err(|err| Error::InvalidOutputCount(err.into()))?;
         }
 
         let mut outputs = Vec::with_capacity(outputs_len as usize);
@@ -195,12 +189,8 @@ impl OldPackable for RegularTransactionEssence {
             outputs.push(Output::unpack_inner::<R, CHECK>(reader)?);
         }
 
-        let mut builder = Self::builder().with_inputs(inputs).with_outputs(outputs);
+        let payload = option_payload_unpack::<R, CHECK>(reader)?.1;
 
-        if let (_, Some(payload)) = option_payload_unpack::<R, CHECK>(reader)? {
-            builder = builder.with_payload(payload);
-        }
-
-        builder.finish()
+        Self::new(inputs, outputs, payload)
     }
 }
