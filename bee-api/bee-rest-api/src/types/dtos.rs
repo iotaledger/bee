@@ -745,8 +745,8 @@ impl From<&ExtendedOutput> for ExtendedOutputDto {
             kind: ExtendedOutput::KIND,
             address: value.address().into(),
             amount: value.amount(),
-            native_tokens: value.native_tokens().iter().map(|x| x.into()).collect::<_>(),
-            feature_blocks: value.feature_blocks().iter().map(|x| x.into()).collect::<_>(),
+            native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
+            feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
         }
     }
 }
@@ -958,14 +958,14 @@ impl From<&AliasOutput> for AliasOutputDto {
         Self {
             kind: AliasOutput::KIND,
             amount: value.amount(),
-            native_tokens: value.native_tokens().iter().map(|x| x.into()).collect::<_>(),
+            native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             alias_id: AliasIdDto(value.alias_id().to_string()),
             state_controller: value.state_controller().into(),
             governance_controller: value.governance_controller().into(),
             state_index: value.state_index(),
             state_metadata: hex::encode(value.state_metadata()),
             foundry_counter: value.foundry_counter(),
-            feature_blocks: value.feature_blocks().iter().map(|x| x.into()).collect::<_>(),
+            feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
         }
     }
 }
@@ -1050,7 +1050,7 @@ impl From<&FoundryOutput> for FoundryOutputDto {
             kind: FoundryOutput::KIND,
             address: value.address().into(),
             amount: value.amount(),
-            native_tokens: value.native_tokens().iter().map(|x| x.into()).collect::<_>(),
+            native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             serial_number: value.serial_number(),
             token_tag: hex::encode(value.token_tag()),
             circulating_supply: U256Dto(value.circulating_supply().to_string()),
@@ -1058,7 +1058,7 @@ impl From<&FoundryOutput> for FoundryOutputDto {
             token_scheme: match value.token_scheme() {
                 TokenScheme::Simple => TokenSchemeDto::Simple,
             },
-            feature_blocks: value.feature_blocks().iter().map(|x| x.into()).collect::<_>(),
+            feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
         }
     }
 }
@@ -1147,10 +1147,10 @@ impl From<&NftOutput> for NftOutputDto {
             kind: NftOutput::KIND,
             address: value.address().into(),
             amount: value.amount(),
-            native_tokens: value.native_tokens().iter().map(|x| x.into()).collect::<_>(),
+            native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             nft_id: NftIdDto(value.nft_id().to_string()),
             immutable_metadata: hex::encode(&value.immutable_metadata()),
-            feature_blocks: value.feature_blocks().iter().map(|x| x.into()).collect::<_>(),
+            feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
         }
     }
 }
