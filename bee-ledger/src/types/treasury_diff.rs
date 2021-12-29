@@ -7,7 +7,7 @@ use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::payload::milestone::MilestoneId;
 
 /// Wraps together the identifiers of the milestones that created and consumed treasury outputs.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
 pub struct TreasuryDiff {
     created: MilestoneId,
     consumed: MilestoneId,

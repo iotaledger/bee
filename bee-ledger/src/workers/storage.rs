@@ -306,7 +306,8 @@ pub(crate) fn apply_milestone<B: StorageBackend>(
         storage,
         &mut batch,
         &index,
-        &OutputDiff::new(created_output_ids, consumed_output_ids, treasury_diff),
+        &OutputDiff::new(created_output_ids, consumed_output_ids, treasury_diff)
+            .map_err(|e| Error::Storage(Box::new(e)))?,
     )
     .map_err(|e| Error::Storage(Box::new(e)))?;
 

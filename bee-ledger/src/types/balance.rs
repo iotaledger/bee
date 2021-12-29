@@ -7,7 +7,7 @@ use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::constant::IOTA_SUPPLY;
 
 /// Holds the balance of an address.
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, bee_packable::Packable)]
 pub struct Balance(u64);
 
 impl Balance {

@@ -3,8 +3,13 @@
 
 use crate::types::{error::Error, snapshot::SnapshotKind};
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_common::packable::{Read, Write};
 use bee_message::{milestone::MilestoneIndex, payload::milestone::MilestoneId};
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+};
 
 const SNAPSHOT_VERSION: u8 = 1;
 
@@ -48,7 +53,49 @@ impl SnapshotHeader {
     }
 }
 
-impl OldPackable for SnapshotHeader {
+impl bee_packable::Packable for SnapshotHeader {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        SNAPSHOT_VERSION.pack(packer)?;
+        self.kind.pack(packer)?;
+        self.timestamp.pack(packer)?;
+        self.network_id.pack(packer)?;
+        self.sep_index.pack(packer)?;
+        self.ledger_index.pack(packer)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let version = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
+
+        if VERIFY && SNAPSHOT_VERSION != version {
+            return Err(UnpackError::Packable(Error::UnsupportedVersion(
+                SNAPSHOT_VERSION,
+                version,
+            )));
+        }
+
+        let kind = SnapshotKind::unpack::<_, VERIFY>(unpacker)?;
+        let timestamp = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let network_id = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let sep_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let ledger_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).infallible()?;
+
+        Ok(Self {
+            kind,
+            timestamp,
+            network_id,
+            sep_index,
+            ledger_index,
+        })
+    }
+}
+
+impl bee_common::packable::Packable for SnapshotHeader {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -95,7 +142,7 @@ impl OldPackable for SnapshotHeader {
 }
 
 /// Describes a snapshot header specific to full snapshots.
-#[derive(Clone)]
+#[derive(Clone, bee_packable::Packable)]
 pub struct FullSnapshotHeader {
     sep_count: u64,
     output_count: u64,
@@ -131,7 +178,7 @@ impl FullSnapshotHeader {
     }
 }
 
-impl OldPackable for FullSnapshotHeader {
+impl bee_common::packable::Packable for FullSnapshotHeader {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -170,7 +217,7 @@ impl OldPackable for FullSnapshotHeader {
 }
 
 /// Describes a snapshot header specific to delta snapshots.
-#[derive(Clone)]
+#[derive(Clone, bee_packable::Packable)]
 pub struct DeltaSnapshotHeader {
     sep_count: u64,
     milestone_diff_count: u64,
@@ -188,7 +235,7 @@ impl DeltaSnapshotHeader {
     }
 }
 
-impl OldPackable for DeltaSnapshotHeader {
+impl bee_common::packable::Packable for DeltaSnapshotHeader {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

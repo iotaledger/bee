@@ -5,12 +5,24 @@ use crate::types::{error::Error, TreasuryDiff};
 
 use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::output::OutputId;
+use bee_packable::prefix::{UnpackPrefixError, VecPrefix};
+
+use core::convert::Infallible;
+
+fn unpack_prefix_error_to_error(err: UnpackPrefixError<bee_message::Error, Infallible>) -> Error {
+    match err {
+        UnpackPrefixError::Packable(err) => err.into(),
+        UnpackPrefixError::Prefix(err) => match err {},
+    }
+}
 
 /// A type to record output and treasury changes that happened within a milestone.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
+#[packable(unpack_error = Error, with = unpack_prefix_error_to_error)]
 pub struct OutputDiff {
-    created_outputs: Vec<OutputId>,
-    consumed_outputs: Vec<OutputId>,
+    created_outputs: VecPrefix<OutputId, u32>,
+    consumed_outputs: VecPrefix<OutputId, u32>,
+    #[packable(unpack_error_with = |_| Error::PackableOption)]
     treasury_diff: Option<TreasuryDiff>,
 }
 
@@ -20,12 +32,12 @@ impl OutputDiff {
         created_outputs: Vec<OutputId>,
         consumed_outputs: Vec<OutputId>,
         treasury_diff: Option<TreasuryDiff>,
-    ) -> Self {
-        Self {
-            created_outputs,
-            consumed_outputs,
+    ) -> Result<Self, Error> {
+        Ok(Self {
+            created_outputs: created_outputs.try_into().map_err(Error::InvalidOutputCount)?,
+            consumed_outputs: consumed_outputs.try_into().map_err(Error::InvalidOutputCount)?,
             treasury_diff,
-        }
+        })
     }
 
     /// Returns the created outputs of the `OutputDiff`.
@@ -83,10 +95,6 @@ impl OldPackable for OutputDiff {
         let treasury_diff =
             Option::<TreasuryDiff>::unpack_inner::<R, CHECK>(reader).map_err(|_| Error::PackableOption)?;
 
-        Ok(Self {
-            created_outputs,
-            consumed_outputs,
-            treasury_diff,
-        })
+        Self::new(created_outputs, consumed_outputs, treasury_diff)
     }
 }

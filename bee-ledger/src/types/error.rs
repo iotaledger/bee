@@ -3,6 +3,8 @@
 
 use bee_message::{payload::milestone::MilestoneId, Error as MessageError};
 
+use core::{convert::Infallible, num::TryFromIntError};
+
 /// Errors related to ledger types.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -12,6 +14,9 @@ pub enum Error {
     /// Message error.
     #[error("Message error: {0}")]
     Message(#[from] MessageError),
+    /// Invalid output count error.
+    #[error("Invalid output count: {0}")]
+    InvalidOutputCount(TryFromIntError),
     /// Unsupported output kind.
     #[error("Unsupported output kind: {0}")]
     UnsupportedOutputKind(u8),
@@ -72,4 +77,10 @@ pub enum Error {
     /// Milestone length mismatch.
     #[error("Milestone length mismatch: expected {0}, got {1}")]
     MilestoneLengthMismatch(usize, usize),
+}
+
+impl From<Infallible> for Error {
+    fn from(err: Infallible) -> Self {
+        match err {}
+    }
 }
