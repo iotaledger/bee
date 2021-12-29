@@ -89,7 +89,7 @@ impl fmt::Display for Error {
         match self {
             Error::CryptoError(e) => write!(f, "cryptographic error: {}.", e),
             Error::DuplicateFeatureBlock { index, kind } => {
-                write!(f, "duplicated feature block at index {} with kind {}.", index, kind)
+                write!(f, "duplicate feature block at index {} with kind {}.", index, kind)
             }
             Error::DuplicateSignatureUnlockBlock(index) => {
                 write!(f, "duplicate signature unlock block at index: {0}", index)
