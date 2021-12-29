@@ -3,7 +3,6 @@
 
 use crate::{constant::IOTA_SUPPLY, Error};
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_packable::bounded::BoundedU64;
 
 use core::ops::RangeInclusive;
@@ -37,23 +36,5 @@ impl TreasuryOutput {
     #[inline(always)]
     pub fn amount(&self) -> u64 {
         self.amount.get()
-    }
-}
-
-impl OldPackable for TreasuryOutput {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.amount().packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.amount().pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Self::new(u64::unpack_inner::<R, CHECK>(reader)?)
     }
 }

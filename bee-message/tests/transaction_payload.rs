@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable as OldPackable;
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, UtxoInput},
@@ -13,6 +12,7 @@ use bee_message::{
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
     Error,
 };
+use bee_packable::PackableExt;
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
@@ -142,12 +142,12 @@ fn pack_unpack_valid() {
         .with_unlock_blocks(unlock_blocks)
         .finish()
         .unwrap();
-    let packed_tx_payload = tx_payload.pack_new();
+    let packed_tx_payload = tx_payload.pack_to_vec();
 
     assert_eq!(packed_tx_payload.len(), tx_payload.packed_len());
     assert_eq!(
         tx_payload,
-        OldPackable::unpack(&mut packed_tx_payload.as_slice()).unwrap()
+        PackableExt::unpack_verified(&mut packed_tx_payload.as_slice()).unwrap()
     );
 }
 

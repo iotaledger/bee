@@ -40,8 +40,6 @@ pub use treasury::TreasuryOutput;
 
 use crate::Error;
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
-
 use derive_more::From;
 
 use core::ops::RangeInclusive;
@@ -108,63 +106,5 @@ impl Output {
             Self::Foundry(output) => output.amount(),
             Self::Nft(output) => output.amount(),
         }
-    }
-}
-
-impl OldPackable for Output {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        match self {
-            Self::Simple(output) => SimpleOutput::KIND.packed_len() + output.packed_len(),
-            Self::Treasury(output) => TreasuryOutput::KIND.packed_len() + output.packed_len(),
-            Self::Extended(output) => ExtendedOutput::KIND.packed_len() + output.packed_len(),
-            Self::Alias(output) => AliasOutput::KIND.packed_len() + output.packed_len(),
-            Self::Foundry(output) => FoundryOutput::KIND.packed_len() + output.packed_len(),
-            Self::Nft(output) => NftOutput::KIND.packed_len() + output.packed_len(),
-        }
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        match self {
-            Self::Simple(output) => {
-                SimpleOutput::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::Treasury(output) => {
-                TreasuryOutput::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::Extended(output) => {
-                ExtendedOutput::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::Alias(output) => {
-                AliasOutput::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::Foundry(output) => {
-                FoundryOutput::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::Nft(output) => {
-                NftOutput::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            SimpleOutput::KIND => SimpleOutput::unpack_inner::<R, CHECK>(reader)?.into(),
-            TreasuryOutput::KIND => TreasuryOutput::unpack_inner::<R, CHECK>(reader)?.into(),
-            ExtendedOutput::KIND => ExtendedOutput::unpack_inner::<R, CHECK>(reader)?.into(),
-            AliasOutput::KIND => AliasOutput::unpack_inner::<R, CHECK>(reader)?.into(),
-            FoundryOutput::KIND => FoundryOutput::unpack_inner::<R, CHECK>(reader)?.into(),
-            NftOutput::KIND => NftOutput::unpack_inner::<R, CHECK>(reader)?.into(),
-            k => return Err(Self::Error::InvalidOutputKind(k)),
-        })
     }
 }

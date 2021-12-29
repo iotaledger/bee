@@ -26,10 +26,7 @@ pub use timelock_unix::TimelockUnixFeatureBlock;
 
 use crate::Error;
 
-use bee_common::{
-    ord::is_unique_sorted,
-    packable::{Packable as OldPackable, Read, Write},
-};
+use bee_common::ord::is_unique_sorted;
 use bee_packable::{
     bounded::BoundedU8,
     error::{UnpackError, UnpackErrorExt},
@@ -108,92 +105,6 @@ impl FeatureBlock {
             Self::Metadata(_) => FeatureBlockFlags::METADATA,
             Self::Indexation(_) => FeatureBlockFlags::INDEXATION,
         }
-    }
-}
-
-impl OldPackable for FeatureBlock {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        match self {
-            Self::Sender(output) => SenderFeatureBlock::KIND.packed_len() + output.packed_len(),
-            Self::Issuer(output) => IssuerFeatureBlock::KIND.packed_len() + output.packed_len(),
-            Self::DustDepositReturn(output) => DustDepositReturnFeatureBlock::KIND.packed_len() + output.packed_len(),
-            Self::TimelockMilestoneIndex(output) => {
-                TimelockMilestoneIndexFeatureBlock::KIND.packed_len() + output.packed_len()
-            }
-            Self::TimelockUnix(output) => TimelockUnixFeatureBlock::KIND.packed_len() + output.packed_len(),
-            Self::ExpirationMilestoneIndex(output) => {
-                ExpirationMilestoneIndexFeatureBlock::KIND.packed_len() + output.packed_len()
-            }
-            Self::ExpirationUnix(output) => ExpirationUnixFeatureBlock::KIND.packed_len() + output.packed_len(),
-            Self::Metadata(output) => MetadataFeatureBlock::KIND.packed_len() + output.packed_len(),
-            Self::Indexation(output) => IndexationFeatureBlock::KIND.packed_len() + output.packed_len(),
-        }
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        match self {
-            Self::Sender(output) => {
-                SenderFeatureBlock::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::Issuer(output) => {
-                IssuerFeatureBlock::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::DustDepositReturn(output) => {
-                DustDepositReturnFeatureBlock::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::TimelockMilestoneIndex(output) => {
-                TimelockMilestoneIndexFeatureBlock::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::TimelockUnix(output) => {
-                TimelockUnixFeatureBlock::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::ExpirationMilestoneIndex(output) => {
-                ExpirationMilestoneIndexFeatureBlock::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::ExpirationUnix(output) => {
-                ExpirationUnixFeatureBlock::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::Metadata(output) => {
-                MetadataFeatureBlock::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::Indexation(output) => {
-                IndexationFeatureBlock::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            SenderFeatureBlock::KIND => SenderFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            IssuerFeatureBlock::KIND => IssuerFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            DustDepositReturnFeatureBlock::KIND => {
-                DustDepositReturnFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into()
-            }
-            TimelockMilestoneIndexFeatureBlock::KIND => {
-                TimelockMilestoneIndexFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into()
-            }
-            TimelockUnixFeatureBlock::KIND => TimelockUnixFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            ExpirationMilestoneIndexFeatureBlock::KIND => {
-                ExpirationMilestoneIndexFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into()
-            }
-            ExpirationUnixFeatureBlock::KIND => ExpirationUnixFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            MetadataFeatureBlock::KIND => MetadataFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            IndexationFeatureBlock::KIND => IndexationFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            k => return Err(Self::Error::InvalidFeatureBlockKind(k)),
-        })
     }
 }
 
@@ -279,50 +190,6 @@ impl bee_packable::Packable for FeatureBlocks {
 
         Self::from_boxed_slice::<VERIFY>(feature_blocks).map_err(UnpackError::Packable)
     }
-}
-
-impl OldPackable for FeatureBlocks {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        0u8.packed_len() + self.0.iter().map(OldPackable::packed_len).sum::<usize>()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.0.len() as u8).pack(writer)?;
-        for feature_block in self.0.iter() {
-            feature_block.pack(writer)?
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let feature_blocks_count = u8::unpack_inner::<R, CHECK>(reader)? as usize;
-
-        if CHECK {
-            validate_count(feature_blocks_count)?;
-        }
-
-        let mut feature_blocks = Vec::with_capacity(feature_blocks_count);
-        for _ in 0..feature_blocks_count {
-            feature_blocks.push(FeatureBlock::unpack_inner::<R, CHECK>(reader)?);
-        }
-
-        if CHECK {
-            validate_unique_sorted(&feature_blocks)?;
-            validate_dependencies(&feature_blocks)?;
-        };
-
-        Self::new(feature_blocks)
-    }
-}
-
-#[inline]
-fn validate_count(feature_blocks_count: usize) -> Result<(), Error> {
-    FeatureBlockCount::try_from(feature_blocks_count).map_err(Error::InvalidFeatureBlockCount)?;
-
-    Ok(())
 }
 
 #[inline]

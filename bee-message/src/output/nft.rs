@@ -10,7 +10,6 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Read, Write};
 use bee_packable::{
     bounded::BoundedU32,
     error::{UnpackError, UnpackErrorExt},
@@ -231,69 +230,6 @@ impl bee_packable::Packable for NftOutput {
             native_tokens,
             nft_id,
             immutable_metadata,
-            feature_blocks,
-        })
-    }
-}
-
-impl bee_common::packable::Packable for NftOutput {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.address.packed_len()
-            + self.amount.packed_len()
-            + self.native_tokens.packed_len()
-            + self.nft_id.packed_len()
-            + 0u32.packed_len()
-            + self.immutable_metadata.len()
-            + self.feature_blocks.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.address.pack(writer)?;
-        self.amount.pack(writer)?;
-        self.native_tokens.pack(writer)?;
-        self.nft_id.pack(writer)?;
-        (self.immutable_metadata.len() as u32).pack(writer)?;
-        writer.write_all(&self.immutable_metadata)?;
-        self.feature_blocks.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let address = Address::unpack_inner::<R, CHECK>(reader)?;
-        let amount = u64::unpack_inner::<R, CHECK>(reader)?;
-        let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
-        let nft_id = NftId::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            validate_address(&address, &nft_id)?;
-        }
-
-        let immutable_metadata_length = u32::unpack_inner::<R, CHECK>(reader)? as usize;
-
-        if CHECK {
-            validate_immutable_metadata_length(immutable_metadata_length)?;
-        }
-
-        let mut immutable_metadata = vec![0u8; immutable_metadata_length];
-        reader.read_exact(&mut immutable_metadata)?;
-        let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            validate_allowed_feature_blocks(&feature_blocks, NftOutput::ALLOWED_FEATURE_BLOCKS)?;
-        }
-
-        Ok(Self {
-            address,
-            amount,
-            native_tokens,
-            nft_id,
-            immutable_metadata: immutable_metadata
-                .into_boxed_slice()
-                .try_into()
-                .map_err(Error::InvalidImmutableMetadataLength)?,
             feature_blocks,
         })
     }

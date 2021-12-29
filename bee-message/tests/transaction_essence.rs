@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable as OldPackable;
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, UtxoInput},
@@ -9,6 +8,7 @@ use bee_message::{
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     Error,
 };
+use bee_packable::{error::UnpackError, PackableExt};
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
@@ -31,7 +31,7 @@ fn essence_kind() {
 #[test]
 fn essence_unpack_invalid_kind() {
     assert!(matches!(
-        TransactionEssence::unpack(&mut vec![1u8; 32].as_slice()),
-        Err(Error::InvalidEssenceKind(1))
+        TransactionEssence::unpack_verified(&mut vec![1u8; 32].as_slice()),
+        Err(UnpackError::Packable(Error::InvalidEssenceKind(1)))
     ));
 }

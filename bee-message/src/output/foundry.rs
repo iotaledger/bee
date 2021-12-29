@@ -10,8 +10,6 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Read, Write};
-
 use bee_packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
@@ -28,27 +26,6 @@ use primitive_types::U256;
 pub enum TokenScheme {
     ///
     Simple = 0,
-}
-
-impl bee_common::packable::Packable for TokenScheme {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        0u8.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (*self as u8).pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            0 => TokenScheme::Simple,
-            k => return Err(Self::Error::InvalidTokenSchemeKind(k)),
-        })
-    }
 }
 
 ///
@@ -311,76 +288,6 @@ impl bee_packable::Packable for FoundryOutput {
         if VERIFY {
             validate_allowed_feature_blocks(&feature_blocks, FoundryOutput::ALLOWED_FEATURE_BLOCKS)
                 .map_err(UnpackError::Packable)?;
-        }
-
-        Ok(Self {
-            address,
-            amount,
-            native_tokens,
-            serial_number,
-            token_tag,
-            circulating_supply,
-            maximum_supply,
-            token_scheme,
-            feature_blocks,
-        })
-    }
-}
-
-impl bee_common::packable::Packable for FoundryOutput {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.address.packed_len()
-            + self.amount.packed_len()
-            + self.native_tokens.packed_len()
-            + self.serial_number.packed_len()
-            + self.token_tag.packed_len()
-            + 32
-            + 32
-            + self.token_scheme.packed_len()
-            + self.feature_blocks.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.address.pack(writer)?;
-        self.amount.pack(writer)?;
-        self.native_tokens.pack(writer)?;
-        self.serial_number.pack(writer)?;
-        self.token_tag.pack(writer)?;
-        // SAFETY: Reinterpreting a [u64; 4] as a [u8; 32] is fine since they have the same size.
-        writer.write_all(&unsafe { std::mem::transmute::<[u64; 4], [u8; 32]>(self.circulating_supply.0) })?;
-        // SAFETY: Reinterpreting a [u64; 4] as a [u8; 32] is fine since they have the same size.
-        writer.write_all(&unsafe { std::mem::transmute::<[u64; 4], [u8; 32]>(self.maximum_supply.0) })?;
-        self.token_scheme.pack(writer)?;
-        self.feature_blocks.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let address = Address::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            validate_address(&address)?;
-        }
-
-        let amount = u64::unpack_inner::<R, CHECK>(reader)?;
-        let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
-        let serial_number = u32::unpack_inner::<R, CHECK>(reader)?;
-        let token_tag = <[u8; 12]>::unpack_inner::<R, CHECK>(reader)?;
-        let circulating_supply = U256::from_little_endian(&<[u8; 32]>::unpack_inner::<R, CHECK>(reader)?);
-        let maximum_supply = U256::from_little_endian(&<[u8; 32]>::unpack_inner::<R, CHECK>(reader)?);
-
-        if CHECK {
-            validate_supply(&circulating_supply, &maximum_supply)?;
-        }
-
-        let token_scheme = TokenScheme::unpack_inner::<R, CHECK>(reader)?;
-        let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            validate_allowed_feature_blocks(&feature_blocks, FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
         }
 
         Ok(Self {

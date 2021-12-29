@@ -1,14 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable as OldPackable;
 use bee_message::{
     milestone::MilestoneIndex,
     parent::Parents,
     payload::milestone::{MilestoneEssence, MilestonePayload},
     Error,
 };
-use bee_packable::bounded::TryIntoBoundedU8Error;
+use bee_packable::{bounded::TryIntoBoundedU8Error, PackableExt};
 use bee_test::rand::{self, message::rand_message_ids, parents::rand_parents};
 
 #[test]
@@ -124,7 +123,7 @@ fn packed_len() {
     .unwrap();
 
     assert_eq!(ms.packed_len(), 379);
-    assert_eq!(ms.pack_new().len(), 379);
+    assert_eq!(ms.pack_to_vec().len(), 379);
 }
 
 #[test]
@@ -145,10 +144,10 @@ fn pack_unpack_valid() {
     )
     .unwrap();
 
-    let packed = payload.pack_new();
+    let packed = payload.pack_to_vec();
 
     assert_eq!(payload.packed_len(), packed.len());
-    assert_eq!(payload, OldPackable::unpack(&mut packed.as_slice()).unwrap())
+    assert_eq!(payload, PackableExt::unpack_verified(&mut packed.as_slice()).unwrap())
 }
 
 #[test]

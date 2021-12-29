@@ -9,8 +9,6 @@ mod version;
 pub use health::{Error as StorageHealthError, StorageHealth};
 pub use version::StorageVersion;
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
-
 use core::convert::Infallible;
 
 /// Key used to store the system version.
@@ -49,38 +47,4 @@ pub enum System {
     /// The health status of the storage.
     #[packable(tag = SYSTEM_HEALTH_KEY)]
     Health(StorageHealth),
-}
-
-impl OldPackable for System {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        match self {
-            System::Version(version) => SYSTEM_VERSION_KEY.packed_len() + version.packed_len(),
-            System::Health(health) => SYSTEM_HEALTH_KEY.packed_len() + health.packed_len(),
-        }
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        match self {
-            System::Version(version) => {
-                SYSTEM_VERSION_KEY.pack(writer)?;
-                version.pack(writer)?;
-            }
-            System::Health(health) => {
-                SYSTEM_HEALTH_KEY.pack(writer)?;
-                health.pack(writer)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        match u8::unpack_inner::<R, CHECK>(reader)? {
-            SYSTEM_VERSION_KEY => Ok(System::Version(StorageVersion::unpack_inner::<R, CHECK>(reader)?)),
-            SYSTEM_HEALTH_KEY => Ok(System::Health(StorageHealth::unpack_inner::<R, CHECK>(reader)?)),
-            s => Err(Error::UnknownSystemKey(s)),
-        }
-    }
 }

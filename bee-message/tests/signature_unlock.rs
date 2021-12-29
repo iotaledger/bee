@@ -1,12 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable as OldPackable;
 use bee_message::{
     signature::{Ed25519Signature, Signature},
     unlock_block::SignatureUnlockBlock,
     Error,
 };
+use bee_packable::{error::UnpackError, PackableExt};
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
 
 #[test]
@@ -49,7 +49,7 @@ fn packed_len() {
     )));
 
     assert_eq!(signature.packed_len(), 1 + 32 + 64);
-    assert_eq!(signature.pack_new().len(), 1 + 32 + 64);
+    assert_eq!(signature.pack_to_vec().len(), 1 + 32 + 64);
 }
 
 #[test]
@@ -58,8 +58,8 @@ fn pack_unpack_valid_ed25519() {
         rand_bytes_array(),
         rand_bytes(64).try_into().unwrap(),
     )));
-    let signature_bytes = signature_1.pack_new();
-    let signature_2 = SignatureUnlockBlock::unpack(&mut signature_bytes.as_slice()).unwrap();
+    let signature_bytes = signature_1.pack_to_vec();
+    let signature_2 = SignatureUnlockBlock::unpack_verified(&mut signature_bytes.as_slice()).unwrap();
 
     assert_eq!(signature_bytes[0], 0);
     assert_eq!(signature_1, signature_2);
@@ -68,7 +68,7 @@ fn pack_unpack_valid_ed25519() {
 #[test]
 fn pack_unpack_invalid_kind() {
     assert!(matches!(
-        SignatureUnlockBlock::unpack(
+        SignatureUnlockBlock::unpack_verified(
             &mut vec![
                 1, 111, 225, 221, 28, 247, 253, 234, 110, 187, 52, 129, 153, 130, 84, 26, 7, 226, 27, 212, 145, 96,
                 151, 196, 124, 135, 176, 31, 48, 0, 213, 200, 82, 227, 169, 21, 179, 253, 115, 184, 209, 107, 138, 0,
@@ -78,6 +78,6 @@ fn pack_unpack_invalid_kind() {
             ]
             .as_slice()
         ),
-        Err(Error::InvalidSignatureKind(1))
+        Err(UnpackError::Packable(Error::InvalidSignatureKind(1)))
     ));
 }

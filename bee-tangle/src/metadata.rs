@@ -6,11 +6,12 @@ use crate::{
     flags::Flags,
 };
 
-use bee_common::packable::{OptionError, Packable as OldPackable, Read, Write};
 use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_packable::Packable;
 
 use serde::Serialize;
 
+use core::convert::Infallible;
 use std::{
     cmp::Ordering,
     time::{SystemTime, UNIX_EPOCH},
@@ -18,15 +19,20 @@ use std::{
 
 // FIXME: derive packable
 /// Metadata associated with a tangle message.
-#[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Serialize)]
+#[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Serialize, Packable)]
+#[packable(unpack_error = MessageMetadataError)]
 pub struct MessageMetadata {
     flags: Flags,
+    #[packable(unpack_error_with = MessageMetadataError::OptionIndex)]
     milestone_index: Option<MilestoneIndex>,
     arrival_timestamp: u64,
     solidification_timestamp: u64,
     reference_timestamp: u64,
+    #[packable(unpack_error_with = MessageMetadataError::OptionIndexId)]
     omrsi: Option<IndexId>,
+    #[packable(unpack_error_with = MessageMetadataError::OptionIndexId)]
     ymrsi: Option<IndexId>,
+    #[packable(unpack_error_with = MessageMetadataError::Conflict)]
     conflict: ConflictReason,
 }
 
@@ -150,72 +156,17 @@ impl MessageMetadata {
 /// An error that may occur when manipulating message metadata.
 #[derive(Debug)]
 pub enum MessageMetadataError {
-    /// An IO error occurred.
-    Io(std::io::Error),
     /// A packing error occurred.
-    OptionIndex(<Option<MilestoneIndex> as OldPackable>::Error),
+    OptionIndex(<Option<MilestoneIndex> as Packable>::UnpackError),
     /// A packing error occurred.
-    OptionIndexId(<Option<IndexId> as OldPackable>::Error),
+    OptionIndexId(<Option<IndexId> as Packable>::UnpackError),
     /// An error relating to a conflict reason occurred.
     Conflict(ConflictError),
 }
 
-impl From<std::io::Error> for MessageMetadataError {
-    fn from(error: std::io::Error) -> Self {
-        MessageMetadataError::Io(error)
-    }
-}
-
-impl From<OptionError<std::io::Error>> for MessageMetadataError {
-    fn from(error: OptionError<std::io::Error>) -> Self {
-        MessageMetadataError::OptionIndex(error)
-    }
-}
-
-impl From<OptionError<IndexIdError>> for MessageMetadataError {
-    fn from(error: OptionError<IndexIdError>) -> Self {
-        MessageMetadataError::OptionIndexId(error)
-    }
-}
-
-impl OldPackable for MessageMetadata {
-    type Error = MessageMetadataError;
-
-    fn packed_len(&self) -> usize {
-        self.flags.packed_len()
-            + self.milestone_index.packed_len()
-            + self.arrival_timestamp.packed_len()
-            + self.solidification_timestamp.packed_len()
-            + self.reference_timestamp.packed_len()
-            + self.omrsi.packed_len()
-            + self.ymrsi.packed_len()
-            + self.conflict.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.flags.pack(writer)?;
-        self.milestone_index.pack(writer)?;
-        self.arrival_timestamp.pack(writer)?;
-        self.solidification_timestamp.pack(writer)?;
-        self.reference_timestamp.pack(writer)?;
-        self.omrsi.pack(writer)?;
-        self.ymrsi.pack(writer)?;
-        self.conflict.pack(writer).map_err(MessageMetadataError::Conflict)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self {
-            flags: Flags::unpack_inner::<R, CHECK>(reader)?,
-            milestone_index: Option::<MilestoneIndex>::unpack_inner::<R, CHECK>(reader)?,
-            arrival_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
-            solidification_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
-            reference_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
-            omrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
-            ymrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
-            conflict: ConflictReason::unpack_inner::<R, CHECK>(reader).map_err(MessageMetadataError::Conflict)?,
-        })
+impl From<Infallible> for MessageMetadataError {
+    fn from(err: Infallible) -> Self {
+        match err {}
     }
 }
 
@@ -263,28 +214,6 @@ impl Eq for IndexId {}
 impl PartialEq for IndexId {
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
-    }
-}
-
-impl OldPackable for IndexId {
-    type Error = IndexIdError;
-
-    fn packed_len(&self) -> usize {
-        self.0.packed_len() + self.1.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
-        self.1.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
-        let id = MessageId::unpack_inner::<R, CHECK>(reader)?;
-
-        Ok(Self(index, id))
     }
 }
 

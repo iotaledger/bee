@@ -1,9 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable as OldPackable;
 use bee_message::{unlock_block::ReferenceUnlockBlock, Error};
-use bee_packable::bounded::InvalidBoundedU16;
+use bee_packable::{bounded::InvalidBoundedU16, error::UnpackError, PackableExt};
 
 #[test]
 fn kind() {
@@ -46,13 +45,13 @@ fn packed_len() {
     let reference = ReferenceUnlockBlock::new(0).unwrap();
 
     assert_eq!(reference.packed_len(), 2);
-    assert_eq!(reference.pack_new().len(), 2);
+    assert_eq!(reference.pack_to_vec().len(), 2);
 }
 
 #[test]
 fn pack_unpack_valid() {
     let reference_1 = ReferenceUnlockBlock::try_from(42).unwrap();
-    let reference_2 = ReferenceUnlockBlock::unpack(&mut reference_1.pack_new().as_slice()).unwrap();
+    let reference_2 = ReferenceUnlockBlock::unpack_verified(&mut reference_1.pack_to_vec().as_slice()).unwrap();
 
     assert_eq!(reference_1, reference_2);
 }
@@ -60,7 +59,9 @@ fn pack_unpack_valid() {
 #[test]
 fn pack_unpack_invalid_index() {
     assert!(matches!(
-        ReferenceUnlockBlock::unpack(&mut vec![0x2a, 0x2a].as_slice()),
-        Err(Error::InvalidReferenceIndex(InvalidBoundedU16(10794)))
+        ReferenceUnlockBlock::unpack_verified(&mut vec![0x2a, 0x2a].as_slice()),
+        Err(UnpackError::Packable(Error::InvalidReferenceIndex(InvalidBoundedU16(
+            10794
+        ))))
     ));
 }

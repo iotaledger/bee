@@ -3,7 +3,6 @@
 
 use crate::Error;
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_packable::{bounded::BoundedU32, prefix::BoxedSlicePrefix};
 
 pub(crate) type MetadataFeatureBlockLength =
@@ -49,39 +48,4 @@ impl MetadataFeatureBlock {
     pub fn data(&self) -> &[u8] {
         &self.0
     }
-}
-
-impl OldPackable for MetadataFeatureBlock {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        0u32.packed_len() + self.0.len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.0.len() as u32).pack(writer)?;
-        writer.write_all(&self.0)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let data_length = u32::unpack_inner::<R, CHECK>(reader)? as usize;
-
-        if CHECK {
-            validate_length(data_length)?;
-        }
-
-        let mut data = vec![0u8; data_length];
-        reader.read_exact(&mut data)?;
-
-        Self::new(data)
-    }
-}
-
-#[inline]
-fn validate_length(data_length: usize) -> Result<(), Error> {
-    MetadataFeatureBlockLength::try_from(data_length).map_err(Error::InvalidMetadataFeatureBlockLength)?;
-
-    Ok(())
 }

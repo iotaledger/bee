@@ -3,10 +3,7 @@
 
 use crate::{output::TokenId, Error};
 
-use bee_common::{
-    ord::is_unique_sorted,
-    packable::{Packable as OldPackable, Read, Write},
-};
+use bee_common::ord::is_unique_sorted;
 use bee_packable::{
     bounded::BoundedU16,
     error::{UnpackError, UnpackErrorExt},
@@ -45,29 +42,6 @@ impl NativeToken {
     #[inline(always)]
     pub fn amount(&self) -> &U256 {
         &self.amount
-    }
-}
-
-impl OldPackable for NativeToken {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.token_id.packed_len() + 32
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.token_id.pack(writer)?;
-        // SAFETY: Reinterpreting a [u64; 4] as a [u8; 32] is fine since they have the same size.
-        writer.write_all(&unsafe { std::mem::transmute::<[u64; 4], [u8; 32]>(self.amount.0) })?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let token_id = TokenId::unpack_inner::<R, CHECK>(reader)?;
-        let amount = U256::from_little_endian(&<[u8; 32]>::unpack_inner::<R, CHECK>(reader)?);
-
-        Ok(Self::new(token_id, amount))
     }
 }
 
@@ -128,47 +102,6 @@ impl bee_packable::Packable for NativeTokens {
 
         Self::from_boxed_slice::<VERIFY>(native_tokens).map_err(UnpackError::Packable)
     }
-}
-
-impl OldPackable for NativeTokens {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        0u16.packed_len() + self.0.iter().map(OldPackable::packed_len).sum::<usize>()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.0.len() as u16).pack(writer)?;
-        for native_token in self.0.iter() {
-            native_token.pack(writer)?
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let native_token_count = u16::unpack_inner::<R, CHECK>(reader)? as usize;
-
-        if CHECK {
-            validate_count(native_token_count)?;
-        }
-
-        let mut native_tokens = Vec::with_capacity(native_token_count);
-        for _ in 0..native_token_count {
-            native_tokens.push(NativeToken::unpack_inner::<R, CHECK>(reader)?);
-        }
-
-        validate_unique_sorted::<CHECK>(&native_tokens)?;
-
-        Self::new(native_tokens)
-    }
-}
-
-#[inline]
-fn validate_count(native_token_count: usize) -> Result<(), Error> {
-    NativeTokenCount::try_from(native_token_count).map_err(Error::InvalidNativeTokenCount)?;
-
-    Ok(())
 }
 
 #[inline]

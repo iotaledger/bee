@@ -8,12 +8,10 @@ mod transaction_id;
 
 use crate::{unlock_block::UnlockBlocks, Error};
 
-use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker};
+use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, PackableExt};
 pub(crate) use essence::{InputCount, OutputCount};
 pub use essence::{RegularTransactionEssence, TransactionEssence};
 pub use transaction_id::TransactionId;
-
-use bee_common::packable::{Read, Write};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
@@ -81,11 +79,10 @@ impl TransactionPayload {
 
     /// Computes the identifier of a [`TransactionPayload`].
     pub fn id(&self) -> TransactionId {
-        use bee_common::packable::Packable;
         let mut hasher = Blake2b256::new();
 
         hasher.update(Self::KIND.to_le_bytes());
-        hasher.update(self.pack_new());
+        hasher.update(self.pack_to_vec());
 
         TransactionId::new(hasher.finalize().into())
     }
@@ -122,30 +119,5 @@ impl bee_packable::Packable for TransactionPayload {
             .with_unlock_blocks(unlock_blocks)
             .finish()
             .map_err(UnpackError::Packable)
-    }
-}
-
-impl bee_common::packable::Packable for TransactionPayload {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.essence.packed_len() + self.unlock_blocks.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.essence.pack(writer)?;
-        self.unlock_blocks.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let essence = TransactionEssence::unpack_inner::<R, CHECK>(reader)?;
-        let unlock_blocks = UnlockBlocks::unpack_inner::<R, CHECK>(reader)?;
-
-        Self::builder()
-            .with_essence(essence)
-            .with_unlock_blocks(unlock_blocks)
-            .finish()
     }
 }

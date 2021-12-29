@@ -12,13 +12,13 @@ pub use milestone_id::MilestoneId;
 
 use crate::Error;
 
-use bee_common::packable::{Read, Write};
 use bee_packable::{
     bounded::BoundedU8,
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     prefix::VecPrefix,
     unpacker::Unpacker,
+    PackableExt,
 };
 
 use crypto::{
@@ -105,12 +105,10 @@ impl MilestonePayload {
 
     /// Computes the identifier of a `MilestonePayload`.
     pub fn id(&self) -> MilestoneId {
-        use bee_common::packable::Packable;
-
         let mut hasher = Blake2b256::new();
 
         hasher.update(Self::KIND.to_le_bytes());
-        hasher.update(self.pack_new());
+        hasher.update(self.pack_to_vec());
 
         MilestoneId::new(hasher.finalize().into())
     }
@@ -196,37 +194,5 @@ impl bee_packable::Packable for MilestonePayload {
             .map_packable_err(|err| Error::MilestoneInvalidSignatureCount(err.into_prefix().into()))?;
 
         Self::from_vec_prefix(essence, signatures).map_err(UnpackError::Packable)
-    }
-}
-
-impl bee_common::packable::Packable for MilestonePayload {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.essence.packed_len() + 0u8.packed_len() + self.signatures.len() * MilestonePayload::SIGNATURE_LENGTH
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.essence.pack(writer)?;
-
-        (self.signatures.len() as u8).pack(writer)?;
-        for signature in self.signatures.iter() {
-            writer.write_all(&signature.0)?;
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let essence = MilestoneEssence::unpack_inner::<R, CHECK>(reader)?;
-        let signatures_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut signatures = Vec::with_capacity(signatures_len);
-        for _ in 0..signatures_len {
-            signatures.push(<[u8; MilestonePayload::SIGNATURE_LENGTH]>::unpack_inner::<R, CHECK>(
-                reader,
-            )?);
-        }
-
-        Self::new(essence, signatures)
     }
 }

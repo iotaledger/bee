@@ -10,7 +10,6 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Read, Write};
 use bee_packable::{
     bounded::BoundedU32,
     error::{UnpackError, UnpackErrorExt},
@@ -314,98 +313,6 @@ impl bee_packable::Packable for AliasOutput {
             feature_blocks,
         })
     }
-}
-
-impl bee_common::packable::Packable for AliasOutput {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.amount.packed_len()
-            + self.native_tokens.packed_len()
-            + self.alias_id.packed_len()
-            + self.state_controller.packed_len()
-            + self.governance_controller.packed_len()
-            + self.state_index.packed_len()
-            + 0u32.packed_len()
-            + self.state_metadata.len()
-            + self.foundry_counter.packed_len()
-            + self.feature_blocks.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.amount.pack(writer)?;
-        self.native_tokens.pack(writer)?;
-        self.alias_id.pack(writer)?;
-        self.state_controller.pack(writer)?;
-        self.governance_controller.pack(writer)?;
-        self.state_index.pack(writer)?;
-        0u32.pack(writer)?;
-        writer.write_all(&self.state_metadata)?;
-        self.foundry_counter.pack(writer)?;
-        self.feature_blocks.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let amount = u64::unpack_inner::<R, CHECK>(reader)?;
-        let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
-        let alias_id = AliasId::unpack_inner::<R, CHECK>(reader)?;
-        let state_controller = Address::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            validate_controller(&state_controller, &alias_id)?;
-        }
-
-        let governance_controller = Address::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            validate_controller(&governance_controller, &alias_id)?;
-        }
-
-        let state_index = u32::unpack_inner::<R, CHECK>(reader)?;
-        let state_metadata_length = u32::unpack_inner::<R, CHECK>(reader)? as usize;
-
-        if CHECK {
-            validate_state_metadata_length(state_metadata_length)?;
-        }
-
-        let mut state_metadata = vec![0u8; state_metadata_length];
-        reader.read_exact(&mut state_metadata)?;
-        let foundry_counter = u32::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            validate_index_counter(&alias_id, state_index, foundry_counter)?;
-        }
-
-        let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            validate_allowed_feature_blocks(&feature_blocks, AliasOutput::ALLOWED_FEATURE_BLOCKS)?;
-        }
-
-        Ok(Self {
-            amount,
-            native_tokens,
-            alias_id,
-            state_controller,
-            governance_controller,
-            state_index,
-            state_metadata: state_metadata
-                .into_boxed_slice()
-                .try_into()
-                .map_err(Error::InvalidStateMetadataLength)?,
-            foundry_counter,
-            feature_blocks,
-        })
-    }
-}
-
-#[inline]
-fn validate_state_metadata_length(state_metadata_length: usize) -> Result<(), Error> {
-    StateMetadataLength::try_from(state_metadata_length).map_err(Error::InvalidStateMetadataLength)?;
-
-    Ok(())
 }
 
 #[inline]

@@ -6,7 +6,6 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_packable::bounded::BoundedU64;
 
 pub(crate) type DustDepositAmount = BoundedU64<DUST_DEPOSIT_MIN, { u64::MAX }>;
@@ -49,35 +48,4 @@ impl DustDepositReturnFeatureBlock {
     pub fn amount(&self) -> u64 {
         self.0.get()
     }
-}
-
-impl OldPackable for DustDepositReturnFeatureBlock {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.amount().packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.amount().pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let amount = u64::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            validate_amount(amount)?;
-        }
-
-        Self::new(amount)
-    }
-}
-
-#[inline]
-fn validate_amount(amount: u64) -> Result<(), Error> {
-    DustDepositReturnFeatureBlock::try_from(amount)?;
-
-    Ok(())
 }

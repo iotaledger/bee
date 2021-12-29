@@ -1,11 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable as OldPackable;
-
 use serde::{Deserialize, Serialize};
-
-use std::io::{Read, Write};
 
 /// Errors related to ledger types.
 #[derive(Debug, thiserror::Error)]
@@ -60,24 +56,5 @@ impl TryFrom<u8> for ConflictReason {
             255 => Self::SemanticValidationFailed,
             x => return Err(Self::Error::InvalidConflict(x)),
         })
-    }
-}
-
-impl OldPackable for ConflictReason {
-    type Error = ConflictError;
-
-    fn packed_len(&self) -> usize {
-        (*self as u8).packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        Ok((*self as u8).pack(writer)?)
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
-        u8::unpack_inner::<R, CHECK>(reader)?.try_into()
     }
 }
