@@ -3,11 +3,16 @@
 
 use crate::{
     parent::Parents,
-    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
+    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, OptionalPayload, Payload},
     Error, MessageId,
 };
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_common::packable::{Read, Write};
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+};
 use bee_pow::providers::{miner::Miner, NonceProvider, NonceProviderBuilder};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
@@ -71,6 +76,8 @@ impl<P: NonceProvider> MessageBuilder<P> {
 
     /// Finishes the `MessageBuilder` into a [`Message`].
     pub fn finish(self) -> Result<Message, Error> {
+        use bee_common::packable::Packable;
+
         let network_id = self.network_id.ok_or(Error::MissingField("network_id"))?;
         let parents = self.parents.ok_or(Error::MissingField("parents"))?;
 
@@ -85,7 +92,7 @@ impl<P: NonceProvider> MessageBuilder<P> {
         let mut message = Message {
             network_id,
             parents,
-            payload: self.payload,
+            payload: self.payload.into(),
             nonce: 0,
         };
 
@@ -119,7 +126,7 @@ pub struct Message {
     /// The [`MessageId`]s that this message directly approves.
     parents: Parents,
     /// The optional [Payload] of the message.
-    payload: Option<Payload>,
+    payload: OptionalPayload,
     /// The result of the Proof of Work in order for the message to be accepted into the tangle.
     nonce: u64,
 }
@@ -139,6 +146,7 @@ impl Message {
     /// Computes the identifier of the message.
     #[inline(always)]
     pub fn id(&self) -> MessageId {
+        use bee_common::packable::Packable;
         MessageId::new(Blake2b256::digest(&self.pack_new()).into())
     }
 
@@ -174,11 +182,71 @@ impl Message {
 
     /// Consumes the [[`Message`]], and returns ownership over its [`Parents`] and [`Payload`].
     pub fn into_parents_and_payload(self) -> (Parents, Option<Payload>) {
-        (self.parents, self.payload)
+        (self.parents, self.payload.into())
     }
 }
 
-impl OldPackable for Message {
+impl bee_packable::Packable for Message {
+    type UnpackError = Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.network_id.pack(packer)?;
+        self.parents.pack(packer)?;
+        self.payload.pack(packer)?;
+        self.nonce.pack(packer)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        use bee_packable::PackableExt;
+
+        let network_id = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+
+        let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
+
+        let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
+
+        if VERIFY
+            && !matches!(
+                *payload,
+                None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::Indexation(_))
+            )
+        {
+            // Safe to unwrap since it's known not to be None.
+            return Err(UnpackError::Packable(Error::InvalidPayloadKind(
+                Into::<Option<Payload>>::into(payload).unwrap().kind(),
+            )));
+        }
+
+        let nonce = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+
+        let message = Self {
+            network_id,
+            parents,
+            payload,
+            nonce,
+        };
+
+        let message_len = message.packed_len();
+
+        // FIXME: compute this in a more efficient way.
+        if VERIFY && message_len > Message::LENGTH_MAX {
+            return Err(UnpackError::Packable(Error::InvalidMessageLength(message_len)));
+        }
+
+        // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
+        if VERIFY && u8::unpack::<_, VERIFY>(unpacker).is_ok() {
+            return Err(UnpackError::Packable(Error::RemainingBytesAfterMessage));
+        }
+
+        Ok(message)
+    }
+}
+
+impl bee_common::packable::Packable for Message {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -232,7 +300,7 @@ impl OldPackable for Message {
         Ok(Self {
             network_id,
             parents,
-            payload,
+            payload: payload.into(),
             nonce,
         })
     }
