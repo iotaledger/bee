@@ -75,17 +75,17 @@ impl FeatureBlock {
     }
 
     /// Returns the [`FeatureBlockUsages`] for the given [`FeatureBlock`].
-    pub(crate) fn usage(&self) -> FeatureBlockUsages {
+    pub(crate) fn usage(&self) -> FeatureBlockFlags {
         match self {
-            Self::Sender(_) => FeatureBlockUsages::SENDER,
-            Self::Issuer(_) => FeatureBlockUsages::ISSUER,
-            Self::DustDepositReturn(_) => FeatureBlockUsages::DUST_DEPOSIT_RETURN,
-            Self::TimelockMilestoneIndex(_) => FeatureBlockUsages::TIMELOCK_MILESTONE_INDEX,
-            Self::TimelockUnix(_) => FeatureBlockUsages::TIMELOCK_UNIX,
-            Self::ExpirationMilestoneIndex(_) => FeatureBlockUsages::EXPIRATION_MILESTONE_INDEX,
-            Self::ExpirationUnix(_) => FeatureBlockUsages::EXPIRATION_UNIX,
-            Self::Indexation(_) => FeatureBlockUsages::INDEXATION,
-            Self::Metadata(_) => FeatureBlockUsages::METADATA,
+            Self::Sender(_) => FeatureBlockFlags::SENDER,
+            Self::Issuer(_) => FeatureBlockFlags::ISSUER,
+            Self::DustDepositReturn(_) => FeatureBlockFlags::DUST_DEPOSIT_RETURN,
+            Self::TimelockMilestoneIndex(_) => FeatureBlockFlags::TIMELOCK_MILESTONE_INDEX,
+            Self::TimelockUnix(_) => FeatureBlockFlags::TIMELOCK_UNIX,
+            Self::ExpirationMilestoneIndex(_) => FeatureBlockFlags::EXPIRATION_MILESTONE_INDEX,
+            Self::ExpirationUnix(_) => FeatureBlockFlags::EXPIRATION_UNIX,
+            Self::Indexation(_) => FeatureBlockFlags::INDEXATION,
+            Self::Metadata(_) => FeatureBlockFlags::METADATA,
         }
     }
 }
@@ -308,7 +308,7 @@ fn validate_dependencies(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
 
 pub(crate) fn validate_allowed_feature_blocks(
     feature_blocks: &FeatureBlocks,
-    allowed_feature_blocks: FeatureBlockUsages,
+    allowed_feature_blocks: FeatureBlockFlags,
 ) -> Result<(), Error> {
     for (index, feature_block) in feature_blocks.iter().enumerate() {
         if !allowed_feature_blocks.contains(feature_block.usage()) {
@@ -325,7 +325,7 @@ use bitflags::bitflags;
 
 bitflags! {
     /// A bitflags-based representation of the set of active feature blocks.
-    pub(crate) struct FeatureBlockUsages: u16 {
+    pub(crate) struct FeatureBlockFlags: u16 {
         /// Signals the presence of a [`SenderFeatureBlock`].
         const SENDER = 1 << SenderFeatureBlock::KIND;
         /// Signals the presence of a [`IssuerFeatureBlock`].

@@ -4,7 +4,7 @@
 use crate::{
     address::Address,
     output::{
-        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockUsages, FeatureBlocks},
+        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         NativeToken, NativeTokens,
     },
     Error,
@@ -64,7 +64,7 @@ impl ExtendedOutputBuilder {
     pub fn finish(self) -> Result<ExtendedOutput, Error> {
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
-        validate_allowed_feature_blocks(&feature_blocks, ExtendedOutput::allowed_feature_blocks())?;
+        validate_allowed_feature_blocks(&feature_blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)?;
 
         Ok(ExtendedOutput {
             address: self.address,
@@ -92,19 +92,15 @@ impl ExtendedOutput {
     /// The [`Output`](crate::output::Output) kind of an [`ExtendedOutput`].
     pub const KIND: u8 = 3;
 
-    /// Returns the set of allowed [`FeatureBlock`]s for an [`ExtendedOutput`].
-    #[inline(always)]
-    fn allowed_feature_blocks() -> FeatureBlockUsages {
-        FeatureBlockUsages::empty()
-            | FeatureBlockUsages::SENDER
-            | FeatureBlockUsages::DUST_DEPOSIT_RETURN
-            | FeatureBlockUsages::TIMELOCK_MILESTONE_INDEX
-            | FeatureBlockUsages::TIMELOCK_UNIX
-            | FeatureBlockUsages::EXPIRATION_MILESTONE_INDEX
-            | FeatureBlockUsages::EXPIRATION_UNIX
-            | FeatureBlockUsages::METADATA
-            | FeatureBlockUsages::INDEXATION
-    }
+    /// The set of allowed [`FeatureBlock`]s for an [`ExtendedOutput`].
+    const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
+        .union(FeatureBlockFlags::DUST_DEPOSIT_RETURN)
+        .union(FeatureBlockFlags::TIMELOCK_MILESTONE_INDEX)
+        .union(FeatureBlockFlags::TIMELOCK_UNIX)
+        .union(FeatureBlockFlags::EXPIRATION_MILESTONE_INDEX)
+        .union(FeatureBlockFlags::EXPIRATION_UNIX)
+        .union(FeatureBlockFlags::METADATA)
+        .union(FeatureBlockFlags::INDEXATION);
 
     /// Creates a new [`ExtendedOutput`].
     #[inline(always)]
@@ -170,7 +166,7 @@ impl Packable for ExtendedOutput {
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
         if CHECK {
-            validate_allowed_feature_blocks(&feature_blocks, ExtendedOutput::allowed_feature_blocks())?;
+            validate_allowed_feature_blocks(&feature_blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)?;
         }
 
         Ok(Self {

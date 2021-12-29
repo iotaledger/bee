@@ -4,7 +4,7 @@
 use crate::{
     address::Address,
     output::{
-        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockUsages, FeatureBlocks},
+        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         AliasId, NativeToken, NativeTokens,
     },
     Error,
@@ -108,7 +108,7 @@ impl AliasOutputBuilder {
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
-        validate_allowed_feature_blocks(&feature_blocks, AliasOutput::allowed_feature_blocks())?;
+        validate_allowed_feature_blocks(&feature_blocks, AliasOutput::ALLOWED_FEATURE_BLOCKS)?;
 
         Ok(AliasOutput {
             amount: self.amount,
@@ -152,16 +152,12 @@ impl AliasOutput {
     /// The [`Output`](crate::output::Output) kind of an [`AliasOutput`].
     pub const KIND: u8 = 4;
     /// Maximum possible length in bytes of the state metadata.
-    pub const STATE_METADATA_LENGTH_MAX: usize = 1024;
+    const STATE_METADATA_LENGTH_MAX: usize = 1024;
 
-    /// Returns the set of allowed [`FeatureBlock`]s for an [`AliasOutput`].
-    #[inline(always)]
-    fn allowed_feature_blocks() -> FeatureBlockUsages {
-        FeatureBlockUsages::empty()
-            | FeatureBlockUsages::SENDER
-            | FeatureBlockUsages::ISSUER
-            | FeatureBlockUsages::METADATA
-    }
+    /// The set of allowed [`FeatureBlock`]s for an [`AliasOutput`].
+    const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
+        .union(FeatureBlockFlags::ISSUER)
+        .union(FeatureBlockFlags::METADATA);
 
     /// Creates a new [`AliasOutput`].
     #[inline(always)]
@@ -305,7 +301,7 @@ impl Packable for AliasOutput {
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
         if CHECK {
-            validate_allowed_feature_blocks(&feature_blocks, AliasOutput::allowed_feature_blocks())?;
+            validate_allowed_feature_blocks(&feature_blocks, AliasOutput::ALLOWED_FEATURE_BLOCKS)?;
         }
 
         Ok(Self {
