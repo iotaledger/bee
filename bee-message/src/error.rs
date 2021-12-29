@@ -79,7 +79,6 @@ pub enum Error {
     SignaturePublicKeyMismatch { expected: String, actual: String },
     TailTransactionHashNotUnique { previous: usize, current: usize },
     UnallowedFeatureBlock { index: usize, kind: u8 },
-    TooManyFeatureBlocks { max: usize, actual: usize },
 }
 
 impl std::error::Error for Error {}
@@ -88,7 +87,6 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::CryptoError(e) => write!(f, "cryptographic error: {}.", e),
-
             Error::DuplicateSignatureUnlockBlock(index) => {
                 write!(f, "duplicate signature unlock block at index: {0}", index)
             }
@@ -230,9 +228,6 @@ impl fmt::Display for Error {
             }
             Error::UnallowedFeatureBlock { index, kind } => {
                 write!(f, "unallowed feature block at index {} with kind {}.", index, kind)
-            }
-            Error::TooManyFeatureBlocks { max, actual } => {
-                write!(f, "too many feature blocks, max {}, got {}.", max, actual)
             }
         }
     }
