@@ -7,7 +7,7 @@ use bee_message::MessageId;
 use std::ops::Deref;
 
 /// A type representing an unreferenced message.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, bee_packable::Packable)]
 pub struct UnreferencedMessage(MessageId);
 
 impl From<MessageId> for UnreferencedMessage {

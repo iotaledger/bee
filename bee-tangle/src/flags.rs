@@ -1,10 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
+use bee_common::packable::{Read, Write};
+use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker};
 
 use bitflags::bitflags;
 use serde::Serialize;
+
+use core::convert::Infallible;
 
 bitflags! {
     /// Flags representing the state of a message.
@@ -75,7 +78,22 @@ impl Flags {
     }
 }
 
-impl OldPackable for Flags {
+impl bee_packable::Packable for Flags {
+    type UnpackError = Infallible;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.bits().pack(packer)
+    }
+
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        // Flags are only expected to be unpacked from a trusted storage source.
+        Ok(unsafe { Self::from_bits_unchecked(u8::unpack::<_, VERIFY>(unpacker)?) })
+    }
+}
+
+impl bee_common::packable::Packable for Flags {
     type Error = std::io::Error;
 
     fn packed_len(&self) -> usize {

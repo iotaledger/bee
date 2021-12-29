@@ -448,6 +448,7 @@ dependencies = [
  "async-trait",
  "bee-common",
  "bee-message",
+ "bee-packable",
  "bee-runtime",
  "bee-storage",
  "bee-storage-null",
