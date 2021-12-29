@@ -76,7 +76,7 @@ impl FeatureBlock {
     }
 
     /// Returns the [`FeatureBlockFlags`] for the given [`FeatureBlock`].
-    pub(crate) fn flag(&self) -> FeatureBlockFlags {
+    pub fn flag(&self) -> FeatureBlockFlags {
         match self {
             Self::Sender(_) => FeatureBlockFlags::SENDER,
             Self::Issuer(_) => FeatureBlockFlags::ISSUER,
@@ -201,7 +201,7 @@ pub(crate) fn validate_allowed_feature_blocks(
 
 bitflags! {
     /// A bitflags-based representation of the set of active feature blocks.
-    pub(crate) struct FeatureBlockFlags: u16 {
+    pub struct FeatureBlockFlags: u16 {
         /// Signals the presence of a [`SenderFeatureBlock`].
         const SENDER = 1 << SenderFeatureBlock::KIND;
         /// Signals the presence of a [`IssuerFeatureBlock`].

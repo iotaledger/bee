@@ -126,7 +126,7 @@ impl NftOutput {
     pub const IMMUTABLE_METADATA_LENGTH_MAX: u32 = 1024;
 
     /// The set of allowed [`FeatureBlock`]s for an [`NftOutput`].
-    const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
+    pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
         .union(FeatureBlockFlags::ISSUER)
         .union(FeatureBlockFlags::DUST_DEPOSIT_RETURN)
         .union(FeatureBlockFlags::TIMELOCK)

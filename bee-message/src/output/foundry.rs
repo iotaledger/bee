@@ -145,7 +145,7 @@ impl FoundryOutput {
     pub const KIND: u8 = 5;
 
     /// The set of allowed [`FeatureBlock`]s for an [`FoundryOutput`].
-    const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
+    pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
 
     /// Creates a new [`FoundryOutput`].
     #[inline(always)]

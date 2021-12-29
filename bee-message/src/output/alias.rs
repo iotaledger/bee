@@ -170,7 +170,7 @@ impl AliasOutput {
     pub const STATE_METADATA_LENGTH_MAX: u32 = 1024;
 
     /// The set of allowed [`FeatureBlock`]s for an [`AliasOutput`].
-    const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
+    pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
         .union(FeatureBlockFlags::ISSUER)
         .union(FeatureBlockFlags::METADATA);
 
