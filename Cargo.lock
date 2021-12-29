@@ -369,6 +369,7 @@ name = "bee-storage"
 version = "0.9.0"
 dependencies = [
  "bee-common",
+ "bee-packable",
  "serde",
  "thiserror",
 ]
@@ -402,6 +403,7 @@ dependencies = [
  "bee-common",
  "bee-ledger",
  "bee-message",
+ "bee-packable",
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
@@ -419,6 +421,7 @@ dependencies = [
  "bee-common",
  "bee-ledger",
  "bee-message",
+ "bee-packable",
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
@@ -436,6 +439,7 @@ dependencies = [
  "bee-common",
  "bee-ledger",
  "bee-message",
+ "bee-packable",
  "bee-storage",
  "bee-tangle",
  "bee-test",
