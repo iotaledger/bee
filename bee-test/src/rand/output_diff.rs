@@ -27,5 +27,5 @@ pub fn rand_output_diff() -> OutputDiff {
         created_outputs.push(rand_output_id());
     }
 
-    OutputDiff::new(spent_outputs, created_outputs, rand_option(rand_treasury_diff()))
+    OutputDiff::new(spent_outputs, created_outputs, rand_option(rand_treasury_diff())).unwrap()
 }

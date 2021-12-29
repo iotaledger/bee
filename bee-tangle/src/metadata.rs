@@ -16,6 +16,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+// FIXME: derive packable
 /// Metadata associated with a tangle message.
 #[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Serialize)]
 pub struct MessageMetadata {
@@ -220,7 +221,7 @@ impl OldPackable for MessageMetadata {
 
 /// A type used to associate two particular interesting Cone Root Indexes with a message in the Tangle, i.e. the Oldest
 /// Cone Root Index (OCRI), and the Youngest Cone Root Index (YCRI)
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, Serialize, bee_packable::Packable)]
 pub struct IndexId(MilestoneIndex, MessageId);
 
 impl IndexId {
