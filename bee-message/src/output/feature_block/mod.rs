@@ -310,21 +310,12 @@ pub(crate) fn validate_allowed_feature_blocks(
     feature_blocks: &FeatureBlocks,
     allowed_feature_blocks: FeatureBlockUsages,
 ) -> Result<(), Error> {
-    let mut blocks = FeatureBlockUsages::empty();
     for (index, feature_block) in feature_blocks.iter().enumerate() {
-        let usage = feature_block.usage();
-        if blocks.contains(usage) {
-            return Err(Error::DuplicateFeatureBlock {
-                index,
-                kind: feature_block.kind(),
-            });
-        } else if !allowed_feature_blocks.contains(usage) {
+        if !allowed_feature_blocks.contains(feature_block.usage()) {
             return Err(Error::UnallowedFeatureBlock {
                 index,
                 kind: feature_block.kind(),
             });
-        } else {
-            blocks.insert(usage);
         }
     }
     Ok(())

@@ -16,7 +16,6 @@ use core::fmt;
 #[allow(missing_docs)]
 pub enum Error {
     CryptoError(CryptoError),
-    DuplicateFeatureBlock { index: usize, kind: u8 },
     DuplicateSignatureUnlockBlock(u16),
     DuplicateUtxo(UtxoInput),
     FeatureBlocksNotUniqueSorted,
@@ -88,9 +87,6 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::CryptoError(e) => write!(f, "cryptographic error: {}.", e),
-            Error::DuplicateFeatureBlock { index, kind } => {
-                write!(f, "duplicate feature block at index {} with kind {}.", index, kind)
-            }
             Error::DuplicateSignatureUnlockBlock(index) => {
                 write!(f, "duplicate signature unlock block at index: {0}", index)
             }
