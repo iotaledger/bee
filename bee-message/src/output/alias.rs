@@ -156,7 +156,7 @@ impl AliasOutput {
 
     /// Returns the set of allowed [`FeatureBlock`]s for an [`AliasOutput`].
     #[inline(always)]
-    pub fn allowed_feature_blocks() -> FeatureBlockUsages {
+    fn allowed_feature_blocks() -> FeatureBlockUsages {
         FeatureBlockUsages::empty()
             | FeatureBlockUsages::SENDER
             | FeatureBlockUsages::ISSUER

@@ -11,6 +11,7 @@ use crate::{
 };
 
 use bee_common::packable::{Packable, Read, Write};
+
 ///
 pub struct ExtendedOutputBuilder {
     address: Address,
@@ -93,7 +94,7 @@ impl ExtendedOutput {
 
     /// Returns the set of allowed [`FeatureBlock`]s for an [`ExtendedOutput`].
     #[inline(always)]
-    pub fn allowed_feature_blocks() -> FeatureBlockUsages {
+    fn allowed_feature_blocks() -> FeatureBlockUsages {
         FeatureBlockUsages::empty()
             | FeatureBlockUsages::SENDER
             | FeatureBlockUsages::DUST_DEPOSIT_RETURN

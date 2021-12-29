@@ -75,7 +75,7 @@ impl FeatureBlock {
     }
 
     /// Returns the [`FeatureBlockUsages`] for the given [`FeatureBlock`].
-    pub fn usage(&self) -> FeatureBlockUsages {
+    pub(crate) fn usage(&self) -> FeatureBlockUsages {
         match self {
             Self::Sender(_) => FeatureBlockUsages::SENDER,
             Self::Issuer(_) => FeatureBlockUsages::ISSUER,
@@ -334,9 +334,11 @@ use bitflags::bitflags;
 
 bitflags! {
     /// A bitflags-based representation of the set of active feature blocks.
-    pub struct FeatureBlockUsages: u16 {
+    pub(crate) struct FeatureBlockUsages: u16 {
         /// Signals the presence of a [`SenderFeatureBlock`].
         const SENDER = 1 << SenderFeatureBlock::KIND;
+        /// Signals the presence of a [`IssuerFeatureBlock`].
+        const ISSUER = 1 << IssuerFeatureBlock::KIND;
         /// Signals the presence of a [`DustDepositReturnFeatureBlock`].
         const DUST_DEPOSIT_RETURN = 1 << DustDepositReturnFeatureBlock::KIND;
         /// Signals the presence of a [`TimelockMilestoneIndexFeatureBlock`].
@@ -351,7 +353,5 @@ bitflags! {
         const METADATA = 1 << MetadataFeatureBlock::KIND;
         /// Signals the presence of a [`IndexationFeatureBlock`].
         const INDEXATION = 1 << IndexationFeatureBlock::KIND;
-        /// Signals the presence of a [`IssuerFeatureBlock`].
-        const ISSUER = 1 << IssuerFeatureBlock::KIND;
     }
 }
