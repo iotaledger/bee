@@ -719,7 +719,7 @@ impl<T: RawEncoding + ?Sized> fmt::Display for Trits<T> {
 
 /// A buffer containing trits.
 ///
-/// This type is roughly analogous to [`Vec`] or [`String`]. It supports pushing and popping trits
+/// This type is roughly analogous to [`alloc::vec::Vec`] or [`alloc::string::String`]. It supports pushing and popping trits
 /// and dereferences to [`Trits`]. It may be borrowed as a trit slice, either mutably or immutably.
 #[derive(Clone)]
 #[repr(transparent)]
