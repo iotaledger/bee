@@ -4,7 +4,7 @@
 use bee_common::packable::{Packable as OldPackable, Read, Write};
 
 /// Version of the storage.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, bee_packable::Packable)]
 pub struct StorageVersion(pub u64);
 
 impl OldPackable for StorageVersion {

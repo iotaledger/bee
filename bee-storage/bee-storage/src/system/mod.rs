@@ -11,6 +11,8 @@ pub use version::StorageVersion;
 
 use bee_common::packable::{Packable as OldPackable, Read, Write};
 
+use core::convert::Infallible;
+
 /// Key used to store the system version.
 pub const SYSTEM_VERSION_KEY: u8 = 0;
 /// Key used to store the system health.
@@ -30,12 +32,22 @@ pub enum Error {
     UnknownSystemKey(u8),
 }
 
+impl From<Infallible> for Error {
+    fn from(err: Infallible) -> Self {
+        match err {}
+    }
+}
+
 /// System-related information.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, bee_packable::Packable)]
+#[packable(unpack_error = Error)]
+#[packable(tag_type = u8, with_error = Error::UnknownSystemKey)]
 pub enum System {
     /// The current version of the storage.
+    #[packable(tag = SYSTEM_VERSION_KEY)]
     Version(StorageVersion),
     /// The health status of the storage.
+    #[packable(tag = SYSTEM_HEALTH_KEY)]
     Health(StorageHealth),
 }
 
