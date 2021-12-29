@@ -4,18 +4,13 @@
 use crate::{
     address::Address,
     output::{
-        feature_block::{
-            validate_allowed_feature_blocks, DustDepositReturnFeatureBlock, ExpirationMilestoneIndexFeatureBlock,
-            ExpirationUnixFeatureBlock, FeatureBlock, FeatureBlocks, IndexationFeatureBlock, MetadataFeatureBlock,
-            SenderFeatureBlock, TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
-        },
+        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockUsages, FeatureBlocks},
         NativeToken, NativeTokens,
     },
     Error,
 };
 
 use bee_common::packable::{Packable, Read, Write};
-
 ///
 pub struct ExtendedOutputBuilder {
     address: Address,
@@ -68,7 +63,7 @@ impl ExtendedOutputBuilder {
     pub fn finish(self) -> Result<ExtendedOutput, Error> {
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
-        validate_allowed_feature_blocks(&feature_blocks, &ExtendedOutput::ALLOWED_FEATURE_BLOCKS)?;
+        validate_allowed_feature_blocks(&feature_blocks, ExtendedOutput::allowed_feature_blocks())?;
 
         Ok(ExtendedOutput {
             address: self.address,
@@ -95,17 +90,20 @@ pub struct ExtendedOutput {
 impl ExtendedOutput {
     /// The [`Output`](crate::output::Output) kind of an [`ExtendedOutput`].
     pub const KIND: u8 = 3;
-    ///
-    const ALLOWED_FEATURE_BLOCKS: [u8; 8] = [
-        SenderFeatureBlock::KIND,
-        DustDepositReturnFeatureBlock::KIND,
-        TimelockMilestoneIndexFeatureBlock::KIND,
-        TimelockUnixFeatureBlock::KIND,
-        ExpirationMilestoneIndexFeatureBlock::KIND,
-        ExpirationUnixFeatureBlock::KIND,
-        MetadataFeatureBlock::KIND,
-        IndexationFeatureBlock::KIND,
-    ];
+
+    /// Returns the set of allowed [`FeatureBlock`]s for an [`ExtendedOutput`].
+    #[inline(always)]
+    pub fn allowed_feature_blocks() -> FeatureBlockUsages {
+        FeatureBlockUsages::empty()
+            | FeatureBlockUsages::SENDER
+            | FeatureBlockUsages::DUST_DEPOSIT_RETURN
+            | FeatureBlockUsages::TIMELOCK_MILESTONE_INDEX
+            | FeatureBlockUsages::TIMELOCK_UNIX
+            | FeatureBlockUsages::EXPIRATION_MILESTONE_INDEX
+            | FeatureBlockUsages::EXPIRATION_UNIX
+            | FeatureBlockUsages::METADATA
+            | FeatureBlockUsages::INDEXATION
+    }
 
     /// Creates a new [`ExtendedOutput`].
     #[inline(always)]
@@ -171,7 +169,7 @@ impl Packable for ExtendedOutput {
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
         if CHECK {
-            validate_allowed_feature_blocks(&feature_blocks, &ExtendedOutput::ALLOWED_FEATURE_BLOCKS)?;
+            validate_allowed_feature_blocks(&feature_blocks, ExtendedOutput::allowed_feature_blocks())?;
         }
 
         Ok(Self {

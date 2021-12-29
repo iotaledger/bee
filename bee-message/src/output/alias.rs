@@ -4,10 +4,7 @@
 use crate::{
     address::Address,
     output::{
-        feature_block::{
-            validate_allowed_feature_blocks, FeatureBlock, FeatureBlocks, IssuerFeatureBlock, MetadataFeatureBlock,
-            SenderFeatureBlock,
-        },
+        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockUsages, FeatureBlocks},
         AliasId, NativeToken, NativeTokens,
     },
     Error,
@@ -111,7 +108,7 @@ impl AliasOutputBuilder {
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
-        validate_allowed_feature_blocks(&feature_blocks, &AliasOutput::ALLOWED_FEATURE_BLOCKS)?;
+        validate_allowed_feature_blocks(&feature_blocks, AliasOutput::allowed_feature_blocks())?;
 
         Ok(AliasOutput {
             amount: self.amount,
@@ -157,12 +154,14 @@ impl AliasOutput {
     /// Maximum possible length in bytes of the state metadata.
     pub const STATE_METADATA_LENGTH_MAX: usize = 1024;
 
-    ///
-    const ALLOWED_FEATURE_BLOCKS: [u8; 3] = [
-        SenderFeatureBlock::KIND,
-        IssuerFeatureBlock::KIND,
-        MetadataFeatureBlock::KIND,
-    ];
+    /// Returns the set of allowed [`FeatureBlock`]s for an [`AliasOutput`].
+    #[inline(always)]
+    pub fn allowed_feature_blocks() -> FeatureBlockUsages {
+        FeatureBlockUsages::empty()
+            | FeatureBlockUsages::SENDER
+            | FeatureBlockUsages::ISSUER
+            | FeatureBlockUsages::METADATA
+    }
 
     /// Creates a new [`AliasOutput`].
     #[inline(always)]
@@ -306,7 +305,7 @@ impl Packable for AliasOutput {
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
         if CHECK {
-            validate_allowed_feature_blocks(&feature_blocks, &AliasOutput::ALLOWED_FEATURE_BLOCKS)?;
+            validate_allowed_feature_blocks(&feature_blocks, AliasOutput::allowed_feature_blocks())?;
         }
 
         Ok(Self {

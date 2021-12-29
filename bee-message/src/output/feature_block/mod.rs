@@ -73,6 +73,21 @@ impl FeatureBlock {
             Self::Metadata(_) => MetadataFeatureBlock::KIND,
         }
     }
+
+    /// Returns the [`FeatureBlockUsages`] for the given [`FeatureBlock`].
+    pub fn usage(&self) -> FeatureBlockUsages {
+        match self {
+            Self::Sender(_) => FeatureBlockUsages::SENDER,
+            Self::Issuer(_) => FeatureBlockUsages::ISSUER,
+            Self::DustDepositReturn(_) => FeatureBlockUsages::DUST_DEPOSIT_RETURN,
+            Self::TimelockMilestoneIndex(_) => FeatureBlockUsages::TIMELOCK_MILESTONE_INDEX,
+            Self::TimelockUnix(_) => FeatureBlockUsages::TIMELOCK_UNIX,
+            Self::ExpirationMilestoneIndex(_) => FeatureBlockUsages::EXPIRATION_MILESTONE_INDEX,
+            Self::ExpirationUnix(_) => FeatureBlockUsages::EXPIRATION_UNIX,
+            Self::Indexation(_) => FeatureBlockUsages::INDEXATION,
+            Self::Metadata(_) => FeatureBlockUsages::METADATA,
+        }
+    }
 }
 
 impl Packable for FeatureBlock {
@@ -293,25 +308,50 @@ fn validate_dependencies(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
 
 pub(crate) fn validate_allowed_feature_blocks(
     feature_blocks: &FeatureBlocks,
-    allowed_feature_blocks_kind: &[u8],
+    allowed_feature_blocks: FeatureBlockUsages,
 ) -> Result<(), Error> {
-    if feature_blocks.len() > allowed_feature_blocks_kind.len() {
-        return Err(Error::TooManyFeatureBlocks {
-            max: allowed_feature_blocks_kind.len(),
-            actual: feature_blocks.len(),
-        });
-    }
-
-    let mut index = 0;
-
-    for feature_block in feature_blocks.iter() {
-        index = allowed_feature_blocks_kind[index..]
-            .binary_search(&feature_block.kind())
-            .map_err(|index| Error::UnallowedFeatureBlock {
+    let mut blocks = FeatureBlockUsages::empty();
+    for (index, feature_block) in feature_blocks.iter().enumerate() {
+        let usage = feature_block.usage();
+        if blocks.contains(usage) {
+            return Err(Error::DuplicateFeatureBlock {
                 index,
                 kind: feature_block.kind(),
-            })?;
+            });
+        } else if !allowed_feature_blocks.contains(usage) {
+            return Err(Error::UnallowedFeatureBlock {
+                index,
+                kind: feature_block.kind(),
+            });
+        } else {
+            blocks.insert(usage);
+        }
     }
-
     Ok(())
+}
+
+use bitflags::bitflags;
+
+bitflags! {
+    /// A bitflags-based representation of the set of active feature blocks.
+    pub struct FeatureBlockUsages: u16 {
+        /// Signals the presence of a [`SenderFeatureBlock`].
+        const SENDER = 1 << SenderFeatureBlock::KIND;
+        /// Signals the presence of a [`DustDepositReturnFeatureBlock`].
+        const DUST_DEPOSIT_RETURN = 1 << DustDepositReturnFeatureBlock::KIND;
+        /// Signals the presence of a [`TimelockMilestoneIndexFeatureBlock`].
+        const TIMELOCK_MILESTONE_INDEX = 1 << TimelockMilestoneIndexFeatureBlock::KIND;
+        /// Signals the presence of a [`TimelockUnixFeatureBlock`].
+        const TIMELOCK_UNIX = 1 << TimelockUnixFeatureBlock::KIND;
+        /// Signals the presence of a [`ExpirationMilestoneIndexFeatureBlock`].
+        const EXPIRATION_MILESTONE_INDEX = 1 << ExpirationMilestoneIndexFeatureBlock::KIND;
+        /// Signals the presence of a [`ExpirationUnixFeatureBlock`].
+        const EXPIRATION_UNIX = 1 << ExpirationUnixFeatureBlock::KIND;
+        /// Signals the presence of a [`MetadataFeatureBlock`].
+        const METADATA = 1 << MetadataFeatureBlock::KIND;
+        /// Signals the presence of a [`IndexationFeatureBlock`].
+        const INDEXATION = 1 << IndexationFeatureBlock::KIND;
+        /// Signals the presence of a [`IssuerFeatureBlock`].
+        const ISSUER = 1 << IssuerFeatureBlock::KIND;
+    }
 }

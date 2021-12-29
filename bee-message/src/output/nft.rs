@@ -4,11 +4,7 @@
 use crate::{
     address::Address,
     output::{
-        feature_block::{
-            validate_allowed_feature_blocks, DustDepositReturnFeatureBlock, ExpirationMilestoneIndexFeatureBlock,
-            ExpirationUnixFeatureBlock, FeatureBlock, FeatureBlocks, IndexationFeatureBlock, IssuerFeatureBlock,
-            MetadataFeatureBlock, SenderFeatureBlock, TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
-        },
+        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockUsages, FeatureBlocks},
         NativeToken, NativeTokens, NftId,
     },
     Error,
@@ -79,7 +75,7 @@ impl NftOutputBuilder {
     pub fn finish(self) -> Result<NftOutput, Error> {
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
-        validate_allowed_feature_blocks(&feature_blocks, &NftOutput::ALLOWED_FEATURE_BLOCKS)?;
+        validate_allowed_feature_blocks(&feature_blocks, NftOutput::allowed_feature_blocks())?;
 
         Ok(NftOutput {
             address: self.address,
@@ -115,18 +111,20 @@ impl NftOutput {
     ///
     pub const IMMUTABLE_METADATA_LENGTH_MAX: usize = 1024;
 
-    ///
-    const ALLOWED_FEATURE_BLOCKS: [u8; 9] = [
-        SenderFeatureBlock::KIND,
-        IssuerFeatureBlock::KIND,
-        DustDepositReturnFeatureBlock::KIND,
-        TimelockMilestoneIndexFeatureBlock::KIND,
-        TimelockUnixFeatureBlock::KIND,
-        ExpirationMilestoneIndexFeatureBlock::KIND,
-        ExpirationUnixFeatureBlock::KIND,
-        MetadataFeatureBlock::KIND,
-        IndexationFeatureBlock::KIND,
-    ];
+    /// Returns the set of allowed [`FeatureBlock`]s for an [`NftOutput`].
+    #[inline(always)]
+    fn allowed_feature_blocks() -> FeatureBlockUsages {
+        FeatureBlockUsages::empty()
+            | FeatureBlockUsages::SENDER
+            | FeatureBlockUsages::ISSUER
+            | FeatureBlockUsages::DUST_DEPOSIT_RETURN
+            | FeatureBlockUsages::TIMELOCK_MILESTONE_INDEX
+            | FeatureBlockUsages::TIMELOCK_UNIX
+            | FeatureBlockUsages::EXPIRATION_MILESTONE_INDEX
+            | FeatureBlockUsages::EXPIRATION_UNIX
+            | FeatureBlockUsages::METADATA
+            | FeatureBlockUsages::INDEXATION
+    }
 
     /// Creates a new [`NftOutput`].
     #[inline(always)]
@@ -228,7 +226,7 @@ impl Packable for NftOutput {
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
         if CHECK {
-            validate_allowed_feature_blocks(&feature_blocks, &NftOutput::ALLOWED_FEATURE_BLOCKS)?;
+            validate_allowed_feature_blocks(&feature_blocks, NftOutput::allowed_feature_blocks())?;
         }
 
         Ok(Self {

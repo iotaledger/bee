@@ -271,6 +271,7 @@ dependencies = [
  "bee-pow",
  "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
+ "bitflags",
  "bytemuck",
  "derive_more",
  "digest",
