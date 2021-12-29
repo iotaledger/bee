@@ -50,7 +50,7 @@ start       = 1333460
 end         = 2888660
 [[protocol.coordinator.public_key_ranges]]
 public_key  = "7bac2209b576ea2235539358c7df8ca4d2f2fc35a663c760449e65eba9f8a6e7"
-start       = 2111060
+start       = 2108160
 end         = 3666260
 [[protocol.coordinator.public_key_ranges]]
 public_key  = "edd9c639a719325e465346b84133bf94740b7d476dd87fc949c0e8df516f9954"
