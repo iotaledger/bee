@@ -4,7 +4,7 @@
 use crate::{
     address::Address,
     output::{
-        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlocks, MetadataFeatureBlock},
+        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         NativeToken, NativeTokens,
     },
     Error,
@@ -116,7 +116,7 @@ impl FoundryOutputBuilder {
     pub fn finish(self) -> Result<FoundryOutput, Error> {
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
-        validate_allowed_feature_blocks(&feature_blocks, &FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
+        validate_allowed_feature_blocks(&feature_blocks, FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
 
         Ok(FoundryOutput {
             address: self.address,
@@ -157,8 +157,9 @@ pub struct FoundryOutput {
 impl FoundryOutput {
     /// The [`Output`](crate::output::Output) kind of a [`FoundryOutput`].
     pub const KIND: u8 = 5;
-    ///
-    const ALLOWED_FEATURE_BLOCKS: [u8; 1] = [MetadataFeatureBlock::KIND];
+
+    /// The set of allowed [`FeatureBlock`]s for an [`FoundryOutput`].
+    const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
 
     /// Creates a new [`FoundryOutput`].
     #[inline(always)]
@@ -313,7 +314,7 @@ impl Packable for FoundryOutput {
         let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
 
         if CHECK {
-            validate_allowed_feature_blocks(&feature_blocks, &FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
+            validate_allowed_feature_blocks(&feature_blocks, FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
         }
 
         Ok(Self {
