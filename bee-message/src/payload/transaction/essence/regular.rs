@@ -5,11 +5,10 @@ use crate::{
     constant::IOTA_SUPPLY,
     input::{Input, INPUT_COUNT_RANGE},
     output::{Output, OUTPUT_COUNT_RANGE},
-    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, OptionalPayload, Payload},
+    payload::{OptionalPayload, Payload},
     Error,
 };
 
-use bee_common::packable::{Read, Write};
 use bee_packable::{
     bounded::BoundedU16,
     error::{UnpackError, UnpackErrorExt},
@@ -137,60 +136,5 @@ impl bee_packable::Packable for RegularTransactionEssence {
         let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker)?.into();
 
         Self::from_boxed_slice_prefixes(inputs, outputs, payload).map_err(UnpackError::Packable)
-    }
-}
-
-impl bee_common::packable::Packable for RegularTransactionEssence {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        use bee_common::packable::Packable;
-        0u16.packed_len()
-            + self.inputs.iter().map(Packable::packed_len).sum::<usize>()
-            + 0u16.packed_len()
-            + self.outputs.iter().map(Packable::packed_len).sum::<usize>()
-            + option_payload_packed_len(self.payload.as_ref())
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.inputs.len() as u16).pack(writer)?;
-        for input in self.inputs.iter() {
-            input.pack(writer)?;
-        }
-        (self.outputs.len() as u16).pack(writer)?;
-        for output in self.outputs.iter() {
-            output.pack(writer)?;
-        }
-        option_payload_pack(writer, self.payload.as_ref())?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let inputs_len = u16::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            InputCount::try_from(inputs_len).map_err(|err| Error::InvalidInputCount(err.into()))?;
-        }
-
-        let mut inputs = Vec::with_capacity(inputs_len as usize);
-        for _ in 0..inputs_len {
-            inputs.push(Input::unpack_inner::<R, CHECK>(reader)?);
-        }
-
-        let outputs_len = u16::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            OutputCount::try_from(outputs_len).map_err(|err| Error::InvalidOutputCount(err.into()))?;
-        }
-
-        let mut outputs = Vec::with_capacity(outputs_len as usize);
-        for _ in 0..outputs_len {
-            outputs.push(Output::unpack_inner::<R, CHECK>(reader)?);
-        }
-
-        let payload = option_payload_unpack::<R, CHECK>(reader)?.1;
-
-        Self::new(inputs, outputs, payload)
     }
 }

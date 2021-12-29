@@ -3,7 +3,6 @@
 
 use crate::Error;
 
-use bee_common::packable::{Read, Write};
 use bee_packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
@@ -69,23 +68,5 @@ impl bee_packable::Packable for TailTransactionHash {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         Self::new(<[u8; TailTransactionHash::LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?)
             .map_err(UnpackError::Packable)
-    }
-}
-
-impl bee_common::packable::Packable for TailTransactionHash {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        TailTransactionHash::LENGTH
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        writer.write_all(self.as_ref())?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Self::new(<[u8; TailTransactionHash::LENGTH]>::unpack_inner::<R, CHECK>(reader)?)
     }
 }

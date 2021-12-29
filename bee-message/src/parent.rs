@@ -5,10 +5,7 @@
 
 use crate::{Error, MessageId};
 
-use bee_common::{
-    ord::is_unique_sorted,
-    packable::{Packable as OldPackable, Read, Write},
-};
+use bee_common::ord::is_unique_sorted;
 use bee_packable::{
     bounded::BoundedU8,
     error::{UnpackError, UnpackErrorExt},
@@ -80,40 +77,5 @@ impl bee_packable::Packable for Parents {
             .map_packable_err(|err| Error::InvalidParentCount(err.into_prefix().into()))?;
 
         Self::from_boxed_slice::<VERIFY>(inner).map_err(UnpackError::Packable)
-    }
-}
-
-impl OldPackable for Parents {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        0u8.packed_len() + self.len() * MessageId::LENGTH
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.len() as u8).pack(writer)?;
-
-        for parent in self.iter() {
-            parent.pack(writer)?;
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let parents_len = u8::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK && !Parents::COUNT_RANGE.contains(&parents_len) {
-            return Err(Error::InvalidParentCount(
-                ParentCount::try_from(usize::from(parents_len)).unwrap_err(),
-            ));
-        }
-
-        let mut inner = Vec::with_capacity(parents_len.into());
-        for _ in 0..parents_len {
-            inner.push(MessageId::unpack_inner::<R, CHECK>(reader)?);
-        }
-
-        Self::new(inner)
     }
 }

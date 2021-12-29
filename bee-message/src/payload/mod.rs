@@ -21,18 +21,18 @@ pub use treasury::TreasuryTransactionPayload;
 
 use crate::Error;
 
-use bee_common::packable::{Read, Write};
 use bee_packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
+    Packable, PackableExt,
 };
 
 use alloc::boxed::Box;
 use core::ops::Deref;
 
 /// A generic payload that can represent different types defining message payloads.
-#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
@@ -101,102 +101,6 @@ impl Payload {
     }
 }
 
-impl bee_common::packable::Packable for Payload {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        match self {
-            Self::Transaction(payload) => TransactionPayload::KIND.packed_len() + payload.packed_len(),
-            Self::Milestone(payload) => MilestonePayload::KIND.packed_len() + payload.packed_len(),
-            Self::Indexation(payload) => IndexationPayload::KIND.packed_len() + payload.packed_len(),
-            Self::Receipt(payload) => ReceiptPayload::KIND.packed_len() + payload.packed_len(),
-            Self::TreasuryTransaction(payload) => TreasuryTransactionPayload::KIND.packed_len() + payload.packed_len(),
-        }
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        match self {
-            Self::Transaction(payload) => {
-                TransactionPayload::KIND.pack(writer)?;
-                payload.pack(writer)?;
-            }
-            Self::Milestone(payload) => {
-                MilestonePayload::KIND.pack(writer)?;
-                payload.pack(writer)?;
-            }
-            Self::Indexation(payload) => {
-                IndexationPayload::KIND.pack(writer)?;
-                payload.pack(writer)?;
-            }
-            Self::Receipt(payload) => {
-                ReceiptPayload::KIND.pack(writer)?;
-                payload.pack(writer)?;
-            }
-            Self::TreasuryTransaction(payload) => {
-                TreasuryTransactionPayload::KIND.pack(writer)?;
-                payload.pack(writer)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u32::unpack_inner::<R, CHECK>(reader)? {
-            TransactionPayload::KIND => TransactionPayload::unpack_inner::<R, CHECK>(reader)?.into(),
-            MilestonePayload::KIND => MilestonePayload::unpack_inner::<R, CHECK>(reader)?.into(),
-            IndexationPayload::KIND => IndexationPayload::unpack_inner::<R, CHECK>(reader)?.into(),
-            ReceiptPayload::KIND => ReceiptPayload::unpack_inner::<R, CHECK>(reader)?.into(),
-            TreasuryTransactionPayload::KIND => TreasuryTransactionPayload::unpack_inner::<R, CHECK>(reader)?.into(),
-            k => return Err(Self::Error::InvalidPayloadKind(k)),
-        })
-    }
-}
-
-/// Returns the packed length of an optional payload.
-pub fn option_payload_packed_len(payload: Option<&Payload>) -> usize {
-    use bee_common::packable::Packable;
-
-    0u32.packed_len() + payload.map_or(0, Packable::packed_len)
-}
-
-/// Packs an optional payload to a writer.
-pub fn option_payload_pack<W: Write>(writer: &mut W, payload: Option<&Payload>) -> Result<(), Error> {
-    use bee_common::packable::Packable;
-
-    if let Some(payload) = payload {
-        (payload.packed_len() as u32).pack(writer)?;
-        payload.pack(writer)?;
-    } else {
-        0u32.pack(writer)?;
-    }
-
-    Ok(())
-}
-
-/// Unpacks an optional payload from a reader.
-pub fn option_payload_unpack<R: Read + ?Sized, const CHECK: bool>(
-    reader: &mut R,
-) -> Result<(usize, Option<Payload>), Error> {
-    use bee_common::packable::Packable;
-
-    let payload_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
-
-    if payload_len > 0 {
-        let payload = Payload::unpack_inner::<R, CHECK>(reader)?;
-        if payload_len != payload.packed_len() {
-            Err(Error::InvalidPayloadLength {
-                expected: payload_len,
-                actual: payload.packed_len(),
-            })
-        } else {
-            Ok((payload_len, Some(payload)))
-        }
-    } else {
-        Ok((0, None))
-    }
-}
-
 /// Representation of an optional [`Payload`].
 /// Essentially an `Option<Payload>` with a different [`Packable`] implementation, to conform to specs.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -205,8 +109,6 @@ pub struct OptionalPayload(Option<Payload>);
 
 impl OptionalPayload {
     fn pack_ref<P: Packer>(payload: &Payload, packer: &mut P) -> Result<(), P::Error> {
-        use bee_packable::{Packable, PackableExt};
-
         (payload.packed_len() as u32).pack(packer)?;
         payload.pack(packer)
     }
@@ -220,7 +122,7 @@ impl Deref for OptionalPayload {
     }
 }
 
-impl bee_packable::Packable for OptionalPayload {
+impl Packable for OptionalPayload {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
@@ -233,7 +135,6 @@ impl bee_packable::Packable for OptionalPayload {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        use bee_packable::PackableExt;
         let len = u32::unpack::<_, VERIFY>(unpacker).infallible()? as usize;
 
         if len > 0 {

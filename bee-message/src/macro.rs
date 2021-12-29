@@ -50,28 +50,6 @@ macro_rules! impl_id {
                 write!(f, "{}({})", stringify!($name), self)
             }
         }
-
-        impl bee_common::packable::Packable for $name {
-            type Error = crate::Error;
-
-            fn packed_len(&self) -> usize {
-                $name::LENGTH
-            }
-
-            fn pack<W: bee_common::packable::Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-                bee_common::packable::Packable::pack(&self.0, writer)?;
-
-                Ok(())
-            }
-
-            fn unpack_inner<R: bee_common::packable::Read + ?Sized, const CHECK: bool>(
-                reader: &mut R,
-            ) -> Result<Self, Self::Error> {
-                Ok(Self::new(<[u8; $name::LENGTH]>::unpack_inner::<R, CHECK>(
-                    reader,
-                )?))
-            }
-        }
     };
 }
 

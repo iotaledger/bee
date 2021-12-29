@@ -3,7 +3,6 @@
 
 use crate::{output::OUTPUT_INDEX_RANGE, payload::transaction::TransactionId, util::hex_decode, Error};
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_packable::bounded::BoundedU16;
 
 use core::str::FromStr;
@@ -85,27 +84,5 @@ impl core::fmt::Display for OutputId {
 impl core::fmt::Debug for OutputId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "OutputId({})", self)
-    }
-}
-
-impl OldPackable for OutputId {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.transaction_id.packed_len() + self.index().packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.transaction_id.pack(writer)?;
-        self.index().pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let transaction_id = TransactionId::unpack_inner::<R, CHECK>(reader)?;
-        let index = u16::unpack_inner::<R, CHECK>(reader)?;
-
-        Self::new(transaction_id, index)
     }
 }

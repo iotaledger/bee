@@ -3,7 +3,6 @@
 
 use crate::types::{error::Error, TreasuryDiff};
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_message::output::OutputId;
 use bee_packable::prefix::{UnpackPrefixError, VecPrefix};
 
@@ -53,48 +52,5 @@ impl OutputDiff {
     /// Returns the treasury diff of the `OutputDiff`.
     pub fn treasury_diff(&self) -> Option<&TreasuryDiff> {
         self.treasury_diff.as_ref()
-    }
-}
-
-impl OldPackable for OutputDiff {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.created_outputs.packed_len() + self.consumed_outputs.packed_len() + self.treasury_diff.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.created_outputs.len() as u32).pack(writer)?;
-        for output in self.created_outputs.iter() {
-            output.pack(writer)?;
-        }
-
-        (self.consumed_outputs.len() as u32).pack(writer)?;
-        for output in self.consumed_outputs.iter() {
-            output.pack(writer)?;
-        }
-
-        self.treasury_diff.pack(writer).map_err(|_| Error::PackableOption)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let created_outputs_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut created_outputs = Vec::with_capacity(created_outputs_len);
-        for _ in 0..created_outputs_len {
-            created_outputs.push(OutputId::unpack_inner::<R, CHECK>(reader)?);
-        }
-
-        let consumed_outputs_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut consumed_outputs = Vec::with_capacity(consumed_outputs_len);
-        for _ in 0..consumed_outputs_len {
-            consumed_outputs.push(OutputId::unpack_inner::<R, CHECK>(reader)?);
-        }
-
-        let treasury_diff =
-            Option::<TreasuryDiff>::unpack_inner::<R, CHECK>(reader).map_err(|_| Error::PackableOption)?;
-
-        Self::new(created_outputs, consumed_outputs, treasury_diff)
     }
 }

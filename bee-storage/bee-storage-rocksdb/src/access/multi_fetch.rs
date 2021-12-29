@@ -6,7 +6,6 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
-use bee_common::packable::Packable as OldPackable;
 use bee_ledger::types::{Balance, ConsumedOutput, CreatedOutput, OutputDiff};
 use bee_message::{
     address::Address,
@@ -14,6 +13,7 @@ use bee_message::{
     output::OutputId,
     Message, MessageId,
 };
+use bee_packable::{Packable, PackableExt};
 use bee_storage::{access::MultiFetch, system::System};
 use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
 
@@ -24,14 +24,14 @@ pub struct MultiIter<V, E> {
     marker: PhantomData<(V, E)>,
 }
 
-impl<V: OldPackable, E: From<rocksdb::Error>> Iterator for MultiIter<V, E> {
+impl<V: Packable, E: From<rocksdb::Error>> Iterator for MultiIter<V, E> {
     type Item = Result<Option<V>, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
         Some(
             self.iter
                 .next()?
-                .map(|option| option.map(|bytes| V::unpack_unchecked(&mut bytes.as_slice()).unwrap()))
+                .map(|option| option.map(|bytes| V::unpack_unverified(&mut bytes.as_slice()).unwrap()))
                 .map_err(E::from),
         )
     }
@@ -48,7 +48,7 @@ macro_rules! impl_multi_fetch {
                 Ok(MultiIter {
                     iter: self
                         .inner
-                        .multi_get_cf(keys.iter().map(|k| (cf, k.pack_new())))
+                        .multi_get_cf(keys.iter().map(|k| (cf, k.pack_to_vec())))
                         .into_iter(),
                     marker: PhantomData,
                 })

@@ -19,7 +19,6 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_packable::{
     bounded::BoundedU16,
     error::{UnpackError, UnpackErrorExt},
@@ -75,52 +74,6 @@ impl UnlockBlock {
             Self::Alias(_) => AliasUnlockBlock::KIND,
             Self::Nft(_) => NftUnlockBlock::KIND,
         }
-    }
-}
-
-impl OldPackable for UnlockBlock {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        match self {
-            Self::Signature(unlock) => SignatureUnlockBlock::KIND.packed_len() + unlock.packed_len(),
-            Self::Reference(unlock) => ReferenceUnlockBlock::KIND.packed_len() + unlock.packed_len(),
-            Self::Alias(unlock) => AliasUnlockBlock::KIND.packed_len() + unlock.packed_len(),
-            Self::Nft(unlock) => NftUnlockBlock::KIND.packed_len() + unlock.packed_len(),
-        }
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        match self {
-            Self::Signature(unlock) => {
-                SignatureUnlockBlock::KIND.pack(writer)?;
-                unlock.pack(writer)?;
-            }
-            Self::Reference(unlock) => {
-                ReferenceUnlockBlock::KIND.pack(writer)?;
-                unlock.pack(writer)?;
-            }
-            Self::Alias(unlock) => {
-                AliasUnlockBlock::KIND.pack(writer)?;
-                unlock.pack(writer)?;
-            }
-            Self::Nft(unlock) => {
-                NftUnlockBlock::KIND.pack(writer)?;
-                unlock.pack(writer)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            SignatureUnlockBlock::KIND => SignatureUnlockBlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            ReferenceUnlockBlock::KIND => ReferenceUnlockBlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            AliasUnlockBlock::KIND => AliasUnlockBlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            NftUnlockBlock::KIND => NftUnlockBlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            k => return Err(Self::Error::InvalidUnlockBlockKind(k)),
-        })
     }
 }
 
@@ -204,39 +157,5 @@ impl bee_packable::Packable for UnlockBlocks {
             })?;
 
         Self::from_boxed_slice(unlock_blocks).map_err(UnpackError::Packable)
-    }
-}
-
-impl OldPackable for UnlockBlocks {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        0u16.packed_len() + self.0.iter().map(OldPackable::packed_len).sum::<usize>()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.0.len() as u16).pack(writer)?;
-        for unlock_block in self.0.as_ref() {
-            unlock_block.pack(writer)?;
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let unlock_blocks_len = u16::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK && !UNLOCK_BLOCK_COUNT_RANGE.contains(&unlock_blocks_len) {
-            return Err(Error::InvalidUnlockBlockCount(
-                UnlockBlockCount::try_from(unlock_blocks_len).unwrap_err().into(),
-            ));
-        }
-
-        let mut unlock_blocks = Vec::with_capacity(unlock_blocks_len as usize);
-        for _ in 0..unlock_blocks_len {
-            unlock_blocks.push(UnlockBlock::unpack_inner::<R, CHECK>(reader)?);
-        }
-
-        Self::new(unlock_blocks)
     }
 }

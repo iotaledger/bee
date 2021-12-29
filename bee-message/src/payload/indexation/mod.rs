@@ -9,7 +9,6 @@ use crate::{Error, Message};
 
 pub use padded::PaddedIndex;
 
-use bee_common::packable::{Packable as OldPackable, Read, Write};
 use bee_packable::{
     bounded::{BoundedU16, BoundedU32},
     prefix::BoxedSlicePrefix,
@@ -67,46 +66,5 @@ impl IndexationPayload {
     /// Returns the data of an `IndexationPayload`.
     pub fn data(&self) -> &[u8] {
         &self.data
-    }
-}
-
-impl OldPackable for IndexationPayload {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        0u16.packed_len() + self.index.len() + 0u32.packed_len() + self.data.len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.index.len() as u16).pack(writer)?;
-        writer.write_all(&self.index)?;
-
-        (self.data.len() as u32).pack(writer)?;
-        writer.write_all(&self.data)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let index_len = u16::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            IndexationIndexLength::try_from(index_len)
-                .map_err(|err| Error::InvalidIndexationIndexLength(err.into()))?;
-        }
-
-        let mut index = vec![0u8; index_len.into()];
-        reader.read_exact(&mut index)?;
-
-        let data_len = u32::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            IndexationDataLength::try_from(data_len).map_err(|err| Error::InvalidIndexationDataLength(err.into()))?;
-        }
-
-        let mut data = vec![0u8; data_len as usize];
-        reader.read_exact(&mut data)?;
-
-        Self::new(index, data)
     }
 }

@@ -6,8 +6,8 @@ use crate::{
     workers::snapshot::{config::DownloadUrls, error::Error},
 };
 
-use bee_common::packable::Packable as OldPackable;
 use bee_message::milestone::MilestoneIndex;
+use bee_packable::{error::UnpackError, PackableExt};
 
 use bytes::Buf;
 use futures::{future::join_all, StreamExt};
@@ -36,7 +36,10 @@ async fn download_snapshot_header(download_url: &str) -> Result<SnapshotHeader, 
 
                     let mut slice: &[u8] = &bytes[..SnapshotHeader::LENGTH];
 
-                    return Ok(SnapshotHeader::unpack(&mut slice)?);
+                    return Ok(SnapshotHeader::unpack_verified(&mut slice).map_err(|err| match err {
+                        UnpackError::Packable(err) => err,
+                        UnpackError::Unpacker(_) => unreachable!(),
+                    })?);
                 }
             }
         }

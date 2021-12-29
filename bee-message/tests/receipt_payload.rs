@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable as OldPackable;
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput},
@@ -14,7 +13,7 @@ use bee_message::{
     },
     Error,
 };
-use bee_packable::bounded::TryIntoBoundedU16Error;
+use bee_packable::{bounded::TryIntoBoundedU16Error, PackableExt};
 use bee_test::rand::{bytes::rand_bytes, number::rand_number};
 
 use std::str::FromStr;
@@ -235,10 +234,13 @@ fn pack_unpack_valid() {
     )
     .unwrap();
 
-    let packed_receipt = receipt.pack_new();
+    let packed_receipt = receipt.pack_to_vec();
 
     assert_eq!(packed_receipt.len(), receipt.packed_len());
-    assert_eq!(receipt, OldPackable::unpack(&mut packed_receipt.as_slice()).unwrap());
+    assert_eq!(
+        receipt,
+        PackableExt::unpack_verified(&mut packed_receipt.as_slice()).unwrap()
+    );
 }
 
 #[test]
