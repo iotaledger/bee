@@ -28,6 +28,7 @@ use bee_common::{
     packable::{Packable, Read, Write},
 };
 
+use bitflags::bitflags;
 use derive_more::{Deref, From};
 
 ///
@@ -74,8 +75,8 @@ impl FeatureBlock {
         }
     }
 
-    /// Returns the [`FeatureBlockUsages`] for the given [`FeatureBlock`].
-    pub(crate) fn usage(&self) -> FeatureBlockFlags {
+    /// Returns the [`FeatureBlockFlags`] for the given [`FeatureBlock`].
+    pub(crate) fn flag(&self) -> FeatureBlockFlags {
         match self {
             Self::Sender(_) => FeatureBlockFlags::SENDER,
             Self::Issuer(_) => FeatureBlockFlags::ISSUER,
@@ -311,7 +312,7 @@ pub(crate) fn validate_allowed_feature_blocks(
     allowed_feature_blocks: FeatureBlockFlags,
 ) -> Result<(), Error> {
     for (index, feature_block) in feature_blocks.iter().enumerate() {
-        if !allowed_feature_blocks.contains(feature_block.usage()) {
+        if !allowed_feature_blocks.contains(feature_block.flag()) {
             return Err(Error::UnallowedFeatureBlock {
                 index,
                 kind: feature_block.kind(),
@@ -320,8 +321,6 @@ pub(crate) fn validate_allowed_feature_blocks(
     }
     Ok(())
 }
-
-use bitflags::bitflags;
 
 bitflags! {
     /// A bitflags-based representation of the set of active feature blocks.
