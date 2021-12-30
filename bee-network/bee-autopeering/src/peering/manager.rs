@@ -579,7 +579,7 @@ pub(crate) fn send_drop_peering_request_to_addr(
 // EVENTS
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Publishes the corresponding peering event [`IncomingPeering`], or [`OutgoingPeering`].
+/// Publishes the corresponding peering event `IncomingPeering`, or `OutgoingPeering`.
 pub(crate) fn publish_peering_event<const IS_INBOUND: bool>(
     peer: Peer,
     status: Status,
