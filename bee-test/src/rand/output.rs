@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::rand::{
-    address::rand_address,
+    address::{rand_address, rand_alias_address, rand_ed25519_address},
     bytes::{rand_bytes, rand_bytes_array},
     message::rand_message_id,
     milestone::{rand_milestone_id, rand_milestone_index},
@@ -15,9 +15,13 @@ use crate::rand::{
 pub mod feature_block;
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
-use bee_message::output::{self, Output, OutputId, OUTPUT_INDEX_RANGE};
+use bee_message::{
+    address::Address,
+    output::{self, Output, OutputId, SimpleOutput, OUTPUT_INDEX_RANGE},
+};
 
 use primitive_types::U256;
+use rand::prelude::SliceRandom;
 
 /// Generates a random [`OutputId`].
 pub fn rand_output_id() -> OutputId {
@@ -52,11 +56,23 @@ pub fn rand_extended_output() -> output::ExtendedOutput {
 /// Generates a random [`AliasOutput`].
 pub fn rand_alias_output() -> output::AliasOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::AliasOutput::ALLOWED_FEATURE_BLOCKS);
+
+    let ed25519_address = rand_ed25519_address();
+    let alias_address = rand_alias_address();
+
+    // We need to make sure that `AliasId` and `Address` don't match.
+    let mut alias_id = output::AliasId::from(rand_bytes_array());
+    while &alias_id == alias_address.id() {
+        alias_id = output::AliasId::from(rand_bytes_array());
+    }
+
+    let address_options: [Address; 2] = [ed25519_address.into(), alias_address.into()];
+
     output::AliasOutput::build(
         rand_number(),
-        output::AliasId::from(rand_bytes_array()),
-        rand_address(),
-        rand_address(),
+        alias_id,
+        address_options.choose(&mut rand::thread_rng()).unwrap().clone(),
+        address_options.choose(&mut rand::thread_rng()).unwrap().clone(),
     )
     .unwrap()
     .with_feature_blocks(feature_blocks)
@@ -67,13 +83,17 @@ pub fn rand_alias_output() -> output::AliasOutput {
 /// Generates a random [`FoundryOutput`].
 pub fn rand_foundry_output() -> output::FoundryOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::FoundryOutput::ALLOWED_FEATURE_BLOCKS);
+
+    let max_supply = U256::from(rand_bytes_array()).saturating_add(1.into());
+    let circulating = U256::from(rand_bytes_array()) % max_supply.saturating_add(1.into());
+
     output::FoundryOutput::build(
-        rand_address(),
+        rand_alias_address().into(),
         rand_number(),
         rand_number(),
         rand_bytes_array(),
-        U256::from(rand_bytes_array()),
-        U256::from(rand_bytes_array()),
+        circulating,
+        max_supply,
         output::TokenScheme::Simple,
     )
     .unwrap()
@@ -89,7 +109,7 @@ pub fn rand_nft_output() -> output::NftOutput {
         rand_address(),
         rand_number(),
         output::NftId::new(rand_bytes_array()),
-        rand_bytes(rand_number_range(0..u32::MAX) as usize),
+        rand_bytes(rand_number_range(0..output::NftOutput::IMMUTABLE_METADATA_LENGTH_MAX) as usize),
     )
     .unwrap()
     .with_feature_blocks(feature_blocks)
