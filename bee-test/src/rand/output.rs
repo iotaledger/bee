@@ -71,8 +71,8 @@ pub fn rand_alias_output() -> output::AliasOutput {
     output::AliasOutput::build(
         rand_number(),
         alias_id,
-        address_options.choose(&mut rand::thread_rng()).unwrap().clone(),
-        address_options.choose(&mut rand::thread_rng()).unwrap().clone(),
+        *address_options.choose(&mut rand::thread_rng()).unwrap(),
+        *address_options.choose(&mut rand::thread_rng()).unwrap(),
     )
     .unwrap()
     .with_feature_blocks(feature_blocks)
