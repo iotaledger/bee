@@ -20,6 +20,7 @@ impl Fragments {
         let RecordInfo {
             path,
             fields_unpack_error_with,
+            fields_verify_with,
             fields_ident,
             fields_pattern_ident,
             fields_type,
@@ -31,9 +32,16 @@ impl Fragments {
                 #(<#fields_type as bee_packable::Packable>::pack(#fields_ident, packer)?;) *
                 Ok(())
             },
-            unpack: quote! {Ok(#path {
-                #(#fields_pattern_ident: <#fields_type as bee_packable::Packable>::unpack::<_, VERIFY>(unpacker).map_packable_err(#fields_unpack_error_with).coerce()?,)*
-            })},
+            unpack: quote! {
+                #(
+                    let #fields_ident = <#fields_type as bee_packable::Packable>::unpack::<_, VERIFY>(unpacker).map_packable_err(#fields_unpack_error_with).coerce()?;
+                    (|field: &#fields_type| -> Result<(), Self::UnpackError> { (#fields_verify_with)(field) })(&#fields_ident).map_err(bee_packable::error::UnpackError::Packable)?;
+                )*
+
+                Ok(#path {
+                    #(#fields_pattern_ident: #fields_ident,)*
+                })
+            },
         }
     }
 }
