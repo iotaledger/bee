@@ -17,25 +17,9 @@ use bee_message::{
     },
 };
 
-/// Generates a random [`DustDepositReturnFeatureBlock`].
-pub fn rand_dust_deposit_return() -> DustDepositReturnFeatureBlock {
-    DustDepositReturnFeatureBlock::new(rand_number_range(DUST_DEPOSIT_MIN..IOTA_SUPPLY)).unwrap()
-}
-
-/// Generates a random [`ExpirationMilestoneIndexFeatureBlock`].
-pub fn rand_expiration_milestone_index() -> ExpirationMilestoneIndexFeatureBlock {
-    ExpirationMilestoneIndexFeatureBlock::new(rand_milestone_index())
-}
-
-/// Generates a random [`ExpirationUnixFeatureBlock`].
-pub fn rand_expiration_unix() -> ExpirationUnixFeatureBlock {
-    ExpirationUnixFeatureBlock::new(rand_number())
-}
-
-/// Generates a random [`IndexationFeatureBlock`].
-pub fn rand_indexation() -> IndexationFeatureBlock {
-    let bytes = rand_bytes(rand_number_range(1..IndexationFeatureBlock::LENGTH_MAX));
-    IndexationFeatureBlock::new(&bytes).unwrap()
+/// Generates a random [`SenderFeatureBlock`].
+pub fn rand_sender() -> SenderFeatureBlock {
+    SenderFeatureBlock::new(rand_address())
 }
 
 /// Generates a random [`IssuerFeatureBlock`].
@@ -43,15 +27,9 @@ pub fn rand_issuer() -> IssuerFeatureBlock {
     IssuerFeatureBlock::new(rand_address())
 }
 
-/// Generates a random [`MetadataFeatureBlock`].
-pub fn rand_metadata() -> MetadataFeatureBlock {
-    let bytes = rand_bytes(rand_number_range(1..MetadataFeatureBlock::LENGTH_MAX));
-    MetadataFeatureBlock::new(&bytes).unwrap()
-}
-
-/// Generates a random [`SenderFeatureBlock`].
-pub fn rand_sender() -> SenderFeatureBlock {
-    SenderFeatureBlock::new(rand_address())
+/// Generates a random [`DustDepositReturnFeatureBlock`].
+pub fn rand_dust_deposit_return() -> DustDepositReturnFeatureBlock {
+    DustDepositReturnFeatureBlock::new(rand_number_range(DUST_DEPOSIT_MIN..IOTA_SUPPLY)).unwrap()
 }
 
 /// Generates a random [`TimelockMilestoneIndexFeatureBlock`].
@@ -64,6 +42,28 @@ pub fn rand_timelock_unix() -> TimelockUnixFeatureBlock {
     TimelockUnixFeatureBlock::new(rand_number())
 }
 
+/// Generates a random [`ExpirationMilestoneIndexFeatureBlock`].
+pub fn rand_expiration_milestone_index() -> ExpirationMilestoneIndexFeatureBlock {
+    ExpirationMilestoneIndexFeatureBlock::new(rand_milestone_index())
+}
+
+/// Generates a random [`ExpirationUnixFeatureBlock`].
+pub fn rand_expiration_unix() -> ExpirationUnixFeatureBlock {
+    ExpirationUnixFeatureBlock::new(rand_number())
+}
+
+/// Generates a random [`MetadataFeatureBlock`].
+pub fn rand_metadata() -> MetadataFeatureBlock {
+    let bytes = rand_bytes(rand_number_range(1..MetadataFeatureBlock::LENGTH_MAX));
+    MetadataFeatureBlock::new(&bytes).unwrap()
+}
+
+/// Generates a random [`IndexationFeatureBlock`].
+pub fn rand_indexation() -> IndexationFeatureBlock {
+    let bytes = rand_bytes(rand_number_range(1..IndexationFeatureBlock::LENGTH_MAX));
+    IndexationFeatureBlock::new(&bytes).unwrap()
+}
+
 fn all_feature_blocks() -> Vec<FeatureBlock> {
     vec![
         FeatureBlock::Sender(rand_sender()),
@@ -73,8 +73,8 @@ fn all_feature_blocks() -> Vec<FeatureBlock> {
         FeatureBlock::TimelockUnix(rand_timelock_unix()),
         FeatureBlock::ExpirationMilestoneIndex(rand_expiration_milestone_index()),
         FeatureBlock::ExpirationUnix(rand_expiration_unix()),
-        FeatureBlock::Indexation(rand_indexation()),
         FeatureBlock::Metadata(rand_metadata()),
+        FeatureBlock::Indexation(rand_indexation()),
     ]
 }
 
