@@ -10,7 +10,7 @@ use crate::{
         command::{Command, CommandReceiver},
         event::{InternalEvent, InternalEventSender},
     },
-    swarm::behavior::SwarmBehavior,
+    swarm::behaviour::SwarmBehaviour,
 };
 
 use futures::{channel::oneshot, StreamExt};
@@ -21,7 +21,7 @@ pub struct NetworkHostConfig {
     pub internal_event_sender: InternalEventSender,
     pub internal_command_receiver: CommandReceiver,
     pub peerlist: PeerList,
-    pub swarm: Swarm<SwarmBehavior>,
+    pub swarm: Swarm<SwarmBehaviour>,
     pub bind_multiaddr: Multiaddr,
 }
 
@@ -169,7 +169,7 @@ async fn process_swarm_event(
     }
 }
 
-async fn process_internal_command(internal_command: Command, swarm: &mut Swarm<SwarmBehavior>, peerlist: &PeerList) {
+async fn process_internal_command(internal_command: Command, swarm: &mut Swarm<SwarmBehaviour>, peerlist: &PeerList) {
     match internal_command {
         Command::DialAddress { address } => {
             if let Err(e) = dial_addr(swarm, address.clone(), peerlist).await {
@@ -192,7 +192,7 @@ async fn process_internal_command(internal_command: Command, swarm: &mut Swarm<S
     }
 }
 
-async fn dial_addr(swarm: &mut Swarm<SwarmBehavior>, addr: Multiaddr, peerlist: &PeerList) -> Result<(), Error> {
+async fn dial_addr(swarm: &mut Swarm<SwarmBehaviour>, addr: Multiaddr, peerlist: &PeerList) -> Result<(), Error> {
     if let Err(e) = peerlist.0.read().await.allows_dialing_addr(&addr) {
         warn!("Dialing address {} denied. Cause: {:?}", addr, e);
         return Err(Error::DialingAddressDenied(addr));
@@ -205,7 +205,7 @@ async fn dial_addr(swarm: &mut Swarm<SwarmBehavior>, addr: Multiaddr, peerlist: 
     Ok(())
 }
 
-async fn dial_peer(swarm: &mut Swarm<SwarmBehavior>, peer_id: PeerId, peerlist: &PeerList) -> Result<(), Error> {
+async fn dial_peer(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId, peerlist: &PeerList) -> Result<(), Error> {
     if let Err(e) = peerlist.0.read().await.allows_dialing_peer(&peer_id) {
         warn!("Dialing peer {} denied. Cause: {:?}", alias!(peer_id), e);
         return Err(Error::DialingPeerDenied(peer_id));

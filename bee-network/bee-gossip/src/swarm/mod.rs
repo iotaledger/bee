@@ -3,7 +3,7 @@
 
 #![cfg(feature = "full")]
 
-pub mod behavior;
+pub mod behaviour;
 pub mod builder;
 pub mod error;
 pub mod protocols;
