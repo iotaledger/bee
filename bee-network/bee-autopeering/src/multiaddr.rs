@@ -33,7 +33,7 @@ pub enum AddressKind {
 // Note:
 // Go-libp2p allows Hornet to introduce a custom autopeering [`Protocol`]. In rust-libp2p we unfortunately can't do
 // that, so what we'll do is to introduce a wrapper type, which understands Hornet's custom multiaddr, and internally
-// stores the address part and the key part separatedly. The details are abstracted away and the behavior identical
+// stores the address part and the key part separatedly. The details are abstracted away and the behaviour identical
 // to a standard libp2p multiaddress.
 
 /// Represents a special type of [`Multiaddr`] used to describe peers that particpate in autopeering, i.e. make

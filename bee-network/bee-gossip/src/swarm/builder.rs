@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{behavior::SwarmBehavior, error::Error};
+use super::{behaviour::SwarmBehaviour, error::Error};
 
 use crate::service::event::InternalEventSender;
 
@@ -23,7 +23,7 @@ const DEFAULT_CONNECTION_TIMEOUT_SECS: u64 = 10;
 pub fn build_swarm(
     local_keys: &identity::Keypair,
     internal_sender: InternalEventSender,
-) -> Result<Swarm<SwarmBehavior>, Error> {
+) -> Result<Swarm<SwarmBehaviour>, Error> {
     let local_pk = local_keys.public();
     let local_id = local_pk.clone().into_peer_id();
 
@@ -56,10 +56,10 @@ pub fn build_swarm(
             .boxed()
     };
 
-    let behavior = SwarmBehavior::new(local_pk, internal_sender);
+    let behaviour = SwarmBehaviour::new(local_pk, internal_sender);
     let limits = ConnectionLimits::default().with_max_established_per_peer(Some(MAX_CONNECTIONS_PER_PEER));
 
-    let swarm = SwarmBuilder::new(transport, behavior, local_id)
+    let swarm = SwarmBuilder::new(transport, behaviour, local_id)
         .connection_limits(limits)
         // We want the connection background tasks to be spawned
         // onto the tokio runtime.

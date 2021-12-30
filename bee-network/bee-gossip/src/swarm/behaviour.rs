@@ -19,14 +19,14 @@ use log::*;
 const IOTA_PROTOCOL_VERSION: &str = "iota/0.1.0";
 
 #[derive(NetworkBehaviour)]
-pub struct SwarmBehavior {
+pub struct SwarmBehaviour {
     identify: Identify,
     gossip: IotaGossipProtocol,
     #[behaviour(ignore)]
     internal_sender: InternalEventSender,
 }
 
-impl SwarmBehavior {
+impl SwarmBehaviour {
     pub fn new(local_pk: PublicKey, internal_sender: InternalEventSender) -> Self {
         let protocol_version = IOTA_PROTOCOL_VERSION.to_string();
         let config = IdentifyConfig::new(protocol_version, local_pk);
@@ -39,7 +39,7 @@ impl SwarmBehavior {
     }
 }
 
-impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
+impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehaviour {
     fn inject_event(&mut self, event: IdentifyEvent) {
         match event {
             IdentifyEvent::Received { peer_id, info } => {
@@ -64,7 +64,7 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
     }
 }
 
-impl NetworkBehaviourEventProcess<IotaGossipEvent> for SwarmBehavior {
+impl NetworkBehaviourEventProcess<IotaGossipEvent> for SwarmBehaviour {
     fn inject_event(&mut self, event: IotaGossipEvent) {
         match event {
             IotaGossipEvent::ReceivedUpgradeRequest { from } => {

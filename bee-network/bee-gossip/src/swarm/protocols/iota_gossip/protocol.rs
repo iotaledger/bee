@@ -43,7 +43,7 @@ pub struct IotaGossipProtocol {
     /// Counts the number of outbound connections.
     num_outbounds: usize,
 
-    /// Events produced for the behavior and handlers.
+    /// Events produced for the behaviour and handlers.
     events: VecDeque<NetworkBehaviourAction<IotaGossipHandlerInEvent, IotaGossipEvent>>,
 
     /// Maps peers to their connection infos. Peers can only have 1 gossip connection, hence the mapping is 1:1.
@@ -171,7 +171,7 @@ impl NetworkBehaviour for IotaGossipProtocol {
     fn inject_event(&mut self, peer_id: PeerId, _: ConnectionId, event: IotaGossipHandlerEvent) {
         debug!("gossip protocol: handler event: {:?}", event);
 
-        // Propagate events to the behavior.
+        // Propagate events to the behaviour.
         let ev = match event {
             IotaGossipHandlerEvent::SentUpgradeRequest { to } => {
                 NetworkBehaviourAction::GenerateEvent(IotaGossipEvent::SentUpgradeRequest { to })
@@ -205,7 +205,7 @@ impl NetworkBehaviour for IotaGossipProtocol {
     /// `inject_connection_established` with the same peer ID, connection ID and
     /// endpoint.
     fn inject_connection_closed(&mut self, peer_id: &PeerId, _: &ConnectionId, _: &ConnectedPoint) {
-        debug!("gossip behavior: connection with {} closed.", alias!(peer_id));
+        debug!("gossip behaviour: connection with {} closed.", alias!(peer_id));
     }
 
     /// **libp2p docs**:
@@ -218,7 +218,7 @@ impl NetworkBehaviour for IotaGossipProtocol {
     /// This method is only called when the last established connection to the peer is closed,
     /// preceded by [`inject_connection_closed`](NetworkBehaviour::inject_connection_closed).
     fn inject_disconnected(&mut self, peer_id: &PeerId) {
-        debug!("gossip behavior: {} disconnected.", alias!(peer_id));
+        debug!("gossip behaviour: {} disconnected.", alias!(peer_id));
     }
 
     /// **libp2p docs**:
@@ -231,7 +231,7 @@ impl NetworkBehaviour for IotaGossipProtocol {
         _old: &ConnectedPoint,
         _new: &ConnectedPoint,
     ) {
-        debug!("gossip behavior: address of {} changed.", alias!(peer_id));
+        debug!("gossip behaviour: address of {} changed.", alias!(peer_id));
     }
 
     fn poll(
