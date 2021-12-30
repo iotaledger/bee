@@ -60,7 +60,7 @@ impl Packet {
     /// Restores a packet from its protobuf representation.
     pub(crate) fn from_protobuf(bytes: &[u8]) -> Result<Self, Error> {
         let proto::Packet {
-            r#type,
+            r#type: _,
             data,
             public_key,
             signature,
@@ -72,7 +72,11 @@ impl Packet {
         let signature = Signature::from_bytes(signature.try_into().map_err(|_| Error::RestoreSignature)?);
 
         Ok(Self {
-            msg_type: num::FromPrimitive::from_u8(r#type as u8).ok_or(Error::UnknownMessageType(r#type as u8))?,
+            // TODO For some reason, this field seems to be omitted on some packets, resulting in it being zeroed by
+            // protobuf and making FromPrimitive to fail. It turns out this field is actually never used so it is
+            // temporarily hard coded to a variant until we better understand why it is omitted in the first place.
+            // msg_type: num::FromPrimitive::from_u8(r#type as u8).ok_or(Error::UnknownMessageType(r#type as u8))?,
+            msg_type: MessageType::VerificationResponse,
             msg_bytes: data.to_vec(),
             public_key,
             signature,
@@ -119,8 +123,8 @@ pub(crate) enum Error {
     RestorePublicKey,
     #[error("failed to restore signature")]
     RestoreSignature,
-    #[error("unknown message type {0}")]
-    UnknownMessageType(u8),
+    // #[error("unknown message type {0}")]
+    // UnknownMessageType(u8),
 }
 
 /// The possible types of messages stored in a packet.
