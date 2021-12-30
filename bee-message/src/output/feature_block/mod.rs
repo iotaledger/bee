@@ -53,10 +53,10 @@ pub enum FeatureBlock {
     ExpirationMilestoneIndex(ExpirationMilestoneIndexFeatureBlock),
     /// An expiration unix feature block.
     ExpirationUnix(ExpirationUnixFeatureBlock),
-    /// An indexation feature block.
-    Indexation(IndexationFeatureBlock),
     /// A metadata feature block.
     Metadata(MetadataFeatureBlock),
+    /// An indexation feature block.
+    Indexation(IndexationFeatureBlock),
 }
 
 impl FeatureBlock {
@@ -70,8 +70,8 @@ impl FeatureBlock {
             Self::TimelockUnix(_) => TimelockUnixFeatureBlock::KIND,
             Self::ExpirationMilestoneIndex(_) => ExpirationMilestoneIndexFeatureBlock::KIND,
             Self::ExpirationUnix(_) => ExpirationUnixFeatureBlock::KIND,
-            Self::Indexation(_) => IndexationFeatureBlock::KIND,
             Self::Metadata(_) => MetadataFeatureBlock::KIND,
+            Self::Indexation(_) => IndexationFeatureBlock::KIND,
         }
     }
 
@@ -85,8 +85,8 @@ impl FeatureBlock {
             Self::TimelockUnix(_) => FeatureBlockFlags::TIMELOCK_UNIX,
             Self::ExpirationMilestoneIndex(_) => FeatureBlockFlags::EXPIRATION_MILESTONE_INDEX,
             Self::ExpirationUnix(_) => FeatureBlockFlags::EXPIRATION_UNIX,
-            Self::Indexation(_) => FeatureBlockFlags::INDEXATION,
             Self::Metadata(_) => FeatureBlockFlags::METADATA,
+            Self::Indexation(_) => FeatureBlockFlags::INDEXATION,
         }
     }
 }
@@ -107,8 +107,8 @@ impl Packable for FeatureBlock {
                 ExpirationMilestoneIndexFeatureBlock::KIND.packed_len() + output.packed_len()
             }
             Self::ExpirationUnix(output) => ExpirationUnixFeatureBlock::KIND.packed_len() + output.packed_len(),
-            Self::Indexation(output) => IndexationFeatureBlock::KIND.packed_len() + output.packed_len(),
             Self::Metadata(output) => MetadataFeatureBlock::KIND.packed_len() + output.packed_len(),
+            Self::Indexation(output) => IndexationFeatureBlock::KIND.packed_len() + output.packed_len(),
         }
     }
 
@@ -142,12 +142,12 @@ impl Packable for FeatureBlock {
                 ExpirationUnixFeatureBlock::KIND.pack(writer)?;
                 output.pack(writer)?;
             }
-            Self::Indexation(output) => {
-                IndexationFeatureBlock::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
             Self::Metadata(output) => {
                 MetadataFeatureBlock::KIND.pack(writer)?;
+                output.pack(writer)?;
+            }
+            Self::Indexation(output) => {
+                IndexationFeatureBlock::KIND.pack(writer)?;
                 output.pack(writer)?;
             }
         }
@@ -170,8 +170,8 @@ impl Packable for FeatureBlock {
                 ExpirationMilestoneIndexFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into()
             }
             ExpirationUnixFeatureBlock::KIND => ExpirationUnixFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into(),
-            IndexationFeatureBlock::KIND => ExpirationUnixFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into(),
             MetadataFeatureBlock::KIND => MetadataFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into(),
+            IndexationFeatureBlock::KIND => IndexationFeatureBlock::unpack_inner::<R, CHECK>(reader)?.into(),
             k => return Err(Self::Error::InvalidFeatureBlockKind(k)),
         })
     }
