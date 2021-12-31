@@ -17,7 +17,7 @@ enum SpongeDirection {
     Squeeze,
 }
 
-/// Unrolled [`CurlP`] with a fixed number of 81 rounds.
+/// Unrolled [`UnrolledCurlP81`] with a fixed number of 81 rounds.
 pub struct UnrolledCurlP81 {
     p: [U256; 3],
     n: [U256; 3],

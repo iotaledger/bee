@@ -13,7 +13,7 @@ message Ping {
   // unix time
   int64 timestamp = 3;
 
-  // endpoint of the sender; port and string form of the return IP address (e.g. "192.0.2.1", "[2001:db8::1]")
+  // endpoint of the sender; port and string form of the return IP address (e.g. `192.0.2.1`, `[2001:db8::1]`)
   string src_addr = 4;
   uint32 src_port = 5;
 
