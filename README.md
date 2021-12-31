@@ -26,6 +26,7 @@ You can find details about future development plans in our [roadmap](https://roa
 
 :::
 
+
 ## Design
 
 Bee will be a central reference implementation for the most important
