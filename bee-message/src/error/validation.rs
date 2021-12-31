@@ -4,7 +4,7 @@
 use crate::{
     address::Address,
     input::UtxoInput,
-    output::AssetBalanceCount,
+    output::{Amount, AssetBalanceCount},
     parents::ParentCount,
     payload::{
         data::DataPayloadLength,
@@ -34,7 +34,7 @@ pub enum ValidationError {
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
     InvalidAddressKind(u8),
-    InvalidAmount(u64),
+    InvalidAmount(<Amount as TryFrom<u64>>::Error),
     InvalidAssetBalanceCount(<AssetBalanceCount as TryFrom<usize>>::Error),
     InvalidConflictsCount(<ConflictCount as TryFrom<usize>>::Error),
     InvalidDataPayloadLength(<DataPayloadLength as TryFrom<usize>>::Error),
