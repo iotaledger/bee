@@ -1,5 +1,5 @@
 n-mainnet:
-  base: ["dev", "mainnet*"]
+  base: [ "dev", "mainnet*" ]
 
 n-shimmer:
   base: "shimmer*"
