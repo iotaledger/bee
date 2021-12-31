@@ -35,7 +35,7 @@ impl Fragments {
             unpack: quote! {
                 #(
                     let #fields_ident = <#fields_type as bee_packable::Packable>::unpack::<_, VERIFY>(unpacker).map_packable_err(#fields_unpack_error_with).coerce()?;
-                    (|field: &#fields_type| -> Result<(), Self::UnpackError> { (#fields_verify_with)(field) })(&#fields_ident).map_err(bee_packable::error::UnpackError::Packable)?;
+                    (#fields_verify_with)(&#fields_ident).map_err(bee_packable::error::UnpackError::from_packable)?;
                 )*
 
                 Ok(#path {

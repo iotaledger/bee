@@ -68,7 +68,8 @@ impl FieldInfo {
 
         Ok(Self {
             unpack_error_with: unpack_error_with_opt.unwrap_or_else(|| default_unpack_error_with.clone()),
-            verify_with: verify_with_opt.unwrap_or_else(|| parse2(quote!(|_| Ok(()))).unwrap()),
+            verify_with: verify_with_opt
+                .unwrap_or_else(|| parse2(quote!(|_| -> Result<(), Self::UnpackError> { Ok(()) })).unwrap()),
             ident,
             pattern_ident,
             ty: field.ty.clone(),

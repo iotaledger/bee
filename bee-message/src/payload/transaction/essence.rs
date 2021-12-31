@@ -9,14 +9,7 @@ use crate::{
 };
 
 use bee_ord::is_sorted;
-use bee_packable::{
-    bounded::BoundedU32,
-    error::{UnpackError, UnpackErrorExt},
-    packer::Packer,
-    prefix::VecPrefix,
-    unpacker::Unpacker,
-    Packable, PackableExt,
-};
+use bee_packable::{bounded::BoundedU32, prefix::VecPrefix, Packable, PackableExt};
 
 use alloc::vec::Vec;
 use core::{convert::Infallible, fmt};
@@ -64,8 +57,9 @@ impl fmt::Display for TransactionEssenceUnpackError {
 /// * Ensure that [`Output]`s are sorted lexicographically in their serialized formns.
 /// * Ensure that the optional [`Payload`] is of [`IndexationPayload`](crate::payload::indexation::IndexationPayload)
 /// type.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = MessageUnpackError)]
 pub struct TransactionEssence {
     /// Timestamp of the transaction.
     timestamp: u64,
@@ -74,10 +68,15 @@ pub struct TransactionEssence {
     /// Node ID to which the consensus mana of the transaction is pledged.
     consensus_pledge_id: [u8; PLEDGE_ID_LENGTH],
     /// Collection of transaction [`Input`]s.
+    #[packable(verify_with = validate_inputs)]
+    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| ValidationError::InvalidInputCount(p.into())))]
     inputs: VecPrefix<Input, InputCount>,
     /// Collection of transaction [`Output`]s.
+    #[packable(verify_with = validate_outputs)]
+    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| ValidationError::InvalidOutputCount(p.into())))]
     outputs: VecPrefix<Output, OutputCount>,
     /// Optional additional payload.
+    #[packable(verify_with = validate_payload)]
     payload: Option<Payload>,
 }
 
@@ -115,66 +114,6 @@ impl TransactionEssence {
     /// Returns the optional payload of a [`TransactionEssence`].
     pub fn payload(&self) -> &Option<Payload> {
         &self.payload
-    }
-}
-
-impl Packable for TransactionEssence {
-    type UnpackError = MessageUnpackError;
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.timestamp.pack(packer)?;
-        self.access_pledge_id.pack(packer)?;
-        self.consensus_pledge_id.pack(packer)?;
-        self.inputs.pack(packer)?;
-        self.outputs.pack(packer)?;
-        self.payload.pack(packer)
-    }
-
-    fn unpack<U: Unpacker, const VERIFY: bool>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let timestamp = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let access_pledge_id = <[u8; PLEDGE_ID_LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let consensus_pledge_id = <[u8; PLEDGE_ID_LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?;
-
-        // Inputs syntactical validation
-        let inputs = VecPrefix::<Input, InputCount>::unpack::<_, VERIFY>(unpacker).map_packable_err(|err| {
-            err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidInputCount(prefix_err.into()))
-        })?;
-
-        validate_inputs_unique_utxos(&inputs).map_err(UnpackError::from_packable)?;
-        validate_inputs_sorted(&inputs).map_err(UnpackError::from_packable)?;
-
-        // Outputs syntactical validation
-        let outputs = VecPrefix::<Output, OutputCount>::unpack::<_, VERIFY>(unpacker).map_packable_err(|err| {
-            err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidOutputCount(prefix_err.into()))
-        })?;
-
-        validate_output_total(
-            outputs
-                .iter()
-                .try_fold(0u64, |total, output| {
-                    let amount = validate_output_variant(output, &outputs)?;
-                    total
-                        .checked_add(amount)
-                        .ok_or_else(|| ValidationError::InvalidAccumulatedOutput(total as u128 + amount as u128))
-                })
-                .map_err(UnpackError::from_packable)?,
-        )
-        .map_err(UnpackError::from_packable)?;
-        validate_outputs_sorted(&outputs).map_err(UnpackError::from_packable)?;
-
-        let payload = Option::<Payload>::unpack::<_, VERIFY>(unpacker).coerce()?;
-        validate_payload(&payload).map_err(UnpackError::from_packable)?;
-
-        Ok(Self {
-            timestamp,
-            access_pledge_id,
-            consensus_pledge_id,
-            inputs,
-            outputs,
-            payload,
-        })
     }
 }
 
@@ -255,19 +194,8 @@ impl TransactionEssenceBuilder {
             .consensus_pledge_id
             .ok_or(ValidationError::MissingBuilderField("consensus_pledge_id"))?;
 
-        // Inputs syntactical validation
-        validate_inputs_unique_utxos(&self.inputs)?;
-        validate_inputs_sorted(&self.inputs)?;
-
-        // Outputs syntactical validation
-        validate_output_total(self.outputs.iter().try_fold(0u64, |total, output| {
-            let amount = validate_output_variant(output, &self.outputs)?;
-            total
-                .checked_add(amount)
-                .ok_or_else(|| ValidationError::InvalidAccumulatedOutput(total as u128 + amount as u128))
-        })?)?;
-        validate_outputs_sorted(&self.outputs)?;
-
+        validate_inputs(&self.inputs)?;
+        validate_outputs(&self.outputs)?;
         validate_payload(&self.payload)?;
 
         Ok(TransactionEssence {
@@ -337,6 +265,25 @@ fn validate_outputs_sorted(outputs: &[Output]) -> Result<(), ValidationError> {
     } else {
         Ok(())
     }
+}
+
+fn validate_inputs(inputs: &[Input]) -> Result<(), ValidationError> {
+    validate_inputs_unique_utxos(inputs)?;
+    validate_inputs_sorted(inputs)?;
+
+    Ok(())
+}
+
+fn validate_outputs(outputs: &[Output]) -> Result<(), ValidationError> {
+    validate_output_total(outputs.iter().try_fold(0u64, |total, output| {
+        let amount = validate_output_variant(output, outputs)?;
+        total
+            .checked_add(amount)
+            .ok_or_else(|| ValidationError::InvalidAccumulatedOutput(total as u128 + amount as u128))
+    })?)?;
+    validate_outputs_sorted(outputs)?;
+
+    Ok(())
 }
 
 fn validate_payload(payload: &Option<Payload>) -> Result<(), ValidationError> {
