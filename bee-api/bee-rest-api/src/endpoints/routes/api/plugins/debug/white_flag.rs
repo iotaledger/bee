@@ -136,10 +136,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
         if let Ok(mut to_solidify) = task_to_solidify.lock() {
             if to_solidify.remove(&event.message_id) && to_solidify.is_empty() {
                 if let Ok(mut sender) = task_sender.lock() {
-                    let sender = std::mem::take(&mut *sender);
-                    if let Some(sender) = sender {
-                        let _ = sender.send(());
-                    }
+                    sender.take().map(|s| s.send(()));
                 }
             }
         }
@@ -158,10 +155,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     if let Ok(to_solidify) = to_solidify.lock() {
         if to_solidify.is_empty() {
             if let Ok(mut sender) = sender.lock() {
-                let sender = std::mem::take(&mut *sender);
-                if let Some(sender) = sender {
-                    let _ = sender.send(());
-                }
+                sender.take().map(|s| s.send(()));
             }
         }
     }
