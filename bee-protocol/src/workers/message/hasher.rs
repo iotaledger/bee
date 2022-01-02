@@ -15,7 +15,7 @@ use crate::{
 };
 
 use bee_message::MessageId;
-use bee_network::PeerId;
+use bee_gossip::PeerId;
 use bee_pow::score;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 

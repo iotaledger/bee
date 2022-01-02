@@ -10,7 +10,7 @@ use crate::{
 };
 
 use bee_message::milestone::MilestoneIndex;
-use bee_network::PeerId;
+use bee_gossip::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{Tangle, TangleWorker};
 

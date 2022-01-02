@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-use bee_network::{Event, NetworkEventReceiver, ServiceHost};
+use bee_gossip::{Event, NetworkEventReceiver, ServiceHost};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{Tangle, TangleWorker};
 

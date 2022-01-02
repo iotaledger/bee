@@ -3,7 +3,7 @@
 
 use crate::workers::packets::{HeaderPacket, HEADER_SIZE};
 
-use bee_network::Multiaddr;
+use bee_gossip::Multiaddr;
 
 use futures::{
     channel::oneshot,

@@ -43,7 +43,7 @@ pub(crate) use responder::{
 pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
 pub(crate) use status::StatusWorker;
 
-use bee_network::NetworkEventReceiver;
+use bee_gossip::NetworkEventReceiver;
 use bee_runtime::node::{Node, NodeBuilder};
 
 pub fn init<N: Node>(
