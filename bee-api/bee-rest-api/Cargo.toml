@@ -12,9 +12,9 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
+bee-gossip = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
 bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
-bee-gossip = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
 bee-pow = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
 bee-protocol = { path = "../../bee-protocol", default-features = false }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true  }
