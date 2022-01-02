@@ -51,7 +51,7 @@ impl WsUser {
     pub(crate) fn send(&self, event: WsEvent) {
         match serde_json::to_string(&event) {
             Ok(as_text) => {
-                if let Err(_) = self.tx.send(Ok(Message::text(as_text))) {
+                if self.tx.send(Ok(Message::text(as_text))).is_err() {
                     // The tx is disconnected, our `user_disconnected` code should be happening in another task, nothing
                     // more to do here.
                 }
@@ -183,7 +183,7 @@ async fn user_message<S: NodeStorageBackend>(
                         return;
                     }
                 }
-                send_init_values(&topic, &user, tangle, storage);
+                send_init_values(&topic, user, tangle, storage);
                 let _ = user.topics.insert(topic);
             }
             WsCommand::Unregister => {

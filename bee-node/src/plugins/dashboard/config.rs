@@ -88,7 +88,7 @@ impl DashboardConfigBuilder {
                     (address.to_string(), 0)
                         .to_socket_addrs()
                         .unwrap_or_else(|error| panic!("error resolving '{}':{}", address, error))
-                        .nth(0)
+                        .next()
                         // Unwrapping here is fine, because to_socket-addrs() didn't return an error,
                         // thus we can be sure that the iterator contains at least 1 element.
                         .unwrap()
