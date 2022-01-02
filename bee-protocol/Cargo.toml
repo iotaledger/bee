@@ -13,9 +13,9 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-autopeering = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
+bee-gossip = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
 bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "workers" ], optional = true }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "serde" ] }
-bee-gossip = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
 bee-pow = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
@@ -44,8 +44,8 @@ twox-hash = { version = "1.6.1", default-features = false, optional = true }
 [features]
 workers = [
   "bee-common",
-  "bee-ledger",
   "bee-gossip/full",
+  "bee-ledger",
   "bee-runtime",
   "bee-storage",
   "bee-tangle",
