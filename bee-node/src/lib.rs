@@ -5,8 +5,6 @@
 //! * A Bee full node;
 //! * A Bee entry node (autopeering);
 
-#![deny(missing_docs)]
-
 mod cli;
 mod config;
 mod core;

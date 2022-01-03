@@ -13,7 +13,6 @@ mod metrics;
 mod mps;
 mod packets;
 mod peer;
-
 mod propagator;
 mod requester;
 mod responder;
@@ -32,6 +31,7 @@ pub(crate) use message::{
 pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
 pub use metrics::MetricsWorker;
 pub(crate) use mps::MpsWorker;
+use peer::PeerManagerConfig;
 pub use peer::{PeerManager, PeerManagerResWorker};
 pub(crate) use peer::{PeerManagerWorker, PeerWorker};
 pub(crate) use propagator::{PropagatorWorker, PropagatorWorkerEvent};
@@ -46,7 +46,6 @@ pub(crate) use status::StatusWorker;
 use bee_autopeering::event::EventRx as AutopeeringEventRx;
 use bee_gossip::NetworkEventReceiver as NetworkEventRx;
 use bee_runtime::node::{Node, NodeBuilder};
-use peer::PeerManagerConfig;
 
 pub fn init<N: Node>(
     config: config::ProtocolConfig,
