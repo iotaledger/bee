@@ -92,7 +92,7 @@ impl<N: Node> Worker<N> for Mqtt {
                 // });
             }
             Err(e) => {
-                error!("Creating mqtt manager failed {:?}.", e);
+                // error!("Creating mqtt manager failed {:?}.", e);
             }
         }
 
