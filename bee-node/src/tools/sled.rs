@@ -336,7 +336,7 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
 }
 
 pub fn exec(tool: &SledTool) -> Result<(), SledError> {
-    let storage = Storage::start(SledConfigBuilder::default().finish())?;
+    let storage = Storage::start(SledConfigBuilder::default().with_path(tool.path.clone()).finish())?;
     let res = exec_inner(tool, &storage);
 
     storage.shutdown()?;
