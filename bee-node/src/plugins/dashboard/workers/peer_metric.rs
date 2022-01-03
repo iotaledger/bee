@@ -3,7 +3,7 @@
 
 use crate::{
     plugins::dashboard::{broadcast, websocket::WsUsers, Dashboard},
-    storage::StorageBackend,
+    storage::NodeStorageBackend,
 };
 
 use bee_protocol::workers::PeerManager;
@@ -23,7 +23,7 @@ const NODE_STATUS_METRICS_WORKER_INTERVAL_SEC: u64 = 1;
 pub(crate) fn peer_metric_worker<N>(node: &mut N, users: &WsUsers)
 where
     N: Node,
-    N::Backend: StorageBackend,
+    N::Backend: NodeStorageBackend,
 {
     let peer_manager = node.resource::<PeerManager>();
     let users = users.clone();

@@ -3,7 +3,7 @@
 
 use crate::{
     plugins::dashboard::{broadcast, websocket::WsUsers, Dashboard},
-    storage::StorageBackend,
+    storage::NodeStorageBackend,
 };
 
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
@@ -21,7 +21,7 @@ const DB_SIZE_METRICS_WORKER_INTERVAL_SEC: u64 = 60;
 pub(crate) fn db_size_metrics_worker<N>(node: &mut N, users: &WsUsers)
 where
     N: Node,
-    N::Backend: StorageBackend,
+    N::Backend: NodeStorageBackend,
 {
     let storage = node.storage();
     let users = users.clone();

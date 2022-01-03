@@ -1,61 +1,108 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![recursion_limit = "256"]
-
-use bee_node::{plugins, print_banner_and_version, tools, CliArgs, NodeBuilder, NodeConfigBuilder};
+use bee_node::{
+    plugins, print_banner_and_version, tools, ClArgs, EntryNodeBuilder, FullNodeBuilder, FullNodeConfig, NodeConfig,
+    NodeConfigBuilder, NodeStorageBackend,
+};
 use bee_runtime::node::NodeBuilder as _;
-#[cfg(feature = "rocksdb")]
-use bee_storage_rocksdb::storage::Storage as RocksDb;
-#[cfg(all(feature = "sled", not(feature = "rocksdb")))]
-use bee_storage_sled::storage::Storage as Sled;
 
-use log::error;
+#[cfg(feature = "rocksdb")]
+use bee_storage_rocksdb::storage::Storage;
+#[cfg(all(feature = "sled", not(feature = "rocksdb")))]
+use bee_storage_sled::storage::Storage;
+
+use std::{error::Error, path::Path};
 
 const CONFIG_PATH: &str = "./config.toml";
 
+/// The entry point of the node software.
 #[tokio::main(flavor = "multi_thread")]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let cli = CliArgs::new();
+async fn main() -> Result<(), Box<dyn Error>> {
+    // Load the command line arguments passed to the binary.
+    let cl_args = ClArgs::load();
 
-    if let Some(tool) = cli.tool() {
+    // Execute one of Bee's tools and exit.
+    if let Some(tool) = cl_args.tool() {
         return tools::exec(tool).map_err(|e| e.into());
     }
 
-    if cli.version() {
+    // Just show the version and exit.
+    if cl_args.print_commit_version() {
         print_banner_and_version(false);
         return Ok(());
     }
 
     print_banner_and_version(true);
 
-    let config = match NodeConfigBuilder::from_file(cli.config().unwrap_or(&CONFIG_PATH.to_owned())) {
-        Ok(builder) => builder.with_cli_args(cli.clone()).finish(),
-        Err(e) => panic!("Failed to create the node config builder: {}", e),
-    };
+    // Deserialize the config.
+    let config = deserialize_config(cl_args);
 
-    if let Err(e) = bee_common::logger::logger_init(config.logger.clone()) {
-        panic!("Failed to initialise the logger: {}", e);
+    // Initialize the logger.
+    let logger_cfg = config.logger_config().clone();
+    bee_common::logger::logger_init(logger_cfg)?;
+
+    // Start running the node.
+    if config.run_as_entry_node() {
+        start_entrynode(config).await;
+    } else {
+        start_fullnode(config).await;
     }
 
+    Ok(())
+}
+
+fn deserialize_config(cl_args: ClArgs) -> NodeConfig<Storage> {
     #[cfg(feature = "rocksdb")]
-    let node_builder = NodeBuilder::<RocksDb>::new(config);
+    let config = match NodeConfigBuilder::<Storage>::from_file(
+        cl_args.config_path().unwrap_or_else(|| Path::new(CONFIG_PATH)),
+    ) {
+        Ok(builder) => builder.apply_args(&cl_args).finish(),
+        Err(e) => panic!("Failed to create the node config builder: {}", e),
+    };
     #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
-    let node_builder = NodeBuilder::<Sled>::new(config);
+    let config = match NodeConfigBuilder::<Storage>::from_file(cl_args.config_path().unwrap_or(Path::new(CONFIG_PATH)))
+    {
+        Ok(builder) => builder.apply_args(cl_args).finish(),
+        Err(e) => panic!("Failed to create the node config builder: {}", e),
+    };
+    config
+}
+
+async fn start_entrynode<S: NodeStorageBackend>(config: NodeConfig<S>) {
+    let node_builder = EntryNodeBuilder::new(config.into());
+
+    match node_builder {
+        Ok(builder) => match builder.finish().await {
+            Ok(node) => {
+                if let Err(e) = node.run().await {
+                    log::error!("Failed to run entry node: {}", e);
+                }
+            }
+            Err(e) => log::error!("Failed to build entry node: {}", e),
+        },
+        Err(e) => log::error!("Failed to build entry node builder: {}", e),
+    }
+}
+
+async fn start_fullnode<S: NodeStorageBackend>(config: NodeConfig<S>)
+where
+    FullNodeConfig<Storage>: From<NodeConfig<S>>,
+{
+    #[cfg(feature = "rocksdb")]
+    let node_builder = FullNodeBuilder::<Storage>::new(config.into());
+    #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
+    let node_builder = FullNodeBuilder::<Storage>::new(config.into());
 
     match node_builder {
         Ok(builder) => match builder.with_plugin::<plugins::Mps>().finish().await {
             Ok(node) => {
-                let res = node.run().await;
-
-                if let Err(e) = res {
-                    error!("Failed to run node: {}", e);
+                if let Err(e) = node.run().await {
+                    log::error!("Failed to run full node: {}", e);
                 }
             }
-            Err(e) => error!("Failed to build node: {}", e),
+            Err(e) => log::error!("Failed to build full node: {}", e),
         },
-        Err(e) => error!("Failed to build node builder: {}", e),
+        Err(e) => log::error!("Failed to build full node builder: {}", e),
     }
-
-    Ok(())
 }

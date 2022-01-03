@@ -135,7 +135,9 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     bus.add_listener::<Static, _, _>(move |event: &MessageSolidified| {
         if let Ok(mut to_solidify) = task_to_solidify.lock() {
             if to_solidify.remove(&event.message_id) && to_solidify.is_empty() {
-                let _ = task_sender.lock().map(|mut s| s.take().map(|s| s.send(())));
+                if let Ok(mut sender) = task_sender.lock() {
+                    sender.take().map(|s| s.send(()));
+                }
             }
         }
     });
@@ -152,7 +154,9 @@ pub(crate) async fn white_flag<B: StorageBackend>(
 
     if let Ok(to_solidify) = to_solidify.lock() {
         if to_solidify.is_empty() {
-            let _ = sender.lock().map(|mut s| s.take().map(|s| s.send(())));
+            if let Ok(mut sender) = sender.lock() {
+                sender.take().map(|s| s.send(()));
+            }
         }
     }
 

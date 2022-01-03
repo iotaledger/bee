@@ -16,7 +16,7 @@ use crate::{
             database_size_metrics::DatabaseSizeMetricsResponse, sync_status::SyncStatusResponse, WsEvent, WsEventInner,
         },
     },
-    storage::StorageBackend,
+    storage::NodeStorageBackend,
 };
 
 use bee_common::auth::jwt::JsonWebToken;
@@ -51,7 +51,7 @@ impl WsUser {
     pub(crate) fn send(&self, event: WsEvent) {
         match serde_json::to_string(&event) {
             Ok(as_text) => {
-                if let Err(_) = self.tx.send(Ok(Message::text(as_text))) {
+                if self.tx.send(Ok(Message::text(as_text))).is_err() {
                     // The tx is disconnected, our `user_disconnected` code should be happening in another task, nothing
                     // more to do here.
                 }
@@ -63,10 +63,10 @@ impl WsUser {
 
 pub(crate) type WsUsers = Arc<RwLock<HashMap<usize, WsUser>>>;
 
-pub(crate) async fn user_connected<B: StorageBackend>(
+pub(crate) async fn user_connected<S: NodeStorageBackend>(
     ws: WebSocket,
-    storage: ResourceHandle<B>,
-    tangle: ResourceHandle<Tangle<B>>,
+    storage: ResourceHandle<S>,
+    tangle: ResourceHandle<Tangle<S>>,
     users: WsUsers,
     node_id: String,
     auth_config: DashboardAuthConfig,
@@ -123,12 +123,12 @@ pub(crate) async fn user_connected<B: StorageBackend>(
     let _ = shutdown_ready_tx.send(());
 }
 
-async fn user_message<B: StorageBackend>(
+async fn user_message<S: NodeStorageBackend>(
     user_id: usize,
     msg: Message,
     users: &WsUsers,
-    tangle: &Tangle<B>,
-    storage: &B,
+    tangle: &Tangle<S>,
+    storage: &S,
     node_id: &str,
     auth_config: &DashboardAuthConfig,
 ) {
@@ -183,7 +183,7 @@ async fn user_message<B: StorageBackend>(
                         return;
                     }
                 }
-                send_init_values(&topic, &user, tangle, storage);
+                send_init_values(&topic, user, tangle, storage);
                 let _ = user.topics.insert(topic);
             }
             WsCommand::Unregister => {
@@ -198,7 +198,7 @@ async fn user_disconnected(user_id: usize, users: &WsUsers) {
     users.write().await.remove(&user_id);
 }
 
-fn send_init_values<B: StorageBackend>(topic: &WsTopic, user: &WsUser, tangle: &Tangle<B>, storage: &B) {
+fn send_init_values<S: NodeStorageBackend>(topic: &WsTopic, user: &WsUser, tangle: &Tangle<S>, storage: &S) {
     match topic {
         WsTopic::SyncStatus => {
             let event = WsEvent::new(

@@ -6,7 +6,7 @@ use crate::{
         responses::{WsEvent, WsEventInner},
         topics::WsTopic,
     },
-    storage::StorageBackend,
+    storage::NodeStorageBackend,
 };
 
 use bee_ledger::workers::event::MilestoneConfirmed;
@@ -20,9 +20,9 @@ pub(crate) struct SyncStatusResponse {
     pub(crate) cmi: u32,
 }
 
-pub(crate) fn forward_latest_milestone_changed<B: StorageBackend>(
+pub(crate) fn forward_latest_milestone_changed<S: NodeStorageBackend>(
     latest_milestone: LatestMilestoneChanged,
-    tangle: &Tangle<B>,
+    tangle: &Tangle<S>,
 ) -> WsEvent {
     WsEvent::new(
         WsTopic::SyncStatus,
@@ -33,9 +33,9 @@ pub(crate) fn forward_latest_milestone_changed<B: StorageBackend>(
     )
 }
 
-pub(crate) fn forward_confirmed_milestone_changed<B: StorageBackend>(
+pub(crate) fn forward_confirmed_milestone_changed<S: NodeStorageBackend>(
     event: &MilestoneConfirmed,
-    tangle: &Tangle<B>,
+    tangle: &Tangle<S>,
 ) -> WsEvent {
     WsEvent::new(
         WsTopic::SyncStatus,

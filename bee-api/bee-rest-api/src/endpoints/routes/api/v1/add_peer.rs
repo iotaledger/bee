@@ -15,7 +15,7 @@ use crate::{
     },
 };
 
-use bee_network::{Command::AddPeer, Multiaddr, NetworkCommandSender, PeerId, PeerRelation, Protocol};
+use bee_gossip::{Command::AddPeer, Multiaddr, NetworkCommandSender, PeerId, PeerRelation, Protocol};
 use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 

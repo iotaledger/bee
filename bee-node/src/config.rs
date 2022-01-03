@@ -1,165 +1,214 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Handles the proper configuration of a node from a single config file.
+//!
+//! ## Note
+//! All node types use a common config file (i.e. config.toml), and simply ignore
+//! those parameters they don't actually require.
+
+use crate::{
+    cli::ClArgs,
+    local::Local,
+    plugins::mqtt::config::{MqttConfig, MqttConfigBuilder},
+    storage::NodeStorageBackend,
+    util, BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT,
+};
+
 #[cfg(feature = "dashboard")]
 use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder};
 
-use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
-
-use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
+use bee_autopeering::config::{AutopeeringConfig, AutopeeringConfigTomlBuilder};
+use bee_common::logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
+use bee_gossip::{NetworkConfig, NetworkConfigBuilder};
 use bee_ledger::workers::{
     pruning::config::{PruningConfig, PruningConfigBuilder},
     snapshot::config::{SnapshotConfig, SnapshotConfigBuilder},
 };
-use bee_network::{Keypair, NetworkConfig, NetworkConfigBuilder, PeerId, PublicKey};
 use bee_protocol::workers::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::endpoints::config::{RestApiConfig, RestApiConfigBuilder};
-use bee_storage::backend::StorageBackend;
 use bee_tangle::config::{TangleConfig, TangleConfigBuilder};
 
-use crypto::hashes::{blake2b::Blake2b256, Digest};
 use serde::Deserialize;
-use thiserror::Error;
 
 use std::{fs, path::Path};
 
-const DEFAULT_ALIAS: &str = "bee";
-const DEFAULT_BECH32_HRP: &str = "iota";
-const DEFAULT_NETWORK_ID: &str = "iota";
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("Reading the specified config file failed: {0}.")]
-    ConfigFileReadFailure(#[from] std::io::Error),
-    #[error("Deserializing the node config builder failed: {0}.")]
-    NodeConfigBuilderCreationFailure(#[from] toml::de::Error),
+/// Config file errors.
+#[derive(Debug, thiserror::Error)]
+pub enum NodeConfigError {
+    #[error("reading the config file failed: {0}")]
+    FileRead(#[from] std::io::Error),
+    #[error("deserializing the config builder failed: {0}")]
+    ConfigBuilderDeserialization(#[from] toml::de::Error),
 }
 
-#[derive(Default, Deserialize)]
-pub struct NodeConfigBuilder<B: StorageBackend> {
-    pub(crate) identity: Option<String>,
-    pub(crate) alias: Option<String>,
-    pub(crate) bech32_hrp: Option<String>,
-    pub(crate) network_id: Option<String>,
-    pub(crate) logger: Option<LoggerConfigBuilder>,
-    pub(crate) network: Option<NetworkConfigBuilder>,
-    pub(crate) protocol: Option<ProtocolConfigBuilder>,
-    pub(crate) rest_api: Option<RestApiConfigBuilder>,
-    pub(crate) snapshot: Option<SnapshotConfigBuilder>,
-    pub(crate) pruning: Option<PruningConfigBuilder>,
-    pub(crate) storage: Option<B::ConfigBuilder>,
-    pub(crate) tangle: Option<TangleConfigBuilder>,
-    pub(crate) mqtt: Option<MqttConfigBuilder>,
+/// Entails all data that can be stored in a Bee config file.
+pub struct NodeConfig<S: NodeStorageBackend> {
+    pub(crate) local: Local,
+    pub(crate) network_spec: NetworkSpec,
+    pub(crate) logger_config: LoggerConfig,
+    pub(crate) gossip_config: NetworkConfig,
+    pub(crate) autopeering_config: AutopeeringConfig,
+    pub(crate) protocol_config: ProtocolConfig,
+    pub(crate) rest_api_config: RestApiConfig,
+    pub(crate) snapshot_config: SnapshotConfig,
+    pub(crate) pruning_config: PruningConfig,
+    pub(crate) storage_config: S::Config,
+    pub(crate) tangle_config: TangleConfig,
+    pub(crate) mqtt_config: MqttConfig,
     #[cfg(feature = "dashboard")]
-    pub(crate) dashboard: Option<DashboardConfigBuilder>,
+    pub(crate) dashboard_config: DashboardConfig,
 }
 
-impl<B: StorageBackend> NodeConfigBuilder<B> {
+impl<S: NodeStorageBackend> NodeConfig<S> {
+    /// Returns the logger config.
+    pub fn logger_config(&self) -> &LoggerConfig {
+        &self.logger_config
+    }
+
+    /// Returns whether this node should run as an autopeering entry node.
+    pub fn run_as_entry_node(&self) -> bool {
+        self.autopeering_config.enabled() && self.autopeering_config.run_as_entry_node()
+    }
+}
+
+// NOTE: To make the config robust against refactoring we "serde-rename" all fields even if not strictly necessary.
+/// A builder for a Bee config, that can be deserialized from a corresponding config file.
+#[derive(Default, Deserialize)]
+pub struct NodeConfigBuilder<S: NodeStorageBackend> {
+    #[serde(rename = "identity")]
+    pub(crate) identity: Option<String>,
+    #[serde(rename = "alias")]
+    pub(crate) alias: Option<String>,
+    #[serde(rename = "bech32_hrp")]
+    pub(crate) bech32_hrp: Option<String>,
+    #[serde(rename = "network_id")]
+    pub(crate) network_id: Option<String>,
+    #[serde(rename = "logger")]
+    pub(crate) logger_builder: Option<LoggerConfigBuilder>,
+    #[serde(rename = "network")]
+    pub(crate) gossip_builder: Option<NetworkConfigBuilder>,
+    #[serde(rename = "autopeering")]
+    pub(crate) autopeering_builder: Option<AutopeeringConfigTomlBuilder>,
+    #[serde(rename = "protocol")]
+    pub(crate) protocol_builder: Option<ProtocolConfigBuilder>,
+    #[serde(rename = "rest_api")]
+    pub(crate) rest_api_builder: Option<RestApiConfigBuilder>,
+    #[serde(rename = "snapshot")]
+    pub(crate) snapshot_builder: Option<SnapshotConfigBuilder>,
+    #[serde(rename = "pruning")]
+    pub(crate) pruning_builder: Option<PruningConfigBuilder>,
+    #[serde(rename = "storage")]
+    pub(crate) storage_builder: Option<S::ConfigBuilder>,
+    #[serde(rename = "tangle")]
+    pub(crate) tangle_builder: Option<TangleConfigBuilder>,
+    #[serde(rename = "mqtt")]
+    pub(crate) mqtt_builder: Option<MqttConfigBuilder>,
+    #[cfg(feature = "dashboard")]
+    #[serde(rename = "dashboard")]
+    pub(crate) dashboard_builder: Option<DashboardConfigBuilder>,
+}
+
+impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
     /// Creates a node config builder from a local config file.
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, NodeConfigError> {
         match fs::read_to_string(path) {
-            Ok(toml) => toml::from_str::<Self>(&toml).map_err(Error::NodeConfigBuilderCreationFailure),
-            Err(e) => Err(Error::ConfigFileReadFailure(e)),
+            Ok(toml) => toml::from_str::<Self>(&toml).map_err(NodeConfigError::ConfigBuilderDeserialization),
+            Err(e) => Err(NodeConfigError::FileRead(e)),
         }
     }
 
-    pub fn finish(self) -> NodeConfig<B> {
-        let (identity, identity_string, new) = if let Some(identity_string) = self.identity {
-            if identity_string.len() == 128 {
-                let mut decoded = [0u8; 64];
-                hex::decode_to_slice(&identity_string[..], &mut decoded).expect("error decoding identity");
-                let identity = Keypair::decode(&mut decoded).expect("error decoding identity");
-                (identity, identity_string, false)
-            } else if identity_string.is_empty() {
-                generate_random_identity()
-            } else {
-                panic!("invalid identity string length");
-            }
+    /// Applies commandline arguments to the builder.
+    pub fn apply_args(mut self, args: &ClArgs) -> Self {
+        // Override the log level.
+        if let Some(log_level) = args.log_level() {
+            // TODO: use 'option_get_or_insert_default' once stable (see issue #82901)
+            let logger = self.logger_builder.get_or_insert(LoggerConfigBuilder::default());
+
+            logger.level(LOGGER_STDOUT_NAME, log_level);
+        }
+
+        // Override the entry node mode.
+        if args.run_as_entry_node() {
+            // TODO: use 'option_get_or_insert_default' once stable (see issue #82901)
+            let autopeering = self
+                .autopeering_builder
+                .get_or_insert(AutopeeringConfigTomlBuilder::default());
+
+            autopeering.enabled = true;
+            autopeering.run_as_entry_node = Some(true);
+        }
+
+        self
+    }
+
+    /// Returns the built node config.
+    pub fn finish(self) -> NodeConfig<S> {
+        // Create the local node entity.
+        let local = if let Some(keypair) = self.identity {
+            Local::from_keypair(keypair, self.alias).expect("error creating local from hex encoded keypair")
         } else {
-            generate_random_identity()
+            Local::new(self.alias)
         };
 
-        let node_id = PeerId::from_public_key(PublicKey::Ed25519(identity.public()));
+        // Create the necessary info about the network.
+        let bech32_hrp = self.bech32_hrp.unwrap_or_else(|| BECH32_HRP_DEFAULT.to_owned());
+        let network_name = self.network_id.unwrap_or_else(|| NETWORK_NAME_DEFAULT.to_string());
+        let network_id = util::create_id_from_network_name(&network_name);
 
-        let network_id_string = self.network_id.unwrap_or_else(|| DEFAULT_NETWORK_ID.to_string());
-        let network_id_numeric = u64::from_le_bytes(
-            Blake2b256::digest(network_id_string.as_bytes())[0..8]
-                .try_into()
-                .unwrap(),
-        );
+        let network_spec = NetworkSpec {
+            name: network_name,
+            id: network_id,
+            hrp: bech32_hrp,
+        };
 
         NodeConfig {
-            identity: (identity, identity_string, new),
-            node_id,
-            alias: self.alias.unwrap_or_else(|| DEFAULT_ALIAS.to_owned()),
-            bech32_hrp: self.bech32_hrp.unwrap_or_else(|| DEFAULT_BECH32_HRP.to_owned()),
-            network_id: (network_id_string, network_id_numeric),
-            logger: self.logger.unwrap_or_default().finish(),
-            // TODO: Create specific error types for each config section, e.g.
-            // Error::NetworkConfigError(bee_network::config::Error)
-            network: self
-                .network
+            local,
+            network_spec,
+            logger_config: self.logger_builder.unwrap_or_default().finish(),
+            gossip_config: self
+                .gossip_builder
                 .unwrap_or_default()
                 .finish()
                 .expect("faulty network configuration"),
-            protocol: self.protocol.unwrap_or_default().finish(),
-            rest_api: self.rest_api.unwrap_or_default().finish(),
-            snapshot: self.snapshot.unwrap_or_default().finish(),
-            pruning: self.pruning.unwrap_or_default().finish(),
-            storage: self.storage.unwrap_or_default().into(),
-            tangle: self.tangle.unwrap_or_default().finish(),
-            mqtt: self.mqtt.unwrap_or_default().finish(),
+            autopeering_config: self.autopeering_builder.unwrap_or_default().finish(),
+            protocol_config: self.protocol_builder.unwrap_or_default().finish(),
+            rest_api_config: self.rest_api_builder.unwrap_or_default().finish(),
+            snapshot_config: self.snapshot_builder.unwrap_or_default().finish(),
+            pruning_config: self.pruning_builder.unwrap_or_default().finish(),
+            storage_config: self.storage_builder.unwrap_or_default().into(),
+            tangle_config: self.tangle_builder.unwrap_or_default().finish(),
+            mqtt_config: self.mqtt_builder.unwrap_or_default().finish(),
             #[cfg(feature = "dashboard")]
-            dashboard: self.dashboard.unwrap_or_default().finish(),
+            dashboard_config: self.dashboard_builder.unwrap_or_default().finish(),
         }
     }
 }
 
-fn generate_random_identity() -> (Keypair, String, bool) {
-    let identity = Keypair::generate();
-    let encoded = identity.encode();
-    let identity_string = hex::encode(encoded);
-    (identity, identity_string, true)
+/// Represents an IOTA network specification. It consists of:
+/// * a name, e.g. "chrysalis-mainnet";
+/// * an id number (hash of the name);
+/// * an "hrp"(human readable part) prefix for addresses used in this network;
+#[derive(Clone, Debug)]
+pub struct NetworkSpec {
+    pub(crate) name: String,
+    pub(crate) id: u64,
+    pub(crate) hrp: String,
 }
 
-pub struct NodeConfig<B: StorageBackend> {
-    pub identity: (Keypair, String, bool),
-    pub node_id: PeerId,
-    pub alias: String,
-    pub bech32_hrp: String,
-    pub network_id: (String, u64),
-    pub logger: LoggerConfig,
-    pub network: NetworkConfig,
-    pub protocol: ProtocolConfig,
-    pub rest_api: RestApiConfig,
-    pub snapshot: SnapshotConfig,
-    pub pruning: PruningConfig,
-    pub storage: B::Config,
-    pub tangle: TangleConfig,
-    pub mqtt: MqttConfig,
-    #[cfg(feature = "dashboard")]
-    pub dashboard: DashboardConfig,
-}
+impl NetworkSpec {
+    /// Returns the name of the network, e.g. "chrysalis-mainnet".
+    pub fn name(&self) -> &str {
+        &self.name
+    }
 
-impl<B: StorageBackend> Clone for NodeConfig<B> {
-    fn clone(&self) -> Self {
-        Self {
-            identity: self.identity.clone(),
-            node_id: self.node_id,
-            alias: self.alias.clone(),
-            bech32_hrp: self.bech32_hrp.clone(),
-            network_id: self.network_id.clone(),
-            logger: self.logger.clone(),
-            network: self.network.clone(),
-            protocol: self.protocol.clone(),
-            rest_api: self.rest_api.clone(),
-            snapshot: self.snapshot.clone(),
-            pruning: self.pruning.clone(),
-            storage: self.storage.clone(),
-            tangle: self.tangle.clone(),
-            mqtt: self.mqtt.clone(),
-            #[cfg(feature = "dashboard")]
-            dashboard: self.dashboard.clone(),
-        }
+    /// Returns the id of the network.
+    pub fn id(&self) -> u64 {
+        self.id
+    }
+
+    /// Returns the bech32 encoded "hrp" (human readable part) of the network.
+    pub fn hrp(&self) -> &str {
+        &self.hrp
     }
 }

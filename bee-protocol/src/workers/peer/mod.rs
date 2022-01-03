@@ -5,7 +5,7 @@ mod manager;
 mod manager_res;
 mod packet_handler;
 
-pub(crate) use manager::PeerManagerWorker;
+pub(crate) use manager::{PeerManagerConfig, PeerManagerWorker};
 pub use manager_res::{PeerManager, PeerManagerResWorker};
 
 use crate::{
