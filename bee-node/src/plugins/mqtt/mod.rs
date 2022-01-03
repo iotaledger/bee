@@ -15,7 +15,7 @@ use bee_tangle::event::{LatestMilestoneChanged, SolidMilestoneChanged};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
-use log::{debug, error, warn};
+use log::{debug, warn};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -91,7 +91,7 @@ impl<N: Node> Worker<N> for Mqtt {
                 //     (_TOPIC_ADDRESSES_ED25519_OUTPUT, "")
                 // });
             }
-            Err(e) => {
+            Err(_e) => {
                 // error!("Creating mqtt manager failed {:?}.", e);
             }
         }

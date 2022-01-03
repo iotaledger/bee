@@ -21,7 +21,7 @@ pub(crate) struct MqttManager {
 
 impl Drop for MqttManager {
     fn drop(&mut self) {
-        if let Err(e) = self.client.disconnect(None).wait() {
+        if let Err(_e) = self.client.disconnect(None).wait() {
             // error!("Disconnecting mqtt broker failed: {:?}.", e);
         }
     }
