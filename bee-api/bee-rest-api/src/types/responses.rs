@@ -136,9 +136,10 @@ pub struct OutputResponse {
     #[serde(rename = "isSpent")]
     pub is_spent: bool,
     #[serde(rename = "milestoneIndex")]
-    pub milestone_index: bool,
+    pub milestone_index: u32,
     #[serde(rename = "milestoneTimestamp")]
-    pub milestone_timestamp: bool,
+    // todo: u32 or u64 here? in MilestoneResponse it's an u64
+    pub milestone_timestamp: u32,
     #[serde(rename = "ledgerIndex", default)]
     pub ledger_index: u32,
     pub output: OutputDto,
