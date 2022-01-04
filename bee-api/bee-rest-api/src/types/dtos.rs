@@ -735,7 +735,9 @@ pub struct ExtendedOutputDto {
     // Amount of IOTA tokens held by the output.
     pub amount: u64,
     // Native tokens held by the output.
+    #[serde(rename = "nativeTokens")]
     pub native_tokens: Vec<NativeTokenDto>,
+    #[serde(rename = "blocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
 }
 
