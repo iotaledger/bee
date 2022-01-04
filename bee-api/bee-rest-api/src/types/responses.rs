@@ -166,9 +166,6 @@ impl BodyInner for BalanceAddressResponse {}
 /// Returns the outputs of an address.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OutputsAddressResponse {
-    #[serde(rename = "addressType")]
-    pub address_type: u8,
-    pub address: String,
     #[serde(rename = "maxResults")]
     pub max_results: usize,
     pub count: usize,
