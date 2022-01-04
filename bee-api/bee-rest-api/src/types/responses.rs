@@ -155,8 +155,6 @@ pub struct BalanceAddressResponse {
     pub address_type: u8,
     pub address: String,
     pub balance: u64,
-    #[serde(rename = "dustAllowed")]
-    pub dust_allowed: bool,
     #[serde(rename = "ledgerIndex", default)]
     pub ledger_index: u32,
 }
