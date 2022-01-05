@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.6.1 - 2021-12-29
+
+### Changed
+
+- Don't ignore source when header download of the delta snapshot fails; 
+
 ## 0.6.0 - 2021-12-07
 
 ### Added

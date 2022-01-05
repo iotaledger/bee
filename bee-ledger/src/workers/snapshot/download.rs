@@ -40,7 +40,7 @@ async fn download_snapshot_header(download_url: &str) -> Result<SnapshotHeader, 
                 }
             }
         }
-        Err(e) => warn!("Downloading snapshot header failed: {:?}.", e.to_string()),
+        Err(e) => debug!("Downloading snapshot header failed: {:?}.", e.to_string()),
     }
 
     Err(Error::DownloadingFailed)
@@ -126,7 +126,11 @@ async fn gather_source_information(
 ) -> Result<SourceInformation<'_>, Error> {
     let full_header = download_snapshot_header(urls.full()).await?;
     let delta_header = if download_delta {
-        Some(download_snapshot_header(urls.delta()).await?)
+        match download_snapshot_header(urls.delta()).await {
+            Ok(header) => Some(header),
+            Err(Error::DownloadingFailed) => None, // We ignore failed downloads of delta snapshot headers.
+            Err(error) => return Err(error),
+        }
     } else {
         None
     };
