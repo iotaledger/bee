@@ -51,7 +51,7 @@ pub(crate) fn shutdown_listener() -> ShutdownRx {
         shutdown_procedure(shutdown_tx);
     });
 
-    receiver
+    shutdown_rx
 }
 
 fn shutdown_procedure(shutdown_tx: ShutdownTx) {

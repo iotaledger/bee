@@ -29,7 +29,6 @@ use bee_storage::system::StorageHealth;
 
 use async_trait::async_trait;
 use fxhash::FxBuildHasher;
-use tokio::signal::unix::SignalKind;
 
 use std::{
     any::{type_name, Any, TypeId},
@@ -236,7 +235,10 @@ fn add_node_resources<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Res
         .with_resource(Bus::<TypeId>::default());
 
     #[cfg(unix)]
-    let shutdown_rx = shutdown::shutdown_listener(vec![SignalKind::interrupt(), SignalKind::terminate()]);
+    let shutdown_rx = shutdown::shutdown_listener(vec![
+        tokio::signal::unix::SignalKind::interrupt(),
+        tokio::signal::unix::SignalKind::terminate(),
+    ]);
 
     #[cfg(not(unix))]
     let shutdown_rx = shutdown::shutdown_listener();
