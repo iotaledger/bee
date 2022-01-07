@@ -24,7 +24,6 @@ use bee_runtime::{
 use async_trait::async_trait;
 use futures::StreamExt;
 use fxhash::FxBuildHasher;
-use tokio::signal::unix::SignalKind;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{
@@ -196,7 +195,10 @@ fn add_node_resources(builder: EntryNodeBuilder) -> Result<EntryNodeBuilder, Ent
         .with_resource(Bus::<TypeId>::default());
 
     #[cfg(unix)]
-    let shutdown_rx = shutdown::shutdown_listener(vec![SignalKind::interrupt(), SignalKind::terminate()]);
+    let shutdown_rx = shutdown::shutdown_listener(vec![
+        tokio::signal::unix::SignalKind::interrupt(),
+        tokio::signal::unix::SignalKind::terminate(),
+    ]);
 
     #[cfg(not(unix))]
     let shutdown_rx = shutdown::shutdown_listener();
