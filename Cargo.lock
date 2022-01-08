@@ -300,6 +300,7 @@ dependencies = [
  "async-channel",
  "async-priority-queue",
  "async-trait",
+ "bee-autopeering",
  "bee-common",
  "bee-gossip",
  "bee-ledger",

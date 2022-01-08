@@ -12,7 +12,11 @@ use crate::{
     },
 };
 
-use bee_gossip::{Event, NetworkEventReceiver, ServiceHost};
+use bee_autopeering::event::{Event as AutopeeringEvent, EventRx as AutopeeringEventRx};
+use bee_gossip::{
+    alias, Command, Event as NetworkEvent, NetworkCommandSender, NetworkEventReceiver as NetworkEventRx, PeerRelation,
+    ServiceHost,
+};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{Tangle, TangleWorker};
 
@@ -23,6 +27,12 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible, sync::Arc};
 
+pub(crate) struct PeerManagerConfig {
+    pub(crate) network_rx: NetworkEventRx,
+    pub(crate) peering_rx: Option<AutopeeringEventRx>,
+    pub(crate) network_name: String,
+}
+
 pub(crate) struct PeerManagerWorker {}
 
 #[async_trait]
@@ -30,7 +40,7 @@ impl<N: Node> Worker<N> for PeerManagerWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = NetworkEventReceiver;
+    type Config = PeerManagerConfig;
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -53,33 +63,68 @@ where
         let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let metrics = node.resource::<NodeMetrics>();
+        let network_command_tx = node.resource::<NetworkCommandSender>();
+
         let hasher = node.worker::<HasherWorker>().unwrap().tx.clone();
         let message_responder = node.worker::<MessageResponderWorker>().unwrap().tx.clone();
         let milestone_responder = node.worker::<MilestoneResponderWorker>().unwrap().tx.clone();
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
 
-        node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Running.");
+        let PeerManagerConfig {
+            network_rx,
+            peering_rx,
+            network_name,
+        } = config;
 
-            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(config.into()));
+        if let Some(peering_rx) = peering_rx {
+            node.spawn::<Self, _, _>(|shutdown| async move {
+                info!("Autopeering handler running.");
+
+                let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(peering_rx));
+
+                while let Some(event) = receiver.next().await {
+                    trace!("Received event {:?}.", event);
+
+                    match event {
+                        AutopeeringEvent::IncomingPeering { peer, .. } => {
+                            handle_new_peering(peer, &network_name, &network_command_tx);
+                        }
+                        AutopeeringEvent::OutgoingPeering { peer, .. } => {
+                            handle_new_peering(peer, &network_name, &network_command_tx);
+                        }
+                        AutopeeringEvent::PeeringDropped { peer_id } => {
+                            handle_peering_dropped(peer_id, &network_command_tx);
+                        }
+                        _ => {}
+                    }
+                }
+
+                info!("Autopeering handler stopped.");
+            });
+        }
+
+        node.spawn::<Self, _, _>(|shutdown| async move {
+            info!("Network handler running.");
+
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(network_rx.into()));
 
             while let Some(event) = receiver.next().await {
                 trace!("Received event {:?}.", event);
 
                 match event {
-                    Event::PeerAdded { peer_id, info } => {
+                    NetworkEvent::PeerAdded { peer_id, info } => {
                         // TODO check if not already added ?
                         info!("Added peer {}.", info.alias);
 
                         let peer = Arc::new(Peer::new(peer_id, info));
                         peer_manager.add(peer);
                     }
-                    Event::PeerRemoved { peer_id } => {
+                    NetworkEvent::PeerRemoved { peer_id } => {
                         if let Some(peer) = peer_manager.remove(&peer_id) {
                             info!("Removed peer {}.", peer.0.alias());
                         }
                     }
-                    Event::PeerConnected {
+                    NetworkEvent::PeerConnected {
                         peer_id,
                         info: _,
                         gossip_in: receiver,
@@ -120,8 +165,7 @@ where
                             &new_heartbeat(&*peer_manager, &*tangle),
                         );
                     }
-                    Event::PeerDisconnected { peer_id } => {
-                        // TODO write a get_mut peer manager method
+                    NetworkEvent::PeerDisconnected { peer_id } => {
                         if let Some(mut peer) = peer_manager.get_mut(&peer_id) {
                             peer.0.set_connected(false);
                             if let Some((_, shutdown)) = peer.1.take() {
@@ -136,9 +180,32 @@ where
                 }
             }
 
-            info!("Stopped.");
+            info!("Network handler stopped.");
         });
 
         Ok(Self {})
     }
+}
+
+fn handle_new_peering(peer: bee_autopeering::Peer, network_name: &str, command_tx: &NetworkCommandSender) {
+    if let Some(multiaddr) = peer.service_multiaddr(network_name) {
+        let peer_id = peer.peer_id().libp2p_peer_id();
+
+        command_tx
+            .send(Command::AddPeer {
+                peer_id,
+                alias: Some(alias!(peer_id).to_string()),
+                multiaddr,
+                relation: PeerRelation::Discovered,
+            })
+            .expect("error sending network command");
+    }
+}
+
+fn handle_peering_dropped(peer_id: bee_autopeering::PeerId, command_tx: &NetworkCommandSender) {
+    let peer_id = peer_id.libp2p_peer_id();
+
+    command_tx
+        .send(Command::RemovePeer { peer_id })
+        .expect("error sending network command");
 }
