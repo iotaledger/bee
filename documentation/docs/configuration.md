@@ -34,7 +34,7 @@ bee -c config_example.toml
 
 | Name                | Description                          | Type           |
 | :------------------ | :----------------------------------- | :------------- |
-| color_enabled       | stdout it colored if enabled         | bool           |
+| color_enabled       | stdout is colored if enabled         | bool           |
 | target_width        | width of the target section of a log | integer[usize] |
 | level_width         | width of the level section of a log  | integer[usize] |
 | [outputs](#outputs) | config for different log filters     | array          |
