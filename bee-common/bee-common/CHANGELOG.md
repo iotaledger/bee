@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.6.0 - 2022-01-10
+
+### Changed
+
+- Move `color_enabled` from `LoggerConfig` to `LoggerOutputConfig`;
+
 ## 0.5.0 - 2021-12-07
 
 ### Added
