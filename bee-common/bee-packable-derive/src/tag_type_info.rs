@@ -3,8 +3,8 @@
 
 use crate::parse::{parse_kv, parse_kv_after_comma, skip_stream};
 
-use quote::{quote, ToTokens};
-use syn::{parse::ParseStream, parse2, spanned::Spanned, Attribute, Error, Expr, Ident, Result, Type};
+use quote::ToTokens;
+use syn::{parse::ParseStream, parse_quote, spanned::Spanned, Attribute, Error, Expr, Ident, Result, Type};
 
 const VALID_TAG_TYPES: &[&str] = &["u8", "u16", "u32", "u64"];
 
@@ -33,7 +33,7 @@ impl TagTypeInfo {
                         Some(with_error) => with_error,
                         None => {
                             skip_stream(stream)?;
-                            parse2(quote!(bee_packable::error::UnknownTagError))?
+                            parse_quote!(bee_packable::error::UnknownTagError)
                         }
                     };
                     Ok(Some(Self { tag_type, with_error }))
@@ -52,7 +52,7 @@ impl TagTypeInfo {
         match repr_type {
             Some(repr_type) => Ok(Self {
                 tag_type: repr_type.clone(),
-                with_error: parse2(quote!(bee_packable::error::UnknownTagError))?,
+                with_error: parse_quote!(bee_packable::error::UnknownTagError),
             }),
             None => Err(Error::new(
                 enum_ident.span(),

@@ -7,10 +7,10 @@ use crate::{
 };
 
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::ToTokens;
 use syn::{
     parse::{Parse, ParseStream},
-    parse2, Error, Expr, ExprLit, ExprPath, Result, Variant,
+    parse_quote, Error, Expr, ExprLit, ExprPath, Result, Variant,
 };
 
 #[derive(Debug, Clone)]
@@ -53,7 +53,7 @@ impl VariantInfo {
                 return Ok(Self {
                     tag,
                     inner: RecordInfo::new(
-                        parse2(quote!(#enum_ident::#variant_ident))?,
+                        parse_quote!(#enum_ident::#variant_ident),
                         &variant.fields,
                         default_unpack_error_with,
                     )?,
@@ -63,9 +63,9 @@ impl VariantInfo {
 
         match &variant.discriminant {
             Some((_, tag)) => Ok(Self {
-                tag: parse2(quote!(#tag))?,
+                tag: parse_quote!(#tag),
                 inner: RecordInfo::new(
-                    parse2(quote!(#enum_ident::#variant_ident))?,
+                    parse_quote!(#enum_ident::#variant_ident),
                     &variant.fields,
                     default_unpack_error_with,
                 )?,

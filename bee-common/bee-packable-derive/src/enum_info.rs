@@ -5,8 +5,7 @@ use crate::{
     parse::filter_attrs, tag_type_info::TagTypeInfo, unpack_error_info::UnpackErrorInfo, variant_info::VariantInfo,
 };
 
-use quote::quote;
-use syn::{parse2, Attribute, DataEnum, Ident, Result, Type};
+use syn::{parse_quote, Attribute, DataEnum, Ident, Result, Type};
 
 pub(crate) struct EnumInfo {
     pub(crate) unpack_error: UnpackErrorInfo,
@@ -27,9 +26,10 @@ impl EnumInfo {
         let tag_type = TagTypeInfo::new(&ident, filtered_attrs.clone(), &repr_type)?;
         let tag_ty = &tag_type.tag_type;
 
-        let unpack_error = UnpackErrorInfo::new(filtered_attrs, || {
-            parse2(quote!(bee_packable::error::UnknownTagError<#tag_ty>))
-        })?;
+        let unpack_error = UnpackErrorInfo::new(
+            filtered_attrs,
+            || parse_quote!(bee_packable::error::UnknownTagError<#tag_ty>),
+        )?;
 
         let variants_info = data
             .variants

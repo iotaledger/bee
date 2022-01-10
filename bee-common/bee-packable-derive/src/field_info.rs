@@ -4,8 +4,8 @@
 use crate::parse::{filter_attrs, parse_kv, skip_stream};
 
 use proc_macro2::Span;
-use quote::{format_ident, quote, ToTokens};
-use syn::{parse::ParseStream, parse2, Expr, Field, Ident, Index, Result, Type};
+use quote::{format_ident, ToTokens};
+use syn::{parse::ParseStream, parse_quote, Expr, Field, Ident, Index, Result, Type};
 
 pub(crate) enum IdentOrIndex {
     Ident(Ident),
@@ -69,7 +69,8 @@ impl FieldInfo {
         Ok(Self {
             unpack_error_with: unpack_error_with_opt.unwrap_or_else(|| default_unpack_error_with.clone()),
             verify_with: verify_with_opt
-                .unwrap_or_else(|| parse2(quote!(|_| -> Result<(), Self::UnpackError> { Ok(()) })).unwrap()),
+                .unwrap_or_else(|| parse_quote!(|_| -> Result<(), Self::UnpackError> { Ok(()) })),
+
             ident,
             pattern_ident,
             ty: field.ty.clone(),
