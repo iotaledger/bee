@@ -22,19 +22,12 @@ impl From<Infallible> for PickyError {
     }
 }
 
-fn verify_value<const VERIFY: bool>(&value: &u8) -> Result<(), PickyError> {
-    if !VERIFY && value == 42 {
-        Ok(())
-    } else {
-        Err(PickyError(value))
-    }
-}
-
 #[derive(Packable)]
 #[packable(unpack_error = PickyError)]
 pub struct Picky(
-    #[packable(verify_with = verify_value::<VERIFY>)]
+    #[packable(verify_with = |&value| { if !VERIFY && value == 42 { Ok(()) } else { Err(PickyError(value)) } })]
     u8
 );
 
 fn main() {}
+
