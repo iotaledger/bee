@@ -1,6 +1,6 @@
 [package]
 name = "bee-common"
-version = "0.5.0"
+version = "0.6.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Common utilities used across the bee framework"
