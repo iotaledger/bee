@@ -17,7 +17,7 @@ const DEFAULT_OUTPUT_NAME: &str = LOGGER_STDOUT_NAME;
 /// Default log level for an output.
 const DEFAULT_OUTPUT_LEVEL_FILTER: LevelFilter = LevelFilter::Info;
 /// Default value for the color flag.
-const DEFAULT_COLOR_ENABLED: bool = true;
+const DEFAULT_COLOR_ENABLED: bool = false;
 
 /// Builder for a logger output configuration.
 #[derive(Default, Deserialize)]
