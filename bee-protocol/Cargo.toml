@@ -11,15 +11,15 @@ keywords = [ "iota", "tangle", "bee", "framework", "protocol" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-autopeering = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
-bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
-bee-gossip = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
-bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "workers" ], optional = true }
-bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "serde" ] }
-bee-pow = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
-bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
-bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
-bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, optional = true }
+bee-autopeering = { git = "https://github.com/alex6323/bee.git", branch = "autopeering-fixes", default-features = false }
+bee-common = { git = "https://github.com/alex6323/bee.git", branch = "autopeering-fixes", default-features = false, optional = true }
+bee-gossip = { git = "https://github.com/alex6323/bee.git", branch = "autopeering-fixes", default-features = false }
+bee-ledger = { git = "https://github.com/alex6323/bee.git", branch = "autopeering-fixes", default-features = false, features = [ "workers" ], optional = true }
+bee-message = { git = "https://github.com/alex6323/bee.git", branch = "autopeering-fixes", default-features = false, features = [ "serde" ] }
+bee-pow = { git = "https://github.com/alex6323/bee.git", branch = "autopeering-fixes", default-features = false }
+bee-runtime = { git = "https://github.com/alex6323/bee.git", branch = "autopeering-fixes", default-features = false, optional = true }
+bee-storage = { git = "https://github.com/alex6323/bee.git", branch = "autopeering-fixes", default-features = false, optional = true }
+bee-tangle = { git = "https://github.com/alex6323/bee.git", branch = "autopeering-fixes", default-features = false, optional = true }
 bee-ternary = { version = "0.5.2", default-features = false, optional = true }
 
 async-channel = { version = "1.6.1", default-features = false, optional = true }
