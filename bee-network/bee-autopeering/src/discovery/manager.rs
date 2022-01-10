@@ -558,6 +558,7 @@ fn validate_verification_response(
                 if autopeering_svc.port() == source_socket_addr.port() {
                     Ok(reqv)
                 } else {
+                    // Fix: Update the outdated/wrong port
                     Err(ServicePortMismatch {
                         expected: source_socket_addr.port(),
                         received: autopeering_svc.port(),
@@ -827,6 +828,8 @@ pub(crate) fn send_verification_response_to_addr(
     server_tx: &ServerTx,
     local: &Local,
 ) {
+    let peer_addr = SocketAddr::new(peer_addr.ip(), verif_req.source_addr().port());
+
     log::trace!("Sending verification response to: {}/{}", peer_id, peer_addr);
 
     let request_hash = message_hash(MessageType::VerificationRequest, msg_bytes);
@@ -843,7 +846,7 @@ pub(crate) fn send_verification_response_to_addr(
         .send(OutgoingPacket {
             msg_type: MessageType::VerificationResponse,
             msg_bytes,
-            peer_addr: SocketAddr::new(peer_addr.ip(), verif_req.source_addr().port()),
+            peer_addr,
         })
         .expect("error sending verification response to server");
 }
