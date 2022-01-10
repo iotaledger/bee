@@ -18,6 +18,7 @@ impl TagTypeInfo {
         enum_ident: &Ident,
         filtered_attrs: impl Iterator<Item = &'a Attribute>,
         repr_type: &Option<Type>,
+        crate_name: &Ident,
     ) -> Result<Self> {
         for attr in filtered_attrs {
             let opt_info = attr.parse_args_with(|stream: ParseStream| match parse_kv::<Type>("tag_type", stream)? {
@@ -33,7 +34,7 @@ impl TagTypeInfo {
                         Some(with_error) => with_error,
                         None => {
                             skip_stream(stream)?;
-                            parse_quote!(bee_packable::error::UnknownTagError)
+                            parse_quote!(#crate_name::error::UnknownTagError)
                         }
                     };
                     Ok(Some(Self { tag_type, with_error }))
@@ -52,7 +53,7 @@ impl TagTypeInfo {
         match repr_type {
             Some(repr_type) => Ok(Self {
                 tag_type: repr_type.clone(),
-                with_error: parse_quote!(bee_packable::error::UnknownTagError),
+                with_error: parse_quote!(#crate_name::error::UnknownTagError),
             }),
             None => Err(Error::new(
                 enum_ident.span(),

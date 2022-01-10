@@ -14,7 +14,7 @@ pub(crate) struct EnumInfo {
 }
 
 impl EnumInfo {
-    pub(crate) fn new(ident: Ident, data: DataEnum, attrs: &[Attribute]) -> Result<Self> {
+    pub(crate) fn new(ident: Ident, data: DataEnum, attrs: &[Attribute], crate_name: &Ident) -> Result<Self> {
         let repr_type = attrs
             .iter()
             .find(|attr| attr.path.is_ident("repr"))
@@ -23,12 +23,12 @@ impl EnumInfo {
 
         let filtered_attrs = filter_attrs(attrs);
 
-        let tag_type = TagTypeInfo::new(&ident, filtered_attrs.clone(), &repr_type)?;
+        let tag_type = TagTypeInfo::new(&ident, filtered_attrs.clone(), &repr_type, crate_name)?;
         let tag_ty = &tag_type.tag_type;
 
         let unpack_error = UnpackErrorInfo::new(
             filtered_attrs,
-            || parse_quote!(bee_packable::error::UnknownTagError<#tag_ty>),
+            || parse_quote!(#crate_name::error::UnknownTagError<#tag_ty>),
         )?;
 
         let variants_info = data
