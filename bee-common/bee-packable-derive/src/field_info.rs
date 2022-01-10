@@ -5,7 +5,7 @@ use crate::parse::{filter_attrs, parse_kv, skip_stream};
 
 use proc_macro2::Span;
 use quote::{format_ident, ToTokens};
-use syn::{parse::ParseStream, parse_quote, Expr, Field, Ident, Index, Result, Type};
+use syn::{parse::ParseStream, Expr, Field, Ident, Index, Result, Type};
 
 pub(crate) enum IdentOrIndex {
     Ident(Ident),
@@ -23,7 +23,7 @@ impl ToTokens for IdentOrIndex {
 
 pub(crate) struct FieldInfo {
     pub(crate) unpack_error_with: Expr,
-    pub(crate) verify_with: Expr,
+    pub(crate) verify_with: Option<Ident>,
     pub(crate) pattern_ident: IdentOrIndex,
     pub(crate) ident: Ident,
     pub(crate) ty: Type,
@@ -68,9 +68,7 @@ impl FieldInfo {
 
         Ok(Self {
             unpack_error_with: unpack_error_with_opt.unwrap_or_else(|| default_unpack_error_with.clone()),
-            verify_with: verify_with_opt
-                .unwrap_or_else(|| parse_quote!(|_| -> Result<(), Self::UnpackError> { Ok(()) })),
-
+            verify_with: verify_with_opt,
             ident,
             pattern_ident,
             ty: field.ty.clone(),

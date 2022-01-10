@@ -39,7 +39,7 @@ impl UnlockBlocks {
         let unlock_blocks = VecPrefix::<UnlockBlock, UnlockBlockCount>::try_from(unlock_blocks)
             .map_err(ValidationError::InvalidUnlockBlockCount)?;
 
-        validate_unlock_block_variants(&unlock_blocks)?;
+        validate_unlock_block_variants::<true>(&unlock_blocks)?;
 
         Ok(Self(unlock_blocks))
     }
@@ -63,7 +63,7 @@ impl Deref for UnlockBlocks {
     }
 }
 
-fn validate_unlock_block_variants(unlock_blocks: &[UnlockBlock]) -> Result<(), ValidationError> {
+fn validate_unlock_block_variants<const VERIFY: bool>(unlock_blocks: &[UnlockBlock]) -> Result<(), ValidationError> {
     let mut seen = HashSet::new();
 
     for (idx, unlock_block) in unlock_blocks.iter().enumerate() {

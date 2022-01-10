@@ -194,9 +194,9 @@ impl TransactionEssenceBuilder {
             .consensus_pledge_id
             .ok_or(ValidationError::MissingBuilderField("consensus_pledge_id"))?;
 
-        validate_inputs(&self.inputs)?;
-        validate_outputs(&self.outputs)?;
-        validate_payload(&self.payload)?;
+        validate_inputs::<true>(&self.inputs)?;
+        validate_outputs::<true>(&self.outputs)?;
+        validate_payload::<true>(&self.payload)?;
 
         Ok(TransactionEssence {
             timestamp,
@@ -267,14 +267,14 @@ fn validate_outputs_sorted(outputs: &[Output]) -> Result<(), ValidationError> {
     }
 }
 
-fn validate_inputs(inputs: &[Input]) -> Result<(), ValidationError> {
+fn validate_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), ValidationError> {
     validate_inputs_unique_utxos(inputs)?;
     validate_inputs_sorted(inputs)?;
 
     Ok(())
 }
 
-fn validate_outputs(outputs: &[Output]) -> Result<(), ValidationError> {
+fn validate_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), ValidationError> {
     validate_output_total(outputs.iter().try_fold(0u64, |total, output| {
         let amount = validate_output_variant(output, outputs)?;
         total
@@ -286,7 +286,7 @@ fn validate_outputs(outputs: &[Output]) -> Result<(), ValidationError> {
     Ok(())
 }
 
-fn validate_payload(payload: &Option<Payload>) -> Result<(), ValidationError> {
+fn validate_payload<const VERIFY: bool>(payload: &Option<Payload>) -> Result<(), ValidationError> {
     match payload {
         None | Some(Payload::Indexation(_)) => Ok(()),
         // Unwrap is fine because we just checked that the Option is not None.

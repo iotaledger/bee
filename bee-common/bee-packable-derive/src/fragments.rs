@@ -26,6 +26,11 @@ impl Fragments {
             fields_type,
         } = info;
 
+        let fields_verification = fields_verify_with.into_iter().zip(fields_ident.iter()).map(|(verify_with, field_ident)| match verify_with {
+            Some(verify_with) => quote!(#verify_with::<VERIFY>(&#field_ident).map_err(bee_packable::error::UnpackError::from_packable)?;),
+            None => quote!(),
+        });
+
         Self {
             pattern: quote!(#path { #(#fields_pattern_ident: #fields_ident),* }),
             pack: quote! {
@@ -35,7 +40,7 @@ impl Fragments {
             unpack: quote! {
                 #(
                     let #fields_ident = <#fields_type as bee_packable::Packable>::unpack::<_, VERIFY>(unpacker).map_packable_err(#fields_unpack_error_with).coerce()?;
-                    (#fields_verify_with)(&#fields_ident).map_err(bee_packable::error::UnpackError::from_packable)?;
+                    #fields_verification
                 )*
 
                 Ok(#path {
