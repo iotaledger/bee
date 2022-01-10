@@ -51,40 +51,41 @@ pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
     let target_width = config.target_width;
     let level_width = config.level_width;
 
-    let mut logger = if config.color_enabled {
-        let colors = ColoredLevelConfig::new()
-            .trace(Color::BrightMagenta)
-            .debug(Color::BrightBlue)
-            .info(Color::BrightGreen)
-            .warn(Color::BrightYellow)
-            .error(Color::BrightRed);
-
-        // Creates a logger dispatch with color support.
-        Dispatch::new().format(move |out, message, record| {
-            out.finish(log_format!(
-                record.target(),
-                colors.color(record.level()),
-                message,
-                target_width,
-                level_width
-            ))
-        })
-    } else {
-        // Creates a logger dispatch without color support.
-        Dispatch::new().format(move |out, message, record| {
-            out.finish(log_format!(
-                record.target(),
-                record.level(),
-                message,
-                target_width,
-                level_width
-            ))
-        })
-    };
+    let mut logger = Dispatch::new();
 
     for output in config.outputs {
         // Creates a logger dispatch for each output of the configuration.
-        let mut dispatch = Dispatch::new().level(output.level_filter);
+        let mut dispatch = if output.color_enabled {
+            let colors = ColoredLevelConfig::new()
+                .trace(Color::BrightMagenta)
+                .debug(Color::BrightBlue)
+                .info(Color::BrightGreen)
+                .warn(Color::BrightYellow)
+                .error(Color::BrightRed);
+
+            // Creates a logger dispatch with color support.
+            Dispatch::new().format(move |out, message, record| {
+                out.finish(log_format!(
+                    record.target(),
+                    colors.color(record.level()),
+                    message,
+                    target_width,
+                    level_width
+                ))
+            })
+        } else {
+            // Creates a logger dispatch without color support.
+            Dispatch::new().format(move |out, message, record| {
+                out.finish(log_format!(
+                    record.target(),
+                    record.level(),
+                    message,
+                    target_width,
+                    level_width
+                ))
+            })
+        }
+        .level(output.level_filter);
 
         if !output.target_filters.is_empty() {
             let target_filters = output.target_filters;
