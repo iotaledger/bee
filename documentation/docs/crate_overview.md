@@ -25,10 +25,6 @@ Common utilities used across the bee framework.
 
 Derive macros for the `bee-common` crate.
 
-## bee-crypto
-
-TO-DO
-
 ## bee-ledger
 
 All types and features required to compute and maintain the ledger state.
@@ -53,10 +49,6 @@ All types and workers enabling the IOTA protocol.
 
 Runtime components and utilities for the bee framework.
 
-## bee-signing
-
-IOTA signing primitives.
-
 ## bee-storage
 
 #### bee-storage
@@ -75,6 +67,3 @@ A bee-storage implementation for the [Sled](https://dbdb.io/db/sled) backend.
 #### bee-storage-test
 
 A crate to test storage implementation generically.
-
-
-
