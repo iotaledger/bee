@@ -8,8 +8,6 @@ use serde::Deserialize;
 
 use std::borrow::Cow;
 
-/// Default value for the color flag.
-const DEFAULT_COLOR_ENABLED: bool = true;
 /// Default value for the target width.
 const DEFAULT_TARGET_WIDTH: usize = 42;
 /// Default value for the level width.
@@ -17,7 +15,9 @@ const DEFAULT_LEVEL_WIDTH: usize = 5;
 /// Default name for an output.
 const DEFAULT_OUTPUT_NAME: &str = LOGGER_STDOUT_NAME;
 /// Default log level for an output.
-const DEFAULT_OUTPUT_LEVEL: LevelFilter = LevelFilter::Info;
+const DEFAULT_OUTPUT_LEVEL_FILTER: LevelFilter = LevelFilter::Info;
+/// Default value for the color flag.
+const DEFAULT_COLOR_ENABLED: bool = true;
 
 /// Builder for a logger output configuration.
 #[derive(Default, Deserialize)]
@@ -30,6 +30,8 @@ pub struct LoggerOutputConfigBuilder {
     target_filters: Option<Vec<String>>,
     /// Log target exclusions of an output.
     target_exclusions: Option<Vec<String>>,
+    /// Color flag of an output.
+    color_enabled: Option<bool>,
 }
 
 impl LoggerOutputConfigBuilder {
@@ -64,11 +66,17 @@ impl LoggerOutputConfigBuilder {
         self
     }
 
+    /// Sets the color flag of a logger output.
+    pub fn color_enabled(mut self, color: bool) -> Self {
+        self.color_enabled.replace(color);
+        self
+    }
+
     /// Builds a logger output configuration.
     pub fn finish(self) -> LoggerOutputConfig {
         LoggerOutputConfig {
             name: self.name.unwrap_or_else(|| DEFAULT_OUTPUT_NAME.to_owned()),
-            level_filter: self.level_filter.unwrap_or(DEFAULT_OUTPUT_LEVEL),
+            level_filter: self.level_filter.unwrap_or(DEFAULT_OUTPUT_LEVEL_FILTER),
             target_filters: self
                 .target_filters
                 .unwrap_or_else(Vec::new)
@@ -81,6 +89,7 @@ impl LoggerOutputConfigBuilder {
                 .iter()
                 .map(|f| f.to_lowercase())
                 .collect(),
+            color_enabled: self.color_enabled.unwrap_or(DEFAULT_COLOR_ENABLED),
         }
     }
 }
@@ -96,6 +105,8 @@ pub struct LoggerOutputConfig {
     pub(crate) target_filters: Vec<String>,
     /// Log target exclusions of the output.
     pub(crate) target_exclusions: Vec<String>,
+    /// Color flag of the output.
+    pub(crate) color_enabled: bool,
 }
 
 impl LoggerOutputConfig {
@@ -123,8 +134,6 @@ impl LoggerOutputConfig {
 /// Builder for a logger configuration.
 #[derive(Default, Deserialize)]
 pub struct LoggerConfigBuilder {
-    /// Color flag of the logger.
-    color_enabled: Option<bool>,
     /// Width of the target section of a log.
     target_width: Option<usize>,
     /// Width of the level section of a log.
@@ -134,12 +143,6 @@ pub struct LoggerConfigBuilder {
 }
 
 impl LoggerConfigBuilder {
-    /// Sets the color flag of a logger.
-    pub fn color_enabled(mut self, color: bool) -> Self {
-        self.color_enabled.replace(color);
-        self
-    }
-
     /// Sets the target width.
     pub fn with_target_width(mut self, width: usize) -> Self {
         self.target_width.replace(width);
@@ -180,7 +183,6 @@ impl LoggerConfigBuilder {
             .unwrap_or_default();
 
         LoggerConfig {
-            color_enabled: self.color_enabled.unwrap_or(DEFAULT_COLOR_ENABLED),
             target_width: self.target_width.unwrap_or(DEFAULT_TARGET_WIDTH),
             level_width: self.level_width.unwrap_or(DEFAULT_LEVEL_WIDTH),
             outputs,
@@ -191,8 +193,6 @@ impl LoggerConfigBuilder {
 /// Logger configuration.
 #[derive(Clone)]
 pub struct LoggerConfig {
-    /// Color flag of the logger.
-    pub(crate) color_enabled: bool,
     /// Width of the target section of a log.
     pub(crate) target_width: usize,
     /// Width of the level section of a log.
@@ -205,11 +205,6 @@ impl LoggerConfig {
     /// Creates a builder for a logger config.
     pub fn build() -> LoggerConfigBuilder {
         LoggerConfigBuilder::default()
-    }
-
-    /// Returns the color flag of the `LoggerConfig`.
-    pub fn color_enabled(&self) -> bool {
-        self.color_enabled
     }
 
     /// Returns the width of the target section of the `LoggerConfig`.

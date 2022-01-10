@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package proto;
+
+message Packet {
+  uint32 type = 1;
+  bytes data = 2;
+  bytes public_key = 3;
+  bytes signature = 4;
+}
