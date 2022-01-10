@@ -6,7 +6,6 @@ bech32_hrp = "iota"
 network_id = "chrysalis-mainnet"
 
 [logger]
-color_enabled = true
 [[logger.outputs]]
 name              = "stdout"
 level_filter      = "info"

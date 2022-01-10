@@ -6,7 +6,6 @@ bech32_hrp = "atoi"
 network_id = "chrysalis-devnet"
 
 [logger]
-color_enabled = true
 [[logger.outputs]]
 name              = "stdout"
 level_filter      = "info"
