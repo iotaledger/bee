@@ -7,11 +7,11 @@ network_id = "comnet1"
 
 [logger]
 [[logger.outputs]]
-color_enabled     = true
 name              = "stdout"
 level_filter      = "info"
 target_filters    = []
 target_exclusions = []
+color_enabled     = true
 [[logger.outputs]]
 name              = "warn.log"
 level_filter      = "warn"
