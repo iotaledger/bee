@@ -8,7 +8,7 @@ use syn::{Expr, Fields, Ident, Path, Result, Type};
 pub(crate) struct RecordInfo {
     pub(crate) path: Path,
     pub(crate) fields_unpack_error_with: Vec<Expr>,
-    pub(crate) fields_verify_with: Vec<Option<Ident>>,
+    pub(crate) fields_verify_with: Vec<Option<Path>>,
     pub(crate) fields_pattern_ident: Vec<IdentOrIndex>,
     pub(crate) fields_ident: Vec<Ident>,
     pub(crate) fields_type: Vec<Type>,

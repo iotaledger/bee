@@ -5,7 +5,7 @@ use crate::parse::{filter_attrs, parse_kv, skip_stream};
 
 use proc_macro2::Span;
 use quote::{format_ident, ToTokens};
-use syn::{parse::ParseStream, Expr, Field, Ident, Index, Result, Type};
+use syn::{parse::ParseStream, Expr, Field, Ident, Index, Path, Result, Type};
 
 pub(crate) enum IdentOrIndex {
     Ident(Ident),
@@ -23,7 +23,7 @@ impl ToTokens for IdentOrIndex {
 
 pub(crate) struct FieldInfo {
     pub(crate) unpack_error_with: Expr,
-    pub(crate) verify_with: Option<Ident>,
+    pub(crate) verify_with: Option<Path>,
     pub(crate) pattern_ident: IdentOrIndex,
     pub(crate) ident: Ident,
     pub(crate) ty: Type,
