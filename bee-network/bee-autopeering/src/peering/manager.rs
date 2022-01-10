@@ -590,9 +590,9 @@ pub(crate) fn publish_peering_event<const IS_INBOUND: bool>(
 ) {
     log::debug!(
         "Peering with {}; status: {}, direction: {}, #out_nbh: {}, #in_nbh: {}",
-        if IS_INBOUND { "in" } else { "out" },
-        status,
         peer.peer_id(),
+        status,
+        if IS_INBOUND { "in" } else { "out" },
         outbound_nbh.len(),
         inbound_nbh.len(),
     );
