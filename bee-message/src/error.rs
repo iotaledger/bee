@@ -5,7 +5,7 @@ use crate::{
     input::UtxoInput,
     output::{
         feature_block::FeatureBlockCount, AliasId, DustDepositAmount, ImmutableMetadataLength,
-        IndexationFeatureBlockLength, InputOutputIndex, MetadataFeatureBlockLength, NativeTokenCount, NftId,
+        IndexationFeatureBlockLength, MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputIndex,
         SimpleOutputAmount, StateMetadataLength, TreasuryOutputAmount,
     },
     parent::ParentCount,
@@ -49,7 +49,7 @@ pub enum Error {
     InvalidInputKind(u8),
     InvalidInputCount(<InputCount as TryFrom<usize>>::Error),
     InvalidOutputCount(<OutputCount as TryFrom<usize>>::Error),
-    InvalidInputOutputIndex(<InputOutputIndex as TryFrom<u16>>::Error),
+    InvalidInputOutputIndex(<OutputIndex as TryFrom<u16>>::Error),
     InvalidMessageLength(usize),
     InvalidImmutableMetadataLength(<ImmutableMetadataLength as TryFrom<usize>>::Error),
     InvalidStateMetadataLength(<StateMetadataLength as TryFrom<usize>>::Error),

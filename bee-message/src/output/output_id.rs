@@ -7,7 +7,7 @@ use bee_packable::bounded::BoundedU16;
 
 use core::str::FromStr;
 
-pub(crate) type InputOutputIndex = BoundedU16<{ *OUTPUT_INDEX_RANGE.start() }, { *OUTPUT_INDEX_RANGE.end() }>;
+pub(crate) type OutputIndex = BoundedU16<{ *OUTPUT_INDEX_RANGE.start() }, { *OUTPUT_INDEX_RANGE.end() }>;
 
 /// The identifier of an `Output`.
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd, bee_packable::Packable)]
@@ -15,7 +15,7 @@ pub(crate) type InputOutputIndex = BoundedU16<{ *OUTPUT_INDEX_RANGE.start() }, {
 pub struct OutputId {
     transaction_id: TransactionId,
     #[packable(unpack_error_with = Error::InvalidInputOutputIndex)]
-    index: InputOutputIndex,
+    index: OutputIndex,
 }
 
 impl OutputId {
