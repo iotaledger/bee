@@ -5,6 +5,8 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
+use core::ops::RangeInclusive;
+
 /// Defines an indexation tag to which the output will be indexed.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -26,8 +28,8 @@ impl TryFrom<&[u8]> for IndexationFeatureBlock {
 impl IndexationFeatureBlock {
     /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of an [`IndexationFeatureBlock`].
     pub const KIND: u8 = 8;
-    /// Maximum possible length in bytes of an indexation tag.
-    pub const LENGTH_MAX: usize = 64;
+    /// Valid lengths for an [`IndexationFeatureBlock`].
+    pub const LENGTH_RANGE: RangeInclusive<usize> = 1..=64;
 
     /// Creates a new [`IndexationFeatureBlock`].
     #[inline(always)]
@@ -72,7 +74,7 @@ impl Packable for IndexationFeatureBlock {
 
 #[inline]
 fn validate_length(tag_length: usize) -> Result<(), Error> {
-    if tag_length == 0 || tag_length > IndexationFeatureBlock::LENGTH_MAX {
+    if !IndexationFeatureBlock::LENGTH_RANGE.contains(&tag_length) {
         return Err(Error::InvalidIndexationIndexLength(tag_length));
     }
 
