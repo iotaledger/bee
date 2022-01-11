@@ -1,8 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable as OldPackable;
-use bee_message::{Error, Message};
+use bee_message::Message;
+use bee_packable::{error::UnpackError, PackableExt};
 
 use std::{
     fs::{self, File, OpenOptions},
@@ -23,8 +23,8 @@ fn main() -> io::Result<()> {
 
         file.read_to_end(&mut buffer)?;
 
-        if let Err(err) = Message::unpack(&mut buffer.as_slice()) {
-            if !matches!(err, Error::Io(..)) {
+        if let Err(err) = Message::unpack_verified(&mut buffer.as_slice()) {
+            if !matches!(err, UnpackError::Unpacker(..)) {
                 let mut file = OpenOptions::new()
                     .write(true)
                     .truncate(true)
