@@ -5,6 +5,8 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
+use core::ops::RangeInclusive;
+
 /// Defines metadata, arbitrary binary data, that will be stored in the output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -26,8 +28,8 @@ impl TryFrom<&[u8]> for MetadataFeatureBlock {
 impl MetadataFeatureBlock {
     /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of [`MetadataFeatureBlock`].
     pub const KIND: u8 = 7;
-    /// Maximum possible length in bytes of the data field.
-    pub const LENGTH_MAX: usize = 1024;
+    /// Valid lengths for a [`MetadataFeatureBlock`].
+    pub const LENGTH_RANGE: RangeInclusive<usize> = 1..=1024;
 
     /// Creates a new [`MetadataFeatureBlock`].
     #[inline(always)]
@@ -72,7 +74,7 @@ impl Packable for MetadataFeatureBlock {
 
 #[inline]
 fn validate_length(data_length: usize) -> Result<(), Error> {
-    if data_length == 0 || data_length > MetadataFeatureBlock::LENGTH_MAX {
+    if !MetadataFeatureBlock::LENGTH_RANGE.contains(&data_length) {
         return Err(Error::InvalidMetadataLength(data_length));
     }
 
