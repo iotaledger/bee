@@ -14,12 +14,13 @@ use bee_packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
+    Packable,
 };
 use primitive_types::U256;
 
 ///
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 #[packable(tag_type = u8, with_error = Error::InvalidTokenSchemeKind)]
@@ -245,7 +246,7 @@ impl FoundryOutput {
     }
 }
 
-impl bee_packable::Packable for FoundryOutput {
+impl Packable for FoundryOutput {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

@@ -15,7 +15,7 @@ use bee_packable::{
     packer::Packer,
     prefix::VecPrefix,
     unpacker::Unpacker,
-    PackableExt,
+    Packable, PackableExt,
 };
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
@@ -167,7 +167,7 @@ impl MilestoneEssence {
     }
 }
 
-impl bee_packable::Packable for MilestoneEssence {
+impl Packable for MilestoneEssence {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

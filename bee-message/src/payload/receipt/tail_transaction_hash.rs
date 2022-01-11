@@ -7,10 +7,13 @@ use bee_packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
+    Packable,
 };
 use bee_ternary::{T5B1Buf, TritBuf, Trits, T5B1};
 
 use bytemuck::cast_slice;
+
+use core::fmt;
 
 /// Represents a tail transaction hash of a legacy bundle.
 #[derive(Clone, Eq, PartialEq)]
@@ -45,18 +48,18 @@ impl AsRef<[u8]> for TailTransactionHash {
     }
 }
 
-impl core::fmt::Display for TailTransactionHash {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+impl fmt::Display for TailTransactionHash {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.0.iter_trytes().map(char::from).collect::<String>())
     }
 }
 
-impl core::fmt::Debug for TailTransactionHash {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+impl fmt::Debug for TailTransactionHash {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "TailTransactionHash({})", self)
     }
 }
-impl bee_packable::Packable for TailTransactionHash {
+impl Packable for TailTransactionHash {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

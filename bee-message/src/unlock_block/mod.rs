@@ -25,6 +25,7 @@ use bee_packable::{
     packer::Packer,
     prefix::BoxedSlicePrefix,
     unpacker::Unpacker,
+    Packable,
 };
 
 use derive_more::{Deref, From};
@@ -42,7 +43,7 @@ pub const UNLOCK_BLOCK_INDEX_MAX: u16 = INPUT_INDEX_MAX; // 126
 pub const UNLOCK_BLOCK_INDEX_RANGE: RangeInclusive<u16> = INPUT_INDEX_RANGE; // [0..126]
 
 /// Defines the mechanism by which a transaction input is authorized to be consumed.
-#[derive(Clone, Debug, Eq, PartialEq, Hash, From, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, From, Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
@@ -141,7 +142,7 @@ impl UnlockBlocks {
     }
 }
 
-impl bee_packable::Packable for UnlockBlocks {
+impl Packable for UnlockBlocks {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

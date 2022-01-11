@@ -15,6 +15,7 @@ use bee_packable::{
     packer::Packer,
     prefix::BoxedSlicePrefix,
     unpacker::Unpacker,
+    Packable,
 };
 
 use alloc::vec::Vec;
@@ -112,7 +113,7 @@ impl RegularTransactionEssence {
     }
 }
 
-impl bee_packable::Packable for RegularTransactionEssence {
+impl Packable for RegularTransactionEssence {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

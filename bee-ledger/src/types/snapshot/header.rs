@@ -8,6 +8,7 @@ use bee_packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
+    Packable,
 };
 
 const SNAPSHOT_VERSION: u8 = 1;
@@ -52,7 +53,7 @@ impl SnapshotHeader {
     }
 }
 
-impl bee_packable::Packable for SnapshotHeader {
+impl Packable for SnapshotHeader {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
@@ -95,7 +96,7 @@ impl bee_packable::Packable for SnapshotHeader {
 }
 
 /// Describes a snapshot header specific to full snapshots.
-#[derive(Clone, bee_packable::Packable)]
+#[derive(Clone, Packable)]
 pub struct FullSnapshotHeader {
     sep_count: u64,
     output_count: u64,
@@ -132,7 +133,7 @@ impl FullSnapshotHeader {
 }
 
 /// Describes a snapshot header specific to delta snapshots.
-#[derive(Clone, bee_packable::Packable)]
+#[derive(Clone, Packable)]
 pub struct DeltaSnapshotHeader {
     sep_count: u64,
     milestone_diff_count: u64,

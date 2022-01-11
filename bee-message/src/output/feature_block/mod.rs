@@ -32,13 +32,14 @@ use bee_packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     prefix::BoxedSlicePrefix,
+    Packable,
 };
 
 use bitflags::bitflags;
 use derive_more::{Deref, From};
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
@@ -173,7 +174,7 @@ impl FeatureBlocks {
     }
 }
 
-impl bee_packable::Packable for FeatureBlocks {
+impl Packable for FeatureBlocks {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

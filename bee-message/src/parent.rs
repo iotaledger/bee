@@ -12,6 +12,7 @@ use bee_packable::{
     packer::Packer,
     prefix::BoxedSlicePrefix,
     unpacker::Unpacker,
+    Packable,
 };
 
 use derive_more::Deref;
@@ -63,7 +64,7 @@ impl Parents {
     }
 }
 
-impl bee_packable::Packable for Parents {
+impl Packable for Parents {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

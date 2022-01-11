@@ -10,13 +10,14 @@ use bee_packable::{
     packer::Packer,
     prefix::BoxedSlicePrefix,
     unpacker::Unpacker,
+    Packable,
 };
 
 use derive_more::Deref;
 use primitive_types::U256;
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct NativeToken {
     // Identifier of the native token.
@@ -87,7 +88,7 @@ impl NativeTokens {
     }
 }
 
-impl bee_packable::Packable for NativeTokens {
+impl Packable for NativeTokens {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

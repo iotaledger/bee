@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker};
+use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
 
 use bitflags::bitflags;
 use serde::Serialize;
@@ -77,7 +77,7 @@ impl Flags {
     }
 }
 
-impl bee_packable::Packable for Flags {
+impl Packable for Flags {
     type UnpackError = Infallible;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

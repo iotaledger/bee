@@ -11,7 +11,7 @@ use bee_packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
-    PackableExt,
+    Packable, PackableExt,
 };
 use bee_pow::providers::{miner::Miner, NonceProvider, NonceProviderBuilder};
 
@@ -183,7 +183,7 @@ impl Message {
     }
 }
 
-impl bee_packable::Packable for Message {
+impl Packable for Message {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

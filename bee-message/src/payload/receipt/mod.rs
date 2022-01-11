@@ -23,7 +23,7 @@ use bee_packable::{
     packer::Packer,
     prefix::VecPrefix,
     unpacker::Unpacker,
-    PackableExt,
+    Packable, PackableExt,
 };
 
 use core::ops::RangeInclusive;
@@ -120,7 +120,7 @@ impl ReceiptPayload {
     }
 }
 
-impl bee_packable::Packable for ReceiptPayload {
+impl Packable for ReceiptPayload {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

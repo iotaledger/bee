@@ -18,7 +18,7 @@ use bee_packable::{
     packer::Packer,
     prefix::VecPrefix,
     unpacker::Unpacker,
-    PackableExt,
+    Packable, PackableExt,
 };
 
 use crypto::{
@@ -47,7 +47,7 @@ impl From<CryptoError> for MilestoneValidationError {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 struct Signature(
     #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))] [u8; MilestonePayload::SIGNATURE_LENGTH],
@@ -77,7 +77,6 @@ impl MilestonePayload {
         essence: MilestoneEssence,
         signatures: Vec<[u8; MilestonePayload::SIGNATURE_LENGTH]>,
     ) -> Result<Self, Error> {
-        // FIXME: can this be done in a more performant way?
         let signatures = VecPrefix::<Box<Signature>, SignatureCount>::try_from(
             signatures
                 .into_iter()
@@ -176,7 +175,7 @@ impl MilestonePayload {
     }
 }
 
-impl bee_packable::Packable for MilestonePayload {
+impl Packable for MilestonePayload {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

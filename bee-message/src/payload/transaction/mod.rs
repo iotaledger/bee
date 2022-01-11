@@ -8,7 +8,7 @@ mod transaction_id;
 
 use crate::{unlock_block::UnlockBlocks, Error};
 
-use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, PackableExt};
+use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable, PackableExt};
 pub(crate) use essence::{InputCount, OutputCount};
 pub use essence::{RegularTransactionEssence, TransactionEssence};
 pub use transaction_id::TransactionId;
@@ -98,7 +98,7 @@ impl TransactionPayload {
     }
 }
 
-impl bee_packable::Packable for TransactionPayload {
+impl Packable for TransactionPayload {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

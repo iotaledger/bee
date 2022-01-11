@@ -16,6 +16,7 @@ use bee_packable::{
     packer::Packer,
     prefix::BoxedSlicePrefix,
     unpacker::Unpacker,
+    Packable,
 };
 
 ///
@@ -188,7 +189,7 @@ impl NftOutput {
     }
 }
 
-impl bee_packable::Packable for NftOutput {
+impl Packable for NftOutput {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

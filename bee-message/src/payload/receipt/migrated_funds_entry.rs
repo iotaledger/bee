@@ -8,7 +8,7 @@ use crate::{
     Error,
 };
 
-use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker};
+use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
 
 use core::ops::RangeInclusive;
 
@@ -47,7 +47,7 @@ impl MigratedFundsEntry {
     }
 }
 
-impl bee_packable::Packable for MigratedFundsEntry {
+impl Packable for MigratedFundsEntry {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

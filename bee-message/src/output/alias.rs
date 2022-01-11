@@ -16,6 +16,7 @@ use bee_packable::{
     packer::Packer,
     prefix::BoxedSlicePrefix,
     unpacker::Unpacker,
+    Packable,
 };
 
 ///
@@ -249,7 +250,7 @@ impl AliasOutput {
     }
 }
 
-impl bee_packable::Packable for AliasOutput {
+impl Packable for AliasOutput {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

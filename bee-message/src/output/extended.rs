@@ -14,6 +14,7 @@ use bee_packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
+    Packable,
 };
 
 ///
@@ -144,7 +145,7 @@ impl ExtendedOutput {
     }
 }
 
-impl bee_packable::Packable for ExtendedOutput {
+impl Packable for ExtendedOutput {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
