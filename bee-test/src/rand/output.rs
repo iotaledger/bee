@@ -43,7 +43,7 @@ pub fn rand_ledger_treasury_output() -> TreasuryOutput {
     TreasuryOutput::new(rand_treasury_output(), rand_milestone_id())
 }
 
-/// Generates a random [`ExtendedOutput`].
+/// Generates a random [`ExtendedOutput`](output::ExtendedOutput).
 pub fn rand_extended_output() -> output::ExtendedOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::ExtendedOutput::ALLOWED_FEATURE_BLOCKS);
     // TODO: Add `NativeTokens`
@@ -53,7 +53,7 @@ pub fn rand_extended_output() -> output::ExtendedOutput {
         .unwrap()
 }
 
-/// Generates a random [`AliasOutput`].
+/// Generates a random [`AliasOutput`](output::AliasOutput).
 pub fn rand_alias_output() -> output::AliasOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::AliasOutput::ALLOWED_FEATURE_BLOCKS);
 
@@ -80,7 +80,7 @@ pub fn rand_alias_output() -> output::AliasOutput {
     .unwrap()
 }
 
-/// Generates a random [`FoundryOutput`].
+/// Generates a random [`FoundryOutput`](output::FoundryOutput).
 pub fn rand_foundry_output() -> output::FoundryOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::FoundryOutput::ALLOWED_FEATURE_BLOCKS);
 
@@ -102,7 +102,7 @@ pub fn rand_foundry_output() -> output::FoundryOutput {
     .unwrap()
 }
 
-/// Generates a random [`NftOutput`].
+/// Generates a random [`NftOutput`](output::NftOutput).
 pub fn rand_nft_output() -> output::NftOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::NftOutput::ALLOWED_FEATURE_BLOCKS);
     output::NftOutput::build(

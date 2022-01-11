@@ -78,7 +78,7 @@ fn all_feature_blocks() -> Vec<FeatureBlock> {
     ]
 }
 
-/// Generates random [`FeatureBlocks`] given a set of allowed [`FeatureBlockFlags`].
+/// Generates a [`Vec`] of random [`FeatureBlock`]s given a set of allowed [`FeatureBlockFlags`].
 pub fn rand_allowed_feature_blocks(allowed_feature_blocks: FeatureBlockFlags) -> Vec<FeatureBlock> {
     let mut all_feature_blocks = all_feature_blocks();
     all_feature_blocks.retain(|feature_block| allowed_feature_blocks.contains(feature_block.flag()));
