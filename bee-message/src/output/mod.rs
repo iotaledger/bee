@@ -35,8 +35,8 @@ pub use output_id::OutputId;
 pub use simple::SimpleOutput;
 pub(crate) use simple::SimpleOutputAmount;
 pub use token_id::TokenId;
-pub(crate) use treasury::TreasuryAmount;
 pub use treasury::TreasuryOutput;
+pub(crate) use treasury::TreasuryOutputAmount;
 
 use crate::Error;
 

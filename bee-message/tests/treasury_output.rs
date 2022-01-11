@@ -23,7 +23,7 @@ fn new_valid_max_amount() {
 fn invalid_more_than_max_amount() {
     assert!(matches!(
         TreasuryOutput::new(3_038_287_259_199_220_266),
-        Err(Error::InvalidTreasuryAmount(InvalidBoundedU64(
+        Err(Error::InvalidTreasuryOutputAmount(InvalidBoundedU64(
             3_038_287_259_199_220_266
         )))
     ));
@@ -49,8 +49,8 @@ fn pack_unpack_valid() {
 fn pack_unpack_invalid() {
     assert!(matches!(
         TreasuryOutput::unpack_verified(&mut vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a].as_slice()),
-        Err(UnpackError::Packable(Error::InvalidTreasuryAmount(InvalidBoundedU64(
-            3_038_287_259_199_220_266
-        ))))
+        Err(UnpackError::Packable(Error::InvalidTreasuryOutputAmount(
+            InvalidBoundedU64(3_038_287_259_199_220_266)
+        )))
     ));
 }

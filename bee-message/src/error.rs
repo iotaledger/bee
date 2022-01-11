@@ -6,7 +6,7 @@ use crate::{
     output::{
         feature_block::FeatureBlockCount, AliasId, DustDepositAmount, ImmutableMetadataLength,
         IndexationFeatureBlockLength, InputOutputIndex, MetadataFeatureBlockLength, NativeTokenCount, NftId,
-        SimpleOutputAmount, StateMetadataLength, TreasuryAmount,
+        SimpleOutputAmount, StateMetadataLength, TreasuryOutputAmount,
     },
     parent::ParentCount,
     payload::{
@@ -68,7 +68,7 @@ pub enum Error {
     InvalidSignatureKind(u8),
     InvalidTailTransactionHash,
     InvalidTokenSchemeKind(u8),
-    InvalidTreasuryAmount(<TreasuryAmount as TryFrom<u64>>::Error),
+    InvalidTreasuryOutputAmount(<TreasuryOutputAmount as TryFrom<u64>>::Error),
     InvalidUnlockBlockCount(<UnlockBlockCount as TryFrom<usize>>::Error),
     InvalidUnlockBlockKind(u8),
     InvalidUnlockBlockReference(u16),
@@ -180,7 +180,7 @@ impl fmt::Display for Error {
             Error::InvalidSignatureKind(k) => write!(f, "invalid signature kind: {}.", k),
             Error::InvalidTailTransactionHash => write!(f, "invalid tail transaction hash."),
             Error::InvalidTokenSchemeKind(k) => write!(f, "invalid token scheme kind {}.", k),
-            Error::InvalidTreasuryAmount(amount) => write!(f, "invalid treasury amount: {}.", amount),
+            Error::InvalidTreasuryOutputAmount(amount) => write!(f, "invalid treasury amount: {}.", amount),
             Error::InvalidUnlockBlockCount(count) => write!(f, "invalid unlock block count: {}.", count),
             Error::InvalidUnlockBlockKind(k) => write!(f, "invalid unlock block kind: {}.", k),
             Error::InvalidUnlockBlockReference(index) => {

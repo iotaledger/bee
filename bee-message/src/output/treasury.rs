@@ -7,15 +7,15 @@ use bee_packable::bounded::BoundedU64;
 
 use core::ops::RangeInclusive;
 
-pub(crate) type TreasuryAmount =
+pub(crate) type TreasuryOutputAmount =
     BoundedU64<{ *TreasuryOutput::AMOUNT_RANGE.start() }, { *TreasuryOutput::AMOUNT_RANGE.end() }>;
 
 /// [`TreasuryOutput`] is an output which holds the treasury of a network.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = Error, with = Error::InvalidTreasuryAmount)]
+#[packable(unpack_error = Error, with = Error::InvalidTreasuryOutputAmount)]
 pub struct TreasuryOutput {
-    amount: TreasuryAmount,
+    amount: TreasuryOutputAmount,
 }
 
 impl TreasuryOutput {
@@ -29,7 +29,7 @@ impl TreasuryOutput {
         amount
             .try_into()
             .map(|amount| Self { amount })
-            .map_err(Error::InvalidTreasuryAmount)
+            .map_err(Error::InvalidTreasuryOutputAmount)
     }
 
     /// Returns the amount of a [`TreasuryOutput`].
