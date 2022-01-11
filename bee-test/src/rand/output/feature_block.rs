@@ -8,13 +8,10 @@ use crate::rand::{
     number::{rand_number, rand_number_range},
 };
 
-use bee_message::{
-    constant::{DUST_DEPOSIT_MIN, IOTA_SUPPLY},
-    output::feature_block::{
-        DustDepositReturnFeatureBlock, ExpirationMilestoneIndexFeatureBlock, ExpirationUnixFeatureBlock, FeatureBlock,
-        FeatureBlockFlags, IndexationFeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock,
-        TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
-    },
+use bee_message::output::feature_block::{
+    DustDepositReturnFeatureBlock, ExpirationMilestoneIndexFeatureBlock, ExpirationUnixFeatureBlock, FeatureBlock,
+    FeatureBlockFlags, IndexationFeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock,
+    TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
 };
 
 /// Generates a random [`SenderFeatureBlock`].
@@ -29,7 +26,7 @@ pub fn rand_issuer_feature_block() -> IssuerFeatureBlock {
 
 /// Generates a random [`DustDepositReturnFeatureBlock`].
 pub fn rand_dust_deposit_return_feature_block() -> DustDepositReturnFeatureBlock {
-    DustDepositReturnFeatureBlock::new(rand_number_range(DUST_DEPOSIT_MIN..IOTA_SUPPLY)).unwrap()
+    DustDepositReturnFeatureBlock::new(rand_number_range(DustDepositReturnFeatureBlock::AMOUNT_RANGE)).unwrap()
 }
 
 /// Generates a random [`TimelockMilestoneIndexFeatureBlock`].
@@ -54,13 +51,13 @@ pub fn rand_expiration_unix_feature_block() -> ExpirationUnixFeatureBlock {
 
 /// Generates a random [`MetadataFeatureBlock`].
 pub fn rand_metadata_feature_block() -> MetadataFeatureBlock {
-    let bytes = rand_bytes(rand_number_range(1..MetadataFeatureBlock::LENGTH_MAX));
+    let bytes = rand_bytes(rand_number_range(MetadataFeatureBlock::LENGTH_RANGE));
     MetadataFeatureBlock::new(&bytes).unwrap()
 }
 
 /// Generates a random [`IndexationFeatureBlock`].
 pub fn rand_indexation_feature_block() -> IndexationFeatureBlock {
-    let bytes = rand_bytes(rand_number_range(1..IndexationFeatureBlock::LENGTH_MAX));
+    let bytes = rand_bytes(rand_number_range(IndexationFeatureBlock::LENGTH_RANGE));
     IndexationFeatureBlock::new(&bytes).unwrap()
 }
 
