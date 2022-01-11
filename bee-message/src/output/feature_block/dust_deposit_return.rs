@@ -1,9 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{constant::DUST_DEPOSIT_MIN, Error};
+use crate::{
+    constant::{DUST_DEPOSIT_MIN, IOTA_SUPPLY},
+    Error,
+};
 
 use bee_common::packable::{Packable, Read, Write};
+
+use core::ops::RangeInclusive;
 
 /// Defines the amount of IOTAs used as dust deposit that have to be returned to the sender
 /// [`Address`](crate::address::Address).
@@ -28,6 +33,8 @@ impl TryFrom<u64> for DustDepositReturnFeatureBlock {
 impl DustDepositReturnFeatureBlock {
     /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of a [`DustDepositReturnFeatureBlock`].
     pub const KIND: u8 = 2;
+    /// Valid amounts for a [`DustDepositReturnFeatureBlock`].
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = DUST_DEPOSIT_MIN..=IOTA_SUPPLY;
 
     /// Creates a new [`DustDepositReturnFeatureBlock`].
     #[inline(always)]
@@ -68,7 +75,7 @@ impl Packable for DustDepositReturnFeatureBlock {
 
 #[inline]
 fn validate_amount(amount: u64) -> Result<(), Error> {
-    if amount < DUST_DEPOSIT_MIN {
+    if !DustDepositReturnFeatureBlock::AMOUNT_RANGE.contains(&amount) {
         return Err(Error::InvalidDustDepositAmount(amount));
     }
 
