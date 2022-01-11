@@ -30,7 +30,7 @@ pub enum Address {
     Ed25519(Ed25519Address),
     /// An alias address.
     Alias(AliasAddress),
-    /// A NFT address.
+    /// An NFT address.
     Nft(NftAddress),
 }
 
