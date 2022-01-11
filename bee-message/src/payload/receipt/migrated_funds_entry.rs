@@ -41,7 +41,7 @@ impl MigratedFundsEntry {
         &self.tail_transaction_hash
     }
 
-    /// Returns the output of a [`MigratedFundsEntry`]._
+    /// Returns the output of a [`MigratedFundsEntry`].
     pub fn output(&self) -> &SimpleOutput {
         &self.output
     }
