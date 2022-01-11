@@ -6,14 +6,7 @@ use crate::{
     MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{
-    bounded::BoundedU16,
-    error::{UnpackError, UnpackErrorExt},
-    packer::Packer,
-    prefix::VecPrefix,
-    unpacker::Unpacker,
-    Packable,
-};
+use bee_packable::{bounded::BoundedU16, prefix::VecPrefix, Packable};
 
 use hashbrown::HashSet;
 
@@ -31,9 +24,14 @@ pub(crate) type UnlockBlockCount =
 ///   collection.
 /// * Ensure [`ReferenceUnlock`](crate::unlock::ReferenceUnlock) blocks specify a previous existing.
 /// [`SignatureUnlock`](crate::unlock::SignatureUnlock) block.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct UnlockBlocks(VecPrefix<UnlockBlock, UnlockBlockCount>);
+#[packable(unpack_error = MessageUnpackError)]
+pub struct UnlockBlocks(
+    #[packable(verify_with = validate_unlock_block_variants)]
+    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| ValidationError::InvalidUnlockBlockCount(p.into())))]
+    VecPrefix<UnlockBlock, UnlockBlockCount>,
+);
 
 impl UnlockBlocks {
     /// Creates a new [`UnlockBlocks`].
@@ -41,7 +39,7 @@ impl UnlockBlocks {
         let unlock_blocks = VecPrefix::<UnlockBlock, UnlockBlockCount>::try_from(unlock_blocks)
             .map_err(ValidationError::InvalidUnlockBlockCount)?;
 
-        validate_unlock_block_variants(&unlock_blocks)?;
+        validate_unlock_block_variants::<true>(&unlock_blocks)?;
 
         Ok(Self(unlock_blocks))
     }
@@ -65,29 +63,7 @@ impl Deref for UnlockBlocks {
     }
 }
 
-impl Packable for UnlockBlocks {
-    type UnpackError = MessageUnpackError;
-
-    #[inline(always)]
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.0.pack(packer)
-    }
-
-    fn unpack<U: Unpacker, const VERIFY: bool>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let inner =
-            VecPrefix::<UnlockBlock, UnlockBlockCount>::unpack::<_, VERIFY>(unpacker).map_packable_err(|err| {
-                err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidUnlockBlockCount(prefix_err.into()))
-            })?;
-
-        validate_unlock_block_variants(&inner).map_err(UnpackError::from_packable)?;
-
-        Ok(Self(inner))
-    }
-}
-
-fn validate_unlock_block_variants(unlock_blocks: &[UnlockBlock]) -> Result<(), ValidationError> {
+fn validate_unlock_block_variants<const VERIFY: bool>(unlock_blocks: &[UnlockBlock]) -> Result<(), ValidationError> {
     let mut seen = HashSet::new();
 
     for (idx, unlock_block) in unlock_blocks.iter().enumerate() {

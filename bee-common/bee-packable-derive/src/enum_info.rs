@@ -5,8 +5,7 @@ use crate::{
     parse::filter_attrs, tag_type_info::TagTypeInfo, unpack_error_info::UnpackErrorInfo, variant_info::VariantInfo,
 };
 
-use quote::quote;
-use syn::{parse2, Attribute, DataEnum, Ident, Result, Type};
+use syn::{parse_quote, Attribute, DataEnum, Ident, Result, Type};
 
 pub(crate) struct EnumInfo {
     pub(crate) unpack_error: UnpackErrorInfo,
@@ -15,7 +14,7 @@ pub(crate) struct EnumInfo {
 }
 
 impl EnumInfo {
-    pub(crate) fn new(ident: Ident, data: DataEnum, attrs: &[Attribute]) -> Result<Self> {
+    pub(crate) fn new(ident: Ident, data: DataEnum, attrs: &[Attribute], crate_name: &Ident) -> Result<Self> {
         let repr_type = attrs
             .iter()
             .find(|attr| attr.path.is_ident("repr"))
@@ -24,12 +23,13 @@ impl EnumInfo {
 
         let filtered_attrs = filter_attrs(attrs);
 
-        let tag_type = TagTypeInfo::new(&ident, filtered_attrs.clone(), &repr_type)?;
+        let tag_type = TagTypeInfo::new(&ident, filtered_attrs.clone(), &repr_type, crate_name)?;
         let tag_ty = &tag_type.tag_type;
 
-        let unpack_error = UnpackErrorInfo::new(filtered_attrs, || {
-            parse2(quote!(bee_packable::error::UnknownTagError<#tag_ty>))
-        })?;
+        let unpack_error = UnpackErrorInfo::new(
+            filtered_attrs,
+            || parse_quote!(#crate_name::error::UnknownTagError<#tag_ty>),
+        )?;
 
         let variants_info = data
             .variants

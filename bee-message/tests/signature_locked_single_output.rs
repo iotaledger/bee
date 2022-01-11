@@ -7,7 +7,7 @@ use bee_message::{
     output::SignatureLockedSingleOutput,
     IOTA_SUPPLY,
 };
-use bee_packable::{error::UnpackError, PackableExt};
+use bee_packable::{bounded::InvalidBoundedU64, error::UnpackError, PackableExt};
 
 use core::str::FromStr;
 
@@ -40,7 +40,7 @@ fn new_valid_max_amount() {
 fn new_invalid_less_than_min_amount() {
     assert!(matches!(
         SignatureLockedSingleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 0),
-        Err(ValidationError::InvalidAmount(0))
+        Err(ValidationError::InvalidAmount(InvalidBoundedU64(0)))
     ));
 }
 
@@ -51,7 +51,7 @@ fn new_invalid_more_than_max_amount() {
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             3_333_333_333_333_333
         ),
-        Err(ValidationError::InvalidAmount(3_333_333_333_333_333))
+        Err(ValidationError::InvalidAmount(InvalidBoundedU64(3_333_333_333_333_333)))
     ));
 }
 
@@ -63,7 +63,7 @@ fn unpack_invalid_amount() {
             123, 187, 4, 7, 209, 226, 198, 73, 0, 0, 0, 0, 0, 0, 0, 0,
         ]),
         Err(UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidAmount(0)
+            ValidationError::InvalidAmount(InvalidBoundedU64(0))
         ))),
     ));
 }

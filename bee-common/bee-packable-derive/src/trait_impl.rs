@@ -16,17 +16,18 @@ pub(crate) struct TraitImpl {
     unpack_error: TokenStream,
     pack: TokenStream,
     unpack: TokenStream,
+    crate_name: Ident,
 }
 
 impl TraitImpl {
-    pub(crate) fn new(input: DeriveInput) -> syn::Result<Self> {
+    pub(crate) fn new(input: DeriveInput, crate_name: Ident) -> syn::Result<Self> {
         match input.data {
             Data::Struct(data) => {
-                let info = StructInfo::new(input.ident.clone().into(), &data.fields, &input.attrs)?;
+                let info = StructInfo::new(input.ident.clone().into(), &data.fields, &input.attrs, &crate_name)?;
 
                 let unpack_error = info.unpack_error.unpack_error.clone().into_token_stream();
 
-                let Fragments { pattern, pack, unpack }: Fragments = Fragments::new(info.inner);
+                let Fragments { pattern, pack, unpack }: Fragments = Fragments::new(info.inner, &crate_name);
 
                 Ok(Self {
                     ident: input.ident,
@@ -37,11 +38,12 @@ impl TraitImpl {
                         #pack
                     },
                     unpack,
+                    crate_name,
                 })
             }
             Data::Enum(data) => {
                 let enum_ident = &input.ident;
-                let info = EnumInfo::new(enum_ident.clone(), data, &input.attrs)?;
+                let info = EnumInfo::new(enum_ident.clone(), data, &input.attrs, &crate_name)?;
 
                 let TagTypeInfo {
                     tag_type,
@@ -59,7 +61,7 @@ impl TraitImpl {
                 for (index, VariantInfo { tag, inner }) in info.variants_info.into_iter().enumerate() {
                     let variant_ident = inner.path.segments.last().unwrap().clone();
 
-                    let Fragments { pattern, pack, unpack } = Fragments::new(inner);
+                    let Fragments { pattern, pack, unpack } = Fragments::new(inner, &crate_name);
 
                     // @pvdrz: The span here is very important, otherwise the compiler won't detect
                     // unreachable patterns in the generated code for some reason. I think this is related
@@ -67,7 +69,7 @@ impl TraitImpl {
                     let tag_ident = format_ident!("__TAG_{}", index, span = tag.span());
 
                     pack_arms.push(quote!(#pattern => {
-                        <#tag_type as bee_packable::Packable>::pack(&#tag, packer)?;
+                        <#tag_type as #crate_name::Packable>::pack(&#tag, packer)?;
                         #pack
                     }));
 
@@ -104,11 +106,12 @@ impl TraitImpl {
                         #(#tag_decls)*
                         #(#tag_asserts)*
 
-                        match <#tag_type as bee_packable::Packable>::unpack::<_, VERIFY>(unpacker).infallible()? {
+                        match <#tag_type as #crate_name::Packable>::unpack::<_, VERIFY>(unpacker).infallible()? {
                             #(#unpack_arms)*
-                            tag => Err(bee_packable::error::UnpackError::from_packable(#tag_with_error(tag)))
+                            tag => Err(#crate_name::error::UnpackError::from_packable(#tag_with_error(tag)))
                         }
                     },
+                    crate_name,
                 })
             }
             Data::Union(_) => Err(syn::Error::new(
@@ -127,21 +130,22 @@ impl ToTokens for TraitImpl {
             unpack_error,
             pack,
             unpack,
+            crate_name,
         } = &self;
 
         let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
         let impl_tokens = quote! {
-            impl #impl_generics bee_packable::Packable for #type_name #ty_generics #where_clause {
+            impl #impl_generics #crate_name::Packable for #type_name #ty_generics #where_clause {
                 type UnpackError = #unpack_error;
 
-                fn pack<P: bee_packable::packer::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-                    use bee_packable::error::UnpackErrorExt;
+                fn pack<P: #crate_name::packer::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+                    use #crate_name::error::UnpackErrorExt;
                     #pack
                 }
 
-                fn unpack<U: bee_packable::unpacker::Unpacker, const VERIFY: bool>(unpacker: &mut U) -> Result<Self, bee_packable::error::UnpackError<Self::UnpackError, U::Error>> {
-                    use bee_packable::error::UnpackErrorExt;
+                fn unpack<U: #crate_name::unpacker::Unpacker, const VERIFY: bool>(unpacker: &mut U) -> Result<Self, #crate_name::error::UnpackError<Self::UnpackError, U::Error>> {
+                    use #crate_name::error::UnpackErrorExt;
                     #unpack
                 }
             }

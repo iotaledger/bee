@@ -103,8 +103,9 @@ impl Packable for Flags {
 }
 
 /// Additional data that describes the local perception of a message which is not part of the Tangle.
-#[derive(Clone, Default, Debug, Eq, PartialEq)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = MessageUnpackError)]
 pub struct MessageMetadata {
     /// The flags describing the message state.
     flags: Flags,
@@ -175,35 +176,5 @@ impl MessageMetadata {
     /// Sets the opinion of the [`MessageMetadata`].
     pub fn set_opinion(&mut self, opinion: Opinion) {
         self.opinion = opinion;
-    }
-}
-
-impl Packable for MessageMetadata {
-    type UnpackError = MessageUnpackError;
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.flags.pack(packer)?;
-        self.received_timestamp.pack(packer)?;
-        self.solidification_timestamp.pack(packer)?;
-        self.branch_id.pack(packer)?;
-        self.opinion.pack(packer)
-    }
-
-    fn unpack<U: Unpacker, const VERIFY: bool>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let flags = Flags::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let received_timestamp = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let solidification_timestamp = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let branch_id = <[u8; 32]>::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let opinion = Opinion::unpack::<_, VERIFY>(unpacker)?;
-
-        Ok(Self {
-            flags,
-            received_timestamp,
-            solidification_timestamp,
-            branch_id,
-            opinion,
-        })
     }
 }

@@ -21,6 +21,7 @@ path = "tests/lib.rs"
 development = [ "bee-packable" ]
 
 [dependencies]
+proc-macro-crate = { version = "1.1.0", default-features = false }
 proc-macro-error = { version = "1.0.4", default-features = false, features = [ "syn-error" ] }
 proc-macro2 = { version = "1.0.30", default-features = false }
 quote = { version = "1.0.10", default-features = false }

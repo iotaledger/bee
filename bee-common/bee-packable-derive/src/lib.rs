@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! This crate provides the [`Packable`] derive macro.
+//! This crate provides the `Packable` derive macro.
 
 #![deny(missing_docs)]
 
@@ -16,19 +16,21 @@ mod trait_impl;
 mod unpack_error_info;
 mod variant_info;
 
+use proc_macro2::Span;
 use trait_impl::TraitImpl;
 
 use proc_macro::TokenStream;
+use proc_macro_crate::{crate_name, FoundCrate};
 use proc_macro_error::{abort, proc_macro_error};
 use quote::ToTokens;
-use syn::parse_macro_input;
+use syn::{parse_macro_input, Ident};
 
-/// The [`Packable`] derive macro.
+/// The `Packable` derive macro.
 ///
 /// # Example
 ///
-/// We will implement [`Packable`] for the `Maybe` type described in the example that can be found
-/// in the [`Packable`] trait documentation.
+/// We will implement `Packable` for the `Maybe` type described in the example that can be found
+/// in the `Packable` trait documentation.
 /// ```rust
 /// use bee_packable::Packable;
 ///
@@ -41,7 +43,8 @@ use syn::parse_macro_input;
 ///     Just(i32),
 /// }
 /// ```
-/// The code produced by this macro is equivalent to the one shown in the [`Packable`] example.
+/// The code produced by this macro is equivalent to the one shown in the `Packable` example.
+/// Additional examples can be found in the test suite for this crate.
 ///
 /// # Attributes
 ///
@@ -49,7 +52,7 @@ use syn::parse_macro_input;
 ///
 /// ## Tags for enums
 ///
-/// A very common pattern when implementing [`Packable`] for enums consists in introducing a prefix
+/// A very common pattern when implementing `Packable` for enums consists in introducing a prefix
 /// value to differentiate each variant of the enumeration when unpacking, this prefix value is
 /// known as a `tag`. The type of the `tag` is specified with the `#[packable(tag_type = ...)]`
 /// attribute and it can only be one of `u8`, `u16`, `u32` or `u64`. The `tag` value used for each
@@ -96,12 +99,30 @@ use syn::parse_macro_input;
 /// The error produced when an invalid `tag` is found while unpacking an `enum` can also be
 /// specified using the `with_error` optional argument for the `tag_type` attribute:
 /// `#[packable(tag_type = ..., with_error = ...)]`. This argument must be a valid Rust expression.
+///
+/// ## Additional semantic verifications
+///
+/// From time to time it is required to do additional semantic verifications over one of more
+/// fields of a `struct` or an `enum`'s variant. This can be done using the
+/// `#[packable(verify_with = ...)]` attribute which must receive a valid Rust path refering to a
+/// function with the signature
+/// ```no_run
+/// fn<const VERIFY: bool>(field: &F) -> Result<(), P::UnpackError>
+/// ```
+/// where `F` is the type of the field being verified, `P` is the type of the `struct` or `enum`
+/// and `VERIFY` is the same constant parameter used inside `Packable::unpack`. This verification
+/// function will be run immediately after unpacking the field.
 #[proc_macro_error]
 #[proc_macro_derive(Packable, attributes(packable))]
 pub fn packable(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input);
 
-    match TraitImpl::new(input) {
+    let crate_string = match crate_name("bee-packable").expect("bee-packable should be present in `Cargo.toml`") {
+        FoundCrate::Itself => "crate".to_owned(),
+        FoundCrate::Name(name) => name,
+    };
+
+    match TraitImpl::new(input, Ident::new(&crate_string, Span::call_site())) {
         Ok(trait_impl) => trait_impl.into_token_stream().into(),
         Err(err) => abort!(err),
     }

@@ -1,0 +1,9 @@
+error[E0308]: mismatched types
+  --> tests/fail/invalid_field_type_verify_with.rs:33:10
+   |
+33 | #[derive(Packable)]
+   |          ^^^^^^^^ expected `u64`, found `u8`
+   |
+   = note: expected reference `&u64`
+              found reference `&u8`
+   = note: this error originates in the derive macro `Packable` (in Nightly builds, run with -Z macro-backtrace for more info)

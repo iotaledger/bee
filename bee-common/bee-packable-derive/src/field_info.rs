@@ -1,11 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::parse::{filter_attrs, parse_kv};
+use crate::parse::{filter_attrs, parse_kv, skip_stream};
 
 use proc_macro2::Span;
 use quote::{format_ident, ToTokens};
-use syn::{parse::ParseStream, Expr, Field, Ident, Index, Result, Type};
+use syn::{parse::ParseStream, Expr, Field, Ident, Index, Path, Result, Type};
 
 pub(crate) enum IdentOrIndex {
     Ident(Ident),
@@ -23,6 +23,7 @@ impl ToTokens for IdentOrIndex {
 
 pub(crate) struct FieldInfo {
     pub(crate) unpack_error_with: Expr,
+    pub(crate) verify_with: Option<Path>,
     pub(crate) pattern_ident: IdentOrIndex,
     pub(crate) ident: Ident,
     pub(crate) ty: Type,
@@ -40,20 +41,34 @@ impl FieldInfo {
 
         let ident = format_ident!("field_{}", index);
 
+        let mut unpack_error_with_opt = None;
+        let mut verify_with_opt = None;
+
         for attr in filter_attrs(&field.attrs) {
-            if let Some(unpack_error_with) =
-                attr.parse_args_with(|stream: ParseStream| parse_kv("unpack_error_with", stream))?
-            {
-                return Ok(Self {
-                    unpack_error_with,
-                    ident,
-                    pattern_ident,
-                    ty: field.ty.clone(),
-                });
+            if let Some(verify_with) = attr.parse_args_with(|stream: ParseStream| {
+                let opt = parse_kv("verify_with", stream)?;
+                if opt.is_none() {
+                    skip_stream(stream)?;
+                }
+                Ok(opt)
+            })? {
+                verify_with_opt = Some(verify_with);
+            }
+
+            if let Some(unpack_error_with) = attr.parse_args_with(|stream: ParseStream| {
+                let opt = parse_kv("unpack_error_with", stream)?;
+                if opt.is_none() {
+                    skip_stream(stream)?;
+                }
+                Ok(opt)
+            })? {
+                unpack_error_with_opt = Some(unpack_error_with);
             }
         }
+
         Ok(Self {
-            unpack_error_with: default_unpack_error_with.clone(),
+            unpack_error_with: unpack_error_with_opt.unwrap_or_else(|| default_unpack_error_with.clone()),
+            verify_with: verify_with_opt,
             ident,
             pattern_ident,
             ty: field.ty.clone(),

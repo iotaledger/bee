@@ -51,6 +51,7 @@ fn validate_ident(ident: &Ident) -> Result<()> {
         "tag",
         "with",
         "with_error",
+        "verify_with",
     ];
 
     if KNOWN_IDENTS.iter().any(|known_ident| ident == known_ident) {
