@@ -64,7 +64,10 @@ impl Packable for MilestoneDiff {
                 milestone_id.pack(packer)?;
                 treasury_output.pack(packer)?;
             } else {
-                todo!()
+                // This never happens because `MilestoneDiff` values can only be created by
+                // unpacking them and the `unpack` implementation guarantees that the
+                // `consumed_treasury` field is some if the receipt is some.
+                unreachable!()
             }
         }
 
