@@ -46,7 +46,7 @@ pub enum UnlockBlock {
     Reference(ReferenceUnlockBlock),
     /// An alias unlock block.
     Alias(AliasUnlockBlock),
-    /// A NFT unlock block.
+    /// An NFT unlock block.
     Nft(NftUnlockBlock),
 }
 

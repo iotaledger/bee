@@ -66,7 +66,7 @@ pub enum Output {
     Alias(AliasOutput),
     /// A foundry output.
     Foundry(FoundryOutput),
-    /// A NFT output.
+    /// An NFT output.
     Nft(NftOutput),
 }
 

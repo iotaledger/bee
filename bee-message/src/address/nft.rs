@@ -9,14 +9,14 @@ use derive_more::{AsRef, Deref, From};
 
 use core::str::FromStr;
 
-/// A NFT address.
+/// An NFT address.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, Deref)]
 #[as_ref(forward)]
 pub struct NftAddress(NftId);
 
 #[allow(clippy::len_without_is_empty)]
 impl NftAddress {
-    /// The [`Address`](crate::address::Address) kind of a NFT address.
+    /// The [`Address`](crate::address::Address) kind of an NFT address.
     pub const KIND: u8 = 16;
     /// The length of a [`NftAddress`].
     pub const LENGTH: usize = 20;
