@@ -219,12 +219,12 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
         let inputs = value
             .inputs
             .iter()
-            .map(|i| i.try_into())
+            .map(TryInto::try_into)
             .collect::<Result<Vec<Input>, Self::Error>>()?;
         let outputs = value
             .outputs
             .iter()
-            .map(|o| o.try_into())
+            .map(TryInto::try_into)
             .collect::<Result<Vec<Output>, Self::Error>>()?;
 
         let payload = if let Some(p) = &value.payload {
