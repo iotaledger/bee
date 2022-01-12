@@ -394,8 +394,8 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
 
 impl Serialize for OutputDto {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         #[derive(Serialize)]
         #[serde(untagged)]
