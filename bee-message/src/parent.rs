@@ -6,14 +6,7 @@
 use crate::{Error, MessageId};
 
 use bee_common::ord::is_unique_sorted;
-use bee_packable::{
-    bounded::BoundedU8,
-    error::{UnpackError, UnpackErrorExt},
-    packer::Packer,
-    prefix::BoxedSlicePrefix,
-    unpacker::Unpacker,
-    Packable,
-};
+use bee_packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
 use derive_more::Deref;
 
@@ -27,10 +20,11 @@ pub(crate) type ParentCount = BoundedU8<{ *Parents::COUNT_RANGE.start() }, { *Pa
 /// * in the `Parents::COUNT_RANGE` range;
 /// * lexicographically sorted;
 /// * unique;
-#[derive(Clone, Debug, Eq, PartialEq, Deref)]
+#[derive(Clone, Debug, Eq, PartialEq, Deref, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[deref(forward)]
-pub struct Parents(BoxedSlicePrefix<MessageId, ParentCount>);
+#[packable(unpack_error = Error, with = |e| Error::InvalidParentCount(e.into_prefix().into()))]
+pub struct Parents(#[packable(verify_with = validate_parents)] BoxedSlicePrefix<MessageId, ParentCount>);
 
 #[allow(clippy::len_without_is_empty)]
 impl Parents {
@@ -42,13 +36,7 @@ impl Parents {
         let inner: BoxedSlicePrefix<MessageId, ParentCount> =
             inner.into_boxed_slice().try_into().map_err(Error::InvalidParentCount)?;
 
-        Self::from_boxed_slice::<true>(inner)
-    }
-
-    fn from_boxed_slice<const VERIFY: bool>(inner: BoxedSlicePrefix<MessageId, ParentCount>) -> Result<Self, Error> {
-        if VERIFY && !is_unique_sorted(inner.iter().map(AsRef::as_ref)) {
-            return Err(Error::ParentsNotUniqueSorted);
-        }
+        validate_parents::<true>(&inner)?;
 
         Ok(Self(inner))
     }
@@ -64,19 +52,10 @@ impl Parents {
     }
 }
 
-impl Packable for Parents {
-    type UnpackError = Error;
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.0.pack(packer)
-    }
-
-    fn unpack<U: Unpacker, const VERIFY: bool>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let inner = BoxedSlicePrefix::<MessageId, ParentCount>::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| Error::InvalidParentCount(err.into_prefix().into()))?;
-
-        Self::from_boxed_slice::<VERIFY>(inner).map_err(UnpackError::Packable)
+fn validate_parents<const VERIFY: bool>(parents: &[MessageId]) -> Result<(), Error> {
+    if VERIFY && !is_unique_sorted(parents.iter().map(AsRef::as_ref)) {
+        Err(Error::ParentsNotUniqueSorted)
+    } else {
+        Ok(())
     }
 }
