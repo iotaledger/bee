@@ -9,22 +9,10 @@ mod tail_transaction_hash;
 pub use migrated_funds_entry::MigratedFundsEntry;
 pub use tail_transaction_hash::TailTransactionHash;
 
-use crate::{
-    milestone::MilestoneIndex,
-    output::OUTPUT_COUNT_RANGE,
-    payload::{OptionalPayload, Payload},
-    Error,
-};
+use crate::{milestone::MilestoneIndex, output::OUTPUT_COUNT_RANGE, payload::Payload, Error};
 
 use bee_common::ord::is_unique_sorted;
-use bee_packable::{
-    bounded::BoundedU16,
-    error::{UnpackError, UnpackErrorExt},
-    packer::Packer,
-    prefix::VecPrefix,
-    unpacker::Unpacker,
-    Packable, PackableExt,
-};
+use bee_packable::{bounded::BoundedU16, prefix::VecPrefix, Packable, PackableExt};
 
 use core::ops::RangeInclusive;
 use std::collections::HashMap;
@@ -35,12 +23,16 @@ pub(crate) type ReceiptFundsCount =
     BoundedU16<{ *MIGRATED_FUNDS_ENTRY_RANGE.start() }, { *MIGRATED_FUNDS_ENTRY_RANGE.end() }>;
 
 /// Receipt is a listing of migrated funds.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = Error)]
 pub struct ReceiptPayload {
     migrated_at: MilestoneIndex,
     last: bool,
+    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| Error::InvalidReceiptFundsCount(p.into())))]
+    #[packable(verify_with = validate_funds)]
     funds: VecPrefix<MigratedFundsEntry, ReceiptFundsCount>,
+    #[packable(verify_with = validate_transaction)]
     transaction: Payload,
 }
 
@@ -58,33 +50,8 @@ impl ReceiptPayload {
         let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::try_from(funds)
             .map_err(Error::InvalidReceiptFundsCount)?;
 
-        Self::from_vec_prefix(migrated_at, last, funds, transaction)
-    }
-
-    fn from_vec_prefix(
-        migrated_at: MilestoneIndex,
-        last: bool,
-        funds: VecPrefix<MigratedFundsEntry, ReceiptFundsCount>,
-        transaction: Payload,
-    ) -> Result<Self, Error> {
-        if !matches!(transaction, Payload::TreasuryTransaction(_)) {
-            return Err(Error::InvalidPayloadKind(transaction.kind()));
-        }
-
-        // Funds must be lexicographically sorted and unique in their serialised forms.
-        if !is_unique_sorted(funds.iter().map(PackableExt::pack_to_vec)) {
-            return Err(Error::ReceiptFundsNotUniqueSorted);
-        }
-
-        let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
-        for (index, funds) in funds.iter().enumerate() {
-            if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash().as_ref(), index) {
-                return Err(Error::TailTransactionHashNotUnique {
-                    previous,
-                    current: index,
-                });
-            }
-        }
+        validate_transaction::<true>(&transaction)?;
+        validate_funds::<true>(&funds)?;
 
         Ok(Self {
             migrated_at,
@@ -120,30 +87,29 @@ impl ReceiptPayload {
     }
 }
 
-impl Packable for ReceiptPayload {
-    type UnpackError = Error;
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.migrated_at.pack(packer)?;
-        self.last.pack(packer)?;
-        self.funds.pack(packer)?;
-        OptionalPayload::pack_ref(&self.transaction, packer)?;
-
-        Ok(())
+fn validate_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<(), Error> {
+    // Funds must be lexicographically sorted and unique in their serialised forms.
+    if !is_unique_sorted(funds.iter().map(PackableExt::pack_to_vec)) {
+        return Err(Error::ReceiptFundsNotUniqueSorted);
     }
 
-    fn unpack<U: Unpacker, const VERIFY: bool>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let migrated_at = MilestoneIndex::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let last = bool::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| {
-                err.unwrap_packable_or_else(|prefix_err| Error::InvalidReceiptFundsCount(prefix_err.into()))
-            })?;
-        let transaction = Into::<Option<Payload>>::into(OptionalPayload::unpack::<_, VERIFY>(unpacker)?)
-            .ok_or(UnpackError::Packable(Error::MissingPayload))?;
+    let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
+    for (index, funds) in funds.iter().enumerate() {
+        if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash().as_ref(), index) {
+            return Err(Error::TailTransactionHashNotUnique {
+                previous,
+                current: index,
+            });
+        }
+    }
 
-        Self::from_vec_prefix(migrated_at, last, funds, transaction).map_err(UnpackError::Packable)
+    Ok(())
+}
+
+fn validate_transaction<const VERIFY: bool>(transaction: &Payload) -> Result<(), Error> {
+    if !matches!(transaction, Payload::TreasuryTransaction(_)) {
+        Err(Error::InvalidPayloadKind(transaction.kind()))
+    } else {
+        Ok(())
     }
 }
