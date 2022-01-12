@@ -1,3 +1,6 @@
+# We can get rid of this once Rust 1.58 lands
+cargo-features = ["strip"]
+
 [workspace]
 members = [
 	"bee-api/bee-rest-api",
@@ -10,3 +13,11 @@ panic = "abort"
 
 [profile.release]
 panic = "abort"
+
+[profile.min-size]
+inherits = "release"
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
