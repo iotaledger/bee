@@ -8,10 +8,10 @@ use bee_packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix};
 use core::ops::RangeInclusive;
 
 pub(crate) type IndexationFeatureBlockLength =
-    BoundedU8<{ *IndexationFeatureBlock::LENGTH_RANGE.start() }, { *IndexationFeatureBlock::LENGTH_RANGE.end() }>;
+BoundedU8<{ *IndexationFeatureBlock::LENGTH_RANGE.start() }, { *IndexationFeatureBlock::LENGTH_RANGE.end() }>;
 
 /// Defines an indexation tag to which the output will be indexed.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = |e| Error::InvalidIndexationFeatureBlockLength(e.into_prefix().into()))]
 pub struct IndexationFeatureBlock(
@@ -47,5 +47,17 @@ impl IndexationFeatureBlock {
     #[inline(always)]
     pub fn tag(&self) -> &[u8] {
         &self.0
+    }
+}
+
+impl core::fmt::Display for IndexationFeatureBlock {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", hex::encode(&self.0))
+    }
+}
+
+impl core::fmt::Debug for IndexationFeatureBlock {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "IndexationFeatureBlock({})", self)
     }
 }

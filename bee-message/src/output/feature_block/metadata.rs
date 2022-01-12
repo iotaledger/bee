@@ -8,10 +8,10 @@ use bee_packable::{bounded::BoundedU32, prefix::BoxedSlicePrefix};
 use core::ops::RangeInclusive;
 
 pub(crate) type MetadataFeatureBlockLength =
-    BoundedU32<{ *MetadataFeatureBlock::LENGTH_RANGE.start() }, { *MetadataFeatureBlock::LENGTH_RANGE.end() }>;
+BoundedU32<{ *MetadataFeatureBlock::LENGTH_RANGE.start() }, { *MetadataFeatureBlock::LENGTH_RANGE.end() }>;
 
 /// Defines metadata, arbitrary binary data, that will be stored in the output.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = |err| Error::InvalidMetadataFeatureBlockLength(err.into_prefix().into()))]
 pub struct MetadataFeatureBlock(
@@ -47,5 +47,17 @@ impl MetadataFeatureBlock {
     #[inline(always)]
     pub fn data(&self) -> &[u8] {
         &self.0
+    }
+}
+
+impl core::fmt::Display for MetadataFeatureBlock {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", hex::encode(&self.0))
+    }
+}
+
+impl core::fmt::Debug for MetadataFeatureBlock {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "MetadataFeatureBlock({})", self)
     }
 }
