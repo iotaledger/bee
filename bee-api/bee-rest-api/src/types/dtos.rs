@@ -368,23 +368,23 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
             {
                 TreasuryOutput::KIND => OutputDto::Treasury(
                     TreasuryOutputDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize treasury output: {}", e)))?,
+                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize treasury output: {}", e)))?,
                 ),
                 ExtendedOutput::KIND => OutputDto::Extended(
                     ExtendedOutputDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize extended output: {}", e)))?,
+                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize extended output: {}", e)))?,
                 ),
                 AliasOutput::KIND => OutputDto::Alias(
                     AliasOutputDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize alias output: {}", e)))?,
+                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize alias output: {}", e)))?,
                 ),
                 FoundryOutput::KIND => OutputDto::Foundry(
                     FoundryOutputDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize foundry output: {}", e)))?,
+                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize foundry output: {}", e)))?,
                 ),
                 NftOutput::KIND => OutputDto::Nft(
                     NftOutputDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize NFT output: {}", e)))?,
+                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize NFT output: {}", e)))?,
                 ),
                 _ => return Err(serde::de::Error::custom("unsupported output type")),
             },
