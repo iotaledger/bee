@@ -11,10 +11,10 @@ use std::io::{Read, Write};
 #[derive(Debug, thiserror::Error)]
 pub enum ConflictError {
     /// I/O error.
-    #[error("I/O error: {0}")]
+    #[error("i/o error: {0}")]
     Io(#[from] std::io::Error),
     /// Invalid conflict byte.
-    #[error("Invalid conflict byte")]
+    #[error("invalid conflict byte")]
     InvalidConflict(u8),
 }
 

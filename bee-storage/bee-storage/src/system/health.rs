@@ -9,10 +9,10 @@ use bee_common::packable::{Packable, Read, Write};
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// I/O error happened.
-    #[error("I/O error happened: {0:?}")]
+    #[error("i/o error happened: {0:?}")]
     Io(#[from] std::io::Error),
     /// Unknown storage health variant.
-    #[error("Unknown storage health variant: {0}")]
+    #[error("unknown storage health variant: {0}")]
     UnknownHealth(u8),
 }
 

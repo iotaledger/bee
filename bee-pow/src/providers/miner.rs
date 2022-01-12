@@ -34,10 +34,10 @@ const LN_3: f64 = 1.098_612_288_668_109;
 #[derive(Error, Debug)]
 pub enum Error {
     /// The worker has been cancelled.
-    #[error("The worker has been cancelled.")]
+    #[error("the worker has been cancelled.")]
     Cancelled,
     /// Invalid proof of work score.
-    #[error("Invalid proof of work score {0}, requiring {} trailing zeros.")]
+    #[error("invalid proof of work score {0}, requiring {} trailing zeros.")]
     InvalidPowScore(f64, usize),
 }
 
