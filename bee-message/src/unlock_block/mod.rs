@@ -19,14 +19,7 @@ use crate::{
     Error,
 };
 
-use bee_packable::{
-    bounded::BoundedU16,
-    error::{UnpackError, UnpackErrorExt},
-    packer::Packer,
-    prefix::BoxedSlicePrefix,
-    unpacker::Unpacker,
-    Packable,
-};
+use bee_packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 
 use derive_more::{Deref, From};
 
@@ -82,9 +75,12 @@ pub(crate) type UnlockBlockCount =
     BoundedU16<{ *UNLOCK_BLOCK_COUNT_RANGE.start() }, { *UNLOCK_BLOCK_COUNT_RANGE.end() }>;
 
 /// A collection of unlock blocks.
-#[derive(Clone, Debug, Eq, PartialEq, Deref)]
+#[derive(Clone, Debug, Eq, PartialEq, Deref, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct UnlockBlocks(BoxedSlicePrefix<UnlockBlock, UnlockBlockCount>);
+#[packable(unpack_error = Error, with = |e| e.unwrap_packable_or_else(|p| Error::InvalidUnlockBlockCount(p.into())))]
+pub struct UnlockBlocks(
+    #[packable(verify_with = validate_unlock_blocks)] BoxedSlicePrefix<UnlockBlock, UnlockBlockCount>,
+);
 
 impl UnlockBlocks {
     /// Creates a new `UnlockBlocks`.
@@ -94,39 +90,7 @@ impl UnlockBlocks {
             .try_into()
             .map_err(Error::InvalidUnlockBlockCount)?;
 
-        Self::from_boxed_slice(unlock_blocks)
-    }
-
-    fn from_boxed_slice(unlock_blocks: BoxedSlicePrefix<UnlockBlock, UnlockBlockCount>) -> Result<Self, Error> {
-        let mut seen_signatures = HashSet::new();
-
-        for (index, unlock_block) in (0u16..).zip(unlock_blocks.iter()) {
-            match unlock_block {
-                UnlockBlock::Signature(signature) => {
-                    if !seen_signatures.insert(signature) {
-                        return Err(Error::DuplicateSignatureUnlockBlock(index));
-                    }
-                }
-                UnlockBlock::Reference(reference) => {
-                    if index == 0
-                        || reference.index() >= index as u16
-                        || matches!(unlock_blocks[reference.index() as usize], UnlockBlock::Reference(_))
-                    {
-                        return Err(Error::InvalidUnlockBlockReference(index));
-                    }
-                }
-                UnlockBlock::Alias(alias) => {
-                    if index == 0 || alias.index() >= index as u16 {
-                        return Err(Error::InvalidUnlockBlockAlias(index));
-                    }
-                }
-                UnlockBlock::Nft(nft) => {
-                    if index == 0 || nft.index() >= index as u16 {
-                        return Err(Error::InvalidUnlockBlockNft(index));
-                    }
-                }
-            }
-        }
+        validate_unlock_blocks::<true>(&unlock_blocks)?;
 
         Ok(Self(unlock_blocks))
     }
@@ -142,21 +106,36 @@ impl UnlockBlocks {
     }
 }
 
-impl Packable for UnlockBlocks {
-    type UnpackError = Error;
+fn validate_unlock_blocks<const VERIFY: bool>(unlock_blocks: &[UnlockBlock]) -> Result<(), Error> {
+    let mut seen_signatures = HashSet::new();
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.0.pack(packer)
+    for (index, unlock_block) in (0u16..).zip(unlock_blocks.iter()) {
+        match unlock_block {
+            UnlockBlock::Signature(signature) => {
+                if !seen_signatures.insert(signature) {
+                    return Err(Error::DuplicateSignatureUnlockBlock(index));
+                }
+            }
+            UnlockBlock::Reference(reference) => {
+                if index == 0
+                    || reference.index() >= index as u16
+                    || matches!(unlock_blocks[reference.index() as usize], UnlockBlock::Reference(_))
+                {
+                    return Err(Error::InvalidUnlockBlockReference(index));
+                }
+            }
+            UnlockBlock::Alias(alias) => {
+                if index == 0 || alias.index() >= index as u16 {
+                    return Err(Error::InvalidUnlockBlockAlias(index));
+                }
+            }
+            UnlockBlock::Nft(nft) => {
+                if index == 0 || nft.index() >= index as u16 {
+                    return Err(Error::InvalidUnlockBlockNft(index));
+                }
+            }
+        }
     }
 
-    fn unpack<U: Unpacker, const VERIFY: bool>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let unlock_blocks = BoxedSlicePrefix::<UnlockBlock, UnlockBlockCount>::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| {
-                err.unwrap_packable_or_else(|prefix_err| Error::InvalidUnlockBlockCount(prefix_err.into()))
-            })?;
-
-        Self::from_boxed_slice(unlock_blocks).map_err(UnpackError::Packable)
-    }
+    Ok(())
 }
