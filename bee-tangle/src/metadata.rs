@@ -17,7 +17,6 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-// FIXME: derive packable
 /// Metadata associated with a tangle message.
 #[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Serialize, Packable)]
 #[packable(unpack_error = MessageMetadataError)]
