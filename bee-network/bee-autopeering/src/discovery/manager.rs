@@ -551,7 +551,7 @@ fn validate_verification_response(
 ) -> Result<RequestValue, ValidationError> {
     use ValidationError::*;
 
-    if let Some(reqv) = request_mngr.write().remove::<VerificationRequest>(peer_id) {
+    if let Some(reqv) = request_mngr.remove_request::<VerificationRequest>(peer_id) {
         if verif_res.request_hash() == reqv.request_hash {
             let res_services = verif_res.services();
             if let Some(autopeering_svc) = res_services.get(AUTOPEERING_SERVICE_NAME) {
@@ -592,7 +592,7 @@ fn validate_discovery_response(
 ) -> Result<RequestValue, ValidationError> {
     use ValidationError::*;
 
-    if let Some(reqv) = request_mngr.write().remove::<DiscoveryRequest>(peer_id) {
+    if let Some(reqv) = request_mngr.remove_request::<DiscoveryRequest>(peer_id) {
         if disc_res.request_hash() == &reqv.request_hash[..] {
             // TODO: consider performing some checks on the peers we received, for example:
             // * does the peer have necessary services (autopeering, gossip, fpc, ...)
@@ -762,7 +762,7 @@ pub(crate) async fn begin_verification(
             log::debug!("Verification response timeout: {}", e);
 
             // The response didn't arrive in time => remove the request.
-            let _ = request_mngr.write().remove::<VerificationRequest>(peer_id);
+            let _ = request_mngr.remove_request::<VerificationRequest>(peer_id);
 
             None
         }
@@ -803,9 +803,7 @@ pub(crate) fn send_verification_request_to_addr(
 ) {
     log::trace!("Sending verification request to: {}/{}", peer_id, peer_addr);
 
-    let verif_req = request_mngr
-        .write()
-        .new_verification_request(*peer_id, peer_addr.ip(), response_tx);
+    let verif_req = request_mngr.create_verification_request(*peer_id, peer_addr.ip(), response_tx);
 
     let msg_bytes = verif_req.to_protobuf().to_vec();
 
@@ -885,7 +883,7 @@ pub(crate) async fn begin_discovery(
             log::debug!("Discovery response timeout: {}", e);
 
             // The response didn't arrive in time => remove the request.
-            let _ = request_mngr.write().remove::<DiscoveryRequest>(peer_id);
+            let _ = request_mngr.remove_request::<DiscoveryRequest>(peer_id);
 
             None
         }
@@ -926,7 +924,7 @@ pub(crate) fn send_discovery_request_to_addr(
 ) {
     log::trace!("Sending discovery request to: {:?}", peer_id);
 
-    let disc_req = request_mngr.write().new_discovery_request(*peer_id, response_tx);
+    let disc_req = request_mngr.create_discovery_request(*peer_id, response_tx);
 
     let msg_bytes = disc_req.to_protobuf().to_vec();
 

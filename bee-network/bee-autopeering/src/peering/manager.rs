@@ -244,7 +244,7 @@ fn validate_peering_request(peer_req: &PeeringRequest, ctx: &RecvContext) -> Res
 fn validate_peering_response(peer_res: &PeeringResponse, ctx: &RecvContext) -> Result<RequestValue, ValidationError> {
     use ValidationError::*;
 
-    if let Some(reqv) = ctx.request_mngr.write().remove::<PeeringRequest>(ctx.peer_id) {
+    if let Some(reqv) = ctx.request_mngr.remove_request::<PeeringRequest>(ctx.peer_id) {
         if peer_res.request_hash() != reqv.request_hash {
             Err(IncorrectRequestHash)
         } else {
@@ -457,7 +457,7 @@ pub(crate) async fn begin_peering(
             log::debug!("Peering response timeout: {}", e);
 
             // The response didn't arrive in time => remove the request.
-            let _ = request_mngr.write().remove::<PeeringRequest>(peer_id);
+            let _ = request_mngr.remove_request::<PeeringRequest>(peer_id);
 
             None
         }
@@ -498,7 +498,7 @@ pub(crate) fn send_peering_request_to_addr(
 ) {
     log::trace!("Sending peering request to: {}", peer_id);
 
-    let peer_req = request_mngr.write().new_peering_request(*peer_id, response_tx, local);
+    let peer_req = request_mngr.create_peering_request(*peer_id, response_tx, local);
 
     let msg_bytes = peer_req.to_protobuf().to_vec();
 
