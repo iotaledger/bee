@@ -3,15 +3,19 @@
 
 use crate::{output::OUTPUT_INDEX_RANGE, payload::transaction::TransactionId, util::hex_decode, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::bounded::BoundedU16;
 
 use core::str::FromStr;
 
+pub(crate) type OutputIndex = BoundedU16<{ *OUTPUT_INDEX_RANGE.start() }, { *OUTPUT_INDEX_RANGE.end() }>;
+
 /// The identifier of an `Output`.
-#[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd, bee_packable::Packable)]
+#[packable(unpack_error = Error)]
 pub struct OutputId {
     transaction_id: TransactionId,
-    index: u16,
+    #[packable(unpack_error_with = Error::InvalidInputOutputIndex)]
+    index: OutputIndex,
 }
 
 impl OutputId {
@@ -20,11 +24,10 @@ impl OutputId {
 
     /// Creates a new [`OutputId`].
     pub fn new(transaction_id: TransactionId, index: u16) -> Result<Self, Error> {
-        if !OUTPUT_INDEX_RANGE.contains(&index) {
-            return Err(Error::InvalidInputOutputIndex(index));
-        }
-
-        Ok(Self { transaction_id, index })
+        index
+            .try_into()
+            .map(|index| Self { transaction_id, index })
+            .map_err(Error::InvalidInputOutputIndex)
     }
 
     /// Returns the `TransactionId` of an `OutputId`.
@@ -36,13 +39,13 @@ impl OutputId {
     /// Returns the index of an `OutputId`.
     #[inline(always)]
     pub fn index(&self) -> u16 {
-        self.index
+        self.index.get()
     }
 
     /// Splits an `OutputId` into its `TransactionId` and index.
     #[inline(always)]
     pub fn split(self) -> (TransactionId, u16) {
-        (self.transaction_id, self.index)
+        (self.transaction_id, self.index())
     }
 }
 
@@ -74,34 +77,12 @@ impl FromStr for OutputId {
 
 impl core::fmt::Display for OutputId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}{}", self.transaction_id, hex::encode(self.index.to_le_bytes()))
+        write!(f, "{}{}", self.transaction_id, hex::encode(self.index().to_le_bytes()))
     }
 }
 
 impl core::fmt::Debug for OutputId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "OutputId({})", self)
-    }
-}
-
-impl Packable for OutputId {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.transaction_id.packed_len() + self.index.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.transaction_id.pack(writer)?;
-        self.index.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let transaction_id = TransactionId::unpack_inner::<R, CHECK>(reader)?;
-        let index = u16::unpack_inner::<R, CHECK>(reader)?;
-
-        Self::new(transaction_id, index)
     }
 }

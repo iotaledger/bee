@@ -10,7 +10,7 @@ use crate::{
     Error,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::Packable;
 
 ///
 pub struct ExtendedOutputBuilder {
@@ -76,8 +76,9 @@ impl ExtendedOutputBuilder {
 }
 
 /// Describes an extended output with optional features.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = Error)]
 pub struct ExtendedOutput {
     // Deposit address of the output.
     address: Address,
@@ -85,6 +86,7 @@ pub struct ExtendedOutput {
     amount: u64,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
+    #[packable(verify_with = Self::validate_feature_blocks)]
     feature_blocks: FeatureBlocks,
 }
 
@@ -101,6 +103,14 @@ impl ExtendedOutput {
         .union(FeatureBlockFlags::EXPIRATION_UNIX)
         .union(FeatureBlockFlags::METADATA)
         .union(FeatureBlockFlags::INDEXATION);
+
+    fn validate_feature_blocks<const VERIFY: bool>(blocks: &FeatureBlocks) -> Result<(), Error> {
+        if VERIFY {
+            validate_allowed_feature_blocks(blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)
+        } else {
+            Ok(())
+        }
+    }
 
     /// Creates a new [`ExtendedOutput`].
     #[inline(always)]
@@ -137,43 +147,5 @@ impl ExtendedOutput {
     #[inline(always)]
     pub fn feature_blocks(&self) -> &[FeatureBlock] {
         &self.feature_blocks
-    }
-}
-
-impl Packable for ExtendedOutput {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.address.packed_len()
-            + self.amount.packed_len()
-            + self.native_tokens.packed_len()
-            + self.feature_blocks.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.address.pack(writer)?;
-        self.amount.pack(writer)?;
-        self.native_tokens.pack(writer)?;
-        self.feature_blocks.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let address = Address::unpack_inner::<R, CHECK>(reader)?;
-        let amount = u64::unpack_inner::<R, CHECK>(reader)?;
-        let native_tokens = NativeTokens::unpack_inner::<R, CHECK>(reader)?;
-        let feature_blocks = FeatureBlocks::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK {
-            validate_allowed_feature_blocks(&feature_blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)?;
-        }
-
-        Ok(Self {
-            address,
-            amount,
-            native_tokens,
-            feature_blocks,
-        })
     }
 }

@@ -3,11 +3,10 @@
 
 use crate::types::{error::Error, BalanceDiff};
 
-use bee_common::packable::{Packable, Read, Write};
 use bee_message::constant::IOTA_SUPPLY;
 
 /// Holds the balance of an address.
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, bee_packable::Packable)]
 pub struct Balance(u64);
 
 impl Balance {
@@ -37,25 +36,5 @@ impl Balance {
         }
 
         Ok(Self(amount as u64))
-    }
-}
-
-impl Packable for Balance {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.0.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let amount = u64::unpack_inner::<R, CHECK>(reader)?;
-
-        Balance::new(amount)
     }
 }

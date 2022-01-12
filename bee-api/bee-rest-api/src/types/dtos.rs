@@ -216,25 +216,31 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
     type Error = Error;
 
     fn try_from(value: &RegularTransactionEssenceDto) -> Result<Self, Self::Error> {
-        let mut builder = RegularTransactionEssence::builder();
+        let inputs = value
+            .inputs
+            .iter()
+            .map(TryInto::try_into)
+            .collect::<Result<Vec<Input>, Self::Error>>()?;
+        let outputs = value
+            .outputs
+            .iter()
+            .map(TryInto::try_into)
+            .collect::<Result<Vec<Output>, Self::Error>>()?;
 
-        for i in &value.inputs {
-            builder = builder.add_input(i.try_into()?);
-        }
-
-        for o in &value.outputs {
-            builder = builder.add_output(o.try_into()?);
-        }
-
-        if let Some(p) = &value.payload {
+        let mut builder = RegularTransactionEssence::builder()
+            .with_inputs(inputs)
+            .with_outputs(outputs);
+        builder = if let Some(p) = &value.payload {
             if let PayloadDto::Indexation(i) = p {
-                builder = builder.with_payload(Payload::Indexation(Box::new((i.as_ref()).try_into()?)));
+                builder.with_payload(Payload::Indexation(Box::new((i.as_ref()).try_into()?)))
             } else {
                 return Err(Error::InvalidSemanticField("payload"));
             }
-        }
+        } else {
+            builder
+        };
 
-        Ok(builder.finish()?)
+        builder.finish().map_err(Into::into)
     }
 }
 
@@ -587,7 +593,7 @@ impl From<&MilestonePayload> for MilestonePayloadDto {
             next_pow_score_milestone_index: value.essence().next_pow_score_milestone_index(),
             public_keys: value.essence().public_keys().iter().map(hex::encode).collect(),
             receipt: value.essence().receipt().map(Into::into),
-            signatures: value.signatures().iter().map(hex::encode).collect(),
+            signatures: value.signatures().map(hex::encode).collect(),
         }
     }
 }
@@ -678,8 +684,8 @@ impl TryFrom<&IndexationPayloadDto> for IndexationPayload {
 
     fn try_from(value: &IndexationPayloadDto) -> Result<Self, Self::Error> {
         Ok(IndexationPayload::new(
-            &hex::decode(value.index.clone()).map_err(|_| Error::InvalidSyntaxField("index"))?,
-            &hex::decode(value.data.clone()).map_err(|_| Error::InvalidSyntaxField("data"))?,
+            hex::decode(value.index.clone()).map_err(|_| Error::InvalidSyntaxField("index"))?,
+            hex::decode(value.data.clone()).map_err(|_| Error::InvalidSyntaxField("data"))?,
         )?)
     }
 }

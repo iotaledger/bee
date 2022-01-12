@@ -230,6 +230,7 @@ dependencies = [
  "async-trait",
  "bee-common",
  "bee-message",
+ "bee-packable",
  "bee-runtime",
  "bee-storage",
  "bee-tangle",
@@ -255,6 +256,7 @@ version = "0.2.0"
 dependencies = [
  "bech32",
  "bee-common",
+ "bee-packable",
  "bee-pow",
  "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
@@ -269,6 +271,29 @@ dependencies = [
  "serde",
  "serde-big-array",
  "thiserror",
+]
+
+[[package]]
+name = "bee-packable"
+version = "0.1.0"
+source = "git+https://github.com/iotaledger/bee?branch=coordicide#856123277f2a7b5353fa7f2472ceaf1932be4df7"
+dependencies = [
+ "autocfg",
+ "bee-packable-derive",
+ "primitive-types",
+ "serde",
+]
+
+[[package]]
+name = "bee-packable-derive"
+version = "0.1.0"
+source = "git+https://github.com/iotaledger/bee?branch=coordicide#856123277f2a7b5353fa7f2472ceaf1932be4df7"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -318,7 +343,7 @@ dependencies = [
 name = "bee-storage"
 version = "0.9.0"
 dependencies = [
- "bee-common",
+ "bee-packable",
  "serde",
  "thiserror",
 ]
@@ -352,6 +377,7 @@ dependencies = [
  "bee-common",
  "bee-ledger",
  "bee-message",
+ "bee-packable",
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
@@ -369,6 +395,7 @@ dependencies = [
  "bee-common",
  "bee-ledger",
  "bee-message",
+ "bee-packable",
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
@@ -386,6 +413,7 @@ dependencies = [
  "bee-common",
  "bee-ledger",
  "bee-message",
+ "bee-packable",
  "bee-storage",
  "bee-tangle",
  "bee-test",
@@ -398,6 +426,7 @@ dependencies = [
  "async-trait",
  "bee-common",
  "bee-message",
+ "bee-packable",
  "bee-runtime",
  "bee-storage",
  "bee-storage-null",

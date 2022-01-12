@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput, UtxoInput},
@@ -10,13 +9,14 @@ use bee_message::{
     payload::{
         milestone::{MilestoneEssence, MilestoneId, MilestonePayload},
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
-        transaction::{RegularTransactionEssenceBuilder, TransactionEssence, TransactionId, TransactionPayloadBuilder},
+        transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayloadBuilder},
         IndexationPayload, Payload, TreasuryTransactionPayload,
     },
     signature::{Ed25519Signature, Signature},
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
 };
-use bee_test::rand::{bytes::rand_bytes_array, parents::rand_parents};
+use bee_packable::PackableExt;
+use bee_test::rand::{bytes::rand_bytes, parents::rand_parents};
 
 use std::str::FromStr;
 
@@ -41,9 +41,9 @@ fn transaction() {
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssenceBuilder::new()
+        RegularTransactionEssence::builder()
             .with_inputs(vec![input1, input2])
-            .with_outputs(vec![output])
+            .add_output(output)
             .finish()
             .unwrap(),
     );
@@ -62,12 +62,12 @@ fn transaction() {
         .unwrap();
 
     let payload: Payload = tx_payload.into();
-    let packed = payload.pack_new();
+    let packed = payload.pack_to_vec();
 
     assert_eq!(payload.kind(), 0);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::Transaction(_)));
-    assert_eq!(payload, Packable::unpack(&mut packed.as_slice()).unwrap());
+    assert_eq!(payload, PackableExt::unpack_verified(&mut packed.as_slice()).unwrap());
 }
 
 #[test]
@@ -89,19 +89,19 @@ fn milestone() {
     .unwrap()
     .into();
 
-    let packed = payload.pack_new();
+    let packed = payload.pack_to_vec();
 
     assert_eq!(payload.kind(), 1);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::Milestone(_)));
-    assert_eq!(payload, Packable::unpack(&mut packed.as_slice()).unwrap());
+    assert_eq!(payload, PackableExt::unpack_verified(&mut packed.as_slice()).unwrap());
 }
 
 #[test]
 fn indexation() {
-    let payload: Payload = IndexationPayload::new(&rand_bytes_array::<32>(), &[]).unwrap().into();
+    let payload: Payload = IndexationPayload::new(rand_bytes(32), vec![]).unwrap().into();
 
-    let packed = payload.pack_new();
+    let packed = payload.pack_to_vec();
 
     assert_eq!(payload.kind(), 2);
     assert_eq!(payload.packed_len(), packed.len());
@@ -135,12 +135,12 @@ fn receipt() {
     .unwrap()
     .into();
 
-    let packed = payload.pack_new();
+    let packed = payload.pack_to_vec();
 
     assert_eq!(payload.kind(), 3);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::Receipt(_)));
-    assert_eq!(payload, Packable::unpack(&mut packed.as_slice()).unwrap());
+    assert_eq!(payload, PackableExt::unpack_verified(&mut packed.as_slice()).unwrap());
 }
 
 #[test]
@@ -152,10 +152,10 @@ fn treasury_transaction() {
     .unwrap()
     .into();
 
-    let packed = payload.pack_new();
+    let packed = payload.pack_to_vec();
 
     assert_eq!(payload.kind(), 4);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::TreasuryTransaction(_)));
-    assert_eq!(payload, Packable::unpack(&mut packed.as_slice()).unwrap());
+    assert_eq!(payload, PackableExt::unpack_verified(&mut packed.as_slice()).unwrap());
 }

@@ -3,10 +3,17 @@
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
 use bee_ternary::{T5B1Buf, TritBuf, Trits, T5B1};
 
 use bytemuck::cast_slice;
+
+use core::fmt;
 
 /// Represents a tail transaction hash of a legacy bundle.
 #[derive(Clone, Eq, PartialEq)]
@@ -41,32 +48,28 @@ impl AsRef<[u8]> for TailTransactionHash {
     }
 }
 
-impl core::fmt::Display for TailTransactionHash {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+impl fmt::Display for TailTransactionHash {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.0.iter_trytes().map(char::from).collect::<String>())
     }
 }
 
-impl core::fmt::Debug for TailTransactionHash {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+impl fmt::Debug for TailTransactionHash {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "TailTransactionHash({})", self)
     }
 }
-
 impl Packable for TailTransactionHash {
-    type Error = Error;
+    type UnpackError = Error;
 
-    fn packed_len(&self) -> usize {
-        TailTransactionHash::LENGTH
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        packer.pack_bytes(self.as_ref())
     }
 
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        writer.write_all(self.as_ref())?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Self::new(<[u8; TailTransactionHash::LENGTH]>::unpack_inner::<R, CHECK>(reader)?)
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Self::new(<[u8; TailTransactionHash::LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?)
+            .map_err(UnpackError::Packable)
     }
 }

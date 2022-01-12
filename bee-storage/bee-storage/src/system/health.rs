@@ -3,8 +3,6 @@
 
 //! Defines a type to represent different health states in which the storage backend can be.
 
-use bee_common::packable::{Packable, Read, Write};
-
 /// Errors related to storage health statuses.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -18,7 +16,9 @@ pub enum Error {
 
 /// Represents different health states for a `StorageBackend`.
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, bee_packable::Packable)]
+#[packable(unpack_error = Error)]
+#[packable(tag_type = u8, with_error = Error::UnknownHealth)]
 pub enum StorageHealth {
     /// The storage is in a healthy state.
     Healthy = 0,
@@ -26,27 +26,4 @@ pub enum StorageHealth {
     Idle = 1,
     /// The storage has been corrupted.
     Corrupted = 2,
-}
-
-impl Packable for StorageHealth {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        0u8.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (*self as u8).pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        match u8::unpack_inner::<R, CHECK>(reader)? {
-            0 => Ok(StorageHealth::Healthy),
-            1 => Ok(StorageHealth::Idle),
-            2 => Ok(StorageHealth::Corrupted),
-            h => Err(Error::UnknownHealth(h)),
-        }
-    }
 }

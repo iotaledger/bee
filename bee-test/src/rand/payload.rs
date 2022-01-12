@@ -13,8 +13,8 @@ use bee_message::payload::{
 /// Generates a random indexation payload.
 pub fn rand_indexation_payload() -> IndexationPayload {
     IndexationPayload::new(
-        &rand_bytes(rand_number_range(IndexationPayload::LENGTH_RANGE)),
-        &rand_bytes(rand_number_range(0..10000)),
+        rand_bytes(rand_number_range(IndexationPayload::LENGTH_RANGE).into()),
+        rand_bytes(rand_number_range(0..10000)),
     )
     .unwrap()
 }

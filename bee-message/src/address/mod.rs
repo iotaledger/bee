@@ -11,7 +11,7 @@ pub use nft::NftAddress;
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::PackableExt;
 
 use bech32::{self, FromBase32, ToBase32, Variant};
 use derive_more::From;
@@ -19,18 +19,23 @@ use derive_more::From;
 use alloc::{str::FromStr, string::String};
 
 /// A generic address supporting different address kinds.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From, bee_packable::Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
+#[packable(tag_type = u8, with_error = Error::InvalidAddressKind)]
+#[packable(unpack_error = Error)]
 pub enum Address {
     /// An Ed25519 address.
+    #[packable(tag = Ed25519Address::KIND)]
     Ed25519(Ed25519Address),
     /// An alias address.
+    #[packable(tag = AliasAddress::KIND)]
     Alias(AliasAddress),
     /// An NFT address.
+    #[packable(tag = NftAddress::KIND)]
     Nft(NftAddress),
 }
 
@@ -49,7 +54,7 @@ impl Address {
         match bech32::decode(addr) {
             Ok((_hrp, data, _)) => {
                 let bytes = Vec::<u8>::from_base32(&data).map_err(|_| Error::InvalidAddress)?;
-                Self::unpack(&mut bytes.as_slice()).map_err(|_| Error::InvalidAddress)
+                Self::unpack_verified(&mut bytes.as_slice()).map_err(|_| Error::InvalidAddress)
             }
             Err(_) => Err(Error::InvalidAddress),
         }
@@ -58,7 +63,7 @@ impl Address {
     /// Encodes this address to a Bech32 string with the hrp (human readable part) argument as prefix.
     #[allow(clippy::wrong_self_convention)]
     pub fn to_bech32(&self, hrp: &str) -> String {
-        bech32::encode(hrp, self.pack_new().to_base32(), Variant::Bech32).expect("Invalid address.")
+        bech32::encode(hrp, self.pack_to_vec().to_base32(), Variant::Bech32).expect("Invalid address.")
     }
 }
 
@@ -75,44 +80,5 @@ impl TryFrom<String> for Address {
 
     fn try_from(address: String) -> Result<Self, Self::Error> {
         Address::from_str(&address)
-    }
-}
-
-impl Packable for Address {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        match self {
-            Self::Ed25519(address) => Ed25519Address::KIND.packed_len() + address.packed_len(),
-            Self::Alias(address) => AliasAddress::KIND.packed_len() + address.packed_len(),
-            Self::Nft(address) => NftAddress::KIND.packed_len() + address.packed_len(),
-        }
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        match self {
-            Self::Ed25519(address) => {
-                Ed25519Address::KIND.pack(writer)?;
-                address.pack(writer)?;
-            }
-            Self::Alias(address) => {
-                AliasAddress::KIND.pack(writer)?;
-                address.pack(writer)?;
-            }
-            Self::Nft(address) => {
-                NftAddress::KIND.pack(writer)?;
-                address.pack(writer)?;
-            }
-        }
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            Ed25519Address::KIND => Ed25519Address::unpack_inner::<R, CHECK>(reader)?.into(),
-            AliasAddress::KIND => AliasAddress::unpack_inner::<R, CHECK>(reader)?.into(),
-            NftAddress::KIND => NftAddress::unpack_inner::<R, CHECK>(reader)?.into(),
-            k => return Err(Self::Error::InvalidAddressKind(k)),
-        })
     }
 }

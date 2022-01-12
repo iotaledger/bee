@@ -13,6 +13,7 @@ use bee_message::{
     },
     Error,
 };
+use bee_packable::bounded::TryIntoBoundedU16Error;
 use bee_test::rand::{
     bytes::rand_bytes_array,
     payload::{rand_indexation_payload, rand_treasury_transaction_payload},
@@ -39,7 +40,7 @@ fn build_valid() {
 
     let essence = RegularTransactionEssence::builder()
         .with_inputs(vec![input1, input2])
-        .with_outputs(vec![output])
+        .add_output(output)
         .finish();
 
     assert!(essence.is_ok());
@@ -58,7 +59,7 @@ fn build_valid_with_payload() {
 
     let essence = RegularTransactionEssence::builder()
         .with_inputs(vec![input1, input2])
-        .with_outputs(vec![output])
+        .add_output(output)
         .with_payload(payload)
         .finish();
 
@@ -76,8 +77,7 @@ fn build_valid_add_inputs_outputs() {
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
 
     let essence = RegularTransactionEssence::builder()
-        .add_input(input1)
-        .add_input(input2)
+        .with_inputs(vec![input1, input2])
         .add_output(output)
         .finish();
 
@@ -97,7 +97,7 @@ fn build_invalid_payload_kind() {
 
     let essence = RegularTransactionEssence::builder()
         .with_inputs(vec![input1, input2])
-        .with_outputs(vec![output])
+        .add_output(output)
         .with_payload(payload.into())
         .finish();
 
@@ -111,9 +111,12 @@ fn build_invalid_input_count_low() {
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
 
-    let essence = RegularTransactionEssence::builder().with_outputs(vec![output]).finish();
+    let essence = RegularTransactionEssence::builder().add_output(output).finish();
 
-    assert!(matches!(essence, Err(Error::InvalidInputOutputCount(0))));
+    assert!(matches!(
+        essence,
+        Err(Error::InvalidInputCount(TryIntoBoundedU16Error::Invalid(0)))
+    ));
 }
 
 #[test]
@@ -127,10 +130,13 @@ fn build_invalid_input_count_high() {
 
     let essence = RegularTransactionEssence::builder()
         .with_inputs(vec![input; 128])
-        .with_outputs(vec![output])
+        .add_output(output)
         .finish();
 
-    assert!(matches!(essence, Err(Error::InvalidInputOutputCount(128))));
+    assert!(matches!(
+        essence,
+        Err(Error::InvalidInputCount(TryIntoBoundedU16Error::Invalid(128)))
+    ));
 }
 
 #[test]
@@ -138,12 +144,12 @@ fn build_invalid_output_count_low() {
     let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
     let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
 
-    let essence = RegularTransactionEssence::builder()
-        .with_inputs(vec![input])
-        .with_outputs(vec![])
-        .finish();
+    let essence = RegularTransactionEssence::builder().add_input(input).finish();
 
-    assert!(matches!(essence, Err(Error::InvalidInputOutputCount(0))));
+    assert!(matches!(
+        essence,
+        Err(Error::InvalidOutputCount(TryIntoBoundedU16Error::Invalid(0)))
+    ));
 }
 
 #[test]
@@ -156,11 +162,14 @@ fn build_invalid_output_count_high() {
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
 
     let essence = RegularTransactionEssence::builder()
-        .with_inputs(vec![input])
+        .add_input(input)
         .with_outputs(vec![output; 128])
         .finish();
 
-    assert!(matches!(essence, Err(Error::InvalidInputOutputCount(128))));
+    assert!(matches!(
+        essence,
+        Err(Error::InvalidOutputCount(TryIntoBoundedU16Error::Invalid(128)))
+    ));
 }
 
 #[test]
@@ -174,7 +183,7 @@ fn build_invalid_duplicate_utxo() {
 
     let essence = RegularTransactionEssence::builder()
         .with_inputs(vec![input; 2])
-        .with_outputs(vec![output])
+        .add_output(output)
         .finish();
 
     assert!(matches!(essence, Err(Error::DuplicateUtxo(_))));
@@ -189,8 +198,8 @@ fn build_invalid_input_kind() {
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
 
     let essence = RegularTransactionEssence::builder()
-        .with_inputs(vec![input])
-        .with_outputs(vec![output])
+        .add_input(input)
+        .add_output(output)
         .finish();
 
     assert!(matches!(essence, Err(Error::InvalidInputKind(1))));
@@ -204,8 +213,8 @@ fn build_invalid_output_kind() {
     let output = Output::Treasury(TreasuryOutput::new(amount).unwrap());
 
     let essence = RegularTransactionEssence::builder()
-        .with_inputs(vec![input])
-        .with_outputs(vec![output])
+        .add_input(input)
+        .add_output(output)
         .finish();
 
     assert!(matches!(essence, Err(Error::InvalidOutputKind(2))));
@@ -227,7 +236,7 @@ fn build_invalid_accumulated_output() {
     let output2 = Output::Simple(SimpleOutput::new(address2, amount2).unwrap());
 
     let essence = RegularTransactionEssence::builder()
-        .with_inputs(vec![input])
+        .add_input(input)
         .with_outputs(vec![output1, output2])
         .finish();
 

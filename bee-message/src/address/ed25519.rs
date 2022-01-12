@@ -3,8 +3,6 @@
 
 use crate::{signature::Ed25519Signature, util::hex_decode, Error};
 
-use bee_common::packable::{Packable, Read, Write};
-
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
     signatures::ed25519::{PublicKey, Signature},
@@ -14,7 +12,7 @@ use derive_more::{AsRef, From};
 use core::str::FromStr;
 
 /// An Ed25519 address.
-#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, bee_packable::Packable)]
 #[as_ref(forward)]
 pub struct Ed25519Address([u8; Self::LENGTH]);
 
@@ -73,23 +71,5 @@ impl core::fmt::Display for Ed25519Address {
 impl core::fmt::Debug for Ed25519Address {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "Ed25519Address({})", self)
-    }
-}
-
-impl Packable for Ed25519Address {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        Self::LENGTH
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(<[u8; Self::LENGTH]>::unpack_inner::<R, CHECK>(reader)?))
     }
 }

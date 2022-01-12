@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.2.0 - 2022-XX-XX
+
+### Changed
+
+ - Serialize and deserialize the `DTO` types using `bee-packable` instead of `bee-common::packable`;
+
 ## 0.1.7 - 2021-12-08
 
 ### Changed

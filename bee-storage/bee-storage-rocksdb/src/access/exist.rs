@@ -6,7 +6,6 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
-use bee_common::packable::Packable;
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
     TreasuryOutput, Unspent,
@@ -18,6 +17,7 @@ use bee_message::{
     payload::indexation::PaddedIndex,
     Message, MessageId,
 };
+use bee_packable::PackableExt;
 use bee_storage::access::Exist;
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
@@ -69,7 +69,7 @@ impl Exist<OutputId, CreatedOutput> for Storage {
     fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)?, output_id.pack_new())?
+            .get_cf(self.cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)?, output_id.pack_to_vec())?
             .is_some())
     }
 }
@@ -78,7 +78,10 @@ impl Exist<OutputId, ConsumedOutput> for Storage {
     fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)?, output_id.pack_new())?
+            .get_cf(
+                self.cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)?,
+                output_id.pack_to_vec(),
+            )?
             .is_some())
     }
 }
@@ -87,7 +90,7 @@ impl Exist<Unspent, ()> for Storage {
     fn exist(&self, unspent: &Unspent) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_OUTPUT_ID_UNSPENT)?, unspent.pack_new())?
+            .get_cf(self.cf_handle(CF_OUTPUT_ID_UNSPENT)?, unspent.pack_to_vec())?
             .is_some())
     }
 }
@@ -98,7 +101,7 @@ impl Exist<(Ed25519Address, OutputId), ()> for Storage {
         (address, output_id): &(Ed25519Address, OutputId),
     ) -> Result<bool, <Self as StorageBackend>::Error> {
         let mut key = address.as_ref().to_vec();
-        key.extend_from_slice(&output_id.pack_new());
+        key.extend_from_slice(&output_id.pack_to_vec());
 
         Ok(self
             .inner
@@ -117,7 +120,7 @@ impl Exist<MilestoneIndex, Milestone> for Storage {
     fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_new())?
+            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_to_vec())?
             .is_some())
     }
 }
@@ -135,7 +138,10 @@ impl Exist<SolidEntryPoint, MilestoneIndex> for Storage {
     fn exist(&self, sep: &SolidEntryPoint) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?, sep.pack_new())?
+            .get_cf(
+                self.cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?,
+                sep.pack_to_vec(),
+            )?
             .is_some())
     }
 }
@@ -144,7 +150,7 @@ impl Exist<MilestoneIndex, OutputDiff> for Storage {
     fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?, index.pack_new())?
+            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?, index.pack_to_vec())?
             .is_some())
     }
 }
@@ -153,7 +159,7 @@ impl Exist<Address, Balance> for Storage {
     fn exist(&self, address: &Address) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_ADDRESS_TO_BALANCE)?, address.pack_new())?
+            .get_cf(self.cf_handle(CF_ADDRESS_TO_BALANCE)?, address.pack_to_vec())?
             .is_some())
     }
 }
@@ -163,7 +169,7 @@ impl Exist<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
         &self,
         (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
     ) -> Result<bool, <Self as StorageBackend>::Error> {
-        let mut key = index.pack_new();
+        let mut key = index.pack_to_vec();
         key.extend_from_slice(unreferenced_message.as_ref());
 
         Ok(self
@@ -175,8 +181,8 @@ impl Exist<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
 
 impl Exist<(MilestoneIndex, Receipt), ()> for Storage {
     fn exist(&self, (index, receipt): &(MilestoneIndex, Receipt)) -> Result<bool, <Self as StorageBackend>::Error> {
-        let mut key = index.pack_new();
-        key.extend_from_slice(&receipt.pack_new());
+        let mut key = index.pack_to_vec();
+        key.extend_from_slice(&receipt.pack_to_vec());
 
         Ok(self
             .inner
@@ -187,8 +193,8 @@ impl Exist<(MilestoneIndex, Receipt), ()> for Storage {
 
 impl Exist<(bool, TreasuryOutput), ()> for Storage {
     fn exist(&self, (spent, output): &(bool, TreasuryOutput)) -> Result<bool, <Self as StorageBackend>::Error> {
-        let mut key = spent.pack_new();
-        key.extend_from_slice(&output.pack_new());
+        let mut key = spent.pack_to_vec();
+        key.extend_from_slice(&output.pack_to_vec());
 
         Ok(self
             .inner

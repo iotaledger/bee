@@ -3,15 +3,19 @@
 
 use crate::{constant::IOTA_SUPPLY, Error};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::bounded::BoundedU64;
 
 use core::ops::RangeInclusive;
 
+pub(crate) type TreasuryOutputAmount =
+    BoundedU64<{ *TreasuryOutput::AMOUNT_RANGE.start() }, { *TreasuryOutput::AMOUNT_RANGE.end() }>;
+
 /// [`TreasuryOutput`] is an output which holds the treasury of a network.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = Error, with = Error::InvalidTreasuryOutputAmount)]
 pub struct TreasuryOutput {
-    amount: u64,
+    amount: TreasuryOutputAmount,
 }
 
 impl TreasuryOutput {
@@ -22,34 +26,15 @@ impl TreasuryOutput {
 
     /// Creates a new [`TreasuryOutput`].
     pub fn new(amount: u64) -> Result<Self, Error> {
-        if !TreasuryOutput::AMOUNT_RANGE.contains(&amount) {
-            return Err(Error::InvalidTreasuryAmount(amount));
-        }
-
-        Ok(Self { amount })
+        amount
+            .try_into()
+            .map(|amount| Self { amount })
+            .map_err(Error::InvalidTreasuryOutputAmount)
     }
 
     /// Returns the amount of a [`TreasuryOutput`].
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount
-    }
-}
-
-impl Packable for TreasuryOutput {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.amount.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.amount.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Self::new(u64::unpack_inner::<R, CHECK>(reader)?)
+        self.amount.get()
     }
 }

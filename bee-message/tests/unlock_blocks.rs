@@ -6,6 +6,7 @@ use bee_message::{
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
     Error,
 };
+use bee_packable::bounded::TryIntoBoundedU16Error;
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
 
 #[test]
@@ -85,7 +86,7 @@ fn new_invalid_duplicate_signature() {
 fn new_invalid_too_many_blocks() {
     assert!(matches!(
         UnlockBlocks::new(vec![ReferenceUnlockBlock::new(0).unwrap().into(); 300]),
-        Err(Error::InvalidUnlockBlockCount(300)),
+        Err(Error::InvalidUnlockBlockCount(TryIntoBoundedU16Error::Invalid(300))),
     ));
 }
 

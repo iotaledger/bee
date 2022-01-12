@@ -5,13 +5,13 @@ use crate::{
     constant::IOTA_SUPPLY,
     input::{Input, INPUT_COUNT_RANGE},
     output::{Output, OUTPUT_COUNT_RANGE},
-    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
+    payload::{OptionalPayload, Payload},
     Error,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 
-use alloc::{boxed::Box, vec::Vec};
+use alloc::vec::Vec;
 
 /// A builder to build a [`RegularTransactionEssence`].
 #[derive(Debug, Default)]
@@ -59,67 +59,46 @@ impl RegularTransactionEssenceBuilder {
 
     /// Finishes a [`RegularTransactionEssenceBuilder`] into a [`RegularTransactionEssence`].
     pub fn finish(self) -> Result<RegularTransactionEssence, Error> {
-        if !INPUT_COUNT_RANGE.contains(&(self.inputs.len() as u16)) {
-            return Err(Error::InvalidInputOutputCount(self.inputs.len() as u16));
-        }
+        let inputs: BoxedSlicePrefix<Input, InputCount> = self
+            .inputs
+            .into_boxed_slice()
+            .try_into()
+            .map_err(Error::InvalidInputCount)?;
+        let outputs: BoxedSlicePrefix<Output, OutputCount> = self
+            .outputs
+            .into_boxed_slice()
+            .try_into()
+            .map_err(Error::InvalidOutputCount)?;
+        let payload = OptionalPayload::from(self.payload);
 
-        if !OUTPUT_COUNT_RANGE.contains(&(self.outputs.len() as u16)) {
-            return Err(Error::InvalidInputOutputCount(self.outputs.len() as u16));
-        }
-
-        if !matches!(self.payload, None | Some(Payload::Indexation(_))) {
-            // Unwrap is fine because we just checked that the Option is not None.
-            return Err(Error::InvalidPayloadKind(self.payload.unwrap().kind()));
-        }
-
-        for input in self.inputs.iter() {
-            match input {
-                Input::Utxo(u) => {
-                    if self.inputs.iter().filter(|i| *i == input).count() > 1 {
-                        return Err(Error::DuplicateUtxo(u.clone()));
-                    }
-                }
-                _ => return Err(Error::InvalidInputKind(input.kind())),
-            }
-        }
-
-        let mut total_amount: u64 = 0;
-
-        for output in self.outputs.iter() {
-            let amount = match output {
-                Output::Simple(output) => output.amount(),
-                Output::Extended(output) => output.amount(),
-                Output::Alias(output) => output.amount(),
-                Output::Foundry(output) => output.amount(),
-                Output::Nft(output) => output.amount(),
-                _ => return Err(Error::InvalidOutputKind(output.kind())),
-            };
-
-            total_amount = total_amount
-                .checked_add(amount)
-                .ok_or_else(|| Error::InvalidAccumulatedOutput((total_amount + amount) as u128))?;
-
-            // Accumulated output balance must not exceed the total supply of tokens.
-            if total_amount > IOTA_SUPPLY {
-                return Err(Error::InvalidAccumulatedOutput(total_amount as u128));
-            }
-        }
+        validate_inputs::<true>(&inputs)?;
+        validate_outputs::<true>(&outputs)?;
+        validate_payload::<true>(&payload)?;
 
         Ok(RegularTransactionEssence {
-            inputs: self.inputs.into_boxed_slice(),
-            outputs: self.outputs.into_boxed_slice(),
-            payload: self.payload,
+            inputs,
+            outputs,
+            payload,
         })
     }
 }
 
+pub(crate) type InputCount = BoundedU16<{ *INPUT_COUNT_RANGE.start() }, { *INPUT_COUNT_RANGE.end() }>;
+pub(crate) type OutputCount = BoundedU16<{ *OUTPUT_COUNT_RANGE.start() }, { *OUTPUT_COUNT_RANGE.end() }>;
+
 /// A transaction regular essence consuming inputs, creating outputs and carrying an optional payload.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = Error)]
 pub struct RegularTransactionEssence {
-    inputs: Box<[Input]>,
-    outputs: Box<[Output]>,
-    payload: Option<Payload>,
+    #[packable(verify_with = validate_inputs)]
+    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| Error::InvalidInputCount(p.into())))]
+    inputs: BoxedSlicePrefix<Input, InputCount>,
+    #[packable(verify_with = validate_outputs)]
+    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| Error::InvalidOutputCount(p.into())))]
+    outputs: BoxedSlicePrefix<Output, OutputCount>,
+    #[packable(verify_with = validate_payload)]
+    payload: OptionalPayload,
 }
 
 impl RegularTransactionEssence {
@@ -147,60 +126,50 @@ impl RegularTransactionEssence {
     }
 }
 
-impl Packable for RegularTransactionEssence {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        0u16.packed_len()
-            + self.inputs.iter().map(Packable::packed_len).sum::<usize>()
-            + 0u16.packed_len()
-            + self.outputs.iter().map(Packable::packed_len).sum::<usize>()
-            + option_payload_packed_len(self.payload.as_ref())
+fn validate_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
+    for input in inputs.iter() {
+        match input {
+            Input::Utxo(u) => {
+                if inputs.iter().filter(|i| *i == input).count() > 1 {
+                    return Err(Error::DuplicateUtxo(u.clone()));
+                }
+            }
+            _ => return Err(Error::InvalidInputKind(input.kind())),
+        }
     }
 
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.inputs.len() as u16).pack(writer)?;
-        for input in self.inputs.iter() {
-            input.pack(writer)?;
-        }
-        (self.outputs.len() as u16).pack(writer)?;
-        for output in self.outputs.iter() {
-            output.pack(writer)?;
-        }
-        option_payload_pack(writer, self.payload.as_ref())?;
+    Ok(())
+}
 
-        Ok(())
+fn validate_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
+    let mut total_amount: u64 = 0;
+
+    for output in outputs.iter() {
+        let amount = match output {
+            Output::Simple(output) => output.amount(),
+            Output::Extended(output) => output.amount(),
+            Output::Alias(output) => output.amount(),
+            Output::Foundry(output) => output.amount(),
+            Output::Nft(output) => output.amount(),
+            _ => return Err(Error::InvalidOutputKind(output.kind())),
+        };
+
+        total_amount = total_amount
+            .checked_add(amount)
+            .ok_or_else(|| Error::InvalidAccumulatedOutput((total_amount + amount) as u128))?;
+
+        // Accumulated output balance must not exceed the total supply of tokens.
+        if total_amount > IOTA_SUPPLY {
+            return Err(Error::InvalidAccumulatedOutput(total_amount as u128));
+        }
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let inputs_len = u16::unpack_inner::<R, CHECK>(reader)?;
+    Ok(())
+}
 
-        if CHECK && !INPUT_COUNT_RANGE.contains(&inputs_len) {
-            return Err(Error::InvalidInputOutputCount(inputs_len));
-        }
-
-        let mut inputs = Vec::with_capacity(inputs_len as usize);
-        for _ in 0..inputs_len {
-            inputs.push(Input::unpack_inner::<R, CHECK>(reader)?);
-        }
-
-        let outputs_len = u16::unpack_inner::<R, CHECK>(reader)?;
-
-        if CHECK && !OUTPUT_COUNT_RANGE.contains(&outputs_len) {
-            return Err(Error::InvalidInputOutputCount(outputs_len));
-        }
-
-        let mut outputs = Vec::with_capacity(outputs_len as usize);
-        for _ in 0..outputs_len {
-            outputs.push(Output::unpack_inner::<R, CHECK>(reader)?);
-        }
-
-        let mut builder = Self::builder().with_inputs(inputs).with_outputs(outputs);
-
-        if let (_, Some(payload)) = option_payload_unpack::<R, CHECK>(reader)? {
-            builder = builder.with_payload(payload);
-        }
-
-        builder.finish()
+fn validate_payload<const VERIFY: bool>(payload: &OptionalPayload) -> Result<(), Error> {
+    match &payload.0 {
+        Some(Payload::Indexation(_)) | None => Ok(()),
+        Some(payload) => Err(Error::InvalidPayloadKind(payload.kind())),
     }
 }
