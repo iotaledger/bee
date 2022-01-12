@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.3.0 - 2022-XX-XX
 
+### Changed
+
+- Use `bee-packable` instead of `bee-common::packable` for serialization and deserialization.
+
 ### Removed
 
 - `ConflictReason::InvalidDustAllowance`;

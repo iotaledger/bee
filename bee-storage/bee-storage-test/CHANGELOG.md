@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.4.0 - 2022-XX-XX
+
+### Changed
+
+- Use `bee-packable` instead of `bee-common::packable` to serialize to and deserialize from storage.
+
 ## 0.3.0 - 2021-06-10
 
 ### Changed
