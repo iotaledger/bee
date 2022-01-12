@@ -1,5 +1,0 @@
-n-mainnet:
-  base: "mainnet*"
-
-n-shimmer:
-  base: "shimmer*"
