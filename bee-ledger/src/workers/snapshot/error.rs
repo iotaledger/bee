@@ -11,7 +11,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum Error {
     /// I/O error happened.
-    #[error("I/O error: {0}")]
+    #[error("i/o error: {0}")]
     Io(#[from] std::io::Error),
     /// Types error.
     #[error("types error: {0}")]

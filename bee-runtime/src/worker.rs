@@ -15,7 +15,7 @@ pub struct Error(pub Box<dyn std::error::Error + Send>);
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Worker error: {:?}.", self.0)
+        write!(f, "worker error: {:?}.", self.0)
     }
 }
 
