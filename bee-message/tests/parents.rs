@@ -122,7 +122,7 @@ fn unpack_invalid_not_sorted() {
 }
 
 #[test]
-fn upnack_invalid_not_unique() {
+fn unpack_invalid_not_unique() {
     let mut inner = rand_message_ids(7);
     inner.push(*inner.last().unwrap());
     let inner = VecPrefix::<_, u8>::try_from(inner).unwrap();
