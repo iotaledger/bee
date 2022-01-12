@@ -12,6 +12,7 @@ use crate::{
 use bee_packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 
 use alloc::vec::Vec;
+
 /// A builder to build a [`RegularTransactionEssence`].
 #[derive(Debug, Default)]
 pub struct RegularTransactionEssenceBuilder {
@@ -44,15 +45,15 @@ impl RegularTransactionEssenceBuilder {
         self
     }
 
-    /// Add a payload to a [`RegularTransactionEssenceBuilder`].
-    pub fn with_payload(mut self, payload: Payload) -> Self {
-        self.payload = Some(payload);
-        self
-    }
-
     /// Add an output to a [`RegularTransactionEssenceBuilder`].
     pub fn add_output(mut self, output: Output) -> Self {
         self.outputs.push(output);
+        self
+    }
+
+    /// Add a payload to a [`RegularTransactionEssenceBuilder`].
+    pub fn with_payload(mut self, payload: Payload) -> Self {
+        self.payload = Some(payload);
         self
     }
 
