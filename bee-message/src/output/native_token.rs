@@ -4,14 +4,7 @@
 use crate::{output::TokenId, Error};
 
 use bee_common::ord::is_unique_sorted;
-use bee_packable::{
-    bounded::BoundedU16,
-    error::{UnpackError, UnpackErrorExt},
-    packer::Packer,
-    prefix::BoxedSlicePrefix,
-    unpacker::Unpacker,
-    Packable,
-};
+use bee_packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 
 use derive_more::Deref;
 use primitive_types::U256;
@@ -49,9 +42,12 @@ impl NativeToken {
 pub(crate) type NativeTokenCount = BoundedU16<0, { NativeTokens::COUNT_MAX }>;
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Deref)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Deref, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct NativeTokens(BoxedSlicePrefix<NativeToken, NativeTokenCount>);
+#[packable(unpack_error = Error, with = |e| Error::InvalidNativeTokenCount(e.into_prefix().into()))]
+pub struct NativeTokens(
+    #[packable(verify_with = validate_unique_sorted)] BoxedSlicePrefix<NativeToken, NativeTokenCount>,
+);
 
 impl TryFrom<Vec<NativeToken>> for NativeTokens {
     type Error = Error;
@@ -74,34 +70,10 @@ impl NativeTokens {
             .map_err(Error::InvalidNativeTokenCount)?;
 
         native_tokens.sort_by(|a, b| a.token_id().cmp(b.token_id()));
-
-        Self::from_boxed_slice::<true>(native_tokens)
-    }
-
-    fn from_boxed_slice<const VERIFY: bool>(
-        native_tokens: BoxedSlicePrefix<NativeToken, NativeTokenCount>,
-    ) -> Result<Self, Error> {
         // Sort is obviously fine now but uniqueness still needs to be checked.
-        validate_unique_sorted::<VERIFY>(&native_tokens)?;
+        validate_unique_sorted::<true>(&native_tokens)?;
 
         Ok(Self(native_tokens))
-    }
-}
-
-impl Packable for NativeTokens {
-    type UnpackError = Error;
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.0.pack(packer)
-    }
-
-    fn unpack<U: Unpacker, const VERIFY: bool>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let native_tokens = BoxedSlicePrefix::<NativeToken, NativeTokenCount>::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| Error::InvalidNativeTokenCount(err.into_prefix().into()))?;
-
-        Self::from_boxed_slice::<VERIFY>(native_tokens).map_err(UnpackError::Packable)
     }
 }
 

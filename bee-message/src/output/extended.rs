@@ -10,12 +10,7 @@ use crate::{
     Error,
 };
 
-use bee_packable::{
-    error::{UnpackError, UnpackErrorExt},
-    packer::Packer,
-    unpacker::Unpacker,
-    Packable,
-};
+use bee_packable::Packable;
 
 ///
 pub struct ExtendedOutputBuilder {
@@ -81,8 +76,9 @@ impl ExtendedOutputBuilder {
 }
 
 /// Describes an extended output with optional features.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = Error)]
 pub struct ExtendedOutput {
     // Deposit address of the output.
     address: Address,
@@ -90,6 +86,7 @@ pub struct ExtendedOutput {
     amount: u64,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
+    #[packable(verify_with = Self::validate_feature_blocks)]
     feature_blocks: FeatureBlocks,
 }
 
@@ -106,6 +103,14 @@ impl ExtendedOutput {
         .union(FeatureBlockFlags::EXPIRATION_UNIX)
         .union(FeatureBlockFlags::METADATA)
         .union(FeatureBlockFlags::INDEXATION);
+
+    fn validate_feature_blocks<const VERIFY: bool>(blocks: &FeatureBlocks) -> Result<(), Error> {
+        if VERIFY {
+            validate_allowed_feature_blocks(blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)
+        } else {
+            Ok(())
+        }
+    }
 
     /// Creates a new [`ExtendedOutput`].
     #[inline(always)]
@@ -142,39 +147,5 @@ impl ExtendedOutput {
     #[inline(always)]
     pub fn feature_blocks(&self) -> &[FeatureBlock] {
         &self.feature_blocks
-    }
-}
-
-impl Packable for ExtendedOutput {
-    type UnpackError = Error;
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.address.pack(packer)?;
-        self.amount.pack(packer)?;
-        self.native_tokens.pack(packer)?;
-        self.feature_blocks.pack(packer)?;
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker, const VERIFY: bool>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let address = Address::unpack::<_, VERIFY>(unpacker)?;
-        let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
-        let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
-
-        if VERIFY {
-            validate_allowed_feature_blocks(&feature_blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)
-                .map_err(UnpackError::Packable)?;
-        }
-
-        Ok(Self {
-            address,
-            amount,
-            native_tokens,
-            feature_blocks,
-        })
     }
 }

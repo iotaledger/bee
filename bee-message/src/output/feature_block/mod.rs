@@ -27,13 +27,7 @@ pub use timelock_unix::TimelockUnixFeatureBlock;
 use crate::Error;
 
 use bee_common::ord::is_unique_sorted;
-use bee_packable::{
-    bounded::BoundedU8,
-    error::{UnpackError, UnpackErrorExt},
-    packer::Packer,
-    prefix::BoxedSlicePrefix,
-    Packable,
-};
+use bee_packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
 use bitflags::bitflags;
 use derive_more::{Deref, From};
@@ -112,9 +106,12 @@ impl FeatureBlock {
 pub(crate) type FeatureBlockCount = BoundedU8<0, { FeatureBlocks::COUNT_MAX }>;
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Deref)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Deref, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct FeatureBlocks(BoxedSlicePrefix<FeatureBlock, FeatureBlockCount>);
+#[packable(unpack_error = Error, with = |e| e.unwrap_packable_or_else(|p| Error::InvalidFeatureBlockCount(p.into())))]
+pub struct FeatureBlocks(
+    #[packable(verify_with = Self::validate_feature_blocks)] BoxedSlicePrefix<FeatureBlock, FeatureBlockCount>,
+);
 
 impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
     type Error = Error;
@@ -136,19 +133,19 @@ impl FeatureBlocks {
                 .map_err(Error::InvalidFeatureBlockCount)?;
 
         feature_blocks.sort_by_key(FeatureBlock::kind);
-        // Sort is obviously fine now but uniqueness still needs to be checked.
-        Self::from_boxed_slice::<true>(feature_blocks)
-    }
-
-    fn from_boxed_slice<const VERIFY: bool>(
-        feature_blocks: BoxedSlicePrefix<FeatureBlock, FeatureBlockCount>,
-    ) -> Result<Self, Error> {
-        if VERIFY {
-            validate_unique_sorted(&feature_blocks)?;
-            validate_dependencies(&feature_blocks)?;
-        }
+        Self::validate_feature_blocks::<true>(&feature_blocks)?;
 
         Ok(Self(feature_blocks))
+    }
+
+    fn validate_feature_blocks<const VERIFY: bool>(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
+        if VERIFY {
+            // Sort is obviously fine now but uniqueness still needs to be checked.
+            validate_unique_sorted(feature_blocks)?;
+            validate_dependencies(feature_blocks)
+        } else {
+            Ok(())
+        }
     }
 
     /// Gets a reference to a feature block from a feature block kind, if found.
@@ -171,25 +168,6 @@ impl FeatureBlocks {
     #[inline(always)]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
-    }
-}
-
-impl Packable for FeatureBlocks {
-    type UnpackError = Error;
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.0.pack(packer)
-    }
-
-    fn unpack<U: bee_packable::unpacker::Unpacker, const VERIFY: bool>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let feature_blocks = BoxedSlicePrefix::<FeatureBlock, FeatureBlockCount>::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| {
-                err.unwrap_packable_or_else(|prefix_err| Error::InvalidFeatureBlockCount(prefix_err.into()))
-            })?;
-
-        Self::from_boxed_slice::<VERIFY>(feature_blocks).map_err(UnpackError::Packable)
     }
 }
 
