@@ -8,9 +8,9 @@ use crate::{
 
 use bee_packable::bounded::BoundedU64;
 
-pub(crate) type DustDepositAmount = BoundedU64<DUST_DEPOSIT_MIN, { u64::MAX }>;
-
 use core::ops::RangeInclusive;
+
+pub(crate) type DustDepositAmount = BoundedU64<DUST_DEPOSIT_MIN, { u64::MAX }>;
 
 /// Defines the amount of IOTAs used as dust deposit that have to be returned to the sender
 /// [`Address`](crate::address::Address).

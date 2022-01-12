@@ -5,10 +5,10 @@ use crate::Error;
 
 use bee_packable::{bounded::BoundedU32, prefix::BoxedSlicePrefix};
 
+use core::ops::RangeInclusive;
+
 pub(crate) type MetadataFeatureBlockLength =
     BoundedU32<{ *MetadataFeatureBlock::LENGTH_RANGE.start() }, { *MetadataFeatureBlock::LENGTH_RANGE.end() }>;
-
-use core::ops::RangeInclusive;
 
 /// Defines metadata, arbitrary binary data, that will be stored in the output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]

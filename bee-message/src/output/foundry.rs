@@ -16,6 +16,7 @@ use bee_packable::{
     unpacker::Unpacker,
     Packable,
 };
+
 use primitive_types::U256;
 
 ///

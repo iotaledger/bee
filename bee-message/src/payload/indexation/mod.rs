@@ -5,9 +5,9 @@
 
 mod padded;
 
-use crate::{Error, Message};
-
 pub use padded::PaddedIndex;
+
+use crate::{Error, Message};
 
 use bee_packable::{
     bounded::{BoundedU16, BoundedU32},
