@@ -7,7 +7,7 @@ mod essence;
 mod transaction_id;
 
 pub(crate) use essence::{InputCount, OutputCount};
-pub use essence::{RegularTransactionEssence, TransactionEssence};
+pub use essence::{RegularTransactionEssence, RegularTransactionEssenceBuilder, TransactionEssence};
 pub use transaction_id::TransactionId;
 
 use crate::{unlock_block::UnlockBlocks, Error};

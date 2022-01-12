@@ -42,7 +42,13 @@ fn builder_no_essence_no_unlock_blocks() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-    let essence = TransactionEssence::Regular(RegularTransactionEssence::new(vec![input], vec![output], None).unwrap());
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
+            .add_input(input)
+            .add_output(output)
+            .finish()
+            .unwrap(),
+    );
 
     // Initialize the builder but do not set `with_output_block()`.
     let builder = TransactionPayload::builder().with_essence(essence);
@@ -62,8 +68,13 @@ fn builder_no_essence_too_few_unlock_blocks() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-    let essence =
-        TransactionEssence::Regular(RegularTransactionEssence::new(vec![input1, input2], vec![output], None).unwrap());
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
+            .with_inputs(vec![input1, input2])
+            .add_output(output)
+            .finish()
+            .unwrap(),
+    );
 
     // Construct a list with a single unlock block, whereas we have 2 tx inputs.
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
@@ -93,8 +104,13 @@ fn builder_no_essence_too_many_unlock_blocks() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-    let essence =
-        TransactionEssence::Regular(RegularTransactionEssence::new(vec![input1], vec![output], None).unwrap());
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
+            .add_input(input1)
+            .add_output(output)
+            .finish()
+            .unwrap(),
+    );
 
     // Construct a list of two unlock blocks, whereas we only have 1 tx input.
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
@@ -126,8 +142,13 @@ fn pack_unpack_valid() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-    let essence =
-        TransactionEssence::Regular(RegularTransactionEssence::new(vec![input1, input2], vec![output], None).unwrap());
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
+            .with_inputs(vec![input1, input2])
+            .add_output(output)
+            .finish()
+            .unwrap(),
+    );
 
     // Construct a list of two unlock blocks, whereas we only have 1 tx input.
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
@@ -161,8 +182,13 @@ fn getters() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-    let essence =
-        TransactionEssence::Regular(RegularTransactionEssence::new(vec![input1, input2], vec![output], None).unwrap());
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
+            .with_inputs(vec![input1, input2])
+            .add_output(output)
+            .finish()
+            .unwrap(),
+    );
 
     // Construct a list of two unlock blocks, whereas we only have 1 tx input.
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();

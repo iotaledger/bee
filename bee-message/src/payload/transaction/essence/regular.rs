@@ -9,26 +9,94 @@ use crate::{
     Error,
 };
 
-use bee_packable::{
-    bounded::BoundedU16,
-    error::{UnpackError, UnpackErrorExt},
-    packer::Packer,
-    prefix::BoxedSlicePrefix,
-    unpacker::Unpacker,
-    Packable,
-};
+use bee_packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 
 use alloc::vec::Vec;
+/// A builder to build a [`RegularTransactionEssence`].
+#[derive(Debug, Default)]
+pub struct RegularTransactionEssenceBuilder {
+    inputs: Vec<Input>,
+    outputs: Vec<Output>,
+    payload: Option<Payload>,
+}
+
+impl RegularTransactionEssenceBuilder {
+    /// Creates a new [`RegularTransactionEssenceBuilder`].
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Adds inputs to a [`RegularTransactionEssenceBuilder`]
+    pub fn with_inputs(mut self, inputs: Vec<Input>) -> Self {
+        self.inputs = inputs;
+        self
+    }
+
+    /// Add an input to a [`RegularTransactionEssenceBuilder`].
+    pub fn add_input(mut self, input: Input) -> Self {
+        self.inputs.push(input);
+        self
+    }
+
+    /// Add outputs to a [`RegularTransactionEssenceBuilder`].
+    pub fn with_outputs(mut self, outputs: Vec<Output>) -> Self {
+        self.outputs = outputs;
+        self
+    }
+
+    /// Add a payload to a [`RegularTransactionEssenceBuilder`].
+    pub fn with_payload(mut self, payload: Payload) -> Self {
+        self.payload = Some(payload);
+        self
+    }
+
+    /// Add an output to a [`RegularTransactionEssenceBuilder`].
+    pub fn add_output(mut self, output: Output) -> Self {
+        self.outputs.push(output);
+        self
+    }
+
+    /// Finishes a [`RegularTransactionEssenceBuilder`] into a [`RegularTransactionEssence`].
+    pub fn finish(self) -> Result<RegularTransactionEssence, Error> {
+        let inputs: BoxedSlicePrefix<Input, InputCount> = self
+            .inputs
+            .into_boxed_slice()
+            .try_into()
+            .map_err(Error::InvalidInputCount)?;
+        let outputs: BoxedSlicePrefix<Output, OutputCount> = self
+            .outputs
+            .into_boxed_slice()
+            .try_into()
+            .map_err(Error::InvalidOutputCount)?;
+        let payload = OptionalPayload::from(self.payload);
+
+        validate_inputs::<true>(&inputs)?;
+        validate_outputs::<true>(&outputs)?;
+        validate_payload::<true>(&payload)?;
+
+        Ok(RegularTransactionEssence {
+            inputs,
+            outputs,
+            payload,
+        })
+    }
+}
 
 pub(crate) type InputCount = BoundedU16<{ *INPUT_COUNT_RANGE.start() }, { *INPUT_COUNT_RANGE.end() }>;
 pub(crate) type OutputCount = BoundedU16<{ *OUTPUT_COUNT_RANGE.start() }, { *OUTPUT_COUNT_RANGE.end() }>;
 
 /// A transaction regular essence consuming inputs, creating outputs and carrying an optional payload.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = Error)]
 pub struct RegularTransactionEssence {
+    #[packable(verify_with = validate_inputs)]
+    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| Error::InvalidInputCount(p.into())))]
     inputs: BoxedSlicePrefix<Input, InputCount>,
+    #[packable(verify_with = validate_outputs)]
+    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| Error::InvalidOutputCount(p.into())))]
     outputs: BoxedSlicePrefix<Output, OutputCount>,
+    #[packable(verify_with = validate_payload)]
     payload: OptionalPayload,
 }
 
@@ -36,65 +104,9 @@ impl RegularTransactionEssence {
     /// The essence kind of a [`RegularTransactionEssence`].
     pub const KIND: u8 = 0;
 
-    /// Create a new [`RegularTransactionEssence`].
-    pub fn new(inputs: Vec<Input>, outputs: Vec<Output>, payload: Option<Payload>) -> Result<Self, Error> {
-        let inputs = inputs.into_boxed_slice().try_into().map_err(Error::InvalidInputCount)?;
-        let outputs = outputs
-            .into_boxed_slice()
-            .try_into()
-            .map_err(Error::InvalidOutputCount)?;
-
-        Self::from_boxed_slice_prefixes(inputs, outputs, payload)
-    }
-
-    fn from_boxed_slice_prefixes(
-        inputs: BoxedSlicePrefix<Input, InputCount>,
-        outputs: BoxedSlicePrefix<Output, OutputCount>,
-        payload: Option<Payload>,
-    ) -> Result<Self, Error> {
-        if !matches!(payload, None | Some(Payload::Indexation(_))) {
-            // Unwrap is fine because we just checked that the Option is not None.
-            return Err(Error::InvalidPayloadKind(payload.unwrap().kind()));
-        }
-
-        for input in inputs.iter() {
-            match input {
-                Input::Utxo(u) => {
-                    if inputs.iter().filter(|i| *i == input).count() > 1 {
-                        return Err(Error::DuplicateUtxo(u.clone()));
-                    }
-                }
-                _ => return Err(Error::InvalidInputKind(input.kind())),
-            }
-        }
-
-        let mut total_amount: u64 = 0;
-
-        for output in outputs.iter() {
-            let amount = match output {
-                Output::Simple(output) => output.amount(),
-                Output::Extended(output) => output.amount(),
-                Output::Alias(output) => output.amount(),
-                Output::Foundry(output) => output.amount(),
-                Output::Nft(output) => output.amount(),
-                _ => return Err(Error::InvalidOutputKind(output.kind())),
-            };
-
-            total_amount = total_amount
-                .checked_add(amount)
-                .ok_or_else(|| Error::InvalidAccumulatedOutput((total_amount + amount) as u128))?;
-
-            // Accumulated output balance must not exceed the total supply of tokens.
-            if total_amount > IOTA_SUPPLY {
-                return Err(Error::InvalidAccumulatedOutput(total_amount as u128));
-            }
-        }
-
-        Ok(RegularTransactionEssence {
-            inputs,
-            outputs,
-            payload: payload.into(),
-        })
+    /// Create a new [`RegularTransactionEssenceBuilder`] to build a [`RegularTransactionEssence`].
+    pub fn builder() -> RegularTransactionEssenceBuilder {
+        RegularTransactionEssenceBuilder::new()
     }
 
     /// Return the inputs of a [`RegularTransactionEssence`].
@@ -113,29 +125,50 @@ impl RegularTransactionEssence {
     }
 }
 
-impl Packable for RegularTransactionEssence {
-    type UnpackError = Error;
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.inputs.pack(packer)?;
-        self.outputs.pack(packer)?;
-        self.payload.pack(packer)?;
-
-        Ok(())
+fn validate_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
+    for input in inputs.iter() {
+        match input {
+            Input::Utxo(u) => {
+                if inputs.iter().filter(|i| *i == input).count() > 1 {
+                    return Err(Error::DuplicateUtxo(u.clone()));
+                }
+            }
+            _ => return Err(Error::InvalidInputKind(input.kind())),
+        }
     }
 
-    fn unpack<U: Unpacker, const VERIFY: bool>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let inputs = BoxedSlicePrefix::<Input, InputCount>::unpack::<_, VERIFY>(unpacker).map_packable_err(|err| {
-            err.unwrap_packable_or_else(|prefix_err| Error::InvalidInputCount(prefix_err.into()))
-        })?;
-        let outputs =
-            BoxedSlicePrefix::<Output, OutputCount>::unpack::<_, VERIFY>(unpacker).map_packable_err(|err| {
-                err.unwrap_packable_or_else(|prefix_err| Error::InvalidOutputCount(prefix_err.into()))
-            })?;
-        let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker)?.into();
+    Ok(())
+}
 
-        Self::from_boxed_slice_prefixes(inputs, outputs, payload).map_err(UnpackError::Packable)
+fn validate_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
+    let mut total_amount: u64 = 0;
+
+    for output in outputs.iter() {
+        let amount = match output {
+            Output::Simple(output) => output.amount(),
+            Output::Extended(output) => output.amount(),
+            Output::Alias(output) => output.amount(),
+            Output::Foundry(output) => output.amount(),
+            Output::Nft(output) => output.amount(),
+            _ => return Err(Error::InvalidOutputKind(output.kind())),
+        };
+
+        total_amount = total_amount
+            .checked_add(amount)
+            .ok_or_else(|| Error::InvalidAccumulatedOutput((total_amount + amount) as u128))?;
+
+        // Accumulated output balance must not exceed the total supply of tokens.
+        if total_amount > IOTA_SUPPLY {
+            return Err(Error::InvalidAccumulatedOutput(total_amount as u128));
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_payload<const VERIFY: bool>(payload: &OptionalPayload) -> Result<(), Error> {
+    match &payload.0 {
+        Some(Payload::Indexation(_)) | None => Ok(()),
+        Some(payload) => Err(Error::InvalidPayloadKind(payload.kind())),
     }
 }

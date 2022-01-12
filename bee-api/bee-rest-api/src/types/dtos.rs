@@ -227,17 +227,20 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
             .map(TryInto::try_into)
             .collect::<Result<Vec<Output>, Self::Error>>()?;
 
-        let payload = if let Some(p) = &value.payload {
+        let mut builder = RegularTransactionEssence::builder()
+            .with_inputs(inputs)
+            .with_outputs(outputs);
+        builder = if let Some(p) = &value.payload {
             if let PayloadDto::Indexation(i) = p {
-                Some(Payload::Indexation(Box::new((i.as_ref()).try_into()?)))
+                builder.with_payload(Payload::Indexation(Box::new((i.as_ref()).try_into()?)))
             } else {
                 return Err(Error::InvalidSemanticField("payload"));
             }
         } else {
-            None
+            builder
         };
 
-        RegularTransactionEssence::new(inputs, outputs, payload).map_err(From::from)
+        builder.finish().map_err(Into::into)
     }
 }
 

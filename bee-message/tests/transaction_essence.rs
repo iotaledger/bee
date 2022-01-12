@@ -22,8 +22,13 @@ fn essence_kind() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
-    let essence =
-        TransactionEssence::Regular(RegularTransactionEssence::new(vec![input1, input2], vec![output], None).unwrap());
+    let essence = TransactionEssence::Regular(
+        RegularTransactionEssence::builder()
+            .with_inputs(vec![input1, input2])
+            .add_output(output)
+            .finish()
+            .unwrap(),
+    );
 
     assert_eq!(essence.kind(), RegularTransactionEssence::KIND);
 }

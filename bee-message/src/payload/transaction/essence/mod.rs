@@ -3,8 +3,8 @@
 
 mod regular;
 
-pub use regular::RegularTransactionEssence;
 pub(crate) use regular::{InputCount, OutputCount};
+pub use regular::{RegularTransactionEssence, RegularTransactionEssenceBuilder};
 
 use crate::Error;
 
