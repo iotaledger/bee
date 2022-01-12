@@ -72,6 +72,7 @@ impl Packable for MilestoneDiff {
         }
 
         (self.created_outputs.len() as u64).pack(packer)?;
+
         for (output_id, created) in self.created_outputs.iter() {
             created.message_id().pack(packer)?;
             output_id.pack(packer)?;
@@ -79,6 +80,7 @@ impl Packable for MilestoneDiff {
         }
 
         (self.consumed_outputs.len() as u64).pack(packer)?;
+
         for (output_id, (created, consumed)) in self.consumed_outputs.iter() {
             created.message_id().pack(packer)?;
             output_id.pack(packer)?;
