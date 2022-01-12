@@ -60,7 +60,7 @@ pub fn flamegraph_layer<P: AsRef<Path>>(stack_filename: P) -> Result<(Flamegraph
     Ok((layer, flamegrapher))
 }
 
-/// Creates a new [`LogLayer`](layer::LogLayer), using the parameters provided by the given [`LoggerConfig`].
+/// Creates a new [`LogLayer`], using the parameters provided by the given [`LoggerConfig`].
 ///
 /// This should allow the subscriber to perform logging in an identical fashion to the functionality provided
 /// in [`bee_common`].

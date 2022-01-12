@@ -9,7 +9,7 @@ use std::fmt;
 
 /// Visits a [`Span`](tracing::Span) and records location fields.
 ///
-/// In [`tokio`]'s internal instrumentation, these fields are identified with the keys `"loc.line"`,
+/// In `tokio`'s internal instrumentation, these fields are identified with the keys `"loc.line"`,
 /// `"loc.file"`, and `"loc.col"`. Currently, the column field is ignored by this visitor.
 #[derive(Default)]
 pub(crate) struct LocationVisitor {

@@ -60,7 +60,7 @@ enum LogDest {
 /// Describes a target destination of a [`log`] event, combined with filters that only permit
 /// specific events to be logged to that target.
 struct LogTarget {
-    /// Target filters. Enables/disables [`Span`]s based on their target and level.
+    /// Target filters. Enables/disables `Span`s based on their target and level.
     filter: Targets,
     /// The output destination of the event, if it passes through the filter.
     dest: LogDest,
