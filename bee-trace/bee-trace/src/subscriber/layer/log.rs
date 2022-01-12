@@ -25,8 +25,8 @@ use std::{
 ///
 /// Variants wrap a locked writer to the output target.
 enum LogOutput<'a> {
-    /// Log to standard output.
-    Stdout(StdoutLock<'a>),
+    /// Log to standard output, with optional color.
+    Stdout(StdoutLock<'a>, bool),
     /// Log to a file.
     File(MutexGuard<'a, File>),
 }
@@ -34,14 +34,14 @@ enum LogOutput<'a> {
 impl<'a> io::Write for LogOutput<'a> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         match self {
-            Self::Stdout(lock) => lock.write(buf),
+            Self::Stdout(lock, _) => lock.write(buf),
             Self::File(lock) => lock.write(buf),
         }
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
         match self {
-            Self::Stdout(lock) => lock.flush(),
+            Self::Stdout(lock, _) => lock.flush(),
             Self::File(lock) => lock.flush(),
         }
     }
@@ -51,8 +51,8 @@ impl<'a> io::Write for LogOutput<'a> {
 ///
 /// Locks obtained from these targets are used to create writers to the appropriate [`LogOutput`].
 enum LogDest {
-    /// Log to standard output.
-    Stdout,
+    /// Log to standard output, with optional color.
+    Stdout(bool),
     /// Log to a file.
     File(Mutex<File>),
 }
@@ -95,7 +95,7 @@ impl<'a> MakeWriter for &'a LogTargetMakeWriter {
 
     fn make_writer(&self) -> Self::Writer {
         match &self.target.dest {
-            LogDest::Stdout => LogOutput::Stdout(self.stdout.lock()),
+            LogDest::Stdout(color) => LogOutput::Stdout(self.stdout.lock(), *color),
             LogDest::File(file) => LogOutput::File(file.lock()),
         }
     }
@@ -148,7 +148,6 @@ impl LogLayer {
 
     pub(crate) fn new(config: LoggerConfig) -> Result<Self, Error> {
         let fmt_events = LogFormatter {
-            color_enabled: config.color_enabled(),
             target_width: config.target_width(),
             level_width: config.level_width(),
         };
@@ -176,7 +175,7 @@ impl LogLayer {
                 }
 
                 let dest = match output_config.name() {
-                    Self::STDOUT_NAME => LogDest::Stdout,
+                    Self::STDOUT_NAME => LogDest::Stdout(output_config.color_enabled()),
                     name => {
                         let file = OpenOptions::new().write(true).create(true).append(true).open(name)?;
                         LogDest::File(Mutex::new(file))
@@ -224,7 +223,6 @@ impl ColorFormat for Level {
 /// Helper struct for formatting [`log`] records into a [`String`] and writing to a [`Write`](std::fmt::Write)
 /// implementer.
 struct LogFormatter {
-    color_enabled: bool,
     target_width: usize,
     level_width: usize,
 }
@@ -249,9 +247,9 @@ impl LogFormatter {
 
             let time = bee_common::time::format(&bee_common::time::now_utc());
 
-            let level = match output {
+            let level = match *output {
                 LogOutput::File(_) => ColoredString::from(level.to_string().as_str()),
-                LogOutput::Stdout(_) => level.color(self.color_enabled),
+                LogOutput::Stdout(_, color_enabled) => level.color(color_enabled),
             };
 
             write!(

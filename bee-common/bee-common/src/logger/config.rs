@@ -129,6 +129,11 @@ impl LoggerOutputConfig {
     pub fn target_exclusions(&self) -> &[String] {
         &self.target_exclusions
     }
+
+    /// Returns the color flag of the output.
+    pub fn color_enabled(&self) -> bool {
+        self.color_enabled
+    }
 }
 
 /// Builder for a logger configuration.
