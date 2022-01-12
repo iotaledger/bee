@@ -27,7 +27,7 @@ use crypto::{
     Error as CryptoError,
 };
 
-use alloc::{boxed::Box, vec::Vec};
+use alloc::vec::Vec;
 use core::{fmt::Debug, ops::RangeInclusive};
 
 #[derive(Debug)]
@@ -49,6 +49,7 @@ impl From<CryptoError> for MilestoneValidationError {
 
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[repr(transparent)]
 struct Signature(
     #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))] [u8; MilestonePayload::SIGNATURE_LENGTH],
 );
@@ -61,7 +62,7 @@ pub(crate) type SignatureCount =
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestonePayload {
     essence: MilestoneEssence,
-    signatures: VecPrefix<Box<Signature>, SignatureCount>,
+    signatures: VecPrefix<Signature, SignatureCount>,
 }
 
 impl MilestonePayload {
@@ -77,11 +78,8 @@ impl MilestonePayload {
         essence: MilestoneEssence,
         signatures: Vec<[u8; MilestonePayload::SIGNATURE_LENGTH]>,
     ) -> Result<Self, Error> {
-        let signatures = VecPrefix::<Box<Signature>, SignatureCount>::try_from(
-            signatures
-                .into_iter()
-                .map(|s| Box::new(Signature(s)))
-                .collect::<Vec<_>>(),
+        let signatures = VecPrefix::<Signature, SignatureCount>::try_from(
+            signatures.into_iter().map(Signature).collect::<Vec<Signature>>(),
         )
         .map_err(Error::MilestoneInvalidSignatureCount)?;
 
@@ -90,7 +88,7 @@ impl MilestonePayload {
 
     fn from_vec_prefix(
         essence: MilestoneEssence,
-        signatures: VecPrefix<Box<Signature>, SignatureCount>,
+        signatures: VecPrefix<Signature, SignatureCount>,
     ) -> Result<Self, Error> {
         if essence.public_keys().len() != signatures.len() {
             return Err(Error::MilestonePublicKeysSignaturesCountMismatch {
@@ -161,7 +159,7 @@ impl MilestonePayload {
 
             let ed25519_public_key =
                 ed25519::PublicKey::try_from_bytes(*public_key).map_err(MilestoneValidationError::Crypto)?;
-            let ed25519_signature = ed25519::Signature::from_bytes(signature.as_ref().0);
+            let ed25519_signature = ed25519::Signature::from_bytes(signature.0);
 
             if !ed25519_public_key.verify(&ed25519_signature, &essence_hash) {
                 return Err(MilestoneValidationError::InvalidSignature(
@@ -189,7 +187,7 @@ impl Packable for MilestonePayload {
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let essence = MilestoneEssence::unpack::<_, VERIFY>(unpacker)?;
-        let signatures = VecPrefix::<Box<Signature>, SignatureCount>::unpack::<_, VERIFY>(unpacker)
+        let signatures = VecPrefix::<Signature, SignatureCount>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|err| Error::MilestoneInvalidSignatureCount(err.into_prefix().into()))?;
 
         Self::from_vec_prefix(essence, signatures).map_err(UnpackError::Packable)
