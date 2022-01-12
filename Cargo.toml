@@ -14,10 +14,9 @@ panic = "abort"
 [profile.release]
 panic = "abort"
 
-[profile.min-size]
+[profile.production]
 codegen-units = 1
 inherits = "release"
 lto = true
-opt-level = "s"
 panic = "abort"
 strip = "symbols"
