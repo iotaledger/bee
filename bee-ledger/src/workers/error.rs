@@ -9,10 +9,16 @@ use crate::{
 };
 
 use bee_message::{milestone::MilestoneIndex, Error as MessageError, MessageId};
+use bee_packable::error::UnpackError;
+
+use std::convert::Infallible;
 
 /// Errors occurring during ledger workers operations.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    /// IO error.
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
     /// Snapshot error.
     #[error("snapshot error: {0}")]
     Snapshot(#[from] SnapshotError),
@@ -76,4 +82,19 @@ pub enum Error {
     /// Storage backend error.
     #[error("storage backend error: {0}")]
     Storage(Box<dyn std::error::Error + Send>),
+}
+
+impl<E: Into<Error>> From<UnpackError<E, std::io::Error>> for Error {
+    fn from(err: UnpackError<E, std::io::Error>) -> Self {
+        match err {
+            UnpackError::Packable(err) => err.into(),
+            UnpackError::Unpacker(err) => err.into(),
+        }
+    }
+}
+
+impl From<Infallible> for Error {
+    fn from(err: Infallible) -> Self {
+        match err {}
+    }
 }

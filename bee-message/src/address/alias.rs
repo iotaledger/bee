@@ -3,14 +3,12 @@
 
 use crate::{output::AliasId, util::hex_decode, Error};
 
-use bee_common::packable::{Packable, Read, Write};
-
 use derive_more::{AsRef, Deref, From};
 
 use core::str::FromStr;
 
 /// An alias address.
-#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, Deref)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, Deref, bee_packable::Packable)]
 #[as_ref(forward)]
 pub struct AliasAddress(AliasId);
 
@@ -54,23 +52,5 @@ impl core::fmt::Display for AliasAddress {
 impl core::fmt::Debug for AliasAddress {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "AliasAddress({})", self)
-    }
-}
-
-impl Packable for AliasAddress {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        Self::LENGTH
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(AliasId::unpack_inner::<R, CHECK>(reader)?))
     }
 }

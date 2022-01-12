@@ -6,7 +6,6 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
-use bee_common::packable::Packable;
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
     TreasuryOutput, Unspent,
@@ -18,6 +17,7 @@ use bee_message::{
     payload::indexation::PaddedIndex,
     Message, MessageId,
 };
+use bee_packable::PackableExt;
 use bee_storage::access::Delete;
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
@@ -67,7 +67,7 @@ impl Delete<(PaddedIndex, MessageId), ()> for Storage {
 impl Delete<OutputId, CreatedOutput> for Storage {
     fn delete(&self, output_id: &OutputId) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .delete_cf(self.cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)?, output_id.pack_new())?;
+            .delete_cf(self.cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)?, output_id.pack_to_vec())?;
 
         Ok(())
     }
@@ -75,8 +75,10 @@ impl Delete<OutputId, CreatedOutput> for Storage {
 
 impl Delete<OutputId, ConsumedOutput> for Storage {
     fn delete(&self, output_id: &OutputId) -> Result<(), <Self as StorageBackend>::Error> {
-        self.inner
-            .delete_cf(self.cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)?, output_id.pack_new())?;
+        self.inner.delete_cf(
+            self.cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)?,
+            output_id.pack_to_vec(),
+        )?;
 
         Ok(())
     }
@@ -85,7 +87,7 @@ impl Delete<OutputId, ConsumedOutput> for Storage {
 impl Delete<Unspent, ()> for Storage {
     fn delete(&self, unspent: &Unspent) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .delete_cf(self.cf_handle(CF_OUTPUT_ID_UNSPENT)?, unspent.pack_new())?;
+            .delete_cf(self.cf_handle(CF_OUTPUT_ID_UNSPENT)?, unspent.pack_to_vec())?;
 
         Ok(())
     }
@@ -94,7 +96,7 @@ impl Delete<Unspent, ()> for Storage {
 impl Delete<(Ed25519Address, OutputId), ()> for Storage {
     fn delete(&self, (address, output_id): &(Ed25519Address, OutputId)) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = address.as_ref().to_vec();
-        key.extend_from_slice(&output_id.pack_new());
+        key.extend_from_slice(&output_id.pack_to_vec());
 
         self.inner
             .delete_cf(self.cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)?, key)?;
@@ -114,7 +116,7 @@ impl Delete<(), LedgerIndex> for Storage {
 impl Delete<MilestoneIndex, Milestone> for Storage {
     fn delete(&self, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_new())?;
+            .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_to_vec())?;
 
         Ok(())
     }
@@ -140,7 +142,7 @@ impl Delete<SolidEntryPoint, MilestoneIndex> for Storage {
 impl Delete<MilestoneIndex, OutputDiff> for Storage {
     fn delete(&self, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?, index.pack_new())?;
+            .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?, index.pack_to_vec())?;
 
         Ok(())
     }
@@ -149,7 +151,7 @@ impl Delete<MilestoneIndex, OutputDiff> for Storage {
 impl Delete<Address, Balance> for Storage {
     fn delete(&self, address: &Address) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .delete_cf(self.cf_handle(CF_ADDRESS_TO_BALANCE)?, address.pack_new())?;
+            .delete_cf(self.cf_handle(CF_ADDRESS_TO_BALANCE)?, address.pack_to_vec())?;
 
         Ok(())
     }
@@ -160,7 +162,7 @@ impl Delete<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
         &self,
         (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
     ) -> Result<(), <Self as StorageBackend>::Error> {
-        let mut key = index.pack_new();
+        let mut key = index.pack_to_vec();
         key.extend_from_slice(unreferenced_message.as_ref());
 
         self.inner
@@ -172,8 +174,8 @@ impl Delete<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
 
 impl Delete<(MilestoneIndex, Receipt), ()> for Storage {
     fn delete(&self, (index, receipt): &(MilestoneIndex, Receipt)) -> Result<(), <Self as StorageBackend>::Error> {
-        let mut key = index.pack_new();
-        key.extend_from_slice(&receipt.pack_new());
+        let mut key = index.pack_to_vec();
+        key.extend_from_slice(&receipt.pack_to_vec());
 
         self.inner
             .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)?, key)?;
@@ -184,8 +186,8 @@ impl Delete<(MilestoneIndex, Receipt), ()> for Storage {
 
 impl Delete<(bool, TreasuryOutput), ()> for Storage {
     fn delete(&self, (spent, output): &(bool, TreasuryOutput)) -> Result<(), <Self as StorageBackend>::Error> {
-        let mut key = spent.pack_new();
-        key.extend_from_slice(&output.pack_new());
+        let mut key = spent.pack_to_vec();
+        key.extend_from_slice(&output.pack_to_vec());
 
         self.inner
             .delete_cf(self.cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)?, key)?;

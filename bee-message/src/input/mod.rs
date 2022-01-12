@@ -9,8 +9,6 @@ pub use utxo::UtxoInput;
 
 use crate::Error;
 
-use bee_common::packable::{Packable, Read, Write};
-
 use derive_more::From;
 
 use core::ops::RangeInclusive;
@@ -25,16 +23,20 @@ pub const INPUT_INDEX_MAX: u16 = INPUT_COUNT_MAX - 1; // 126
 pub const INPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=INPUT_INDEX_MAX; // [0..126]
 
 /// A generic input supporting different input kinds.
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd, From)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd, From, bee_packable::Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
+#[packable(unpack_error = Error)]
+#[packable(tag_type = u8, with_error = Error::InvalidInputKind)]
 pub enum Input {
     /// A UTXO input.
+    #[packable(tag = UtxoInput::KIND)]
     Utxo(UtxoInput),
     /// A treasury input.
+    #[packable(tag = TreasuryInput::KIND)]
     Treasury(TreasuryInput),
 }
 
@@ -45,39 +47,5 @@ impl Input {
             Self::Utxo(_) => UtxoInput::KIND,
             Self::Treasury(_) => TreasuryInput::KIND,
         }
-    }
-}
-
-impl Packable for Input {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        match self {
-            Self::Utxo(input) => UtxoInput::KIND.packed_len() + input.packed_len(),
-            Self::Treasury(input) => TreasuryInput::KIND.packed_len() + input.packed_len(),
-        }
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        match self {
-            Self::Utxo(input) => {
-                UtxoInput::KIND.pack(writer)?;
-                input.pack(writer)?;
-            }
-            Self::Treasury(input) => {
-                TreasuryInput::KIND.pack(writer)?;
-                input.pack(writer)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            UtxoInput::KIND => UtxoInput::unpack_inner::<R, CHECK>(reader)?.into(),
-            TreasuryInput::KIND => TreasuryInput::unpack_inner::<R, CHECK>(reader)?.into(),
-            k => return Err(Self::Error::InvalidInputKind(k)),
-        })
     }
 }

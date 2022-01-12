@@ -5,7 +5,6 @@
 
 use crate::{storage::Storage, trees::*};
 
-use bee_common::packable::Packable;
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
     TreasuryOutput, Unspent,
@@ -17,6 +16,7 @@ use bee_message::{
     payload::indexation::PaddedIndex,
     Message, MessageId,
 };
+use bee_packable::PackableExt;
 use bee_storage::{access::Exist, backend::StorageBackend};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
@@ -63,7 +63,7 @@ impl Exist<OutputId, CreatedOutput> for Storage {
         Ok(self
             .inner
             .open_tree(TREE_OUTPUT_ID_TO_CREATED_OUTPUT)?
-            .contains_key(output_id.pack_new())?)
+            .contains_key(output_id.pack_to_vec())?)
     }
 }
 
@@ -72,7 +72,7 @@ impl Exist<OutputId, ConsumedOutput> for Storage {
         Ok(self
             .inner
             .open_tree(TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT)?
-            .contains_key(output_id.pack_new())?)
+            .contains_key(output_id.pack_to_vec())?)
     }
 }
 
@@ -81,7 +81,7 @@ impl Exist<Unspent, ()> for Storage {
         Ok(self
             .inner
             .open_tree(TREE_OUTPUT_ID_UNSPENT)?
-            .contains_key(unspent.pack_new())?)
+            .contains_key(unspent.pack_to_vec())?)
     }
 }
 
@@ -91,7 +91,7 @@ impl Exist<(Ed25519Address, OutputId), ()> for Storage {
         (address, output_id): &(Ed25519Address, OutputId),
     ) -> Result<bool, <Self as StorageBackend>::Error> {
         let mut key = address.as_ref().to_vec();
-        key.extend_from_slice(&output_id.pack_new());
+        key.extend_from_slice(&output_id.pack_to_vec());
 
         Ok(self
             .inner
@@ -111,7 +111,7 @@ impl Exist<MilestoneIndex, Milestone> for Storage {
         Ok(self
             .inner
             .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE)?
-            .contains_key(index.pack_new())?)
+            .contains_key(index.pack_to_vec())?)
     }
 }
 
@@ -126,7 +126,7 @@ impl Exist<SolidEntryPoint, MilestoneIndex> for Storage {
         Ok(self
             .inner
             .open_tree(TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?
-            .contains_key(sep.pack_new())?)
+            .contains_key(sep.pack_to_vec())?)
     }
 }
 
@@ -135,7 +135,7 @@ impl Exist<MilestoneIndex, OutputDiff> for Storage {
         Ok(self
             .inner
             .open_tree(TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF)?
-            .contains_key(index.pack_new())?)
+            .contains_key(index.pack_to_vec())?)
     }
 }
 
@@ -144,7 +144,7 @@ impl Exist<Address, Balance> for Storage {
         Ok(self
             .inner
             .open_tree(TREE_ADDRESS_TO_BALANCE)?
-            .contains_key(address.pack_new())?)
+            .contains_key(address.pack_to_vec())?)
     }
 }
 
@@ -153,7 +153,7 @@ impl Exist<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
         &self,
         (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
     ) -> Result<bool, <Self as StorageBackend>::Error> {
-        let mut key = index.pack_new();
+        let mut key = index.pack_to_vec();
         key.extend_from_slice(unreferenced_message.as_ref());
 
         Ok(self
@@ -165,8 +165,8 @@ impl Exist<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
 
 impl Exist<(MilestoneIndex, Receipt), ()> for Storage {
     fn exist(&self, (index, receipt): &(MilestoneIndex, Receipt)) -> Result<bool, <Self as StorageBackend>::Error> {
-        let mut key = index.pack_new();
-        key.extend_from_slice(&receipt.pack_new());
+        let mut key = index.pack_to_vec();
+        key.extend_from_slice(&receipt.pack_to_vec());
 
         Ok(self
             .inner
@@ -177,8 +177,8 @@ impl Exist<(MilestoneIndex, Receipt), ()> for Storage {
 
 impl Exist<(bool, TreasuryOutput), ()> for Storage {
     fn exist(&self, (spent, output): &(bool, TreasuryOutput)) -> Result<bool, <Self as StorageBackend>::Error> {
-        let mut key = spent.pack_new();
-        key.extend_from_slice(&output.pack_new());
+        let mut key = spent.pack_to_vec();
+        key.extend_from_slice(&output.pack_to_vec());
 
         Ok(self.inner.open_tree(TREE_SPENT_TO_TREASURY_OUTPUT)?.contains_key(key)?)
     }

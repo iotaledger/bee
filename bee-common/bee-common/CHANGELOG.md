@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.7.0 - 2022-XX-XX
+
+### Removed
+
+ - `packable` module;
+
 ## 0.6.0 - 2022-01-10
 
 ### Changed

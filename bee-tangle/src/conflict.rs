@@ -1,11 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
-
 use serde::{Deserialize, Serialize};
-
-use std::io::{Read, Write};
 
 /// Errors related to ledger types.
 #[derive(Debug, thiserror::Error)]
@@ -20,7 +16,9 @@ pub enum ConflictError {
 
 /// Represents the different reasons why a transaction can conflict with the ledger state.
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, bee_packable::Packable)]
+#[packable(unpack_error = ConflictError)]
+#[packable(tag_type = u8, with_error = ConflictError::InvalidConflict)]
 pub enum ConflictReason {
     /// The message has no conflict.
     None = 0,
@@ -58,24 +56,5 @@ impl TryFrom<u8> for ConflictReason {
             255 => Self::SemanticValidationFailed,
             x => return Err(Self::Error::InvalidConflict(x)),
         })
-    }
-}
-
-impl Packable for ConflictReason {
-    type Error = ConflictError;
-
-    fn packed_len(&self) -> usize {
-        (*self as u8).packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        Ok((*self as u8).pack(writer)?)
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
-        u8::unpack_inner::<R, CHECK>(reader)?.try_into()
     }
 }

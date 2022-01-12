@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput},
@@ -14,7 +13,8 @@ use bee_message::{
     },
     Error,
 };
-use bee_test::rand::{bytes::rand_bytes_array, number::rand_number};
+use bee_packable::{bounded::TryIntoBoundedU16Error, PackableExt};
+use bee_test::rand::{bytes::rand_bytes, number::rand_number};
 
 use std::str::FromStr;
 
@@ -74,7 +74,10 @@ fn new_invalid_receipt_funds_count_low() {
         ),
     );
 
-    assert!(matches!(receipt, Err(Error::InvalidReceiptFundsCount(0))));
+    assert!(matches!(
+        receipt,
+        Err(Error::InvalidReceiptFundsCount(TryIntoBoundedU16Error::Invalid(0)))
+    ));
 }
 
 #[test]
@@ -104,7 +107,10 @@ fn new_invalid_receipt_funds_count_high() {
         ),
     );
 
-    assert!(matches!(receipt, Err(Error::InvalidReceiptFundsCount(128))));
+    assert!(matches!(
+        receipt,
+        Err(Error::InvalidReceiptFundsCount(TryIntoBoundedU16Error::Invalid(128)))
+    ));
 }
 
 #[test]
@@ -123,7 +129,7 @@ fn new_invalid_payload_kind() {
             )
             .unwrap(),
         ],
-        Payload::from(IndexationPayload::new(&rand_bytes_array::<32>(), &[]).unwrap()),
+        Payload::from(IndexationPayload::new(rand_bytes(32), vec![]).unwrap()),
     );
 
     assert!(matches!(
@@ -228,10 +234,13 @@ fn pack_unpack_valid() {
     )
     .unwrap();
 
-    let packed_receipt = receipt.pack_new();
+    let packed_receipt = receipt.pack_to_vec();
 
     assert_eq!(packed_receipt.len(), receipt.packed_len());
-    assert_eq!(receipt, Packable::unpack(&mut packed_receipt.as_slice()).unwrap());
+    assert_eq!(
+        receipt,
+        PackableExt::unpack_verified(&mut packed_receipt.as_slice()).unwrap()
+    );
 }
 
 #[test]

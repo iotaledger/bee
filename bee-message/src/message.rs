@@ -3,11 +3,16 @@
 
 use crate::{
     parent::Parents,
-    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
+    payload::{OptionalPayload, Payload},
     Error, MessageId,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable, PackableExt,
+};
 use bee_pow::providers::{miner::Miner, NonceProvider, NonceProviderBuilder};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
@@ -86,11 +91,11 @@ impl<P: NonceProvider> MessageBuilder<P> {
         let mut message = Message {
             network_id,
             parents,
-            payload: self.payload,
+            payload: self.payload.into(),
             nonce: 0,
         };
 
-        let message_bytes = message.pack_new();
+        let message_bytes = message.pack_to_vec();
 
         if message_bytes.len() > Message::LENGTH_MAX {
             return Err(Error::InvalidMessageLength(message_bytes.len()));
@@ -120,7 +125,7 @@ pub struct Message {
     /// The [`MessageId`]s that this message directly approves.
     parents: Parents,
     /// The optional [Payload] of the message.
-    payload: Option<Payload>,
+    payload: OptionalPayload,
     /// The result of the Proof of Work in order for the message to be accepted into the tangle.
     nonce: u64,
 }
@@ -140,7 +145,7 @@ impl Message {
     /// Computes the identifier of the message.
     #[inline(always)]
     pub fn id(&self) -> MessageId {
-        MessageId::new(Blake2b256::digest(&self.pack_new()).into())
+        MessageId::new(Blake2b256::digest(&self.pack_to_vec()).into())
     }
 
     /// Returns the network id of a [`Message`].
@@ -167,7 +172,7 @@ impl Message {
         self.nonce
     }
 
-    /// Consumes the [[`Message`]], and returns ownership over its [`Parents`].
+    /// Consumes the [`Message`], and returns ownership over its [`Parents`].
     #[inline(always)]
     pub fn into_parents(self) -> Parents {
         self.parents
@@ -175,61 +180,59 @@ impl Message {
 }
 
 impl Packable for Message {
-    type Error = Error;
+    type UnpackError = Error;
 
-    fn packed_len(&self) -> usize {
-        self.network_id.packed_len()
-            + self.parents.packed_len()
-            + option_payload_packed_len(self.payload.as_ref())
-            + self.nonce.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.network_id.pack(writer)?;
-        self.parents.pack(writer)?;
-        option_payload_pack(writer, self.payload.as_ref())?;
-        self.nonce.pack(writer)?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        self.network_id.pack(packer)?;
+        self.parents.pack(packer)?;
+        self.payload.pack(packer)?;
+        self.nonce.pack(packer)?;
 
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let network_id = u64::unpack_inner::<R, CHECK>(reader)?;
+    fn unpack<U: Unpacker, const VERIFY: bool>(
+        unpacker: &mut U,
+    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let network_id = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
 
-        let parents = Parents::unpack_inner::<R, CHECK>(reader)?;
+        let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
 
-        let (payload_len, payload) = option_payload_unpack::<R, CHECK>(reader)?;
+        let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
 
-        if CHECK
+        if VERIFY
             && !matches!(
-                payload,
+                *payload,
                 None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::Indexation(_))
             )
         {
             // Safe to unwrap since it's known not to be None.
-            return Err(Error::InvalidPayloadKind(payload.unwrap().kind()));
+            return Err(UnpackError::Packable(Error::InvalidPayloadKind(
+                Into::<Option<Payload>>::into(payload).unwrap().kind(),
+            )));
         }
 
-        let nonce = u64::unpack_inner::<R, CHECK>(reader)?;
+        let nonce = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
 
-        // Computed instead of calling `packed_len` on Self because `payload_len` is already known and it may be
-        // expensive to call `payload.packed_len()` twice.
-        let message_len = network_id.packed_len() + parents.packed_len() + payload_len + nonce.packed_len();
-
-        if CHECK && message_len > Message::LENGTH_MAX {
-            return Err(Error::InvalidMessageLength(message_len));
-        }
-
-        // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
-        if CHECK && reader.bytes().next().is_some() {
-            return Err(Error::RemainingBytesAfterMessage);
-        }
-
-        Ok(Self {
+        let message = Self {
             network_id,
             parents,
             payload,
             nonce,
-        })
+        };
+
+        let message_len = message.packed_len();
+
+        // FIXME: compute this in a more efficient way.
+        if VERIFY && message_len > Message::LENGTH_MAX {
+            return Err(UnpackError::Packable(Error::InvalidMessageLength(message_len)));
+        }
+
+        // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
+        if VERIFY && u8::unpack::<_, VERIFY>(unpacker).is_ok() {
+            return Err(UnpackError::Packable(Error::RemainingBytesAfterMessage));
+        }
+
+        Ok(message)
     }
 }

@@ -6,7 +6,18 @@
 macro_rules! impl_id {
     ($name:ident, $length:literal, $doc:literal) => {
         #[doc = $doc]
-        #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, derive_more::From, derive_more::AsRef)]
+        #[derive(
+            Clone,
+            Copy,
+            Eq,
+            Hash,
+            PartialEq,
+            Ord,
+            PartialOrd,
+            derive_more::From,
+            derive_more::AsRef,
+            bee_packable::Packable,
+        )]
         #[as_ref(forward)]
         pub struct $name([u8; $name::LENGTH]);
 
@@ -37,28 +48,6 @@ macro_rules! impl_id {
         impl core::fmt::Debug for $name {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 write!(f, "{}({})", stringify!($name), self)
-            }
-        }
-
-        impl bee_common::packable::Packable for $name {
-            type Error = crate::Error;
-
-            fn packed_len(&self) -> usize {
-                $name::LENGTH
-            }
-
-            fn pack<W: bee_common::packable::Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-                self.0.pack(writer)?;
-
-                Ok(())
-            }
-
-            fn unpack_inner<R: bee_common::packable::Read + ?Sized, const CHECK: bool>(
-                reader: &mut R,
-            ) -> Result<Self, Self::Error> {
-                Ok(Self::new(<[u8; $name::LENGTH]>::unpack_inner::<R, CHECK>(
-                    reader,
-                )?))
             }
         }
     };

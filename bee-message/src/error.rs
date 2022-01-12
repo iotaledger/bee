@@ -3,13 +3,23 @@
 
 use crate::{
     input::UtxoInput,
-    output::{AliasId, NftId},
+    output::{
+        feature_block::FeatureBlockCount, AliasId, DustDepositAmount, ImmutableMetadataLength,
+        IndexationFeatureBlockLength, MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputIndex,
+        SimpleOutputAmount, StateMetadataLength, TreasuryOutputAmount,
+    },
+    parent::ParentCount,
+    payload::{
+        IndexationDataLength, IndexationIndexLength, InputCount, OutputCount, PublicKeyCount, ReceiptFundsCount,
+        SignatureCount,
+    },
+    unlock_block::{AliasIndex, NftIndex, ReferenceIndex, UnlockBlockCount},
 };
 
 use crypto::Error as CryptoError;
 use primitive_types::U256;
 
-use core::fmt;
+use core::{convert::Infallible, fmt};
 
 /// Error occurring when creating/parsing/validating messages.
 #[derive(Debug)]
@@ -23,47 +33,51 @@ pub enum Error {
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
     InvalidAddressKind(u8),
-    InvalidAliasIndex(u16),
-    InvalidAmount(u64),
+    InvalidAliasIndex(<AliasIndex as TryFrom<u16>>::Error),
+    InvalidAmount(<SimpleOutputAmount as TryFrom<u64>>::Error),
     InvalidControllerKind(u8),
-    InvalidDustDepositAmount(u64),
+    InvalidDustDepositAmount(<DustDepositAmount as TryFrom<u64>>::Error),
     InvalidEssenceKind(u8),
-    InvalidFeatureBlockCount(usize),
+    InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
     InvalidFeatureBlockKind(u8),
     InvalidFoundryOutputSupply { circulating: U256, max: U256 },
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength { expected: usize, actual: usize },
-    InvalidIndexationDataLength(usize),
-    InvalidIndexationIndexLength(usize),
+    InvalidIndexationDataLength(<IndexationDataLength as TryFrom<usize>>::Error),
+    InvalidIndexationFeatureBlockLength(<IndexationFeatureBlockLength as TryFrom<usize>>::Error),
+    InvalidIndexationIndexLength(<IndexationIndexLength as TryFrom<usize>>::Error),
     InvalidInputKind(u8),
-    InvalidInputOutputCount(u16),
-    InvalidInputOutputIndex(u16),
+    InvalidInputCount(<InputCount as TryFrom<usize>>::Error),
+    InvalidOutputCount(<OutputCount as TryFrom<usize>>::Error),
+    InvalidInputOutputIndex(<OutputIndex as TryFrom<u16>>::Error),
     InvalidMessageLength(usize),
-    InvalidMetadataLength(usize),
+    InvalidImmutableMetadataLength(<ImmutableMetadataLength as TryFrom<usize>>::Error),
+    InvalidStateMetadataLength(<StateMetadataLength as TryFrom<usize>>::Error),
+    InvalidMetadataFeatureBlockLength(<MetadataFeatureBlockLength as TryFrom<usize>>::Error),
     InvalidMigratedFundsEntryAmount(u64),
-    InvalidNativeTokenCount(usize),
-    InvalidNftIndex(u16),
+    InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
+    InvalidNftIndex(<NftIndex as TryFrom<u16>>::Error),
     InvalidOutputKind(u8),
-    InvalidParentsCount(usize),
+    InvalidParentCount(<ParentCount as TryFrom<usize>>::Error),
     InvalidPayloadKind(u32),
     InvalidPayloadLength { expected: usize, actual: usize },
     InvalidPowScoreValues { nps: u32, npsmi: u32 },
-    InvalidReceiptFundsCount(u16),
-    InvalidReferenceIndex(u16),
+    InvalidReceiptFundsCount(<ReceiptFundsCount as TryFrom<usize>>::Error),
+    InvalidReferenceIndex(<ReferenceIndex as TryFrom<u16>>::Error),
     InvalidSignature,
     InvalidSignatureKind(u8),
     InvalidTailTransactionHash,
     InvalidTokenSchemeKind(u8),
-    InvalidTreasuryAmount(u64),
-    InvalidUnlockBlockCount(u16),
+    InvalidTreasuryOutputAmount(<TreasuryOutputAmount as TryFrom<u64>>::Error),
+    InvalidUnlockBlockCount(<UnlockBlockCount as TryFrom<usize>>::Error),
     InvalidUnlockBlockKind(u8),
     InvalidUnlockBlockReference(u16),
     InvalidUnlockBlockAlias(u16),
     InvalidUnlockBlockNft(u16),
     Io(std::io::Error),
     MigratedFundsNotSorted,
-    MilestoneInvalidPublicKeyCount(usize),
-    MilestoneInvalidSignatureCount(usize),
+    MilestoneInvalidPublicKeyCount(<PublicKeyCount as TryFrom<usize>>::Error),
+    MilestoneInvalidSignatureCount(<SignatureCount as TryFrom<usize>>::Error),
     MilestonePublicKeysNotUniqueSorted,
     MilestonePublicKeysSignaturesCountMismatch { key_count: usize, sig_count: usize },
     MissingField(&'static str),
@@ -126,21 +140,29 @@ impl fmt::Display for Error {
             Error::InvalidIndexationDataLength(length) => {
                 write!(f, "invalid indexation data length {}.", length)
             }
+            Error::InvalidIndexationFeatureBlockLength(length) => {
+                write!(f, "invalid indexation feature block length {}.", length)
+            }
             Error::InvalidIndexationIndexLength(length) => {
                 write!(f, "invalid indexation index length {}.", length)
             }
             Error::InvalidInputKind(k) => write!(f, "invalid input kind: {}.", k),
-            Error::InvalidInputOutputCount(count) => write!(f, "invalid input or output count: {}.", count),
+            Error::InvalidInputCount(count) => write!(f, "invalid input count: {}.", count),
+            Error::InvalidOutputCount(count) => write!(f, "invalid output count: {}.", count),
             Error::InvalidInputOutputIndex(index) => write!(f, "invalid input or output index: {}.", index),
             Error::InvalidMessageLength(length) => write!(f, "invalid message length {}.", length),
-            Error::InvalidMetadataLength(length) => write!(f, "invalid metadata length {}.", length),
+            Error::InvalidStateMetadataLength(length) => write!(f, "invalid state metadata length {}.", length),
+            Error::InvalidImmutableMetadataLength(length) => write!(f, "invalid immutable metadata length {}.", length),
+            Error::InvalidMetadataFeatureBlockLength(length) => {
+                write!(f, "invalid metadata feature block length {}.", length)
+            }
             Error::InvalidMigratedFundsEntryAmount(amount) => {
                 write!(f, "invalid migrated funds entry amount: {}.", amount)
             }
             Error::InvalidNativeTokenCount(count) => write!(f, "invalid native token count: {}.", count),
             Error::InvalidNftIndex(index) => write!(f, "invalid nft index: {}.", index),
             Error::InvalidOutputKind(k) => write!(f, "invalid output kind: {}.", k),
-            Error::InvalidParentsCount(count) => {
+            Error::InvalidParentCount(count) => {
                 write!(f, "invalid parents count: {}.", count)
             }
             Error::InvalidPayloadKind(k) => write!(f, "invalid payload kind: {}.", k),
@@ -158,7 +180,7 @@ impl fmt::Display for Error {
             Error::InvalidSignatureKind(k) => write!(f, "invalid signature kind: {}.", k),
             Error::InvalidTailTransactionHash => write!(f, "invalid tail transaction hash."),
             Error::InvalidTokenSchemeKind(k) => write!(f, "invalid token scheme kind {}.", k),
-            Error::InvalidTreasuryAmount(amount) => write!(f, "invalid treasury amount: {}.", amount),
+            Error::InvalidTreasuryOutputAmount(amount) => write!(f, "invalid treasury amount: {}.", amount),
             Error::InvalidUnlockBlockCount(count) => write!(f, "invalid unlock block count: {}.", count),
             Error::InvalidUnlockBlockKind(k) => write!(f, "invalid unlock block kind: {}.", k),
             Error::InvalidUnlockBlockReference(index) => {
@@ -242,5 +264,11 @@ impl From<std::io::Error> for Error {
 impl From<CryptoError> for Error {
     fn from(error: CryptoError) -> Self {
         Error::CryptoError(error)
+    }
+}
+
+impl From<Infallible> for Error {
+    fn from(err: Infallible) -> Self {
+        match err {}
     }
 }
