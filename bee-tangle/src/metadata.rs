@@ -11,9 +11,9 @@ use bee_packable::Packable;
 
 use serde::Serialize;
 
-use core::convert::Infallible;
 use std::{
     cmp::Ordering,
+    convert::Infallible,
     time::{SystemTime, UNIX_EPOCH},
 };
 
