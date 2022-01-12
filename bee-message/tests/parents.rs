@@ -114,11 +114,10 @@ fn unpack_invalid_not_sorted() {
     let packed = inner.pack_to_vec();
     let parents = Parents::unpack_verified(&mut packed.as_slice());
 
-    assert!(
-        matches!(parents, Err(UnpackError::Packable(Error::ParentsNotUniqueSorted))),
-        "{:?}",
-        parents
-    );
+    assert!(matches!(
+        parents,
+        Err(UnpackError::Packable(Error::ParentsNotUniqueSorted))
+    ),);
 }
 
 #[test]
@@ -130,9 +129,8 @@ fn unpack_invalid_not_unique() {
     let packed = inner.pack_to_vec();
     let parents = Parents::unpack_verified(&mut packed.as_slice());
 
-    assert!(
-        matches!(parents, Err(UnpackError::Packable(Error::ParentsNotUniqueSorted))),
-        "{:?}",
-        parents
-    );
+    assert!(matches!(
+        parents,
+        Err(UnpackError::Packable(Error::ParentsNotUniqueSorted))
+    ),);
 }
