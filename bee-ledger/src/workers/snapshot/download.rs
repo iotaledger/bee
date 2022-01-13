@@ -24,24 +24,27 @@ async fn download_snapshot_header(download_url: &str) -> Result<SnapshotHeader, 
             if res.status().is_success() {
                 let mut stream = res.bytes_stream();
                 let mut bytes = Vec::<u8>::with_capacity(SnapshotHeader::LENGTH);
-    
+
                 while let Some(chunk) = stream.next().await {
                     let mut chunk_reader = chunk.map_err(|_| Error::DownloadingFailed)?.reader();
-    
+
                     let mut buf = Vec::new();
                     chunk_reader.read_to_end(&mut buf)?;
                     bytes.extend_from_slice(&buf);
-    
+
                     if bytes.len() >= SnapshotHeader::LENGTH {
                         debug!("Downloaded snapshot header from {}.", download_url);
-    
+
                         let mut slice: &[u8] = &bytes[..SnapshotHeader::LENGTH];
-    
+
                         return Ok(SnapshotHeader::unpack(&mut slice)?);
                     }
                 }
             } else {
-                debug!("Downloading snapshot header failed with status code {:?}.", res.status());
+                debug!(
+                    "Downloading snapshot header failed with status code {:?}.",
+                    res.status()
+                );
             }
         }
         Err(e) => debug!("Downloading snapshot header failed: {:?}.", e.to_string()),
