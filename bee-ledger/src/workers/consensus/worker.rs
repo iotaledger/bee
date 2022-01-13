@@ -16,7 +16,7 @@ use crate::{
 use bee_message::{
     address::Address,
     milestone::MilestoneIndex,
-    output::{Output, OutputId},
+    output::{ExtendedOutput, Output, OutputId},
     payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
     MessageId,
 };
@@ -138,11 +138,12 @@ where
         for (index, fund) in receipt.funds().iter().enumerate() {
             metadata.created_outputs.insert(
                 OutputId::new(transaction_id, index as u16)?,
-                CreatedOutput::new(message_id, Output::from(fund.output().clone())),
+                CreatedOutput::new(
+                    message_id,
+                    Output::from(ExtendedOutput::new(*fund.address(), fund.amount())),
+                ),
             );
-            metadata
-                .balance_diffs
-                .amount_add(*fund.output().address(), fund.output().amount())?;
+            metadata.balance_diffs.amount_add(*fund.address(), fund.amount())?;
         }
 
         if receipt.migrated_at() < *receipt_migrated_at {

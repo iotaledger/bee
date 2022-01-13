@@ -2,22 +2,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    address::Address,
     constant::{DUST_DEPOSIT_MIN, IOTA_SUPPLY},
-    output::SimpleOutput,
     payload::receipt::TailTransactionHash,
     Error,
 };
 
-use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
+use bee_packable::{bounded::BoundedU64, Packable};
 
 use core::ops::RangeInclusive;
 
+pub(crate) type MigratedFundsAmount =
+    BoundedU64<{ *MigratedFundsEntry::AMOUNT_RANGE.start() }, { *MigratedFundsEntry::AMOUNT_RANGE.end() }>;
+
 /// Describes funds which were migrated from a legacy network.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MigratedFundsEntry {
     tail_transaction_hash: TailTransactionHash,
-    output: SimpleOutput,
+    // The target address of the migrated funds.
+    address: Address,
+    // The migrated amount.
+    #[packable(unpack_error_with = Error::InvalidMigratedFundsEntryAmount)]
+    amount: MigratedFundsAmount,
 }
 
 impl MigratedFundsEntry {
@@ -25,44 +32,32 @@ impl MigratedFundsEntry {
     pub const AMOUNT_RANGE: RangeInclusive<u64> = DUST_DEPOSIT_MIN..=IOTA_SUPPLY;
 
     /// Creates a new [`MigratedFundsEntry`].
-    pub fn new(tail_transaction_hash: TailTransactionHash, output: SimpleOutput) -> Result<Self, Error> {
-        if !MigratedFundsEntry::AMOUNT_RANGE.contains(&output.amount()) {
-            return Err(Error::InvalidMigratedFundsEntryAmount(output.amount()));
-        }
-
-        Ok(Self {
-            tail_transaction_hash,
-            output,
-        })
+    pub fn new(tail_transaction_hash: TailTransactionHash, address: Address, amount: u64) -> Result<Self, Error> {
+        amount
+            .try_into()
+            .map(|amount| Self {
+                tail_transaction_hash,
+                address,
+                amount,
+            })
+            .map_err(Error::InvalidMigratedFundsEntryAmount)
     }
 
+    #[inline(always)]
     /// Returns the tail transaction hash of a [`MigratedFundsEntry`].
     pub fn tail_transaction_hash(&self) -> &TailTransactionHash {
         &self.tail_transaction_hash
     }
 
-    /// Returns the output of a [`MigratedFundsEntry`].
-    pub fn output(&self) -> &SimpleOutput {
-        &self.output
-    }
-}
-
-impl Packable for MigratedFundsEntry {
-    type UnpackError = Error;
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.tail_transaction_hash.pack(packer)?;
-        self.output.pack(packer)?;
-
-        Ok(())
+    /// Returns the address of a [`MigratedFundsEntry`].
+    #[inline(always)]
+    pub fn address(&self) -> &Address {
+        &self.address
     }
 
-    fn unpack<U: Unpacker, const VERIFY: bool>(
-        unpacker: &mut U,
-    ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let tail_transaction_hash = TailTransactionHash::unpack::<_, VERIFY>(unpacker)?;
-        let output = SimpleOutput::unpack::<_, VERIFY>(unpacker)?;
-
-        Self::new(tail_transaction_hash, output).map_err(UnpackError::Packable)
+    /// Returns the amount of a [`MigratedFundsEntry`].
+    #[inline(always)]
+    pub fn amount(&self) -> u64 {
+        self.amount.get()
     }
 }

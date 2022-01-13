@@ -5,7 +5,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput},
     milestone::MilestoneIndex,
-    output::{Output, SimpleOutput, TreasuryOutput},
+    output::{Output, TreasuryOutput},
     payload::{
         milestone::MilestoneId,
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
@@ -39,11 +39,8 @@ fn new_valid() {
         vec![
             MigratedFundsEntry::new(
                 TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SimpleOutput::new(
-                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                    AMOUNT,
-                )
-                .unwrap(),
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                AMOUNT,
             )
             .unwrap(),
         ],
@@ -89,11 +86,8 @@ fn new_invalid_receipt_funds_count_high() {
             .map(|_| {
                 MigratedFundsEntry::new(
                     TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                    SimpleOutput::new(
-                        Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                        AMOUNT,
-                    )
-                    .unwrap(),
+                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                    AMOUNT,
                 )
                 .unwrap()
             })
@@ -121,11 +115,8 @@ fn new_invalid_payload_kind() {
         vec![
             MigratedFundsEntry::new(
                 TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SimpleOutput::new(
-                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                    AMOUNT,
-                )
-                .unwrap(),
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                AMOUNT,
             )
             .unwrap(),
         ],
@@ -146,20 +137,14 @@ fn new_invalid_transaction_outputs_not_sorted() {
     let migrated_funds = vec![
         MigratedFundsEntry::new(
             TailTransactionHash::new(new_tail_transaction_hash).unwrap(),
-            SimpleOutput::new(
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                AMOUNT,
-            )
-            .unwrap(),
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            AMOUNT,
         )
         .unwrap(),
         MigratedFundsEntry::new(
             TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-            SimpleOutput::new(
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                AMOUNT,
-            )
-            .unwrap(),
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            AMOUNT,
         )
         .unwrap(),
     ];
@@ -184,11 +169,8 @@ fn new_invalid_transaction_outputs_not_sorted() {
 fn new_invalid_tail_transaction_hashes_not_unique() {
     let migrated_funds = MigratedFundsEntry::new(
         TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-        SimpleOutput::new(
-            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-            AMOUNT,
-        )
-        .unwrap(),
+        Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+        AMOUNT,
     )
     .unwrap();
 
@@ -216,11 +198,8 @@ fn pack_unpack_valid() {
         vec![
             MigratedFundsEntry::new(
                 TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SimpleOutput::new(
-                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                    AMOUNT,
-                )
-                .unwrap(),
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                AMOUNT,
             )
             .unwrap(),
         ],
@@ -250,11 +229,8 @@ fn getters() {
     let funds = vec![
         MigratedFundsEntry::new(
             TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-            SimpleOutput::new(
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                AMOUNT,
-            )
-            .unwrap(),
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            AMOUNT,
         )
         .unwrap(),
     ];

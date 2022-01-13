@@ -8,7 +8,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
-    output::{Output, SimpleOutput, TreasuryOutput},
+    output::{Output, TreasuryOutput},
     parent::Parents,
     payload::{
         indexation::IndexationPayload,
@@ -312,18 +312,12 @@ pub struct TreasuryInputDto {
 /// Describes all the different output types.
 #[derive(Clone, Debug)]
 pub enum OutputDto {
-    Simple(SimpleOutputDto),
     Treasury(TreasuryOutputDto),
 }
 
 impl From<&Output> for OutputDto {
     fn from(value: &Output) -> Self {
         match value {
-            Output::Simple(s) => OutputDto::Simple(SimpleOutputDto {
-                kind: SimpleOutput::KIND,
-                address: s.address().into(),
-                amount: s.amount(),
-            }),
             Output::Treasury(t) => OutputDto::Treasury(TreasuryOutputDto {
                 kind: TreasuryOutput::KIND,
                 amount: t.amount(),
@@ -341,7 +335,6 @@ impl TryFrom<&OutputDto> for Output {
 
     fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
         match value {
-            OutputDto::Simple(s) => Ok(Output::Simple(SimpleOutput::new((&s.address).try_into()?, s.amount)?)),
             OutputDto::Treasury(t) => Ok(Output::Treasury(TreasuryOutput::new(t.amount)?)),
         }
     }
@@ -356,10 +349,6 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
                 .and_then(Value::as_u64)
                 .ok_or_else(|| serde::de::Error::custom("invalid output type"))? as u8
             {
-                SimpleOutput::KIND => OutputDto::Simple(
-                    SimpleOutputDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
-                ),
                 TreasuryOutput::KIND => OutputDto::Treasury(
                     TreasuryOutputDto::deserialize(value)
                         .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
@@ -378,7 +367,6 @@ impl Serialize for OutputDto {
         #[derive(Serialize)]
         #[serde(untagged)]
         enum OutputDto_<'a> {
-            T1(&'a SimpleOutputDto),
             T3(&'a TreasuryOutputDto),
         }
         #[derive(Serialize)]
@@ -387,24 +375,12 @@ impl Serialize for OutputDto {
             output: OutputDto_<'a>,
         }
         let output = match self {
-            OutputDto::Simple(s) => TypedOutput {
-                output: OutputDto_::T1(s),
-            },
             OutputDto::Treasury(t) => TypedOutput {
                 output: OutputDto_::T3(t),
             },
         };
         output.serialize(serializer)
     }
-}
-
-/// Describes a deposit to a single address which is unlocked via a signature.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SimpleOutputDto {
-    #[serde(rename = "type")]
-    pub kind: u8,
-    pub address: AddressDto,
-    pub amount: u64,
 }
 
 /// Describes all the different address types.
@@ -740,8 +716,8 @@ impl From<&MigratedFundsEntry> for MigratedFundsEntryDto {
     fn from(value: &MigratedFundsEntry) -> Self {
         MigratedFundsEntryDto {
             tail_transaction_hash: hex::encode(value.tail_transaction_hash().as_ref()),
-            address: value.output().address().into(),
-            deposit: value.output().amount(),
+            address: value.address().into(),
+            deposit: value.amount(),
         }
     }
 }
@@ -755,7 +731,8 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
             .map_err(|_| Error::InvalidSyntaxField("tailTransactionHash"))?;
         Ok(MigratedFundsEntry::new(
             TailTransactionHash::new(tail_transaction_hash)?,
-            SimpleOutput::new((&value.address).try_into()?, value.deposit)?,
+            (&value.address).try_into()?,
+            value.deposit,
         )?)
     }
 }

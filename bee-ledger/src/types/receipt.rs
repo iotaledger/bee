@@ -44,9 +44,9 @@ impl Receipt {
         };
 
         for funds in self.inner().funds() {
-            migrated_amount = migrated_amount.checked_add(funds.output().amount()).ok_or_else(|| {
-                Error::MigratedFundsAmountOverflow(migrated_amount as u128 + funds.output().amount() as u128)
-            })?;
+            migrated_amount = migrated_amount
+                .checked_add(funds.amount())
+                .ok_or_else(|| Error::MigratedFundsAmountOverflow(migrated_amount as u128 + funds.amount() as u128))?;
         }
 
         if migrated_amount > IOTA_SUPPLY {
