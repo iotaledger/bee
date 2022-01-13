@@ -906,20 +906,28 @@ pub struct AliasOutputDto {
     // Amount of IOTA tokens held by the output.
     pub amount: u64,
     // Native tokens held by the output.
+    #[serde(rename = "nativeTokens")]
     pub native_tokens: Vec<NativeTokenDto>,
     // Unique identifier of the alias.
+    #[serde(rename = "aliasId")]
     pub alias_id: AliasIdDto,
     //
+    #[serde(rename = "stateController")]
     pub state_controller: AddressDto,
     //
+    #[serde(rename = "governanceController")]
     pub governance_controller: AddressDto,
     // A counter that must increase by 1 every time the alias is state transitioned.
+    #[serde(rename = "stateIndex")]
     pub state_index: u32,
     // Metadata that can only be changed by the state controller.
+    #[serde(rename = "stateMetadata")]
     pub state_metadata: String,
     // A counter that denotes the number of foundries created by this alias account.
+    #[serde(rename = "foundryCounter")]
     pub foundry_counter: u32,
     //
+    #[serde(rename = "blocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
 }
 
@@ -996,16 +1004,23 @@ pub struct FoundryOutputDto {
     // Amount of IOTA tokens held by the output.
     amount: u64,
     // Native tokens held by the output.
+    #[serde(rename = "nativeTokens")]
     native_tokens: Vec<NativeTokenDto>,
     // The serial number of the foundry with respect to the controlling alias.
+    #[serde(rename = "serialNumber")]
     serial_number: u32,
     // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
+    #[serde(rename = "tokenTag")]
     token_tag: String,
     // Circulating supply of tokens controlled by this foundry.
+    #[serde(rename = "circulatingSupply")]
     circulating_supply: U256Dto,
     // Maximum supply of tokens controlled by this foundry.
+    #[serde(rename = "maximumSupply")]
     maximum_supply: U256Dto,
+    #[serde(rename = "tokenScheme")]
     token_scheme: TokenSchemeDto,
+    #[serde(rename = "blocks")]
     feature_blocks: Vec<FeatureBlockDto>,
 }
 
@@ -1083,11 +1098,15 @@ pub struct NftOutputDto {
     // Amount of IOTA tokens held by the output.
     pub amount: u64,
     // Native tokens held by the output.
+    #[serde(rename = "nativeTokens")]
     pub native_tokens: Vec<NativeTokenDto>,
     // Unique identifier of the NFT.
+    #[serde(rename = "nftId")]
     pub nft_id: NftIdDto,
     // Binary metadata attached immutably to the NFT.
+    #[serde(rename = "immutableMetadata")]
     pub immutable_metadata: String,
+    #[serde(rename = "blocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
 }
 
