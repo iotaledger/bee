@@ -507,10 +507,10 @@ pub(crate) enum ValidationError {
     #[error("no autopeering service")]
     NoAutopeeringService,
     // The service port must match with the detected port.
-    #[error("service port mismatch; expected: {expected}, received: {received}")]
+    #[error("service port mismatch; expected: {expected}, found: {found}")]
     ServicePortMismatch {
         expected: ServicePort,
-        received: ServicePort,
+        found: ServicePort,
     },
 }
 
@@ -557,10 +557,9 @@ fn validate_verification_response(
                 if autopeering_svc.port() == source_socket_addr.port() {
                     Ok(reqv)
                 } else {
-                    // Fix: Update the outdated/wrong port
                     Err(ServicePortMismatch {
-                        expected: source_socket_addr.port(),
-                        received: autopeering_svc.port(),
+                        expected: autopeering_svc.port(),
+                        found: source_socket_addr.port(),
                     })
                 }
             } else {
@@ -626,22 +625,25 @@ fn handle_verification_request(verif_req: VerificationRequest, ctx: RecvContext)
 
     // Is this a known peer?
     if peer::is_known(ctx.peer_id, ctx.local, ctx.active_peers, ctx.replacements) {
-        // Update verification request timestamp
+        // Update verification request timestamp.
         if let Some(peer) = ctx.active_peers.write().find_mut(ctx.peer_id) {
             peer.metrics_mut().set_last_verif_request_timestamp();
         }
 
-        if !peer::is_verified(ctx.peer_id, ctx.active_peers) {
-            // Peer is known, but no longer verified.
-            send_verification_request_to_addr(ctx.peer_addr, ctx.peer_id, ctx.request_mngr, ctx.server_tx, None);
-        }
+        // BUGFIX: commented, because this created an infinite loop if the peer sent an invalid response (e.g. PortMismatch).
+
+        // // If this is a known, yet unverified peer, send a verification request.
+        // if !peer::is_verified(ctx.peer_id, ctx.active_peers) {
+        //     // Peer is known, but no longer verified.
+        //     send_verification_request_to_addr(ctx.peer_addr, ctx.peer_id, ctx.request_mngr, ctx.server_tx, None);
+        // }
     } else {
         // Add it as a new peer with autopeering service.
         let mut peer = Peer::new(ctx.peer_addr.ip(), *ctx.peer_id.public_key());
         peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, ctx.peer_addr.port());
 
         if let Some(peer_id) = add_peer::<true>(peer, ctx.local, ctx.active_peers, ctx.replacements) {
-            log::debug!("Added {}.", peer_id);
+            log::debug!("Added unknown and unverified {}.", peer_id);
         }
 
         // Peer is unknown, thus still unverified.
