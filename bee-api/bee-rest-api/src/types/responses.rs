@@ -135,9 +135,13 @@ pub struct OutputResponse {
     pub output_index: u16,
     #[serde(rename = "isSpent")]
     pub is_spent: bool,
-    pub output: OutputDto,
+    #[serde(rename = "milestoneIndex")]
+    pub milestone_index: u32,
+    #[serde(rename = "milestoneTimestamp")]
+    pub milestone_timestamp: u64,
     #[serde(rename = "ledgerIndex", default)]
     pub ledger_index: u32,
+    pub output: OutputDto,
 }
 
 impl BodyInner for OutputResponse {}
@@ -150,8 +154,6 @@ pub struct BalanceAddressResponse {
     pub address_type: u8,
     pub address: String,
     pub balance: u64,
-    #[serde(rename = "dustAllowed")]
-    pub dust_allowed: bool,
     #[serde(rename = "ledgerIndex", default)]
     pub ledger_index: u32,
 }
@@ -162,9 +164,6 @@ impl BodyInner for BalanceAddressResponse {}
 /// Returns the outputs of an address.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OutputsAddressResponse {
-    #[serde(rename = "addressType")]
-    pub address_type: u8,
-    pub address: String,
     #[serde(rename = "maxResults")]
     pub max_results: usize,
     pub count: usize,

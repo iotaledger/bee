@@ -21,9 +21,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.2.0 - 2022-XX-XX
 
+### Added
+
+- `ExtendedOutputDto`;
+- `AliasOutputDto`;
+- `FoundryOutputDto`;
+- `NftOutputDto`;
+- `AliasAddressDto`;
+- `NftAddressDto`;
+- `AliasUnlockBlockDto`;
+- `NftUnlockBlockDto`;
+- `NativeTokenDto`;
+- `TokenIdDto`;
+- `U256Dto`;
+- `FeatureBlockDto`;
+- `SenderFeatureBlockDto`;
+- `IssuerFeatureBlockDto`;
+- `DustDepositReturnFeatureBlockDto`;
+- `TimelockMilestoneIndexFeatureBlockDto`;
+- `TimelockUnixFeatureBlockDto`;
+- `ExpirationMilestoneIndexFeatureBlockDto`;
+- `ExpirationUnixFeatureBlockDto`;
+- `IndexationFeatureBlockDto`;
+- `MetadataFeatureBlockDto`;
+- `AliasIdDto`;
+- `TokenSchemeDto`;
+- `NftIdDto`;
+
 ### Changed
 
- - Serialize and deserialize the `DTO` types using `bee-packable` instead of `bee-common::packable`;
+- Serialize and deserialize the `DTO` types using `bee-packable` instead of `bee-common::packable`;
+- Changed `OutputResponse` type: added `milestone_index`, added `milestone_timestamp`, removed `dust_allowed`;
+- Changed `OutputsAddressResponse` type: removed `address_type`, removed `address`;
+- Merge `InvalidSyntaxField` with `InvalidSemanticField` to `InvalidField`;
 
 ### Removed
 
