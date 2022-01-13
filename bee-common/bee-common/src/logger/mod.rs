@@ -21,10 +21,10 @@ pub const LOGGER_STDOUT_NAME: &str = "stdout";
 #[non_exhaustive]
 pub enum Error {
     /// Creating output file failed.
-    #[error("creating output file failed.")]
+    #[error("creating output file failed")]
     CreatingFileFailed,
     /// Initializing the logger backend failed.
-    #[error("initializing the logger backend failed.")]
+    #[error("initializing the logger backend failed")]
     InitializationFailed,
 }
 

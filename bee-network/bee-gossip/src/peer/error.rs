@@ -53,10 +53,10 @@ pub enum Error {
     PeerIsUnbanned(PeerId),
 
     /// A failure due to hitting the maximum number of allowed unknown peers.
-    #[error("tried to add more unknown peers than defined in the config ({0}).")]
+    #[error("tried to add more unknown peers than defined in the config ({0})")]
     ExceedsUnknownPeerLimit(usize),
 
     /// A failure due to hitting the maximum number of allowed discovered peers.
-    #[error("tried to add more discovered peers than defined in the config ({0}).")]
+    #[error("tried to add more discovered peers than defined in the config ({0})")]
     ExceedsDiscoveredPeerLimit(usize),
 }

@@ -22,39 +22,39 @@ pub const DEFAULT_MAX_DISCOVERED_PEERS: usize = 4;
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// The provided [`Multiaddr`] has too few protocols in it.
-    #[error("multiaddr is underspecified.")]
+    #[error("multiaddr is underspecified")]
     MultiaddrUnderspecified,
 
     /// The provided [`Multiaddr`] has too many protocols in it.
-    #[error("multiaddr is overspecified.")]
+    #[error("multiaddr is overspecified")]
     MultiaddrOverspecified,
 
     /// The provided [`Protocol`] is invalid.
-    #[error("invalid multiaddr protocol at {}.", .0)]
+    #[error("invalid multiaddr protocol at {}", .0)]
     InvalidProtocol(usize),
 
     /// The provided address is invalid.
-    #[error("invalid address protocol.")]
+    #[error("invalid address protocol")]
     InvalidAddressProtocol,
 
     /// The provided port is invalid.
-    #[error("invalid port protocol.")]
+    #[error("invalid port protocol")]
     InvalidPortProtocol,
 
     /// The peer was already added.
-    #[error("static peer {} already added.", alias!(.0))]
+    #[error("static peer {} already added", alias!(.0))]
     DuplicateStaticPeer(PeerId),
 
     /// The domain was unresolvable.
-    #[error("domain name '{}' couldn't be resolved to an IP address", .0)]
+    #[error("domain name '{}' couldn't be resolved to an IP address", 0)]
     UnresolvableDomain(String),
 
     /// Parsing of a [`Multiaddr`] failed.
-    #[error("parsing of '{}' to a multiaddr failed.", 0)]
+    #[error("parsing of '{}' to a multiaddr failed", 0)]
     ParsingFailed(String),
 
     /// The provided [`Multiaddr`] lacks the P2p [`Protocol`].
-    #[error("invalid p2p multiaddr. Did you forget to add `.../p2p/12D3Koo...`?")]
+    #[error("invalid p2p multiaddr Did you forget to add `.../p2p/12D3Koo...`?")]
     MissingP2pProtocol,
 }
 
