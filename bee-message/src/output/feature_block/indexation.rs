@@ -8,7 +8,7 @@ use bee_packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix};
 use core::ops::RangeInclusive;
 
 pub(crate) type IndexationFeatureBlockLength =
-BoundedU8<{ *IndexationFeatureBlock::LENGTH_RANGE.start() }, { *IndexationFeatureBlock::LENGTH_RANGE.end() }>;
+    BoundedU8<{ *IndexationFeatureBlock::LENGTH_RANGE.start() }, { *IndexationFeatureBlock::LENGTH_RANGE.end() }>;
 
 /// Defines an indexation tag to which the output will be indexed.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
