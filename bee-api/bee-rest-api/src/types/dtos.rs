@@ -71,7 +71,7 @@ impl TryFrom<&MessageDto> for Message {
                 value
                     .network_id
                     .parse::<u64>()
-                    .map_err(|_| Error::InvalidSyntaxField("networkId"))?,
+                    .map_err(|_| Error::InvalidField("networkId"))?,
             )
             .with_parents(Parents::new(
                 value
@@ -79,15 +79,12 @@ impl TryFrom<&MessageDto> for Message {
                     .iter()
                     .map(|m| {
                         m.parse::<MessageId>()
-                            .map_err(|_| Error::InvalidSyntaxField("parentMessageIds"))
+                            .map_err(|_| Error::InvalidField("parentMessageIds"))
                     })
                     .collect::<Result<Vec<MessageId>, Error>>()?,
             )?)
             .with_nonce_provider(
-                value
-                    .nonce
-                    .parse::<u64>()
-                    .map_err(|_| Error::InvalidSyntaxField("nonce"))?,
+                value.nonce.parse::<u64>().map_err(|_| Error::InvalidField("nonce"))?,
                 0f64,
             );
         if let Some(p) = value.payload.as_ref() {
@@ -246,7 +243,7 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
             if let PayloadDto::Indexation(i) = p {
                 builder.with_payload(Payload::Indexation(Box::new((i.as_ref()).try_into()?)))
             } else {
-                return Err(Error::InvalidSemanticField("payload"));
+                return Err(Error::InvalidField("payload"));
             }
         } else {
             builder
@@ -288,13 +285,13 @@ impl TryFrom<&InputDto> for Input {
             InputDto::Utxo(i) => Ok(Input::Utxo(UtxoInput::new(
                 i.transaction_id
                     .parse::<TransactionId>()
-                    .map_err(|_| Error::InvalidSyntaxField("transactionId"))?,
+                    .map_err(|_| Error::InvalidField("transactionId"))?,
                 i.transaction_output_index,
             )?)),
             InputDto::Treasury(t) => Ok(Input::Treasury(
                 t.milestone_id
                     .parse::<MilestoneId>()
-                    .map_err(|_| Error::InvalidSyntaxField("milestoneId"))?
+                    .map_err(|_| Error::InvalidField("milestoneId"))?
                     .into(),
             )),
         }
@@ -490,7 +487,7 @@ impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
         value
             .address
             .parse::<Ed25519Address>()
-            .map_err(|_| Error::InvalidSyntaxField("Ed25519 address"))
+            .map_err(|_| Error::InvalidField("Ed25519 address"))
     }
 }
 
@@ -518,7 +515,7 @@ impl TryFrom<&AliasAddressDto> for AliasAddress {
         value
             .id
             .parse::<AliasAddress>()
-            .map_err(|_| Error::InvalidSyntaxField("alias address"))
+            .map_err(|_| Error::InvalidField("alias address"))
     }
 }
 
@@ -546,7 +543,7 @@ impl TryFrom<&NftAddressDto> for NftAddress {
         value
             .id
             .parse::<NftAddress>()
-            .map_err(|_| Error::InvalidSyntaxField("NFT address"))
+            .map_err(|_| Error::InvalidField("NFT address"))
     }
 }
 
@@ -623,11 +620,11 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
                 SignatureDto::Ed25519(ed) => {
                     let mut public_key = [0u8; Ed25519Address::LENGTH];
                     hex::decode_to_slice(&ed.public_key, &mut public_key)
-                        .map_err(|_| Error::InvalidSyntaxField("publicKey"))?;
+                        .map_err(|_| Error::InvalidField("publicKey"))?;
                     // TODO const
                     let mut signature = [0u8; 64];
                     hex::decode_to_slice(&ed.signature, &mut signature)
-                        .map_err(|_| Error::InvalidSyntaxField("signature"))?;
+                        .map_err(|_| Error::InvalidField("signature"))?;
                     Ok(UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(
                         Ed25519Signature::new(public_key, signature),
                     ))))
@@ -764,7 +761,7 @@ impl TryFrom<&NativeTokenDto> for NativeToken {
                 .amount
                 .0
                 .parse::<U256>()
-                .map_err(|_| Error::InvalidSyntaxField("amount"))?,
+                .map_err(|_| Error::InvalidField("amount"))?,
         ))
     }
 }
@@ -783,10 +780,7 @@ impl TryFrom<&TokenIdDto> for TokenId {
     type Error = Error;
 
     fn try_from(value: &TokenIdDto) -> Result<Self, Self::Error> {
-        value
-            .0
-            .parse::<TokenId>()
-            .map_err(|_| Error::InvalidSemanticField("token id"))
+        value.0.parse::<TokenId>().map_err(|_| Error::InvalidField("token id"))
     }
 }
 
@@ -889,10 +883,10 @@ impl TryFrom<&FeatureBlockDto> for FeatureBlock {
             }
             FeatureBlockDto::ExpirationUnix(v) => Self::ExpirationUnix(ExpirationUnixFeatureBlock::new(v.0)),
             FeatureBlockDto::Indexation(v) => Self::Indexation(IndexationFeatureBlock::new(
-                hex::decode(&v.0).map_err(|_e| Error::InvalidSemanticField("IndexationFeatureBlock"))?,
+                hex::decode(&v.0).map_err(|_e| Error::InvalidField("IndexationFeatureBlock"))?,
             )?),
             FeatureBlockDto::Metadata(v) => Self::Metadata(MetadataFeatureBlock::new(
-                hex::decode(&v.0).map_err(|_e| Error::InvalidSemanticField("MetadataFeatureBlock"))?,
+                hex::decode(&v.0).map_err(|_e| Error::InvalidField("MetadataFeatureBlock"))?,
             )?),
         })
     }
@@ -960,7 +954,7 @@ impl TryFrom<&AliasOutputDto> for AliasOutput {
         )?;
         builder = builder.with_state_index(value.state_index);
         builder = builder.with_state_metadata(
-            hex::decode(&value.state_metadata).map_err(|_| Error::InvalidSyntaxField("state_metadata"))?,
+            hex::decode(&value.state_metadata).map_err(|_| Error::InvalidField("state_metadata"))?,
         );
         builder = builder.with_foundry_counter(value.foundry_counter);
 
@@ -987,10 +981,7 @@ impl TryFrom<&AliasIdDto> for AliasId {
     type Error = Error;
 
     fn try_from(value: &AliasIdDto) -> Result<Self, Self::Error> {
-        value
-            .0
-            .parse::<AliasId>()
-            .map_err(|_| Error::InvalidSemanticField("alias id"))
+        value.0.parse::<AliasId>().map_err(|_| Error::InvalidField("alias id"))
     }
 }
 
@@ -1059,19 +1050,19 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
             {
                 let mut decoded_token_tag = [0u8; 12];
                 hex::decode_to_slice(&value.token_tag, &mut decoded_token_tag as &mut [u8])
-                    .map_err(|_| Error::InvalidSyntaxField("token_tag"))?;
+                    .map_err(|_| Error::InvalidField("token_tag"))?;
                 decoded_token_tag
             },
             value
                 .circulating_supply
                 .0
                 .parse::<U256>()
-                .map_err(|_| Error::InvalidSyntaxField("circulating_supply"))?,
+                .map_err(|_| Error::InvalidField("circulating_supply"))?,
             value
                 .maximum_supply
                 .0
                 .parse::<U256>()
-                .map_err(|_| Error::InvalidSyntaxField("maximum_supply"))?,
+                .map_err(|_| Error::InvalidField("maximum_supply"))?,
             match value.token_scheme {
                 TokenSchemeDto::Simple => TokenScheme::Simple,
             },
@@ -1123,10 +1114,7 @@ impl TryFrom<&NftIdDto> for NftId {
     type Error = Error;
 
     fn try_from(value: &NftIdDto) -> Result<Self, Self::Error> {
-        value
-            .0
-            .parse::<NftId>()
-            .map_err(|_| Error::InvalidSemanticField("NFT id"))
+        value.0.parse::<NftId>().map_err(|_| Error::InvalidField("NFT id"))
     }
 }
 
@@ -1152,7 +1140,7 @@ impl TryFrom<&NftOutputDto> for NftOutput {
             (&value.address).try_into()?,
             value.amount,
             (&value.nft_id).try_into()?,
-            hex::decode(&value.immutable_metadata).map_err(|_| Error::InvalidSyntaxField("immutable_metadata"))?,
+            hex::decode(&value.immutable_metadata).map_err(|_| Error::InvalidField("immutable_metadata"))?,
         )?;
 
         for t in &value.native_tokens {
@@ -1216,13 +1204,13 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
                 parent_ids.push(
                     msg_id
                         .parse::<MessageId>()
-                        .map_err(|_| Error::InvalidSyntaxField("parentMessageIds"))?,
+                        .map_err(|_| Error::InvalidField("parentMessageIds"))?,
                 );
             }
             let merkle_proof = {
                 let mut buf = [0u8; MilestoneEssence::MERKLE_PROOF_LENGTH];
                 hex::decode_to_slice(&value.inclusion_merkle_proof, &mut buf)
-                    .map_err(|_| Error::InvalidSyntaxField("inclusionMerkleProof"))?;
+                    .map_err(|_| Error::InvalidField("inclusionMerkleProof"))?;
                 buf
             };
             let next_pow_score = value.next_pow_score;
@@ -1231,7 +1219,7 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
             for v in &value.public_keys {
                 let key = {
                     let mut buf = [0u8; MilestoneEssence::PUBLIC_KEY_LENGTH];
-                    hex::decode_to_slice(v, &mut buf).map_err(|_| Error::InvalidSyntaxField("publicKeys"))?;
+                    hex::decode_to_slice(v, &mut buf).map_err(|_| Error::InvalidField("publicKeys"))?;
                     buf
                 };
                 public_keys.push(key);
@@ -1256,9 +1244,9 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
         for v in &value.signatures {
             signatures.push(
                 hex::decode(v)
-                    .map_err(|_| Error::InvalidSyntaxField("signatures"))?
+                    .map_err(|_| Error::InvalidField("signatures"))?
                     .try_into()
-                    .map_err(|_| Error::InvalidSyntaxField("signatures"))?,
+                    .map_err(|_| Error::InvalidField("signatures"))?,
             )
         }
 
@@ -1290,8 +1278,8 @@ impl TryFrom<&IndexationPayloadDto> for IndexationPayload {
 
     fn try_from(value: &IndexationPayloadDto) -> Result<Self, Self::Error> {
         Ok(IndexationPayload::new(
-            hex::decode(value.index.clone()).map_err(|_| Error::InvalidSyntaxField("index"))?,
-            hex::decode(value.data.clone()).map_err(|_| Error::InvalidSyntaxField("data"))?,
+            hex::decode(value.index.clone()).map_err(|_| Error::InvalidField("index"))?,
+            hex::decode(value.data.clone()).map_err(|_| Error::InvalidField("data"))?,
         )?)
     }
 }
@@ -1358,7 +1346,7 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
     fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
         let mut tail_transaction_hash = [0u8; TailTransactionHash::LENGTH];
         hex::decode_to_slice(&value.tail_transaction_hash, &mut tail_transaction_hash)
-            .map_err(|_| Error::InvalidSyntaxField("tailTransactionHash"))?;
+            .map_err(|_| Error::InvalidField("tailTransactionHash"))?;
         Ok(MigratedFundsEntry::new(
             TailTransactionHash::new(tail_transaction_hash)?,
             (&value.address).try_into()?,
