@@ -52,7 +52,7 @@ impl IndexationFeatureBlock {
 
 impl core::fmt::Display for IndexationFeatureBlock {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", hex::encode(&self.0))
+        write!(f, "{}", hex::encode(&*self.0))
     }
 }
 
