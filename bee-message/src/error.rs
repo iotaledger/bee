@@ -6,12 +6,12 @@ use crate::{
     output::{
         feature_block::FeatureBlockCount, AliasId, DustDepositAmount, ImmutableMetadataLength,
         IndexationFeatureBlockLength, MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputIndex,
-        SimpleOutputAmount, StateMetadataLength, TreasuryOutputAmount,
+        StateMetadataLength, TreasuryOutputAmount,
     },
     parent::ParentCount,
     payload::{
-        IndexationDataLength, IndexationIndexLength, InputCount, OutputCount, PublicKeyCount, ReceiptFundsCount,
-        SignatureCount,
+        IndexationDataLength, IndexationIndexLength, InputCount, MigratedFundsAmount, OutputCount, PublicKeyCount,
+        ReceiptFundsCount, SignatureCount,
     },
     unlock_block::{AliasIndex, NftIndex, ReferenceIndex, UnlockBlockCount},
 };
@@ -34,7 +34,6 @@ pub enum Error {
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAliasIndex(<AliasIndex as TryFrom<u16>>::Error),
-    InvalidAmount(<SimpleOutputAmount as TryFrom<u64>>::Error),
     InvalidControllerKind(u8),
     InvalidDustDepositAmount(<DustDepositAmount as TryFrom<u64>>::Error),
     InvalidEssenceKind(u8),
@@ -54,7 +53,7 @@ pub enum Error {
     InvalidImmutableMetadataLength(<ImmutableMetadataLength as TryFrom<usize>>::Error),
     InvalidStateMetadataLength(<StateMetadataLength as TryFrom<usize>>::Error),
     InvalidMetadataFeatureBlockLength(<MetadataFeatureBlockLength as TryFrom<usize>>::Error),
-    InvalidMigratedFundsEntryAmount(u64),
+    InvalidMigratedFundsEntryAmount(<MigratedFundsAmount as TryFrom<u64>>::Error),
     InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
     InvalidNftIndex(<NftIndex as TryFrom<u16>>::Error),
     InvalidOutputKind(u8),
@@ -120,7 +119,6 @@ impl fmt::Display for Error {
             Error::InvalidAddress => write!(f, "invalid address provided."),
             Error::InvalidAddressKind(k) => write!(f, "invalid address kind: {}.", k),
             Error::InvalidAliasIndex(index) => write!(f, "invalid alias index: {}.", index),
-            Error::InvalidAmount(amount) => write!(f, "invalid amount: {}.", amount),
             Error::InvalidControllerKind(k) => write!(f, "invalid controller kind: {}.", k),
             Error::InvalidDustDepositAmount(amount) => {
                 write!(f, "invalid dust deposit amount: {}.", amount)

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::rand::{
-    address::rand_address,
     message::rand_message_id,
     milestone::{rand_milestone_id, rand_milestone_index},
     number::{rand_number, rand_number_range},
@@ -10,7 +9,7 @@ use crate::rand::{
 };
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
-use bee_message::output::{self, Output, OutputId, SimpleOutput, OUTPUT_INDEX_RANGE};
+use bee_message::output::{self, Output, OutputId, OUTPUT_INDEX_RANGE};
 
 /// Generates a random output id.
 pub fn rand_output_id() -> OutputId {
@@ -22,11 +21,6 @@ pub fn rand_unspent_output_id() -> Unspent {
     Unspent::new(rand_output_id())
 }
 
-/// Generates a random simple output.
-pub fn rand_simple_output() -> SimpleOutput {
-    SimpleOutput::new(rand_address(), rand_number_range(SimpleOutput::AMOUNT_RANGE)).unwrap()
-}
-
 /// Generates a random treasury output.
 pub fn rand_treasury_output() -> output::TreasuryOutput {
     output::TreasuryOutput::new(rand_number_range(output::TreasuryOutput::AMOUNT_RANGE)).unwrap()
@@ -36,7 +30,6 @@ pub fn rand_treasury_output() -> output::TreasuryOutput {
 // TODO finish
 pub fn rand_output() -> Output {
     match rand_number::<u64>() % 3 {
-        0 => rand_simple_output().into(),
         // 1 => todo!(),
         _ => rand_treasury_output().into(),
         // _ => unreachable!(),
@@ -54,7 +47,6 @@ pub fn rand_created_output() -> CreatedOutput {
     CreatedOutput::new(
         rand_message_id(),
         match rand_number::<u64>() % 3 {
-            0 => rand_simple_output().into(),
             // 1 => todo!(),
             _ => rand_treasury_output().into(),
             // _ => unreachable!(),

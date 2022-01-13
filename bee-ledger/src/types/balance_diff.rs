@@ -81,9 +81,6 @@ impl BalanceDiffs {
     /// Adds an output to a [`BalanceDiffs`].
     pub fn output_add(&mut self, output: &Output) -> Result<(), Error> {
         match output {
-            Output::Simple(output) => {
-                self.amount_add(*output.address(), output.amount())?;
-            }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(output.kind())),
             Output::Extended(output) => {
                 self.amount_add(*output.address(), output.amount())?;
@@ -105,9 +102,6 @@ impl BalanceDiffs {
     /// Subtracts an output from a BalanceDiffs`.
     pub fn output_sub(&mut self, output: &Output) -> Result<(), Error> {
         match output {
-            Output::Simple(output) => {
-                self.amount_sub(*output.address(), output.amount())?;
-            }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(output.kind())),
             Output::Extended(output) => {
                 self.amount_sub(*output.address(), output.amount())?;
