@@ -7,7 +7,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("invalid syntax for field \"{0}\"")]
+    #[error("invalid field \"{0}\"")]
     InvalidField(&'static str),
     #[error("{0}")]
     Message(#[from] MessageError),
