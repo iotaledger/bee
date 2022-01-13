@@ -272,7 +272,6 @@ impl Runnable for OutgoingPacketHandler {
                         let n = outgoing_socket.send_to(&bytes, peer_addr).await.expect("socket send error");
 
                         log::trace!("Sent {} bytes to {}.", n, peer_addr);
-
                     } else {
                         // All `outgoing_tx` message senders were dropped.
                         break 'recv;

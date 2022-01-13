@@ -508,10 +508,7 @@ pub(crate) enum ValidationError {
     NoAutopeeringService,
     // The service port must match with the detected port.
     #[error("service port mismatch; expected: {expected}, found: {found}")]
-    ServicePortMismatch {
-        expected: ServicePort,
-        found: ServicePort,
-    },
+    ServicePortMismatch { expected: ServicePort, found: ServicePort },
 }
 
 fn validate_verification_request(
@@ -629,14 +626,6 @@ fn handle_verification_request(verif_req: VerificationRequest, ctx: RecvContext)
         if let Some(peer) = ctx.active_peers.write().find_mut(ctx.peer_id) {
             peer.metrics_mut().set_last_verif_request_timestamp();
         }
-
-        // BUGFIX: commented, because this created an infinite loop if the peer sent an invalid response (e.g. PortMismatch).
-
-        // // If this is a known, yet unverified peer, send a verification request.
-        // if !peer::is_verified(ctx.peer_id, ctx.active_peers) {
-        //     // Peer is known, but no longer verified.
-        //     send_verification_request_to_addr(ctx.peer_addr, ctx.peer_id, ctx.request_mngr, ctx.server_tx, None);
-        // }
     } else {
         // Add it as a new peer with autopeering service.
         let mut peer = Peer::new(ctx.peer_addr.ip(), *ctx.peer_id.public_key());

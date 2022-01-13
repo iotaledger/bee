@@ -125,7 +125,7 @@ impl<const N: usize, const INBOUND: bool> Neighborhood<N, INBOUND> {
         self.write().update_distances(local);
     }
 
-    /// Returns, whether a peer is part of this neighborhood.
+    /// Returns whether a peer is part of this neighborhood.
     pub(crate) fn contains(&self, peer_id: &PeerId) -> bool {
         self.read().contains(peer_id)
     }

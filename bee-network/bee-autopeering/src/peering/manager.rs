@@ -286,8 +286,6 @@ fn handle_peering_request<V: NeighborValidator>(
             .cloned()
             .expect("inconsistent peer list");
 
-        // if nb_filter.ok(&active_peer.peer()) {
-
         // The peer must not be a neighbor already.
         if !ctx.inbound_nbh.contains(ctx.peer_id) && !ctx.outbound_nbh.contains(ctx.peer_id) {
             // Calculate the distance between the local peer and the potential neighbor.
@@ -326,13 +324,16 @@ fn handle_peering_request<V: NeighborValidator>(
                     );
                 }
             } else {
-                log::debug!("Denying peering request from {}: Peer distance too large.", ctx.peer_id);
+                log::debug!("Denying peering request from {}: Peer is too far away.", ctx.peer_id);
             }
         } else {
-            log::debug!("Denying peering request from {}: Peer already neighbored.", ctx.peer_id);
+            log::debug!(
+                "Denying peering request from {}: Peer is already a neighbor.",
+                ctx.peer_id
+            );
         }
     } else {
-        log::debug!("Denying peering request from {}: Peer not verified.", ctx.peer_id);
+        log::debug!("Denying peering request from {}: Peer is not verified.", ctx.peer_id);
     }
 
     // In any case send a response.
@@ -385,7 +386,10 @@ fn handle_peering_response<V: NeighborValidator>(
             // Fire `OutgoingPeering` event with status = `true`.
             publish_peering_event::<OUTBOUND>(peer, status, ctx.local, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
         } else {
-            log::debug!("Failed to add {} to outbound neighborhood after successful peering request", ctx.peer_id);
+            log::debug!(
+                "Failed to add {} to outbound neighborhood after successful peering request",
+                ctx.peer_id
+            );
         }
     } else {
         log::debug!("Peering rejected by {}.", ctx.peer_id);

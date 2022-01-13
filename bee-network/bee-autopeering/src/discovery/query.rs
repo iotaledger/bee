@@ -45,7 +45,7 @@ pub(crate) fn reverify_fn() -> Repeat<QueryContext> {
                         services
                     );
                 } else {
-                    log::debug!("Reverifying {} failed. Removing peer.", peer_id);
+                    log::debug!("Failed to reverify {}. Removing peer.", peer_id);
 
                     manager::remove_peer_from_active_list(
                         &peer_id,
