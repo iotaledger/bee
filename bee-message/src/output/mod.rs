@@ -10,7 +10,6 @@ mod native_token;
 mod nft;
 mod nft_id;
 mod output_id;
-mod simple;
 mod token_id;
 mod treasury;
 
@@ -32,8 +31,6 @@ pub use nft::{NftOutput, NftOutputBuilder};
 pub use nft_id::NftId;
 pub use output_id::OutputId;
 pub(crate) use output_id::OutputIndex;
-pub use simple::SimpleOutput;
-pub(crate) use simple::SimpleOutputAmount;
 pub use token_id::TokenId;
 pub use treasury::TreasuryOutput;
 pub(crate) use treasury::TreasuryOutputAmount;
@@ -63,9 +60,6 @@ pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; // [0.
 #[packable(unpack_error = Error)]
 #[packable(tag_type = u8, with_error = Error::InvalidOutputKind)]
 pub enum Output {
-    /// A simple output.
-    #[packable(tag = SimpleOutput::KIND)]
-    Simple(SimpleOutput),
     /// A treasury output.
     #[packable(tag = TreasuryOutput::KIND)]
     Treasury(TreasuryOutput),
@@ -87,7 +81,6 @@ impl Output {
     /// Return the output kind of an `Output`.
     pub fn kind(&self) -> u8 {
         match self {
-            Self::Simple(_) => SimpleOutput::KIND,
             Self::Treasury(_) => TreasuryOutput::KIND,
             Self::Extended(_) => ExtendedOutput::KIND,
             Self::Alias(_) => AliasOutput::KIND,
@@ -99,7 +92,6 @@ impl Output {
     ///
     pub fn amount(&self) -> u64 {
         match self {
-            Self::Simple(output) => output.amount(),
             Self::Treasury(output) => output.amount(),
             Self::Extended(output) => output.amount(),
             Self::Alias(output) => output.amount(),

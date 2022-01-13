@@ -4,7 +4,7 @@
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, UtxoInput},
-    output::{Output, SimpleOutput},
+    output::{ExtendedOutput, Output},
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     Error,
 };
@@ -21,7 +21,7 @@ fn essence_kind() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let output = Output::Extended(ExtendedOutput::new(address, amount));
     let essence = TransactionEssence::Regular(
         RegularTransactionEssence::builder()
             .with_inputs(vec![input1, input2])

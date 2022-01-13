@@ -111,45 +111,45 @@ impl<T> StorageBackend for T where
 {
 }
 
-pub(crate) fn insert_output_id_for_address_batch<B: StorageBackend>(
-    storage: &B,
-    batch: &mut <B as BatchBuilder>::Batch,
-    address: &Address,
-    output_id: &OutputId,
-) -> Result<(), Error> {
-    match address {
-        Address::Ed25519(address) => {
-            Batch::<(Ed25519Address, OutputId), ()>::batch_insert(storage, batch, &(*address, *output_id), &())
-                .map_err(|e| Error::Storage(Box::new(e)))
-        }
-        Address::Alias(_address) => {
-            todo!();
-        }
-        Address::Nft(_address) => {
-            todo!();
-        }
-    }
-}
-
-pub(crate) fn delete_output_id_for_address_batch<B: StorageBackend>(
-    storage: &B,
-    batch: &mut <B as BatchBuilder>::Batch,
-    address: &Address,
-    output_id: &OutputId,
-) -> Result<(), Error> {
-    match address {
-        Address::Ed25519(address) => {
-            Batch::<(Ed25519Address, OutputId), ()>::batch_delete(storage, batch, &(*address, *output_id))
-                .map_err(|e| Error::Storage(Box::new(e)))
-        }
-        Address::Alias(_address) => {
-            todo!();
-        }
-        Address::Nft(_address) => {
-            todo!();
-        }
-    }
-}
+// pub(crate) fn insert_output_id_for_address_batch<B: StorageBackend>(
+//     storage: &B,
+//     batch: &mut <B as BatchBuilder>::Batch,
+//     address: &Address,
+//     output_id: &OutputId,
+// ) -> Result<(), Error> {
+//     match address {
+//         Address::Ed25519(address) => {
+//             Batch::<(Ed25519Address, OutputId), ()>::batch_insert(storage, batch, &(*address, *output_id), &())
+//                 .map_err(|e| Error::Storage(Box::new(e)))
+//         }
+//         Address::Alias(_address) => {
+//             todo!();
+//         }
+//         Address::Nft(_address) => {
+//             todo!();
+//         }
+//     }
+// }
+//
+// pub(crate) fn delete_output_id_for_address_batch<B: StorageBackend>(
+//     storage: &B,
+//     batch: &mut <B as BatchBuilder>::Batch,
+//     address: &Address,
+//     output_id: &OutputId,
+// ) -> Result<(), Error> {
+//     match address {
+//         Address::Ed25519(address) => {
+//             Batch::<(Ed25519Address, OutputId), ()>::batch_delete(storage, batch, &(*address, *output_id))
+//                 .map_err(|e| Error::Storage(Box::new(e)))
+//         }
+//         Address::Alias(_address) => {
+//             todo!();
+//         }
+//         Address::Nft(_address) => {
+//             todo!();
+//         }
+//     }
+// }
 
 pub(crate) fn insert_created_output_batch<B: StorageBackend>(
     storage: &B,
@@ -163,7 +163,6 @@ pub(crate) fn insert_created_output_batch<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     match output.inner() {
-        Output::Simple(output) => insert_output_id_for_address_batch(storage, batch, output.address(), output_id),
         Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
         Output::Extended(_) => todo!(),
         Output::Alias(_) => todo!(),
@@ -184,7 +183,6 @@ pub(crate) fn delete_created_output_batch<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     match output.inner() {
-        Output::Simple(output) => delete_output_id_for_address_batch(storage, batch, output.address(), output_id),
         Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
         Output::Extended(_) => todo!(),
         Output::Alias(_) => todo!(),

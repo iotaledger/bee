@@ -6,6 +6,7 @@
 mod migrated_funds_entry;
 mod tail_transaction_hash;
 
+pub(crate) use migrated_funds_entry::MigratedFundsAmount;
 pub use migrated_funds_entry::MigratedFundsEntry;
 pub use tail_transaction_hash::TailTransactionHash;
 
@@ -83,7 +84,7 @@ impl ReceiptPayload {
 
     /// Returns the sum of all `MigratedFundsEntry` items within a `ReceiptPayload`.
     pub fn amount(&self) -> u64 {
-        self.funds.iter().fold(0, |acc, funds| acc + funds.output().amount())
+        self.funds.iter().fold(0, |acc, funds| acc + funds.amount())
     }
 }
 

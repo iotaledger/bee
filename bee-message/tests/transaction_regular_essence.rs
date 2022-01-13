@@ -5,7 +5,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     constant::IOTA_SUPPLY,
     input::{Input, TreasuryInput, UtxoInput},
-    output::{Output, SimpleOutput, TreasuryOutput},
+    output::{ExtendedOutput, Output, TreasuryOutput},
     payload::{
         milestone::MilestoneId,
         transaction::{RegularTransactionEssence, TransactionId},
@@ -36,7 +36,7 @@ fn build_valid() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let output = Output::Extended(ExtendedOutput::new(address, amount));
 
     let essence = RegularTransactionEssence::builder()
         .with_inputs(vec![input1, input2])
@@ -54,7 +54,7 @@ fn build_valid_with_payload() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let output = Output::Extended(ExtendedOutput::new(address, amount));
     let payload = Payload::from(rand_indexation_payload());
 
     let essence = RegularTransactionEssence::builder()
@@ -74,7 +74,7 @@ fn build_valid_add_inputs_outputs() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let output = Output::Extended(ExtendedOutput::new(address, amount));
 
     let essence = RegularTransactionEssence::builder()
         .with_inputs(vec![input1, input2])
@@ -92,7 +92,7 @@ fn build_invalid_payload_kind() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let output = Output::Extended(ExtendedOutput::new(address, amount));
     let payload = rand_treasury_transaction_payload();
 
     let essence = RegularTransactionEssence::builder()
@@ -109,7 +109,7 @@ fn build_invalid_input_count_low() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let output = Output::Extended(ExtendedOutput::new(address, amount));
 
     let essence = RegularTransactionEssence::builder().add_output(output).finish();
 
@@ -126,7 +126,7 @@ fn build_invalid_input_count_high() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let output = Output::Extended(ExtendedOutput::new(address, amount));
 
     let essence = RegularTransactionEssence::builder()
         .with_inputs(vec![input; 128])
@@ -159,7 +159,7 @@ fn build_invalid_output_count_high() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let output = Output::Extended(ExtendedOutput::new(address, amount));
 
     let essence = RegularTransactionEssence::builder()
         .add_input(input)
@@ -179,7 +179,7 @@ fn build_invalid_duplicate_utxo() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let output = Output::Extended(ExtendedOutput::new(address, amount));
 
     let essence = RegularTransactionEssence::builder()
         .with_inputs(vec![input; 2])
@@ -195,7 +195,7 @@ fn build_invalid_input_kind() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Simple(SimpleOutput::new(address, amount).unwrap());
+    let output = Output::Extended(ExtendedOutput::new(address, amount));
 
     let essence = RegularTransactionEssence::builder()
         .add_input(input)
@@ -228,12 +228,12 @@ fn build_invalid_accumulated_output() {
     let bytes1: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address1 = Address::from(Ed25519Address::new(bytes1));
     let amount1 = IOTA_SUPPLY - 1_000_000;
-    let output1 = Output::Simple(SimpleOutput::new(address1, amount1).unwrap());
+    let output1 = Output::Extended(ExtendedOutput::new(address1, amount1));
 
     let bytes2: [u8; 32] = hex::decode(ED25519_ADDRESS_2).unwrap().try_into().unwrap();
     let address2 = Address::from(Ed25519Address::new(bytes2));
     let amount2 = 2_000_000;
-    let output2 = Output::Simple(SimpleOutput::new(address2, amount2).unwrap());
+    let output2 = Output::Extended(ExtendedOutput::new(address2, amount2));
 
     let essence = RegularTransactionEssence::builder()
         .add_input(input)
@@ -251,7 +251,7 @@ fn getters() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let outputs = vec![Output::Simple(SimpleOutput::new(address, amount).unwrap())];
+    let outputs = vec![Output::Extended(ExtendedOutput::new(address, amount))];
     let payload = Payload::from(rand_indexation_payload());
 
     let essence = RegularTransactionEssence::builder()

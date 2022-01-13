@@ -25,6 +25,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Serialize and deserialize the `DTO` types using `bee-packable` instead of `bee-common::packable`;
 
+### Removed
+
+- `OutputDto::SignatureLockedSingle`;
+- `OutputDto::SignatureLockedDustAllowance`;
+- `SignatureLockedSingleOutputDto`;
+- `SignatureLockedDustAllowanceOutputDto`;
+
 ## 0.1.7 - 2021-12-08
 
 ### Changed

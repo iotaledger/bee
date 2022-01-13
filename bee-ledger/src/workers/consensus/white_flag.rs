@@ -77,9 +77,6 @@ fn apply_regular_essence<B: StorageBackend>(
         let _essence_hash = TransactionEssence::from(essence.clone()).hash();
 
         match consumed_output.inner() {
-            Output::Simple(_) => {
-                // TODO
-            }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
             Output::Extended(_) => {
                 // TODO
@@ -100,9 +97,6 @@ fn apply_regular_essence<B: StorageBackend>(
 
     for created_output in essence.outputs() {
         match created_output {
-            Output::Simple(_) => {
-                // TODO
-            }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
             Output::Extended(_) => {
                 // TODO
