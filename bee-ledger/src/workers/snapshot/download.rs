@@ -171,7 +171,7 @@ async fn download_snapshot_file(path: &Path, download_url: &str) -> Result<(), E
                 warn!("Downloading snapshot file failed with status code {:?}.", res.status());
             }
         }
-        Err(e) => debug!("Downloading snapshot failed: {:?}.", e.to_string()),
+        Err(e) => warn!("Downloading snapshot failed: {:?}.", e.to_string()),
     }
 
     Ok(())
