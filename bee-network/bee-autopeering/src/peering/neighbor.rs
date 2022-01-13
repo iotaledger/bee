@@ -125,6 +125,11 @@ impl<const N: usize, const INBOUND: bool> Neighborhood<N, INBOUND> {
         self.write().update_distances(local);
     }
 
+    /// Returns, whether a peer is part of this neighborhood.
+    pub(crate) fn contains(&self, peer_id: &PeerId) -> bool {
+        self.read().contains(peer_id)
+    }
+
     /// Clears the neighborhood, removing all neighbors.
     pub(crate) fn clear(&self) {
         self.write().clear();
@@ -247,6 +252,10 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         self.neighbors.iter_mut().for_each(|pd| {
             pd.distance = salt_distance(&local_id, pd.peer().peer_id(), &salt);
         });
+    }
+
+    fn contains(&self, peer_id: &PeerId) -> bool {
+        self.neighbors.iter().any(|nb| nb.peer().peer_id() == peer_id)
     }
 
     fn len(&self) -> usize {

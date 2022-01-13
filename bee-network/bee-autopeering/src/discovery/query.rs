@@ -30,8 +30,6 @@ pub(crate) fn reverify_fn() -> Repeat<QueryContext> {
     Box::new(|ctx| {
         // Determine the next peer to re/verifiy.
         if let Some(peer_id) = peer_to_reverify(&ctx.active_peers) {
-            log::debug!("Reverifying {}...", peer_id);
-
             let ctx_ = ctx.clone();
 
             // TODO: introduce `UnsupervisedTask` type, that always finishes after a timeout.
@@ -41,12 +39,13 @@ pub(crate) fn reverify_fn() -> Repeat<QueryContext> {
                 {
                     // Hive.go: no need to do anything here, as the peer is bumped when handling the pong
                     log::debug!(
-                        "Reverification successful. Peer offers {} service/s: {}",
+                        "Reverified {}. Peer offers {} service/s: {}",
+                        &peer_id,
                         services.len(),
                         services
                     );
                 } else {
-                    log::debug!("Reverification failed. Removing peer {}.", peer_id);
+                    log::debug!("Reverifying {} failed. Removing peer.", peer_id);
 
                     manager::remove_peer_from_active_list(
                         &peer_id,

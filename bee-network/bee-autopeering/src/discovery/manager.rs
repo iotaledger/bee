@@ -658,6 +658,14 @@ fn handle_verification_response(verif_res: VerificationResponse, verif_reqval: R
         // * Update its services;
         // * Fire the "peer discovered" event;
         if verified_count == 1 {
+            let services = verif_res.services();
+            log::debug!(
+                "Verified {}. Peer offers {} service/s: {}",
+                ctx.peer_id,
+                services.len(),
+                services
+            );
+
             if let Some(peer) = ctx.active_peers.write().find_mut(ctx.peer_id) {
                 peer.peer_mut().set_services(verif_res.services().clone())
             }
