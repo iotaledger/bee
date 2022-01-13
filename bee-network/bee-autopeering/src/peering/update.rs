@@ -93,7 +93,9 @@ fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
                 if status {
                     set_outbound_update_interval(&ctx_.outbound_nbh, &ctx_.local);
                 } else {
-                    ctx_.nb_filter.add(*candidate.peer_id());
+                    // TEMP: don't filter the peer right away because it didn't accept our peering request immediatedly
+                    // Logs show that a peer that rejected our peering request later sends a peering request to us.
+                    // ctx_.nb_filter.add(*candidate.peer_id());
                 }
             } else {
                 ctx_.nb_filter.add(*candidate.peer_id());

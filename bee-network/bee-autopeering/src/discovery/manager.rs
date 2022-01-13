@@ -749,16 +749,16 @@ pub(crate) async fn begin_verification(
         Ok(Ok(bytes)) => match VerificationResponse::from_protobuf(&bytes).map(|r| r.into_services()) {
             Ok(services) => Some(services),
             Err(e) => {
-                log::debug!("Verification response decode error: {}", e);
+                log::debug!("Verification response decode error for {}: {}", peer_id, e);
                 None
             }
         },
         Ok(Err(e)) => {
-            log::debug!("Verification response error: {}", e);
+            log::debug!("Verification response error for {}: {}", peer_id, e);
             None
         }
         Err(e) => {
-            log::debug!("Verification response timeout: {}", e);
+            log::debug!("Verification response timeout for {}: {}", peer_id, e);
 
             // The response didn't arrive in time => remove the request.
             let _ = request_mngr.remove_request::<VerificationRequest>(peer_id);
