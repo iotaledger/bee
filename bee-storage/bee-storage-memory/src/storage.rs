@@ -33,13 +33,13 @@ use std::sync::{PoisonError, RwLock};
 #[derive(Debug, Error)]
 pub enum Error {
     /// A thread panicked while a lock was being held.
-    #[error("A lock is poisoned")]
+    #[error("a lock is poisoned")]
     PoisonedLock,
     /// There is a storage version mismatch between the storage folder and this version of the storage.
-    #[error("Storage version mismatch, {0:?} != {1:?}, remove storage folder and restart")]
+    #[error("storage version mismatch, {0:?} != {1:?}, remove storage folder and restart")]
     VersionMismatch(StorageVersion, StorageVersion),
     /// The storage was not closed properly.
-    #[error("Unhealthy storage: {0:?}, remove storage folder and restart")]
+    #[error("unhealthy storage: {0:?}, remove storage folder and restart")]
     UnhealthyStorage(StorageHealth),
 }
 

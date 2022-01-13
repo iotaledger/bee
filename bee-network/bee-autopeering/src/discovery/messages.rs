@@ -291,9 +291,9 @@ impl fmt::Debug for DiscoveryResponse {
 pub(crate) enum Error {
     #[error("the peer did not announce any services")]
     MissingServices,
-    #[error("invalid source ip address due to: {0}.")]
+    #[error("invalid source ip address due to: {0}")]
     InvalidSourceIpAddress(AddrParseError),
-    #[error("invalid target ip address due to: {0}.")]
+    #[error("invalid target ip address due to: {0}")]
     InvalidTargetIpAddress(AddrParseError),
     #[error("invalid service description")]
     Service(#[from] crate::local::services::Error),

@@ -7,22 +7,22 @@
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// Publishing the local (peer) id failed.
-    #[error("Failed to announce local id")]
+    #[error("failed to announce local id")]
     LocalIdAnnouncementFailed,
 
     /// Publishing the list of static peers failed.
-    #[error("Failed to announce static peers.")]
+    #[error("failed to announce static peers")]
     StaticPeersAnnouncementFailed,
 
     /// Creating transport layer failed.
-    #[error("Failed to create transport layer.")]
+    #[error("failed to create transport layer")]
     CreatingTransportFailed,
 
     /// Binding to an address failed.
-    #[error("Failed to bind to an address.")]
+    #[error("failed to bind to an address")]
     BindingAddressFailed,
 
     /// An error occurred in the [`Host`] event loop.
-    #[error("Failed to process an item in the host processor event loop.")]
+    #[error("failed to process an item in the host processor event loop")]
     HostEventLoopError,
 }
