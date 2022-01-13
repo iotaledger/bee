@@ -323,13 +323,13 @@ fn handle_peering_request<V: NeighborValidator>(
                     );
                 }
             } else {
-                log::debug!("Denying peering request: Peer distance too large.");
+                log::debug!("Denying peering request from {}: Peer distance too large.", ctx.peer_id);
             }
         } else {
-            log::debug!("Denying peering request: Peer filtered.");
+            log::debug!("Denying peering request from {}: Peer filtered.", ctx.peer_id);
         }
     } else {
-        log::debug!("Denying peering request: Peer not verified.");
+        log::debug!("Denying peering request from {}: Peer not verified.", ctx.peer_id);
     }
 
     // In any case send a response.

@@ -39,7 +39,6 @@ pub(crate) const VERIFICATION_EXPIRATION: Duration = Duration::from_secs(12 * HO
 const MAX_PEERS_IN_RESPONSE: usize = 6;
 // Is the minimum number of verifications required to be selected in DiscoveryResponse.
 const MIN_VERIFIED_IN_RESPONSE: usize = 1;
-// Is the maximum number of services a peer can support.
 
 pub(crate) struct DiscoveryManagerConfig {
     pub(crate) entry_nodes: Vec<AutopeeringMultiaddr>,
@@ -128,9 +127,6 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
 
         let ServerSocket { server_rx, server_tx } = socket;
 
-        // Add previously discovered peers from the peer store.
-        add_peers_from_store(&peer_store, &active_peers, &replacements);
-
         // Add entry peers from the config.
         add_entry_peers(
             &mut entry_nodes,
@@ -141,6 +137,9 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
             &replacements,
         )
         .await;
+
+        // Add previously discovered peers from the peer store.
+        add_peers_from_store(&peer_store, &active_peers, &replacements);
 
         let discovery_recv_handler = DiscoveryRecvHandler {
             server_tx: server_tx.clone(),
