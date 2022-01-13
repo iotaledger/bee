@@ -7,7 +7,7 @@ pub enum Error {
     #[error("{0}")]
     IoError(#[from] std::io::Error),
 
-    /// Creating Noise authentication keys failed.
-    #[error("Creating Noise authentication keys failed")]
+    /// Creating noise authentication keys failed.
+    #[error("creating noise authentication keys failed")]
     CreatingNoiseKeysFailed,
 }

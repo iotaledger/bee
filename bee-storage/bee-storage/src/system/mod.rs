@@ -20,13 +20,13 @@ pub const SYSTEM_HEALTH_KEY: u8 = 1;
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// I/O error.
-    #[error("I/O error happened: {0}")]
+    #[error("i/o error happened: {0}")]
     Io(#[from] std::io::Error),
     /// Packing/unpacking the `System::Health` variant failed.
-    #[error("Storage health error: {0}")]
+    #[error("storage health error: {0}")]
     Health(#[from] StorageHealthError),
     /// Found an invalid key while unpacking a `System` value.
-    #[error("Unknown system key: {0}")]
+    #[error("unknown system key: {0}")]
     UnknownSystemKey(u8),
 }
 
