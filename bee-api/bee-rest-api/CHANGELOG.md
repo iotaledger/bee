@@ -31,7 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Serialize and deserialize the `DTO` types using `bee-packable` instead of `bee-common::packable`;
-- `OutputResponse`;
+- Changed `OutputResponse` type: added `milestone_index`, added `milestone_timestamp`, removed `dust_allowed`;
+- Changed `OutputsAddressResponse` type: removed `address_type`, removed `address`;
 - Custom debug implementations for `MetadataFeatureBlock` and `IndexationFeatureBlock`;
 
 ### Removed
