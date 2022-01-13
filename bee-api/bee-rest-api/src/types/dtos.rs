@@ -15,8 +15,8 @@ use bee_message::{
             TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
         },
         AliasId, AliasOutput, AliasOutputBuilder, ExtendedOutput, ExtendedOutputBuilder, FoundryOutput,
-        FoundryOutputBuilder, NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId,
-        TokenScheme, TreasuryOutput,
+        FoundryOutputBuilder, NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme,
+        TreasuryOutput,
     },
     parent::Parents,
     payload::{
@@ -889,10 +889,10 @@ impl TryFrom<&FeatureBlockDto> for FeatureBlock {
             }
             FeatureBlockDto::ExpirationUnix(v) => Self::ExpirationUnix(ExpirationUnixFeatureBlock::new(v.0)),
             FeatureBlockDto::Indexation(v) => Self::Indexation(IndexationFeatureBlock::new(
-                &hex::decode(&v.0).map_err(|_e| Error::InvalidSemanticField("IndexationFeatureBlock"))?,
+                hex::decode(&v.0).map_err(|_e| Error::InvalidSemanticField("IndexationFeatureBlock"))?,
             )?),
             FeatureBlockDto::Metadata(v) => Self::Metadata(MetadataFeatureBlock::new(
-                &hex::decode(&v.0).map_err(|_e| Error::InvalidSemanticField("MetadataFeatureBlock"))?,
+                hex::decode(&v.0).map_err(|_e| Error::InvalidSemanticField("MetadataFeatureBlock"))?,
             )?),
         })
     }
