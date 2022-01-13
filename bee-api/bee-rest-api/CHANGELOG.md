@@ -27,13 +27,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AliasOutputDto`;
 - `FoundryOutputDto`;
 - `NftOutputDto`;
+- `AliasAddressDto`;
+- `NftAddressDto`;
+- `AliasUnlockBlockDto`;
+- `NftUnlockBlockDto`;
+- `NativeTokenDto`;
+- `TokenIdDto`;
+- `U256Dto`;
+- `FeatureBlockDto`;
+- `SenderFeatureBlockDto`;
+- `IssuerFeatureBlockDto`;
+- `DustDepositReturnFeatureBlockDto`;
+- `TimelockMilestoneIndexFeatureBlockDto`;
+- `TimelockUnixFeatureBlockDto`;
+- `ExpirationMilestoneIndexFeatureBlockDto`;
+- `ExpirationUnixFeatureBlockDto`;
+- `IndexationFeatureBlockDto`;
+- `MetadataFeatureBlockDto`;
+- `AliasIdDto`;
+- `TokenSchemeDto`;
+- `NftIdDto`;
 
 ### Changed
 
 - Serialize and deserialize the `DTO` types using `bee-packable` instead of `bee-common::packable`;
 - Changed `OutputResponse` type: added `milestone_index`, added `milestone_timestamp`, removed `dust_allowed`;
 - Changed `OutputsAddressResponse` type: removed `address_type`, removed `address`;
-- Custom debug implementations for `MetadataFeatureBlock` and `IndexationFeatureBlock`;
 
 ### Removed
 
