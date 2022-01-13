@@ -37,11 +37,6 @@ impl<V: NeighborValidator> NeighborFilter<V> {
         self.write().clear();
     }
 
-    /// Returns `true` if the filter is okay with the candidate, otherwise `false`.
-    pub(crate) fn ok(&self, candidate: impl AsRef<Peer>) -> bool {
-        self.read().ok(candidate)
-    }
-
     /// Applies the filter to a list of candidates.
     pub(crate) fn apply_list<'a, P: AsRef<Peer>>(&self, candidates: &'a [P]) -> Vec<&'a P> {
         self.read().apply_list(candidates)

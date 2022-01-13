@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.1.1 - 2022-01-13
+
+### Fixed
+
+- server panics when sending to an IPv6 address;
+- spams port mismatch warnings
+- filters out valid incoming peering requests 
+
 ## 0.1.0 - 2021-12-03
 
 ### Added
