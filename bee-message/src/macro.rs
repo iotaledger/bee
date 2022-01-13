@@ -62,6 +62,8 @@ macro_rules! string_serde_impl {
 
         impl Serialize for $type {
             fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+                use alloc::string::ToString;
+
                 s.serialize_str(&self.to_string())
             }
         }
@@ -76,7 +78,7 @@ macro_rules! string_serde_impl {
                 impl<'de> Visitor<'de> for StringVisitor {
                     type Value = $type;
 
-                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    fn expecting(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                         formatter.write_str("a string representing the value")
                     }
 

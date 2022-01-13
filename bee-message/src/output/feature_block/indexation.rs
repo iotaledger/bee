@@ -5,6 +5,7 @@ use crate::Error;
 
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix};
 
+use alloc::vec::Vec;
 use core::ops::RangeInclusive;
 
 pub(crate) type IndexationFeatureBlockLength =

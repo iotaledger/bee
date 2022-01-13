@@ -19,6 +19,8 @@ use packable::{
     Packable,
 };
 
+use alloc::vec::Vec;
+
 ///
 #[must_use]
 pub struct NftOutputBuilder {

@@ -6,7 +6,7 @@ use bee_test::rand::message::{rand_message_id, rand_message_ids};
 
 use packable::{bounded::TryIntoBoundedU8Error, error::UnpackError, prefix::VecPrefix, PackableExt};
 
-use std::ops::Deref;
+use core::ops::Deref;
 
 #[test]
 fn new_valid_iter() {

@@ -15,7 +15,7 @@ use bech32::{self, FromBase32, ToBase32, Variant};
 use derive_more::From;
 use packable::PackableExt;
 
-use alloc::{str::FromStr, string::String};
+use alloc::{str::FromStr, string::String, vec::Vec};
 
 /// A generic address supporting different address kinds.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From, packable::Packable)]

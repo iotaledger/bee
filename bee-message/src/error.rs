@@ -19,6 +19,7 @@ use crate::{
 use crypto::Error as CryptoError;
 use primitive_types::U256;
 
+use alloc::string::String;
 use core::{convert::Infallible, fmt};
 
 /// Error occurring when creating/parsing/validating messages.
@@ -73,7 +74,6 @@ pub enum Error {
     InvalidUnlockBlockReference(u16),
     InvalidUnlockBlockAlias(u16),
     InvalidUnlockBlockNft(u16),
-    Io(std::io::Error),
     MigratedFundsNotSorted,
     MilestoneInvalidPublicKeyCount(<PublicKeyCount as TryFrom<usize>>::Error),
     MilestoneInvalidSignatureCount(<SignatureCount as TryFrom<usize>>::Error),
@@ -94,6 +94,7 @@ pub enum Error {
     UnallowedFeatureBlock { index: usize, kind: u8 },
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for Error {}
 
 impl fmt::Display for Error {
@@ -190,7 +191,6 @@ impl fmt::Display for Error {
             Error::InvalidUnlockBlockNft(index) => {
                 write!(f, "invalid unlock block nft: {0}", index)
             }
-            Error::Io(e) => write!(f, "i/o error happened: {}.", e),
             Error::MigratedFundsNotSorted => {
                 write!(f, "migrated funds are not sorted.")
             }
@@ -250,12 +250,6 @@ impl fmt::Display for Error {
                 write!(f, "unallowed feature block at index {} with kind {}.", index, kind)
             }
         }
-    }
-}
-
-impl From<std::io::Error> for Error {
-    fn from(error: std::io::Error) -> Self {
-        Error::Io(error)
     }
 }
 

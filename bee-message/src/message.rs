@@ -107,7 +107,7 @@ impl<P: NonceProvider> MessageBuilder<P> {
 
         message.nonce = nonce_provider
             .nonce(
-                &message_bytes[..message_bytes.len() - std::mem::size_of::<u64>()],
+                &message_bytes[..message_bytes.len() - core::mem::size_of::<u64>()],
                 target_score,
             )
             .unwrap_or(Self::DEFAULT_NONCE);

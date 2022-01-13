@@ -20,7 +20,7 @@ pub struct OutputId {
 
 impl OutputId {
     /// The length of a [`OutputId`].
-    pub const LENGTH: usize = TransactionId::LENGTH + std::mem::size_of::<u16>();
+    pub const LENGTH: usize = TransactionId::LENGTH + core::mem::size_of::<u16>();
 
     /// Creates a new [`OutputId`].
     pub fn new(transaction_id: TransactionId, index: u16) -> Result<Self, Error> {

@@ -10,14 +10,14 @@ pub(crate) use migrated_funds_entry::MigratedFundsAmount;
 pub use migrated_funds_entry::MigratedFundsEntry;
 pub use tail_transaction_hash::TailTransactionHash;
 
-use crate::{milestone::MilestoneIndex, output::OUTPUT_COUNT_RANGE, payload::Payload, Error};
+use crate::{milestone::MilestoneIndex, output::OUTPUT_COUNT_RANGE, payload::Payload, util::Map, Error};
 
 use bee_common::ord::is_unique_sorted;
 
 use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable, PackableExt};
 
+use alloc::vec::Vec;
 use core::ops::RangeInclusive;
-use std::collections::HashMap;
 
 const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<u16> = OUTPUT_COUNT_RANGE;
 
@@ -95,7 +95,7 @@ fn validate_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<()
         return Err(Error::ReceiptFundsNotUniqueSorted);
     }
 
-    let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
+    let mut tail_transaction_hashes = Map::with_capacity(funds.len());
     for (index, funds) in funds.iter().enumerate() {
         if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash().as_ref(), index) {
             return Err(Error::TailTransactionHashNotUnique {

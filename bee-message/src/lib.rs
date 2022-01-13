@@ -3,9 +3,12 @@
 
 //! Core data types for messages in the tangle.
 
-#![deny(missing_docs, warnings)]
+#![cfg_attr(not(feature = "std"), no_std)]
+// #![deny(missing_docs, warnings)]
 
 extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
 
 #[macro_use]
 mod r#macro;

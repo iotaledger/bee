@@ -14,6 +14,7 @@ use packable::{
     prefix::BoxedSlicePrefix,
 };
 
+use alloc::vec::Vec;
 use core::ops::RangeInclusive;
 
 pub(crate) type IndexationIndexLength =

@@ -18,6 +18,8 @@ use packable::{
 };
 use primitive_types::U256;
 
+use alloc::vec::Vec;
+
 ///
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]

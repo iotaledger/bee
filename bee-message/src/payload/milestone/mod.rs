@@ -26,7 +26,13 @@ use packable::{
     Packable, PackableExt,
 };
 
-use alloc::vec::Vec;
+use crypto::{
+    hashes::{blake2b::Blake2b256, Digest},
+    signatures::ed25519,
+    Error as CryptoError,
+};
+
+use alloc::{string::String, vec::Vec};
 use core::{fmt::Debug, ops::RangeInclusive};
 
 #[derive(Debug)]

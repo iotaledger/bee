@@ -5,14 +5,14 @@ use bee_message::Message;
 
 use packable::{error::UnpackError, PackableExt};
 
-use std::{
+use core::{
     fs::{self, File, OpenOptions},
     io::{self, prelude::*},
 };
 
 fn main() -> io::Result<()> {
     let paths = fs::read_dir("./corpus/fuzz_message")?;
-    std::fs::create_dir_all("./corpus/errors")?;
+    core::fs::create_dir_all("./corpus/errors")?;
 
     for path in paths {
         let file_name = format!(
