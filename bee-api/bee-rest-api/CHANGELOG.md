@@ -21,9 +21,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.2.0 - 2022-XX-XX
 
+### Added
+
+- `ExtendedOutputDto`;
+- `AliasOutputDto`;
+- `FoundryOutputDto`;
+- `NftOutputDto`;
+
 ### Changed
 
- - Serialize and deserialize the `DTO` types using `bee-packable` instead of `bee-common::packable`;
+- Serialize and deserialize the `DTO` types using `bee-packable` instead of `bee-common::packable`;
+- `OutputResponse`;
+- Custom debug implementations for `MetadataFeatureBlock` and `IndexationFeatureBlock`;
 
 ### Removed
 
