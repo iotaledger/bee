@@ -67,12 +67,14 @@ impl LoggerOutputConfigBuilder {
             name: self.name.unwrap_or_else(|| DEFAULT_OUTPUT_NAME.to_owned()),
             level_filter: self.level_filter.unwrap_or(DEFAULT_OUTPUT_LEVEL),
             target_filters: self
-                .target_filters.unwrap_or_default()
+                .target_filters
+                .unwrap_or_default()
                 .iter()
                 .map(|f| f.to_lowercase())
                 .collect(),
             target_exclusions: self
-                .target_exclusions.unwrap_or_default()
+                .target_exclusions
+                .unwrap_or_default()
                 .iter()
                 .map(|f| f.to_lowercase())
                 .collect(),
