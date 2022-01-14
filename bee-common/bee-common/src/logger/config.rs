@@ -63,6 +63,7 @@ impl LoggerOutputConfigBuilder {
     }
 
     /// Sets the color flag of a logger output.
+    #[must_use]
     pub fn color_enabled(mut self, color: bool) -> Self {
         self.color_enabled.replace(color);
         self
