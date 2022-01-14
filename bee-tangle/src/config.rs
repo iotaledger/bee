@@ -25,6 +25,7 @@ impl TangleConfigBuilder {
     }
 
     /// Finish building tangle configuration, to create a [`TangleConfig`].
+    #[must_use]
     pub fn finish(self) -> TangleConfig {
         TangleConfig {
             below_max_depth: self.below_max_depth.unwrap_or(DEFAULT_BELOW_MAX_DEPTH),

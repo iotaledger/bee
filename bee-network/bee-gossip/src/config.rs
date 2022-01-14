@@ -214,6 +214,7 @@ impl NetworkConfigBuilder {
     }
 
     /// Specifies the bind addresses.
+    #[must_use]
     pub fn with_bind_multiaddr(mut self, mut multiaddr: Multiaddr) -> Result<Self, Error> {
         let mut valid = false;
         let mut is_dns = false;
@@ -276,6 +277,7 @@ impl NetworkConfigBuilder {
     /// Specifies the interval (in seconds) at which known peers are automatically reconnected if possible.
     ///
     /// The allowed minimum value for the `secs` argument is `1`.
+    #[must_use]
     pub fn with_reconnect_interval_secs(mut self, secs: u64) -> Self {
         let secs = secs.max(MIN_RECONNECT_INTERVAL_SECS);
         self.reconnect_interval_secs.replace(secs);
@@ -283,18 +285,21 @@ impl NetworkConfigBuilder {
     }
 
     /// Specifies the maximum number of gossip connections with unknown peers.
+    #[must_use]
     pub fn with_max_unknown_peers(mut self, n: usize) -> Self {
         self.max_unknown_peers.replace(n);
         self
     }
 
     /// Specifies the maximum number of gossip connections with discovered peers.
+    #[must_use]
     pub fn with_max_discovered_peers(mut self, n: usize) -> Self {
         self.max_discovered_peers.replace(n);
         self
     }
 
     /// Builds the network config.
+    #[must_use]
     pub fn finish(self) -> Result<NetworkConfig, Error> {
         Ok(NetworkConfig {
             bind_multiaddr: self
@@ -325,6 +330,7 @@ impl InMemoryNetworkConfigBuilder {
     }
 
     /// Specifies the bind addresses.
+    #[must_use]
     pub fn with_bind_multiaddr(mut self, multiaddr: Multiaddr) -> Self {
         for (i, p) in multiaddr.iter().enumerate() {
             match i {
@@ -341,6 +347,7 @@ impl InMemoryNetworkConfigBuilder {
     }
 
     /// Builds the in-memory network config.
+    #[must_use]
     pub fn finish(self) -> NetworkConfig {
         const DEFAULT_BIND_MULTIADDR_MEM: &str = "/memory/0";
 
@@ -386,6 +393,7 @@ pub struct ManualPeeringConfigBuilder {
 }
 
 impl ManualPeeringConfigBuilder {
+    #[must_use]
     pub fn finish(self) -> Result<ManualPeeringConfig, Error> {
         let peers = match self.peers {
             None => Default::default(),

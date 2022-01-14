@@ -92,12 +92,14 @@ where
     G: PrivateKeyGenerator,
 {
     /// Sets the depth of the MSS.
+    #[must_use]
     pub fn with_depth(mut self, depth: u8) -> Self {
         self.depth.replace(depth);
         self
     }
 
     /// Sets the underlying private key generator.
+    #[must_use]
     pub fn with_generator(mut self, generator: G) -> Self {
         self.generator.replace(generator);
         self
@@ -273,6 +275,7 @@ where
     K: PublicKey,
 {
     /// Sets the depth of the public key.
+    #[must_use]
     pub fn with_depth(mut self, depth: u8) -> Self {
         self.depth.replace(depth);
         self
@@ -362,6 +365,7 @@ pub struct MssSignature<S> {
 
 impl<S: Sponge + Default> MssSignature<S> {
     /// Set the index of the signature.
+    #[must_use]
     pub fn with_index(mut self, index: usize) -> Self {
         self.index.replace(index);
         self

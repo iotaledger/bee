@@ -153,6 +153,7 @@ pub struct AutopeeringConfigJsonBuilder {
 
 impl AutopeeringConfigJsonBuilder {
     /// Builds the actual `AutopeeringConfig`.
+    #[must_use]
     pub fn finish(self) -> AutopeeringConfig {
         AutopeeringConfig {
             enabled: self.enabled,
@@ -204,6 +205,7 @@ pub struct AutopeeringConfigTomlBuilder {
 
 impl AutopeeringConfigTomlBuilder {
     /// Builds the actual `AutopeeringConfig`.
+    #[must_use]
     pub fn finish(self) -> AutopeeringConfig {
         AutopeeringConfig {
             enabled: self.enabled,

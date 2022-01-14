@@ -29,12 +29,14 @@ pub struct WotsShakePrivateKeyGeneratorBuilder<S> {
 
 impl<S: Sponge + Default> WotsShakePrivateKeyGeneratorBuilder<S> {
     /// Sets the security level of the private key.
+    #[must_use]
     pub fn with_security_level(mut self, security_level: WotsSecurityLevel) -> Self {
         self.security_level.replace(security_level);
         self
     }
 
     /// Builds the private key generator.
+    #[must_use]
     pub fn build(self) -> Result<WotsShakePrivateKeyGenerator<S>, WotsError> {
         Ok(WotsShakePrivateKeyGenerator {
             security_level: self.security_level.ok_or(WotsError::MissingSecurityLevel)?,

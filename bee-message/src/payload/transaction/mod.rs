@@ -92,20 +92,21 @@ impl TransactionPayloadBuilder {
     }
 
     /// Adds an essence to a `TransactionPayloadBuilder`.
+    #[must_use]
     pub fn with_essence(mut self, essence: Essence) -> Self {
         self.essence.replace(essence);
-
         self
     }
 
     /// Adds unlock blocks to a `TransactionPayloadBuilder`.
+    #[must_use]
     pub fn with_unlock_blocks(mut self, unlock_blocks: UnlockBlocks) -> Self {
         self.unlock_blocks.replace(unlock_blocks);
-
         self
     }
 
     /// Finishes a `TransactionPayloadBuilder` into a `TransactionPayload`.
+    #[must_use]
     pub fn finish(self) -> Result<TransactionPayload, Error> {
         let essence = self.essence.ok_or(Error::MissingField("essence"))?;
         let unlock_blocks = self.unlock_blocks.ok_or(Error::MissingField("unlock_blocks"))?;

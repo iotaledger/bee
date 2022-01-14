@@ -8,6 +8,7 @@ use crate::providers::{NonceProvider, NonceProviderBuilder};
 impl NonceProviderBuilder for u64 {
     type Provider = u64;
 
+    #[must_use]
     fn finish(self) -> u64 {
         self
     }

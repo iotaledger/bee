@@ -161,30 +161,35 @@ impl<P: NonceProvider> MessageBuilder<P> {
     }
 
     /// Adds a network id to a `MessageBuilder`.
+    #[must_use]
     pub fn with_network_id(mut self, network_id: u64) -> Self {
         self.network_id = Some(network_id);
         self
     }
 
     /// Adds parents to a `MessageBuilder`.
+    #[must_use]
     pub fn with_parents(mut self, parents: Parents) -> Self {
         self.parents = Some(parents);
         self
     }
 
     /// Adds a payload to a `MessageBuilder`.
+    #[must_use]
     pub fn with_payload(mut self, payload: Payload) -> Self {
         self.payload = Some(payload);
         self
     }
 
     /// Adds a nonce provider to a `MessageBuilder`.
+    #[must_use]
     pub fn with_nonce_provider(mut self, nonce_provider: P, target_score: f64) -> Self {
         self.nonce_provider = Some((nonce_provider, target_score));
         self
     }
 
     /// Finishes the `MessageBuilder` into a `Message`.
+    #[must_use]
     pub fn finish(self) -> Result<Message, Error> {
         let network_id = self.network_id.ok_or(Error::MissingField("network_id"))?;
         let parents = self.parents.ok_or(Error::MissingField("parents"))?;

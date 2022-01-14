@@ -48,6 +48,7 @@ impl StorageConfigBuilder {
         Self::default()
     }
 
+    #[must_use]
     pub fn finish(self) -> StorageConfig {
         StorageConfig {
             fetch_edge_limit: self.fetch_edge_limit.unwrap_or(DEFAULT_FETCH_EDGE_LIMIT),
@@ -68,6 +69,7 @@ impl RocksDbEnvConfigBuilder {
         Self::default()
     }
 
+    #[must_use]
     pub fn finish(self) -> RocksDbEnvConfig {
         RocksDbEnvConfig {
             set_background_threads: self.set_background_threads.unwrap_or(num_cpus::get() as i32),
@@ -112,11 +114,13 @@ impl RocksDbConfigBuilder {
         Self::default()
     }
 
+    #[must_use]
     pub fn with_path(mut self, path: String) -> Self {
         self.path = Some(path);
         self
     }
 
+    #[must_use]
     pub fn finish(self) -> RocksDbConfig {
         RocksDbConfig::from(self)
     }

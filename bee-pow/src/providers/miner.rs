@@ -76,12 +76,14 @@ pub struct MinerBuilder {
 
 impl MinerBuilder {
     /// Sets the desired number of workers for the `Miner` nonce provider.
+    #[must_use]
     pub fn with_num_workers(mut self, num_workers: usize) -> Self {
         self.num_workers.replace(num_workers);
         self
     }
 
     /// Sets a `MinerCancel to abort the `Miner` nonce provider.
+    #[must_use]
     pub fn with_cancel(mut self, cancel: MinerCancel) -> Self {
         self.cancel.replace(cancel);
         self

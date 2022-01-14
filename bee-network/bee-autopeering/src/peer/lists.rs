@@ -311,7 +311,7 @@ impl<P: AsRef<PeerId>, const N: usize> PeerRing<P, N> {
     }
 
     pub(crate) fn find(&self, peer_id: &PeerId) -> Option<&P> {
-        self.find_index(peer_id).map(|index| self.get(index)).flatten()
+        self.find_index(peer_id).and_then(|index| self.get(index))
     }
 
     pub(crate) fn find_mut(&mut self, peer_id: &PeerId) -> Option<&mut P> {
