@@ -4,7 +4,7 @@
 #![no_main]
 
 use bee_message::Message;
-use bee_packable::packable::Packable;
+use packable::packable::Packable;
 
 use libfuzzer_sys::fuzz_target;
 

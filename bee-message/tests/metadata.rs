@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::MessageMetadata;
-use bee_packable::PackableExt;
 use bee_test::rand::{
     bytes::rand_bytes_array,
     message::{metadata::rand_message_metadata, payload::rand_opinion},
     number::rand_number,
 };
+use packable::PackableExt;
 
 #[test]
 fn flags() {

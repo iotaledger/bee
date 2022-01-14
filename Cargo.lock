@@ -105,8 +105,6 @@ version = "0.1.3"
 dependencies = [
  "bech32",
  "bee-ord",
- "bee-packable",
- "bee-packable-derive",
  "bee-test",
  "bitflags",
  "bitvec 0.20.4",
@@ -114,6 +112,7 @@ dependencies = [
  "hashbrown",
  "hex",
  "iota-crypto",
+ "packable",
  "serde",
  "serde-big-array",
  "serde_json",
@@ -137,30 +136,6 @@ name = "bee-ord"
 version = "0.1.0"
 
 [[package]]
-name = "bee-packable"
-version = "0.1.0"
-dependencies = [
- "autocfg",
- "bee-packable-derive",
- "primitive-types",
- "serde",
-]
-
-[[package]]
-name = "bee-packable-derive"
-version = "0.1.0"
-dependencies = [
- "bee-packable",
- "proc-macro-crate",
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "rustversion",
- "syn",
- "trybuild",
-]
-
-[[package]]
 name = "bee-plugin"
 version = "0.1.0"
 dependencies = [
@@ -182,7 +157,7 @@ dependencies = [
 name = "bee-storage"
 version = "0.9.0"
 dependencies = [
- "bee-packable",
+ "packable",
  "serde",
 ]
 
@@ -198,10 +173,10 @@ name = "bee-storage-rocksdb"
 version = "0.5.0"
 dependencies = [
  "bee-message",
- "bee-packable",
  "bee-storage",
  "bee-storage-test",
  "num_cpus",
+ "packable",
  "rocksdb",
  "serde",
  "thiserror",
@@ -212,9 +187,9 @@ name = "bee-storage-sled"
 version = "0.4.0"
 dependencies = [
  "bee-message",
- "bee-packable",
  "bee-storage",
  "bee-storage-test",
+ "packable",
  "serde",
  "sled",
  "thiserror",
@@ -254,7 +229,7 @@ name = "bee-test"
 version = "0.1.0"
 dependencies = [
  "bee-message",
- "bee-packable",
+ "packable",
  "rand",
 ]
 
@@ -611,12 +586,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dissimilar"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31ad93652f40969dead8d4bf897a41e9462095152eb21c56e5830537e41179dd"
-
-[[package]]
 name = "ed25519-zebra"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -643,15 +612,6 @@ checksum = "8c9a4820f0ccc8a7afd67c39a0f1a0f4b07ca1725164271a64939d7aeb9af065"
 dependencies = [
  "colored",
  "log",
-]
-
-[[package]]
-name = "fixed-hash"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfcf0ed7fe52a17a03854ec54a9f76d6d84508d1c0e66bc1793301c73fc8493c"
-dependencies = [
- "static_assertions",
 ]
 
 [[package]]
@@ -1121,6 +1081,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
+name = "packable"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcd3479b91e23fd284831750050730dfe65c56e79b3bb0bcce1d7ca4fbb0f8a0"
+dependencies = [
+ "autocfg",
+ "packable-derive",
+ "serde",
+]
+
+[[package]]
+name = "packable-derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd61aa925afa47c4e38093f25607e1d24f640c740a925ede989e5adbfc86c600"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "parking_lot"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1232,16 +1216,6 @@ name = "ppv-lite86"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed0cfbc8191465bed66e1718596ee0b0b35d5ee1f41c5df2189d0fe8bde535ba"
-
-[[package]]
-name = "primitive-types"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05e4722c697a58a99d5d06a08c30821d7c082a4632198de1eaa5a6c22ef42373"
-dependencies = [
- "fixed-hash",
- "uint",
-]
 
 [[package]]
 name = "proc-macro-crate"
@@ -1503,12 +1477,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rustversion"
-version = "1.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61b3909d758bb75c79f23d4736fac9433868679d3ad2ea7a61e3c25cfda9a088"
-
-[[package]]
 name = "ryu"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1654,12 +1622,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "static_assertions"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
-
-[[package]]
 name = "structopt"
 version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1718,15 +1680,6 @@ dependencies = [
  "redox_syscall",
  "remove_dir_all",
  "winapi",
-]
-
-[[package]]
-name = "termcolor"
-version = "1.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
-dependencies = [
- "winapi-util",
 ]
 
 [[package]]
@@ -1987,37 +1940,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
 
 [[package]]
-name = "trybuild"
-version = "1.0.52"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "150e726dc059e6fbd4fce3288f5bb3cf70128cf63b0dde23b938a3cad810fb23"
-dependencies = [
- "dissimilar",
- "glob",
- "lazy_static",
- "serde",
- "serde_json",
- "termcolor",
- "toml",
-]
-
-[[package]]
 name = "typenum"
 version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b63708a265f51345575b27fe43f9500ad611579e764c79edbc2037b1121959ec"
-
-[[package]]
-name = "uint"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6470ab50f482bde894a037a57064480a246dbfdd5960bd65a44824693f08da5f"
-dependencies = [
- "byteorder",
- "crunchy",
- "hex",
- "static_assertions",
-]
 
 [[package]]
 name = "unicode-segmentation"

@@ -3,7 +3,7 @@
 
 use crate::{address::Address, error::ValidationError, MessageUnpackError, IOTA_SUPPLY};
 
-use bee_packable::{bounded::BoundedU64, Packable};
+use packable::{bounded::BoundedU64, Packable};
 
 use core::ops::RangeInclusive;
 

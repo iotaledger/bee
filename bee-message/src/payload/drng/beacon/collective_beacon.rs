@@ -9,7 +9,7 @@ use crate::{
     MessageUnpackError, ValidationError,
 };
 
-use bee_packable::Packable;
+use packable::Packable;
 
 /// Message decsribing a dRNG [`CollectiveBeaconPayload`].
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]

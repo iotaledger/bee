@@ -12,8 +12,6 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-ord = { path = "../bee-common/bee-ord", default-features = false }
-bee-packable = { path = "../bee-common/bee-packable", default-features = false, features = [ "serde" ] }
-bee-packable-derive = { path = "../bee-common/bee-packable-derive", default-features = false }
 
 bech32 = { version = "0.8.1", default-features = false }
 bitflags = { version = "1.3.2", default-features = false, optional = true }
@@ -22,6 +20,7 @@ digest = { version = "0.9.0", default-features = false }
 hashbrown = { version = "0.11.2", default-features = false, features = [ "ahash-compile-time-rng" ] }
 hex = { version = "0.4.3", default-features = false }
 iota-crypto = { version = "0.7.0", default-features = false, features = [ "ed25519", "blake2b" ] }
+packable = { version = "0.1.0", default-features = false, features = [ "serde" ] }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ], optional = true }
 serde-big-array = { version = "0.3.2", default-features = false, features = [ "const-generics" ], optional = true }
 

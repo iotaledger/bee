@@ -19,7 +19,7 @@ use indexation::IndexationPayload;
 use salt_declaration::SaltDeclarationPayload;
 use transaction::{TransactionPayload, TransactionUnpackError};
 
-use bee_packable::{
+use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,

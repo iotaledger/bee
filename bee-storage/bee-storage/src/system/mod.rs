@@ -9,7 +9,7 @@ mod version;
 pub use health::StorageHealth;
 pub use version::StorageVersion;
 
-use bee_packable::Packable;
+use packable::Packable;
 
 /// Key used to store the system version.
 pub const SYSTEM_VERSION_KEY: u8 = 0;

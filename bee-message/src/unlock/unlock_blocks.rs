@@ -6,7 +6,7 @@ use crate::{
     MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{bounded::BoundedU16, prefix::VecPrefix, Packable};
+use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable};
 
 use hashbrown::HashSet;
 

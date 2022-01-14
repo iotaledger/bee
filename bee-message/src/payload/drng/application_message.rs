@@ -3,7 +3,7 @@
 
 use crate::payload::{MessagePayload, MessageUnpackError};
 
-use bee_packable::Packable;
+use packable::Packable;
 
 /// [`Payload`](crate::payload::Payload) used by a node to declare its willingness to participate in the Committee
 /// Selection process.

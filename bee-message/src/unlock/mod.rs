@@ -18,7 +18,7 @@ use crate::{
     MessageUnpackError, ValidationError,
 };
 
-use bee_packable::Packable;
+use packable::Packable;
 
 use core::{fmt, ops::RangeInclusive};
 

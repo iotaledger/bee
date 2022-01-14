@@ -15,11 +15,11 @@ pub use crate::{
     ValidationError,
 };
 
-use bee_packable::option::UnpackOptionError;
+use ::packable::option::UnpackOptionError;
 
 use core::{convert::Infallible, fmt};
 
-/// Error encountered while deserializing with [`Packable`](bee_packable::Packable).
+/// Error encountered while deserializing with [`Packable`](packable::Packable).
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum MessageUnpackError {

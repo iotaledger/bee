@@ -3,7 +3,7 @@
 
 use crate::{payload::fpc::Opinion, MessageUnpackError};
 
-use bee_packable::{
+use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,

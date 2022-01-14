@@ -6,7 +6,7 @@
 use crate::{MessageId, MessageUnpackError, ValidationError};
 
 use bee_ord::is_unique_sorted;
-use bee_packable::{
+use packable::{
     bounded::BoundedU8,
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,

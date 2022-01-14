@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{payload::indexation::PaddedIndex, util::hex_decode};
-use bee_packable::PackableExt;
+use packable::PackableExt;
 
 use core::{ops::Deref, str::FromStr};
 

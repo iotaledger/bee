@@ -3,7 +3,7 @@
 
 //! Defines a type to represent different health states in which the storage backend can be.
 
-use bee_packable::Packable;
+use packable::Packable;
 
 /// Represents different health states for a `StorageBackend`.
 #[repr(u8)]

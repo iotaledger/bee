@@ -6,8 +6,8 @@
 use crate::{column_families::*, Storage};
 
 use bee_message::{Message, MessageId, MessageMetadata};
-use bee_packable::PackableExt;
 use bee_storage::{access::Fetch, system::System, StorageBackend};
+use packable::PackableExt;
 
 impl Fetch<u8, System> for Storage {
     fn fetch(&self, key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {

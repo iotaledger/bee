@@ -3,7 +3,7 @@
 
 use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessageUnpackError, ValidationError};
 
-use bee_packable::{
+use packable::{
     bounded::BoundedU32,
     prefix::{UnpackPrefixError, VecPrefix},
     Packable,

@@ -12,9 +12,9 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-message = { path = "../../bee-message", default-features = false, features = [ "metadata" ] }
-bee-packable = { path = "../../bee-common/bee-packable", default-features = false, features = [ "io" ] }
 bee-storage = { path = "../bee-storage", default-features = false }
 
+packable = { version = "0.1.0", default-features = false, features = [ "io" ] }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
 sled = { version = "0.34.7", default-features = false, features = [ "compression" ]}
 thiserror = "1.0.30"

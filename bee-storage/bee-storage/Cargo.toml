@@ -11,6 +11,5 @@ keywords = [ "iota", "tangle", "bee", "framework", "storage" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-packable = { path = "../../bee-common/bee-packable", default-features = false }
-
+packable = { version = "0.1.0", default-features = false }
 serde = { version = "1.0.13", default-features = false, features = [ "derive" ] }

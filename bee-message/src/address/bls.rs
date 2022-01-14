@@ -3,7 +3,7 @@
 
 use crate::{error::ValidationError, util::hex_decode};
 
-use bee_packable::Packable;
+use packable::Packable;
 
 /// A BLS address.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]

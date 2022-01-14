@@ -1,5 +1,0 @@
-error: Unknown identifier `unknown_ident`.
-  --> tests/fail/unknown_ident.rs:11:12
-   |
-11 | #[packable(unknown_ident = true)]
-   |            ^^^^^^^^^^^^^

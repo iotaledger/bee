@@ -3,7 +3,7 @@
 
 use crate::signature::Signature;
 
-use bee_packable::Packable;
+use packable::Packable;
 
 /// An [`UnlockBlock`](crate::unlock::UnlockBlock) which is used to unlock a signature locked
 /// [`Input`](crate::input::Input).

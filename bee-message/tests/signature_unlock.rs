@@ -5,8 +5,8 @@ use bee_message::{
     signature::{Ed25519Signature, Signature},
     unlock::SignatureUnlock,
 };
-use bee_packable::PackableExt;
 use bee_test::rand::bytes::rand_bytes_array;
+use packable::PackableExt;
 
 use core::ops::Deref;
 

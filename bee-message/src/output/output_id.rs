@@ -8,7 +8,7 @@ use crate::{
     util::hex_decode,
 };
 
-use bee_packable::{
+use packable::{
     bounded::{BoundedU16, InvalidBoundedU16},
     Packable,
 };

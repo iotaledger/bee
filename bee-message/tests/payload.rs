@@ -19,11 +19,11 @@ use bee_message::{
     unlock::{SignatureUnlock, UnlockBlock, UnlockBlocks},
     MessageId,
 };
-use bee_packable::{error::UnpackError, PackableExt};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,
 };
+use packable::{error::UnpackError, PackableExt};
 
 #[test]
 fn application_message_payload_packable_round_trip() {

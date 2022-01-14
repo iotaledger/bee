@@ -3,7 +3,7 @@
 
 use crate::{error::ValidationError, unlock::UNLOCK_BLOCK_INDEX_MAX, MessageUnpackError};
 
-use bee_packable::{bounded::BoundedU16, Packable};
+use packable::{bounded::BoundedU16, Packable};
 
 use core::fmt;
 

@@ -12,7 +12,7 @@ pub(crate) use essence::{InputCount, OutputCount};
 pub use essence::{TransactionEssence, TransactionEssenceBuilder, TransactionEssenceUnpackError};
 pub use transaction_id::TransactionId;
 
-use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable, PackableExt};
+use packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable, PackableExt};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 

@@ -6,11 +6,11 @@
 use crate::{column_families::*, Storage};
 
 use bee_message::{Message, MessageId, MessageMetadata};
-use bee_packable::Packable;
 use bee_storage::{
     access::{Batch, BatchBuilder},
     StorageBackend,
 };
+use packable::Packable;
 
 use rocksdb::{WriteBatch, WriteOptions};
 

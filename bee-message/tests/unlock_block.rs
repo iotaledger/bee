@@ -6,8 +6,8 @@ use bee_message::{
     signature::{Ed25519Signature, Signature},
     unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlockUnpackError},
 };
-use bee_packable::{error::UnpackError, PackableExt};
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
+use packable::{error::UnpackError, PackableExt};
 
 #[test]
 fn from_signature() {

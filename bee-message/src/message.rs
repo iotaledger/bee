@@ -7,7 +7,7 @@ use crate::{
     MessageId, MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{
+use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,

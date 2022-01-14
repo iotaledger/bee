@@ -16,7 +16,7 @@ use crate::{
     signature::Signature,
 };
 
-use bee_packable::Packable;
+use packable::Packable;
 
 use core::fmt;
 

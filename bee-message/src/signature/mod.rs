@@ -11,7 +11,7 @@ pub use ed25519::Ed25519Signature;
 
 use crate::MessageUnpackError;
 
-use bee_packable::Packable;
+use packable::Packable;
 
 use core::fmt;
 
