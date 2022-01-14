@@ -135,48 +135,56 @@ impl TransactionEssenceBuilder {
     }
 
     /// Adds a timestamp to a [`TransactionEssenceBuilder`].
+    #[must_use]
     pub fn with_timestamp(mut self, timestamp: u64) -> Self {
         self.timestamp.replace(timestamp);
         self
     }
 
     /// Adds an access pledge ID to a [`TransactionEssenceBuilder`].
+    #[must_use]
     pub fn with_access_pledge_id(mut self, access_pledge_id: [u8; PLEDGE_ID_LENGTH]) -> Self {
         self.access_pledge_id.replace(access_pledge_id);
         self
     }
 
     /// Adds a consensus pledge ID to a [`TransactionEssenceBuilder`].
+    #[must_use]
     pub fn with_consensus_pledge_id(mut self, consensus_pledge_id: [u8; PLEDGE_ID_LENGTH]) -> Self {
         self.consensus_pledge_id.replace(consensus_pledge_id);
         self
     }
 
     /// Adds inputs to a [`TransactionEssenceBuilder`]
+    #[must_use]
     pub fn with_inputs(mut self, inputs: Vec<Input>) -> Self {
         self.inputs = inputs;
         self
     }
 
     /// Add an input to a [`TransactionEssenceBuilder`].
+    #[must_use]
     pub fn add_input(mut self, input: Input) -> Self {
         self.inputs.push(input);
         self
     }
 
     /// Add outputs to a [`TransactionEssenceBuilder`].
+    #[must_use]
     pub fn with_outputs(mut self, outputs: Vec<Output>) -> Self {
         self.outputs = outputs;
         self
     }
 
     /// Add an output to a [`TransactionEssenceBuilder`].
+    #[must_use]
     pub fn add_output(mut self, output: Output) -> Self {
         self.outputs.push(output);
         self
     }
 
     /// Add a payload to a [`TransactionEssenceBuilder`].
+    #[must_use]
     pub fn with_payload(mut self, payload: Payload) -> Self {
         self.payload.replace(payload);
         self
@@ -279,7 +287,9 @@ fn validate_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Valida
         let amount = validate_output_variant(output, outputs)?;
         total
             .checked_add(amount)
-            .ok_or_else(|| ValidationError::InvalidAccumulatedOutput(total as u128 + amount as u128))
+            .ok_or(ValidationError::InvalidAccumulatedOutput(
+                total as u128 + amount as u128,
+            ))
     })?)?;
     validate_outputs_sorted(outputs)?;
 

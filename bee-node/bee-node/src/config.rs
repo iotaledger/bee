@@ -42,6 +42,7 @@ impl NodeConfigBuilder {
     }
 
     /// Applies a [`NodeCliArgs`] to the [`NodeConfigBuilder`].
+    #[must_use]
     pub fn with_cli_args(mut self, args: NodeCliArgs) -> Self {
         if let Some(log_level) = args.log_level {
             if self.logger.is_none() {
@@ -68,6 +69,7 @@ pub struct NodeConfig {
 }
 
 impl Clone for NodeConfig {
+    #[must_use]
     fn clone(&self) -> Self {
         Self {
             logger: self.logger.clone(),

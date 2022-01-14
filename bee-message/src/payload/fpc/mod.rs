@@ -92,12 +92,14 @@ impl FpcPayloadBuilder {
     }
 
     /// Adds a collection of conflicts to the [`FpcPayloadBuilder`].
+    #[must_use]
     pub fn with_conflicts(mut self, conflicts: Vec<Conflict>) -> Self {
         self.conflicts = conflicts;
         self
     }
 
     /// Adds a collection of timestamps to the [`FpcPayloadBuilder`].
+    #[must_use]
     pub fn with_timestamps(mut self, timestamps: Vec<Timestamp>) -> Self {
         self.timestamps = timestamps;
         self
