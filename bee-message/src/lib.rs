@@ -4,7 +4,7 @@
 //! Core data types for messages in the tangle.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-// #![deny(missing_docs, warnings)]
+#![deny(missing_docs, warnings)]
 
 extern crate alloc;
 #[cfg(feature = "std")]
