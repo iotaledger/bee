@@ -158,7 +158,6 @@ impl RegularEssenceBuilder {
     }
 
     /// Finishes a `RegularEssenceBuilder` into a `RegularEssence`.
-    #[must_use]
     pub fn finish(self) -> Result<RegularEssence, Error> {
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.inputs.len()) {
             return Err(Error::InvalidInputOutputCount(self.inputs.len()));

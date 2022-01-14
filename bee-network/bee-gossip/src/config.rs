@@ -214,7 +214,6 @@ impl NetworkConfigBuilder {
     }
 
     /// Specifies the bind addresses.
-    #[must_use]
     pub fn with_bind_multiaddr(mut self, mut multiaddr: Multiaddr) -> Result<Self, Error> {
         let mut valid = false;
         let mut is_dns = false;
@@ -299,7 +298,6 @@ impl NetworkConfigBuilder {
     }
 
     /// Builds the network config.
-    #[must_use]
     pub fn finish(self) -> Result<NetworkConfig, Error> {
         Ok(NetworkConfig {
             bind_multiaddr: self
@@ -393,7 +391,6 @@ pub struct ManualPeeringConfigBuilder {
 }
 
 impl ManualPeeringConfigBuilder {
-    #[must_use]
     pub fn finish(self) -> Result<ManualPeeringConfig, Error> {
         let peers = match self.peers {
             None => Default::default(),

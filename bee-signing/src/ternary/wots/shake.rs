@@ -36,7 +36,6 @@ impl<S: Sponge + Default> WotsShakePrivateKeyGeneratorBuilder<S> {
     }
 
     /// Builds the private key generator.
-    #[must_use]
     pub fn build(self) -> Result<WotsShakePrivateKeyGenerator<S>, WotsError> {
         Ok(WotsShakePrivateKeyGenerator {
             security_level: self.security_level.ok_or(WotsError::MissingSecurityLevel)?,

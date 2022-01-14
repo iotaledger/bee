@@ -106,7 +106,6 @@ impl TransactionPayloadBuilder {
     }
 
     /// Finishes a `TransactionPayloadBuilder` into a `TransactionPayload`.
-    #[must_use]
     pub fn finish(self) -> Result<TransactionPayload, Error> {
         let essence = self.essence.ok_or(Error::MissingField("essence"))?;
         let unlock_blocks = self.unlock_blocks.ok_or(Error::MissingField("unlock_blocks"))?;

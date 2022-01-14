@@ -116,6 +116,7 @@ impl BalanceDiffs {
     }
 
     /// Creates a new negated version of a `BalanceDiffs`.
+    #[must_use]
     pub fn negated(&self) -> Self {
         let mut new = self.clone();
         new.negate();
