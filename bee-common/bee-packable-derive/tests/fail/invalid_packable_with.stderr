@@ -8,3 +8,9 @@ error[E0593]: function is expected to take 1 argument, but it takes 0 arguments
 ...
 21 |     fn new() -> Self {
    |     ---------------- takes 0 arguments
+   |
+note: required by a bound in `map_packable_err`
+  --> $WORKSPACE/bee-common/bee-packable/src/error.rs
+   |
+   |     fn map_packable_err<W>(self, f: impl Fn(U) -> W) -> Result<T, UnpackError<W, V>>;
+   |                                          ^^^^^^^^^^ required by this bound in `map_packable_err`

@@ -4,22 +4,4 @@ error[E0277]: the trait bound `NonPackable: bee_packable::Packable` is not satis
 12 | #[derive(Packable)]
    |          ^^^^^^^^ the trait `bee_packable::Packable` is not implemented for `NonPackable`
    |
-note: required by a bound in `pack`
-  --> $WORKSPACE/bee-common/bee-packable/src/packable/mod.rs
-   |
-   |     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
-   |                ^^^^^^ required by this bound in `pack`
-   = note: this error originates in the derive macro `Packable` (in Nightly builds, run with -Z macro-backtrace for more info)
-
-error[E0277]: the trait bound `NonPackable: bee_packable::Packable` is not satisfied
-  --> tests/fail/packable_is_structural.rs:12:10
-   |
-12 | #[derive(Packable)]
-   |          ^^^^^^^^ the trait `bee_packable::Packable` is not implemented for `NonPackable`
-   |
-note: required by a bound in `unpack`
-  --> $WORKSPACE/bee-common/bee-packable/src/packable/mod.rs
-   |
-   |     fn unpack<U: Unpacker, const VERIFY: bool>(
-   |                  ^^^^^^^^ required by this bound in `unpack`
    = note: this error originates in the derive macro `Packable` (in Nightly builds, run with -Z macro-backtrace for more info)

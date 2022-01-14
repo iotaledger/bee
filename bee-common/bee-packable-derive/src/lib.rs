@@ -106,7 +106,7 @@ use syn::{parse_macro_input, Ident};
 /// fields of a `struct` or an `enum`'s variant. This can be done using the
 /// `#[packable(verify_with = ...)]` attribute which must receive a valid Rust path refering to a
 /// function with the signature
-/// ```no_run
+/// ```ignore
 /// fn<const VERIFY: bool>(field: &F) -> Result<(), P::UnpackError>
 /// ```
 /// where `F` is the type of the field being verified, `P` is the type of the `struct` or `enum`
