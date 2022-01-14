@@ -12,6 +12,7 @@ const DEFAULT_MAX_EVICTION_RETRIES: usize = 10;
 
 /// A builder type for a tangle configuration.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct TangleConfigBuilder {
     below_max_depth: Option<u32>,
     num_partitions: Option<NonZeroUsize>,
@@ -25,6 +26,7 @@ impl TangleConfigBuilder {
     }
 
     /// Finish building tangle configuration, to create a [`TangleConfig`].
+    #[must_use]
     pub fn finish(self) -> TangleConfig {
         TangleConfig {
             below_max_depth: self.below_max_depth.unwrap_or(DEFAULT_BELOW_MAX_DEPTH),

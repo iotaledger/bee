@@ -31,6 +31,7 @@ pub struct SledConfig {
 
 /// Configuration builder for the sled storage backend.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct SledConfigBuilder {
     storage: Option<StorageConfigBuilder>,
     path: Option<PathBuf>,
@@ -86,6 +87,7 @@ impl SledConfigBuilder {
     }
 
     /// Build the configuration.
+    #[must_use]
     pub fn finish(self) -> SledConfig {
         SledConfig {
             storage: self.storage.unwrap_or_default().finish(),
@@ -115,6 +117,7 @@ pub struct StorageConfig {
 
 /// Configuration builder related to the access operations of the storage.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct StorageConfigBuilder {
     fetch_edge_limit: Option<usize>,
     fetch_index_limit: Option<usize>,
@@ -128,6 +131,7 @@ impl StorageConfigBuilder {
     }
 
     /// Build the configuration.
+    #[must_use]
     pub fn finish(self) -> StorageConfig {
         StorageConfig {
             fetch_edge_limit: self.fetch_edge_limit.unwrap_or(DEFAULT_FETCH_EDGE_LIMIT),

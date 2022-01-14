@@ -13,6 +13,7 @@ use std::marker::PhantomData;
 
 /// Sponge-based Winternitz One Time Signature private key generator builder.
 #[derive(Default)]
+#[must_use]
 pub struct WotsSpongePrivateKeyGeneratorBuilder<S> {
     security_level: Option<WotsSecurityLevel>,
     marker: PhantomData<S>,

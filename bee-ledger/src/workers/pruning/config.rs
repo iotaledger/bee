@@ -11,6 +11,7 @@ const DEFAULT_PRUNE_RECEIPTS: bool = false;
 
 /// Builder for a [`PruningConfig`].
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct PruningConfigBuilder {
     enabled: Option<bool>,
     delay: Option<u32>,
@@ -42,6 +43,7 @@ impl PruningConfigBuilder {
     }
 
     /// Finishes the builder into a [`PruningConfig`].
+    #[must_use]
     pub fn finish(self) -> PruningConfig {
         PruningConfig {
             enabled: self.enabled.unwrap_or(DEFAULT_ENABLED),

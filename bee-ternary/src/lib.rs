@@ -815,6 +815,7 @@ impl TritBuf<T3B1Buf> {
     /// Pad the trit buffer with [`Btrit::Zero`] until the buffer's length is a multiple of 3.
     ///
     /// This method is often used in conjunction with [`Trits::as_trytes`].
+    #[must_use]
     pub fn padded_zeros(mut self) -> Self {
         self.pad_zeros();
         self
@@ -827,6 +828,7 @@ where
 {
     type Output = Self;
 
+    #[must_use]
     fn neg(mut self) -> Self {
         self.negate();
         self

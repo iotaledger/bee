@@ -88,14 +88,17 @@ pub trait NodeBuilder<N: Node>: Sized {
     fn new(config: Self::Config) -> Result<Self, Self::Error>;
 
     /// Register a worker, with default configuration state, that should be started with the node.
+    #[must_use]
     fn with_worker<W: Worker<N> + 'static>(self) -> Self
     where
         W::Config: Default;
 
     /// Register a worker, with the given configuration state, that should be started with the node.
+    #[must_use]
     fn with_worker_cfg<W: Worker<N> + 'static>(self, config: W::Config) -> Self;
 
     /// Provide a resource that should be registered with the node upon start.
+    #[must_use]
     fn with_resource<R: Any + Send + Sync>(self, res: R) -> Self;
 
     /// Finish building the node, returning the final node.

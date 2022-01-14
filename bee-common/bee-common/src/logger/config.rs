@@ -21,6 +21,7 @@ const DEFAULT_COLOR_ENABLED: bool = false;
 
 /// Builder for a logger output configuration.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct LoggerOutputConfigBuilder {
     /// Name of an output file, or `stdout` for standard output.
     name: Option<String>,
@@ -66,19 +67,20 @@ impl LoggerOutputConfigBuilder {
     }
 
     /// Builds a logger output configuration.
+    #[must_use]
     pub fn finish(self) -> LoggerOutputConfig {
         LoggerOutputConfig {
             name: self.name.unwrap_or_else(|| DEFAULT_OUTPUT_NAME.to_owned()),
             level_filter: self.level_filter.unwrap_or(DEFAULT_OUTPUT_LEVEL_FILTER),
             target_filters: self
                 .target_filters
-                .unwrap_or_else(Vec::new)
+                .unwrap_or_default()
                 .iter()
                 .map(|f| f.to_lowercase())
                 .collect(),
             target_exclusions: self
                 .target_exclusions
-                .unwrap_or_else(Vec::new)
+                .unwrap_or_default()
                 .iter()
                 .map(|f| f.to_lowercase())
                 .collect(),
@@ -104,6 +106,7 @@ pub struct LoggerOutputConfig {
 
 /// Builder for a logger configuration.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct LoggerConfigBuilder {
     /// Width of the target section of a log.
     target_width: Option<usize>,
@@ -147,6 +150,7 @@ impl LoggerConfigBuilder {
     }
 
     /// Builds a logger configuration.
+    #[must_use]
     pub fn finish(self) -> LoggerConfig {
         let outputs = self
             .outputs

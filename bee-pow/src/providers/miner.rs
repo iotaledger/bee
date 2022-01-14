@@ -69,6 +69,7 @@ impl MinerCancel {
 
 /// Builder for the `Miner` nonce provider.
 #[derive(Default)]
+#[must_use]
 pub struct MinerBuilder {
     num_workers: Option<usize>,
     cancel: Option<MinerCancel>,

@@ -35,6 +35,7 @@ impl DownloadUrls {
 
 /// Builder for a `SnapshotConfig`.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct SnapshotConfigBuilder {
     full_path: Option<PathBuf>,
     delta_path: Option<PathBuf>,
@@ -87,6 +88,7 @@ impl SnapshotConfigBuilder {
     }
 
     /// Finishes the `SnapshotConfigBuilder` into a `SnapshotConfig`.
+    #[must_use]
     pub fn finish(self) -> SnapshotConfig {
         SnapshotConfig {
             full_path: self

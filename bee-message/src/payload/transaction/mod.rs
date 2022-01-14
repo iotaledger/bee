@@ -80,6 +80,7 @@ impl Packable for TransactionPayload {
 
 /// A builder to build a `TransactionPayload`.
 #[derive(Debug, Default)]
+#[must_use]
 pub struct TransactionPayloadBuilder {
     essence: Option<Essence>,
     unlock_blocks: Option<UnlockBlocks>,
@@ -94,14 +95,12 @@ impl TransactionPayloadBuilder {
     /// Adds an essence to a `TransactionPayloadBuilder`.
     pub fn with_essence(mut self, essence: Essence) -> Self {
         self.essence.replace(essence);
-
         self
     }
 
     /// Adds unlock blocks to a `TransactionPayloadBuilder`.
     pub fn with_unlock_blocks(mut self, unlock_blocks: UnlockBlocks) -> Self {
         self.unlock_blocks.replace(unlock_blocks);
-
         self
     }
 

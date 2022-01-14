@@ -110,6 +110,7 @@ impl Packable for RegularEssence {
 
 /// A builder to build a `RegularEssence`.
 #[derive(Debug, Default)]
+#[must_use]
 pub struct RegularEssenceBuilder {
     inputs: Vec<Input>,
     outputs: Vec<Output>,

@@ -198,6 +198,7 @@ impl Default for NetworkConfig {
 
 /// A network configuration builder.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct NetworkConfigBuilder {
     #[serde(rename = "bind_address")]
     bind_multiaddr: Option<Multiaddr>,
@@ -313,6 +314,7 @@ impl NetworkConfigBuilder {
 /// An in-memory network config builder, that becomes useful as part of integration testing.
 #[cfg(test)]
 #[derive(Default)]
+#[must_use]
 pub struct InMemoryNetworkConfigBuilder {
     bind_multiaddr: Option<Multiaddr>,
 }
@@ -341,6 +343,7 @@ impl InMemoryNetworkConfigBuilder {
     }
 
     /// Builds the in-memory network config.
+    #[must_use]
     pub fn finish(self) -> NetworkConfig {
         const DEFAULT_BIND_MULTIADDR_MEM: &str = "/memory/0";
 
@@ -381,6 +384,7 @@ impl std::hash::Hash for Peer {
 }
 
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct ManualPeeringConfigBuilder {
     pub peers: Option<Vec<PeerBuilder>>,
 }
@@ -429,6 +433,7 @@ fn split_multiaddr(multiaddr: &str) -> Result<(Multiaddr, PeerId), Error> {
 }
 
 #[derive(Deserialize)]
+#[must_use]
 pub struct PeerBuilder {
     #[serde(rename = "address")]
     multiaddr: String,

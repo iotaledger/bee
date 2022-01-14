@@ -59,6 +59,7 @@ impl Seed {
     }
 
     /// Creates a new `Seed` from the current `Seed` and an index.
+    #[must_use]
     pub fn subseed(&self, index: usize) -> Self {
         let mut subseed = self.0.clone();
 

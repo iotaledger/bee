@@ -128,8 +128,9 @@ impl AutopeeringConfig {
 /// The autopeering config JSON builder.
 ///
 /// Note: Fields will be camel-case formatted.
-#[derive(Clone, Debug, Deserialize, Serialize)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[must_use]
 #[serde(rename = "autopeering")]
 pub struct AutopeeringConfigJsonBuilder {
     /// Whether autopeering should be enabled.
@@ -153,6 +154,7 @@ pub struct AutopeeringConfigJsonBuilder {
 
 impl AutopeeringConfigJsonBuilder {
     /// Builds the actual `AutopeeringConfig`.
+    #[must_use]
     pub fn finish(self) -> AutopeeringConfig {
         AutopeeringConfig {
             enabled: self.enabled,
@@ -183,8 +185,9 @@ impl Default for AutopeeringConfigJsonBuilder {
 /// The autopeering config TOML builder.
 ///
 /// Note: Fields will be snake-case formatted.
-#[derive(Clone, Debug, Deserialize, Serialize)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[must_use]
 #[serde(rename = "autopeering")]
 pub struct AutopeeringConfigTomlBuilder {
     /// Wether autopeering should be enabled.

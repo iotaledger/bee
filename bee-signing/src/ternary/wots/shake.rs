@@ -22,6 +22,7 @@ use std::marker::PhantomData;
 
 /// Shake-based Winternitz One Time Signature private key generator builder.
 #[derive(Default)]
+#[must_use]
 pub struct WotsShakePrivateKeyGeneratorBuilder<S> {
     security_level: Option<WotsSecurityLevel>,
     marker: PhantomData<S>,

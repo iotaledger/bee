@@ -136,6 +136,7 @@ impl Packable for Message {
 }
 
 /// A builder to build a `Message`.
+#[must_use]
 pub struct MessageBuilder<P: NonceProvider = Miner> {
     network_id: Option<u64>,
     parents: Option<Parents>,
