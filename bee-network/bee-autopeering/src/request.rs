@@ -22,7 +22,7 @@ use std::{
     collections::HashMap,
     fmt::Debug,
     net::{IpAddr, SocketAddr},
-    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
+    sync::{Arc, RwLock},
     time::Duration,
 };
 
@@ -52,43 +52,26 @@ pub(crate) struct RequestValue {
 
 #[derive(Clone)]
 pub(crate) struct RequestManager {
-    inner: Arc<RwLock<RequestManagerInner>>,
+    version: u32,
+    network_id: u32,
+    source_addr: SocketAddr,
+    open_requests: Arc<RwLock<HashMap<RequestKey, RequestValue>>>,
 }
 
 impl RequestManager {
     /// Creates a new request manager.
     pub(crate) fn new(version: u32, network_id: u32, source_addr: SocketAddr) -> Self {
         Self {
-            inner: Arc::new(RwLock::new(RequestManagerInner {
-                version,
-                network_id,
-                source_addr,
-                open_requests: HashMap::default(),
-            })),
+            version,
+            network_id,
+            source_addr,
+            open_requests: Arc::new(RwLock::new(HashMap::default())),
         }
     }
 
-    pub(crate) fn read(&self) -> RwLockReadGuard<RequestManagerInner> {
-        // Panic: We don't allow poisened locks.
-        self.inner.read().expect("error getting read access")
-    }
-
-    pub(crate) fn write(&self) -> RwLockWriteGuard<RequestManagerInner> {
-        // Panic: We don't allow poisened locks.
-        self.inner.write().expect("error getting write access")
-    }
-}
-
-pub(crate) struct RequestManagerInner {
-    version: u32,
-    network_id: u32,
-    source_addr: SocketAddr,
-    open_requests: HashMap<RequestKey, RequestValue>,
-}
-
-impl RequestManagerInner {
-    pub(crate) fn new_verification_request(
-        &mut self,
+    /// Creates and registers an open verification request.
+    pub(crate) fn create_verification_request(
+        &self,
         peer_id: PeerId,
         peer_addr: IpAddr,
         response_tx: Option<ResponseTx>,
@@ -109,13 +92,14 @@ impl RequestManagerInner {
             response_tx,
         };
 
-        let _ = self.open_requests.insert(key, value);
+        let _ = self.open_requests.write().expect("write").insert(key, value);
 
         verif_req
     }
 
-    pub(crate) fn new_discovery_request(
-        &mut self,
+    /// Creates and registers an open discovery request.
+    pub(crate) fn create_discovery_request(
+        &self,
         peer_id: PeerId,
         response_tx: Option<ResponseTx>,
     ) -> DiscoveryRequest {
@@ -135,13 +119,14 @@ impl RequestManagerInner {
             response_tx,
         };
 
-        let _ = self.open_requests.insert(key, value);
+        let _ = self.open_requests.write().expect("write").insert(key, value);
 
         disc_req
     }
 
-    pub(crate) fn new_peering_request(
-        &mut self,
+    /// Creates and registers an open peering request.
+    pub(crate) fn create_peering_request(
+        &self,
         peer_id: PeerId,
         response_tx: Option<ResponseTx>,
         local: &Local,
@@ -163,18 +148,32 @@ impl RequestManagerInner {
             response_tx,
         };
 
-        let _ = self.open_requests.insert(key, value);
+        let _ = self.open_requests.write().expect("write").insert(key, value);
 
         peer_req
     }
 
-    pub(crate) fn remove<R: Request + 'static>(&mut self, peer_id: &PeerId) -> Option<RequestValue> {
+    /// Removes a request to a peer.
+    pub(crate) fn remove_request<R: Request + 'static>(&self, peer_id: &PeerId) -> Option<RequestValue> {
         let key = RequestKey {
             peer_id: *peer_id,
             request_id: TypeId::of::<R>(),
         };
 
-        self.open_requests.remove(&key)
+        self.open_requests.write().expect("write").remove(&key)
+    }
+
+    /// Removes all expired requests.
+    pub(crate) fn remove_expired_requests(&self, now_ts: u64) {
+        self.open_requests
+            .write()
+            .expect("write")
+            .retain(|_, v| !is_expired_internal(v.issue_time, now_ts));
+    }
+
+    /// Returns the number of open requests.
+    pub(crate) fn num_open_requests(&self) -> usize {
+        self.open_requests.read().expect("read").len()
     }
 }
 
@@ -192,13 +191,10 @@ pub(crate) fn remove_expired_requests_fn() -> Repeat<RequestManager> {
     Box::new(|mngr: &RequestManager| {
         let now_ts = time::unix_now_secs();
 
-        // TODO: measure current time only once and reuse it.
         // Retain only those that aren't expired yet, remove all others.
-        mngr.write()
-            .open_requests
-            .retain(|_, v| !is_expired_internal(v.issue_time, now_ts));
+        mngr.remove_expired_requests(now_ts);
 
-        let num_open_requests = mngr.read().open_requests.len();
+        let num_open_requests = mngr.num_open_requests();
         if num_open_requests > 0 {
             log::trace!("Open requests: {}", num_open_requests);
         }
