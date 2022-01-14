@@ -39,7 +39,6 @@ pub(crate) const VERIFICATION_EXPIRATION: Duration = Duration::from_secs(12 * HO
 const MAX_PEERS_IN_RESPONSE: usize = 6;
 // Is the minimum number of verifications required to be selected in DiscoveryResponse.
 const MIN_VERIFIED_IN_RESPONSE: usize = 1;
-// Is the maximum number of services a peer can support.
 
 pub(crate) struct DiscoveryManagerConfig {
     pub(crate) entry_nodes: Vec<AutopeeringMultiaddr>,
@@ -128,9 +127,6 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
 
         let ServerSocket { server_rx, server_tx } = socket;
 
-        // Add previously discovered peers from the peer store.
-        add_peers_from_store(&peer_store, &active_peers, &replacements);
-
         // Add entry peers from the config.
         add_entry_peers(
             &mut entry_nodes,
@@ -141,6 +137,9 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
             &replacements,
         )
         .await;
+
+        // Add previously discovered peers from the peer store.
+        add_peers_from_store(&peer_store, &active_peers, &replacements);
 
         let discovery_recv_handler = DiscoveryRecvHandler {
             server_tx: server_tx.clone(),
@@ -508,11 +507,8 @@ pub(crate) enum ValidationError {
     #[error("no autopeering service")]
     NoAutopeeringService,
     // The service port must match with the detected port.
-    #[error("service port mismatch; expected: {expected}, received: {received}")]
-    ServicePortMismatch {
-        expected: ServicePort,
-        received: ServicePort,
-    },
+    #[error("service port mismatch; expected: {expected}, found: {found}")]
+    ServicePortMismatch { expected: ServicePort, found: ServicePort },
 }
 
 fn validate_verification_request(
@@ -551,7 +547,7 @@ fn validate_verification_response(
 ) -> Result<RequestValue, ValidationError> {
     use ValidationError::*;
 
-    if let Some(reqv) = request_mngr.write().remove::<VerificationRequest>(peer_id) {
+    if let Some(reqv) = request_mngr.remove_request::<VerificationRequest>(peer_id) {
         if verif_res.request_hash() == reqv.request_hash {
             let res_services = verif_res.services();
             if let Some(autopeering_svc) = res_services.get(AUTOPEERING_SERVICE_NAME) {
@@ -559,8 +555,8 @@ fn validate_verification_response(
                     Ok(reqv)
                 } else {
                     Err(ServicePortMismatch {
-                        expected: source_socket_addr.port(),
-                        received: autopeering_svc.port(),
+                        expected: autopeering_svc.port(),
+                        found: source_socket_addr.port(),
                     })
                 }
             } else {
@@ -591,7 +587,7 @@ fn validate_discovery_response(
 ) -> Result<RequestValue, ValidationError> {
     use ValidationError::*;
 
-    if let Some(reqv) = request_mngr.write().remove::<DiscoveryRequest>(peer_id) {
+    if let Some(reqv) = request_mngr.remove_request::<DiscoveryRequest>(peer_id) {
         if disc_res.request_hash() == &reqv.request_hash[..] {
             // TODO: consider performing some checks on the peers we received, for example:
             // * does the peer have necessary services (autopeering, gossip, fpc, ...)
@@ -626,14 +622,9 @@ fn handle_verification_request(verif_req: VerificationRequest, ctx: RecvContext)
 
     // Is this a known peer?
     if peer::is_known(ctx.peer_id, ctx.local, ctx.active_peers, ctx.replacements) {
-        // Update verification request timestamp
+        // Update verification request timestamp.
         if let Some(peer) = ctx.active_peers.write().find_mut(ctx.peer_id) {
             peer.metrics_mut().set_last_verif_request_timestamp();
-        }
-
-        if !peer::is_verified(ctx.peer_id, ctx.active_peers) {
-            // Peer is known, but no longer verified.
-            send_verification_request_to_addr(ctx.peer_addr, ctx.peer_id, ctx.request_mngr, ctx.server_tx, None);
         }
     } else {
         // Add it as a new peer with autopeering service.
@@ -641,7 +632,7 @@ fn handle_verification_request(verif_req: VerificationRequest, ctx: RecvContext)
         peer.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, ctx.peer_addr.port());
 
         if let Some(peer_id) = add_peer::<true>(peer, ctx.local, ctx.active_peers, ctx.replacements) {
-            log::debug!("Added {}.", peer_id);
+            log::debug!("Added unknown and unverified {}.", peer_id);
         }
 
         // Peer is unknown, thus still unverified.
@@ -658,6 +649,14 @@ fn handle_verification_response(verif_res: VerificationResponse, verif_reqval: R
         // * Update its services;
         // * Fire the "peer discovered" event;
         if verified_count == 1 {
+            let services = verif_res.services();
+            log::debug!(
+                "Verified {}. Peer offers {} service/s: {}",
+                ctx.peer_id,
+                services.len(),
+                services
+            );
+
             if let Some(peer) = ctx.active_peers.write().find_mut(ctx.peer_id) {
                 peer.peer_mut().set_services(verif_res.services().clone())
             }
@@ -749,19 +748,19 @@ pub(crate) async fn begin_verification(
         Ok(Ok(bytes)) => match VerificationResponse::from_protobuf(&bytes).map(|r| r.into_services()) {
             Ok(services) => Some(services),
             Err(e) => {
-                log::debug!("Verification response decode error: {}", e);
+                log::debug!("Verification response decode error for {}: {}", peer_id, e);
                 None
             }
         },
         Ok(Err(e)) => {
-            log::debug!("Verification response error: {}", e);
+            log::debug!("Verification response error for {}: {}", peer_id, e);
             None
         }
         Err(e) => {
-            log::debug!("Verification response timeout: {}", e);
+            log::debug!("Verification response timeout for {}: {}", peer_id, e);
 
             // The response didn't arrive in time => remove the request.
-            let _ = request_mngr.write().remove::<VerificationRequest>(peer_id);
+            let _ = request_mngr.remove_request::<VerificationRequest>(peer_id);
 
             None
         }
@@ -802,9 +801,7 @@ pub(crate) fn send_verification_request_to_addr(
 ) {
     log::trace!("Sending verification request to: {}/{}", peer_id, peer_addr);
 
-    let verif_req = request_mngr
-        .write()
-        .new_verification_request(*peer_id, peer_addr.ip(), response_tx);
+    let verif_req = request_mngr.create_verification_request(*peer_id, peer_addr.ip(), response_tx);
 
     let msg_bytes = verif_req.to_protobuf().to_vec();
 
@@ -827,6 +824,8 @@ pub(crate) fn send_verification_response_to_addr(
     server_tx: &ServerTx,
     local: &Local,
 ) {
+    let peer_addr = SocketAddr::new(peer_addr.ip(), verif_req.source_addr().port());
+
     log::trace!("Sending verification response to: {}/{}", peer_id, peer_addr);
 
     let request_hash = message_hash(MessageType::VerificationRequest, msg_bytes);
@@ -843,7 +842,7 @@ pub(crate) fn send_verification_response_to_addr(
         .send(OutgoingPacket {
             msg_type: MessageType::VerificationResponse,
             msg_bytes,
-            peer_addr: SocketAddr::new(peer_addr.ip(), verif_req.source_addr().port()),
+            peer_addr,
         })
         .expect("error sending verification response to server");
 }
@@ -882,7 +881,7 @@ pub(crate) async fn begin_discovery(
             log::debug!("Discovery response timeout: {}", e);
 
             // The response didn't arrive in time => remove the request.
-            let _ = request_mngr.write().remove::<DiscoveryRequest>(peer_id);
+            let _ = request_mngr.remove_request::<DiscoveryRequest>(peer_id);
 
             None
         }
@@ -923,7 +922,7 @@ pub(crate) fn send_discovery_request_to_addr(
 ) {
     log::trace!("Sending discovery request to: {:?}", peer_id);
 
-    let disc_req = request_mngr.write().new_discovery_request(*peer_id, response_tx);
+    let disc_req = request_mngr.create_discovery_request(*peer_id, response_tx);
 
     let msg_bytes = disc_req.to_protobuf().to_vec();
 

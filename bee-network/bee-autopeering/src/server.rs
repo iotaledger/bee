@@ -246,6 +246,12 @@ impl Runnable for OutgoingPacketHandler {
                             peer_addr,
                         } = packet;
 
+                        // TODO: support ipv6
+                        if peer_addr.is_ipv6() {
+                            log::warn!("Trying to send to an IPv6 address ({}), which is not yet supported. Ignoring packet.", peer_addr);
+                            continue 'recv;
+                        }
+
                         if peer_addr == bind_addr {
                             log::warn!("Trying to send to own bind address: {}. Ignoring packet.", peer_addr);
                             continue 'recv;
@@ -259,11 +265,10 @@ impl Runnable for OutgoingPacketHandler {
                         let bytes = packet.to_protobuf();
 
                         if bytes.len() > MAX_PACKET_SIZE {
-                            log::warn!("Trying to send too many bytes to {}. Ignoring...", peer_addr);
+                            log::warn!("Trying to send too many bytes to {}. Ignoring packet.", peer_addr);
                             continue 'recv;
                         }
 
-                        // TODO: Make sure this won't occur by introducing IPv4 and IPv6 outgoing packet handler.
                         let n = outgoing_socket.send_to(&bytes, peer_addr).await.expect("socket send error");
 
                         log::trace!("Sent {} bytes to {}.", n, peer_addr);
