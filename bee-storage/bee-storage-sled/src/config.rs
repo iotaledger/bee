@@ -31,6 +31,7 @@ pub struct SledConfig {
 
 /// Configuration builder for the sled storage backend.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct SledConfigBuilder {
     storage: Option<StorageConfigBuilder>,
     path: Option<PathBuf>,
@@ -48,7 +49,6 @@ impl SledConfigBuilder {
     }
 
     /// Set the path where the database will be stored.
-    #[must_use]
     pub fn with_path(mut self, path: String) -> Self {
         self.path = Some(path.into());
         self
@@ -56,28 +56,24 @@ impl SledConfigBuilder {
 
     /// Set the compression factor for zstd, it must be an integer between 1 and 22. Do not use
     /// compression if the factor is `None`,
-    #[must_use]
     pub fn with_compression_factor(mut self, compression_factor: Option<usize>) -> Self {
         self.compression_factor = Some(compression_factor);
         self
     }
 
     /// Set the page cache maximum capacity in bytes.
-    #[must_use]
     pub fn with_cache_capacity(mut self, cache_capacity: usize) -> Self {
         self.cache_capacity = Some(cache_capacity);
         self
     }
 
     /// Specify if the database should priorize speed (true) or size (false).
-    #[must_use]
     pub fn with_mode(mut self, fast: bool) -> Self {
         self.fast_mode = Some(fast);
         self
     }
 
     /// Set the database to be deleted after `Storage` is dropped.
-    #[must_use]
     pub fn with_temporary(mut self, temporary: bool) -> Self {
         self.temporary = Some(temporary);
         self
@@ -85,7 +81,6 @@ impl SledConfigBuilder {
 
     /// Specify if the database should be created from scratch and fail if the `path` is already
     /// used.
-    #[must_use]
     pub fn with_create_new(mut self, create_new: bool) -> Self {
         self.create_new = Some(create_new);
         self
@@ -122,6 +117,7 @@ pub struct StorageConfig {
 
 /// Configuration builder related to the access operations of the storage.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct StorageConfigBuilder {
     fetch_edge_limit: Option<usize>,
     fetch_index_limit: Option<usize>,
@@ -135,6 +131,7 @@ impl StorageConfigBuilder {
     }
 
     /// Build the configuration.
+    #[must_use]
     pub fn finish(self) -> StorageConfig {
         StorageConfig {
             fetch_edge_limit: self.fetch_edge_limit.unwrap_or(DEFAULT_FETCH_EDGE_LIMIT),

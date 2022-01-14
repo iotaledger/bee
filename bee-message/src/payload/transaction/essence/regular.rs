@@ -110,6 +110,7 @@ impl Packable for RegularEssence {
 
 /// A builder to build a `RegularEssence`.
 #[derive(Debug, Default)]
+#[must_use]
 pub struct RegularEssenceBuilder {
     inputs: Vec<Input>,
     outputs: Vec<Output>,
@@ -123,35 +124,30 @@ impl RegularEssenceBuilder {
     }
 
     /// Adds inputs to a `RegularEssenceBuilder`
-    #[must_use]
     pub fn with_inputs(mut self, inputs: Vec<Input>) -> Self {
         self.inputs = inputs;
         self
     }
 
     /// Add an input to a `RegularEssenceBuilder`.
-    #[must_use]
     pub fn add_input(mut self, input: Input) -> Self {
         self.inputs.push(input);
         self
     }
 
     /// Add outputs to a `RegularEssenceBuilder`.
-    #[must_use]
     pub fn with_outputs(mut self, outputs: Vec<Output>) -> Self {
         self.outputs = outputs;
         self
     }
 
     /// Add an output to a `RegularEssenceBuilder`.
-    #[must_use]
     pub fn add_output(mut self, output: Output) -> Self {
         self.outputs.push(output);
         self
     }
 
     /// Add a payload to a `RegularEssenceBuilder`.
-    #[must_use]
     pub fn with_payload(mut self, payload: Payload) -> Self {
         self.payload = Some(payload);
         self

@@ -37,6 +37,7 @@ const DEFAULT_SET_USE_DIRECT_IO_FOR_FLUSH_AND_COMPACTION: bool = true;
 const DEFAULT_SET_HIGH_PRIORITY_BACKGROUND_THREADS: i32 = 2;
 
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct StorageConfigBuilder {
     fetch_edge_limit: Option<usize>,
     fetch_index_limit: Option<usize>,
@@ -48,7 +49,6 @@ impl StorageConfigBuilder {
         Self::default()
     }
 
-    #[must_use]
     pub fn finish(self) -> StorageConfig {
         StorageConfig {
             fetch_edge_limit: self.fetch_edge_limit.unwrap_or(DEFAULT_FETCH_EDGE_LIMIT),
@@ -59,6 +59,7 @@ impl StorageConfigBuilder {
 }
 
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct RocksDbEnvConfigBuilder {
     set_background_threads: Option<i32>,
     set_high_priority_background_threads: Option<i32>,
@@ -69,7 +70,6 @@ impl RocksDbEnvConfigBuilder {
         Self::default()
     }
 
-    #[must_use]
     pub fn finish(self) -> RocksDbEnvConfig {
         RocksDbEnvConfig {
             set_background_threads: self.set_background_threads.unwrap_or(num_cpus::get() as i32),
@@ -81,6 +81,7 @@ impl RocksDbEnvConfigBuilder {
 }
 
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct RocksDbConfigBuilder {
     storage: Option<StorageConfigBuilder>,
     path: Option<String>,
@@ -113,14 +114,11 @@ impl RocksDbConfigBuilder {
     pub fn new() -> Self {
         Self::default()
     }
-
-    #[must_use]
     pub fn with_path(mut self, path: String) -> Self {
         self.path = Some(path);
         self
     }
 
-    #[must_use]
     pub fn finish(self) -> RocksDbConfig {
         RocksDbConfig::from(self)
     }

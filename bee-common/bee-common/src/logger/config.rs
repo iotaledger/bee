@@ -21,6 +21,7 @@ const DEFAULT_COLOR_ENABLED: bool = false;
 
 /// Builder for a logger output configuration.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct LoggerOutputConfigBuilder {
     /// Name of an output file, or `stdout` for standard output.
     name: Option<String>,
@@ -41,14 +42,12 @@ impl LoggerOutputConfigBuilder {
     }
 
     /// Sets the name of a logger output.
-    #[must_use]
     pub fn name<'a>(mut self, name: impl Into<Cow<'a, str>>) -> Self {
         self.name.replace(name.into().into_owned());
         self
     }
 
     /// Sets the level of a logger output.
-    #[must_use]
     pub fn level_filter(mut self, level: LevelFilter) -> Self {
         self.level_filter.replace(level);
         self
@@ -56,14 +55,12 @@ impl LoggerOutputConfigBuilder {
 
     /// Sets a collection of filters of a logger output.
     /// A message is logged only if one of the filters is part of the log's metadata target.
-    #[must_use]
     pub fn target_filters(mut self, target_filters: &[&str]) -> Self {
         self.target_filters = Some(target_filters.iter().map(|f| f.to_string()).collect::<Vec<String>>());
         self
     }
 
     /// Sets the color flag of a logger output.
-    #[must_use]
     pub fn color_enabled(mut self, color: bool) -> Self {
         self.color_enabled.replace(color);
         self
@@ -109,6 +106,7 @@ pub struct LoggerOutputConfig {
 
 /// Builder for a logger configuration.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct LoggerConfigBuilder {
     /// Width of the target section of a log.
     target_width: Option<usize>,
@@ -120,21 +118,18 @@ pub struct LoggerConfigBuilder {
 
 impl LoggerConfigBuilder {
     /// Sets the target width.
-    #[must_use]
     pub fn with_target_width(mut self, width: usize) -> Self {
         self.target_width.replace(width);
         self
     }
 
     /// Sets the target width.
-    #[must_use]
     pub fn with_level_width(mut self, width: usize) -> Self {
         self.level_width.replace(width);
         self
     }
 
     /// Adds an output builder to the logger builder.
-    #[must_use]
     pub fn with_output(mut self, output: LoggerOutputConfigBuilder) -> Self {
         self.outputs.get_or_insert_with(Vec::new).push(output);
         self

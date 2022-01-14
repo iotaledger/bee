@@ -11,6 +11,7 @@ const DEFAULT_PRUNE_RECEIPTS: bool = false;
 
 /// Builder for a [`PruningConfig`].
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct PruningConfigBuilder {
     enabled: Option<bool>,
     delay: Option<u32>,
@@ -24,21 +25,18 @@ impl PruningConfigBuilder {
     }
 
     /// Enables pruning.
-    #[must_use]
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.enabled.replace(enabled);
         self
     }
 
     /// Sets the pruning delay.
-    #[must_use]
     pub fn delay(mut self, delay: u32) -> Self {
         self.delay.replace(delay);
         self
     }
 
     /// Sets whether receipts should be pruned as well.
-    #[must_use]
     pub fn prune_receipts(mut self, prune_receipts: bool) -> Self {
         self.prune_receipts.replace(prune_receipts);
         self

@@ -198,6 +198,7 @@ impl Default for NetworkConfig {
 
 /// A network configuration builder.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct NetworkConfigBuilder {
     #[serde(rename = "bind_address")]
     bind_multiaddr: Option<Multiaddr>,
@@ -276,7 +277,6 @@ impl NetworkConfigBuilder {
     /// Specifies the interval (in seconds) at which known peers are automatically reconnected if possible.
     ///
     /// The allowed minimum value for the `secs` argument is `1`.
-    #[must_use]
     pub fn with_reconnect_interval_secs(mut self, secs: u64) -> Self {
         let secs = secs.max(MIN_RECONNECT_INTERVAL_SECS);
         self.reconnect_interval_secs.replace(secs);
@@ -284,14 +284,12 @@ impl NetworkConfigBuilder {
     }
 
     /// Specifies the maximum number of gossip connections with unknown peers.
-    #[must_use]
     pub fn with_max_unknown_peers(mut self, n: usize) -> Self {
         self.max_unknown_peers.replace(n);
         self
     }
 
     /// Specifies the maximum number of gossip connections with discovered peers.
-    #[must_use]
     pub fn with_max_discovered_peers(mut self, n: usize) -> Self {
         self.max_discovered_peers.replace(n);
         self
@@ -316,6 +314,7 @@ impl NetworkConfigBuilder {
 /// An in-memory network config builder, that becomes useful as part of integration testing.
 #[cfg(test)]
 #[derive(Default)]
+#[must_use]
 pub struct InMemoryNetworkConfigBuilder {
     bind_multiaddr: Option<Multiaddr>,
 }
@@ -328,7 +327,6 @@ impl InMemoryNetworkConfigBuilder {
     }
 
     /// Specifies the bind addresses.
-    #[must_use]
     pub fn with_bind_multiaddr(mut self, multiaddr: Multiaddr) -> Self {
         for (i, p) in multiaddr.iter().enumerate() {
             match i {
@@ -386,6 +384,7 @@ impl std::hash::Hash for Peer {
 }
 
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct ManualPeeringConfigBuilder {
     pub peers: Option<Vec<PeerBuilder>>,
 }
@@ -434,6 +433,7 @@ fn split_multiaddr(multiaddr: &str) -> Result<(Multiaddr, PeerId), Error> {
 }
 
 #[derive(Deserialize)]
+#[must_use]
 pub struct PeerBuilder {
     #[serde(rename = "address")]
     multiaddr: String,
