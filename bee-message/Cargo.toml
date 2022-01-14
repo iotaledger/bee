@@ -35,4 +35,4 @@ num_cpus = { version = "1.13.0", default-features = false }
 
 [features]
 serde1 = [ "serde", "serde-big-array" ]
-std = []
+std = [ ]
