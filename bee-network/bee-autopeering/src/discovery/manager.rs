@@ -220,12 +220,12 @@ impl Runnable for DiscoveryRecvHandler {
                                 let verif_req = if let Ok(verif_req) = VerificationRequest::from_protobuf(&msg_bytes) {
                                     verif_req
                                 } else {
-                                    log::warn!("Error decoding verification request from {}.", &peer_id);
+                                    log::debug!("Error decoding verification request from {}.", &peer_id);
                                     continue 'recv;
                                 };
 
                                 if let Err(e) = validate_verification_request(&verif_req, version, network_id) {
-                                    log::warn!("Received invalid verification request from {}. Reason: {}", &peer_id, e);
+                                    log::debug!("Received invalid verification request from {}. Reason: {}", &peer_id, e);
                                     continue 'recv;
                                 } else {
                                     log::trace!("Received valid verification request from {}.", &peer_id);
@@ -237,7 +237,7 @@ impl Runnable for DiscoveryRecvHandler {
                                 let verif_res = if let Ok(verif_res) = VerificationResponse::from_protobuf(&msg_bytes) {
                                     verif_res
                                 } else {
-                                    log::warn!("Error decoding verification response from {}.", &peer_id);
+                                    log::debug!("Error decoding verification response from {}.", &peer_id);
                                     continue 'recv;
                                 };
 
@@ -248,7 +248,7 @@ impl Runnable for DiscoveryRecvHandler {
                                         handle_verification_response(verif_res, verif_reqval, ctx);
                                     }
                                     Err(e) => {
-                                        log::warn!("Received invalid verification response from {}. Reason: {:?}", &peer_id, e);
+                                        log::debug!("Received invalid verification response from {}. Reason: {:?}", &peer_id, e);
                                         continue 'recv;
                                     }
                                 }
@@ -257,12 +257,12 @@ impl Runnable for DiscoveryRecvHandler {
                                 let disc_req = if let Ok(disc_req) = DiscoveryRequest::from_protobuf(&msg_bytes) {
                                     disc_req
                                 } else {
-                                    log::warn!("Error decoding discovery request from {}.", &peer_id);
+                                    log::debug!("Error decoding discovery request from {}.", &peer_id);
                                     continue 'recv;
                                 };
 
                                 if let Err(e) = validate_discovery_request(&disc_req) {
-                                    log::warn!("Received invalid discovery request from {}. Reason: {:?}", &peer_id, e);
+                                    log::debug!("Received invalid discovery request from {}. Reason: {:?}", &peer_id, e);
                                     continue 'recv;
                                 } else {
                                     log::trace!("Received valid discovery request from {}.", &peer_id);
@@ -274,7 +274,7 @@ impl Runnable for DiscoveryRecvHandler {
                                 let disc_res = if let Ok(disc_res) = DiscoveryResponse::from_protobuf(&msg_bytes) {
                                     disc_res
                                 } else {
-                                    log::warn!("Error decoding discovery response from {}.", &peer_id);
+                                    log::debug!("Error decoding discovery response from {}.", &peer_id);
                                     continue 'recv;
                                 };
 
@@ -285,12 +285,12 @@ impl Runnable for DiscoveryRecvHandler {
                                         handle_discovery_response(disc_res, disc_reqval, ctx);
                                     }
                                     Err(e) => {
-                                        log::warn!("Received invalid discovery response from {}. Reason: {:?}", &peer_id, e);
+                                        log::debug!("Received invalid discovery response from {}. Reason: {:?}", &peer_id, e);
                                         continue 'recv;
                                     }
                                 }
                             }
-                            _ => log::warn!("Received unsupported discovery message type"),
+                            _ => log::debug!("Received unsupported discovery message type"),
                         }
                     }
                 }

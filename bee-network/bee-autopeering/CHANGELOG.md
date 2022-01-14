@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Server panics when sending to an IPv6 address;
 - Spams port mismatch warnings;
-- filters out valid incoming peering requests;
+- Filters out valid incoming peering requests;
 
 ## 0.1.0 - 2021-12-03
 
