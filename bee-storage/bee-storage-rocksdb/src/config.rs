@@ -114,7 +114,7 @@ impl RocksDbConfigBuilder {
     pub fn new() -> Self {
         Self::default()
     }
-    
+
     pub fn with_path(mut self, path: String) -> Self {
         self.path = Some(path);
         self
