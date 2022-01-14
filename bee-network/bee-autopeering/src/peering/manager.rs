@@ -244,7 +244,7 @@ fn validate_peering_request(peer_req: &PeeringRequest, ctx: &RecvContext) -> Res
 fn validate_peering_response(peer_res: &PeeringResponse, ctx: &RecvContext) -> Result<RequestValue, ValidationError> {
     use ValidationError::*;
 
-    if let Some(reqv) = ctx.request_mngr.write().remove::<PeeringRequest>(ctx.peer_id) {
+    if let Some(reqv) = ctx.request_mngr.remove_request::<PeeringRequest>(ctx.peer_id) {
         if peer_res.request_hash() != reqv.request_hash {
             Err(IncorrectRequestHash)
         } else {
@@ -286,7 +286,8 @@ fn handle_peering_request<V: NeighborValidator>(
             .cloned()
             .expect("inconsistent peer list");
 
-        if nb_filter.ok(&active_peer.peer()) {
+        // The peer must not be a neighbor already.
+        if !ctx.inbound_nbh.contains(ctx.peer_id) && !ctx.outbound_nbh.contains(ctx.peer_id) {
             // Calculate the distance between the local peer and the potential neighbor.
             let distance =
                 neighbor::salt_distance(&ctx.local.peer_id(), active_peer.peer_id(), &ctx.local.private_salt());
@@ -323,13 +324,16 @@ fn handle_peering_request<V: NeighborValidator>(
                     );
                 }
             } else {
-                log::debug!("Denying peering request: Peer distance too large.");
+                log::debug!("Denying peering request from {}: Peer is too far away.", ctx.peer_id);
             }
         } else {
-            log::debug!("Denying peering request: Peer filtered.");
+            log::debug!(
+                "Denying peering request from {}: Peer is already a neighbor.",
+                ctx.peer_id
+            );
         }
     } else {
-        log::debug!("Denying peering request: Peer not verified.");
+        log::debug!("Denying peering request from {}: Peer is not verified.", ctx.peer_id);
     }
 
     // In any case send a response.
@@ -382,10 +386,13 @@ fn handle_peering_response<V: NeighborValidator>(
             // Fire `OutgoingPeering` event with status = `true`.
             publish_peering_event::<OUTBOUND>(peer, status, ctx.local, ctx.event_tx, ctx.inbound_nbh, ctx.outbound_nbh);
         } else {
-            log::debug!("Failed to add neighbor to outbound neighborhood after successful peering request");
+            log::debug!(
+                "Failed to add {} to outbound neighborhood after successful peering request",
+                ctx.peer_id
+            );
         }
     } else {
-        log::debug!("Peering by {} denied.", ctx.peer_id);
+        log::debug!("Peering rejected by {}.", ctx.peer_id);
     }
 
     // Send the response notification.
@@ -457,7 +464,7 @@ pub(crate) async fn begin_peering(
             log::debug!("Peering response timeout: {}", e);
 
             // The response didn't arrive in time => remove the request.
-            let _ = request_mngr.write().remove::<PeeringRequest>(peer_id);
+            let _ = request_mngr.remove_request::<PeeringRequest>(peer_id);
 
             None
         }
@@ -498,7 +505,7 @@ pub(crate) fn send_peering_request_to_addr(
 ) {
     log::trace!("Sending peering request to: {}", peer_id);
 
-    let peer_req = request_mngr.write().new_peering_request(*peer_id, response_tx, local);
+    let peer_req = request_mngr.create_peering_request(*peer_id, response_tx, local);
 
     let msg_bytes = peer_req.to_protobuf().to_vec();
 
@@ -590,9 +597,9 @@ pub(crate) fn publish_peering_event<const IS_INBOUND: bool>(
 ) {
     log::debug!(
         "Peering with {}; status: {}, direction: {}, #out_nbh: {}, #in_nbh: {}",
-        if IS_INBOUND { "in" } else { "out" },
-        status,
         peer.peer_id(),
+        status,
+        if IS_INBOUND { "in" } else { "out" },
         outbound_nbh.len(),
         inbound_nbh.len(),
     );

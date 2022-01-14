@@ -34,33 +34,35 @@ bee -c config_example.toml
 
 | Name                | Description                          | Type           |
 | :------------------ | :----------------------------------- | :------------- |
-| color_enabled       | stdout is colored if enabled         | bool           |
 | target_width        | width of the target section of a log | integer[usize] |
 | level_width         | width of the level section of a log  | integer[usize] |
 | [outputs](#outputs) | config for different log filters     | array          |
 
 ### Outputs
 
-| Name          | Description                     | Type             |
-| :------------ | :------------------------------ | :--------------- |
-| name          | standard stream or file         | string           |
-| level_filter  | log level filter of an output   | string           |
-| target_filter | log target filters of an output | array of strings |
+| Name              | Description                        | Type             |
+| :---------------- | :--------------------------------- | :--------------- |
+| name              | standard stream or file            | string           |
+| level_filter      | log level filter of an output      | string           |
+| target_filter     | log target filters of an output    | array of strings |
+| target_exclusions | log target exclusions of an output | array of strings |
+| color_enabled     | output is colored if enabled       | bool             |
 
 Example:
 
 ```toml
 [logger]
-color_enabled = true
 target_width = 42
 level_width = 5
 [[logger.outputs]]
+color_enabled  = true
 name           = "stdout"
 level_filter   = "info" # other possible values are: "error", "warn", "info", "debug", "trace"
 target_filters = ["bee_network"] 
 [[logger.outputs]]
-name           = "error.log"
-level_filter   = "error"
+name              = "error.log"
+level_filter      = "error"
+target_exclusions = ["bee_network"] 
 ```
 
 ## Network
