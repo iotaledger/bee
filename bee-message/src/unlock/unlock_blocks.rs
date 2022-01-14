@@ -44,7 +44,7 @@ impl UnlockBlocks {
         Ok(Self(unlock_blocks))
     }
 
-    /// Gets an [`UnlockBlock`] from an [`UnlockBlockbee-common/bee-packable/src/packable/bounded.rss`].
+    /// Gets an [`UnlockBlock`] from an [`UnlockBlocks`].
     /// Returns the referenced unlock block if the requested unlock block was a reference.
     pub fn get(&self, index: usize) -> Option<&UnlockBlock> {
         match self.0.get(index) {
