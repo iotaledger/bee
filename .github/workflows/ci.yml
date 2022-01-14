@@ -97,7 +97,6 @@ jobs:
         rust: [nightly, beta, stable]
         crates: [
           "bee-common/bee-ord",
-          "bee-common/bee-packable",
         ]
 
     steps:
@@ -326,5 +325,5 @@ jobs:
 
       - name: Run missing files check
         run: >
-          bash .github/workflows/scripts/missing_files.sh 
+          bash .github/workflows/scripts/missing_files.sh
           bee-message/fuzz
