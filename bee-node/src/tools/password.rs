@@ -44,8 +44,8 @@ pub fn exec(_tool: &PasswordTool) -> Result<(), PasswordError> {
         return Err(PasswordError::VerificationFailed);
     }
 
-    println!("Password salt: {}", hex::encode(salt));
-    println!("Password hash: {}", hex::encode(hash));
+    println!("password_salt = \"{}\"", hex::encode(salt));
+    println!("password_hash = \"{}\"", hex::encode(hash));
 
     Ok(())
 }

@@ -12,7 +12,7 @@ pub fn exec(_tool: &P2pIdentityTool) {
     let keypair = Keypair::generate();
     let public_key = keypair.public();
 
-    println!("Your node identity:\t\t{}", hex::encode(keypair.encode()));
+    println!("identity = \"{}\"", hex::encode(keypair.encode()));
     println!("Your node public key:\t\t{}", hex::encode(public_key.encode()));
     println!(
         "Your libp2p peer identity:\t{}",
