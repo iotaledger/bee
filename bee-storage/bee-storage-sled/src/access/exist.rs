@@ -6,11 +6,11 @@
 use crate::{storage::Storage, trees::*};
 
 use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
-    TreasuryOutput, Unspent,
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
+    Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -137,15 +137,6 @@ impl Exist<MilestoneIndex, OutputDiff> for Storage {
             .inner
             .open_tree(TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF)?
             .contains_key(index.pack_to_vec())?)
-    }
-}
-
-impl Exist<Address, Balance> for Storage {
-    fn exist(&self, address: &Address) -> Result<bool, <Self as StorageBackend>::Error> {
-        Ok(self
-            .inner
-            .open_tree(TREE_ADDRESS_TO_BALANCE)?
-            .contains_key(address.pack_to_vec())?)
     }
 }
 

@@ -6,13 +6,13 @@ use crate::{
         snapshot::{
             DeltaSnapshotHeader, FullSnapshotHeader, MilestoneDiff, SnapshotHeader, SnapshotInfo, SnapshotKind,
         },
-        BalanceDiffs, CreatedOutput, TreasuryOutput,
+        CreatedOutput, TreasuryOutput,
     },
     workers::{
         consensus::worker::migration_from_milestone,
         error::Error,
         snapshot::{config::SnapshotConfig, download::download_latest_snapshot_files, error::Error as SnapshotError},
-        storage::{self, apply_balance_diffs, apply_milestone, create_output, rollback_milestone, StorageBackend},
+        storage::{self, apply_milestone, create_output, rollback_milestone, StorageBackend},
     },
 };
 
@@ -72,8 +72,6 @@ fn import_outputs<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
     storage: &B,
     output_count: u64,
 ) -> Result<(), Error> {
-    let mut balance_diffs = BalanceDiffs::new();
-
     for _ in 0..output_count {
         let message_id = MessageId::unpack::<_, true>(unpacker)?;
         let output_id = OutputId::unpack::<_, true>(unpacker)?;
@@ -83,10 +81,9 @@ fn import_outputs<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
         let created_output = CreatedOutput::new(message_id, milestone_index, milestone_timestamp, output);
 
         create_output(&*storage, &output_id, &created_output)?;
-        balance_diffs.output_add(created_output.inner())?;
     }
 
-    apply_balance_diffs(&*storage, &balance_diffs)
+    Ok(())
 }
 
 async fn import_milestone_diffs<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
@@ -99,17 +96,11 @@ async fn import_milestone_diffs<U: Unpacker<Error = std::io::Error>, B: StorageB
         let index = diff.milestone().essence().index();
         // Unwrap is fine because ledger index was inserted just before.
         let ledger_index = *storage::fetch_ledger_index(&*storage)?.unwrap();
-        let mut balance_diffs = BalanceDiffs::new();
-
-        for (_, output) in diff.created().iter() {
-            balance_diffs.output_add(output.inner())?;
-        }
 
         let consumed = diff
             .consumed()
             .iter()
             .map::<Result<_, Error>, _>(|(output_id, (created_output, consumed_output))| {
-                balance_diffs.output_sub(created_output.inner())?;
                 Ok((*output_id, (created_output.clone(), consumed_output.clone())))
             })
             .collect::<Result<HashMap<_, _>, _>>()?;
@@ -134,9 +125,9 @@ async fn import_milestone_diffs<U: Unpacker<Error = std::io::Error>, B: StorageB
         };
 
         if index == MilestoneIndex(ledger_index + 1) {
-            apply_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)?;
+            apply_milestone(&*storage, index, diff.created(), &consumed, &migration)?;
         } else if index == MilestoneIndex(ledger_index) {
-            rollback_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)?;
+            rollback_milestone(&*storage, index, diff.created(), &consumed, &migration)?;
         } else {
             return Err(Error::Snapshot(SnapshotError::UnexpectedMilestoneDiffIndex(index)));
         }

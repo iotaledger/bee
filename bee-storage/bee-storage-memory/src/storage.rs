@@ -6,11 +6,10 @@
 use crate::table::{SingletonTable, Table, VecBinTable, VecTable};
 
 use bee_ledger::types::{
-    snapshot::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
-    Unspent,
+    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -73,7 +72,6 @@ pub(crate) struct InnerStorage {
     pub(crate) snapshot_info: SingletonTable<SnapshotInfo>,
     pub(crate) solid_entry_point_to_milestone_index: Table<SolidEntryPoint, MilestoneIndex>,
     pub(crate) milestone_index_to_output_diff: Table<MilestoneIndex, OutputDiff>,
-    pub(crate) address_to_balance: Table<Address, Balance>,
     pub(crate) milestone_index_to_unreferenced_message: VecTable<MilestoneIndex, UnreferencedMessage>,
     pub(crate) milestone_index_to_receipt: VecTable<MilestoneIndex, Receipt>,
     pub(crate) spent_to_treasury_output: VecTable<bool, TreasuryOutput>,

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    types::{BalanceDiffs, ConsumedOutput, CreatedOutput},
+    types::{ConsumedOutput, CreatedOutput},
     workers::{
         consensus::{merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
         error::Error,
@@ -45,7 +45,6 @@ fn apply_regular_essence<B: StorageBackend>(
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
     let mut consumed_outputs = HashMap::with_capacity(essence.inputs().len());
-    let balance_diffs = BalanceDiffs::new();
     let consumed_amount: u64 = 0;
     let created_amount: u64 = 0;
 
@@ -138,8 +137,6 @@ fn apply_regular_essence<B: StorageBackend>(
             ),
         );
     }
-
-    metadata.balance_diffs.merge(balance_diffs)?;
 
     Ok(ConflictReason::None)
 }
@@ -247,11 +244,5 @@ pub async fn white_flag<B: StorageBackend>(
         ));
     }
 
-    let diff_sum = metadata.balance_diffs.iter().map(|(_, diff)| diff.amount()).sum();
-
-    if diff_sum == 0 {
-        Ok(())
-    } else {
-        Err(Error::NonZeroBalanceDiffSum(diff_sum))
-    }
+    Ok(())
 }

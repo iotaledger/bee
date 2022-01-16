@@ -34,8 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- `Balance::{dust_allowance, dust_outputs}` and related methods;
-- `BalanceDiff::{dust_allowance, dust_outputs}` and related methods;
+- `Balance`, `BalanceDiff` and `BalanceDiffs`;
 - `Error::InvalidLedgerDustState`;
 
 ## 0.6.1 - 2021-12-29

@@ -6,11 +6,10 @@
 use crate::{storage::Storage, trees::*};
 
 use bee_ledger::types::{
-    snapshot::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
-    Unspent,
+    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -50,7 +49,6 @@ impl_truncate!(
     TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX
 );
 impl_truncate!(MilestoneIndex, OutputDiff, TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF);
-impl_truncate!(Address, Balance, TREE_ADDRESS_TO_BALANCE);
 impl_truncate!(
     (MilestoneIndex, UnreferencedMessage),
     (),

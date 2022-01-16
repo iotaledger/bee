@@ -6,11 +6,10 @@
 use crate::{storage::Storage, trees::*};
 
 use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
-    TreasuryOutput,
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -187,17 +186,6 @@ impl Fetch<MilestoneIndex, OutputDiff> for Storage {
             .get(index.pack_to_vec())?
             // Unpacking from storage is fine.
             .map(|v| OutputDiff::unpack_unverified(&mut v.as_ref()).unwrap()))
-    }
-}
-
-impl Fetch<Address, Balance> for Storage {
-    fn fetch(&self, address: &Address) -> Result<Option<Balance>, <Self as StorageBackend>::Error> {
-        Ok(self
-            .inner
-            .open_tree(TREE_ADDRESS_TO_BALANCE)?
-            .get(address.pack_to_vec())?
-            // Unpacking from storage is fine.
-            .map(|v| Balance::unpack_unverified(&mut v.as_ref()).unwrap()))
     }
 }
 

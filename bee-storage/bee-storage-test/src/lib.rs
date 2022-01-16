@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod address_to_balance;
 mod ed25519_address_to_output_id;
 mod index_to_message_id;
 mod ledger_index;
@@ -19,7 +18,6 @@ mod snapshot_info;
 mod solid_entry_point_to_milestone_index;
 mod spent_to_treasury_output;
 
-pub use address_to_balance::address_to_balance_access;
 pub use ed25519_address_to_output_id::ed25519_address_to_output_id_access;
 pub use index_to_message_id::index_to_message_id_access;
 pub use ledger_index::ledger_index_access;

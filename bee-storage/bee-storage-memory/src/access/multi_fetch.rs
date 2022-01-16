@@ -5,9 +5,8 @@
 
 use crate::storage::Storage;
 
-use bee_ledger::types::{Balance, ConsumedOutput, CreatedOutput, OutputDiff};
+use bee_ledger::types::{ConsumedOutput, CreatedOutput, OutputDiff};
 use bee_message::{
-    address::Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     Message, MessageId,
@@ -40,4 +39,3 @@ impl_multi_fetch!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_multi_fetch!(MilestoneIndex, Milestone, milestone_index_to_milestone);
 impl_multi_fetch!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_multi_fetch!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);
-impl_multi_fetch!(Address, Balance, address_to_balance);

@@ -68,8 +68,6 @@ impl Storage {
         let cf_milestone_index_to_output_diff =
             ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF, Options::default());
 
-        let cf_address_to_balance = ColumnFamilyDescriptor::new(CF_ADDRESS_TO_BALANCE, Options::default());
-
         let mut options = Options::default();
         options.set_prefix_extractor(SliceTransform::create_fixed_prefix(
             std::mem::size_of::<MilestoneIndex>(),
@@ -136,7 +134,6 @@ impl Storage {
                 cf_snapshot_info,
                 cf_solid_entry_point_to_milestone_index,
                 cf_milestone_index_to_output_diff,
-                cf_address_to_balance,
                 cf_milestone_index_to_unreferenced_message,
                 cf_milestone_index_to_receipt,
                 cf_spent_to_treasury,

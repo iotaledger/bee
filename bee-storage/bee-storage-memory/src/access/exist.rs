@@ -6,11 +6,11 @@
 use crate::storage::Storage;
 
 use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
-    TreasuryOutput, Unspent,
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
+    Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -44,7 +44,6 @@ impl_exist!(MilestoneIndex, Milestone, milestone_index_to_milestone);
 impl_exist!((), SnapshotInfo, snapshot_info);
 impl_exist!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_exist!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);
-impl_exist!(Address, Balance, address_to_balance);
 impl_exist!(
     (MilestoneIndex, UnreferencedMessage),
     (),
