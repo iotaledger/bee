@@ -26,6 +26,7 @@ impl<'a, S: StorageBackend> TangleBfsWalkerBuilder<'a, S> {
     }
 
     /// Adds a condition to the [`TangleBfsWalkerBuilder`].
+    #[must_use]
     pub fn with_condition(mut self, condition: Box<dyn Fn(&'a Tangle<S>, &MessageId, &MessageData) -> bool>) -> Self {
         self.condition.replace(condition);
         self

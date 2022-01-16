@@ -85,30 +85,35 @@ impl CollectiveBeaconPayloadBuilder {
     }
 
     /// Adds an instance ID to a [`CollectiveBeaconPayloadBuilder`].
+    #[must_use]
     pub fn with_instance_id(mut self, instance_id: u32) -> Self {
         self.instance_id.replace(instance_id);
         self
     }
 
     /// Adds a round number to a [`CollectiveBeaconPayloadBuilder`].
+    #[must_use]
     pub fn with_round(mut self, round: u64) -> Self {
         self.round.replace(round);
         self
     }
 
     /// Returns the previous signature of a [`CollectiveBeaconPayloadBuilder`].
+    #[must_use]
     pub fn with_prev_signature(mut self, prev_signature: [u8; BEACON_SIGNATURE_LENGTH]) -> Self {
         self.prev_signature.replace(prev_signature);
         self
     }
 
     /// Returns the current signature of a [`CollectiveBeaconPayloadBuilder`].
+    #[must_use]
     pub fn with_signature(mut self, signature: [u8; BEACON_SIGNATURE_LENGTH]) -> Self {
         self.signature.replace(signature);
         self
     }
 
     /// Returns the distributed public key of a [`CollectiveBeaconPayloadBuilder`].
+    #[must_use]
     pub fn with_distributed_public_key(
         mut self,
         distributed_public_key: [u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH],

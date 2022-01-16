@@ -29,42 +29,49 @@ impl MessageBuilder {
     }
 
     /// Adds [`Parents`] to a [`MessageBuilder`].
+    #[must_use]
     pub fn with_parents(mut self, parents: Parents) -> Self {
         self.parents.replace(parents);
         self
     }
 
     /// Adds an issuer public key to a [`MessageBuilder`].
+    #[must_use]
     pub fn with_issuer_public_key(mut self, issuer_public_key: [u8; MESSAGE_PUBLIC_KEY_LENGTH]) -> Self {
         self.issuer_public_key.replace(issuer_public_key);
         self
     }
 
     /// Adds an issuance timestamp to a [`MessageBuilder`].
+    #[must_use]
     pub fn with_issue_timestamp(mut self, issue_timestamp: u64) -> Self {
         self.issue_timestamp.replace(issue_timestamp);
         self
     }
 
     /// Adds a sequence number to a [`MessageBuilder`].
+    #[must_use]
     pub fn with_sequence_number(mut self, sequence_number: u32) -> Self {
         self.sequence_number.replace(sequence_number);
         self
     }
 
     /// Adds a payload to a [`MessageBuilder`].
+    #[must_use]
     pub fn with_payload(mut self, payload: Payload) -> Self {
         self.payload.replace(payload);
         self
     }
 
     /// Adds a nonce provider to a [`MessageBuilder`].
+    #[must_use]
     pub fn with_nonce(mut self, nonce: u64) -> Self {
         self.nonce.replace(nonce);
         self
     }
 
     /// Adds a signature to a [`MessageBuilder`].
+    #[must_use]
     pub fn with_signature(mut self, signature: [u8; MESSAGE_SIGNATURE_LENGTH]) -> Self {
         self.signature.replace(signature);
         self

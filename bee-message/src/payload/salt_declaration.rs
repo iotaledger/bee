@@ -123,24 +123,28 @@ impl SaltDeclarationPayloadBuilder {
     }
 
     /// Adds a node ID to a [`SaltDeclarationPayloadBuilder`].
+    #[must_use]
     pub fn with_node_id(mut self, node_id: u32) -> Self {
         self.node_id.replace(node_id);
         self
     }
 
     /// Adds a salt to a [`SaltDeclarationPayloadBuilder`].
+    #[must_use]
     pub fn with_salt(mut self, salt: Salt) -> Self {
         self.salt.replace(salt);
         self
     }
 
     /// Adds a timestamp to a [`SaltDeclarationPayloadBuilder`].
+    #[must_use]
     pub fn with_timestamp(mut self, timestamp: u64) -> Self {
         self.timestamp.replace(timestamp);
         self
     }
 
     /// Adds a signature to a [`SaltDeclarationPayloadBuilder`].
+    #[must_use]
     pub fn with_signature(mut self, signature: [u8; Ed25519Signature::SIGNATURE_LENGTH]) -> Self {
         self.signature.replace(signature);
         self

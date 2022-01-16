@@ -111,6 +111,7 @@ impl RocksDbConfigBuilder {
     }
 
     /// Sets the path of a [`RocksDbConfigBuilder`].
+    #[must_use]
     pub fn with_path(mut self, path: String) -> Self {
         self.path = Some(path);
         self

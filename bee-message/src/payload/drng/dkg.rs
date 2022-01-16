@@ -91,30 +91,35 @@ impl EncryptedDealBuilder {
     }
 
     /// Adds a Diffie-Hellman key to an [`EncryptedDeal`].
+    #[must_use]
     pub fn with_dh_key(mut self, dh_key: Vec<u8>) -> Self {
         self.dh_key.replace(dh_key);
         self
     }
 
     /// Adds a nonce to an [`EncryptedDeal`].
+    #[must_use]
     pub fn with_nonce(mut self, nonce: Vec<u8>) -> Self {
         self.nonce.replace(nonce);
         self
     }
 
     /// Adds an encrypted share to an [`EncryptedDeal`].
+    #[must_use]
     pub fn with_encrypted_share(mut self, encrypted_share: Vec<u8>) -> Self {
         self.encrypted_share.replace(encrypted_share);
         self
     }
 
     /// Adds a threshold to an [`EncryptedDeal`].
+    #[must_use]
     pub fn with_threshold(mut self, threshold: u32) -> Self {
         self.threshold.replace(threshold);
         self
     }
 
     /// Adds commitments to an [`EncryptedDeal`].
+    #[must_use]
     pub fn with_commitments(mut self, commitments: Vec<u8>) -> Self {
         self.commitments.replace(commitments);
         self
@@ -229,24 +234,28 @@ impl DkgPayloadBuilder {
     }
 
     /// Adds an instance ID to a [`DkgPayloadBuilder`].
+    #[must_use]
     pub fn with_instance_id(mut self, instance_id: u32) -> Self {
         self.instance_id.replace(instance_id);
         self
     }
 
     /// Adds the dealer index to a [`DkgPayloadBuilder`].
+    #[must_use]
     pub fn with_from_index(mut self, from_index: u32) -> Self {
         self.from_index.replace(from_index);
         self
     }
 
     /// Adds the verifier index to a [`DkgPayloadBuilder`].
+    #[must_use]
     pub fn with_to_index(mut self, to_index: u32) -> Self {
         self.to_index.replace(to_index);
         self
     }
 
     /// Adds an encrypted deal to a [`DkgPayloadBuilder`].
+    #[must_use]
     pub fn with_deal(mut self, deal: EncryptedDeal) -> Self {
         self.deal.replace(deal);
         self

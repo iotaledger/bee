@@ -39,12 +39,14 @@ impl LoggerOutputConfigBuilder {
     }
 
     /// Sets the name of a [`LoggerOutputConfigBuilder`].
+    #[must_use]
     pub fn name<'a>(mut self, name: impl Into<Cow<'a, str>>) -> Self {
         self.name.replace(name.into().into_owned());
         self
     }
 
     /// Sets the level of a [`LoggerOutputConfigBuilder`].
+    #[must_use]
     pub fn level_filter(mut self, level: LevelFilter) -> Self {
         self.level_filter.replace(level);
         self
@@ -52,6 +54,7 @@ impl LoggerOutputConfigBuilder {
 
     /// Sets a collection of target filters of a [`LoggerOutputConfigBuilder`].
     /// A message is logged only if one of the filters is part of the log's metadata target.
+    #[must_use]
     pub fn target_filters(mut self, target_filters: &[&str]) -> Self {
         self.target_filters = Some(target_filters.iter().map(|f| f.to_string()).collect::<Vec<String>>());
         self
@@ -59,6 +62,7 @@ impl LoggerOutputConfigBuilder {
 
     /// Sets a collection of target exclusions of a [`LoggerOutputConfigBuilder`].
     /// A message is not logged if one of the exclusions is part of the log's metadata target.
+    #[must_use]
     pub fn target_exclusions(mut self, target_exclusions: &[&str]) -> Self {
         self.target_exclusions = Some(target_exclusions.iter().map(|f| f.to_string()).collect::<Vec<String>>());
         self
@@ -71,13 +75,13 @@ impl LoggerOutputConfigBuilder {
             level_filter: self.level_filter.unwrap_or(DEFAULT_OUTPUT_LEVEL_FILTER),
             target_filters: self
                 .target_filters
-                .unwrap_or_else(Vec::new)
+                .unwrap_or_default()
                 .iter()
                 .map(|f| f.to_lowercase())
                 .collect(),
             target_exclusions: self
                 .target_exclusions
-                .unwrap_or_else(Vec::new)
+                .unwrap_or_default()
                 .iter()
                 .map(|f| f.to_lowercase())
                 .collect(),
@@ -114,24 +118,28 @@ pub struct LoggerConfigBuilder {
 
 impl LoggerConfigBuilder {
     /// Sets the color flag of a [`LoggerConfigBuilder`].
+    #[must_use]
     pub fn color_enabled(mut self, color: bool) -> Self {
         self.color_enabled.replace(color);
         self
     }
 
     /// Sets the target width of a [`LoggerConfigBuilder`].
+    #[must_use]
     pub fn target_width(mut self, width: usize) -> Self {
         self.target_width.replace(width);
         self
     }
 
     /// Sets the target width of a [`LoggerConfigBuilder`].
+    #[must_use]
     pub fn level_width(mut self, width: usize) -> Self {
         self.level_width.replace(width);
         self
     }
 
     /// Adds an output builder to a [`LoggerConfigBuilder`].
+    #[must_use]
     pub fn output(mut self, output: LoggerOutputConfigBuilder) -> Self {
         self.outputs.get_or_insert_with(Vec::new).push(output);
         self
