@@ -113,7 +113,7 @@ where
         ));
     }
 
-    let mut metadata = WhiteFlagMetadata::new(milestone.essence().index());
+    let mut metadata = WhiteFlagMetadata::new(milestone.essence().index(), milestone.essence().timestamp());
 
     white_flag(tangle, storage, message.parents(), &mut metadata).await?;
 
@@ -140,6 +140,8 @@ where
                 OutputId::new(transaction_id, index as u16)?,
                 CreatedOutput::new(
                     message_id,
+                    milestone.essence().index(),
+                    milestone.essence().timestamp() as u32,
                     Output::from(ExtendedOutput::new(*fund.address(), fund.amount())),
                 ),
             );
@@ -174,7 +176,7 @@ where
 
     storage::apply_milestone(
         &*storage,
-        metadata.index,
+        metadata.milestone_index,
         &metadata.created_outputs,
         &metadata.consumed_outputs,
         &metadata.balance_diffs,

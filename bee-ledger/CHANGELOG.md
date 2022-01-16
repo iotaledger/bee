@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.7.0 - 2022-XX-XX
 
+### Added
+
+- `CreatedOutput::milestone_index`, `CreatedOutput::milestone_timestamp` and their getters;
+
 ### Changed
 
 - Complete refactoring of White Flag with Tokenization and Smart Contracts layouts;

@@ -4,6 +4,7 @@
 use crate::types::{ConsumedOutput, CreatedOutput, Error};
 
 use bee_message::{
+    milestone::MilestoneIndex,
     output::{Output, OutputId, TreasuryOutput},
     payload::{
         milestone::{MilestoneId, MilestonePayload},
@@ -99,10 +100,7 @@ impl Packable for MilestoneDiff {
         let payload = Payload::unpack::<_, VERIFY>(unpacker).coerce()?;
         let milestone = match payload {
             Payload::Milestone(milestone) => milestone,
-            Payload::Indexation(_)
-            | Payload::Receipt(_)
-            | Payload::Transaction(_)
-            | Payload::TreasuryTransaction(_) => {
+            _ => {
                 return Err(UnpackError::Packable(Error::InvalidPayloadKind(payload.kind())));
             }
         };
@@ -134,7 +132,15 @@ impl Packable for MilestoneDiff {
             let output_id = OutputId::unpack::<_, VERIFY>(unpacker).coerce()?;
             let output = Output::unpack::<_, VERIFY>(unpacker).coerce()?;
 
-            created_outputs.insert(output_id, CreatedOutput::new(message_id, output));
+            created_outputs.insert(
+                output_id,
+                CreatedOutput::new(
+                    message_id,
+                    milestone.essence().index(),
+                    milestone.essence().timestamp() as u32,
+                    output,
+                ),
+            );
         }
 
         let consumed_count = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
@@ -143,13 +149,15 @@ impl Packable for MilestoneDiff {
         for _ in 0..consumed_count {
             let message_id = MessageId::unpack::<_, VERIFY>(unpacker).infallible()?;
             let output_id = OutputId::unpack::<_, VERIFY>(unpacker).coerce()?;
+            let milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).infallible()?;
+            let milestone_timestamp = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
             let output = Output::unpack::<_, VERIFY>(unpacker).coerce()?;
             let target = TransactionId::unpack::<_, VERIFY>(unpacker).infallible()?;
 
             consumed_outputs.insert(
                 output_id,
                 (
-                    CreatedOutput::new(message_id, output),
+                    CreatedOutput::new(message_id, milestone_index, milestone_timestamp, output),
                     ConsumedOutput::new(target, milestone.essence().index()),
                 ),
             );

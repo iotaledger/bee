@@ -11,7 +11,9 @@ use std::collections::HashMap;
 /// White flag metadata of a milestone confirmation.
 pub struct WhiteFlagMetadata {
     /// Index of the confirmed milestone.
-    pub(crate) index: MilestoneIndex,
+    pub(crate) milestone_index: MilestoneIndex,
+    /// Timestamp of the confirmed milestone.
+    pub(crate) milestone_timestamp: u64,
     /// The number of messages which were referenced by the confirmed milestone.
     pub(crate) referenced_messages: usize,
     /// The messages which were excluded because they did not include a transaction.
@@ -31,10 +33,11 @@ pub struct WhiteFlagMetadata {
 }
 
 impl WhiteFlagMetadata {
-    /// Creates a new `WhiteFlagMetadata`.
-    pub fn new(index: MilestoneIndex) -> WhiteFlagMetadata {
+    /// Creates a new [`WhiteFlagMetadata`].
+    pub fn new(milestone_index: MilestoneIndex, milestone_timestamp: u64) -> WhiteFlagMetadata {
         WhiteFlagMetadata {
-            index,
+            milestone_index,
+            milestone_timestamp,
             referenced_messages: 0,
             excluded_no_transaction_messages: Vec::new(),
             excluded_conflicting_messages: Vec::new(),
@@ -46,7 +49,7 @@ impl WhiteFlagMetadata {
         }
     }
 
-    /// Returns the merkle proof of a `WhiteFlagMetadata`.
+    /// Returns the merkle proof of a [`WhiteFlagMetadata`].
     pub fn merkle_proof(&self) -> &[u8] {
         &self.merkle_proof
     }

@@ -77,8 +77,10 @@ fn import_outputs<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
     for _ in 0..output_count {
         let message_id = MessageId::unpack::<_, true>(unpacker)?;
         let output_id = OutputId::unpack::<_, true>(unpacker)?;
+        let milestone_index = MilestoneIndex::unpack::<_, true>(unpacker)?;
+        let milestone_timestamp = u32::unpack::<_, true>(unpacker)?;
         let output = Output::unpack::<_, true>(unpacker)?;
-        let created_output = CreatedOutput::new(message_id, output);
+        let created_output = CreatedOutput::new(message_id, milestone_index, milestone_timestamp, output);
 
         create_output(&*storage, &output_id, &created_output)?;
         balance_diffs.output_add(created_output.inner())?;
