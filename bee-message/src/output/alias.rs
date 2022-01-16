@@ -20,6 +20,7 @@ use bee_packable::{
 };
 
 ///
+#[must_use]
 pub struct AliasOutputBuilder {
     amount: u64,
     native_tokens: Vec<NativeToken>,

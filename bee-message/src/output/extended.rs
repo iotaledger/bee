@@ -13,6 +13,7 @@ use crate::{
 use bee_packable::Packable;
 
 ///
+#[must_use]
 pub struct ExtendedOutputBuilder {
     address: Address,
     amount: u64,
