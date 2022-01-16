@@ -51,14 +51,14 @@ pub fn rand_expiration_unix_feature_block() -> ExpirationUnixFeatureBlock {
 
 /// Generates a random [`MetadataFeatureBlock`].
 pub fn rand_metadata_feature_block() -> MetadataFeatureBlock {
-    let bytes = rand_bytes(rand_number_range(MetadataFeatureBlock::LENGTH_RANGE));
-    MetadataFeatureBlock::new(&bytes).unwrap()
+    let bytes = rand_bytes(rand_number_range(MetadataFeatureBlock::LENGTH_RANGE) as usize);
+    MetadataFeatureBlock::new(bytes).unwrap()
 }
 
 /// Generates a random [`IndexationFeatureBlock`].
 pub fn rand_indexation_feature_block() -> IndexationFeatureBlock {
-    let bytes = rand_bytes(rand_number_range(IndexationFeatureBlock::LENGTH_RANGE));
-    IndexationFeatureBlock::new(&bytes).unwrap()
+    let bytes = rand_bytes(rand_number_range(IndexationFeatureBlock::LENGTH_RANGE) as usize);
+    IndexationFeatureBlock::new(bytes).unwrap()
 }
 
 fn all_feature_blocks() -> Vec<FeatureBlock> {

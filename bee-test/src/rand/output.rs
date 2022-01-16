@@ -17,7 +17,7 @@ pub mod feature_block;
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
 use bee_message::{
     address::Address,
-    output::{self, Output, OutputId, SimpleOutput, OUTPUT_INDEX_RANGE},
+    output::{self, Output, OutputId, OUTPUT_INDEX_RANGE},
 };
 
 use primitive_types::U256;
@@ -119,13 +119,12 @@ pub fn rand_nft_output() -> output::NftOutput {
 
 /// Generates a random [`Output`].
 pub fn rand_output() -> Output {
-    match rand_number::<u64>() % 6 {
-        0 => rand_simple_output().into(),
-        1 => rand_treasury_output().into(),
-        2 => rand_extended_output().into(),
-        3 => rand_alias_output().into(),
-        4 => rand_foundry_output().into(),
-        5 => rand_nft_output().into(),
+    match rand_number::<u64>() % 5 {
+        0 => rand_treasury_output().into(),
+        1 => rand_extended_output().into(),
+        2 => rand_alias_output().into(),
+        3 => rand_foundry_output().into(),
+        4 => rand_nft_output().into(),
         _ => unreachable!(),
     }
 }
