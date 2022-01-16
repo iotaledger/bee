@@ -20,6 +20,7 @@ use bee_packable::{
 };
 
 ///
+#[must_use]
 pub struct NftOutputBuilder {
     address: Address,
     amount: u64,

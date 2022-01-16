@@ -156,7 +156,7 @@ fn validate_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error>
 
         total_amount = total_amount
             .checked_add(amount)
-            .ok_or_else(|| Error::InvalidAccumulatedOutput((total_amount + amount) as u128))?;
+            .ok_or(Error::InvalidAccumulatedOutput((total_amount + amount) as u128))?;
 
         // Accumulated output balance must not exceed the total supply of tokens.
         if total_amount > IOTA_SUPPLY {

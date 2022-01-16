@@ -31,6 +31,7 @@ pub enum TokenScheme {
 }
 
 ///
+#[must_use]
 pub struct FoundryOutputBuilder {
     address: Address,
     amount: u64,
