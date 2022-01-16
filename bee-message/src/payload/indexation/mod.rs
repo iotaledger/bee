@@ -9,7 +9,7 @@ pub use padded::PaddedIndex;
 
 use crate::{Error, Message};
 
-use bee_packable::{
+use packable::{
     bounded::{BoundedU16, BoundedU32},
     prefix::BoxedSlicePrefix,
 };
@@ -21,7 +21,7 @@ pub(crate) type IndexationIndexLength =
 pub(crate) type IndexationDataLength = BoundedU32<0, { Message::LENGTH_MAX as u32 }>;
 
 /// A payload which holds an index and associated data.
-#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct IndexationPayload {

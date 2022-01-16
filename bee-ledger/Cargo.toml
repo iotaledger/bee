@@ -13,7 +13,6 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-common = { version = "0.6.0", path = "../bee-common/bee-common", default-features = false }
 bee-message = { version = "0.2.0", path = "../bee-message", default-features = false }
-bee-packable = { git = "https://github.com/iotaledger/bee", branch = "coordicide", default-features = false, features = [ "serde", "io" ] }
 bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", default-features = false, optional = true }
 bee-storage = { version = "0.9.0", path = "../bee-storage/bee-storage", default-features = false, optional = true }
 bee-tangle = { version = "0.3.0", path = "../bee-tangle", default-features = false, optional = true }
@@ -26,6 +25,7 @@ hashbrown = { version = "0.11.2", default-features = false, optional = true }
 hex = { version = "0.4.3", default-features = false, optional = true }
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "blake2b" ], optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
+packable = { version = "0.1.0", default-features = false, features = [ "serde", "io" ] }
 ref-cast = { version = "1.0.6", default-features = false, optional = true }
 reqwest = { version = "0.11.5", default-features = false, features = [ "default-tls", "stream" ], optional = true }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ], optional = true }

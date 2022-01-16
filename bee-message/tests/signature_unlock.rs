@@ -6,8 +6,9 @@ use bee_message::{
     unlock_block::SignatureUnlockBlock,
     Error,
 };
-use bee_packable::{error::UnpackError, PackableExt};
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
+
+use packable::{error::UnpackError, PackableExt};
 
 #[test]
 fn unlock_kind() {

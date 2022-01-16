@@ -19,9 +19,8 @@ use crate::{
     Error,
 };
 
-use bee_packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
-
 use derive_more::{Deref, From};
+use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 
 use core::ops::RangeInclusive;
 use std::collections::HashSet;

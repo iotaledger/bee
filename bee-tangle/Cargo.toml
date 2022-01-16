@@ -13,7 +13,6 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-common = { version = "0.6.0", path = "../bee-common/bee-common", default-features = false }
 bee-message = { version = "0.2.0", path = "../bee-message", default-features = false, features = [ "serde1" ] }
-bee-packable = { git = "https://github.com/iotaledger/bee", branch = "coordicide", default-features = false, features = [ "serde" ] }
 bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", default-features = false }
 bee-storage = { version = "0.9.0", path = "../bee-storage/bee-storage", default-features = false }
 
@@ -22,6 +21,7 @@ bitflags = { version = "1.2.1", default-features = false }
 futures = { version = "0.3.17", default-features = false }
 hashbrown = { version = "0.11.2", default-features = false, features = [ "raw", "ahash" ] }
 log = { version = "0.4.14", default-features = false }
+packable = { version = "0.1.0", default-features = false, features = [ "serde" ] }
 rand = { version = "0.8.4", default-features = false, features = [ "std", "std_rng" ] }
 ref-cast = { version = "1.0.6", default-features = false }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }

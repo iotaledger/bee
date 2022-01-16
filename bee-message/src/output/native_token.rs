@@ -4,9 +4,9 @@
 use crate::{output::TokenId, Error};
 
 use bee_common::ord::is_unique_sorted;
-use bee_packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 
 use derive_more::Deref;
+use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 use primitive_types::U256;
 
 ///

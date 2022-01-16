@@ -12,19 +12,18 @@ pub use milestone_id::MilestoneId;
 
 use crate::Error;
 
-use bee_packable::{
+use crypto::{
+    hashes::{blake2b::Blake2b256, Digest},
+    signatures::ed25519,
+    Error as CryptoError,
+};
+use packable::{
     bounded::BoundedU8,
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     prefix::VecPrefix,
     unpacker::Unpacker,
     Packable, PackableExt,
-};
-
-use crypto::{
-    hashes::{blake2b::Blake2b256, Digest},
-    signatures::ed25519,
-    Error as CryptoError,
 };
 
 use alloc::vec::Vec;

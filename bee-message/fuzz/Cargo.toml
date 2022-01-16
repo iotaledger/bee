@@ -10,9 +10,9 @@ cargo-fuzz = true
 
 [dependencies]
 bee-message = { path = "..", default-features = false }
-bee-packable = { git = "https://github.com/iotaledger/bee", branch = "coordicide", default-features = false }
 
 libfuzzer-sys = { version = "0.4.2", default-features = false }
+packable = { version = "0.1.0", default-features = false }
 
 # Prevent this from interfering with workspaces
 [workspace]

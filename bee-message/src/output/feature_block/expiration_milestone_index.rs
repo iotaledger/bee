@@ -8,7 +8,7 @@ use derive_more::From;
 /// Defines a milestone index until which only the deposit [`Address`](crate::address::Address) is allowed to unlock the
 /// output. After the milestone index, only the [`Address`](crate::address::Address) defined in the
 /// [`SenderFeatureBlock`](crate::output::feature_block::SenderFeatureBlock) can unlock it.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExpirationMilestoneIndexFeatureBlock(
     // Before this milestone index, [`Address`](crate::address::Address) is allowed to unlock the output.

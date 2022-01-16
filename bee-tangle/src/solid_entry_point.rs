@@ -16,7 +16,7 @@ use core::{convert::AsRef, ops::Deref};
 /// without needing the full tangle history.
 #[derive(RefCast)]
 #[repr(transparent)]
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, bee_packable::Packable)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, packable::Packable)]
 pub struct SolidEntryPoint(MessageId);
 
 impl SolidEntryPoint {

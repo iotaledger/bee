@@ -6,9 +6,9 @@
 use crate::{Error, MessageId};
 
 use bee_common::ord::is_unique_sorted;
-use bee_packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
 use derive_more::Deref;
+use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
 use core::ops::RangeInclusive;
 

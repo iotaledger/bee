@@ -8,7 +8,7 @@ use crate::{
     Error,
 };
 
-use bee_packable::{bounded::BoundedU64, Packable};
+use packable::{bounded::BoundedU64, Packable};
 
 use core::ops::RangeInclusive;
 

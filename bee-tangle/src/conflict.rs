@@ -16,7 +16,7 @@ pub enum ConflictError {
 
 /// Represents the different reasons why a transaction can conflict with the ledger state.
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, bee_packable::Packable)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, packable::Packable)]
 #[packable(unpack_error = ConflictError)]
 #[packable(tag_type = u8, with_error = ConflictError::InvalidConflict)]
 pub enum ConflictReason {

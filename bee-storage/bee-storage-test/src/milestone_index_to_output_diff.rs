@@ -3,12 +3,13 @@
 
 use bee_ledger::types::OutputDiff;
 use bee_message::milestone::MilestoneIndex;
-use bee_packable::PackableExt;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_test::rand::{milestone::rand_milestone_index, output_diff::rand_output_diff};
+
+use packable::PackableExt;
 
 pub trait StorageBackend:
     backend::StorageBackend

@@ -23,14 +23,14 @@ use bee_message::{
     payload::Payload,
     MessageId,
 };
-use bee_packable::{
-    unpacker::{IoUnpacker, Unpacker},
-    Packable,
-};
 use bee_storage::access::{Insert, Truncate};
 use bee_tangle::solid_entry_point::SolidEntryPoint;
 
 use log::info;
+use packable::{
+    unpacker::{IoUnpacker, Unpacker},
+    Packable,
+};
 
 use std::{
     collections::HashMap,

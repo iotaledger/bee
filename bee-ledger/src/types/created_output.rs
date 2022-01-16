@@ -8,7 +8,7 @@ use bee_message::{output::Output, MessageId};
 use core::ops::Deref;
 
 /// Represents a newly created output.
-#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 #[packable(unpack_error = Error)]
 pub struct CreatedOutput {
     message_id: MessageId,

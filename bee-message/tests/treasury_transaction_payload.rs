@@ -9,7 +9,8 @@ use bee_message::{
     payload::TreasuryTransactionPayload,
     Error,
 };
-use bee_packable::PackableExt;
+
+use packable::PackableExt;
 
 use core::str::FromStr;
 

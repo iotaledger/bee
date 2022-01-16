@@ -230,7 +230,6 @@ dependencies = [
  "async-trait",
  "bee-common",
  "bee-message",
- "bee-packable",
  "bee-runtime",
  "bee-storage",
  "bee-tangle",
@@ -241,6 +240,7 @@ dependencies = [
  "hex",
  "iota-crypto",
  "log",
+ "packable",
  "ref-cast",
  "reqwest",
  "serde",
@@ -256,7 +256,6 @@ version = "0.2.0"
 dependencies = [
  "bech32",
  "bee-common",
- "bee-packable",
  "bee-pow",
  "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
@@ -267,33 +266,11 @@ dependencies = [
  "hex",
  "iota-crypto",
  "num_cpus",
+ "packable",
  "primitive-types",
  "serde",
  "serde-big-array",
  "thiserror",
-]
-
-[[package]]
-name = "bee-packable"
-version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee?branch=coordicide#856123277f2a7b5353fa7f2472ceaf1932be4df7"
-dependencies = [
- "autocfg",
- "bee-packable-derive",
- "primitive-types",
- "serde",
-]
-
-[[package]]
-name = "bee-packable-derive"
-version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee?branch=coordicide#856123277f2a7b5353fa7f2472ceaf1932be4df7"
-dependencies = [
- "proc-macro-crate",
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -344,7 +321,7 @@ dependencies = [
 name = "bee-storage"
 version = "0.9.0"
 dependencies = [
- "bee-packable",
+ "packable",
  "serde",
  "thiserror",
 ]
@@ -378,12 +355,12 @@ dependencies = [
  "bee-common",
  "bee-ledger",
  "bee-message",
- "bee-packable",
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
  "bee-test",
  "num_cpus",
+ "packable",
  "rocksdb",
  "serde",
  "thiserror",
@@ -396,12 +373,12 @@ dependencies = [
  "bee-common",
  "bee-ledger",
  "bee-message",
- "bee-packable",
  "bee-storage",
  "bee-storage-test",
  "bee-tangle",
  "bee-test",
  "num_cpus",
+ "packable",
  "serde",
  "sled",
  "thiserror",
@@ -414,10 +391,10 @@ dependencies = [
  "bee-common",
  "bee-ledger",
  "bee-message",
- "bee-packable",
  "bee-storage",
  "bee-tangle",
  "bee-test",
+ "packable",
 ]
 
 [[package]]
@@ -427,7 +404,6 @@ dependencies = [
  "async-trait",
  "bee-common",
  "bee-message",
- "bee-packable",
  "bee-runtime",
  "bee-storage",
  "bee-storage-null",
@@ -437,6 +413,7 @@ dependencies = [
  "futures",
  "hashbrown",
  "log",
+ "packable",
  "rand 0.8.4",
  "ref-cast",
  "serde",
@@ -2198,6 +2175,31 @@ dependencies = [
  "libc",
  "pkg-config",
  "vcpkg",
+]
+
+[[package]]
+name = "packable"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcd3479b91e23fd284831750050730dfe65c56e79b3bb0bcce1d7ca4fbb0f8a0"
+dependencies = [
+ "autocfg",
+ "packable-derive",
+ "primitive-types",
+ "serde",
+]
+
+[[package]]
+name = "packable-derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd61aa925afa47c4e38093f25607e1d24f640c740a925ede989e5adbfc86c600"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

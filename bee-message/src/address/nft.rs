@@ -8,7 +8,7 @@ use derive_more::{AsRef, Deref, From};
 use core::str::FromStr;
 
 /// An NFT address.
-#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, Deref, bee_packable::Packable)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, Deref, packable::Packable)]
 #[as_ref(forward)]
 pub struct NftAddress(NftId);
 

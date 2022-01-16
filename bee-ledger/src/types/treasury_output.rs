@@ -4,7 +4,7 @@
 use bee_message::{output, payload::milestone::MilestoneId};
 
 /// Records the creation of a treasury output.
-#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 pub struct TreasuryOutput {
     inner: output::TreasuryOutput,
     milestone_id: MilestoneId,

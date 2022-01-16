@@ -9,7 +9,7 @@ use crate::{
     Error,
 };
 
-use bee_packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
+use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 
 use alloc::vec::Vec;
 

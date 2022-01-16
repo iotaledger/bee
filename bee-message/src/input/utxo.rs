@@ -8,7 +8,7 @@ use derive_more::From;
 use core::str::FromStr;
 
 /// Represents an input referencing an output.
-#[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd, From, bee_packable::Packable)]
+#[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd, From, packable::Packable)]
 pub struct UtxoInput(OutputId);
 
 impl UtxoInput {

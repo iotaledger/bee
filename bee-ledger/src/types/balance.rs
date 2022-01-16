@@ -6,7 +6,7 @@ use crate::types::{error::Error, BalanceDiff};
 use bee_message::constant::IOTA_SUPPLY;
 
 /// Holds the balance of an address.
-#[derive(Clone, Debug, Default, Eq, PartialEq, bee_packable::Packable)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, packable::Packable)]
 pub struct Balance(u64);
 
 impl Balance {

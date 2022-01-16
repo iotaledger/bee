@@ -7,7 +7,7 @@ use core::ops::{Add, Sub};
 
 /// A wrapper around a `u32` that represents a milestone index.
 #[repr(transparent)]
-#[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, From, Deref, bee_packable::Packable)]
+#[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, From, Deref, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestoneIndex(pub u32);
 

@@ -3,15 +3,15 @@
 
 use crate::Error;
 
-use bee_packable::{
+use bee_ternary::{T5B1Buf, TritBuf, Trits, T5B1};
+
+use bytemuck::cast_slice;
+use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
     Packable,
 };
-use bee_ternary::{T5B1Buf, TritBuf, Trits, T5B1};
-
-use bytemuck::cast_slice;
 
 use core::fmt;
 

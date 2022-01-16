@@ -5,7 +5,8 @@ use bee_message::{
     address::{Address, Ed25519Address},
     Error,
 };
-use bee_packable::PackableExt;
+
+use packable::PackableExt;
 
 use core::str::FromStr;
 

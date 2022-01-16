@@ -8,12 +8,13 @@
 //! The code was adapted from: https://kanejaku.org/posts/2021/01/2021-01-27/ (CC-BY 4.0)
 
 use bee_message::MessageBuilder;
-use bee_packable::PackableExt;
 use bee_pow::{
     providers::{miner::MinerBuilder, NonceProviderBuilder},
     score::PoWScorer,
 };
 use bee_test::rand::parents::rand_parents;
+
+use packable::PackableExt;
 
 use std::{
     alloc::{GlobalAlloc, Layout, System},

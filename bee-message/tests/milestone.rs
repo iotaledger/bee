@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{milestone::Milestone, MessageId};
-use bee_packable::PackableExt;
 use bee_test::rand::{milestone::rand_milestone, number::rand_number};
+
+use packable::PackableExt;
 
 use std::str::FromStr;
 

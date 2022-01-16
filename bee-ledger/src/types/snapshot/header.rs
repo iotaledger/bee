@@ -4,7 +4,8 @@
 use crate::types::{error::Error, snapshot::SnapshotKind};
 
 use bee_message::{milestone::MilestoneIndex, payload::milestone::MilestoneId};
-use bee_packable::{
+
+use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,

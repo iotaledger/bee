@@ -17,12 +17,12 @@ use bee_message::{
     payload::indexation::PaddedIndex,
     Message, MessageId,
 };
-use bee_packable::{Packable, PackableExt};
 use bee_storage::access::{Batch, BatchBuilder};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
+use packable::{Packable, PackableExt};
 use rocksdb::{WriteBatch, WriteOptions};
 
 #[derive(Default)]

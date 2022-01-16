@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{constant::IOTA_SUPPLY, output::TreasuryOutput, Error};
-use bee_packable::{bounded::InvalidBoundedU64, error::UnpackError, PackableExt};
+
+use packable::{bounded::InvalidBoundedU64, error::UnpackError, PackableExt};
 
 #[test]
 fn kind() {

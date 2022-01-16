@@ -6,7 +6,7 @@ use crate::{
     Error,
 };
 
-use bee_packable::bounded::BoundedU64;
+use packable::bounded::BoundedU64;
 
 use core::ops::RangeInclusive;
 
@@ -17,7 +17,7 @@ pub(crate) type DustDepositAmount = BoundedU64<
 
 /// Defines the amount of IOTAs used as dust deposit that have to be returned to the sender
 /// [`Address`](crate::address::Address).
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = Error::InvalidDustDepositAmount)]
 pub struct DustDepositReturnFeatureBlock(

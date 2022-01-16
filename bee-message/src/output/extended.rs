@@ -10,7 +10,7 @@ use crate::{
     Error,
 };
 
-use bee_packable::Packable;
+use packable::Packable;
 
 ///
 #[must_use]

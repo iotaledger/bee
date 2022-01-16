@@ -1,9 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
-
 use bitflags::bitflags;
+use packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable};
 use serde::Serialize;
 
 use core::convert::Infallible;

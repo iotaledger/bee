@@ -13,7 +13,8 @@ pub use tail_transaction_hash::TailTransactionHash;
 use crate::{milestone::MilestoneIndex, output::OUTPUT_COUNT_RANGE, payload::Payload, Error};
 
 use bee_common::ord::is_unique_sorted;
-use bee_packable::{bounded::BoundedU16, prefix::VecPrefix, Packable, PackableExt};
+
+use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable, PackableExt};
 
 use core::ops::RangeInclusive;
 use std::collections::HashMap;

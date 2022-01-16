@@ -16,11 +16,12 @@ use bee_message::{
     payload::indexation::PaddedIndex,
     Message, MessageId,
 };
-use bee_packable::PackableExt;
 use bee_storage::{access::Fetch, backend::StorageBackend, system::System};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
+
+use packable::PackableExt;
 
 impl Fetch<u8, System> for Storage {
     fn fetch(&self, &key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {

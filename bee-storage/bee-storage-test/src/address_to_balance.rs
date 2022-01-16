@@ -3,12 +3,13 @@
 
 use bee_ledger::types::Balance;
 use bee_message::address::Address;
-use bee_packable::PackableExt;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_test::rand::{address::rand_address, balance::rand_balance};
+
+use packable::PackableExt;
 
 pub trait StorageBackend:
     backend::StorageBackend
