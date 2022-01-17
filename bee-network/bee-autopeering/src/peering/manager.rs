@@ -327,6 +327,9 @@ fn handle_peering_request<V: NeighborValidator>(
                 log::debug!("Denying peering request from {}: Peer is too far away.", ctx.peer_id);
             }
         } else {
+            // Change peering status to `true`.
+            status = true;
+
             log::debug!(
                 "Denying peering request from {}: Peer is already a neighbor.",
                 ctx.peer_id
@@ -526,7 +529,7 @@ pub(crate) fn send_peering_response_to_addr(
     tx: &ServerTx,
     status: bool,
 ) {
-    log::trace!("Sending peering response to: {}", peer_id);
+    log::trace!("Sending peering response '{}' to: {}", status, peer_id);
 
     let request_hash = message_hash(MessageType::PeeringRequest, msg_bytes);
 
