@@ -46,6 +46,8 @@ pub fn rand_consumed_output() -> ConsumedOutput {
 pub fn rand_created_output() -> CreatedOutput {
     CreatedOutput::new(
         rand_message_id(),
+        rand_milestone_index(),
+        rand_number(),
         match rand_number::<u64>() % 3 {
             // 1 => todo!(),
             _ => rand_treasury_output().into(),

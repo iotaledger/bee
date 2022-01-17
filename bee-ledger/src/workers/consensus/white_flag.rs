@@ -120,14 +120,22 @@ fn apply_regular_essence<B: StorageBackend>(
     for (output_id, created_output) in consumed_outputs {
         metadata.consumed_outputs.insert(
             output_id,
-            (created_output, ConsumedOutput::new(*transaction_id, metadata.index)),
+            (
+                created_output,
+                ConsumedOutput::new(*transaction_id, metadata.milestone_index),
+            ),
         );
     }
 
     for (index, output) in essence.outputs().iter().enumerate() {
         metadata.created_outputs.insert(
             OutputId::new(*transaction_id, index as u16)?,
-            CreatedOutput::new(*message_id, output.clone()),
+            CreatedOutput::new(
+                *message_id,
+                metadata.milestone_index,
+                metadata.milestone_timestamp as u32,
+                output.clone(),
+            ),
         );
     }
 

@@ -3,7 +3,7 @@
 
 use crate::types::error::Error;
 
-use bee_message::{output::Output, MessageId};
+use bee_message::{milestone::MilestoneIndex, output::Output, MessageId};
 
 use core::ops::Deref;
 
@@ -12,21 +12,43 @@ use core::ops::Deref;
 #[packable(unpack_error = Error)]
 pub struct CreatedOutput {
     message_id: MessageId,
+    milestone_index: MilestoneIndex,
+    milestone_timestamp: u32,
     inner: Output,
 }
 
 impl CreatedOutput {
-    /// Creates a new `CreatedOutput`.
-    pub fn new(message_id: MessageId, inner: Output) -> Self {
-        Self { message_id, inner }
+    /// Creates a new [`CreatedOutput`].
+    pub fn new(
+        message_id: MessageId,
+        milestone_index: MilestoneIndex,
+        milestone_timestamp: u32,
+        inner: Output,
+    ) -> Self {
+        Self {
+            message_id,
+            milestone_index,
+            milestone_timestamp,
+            inner,
+        }
     }
 
-    /// Returns the message id of the `CreatedOutput`.
+    /// Returns the message id of the [`CreatedOutput`].
     pub fn message_id(&self) -> &MessageId {
         &self.message_id
     }
 
-    /// Returns the inner output of the `CreatedOutput`.
+    /// Returns the milestone index of the [`CreatedOutput`].
+    pub fn milestone_index(&self) -> MilestoneIndex {
+        self.milestone_index
+    }
+
+    /// Returns the milestone milestone timestamp of the [`CreatedOutput`].
+    pub fn milestone_timestamp(&self) -> u32 {
+        self.milestone_timestamp
+    }
+
+    /// Returns the inner output of the [`CreatedOutput`].
     pub fn inner(&self) -> &Output {
         &self.inner
     }
