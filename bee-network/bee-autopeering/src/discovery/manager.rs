@@ -127,19 +127,20 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
 
         let ServerSocket { server_rx, server_tx } = socket;
 
-        // Add entry peers from the config.
-        add_entry_peers(
-            &mut entry_nodes,
-            entry_nodes_prefer_ipv6,
-            &local,
-            &entry_peers,
-            &active_peers,
-            &replacements,
-        )
-        .await;
-
         // Add previously discovered peers from the peer store.
-        add_peers_from_store(&peer_store, &active_peers, &replacements);
+        if add_peers_from_store(&peer_store, &active_peers, &replacements) == 0 {
+            // Add entry peers from the config **only** if we start with an empty peer store,
+            // otherwise entry nodes would be contacted each time a node starts.
+            add_entry_peers(
+                &mut entry_nodes,
+                entry_nodes_prefer_ipv6,
+                &local,
+                &entry_peers,
+                &active_peers,
+                &replacements,
+            )
+            .await;
+        }
 
         let discovery_recv_handler = DiscoveryRecvHandler {
             server_tx: server_tx.clone(),
@@ -303,11 +304,11 @@ impl Runnable for DiscoveryRecvHandler {
     }
 }
 
-fn add_peers_from_store<S: PeerStore>(
+fn add_peers_from_store<S: PeerStore> (
     peer_store: &S,
     active_peers: &ActivePeersList,
     replacements: &ReplacementPeersList,
-) {
+) -> usize {
     let mut num_added = 0;
 
     let mut write = active_peers.write();
@@ -327,6 +328,8 @@ fn add_peers_from_store<S: PeerStore>(
     drop(write);
 
     log::debug!("Restored {} peer/s.", num_added);
+
+    num_added
 }
 
 async fn add_entry_peers(
@@ -381,6 +384,8 @@ async fn add_entry_peers(
         if let Some(peer_id) = add_peer::<false>(peer, local, active_peers, replacements) {
             log::debug!("Added {}.", peer_id);
             num_added += 1;
+
+            send_verification_request_to_peer()
         }
     }
 
