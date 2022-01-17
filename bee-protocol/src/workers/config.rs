@@ -15,12 +15,14 @@ const DEFAULT_STATUS_INTERVAL: u64 = 10;
 const DEFAULT_MILESTONE_SYNC_COUNT: u32 = 200;
 
 #[derive(Default, Deserialize)]
+#[must_use]
 struct ProtocolCoordinatorConfigBuilder {
     public_key_count: Option<usize>,
     public_key_ranges: Option<Vec<MilestoneKeyRange>>,
 }
 
 #[derive(Default, Deserialize)]
+#[must_use]
 struct ProtocolWorkersConfigBuilder {
     message_worker_cache: Option<usize>,
     status_interval: Option<u64>,
@@ -29,6 +31,7 @@ struct ProtocolWorkersConfigBuilder {
 
 /// Builder for a `ProtocolConfig`.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct ProtocolConfigBuilder {
     minimum_pow_score: Option<f64>,
     coordinator: ProtocolCoordinatorConfigBuilder,
@@ -78,6 +81,7 @@ impl ProtocolConfigBuilder {
     }
 
     /// Finishes the `ProtocolConfigBuilder` into a `ProtocolConfig`.
+    #[must_use]
     pub fn finish(self) -> ProtocolConfig {
         ProtocolConfig {
             minimum_pow_score: self.minimum_pow_score.unwrap_or(DEFAULT_MINIMUM_POW_SCORE),
