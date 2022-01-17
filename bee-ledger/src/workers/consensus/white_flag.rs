@@ -11,44 +11,184 @@ use crate::{
 };
 
 use bee_message::{
+    address::Address,
     input::Input,
-    output::{Output, OutputId},
+    milestone::MilestoneIndex,
+    output::{AliasOutput, ExtendedOutput, FeatureBlock, NftOutput, Output, OutputId, TokenId},
     payload::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
     },
-    unlock_block::UnlockBlocks,
+    signature::Signature,
+    unlock_block::{UnlockBlock, UnlockBlocks},
     Message, MessageId,
 };
 use bee_tangle::{ConflictReason, Tangle};
 
 use crypto::hashes::blake2b::Blake2b256;
+use primitive_types::U256;
 
 use std::collections::{HashMap, HashSet};
 
-// TODO
-// fn _verify_signature(_address: &Address, unlock_blocks: &UnlockBlocks, index: usize, _essence_hash: &[u8; 32]) ->
-// bool {     if let Some(UnlockBlock::Signature(_signature)) = unlock_blocks.get(index) {
-//         true
-//         // address.verify(essence_hash, signature).is_ok()
-//     } else {
-//         false
-//     }
-// }
+struct ValidationContext {
+    index: MilestoneIndex,
+    timestamp: u64,
+    amount: u64,
+    native_tokens_amount: HashMap<TokenId, U256>,
+    consumed_outputs: HashMap<OutputId, CreatedOutput>,
+    essence_hash: [u8; 32],
+    verified_addresses: HashSet<Address>,
+}
+
+impl ValidationContext {
+    fn new(index: MilestoneIndex, timestamp: u64, essence: &RegularTransactionEssence) -> Self {
+        Self {
+            index,
+            timestamp,
+            amount: 0,
+            native_tokens_amount: HashMap::<TokenId, U256>::new(),
+            consumed_outputs: HashMap::with_capacity(essence.inputs().len()),
+            essence_hash: TransactionEssence::from(essence.clone()).hash(),
+            verified_addresses: HashSet::new(),
+        }
+    }
+}
+
+fn check_input_feature_blocks(
+    feature_blocks: &[FeatureBlock],
+    context: &ValidationContext,
+) -> Result<(), ConflictReason> {
+    for feature_block in feature_blocks {
+        match feature_block {
+            FeatureBlock::DustDepositReturn(_) => {}
+            FeatureBlock::TimelockMilestoneIndex(timelock) => {
+                if context.index < timelock.index() {
+                    return Err(ConflictReason::TimelockMilestoneIndex);
+                }
+            }
+            FeatureBlock::TimelockUnix(timelock) => {
+                if context.timestamp < timelock.timestamp() as u64 {
+                    return Err(ConflictReason::TimelockUnix);
+                }
+            }
+            FeatureBlock::ExpirationMilestoneIndex(_) => {}
+            FeatureBlock::ExpirationUnix(_) => {}
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
+fn check_output_feature_blocks(
+    feature_blocks: &[FeatureBlock],
+    context: &ValidationContext,
+) -> Result<(), ConflictReason> {
+    for feature_block in feature_blocks {
+        match feature_block {
+            FeatureBlock::Sender(sender) => {
+                if !context.verified_addresses.contains(sender.address()) {
+                    return Err(ConflictReason::UnverifiedSender);
+                }
+            }
+            FeatureBlock::Issuer(_) => {}
+            FeatureBlock::DustDepositReturn(_) => {}
+            FeatureBlock::TimelockMilestoneIndex(_) => {}
+            FeatureBlock::TimelockUnix(_) => {}
+            FeatureBlock::ExpirationMilestoneIndex(_) => {}
+            FeatureBlock::ExpirationUnix(_) => {}
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
+fn unlock_extended_output(
+    output: &ExtendedOutput,
+    unlock_blocks: &UnlockBlocks,
+    index: usize,
+    context: &mut ValidationContext,
+) -> Result<(), ConflictReason> {
+    // SAFETY: index is fine as it is already known that there is the same amount of inputs and unlock blocks.
+    let unlock_block = unlock_blocks.get(index).unwrap();
+
+    match output.address() {
+        Address::Ed25519(address) => {
+            if let UnlockBlock::Signature(unlock) = unlock_block {
+                if let Signature::Ed25519(signature) = unlock.signature() {
+                    if address.verify(&context.essence_hash, signature).is_ok() {
+                        // TODO another place where this should be done ?
+                        context.verified_addresses.insert(*output.address());
+                        check_input_feature_blocks(output.feature_blocks(), context)
+                    } else {
+                        Err(ConflictReason::InvalidSignature)
+                    }
+                } else {
+                    Err(ConflictReason::InvalidSignature)
+                }
+            } else {
+                Err(ConflictReason::IncorrectUnlockMethod)
+            }
+        }
+        Address::Alias(_) => {
+            if let UnlockBlock::Alias(unlock) = unlock_block {
+                todo!();
+            } else {
+                Err(ConflictReason::IncorrectUnlockMethod)
+            }
+        }
+        Address::Nft(_) => {
+            if let UnlockBlock::Nft(unlock) = unlock_block {
+                todo!();
+            } else {
+                Err(ConflictReason::IncorrectUnlockMethod)
+            }
+        }
+    }
+}
+
+fn unlock_alias_output(
+    output: &AliasOutput,
+    unlock_blocks: &UnlockBlocks,
+    index: usize,
+    context: &ValidationContext,
+) -> Result<(), ConflictReason> {
+    // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
+    match unlock_blocks.get(index).unwrap() {
+        UnlockBlock::Signature(_) => todo!(),
+        UnlockBlock::Reference(_) => todo!(),
+        UnlockBlock::Alias(_) => todo!(),
+        UnlockBlock::Nft(_) => todo!(),
+    }
+}
+
+fn unlock_nft_output(
+    output: &NftOutput,
+    unlock_blocks: &UnlockBlocks,
+    index: usize,
+    context: &ValidationContext,
+) -> Result<(), ConflictReason> {
+    // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
+    match unlock_blocks.get(index).unwrap() {
+        UnlockBlock::Signature(_) => todo!(),
+        UnlockBlock::Reference(_) => todo!(),
+        UnlockBlock::Alias(_) => todo!(),
+        UnlockBlock::Nft(_) => todo!(),
+    }
+}
 
 fn apply_regular_essence<B: StorageBackend>(
     storage: &B,
     message_id: &MessageId,
     transaction_id: &TransactionId,
     essence: &RegularTransactionEssence,
-    _unlock_blocks: &UnlockBlocks,
+    unlock_blocks: &UnlockBlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
-    let mut consumed_outputs = HashMap::with_capacity(essence.inputs().len());
-    let consumed_amount: u64 = 0;
-    let created_amount: u64 = 0;
+    let mut context = ValidationContext::new(metadata.milestone_index, metadata.milestone_timestamp, &essence);
 
-    for (_index, input) in essence.inputs().iter().enumerate() {
+    for (index, input) in essence.inputs().iter().enumerate() {
         let (output_id, consumed_output) = match input {
             Input::Utxo(input) => {
                 let output_id = input.output_id();
@@ -73,66 +213,90 @@ fn apply_regular_essence<B: StorageBackend>(
             }
         };
 
-        let _essence_hash = TransactionEssence::from(essence.clone()).hash();
-
-        match consumed_output.inner() {
-            #[cfg(feature = "cpt2")]
-            Output::SignatureLockedSingle(_) => {
-                // TODO
-            }
-            #[cfg(feature = "cpt2")]
-            Output::SignatureLockedDustAllowance(_) => {
-                // TODO
-            }
+        let (amount, consumed_native_tokens) = match consumed_output.inner() {
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
-            Output::Basic(_) => {
-                // TODO
+            Output::Extended(output) => {
+                if let Err(conflict) = unlock_extended_output(output, unlock_blocks, index, &mut context) {
+                    return Ok(conflict);
+                }
+
+                (output.amount(), output.native_tokens())
             }
-            Output::Alias(_) => {
-                // TODO
+            Output::Alias(output) => {
+                if let Err(conflict) = unlock_alias_output(output, unlock_blocks, index, &context) {
+                    return Ok(conflict);
+                }
+
+                (output.amount(), output.native_tokens())
             }
-            Output::Foundry(_) => {
-                // TODO
+            Output::Foundry(output) => (output.amount(), output.native_tokens()),
+            Output::Nft(output) => {
+                if let Err(conflict) = unlock_nft_output(output, unlock_blocks, index, &context) {
+                    return Ok(conflict);
+                }
+
+                (output.amount(), output.native_tokens())
             }
-            Output::Nft(_) => {
-                // TODO
-            }
+        };
+
+        context.amount = context
+            .amount
+            .checked_add(amount)
+            .ok_or(Error::ConsumedAmountOverflow)?;
+        for native_token in consumed_native_tokens {
+            let native_token_amount = context
+                .native_tokens_amount
+                .entry(*native_token.token_id())
+                .or_default();
+            *native_token_amount = native_token_amount
+                .checked_add(*native_token.amount())
+                .ok_or(Error::ConsumedNativeTokensAmountOverflow)?;
         }
 
-        consumed_outputs.insert(*output_id, consumed_output);
+        context.consumed_outputs.insert(*output_id, consumed_output);
     }
 
     for created_output in essence.outputs() {
-        match created_output {
-            #[cfg(feature = "cpt2")]
-            Output::SignatureLockedSingle(_) => {
-                // TODO
-            }
-            #[cfg(feature = "cpt2")]
-            Output::SignatureLockedDustAllowance(_) => {
-                // TODO
-            }
+        // TODO also check feature blocks ?
+        let (amount, created_native_tokens) = match created_output {
+            // TODO chain constraints
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
-            Output::Basic(_) => {
-                // TODO
-            }
-            Output::Alias(_) => {
-                // TODO
-            }
-            Output::Foundry(_) => {
-                // TODO
-            }
-            Output::Nft(_) => {
-                // TODO
-            }
+            Output::Extended(output) => (output.amount(), output.native_tokens()),
+            Output::Alias(output) => (output.amount(), output.native_tokens()),
+            Output::Foundry(output) => (output.amount(), output.native_tokens()),
+            Output::Nft(output) => (output.amount(), output.native_tokens()),
+        };
+
+        context.amount = context.amount.checked_sub(amount).ok_or(Error::CreatedAmountOverflow)?;
+        for native_token in created_native_tokens {
+            let native_token_amount = *context
+                .native_tokens_amount
+                .entry(*native_token.token_id())
+                .or_default();
+            native_token_amount
+                .checked_sub(*native_token.amount())
+                .ok_or(Error::CreatedNativeTokensAmountOverflow)?;
         }
     }
 
-    if created_amount != consumed_amount {
-        return Ok(ConflictReason::InputOutputSumMismatch);
+    if context.amount != 0 {
+        return Ok(ConflictReason::CreatedConsumedAmountMismatch);
     }
 
-    for (output_id, created_output) in consumed_outputs {
+    for (_, amount) in context.native_tokens_amount {
+        if !amount.is_zero() {
+            return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
+        }
+
+        // TODO The transaction is balanced in terms of native tokens, meaning the amount of native tokens present in
+        // inputs equals to that of outputs. Otherwise, the foundry outputs controlling outstanding native token
+        // balances must be present in the transaction. The validation of the foundry output(s) determines if
+        // the outstanding balances are valid.
+    }
+
+    // TODO check chain constraints
+
+    for (output_id, created_output) in context.consumed_outputs {
         metadata.consumed_outputs.insert(
             output_id,
             (

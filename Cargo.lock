@@ -277,6 +277,7 @@ dependencies = [
  "iota-crypto",
  "log",
  "packable",
+ "primitive-types",
  "ref-cast",
  "reqwest",
  "serde",
