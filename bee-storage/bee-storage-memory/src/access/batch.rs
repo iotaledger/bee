@@ -6,11 +6,11 @@
 use crate::{storage::Storage, table::TableBatch};
 
 use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
-    TreasuryOutput, Unspent,
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
+    Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -40,7 +40,6 @@ pub struct StorageBatch {
     snapshot_info: TableBatch<(), SnapshotInfo>,
     solid_entry_point_to_milestone_index: TableBatch<SolidEntryPoint, MilestoneIndex>,
     milestone_index_to_output_diff: TableBatch<MilestoneIndex, OutputDiff>,
-    address_to_balance: TableBatch<Address, Balance>,
     milestone_index_to_unreferenced_message: TableBatch<(MilestoneIndex, UnreferencedMessage), ()>,
     milestone_index_to_receipt: TableBatch<(MilestoneIndex, Receipt), ()>,
     spent_to_treasury_output: TableBatch<(bool, TreasuryOutput), ()>,
@@ -75,7 +74,6 @@ impl BatchBuilder for Storage {
         apply_batch!(snapshot_info);
         apply_batch!(solid_entry_point_to_milestone_index);
         apply_batch!(milestone_index_to_output_diff);
-        apply_batch!(address_to_balance);
         apply_batch!(milestone_index_to_unreferenced_message);
         apply_batch!(milestone_index_to_receipt);
         apply_batch!(spent_to_treasury_output);
@@ -120,7 +118,6 @@ impl_batch!(MilestoneIndex, Milestone, milestone_index_to_milestone);
 impl_batch!((), SnapshotInfo, snapshot_info);
 impl_batch!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_batch!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);
-impl_batch!(Address, Balance, address_to_balance);
 impl_batch!(
     (MilestoneIndex, UnreferencedMessage),
     (),

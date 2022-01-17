@@ -6,11 +6,11 @@
 use crate::{storage::Storage, trees::*};
 
 use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
-    TreasuryOutput, Unspent,
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
+    Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -540,33 +540,6 @@ impl Batch<MilestoneIndex, OutputDiff> for Storage {
             .entry(TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF)
             .or_default()
             .remove(batch.key_buf.as_slice());
-
-        Ok(())
-    }
-}
-
-impl Batch<Address, Balance> for Storage {
-    fn batch_insert(
-        &self,
-        batch: &mut Self::Batch,
-        address: &Address,
-        balance: &Balance,
-    ) -> Result<(), <Self as StorageBackend>::Error> {
-        batch
-            .inner
-            .entry(TREE_ADDRESS_TO_BALANCE)
-            .or_default()
-            .insert(address.pack_to_vec(), balance.pack_to_vec());
-
-        Ok(())
-    }
-
-    fn batch_delete(&self, batch: &mut Self::Batch, address: &Address) -> Result<(), <Self as StorageBackend>::Error> {
-        batch
-            .inner
-            .entry(TREE_ADDRESS_TO_BALANCE)
-            .or_default()
-            .remove(address.pack_to_vec());
 
         Ok(())
     }

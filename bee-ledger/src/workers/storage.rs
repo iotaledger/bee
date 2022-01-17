@@ -5,14 +5,14 @@
 
 use crate::{
     types::{
-        snapshot::SnapshotInfo, Balance, BalanceDiffs, ConsumedOutput, CreatedOutput, LedgerIndex, Migration,
-        OutputDiff, Receipt, TreasuryDiff, TreasuryOutput, Unspent,
+        snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, Migration, OutputDiff, Receipt,
+        TreasuryDiff, TreasuryOutput, Unspent,
     },
     workers::error::Error,
 };
 
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::{Output, OutputId},
     payload::indexation::PaddedIndex,
@@ -38,7 +38,6 @@ pub trait StorageBackend:
     + Batch<(), LedgerIndex>
     + Batch<MilestoneIndex, OutputDiff>
     + Batch<(Ed25519Address, OutputId), ()>
-    + Batch<Address, Balance>
     + Batch<(MilestoneIndex, Receipt), ()>
     + Batch<(bool, TreasuryOutput), ()>
     + Batch<SolidEntryPoint, MilestoneIndex>
@@ -52,7 +51,6 @@ pub trait StorageBackend:
     + Fetch<(), SnapshotInfo>
     + Fetch<OutputId, CreatedOutput>
     + Fetch<(), LedgerIndex>
-    + Fetch<Address, Balance>
     + Fetch<bool, Vec<TreasuryOutput>>
     + Fetch<Ed25519Address, Vec<OutputId>>
     + Fetch<MilestoneIndex, Milestone>
@@ -64,7 +62,6 @@ pub trait StorageBackend:
     + Insert<(bool, TreasuryOutput), ()>
     + Truncate<SolidEntryPoint, MilestoneIndex>
     + for<'a> AsIterator<'a, Unspent, ()>
-    + for<'a> AsIterator<'a, Address, Balance>
     + for<'a> AsIterator<'a, SolidEntryPoint, MilestoneIndex>
     + bee_tangle::storage::StorageBackend
 {
@@ -79,7 +76,6 @@ impl<T> StorageBackend for T where
         + Batch<(), LedgerIndex>
         + Batch<MilestoneIndex, OutputDiff>
         + Batch<(Ed25519Address, OutputId), ()>
-        + Batch<Address, Balance>
         + Batch<(MilestoneIndex, Receipt), ()>
         + Batch<(bool, TreasuryOutput), ()>
         + Batch<SolidEntryPoint, MilestoneIndex>
@@ -93,7 +89,6 @@ impl<T> StorageBackend for T where
         + Fetch<(), SnapshotInfo>
         + Fetch<OutputId, CreatedOutput>
         + Fetch<(), LedgerIndex>
-        + Fetch<Address, Balance>
         + Fetch<bool, Vec<TreasuryOutput>>
         + Fetch<Ed25519Address, Vec<OutputId>>
         + Fetch<MilestoneIndex, Milestone>
@@ -105,7 +100,6 @@ impl<T> StorageBackend for T where
         + Insert<(bool, TreasuryOutput), ()>
         + Truncate<SolidEntryPoint, MilestoneIndex>
         + for<'a> AsIterator<'a, Unspent, ()>
-        + for<'a> AsIterator<'a, Address, Balance>
         + for<'a> AsIterator<'a, SolidEntryPoint, MilestoneIndex>
         + bee_tangle::storage::StorageBackend
 {
@@ -227,42 +221,11 @@ pub(crate) fn delete_consumed_output_batch<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) fn apply_balance_diffs<B: StorageBackend>(storage: &B, balance_diffs: &BalanceDiffs) -> Result<(), Error> {
-    let mut batch = B::batch_begin();
-
-    apply_balance_diffs_batch(storage, &mut batch, balance_diffs)?;
-
-    storage
-        .batch_commit(batch, true)
-        .map_err(|e| Error::Storage(Box::new(e)))
-}
-
-pub(crate) fn apply_balance_diffs_batch<B: StorageBackend>(
-    storage: &B,
-    batch: &mut <B as BatchBuilder>::Batch,
-    balance_diffs: &BalanceDiffs,
-) -> Result<(), Error> {
-    for (address, diff) in balance_diffs.iter() {
-        let balance = fetch_balance_or_default(storage, address)?.apply_diff(diff)?;
-
-        if balance.amount() != 0 {
-            Batch::<Address, Balance>::batch_insert(storage, batch, address, &balance)
-                .map_err(|e| Error::Storage(Box::new(e)))?;
-        } else {
-            Batch::<Address, Balance>::batch_delete(storage, batch, address)
-                .map_err(|e| Error::Storage(Box::new(e)))?;
-        }
-    }
-
-    Ok(())
-}
-
 pub(crate) fn apply_milestone<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
-    balance_diffs: &BalanceDiffs,
     migration: &Option<Migration>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
@@ -284,8 +247,6 @@ pub(crate) fn apply_milestone<B: StorageBackend>(
             Ok(*output_id)
         })
         .collect::<Result<Vec<_>, _>>()?;
-
-    apply_balance_diffs_batch(storage, &mut batch, balance_diffs)?;
 
     let treasury_diff = if let Some(migration) = migration {
         insert_receipt_batch(storage, &mut batch, migration.receipt())?;
@@ -319,7 +280,6 @@ pub(crate) fn rollback_milestone<B: StorageBackend>(
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
-    balance_diffs: &BalanceDiffs,
     migration: &Option<Migration>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
@@ -335,8 +295,6 @@ pub(crate) fn rollback_milestone<B: StorageBackend>(
         delete_consumed_output_batch(storage, &mut batch, output_id)?;
     }
 
-    apply_balance_diffs_batch(storage, &mut batch, &balance_diffs.negated())?;
-
     if let Some(migration) = migration {
         delete_receipt_batch(storage, &mut batch, migration.receipt())?;
         delete_treasury_output_batch(storage, &mut batch, migration.created_treasury())?;
@@ -349,14 +307,6 @@ pub(crate) fn rollback_milestone<B: StorageBackend>(
     storage
         .batch_commit(batch, true)
         .map_err(|e| Error::Storage(Box::new(e)))
-}
-
-pub(crate) fn fetch_balance<B: StorageBackend>(storage: &B, address: &Address) -> Result<Option<Balance>, Error> {
-    Fetch::<Address, Balance>::fetch(storage, address).map_err(|e| Error::Storage(Box::new(e)))
-}
-
-pub(crate) fn fetch_balance_or_default<B: StorageBackend>(storage: &B, address: &Address) -> Result<Balance, Error> {
-    Ok(fetch_balance(storage, address)?.unwrap_or_default())
 }
 
 pub(crate) fn insert_ledger_index<B: StorageBackend>(storage: &B, index: &LedgerIndex) -> Result<(), Error> {

@@ -32,8 +32,6 @@ pub const TREE_SNAPSHOT_INFO: &str = "snapshot_info";
 pub const TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX: &str = "solid_entry_point_to_milestone_index";
 /// Identifier for the `MilestoneIndex` to `OutputDiff` tree.
 pub const TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF: &str = "milestone_index_to_output_diff";
-/// Identifier for the `Address` to `Balance` tree.
-pub const TREE_ADDRESS_TO_BALANCE: &str = "address_to_balance";
 /// Identifier for the `MilestoneIndex` to `Vec<UnreferencedMessage>` tree.
 pub const TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE: &str = "milestone_index_to_unreferenced_message";
 /// Identifier for the `MilestoneIndex` to `Vec<Receipt>` tree.

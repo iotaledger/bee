@@ -6,11 +6,11 @@
 use crate::{storage::Storage, trees::*};
 
 use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
-    TreasuryOutput, Unspent,
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
+    Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -143,16 +143,6 @@ impl Delete<MilestoneIndex, OutputDiff> for Storage {
         self.inner
             .open_tree(TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF)?
             .remove(index.pack_to_vec())?;
-
-        Ok(())
-    }
-}
-
-impl Delete<Address, Balance> for Storage {
-    fn delete(&self, address: &Address) -> Result<(), <Self as StorageBackend>::Error> {
-        self.inner
-            .open_tree(TREE_ADDRESS_TO_BALANCE)?
-            .remove(address.pack_to_vec())?;
 
         Ok(())
     }

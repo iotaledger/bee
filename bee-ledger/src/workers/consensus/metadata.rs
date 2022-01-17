@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{BalanceDiffs, ConsumedOutput, CreatedOutput};
+use crate::types::{ConsumedOutput, CreatedOutput};
 
 use bee_message::{milestone::MilestoneIndex, output::OutputId, MessageId};
 use bee_tangle::ConflictReason;
@@ -26,8 +26,6 @@ pub struct WhiteFlagMetadata {
     pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
     /// The outputs consumed within the confirmed milestone.
     pub(crate) consumed_outputs: HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
-    /// The balance diffs occurring within the confirmed milestone.
-    pub(crate) balance_diffs: BalanceDiffs,
     /// The merkle proof of the milestone.
     pub(crate) merkle_proof: Vec<u8>,
 }
@@ -44,7 +42,6 @@ impl WhiteFlagMetadata {
             included_messages: Vec::new(),
             created_outputs: HashMap::new(),
             consumed_outputs: HashMap::new(),
-            balance_diffs: BalanceDiffs::new(),
             merkle_proof: Vec::new(),
         }
     }

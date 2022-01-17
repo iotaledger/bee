@@ -6,11 +6,10 @@
 use crate::storage::Storage;
 
 use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
-    TreasuryOutput,
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -44,7 +43,6 @@ impl_fetch!(MilestoneIndex, Milestone, milestone_index_to_milestone);
 impl_fetch!((), SnapshotInfo, snapshot_info);
 impl_fetch!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_fetch!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);
-impl_fetch!(Address, Balance, address_to_balance);
 impl_fetch!(
     MilestoneIndex,
     Vec<UnreferencedMessage>,

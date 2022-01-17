@@ -59,9 +59,6 @@ pub enum Error {
     /// Invalid ledger unspent state.
     #[error("invalid ledger unspent state: {0}")]
     InvalidLedgerUnspentState(u64),
-    /// Invalid ledger balance state.
-    #[error("invalid ledger balance state: {0}")]
-    InvalidLedgerBalanceState(u64),
     /// Consumed amount overflow.
     #[error("consumed amount overflow: {0}")]
     ConsumedAmountOverflow(u128),
@@ -71,9 +68,6 @@ pub enum Error {
     /// Ledger state overflow.
     #[error("ledger state overflow: {0}")]
     LedgerStateOverflow(u128),
-    /// Non zero balance diff sum.
-    #[error("non zero balance diff sum: {0}")]
-    NonZeroBalanceDiffSum(i64),
     /// Decreasing receipt migrated at index.
     #[error("decreasing receipt migrated at index: {0} < {1}")]
     DecreasingReceiptMigratedAtIndex(MilestoneIndex, MilestoneIndex),

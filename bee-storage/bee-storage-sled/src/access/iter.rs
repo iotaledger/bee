@@ -6,11 +6,10 @@
 use crate::{storage::Storage, trees::*};
 
 use bee_ledger::types::{
-    snapshot::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
-    Unspent,
+    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
     payload::indexation::PaddedIndex,
@@ -240,17 +239,6 @@ impl<'a> StorageIterator<'a, MilestoneIndex, OutputDiff> {
     }
 }
 
-impl<'a> StorageIterator<'a, Address, Balance> {
-    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (Address, Balance) {
-        (
-            // Unpacking from storage is fine.
-            Address::unpack_unverified(&mut key).unwrap(),
-            // Unpacking from storage is fine.
-            Balance::unpack_unverified(&mut value).unwrap(),
-        )
-    }
-}
-
 impl<'a> StorageIterator<'a, (MilestoneIndex, UnreferencedMessage), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MilestoneIndex, UnreferencedMessage), ()) {
         let (mut index, mut unreferenced_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
@@ -337,7 +325,6 @@ impl_iter!(
     TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX
 );
 impl_iter!(MilestoneIndex, OutputDiff, TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF);
-impl_iter!(Address, Balance, TREE_ADDRESS_TO_BALANCE);
 impl_iter!(
     (MilestoneIndex, UnreferencedMessage),
     (),
