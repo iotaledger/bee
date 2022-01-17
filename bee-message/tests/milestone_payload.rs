@@ -7,8 +7,9 @@ use bee_message::{
     payload::milestone::{MilestoneEssence, MilestonePayload},
     Error,
 };
-use bee_packable::{bounded::TryIntoBoundedU8Error, PackableExt};
 use bee_test::rand::{self, message::rand_message_ids, parents::rand_parents};
+
+use packable::{bounded::TryIntoBoundedU8Error, PackableExt};
 
 #[test]
 fn kind() {

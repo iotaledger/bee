@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{parent::Parents, Error, MessageId};
-use bee_packable::{bounded::TryIntoBoundedU8Error, error::UnpackError, prefix::VecPrefix, PackableExt};
 use bee_test::rand::message::{rand_message_id, rand_message_ids};
+
+use packable::{bounded::TryIntoBoundedU8Error, error::UnpackError, prefix::VecPrefix, PackableExt};
 
 use std::ops::Deref;
 

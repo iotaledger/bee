@@ -8,7 +8,7 @@ use derive_more::{Deref, From};
 use core::str::FromStr;
 
 /// `TreasuryInput` is an input which references a milestone which generated a `TreasuryOutput`.
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, From, Deref, bee_packable::Packable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, From, Deref, packable::Packable)]
 pub struct TreasuryInput(MilestoneId);
 
 impl TreasuryInput {

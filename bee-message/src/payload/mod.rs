@@ -21,7 +21,7 @@ pub use treasury::TreasuryTransactionPayload;
 
 use crate::Error;
 
-use bee_packable::{
+use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,

@@ -17,12 +17,12 @@ use bee_message::{
     payload::indexation::PaddedIndex,
     Message, MessageId,
 };
-use bee_packable::PackableExt;
 use bee_storage::{access::AsIterator, system::System};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
+use packable::PackableExt;
 use rocksdb::{DBIterator, IteratorMode};
 
 use std::marker::PhantomData;

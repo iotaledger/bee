@@ -8,7 +8,7 @@ pub use index::MilestoneIndex;
 use crate::MessageId;
 
 /// Defines a coordinator milestone.
-#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 pub struct Milestone {
     message_id: MessageId,
     timestamp: u64,

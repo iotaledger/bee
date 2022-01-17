@@ -7,11 +7,11 @@ use crate::{
 };
 
 use bee_message::milestone::MilestoneIndex;
-use bee_packable::{error::UnpackError, PackableExt};
 
 use bytes::Buf;
 use futures::{future::join_all, StreamExt};
 use log::{debug, info, warn};
+use packable::{error::UnpackError, PackableExt};
 use reqwest::Response;
 
 use std::{io::Read, path::Path};

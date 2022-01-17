@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Use `bee-packable` instead of `bee-common::packable` to serialize to and deserialize from storage.
+- Use `packable` instead of `bee-common::packable` to serialize to and deserialize from storage.
 
 ## 0.3.0 - 2021-06-10
 

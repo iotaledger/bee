@@ -8,7 +8,8 @@ use bee_message::{
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     Error,
 };
-use bee_packable::{error::UnpackError, PackableExt};
+
+use packable::{error::UnpackError, PackableExt};
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";

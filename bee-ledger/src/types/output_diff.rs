@@ -4,7 +4,8 @@
 use crate::types::{error::Error, TreasuryDiff};
 
 use bee_message::output::OutputId;
-use bee_packable::prefix::{UnpackPrefixError, VecPrefix};
+
+use packable::prefix::{UnpackPrefixError, VecPrefix};
 
 use core::convert::Infallible;
 
@@ -16,7 +17,7 @@ fn unpack_prefix_error_to_error(err: UnpackPrefixError<bee_message::Error, Infal
 }
 
 /// A type to record output and treasury changes that happened within a milestone.
-#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 #[packable(unpack_error = Error, with = unpack_prefix_error_to_error)]
 pub struct OutputDiff {
     created_outputs: VecPrefix<OutputId, u32>,

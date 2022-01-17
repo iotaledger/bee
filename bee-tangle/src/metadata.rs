@@ -7,8 +7,8 @@ use crate::{
 };
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
-use bee_packable::Packable;
 
+use packable::Packable;
 use serde::Serialize;
 
 use std::{
@@ -171,7 +171,7 @@ impl From<Infallible> for MessageMetadataError {
 
 /// A type used to associate two particular interesting Cone Root Indexes with a message in the Tangle, i.e. the Oldest
 /// Cone Root Index (OCRI), and the Youngest Cone Root Index (YCRI)
-#[derive(Clone, Copy, Debug, Serialize, bee_packable::Packable)]
+#[derive(Clone, Copy, Debug, Serialize, packable::Packable)]
 pub struct IndexId(MilestoneIndex, MessageId);
 
 impl IndexId {

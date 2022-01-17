@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{payload::transaction::TransactionId, Error};
-use bee_packable::PackableExt;
+
+use packable::PackableExt;
 
 use core::str::FromStr;
 

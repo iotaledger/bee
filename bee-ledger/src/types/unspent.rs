@@ -6,7 +6,7 @@ use bee_message::output::OutputId;
 use std::ops::Deref;
 
 /// Represents an output id as unspent.
-#[derive(Clone, Eq, PartialEq, Hash, bee_packable::Packable)]
+#[derive(Clone, Eq, PartialEq, Hash, packable::Packable)]
 pub struct Unspent(OutputId);
 
 impl From<OutputId> for Unspent {

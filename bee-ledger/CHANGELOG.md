@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Complete refactoring of White Flag with Tokenization and Smart Contracts layouts;
 - `BalanceDiff` is now an `u64` tuple struct;
 - `Balance` is now an `u64` tuple struct;
- - Serialize and deserialize the ledger types using `bee-packable` instead of `bee-common::packable`;
+ - Serialize and deserialize the ledger types using `packable` instead of `bee-common::packable`;
 
 ### Removed
 

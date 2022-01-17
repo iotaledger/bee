@@ -3,7 +3,7 @@
 
 use crate::{constant::IOTA_SUPPLY, Error};
 
-use bee_packable::bounded::BoundedU64;
+use packable::bounded::BoundedU64;
 
 use core::ops::RangeInclusive;
 
@@ -11,7 +11,7 @@ pub(crate) type TreasuryOutputAmount =
     BoundedU64<{ *TreasuryOutput::AMOUNT_RANGE.start() }, { *TreasuryOutput::AMOUNT_RANGE.end() }>;
 
 /// [`TreasuryOutput`] is an output which holds the treasury of a network.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = Error::InvalidTreasuryOutputAmount)]
 pub struct TreasuryOutput {

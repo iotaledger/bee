@@ -8,8 +8,9 @@ use bee_message::{
     payload::{milestone::MilestoneEssence, IndexationPayload, Payload, ReceiptPayload, TreasuryTransactionPayload},
     Error,
 };
-use bee_packable::{bounded::TryIntoBoundedU8Error, PackableExt};
 use bee_test::rand::{self, bytes::rand_bytes, parents::rand_parents};
+
+use packable::{bounded::TryIntoBoundedU8Error, PackableExt};
 
 #[test]
 fn new_invalid_pow_score_non_zero() {

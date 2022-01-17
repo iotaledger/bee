@@ -3,12 +3,12 @@
 
 use crate::{unlock_block::UNLOCK_BLOCK_INDEX_RANGE, Error};
 
-use bee_packable::bounded::BoundedU16;
+use packable::bounded::BoundedU16;
 
 pub(crate) type ReferenceIndex = BoundedU16<{ *UNLOCK_BLOCK_INDEX_RANGE.start() }, { *UNLOCK_BLOCK_INDEX_RANGE.end() }>;
 
 /// An [`UnlockBlock`](crate::unlock_block::UnlockBlock) that refers to another unlock block.
-#[derive(Clone, Debug, Eq, PartialEq, Hash, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = Error::InvalidReferenceIndex)]
 pub struct ReferenceUnlockBlock(ReferenceIndex);

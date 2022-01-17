@@ -11,7 +11,6 @@ keywords = [ "iota", "tangle", "bee", "framework", "storage" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-packable = { git = "https://github.com/iotaledger/bee", branch = "coordicide", default-features = false, features = [ "serde" ] }
-
+packable = { version = "0.1.0", default-features = false, features = [ "serde" ] }
 serde = { version = "1.0.130", features = [ "derive" ], default-features = false }
 thiserror = { version = "1.0.30", default-features = false }

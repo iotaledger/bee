@@ -12,9 +12,8 @@ pub use transaction_id::TransactionId;
 
 use crate::{unlock_block::UnlockBlocks, Error};
 
-use bee_packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable, PackableExt};
-
 use crypto::hashes::{blake2b::Blake2b256, Digest};
+use packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable, PackableExt};
 
 /// A builder to build a [`TransactionPayload`].
 #[derive(Debug, Default)]

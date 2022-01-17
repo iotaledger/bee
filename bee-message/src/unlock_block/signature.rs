@@ -7,7 +7,7 @@ use derive_more::{Deref, From};
 
 /// An [`UnlockBlock`](crate::unlock_block::UnlockBlock) which is used to unlock a signature locked
 /// [`Input`](crate::input::Input).
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From, Deref, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From, Deref, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct SignatureUnlockBlock(Signature);
 

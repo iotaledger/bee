@@ -16,7 +16,7 @@ macro_rules! impl_id {
             PartialOrd,
             derive_more::From,
             derive_more::AsRef,
-            bee_packable::Packable,
+            packable::Packable,
         )]
         #[as_ref(forward)]
         pub struct $name([u8; $name::LENGTH]);

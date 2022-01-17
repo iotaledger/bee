@@ -15,8 +15,9 @@ use bee_message::{
     signature::{Ed25519Signature, Signature},
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
 };
-use bee_packable::PackableExt;
 use bee_test::rand::{bytes::rand_bytes, parents::rand_parents};
+
+use packable::PackableExt;
 
 use std::str::FromStr;
 

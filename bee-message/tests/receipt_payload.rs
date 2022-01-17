@@ -13,8 +13,9 @@ use bee_message::{
     },
     Error,
 };
-use bee_packable::{bounded::TryIntoBoundedU16Error, PackableExt};
 use bee_test::rand::{bytes::rand_bytes, number::rand_number};
+
+use packable::{bounded::TryIntoBoundedU16Error, PackableExt};
 
 use std::str::FromStr;
 

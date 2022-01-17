@@ -8,13 +8,12 @@ pub use regular::{RegularTransactionEssence, RegularTransactionEssenceBuilder};
 
 use crate::Error;
 
-use bee_packable::PackableExt;
-
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 use derive_more::From;
+use packable::PackableExt;
 
 /// A generic essence that can represent different types defining transaction essences.
-#[derive(Clone, Debug, Eq, PartialEq, From, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, From, packable::Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),

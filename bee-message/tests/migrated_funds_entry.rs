@@ -6,8 +6,9 @@ use bee_message::{
     payload::receipt::MigratedFundsEntry,
     Error,
 };
-use bee_packable::{bounded::InvalidBoundedU64, error::UnpackError, PackableExt};
 use bee_test::rand::receipt::rand_tail_transaction_hash;
+
+use packable::{bounded::InvalidBoundedU64, error::UnpackError, PackableExt};
 
 use core::str::FromStr;
 

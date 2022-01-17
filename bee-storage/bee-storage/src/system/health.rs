@@ -16,7 +16,7 @@ pub enum Error {
 
 /// Represents different health states for a `StorageBackend`.
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, bee_packable::Packable)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, packable::Packable)]
 #[packable(unpack_error = Error)]
 #[packable(tag_type = u8, with_error = Error::UnknownHealth)]
 pub enum StorageHealth {

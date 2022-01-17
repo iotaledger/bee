@@ -10,7 +10,7 @@ use crate::{
     Error,
 };
 
-use bee_packable::{
+use packable::{
     bounded::BoundedU32,
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,

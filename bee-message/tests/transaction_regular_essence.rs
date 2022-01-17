@@ -13,11 +13,12 @@ use bee_message::{
     },
     Error,
 };
-use bee_packable::bounded::TryIntoBoundedU16Error;
 use bee_test::rand::{
     bytes::rand_bytes_array,
     payload::{rand_indexation_payload, rand_treasury_transaction_payload},
 };
+
+use packable::bounded::TryIntoBoundedU16Error;
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS_1: &str = "d56da1eb7726ed482dfe9d457cf548c2ae2a6ce3e053dbf82f11223be476adb9";

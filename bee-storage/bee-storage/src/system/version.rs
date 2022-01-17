@@ -2,5 +2,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// Version of the storage.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, bee_packable::Packable)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, packable::Packable)]
 pub struct StorageVersion(pub u64);

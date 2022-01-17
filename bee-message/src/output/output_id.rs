@@ -3,14 +3,14 @@
 
 use crate::{output::OUTPUT_INDEX_RANGE, payload::transaction::TransactionId, util::hex_decode, Error};
 
-use bee_packable::bounded::BoundedU16;
+use packable::bounded::BoundedU16;
 
 use core::str::FromStr;
 
 pub(crate) type OutputIndex = BoundedU16<{ *OUTPUT_INDEX_RANGE.start() }, { *OUTPUT_INDEX_RANGE.end() }>;
 
 /// The identifier of an `Output`.
-#[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd, bee_packable::Packable)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd, packable::Packable)]
 #[packable(unpack_error = Error)]
 pub struct OutputId {
     transaction_id: TransactionId,

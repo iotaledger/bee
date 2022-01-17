@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{output::OutputId, payload::transaction::TransactionId, Error};
-use bee_packable::{bounded::InvalidBoundedU16, error::UnpackError, PackableExt};
+
+use packable::{bounded::InvalidBoundedU16, error::UnpackError, PackableExt};
 
 use core::str::FromStr;
 

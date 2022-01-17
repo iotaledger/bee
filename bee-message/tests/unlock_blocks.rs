@@ -6,8 +6,9 @@ use bee_message::{
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
     Error,
 };
-use bee_packable::bounded::TryIntoBoundedU16Error;
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
+
+use packable::bounded::TryIntoBoundedU16Error;
 
 #[test]
 fn kind() {

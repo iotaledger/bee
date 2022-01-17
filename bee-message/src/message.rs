@@ -7,15 +7,15 @@ use crate::{
     Error, MessageId,
 };
 
-use bee_packable::{
+use bee_pow::providers::{miner::Miner, NonceProvider, NonceProviderBuilder};
+
+use crypto::hashes::{blake2b::Blake2b256, Digest};
+use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
     Packable, PackableExt,
 };
-use bee_pow::providers::{miner::Miner, NonceProvider, NonceProviderBuilder};
-
-use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 /// A builder to build a [`Message`].
 #[must_use]

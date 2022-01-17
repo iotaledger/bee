@@ -9,7 +9,8 @@ use crate::{
 };
 
 use bee_message::{milestone::MilestoneIndex, Error as MessageError, MessageId};
-use bee_packable::error::UnpackError;
+
+use packable::error::UnpackError;
 
 use std::convert::Infallible;
 

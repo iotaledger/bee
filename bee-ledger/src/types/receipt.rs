@@ -12,7 +12,7 @@ use bee_message::{
 };
 
 /// A type that wraps a receipt and the index of the milestone in which it was included.
-#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 pub struct Receipt {
     inner: ReceiptPayload,
     included_in: MilestoneIndex,

@@ -12,7 +12,7 @@ use derive_more::{AsRef, From};
 use core::str::FromStr;
 
 /// An Ed25519 address.
-#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, bee_packable::Packable)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, packable::Packable)]
 #[as_ref(forward)]
 pub struct Ed25519Address([u8; Self::LENGTH]);
 

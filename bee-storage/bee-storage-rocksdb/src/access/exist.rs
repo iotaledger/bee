@@ -17,11 +17,12 @@ use bee_message::{
     payload::indexation::PaddedIndex,
     Message, MessageId,
 };
-use bee_packable::PackableExt;
 use bee_storage::access::Exist;
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
+
+use packable::PackableExt;
 
 impl Exist<MessageId, Message> for Storage {
     fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {

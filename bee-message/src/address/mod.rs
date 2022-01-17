@@ -11,15 +11,14 @@ pub use nft::NftAddress;
 
 use crate::Error;
 
-use bee_packable::PackableExt;
-
 use bech32::{self, FromBase32, ToBase32, Variant};
 use derive_more::From;
+use packable::PackableExt;
 
 use alloc::{str::FromStr, string::String};
 
 /// A generic address supporting different address kinds.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From, bee_packable::Packable)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From, packable::Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),

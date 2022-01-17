@@ -27,10 +27,10 @@ pub use timelock_unix::TimelockUnixFeatureBlock;
 use crate::Error;
 
 use bee_common::ord::is_unique_sorted;
-use bee_packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
 use bitflags::bitflags;
 use derive_more::{Deref, From};
+use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, Packable)]

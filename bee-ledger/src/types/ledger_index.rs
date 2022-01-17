@@ -6,7 +6,7 @@ use bee_message::milestone::MilestoneIndex;
 use core::ops::Deref;
 
 /// A wrapper type to represent the current ledger index.
-#[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, bee_packable::Packable)]
+#[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, packable::Packable)]
 pub struct LedgerIndex(pub MilestoneIndex);
 
 impl LedgerIndex {

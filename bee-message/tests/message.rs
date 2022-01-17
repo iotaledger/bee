@@ -6,7 +6,6 @@ use bee_message::{
     payload::{IndexationPayload, Payload},
     Error, Message, MessageBuilder,
 };
-use bee_packable::{error::UnpackError, PackableExt};
 use bee_pow::{
     providers::{
         miner::{Miner, MinerBuilder},
@@ -20,6 +19,8 @@ use bee_test::rand::{
     parents::rand_parents,
     payload::{rand_indexation_payload, rand_treasury_transaction_payload},
 };
+
+use packable::{error::UnpackError, PackableExt};
 
 #[test]
 fn pow_default_provider() {

@@ -5,12 +5,13 @@ use bee_message::{
     payload::indexation::{IndexationPayload, PaddedIndex},
     Error, Message,
 };
-use bee_packable::{
+use bee_test::rand::bytes::rand_bytes;
+
+use packable::{
     bounded::{TryIntoBoundedU16Error, TryIntoBoundedU32Error},
     error::UnpackError,
     PackableExt,
 };
-use bee_test::rand::bytes::rand_bytes;
 
 const PADDED_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64952fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 

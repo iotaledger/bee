@@ -9,7 +9,9 @@ use crate::{
 };
 
 use bee_common::ord::is_unique_sorted;
-use bee_packable::{
+
+use crypto::hashes::{blake2b::Blake2b256, Digest};
+use packable::{
     bounded::BoundedU8,
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
@@ -17,8 +19,6 @@ use bee_packable::{
     unpacker::Unpacker,
     Packable, PackableExt,
 };
-
-use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use alloc::vec::Vec;
 use core::ops::RangeInclusive;

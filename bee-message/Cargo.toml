@@ -12,7 +12,6 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-common = { version = "0.6.0", path = "../bee-common/bee-common", default-features = false }
-bee-packable = { git = "https://github.com/iotaledger/bee", branch = "coordicide", default-features = false, features = [ "serde", "primitive-types" ] }
 bee-pow = { version = "0.2.0", path = "../bee-pow", default-features = false }
 bee-ternary = { version = "0.5.2", default-features = false, features = [ "serde1" ] }
 
@@ -23,6 +22,7 @@ derive_more = { version = "0.99.16", default-features = false, features = [ "fro
 digest = { version = "0.9.0", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "ed25519", "blake2b" ] }
+packable = { version = "0.1.0", default-features = false, features = [ "serde", "primitive-types" ] }
 primitive-types = { version = "0.10.1", default-features = false, features = [ "serde" ] }
 serde = { version = "1.0.130", default-features = false, optional = true }
 serde-big-array = { version = "0.3.2", default-features = false, features = [ "const-generics" ], optional = true }

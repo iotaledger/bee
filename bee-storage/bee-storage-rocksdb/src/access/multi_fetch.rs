@@ -13,9 +13,10 @@ use bee_message::{
     output::OutputId,
     Message, MessageId,
 };
-use bee_packable::{Packable, PackableExt};
 use bee_storage::{access::MultiFetch, system::System};
 use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
+
+use packable::{Packable, PackableExt};
 
 use std::{marker::PhantomData, vec::IntoIter};
 

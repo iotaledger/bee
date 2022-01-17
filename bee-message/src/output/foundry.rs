@@ -10,13 +10,12 @@ use crate::{
     Error,
 };
 
-use bee_packable::{
+use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
     Packable,
 };
-
 use primitive_types::U256;
 
 ///

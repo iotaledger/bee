@@ -39,7 +39,7 @@ checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 
 [[package]]
 name = "bee-common"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "autocfg",
  "fern",
@@ -55,7 +55,6 @@ version = "0.2.0"
 dependencies = [
  "bech32",
  "bee-common",
- "bee-packable",
  "bee-pow",
  "bee-ternary",
  "bitflags",
@@ -64,6 +63,7 @@ dependencies = [
  "digest",
  "hex",
  "iota-crypto",
+ "packable",
  "primitive-types",
  "thiserror",
 ]
@@ -73,30 +73,8 @@ name = "bee-message-fuzz"
 version = "0.0.0"
 dependencies = [
  "bee-message",
- "bee-packable",
  "libfuzzer-sys",
-]
-
-[[package]]
-name = "bee-packable"
-version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee?branch=coordicide#389c0122479eba0618b1103517c70a0dc18f8b93"
-dependencies = [
- "autocfg",
- "bee-packable-derive",
- "primitive-types",
- "serde",
-]
-
-[[package]]
-name = "bee-packable-derive"
-version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee?branch=coordicide#389c0122479eba0618b1103517c70a0dc18f8b93"
-dependencies = [
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn",
+ "packable",
 ]
 
 [[package]]
@@ -448,6 +426,31 @@ name = "opaque-debug"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
+
+[[package]]
+name = "packable"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcd3479b91e23fd284831750050730dfe65c56e79b3bb0bcce1d7ca4fbb0f8a0"
+dependencies = [
+ "autocfg",
+ "packable-derive",
+ "primitive-types",
+ "serde",
+]
+
+[[package]]
+name = "packable-derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd61aa925afa47c4e38093f25607e1d24f640c740a925ede989e5adbfc86c600"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "parity-scale-codec"

@@ -4,7 +4,7 @@
 use bee_message::milestone::MilestoneIndex;
 
 /// Snapshot information to be stored.
-#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 pub struct SnapshotInfo {
     network_id: u64,
     snapshot_index: MilestoneIndex,

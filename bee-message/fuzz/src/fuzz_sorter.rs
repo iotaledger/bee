@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::Message;
-use bee_packable::{error::UnpackError, PackableExt};
+
+use packable::{error::UnpackError, PackableExt};
 
 use std::{
     fs::{self, File, OpenOptions},

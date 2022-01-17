@@ -6,7 +6,7 @@
 use crate::{input::Input, output::Output, Error};
 
 /// `TreasuryTransaction` represents a transaction which moves funds from the treasury.
-#[derive(Clone, Debug, Eq, PartialEq, bee_packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreasuryTransactionPayload {
     input: Input,
