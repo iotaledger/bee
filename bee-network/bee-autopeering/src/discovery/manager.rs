@@ -149,6 +149,7 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
             network_id,
             request_mngr: request_mngr.clone(),
             event_tx,
+            entry_peers: entry_peers.clone(),
             active_peers: active_peers.clone(),
             replacements,
         };
@@ -165,6 +166,7 @@ struct DiscoveryRecvHandler {
     network_id: u32,
     request_mngr: RequestManager,
     event_tx: EventTx,
+    entry_peers: EntryPeersList,
     active_peers: ActivePeersList,
     replacements: ReplacementPeersList,
 }
@@ -185,6 +187,7 @@ impl Runnable for DiscoveryRecvHandler {
             network_id,
             request_mngr,
             event_tx,
+            entry_peers,
             active_peers,
             replacements,
             ..
@@ -211,6 +214,7 @@ impl Runnable for DiscoveryRecvHandler {
                             request_mngr: &request_mngr,
                             peer_addr,
                             event_tx: &event_tx,
+                            entry_peers: &entry_peers,
                             active_peers: &active_peers,
                             replacements: &replacements,
                         };
@@ -478,6 +482,7 @@ pub(crate) struct RecvContext<'a> {
     request_mngr: &'a RequestManager,
     peer_addr: SocketAddr,
     event_tx: &'a EventTx,
+    entry_peers: &'a EntryPeersList,
     active_peers: &'a ActivePeersList,
     replacements: &'a ReplacementPeersList,
 }
@@ -664,6 +669,11 @@ fn handle_verification_response(verif_res: VerificationResponse, verif_reqval: R
             ctx.event_tx
                 .send(Event::PeerDiscovered { peer_id: *ctx.peer_id })
                 .expect("error publishing peer-discovered event");
+
+            // If it's an entry node we immediatedly send a discovery request to speed up node synchronization
+            if ctx.entry_peers.read().contains(ctx.peer_id) {
+                send_discovery_request_to_peer(ctx.peer_id, ctx.active_peers, ctx.request_mngr, ctx.server_tx, None);
+            }
         }
     }
 
