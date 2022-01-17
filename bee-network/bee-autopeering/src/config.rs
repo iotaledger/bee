@@ -190,7 +190,7 @@ impl Default for AutopeeringConfigJsonBuilder {
 #[must_use]
 #[serde(rename = "autopeering")]
 pub struct AutopeeringConfigTomlBuilder {
-    /// Wether autopeering should be enabled.
+    /// Whether autopeering should be enabled.
     pub enabled: bool,
     /// The bind address for the server.
     #[serde(rename = "bind_address")]

@@ -42,6 +42,11 @@ impl<V: NeighborValidator> NeighborFilter<V> {
         self.read().apply_list(candidates)
     }
 
+    /// Returns whether the peer is a valid neighbor.
+    pub(crate) fn is_valid_neighbor<P: AsRef<Peer>>(&self, peer: P) -> bool {
+        self.read().validator.is_valid(peer)
+    }
+
     fn read(&self) -> RwLockReadGuard<NeighborFilterInner<V>> {
         self.inner.read().expect("error getting read access")
     }
@@ -106,8 +111,8 @@ mod tests {
     #[derive(Clone)]
     struct DummyValidator {}
     impl NeighborValidator for DummyValidator {
-        fn is_valid(&self, peer: &Peer) -> bool {
-            peer.services().get(AUTOPEERING_SERVICE_NAME).unwrap().port() == 1337
+        fn is_valid<P: AsRef<Peer>>(&self, peer: P) -> bool {
+            peer.as_ref().services().get(AUTOPEERING_SERVICE_NAME).unwrap().port() == 1337
         }
     }
 

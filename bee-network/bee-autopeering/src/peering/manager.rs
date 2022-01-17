@@ -278,6 +278,7 @@ fn handle_peering_request<V: NeighborValidator>(
 
     let mut status = false;
 
+    // The peer must be verified.
     if peer::is_verified(ctx.peer_id, ctx.active_peers) {
         let active_peer = ctx
             .active_peers
@@ -286,52 +287,61 @@ fn handle_peering_request<V: NeighborValidator>(
             .cloned()
             .expect("inconsistent peer list");
 
-        // The peer must not be a neighbor already.
-        if !ctx.inbound_nbh.contains(ctx.peer_id) && !ctx.outbound_nbh.contains(ctx.peer_id) {
-            // Calculate the distance between the local peer and the potential neighbor.
-            let distance =
-                neighbor::salt_distance(&ctx.local.peer_id(), active_peer.peer_id(), &ctx.local.private_salt());
+        // The peer must be a valid neighbor.
+        if nb_filter.is_valid_neighbor(&active_peer) {
 
-            // Create a new neighbor.
-            let neighbor = Neighbor::new(active_peer.into_peer(), distance);
+            // The peer must not be a neighbor already.
+            if !ctx.inbound_nbh.contains(ctx.peer_id) && !ctx.outbound_nbh.contains(ctx.peer_id) { 
+                // Calculate the distance between the local peer and the potential neighbor.
+                let distance =
+                    neighbor::salt_distance(&ctx.local.peer_id(), active_peer.peer_id(), &ctx.local.private_salt());
 
-            // Check if the neighbor would be closer than the currently furthest in the inbound neighborhood.
-            if ctx.inbound_nbh.is_preferred(&neighbor) {
-                let peer = neighbor.into_peer();
+                // Create a new neighbor.
+                let neighbor = Neighbor::new(active_peer.into_peer(), distance);
 
-                if add_or_replace_neighbor::<INBOUND>(
-                    peer.clone(),
-                    ctx.local,
-                    ctx.inbound_nbh,
-                    ctx.outbound_nbh,
-                    ctx.server_tx,
-                    ctx.event_tx,
-                ) {
-                    // Change peering status to `true`.
-                    status = true;
+                // Check if the neighbor would be closer than the currently furthest in the inbound neighborhood.
+                if ctx.inbound_nbh.is_preferred(&neighbor) {
+                    let peer = neighbor.into_peer();
 
-                    // Update the neighbor filter.
-                    nb_filter.add(*peer.peer_id());
-
-                    // Fire `IncomingPeering` event.
-                    publish_peering_event::<INBOUND>(
-                        peer,
-                        status,
+                    if add_or_replace_neighbor::<INBOUND>(
+                        peer.clone(),
                         ctx.local,
-                        ctx.event_tx,
                         ctx.inbound_nbh,
                         ctx.outbound_nbh,
-                    );
+                        ctx.server_tx,
+                        ctx.event_tx,
+                    ) {
+                        // Change peering status to `true`.
+                        status = true;
+
+                        // Update the neighbor filter, so that it's excluded from outbound peering requests.
+                        nb_filter.add(*peer.peer_id());
+
+                        // Fire `IncomingPeering` event.
+                        publish_peering_event::<INBOUND>(
+                            peer,
+                            status,
+                            ctx.local,
+                            ctx.event_tx,
+                            ctx.inbound_nbh,
+                            ctx.outbound_nbh,
+                        );
+                    }
+                } else {
+                    log::debug!("Denying peering request from {}: Peer is too far away.", ctx.peer_id);
                 }
             } else {
-                log::debug!("Denying peering request from {}: Peer is too far away.", ctx.peer_id);
+                // Signal to the peer that the peering status is still `true`.
+                status = true;
+
+                log::debug!(
+                    "Denying peering request from {}: Peer is already a neighbor.",
+                    ctx.peer_id
+                );
             }
         } else {
-            // Change peering status to `true`.
-            status = true;
-
             log::debug!(
-                "Denying peering request from {}: Peer is already a neighbor.",
+                "Denying peering request from {}: Peer is not a valid neighbor.",
                 ctx.peer_id
             );
         }
