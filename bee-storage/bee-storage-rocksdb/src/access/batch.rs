@@ -10,8 +10,8 @@ use bee_storage::{
     access::{Batch, BatchBuilder},
     StorageBackend,
 };
-use packable::Packable;
 
+use packable::Packable;
 use rocksdb::{WriteBatch, WriteOptions};
 
 /// A writing batch that can be applied atomically.

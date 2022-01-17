@@ -9,6 +9,7 @@ use crate::{
 };
 
 use bee_ord::is_sorted;
+
 use packable::{bounded::BoundedU32, prefix::VecPrefix, Packable, PackableExt};
 
 use alloc::vec::Vec;

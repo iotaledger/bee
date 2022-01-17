@@ -5,6 +5,7 @@ use bee_message::{
     error::{MessageUnpackError, ValidationError},
     unlock::ReferenceUnlock,
 };
+
 use packable::{bounded::InvalidBoundedU16, error::UnpackError, PackableExt};
 
 #[test]

@@ -7,6 +7,7 @@ use bee_message::{
     unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlockUnpackError, UnlockBlocks},
 };
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
+
 use packable::{bounded::TryIntoBoundedU16Error, error::UnpackError, PackableExt};
 
 #[test]

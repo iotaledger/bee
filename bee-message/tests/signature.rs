@@ -6,6 +6,7 @@ use bee_message::{
     signature::{BlsSignature, Ed25519Signature, Signature, SignatureUnpackError},
 };
 use bee_test::rand::bytes::rand_bytes_array;
+
 use packable::{error::UnpackError, PackableExt};
 
 #[test]

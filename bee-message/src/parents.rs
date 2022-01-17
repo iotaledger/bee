@@ -6,6 +6,8 @@
 use crate::{MessageId, MessageUnpackError, ValidationError};
 
 use bee_ord::is_unique_sorted;
+
+use bitvec::prelude::*;
 use packable::{
     bounded::BoundedU8,
     error::{UnpackError, UnpackErrorExt},
@@ -14,8 +16,6 @@ use packable::{
     unpacker::Unpacker,
     Packable,
 };
-
-use bitvec::prelude::*;
 
 use alloc::{vec, vec::Vec};
 use core::{

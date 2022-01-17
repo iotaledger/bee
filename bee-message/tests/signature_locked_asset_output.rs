@@ -7,6 +7,7 @@ use bee_message::{
     util::hex_decode,
 };
 use bee_test::rand::bytes::rand_bytes_array;
+
 use packable::PackableExt;
 
 use core::str::FromStr;

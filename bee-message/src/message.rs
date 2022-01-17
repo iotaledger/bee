@@ -7,16 +7,15 @@ use crate::{
     MessageId, MessageUnpackError, ValidationError,
 };
 
+use crypto::{
+    hashes::{blake2b::Blake2b256, Digest},
+    signatures::ed25519,
+};
 use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
     Packable, PackableExt,
-};
-
-use crypto::{
-    hashes::{blake2b::Blake2b256, Digest},
-    signatures::ed25519,
 };
 
 use core::ops::RangeInclusive;

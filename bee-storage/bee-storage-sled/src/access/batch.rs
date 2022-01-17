@@ -10,6 +10,7 @@ use bee_storage::{
     access::{Batch, BatchBuilder},
     StorageBackend,
 };
+
 use packable::Packable;
 
 use std::collections::HashMap;

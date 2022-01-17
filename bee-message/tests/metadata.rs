@@ -7,6 +7,7 @@ use bee_test::rand::{
     message::{metadata::rand_message_metadata, payload::rand_opinion},
     number::rand_number,
 };
+
 use packable::PackableExt;
 
 #[test]

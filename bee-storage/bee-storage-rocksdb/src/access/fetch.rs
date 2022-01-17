@@ -7,6 +7,7 @@ use crate::{column_families::*, Storage};
 
 use bee_message::{Message, MessageId, MessageMetadata};
 use bee_storage::{access::Fetch, system::System, StorageBackend};
+
 use packable::PackableExt;
 
 impl Fetch<u8, System> for Storage {

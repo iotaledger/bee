@@ -9,6 +9,7 @@ use bee_test::rand::{
     message::{parents::rand_parents, rand_message_id},
     vec::rand_vec,
 };
+
 use packable::{bounded::TryIntoBoundedU8Error, error::UnpackError, prefix::VecPrefix, PackableExt};
 
 #[test]

@@ -9,6 +9,7 @@ use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,
 };
+
 use packable::PackableExt;
 
 #[test]

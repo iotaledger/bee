@@ -4,9 +4,9 @@
 #![no_main]
 
 use bee_message::Message;
-use packable::PackableExt;
 
 use libfuzzer_sys::fuzz_target;
+use packable::PackableExt;
 
 fuzz_target!(|data: &[u8]| {
     let _ = Message::unpack_verified(data);

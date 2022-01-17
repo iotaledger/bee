@@ -6,6 +6,7 @@ use bee_message::{
     unlock::SignatureUnlock,
 };
 use bee_test::rand::bytes::rand_bytes_array;
+
 use packable::PackableExt;
 
 use core::ops::Deref;

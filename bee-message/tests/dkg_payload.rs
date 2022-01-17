@@ -6,6 +6,7 @@ use bee_message::payload::{
     MessagePayload,
 };
 use bee_test::rand::bytes::rand_bytes;
+
 use packable::PackableExt;
 
 #[test]

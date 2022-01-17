@@ -5,6 +5,7 @@ use bee_message::{
     payload::{drng::BeaconPayload, MessagePayload},
     util::hex_decode,
 };
+
 use packable::PackableExt;
 
 const BEACON_PARTIAL_PUBLIC_KEY: &str = "55914b063d6342d89680c90b3617877c0dd5c1b88fce7e19d24904ebe56aaca9835d458d77f61\

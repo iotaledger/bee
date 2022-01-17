@@ -7,6 +7,7 @@ use bee_message::{
     MessageUnpackError,
 };
 use bee_test::rand::bytes::rand_bytes;
+
 use packable::{bounded::TryIntoBoundedU32Error, error::UnpackError, PackableExt};
 
 #[test]

@@ -6,9 +6,8 @@ use crate::{
     MessageUnpackError, ValidationError,
 };
 
-use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable};
-
 use hashbrown::HashSet;
+use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable};
 
 use alloc::vec::Vec;
 use core::ops::Deref;

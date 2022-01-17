@@ -13,6 +13,7 @@ use bee_message::{
     payload::transaction::{TransactionEssence, TransactionId, TransactionPayload},
     unlock::UnlockBlocks,
 };
+
 use packable::PackableExt;
 
 /// Generates a random [`TransactionId`].

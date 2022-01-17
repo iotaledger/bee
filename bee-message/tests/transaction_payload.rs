@@ -15,6 +15,7 @@ use bee_message::{
     util::hex_decode,
 };
 use bee_test::rand::{bytes::rand_bytes_array, number::rand_number};
+
 use packable::PackableExt;
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";

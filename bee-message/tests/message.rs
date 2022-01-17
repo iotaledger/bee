@@ -10,6 +10,7 @@ use bee_test::rand::{
     message::{parents::rand_parents, payload::rand_indexation_payload},
     number::rand_number,
 };
+
 use packable::{
     error::{UnexpectedEOF, UnpackError},
     PackableExt,
