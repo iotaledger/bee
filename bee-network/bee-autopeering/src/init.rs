@@ -30,7 +30,7 @@ use crate::{
     task::{TaskManager, MAX_SHUTDOWN_PRIORITY},
 };
 
-use std::{error, future::Future, iter};
+use std::{error, future::Future, iter, time::Duration};
 
 const NUM_TASKS: usize = 9;
 
@@ -162,12 +162,17 @@ where
 
     // Reverify old peers regularly.
     let f = query::reverify_fn();
-    let delay = iter::repeat(DEFAULT_REVERIFY_INTERVAL);
+    let bootup_burst = 10.min(active_peers.read().len());
+    let delay = iter::repeat(Duration::from_millis(100))
+        .take(bootup_burst)
+        .chain(iter::repeat(DEFAULT_REVERIFY_INTERVAL));
     task_mngr.repeat(f, delay, ctx.clone(), "Reverification", MAX_SHUTDOWN_PRIORITY);
 
     // Discover new peers regularly.
     let f = query::query_fn();
-    let delay = iter::repeat(DEFAULT_QUERY_INTERVAL);
+    let delay = iter::once(Duration::from_millis(2000))
+        .chain(iter::repeat(Duration::from_millis(100)).take(bootup_burst))
+        .chain(iter::repeat(DEFAULT_QUERY_INTERVAL));
     task_mngr.repeat(f, delay, ctx, "Discovery", MAX_SHUTDOWN_PRIORITY);
 
     let ctx = UpdateContext {
@@ -181,7 +186,8 @@ where
 
     // Update the outbound neighborhood regularly (interval depends on whether slots available or not).
     let f = update::update_outbound_neighborhood_fn();
-    let delay = delay::ManualDelayFactory::new(OPEN_OUTBOUND_NBH_UPDATE_SECS);
+    let delay =
+        iter::once(Duration::from_millis(4000)).chain(delay::ManualDelayFactory::new(OPEN_OUTBOUND_NBH_UPDATE_SECS));
     task_mngr.repeat(f, delay, ctx, "Outbound neighborhood update", MAX_SHUTDOWN_PRIORITY);
 
     // Await the shutdown signal (in a separate task).

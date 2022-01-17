@@ -289,9 +289,8 @@ fn handle_peering_request<V: NeighborValidator>(
 
         // The peer must be a valid neighbor.
         if nb_filter.is_valid_neighbor(&active_peer) {
-
             // The peer must not be a neighbor already.
-            if !ctx.inbound_nbh.contains(ctx.peer_id) && !ctx.outbound_nbh.contains(ctx.peer_id) { 
+            if !ctx.inbound_nbh.contains(ctx.peer_id) && !ctx.outbound_nbh.contains(ctx.peer_id) {
                 // Calculate the distance between the local peer and the potential neighbor.
                 let distance =
                     neighbor::salt_distance(&ctx.local.peer_id(), active_peer.peer_id(), &ctx.local.private_salt());

@@ -131,7 +131,7 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
         if add_peers_from_store(&peer_store, &active_peers, &replacements) == 0 {
             // Add entry peers from the config **only** if we start with an empty peer store,
             // otherwise entry nodes would be contacted each time a node starts.
-            add_entry_peers(
+            if add_entry_peers(
                 &mut entry_nodes,
                 entry_nodes_prefer_ipv6,
                 &local,
@@ -139,7 +139,11 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
                 &active_peers,
                 &replacements,
             )
-            .await;
+            .await
+                == 0
+            {
+                log::warn!("No entry nodes and no peers from the store were added. Please check your config.");
+            }
         }
 
         let discovery_recv_handler = DiscoveryRecvHandler {
@@ -150,7 +154,6 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
             network_id,
             request_mngr: request_mngr.clone(),
             event_tx,
-            entry_peers: entry_peers.clone(),
             active_peers: active_peers.clone(),
             replacements,
         };
@@ -167,7 +170,6 @@ struct DiscoveryRecvHandler {
     network_id: u32,
     request_mngr: RequestManager,
     event_tx: EventTx,
-    entry_peers: EntryPeersList,
     active_peers: ActivePeersList,
     replacements: ReplacementPeersList,
 }
@@ -188,7 +190,6 @@ impl Runnable for DiscoveryRecvHandler {
             network_id,
             request_mngr,
             event_tx,
-            entry_peers,
             active_peers,
             replacements,
             ..
@@ -215,7 +216,6 @@ impl Runnable for DiscoveryRecvHandler {
                             request_mngr: &request_mngr,
                             peer_addr,
                             event_tx: &event_tx,
-                            entry_peers: &entry_peers,
                             active_peers: &active_peers,
                             replacements: &replacements,
                         };
@@ -304,7 +304,7 @@ impl Runnable for DiscoveryRecvHandler {
     }
 }
 
-fn add_peers_from_store<S: PeerStore> (
+fn add_peers_from_store<S: PeerStore>(
     peer_store: &S,
     active_peers: &ActivePeersList,
     replacements: &ReplacementPeersList,
@@ -339,7 +339,7 @@ async fn add_entry_peers(
     entry_peers: &EntryPeersList,
     active_peers: &ActivePeersList,
     replacements: &ReplacementPeersList,
-) {
+) -> usize {
     let mut num_added = 0;
 
     for entry_addr in entry_nodes {
@@ -384,12 +384,12 @@ async fn add_entry_peers(
         if let Some(peer_id) = add_peer::<false>(peer, local, active_peers, replacements) {
             log::debug!("Added {}.", peer_id);
             num_added += 1;
-
-            send_verification_request_to_peer()
         }
     }
 
     log::debug!("Added {} entry node/s.", num_added);
+
+    num_added
 }
 
 /// Attempts to add a new peer to a peer list (preferably as active).
@@ -487,7 +487,6 @@ pub(crate) struct RecvContext<'a> {
     request_mngr: &'a RequestManager,
     peer_addr: SocketAddr,
     event_tx: &'a EventTx,
-    entry_peers: &'a EntryPeersList,
     active_peers: &'a ActivePeersList,
     replacements: &'a ReplacementPeersList,
 }
@@ -618,7 +617,7 @@ fn validate_discovery_response(
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn handle_verification_request(verif_req: VerificationRequest, ctx: RecvContext) {
-    log::trace!("Handling verification request.");
+    log::trace!("Handling verification request from {}.", ctx.peer_id);
 
     // In any case send a response.
     send_verification_response_to_addr(
@@ -652,7 +651,7 @@ fn handle_verification_request(verif_req: VerificationRequest, ctx: RecvContext)
 
 // The peer must be known (since it's a valid response). That means that the peer is part of the active list currently.
 fn handle_verification_response(verif_res: VerificationResponse, verif_reqval: RequestValue, ctx: RecvContext) {
-    log::trace!("Handling verification response.");
+    log::trace!("Handling verification response from {}.", ctx.peer_id);
 
     if let Some(verified_count) = peer::set_front_and_update(ctx.peer_id, ctx.active_peers) {
         // If this is the first time the peer was verified:
@@ -674,11 +673,6 @@ fn handle_verification_response(verif_res: VerificationResponse, verif_reqval: R
             ctx.event_tx
                 .send(Event::PeerDiscovered { peer_id: *ctx.peer_id })
                 .expect("error publishing peer-discovered event");
-
-            // If it's an entry node we immediatedly send a discovery request to speed up node synchronization
-            if ctx.entry_peers.read().contains(ctx.peer_id) {
-                send_discovery_request_to_peer(ctx.peer_id, ctx.active_peers, ctx.request_mngr, ctx.server_tx, None);
-            }
         }
     }
 
@@ -691,7 +685,7 @@ fn handle_verification_response(verif_res: VerificationResponse, verif_reqval: R
 }
 
 fn handle_discovery_request(_disc_req: DiscoveryRequest, ctx: RecvContext) {
-    log::trace!("Handling discovery request.");
+    log::trace!("Handling discovery request from {}.", ctx.peer_id);
 
     let request_hash = message_hash(MessageType::DiscoveryRequest, ctx.msg_bytes);
 
@@ -713,7 +707,7 @@ fn handle_discovery_request(_disc_req: DiscoveryRequest, ctx: RecvContext) {
 
 fn handle_discovery_response(disc_res: DiscoveryResponse, disc_reqval: RequestValue, ctx: RecvContext) {
     // Remove the corresponding request from the request manager.
-    log::trace!("Handling discovery response.");
+    log::trace!("Handling discovery response from {}.", ctx.peer_id);
 
     let mut num_added = 0;
 
@@ -935,7 +929,7 @@ pub(crate) fn send_discovery_request_to_addr(
     server_tx: &ServerTx,
     response_tx: Option<ResponseTx>,
 ) {
-    log::trace!("Sending discovery request to: {:?}", peer_id);
+    log::trace!("Sending discovery request to: {}", peer_id);
 
     let disc_req = request_mngr.create_discovery_request(*peer_id, response_tx);
 
