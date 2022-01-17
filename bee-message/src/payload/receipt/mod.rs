@@ -16,10 +16,9 @@ use crate::{
     Error,
 };
 
-use bee_common::{
-    ord::is_unique_sorted,
-    packable::{Packable, Read, Write},
-};
+use bee_common::packable::{Packable, Read, Write};
+
+use stable_sorted::is_unique_sorted;
 
 use core::ops::RangeInclusive;
 use std::collections::HashMap;

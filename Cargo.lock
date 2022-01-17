@@ -271,6 +271,7 @@ dependencies = [
  "iota-crypto",
  "num_cpus",
  "serde",
+ "stable-sorted",
  "thiserror",
 ]
 
@@ -2989,6 +2990,11 @@ name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "stable-sorted"
+version = "0.1.0"
+source = "git+https://github.com/iotaledger/common-rs?branch=main#a83336f2dc478b4194c5d5c60ba9e999e0e0f2dd"
 
 [[package]]
 name = "static_assertions"

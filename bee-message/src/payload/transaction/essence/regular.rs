@@ -9,10 +9,9 @@ use crate::{
     Error,
 };
 
-use bee_common::{
-    ord::is_sorted,
-    packable::{Packable, Read, Write},
-};
+use bee_common::packable::{Packable, Read, Write};
+
+use stable_sorted::is_sorted;
 
 use alloc::{boxed::Box, vec::Vec};
 
