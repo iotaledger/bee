@@ -15,7 +15,7 @@ pub use signature_locked_asset::{AssetBalance, AssetId, SignatureLockedAssetOutp
 pub(crate) use signature_locked_single::Amount;
 pub use signature_locked_single::{SignatureLockedSingleOutput, SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT};
 
-use bee_packable::Packable;
+use packable::Packable;
 
 use core::{fmt, ops::RangeInclusive};
 

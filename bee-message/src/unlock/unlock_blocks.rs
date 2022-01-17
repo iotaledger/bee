@@ -6,9 +6,8 @@ use crate::{
     MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{bounded::BoundedU16, prefix::VecPrefix, Packable};
-
 use hashbrown::HashSet;
+use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable};
 
 use alloc::vec::Vec;
 use core::ops::Deref;
@@ -44,7 +43,7 @@ impl UnlockBlocks {
         Ok(Self(unlock_blocks))
     }
 
-    /// Gets an [`UnlockBlock`] from an [`UnlockBlockbee-common/bee-packable/src/packable/bounded.rss`].
+    /// Gets an [`UnlockBlock`] from an [`UnlockBlocks`].
     /// Returns the referenced unlock block if the requested unlock block was a reference.
     pub fn get(&self, index: usize) -> Option<&UnlockBlock> {
         match self.0.get(index) {

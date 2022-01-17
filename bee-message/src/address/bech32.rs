@@ -3,9 +3,8 @@
 
 use crate::{address::Address, error::ValidationError};
 
-use bee_packable::PackableExt;
-
 use bech32::{self, FromBase32, ToBase32};
+use packable::PackableExt;
 
 use alloc::{
     boxed::Box,

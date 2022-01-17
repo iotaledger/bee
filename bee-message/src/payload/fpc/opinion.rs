@@ -3,7 +3,7 @@
 
 use crate::MessageUnpackError;
 
-use bee_packable::Packable;
+use packable::Packable;
 
 use core::{convert::Infallible, fmt};
 

@@ -7,8 +7,9 @@ use bee_message::{
     output::OutputId,
     payload::transaction::TransactionId,
 };
-use bee_packable::{error::UnpackError, PackableExt};
 use bee_test::rand::bytes::rand_bytes;
+
+use packable::{error::UnpackError, PackableExt};
 
 #[test]
 fn from_utxo() {

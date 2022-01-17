@@ -3,8 +3,6 @@ members = [
   "bee-common/bee-event-bus",
   "bee-common/bee-logger",
   "bee-common/bee-ord",
-  "bee-common/bee-packable",
-  "bee-common/bee-packable-derive",
   "bee-common/bee-task",
   "bee-common/bee-time",
   "bee-message",

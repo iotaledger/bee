@@ -3,7 +3,7 @@
 
 use crate::payload::{fpc::Opinion, transaction::TransactionId, MessageUnpackError};
 
-use bee_packable::Packable;
+use packable::Packable;
 
 /// Describes a vote in a given round for a transaction conflict.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]

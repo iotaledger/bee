@@ -14,11 +14,12 @@ use bee_message::{
     util::hex_decode,
     MessageUnpackError, IOTA_SUPPLY,
 };
-use bee_packable::{bounded::TryIntoBoundedU32Error, error::UnpackError, PackableExt};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,
 };
+
+use packable::{bounded::TryIntoBoundedU32Error, error::UnpackError, PackableExt};
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS_1: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";

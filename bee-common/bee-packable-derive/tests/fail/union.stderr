@@ -1,5 +1,0 @@
-error: The `Packable` trait cannot be derived for unions.
-  --> tests/fail/union.rs:12:11
-   |
-12 | pub union MaybeInt {
-   |           ^^^^^^^^

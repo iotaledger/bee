@@ -5,7 +5,8 @@ use bee_message::{
     error::{MessageUnpackError, ValidationError},
     unlock::ReferenceUnlock,
 };
-use bee_packable::{bounded::InvalidBoundedU16, error::UnpackError, PackableExt};
+
+use packable::{bounded::InvalidBoundedU16, error::UnpackError, PackableExt};
 
 #[test]
 fn kind() {

@@ -5,8 +5,9 @@ use bee_message::{
     error::MessageUnpackError,
     signature::{BlsSignature, Ed25519Signature, Signature, SignatureUnpackError},
 };
-use bee_packable::{error::UnpackError, PackableExt};
 use bee_test::rand::bytes::rand_bytes_array;
+
+use packable::{error::UnpackError, PackableExt};
 
 #[test]
 fn from_ed25519() {

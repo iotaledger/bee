@@ -3,7 +3,7 @@
 
 use crate::{error::ValidationError, util::hex_decode};
 
-use bee_packable::Packable;
+use packable::Packable;
 
 /// An [`IndexationPayload`](crate::payload::indexation::IndexationPayload) index padded with `0` up to the maximum
 /// length.

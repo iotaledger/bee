@@ -3,12 +3,11 @@
 
 use crate::{error::ValidationError, signature::Ed25519Signature, util::hex_decode};
 
-use bee_packable::Packable;
-
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
     signatures::ed25519::{PublicKey, Signature},
 };
+use packable::Packable;
 
 /// An Ed25519 address.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]

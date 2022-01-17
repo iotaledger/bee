@@ -6,7 +6,7 @@ use crate::{
     payload::{MessagePayload, PAYLOAD_LENGTH_MAX},
 };
 
-use bee_packable::{
+use packable::{
     bounded::BoundedU32,
     prefix::{UnpackPrefixError, VecPrefix},
     Packable, PackableExt,

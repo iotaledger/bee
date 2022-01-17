@@ -2,5 +2,3 @@
 *                                 thibault@iota.org
 /.github/                         thibault@iota.org
 /bee-common/bee-ord/              adam.gleave@iota.org
-/bee-common/bee-packable/         christian.poveda@iota.org
-/bee-common/bee-packable-derive/  christian.poveda@iota.org

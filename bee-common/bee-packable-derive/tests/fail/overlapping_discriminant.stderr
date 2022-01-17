@@ -1,7 +1,0 @@
-error[E0080]: evaluation of constant value failed
- --> tests/fail/overlapping_discriminant.rs:8:10
-  |
-8 | #[derive(Packable)]
-  |          ^^^^^^^^ the evaluated program panicked at 'The tags for the variants `B` and `C` of enum `A` are equal', $DIR/tests/fail/overlapping_discriminant.rs:8:10
-  |
-  = note: this error originates in the macro `$crate::panic::panic_2021` (in Nightly builds, run with -Z macro-backtrace for more info)

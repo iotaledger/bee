@@ -6,8 +6,9 @@ use bee_message::{
     payload::{indexation::IndexationPayload, MessagePayload},
     MESSAGE_LENGTH_RANGE,
 };
-use bee_packable::{bounded::TryIntoBoundedU32Error, error::UnpackError, PackableExt};
 use bee_test::rand::bytes::rand_bytes;
+
+use packable::{bounded::TryIntoBoundedU32Error, error::UnpackError, PackableExt};
 
 #[test]
 fn kind() {

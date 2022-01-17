@@ -3,14 +3,13 @@
 
 use crate::{payload::fpc::Opinion, MessageUnpackError};
 
-use bee_packable::{
+use bitflags::bitflags;
+use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
     Packable,
 };
-
-use bitflags::bitflags;
 
 use core::convert::Infallible;
 

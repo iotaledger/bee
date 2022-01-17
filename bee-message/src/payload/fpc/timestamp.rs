@@ -3,7 +3,7 @@
 
 use crate::{payload::fpc::Opinion, MessageId, MessageUnpackError};
 
-use bee_packable::Packable;
+use packable::Packable;
 
 /// Describes a vote in a given round for a message timestamp.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]

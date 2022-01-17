@@ -5,11 +5,12 @@ use bee_message::{
     error::{MessageUnpackError, ValidationError},
     parents::{Parent, Parents},
 };
-use bee_packable::{bounded::TryIntoBoundedU8Error, error::UnpackError, prefix::VecPrefix, PackableExt};
 use bee_test::rand::{
     message::{parents::rand_parents, rand_message_id},
     vec::rand_vec,
 };
+
+use packable::{bounded::TryIntoBoundedU8Error, error::UnpackError, prefix::VecPrefix, PackableExt};
 
 #[test]
 fn new_invalid_less_than_min() {

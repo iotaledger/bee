@@ -1,7 +1,0 @@
-error[E0277]: the trait bound `NonPackable: bee_packable::Packable` is not satisfied
-  --> tests/fail/packable_is_structural.rs:12:10
-   |
-12 | #[derive(Packable)]
-   |          ^^^^^^^^ the trait `bee_packable::Packable` is not implemented for `NonPackable`
-   |
-   = note: this error originates in the derive macro `Packable` (in Nightly builds, run with -Z macro-backtrace for more info)

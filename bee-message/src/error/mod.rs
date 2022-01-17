@@ -6,5 +6,5 @@
 mod packable;
 mod validation;
 
-pub use packable::MessageUnpackError;
+pub use self::packable::MessageUnpackError;
 pub use validation::ValidationError;
