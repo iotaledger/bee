@@ -171,7 +171,7 @@ where
     // Discover new peers regularly.
     let f = query::query_fn();
     let delay = iter::once(Duration::from_millis(2000))
-        .chain(iter::repeat(Duration::from_millis(100)).take(bootup_burst))
+        .chain(iter::repeat(Duration::from_millis(0)).take(1))
         .chain(iter::repeat(DEFAULT_QUERY_INTERVAL));
     task_mngr.repeat(f, delay, ctx, "Discovery", MAX_SHUTDOWN_PRIORITY);
 

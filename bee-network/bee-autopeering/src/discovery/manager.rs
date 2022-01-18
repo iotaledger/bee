@@ -195,6 +195,7 @@ impl Runnable for DiscoveryRecvHandler {
             ..
         } = self;
 
+        // Event loop.
         'recv: loop {
             tokio::select! {
                 _ = &mut shutdown_rx => {
@@ -393,7 +394,7 @@ async fn add_entry_peers(
 }
 
 /// Attempts to add a new peer to a peer list (preferably as active).
-/// If the peer is added inbound, i.e. , the "last verification timestamp" is added.
+/// If the peer is added inbound, the "last verification timestamp" is added.
 pub(crate) fn add_peer<const ON_REQUEST: bool>(
     peer: Peer,
     local: &Local,
@@ -706,17 +707,19 @@ fn handle_discovery_request(_disc_req: DiscoveryRequest, ctx: RecvContext) {
 }
 
 fn handle_discovery_response(disc_res: DiscoveryResponse, disc_reqval: RequestValue, ctx: RecvContext) {
-    // Remove the corresponding request from the request manager.
     log::trace!("Handling discovery response from {}.", ctx.peer_id);
 
     let mut num_added = 0;
 
     // Add discovered peers to the peer list and peer store.
     for peer in disc_res.into_peers() {
-        // Note: we only fire `PeerDiscovered` if it can be verified.
+        // Note: we only fire `PeerDiscovered` if it also can be verified, so we don't fire it just yet.
         if let Some(peer_id) = add_peer::<false>(peer, ctx.local, ctx.active_peers, ctx.replacements) {
-            log::debug!("Added: {}.", peer_id);
+            log::debug!("Added (unverified): {}.", peer_id);
             num_added += 1;
+
+            // Note: we immediatedly try to verify it.
+            send_verification_request_to_peer(&peer_id, ctx.active_peers, ctx.request_mngr, ctx.server_tx, None);
         }
     }
 
