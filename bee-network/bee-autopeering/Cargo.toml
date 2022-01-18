@@ -26,9 +26,9 @@ num-derive = { version = "0.3.3", default-features = false  }
 num-traits = { version = "0.2.14" , default-features = false }
 priority-queue = { version = "1.2.0" , default-features = false }
 prost = { version = "0.8", default-features = false, features = [ "std" ] }
-rocksdb = { version = "0.17.0", default-features = false, optional = true }
 rand = { version = "0.8.4" , default-features = false }
 ring = { version = "0.16.20" , default-features = false }
+rocksdb = { version = "0.17.0", default-features = false, optional = true }
 serde = { version = "1.0", default-features = false , features = [ "derive" ] }
 sled = { version = "0.34.7", default-features = false, optional = true }
 thiserror = { version = "1.0.29", default-features = false  }
