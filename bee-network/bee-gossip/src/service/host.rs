@@ -215,23 +215,23 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
     // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
     // of those.
     while interval.next().await.is_some() {
-        let peerlist0 = peerlist.0.read().await;
+        let peerlist_reader = peerlist.0.read().await;
 
         // To how many known peers are we currently connected.
-        let num_known = peerlist0.filter_count(|info, _| info.relation.is_known());
+        let num_known = peerlist_reader.filter_count(|info, _| info.relation.is_known());
         let num_connected_known =
-            peerlist0.filter_count(|info, state| info.relation.is_known() && state.is_connected());
+            peerlist_reader.filter_count(|info, state| info.relation.is_known() && state.is_connected());
 
         // To how many unknown peers are we currently connected.
         let num_connected_unknown =
-            peerlist0.filter_count(|info, state| info.relation.is_unknown() && state.is_connected());
+            peerlist_reader.filter_count(|info, state| info.relation.is_unknown() && state.is_connected());
 
         // To how many discovered peers are we currently connected.
         let num_connected_discovered =
-            peerlist0.filter_count(|info, state| info.relation.is_discovered() && state.is_connected());
+            peerlist_reader.filter_count(|info, state| info.relation.is_discovered() && state.is_connected());
 
         // TODO: remove
-        println!("All peers: {}", peerlist0.len());
+        println!("All peers: {}", peerlist_reader.len());
 
         info!(
             "Connected peers: known {}/{} unknown {}/{} discovered {}/{}.",
@@ -243,8 +243,9 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
             global::max_discovered_peers()
         );
 
-        // Automatically try to reconnect known peers.
-        for (peer_id, info) in peerlist0.filter_info(|info, state| info.relation.is_known() && state.is_disconnected())
+        // Automatically try to reconnect known **and** discovered peers. The removal of discovered peers is a decision that
+        // needs to be made in the autopeering service.
+        for (peer_id, info) in peerlist_reader.filter_info(|info, state| (info.relation.is_known()|| info.relation.is_discovered()) && state.is_disconnected())
         {
             info!("Trying to reconnect to: {} ({}).", info.alias, alias!(peer_id));
 
@@ -252,22 +253,22 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
             let _ = senders.internal_commands.send(Command::DialPeer { peer_id });
         }
 
-        // Automatically remove disconnected discovered peers.
-        let discovered_to_remove = peerlist0
-            .filter_info(|info, state| info.relation.is_discovered() && state.is_disconnected())
-            .collect::<Vec<_>>();
+        // // Automatically remove disconnected discovered peers.
+        // let discovered_to_remove = peerlist0
+        //     .filter_info(|info, state| info.relation.is_discovered() && state.is_disconnected())
+        //     .collect::<Vec<_>>();
 
-        drop(peerlist0);
+        // drop(peerlist0);
 
-        for (peer_id, info) in discovered_to_remove {
-            info!(
-                "Removing disconnected discovered peer: {} ({}).",
-                info.alias,
-                alias!(peer_id)
-            );
+        // for (peer_id, info) in discovered_to_remove {
+        //     info!(
+        //         "Removing disconnected discovered peer: {} ({}).",
+        //         info.alias,
+        //         alias!(peer_id)
+        //     );
 
-            let _ = remove_peer(peer_id, &senders, &peerlist).await;
-        }
+        //     let _ = remove_peer(peer_id, &senders, &peerlist).await;
+        // }
     }
 
     debug!("Peer checker stopped.");
