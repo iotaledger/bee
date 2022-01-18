@@ -15,7 +15,7 @@ use bee_message::{
     signature::{Ed25519Signature, Signature},
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
 };
-use bee_test::rand::{bytes::rand_bytes, parents::rand_parents};
+use bee_test::rand::{bytes::rand_bytes, number::rand_number, parents::rand_parents};
 
 use packable::PackableExt;
 
@@ -42,7 +42,7 @@ fn transaction() {
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder()
+        RegularTransactionEssence::builder(rand_number())
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()

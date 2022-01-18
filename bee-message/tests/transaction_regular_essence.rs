@@ -15,6 +15,7 @@ use bee_message::{
 };
 use bee_test::rand::{
     bytes::rand_bytes_array,
+    number::rand_number,
     payload::{rand_indexation_payload, rand_treasury_transaction_payload},
 };
 
@@ -39,7 +40,7 @@ fn build_valid() {
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(rand_number())
         .with_inputs(vec![input1, input2])
         .add_output(output)
         .finish();
@@ -58,7 +59,7 @@ fn build_valid_with_payload() {
     let output = Output::Extended(ExtendedOutput::new(address, amount));
     let payload = Payload::from(rand_indexation_payload());
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(rand_number())
         .with_inputs(vec![input1, input2])
         .add_output(output)
         .with_payload(payload)
@@ -77,7 +78,7 @@ fn build_valid_add_inputs_outputs() {
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(rand_number())
         .with_inputs(vec![input1, input2])
         .add_output(output)
         .finish();
@@ -96,7 +97,7 @@ fn build_invalid_payload_kind() {
     let output = Output::Extended(ExtendedOutput::new(address, amount));
     let payload = rand_treasury_transaction_payload();
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(rand_number())
         .with_inputs(vec![input1, input2])
         .add_output(output)
         .with_payload(payload.into())
@@ -112,7 +113,9 @@ fn build_invalid_input_count_low() {
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
 
-    let essence = RegularTransactionEssence::builder().add_output(output).finish();
+    let essence = RegularTransactionEssence::builder(rand_number())
+        .add_output(output)
+        .finish();
 
     assert!(matches!(
         essence,
@@ -129,7 +132,7 @@ fn build_invalid_input_count_high() {
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(rand_number())
         .with_inputs(vec![input; 128])
         .add_output(output)
         .finish();
@@ -145,7 +148,9 @@ fn build_invalid_output_count_low() {
     let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
     let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
 
-    let essence = RegularTransactionEssence::builder().add_input(input).finish();
+    let essence = RegularTransactionEssence::builder(rand_number())
+        .add_input(input)
+        .finish();
 
     assert!(matches!(
         essence,
@@ -162,7 +167,7 @@ fn build_invalid_output_count_high() {
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(rand_number())
         .add_input(input)
         .with_outputs(vec![output; 128])
         .finish();
@@ -182,7 +187,7 @@ fn build_invalid_duplicate_utxo() {
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(rand_number())
         .with_inputs(vec![input; 2])
         .add_output(output)
         .finish();
@@ -198,7 +203,7 @@ fn build_invalid_input_kind() {
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(rand_number())
         .add_input(input)
         .add_output(output)
         .finish();
@@ -213,7 +218,7 @@ fn build_invalid_output_kind() {
     let amount = 1_000_000;
     let output = Output::Treasury(TreasuryOutput::new(amount).unwrap());
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(rand_number())
         .add_input(input)
         .add_output(output)
         .finish();
@@ -236,7 +241,7 @@ fn build_invalid_accumulated_output() {
     let amount2 = 2_000_000;
     let output2 = Output::Extended(ExtendedOutput::new(address2, amount2));
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(rand_number())
         .add_input(input)
         .with_outputs(vec![output1, output2])
         .finish();
@@ -255,7 +260,7 @@ fn getters() {
     let outputs = vec![Output::Extended(ExtendedOutput::new(address, amount))];
     let payload = Payload::from(rand_indexation_payload());
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(rand_number())
         .with_inputs(vec![input1, input2])
         .with_outputs(outputs.clone())
         .with_payload(payload.clone())

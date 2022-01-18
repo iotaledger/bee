@@ -12,6 +12,7 @@ use bee_message::{
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
     Error,
 };
+use bee_test::rand::number::rand_number;
 
 use packable::PackableExt;
 
@@ -44,7 +45,7 @@ fn builder_no_essence_no_unlock_blocks() {
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder()
+        RegularTransactionEssence::builder(rand_number())
             .add_input(input)
             .add_output(output)
             .finish()
@@ -70,7 +71,7 @@ fn builder_no_essence_too_few_unlock_blocks() {
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder()
+        RegularTransactionEssence::builder(rand_number())
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()
@@ -106,7 +107,7 @@ fn builder_no_essence_too_many_unlock_blocks() {
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder()
+        RegularTransactionEssence::builder(rand_number())
             .add_input(input1)
             .add_output(output)
             .finish()
@@ -144,7 +145,7 @@ fn pack_unpack_valid() {
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder()
+        RegularTransactionEssence::builder(rand_number())
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()
@@ -184,7 +185,7 @@ fn getters() {
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder()
+        RegularTransactionEssence::builder(rand_number())
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()

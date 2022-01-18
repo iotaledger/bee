@@ -201,6 +201,8 @@ impl TryFrom<&TransactionEssenceDto> for TransactionEssence {
 pub struct RegularTransactionEssenceDto {
     #[serde(rename = "type")]
     pub kind: u8,
+    #[serde(rename = "networkId")]
+    pub network_id: String,
     pub inputs: Vec<InputDto>,
     pub outputs: Vec<OutputDto>,
     pub payload: Option<PayloadDto>,
@@ -210,6 +212,7 @@ impl From<&RegularTransactionEssence> for RegularTransactionEssenceDto {
     fn from(value: &RegularTransactionEssence) -> Self {
         RegularTransactionEssenceDto {
             kind: RegularTransactionEssence::KIND,
+            network_id: value.network_id().to_string(),
             inputs: value.inputs().iter().map(Into::into).collect::<Vec<_>>(),
             outputs: value.outputs().iter().map(Into::into).collect::<Vec<_>>(),
             payload: match value.payload() {
@@ -225,6 +228,10 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
     type Error = Error;
 
     fn try_from(value: &RegularTransactionEssenceDto) -> Result<Self, Self::Error> {
+        let network_id = value
+            .network_id
+            .parse::<u64>()
+            .map_err(|_| Error::InvalidField("networkId"))?;
         let inputs = value
             .inputs
             .iter()
@@ -236,7 +243,7 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
             .map(TryInto::try_into)
             .collect::<Result<Vec<Output>, Self::Error>>()?;
 
-        let mut builder = RegularTransactionEssence::builder()
+        let mut builder = RegularTransactionEssence::builder(network_id)
             .with_inputs(inputs)
             .with_outputs(outputs);
         builder = if let Some(p) = &value.payload {
