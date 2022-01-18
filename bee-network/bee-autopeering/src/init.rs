@@ -68,7 +68,7 @@ where
     log::info!("Bind address: {}", config.bind_addr());
 
     // Create or load a peer store.
-    let peer_store = S::new(peer_store_config);
+    let peer_store = S::new(peer_store_config)?;
 
     // Create peer lists.
     let entry_peers = EntryPeersList::default();
@@ -113,7 +113,7 @@ where
         replacements.clone(),
         event_tx.clone(),
     );
-    discovery_mngr.init(&mut task_mngr).await;
+    discovery_mngr.init(&mut task_mngr).await?;
 
     // Create neighborhoods and neighbor candidate filter.
     let inbound_nbh = InboundNeighborhood::new();
@@ -194,7 +194,8 @@ where
     // Await the shutdown signal (in a separate task).
     tokio::spawn(async move {
         term_signal.await;
-        task_mngr.shutdown().await;
+        task_mngr.shutdown().await?;
+        Ok::<_, S::Error>(())
     });
 
     log::debug!("Autopeering initialized.");

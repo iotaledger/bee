@@ -105,7 +105,7 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
         }
     }
 
-    pub async fn init<const N: usize>(self, task_mngr: &mut TaskManager<S, N>) {
+    pub async fn init<const N: usize>(self, task_mngr: &mut TaskManager<S, N>) -> Result<(), S::Error> {
         let DiscoveryManager {
             config,
             local,
@@ -128,7 +128,7 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
         let ServerSocket { server_rx, server_tx } = socket;
 
         // Add previously discovered peers from the peer store.
-        if add_peers_from_store(&peer_store, &active_peers, &replacements) == 0 {
+        if add_peers_from_store(&peer_store, &active_peers, &replacements)? == 0 {
             // Add entry peers from the config **only** if we start with an empty peer store,
             // otherwise entry nodes would be contacted each time a node starts.
             if add_entry_peers(
@@ -159,6 +159,8 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
         };
 
         task_mngr.run::<DiscoveryRecvHandler>(discovery_recv_handler);
+
+        Ok(())
     }
 }
 
@@ -309,11 +311,11 @@ fn add_peers_from_store<S: PeerStore>(
     peer_store: &S,
     active_peers: &ActivePeersList,
     replacements: &ReplacementPeersList,
-) -> usize {
+) -> Result<usize, S::Error> {
     let mut num_added = 0;
 
     let mut write = active_peers.write();
-    for active_peer in peer_store.fetch_all_active() {
+    for active_peer in peer_store.fetch_all_active()? {
         if write.insert(active_peer) {
             num_added += 1;
         }
@@ -321,7 +323,7 @@ fn add_peers_from_store<S: PeerStore>(
     drop(write);
 
     let mut write = replacements.write();
-    for replacement in peer_store.fetch_all_replacements() {
+    for replacement in peer_store.fetch_all_replacements()? {
         if write.insert(replacement) {
             num_added += 1;
         }
@@ -330,7 +332,7 @@ fn add_peers_from_store<S: PeerStore>(
 
     log::debug!("Restored {} peer/s.", num_added);
 
-    num_added
+    Ok(num_added)
 }
 
 async fn add_entry_peers(

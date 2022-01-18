@@ -25,24 +25,28 @@ pub struct SledPeerStore {
 impl PeerStore for SledPeerStore {
     type Config = SledPeerStoreConfig;
 
-    fn new(config: Self::Config) -> Self {
-        let db = config.open().expect("error opening peer store");
+    type Error = sled::Error;
 
-        db.open_tree("active_peers").expect("error opening tree");
-        db.open_tree("replacements").expect("error opening tree");
+    fn new(config: Self::Config) -> Result<Self, Self::Error> {
+        let db = config.open()?;
 
-        Self { db }
+        db.open_tree("active_peers")?;
+        db.open_tree("replacements")?;
+
+        Ok(Self { db })
     }
 
-    fn store_active(&self, active_peer: ActivePeer) {
-        let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
+    fn store_active(&self, active_peer: ActivePeer) -> Result<(), Self::Error> {
+        let tree = self.db.open_tree(ACTIVE_PEERS_TREE)?;
         let key = *active_peer.peer_id();
 
-        tree.insert(key, active_peer.to_bytes()).expect("insert error");
+        tree.insert(key, active_peer.to_bytes())?;
+
+        Ok(())
     }
 
-    fn store_all_active(&self, active_peers: &ActivePeersList) {
-        let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
+    fn store_all_active(&self, active_peers: &ActivePeersList) -> Result<(), Self::Error> {
+        let tree = self.db.open_tree(ACTIVE_PEERS_TREE)?;
 
         let mut batch = Batch::default();
         active_peers
@@ -50,18 +54,22 @@ impl PeerStore for SledPeerStore {
             .iter()
             .for_each(|p| batch.insert(p.peer_id(), p.clone()));
 
-        tree.apply_batch(batch).expect("error applying batch");
+        tree.apply_batch(batch)?;
+
+        Ok(())
     }
 
-    fn store_replacement(&self, peer: Peer) {
-        let tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
+    fn store_replacement(&self, peer: Peer) -> Result<(), Self::Error> {
+        let tree = self.db.open_tree(REPLACEMENTS_TREE)?;
         let key = *peer.peer_id();
 
-        tree.insert(key, peer).expect("error inserting peer");
+        tree.insert(key, peer)?;
+
+        Ok(())
     }
 
-    fn store_all_replacements(&self, replacements: &ReplacementPeersList) {
-        let replacements_tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
+    fn store_all_replacements(&self, replacements: &ReplacementPeersList) -> Result<(), Self::Error> {
+        let replacements_tree = self.db.open_tree(REPLACEMENTS_TREE)?;
 
         let mut batch = Batch::default();
         replacements
@@ -69,65 +77,58 @@ impl PeerStore for SledPeerStore {
             .iter()
             .for_each(|p| batch.insert(p.peer_id(), p.clone()));
 
-        replacements_tree.apply_batch(batch).expect("error applying batch");
+        replacements_tree.apply_batch(batch)?;
+
+        Ok(())
     }
 
-    fn contains(&self, peer_id: &PeerId) -> bool {
-        let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
-        if tree.contains_key(peer_id).expect("db error") {
-            true
+    fn contains(&self, peer_id: &PeerId) -> Result<bool, Self::Error> {
+        let tree = self.db.open_tree(ACTIVE_PEERS_TREE)?;
+        if tree.contains_key(peer_id)? {
+            Ok(true)
         } else {
-            let tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
-            tree.contains_key(peer_id).expect("db error")
+            let tree = self.db.open_tree(REPLACEMENTS_TREE)?;
+            tree.contains_key(peer_id)
         }
     }
 
-    fn fetch_active(&self, peer_id: &PeerId) -> Option<ActivePeer> {
-        let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
+    fn fetch_active(&self, peer_id: &PeerId) -> Result<Option<ActivePeer>, Self::Error> {
+        let tree = self.db.open_tree(ACTIVE_PEERS_TREE)?;
 
-        tree.get(peer_id).expect("db error").map(|b| ActivePeer::from_bytes(&b))
+        Ok(tree.get(peer_id)?.map(|b| ActivePeer::from_bytes(&b)))
     }
 
-    fn fetch_all_active(&self) -> Vec<ActivePeer> {
-        let tree = self.db.open_tree(ACTIVE_PEERS_TREE).expect("error opening tree");
+    fn fetch_all_active(&self) -> Result<Vec<ActivePeer>, Self::Error> {
+        let tree = self.db.open_tree(ACTIVE_PEERS_TREE)?;
 
         tree.iter()
-            .filter_map(|p| p.ok())
-            .map(|(_, b)| ActivePeer::from_bytes(&b))
-            .collect::<Vec<_>>()
+            .map(|r| r.map(|(_, b)| ActivePeer::from_bytes(&b)))
+            .collect::<Result<Vec<_>, _>>()
     }
 
-    fn fetch_replacement(&self, peer_id: &PeerId) -> Option<Peer> {
-        let tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
+    fn fetch_replacement(&self, peer_id: &PeerId) -> Result<Option<Peer>, Self::Error> {
+        let tree = self.db.open_tree(REPLACEMENTS_TREE)?;
 
-        tree.get(peer_id).expect("db error").map(Peer::from)
+        Ok(tree.get(peer_id)?.map(Peer::from))
     }
 
-    fn fetch_all_replacements(&self) -> Vec<Peer> {
-        let tree = self.db.open_tree(REPLACEMENTS_TREE).expect("error opening tree");
+    fn fetch_all_replacements(&self) -> Result<Vec<Peer>, Self::Error> {
+        let tree = self.db.open_tree(REPLACEMENTS_TREE)?;
 
         tree.iter()
-            .filter_map(|p| p.ok())
-            .map(|(_, ivec)| Peer::from(ivec))
-            .collect::<Vec<_>>()
+            .map(|r| r.map(|(_, ivec)| Peer::from(ivec)))
+            .collect::<Result<Vec<_>, _>>()
     }
 
-    fn delete(&self, _: &PeerId) -> bool {
+    fn delete(&self, _: &PeerId) -> Result<bool, Self::Error> {
         unimplemented!("no need for single entry removal at the moment")
     }
 
-    fn delete_all(&self) {
-        self.db
-            .open_tree(ACTIVE_PEERS_TREE)
-            .expect("error opening tree")
-            .clear()
-            .expect("error clearing tree");
+    fn delete_all(&self) -> Result<(), Self::Error> {
+        self.db.open_tree(ACTIVE_PEERS_TREE)?.clear()?;
+        self.db.open_tree(REPLACEMENTS_TREE)?.clear()?;
 
-        self.db
-            .open_tree(REPLACEMENTS_TREE)
-            .expect("error opening tree")
-            .clear()
-            .expect("error clearing tree");
+        Ok(())
     }
 }
 
@@ -137,7 +138,7 @@ mod tests {
 
     fn create_temporary_sled_peer_store() -> SledPeerStore {
         let config = SledPeerStoreConfig::new().temporary(true);
-        SledPeerStore::new(config)
+        SledPeerStore::new(config).unwrap()
     }
 
     #[test]
@@ -147,9 +148,9 @@ mod tests {
         let peer = ActivePeer::new(Peer::new_test_peer(0));
         let peer_id = *peer.peer_id();
 
-        peer_store.store_active(peer);
+        peer_store.store_active(peer).unwrap();
 
-        let fetched_active_peer = peer_store.fetch_active(&peer_id).expect("missing peer");
+        let fetched_active_peer = peer_store.fetch_active(&peer_id).unwrap().expect("missing peer");
 
         assert_eq!(peer_id, *fetched_active_peer.peer_id());
     }
@@ -161,9 +162,9 @@ mod tests {
         let peer = Peer::new_test_peer(0);
         let peer_id = *peer.peer_id();
 
-        peer_store.store_replacement(peer);
+        peer_store.store_replacement(peer).unwrap();
 
-        let fetched_peer = peer_store.fetch_replacement(&peer_id).expect("missing peer");
+        let fetched_peer = peer_store.fetch_replacement(&peer_id).unwrap().expect("missing peer");
 
         assert_eq!(peer_id, *fetched_peer.peer_id());
     }
