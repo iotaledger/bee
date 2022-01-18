@@ -32,7 +32,7 @@ impl TryFrom<Vec<u8>> for MetadataFeatureBlock {
 
 impl MetadataFeatureBlock {
     /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of [`MetadataFeatureBlock`].
-    pub const KIND: u8 = 7;
+    pub const KIND: u8 = 5;
 
     /// Valid lengths for a [`MetadataFeatureBlock`].
     pub const LENGTH_RANGE: RangeInclusive<u32> = 1..=1024;
