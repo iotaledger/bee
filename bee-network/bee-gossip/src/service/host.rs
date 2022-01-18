@@ -198,7 +198,7 @@ async fn event_processor(shutdown: Shutdown, events: InternalEventReceiver, send
 async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerList) {
     debug!("Peer checker running.");
 
-    let Senders { internal_commands, .. } = senders;
+    // let Senders { internal_commands, .. } = senders;
 
     // NOTE:
     // We want to reduce the overhead of simultaneous mutual dialing even if several nodes are started at the same time
@@ -215,14 +215,23 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
     // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
     // of those.
     while interval.next().await.is_some() {
-        let peerlist = peerlist.0.read().await;
+        let peerlist0 = peerlist.0.read().await;
 
-        let num_known = peerlist.filter_count(|info, _| info.relation.is_known());
-        let num_connected_known = peerlist.filter_count(|info, state| info.relation.is_known() && state.is_connected());
+        // To how many known peers are we currently connected.
+        let num_known = peerlist0.filter_count(|info, _| info.relation.is_known());
+        let num_connected_known =
+            peerlist0.filter_count(|info, state| info.relation.is_known() && state.is_connected());
+
+        // To how many unknown peers are we currently connected.
         let num_connected_unknown =
-            peerlist.filter_count(|info, state| info.relation.is_unknown() && state.is_connected());
+            peerlist0.filter_count(|info, state| info.relation.is_unknown() && state.is_connected());
+
+        // To how many discovered peers are we currently connected.
         let num_connected_discovered =
-            peerlist.filter_count(|info, state| info.relation.is_discovered() && state.is_connected());
+            peerlist0.filter_count(|info, state| info.relation.is_discovered() && state.is_connected());
+
+        // TODO: remove
+        println!("All peers: {}", peerlist0.len());
 
         info!(
             "Connected peers: known {}/{} unknown {}/{} discovered {}/{}.",
@@ -234,13 +243,30 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
             global::max_discovered_peers()
         );
 
-        for (peer_id, info) in peerlist.filter_info(|info, state| {
-            (info.relation.is_known() || info.relation.is_discovered()) && state.is_disconnected()
-        }) {
-            info!("Trying to connect to: {} ({}).", info.alias, alias!(peer_id));
+        // Automatically try to reconnect known peers.
+        for (peer_id, info) in peerlist0.filter_info(|info, state| info.relation.is_known() && state.is_disconnected())
+        {
+            info!("Trying to reconnect to: {} ({}).", info.alias, alias!(peer_id));
 
             // Ignore if the command fails. We can always retry the next time.
-            let _ = internal_commands.send(Command::DialPeer { peer_id });
+            let _ = senders.internal_commands.send(Command::DialPeer { peer_id });
+        }
+
+        // Automatically remove disconnected discovered peers.
+        let discovered_to_remove = peerlist0
+            .filter_info(|info, state| info.relation.is_discovered() && state.is_disconnected())
+            .collect::<Vec<_>>();
+
+        drop(peerlist0);
+
+        for (peer_id, info) in discovered_to_remove {
+            info!(
+                "Removing disconnected discovered peer: {} ({}).",
+                info.alias,
+                alias!(peer_id)
+            );
+
+            let _ = remove_peer(peer_id, &senders, &peerlist).await;
         }
     }
 
@@ -260,6 +286,9 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
             let alias = alias.unwrap_or_else(|| alias!(peer_id).to_string());
 
             add_peer(peer_id, multiaddr, alias, relation, senders, peerlist).await?;
+
+            // Immediatedly try to dial that peer.
+            let _ = senders.internal_commands.send(Command::DialPeer { peer_id });
         }
 
         Command::BanAddress { address } => {
@@ -462,6 +491,7 @@ async fn add_peer(
     senders: &Senders,
     peerlist: &PeerList,
 ) -> Result<(), Error> {
+    // TODO: remove
     println!("bee-gossip/host.rs: adding {:?} peer.", relation);
 
     let peer_info = PeerInfo {
