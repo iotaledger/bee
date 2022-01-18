@@ -5,17 +5,7 @@ use std::fmt;
 
 use bee_gossip::{Keypair, PeerId, PublicKey};
 
-use crate::{KEYPAIR_STR_LENGTH, LOCAL_ALIAS_DEFAULT};
-
-#[derive(Debug, thiserror::Error)]
-pub enum LocalError {
-    #[error("invalid ed25519 keypair")]
-    InvalidKeypair,
-    #[error("cannot decode from hex representation")]
-    HexDecode,
-    #[error("cannot decode ed25519 keypair")]
-    KeypairDecode,
-}
+use crate::LOCAL_ALIAS_DEFAULT;
 
 #[derive(Clone, Debug)]
 pub struct Local {
@@ -32,41 +22,16 @@ pub struct Local {
 }
 
 impl Local {
-    /// Creates a new local identity with the given alias.
-    pub(crate) fn new(alias: Option<String>) -> Self {
-        let keypair = Keypair::generate();
+    pub fn from_keypair(keypair: Keypair, alias: Option<String>) -> Self {
         let encoded = hex::encode(keypair.encode());
         let peer_id = PeerId::from_public_key(PublicKey::Ed25519(keypair.public()));
 
-        Self {
+        Local {
             keypair,
             encoded,
             peer_id,
+            is_new: false,
             alias: alias.unwrap_or_else(|| LOCAL_ALIAS_DEFAULT.to_owned()),
-            is_new: true,
-        }
-    }
-
-    /// Restores a local identity from a `hex`/`base16` encoded Ed25519 keypair with the given alias.
-    pub(crate) fn from_keypair(encoded: String, alias: Option<String>) -> Result<Self, LocalError> {
-        if encoded.len() == KEYPAIR_STR_LENGTH {
-            // Decode the keypair from hex.
-            let mut decoded = [0u8; 64];
-            hex::decode_to_slice(&encoded[..], &mut decoded).map_err(|_| LocalError::HexDecode)?;
-
-            // Decode the keypair from bytes.
-            let keypair = Keypair::decode(&mut decoded).map_err(|_| LocalError::KeypairDecode)?;
-            let peer_id = PeerId::from_public_key(PublicKey::Ed25519(keypair.public()));
-
-            Ok(Local {
-                keypair,
-                encoded,
-                peer_id,
-                is_new: false,
-                alias: alias.unwrap_or_else(|| LOCAL_ALIAS_DEFAULT.to_owned()),
-            })
-        } else {
-            Err(LocalError::InvalidKeypair)
         }
     }
 

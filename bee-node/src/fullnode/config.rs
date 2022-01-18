@@ -58,6 +58,25 @@ impl<S: NodeStorageBackend> FullNodeConfig<S> {
     pub fn network_spec(&self) -> &NetworkSpec {
         &self.network_spec
     }
+
+    pub fn from(local: Local, node_cfg: NodeConfig<S>) -> Self {
+        Self {
+            local: local,
+            network_spec: node_cfg.network_spec,
+            logger_config: node_cfg.logger_config,
+            gossip_config: node_cfg.gossip_config,
+            autopeering_config: node_cfg.autopeering_config,
+            protocol_config: node_cfg.protocol_config,
+            rest_api_config: node_cfg.rest_api_config,
+            snapshot_config: node_cfg.snapshot_config,
+            pruning_config: node_cfg.pruning_config,
+            storage_config: node_cfg.storage_config,
+            tangle_config: node_cfg.tangle_config,
+            mqtt_config: node_cfg.mqtt_config,
+            #[cfg(feature = "dashboard")]
+            dashboard_config: node_cfg.dashboard_config,
+        }
+    }
 }
 
 impl<S: NodeStorageBackend> Clone for FullNodeConfig<S> {
@@ -77,27 +96,6 @@ impl<S: NodeStorageBackend> Clone for FullNodeConfig<S> {
             mqtt_config: self.mqtt_config.clone(),
             #[cfg(feature = "dashboard")]
             dashboard_config: self.dashboard_config.clone(),
-        }
-    }
-}
-
-impl<S: NodeStorageBackend> From<NodeConfig<S>> for FullNodeConfig<S> {
-    fn from(node_cfg: NodeConfig<S>) -> Self {
-        Self {
-            local: node_cfg.local,
-            network_spec: node_cfg.network_spec,
-            logger_config: node_cfg.logger_config,
-            gossip_config: node_cfg.gossip_config,
-            autopeering_config: node_cfg.autopeering_config,
-            protocol_config: node_cfg.protocol_config,
-            rest_api_config: node_cfg.rest_api_config,
-            snapshot_config: node_cfg.snapshot_config,
-            pruning_config: node_cfg.pruning_config,
-            storage_config: node_cfg.storage_config,
-            tangle_config: node_cfg.tangle_config,
-            mqtt_config: node_cfg.mqtt_config,
-            #[cfg(feature = "dashboard")]
-            dashboard_config: node_cfg.dashboard_config,
         }
     }
 }

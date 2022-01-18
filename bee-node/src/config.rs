@@ -9,7 +9,6 @@
 
 use crate::{
     cli::ClArgs,
-    local::Local,
     plugins::mqtt::config::{MqttConfig, MqttConfigBuilder},
     storage::NodeStorageBackend,
     util, BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT,
@@ -44,7 +43,6 @@ pub enum NodeConfigError {
 
 /// Entails all data that can be stored in a Bee config file.
 pub struct NodeConfig<S: NodeStorageBackend> {
-    pub(crate) local: Local,
     pub(crate) network_spec: NetworkSpec,
     pub(crate) logger_config: LoggerConfig,
     pub(crate) gossip_config: NetworkConfig,
@@ -77,8 +75,10 @@ impl<S: NodeStorageBackend> NodeConfig<S> {
 #[derive(Default, Deserialize)]
 #[must_use]
 pub struct NodeConfigBuilder<S: NodeStorageBackend> {
+    // We don't store the identity in the config file anymore.
+    // This is here for legacy reasons to warn the user of that fact.
     #[serde(rename = "identity")]
-    pub(crate) identity: Option<String>,
+    _identity: Option<String>,
     #[serde(rename = "alias")]
     pub(crate) alias: Option<String>,
     #[serde(rename = "bech32_hrp")]
@@ -112,8 +112,8 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
 
 impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
     /// Creates a node config builder from a local config file.
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, NodeConfigError> {
-        match fs::read_to_string(path) {
+    pub fn from_file<P: AsRef<Path>>(config_path: P) -> Result<Self, NodeConfigError> {
+        match fs::read_to_string(config_path) {
             Ok(toml) => toml::from_str::<Self>(&toml).map_err(NodeConfigError::ConfigBuilderDeserialization),
             Err(e) => Err(NodeConfigError::FileRead(e)),
         }
@@ -144,14 +144,7 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
     }
 
     /// Returns the built node config.
-    pub fn finish(self) -> NodeConfig<S> {
-        // Create the local node entity.
-        let local = if let Some(keypair) = self.identity {
-            Local::from_keypair(keypair, self.alias).expect("error creating local from hex encoded keypair")
-        } else {
-            Local::new(self.alias)
-        };
-
+    pub fn finish(self) -> (Option<String>, bool, NodeConfig<S>) {
         // Create the necessary info about the network.
         let bech32_hrp = self.bech32_hrp.unwrap_or_else(|| BECH32_HRP_DEFAULT.to_owned());
         let network_name = self.network_id.unwrap_or_else(|| NETWORK_NAME_DEFAULT.to_string());
@@ -163,26 +156,29 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
             hrp: bech32_hrp,
         };
 
-        NodeConfig {
-            local,
-            network_spec,
-            logger_config: self.logger_builder.unwrap_or_default().finish(),
-            gossip_config: self
-                .gossip_builder
-                .unwrap_or_default()
-                .finish()
-                .expect("faulty network configuration"),
-            autopeering_config: self.autopeering_builder.unwrap_or_default().finish(),
-            protocol_config: self.protocol_builder.unwrap_or_default().finish(),
-            rest_api_config: self.rest_api_builder.unwrap_or_default().finish(),
-            snapshot_config: self.snapshot_builder.unwrap_or_default().finish(),
-            pruning_config: self.pruning_builder.unwrap_or_default().finish(),
-            storage_config: self.storage_builder.unwrap_or_default().into(),
-            tangle_config: self.tangle_builder.unwrap_or_default().finish(),
-            mqtt_config: self.mqtt_builder.unwrap_or_default().finish(),
-            #[cfg(feature = "dashboard")]
-            dashboard_config: self.dashboard_builder.unwrap_or_default().finish(),
-        }
+        (
+            self.alias,
+            self._identity.is_some(),
+            NodeConfig {
+                network_spec,
+                logger_config: self.logger_builder.unwrap_or_default().finish(),
+                gossip_config: self
+                    .gossip_builder
+                    .unwrap_or_default()
+                    .finish()
+                    .expect("faulty network configuration"),
+                autopeering_config: self.autopeering_builder.unwrap_or_default().finish(),
+                protocol_config: self.protocol_builder.unwrap_or_default().finish(),
+                rest_api_config: self.rest_api_builder.unwrap_or_default().finish(),
+                snapshot_config: self.snapshot_builder.unwrap_or_default().finish(),
+                pruning_config: self.pruning_builder.unwrap_or_default().finish(),
+                storage_config: self.storage_builder.unwrap_or_default().into(),
+                tangle_config: self.tangle_builder.unwrap_or_default().finish(),
+                mqtt_config: self.mqtt_builder.unwrap_or_default().finish(),
+                #[cfg(feature = "dashboard")]
+                dashboard_config: self.dashboard_builder.unwrap_or_default().finish(),
+            },
+        )
     }
 }
 

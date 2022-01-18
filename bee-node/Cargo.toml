@@ -39,6 +39,7 @@ log = { version = "0.4.14", default-features = false }
 mime_guess = { version = "2.0.3", default-features = false, optional = true }
 multiaddr = { version = "0.13.0", default-features = false }
 paho-mqtt = { version = "0.9.1", default-features = false, features = [ "bundled" ]}
+pem = { version = "1.0.2", default-features = false }
 rand = { version = "0.8.4", default-features = false }
 rpassword = { version = "5.0.1", default-features = false }
 rust-embed = { version = "6.2.0", default-features = false, features = [ "interpolate-folder-path" ], optional = true }

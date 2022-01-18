@@ -34,12 +34,13 @@ impl EntryNodeConfig {
     pub fn network_spec(&self) -> &NetworkSpec {
         &self.network_spec
     }
-}
 
-impl<S: NodeStorageBackend> From<NodeConfig<S>> for EntryNodeConfig {
-    fn from(node_cfg: NodeConfig<S>) -> Self {
+    pub fn from<S>(local: Local, node_cfg: NodeConfig<S>) -> Self
+    where
+        S: NodeStorageBackend,
+    {
         Self {
-            local: node_cfg.local,
+            local: local,
             network_spec: node_cfg.network_spec,
             logger_config: node_cfg.logger_config,
             autopeering_config: node_cfg.autopeering_config,

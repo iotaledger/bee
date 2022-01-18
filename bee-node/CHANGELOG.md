@@ -10,12 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - New `./dashboard` route;
+- Automatically generate new identity if none is present;
 
 ### Changed
+
+- P2P identity is now stored in a `*.pem` file;
 
 ### Deprecated
 
 ### Removed
+
+- `p2p_identity` tool;
 
 ### Fixed
 

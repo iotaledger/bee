@@ -24,6 +24,12 @@ struct Cli {
         help = "Sets a custom path to a configuration file to be used"
     )]
     config_path: Option<PathBuf>,
+    #[structopt(
+        short = "i",
+        long = "identity",
+        help = "Sets a custom path to the identity file to be used"
+    )]
+    identity_path: Option<PathBuf>,
     // The log level to be used during runtime.
     #[structopt(
         short = "l",
@@ -60,6 +66,11 @@ impl ClArgs {
     /// Returns the config file path.
     pub fn config_path(&self) -> Option<&Path> {
         self.cli.config_path.as_deref()
+    }
+
+    /// Returns the identity file path.
+    pub fn identity_path(&self) -> Option<&Path> {
+        self.cli.identity_path.as_deref()
     }
 
     /// Returns the chosen log level.
