@@ -10,12 +10,12 @@ mod rocksdb;
 #[cfg(feature = "sled")]
 mod sled;
 
-#[cfg(feature = "in-memory")]
-pub use in_memory::*;
 #[cfg(feature = "rocksdb")]
 pub use self::rocksdb::*;
 #[cfg(feature = "sled")]
 pub use self::sled::*;
+#[cfg(feature = "in-memory")]
+pub use in_memory::*;
 
 use super::{
     lists::{ActivePeer, ActivePeersList, ReplacementPeersList},

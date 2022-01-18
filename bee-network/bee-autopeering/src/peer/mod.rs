@@ -145,6 +145,14 @@ impl Peer {
     pub(crate) fn into_id(self) -> PeerId {
         self.peer_id
     }
+
+    pub(crate) fn as_bytes(&self) -> Vec<u8> {
+        bincode::serialize(self).expect("serialization error")
+    }
+
+    pub(crate) fn from_bytes<B: AsRef<[u8]>>(bytes: B) -> Self {
+        bincode::deserialize(bytes.as_ref()).expect("deserialization error")
+    }
 }
 
 impl fmt::Debug for Peer {
@@ -210,15 +218,14 @@ impl AsRef<PeerId> for Peer {
 #[cfg(feature = "sled")]
 impl From<Peer> for sled::IVec {
     fn from(peer: Peer) -> Self {
-        let bytes = bincode::serialize(&peer).expect("serialization error");
-        sled::IVec::from_iter(bytes.into_iter())
+        peer.as_bytes().into()
     }
 }
 
 #[cfg(feature = "sled")]
 impl From<sled::IVec> for Peer {
     fn from(bytes: sled::IVec) -> Self {
-        bincode::deserialize(&bytes).expect("deserialization error")
+        Peer::from_bytes(bytes)
     }
 }
 

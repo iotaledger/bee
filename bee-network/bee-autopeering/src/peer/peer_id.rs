@@ -78,6 +78,7 @@ impl PartialEq for PeerId {
         self.id_bytes == other.id_bytes
     }
 }
+
 impl Hash for PeerId {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.id_bytes.hash(state);
