@@ -38,10 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SenderFeatureBlockDto`;
 - `IssuerFeatureBlockDto`;
 - `DustDepositReturnFeatureBlockDto`;
-- `TimelockMilestoneIndexFeatureBlockDto`;
-- `TimelockUnixFeatureBlockDto`;
-- `ExpirationMilestoneIndexFeatureBlockDto`;
-- `ExpirationUnixFeatureBlockDto`;
+- `TimelockFeatureBlockDto`;
+- `ExpirationFeatureBlockDto`;
 - `IndexationFeatureBlockDto`;
 - `MetadataFeatureBlockDto`;
 - `AliasIdDto`;

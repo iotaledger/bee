@@ -1,4 +1,4 @@
-// Copyright 2021 IOTA Stiftung
+// Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -129,10 +129,8 @@ impl NftOutput {
     const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
         .union(FeatureBlockFlags::ISSUER)
         .union(FeatureBlockFlags::DUST_DEPOSIT_RETURN)
-        .union(FeatureBlockFlags::TIMELOCK_MILESTONE_INDEX)
-        .union(FeatureBlockFlags::TIMELOCK_UNIX)
-        .union(FeatureBlockFlags::EXPIRATION_MILESTONE_INDEX)
-        .union(FeatureBlockFlags::EXPIRATION_UNIX)
+        .union(FeatureBlockFlags::TIMELOCK)
+        .union(FeatureBlockFlags::EXPIRATION)
         .union(FeatureBlockFlags::METADATA)
         .union(FeatureBlockFlags::INDEXATION);
 

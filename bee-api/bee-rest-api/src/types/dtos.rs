@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::types::error::Error;
@@ -10,9 +10,8 @@ use bee_message::{
     milestone::MilestoneIndex,
     output::{
         feature_block::{
-            DustDepositReturnFeatureBlock, ExpirationMilestoneIndexFeatureBlock, ExpirationUnixFeatureBlock,
-            FeatureBlock, IndexationFeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock,
-            TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
+            DustDepositReturnFeatureBlock, ExpirationFeatureBlock, FeatureBlock, IndexationFeatureBlock,
+            IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock, TimelockFeatureBlock,
         },
         AliasId, AliasOutput, AliasOutputBuilder, ExtendedOutput, ExtendedOutputBuilder, FoundryOutput,
         FoundryOutputBuilder, NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme,
@@ -803,14 +802,10 @@ pub enum FeatureBlockDto {
     Issuer(IssuerFeatureBlockDto),
     /// A dust deposit return feature block.
     DustDepositReturn(DustDepositReturnFeatureBlockDto),
-    /// A timelock milestone index feature block.
-    TimelockMilestoneIndex(TimelockMilestoneIndexFeatureBlockDto),
-    /// A timelock unix feature block.
-    TimelockUnix(TimelockUnixFeatureBlockDto),
-    /// An expiration milestone index feature block.
-    ExpirationMilestoneIndex(ExpirationMilestoneIndexFeatureBlockDto),
-    /// An expiration unix feature block.
-    ExpirationUnix(ExpirationUnixFeatureBlockDto),
+    /// A timelock feature block.
+    Timelock(TimelockFeatureBlockDto),
+    /// An expiration feature block.
+    Expiration(ExpirationFeatureBlockDto),
     /// An indexation feature block.
     Indexation(IndexationFeatureBlockDto),
     /// A metadata feature block.
@@ -824,13 +819,15 @@ pub struct IssuerFeatureBlockDto(pub AddressDto);
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DustDepositReturnFeatureBlockDto(pub u64);
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TimelockMilestoneIndexFeatureBlockDto(pub MilestoneIndex);
+pub struct TimelockFeatureBlockDto {
+    pub index: MilestoneIndex,
+    pub timestamp: u32,
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TimelockUnixFeatureBlockDto(pub u32);
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ExpirationMilestoneIndexFeatureBlockDto(pub MilestoneIndex);
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ExpirationUnixFeatureBlockDto(pub u32);
+pub struct ExpirationFeatureBlockDto {
+    pub index: MilestoneIndex,
+    pub timestamp: u32,
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IndexationFeatureBlockDto(pub String);
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -843,10 +840,8 @@ impl FeatureBlockDto {
             Self::Sender(_) => SenderFeatureBlock::KIND,
             Self::Issuer(_) => IssuerFeatureBlock::KIND,
             Self::DustDepositReturn(_) => DustDepositReturnFeatureBlock::KIND,
-            Self::TimelockMilestoneIndex(_) => TimelockMilestoneIndexFeatureBlock::KIND,
-            Self::TimelockUnix(_) => TimelockUnixFeatureBlock::KIND,
-            Self::ExpirationMilestoneIndex(_) => ExpirationMilestoneIndexFeatureBlock::KIND,
-            Self::ExpirationUnix(_) => ExpirationUnixFeatureBlock::KIND,
+            Self::Timelock(_) => TimelockFeatureBlock::KIND,
+            Self::Expiration(_) => ExpirationFeatureBlock::KIND,
             Self::Indexation(_) => IndexationFeatureBlock::KIND,
             Self::Metadata(_) => MetadataFeatureBlock::KIND,
         }
@@ -859,14 +854,14 @@ impl From<&FeatureBlock> for FeatureBlockDto {
             FeatureBlock::Sender(v) => Self::Sender(SenderFeatureBlockDto(v.address().into())),
             FeatureBlock::Issuer(v) => Self::Issuer(IssuerFeatureBlockDto(v.address().into())),
             FeatureBlock::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnFeatureBlockDto(v.amount())),
-            FeatureBlock::TimelockMilestoneIndex(v) => {
-                Self::TimelockMilestoneIndex(TimelockMilestoneIndexFeatureBlockDto(v.index()))
-            }
-            FeatureBlock::TimelockUnix(v) => Self::TimelockUnix(TimelockUnixFeatureBlockDto(v.timestamp())),
-            FeatureBlock::ExpirationMilestoneIndex(v) => {
-                Self::ExpirationMilestoneIndex(ExpirationMilestoneIndexFeatureBlockDto(v.index()))
-            }
-            FeatureBlock::ExpirationUnix(v) => Self::ExpirationUnix(ExpirationUnixFeatureBlockDto(v.timestamp())),
+            FeatureBlock::Timelock(v) => Self::Timelock(TimelockFeatureBlockDto {
+                index: v.index(),
+                timestamp: v.timestamp(),
+            }),
+            FeatureBlock::Expiration(v) => Self::Expiration(ExpirationFeatureBlockDto {
+                index: v.index(),
+                timestamp: v.timestamp(),
+            }),
             FeatureBlock::Indexation(v) => Self::Indexation(IndexationFeatureBlockDto(v.to_string())),
             FeatureBlock::Metadata(v) => Self::Metadata(MetadataFeatureBlockDto(v.to_string())),
         }
@@ -881,14 +876,8 @@ impl TryFrom<&FeatureBlockDto> for FeatureBlock {
             FeatureBlockDto::Sender(v) => Self::Sender(SenderFeatureBlock::new((&v.0).try_into()?)),
             FeatureBlockDto::Issuer(v) => Self::Issuer(IssuerFeatureBlock::new((&v.0).try_into()?)),
             FeatureBlockDto::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnFeatureBlock::new(v.0)?),
-            FeatureBlockDto::TimelockMilestoneIndex(v) => {
-                Self::TimelockMilestoneIndex(TimelockMilestoneIndexFeatureBlock::new(v.0))
-            }
-            FeatureBlockDto::TimelockUnix(v) => Self::TimelockUnix(TimelockUnixFeatureBlock::new(v.0)),
-            FeatureBlockDto::ExpirationMilestoneIndex(v) => {
-                Self::ExpirationMilestoneIndex(ExpirationMilestoneIndexFeatureBlock::new(v.0))
-            }
-            FeatureBlockDto::ExpirationUnix(v) => Self::ExpirationUnix(ExpirationUnixFeatureBlock::new(v.0)),
+            FeatureBlockDto::Timelock(v) => Self::Timelock(TimelockFeatureBlock::new(v.index, v.timestamp)),
+            FeatureBlockDto::Expiration(v) => Self::Expiration(ExpirationFeatureBlock::new(v.index, v.timestamp)),
             FeatureBlockDto::Indexation(v) => Self::Indexation(IndexationFeatureBlock::new(
                 hex::decode(&v.0).map_err(|_e| Error::InvalidField("IndexationFeatureBlock"))?,
             )?),
