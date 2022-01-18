@@ -162,16 +162,16 @@ where
 
     // Reverify old peers regularly.
     let f = query::reverify_fn();
-    let bootup_burst = 10.min(active_peers.read().len());
+    let bootstrap_verif_count = 10.min(active_peers.read().len());
     let delay = iter::repeat(Duration::from_millis(100))
-        .take(bootup_burst)
+        .take(bootstrap_verif_count)
         .chain(iter::repeat(DEFAULT_REVERIFY_INTERVAL));
     task_mngr.repeat(f, delay, ctx.clone(), "Reverification", MAX_SHUTDOWN_PRIORITY);
 
     // Discover new peers regularly.
     let f = query::query_fn();
-    let delay = iter::once(Duration::from_millis(2000))
-        .chain(iter::repeat(Duration::from_millis(0)).take(1))
+    let bootstrap_query_delay = 2;
+    let delay = iter::once(Duration::from_secs(bootstrap_query_delay))
         .chain(iter::repeat(DEFAULT_QUERY_INTERVAL));
     task_mngr.repeat(f, delay, ctx, "Discovery", MAX_SHUTDOWN_PRIORITY);
 
