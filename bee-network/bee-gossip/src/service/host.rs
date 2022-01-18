@@ -462,6 +462,8 @@ async fn add_peer(
     senders: &Senders,
     peerlist: &PeerList,
 ) -> Result<(), Error> {
+    println!("bee-gossip/host.rs: adding {:?} peer.", relation);
+
     let peer_info = PeerInfo {
         address,
         alias,
