@@ -71,7 +71,7 @@ impl PeerStore for RocksDbPeerStore {
         let cf = self.open_cf(REPLACEMENTS_CF);
         let key = *peer.peer_id();
 
-        self.db.put_cf(&cf, key, peer.as_bytes()).expect("error inserting peer");
+        self.db.put_cf(&cf, key, peer.to_bytes()).expect("error inserting peer");
     }
 
     fn store_all_replacements(&self, replacements: &ReplacementPeersList) {
@@ -81,7 +81,7 @@ impl PeerStore for RocksDbPeerStore {
         replacements
             .read()
             .iter()
-            .for_each(|p| batch.put_cf(&cf, p.peer_id(), p.as_bytes()));
+            .for_each(|p| batch.put_cf(&cf, p.peer_id(), p.to_bytes()));
 
         self.db.write(batch).expect("error applying batch");
     }

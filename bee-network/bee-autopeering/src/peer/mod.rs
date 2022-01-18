@@ -146,7 +146,7 @@ impl Peer {
         self.peer_id
     }
 
-    pub(crate) fn as_bytes(&self) -> Vec<u8> {
+    pub(crate) fn to_bytes(&self) -> Vec<u8> {
         bincode::serialize(self).expect("serialization error")
     }
 
@@ -218,7 +218,7 @@ impl AsRef<PeerId> for Peer {
 #[cfg(feature = "sled")]
 impl From<Peer> for sled::IVec {
     fn from(peer: Peer) -> Self {
-        peer.as_bytes().into()
+        peer.to_bytes().into()
     }
 }
 
