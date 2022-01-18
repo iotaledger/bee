@@ -113,6 +113,7 @@ impl AsRef<[u8]> for PeerId {
     }
 }
 
+#[cfg(feature = "sled")]
 impl From<&PeerId> for sled::IVec {
     fn from(peer: &PeerId) -> Self {
         let bytes = peer.public_key().to_bytes();

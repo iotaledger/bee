@@ -163,6 +163,7 @@ dependencies = [
  "prost-build",
  "rand 0.8.4",
  "ring",
+ "rocksdb",
  "serde",
  "serde_json",
  "sled",

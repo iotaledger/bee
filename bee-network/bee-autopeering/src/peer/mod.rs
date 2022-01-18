@@ -207,6 +207,7 @@ impl AsRef<PeerId> for Peer {
     }
 }
 
+#[cfg(feature = "sled")]
 impl From<Peer> for sled::IVec {
     fn from(peer: Peer) -> Self {
         let bytes = bincode::serialize(&peer).expect("serialization error");
@@ -214,6 +215,7 @@ impl From<Peer> for sled::IVec {
     }
 }
 
+#[cfg(feature = "sled")]
 impl From<sled::IVec> for Peer {
     fn from(bytes: sled::IVec) -> Self {
         bincode::deserialize(&bytes).expect("deserialization error")
