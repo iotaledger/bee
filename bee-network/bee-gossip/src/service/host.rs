@@ -243,10 +243,11 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
             global::max_discovered_peers()
         );
 
-        // Automatically try to reconnect known **and** discovered peers. The removal of discovered peers is a decision that
-        // needs to be made in the autopeering service.
-        for (peer_id, info) in peerlist_reader.filter_info(|info, state| (info.relation.is_known()|| info.relation.is_discovered()) && state.is_disconnected())
-        {
+        // Automatically try to reconnect known **and** discovered peers. The removal of discovered peers is a decision
+        // that needs to be made in the autopeering service.
+        for (peer_id, info) in peerlist_reader.filter_info(|info, state| {
+            (info.relation.is_known() || info.relation.is_discovered()) && state.is_disconnected()
+        }) {
             info!("Trying to reconnect to: {} ({}).", info.alias, alias!(peer_id));
 
             // Ignore if the command fails. We can always retry the next time.
@@ -381,10 +382,9 @@ async fn process_internal_event(
             // Try to disconnect, but ignore errors in-case the peer was disconnected already.
             let _ = peerlist.update_state(&peer_id, |state| state.set_disconnected());
 
-            // Try to remove unknown and discovered peers.
-            let _ = peerlist.filter_remove(&peer_id, |peer_info, _| {
-                peer_info.relation.is_unknown() || peer_info.relation.is_discovered()
-            });
+            // Only remove unknown peers.
+            // NOTE: discovered peers should be removed manually via command if the autopeering protocol suggests it.
+            let _ = peerlist.filter_remove(&peer_id, |peer_info, _| peer_info.relation.is_unknown());
 
             // We no longer need to hold the lock.
             drop(peerlist);
@@ -573,6 +573,9 @@ async fn add_peer(
 }
 
 async fn remove_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList) -> Result<(), Error> {
+    // TODO: remove println
+    println!("Removing peer: {:?}", peer_id);
+
     disconnect_peer(peer_id, senders, peerlist).await?;
 
     let peer_removal = peerlist.0.write().await.remove(&peer_id);
