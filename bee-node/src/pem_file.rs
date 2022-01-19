@@ -13,7 +13,7 @@ const PRIVATE_KEY_TAG: &str = "PRIVATE KEY";
 pub enum PemFileError {
     #[error("reading the identity file failed: {0}")]
     FileRead(std::io::Error),
-    #[error("writing the identity file failed")]
+    #[error("writing the identity file failed: {0}")]
     FileWrite(#[from] std::io::Error),
     #[error("could not parse PEM file")]
     InvalidPemFile,
