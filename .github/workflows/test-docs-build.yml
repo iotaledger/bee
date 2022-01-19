@@ -2,13 +2,12 @@ name: Test Docs Wiki Build
 
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     branches:
-      - 'docs/addTestBuildAction'
-      - 'dev'
+      - dev
 jobs:
   checks:
-    if: github.event_name == 'push'
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
