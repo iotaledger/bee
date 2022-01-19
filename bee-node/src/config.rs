@@ -84,7 +84,7 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     // We don't store the identity in the config file anymore.
     // This is here for legacy reasons to warn the user of that fact.
     #[serde(rename = "identity")]
-    #[deprecated]
+    #[deprecated(since = "0.2.0")]
     _identity: Option<String>,
     #[serde(rename = "alias")]
     pub(crate) alias: Option<String>,
@@ -151,7 +151,7 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
     }
 
     /// Returns the built node config.
-    pub fn finish(self) -> (bool, NodeConfig<S>) {
+    pub fn finish(self) -> (Option<String>, NodeConfig<S>) {
         // Create the necessary info about the network.
         let bech32_hrp = self.bech32_hrp.unwrap_or_else(|| BECH32_HRP_DEFAULT.to_owned());
         let network_name = self.network_id.unwrap_or_else(|| NETWORK_NAME_DEFAULT.to_string());
@@ -165,7 +165,7 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
 
         (
             #[allow(deprecated)]
-            self._identity.is_some(),
+            self._identity,
             NodeConfig {
                 alias: self.alias.unwrap_or_else(|| LOCAL_ALIAS_DEFAULT.to_owned()),
                 network_spec,

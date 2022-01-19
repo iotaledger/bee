@@ -19,6 +19,8 @@ use log::{error, info, warn};
 
 use std::{error::Error, path::Path};
 
+const KEYPAIR_STR_LENGTH: usize = 128;
+
 const CONFIG_PATH: &str = "./config.toml";
 const IDENTITY_PATH: &str = "./identity.pem";
 
@@ -43,33 +45,49 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // Deserialize the config.
     let identity_path = cl_args.identity_path().unwrap_or(Path::new(IDENTITY_PATH)).to_owned();
-    let (has_identity_field, config) = deserialize_config(cl_args);
+    let (identity_field, config) = deserialize_config(cl_args);
 
     // Initialize the logger.
     let logger_cfg = config.logger_config().clone();
     fern_logger::logger_init(logger_cfg)?;
 
     // Establish identity.
-
-    // The identity used to be stored in the config file.
-    if has_identity_field {
-        warn!(
-            "The config file contains an `identity` field which will be ignored. You may safely delete this field to suppress this warning."
-        );
-    }
-
     let keypair = match read_keypair_from_pem_file(&identity_path) {
-        Ok(keypair) => keypair,
+        Ok(keypair) => {
+            if identity_field.is_some() {
+                warn!(
+                    "The config file contains an `identity` field which will be ignored. You may safely delete this field to suppress this warning."
+                );
+            }
+            keypair
+        }
         Err(PemFileError::Read(_)) => {
-            info!(
-                "There is no identity file at `{}`. Generating a new one.",
-                identity_path.display()
-            );
-            let keypair = Keypair::generate();
+            // If we can't read from the file (which means it probably doesn't exist) we either migrate from the
+            // existing config or generate a new identity.
+            let keypair = if let Some(identity_encoded) = identity_field {
+                warn!(
+                    "There is no identity file at `{}`. Migrating identity from the existing config file.",
+                    identity_path.display(),
+                );
+
+                migrate_keypair(identity_encoded).unwrap_or_else(|e| {
+                    error!("Failed to migrate keypair: {}", e);
+                    std::process::exit(-1);
+                })
+            } else {
+                info!(
+                    "There is no identity file at `{}`. Generating a new one.",
+                    identity_path.display()
+                );
+
+                Keypair::generate()
+            };
+
             if let Err(e) = write_keypair_to_pem_file(identity_path, &keypair) {
                 error!("Failed to write PEM file: {}", e);
                 std::process::exit(-1);
             };
+
             keypair
         }
         Err(e) => {
@@ -90,7 +108,30 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn deserialize_config(cl_args: ClArgs) -> (bool, NodeConfig<Storage>) {
+#[derive(Debug, thiserror::Error)]
+enum MigrationError {
+    #[error("hex decoding failed")]
+    HexDecode,
+    #[error("keypair decoding failed")]
+    KeypairDecode,
+    #[error("invalid keypair")]
+    InvalidKeypair,
+}
+
+fn migrate_keypair(encoded: String) -> Result<Keypair, MigrationError> {
+    if encoded.len() == KEYPAIR_STR_LENGTH {
+        // Decode the keypair from hex.
+        let mut decoded = [0u8; 64];
+        hex::decode_to_slice(&encoded[..], &mut decoded).map_err(|_| MigrationError::HexDecode)?;
+
+        // Decode the keypair from bytes.
+        Keypair::decode(&mut decoded).map_err(|_| MigrationError::KeypairDecode)
+    } else {
+        Err(MigrationError::InvalidKeypair)
+    }
+}
+
+fn deserialize_config(cl_args: ClArgs) -> (Option<String>, NodeConfig<Storage>) {
     match NodeConfigBuilder::<Storage>::from_file(cl_args.config_path().unwrap_or(Path::new(CONFIG_PATH))) {
         Ok(builder) => builder.apply_args(&cl_args).finish(),
         Err(e) => panic!("Failed to create the node config builder: {}", e),
