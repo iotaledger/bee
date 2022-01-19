@@ -3,9 +3,10 @@
 
 use bee_gossip::Keypair;
 use bee_node::{
-    plugins, print_banner_and_version, read_keypair_from_pem_file, tools, write_keypair_to_pem_file, ClArgs,
-    EntryNodeBuilder, EntryNodeConfig, FullNodeBuilder, FullNodeConfig, Local, NodeConfig, NodeConfigBuilder,
-    PemFileError,
+    plugins, print_banner_and_version, read_keypair_from_pem_file,
+    tools::{self},
+    write_keypair_to_pem_file, ClArgs, EntryNodeBuilder, EntryNodeConfig, FullNodeBuilder, FullNodeConfig, Local,
+    NodeConfig, NodeConfigBuilder, PemFileError,
 };
 use bee_runtime::node::NodeBuilder as _;
 
@@ -14,7 +15,7 @@ use bee_storage_rocksdb::storage::Storage;
 #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
 use bee_storage_sled::storage::Storage;
 
-use log::{info, warn};
+use log::{error, info, warn};
 
 use std::{error::Error, path::Path};
 
@@ -52,7 +53,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // The identity used to be stored in the config file.
     if has_identity_field {
-        warn!("The config file contains an `identity` field which will be ignored. You may safely delete this field to suppress this warning.");
+        warn!(
+            "The config file contains an `identity` field which will be ignored. You may safely delete this field to suppress this warning."
+        );
     }
 
     let keypair = match read_keypair_from_pem_file(&identity_path) {
@@ -64,11 +67,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
             );
             let keypair = Keypair::generate();
             if let Err(e) = write_keypair_to_pem_file(identity_path, &keypair) {
-                panic!("Failed to write PEM file: {}", e);
+                error!("Failed to write PEM file: {}", e);
+                std::process::exit(-1);
             };
             keypair
         }
-        _ => unreachable!()
+        Err(e) => {
+            error!("Could not extract private key from PEM file: {}", e);
+            std::process::exit(-1);
+        }
     };
 
     let local = Local::from_keypair(keypair, Some(config.alias().clone()));

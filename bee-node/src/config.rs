@@ -11,7 +11,7 @@ use crate::{
     cli::ClArgs,
     plugins::mqtt::config::{MqttConfig, MqttConfigBuilder},
     storage::NodeStorageBackend,
-    util, BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT, LOCAL_ALIAS_DEFAULT,
+    util, BECH32_HRP_DEFAULT, LOCAL_ALIAS_DEFAULT, NETWORK_NAME_DEFAULT,
 };
 
 #[cfg(feature = "dashboard")]
@@ -64,7 +64,7 @@ impl<S: NodeStorageBackend> NodeConfig<S> {
     pub fn alias(&self) -> &String {
         &self.alias
     }
-    
+
     /// Returns the logger config.
     pub fn logger_config(&self) -> &LoggerConfig {
         &self.logger_config
@@ -84,6 +84,7 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     // We don't store the identity in the config file anymore.
     // This is here for legacy reasons to warn the user of that fact.
     #[serde(rename = "identity")]
+    #[deprecated]
     _identity: Option<String>,
     #[serde(rename = "alias")]
     pub(crate) alias: Option<String>,
@@ -163,9 +164,10 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
         };
 
         (
+            #[allow(deprecated)]
             self._identity.is_some(),
             NodeConfig {
-                alias: self.alias.unwrap_or_else(|| LOCAL_ALIAS_DEFAULT.to_owned()), 
+                alias: self.alias.unwrap_or_else(|| LOCAL_ALIAS_DEFAULT.to_owned()),
                 network_spec,
                 logger_config: self.logger_builder.unwrap_or_default().finish(),
                 gossip_config: self
