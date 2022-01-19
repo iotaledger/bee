@@ -39,7 +39,6 @@ impl RocksDbPeerStoreConfig {
 #[derive(Clone)]
 pub struct RocksDbPeerStore {
     db: Arc<DBWithThreadMode<MultiThreaded>>,
-    config: RocksDbPeerStoreConfig,
 }
 
 impl RocksDbPeerStore {
@@ -58,7 +57,6 @@ impl PeerStore for RocksDbPeerStore {
 
         Ok(Self {
             db: Arc::new(db),
-            config,
         })
     }
 
@@ -147,11 +145,11 @@ impl PeerStore for RocksDbPeerStore {
     }
 
     fn delete_all(&self) -> Result<(), Self::Error> {
-        self.db.drop_cf(ACTIVE_PEERS_CF)?;
-        self.db.create_cf(ACTIVE_PEERS_CF, &self.config.options)?;
+        let cf = self.open_cf(ACTIVE_PEERS_CF);
+        self.db.delete_range_cf(&cf, [0; 32], [0xff; 32])?;
 
-        self.db.drop_cf(REPLACEMENTS_CF)?;
-        self.db.create_cf(REPLACEMENTS_CF, &self.config.options)?;
+        let cf = self.open_cf(REPLACEMENTS_CF);
+        self.db.delete_range_cf(&cf, [0; 32], [0xff; 32])?;
 
         Ok(())
     }
