@@ -14,7 +14,7 @@ use bee_storage_rocksdb::storage::Storage;
 #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
 use bee_storage_sled::storage::Storage;
 
-use log::warn;
+use log::{warn, info};
 
 use std::{error::Error, path::Path};
 
@@ -58,6 +58,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let keypair = match read_keypair_from_pem_file(&identity_path) {
         Ok(keypair) => keypair,
         Err(PemFileError::FileRead(_)) => {
+            info!("There is no identity file at `{}`. Generating a new one.", identity_path.display());
             let keypair = Keypair::generate();
             if let Err(e) = write_keypair_to_pem_file(identity_path, &keypair) {
                 panic!("Failed to write PEM file: {}", e);

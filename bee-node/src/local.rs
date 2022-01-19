@@ -26,7 +26,7 @@ impl Local {
         let encoded = hex::encode(keypair.encode());
         let peer_id = PeerId::from_public_key(PublicKey::Ed25519(keypair.public()));
 
-        Local {
+        Self {
             keypair,
             encoded,
             peer_id,

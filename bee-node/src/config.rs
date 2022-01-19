@@ -112,8 +112,8 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
 
 impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
     /// Creates a node config builder from a local config file.
-    pub fn from_file<P: AsRef<Path>>(config_path: P) -> Result<Self, NodeConfigError> {
-        match fs::read_to_string(config_path) {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, NodeConfigError> {
+        match fs::read_to_string(path) {
             Ok(toml) => toml::from_str::<Self>(&toml).map_err(NodeConfigError::ConfigBuilderDeserialization),
             Err(e) => Err(NodeConfigError::FileRead(e)),
         }
