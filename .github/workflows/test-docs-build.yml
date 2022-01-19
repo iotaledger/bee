@@ -1,0 +1,42 @@
+name: Deploy & test docs
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'docs/addTestBuildAction '
+      - 'dev'
+jobs:
+  checks:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - name: Install dependencies
+        run: |
+          cd documentation
+          if [ -e package-lock.json ]; then
+          npm ci
+          else
+          npm i
+          fi
+          pwd
+      - name: Setup Wiki and Test Build
+        run: |
+          cd documentation
+          export config=$(cat EXTERNAL_DOCS_CONFIG)
+          npm run setup
+          cd ../
+          rsync -av --progress ./ ./documentation/local-wiki/iota-wiki/external/bee --exclude .git --exclude node_modules --exclude local-wiki
+          cd documentation/local-wiki/iota-wiki
+          yarn
+          export replace_string='/\* AUTO GENERATED EXTERNAL DOCS CONFIG \*/'
+          perl -0pe 's#$ENV{replace_string}#$ENV{config}#' docusaurus.config.js > docusaurus.config.js.cpy
+          rm -f docusaurus.config.js && mv docusaurus.config.js.cpy docusaurus.config.js
+          sed -i "s+baseUrl: '/',+baseUrl: '/bee/',+g" docusaurus.config.js
+          yarn build
