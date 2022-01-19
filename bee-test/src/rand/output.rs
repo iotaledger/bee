@@ -38,11 +38,6 @@ pub fn rand_treasury_output() -> output::TreasuryOutput {
     output::TreasuryOutput::new(rand_number_range(output::TreasuryOutput::AMOUNT_RANGE)).unwrap()
 }
 
-/// Generates a random ledger [`TreasuryOutput`].
-pub fn rand_ledger_treasury_output() -> TreasuryOutput {
-    TreasuryOutput::new(rand_treasury_output(), rand_milestone_id())
-}
-
 /// Generates a random [`ExtendedOutput`](output::ExtendedOutput).
 pub fn rand_extended_output() -> output::ExtendedOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::ExtendedOutput::ALLOWED_FEATURE_BLOCKS);
@@ -148,7 +143,7 @@ pub fn rand_created_output() -> CreatedOutput {
     )
 }
 
-/// Generates a random ledger treasury output.
+/// Generates a random ledger [`TreasuryOutput`].
 pub fn rand_ledger_treasury_output() -> TreasuryOutput {
     TreasuryOutput::new(rand_treasury_output(), rand_milestone_id())
 }

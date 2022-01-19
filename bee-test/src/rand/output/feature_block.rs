@@ -1,17 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::{
-    address::rand_address,
-    bytes::rand_bytes,
-    milestone::rand_milestone_index,
-    number::{rand_number, rand_number_range},
-};
+use crate::rand::{address::rand_address, bytes::rand_bytes, number::rand_number_range};
 
 use bee_message::output::feature_block::{
-    DustDepositReturnFeatureBlock, ExpirationMilestoneIndexFeatureBlock, ExpirationUnixFeatureBlock, FeatureBlock,
-    FeatureBlockFlags, IndexationFeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock,
-    TimelockMilestoneIndexFeatureBlock, TimelockUnixFeatureBlock,
+    DustDepositReturnFeatureBlock, FeatureBlock, FeatureBlockFlags, IndexationFeatureBlock, IssuerFeatureBlock,
+    MetadataFeatureBlock, SenderFeatureBlock,
 };
 
 /// Generates a random [`SenderFeatureBlock`].
@@ -29,25 +23,7 @@ pub fn rand_dust_deposit_return_feature_block() -> DustDepositReturnFeatureBlock
     DustDepositReturnFeatureBlock::new(rand_number_range(DustDepositReturnFeatureBlock::AMOUNT_RANGE)).unwrap()
 }
 
-/// Generates a random [`TimelockMilestoneIndexFeatureBlock`].
-pub fn rand_timelock_milestone_index_feature_block() -> TimelockMilestoneIndexFeatureBlock {
-    TimelockMilestoneIndexFeatureBlock::new(rand_milestone_index())
-}
-
-/// Generates a random [`TimelockUnixFeatureBlock`].
-pub fn rand_timelock_unix_feature_block() -> TimelockUnixFeatureBlock {
-    TimelockUnixFeatureBlock::new(rand_number())
-}
-
-/// Generates a random [`ExpirationMilestoneIndexFeatureBlock`].
-pub fn rand_expiration_milestone_index_feature_block() -> ExpirationMilestoneIndexFeatureBlock {
-    ExpirationMilestoneIndexFeatureBlock::new(rand_milestone_index())
-}
-
-/// Generates a random [`ExpirationUnixFeatureBlock`].
-pub fn rand_expiration_unix_feature_block() -> ExpirationUnixFeatureBlock {
-    ExpirationUnixFeatureBlock::new(rand_number())
-}
+// Todo: Add ExpirationFeatureBlock,
 
 /// Generates a random [`MetadataFeatureBlock`].
 pub fn rand_metadata_feature_block() -> MetadataFeatureBlock {
@@ -66,10 +42,6 @@ fn all_feature_blocks() -> Vec<FeatureBlock> {
         FeatureBlock::Sender(rand_sender_feature_block()),
         FeatureBlock::Issuer(rand_issuer_feature_block()),
         FeatureBlock::DustDepositReturn(rand_dust_deposit_return_feature_block()),
-        FeatureBlock::TimelockMilestoneIndex(rand_timelock_milestone_index_feature_block()),
-        FeatureBlock::TimelockUnix(rand_timelock_unix_feature_block()),
-        FeatureBlock::ExpirationMilestoneIndex(rand_expiration_milestone_index_feature_block()),
-        FeatureBlock::ExpirationUnix(rand_expiration_unix_feature_block()),
         FeatureBlock::Metadata(rand_metadata_feature_block()),
         FeatureBlock::Indexation(rand_indexation_feature_block()),
     ]
