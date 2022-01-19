@@ -55,9 +55,7 @@ impl PeerStore for RocksDbPeerStore {
     fn new(config: Self::Config) -> Result<Self, Self::Error> {
         let db = DBWithThreadMode::open_cf(&config.options, &config.path, &[ACTIVE_PEERS_CF, REPLACEMENTS_CF])?;
 
-        Ok(Self {
-            db: Arc::new(db),
-        })
+        Ok(Self { db: Arc::new(db) })
     }
 
     fn store_active(&self, active_peer: ActivePeer) -> Result<(), Self::Error> {
