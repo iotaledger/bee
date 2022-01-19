@@ -42,7 +42,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // Deserialize the config.
     let identity_path = cl_args.identity_path().unwrap_or(Path::new(IDENTITY_PATH)).to_owned();
-    let (alias, has_identity_field, config) = deserialize_config(cl_args);
+    let (has_identity_field, config) = deserialize_config(cl_args);
 
     // Initialize the logger.
     let logger_cfg = config.logger_config().clone();
@@ -71,7 +71,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         _ => unreachable!()
     };
 
-    let local = Local::from_keypair(keypair, alias);
+    let local = Local::from_keypair(keypair, Some(config.alias().clone()));
 
     // Start running the node.
     if config.run_as_entry_node() {
@@ -83,7 +83,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn deserialize_config(cl_args: ClArgs) -> (Option<String>, bool, NodeConfig<Storage>) {
+fn deserialize_config(cl_args: ClArgs) -> (bool, NodeConfig<Storage>) {
     match NodeConfigBuilder::<Storage>::from_file(cl_args.config_path().unwrap_or(Path::new(CONFIG_PATH))) {
         Ok(builder) => builder.apply_args(&cl_args).finish(),
         Err(e) => panic!("Failed to create the node config builder: {}", e),

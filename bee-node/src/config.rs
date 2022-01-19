@@ -11,7 +11,7 @@ use crate::{
     cli::ClArgs,
     plugins::mqtt::config::{MqttConfig, MqttConfigBuilder},
     storage::NodeStorageBackend,
-    util, BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT,
+    util, BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT, LOCAL_ALIAS_DEFAULT,
 };
 
 #[cfg(feature = "dashboard")]
@@ -43,6 +43,7 @@ pub enum NodeConfigError {
 
 /// Entails all data that can be stored in a Bee config file.
 pub struct NodeConfig<S: NodeStorageBackend> {
+    pub(crate) alias: String,
     pub(crate) network_spec: NetworkSpec,
     pub(crate) logger_config: LoggerConfig,
     pub(crate) gossip_config: NetworkConfig,
@@ -59,6 +60,11 @@ pub struct NodeConfig<S: NodeStorageBackend> {
 }
 
 impl<S: NodeStorageBackend> NodeConfig<S> {
+    /// Returns the alias.
+    pub fn alias(&self) -> &String {
+        &self.alias
+    }
+    
     /// Returns the logger config.
     pub fn logger_config(&self) -> &LoggerConfig {
         &self.logger_config
@@ -144,7 +150,7 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
     }
 
     /// Returns the built node config.
-    pub fn finish(self) -> (Option<String>, bool, NodeConfig<S>) {
+    pub fn finish(self) -> (bool, NodeConfig<S>) {
         // Create the necessary info about the network.
         let bech32_hrp = self.bech32_hrp.unwrap_or_else(|| BECH32_HRP_DEFAULT.to_owned());
         let network_name = self.network_id.unwrap_or_else(|| NETWORK_NAME_DEFAULT.to_string());
@@ -157,9 +163,9 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
         };
 
         (
-            self.alias,
             self._identity.is_some(),
             NodeConfig {
+                alias: self.alias.unwrap_or_else(|| LOCAL_ALIAS_DEFAULT.to_owned()), 
                 network_spec,
                 logger_config: self.logger_builder.unwrap_or_default().finish(),
                 gossip_config: self
