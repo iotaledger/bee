@@ -216,4 +216,20 @@ mod tests {
 
         run_with_peer_store_in_path("rocksdb_store_and_fetch_replacement_peer", f);
     }
+
+    #[test]
+    fn store_and_delete_all() {
+        fn f(peer_store: RocksDbPeerStore) {
+            let peer = ActivePeer::new(Peer::new_test_peer(0));
+            let peer_id = *peer.peer_id();
+
+            peer_store.store_active(peer).unwrap();
+
+            peer_store.delete_all().unwrap();
+
+            assert!(!peer_store.contains(&peer_id).unwrap());
+        }
+
+        run_with_peer_store_in_path("rocksdb_store_and_delete_all", f)
+    }
 }
