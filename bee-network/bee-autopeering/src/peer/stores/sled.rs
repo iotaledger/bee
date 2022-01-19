@@ -30,8 +30,8 @@ impl PeerStore for SledPeerStore {
     fn new(config: Self::Config) -> Result<Self, Self::Error> {
         let db = config.open()?;
 
-        db.open_tree("active_peers")?;
-        db.open_tree("replacements")?;
+        db.open_tree(ACTIVE_PEERS_TREE)?;
+        db.open_tree(REPLACEMENTS_TREE)?;
 
         Ok(Self { db })
     }
