@@ -10,16 +10,29 @@ use crate::peer::{
 
 use rocksdb::{AsColumnFamilyRef, DBWithThreadMode, IteratorMode, MultiThreaded, Options, WriteBatch};
 
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 const ACTIVE_PEERS_CF: &str = "active_peers";
 const REPLACEMENTS_CF: &str = "replacements";
 
-/// The config for the RocksDb peer store.
+/// The config for the RocksDB peer store.
 #[derive(Clone)]
 pub struct RocksDbPeerStoreConfig {
     path: PathBuf,
     options: Options,
+}
+
+impl RocksDbPeerStoreConfig {
+    /// Creates a new config for the RocksDB peer store.
+    pub fn new<P: AsRef<Path>>(path: P, options: Options) -> Self {
+        Self {
+            path: path.as_ref().to_owned(),
+            options,
+        }
+    }
 }
 
 /// The (persistent) RocksDb peer store.
@@ -141,5 +154,66 @@ impl PeerStore for RocksDbPeerStore {
         self.db.create_cf(REPLACEMENTS_CF, &self.config.options)?;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    struct Janitor<P: AsRef<Path>>(P);
+
+    impl<P: AsRef<Path>> Drop for Janitor<P> {
+        fn drop(&mut self) {
+            if let Err(e) = std::fs::remove_dir_all(self.0.as_ref()) {
+                if e.kind() != std::io::ErrorKind::NotFound {
+                    panic!("{}", e);
+                }
+            }
+        }
+    }
+
+    use super::*;
+
+    fn run_with_peer_store_in_path<P: AsRef<Path> + Copy>(path: P, f: fn(RocksDbPeerStore)) {
+        let mut options = Options::default();
+        options.create_if_missing(true);
+        options.create_missing_column_families(true);
+
+        let config = RocksDbPeerStoreConfig::new(path, options);
+        let peer_store = RocksDbPeerStore::new(config).unwrap();
+        let janitor = Janitor(path);
+        f(peer_store);
+        drop(janitor);
+    }
+
+    #[test]
+    fn store_and_fetch_active_peer() {
+        fn f(peer_store: RocksDbPeerStore) {
+            let peer = ActivePeer::new(Peer::new_test_peer(0));
+            let peer_id = *peer.peer_id();
+
+            peer_store.store_active(peer).unwrap();
+
+            let fetched_active_peer = peer_store.fetch_active(&peer_id).unwrap().expect("missing peer");
+
+            assert_eq!(peer_id, *fetched_active_peer.peer_id());
+        }
+
+        run_with_peer_store_in_path("rocksdb_store_and_fetch_active_peer", f)
+    }
+
+    #[test]
+    fn store_and_fetch_replacement_peer() {
+        fn f(peer_store: RocksDbPeerStore) {
+            let peer = Peer::new_test_peer(0);
+            let peer_id = *peer.peer_id();
+
+            peer_store.store_replacement(peer).unwrap();
+
+            let fetched_peer = peer_store.fetch_replacement(&peer_id).unwrap().expect("missing peer");
+
+            assert_eq!(peer_id, *fetched_peer.peer_id());
+        }
+
+        run_with_peer_store_in_path("rocksdb_store_and_fetch_replacement_peer", f);
     }
 }
