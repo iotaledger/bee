@@ -16,7 +16,7 @@ pub(crate) struct NodeStatusResponse(pub NodeStatus);
 
 impl From<NodeStatus> for WsEvent {
     fn from(val: NodeStatus) -> Self {
-        Self::new(WsTopic::NodeStatus, WsEventInner::NodeStatus(val.into()))
+        Self::new(WsTopic::NodeStatus, WsEventInner::NodeStatus(Box::new(val.into())))
     }
 }
 

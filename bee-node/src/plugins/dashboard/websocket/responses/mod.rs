@@ -58,6 +58,6 @@ pub(crate) enum WsEventInner {
     DatabaseSizeMetrics(DatabaseSizeMetricsResponse),
     TipInfo(TipInfoResponse),
     PublicNodeStatus(PublicNodeStatusResponse),
-    NodeStatus(NodeStatusResponse),
+    NodeStatus(Box<NodeStatusResponse>), // `NodeStatusResponse` is much larger than the rest.
     PeerMetric(PeersResponse),
 }
