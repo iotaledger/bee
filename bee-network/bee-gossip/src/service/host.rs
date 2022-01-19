@@ -230,9 +230,6 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
         let num_connected_discovered =
             peerlist_reader.filter_count(|info, state| info.relation.is_discovered() && state.is_connected());
 
-        // TODO: remove
-        println!("All peers: {}", peerlist_reader.len());
-
         info!(
             "Connected peers: known {}/{} unknown {}/{} discovered {}/{}.",
             num_connected_known,
@@ -492,9 +489,6 @@ async fn add_peer(
     senders: &Senders,
     peerlist: &PeerList,
 ) -> Result<(), Error> {
-    // TODO: remove
-    println!("bee-gossip/host.rs: adding {:?} peer.", relation);
-
     let peer_info = PeerInfo {
         address,
         alias,
@@ -573,9 +567,6 @@ async fn add_peer(
 }
 
 async fn remove_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList) -> Result<(), Error> {
-    // TODO: remove println
-    println!("Removing peer: {:?}", peer_id);
-
     disconnect_peer(peer_id, senders, peerlist).await?;
 
     let peer_removal = peerlist.0.write().await.remove(&peer_id);
