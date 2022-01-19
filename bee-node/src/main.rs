@@ -5,7 +5,7 @@ use bee_gossip::Keypair;
 use bee_node::{
     plugins, print_banner_and_version, read_keypair_from_pem_file, tools, write_keypair_to_pem_file, ClArgs,
     EntryNodeBuilder, EntryNodeConfig, FullNodeBuilder, FullNodeConfig, Local, NodeConfig, NodeConfigBuilder,
-    NodeStorageBackend, PemFileError,
+    PemFileError,
 };
 use bee_runtime::node::NodeBuilder as _;
 
@@ -14,7 +14,7 @@ use bee_storage_rocksdb::storage::Storage;
 #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
 use bee_storage_sled::storage::Storage;
 
-use log::{warn, info};
+use log::{info, warn};
 
 use std::{error::Error, path::Path};
 
@@ -58,7 +58,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let keypair = match read_keypair_from_pem_file(&identity_path) {
         Ok(keypair) => keypair,
         Err(PemFileError::FileRead(_)) => {
-            info!("There is no identity file at `{}`. Generating a new one.", identity_path.display());
+            info!(
+                "There is no identity file at `{}`. Generating a new one.",
+                identity_path.display()
+            );
             let keypair = Keypair::generate();
             if let Err(e) = write_keypair_to_pem_file(identity_path, &keypair) {
                 panic!("Failed to write PEM file: {}", e);
@@ -87,7 +90,7 @@ fn deserialize_config(cl_args: ClArgs) -> (Option<String>, bool, NodeConfig<Stor
     }
 }
 
-async fn start_entrynode<S: NodeStorageBackend>(local: Local, config: NodeConfig<S>) {
+async fn start_entrynode(local: Local, config: NodeConfig<Storage>) {
     let entry_node_config = EntryNodeConfig::from(local, config);
     let node_builder = EntryNodeBuilder::new(entry_node_config);
 
