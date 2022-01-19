@@ -250,23 +250,6 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
             // Ignore if the command fails. We can always retry the next time.
             let _ = senders.internal_commands.send(Command::DialPeer { peer_id });
         }
-
-        // // Automatically remove disconnected discovered peers.
-        // let discovered_to_remove = peerlist0
-        //     .filter_info(|info, state| info.relation.is_discovered() && state.is_disconnected())
-        //     .collect::<Vec<_>>();
-
-        // drop(peerlist0);
-
-        // for (peer_id, info) in discovered_to_remove {
-        //     info!(
-        //         "Removing disconnected discovered peer: {} ({}).",
-        //         info.alias,
-        //         alias!(peer_id)
-        //     );
-
-        //     let _ = remove_peer(peer_id, &senders, &peerlist).await;
-        // }
     }
 
     debug!("Peer checker stopped.");

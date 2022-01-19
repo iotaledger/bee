@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.1.2 - 2022-01-19
+
+### Changed
+
+- Improved logged messages;
+
+### Fixed
+
+- Slow in finding first peers;
+- Accepting invalid peering requests;
+
 ## 0.1.1 - 2022-01-13
 
 ### Fixed
