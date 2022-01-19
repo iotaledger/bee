@@ -1,11 +1,16 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::{address::rand_address, bytes::rand_bytes, number::rand_number_range};
+use crate::rand::{
+    address::rand_address,
+    bytes::rand_bytes,
+    milestone::rand_milestone_index,
+    number::{rand_number, rand_number_range},
+};
 
 use bee_message::output::feature_block::{
-    DustDepositReturnFeatureBlock, FeatureBlock, FeatureBlockFlags, IndexationFeatureBlock, IssuerFeatureBlock,
-    MetadataFeatureBlock, SenderFeatureBlock,
+    DustDepositReturnFeatureBlock, ExpirationFeatureBlock, FeatureBlock, FeatureBlockFlags, IndexationFeatureBlock,
+    IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock, TimelockFeatureBlock,
 };
 
 /// Generates a random [`SenderFeatureBlock`].
@@ -23,7 +28,15 @@ pub fn rand_dust_deposit_return_feature_block() -> DustDepositReturnFeatureBlock
     DustDepositReturnFeatureBlock::new(rand_number_range(DustDepositReturnFeatureBlock::AMOUNT_RANGE)).unwrap()
 }
 
-// Todo: Add ExpirationFeatureBlock,
+/// Generates a random [`TimelockFeatureBlock`].
+pub fn rand_timelock_feature_block() -> TimelockFeatureBlock {
+    TimelockFeatureBlock::new(rand_milestone_index(), rand_number())
+}
+
+/// Generates a random [`ExpirationFeatureBlock`].
+pub fn rand_expiration_feature_block() -> ExpirationFeatureBlock {
+    ExpirationFeatureBlock::new(rand_milestone_index(), rand_number())
+}
 
 /// Generates a random [`MetadataFeatureBlock`].
 pub fn rand_metadata_feature_block() -> MetadataFeatureBlock {
@@ -42,6 +55,8 @@ fn all_feature_blocks() -> Vec<FeatureBlock> {
         FeatureBlock::Sender(rand_sender_feature_block()),
         FeatureBlock::Issuer(rand_issuer_feature_block()),
         FeatureBlock::DustDepositReturn(rand_dust_deposit_return_feature_block()),
+        FeatureBlock::Timelock(rand_timelock_feature_block()),
+        FeatureBlock::Expiration(rand_expiration_feature_block()),
         FeatureBlock::Metadata(rand_metadata_feature_block()),
         FeatureBlock::Indexation(rand_indexation_feature_block()),
     ]
