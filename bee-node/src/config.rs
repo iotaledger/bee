@@ -75,6 +75,7 @@ impl<S: NodeStorageBackend> NodeConfig<S> {
 // NOTE: To make the config robust against refactoring we "serde-rename" all fields even if not strictly necessary.
 /// A builder for a Bee config, that can be deserialized from a corresponding config file.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     #[serde(rename = "identity")]
     pub(crate) identity: Option<String>,

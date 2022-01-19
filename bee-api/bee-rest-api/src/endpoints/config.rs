@@ -69,6 +69,7 @@ pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: u64 = 2;
 
 /// REST API configuration builder.
 #[derive(Default, Deserialize)]
+#[must_use]
 pub struct RestApiConfigBuilder {
     bind_address: Option<Multiaddr>,
     public_routes: Option<Vec<String>>,

@@ -36,6 +36,7 @@ use std::{
 };
 
 /// A builder to create a Bee full node.
+#[must_use]
 pub struct FullNodeBuilder<S: NodeStorageBackend> {
     config: FullNodeConfig<S>,
     deps: HashMap<TypeId, &'static [TypeId], FxBuildHasher>,
