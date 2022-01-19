@@ -10,7 +10,6 @@ target/
 
 # bee-node
 bee-node/config.toml
-bee-node/identity.toml
 bee-node/snapshots/
 bee-node/storage/
 bee-node/peerstore/

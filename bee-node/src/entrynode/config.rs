@@ -40,7 +40,7 @@ impl EntryNodeConfig {
         S: NodeStorageBackend,
     {
         Self {
-            local: local,
+            local,
             network_spec: node_cfg.network_spec,
             logger_config: node_cfg.logger_config,
             autopeering_config: node_cfg.autopeering_config,

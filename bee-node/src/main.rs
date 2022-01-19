@@ -52,12 +52,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // The identity used to be stored in the config file.
     if has_identity_field {
-        warn!("The config file contains an identity field which will be ignored.");
+        warn!("The config file contains an `identity` field which will be ignored. You may safely delete this field to suppress this warning.");
     }
 
     let keypair = match read_keypair_from_pem_file(&identity_path) {
         Ok(keypair) => keypair,
-        Err(PemFileError::FileRead(_)) => {
+        Err(PemFileError::Read(_)) => {
             info!(
                 "There is no identity file at `{}`. Generating a new one.",
                 identity_path.display()
@@ -68,7 +68,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             };
             keypair
         }
-        Err(e) => panic!("Failed to establish identity: {}", e),
+        _ => unreachable!()
     };
 
     let local = Local::from_keypair(keypair, alias);

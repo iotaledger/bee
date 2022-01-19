@@ -12,13 +12,13 @@ const PRIVATE_KEY_TAG: &str = "PRIVATE KEY";
 #[derive(Debug, thiserror::Error)]
 pub enum PemFileError {
     #[error("reading the identity file failed: {0}")]
-    FileRead(std::io::Error),
+    Read(std::io::Error),
     #[error("writing the identity file failed: {0}")]
-    FileWrite(#[from] std::io::Error),
+    Write(#[from] std::io::Error),
     #[error("could not parse PEM file")]
-    InvalidPemFile,
+    Parse,
     #[error("could not decode keypair")]
-    KeypairDecode,
+    DecodeKeypair,
 }
 
 fn keypair_to_pem_entry(keypair: &Keypair) -> String {
@@ -30,20 +30,20 @@ fn keypair_to_pem_entry(keypair: &Keypair) -> String {
 }
 
 fn pem_entry_to_keypair(pem_entry: String) -> Result<Keypair, PemFileError> {
-    let mut pem = pem::parse(pem_entry).or(Err(PemFileError::InvalidPemFile))?;
-    Keypair::decode(&mut pem.contents).or(Err(PemFileError::KeypairDecode))
+    let mut pem = pem::parse(pem_entry).or(Err(PemFileError::Parse))?;
+    Keypair::decode(&mut pem.contents).or(Err(PemFileError::DecodeKeypair))
 }
 
 pub fn read_keypair_from_pem_file<P: AsRef<Path>>(path: P) -> Result<Keypair, PemFileError> {
     match fs::read_to_string(path) {
         // Todo: Should we handle PEM files with multiple keys?
         Ok(pem_file) => pem_entry_to_keypair(pem_file),
-        Err(e) => return Err(PemFileError::FileRead(e)),
+        Err(e) => return Err(PemFileError::Read(e)),
     }
 }
 
 pub fn write_keypair_to_pem_file<P: AsRef<Path>>(path: P, keypair: &Keypair) -> Result<(), PemFileError> {
-    fs::write(path, keypair_to_pem_entry(keypair)).map_err(PemFileError::FileWrite)
+    fs::write(path, keypair_to_pem_entry(keypair)).map_err(PemFileError::Write)
 }
 
 #[cfg(test)]
