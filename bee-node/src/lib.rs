@@ -11,7 +11,7 @@ mod core;
 mod entrynode;
 mod fullnode;
 mod local;
-mod pem_file;
+mod identity;
 mod shutdown;
 mod storage;
 mod util;
@@ -24,7 +24,7 @@ pub use config::{NodeConfig, NodeConfigBuilder};
 pub use entrynode::{builder::EntryNodeBuilder, config::EntryNodeConfig, EntryNode};
 pub use fullnode::{builder::FullNodeBuilder, config::FullNodeConfig, FullNode};
 pub use local::Local;
-pub use pem_file::{read_keypair_from_pem_file, write_keypair_to_pem_file, PemFileError};
+pub use identity::{read_keypair_from_pem_file, write_keypair_to_pem_file, PemFileError};
 pub use storage::NodeStorageBackend;
 pub use util::print_banner_and_version;
 
