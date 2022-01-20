@@ -28,7 +28,7 @@ pub use libp2p_core::{
 // Exported only with "full" feature flag.
 #[cfg(feature = "full")]
 #[doc(inline)]
-pub use libp2p::core::identity::{ed25519::Keypair, PublicKey};
+pub use libp2p::core::identity::ed25519::{Keypair, PublicKey, SecretKey};
 
 #[cfg(feature = "full")]
 pub use crate::{
