@@ -10,14 +10,5 @@ license = "Apache-2.0"
 keywords = [ "iota", "tangle", "bee", "framework", "common" ]
 homepage = "https://www.iota.org"
 
-[dependencies]
-jsonwebtoken = { version = "7.2.0", default-features = false, optional = true }
-rand = { version = "0.8.4", default-features = false, optional = true }
-rust-argon2 = { version = "0.8.3", default-features = false, optional = true }
-serde = { version = "1.0.130", default-features = false, features = [ "std", "derive" ] }
-
 [build-dependencies]
 autocfg = { version = "1.0.0", default-features = false }
-
-[features]
-auth = [ "jsonwebtoken", "rand", "rust-argon2" ]
