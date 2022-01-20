@@ -177,14 +177,10 @@ name = "bee-common"
 version = "0.6.0"
 dependencies = [
  "autocfg",
- "fern",
  "jsonwebtoken",
- "log",
  "rand 0.8.4",
  "rust-argon2",
  "serde",
- "thiserror",
- "time 0.3.5",
 ]
 
 [[package]]
@@ -685,17 +681,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "colored"
-version = "1.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4ffc801dacf156c5854b9df4f425a626539c3a6ef7893cc0c5084a23f0b6c59"
-dependencies = [
- "atty",
- "lazy_static",
- "winapi",
-]
-
-[[package]]
 name = "constant_time_eq"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -980,7 +965,6 @@ version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c9a4820f0ccc8a7afd67c39a0f1a0f4b07ca1725164271a64939d7aeb9af065"
 dependencies = [
- "colored",
  "log",
 ]
 
