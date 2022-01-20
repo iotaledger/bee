@@ -177,14 +177,10 @@ name = "bee-common"
 version = "0.6.0"
 dependencies = [
  "autocfg",
- "fern",
  "jsonwebtoken",
- "log",
  "rand 0.8.4",
  "rust-argon2",
  "serde",
- "thiserror",
- "time 0.3.5",
 ]
 
 [[package]]
@@ -251,6 +247,7 @@ dependencies = [
  "reqwest",
  "serde",
  "thiserror",
+ "time-helper",
  "tokio",
  "tokio-stream",
  "url",
@@ -269,9 +266,9 @@ dependencies = [
  "digest",
  "hex",
  "iota-crypto",
+ "iterator-sorted",
  "num_cpus",
  "serde",
- "stable-sorted",
  "thiserror",
 ]
 
@@ -684,17 +681,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "colored"
-version = "1.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4ffc801dacf156c5854b9df4f425a626539c3a6ef7893cc0c5084a23f0b6c59"
-dependencies = [
- "atty",
- "lazy_static",
- "winapi",
-]
-
-[[package]]
 name = "constant_time_eq"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -979,7 +965,6 @@ version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c9a4820f0ccc8a7afd67c39a0f1a0f4b07ca1725164271a64939d7aeb9af065"
 dependencies = [
- "colored",
  "log",
 ]
 
@@ -1438,6 +1423,12 @@ name = "ipnet"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68f2d64f2edebec4ce84ad108148e67e1064789bee435edc5b60ad398714a3a9"
+
+[[package]]
+name = "iterator-sorted"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d101775d2bc8f99f4ac18bf29b9ed70c0dd138b9a1e88d7b80179470cbbe8bd2"
 
 [[package]]
 name = "itertools"
@@ -2992,11 +2983,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
-name = "stable-sorted"
-version = "0.1.0"
-source = "git+https://github.com/iotaledger/common-rs?branch=main#a83336f2dc478b4194c5d5c60ba9e999e0e0f2dd"
-
-[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3092,6 +3078,15 @@ checksum = "41effe7cfa8af36f439fac33861b66b049edc6f9a32331e2312660529c1c24ad"
 dependencies = [
  "itoa 0.4.8",
  "libc",
+]
+
+[[package]]
+name = "time-helper"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17c30f0091717eeeff0b556d830302d5563de8b72fd49127aa5899a06a369808"
+dependencies = [
+ "time 0.3.5",
 ]
 
 [[package]]

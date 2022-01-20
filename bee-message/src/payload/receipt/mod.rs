@@ -18,7 +18,7 @@ use crate::{
 
 use bee_common::packable::{Packable, Read, Write};
 
-use stable_sorted::is_unique_sorted;
+use iterator_sorted::is_unique_sorted;
 
 use core::ops::RangeInclusive;
 use std::collections::HashMap;

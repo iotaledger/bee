@@ -8,6 +8,4 @@
 
 #[cfg(feature = "auth")]
 pub mod auth;
-pub mod logger;
 pub mod packable;
-pub mod time;
