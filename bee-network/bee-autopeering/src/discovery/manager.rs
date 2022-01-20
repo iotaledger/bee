@@ -30,9 +30,9 @@ use rand::{seq::index, Rng as _};
 use std::{net::SocketAddr, time::Duration};
 
 // Time interval after which the next peer is reverified.
-pub(crate) const DEFAULT_REVERIFY_INTERVAL: Duration = Duration::from_secs(10 * SECOND);
+pub(crate) const REVERIFY_INTERVAL_DEFAULT: Duration = Duration::from_secs(10 * SECOND);
 // Time interval after which peers are queried for new peers.
-pub(crate) const DEFAULT_QUERY_INTERVAL: Duration = Duration::from_secs(60 * SECOND);
+pub(crate) const QUERY_INTERVAL_DEFAULT: Duration = Duration::from_secs(60 * SECOND);
 // Is the time until a peer verification expires (12 hours).
 pub(crate) const VERIFICATION_EXPIRATION: Duration = Duration::from_secs(12 * HOUR);
 // Is the maximum number of peers returned in DiscoveryResponse.
