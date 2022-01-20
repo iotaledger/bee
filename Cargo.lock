@@ -194,14 +194,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-common-derive"
-version = "0.1.1-alpha"
-dependencies = [
- "quote",
- "syn",
-]
-
-[[package]]
 name = "bee-gossip"
 version = "0.3.0"
 dependencies = [
