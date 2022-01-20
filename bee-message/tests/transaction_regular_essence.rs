@@ -16,7 +16,7 @@ use bee_message::{
 use bee_test::rand::{
     bytes::rand_bytes_array,
     number::rand_number,
-    payload::{rand_indexation_payload, rand_treasury_transaction_payload},
+    payload::{rand_tagged_data_payload, rand_treasury_transaction_payload},
 };
 
 use packable::bounded::TryIntoBoundedU16Error;
@@ -57,7 +57,7 @@ fn build_valid_with_payload() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Extended(ExtendedOutput::new(address, amount));
-    let payload = Payload::from(rand_indexation_payload());
+    let payload = Payload::from(rand_tagged_data_payload());
 
     let essence = RegularTransactionEssence::builder(rand_number())
         .with_inputs(vec![input1, input2])
@@ -258,7 +258,7 @@ fn getters() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let outputs = vec![Output::Extended(ExtendedOutput::new(address, amount))];
-    let payload = Payload::from(rand_indexation_payload());
+    let payload = Payload::from(rand_tagged_data_payload());
 
     let essence = RegularTransactionEssence::builder(rand_number())
         .with_inputs(vec![input1, input2])

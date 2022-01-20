@@ -19,9 +19,9 @@ use bee_message::{
     },
     parent::Parents,
     payload::{
-        indexation::IndexationPayload,
         milestone::{MilestoneEssence, MilestoneId, MilestonePayload},
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
+        tagged_data::TaggedDataPayload,
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         treasury::TreasuryTransactionPayload,
         Payload,
@@ -100,9 +100,9 @@ impl TryFrom<&MessageDto> for Message {
 pub enum PayloadDto {
     Transaction(Box<TransactionPayloadDto>),
     Milestone(Box<MilestonePayloadDto>),
-    Indexation(Box<IndexationPayloadDto>),
     Receipt(Box<ReceiptPayloadDto>),
     TreasuryTransaction(Box<TreasuryTransactionPayloadDto>),
+    TaggedData(Box<TaggedDataPayloadDto>),
 }
 
 impl From<&Payload> for PayloadDto {
@@ -110,11 +110,11 @@ impl From<&Payload> for PayloadDto {
         match value {
             Payload::Transaction(p) => PayloadDto::Transaction(Box::new(TransactionPayloadDto::from(p.as_ref()))),
             Payload::Milestone(p) => PayloadDto::Milestone(Box::new(MilestonePayloadDto::from(p.as_ref()))),
-            Payload::Indexation(p) => PayloadDto::Indexation(Box::new(IndexationPayloadDto::from(p.as_ref()))),
             Payload::Receipt(p) => PayloadDto::Receipt(Box::new(ReceiptPayloadDto::from(p.as_ref()))),
             Payload::TreasuryTransaction(p) => {
                 PayloadDto::TreasuryTransaction(Box::new(TreasuryTransactionPayloadDto::from(p.as_ref())))
             }
+            Payload::TaggedData(p) => PayloadDto::TaggedData(Box::new(TaggedDataPayloadDto::from(p.as_ref()))),
         }
     }
 }
@@ -125,11 +125,11 @@ impl TryFrom<&PayloadDto> for Payload {
         Ok(match value {
             PayloadDto::Transaction(p) => Payload::Transaction(Box::new(TransactionPayload::try_from(p.as_ref())?)),
             PayloadDto::Milestone(p) => Payload::Milestone(Box::new(MilestonePayload::try_from(p.as_ref())?)),
-            PayloadDto::Indexation(p) => Payload::Indexation(Box::new(IndexationPayload::try_from(p.as_ref())?)),
             PayloadDto::Receipt(p) => Payload::Receipt(Box::new(ReceiptPayload::try_from(p.as_ref())?)),
             PayloadDto::TreasuryTransaction(p) => {
                 Payload::TreasuryTransaction(Box::new(TreasuryTransactionPayload::try_from(p.as_ref())?))
             }
+            PayloadDto::TaggedData(p) => Payload::TaggedData(Box::new(TaggedDataPayload::try_from(p.as_ref())?)),
         })
     }
 }
@@ -215,7 +215,7 @@ impl From<&RegularTransactionEssence> for RegularTransactionEssenceDto {
             inputs: value.inputs().iter().map(Into::into).collect::<Vec<_>>(),
             outputs: value.outputs().iter().map(Into::into).collect::<Vec<_>>(),
             payload: match value.payload() {
-                Some(Payload::Indexation(i)) => Some(PayloadDto::Indexation(Box::new(i.as_ref().into()))),
+                Some(Payload::TaggedData(i)) => Some(PayloadDto::TaggedData(Box::new(i.as_ref().into()))),
                 Some(_) => unimplemented!(),
                 None => None,
             },
@@ -246,8 +246,8 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
             .with_inputs(inputs)
             .with_outputs(outputs);
         builder = if let Some(p) = &value.payload {
-            if let PayloadDto::Indexation(i) = p {
-                builder.with_payload(Payload::Indexation(Box::new((i.as_ref()).try_into()?)))
+            if let PayloadDto::TaggedData(i) = p {
+                builder.with_payload(Payload::TaggedData(Box::new((i.as_ref()).try_into()?)))
             } else {
                 return Err(Error::InvalidField("payload"));
             }
@@ -1250,31 +1250,31 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
     }
 }
 
-/// The payload type to define a indexation payload.
+/// The payload type to define a tagged data payload.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct IndexationPayloadDto {
+pub struct TaggedDataPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    pub index: String,
+    pub tag: String,
     pub data: String,
 }
 
-impl From<&IndexationPayload> for IndexationPayloadDto {
-    fn from(value: &IndexationPayload) -> Self {
-        IndexationPayloadDto {
-            kind: IndexationPayload::KIND,
-            index: hex::encode(value.index()),
+impl From<&TaggedDataPayload> for TaggedDataPayloadDto {
+    fn from(value: &TaggedDataPayload) -> Self {
+        TaggedDataPayloadDto {
+            kind: TaggedDataPayload::KIND,
+            tag: hex::encode(value.tag()),
             data: hex::encode(value.data()),
         }
     }
 }
 
-impl TryFrom<&IndexationPayloadDto> for IndexationPayload {
+impl TryFrom<&TaggedDataPayloadDto> for TaggedDataPayload {
     type Error = Error;
 
-    fn try_from(value: &IndexationPayloadDto) -> Result<Self, Self::Error> {
-        Ok(IndexationPayload::new(
-            hex::decode(value.index.clone()).map_err(|_| Error::InvalidField("index"))?,
+    fn try_from(value: &TaggedDataPayloadDto) -> Result<Self, Self::Error> {
+        Ok(TaggedDataPayload::new(
+            hex::decode(value.tag.clone()).map_err(|_| Error::InvalidField("index"))?,
             hex::decode(value.data.clone()).map_err(|_| Error::InvalidField("data"))?,
         )?)
     }

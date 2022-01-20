@@ -36,7 +36,7 @@ pub struct NodeMetrics {
 
     transaction_payloads: AtomicU64,
     milestone_payloads: AtomicU64,
-    indexation_payloads: AtomicU64,
+    tagged_data_payloads: AtomicU64,
 
     snapshots: AtomicU64,
     prunings: AtomicU64,
@@ -270,14 +270,14 @@ impl NodeMetrics {
         self.milestone_payloads.fetch_add(value, Ordering::SeqCst)
     }
 
-    /// Returns the number of indexation payloads of the `NodeMetrics`.
-    pub fn indexation_payloads(&self) -> u64 {
-        self.indexation_payloads.load(Ordering::Relaxed)
+    /// Returns the number of tagged data payloads of the `NodeMetrics`.
+    pub fn tagged_data_payloads(&self) -> u64 {
+        self.tagged_data_payloads.load(Ordering::Relaxed)
     }
 
-    /// Increments the number of indexation payloads of the `NodeMetrics`.
+    /// Increments the number of tagged data payloads of the `NodeMetrics`.
     pub fn indexation_payload_inc(&self, value: u64) -> u64 {
-        self.indexation_payloads.fetch_add(value, Ordering::SeqCst)
+        self.tagged_data_payloads.fetch_add(value, Ordering::SeqCst)
     }
 
     /// Returns the number of snapshots of the `NodeMetrics`.
@@ -332,7 +332,7 @@ mod tests {
         assert_eq!(metrics.receipts(), 0);
         assert_eq!(metrics.transaction_payloads(), 0);
         assert_eq!(metrics.milestone_payloads(), 0);
-        assert_eq!(metrics.indexation_payloads(), 0);
+        assert_eq!(metrics.tagged_data_payloads(), 0);
         assert_eq!(metrics.snapshots(), 0);
         assert_eq!(metrics.prunings(), 0);
 
@@ -384,7 +384,7 @@ mod tests {
         assert_eq!(metrics.receipts(), 1);
         assert_eq!(metrics.transaction_payloads(), 1);
         assert_eq!(metrics.milestone_payloads(), 1);
-        assert_eq!(metrics.indexation_payloads(), 1);
+        assert_eq!(metrics.tagged_data_payloads(), 1);
         assert_eq!(metrics.snapshots(), 1);
         assert_eq!(metrics.prunings(), 1);
     }

@@ -29,7 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
- - Serialize and deserialize all the types using `packable` instead of `bee-common::packable`;
+- Serialize and deserialize all the types using `packable` instead of `bee-common::packable`;
+- Renamed `IndexationPayload` to `TaggedDataPayload`;
 
 ### Removed
 
