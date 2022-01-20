@@ -21,24 +21,24 @@ jobs:
           npm ci
       - name: Setup Wiki and Test Build
         run: |
-# move into the documentation folder
+          # Move into the documentation folder
           cd documentation
-# export this projects configuration as a variable
+          # Export this projects configuration as a variable
           export config=$(cat EXTERNAL_DOCS_CONFIG)
-# setup the wiki using iota wiki cli.  This will clone the wiki repository as well the current repository
+          # Set up the wiki using iota wiki cli.  This will clone the wiki repository as well the current repository
           npm run setup
           cd ../
-# sync the PR content with the freshly created wiki instance
+          # Sync the PR content with the freshly created wiki instance
           rsync -av --progress ./ ./documentation/local-wiki/iota-wiki/external/bee --exclude .git --exclude node_modules --exclude local-wiki\
-# change directory into the wiki
+          # Change directory into the wiki
           cd documentation/local-wiki/iota-wiki
-# install docusaurus and it's dependencies
+          # Install docusaurus and it's dependencies
           yarn
-# replace the configuration placeholder with the configuration variable text
+          # Replace the configuration placeholder with the configuration variable text
           export replace_string='/\* AUTO GENERATED EXTERNAL DOCS CONFIG \*/'
           perl -0pe 's#$ENV{replace_string}#$ENV{config}#' docusaurus.config.js > docusaurus.config.js.cpy
-# replace the existing configuration file with the edited one
+          # Replace the existing configuration file with the edited one
           rm -f docusaurus.config.js && mv docusaurus.config.js.cpy docusaurus.config.js
           sed -i "s+baseUrl: '/',+baseUrl: '/bee/',+g" docusaurus.config.js
-# run the build process to test for any errors
+          # Run the build process to test for any errors
           yarn build
