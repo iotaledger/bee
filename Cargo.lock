@@ -142,7 +142,7 @@ checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 
 [[package]]
 name = "bee-autopeering"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "base64 0.13.0",
@@ -163,6 +163,7 @@ dependencies = [
  "prost-build",
  "rand 0.8.4",
  "ring",
+ "rocksdb",
  "serde",
  "serde_json",
  "sled",

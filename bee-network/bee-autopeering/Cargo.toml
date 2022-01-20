@@ -1,6 +1,6 @@
 [package]
 name = "bee-autopeering"
-version = "0.2.0"
+version = "0.3.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Allows peers in the same IOTA network to automatically discover each other."
@@ -28,8 +28,9 @@ priority-queue = { version = "1.2.0" , default-features = false }
 prost = { version = "0.8", default-features = false, features = [ "std" ] }
 rand = { version = "0.8.4" , default-features = false }
 ring = { version = "0.16.20" , default-features = false }
+rocksdb = { version = "0.17.0", default-features = false, optional = true }
 serde = { version = "1.0", default-features = false , features = [ "derive" ] }
-sled = { version = "0.34.7", default-features = false  }
+sled = { version = "0.34.7", default-features = false, optional = true }
 thiserror = { version = "1.0.29", default-features = false  }
 tokio = { version = "1.11", default-features = false , features = [ "macros", "rt", "time", "net" ] }
 tokio-stream = { version = "0.1", default-features = false  }
@@ -46,3 +47,6 @@ prost-build = { version = "0.8", default-features = false }
 [[example]]
 name = "node"
 
+[features]
+default = [ "rocksdb" ]
+in-memory = [ ]

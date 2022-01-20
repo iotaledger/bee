@@ -101,12 +101,14 @@ impl AsRef<Peer> for ActivePeer {
     }
 }
 
+#[cfg(feature = "sled")]
 impl From<ActivePeer> for sled::IVec {
     fn from(peer: ActivePeer) -> Self {
         bincode::serialize(&peer).expect("serialization error").into()
     }
 }
 
+#[cfg(feature = "sled")]
 impl From<sled::IVec> for ActivePeer {
     fn from(bytes: sled::IVec) -> Self {
         bincode::deserialize(bytes.as_ref()).expect("deserialization error")
