@@ -111,9 +111,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 #[derive(Debug, thiserror::Error)]
 enum MigrationError {
     #[error("hex decoding failed")]
-    HexDecode,
+    DecodeHex,
     #[error("keypair decoding failed")]
-    KeypairDecode,
+    DecodeKeypair,
     #[error("invalid keypair")]
     InvalidKeypair,
 }
@@ -122,10 +122,10 @@ fn migrate_keypair(encoded: String) -> Result<Keypair, MigrationError> {
     if encoded.len() == KEYPAIR_STR_LENGTH {
         // Decode the keypair from hex.
         let mut decoded = [0u8; 64];
-        hex::decode_to_slice(&encoded[..], &mut decoded).map_err(|_| MigrationError::HexDecode)?;
+        hex::decode_to_slice(&encoded[..], &mut decoded).map_err(|_| MigrationError::DecodeHex)?;
 
         // Decode the keypair from bytes.
-        Keypair::decode(&mut decoded).map_err(|_| MigrationError::KeypairDecode)
+        Keypair::decode(&mut decoded).map_err(|_| MigrationError::DecodeKeypair)
     } else {
         Err(MigrationError::InvalidKeypair)
     }
