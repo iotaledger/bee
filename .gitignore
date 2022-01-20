@@ -6,7 +6,7 @@ target/
 **/*.rs.bk
 
 # Private key files
-*.pem
+*.key
 
 # bee-node
 bee-node/config.toml

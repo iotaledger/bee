@@ -22,7 +22,7 @@ use std::{error::Error, path::Path};
 const KEYPAIR_STR_LENGTH: usize = 128;
 
 const CONFIG_PATH: &str = "./config.toml";
-const IDENTITY_PATH: &str = "./identity.pem";
+const IDENTITY_PATH: &str = "./identity.key";
 
 /// The entry point of the node software.
 #[tokio::main(flavor = "multi_thread")]
