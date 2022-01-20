@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_gossip::Keypair;
+use bee_gossip::{Keypair, SecretKey};
 
 use pem::Pem;
 
@@ -28,7 +28,7 @@ pub enum PemFileError {
 fn keypair_to_pem_entry(keypair: &Keypair) -> String {
     let pem_entry = Pem {
         tag: PRIVATE_KEY_TAG.into(),
-        contents: keypair.encode().to_vec(),
+        contents: keypair.secret().as_ref().to_vec(),
     };
     pem::encode(&pem_entry)
 }
@@ -40,7 +40,8 @@ fn pem_entry_to_keypair(pem_entry: String) -> Result<Keypair, PemFileError> {
         Err(PemFileError::NoEntries)
     } else if pems.len() == 1 {
         // Safety: We just checked the length.
-        Keypair::decode(&mut pems[0].contents).or(Err(PemFileError::DecodeKeypair))
+        let secret = SecretKey::from_bytes(&mut pems[0].contents).or(Err(PemFileError::DecodeKeypair))?;
+        Ok(secret.into())
     } else {
         Err(PemFileError::MultipleEntries)
     }
@@ -64,7 +65,8 @@ mod test {
     #[test]
     fn pem_keypair_round_trip() {
         let keypair = Keypair::generate();
-        let pem_entry = keypair_to_pem_entry(&keypair);
+        let secret = keypair.secret();
+        let pem_entry = keypair_to_pem_entry(&secret.into());
         let parsed_keypair = pem_entry_to_keypair(pem_entry).unwrap();
         assert_eq!(keypair.public(), parsed_keypair.public());
         assert_eq!(keypair.secret().as_ref(), parsed_keypair.secret().as_ref());
@@ -80,15 +82,26 @@ mod test {
     }
 
     #[test]
+    fn single_entry() {
+        // This entry was generated with the Hornet node software.
+        let pem_entry = r#"
+            -----BEGIN PRIVATE KEY-----
+            MC4CAQAwBQYDK2VwBCIEIF4Pg6pHREq+RQDpkaU/f3MkIFcUXSjM80yabh7P9q4r
+            -----END PRIVATE KEY-----
+        "#;
+        let bytes = pem_entry_to_keypair(pem_entry.into()).unwrap().encode();
+        let hex_encoded = hex::encode(bytes);
+        assert_eq!(&hex_encoded, "12D3KooWKncxbqs3ddRvW54116WaWfYj2jLKC6wAqcGVqsuUXSs7");
+    }
+
+    #[test]
     fn multiple_entries() {
         let pem_entries = r#"
             -----BEGIN PRIVATE KEY-----
-            GOhzQQ89CphHEoykMCBB4BrVEPjbp/CAHL0tfVkqR5ozvvgwmJA37lRUArmLF9DR
-            /j6dMeIEedK8rIROmIfo4g==
+            MC4CAQAwBQYDK2VwBCIEIGQ9cgUtF454R2VotN/W5VCcYWhnEuwOsYtsqKRoIeIz
             -----END PRIVATE KEY-----
             -----BEGIN PRIVATE KEY-----
-            7ycOkS9zpvPHycgOG2PEue+TW+6FpZMCVWGNWxwToG0HaByLxXqP86dVqVxF/WCT
-            emkeb/dVVWf2VwtIpEaTmQ==
+            MC4CAQAwBQYDK2VwBCIEIPf9H/AJTY1wy3PKu9B//fJxZ6QemTpmSAnPV8Gpt97f
             -----END PRIVATE KEY-----
         "#;
         assert!(matches!(
