@@ -16,9 +16,7 @@ use crate::{
     },
 };
 
-use bee_common::{
-    packable::{Packable, Read},
-};
+use bee_common::packable::{Packable, Read};
 use bee_message::{
     milestone::MilestoneIndex,
     output::{self, Output, OutputId},
