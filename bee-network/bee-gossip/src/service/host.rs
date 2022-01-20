@@ -198,8 +198,6 @@ async fn event_processor(shutdown: Shutdown, events: InternalEventReceiver, send
 async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerList) {
     debug!("Peer checker running.");
 
-    // let Senders { internal_commands, .. } = senders;
-
     // NOTE:
     // We want to reduce the overhead of simultaneous mutual dialing even if several nodes are started at the same time
     // (by script for example). We do this here by adding a small random delay to when this task will be executing
