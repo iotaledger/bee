@@ -28,7 +28,7 @@ jobs:
           npm run setup
           cd ../
           # Sync the PR content with the freshly created wiki instance
-          rsync -av --progress ./ ./documentation/local-wiki/iota-wiki/external/bee --exclude .git --exclude node_modules --exclude local-wiki\
+          rsync -av --progress ./ ./documentation/local-wiki/iota-wiki/external/bee --exclude .git --exclude node_modules --exclude local-wiki
           # Change directory into the wiki
           cd documentation/local-wiki/iota-wiki
           # Install docusaurus and it's dependencies
