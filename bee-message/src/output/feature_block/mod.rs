@@ -202,7 +202,8 @@ pub(crate) fn validate_allowed_feature_blocks(
 macro_rules! create_bitflags {
     ($Name : ident, $type: ty, [$(($FlagName: ident, $TypeName: ident),)+]) => {
         bitflags! {
-            pub(crate) struct $Name: $type {
+            /// A bitflags-based representation of the set of active feature blocks.
+            pub struct $Name: $type {
                 $(
                     /// Signals the presence of a [`$TypeName`].
                     const $FlagName = 1 << $TypeName::KIND;
@@ -212,6 +213,7 @@ macro_rules! create_bitflags {
 
         impl $Name {
             #[allow(dead_code)]
+            /// Returns a slice of all feature blocks.
             pub const ALL_FLAGS: &'static [$Name] = &[$($Name::$FlagName),*];
         }
     };
