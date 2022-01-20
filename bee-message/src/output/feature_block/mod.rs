@@ -20,7 +20,7 @@ pub(crate) use metadata::MetadataFeatureBlockLength;
 pub use sender::SenderFeatureBlock;
 pub use timelock::TimelockFeatureBlock;
 
-use crate::Error;
+use crate::{create_bitflags, Error};
 
 use bee_common::ord::is_unique_sorted;
 
@@ -199,27 +199,8 @@ pub(crate) fn validate_allowed_feature_blocks(
     Ok(())
 }
 
-macro_rules! create_bitflags {
-    ($Name : ident, $type: ty, [$(($FlagName: ident, $TypeName: ident),)+]) => {
-        bitflags! {
-            /// A bitflags-based representation of the set of active feature blocks.
-            pub struct $Name: $type {
-                $(
-                    /// Signals the presence of a [`$TypeName`].
-                    const $FlagName = 1 << $TypeName::KIND;
-                )*
-            }
-        }
-
-        impl $Name {
-            #[allow(dead_code)]
-            /// Returns a slice of all feature blocks.
-            pub const ALL_FLAGS: &'static [$Name] = &[$($Name::$FlagName),*];
-        }
-    };
-}
-
 create_bitflags!(
+    /// A bitflags-based representation of the set of active [`FeatureBlock`]s.
     FeatureBlockFlags,
     u16,
     [
