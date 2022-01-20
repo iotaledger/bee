@@ -220,7 +220,9 @@ async fn initialize_autopeering(
     let neighbor_validator = EntryNodeNeighborValidator::new();
 
     // The peer store for persisting discovered peers.
-    let peerstore_cfg = RocksDbPeerStoreConfig::new(PEERSTORE_PATH, RocksDbPeerStoreConfigOptions::default());
+    let mut peerstore_options = RocksDbPeerStoreConfigOptions::default();
+    peerstore_options.create_if_missing(true);
+    let peerstore_cfg = RocksDbPeerStoreConfig::new(PEERSTORE_PATH, peerstore_options);
 
     // A local entity that can sign outgoing messages, and announce services.
     let keypair = builder.config().local().keypair().clone();
