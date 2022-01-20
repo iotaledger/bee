@@ -40,7 +40,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // Initialize the logger.
     let logger_cfg = config.logger_config().clone();
-    bee_common::logger::logger_init(logger_cfg)?;
+    fern_logger::logger_init(logger_cfg)?;
 
     // Start running the node.
     if config.run_as_entry_node() {

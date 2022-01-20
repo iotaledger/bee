@@ -1,8 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::auth::password::{self, Error as GeneratorError};
-
+use auth_helper::password::{self, Error as GeneratorError};
 use rpassword::read_password_from_tty;
 use structopt::StructOpt;
 use thiserror::Error;

@@ -8,7 +8,8 @@ use crate::{
 };
 
 use bee_autopeering::AutopeeringConfig;
-use bee_common::logger::LoggerConfig;
+
+use fern_logger::LoggerConfig;
 
 /// The config of a Bee entry node.
 #[derive(Clone)]

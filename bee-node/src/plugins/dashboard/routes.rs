@@ -12,11 +12,11 @@ use crate::{
     storage::NodeStorageBackend,
 };
 
-use bee_common::auth::jwt::JsonWebToken;
 use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 
+use auth_helper::jwt::JsonWebToken;
 use log::debug;
 use warp::{
     filters::header::headers_cloned,

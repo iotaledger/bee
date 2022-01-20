@@ -9,12 +9,13 @@ use crate::{
 use crate::plugins::dashboard::config::DashboardConfig;
 
 use bee_autopeering::config::AutopeeringConfig;
-use bee_common::logger::LoggerConfig;
 use bee_gossip::NetworkConfig;
 use bee_ledger::workers::{pruning::config::PruningConfig, snapshot::config::SnapshotConfig};
 use bee_protocol::workers::config::ProtocolConfig;
 use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_tangle::config::TangleConfig;
+
+use fern_logger::LoggerConfig;
 
 /// The config of a Bee full node.
 pub struct FullNodeConfig<S: NodeStorageBackend> {

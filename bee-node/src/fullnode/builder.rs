@@ -16,7 +16,7 @@ use crate::{
 use crate::plugins::Dashboard;
 
 use bee_autopeering::{
-    stores::{SledPeerStore, SledPeerStoreConfig},
+    stores::{Options as RocksDbPeerStoreConfigOptions, RocksDbPeerStore, RocksDbPeerStoreConfig},
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
@@ -327,7 +327,7 @@ async fn initialize_autopeering<S: NodeStorageBackend>(
         let neighbor_validator = FullNodeNeighborValidator::new(network_name.clone());
 
         // The peer store for persisting discovered peers.
-        let peerstore_cfg = SledPeerStoreConfig::new().path(PEERSTORE_PATH);
+        let peerstore_cfg = RocksDbPeerStoreConfig::new(PEERSTORE_PATH, RocksDbPeerStoreConfigOptions::default());
 
         // A local entity that can sign outgoing messages, and announce services.
         let keypair = config.local().keypair().clone();
@@ -335,7 +335,7 @@ async fn initialize_autopeering<S: NodeStorageBackend>(
 
         let quit_signal = tokio::signal::ctrl_c();
 
-        let autopeering_rx = bee_autopeering::init::<SledPeerStore, _, _, _>(
+        let autopeering_rx = bee_autopeering::init::<RocksDbPeerStore, _, _, _>(
             autopeering_cfg,
             AUTOPEERING_VERSION,
             network_name,
@@ -421,7 +421,7 @@ impl FullNodeNeighborValidator {
 }
 
 impl NeighborValidator for FullNodeNeighborValidator {
-    fn is_valid(&self, peer: &bee_autopeering::Peer) -> bool {
-        peer.has_service(&self.network_name)
+    fn is_valid<P: AsRef<bee_autopeering::Peer>>(&self, peer: P) -> bool {
+        peer.as_ref().has_service(&self.network_name)
     }
 }

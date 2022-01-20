@@ -19,10 +19,10 @@ use crate::{
     storage::NodeStorageBackend,
 };
 
-use bee_common::auth::jwt::JsonWebToken;
 use bee_runtime::{resource::ResourceHandle, shutdown_stream::ShutdownStream};
 use bee_tangle::Tangle;
 
+use auth_helper::jwt::JsonWebToken;
 use futures::{channel::oneshot, FutureExt, StreamExt};
 use log::{debug, error};
 use tokio::sync::{mpsc, RwLock};

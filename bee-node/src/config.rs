@@ -19,7 +19,6 @@ use crate::{
 use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder};
 
 use bee_autopeering::config::{AutopeeringConfig, AutopeeringConfigTomlBuilder};
-use bee_common::logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
 use bee_gossip::{NetworkConfig, NetworkConfigBuilder};
 use bee_ledger::workers::{
     pruning::config::{PruningConfig, PruningConfigBuilder},
@@ -29,6 +28,7 @@ use bee_protocol::workers::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::endpoints::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_tangle::config::{TangleConfig, TangleConfigBuilder};
 
+use fern_logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
 use serde::Deserialize;
 
 use std::{fs, path::Path};

@@ -3,8 +3,7 @@
 
 use crate::plugins::dashboard::{config::DashboardAuthConfig, rejection::CustomRejection};
 
-use bee_common::auth::{jwt::JsonWebToken, password};
-
+use auth_helper::{jwt::JsonWebToken, password};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use warp::{reject, Rejection, Reply};
