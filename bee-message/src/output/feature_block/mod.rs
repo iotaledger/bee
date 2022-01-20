@@ -199,22 +199,55 @@ pub(crate) fn validate_allowed_feature_blocks(
     Ok(())
 }
 
-bitflags! {
-    /// A bitflags-based representation of the set of active feature blocks.
-    pub struct FeatureBlockFlags: u16 {
-        /// Signals the presence of a [`SenderFeatureBlock`].
-        const SENDER = 1 << SenderFeatureBlock::KIND;
-        /// Signals the presence of a [`IssuerFeatureBlock`].
-        const ISSUER = 1 << IssuerFeatureBlock::KIND;
-        /// Signals the presence of a [`DustDepositReturnFeatureBlock`].
-        const DUST_DEPOSIT_RETURN = 1 << DustDepositReturnFeatureBlock::KIND;
-        /// Signals the presence of a [`TimelockFeatureBlock`].
-        const TIMELOCK = 1 << TimelockFeatureBlock::KIND;
-        /// Signals the presence of a [`ExpirationFeatureBlock`].
-        const EXPIRATION = 1 << ExpirationFeatureBlock::KIND;
-        /// Signals the presence of a [`MetadataFeatureBlock`].
-        const METADATA = 1 << MetadataFeatureBlock::KIND;
-        /// Signals the presence of a [`IndexationFeatureBlock`].
-        const INDEXATION = 1 << IndexationFeatureBlock::KIND;
+macro_rules! create_bitflags {
+    ($Name : ident, $type: ty, [$(($FlagName: ident, $TypeName: ident),)+]) => {
+        bitflags! {
+            pub(crate) struct $Name: $type {
+                $(
+                    /// Signals the presence of a [`$TypeName`].
+                    const $FlagName = 1 << $TypeName::KIND;
+                )*
+            }
+        }
+
+        impl $Name {
+            #[allow(dead_code)]
+            pub const ALL_FLAGS: &'static [$Name] = &[$($Name::$FlagName),*];
+        }
+    };
+}
+
+create_bitflags!(
+    FeatureBlockFlags,
+    u16,
+    [
+        (SENDER, SenderFeatureBlock),
+        (ISSUER, IssuerFeatureBlock),
+        (DUST_DEPOSIT_RETURN, DustDepositReturnFeatureBlock),
+        (TIMELOCK, TimelockFeatureBlock),
+        (EXPIRATION, ExpirationFeatureBlock),
+        (METADATA, MetadataFeatureBlock),
+        (INDEXATION, IndexationFeatureBlock),
+    ]
+);
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn check_length() {
+        assert_eq!(
+            FeatureBlockFlags::ALL_FLAGS,
+            &[
+                FeatureBlockFlags::SENDER,
+                FeatureBlockFlags::ISSUER,
+                FeatureBlockFlags::DUST_DEPOSIT_RETURN,
+                FeatureBlockFlags::TIMELOCK,
+                FeatureBlockFlags::EXPIRATION,
+                FeatureBlockFlags::METADATA,
+                FeatureBlockFlags::INDEXATION
+            ]
+        );
     }
 }

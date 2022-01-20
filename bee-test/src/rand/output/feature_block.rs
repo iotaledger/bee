@@ -50,21 +50,9 @@ pub fn rand_indexation_feature_block() -> IndexationFeatureBlock {
     IndexationFeatureBlock::new(bytes).unwrap()
 }
 
-fn all_feature_blocks() -> Vec<FeatureBlock> {
-    vec![
-        FeatureBlock::Sender(rand_sender_feature_block()),
-        FeatureBlock::Issuer(rand_issuer_feature_block()),
-        FeatureBlock::DustDepositReturn(rand_dust_deposit_return_feature_block()),
-        FeatureBlock::Timelock(rand_timelock_feature_block()),
-        FeatureBlock::Expiration(rand_expiration_feature_block()),
-        FeatureBlock::Metadata(rand_metadata_feature_block()),
-        FeatureBlock::Indexation(rand_indexation_feature_block()),
-    ]
-}
-
 /// Generates a [`Vec`] of random [`FeatureBlock`]s given a set of allowed [`FeatureBlockFlags`].
 pub fn rand_allowed_feature_blocks(allowed_feature_blocks: FeatureBlockFlags) -> Vec<FeatureBlock> {
-    let mut all_feature_blocks = all_feature_blocks();
+    let mut all_feature_blocks = FeatureBlockFlags::ALL_FLAGS.to_owned();
     all_feature_blocks.retain(|feature_block| allowed_feature_blocks.contains(feature_block.flag()));
     all_feature_blocks
 }
