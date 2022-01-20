@@ -8,7 +8,8 @@ use crate::peer::{
     Peer,
 };
 
-use rocksdb::{AsColumnFamilyRef, DBWithThreadMode, IteratorMode, MultiThreaded, Options, WriteBatch};
+pub use rocksdb::Options;
+use rocksdb::{AsColumnFamilyRef, DBWithThreadMode, IteratorMode, MultiThreaded, WriteBatch};
 
 use std::{
     path::{Path, PathBuf},
