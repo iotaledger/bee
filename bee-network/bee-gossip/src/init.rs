@@ -190,8 +190,10 @@ fn init(
         .send(Event::LocalIdCreated { local_id })
         .map_err(|_| Error::LocalIdAnnouncementFailed)?;
 
+    // TODO: rename to PeerStateMap.
     let peerlist = PeerListWrapper::new(PeerList::from_peers(local_id, peers.iter().cloned().collect()));
 
+    // Publish which known peers were added initially.
     for peer in peers.into_iter() {
         let peer_id = peer.peer_id;
         event_sender
@@ -206,7 +208,7 @@ fn init(
             .map_err(|_| Error::StaticPeersAnnouncementFailed)?;
     }
 
-    // Create the transport layer
+    // Create the transport layer.
     let swarm = build_swarm(&local_keys, internal_event_sender.clone()).map_err(|_| Error::CreatingTransportFailed)?;
 
     let network_host_config = NetworkHostConfig {

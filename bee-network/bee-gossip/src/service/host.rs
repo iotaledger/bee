@@ -198,8 +198,6 @@ async fn event_processor(shutdown: Shutdown, events: InternalEventReceiver, send
 async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerList) {
     debug!("Peer checker running.");
 
-    let Senders { internal_commands, .. } = senders;
-
     // NOTE:
     // We want to reduce the overhead of simultaneous mutual dialing even if several nodes are started at the same time
     // (by script for example). We do this here by adding a small random delay to when this task will be executing
@@ -215,14 +213,20 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
     // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
     // of those.
     while interval.next().await.is_some() {
-        let peerlist = peerlist.0.read().await;
+        let peerlist_reader = peerlist.0.read().await;
 
-        let num_known = peerlist.filter_count(|info, _| info.relation.is_known());
-        let num_connected_known = peerlist.filter_count(|info, state| info.relation.is_known() && state.is_connected());
+        // To how many known peers are we currently connected.
+        let num_known = peerlist_reader.filter_count(|info, _| info.relation.is_known());
+        let num_connected_known =
+            peerlist_reader.filter_count(|info, state| info.relation.is_known() && state.is_connected());
+
+        // To how many unknown peers are we currently connected.
         let num_connected_unknown =
-            peerlist.filter_count(|info, state| info.relation.is_unknown() && state.is_connected());
+            peerlist_reader.filter_count(|info, state| info.relation.is_unknown() && state.is_connected());
+
+        // To how many discovered peers are we currently connected.
         let num_connected_discovered =
-            peerlist.filter_count(|info, state| info.relation.is_discovered() && state.is_connected());
+            peerlist_reader.filter_count(|info, state| info.relation.is_discovered() && state.is_connected());
 
         info!(
             "Connected peers: known {}/{} unknown {}/{} discovered {}/{}.",
@@ -234,13 +238,15 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
             global::max_discovered_peers()
         );
 
-        for (peer_id, info) in peerlist.filter_info(|info, state| {
+        // Automatically try to reconnect known **and** discovered peers. The removal of discovered peers is a decision
+        // that needs to be made in the autopeering service.
+        for (peer_id, info) in peerlist_reader.filter_info(|info, state| {
             (info.relation.is_known() || info.relation.is_discovered()) && state.is_disconnected()
         }) {
-            info!("Trying to connect to: {} ({}).", info.alias, alias!(peer_id));
+            info!("Trying to reconnect to: {} ({}).", info.alias, alias!(peer_id));
 
             // Ignore if the command fails. We can always retry the next time.
-            let _ = internal_commands.send(Command::DialPeer { peer_id });
+            let _ = senders.internal_commands.send(Command::DialPeer { peer_id });
         }
     }
 
@@ -260,6 +266,9 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
             let alias = alias.unwrap_or_else(|| alias!(peer_id).to_string());
 
             add_peer(peer_id, multiaddr, alias, relation, senders, peerlist).await?;
+
+            // Immediatedly try to dial that peer.
+            let _ = senders.internal_commands.send(Command::DialPeer { peer_id });
         }
 
         Command::BanAddress { address } => {
@@ -351,10 +360,9 @@ async fn process_internal_event(
             // Try to disconnect, but ignore errors in-case the peer was disconnected already.
             let _ = peerlist.update_state(&peer_id, |state| state.set_disconnected());
 
-            // Try to remove unknown and discovered peers.
-            let _ = peerlist.filter_remove(&peer_id, |peer_info, _| {
-                peer_info.relation.is_unknown() || peer_info.relation.is_discovered()
-            });
+            // Only remove unknown peers.
+            // NOTE: discovered peers should be removed manually via command if the autopeering protocol suggests it.
+            let _ = peerlist.filter_remove(&peer_id, |peer_info, _| peer_info.relation.is_unknown());
 
             // We no longer need to hold the lock.
             drop(peerlist);
