@@ -5,8 +5,6 @@ use std::fmt;
 
 use bee_gossip::{Keypair, PeerId, PublicKey};
 
-use crate::LOCAL_ALIAS_DEFAULT;
-
 #[derive(Clone, Debug)]
 pub struct Local {
     /// An Ed25519 keypair.
@@ -22,7 +20,7 @@ pub struct Local {
 }
 
 impl Local {
-    pub fn from_keypair(keypair: Keypair, alias: Option<String>) -> Self {
+    pub fn from_keypair(keypair: Keypair, alias: String) -> Self {
         let encoded = hex::encode(keypair.encode());
         let peer_id = PeerId::from_public_key(PublicKey::Ed25519(keypair.public()));
 
@@ -31,7 +29,7 @@ impl Local {
             encoded,
             peer_id,
             is_new: false,
-            alias: alias.unwrap_or_else(|| LOCAL_ALIAS_DEFAULT.to_owned()),
+            alias,
         }
     }
 

@@ -96,7 +96,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     };
 
-    let local = Local::from_keypair(keypair, Some(config.alias().clone()));
+    let local = Local::from_keypair(keypair, config.alias().clone());
 
     // Start running the node.
     if config.run_as_entry_node() {

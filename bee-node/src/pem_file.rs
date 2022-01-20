@@ -48,7 +48,6 @@ fn pem_entry_to_keypair(pem_entry: String) -> Result<Keypair, PemFileError> {
 
 pub fn read_keypair_from_pem_file<P: AsRef<Path>>(path: P) -> Result<Keypair, PemFileError> {
     match fs::read_to_string(path) {
-        // Todo: Should we handle PEM files with multiple keys?
         Ok(pem_file) => pem_entry_to_keypair(pem_file),
         Err(e) => return Err(PemFileError::Read(e)),
     }

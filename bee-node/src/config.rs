@@ -11,7 +11,7 @@ use crate::{
     cli::ClArgs,
     plugins::mqtt::config::{MqttConfig, MqttConfigBuilder},
     storage::NodeStorageBackend,
-    util, BECH32_HRP_DEFAULT, LOCAL_ALIAS_DEFAULT, NETWORK_NAME_DEFAULT,
+    util, BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT,
 };
 
 #[cfg(feature = "dashboard")]
@@ -31,6 +31,8 @@ use fern_logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
 use serde::Deserialize;
 
 use std::{fs, path::Path};
+
+pub(crate) const ALIAS_DEFAULT: &str = "bee";
 
 /// Config file errors.
 #[derive(Debug, thiserror::Error)]
@@ -167,7 +169,7 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
             #[allow(deprecated)]
             self._identity,
             NodeConfig {
-                alias: self.alias.unwrap_or_else(|| LOCAL_ALIAS_DEFAULT.to_owned()),
+                alias: self.alias.unwrap_or_else(|| ALIAS_DEFAULT.to_owned()),
                 network_spec,
                 logger_config: self.logger_builder.unwrap_or_default().finish(),
                 gossip_config: self
