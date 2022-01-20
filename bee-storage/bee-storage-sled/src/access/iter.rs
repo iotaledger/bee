@@ -12,7 +12,6 @@ use bee_message::{
     address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::AsIterator, backend::StorageBackend, system::System};
@@ -115,23 +114,6 @@ impl<'a> StorageIterator<'a, (MessageId, MessageId), ()> {
                 MessageId::unpack_unverified(&mut parent).unwrap(),
                 // Unpacking from storage is fine.
                 MessageId::unpack_unverified(&mut child).unwrap(),
-            ),
-            (),
-        )
-    }
-}
-
-impl<'a> StorageIterator<'a, (PaddedIndex, MessageId), ()> {
-    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((PaddedIndex, MessageId), ()) {
-        let (index, mut message_id) = key.split_at(PaddedIndex::LENGTH);
-        // Unpacking from storage is fine.
-        let index: [u8; PaddedIndex::LENGTH] = index.try_into().unwrap();
-
-        (
-            (
-                PaddedIndex::new(index),
-                // Unpacking from storage is fine.
-                MessageId::unpack_unverified(&mut message_id).unwrap(),
             ),
             (),
         )
@@ -311,7 +293,6 @@ impl<'a> Iterator for StorageIterator<'a, u8, System> {
 impl_iter!(MessageId, Message, TREE_MESSAGE_ID_TO_MESSAGE);
 impl_iter!(MessageId, MessageMetadata, TREE_MESSAGE_ID_TO_METADATA);
 impl_iter!((MessageId, MessageId), (), TREE_MESSAGE_ID_TO_MESSAGE_ID);
-impl_iter!((PaddedIndex, MessageId), (), TREE_INDEX_TO_MESSAGE_ID);
 impl_iter!(OutputId, CreatedOutput, TREE_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_iter!(OutputId, ConsumedOutput, TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_iter!(Unspent, (), TREE_OUTPUT_ID_UNSPENT);

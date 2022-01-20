@@ -3,10 +3,6 @@
 
 //! Module describing the indexation payload.
 
-mod padded;
-
-pub use padded::PaddedIndex;
-
 use crate::{Error, Message};
 
 use packable::{
@@ -35,7 +31,7 @@ impl IndexationPayload {
     /// The payload kind of an `IndexationPayload`.
     pub const KIND: u32 = 2;
     /// Valid lengths for an indexation payload index.
-    pub const LENGTH_RANGE: RangeInclusive<u16> = 1..=PaddedIndex::LENGTH as u16;
+    pub const LENGTH_RANGE: RangeInclusive<u16> = 1..=64;
 
     /// Creates a new `IndexationPayload`.
     pub fn new(index: Vec<u8>, data: Vec<u8>) -> Result<Self, Error> {
@@ -54,13 +50,6 @@ impl IndexationPayload {
     /// Returns the index of an `IndexationPayload`.
     pub fn index(&self) -> &[u8] {
         &self.index
-    }
-
-    /// Returns the padded index of an `IndexationPayload`.
-    pub fn padded_index(&self) -> PaddedIndex {
-        let mut padded_index = [0u8; PaddedIndex::LENGTH];
-        padded_index[..self.index.len()].copy_from_slice(&self.index);
-        PaddedIndex::from(padded_index)
     }
 
     /// Returns the data of an `IndexationPayload`.

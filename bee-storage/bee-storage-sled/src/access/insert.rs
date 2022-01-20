@@ -13,7 +13,6 @@ use bee_message::{
     address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::Insert, backend::StorageBackend, system::System};
@@ -61,21 +60,6 @@ impl Insert<(MessageId, MessageId), ()> for Storage {
         key.extend_from_slice(child.as_ref());
 
         self.inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE_ID)?.insert(key, &[])?;
-
-        Ok(())
-    }
-}
-
-impl Insert<(PaddedIndex, MessageId), ()> for Storage {
-    fn insert(
-        &self,
-        (index, message_id): &(PaddedIndex, MessageId),
-        (): &(),
-    ) -> Result<(), <Self as StorageBackend>::Error> {
-        let mut key = index.as_ref().to_vec();
-        key.extend_from_slice(message_id.as_ref());
-
-        self.inner.open_tree(TREE_INDEX_TO_MESSAGE_ID)?.insert(key, &[])?;
 
         Ok(())
     }

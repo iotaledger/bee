@@ -13,7 +13,7 @@ pub use bee_storage::{
     system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
 
-use bee_message::{address::Ed25519Address, milestone::MilestoneIndex, payload::indexation::PaddedIndex, MessageId};
+use bee_message::{address::Ed25519Address, milestone::MilestoneIndex, MessageId};
 
 use rocksdb::{
     ColumnFamily, ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, FlushOptions, Options,
@@ -38,10 +38,6 @@ impl Storage {
         let mut options = Options::default();
         options.set_prefix_extractor(SliceTransform::create_fixed_prefix(MessageId::LENGTH));
         let cf_message_id_to_message_id = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE_ID, options);
-
-        let mut options = Options::default();
-        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(PaddedIndex::LENGTH));
-        let cf_index_to_message_id = ColumnFamilyDescriptor::new(CF_INDEX_TO_MESSAGE_ID, options);
 
         let cf_output_id_to_created_output =
             ColumnFamilyDescriptor::new(CF_OUTPUT_ID_TO_CREATED_OUTPUT, Options::default());
@@ -124,7 +120,6 @@ impl Storage {
                 cf_message_id_to_message,
                 cf_message_id_to_metadata,
                 cf_message_id_to_message_id,
-                cf_index_to_message_id,
                 cf_output_id_to_created_output,
                 cf_output_id_to_consumed_output,
                 cf_output_id_unspent,

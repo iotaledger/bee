@@ -12,7 +12,6 @@ use bee_message::{
     address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::Truncate, backend::StorageBackend};
@@ -35,7 +34,6 @@ macro_rules! impl_truncate {
 impl_truncate!(MessageId, Message, message_id_to_message);
 impl_truncate!(MessageId, MessageMetadata, message_id_to_metadata);
 impl_truncate!((MessageId, MessageId), (), message_id_to_message_id);
-impl_truncate!((PaddedIndex, MessageId), (), index_to_message_id);
 impl_truncate!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_truncate!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_truncate!(Unspent, (), output_id_unspent);

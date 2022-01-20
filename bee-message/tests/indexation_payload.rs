@@ -1,10 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{
-    payload::indexation::{IndexationPayload, PaddedIndex},
-    Error, Message,
-};
+use bee_message::{payload::indexation::IndexationPayload, Error, Message};
 use bee_test::rand::bytes::rand_bytes;
 
 use packable::{
@@ -13,47 +10,28 @@ use packable::{
     PackableExt,
 };
 
-const PADDED_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64952fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-
 #[test]
 fn kind() {
     assert_eq!(IndexationPayload::KIND, 2);
 }
 
 #[test]
-fn debug_impl() {
-    assert_eq!(
-        format!(
-            "{:?}",
-            PaddedIndex::new(hex::decode(PADDED_INDEX).unwrap().try_into().unwrap())
-        ),
-        "PaddedIndex(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64952fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
-    );
-}
-
-#[test]
 fn new_valid() {
     let index = rand_bytes(64);
-    let index_array: [u8; 64] = index.as_slice().try_into().unwrap();
     let data = vec![0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2];
     let indexation = IndexationPayload::new(index.clone(), data.clone()).unwrap();
 
     assert_eq!(indexation.index(), &index);
-    assert_eq!(indexation.padded_index().as_ref(), index.as_slice());
-    assert_eq!(*indexation.padded_index(), index_array);
     assert_eq!(indexation.data(), &data);
 }
 
 #[test]
 fn new_valid_empty_data() {
     let index = rand_bytes(64);
-    let index_array: [u8; 64] = index.as_slice().try_into().unwrap();
     let data = vec![];
     let indexation = IndexationPayload::new(index.clone(), data.clone()).unwrap();
 
     assert_eq!(indexation.index(), &index);
-    assert_eq!(indexation.padded_index().as_ref(), index.as_slice());
-    assert_eq!(*indexation.padded_index(), index_array);
     assert_eq!(indexation.data(), &data);
 }
 
@@ -66,7 +44,6 @@ fn new_valid_padded() {
     let indexation = IndexationPayload::new(index.clone(), data.clone()).unwrap();
 
     assert_eq!(indexation.index(), &index);
-    assert_eq!(indexation.padded_index().as_ref(), padded_index.as_slice());
     assert_eq!(indexation.data(), &data);
 }
 
@@ -150,18 +127,4 @@ fn unpack_invalid_data_length_more_than_max() {
             TryIntoBoundedU32Error::Invalid(33333)
         )))
     ));
-}
-
-#[test]
-fn unpack_valid_padded() {
-    let index = rand_bytes(32);
-    let mut padded_index = index.clone();
-    padded_index.append(&mut vec![0u8; 32]);
-
-    let indexation_1 = IndexationPayload::new(index, vec![0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).unwrap();
-    let indexation_2 = IndexationPayload::unpack_verified(&mut indexation_1.pack_to_vec().as_slice()).unwrap();
-
-    assert_eq!(indexation_1.index(), indexation_2.index());
-    assert_eq!(indexation_1.padded_index(), indexation_2.padded_index());
-    assert_eq!(indexation_1.data(), indexation_2.data());
 }

@@ -15,7 +15,6 @@ use bee_message::{
     address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::AsIterator, backend::StorageBackend, system::System};
@@ -58,7 +57,6 @@ impl_iter!(u8, System, system);
 impl_iter!(MessageId, Message, message_id_to_message);
 impl_iter!(MessageId, MessageMetadata, message_id_to_metadata);
 impl_iter!((MessageId, MessageId), (), message_id_to_message_id);
-impl_iter!((PaddedIndex, MessageId), (), index_to_message_id);
 impl_iter!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_iter!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_iter!(Unspent, (), output_id_unspent);

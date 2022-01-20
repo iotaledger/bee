@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `Balance`, `BalanceDiff` and `BalanceDiffs`;
 - `Error::InvalidLedgerDustState`;
+- Pruning of `PaddedIndex`;
 
 ## 0.6.1 - 2021-12-29
 

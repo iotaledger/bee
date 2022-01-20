@@ -14,7 +14,7 @@ Bee uses the Toml standard as a configuration file. If you are unsure about synt
 
 The default configuration file is `config.toml`. You can change the configuration file's path or name  by using the `-c` or `--config` flag.
 
-For example: 
+For example:
 
 ```bash
 bee -c config_example.toml
@@ -58,11 +58,11 @@ level_width = 5
 color_enabled  = true
 name           = "stdout"
 level_filter   = "info" # other possible values are: "error", "warn", "info", "debug", "trace"
-target_filters = ["bee_network"] 
+target_filters = ["bee_network"]
 [[logger.outputs]]
 name              = "error.log"
 level_filter      = "error"
-target_exclusions = ["bee_network"] 
+target_exclusions = ["bee_network"]
 ```
 
 ## Network
@@ -288,7 +288,6 @@ prune_receipts  = false
 | Name                  | Description | Type           |
 | :-------------------- | :---------- | :------------- |
 | fetch_edge_limit      | TO-DO       | integer[usize] |
-| fetch_index_limit     | TO-DO       | integer[usize] |
 | fetch_output_id_limit | TO-DO       | integer[usize] |
 | iteration_budget      | TO-DO       | integer[usize] |
 

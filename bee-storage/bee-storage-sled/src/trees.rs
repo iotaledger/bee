@@ -12,8 +12,6 @@ pub const TREE_MESSAGE_ID_TO_MESSAGE: &str = "message_id_to_message";
 pub const TREE_MESSAGE_ID_TO_METADATA: &str = "message_id_to_metadata";
 /// Identifier for the `MessageId` to `Vec<MessageId>` tree.
 pub const TREE_MESSAGE_ID_TO_MESSAGE_ID: &str = "message_id_to_message_id";
-/// Identifier for the `PaddedIndex` to `Vec<MessageId>` tree.
-pub const TREE_INDEX_TO_MESSAGE_ID: &str = "index_to_message_id";
 /// Identifier for the `OutputId` to `CreatedOutput` tree.
 pub const TREE_OUTPUT_ID_TO_CREATED_OUTPUT: &str = "output_id_to_created_output";
 /// Identifier for the `OutputId` to `ConsumedOutput` tree.
