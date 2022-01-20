@@ -7,7 +7,7 @@ use crate::{Error, MessageId, MESSAGE_ID_LENGTH};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use stable_sorted::is_unique_sorted;
+use iterator_sorted::is_unique_sorted;
 
 use core::ops::{Deref, RangeInclusive};
 

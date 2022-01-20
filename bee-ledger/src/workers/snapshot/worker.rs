@@ -7,14 +7,14 @@ use crate::workers::{
     storage::{self, StorageBackend},
 };
 
-use bee_common::time;
+
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::{node::Node, worker::Worker};
 use bee_storage::{access::AsIterator, backend::StorageBackend as _, system::StorageHealth};
 use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
 
 use async_trait::async_trait;
-
+use time_helper as time;
 use log::info;
 
 use std::{any::TypeId, collections::HashMap};

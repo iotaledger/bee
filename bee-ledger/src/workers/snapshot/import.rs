@@ -18,7 +18,6 @@ use crate::{
 
 use bee_common::{
     packable::{Packable, Read},
-    time,
 };
 use bee_message::{
     milestone::MilestoneIndex,
@@ -30,6 +29,7 @@ use bee_storage::access::{Insert, Truncate};
 use bee_tangle::solid_entry_point::SolidEntryPoint;
 
 use log::info;
+use time_helper as time;
 
 use std::{
     collections::HashMap,
