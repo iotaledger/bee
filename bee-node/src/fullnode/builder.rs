@@ -329,6 +329,7 @@ async fn initialize_autopeering<S: NodeStorageBackend>(
         // The peer store for persisting discovered peers.
         let mut peerstore_options = RocksDbPeerStoreConfigOptions::default();
         peerstore_options.create_if_missing(true);
+        peerstore_options.create_missing_column_families(true);
         let peerstore_cfg = RocksDbPeerStoreConfig::new(PEERSTORE_PATH, peerstore_options);
 
         // A local entity that can sign outgoing messages, and announce services.
