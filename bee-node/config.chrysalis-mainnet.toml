@@ -125,7 +125,7 @@ delay           = 60480
 prune_receipts  = false
 
 [storage]
-path = "./storage/mainnet"
+path = "./storage/mainnet/tangle"
 
 [tangle]
 below_max_depth = 15

@@ -101,7 +101,7 @@ delay           = 60480
 prune_receipts  = false
 
 [storage]
-path = "./storage/comnet"
+path = "./storage/comnet/tangle"
 
 [tangle]
 below_max_depth = 15
