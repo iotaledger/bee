@@ -53,20 +53,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn deserialize_config(cl_args: ClArgs) -> NodeConfig<Storage> {
-    #[cfg(feature = "rocksdb")]
-    let config = match NodeConfigBuilder::<Storage>::from_file(
+    match NodeConfigBuilder::<Storage>::from_file(
         cl_args.config_path().unwrap_or_else(|| Path::new(CONFIG_PATH)),
     ) {
         Ok(builder) => builder.apply_args(&cl_args).finish(),
         Err(e) => panic!("Failed to create the node config builder: {}", e),
-    };
-    #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
-    let config = match NodeConfigBuilder::<Storage>::from_file(cl_args.config_path().unwrap_or(Path::new(CONFIG_PATH)))
-    {
-        Ok(builder) => builder.apply_args(cl_args).finish(),
-        Err(e) => panic!("Failed to create the node config builder: {}", e),
-    };
-    config
+    }
 }
 
 async fn start_entrynode<S: NodeStorageBackend>(config: NodeConfig<S>) {
@@ -89,9 +81,6 @@ async fn start_fullnode<S: NodeStorageBackend>(config: NodeConfig<S>)
 where
     FullNodeConfig<Storage>: From<NodeConfig<S>>,
 {
-    #[cfg(feature = "rocksdb")]
-    let node_builder = FullNodeBuilder::<Storage>::new(config.into());
-    #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
     let node_builder = FullNodeBuilder::<Storage>::new(config.into());
 
     match node_builder {
