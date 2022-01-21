@@ -61,7 +61,7 @@ impl<S: NodeStorageBackend> FullNodeConfig<S> {
 
     pub fn from(local: Local, node_cfg: NodeConfig<S>) -> Self {
         Self {
-            local: local,
+            local,
             network_spec: node_cfg.network_spec,
             logger_config: node_cfg.logger_config,
             gossip_config: node_cfg.gossip_config,

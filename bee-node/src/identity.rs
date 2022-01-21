@@ -50,7 +50,7 @@ fn keypair_to_pem_entry(keypair: &Keypair) -> Result<String, PemFileError> {
 pub fn read_keypair_from_pem_file<P: AsRef<Path>>(path: P) -> Result<Keypair, PemFileError> {
     match fs::read_to_string(path) {
         Ok(pem_file) => pem_entry_to_keypair(pem_file),
-        Err(e) => return Err(PemFileError::Read(e)),
+        Err(e) => Err(PemFileError::Read(e)),
     }
 }
 

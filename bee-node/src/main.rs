@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     print_banner_and_version(true);
 
     // Deserialize the config.
-    let identity_path = cl_args.identity_path().unwrap_or(Path::new(IDENTITY_PATH)).to_owned();
+    let identity_path = cl_args.identity_path().unwrap_or_else(|| Path::new(IDENTITY_PATH)).to_owned();
     let (identity_field, config) = deserialize_config(cl_args);
 
     // Initialize the logger.
@@ -132,7 +132,7 @@ fn migrate_keypair(encoded: String) -> Result<Keypair, MigrationError> {
 }
 
 fn deserialize_config(cl_args: ClArgs) -> (Option<String>, NodeConfig<Storage>) {
-    match NodeConfigBuilder::<Storage>::from_file(cl_args.config_path().unwrap_or(Path::new(CONFIG_PATH))) {
+    match NodeConfigBuilder::<Storage>::from_file(cl_args.config_path().unwrap_or_else(|| Path::new(CONFIG_PATH))) {
         Ok(builder) => builder.apply_args(&cl_args).finish(),
         Err(e) => panic!("Failed to create the node config builder: {}", e),
     }
