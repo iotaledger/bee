@@ -3,19 +3,17 @@
 
 use bee_gossip::{Keypair, SecretKey};
 
-use pkcs8::{
-    der::Document, AlgorithmIdentifier, DecodePrivateKey, EncodePrivateKey, LineEnding, ObjectIdentifier, der::Decodable,
-    PrivateKeyDocument, PrivateKeyInfo,
-};
+use ed25519::KeypairBytes;
+use pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding};
 
-use std::path::Path;
+use std::{fs, path::Path};
 
 #[derive(Debug, thiserror::Error)]
 pub enum PemFileError {
     #[error("reading the identity file failed: {0}")]
-    Read(pkcs8::Error),
+    Read(std::io::Error),
     #[error("writing the identity file failed: {0}")]
-    Write(pkcs8::Error),
+    Write(std::io::Error),
     #[error("could not parse PEM file")]
     Parse,
     #[error("could not decode keypair")]
@@ -26,110 +24,90 @@ pub enum PemFileError {
     NoEntries,
 }
 
-// fn keypair_to_pem_entry(keypair: &Keypair) -> String {
-//     let secret = keypair.secret();
-//     let pk_info = PrivateKeyInfo::new(secret.as_ref()).unwrap();
-//     pk_info.to_pem(LineEnding::default()).
-// }
-
-// fn pem_entry_to_keypair(pem_entry: String) -> Result<Keypair, PemFileError> {
-//     let mut pkcs8_doc : PrivateKeyDocument = pem_entry.parse().or(Err(PemFileError::Parse))?;
-//     // We only support a single PEM entry per file.
-//     if pems.is_empty() {
-//         Err(PemFileError::NoEntries)
-//     } else if pems.len() == 1 {
-//         // Safety: We just checked the length.
-//         let secret = SecretKey::from_bytes(&mut pems[0].contents).or(Err(PemFileError::DecodeKeypair))?;
-//         Ok(secret.into())
-//     } else {
-//         Err(PemFileError::MultipleEntries)
-//     }
-// }
-
-// According to: https://crypto.stackexchange.com/questions/81023/oid-for-ed25519
-const ED25519_DER_ENCODING: &str = "1.3.101.112"; // This is the one that golang/crypto uses.
-
-// fn pem_entry_to_keypair(pem_entry: String) -> Result<Keypair, PemFileError> {
-//     // let pem_doc = PrivateKeyDocument::from_pkcs8_(&pem_entry).or(Err(PemFileError::Parse))?;
-//     let pem_doc = PrivateKeyDocument::from_pem(&pem_entry);
-//     let pk_info = pem_doc.decode();
-//     let mut private_key = pk_info.private_key.to_owned();
-//     let secret = SecretKey::from_bytes(&mut private_key).unwrap();
-//     Ok(secret.into())
-// }
-
-pub fn read_keypair_from_pem_file<P: AsRef<Path>>(path: P) -> Result<Keypair, PemFileError> {
-    let pkcs8_doc = PrivateKeyDocument::read_pkcs8_pem_file(path).map_err(PemFileError::Read)?;
-    let pk_info = pkcs8_doc.decode();
-    let private_key = pk_info.private_key;
-    println!("pk length: {}", private_key.len());
-    println!("pk[0..2]: {:?}", &private_key[0..2]);
-    let mut private_key = private_key[2..].to_owned();
-    let secret = SecretKey::from_bytes(&mut private_key).unwrap();
+fn pem_entry_to_keypair(pem_entry: String) -> Result<Keypair, PemFileError> {
+    let KeypairBytes { mut secret_key, .. } = KeypairBytes::from_pkcs8_pem(&pem_entry).or(Err(PemFileError::Parse))?;
+    let secret = SecretKey::from_bytes(&mut secret_key).or(Err(PemFileError::DecodeKeypair))?;
     Ok(secret.into())
 }
 
-pub fn write_keypair_to_pem_file<P: AsRef<Path>>(path: P, keypair: &Keypair) -> Result<(), PemFileError> {
-    let secret = keypair.secret();
-    let algorithm = AlgorithmIdentifier {
-        oid: ED25519_DER_ENCODING.parse::<ObjectIdentifier>().unwrap(),
-        parameters: None,
+fn keypair_to_pem_entry(keypair: &Keypair) -> Result<String, PemFileError> {
+    // Safety: We know that this has the correct size.
+    let secret_key: [u8; 32] = keypair
+        .secret()
+        .as_ref()
+        .try_into()
+        .or(Err(PemFileError::DecodeKeypair))?;
+    let keypair_bytes = KeypairBytes {
+        secret_key,
+        public_key: None,
     };
-    let pk_info = PrivateKeyInfo::new(algorithm, secret.as_ref());
-    let pk_doc = PrivateKeyDocument::try_from(pk_info).unwrap();
-    pk_doc
-        .write_pkcs8_pem_file(path, LineEnding::default())
-        .map_err(PemFileError::Write)
+    match keypair_bytes.to_pkcs8_pem(LineEnding::default()) {
+        Ok(zeroize_string) => Ok(zeroize_string.to_string()),
+        Err(_) => Err(PemFileError::DecodeKeypair),
+    }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use super::*;
+pub fn read_keypair_from_pem_file<P: AsRef<Path>>(path: P) -> Result<Keypair, PemFileError> {
+    match fs::read_to_string(path) {
+        Ok(pem_file) => pem_entry_to_keypair(pem_file),
+        Err(e) => return Err(PemFileError::Read(e)),
+    }
+}
 
-//     #[test]
-//     fn pem_keypair_round_trip() {
-//         let keypair = Keypair::generate();
-//         let secret = keypair.secret();
-//         let pem_entry = keypair_to_pem_entry(&secret.into());
-//         let parsed_keypair = pem_entry_to_keypair(pem_entry).unwrap();
-//         assert_eq!(keypair.public(), parsed_keypair.public());
-//         assert_eq!(keypair.secret().as_ref(), parsed_keypair.secret().as_ref());
-//     }
+pub fn write_keypair_to_pem_file<P: AsRef<Path>>(path: P, keypair: &Keypair) -> Result<(), PemFileError> {
+    fs::write(path, keypair_to_pem_entry(keypair)?).map_err(PemFileError::Write)
+}
 
-//     #[test]
-//     fn no_entries() {
-//         let pem_entries = "";
-//         assert!(matches!(
-//             pem_entry_to_keypair(pem_entries.into()),
-//             Err(PemFileError::NoEntries)
-//         ));
-//     }
+#[cfg(test)]
+mod test {
+    use super::*;
 
-//#[test]
-// fn single_entry() {
-//     // This entry was generated with the Hornet node software.
-//     let pem_entry = r#"-----BEGIN PRIVATE KEY-----
-//             MC4CAQAwBQYDK2VwBCIEIF4Pg6pHREq+RQDpkaU/f3MkIFcUXSjM80yabh7P9q4r
-// -----END PRIVATE KEY-----
-//         "#;
-//     let bytes = pem_entry_to_keypair(pem_entry.into()).unwrap().encode();
-//     let hex_encoded = hex::encode(bytes);
-//     assert_eq!(&hex_encoded, "12D3KooWKncxbqs3ddRvW54116WaWfYj2jLKC6wAqcGVqsuUXSs7");
-// }
+    #[test]
+    fn pem_keypair_round_trip() {
+        let keypair = Keypair::generate();
+        let secret = keypair.secret();
+        let pem_entry = keypair_to_pem_entry(&secret.into()).unwrap();
+        let parsed_keypair = pem_entry_to_keypair(pem_entry).unwrap();
+        assert_eq!(keypair.public(), parsed_keypair.public());
+        assert_eq!(keypair.secret().as_ref(), parsed_keypair.secret().as_ref());
+    }
 
-//     #[test]
-//     fn multiple_entries() {
-//         let pem_entries = r#"
-//             -----BEGIN PRIVATE KEY-----
-//             MC4CAQAwBQYDK2VwBCIEIGQ9cgUtF454R2VotN/W5VCcYWhnEuwOsYtsqKRoIeIz
-//             -----END PRIVATE KEY-----
-//             -----BEGIN PRIVATE KEY-----
-//             MC4CAQAwBQYDK2VwBCIEIPf9H/AJTY1wy3PKu9B//fJxZ6QemTpmSAnPV8Gpt97f
-//             -----END PRIVATE KEY-----
-//         "#;
-//         assert!(matches!(
-//             pem_entry_to_keypair(pem_entries.into()),
-//             Err(PemFileError::MultipleEntries)
-//         ));
-//     }
-// }
+    #[test]
+    fn no_entries() {
+        let pem_entries = "";
+        assert!(matches!(
+            pem_entry_to_keypair(pem_entries.into()),
+            Err(PemFileError::Parse)
+        ));
+    }
+
+    #[test]
+    fn single_entry() {
+        let pem_entry = concat!(
+            "-----BEGIN PRIVATE KEY-----\n",
+            "MC4CAQAwBQYDK2VwBCIEIPQ8j9xL2WvxWk2Z/sCocRxywwWAfEgvXxcrSSfX9tUH\n",
+            "-----END PRIVATE KEY-----\n",
+        );
+        let keypair = pem_entry_to_keypair(pem_entry.into()).unwrap();
+        let mut decoded = [0u8; 64];
+        hex::decode_to_slice("f43c8fdc4bd96bf15a4d99fec0a8711c72c305807c482f5f172b4927d7f6d507f3eef70378022bd42fe0cdb799a2b909d42eace03da33b63c4c32c695a9729c2", &mut decoded).unwrap();
+        let parsed = Keypair::decode(&mut decoded).unwrap();
+        assert_eq!(keypair.secret().as_ref(), parsed.secret().as_ref());
+    }
+
+    #[test]
+    fn multiple_entries() {
+        let pem_entries = concat!(
+            "-----BEGIN PRIVATE KEY-----\n",
+            "MC4CAQAwBQYDK2VwBCIEIGQ9cgUtF454R2VotN/W5VCcYWhnEuwOsYtsqKRoIeIz\n",
+            "-----END PRIVATE KEY-----\n",
+            "-----BEGIN PRIVATE KEY-----\n",
+            "MC4CAQAwBQYDK2VwBCIEIPf9H/AJTY1wy3PKu9B//fJxZ6QemTpmSAnPV8Gpt97f\n",
+            "-----END PRIVATE KEY-----\n",
+        );
+        assert!(matches!(
+            pem_entry_to_keypair(pem_entries.into()),
+            Err(PemFileError::Parse)
+        ));
+    }
+}
