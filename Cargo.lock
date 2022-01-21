@@ -218,6 +218,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-gossip2"
+version = "0.1.0"
+dependencies = [
+ "libp2p",
+ "libp2p-core",
+ "tokio",
+ "tokio-stream",
+]
+
+[[package]]
+name = "bee-identity"
+version = "0.1.0"
+dependencies = [
+ "libp2p-core",
+ "thiserror",
+]
+
+[[package]]
 name = "bee-ledger"
 version = "0.6.1"
 dependencies = [

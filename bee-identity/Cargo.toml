@@ -1,0 +1,15 @@
+[package]
+name = "bee-identity"
+version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
+edition = "2021"
+description = "TODO"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "bee", "framework", "node", "identity" ]
+homepage = "https://www.iota.org"
+
+[dependencies]
+libp2p-core = { version = "0.29.0", default-features = false }
+thiserror = { version = "1.0.30", default-features = false, optional = true }
