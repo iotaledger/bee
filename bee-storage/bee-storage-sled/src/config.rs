@@ -7,7 +7,7 @@ use serde::Deserialize;
 
 use std::path::PathBuf;
 
-const DEFAULT_PATH: &str = "./storage/mainnet";
+const DEFAULT_PATH: &str = "./storage/mainnet/tangle";
 const DEFAULT_COMPRESSION_FACTOR: Option<usize> = None;
 const DEFAULT_CACHE_CAPACITY: usize = 1_024 * 1_024 * 1_024;
 const DEFAULT_FAST_MODE: bool = false;
