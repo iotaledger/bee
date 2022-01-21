@@ -18,10 +18,6 @@ pub enum PemFileError {
     Parse,
     #[error("could not decode keypair")]
     DecodeKeypair,
-    #[error("found multiple PEM entries")]
-    MultipleEntries,
-    #[error("no PEM entries")]
-    NoEntries,
 }
 
 fn pem_entry_to_keypair(pem_entry: String) -> Result<Keypair, PemFileError> {
