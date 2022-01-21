@@ -9,7 +9,7 @@ use crate::{
     plugins::{self, Mqtt, VersionChecker},
     shutdown,
     storage::NodeStorageBackend,
-    util, AUTOPEERING_VERSION, PEERSTORE_PATH,
+    util, AUTOPEERING_VERSION,
 };
 
 #[cfg(feature = "dashboard")]
@@ -330,7 +330,7 @@ async fn initialize_autopeering<S: NodeStorageBackend>(
         let mut peerstore_options = RocksDbPeerStoreConfigOptions::default();
         peerstore_options.create_if_missing(true);
         peerstore_options.create_missing_column_families(true);
-        let peerstore_cfg = RocksDbPeerStoreConfig::new(PEERSTORE_PATH, peerstore_options);
+        let peerstore_cfg = RocksDbPeerStoreConfig::new(autopeering_cfg.peer_storage_path(), peerstore_options);
 
         // A local entity that can sign outgoing messages, and announce services.
         let keypair = config.local().keypair().clone();
