@@ -22,7 +22,7 @@ target_exclusions = []
 bind_address            = "/ip4/0.0.0.0/tcp/15600"
 reconnect_interval_secs = 30
 max_unknown_peers       = 4
-max_discovered_peers    = 4
+max_discovered_peers    = 8
 
 [network.peering]
 #[[network.peering.peers]]
@@ -36,6 +36,7 @@ entry_nodes = []
 entry_nodes_prefer_ipv6 = false
 run_as_entry_node = false
 drop_neighbors_on_salt_update = false
+peer_storage_path = "./storage/devnet/peers"
 
 [protocol]
 minimum_pow_score = 2000

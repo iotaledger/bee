@@ -6,7 +6,7 @@ use super::{config::EntryNodeConfig, EntryNode, EntryNodeError};
 use crate::{
     core::{Core, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
     plugins::VersionChecker,
-    shutdown, util, AUTOPEERING_VERSION, PEERSTORE_PATH,
+    shutdown, util, AUTOPEERING_VERSION,
 };
 
 use bee_autopeering::{
@@ -223,7 +223,10 @@ async fn initialize_autopeering(
     let mut peerstore_options = RocksDbPeerStoreConfigOptions::default();
     peerstore_options.create_if_missing(true);
     peerstore_options.create_missing_column_families(true);
-    let peerstore_cfg = RocksDbPeerStoreConfig::new(PEERSTORE_PATH, peerstore_options);
+    let peerstore_cfg = RocksDbPeerStoreConfig::new(
+        builder.config().autopeering_config.peer_storage_path(),
+        peerstore_options,
+    );
 
     // A local entity that can sign outgoing messages, and announce services.
     let keypair = builder.config().local().keypair().clone();
