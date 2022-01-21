@@ -53,7 +53,7 @@ pub enum Payload {
     /// A treasury transaction payload.
     #[packable(tag = TreasuryTransactionPayload::KIND)]
     TreasuryTransaction(Box<TreasuryTransactionPayload>),
-    /// An tagged data payload.
+    /// A tagged data payload.
     #[packable(tag = TaggedDataPayload::KIND)]
     TaggedData(Box<TaggedDataPayload>),
 }
