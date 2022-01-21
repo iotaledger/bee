@@ -10,8 +10,8 @@ use bee_message::{
     milestone::MilestoneIndex,
     output::{
         feature_block::{
-            DustDepositReturnFeatureBlock, ExpirationFeatureBlock, FeatureBlock, IndexationFeatureBlock,
-            IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock, TimelockFeatureBlock,
+            DustDepositReturnFeatureBlock, ExpirationFeatureBlock, FeatureBlock, IssuerFeatureBlock,
+            MetadataFeatureBlock, SenderFeatureBlock, TagFeatureBlock, TimelockFeatureBlock,
         },
         AliasId, AliasOutput, AliasOutputBuilder, ExtendedOutput, ExtendedOutputBuilder, FoundryOutput,
         FoundryOutputBuilder, NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme,
@@ -806,10 +806,10 @@ pub enum FeatureBlockDto {
     Timelock(TimelockFeatureBlockDto),
     /// An expiration feature block.
     Expiration(ExpirationFeatureBlockDto),
-    /// An indexation feature block.
-    Indexation(IndexationFeatureBlockDto),
     /// A metadata feature block.
     Metadata(MetadataFeatureBlockDto),
+    /// A tag feature block.
+    Tag(TagFeatureBlockDto),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -829,9 +829,9 @@ pub struct ExpirationFeatureBlockDto {
     pub timestamp: u32,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct IndexationFeatureBlockDto(pub String);
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MetadataFeatureBlockDto(pub String);
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TagFeatureBlockDto(pub String);
 
 impl FeatureBlockDto {
     /// Return the output kind of an `Output`.
@@ -842,8 +842,8 @@ impl FeatureBlockDto {
             Self::DustDepositReturn(_) => DustDepositReturnFeatureBlock::KIND,
             Self::Timelock(_) => TimelockFeatureBlock::KIND,
             Self::Expiration(_) => ExpirationFeatureBlock::KIND,
-            Self::Indexation(_) => IndexationFeatureBlock::KIND,
             Self::Metadata(_) => MetadataFeatureBlock::KIND,
+            Self::Tag(_) => TagFeatureBlock::KIND,
         }
     }
 }
@@ -862,8 +862,8 @@ impl From<&FeatureBlock> for FeatureBlockDto {
                 index: v.index(),
                 timestamp: v.timestamp(),
             }),
-            FeatureBlock::Indexation(v) => Self::Indexation(IndexationFeatureBlockDto(v.to_string())),
             FeatureBlock::Metadata(v) => Self::Metadata(MetadataFeatureBlockDto(v.to_string())),
+            FeatureBlock::Tag(v) => Self::Tag(TagFeatureBlockDto(v.to_string())),
         }
     }
 }
@@ -878,11 +878,11 @@ impl TryFrom<&FeatureBlockDto> for FeatureBlock {
             FeatureBlockDto::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnFeatureBlock::new(v.0)?),
             FeatureBlockDto::Timelock(v) => Self::Timelock(TimelockFeatureBlock::new(v.index, v.timestamp)),
             FeatureBlockDto::Expiration(v) => Self::Expiration(ExpirationFeatureBlock::new(v.index, v.timestamp)),
-            FeatureBlockDto::Indexation(v) => Self::Indexation(IndexationFeatureBlock::new(
-                hex::decode(&v.0).map_err(|_e| Error::InvalidField("IndexationFeatureBlock"))?,
-            )?),
             FeatureBlockDto::Metadata(v) => Self::Metadata(MetadataFeatureBlock::new(
                 hex::decode(&v.0).map_err(|_e| Error::InvalidField("MetadataFeatureBlock"))?,
+            )?),
+            FeatureBlockDto::Tag(v) => Self::Tag(TagFeatureBlock::new(
+                hex::decode(&v.0).map_err(|_e| Error::InvalidField("TagFeatureBlock"))?,
             )?),
         })
     }

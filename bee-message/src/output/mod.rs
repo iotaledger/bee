@@ -21,7 +21,7 @@ pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
 pub use chain_id::ChainId;
 pub use extended::{ExtendedOutput, ExtendedOutputBuilder};
-pub(crate) use feature_block::{DustDepositAmount, IndexationFeatureBlockLength, MetadataFeatureBlockLength};
+pub(crate) use feature_block::{DustDepositAmount, MetadataFeatureBlockLength, TagFeatureBlockLength};
 pub use feature_block::{FeatureBlock, FeatureBlocks};
 pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme};
 pub(crate) use native_token::NativeTokenCount;

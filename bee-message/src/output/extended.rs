@@ -101,7 +101,7 @@ impl ExtendedOutput {
         .union(FeatureBlockFlags::TIMELOCK)
         .union(FeatureBlockFlags::EXPIRATION)
         .union(FeatureBlockFlags::METADATA)
-        .union(FeatureBlockFlags::INDEXATION);
+        .union(FeatureBlockFlags::TAG);
 
     fn validate_feature_blocks<const VERIFY: bool>(blocks: &FeatureBlocks) -> Result<(), Error> {
         if VERIFY {

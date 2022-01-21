@@ -276,7 +276,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of tagged data payloads of the `NodeMetrics`.
-    pub fn indexation_payload_inc(&self, value: u64) -> u64 {
+    pub fn tagged_data_payload_inc(&self, value: u64) -> u64 {
         self.tagged_data_payloads.fetch_add(value, Ordering::SeqCst)
     }
 
@@ -358,7 +358,7 @@ mod tests {
         metrics.receipts_inc(1);
         metrics.transaction_payloads_inc(1);
         metrics.milestone_payloads_inc(1);
-        metrics.indexation_payload_inc(1);
+        metrics.tagged_data_payload_inc(1);
         metrics.snapshots_inc(1);
         metrics.prunings_inc(1);
 

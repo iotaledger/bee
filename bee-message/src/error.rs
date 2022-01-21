@@ -5,8 +5,8 @@ use crate::{
     input::UtxoInput,
     output::{
         feature_block::FeatureBlockCount, AliasId, DustDepositAmount, ImmutableMetadataLength,
-        IndexationFeatureBlockLength, MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputIndex,
-        StateMetadataLength, TreasuryOutputAmount,
+        MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputIndex, StateMetadataLength, TagFeatureBlockLength,
+        TreasuryOutputAmount,
     },
     parent::ParentCount,
     payload::{
@@ -43,7 +43,7 @@ pub enum Error {
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength { expected: usize, actual: usize },
     InvalidTaggedDataLength(<TaggedDataLength as TryFrom<usize>>::Error),
-    InvalidIndexationFeatureBlockLength(<IndexationFeatureBlockLength as TryFrom<usize>>::Error),
+    InvalidTagFeatureBlockLength(<TagFeatureBlockLength as TryFrom<usize>>::Error),
     InvalidTagLength(<TagLength as TryFrom<usize>>::Error),
     InvalidInputKind(u8),
     InvalidInputCount(<InputCount as TryFrom<usize>>::Error),
@@ -138,8 +138,8 @@ impl fmt::Display for Error {
             Error::InvalidTaggedDataLength(length) => {
                 write!(f, "invalid tagged data length {}.", length)
             }
-            Error::InvalidIndexationFeatureBlockLength(length) => {
-                write!(f, "invalid indexation feature block length {}.", length)
+            Error::InvalidTagFeatureBlockLength(length) => {
+                write!(f, "invalid tag feature block length {}.", length)
             }
             Error::InvalidTagLength(length) => {
                 write!(f, "invalid tag length {}.", length)
