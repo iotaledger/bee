@@ -13,7 +13,6 @@ use bee_message::{
     address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::AsIterator, system::System};
@@ -116,23 +115,6 @@ impl<'a> StorageIterator<'a, (MessageId, MessageId), ()> {
                 MessageId::unpack_unverified(&mut parent).unwrap(),
                 // Unpacking from storage is fine.
                 MessageId::unpack_unverified(&mut child).unwrap(),
-            ),
-            (),
-        )
-    }
-}
-
-impl<'a> StorageIterator<'a, (PaddedIndex, MessageId), ()> {
-    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((PaddedIndex, MessageId), ()) {
-        let (index, mut message_id) = key.split_at(PaddedIndex::LENGTH);
-        // Unpacking from storage is fine.
-        let index: [u8; PaddedIndex::LENGTH] = index.try_into().unwrap();
-
-        (
-            (
-                PaddedIndex::new(index),
-                // Unpacking from storage is fine.
-                MessageId::unpack_unverified(&mut message_id).unwrap(),
             ),
             (),
         )
@@ -292,7 +274,6 @@ impl_iter!(u8, System, CF_SYSTEM);
 impl_iter!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_iter!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_iter!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
-impl_iter!((PaddedIndex, MessageId), (), CF_INDEX_TO_MESSAGE_ID);
 impl_iter!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_iter!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_iter!(Unspent, (), CF_OUTPUT_ID_UNSPENT);

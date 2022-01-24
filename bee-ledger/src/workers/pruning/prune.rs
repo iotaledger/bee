@@ -84,7 +84,6 @@ pub async fn prune<S: StorageBackend>(
         metrics.new_seps = new_seps.len();
         metrics.messages = confirmed_data_metrics.prunable_messages;
         metrics.edges = confirmed_data_metrics.prunable_edges;
-        metrics.indexations = confirmed_data_metrics.prunable_indexations;
 
         // Keep still relevant SEPs.
         //
@@ -142,7 +141,6 @@ pub async fn prune<S: StorageBackend>(
 
         metrics.messages += unconfirmed_data_metrics.prunable_messages;
         metrics.edges += unconfirmed_data_metrics.prunable_edges;
-        metrics.indexations += unconfirmed_data_metrics.prunable_indexations;
 
         // Remove old SEPs from the storage.
         //

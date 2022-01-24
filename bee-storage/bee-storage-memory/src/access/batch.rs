@@ -13,7 +13,6 @@ use bee_message::{
     address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{
@@ -30,7 +29,6 @@ pub struct StorageBatch {
     message_id_to_message: TableBatch<MessageId, Message>,
     message_id_to_metadata: TableBatch<MessageId, MessageMetadata>,
     message_id_to_message_id: TableBatch<(MessageId, MessageId), ()>,
-    index_to_message_id: TableBatch<(PaddedIndex, MessageId), ()>,
     output_id_to_created_output: TableBatch<OutputId, CreatedOutput>,
     output_id_to_consumed_output: TableBatch<OutputId, ConsumedOutput>,
     output_id_unspent: TableBatch<Unspent, ()>,
@@ -64,7 +62,6 @@ impl BatchBuilder for Storage {
         apply_batch!(message_id_to_message);
         apply_batch!(message_id_to_metadata);
         apply_batch!(message_id_to_message_id);
-        apply_batch!(index_to_message_id);
         apply_batch!(output_id_to_created_output);
         apply_batch!(output_id_to_consumed_output);
         apply_batch!(output_id_unspent);
@@ -108,7 +105,6 @@ macro_rules! impl_batch {
 impl_batch!(MessageId, Message, message_id_to_message);
 impl_batch!(MessageId, MessageMetadata, message_id_to_metadata);
 impl_batch!((MessageId, MessageId), (), message_id_to_message_id);
-impl_batch!((PaddedIndex, MessageId), (), index_to_message_id);
 impl_batch!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_batch!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_batch!(Unspent, (), output_id_unspent);

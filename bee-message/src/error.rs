@@ -5,13 +5,13 @@ use crate::{
     input::UtxoInput,
     output::{
         feature_block::FeatureBlockCount, AliasId, DustDepositAmount, ImmutableMetadataLength,
-        IndexationFeatureBlockLength, MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputIndex,
-        StateMetadataLength, TreasuryOutputAmount,
+        MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputIndex, StateMetadataLength, TagFeatureBlockLength,
+        TreasuryOutputAmount,
     },
     parent::ParentCount,
     payload::{
-        IndexationDataLength, IndexationIndexLength, InputCount, MigratedFundsAmount, OutputCount, PublicKeyCount,
-        ReceiptFundsCount, SignatureCount,
+        InputCount, MigratedFundsAmount, OutputCount, PublicKeyCount, ReceiptFundsCount, SignatureCount, TagLength,
+        TaggedDataLength,
     },
     unlock_block::{AliasIndex, NftIndex, ReferenceIndex, UnlockBlockCount},
 };
@@ -42,9 +42,9 @@ pub enum Error {
     InvalidFoundryOutputSupply { circulating: U256, max: U256 },
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength { expected: usize, actual: usize },
-    InvalidIndexationDataLength(<IndexationDataLength as TryFrom<usize>>::Error),
-    InvalidIndexationFeatureBlockLength(<IndexationFeatureBlockLength as TryFrom<usize>>::Error),
-    InvalidIndexationIndexLength(<IndexationIndexLength as TryFrom<usize>>::Error),
+    InvalidTaggedDataLength(<TaggedDataLength as TryFrom<usize>>::Error),
+    InvalidTagFeatureBlockLength(<TagFeatureBlockLength as TryFrom<usize>>::Error),
+    InvalidTagLength(<TagLength as TryFrom<usize>>::Error),
     InvalidInputKind(u8),
     InvalidInputCount(<InputCount as TryFrom<usize>>::Error),
     InvalidOutputCount(<OutputCount as TryFrom<usize>>::Error),
@@ -135,14 +135,14 @@ impl fmt::Display for Error {
             Error::InvalidHexadecimalLength { expected, actual } => {
                 write!(f, "invalid hexadecimal length: expected {} got {}.", expected, actual)
             }
-            Error::InvalidIndexationDataLength(length) => {
-                write!(f, "invalid indexation data length {}.", length)
+            Error::InvalidTaggedDataLength(length) => {
+                write!(f, "invalid tagged data length {}.", length)
             }
-            Error::InvalidIndexationFeatureBlockLength(length) => {
-                write!(f, "invalid indexation feature block length {}.", length)
+            Error::InvalidTagFeatureBlockLength(length) => {
+                write!(f, "invalid tag feature block length {}.", length)
             }
-            Error::InvalidIndexationIndexLength(length) => {
-                write!(f, "invalid indexation index length {}.", length)
+            Error::InvalidTagLength(length) => {
+                write!(f, "invalid tag length {}.", length)
             }
             Error::InvalidInputKind(k) => write!(f, "invalid input kind: {}.", k),
             Error::InvalidInputCount(count) => write!(f, "invalid input count: {}.", count),

@@ -132,7 +132,7 @@ impl NftOutput {
         .union(FeatureBlockFlags::TIMELOCK)
         .union(FeatureBlockFlags::EXPIRATION)
         .union(FeatureBlockFlags::METADATA)
-        .union(FeatureBlockFlags::INDEXATION);
+        .union(FeatureBlockFlags::TAG);
 
     /// Creates a new [`NftOutput`].
     #[inline(always)]

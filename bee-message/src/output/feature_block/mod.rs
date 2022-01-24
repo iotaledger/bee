@@ -3,21 +3,21 @@
 
 mod dust_deposit_return;
 mod expiration;
-mod indexation;
 mod issuer;
 mod metadata;
 mod sender;
+mod tag;
 mod timelock;
 
 pub(crate) use dust_deposit_return::DustDepositAmount;
 pub use dust_deposit_return::DustDepositReturnFeatureBlock;
 pub use expiration::ExpirationFeatureBlock;
-pub use indexation::IndexationFeatureBlock;
-pub(crate) use indexation::IndexationFeatureBlockLength;
 pub use issuer::IssuerFeatureBlock;
 pub use metadata::MetadataFeatureBlock;
 pub(crate) use metadata::MetadataFeatureBlockLength;
 pub use sender::SenderFeatureBlock;
+pub use tag::TagFeatureBlock;
+pub(crate) use tag::TagFeatureBlockLength;
 pub use timelock::TimelockFeatureBlock;
 
 use crate::Error;
@@ -56,9 +56,9 @@ pub enum FeatureBlock {
     /// A metadata feature block.
     #[packable(tag = MetadataFeatureBlock::KIND)]
     Metadata(MetadataFeatureBlock),
-    /// An indexation feature block.
-    #[packable(tag = IndexationFeatureBlock::KIND)]
-    Indexation(IndexationFeatureBlock),
+    /// A tag feature block.
+    #[packable(tag = TagFeatureBlock::KIND)]
+    Tag(TagFeatureBlock),
 }
 
 impl FeatureBlock {
@@ -71,7 +71,7 @@ impl FeatureBlock {
             Self::Timelock(_) => TimelockFeatureBlock::KIND,
             Self::Expiration(_) => ExpirationFeatureBlock::KIND,
             Self::Metadata(_) => MetadataFeatureBlock::KIND,
-            Self::Indexation(_) => IndexationFeatureBlock::KIND,
+            Self::Tag(_) => TagFeatureBlock::KIND,
         }
     }
 
@@ -84,7 +84,7 @@ impl FeatureBlock {
             Self::Timelock(_) => FeatureBlockFlags::TIMELOCK,
             Self::Expiration(_) => FeatureBlockFlags::EXPIRATION,
             Self::Metadata(_) => FeatureBlockFlags::METADATA,
-            Self::Indexation(_) => FeatureBlockFlags::INDEXATION,
+            Self::Tag(_) => FeatureBlockFlags::TAG,
         }
     }
 }
@@ -214,7 +214,7 @@ bitflags! {
         const EXPIRATION = 1 << ExpirationFeatureBlock::KIND;
         /// Signals the presence of a [`MetadataFeatureBlock`].
         const METADATA = 1 << MetadataFeatureBlock::KIND;
-        /// Signals the presence of a [`IndexationFeatureBlock`].
-        const INDEXATION = 1 << IndexationFeatureBlock::KIND;
+        /// Signals the presence of a [`TagFeatureBlock`].
+        const TAG = 1 << TagFeatureBlock::KIND;
     }
 }

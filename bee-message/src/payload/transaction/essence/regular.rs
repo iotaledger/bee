@@ -180,7 +180,7 @@ fn validate_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error>
 
 fn validate_payload<const VERIFY: bool>(payload: &OptionalPayload) -> Result<(), Error> {
     match &payload.0 {
-        Some(Payload::Indexation(_)) | None => Ok(()),
+        Some(Payload::TaggedData(_)) | None => Ok(()),
         Some(payload) => Err(Error::InvalidPayloadKind(payload.kind())),
     }
 }

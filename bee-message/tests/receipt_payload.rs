@@ -9,7 +9,7 @@ use bee_message::{
     payload::{
         milestone::MilestoneId,
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
-        IndexationPayload, Payload, TreasuryTransactionPayload,
+        Payload, TaggedDataPayload, TreasuryTransactionPayload,
     },
     Error,
 };
@@ -121,12 +121,12 @@ fn new_invalid_payload_kind() {
             )
             .unwrap(),
         ],
-        Payload::from(IndexationPayload::new(rand_bytes(32), vec![]).unwrap()),
+        Payload::from(TaggedDataPayload::new(rand_bytes(32), vec![]).unwrap()),
     );
 
     assert!(matches!(
         receipt,
-        Err(Error::InvalidPayloadKind(IndexationPayload::KIND))
+        Err(Error::InvalidPayloadKind(TaggedDataPayload::KIND))
     ));
 }
 

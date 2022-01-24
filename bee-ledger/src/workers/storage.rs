@@ -15,7 +15,6 @@ use bee_message::{
     address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::{Output, OutputId},
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{
@@ -42,7 +41,6 @@ pub trait StorageBackend:
     + Batch<(bool, TreasuryOutput), ()>
     + Batch<SolidEntryPoint, MilestoneIndex>
     + Batch<(MilestoneIndex, UnreferencedMessage), ()>
-    + Batch<(PaddedIndex, MessageId), ()>
     + Batch<(MessageId, MessageId), ()>
     + Batch<MessageId, Message>
     + Batch<MessageId, MessageMetadata>
@@ -80,7 +78,6 @@ impl<T> StorageBackend for T where
         + Batch<(bool, TreasuryOutput), ()>
         + Batch<SolidEntryPoint, MilestoneIndex>
         + Batch<(MilestoneIndex, UnreferencedMessage), ()>
-        + Batch<(PaddedIndex, MessageId), ()>
         + Batch<(MessageId, MessageId), ()>
         + Batch<MessageId, Message>
         + Batch<MessageId, MessageMetadata>

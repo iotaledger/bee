@@ -13,7 +13,6 @@ use bee_message::{
     address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::Delete, backend::StorageBackend};
@@ -45,17 +44,6 @@ impl Delete<(MessageId, MessageId), ()> for Storage {
         key.extend_from_slice(child.as_ref());
 
         self.inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE_ID)?.remove(key)?;
-
-        Ok(())
-    }
-}
-
-impl Delete<(PaddedIndex, MessageId), ()> for Storage {
-    fn delete(&self, (index, message_id): &(PaddedIndex, MessageId)) -> Result<(), <Self as StorageBackend>::Error> {
-        let mut key = index.as_ref().to_vec();
-        key.extend_from_slice(message_id.as_ref());
-
-        self.inner.open_tree(TREE_INDEX_TO_MESSAGE_ID)?.remove(key)?;
 
         Ok(())
     }
