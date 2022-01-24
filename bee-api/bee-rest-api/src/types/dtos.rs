@@ -9,9 +9,9 @@ use bee_message::{
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
     output::{
-        feature_block::{
-            DustDepositReturnFeatureBlock, ExpirationFeatureBlock, FeatureBlock, IssuerFeatureBlock,
-            MetadataFeatureBlock, SenderFeatureBlock, TagFeatureBlock, TimelockFeatureBlock,
+        feature_block::{FeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock, TagFeatureBlock},
+        unlock_condition::{
+            DustDepositReturnUnlockCondition, ExpirationUnlockCondition, TimelockUnlockCondition, UnlockCondition,
         },
         AliasId, AliasOutput, AliasOutputBuilder, ExtendedOutput, ExtendedOutputBuilder, FoundryOutput,
         FoundryOutputBuilder, NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme,
@@ -795,17 +795,21 @@ impl TryFrom<&TokenIdDto> for TokenId {
 pub struct U256Dto(pub String);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum UnlockConditionDto {
+    /// A dust deposit return unlock condition.
+    DustDepositReturn(DustDepositReturnUnlockConditionDto),
+    /// A timelock unlock condition.
+    Timelock(TimelockUnlockConditionDto),
+    /// An expiration unlock condition.
+    Expiration(ExpirationUnlockConditionDto),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum FeatureBlockDto {
     /// A sender feature block.
     Sender(SenderFeatureBlockDto),
     /// An issuer feature block.
     Issuer(IssuerFeatureBlockDto),
-    /// A dust deposit return feature block.
-    DustDepositReturn(DustDepositReturnFeatureBlockDto),
-    /// A timelock feature block.
-    Timelock(TimelockFeatureBlockDto),
-    /// An expiration feature block.
-    Expiration(ExpirationFeatureBlockDto),
     /// A metadata feature block.
     Metadata(MetadataFeatureBlockDto),
     /// A tag feature block.
@@ -813,37 +817,64 @@ pub enum FeatureBlockDto {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct DustDepositReturnUnlockConditionDto(pub u64);
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TimelockUnlockConditionDto {
+    pub index: MilestoneIndex,
+    pub timestamp: u32,
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ExpirationUnlockConditionDto {
+    pub index: MilestoneIndex,
+    pub timestamp: u32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SenderFeatureBlockDto(pub AddressDto);
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IssuerFeatureBlockDto(pub AddressDto);
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct DustDepositReturnFeatureBlockDto(pub u64);
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TimelockFeatureBlockDto {
-    pub index: MilestoneIndex,
-    pub timestamp: u32,
-}
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ExpirationFeatureBlockDto {
-    pub index: MilestoneIndex,
-    pub timestamp: u32,
-}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MetadataFeatureBlockDto(pub String);
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TagFeatureBlockDto(pub String);
 
+impl UnlockConditionDto {
+    /// Return the unlock condition kind of a `UnlockConditionDto`.
+    pub fn kind(&self) -> u8 {
+        match self {
+            Self::DustDepositReturn(_) => DustDepositReturnUnlockCondition::KIND,
+            Self::Timelock(_) => TimelockUnlockCondition::KIND,
+            Self::Expiration(_) => ExpirationUnlockCondition::KIND,
+        }
+    }
+}
+
 impl FeatureBlockDto {
-    /// Return the output kind of an `Output`.
+    /// Return the feature block kind of a `FeatureBlockDto`.
     pub fn kind(&self) -> u8 {
         match self {
             Self::Sender(_) => SenderFeatureBlock::KIND,
             Self::Issuer(_) => IssuerFeatureBlock::KIND,
-            Self::DustDepositReturn(_) => DustDepositReturnFeatureBlock::KIND,
-            Self::Timelock(_) => TimelockFeatureBlock::KIND,
-            Self::Expiration(_) => ExpirationFeatureBlock::KIND,
             Self::Metadata(_) => MetadataFeatureBlock::KIND,
             Self::Tag(_) => TagFeatureBlock::KIND,
+        }
+    }
+}
+
+impl From<&UnlockCondition> for UnlockConditionDto {
+    fn from(value: &UnlockCondition) -> Self {
+        match value {
+            UnlockCondition::DustDepositReturn(v) => {
+                Self::DustDepositReturn(DustDepositReturnUnlockConditionDto(v.amount()))
+            }
+            UnlockCondition::Timelock(v) => Self::Timelock(TimelockUnlockConditionDto {
+                index: v.index(),
+                timestamp: v.timestamp(),
+            }),
+            UnlockCondition::Expiration(v) => Self::Expiration(ExpirationUnlockConditionDto {
+                index: v.index(),
+                timestamp: v.timestamp(),
+            }),
         }
     }
 }
@@ -853,18 +884,23 @@ impl From<&FeatureBlock> for FeatureBlockDto {
         match value {
             FeatureBlock::Sender(v) => Self::Sender(SenderFeatureBlockDto(v.address().into())),
             FeatureBlock::Issuer(v) => Self::Issuer(IssuerFeatureBlockDto(v.address().into())),
-            FeatureBlock::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnFeatureBlockDto(v.amount())),
-            FeatureBlock::Timelock(v) => Self::Timelock(TimelockFeatureBlockDto {
-                index: v.index(),
-                timestamp: v.timestamp(),
-            }),
-            FeatureBlock::Expiration(v) => Self::Expiration(ExpirationFeatureBlockDto {
-                index: v.index(),
-                timestamp: v.timestamp(),
-            }),
             FeatureBlock::Metadata(v) => Self::Metadata(MetadataFeatureBlockDto(v.to_string())),
             FeatureBlock::Tag(v) => Self::Tag(TagFeatureBlockDto(v.to_string())),
         }
+    }
+}
+
+impl TryFrom<&UnlockConditionDto> for UnlockCondition {
+    type Error = Error;
+
+    fn try_from(value: &UnlockConditionDto) -> Result<Self, Self::Error> {
+        Ok(match value {
+            UnlockConditionDto::DustDepositReturn(v) => {
+                Self::DustDepositReturn(DustDepositReturnUnlockCondition::new(v.0)?)
+            }
+            UnlockConditionDto::Timelock(v) => Self::Timelock(TimelockUnlockCondition::new(v.index, v.timestamp)),
+            UnlockConditionDto::Expiration(v) => Self::Expiration(ExpirationUnlockCondition::new(v.index, v.timestamp)),
+        })
     }
 }
 
@@ -875,9 +911,6 @@ impl TryFrom<&FeatureBlockDto> for FeatureBlock {
         Ok(match value {
             FeatureBlockDto::Sender(v) => Self::Sender(SenderFeatureBlock::new((&v.0).try_into()?)),
             FeatureBlockDto::Issuer(v) => Self::Issuer(IssuerFeatureBlock::new((&v.0).try_into()?)),
-            FeatureBlockDto::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnFeatureBlock::new(v.0)?),
-            FeatureBlockDto::Timelock(v) => Self::Timelock(TimelockFeatureBlock::new(v.index, v.timestamp)),
-            FeatureBlockDto::Expiration(v) => Self::Expiration(ExpirationFeatureBlock::new(v.index, v.timestamp)),
             FeatureBlockDto::Metadata(v) => Self::Metadata(MetadataFeatureBlock::new(
                 hex::decode(&v.0).map_err(|_e| Error::InvalidField("MetadataFeatureBlock"))?,
             )?),
