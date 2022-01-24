@@ -141,7 +141,7 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
             log::warn!("Not all spawned tasks were shut down in time: {}.", e);
         }
 
-        log::info!("Flushing data to peer store...");
+        log::debug!("Flushing data to peer store...");
 
         peer_store.delete_all()?;
         peer_store.store_all_active(&active_peers)?;

@@ -57,14 +57,14 @@ where
 {
     let network_id = hash::network_hash(&network_name);
 
-    log::info!("---------------------------------------------------------------------------------------------------");
-    log::info!("WARNING:");
+    log::info!("----------------------------------------------------------------------------------------");
+    log::info!("DISCLAIMER:");
     log::info!("Autopeering will disclose your public IP address to possibly all nodes and entry points.");
-    log::info!("Please disable it if you do not want this to happen!");
-    log::info!("---------------------------------------------------------------------------------------------------");
-    log::info!("Network name/id: {}/{}", network_name.as_ref(), network_id);
-    log::info!("Protocol_version: {}", version);
-    log::info!("Public key: {}", multiaddr::pubkey_to_base58(&local.public_key()));
+    log::info!("Please disable it if you do not want this to happen.");
+    log::info!("----------------------------------------------------------------------------------------");
+    log::debug!("Network name/id: {}/{}", network_name.as_ref(), network_id);
+    log::debug!("Protocol_version: {}", version);
+    log::debug!("Public key: {}", multiaddr::pubkey_to_base58(&local.public_key()));
     log::info!("Bind address: {}", config.bind_addr());
 
     // Create or load a peer store.
