@@ -19,6 +19,8 @@ use fern_logger::LoggerConfig;
 
 /// The config of a Bee full node.
 pub struct FullNodeConfig<S: NodeStorageBackend> {
+    /// The node alias.
+    pub alias: String,
     /// The local entity.
     pub local: Local,
     /// The specification of the network the node wants to participate in.
@@ -49,6 +51,11 @@ pub struct FullNodeConfig<S: NodeStorageBackend> {
 }
 
 impl<S: NodeStorageBackend> FullNodeConfig<S> {
+    /// Returns the alias of the node.
+    pub fn alias(&self) -> &String {
+        &self.alias
+    }
+
     /// Returns the local entity associated with the node.
     pub fn local(&self) -> &Local {
         &self.local
@@ -61,6 +68,7 @@ impl<S: NodeStorageBackend> FullNodeConfig<S> {
 
     pub fn from(local: Local, node_cfg: NodeConfig<S>) -> Self {
         Self {
+            alias: node_cfg.alias,
             local,
             network_spec: node_cfg.network_spec,
             logger_config: node_cfg.logger_config,
@@ -82,6 +90,7 @@ impl<S: NodeStorageBackend> FullNodeConfig<S> {
 impl<S: NodeStorageBackend> Clone for FullNodeConfig<S> {
     fn clone(&self) -> Self {
         Self {
+            alias: self.alias.clone(),
             local: self.local.clone(),
             network_spec: self.network_spec.clone(),
             logger_config: self.logger_config.clone(),

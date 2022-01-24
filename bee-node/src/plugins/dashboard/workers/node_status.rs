@@ -63,7 +63,7 @@ where
                 latest_version: node_info.version.clone(),
                 uptime: uptime.elapsed().as_millis() as u64,
                 node_id: node_config.local().peer_id().to_string(),
-                node_alias: node_config.local().alias().to_string(),
+                node_alias: node_config.alias().to_string(),
                 bech32_hrp: node_config.network_spec().hrp().to_string(),
                 connected_peers_count: 0,
                 current_requested_ms: 0,

@@ -13,14 +13,12 @@ pub struct Local {
     encoded: String,
     /// The local peer identity.
     peer_id: PeerId,
-    /// The local alias.
-    alias: String,
     /// Whether the identity was newly generated.
     is_new: bool,
 }
 
 impl Local {
-    pub fn from_keypair(keypair: Keypair, alias: String) -> Self {
+    pub fn from_keypair(keypair: Keypair) -> Self {
         let encoded = hex::encode(keypair.encode());
         let peer_id = PeerId::from_public_key(PublicKey::Ed25519(keypair.public()));
 
@@ -29,7 +27,6 @@ impl Local {
             encoded,
             peer_id,
             is_new: false,
-            alias,
         }
     }
 
@@ -46,11 +43,6 @@ impl Local {
         self.peer_id
     }
 
-    #[allow(dead_code)]
-    pub(crate) fn alias(&self) -> &str {
-        &self.alias
-    }
-
     pub(crate) fn is_new(&self) -> bool {
         self.is_new
     }
@@ -58,6 +50,6 @@ impl Local {
 
 impl fmt::Display for Local {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "PeerId: {}, Alias: {}", self.peer_id, self.alias)
+        write!(f, "PeerId: {}", self.peer_id)
     }
 }
