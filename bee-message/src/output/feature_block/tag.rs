@@ -32,7 +32,7 @@ impl TryFrom<Vec<u8>> for TagFeatureBlock {
 
 impl TagFeatureBlock {
     /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of an [`TagFeatureBlock`].
-    pub const KIND: u8 = 6;
+    pub const KIND: u8 = 3;
 
     /// Valid lengths for an [`TagFeatureBlock`].
     pub const LENGTH_RANGE: RangeInclusive<u8> = 1..=64;

@@ -36,7 +36,7 @@ impl TryFrom<u64> for DustDepositReturnUnlockCondition {
 
 impl DustDepositReturnUnlockCondition {
     /// The [`UnlockCondition`](crate::output::UnlockCondition) kind of a [`DustDepositReturnUnlockCondition`].
-    pub const KIND: u8 = 2;
+    pub const KIND: u8 = 1;
     /// Valid amounts for a [`DustDepositReturnUnlockCondition`].
     pub const AMOUNT_RANGE: RangeInclusive<u64> = DUST_DEPOSIT_MIN..=IOTA_SUPPLY;
 

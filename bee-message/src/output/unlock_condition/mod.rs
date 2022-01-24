@@ -1,13 +1,19 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod address;
 mod dust_deposit_return;
 mod expiration;
+mod governor_address;
+mod state_controller_address;
 mod timelock;
 
+pub use address::AddressUnlockCondition;
 pub(crate) use dust_deposit_return::DustDepositAmount;
 pub use dust_deposit_return::DustDepositReturnUnlockCondition;
 pub use expiration::ExpirationUnlockCondition;
+pub use governor_address::GovernorAddressUnlockCondition;
+pub use state_controller_address::StateControllerAddressUnlockCondition;
 pub use timelock::TimelockUnlockCondition;
 
 use crate::Error;
@@ -28,6 +34,9 @@ use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 #[packable(unpack_error = Error)]
 #[packable(tag_type = u8, with_error = Error::InvalidUnlockConditionKind)]
 pub enum UnlockCondition {
+    /// An address unlock condition.
+    #[packable(tag = AddressUnlockCondition::KIND)]
+    Address(AddressUnlockCondition),
     /// A dust deposit return unlock condition.
     #[packable(tag = DustDepositReturnUnlockCondition::KIND)]
     DustDepositReturn(DustDepositReturnUnlockCondition),
@@ -37,24 +46,36 @@ pub enum UnlockCondition {
     /// An expiration unlock condition.
     #[packable(tag = ExpirationUnlockCondition::KIND)]
     Expiration(ExpirationUnlockCondition),
+    /// A state controller address unlock condition.
+    #[packable(tag = StateControllerAddressUnlockCondition::KIND)]
+    StateControllerAddress(StateControllerAddressUnlockCondition),
+    /// A governor address unlock condition.
+    #[packable(tag = GovernorAddressUnlockCondition::KIND)]
+    GovernorAddress(GovernorAddressUnlockCondition),
 }
 
 impl UnlockCondition {
     /// Return the output kind of an `Output`.
     pub fn kind(&self) -> u8 {
         match self {
+            Self::Address(_) => AddressUnlockCondition::KIND,
             Self::DustDepositReturn(_) => DustDepositReturnUnlockCondition::KIND,
             Self::Timelock(_) => TimelockUnlockCondition::KIND,
             Self::Expiration(_) => ExpirationUnlockCondition::KIND,
+            Self::StateControllerAddress(_) => StateControllerAddressUnlockCondition::KIND,
+            Self::GovernorAddress(_) => GovernorAddressUnlockCondition::KIND,
         }
     }
 
     /// Returns the [`UnlockConditionFlags`] for the given [`UnlockCondition`].
     pub(crate) fn flag(&self) -> UnlockConditionFlags {
         match self {
+            Self::Address(_) => UnlockConditionFlags::ADDRESS,
             Self::DustDepositReturn(_) => UnlockConditionFlags::DUST_DEPOSIT_RETURN,
             Self::Timelock(_) => UnlockConditionFlags::TIMELOCK,
             Self::Expiration(_) => UnlockConditionFlags::EXPIRATION,
+            Self::StateControllerAddress(_) => UnlockConditionFlags::STATE_CONTROLLER_ADDRESS,
+            Self::GovernorAddress(_) => UnlockConditionFlags::GOVERNOR_ADDRESS,
         }
     }
 }
@@ -153,11 +174,17 @@ pub(crate) fn validate_allowed_unlock_conditions(
 bitflags! {
     /// A bitflags-based representation of the set of active unlock conditions.
     pub(crate) struct UnlockConditionFlags: u16 {
+        /// Signals the presence of an [`AddressUnlockCondition`].
+        const ADDRESS = 1 << AddressUnlockCondition::KIND;
         /// Signals the presence of a [`DustDepositReturnUnlockCondition`].
         const DUST_DEPOSIT_RETURN = 1 << DustDepositReturnUnlockCondition::KIND;
         /// Signals the presence of a [`TimelockUnlockCondition`].
         const TIMELOCK = 1 << TimelockUnlockCondition::KIND;
         /// Signals the presence of a [`ExpirationUnlockCondition`].
         const EXPIRATION = 1 << ExpirationUnlockCondition::KIND;
+        /// Signals the presence of a [`StateControllerAddressUnlockCondition`].
+        const STATE_CONTROLLER_ADDRESS = 1 << StateControllerAddressUnlockCondition::KIND;
+        /// Signals the presence of a [`GovernorAddressUnlockCondition`].
+        const GOVERNOR_ADDRESS = 1 << GovernorAddressUnlockCondition::KIND;
     }
 }

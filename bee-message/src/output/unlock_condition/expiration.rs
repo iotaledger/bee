@@ -23,7 +23,7 @@ pub struct ExpirationUnlockCondition {
 
 impl ExpirationUnlockCondition {
     /// The [`UnlockCondition`](crate::output::UnlockCondition) kind of an [`ExpirationUnlockCondition`].
-    pub const KIND: u8 = 4;
+    pub const KIND: u8 = 3;
 
     /// Creates a new [`ExpirationUnlockCondition`].
     #[inline(always)]

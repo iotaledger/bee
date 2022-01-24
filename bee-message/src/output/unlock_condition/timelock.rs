@@ -17,7 +17,7 @@ pub struct TimelockUnlockCondition {
 
 impl TimelockUnlockCondition {
     /// The [`UnlockCondition`](crate::output::UnlockCondition) kind of a [`TimelockUnlockCondition`].
-    pub const KIND: u8 = 3;
+    pub const KIND: u8 = 2;
 
     /// Creates a new [`TimelockUnlockCondition`].
     #[inline(always)]
