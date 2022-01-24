@@ -74,8 +74,8 @@ fn packed_len() {
     let tagged_data =
         TaggedDataPayload::new(rand_bytes(10), vec![0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).unwrap();
 
-    assert_eq!(tagged_data.packed_len(), 10 + 1 + 4 + 8);
-    assert_eq!(tagged_data.pack_to_vec().len(), 10 + 1 + 4 + 8);
+    assert_eq!(tagged_data.packed_len(), 1 + 10 + 4 + 8);
+    assert_eq!(tagged_data.pack_to_vec().len(), 1 + 10 + 4 + 8);
 }
 
 #[test]
