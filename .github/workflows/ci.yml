@@ -100,7 +100,6 @@ jobs:
       matrix:
         rust: [nightly, beta, stable]
         crates: [
-          "bee-message",
           "bee-ternary",
         ]
 
