@@ -4,9 +4,9 @@
 use crate::{
     input::UtxoInput,
     output::{
-        feature_block::FeatureBlockCount, AliasId, DustDepositAmount, ImmutableMetadataLength,
-        MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputIndex, StateMetadataLength, TagFeatureBlockLength,
-        TreasuryOutputAmount,
+        feature_block::FeatureBlockCount, unlock_condition::UnlockConditionCount, AliasId, DustDepositAmount,
+        ImmutableMetadataLength, MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputIndex, StateMetadataLength,
+        TagFeatureBlockLength, TreasuryOutputAmount,
     },
     parent::ParentCount,
     payload::{
@@ -73,6 +73,8 @@ pub enum Error {
     InvalidUnlockBlockReference(u16),
     InvalidUnlockBlockAlias(u16),
     InvalidUnlockBlockNft(u16),
+    InvalidUnlockConditionCount(<UnlockConditionCount as TryFrom<usize>>::Error),
+    InvalidUnlockConditionKind(u8),
     Io(std::io::Error),
     MigratedFundsNotSorted,
     MilestoneInvalidPublicKeyCount(<PublicKeyCount as TryFrom<usize>>::Error),
@@ -92,6 +94,8 @@ pub enum Error {
     SignaturePublicKeyMismatch { expected: String, actual: String },
     TailTransactionHashNotUnique { previous: usize, current: usize },
     UnallowedFeatureBlock { index: usize, kind: u8 },
+    UnallowedUnlockCondition { index: usize, kind: u8 },
+    UnlockConditionsNotUniqueSorted,
 }
 
 impl std::error::Error for Error {}
@@ -190,6 +194,8 @@ impl fmt::Display for Error {
             Error::InvalidUnlockBlockNft(index) => {
                 write!(f, "invalid unlock block nft: {0}", index)
             }
+            Error::InvalidUnlockConditionCount(count) => write!(f, "invalid unlock condition count: {}.", count),
+            Error::InvalidUnlockConditionKind(k) => write!(f, "invalid unlock condition kind: {}.", k),
             Error::Io(e) => write!(f, "i/o error happened: {}.", e),
             Error::MigratedFundsNotSorted => {
                 write!(f, "migrated funds are not sorted.")
@@ -249,6 +255,10 @@ impl fmt::Display for Error {
             Error::UnallowedFeatureBlock { index, kind } => {
                 write!(f, "unallowed feature block at index {} with kind {}.", index, kind)
             }
+            Error::UnallowedUnlockCondition { index, kind } => {
+                write!(f, "unallowed unlock condition at index {} with kind {}.", index, kind)
+            }
+            Error::UnlockConditionsNotUniqueSorted => write!(f, "unlock conditions are not unique and/or sorted."),
         }
     }
 }

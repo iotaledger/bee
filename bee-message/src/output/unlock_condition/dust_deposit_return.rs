@@ -11,8 +11,8 @@ use packable::bounded::BoundedU64;
 use core::ops::RangeInclusive;
 
 pub(crate) type DustDepositAmount = BoundedU64<
-    { *DustDepositReturnFeatureBlock::AMOUNT_RANGE.start() },
-    { *DustDepositReturnFeatureBlock::AMOUNT_RANGE.end() },
+    { *DustDepositReturnUnlockCondition::AMOUNT_RANGE.start() },
+    { *DustDepositReturnUnlockCondition::AMOUNT_RANGE.end() },
 >;
 
 /// Defines the amount of IOTAs used as dust deposit that have to be returned to the sender
@@ -20,13 +20,13 @@ pub(crate) type DustDepositAmount = BoundedU64<
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = Error::InvalidDustDepositAmount)]
-pub struct DustDepositReturnFeatureBlock(
+pub struct DustDepositReturnUnlockCondition(
     // Amount of IOTA coins the consuming transaction should deposit to the [`Address`](crate::address::Address)
-    // defined in [`SenderFeatureBlock`].
+    // defined in [`SenderUnlockCondition`].
     DustDepositAmount,
 );
 
-impl TryFrom<u64> for DustDepositReturnFeatureBlock {
+impl TryFrom<u64> for DustDepositReturnUnlockCondition {
     type Error = Error;
 
     fn try_from(amount: u64) -> Result<Self, Self::Error> {
@@ -34,13 +34,13 @@ impl TryFrom<u64> for DustDepositReturnFeatureBlock {
     }
 }
 
-impl DustDepositReturnFeatureBlock {
-    /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of a [`DustDepositReturnFeatureBlock`].
+impl DustDepositReturnUnlockCondition {
+    /// The [`UnlockCondition`](crate::output::UnlockCondition) kind of a [`DustDepositReturnUnlockCondition`].
     pub const KIND: u8 = 2;
-    /// Valid amounts for a [`DustDepositReturnFeatureBlock`].
+    /// Valid amounts for a [`DustDepositReturnUnlockCondition`].
     pub const AMOUNT_RANGE: RangeInclusive<u64> = DUST_DEPOSIT_MIN..=IOTA_SUPPLY;
 
-    /// Creates a new [`DustDepositReturnFeatureBlock`].
+    /// Creates a new [`DustDepositReturnUnlockCondition`].
     #[inline(always)]
     pub fn new(amount: u64) -> Result<Self, Error> {
         Self::try_from(amount)

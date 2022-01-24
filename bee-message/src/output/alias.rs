@@ -5,6 +5,7 @@ use crate::{
     address::Address,
     output::{
         feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
+        unlock_condition::UnlockConditionFlags,
         AliasId, NativeToken, NativeTokens,
     },
     Error,
@@ -169,6 +170,8 @@ impl AliasOutput {
     /// Maximum possible length in bytes of the state metadata.
     pub const STATE_METADATA_LENGTH_MAX: u32 = 1024;
 
+    /// The set of allowed [`UnlockCondition`]s for an [`AliasOutput`].
+    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::empty();
     /// The set of allowed [`FeatureBlock`]s for an [`AliasOutput`].
     const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
         .union(FeatureBlockFlags::ISSUER)

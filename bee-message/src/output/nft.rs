@@ -5,6 +5,7 @@ use crate::{
     address::Address,
     output::{
         feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
+        unlock_condition::UnlockConditionFlags,
         NativeToken, NativeTokens, NftId,
     },
     Error,
@@ -125,12 +126,13 @@ impl NftOutput {
     ///
     pub const IMMUTABLE_METADATA_LENGTH_MAX: u32 = 1024;
 
+    /// The set of allowed [`UnlockCondition`]s for an [`NftOutput`].
+    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::DUST_DEPOSIT_RETURN
+        .union(UnlockConditionFlags::TIMELOCK)
+        .union(UnlockConditionFlags::EXPIRATION);
     /// The set of allowed [`FeatureBlock`]s for an [`NftOutput`].
     const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
         .union(FeatureBlockFlags::ISSUER)
-        .union(FeatureBlockFlags::DUST_DEPOSIT_RETURN)
-        .union(FeatureBlockFlags::TIMELOCK)
-        .union(FeatureBlockFlags::EXPIRATION)
         .union(FeatureBlockFlags::METADATA)
         .union(FeatureBlockFlags::TAG);
 

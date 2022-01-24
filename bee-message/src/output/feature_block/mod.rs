@@ -1,24 +1,17 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod dust_deposit_return;
-mod expiration;
 mod issuer;
 mod metadata;
 mod sender;
 mod tag;
-mod timelock;
 
-pub(crate) use dust_deposit_return::DustDepositAmount;
-pub use dust_deposit_return::DustDepositReturnFeatureBlock;
-pub use expiration::ExpirationFeatureBlock;
 pub use issuer::IssuerFeatureBlock;
 pub use metadata::MetadataFeatureBlock;
 pub(crate) use metadata::MetadataFeatureBlockLength;
 pub use sender::SenderFeatureBlock;
 pub use tag::TagFeatureBlock;
 pub(crate) use tag::TagFeatureBlockLength;
-pub use timelock::TimelockFeatureBlock;
 
 use crate::Error;
 
@@ -44,15 +37,6 @@ pub enum FeatureBlock {
     /// An issuer feature block.
     #[packable(tag = IssuerFeatureBlock::KIND)]
     Issuer(IssuerFeatureBlock),
-    /// A dust deposit return feature block.
-    #[packable(tag = DustDepositReturnFeatureBlock::KIND)]
-    DustDepositReturn(DustDepositReturnFeatureBlock),
-    /// A timelock feature block.
-    #[packable(tag = TimelockFeatureBlock::KIND)]
-    Timelock(TimelockFeatureBlock),
-    /// An expiration feature block.
-    #[packable(tag = ExpirationFeatureBlock::KIND)]
-    Expiration(ExpirationFeatureBlock),
     /// A metadata feature block.
     #[packable(tag = MetadataFeatureBlock::KIND)]
     Metadata(MetadataFeatureBlock),
@@ -67,9 +51,6 @@ impl FeatureBlock {
         match self {
             Self::Sender(_) => SenderFeatureBlock::KIND,
             Self::Issuer(_) => IssuerFeatureBlock::KIND,
-            Self::DustDepositReturn(_) => DustDepositReturnFeatureBlock::KIND,
-            Self::Timelock(_) => TimelockFeatureBlock::KIND,
-            Self::Expiration(_) => ExpirationFeatureBlock::KIND,
             Self::Metadata(_) => MetadataFeatureBlock::KIND,
             Self::Tag(_) => TagFeatureBlock::KIND,
         }
@@ -80,9 +61,6 @@ impl FeatureBlock {
         match self {
             Self::Sender(_) => FeatureBlockFlags::SENDER,
             Self::Issuer(_) => FeatureBlockFlags::ISSUER,
-            Self::DustDepositReturn(_) => FeatureBlockFlags::DUST_DEPOSIT_RETURN,
-            Self::Timelock(_) => FeatureBlockFlags::TIMELOCK,
-            Self::Expiration(_) => FeatureBlockFlags::EXPIRATION,
             Self::Metadata(_) => FeatureBlockFlags::METADATA,
             Self::Tag(_) => FeatureBlockFlags::TAG,
         }
@@ -110,7 +88,7 @@ impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
 
 impl FeatureBlocks {
     ///
-    pub const COUNT_MAX: u8 = 9;
+    pub const COUNT_MAX: u8 = 4;
 
     /// Creates a new `FeatureBlocks`.
     pub fn new(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Error> {
@@ -127,8 +105,7 @@ impl FeatureBlocks {
     fn validate_feature_blocks<const VERIFY: bool>(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
         if VERIFY {
             // Sort is obviously fine now but uniqueness still needs to be checked.
-            validate_unique_sorted(feature_blocks)?;
-            validate_dependencies(feature_blocks)
+            validate_unique_sorted(feature_blocks)
         } else {
             Ok(())
         }
@@ -166,24 +143,6 @@ fn validate_unique_sorted(feature_blocks: &[FeatureBlock]) -> Result<(), Error> 
     Ok(())
 }
 
-#[inline]
-fn validate_dependencies(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
-    if (feature_blocks
-        .binary_search_by_key(&DustDepositReturnFeatureBlock::KIND, FeatureBlock::kind)
-        .is_ok()
-        || feature_blocks
-            .binary_search_by_key(&ExpirationFeatureBlock::KIND, FeatureBlock::kind)
-            .is_ok())
-        && feature_blocks
-            .binary_search_by_key(&SenderFeatureBlock::KIND, FeatureBlock::kind)
-            .is_err()
-    {
-        return Err(Error::MissingRequiredSenderBlock);
-    }
-
-    Ok(())
-}
-
 pub(crate) fn validate_allowed_feature_blocks(
     feature_blocks: &FeatureBlocks,
     allowed_feature_blocks: FeatureBlockFlags,
@@ -206,12 +165,6 @@ bitflags! {
         const SENDER = 1 << SenderFeatureBlock::KIND;
         /// Signals the presence of a [`IssuerFeatureBlock`].
         const ISSUER = 1 << IssuerFeatureBlock::KIND;
-        /// Signals the presence of a [`DustDepositReturnFeatureBlock`].
-        const DUST_DEPOSIT_RETURN = 1 << DustDepositReturnFeatureBlock::KIND;
-        /// Signals the presence of a [`TimelockFeatureBlock`].
-        const TIMELOCK = 1 << TimelockFeatureBlock::KIND;
-        /// Signals the presence of a [`ExpirationFeatureBlock`].
-        const EXPIRATION = 1 << ExpirationFeatureBlock::KIND;
         /// Signals the presence of a [`MetadataFeatureBlock`].
         const METADATA = 1 << MetadataFeatureBlock::KIND;
         /// Signals the presence of a [`TagFeatureBlock`].

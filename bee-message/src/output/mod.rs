@@ -15,14 +15,16 @@ mod treasury;
 
 ///
 pub mod feature_block;
+///
+pub mod unlock_condition;
 
 pub(crate) use alias::StateMetadataLength;
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
 pub use chain_id::ChainId;
 pub use extended::{ExtendedOutput, ExtendedOutputBuilder};
-pub(crate) use feature_block::{DustDepositAmount, MetadataFeatureBlockLength, TagFeatureBlockLength};
 pub use feature_block::{FeatureBlock, FeatureBlocks};
+pub(crate) use feature_block::{MetadataFeatureBlockLength, TagFeatureBlockLength};
 pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme};
 pub(crate) use native_token::NativeTokenCount;
 pub use native_token::{NativeToken, NativeTokens};
@@ -34,6 +36,8 @@ pub(crate) use output_id::OutputIndex;
 pub use token_id::TokenId;
 pub use treasury::TreasuryOutput;
 pub(crate) use treasury::TreasuryOutputAmount;
+pub(crate) use unlock_condition::DustDepositAmount;
+pub use unlock_condition::{UnlockCondition, UnlockConditions};
 
 use crate::Error;
 

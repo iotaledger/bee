@@ -5,6 +5,7 @@ use crate::{
     address::Address,
     output::{
         feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
+        unlock_condition::UnlockConditionFlags,
         NativeToken, NativeTokens,
     },
     Error,
@@ -95,11 +96,12 @@ impl ExtendedOutput {
     /// The [`Output`](crate::output::Output) kind of an [`ExtendedOutput`].
     pub const KIND: u8 = 3;
 
+    /// The set of allowed [`UnlockCondition`]s for an [`ExtendedOutput`].
+    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::DUST_DEPOSIT_RETURN
+        .union(UnlockConditionFlags::TIMELOCK)
+        .union(UnlockConditionFlags::EXPIRATION);
     /// The set of allowed [`FeatureBlock`]s for an [`ExtendedOutput`].
     const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
-        .union(FeatureBlockFlags::DUST_DEPOSIT_RETURN)
-        .union(FeatureBlockFlags::TIMELOCK)
-        .union(FeatureBlockFlags::EXPIRATION)
         .union(FeatureBlockFlags::METADATA)
         .union(FeatureBlockFlags::TAG);
 
