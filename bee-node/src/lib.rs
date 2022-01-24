@@ -32,6 +32,5 @@ pub(crate) const BEE_NAME: &str = "Bee";
 pub(crate) const BEE_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub(crate) const BEE_GIT_COMMIT: &str = env!("GIT_COMMIT");
 pub(crate) const AUTOPEERING_VERSION: u32 = 1;
-pub(crate) const PEERSTORE_PATH: &str = "./peerstore";
 pub(crate) const BECH32_HRP_DEFAULT: &str = "iota";
 pub(crate) const NETWORK_NAME_DEFAULT: &str = "iota";
