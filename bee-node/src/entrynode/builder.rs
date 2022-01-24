@@ -124,14 +124,10 @@ impl NodeBuilder<EntryNode> for EntryNodeBuilder {
 
         // Print the network info the node is trying to connect to.
         log::info!(
-            "Joining network \"{}\"({}). Bech32 hrp \"{}\".",
+            "Joining network \"{}\", hrp \"{}\".",
             network_spec.name(),
-            network_spec.id(),
             network_spec.hrp()
         );
-
-        // Print the local entity data.
-        log::info!("{}", builder.config().local());
 
         // Add the resources that are shared throughout the node.
         let builder = add_node_resources(builder)?;
