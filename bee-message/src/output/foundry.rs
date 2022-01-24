@@ -5,7 +5,9 @@ use crate::{
     address::Address,
     output::{
         feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
-        unlock_condition::UnlockConditionFlags,
+        unlock_condition::{
+            validate_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions,
+        },
         NativeToken, NativeTokens,
     },
     Error,
@@ -41,6 +43,7 @@ pub struct FoundryOutputBuilder {
     circulating_supply: U256,
     maximum_supply: U256,
     token_scheme: TokenScheme,
+    unlock_conditions: Vec<UnlockCondition>,
     feature_blocks: Vec<FeatureBlock>,
 }
 
@@ -67,6 +70,7 @@ impl FoundryOutputBuilder {
             circulating_supply,
             maximum_supply,
             token_scheme,
+            unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
         })
     }
@@ -87,6 +91,20 @@ impl FoundryOutputBuilder {
 
     ///
     #[inline(always)]
+    pub fn add_unlock_condition(mut self, unlock_condition: UnlockCondition) -> Self {
+        self.unlock_conditions.push(unlock_condition);
+        self
+    }
+
+    ///
+    #[inline(always)]
+    pub fn with_unlock_conditions(mut self, unlock_conditions: impl IntoIterator<Item = UnlockCondition>) -> Self {
+        self.unlock_conditions = unlock_conditions.into_iter().collect();
+        self
+    }
+
+    ///
+    #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
         self
@@ -101,6 +119,10 @@ impl FoundryOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<FoundryOutput, Error> {
+        let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
+
+        validate_allowed_unlock_conditions(&unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)?;
+
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
         validate_allowed_feature_blocks(&feature_blocks, FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
@@ -114,6 +136,7 @@ impl FoundryOutputBuilder {
             circulating_supply: self.circulating_supply,
             maximum_supply: self.maximum_supply,
             token_scheme: self.token_scheme,
+            unlock_conditions,
             feature_blocks,
         })
     }
@@ -138,6 +161,7 @@ pub struct FoundryOutput {
     // Maximum supply of tokens controlled by this foundry.
     maximum_supply: U256,
     token_scheme: TokenScheme,
+    unlock_conditions: UnlockConditions,
     feature_blocks: FeatureBlocks,
 }
 
@@ -245,6 +269,12 @@ impl FoundryOutput {
 
     ///
     #[inline(always)]
+    pub fn unlock_conditions(&self) -> &[UnlockCondition] {
+        &self.unlock_conditions
+    }
+
+    ///
+    #[inline(always)]
     pub fn feature_blocks(&self) -> &[FeatureBlock] {
         &self.feature_blocks
     }
@@ -288,6 +318,14 @@ impl Packable for FoundryOutput {
         }
 
         let token_scheme = TokenScheme::unpack::<_, VERIFY>(unpacker)?;
+
+        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
+
+        if VERIFY {
+            validate_allowed_unlock_conditions(&unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)
+                .map_err(UnpackError::Packable)?;
+        }
+
         let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
@@ -304,6 +342,7 @@ impl Packable for FoundryOutput {
             circulating_supply,
             maximum_supply,
             token_scheme,
+            unlock_conditions,
             feature_blocks,
         })
     }

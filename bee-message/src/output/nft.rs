@@ -5,7 +5,9 @@ use crate::{
     address::Address,
     output::{
         feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
-        unlock_condition::UnlockConditionFlags,
+        unlock_condition::{
+            validate_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions,
+        },
         NativeToken, NativeTokens, NftId,
     },
     Error,
@@ -28,6 +30,7 @@ pub struct NftOutputBuilder {
     native_tokens: Vec<NativeToken>,
     nft_id: NftId,
     immutable_metadata: Vec<u8>,
+    unlock_conditions: Vec<UnlockCondition>,
     feature_blocks: Vec<FeatureBlock>,
 }
 
@@ -48,6 +51,7 @@ impl NftOutputBuilder {
             native_tokens: Vec::new(),
             nft_id,
             immutable_metadata,
+            unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
         })
     }
@@ -68,6 +72,20 @@ impl NftOutputBuilder {
 
     ///
     #[inline(always)]
+    pub fn add_unlock_condition(mut self, unlock_condition: UnlockCondition) -> Self {
+        self.unlock_conditions.push(unlock_condition);
+        self
+    }
+
+    ///
+    #[inline(always)]
+    pub fn with_unlock_conditions(mut self, unlock_conditions: impl IntoIterator<Item = UnlockCondition>) -> Self {
+        self.unlock_conditions = unlock_conditions.into_iter().collect();
+        self
+    }
+
+    ///
+    #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
         self
@@ -82,6 +100,10 @@ impl NftOutputBuilder {
 
     ///
     pub fn finish(self) -> Result<NftOutput, Error> {
+        let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
+
+        validate_allowed_unlock_conditions(&unlock_conditions, NftOutput::ALLOWED_UNLOCK_CONDITIONS)?;
+
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
         validate_allowed_feature_blocks(&feature_blocks, NftOutput::ALLOWED_FEATURE_BLOCKS)?;
@@ -96,6 +118,7 @@ impl NftOutputBuilder {
                 .into_boxed_slice()
                 .try_into()
                 .map_err(Error::InvalidImmutableMetadataLength)?,
+            unlock_conditions,
             feature_blocks,
         })
     }
@@ -117,6 +140,7 @@ pub struct NftOutput {
     nft_id: NftId,
     // Binary metadata attached immutably to the NFT.
     immutable_metadata: BoxedSlicePrefix<u8, ImmutableMetadataLength>,
+    unlock_conditions: UnlockConditions,
     feature_blocks: FeatureBlocks,
 }
 
@@ -185,6 +209,12 @@ impl NftOutput {
 
     ///
     #[inline(always)]
+    pub fn unlock_conditions(&self) -> &[UnlockCondition] {
+        &self.unlock_conditions
+    }
+
+    ///
+    #[inline(always)]
     pub fn feature_blocks(&self) -> &[FeatureBlock] {
         &self.feature_blocks
     }
@@ -199,6 +229,7 @@ impl Packable for NftOutput {
         self.native_tokens.pack(packer)?;
         self.nft_id.pack(packer)?;
         self.immutable_metadata.pack(packer)?;
+        self.unlock_conditions.pack(packer)?;
         self.feature_blocks.pack(packer)?;
 
         Ok(())
@@ -219,6 +250,13 @@ impl Packable for NftOutput {
         let immutable_metadata = BoxedSlicePrefix::<u8, ImmutableMetadataLength>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|err| Error::InvalidImmutableMetadataLength(err.into_prefix().into()))?;
 
+        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
+
+        if VERIFY {
+            validate_allowed_unlock_conditions(&unlock_conditions, NftOutput::ALLOWED_UNLOCK_CONDITIONS)
+                .map_err(UnpackError::Packable)?;
+        }
+
         let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
@@ -232,6 +270,7 @@ impl Packable for NftOutput {
             native_tokens,
             nft_id,
             immutable_metadata,
+            unlock_conditions,
             feature_blocks,
         })
     }

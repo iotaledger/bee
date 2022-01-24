@@ -5,7 +5,9 @@ use crate::{
     address::Address,
     output::{
         feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
-        unlock_condition::UnlockConditionFlags,
+        unlock_condition::{
+            validate_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions,
+        },
         AliasId, NativeToken, NativeTokens,
     },
     Error,
@@ -31,6 +33,7 @@ pub struct AliasOutputBuilder {
     state_index: Option<u32>,
     state_metadata: Vec<u8>,
     foundry_counter: Option<u32>,
+    unlock_conditions: Vec<UnlockCondition>,
     feature_blocks: Vec<FeatureBlock>,
 }
 
@@ -54,6 +57,7 @@ impl AliasOutputBuilder {
             state_index: None,
             state_metadata: Vec::new(),
             foundry_counter: None,
+            unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
         })
     }
@@ -95,6 +99,20 @@ impl AliasOutputBuilder {
 
     ///
     #[inline(always)]
+    pub fn add_unlock_condition(mut self, unlock_condition: UnlockCondition) -> Self {
+        self.unlock_conditions.push(unlock_condition);
+        self
+    }
+
+    ///
+    #[inline(always)]
+    pub fn with_unlock_conditions(mut self, unlock_conditions: impl IntoIterator<Item = UnlockCondition>) -> Self {
+        self.unlock_conditions = unlock_conditions.into_iter().collect();
+        self
+    }
+
+    ///
+    #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
         self
@@ -120,6 +138,10 @@ impl AliasOutputBuilder {
 
         validate_index_counter(&self.alias_id, state_index, foundry_counter)?;
 
+        let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
+
+        validate_allowed_unlock_conditions(&unlock_conditions, AliasOutput::ALLOWED_UNLOCK_CONDITIONS)?;
+
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
         validate_allowed_feature_blocks(&feature_blocks, AliasOutput::ALLOWED_FEATURE_BLOCKS)?;
@@ -133,6 +155,7 @@ impl AliasOutputBuilder {
             state_index,
             state_metadata,
             foundry_counter,
+            unlock_conditions,
             feature_blocks,
         })
     }
@@ -160,6 +183,7 @@ pub struct AliasOutput {
     state_metadata: BoxedSlicePrefix<u8, StateMetadataLength>,
     // A counter that denotes the number of foundries created by this alias account.
     foundry_counter: u32,
+    unlock_conditions: UnlockConditions,
     //
     feature_blocks: FeatureBlocks,
 }
@@ -249,6 +273,12 @@ impl AliasOutput {
 
     ///
     #[inline(always)]
+    pub fn unlock_conditions(&self) -> &[UnlockCondition] {
+        &self.unlock_conditions
+    }
+
+    ///
+    #[inline(always)]
     pub fn feature_blocks(&self) -> &[FeatureBlock] {
         &self.feature_blocks
     }
@@ -299,6 +329,13 @@ impl Packable for AliasOutput {
             validate_index_counter(&alias_id, state_index, foundry_counter).map_err(UnpackError::Packable)?;
         }
 
+        let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
+
+        if VERIFY {
+            validate_allowed_unlock_conditions(&unlock_conditions, AliasOutput::ALLOWED_UNLOCK_CONDITIONS)
+                .map_err(UnpackError::Packable)?;
+        }
+
         let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
@@ -315,6 +352,7 @@ impl Packable for AliasOutput {
             state_index,
             state_metadata,
             foundry_counter,
+            unlock_conditions,
             feature_blocks,
         })
     }
