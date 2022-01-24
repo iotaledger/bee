@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod ed25519;
-mod p2p_identity;
 mod password;
 #[cfg(feature = "rocksdb")]
 mod rocksdb;
@@ -18,8 +17,6 @@ use thiserror::Error;
 pub enum Tool {
     /// Generates Ed25519 public/private keys and addresses.
     Ed25519(ed25519::Ed25519Tool),
-    /// Generates a p2p identity.
-    P2pIdentity(p2p_identity::P2pIdentityTool),
     /// Rocksdb database analyser.
     #[cfg(feature = "rocksdb")]
     Rocksdb(rocksdb::RocksdbTool),
@@ -51,7 +48,6 @@ pub enum ToolError {
 pub fn exec(tool: &Tool) -> Result<(), ToolError> {
     match tool {
         Tool::Ed25519(tool) => ed25519::exec(tool)?,
-        Tool::P2pIdentity(tool) => p2p_identity::exec(tool),
         #[cfg(feature = "rocksdb")]
         Tool::Rocksdb(tool) => rocksdb::exec(tool)?,
         #[cfg(feature = "sled")]
