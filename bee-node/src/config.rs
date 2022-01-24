@@ -86,7 +86,7 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     // We don't store the identity in the config file anymore.
     // This is here for legacy reasons to warn the user of that fact.
     #[serde(rename = "identity")]
-    #[deprecated(since = "0.2.0")]
+    #[deprecated(since = "0.3.0")]
     _identity: Option<String>,
     #[serde(rename = "alias")]
     pub(crate) alias: Option<String>,

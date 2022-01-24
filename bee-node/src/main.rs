@@ -44,7 +44,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     print_banner_and_version(true);
 
     // Deserialize the config.
-    let identity_path = cl_args.identity_path().unwrap_or_else(|| Path::new(IDENTITY_PATH)).to_owned();
+    let identity_path = cl_args
+        .identity_path()
+        .unwrap_or_else(|| Path::new(IDENTITY_PATH))
+        .to_owned();
     let (identity_field, config) = deserialize_config(cl_args);
 
     // Initialize the logger.
@@ -59,7 +62,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     "The config file contains an `identity` field which will be ignored. You may safely delete this field to suppress this warning."
                 );
             }
-            keypair
+            Ok(keypair)
         }
         Err(PemFileError::Read(_)) => {
             // If we can't read from the file (which means it probably doesn't exist) we either migrate from the
@@ -70,10 +73,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     identity_path.display(),
                 );
 
-                migrate_keypair(identity_encoded).unwrap_or_else(|e| {
+                migrate_keypair(identity_encoded).map_err(|e| {
                     error!("Failed to migrate keypair: {}", e);
-                    std::process::exit(-1);
-                })
+                    e
+                })?
             } else {
                 info!(
                     "There is no identity file at `{}`. Generating a new one.",
@@ -83,18 +86,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 Keypair::generate()
             };
 
-            if let Err(e) = write_keypair_to_pem_file(identity_path, &keypair) {
+            write_keypair_to_pem_file(identity_path, &keypair).map_err(|e| {
                 error!("Failed to write PEM file: {}", e);
-                std::process::exit(-1);
-            };
+                e
+            })?;
 
-            keypair
+            Ok(keypair)
         }
         Err(e) => {
             error!("Could not extract private key from PEM file: {}", e);
-            std::process::exit(-1);
+            Err(e)
         }
-    };
+    }?;
 
     let local = Local::from_keypair(keypair, config.alias().clone());
 
@@ -109,7 +112,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 #[derive(Debug, thiserror::Error)]
-enum MigrationError {
+enum IdentityMigrationError {
     #[error("hex decoding failed")]
     DecodeHex,
     #[error("keypair decoding failed")]
@@ -118,16 +121,16 @@ enum MigrationError {
     InvalidKeypair,
 }
 
-fn migrate_keypair(encoded: String) -> Result<Keypair, MigrationError> {
+fn migrate_keypair(encoded: String) -> Result<Keypair, IdentityMigrationError> {
     if encoded.len() == KEYPAIR_STR_LENGTH {
         // Decode the keypair from hex.
         let mut decoded = [0u8; 64];
-        hex::decode_to_slice(&encoded[..], &mut decoded).map_err(|_| MigrationError::DecodeHex)?;
+        hex::decode_to_slice(&encoded[..], &mut decoded).map_err(|_| IdentityMigrationError::DecodeHex)?;
 
         // Decode the keypair from bytes.
-        Keypair::decode(&mut decoded).map_err(|_| MigrationError::DecodeKeypair)
+        Keypair::decode(&mut decoded).map_err(|_| IdentityMigrationError::DecodeKeypair)
     } else {
-        Err(MigrationError::InvalidKeypair)
+        Err(IdentityMigrationError::InvalidKeypair)
     }
 }
 
