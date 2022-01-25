@@ -11,7 +11,9 @@ use bee_message::{
     output::{
         feature_block::{FeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock, TagFeatureBlock},
         unlock_condition::{
-            DustDepositReturnUnlockCondition, ExpirationUnlockCondition, TimelockUnlockCondition, UnlockCondition,
+            AddressUnlockCondition, DustDepositReturnUnlockCondition, ExpirationUnlockCondition,
+            GovernorAddressUnlockCondition, StateControllerAddressUnlockCondition, TimelockUnlockCondition,
+            UnlockCondition,
         },
         AliasId, AliasOutput, AliasOutputBuilder, ExtendedOutput, ExtendedOutputBuilder, FoundryOutput,
         FoundryOutputBuilder, NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme,
@@ -796,12 +798,18 @@ pub struct U256Dto(pub String);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum UnlockConditionDto {
+    /// An address unlock condition.
+    Address(AddressUnlockConditionDto),
     /// A dust deposit return unlock condition.
     DustDepositReturn(DustDepositReturnUnlockConditionDto),
     /// A timelock unlock condition.
     Timelock(TimelockUnlockConditionDto),
     /// An expiration unlock condition.
     Expiration(ExpirationUnlockConditionDto),
+    /// A state controller address unlock condition.
+    StateControllerAddress(StateControllerAddressUnlockConditionDto),
+    /// A governor address unlock condition.
+    GovernorAddress(GovernorAddressUnlockConditionDto),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -817,6 +825,8 @@ pub enum FeatureBlockDto {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AddressUnlockConditionDto(pub Address);
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DustDepositReturnUnlockConditionDto(pub u64);
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TimelockUnlockConditionDto {
@@ -828,6 +838,10 @@ pub struct ExpirationUnlockConditionDto {
     pub index: MilestoneIndex,
     pub timestamp: u32,
 }
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct StateControllerAddressUnlockConditionDto(pub Address);
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct GovernorAddressUnlockConditionDto(pub Address);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SenderFeatureBlockDto(pub AddressDto);
@@ -842,9 +856,12 @@ impl UnlockConditionDto {
     /// Return the unlock condition kind of a `UnlockConditionDto`.
     pub fn kind(&self) -> u8 {
         match self {
+            Self::Address(_) => AddressUnlockCondition::KIND,
             Self::DustDepositReturn(_) => DustDepositReturnUnlockCondition::KIND,
             Self::Timelock(_) => TimelockUnlockCondition::KIND,
             Self::Expiration(_) => ExpirationUnlockCondition::KIND,
+            Self::StateControllerAddress(_) => StateControllerAddressUnlockCondition::KIND,
+            Self::GovernorAddress(_) => GovernorAddressUnlockCondition::KIND,
         }
     }
 }
@@ -864,6 +881,7 @@ impl FeatureBlockDto {
 impl From<&UnlockCondition> for UnlockConditionDto {
     fn from(value: &UnlockCondition) -> Self {
         match value {
+            UnlockCondition::Address(v) => Self::Address(AddressUnlockConditionDto(*v.address())),
             UnlockCondition::DustDepositReturn(v) => {
                 Self::DustDepositReturn(DustDepositReturnUnlockConditionDto(v.amount()))
             }
@@ -875,6 +893,12 @@ impl From<&UnlockCondition> for UnlockConditionDto {
                 index: v.index(),
                 timestamp: v.timestamp(),
             }),
+            UnlockCondition::StateControllerAddress(v) => {
+                Self::StateControllerAddress(StateControllerAddressUnlockConditionDto(*v.address()))
+            }
+            UnlockCondition::GovernorAddress(v) => {
+                Self::GovernorAddress(GovernorAddressUnlockConditionDto(*v.address()))
+            }
         }
     }
 }
@@ -895,11 +919,16 @@ impl TryFrom<&UnlockConditionDto> for UnlockCondition {
 
     fn try_from(value: &UnlockConditionDto) -> Result<Self, Self::Error> {
         Ok(match value {
+            UnlockConditionDto::Address(v) => Self::Address(AddressUnlockCondition::new(v.0)),
             UnlockConditionDto::DustDepositReturn(v) => {
                 Self::DustDepositReturn(DustDepositReturnUnlockCondition::new(v.0)?)
             }
             UnlockConditionDto::Timelock(v) => Self::Timelock(TimelockUnlockCondition::new(v.index, v.timestamp)),
             UnlockConditionDto::Expiration(v) => Self::Expiration(ExpirationUnlockCondition::new(v.index, v.timestamp)),
+            UnlockConditionDto::StateControllerAddress(v) => {
+                Self::StateControllerAddress(StateControllerAddressUnlockCondition::new(v.0))
+            }
+            UnlockConditionDto::GovernorAddress(v) => Self::GovernorAddress(GovernorAddressUnlockCondition::new(v.0)),
         })
     }
 }
