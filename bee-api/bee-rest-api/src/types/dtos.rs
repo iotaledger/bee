@@ -991,7 +991,7 @@ impl From<&AliasOutput> for AliasOutputDto {
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             alias_id: AliasIdDto(value.alias_id().to_string()),
             state_controller: value.state_controller().into(),
-            governance_controller: value.governance_controller().into(),
+            governance_controller: value.governor().into(),
             state_index: value.state_index(),
             state_metadata: hex::encode(value.state_metadata()),
             foundry_counter: value.foundry_counter(),

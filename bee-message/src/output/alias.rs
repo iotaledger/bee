@@ -6,7 +6,8 @@ use crate::{
     output::{
         feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{
-            validate_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions,
+            validate_allowed_unlock_conditions, GovernorAddressUnlockCondition, StateControllerAddressUnlockCondition,
+            UnlockCondition, UnlockConditionFlags, UnlockConditions,
         },
         AliasId, NativeToken, NativeTokens,
     },
@@ -28,8 +29,6 @@ pub struct AliasOutputBuilder {
     amount: u64,
     native_tokens: Vec<NativeToken>,
     alias_id: AliasId,
-    state_controller: Address,
-    governance_controller: Address,
     state_index: Option<u32>,
     state_metadata: Vec<u8>,
     foundry_counter: Option<u32>,
@@ -43,21 +42,22 @@ impl AliasOutputBuilder {
         amount: u64,
         alias_id: AliasId,
         state_controller: Address,
-        governance_controller: Address,
+        governor: Address,
     ) -> Result<AliasOutputBuilder, Error> {
         validate_controller(&state_controller, &alias_id)?;
-        validate_controller(&governance_controller, &alias_id)?;
+        validate_controller(&governor, &alias_id)?;
 
         Ok(Self {
             amount,
             native_tokens: Vec::new(),
             alias_id,
-            state_controller,
-            governance_controller,
             state_index: None,
             state_metadata: Vec::new(),
             foundry_counter: None,
-            unlock_conditions: Vec::new(),
+            unlock_conditions: vec![
+                StateControllerAddressUnlockCondition::new(state_controller).into(),
+                GovernorAddressUnlockCondition::new(governor).into(),
+            ],
             feature_blocks: Vec::new(),
         })
     }
@@ -150,8 +150,6 @@ impl AliasOutputBuilder {
             amount: self.amount,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             alias_id: self.alias_id,
-            state_controller: self.state_controller,
-            governance_controller: self.governance_controller,
             state_index,
             state_metadata,
             foundry_counter,
@@ -173,10 +171,6 @@ pub struct AliasOutput {
     native_tokens: NativeTokens,
     // Unique identifier of the alias.
     alias_id: AliasId,
-    //
-    state_controller: Address,
-    //
-    governance_controller: Address,
     // A counter that must increase by 1 every time the alias is state transitioned.
     state_index: u32,
     // Metadata that can only be changed by the state controller.
@@ -195,7 +189,8 @@ impl AliasOutput {
     pub const STATE_METADATA_LENGTH_MAX: u32 = 1024;
 
     /// The set of allowed [`UnlockCondition`]s for an [`AliasOutput`].
-    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::empty();
+    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags =
+        UnlockConditionFlags::STATE_CONTROLLER_ADDRESS.union(UnlockConditionFlags::GOVERNOR_ADDRESS);
     /// The set of allowed [`FeatureBlock`]s for an [`AliasOutput`].
     const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
         .union(FeatureBlockFlags::ISSUER)
@@ -203,13 +198,8 @@ impl AliasOutput {
 
     /// Creates a new [`AliasOutput`].
     #[inline(always)]
-    pub fn new(
-        amount: u64,
-        alias_id: AliasId,
-        state_controller: Address,
-        governance_controller: Address,
-    ) -> Result<Self, Error> {
-        AliasOutputBuilder::new(amount, alias_id, state_controller, governance_controller)?.finish()
+    pub fn new(amount: u64, alias_id: AliasId, state_controller: Address, governor: Address) -> Result<Self, Error> {
+        AliasOutputBuilder::new(amount, alias_id, state_controller, governor)?.finish()
     }
 
     /// Creates a new [`AliasOutputBuilder`].
@@ -218,9 +208,9 @@ impl AliasOutput {
         amount: u64,
         alias_id: AliasId,
         state_controller: Address,
-        governance_controller: Address,
+        governor: Address,
     ) -> Result<AliasOutputBuilder, Error> {
-        AliasOutputBuilder::new(amount, alias_id, state_controller, governance_controller)
+        AliasOutputBuilder::new(amount, alias_id, state_controller, governor)
     }
 
     ///
@@ -244,13 +234,31 @@ impl AliasOutput {
     ///
     #[inline(always)]
     pub fn state_controller(&self) -> &Address {
-        &self.state_controller
+        if let UnlockCondition::StateControllerAddress(address) = self
+            .unlock_conditions
+            .get(StateControllerAddressUnlockCondition::KIND)
+            .unwrap()
+        {
+            return address.address();
+        } else {
+            // An AliasOutput must have a StateControllerAddressUnlockCondition.
+            unreachable!();
+        }
     }
 
     ///
     #[inline(always)]
-    pub fn governance_controller(&self) -> &Address {
-        &self.governance_controller
+    pub fn governor(&self) -> &Address {
+        if let UnlockCondition::GovernorAddress(address) = self
+            .unlock_conditions
+            .get(GovernorAddressUnlockCondition::KIND)
+            .unwrap()
+        {
+            return address.address();
+        } else {
+            // An AliasOutput must have a GovernorAddressUnlockCondition.
+            unreachable!();
+        }
     }
 
     ///
@@ -291,8 +299,6 @@ impl Packable for AliasOutput {
         self.amount.pack(packer)?;
         self.native_tokens.pack(packer)?;
         self.alias_id.pack(packer)?;
-        self.state_controller.pack(packer)?;
-        self.governance_controller.pack(packer)?;
         self.state_index.pack(packer)?;
         self.state_metadata.pack(packer)?;
         self.foundry_counter.pack(packer)?;
@@ -307,18 +313,6 @@ impl Packable for AliasOutput {
         let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let alias_id = AliasId::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let state_controller = Address::unpack::<_, VERIFY>(unpacker)?;
-
-        if VERIFY {
-            validate_controller(&state_controller, &alias_id).map_err(UnpackError::Packable)?;
-        }
-
-        let governance_controller = Address::unpack::<_, VERIFY>(unpacker)?;
-
-        if VERIFY {
-            validate_controller(&governance_controller, &alias_id).map_err(UnpackError::Packable)?;
-        }
-
         let state_index = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
         let state_metadata = BoxedSlicePrefix::<u8, StateMetadataLength>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|err| Error::InvalidStateMetadataLength(err.into_prefix().into()))?;
@@ -347,8 +341,6 @@ impl Packable for AliasOutput {
             amount,
             native_tokens,
             alias_id,
-            state_controller,
-            governance_controller,
             state_index,
             state_metadata,
             foundry_counter,

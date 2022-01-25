@@ -6,7 +6,8 @@ use crate::{
     output::{
         feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{
-            validate_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions,
+            validate_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
+            UnlockConditions,
         },
         NativeToken, NativeTokens,
     },
@@ -18,7 +19,6 @@ use packable::Packable;
 ///
 #[must_use]
 pub struct ExtendedOutputBuilder {
-    address: Address,
     amount: u64,
     native_tokens: Vec<NativeToken>,
     unlock_conditions: Vec<UnlockCondition>,
@@ -30,10 +30,9 @@ impl ExtendedOutputBuilder {
     #[inline(always)]
     pub fn new(address: Address, amount: u64) -> Self {
         Self {
-            address,
             amount,
             native_tokens: Vec::new(),
-            unlock_conditions: Vec::new(),
+            unlock_conditions: vec![AddressUnlockCondition::new(address).into()],
             feature_blocks: Vec::new(),
         }
     }
@@ -91,7 +90,6 @@ impl ExtendedOutputBuilder {
         validate_allowed_feature_blocks(&feature_blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)?;
 
         Ok(ExtendedOutput {
-            address: self.address,
             amount: self.amount,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             unlock_conditions,
@@ -105,8 +103,6 @@ impl ExtendedOutputBuilder {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct ExtendedOutput {
-    // Deposit address of the output.
-    address: Address,
     // Amount of IOTA tokens held by the output.
     amount: u64,
     // Native tokens held by the output.
@@ -122,7 +118,8 @@ impl ExtendedOutput {
     pub const KIND: u8 = 3;
 
     /// The set of allowed [`UnlockCondition`]s for an [`ExtendedOutput`].
-    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::DUST_DEPOSIT_RETURN
+    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS
+        .union(UnlockConditionFlags::DUST_DEPOSIT_RETURN)
         .union(UnlockConditionFlags::TIMELOCK)
         .union(UnlockConditionFlags::EXPIRATION);
     /// The set of allowed [`FeatureBlock`]s for an [`ExtendedOutput`].
@@ -162,7 +159,12 @@ impl ExtendedOutput {
     ///
     #[inline(always)]
     pub fn address(&self) -> &Address {
-        &self.address
+        if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
+            return address.address();
+        } else {
+            // An ExtendedOutput must have a AddressUnlockCondition.
+            unreachable!();
+        }
     }
 
     ///

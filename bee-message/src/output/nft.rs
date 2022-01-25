@@ -6,7 +6,8 @@ use crate::{
     output::{
         feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{
-            validate_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions,
+            validate_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
+            UnlockConditions,
         },
         NativeToken, NativeTokens, NftId,
     },
@@ -25,7 +26,6 @@ use packable::{
 ///
 #[must_use]
 pub struct NftOutputBuilder {
-    address: Address,
     amount: u64,
     native_tokens: Vec<NativeToken>,
     nft_id: NftId,
@@ -46,12 +46,11 @@ impl NftOutputBuilder {
         validate_immutable_metadata_length(immutable_metadata.len())?;
 
         Ok(Self {
-            address,
             amount,
             native_tokens: Vec::new(),
             nft_id,
             immutable_metadata,
-            unlock_conditions: Vec::new(),
+            unlock_conditions: vec![AddressUnlockCondition::new(address).into()],
             feature_blocks: Vec::new(),
         })
     }
@@ -109,7 +108,6 @@ impl NftOutputBuilder {
         validate_allowed_feature_blocks(&feature_blocks, NftOutput::ALLOWED_FEATURE_BLOCKS)?;
 
         Ok(NftOutput {
-            address: self.address,
             amount: self.amount,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             nft_id: self.nft_id,
@@ -130,8 +128,6 @@ pub(crate) type ImmutableMetadataLength = BoundedU32<0, { NftOutput::IMMUTABLE_M
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct NftOutput {
-    // Deposit address of the output.
-    address: Address,
     // Amount of IOTA tokens held by the output.
     amount: u64,
     // Native tokens held by the output.
@@ -151,7 +147,8 @@ impl NftOutput {
     pub const IMMUTABLE_METADATA_LENGTH_MAX: u32 = 1024;
 
     /// The set of allowed [`UnlockCondition`]s for an [`NftOutput`].
-    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::DUST_DEPOSIT_RETURN
+    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS
+        .union(UnlockConditionFlags::DUST_DEPOSIT_RETURN)
         .union(UnlockConditionFlags::TIMELOCK)
         .union(UnlockConditionFlags::EXPIRATION);
     /// The set of allowed [`FeatureBlock`]s for an [`NftOutput`].
@@ -180,7 +177,12 @@ impl NftOutput {
     ///
     #[inline(always)]
     pub fn address(&self) -> &Address {
-        &self.address
+        if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
+            return address.address();
+        } else {
+            // An NftOutput must have a AddressUnlockCondition.
+            unreachable!();
+        }
     }
 
     ///
@@ -224,7 +226,6 @@ impl Packable for NftOutput {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.address.pack(packer)?;
         self.amount.pack(packer)?;
         self.native_tokens.pack(packer)?;
         self.nft_id.pack(packer)?;
@@ -238,18 +239,11 @@ impl Packable for NftOutput {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let address = Address::unpack::<_, VERIFY>(unpacker)?;
         let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let nft_id = NftId::unpack::<_, VERIFY>(unpacker).infallible()?;
-
-        if VERIFY {
-            validate_address(&address, &nft_id).map_err(UnpackError::Packable)?;
-        }
-
         let immutable_metadata = BoxedSlicePrefix::<u8, ImmutableMetadataLength>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|err| Error::InvalidImmutableMetadataLength(err.into_prefix().into()))?;
-
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
@@ -265,7 +259,6 @@ impl Packable for NftOutput {
         }
 
         Ok(Self {
-            address,
             amount,
             native_tokens,
             nft_id,

@@ -6,7 +6,8 @@ use crate::{
     output::{
         feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{
-            validate_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions,
+            validate_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
+            UnlockConditions,
         },
         NativeToken, NativeTokens,
     },
@@ -35,7 +36,6 @@ pub enum TokenScheme {
 ///
 #[must_use]
 pub struct FoundryOutputBuilder {
-    address: Address,
     amount: u64,
     native_tokens: Vec<NativeToken>,
     serial_number: u32,
@@ -62,7 +62,6 @@ impl FoundryOutputBuilder {
         validate_supply(&circulating_supply, &maximum_supply)?;
 
         Ok(Self {
-            address,
             amount,
             native_tokens: Vec::new(),
             serial_number,
@@ -70,7 +69,7 @@ impl FoundryOutputBuilder {
             circulating_supply,
             maximum_supply,
             token_scheme,
-            unlock_conditions: Vec::new(),
+            unlock_conditions: vec![AddressUnlockCondition::new(address).into()],
             feature_blocks: Vec::new(),
         })
     }
@@ -128,7 +127,6 @@ impl FoundryOutputBuilder {
         validate_allowed_feature_blocks(&feature_blocks, FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
 
         Ok(FoundryOutput {
-            address: self.address,
             amount: self.amount,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             serial_number: self.serial_number,
@@ -146,8 +144,6 @@ impl FoundryOutputBuilder {
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct FoundryOutput {
-    // Deposit address of the output.
-    address: Address,
     // Amount of IOTA tokens held by the output.
     amount: u64,
     // Native tokens held by the output.
@@ -170,7 +166,7 @@ impl FoundryOutput {
     pub const KIND: u8 = 5;
 
     /// The set of allowed [`UnlockCondition`]s for an [`FoundryOutput`].
-    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::empty();
+    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS;
     /// The set of allowed [`FeatureBlock`]s for an [`FoundryOutput`].
     const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
 
@@ -222,7 +218,12 @@ impl FoundryOutput {
     ///
     #[inline(always)]
     pub fn address(&self) -> &Address {
-        &self.address
+        if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
+            return address.address();
+        } else {
+            // An FoundryOutput must have a AddressUnlockCondition.
+            unreachable!();
+        }
     }
 
     ///
@@ -284,7 +285,6 @@ impl Packable for FoundryOutput {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        self.address.pack(packer)?;
         self.amount.pack(packer)?;
         self.native_tokens.pack(packer)?;
         self.serial_number.pack(packer)?;
@@ -300,12 +300,6 @@ impl Packable for FoundryOutput {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let address = Address::unpack::<_, VERIFY>(unpacker)?;
-
-        if VERIFY {
-            validate_address(&address).map_err(UnpackError::Packable)?;
-        }
-
         let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let serial_number = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
@@ -334,7 +328,6 @@ impl Packable for FoundryOutput {
         }
 
         Ok(Self {
-            address,
             amount,
             native_tokens,
             serial_number,
