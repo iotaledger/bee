@@ -38,15 +38,7 @@ pub struct AliasOutputBuilder {
 
 impl AliasOutputBuilder {
     ///
-    pub fn new(
-        amount: u64,
-        alias_id: AliasId,
-        state_controller: Address,
-        governor: Address,
-    ) -> Result<AliasOutputBuilder, Error> {
-        validate_controller(&state_controller, &alias_id)?;
-        validate_controller(&governor, &alias_id)?;
-
+    pub fn new(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
         Ok(Self {
             amount,
             native_tokens: Vec::new(),
@@ -54,10 +46,7 @@ impl AliasOutputBuilder {
             state_index: None,
             state_metadata: Vec::new(),
             foundry_counter: None,
-            unlock_conditions: vec![
-                StateControllerAddressUnlockCondition::new(state_controller).into(),
-                GovernorAddressUnlockCondition::new(governor).into(),
-            ],
+            unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
         })
     }
@@ -142,6 +131,10 @@ impl AliasOutputBuilder {
 
         validate_allowed_unlock_conditions(&unlock_conditions, AliasOutput::ALLOWED_UNLOCK_CONDITIONS)?;
 
+        // TODO reactivate in a later PR
+        // validate_controller(&state_controller, &alias_id)?;
+        // validate_controller(&governor, &alias_id)?;
+
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
         validate_allowed_feature_blocks(&feature_blocks, AliasOutput::ALLOWED_FEATURE_BLOCKS)?;
@@ -198,19 +191,14 @@ impl AliasOutput {
 
     /// Creates a new [`AliasOutput`].
     #[inline(always)]
-    pub fn new(amount: u64, alias_id: AliasId, state_controller: Address, governor: Address) -> Result<Self, Error> {
-        AliasOutputBuilder::new(amount, alias_id, state_controller, governor)?.finish()
+    pub fn new(amount: u64, alias_id: AliasId) -> Result<Self, Error> {
+        AliasOutputBuilder::new(amount, alias_id)?.finish()
     }
 
     /// Creates a new [`AliasOutputBuilder`].
     #[inline(always)]
-    pub fn build(
-        amount: u64,
-        alias_id: AliasId,
-        state_controller: Address,
-        governor: Address,
-    ) -> Result<AliasOutputBuilder, Error> {
-        AliasOutputBuilder::new(amount, alias_id, state_controller, governor)
+    pub fn build(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
+        AliasOutputBuilder::new(amount, alias_id)
     }
 
     ///
@@ -234,6 +222,7 @@ impl AliasOutput {
     ///
     #[inline(always)]
     pub fn state_controller(&self) -> &Address {
+        // An AliasOutput must have a StateControllerAddressUnlockCondition.
         if let UnlockCondition::StateControllerAddress(address) = self
             .unlock_conditions
             .get(StateControllerAddressUnlockCondition::KIND)
@@ -241,7 +230,6 @@ impl AliasOutput {
         {
             address.address()
         } else {
-            // An AliasOutput must have a StateControllerAddressUnlockCondition.
             unreachable!();
         }
     }
@@ -249,6 +237,7 @@ impl AliasOutput {
     ///
     #[inline(always)]
     pub fn governor(&self) -> &Address {
+        // An AliasOutput must have a GovernorAddressUnlockCondition.
         if let UnlockCondition::GovernorAddress(address) = self
             .unlock_conditions
             .get(GovernorAddressUnlockCondition::KIND)
@@ -256,7 +245,6 @@ impl AliasOutput {
         {
             address.address()
         } else {
-            // An AliasOutput must have a GovernorAddressUnlockCondition.
             unreachable!();
         }
     }
@@ -359,17 +347,18 @@ fn validate_index_counter(alias_id: &AliasId, state_index: u32, foundry_counter:
     Ok(())
 }
 
-#[inline]
-fn validate_controller(controller: &Address, alias_id: &AliasId) -> Result<(), Error> {
-    match controller {
-        Address::Ed25519(_) => {}
-        Address::Alias(address) => {
-            if address.id() == alias_id {
-                return Err(Error::SelfControlledAliasOutput(*alias_id));
-            }
-        }
-        _ => return Err(Error::InvalidControllerKind(controller.kind())),
-    };
-
-    Ok(())
-}
+// TODO reactivate in a later PR
+// #[inline]
+// fn validate_controller(controller: &Address, alias_id: &AliasId) -> Result<(), Error> {
+//     match controller {
+//         Address::Ed25519(_) => {}
+//         Address::Alias(address) => {
+//             if address.id() == alias_id {
+//                 return Err(Error::SelfControlledAliasOutput(*alias_id));
+//             }
+//         }
+//         _ => return Err(Error::InvalidControllerKind(controller.kind())),
+//     };
+//
+//     Ok(())
+// }

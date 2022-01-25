@@ -36,13 +36,7 @@ pub struct NftOutputBuilder {
 
 impl NftOutputBuilder {
     ///
-    pub fn new(
-        address: Address,
-        amount: u64,
-        nft_id: NftId,
-        immutable_metadata: Vec<u8>,
-    ) -> Result<NftOutputBuilder, Error> {
-        validate_address(&address, &nft_id)?;
+    pub fn new(amount: u64, nft_id: NftId, immutable_metadata: Vec<u8>) -> Result<NftOutputBuilder, Error> {
         validate_immutable_metadata_length(immutable_metadata.len())?;
 
         Ok(Self {
@@ -50,7 +44,7 @@ impl NftOutputBuilder {
             native_tokens: Vec::new(),
             nft_id,
             immutable_metadata,
-            unlock_conditions: vec![AddressUnlockCondition::new(address).into()],
+            unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
         })
     }
@@ -102,6 +96,9 @@ impl NftOutputBuilder {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
         validate_allowed_unlock_conditions(&unlock_conditions, NftOutput::ALLOWED_UNLOCK_CONDITIONS)?;
+
+        // TODO reactivate in a later PR
+        // validate_address(&address, &nft_id)?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
@@ -159,28 +156,23 @@ impl NftOutput {
 
     /// Creates a new [`NftOutput`].
     #[inline(always)]
-    pub fn new(address: Address, amount: u64, nft_id: NftId, immutable_metadata: Vec<u8>) -> Result<Self, Error> {
-        NftOutputBuilder::new(address, amount, nft_id, immutable_metadata)?.finish()
+    pub fn new(amount: u64, nft_id: NftId, immutable_metadata: Vec<u8>) -> Result<Self, Error> {
+        NftOutputBuilder::new(amount, nft_id, immutable_metadata)?.finish()
     }
 
     /// Creates a new [`NftOutputBuilder`].
     #[inline(always)]
-    pub fn build(
-        address: Address,
-        amount: u64,
-        nft_id: NftId,
-        immutable_metadata: Vec<u8>,
-    ) -> Result<NftOutputBuilder, Error> {
-        NftOutputBuilder::new(address, amount, nft_id, immutable_metadata)
+    pub fn build(amount: u64, nft_id: NftId, immutable_metadata: Vec<u8>) -> Result<NftOutputBuilder, Error> {
+        NftOutputBuilder::new(amount, nft_id, immutable_metadata)
     }
 
     ///
     #[inline(always)]
     pub fn address(&self) -> &Address {
+        // An NftOutput must have a AddressUnlockCondition.
         if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
             address.address()
         } else {
-            // An NftOutput must have a AddressUnlockCondition.
             unreachable!();
         }
     }
@@ -269,20 +261,21 @@ impl Packable for NftOutput {
     }
 }
 
-#[inline]
-fn validate_address(address: &Address, nft_id: &NftId) -> Result<(), Error> {
-    match address {
-        Address::Ed25519(_) => {}
-        Address::Alias(_) => {}
-        Address::Nft(address) => {
-            if address.id() == nft_id {
-                return Err(Error::SelfDepositNft(*nft_id));
-            }
-        }
-    };
-
-    Ok(())
-}
+// TODO reactivate in a later PR
+// #[inline]
+// fn validate_address(address: &Address, nft_id: &NftId) -> Result<(), Error> {
+//     match address {
+//         Address::Ed25519(_) => {}
+//         Address::Alias(_) => {}
+//         Address::Nft(address) => {
+//             if address.id() == nft_id {
+//                 return Err(Error::SelfDepositNft(*nft_id));
+//             }
+//         }
+//     };
+//
+//     Ok(())
+// }
 
 #[inline]
 fn validate_immutable_metadata_length(immutable_metadata_length: usize) -> Result<(), Error> {

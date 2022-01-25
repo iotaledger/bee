@@ -28,11 +28,11 @@ pub struct ExtendedOutputBuilder {
 impl ExtendedOutputBuilder {
     ///
     #[inline(always)]
-    pub fn new(address: Address, amount: u64) -> Self {
+    pub fn new(amount: u64) -> Self {
         Self {
             amount,
             native_tokens: Vec::new(),
-            unlock_conditions: vec![AddressUnlockCondition::new(address).into()],
+            unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
         }
     }
@@ -145,24 +145,24 @@ impl ExtendedOutput {
 
     /// Creates a new [`ExtendedOutput`].
     #[inline(always)]
-    pub fn new(address: Address, amount: u64) -> Self {
+    pub fn new(amount: u64) -> Self {
         // SAFETY: this can't fail as this is a default builder.
-        ExtendedOutputBuilder::new(address, amount).finish().unwrap()
+        ExtendedOutputBuilder::new(amount).finish().unwrap()
     }
 
     /// Creates a new [`ExtendedOutputBuilder`].
     #[inline(always)]
-    pub fn build(address: Address, amount: u64) -> ExtendedOutputBuilder {
-        ExtendedOutputBuilder::new(address, amount)
+    pub fn build(amount: u64) -> ExtendedOutputBuilder {
+        ExtendedOutputBuilder::new(amount)
     }
 
     ///
     #[inline(always)]
     pub fn address(&self) -> &Address {
+        // An ExtendedOutput must have a AddressUnlockCondition.
         if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
             address.address()
         } else {
-            // An ExtendedOutput must have a AddressUnlockCondition.
             unreachable!();
         }
     }

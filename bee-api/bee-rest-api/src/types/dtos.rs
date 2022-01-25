@@ -703,13 +703,13 @@ pub struct NftUnlockBlockDto {
 pub struct ExtendedOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    // Deposit address of the output.
-    pub address: AddressDto,
     // Amount of IOTA tokens held by the output.
     pub amount: u64,
     // Native tokens held by the output.
     #[serde(rename = "nativeTokens")]
     pub native_tokens: Vec<NativeTokenDto>,
+    #[serde(rename = "unlock_conditions")]
+    pub unlock_conditions: Vec<UnlockConditionDto>,
     #[serde(rename = "blocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
 }
@@ -718,9 +718,9 @@ impl From<&ExtendedOutput> for ExtendedOutputDto {
     fn from(value: &ExtendedOutput) -> Self {
         Self {
             kind: ExtendedOutput::KIND,
-            address: value.address().into(),
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
+            unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
         }
     }
@@ -730,9 +730,12 @@ impl TryFrom<&ExtendedOutputDto> for ExtendedOutput {
     type Error = Error;
 
     fn try_from(value: &ExtendedOutputDto) -> Result<Self, Self::Error> {
-        let mut builder = ExtendedOutputBuilder::new((&value.address).try_into()?, value.amount);
+        let mut builder = ExtendedOutputBuilder::new(value.amount);
         for t in &value.native_tokens {
             builder = builder.add_native_token(t.try_into()?);
+        }
+        for b in &value.unlock_conditions {
+            builder = builder.add_unlock_condition(b.try_into()?);
         }
         for b in &value.feature_blocks {
             builder = builder.add_feature_block(b.try_into()?);
@@ -963,12 +966,6 @@ pub struct AliasOutputDto {
     // Unique identifier of the alias.
     #[serde(rename = "aliasId")]
     pub alias_id: AliasIdDto,
-    //
-    #[serde(rename = "stateController")]
-    pub state_controller: AddressDto,
-    //
-    #[serde(rename = "governanceController")]
-    pub governance_controller: AddressDto,
     // A counter that must increase by 1 every time the alias is state transitioned.
     #[serde(rename = "stateIndex")]
     pub state_index: u32,
@@ -978,6 +975,9 @@ pub struct AliasOutputDto {
     // A counter that denotes the number of foundries created by this alias account.
     #[serde(rename = "foundryCounter")]
     pub foundry_counter: u32,
+    //
+    #[serde(rename = "unlock_conditions")]
+    pub unlock_conditions: Vec<UnlockConditionDto>,
     //
     #[serde(rename = "blocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
@@ -990,11 +990,10 @@ impl From<&AliasOutput> for AliasOutputDto {
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             alias_id: AliasIdDto(value.alias_id().to_string()),
-            state_controller: value.state_controller().into(),
-            governance_controller: value.governor().into(),
             state_index: value.state_index(),
             state_metadata: hex::encode(value.state_metadata()),
             foundry_counter: value.foundry_counter(),
+            unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
         }
     }
@@ -1004,12 +1003,7 @@ impl TryFrom<&AliasOutputDto> for AliasOutput {
     type Error = Error;
 
     fn try_from(value: &AliasOutputDto) -> Result<Self, Self::Error> {
-        let mut builder = AliasOutputBuilder::new(
-            value.amount,
-            (&value.alias_id).try_into()?,
-            (&value.state_controller).try_into()?,
-            (&value.governance_controller).try_into()?,
-        )?;
+        let mut builder = AliasOutputBuilder::new(value.amount, (&value.alias_id).try_into()?)?;
         builder = builder.with_state_index(value.state_index);
         builder = builder.with_state_metadata(
             hex::decode(&value.state_metadata).map_err(|_| Error::InvalidField("state_metadata"))?,
@@ -1018,6 +1012,9 @@ impl TryFrom<&AliasOutputDto> for AliasOutput {
 
         for t in &value.native_tokens {
             builder = builder.add_native_token(t.try_into()?);
+        }
+        for b in &value.unlock_conditions {
+            builder = builder.add_unlock_condition(b.try_into()?);
         }
         for b in &value.feature_blocks {
             builder = builder.add_feature_block(b.try_into()?);
@@ -1048,8 +1045,6 @@ impl TryFrom<&AliasIdDto> for AliasId {
 pub struct FoundryOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    // Deposit address of the output.
-    address: AddressDto,
     // Amount of IOTA tokens held by the output.
     amount: u64,
     // Native tokens held by the output.
@@ -1069,6 +1064,8 @@ pub struct FoundryOutputDto {
     maximum_supply: U256Dto,
     #[serde(rename = "tokenScheme")]
     token_scheme: TokenSchemeDto,
+    #[serde(rename = "unlock_conditions")]
+    unlock_conditions: Vec<UnlockConditionDto>,
     #[serde(rename = "blocks")]
     feature_blocks: Vec<FeatureBlockDto>,
 }
@@ -1082,7 +1079,6 @@ impl From<&FoundryOutput> for FoundryOutputDto {
     fn from(value: &FoundryOutput) -> Self {
         Self {
             kind: FoundryOutput::KIND,
-            address: value.address().into(),
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             serial_number: value.serial_number(),
@@ -1092,6 +1088,7 @@ impl From<&FoundryOutput> for FoundryOutputDto {
             token_scheme: match value.token_scheme() {
                 TokenScheme::Simple => TokenSchemeDto::Simple,
             },
+            unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
         }
     }
@@ -1102,7 +1099,6 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
 
     fn try_from(value: &FoundryOutputDto) -> Result<Self, Self::Error> {
         let mut builder = FoundryOutputBuilder::new(
-            (&value.address).try_into()?,
             value.amount,
             value.serial_number,
             {
@@ -1129,6 +1125,9 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
         for t in &value.native_tokens {
             builder = builder.add_native_token(t.try_into()?);
         }
+        for b in &value.unlock_conditions {
+            builder = builder.add_unlock_condition(b.try_into()?);
+        }
         for b in &value.feature_blocks {
             builder = builder.add_feature_block(b.try_into()?);
         }
@@ -1142,8 +1141,6 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
 pub struct NftOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    // Deposit address of the output.
-    pub address: AddressDto,
     // Amount of IOTA tokens held by the output.
     pub amount: u64,
     // Native tokens held by the output.
@@ -1155,6 +1152,8 @@ pub struct NftOutputDto {
     // Binary metadata attached immutably to the NFT.
     #[serde(rename = "immutableMetadata")]
     pub immutable_metadata: String,
+    #[serde(rename = "unlock_conditions")]
+    pub unlock_conditions: Vec<UnlockConditionDto>,
     #[serde(rename = "blocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
 }
@@ -1180,11 +1179,11 @@ impl From<&NftOutput> for NftOutputDto {
     fn from(value: &NftOutput) -> Self {
         Self {
             kind: NftOutput::KIND,
-            address: value.address().into(),
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             nft_id: NftIdDto(value.nft_id().to_string()),
             immutable_metadata: hex::encode(&value.immutable_metadata()),
+            unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
         }
     }
@@ -1195,7 +1194,6 @@ impl TryFrom<&NftOutputDto> for NftOutput {
 
     fn try_from(value: &NftOutputDto) -> Result<Self, Self::Error> {
         let mut builder = NftOutputBuilder::new(
-            (&value.address).try_into()?,
             value.amount,
             (&value.nft_id).try_into()?,
             hex::decode(&value.immutable_metadata).map_err(|_| Error::InvalidField("immutable_metadata"))?,
@@ -1203,6 +1201,9 @@ impl TryFrom<&NftOutputDto> for NftOutput {
 
         for t in &value.native_tokens {
             builder = builder.add_native_token(t.try_into()?);
+        }
+        for b in &value.unlock_conditions {
+            builder = builder.add_unlock_condition(b.try_into()?);
         }
         for b in &value.feature_blocks {
             builder = builder.add_feature_block(b.try_into()?);

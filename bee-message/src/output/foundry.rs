@@ -50,7 +50,6 @@ pub struct FoundryOutputBuilder {
 impl FoundryOutputBuilder {
     ///
     pub fn new(
-        address: Address,
         amount: u64,
         serial_number: u32,
         token_tag: [u8; 12],
@@ -58,7 +57,6 @@ impl FoundryOutputBuilder {
         maximum_supply: U256,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        validate_address(&address)?;
         validate_supply(&circulating_supply, &maximum_supply)?;
 
         Ok(Self {
@@ -69,7 +67,7 @@ impl FoundryOutputBuilder {
             circulating_supply,
             maximum_supply,
             token_scheme,
-            unlock_conditions: vec![AddressUnlockCondition::new(address).into()],
+            unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
         })
     }
@@ -122,6 +120,9 @@ impl FoundryOutputBuilder {
 
         validate_allowed_unlock_conditions(&unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)?;
 
+        // TODO reactivate in a later PR
+        // validate_address(&address)?;
+
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
         validate_allowed_feature_blocks(&feature_blocks, FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
@@ -173,7 +174,6 @@ impl FoundryOutput {
     /// Creates a new [`FoundryOutput`].
     #[inline(always)]
     pub fn new(
-        address: Address,
         amount: u64,
         serial_number: u32,
         token_tag: [u8; 12],
@@ -182,7 +182,6 @@ impl FoundryOutput {
         token_scheme: TokenScheme,
     ) -> Result<Self, Error> {
         FoundryOutputBuilder::new(
-            address,
             amount,
             serial_number,
             token_tag,
@@ -196,7 +195,6 @@ impl FoundryOutput {
     /// Creates a new [`FoundryOutputBuilder`].
     #[inline(always)]
     pub fn build(
-        address: Address,
         amount: u64,
         serial_number: u32,
         token_tag: [u8; 12],
@@ -205,7 +203,6 @@ impl FoundryOutput {
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
         FoundryOutputBuilder::new(
-            address,
             amount,
             serial_number,
             token_tag,
@@ -218,10 +215,10 @@ impl FoundryOutput {
     ///
     #[inline(always)]
     pub fn address(&self) -> &Address {
+        // An FoundryOutput must have a AddressUnlockCondition.
         if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
             address.address()
         } else {
-            // An FoundryOutput must have a AddressUnlockCondition.
             unreachable!();
         }
     }
@@ -341,15 +338,16 @@ impl Packable for FoundryOutput {
     }
 }
 
-#[inline]
-fn validate_address(address: &Address) -> Result<(), Error> {
-    match address {
-        Address::Alias(_) => {}
-        _ => return Err(Error::InvalidAddressKind(address.kind())),
-    };
-
-    Ok(())
-}
+// TODO reactivate in a later PR
+// #[inline]
+// fn validate_address(address: &Address) -> Result<(), Error> {
+//     match address {
+//         Address::Alias(_) => {}
+//         _ => return Err(Error::InvalidAddressKind(address.kind())),
+//     };
+//
+//     Ok(())
+// }
 
 #[inline]
 fn validate_supply(circulating_supply: &U256, maximum_supply: &U256) -> Result<(), Error> {
