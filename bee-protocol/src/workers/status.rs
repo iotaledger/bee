@@ -46,18 +46,18 @@ where
 
             while ticker.next().await.is_some() {
                 let snapshot_index = *tangle.get_snapshot_index();
-                let confirmed_milestone_index = *tangle.get_confirmed_milestone_index();
                 let solid_milestone_index = *tangle.get_solid_milestone_index();
+                let confirmed_milestone_index = *tangle.get_confirmed_milestone_index();
                 let latest_milestone_index = *tangle.get_latest_milestone_index();
 
                 let status = if confirmed_milestone_index == latest_milestone_index {
                     format!("Synchronized and confirmed at {}", latest_milestone_index)
                 } else {
-                    let confirmed_progress = ((confirmed_milestone_index - snapshot_index) as f64 * 100.0
+                    let solid_progress = ((solid_milestone_index - snapshot_index) as f64 * 100.0
                         / (latest_milestone_index - snapshot_index) as f64)
                         as u8;
-                    let solid_progress = ((solid_milestone_index - snapshot_index) as f32 * 100.0
-                        / (latest_milestone_index - snapshot_index) as f32)
+                    let confirmed_progress = ((confirmed_milestone_index - snapshot_index) as f64 * 100.0
+                        / (latest_milestone_index - snapshot_index) as f64)
                         as u8;
                     format!(
                         "Synchronizing from {} to {}: confirmed {} ({}%) and solid {} ({}%) - Requested {}",
