@@ -7,17 +7,17 @@ use derive_more::From;
 
 /// Defines a milestone index and/or unix time until which only the deposit [`Address`](crate::address::Address) is
 /// allowed to unlock the output. After the expiration time, only the [`Address`](crate::address::Address) defined in
-/// the [`SenderUnlockCondition`](crate::output::unlock_condition::SenderUnlockCondition) can unlock it.
+/// the [`SenderFeatureBlock`](crate::output::feature_block::SenderFeatureBlock) can unlock it.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExpirationUnlockCondition {
     // Before this milestone index, [`Address`](crate::address::Address) is allowed to unlock the output.
     // After that, only the [`Address`](crate::address::Address) defined in the
-    // [`SenderUnlockCondition`](crate::output::unlock_condition::SenderUnlockCondition) can.
+    // [`SenderFeatureBlock`](crate::output::feature_block::SenderFeatureBlock) can.
     index: MilestoneIndex,
     // Before this unix time, seconds since unix epoch, [`Address`](crate::address::Address) is allowed to unlock the
     // output. After that, only the [`Address`](crate::address::Address) defined in the
-    // [`SenderUnlockCondition`](crate::output::unlock_condition::SenderUnlockCondition) can.
+    // [`SenderFeatureBlock`](crate::output::feature_block::SenderFeatureBlock) can.
     timestamp: u32,
 }
 
