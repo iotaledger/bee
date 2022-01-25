@@ -21,11 +21,9 @@ use tokio_stream::wrappers::IntervalStream;
 
 use std::{any::TypeId, convert::Infallible, time::Duration};
 
-const CHECK_HEARTBEATS_INTERVAL: Duration = Duration::from_secs(5);
-const _HEARTBEAT_SEND_INTERVAL: Duration = Duration::from_secs(30);
-const _HEARTBEAT_RECEIVE_INTERVAL: Duration = Duration::from_secs(100);
+const HEARTBEAT_SEND_INTERVAL: Duration = Duration::from_secs(30);
 
-pub(crate) fn new_heartbeat<B: StorageBackend>(peer_manager: &PeerManager, tangle: &Tangle<B>) -> HeartbeatPacket {
+pub(crate) fn new_heartbeat<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &PeerManager) -> HeartbeatPacket {
     let connected_peers = peer_manager.connected_peers();
     let synced_peers = peer_manager.synced_peers();
 
@@ -39,22 +37,22 @@ pub(crate) fn new_heartbeat<B: StorageBackend>(peer_manager: &PeerManager, tangl
 }
 
 pub(crate) fn send_heartbeat(
+    heartbeat: &HeartbeatPacket,
+    peer_id: &PeerId,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
-    peer_id: &PeerId,
-    heartbeat: &HeartbeatPacket,
 ) {
     Sender::<HeartbeatPacket>::send(heartbeat, peer_id, peer_manager, metrics);
 }
 
 pub(crate) fn broadcast_heartbeat<B: StorageBackend>(
+    tangle: &Tangle<B>,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
-    tangle: &Tangle<B>,
 ) {
-    let heartbeat = new_heartbeat(peer_manager, tangle);
+    let heartbeat = new_heartbeat(tangle, peer_manager);
 
-    peer_manager.for_each(|peer_id, _| send_heartbeat(peer_manager, metrics, peer_id, &heartbeat));
+    peer_manager.for_each(|peer_id, _| send_heartbeat(&heartbeat, peer_id, peer_manager, metrics));
 }
 
 #[derive(Default)]
@@ -85,11 +83,10 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(CHECK_HEARTBEATS_INTERVAL)));
+            let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(HEARTBEAT_SEND_INTERVAL)));
 
             while ticker.next().await.is_some() {
-                // TODO real impl
-                broadcast_heartbeat(&peer_manager, &metrics, &tangle);
+                broadcast_heartbeat(&tangle, &peer_manager, &metrics);
             }
 
             info!("Stopped.");

@@ -95,7 +95,7 @@ async fn process<B: StorageBackend>(
                     info!("New milestone {} {}.", index, milestone.message_id());
                     tangle.update_latest_milestone_index(index);
 
-                    broadcast_heartbeat(peer_manager, metrics, tangle);
+                    broadcast_heartbeat(tangle, peer_manager, metrics);
 
                     bus.dispatch(LatestMilestoneChanged { index, milestone });
                 } else {
