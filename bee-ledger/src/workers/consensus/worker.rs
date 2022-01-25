@@ -16,7 +16,7 @@ use crate::{
 use bee_message::{
     address::Address,
     milestone::MilestoneIndex,
-    output::{ExtendedOutput, Output, OutputId},
+    output::{unlock_condition::AddressUnlockCondition, ExtendedOutput, Output, OutputId},
     payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
     MessageId,
 };
@@ -140,7 +140,13 @@ where
                     message_id,
                     milestone.essence().index(),
                     milestone.essence().timestamp() as u32,
-                    Output::from(ExtendedOutput::new(*fund.address(), fund.amount())),
+                    Output::from(
+                        ExtendedOutput::build(fund.amount())
+                            .add_unlock_condition(AddressUnlockCondition::new(*fund.address()).into())
+                            .finish()
+                            // SAFETY: these parameters are certified fine.
+                            .unwrap(),
+                    ),
                 ),
             );
         }

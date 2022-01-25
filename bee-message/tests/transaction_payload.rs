@@ -4,7 +4,7 @@
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, UtxoInput},
-    output::{ExtendedOutput, Output},
+    output::{unlock_condition::AddressUnlockCondition, ExtendedOutput, Output},
     payload::transaction::{
         RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload, TransactionPayloadBuilder,
     },
@@ -43,7 +43,12 @@ fn builder_no_essence_no_unlock_blocks() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(ExtendedOutput::new(address, amount));
+    let output = Output::Extended(
+        ExtendedOutput::build(amount)
+            .add_unlock_condition(AddressUnlockCondition::new(address).into())
+            .finish()
+            .unwrap(),
+    );
     let essence = TransactionEssence::Regular(
         RegularTransactionEssence::builder(rand_number())
             .add_input(input)
@@ -69,7 +74,12 @@ fn builder_no_essence_too_few_unlock_blocks() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(ExtendedOutput::new(address, amount));
+    let output = Output::Extended(
+        ExtendedOutput::build(amount)
+            .add_unlock_condition(AddressUnlockCondition::new(address).into())
+            .finish()
+            .unwrap(),
+    );
     let essence = TransactionEssence::Regular(
         RegularTransactionEssence::builder(rand_number())
             .with_inputs(vec![input1, input2])
@@ -105,7 +115,12 @@ fn builder_no_essence_too_many_unlock_blocks() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(ExtendedOutput::new(address, amount));
+    let output = Output::Extended(
+        ExtendedOutput::build(amount)
+            .add_unlock_condition(AddressUnlockCondition::new(address).into())
+            .finish()
+            .unwrap(),
+    );
     let essence = TransactionEssence::Regular(
         RegularTransactionEssence::builder(rand_number())
             .add_input(input1)
@@ -143,7 +158,12 @@ fn pack_unpack_valid() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(ExtendedOutput::new(address, amount));
+    let output = Output::Extended(
+        ExtendedOutput::build(amount)
+            .add_unlock_condition(AddressUnlockCondition::new(address).into())
+            .finish()
+            .unwrap(),
+    );
     let essence = TransactionEssence::Regular(
         RegularTransactionEssence::builder(rand_number())
             .with_inputs(vec![input1, input2])
@@ -183,7 +203,12 @@ fn getters() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(ExtendedOutput::new(address, amount));
+    let output = Output::Extended(
+        ExtendedOutput::build(amount)
+            .add_unlock_condition(AddressUnlockCondition::new(address).into())
+            .finish()
+            .unwrap(),
+    );
     let essence = TransactionEssence::Regular(
         RegularTransactionEssence::builder(rand_number())
             .with_inputs(vec![input1, input2])

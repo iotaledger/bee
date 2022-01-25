@@ -5,7 +5,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
-    output::{ExtendedOutput, Output, TreasuryOutput},
+    output::{unlock_condition::AddressUnlockCondition, ExtendedOutput, Output, TreasuryOutput},
     payload::{
         milestone::{MilestoneEssence, MilestoneId, MilestonePayload},
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
@@ -40,7 +40,12 @@ fn transaction() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(ExtendedOutput::new(address, amount));
+    let output = Output::Extended(
+        ExtendedOutput::build(amount)
+            .add_unlock_condition(AddressUnlockCondition::new(address).into())
+            .finish()
+            .unwrap(),
+    );
     let essence = TransactionEssence::Regular(
         RegularTransactionEssence::builder(rand_number())
             .with_inputs(vec![input1, input2])
