@@ -160,7 +160,7 @@ impl ExtendedOutput {
     #[inline(always)]
     pub fn address(&self) -> &Address {
         if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
-            return address.address();
+            address.address()
         } else {
             // An ExtendedOutput must have a AddressUnlockCondition.
             unreachable!();

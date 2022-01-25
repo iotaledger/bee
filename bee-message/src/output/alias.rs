@@ -239,7 +239,7 @@ impl AliasOutput {
             .get(StateControllerAddressUnlockCondition::KIND)
             .unwrap()
         {
-            return address.address();
+            address.address()
         } else {
             // An AliasOutput must have a StateControllerAddressUnlockCondition.
             unreachable!();
@@ -254,7 +254,7 @@ impl AliasOutput {
             .get(GovernorAddressUnlockCondition::KIND)
             .unwrap()
         {
-            return address.address();
+            address.address()
         } else {
             // An AliasOutput must have a GovernorAddressUnlockCondition.
             unreachable!();
