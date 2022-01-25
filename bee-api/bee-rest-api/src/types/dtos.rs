@@ -838,6 +838,7 @@ pub struct TimelockUnlockConditionDto {
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ExpirationUnlockConditionDto {
+    pub return_address: Address,
     pub index: MilestoneIndex,
     pub timestamp: u32,
 }
@@ -893,6 +894,7 @@ impl From<&UnlockCondition> for UnlockConditionDto {
                 timestamp: v.timestamp(),
             }),
             UnlockCondition::Expiration(v) => Self::Expiration(ExpirationUnlockConditionDto {
+                return_address: *v.return_address(),
                 index: v.index(),
                 timestamp: v.timestamp(),
             }),
@@ -927,7 +929,9 @@ impl TryFrom<&UnlockConditionDto> for UnlockCondition {
                 Self::DustDepositReturn(DustDepositReturnUnlockCondition::new(v.0)?)
             }
             UnlockConditionDto::Timelock(v) => Self::Timelock(TimelockUnlockCondition::new(v.index, v.timestamp)),
-            UnlockConditionDto::Expiration(v) => Self::Expiration(ExpirationUnlockCondition::new(v.index, v.timestamp)),
+            UnlockConditionDto::Expiration(v) => {
+                Self::Expiration(ExpirationUnlockCondition::new(v.return_address, v.index, v.timestamp))
+            }
             UnlockConditionDto::StateControllerAddress(v) => {
                 Self::StateControllerAddress(StateControllerAddressUnlockCondition::new(v.0))
             }
