@@ -16,7 +16,7 @@ pub use governor_address::GovernorAddressUnlockCondition;
 pub use state_controller_address::StateControllerAddressUnlockCondition;
 pub use timelock::TimelockUnlockCondition;
 
-use crate::Error;
+use crate::{create_bitflags, Error};
 
 use bee_common::ord::is_unique_sorted;
 
@@ -80,23 +80,19 @@ impl UnlockCondition {
     }
 }
 
-bitflags! {
-    /// A bitflags-based representation of the set of active unlock conditions.
-    pub(crate) struct UnlockConditionFlags: u16 {
-        /// Signals the presence of an [`AddressUnlockCondition`].
-        const ADDRESS = 1 << AddressUnlockCondition::KIND;
-        /// Signals the presence of a [`DustDepositReturnUnlockCondition`].
-        const DUST_DEPOSIT_RETURN = 1 << DustDepositReturnUnlockCondition::KIND;
-        /// Signals the presence of a [`TimelockUnlockCondition`].
-        const TIMELOCK = 1 << TimelockUnlockCondition::KIND;
-        /// Signals the presence of a [`ExpirationUnlockCondition`].
-        const EXPIRATION = 1 << ExpirationUnlockCondition::KIND;
-        /// Signals the presence of a [`StateControllerAddressUnlockCondition`].
-        const STATE_CONTROLLER_ADDRESS = 1 << StateControllerAddressUnlockCondition::KIND;
-        /// Signals the presence of a [`GovernorAddressUnlockCondition`].
-        const GOVERNOR_ADDRESS = 1 << GovernorAddressUnlockCondition::KIND;
-    }
-}
+create_bitflags!(
+    /// A bitflags-based representation of the set of active [`UnlockCondition`]s.
+    UnlockConditionFlags,
+    u16,
+    [
+        (ADDRESS, AddressUnlockCondition),
+        (DUST_DEPOSIT_RETURN, DustDepositReturnUnlockCondition),
+        (TIMELOCK, TimelockUnlockCondition),
+        (EXPIRATION, ExpirationUnlockCondition),
+        (STATE_CONTROLLER_ADDRESS, StateControllerAddressUnlockCondition),
+        (GOVERNOR_ADDRESS, GovernorAddressUnlockCondition),
+    ]
+);
 
 pub(crate) type UnlockConditionCount = BoundedU8<0, { UnlockConditions::COUNT_MAX }>;
 
@@ -180,4 +176,24 @@ pub(crate) fn verify_allowed_unlock_conditions(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn all_flags_present() {
+        assert_eq!(
+            UnlockConditionFlags::ALL_FLAGS,
+            &[
+                UnlockConditionFlags::ADDRESS,
+                UnlockConditionFlags::DUST_DEPOSIT_RETURN,
+                UnlockConditionFlags::TIMELOCK,
+                UnlockConditionFlags::EXPIRATION,
+                UnlockConditionFlags::STATE_CONTROLLER_ADDRESS,
+                UnlockConditionFlags::GOVERNOR_ADDRESS
+            ]
+        );
+    }
 }
