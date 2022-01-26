@@ -93,7 +93,6 @@ jobs:
         if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
         run: |
           nuget install RocksDB -Version $env:ROCKSDB_VERSION -OutputDirectory $env:LOCAL_BINARIES_PATH
-          Get-ChildItem -Path $env:LOCAL_BINARIES_PATH -Force
           echo "ROCKSDB_LIB_DIR=$env:LOCAL_BINARIES_PATH\RocksDB.$env:ROCKSDB_VERSION" >> $env:GITHUB_ENV
 
       - name: Install ${{ matrix.rust }}
