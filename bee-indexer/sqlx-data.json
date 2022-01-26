@@ -1,0 +1,103 @@
+{
+  "db": "SQLite",
+  "7e9fa616c7eb68dd58579dbce90c3e56407fcc9756e8f1b51aea24e16d297321": {
+    "query": "\n        INSERT INTO foundry_outputs\n        ( foundry_id, output_id, amount, address, milestone_index )\n        VALUES  (?1, ?2, ?3, ?4, ?5);\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Right": 5
+      },
+      "nullable": []
+    }
+  },
+  "8dc9e09be389222420266f38bcb10e4f9d288e78e3df52e9d8006fe401571704": {
+    "query": "\n        INSERT INTO extended_outputs\n        ( output_id, amount, sender, tag, address, milestone_index )\n        VALUES  (?1, ?2, ?3, ?4, ?5, ?6);\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Right": 6
+      },
+      "nullable": []
+    }
+  },
+  "af0e3c2f312f1b73ee59fb09c4889ad340bfdc6f55bcccfc3f7ab05aef910fab": {
+    "query": "SELECT * FROM alias_outputs WHERE alias_id = ?1",
+    "describe": {
+      "columns": [
+        {
+          "name": "alias_id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "output_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "amount",
+          "ordinal": 2,
+          "type_info": "Int64"
+        },
+        {
+          "name": "state_controller",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "governor",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "issuer",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "sender",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "milestone_index",
+          "ordinal": 7,
+          "type_info": "Int64"
+        }
+      ],
+      "parameters": {
+        "Right": 1
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        false
+      ]
+    }
+  },
+  "b28adbd7297de36a3242b8859d893d906c773ec24e5e849d2ece7dfb0b932f5b": {
+    "query": "\n        INSERT INTO alias_outputs\n        ( alias_id, output_id, amount, state_controller, governor, issuer, sender, milestone_index )\n        VALUES  (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Right": 8
+      },
+      "nullable": []
+    }
+  },
+  "ca8d125466c76aaa19a79a322a9ccf7b853ac71bdc0ca40a9f95e72b66630f65": {
+    "query": "\n        INSERT INTO nft_outputs\n        ( nft_id, output_id, amount, issuer, sender, tag, address, milestone_index )\n        VALUES  (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Right": 8
+      },
+      "nullable": []
+    }
+  }
+}
