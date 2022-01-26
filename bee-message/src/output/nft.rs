@@ -4,9 +4,9 @@
 use crate::{
     address::Address,
     output::{
-        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
+        feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{
-            validate_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
+            verify_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
             UnlockConditions,
         },
         NativeToken, NativeTokens, NftId,
@@ -95,14 +95,14 @@ impl NftOutputBuilder {
     pub fn finish(self) -> Result<NftOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
-        validate_allowed_unlock_conditions(&unlock_conditions, NftOutput::ALLOWED_UNLOCK_CONDITIONS)?;
+        verify_allowed_unlock_conditions(&unlock_conditions, NftOutput::ALLOWED_UNLOCK_CONDITIONS)?;
 
         // TODO reactivate in a later PR
         // validate_address(&address, &nft_id)?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
-        validate_allowed_feature_blocks(&feature_blocks, NftOutput::ALLOWED_FEATURE_BLOCKS)?;
+        verify_allowed_feature_blocks(&feature_blocks, NftOutput::ALLOWED_FEATURE_BLOCKS)?;
 
         Ok(NftOutput {
             amount: self.amount,
@@ -239,14 +239,14 @@ impl Packable for NftOutput {
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            validate_allowed_unlock_conditions(&unlock_conditions, NftOutput::ALLOWED_UNLOCK_CONDITIONS)
+            verify_allowed_unlock_conditions(&unlock_conditions, NftOutput::ALLOWED_UNLOCK_CONDITIONS)
                 .map_err(UnpackError::Packable)?;
         }
 
         let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            validate_allowed_feature_blocks(&feature_blocks, NftOutput::ALLOWED_FEATURE_BLOCKS)
+            verify_allowed_feature_blocks(&feature_blocks, NftOutput::ALLOWED_FEATURE_BLOCKS)
                 .map_err(UnpackError::Packable)?;
         }
 
