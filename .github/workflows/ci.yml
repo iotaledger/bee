@@ -59,7 +59,7 @@ jobs:
 
       - name: Set local binaries path (Windows)
         if: matrix.os == 'windows-latest'
-        run: echo "LOCAL_BINARIES_PATH=$(Get-Location)/local-binaries" >> $env:GITHUB_ENV
+        run: echo "LOCAL_BINARIES_PATH=$(Get-Location)\local-binaries" >> $env:GITHUB_ENV
 
       - name: Cache rocksdb
         uses: actions/cache@v2
@@ -92,7 +92,8 @@ jobs:
       - name: Install rocksdb (Windows)
         if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
         run: |
-          nuget install RocksDB -Version $env:ROCKSDB_VERSION
+          nuget install RocksDB -Version $env:ROCKSDB_VERSION -OutputDirectory $env:LOCAL_BINARIES_PATH
+          Get-ChildItem -Path $env:LOCAL_BINARIES_PATH -Force
 
       - name: Install ${{ matrix.rust }}
         uses: actions-rs/toolchain@v1
