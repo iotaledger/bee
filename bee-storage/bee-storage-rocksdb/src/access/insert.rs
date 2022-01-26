@@ -7,14 +7,13 @@ use crate::{
 };
 
 use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
-    TreasuryOutput, Unspent,
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
+    Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::Insert, system::System};
@@ -68,21 +67,6 @@ impl Insert<(MessageId, MessageId), ()> for Storage {
 
         self.inner
             .put_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, key, [])?;
-
-        Ok(())
-    }
-}
-
-impl Insert<(PaddedIndex, MessageId), ()> for Storage {
-    fn insert(
-        &self,
-        (index, message_id): &(PaddedIndex, MessageId),
-        (): &(),
-    ) -> Result<(), <Self as StorageBackend>::Error> {
-        let mut key = index.as_ref().to_vec();
-        key.extend_from_slice(message_id.as_ref());
-
-        self.inner.put_cf(self.cf_handle(CF_INDEX_TO_MESSAGE_ID)?, key, [])?;
 
         Ok(())
     }
@@ -185,18 +169,6 @@ impl Insert<MilestoneIndex, OutputDiff> for Storage {
             self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?,
             index.pack_to_vec(),
             diff.pack_to_vec(),
-        )?;
-
-        Ok(())
-    }
-}
-
-impl Insert<Address, Balance> for Storage {
-    fn insert(&self, address: &Address, balance: &Balance) -> Result<(), <Self as StorageBackend>::Error> {
-        self.inner.put_cf(
-            self.cf_handle(CF_ADDRESS_TO_BALANCE)?,
-            address.pack_to_vec(),
-            balance.pack_to_vec(),
         )?;
 
         Ok(())

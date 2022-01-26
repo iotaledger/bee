@@ -6,14 +6,13 @@
 use crate::storage::Storage;
 
 use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
-    TreasuryOutput, Unspent,
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
+    Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::Insert, backend::StorageBackend, system::System};
@@ -37,7 +36,6 @@ impl_insert!(u8, System, system);
 impl_insert!(MessageId, Message, message_id_to_message);
 impl_insert!(MessageId, MessageMetadata, message_id_to_metadata);
 impl_insert!((MessageId, MessageId), (), message_id_to_message_id);
-impl_insert!((PaddedIndex, MessageId), (), index_to_message_id);
 impl_insert!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_insert!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_insert!(Unspent, (), output_id_unspent);
@@ -47,7 +45,6 @@ impl_insert!(MilestoneIndex, Milestone, milestone_index_to_milestone);
 impl_insert!((), SnapshotInfo, snapshot_info);
 impl_insert!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_insert!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);
-impl_insert!(Address, Balance, address_to_balance);
 impl_insert!(
     (MilestoneIndex, UnreferencedMessage),
     (),

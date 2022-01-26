@@ -11,7 +11,6 @@ pub struct PruningMetrics {
     pub next_seps: usize,
     pub messages: usize,
     pub edges: usize,
-    pub indexations: usize,
     pub output_diffs: bool,
     pub receipts: usize,
 }
@@ -27,7 +26,6 @@ pub struct ConfirmedDataPruningMetrics {
     pub found_seps: usize,
     pub prunable_messages: usize,
     pub prunable_edges: usize,
-    pub prunable_indexations: usize,
     pub new_seps: usize,
 }
 
@@ -36,7 +34,6 @@ pub struct UnconfirmedDataPruningMetrics {
     pub none_received: bool,
     pub prunable_messages: usize,
     pub prunable_edges: usize,
-    pub prunable_indexations: usize,
     pub already_pruned: usize,
     pub were_confirmed: usize,
 }

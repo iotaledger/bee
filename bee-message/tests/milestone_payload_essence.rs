@@ -5,7 +5,7 @@ use bee_message::{
     input::{Input, TreasuryInput},
     milestone::MilestoneIndex,
     output::{Output, TreasuryOutput},
-    payload::{milestone::MilestoneEssence, IndexationPayload, Payload, ReceiptPayload, TreasuryTransactionPayload},
+    payload::{milestone::MilestoneEssence, Payload, ReceiptPayload, TaggedDataPayload, TreasuryTransactionPayload},
     Error,
 };
 use bee_test::rand::{self, bytes::rand_bytes, parents::rand_parents};
@@ -152,11 +152,11 @@ fn new_invalid_payload_kind() {
             vec![
                 [0; 32], [1; 32], [2; 32], [3; 32], [4; 32], [5; 32], [6; 32], [7; 32], [8; 32], [9; 32]
             ],
-            Some(Payload::Indexation(Box::new(
-                IndexationPayload::new(rand_bytes(32), vec![]).unwrap()
+            Some(Payload::TaggedData(Box::new(
+                TaggedDataPayload::new(rand_bytes(32), vec![]).unwrap()
             ))),
         ),
-        Err(Error::InvalidPayloadKind(2))
+        Err(Error::InvalidPayloadKind(5))
     ));
 }
 

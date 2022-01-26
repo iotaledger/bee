@@ -7,14 +7,12 @@ use crate::{
 };
 
 use bee_ledger::types::{
-    snapshot::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
-    Unspent,
+    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::access::Truncate;
@@ -67,7 +65,6 @@ macro_rules! impl_truncate {
 impl_truncate!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_truncate!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_truncate!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
-impl_truncate!((PaddedIndex, MessageId), (), CF_INDEX_TO_MESSAGE_ID);
 impl_truncate!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_truncate!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_truncate!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
@@ -77,7 +74,6 @@ impl_truncate!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
 impl_truncate!((), SnapshotInfo, CF_SNAPSHOT_INFO);
 impl_truncate!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
 impl_truncate!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
-impl_truncate!(Address, Balance, CF_ADDRESS_TO_BALANCE);
 impl_truncate!(
     (MilestoneIndex, UnreferencedMessage),
     (),

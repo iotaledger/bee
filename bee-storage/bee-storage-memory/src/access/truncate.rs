@@ -6,14 +6,12 @@
 use crate::storage::Storage;
 
 use bee_ledger::types::{
-    snapshot::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
-    Unspent,
+    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::Truncate, backend::StorageBackend};
@@ -36,7 +34,6 @@ macro_rules! impl_truncate {
 impl_truncate!(MessageId, Message, message_id_to_message);
 impl_truncate!(MessageId, MessageMetadata, message_id_to_metadata);
 impl_truncate!((MessageId, MessageId), (), message_id_to_message_id);
-impl_truncate!((PaddedIndex, MessageId), (), index_to_message_id);
 impl_truncate!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_truncate!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_truncate!(Unspent, (), output_id_unspent);
@@ -46,7 +43,6 @@ impl_truncate!(MilestoneIndex, Milestone, milestone_index_to_milestone);
 impl_truncate!((), SnapshotInfo, snapshot_info);
 impl_truncate!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_truncate!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);
-impl_truncate!(Address, Balance, address_to_balance);
 impl_truncate!(
     (MilestoneIndex, UnreferencedMessage),
     (),

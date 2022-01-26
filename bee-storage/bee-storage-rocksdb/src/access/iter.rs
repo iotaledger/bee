@@ -7,14 +7,12 @@ use crate::{
 };
 
 use bee_ledger::types::{
-    snapshot::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
-    Unspent,
+    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::AsIterator, system::System};
@@ -123,23 +121,6 @@ impl<'a> StorageIterator<'a, (MessageId, MessageId), ()> {
     }
 }
 
-impl<'a> StorageIterator<'a, (PaddedIndex, MessageId), ()> {
-    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((PaddedIndex, MessageId), ()) {
-        let (index, mut message_id) = key.split_at(PaddedIndex::LENGTH);
-        // Unpacking from storage is fine.
-        let index: [u8; PaddedIndex::LENGTH] = index.try_into().unwrap();
-
-        (
-            (
-                PaddedIndex::new(index),
-                // Unpacking from storage is fine.
-                MessageId::unpack_unverified(&mut message_id).unwrap(),
-            ),
-            (),
-        )
-    }
-}
-
 impl<'a> StorageIterator<'a, OutputId, CreatedOutput> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (OutputId, CreatedOutput) {
         (
@@ -241,17 +222,6 @@ impl<'a> StorageIterator<'a, MilestoneIndex, OutputDiff> {
     }
 }
 
-impl<'a> StorageIterator<'a, Address, Balance> {
-    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (Address, Balance) {
-        (
-            // Unpacking from storage is fine.
-            Address::unpack_unverified(&mut key).unwrap(),
-            // Unpacking from storage is fine.
-            Balance::unpack_unverified(&mut value).unwrap(),
-        )
-    }
-}
-
 impl<'a> StorageIterator<'a, (MilestoneIndex, UnreferencedMessage), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MilestoneIndex, UnreferencedMessage), ()) {
         let (mut index, mut unreferenced_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
@@ -304,7 +274,6 @@ impl_iter!(u8, System, CF_SYSTEM);
 impl_iter!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_iter!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_iter!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
-impl_iter!((PaddedIndex, MessageId), (), CF_INDEX_TO_MESSAGE_ID);
 impl_iter!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_iter!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_iter!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
@@ -314,7 +283,6 @@ impl_iter!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
 impl_iter!((), SnapshotInfo, CF_SNAPSHOT_INFO);
 impl_iter!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
 impl_iter!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
-impl_iter!(Address, Balance, CF_ADDRESS_TO_BALANCE);
 impl_iter!(
     (MilestoneIndex, UnreferencedMessage),
     (),

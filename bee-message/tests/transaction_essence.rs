@@ -4,10 +4,11 @@
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, UtxoInput},
-    output::{ExtendedOutput, Output},
+    output::{unlock_condition::AddressUnlockCondition, ExtendedOutput, Output},
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     Error,
 };
+use bee_test::rand::number::rand_number;
 
 use packable::{error::UnpackError, PackableExt};
 
@@ -22,9 +23,14 @@ fn essence_kind() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(ExtendedOutput::new(address, amount));
+    let output = Output::Extended(
+        ExtendedOutput::build(amount)
+            .add_unlock_condition(AddressUnlockCondition::new(address).into())
+            .finish()
+            .unwrap(),
+    );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder()
+        RegularTransactionEssence::builder(rand_number())
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()

@@ -7,14 +7,12 @@ use crate::{
 };
 
 use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
-    TreasuryOutput,
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::Fetch, system::System};
@@ -66,23 +64,6 @@ impl Fetch<MessageId, Vec<MessageId>> for Storage {
                     MessageId::from(child)
                 })
                 .take(self.config.fetch_edge_limit)
-                .collect(),
-        ))
-    }
-}
-
-impl Fetch<PaddedIndex, Vec<MessageId>> for Storage {
-    fn fetch(&self, index: &PaddedIndex) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
-        Ok(Some(
-            self.inner
-                .prefix_iterator_cf(self.cf_handle(CF_INDEX_TO_MESSAGE_ID)?, index)
-                .map(|(key, _)| {
-                    let (_, message_id) = key.split_at(PaddedIndex::LENGTH);
-                    // Unpacking from storage is fine.
-                    let message_id: [u8; MessageId::LENGTH] = message_id.try_into().unwrap();
-                    MessageId::from(message_id)
-                })
-                .take(self.config.fetch_index_limit)
                 .collect(),
         ))
     }
@@ -174,16 +155,6 @@ impl Fetch<MilestoneIndex, OutputDiff> for Storage {
             .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?, index.pack_to_vec())?
             // Unpacking from storage is fine.
             .map(|v| OutputDiff::unpack_unverified(&mut v.as_slice()).unwrap()))
-    }
-}
-
-impl Fetch<Address, Balance> for Storage {
-    fn fetch(&self, address: &Address) -> Result<Option<Balance>, <Self as StorageBackend>::Error> {
-        Ok(self
-            .inner
-            .get_cf(self.cf_handle(CF_ADDRESS_TO_BALANCE)?, address.pack_to_vec())?
-            // Unpacking from storage is fine.
-            .map(|v| Balance::unpack_unverified(&mut v.as_slice()).unwrap()))
     }
 }
 

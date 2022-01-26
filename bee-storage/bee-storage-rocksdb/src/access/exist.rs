@@ -7,14 +7,13 @@ use crate::{
 };
 
 use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
-    TreasuryOutput, Unspent,
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
+    Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::access::Exist;
@@ -50,18 +49,6 @@ impl Exist<(MessageId, MessageId), ()> for Storage {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, key)?
-            .is_some())
-    }
-}
-
-impl Exist<(PaddedIndex, MessageId), ()> for Storage {
-    fn exist(&self, (index, message_id): &(PaddedIndex, MessageId)) -> Result<bool, <Self as StorageBackend>::Error> {
-        let mut key = index.as_ref().to_vec();
-        key.extend_from_slice(message_id.as_ref());
-
-        Ok(self
-            .inner
-            .get_cf(self.cf_handle(CF_INDEX_TO_MESSAGE_ID)?, key)?
             .is_some())
     }
 }
@@ -152,15 +139,6 @@ impl Exist<MilestoneIndex, OutputDiff> for Storage {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?, index.pack_to_vec())?
-            .is_some())
-    }
-}
-
-impl Exist<Address, Balance> for Storage {
-    fn exist(&self, address: &Address) -> Result<bool, <Self as StorageBackend>::Error> {
-        Ok(self
-            .inner
-            .get_cf(self.cf_handle(CF_ADDRESS_TO_BALANCE)?, address.pack_to_vec())?
             .is_some())
     }
 }

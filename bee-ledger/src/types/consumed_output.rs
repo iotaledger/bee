@@ -7,22 +7,25 @@ use bee_message::{milestone::MilestoneIndex, payload::transaction::TransactionId
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 pub struct ConsumedOutput {
     target: TransactionId,
-    index: MilestoneIndex,
+    milestone_index: MilestoneIndex,
 }
 
 impl ConsumedOutput {
-    /// Creates a new `ConsumedOutput`.
-    pub fn new(target: TransactionId, index: MilestoneIndex) -> Self {
-        Self { target, index }
+    /// Creates a new [`ConsumedOutput`].
+    pub fn new(target: TransactionId, milestone_index: MilestoneIndex) -> Self {
+        Self {
+            target,
+            milestone_index,
+        }
     }
 
-    /// Returns the target transaction of the `ConsumedOutput`.
+    /// Returns the target transaction of the [`ConsumedOutput`].
     pub fn target(&self) -> &TransactionId {
         &self.target
     }
 
-    /// Returns the milestone index of the `ConsumedOutput`.
-    pub fn index(&self) -> MilestoneIndex {
-        self.index
+    /// Returns the milestone index of the [`ConsumedOutput`].
+    pub fn milestone_index(&self) -> MilestoneIndex {
+        self.milestone_index
     }
 }

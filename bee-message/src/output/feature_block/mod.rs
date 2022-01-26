@@ -1,30 +1,19 @@
-// Copyright 2021 IOTA Stiftung
+// Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod dust_deposit_return;
-mod expiration_milestone_index;
-mod expiration_unix;
-mod indexation;
 mod issuer;
 mod metadata;
 mod sender;
-mod timelock_milestone_index;
-mod timelock_unix;
+mod tag;
 
-pub(crate) use dust_deposit_return::DustDepositAmount;
-pub use dust_deposit_return::DustDepositReturnFeatureBlock;
-pub use expiration_milestone_index::ExpirationMilestoneIndexFeatureBlock;
-pub use expiration_unix::ExpirationUnixFeatureBlock;
-pub use indexation::IndexationFeatureBlock;
-pub(crate) use indexation::IndexationFeatureBlockLength;
 pub use issuer::IssuerFeatureBlock;
 pub use metadata::MetadataFeatureBlock;
 pub(crate) use metadata::MetadataFeatureBlockLength;
 pub use sender::SenderFeatureBlock;
-pub use timelock_milestone_index::TimelockMilestoneIndexFeatureBlock;
-pub use timelock_unix::TimelockUnixFeatureBlock;
+pub use tag::TagFeatureBlock;
+pub(crate) use tag::TagFeatureBlockLength;
 
-use crate::Error;
+use crate::{create_bitflags, Error};
 
 use bee_common::ord::is_unique_sorted;
 
@@ -50,27 +39,12 @@ pub enum FeatureBlock {
     /// An issuer feature block.
     #[packable(tag = IssuerFeatureBlock::KIND)]
     Issuer(IssuerFeatureBlock),
-    /// A dust deposit return feature block.
-    #[packable(tag = DustDepositReturnFeatureBlock::KIND)]
-    DustDepositReturn(DustDepositReturnFeatureBlock),
-    /// A timelock milestone index feature block.
-    #[packable(tag = TimelockMilestoneIndexFeatureBlock::KIND)]
-    TimelockMilestoneIndex(TimelockMilestoneIndexFeatureBlock),
-    /// A timelock unix feature block.
-    #[packable(tag = TimelockUnixFeatureBlock::KIND)]
-    TimelockUnix(TimelockUnixFeatureBlock),
-    /// An expiration milestone index feature block.
-    #[packable(tag = ExpirationMilestoneIndexFeatureBlock::KIND)]
-    ExpirationMilestoneIndex(ExpirationMilestoneIndexFeatureBlock),
-    /// An expiration unix feature block.
-    #[packable(tag = ExpirationUnixFeatureBlock::KIND)]
-    ExpirationUnix(ExpirationUnixFeatureBlock),
     /// A metadata feature block.
     #[packable(tag = MetadataFeatureBlock::KIND)]
     Metadata(MetadataFeatureBlock),
-    /// An indexation feature block.
-    #[packable(tag = IndexationFeatureBlock::KIND)]
-    Indexation(IndexationFeatureBlock),
+    /// A tag feature block.
+    #[packable(tag = TagFeatureBlock::KIND)]
+    Tag(TagFeatureBlock),
 }
 
 impl FeatureBlock {
@@ -79,28 +53,18 @@ impl FeatureBlock {
         match self {
             Self::Sender(_) => SenderFeatureBlock::KIND,
             Self::Issuer(_) => IssuerFeatureBlock::KIND,
-            Self::DustDepositReturn(_) => DustDepositReturnFeatureBlock::KIND,
-            Self::TimelockMilestoneIndex(_) => TimelockMilestoneIndexFeatureBlock::KIND,
-            Self::TimelockUnix(_) => TimelockUnixFeatureBlock::KIND,
-            Self::ExpirationMilestoneIndex(_) => ExpirationMilestoneIndexFeatureBlock::KIND,
-            Self::ExpirationUnix(_) => ExpirationUnixFeatureBlock::KIND,
             Self::Metadata(_) => MetadataFeatureBlock::KIND,
-            Self::Indexation(_) => IndexationFeatureBlock::KIND,
+            Self::Tag(_) => TagFeatureBlock::KIND,
         }
     }
 
     /// Returns the [`FeatureBlockFlags`] for the given [`FeatureBlock`].
-    pub(crate) fn flag(&self) -> FeatureBlockFlags {
+    pub fn flag(&self) -> FeatureBlockFlags {
         match self {
             Self::Sender(_) => FeatureBlockFlags::SENDER,
             Self::Issuer(_) => FeatureBlockFlags::ISSUER,
-            Self::DustDepositReturn(_) => FeatureBlockFlags::DUST_DEPOSIT_RETURN,
-            Self::TimelockMilestoneIndex(_) => FeatureBlockFlags::TIMELOCK_MILESTONE_INDEX,
-            Self::TimelockUnix(_) => FeatureBlockFlags::TIMELOCK_UNIX,
-            Self::ExpirationMilestoneIndex(_) => FeatureBlockFlags::EXPIRATION_MILESTONE_INDEX,
-            Self::ExpirationUnix(_) => FeatureBlockFlags::EXPIRATION_UNIX,
             Self::Metadata(_) => FeatureBlockFlags::METADATA,
-            Self::Indexation(_) => FeatureBlockFlags::INDEXATION,
+            Self::Tag(_) => FeatureBlockFlags::TAG,
         }
     }
 }
@@ -126,7 +90,7 @@ impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
 
 impl FeatureBlocks {
     ///
-    pub const COUNT_MAX: u8 = 9;
+    pub const COUNT_MAX: u8 = 4;
 
     /// Creates a new `FeatureBlocks`.
     pub fn new(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Error> {
@@ -143,8 +107,7 @@ impl FeatureBlocks {
     fn validate_feature_blocks<const VERIFY: bool>(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
         if VERIFY {
             // Sort is obviously fine now but uniqueness still needs to be checked.
-            validate_unique_sorted(feature_blocks)?;
-            validate_dependencies(feature_blocks)
+            validate_unique_sorted(feature_blocks)
         } else {
             Ok(())
         }
@@ -182,27 +145,6 @@ fn validate_unique_sorted(feature_blocks: &[FeatureBlock]) -> Result<(), Error> 
     Ok(())
 }
 
-#[inline]
-fn validate_dependencies(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
-    if (feature_blocks
-        .binary_search_by_key(&DustDepositReturnFeatureBlock::KIND, FeatureBlock::kind)
-        .is_ok()
-        || feature_blocks
-            .binary_search_by_key(&ExpirationMilestoneIndexFeatureBlock::KIND, FeatureBlock::kind)
-            .is_ok()
-        || feature_blocks
-            .binary_search_by_key(&ExpirationUnixFeatureBlock::KIND, FeatureBlock::kind)
-            .is_ok())
-        && feature_blocks
-            .binary_search_by_key(&SenderFeatureBlock::KIND, FeatureBlock::kind)
-            .is_err()
-    {
-        return Err(Error::MissingRequiredSenderBlock);
-    }
-
-    Ok(())
-}
-
 pub(crate) fn validate_allowed_feature_blocks(
     feature_blocks: &FeatureBlocks,
     allowed_feature_blocks: FeatureBlockFlags,
@@ -218,26 +160,32 @@ pub(crate) fn validate_allowed_feature_blocks(
     Ok(())
 }
 
-bitflags! {
-    /// A bitflags-based representation of the set of active feature blocks.
-    pub(crate) struct FeatureBlockFlags: u16 {
-        /// Signals the presence of a [`SenderFeatureBlock`].
-        const SENDER = 1 << SenderFeatureBlock::KIND;
-        /// Signals the presence of a [`IssuerFeatureBlock`].
-        const ISSUER = 1 << IssuerFeatureBlock::KIND;
-        /// Signals the presence of a [`DustDepositReturnFeatureBlock`].
-        const DUST_DEPOSIT_RETURN = 1 << DustDepositReturnFeatureBlock::KIND;
-        /// Signals the presence of a [`TimelockMilestoneIndexFeatureBlock`].
-        const TIMELOCK_MILESTONE_INDEX = 1 << TimelockMilestoneIndexFeatureBlock::KIND;
-        /// Signals the presence of a [`TimelockUnixFeatureBlock`].
-        const TIMELOCK_UNIX = 1 << TimelockUnixFeatureBlock::KIND;
-        /// Signals the presence of a [`ExpirationMilestoneIndexFeatureBlock`].
-        const EXPIRATION_MILESTONE_INDEX = 1 << ExpirationMilestoneIndexFeatureBlock::KIND;
-        /// Signals the presence of a [`ExpirationUnixFeatureBlock`].
-        const EXPIRATION_UNIX = 1 << ExpirationUnixFeatureBlock::KIND;
-        /// Signals the presence of a [`MetadataFeatureBlock`].
-        const METADATA = 1 << MetadataFeatureBlock::KIND;
-        /// Signals the presence of a [`IndexationFeatureBlock`].
-        const INDEXATION = 1 << IndexationFeatureBlock::KIND;
+create_bitflags!(
+    /// A bitflags-based representation of the set of active [`FeatureBlock`]s.
+    FeatureBlockFlags,
+    u16,
+    [
+        (SENDER, SenderFeatureBlock),
+        (ISSUER, IssuerFeatureBlock),
+        (METADATA, MetadataFeatureBlock),
+        (TAG, TagFeatureBlock),
+    ]
+);
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn all_flags_present() {
+        assert_eq!(
+            FeatureBlockFlags::ALL_FLAGS,
+            &[
+                FeatureBlockFlags::SENDER,
+                FeatureBlockFlags::ISSUER,
+                FeatureBlockFlags::METADATA,
+                FeatureBlockFlags::TAG
+            ]
+        );
     }
 }

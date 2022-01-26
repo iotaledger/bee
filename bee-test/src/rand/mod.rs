@@ -3,8 +3,6 @@
 
 /// Module providing random address generation utilities.
 pub mod address;
-/// Module providing random balance generation utilities.
-pub mod balance;
 /// Module providing random boolean generation utilities.
 pub mod bool;
 /// Module providing random byte generation utilities.

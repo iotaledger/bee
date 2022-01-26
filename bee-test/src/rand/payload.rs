@@ -7,13 +7,13 @@ use crate::rand::{
 };
 
 use bee_message::payload::{
-    indexation::IndexationPayload, receipt::ReceiptPayload, treasury::TreasuryTransactionPayload, Payload,
+    receipt::ReceiptPayload, tagged_data::TaggedDataPayload, treasury::TreasuryTransactionPayload, Payload,
 };
 
-/// Generates a random indexation payload.
-pub fn rand_indexation_payload() -> IndexationPayload {
-    IndexationPayload::new(
-        rand_bytes(rand_number_range(IndexationPayload::LENGTH_RANGE).into()),
+/// Generates a random tagged data payload.
+pub fn rand_tagged_data_payload() -> TaggedDataPayload {
+    TaggedDataPayload::new(
+        rand_bytes(rand_number_range(TaggedDataPayload::LENGTH_RANGE).into()),
         rand_bytes(rand_number_range(0..10000)),
     )
     .unwrap()
@@ -38,5 +38,5 @@ pub fn rand_receipt_payload() -> ReceiptPayload {
 /// Generates a random payload for a message.
 pub fn rand_payload_for_message() -> Payload {
     // TODO complete
-    rand_indexation_payload().into()
+    rand_tagged_data_payload().into()
 }

@@ -13,7 +13,7 @@ pub use bee_storage::{
     system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
 
-use bee_message::{address::Ed25519Address, milestone::MilestoneIndex, payload::indexation::PaddedIndex, MessageId};
+use bee_message::{address::Ed25519Address, milestone::MilestoneIndex, MessageId};
 
 use rocksdb::{
     ColumnFamily, ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, FlushOptions, Options,
@@ -39,10 +39,6 @@ impl Storage {
         options.set_prefix_extractor(SliceTransform::create_fixed_prefix(MessageId::LENGTH));
         let cf_message_id_to_message_id = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE_ID, options);
 
-        let mut options = Options::default();
-        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(PaddedIndex::LENGTH));
-        let cf_index_to_message_id = ColumnFamilyDescriptor::new(CF_INDEX_TO_MESSAGE_ID, options);
-
         let cf_output_id_to_created_output =
             ColumnFamilyDescriptor::new(CF_OUTPUT_ID_TO_CREATED_OUTPUT, Options::default());
 
@@ -67,8 +63,6 @@ impl Storage {
 
         let cf_milestone_index_to_output_diff =
             ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF, Options::default());
-
-        let cf_address_to_balance = ColumnFamilyDescriptor::new(CF_ADDRESS_TO_BALANCE, Options::default());
 
         let mut options = Options::default();
         options.set_prefix_extractor(SliceTransform::create_fixed_prefix(
@@ -126,7 +120,6 @@ impl Storage {
                 cf_message_id_to_message,
                 cf_message_id_to_metadata,
                 cf_message_id_to_message_id,
-                cf_index_to_message_id,
                 cf_output_id_to_created_output,
                 cf_output_id_to_consumed_output,
                 cf_output_id_unspent,
@@ -136,7 +129,6 @@ impl Storage {
                 cf_snapshot_info,
                 cf_solid_entry_point_to_milestone_index,
                 cf_milestone_index_to_output_diff,
-                cf_address_to_balance,
                 cf_milestone_index_to_unreferenced_message,
                 cf_milestone_index_to_receipt,
                 cf_spent_to_treasury,

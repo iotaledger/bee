@@ -6,14 +6,12 @@
 use crate::{storage::Storage, trees::*};
 
 use bee_ledger::types::{
-    snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
-    TreasuryOutput,
+    snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::Fetch, backend::StorageBackend, system::System};
@@ -69,25 +67,6 @@ impl Fetch<MessageId, Vec<MessageId>> for Storage {
                     Ok(MessageId::from(child))
                 })
                 .take(self.config.storage.fetch_edge_limit)
-                .collect::<Result<Vec<MessageId>, Self::Error>>()?,
-        ))
-    }
-}
-
-impl Fetch<PaddedIndex, Vec<MessageId>> for Storage {
-    fn fetch(&self, index: &PaddedIndex) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
-        Ok(Some(
-            self.inner
-                .open_tree(TREE_INDEX_TO_MESSAGE_ID)?
-                .scan_prefix(index)
-                .map(|result| {
-                    let (key, _) = result?;
-                    let (_, message_id) = key.split_at(PaddedIndex::LENGTH);
-                    // Unpacking from storage is fine.
-                    let message_id: [u8; MessageId::LENGTH] = message_id.try_into().unwrap();
-                    Ok(MessageId::from(message_id))
-                })
-                .take(self.config.storage.fetch_index_limit)
                 .collect::<Result<Vec<MessageId>, Self::Error>>()?,
         ))
     }
@@ -187,17 +166,6 @@ impl Fetch<MilestoneIndex, OutputDiff> for Storage {
             .get(index.pack_to_vec())?
             // Unpacking from storage is fine.
             .map(|v| OutputDiff::unpack_unverified(&mut v.as_ref()).unwrap()))
-    }
-}
-
-impl Fetch<Address, Balance> for Storage {
-    fn fetch(&self, address: &Address) -> Result<Option<Balance>, <Self as StorageBackend>::Error> {
-        Ok(self
-            .inner
-            .open_tree(TREE_ADDRESS_TO_BALANCE)?
-            .get(address.pack_to_vec())?
-            // Unpacking from storage is fine.
-            .map(|v| Balance::unpack_unverified(&mut v.as_ref()).unwrap()))
     }
 }
 

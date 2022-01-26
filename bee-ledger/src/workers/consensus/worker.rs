@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    types::{Balance, CreatedOutput, LedgerIndex, Migration, Receipt, TreasuryOutput},
+    types::{CreatedOutput, LedgerIndex, Migration, Receipt, TreasuryOutput},
     workers::{
         consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
         error::Error,
@@ -16,7 +16,7 @@ use crate::{
 use bee_message::{
     address::Address,
     milestone::MilestoneIndex,
-    output::{ExtendedOutput, Output, OutputId},
+    output::{unlock_condition::AddressUnlockCondition, ExtendedOutput, Output, OutputId},
     payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
     MessageId,
 };
@@ -39,8 +39,6 @@ pub(crate) const EXTRA_PRUNING_DEPTH: u32 = 5;
 pub enum ConsensusWorkerCommand {
     /// Command to confirm a milestone.
     ConfirmMilestone(MessageId),
-    /// Command to fetch the balance of an address.
-    FetchBalance(Address, oneshot::Sender<(Result<Option<Balance>, Error>, LedgerIndex)>),
     /// Command to fetch an output.
     FetchOutput(
         OutputId,
@@ -113,7 +111,7 @@ where
         ));
     }
 
-    let mut metadata = WhiteFlagMetadata::new(milestone.essence().index());
+    let mut metadata = WhiteFlagMetadata::new(milestone.essence().index(), milestone.essence().timestamp());
 
     white_flag(tangle, storage, message.parents(), &mut metadata).await?;
 
@@ -140,10 +138,17 @@ where
                 OutputId::new(transaction_id, index as u16)?,
                 CreatedOutput::new(
                     message_id,
-                    Output::from(ExtendedOutput::new(*fund.address(), fund.amount())),
+                    milestone.essence().index(),
+                    milestone.essence().timestamp() as u32,
+                    Output::from(
+                        ExtendedOutput::build(fund.amount())
+                            .add_unlock_condition(AddressUnlockCondition::new(*fund.address()).into())
+                            .finish()
+                            // SAFETY: these parameters are certified fine.
+                            .unwrap(),
+                    ),
                 ),
             );
-            metadata.balance_diffs.amount_add(*fund.address(), fund.amount())?;
         }
 
         if receipt.migrated_at() < *receipt_migrated_at {
@@ -174,10 +179,9 @@ where
 
     storage::apply_milestone(
         &*storage,
-        metadata.index,
+        metadata.milestone_index,
         &metadata.created_outputs,
         &metadata.consumed_outputs,
-        &metadata.balance_diffs,
         &migration,
     )?;
 
@@ -366,11 +370,6 @@ where
                             Err(reason) => {
                                 debug!("Pruning skipped: {:?}", reason);
                             }
-                        }
-                    }
-                    ConsensusWorkerCommand::FetchBalance(address, sender) => {
-                        if let Err(e) = sender.send((storage::fetch_balance(&*storage, &address), ledger_index)) {
-                            error!("Error while sending balance: {:?}", e);
                         }
                     }
                     ConsensusWorkerCommand::FetchOutput(output_id, sender) => {

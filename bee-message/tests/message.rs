@@ -3,7 +3,7 @@
 
 use bee_message::{
     parent::Parents,
-    payload::{IndexationPayload, Payload},
+    payload::{Payload, TaggedDataPayload},
     Error, Message, MessageBuilder,
 };
 use bee_pow::{
@@ -17,7 +17,7 @@ use bee_test::rand::{
     message::rand_message_ids,
     number::rand_number,
     parents::rand_parents,
-    payload::{rand_indexation_payload, rand_treasury_transaction_payload},
+    payload::{rand_tagged_data_payload, rand_treasury_transaction_payload},
 };
 
 use packable::{error::UnpackError, PackableExt};
@@ -58,13 +58,13 @@ fn invalid_length() {
         .with_parents(Parents::new(rand_message_ids(2)).unwrap())
         .with_nonce_provider(42, 10000f64)
         .with_payload(
-            IndexationPayload::new(vec![42], vec![0u8; Message::LENGTH_MAX])
+            TaggedDataPayload::new(vec![42], vec![0u8; Message::LENGTH_MAX])
                 .unwrap()
                 .into(),
         )
         .finish();
 
-    assert!(matches!(res, Err(Error::InvalidMessageLength(len)) if len == Message::LENGTH_MAX + 96));
+    assert!(matches!(res, Err(Error::InvalidMessageLength(len)) if len == Message::LENGTH_MAX + 95));
 }
 
 #[test]
@@ -130,7 +130,7 @@ fn pack_unpack_valid() {
 #[test]
 fn getters() {
     let parents = rand_parents();
-    let payload: Payload = rand_indexation_payload().into();
+    let payload: Payload = rand_tagged_data_payload().into();
     let nonce: u64 = rand_number();
 
     let message = MessageBuilder::new()

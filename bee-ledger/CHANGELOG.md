@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.7.0 - 2022-XX-XX
 
+### Added
+
+- `CreatedOutput::milestone_index`, `CreatedOutput::milestone_timestamp` and their getters;
+
 ### Changed
 
 - Complete refactoring of White Flag with Tokenization and Smart Contracts layouts;
@@ -30,9 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- `Balance::{dust_allowance, dust_outputs}` and related methods;
-- `BalanceDiff::{dust_allowance, dust_outputs}` and related methods;
+- `Balance`, `BalanceDiff` and `BalanceDiffs`;
 - `Error::InvalidLedgerDustState`;
+- Pruning of `PaddedIndex`;
 
 ## 0.6.1 - 2021-12-29
 

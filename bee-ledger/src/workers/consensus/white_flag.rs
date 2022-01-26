@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    types::{BalanceDiffs, ConsumedOutput, CreatedOutput},
+    types::{ConsumedOutput, CreatedOutput},
     workers::{
         consensus::{merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
         error::Error,
@@ -45,7 +45,6 @@ fn apply_regular_essence<B: StorageBackend>(
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
     let mut consumed_outputs = HashMap::with_capacity(essence.inputs().len());
-    let balance_diffs = BalanceDiffs::new();
     let consumed_amount: u64 = 0;
     let created_amount: u64 = 0;
 
@@ -120,18 +119,24 @@ fn apply_regular_essence<B: StorageBackend>(
     for (output_id, created_output) in consumed_outputs {
         metadata.consumed_outputs.insert(
             output_id,
-            (created_output, ConsumedOutput::new(*transaction_id, metadata.index)),
+            (
+                created_output,
+                ConsumedOutput::new(*transaction_id, metadata.milestone_index),
+            ),
         );
     }
 
     for (index, output) in essence.outputs().iter().enumerate() {
         metadata.created_outputs.insert(
             OutputId::new(*transaction_id, index as u16)?,
-            CreatedOutput::new(*message_id, output.clone()),
+            CreatedOutput::new(
+                *message_id,
+                metadata.milestone_index,
+                metadata.milestone_timestamp as u32,
+                output.clone(),
+            ),
         );
     }
-
-    metadata.balance_diffs.merge(balance_diffs)?;
 
     Ok(ConflictReason::None)
 }
@@ -239,11 +244,5 @@ pub async fn white_flag<B: StorageBackend>(
         ));
     }
 
-    let diff_sum = metadata.balance_diffs.iter().map(|(_, diff)| diff.amount()).sum();
-
-    if diff_sum == 0 {
-        Ok(())
-    } else {
-        Err(Error::NonZeroBalanceDiffSum(diff_sum))
-    }
+    Ok(())
 }

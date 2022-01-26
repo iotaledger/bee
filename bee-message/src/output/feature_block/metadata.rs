@@ -1,4 +1,4 @@
-// Copyright 2021 IOTA Stiftung
+// Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::Error;
@@ -33,7 +33,7 @@ impl TryFrom<Vec<u8>> for MetadataFeatureBlock {
 
 impl MetadataFeatureBlock {
     /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of [`MetadataFeatureBlock`].
-    pub const KIND: u8 = 7;
+    pub const KIND: u8 = 2;
 
     /// Valid lengths for a [`MetadataFeatureBlock`].
     pub const LENGTH_RANGE: RangeInclusive<u32> = 1..=1024;

@@ -16,11 +16,6 @@ use crate::{
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::{
-        indexation::{IndexationPayload, PaddedIndex},
-        transaction::TransactionEssence,
-        Payload,
-    },
     Message, MessageId,
 };
 use bee_storage::access::{Batch, Fetch};
@@ -104,15 +99,6 @@ pub async fn prune_confirmed_data<S: StorageBackend>(
                 return Err(e);
             }
         };
-
-        // Delete its `Indexation` payload (if existent).
-        let payload = msg.payload();
-        if let Some(indexation) = unwrap_indexation(payload) {
-            let padded_index = indexation.padded_index();
-
-            prune_indexation_data(storage, batch, &(padded_index, message_id))?;
-            metrics.prunable_indexations += 1;
-        }
 
         // Delete its edges.
         let parents = msg.parents();
@@ -300,23 +286,12 @@ pub async fn prune_unconfirmed_data<S: StorageBackend>(
         // Delete those messages that remained unconfirmed.
         match Fetch::<MessageId, Message>::fetch(storage, unconf_msg_id).map_err(|e| Error::Storage(Box::new(e)))? {
             Some(msg) => {
-                let payload = msg.payload();
                 let parents = msg.parents();
 
                 // Add message data to the delete batch.
                 prune_message_and_metadata(storage, batch, unconf_msg_id)?;
 
                 log::trace!("Pruned unconfirmed msg {} at {}.", unconf_msg_id, prune_index);
-
-                if let Some(indexation) = unwrap_indexation(payload) {
-                    let padded_index = indexation.padded_index();
-                    let message_id = *unconf_msg_id;
-
-                    // Add prunable indexations to the delete batch.
-                    prune_indexation_data(storage, batch, &(padded_index, message_id))?;
-
-                    metrics.prunable_indexations += 1;
-                }
 
                 // Add prunable edges to the delete batch.
                 for parent in parents.iter() {
@@ -385,17 +360,6 @@ fn prune_edge<S: StorageBackend>(
     Ok(())
 }
 
-fn prune_indexation_data<S: StorageBackend>(
-    storage: &S,
-    batch: &mut S::Batch,
-    index_message_id: &(PaddedIndex, MessageId),
-) -> Result<(), Error> {
-    Batch::<(PaddedIndex, MessageId), ()>::batch_delete(storage, batch, index_message_id)
-        .map_err(|e| Error::Storage(Box::new(e)))?;
-
-    Ok(())
-}
-
 async fn prune_milestone<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
@@ -452,26 +416,6 @@ async fn prune_receipts<S: StorageBackend>(
     }
 
     Ok(num)
-}
-
-fn unwrap_indexation(payload: Option<&Payload>) -> Option<&IndexationPayload> {
-    match payload {
-        Some(Payload::Indexation(indexation)) => Some(indexation),
-        Some(Payload::Transaction(transaction)) =>
-        {
-            #[allow(irrefutable_let_patterns)]
-            if let TransactionEssence::Regular(essence) = transaction.essence() {
-                if let Some(Payload::Indexation(indexation)) = essence.payload() {
-                    Some(indexation)
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        }
-        _ => None,
-    }
 }
 
 // TODO: consider using this instead of 'truncate'

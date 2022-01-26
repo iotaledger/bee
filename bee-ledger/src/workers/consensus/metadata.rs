@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{BalanceDiffs, ConsumedOutput, CreatedOutput};
+use crate::types::{ConsumedOutput, CreatedOutput};
 
 use bee_message::{milestone::MilestoneIndex, output::OutputId, MessageId};
 use bee_tangle::ConflictReason;
@@ -11,7 +11,9 @@ use std::collections::HashMap;
 /// White flag metadata of a milestone confirmation.
 pub struct WhiteFlagMetadata {
     /// Index of the confirmed milestone.
-    pub(crate) index: MilestoneIndex,
+    pub(crate) milestone_index: MilestoneIndex,
+    /// Timestamp of the confirmed milestone.
+    pub(crate) milestone_timestamp: u64,
     /// The number of messages which were referenced by the confirmed milestone.
     pub(crate) referenced_messages: usize,
     /// The messages which were excluded because they did not include a transaction.
@@ -24,29 +26,27 @@ pub struct WhiteFlagMetadata {
     pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
     /// The outputs consumed within the confirmed milestone.
     pub(crate) consumed_outputs: HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
-    /// The balance diffs occurring within the confirmed milestone.
-    pub(crate) balance_diffs: BalanceDiffs,
     /// The merkle proof of the milestone.
     pub(crate) merkle_proof: Vec<u8>,
 }
 
 impl WhiteFlagMetadata {
-    /// Creates a new `WhiteFlagMetadata`.
-    pub fn new(index: MilestoneIndex) -> WhiteFlagMetadata {
+    /// Creates a new [`WhiteFlagMetadata`].
+    pub fn new(milestone_index: MilestoneIndex, milestone_timestamp: u64) -> WhiteFlagMetadata {
         WhiteFlagMetadata {
-            index,
+            milestone_index,
+            milestone_timestamp,
             referenced_messages: 0,
             excluded_no_transaction_messages: Vec::new(),
             excluded_conflicting_messages: Vec::new(),
             included_messages: Vec::new(),
             created_outputs: HashMap::new(),
             consumed_outputs: HashMap::new(),
-            balance_diffs: BalanceDiffs::new(),
             merkle_proof: Vec::new(),
         }
     }
 
-    /// Returns the merkle proof of a `WhiteFlagMetadata`.
+    /// Returns the merkle proof of a [`WhiteFlagMetadata`].
     pub fn merkle_proof(&self) -> &[u8] {
         &self.merkle_proof
     }
