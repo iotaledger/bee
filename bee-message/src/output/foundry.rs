@@ -169,7 +169,7 @@ impl FoundryOutput {
     /// The set of allowed [`UnlockCondition`]s for an [`FoundryOutput`].
     const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS;
     /// The set of allowed [`FeatureBlock`]s for an [`FoundryOutput`].
-    const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
+    pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
 
     /// Creates a new [`FoundryOutput`].
     #[inline(always)]

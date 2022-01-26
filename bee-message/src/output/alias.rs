@@ -185,7 +185,7 @@ impl AliasOutput {
     const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags =
         UnlockConditionFlags::STATE_CONTROLLER_ADDRESS.union(UnlockConditionFlags::GOVERNOR_ADDRESS);
     /// The set of allowed [`FeatureBlock`]s for an [`AliasOutput`].
-    const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
+    pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
         .union(FeatureBlockFlags::ISSUER)
         .union(FeatureBlockFlags::METADATA);
 

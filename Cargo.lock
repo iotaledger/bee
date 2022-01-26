@@ -444,6 +444,7 @@ dependencies = [
  "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytemuck",
  "hex",
+ "primitive-types",
  "rand 0.8.4",
  "serde",
  "serde_json",

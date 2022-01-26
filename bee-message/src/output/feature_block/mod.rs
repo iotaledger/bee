@@ -13,7 +13,7 @@ pub use sender::SenderFeatureBlock;
 pub use tag::TagFeatureBlock;
 pub(crate) use tag::TagFeatureBlockLength;
 
-use crate::Error;
+use crate::{create_bitflags, Error};
 
 use bee_common::ord::is_unique_sorted;
 
@@ -57,7 +57,7 @@ impl FeatureBlock {
     }
 
     /// Returns the [`FeatureBlockFlags`] for the given [`FeatureBlock`].
-    pub(crate) fn flag(&self) -> FeatureBlockFlags {
+    pub fn flag(&self) -> FeatureBlockFlags {
         match self {
             Self::Sender(_) => FeatureBlockFlags::SENDER,
             Self::Issuer(_) => FeatureBlockFlags::ISSUER,
@@ -158,16 +158,32 @@ pub(crate) fn validate_allowed_feature_blocks(
     Ok(())
 }
 
-bitflags! {
-    /// A bitflags-based representation of the set of active feature blocks.
-    pub(crate) struct FeatureBlockFlags: u16 {
-        /// Signals the presence of a [`SenderFeatureBlock`].
-        const SENDER = 1 << SenderFeatureBlock::KIND;
-        /// Signals the presence of a [`IssuerFeatureBlock`].
-        const ISSUER = 1 << IssuerFeatureBlock::KIND;
-        /// Signals the presence of a [`MetadataFeatureBlock`].
-        const METADATA = 1 << MetadataFeatureBlock::KIND;
-        /// Signals the presence of a [`TagFeatureBlock`].
-        const TAG = 1 << TagFeatureBlock::KIND;
+create_bitflags!(
+    /// A bitflags-based representation of the set of active [`FeatureBlock`]s.
+    FeatureBlockFlags,
+    u16,
+    [
+        (SENDER, SenderFeatureBlock),
+        (ISSUER, IssuerFeatureBlock),
+        (METADATA, MetadataFeatureBlock),
+        (TAG, TagFeatureBlock),
+    ]
+);
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn all_flags_present() {
+        assert_eq!(
+            FeatureBlockFlags::ALL_FLAGS,
+            &[
+                FeatureBlockFlags::SENDER,
+                FeatureBlockFlags::ISSUER,
+                FeatureBlockFlags::METADATA,
+                FeatureBlockFlags::TAG
+            ]
+        );
     }
 }
