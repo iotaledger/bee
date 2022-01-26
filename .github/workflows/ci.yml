@@ -64,7 +64,7 @@ jobs:
           echo $ROCKSDB_VERSION
           curl -L -v -o rocksdb.tar.gz https://github.com/facebook/rocksdb/archive/refs/tags/v$ROCKSDB_VERSION.tar.gz
           tar -xzf rocksdb.tar.gz
-          cd rocksdb
+          cd rocksdb-$ROCKSDB_VERSION
           apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
           make shared_lib
           cp -L librocksdb.so $LOCAL_BINARIES_PATH
