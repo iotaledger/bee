@@ -46,22 +46,19 @@ jobs:
         if: matrix.os == 'windows-latest'
 
       - name: Set rocksdb version
-        if: matrix.os == 'ubuntu-latest'
         run: echo "ROCKSDB_VERSION=6.22.1" >> $GITHUB_ENV
 
       - name: Set local binaries path
-        if: matrix.os == 'ubuntu-latest'
         run: echo "LOCAL_BINARIES_PATH=$(pwd)/local-binaries" >> $GITHUB_ENV
 
       - name: Cache rocksdb
-        if: matrix.os == 'ubuntu-latest'
         uses: actions/cache@v2
         id: cache-rocksdb
         with:
           path: ${{ env.LOCAL_BINARIES_PATH }}
           key: rocksdb-${{ runner.os }}-${{ env.ROCKSDB_VERSION }}
 
-      - name: Compile rocksdb
+      - name: Compile rocksdb (Linux)
         if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'ubuntu-latest'
         run: |
           curl -L -O https://github.com/facebook/rocksdb/archive/refs/tags/v$ROCKSDB_VERSION.tar.gz
@@ -71,8 +68,17 @@ jobs:
           make shared_lib
           cp -L librocksdb.so $LOCAL_BINARIES_PATH
 
+      - name: Compile rocksdb (MacOS)
+        if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'macos-latest'
+        run: |
+          curl -L -O https://github.com/facebook/rocksdb/archive/refs/tags/v$ROCKSDB_VERSION.tar.gz
+          tar -xzf v$ROCKSDB_VERSION.tar.gz
+          cd rocksdb-$ROCKSDB_VERSION
+          make shared_lib
+          cp -L librocksdb.so $LOCAL_BINARIES_PATH
+
       - name: Add rocksdb path to env
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os != 'windows-latest'
         run: echo "ROCKSDB_LIB_DIR=$LOCAL_BINARIES_PATH/librocksdb.so" >> $GITHUB_ENV
 
       - name: Install ${{ matrix.rust }}
