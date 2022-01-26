@@ -46,13 +46,16 @@ jobs:
         if: matrix.os == 'windows-latest'
 
       - name: Set rocksdb version
+        if: matrix.os != 'windows-latest'
         run: echo "ROCKSDB_VERSION=6.22.1" >> $GITHUB_ENV
 
       - name: Set local binaries path
+        if: matrix.os != 'windows-latest'
         run: echo "LOCAL_BINARIES_PATH=$(pwd)/local-binaries" >> $GITHUB_ENV
 
       - name: Cache rocksdb
         uses: actions/cache@v2
+        if: matrix.os != 'windows-latest'
         id: cache-rocksdb
         with:
           path: ${{ env.LOCAL_BINARIES_PATH }}
