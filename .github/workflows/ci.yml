@@ -64,9 +64,8 @@ jobs:
       - name: Compile rocksdb
         if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'ubuntu-latest'
         run: |
-          echo $ROCKSDB_VERSION
-          curl -L -v -o rocksdb.tar.gz https://github.com/facebook/rocksdb/archive/refs/tags/v$ROCKSDB_VERSION.tar.gz
-          tar -xzf rocksdb.tar.gz
+          curl -L -O https://github.com/facebook/rocksdb/archive/refs/tags/v$ROCKSDB_VERSION.tar.gz
+          tar -xzf v$ROCKSDB_VERSION.tar.gz
           cd rocksdb-$ROCKSDB_VERSION
           sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
           make shared_lib
