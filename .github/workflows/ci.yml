@@ -59,7 +59,7 @@ jobs:
           key: rocksdb-${{ runner.os }}-${{ env.ROCKSDB_VERSION }}
 
       - name: Compile rocksdb
-        if: steps.cache-rocksdb.outputs.cache-hit != 'true'
+        if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'ubuntu-latest'
         run: |
           echo $ROCKSDB_VERSION
           curl -L -v -o rocksdb.tar.gz https://github.com/facebook/rocksdb/archive/refs/tags/v$ROCKSDB_VERSION.tar.gz
@@ -70,6 +70,7 @@ jobs:
           cp -L librocksdb.so $LOCAL_BINARIES_PATH
 
       - name: Add rocksdb path to env
+        if: matrix.os == 'ubuntu-latest'
         run: echo "ROCKSDB_LIB_DIR=$LOCAL_BINARIES_PATH/librocksdb.so" >> $GITHUB_ENV
 
       - name: Install ${{ matrix.rust }}
