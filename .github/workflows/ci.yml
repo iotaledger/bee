@@ -61,6 +61,7 @@ jobs:
       - name: Compile rocksdb
         if: steps.cache-rocksdb.outputs.cache-hit != 'true'
         run: |
+          echo $ROCKSDB_VERSION
           curl -o rocksdb.tar.gz https://github.com/facebook/rocksdb/archive/refs/tags/v$ROCKSDB_VERSION.tar.gz
           tar -xzf rocksdb.tar.gz
           cd rocksdb
