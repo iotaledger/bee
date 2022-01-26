@@ -63,7 +63,7 @@ jobs:
 
       - name: Cache rocksdb
         uses: actions/cache@v2
-        id: cache-rocksdb:
+        id: cache-rocksdb
         with:
           path: ${{ env.LOCAL_BINARIES_PATH }}
           key: rocksdb-${{ runner.os }}-${{ env.ROCKSDB_VERSION }}
