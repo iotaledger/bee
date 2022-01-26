@@ -23,7 +23,7 @@ pub fn rand_metadata_feature_block() -> MetadataFeatureBlock {
     MetadataFeatureBlock::new(bytes).unwrap()
 }
 
-/// Generates a random [`IndexationFeatureBlock`].
+/// Generates a random [`TagFeatureBlock`].
 pub fn rand_tag_feature_block() -> TagFeatureBlock {
     let bytes = rand_bytes(rand_number_range(TagFeatureBlock::LENGTH_RANGE) as usize);
     TagFeatureBlock::new(bytes).unwrap()
