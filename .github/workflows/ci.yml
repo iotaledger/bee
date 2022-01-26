@@ -63,7 +63,7 @@ jobs:
 
       - name: Cache rocksdb
         uses: actions/cache@v2
-        id: cache-rocksdb
+        id: cache-rocksdb:
         with:
           path: ${{ env.LOCAL_BINARIES_PATH }}
           key: rocksdb-${{ runner.os }}-${{ env.ROCKSDB_VERSION }}
@@ -94,6 +94,7 @@ jobs:
         run: |
           nuget install RocksDB -Version $env:ROCKSDB_VERSION -OutputDirectory $env:LOCAL_BINARIES_PATH
           Get-ChildItem -Path $env:LOCAL_BINARIES_PATH -Force
+          echo "ROCKSDB_LIB_DIR=$env:LOCAL_BINARIES_PATH\RocksDB.$env:ROCKSDB_VERSION" >> $env:GITHUB_ENV
 
       - name: Install ${{ matrix.rust }}
         uses: actions-rs/toolchain@v1
