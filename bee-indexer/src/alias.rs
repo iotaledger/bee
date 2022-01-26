@@ -14,7 +14,7 @@ pub(crate) struct Alias {
     pub milestone_index: MilestoneIndex,
 }
 
-pub(crate) async fn insert_alias_output<'a>(pool: &sqlx::SqlitePool, alias: &Alias) -> Result<(), sqlx::Error> {
+pub(crate) async fn insert_alias_output(pool: &sqlx::SqlitePool, alias: &Alias) -> Result<(), sqlx::Error> {
     let mut conn = pool.acquire().await?;
 
     let id = sqlx::query!(
