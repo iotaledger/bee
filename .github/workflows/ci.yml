@@ -46,7 +46,7 @@ jobs:
         if: matrix.os == 'windows-latest'
 
       - name: Set rocksdb version
-        run: echo "ROCKSDB_VERSION=6.22.1"
+        run: echo "ROCKSDB_VERSION=6.22.1" >> $GITHUB_ENV
 
       - name: Set local binaries path
         run: echo "LOCAL_BINARIES_PATH=$(pwd)/local-binaries" >> $GITHUB_ENV
@@ -61,7 +61,7 @@ jobs:
       - name: Compile rocksdb
         if: steps.cache-rocksdb.outputs.cache-hit != 'true'
         run: |
-          curl -o rocksdb.tar.gz https://github.com/facebook/rocksdb/archive/refs/tags/$ROCKSDB_VERSION.tar.gz
+          curl -o rocksdb.tar.gz https://github.com/facebook/rocksdb/archive/refs/tags/v$ROCKSDB_VERSION.tar.gz
           tar -xzf rocksdb.tar.gz
           cd rocksdb
           apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
