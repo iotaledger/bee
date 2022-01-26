@@ -1,16 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::{
-    address::rand_address,
-    bytes::rand_bytes,
-    milestone::rand_milestone_index,
-    number::{rand_number, rand_number_range},
-};
+use crate::rand::{address::rand_address, bytes::rand_bytes, number::rand_number_range};
 
 use bee_message::output::feature_block::{
-    DustDepositReturnFeatureBlock, ExpirationFeatureBlock, FeatureBlock, FeatureBlockFlags, IndexationFeatureBlock,
-    IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock, TimelockFeatureBlock,
+    FeatureBlock, FeatureBlockFlags, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock, TagFeatureBlock,
 };
 
 /// Generates a random [`SenderFeatureBlock`].
@@ -23,21 +17,6 @@ pub fn rand_issuer_feature_block() -> IssuerFeatureBlock {
     IssuerFeatureBlock::new(rand_address())
 }
 
-/// Generates a random [`DustDepositReturnFeatureBlock`].
-pub fn rand_dust_deposit_return_feature_block() -> DustDepositReturnFeatureBlock {
-    DustDepositReturnFeatureBlock::new(rand_number_range(DustDepositReturnFeatureBlock::AMOUNT_RANGE)).unwrap()
-}
-
-/// Generates a random [`TimelockFeatureBlock`].
-pub fn rand_timelock_feature_block() -> TimelockFeatureBlock {
-    TimelockFeatureBlock::new(rand_milestone_index(), rand_number())
-}
-
-/// Generates a random [`ExpirationFeatureBlock`].
-pub fn rand_expiration_feature_block() -> ExpirationFeatureBlock {
-    ExpirationFeatureBlock::new(rand_milestone_index(), rand_number())
-}
-
 /// Generates a random [`MetadataFeatureBlock`].
 pub fn rand_metadata_feature_block() -> MetadataFeatureBlock {
     let bytes = rand_bytes(rand_number_range(MetadataFeatureBlock::LENGTH_RANGE) as usize);
@@ -45,22 +24,17 @@ pub fn rand_metadata_feature_block() -> MetadataFeatureBlock {
 }
 
 /// Generates a random [`IndexationFeatureBlock`].
-pub fn rand_indexation_feature_block() -> IndexationFeatureBlock {
-    let bytes = rand_bytes(rand_number_range(IndexationFeatureBlock::LENGTH_RANGE) as usize);
-    IndexationFeatureBlock::new(bytes).unwrap()
+pub fn rand_tag_feature_block() -> TagFeatureBlock {
+    let bytes = rand_bytes(rand_number_range(TagFeatureBlock::LENGTH_RANGE) as usize);
+    TagFeatureBlock::new(bytes).unwrap()
 }
 
 fn rand_feature_block_from_flag(flag: &FeatureBlockFlags) -> FeatureBlock {
     match *flag {
         FeatureBlockFlags::SENDER => FeatureBlock::Sender(rand_sender_feature_block()),
         FeatureBlockFlags::ISSUER => FeatureBlock::Issuer(rand_issuer_feature_block()),
-        FeatureBlockFlags::DUST_DEPOSIT_RETURN => {
-            FeatureBlock::DustDepositReturn(rand_dust_deposit_return_feature_block())
-        }
-        FeatureBlockFlags::TIMELOCK => FeatureBlock::Timelock(rand_timelock_feature_block()),
-        FeatureBlockFlags::EXPIRATION => FeatureBlock::Expiration(rand_expiration_feature_block()),
         FeatureBlockFlags::METADATA => FeatureBlock::Metadata(rand_metadata_feature_block()),
-        FeatureBlockFlags::INDEXATION => FeatureBlock::Indexation(rand_indexation_feature_block()),
+        FeatureBlockFlags::TAG => FeatureBlock::Tag(rand_tag_feature_block()),
         _ => unreachable!(),
     }
 }

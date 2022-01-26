@@ -122,8 +122,9 @@ impl ExtendedOutput {
         .union(UnlockConditionFlags::DUST_DEPOSIT_RETURN)
         .union(UnlockConditionFlags::TIMELOCK)
         .union(UnlockConditionFlags::EXPIRATION);
+
     /// The set of allowed [`FeatureBlock`]s for an [`ExtendedOutput`].
-    const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
+    pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
         .union(FeatureBlockFlags::METADATA)
         .union(FeatureBlockFlags::TAG);
 
