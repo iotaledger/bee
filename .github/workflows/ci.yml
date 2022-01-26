@@ -70,6 +70,7 @@ jobs:
           sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
           make shared_lib
           cp -L librocksdb.so $LOCAL_BINARIES_PATH
+          echo "ROCKSDB_LIB_DIR=$LOCAL_BINARIES_PATH/librocksdb.so" >> $GITHUB_ENV
 
       - name: Compile rocksdb (MacOS)
         if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'macos-latest'
@@ -78,11 +79,8 @@ jobs:
           tar -xzf v$ROCKSDB_VERSION.tar.gz
           cd rocksdb-$ROCKSDB_VERSION
           make shared_lib
-          cp -L librocksdb.so $LOCAL_BINARIES_PATH
-
-      - name: Add rocksdb path to env
-        if: matrix.os != 'windows-latest'
-        run: echo "ROCKSDB_LIB_DIR=$LOCAL_BINARIES_PATH/librocksdb.so" >> $GITHUB_ENV
+          cp -L librocksdb.dylib $LOCAL_BINARIES_PATH
+          echo "ROCKSDB_LIB_DIR=$LOCAL_BINARIES_PATH/librocksdb.dylib" >> $GITHUB_ENV
 
       - name: Install ${{ matrix.rust }}
         uses: actions-rs/toolchain@v1
