@@ -45,6 +45,32 @@ jobs:
         run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
         if: matrix.os == 'windows-latest'
 
+      - name: Set rocksdb version
+        run: echo "ROCKSDB_VERSION=6.22.1"
+
+      - name: Set local binaries path
+        run: echo "LOCAL_BINARIES_PATH=$(pwd)/local-binaries" >> $GITHUB_ENV
+
+      - name: Cache rocksdb
+        uses: actions/cache@v2
+        id: cache-rocksdb
+        with:
+          path: ${{ env.LOCAL_BINARIES_PATH }}
+          key: rocksdb-${{ runner.os }}-${{ env.ROCKSDB_VERSION }}
+
+      - name: Compile rocksdb
+        if: steps.cache-rocksdb.outputs.cache-hit != 'true'
+        run: |
+          curl -o rocksdb.tar.gz https://github.com/facebook/rocksdb/archive/refs/tags/$ROCKSDB_VERSION.tar.gz
+          tar -xzf rocksdb.tar.gz
+          cd rocksdb
+          apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
+          make shared_lib
+          cp -L librocksdb.so $LOCAL_BINARIES_PATH
+
+      - name: Add rocksdb path to env
+        run: echo "ROCKSDB_LIB_DIR=$LOCAL_BINARIES_PATH/librocksdb.so" >> $GITHUB_ENV
+
       - name: Install ${{ matrix.rust }}
         uses: actions-rs/toolchain@v1
         with:
@@ -329,5 +355,5 @@ jobs:
 
       - name: Run missing files check
         run: >
-          bash .github/workflows/scripts/missing_files.sh 
+          bash .github/workflows/scripts/missing_files.sh
           bee-message/fuzz
