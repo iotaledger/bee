@@ -175,7 +175,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn check_length() {
+    fn all_flags_present() {
         assert_eq!(
             FeatureBlockFlags::ALL_FLAGS,
             &[

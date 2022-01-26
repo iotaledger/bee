@@ -96,7 +96,7 @@ macro_rules! string_serde_impl {
 }
 
 /// A convenience macro to work around the fact the `[bitflags]` crate does not yet support iterating over the
-/// individual flags. This macro essentially creates the `[bitflags]` and puts the individual flags into a associated
+/// individual flags. This macro essentially creates the `[bitflags]` and puts the individual flags into an associated
 /// constant `pub const ALL_FLAGS: &'static []`.
 #[macro_export]
 macro_rules! create_bitflags {
@@ -105,9 +105,7 @@ macro_rules! create_bitflags {
             $(#[$meta])*
             pub struct $Name: $TagType {
                 $(
-                    #[doc = "Signals the presence of a [`"]
-                    #[doc = stringify!($TypeName)]
-                    #[doc = "`]."]
+                    #[doc = concat!("Signals the presence of a [`", stringify!($TypeName), "`].")]
                     const $FlagName = 1 << $TypeName::KIND;
                 )*
             }
