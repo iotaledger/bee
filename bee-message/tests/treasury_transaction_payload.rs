@@ -5,7 +5,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     constant::IOTA_SUPPLY,
     input::{Input, TreasuryInput, UtxoInput},
-    output::{ExtendedOutput, Output, TreasuryOutput},
+    output::{unlock_condition::AddressUnlockCondition, ExtendedOutput, Output, TreasuryOutput},
     payload::TreasuryTransactionPayload,
     Error,
 };
@@ -47,10 +47,14 @@ fn new_invalid_input() {
 #[test]
 fn new_invalid_output() {
     let input = Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap());
-    let output = Output::from(ExtendedOutput::new(
-        Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-        IOTA_SUPPLY,
-    ));
+    let output = Output::from(
+        ExtendedOutput::build(IOTA_SUPPLY)
+            .add_unlock_condition(
+                AddressUnlockCondition::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap())).into(),
+            )
+            .finish()
+            .unwrap(),
+    );
 
     assert!(matches!(
         TreasuryTransactionPayload::new(input, output.clone()),

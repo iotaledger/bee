@@ -3,18 +3,18 @@
 
 //! The payload module defines the core data types for representing message payloads.
 
-pub mod indexation;
 pub mod milestone;
 pub mod receipt;
+pub mod tagged_data;
 pub mod transaction;
 pub mod treasury;
 
-pub use indexation::IndexationPayload;
-pub(crate) use indexation::{IndexationDataLength, IndexationIndexLength};
 pub use milestone::MilestonePayload;
 pub(crate) use milestone::{PublicKeyCount, SignatureCount};
 pub use receipt::ReceiptPayload;
 pub(crate) use receipt::{MigratedFundsAmount, ReceiptFundsCount};
+pub use tagged_data::TaggedDataPayload;
+pub(crate) use tagged_data::{TagLength, TaggedDataLength};
 pub use transaction::TransactionPayload;
 pub(crate) use transaction::{InputCount, OutputCount};
 pub use treasury::TreasuryTransactionPayload;
@@ -47,15 +47,15 @@ pub enum Payload {
     /// A milestone payload.
     #[packable(tag = MilestonePayload::KIND)]
     Milestone(Box<MilestonePayload>),
-    /// An indexation payload.
-    #[packable(tag = IndexationPayload::KIND)]
-    Indexation(Box<IndexationPayload>),
     /// A receipt payload.
     #[packable(tag = ReceiptPayload::KIND)]
     Receipt(Box<ReceiptPayload>),
     /// A treasury transaction payload.
     #[packable(tag = TreasuryTransactionPayload::KIND)]
     TreasuryTransaction(Box<TreasuryTransactionPayload>),
+    /// A tagged data payload.
+    #[packable(tag = TaggedDataPayload::KIND)]
+    TaggedData(Box<TaggedDataPayload>),
 }
 
 impl From<TransactionPayload> for Payload {
@@ -67,12 +67,6 @@ impl From<TransactionPayload> for Payload {
 impl From<MilestonePayload> for Payload {
     fn from(payload: MilestonePayload) -> Self {
         Self::Milestone(Box::new(payload))
-    }
-}
-
-impl From<IndexationPayload> for Payload {
-    fn from(payload: IndexationPayload) -> Self {
-        Self::Indexation(Box::new(payload))
     }
 }
 
@@ -88,15 +82,21 @@ impl From<TreasuryTransactionPayload> for Payload {
     }
 }
 
+impl From<TaggedDataPayload> for Payload {
+    fn from(payload: TaggedDataPayload) -> Self {
+        Self::TaggedData(Box::new(payload))
+    }
+}
+
 impl Payload {
     /// Returns the payload kind of a `Payload`.
     pub fn kind(&self) -> u32 {
         match self {
             Self::Transaction(_) => TransactionPayload::KIND,
             Self::Milestone(_) => MilestonePayload::KIND,
-            Self::Indexation(_) => IndexationPayload::KIND,
             Self::Receipt(_) => ReceiptPayload::KIND,
             Self::TreasuryTransaction(_) => TreasuryTransactionPayload::KIND,
+            Self::TaggedData(_) => TaggedDataPayload::KIND,
         }
     }
 }

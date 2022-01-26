@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod ed25519_address_to_output_id;
-mod index_to_message_id;
 mod ledger_index;
 mod message_id_to_message;
 mod message_id_to_message_id;
@@ -19,7 +18,6 @@ mod solid_entry_point_to_milestone_index;
 mod spent_to_treasury_output;
 
 pub use ed25519_address_to_output_id::ed25519_address_to_output_id_access;
-pub use index_to_message_id::index_to_message_id_access;
 pub use ledger_index::ledger_index_access;
 pub use message_id_to_message::message_id_to_message_access;
 pub use message_id_to_message_id::message_id_to_message_id_access;

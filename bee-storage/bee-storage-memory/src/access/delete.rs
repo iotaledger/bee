@@ -13,7 +13,6 @@ use bee_message::{
     address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::Delete, backend::StorageBackend};
@@ -36,7 +35,6 @@ macro_rules! impl_delete {
 impl_delete!(MessageId, Message, message_id_to_message);
 impl_delete!(MessageId, MessageMetadata, message_id_to_metadata);
 impl_delete!((MessageId, MessageId), (), message_id_to_message_id);
-impl_delete!((PaddedIndex, MessageId), (), index_to_message_id);
 impl_delete!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_delete!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_delete!(Unspent, (), output_id_unspent);

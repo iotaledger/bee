@@ -5,12 +5,12 @@ use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
-    output::{ExtendedOutput, Output, TreasuryOutput},
+    output::{unlock_condition::AddressUnlockCondition, ExtendedOutput, Output, TreasuryOutput},
     payload::{
         milestone::{MilestoneEssence, MilestoneId, MilestonePayload},
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayloadBuilder},
-        IndexationPayload, Payload, TreasuryTransactionPayload,
+        Payload, TaggedDataPayload, TreasuryTransactionPayload,
     },
     signature::{Ed25519Signature, Signature},
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
@@ -40,7 +40,12 @@ fn transaction() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(ExtendedOutput::new(address, amount));
+    let output = Output::Extended(
+        ExtendedOutput::build(amount)
+            .add_unlock_condition(AddressUnlockCondition::new(address).into())
+            .finish()
+            .unwrap(),
+    );
     let essence = TransactionEssence::Regular(
         RegularTransactionEssence::builder(rand_number())
             .with_inputs(vec![input1, input2])
@@ -99,14 +104,14 @@ fn milestone() {
 }
 
 #[test]
-fn indexation() {
-    let payload: Payload = IndexationPayload::new(rand_bytes(32), vec![]).unwrap().into();
+fn tagged_data() {
+    let payload: Payload = TaggedDataPayload::new(rand_bytes(32), vec![]).unwrap().into();
 
     let packed = payload.pack_to_vec();
 
-    assert_eq!(payload.kind(), 2);
+    assert_eq!(payload.kind(), 5);
     assert_eq!(payload.packed_len(), packed.len());
-    assert!(matches!(payload, Payload::Indexation(_)));
+    assert!(matches!(payload, Payload::TaggedData(_)));
 }
 
 #[test]

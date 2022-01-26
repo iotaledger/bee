@@ -13,7 +13,6 @@ use bee_message::{
     address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::Insert, backend::StorageBackend, system::System};
@@ -37,7 +36,6 @@ impl_insert!(u8, System, system);
 impl_insert!(MessageId, Message, message_id_to_message);
 impl_insert!(MessageId, MessageMetadata, message_id_to_metadata);
 impl_insert!((MessageId, MessageId), (), message_id_to_message_id);
-impl_insert!((PaddedIndex, MessageId), (), index_to_message_id);
 impl_insert!(OutputId, CreatedOutput, output_id_to_created_output);
 impl_insert!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_insert!(Unspent, (), output_id_unspent);

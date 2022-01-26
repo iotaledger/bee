@@ -8,7 +8,6 @@ use serde::Deserialize;
 use std::path::PathBuf;
 
 const DEFAULT_FETCH_EDGE_LIMIT: usize = 1_000;
-const DEFAULT_FETCH_INDEX_LIMIT: usize = 1_000;
 const DEFAULT_FETCH_OUTPUT_ID_LIMIT: usize = 1_000;
 
 const DEFAULT_PATH: &str = "./storage/mainnet";
@@ -40,7 +39,6 @@ const DEFAULT_SET_HIGH_PRIORITY_BACKGROUND_THREADS: i32 = 2;
 #[must_use]
 pub struct StorageConfigBuilder {
     fetch_edge_limit: Option<usize>,
-    fetch_index_limit: Option<usize>,
     fetch_output_id_limit: Option<usize>,
 }
 
@@ -52,7 +50,6 @@ impl StorageConfigBuilder {
     pub fn finish(self) -> StorageConfig {
         StorageConfig {
             fetch_edge_limit: self.fetch_edge_limit.unwrap_or(DEFAULT_FETCH_EDGE_LIMIT),
-            fetch_index_limit: self.fetch_index_limit.unwrap_or(DEFAULT_FETCH_INDEX_LIMIT),
             fetch_output_id_limit: self.fetch_output_id_limit.unwrap_or(DEFAULT_FETCH_OUTPUT_ID_LIMIT),
         }
     }
@@ -182,7 +179,6 @@ impl From<RocksDbConfigBuilder> for RocksDbConfig {
 #[derive(Clone)]
 pub struct StorageConfig {
     pub(crate) fetch_edge_limit: usize,
-    pub(crate) fetch_index_limit: usize,
     pub(crate) fetch_output_id_limit: usize,
 }
 

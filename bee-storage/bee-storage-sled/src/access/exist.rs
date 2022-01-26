@@ -13,7 +13,6 @@ use bee_message::{
     address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{access::Exist, backend::StorageBackend};
@@ -47,15 +46,6 @@ impl Exist<(MessageId, MessageId), ()> for Storage {
         key.extend_from_slice(child.as_ref());
 
         Ok(self.inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE_ID)?.contains_key(key)?)
-    }
-}
-
-impl Exist<(PaddedIndex, MessageId), ()> for Storage {
-    fn exist(&self, (index, message_id): &(PaddedIndex, MessageId)) -> Result<bool, <Self as StorageBackend>::Error> {
-        let mut key = index.as_ref().to_vec();
-        key.extend_from_slice(message_id.as_ref());
-
-        Ok(self.inner.open_tree(TREE_INDEX_TO_MESSAGE_ID)?.contains_key(key)?)
     }
 }
 

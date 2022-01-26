@@ -12,7 +12,6 @@ use bee_message::{
     address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{
@@ -62,7 +61,6 @@ pub(crate) struct InnerStorage {
     pub(crate) message_id_to_message: Table<MessageId, Message>,
     pub(crate) message_id_to_metadata: Table<MessageId, MessageMetadata>,
     pub(crate) message_id_to_message_id: VecBinTable<MessageId, MessageId>,
-    pub(crate) index_to_message_id: VecBinTable<PaddedIndex, MessageId>,
     pub(crate) output_id_to_created_output: Table<OutputId, CreatedOutput>,
     pub(crate) output_id_to_consumed_output: Table<OutputId, ConsumedOutput>,
     pub(crate) output_id_unspent: Table<Unspent, ()>,

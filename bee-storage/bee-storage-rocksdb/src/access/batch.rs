@@ -14,7 +14,6 @@ use bee_message::{
     address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::access::{Batch, BatchBuilder};
@@ -137,41 +136,6 @@ impl Batch<(MessageId, MessageId), ()> for Storage {
         batch
             .inner
             .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, &batch.key_buf);
-
-        Ok(())
-    }
-}
-
-impl Batch<(PaddedIndex, MessageId), ()> for Storage {
-    fn batch_insert(
-        &self,
-        batch: &mut Self::Batch,
-        (index, message_id): &(PaddedIndex, MessageId),
-        (): &(),
-    ) -> Result<(), <Self as StorageBackend>::Error> {
-        batch.key_buf.clear();
-        batch.key_buf.extend_from_slice(index.as_ref());
-        batch.key_buf.extend_from_slice(message_id.as_ref());
-
-        batch
-            .inner
-            .put_cf(self.cf_handle(CF_INDEX_TO_MESSAGE_ID)?, &batch.key_buf, []);
-
-        Ok(())
-    }
-
-    fn batch_delete(
-        &self,
-        batch: &mut Self::Batch,
-        (index, message_id): &(PaddedIndex, MessageId),
-    ) -> Result<(), <Self as StorageBackend>::Error> {
-        batch.key_buf.clear();
-        batch.key_buf.extend_from_slice(index.as_ref());
-        batch.key_buf.extend_from_slice(message_id.as_ref());
-
-        batch
-            .inner
-            .delete_cf(self.cf_handle(CF_INDEX_TO_MESSAGE_ID)?, &batch.key_buf);
 
         Ok(())
     }

@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed `OutputResponse` type: added `milestone_index`, added `milestone_timestamp`, removed `dust_allowed`;
 - Changed `OutputsAddressResponse` type: removed `address_type`, removed `address`;
 - Merge `InvalidSyntaxField` with `InvalidSemanticField` to `InvalidField`;
+- Renamed `IndexationPayloadDto` to `TaggedDataPayloadDto`;
 
 ### Removed
 
