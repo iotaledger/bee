@@ -27,7 +27,7 @@ runs:
       id: cache-rocksdb
       with:
         path: ${{ env.LOCAL_BINARIES_PATH }}
-        key: rocksdb-${{ runner.os }}-${{ env.ROCKSDB_VERSION }}
+        key: rocksdb-${{ matrix.os }}-${{ env.ROCKSDB_VERSION }}
 
     - name: Compile rocksdb (Linux)
       shell: bash
