@@ -15,7 +15,7 @@ pub struct ExpirationUnlockCondition {
     // Before this milestone index, [`AddressUnlockCondition`](crate::unlock_condition::AddressUnlockCondition) is
     // allowed to unlock the output.
     // After that, only the return [`Address`](crate::address::Address) can.
-    index: MilestoneIndex,
+    milestone_index: MilestoneIndex,
     // Before this unix time, seconds since unix epoch,
     // [`AddressUnlockCondition`](crate::unlock_condition::AddressUnlockCondition) is allowed to unlock the output.
     // After that, only the return [`Address`](crate::address::Address) can.
@@ -28,10 +28,10 @@ impl ExpirationUnlockCondition {
 
     /// Creates a new [`ExpirationUnlockCondition`].
     #[inline(always)]
-    pub fn new(return_address: Address, index: MilestoneIndex, timestamp: u32) -> Self {
+    pub fn new(return_address: Address, milestone_index: MilestoneIndex, timestamp: u32) -> Self {
         Self {
             return_address,
-            index,
+            milestone_index,
             timestamp,
         }
     }
@@ -42,10 +42,10 @@ impl ExpirationUnlockCondition {
         &self.return_address
     }
 
-    /// Returns the index of a [`ExpirationUnlockCondition`].
+    /// Returns the milestone index of a [`ExpirationUnlockCondition`].
     #[inline(always)]
-    pub fn index(&self) -> MilestoneIndex {
-        self.index
+    pub fn milestone_index(&self) -> MilestoneIndex {
+        self.milestone_index
     }
 
     /// Returns the timestamp of a [`ExpirationUnlockCondition`].

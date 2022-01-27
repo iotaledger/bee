@@ -22,7 +22,7 @@ pub(crate) type DustDepositAmount = BoundedU64<
 pub struct DustDepositReturnUnlockCondition {
     // The [`Address`] to return the amount to.
     return_address: Address,
-    // Amount of IOTA coins the consuming transaction should deposit to the [`Address`]
+    // Amount of IOTA coins the consuming transaction should deposit to `return_address`.
     #[packable(unpack_error_with = Error::InvalidDustDepositAmount)]
     amount: DustDepositAmount,
 }
