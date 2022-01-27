@@ -3,10 +3,12 @@ runs:
   using: "composite"
   steps:
     - name: Set rocksdb version (Unix)
+      shell: bash
       if: matrix.os != 'windows-latest'
       run: echo "ROCKSDB_VERSION=6.22.1" >> $GITHUB_ENV
 
     - name: Set rocksdb version (Windows)
+      shell: pwsh
       if: matrix.os == 'windows-latest'
       run: echo "ROCKSDB_VERSION=6.22.1.20635" >> $env:GITHUB_ENV
 
@@ -18,6 +20,7 @@ runs:
         key: rocksdb-${{ runner.os }}-${{ env.ROCKSDB_VERSION }}
 
     - name: Compile rocksdb (Linux)
+      shell: bash
       if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'ubuntu-latest'
       run: |
         curl -L -O https://github.com/facebook/rocksdb/archive/refs/tags/v$ROCKSDB_VERSION.tar.gz
@@ -29,6 +32,7 @@ runs:
         echo "ROCKSDB_LIB_DIR=$LOCAL_BINARIES_PATH/librocksdb.so" >> $GITHUB_ENV
 
     - name: Compile rocksdb (MacOS)
+      shell: bash
       if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'macos-latest'
       run: |
         curl -L -O https://github.com/facebook/rocksdb/archive/refs/tags/v$ROCKSDB_VERSION.tar.gz
@@ -39,6 +43,7 @@ runs:
         echo "ROCKSDB_LIB_DIR=$LOCAL_BINARIES_PATH/librocksdb.dylib" >> $GITHUB_ENV
 
     - name: Install rocksdb (Windows)
+      shell: pwsh
       if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
       run: |
         nuget install RocksDB -Version $env:ROCKSDB_VERSION -OutputDirectory $env:LOCAL_BINARIES_PATH
