@@ -90,7 +90,7 @@ jobs:
           echo "ROCKSDB_LIB_DIR=$LOCAL_BINARIES_PATH/librocksdb.dylib" >> $GITHUB_ENV
 
       - name: Install rocksdb (Windows)
-        if: matrix.os == 'windows-latest'
+        if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
         run: |
           nuget install RocksDB -Version $env:ROCKSDB_VERSION -OutputDirectory $env:LOCAL_BINARIES_PATH
           echo "ROCKSDB_LIB_DIR=$env:LOCAL_BINARIES_PATH\RocksDB.$env:ROCKSDB_VERSION" >> $env:GITHUB_ENV
