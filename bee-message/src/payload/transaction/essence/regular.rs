@@ -17,7 +17,6 @@ use alloc::vec::Vec;
 #[derive(Debug, Default)]
 #[must_use]
 pub struct RegularTransactionEssenceBuilder {
-    network_id: u64,
     inputs: Vec<Input>,
     outputs: Vec<Output>,
     payload: Option<Payload>,
@@ -25,11 +24,8 @@ pub struct RegularTransactionEssenceBuilder {
 
 impl RegularTransactionEssenceBuilder {
     /// Creates a new [`RegularTransactionEssenceBuilder`].
-    pub fn new(network_id: u64) -> Self {
-        Self {
-            network_id,
-            ..Default::default()
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 
     /// Adds inputs to a [`RegularTransactionEssenceBuilder`]
@@ -81,7 +77,6 @@ impl RegularTransactionEssenceBuilder {
         validate_payload::<true>(&payload)?;
 
         Ok(RegularTransactionEssence {
-            network_id: self.network_id,
             inputs,
             outputs,
             payload,
@@ -97,7 +92,6 @@ pub(crate) type OutputCount = BoundedU16<{ *OUTPUT_COUNT_RANGE.start() }, { *OUT
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct RegularTransactionEssence {
-    network_id: u64,
     #[packable(verify_with = validate_inputs)]
     #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| Error::InvalidInputCount(p.into())))]
     inputs: BoxedSlicePrefix<Input, InputCount>,
@@ -113,13 +107,8 @@ impl RegularTransactionEssence {
     pub const KIND: u8 = 0;
 
     /// Create a new [`RegularTransactionEssenceBuilder`] to build a [`RegularTransactionEssence`].
-    pub fn builder(network_id: u64) -> RegularTransactionEssenceBuilder {
-        RegularTransactionEssenceBuilder::new(network_id)
-    }
-
-    /// Return the network id of a [`RegularTransactionEssence`].
-    pub fn network_id(&self) -> u64 {
-        self.network_id
+    pub fn builder() -> RegularTransactionEssenceBuilder {
+        RegularTransactionEssenceBuilder::new()
     }
 
     /// Return the inputs of a [`RegularTransactionEssence`].
