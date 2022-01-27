@@ -16,7 +16,7 @@ pub use governor_address::GovernorAddressUnlockCondition;
 pub use state_controller_address::StateControllerAddressUnlockCondition;
 pub use timelock::TimelockUnlockCondition;
 
-use crate::Error;
+use crate::{create_bitflags, Error};
 
 use bee_common::ord::is_unique_sorted;
 
@@ -80,6 +80,20 @@ impl UnlockCondition {
     }
 }
 
+create_bitflags!(
+    /// A bitflags-based representation of the set of active [`UnlockCondition`]s.
+    UnlockConditionFlags,
+    u16,
+    [
+        (ADDRESS, AddressUnlockCondition),
+        (DUST_DEPOSIT_RETURN, DustDepositReturnUnlockCondition),
+        (TIMELOCK, TimelockUnlockCondition),
+        (EXPIRATION, ExpirationUnlockCondition),
+        (STATE_CONTROLLER_ADDRESS, StateControllerAddressUnlockCondition),
+        (GOVERNOR_ADDRESS, GovernorAddressUnlockCondition),
+    ]
+);
+
 pub(crate) type UnlockConditionCount = BoundedU8<0, { UnlockConditions::COUNT_MAX }>;
 
 ///
@@ -87,7 +101,7 @@ pub(crate) type UnlockConditionCount = BoundedU8<0, { UnlockConditions::COUNT_MA
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = |e| e.unwrap_packable_or_else(|p| Error::InvalidUnlockConditionCount(p.into())))]
 pub struct UnlockConditions(
-    #[packable(verify_with = Self::validate_unlock_conditions)] BoxedSlicePrefix<UnlockCondition, UnlockConditionCount>,
+    #[packable(verify_with = verify_unique_sorted)] BoxedSlicePrefix<UnlockCondition, UnlockConditionCount>,
 );
 
 impl TryFrom<Vec<UnlockCondition>> for UnlockConditions {
@@ -101,27 +115,19 @@ impl TryFrom<Vec<UnlockCondition>> for UnlockConditions {
 
 impl UnlockConditions {
     ///
-    pub const COUNT_MAX: u8 = 3;
+    pub const COUNT_MAX: u8 = 6;
 
-    /// Creates a new `UnlockConditions`.
+    /// Creates a new [`UnlockConditions`].
     pub fn new(unlock_conditions: Vec<UnlockCondition>) -> Result<Self, Error> {
         let mut unlock_conditions =
             BoxedSlicePrefix::<UnlockCondition, UnlockConditionCount>::try_from(unlock_conditions.into_boxed_slice())
                 .map_err(Error::InvalidUnlockConditionCount)?;
 
         unlock_conditions.sort_by_key(UnlockCondition::kind);
-        Self::validate_unlock_conditions::<true>(&unlock_conditions)?;
+        // Sort is obviously fine now but uniqueness still needs to be checked.
+        verify_unique_sorted::<true>(&unlock_conditions)?;
 
         Ok(Self(unlock_conditions))
-    }
-
-    fn validate_unlock_conditions<const VERIFY: bool>(unlock_conditions: &[UnlockCondition]) -> Result<(), Error> {
-        if VERIFY {
-            // Sort is obviously fine now but uniqueness still needs to be checked.
-            validate_unique_sorted(unlock_conditions)
-        } else {
-            Ok(())
-        }
     }
 
     /// Gets a reference to a unlock condition from a unlock condition kind, if found.
@@ -134,7 +140,7 @@ impl UnlockConditions {
             .ok()
     }
 
-    /// Returns the length of the unlock conditions.
+    /// Returns the length of the [`UnlockConditions`].
     #[inline(always)]
     pub fn len(&self) -> usize {
         self.0.len()
@@ -148,15 +154,15 @@ impl UnlockConditions {
 }
 
 #[inline]
-fn validate_unique_sorted(unlock_conditions: &[UnlockCondition]) -> Result<(), Error> {
-    if !is_unique_sorted(unlock_conditions.iter().map(UnlockCondition::kind)) {
-        return Err(Error::UnlockConditionsNotUniqueSorted);
+fn verify_unique_sorted<const VERIFY: bool>(unlock_conditions: &[UnlockCondition]) -> Result<(), Error> {
+    if VERIFY && !is_unique_sorted(unlock_conditions.iter().map(UnlockCondition::kind)) {
+        Err(Error::UnlockConditionsNotUniqueSorted)
+    } else {
+        Ok(())
     }
-
-    Ok(())
 }
 
-pub(crate) fn validate_allowed_unlock_conditions(
+pub(crate) fn verify_allowed_unlock_conditions(
     unlock_conditions: &UnlockConditions,
     allowed_unlock_conditions: UnlockConditionFlags,
 ) -> Result<(), Error> {
@@ -168,23 +174,26 @@ pub(crate) fn validate_allowed_unlock_conditions(
             });
         }
     }
+
     Ok(())
 }
 
-bitflags! {
-    /// A bitflags-based representation of the set of active unlock conditions.
-    pub(crate) struct UnlockConditionFlags: u16 {
-        /// Signals the presence of an [`AddressUnlockCondition`].
-        const ADDRESS = 1 << AddressUnlockCondition::KIND;
-        /// Signals the presence of a [`DustDepositReturnUnlockCondition`].
-        const DUST_DEPOSIT_RETURN = 1 << DustDepositReturnUnlockCondition::KIND;
-        /// Signals the presence of a [`TimelockUnlockCondition`].
-        const TIMELOCK = 1 << TimelockUnlockCondition::KIND;
-        /// Signals the presence of a [`ExpirationUnlockCondition`].
-        const EXPIRATION = 1 << ExpirationUnlockCondition::KIND;
-        /// Signals the presence of a [`StateControllerAddressUnlockCondition`].
-        const STATE_CONTROLLER_ADDRESS = 1 << StateControllerAddressUnlockCondition::KIND;
-        /// Signals the presence of a [`GovernorAddressUnlockCondition`].
-        const GOVERNOR_ADDRESS = 1 << GovernorAddressUnlockCondition::KIND;
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn all_flags_present() {
+        assert_eq!(
+            UnlockConditionFlags::ALL_FLAGS,
+            &[
+                UnlockConditionFlags::ADDRESS,
+                UnlockConditionFlags::DUST_DEPOSIT_RETURN,
+                UnlockConditionFlags::TIMELOCK,
+                UnlockConditionFlags::EXPIRATION,
+                UnlockConditionFlags::STATE_CONTROLLER_ADDRESS,
+                UnlockConditionFlags::GOVERNOR_ADDRESS
+            ]
+        );
     }
 }

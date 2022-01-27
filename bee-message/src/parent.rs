@@ -24,7 +24,7 @@ pub(crate) type ParentCount = BoundedU8<{ *Parents::COUNT_RANGE.start() }, { *Pa
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[deref(forward)]
 #[packable(unpack_error = Error, with = |e| Error::InvalidParentCount(e.into_prefix().into()))]
-pub struct Parents(#[packable(verify_with = validate_parents)] BoxedSlicePrefix<MessageId, ParentCount>);
+pub struct Parents(#[packable(verify_with = verify_parents)] BoxedSlicePrefix<MessageId, ParentCount>);
 
 #[allow(clippy::len_without_is_empty)]
 impl Parents {
@@ -36,7 +36,7 @@ impl Parents {
         let inner: BoxedSlicePrefix<MessageId, ParentCount> =
             inner.into_boxed_slice().try_into().map_err(Error::InvalidParentCount)?;
 
-        validate_parents::<true>(&inner)?;
+        verify_parents::<true>(&inner)?;
 
         Ok(Self(inner))
     }
@@ -52,7 +52,7 @@ impl Parents {
     }
 }
 
-fn validate_parents<const VERIFY: bool>(parents: &[MessageId]) -> Result<(), Error> {
+fn verify_parents<const VERIFY: bool>(parents: &[MessageId]) -> Result<(), Error> {
     if VERIFY && !is_unique_sorted(parents.iter().map(AsRef::as_ref)) {
         Err(Error::ParentsNotUniqueSorted)
     } else {

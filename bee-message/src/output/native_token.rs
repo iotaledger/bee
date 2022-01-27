@@ -46,7 +46,7 @@ pub(crate) type NativeTokenCount = BoundedU16<0, { NativeTokens::COUNT_MAX }>;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = |e| Error::InvalidNativeTokenCount(e.into_prefix().into()))]
 pub struct NativeTokens(
-    #[packable(verify_with = validate_unique_sorted)] BoxedSlicePrefix<NativeToken, NativeTokenCount>,
+    #[packable(verify_with = verify_unique_sorted)] BoxedSlicePrefix<NativeToken, NativeTokenCount>,
 );
 
 impl TryFrom<Vec<NativeToken>> for NativeTokens {
@@ -71,14 +71,14 @@ impl NativeTokens {
 
         native_tokens.sort_by(|a, b| a.token_id().cmp(b.token_id()));
         // Sort is obviously fine now but uniqueness still needs to be checked.
-        validate_unique_sorted::<true>(&native_tokens)?;
+        verify_unique_sorted::<true>(&native_tokens)?;
 
         Ok(Self(native_tokens))
     }
 }
 
 #[inline]
-fn validate_unique_sorted<const VERIFY: bool>(native_tokens: &[NativeToken]) -> Result<(), Error> {
+fn verify_unique_sorted<const VERIFY: bool>(native_tokens: &[NativeToken]) -> Result<(), Error> {
     if VERIFY && !is_unique_sorted(native_tokens.iter().map(NativeToken::token_id)) {
         return Err(Error::NativeTokensNotUniqueSorted);
     }

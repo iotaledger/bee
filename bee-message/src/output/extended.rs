@@ -4,9 +4,9 @@
 use crate::{
     address::Address,
     output::{
-        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
+        feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{
-            validate_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
+            verify_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
             UnlockConditions,
         },
         NativeToken, NativeTokens,
@@ -83,11 +83,11 @@ impl ExtendedOutputBuilder {
     pub fn finish(self) -> Result<ExtendedOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
-        validate_allowed_unlock_conditions(&unlock_conditions, ExtendedOutput::ALLOWED_UNLOCK_CONDITIONS)?;
+        verify_allowed_unlock_conditions(&unlock_conditions, ExtendedOutput::ALLOWED_UNLOCK_CONDITIONS)?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
-        validate_allowed_feature_blocks(&feature_blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)?;
+        verify_allowed_feature_blocks(&feature_blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)?;
 
         Ok(ExtendedOutput {
             amount: self.amount,
@@ -107,9 +107,9 @@ pub struct ExtendedOutput {
     amount: u64,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
-    #[packable(verify_with = Self::validate_unlock_conditions)]
+    #[packable(verify_with = verify_unlock_conditions)]
     unlock_conditions: UnlockConditions,
-    #[packable(verify_with = Self::validate_feature_blocks)]
+    #[packable(verify_with = verify_feature_blocks)]
     feature_blocks: FeatureBlocks,
 }
 
@@ -126,22 +126,6 @@ impl ExtendedOutput {
     pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
         .union(FeatureBlockFlags::METADATA)
         .union(FeatureBlockFlags::TAG);
-
-    fn validate_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
-        if VERIFY {
-            validate_allowed_unlock_conditions(unlock_conditions, ExtendedOutput::ALLOWED_UNLOCK_CONDITIONS)
-        } else {
-            Ok(())
-        }
-    }
-
-    fn validate_feature_blocks<const VERIFY: bool>(blocks: &FeatureBlocks) -> Result<(), Error> {
-        if VERIFY {
-            validate_allowed_feature_blocks(blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)
-        } else {
-            Ok(())
-        }
-    }
 
     /// Creates a new [`ExtendedOutput`].
     #[inline(always)]
@@ -189,5 +173,21 @@ impl ExtendedOutput {
     #[inline(always)]
     pub fn feature_blocks(&self) -> &[FeatureBlock] {
         &self.feature_blocks
+    }
+}
+
+fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
+    if VERIFY {
+        verify_allowed_unlock_conditions(unlock_conditions, ExtendedOutput::ALLOWED_UNLOCK_CONDITIONS)
+    } else {
+        Ok(())
+    }
+}
+
+fn verify_feature_blocks<const VERIFY: bool>(blocks: &FeatureBlocks) -> Result<(), Error> {
+    if VERIFY {
+        verify_allowed_feature_blocks(blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)
+    } else {
+        Ok(())
     }
 }

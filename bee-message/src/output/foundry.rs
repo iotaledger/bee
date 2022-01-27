@@ -4,9 +4,9 @@
 use crate::{
     address::Address,
     output::{
-        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
+        feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{
-            validate_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
+            verify_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
             UnlockConditions,
         },
         FoundryId, NativeToken, NativeTokens,
@@ -57,7 +57,7 @@ impl FoundryOutputBuilder {
         maximum_supply: U256,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        validate_supply(&circulating_supply, &maximum_supply)?;
+        verify_supply(&circulating_supply, &maximum_supply)?;
 
         Ok(Self {
             amount,
@@ -118,14 +118,14 @@ impl FoundryOutputBuilder {
     pub fn finish(self) -> Result<FoundryOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
-        validate_allowed_unlock_conditions(&unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)?;
+        verify_allowed_unlock_conditions(&unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)?;
 
         // TODO reactivate in a later PR
-        // validate_address(&address)?;
+        // verify_address(&address)?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
-        validate_allowed_feature_blocks(&feature_blocks, FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
+        verify_allowed_feature_blocks(&feature_blocks, FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
 
         Ok(FoundryOutput {
             amount: self.amount,
@@ -318,7 +318,7 @@ impl Packable for FoundryOutput {
         let maximum_supply = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
 
         if VERIFY {
-            validate_supply(&circulating_supply, &maximum_supply).map_err(UnpackError::Packable)?;
+            verify_supply(&circulating_supply, &maximum_supply).map_err(UnpackError::Packable)?;
         }
 
         let token_scheme = TokenScheme::unpack::<_, VERIFY>(unpacker)?;
@@ -326,14 +326,14 @@ impl Packable for FoundryOutput {
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            validate_allowed_unlock_conditions(&unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)
+            verify_allowed_unlock_conditions(&unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)
                 .map_err(UnpackError::Packable)?;
         }
 
         let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            validate_allowed_feature_blocks(&feature_blocks, FoundryOutput::ALLOWED_FEATURE_BLOCKS)
+            verify_allowed_feature_blocks(&feature_blocks, FoundryOutput::ALLOWED_FEATURE_BLOCKS)
                 .map_err(UnpackError::Packable)?;
         }
 
@@ -353,7 +353,7 @@ impl Packable for FoundryOutput {
 
 // TODO reactivate in a later PR
 // #[inline]
-// fn validate_address(address: &Address) -> Result<(), Error> {
+// fn verify_address(address: &Address) -> Result<(), Error> {
 //     match address {
 //         Address::Alias(_) => {}
 //         _ => return Err(Error::InvalidAddressKind(address.kind())),
@@ -363,7 +363,7 @@ impl Packable for FoundryOutput {
 // }
 
 #[inline]
-fn validate_supply(circulating_supply: &U256, maximum_supply: &U256) -> Result<(), Error> {
+fn verify_supply(circulating_supply: &U256, maximum_supply: &U256) -> Result<(), Error> {
     if maximum_supply.is_zero() {
         return Err(Error::InvalidFoundryOutputSupply {
             circulating: *circulating_supply,

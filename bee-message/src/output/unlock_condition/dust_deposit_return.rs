@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    address::Address,
     constant::{DUST_DEPOSIT_MIN, IOTA_SUPPLY},
     Error,
 };
@@ -15,23 +16,15 @@ pub(crate) type DustDepositAmount = BoundedU64<
     { *DustDepositReturnUnlockCondition::AMOUNT_RANGE.end() },
 >;
 
-/// Defines the amount of IOTAs used as dust deposit that have to be returned to the sender
-/// [`Address`](crate::address::Address).
+/// Defines the amount of IOTAs used as dust deposit that have to be returned to the return [`Address`].
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = Error, with = Error::InvalidDustDepositAmount)]
-pub struct DustDepositReturnUnlockCondition(
-    // Amount of IOTA coins the consuming transaction should deposit to the [`Address`](crate::address::Address)
-    // defined in [`SenderUnlockCondition`].
-    DustDepositAmount,
-);
-
-impl TryFrom<u64> for DustDepositReturnUnlockCondition {
-    type Error = Error;
-
-    fn try_from(amount: u64) -> Result<Self, Self::Error> {
-        amount.try_into().map(Self).map_err(Error::InvalidDustDepositAmount)
-    }
+pub struct DustDepositReturnUnlockCondition {
+    // The [`Address`] to return the amount to.
+    return_address: Address,
+    // Amount of IOTA coins the consuming transaction should deposit to `return_address`.
+    #[packable(unpack_error_with = Error::InvalidDustDepositAmount)]
+    amount: DustDepositAmount,
 }
 
 impl DustDepositReturnUnlockCondition {
@@ -42,13 +35,22 @@ impl DustDepositReturnUnlockCondition {
 
     /// Creates a new [`DustDepositReturnUnlockCondition`].
     #[inline(always)]
-    pub fn new(amount: u64) -> Result<Self, Error> {
-        Self::try_from(amount)
+    pub fn new(return_address: Address, amount: u64) -> Result<Self, Error> {
+        Ok(Self {
+            return_address,
+            amount: amount.try_into().map_err(Error::InvalidDustDepositAmount)?,
+        })
+    }
+
+    /// Returns the return address.
+    #[inline(always)]
+    pub fn return_address(&self) -> &Address {
+        &self.return_address
     }
 
     /// Returns the amount.
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.0.get()
+        self.amount.get()
     }
 }

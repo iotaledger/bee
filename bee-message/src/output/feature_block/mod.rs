@@ -67,6 +67,18 @@ impl FeatureBlock {
     }
 }
 
+create_bitflags!(
+    /// A bitflags-based representation of the set of active [`FeatureBlock`]s.
+    FeatureBlockFlags,
+    u16,
+    [
+        (SENDER, SenderFeatureBlock),
+        (ISSUER, IssuerFeatureBlock),
+        (METADATA, MetadataFeatureBlock),
+        (TAG, TagFeatureBlock),
+    ]
+);
+
 pub(crate) type FeatureBlockCount = BoundedU8<0, { FeatureBlocks::COUNT_MAX }>;
 
 ///
@@ -74,7 +86,7 @@ pub(crate) type FeatureBlockCount = BoundedU8<0, { FeatureBlocks::COUNT_MAX }>;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = |e| e.unwrap_packable_or_else(|p| Error::InvalidFeatureBlockCount(p.into())))]
 pub struct FeatureBlocks(
-    #[packable(verify_with = Self::validate_feature_blocks)] BoxedSlicePrefix<FeatureBlock, FeatureBlockCount>,
+    #[packable(verify_with = verify_unique_sorted)] BoxedSlicePrefix<FeatureBlock, FeatureBlockCount>,
 );
 
 impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
@@ -90,25 +102,17 @@ impl FeatureBlocks {
     ///
     pub const COUNT_MAX: u8 = 4;
 
-    /// Creates a new `FeatureBlocks`.
+    /// Creates a new [`FeatureBlocks`].
     pub fn new(feature_blocks: Vec<FeatureBlock>) -> Result<Self, Error> {
         let mut feature_blocks =
             BoxedSlicePrefix::<FeatureBlock, FeatureBlockCount>::try_from(feature_blocks.into_boxed_slice())
                 .map_err(Error::InvalidFeatureBlockCount)?;
 
         feature_blocks.sort_by_key(FeatureBlock::kind);
-        Self::validate_feature_blocks::<true>(&feature_blocks)?;
+        // Sort is obviously fine now but uniqueness still needs to be checked.
+        verify_unique_sorted::<true>(&feature_blocks)?;
 
         Ok(Self(feature_blocks))
-    }
-
-    fn validate_feature_blocks<const VERIFY: bool>(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
-        if VERIFY {
-            // Sort is obviously fine now but uniqueness still needs to be checked.
-            validate_unique_sorted(feature_blocks)
-        } else {
-            Ok(())
-        }
     }
 
     /// Gets a reference to a feature block from a feature block kind, if found.
@@ -121,7 +125,7 @@ impl FeatureBlocks {
             .ok()
     }
 
-    /// Returns the length of the feature blocks.
+    /// Returns the length of the [`FeatureBlocks`].
     #[inline(always)]
     pub fn len(&self) -> usize {
         self.0.len()
@@ -135,15 +139,15 @@ impl FeatureBlocks {
 }
 
 #[inline]
-fn validate_unique_sorted(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
-    if !is_unique_sorted(feature_blocks.iter().map(FeatureBlock::kind)) {
-        return Err(Error::FeatureBlocksNotUniqueSorted);
+fn verify_unique_sorted<const VERIFY: bool>(feature_blocks: &[FeatureBlock]) -> Result<(), Error> {
+    if VERIFY && !is_unique_sorted(feature_blocks.iter().map(FeatureBlock::kind)) {
+        Err(Error::FeatureBlocksNotUniqueSorted)
+    } else {
+        Ok(())
     }
-
-    Ok(())
 }
 
-pub(crate) fn validate_allowed_feature_blocks(
+pub(crate) fn verify_allowed_feature_blocks(
     feature_blocks: &FeatureBlocks,
     allowed_feature_blocks: FeatureBlockFlags,
 ) -> Result<(), Error> {
@@ -155,20 +159,9 @@ pub(crate) fn validate_allowed_feature_blocks(
             });
         }
     }
+
     Ok(())
 }
-
-create_bitflags!(
-    /// A bitflags-based representation of the set of active [`FeatureBlock`]s.
-    FeatureBlockFlags,
-    u16,
-    [
-        (SENDER, SenderFeatureBlock),
-        (ISSUER, IssuerFeatureBlock),
-        (METADATA, MetadataFeatureBlock),
-        (TAG, TagFeatureBlock),
-    ]
-);
 
 #[cfg(test)]
 mod test {

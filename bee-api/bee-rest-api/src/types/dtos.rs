@@ -832,13 +832,14 @@ pub struct AddressUnlockConditionDto {
 pub struct DustDepositReturnUnlockConditionDto {
     #[serde(rename = "type")]
     pub kind: u8,
+    pub return_address: Address,
     pub amount: u64,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TimelockUnlockConditionDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    pub index: MilestoneIndex,
+    pub milestone_index: MilestoneIndex,
     pub timestamp: u32,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -847,7 +848,7 @@ pub struct ExpirationUnlockConditionDto {
     pub kind: u8,
     #[serde(rename = "returnAddress")]
     pub return_address: AddressDto,
-    pub index: MilestoneIndex,
+    pub milestone_index: MilestoneIndex,
     pub timestamp: u32,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -923,17 +924,18 @@ impl From<&UnlockCondition> for UnlockConditionDto {
             }),
             UnlockCondition::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnUnlockConditionDto {
                 kind: DustDepositReturnUnlockCondition::KIND,
+                return_address: *v.return_address(),
                 amount: v.amount(),
             }),
             UnlockCondition::Timelock(v) => Self::Timelock(TimelockUnlockConditionDto {
                 kind: TimelockUnlockCondition::KIND,
-                index: v.index(),
+                milestone_index: v.milestone_index(),
                 timestamp: v.timestamp(),
             }),
             UnlockCondition::Expiration(v) => Self::Expiration(ExpirationUnlockConditionDto {
                 kind: ExpirationUnlockCondition::KIND,
                 return_address: v.return_address().into(),
-                index: v.index(),
+                milestone_index: v.milestone_index(),
                 timestamp: v.timestamp(),
             }),
             UnlockCondition::StateControllerAddress(v) => {
@@ -984,14 +986,16 @@ impl TryFrom<&UnlockConditionDto> for UnlockCondition {
                     .map_err(|_e| Error::InvalidField("AddressUnlockCondition"))?,
             )),
             UnlockConditionDto::DustDepositReturn(v) => {
-                Self::DustDepositReturn(DustDepositReturnUnlockCondition::new(v.amount)?)
+                Self::DustDepositReturn(DustDepositReturnUnlockCondition::new(v.return_address, v.amount)?)
             }
-            UnlockConditionDto::Timelock(v) => Self::Timelock(TimelockUnlockCondition::new(v.index, v.timestamp)),
+            UnlockConditionDto::Timelock(v) => {
+                Self::Timelock(TimelockUnlockCondition::new(v.milestone_index, v.timestamp))
+            }
             UnlockConditionDto::Expiration(v) => Self::Expiration(ExpirationUnlockCondition::new(
                 (&v.return_address)
                     .try_into()
                     .map_err(|_e| Error::InvalidField("ExpirationUnlockCondition"))?,
-                v.index,
+                v.milestone_index,
                 v.timestamp,
             )),
             UnlockConditionDto::StateControllerAddress(v) => {

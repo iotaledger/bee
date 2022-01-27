@@ -4,9 +4,9 @@
 use crate::{
     address::Address,
     output::{
-        feature_block::{validate_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
+        feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{
-            validate_allowed_unlock_conditions, GovernorAddressUnlockCondition, StateControllerAddressUnlockCondition,
+            verify_allowed_unlock_conditions, GovernorAddressUnlockCondition, StateControllerAddressUnlockCondition,
             UnlockCondition, UnlockConditionFlags, UnlockConditions,
         },
         AliasId, NativeToken, NativeTokens,
@@ -125,19 +125,19 @@ impl AliasOutputBuilder {
             .try_into()
             .map_err(Error::InvalidStateMetadataLength)?;
 
-        validate_index_counter(&self.alias_id, state_index, foundry_counter)?;
+        verify_index_counter(&self.alias_id, state_index, foundry_counter)?;
 
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
-        validate_allowed_unlock_conditions(&unlock_conditions, AliasOutput::ALLOWED_UNLOCK_CONDITIONS)?;
+        verify_allowed_unlock_conditions(&unlock_conditions, AliasOutput::ALLOWED_UNLOCK_CONDITIONS)?;
 
         // TODO reactivate in a later PR
-        // validate_controller(&state_controller, &alias_id)?;
-        // validate_controller(&governor, &alias_id)?;
+        // verify_controller(&state_controller, &alias_id)?;
+        // verify_controller(&governor, &alias_id)?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
-        validate_allowed_feature_blocks(&feature_blocks, AliasOutput::ALLOWED_FEATURE_BLOCKS)?;
+        verify_allowed_feature_blocks(&feature_blocks, AliasOutput::ALLOWED_FEATURE_BLOCKS)?;
 
         Ok(AliasOutput {
             amount: self.amount,
@@ -308,20 +308,20 @@ impl Packable for AliasOutput {
         let foundry_counter = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
 
         if VERIFY {
-            validate_index_counter(&alias_id, state_index, foundry_counter).map_err(UnpackError::Packable)?;
+            verify_index_counter(&alias_id, state_index, foundry_counter).map_err(UnpackError::Packable)?;
         }
 
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            validate_allowed_unlock_conditions(&unlock_conditions, AliasOutput::ALLOWED_UNLOCK_CONDITIONS)
+            verify_allowed_unlock_conditions(&unlock_conditions, AliasOutput::ALLOWED_UNLOCK_CONDITIONS)
                 .map_err(UnpackError::Packable)?;
         }
 
         let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            validate_allowed_feature_blocks(&feature_blocks, AliasOutput::ALLOWED_FEATURE_BLOCKS)
+            verify_allowed_feature_blocks(&feature_blocks, AliasOutput::ALLOWED_FEATURE_BLOCKS)
                 .map_err(UnpackError::Packable)?;
         }
 
@@ -339,7 +339,7 @@ impl Packable for AliasOutput {
 }
 
 #[inline]
-fn validate_index_counter(alias_id: &AliasId, state_index: u32, foundry_counter: u32) -> Result<(), Error> {
+fn verify_index_counter(alias_id: &AliasId, state_index: u32, foundry_counter: u32) -> Result<(), Error> {
     if alias_id.as_ref().iter().all(|&b| b == 0) && (state_index != 0 || foundry_counter != 0) {
         return Err(Error::NonZeroStateIndexOrFoundryCounter);
     }
@@ -349,7 +349,7 @@ fn validate_index_counter(alias_id: &AliasId, state_index: u32, foundry_counter:
 
 // TODO reactivate in a later PR
 // #[inline]
-// fn validate_controller(controller: &Address, alias_id: &AliasId) -> Result<(), Error> {
+// fn verify_controller(controller: &Address, alias_id: &AliasId) -> Result<(), Error> {
 //     match controller {
 //         Address::Ed25519(_) => {}
 //         Address::Alias(address) => {

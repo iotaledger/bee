@@ -10,7 +10,7 @@ use derive_more::From;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TimelockUnlockCondition {
     // The milestone index starting from which the output can be consumed.
-    index: MilestoneIndex,
+    milestone_index: MilestoneIndex,
     // Unix time, seconds since unix epoch, starting from which the output can be consumed.
     timestamp: u32,
 }
@@ -21,14 +21,17 @@ impl TimelockUnlockCondition {
 
     /// Creates a new [`TimelockUnlockCondition`].
     #[inline(always)]
-    pub fn new(index: MilestoneIndex, timestamp: u32) -> Self {
-        Self { index, timestamp }
+    pub fn new(milestone_index: MilestoneIndex, timestamp: u32) -> Self {
+        Self {
+            milestone_index,
+            timestamp,
+        }
     }
 
-    /// Returns the index of a [`TimelockUnlockCondition`].
+    /// Returns the milestone index of a [`TimelockUnlockCondition`].
     #[inline(always)]
-    pub fn index(&self) -> MilestoneIndex {
-        self.index
+    pub fn milestone_index(&self) -> MilestoneIndex {
+        self.milestone_index
     }
 
     /// Returns the timestamp of a [`TimelockUnlockCondition`].
