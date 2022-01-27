@@ -37,7 +37,7 @@ pub struct NftOutputBuilder {
 impl NftOutputBuilder {
     ///
     pub fn new(amount: u64, nft_id: NftId, immutable_metadata: Vec<u8>) -> Result<NftOutputBuilder, Error> {
-        validate_immutable_metadata_length(immutable_metadata.len())?;
+        verify_immutable_metadata_length(immutable_metadata.len())?;
 
         Ok(Self {
             amount,
@@ -98,7 +98,7 @@ impl NftOutputBuilder {
         verify_allowed_unlock_conditions(&unlock_conditions, NftOutput::ALLOWED_UNLOCK_CONDITIONS)?;
 
         // TODO reactivate in a later PR
-        // validate_address(&address, &nft_id)?;
+        // verify_address(&address, &nft_id)?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
@@ -263,7 +263,7 @@ impl Packable for NftOutput {
 
 // TODO reactivate in a later PR
 // #[inline]
-// fn validate_address(address: &Address, nft_id: &NftId) -> Result<(), Error> {
+// fn verify_address(address: &Address, nft_id: &NftId) -> Result<(), Error> {
 //     match address {
 //         Address::Ed25519(_) => {}
 //         Address::Alias(_) => {}
@@ -278,7 +278,7 @@ impl Packable for NftOutput {
 // }
 
 #[inline]
-fn validate_immutable_metadata_length(immutable_metadata_length: usize) -> Result<(), Error> {
+fn verify_immutable_metadata_length(immutable_metadata_length: usize) -> Result<(), Error> {
     ImmutableMetadataLength::try_from(immutable_metadata_length).map_err(Error::InvalidImmutableMetadataLength)?;
 
     Ok(())

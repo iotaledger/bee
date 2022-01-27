@@ -32,9 +32,9 @@ pub struct ReceiptPayload {
     migrated_at: MilestoneIndex,
     last: bool,
     #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| Error::InvalidReceiptFundsCount(p.into())))]
-    #[packable(verify_with = validate_funds)]
+    #[packable(verify_with = verify_funds)]
     funds: VecPrefix<MigratedFundsEntry, ReceiptFundsCount>,
-    #[packable(verify_with = validate_transaction)]
+    #[packable(verify_with = verify_transaction)]
     transaction: Payload,
 }
 
@@ -52,8 +52,8 @@ impl ReceiptPayload {
         let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::try_from(funds)
             .map_err(Error::InvalidReceiptFundsCount)?;
 
-        validate_transaction::<true>(&transaction)?;
-        validate_funds::<true>(&funds)?;
+        verify_transaction::<true>(&transaction)?;
+        verify_funds::<true>(&funds)?;
 
         Ok(Self {
             migrated_at,
@@ -89,7 +89,7 @@ impl ReceiptPayload {
     }
 }
 
-fn validate_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<(), Error> {
+fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<(), Error> {
     // Funds must be lexicographically sorted and unique in their serialised forms.
     if !is_unique_sorted(funds.iter().map(PackableExt::pack_to_vec)) {
         return Err(Error::ReceiptFundsNotUniqueSorted);
@@ -108,7 +108,7 @@ fn validate_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<()
     Ok(())
 }
 
-fn validate_transaction<const VERIFY: bool>(transaction: &Payload) -> Result<(), Error> {
+fn verify_transaction<const VERIFY: bool>(transaction: &Payload) -> Result<(), Error> {
     if !matches!(transaction, Payload::TreasuryTransaction(_)) {
         Err(Error::InvalidPayloadKind(transaction.kind()))
     } else {

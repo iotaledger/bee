@@ -78,7 +78,7 @@ pub(crate) type UnlockBlockCount =
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = |e| e.unwrap_packable_or_else(|p| Error::InvalidUnlockBlockCount(p.into())))]
 pub struct UnlockBlocks(
-    #[packable(verify_with = validate_unlock_blocks)] BoxedSlicePrefix<UnlockBlock, UnlockBlockCount>,
+    #[packable(verify_with = verify_unlock_blocks)] BoxedSlicePrefix<UnlockBlock, UnlockBlockCount>,
 );
 
 impl UnlockBlocks {
@@ -89,7 +89,7 @@ impl UnlockBlocks {
             .try_into()
             .map_err(Error::InvalidUnlockBlockCount)?;
 
-        validate_unlock_blocks::<true>(&unlock_blocks)?;
+        verify_unlock_blocks::<true>(&unlock_blocks)?;
 
         Ok(Self(unlock_blocks))
     }
@@ -105,7 +105,7 @@ impl UnlockBlocks {
     }
 }
 
-fn validate_unlock_blocks<const VERIFY: bool>(unlock_blocks: &[UnlockBlock]) -> Result<(), Error> {
+fn verify_unlock_blocks<const VERIFY: bool>(unlock_blocks: &[UnlockBlock]) -> Result<(), Error> {
     let mut seen_signatures = HashSet::new();
 
     for (index, unlock_block) in (0u16..).zip(unlock_blocks.iter()) {

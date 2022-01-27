@@ -72,9 +72,9 @@ impl RegularTransactionEssenceBuilder {
             .map_err(Error::InvalidOutputCount)?;
         let payload = OptionalPayload::from(self.payload);
 
-        validate_inputs::<true>(&inputs)?;
-        validate_outputs::<true>(&outputs)?;
-        validate_payload::<true>(&payload)?;
+        verify_inputs::<true>(&inputs)?;
+        verify_outputs::<true>(&outputs)?;
+        verify_payload::<true>(&payload)?;
 
         Ok(RegularTransactionEssence {
             inputs,
@@ -92,13 +92,13 @@ pub(crate) type OutputCount = BoundedU16<{ *OUTPUT_COUNT_RANGE.start() }, { *OUT
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct RegularTransactionEssence {
-    #[packable(verify_with = validate_inputs)]
+    #[packable(verify_with = verify_inputs)]
     #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| Error::InvalidInputCount(p.into())))]
     inputs: BoxedSlicePrefix<Input, InputCount>,
-    #[packable(verify_with = validate_outputs)]
+    #[packable(verify_with = verify_outputs)]
     #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| Error::InvalidOutputCount(p.into())))]
     outputs: BoxedSlicePrefix<Output, OutputCount>,
-    #[packable(verify_with = validate_payload)]
+    #[packable(verify_with = verify_payload)]
     payload: OptionalPayload,
 }
 
@@ -127,7 +127,7 @@ impl RegularTransactionEssence {
     }
 }
 
-fn validate_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
+fn verify_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
     for input in inputs.iter() {
         match input {
             Input::Utxo(u) => {
@@ -142,7 +142,7 @@ fn validate_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
     Ok(())
 }
 
-fn validate_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
+fn verify_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
     let mut total_amount: u64 = 0;
 
     for output in outputs.iter() {
@@ -167,7 +167,7 @@ fn validate_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error>
     Ok(())
 }
 
-fn validate_payload<const VERIFY: bool>(payload: &OptionalPayload) -> Result<(), Error> {
+fn verify_payload<const VERIFY: bool>(payload: &OptionalPayload) -> Result<(), Error> {
     match &payload.0 {
         Some(Payload::TaggedData(_)) | None => Ok(()),
         Some(payload) => Err(Error::InvalidPayloadKind(payload.kind())),

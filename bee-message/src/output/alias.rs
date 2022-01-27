@@ -125,15 +125,15 @@ impl AliasOutputBuilder {
             .try_into()
             .map_err(Error::InvalidStateMetadataLength)?;
 
-        validate_index_counter(&self.alias_id, state_index, foundry_counter)?;
+        verify_index_counter(&self.alias_id, state_index, foundry_counter)?;
 
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
         verify_allowed_unlock_conditions(&unlock_conditions, AliasOutput::ALLOWED_UNLOCK_CONDITIONS)?;
 
         // TODO reactivate in a later PR
-        // validate_controller(&state_controller, &alias_id)?;
-        // validate_controller(&governor, &alias_id)?;
+        // verify_controller(&state_controller, &alias_id)?;
+        // verify_controller(&governor, &alias_id)?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
@@ -308,7 +308,7 @@ impl Packable for AliasOutput {
         let foundry_counter = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
 
         if VERIFY {
-            validate_index_counter(&alias_id, state_index, foundry_counter).map_err(UnpackError::Packable)?;
+            verify_index_counter(&alias_id, state_index, foundry_counter).map_err(UnpackError::Packable)?;
         }
 
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
@@ -339,7 +339,7 @@ impl Packable for AliasOutput {
 }
 
 #[inline]
-fn validate_index_counter(alias_id: &AliasId, state_index: u32, foundry_counter: u32) -> Result<(), Error> {
+fn verify_index_counter(alias_id: &AliasId, state_index: u32, foundry_counter: u32) -> Result<(), Error> {
     if alias_id.as_ref().iter().all(|&b| b == 0) && (state_index != 0 || foundry_counter != 0) {
         return Err(Error::NonZeroStateIndexOrFoundryCounter);
     }
@@ -349,7 +349,7 @@ fn validate_index_counter(alias_id: &AliasId, state_index: u32, foundry_counter:
 
 // TODO reactivate in a later PR
 // #[inline]
-// fn validate_controller(controller: &Address, alias_id: &AliasId) -> Result<(), Error> {
+// fn verify_controller(controller: &Address, alias_id: &AliasId) -> Result<(), Error> {
 //     match controller {
 //         Address::Ed25519(_) => {}
 //         Address::Alias(address) => {
