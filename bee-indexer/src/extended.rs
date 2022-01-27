@@ -1,4 +1,5 @@
-use crate::types::{Address, MilestoneIndex};
+// Copyright 2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
 #[derive(Debug, sqlx::FromRow)]
 pub(crate) struct Extended {
@@ -7,10 +8,13 @@ pub(crate) struct Extended {
     pub sender: Option<String>,
     pub tag: Option<String>,
     pub address: Option<String>,
-    pub milestone_index: MilestoneIndex,
+    pub milestone_index: String,
 }
 
-pub(crate) async fn insert_extended_output<'a>(pool: &sqlx::SqlitePool, extended: Extended) -> Result<i64, sqlx::Error> {
+pub(crate) async fn insert_extended_output<'a>(
+    pool: &sqlx::SqlitePool,
+    extended: Extended,
+) -> Result<i64, sqlx::Error> {
     let mut conn = pool.acquire().await?;
 
     let id = sqlx::query!(

@@ -81,3 +81,13 @@ impl TryFrom<String> for Address {
         Address::from_str(&address)
     }
 }
+
+impl AsRef<[u8]> for Address {
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            Self::Ed25519(a) => a.as_ref(),
+            Self::Alias(a) => a.as_ref(),
+            Self::Nft(a) => a.as_ref(),
+        }
+    }
+}

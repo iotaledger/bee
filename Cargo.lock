@@ -258,6 +258,8 @@ dependencies = [
 name = "bee-indexer"
 version = "0.1.0"
 dependencies = [
+ "bee-ledger",
+ "bee-message",
  "bee-test",
  "dotenv",
  "hex",

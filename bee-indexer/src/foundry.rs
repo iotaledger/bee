@@ -1,4 +1,5 @@
-use crate::types::{Address, MilestoneIndex};
+// Copyright 2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
 #[derive(Debug, sqlx::FromRow)]
 pub(crate) struct Foundry {
@@ -6,7 +7,7 @@ pub(crate) struct Foundry {
     pub output_id: String,
     pub amount: i64,
     pub address: Option<String>,
-    pub milestone_index: MilestoneIndex,
+    pub milestone_index: String,
 }
 
 pub(crate) async fn insert_foundry_output<'a>(pool: &sqlx::SqlitePool, foundry: Foundry) -> Result<i64, sqlx::Error> {
@@ -23,7 +24,6 @@ pub(crate) async fn insert_foundry_output<'a>(pool: &sqlx::SqlitePool, foundry: 
         foundry.amount,
         foundry.address,
         foundry.milestone_index,
-        
     )
     .execute(&mut conn)
     .await?
