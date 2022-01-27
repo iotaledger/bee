@@ -2,36 +2,41 @@ name: 'Compile and cache RocksDB'
 runs:
   using: "composite"
   steps:
-    - name: Set rocksdb version (Linux)
+    - name: Set RocksDB version and build path (Unix)
       shell: bash
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os != 'windows-latest'
       run: |
         echo "ROCKSDB_VERSION=6.22.1" >> $GITHUB_ENV
         echo "ROCKSDB_BUILD_PATH=$(pwd)/rocksdb_build" >> $GITHUB_ENV
-        echo "ROCKSDB_LIB_DIR=$(pwd)/rocksdb_build/librocksdb.so" >> $GITHUB_ENV
 
-    - name: Set rocksdb version (MacOS)
-      shell: bash
-      if: matrix.os == 'macos-latest'
-      run: |
-        echo "ROCKSDB_VERSION=6.22.1" >> $GITHUB_ENV
-        echo "ROCKSDB_BUILD_PATH=$(pwd)/rocksdb_build" >> $GITHUB_ENV
-        echo "ROCKSDB_LIB_DIR=$(pwd)/rocksdb_build/librocksdb.dylib" >> $GITHUB_ENV
-
-    - name: Set rocksdb version (Windows)
+    - name: Set RocksDB version and build path (Windows)
       shell: pwsh
       if: matrix.os == 'windows-latest'
       run: |
         echo "ROCKSDB_VERSION=6.22.1.20635" >> $env:GITHUB_ENV
         echo "ROCKSDB_BUILD_PATH=$(Get-Location)\rocksdb_build" >> $env:GITHUB_ENV
-        echo "ROCKSDB_LIB_DIR=$(Get-Location)\rocksdb_build\rocksdb.dll" >> $env:GITHUB_ENV
 
-    - name: Cache rocksdb
+    - name: Set RocksDB path (Linux)
+      shell: bash
+      if: matrix.os == 'ubuntu-latest'
+      run: echo "ROCKSDB_LIB_DIR=$ROCKSDB_BUILD_PATH/rocksdb-$ROCKSDB_VERSION/librocksdb.so" >> $GITHUB_ENV
+
+    - name: Set RocksDB path (MacOS)
+      shell: bash
+      if: matrix.os == 'macos-latest'
+      run: echo "ROCKSDB_LIB_DIR=$ROCKSDB_BUILD_PATH/rocksdb-$ROCKSDB_VERSION/librocksdb.dylib" >> $GITHUB_ENV
+
+    - name: Set RocksDB path (Windows)
+      shell: pwsh
+      if: matrix.os == 'windows-latest'
+      run: echo "ROCKSDB_LIB_DIR=$env:ROCKSDB_BUILD_PATH\RocksDB.$env:ROCKSDB_VERSION\runtimes\win-x64\native\rocksdb.dll" >> $env:GITHUB_ENV
+
+    - name: Cache RocksDB
       uses: actions/cache@v2
       id: cache-rocksdb
       with:
-        path: ${{ env.ROCKSDB_LIB_DIR }}
-        key: rocksdb-${{ env.ROCKSDB_VERSION }}-${{ matrix.os }}
+        path: ${{ env.ROCKSDB_BUILD_PATH }}
+        key: rocksdb-build-${{ env.ROCKSDB_VERSION }}-${{ matrix.os }}
 
     - name: Compile RocksDB (Linux)
       shell: bash
@@ -41,19 +46,11 @@ runs:
         cd $ROCKSDB_BUILD_PATH
         curl -L -O https://github.com/facebook/rocksdb/archive/refs/tags/v$ROCKSDB_VERSION.tar.gz
         tar -xzf v$ROCKSDB_VERSION.tar.gz
+        rm -r v$ROCKSDB_VERSION.tar.gz
         cd rocksdb-$ROCKSDB_VERSION
-        sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
         make shared_lib
-        cp -L librocksdb.so $ROCKSDB_LIB_DIR
 
-    - name: Debug
-      shell: bash
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        ls -lah $ROCKSDB_LIB_DIR
-        file $ROCKSDB_LIB_DIR
-
-    - name: Compile rocksdb (MacOS)
+    - name: Compile RocksDB (MacOS)
       shell: bash
       if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'macos-latest'
       run: |
@@ -61,15 +58,14 @@ runs:
         cd $ROCKSDB_BUILD_PATH
         curl -L -O https://github.com/facebook/rocksdb/archive/refs/tags/v$ROCKSDB_VERSION.tar.gz
         tar -xzf v$ROCKSDB_VERSION.tar.gz
+        rm -r v$ROCKSDB_VERSION.tar.gz
         cd rocksdb-$ROCKSDB_VERSION
         make shared_lib
-        cp -L librocksdb.dylib $ROCKSDB_LIB_DIR
 
-    - name: Install rocksdb (Windows)
+    - name: Install RocksDB (Windows)
       shell: pwsh
       if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
       run: |
         New-Item $env:ROCKSDB_BUILD_PATH -itemtype directory
         nuget install RocksDB -Version $env:ROCKSDB_VERSION -OutputDirectory $env:ROCKSDB_BUILD_PATH
-        Copy-Item $env:ROCKSDB_BUILD_PATH\RocksDB.$env:ROCKSDB_VERSION\runtimes\win-x64\native\rocksdb.dll $env:ROCKSDB_LIB_DIR
 
