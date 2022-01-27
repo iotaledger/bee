@@ -1057,7 +1057,7 @@ pub struct AliasOutputDto {
     #[serde(rename = "foundryCounter")]
     pub foundry_counter: u32,
     //
-    #[serde(rename = "unlock_conditions")]
+    #[serde(rename = "unlockConditions")]
     pub unlock_conditions: Vec<UnlockConditionDto>,
     //
     #[serde(rename = "blocks")]
@@ -1145,7 +1145,7 @@ pub struct FoundryOutputDto {
     maximum_supply: U256Dto,
     #[serde(rename = "tokenScheme")]
     token_scheme: TokenSchemeDto,
-    #[serde(rename = "unlock_conditions")]
+    #[serde(rename = "unlockConditions")]
     unlock_conditions: Vec<UnlockConditionDto>,
     #[serde(rename = "blocks")]
     feature_blocks: Vec<FeatureBlockDto>,
@@ -1231,9 +1231,9 @@ pub struct NftOutputDto {
     #[serde(rename = "nftId")]
     pub nft_id: NftIdDto,
     // Binary metadata attached immutably to the NFT.
-    #[serde(rename = "immutableMetadata")]
-    pub immutable_metadata: String,
-    #[serde(rename = "unlock_conditions")]
+    #[serde(rename = "immutableData")]
+    pub immutable_data: String,
+    #[serde(rename = "unlockConditions")]
     pub unlock_conditions: Vec<UnlockConditionDto>,
     #[serde(rename = "blocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
@@ -1263,7 +1263,7 @@ impl From<&NftOutput> for NftOutputDto {
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             nft_id: NftIdDto(value.nft_id().to_string()),
-            immutable_metadata: hex::encode(&value.immutable_metadata()),
+            immutable_data: hex::encode(&value.immutable_metadata()),
             unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
         }
@@ -1277,7 +1277,7 @@ impl TryFrom<&NftOutputDto> for NftOutput {
         let mut builder = NftOutputBuilder::new(
             value.amount,
             (&value.nft_id).try_into()?,
-            hex::decode(&value.immutable_metadata).map_err(|_| Error::InvalidField("immutable_metadata"))?,
+            hex::decode(&value.immutable_data).map_err(|_| Error::InvalidField("immutableData"))?,
         )?;
 
         for t in &value.native_tokens {
