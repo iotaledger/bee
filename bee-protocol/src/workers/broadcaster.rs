@@ -32,14 +32,14 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<MetricsWorker>(), TypeId::of::<PeerManagerResWorker>()].leak()
+        vec![TypeId::of::<PeerManagerResWorker>(), TypeId::of::<MetricsWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let metrics = node.resource::<NodeMetrics>();
-        let peer_manager = node.resource::<PeerManager>();
-
         let (tx, rx) = mpsc::unbounded_channel();
+
+        let peer_manager = node.resource::<PeerManager>();
+        let metrics = node.resource::<NodeMetrics>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
