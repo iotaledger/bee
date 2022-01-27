@@ -68,4 +68,6 @@ runs:
     - name: Set ROCKSDB_LIB_DIR (Windows)
       shell: pwsh
       if: matrix.os == 'windows-latest'
-      run: echo "ROCKSDB_LIB_DIR=$env:LOCAL_BINARIES_PATH\RocksDB.$env:ROCKSDB_VERSION" >> $env:GITHUB_ENV
+      run: |
+        echo "ROCKSDB_LIB_DIR=$env:LOCAL_BINARIES_PATH\RocksDB.$env:ROCKSDB_VERSION" >> $env:GITHUB_ENV
+        Get-ChildItem -Path $env:LOCAL_BINARIES_PATH -Force -Recurse
