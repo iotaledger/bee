@@ -54,7 +54,7 @@ jobs:
         run: echo "LOCAL_BINARIES_PATH=$(Get-Location)\local-binaries" >> $env:GITHUB_ENV
 
       - name: Provide RocksDB
-        uses: ./rocksdb
+        uses: ./.github/workflows/rocksdb
 
       - name: Install ${{ matrix.rust }}
         uses: actions-rs/toolchain@v1
