@@ -3,7 +3,8 @@
 
 use crate::{output::OUTPUT_INDEX_RANGE, payload::transaction::TransactionId, util::hex_decode, Error};
 
-use packable::bounded::BoundedU16;
+use crypto::hashes::{blake2b::Blake2b160, Digest};
+use packable::{bounded::BoundedU16, PackableExt};
 
 use core::str::FromStr;
 
@@ -46,6 +47,12 @@ impl OutputId {
     #[inline(always)]
     pub fn split(self) -> (TransactionId, u16) {
         (self.transaction_id, self.index())
+    }
+
+    /// Hash the `OutputId` with BLAKE2b-160 for `AliasId` or `NftId`.
+    #[inline(always)]
+    pub fn hash(self) -> [u8; 20] {
+        Blake2b160::digest(&self.pack_to_vec()).into()
     }
 }
 
