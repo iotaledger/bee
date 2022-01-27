@@ -965,15 +965,15 @@ impl From<&FeatureBlock> for FeatureBlockDto {
                 address: v.address().into(),
             }),
             FeatureBlock::Issuer(v) => Self::Issuer(IssuerFeatureBlockDto {
-                kind: SenderFeatureBlock::KIND,
+                kind: IssuerFeatureBlock::KIND,
                 address: v.address().into(),
             }),
             FeatureBlock::Metadata(v) => Self::Metadata(MetadataFeatureBlockDto {
-                kind: SenderFeatureBlock::KIND,
+                kind: MetadataFeatureBlock::KIND,
                 data: v.to_string(),
             }),
             FeatureBlock::Tag(v) => Self::Tag(TagFeatureBlockDto {
-                kind: SenderFeatureBlock::KIND,
+                kind: TagFeatureBlock::KIND,
                 tag: v.to_string(),
             }),
         }
