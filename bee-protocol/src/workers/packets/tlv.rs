@@ -6,6 +6,7 @@
 use crate::workers::packets::{HeaderPacket, Packet, HEADER_SIZE};
 
 #[allow(clippy::enum_variant_names)]
+#[allow(dead_code)] // TODO
 #[derive(Debug)]
 pub(crate) enum Error {
     InvalidAdvertisedType {
