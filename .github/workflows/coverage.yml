@@ -32,6 +32,8 @@ jobs:
         with:
           crate: rustfilt
           version: 0.2.1
+      - name: Provide RocksDB
+        uses: ./.github/workflows/rocksdb
       - name: Run test coverage
         run: bash .github/workflows/scripts/coverage.sh
       - uses: coverallsapp/github-action@v1.1.2

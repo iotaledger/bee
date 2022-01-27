@@ -190,6 +190,9 @@ jobs:
           override: true
           components: clippy
 
+      - name: Provide RocksDB
+        uses: ./.github/workflows/rocksdb
+
       - name: Cache cargo state
         uses: actions/cache@v2
         env:
@@ -222,6 +225,9 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
+
+      - name: Provide RocksDB
+        uses: ./.github/workflows/rocksdb
 
       - name: Cache cargo state
         uses: actions/cache@v2
@@ -311,6 +317,9 @@ jobs:
             profile: minimal
             toolchain: nightly
             override: true
+
+      - name: Provide RocksDB
+        uses: ./.github/workflows/rocksdb
 
       - name: Cache cargo state
         uses: actions/cache@v2
