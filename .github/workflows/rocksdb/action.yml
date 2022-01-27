@@ -8,7 +8,7 @@ runs:
       run: |
         echo "ROCKSDB_VERSION=6.22.1" >> $GITHUB_ENV
         echo "ROCKSDB_BUILD_PATH=$(pwd)/rocksdb_build" >> $GITHUB_ENV
-        echo "ROCKSDB_LIB_DIR=$ROCKSDB_BUILD_PATH/librocksdb.so" >> $GITHUB_ENV
+        echo "ROCKSDB_LIB_DIR=$(pwd)/rocksdb_build/librocksdb.so" >> $GITHUB_ENV
 
     - name: Set rocksdb version (MacOS)
       shell: bash
@@ -16,7 +16,7 @@ runs:
       run: |
         echo "ROCKSDB_VERSION=6.22.1" >> $GITHUB_ENV
         echo "ROCKSDB_BUILD_PATH=$(pwd)/rocksdb_build" >> $GITHUB_ENV
-        echo "ROCKSDB_LIB_DIR=$ROCKSDB_BUILD_PATH/librocksdb.dylib" >> $GITHUB_ENV
+        echo "ROCKSDB_LIB_DIR=$(pwd)/rocksdb_build/librocksdb.dylib" >> $GITHUB_ENV
 
     - name: Set rocksdb version (Windows)
       shell: pwsh
@@ -24,7 +24,7 @@ runs:
       run: |
         echo "ROCKSDB_VERSION=6.22.1.20635" >> $env:GITHUB_ENV
         echo "ROCKSDB_BUILD_PATH=$(Get-Location)\rocksdb_build" >> $env:GITHUB_ENV
-        echo "ROCKSDB_LIB_DIR=$env:ROCKSDB_BUILD_PATH\rocksdb.dll" >> $env:GITHUB_ENV
+        echo "ROCKSDB_LIB_DIR=$(Get-Location)\rocksdb_build\rocksdb.dll" >> $env:GITHUB_ENV
 
     - name: Cache rocksdb
       uses: actions/cache@v2
