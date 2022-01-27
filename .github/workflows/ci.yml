@@ -47,6 +47,8 @@ jobs:
 
       - name: Provide RocksDB
         uses: ./.github/workflows/rocksdb
+        with:
+          os: ${{ matrix.os }}
 
       - name: Install ${{ matrix.rust }}
         uses: actions-rs/toolchain@v1
