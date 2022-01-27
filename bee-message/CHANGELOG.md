@@ -23,10 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.2.0 - 2022-XX-XX
 
-### Added
-
-- `RegularTransactionEssence::network_id`;
-
 ### Changed
 
 - Serialize and deserialize all the types using `packable` instead of `bee-common::packable`;

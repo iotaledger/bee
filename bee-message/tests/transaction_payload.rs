@@ -12,7 +12,6 @@ use bee_message::{
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
     Error,
 };
-use bee_test::rand::number::rand_number;
 
 use packable::PackableExt;
 
@@ -50,7 +49,7 @@ fn builder_no_essence_no_unlock_blocks() {
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder(rand_number())
+        RegularTransactionEssence::builder()
             .add_input(input)
             .add_output(output)
             .finish()
@@ -81,7 +80,7 @@ fn builder_no_essence_too_few_unlock_blocks() {
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder(rand_number())
+        RegularTransactionEssence::builder()
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()
@@ -122,7 +121,7 @@ fn builder_no_essence_too_many_unlock_blocks() {
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder(rand_number())
+        RegularTransactionEssence::builder()
             .add_input(input1)
             .add_output(output)
             .finish()
@@ -165,7 +164,7 @@ fn pack_unpack_valid() {
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder(rand_number())
+        RegularTransactionEssence::builder()
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()
@@ -210,7 +209,7 @@ fn getters() {
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder(rand_number())
+        RegularTransactionEssence::builder()
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()
