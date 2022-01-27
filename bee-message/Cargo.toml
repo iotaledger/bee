@@ -20,6 +20,7 @@ bitflags = { version = "1.3.2", default-features = false }
 bytemuck = { version = "1.7.2", default-features = false }
 derive_more = { version = "0.99.16", default-features = false, features = [ "from", "as_ref", "deref" ] }
 digest = { version = "0.9.0", default-features = false }
+hashbrown = { version = "0.12.0", default-features = false, features = [ "ahash", "inline-more" ] }
 hex = { version = "0.4.3", default-features = false }
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "ed25519", "blake2b" ] }
 packable = { version = "0.1.0", default-features = false, features = [ "serde", "primitive-types" ] }

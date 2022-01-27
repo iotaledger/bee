@@ -16,11 +16,11 @@ pub use signature::SignatureUnlockBlock;
 
 use crate::{
     input::{INPUT_COUNT_MAX, INPUT_COUNT_RANGE, INPUT_INDEX_MAX, INPUT_INDEX_RANGE},
-    util::Set,
     Error,
 };
 
 use derive_more::{Deref, From};
+use hashbrown::HashSet;
 use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 
 use alloc::vec::Vec;
@@ -107,7 +107,7 @@ impl UnlockBlocks {
 }
 
 fn validate_unlock_blocks<const VERIFY: bool>(unlock_blocks: &[UnlockBlock]) -> Result<(), Error> {
-    let mut seen_signatures = Set::new();
+    let mut seen_signatures = HashSet::new();
 
     for (index, unlock_block) in (0u16..).zip(unlock_blocks.iter()) {
         match unlock_block {

@@ -201,7 +201,7 @@ dependencies = [
  "bee-runtime",
  "fern",
  "futures",
- "hashbrown",
+ "hashbrown 0.11.2",
  "hex",
  "libp2p",
  "libp2p-core",
@@ -228,7 +228,7 @@ dependencies = [
  "bytes",
  "digest",
  "futures",
- "hashbrown",
+ "hashbrown 0.11.2",
  "hex",
  "iota-crypto",
  "log",
@@ -255,6 +255,7 @@ dependencies = [
  "bytemuck",
  "derive_more",
  "digest",
+ "hashbrown 0.12.0",
  "hex",
  "iota-crypto",
  "num_cpus",
@@ -403,7 +404,7 @@ dependencies = [
  "bitflags",
  "criterion",
  "futures",
- "hashbrown",
+ "hashbrown 0.11.2",
  "log",
  "packable",
  "rand 0.8.4",
@@ -1252,6 +1253,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hashbrown"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c21d40587b92fa6a6c6e3c1bdbf87d75511db5672f9c93175574b3a00df1758"
+dependencies = [
+ "ahash",
+]
+
+[[package]]
 name = "heck"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1446,7 +1456,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "282a6247722caba404c065016bbfa522806e51714c34f5dfc3e4a3a46fcb4223"
 dependencies = [
  "autocfg",
- "hashbrown",
+ "hashbrown 0.11.2",
 ]
 
 [[package]]
