@@ -29,7 +29,6 @@ runs:
         sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
         make shared_lib
         cp -L librocksdb.so $LOCAL_BINARIES_PATH
-        echo "ROCKSDB_LIB_DIR=$LOCAL_BINARIES_PATH/librocksdb.so" >> $GITHUB_ENV
 
     - name: Compile rocksdb (MacOS)
       shell: bash
@@ -40,11 +39,23 @@ runs:
         cd rocksdb-$ROCKSDB_VERSION
         make shared_lib
         cp -L librocksdb.dylib $LOCAL_BINARIES_PATH
-        echo "ROCKSDB_LIB_DIR=$LOCAL_BINARIES_PATH/librocksdb.dylib" >> $GITHUB_ENV
 
     - name: Install rocksdb (Windows)
       shell: pwsh
       if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
-      run: |
-        nuget install RocksDB -Version $env:ROCKSDB_VERSION -OutputDirectory $env:LOCAL_BINARIES_PATH
-        echo "ROCKSDB_LIB_DIR=$env:LOCAL_BINARIES_PATH\RocksDB.$env:ROCKSDB_VERSION" >> $env:GITHUB_ENV
+      run: nuget install RocksDB -Version $env:ROCKSDB_VERSION -OutputDirectory $env:LOCAL_BINARIES_PATH
+
+    - name: Set ROCKSDB_LIB_DIR (Linux)
+      shell: bash
+      if: matrix.os == 'ubuntu-latest'
+      run: echo "ROCKSDB_LIB_DIR=$LOCAL_BINARIES_PATH/librocksdb.so" >> $GITHUB_ENV
+
+    - name: Set ROCKSDB_LIB_DIR (MacOS)
+      shell: bash
+      if: matrix.os == 'macos-latest'
+      run: echo "ROCKSDB_LIB_DIR=$LOCAL_BINARIES_PATH/librocksdb.dylib" >> $GITHUB_ENV
+
+    - name: Set ROCKSDB_LIB_DIR (Windows)
+      shell: pwsh
+      if: matrix.os == 'windows-latest'
+      run: echo "ROCKSDB_LIB_DIR=$env:LOCAL_BINARIES_PATH\RocksDB.$env:ROCKSDB_VERSION" >> $env:GITHUB_ENV
