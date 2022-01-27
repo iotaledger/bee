@@ -799,8 +799,8 @@ impl TryFrom<&TokenIdDto> for TokenId {
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct U256Dto(pub String);
 
-#[serde(untagged)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum UnlockConditionDto {
     /// An address unlock condition.
     Address(AddressUnlockConditionDto),
@@ -816,8 +816,8 @@ pub enum UnlockConditionDto {
     GovernorAddress(GovernorAddressUnlockConditionDto),
 }
 
-#[serde(untagged)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum FeatureBlockDto {
     /// A sender feature block.
     Sender(SenderFeatureBlockDto),
