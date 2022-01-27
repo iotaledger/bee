@@ -20,10 +20,11 @@ use crate::{
 };
 
 use derive_more::{Deref, From};
+use hashbrown::HashSet;
 use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 
+use alloc::vec::Vec;
 use core::ops::RangeInclusive;
-use std::collections::HashSet;
 
 /// The maximum number of unlock blocks of a transaction.
 pub const UNLOCK_BLOCK_COUNT_MAX: u16 = INPUT_COUNT_MAX; //127

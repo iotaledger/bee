@@ -13,6 +13,7 @@ use packable::{
     Packable,
 };
 
+use alloc::string::String;
 use core::fmt;
 
 /// Represents a tail transaction hash of a legacy bundle.

@@ -10,6 +10,7 @@ use bee_common::ord::is_unique_sorted;
 use derive_more::Deref;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
+use alloc::vec::Vec;
 use core::ops::RangeInclusive;
 
 pub(crate) type ParentCount = BoundedU8<{ *Parents::COUNT_RANGE.start() }, { *Parents::COUNT_RANGE.end() }>;

@@ -21,6 +21,8 @@ use bitflags::bitflags;
 use derive_more::{Deref, From};
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
+use alloc::vec::Vec;
+
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, Packable)]
 #[cfg_attr(

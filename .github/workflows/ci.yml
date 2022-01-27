@@ -329,5 +329,5 @@ jobs:
 
       - name: Run missing files check
         run: >
-          bash .github/workflows/scripts/missing_files.sh 
+          bash .github/workflows/scripts/missing_files.sh
           bee-message/fuzz

@@ -26,7 +26,7 @@ use packable::{
     Packable, PackableExt,
 };
 
-use alloc::vec::Vec;
+use alloc::{string::String, vec::Vec};
 use core::{fmt::Debug, ops::RangeInclusive};
 
 #[derive(Debug)]

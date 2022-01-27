@@ -19,6 +19,7 @@ use crate::{
 use crypto::Error as CryptoError;
 use primitive_types::U256;
 
+use alloc::string::String;
 use core::{convert::Infallible, fmt};
 
 /// Error occurring when creating/parsing/validating messages.
@@ -75,7 +76,6 @@ pub enum Error {
     InvalidUnlockBlockNft(u16),
     InvalidUnlockConditionCount(<UnlockConditionCount as TryFrom<usize>>::Error),
     InvalidUnlockConditionKind(u8),
-    Io(std::io::Error),
     MigratedFundsNotSorted,
     MilestoneInvalidPublicKeyCount(<PublicKeyCount as TryFrom<usize>>::Error),
     MilestoneInvalidSignatureCount(<SignatureCount as TryFrom<usize>>::Error),
@@ -98,6 +98,7 @@ pub enum Error {
     UnlockConditionsNotUniqueSorted,
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for Error {}
 
 impl fmt::Display for Error {
@@ -196,7 +197,6 @@ impl fmt::Display for Error {
             }
             Error::InvalidUnlockConditionCount(count) => write!(f, "invalid unlock condition count: {}", count),
             Error::InvalidUnlockConditionKind(k) => write!(f, "invalid unlock condition kind: {}", k),
-            Error::Io(e) => write!(f, "i/o error happened: {}", e),
             Error::MigratedFundsNotSorted => {
                 write!(f, "migrated funds are not sorted")
             }
@@ -260,12 +260,6 @@ impl fmt::Display for Error {
             }
             Error::UnlockConditionsNotUniqueSorted => write!(f, "unlock conditions are not unique and/or sorted"),
         }
-    }
-}
-
-impl From<std::io::Error> for Error {
-    fn from(error: std::io::Error) -> Self {
-        Error::Io(error)
     }
 }
 

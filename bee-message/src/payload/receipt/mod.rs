@@ -14,10 +14,11 @@ use crate::{milestone::MilestoneIndex, output::OUTPUT_COUNT_RANGE, payload::Payl
 
 use bee_common::ord::is_unique_sorted;
 
+use hashbrown::HashMap;
 use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable, PackableExt};
 
+use alloc::vec::Vec;
 use core::ops::RangeInclusive;
-use std::collections::HashMap;
 
 const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<u16> = OUTPUT_COUNT_RANGE;
 

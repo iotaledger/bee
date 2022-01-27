@@ -9,6 +9,8 @@ use derive_more::Deref;
 use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 use primitive_types::U256;
 
+use alloc::vec::Vec;
+
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
