@@ -46,6 +46,13 @@ runs:
         make shared_lib
         cp -L librocksdb.so $ROCKSDB_LIB_DIR
 
+    - name: Debug
+      shell: bash
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        ls -lah $ROCKSDB_LIB_DIR
+        file $ROCKSDB_LIB_DIR
+
     - name: Compile rocksdb (MacOS)
       shell: bash
       if: steps.cache-rocksdb.outputs.cache-hit != 'true' && matrix.os == 'macos-latest'
@@ -65,3 +72,4 @@ runs:
         New-Item $env:ROCKSDB_BUILD_PATH -itemtype directory
         nuget install RocksDB -Version $env:ROCKSDB_VERSION -OutputDirectory $env:ROCKSDB_BUILD_PATH
         Copy-Item $env:ROCKSDB_BUILD_PATH\RocksDB.$env:ROCKSDB_VERSION\runtimes\win-x64\native\rocksdb.dll $env:ROCKSDB_LIB_DIR
+
