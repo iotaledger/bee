@@ -49,6 +49,7 @@ where
                 let solid_milestone_index = *tangle.get_solid_milestone_index();
                 let confirmed_milestone_index = *tangle.get_confirmed_milestone_index();
                 let latest_milestone_index = *tangle.get_latest_milestone_index();
+                let non_lazy_tips_num = tangle.non_lazy_tips_num().await;
 
                 let status = if confirmed_milestone_index == latest_milestone_index {
                     format!("Synchronized and confirmed at {}", latest_milestone_index)
@@ -59,6 +60,7 @@ where
                     let confirmed_progress = ((confirmed_milestone_index - snapshot_index) as f64 * 100.0
                         / (latest_milestone_index - snapshot_index) as f64)
                         as u8;
+
                     format!(
                         "Synchronizing from {} to {}: confirmed {} ({}%) and solid {} ({}%) - Requested {}",
                         snapshot_index,
@@ -71,7 +73,7 @@ where
                     )
                 };
 
-                info!("{} - Tips {}.", status, tangle.non_lazy_tips_num().await);
+                info!("{} - Tips {}.", status, non_lazy_tips_num);
             }
 
             info!("Stopped.");
