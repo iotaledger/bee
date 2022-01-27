@@ -1,8 +1,11 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! A crate that provides types and workers enabling the IOTA protocol.
 
-#![deny(missing_docs, warnings)]
+// TODO
+// #![deny(missing_docs, warnings)]
 
 pub mod types;
+#[cfg(feature = "workers")]
+pub mod workers;
