@@ -135,10 +135,10 @@ pub struct OutputResponse {
     pub output_index: u16,
     #[serde(rename = "isSpent")]
     pub is_spent: bool,
-    #[serde(rename = "milestoneIndex")]
-    pub milestone_index: u32,
-    #[serde(rename = "milestoneTimestamp")]
-    pub milestone_timestamp: u64,
+    #[serde(rename = "milestoneIndexBooked")]
+    pub milestone_index_booked: u32,
+    #[serde(rename = "milestoneTimestampBooked")]
+    pub milestone_timestamp_booked: u64,
     #[serde(rename = "ledgerIndex", default)]
     pub ledger_index: u32,
     pub output: OutputDto,

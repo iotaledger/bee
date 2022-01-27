@@ -701,7 +701,7 @@ pub struct ExtendedOutputDto {
     // Native tokens held by the output.
     #[serde(rename = "nativeTokens")]
     pub native_tokens: Vec<NativeTokenDto>,
-    #[serde(rename = "unlock_conditions")]
+    #[serde(rename = "unlockConditions")]
     pub unlock_conditions: Vec<UnlockConditionDto>,
     #[serde(rename = "blocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
@@ -793,6 +793,7 @@ impl TryFrom<&TokenIdDto> for TokenId {
 pub struct U256Dto(pub String);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum UnlockConditionDto {
     /// An address unlock condition.
     Address(AddressUnlockConditionDto),
@@ -809,6 +810,7 @@ pub enum UnlockConditionDto {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum FeatureBlockDto {
     /// A sender feature block.
     Sender(SenderFeatureBlockDto),
@@ -821,33 +823,70 @@ pub enum FeatureBlockDto {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct AddressUnlockConditionDto(pub Address);
+pub struct AddressUnlockConditionDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    pub address: AddressDto,
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct DustDepositReturnUnlockConditionDto(pub u64);
+pub struct DustDepositReturnUnlockConditionDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    pub amount: u64,
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TimelockUnlockConditionDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
     pub index: MilestoneIndex,
     pub timestamp: u32,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ExpirationUnlockConditionDto {
-    pub return_address: Address,
+    #[serde(rename = "type")]
+    pub kind: u8,
+    #[serde(rename = "returnAddress")]
+    pub return_address: AddressDto,
     pub index: MilestoneIndex,
     pub timestamp: u32,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct StateControllerAddressUnlockConditionDto(pub Address);
+pub struct StateControllerAddressUnlockConditionDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    pub address: AddressDto,
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct GovernorAddressUnlockConditionDto(pub Address);
+pub struct GovernorAddressUnlockConditionDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    pub address: AddressDto,
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SenderFeatureBlockDto(pub AddressDto);
+pub struct SenderFeatureBlockDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    pub address: AddressDto,
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct IssuerFeatureBlockDto(pub AddressDto);
+pub struct IssuerFeatureBlockDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    pub address: AddressDto,
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MetadataFeatureBlockDto(pub String);
+pub struct MetadataFeatureBlockDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    pub data: String,
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TagFeatureBlockDto(pub String);
+pub struct TagFeatureBlockDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    pub tag: String,
+}
 
 impl UnlockConditionDto {
     /// Return the unlock condition kind of a `UnlockConditionDto`.
@@ -878,25 +917,35 @@ impl FeatureBlockDto {
 impl From<&UnlockCondition> for UnlockConditionDto {
     fn from(value: &UnlockCondition) -> Self {
         match value {
-            UnlockCondition::Address(v) => Self::Address(AddressUnlockConditionDto(*v.address())),
-            UnlockCondition::DustDepositReturn(v) => {
-                Self::DustDepositReturn(DustDepositReturnUnlockConditionDto(v.amount()))
-            }
+            UnlockCondition::Address(v) => Self::Address(AddressUnlockConditionDto {
+                kind: AddressUnlockCondition::KIND,
+                address: v.address().into(),
+            }),
+            UnlockCondition::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnUnlockConditionDto {
+                kind: DustDepositReturnUnlockCondition::KIND,
+                amount: v.amount(),
+            }),
             UnlockCondition::Timelock(v) => Self::Timelock(TimelockUnlockConditionDto {
+                kind: TimelockUnlockCondition::KIND,
                 index: v.index(),
                 timestamp: v.timestamp(),
             }),
             UnlockCondition::Expiration(v) => Self::Expiration(ExpirationUnlockConditionDto {
-                return_address: *v.return_address(),
+                kind: ExpirationUnlockCondition::KIND,
+                return_address: v.return_address().into(),
                 index: v.index(),
                 timestamp: v.timestamp(),
             }),
             UnlockCondition::StateControllerAddress(v) => {
-                Self::StateControllerAddress(StateControllerAddressUnlockConditionDto(*v.address()))
+                Self::StateControllerAddress(StateControllerAddressUnlockConditionDto {
+                    kind: StateControllerAddressUnlockCondition::KIND,
+                    address: v.address().into(),
+                })
             }
-            UnlockCondition::GovernorAddress(v) => {
-                Self::GovernorAddress(GovernorAddressUnlockConditionDto(*v.address()))
-            }
+            UnlockCondition::GovernorAddress(v) => Self::GovernorAddress(GovernorAddressUnlockConditionDto {
+                kind: GovernorAddressUnlockCondition::KIND,
+                address: v.address().into(),
+            }),
         }
     }
 }
@@ -904,10 +953,22 @@ impl From<&UnlockCondition> for UnlockConditionDto {
 impl From<&FeatureBlock> for FeatureBlockDto {
     fn from(value: &FeatureBlock) -> Self {
         match value {
-            FeatureBlock::Sender(v) => Self::Sender(SenderFeatureBlockDto(v.address().into())),
-            FeatureBlock::Issuer(v) => Self::Issuer(IssuerFeatureBlockDto(v.address().into())),
-            FeatureBlock::Metadata(v) => Self::Metadata(MetadataFeatureBlockDto(v.to_string())),
-            FeatureBlock::Tag(v) => Self::Tag(TagFeatureBlockDto(v.to_string())),
+            FeatureBlock::Sender(v) => Self::Sender(SenderFeatureBlockDto {
+                kind: SenderFeatureBlock::KIND,
+                address: v.address().into(),
+            }),
+            FeatureBlock::Issuer(v) => Self::Issuer(IssuerFeatureBlockDto {
+                kind: IssuerFeatureBlock::KIND,
+                address: v.address().into(),
+            }),
+            FeatureBlock::Metadata(v) => Self::Metadata(MetadataFeatureBlockDto {
+                kind: MetadataFeatureBlock::KIND,
+                data: v.to_string(),
+            }),
+            FeatureBlock::Tag(v) => Self::Tag(TagFeatureBlockDto {
+                kind: TagFeatureBlock::KIND,
+                tag: v.to_string(),
+            }),
         }
     }
 }
@@ -917,18 +978,34 @@ impl TryFrom<&UnlockConditionDto> for UnlockCondition {
 
     fn try_from(value: &UnlockConditionDto) -> Result<Self, Self::Error> {
         Ok(match value {
-            UnlockConditionDto::Address(v) => Self::Address(AddressUnlockCondition::new(v.0)),
+            UnlockConditionDto::Address(v) => Self::Address(AddressUnlockCondition::new(
+                (&v.address)
+                    .try_into()
+                    .map_err(|_e| Error::InvalidField("AddressUnlockCondition"))?,
+            )),
             UnlockConditionDto::DustDepositReturn(v) => {
-                Self::DustDepositReturn(DustDepositReturnUnlockCondition::new(v.0)?)
+                Self::DustDepositReturn(DustDepositReturnUnlockCondition::new(v.amount)?)
             }
             UnlockConditionDto::Timelock(v) => Self::Timelock(TimelockUnlockCondition::new(v.index, v.timestamp)),
-            UnlockConditionDto::Expiration(v) => {
-                Self::Expiration(ExpirationUnlockCondition::new(v.return_address, v.index, v.timestamp))
-            }
+            UnlockConditionDto::Expiration(v) => Self::Expiration(ExpirationUnlockCondition::new(
+                (&v.return_address)
+                    .try_into()
+                    .map_err(|_e| Error::InvalidField("ExpirationUnlockCondition"))?,
+                v.index,
+                v.timestamp,
+            )),
             UnlockConditionDto::StateControllerAddress(v) => {
-                Self::StateControllerAddress(StateControllerAddressUnlockCondition::new(v.0))
+                Self::StateControllerAddress(StateControllerAddressUnlockCondition::new(
+                    (&v.address)
+                        .try_into()
+                        .map_err(|_e| Error::InvalidField("StateControllerAddressUnlockCondition"))?,
+                ))
             }
-            UnlockConditionDto::GovernorAddress(v) => Self::GovernorAddress(GovernorAddressUnlockCondition::new(v.0)),
+            UnlockConditionDto::GovernorAddress(v) => Self::GovernorAddress(GovernorAddressUnlockCondition::new(
+                (&v.address)
+                    .try_into()
+                    .map_err(|_e| Error::InvalidField("GovernorAddressUnlockCondition"))?,
+            )),
         })
     }
 }
@@ -938,13 +1015,13 @@ impl TryFrom<&FeatureBlockDto> for FeatureBlock {
 
     fn try_from(value: &FeatureBlockDto) -> Result<Self, Self::Error> {
         Ok(match value {
-            FeatureBlockDto::Sender(v) => Self::Sender(SenderFeatureBlock::new((&v.0).try_into()?)),
-            FeatureBlockDto::Issuer(v) => Self::Issuer(IssuerFeatureBlock::new((&v.0).try_into()?)),
+            FeatureBlockDto::Sender(v) => Self::Sender(SenderFeatureBlock::new((&v.address).try_into()?)),
+            FeatureBlockDto::Issuer(v) => Self::Issuer(IssuerFeatureBlock::new((&v.address).try_into()?)),
             FeatureBlockDto::Metadata(v) => Self::Metadata(MetadataFeatureBlock::new(
-                hex::decode(&v.0).map_err(|_e| Error::InvalidField("MetadataFeatureBlock"))?,
+                hex::decode(&v.data).map_err(|_e| Error::InvalidField("MetadataFeatureBlock"))?,
             )?),
             FeatureBlockDto::Tag(v) => Self::Tag(TagFeatureBlock::new(
-                hex::decode(&v.0).map_err(|_e| Error::InvalidField("TagFeatureBlock"))?,
+                hex::decode(&v.tag).map_err(|_e| Error::InvalidField("TagFeatureBlock"))?,
             )?),
         })
     }
@@ -973,7 +1050,7 @@ pub struct AliasOutputDto {
     #[serde(rename = "foundryCounter")]
     pub foundry_counter: u32,
     //
-    #[serde(rename = "unlock_conditions")]
+    #[serde(rename = "unlockConditions")]
     pub unlock_conditions: Vec<UnlockConditionDto>,
     //
     #[serde(rename = "blocks")]
@@ -1061,7 +1138,7 @@ pub struct FoundryOutputDto {
     maximum_supply: U256Dto,
     #[serde(rename = "tokenScheme")]
     token_scheme: TokenSchemeDto,
-    #[serde(rename = "unlock_conditions")]
+    #[serde(rename = "unlockConditions")]
     unlock_conditions: Vec<UnlockConditionDto>,
     #[serde(rename = "blocks")]
     feature_blocks: Vec<FeatureBlockDto>,
@@ -1147,9 +1224,9 @@ pub struct NftOutputDto {
     #[serde(rename = "nftId")]
     pub nft_id: NftIdDto,
     // Binary metadata attached immutably to the NFT.
-    #[serde(rename = "immutableMetadata")]
-    pub immutable_metadata: String,
-    #[serde(rename = "unlock_conditions")]
+    #[serde(rename = "immutableData")]
+    pub immutable_data: String,
+    #[serde(rename = "unlockConditions")]
     pub unlock_conditions: Vec<UnlockConditionDto>,
     #[serde(rename = "blocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
@@ -1179,7 +1256,7 @@ impl From<&NftOutput> for NftOutputDto {
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             nft_id: NftIdDto(value.nft_id().to_string()),
-            immutable_metadata: hex::encode(&value.immutable_metadata()),
+            immutable_data: hex::encode(&value.immutable_metadata()),
             unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
         }
@@ -1193,7 +1270,7 @@ impl TryFrom<&NftOutputDto> for NftOutput {
         let mut builder = NftOutputBuilder::new(
             value.amount,
             (&value.nft_id).try_into()?,
-            hex::decode(&value.immutable_metadata).map_err(|_| Error::InvalidField("immutable_metadata"))?,
+            hex::decode(&value.immutable_data).map_err(|_| Error::InvalidField("immutableData"))?,
         )?;
 
         for t in &value.native_tokens {
