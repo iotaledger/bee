@@ -79,4 +79,5 @@ runs:
         New-Item build -itemtype directory -Force
         Set-Location build
         cmake -G "Visual Studio 16 2019" -DJNI=0 -DGFLAGS=0 -DSNAPPY=0 -DLZ4=1 -DZLIB=0 -DZSTD=0 -DXPRESS=0 ..
+        msbuild rocksdb.sln /p:Configuration=Release
         Get-ChildItem -Force -Recurse
