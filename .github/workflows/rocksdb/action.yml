@@ -18,7 +18,7 @@ runs:
       shell: pwsh
       if: inputs.os == 'windows-latest'
       run: |
-        echo "ROCKSDB_VERSION=6.22.1.20635" >> $env:GITHUB_ENV
+        echo "ROCKSDB_VERSION=6.22.1" >> $env:GITHUB_ENV
         echo "ROCKSDB_BUILD_PATH=$(Get-Location)\rocksdb_build" >> $env:GITHUB_ENV
 
     - name: Set RocksDB path (Linux)
@@ -73,5 +73,9 @@ runs:
       run: |
         New-Item $env:ROCKSDB_BUILD_PATH -itemtype directory -Force
         Set-Location $env:ROCKSDB_BUILD_PATH
-        vcpkg install rocksdb:x64-windows version:$env:ROCKSDB_VERSION
+        git clone https://github.com/facebook/rocksdb
+        Set-Location rocksdb
+        git checkout tags/v$env:ROCKSDB_VERSION
+        New-Item build -itemtype directory -Force
+        cmake -G "Visual Studio 16 Win64" -DJNI=0 -DGFLAGS=0 -DSNAPPY=0 -DLZ4=1 -DZLIB=0 -DZSTD=0 -DXPRESS=0 ..
         Get-ChildItem -Force -Recurse
