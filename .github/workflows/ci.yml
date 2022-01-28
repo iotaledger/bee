@@ -88,7 +88,7 @@ jobs:
 
       - name: Set LD_LIBRARY_PATH (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ROCKSDB_LIB_DIR
+        run: echo $LD_LIBRARY_PATH
 
       - name: Build
         uses: actions-rs/cargo@v1
