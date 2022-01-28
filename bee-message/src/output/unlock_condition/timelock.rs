@@ -28,7 +28,7 @@ impl TimelockUnlockCondition {
     /// Creates a new [`TimelockUnlockCondition`].
     #[inline(always)]
     pub fn new(milestone_index: MilestoneIndex, timestamp: u32) -> Result<Self, Error> {
-        verify_index_timestamp(milestone_index, timestamp)?;
+        verify_milestone_index_timestamp(milestone_index, timestamp)?;
 
         Ok(Self {
             milestone_index,
@@ -66,7 +66,7 @@ impl Packable for TimelockUnlockCondition {
         let timestamp = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
 
         if VERIFY {
-            verify_index_timestamp(milestone_index, timestamp).map_err(UnpackError::Packable)?;
+            verify_milestone_index_timestamp(milestone_index, timestamp).map_err(UnpackError::Packable)?;
         }
 
         Ok(Self {
@@ -77,7 +77,7 @@ impl Packable for TimelockUnlockCondition {
 }
 
 #[inline]
-fn verify_index_timestamp(milestone_index: MilestoneIndex, timestamp: u32) -> Result<(), Error> {
+fn verify_milestone_index_timestamp(milestone_index: MilestoneIndex, timestamp: u32) -> Result<(), Error> {
     if *milestone_index == 0 && timestamp == 0 {
         Err(Error::TimelockUnlockConditionZero)
     } else {

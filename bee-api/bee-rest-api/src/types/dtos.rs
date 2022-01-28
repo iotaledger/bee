@@ -992,13 +992,16 @@ impl TryFrom<&UnlockConditionDto> for UnlockCondition {
                 TimelockUnlockCondition::new(v.milestone_index, v.timestamp)
                     .map_err(|_| Error::InvalidField("TimelockUnlockCondition"))?,
             ),
-            UnlockConditionDto::Expiration(v) => Self::Expiration(ExpirationUnlockCondition::new(
-                (&v.return_address)
-                    .try_into()
-                    .map_err(|_e| Error::InvalidField("ExpirationUnlockCondition"))?,
-                v.milestone_index,
-                v.timestamp,
-            )),
+            UnlockConditionDto::Expiration(v) => Self::Expiration(
+                ExpirationUnlockCondition::new(
+                    (&v.return_address)
+                        .try_into()
+                        .map_err(|_e| Error::InvalidField("ExpirationUnlockCondition"))?,
+                    v.milestone_index,
+                    v.timestamp,
+                )
+                .map_err(|_| Error::InvalidField("ExpirationUnlockCondition"))?,
+            ),
             UnlockConditionDto::StateControllerAddress(v) => {
                 Self::StateControllerAddress(StateControllerAddressUnlockCondition::new(
                     (&v.address)
