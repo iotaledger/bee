@@ -1037,7 +1037,6 @@ impl TryFrom<&UnlockConditionDto> for UnlockCondition {
     type Error = Error;
 
     fn try_from(value: &UnlockConditionDto) -> Result<Self, Self::Error> {
-        println!("{:?}", value);
         Ok(match value {
             UnlockConditionDto::Address(v) => Self::Address(AddressUnlockCondition::new(
                 (&v.address)
