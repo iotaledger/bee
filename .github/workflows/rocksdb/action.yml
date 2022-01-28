@@ -69,8 +69,9 @@ runs:
 
     - name: Install RocksDB (Windows)
       shell: pwsh
-      if: steps.cache-rocksdb.outputs.cache-hit != 'true' && inputs.os == 'windows-latest'
+      if: inputs.os == 'windows-latest'
       run: |
         New-Item $env:ROCKSDB_BUILD_PATH -itemtype directory
-        nuget install RocksDB -Version $env:ROCKSDB_VERSION -OutputDirectory $env:ROCKSDB_BUILD_PATH
-
+        Set-Location $env:ROCKSDB_BUILD_PATH
+        vcpkg install rocksdb:x64-windows version:$env:ROCKSDB_VERSION
+        Get-ChildItem -Force -Recurse
