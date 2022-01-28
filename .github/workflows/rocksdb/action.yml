@@ -77,5 +77,5 @@ runs:
         Set-Location rocksdb
         git checkout tags/v$env:ROCKSDB_VERSION
         New-Item build -itemtype directory -Force
-        cmake -G "Visual Studio 16 Win64" -DJNI=0 -DGFLAGS=0 -DSNAPPY=0 -DLZ4=1 -DZLIB=0 -DZSTD=0 -DXPRESS=0 ..
+        cmake -G "Visual Studio 17 2022" -DJNI=0 -DGFLAGS=0 -DSNAPPY=0 -DLZ4=1 -DZLIB=0 -DZSTD=0 -DXPRESS=0 ..
         Get-ChildItem -Force -Recurse
