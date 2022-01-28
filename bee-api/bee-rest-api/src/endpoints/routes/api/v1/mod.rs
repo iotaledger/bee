@@ -33,11 +33,10 @@ use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent,
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
 
+use tokio::sync::mpsc;
 use warp::{self, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
-
-use tokio::sync::mpsc;
 
 pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("v1"))

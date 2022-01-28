@@ -17,6 +17,7 @@ use storage::StorageBackend;
 use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
 use bee_gossip::NetworkCommandSender;
+use bee_ledger::workers::consensus::ConsensusWorker;
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorker, PeerManager, PeerManagerResWorker,
     RequestedMessages,
@@ -31,7 +32,6 @@ use async_trait::async_trait;
 use log::{error, info};
 use warp::{http::StatusCode, Filter, Rejection, Reply};
 
-use bee_ledger::workers::consensus::ConsensusWorker;
 use std::{any::TypeId, convert::Infallible};
 
 pub(crate) type NetworkId = (String, u64);
