@@ -431,8 +431,7 @@ impl Serialize for OutputDto {
 }
 
 /// Describes all the different address types.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(untagged)]
+#[derive(Clone, Debug)]
 pub enum AddressDto {
     /// An Ed25519 address.
     Ed25519(Ed25519AddressDto),
@@ -461,6 +460,65 @@ impl TryFrom<&AddressDto> for Address {
             AddressDto::Alias(a) => Ok(Address::Alias(a.try_into()?)),
             AddressDto::Nft(a) => Ok(Address::Nft(a.try_into()?)),
         }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for AddressDto {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let value = Value::deserialize(d)?;
+        Ok(
+            match value
+                .get("type")
+                .and_then(Value::as_u64)
+                .ok_or_else(|| serde::de::Error::custom("invalid address type"))? as u8
+            {
+                Ed25519Address::KIND => AddressDto::Ed25519(
+                    Ed25519AddressDto::deserialize(value)
+                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize ed25519 address: {}", e)))?,
+                ),
+                AliasAddress::KIND => AddressDto::Alias(
+                    AliasAddressDto::deserialize(value)
+                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize alias address: {}", e)))?,
+                ),
+                NftAddress::KIND => AddressDto::Nft(
+                    NftAddressDto::deserialize(value)
+                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize NFT address: {}", e)))?,
+                ),
+                _ => return Err(serde::de::Error::custom("unsupported address type")),
+            },
+        )
+    }
+}
+
+impl Serialize for AddressDto {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        #[derive(Serialize)]
+        #[serde(untagged)]
+        enum AddressDto_<'a> {
+            T1(&'a Ed25519AddressDto),
+            T2(&'a AliasAddressDto),
+            T3(&'a NftAddressDto),
+        }
+        #[derive(Serialize)]
+        struct TypedAddress<'a> {
+            #[serde(flatten)]
+            address: AddressDto_<'a>,
+        }
+        let address = match self {
+            AddressDto::Ed25519(o) => TypedAddress {
+                address: AddressDto_::T1(o),
+            },
+            AddressDto::Alias(o) => TypedAddress {
+                address: AddressDto_::T2(o),
+            },
+            AddressDto::Nft(o) => TypedAddress {
+                address: AddressDto_::T3(o),
+            },
+        };
+        address.serialize(serializer)
     }
 }
 
@@ -497,14 +555,14 @@ impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
 pub struct AliasAddressDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    pub id: String,
+    pub address: String,
 }
 
 impl From<&AliasAddress> for AliasAddressDto {
     fn from(value: &AliasAddress) -> Self {
         Self {
             kind: AliasAddress::KIND,
-            id: value.to_string(),
+            address: value.to_string(),
         }
     }
 }
@@ -514,7 +572,7 @@ impl TryFrom<&AliasAddressDto> for AliasAddress {
 
     fn try_from(value: &AliasAddressDto) -> Result<Self, Self::Error> {
         value
-            .id
+            .address
             .parse::<AliasAddress>()
             .map_err(|_| Error::InvalidField("alias address"))
     }
@@ -525,14 +583,14 @@ impl TryFrom<&AliasAddressDto> for AliasAddress {
 pub struct NftAddressDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    pub id: String,
+    pub address: String,
 }
 
 impl From<&NftAddress> for NftAddressDto {
     fn from(value: &NftAddress) -> Self {
         Self {
             kind: NftAddress::KIND,
-            id: value.to_string(),
+            address: value.to_string(),
         }
     }
 }
@@ -542,7 +600,7 @@ impl TryFrom<&NftAddressDto> for NftAddress {
 
     fn try_from(value: &NftAddressDto) -> Result<Self, Self::Error> {
         value
-            .id
+            .address
             .parse::<NftAddress>()
             .map_err(|_| Error::InvalidField("NFT address"))
     }
