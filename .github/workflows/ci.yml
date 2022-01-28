@@ -86,6 +86,10 @@ jobs:
             ${{ matrix.os }}-${{ matrix.rust }}-
             ${{ matrix.os }}-
 
+      - name: Set LD_LIBRARY_PATH (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ROCKSDB_LIB_DIR
+
       - name: Build
         uses: actions-rs/cargo@v1
         with:

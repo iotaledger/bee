@@ -26,11 +26,6 @@ runs:
       if: inputs.os == 'ubuntu-latest'
       run: echo "ROCKSDB_LIB_DIR=$ROCKSDB_BUILD_PATH/rocksdb-$ROCKSDB_VERSION/librocksdb.so" >> $GITHUB_ENV
 
-    - name: Set LD_LIBRARY_PATH (Linux)
-      shell: bash
-      if: inputs.os == 'ubuntu-latest'
-      run: echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ROCKSDB_LIB_DIR" >> $GITHUB_ENV
-
     - name: Set RocksDB path (MacOS)
       shell: bash
       if: inputs.os == 'macos-latest'
