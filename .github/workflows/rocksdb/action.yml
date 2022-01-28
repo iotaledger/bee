@@ -71,7 +71,7 @@ runs:
       shell: pwsh
       if: inputs.os == 'windows-latest'
       run: |
-        New-Item $env:ROCKSDB_BUILD_PATH -itemtype directory
+        New-Item $env:ROCKSDB_BUILD_PATH -itemtype directory -Force
         Set-Location $env:ROCKSDB_BUILD_PATH
         vcpkg install rocksdb:x64-windows version:$env:ROCKSDB_VERSION
         Get-ChildItem -Force -Recurse
