@@ -52,5 +52,7 @@ pub(crate) fn receipts_at<B: StorageBackend>(
         }
     }
 
-    Ok(warp::reply::json(&SuccessBody::new(ReceiptsResponse(receipts_dto))))
+    Ok(warp::reply::json(&SuccessBody::new(ReceiptsResponse {
+        receipts: receipts_dto,
+    })))
 }

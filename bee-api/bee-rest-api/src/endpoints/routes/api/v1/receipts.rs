@@ -45,5 +45,7 @@ pub(crate) fn receipts<B: StorageBackend>(storage: ResourceHandle<B>) -> Result<
         receipts_dto.push(ReceiptDto::try_from(receipt).map_err(|_| CustomRejection::InternalError)?);
     }
 
-    Ok(warp::reply::json(&SuccessBody::new(ReceiptsResponse(receipts_dto))))
+    Ok(warp::reply::json(&SuccessBody::new(ReceiptsResponse {
+        receipts: receipts_dto,
+    })))
 }
