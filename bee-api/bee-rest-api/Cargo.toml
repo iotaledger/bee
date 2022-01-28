@@ -37,25 +37,6 @@ tokio = { version = "1.12.0", default-features = false, optional = true }
 warp = { version = "0.3.1", default-features = false, optional = true }
 
 [features]
-endpoints = [
-  "bee-common",
-  "bee-gossip",
-  "bee-protocol/workers",
-  "bee-runtime",
-  "bee-storage",
-  "bee-tangle",
-  "async-trait",
-  "bech32",
-  "digest",
-  "futures",
-  "iota-crypto",
-  "log",
-  "num_cpus",
-  "tokio",
-  "warp",
-]
-
-[features]
 default = [ "peer" ]
 endpoints = [
   "bee-common",
