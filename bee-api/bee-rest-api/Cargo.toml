@@ -16,7 +16,7 @@ bee-gossip = { version = "0.4.0", path = "../../bee-network/bee-gossip", default
 bee-ledger = { version = "0.6.1", path = "../../bee-ledger", default-features = false }
 bee-message = { version = "0.1.6", path = "../../bee-message", default-features = false }
 bee-pow = { version = "0.2.0", path = "../../bee-pow", default-features = false }
-bee-protocol = { version = "0.2.0", path = "../../bee-protocol", default-features = false }
+bee-protocol = { version = "0.2.0", path = "../../bee-protocol", default-features = false, optional = true }
 bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true  }
 bee-storage = { version = "0.9.0", path = "../../bee-storage/bee-storage", default-features = false, optional = true }
 bee-tangle = { version = "0.2.0", path = "../../bee-tangle", default-features = false, optional = true }
