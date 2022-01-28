@@ -67,6 +67,10 @@ runs:
         cd rocksdb-$ROCKSDB_VERSION
         make shared_lib
 
+    - name: Add msbuild to PATH
+      if: inputs.os == 'windows-latest'
+      uses: microsoft/setup-msbuild@v1.1
+
     - name: Install RocksDB (Windows)
       shell: pwsh
       if: inputs.os == 'windows-latest'
