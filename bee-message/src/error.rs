@@ -93,6 +93,7 @@ pub enum Error {
     SelfDepositNft(NftId),
     SignaturePublicKeyMismatch { expected: String, actual: String },
     TailTransactionHashNotUnique { previous: usize, current: usize },
+    TimelockUnlockConditionZero,
     UnallowedFeatureBlock { index: usize, kind: u8 },
     UnallowedUnlockCondition { index: usize, kind: u8 },
     UnlockConditionsNotUniqueSorted,
@@ -250,6 +251,12 @@ impl fmt::Display for Error {
                     f,
                     "tail transaction hash is not unique at indices: {0} and {1}",
                     previous, current
+                )
+            }
+            Error::TimelockUnlockConditionZero => {
+                write!(
+                    f,
+                    "timelock unlock condition with milestone index and timestamp set to 0",
                 )
             }
             Error::UnallowedFeatureBlock { index, kind } => {
