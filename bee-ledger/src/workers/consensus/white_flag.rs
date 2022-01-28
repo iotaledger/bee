@@ -60,19 +60,19 @@ fn check_input_feature_blocks(
 ) -> Result<(), ConflictReason> {
     for feature_block in feature_blocks {
         match feature_block {
-            FeatureBlock::DustDepositReturn(_) => {}
-            FeatureBlock::TimelockMilestoneIndex(timelock) => {
-                if context.index < timelock.index() {
-                    return Err(ConflictReason::TimelockMilestoneIndex);
-                }
-            }
-            FeatureBlock::TimelockUnix(timelock) => {
-                if context.timestamp < timelock.timestamp() as u64 {
-                    return Err(ConflictReason::TimelockUnix);
-                }
-            }
-            FeatureBlock::ExpirationMilestoneIndex(_) => {}
-            FeatureBlock::ExpirationUnix(_) => {}
+            // FeatureBlock::DustDepositReturn(_) => {}
+            // FeatureBlock::TimelockMilestoneIndex(timelock) => {
+            //     if context.index < timelock.index() {
+            //         return Err(ConflictReason::TimelockMilestoneIndex);
+            //     }
+            // }
+            // FeatureBlock::TimelockUnix(timelock) => {
+            //     if context.timestamp < timelock.timestamp() as u64 {
+            //         return Err(ConflictReason::TimelockUnix);
+            //     }
+            // }
+            // FeatureBlock::ExpirationMilestoneIndex(_) => {}
+            // FeatureBlock::ExpirationUnix(_) => {}
             _ => {}
         }
     }
@@ -86,17 +86,17 @@ fn check_output_feature_blocks(
 ) -> Result<(), ConflictReason> {
     for feature_block in feature_blocks {
         match feature_block {
-            FeatureBlock::Sender(sender) => {
-                if !context.verified_addresses.contains(sender.address()) {
-                    return Err(ConflictReason::UnverifiedSender);
-                }
-            }
-            FeatureBlock::Issuer(_) => {}
-            FeatureBlock::DustDepositReturn(_) => {}
-            FeatureBlock::TimelockMilestoneIndex(_) => {}
-            FeatureBlock::TimelockUnix(_) => {}
-            FeatureBlock::ExpirationMilestoneIndex(_) => {}
-            FeatureBlock::ExpirationUnix(_) => {}
+            // FeatureBlock::Sender(sender) => {
+            //     if !context.verified_addresses.contains(sender.address()) {
+            //         return Err(ConflictReason::UnverifiedSender);
+            //     }
+            // }
+            // FeatureBlock::Issuer(_) => {}
+            // FeatureBlock::DustDepositReturn(_) => {}
+            // FeatureBlock::TimelockMilestoneIndex(_) => {}
+            // FeatureBlock::TimelockUnix(_) => {}
+            // FeatureBlock::ExpirationMilestoneIndex(_) => {}
+            // FeatureBlock::ExpirationUnix(_) => {}
             _ => {}
         }
     }
