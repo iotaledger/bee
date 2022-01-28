@@ -126,18 +126,6 @@ impl FeatureBlocks {
             .map(|index| &self.0[index])
             .ok()
     }
-
-    /// Returns the length of the [`FeatureBlocks`].
-    #[inline(always)]
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    /// Returns whether the [`FeatureBlocks`] is empty or not.
-    #[inline(always)]
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
 }
 
 #[inline]

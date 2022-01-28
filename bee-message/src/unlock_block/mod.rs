@@ -6,11 +6,8 @@ mod nft;
 mod reference;
 mod signature;
 
-pub(crate) use alias::AliasIndex;
 pub use alias::AliasUnlockBlock;
-pub(crate) use nft::NftIndex;
 pub use nft::NftUnlockBlock;
-pub(crate) use reference::ReferenceIndex;
 pub use reference::ReferenceUnlockBlock;
 pub use signature::SignatureUnlockBlock;
 
@@ -34,6 +31,9 @@ pub const UNLOCK_BLOCK_COUNT_RANGE: RangeInclusive<u16> = INPUT_COUNT_RANGE; // 
 pub const UNLOCK_BLOCK_INDEX_MAX: u16 = INPUT_INDEX_MAX; // 126
 /// The range of valid indices of unlock blocks of a transaction.
 pub const UNLOCK_BLOCK_INDEX_RANGE: RangeInclusive<u16> = INPUT_INDEX_RANGE; // [0..126]
+
+pub(crate) type UnlockBlockIndex =
+    BoundedU16<{ *UNLOCK_BLOCK_INDEX_RANGE.start() }, { *UNLOCK_BLOCK_INDEX_RANGE.end() }>;
 
 /// Defines the mechanism by which a transaction input is authorized to be consumed.
 #[derive(Clone, Debug, Eq, PartialEq, Hash, From, Packable)]
