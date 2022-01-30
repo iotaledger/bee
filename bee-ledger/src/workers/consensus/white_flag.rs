@@ -14,7 +14,9 @@ use bee_message::{
     address::Address,
     input::Input,
     milestone::MilestoneIndex,
-    output::{AliasOutput, ExtendedOutput, FeatureBlock, FoundryOutput, NftOutput, Output, OutputId, TokenId},
+    output::{
+        AliasOutput, ExtendedOutput, FeatureBlock, FoundryOutput, NftOutput, Output, OutputId, TokenId, UnlockCondition,
+    },
     payload::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
@@ -54,26 +56,35 @@ impl ValidationContext {
     }
 }
 
-fn check_input_feature_blocks(
-    feature_blocks: &[FeatureBlock],
+fn check_input_unlock_conditions(
+    unlock_conditions: &[UnlockCondition],
     context: &ValidationContext,
 ) -> Result<(), ConflictReason> {
-    for feature_block in feature_blocks {
-        match feature_block {
-            // FeatureBlock::DustDepositReturn(_) => {}
-            // FeatureBlock::TimelockMilestoneIndex(timelock) => {
-            //     if context.index < timelock.index() {
-            //         return Err(ConflictReason::TimelockMilestoneIndex);
-            //     }
-            // }
-            // FeatureBlock::TimelockUnix(timelock) => {
-            //     if context.timestamp < timelock.timestamp() as u64 {
-            //         return Err(ConflictReason::TimelockUnix);
-            //     }
-            // }
-            // FeatureBlock::ExpirationMilestoneIndex(_) => {}
-            // FeatureBlock::ExpirationUnix(_) => {}
-            _ => {}
+    for unlock_condition in unlock_conditions {
+        match unlock_condition {
+            UnlockCondition::Address(_) => {
+                todo!()
+            }
+            UnlockCondition::DustDepositReturn(_) => {
+                todo!()
+            }
+            UnlockCondition::Timelock(timelock) => {
+                if context.index < timelock.milestone_index() {
+                    return Err(ConflictReason::TimelockMilestoneIndex);
+                }
+                if context.timestamp < timelock.timestamp() as u64 {
+                    return Err(ConflictReason::TimelockUnix);
+                }
+            }
+            UnlockCondition::Expiration(_) => {
+                todo!()
+            }
+            UnlockCondition::StateControllerAddress(_) => {
+                todo!()
+            }
+            UnlockCondition::GovernorAddress(_) => {
+                todo!()
+            }
         }
     }
 
