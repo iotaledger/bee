@@ -104,28 +104,47 @@ fn check_output_feature_blocks(
     Ok(())
 }
 
-fn unlock_address(address: &Address, unlock_block: &UnlockBlock, context: &mut ValidationContext) -> Result<(), ConflictReason> {
+fn unlock_address(
+    address: &Address,
+    unlock_block: &UnlockBlock,
+    context: &mut ValidationContext,
+) -> Result<(), ConflictReason> {
     match (address, unlock_block) {
         (Address::Ed25519(ed25519_address), UnlockBlock::Signature(unlock_block)) => {
             if let Signature::Ed25519(signature) = unlock_block.signature() {
-                if ed25519_address.verify(&context.essence_hash, signature).is_ok() {
-                    context.verified_addresses.insert(*address);
-                    Ok(())
-                } else {
-                    Err(ConflictReason::InvalidSignature)
+                if ed25519_address.verify(&context.essence_hash, signature).is_err() {
+                    return Err(ConflictReason::InvalidSignature);
                 }
             } else {
-                Err(ConflictReason::InvalidSignature)
+                return Err(ConflictReason::InvalidSignature);
             }
         }
         (Address::Alias(alias_address), UnlockBlock::Alias(unlock_block)) => {
-            todo!()
+            // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
+            if let Output::Alias(alias_output) = context.consumed_outputs[unlock_block.index() as usize].1.inner() {
+                if alias_output.alias_id() != alias_address.id() {
+                    return Err(ConflictReason::IncorrectUnlockMethod);
+                }
+            } else {
+                return Err(ConflictReason::IncorrectUnlockMethod);
+            }
         }
         (Address::Nft(nft_address), UnlockBlock::Nft(unlock_block)) => {
-            todo!()
+            // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
+            if let Output::Nft(nft_output) = context.consumed_outputs[unlock_block.index() as usize].1.inner() {
+                if nft_output.nft_id() != nft_address.id() {
+                    return Err(ConflictReason::IncorrectUnlockMethod);
+                }
+            } else {
+                return Err(ConflictReason::IncorrectUnlockMethod);
+            }
         }
-        _ => Err(ConflictReason::IncorrectUnlockMethod),
+        _ => return Err(ConflictReason::IncorrectUnlockMethod),
     }
+
+    context.verified_addresses.insert(*address);
+
+    Ok(())
 }
 
 fn unlock_extended_output(
