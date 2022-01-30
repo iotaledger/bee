@@ -35,7 +35,7 @@ struct ValidationContext {
     timestamp: u64,
     amount: u64,
     native_tokens_amount: HashMap<TokenId, U256>,
-    consumed_outputs: HashMap<OutputId, CreatedOutput>,
+    consumed_outputs: Vec<(OutputId, CreatedOutput)>,
     essence_hash: [u8; 32],
     verified_addresses: HashSet<Address>,
 }
@@ -47,7 +47,7 @@ impl ValidationContext {
             timestamp,
             amount: 0,
             native_tokens_amount: HashMap::<TokenId, U256>::new(),
-            consumed_outputs: HashMap::with_capacity(essence.inputs().len()),
+            consumed_outputs: Vec::with_capacity(essence.inputs().len()),
             essence_hash: TransactionEssence::from(essence.clone()).hash(),
             verified_addresses: HashSet::new(),
         }
@@ -280,7 +280,7 @@ fn apply_regular_essence<B: StorageBackend>(
                 .ok_or(Error::ConsumedNativeTokensAmountOverflow)?;
         }
 
-        context.consumed_outputs.insert(*output_id, consumed_output);
+        context.consumed_outputs.push((*output_id, consumed_output));
     }
 
     for created_output in essence.outputs() {
