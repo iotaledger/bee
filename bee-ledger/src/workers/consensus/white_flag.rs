@@ -14,7 +14,7 @@ use bee_message::{
     address::Address,
     input::Input,
     milestone::MilestoneIndex,
-    output::{AliasOutput, ExtendedOutput, FeatureBlock, NftOutput, Output, OutputId, TokenId},
+    output::{AliasOutput, ExtendedOutput, FeatureBlock, FoundryOutput, NftOutput, Output, OutputId, TokenId},
     payload::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
@@ -163,6 +163,21 @@ fn unlock_alias_output(
     }
 }
 
+fn unlock_foundry_output(
+    output: &FoundryOutput,
+    unlock_blocks: &UnlockBlocks,
+    index: usize,
+    context: &ValidationContext,
+) -> Result<(), ConflictReason> {
+    // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
+    match unlock_blocks.get(index).unwrap() {
+        UnlockBlock::Signature(_) => todo!(),
+        UnlockBlock::Reference(_) => todo!(),
+        UnlockBlock::Alias(_) => todo!(),
+        UnlockBlock::Nft(_) => todo!(),
+    }
+}
+
 fn unlock_nft_output(
     output: &NftOutput,
     unlock_blocks: &UnlockBlocks,
@@ -242,7 +257,13 @@ fn apply_regular_essence<B: StorageBackend>(
 
                 (output.amount(), output.native_tokens())
             }
-            Output::Foundry(output) => (output.amount(), output.native_tokens()),
+            Output::Foundry(output) => {
+                if let Err(conflict) = unlock_foundry_output(output, unlock_blocks, index, &context) {
+                    return Ok(conflict);
+                }
+
+                (output.amount(), output.native_tokens())
+            }
             Output::Nft(output) => {
                 if let Err(conflict) = unlock_nft_output(output, unlock_blocks, index, &context) {
                     return Ok(conflict);
