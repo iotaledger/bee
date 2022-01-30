@@ -208,13 +208,12 @@ fn apply_regular_essence<B: StorageBackend>(
                     return Ok(ConflictReason::InputUtxoNotFound);
                 }
             }
-            Input::Treasury(_) => {
+            _ => {
                 return Err(Error::UnsupportedInputKind(input.kind()));
             }
         };
 
         let (amount, consumed_native_tokens) = match consumed_output.inner() {
-            Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
             Output::Extended(output) => {
                 if let Err(conflict) = unlock_extended_output(output, unlock_blocks, index, &mut context) {
                     return Ok(conflict);
@@ -237,6 +236,7 @@ fn apply_regular_essence<B: StorageBackend>(
 
                 (output.amount(), output.native_tokens())
             }
+            _ => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
         };
 
         context.amount = context
@@ -260,11 +260,11 @@ fn apply_regular_essence<B: StorageBackend>(
         // TODO also check feature blocks ?
         let (amount, created_native_tokens) = match created_output {
             // TODO chain constraints
-            Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
             Output::Extended(output) => (output.amount(), output.native_tokens()),
             Output::Alias(output) => (output.amount(), output.native_tokens()),
             Output::Foundry(output) => (output.amount(), output.native_tokens()),
             Output::Nft(output) => (output.amount(), output.native_tokens()),
+            _ => return Err(Error::UnsupportedOutputKind(created_output.kind())),
         };
 
         context.amount = context.amount.checked_sub(amount).ok_or(Error::CreatedAmountOverflow)?;
