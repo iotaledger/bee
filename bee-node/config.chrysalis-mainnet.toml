@@ -1,0 +1,143 @@
+# Duplicate this file to config.toml to use it
+
+alias      = "bee"
+bech32_hrp = "iota"
+network_id = "chrysalis-mainnet"
+
+[logger]
+[[logger.outputs]]
+name              = "stdout"
+level_filter      = "info"
+target_filters    = []
+target_exclusions = []
+color_enabled     = true
+[[logger.outputs]]
+name              = "warn.log"
+level_filter      = "warn"
+target_filters    = []
+target_exclusions = []
+
+[network]
+bind_address            = "/ip4/0.0.0.0/tcp/15600"
+reconnect_interval_secs = 30
+max_unknown_peers       = 4
+max_discovered_peers    = 8
+
+[network.peering]
+#[[network.peering.peers]]
+#address  = ""
+#alias    = ""
+
+[autopeering]
+enabled = false
+bind_address = "0.0.0.0:14626"
+entry_nodes = [
+    "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
+    "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
+    "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
+    "/dns/entry-0.mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC",
+    "/dns/entry-1.mainnet.tanglebay.com/udp/14636/autopeering/CATsx21mFVvQQPXeDineGs9DDeKvoBBQdzcmR6ffCkVA",
+]
+entry_nodes_prefer_ipv6 = false
+run_as_entry_node = false
+drop_neighbors_on_salt_update = false
+peer_storage_path = "./storage/mainnet/peers"
+
+[protocol]
+minimum_pow_score = 4000
+[protocol.coordinator]
+public_key_count  = 2
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "a9b46fe743df783dedd00c954612428b34241f5913cf249d75bed3aafd65e4cd"
+start       = 0
+end         = 777600
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "365fb85e7568b9b32f7359d6cbafa9814472ad0ecbad32d77beaf5dd9e84c6ba"
+start       = 0
+end         = 1555200
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "ba6d07d1a1aea969e7e435f9f7d1b736ea9e0fcb8de400bf855dba7f2a57e947"
+start       = 552960
+end         = 2108160
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "760d88e112c0fd210cf16a3dce3443ecf7e18c456c2fb9646cabb2e13e367569"
+start       = 1333460
+end         = 2888660
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "7bac2209b576ea2235539358c7df8ca4d2f2fc35a663c760449e65eba9f8a6e7"
+start       = 2108160
+end         = 3666260
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "edd9c639a719325e465346b84133bf94740b7d476dd87fc949c0e8df516f9954"
+start       = 2888660
+end         = 4443860
+
+[protocol.workers]
+status_interval       = 10
+milestone_sync_count  = 200
+
+[rest_api]
+bind_address          = "/ip4/0.0.0.0/tcp/14265"
+feature_proof_of_work = true
+public_routes         = [
+    "/health",
+    "/api/v1/info",
+    "/api/v1/tips",
+    "/api/v1/messages",
+    "/api/v1/messages/:messageId",
+    "/api/v1/messages/:messageId/metadata",
+    "/api/v1/messages/:messageId/raw",
+    "/api/v1/messages/:messageId/children",
+    "/api/v1/outputs/:outputId",
+    "/api/v1/addresses/:address",
+    "/api/v1/addresses/ed25519/:address",
+    "/api/v1/addresses/:address/outputs",
+    "/api/v1/addresses/ed25519/:address/outputs",
+    "/api/v1/receipts",
+    "/api/v1/receipts/:milestoneIndex",
+    "/api/v1/treasury",
+    "/api/v1/transactions/:transactionId/included-message",
+    "/api/v1/milestones/:milestoneIndex",
+    "/api/v1/milestones/:milestoneIndex/utxo-changes",
+]
+allowed_ips = [
+    "127.0.0.1",
+    "::1"
+]
+white_flag_solidification_timeout = 2
+
+[snapshot]
+depth             = 50
+interval_synced   = 50
+interval_unsynced = 1000
+full_path   = "./snapshots/mainnet/full_snapshot.bin"
+delta_path  = "./snapshots/mainnet/delta_snapshot.bin"
+[[snapshot.download_urls]]
+full        = "https://chrysalis-dbfiles.iota.org/snapshots/hornet/latest-full_snapshot.bin"
+delta       = "https://chrysalis-dbfiles.iota.org/snapshots/hornet/latest-delta_snapshot.bin"
+[[snapshot.download_urls]]
+full        = "https://cdn.tanglebay.com/snapshots/mainnet/full_snapshot.bin"
+delta       = "https://cdn.tanglebay.com/snapshots/mainnet/delta_snapshot.bin"
+
+[pruning]
+enabled         = true
+delay           = 60480
+prune_receipts  = false
+
+[storage]
+path = "./storage/mainnet/tangle"
+
+[tangle]
+below_max_depth = 15
+num_partitions  = 16
+
+[mqtt]
+address = "tcp://localhost:1883"
+
+[dashboard]
+bind_address    = "/ip4/0.0.0.0/tcp/8081"
+[dashboard.auth]
+session_timeout = 86400
+user            = "admin"
+password_salt   = "0000000000000000000000000000000000000000000000000000000000000000"
+password_hash   = "0000000000000000000000000000000000000000000000000000000000000000"
