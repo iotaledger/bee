@@ -178,6 +178,20 @@ fn unlock_nft_output(
     }
 }
 
+fn alias_chain_constraint(current_state: &AliasOutput, next_state: Option<&AliasOutput>) {
+    if let Some(next_state) = next_state {
+        // The alias is transitioned.
+        if next_state.state_index() == current_state.state_index() + 1 {
+            // State transition.
+        } else if next_state.state_index() == current_state.state_index() {
+            // Governance transition.
+        } else {
+        }
+    } else {
+        // The alias is destroyed.
+    }
+}
+
 fn apply_regular_essence<B: StorageBackend>(
     storage: &B,
     message_id: &MessageId,
