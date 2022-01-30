@@ -13,7 +13,7 @@ use crate::{
         InputCount, MigratedFundsAmount, OutputCount, PublicKeyCount, ReceiptFundsCount, SignatureCount, TagLength,
         TaggedDataLength,
     },
-    unlock_block::{AliasIndex, NftIndex, ReferenceIndex, UnlockBlockCount},
+    unlock_block::{UnlockBlockCount, UnlockBlockIndex},
 };
 
 use crypto::Error as CryptoError;
@@ -29,12 +29,13 @@ pub enum Error {
     CryptoError(CryptoError),
     DuplicateSignatureUnlockBlock(u16),
     DuplicateUtxo(UtxoInput),
+    ExpirationUnlockConditionZero,
     FeatureBlocksNotUniqueSorted,
     InputUnlockBlockCountMismatch { input_count: usize, block_count: usize },
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
     InvalidAddressKind(u8),
-    InvalidAliasIndex(<AliasIndex as TryFrom<u16>>::Error),
+    InvalidAliasIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
     InvalidControllerKind(u8),
     InvalidDustDepositAmount(<DustDepositAmount as TryFrom<u64>>::Error),
     InvalidEssenceKind(u8),
@@ -56,14 +57,14 @@ pub enum Error {
     InvalidMetadataFeatureBlockLength(<MetadataFeatureBlockLength as TryFrom<usize>>::Error),
     InvalidMigratedFundsEntryAmount(<MigratedFundsAmount as TryFrom<u64>>::Error),
     InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
-    InvalidNftIndex(<NftIndex as TryFrom<u16>>::Error),
+    InvalidNftIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
     InvalidOutputKind(u8),
     InvalidParentCount(<ParentCount as TryFrom<usize>>::Error),
     InvalidPayloadKind(u32),
     InvalidPayloadLength { expected: usize, actual: usize },
     InvalidPowScoreValues { nps: u32, npsmi: u32 },
     InvalidReceiptFundsCount(<ReceiptFundsCount as TryFrom<usize>>::Error),
-    InvalidReferenceIndex(<ReferenceIndex as TryFrom<u16>>::Error),
+    InvalidReferenceIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
     InvalidSignature,
     InvalidSignatureKind(u8),
     InvalidTailTransactionHash,
@@ -93,6 +94,7 @@ pub enum Error {
     SelfDepositNft(NftId),
     SignaturePublicKeyMismatch { expected: String, actual: String },
     TailTransactionHashNotUnique { previous: usize, current: usize },
+    TimelockUnlockConditionZero,
     UnallowedFeatureBlock { index: usize, kind: u8 },
     UnallowedUnlockCondition { index: usize, kind: u8 },
     UnlockConditionsNotUniqueSorted,
@@ -109,6 +111,12 @@ impl fmt::Display for Error {
                 write!(f, "duplicate signature unlock block at index: {0}", index)
             }
             Error::DuplicateUtxo(utxo) => write!(f, "duplicate UTXO {:?} in inputs", utxo),
+            Error::ExpirationUnlockConditionZero => {
+                write!(
+                    f,
+                    "expiration unlock condition with milestone index and timestamp set to 0",
+                )
+            }
             Error::FeatureBlocksNotUniqueSorted => write!(f, "feature blocks are not unique and/or sorted"),
             Error::InputUnlockBlockCountMismatch {
                 input_count,
@@ -250,6 +258,12 @@ impl fmt::Display for Error {
                     f,
                     "tail transaction hash is not unique at indices: {0} and {1}",
                     previous, current
+                )
+            }
+            Error::TimelockUnlockConditionZero => {
+                write!(
+                    f,
+                    "timelock unlock condition with milestone index and timestamp set to 0",
                 )
             }
             Error::UnallowedFeatureBlock { index, kind } => {

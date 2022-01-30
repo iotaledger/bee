@@ -64,12 +64,11 @@ impl NativeTokens {
     /// Maximum possible number of different native tokens that can reside in one output.
     pub const COUNT_MAX: u16 = 256;
 
-    /// Creates a new `NativeTokens`.
+    /// Creates a new [`NativeTokens`].
     pub fn new(native_tokens: Vec<NativeToken>) -> Result<Self, Error> {
-        let mut native_tokens: BoxedSlicePrefix<NativeToken, NativeTokenCount> = native_tokens
-            .into_boxed_slice()
-            .try_into()
-            .map_err(Error::InvalidNativeTokenCount)?;
+        let mut native_tokens =
+            BoxedSlicePrefix::<NativeToken, NativeTokenCount>::try_from(native_tokens.into_boxed_slice())
+                .map_err(Error::InvalidNativeTokenCount)?;
 
         native_tokens.sort_by(|a, b| a.token_id().cmp(b.token_id()));
         // Sort is obviously fine now but uniqueness still needs to be checked.
@@ -82,8 +81,8 @@ impl NativeTokens {
 #[inline]
 fn verify_unique_sorted<const VERIFY: bool>(native_tokens: &[NativeToken]) -> Result<(), Error> {
     if VERIFY && !is_unique_sorted(native_tokens.iter().map(NativeToken::token_id)) {
-        return Err(Error::NativeTokensNotUniqueSorted);
+        Err(Error::NativeTokensNotUniqueSorted)
+    } else {
+        Ok(())
     }
-
-    Ok(())
 }

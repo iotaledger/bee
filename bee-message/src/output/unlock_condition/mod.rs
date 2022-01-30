@@ -130,7 +130,7 @@ impl UnlockConditions {
         Ok(Self(unlock_conditions))
     }
 
-    /// Gets a reference to a unlock condition from a unlock condition kind, if found.
+    /// Gets a reference to an unlock condition from an unlock condition kind, if found.
     #[inline(always)]
     pub fn get(&self, key: u8) -> Option<&UnlockCondition> {
         self.0
@@ -138,18 +138,6 @@ impl UnlockConditions {
             // SAFETY: indexation is fine since the index has been found.
             .map(|index| &self.0[index])
             .ok()
-    }
-
-    /// Returns the length of the [`UnlockConditions`].
-    #[inline(always)]
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    /// Returns whether the [`UnlockConditions`] is empty or not.
-    #[inline(always)]
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
     }
 }
 
