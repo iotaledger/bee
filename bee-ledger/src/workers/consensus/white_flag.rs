@@ -104,6 +104,30 @@ fn check_output_feature_blocks(
     Ok(())
 }
 
+fn unlock_address(address: &Address, unlock_block: &UnlockBlock, context: &mut ValidationContext) -> Result<(), ConflictReason> {
+    match (address, unlock_block) {
+        (Address::Ed25519(ed25519_address), UnlockBlock::Signature(unlock_block)) => {
+            if let Signature::Ed25519(signature) = unlock_block.signature() {
+                if ed25519_address.verify(&context.essence_hash, signature).is_ok() {
+                    context.verified_addresses.insert(*address);
+                    Ok(())
+                } else {
+                    Err(ConflictReason::InvalidSignature)
+                }
+            } else {
+                Err(ConflictReason::InvalidSignature)
+            }
+        }
+        (Address::Alias(alias_address), UnlockBlock::Alias(unlock_block)) => {
+            todo!()
+        }
+        (Address::Nft(nft_address), UnlockBlock::Nft(unlock_block)) => {
+            todo!()
+        }
+        _ => Err(ConflictReason::IncorrectUnlockMethod),
+    }
+}
+
 fn unlock_extended_output(
     output: &ExtendedOutput,
     unlock_blocks: &UnlockBlocks,
@@ -113,39 +137,7 @@ fn unlock_extended_output(
     // SAFETY: index is fine as it is already known that there is the same amount of inputs and unlock blocks.
     let unlock_block = unlock_blocks.get(index).unwrap();
 
-    match output.address() {
-        Address::Ed25519(address) => {
-            if let UnlockBlock::Signature(unlock) = unlock_block {
-                if let Signature::Ed25519(signature) = unlock.signature() {
-                    if address.verify(&context.essence_hash, signature).is_ok() {
-                        // TODO another place where this should be done ?
-                        context.verified_addresses.insert(*output.address());
-                        check_input_feature_blocks(output.feature_blocks(), context)
-                    } else {
-                        Err(ConflictReason::InvalidSignature)
-                    }
-                } else {
-                    Err(ConflictReason::InvalidSignature)
-                }
-            } else {
-                Err(ConflictReason::IncorrectUnlockMethod)
-            }
-        }
-        Address::Alias(_) => {
-            if let UnlockBlock::Alias(unlock) = unlock_block {
-                todo!();
-            } else {
-                Err(ConflictReason::IncorrectUnlockMethod)
-            }
-        }
-        Address::Nft(_) => {
-            if let UnlockBlock::Nft(unlock) = unlock_block {
-                todo!();
-            } else {
-                Err(ConflictReason::IncorrectUnlockMethod)
-            }
-        }
-    }
+    unlock_address(output.address(), unlock_block, context)
 }
 
 fn unlock_alias_output(
