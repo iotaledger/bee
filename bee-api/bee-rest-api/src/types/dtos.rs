@@ -704,18 +704,21 @@ impl<'de> serde::Deserialize<'de> for UnlockBlockDto {
                 .and_then(Value::as_u64)
                 .ok_or_else(|| serde::de::Error::custom("invalid unlock block type"))? as u8
             {
-                SignatureUnlockBlock::KIND => UnlockBlockDto::Signature(
-                    SignatureUnlockBlockDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize signature unlock block: {}", e)))?,
-                ),
-                ReferenceUnlockBlock::KIND => UnlockBlockDto::Reference(
-                    ReferenceUnlockBlockDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize reference unlock block: {}", e)))?,
-                ),
-                AliasUnlockBlock::KIND => UnlockBlockDto::Alias(
-                    AliasUnlockBlockDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize alias unlock block: {}", e)))?,
-                ),
+                SignatureUnlockBlock::KIND => {
+                    UnlockBlockDto::Signature(SignatureUnlockBlockDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("cannot deserialize signature unlock block: {}", e))
+                    })?)
+                }
+                ReferenceUnlockBlock::KIND => {
+                    UnlockBlockDto::Reference(ReferenceUnlockBlockDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("cannot deserialize reference unlock block: {}", e))
+                    })?)
+                }
+                AliasUnlockBlock::KIND => {
+                    UnlockBlockDto::Alias(AliasUnlockBlockDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("cannot deserialize alias unlock block: {}", e))
+                    })?)
+                }
                 NftUnlockBlock::KIND => UnlockBlockDto::Nft(
                     NftUnlockBlockDto::deserialize(value)
                         .map_err(|e| serde::de::Error::custom(format!("cannot deserialize NFT unlock block: {}", e)))?,
@@ -728,8 +731,8 @@ impl<'de> serde::Deserialize<'de> for UnlockBlockDto {
 
 impl Serialize for UnlockBlockDto {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         #[derive(Serialize)]
         #[serde(untagged)]
@@ -941,30 +944,36 @@ impl<'de> serde::Deserialize<'de> for UnlockConditionDto {
                 .and_then(Value::as_u64)
                 .ok_or_else(|| serde::de::Error::custom("invalid unlock condition type"))? as u8
             {
-                AddressUnlockCondition::KIND => UnlockConditionDto::Address(
-                    AddressUnlockConditionDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize address unlock condition: {}", e)))?,
-                ),
+                AddressUnlockCondition::KIND => {
+                    UnlockConditionDto::Address(AddressUnlockConditionDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("cannot deserialize address unlock condition: {}", e))
+                    })?)
+                }
                 DustDepositReturnUnlockCondition::KIND => UnlockConditionDto::DustDepositReturn(
-                    DustDepositReturnUnlockConditionDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize dust deposit unlock condition: {}", e)))?,
+                    DustDepositReturnUnlockConditionDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("cannot deserialize dust deposit unlock condition: {}", e))
+                    })?,
                 ),
-                TimelockUnlockCondition::KIND => UnlockConditionDto::Timelock(
-                    TimelockUnlockConditionDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize timelock unlock condition: {}", e)))?,
-                ),
-                ExpirationUnlockCondition::KIND => UnlockConditionDto::Expiration(
-                    ExpirationUnlockConditionDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize expiration unlock condition: {}", e)))?,
-                ),
+                TimelockUnlockCondition::KIND => {
+                    UnlockConditionDto::Timelock(TimelockUnlockConditionDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("cannot deserialize timelock unlock condition: {}", e))
+                    })?)
+                }
+                ExpirationUnlockCondition::KIND => {
+                    UnlockConditionDto::Expiration(ExpirationUnlockConditionDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("cannot deserialize expiration unlock condition: {}", e))
+                    })?)
+                }
                 StateControllerAddressUnlockCondition::KIND => UnlockConditionDto::StateControllerAddress(
-                    StateControllerAddressUnlockConditionDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize state controller unlock condition: {}", e)))?,
+                    StateControllerAddressUnlockConditionDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("cannot deserialize state controller unlock condition: {}", e))
+                    })?,
                 ),
-                GovernorAddressUnlockCondition::KIND => UnlockConditionDto::GovernorAddress(
-                    GovernorAddressUnlockConditionDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize governor unlock condition: {}", e)))?,
-                ),
+                GovernorAddressUnlockCondition::KIND => {
+                    UnlockConditionDto::GovernorAddress(GovernorAddressUnlockConditionDto::deserialize(value).map_err(
+                        |e| serde::de::Error::custom(format!("cannot deserialize governor unlock condition: {}", e)),
+                    )?)
+                }
                 _ => return Err(serde::de::Error::custom("invalid unlock condition type")),
             },
         )
@@ -973,8 +982,8 @@ impl<'de> serde::Deserialize<'de> for UnlockConditionDto {
 
 impl Serialize for UnlockConditionDto {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         #[derive(Serialize)]
         #[serde(untagged)]
@@ -1036,22 +1045,26 @@ impl<'de> serde::Deserialize<'de> for FeatureBlockDto {
                 .and_then(Value::as_u64)
                 .ok_or_else(|| serde::de::Error::custom("invalid feature block type"))? as u8
             {
-                SenderFeatureBlock::KIND => FeatureBlockDto::Sender(
-                    SenderFeatureBlockDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize sender feature block: {}", e)))?,
-                ),
-                IssuerFeatureBlock::KIND => FeatureBlockDto::Issuer(
-                    IssuerFeatureBlockDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize issuer feature block: {}", e)))?,
-                ),
-                MetadataFeatureBlock::KIND => FeatureBlockDto::Metadata(
-                    MetadataFeatureBlockDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize metadata feature block: {}", e)))?,
-                ),
-                TagFeatureBlock::KIND => FeatureBlockDto::Tag(
-                    TagFeatureBlockDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize tag feature block: {}", e)))?,
-                ),
+                SenderFeatureBlock::KIND => {
+                    FeatureBlockDto::Sender(SenderFeatureBlockDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("cannot deserialize sender feature block: {}", e))
+                    })?)
+                }
+                IssuerFeatureBlock::KIND => {
+                    FeatureBlockDto::Issuer(IssuerFeatureBlockDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("cannot deserialize issuer feature block: {}", e))
+                    })?)
+                }
+                MetadataFeatureBlock::KIND => {
+                    FeatureBlockDto::Metadata(MetadataFeatureBlockDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("cannot deserialize metadata feature block: {}", e))
+                    })?)
+                }
+                TagFeatureBlock::KIND => {
+                    FeatureBlockDto::Tag(TagFeatureBlockDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("cannot deserialize tag feature block: {}", e))
+                    })?)
+                }
                 _ => return Err(serde::de::Error::custom("invalid feature block type")),
             },
         )
@@ -1060,8 +1073,8 @@ impl<'de> serde::Deserialize<'de> for FeatureBlockDto {
 
 impl Serialize for FeatureBlockDto {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         #[derive(Serialize)]
         #[serde(untagged)]
