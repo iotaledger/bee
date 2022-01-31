@@ -157,73 +157,48 @@ fn unlock_address(
 
 fn unlock_extended_output(
     output: &ExtendedOutput,
-    unlock_blocks: &UnlockBlocks,
-    index: usize,
+    unlock_block: &UnlockBlock,
     context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
-    // SAFETY: index is fine as it is already known that there is the same amount of inputs and unlock blocks.
-    let unlock_block = unlock_blocks.get(index).unwrap();
-
     unlock_address(output.address(), unlock_block, context)
 }
 
 fn unlock_alias_output(
     output: &AliasOutput,
-    unlock_blocks: &UnlockBlocks,
-    index: usize,
+    unlock_block: &UnlockBlock,
     context: &ValidationContext,
 ) -> Result<(), ConflictReason> {
-    // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
-    match unlock_blocks.get(index).unwrap() {
-        UnlockBlock::Signature(_) => todo!(),
-        UnlockBlock::Reference(_) => todo!(),
-        UnlockBlock::Alias(_) => todo!(),
-        UnlockBlock::Nft(_) => todo!(),
-    }
+    // fn alias_chain_constraint(current_state: &AliasOutput, next_state: Option<&AliasOutput>) {
+    //     if let Some(next_state) = next_state {
+    //         // The alias is transitioned.
+    //         if next_state.state_index() == current_state.state_index() + 1 {
+    //             // State transition.
+    //         } else if next_state.state_index() == current_state.state_index() {
+    //             // Governance transition.
+    //         } else {
+    //         }
+    //     } else {
+    //         // The alias is destroyed.
+    //     }
+    // }
+
+    Ok(())
 }
 
 fn unlock_foundry_output(
     output: &FoundryOutput,
-    unlock_blocks: &UnlockBlocks,
-    index: usize,
+    unlock_block: &UnlockBlock,
     context: &ValidationContext,
 ) -> Result<(), ConflictReason> {
-    // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
-    match unlock_blocks.get(index).unwrap() {
-        UnlockBlock::Signature(_) => todo!(),
-        UnlockBlock::Reference(_) => todo!(),
-        UnlockBlock::Alias(_) => todo!(),
-        UnlockBlock::Nft(_) => todo!(),
-    }
+    Ok(())
 }
 
 fn unlock_nft_output(
     output: &NftOutput,
-    unlock_blocks: &UnlockBlocks,
-    index: usize,
+    unlock_block: &UnlockBlock,
     context: &ValidationContext,
 ) -> Result<(), ConflictReason> {
-    // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
-    match unlock_blocks.get(index).unwrap() {
-        UnlockBlock::Signature(_) => todo!(),
-        UnlockBlock::Reference(_) => todo!(),
-        UnlockBlock::Alias(_) => todo!(),
-        UnlockBlock::Nft(_) => todo!(),
-    }
-}
-
-fn alias_chain_constraint(current_state: &AliasOutput, next_state: Option<&AliasOutput>) {
-    if let Some(next_state) = next_state {
-        // The alias is transitioned.
-        if next_state.state_index() == current_state.state_index() + 1 {
-            // State transition.
-        } else if next_state.state_index() == current_state.state_index() {
-            // Governance transition.
-        } else {
-        }
-    } else {
-        // The alias is destroyed.
-    }
+    Ok(())
 }
 
 fn apply_regular_essence<B: StorageBackend>(
@@ -261,30 +236,33 @@ fn apply_regular_essence<B: StorageBackend>(
             }
         };
 
+        // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
+        let unlock_block = unlock_blocks.get(index).unwrap();
+
         let (amount, consumed_native_tokens) = match consumed_output.inner() {
             Output::Extended(output) => {
-                if let Err(conflict) = unlock_extended_output(output, unlock_blocks, index, &mut context) {
+                if let Err(conflict) = unlock_extended_output(output, unlock_block, &mut context) {
                     return Ok(conflict);
                 }
 
                 (output.amount(), output.native_tokens())
             }
             Output::Alias(output) => {
-                if let Err(conflict) = unlock_alias_output(output, unlock_blocks, index, &context) {
+                if let Err(conflict) = unlock_alias_output(output, unlock_block, &context) {
                     return Ok(conflict);
                 }
 
                 (output.amount(), output.native_tokens())
             }
             Output::Foundry(output) => {
-                if let Err(conflict) = unlock_foundry_output(output, unlock_blocks, index, &context) {
+                if let Err(conflict) = unlock_foundry_output(output, unlock_block, &context) {
                     return Ok(conflict);
                 }
 
                 (output.amount(), output.native_tokens())
             }
             Output::Nft(output) => {
-                if let Err(conflict) = unlock_nft_output(output, unlock_blocks, index, &context) {
+                if let Err(conflict) = unlock_nft_output(output, unlock_block, &context) {
                     return Ok(conflict);
                 }
 
