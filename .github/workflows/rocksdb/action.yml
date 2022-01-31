@@ -70,12 +70,12 @@ runs:
         make shared_lib
 
     - name: Add msbuild to PATH (Windows)
-      if: inputs.os == 'windows-latest'
+      if: steps.cache-rocksdb.outputs.cache-hit != 'true' && inputs.os == 'windows-latest'
       uses: microsoft/setup-msbuild@v1.1
 
     - name: Install RocksDB (Windows)
       shell: pwsh
-      if: inputs.os == 'windows-latest'
+      if: steps.cache-rocksdb.outputs.cache-hit != 'true' && inputs.os == 'windows-latest'
       run: |
         New-Item $env:ROCKSDB_BUILD_PATH -itemtype directory -Force
         Set-Location $env:ROCKSDB_BUILD_PATH
