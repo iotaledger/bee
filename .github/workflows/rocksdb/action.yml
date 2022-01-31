@@ -94,4 +94,5 @@ runs:
       if: inputs.os == 'windows-latest'
       run: |
         Get-ChildItem -Force -Recurse "$env:ROCKSDB_BUILD_PATH\rocksdb\build\Release"
-        Copy-Item "$env:ROCKSDB_LIB_DIR" -Destination "C:\Windows\System32"
+        Set-Location rocksdb
+        Copy-Item "$env:ROCKSDB_LIB_DIR" -Destination "$env:ROCKSDB_BUILD_PATH\.."
