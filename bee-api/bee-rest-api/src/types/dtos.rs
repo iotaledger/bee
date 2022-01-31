@@ -1418,33 +1418,34 @@ pub struct FoundryOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
     // Amount of IOTA tokens held by the output.
-    amount: u64,
+    pub amount: u64,
     // Native tokens held by the output.
     #[serde(rename = "nativeTokens")]
-    native_tokens: Vec<NativeTokenDto>,
+    pub native_tokens: Vec<NativeTokenDto>,
     // The serial number of the foundry with respect to the controlling alias.
     #[serde(rename = "serialNumber")]
-    serial_number: u32,
+    pub serial_number: u32,
     // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
     #[serde(rename = "tokenTag")]
-    token_tag: String,
+    pub token_tag: String,
     // Circulating supply of tokens controlled by this foundry.
     #[serde(rename = "circulatingSupply")]
-    circulating_supply: U256Dto,
+    pub circulating_supply: U256Dto,
     // Maximum supply of tokens controlled by this foundry.
     #[serde(rename = "maximumSupply")]
-    maximum_supply: U256Dto,
+    pub maximum_supply: U256Dto,
     #[serde(rename = "tokenScheme")]
-    token_scheme: TokenSchemeDto,
+    pub token_scheme: TokenSchemeDto,
     #[serde(rename = "unlockConditions")]
-    unlock_conditions: Vec<UnlockConditionDto>,
+    pub unlock_conditions: Vec<UnlockConditionDto>,
     #[serde(rename = "blocks")]
-    feature_blocks: Vec<FeatureBlockDto>,
+    pub feature_blocks: Vec<FeatureBlockDto>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum TokenSchemeDto {
-    Simple = 0,
+pub struct TokenSchemeDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
 }
 
 impl From<&FoundryOutput> for FoundryOutputDto {
@@ -1458,7 +1459,7 @@ impl From<&FoundryOutput> for FoundryOutputDto {
             circulating_supply: U256Dto(value.circulating_supply().to_string()),
             maximum_supply: U256Dto(value.maximum_supply().to_string()),
             token_scheme: match value.token_scheme() {
-                TokenScheme::Simple => TokenSchemeDto::Simple,
+                TokenScheme::Simple => TokenSchemeDto { kind: 0 },
             },
             unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
@@ -1489,8 +1490,9 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
                 .0
                 .parse::<U256>()
                 .map_err(|_| Error::InvalidField("maximum_supply"))?,
-            match value.token_scheme {
-                TokenSchemeDto::Simple => TokenScheme::Simple,
+            match value.token_scheme.kind {
+                0 => TokenScheme::Simple,
+                _ => return Err(Error::InvalidField("token_scheme")),
             },
         )?;
 
