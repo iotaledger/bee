@@ -41,7 +41,7 @@ impl NativeToken {
     }
 }
 
-pub(crate) type NativeTokenCount = BoundedU8<0, { (NativeTokens::COUNT_MAX - 1) as u8 }>;
+pub(crate) type NativeTokenCount = BoundedU8<0, { NativeTokens::COUNT_MAX }>;
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Deref, Packable)]
@@ -62,7 +62,7 @@ impl TryFrom<Vec<NativeToken>> for NativeTokens {
 
 impl NativeTokens {
     /// Maximum possible number of different native tokens that can reside in one output.
-    pub const COUNT_MAX: usize = 256;
+    pub const COUNT_MAX: u8 = 255;
 
     /// Creates a new [`NativeTokens`].
     pub fn new(native_tokens: Vec<NativeToken>) -> Result<Self, Error> {
