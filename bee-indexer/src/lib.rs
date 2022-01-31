@@ -17,9 +17,8 @@ use bee_message::{
 };
 
 use sea_orm::{
-    prelude::*, sea_query::SimpleExpr, tests_cfg::cake_expanded::Column, ActiveModelTrait, Condition, Order,
-    ConditionalStatement, ConnectionTrait, Database, DatabaseConnection, EntityTrait, NotSet, QueryOrder, QuerySelect,
-    Schema, Set,
+    prelude::*, ActiveModelTrait, Condition, ConnectionTrait, Database, DatabaseConnection, EntityTrait, NotSet,
+    QueryOrder, QuerySelect, Schema, Set,
 };
 
 use chrono::NaiveDateTime;
@@ -125,7 +124,6 @@ impl Indexer {
 
         // TODO: Factor this out:
 
-       
         if let Some(state_controller) = options.state_controller {
             let encoded = hex::encode(state_controller);
             condition = condition.add(alias::Column::StateController.eq(encoded));
@@ -145,7 +143,11 @@ impl Indexer {
 
         // TODO: Pagination
 
-        query.filter(condition).all(&self.db).await.map_err(IndexerError::DatabaseError)
+        query
+            .filter(condition)
+            .all(&self.db)
+            .await
+            .map_err(IndexerError::DatabaseError)
     }
 }
 
