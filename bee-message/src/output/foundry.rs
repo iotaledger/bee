@@ -304,6 +304,7 @@ impl Packable for FoundryOutput {
         self.circulating_supply.pack(packer)?;
         self.maximum_supply.pack(packer)?;
         self.token_scheme.pack(packer)?;
+        self.unlock_conditions.pack(packer)?;
         self.feature_blocks.pack(packer)?;
 
         Ok(())
