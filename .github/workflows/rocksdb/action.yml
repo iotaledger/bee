@@ -95,4 +95,3 @@ runs:
       run: |
         Get-ChildItem -Force -Recurse "$env:ROCKSDB_BUILD_PATH\rocksdb\build\Release"
         Copy-Item "$env:ROCKSDB_LIB_DIR" -Destination "C:\Windows\System32"
-        Copy-Item "$env:ROCKSDB_LIB_DIR" -Destination "D:\Windows\System32"
