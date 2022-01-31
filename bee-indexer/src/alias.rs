@@ -1,43 +1,31 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::database::Table;
+use sea_orm::entity::prelude::*;
 
-use bee_message::{
-    milestone::MilestoneIndex,
-    output::{AliasOutput, OutputId},
-};
-#[derive(Clone, Debug, Eq, sqlx::FromRow, PartialEq)]
-pub(crate) struct AliasAdapter {
-    pub alias_id: String,
-    pub output_id: String,
-    pub amount: i64,
-    pub state_controller: String,
-    pub governor: String,
-    pub issuer: Option<String>,
-    pub sender: Option<String>,
-    pub milestone_index: i64,
+use chrono::NaiveDateTime;
+
+// TODO: Switch to BLOBs once everythign works.
+#[derive(Clone, Debug, Eq, PartialEq, DeriveEntityModel)]
+#[sea_orm(table_name = "alias_outputs")]
+pub struct Model {
+    #[sea_orm(primary_key)]
+    alias_id: String,
+    #[sea_orm(created_at = "created_at")]
+    pub created_at: NaiveDateTime,
+    #[sea_orm(unique)]
+    output_id: String,
+    amount: i64,
+    state_controller: String,
+    governor: String,
+    issuer: Option<String>,
+    sender: Option<String>,
+    milestone_index: i64,
 }
 
-impl AliasAdapter {
-    pub(crate) fn from_alias_output_with_id(
-        alias: &AliasOutput,
-        output_id: OutputId,
-        milestone_index: MilestoneIndex,
-    ) -> Self {
-        Self {
-            alias_id: hex::encode(alias.alias_id()),
-            output_id: output_id.to_string(), // TODO: Fix once `OutputCreated` is finalized
-            amount: alias.amount() as i64,    // TODO: Fix
-            state_controller: hex::encode(alias.state_controller()),
-            governor: hex::encode(alias.governor()),
-            issuer: None, // TODO: Fix
-            sender: None, // TODO: Fix,
-            milestone_index: *milestone_index as i64,
-        }
-    }
-}
+// The following defintions are need by `sea-orm`.
 
-impl Table for AliasAdapter {
-    const TABLE_NAME: &'static str = "alias_outputs";
-}
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {}
+
+impl ActiveModelBehavior for ActiveModel {}

@@ -12,6 +12,9 @@ use core::ops::{Add, Sub};
 pub struct MilestoneIndex(pub u32);
 
 impl MilestoneIndex {
+    /// The length of an [`MilestoneIndex`].
+    pub const LENGTH: usize = std::mem::size_of::<Self>();
+
     /// Creates a new `MilestoneIndex`.
     pub fn new(value: u32) -> Self {
         Self(value)

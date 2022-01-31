@@ -20,7 +20,7 @@ pub struct OutputId {
 }
 
 impl OutputId {
-    /// The length of a [`OutputId`].
+    /// The length of an [`OutputId`].
     pub const LENGTH: usize = TransactionId::LENGTH + core::mem::size_of::<u16>();
 
     /// Creates a new [`OutputId`].
