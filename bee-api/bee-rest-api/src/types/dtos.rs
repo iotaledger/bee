@@ -1117,6 +1117,7 @@ pub struct AddressUnlockConditionDto {
 pub struct DustDepositReturnUnlockConditionDto {
     #[serde(rename = "type")]
     pub kind: u8,
+    #[serde(rename = "returnAddress")]
     pub return_address: Address,
     pub amount: u64,
 }
@@ -1124,7 +1125,9 @@ pub struct DustDepositReturnUnlockConditionDto {
 pub struct TimelockUnlockConditionDto {
     #[serde(rename = "type")]
     pub kind: u8,
+    #[serde(rename = "milestoneIndex")]
     pub milestone_index: MilestoneIndex,
+    #[serde(rename = "unixTime")]
     pub timestamp: u32,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1133,7 +1136,9 @@ pub struct ExpirationUnlockConditionDto {
     pub kind: u8,
     #[serde(rename = "returnAddress")]
     pub return_address: AddressDto,
+    #[serde(rename = "milestoneIndex")]
     pub milestone_index: MilestoneIndex,
+    #[serde(rename = "unixTime")]
     pub timestamp: u32,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
