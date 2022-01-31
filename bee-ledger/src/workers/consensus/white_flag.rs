@@ -69,7 +69,7 @@ fn check_input_unlock_conditions(
                 todo!()
             }
             UnlockCondition::Timelock(timelock) => {
-                if timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index() {
+                if *timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index() {
                     return Err(ConflictReason::TimelockMilestoneIndex);
                 }
                 if timelock.timestamp() != 0 && context.timestamp < timelock.timestamp() as u64 {
@@ -97,17 +97,14 @@ fn check_output_feature_blocks(
 ) -> Result<(), ConflictReason> {
     for feature_block in feature_blocks {
         match feature_block {
-            // FeatureBlock::Sender(sender) => {
-            //     if !context.verified_addresses.contains(sender.address()) {
-            //         return Err(ConflictReason::UnverifiedSender);
-            //     }
-            // }
-            // FeatureBlock::Issuer(_) => {}
-            // FeatureBlock::DustDepositReturn(_) => {}
-            // FeatureBlock::TimelockMilestoneIndex(_) => {}
-            // FeatureBlock::TimelockUnix(_) => {}
-            // FeatureBlock::ExpirationMilestoneIndex(_) => {}
-            // FeatureBlock::ExpirationUnix(_) => {}
+            FeatureBlock::Sender(sender) => {
+                if !context.verified_addresses.contains(sender.address()) {
+                    return Err(ConflictReason::UnverifiedSender);
+                }
+            }
+            FeatureBlock::Issuer(_) => {
+                todo!()
+            }
             _ => {}
         }
     }
