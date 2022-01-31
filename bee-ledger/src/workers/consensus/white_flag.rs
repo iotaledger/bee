@@ -33,7 +33,7 @@ use primitive_types::U256;
 use std::collections::{HashMap, HashSet};
 
 struct ValidationContext {
-    index: MilestoneIndex,
+    milestone_index: MilestoneIndex,
     timestamp: u64,
     amount: u64,
     native_tokens_amount: HashMap<TokenId, U256>,
@@ -43,9 +43,9 @@ struct ValidationContext {
 }
 
 impl ValidationContext {
-    fn new(index: MilestoneIndex, timestamp: u64, essence: &RegularTransactionEssence) -> Self {
+    fn new(milestone_index: MilestoneIndex, timestamp: u64, essence: &RegularTransactionEssence) -> Self {
         Self {
-            index,
+            milestone_index,
             timestamp,
             amount: 0,
             native_tokens_amount: HashMap::<TokenId, U256>::new(),
@@ -69,10 +69,10 @@ fn check_input_unlock_conditions(
                 todo!()
             }
             UnlockCondition::Timelock(timelock) => {
-                if context.index < timelock.milestone_index() {
+                if timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index() {
                     return Err(ConflictReason::TimelockMilestoneIndex);
                 }
-                if context.timestamp < timelock.timestamp() as u64 {
+                if timelock.timestamp() != 0 && context.timestamp < timelock.timestamp() as u64 {
                     return Err(ConflictReason::TimelockUnix);
                 }
             }
