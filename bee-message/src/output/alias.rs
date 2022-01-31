@@ -288,6 +288,7 @@ impl Packable for AliasOutput {
         self.state_index.pack(packer)?;
         self.state_metadata.pack(packer)?;
         self.foundry_counter.pack(packer)?;
+        self.unlock_conditions.pack(packer)?;
         self.feature_blocks.pack(packer)?;
 
         Ok(())
