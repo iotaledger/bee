@@ -1459,7 +1459,9 @@ impl From<&FoundryOutput> for FoundryOutputDto {
             circulating_supply: U256Dto(value.circulating_supply().to_string()),
             maximum_supply: U256Dto(value.maximum_supply().to_string()),
             token_scheme: match value.token_scheme() {
-                TokenScheme::Simple => TokenSchemeDto { kind: 0 },
+                TokenScheme::Simple => TokenSchemeDto {
+                    kind: TokenScheme::Simple as u8,
+                },
             },
             unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
