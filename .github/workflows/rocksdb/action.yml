@@ -37,7 +37,6 @@ runs:
       run: |
         echo "ROCKSDB_LIB_DIR=$env:ROCKSDB_BUILD_PATH\rocksdb\build\Release\rocksdb.lib" >> $env:GITHUB_ENV
         echo "$env:ROCKSDB_BUILD_PATH\rocksdb\build\Release" >> $env:GITHUB_PATH
-        Get-ChildItem -Force -Recurse "$env:ROCKSDB_BUILD_PATH\rocksdb\build\Release"
 
     - name: Cache RocksDB
       uses: actions/cache@v2
@@ -89,3 +88,9 @@ runs:
         cmake -G "Visual Studio 16 2019" ..
         msbuild rocksdb.sln /p:Configuration=Release
         Get-ChildItem -Force -Recurse
+
+    - name: DBG (Windows)
+      shell: pwsh
+      if: inputs.os == 'windows-latest'
+      run: |
+        Get-ChildItem -Force -Recurse "$env:ROCKSDB_BUILD_PATH\rocksdb\build\Release"
