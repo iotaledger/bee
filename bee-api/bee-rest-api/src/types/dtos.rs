@@ -1000,7 +1000,7 @@ impl Serialize for UnlockConditionDto {
             #[serde(flatten)]
             unlock_condition: UnlockConditionDto_<'a>,
         }
-        let feature_block = match self {
+        let unlock_condition = match self {
             UnlockConditionDto::Address(o) => TypedUnlockCondition {
                 unlock_condition: UnlockConditionDto_::T1(o),
             },
@@ -1020,7 +1020,7 @@ impl Serialize for UnlockConditionDto {
                 unlock_condition: UnlockConditionDto_::T6(o),
             },
         };
-        feature_block.serialize(serializer)
+        unlock_condition.serialize(serializer)
     }
 }
 
