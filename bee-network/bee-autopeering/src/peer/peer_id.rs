@@ -78,6 +78,7 @@ impl PartialEq for PeerId {
         self.id_bytes == other.id_bytes
     }
 }
+
 impl Hash for PeerId {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.id_bytes.hash(state);
@@ -113,6 +114,7 @@ impl AsRef<[u8]> for PeerId {
     }
 }
 
+#[cfg(feature = "sled")]
 impl From<&PeerId> for sled::IVec {
     fn from(peer: &PeerId) -> Self {
         let bytes = peer.public_key().to_bytes();

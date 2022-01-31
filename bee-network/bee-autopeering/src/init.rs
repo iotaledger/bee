@@ -7,7 +7,7 @@ use crate::{
     config::AutopeeringConfig,
     delay,
     discovery::{
-        manager::{DiscoveryManager, DiscoveryManagerConfig, DEFAULT_QUERY_INTERVAL, DEFAULT_REVERIFY_INTERVAL},
+        manager::{DiscoveryManager, DiscoveryManagerConfig, QUERY_INTERVAL_DEFAULT, REVERIFY_INTERVAL_DEFAULT},
         query::{self, QueryContext},
     },
     event::{self, EventRx},
@@ -28,11 +28,16 @@ use crate::{
     request::{self, RequestManager, EXPIRED_REQUEST_REMOVAL_INTERVAL},
     server::{server_chan, IncomingPacketSenders, Server, ServerConfig, ServerSocket},
     task::{TaskManager, MAX_SHUTDOWN_PRIORITY},
+    time::SECOND,
 };
 
-use std::{error, future::Future, iter};
+use std::{error, future::Future, iter, time::Duration};
 
 const NUM_TASKS: usize = 9;
+const BOOTSTRAP_MAX_VERIFICATIONS: usize = 10;
+const BOOTSTRAP_VERIFICATION_DELAY: Duration = Duration::from_millis(100);
+const BOOTSTRAP_QUERY_DELAY: Duration = Duration::from_secs(2 * SECOND);
+const BOOTSTRAP_UPDATE_DELAY: Duration = Duration::from_secs(4 * SECOND);
 
 /// Initializes the autopeering service.
 pub async fn init<S, I, Q, V>(
@@ -52,18 +57,18 @@ where
 {
     let network_id = hash::network_hash(&network_name);
 
-    log::info!("---------------------------------------------------------------------------------------------------");
-    log::info!("WARNING:");
+    log::info!("----------------------------------------------------------------------------------------");
+    log::info!("DISCLAIMER:");
     log::info!("Autopeering will disclose your public IP address to possibly all nodes and entry points.");
-    log::info!("Please disable it if you do not want this to happen!");
-    log::info!("---------------------------------------------------------------------------------------------------");
-    log::info!("Network name/id: {}/{}", network_name.as_ref(), network_id);
-    log::info!("Protocol_version: {}", version);
-    log::info!("Public key: {}", multiaddr::pubkey_to_base58(&local.public_key()));
+    log::info!("Please disable it if you do not want this to happen.");
+    log::info!("----------------------------------------------------------------------------------------");
+    log::debug!("Network name/id: {}/{}", network_name.as_ref(), network_id);
+    log::debug!("Protocol_version: {}", version);
+    log::debug!("Public key: {}", multiaddr::pubkey_to_base58(&local.public_key()));
     log::info!("Bind address: {}", config.bind_addr());
 
     // Create or load a peer store.
-    let peer_store = S::new(peer_store_config);
+    let peer_store = S::new(peer_store_config)?;
 
     // Create peer lists.
     let entry_peers = EntryPeersList::default();
@@ -108,7 +113,7 @@ where
         replacements.clone(),
         event_tx.clone(),
     );
-    discovery_mngr.init(&mut task_mngr).await;
+    discovery_mngr.init(&mut task_mngr).await?;
 
     // Create neighborhoods and neighbor candidate filter.
     let inbound_nbh = InboundNeighborhood::new();
@@ -162,12 +167,14 @@ where
 
     // Reverify old peers regularly.
     let f = query::reverify_fn();
-    let delay = iter::repeat(DEFAULT_REVERIFY_INTERVAL);
+    let delay = iter::repeat(BOOTSTRAP_VERIFICATION_DELAY)
+        .take(BOOTSTRAP_MAX_VERIFICATIONS.min(active_peers.read().len()))
+        .chain(iter::repeat(REVERIFY_INTERVAL_DEFAULT));
     task_mngr.repeat(f, delay, ctx.clone(), "Reverification", MAX_SHUTDOWN_PRIORITY);
 
     // Discover new peers regularly.
     let f = query::query_fn();
-    let delay = iter::repeat(DEFAULT_QUERY_INTERVAL);
+    let delay = iter::once(BOOTSTRAP_QUERY_DELAY).chain(iter::repeat(QUERY_INTERVAL_DEFAULT));
     task_mngr.repeat(f, delay, ctx, "Discovery", MAX_SHUTDOWN_PRIORITY);
 
     let ctx = UpdateContext {
@@ -181,13 +188,14 @@ where
 
     // Update the outbound neighborhood regularly (interval depends on whether slots available or not).
     let f = update::update_outbound_neighborhood_fn();
-    let delay = delay::ManualDelayFactory::new(OPEN_OUTBOUND_NBH_UPDATE_SECS);
+    let delay = iter::once(BOOTSTRAP_UPDATE_DELAY).chain(delay::ManualDelayFactory::new(OPEN_OUTBOUND_NBH_UPDATE_SECS));
     task_mngr.repeat(f, delay, ctx, "Outbound neighborhood update", MAX_SHUTDOWN_PRIORITY);
 
     // Await the shutdown signal (in a separate task).
     tokio::spawn(async move {
         term_signal.await;
-        task_mngr.shutdown().await;
+        task_mngr.shutdown().await?;
+        Ok::<_, S::Error>(())
     });
 
     log::debug!("Autopeering initialized.");

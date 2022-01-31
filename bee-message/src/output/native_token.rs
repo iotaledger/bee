@@ -3,9 +3,8 @@
 
 use crate::{output::TokenId, Error};
 
-use bee_common::ord::is_unique_sorted;
-
 use derive_more::Deref;
+use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 use primitive_types::U256;
 

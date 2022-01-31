@@ -110,6 +110,7 @@ async fn network_host_processor(
     info!("Binding to: {}", bind_multiaddr);
     let _listener_id = Swarm::listen_on(&mut swarm, bind_multiaddr).map_err(|_| crate::Error::BindingAddressFailed)?;
 
+    // Enter command/event loop.
     loop {
         tokio::select! {
             _ = &mut shutdown => break,
@@ -179,13 +180,6 @@ async fn process_internal_command(internal_command: Command, swarm: &mut Swarm<S
         Command::DialPeer { peer_id } => {
             if let Err(e) = dial_peer(swarm, peer_id, peerlist).await {
                 warn!("Dialing peer {} failed. Cause: {}", alias!(peer_id), e);
-
-                // Remove discovered peer if dialing it failed.
-                let _ = peerlist
-                    .0
-                    .write()
-                    .await
-                    .filter_remove(&peer_id, |info, _| info.relation.is_discovered());
             }
         }
         _ => {}

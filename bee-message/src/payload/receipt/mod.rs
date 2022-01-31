@@ -12,9 +12,8 @@ pub use tail_transaction_hash::TailTransactionHash;
 
 use crate::{milestone::MilestoneIndex, output::OUTPUT_COUNT_RANGE, payload::Payload, Error};
 
-use bee_common::ord::is_unique_sorted;
-
 use hashbrown::HashMap;
+use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable, PackableExt};
 
 use alloc::vec::Vec;

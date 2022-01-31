@@ -101,7 +101,11 @@ impl Vertices {
             }
 
             retries += 1;
-            log::debug!("retrying cache eviction (attempt #{})", retries);
+            log::trace!(
+                "Retrying cache eviction for table index {} (attempt #{}).",
+                index,
+                retries
+            );
         }
 
         None

@@ -5,9 +5,8 @@
 
 use crate::{Error, MessageId};
 
-use bee_common::ord::is_unique_sorted;
-
 use derive_more::Deref;
+use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
 use alloc::vec::Vec;

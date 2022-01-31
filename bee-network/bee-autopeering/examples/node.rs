@@ -137,7 +137,7 @@ async fn print_resolved_entry_nodes(config: AutopeeringConfig) {
 struct GossipNeighborValidator {}
 
 impl NeighborValidator for GossipNeighborValidator {
-    fn is_valid(&self, peer: &Peer) -> bool {
-        peer.has_service(NETWORK_SERVICE_NAME)
+    fn is_valid<P: AsRef<Peer>>(&self, peer: P) -> bool {
+        peer.as_ref().has_service(NETWORK_SERVICE_NAME)
     }
 }

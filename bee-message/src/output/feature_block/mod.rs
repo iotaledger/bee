@@ -15,10 +15,9 @@ pub(crate) use tag::TagFeatureBlockLength;
 
 use crate::{create_bitflags, Error};
 
-use bee_common::ord::is_unique_sorted;
-
 use bitflags::bitflags;
 use derive_more::{Deref, From};
+use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
 use alloc::vec::Vec;
