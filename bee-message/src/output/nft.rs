@@ -97,10 +97,7 @@ impl NftOutputBuilder {
     pub fn finish(self) -> Result<NftOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
-        verify_allowed_unlock_conditions(&unlock_conditions, NftOutput::ALLOWED_UNLOCK_CONDITIONS)?;
-
-        // TODO reactivate in a later PR
-        // verify_address(&address, &nft_id)?;
+        verify_unlock_conditions(&unlock_conditions, &self.nft_id)?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
@@ -241,8 +238,7 @@ impl Packable for NftOutput {
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            verify_allowed_unlock_conditions(&unlock_conditions, NftOutput::ALLOWED_UNLOCK_CONDITIONS)
-                .map_err(UnpackError::Packable)?;
+            verify_unlock_conditions(&unlock_conditions, &nft_id).map_err(UnpackError::Packable)?;
         }
 
         let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
@@ -263,25 +259,23 @@ impl Packable for NftOutput {
     }
 }
 
-// TODO reactivate in a later PR
-// #[inline]
-// fn verify_address(address: &Address, nft_id: &NftId) -> Result<(), Error> {
-//     match address {
-//         Address::Ed25519(_) => {}
-//         Address::Alias(_) => {}
-//         Address::Nft(address) => {
-//             if address.id() == nft_id {
-//                 return Err(Error::SelfDepositNft(*nft_id));
-//             }
-//         }
-//     };
-//
-//     Ok(())
-// }
-
 #[inline]
 fn verify_immutable_metadata_length(immutable_metadata_length: usize) -> Result<(), Error> {
     ImmutableMetadataLength::try_from(immutable_metadata_length).map_err(Error::InvalidImmutableMetadataLength)?;
 
     Ok(())
+}
+
+fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, nft_id: &NftId) -> Result<(), Error> {
+    if let Some(UnlockCondition::Address(unlock_condition)) = unlock_conditions.get(AddressUnlockCondition::KIND) {
+        if let Address::Nft(nft_address) = unlock_condition.address() {
+            if nft_address.id() == nft_id {
+                return Err(Error::SelfDepositNft(*nft_id));
+            }
+        }
+    } else {
+        return Err(Error::MissingAddressUnlockCondition);
+    }
+
+    verify_allowed_unlock_conditions(unlock_conditions, NftOutput::ALLOWED_UNLOCK_CONDITIONS)
 }

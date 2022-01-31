@@ -85,11 +85,11 @@ impl ExtendedOutputBuilder {
     pub fn finish(self) -> Result<ExtendedOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
-        verify_allowed_unlock_conditions(&unlock_conditions, ExtendedOutput::ALLOWED_UNLOCK_CONDITIONS)?;
+        verify_unlock_conditions::<true>(&unlock_conditions)?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
-        verify_allowed_feature_blocks(&feature_blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)?;
+        verify_feature_blocks::<true>(&feature_blocks)?;
 
         Ok(ExtendedOutput {
             amount: self.amount,
@@ -180,7 +180,11 @@ impl ExtendedOutput {
 
 fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
     if VERIFY {
-        verify_allowed_unlock_conditions(unlock_conditions, ExtendedOutput::ALLOWED_UNLOCK_CONDITIONS)
+        if unlock_conditions.get(AddressUnlockCondition::KIND).is_none() {
+            Err(Error::MissingAddressUnlockCondition)
+        } else {
+            verify_allowed_unlock_conditions(unlock_conditions, ExtendedOutput::ALLOWED_UNLOCK_CONDITIONS)
+        }
     } else {
         Ok(())
     }
