@@ -34,7 +34,9 @@ runs:
     - name: Set RocksDB path (Windows)
       shell: pwsh
       if: inputs.os == 'windows-latest'
-      run: echo "ROCKSDB_LIB_DIR=$env:ROCKSDB_BUILD_PATH\rocksdb\build\Release\rocksdb.lib" >> $env:GITHUB_ENV
+      run: |
+        echo "ROCKSDB_LIB_DIR=$env:ROCKSDB_BUILD_PATH\rocksdb\build\Release\rocksdb.lib" >> $env:GITHUB_ENV
+        echo "$env:ROCKSDB_BUILD_PATH\rocksdb\build\Release" >> $env:GITHUB_PATH
 
     - name: Cache RocksDB
       uses: actions/cache@v2
