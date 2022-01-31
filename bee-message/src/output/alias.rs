@@ -131,11 +131,7 @@ impl AliasOutputBuilder {
 
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
-        verify_allowed_unlock_conditions(&unlock_conditions, AliasOutput::ALLOWED_UNLOCK_CONDITIONS)?;
-
-        // TODO reactivate in a later PR
-        // verify_controller(&state_controller, &alias_id)?;
-        // verify_controller(&governor, &alias_id)?;
+        verify_unlock_conditions(&unlock_conditions, &self.alias_id)?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
@@ -316,8 +312,7 @@ impl Packable for AliasOutput {
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            verify_allowed_unlock_conditions(&unlock_conditions, AliasOutput::ALLOWED_UNLOCK_CONDITIONS)
-                .map_err(UnpackError::Packable)?;
+            verify_unlock_conditions(&unlock_conditions, &alias_id).map_err(UnpackError::Packable)?;
         }
 
         let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
@@ -349,7 +344,34 @@ fn verify_index_counter(alias_id: &AliasId, state_index: u32, foundry_counter: u
     Ok(())
 }
 
-// TODO reactivate in a later PR
+fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, alias_id: &AliasId) -> Result<(), Error> {
+    if let Some(UnlockCondition::StateControllerAddress(unlock_condition)) =
+        unlock_conditions.get(StateControllerAddressUnlockCondition::KIND)
+    {
+        if let Address::Alias(alias_address) = unlock_condition.address() {
+            if alias_address.id() == alias_id {
+                return Err(Error::SelfControlledAliasOutput(*alias_id));
+            }
+        }
+    } else {
+        return Err(Error::MissingStateControllerUnlockCondition);
+    }
+
+    if let Some(UnlockCondition::GovernorAddress(unlock_condition)) =
+        unlock_conditions.get(GovernorAddressUnlockCondition::KIND)
+    {
+        if let Address::Alias(alias_address) = unlock_condition.address() {
+            if alias_address.id() == alias_id {
+                return Err(Error::SelfControlledAliasOutput(*alias_id));
+            }
+        }
+    } else {
+        return Err(Error::MissingGovernorUnlockCondition);
+    }
+
+    verify_allowed_unlock_conditions(unlock_conditions, AliasOutput::ALLOWED_UNLOCK_CONDITIONS)
+}
+
 // #[inline]
 // fn verify_controller(controller: &Address, alias_id: &AliasId) -> Result<(), Error> {
 //     match controller {

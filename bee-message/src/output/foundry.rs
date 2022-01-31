@@ -120,10 +120,7 @@ impl FoundryOutputBuilder {
     pub fn finish(self) -> Result<FoundryOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
-        verify_allowed_unlock_conditions(&unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)?;
-
-        // TODO reactivate in a later PR
-        // verify_address(&address)?;
+        verify_unlock_conditions(&unlock_conditions)?;
 
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
@@ -328,8 +325,7 @@ impl Packable for FoundryOutput {
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
-            verify_allowed_unlock_conditions(&unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)
-                .map_err(UnpackError::Packable)?;
+            verify_unlock_conditions(&unlock_conditions).map_err(UnpackError::Packable)?;
         }
 
         let feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
@@ -353,17 +349,6 @@ impl Packable for FoundryOutput {
     }
 }
 
-// TODO reactivate in a later PR
-// #[inline]
-// fn verify_address(address: &Address) -> Result<(), Error> {
-//     match address {
-//         Address::Alias(_) => {}
-//         _ => return Err(Error::InvalidAddressKind(address.kind())),
-//     };
-//
-//     Ok(())
-// }
-
 #[inline]
 fn verify_supply(circulating_supply: &U256, maximum_supply: &U256) -> Result<(), Error> {
     if maximum_supply.is_zero() {
@@ -381,4 +366,17 @@ fn verify_supply(circulating_supply: &U256, maximum_supply: &U256) -> Result<(),
     }
 
     Ok(())
+}
+
+fn verify_unlock_conditions(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
+    if let Some(UnlockCondition::Address(unlock_condition)) = unlock_conditions.get(AddressUnlockCondition::KIND) {
+        match unlock_condition.address() {
+            Address::Alias(_) => {}
+            _ => return Err(Error::InvalidAddressKind(unlock_condition.address().kind())),
+        };
+    } else {
+        return Err(Error::MissingAddressUnlockCondition);
+    }
+
+    verify_allowed_unlock_conditions(unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)
 }

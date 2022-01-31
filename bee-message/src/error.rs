@@ -82,9 +82,12 @@ pub enum Error {
     MilestoneInvalidSignatureCount(<SignatureCount as TryFrom<usize>>::Error),
     MilestonePublicKeysNotUniqueSorted,
     MilestonePublicKeysSignaturesCountMismatch { key_count: usize, sig_count: usize },
+    MissingAddressUnlockCondition,
     MissingField(&'static str),
+    MissingGovernorUnlockCondition,
     MissingPayload,
     MissingRequiredSenderBlock,
+    MissingStateControllerUnlockCondition,
     NativeTokensNotUniqueSorted,
     NonZeroStateIndexOrFoundryCounter,
     ParentsNotUniqueSorted,
@@ -224,9 +227,12 @@ impl fmt::Display for Error {
                     key_count, sig_count
                 )
             }
+            Error::MissingAddressUnlockCondition => write!(f, "missing address unlock condition"),
             Error::MissingField(s) => write!(f, "missing required field: {}", s),
+            Error::MissingGovernorUnlockCondition => write!(f, "missing governor unlock condition"),
             Error::MissingPayload => write!(f, "missing payload"),
             Error::MissingRequiredSenderBlock => write!(f, "missing required sender block"),
+            Error::MissingStateControllerUnlockCondition => write!(f, "missing state controller unlock condition"),
             Error::NativeTokensNotUniqueSorted => write!(f, "native tokens are not unique and/or sorted"),
             Error::NonZeroStateIndexOrFoundryCounter => {
                 write!(f, "non zero state index or foundry counter while alias ID is all zero")
