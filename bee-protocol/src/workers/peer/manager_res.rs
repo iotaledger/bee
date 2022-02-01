@@ -48,12 +48,10 @@ type PeerTuple = (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>);
 pub struct PeerManagerInner {
     peers: HashMap<PeerId, PeerTuple>,
     // This is needed to ensure message distribution fairness as iterating over a HashMap is random.
-    // TODO private
-    pub(crate) keys: Vec<PeerId>,
+    keys: Vec<PeerId>,
 }
 
 #[derive(Default)]
-// TODO private
 pub struct PeerManager(RwLock<PeerManagerInner>);
 
 impl PeerManager {
