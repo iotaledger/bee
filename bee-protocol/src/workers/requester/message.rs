@@ -132,8 +132,8 @@ fn process_request_unchecked(
     let message_request = MessageRequestPacket::new(message_id);
 
     if let Some(peer_id) = peer_manager
-        .foo(counter, |_, peer| peer.has_data(index))
-        .or_else(|| peer_manager.foo(counter, |_, peer| peer.maybe_has_data(index)))
+        .find_first_fairly(counter, |peer| peer.has_data(index))
+        .or_else(|| peer_manager.find_first_fairly(counter, |peer| peer.maybe_has_data(index)))
     {
         Sender::<MessageRequestPacket>::send(&message_request, &peer_id, peer_manager, metrics)
     }

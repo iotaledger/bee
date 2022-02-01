@@ -96,7 +96,7 @@ impl PeerManager {
         self.0.read().peers.iter().for_each(|(id, (peer, _))| f(id, peer));
     }
 
-    pub(crate) fn foo(&self, counter: &mut usize, f: impl Fn(&PeerId, &Peer) -> bool) -> Option<PeerId> {
+    pub(crate) fn find_first_fairly(&self, counter: &mut usize, f: impl Fn(&Peer) -> bool) -> Option<PeerId> {
         let guard = self.0.read();
 
         for _ in 0..guard.keys.len() {
@@ -105,7 +105,7 @@ impl PeerManager {
             *counter += 1;
 
             if let Some((peer, _)) = guard.peers.get(peer_id) {
-                if f(peer_id, peer.as_ref()) {
+                if f(peer.as_ref()) {
                     return Some(peer_id.clone());
                 }
             }

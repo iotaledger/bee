@@ -124,7 +124,7 @@ fn process_request_unchecked(
             Sender::<MilestoneRequestPacket>::send(&milestone_request, &peer_id, peer_manager, metrics);
         }
         None => {
-            if let Some(peer_id) = peer_manager.foo(counter, |_, peer| peer.maybe_has_data(index)) {
+            if let Some(peer_id) = peer_manager.find_first_fairly(counter, |peer| peer.maybe_has_data(index)) {
                 Sender::<MilestoneRequestPacket>::send(&milestone_request, &peer_id, peer_manager, metrics);
             }
         }
