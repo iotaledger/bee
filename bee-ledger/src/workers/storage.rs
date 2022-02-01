@@ -155,10 +155,22 @@ pub(crate) fn insert_created_output_batch<B: StorageBackend>(
 
     match output.inner() {
         Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
-        Output::Extended(_) => todo!(),
-        Output::Alias(_) => todo!(),
-        Output::Foundry(_) => todo!(),
-        Output::Nft(_) => todo!(),
+        Output::Extended(_) => {
+            // TODO
+            Ok(())
+        }
+        Output::Alias(_) => {
+            // TODO
+            Ok(())
+        }
+        Output::Foundry(_) => {
+            // TODO
+            Ok(())
+        }
+        Output::Nft(_) => {
+            // TODO
+            Ok(())
+        }
     }
 }
 
