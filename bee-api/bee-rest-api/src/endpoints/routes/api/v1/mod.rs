@@ -104,7 +104,7 @@ pub(crate) fn filter<B: StorageBackend>(
         public_routes.clone(),
         allowed_ips.clone(),
         storage.clone(),
-        consensus_worker.clone(),
+        consensus_worker,
     ))
     .or(peer::filter(
         public_routes.clone(),

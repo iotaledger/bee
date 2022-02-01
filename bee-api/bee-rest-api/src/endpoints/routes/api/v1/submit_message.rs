@@ -223,9 +223,9 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<impl Reply, Rejection> {
     let message = Message::unpack_verified(&mut &(*buf)).map_err(|_| {
-        reject::custom(CustomRejection::BadRequest(format!(
-            "can not submit message: invalid bytes provided: the message format is not respected",
-        )))
+        reject::custom(CustomRejection::BadRequest(
+            "can not submit message: invalid bytes provided: the message format is not respected".to_string(),
+        ))
     })?;
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
     Ok(warp::reply::with_status(
