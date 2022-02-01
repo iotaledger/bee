@@ -130,31 +130,12 @@ fn process_request_unchecked(
     counter: &mut usize,
 ) {
     let message_request = MessageRequestPacket::new(message_id);
-    let guard = peer_manager.0.read();
 
-    for _ in 0..guard.keys.len() {
-        let peer_id = &guard.keys[*counter % guard.keys.len()];
-
-        *counter += 1;
-
-        if let Some(peer) = peer_manager.get(peer_id) {
-            if (*peer).0.has_data(index) {
-                Sender::<MessageRequestPacket>::send(&message_request, peer_id, peer_manager, metrics);
-                return;
-            }
-        }
-    }
-
-    for _ in 0..guard.keys.len() {
-        let peer_id = &guard.keys[*counter % guard.keys.len()];
-
-        *counter += 1;
-
-        if let Some(peer) = peer_manager.get(peer_id) {
-            if (*peer).0.maybe_has_data(index) {
-                Sender::<MessageRequestPacket>::send(&message_request, peer_id, peer_manager, metrics);
-            }
-        }
+    if let Some(peer_id) = peer_manager
+        .foo(counter, |_, peer| peer.has_data(index))
+        .or_else(|| peer_manager.foo(counter, |_, peer| peer.maybe_has_data(index)))
+    {
+        Sender::<MessageRequestPacket>::send(&message_request, &peer_id, peer_manager, metrics)
     }
 }
 

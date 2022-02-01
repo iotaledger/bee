@@ -124,20 +124,8 @@ fn process_request_unchecked(
             Sender::<MilestoneRequestPacket>::send(&milestone_request, &peer_id, peer_manager, metrics);
         }
         None => {
-            let guard = peer_manager.0.read();
-
-            for _ in 0..guard.keys.len() {
-                let peer_id = &guard.keys[*counter % guard.keys.len()];
-
-                *counter += 1;
-
-                if let Some(peer) = peer_manager.get(peer_id) {
-                    // TODO also request if has_data ?
-                    if (*peer).0.maybe_has_data(index) {
-                        Sender::<MilestoneRequestPacket>::send(&milestone_request, peer_id, peer_manager, metrics);
-                        return;
-                    }
-                }
+            if let Some(peer_id) = peer_manager.foo(counter, |_, peer| peer.maybe_has_data(index)) {
+                Sender::<MilestoneRequestPacket>::send(&milestone_request, &peer_id, peer_manager, metrics);
             }
         }
     }

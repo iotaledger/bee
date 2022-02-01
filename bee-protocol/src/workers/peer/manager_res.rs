@@ -54,7 +54,7 @@ pub struct PeerManagerInner {
 
 #[derive(Default)]
 // TODO private
-pub struct PeerManager(pub(crate) RwLock<PeerManagerInner>);
+pub struct PeerManager(RwLock<PeerManagerInner>);
 
 impl PeerManager {
     pub(crate) fn new() -> Self {
@@ -94,6 +94,26 @@ impl PeerManager {
 
     pub(crate) fn for_each<F: Fn(&PeerId, &Peer)>(&self, f: F) {
         self.0.read().peers.iter().for_each(|(id, (peer, _))| f(id, peer));
+    }
+
+    pub(crate) fn foo(&self, counter: &mut usize, f: impl Fn(&PeerId, &Peer) -> bool) -> Option<PeerId> {
+        let guard = self.0.read();
+
+        for _ in 0..guard.keys.len() {
+            let peer_id = &guard.keys[*counter % guard.keys.len()];
+
+            *counter += 1;
+
+            if let Some((peer, _)) = guard.peers.get(peer_id) {
+                if f(peer_id, peer.as_ref()) {
+                    return Some(peer_id.clone());
+                }
+            }
+        }
+
+        drop(guard);
+
+        None
     }
 
     pub fn is_connected(&self, id: &PeerId) -> bool {
