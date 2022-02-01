@@ -104,7 +104,7 @@ impl PeerManager {
 
             if let Some((peer, _)) = guard.peers.get(peer_id) {
                 if f(peer.as_ref()) {
-                    return Some(peer_id.clone());
+                    return Some(*peer_id);
                 }
             }
         }
