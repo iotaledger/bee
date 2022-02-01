@@ -868,6 +868,7 @@ impl TryFrom<&ExtendedOutputDto> for ExtendedOutput {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NativeTokenDto {
     // Identifier of the native token.
+    #[serde(rename = "id")]
     pub token_id: TokenIdDto,
     // Amount of native tokens.
     pub amount: U256Dto,
