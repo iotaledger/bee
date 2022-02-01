@@ -3,7 +3,7 @@
 
 use crate::{
     types::metrics::NodeMetrics,
-    workers::{storage::StorageBackend, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MetricsWorker},
+    workers::{storage::StorageBackend, MetricsWorker, TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent},
 };
 
 use bee_message::{
@@ -33,7 +33,7 @@ pub(crate) struct TransactionPayloadWorker {
 async fn process(
     message_id: MessageId,
     message: MessageRef,
-    tagged_data_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
+    tagged_data_payload_worker: &mpsc::UnboundedSender<TaggedDataPayloadWorkerEvent>,
     metrics: &NodeMetrics,
 ) {
     let transaction = if let Some(Payload::Transaction(transaction)) = message.payload() {
@@ -52,10 +52,10 @@ async fn process(
 
     if let Some(Payload::TaggedData(_)) = essence.payload() {
         if tagged_data_payload_worker
-            .send(IndexationPayloadWorkerEvent {})
+            .send(TaggedDataPayloadWorkerEvent {})
             .is_err()
         {
-            error!("Sending message {} to indexation payload worker failed.", message_id);
+            error!("Sending message {} to tagged data payload worker failed.", message_id);
         }
     }
 }
@@ -70,12 +70,12 @@ where
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<IndexationPayloadWorker>(), TypeId::of::<MetricsWorker>()].leak()
+        vec![TypeId::of::<TaggedDataPayloadWorker>(), TypeId::of::<MetricsWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        // SAFETY: unwrapping is fine because IndexationPayloadWorker is in the dependencies.
-        let tagged_data_payload_worker = node.worker::<IndexationPayloadWorker>().unwrap().tx.clone();
+        // SAFETY: unwrapping is fine because TaggedDataPayloadWorker is in the dependencies.
+        let tagged_data_payload_worker = node.worker::<TaggedDataPayloadWorker>().unwrap().tx.clone();
         let metrics = node.resource::<NodeMetrics>();
         let (tx, rx) = mpsc::unbounded_channel();
 

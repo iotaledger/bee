@@ -61,20 +61,6 @@ pub struct SubmitMessageResponse {
 
 impl BodyInner for SubmitMessageResponse {}
 
-/// Response of GET /api/v1/messages?index={INDEX}.
-/// Returns all messages ids that match a given indexation key.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MessagesFindResponse {
-    pub index: String,
-    #[serde(rename = "maxResults")]
-    pub max_results: usize,
-    pub count: usize,
-    #[serde(rename = "messageIds")]
-    pub message_ids: Vec<String>,
-}
-
-impl BodyInner for MessagesFindResponse {}
-
 /// Response of GET /api/v1/messages/{message_id}.
 /// Returns a specific message.
 #[derive(Clone, Debug, Serialize, Deserialize)]

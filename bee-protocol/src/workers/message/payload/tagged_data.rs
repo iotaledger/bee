@@ -16,14 +16,14 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible};
 
-pub(crate) struct IndexationPayloadWorkerEvent {}
+pub(crate) struct TaggedDataPayloadWorkerEvent {}
 
-pub(crate) struct IndexationPayloadWorker {
-    pub(crate) tx: mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
+pub(crate) struct TaggedDataPayloadWorker {
+    pub(crate) tx: mpsc::UnboundedSender<TaggedDataPayloadWorkerEvent>,
 }
 
 #[async_trait]
-impl<N> Worker<N> for IndexationPayloadWorker
+impl<N> Worker<N> for TaggedDataPayloadWorker
 where
     N: Node,
     N::Backend: StorageBackend,
@@ -44,17 +44,17 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(IndexationPayloadWorkerEvent {}) = receiver.next().await {
+            while let Some(TaggedDataPayloadWorkerEvent {}) = receiver.next().await {
                 metrics.tagged_data_payload_inc(1);
             }
 
-            // Before the worker completely stops, the receiver needs to be drained for indexation payloads to be
+            // Before the worker completely stops, the receiver needs to be drained for tagged data payloads to be
             // analysed. Otherwise, information would be lost and not easily recoverable.
 
             let (_, mut receiver) = receiver.split();
             let mut count: usize = 0;
 
-            while let Some(Some(IndexationPayloadWorkerEvent {})) = receiver.next().now_or_never() {
+            while let Some(Some(TaggedDataPayloadWorkerEvent {})) = receiver.next().now_or_never() {
                 metrics.tagged_data_payload_inc(1);
                 count += 1;
             }

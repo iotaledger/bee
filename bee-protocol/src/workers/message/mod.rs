@@ -11,7 +11,7 @@ mod unreferenced_inserter;
 pub(crate) use hash_cache::HashCache;
 pub(crate) use hasher::{HasherWorker, HasherWorkerEvent};
 pub(crate) use payload::{
-    IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent,
+    MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent, TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent,
     TransactionPayloadWorker,
 };
 pub(crate) use processor::{ProcessorWorker, ProcessorWorkerEvent};

@@ -1,12 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod indexation;
 mod milestone;
+mod tagged_data;
 mod transaction;
 
-pub(crate) use indexation::{IndexationPayloadWorker, IndexationPayloadWorkerEvent};
 pub(crate) use milestone::{MilestonePayloadWorker, MilestonePayloadWorkerEvent};
+pub(crate) use tagged_data::{TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent};
 pub(crate) use transaction::{TransactionPayloadWorker, TransactionPayloadWorkerEvent};
 
 use crate::workers::storage::StorageBackend;
@@ -37,7 +37,7 @@ async fn process(
     message: MessageRef,
     transaction_payload_worker: &mpsc::UnboundedSender<TransactionPayloadWorkerEvent>,
     milestone_payload_worker: &mpsc::UnboundedSender<MilestonePayloadWorkerEvent>,
-    tagged_data_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
+    tagged_data_payload_worker: &mpsc::UnboundedSender<TaggedDataPayloadWorkerEvent>,
 ) {
     match message.payload() {
         Some(Payload::Transaction(_)) => {
@@ -58,7 +58,7 @@ async fn process(
         }
         Some(Payload::TaggedData(_)) => {
             if tagged_data_payload_worker
-                .send(IndexationPayloadWorkerEvent {})
+                .send(TaggedDataPayloadWorkerEvent {})
                 .is_err()
             {
                 error!("Sending message {} to tagged data payload worker failed.", message_id);
@@ -81,7 +81,7 @@ where
         vec![
             TypeId::of::<TransactionPayloadWorker>(),
             TypeId::of::<MilestonePayloadWorker>(),
-            TypeId::of::<IndexationPayloadWorker>(),
+            TypeId::of::<TaggedDataPayloadWorker>(),
         ]
         .leak()
     }
@@ -89,7 +89,7 @@ where
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let transaction_payload_worker = node.worker::<TransactionPayloadWorker>().unwrap().tx.clone();
         let milestone_payload_worker = node.worker::<MilestonePayloadWorker>().unwrap().tx.clone();
-        let tagged_data_payload_worker = node.worker::<IndexationPayloadWorker>().unwrap().tx.clone();
+        let tagged_data_payload_worker = node.worker::<TaggedDataPayloadWorker>().unwrap().tx.clone();
         let (tx, rx) = mpsc::unbounded_channel();
 
         node.spawn::<Self, _, _>(|shutdown| async move {

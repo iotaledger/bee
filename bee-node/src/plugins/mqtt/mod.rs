@@ -77,9 +77,6 @@ impl<N: Node> Worker<N> for Mqtt {
                 // topic_handler(node, _TOPIC_MESSAGES_REFERENCED, |_event: &_| {
                 //     (_TOPIC_MESSAGES_REFERENCED, "")
                 // });
-                // topic_handler(node, _TOPIC_MESSAGES_INDEXATION, |_event: &_| {
-                //     (_TOPIC_MESSAGES_INDEXATION, "")
-                // });
                 // topic_handler(node, _TOPIC_MESSAGES_METADATA, |_event: &_| {
                 //     (_TOPIC_MESSAGES_METADATA, "")
                 // });

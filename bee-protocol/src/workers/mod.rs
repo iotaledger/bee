@@ -24,8 +24,8 @@ pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
 pub(crate) use heartbeater::HeartbeaterWorker;
 pub(crate) use index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
 pub(crate) use message::{
-    HasherWorker, HasherWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker,
-    PayloadWorker, PayloadWorkerEvent, ProcessorWorker, TransactionPayloadWorker, UnreferencedMessageInserterWorker,
+    HasherWorker, HasherWorkerEvent, MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent, ProcessorWorker,
+    TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent, TransactionPayloadWorker, UnreferencedMessageInserterWorker,
     UnreferencedMessageInserterWorkerEvent,
 };
 pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
@@ -74,7 +74,7 @@ where
         .with_worker::<PayloadWorker>()
         .with_worker::<TransactionPayloadWorker>()
         .with_worker_cfg::<MilestonePayloadWorker>(config.clone())
-        .with_worker::<IndexationPayloadWorker>()
+        .with_worker::<TaggedDataPayloadWorker>()
         .with_worker::<PayloadWorker>()
         .with_worker::<BroadcasterWorker>()
         .with_worker::<PropagatorWorker>()
