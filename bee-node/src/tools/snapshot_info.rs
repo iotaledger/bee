@@ -7,7 +7,7 @@ use bee_ledger::types::{
 };
 
 use chrono::{offset::TimeZone, Utc};
-use packable::Packable;
+use packable::{unpacker::IoUnpacker, Packable};
 use structopt::StructOpt;
 use thiserror::Error;
 
@@ -17,8 +17,10 @@ use std::{fs::OpenOptions, io::BufReader, path::Path};
 pub enum SnapshotInfoError {
     #[error("{0}")]
     Io(#[from] std::io::Error),
-    #[error("Invalid snapshot header: {0}")]
+    #[error("invalid snapshot header: {0}")]
     InvalidSnapshotHeader(#[from] SnapshotError),
+    #[error("unpacking snapshot failed")]
+    SnapshotUnpack,
 }
 
 #[derive(Clone, Debug, StructOpt)]
@@ -44,8 +46,9 @@ pub fn print_delta_header(header: DeltaSnapshotHeader) {
 
 pub fn exec(tool: &SnapshotInfoTool) -> Result<(), SnapshotInfoError> {
     let mut reader = BufReader::new(OpenOptions::new().read(true).open(Path::new(&tool.path))?);
+    let mut unpacker = IoUnpacker::new(&mut reader);
 
-    let header = SnapshotHeader::unpack(&mut reader)?;
+    let header = SnapshotHeader::unpack::<_, true>(&mut unpacker).map_err(|_| SnapshotInfoError::SnapshotUnpack)?;
 
     println!("Type:\t\t\t\t{:?}", header.kind());
     println!(
@@ -58,8 +61,12 @@ pub fn exec(tool: &SnapshotInfoTool) -> Result<(), SnapshotInfoError> {
     println!("Ledger index:\t\t\t{}", *header.ledger_index());
 
     match header.kind() {
-        SnapshotKind::Full => print_full_header(FullSnapshotHeader::unpack(&mut reader)?),
-        SnapshotKind::Delta => print_delta_header(DeltaSnapshotHeader::unpack(&mut reader)?),
+        SnapshotKind::Full => print_full_header(
+            FullSnapshotHeader::unpack::<_, true>(&mut unpacker).map_err(|_| SnapshotInfoError::SnapshotUnpack)?,
+        ),
+        SnapshotKind::Delta => print_delta_header(
+            DeltaSnapshotHeader::unpack::<_, true>(&mut unpacker).map_err(|_| SnapshotInfoError::SnapshotUnpack)?,
+        ),
     };
 
     Ok(())

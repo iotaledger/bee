@@ -2,14 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_ledger::types::{
-    snapshot::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
-    Unspent,
+    snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
 };
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::{IndexationPayload, PaddedIndex},
     Message, MessageId,
 };
 use bee_storage::{
@@ -101,27 +99,6 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
             }
             SledCommand::Iterator => {
                 let iterator = AsIterator::<(MessageId, MessageId), ()>::iter(storage)?;
-
-                for result in iterator {
-                    let (key, value) = result?;
-                    println!("Key: {:?}\nValue: {:?}\n", key, value);
-                }
-            }
-        },
-        TREE_INDEX_TO_MESSAGE_ID => match &tool.command {
-            SledCommand::Fetch { key } => {
-                let key = IndexationPayload::new(
-                    &hex::decode(key.clone()).map_err(|_| SledError::InvalidKey(key.clone()))?,
-                    &[],
-                )
-                .map_err(|_| SledError::InvalidKey(key.clone()))?
-                .padded_index();
-                let value = Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &key)?;
-
-                println!("Key: {:?}\nValue: {:?}\n", key, value);
-            }
-            SledCommand::Iterator => {
-                let iterator = AsIterator::<(PaddedIndex, MessageId), ()>::iter(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
@@ -257,22 +234,6 @@ fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
             }
             SledCommand::Iterator => {
                 let iterator = AsIterator::<MilestoneIndex, OutputDiff>::iter(storage)?;
-
-                for result in iterator {
-                    let (key, value) = result?;
-                    println!("Key: {:?}\nValue: {:?}\n", key, value);
-                }
-            }
-        },
-        TREE_ADDRESS_TO_BALANCE => match &tool.command {
-            SledCommand::Fetch { key } => {
-                let key = Address::from(Ed25519Address::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?);
-                let value = Fetch::<Address, Balance>::fetch(storage, &key)?;
-
-                println!("Key: {:?}\nValue: {:?}\n", key, value);
-            }
-            SledCommand::Iterator => {
-                let iterator = AsIterator::<Address, Balance>::iter(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
