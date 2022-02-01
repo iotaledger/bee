@@ -12,7 +12,7 @@ use packable::{
     Packable,
 };
 
-const SNAPSHOT_VERSION: u8 = 1;
+const SNAPSHOT_VERSION: u8 = 2;
 
 /// Describes a snapshot header common to full and delta snapshots.
 #[derive(Clone)]
