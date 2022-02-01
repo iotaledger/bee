@@ -8,6 +8,8 @@ use crate::{
     Error,
 };
 
+use crypto::hashes::{blake2b::Blake2b256, Digest};
+use iterator_sorted::is_unique_sorted;
 use packable::{
     bounded::BoundedU8,
     error::{UnpackError, UnpackErrorExt},
@@ -16,9 +18,6 @@ use packable::{
     unpacker::Unpacker,
     Packable, PackableExt,
 };
-
-use crypto::hashes::{blake2b::Blake2b256, Digest};
-use iterator_sorted::is_unique_sorted;
 
 use alloc::vec::Vec;
 use core::ops::RangeInclusive;
