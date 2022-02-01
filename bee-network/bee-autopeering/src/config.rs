@@ -39,6 +39,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     fmt::Debug,
     net::{IpAddr, Ipv4Addr, SocketAddr},
+    path::{Path, PathBuf},
 };
 
 const AUTOPEERING_ENABLED_DEFAULT: bool = false;
@@ -48,6 +49,7 @@ const AUTOPEERING_BIND_PORT_DEFAULT: u16 = 14626;
 const ENTRYNODES_PREFER_IPV6_DEFAULT: bool = false;
 const RUN_AS_ENTRYNODE_DEFAULT: bool = false;
 const DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT: bool = false;
+const PEER_STORAGE_PATH_DEFAULT: &str = "./storage/mainnet/peers";
 
 /// The autopeering config.
 #[derive(Clone, Debug)]
@@ -58,6 +60,7 @@ pub struct AutopeeringConfig {
     entry_nodes_prefer_ipv6: bool,
     run_as_entry_node: bool,
     drop_neighbors_on_salt_update: bool,
+    peer_storage_path: PathBuf,
 }
 
 impl AutopeeringConfig {
@@ -96,6 +99,11 @@ impl AutopeeringConfig {
         self.entry_nodes
     }
 
+    /// The peer storage path.
+    pub fn peer_storage_path(&self) -> &Path {
+        &self.peer_storage_path
+    }
+
     /// Turns the [`AutopeeringConfig`] into its JSON representation.
     pub fn into_json_config(self) -> AutopeeringConfigJsonBuilder {
         AutopeeringConfigJsonBuilder {
@@ -105,6 +113,7 @@ impl AutopeeringConfig {
             entry_nodes_prefer_ipv6: Some(self.entry_nodes_prefer_ipv6),
             run_as_entry_node: Some(self.run_as_entry_node),
             drop_neighbors_on_salt_update: Some(self.drop_neighbors_on_salt_update),
+            peer_storage_path: Some(self.peer_storage_path),
         }
     }
 
@@ -117,6 +126,7 @@ impl AutopeeringConfig {
             entry_nodes_prefer_ipv6: Some(self.entry_nodes_prefer_ipv6),
             run_as_entry_node: Some(self.run_as_entry_node),
             drop_neighbors_on_salt_update: Some(self.drop_neighbors_on_salt_update),
+            peer_storage_path: Some(self.peer_storage_path),
         }
     }
 }
@@ -150,6 +160,9 @@ pub struct AutopeeringConfigJsonBuilder {
     /// Whether all neighbors should be disconnected from when the salts are updated.
     #[serde(rename = "dropNeighborsOnSaltUpdate")]
     pub drop_neighbors_on_salt_update: Option<bool>,
+    /// The peer storage path.
+    #[serde(rename = "peerStoragePath")]
+    pub peer_storage_path: Option<PathBuf>,
 }
 
 impl AutopeeringConfigJsonBuilder {
@@ -165,6 +178,9 @@ impl AutopeeringConfigJsonBuilder {
             drop_neighbors_on_salt_update: self
                 .drop_neighbors_on_salt_update
                 .unwrap_or(DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT),
+            peer_storage_path: self
+                .peer_storage_path
+                .unwrap_or_else(|| PEER_STORAGE_PATH_DEFAULT.into()),
         }
     }
 }
@@ -178,6 +194,7 @@ impl Default for AutopeeringConfigJsonBuilder {
             entry_nodes_prefer_ipv6: Some(ENTRYNODES_PREFER_IPV6_DEFAULT),
             run_as_entry_node: Some(RUN_AS_ENTRYNODE_DEFAULT),
             drop_neighbors_on_salt_update: Some(DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT),
+            peer_storage_path: Some(PEER_STORAGE_PATH_DEFAULT.into()),
         }
     }
 }
@@ -190,7 +207,7 @@ impl Default for AutopeeringConfigJsonBuilder {
 #[must_use]
 #[serde(rename = "autopeering")]
 pub struct AutopeeringConfigTomlBuilder {
-    /// Wether autopeering should be enabled.
+    /// Whether autopeering should be enabled.
     pub enabled: bool,
     /// The bind address for the server.
     #[serde(rename = "bind_address")]
@@ -203,6 +220,8 @@ pub struct AutopeeringConfigTomlBuilder {
     pub run_as_entry_node: Option<bool>,
     /// Whether all neighbors should be disconnected from when the salts are updated.
     pub drop_neighbors_on_salt_update: Option<bool>,
+    /// The peer storage path.
+    pub peer_storage_path: Option<PathBuf>,
 }
 
 impl AutopeeringConfigTomlBuilder {
@@ -217,6 +236,9 @@ impl AutopeeringConfigTomlBuilder {
             drop_neighbors_on_salt_update: self
                 .drop_neighbors_on_salt_update
                 .unwrap_or(DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT),
+            peer_storage_path: self
+                .peer_storage_path
+                .unwrap_or_else(|| PEER_STORAGE_PATH_DEFAULT.into()),
         }
     }
 }
@@ -230,6 +252,7 @@ impl Default for AutopeeringConfigTomlBuilder {
             entry_nodes_prefer_ipv6: Some(ENTRYNODES_PREFER_IPV6_DEFAULT),
             run_as_entry_node: Some(RUN_AS_ENTRYNODE_DEFAULT),
             drop_neighbors_on_salt_update: Some(DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT),
+            peer_storage_path: Some(PEER_STORAGE_PATH_DEFAULT.into()),
         }
     }
 }
@@ -264,7 +287,8 @@ mod tests {
             ],
             "entryNodesPreferIPv6": true,
             "runAsEntryNode": false,
-            "dropNeighborsOnSaltUpdate": false
+            "dropNeighborsOnSaltUpdate": false,
+            "peerStoragePath": "./storage/mainnet/peers"
         }"#;
 
         serde_json::from_str(config_json_str).expect("error deserializing json config")
@@ -283,6 +307,7 @@ mod tests {
             entry_nodes_prefer_ipv6 = true
             run_as_entry_node = false
             drop_neighbors_on_salt_update = false
+            peer_storage_path = "./storage/mainnet/peers"
         "#;
 
         toml::from_str(toml_config_str).unwrap()
@@ -301,6 +326,7 @@ mod tests {
             entry_nodes_prefer_ipv6: true,
             run_as_entry_node: false,
             drop_neighbors_on_salt_update: false,
+            peer_storage_path: "./storage/mainnet/peers".into()
         }
     }
 

@@ -16,7 +16,6 @@ use crate::{
     },
 };
 
-use bee_common::time;
 use bee_message::{
     milestone::MilestoneIndex,
     output::{self, Output, OutputId},
@@ -31,6 +30,7 @@ use packable::{
     unpacker::{IoUnpacker, Unpacker},
     Packable,
 };
+use time_helper as time;
 
 use std::{
     collections::HashMap,

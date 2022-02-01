@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-/// Errors that can occur during sending/receiving of [`Command`]s and [`Event`]s.
+/// Errors that can occur during sending/receiving of [`Command`](crate::Command)s and [`Event`](crate::Event)s.
 #[derive(Debug, thiserror::Error)]
 // TODO
 #[allow(clippy::enum_variant_names)]

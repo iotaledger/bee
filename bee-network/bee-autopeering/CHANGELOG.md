@@ -19,6 +19,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.3.0 - 2022-01-20
+
+### Added
+
+- `rocksdb` as backend for the peer store;
+
+## 0.2.0 - 2022-01-20
+
+### Changed
+
+- Improved logged messages;
+
+### Fixed
+
+- Slow in finding first peers;
+- Accepting invalid peering requests;
+
 ## 0.1.1 - 2022-01-13
 
 ### Fixed

@@ -73,7 +73,7 @@ impl<'a> SourceInformation<'a> {
     ) -> Result<(), Error> {
         download_snapshot_file(full_snapshot_path, self.urls.full()).await?;
 
-        if let Some(delta_path) = delta_snapshot_path {
+        if let (Some(delta_path), Some(_)) = (delta_snapshot_path, &self.delta_header) {
             download_snapshot_file(delta_path, self.urls.delta()).await?;
         }
 

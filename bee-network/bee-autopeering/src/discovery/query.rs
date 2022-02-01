@@ -13,7 +13,7 @@ use crate::{
     task::Repeat,
 };
 
-use rand::{thread_rng, Rng};
+use rand::{thread_rng, Rng as _};
 
 #[derive(Clone)]
 pub(crate) struct QueryContext {

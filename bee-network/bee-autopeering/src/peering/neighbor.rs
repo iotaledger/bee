@@ -27,7 +27,7 @@ where
     Self: Send + Sync + Clone,
 {
     /// Returns `true` if the given [`Peer`](crate::peer::Peer) is a valid neighbor.
-    fn is_valid(&self, peer: &Peer) -> bool;
+    fn is_valid<P: AsRef<Peer>>(&self, peer: P) -> bool;
 }
 
 // A neighbor is a peer with a distance metric.

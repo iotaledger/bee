@@ -8,9 +8,8 @@ use crate::{
     Error,
 };
 
-use bee_common::ord::is_unique_sorted;
-
 use crypto::hashes::{blake2b::Blake2b256, Digest};
+use iterator_sorted::is_unique_sorted;
 use packable::{
     bounded::BoundedU8,
     error::{UnpackError, UnpackErrorExt},

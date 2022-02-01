@@ -22,7 +22,7 @@ pub enum Error {
     #[error("failed to bind to an address")]
     BindingAddressFailed,
 
-    /// An error occurred in the [`Host`] event loop.
+    /// An error occurred in the host event loop.
     #[error("failed to process an item in the host processor event loop")]
     HostEventLoopError,
 }

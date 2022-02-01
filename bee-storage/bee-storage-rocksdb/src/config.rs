@@ -10,7 +10,7 @@ use std::path::PathBuf;
 const DEFAULT_FETCH_EDGE_LIMIT: usize = 1_000;
 const DEFAULT_FETCH_OUTPUT_ID_LIMIT: usize = 1_000;
 
-const DEFAULT_PATH: &str = "./storage/mainnet";
+const DEFAULT_PATH: &str = "./storage/mainnet/tangle";
 const DEFAULT_CREATE_IF_MISSING: bool = true;
 const DEFAULT_CREATE_MISSING_COLUMN_FAMILIES: bool = true;
 const DEFAULT_ENABLE_STATISTICS: bool = false;

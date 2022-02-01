@@ -99,7 +99,7 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
     }
 
     /// Executes the system shutdown.
-    pub(crate) async fn shutdown(self) {
+    pub(crate) async fn shutdown(self) -> Result<(), S::Error> {
         let TaskManager {
             mut shutdown_order,
             mut shutdown_handles,
@@ -141,12 +141,14 @@ impl<S: PeerStore, const N: usize> TaskManager<S, N> {
             log::warn!("Not all spawned tasks were shut down in time: {}.", e);
         }
 
-        log::info!("Flushing data to peer store...");
+        log::debug!("Flushing data to peer store...");
 
-        peer_store.delete_all();
-        peer_store.store_all_active(&active_peers);
-        peer_store.store_all_replacements(&replacements);
+        peer_store.delete_all()?;
+        peer_store.store_all_active(&active_peers)?;
+        peer_store.store_all_replacements(&replacements)?;
 
         log::info!("Done.");
+
+        Ok(())
     }
 }

@@ -1,11 +1,13 @@
+# cargo-features = [ "strip" ]
+
 [workspace]
 members = [
 	"bee-api/bee-rest-api",
-	"bee-common/bee-common",
 	"bee-ledger",
 	"bee-message",
 	"bee-network/bee-autopeering",
 	"bee-network/bee-gossip",
+	"bee-node",
 	"bee-pow",
 	"bee-protocol",
 	"bee-runtime",
@@ -25,3 +27,10 @@ panic = "abort"
 
 [profile.release]
 panic = "abort"
+
+[profile.production]
+codegen-units = 1
+inherits = "release"
+lto = true
+panic = "abort"
+# strip = "symbols"

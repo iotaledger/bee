@@ -308,11 +308,13 @@ impl PeerList {
             } else if self.banned_addrs.contains(&peer_info.address) {
                 Err(Error::AddressIsBanned(peer_info.address.clone()))
             } else if peer_info.relation.is_unknown()
-                && self.filter_count(|info, _| info.relation.is_unknown()) >= global::max_unknown_peers()
+                && self.filter_count(|info, status| info.relation.is_unknown() && status.is_connected())
+                    >= global::max_unknown_peers()
             {
                 Err(Error::ExceedsUnknownPeerLimit(global::max_unknown_peers()))
             } else if peer_info.relation.is_discovered()
-                && self.filter_count(|info, _| info.relation.is_discovered()) >= global::max_discovered_peers()
+                && self.filter_count(|info, status| info.relation.is_discovered() && status.is_connected())
+                    >= global::max_discovered_peers()
             {
                 Err(Error::ExceedsDiscoveredPeerLimit(global::max_discovered_peers()))
             } else {

@@ -69,7 +69,7 @@ fn update_outbound<V: NeighborValidator + 'static>(ctx: &UpdateContext<V>) {
     let mut candidates = ctx.nb_filter.apply_list(&verif_peers);
 
     if candidates.is_empty() {
-        log::trace!("Currently no suitable candidates.");
+        log::trace!("Currently no suitable peering candidates.");
         return;
     }
 
