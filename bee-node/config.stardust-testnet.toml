@@ -1,8 +1,8 @@
 # Duplicate this file to config.toml to use it
 
-alias      = "bee"
+alias      = "Bee stardust-testnet node"
 bech32_hrp = "atoi"
-network_id = "comnet1"
+network_id = "stardust-testnet-1"
 
 [logger]
 [[logger.outputs]]
@@ -32,25 +32,39 @@ max_discovered_peers    = 8
 enabled = false
 bind_address = "0.0.0.0:14626"
 entry_nodes = [
-    "/dns/entry.comnet.tanglebay.com/udp/14636/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC",
+    "/dns/entry-hornet-0.h.stardust-testnet.iotaledger.net/udp/14626/autopeering/Bv8UUxy81fqpttowiFiBsNT6mnGMFoFNjk79iG1f9nEr",
+    "/dns/entry-hornet-1.h.stardust-testnet.iotaledger.net/udp/14626/autopeering/CbYtFzRQtqeNQJQFYRZk1WewxfKCmqXCHZ16od1d23PX"
 ]
 entry_nodes_prefer_ipv6 = false
 run_as_entry_node = false
 drop_neighbors_on_salt_update = false
-peer_storage_path = "./storage/comnet/peers"
+peer_storage_path = "./storage/shimmer/testnet/peers"
 
 [protocol]
-minimum_pow_score = 2000
+minimum_pow_score = 1000
 [protocol.coordinator]
-public_key_count  = 2
+public_key_count  = 3
 [[protocol.coordinator.public_key_ranges]]
-public_key  = "2b2ae4ed9d74f0feb362eb9b40d5d5b7ca01b84f1eaf328510f69b7ed3fbb0a5"
+public_key  = "d9922819a39e94ddf3907f4b9c8df93f39f026244fcb609205b9a879022599f2"
 start       = 0
 end         = 0
 [[protocol.coordinator.public_key_ranges]]
-public_key  = "68ac543fa797c5b555eba02e0d5e594d691c983aba7e029dc097eaf9f3ae5e55"
+public_key  = "d85e5b1590d898d1e0cdebb2e3b5337c8b76270142663d78811683ba47c17c98"
 start       = 0
 end         = 0
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "f9d9656a60049083eef61487632187b351294c1fa23d118060d813db6d03e8b6"
+start       = 0
+end         = 0
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "3df80964cc83921e08c1fa0a4f5fc05810a634da45461b2b315fcbfd62f7cab7"
+start       = 0
+end         = 0
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "8e222ae7e2adcfb87a2984a19aad52b1979ed1472c3cb17239a73ef1d344c35a"
+start       = 0
+end         = 0
+
 [protocol.workers]
 status_interval       = 10
 milestone_sync_count  = 200
@@ -89,11 +103,11 @@ white_flag_solidification_timeout = 2
 depth             = 50
 interval_synced   = 50
 interval_unsynced = 1000
-full_path         = "./snapshots/comnet/full_snapshot.bin"
-delta_path        = "./snapshots/comnet/delta_snapshot.bin"
+full_path   = "./snapshots/shimmer/testnet/full_snapshot.bin"
+delta_path  = "./snapshots/shimmer/testnet/delta_snapshot.bin"
 [[snapshot.download_urls]]
-full        = "https://cdn.tanglebay.com/snapshots/comnet/full_snapshot.bin"
-delta       = "https://cdn.tanglebay.com/snapshots/comnet/delta_snapshot.bin"
+full        = "https://files.stardust-testnet.iotaledger.net/snapshots/latest-full_snapshot.bin"
+delta       = "https://files.stardust-testnet.iotaledger.net/snapshots/latest-delta_snapshot.bin"
 
 [pruning]
 enabled         = true
@@ -101,7 +115,7 @@ delay           = 60480
 prune_receipts  = false
 
 [storage]
-path = "./storage/comnet/tangle"
+path = "./storage/shimmer/testnet/tangle"
 
 [tangle]
 below_max_depth = 15
