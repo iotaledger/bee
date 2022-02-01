@@ -244,7 +244,7 @@ async fn traverse_past_cone<B: StorageBackend>(
 }
 
 /// Computes the ledger state according to the White Flag method.
-/// RFC: https://github.com/iotaledger/protocol-rfcs/blob/master/text/0005-white-flag/0005-white-flag.md
+/// RFC: <https://github.com/iotaledger/protocol-rfcs/blob/master/text/0005-white-flag/0005-white-flag.md>
 pub async fn white_flag<B: StorageBackend>(
     tangle: &Tangle<B>,
     storage: &B,
