@@ -6,6 +6,10 @@ pub(crate) mod error;
 pub(crate) mod extended;
 pub(crate) mod foundry;
 pub(crate) mod nft;
+pub(crate) mod status;
+pub(crate) mod types;
+
+// TODO: Check `pub(crate)` visibility of all types.
 
 use chrono::Local;
 
@@ -40,22 +44,56 @@ fn offset_to_naive_date_time(offset: &[u8]) -> Result<NaiveDateTime, IndexerErro
 }
 
 impl Indexer {
-    pub async fn new() -> Self {
-        let db = Database::connect("sqlite:memory:").await.unwrap();
+    pub async fn new() -> Result<Self, IndexerError> {
+        // For now, the database lives in memory.
+        let db = Database::connect("sqlite::memory:").await.unwrap();
 
         let builder = db.get_database_backend();
         let schema = Schema::new(builder);
 
-        builder.build(&schema.create_table_from_entity(alias::Entity));
+        db.execute(builder.build(&schema.create_table_from_entity(alias::Entity)))
+            .await
+            .map_err(IndexerError::DatabaseError)?;
+        db.execute(builder.build(&schema.create_table_from_entity(status::Entity)))
+            .await
+            .map_err(IndexerError::DatabaseError)?;
 
         // TODO: Create indices!
 
-        Self { db }
+        // Initialize the status table.
+        let status = status::ActiveModel {
+            id: Set(1),
+            current_milestone_index: Set(0),
+        };
+        status.insert(&db).await.map_err(IndexerError::DatabaseError)?;
+
+        Ok(Self { db })
+    }
+
+    pub async fn update_status(&self, milestone_index: MilestoneIndex) -> Result<(), IndexerError> {
+        let status = status::Entity::find_by_id(1)
+            .one(&self.db)
+            .await
+            .map_err(IndexerError::DatabaseError)?;
+        // Safety: There is always only one status at `id = 1`.
+        let mut status: status::ActiveModel = status.unwrap().into();
+        status.current_milestone_index = Set(milestone_index.0);
+        // We are not interested int the returned `id`.
+        let _ = status.update(&self.db).await.map_err(IndexerError::DatabaseError)?;
+        Ok(())
+    }
+
+    pub async fn current_status(&self) -> Result<MilestoneIndex, IndexerError> {
+        let status = status::Entity::find_by_id(1)
+            .one(&self.db)
+            .await
+            .map_err(IndexerError::DatabaseError)?;
+        // Safety: We can unwrap, because we guarantee that there is always one row in the table.
+        Ok(MilestoneIndex(status.unwrap().current_milestone_index))
     }
 
     pub async fn process_created_output(&self, created: &OutputCreated) -> Result<(), sea_orm::error::DbErr> {
         let output_id = created.output_id;
-        let milestone_index = 42u32; // TODO: Add milestone index.
 
         match &created.output {
             Output::Alias(output) => {
@@ -67,9 +105,8 @@ impl Indexer {
                     amount: Set(output.amount() as i64), // TODO: Fix type?
                     state_controller: Set(hex::encode(output.state_controller())),
                     governor: Set(hex::encode(output.governor())),
-                    issuer: NotSet,                               // TODO: Fix
-                    sender: NotSet,                               // TODO: Fix
-                    milestone_index: Set(milestone_index as i64), // TODO:
+                    issuer: NotSet, // TODO: Fix
+                    sender: NotSet, // TODO: Fix
                 };
                 alias.insert(&self.db).await?;
             }
@@ -162,6 +199,14 @@ pub struct AliasFilterOptions {
     pub offset: Option<Vec<u8>>,
 }
 
+#[derive(Debug)]
+struct IndexerResult {
+    output_ids: Vec<OutputId>,
+    milestone_index: MilestoneIndex,
+    page_size: usize,
+    next_offset: Option<Vec<u8>>,
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -180,4 +225,6 @@ mod test {
         let result = offset_to_naive_date_time(offset).unwrap();
         assert_eq!(result, expected);
     }
+
+    // TODO: Testcase for max amount transaction
 }
