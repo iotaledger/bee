@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-/// Errors that can occur during sending/receiving of [`Command`]s and [`Event`]s.
+/// Errors that can occur during sending/receiving of [`Command`](crate::service::command::Command)s and
+/// [`Event`](crate::service::event::Event)s.
 #[derive(Debug, thiserror::Error)]
-// TODO
 #[allow(clippy::enum_variant_names)]
 pub enum Error {
     /// A command could not be sent.
