@@ -310,8 +310,7 @@ impl Packable for FoundryOutput {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let amount = OutputAmount::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| Error::InvalidOutputAmount(err.into()))?;
+        let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let serial_number = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
         let token_tag = <[u8; 12]>::unpack::<_, VERIFY>(unpacker).infallible()?;

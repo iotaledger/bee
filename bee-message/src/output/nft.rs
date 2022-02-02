@@ -230,8 +230,7 @@ impl Packable for NftOutput {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let amount = OutputAmount::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| Error::InvalidOutputAmount(err.into()))?;
+        let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let nft_id = NftId::unpack::<_, VERIFY>(unpacker).infallible()?;
         let immutable_metadata = BoxedSlicePrefix::<u8, ImmutableMetadataLength>::unpack::<_, VERIFY>(unpacker)
