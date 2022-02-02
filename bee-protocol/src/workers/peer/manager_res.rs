@@ -52,10 +52,39 @@ impl<N: Node> Worker<N> for PeerManagerResWorker {
 type PeerTuple = (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>);
 
 #[derive(Default)]
-pub struct PeerManagerInner {
-    peers: HashMap<PeerId, PeerTuple>,
-    // This is needed to ensure message distribution fairness as iterating over a HashMap is random.
-    keys: Vec<PeerId>,
+struct PeerManagerInner {
+    peers: Vec<(PeerId, PeerTuple)>,
+}
+
+impl PeerManagerInner {
+    fn get(&self, id: &PeerId) -> Option<&PeerTuple> {
+        self.peers
+            .binary_search_by_key(id, |(id, _)| *id)
+            .ok()
+            .map(|i| &self.peers[i].1)
+    }
+
+    fn get_mut(&mut self, id: &PeerId) -> Option<&mut PeerTuple> {
+        self.peers
+            .binary_search_by_key(id, |(id, _)| *id)
+            .ok()
+            .map(|i| &mut self.peers[i].1)
+    }
+
+    fn insert(&mut self, id: PeerId, peer: PeerTuple) {
+        match self.peers.binary_search_by_key(&id, |(id, _)| *id) {
+            Ok(i) => self.peers[i] = (id, peer),
+            Err(i) => self.peers.insert(i, (id, peer)),
+        }
+    }
+
+    fn remove(&mut self, id: &PeerId) -> Option<PeerTuple> {
+        if let Ok(i) = self.peers.binary_search_by_key(id, |(id, _)| *id) {
+            Some(self.peers.remove(i).1)
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Default)]
@@ -75,11 +104,11 @@ impl PeerManager {
 
     // TODO find a way to only return a ref to the peer.
     pub fn get(&self, id: &PeerId) -> Option<impl std::ops::Deref<Target = PeerTuple> + '_> {
-        RwLockReadGuard::try_map(self.inner.read(), |map| map.peers.get(id)).ok()
+        RwLockReadGuard::try_map(self.inner.read(), |map| map.get(id)).ok()
     }
 
     pub fn get_mut(&self, id: &PeerId) -> Option<impl std::ops::DerefMut<Target = PeerTuple> + '_> {
-        RwLockWriteGuard::try_map(self.inner.write(), |map| map.peers.get_mut(id)).ok()
+        RwLockWriteGuard::try_map(self.inner.write(), |map| map.get_mut(id)).ok()
     }
 
     pub fn get_all(&self) -> Vec<Arc<Peer>> {
@@ -95,32 +124,30 @@ impl PeerManager {
     pub(crate) fn add(&self, peer: Arc<Peer>) {
         debug!("Added peer {}.", peer.id());
         let mut lock = self.inner.write();
-        lock.keys.push(*peer.id());
-        lock.peers.insert(*peer.id(), (peer, None));
+        lock.insert(*peer.id(), (peer, None));
     }
 
     pub(crate) fn remove(&self, id: &PeerId) -> Option<PeerTuple> {
         debug!("Removed peer {}.", id);
         let mut lock = self.inner.write();
-        lock.keys.retain(|peer_id| peer_id != id);
-        lock.peers.remove(id)
+        lock.remove(id)
     }
 
     pub(crate) fn for_each<F: Fn(&PeerId, &Peer)>(&self, f: F) {
         self.inner.read().peers.iter().for_each(|(id, (peer, _))| f(id, peer));
     }
 
+    /// Find one peer that satisfies a condition. If more than one peer satisfies this condition,
+    /// each peer is equally likely to be returned.
     pub(crate) fn fair_find(&self, f: impl Fn(&Peer) -> bool) -> Option<PeerId> {
         let guard = self.inner.read();
 
-        for _ in 0..guard.keys.len() {
+        for _ in 0..guard.peers.len() {
             let counter = self.counter.fetch_add(1, Ordering::Relaxed);
-            let peer_id = &guard.keys[counter % guard.keys.len()];
+            let (peer_id, (peer, _)) = &guard.peers[counter % guard.peers.len()];
 
-            if let Some((peer, _)) = guard.peers.get(peer_id) {
-                if f(peer.as_ref()) {
-                    return Some(*peer_id);
-                }
+            if f(peer.as_ref()) {
+                return Some(*peer_id);
             }
         }
 
@@ -130,7 +157,7 @@ impl PeerManager {
     }
 
     pub fn is_connected(&self, id: &PeerId) -> bool {
-        self.inner.read().peers.get(id).map_or(false, |p| p.1.is_some())
+        self.inner.read().get(id).map_or(false, |p| p.1.is_some())
     }
 
     pub fn connected_peers(&self) -> u8 {
