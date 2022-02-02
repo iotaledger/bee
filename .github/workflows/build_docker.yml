@@ -1,0 +1,20 @@
+name: Build Docker
+
+on:
+  pull_request:
+    paths:
+      - "bee-node/docker/Dockerfile"
+      - "bee-node/docker/docker-compose.yml"
+
+jobs:
+  build:
+    name: Build Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build Bee Docker image
+        run: docker-compose -f ./bee-node/docker/docker-compose.yml build --build-arg WITH_DASHBOARD=false
+
+      - name: Test Bee Docker image
+        run: docker-compose -f ./bee-node/docker/docker-compose.yml run --entrypoint "/bee --version" bee | grep -q "bee-node"
