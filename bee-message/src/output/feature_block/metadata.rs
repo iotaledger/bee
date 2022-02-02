@@ -3,13 +3,13 @@
 
 use crate::Error;
 
-use packable::{bounded::BoundedU32, prefix::BoxedSlicePrefix};
+use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix};
 
 use alloc::vec::Vec;
 use core::ops::RangeInclusive;
 
 pub(crate) type MetadataFeatureBlockLength =
-    BoundedU32<{ *MetadataFeatureBlock::LENGTH_RANGE.start() }, { *MetadataFeatureBlock::LENGTH_RANGE.end() }>;
+    BoundedU16<{ *MetadataFeatureBlock::LENGTH_RANGE.start() }, { *MetadataFeatureBlock::LENGTH_RANGE.end() }>;
 
 /// Defines metadata, arbitrary binary data, that will be stored in the output.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, packable::Packable)]
@@ -36,7 +36,7 @@ impl MetadataFeatureBlock {
     pub const KIND: u8 = 2;
 
     /// Valid lengths for a [`MetadataFeatureBlock`].
-    pub const LENGTH_RANGE: RangeInclusive<u32> = 1..=1024;
+    pub const LENGTH_RANGE: RangeInclusive<u16> = 1..=1024;
 
     /// Creates a new [`MetadataFeatureBlock`].
     #[inline(always)]
