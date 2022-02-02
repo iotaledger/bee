@@ -15,7 +15,7 @@ use crate::{
 };
 
 use packable::{
-    bounded::BoundedU32,
+    bounded::BoundedU16,
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     prefix::BoxedSlicePrefix,
@@ -150,7 +150,7 @@ impl AliasOutputBuilder {
     }
 }
 
-pub(crate) type StateMetadataLength = BoundedU32<0, { AliasOutput::STATE_METADATA_LENGTH_MAX }>;
+pub(crate) type StateMetadataLength = BoundedU16<0, { AliasOutput::STATE_METADATA_LENGTH_MAX }>;
 
 /// Describes an alias account in the ledger that can be controlled by the state and governance controllers.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -177,7 +177,7 @@ impl AliasOutput {
     /// The [`Output`](crate::output::Output) kind of an [`AliasOutput`].
     pub const KIND: u8 = 4;
     /// Maximum possible length in bytes of the state metadata.
-    pub const STATE_METADATA_LENGTH_MAX: u32 = 1024;
+    pub const STATE_METADATA_LENGTH_MAX: u16 = 1024;
 
     /// The set of allowed [`UnlockCondition`]s for an [`AliasOutput`].
     const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags =

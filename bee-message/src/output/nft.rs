@@ -15,7 +15,7 @@ use crate::{
 };
 
 use packable::{
-    bounded::BoundedU32,
+    bounded::BoundedU16,
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     prefix::BoxedSlicePrefix,
@@ -118,7 +118,7 @@ impl NftOutputBuilder {
     }
 }
 
-pub(crate) type ImmutableMetadataLength = BoundedU32<0, { NftOutput::IMMUTABLE_METADATA_LENGTH_MAX }>;
+pub(crate) type ImmutableMetadataLength = BoundedU16<0, { NftOutput::IMMUTABLE_METADATA_LENGTH_MAX }>;
 
 /// Describes an NFT output, a globally unique token with metadata attached.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -140,7 +140,7 @@ impl NftOutput {
     /// The [`Output`](crate::output::Output) kind of a [`NftOutput`].
     pub const KIND: u8 = 6;
     ///
-    pub const IMMUTABLE_METADATA_LENGTH_MAX: u32 = 1024;
+    pub const IMMUTABLE_METADATA_LENGTH_MAX: u16 = 1024;
 
     /// The set of allowed [`UnlockCondition`]s for an [`NftOutput`].
     const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS
