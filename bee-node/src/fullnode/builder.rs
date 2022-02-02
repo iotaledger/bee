@@ -388,12 +388,14 @@ async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
         hrp,
     } = config.network_spec().clone();
 
+    let node_id =  config.local.peer_id();
+    let node_key_pair = config.local.keypair().clone();
     let network_id = (network_name, network_id);
     let rest_api_cfg = config.rest_api_config.clone();
     let protocol_cfg = config.protocol_config.clone();
 
     let builder =
-        bee_rest_api::endpoints::init::<FullNode<S>>(rest_api_cfg, protocol_cfg, network_id, hrp, builder).await;
+        bee_rest_api::endpoints::init::<FullNode<S>>(node_id, node_key_pair, rest_api_cfg, protocol_cfg, network_id, hrp, builder).await;
 
     builder
 }

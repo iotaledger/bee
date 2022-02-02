@@ -10,9 +10,12 @@ use crate::{
         websocket::{user_connected, WsUsers},
     },
     storage::NodeStorageBackend,
+    Local,
 };
 
 use bee_rest_api::endpoints::config::RestApiConfig;
+use bee_rest_api::endpoints::permission::DASHBOARD_AUDIENCE_CLAIM;
+
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 
@@ -101,7 +104,7 @@ pub(crate) fn ws_routes<S: NodeStorageBackend>(
 }
 
 pub(crate) fn api_routes(
-    node_id: String,
+    local: Local,
     auth_config: DashboardAuthConfig,
     rest_api_config: RestApiConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
@@ -111,13 +114,13 @@ pub(crate) fn api_routes(
         .or(warp::get().and(warp::path!("api" / "v1" / "outputs" / ..)))
         .or(warp::get().and(warp::path!("api" / "v1" / "addresses" / ..)))
         .or(warp::get().and(warp::path!("api" / "v1" / "milestones" / ..)))
-        .or(auth_filter(node_id.clone(), auth_config.clone())
+        .or(auth_filter(local.clone(), auth_config.clone())
             .and(warp::get())
             .and(warp::path!("api" / "v1" / "peers" / ..)))
-        .or(auth_filter(node_id.clone(), auth_config.clone())
+        .or(auth_filter(local.clone(), auth_config.clone())
             .and(warp::post())
             .and(warp::path!("api" / "v1" / "peers" / ..)))
-        .or(auth_filter(node_id, auth_config)
+        .or(auth_filter(local, auth_config)
             .and(warp::delete())
             .and(warp::path!("api" / "v1" / "peers" / ..)));
 
@@ -130,18 +133,18 @@ pub(crate) fn api_routes(
 }
 
 pub fn auth_filter(
-    node_id: String,
+    local: Local,
     auth_config: DashboardAuthConfig,
 ) -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    let node_id_filter = warp::any().map(move || node_id.clone());
+    let local_filter = warp::any().map(move || local.clone());
     let auth_config_filter = warp::any().map(move || auth_config.clone());
 
     headers_cloned()
         .map(move |headers: HeaderMap<HeaderValue>| (headers))
-        .and(node_id_filter)
+        .and(local_filter)
         .and(auth_config_filter)
         .and_then(
-            move |headers: HeaderMap<HeaderValue>, node_id: String, auth_config: DashboardAuthConfig| async move {
+            move |headers: HeaderMap<HeaderValue>, local: Local, auth_config: DashboardAuthConfig| async move {
                 let header = match headers.get(AUTHORIZATION) {
                     Some(v) => v,
                     None => return Err(reject::custom(CustomRejection::Forbidden)),
@@ -158,10 +161,10 @@ pub fn auth_filter(
 
                 if jwt
                     .validate(
-                        node_id.clone(),
+                        local.peer_id().to_string(),
                         auth_config.user().to_owned(),
-                        AUDIENCE_CLAIM.to_owned(),
-                        b"secret",
+                        DASHBOARD_AUDIENCE_CLAIM.to_owned(),
+                        local.keypair().secret().as_ref(),
                     )
                     .is_err()
                 {
@@ -175,15 +178,15 @@ pub fn auth_filter(
 }
 
 pub(crate) fn auth_route(
-    node_id: String,
+    local: Local,
     auth_config: DashboardAuthConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    let node_id_filter = warp::any().map(move || node_id.clone());
+    let local_filter = warp::any().map(move || local.clone());
     let auth_config_filter = warp::any().map(move || auth_config.clone());
 
     warp::post()
         .and(warp::path("auth"))
-        .and(node_id_filter)
+        .and(local_filter)
         .and(auth_config_filter)
         .and(warp::body::json())
         .and_then(auth)
@@ -192,7 +195,7 @@ pub(crate) fn auth_route(
 pub(crate) fn routes<S: NodeStorageBackend>(
     storage: ResourceHandle<S>,
     tangle: ResourceHandle<Tangle<S>>,
-    node_id: String,
+    local: Local,
     auth_config: DashboardAuthConfig,
     rest_api_config: RestApiConfig,
     users: WsUsers,
@@ -200,7 +203,13 @@ pub(crate) fn routes<S: NodeStorageBackend>(
     index_filter()
         .or(asset_routes())
         .or(page_routes())
-        .or(ws_routes(storage, tangle, users, node_id.clone(), auth_config.clone()))
-        .or(api_routes(node_id.clone(), auth_config.clone(), rest_api_config))
-        .or(auth_route(node_id, auth_config))
+        .or(ws_routes(
+            storage,
+            tangle,
+            users,
+            local.peer_id().to_string(),
+            auth_config.clone(),
+        ))
+        .or(api_routes(local.clone(), auth_config.clone(), rest_api_config))
+        .or(auth_route(local, auth_config))
 }

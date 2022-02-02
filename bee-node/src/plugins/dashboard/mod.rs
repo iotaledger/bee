@@ -4,7 +4,7 @@
 pub mod config;
 
 mod asset;
-mod auth;
+pub mod auth;
 mod rejection;
 mod routes;
 mod websocket;
@@ -172,7 +172,7 @@ where
             let routes = routes::routes(
                 storage.clone(),
                 tangle.clone(),
-                node_config.local().peer_id().to_string(),
+                node_config.local().clone(),
                 config.auth().clone(),
                 rest_api_config.clone(),
                 users.clone(),
