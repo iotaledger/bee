@@ -830,7 +830,7 @@ pub struct ExtendedOutputDto {
     pub native_tokens: Vec<NativeTokenDto>,
     #[serde(rename = "unlockConditions")]
     pub unlock_conditions: Vec<UnlockConditionDto>,
-    #[serde(rename = "blocks")]
+    #[serde(rename = "featureBlocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
 }
 
@@ -1352,7 +1352,7 @@ pub struct AliasOutputDto {
     #[serde(rename = "unlockConditions")]
     pub unlock_conditions: Vec<UnlockConditionDto>,
     //
-    #[serde(rename = "blocks")]
+    #[serde(rename = "featureBlocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
 }
 
@@ -1439,7 +1439,7 @@ pub struct FoundryOutputDto {
     pub token_scheme: TokenSchemeDto,
     #[serde(rename = "unlockConditions")]
     pub unlock_conditions: Vec<UnlockConditionDto>,
-    #[serde(rename = "blocks")]
+    #[serde(rename = "featureBlocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
 }
 
@@ -1531,7 +1531,7 @@ pub struct NftOutputDto {
     pub immutable_data: String,
     #[serde(rename = "unlockConditions")]
     pub unlock_conditions: Vec<UnlockConditionDto>,
-    #[serde(rename = "blocks")]
+    #[serde(rename = "featureBlocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
 }
 
