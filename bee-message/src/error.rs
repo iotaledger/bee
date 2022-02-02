@@ -89,6 +89,7 @@ pub enum Error {
     MissingRequiredSenderBlock,
     MissingStateControllerUnlockCondition,
     NativeTokensNotUniqueSorted,
+    NativeTokensNullAmount,
     NonZeroStateIndexOrFoundryCounter,
     ParentsNotUniqueSorted,
     ReceiptFundsNotUniqueSorted,
@@ -234,6 +235,7 @@ impl fmt::Display for Error {
             Error::MissingRequiredSenderBlock => write!(f, "missing required sender block"),
             Error::MissingStateControllerUnlockCondition => write!(f, "missing state controller unlock condition"),
             Error::NativeTokensNotUniqueSorted => write!(f, "native tokens are not unique and/or sorted"),
+            Error::NativeTokensNullAmount => write!(f, "native tokens null amount"),
             Error::NonZeroStateIndexOrFoundryCounter => {
                 write!(f, "non zero state index or foundry counter while alias ID is all zero")
             }

@@ -894,7 +894,8 @@ impl TryFrom<&NativeTokenDto> for NativeToken {
                 .0
                 .parse::<U256>()
                 .map_err(|_| Error::InvalidField("amount"))?,
-        ))
+        )
+        .map_err(|_| Error::InvalidField("NativeTokens"))?)
     }
 }
 
