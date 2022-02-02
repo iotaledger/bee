@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+  bee:
+    build:
+      context: ../../
+      dockerfile: ./bee-node/docker/Dockerfile
+    image: bee:${IMAGE_TAG}
+    working_dir: /bee_workdir
+    tty: true # for colored logs
+    container_name: "bee"
+    # this env variables are set by the build_and_run script from config.toml
+    ports:
+      - ${BINDING_PORT}:${BINDING_PORT}
+      - ${BIND_ADDRESS_PORT}:${BIND_ADDRESS_PORT}
+      - ${MQTT_PORT}:${MQTT_PORT}
+      - ${DASHBOARD_PORT}:${DASHBOARD_PORT}
+    volumes:
+      - ../config.toml:/bee_workdir/config.toml
+      - ../storage:/bee_workdir/storage
+    # restart: always
