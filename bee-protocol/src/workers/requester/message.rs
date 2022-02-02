@@ -107,7 +107,6 @@ fn process_request(
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     requested_messages: &RequestedMessages,
-    counter: &mut usize,
 ) {
     if requested_messages.contains(&message_id) {
         return;
@@ -119,7 +118,7 @@ fn process_request(
 
     requested_messages.insert(message_id, index);
 
-    process_request_unchecked(message_id, index, peer_manager, metrics, counter);
+    process_request_unchecked(message_id, index, peer_manager, metrics);
 }
 
 fn process_request_unchecked(
@@ -127,13 +126,12 @@ fn process_request_unchecked(
     index: MilestoneIndex,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
-    counter: &mut usize,
 ) {
     let message_request = MessageRequestPacket::new(message_id);
 
     if let Some(peer_id) = peer_manager
-        .find_first_fairly(counter, |peer| peer.has_data(index))
-        .or_else(|| peer_manager.find_first_fairly(counter, |peer| peer.maybe_has_data(index)))
+        .fair_find(|peer| peer.has_data(index))
+        .or_else(|| peer_manager.fair_find(|peer| peer.maybe_has_data(index)))
     {
         Sender::<MessageRequestPacket>::send(&message_request, &peer_id, peer_manager, metrics)
     }
@@ -144,7 +142,6 @@ async fn retry_requests<B: StorageBackend>(
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     tangle: &Tangle<B>,
-    counter: &mut usize,
 ) {
     if peer_manager.is_empty() {
         return;
@@ -169,7 +166,7 @@ async fn retry_requests<B: StorageBackend>(
         if tangle.contains(&message_id).await {
             requested_messages.remove(&message_id);
         } else {
-            process_request_unchecked(message_id, index, peer_manager, metrics, counter);
+            process_request_unchecked(message_id, index, peer_manager, metrics);
         }
     }
 
@@ -211,19 +208,11 @@ where
                 info!("Requester running.");
 
                 let mut receiver = ShutdownStream::new(shutdown, req_queue.incoming());
-                let mut counter: usize = 0;
 
                 while let Some(MessageRequesterWorkerEvent(message_id, index)) = receiver.next().await {
                     trace!("Requesting message {}.", message_id);
 
-                    process_request(
-                        message_id,
-                        index,
-                        &peer_manager,
-                        &metrics,
-                        &requested_messages,
-                        &mut counter,
-                    );
+                    process_request(message_id, index, &peer_manager, &metrics, &requested_messages);
                 }
 
                 info!("Requester stopped.");
@@ -239,10 +228,9 @@ where
             info!("Retryer running.");
 
             let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(RETRY_INTERVAL)));
-            let mut counter: usize = 0;
 
             while ticker.next().await.is_some() {
-                retry_requests(&requested_messages, &peer_manager, &metrics, &tangle, &mut counter).await;
+                retry_requests(&requested_messages, &peer_manager, &metrics, &tangle).await;
             }
 
             info!("Retryer stopped.");
