@@ -29,7 +29,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: iotaledger/bee
+          images: iotaledger/bee-iota
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}

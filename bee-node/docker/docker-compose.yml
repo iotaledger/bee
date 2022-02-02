@@ -6,11 +6,11 @@ services:
       dockerfile: ./bee-node/docker/Dockerfile
       args:
         WITH_DASHBOARD: true
-    image: bee:dev
+    image: bee-iota
     stop_grace_period: 5m
     working_dir: /bee_workdir
     tty: true # for colored logs
-    container_name: "bee"
+    container_name: "bee-iota"
     network_mode: host
     volumes:
       - ../config.toml:/bee_workdir/config.toml

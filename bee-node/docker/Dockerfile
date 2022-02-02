@@ -5,8 +5,8 @@ FROM rust:1-buster as build
 
 ARG WITH_DASHBOARD=false
 
-LABEL org.label-schema.description="Bee — A framework for IOTA nodes, clients and applications in Rust"
-LABEL org.label-schema.name="iotaledger/bee"
+LABEL org.label-schema.description="Bee node software for the IOTA mainnet."
+LABEL org.label-schema.name="iotaledger/bee-iota"
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.vcs-url="https://github.com/iotaledger/bee"
 
