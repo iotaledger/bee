@@ -1119,7 +1119,7 @@ pub struct DustDepositReturnUnlockConditionDto {
     #[serde(rename = "type")]
     pub kind: u8,
     #[serde(rename = "returnAddress")]
-    pub return_address: Address,
+    pub return_address: AddressDto,
     pub amount: u64,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1215,7 +1215,7 @@ impl From<&UnlockCondition> for UnlockConditionDto {
             }),
             UnlockCondition::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnUnlockConditionDto {
                 kind: DustDepositReturnUnlockCondition::KIND,
-                return_address: *v.return_address(),
+                return_address: AddressDto::from(v.return_address()),
                 amount: v.amount(),
             }),
             UnlockCondition::Timelock(v) => Self::Timelock(TimelockUnlockConditionDto {
@@ -1276,9 +1276,10 @@ impl TryFrom<&UnlockConditionDto> for UnlockCondition {
                     .try_into()
                     .map_err(|_e| Error::InvalidField("AddressUnlockCondition"))?,
             )),
-            UnlockConditionDto::DustDepositReturn(v) => {
-                Self::DustDepositReturn(DustDepositReturnUnlockCondition::new(v.return_address, v.amount)?)
-            }
+            UnlockConditionDto::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnUnlockCondition::new(
+                Address::try_from(&v.return_address)?,
+                v.amount,
+            )?),
             UnlockConditionDto::Timelock(v) => Self::Timelock(
                 TimelockUnlockCondition::new(v.milestone_index, v.timestamp)
                     .map_err(|_| Error::InvalidField("TimelockUnlockCondition"))?,
