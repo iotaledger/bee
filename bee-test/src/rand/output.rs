@@ -37,7 +37,8 @@ pub fn rand_treasury_output() -> output::TreasuryOutput {
 pub fn rand_extended_output() -> output::ExtendedOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::ExtendedOutput::ALLOWED_FEATURE_BLOCKS);
     // TODO: Add `NativeTokens`
-    output::ExtendedOutput::build(rand_number())
+    output::ExtendedOutput::build(rand_number_range(1..u64::MAX))
+        .unwrap()
         .with_feature_blocks(feature_blocks)
         .finish()
         .unwrap()

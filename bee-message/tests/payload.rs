@@ -42,6 +42,7 @@ fn transaction() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -119,14 +120,12 @@ fn receipt() {
     let payload: Payload = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                1_000_000,
-            )
-            .unwrap(),
-        ],
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            1_000_000,
+        )
+        .unwrap()],
         Payload::TreasuryTransaction(Box::new(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),

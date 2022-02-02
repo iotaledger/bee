@@ -44,6 +44,7 @@ pub use unlock_condition::{UnlockCondition, UnlockConditions};
 use crate::Error;
 
 use derive_more::From;
+use packable::bounded::BoundedU64;
 
 use core::ops::RangeInclusive;
 
@@ -55,6 +56,8 @@ pub const OUTPUT_COUNT_RANGE: RangeInclusive<u16> = 1..=OUTPUT_COUNT_MAX; // [1.
 pub const OUTPUT_INDEX_MAX: u16 = OUTPUT_COUNT_MAX - 1; // 126
 /// The range of valid indices of outputs of a transaction .
 pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; // [0..126]
+
+pub(crate) type OutputAmount = BoundedU64<1, { u64::MAX }>;
 
 /// A generic output that can represent different types defining the deposit of funds.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]

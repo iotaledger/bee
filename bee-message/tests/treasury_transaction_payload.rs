@@ -49,6 +49,7 @@ fn new_invalid_output() {
     let input = Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap());
     let output = Output::from(
         ExtendedOutput::build(IOTA_SUPPLY)
+            .unwrap()
             .add_unlock_condition(
                 AddressUnlockCondition::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap())).into(),
             )

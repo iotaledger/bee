@@ -39,6 +39,7 @@ fn build_valid() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -62,6 +63,7 @@ fn build_valid_with_payload() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -87,6 +89,7 @@ fn build_valid_add_inputs_outputs() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -110,6 +113,7 @@ fn build_invalid_payload_kind() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -132,6 +136,7 @@ fn build_invalid_input_count_low() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -154,6 +159,7 @@ fn build_invalid_input_count_high() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -192,6 +198,7 @@ fn build_invalid_output_count_high() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -217,6 +224,7 @@ fn build_invalid_duplicate_utxo() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -238,6 +246,7 @@ fn build_invalid_input_kind() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -276,6 +285,7 @@ fn build_invalid_accumulated_output() {
     let amount1 = IOTA_SUPPLY - 1_000_000;
     let output1 = Output::Extended(
         ExtendedOutput::build(amount1)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address1).into())
             .finish()
             .unwrap(),
@@ -286,6 +296,7 @@ fn build_invalid_accumulated_output() {
     let amount2 = 2_000_000;
     let output2 = Output::Extended(
         ExtendedOutput::build(amount2)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address2).into())
             .finish()
             .unwrap(),
@@ -309,6 +320,7 @@ fn getters() {
     let amount = 1_000_000;
     let outputs = vec![Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),

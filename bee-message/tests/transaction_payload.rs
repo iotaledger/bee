@@ -44,6 +44,7 @@ fn builder_no_essence_no_unlock_blocks() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -75,6 +76,7 @@ fn builder_no_essence_too_few_unlock_blocks() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -116,6 +118,7 @@ fn builder_no_essence_too_many_unlock_blocks() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -159,6 +162,7 @@ fn pack_unpack_valid() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
@@ -204,6 +208,7 @@ fn getters() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),
