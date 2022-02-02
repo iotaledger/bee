@@ -1276,9 +1276,10 @@ impl TryFrom<&UnlockConditionDto> for UnlockCondition {
                     .try_into()
                     .map_err(|_e| Error::InvalidField("AddressUnlockCondition"))?,
             )),
-            UnlockConditionDto::DustDepositReturn(v) => {
-                Self::DustDepositReturn(DustDepositReturnUnlockCondition::new(Address::try_from(&v.return_address)?, v.amount)?)
-            }
+            UnlockConditionDto::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnUnlockCondition::new(
+                Address::try_from(&v.return_address)?,
+                v.amount,
+            )?),
             UnlockConditionDto::Timelock(v) => Self::Timelock(
                 TimelockUnlockCondition::new(v.milestone_index, v.timestamp)
                     .map_err(|_| Error::InvalidField("TimelockUnlockCondition"))?,
