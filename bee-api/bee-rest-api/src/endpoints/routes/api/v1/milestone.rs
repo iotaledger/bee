@@ -3,19 +3,16 @@
 
 use crate::{
     endpoints::{
-        config::ROUTE_MILESTONE, filters::with_tangle, path_params::milestone_index, permission::has_permission,
-        rejection::CustomRejection, storage::StorageBackend,
+        filters::with_args, path_params::milestone_index, rejection::CustomRejection, storage::StorageBackend, ApiArgs,
     },
     types::{body::SuccessBody, responses::MilestoneResponse},
 };
 
 use bee_message::milestone::MilestoneIndex;
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
 
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
-use std::net::IpAddr;
+use std::sync::Arc;
 
 fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
     super::path()
@@ -24,25 +21,20 @@ fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<Tangle<B>>,
-) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
-        .and(has_permission(ROUTE_MILESTONE, public_routes, allowed_ips))
-        .and(with_tangle(tangle))
+        .and(with_args(args))
         .and_then(milestone)
         .boxed()
 }
 
 pub(crate) async fn milestone<B: StorageBackend>(
     milestone_index: MilestoneIndex,
-    tangle: ResourceHandle<Tangle<B>>,
+    args: Arc<ApiArgs<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get_milestone_message_id(milestone_index).await {
-        Some(message_id) => match tangle.get_metadata(&message_id).await {
+    match args.tangle.get_milestone_message_id(milestone_index).await {
+        Some(message_id) => match args.tangle.get_metadata(&message_id).await {
             Some(metadata) => Ok(warp::reply::json(&SuccessBody::new(MilestoneResponse {
                 milestone_index: *milestone_index,
                 message_id: message_id.to_string(),

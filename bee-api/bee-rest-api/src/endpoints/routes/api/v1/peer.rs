@@ -3,19 +3,16 @@
 
 use crate::{
     endpoints::{
-        config::ROUTE_PEER, filters::with_peer_manager, path_params::peer_id, permission::has_permission,
-        rejection::CustomRejection,
+        filters::with_args, path_params::peer_id, rejection::CustomRejection, storage::StorageBackend, ApiArgs,
     },
     types::{body::SuccessBody, dtos::PeerDto, responses::PeerResponse},
 };
 
 use bee_gossip::PeerId;
-use bee_protocol::workers::PeerManager;
-use bee_runtime::resource::ResourceHandle;
 
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
-use std::net::IpAddr;
+use std::sync::Arc;
 
 fn path() -> impl Filter<Extract = (PeerId,), Error = Rejection> + Clone {
     super::path()
@@ -24,21 +21,16 @@ fn path() -> impl Filter<Extract = (PeerId,), Error = Rejection> + Clone {
         .and(warp::path::end())
 }
 
-pub(crate) fn filter(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    peer_manager: ResourceHandle<PeerManager>,
-) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
-        .and(has_permission(ROUTE_PEER, public_routes, allowed_ips))
-        .and(with_peer_manager(peer_manager))
-        .and_then(|peer_id, peer_manager| async move { peer(peer_id, peer_manager) })
+        .and(with_args(args))
+        .and_then(peer)
         .boxed()
 }
 
-pub(crate) fn peer(peer_id: PeerId, peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Rejection> {
-    match peer_manager.get(&peer_id) {
+pub(crate) async fn peer<B: StorageBackend>(peer_id: PeerId, args: Arc<ApiArgs<B>>) -> Result<impl Reply, Rejection> {
+    match args.peer_manager.get(&peer_id).await {
         Some(peer_entry) => Ok(warp::reply::json(&SuccessBody::new(PeerResponse(PeerDto::from(
             peer_entry.0.as_ref(),
         ))))),

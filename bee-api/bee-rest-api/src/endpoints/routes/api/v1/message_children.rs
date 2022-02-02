@@ -2,20 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{
-        config::ROUTE_MESSAGE_CHILDREN, filters::with_tangle, path_params::message_id, permission::has_permission,
-        storage::StorageBackend,
-    },
+    endpoints::{filters::with_args, path_params::message_id, storage::StorageBackend, ApiArgs},
     types::{body::SuccessBody, responses::MessageChildrenResponse},
 };
 
 use bee_message::MessageId;
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
 
 use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
-use std::net::IpAddr;
+use std::sync::Arc;
 
 fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clone {
     super::path()
@@ -25,24 +20,19 @@ fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clon
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<Tangle<B>>,
-) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
-        .and(has_permission(ROUTE_MESSAGE_CHILDREN, public_routes, allowed_ips))
-        .and(with_tangle(tangle))
+        .and(with_args(args))
         .and_then(message_children)
         .boxed()
 }
 
 pub async fn message_children<B: StorageBackend>(
     message_id: MessageId,
-    tangle: ResourceHandle<Tangle<B>>,
+    args: Arc<ApiArgs<B>>,
 ) -> Result<impl Reply, Rejection> {
-    let mut children = Vec::from_iter(tangle.get_children(&message_id).await.unwrap_or_default());
+    let mut children = Vec::from_iter(args.tangle.get_children(&message_id).await.unwrap_or_default());
     let count = children.len();
     let max_results = 1000;
     children.truncate(max_results);

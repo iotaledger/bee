@@ -1,30 +1,76 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::rejection::CustomRejection;
+use crate::endpoints::{rejection::CustomRejection, storage::StorageBackend, ApiArgs};
 
-use warp::{reject, Filter, Rejection};
+use auth_helper::jwt::{Claims, JsonWebToken, TokenData};
+use warp::{
+    http::header::{HeaderMap, AUTHORIZATION},
+    path::FullPath,
+    reject, Filter, Rejection,
+};
 
-use std::net::{IpAddr, SocketAddr};
+use std::sync::Arc;
 
-pub fn has_permission(
-    route: &'static str,
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
+const BEARER: &str = "Bearer ";
+pub const API_AUDIENCE_CLAIM: &str = "api";
+pub const DASHBOARD_AUDIENCE_CLAIM: &str = "dashboard";
+
+pub(crate) fn check_permission<B: StorageBackend>(
+    args: Arc<ApiArgs<B>>,
 ) -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    warp::addr::remote()
-        .and_then(move |addr: Option<SocketAddr>| {
-            let route = route.to_owned();
-            let public_routes = public_routes.clone();
-            let allowed_ips = allowed_ips.clone();
+    warp::any()
+        .and(warp::filters::path::full())
+        .and(warp::header::headers_cloned())
+        .and_then(move |path: FullPath, headers| {
+            let args = args.clone();
             async move {
-                if let Some(v) = addr {
-                    if allowed_ips.contains(&v.ip()) || public_routes.contains(&route) {
+
+                for route in args.rest_api_config.public_routes.iter() {
+                    if route.is_match(path.as_str()) {
                         return Ok(());
                     }
                 }
-                Err(reject::custom(CustomRejection::Forbidden))
+
+                if Ok(claims) = validate_jwt(&headers, &args)?.claims {
+                    if claims.aud() == API_AUDIENCE_CLAIM {
+                        for route in args.rest_api_config.protected_routes.iter() {
+                            if route.is_match(path.as_str()) && claims.aud() == API_AUDIENCE_CLAIM {
+                                return Ok(());
+                            }
+                        }
+                    } else if claims.aud() == DASHBOARD_AUDIENCE_CLAIM {
+                        return Ok(());
+                    }
+                }
+
+                return Err(reject::custom(CustomRejection::Forbidden));
             }
         })
         .untuple_one()
+}
+
+fn extract_jwt(headers: &HeaderMap) -> Result<String, Rejection> {
+    let header = headers.get(AUTHORIZATION).ok_or(CustomRejection::Forbidden)?;
+    let auth_header = std::str::from_utf8(header.as_bytes()).map_err(|_| CustomRejection::Forbidden)?;
+
+    if !auth_header.starts_with(BEARER) {
+        return Err(reject::custom(CustomRejection::Forbidden));
+    }
+
+    Ok(auth_header.trim_start_matches(BEARER).to_owned())
+}
+
+fn validate_jwt<B: StorageBackend>(headers: &HeaderMap, args: &Arc<ApiArgs<B>>) -> Result<TokenData<Claims>, Rejection> {
+    let jwt = JsonWebToken::from(extract_jwt(headers)?);
+    jwt.validate(
+        args.node_id.to_string(),
+        args.rest_api_config.jwt_salt.to_owned(),
+        API_AUDIENCE_CLAIM.to_owned(),
+        args.node_key_pair.secret().as_ref(),
+    ).map_err(|_| reject::custom(CustomRejection::Forbidden))
+}
+
+fn process_claims(claims: Claims) {
+
 }

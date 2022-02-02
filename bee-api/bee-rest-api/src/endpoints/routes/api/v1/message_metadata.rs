@@ -3,19 +3,18 @@
 
 use crate::{
     endpoints::{
-        config::ROUTE_MESSAGE_METADATA, filters::with_tangle, path_params::message_id, permission::has_permission,
-        rejection::CustomRejection, storage::StorageBackend, CONFIRMED_THRESHOLD,
+        filters::with_args, path_params::message_id, rejection::CustomRejection, storage::StorageBackend, ApiArgs,
+        CONFIRMED_THRESHOLD,
     },
     types::{body::SuccessBody, dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
 };
 
 use bee_message::{payload::Payload, MessageId};
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::{ConflictReason, Tangle};
+use bee_tangle::ConflictReason;
 
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
-use std::net::IpAddr;
+use std::sync::Arc;
 
 fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clone {
     super::path()
@@ -25,33 +24,28 @@ fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clon
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<Tangle<B>>,
-) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
-        .and(has_permission(ROUTE_MESSAGE_METADATA, public_routes, allowed_ips))
-        .and(with_tangle(tangle))
+        .and(with_args(args))
         .and_then(message_metadata)
         .boxed()
 }
 
 pub(crate) async fn message_metadata<B: StorageBackend>(
     message_id: MessageId,
-    tangle: ResourceHandle<Tangle<B>>,
+    args: Arc<ApiArgs<B>>,
 ) -> Result<impl Reply, Rejection> {
-    if !tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
+    if !args.tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
         return Err(reject::custom(CustomRejection::ServiceUnavailable(
             "the node is not synchronized".to_string(),
         )));
     }
 
-    match tangle.get(&message_id).await.map(|m| (*m).clone()) {
+    match args.tangle.get(&message_id).await.map(|m| (*m).clone()) {
         Some(message) => {
             // existing message <=> existing metadata, therefore unwrap() is safe
-            let metadata = tangle.get_metadata(&message_id).await.unwrap();
+            let metadata = args.tangle.get_metadata(&message_id).await.unwrap();
 
             // TODO: access constants from URTS
             let ymrsi_delta = 8;
@@ -112,7 +106,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                     ledger_inclusion_state = None;
                     conflict_reason = None;
 
-                    let cmi = *tangle.get_confirmed_milestone_index();
+                    let cmi = *args.tangle.get_confirmed_milestone_index();
                     // unwrap() of OMRSI/YMRSI is safe since message is solid
                     if (cmi - *metadata.omrsi().unwrap().index()) > below_max_depth {
                         should_promote = Some(false);
