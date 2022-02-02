@@ -1,38 +1,22 @@
 ############################
-# Prepare dependencies recipe
+# Build
 ############################
-FROM lukemathwalker/cargo-chef as planner
+FROM rust:1-buster as build
 
-WORKDIR /bee
-COPY . .
+ARG WITH_DASHBOARD=false
 
-RUN cargo chef prepare --recipe-path recipe.json
-
-############################
-# Dependency cache
-############################
-FROM lukemathwalker/cargo-chef as cacher
+LABEL org.label-schema.description="Bee — A framework for IOTA nodes, clients and applications in Rust"
+LABEL org.label-schema.name="iotaledger/bee"
+LABEL org.label-schema.schema-version="1.0"
+LABEL org.label-schema.vcs-url="https://github.com/iotaledger/bee"
 
 RUN apt-get update && \
     apt-get install cmake clang -y
 
 WORKDIR /bee
-COPY --from=planner /bee/recipe.json recipe.json
-
-RUN cargo chef cook --release --recipe-path recipe.json
-
-############################
-# Build
-############################
-FROM rust:1 as build
-
-WORKDIR /bee
 COPY . .
 
-COPY --from=cacher /bee/target target
-COPY --from=cacher $CARGO_HOME $CARGO_HOME
-
-RUN cargo build --release --bin bee
+RUN if [ "$WITH_DASHBOARD" = true ] ; then cargo build --profile production --features dashboard --bin bee ; else cargo build --profile production --bin bee ; fi
 
 ############################
 # Image
@@ -53,6 +37,6 @@ EXPOSE 1883/tcp
 # Dashboard
 EXPOSE 8081/tcp
 
-COPY --from=build /bee/target/release/bee /
+COPY --from=build /bee/target/production/bee /
 
 ENTRYPOINT ["/bee"]

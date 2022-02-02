@@ -4,17 +4,15 @@ services:
     build:
       context: ../../
       dockerfile: ./bee-node/docker/Dockerfile
-    image: bee:${IMAGE_TAG}
+      args:
+        WITH_DASHBOARD: true
+    image: bee:dev
+    stop_grace_period: 5m
     working_dir: /bee_workdir
     tty: true # for colored logs
     container_name: "bee"
-    # this env variables are set by the build_and_run script from config.toml
-    ports:
-      - ${BINDING_PORT}:${BINDING_PORT}
-      - ${BIND_ADDRESS_PORT}:${BIND_ADDRESS_PORT}
-      - ${MQTT_PORT}:${MQTT_PORT}
-      - ${DASHBOARD_PORT}:${DASHBOARD_PORT}
+    network_mode: host
     volumes:
       - ../config.toml:/bee_workdir/config.toml
+      - ../identity.key:/bee_workdir/identity.key
       - ../storage:/bee_workdir/storage
-    # restart: always

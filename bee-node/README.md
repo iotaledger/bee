@@ -79,13 +79,29 @@ cp config.example.toml config.toml
 ../target/release/bee
 ```
 
-## Script
+# Using Docker
 
-There is a `build_and_run.sh` script that will build the bee node with dashboard or without, it also builds the `docker image` and run the container using `docker-compose`
+We also provide a `Dockerfile` that allows you to quickly depoly a Bee node.
 
-- usage
-  - `build bee` build without the dashboard
-  - `build bee-dashboard` build with dashboard
-  - `build docker`  create a docker image using as image tag the version in `Cargo.toml` 
-  - `run bee-image`  run a bee node container
-  - `-h` or ` help` print help
+## Prerequisites
+
+The following files need to be present in the `./bee-node` folder:
+
+* `config.toml`
+* `identity.key`
+
+## Build and Run
+
+To build a docker image, we make use of `docker-compose`:
+
+```
+docker-compose -f ./docker/docker-compose.yml build
+```
+
+**⚠️ The build process of the Docker image expects the `dashboard` to be present, so please make sure to follow the instructions above.**
+
+And you can start Bee using:
+
+```
+docker-compose -f ./docker/docker-compose.yml up
+```
