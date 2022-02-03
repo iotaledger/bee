@@ -29,6 +29,10 @@ fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) 
             output::Output::Alias(output) => output.amount(),
             output::Output::Foundry(output) => output.amount(),
             output::Output::Nft(output) => output.amount(),
+            #[cfg(feature = "cpt2")]
+            output::Output::SignatureLockedSingle(output) => output.amount(),
+            #[cfg(feature = "cpt2")]
+            output::Output::SignatureLockedDustAllowance(output) => output.amount(),
         };
 
         supply = supply

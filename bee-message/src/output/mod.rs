@@ -14,6 +14,9 @@ mod output_id;
 mod token_id;
 mod treasury;
 
+#[cfg(feature = "cpt2")]
+mod cpt2;
+
 ///
 pub mod feature_block;
 ///
@@ -47,6 +50,13 @@ use derive_more::From;
 use packable::bounded::BoundedU64;
 
 use core::ops::RangeInclusive;
+
+#[cfg(feature = "cpt2")]
+pub(crate) use self::cpt2::signature_locked_dust_allowance::DustAllowanceAmount;
+#[cfg(feature = "cpt2")]
+pub use self::cpt2::signature_locked_dust_allowance::{dust_outputs_max, SignatureLockedDustAllowanceOutput};
+#[cfg(feature = "cpt2")]
+pub use self::cpt2::signature_locked_single::SignatureLockedSingleOutput;
 
 /// The maximum number of outputs of a transaction.
 pub const OUTPUT_COUNT_MAX: u16 = 127;
@@ -84,6 +94,14 @@ pub enum Output {
     /// An NFT output.
     #[packable(tag = NftOutput::KIND)]
     Nft(NftOutput),
+    /// A chrysalis pt2 signature locked single output.
+    #[cfg(feature = "cpt2")]
+    #[packable(tag = SignatureLockedSingleOutput::KIND)]
+    SignatureLockedSingle(SignatureLockedSingleOutput),
+    /// A chrysalis pt2 signature locked dust allowance output.
+    #[cfg(feature = "cpt2")]
+    #[packable(tag = SignatureLockedDustAllowanceOutput::KIND)]
+    SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput),
 }
 
 impl Output {
@@ -98,6 +116,10 @@ impl Output {
             Self::Alias(_) => AliasOutput::KIND,
             Self::Foundry(_) => FoundryOutput::KIND,
             Self::Nft(_) => NftOutput::KIND,
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedSingle(_) => SignatureLockedSingleOutput::KIND,
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedDustAllowance(_) => SignatureLockedDustAllowanceOutput::KIND,
         }
     }
 
@@ -109,6 +131,10 @@ impl Output {
             Self::Alias(output) => output.amount(),
             Self::Foundry(output) => output.amount(),
             Self::Nft(output) => output.amount(),
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedSingle(output) => output.amount(),
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedDustAllowance(output) => output.amount(),
         }
     }
 }

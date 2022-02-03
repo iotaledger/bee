@@ -171,6 +171,16 @@ pub(crate) fn insert_created_output_batch<B: StorageBackend>(
             // TODO
             Ok(())
         }
+        #[cfg(feature = "cpt2")]
+        Output::SignatureLockedSingle(_) => {
+            // TODO
+            Ok(())
+        }
+        #[cfg(feature = "cpt2")]
+        Output::SignatureLockedDustAllowance(_) => {
+            // TODO
+            Ok(())
+        }
     }
 }
 
@@ -191,6 +201,10 @@ pub(crate) fn delete_created_output_batch<B: StorageBackend>(
         Output::Alias(_) => todo!(),
         Output::Foundry(_) => todo!(),
         Output::Nft(_) => todo!(),
+        #[cfg(feature = "cpt2")]
+        Output::SignatureLockedSingle(_) => todo!(),
+        #[cfg(feature = "cpt2")]
+        Output::SignatureLockedDustAllowance(_) => todo!(),
     }
 }
 

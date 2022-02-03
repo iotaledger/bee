@@ -9,6 +9,9 @@ pub mod tagged_data;
 pub mod transaction;
 pub mod treasury;
 
+#[cfg(feature = "cpt2")]
+pub mod cpt2;
+
 pub use milestone::MilestonePayload;
 pub(crate) use milestone::{PublicKeyCount, SignatureCount};
 pub use receipt::ReceiptPayload;
@@ -30,6 +33,11 @@ use packable::{
 
 use alloc::boxed::Box;
 use core::ops::Deref;
+
+#[cfg(feature = "cpt2")]
+pub use cpt2::indexation::IndexationPayload;
+#[cfg(feature = "cpt2")]
+pub(crate) use cpt2::indexation::{IndexLength, IndexationDataLength};
 
 /// A generic payload that can represent different types defining message payloads.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
@@ -56,6 +64,10 @@ pub enum Payload {
     /// A tagged data payload.
     #[packable(tag = TaggedDataPayload::KIND)]
     TaggedData(Box<TaggedDataPayload>),
+    /// An indexation payload.
+    #[cfg(feature = "cpt2")]
+    #[packable(tag = IndexationPayload::KIND)]
+    Indexation(Box<IndexationPayload>),
 }
 
 impl From<TransactionPayload> for Payload {
@@ -97,6 +109,8 @@ impl Payload {
             Self::Receipt(_) => ReceiptPayload::KIND,
             Self::TreasuryTransaction(_) => TreasuryTransactionPayload::KIND,
             Self::TaggedData(_) => TaggedDataPayload::KIND,
+            #[cfg(feature = "cpt2")]
+            Self::Indexation(_) => IndexationPayload::KIND,
         }
     }
 }

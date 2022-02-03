@@ -89,6 +89,14 @@ fn apply_regular_essence<B: StorageBackend>(
             Output::Nft(_) => {
                 // TODO
             }
+            #[cfg(feature = "cpt2")]
+            Output::SignatureLockedSingle(_) => {
+                // TODO
+            }
+            #[cfg(feature = "cpt2")]
+            Output::SignatureLockedDustAllowance(_) => {
+                // TODO
+            }
         }
 
         consumed_outputs.insert(*output_id, consumed_output);
@@ -107,6 +115,14 @@ fn apply_regular_essence<B: StorageBackend>(
                 // TODO
             }
             Output::Nft(_) => {
+                // TODO
+            }
+            #[cfg(feature = "cpt2")]
+            Output::SignatureLockedSingle(_) => {
+                // TODO
+            }
+            #[cfg(feature = "cpt2")]
+            Output::SignatureLockedDustAllowance(_) => {
                 // TODO
             }
         }

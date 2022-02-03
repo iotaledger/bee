@@ -54,3 +54,4 @@ workers = [
   "tokio-stream",
   "url/serde"
 ]
+cpt2 = [ "bee-message/cpt2" ]

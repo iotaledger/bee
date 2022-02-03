@@ -56,3 +56,4 @@ endpoints = [
   "warp",
 ]
 peer = [ "bee-protocol" ]
+cpt2 = [ "bee-message/cpt2" ]
