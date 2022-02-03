@@ -5,7 +5,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     constant::IOTA_SUPPLY,
     input::{Input, TreasuryInput, UtxoInput},
-    output::{unlock_condition::AddressUnlockCondition, ExtendedOutput, Output, TreasuryOutput},
+    output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, TreasuryOutput},
     payload::TreasuryTransactionPayload,
     Error,
 };
@@ -48,7 +48,7 @@ fn new_invalid_input() {
 fn new_invalid_output() {
     let input = Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap());
     let output = Output::from(
-        ExtendedOutput::build(IOTA_SUPPLY)
+        BasicOutput::build(IOTA_SUPPLY)
             .unwrap()
             .add_unlock_condition(
                 AddressUnlockCondition::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap())).into(),

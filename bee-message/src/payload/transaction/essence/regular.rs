@@ -147,7 +147,7 @@ fn verify_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
 
     for output in outputs.iter() {
         let amount = match output {
-            Output::Extended(output) => output.amount(),
+            Output::Basic(output) => output.amount(),
             Output::Alias(output) => output.amount(),
             Output::Foundry(output) => output.amount(),
             Output::Nft(output) => output.amount(),

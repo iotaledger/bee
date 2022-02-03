@@ -16,7 +16,7 @@ use crate::{
 use bee_message::{
     address::Address,
     milestone::MilestoneIndex,
-    output::{unlock_condition::AddressUnlockCondition, ExtendedOutput, Output, OutputId},
+    output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, OutputId},
     payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
     MessageId,
 };
@@ -141,7 +141,7 @@ where
                     milestone.essence().index(),
                     milestone.essence().timestamp() as u32,
                     Output::from(
-                        ExtendedOutput::build(fund.amount())
+                        BasicOutput::build(fund.amount())
                             // SAFETY: funds are already syntactically verified as part of the receipt validation.
                             .unwrap()
                             .add_unlock_condition(AddressUnlockCondition::new(*fund.address()).into())
