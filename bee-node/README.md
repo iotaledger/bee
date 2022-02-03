@@ -81,7 +81,7 @@ cp config.example.toml config.toml
 
 # Using Docker
 
-We also provide a `Dockerfile` that allows you to quickly depoly a Bee node.
+We also provide a `Dockerfile` that allows you to quickly deploy a Bee node.
 
 ## Prerequisites
 
