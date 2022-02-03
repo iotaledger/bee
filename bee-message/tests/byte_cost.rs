@@ -7,7 +7,6 @@ const CONFIG: ByteCostConfig = ByteCostConfig {
     byte_cost: 1,
     weight_for_data: 10,
     weight_for_key: 1,
-    both_indexation_and_sender: false,
 };
 
 #[cfg(test)]

@@ -13,9 +13,6 @@ pub struct ByteCostConfig {
     pub weight_for_key: u64,
     /// The weight factor used for data fields in the ouputs.
     pub weight_for_data: u64,
-    /// Flag to signal if both `IndexationFeatureBlock` and `SenderFeatureBlock` are present in the output, which leads
-    /// to double weighting of some fields.
-    pub both_indexation_and_sender: bool,
 }
 
 impl Default for ByteCostConfig {
@@ -24,8 +21,6 @@ impl Default for ByteCostConfig {
             byte_cost: 1,
             weight_for_key: 10,
             weight_for_data: 1,
-            #[deprecated]
-            both_indexation_and_sender: false,
         }
     }
 }
