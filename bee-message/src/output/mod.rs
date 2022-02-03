@@ -101,7 +101,7 @@ impl Output {
         }
     }
 
-    /// Return the IOTA amount of an `Output`.
+    /// Returns the amount of an `Output`.
     pub fn amount(&self) -> u64 {
         match self {
             Self::Treasury(output) => output.amount(),
@@ -112,14 +112,14 @@ impl Output {
         }
     }
 
-    /// Return the native tokens of an `Output`, if any.
-    pub fn native_tokens(&self) -> Option<Vec<NativeToken>> {
+    /// Returns the native tokens of an `Output`, if any.
+    pub fn native_tokens(&self) -> Option<&[NativeToken]> {
         match self {
             Self::Treasury(_) => None,
-            Self::Extended(output) => Some(output.native_tokens().to_vec()),
-            Self::Alias(output) => Some(output.native_tokens().to_vec()),
-            Self::Foundry(output) => Some(output.native_tokens().to_vec()),
-            Self::Nft(output) => Some(output.native_tokens().to_vec()),
+            Self::Extended(output) => Some(output.native_tokens()),
+            Self::Alias(output) => Some(output.native_tokens()),
+            Self::Foundry(output) => Some(output.native_tokens()),
+            Self::Nft(output) => Some(output.native_tokens()),
         }
     }
 }
