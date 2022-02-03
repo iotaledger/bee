@@ -6,12 +6,11 @@ edition = "2021"
 description = "Defines the traits for computing the byte cost."
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = [ "iota", "tangle", "bee", "framework", "bytecost", "dust" ]
+keywords = [ "iota", "tangle", "bee", "bytecost", "dust" ]
 homepage = "https://www.iota.org"
 publish = false
 
 [dependencies]
 bee-byte-cost-derive = { version = "0.1.0", path = "../bee-byte-cost-derive", default-features = false }
 
-bitflags = { version = "1.3.2", default-features = false }
 packable = { version = "0.1.0", default-features = false }

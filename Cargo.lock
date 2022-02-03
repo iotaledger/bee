@@ -228,7 +228,6 @@ name = "bee-byte-cost"
 version = "0.1.0"
 dependencies = [
  "bee-byte-cost-derive",
- "bitflags",
  "packable",
 ]
 
