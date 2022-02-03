@@ -15,7 +15,8 @@ use bee_message::{
     input::Input,
     milestone::MilestoneIndex,
     output::{
-        AliasOutput, ExtendedOutput, FeatureBlock, FoundryOutput, NftOutput, Output, OutputId, TokenId, UnlockCondition,
+        AliasId, AliasOutput, ExtendedOutput, FeatureBlock, FoundryOutput, NftId, NftOutput, Output, OutputId, TokenId,
+        UnlockCondition,
     },
     payload::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
@@ -156,6 +157,7 @@ fn unlock_address(
 }
 
 fn unlock_extended_output(
+    output_id: &OutputId,
     output: &ExtendedOutput,
     unlock_block: &UnlockBlock,
     context: &mut ValidationContext,
@@ -164,10 +166,17 @@ fn unlock_extended_output(
 }
 
 fn unlock_alias_output(
+    output_id: &OutputId,
     output: &AliasOutput,
     unlock_block: &UnlockBlock,
     context: &ValidationContext,
 ) -> Result<(), ConflictReason> {
+    let alias_id = if output.alias_id().is_null() {
+        AliasId::new(output_id.hash())
+    } else {
+        *output.alias_id()
+    };
+
     // fn alias_chain_constraint(current_state: &AliasOutput, next_state: Option<&AliasOutput>) {
     //     if let Some(next_state) = next_state {
     //         // The alias is transitioned.
@@ -186,6 +195,7 @@ fn unlock_alias_output(
 }
 
 fn unlock_foundry_output(
+    output_id: &OutputId,
     output: &FoundryOutput,
     unlock_block: &UnlockBlock,
     context: &ValidationContext,
@@ -194,10 +204,17 @@ fn unlock_foundry_output(
 }
 
 fn unlock_nft_output(
+    output_id: &OutputId,
     output: &NftOutput,
     unlock_block: &UnlockBlock,
     context: &ValidationContext,
 ) -> Result<(), ConflictReason> {
+    let nft_id = if output.nft_id().is_null() {
+        NftId::new(output_id.hash())
+    } else {
+        *output.nft_id()
+    };
+
     Ok(())
 }
 
@@ -241,28 +258,28 @@ fn apply_regular_essence<B: StorageBackend>(
 
         let (amount, consumed_native_tokens) = match consumed_output.inner() {
             Output::Extended(output) => {
-                if let Err(conflict) = unlock_extended_output(output, unlock_block, &mut context) {
+                if let Err(conflict) = unlock_extended_output(output_id, output, unlock_block, &mut context) {
                     return Ok(conflict);
                 }
 
                 (output.amount(), output.native_tokens())
             }
             Output::Alias(output) => {
-                if let Err(conflict) = unlock_alias_output(output, unlock_block, &context) {
+                if let Err(conflict) = unlock_alias_output(output_id, output, unlock_block, &context) {
                     return Ok(conflict);
                 }
 
                 (output.amount(), output.native_tokens())
             }
             Output::Foundry(output) => {
-                if let Err(conflict) = unlock_foundry_output(output, unlock_block, &context) {
+                if let Err(conflict) = unlock_foundry_output(output_id, output, unlock_block, &context) {
                     return Ok(conflict);
                 }
 
                 (output.amount(), output.native_tokens())
             }
             Output::Nft(output) => {
-                if let Err(conflict) = unlock_nft_output(output, unlock_block, &context) {
+                if let Err(conflict) = unlock_nft_output(output_id, output, unlock_block, &context) {
                     return Ok(conflict);
                 }
 

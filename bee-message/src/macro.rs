@@ -29,6 +29,11 @@ macro_rules! impl_id {
             $vis fn new(bytes: [u8; $name::LENGTH]) -> Self {
                 Self::from(bytes)
             }
+
+            #[doc = concat!("Checks if the [`", stringify!($ty),"`] is null.")]
+            pub fn is_null(&self) -> bool {
+                true
+            }
         }
 
         impl core::str::FromStr for $name {
