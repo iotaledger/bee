@@ -112,7 +112,7 @@ impl Output {
         }
     }
 
-    /// Return the `NativeTokens`of an `Output`, if any.
+    /// Return the native tokens of an `Output`, if any.
     pub fn native_tokens(&self) -> Option<Vec<NativeToken>> {
         match self {
             Self::Treasury(_) => None,
