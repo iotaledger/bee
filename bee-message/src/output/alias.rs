@@ -14,6 +14,7 @@ use crate::{
     Error,
 };
 
+use bee_byte_cost::ByteCost;
 use packable::{
     bounded::BoundedU16,
     error::{UnpackError, UnpackErrorExt},
@@ -153,23 +154,31 @@ impl AliasOutputBuilder {
 pub(crate) type StateMetadataLength = BoundedU16<0, { AliasOutput::STATE_METADATA_LENGTH_MAX }>;
 
 /// Describes an alias account in the ledger that can be controlled by the state and governance controllers.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, ByteCost)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct AliasOutput {
     // Amount of IOTA tokens held by the output.
+    #[byte_cost(data)]
     amount: OutputAmount,
     // Native tokens held by the output.
+    #[byte_cost(data)]
     native_tokens: NativeTokens,
     // Unique identifier of the alias.
+    #[byte_cost(data)]
     alias_id: AliasId,
     // A counter that must increase by 1 every time the alias is state transitioned.
+    #[byte_cost(data)]
     state_index: u32,
     // Metadata that can only be changed by the state controller.
+    #[byte_cost(data)]
     state_metadata: BoxedSlicePrefix<u8, StateMetadataLength>,
     // A counter that denotes the number of foundries created by this alias account.
+    #[byte_cost(data)]
     foundry_counter: u32,
+    #[byte_cost(data)]
     unlock_conditions: UnlockConditions,
     //
+    #[byte_cost(data)]
     feature_blocks: FeatureBlocks,
 }
 

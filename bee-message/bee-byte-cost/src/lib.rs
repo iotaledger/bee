@@ -24,6 +24,7 @@ impl Default for ByteCostConfig {
             byte_cost: 1,
             weight_for_key: 10,
             weight_for_data: 1,
+            #[deprecated]
             both_indexation_and_sender: false,
         }
     }

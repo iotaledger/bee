@@ -6,12 +6,18 @@ use crate::rand::{
     message::rand_message_id,
     milestone::{rand_milestone_id, rand_milestone_index},
     number::{rand_number, rand_number_range},
-    output::feature_block::rand_allowed_feature_blocks,
+    output::{
+        feature_block::rand_allowed_feature_blocks,
+        unlock_condition::rand_state_controller_address_unlock_condition_different_from,
+        unlock_condition::rand_governor_address_unlock_condition_different_from,
+    },
     transaction::rand_transaction_id,
 };
 
 /// Module providing random feature block generation utilities.
 pub mod feature_block;
+/// Module providing random unlock condition generation utilities.
+pub mod unlock_condition;
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
 use bee_message::output::{self, Output, OutputId, OUTPUT_INDEX_RANGE};
@@ -54,6 +60,8 @@ pub fn rand_alias_output() -> output::AliasOutput {
     output::AliasOutput::build(rand_number_range(Output::AMOUNT_RANGE), alias_id)
         .unwrap()
         .with_feature_blocks(feature_blocks)
+        .add_unlock_condition(rand_state_controller_address_unlock_condition_different_from(&alias_id).into())
+        .add_unlock_condition(rand_governor_address_unlock_condition_different_from(&alias_id).into())
         .finish()
         .unwrap()
 }
