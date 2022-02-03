@@ -24,15 +24,15 @@ fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) 
         let output = storage::fetch_output(storage, &*output_id)?.ok_or(Error::MissingUnspentOutput(output_id))?;
 
         let amount = match output.inner() {
+            #[cfg(feature = "cpt2")]
+            output::Output::SignatureLockedSingle(output) => output.amount(),
+            #[cfg(feature = "cpt2")]
+            output::Output::SignatureLockedDustAllowance(output) => output.amount(),
             output::Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(output.kind())),
             output::Output::Extended(output) => output.amount(),
             output::Output::Alias(output) => output.amount(),
             output::Output::Foundry(output) => output.amount(),
             output::Output::Nft(output) => output.amount(),
-            #[cfg(feature = "cpt2")]
-            output::Output::SignatureLockedSingle(output) => output.amount(),
-            #[cfg(feature = "cpt2")]
-            output::Output::SignatureLockedDustAllowance(output) => output.amount(),
         };
 
         supply = supply

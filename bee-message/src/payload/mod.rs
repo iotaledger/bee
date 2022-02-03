@@ -55,6 +55,10 @@ pub enum Payload {
     /// A milestone payload.
     #[packable(tag = MilestonePayload::KIND)]
     Milestone(Box<MilestonePayload>),
+    /// An indexation payload.
+    #[cfg(feature = "cpt2")]
+    #[packable(tag = IndexationPayload::KIND)]
+    Indexation(Box<IndexationPayload>),
     /// A receipt payload.
     #[packable(tag = ReceiptPayload::KIND)]
     Receipt(Box<ReceiptPayload>),
@@ -64,10 +68,6 @@ pub enum Payload {
     /// A tagged data payload.
     #[packable(tag = TaggedDataPayload::KIND)]
     TaggedData(Box<TaggedDataPayload>),
-    /// An indexation payload.
-    #[cfg(feature = "cpt2")]
-    #[packable(tag = IndexationPayload::KIND)]
-    Indexation(Box<IndexationPayload>),
 }
 
 impl From<TransactionPayload> for Payload {
@@ -79,6 +79,13 @@ impl From<TransactionPayload> for Payload {
 impl From<MilestonePayload> for Payload {
     fn from(payload: MilestonePayload) -> Self {
         Self::Milestone(Box::new(payload))
+    }
+}
+
+#[cfg(feature = "cpt2")]
+impl From<IndexationPayload> for Payload {
+    fn from(payload: IndexationPayload) -> Self {
+        Self::Indexation(Box::new(payload))
     }
 }
 
@@ -100,24 +107,17 @@ impl From<TaggedDataPayload> for Payload {
     }
 }
 
-#[cfg(feature = "cpt2")]
-impl From<IndexationPayload> for Payload {
-    fn from(payload: IndexationPayload) -> Self {
-        Self::Indexation(Box::new(payload))
-    }
-}
-
 impl Payload {
     /// Returns the payload kind of a `Payload`.
     pub fn kind(&self) -> u32 {
         match self {
             Self::Transaction(_) => TransactionPayload::KIND,
             Self::Milestone(_) => MilestonePayload::KIND,
+            #[cfg(feature = "cpt2")]
+            Self::Indexation(_) => IndexationPayload::KIND,
             Self::Receipt(_) => ReceiptPayload::KIND,
             Self::TreasuryTransaction(_) => TreasuryTransactionPayload::KIND,
             Self::TaggedData(_) => TaggedDataPayload::KIND,
-            #[cfg(feature = "cpt2")]
-            Self::Indexation(_) => IndexationPayload::KIND,
         }
     }
 }

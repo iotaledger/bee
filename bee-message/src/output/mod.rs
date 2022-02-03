@@ -79,6 +79,14 @@ pub(crate) type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *
 #[packable(unpack_error = Error)]
 #[packable(tag_type = u8, with_error = Error::InvalidOutputKind)]
 pub enum Output {
+    /// A chrysalis pt2 signature locked single output.
+    #[cfg(feature = "cpt2")]
+    #[packable(tag = SignatureLockedSingleOutput::KIND)]
+    SignatureLockedSingle(SignatureLockedSingleOutput),
+    /// A chrysalis pt2 signature locked dust allowance output.
+    #[cfg(feature = "cpt2")]
+    #[packable(tag = SignatureLockedDustAllowanceOutput::KIND)]
+    SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput),
     /// A treasury output.
     #[packable(tag = TreasuryOutput::KIND)]
     Treasury(TreasuryOutput),
@@ -94,14 +102,6 @@ pub enum Output {
     /// An NFT output.
     #[packable(tag = NftOutput::KIND)]
     Nft(NftOutput),
-    /// A chrysalis pt2 signature locked single output.
-    #[cfg(feature = "cpt2")]
-    #[packable(tag = SignatureLockedSingleOutput::KIND)]
-    SignatureLockedSingle(SignatureLockedSingleOutput),
-    /// A chrysalis pt2 signature locked dust allowance output.
-    #[cfg(feature = "cpt2")]
-    #[packable(tag = SignatureLockedDustAllowanceOutput::KIND)]
-    SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput),
 }
 
 impl Output {
@@ -111,30 +111,30 @@ impl Output {
     /// Return the output kind of an `Output`.
     pub fn kind(&self) -> u8 {
         match self {
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedSingle(_) => SignatureLockedSingleOutput::KIND,
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedDustAllowance(_) => SignatureLockedDustAllowanceOutput::KIND,
             Self::Treasury(_) => TreasuryOutput::KIND,
             Self::Extended(_) => ExtendedOutput::KIND,
             Self::Alias(_) => AliasOutput::KIND,
             Self::Foundry(_) => FoundryOutput::KIND,
             Self::Nft(_) => NftOutput::KIND,
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedSingle(_) => SignatureLockedSingleOutput::KIND,
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedDustAllowance(_) => SignatureLockedDustAllowanceOutput::KIND,
         }
     }
 
     ///
     pub fn amount(&self) -> u64 {
         match self {
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedSingle(output) => output.amount(),
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedDustAllowance(output) => output.amount(),
             Self::Treasury(output) => output.amount(),
             Self::Extended(output) => output.amount(),
             Self::Alias(output) => output.amount(),
             Self::Foundry(output) => output.amount(),
             Self::Nft(output) => output.amount(),
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedSingle(output) => output.amount(),
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedDustAllowance(output) => output.amount(),
         }
     }
 }
