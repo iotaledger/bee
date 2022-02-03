@@ -123,7 +123,7 @@ impl NftOutputBuilder {
 pub(crate) type ImmutableMetadataLength = BoundedU16<0, { NftOutput::IMMUTABLE_METADATA_LENGTH_MAX }>;
 
 /// Describes an NFT output, a globally unique token with metadata attached.
-#[derive(ByteCost, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, ByteCost)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct NftOutput {
     // Amount of IOTA tokens held by the output.

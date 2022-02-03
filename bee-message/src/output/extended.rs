@@ -103,7 +103,7 @@ impl ExtendedOutputBuilder {
 }
 
 /// Describes an extended output with optional features.
-#[derive(ByteCost, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, ByteCost, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct ExtendedOutput {
