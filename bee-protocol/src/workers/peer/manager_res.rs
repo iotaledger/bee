@@ -14,7 +14,6 @@ use log::debug;
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use std::{
-    collections::HashMap,
     convert::Infallible,
     sync::{
         atomic::{AtomicUsize, Ordering},
