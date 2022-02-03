@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use bee_byte_cost_derive::ByteCost;
+
 pub use packable::Packable;
 
 /// TODO: The weights should allow fractional values while avoiding rounding errors.
