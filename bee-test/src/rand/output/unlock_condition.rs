@@ -37,7 +37,7 @@ pub fn rand_governor_address_unlock_condition_different_from(alias_id: &AliasId)
     address.into()
 }
 
-/// Generates a random [`GovernorAddressUnlockCondition`].
+/// Generates a random [`AddressUnlockCondition`].
 pub fn rand_address_unlock_condition() -> AddressUnlockCondition {
     rand_address().into()
 }
