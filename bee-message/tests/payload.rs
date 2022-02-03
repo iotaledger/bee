@@ -42,6 +42,7 @@ fn transaction() {
     let amount = 1_000_000;
     let output = Output::Extended(
         ExtendedOutput::build(amount)
+            .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
             .unwrap(),

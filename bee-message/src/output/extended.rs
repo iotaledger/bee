@@ -9,7 +9,7 @@ use crate::{
             verify_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
             UnlockConditions,
         },
-        NativeToken, NativeTokens,
+        NativeToken, NativeTokens, OutputAmount,
     },
     Error,
 };
@@ -21,7 +21,7 @@ use alloc::vec::Vec;
 ///
 #[must_use]
 pub struct ExtendedOutputBuilder {
-    amount: u64,
+    amount: OutputAmount,
     native_tokens: Vec<NativeToken>,
     unlock_conditions: Vec<UnlockCondition>,
     feature_blocks: Vec<FeatureBlock>,
@@ -30,13 +30,13 @@ pub struct ExtendedOutputBuilder {
 impl ExtendedOutputBuilder {
     ///
     #[inline(always)]
-    pub fn new(amount: u64) -> Self {
-        Self {
-            amount,
+    pub fn new(amount: u64) -> Result<Self, Error> {
+        Ok(Self {
+            amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: Vec::new(),
             unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
-        }
+        })
     }
 
     ///
@@ -106,7 +106,8 @@ impl ExtendedOutputBuilder {
 #[packable(unpack_error = Error)]
 pub struct ExtendedOutput {
     // Amount of IOTA tokens held by the output.
-    amount: u64,
+    #[packable(unpack_error_with = Error::InvalidOutputAmount)]
+    amount: OutputAmount,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
     #[packable(verify_with = verify_unlock_conditions)]
@@ -131,14 +132,13 @@ impl ExtendedOutput {
 
     /// Creates a new [`ExtendedOutput`].
     #[inline(always)]
-    pub fn new(amount: u64) -> Self {
-        // SAFETY: this can't fail as this is a default builder.
-        ExtendedOutputBuilder::new(amount).finish().unwrap()
+    pub fn new(amount: u64) -> Result<Self, Error> {
+        ExtendedOutputBuilder::new(amount)?.finish()
     }
 
     /// Creates a new [`ExtendedOutputBuilder`].
     #[inline(always)]
-    pub fn build(amount: u64) -> ExtendedOutputBuilder {
+    pub fn build(amount: u64) -> Result<ExtendedOutputBuilder, Error> {
         ExtendedOutputBuilder::new(amount)
     }
 
@@ -156,7 +156,7 @@ impl ExtendedOutput {
     ///
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount
+        self.amount.get()
     }
 
     ///

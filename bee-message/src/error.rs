@@ -5,8 +5,8 @@ use crate::{
     input::UtxoInput,
     output::{
         feature_block::FeatureBlockCount, unlock_condition::UnlockConditionCount, AliasId, DustDepositAmount,
-        ImmutableMetadataLength, MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputIndex, StateMetadataLength,
-        TagFeatureBlockLength, TreasuryOutputAmount,
+        ImmutableMetadataLength, MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputAmount, OutputIndex,
+        StateMetadataLength, TagFeatureBlockLength, TreasuryOutputAmount,
     },
     parent::ParentCount,
     payload::{
@@ -49,7 +49,6 @@ pub enum Error {
     InvalidTagLength(<TagLength as TryFrom<usize>>::Error),
     InvalidInputKind(u8),
     InvalidInputCount(<InputCount as TryFrom<usize>>::Error),
-    InvalidOutputCount(<OutputCount as TryFrom<usize>>::Error),
     InvalidInputOutputIndex(<OutputIndex as TryFrom<u16>>::Error),
     InvalidMessageLength(usize),
     InvalidImmutableMetadataLength(<ImmutableMetadataLength as TryFrom<usize>>::Error),
@@ -58,6 +57,8 @@ pub enum Error {
     InvalidMigratedFundsEntryAmount(<MigratedFundsAmount as TryFrom<u64>>::Error),
     InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
     InvalidNftIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
+    InvalidOutputAmount(<OutputAmount as TryFrom<u64>>::Error),
+    InvalidOutputCount(<OutputCount as TryFrom<usize>>::Error),
     InvalidOutputKind(u8),
     InvalidParentCount(<ParentCount as TryFrom<usize>>::Error),
     InvalidPayloadKind(u32),
@@ -163,7 +164,6 @@ impl fmt::Display for Error {
             }
             Error::InvalidInputKind(k) => write!(f, "invalid input kind: {}", k),
             Error::InvalidInputCount(count) => write!(f, "invalid input count: {}", count),
-            Error::InvalidOutputCount(count) => write!(f, "invalid output count: {}", count),
             Error::InvalidInputOutputIndex(index) => write!(f, "invalid input or output index: {}", index),
             Error::InvalidMessageLength(length) => write!(f, "invalid message length {}", length),
             Error::InvalidStateMetadataLength(length) => write!(f, "invalid state metadata length {}", length),
@@ -176,6 +176,8 @@ impl fmt::Display for Error {
             }
             Error::InvalidNativeTokenCount(count) => write!(f, "invalid native token count: {}", count),
             Error::InvalidNftIndex(index) => write!(f, "invalid nft index: {}", index),
+            Error::InvalidOutputAmount(amount) => write!(f, "invalid output amount: {}", amount),
+            Error::InvalidOutputCount(count) => write!(f, "invalid output count: {}", count),
             Error::InvalidOutputKind(k) => write!(f, "invalid output kind: {}", k),
             Error::InvalidParentCount(count) => {
                 write!(f, "invalid parents count: {}", count)

@@ -9,7 +9,7 @@ use crate::{
             verify_allowed_unlock_conditions, GovernorAddressUnlockCondition, StateControllerAddressUnlockCondition,
             UnlockCondition, UnlockConditionFlags, UnlockConditions,
         },
-        AliasId, NativeToken, NativeTokens,
+        AliasId, NativeToken, NativeTokens, OutputAmount,
     },
     Error,
 };
@@ -28,7 +28,7 @@ use alloc::vec::Vec;
 ///
 #[must_use]
 pub struct AliasOutputBuilder {
-    amount: u64,
+    amount: OutputAmount,
     native_tokens: Vec<NativeToken>,
     alias_id: AliasId,
     state_index: Option<u32>,
@@ -42,7 +42,7 @@ impl AliasOutputBuilder {
     ///
     pub fn new(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
         Ok(Self {
-            amount,
+            amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: Vec::new(),
             alias_id,
             state_index: None,
@@ -157,7 +157,7 @@ pub(crate) type StateMetadataLength = BoundedU16<0, { AliasOutput::STATE_METADAT
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct AliasOutput {
     // Amount of IOTA tokens held by the output.
-    amount: u64,
+    amount: OutputAmount,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
     // Unique identifier of the alias.
@@ -202,7 +202,7 @@ impl AliasOutput {
     ///
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount
+        self.amount.get()
     }
 
     ///
@@ -297,7 +297,7 @@ impl Packable for AliasOutput {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let alias_id = AliasId::unpack::<_, VERIFY>(unpacker).infallible()?;
         let state_index = u32::unpack::<_, VERIFY>(unpacker).infallible()?;

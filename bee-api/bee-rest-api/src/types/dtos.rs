@@ -850,7 +850,7 @@ impl TryFrom<&ExtendedOutputDto> for ExtendedOutput {
     type Error = Error;
 
     fn try_from(value: &ExtendedOutputDto) -> Result<Self, Self::Error> {
-        let mut builder = ExtendedOutputBuilder::new(value.amount);
+        let mut builder = ExtendedOutputBuilder::new(value.amount)?;
         for t in &value.native_tokens {
             builder = builder.add_native_token(t.try_into()?);
         }

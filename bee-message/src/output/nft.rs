@@ -9,7 +9,7 @@ use crate::{
             verify_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
             UnlockConditions,
         },
-        NativeToken, NativeTokens, NftId,
+        NativeToken, NativeTokens, NftId, OutputAmount,
     },
     Error,
 };
@@ -28,7 +28,7 @@ use alloc::vec::Vec;
 ///
 #[must_use]
 pub struct NftOutputBuilder {
-    amount: u64,
+    amount: OutputAmount,
     native_tokens: Vec<NativeToken>,
     nft_id: NftId,
     immutable_metadata: Vec<u8>,
@@ -42,7 +42,7 @@ impl NftOutputBuilder {
         verify_immutable_metadata_length(immutable_metadata.len())?;
 
         Ok(Self {
-            amount,
+            amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: Vec::new(),
             nft_id,
             immutable_metadata,
@@ -125,7 +125,7 @@ pub(crate) type ImmutableMetadataLength = BoundedU16<0, { NftOutput::IMMUTABLE_M
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct NftOutput {
     // Amount of IOTA tokens held by the output.
-    amount: u64,
+    amount: OutputAmount,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
     // Unique identifier of the NFT.
@@ -179,7 +179,7 @@ impl NftOutput {
     ///
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount
+        self.amount.get()
     }
 
     ///
@@ -230,7 +230,7 @@ impl Packable for NftOutput {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let nft_id = NftId::unpack::<_, VERIFY>(unpacker).infallible()?;
         let immutable_metadata = BoxedSlicePrefix::<u8, ImmutableMetadataLength>::unpack::<_, VERIFY>(unpacker)

@@ -9,7 +9,7 @@ use crate::{
             verify_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
             UnlockConditions,
         },
-        FoundryId, NativeToken, NativeTokens,
+        FoundryId, NativeToken, NativeTokens, OutputAmount,
     },
     Error,
 };
@@ -38,7 +38,7 @@ pub enum TokenScheme {
 ///
 #[must_use]
 pub struct FoundryOutputBuilder {
-    amount: u64,
+    amount: OutputAmount,
     native_tokens: Vec<NativeToken>,
     serial_number: u32,
     token_tag: [u8; 12],
@@ -62,7 +62,7 @@ impl FoundryOutputBuilder {
         verify_supply(&circulating_supply, &maximum_supply)?;
 
         Ok(Self {
-            amount,
+            amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: Vec::new(),
             serial_number,
             token_tag,
@@ -145,7 +145,7 @@ impl FoundryOutputBuilder {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct FoundryOutput {
     // Amount of IOTA tokens held by the output.
-    amount: u64,
+    amount: OutputAmount,
     // Native tokens held by the output.
     native_tokens: NativeTokens,
     // The serial number of the foundry with respect to the controlling alias.
@@ -238,7 +238,7 @@ impl FoundryOutput {
     ///
     #[inline(always)]
     pub fn amount(&self) -> u64 {
-        self.amount
+        self.amount.get()
     }
 
     ///
@@ -310,7 +310,7 @@ impl Packable for FoundryOutput {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let serial_number = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
         let token_tag = <[u8; 12]>::unpack::<_, VERIFY>(unpacker).infallible()?;

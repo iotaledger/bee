@@ -41,9 +41,10 @@ pub(crate) use treasury::TreasuryOutputAmount;
 pub(crate) use unlock_condition::DustDepositAmount;
 pub use unlock_condition::{UnlockCondition, UnlockConditions};
 
-use crate::Error;
+use crate::{constant::IOTA_SUPPLY, Error};
 
 use derive_more::From;
+use packable::bounded::BoundedU64;
 
 use core::ops::RangeInclusive;
 
@@ -55,6 +56,8 @@ pub const OUTPUT_COUNT_RANGE: RangeInclusive<u16> = 1..=OUTPUT_COUNT_MAX; // [1.
 pub const OUTPUT_INDEX_MAX: u16 = OUTPUT_COUNT_MAX - 1; // 126
 /// The range of valid indices of outputs of a transaction .
 pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; // [0..126]
+
+pub(crate) type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *Output::AMOUNT_RANGE.end() }>;
 
 /// A generic output that can represent different types defining the deposit of funds.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
@@ -84,6 +87,9 @@ pub enum Output {
 }
 
 impl Output {
+    /// Valid amounts for an [`Output`].
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
+
     /// Return the output kind of an `Output`.
     pub fn kind(&self) -> u8 {
         match self {

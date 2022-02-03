@@ -37,7 +37,8 @@ pub fn rand_treasury_output() -> output::TreasuryOutput {
 pub fn rand_extended_output() -> output::ExtendedOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::ExtendedOutput::ALLOWED_FEATURE_BLOCKS);
     // TODO: Add `NativeTokens`
-    output::ExtendedOutput::build(rand_number())
+    output::ExtendedOutput::build(rand_number_range(Output::AMOUNT_RANGE))
+        .unwrap()
         .with_feature_blocks(feature_blocks)
         .finish()
         .unwrap()
@@ -50,7 +51,7 @@ pub fn rand_alias_output() -> output::AliasOutput {
     // We need to make sure that `AliasId` and `Address` don't match.
     let alias_id = output::AliasId::from(rand_bytes_array());
 
-    output::AliasOutput::build(rand_number(), alias_id)
+    output::AliasOutput::build(rand_number_range(Output::AMOUNT_RANGE), alias_id)
         .unwrap()
         .with_feature_blocks(feature_blocks)
         .finish()
@@ -65,7 +66,7 @@ pub fn rand_foundry_output() -> output::FoundryOutput {
     let circulating = U256::from(rand_bytes_array()) % max_supply.saturating_add(1.into());
 
     output::FoundryOutput::build(
-        rand_number(),
+        rand_number_range(Output::AMOUNT_RANGE),
         rand_number(),
         rand_bytes_array(),
         circulating,
@@ -82,7 +83,7 @@ pub fn rand_foundry_output() -> output::FoundryOutput {
 pub fn rand_nft_output() -> output::NftOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::NftOutput::ALLOWED_FEATURE_BLOCKS);
     output::NftOutput::build(
-        rand_number(),
+        rand_number_range(Output::AMOUNT_RANGE),
         output::NftId::new(rand_bytes_array()),
         rand_bytes(rand_number_range(0..output::NftOutput::IMMUTABLE_METADATA_LENGTH_MAX) as usize),
     )
