@@ -1,12 +1,6 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{
-    address::Address,
-    milestone::MilestoneIndex,
-    output::{Output, OutputId},
-};
-
 use sea_orm::entity::prelude::*;
 
 use crate::types::MilestoneIndexDb;

@@ -21,8 +21,8 @@ use bee_message::{
 };
 
 use sea_orm::{
-    prelude::*, ActiveModelTrait, Condition, ConnectionTrait, Database, DatabaseConnection, EntityTrait, NotSet,
-    QueryOrder, QuerySelect, Schema, Set,
+    prelude::*, ActiveModelTrait, Condition, JoinType, ConnectionTrait, Database, DatabaseConnection, EntityTrait, ExecResult,
+    NotSet, QueryOrder, QuerySelect, Schema, Set,
 };
 
 use chrono::NaiveDateTime;
@@ -159,6 +159,8 @@ impl Indexer {
             query = query.limit(options.page_size + 1);
         }
 
+        query = query.select_only().column(status::Column::CurrentMilestoneIndex);
+
         // TODO: Factor this out:
 
         if let Some(state_controller) = options.state_controller {
@@ -180,11 +182,11 @@ impl Indexer {
 
         // TODO: Pagination
 
-        query
+        let res =query
             .filter(condition)
             .all(&self.db)
             .await
-            .map_err(IndexerError::DatabaseError)
+            .map_err(IndexerError::DatabaseError);
     }
 }
 
