@@ -4,8 +4,8 @@
 mod builder;
 mod enum_info;
 mod field_info;
-mod weight;
 mod trait_impl;
+mod weight;
 use trait_impl::process;
 
 use proc_macro::TokenStream;

@@ -14,6 +14,8 @@ use crate::{
     Error,
 };
 
+use bee_byte_cost::ByteCost;
+
 use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::{Packer, SlicePacker},
@@ -141,23 +143,32 @@ impl FoundryOutputBuilder {
 }
 
 /// Describes a foundry output that is controlled by an alias.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(ByteCost, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct FoundryOutput {
     // Amount of IOTA tokens held by the output.
+    #[byte_cost(data)]
     amount: OutputAmount,
     // Native tokens held by the output.
+    #[byte_cost(data)]
     native_tokens: NativeTokens,
     // The serial number of the foundry with respect to the controlling alias.
+    #[byte_cost(data)]
     serial_number: u32,
     // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
+    #[byte_cost(data)]
     token_tag: [u8; 12],
     // Circulating supply of tokens controlled by this foundry.
+    #[byte_cost(data)]
     circulating_supply: U256,
     // Maximum supply of tokens controlled by this foundry.
+    #[byte_cost(data)]
     maximum_supply: U256,
+    #[byte_cost(data)]
     token_scheme: TokenScheme,
+    #[byte_cost(data)]
     unlock_conditions: UnlockConditions,
+    #[byte_cost(data)]
     feature_blocks: FeatureBlocks,
 }
 

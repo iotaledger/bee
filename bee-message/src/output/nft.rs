@@ -14,6 +14,8 @@ use crate::{
     Error,
 };
 
+use bee_byte_cost::ByteCost;
+
 use packable::{
     bounded::BoundedU16,
     error::{UnpackError, UnpackErrorExt},
@@ -121,18 +123,24 @@ impl NftOutputBuilder {
 pub(crate) type ImmutableMetadataLength = BoundedU16<0, { NftOutput::IMMUTABLE_METADATA_LENGTH_MAX }>;
 
 /// Describes an NFT output, a globally unique token with metadata attached.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(ByteCost, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct NftOutput {
     // Amount of IOTA tokens held by the output.
+    #[byte_cost(data)]
     amount: OutputAmount,
     // Native tokens held by the output.
+    #[byte_cost(data)]
     native_tokens: NativeTokens,
     // Unique identifier of the NFT.
+    #[byte_cost(data)]
     nft_id: NftId,
     // Binary metadata attached immutably to the NFT.
+    #[byte_cost(data)]
     immutable_metadata: BoxedSlicePrefix<u8, ImmutableMetadataLength>,
+    #[byte_cost(data)]
     unlock_conditions: UnlockConditions,
+    #[byte_cost(data)]
     feature_blocks: FeatureBlocks,
 }
 

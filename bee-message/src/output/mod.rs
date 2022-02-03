@@ -43,6 +43,8 @@ pub use unlock_condition::{UnlockCondition, UnlockConditions};
 
 use crate::{constant::IOTA_SUPPLY, Error};
 
+use bee_byte_cost::ByteCost;
+
 use derive_more::From;
 use packable::bounded::BoundedU64;
 
@@ -60,7 +62,7 @@ pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; // [0.
 pub(crate) type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *Output::AMOUNT_RANGE.end() }>;
 
 /// A generic output that can represent different types defining the deposit of funds.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
+#[derive(ByteCost, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),

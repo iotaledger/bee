@@ -1,10 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use syn::{
-    spanned::Spanned,
-    Attribute, Error, Meta, NestedMeta, Result,
-};
+use syn::{spanned::Spanned, Attribute, Error, Meta, NestedMeta, Result};
 
 pub(crate) enum Weight {
     Key,
@@ -23,7 +20,10 @@ fn parse_byte_cost_attr(attr: &Attribute) -> Result<Vec<Weight>> {
     match input {
         Meta::List(list) => {
             if list.nested.is_empty() {
-                return Err(Error::new(list.paren_token.span, "field attribute requires one or more weight specifiers such as `key` or `data`"))
+                return Err(Error::new(
+                    list.paren_token.span,
+                    "field attribute requires one or more weight specifiers such as `key` or `data`",
+                ));
             }
 
             for n in list.nested {
@@ -34,14 +34,27 @@ fn parse_byte_cost_attr(attr: &Attribute) -> Result<Vec<Weight>> {
                         } else if p.is_ident("data") {
                             tags.push(Weight::Data);
                         } else {
-                            return Err(Error::new(p.span(), format!("unknown weight identifier `{}`.", p.get_ident().unwrap())))
+                            return Err(Error::new(
+                                p.span(),
+                                format!("unknown weight identifier `{}`.", p.get_ident().unwrap()),
+                            ));
                         }
                     }
-                    other => return Err(Error::new(other.span(), "field attribute requires one or more weight specifiers such as `#[byte_cost(key)]` or `#[byte_cost(key,data)]`")),
+                    other => {
+                        return Err(Error::new(
+                            other.span(),
+                            "field attribute requires one or more weight specifiers such as `#[byte_cost(key)]` or `#[byte_cost(key,data)]`",
+                        ));
+                    }
                 }
             }
         }
-        other => return Err(Error::new(other.span(), "field attribute requires one or more weight specifiers such as `#[byte_cost(key)]` or `#[byte_cost(key,data)]`")),
+        other => {
+            return Err(Error::new(
+                other.span(),
+                "field attribute requires one or more weight specifiers such as `#[byte_cost(key)]` or `#[byte_cost(key,data)]`",
+            ));
+        }
     }
 
     Ok(tags)

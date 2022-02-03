@@ -16,9 +16,9 @@ impl ByteCostBuilder {
     pub(crate) fn new(ident: Ident) -> Self {
         Self {
             ident,
-            key: quote!{ 0 },
-            data: quote!{ 0 },
-            derived: quote!{ 0 },
+            key: quote! { 0 },
+            data: quote! { 0 },
+            derived: quote! { 0 },
         }
     }
 }

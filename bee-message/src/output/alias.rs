@@ -15,6 +15,7 @@ use crate::{
 };
 
 use bee_byte_cost::ByteCost;
+
 use packable::{
     bounded::BoundedU16,
     error::{UnpackError, UnpackErrorExt},
@@ -154,7 +155,7 @@ impl AliasOutputBuilder {
 pub(crate) type StateMetadataLength = BoundedU16<0, { AliasOutput::STATE_METADATA_LENGTH_MAX }>;
 
 /// Describes an alias account in the ledger that can be controlled by the state and governance controllers.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, ByteCost)]
+#[derive(ByteCost, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct AliasOutput {
     // Amount of IOTA tokens held by the output.

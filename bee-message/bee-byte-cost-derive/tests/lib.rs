@@ -10,7 +10,6 @@ const CONFIG: ByteCostConfig = ByteCostConfig {
     byte_cost: 1,
     weight_for_data: 1,
     weight_for_key: 10,
-    both_indexation_and_sender: false,
 };
 
 #[derive(Default, ByteCost, Packable)]
@@ -86,13 +85,7 @@ fn enums() {
     enum Parent {
         Keys(OnlyKeys),
         Data(OnlyData),
-        // #[byte_cost(key)]
-        // SingleKey(u32),
-        // #[byte_cost(data)]
-        // SingleData(u32),
     }
     assert_eq!(min_deposit(&CONFIG, &Parent::Data(Default::default())), 8 + 1);
     assert_eq!(min_deposit(&CONFIG, &Parent::Keys(Default::default())), 80 + 1);
-    // assert_eq!(min_deposit(&CONFIG, &Parent::SingleKey(Default::default())), 10);
-    // assert_eq!(min_deposit(&CONFIG, &Parent::SingleKey(Default::default())), 4);
 }

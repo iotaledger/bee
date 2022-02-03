@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::rand::{
+    address::rand_alias_address,
     bytes::{rand_bytes, rand_bytes_array},
     message::rand_message_id,
     milestone::{rand_milestone_id, rand_milestone_index},
     number::{rand_number, rand_number_range},
     output::{
         feature_block::rand_allowed_feature_blocks,
-        unlock_condition::rand_state_controller_address_unlock_condition_different_from,
-        unlock_condition::rand_governor_address_unlock_condition_different_from,
+        unlock_condition::{
+            rand_address_unlock_condition, rand_governor_address_unlock_condition_different_from,
+            rand_state_controller_address_unlock_condition_different_from,
+        },
     },
     transaction::rand_transaction_id,
 };
@@ -20,7 +23,7 @@ pub mod feature_block;
 pub mod unlock_condition;
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
-use bee_message::output::{self, Output, OutputId, OUTPUT_INDEX_RANGE};
+use bee_message::output::{self, unlock_condition::AddressUnlockCondition, Output, OutputId, OUTPUT_INDEX_RANGE};
 
 use primitive_types::U256;
 
@@ -46,6 +49,7 @@ pub fn rand_extended_output() -> output::ExtendedOutput {
     output::ExtendedOutput::build(rand_number_range(Output::AMOUNT_RANGE))
         .unwrap()
         .with_feature_blocks(feature_blocks)
+        .add_unlock_condition(rand_address_unlock_condition().into())
         .finish()
         .unwrap()
 }
@@ -70,8 +74,8 @@ pub fn rand_alias_output() -> output::AliasOutput {
 pub fn rand_foundry_output() -> output::FoundryOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::FoundryOutput::ALLOWED_FEATURE_BLOCKS);
 
-    let max_supply = U256::from(rand_bytes_array()).saturating_add(1.into());
-    let circulating = U256::from(rand_bytes_array()) % max_supply.saturating_add(1.into());
+    let max_supply = U256::from(rand_bytes_array()).saturating_add(U256::one());
+    let circulating = U256::from(rand_bytes_array()) % max_supply.saturating_add(U256::one());
 
     output::FoundryOutput::build(
         rand_number_range(Output::AMOUNT_RANGE),
@@ -83,6 +87,7 @@ pub fn rand_foundry_output() -> output::FoundryOutput {
     )
     .unwrap()
     .with_feature_blocks(feature_blocks)
+    .add_unlock_condition(AddressUnlockCondition::new(rand_alias_address().into()).into())
     .finish()
     .unwrap()
 }
@@ -97,6 +102,7 @@ pub fn rand_nft_output() -> output::NftOutput {
     )
     .unwrap()
     .with_feature_blocks(feature_blocks)
+    .add_unlock_condition(AddressUnlockCondition::new(rand_alias_address().into()).into())
     .finish()
     .unwrap()
 }

@@ -3,6 +3,8 @@
 
 use crate::{constant::IOTA_SUPPLY, Error};
 
+use bee_byte_cost::{ByteCost, ByteCostConfig};
+
 use packable::bounded::BoundedU64;
 
 use core::ops::RangeInclusive;
@@ -16,6 +18,13 @@ pub(crate) type TreasuryOutputAmount =
 #[packable(unpack_error = Error, with = Error::InvalidTreasuryOutputAmount)]
 pub struct TreasuryOutput {
     amount: TreasuryOutputAmount,
+}
+
+impl ByteCost for TreasuryOutput {
+    fn weighted_bytes(&self, _: &ByteCostConfig) -> u64 {
+        // There is no byte cost for `TreasuryOutput`s yet.
+        unimplemented!()
+    }
 }
 
 impl TreasuryOutput {

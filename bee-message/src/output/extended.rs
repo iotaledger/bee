@@ -14,6 +14,8 @@ use crate::{
     Error,
 };
 
+use bee_byte_cost::ByteCost;
+
 use packable::Packable;
 
 use alloc::vec::Vec;
@@ -101,18 +103,22 @@ impl ExtendedOutputBuilder {
 }
 
 /// Describes an extended output with optional features.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
+#[derive(ByteCost, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct ExtendedOutput {
     // Amount of IOTA tokens held by the output.
     #[packable(unpack_error_with = Error::InvalidOutputAmount)]
+    #[byte_cost(data)]
     amount: OutputAmount,
     // Native tokens held by the output.
+    #[byte_cost(data)]
     native_tokens: NativeTokens,
     #[packable(verify_with = verify_unlock_conditions)]
+    #[byte_cost(data)]
     unlock_conditions: UnlockConditions,
     #[packable(verify_with = verify_feature_blocks)]
+    #[byte_cost(data)]
     feature_blocks: FeatureBlocks,
 }
 
