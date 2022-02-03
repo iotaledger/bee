@@ -100,6 +100,13 @@ impl From<TaggedDataPayload> for Payload {
     }
 }
 
+#[cfg(feature = "cpt2")]
+impl From<IndexationPayload> for Payload {
+    fn from(payload: IndexationPayload) -> Self {
+        Self::Indexation(Box::new(payload))
+    }
+}
+
 impl Payload {
     /// Returns the payload kind of a `Payload`.
     pub fn kind(&self) -> u32 {

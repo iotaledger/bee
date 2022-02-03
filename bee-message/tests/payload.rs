@@ -21,6 +21,9 @@ use packable::PackableExt;
 
 use core::str::FromStr;
 
+#[cfg(feature = "cpt2")]
+use bee_message::payload::IndexationPayload;
+
 const TRANSACTION_ID: &str = "24a1f46bdb6b2bf38f1c59f73cdd4ae5b418804bb231d76d06fbf246498d5883";
 const ED25519_ADDRESS: &str = "e594f9a895c0e0a6760dd12cffc2c3d1e1cbf7269b328091f96ce3d0dd550b75";
 const ED25519_PUBLIC_KEY: &str = "1da5ddd11ba3f961acab68fafee3177d039875eaa94ac5fdbff8b53f0c50bfb9";
@@ -113,6 +116,18 @@ fn tagged_data() {
     assert_eq!(payload.kind(), 5);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::TaggedData(_)));
+}
+
+#[cfg(feature = "cpt2")]
+#[test]
+fn indexation() {
+    let payload: Payload = IndexationPayload::new(rand_bytes(32), vec![]).unwrap().into();
+
+    let packed = payload.pack_to_vec();
+
+    assert_eq!(payload.kind(), 2);
+    assert_eq!(payload.packed_len(), packed.len());
+    assert!(matches!(payload, Payload::Indexation(_)));
 }
 
 #[test]

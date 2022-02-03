@@ -38,11 +38,11 @@ impl IndexationPayload {
     /// Creates a new [`IndexationPayload`].
     pub fn new(index: Vec<u8>, data: Vec<u8>) -> Result<Self, Error> {
         Ok(Self {
-            index: index.into_boxed_slice().try_into().map_err(Error::InvalidTagLength)?,
+            index: index.into_boxed_slice().try_into().map_err(Error::InvalidIndexLength)?,
             data: data
                 .into_boxed_slice()
                 .try_into()
-                .map_err(Error::InvalidTaggedDataLength)?,
+                .map_err(Error::InvalidIndexationDataLength)?,
         })
     }
 
