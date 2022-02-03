@@ -13,18 +13,22 @@ use alloc::vec::Vec;
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = Error)]
 pub struct NativeToken {
     // Identifier of the native token.
     token_id: TokenId,
     // Amount of native tokens.
+    #[packable(verify_with = verify_amount)]
     amount: U256,
 }
 
 impl NativeToken {
     /// Creates a new [`NativeToken`].
     #[inline(always)]
-    pub fn new(token_id: TokenId, amount: U256) -> Self {
-        Self { token_id, amount }
+    pub fn new(token_id: TokenId, amount: U256) -> Result<Self, Error> {
+        verify_amount::<true>(&amount)?;
+
+        Ok(Self { token_id, amount })
     }
 
     /// Returns the token ID of the [`NativeToken`].
@@ -40,12 +44,21 @@ impl NativeToken {
     }
 }
 
+#[inline]
+fn verify_amount<const VERIFY: bool>(amount: &U256) -> Result<(), Error> {
+    if VERIFY && amount.is_zero() {
+        Err(Error::NativeTokensNullAmount)
+    } else {
+        Ok(())
+    }
+}
+
 pub(crate) type NativeTokenCount = BoundedU8<0, { NativeTokens::COUNT_MAX }>;
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Deref, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = Error, with = |e| Error::InvalidNativeTokenCount(e.into_prefix().into()))]
+#[packable(unpack_error = Error, with = |e| e.unwrap_packable_or_else(|p| Error::InvalidNativeTokenCount(p.into())))]
 pub struct NativeTokens(
     #[packable(verify_with = verify_unique_sorted)] BoxedSlicePrefix<NativeToken, NativeTokenCount>,
 );

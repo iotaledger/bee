@@ -887,14 +887,15 @@ impl TryFrom<&NativeTokenDto> for NativeToken {
     type Error = Error;
 
     fn try_from(value: &NativeTokenDto) -> Result<Self, Self::Error> {
-        Ok(Self::new(
+        Self::new(
             (&value.token_id).try_into()?,
             value
                 .amount
                 .0
                 .parse::<U256>()
                 .map_err(|_| Error::InvalidField("amount"))?,
-        ))
+        )
+        .map_err(|_| Error::InvalidField("nativeTokens"))
     }
 }
 
