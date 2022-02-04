@@ -25,7 +25,7 @@ fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) 
 
         let amount = match output.inner() {
             output::Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(output.kind())),
-            output::Output::Extended(output) => output.amount(),
+            output::Output::Basic(output) => output.amount(),
             output::Output::Alias(output) => output.amount(),
             output::Output::Foundry(output) => output.amount(),
             output::Output::Nft(output) => output.amount(),

@@ -77,7 +77,7 @@ fn apply_regular_essence<B: StorageBackend>(
 
         match consumed_output.inner() {
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
-            Output::Extended(_) => {
+            Output::Basic(_) => {
                 // TODO
             }
             Output::Alias(_) => {
@@ -97,7 +97,7 @@ fn apply_regular_essence<B: StorageBackend>(
     for created_output in essence.outputs() {
         match created_output {
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
-            Output::Extended(_) => {
+            Output::Basic(_) => {
                 // TODO
             }
             Output::Alias(_) => {

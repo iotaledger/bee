@@ -33,11 +33,11 @@ pub fn rand_treasury_output() -> output::TreasuryOutput {
     output::TreasuryOutput::new(rand_number_range(output::TreasuryOutput::AMOUNT_RANGE)).unwrap()
 }
 
-/// Generates a random [`ExtendedOutput`](output::ExtendedOutput).
-pub fn rand_extended_output() -> output::ExtendedOutput {
-    let feature_blocks = rand_allowed_feature_blocks(output::ExtendedOutput::ALLOWED_FEATURE_BLOCKS);
+/// Generates a random [`BasicOutput`](output::BasicOutput).
+pub fn rand_basic_output() -> output::BasicOutput {
+    let feature_blocks = rand_allowed_feature_blocks(output::BasicOutput::ALLOWED_FEATURE_BLOCKS);
     // TODO: Add `NativeTokens`
-    output::ExtendedOutput::build(rand_number_range(Output::AMOUNT_RANGE))
+    output::BasicOutput::build(rand_number_range(Output::AMOUNT_RANGE))
         .unwrap()
         .with_feature_blocks(feature_blocks)
         .finish()
@@ -97,7 +97,7 @@ pub fn rand_nft_output() -> output::NftOutput {
 pub fn rand_output() -> Output {
     match rand_number::<u64>() % 5 {
         0 => rand_treasury_output().into(),
-        1 => rand_extended_output().into(),
+        1 => rand_basic_output().into(),
         2 => rand_alias_output().into(),
         3 => rand_foundry_output().into(),
         4 => rand_nft_output().into(),

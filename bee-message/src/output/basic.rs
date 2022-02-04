@@ -20,14 +20,14 @@ use alloc::vec::Vec;
 
 ///
 #[must_use]
-pub struct ExtendedOutputBuilder {
+pub struct BasicOutputBuilder {
     amount: OutputAmount,
     native_tokens: Vec<NativeToken>,
     unlock_conditions: Vec<UnlockCondition>,
     feature_blocks: Vec<FeatureBlock>,
 }
 
-impl ExtendedOutputBuilder {
+impl BasicOutputBuilder {
     ///
     #[inline(always)]
     pub fn new(amount: u64) -> Result<Self, Error> {
@@ -82,7 +82,7 @@ impl ExtendedOutputBuilder {
     }
 
     ///
-    pub fn finish(self) -> Result<ExtendedOutput, Error> {
+    pub fn finish(self) -> Result<BasicOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
         verify_unlock_conditions::<true>(&unlock_conditions)?;
@@ -91,7 +91,7 @@ impl ExtendedOutputBuilder {
 
         verify_feature_blocks::<true>(&feature_blocks)?;
 
-        Ok(ExtendedOutput {
+        Ok(BasicOutput {
             amount: self.amount,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             unlock_conditions,
@@ -100,11 +100,11 @@ impl ExtendedOutputBuilder {
     }
 }
 
-/// Describes an extended output with optional features.
+/// Describes a basic output with optional features.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
-pub struct ExtendedOutput {
+pub struct BasicOutput {
     // Amount of IOTA tokens held by the output.
     #[packable(unpack_error_with = Error::InvalidOutputAmount)]
     amount: OutputAmount,
@@ -116,36 +116,36 @@ pub struct ExtendedOutput {
     feature_blocks: FeatureBlocks,
 }
 
-impl ExtendedOutput {
-    /// The [`Output`](crate::output::Output) kind of an [`ExtendedOutput`].
+impl BasicOutput {
+    /// The [`Output`](crate::output::Output) kind of an [`BasicOutput`].
     pub const KIND: u8 = 3;
 
-    /// The set of allowed [`UnlockCondition`]s for an [`ExtendedOutput`].
+    /// The set of allowed [`UnlockCondition`]s for an [`BasicOutput`].
     const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS
         .union(UnlockConditionFlags::DUST_DEPOSIT_RETURN)
         .union(UnlockConditionFlags::TIMELOCK)
         .union(UnlockConditionFlags::EXPIRATION);
-    /// The set of allowed [`FeatureBlock`]s for an [`ExtendedOutput`].
+    /// The set of allowed [`FeatureBlock`]s for an [`BasicOutput`].
     pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
         .union(FeatureBlockFlags::METADATA)
         .union(FeatureBlockFlags::TAG);
 
-    /// Creates a new [`ExtendedOutput`].
+    /// Creates a new [`BasicOutput`].
     #[inline(always)]
     pub fn new(amount: u64) -> Result<Self, Error> {
-        ExtendedOutputBuilder::new(amount)?.finish()
+        BasicOutputBuilder::new(amount)?.finish()
     }
 
-    /// Creates a new [`ExtendedOutputBuilder`].
+    /// Creates a new [`BasicOutputBuilder`].
     #[inline(always)]
-    pub fn build(amount: u64) -> Result<ExtendedOutputBuilder, Error> {
-        ExtendedOutputBuilder::new(amount)
+    pub fn build(amount: u64) -> Result<BasicOutputBuilder, Error> {
+        BasicOutputBuilder::new(amount)
     }
 
     ///
     #[inline(always)]
     pub fn address(&self) -> &Address {
-        // An ExtendedOutput must have a AddressUnlockCondition.
+        // An BasicOutput must have an AddressUnlockCondition.
         if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
             address.address()
         } else {
@@ -183,7 +183,7 @@ fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockCondit
         if unlock_conditions.get(AddressUnlockCondition::KIND).is_none() {
             Err(Error::MissingAddressUnlockCondition)
         } else {
-            verify_allowed_unlock_conditions(unlock_conditions, ExtendedOutput::ALLOWED_UNLOCK_CONDITIONS)
+            verify_allowed_unlock_conditions(unlock_conditions, BasicOutput::ALLOWED_UNLOCK_CONDITIONS)
         }
     } else {
         Ok(())
@@ -192,7 +192,7 @@ fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockCondit
 
 fn verify_feature_blocks<const VERIFY: bool>(blocks: &FeatureBlocks) -> Result<(), Error> {
     if VERIFY {
-        verify_allowed_feature_blocks(blocks, ExtendedOutput::ALLOWED_FEATURE_BLOCKS)
+        verify_allowed_feature_blocks(blocks, BasicOutput::ALLOWED_FEATURE_BLOCKS)
     } else {
         Ok(())
     }

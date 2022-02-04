@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Full implementation of the [Node REST API](https://github.com/iotaledger/tips/blob/main/tips/TIP-0013/tip-0013.md);
-- `ExtendedOutputDto`;
+- `BasicOutputDto`;
 - `AliasOutputDto`;
 - `FoundryOutputDto`;
 - `NftOutputDto`;

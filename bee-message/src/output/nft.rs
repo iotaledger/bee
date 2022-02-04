@@ -168,7 +168,7 @@ impl NftOutput {
     ///
     #[inline(always)]
     pub fn address(&self) -> &Address {
-        // An NftOutput must have a AddressUnlockCondition.
+        // An NftOutput must have an AddressUnlockCondition.
         if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
             address.address()
         } else {

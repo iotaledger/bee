@@ -227,7 +227,7 @@ impl FoundryOutput {
     ///
     #[inline(always)]
     pub fn address(&self) -> &Address {
-        // A FoundryOutput must have a AddressUnlockCondition.
+        // A FoundryOutput must have an AddressUnlockCondition.
         if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
             address.address()
         } else {

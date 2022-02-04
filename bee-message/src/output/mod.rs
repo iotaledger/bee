@@ -3,8 +3,8 @@
 
 mod alias;
 mod alias_id;
+mod basic;
 mod chain_id;
-mod extended;
 mod foundry;
 mod foundry_id;
 mod native_token;
@@ -22,8 +22,8 @@ pub mod unlock_condition;
 pub(crate) use alias::StateMetadataLength;
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
+pub use basic::{BasicOutput, BasicOutputBuilder};
 pub use chain_id::ChainId;
-pub use extended::{ExtendedOutput, ExtendedOutputBuilder};
 pub use feature_block::{FeatureBlock, FeatureBlocks};
 pub(crate) use feature_block::{MetadataFeatureBlockLength, TagFeatureBlockLength};
 pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme};
@@ -72,9 +72,9 @@ pub enum Output {
     /// A treasury output.
     #[packable(tag = TreasuryOutput::KIND)]
     Treasury(TreasuryOutput),
-    /// An extended output.
-    #[packable(tag = ExtendedOutput::KIND)]
-    Extended(ExtendedOutput),
+    /// A basic output.
+    #[packable(tag = BasicOutput::KIND)]
+    Basic(BasicOutput),
     /// An alias output.
     #[packable(tag = AliasOutput::KIND)]
     Alias(AliasOutput),
@@ -94,7 +94,7 @@ impl Output {
     pub fn kind(&self) -> u8 {
         match self {
             Self::Treasury(_) => TreasuryOutput::KIND,
-            Self::Extended(_) => ExtendedOutput::KIND,
+            Self::Basic(_) => BasicOutput::KIND,
             Self::Alias(_) => AliasOutput::KIND,
             Self::Foundry(_) => FoundryOutput::KIND,
             Self::Nft(_) => NftOutput::KIND,
@@ -105,7 +105,7 @@ impl Output {
     pub fn amount(&self) -> u64 {
         match self {
             Self::Treasury(output) => output.amount(),
-            Self::Extended(output) => output.amount(),
+            Self::Basic(output) => output.amount(),
             Self::Alias(output) => output.amount(),
             Self::Foundry(output) => output.amount(),
             Self::Nft(output) => output.amount(),
@@ -116,7 +116,7 @@ impl Output {
     pub fn native_tokens(&self) -> Option<&[NativeToken]> {
         match self {
             Self::Treasury(_) => None,
-            Self::Extended(output) => Some(output.native_tokens()),
+            Self::Basic(output) => Some(output.native_tokens()),
             Self::Alias(output) => Some(output.native_tokens()),
             Self::Foundry(output) => Some(output.native_tokens()),
             Self::Nft(output) => Some(output.native_tokens()),
