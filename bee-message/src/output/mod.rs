@@ -123,7 +123,7 @@ impl Output {
         }
     }
 
-    ///
+    /// Returns the amount of an `Output`.
     pub fn amount(&self) -> u64 {
         match self {
             #[cfg(feature = "cpt2")]
@@ -135,6 +135,17 @@ impl Output {
             Self::Alias(output) => output.amount(),
             Self::Foundry(output) => output.amount(),
             Self::Nft(output) => output.amount(),
+        }
+    }
+
+    /// Returns the native tokens of an `Output`, if any.
+    pub fn native_tokens(&self) -> Option<&[NativeToken]> {
+        match self {
+            Self::Treasury(_) => None,
+            Self::Extended(output) => Some(output.native_tokens()),
+            Self::Alias(output) => Some(output.native_tokens()),
+            Self::Foundry(output) => Some(output.native_tokens()),
+            Self::Nft(output) => Some(output.native_tokens()),
         }
     }
 }
