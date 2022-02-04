@@ -19,9 +19,8 @@ use bee_message::{
             GovernorAddressUnlockCondition, StateControllerAddressUnlockCondition, TimelockUnlockCondition,
             UnlockCondition,
         },
-        AliasId, AliasOutput, AliasOutputBuilder, ExtendedOutput, ExtendedOutputBuilder, FoundryOutput,
-        FoundryOutputBuilder, NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme,
-        TreasuryOutput,
+        AliasId, AliasOutput, AliasOutputBuilder, BasicOutput, BasicOutputBuilder, FoundryOutput, FoundryOutputBuilder,
+        NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme, TreasuryOutput,
     },
     parent::Parents,
     payload::{
@@ -337,7 +336,7 @@ pub enum OutputDto {
     #[cfg(feature = "cpt2")]
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto),
     Treasury(TreasuryOutputDto),
-    Extended(ExtendedOutputDto),
+    Basic(BasicOutputDto),
     Alias(AliasOutputDto),
     Foundry(FoundryOutputDto),
     Nft(NftOutputDto),
@@ -351,7 +350,7 @@ impl From<&Output> for OutputDto {
             #[cfg(feature = "cpt2")]
             Output::SignatureLockedDustAllowance(o) => OutputDto::SignatureLockedDustAllowance(o.into()),
             Output::Treasury(o) => OutputDto::Treasury(o.into()),
-            Output::Extended(o) => OutputDto::Extended(o.into()),
+            Output::Basic(o) => OutputDto::Basic(o.into()),
             Output::Alias(o) => OutputDto::Alias(o.into()),
             Output::Foundry(o) => OutputDto::Foundry(o.into()),
             Output::Nft(o) => OutputDto::Nft(o.into()),
@@ -369,7 +368,7 @@ impl TryFrom<&OutputDto> for Output {
             #[cfg(feature = "cpt2")]
             OutputDto::SignatureLockedDustAllowance(o) => Ok(Output::SignatureLockedDustAllowance(o.try_into()?)),
             OutputDto::Treasury(o) => Ok(Output::Treasury(o.try_into()?)),
-            OutputDto::Extended(o) => Ok(Output::Extended(o.try_into()?)),
+            OutputDto::Basic(o) => Ok(Output::Basic(o.try_into()?)),
             OutputDto::Alias(o) => Ok(Output::Alias(o.try_into()?)),
             OutputDto::Foundry(o) => Ok(Output::Foundry(o.try_into()?)),
             OutputDto::Nft(o) => Ok(Output::Nft(o.try_into()?)),
@@ -390,9 +389,9 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
                     TreasuryOutputDto::deserialize(value)
                         .map_err(|e| serde::de::Error::custom(format!("cannot deserialize treasury output: {}", e)))?,
                 ),
-                ExtendedOutput::KIND => OutputDto::Extended(
-                    ExtendedOutputDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize extended output: {}", e)))?,
+                BasicOutput::KIND => OutputDto::Basic(
+                    BasicOutputDto::deserialize(value)
+                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize basic output: {}", e)))?,
                 ),
                 AliasOutput::KIND => OutputDto::Alias(
                     AliasOutputDto::deserialize(value)
@@ -425,7 +424,7 @@ impl Serialize for OutputDto {
             #[cfg(feature = "cpt2")]
             T2(&'a SignatureLockedDustAllowanceOutputDto),
             T3(&'a TreasuryOutputDto),
-            T4(&'a ExtendedOutputDto),
+            T4(&'a BasicOutputDto),
             T5(&'a AliasOutputDto),
             T6(&'a FoundryOutputDto),
             T7(&'a NftOutputDto),
@@ -447,7 +446,7 @@ impl Serialize for OutputDto {
             OutputDto::Treasury(o) => TypedOutput {
                 output: OutputDto_::T3(o),
             },
-            OutputDto::Extended(o) => TypedOutput {
+            OutputDto::Basic(o) => TypedOutput {
                 output: OutputDto_::T4(o),
             },
             OutputDto::Alias(o) => TypedOutput {
@@ -852,9 +851,9 @@ pub struct NftUnlockBlockDto {
     pub index: u16,
 }
 
-/// Describes an extended output.
+/// Describes a basic output.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ExtendedOutputDto {
+pub struct BasicOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
     // Amount of IOTA tokens held by the output.
@@ -868,10 +867,10 @@ pub struct ExtendedOutputDto {
     pub feature_blocks: Vec<FeatureBlockDto>,
 }
 
-impl From<&ExtendedOutput> for ExtendedOutputDto {
-    fn from(value: &ExtendedOutput) -> Self {
+impl From<&BasicOutput> for BasicOutputDto {
+    fn from(value: &BasicOutput) -> Self {
         Self {
-            kind: ExtendedOutput::KIND,
+            kind: BasicOutput::KIND,
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
@@ -880,11 +879,11 @@ impl From<&ExtendedOutput> for ExtendedOutputDto {
     }
 }
 
-impl TryFrom<&ExtendedOutputDto> for ExtendedOutput {
+impl TryFrom<&BasicOutputDto> for BasicOutput {
     type Error = Error;
 
-    fn try_from(value: &ExtendedOutputDto) -> Result<Self, Self::Error> {
-        let mut builder = ExtendedOutputBuilder::new(value.amount)?;
+    fn try_from(value: &BasicOutputDto) -> Result<Self, Self::Error> {
+        let mut builder = BasicOutputBuilder::new(value.amount)?;
         for t in &value.native_tokens {
             builder = builder.add_native_token(t.try_into()?);
         }

@@ -165,7 +165,7 @@ pub(crate) fn insert_created_output_batch<B: StorageBackend>(
             Ok(())
         }
         Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
-        Output::Extended(_) => {
+        Output::Basic(_) => {
             // TODO
             Ok(())
         }
@@ -201,7 +201,7 @@ pub(crate) fn delete_created_output_batch<B: StorageBackend>(
         #[cfg(feature = "cpt2")]
         Output::SignatureLockedDustAllowance(_) => todo!(),
         Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
-        Output::Extended(_) => todo!(),
+        Output::Basic(_) => todo!(),
         Output::Alias(_) => todo!(),
         Output::Foundry(_) => todo!(),
         Output::Nft(_) => todo!(),

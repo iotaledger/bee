@@ -5,7 +5,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     constant::IOTA_SUPPLY,
     input::{Input, TreasuryInput, UtxoInput},
-    output::{unlock_condition::AddressUnlockCondition, ExtendedOutput, Output, TreasuryOutput},
+    output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, TreasuryOutput},
     payload::{
         milestone::MilestoneId,
         transaction::{RegularTransactionEssence, TransactionId},
@@ -37,8 +37,8 @@ fn build_valid() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -61,8 +61,8 @@ fn build_valid_with_payload() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -87,8 +87,8 @@ fn build_valid_add_inputs_outputs() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -111,8 +111,8 @@ fn build_invalid_payload_kind() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -134,8 +134,8 @@ fn build_invalid_input_count_low() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -157,8 +157,8 @@ fn build_invalid_input_count_high() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -196,8 +196,8 @@ fn build_invalid_output_count_high() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -222,8 +222,8 @@ fn build_invalid_duplicate_utxo() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -244,8 +244,8 @@ fn build_invalid_input_kind() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -283,8 +283,8 @@ fn build_invalid_accumulated_output() {
     let bytes1: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address1 = Address::from(Ed25519Address::new(bytes1));
     let amount1 = IOTA_SUPPLY - 1_000_000;
-    let output1 = Output::Extended(
-        ExtendedOutput::build(amount1)
+    let output1 = Output::Basic(
+        BasicOutput::build(amount1)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address1).into())
             .finish()
@@ -294,8 +294,8 @@ fn build_invalid_accumulated_output() {
     let bytes2: [u8; 32] = hex::decode(ED25519_ADDRESS_2).unwrap().try_into().unwrap();
     let address2 = Address::from(Ed25519Address::new(bytes2));
     let amount2 = 2_000_000;
-    let output2 = Output::Extended(
-        ExtendedOutput::build(amount2)
+    let output2 = Output::Basic(
+        BasicOutput::build(amount2)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address2).into())
             .finish()
@@ -318,8 +318,8 @@ fn getters() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let outputs = vec![Output::Extended(
-        ExtendedOutput::build(amount)
+    let outputs = vec![Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()

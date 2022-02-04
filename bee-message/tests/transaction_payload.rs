@@ -4,7 +4,7 @@
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, UtxoInput},
-    output::{unlock_condition::AddressUnlockCondition, ExtendedOutput, Output},
+    output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output},
     payload::transaction::{
         RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload, TransactionPayloadBuilder,
     },
@@ -42,8 +42,8 @@ fn builder_no_essence_no_unlock_blocks() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -74,8 +74,8 @@ fn builder_no_essence_too_few_unlock_blocks() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -116,8 +116,8 @@ fn builder_no_essence_too_many_unlock_blocks() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -160,8 +160,8 @@ fn pack_unpack_valid() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -206,8 +206,8 @@ fn getters() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let output = Output::Extended(
-        ExtendedOutput::build(amount)
+    let output = Output::Basic(
+        BasicOutput::build(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
