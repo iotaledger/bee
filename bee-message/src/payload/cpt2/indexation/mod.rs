@@ -5,8 +5,9 @@
 
 mod padded;
 
-use crate::{Error, Message};
 pub use padded::PaddedIndex;
+
+use crate::{Error, Message};
 
 use packable::{
     bounded::{BoundedU32, BoundedU8},

@@ -21,7 +21,6 @@ pub mod feature_block;
 ///
 pub mod unlock_condition;
 
-use crate::{constant::IOTA_SUPPLY, Error};
 pub(crate) use alias::StateMetadataLength;
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
@@ -50,6 +49,8 @@ pub use treasury::TreasuryOutput;
 pub(crate) use treasury::TreasuryOutputAmount;
 pub(crate) use unlock_condition::DustDepositAmount;
 pub use unlock_condition::{UnlockCondition, UnlockConditions};
+
+use crate::{constant::IOTA_SUPPLY, Error};
 
 use derive_more::From;
 use packable::bounded::BoundedU64;
