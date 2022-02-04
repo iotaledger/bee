@@ -13,9 +13,9 @@ pub mod transaction;
 pub mod treasury;
 
 #[cfg(feature = "cpt2")]
-pub(crate) use cpt2::indexation::{IndexLength, IndexationDataLength};
+pub use cpt2::indexation::IndexationPayload;
 #[cfg(feature = "cpt2")]
-pub use cpt2::indexation::{IndexationPayload, PaddedIndex};
+pub(crate) use cpt2::indexation::{IndexLength, IndexationDataLength};
 pub use milestone::MilestonePayload;
 pub(crate) use milestone::{PublicKeyCount, SignatureCount};
 pub use receipt::ReceiptPayload;
