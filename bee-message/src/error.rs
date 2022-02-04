@@ -17,9 +17,10 @@ use crate::{
 };
 
 #[cfg(feature = "cpt2")]
-use crate::output::DustAllowanceAmount;
-#[cfg(feature = "cpt2")]
-use crate::payload::{IndexLength, IndexationDataLength};
+use crate::{
+    output::DustAllowanceAmount,
+    payload::{IndexLength, IndexationDataLength},
+};
 
 use crypto::Error as CryptoError;
 use primitive_types::U256;
