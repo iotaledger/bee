@@ -141,7 +141,7 @@ pub struct OutputResponse {
     #[serde(rename = "milestoneIndexSpent", skip_serializing_if = "Option::is_none")]
     pub milestone_index_spent: Some(u32),
     #[serde(rename = "transactionIdSpent", skip_serializing_if = "Option::is_none")]
-    pub transaction_id_spent: Some(u32),
+    pub transaction_id_spent: Some(String),
 }
 
 impl BodyInner for OutputResponse {}
