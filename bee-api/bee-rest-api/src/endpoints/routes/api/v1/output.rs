@@ -78,15 +78,16 @@ pub(crate) async fn output<B: StorageBackend>(
                     ))
                 })?;
 
-                let (is_spent, milestone_index_spent, transaction_id_spent) = if consumed_output.is_some() {
-                    (
-                        true,
-                        Some(consumed_output.index()),
-                        Some(consumed_output.target().to_string()),
-                    )
-                } else {
-                    (false, None, None)
-                };
+                let (is_spent, milestone_index_spent, transaction_id_spent) =
+                    if let Some(consumed_output) = consumed_output {
+                        (
+                            true,
+                            Some(consumed_output.index()),
+                            Some(consumed_output.target().to_string()),
+                        )
+                    } else {
+                        (false, None, None)
+                    };
 
                 Ok(warp::reply::json(&SuccessBody::new(OutputResponse {
                     message_id: output.message_id().to_string(),
