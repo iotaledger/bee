@@ -52,7 +52,7 @@ rustup update
 ## Compilation
 
 ```sh
-git clone https://github.com/iotaledger/bee.git --branch chrysalis-pt-2
+git clone https://github.com/iotaledger/bee.git --branch dev
 cd bee/bee-node
 ```
 
