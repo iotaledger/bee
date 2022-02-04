@@ -10,7 +10,6 @@ use topics::WsTopic;
 
 use crate::{
     plugins::dashboard::{
-        auth::AUDIENCE_CLAIM,
         config::DashboardAuthConfig,
         websocket::responses::{
             database_size_metrics::DatabaseSizeMetricsResponse, sync_status::SyncStatusResponse, WsEvent, WsEventInner,

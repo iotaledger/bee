@@ -24,7 +24,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
 
 pub(crate) async fn peers<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> Result<impl Reply, Infallible> {
     let mut peers_dtos = Vec::new();
-    for peer in args.peer_manager.get_all().await {
+    for peer in args.peer_manager.get_all() {
         peers_dtos.push(PeerDto::from(peer.as_ref()));
     }
     Ok(warp::reply::json(&SuccessBody::new(PeersResponse(peers_dtos))))

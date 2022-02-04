@@ -153,14 +153,15 @@ dependencies = [
 
 [[package]]
 name = "auth-helper"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7299231e2941a1568afb5c7c97c3d5373f507acf4b5a7fc0b49cdc4a57ecfca0"
+checksum = "574c56c72f9945f1cd1298fe362ec1d5bd7e6c7a5c6e55925748d4986cebb6fb"
 dependencies = [
  "jsonwebtoken",
  "rand 0.8.4",
  "rust-argon2",
  "serde",
+ "thiserror",
 ]
 
 [[package]]

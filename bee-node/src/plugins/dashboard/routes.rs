@@ -4,7 +4,7 @@
 use crate::{
     plugins::dashboard::{
         asset::Asset,
-        auth::{auth, AUDIENCE_CLAIM},
+        auth::{auth},
         config::DashboardAuthConfig,
         rejection::CustomRejection,
         websocket::{user_connected, WsUsers},
@@ -104,25 +104,18 @@ pub(crate) fn ws_routes<S: NodeStorageBackend>(
 }
 
 pub(crate) fn api_routes(
-    local: Local,
-    auth_config: DashboardAuthConfig,
     rest_api_config: RestApiConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+
     let allowed_routes = warp::get()
         .and(warp::path!("api" / "v1" / "info" / ..))
         .or(warp::get().and(warp::path!("api" / "v1" / "messages" / ..)))
         .or(warp::get().and(warp::path!("api" / "v1" / "outputs" / ..)))
         .or(warp::get().and(warp::path!("api" / "v1" / "addresses" / ..)))
         .or(warp::get().and(warp::path!("api" / "v1" / "milestones" / ..)))
-        .or(auth_filter(local.clone(), auth_config.clone())
-            .and(warp::get())
-            .and(warp::path!("api" / "v1" / "peers" / ..)))
-        .or(auth_filter(local.clone(), auth_config.clone())
-            .and(warp::post())
-            .and(warp::path!("api" / "v1" / "peers" / ..)))
-        .or(auth_filter(local, auth_config)
-            .and(warp::delete())
-            .and(warp::path!("api" / "v1" / "peers" / ..)));
+        .or(warp::get().and(warp::path!("api" / "v1" / "peers" / ..)))
+        .or(warp::post().and(warp::path!("api" / "v1" / "peers" / ..)))
+        .or(warp::delete().and(warp::path!("api" / "v1" / "peers" / ..)));
 
     allowed_routes
         .and(reverse_proxy_filter(
@@ -130,51 +123,6 @@ pub(crate) fn api_routes(
             "http://".to_owned() + &rest_api_config.bind_socket_addr().to_string() + "/",
         ))
         .map(|_, res| res)
-}
-
-pub fn auth_filter(
-    local: Local,
-    auth_config: DashboardAuthConfig,
-) -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    let local_filter = warp::any().map(move || local.clone());
-    let auth_config_filter = warp::any().map(move || auth_config.clone());
-
-    headers_cloned()
-        .map(move |headers: HeaderMap<HeaderValue>| (headers))
-        .and(local_filter)
-        .and(auth_config_filter)
-        .and_then(
-            move |headers: HeaderMap<HeaderValue>, local: Local, auth_config: DashboardAuthConfig| async move {
-                let header = match headers.get(AUTHORIZATION) {
-                    Some(v) => v,
-                    None => return Err(reject::custom(CustomRejection::Forbidden)),
-                };
-                let auth_header = match std::str::from_utf8(header.as_bytes()) {
-                    Ok(v) => v,
-                    Err(_) => return Err(reject::custom(CustomRejection::Forbidden)),
-                };
-                if !auth_header.starts_with(BEARER) {
-                    return Err(reject::custom(CustomRejection::Forbidden));
-                }
-
-                let jwt = JsonWebToken::from(auth_header.trim_start_matches(BEARER).to_owned());
-
-                if jwt
-                    .validate(
-                        local.peer_id().to_string(),
-                        auth_config.user().to_owned(),
-                        DASHBOARD_AUDIENCE_CLAIM.to_owned(),
-                        local.keypair().secret().as_ref(),
-                    )
-                    .is_err()
-                {
-                    return Err(reject::custom(CustomRejection::Forbidden));
-                }
-
-                Ok(())
-            },
-        )
-        .untuple_one()
 }
 
 pub(crate) fn auth_route(
@@ -210,6 +158,6 @@ pub(crate) fn routes<S: NodeStorageBackend>(
             local.peer_id().to_string(),
             auth_config.clone(),
         ))
-        .or(api_routes(local.clone(), auth_config.clone(), rest_api_config))
+        .or(api_routes( rest_api_config))
         .or(auth_route(local, auth_config))
 }

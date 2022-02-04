@@ -8,6 +8,7 @@ use crate::{
 
 use bee_rest_api::endpoints::permission::DASHBOARD_AUDIENCE_CLAIM;
 
+use auth_helper::jwt::ClaimsBuilder;
 use auth_helper::{jwt::JsonWebToken, password};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
@@ -73,14 +74,16 @@ pub(crate) async fn auth(local: Local, config: DashboardAuthConfig, body: JsonVa
         return Err(reject::custom(CustomRejection::InvalidCredentials));
     }
 
-    let jwt = JsonWebToken::new(
+    let claims = ClaimsBuilder::new(
         local.peer_id().to_string(),
         config.user().to_owned(),
         DASHBOARD_AUDIENCE_CLAIM.to_owned(),
-        config.session_timeout(),
+    ).with_expiry(config.session_timeout()).build()?;
+
+    let jwt = JsonWebToken::new(
+        claims,
         local.keypair().secret().as_ref(),
-    )
-    .map_err(|_| reject::custom(CustomRejection::InternalError))?;
+    ).map_err(|_| reject::custom(CustomRejection::InternalError))?;
 
     Ok(warp::reply::json(&AuthResponse { jwt: jwt.to_string() }))
 }

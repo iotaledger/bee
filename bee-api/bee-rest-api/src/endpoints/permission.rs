@@ -32,14 +32,17 @@ pub(crate) fn check_permission<B: StorageBackend>(
                     }
                 }
 
-                if Ok(claims) = validate_jwt(&headers, &args)?.claims {
-                    if claims.aud() == API_AUDIENCE_CLAIM {
+                if let Ok(jwt) = validate_jwt(&headers, &args) {
+                    let aud_claim = jwt.claims.audience();
+
+                    if aud_claim == API_AUDIENCE_CLAIM {
                         for route in args.rest_api_config.protected_routes.iter() {
-                            if route.is_match(path.as_str()) && claims.aud() == API_AUDIENCE_CLAIM {
+                            if route.is_match(path.as_str()) && aud_claim == API_AUDIENCE_CLAIM {
                                 return Ok(());
                             }
                         }
-                    } else if claims.aud() == DASHBOARD_AUDIENCE_CLAIM {
+                    } else if aud_claim == DASHBOARD_AUDIENCE_CLAIM {
+                        // check if the requested route is allowed for the dashboard
                         return Ok(());
                     }
                 }
@@ -67,10 +70,7 @@ fn validate_jwt<B: StorageBackend>(headers: &HeaderMap, args: &Arc<ApiArgs<B>>) 
         args.node_id.to_string(),
         args.rest_api_config.jwt_salt.to_owned(),
         API_AUDIENCE_CLAIM.to_owned(),
+        true,
         args.node_key_pair.secret().as_ref(),
     ).map_err(|_| reject::custom(CustomRejection::Forbidden))
-}
-
-fn process_claims(claims: Claims) {
-
 }

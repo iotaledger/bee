@@ -3,9 +3,9 @@
 
 use crate::{Local, NodeConfig, NodeStorageBackend};
 
-use bee_rest_api::endpoints::permission::DASHBOARD_AUDIENCE_CLAIM;
+use bee_rest_api::endpoints::permission::{API_AUDIENCE_CLAIM};
 
-use auth_helper::jwt::JsonWebToken;
+use auth_helper::jwt::{JsonWebToken, Claims, ClaimsBuilder};
 use structopt::StructOpt;
 use thiserror::Error;
 
@@ -23,11 +23,14 @@ pub fn exec<B: NodeStorageBackend>(
     local: &Local,
     node_config: &NodeConfig<B>,
 ) -> Result<(), JwtApiError> {
-    let jwt = JsonWebToken::new(
+
+    let claims = ClaimsBuilder::new(
         local.peer_id().to_string(),
         node_config.rest_api_config.jwt_salt().to_owned(),
         API_AUDIENCE_CLAIM.to_owned(),
-        10000, // JWT tokens shouldn't expire.
+    ).build()?;
+    let jwt = JsonWebToken::new(
+        claims,
         local.keypair().secret().as_ref(),
     )?;
 

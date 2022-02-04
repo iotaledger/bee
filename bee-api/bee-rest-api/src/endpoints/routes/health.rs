@@ -42,7 +42,7 @@ pub async fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &Pe
         return false;
     }
 
-    if peer_manager.connected_peers().await == 0 {
+    if peer_manager.connected_peers() == 0 {
         return false;
     }
 
