@@ -141,6 +141,10 @@ impl Output {
     /// Returns the native tokens of an `Output`, if any.
     pub fn native_tokens(&self) -> Option<&[NativeToken]> {
         match self {
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedSingle(_) => None,
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedDustAllowance(_) => None,
             Self::Treasury(_) => None,
             Self::Extended(output) => Some(output.native_tokens()),
             Self::Alias(output) => Some(output.native_tokens()),
