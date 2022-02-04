@@ -3,16 +3,16 @@
 
 //! The payload module defines the core data types for representing message payloads.
 
+#[cfg(feature = "cpt2")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
+pub mod cpt2;
 pub mod milestone;
 pub mod receipt;
 pub mod tagged_data;
 pub mod transaction;
 pub mod treasury;
 
-#[cfg(feature = "cpt2")]
-#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-pub mod cpt2;
-
+use crate::Error;
 pub use milestone::MilestonePayload;
 pub(crate) use milestone::{PublicKeyCount, SignatureCount};
 pub use receipt::ReceiptPayload;
@@ -22,8 +22,6 @@ pub(crate) use tagged_data::{TagLength, TaggedDataLength};
 pub use transaction::TransactionPayload;
 pub(crate) use transaction::{InputCount, OutputCount};
 pub use treasury::TreasuryTransactionPayload;
-
-use crate::Error;
 
 use packable::{
     error::{UnpackError, UnpackErrorExt},

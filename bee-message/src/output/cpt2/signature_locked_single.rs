@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{address::Address, output::OutputAmount, Error};
+
 use packable::Packable;
 
 /// Describes an extended output with optional features.

@@ -6,7 +6,9 @@ use crate::{
     constant::{DUST_DEPOSIT_MIN, IOTA_SUPPLY},
     Error,
 };
+
 use packable::{bounded::BoundedU64, Packable};
+
 use std::ops::RangeInclusive;
 
 /// Divisor used to compute the allowed dust outputs on an address.

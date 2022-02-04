@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[cfg(feature = "cpt2")]
+use bee_message::payload::IndexationPayload;
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput, UtxoInput},
@@ -20,9 +22,6 @@ use bee_test::rand::{bytes::rand_bytes, parents::rand_parents};
 use packable::PackableExt;
 
 use core::str::FromStr;
-
-#[cfg(feature = "cpt2")]
-use bee_message::payload::IndexationPayload;
 
 const TRANSACTION_ID: &str = "24a1f46bdb6b2bf38f1c59f73cdd4ae5b418804bb231d76d06fbf246498d5883";
 const ED25519_ADDRESS: &str = "e594f9a895c0e0a6760dd12cffc2c3d1e1cbf7269b328091f96ce3d0dd550b75";

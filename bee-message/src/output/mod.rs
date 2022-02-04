@@ -5,6 +5,8 @@ mod alias;
 mod alias_id;
 mod basic;
 mod chain_id;
+#[cfg(feature = "cpt2")]
+mod cpt2;
 mod foundry;
 mod foundry_id;
 mod native_token;
@@ -14,19 +16,24 @@ mod output_id;
 mod token_id;
 mod treasury;
 
-#[cfg(feature = "cpt2")]
-mod cpt2;
-
 ///
 pub mod feature_block;
 ///
 pub mod unlock_condition;
 
+use crate::{constant::IOTA_SUPPLY, Error};
 pub(crate) use alias::StateMetadataLength;
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
 pub use basic::{BasicOutput, BasicOutputBuilder};
 pub use chain_id::ChainId;
+#[cfg(feature = "cpt2")]
+pub(crate) use cpt2::signature_locked_dust_allowance::DustAllowanceAmount;
+#[cfg(feature = "cpt2")]
+pub use cpt2::{
+    signature_locked_dust_allowance::{dust_outputs_max, SignatureLockedDustAllowanceOutput},
+    signature_locked_single::SignatureLockedSingleOutput,
+};
 pub use feature_block::{FeatureBlock, FeatureBlocks};
 pub(crate) use feature_block::{MetadataFeatureBlockLength, TagFeatureBlockLength};
 pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme};
@@ -44,20 +51,10 @@ pub(crate) use treasury::TreasuryOutputAmount;
 pub(crate) use unlock_condition::DustDepositAmount;
 pub use unlock_condition::{UnlockCondition, UnlockConditions};
 
-use crate::{constant::IOTA_SUPPLY, Error};
-
 use derive_more::From;
 use packable::bounded::BoundedU64;
 
 use core::ops::RangeInclusive;
-
-#[cfg(feature = "cpt2")]
-pub(crate) use cpt2::signature_locked_dust_allowance::DustAllowanceAmount;
-#[cfg(feature = "cpt2")]
-pub use cpt2::{
-    signature_locked_dust_allowance::{dust_outputs_max, SignatureLockedDustAllowanceOutput},
-    signature_locked_single::SignatureLockedSingleOutput,
-};
 
 /// The maximum number of outputs of a transaction.
 pub const OUTPUT_COUNT_MAX: u16 = 127;

@@ -15,7 +15,6 @@ use crate::{
     },
     unlock_block::{UnlockBlockCount, UnlockBlockIndex},
 };
-
 #[cfg(feature = "cpt2")]
 use crate::{
     output::DustAllowanceAmount,

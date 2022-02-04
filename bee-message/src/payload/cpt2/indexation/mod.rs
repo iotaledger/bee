@@ -6,13 +6,15 @@
 mod padded;
 
 use crate::{Error, Message};
-use core::ops::RangeInclusive;
+pub use padded::PaddedIndex;
+
 use packable::{
     bounded::{BoundedU32, BoundedU8},
     prefix::BoxedSlicePrefix,
     Packable,
 };
-pub use padded::PaddedIndex;
+
+use core::ops::RangeInclusive;
 
 #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 pub(crate) type IndexLength =
