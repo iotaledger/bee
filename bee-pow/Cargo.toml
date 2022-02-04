@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 # To build locally:
 # RUSTDOCFLAGS="--cfg doc_cfg" cargo +nightly doc --all-features --no-deps --open
 all-features = true
-rustdoc-args = ["--cfg", "doc_cfg"]
+rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
 bee-ternary = { version = "0.5.2", default-features = false }
