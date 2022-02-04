@@ -25,7 +25,6 @@ use crate::{
 };
 
 use libp2p::identity;
-use log::info;
 use once_cell::sync::OnceCell;
 
 pub mod global {
@@ -183,8 +182,6 @@ fn init(
 
     let local_keys = identity::Keypair::Ed25519(keys);
     let local_id = PeerId::from_public_key(local_keys.public());
-
-    info!("Local Id: {}", local_id);
 
     event_sender
         .send(Event::LocalIdCreated { local_id })
