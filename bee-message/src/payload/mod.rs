@@ -10,7 +10,7 @@ pub mod transaction;
 pub mod treasury;
 
 #[cfg(feature = "cpt2")]
-pub mod cpt2;
+mod cpt2;
 
 pub use milestone::MilestonePayload;
 pub(crate) use milestone::{PublicKeyCount, SignatureCount};
@@ -35,9 +35,9 @@ use alloc::boxed::Box;
 use core::ops::Deref;
 
 #[cfg(feature = "cpt2")]
-pub use cpt2::indexation::IndexationPayload;
-#[cfg(feature = "cpt2")]
 pub(crate) use cpt2::indexation::{IndexLength, IndexationDataLength};
+#[cfg(feature = "cpt2")]
+pub use cpt2::indexation::{IndexationPayload, PaddedIndex};
 
 /// A generic payload that can represent different types defining message payloads.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
@@ -57,6 +57,7 @@ pub enum Payload {
     Milestone(Box<MilestonePayload>),
     /// An indexation payload.
     #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     #[packable(tag = IndexationPayload::KIND)]
     Indexation(Box<IndexationPayload>),
     /// A receipt payload.

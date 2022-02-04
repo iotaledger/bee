@@ -10,5 +10,11 @@ license = "Apache-2.0"
 keywords = [ "iota", "tangle", "bee", "framework", "storage" ]
 homepage = "https://www.iota.org"
 
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg doc_cfg" cargo +nightly doc --all-features --no-deps --open
+all-features = true
+rustdoc-args = ["--cfg", "doc_cfg"]
+
 [dependencies]
 bee-storage = { version = "0.9.0", path = "../bee-storage", default-features = false }

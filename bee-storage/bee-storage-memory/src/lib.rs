@@ -3,6 +3,7 @@
 
 //! In-memory Bee storage backend.
 
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
 #![deny(missing_docs)]
 #![deny(warnings)]
 

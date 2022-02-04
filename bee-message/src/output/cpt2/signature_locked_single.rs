@@ -8,6 +8,7 @@ use packable::Packable;
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 pub struct SignatureLockedSingleOutput {
     address: Address,
     // Amount of IOTA tokens held by the output.

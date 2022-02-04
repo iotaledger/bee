@@ -10,6 +10,12 @@ license = "Apache-2.0"
 keywords = [ "iota", "bee", "framework", "node", "api" ]
 homepage = "https://www.iota.org"
 
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg doc_cfg" cargo +nightly doc --all-features --no-deps --open
+all-features = true
+rustdoc-args = ["--cfg", "doc_cfg"]
+
 [dependencies]
 bee-gossip = { version = "0.4.0", path = "../../bee-network/bee-gossip", default-features = false, optional = true }
 bee-ledger = { version = "0.7.0", path = "../../bee-ledger", default-features = false }
@@ -56,4 +62,4 @@ endpoints = [
   "warp",
 ]
 peer = [ "bee-protocol" ]
-cpt2 = [ "bee-message/cpt2" ]
+cpt2 = [ "bee-message/cpt2", "bee-ledger/cpt2" ]

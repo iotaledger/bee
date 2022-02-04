@@ -32,6 +32,7 @@ pub fn dust_outputs_max(dust_allowance_sum: u64) -> u64 {
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 pub struct SignatureLockedDustAllowanceOutput {
     address: Address,
     #[packable(unpack_error_with = Error::InvalidDustAllowanceAmount)]

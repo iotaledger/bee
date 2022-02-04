@@ -14,6 +14,7 @@
 //! This crate tries to simplify the implementation of various storage backends and provides unified access API for the
 //! application/user space.
 
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
 #![deny(missing_docs)]
 #![deny(warnings)]
 

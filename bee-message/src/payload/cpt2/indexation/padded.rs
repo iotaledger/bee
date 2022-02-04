@@ -3,6 +3,7 @@
 
 /// An indexation payload index padded with `0` up to the maximum length.
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 pub struct PaddedIndex([u8; PaddedIndex::LENGTH]);
 
 impl PaddedIndex {

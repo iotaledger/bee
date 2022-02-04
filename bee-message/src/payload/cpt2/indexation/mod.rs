@@ -22,6 +22,7 @@ pub(crate) type IndexationDataLength = BoundedU32<0, { Message::LENGTH_MAX as u3
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 pub struct IndexationPayload {
     #[packable(unpack_error_with = |err| Error::InvalidIndexLength(err.into_prefix().into()))]
     index: BoxedSlicePrefix<u8, IndexLength>,

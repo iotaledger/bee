@@ -6,6 +6,8 @@
 // TODO
 // #![deny(missing_docs, warnings)]
 
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
+
 pub mod types;
 #[cfg(feature = "workers")]
 pub mod workers;

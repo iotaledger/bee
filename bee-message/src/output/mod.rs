@@ -81,10 +81,12 @@ pub(crate) type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *
 pub enum Output {
     /// A chrysalis pt2 signature locked single output.
     #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     #[packable(tag = SignatureLockedSingleOutput::KIND)]
     SignatureLockedSingle(SignatureLockedSingleOutput),
     /// A chrysalis pt2 signature locked dust allowance output.
     #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     #[packable(tag = SignatureLockedDustAllowanceOutput::KIND)]
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput),
     /// A treasury output.
