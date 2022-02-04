@@ -12,14 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Prepare dashboard frontend
-        run: |
-          git submodule init
-          git submodule update --recursive --remote
-          cd bee-node/src/plugins/dashboard/frontend/
-          npm install
-          npm run build-bee
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 

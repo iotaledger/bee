@@ -1,15 +1,23 @@
 version: "3.9"
 services:
   bee:
+    container_name: bee
+    # We can either build the Docker image
     build:
       context: ../../
       dockerfile: ./bee-node/docker/Dockerfile
       args:
         WITH_DASHBOARD: "true"
-    image: bee
+    # Or use an already created image by uncommenting the following line
+    image: bee:latest
+    ulimits:
+      nofile:
+        soft: 8192
+        hard: 8192
     stop_grace_period: 5m
     tty: true # for colored logs
     network_mode: host
     volumes:
-      - ../config.toml:/bee_workdir/config.toml
-      - ../storage:/bee_workdir/storage
+      - ../config.chrysalis-mainnet.toml:/config.toml
+      - ../storage:/storage
+      - ../snapshots:/snapshots
