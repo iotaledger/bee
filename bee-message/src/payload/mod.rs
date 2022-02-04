@@ -12,7 +12,10 @@ pub mod tagged_data;
 pub mod transaction;
 pub mod treasury;
 
-use crate::Error;
+#[cfg(feature = "cpt2")]
+pub(crate) use cpt2::indexation::{IndexLength, IndexationDataLength};
+#[cfg(feature = "cpt2")]
+pub use cpt2::indexation::{IndexationPayload, PaddedIndex};
 pub use milestone::MilestonePayload;
 pub(crate) use milestone::{PublicKeyCount, SignatureCount};
 pub use receipt::ReceiptPayload;
@@ -23,6 +26,8 @@ pub use transaction::TransactionPayload;
 pub(crate) use transaction::{InputCount, OutputCount};
 pub use treasury::TreasuryTransactionPayload;
 
+use crate::Error;
+
 use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
@@ -32,11 +37,6 @@ use packable::{
 
 use alloc::boxed::Box;
 use core::ops::Deref;
-
-#[cfg(feature = "cpt2")]
-pub(crate) use cpt2::indexation::{IndexLength, IndexationDataLength};
-#[cfg(feature = "cpt2")]
-pub use cpt2::indexation::{IndexationPayload, PaddedIndex};
 
 /// A generic payload that can represent different types defining message payloads.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
