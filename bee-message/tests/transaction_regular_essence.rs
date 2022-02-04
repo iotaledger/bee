@@ -166,13 +166,13 @@ fn build_invalid_input_count_high() {
     );
 
     let essence = RegularTransactionEssence::builder()
-        .with_inputs(vec![input; 128])
+        .with_inputs(vec![input; 129])
         .add_output(output)
         .finish();
 
     assert!(matches!(
         essence,
-        Err(Error::InvalidInputCount(TryIntoBoundedU16Error::Invalid(128)))
+        Err(Error::InvalidInputCount(TryIntoBoundedU16Error::Invalid(129)))
     ));
 }
 
@@ -206,12 +206,12 @@ fn build_invalid_output_count_high() {
 
     let essence = RegularTransactionEssence::builder()
         .add_input(input)
-        .with_outputs(vec![output; 128])
+        .with_outputs(vec![output; 129])
         .finish();
 
     assert!(matches!(
         essence,
-        Err(Error::InvalidOutputCount(TryIntoBoundedU16Error::Invalid(128)))
+        Err(Error::InvalidOutputCount(TryIntoBoundedU16Error::Invalid(129)))
     ));
 }
 

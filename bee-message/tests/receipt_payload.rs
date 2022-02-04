@@ -83,7 +83,7 @@ fn new_invalid_receipt_funds_count_high() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         false,
-        (0..128)
+        (0..129)
             .map(|_| {
                 MigratedFundsEntry::new(
                     TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
@@ -104,7 +104,7 @@ fn new_invalid_receipt_funds_count_high() {
 
     assert!(matches!(
         receipt,
-        Err(Error::InvalidReceiptFundsCount(TryIntoBoundedU16Error::Invalid(128)))
+        Err(Error::InvalidReceiptFundsCount(TryIntoBoundedU16Error::Invalid(129)))
     ));
 }
 
