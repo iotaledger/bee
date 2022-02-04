@@ -17,4 +17,4 @@ jobs:
         run: docker-compose -f ./bee-node/docker/docker-compose.yml build --build-arg WITH_DASHBOARD="false"
 
       - name: Test Bee Docker image
-        run: docker-compose -f ./bee-node/docker/docker-compose.yml run --entrypoint "/bee --version" bee | grep -q "bee-node"
+        run: docker-compose -f ./bee-node/docker/docker-compose.yml run bee --version | grep -q "bee-node"

@@ -41,4 +41,11 @@ EXPOSE 14626/udp
 
 COPY --from=build /bee/target/production/bee /
 
+# Copy the profiles
+COPY --from=build /bee/bee-node/config.chrysalis-comnet.toml .
+COPY --from=build /bee/bee-node/config.chrysalis-devnet.toml .
+COPY --from=build /bee/bee-node/config.chrysalis-mainnet.toml .
+
 ENTRYPOINT ["/bee"]
+
+CMD ["--config", "config.chrysalis-mainnet.toml"]
