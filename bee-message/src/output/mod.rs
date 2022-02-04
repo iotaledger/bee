@@ -52,9 +52,9 @@ use packable::bounded::BoundedU64;
 use core::ops::RangeInclusive;
 
 #[cfg(feature = "cpt2")]
-pub(crate) use self::cpt2::signature_locked_dust_allowance::DustAllowanceAmount;
+pub(crate) use cpt2::signature_locked_dust_allowance::DustAllowanceAmount;
 #[cfg(feature = "cpt2")]
-pub use self::cpt2::{
+pub use cpt2::{
     signature_locked_dust_allowance::{dust_outputs_max, SignatureLockedDustAllowanceOutput},
     signature_locked_single::SignatureLockedSingleOutput,
 };
