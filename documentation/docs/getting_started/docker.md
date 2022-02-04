@@ -177,9 +177,7 @@ docker container rm bee
 
 ## Setup using `docker-compose`
 
-You can keep track of different configurations of the node using the [`docker-compose`](https://docs.docker.com/compose/). An example `docker-compose.yml` is in `./bee-node/docker/`.
-
-For example, if you just quickly want to try out the node software on its own.
+You can keep track of different configurations of the node using the [`docker-compose`](https://docs.docker.com/compose/). An example `docker-compose.yml` is in `./bee-node/docker/`, if you just quickly want to try out the node software on its own.
 
 If you want to run the latest release from Docker Hub you can call:
 
