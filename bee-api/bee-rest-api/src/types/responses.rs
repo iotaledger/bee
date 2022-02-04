@@ -139,9 +139,9 @@ pub struct OutputResponse {
     #[serde(rename = "ledgerIndex", default)]
     pub ledger_index: u32,
     #[serde(rename = "milestoneIndexSpent", skip_serializing_if = "Option::is_none")]
-    pub milestone_index_spent: Some(u32),
+    pub milestone_index_spent: Option<u32>,
     #[serde(rename = "transactionIdSpent", skip_serializing_if = "Option::is_none")]
-    pub transaction_id_spent: Some(String),
+    pub transaction_id_spent: Option<String>,
 }
 
 impl BodyInner for OutputResponse {}

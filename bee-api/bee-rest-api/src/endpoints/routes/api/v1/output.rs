@@ -82,7 +82,7 @@ pub(crate) async fn output<B: StorageBackend>(
                     if let Some(consumed_output) = consumed_output {
                         (
                             true,
-                            Some(consumed_output.index()),
+                            Some(*consumed_output.index()),
                             Some(consumed_output.target().to_string()),
                         )
                     } else {
