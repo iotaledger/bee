@@ -888,11 +888,7 @@ impl TryFrom<&NativeTokenDto> for NativeToken {
     fn try_from(value: &NativeTokenDto) -> Result<Self, Self::Error> {
         Self::new(
             (&value.token_id).try_into()?,
-            value
-                .amount
-                .0
-                .parse::<U256>()
-                .map_err(|_| Error::InvalidField("amount"))?,
+            U256::from_dec_str(value.amount.0).map_err(|_| Error::InvalidField("amount"))?,
         )
         .map_err(|_| Error::InvalidField("nativeTokens"))
     }
@@ -1484,16 +1480,8 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
                     .map_err(|_| Error::InvalidField("token_tag"))?;
                 decoded_token_tag
             },
-            value
-                .circulating_supply
-                .0
-                .parse::<U256>()
-                .map_err(|_| Error::InvalidField("circulating_supply"))?,
-            value
-                .maximum_supply
-                .0
-                .parse::<U256>()
-                .map_err(|_| Error::InvalidField("maximum_supply"))?,
+            U256::from_dec_str(value.circulating_supply.0).map_err(|_| Error::InvalidField("circulating_supply"))?,
+            U256::from_dec_str(value.maximum_supply.0).map_err(|_| Error::InvalidField("maximum_supply"))?,
             match value.token_scheme.kind {
                 0 => TokenScheme::Simple,
                 _ => return Err(Error::InvalidField("token_scheme")),
