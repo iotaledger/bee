@@ -46,6 +46,7 @@ pub enum Error {
     InvalidAliasIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
     InvalidControllerKind(u8),
     #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     InvalidDustAllowanceAmount(<DustAllowanceAmount as TryFrom<u64>>::Error),
     InvalidDustDepositAmount(<DustDepositAmount as TryFrom<u64>>::Error),
     InvalidEssenceKind(u8),
@@ -61,8 +62,10 @@ pub enum Error {
         actual: usize,
     },
     #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     InvalidIndexationDataLength(<IndexationDataLength as TryFrom<usize>>::Error),
     #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     InvalidIndexLength(<IndexLength as TryFrom<usize>>::Error),
     InvalidInputKind(u8),
     InvalidInputCount(<InputCount as TryFrom<usize>>::Error),

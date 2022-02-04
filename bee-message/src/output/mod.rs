@@ -54,9 +54,10 @@ use core::ops::RangeInclusive;
 #[cfg(feature = "cpt2")]
 pub(crate) use self::cpt2::signature_locked_dust_allowance::DustAllowanceAmount;
 #[cfg(feature = "cpt2")]
-pub use self::cpt2::signature_locked_dust_allowance::{dust_outputs_max, SignatureLockedDustAllowanceOutput};
-#[cfg(feature = "cpt2")]
-pub use self::cpt2::signature_locked_single::SignatureLockedSingleOutput;
+pub use self::cpt2::{
+    signature_locked_dust_allowance::{dust_outputs_max, SignatureLockedDustAllowanceOutput},
+    signature_locked_single::SignatureLockedSingleOutput,
+};
 
 /// The maximum number of outputs of a transaction.
 pub const OUTPUT_COUNT_MAX: u16 = 127;

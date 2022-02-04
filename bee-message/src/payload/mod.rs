@@ -10,7 +10,8 @@ pub mod transaction;
 pub mod treasury;
 
 #[cfg(feature = "cpt2")]
-mod cpt2;
+#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
+pub mod cpt2;
 
 pub use milestone::MilestonePayload;
 pub(crate) use milestone::{PublicKeyCount, SignatureCount};

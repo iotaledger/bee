@@ -14,6 +14,7 @@ pub const DUST_ALLOWANCE_DIVISOR: u64 = 100_000;
 /// Maximum number of dust outputs for an address.
 pub const DUST_OUTPUTS_MAX: u64 = 100;
 
+#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 pub(crate) type DustAllowanceAmount = BoundedU64<
     { *SignatureLockedDustAllowanceOutput::AMOUNT_RANGE.start() },
     { *SignatureLockedDustAllowanceOutput::AMOUNT_RANGE.end() },

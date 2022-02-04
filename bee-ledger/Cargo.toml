@@ -41,6 +41,7 @@ tokio-stream = { version = "0.1.7", default-features = false, optional = true }
 url = { version = "2.2.2", default-features = false, optional = true }
 
 [features]
+cpt2 = [ "bee-message/cpt2" ]
 workers = [
   "bee-runtime",
   "bee-storage",
@@ -60,4 +61,3 @@ workers = [
   "tokio-stream",
   "url/serde"
 ]
-cpt2 = [ "bee-message/cpt2" ]

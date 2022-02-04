@@ -14,8 +14,10 @@ use packable::{
 };
 pub use padded::PaddedIndex;
 
+#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 pub(crate) type IndexLength =
     BoundedU8<{ *IndexationPayload::LENGTH_RANGE.start() }, { *IndexationPayload::LENGTH_RANGE.end() }>;
+#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 pub(crate) type IndexationDataLength = BoundedU32<0, { Message::LENGTH_MAX as u32 }>;
 
 /// A payload which holds an index and associated data.

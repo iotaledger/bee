@@ -45,6 +45,7 @@ warp = { version = "0.3.1", default-features = false, optional = true }
 
 [features]
 default = [ "peer" ]
+cpt2 = [ "bee-message/cpt2", "bee-ledger/cpt2" ]
 endpoints = [
   "bee-gossip",
   "bee-protocol/workers",
@@ -62,4 +63,3 @@ endpoints = [
   "warp",
 ]
 peer = [ "bee-protocol" ]
-cpt2 = [ "bee-message/cpt2", "bee-ledger/cpt2" ]

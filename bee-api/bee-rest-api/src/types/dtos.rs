@@ -4,10 +4,6 @@
 use crate::types::error::Error;
 
 use bee_ledger::types::Receipt;
-#[cfg(feature = "cpt2")]
-use bee_message::output::{SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput};
-#[cfg(feature = "cpt2")]
-use bee_message::payload::IndexationPayload;
 use bee_message::{
     address::{Address, AliasAddress, Ed25519Address, NftAddress},
     input::{Input, TreasuryInput, UtxoInput},
@@ -36,6 +32,11 @@ use bee_message::{
         AliasUnlockBlock, NftUnlockBlock, ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks,
     },
     Message, MessageBuilder, MessageId,
+};
+#[cfg(feature = "cpt2")]
+use bee_message::{
+    output::{SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput},
+    payload::IndexationPayload,
 };
 #[cfg(feature = "peer")]
 use bee_protocol::types::peer::Peer;
@@ -106,6 +107,7 @@ pub enum PayloadDto {
     Transaction(Box<TransactionPayloadDto>),
     Milestone(Box<MilestonePayloadDto>),
     #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     Indexation(Box<IndexationPayloadDto>),
     Receipt(Box<ReceiptPayloadDto>),
     TreasuryTransaction(Box<TreasuryTransactionPayloadDto>),
@@ -332,8 +334,10 @@ pub struct TreasuryInputDto {
 #[derive(Clone, Debug)]
 pub enum OutputDto {
     #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     SignatureLockedSingle(SignatureLockedSingleOutputDto),
     #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto),
     Treasury(TreasuryOutputDto),
     Basic(BasicOutputDto),
@@ -1627,6 +1631,7 @@ impl TryFrom<&NftOutputDto> for NftOutput {
 
 /// Describes a deposit to a single address which is unlocked via a signature.
 #[cfg(feature = "cpt2")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureLockedSingleOutputDto {
     #[serde(rename = "type")]
@@ -1663,6 +1668,7 @@ impl TryFrom<&SignatureLockedSingleOutputDto> for SignatureLockedSingleOutput {
 /// Output type for deposits that enables an address to receive dust outputs. It can be consumed as an input like a
 /// regular SigLockedSingleOutput.
 #[cfg(feature = "cpt2")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureLockedDustAllowanceOutputDto {
     #[serde(rename = "type")]
@@ -1828,6 +1834,7 @@ impl TryFrom<&TaggedDataPayloadDto> for TaggedDataPayload {
 
 /// The payload type to define a indexation payload.
 #[cfg(feature = "cpt2")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IndexationPayloadDto {
     #[serde(rename = "type")]
