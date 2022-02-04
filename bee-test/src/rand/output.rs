@@ -10,7 +10,8 @@ use crate::rand::{
     output::{
         feature_block::rand_allowed_feature_blocks,
         unlock_condition::{
-            rand_address_unlock_condition, rand_governor_address_unlock_condition_different_from,
+            rand_address_unlock_condition, rand_address_unlock_condition_different_from,
+            rand_governor_address_unlock_condition_different_from,
             rand_state_controller_address_unlock_condition_different_from,
         },
     },
@@ -95,16 +96,25 @@ pub fn rand_foundry_output() -> output::FoundryOutput {
 /// Generates a random [`NftOutput`](output::NftOutput).
 pub fn rand_nft_output() -> output::NftOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::NftOutput::ALLOWED_FEATURE_BLOCKS);
+
+    // We need to make sure that `NftId` and `Address` don't match.
+    let nft_id = output::NftId::from(rand_bytes_array());
+
     output::NftOutput::build(
         rand_number_range(Output::AMOUNT_RANGE),
-        output::NftId::new(rand_bytes_array()),
+        nft_id,
         rand_bytes(rand_number_range(0..output::NftOutput::IMMUTABLE_METADATA_LENGTH_MAX) as usize),
     )
     .unwrap()
     .with_feature_blocks(feature_blocks)
-    .add_unlock_condition(AddressUnlockCondition::new(rand_alias_address().into()).into())
+    .add_unlock_condition(rand_address_unlock_condition_different_from(&nft_id).into())
     .finish()
     .unwrap()
+}
+
+/// Generates a random ledger [`TreasuryOutput`].
+pub fn rand_ledger_treasury_output() -> TreasuryOutput {
+    TreasuryOutput::new(rand_treasury_output(), rand_milestone_id())
 }
 
 /// Generates a random [`Output`].
@@ -126,19 +136,5 @@ pub fn rand_consumed_output() -> ConsumedOutput {
 
 /// Generates a random [`CreatedOutput`].
 pub fn rand_created_output() -> CreatedOutput {
-    CreatedOutput::new(
-        rand_message_id(),
-        rand_milestone_index(),
-        rand_number(),
-        match rand_number::<u64>() % 3 {
-            // 1 => todo!(),
-            _ => rand_treasury_output().into(),
-            // _ => unreachable!(),
-        },
-    )
-}
-
-/// Generates a random ledger [`TreasuryOutput`].
-pub fn rand_ledger_treasury_output() -> TreasuryOutput {
-    TreasuryOutput::new(rand_treasury_output(), rand_milestone_id())
+    CreatedOutput::new(rand_message_id(), rand_milestone_index(), rand_number(), rand_output())
 }
