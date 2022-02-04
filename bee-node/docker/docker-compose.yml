@@ -8,8 +8,8 @@ services:
       dockerfile: ./bee-node/docker/Dockerfile
       args:
         WITH_DASHBOARD: "true"
-    # Or use an already created image by uncommenting the following line
-    image: bee:latest
+    # Or use an already created image by uncommenting the following line (and commenting the build section above)
+    #image: bee:latest
     ulimits:
       nofile:
         soft: 8192
