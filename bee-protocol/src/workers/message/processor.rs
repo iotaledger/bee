@@ -17,7 +17,10 @@ use crate::{
 };
 
 use bee_gossip::PeerId;
-use bee_message::{Message, MessageId};
+use bee_message::{
+    payload::{transaction::TransactionEssence, Payload},
+    Message, MessageId,
+};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::MessageMetadata, Tangle, TangleWorker};
 
@@ -117,14 +120,18 @@ where
                             }
                         };
 
-                        // if message.network_id() != network_id {
-                        //     notify_invalid_message(
-                        //         format!("Incompatible network ID {} != {}.", message.network_id(), network_id),
-                        //         &metrics,
-                        //         notifier,
-                        //     );
-                        //     continue;
-                        // }
+                        if let Some(Payload::Transaction(transaction)) = message.payload() {
+                            let TransactionEssence::Regular(essence) = transaction.essence();
+
+                            if essence.network_id() != network_id {
+                                notify_invalid_message(
+                                    format!("Incompatible network ID {} != {}.", essence.network_id(), network_id),
+                                    &metrics,
+                                    notifier,
+                                );
+                                continue;
+                            }
+                        }
 
                         let message_id = message.id();
                         let metadata = MessageMetadata::arrived();
