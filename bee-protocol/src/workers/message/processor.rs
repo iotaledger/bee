@@ -117,14 +117,14 @@ where
                             }
                         };
 
-                        if message.network_id() != network_id {
-                            notify_invalid_message(
-                                format!("Incompatible network ID {} != {}.", message.network_id(), network_id),
-                                &metrics,
-                                notifier,
-                            );
-                            continue;
-                        }
+                        // if message.network_id() != network_id {
+                        //     notify_invalid_message(
+                        //         format!("Incompatible network ID {} != {}.", message.network_id(), network_id),
+                        //         &metrics,
+                        //         notifier,
+                        //     );
+                        //     continue;
+                        // }
 
                         let message_id = message.id();
                         let metadata = MessageMetadata::arrived();

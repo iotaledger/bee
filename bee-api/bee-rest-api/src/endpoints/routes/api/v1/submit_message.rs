@@ -75,7 +75,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Rejection> {
-    let network_id_v = &value["networkId"];
+    let network_id_v = &value["protocolVersion"];
     let parents_v = &value["parentMessageIds"];
     let payload_v = &value["payload"];
     let nonce_v = &value["nonce"];
@@ -181,7 +181,7 @@ pub(crate) async fn build_message(
 ) -> Result<Message, Rejection> {
     let message = if let Some(nonce) = nonce {
         let mut builder = MessageBuilder::new()
-            .with_network_id(network_id)
+            .with_protocol_version(0)
             .with_parents(
                 Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
             )
@@ -199,7 +199,7 @@ pub(crate) async fn build_message(
             )));
         }
         let mut builder = MessageBuilder::new()
-            .with_network_id(network_id)
+            .with_protocol_version(0)
             .with_parents(
                 Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
             )

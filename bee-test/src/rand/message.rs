@@ -22,7 +22,7 @@ pub fn rand_message_ids(len: usize) -> Vec<MessageId> {
 /// Generates a random message with given parents.
 pub fn rand_message_with_parents(parents: Parents) -> Message {
     MessageBuilder::<u64>::new()
-        .with_network_id(rand_number())
+        .with_protocol_version(rand_number())
         .with_parents(parents)
         .with_payload(rand_payload_for_message())
         .with_nonce_provider(rand_number(), 0f64)

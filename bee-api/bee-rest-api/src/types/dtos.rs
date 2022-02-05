@@ -48,8 +48,8 @@ use serde_json::Value;
 /// The message object that nodes gossip around in the network.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
-    #[serde(rename = "networkId")]
-    pub network_id: String,
+    #[serde(rename = "protocolVersion")]
+    pub protocol_version: String,
     #[serde(rename = "parentMessageIds")]
     pub parents: Vec<String>,
     pub payload: Option<PayloadDto>,
@@ -59,7 +59,7 @@ pub struct MessageDto {
 impl From<&Message> for MessageDto {
     fn from(value: &Message) -> Self {
         MessageDto {
-            network_id: value.network_id().to_string(),
+            protocol_version: value.protocol_version().to_string(),
             parents: value.parents().iter().map(|p| p.to_string()).collect(),
             payload: value.payload().map(Into::into),
             nonce: value.nonce().to_string(),
@@ -72,11 +72,11 @@ impl TryFrom<&MessageDto> for Message {
 
     fn try_from(value: &MessageDto) -> Result<Self, Self::Error> {
         let mut builder = MessageBuilder::new()
-            .with_network_id(
+            .with_protocol_version(
                 value
-                    .network_id
-                    .parse::<u64>()
-                    .map_err(|_| Error::InvalidField("networkId"))?,
+                    .protocol_version
+                    .parse::<u8>()
+                    .map_err(|_| Error::InvalidField("protocolVersion"))?,
             )
             .with_parents(Parents::new(
                 value
