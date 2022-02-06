@@ -14,6 +14,7 @@ use crate::{
         PayloadWorker, PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent,
         RequestedMessages, UnreferencedMessageInserterWorker, UnreferencedMessageInserterWorkerEvent,
     },
+    PROTOCOL_VERSION,
 };
 
 use bee_gossip::PeerId;
@@ -119,6 +120,19 @@ where
                                 continue;
                             }
                         };
+
+                        if message.protocol_version() != PROTOCOL_VERSION {
+                            notify_invalid_message(
+                                format!(
+                                    "Incompatible protocol version {} != {}.",
+                                    message.protocol_version(),
+                                    PROTOCOL_VERSION
+                                ),
+                                &metrics,
+                                notifier,
+                            );
+                            continue;
+                        }
 
                         if let Some(Payload::Transaction(transaction)) = message.payload() {
                             let TransactionEssence::Regular(essence) = transaction.essence();

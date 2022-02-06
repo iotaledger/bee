@@ -8,6 +8,8 @@
 
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
 
+const PROTOCOL_VERSION: u8 = 0;
+
 pub mod types;
 #[cfg(feature = "workers")]
 pub mod workers;
