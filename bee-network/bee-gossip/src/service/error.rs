@@ -3,7 +3,6 @@
 
 /// Errors that can occur during sending/receiving of [`Command`](crate::Command)s and [`Event`](crate::Event)s.
 #[derive(Debug, thiserror::Error)]
-// TODO
 #[allow(clippy::enum_variant_names)]
 pub enum Error {
     /// A command could not be sent.
