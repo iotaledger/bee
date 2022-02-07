@@ -11,7 +11,7 @@ use crate::{
         rejection::CustomRejection,
         storage::StorageBackend,
     },
-    types::{body::SuccessBody, responses::WhiteFlagResponse},
+    types::responses::WhiteFlagResponse,
 };
 
 use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
@@ -176,9 +176,9 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 .await
                 .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
 
-            Ok(warp::reply::json(&SuccessBody::new(WhiteFlagResponse {
+            Ok(warp::reply::json(&WhiteFlagResponse {
                 merkle_tree_hash: hex::encode(metadata.merkle_proof()),
-            })))
+            }))
         }
         Err(_) => {
             // Did timeout, parents are not solid and white flag can not happen.

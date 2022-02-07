@@ -6,7 +6,7 @@ use crate::{
         config::ROUTE_MESSAGE, filters::with_tangle, path_params::message_id, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend,
     },
-    types::{body::SuccessBody, dtos::MessageDto, responses::MessageResponse},
+    types::{dtos::MessageDto, responses::MessageResponse},
 };
 
 use bee_message::MessageId;
@@ -42,9 +42,7 @@ pub(crate) async fn message<B: StorageBackend>(
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     match tangle.get(&message_id).await.map(|m| (*m).clone()) {
-        Some(message) => Ok(warp::reply::json(&SuccessBody::new(MessageResponse(MessageDto::from(
-            &message,
-        ))))),
+        Some(message) => Ok(warp::reply::json(&MessageResponse(MessageDto::from(&message)))),
         None => Err(reject::custom(CustomRejection::NotFound(
             "can not find message".to_string(),
         ))),

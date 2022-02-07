@@ -10,7 +10,7 @@ use crate::{
         rejection::CustomRejection,
         storage::StorageBackend,
     },
-    types::{body::SuccessBody, responses::OutputResponse},
+    types::responses::OutputResponse,
 };
 
 use bee_ledger::{
@@ -78,7 +78,7 @@ pub(crate) async fn output<B: StorageBackend>(
                     ))
                 })?;
 
-                Ok(warp::reply::json(&SuccessBody::new(OutputResponse {
+                Ok(warp::reply::json(&OutputResponse {
                     message_id: output.message_id().to_string(),
                     transaction_id: output_id.transaction_id().to_string(),
                     output_index: output_id.index(),
@@ -89,7 +89,7 @@ pub(crate) async fn output<B: StorageBackend>(
                     milestone_timestamp_booked: 0,
                     ledger_index: *ledger_index,
                     output: output.inner().into(),
-                })))
+                }))
             }
             None => Err(reject::custom(CustomRejection::NotFound(
                 "output not found".to_string(),

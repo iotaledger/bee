@@ -3,7 +3,7 @@
 
 use crate::{
     endpoints::{config::ROUTE_PEERS, filters::with_peer_manager, permission::has_permission},
-    types::{body::SuccessBody, dtos::PeerDto, responses::PeersResponse},
+    types::{dtos::PeerDto, responses::PeersResponse},
 };
 
 use bee_protocol::workers::PeerManager;
@@ -35,5 +35,5 @@ pub(crate) fn peers(peer_manager: ResourceHandle<PeerManager>) -> Result<impl Re
     for peer in peer_manager.get_all() {
         peers_dtos.push(PeerDto::from(peer.as_ref()));
     }
-    Ok(warp::reply::json(&SuccessBody::new(PeersResponse(peers_dtos))))
+    Ok(warp::reply::json(&PeersResponse(peers_dtos)))
 }

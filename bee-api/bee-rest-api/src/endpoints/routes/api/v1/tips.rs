@@ -6,7 +6,7 @@ use crate::{
         config::ROUTE_TIPS, filters::with_tangle, permission::has_permission, rejection::CustomRejection,
         storage::StorageBackend, CONFIRMED_THRESHOLD,
     },
-    types::{body::SuccessBody, responses::TipsResponse},
+    types::responses::TipsResponse,
 };
 
 use bee_runtime::resource::ResourceHandle;
@@ -40,9 +40,9 @@ pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<Tangle<B>>) -
         )));
     }
     match tangle.get_messages_to_approve().await {
-        Some(tips) => Ok(warp::reply::json(&SuccessBody::new(TipsResponse {
+        Some(tips) => Ok(warp::reply::json(&TipsResponse {
             tip_message_ids: tips.iter().map(|t| t.to_string()).collect(),
-        }))),
+        })),
         None => Err(reject::custom(CustomRejection::ServiceUnavailable(
             "tip pool is empty".to_string(),
         ))),

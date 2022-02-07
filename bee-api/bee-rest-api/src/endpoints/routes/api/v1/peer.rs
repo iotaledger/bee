@@ -6,7 +6,7 @@ use crate::{
         config::ROUTE_PEER, filters::with_peer_manager, path_params::peer_id, permission::has_permission,
         rejection::CustomRejection,
     },
-    types::{body::SuccessBody, dtos::PeerDto, responses::PeerResponse},
+    types::{dtos::PeerDto, responses::PeerResponse},
 };
 
 use bee_gossip::PeerId;
@@ -39,9 +39,7 @@ pub(crate) fn filter(
 
 pub(crate) fn peer(peer_id: PeerId, peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Rejection> {
     match peer_manager.get(&peer_id) {
-        Some(peer_entry) => Ok(warp::reply::json(&SuccessBody::new(PeerResponse(PeerDto::from(
-            peer_entry.0.as_ref(),
-        ))))),
+        Some(peer_entry) => Ok(warp::reply::json(&PeerResponse(PeerDto::from(peer_entry.0.as_ref())))),
         None => Err(reject::custom(CustomRejection::NotFound("peer not found".to_string()))),
     }
 }

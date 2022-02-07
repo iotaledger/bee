@@ -6,7 +6,7 @@ use crate::{
         config::ROUTE_MILESTONE, filters::with_tangle, path_params::milestone_index, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend,
     },
-    types::{body::SuccessBody, responses::MilestoneResponse},
+    types::responses::MilestoneResponse,
 };
 
 use bee_message::milestone::MilestoneIndex;
@@ -43,11 +43,11 @@ pub(crate) async fn milestone<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     match tangle.get_milestone_message_id(milestone_index).await {
         Some(message_id) => match tangle.get_metadata(&message_id).await {
-            Some(metadata) => Ok(warp::reply::json(&SuccessBody::new(MilestoneResponse {
+            Some(metadata) => Ok(warp::reply::json(&MilestoneResponse {
                 milestone_index: *milestone_index,
                 message_id: message_id.to_string(),
                 timestamp: metadata.arrival_timestamp(),
-            }))),
+            })),
             None => Err(reject::custom(CustomRejection::NotFound(
                 "can not find metadata for milestone".to_string(),
             ))),
