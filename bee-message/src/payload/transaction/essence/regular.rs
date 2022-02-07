@@ -97,7 +97,7 @@ pub(crate) type OutputCount = BoundedU16<{ *OUTPUT_COUNT_RANGE.start() }, { *OUT
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct RegularTransactionEssence {
-    /// The unique value denoting whether the message was meant for mainnet, testnet, or a private networks.
+    /// The unique value denoting whether the message was meant for mainnet, testnet, or a private network.
     network_id: u64,
     #[packable(verify_with = verify_inputs)]
     #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| Error::InvalidInputCount(p.into())))]
