@@ -113,7 +113,6 @@ where
     });
 }
 
-
 /// Dashboard plugin.
 #[derive(Default)]
 pub struct Dashboard;

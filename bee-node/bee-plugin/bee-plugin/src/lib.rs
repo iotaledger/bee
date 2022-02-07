@@ -21,7 +21,7 @@ pub trait Plugin: Sized + Send + Sync + 'static {
 
     /// Starts the plugin using a given configuration.
     async fn start(config: Self::Config, bus: &Bus<'_>) -> Result<Self, Self::Error>;
-    
+
     /// Stops the plugin.
     async fn stop(self) -> Result<(), Self::Error> {
         Ok(())
