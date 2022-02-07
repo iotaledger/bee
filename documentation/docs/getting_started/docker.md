@@ -84,7 +84,6 @@ If you use the Bee dashboard, you need to create a secure password. Start your B
 
 ```sh
 docker exec -it bee password
-
 ```
 
 Expected output:
