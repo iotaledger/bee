@@ -6,7 +6,7 @@ use crate::{
         config::ROUTE_TREASURY, filters::with_storage, permission::has_permission, rejection::CustomRejection,
         storage::StorageBackend,
     },
-    types::{body::SuccessBody, responses::TreasuryResponse},
+    types::responses::TreasuryResponse,
 };
 
 use bee_ledger::workers::storage;
@@ -36,8 +36,8 @@ pub(crate) fn filter<B: StorageBackend>(
 pub(crate) fn treasury<B: StorageBackend>(storage: ResourceHandle<B>) -> Result<impl Reply, Rejection> {
     let treasury = storage::fetch_unspent_treasury_output(&*storage).map_err(|_| CustomRejection::StorageBackend)?;
 
-    Ok(warp::reply::json(&SuccessBody::new(TreasuryResponse {
+    Ok(warp::reply::json(&TreasuryResponse {
         milestone_id: treasury.milestone_id().to_string(),
         amount: treasury.inner().amount(),
-    })))
+    }))
 }

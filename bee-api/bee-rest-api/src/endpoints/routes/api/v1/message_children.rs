@@ -6,7 +6,7 @@ use crate::{
         config::ROUTE_MESSAGE_CHILDREN, filters::with_tangle, path_params::message_id, permission::has_permission,
         storage::StorageBackend,
     },
-    types::{body::SuccessBody, responses::MessageChildrenResponse},
+    types::responses::MessageChildrenResponse,
 };
 
 use bee_message::MessageId;
@@ -46,10 +46,10 @@ pub async fn message_children<B: StorageBackend>(
     let count = children.len();
     let max_results = 1000;
     children.truncate(max_results);
-    Ok(warp::reply::json(&SuccessBody::new(MessageChildrenResponse {
+    Ok(warp::reply::json(&MessageChildrenResponse {
         message_id: message_id.to_string(),
         max_results,
         count,
         children_message_ids: children.iter().map(|id| id.to_string()).collect(),
-    })))
+    }))
 }

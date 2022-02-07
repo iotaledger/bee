@@ -13,7 +13,7 @@ use crate::{
         storage::StorageBackend,
         Bech32Hrp, NetworkId,
     },
-    types::{body::SuccessBody, responses::InfoResponse},
+    types::responses::InfoResponse,
 };
 
 use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
@@ -70,7 +70,7 @@ pub(crate) async fn info<B: StorageBackend>(
         .map(|m| m.timestamp())
         .unwrap_or_default();
 
-    Ok(warp::reply::json(&SuccessBody::new(InfoResponse {
+    Ok(warp::reply::json(&InfoResponse {
         name: node_info.name.clone(),
         version: node_info.version.clone(),
         is_healthy: health::is_healthy(&tangle, &peer_manager).await,
@@ -91,5 +91,5 @@ pub(crate) async fn info<B: StorageBackend>(
             }
             features
         },
-    })))
+    }))
 }

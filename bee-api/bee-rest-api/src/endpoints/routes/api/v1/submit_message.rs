@@ -10,7 +10,7 @@ use crate::{
         storage::StorageBackend,
         NetworkId,
     },
-    types::{body::SuccessBody, dtos::PayloadDto, responses::SubmitMessageResponse},
+    types::{dtos::PayloadDto, responses::SubmitMessageResponse},
 };
 
 use bee_message::{parent::Parents, payload::Payload, Message, MessageBuilder, MessageId};
@@ -164,9 +164,9 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
 
     Ok(warp::reply::with_status(
-        warp::reply::json(&SuccessBody::new(SubmitMessageResponse {
+        warp::reply::json(&SubmitMessageResponse {
             message_id: message_id.to_string(),
-        })),
+        }),
         StatusCode::CREATED,
     ))
 }
@@ -229,9 +229,9 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
     })?;
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
     Ok(warp::reply::with_status(
-        warp::reply::json(&SuccessBody::new(SubmitMessageResponse {
+        warp::reply::json(&SubmitMessageResponse {
             message_id: message_id.to_string(),
-        })),
+        }),
         StatusCode::CREATED,
     ))
 }

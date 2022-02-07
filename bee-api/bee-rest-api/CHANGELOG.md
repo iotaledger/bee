@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `OutputDto::SignatureLockedDustAllowance`;
 - `SignatureLockedSingleOutputDto`;
 - `SignatureLockedDustAllowanceOutputDto`;
+- Removed `SuccessBody` with its data envelope field;
 
 ## 0.1.7 - 2021-12-08
 

@@ -1,22 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 /// A marker trait to represent the data that can be included into `SuccessBody` and `ErrorBody`.
 pub trait BodyInner {}
-
-/// Describes the response body of a successful HTTP request.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SuccessBody<T: BodyInner> {
-    pub data: T,
-}
-
-impl<T: BodyInner> SuccessBody<T> {
-    pub fn new(data: T) -> Self {
-        Self { data }
-    }
-}
 
 /// Describes the response body of a unsuccessful HTTP request.
 #[derive(Clone, Debug, Serialize)]
