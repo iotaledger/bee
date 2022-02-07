@@ -10,7 +10,7 @@ use libp2p::{
 
 use std::io;
 
-/// Event produced by the IotaGossip.
+/// Gossip events that may occur while establishing the IOTA gossip protocol with a peer.
 #[derive(Debug)]
 pub enum IotaGossipEvent {
     /// Received IOTA gossip request.
@@ -34,7 +34,7 @@ pub enum IotaGossipEvent {
     },
 }
 
-/// Event produced by the IotaGossipHandler.
+/// Gossip handler events that may occur while establishing the IOTA gossip protocol with a peer.
 #[derive(Debug)]
 pub enum IotaGossipHandlerEvent {
     /// Waiting for an upgrade request when inbound.

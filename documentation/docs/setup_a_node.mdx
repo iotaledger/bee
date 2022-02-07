@@ -21,7 +21,7 @@ You can find the source code for Bee in the [official Bee repository](https://gi
 
 ### Dependency Packages
 
-Before starting the installation process, you should make sure your system has all the required dependencies. 
+Before starting the installation process, you should make sure your system has all the required dependencies.
 
 <Tabs
 groupId="operating-systems"
@@ -30,7 +30,7 @@ values={[
     {label: 'Debian', value: 'debian'},
     {label: 'macOS', value: 'mac'},
     {label: 'Windows', value: 'win'},
-]   
+]
 }>
 <TabItem value="debian">
 
@@ -38,13 +38,13 @@ To run a Bee node in a Debian base system you will need to install the following
 
 - [git](https://git-scm.com/)
 - [npm](https://www.npmjs.com/)
-- [build-essential](https://packages.debian.org/sid/build-essential) 
+- [build-essential](https://packages.debian.org/sid/build-essential)
 - [cmake](https://cmake.org/)
-- [pkg-config](https://packages.debian.org/sid/pkg-config) 
-- [librocksdb-dev](https://packages.debian.org/sid/librocksdb-dev) 
-- [llvm](https://apt.llvm.org/) 
-- [clang](https://packages.debian.org/search?keywords=clang) 
-- [libclang-dev](https://packages.debian.org/unstable/libclang-dev) 
+- [pkg-config](https://packages.debian.org/sid/pkg-config)
+- [librocksdb-dev](https://packages.debian.org/sid/librocksdb-dev)
+- [llvm](https://apt.llvm.org/)
+- [clang](https://packages.debian.org/search?keywords=clang)
+- [libclang-dev](https://packages.debian.org/unstable/libclang-dev)
 - [libssl-dev](https://packages.debian.org/jessie/libssl-dev)
 
 To install all of these packages, you can run the following commands:
@@ -78,7 +78,7 @@ brew install cmake npm
 </TabItem>
 <TabItem value="win">
 
-To run a Bee node in a Windows system, you will need to install the following packages using the 
+To run a Bee node in a Windows system, you will need to install the following packages using the
 [chocolatey](https://chocolatey.org/) package manager:
 
 - [cmake](https://cmake.org/)
@@ -159,7 +159,7 @@ rustup update
 Once you have installed all the required dependencies, you can start compiling the Bee Node.  To do so, you can simply clone the source code by running the following command.
 
 ```shell
-git clone https://github.com/iotaledger/bee.git --branch chrysalis-pt-2
+git clone https://github.com/iotaledger/bee.git --branch dev
 ```
 
 #### Compiling
@@ -234,7 +234,7 @@ cargo build --release
 
 Once you have downloaded and compiled Bee, you should copy make a copy of the example config file.  Be sure to review and update your configuration.  You can find more information on configuring bee in the [configuration section](configuration.md).
 
-To copy the example configuration file, you should run the following command: 
+To copy the example configuration file, you should run the following command:
 ```shell
 cp config.example.toml config.toml
 ```

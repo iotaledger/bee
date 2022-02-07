@@ -142,6 +142,9 @@ impl<S: NodeStorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
             network_spec.hrp()
         );
 
+        // Print the local entity data.
+        log::info!("{}", builder.config().local());
+
         // Add the resources that are shared throughout the node.
         let builder = add_node_resources(builder)?;
 
