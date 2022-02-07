@@ -97,7 +97,7 @@ jobs:
         run: |
           git submodule init
           git submodule update --recursive --remote
-          cd bee-node/src/plugins/dashboard/frontend/
+          cd bee-node/bee-plugin/bee-plugin-dashboard/src/frontend/
           npm install
           npm run build-bee
 
