@@ -12,8 +12,8 @@ use bee_message::{
         feature_block::{FeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock, TagFeatureBlock},
         unlock_condition::{
             AddressUnlockCondition, DustDepositReturnUnlockCondition, ExpirationUnlockCondition,
-            GovernorAddressUnlockCondition, StateControllerAddressUnlockCondition, TimelockUnlockCondition,
-            UnlockCondition,
+            GovernorAddressUnlockCondition, ImmutableAliasAddressUnlockCondition,
+            StateControllerAddressUnlockCondition, TimelockUnlockCondition, UnlockCondition,
         },
         AliasId, AliasOutput, AliasOutputBuilder, BasicOutput, BasicOutputBuilder, FoundryOutput, FoundryOutputBuilder,
         NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme, TreasuryOutput,
@@ -930,6 +930,8 @@ pub enum UnlockConditionDto {
     StateControllerAddress(StateControllerAddressUnlockConditionDto),
     /// A governor address unlock condition.
     GovernorAddress(GovernorAddressUnlockConditionDto),
+    /// An immutable alias address unlock condition.
+    ImmutableAliasAddress(ImmutableAliasAddressUnlockConditionDto),
 }
 
 impl<'de> serde::Deserialize<'de> for UnlockConditionDto {
@@ -971,6 +973,14 @@ impl<'de> serde::Deserialize<'de> for UnlockConditionDto {
                         |e| serde::de::Error::custom(format!("cannot deserialize governor unlock condition: {}", e)),
                     )?)
                 }
+                ImmutableAliasAddressUnlockCondition::KIND => UnlockConditionDto::ImmutableAliasAddress(
+                    ImmutableAliasAddressUnlockConditionDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!(
+                            "cannot deserialize immutable alias address unlock condition: {}",
+                            e
+                        ))
+                    })?,
+                ),
                 _ => return Err(serde::de::Error::custom("invalid unlock condition type")),
             },
         )
@@ -991,6 +1001,7 @@ impl Serialize for UnlockConditionDto {
             T4(&'a ExpirationUnlockConditionDto),
             T5(&'a StateControllerAddressUnlockConditionDto),
             T6(&'a GovernorAddressUnlockConditionDto),
+            T7(&'a ImmutableAliasAddressUnlockConditionDto),
         }
         #[derive(Serialize)]
         struct TypedUnlockCondition<'a> {
@@ -1015,6 +1026,9 @@ impl Serialize for UnlockConditionDto {
             },
             UnlockConditionDto::GovernorAddress(o) => TypedUnlockCondition {
                 unlock_condition: UnlockConditionDto_::T6(o),
+            },
+            UnlockConditionDto::ImmutableAliasAddress(o) => TypedUnlockCondition {
+                unlock_condition: UnlockConditionDto_::T7(o),
             },
         };
         unlock_condition.serialize(serializer)
@@ -1175,6 +1189,12 @@ pub struct TagFeatureBlockDto {
     pub kind: u8,
     pub tag: String,
 }
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ImmutableAliasAddressUnlockConditionDto {
+    #[serde(rename = "type")]
+    pub kind: u8,
+    pub address: AliasAddressDto,
+}
 
 impl UnlockConditionDto {
     /// Return the unlock condition kind of a `UnlockConditionDto`.
@@ -1186,6 +1206,7 @@ impl UnlockConditionDto {
             Self::Expiration(_) => ExpirationUnlockCondition::KIND,
             Self::StateControllerAddress(_) => StateControllerAddressUnlockCondition::KIND,
             Self::GovernorAddress(_) => GovernorAddressUnlockCondition::KIND,
+            Self::ImmutableAliasAddress(_) => ImmutableAliasAddressUnlockCondition::KIND,
         }
     }
 }
@@ -1235,6 +1256,12 @@ impl From<&UnlockCondition> for UnlockConditionDto {
                 kind: GovernorAddressUnlockCondition::KIND,
                 address: v.address().into(),
             }),
+            UnlockCondition::ImmutableAliasAddress(v) => {
+                Self::ImmutableAliasAddress(ImmutableAliasAddressUnlockConditionDto {
+                    kind: ImmutableAliasAddressUnlockCondition::KIND,
+                    address: v.address().into(),
+                })
+            }
         }
     }
 }
@@ -1302,6 +1329,13 @@ impl TryFrom<&UnlockConditionDto> for UnlockCondition {
                     .try_into()
                     .map_err(|_e| Error::InvalidField("GovernorAddressUnlockCondition"))?,
             )),
+            UnlockConditionDto::ImmutableAliasAddress(v) => {
+                Self::ImmutableAliasAddress(ImmutableAliasAddressUnlockCondition::new(
+                    (&v.address)
+                        .try_into()
+                        .map_err(|_e| Error::InvalidField("ImmutableAliasAddressUnlockCondition"))?,
+                ))
+            }
         })
     }
 }
