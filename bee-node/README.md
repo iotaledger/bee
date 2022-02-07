@@ -81,27 +81,4 @@ cp config.example.toml config.toml
 
 # Using Docker
 
-We also provide a `Dockerfile` that allows you to quickly deploy a Bee node.
-
-## Prerequisites
-
-The following files need to be present in the `./bee-node` folder:
-
-* `config.toml`
-* `identity.key`
-
-## Build and Run
-
-To build a docker image, we make use of `docker-compose`:
-
-```
-docker-compose -f ./docker/docker-compose.yml build
-```
-
-**⚠️ The build process of the Docker image expects the `dashboard` to be present, so please make sure to follow the instructions above.**
-
-And you can start Bee using:
-
-```
-docker-compose -f ./docker/docker-compose.yml up
-```
+We also provide a `Dockerfile` that allows you to quickly deploy a Bee node. Please refer to the [Docker](../documentation/docs/getting_started/docker.md) section of the Bee documentation for more information.
