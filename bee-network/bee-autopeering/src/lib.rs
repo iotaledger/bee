@@ -116,6 +116,7 @@
 //! }
 //! ```
 
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
 #![deny(missing_docs)]
 
 mod delay;

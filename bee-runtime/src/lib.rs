@@ -3,6 +3,7 @@
 
 //! Runtime components and utilities for the bee node framework
 
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
 #![deny(missing_docs, warnings)]
 
 pub mod event;

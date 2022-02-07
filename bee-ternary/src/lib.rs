@@ -50,8 +50,9 @@
 //! starting index is a multiple of the compression factor. For example a byte-aligned [`T3B1`]
 //! buffer will always start on an index of the *original* buffer that is a multiple of 3.
 
-#![deny(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
+#![deny(missing_docs)]
 
 extern crate alloc;
 

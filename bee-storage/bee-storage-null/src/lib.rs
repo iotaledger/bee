@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
+
 pub mod access;
 
 use bee_storage::backend::StorageBackend;
