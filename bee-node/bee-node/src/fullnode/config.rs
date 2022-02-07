@@ -1,12 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    config::NetworkSpec, local::Local, storage::NodeStorageBackend, NodeConfig,
-};
+use crate::{config::NetworkSpec, local::Local, storage::NodeStorageBackend, NodeConfig};
 
 #[cfg(feature = "dashboard")]
-use crate::plugins::dashboard::config::DashboardConfig;
+use bee_plugin_dashboard::config::DashboardConfig;
 
 use bee_autopeering::config::AutopeeringConfig;
 use bee_gossip::NetworkConfig;

@@ -1,10 +1,17 @@
 [package]
 name = "bee-plugin-mqtt"
 version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
 edition = "2021"
+description = "MQTT plugin for the Bee node."
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "plugin", "mqtt" ]
+homepage = "https://www.iota.org"
+
 
 [dependencies]
-bee-plugin = { version = "0.1.0", path = "../bee-plugin", default-features = false }
 bee-runtime = { version = "0.1.1-alpha", path = "../../../bee-runtime", default-features = false }
 bee-tangle = { version = "0.2.0", path = "../../../bee-tangle", default-features = false }
 

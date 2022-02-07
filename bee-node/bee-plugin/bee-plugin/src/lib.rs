@@ -1,27 +1,39 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Types for use in creating plugins for the Bee node.
+
+#![warn(missing_docs)]
+
 use bee_runtime::{event::Bus, node::Node, worker::Worker};
 
 use async_trait::async_trait;
 
 use std::{any::type_name, error::Error, fmt};
 
+/// Plugin trait for necessary plugin operation.
 #[async_trait]
 pub trait Plugin: Sized + Send + Sync + 'static {
+    /// Type used for plugin configuration.
     type Config: Send;
+    /// Type of error that could be encountered by the plugin.
     type Error: Error;
 
+    /// Starts the plugin using a given configuration.
     async fn start(config: Self::Config, bus: &Bus<'_>) -> Result<Self, Self::Error>;
+    
+    /// Stops the plugin.
     async fn stop(self) -> Result<(), Self::Error> {
         Ok(())
     }
 }
 
+/// The node worker for the plugin.
 pub struct PluginWorker<P: Plugin> {
     plugin: P,
 }
 
+/// Error during plugin operation.
 pub struct PluginError<P: Plugin>(P::Error);
 
 impl<P: Plugin> fmt::Debug for PluginError<P> {

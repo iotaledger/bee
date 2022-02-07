@@ -16,7 +16,6 @@ mod shutdown;
 mod storage;
 mod util;
 
-pub mod plugins;
 pub mod tools;
 
 pub use cli::ClArgs;

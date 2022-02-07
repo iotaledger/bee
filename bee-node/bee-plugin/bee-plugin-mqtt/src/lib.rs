@@ -1,9 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! MQTT plugin for the Bee node.
+
+#![warn(missing_docs)]
+
 mod manager;
 mod topics;
 
+/// MQTT plugin configuration.
 pub mod config;
 
 use config::MqttConfig;
@@ -21,6 +26,7 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::Any, convert::Infallible};
 
+/// MQTT plugin for the Bee node.
 #[derive(Default)]
 pub struct MqttPlugin;
 

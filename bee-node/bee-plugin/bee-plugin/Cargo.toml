@@ -1,7 +1,14 @@
 [package]
 name = "bee-plugin"
 version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
 edition = "2021"
+description = "Types for use in creating plugins for the Bee node."
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "plugin" ]
+homepage = "https://www.iota.org"
 
 [dependencies]
 bee-runtime = { version = "0.1.1-alpha", path = "../../../bee-runtime", default-features = false }

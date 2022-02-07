@@ -11,9 +11,6 @@ use crate::{
     util, AUTOPEERING_VERSION,
 };
 
-#[cfg(feature = "dashboard")]
-use crate::bee_plugin::Dashboard;
-
 use bee_autopeering::{
     stores::{Options as RocksDbPeerStoreConfigOptions, RocksDbPeerStore, RocksDbPeerStoreConfig},
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
@@ -415,6 +412,30 @@ fn initialize_tangle<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Full
 
     // TODO: `init` should probably just consume the config as any other crate does.
     bee_tangle::init::<FullNode<S>>(&tangle_cfg, builder)
+}
+
+#[cfg(feature = "dashboard")]
+fn initialize_dashboard<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> FullNodeBuilder<S> {
+    log::info!("Initializing dashboard...");
+
+    let config = builder.config();
+
+    let dashboard_cfg = config.dashboard_config.clone();
+    let rest_api_cfg = config.rest_api_config.clone();
+    let node_id = config.local().peer_id().to_string();
+    let node_alias = config.alias().clone();
+    let bech32_hrp = config.network_spec().hrp().to_string();
+
+    let builder = bee_plugin_dashboard::init::<FullNode<S>>(
+        dashboard_cfg,
+        rest_api_cfg,
+        node_id,
+        node_alias,
+        bech32_hrp,
+        builder,
+    );
+
+    builder
 }
 
 #[derive(Clone)]

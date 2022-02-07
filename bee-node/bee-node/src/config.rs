@@ -7,14 +7,10 @@
 //! All node types use a common config file (e.g. config.json), and simply ignore
 //! those parameters they don't actually require.
 
-use crate::{
-    cli::ClArgs,
-    storage::NodeStorageBackend,
-    util, BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT,
-};
+use crate::{cli::ClArgs, storage::NodeStorageBackend, util, BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT};
 
 #[cfg(feature = "dashboard")]
-use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder};
+use bee_plugin_dashboard::config::{DashboardConfig, DashboardConfigBuilder};
 
 use bee_autopeering::config::{AutopeeringConfig, AutopeeringConfigBuilder};
 use bee_gossip::{NetworkConfig, NetworkConfigBuilder};

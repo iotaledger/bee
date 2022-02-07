@@ -326,6 +326,7 @@ dependencies = [
  "bee-ledger",
  "bee-message",
  "bee-plugin",
+ "bee-plugin-dashboard",
  "bee-plugin-mps",
  "bee-plugin-mqtt",
  "bee-plugin-version-checker",
@@ -337,7 +338,6 @@ dependencies = [
  "bee-storage-rocksdb",
  "bee-storage-sled",
  "bee-tangle",
- "cap",
  "chrono",
  "ed25519",
  "fern-logger",
@@ -346,16 +346,13 @@ dependencies = [
  "hex",
  "iota-crypto",
  "log",
- "mime_guess",
  "multiaddr",
  "paho-mqtt",
  "pkcs8",
  "rand 0.8.4",
  "rpassword",
- "rust-embed",
  "serde",
  "serde_json",
- "serde_repr",
  "structopt",
  "thiserror",
  "tokio",
@@ -363,7 +360,6 @@ dependencies = [
  "toml",
  "tracing",
  "warp",
- "warp-reverse-proxy",
 ]
 
 [[package]]
@@ -372,6 +368,35 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "bee-runtime",
+]
+
+[[package]]
+name = "bee-plugin-dashboard"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "auth-helper",
+ "bee-ledger",
+ "bee-message",
+ "bee-protocol",
+ "bee-rest-api",
+ "bee-runtime",
+ "bee-storage",
+ "bee-tangle",
+ "cap",
+ "futures",
+ "hex",
+ "log",
+ "mime_guess",
+ "multiaddr",
+ "rust-embed",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "tokio",
+ "tokio-stream",
+ "warp",
+ "warp-reverse-proxy",
 ]
 
 [[package]]
@@ -390,7 +415,6 @@ name = "bee-plugin-mqtt"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "bee-plugin",
  "bee-runtime",
  "bee-tangle",
  "futures",
@@ -407,7 +431,6 @@ name = "bee-plugin-version-checker"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "bee-plugin",
  "bee-runtime",
  "futures",
  "log",

@@ -1,7 +1,14 @@
 [package]
 name = "bee-plugin-mps"
 version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
 edition = "2021"
+description = "MPS plugin for the Bee node."
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "plugin", "mps" ]
+homepage = "https://www.iota.org"
 
 [dependencies]
 bee-plugin = { version = "0.1.0", path = "../bee-plugin", default-features = false }

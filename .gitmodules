@@ -1,5 +1,5 @@
-[submodule "bee-node/src/plugins/dashboard/frontend"]
-	path = bee-node/src/plugins/dashboard/frontend
-	url = https://github.com/iotaledger/node-dashboard
+[submodule "bee-node/bee-plugin/bee-plugin-dashboard/src/frontend"]
+	path = bee-node/bee-plugin/bee-plugin-dashboard/src/frontend
+	url = https://github.com/iotaledger/node-dashboard.git
 	branch = main
 	ignore = dirty
