@@ -26,7 +26,7 @@ pub use basic::{BasicOutput, BasicOutputBuilder};
 pub use chain_id::ChainId;
 pub use feature_block::{FeatureBlock, FeatureBlocks};
 pub(crate) use feature_block::{MetadataFeatureBlockLength, TagFeatureBlockLength};
-pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme};
+pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme, TOKEN_TAG_LENGTH};
 pub use foundry_id::FoundryId;
 pub(crate) use native_token::NativeTokenCount;
 pub use native_token::{NativeToken, NativeTokens};

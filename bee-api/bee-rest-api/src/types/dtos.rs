@@ -17,6 +17,7 @@ use bee_message::{
         },
         AliasId, AliasOutput, AliasOutputBuilder, BasicOutput, BasicOutputBuilder, FoundryOutput, FoundryOutputBuilder,
         NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme, TreasuryOutput,
+        TOKEN_TAG_LENGTH,
     },
     parent::Parents,
     payload::{
@@ -1475,7 +1476,7 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
             value.amount,
             value.serial_number,
             {
-                let mut decoded_token_tag = [0u8; 12];
+                let mut decoded_token_tag = [0u8; TOKEN_TAG_LENGTH];
                 hex::decode_to_slice(&value.token_tag, &mut decoded_token_tag as &mut [u8])
                     .map_err(|_| Error::InvalidField("token_tag"))?;
                 decoded_token_tag
