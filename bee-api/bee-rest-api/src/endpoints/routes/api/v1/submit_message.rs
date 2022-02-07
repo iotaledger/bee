@@ -15,7 +15,10 @@ use crate::{
 
 use bee_message::{parent::Parents, payload::Payload, Message, MessageBuilder, MessageId};
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
-use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
+use bee_protocol::{
+    workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent},
+    PROTOCOL_VERSION,
+};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 
@@ -75,7 +78,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Rejection> {
-    let network_id_v = &value["protocolVersion"];
+    let network_id_v = &value["networkId"];
     let parents_v = &value["parentMessageIds"];
     let payload_v = &value["payload"];
     let nonce_v = &value["nonce"];
@@ -171,8 +174,9 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     ))
 }
 
+// TODO compare/set network ID and protocol version
 pub(crate) async fn build_message(
-    network_id: u64,
+    _network_id: u64,
     parents: Vec<MessageId>,
     payload: Option<Payload>,
     nonce: Option<u64>,
@@ -181,7 +185,7 @@ pub(crate) async fn build_message(
 ) -> Result<Message, Rejection> {
     let message = if let Some(nonce) = nonce {
         let mut builder = MessageBuilder::new()
-            .with_protocol_version(0)
+            .with_protocol_version(PROTOCOL_VERSION)
             .with_parents(
                 Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
             )
@@ -199,7 +203,7 @@ pub(crate) async fn build_message(
             )));
         }
         let mut builder = MessageBuilder::new()
-            .with_protocol_version(0)
+            .with_protocol_version(PROTOCOL_VERSION)
             .with_parents(
                 Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
             )
