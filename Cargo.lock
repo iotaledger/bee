@@ -325,6 +325,10 @@ dependencies = [
  "bee-gossip",
  "bee-ledger",
  "bee-message",
+ "bee-plugin",
+ "bee-plugin-mps",
+ "bee-plugin-mqtt",
+ "bee-plugin-version-checker",
  "bee-protocol",
  "bee-rest-api",
  "bee-runtime",
@@ -360,6 +364,55 @@ dependencies = [
  "tracing",
  "warp",
  "warp-reverse-proxy",
+]
+
+[[package]]
+name = "bee-plugin"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bee-runtime",
+]
+
+[[package]]
+name = "bee-plugin-mps"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bee-plugin",
+ "bee-protocol",
+ "bee-runtime",
+ "log",
+]
+
+[[package]]
+name = "bee-plugin-mqtt"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bee-plugin",
+ "bee-runtime",
+ "bee-tangle",
+ "futures",
+ "log",
+ "paho-mqtt",
+ "serde",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+]
+
+[[package]]
+name = "bee-plugin-version-checker"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bee-plugin",
+ "bee-runtime",
+ "futures",
+ "log",
+ "tokio",
+ "tokio-stream",
 ]
 
 [[package]]

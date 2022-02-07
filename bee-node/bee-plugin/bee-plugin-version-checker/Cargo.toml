@@ -1,0 +1,14 @@
+[package]
+name = "bee-plugin-version-checker"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bee-plugin = { version = "0.1.0", path = "../bee-plugin", default-features = false }
+bee-runtime = { version = "0.1.1-alpha", path = "../../../bee-runtime", default-features = false }
+
+async-trait = { version = "0.1.51", default-features = false }
+futures = { version = "0.3.17", default-features = false }
+log = { version = "0.4.14", default-features = false }
+tokio = { version = "1.12.0", default-features = false, features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
+tokio-stream = { version = "0.1.7", default-features = false }
