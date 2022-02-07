@@ -88,9 +88,9 @@ pub(crate) async fn info<B: StorageBackend>(
             bech32_hrp,
             min_pow_score: protocol_config.minimum_pow_score(),
             rent_structure: RentStructureResponse {
-                vbyte_cost: 0,     // TODO
-                vb_factor_data: 1, // TODO
-                vb_factor_key: 10, // TODO
+                vbyte_cost: 500,     // TODO
+                vbyte_factor_data: 1, // TODO
+                vbyte_factor_key: 10, // TODO
             },
         },
         metrics: MetricsResponse {
