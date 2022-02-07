@@ -90,7 +90,7 @@ pub fn rand_foundry_output() -> output::FoundryOutput {
     )
     .unwrap()
     .with_feature_blocks(feature_blocks)
-    .add_unlock_condition(ImmutableAliasAddressUnlockCondition::new(rand_alias_address().into()).into())
+    .add_unlock_condition(ImmutableAliasAddressUnlockCondition::new(rand_alias_address()).into())
     .finish()
     .unwrap()
 }
