@@ -4,7 +4,7 @@
 use crate::{
     constant::IOTA_SUPPLY,
     input::{Input, INPUT_COUNT_RANGE},
-    output::{Output, OUTPUT_COUNT_RANGE},
+    output::{NativeTokens, Output, OUTPUT_COUNT_RANGE},
     payload::{OptionalPayload, Payload},
     Error,
 };
@@ -143,24 +143,33 @@ fn verify_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
 }
 
 fn verify_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
-    let mut total_amount: u64 = 0;
+    let mut amount_sum: u64 = 0;
+    let mut native_tokens_count: u8 = 0;
 
     for output in outputs.iter() {
-        let amount = match output {
-            Output::Basic(output) => output.amount(),
-            Output::Alias(output) => output.amount(),
-            Output::Foundry(output) => output.amount(),
-            Output::Nft(output) => output.amount(),
+        let (amount, native_tokens) = match output {
+            Output::Basic(output) => (output.amount(), output.native_tokens()),
+            Output::Alias(output) => (output.amount(), output.native_tokens()),
+            Output::Foundry(output) => (output.amount(), output.native_tokens()),
+            Output::Nft(output) => (output.amount(), output.native_tokens()),
             _ => return Err(Error::InvalidOutputKind(output.kind())),
         };
 
-        total_amount = total_amount
+        amount_sum = amount_sum
             .checked_add(amount)
-            .ok_or(Error::InvalidAccumulatedOutput((total_amount + amount) as u128))?;
+            .ok_or(Error::InvalidTransactionAmountSum(amount_sum as u128 + amount as u128))?;
+
+        native_tokens_count = native_tokens_count.checked_add(native_tokens.len() as u8).ok_or(
+            Error::InvalidTransactionNativeTokensCount(native_tokens_count as u16 + native_tokens.len() as u16),
+        )?;
 
         // Accumulated output balance must not exceed the total supply of tokens.
-        if total_amount > IOTA_SUPPLY {
-            return Err(Error::InvalidAccumulatedOutput(total_amount as u128));
+        if amount_sum > IOTA_SUPPLY {
+            return Err(Error::InvalidTransactionAmountSum(amount_sum as u128));
+        }
+
+        if native_tokens_count > NativeTokens::COUNT_MAX {
+            return Err(Error::InvalidTransactionNativeTokensCount(native_tokens_count as u16));
         }
     }
 

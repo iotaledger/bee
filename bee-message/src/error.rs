@@ -40,7 +40,6 @@ pub enum Error {
         input_count: usize,
         block_count: usize,
     },
-    InvalidAccumulatedOutput(u128),
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAliasIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
@@ -99,6 +98,8 @@ pub enum Error {
     InvalidTagLength(<TagLength as TryFrom<usize>>::Error),
     InvalidTailTransactionHash,
     InvalidTokenSchemeKind(u8),
+    InvalidTransactionAmountSum(u128),
+    InvalidTransactionNativeTokensCount(u16),
     InvalidTreasuryOutputAmount(<TreasuryOutputAmount as TryFrom<u64>>::Error),
     InvalidUnlockBlockCount(<UnlockBlockCount as TryFrom<usize>>::Error),
     InvalidUnlockBlockKind(u8),
@@ -177,7 +178,6 @@ impl fmt::Display for Error {
                     input_count, block_count
                 )
             }
-            Error::InvalidAccumulatedOutput(value) => write!(f, "invalid accumulated output balance: {}", value),
             Error::InvalidAddress => write!(f, "invalid address provided"),
             Error::InvalidAddressKind(k) => write!(f, "invalid address kind: {}", k),
             Error::InvalidAliasIndex(index) => write!(f, "invalid alias index: {}", index),
@@ -253,6 +253,10 @@ impl fmt::Display for Error {
             }
             Error::InvalidTailTransactionHash => write!(f, "invalid tail transaction hash"),
             Error::InvalidTokenSchemeKind(k) => write!(f, "invalid token scheme kind {}", k),
+            Error::InvalidTransactionAmountSum(value) => write!(f, "invalid transaction amount sum: {}", value),
+            Error::InvalidTransactionNativeTokensCount(count) => {
+                write!(f, "invalid transaction native tokens count: {}", count)
+            }
             Error::InvalidTreasuryOutputAmount(amount) => write!(f, "invalid treasury amount: {}", amount),
             Error::InvalidUnlockBlockCount(count) => write!(f, "invalid unlock block count: {}", count),
             Error::InvalidUnlockBlockKind(k) => write!(f, "invalid unlock block kind: {}", k),

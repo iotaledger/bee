@@ -307,7 +307,7 @@ fn build_invalid_accumulated_output() {
         .with_outputs(vec![output1, output2])
         .finish();
 
-    assert!(matches!(essence, Err(Error::InvalidAccumulatedOutput(_))));
+    assert!(matches!(essence, Err(Error::InvalidTransactionAmountSum(_))));
 }
 
 #[test]
