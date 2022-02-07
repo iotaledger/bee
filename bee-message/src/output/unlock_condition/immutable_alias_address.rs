@@ -20,7 +20,7 @@ impl ImmutableAliasAddressUnlockCondition {
         Self(address)
     }
 
-    /// Returns the alias address of a [`ImmutableAliasAddressUnlockCondition`].
+    /// Returns the address of a [`ImmutableAliasAddressUnlockCondition`].
     #[inline(always)]
     pub fn address(&self) -> &AliasAddress {
         &self.0
