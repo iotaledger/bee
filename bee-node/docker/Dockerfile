@@ -41,7 +41,9 @@ RUN if [ "$WITH_DASHBOARD" = true ] ; then cargo build --profile production --fe
 FROM debian:buster-slim
 
 RUN apt-get update && \
-    apt-get install openssl -y
+    apt-get install openssl ca-certificates -y
+
+RUN update-ca-certificates
 
 RUN rm -rf /var/lib/apt
 
