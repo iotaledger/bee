@@ -69,6 +69,11 @@ end         = 0
 status_interval       = 10
 milestone_sync_count  = 200
 
+[protocol.byte_cost]
+byte_cost = 1.0
+weight_for_key = 10
+weight_for_data = 1
+
 [rest_api]
 bind_address          = "/ip4/0.0.0.0/tcp/14265"
 feature_proof_of_work = true

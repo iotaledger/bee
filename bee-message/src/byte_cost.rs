@@ -8,7 +8,7 @@ use packable::PackableExt;
 /// Specifies the current parameters for the byte cost computation.
 #[derive(Clone)]
 pub struct ByteCostConfig {
-    /// Cost in IOTA coins per virtual byte.
+    /// Cost in tokens coins per virtual byte.
     pub byte_cost: f32,
     /// The weight factor used for key fields in the ouputs.
     pub weight_for_key: u64,
