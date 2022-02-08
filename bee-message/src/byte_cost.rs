@@ -16,16 +16,6 @@ pub struct ByteCostConfig {
     pub weight_for_data: u64,
 }
 
-impl Default for ByteCostConfig {
-    fn default() -> Self {
-        Self {
-            byte_cost: 1,
-            weight_for_key: 10,
-            weight_for_data: 1,
-        }
-    }
-}
-
 /// A trait to facilitate the computation of the byte cost of message outputs, which is central to dust protection.
 pub trait ByteCost {
     /// Different fields in a type lead to different storage requirements for the ledger state.

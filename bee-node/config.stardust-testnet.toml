@@ -70,7 +70,7 @@ status_interval       = 10
 milestone_sync_count  = 200
 
 [protocol.byte_cost]
-byte_cost = 1
+byte_cost = 500
 weight_for_key = 10
 weight_for_data = 1
 
