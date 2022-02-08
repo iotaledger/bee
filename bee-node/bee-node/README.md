@@ -52,18 +52,18 @@ rustup update
 ## Compilation
 
 ```sh
-git clone https://github.com/iotaledger/bee.git --branch mainnet-develop
-cd bee/bee-node
+git clone https://github.com/iotaledger/bee.git --branch dev
+cd bee/bee-node/bee-node
 ```
 
 With dashboard
 
 ```sh
 git submodule update --init
-cd src/plugins/dashboard/frontend
+cd ../bee-plugin/bee-plugin-dashboard/src/frontend
 npm install
 npm run build-bee
-cd ../../../../
+cd ../../../../bee-node
 cargo build --release --features dashboard
 ```
 
@@ -76,7 +76,7 @@ cargo build --release
 
 ```sh
 cp config.template.json config.json
-../target/release/bee
+../../target/release/bee
 ```
 
 # Using Docker
