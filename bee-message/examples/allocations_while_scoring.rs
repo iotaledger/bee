@@ -41,7 +41,7 @@ static A: CheckAlloc = CheckAlloc;
 
 fn main() {
     let message = MessageBuilder::new()
-        .with_network_id(0)
+        .with_protocol_version(0)
         .with_parents(rand_parents())
         .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64)
         .finish()

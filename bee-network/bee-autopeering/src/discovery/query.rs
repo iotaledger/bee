@@ -74,9 +74,9 @@ pub(crate) fn query_fn() -> Repeat<QueryContext> {
     Box::new(|ctx| {
         let peers = select_peers_to_query(&ctx.active_peers);
         if peers.is_empty() {
-            log::debug!("No peers to query.");
+            log::info!("No peers to query.");
         } else {
-            log::debug!("Querying {} peer/s...", peers.len());
+            log::info!("Querying {} peer/s...", peers.len());
 
             for peer_id in peers.into_iter() {
                 let ctx_ = ctx.clone();

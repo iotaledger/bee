@@ -10,6 +10,12 @@ license = "Apache-2.0"
 keywords = [ "iota", "tangle", "bee", "framework", "ternary" ]
 homepage = "https://www.iota.org"
 
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg doc_cfg" cargo +nightly doc --all-features --no-deps --open
+all-features = true
+rustdoc-args = [ "--cfg", "doc_cfg" ]
+
 [dependencies]
 num-traits = { version = "0.2.14", default-features = false }
 serde = { version = "1.0.130", default-features = false, optional = true }

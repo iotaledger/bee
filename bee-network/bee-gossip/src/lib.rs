@@ -3,6 +3,7 @@
 
 //! Allows peers in the same IOTA network to exchange gossip messages with each other.
 
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
 #![warn(missing_docs)]
 
 mod alias;

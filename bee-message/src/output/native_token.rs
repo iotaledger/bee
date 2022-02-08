@@ -73,8 +73,8 @@ impl TryFrom<Vec<NativeToken>> for NativeTokens {
 }
 
 impl NativeTokens {
-    /// Maximum possible number of different native tokens that can reside in one output.
-    pub const COUNT_MAX: u8 = 255;
+    /// Maximum number of different native tokens that can be referenced in one transaction.
+    pub const COUNT_MAX: u8 = 64;
 
     /// Creates a new [`NativeTokens`].
     pub fn new(native_tokens: Vec<NativeToken>) -> Result<Self, Error> {

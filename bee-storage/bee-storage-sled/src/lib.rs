@@ -3,6 +3,7 @@
 
 //! Bee storage backend using [sled](https://sled.rs).
 
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
 #![deny(missing_docs)]
 #![deny(warnings)]
 

@@ -8,6 +8,7 @@ use crate::{Error, Message};
 use packable::{
     bounded::{BoundedU32, BoundedU8},
     prefix::BoxedSlicePrefix,
+    Packable,
 };
 
 use core::ops::RangeInclusive;
@@ -17,7 +18,7 @@ pub(crate) type TagLength =
 pub(crate) type TaggedDataLength = BoundedU32<0, { Message::LENGTH_MAX as u32 }>;
 
 /// A payload which holds a tag and associated data.
-#[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct TaggedDataPayload {

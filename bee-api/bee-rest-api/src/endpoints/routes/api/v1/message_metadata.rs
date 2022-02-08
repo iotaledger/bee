@@ -6,7 +6,7 @@ use crate::{
         config::ROUTE_MESSAGE_METADATA, filters::with_tangle, path_params::message_id, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend, CONFIRMED_THRESHOLD,
     },
-    types::{body::SuccessBody, dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
+    types::{dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
 };
 
 use bee_message::{payload::Payload, MessageId};
@@ -148,7 +148,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                 )
             };
 
-            Ok(warp::reply::json(&SuccessBody::new(MessageMetadataResponse {
+            Ok(warp::reply::json(&MessageMetadataResponse {
                 message_id: message_id.to_string(),
                 parent_message_ids: message.parents().iter().map(|id| id.to_string()).collect(),
                 is_solid,
@@ -158,7 +158,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                 conflict_reason: conflict_reason.map(|c| c as u8),
                 should_promote,
                 should_reattach,
-            })))
+            }))
         }
         None => Err(reject::custom(CustomRejection::NotFound(
             "can not find message".to_string(),

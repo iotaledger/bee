@@ -6,7 +6,7 @@ use crate::{
         config::ROUTE_RECEIPTS, filters::with_storage, permission::has_permission, rejection::CustomRejection,
         storage::StorageBackend,
     },
-    types::{body::SuccessBody, dtos::ReceiptDto, responses::ReceiptsResponse},
+    types::{dtos::ReceiptDto, responses::ReceiptsResponse},
 };
 
 use bee_ledger::types::Receipt;
@@ -45,7 +45,5 @@ pub(crate) fn receipts<B: StorageBackend>(storage: ResourceHandle<B>) -> Result<
         receipts_dto.push(ReceiptDto::try_from(receipt).map_err(|_| CustomRejection::InternalError)?);
     }
 
-    Ok(warp::reply::json(&SuccessBody::new(ReceiptsResponse {
-        receipts: receipts_dto,
-    })))
+    Ok(warp::reply::json(&ReceiptsResponse { receipts: receipts_dto }))
 }

@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Core data types for messages in the tangle.
+//!
+//! ## Feature Flags
+//! - `cpt2`: Enable support for backwards compatible output and transaction payload types.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
 #![deny(missing_docs, warnings)]
 
 extern crate alloc;

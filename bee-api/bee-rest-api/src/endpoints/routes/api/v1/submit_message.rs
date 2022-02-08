@@ -10,12 +10,15 @@ use crate::{
         storage::StorageBackend,
         NetworkId,
     },
-    types::{body::SuccessBody, dtos::PayloadDto, responses::SubmitMessageResponse},
+    types::{dtos::PayloadDto, responses::SubmitMessageResponse},
 };
 
 use bee_message::{parent::Parents, payload::Payload, Message, MessageBuilder, MessageId};
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
-use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
+use bee_protocol::{
+    workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent},
+    PROTOCOL_VERSION,
+};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 
@@ -164,15 +167,16 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
 
     Ok(warp::reply::with_status(
-        warp::reply::json(&SuccessBody::new(SubmitMessageResponse {
+        warp::reply::json(&SubmitMessageResponse {
             message_id: message_id.to_string(),
-        })),
+        }),
         StatusCode::CREATED,
     ))
 }
 
+// TODO compare/set network ID and protocol version
 pub(crate) async fn build_message(
-    network_id: u64,
+    _network_id: u64,
     parents: Vec<MessageId>,
     payload: Option<Payload>,
     nonce: Option<u64>,
@@ -181,7 +185,7 @@ pub(crate) async fn build_message(
 ) -> Result<Message, Rejection> {
     let message = if let Some(nonce) = nonce {
         let mut builder = MessageBuilder::new()
-            .with_network_id(network_id)
+            .with_protocol_version(PROTOCOL_VERSION)
             .with_parents(
                 Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
             )
@@ -199,7 +203,7 @@ pub(crate) async fn build_message(
             )));
         }
         let mut builder = MessageBuilder::new()
-            .with_network_id(network_id)
+            .with_protocol_version(PROTOCOL_VERSION)
             .with_parents(
                 Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
             )
@@ -229,9 +233,9 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
     })?;
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
     Ok(warp::reply::with_status(
-        warp::reply::json(&SuccessBody::new(SubmitMessageResponse {
+        warp::reply::json(&SubmitMessageResponse {
             message_id: message_id.to_string(),
-        })),
+        }),
         StatusCode::CREATED,
     ))
 }

@@ -3,6 +3,7 @@
 
 //! A crate that contains foundational building blocks for the IOTA Tangle.
 
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
 #![deny(missing_docs)]
 
 /// Types used for tangle configuration.

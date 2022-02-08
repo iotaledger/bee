@@ -5,6 +5,8 @@
 //! * A Bee full node;
 //! * A Bee entry node (autopeering);
 
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
+
 mod cli;
 mod config;
 mod core;

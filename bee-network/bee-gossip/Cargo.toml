@@ -11,7 +11,10 @@ keywords = [ "iota", "bee", "framework", "network", "gossip" ]
 homepage = "https://www.iota.org"
 
 [package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg doc_cfg" cargo +nightly doc --all-features --no-deps --open
 all-features = true
+rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [package.metadata.cargo-udeps.ignore]
 development = [ "fern", "hex", "serial_test" ]

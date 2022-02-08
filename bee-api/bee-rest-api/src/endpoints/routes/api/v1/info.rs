@@ -13,9 +13,12 @@ use crate::{
         storage::StorageBackend,
         Bech32Hrp, NetworkId,
     },
-    types::{
-        body::SuccessBody,
-        responses::{InfoResponse, MetricsResponse, ProtocolResponse, RentStructureResponse, StatusResponse},
+    types::responses::{
+        InfoResponse,
+        MetricsResponse,
+        ProtocolResponse,
+        RentStructureResponse,
+        StatusResponse
     },
 };
 
@@ -73,7 +76,7 @@ pub(crate) async fn info<B: StorageBackend>(
         .map(|m| m.timestamp())
         .unwrap_or_default();
 
-    Ok(warp::reply::json(&SuccessBody::new(InfoResponse {
+    Ok(warp::reply::json(&InfoResponse {
         name: node_info.name.clone(),
         version: node_info.version.clone(),
         status: StatusResponse {
@@ -106,5 +109,5 @@ pub(crate) async fn info<B: StorageBackend>(
             features
         },
         plugins: Vec::new(), // TODO
-    })))
+    }))
 }

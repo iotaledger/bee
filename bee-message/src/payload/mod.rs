@@ -3,12 +3,19 @@
 
 //! The payload module defines the core data types for representing message payloads.
 
+#[cfg(feature = "cpt2")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
+pub mod cpt2;
 pub mod milestone;
 pub mod receipt;
 pub mod tagged_data;
 pub mod transaction;
 pub mod treasury;
 
+#[cfg(feature = "cpt2")]
+pub use cpt2::indexation::IndexationPayload;
+#[cfg(feature = "cpt2")]
+pub(crate) use cpt2::indexation::{IndexLength, IndexationDataLength};
 pub use milestone::MilestonePayload;
 pub(crate) use milestone::{PublicKeyCount, SignatureCount};
 pub use receipt::ReceiptPayload;
@@ -47,6 +54,11 @@ pub enum Payload {
     /// A milestone payload.
     #[packable(tag = MilestonePayload::KIND)]
     Milestone(Box<MilestonePayload>),
+    /// An indexation payload.
+    #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
+    #[packable(tag = IndexationPayload::KIND)]
+    Indexation(Box<IndexationPayload>),
     /// A receipt payload.
     #[packable(tag = ReceiptPayload::KIND)]
     Receipt(Box<ReceiptPayload>),
@@ -67,6 +79,13 @@ impl From<TransactionPayload> for Payload {
 impl From<MilestonePayload> for Payload {
     fn from(payload: MilestonePayload) -> Self {
         Self::Milestone(Box::new(payload))
+    }
+}
+
+#[cfg(feature = "cpt2")]
+impl From<IndexationPayload> for Payload {
+    fn from(payload: IndexationPayload) -> Self {
+        Self::Indexation(Box::new(payload))
     }
 }
 
@@ -94,6 +113,8 @@ impl Payload {
         match self {
             Self::Transaction(_) => TransactionPayload::KIND,
             Self::Milestone(_) => MilestonePayload::KIND,
+            #[cfg(feature = "cpt2")]
+            Self::Indexation(_) => IndexationPayload::KIND,
             Self::Receipt(_) => ReceiptPayload::KIND,
             Self::TreasuryTransaction(_) => TreasuryTransactionPayload::KIND,
             Self::TaggedData(_) => TaggedDataPayload::KIND,

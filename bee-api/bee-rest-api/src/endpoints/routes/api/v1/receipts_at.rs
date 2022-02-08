@@ -6,7 +6,7 @@ use crate::{
         config::ROUTE_RECEIPTS_AT, filters::with_storage, path_params::milestone_index, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend,
     },
-    types::{body::SuccessBody, dtos::ReceiptDto, responses::ReceiptsResponse},
+    types::{dtos::ReceiptDto, responses::ReceiptsResponse},
 };
 
 use bee_ledger::types::Receipt;
@@ -52,7 +52,5 @@ pub(crate) fn receipts_at<B: StorageBackend>(
         }
     }
 
-    Ok(warp::reply::json(&SuccessBody::new(ReceiptsResponse {
-        receipts: receipts_dto,
-    })))
+    Ok(warp::reply::json(&ReceiptsResponse { receipts: receipts_dto }))
 }

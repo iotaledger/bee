@@ -15,6 +15,11 @@ use crate::{
     },
     unlock_block::{UnlockBlockCount, UnlockBlockIndex},
 };
+#[cfg(feature = "cpt2")]
+use crate::{
+    output::DustAllowanceAmount,
+    payload::{IndexLength, IndexationDataLength},
+};
 
 use crypto::Error as CryptoError;
 use primitive_types::U256;
@@ -31,22 +36,36 @@ pub enum Error {
     DuplicateUtxo(UtxoInput),
     ExpirationUnlockConditionZero,
     FeatureBlocksNotUniqueSorted,
-    InputUnlockBlockCountMismatch { input_count: usize, block_count: usize },
-    InvalidAccumulatedOutput(u128),
+    InputUnlockBlockCountMismatch {
+        input_count: usize,
+        block_count: usize,
+    },
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAliasIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
     InvalidControllerKind(u8),
+    #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
+    InvalidDustAllowanceAmount(<DustAllowanceAmount as TryFrom<u64>>::Error),
     InvalidDustDepositAmount(<DustDepositAmount as TryFrom<u64>>::Error),
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
     InvalidFeatureBlockKind(u8),
-    InvalidFoundryOutputSupply { circulating: U256, max: U256 },
+    InvalidFoundryOutputSupply {
+        circulating: U256,
+        max: U256,
+    },
     InvalidHexadecimalChar(String),
-    InvalidHexadecimalLength { expected: usize, actual: usize },
-    InvalidTaggedDataLength(<TaggedDataLength as TryFrom<usize>>::Error),
-    InvalidTagFeatureBlockLength(<TagFeatureBlockLength as TryFrom<usize>>::Error),
-    InvalidTagLength(<TagLength as TryFrom<usize>>::Error),
+    InvalidHexadecimalLength {
+        expected: usize,
+        actual: usize,
+    },
+    #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
+    InvalidIndexationDataLength(<IndexationDataLength as TryFrom<usize>>::Error),
+    #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
+    InvalidIndexLength(<IndexLength as TryFrom<usize>>::Error),
     InvalidInputKind(u8),
     InvalidInputCount(<InputCount as TryFrom<usize>>::Error),
     InvalidInputOutputIndex(<OutputIndex as TryFrom<u16>>::Error),
@@ -62,14 +81,25 @@ pub enum Error {
     InvalidOutputKind(u8),
     InvalidParentCount(<ParentCount as TryFrom<usize>>::Error),
     InvalidPayloadKind(u32),
-    InvalidPayloadLength { expected: usize, actual: usize },
-    InvalidPowScoreValues { nps: u32, npsmi: u32 },
+    InvalidPayloadLength {
+        expected: usize,
+        actual: usize,
+    },
+    InvalidPowScoreValues {
+        nps: u32,
+        npsmi: u32,
+    },
     InvalidReceiptFundsCount(<ReceiptFundsCount as TryFrom<usize>>::Error),
     InvalidReferenceIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
     InvalidSignature,
     InvalidSignatureKind(u8),
+    InvalidTaggedDataLength(<TaggedDataLength as TryFrom<usize>>::Error),
+    InvalidTagFeatureBlockLength(<TagFeatureBlockLength as TryFrom<usize>>::Error),
+    InvalidTagLength(<TagLength as TryFrom<usize>>::Error),
     InvalidTailTransactionHash,
     InvalidTokenSchemeKind(u8),
+    InvalidTransactionAmountSum(u128),
+    InvalidTransactionNativeTokensCount(u16),
     InvalidTreasuryOutputAmount(<TreasuryOutputAmount as TryFrom<u64>>::Error),
     InvalidUnlockBlockCount(<UnlockBlockCount as TryFrom<usize>>::Error),
     InvalidUnlockBlockKind(u8),
@@ -82,7 +112,10 @@ pub enum Error {
     MilestoneInvalidPublicKeyCount(<PublicKeyCount as TryFrom<usize>>::Error),
     MilestoneInvalidSignatureCount(<SignatureCount as TryFrom<usize>>::Error),
     MilestonePublicKeysNotUniqueSorted,
-    MilestonePublicKeysSignaturesCountMismatch { key_count: usize, sig_count: usize },
+    MilestonePublicKeysSignaturesCountMismatch {
+        key_count: usize,
+        sig_count: usize,
+    },
     MissingAddressUnlockCondition,
     MissingField(&'static str),
     MissingGovernorUnlockCondition,
@@ -97,11 +130,23 @@ pub enum Error {
     RemainingBytesAfterMessage,
     SelfControlledAliasOutput(AliasId),
     SelfDepositNft(NftId),
-    SignaturePublicKeyMismatch { expected: String, actual: String },
-    TailTransactionHashNotUnique { previous: usize, current: usize },
+    SignaturePublicKeyMismatch {
+        expected: String,
+        actual: String,
+    },
+    TailTransactionHashNotUnique {
+        previous: usize,
+        current: usize,
+    },
     TimelockUnlockConditionZero,
-    UnallowedFeatureBlock { index: usize, kind: u8 },
-    UnallowedUnlockCondition { index: usize, kind: u8 },
+    UnallowedFeatureBlock {
+        index: usize,
+        kind: u8,
+    },
+    UnallowedUnlockCondition {
+        index: usize,
+        kind: u8,
+    },
     UnlockConditionsNotUniqueSorted,
 }
 
@@ -133,11 +178,14 @@ impl fmt::Display for Error {
                     input_count, block_count
                 )
             }
-            Error::InvalidAccumulatedOutput(value) => write!(f, "invalid accumulated output balance: {}", value),
             Error::InvalidAddress => write!(f, "invalid address provided"),
             Error::InvalidAddressKind(k) => write!(f, "invalid address kind: {}", k),
             Error::InvalidAliasIndex(index) => write!(f, "invalid alias index: {}", index),
             Error::InvalidControllerKind(k) => write!(f, "invalid controller kind: {}", k),
+            #[cfg(feature = "cpt2")]
+            Error::InvalidDustAllowanceAmount(amount) => {
+                write!(f, "invalid dust allowance amount: {}", amount)
+            }
             Error::InvalidDustDepositAmount(amount) => {
                 write!(f, "invalid dust deposit amount: {}", amount)
             }
@@ -153,14 +201,13 @@ impl fmt::Display for Error {
             Error::InvalidHexadecimalLength { expected, actual } => {
                 write!(f, "invalid hexadecimal length: expected {} got {}", expected, actual)
             }
-            Error::InvalidTaggedDataLength(length) => {
-                write!(f, "invalid tagged data length {}", length)
+            #[cfg(feature = "cpt2")]
+            Error::InvalidIndexationDataLength(length) => {
+                write!(f, "invalid indexation data length {}", length)
             }
-            Error::InvalidTagFeatureBlockLength(length) => {
-                write!(f, "invalid tag feature block length {}", length)
-            }
-            Error::InvalidTagLength(length) => {
-                write!(f, "invalid tag length {}", length)
+            #[cfg(feature = "cpt2")]
+            Error::InvalidIndexLength(length) => {
+                write!(f, "invalid index length {}", length)
             }
             Error::InvalidInputKind(k) => write!(f, "invalid input kind: {}", k),
             Error::InvalidInputCount(count) => write!(f, "invalid input count: {}", count),
@@ -195,8 +242,21 @@ impl fmt::Display for Error {
             Error::InvalidReferenceIndex(index) => write!(f, "invalid reference index: {}", index),
             Error::InvalidSignature => write!(f, "invalid signature provided"),
             Error::InvalidSignatureKind(k) => write!(f, "invalid signature kind: {}", k),
+            Error::InvalidTaggedDataLength(length) => {
+                write!(f, "invalid tagged data length {}", length)
+            }
+            Error::InvalidTagFeatureBlockLength(length) => {
+                write!(f, "invalid tag feature block length {}", length)
+            }
+            Error::InvalidTagLength(length) => {
+                write!(f, "invalid tag length {}", length)
+            }
             Error::InvalidTailTransactionHash => write!(f, "invalid tail transaction hash"),
             Error::InvalidTokenSchemeKind(k) => write!(f, "invalid token scheme kind {}", k),
+            Error::InvalidTransactionAmountSum(value) => write!(f, "invalid transaction amount sum: {}", value),
+            Error::InvalidTransactionNativeTokensCount(count) => {
+                write!(f, "invalid transaction native tokens count: {}", count)
+            }
             Error::InvalidTreasuryOutputAmount(amount) => write!(f, "invalid treasury amount: {}", amount),
             Error::InvalidUnlockBlockCount(count) => write!(f, "invalid unlock block count: {}", count),
             Error::InvalidUnlockBlockKind(k) => write!(f, "invalid unlock block kind: {}", k),

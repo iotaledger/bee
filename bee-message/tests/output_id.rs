@@ -9,7 +9,7 @@ use core::str::FromStr;
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const OUTPUT_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00";
-const OUTPUT_ID_INVALID_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f00";
+const OUTPUT_ID_INVALID_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6498000";
 const OUTPUT_ID_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f0x";
 const OUTPUT_ID_INVALID_LEN: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f";
 
@@ -45,8 +45,8 @@ fn new_invalid() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
 
     assert!(matches!(
-        OutputId::new(transaction_id, 127),
-        Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(127)))
+        OutputId::new(transaction_id, 128),
+        Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(128)))
     ));
 }
 
@@ -66,7 +66,7 @@ fn try_from_invalid() {
 
     assert!(matches!(
         OutputId::try_from(output_id_bytes),
-        Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(127)))
+        Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(128)))
     ));
 }
 
@@ -83,7 +83,7 @@ fn from_str_valid() {
 fn from_str_invalid_index() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_INDEX),
-        Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(127)))
+        Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(128)))
     ));
 }
 
@@ -132,13 +132,13 @@ fn pack_unpack_valid() {
 fn pack_unpack_invalid() {
     let bytes = vec![
         82, 253, 252, 7, 33, 130, 101, 79, 22, 63, 95, 15, 154, 98, 29, 114, 149, 102, 199, 77, 16, 3, 124, 77, 123,
-        187, 4, 7, 209, 226, 198, 73, 127, 0,
+        187, 4, 7, 209, 226, 198, 73, 128, 0,
     ];
 
     assert!(matches!(
         OutputId::unpack_verified(&mut bytes.as_slice()),
         Err(UnpackError::Packable(Error::InvalidInputOutputIndex(
-            InvalidBoundedU16(127)
+            InvalidBoundedU16(128)
         )))
     ));
 }

@@ -93,7 +93,6 @@ async fn process_request(
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     requested_milestones: &RequestedMilestones,
-    counter: &mut usize,
 ) {
     if requested_milestones.contains(&index) {
         return;
@@ -107,7 +106,7 @@ async fn process_request(
         requested_milestones.insert(index);
     }
 
-    process_request_unchecked(index, peer_id, peer_manager, metrics, counter);
+    process_request_unchecked(index, peer_id, peer_manager, metrics);
 }
 
 fn process_request_unchecked(
@@ -115,7 +114,6 @@ fn process_request_unchecked(
     peer_id: Option<PeerId>,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
-    counter: &mut usize,
 ) {
     let milestone_request = MilestoneRequestPacket::new(*index);
 
@@ -124,20 +122,8 @@ fn process_request_unchecked(
             Sender::<MilestoneRequestPacket>::send(&milestone_request, &peer_id, peer_manager, metrics);
         }
         None => {
-            let guard = peer_manager.0.read();
-
-            for _ in 0..guard.keys.len() {
-                let peer_id = &guard.keys[*counter % guard.keys.len()];
-
-                *counter += 1;
-
-                if let Some(peer) = peer_manager.get(peer_id) {
-                    // TODO also request if has_data ?
-                    if (*peer).0.maybe_has_data(index) {
-                        Sender::<MilestoneRequestPacket>::send(&milestone_request, peer_id, peer_manager, metrics);
-                        return;
-                    }
-                }
+            if let Some(peer_id) = peer_manager.fair_find(|peer| peer.maybe_has_data(index)) {
+                Sender::<MilestoneRequestPacket>::send(&milestone_request, &peer_id, peer_manager, metrics);
             }
         }
     }
@@ -148,7 +134,6 @@ async fn retry_requests<B: StorageBackend>(
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     tangle: &Tangle<B>,
-    counter: &mut usize,
 ) {
     if peer_manager.is_empty() {
         return;
@@ -173,7 +158,7 @@ async fn retry_requests<B: StorageBackend>(
         if tangle.contains_milestone(index).await {
             requested_milestones.remove(&index);
         } else {
-            process_request_unchecked(index, None, peer_manager, metrics, counter);
+            process_request_unchecked(index, None, peer_manager, metrics);
         }
     }
 
@@ -214,20 +199,11 @@ where
             info!("Requester running.");
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
-            let mut counter: usize = 0;
 
             while let Some(MilestoneRequesterWorkerEvent(index, peer_id)) = receiver.next().await {
                 if !tangle.contains_milestone(index).await {
                     debug!("Requesting milestone {}.", *index);
-                    process_request(
-                        index,
-                        peer_id,
-                        &peer_manager,
-                        &metrics,
-                        &requested_milestones,
-                        &mut counter,
-                    )
-                    .await;
+                    process_request(index, peer_id, &peer_manager, &metrics, &requested_milestones).await;
                 }
             }
 
@@ -243,10 +219,9 @@ where
             info!("Retryer running.");
 
             let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(RETRY_INTERVAL)));
-            let mut counter: usize = 0;
 
             while ticker.next().await.is_some() {
-                retry_requests(&requested_milestones, &peer_manager, &metrics, &tangle, &mut counter).await;
+                retry_requests(&requested_milestones, &peer_manager, &metrics, &tangle).await;
             }
 
             info!("Retryer stopped.");

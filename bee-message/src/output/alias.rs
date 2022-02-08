@@ -372,18 +372,3 @@ fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, alias_id: &Ali
 
     verify_allowed_unlock_conditions(unlock_conditions, AliasOutput::ALLOWED_UNLOCK_CONDITIONS)
 }
-
-// #[inline]
-// fn verify_controller(controller: &Address, alias_id: &AliasId) -> Result<(), Error> {
-//     match controller {
-//         Address::Ed25519(_) => {}
-//         Address::Alias(address) => {
-//             if address.id() == alias_id {
-//                 return Err(Error::SelfControlledAliasOutput(*alias_id));
-//             }
-//         }
-//         _ => return Err(Error::InvalidControllerKind(controller.kind())),
-//     };
-//
-//     Ok(())
-// }

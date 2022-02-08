@@ -45,7 +45,7 @@ fn build_valid() {
             .unwrap(),
     );
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(0)
         .with_inputs(vec![input1, input2])
         .add_output(output)
         .finish();
@@ -70,7 +70,7 @@ fn build_valid_with_payload() {
     );
     let payload = Payload::from(rand_tagged_data_payload());
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(0)
         .with_inputs(vec![input1, input2])
         .add_output(output)
         .with_payload(payload)
@@ -95,7 +95,7 @@ fn build_valid_add_inputs_outputs() {
             .unwrap(),
     );
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(0)
         .with_inputs(vec![input1, input2])
         .add_output(output)
         .finish();
@@ -120,7 +120,7 @@ fn build_invalid_payload_kind() {
     );
     let payload = rand_treasury_transaction_payload();
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(0)
         .with_inputs(vec![input1, input2])
         .add_output(output)
         .with_payload(payload.into())
@@ -142,7 +142,7 @@ fn build_invalid_input_count_low() {
             .unwrap(),
     );
 
-    let essence = RegularTransactionEssence::builder().add_output(output).finish();
+    let essence = RegularTransactionEssence::builder(0).add_output(output).finish();
 
     assert!(matches!(
         essence,
@@ -165,14 +165,14 @@ fn build_invalid_input_count_high() {
             .unwrap(),
     );
 
-    let essence = RegularTransactionEssence::builder()
-        .with_inputs(vec![input; 128])
+    let essence = RegularTransactionEssence::builder(0)
+        .with_inputs(vec![input; 129])
         .add_output(output)
         .finish();
 
     assert!(matches!(
         essence,
-        Err(Error::InvalidInputCount(TryIntoBoundedU16Error::Invalid(128)))
+        Err(Error::InvalidInputCount(TryIntoBoundedU16Error::Invalid(129)))
     ));
 }
 
@@ -181,7 +181,7 @@ fn build_invalid_output_count_low() {
     let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
     let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
 
-    let essence = RegularTransactionEssence::builder().add_input(input).finish();
+    let essence = RegularTransactionEssence::builder(0).add_input(input).finish();
 
     assert!(matches!(
         essence,
@@ -204,14 +204,14 @@ fn build_invalid_output_count_high() {
             .unwrap(),
     );
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(0)
         .add_input(input)
-        .with_outputs(vec![output; 128])
+        .with_outputs(vec![output; 129])
         .finish();
 
     assert!(matches!(
         essence,
-        Err(Error::InvalidOutputCount(TryIntoBoundedU16Error::Invalid(128)))
+        Err(Error::InvalidOutputCount(TryIntoBoundedU16Error::Invalid(129)))
     ));
 }
 
@@ -230,7 +230,7 @@ fn build_invalid_duplicate_utxo() {
             .unwrap(),
     );
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(0)
         .with_inputs(vec![input; 2])
         .add_output(output)
         .finish();
@@ -252,7 +252,7 @@ fn build_invalid_input_kind() {
             .unwrap(),
     );
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(0)
         .add_input(input)
         .add_output(output)
         .finish();
@@ -267,7 +267,7 @@ fn build_invalid_output_kind() {
     let amount = 1_000_000;
     let output = Output::Treasury(TreasuryOutput::new(amount).unwrap());
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(0)
         .add_input(input)
         .add_output(output)
         .finish();
@@ -302,12 +302,12 @@ fn build_invalid_accumulated_output() {
             .unwrap(),
     );
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(0)
         .add_input(input)
         .with_outputs(vec![output1, output2])
         .finish();
 
-    assert!(matches!(essence, Err(Error::InvalidAccumulatedOutput(_))));
+    assert!(matches!(essence, Err(Error::InvalidTransactionAmountSum(_))));
 }
 
 #[test]
@@ -327,7 +327,7 @@ fn getters() {
     )];
     let payload = Payload::from(rand_tagged_data_payload());
 
-    let essence = RegularTransactionEssence::builder()
+    let essence = RegularTransactionEssence::builder(0)
         .with_inputs(vec![input1, input2])
         .with_outputs(outputs.clone())
         .with_payload(payload.clone())

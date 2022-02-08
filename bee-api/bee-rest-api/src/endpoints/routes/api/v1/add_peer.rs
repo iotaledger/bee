@@ -9,7 +9,6 @@ use crate::{
         rejection::CustomRejection,
     },
     types::{
-        body::SuccessBody,
         dtos::{PeerDto, RelationDto},
         responses::AddPeerResponse,
     },
@@ -81,7 +80,7 @@ pub(crate) fn add_peer(
         Some(peer_entry) => {
             let peer_dto = PeerDto::from(peer_entry.0.as_ref());
             Ok(warp::reply::with_status(
-                warp::reply::json(&SuccessBody::new(AddPeerResponse(peer_dto))),
+                warp::reply::json(&AddPeerResponse(peer_dto)),
                 StatusCode::OK,
             ))
         }
@@ -115,14 +114,14 @@ pub(crate) fn add_peer(
             }
 
             Ok(warp::reply::with_status(
-                warp::reply::json(&SuccessBody::new(AddPeerResponse(PeerDto {
+                warp::reply::json(&AddPeerResponse(PeerDto {
                     id: peer_id.to_string(),
                     alias,
                     multi_addresses: vec![multi_address.to_string()],
                     relation: RelationDto::Known,
                     connected: false,
                     gossip: None,
-                }))),
+                })),
                 StatusCode::OK,
             ))
         }

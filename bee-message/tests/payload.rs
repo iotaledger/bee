@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[cfg(feature = "cpt2")]
+use bee_message::payload::IndexationPayload;
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput, UtxoInput},
@@ -48,7 +50,7 @@ fn transaction() {
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder()
+        RegularTransactionEssence::builder(0)
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()
@@ -113,6 +115,18 @@ fn tagged_data() {
     assert_eq!(payload.kind(), 5);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::TaggedData(_)));
+}
+
+#[cfg(feature = "cpt2")]
+#[test]
+fn indexation() {
+    let payload: Payload = IndexationPayload::new(rand_bytes(32), vec![]).unwrap().into();
+
+    let packed = payload.pack_to_vec();
+
+    assert_eq!(payload.kind(), 2);
+    assert_eq!(payload.packed_len(), packed.len());
+    assert!(matches!(payload, Payload::Indexation(_)));
 }
 
 #[test]

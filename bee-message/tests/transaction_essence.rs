@@ -30,7 +30,7 @@ fn essence_kind() {
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder()
+        RegularTransactionEssence::builder(0)
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()
