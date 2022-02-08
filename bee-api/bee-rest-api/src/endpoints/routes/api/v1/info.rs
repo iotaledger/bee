@@ -13,13 +13,7 @@ use crate::{
         storage::StorageBackend,
         Bech32Hrp, NetworkId,
     },
-    types::responses::{
-        InfoResponse,
-        MetricsResponse,
-        ProtocolResponse,
-        RentStructureResponse,
-        StatusResponse
-    },
+    types::responses::{InfoResponse, MetricsResponse, ProtocolResponse, RentStructureResponse, StatusResponse},
 };
 
 use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
