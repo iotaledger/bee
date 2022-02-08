@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    address::Address,
+    address::AliasAddress,
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{
-            verify_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
-            UnlockConditions,
+            verify_allowed_unlock_conditions, ImmutableAliasAddressUnlockCondition, UnlockCondition,
+            UnlockConditionFlags, UnlockConditions,
         },
         FoundryId, NativeToken, NativeTokens, OutputAmount,
     },
@@ -166,7 +166,7 @@ impl FoundryOutput {
     pub const KIND: u8 = 5;
 
     /// The set of allowed [`UnlockCondition`]s for an [`FoundryOutput`].
-    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS;
+    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::IMMUTABLE_ALIAS_ADDRESS;
     /// The set of allowed [`FeatureBlock`]s for an [`FoundryOutput`].
     pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
 
@@ -226,9 +226,13 @@ impl FoundryOutput {
 
     ///
     #[inline(always)]
-    pub fn address(&self) -> &Address {
-        // A FoundryOutput must have an AddressUnlockCondition.
-        if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
+    pub fn address(&self) -> &AliasAddress {
+        // A FoundryOutput must have an ImmutableAliasAddressUnlockCondition.
+        if let UnlockCondition::ImmutableAliasAddress(address) = self
+            .unlock_conditions
+            .get(ImmutableAliasAddressUnlockCondition::KIND)
+            .unwrap()
+        {
             address.address()
         } else {
             unreachable!();
@@ -370,14 +374,12 @@ fn verify_supply(circulating_supply: &U256, maximum_supply: &U256) -> Result<(),
 }
 
 fn verify_unlock_conditions(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
-    if let Some(UnlockCondition::Address(unlock_condition)) = unlock_conditions.get(AddressUnlockCondition::KIND) {
-        match unlock_condition.address() {
-            Address::Alias(_) => {}
-            _ => return Err(Error::InvalidAddressKind(unlock_condition.address().kind())),
-        };
+    if unlock_conditions
+        .get(ImmutableAliasAddressUnlockCondition::KIND)
+        .is_none()
+    {
+        Err(Error::MissingAddressUnlockCondition)
     } else {
-        return Err(Error::MissingAddressUnlockCondition);
+        verify_allowed_unlock_conditions(unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)
     }
-
-    verify_allowed_unlock_conditions(unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)
 }

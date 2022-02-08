@@ -24,7 +24,9 @@ pub mod feature_block;
 pub mod unlock_condition;
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
-use bee_message::output::{self, unlock_condition::AddressUnlockCondition, Output, OutputId, OUTPUT_INDEX_RANGE};
+use bee_message::output::{
+    self, unlock_condition::ImmutableAliasAddressUnlockCondition, Output, OutputId, OUTPUT_INDEX_RANGE,
+};
 
 use primitive_types::U256;
 
@@ -88,7 +90,7 @@ pub fn rand_foundry_output() -> output::FoundryOutput {
     )
     .unwrap()
     .with_feature_blocks(feature_blocks)
-    .add_unlock_condition(AddressUnlockCondition::new(rand_alias_address().into()).into())
+    .add_unlock_condition(ImmutableAliasAddressUnlockCondition::new(rand_alias_address()).into())
     .finish()
     .unwrap()
 }

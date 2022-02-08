@@ -5,6 +5,7 @@ mod address;
 mod dust_deposit_return;
 mod expiration;
 mod governor_address;
+mod immutable_alias_address;
 mod state_controller_address;
 mod timelock;
 
@@ -13,6 +14,7 @@ pub(crate) use dust_deposit_return::DustDepositAmount;
 pub use dust_deposit_return::DustDepositReturnUnlockCondition;
 pub use expiration::ExpirationUnlockCondition;
 pub use governor_address::GovernorAddressUnlockCondition;
+pub use immutable_alias_address::ImmutableAliasAddressUnlockCondition;
 pub use state_controller_address::StateControllerAddressUnlockCondition;
 pub use timelock::TimelockUnlockCondition;
 
@@ -51,6 +53,9 @@ pub enum UnlockCondition {
     /// A governor address unlock condition.
     #[packable(tag = GovernorAddressUnlockCondition::KIND)]
     GovernorAddress(GovernorAddressUnlockCondition),
+    /// An immutable alias address unlock condition.
+    #[packable(tag = ImmutableAliasAddressUnlockCondition::KIND)]
+    ImmutableAliasAddress(ImmutableAliasAddressUnlockCondition),
 }
 
 impl UnlockCondition {
@@ -63,6 +68,7 @@ impl UnlockCondition {
             Self::Expiration(_) => ExpirationUnlockCondition::KIND,
             Self::StateControllerAddress(_) => StateControllerAddressUnlockCondition::KIND,
             Self::GovernorAddress(_) => GovernorAddressUnlockCondition::KIND,
+            Self::ImmutableAliasAddress(_) => ImmutableAliasAddressUnlockCondition::KIND,
         }
     }
 
@@ -75,6 +81,7 @@ impl UnlockCondition {
             Self::Expiration(_) => UnlockConditionFlags::EXPIRATION,
             Self::StateControllerAddress(_) => UnlockConditionFlags::STATE_CONTROLLER_ADDRESS,
             Self::GovernorAddress(_) => UnlockConditionFlags::GOVERNOR_ADDRESS,
+            Self::ImmutableAliasAddress(_) => UnlockConditionFlags::IMMUTABLE_ALIAS_ADDRESS,
         }
     }
 }
@@ -90,6 +97,7 @@ create_bitflags!(
         (EXPIRATION, ExpirationUnlockCondition),
         (STATE_CONTROLLER_ADDRESS, StateControllerAddressUnlockCondition),
         (GOVERNOR_ADDRESS, GovernorAddressUnlockCondition),
+        (IMMUTABLE_ALIAS_ADDRESS, ImmutableAliasAddressUnlockCondition),
     ]
 );
 
@@ -179,7 +187,8 @@ mod test {
                 UnlockConditionFlags::TIMELOCK,
                 UnlockConditionFlags::EXPIRATION,
                 UnlockConditionFlags::STATE_CONTROLLER_ADDRESS,
-                UnlockConditionFlags::GOVERNOR_ADDRESS
+                UnlockConditionFlags::GOVERNOR_ADDRESS,
+                UnlockConditionFlags::IMMUTABLE_ALIAS_ADDRESS
             ]
         );
     }
