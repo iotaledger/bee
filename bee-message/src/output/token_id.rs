@@ -9,7 +9,7 @@ impl_id!(TokenId, 38, "TODO.");
 string_serde_impl!(TokenId);
 
 impl TokenId {
-    /// Createa a new `TokenId`.
+    /// Creates a new `TokenId`.
     pub fn build(foundry_id: FoundryId, token_tag: [u8; TOKEN_TAG_LENGTH]) -> Self {
         Self(
             foundry_id
