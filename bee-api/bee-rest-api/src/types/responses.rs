@@ -23,7 +23,7 @@ pub struct InfoResponse {
 
 impl BodyInner for InfoResponse {}
 
-/// Returned in InfoResponse.
+/// Returned in [`InfoResponse`].
 /// Status information about the node.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct StatusResponse {
