@@ -85,16 +85,19 @@ impl<S: NodeStorageBackend> NodeConfig<S> {
 pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     // We don't store the identity in the config file anymore.
     // This is here for legacy reasons to warn the user of that fact.
-    #[serde(rename = "identity")]
     #[deprecated(since = "0.3.0")]
+    #[serde(alias = "identity")]
     _identity: Option<String>,
     pub(crate) alias: Option<String>,
+    #[serde(alias = "bech32Hrp")]
     pub(crate) bech32_hrp: Option<String>,
+    #[serde(alias = "networkId")]
     pub(crate) network_id: Option<String>,
     pub(crate) logger: Option<LoggerConfigBuilder>,
     pub(crate) gossip: Option<NetworkConfigBuilder>,
     pub(crate) autopeering: Option<AutopeeringConfigBuilder>,
     pub(crate) protocol: Option<ProtocolConfigBuilder>,
+    #[serde(alias = "restApi")]
     pub(crate) rest_api: Option<RestApiConfigBuilder>,
     pub(crate) snapshot: Option<SnapshotConfigBuilder>,
     pub(crate) pruning: Option<PruningConfigBuilder>,
