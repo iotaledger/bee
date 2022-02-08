@@ -53,7 +53,7 @@ pub struct ProtocolResponse {
     pub rent_structure: RentStructureResponse,
 }
 
-/// Returned in InfoResponse.
+/// Returned in [`InfoResponse`].
 /// Rent information about the node.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RentStructureResponse {
@@ -65,7 +65,7 @@ pub struct RentStructureResponse {
     pub vbyte_factor_key: u64,
 }
 
-/// Returned in InfoResponse.
+/// Returned in [`InfoResponse`].
 /// Metric information about the node.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MetricsResponse {
