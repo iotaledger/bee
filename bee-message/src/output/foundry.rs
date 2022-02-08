@@ -35,7 +35,7 @@ pub enum TokenScheme {
     Simple = 0,
 }
 
-/// Token tag length
+/// Token tag length.
 pub const TOKEN_TAG_LENGTH: usize = 12;
 
 ///

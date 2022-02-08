@@ -9,7 +9,7 @@ impl_id!(TokenId, 38, "TODO.");
 string_serde_impl!(TokenId);
 
 impl TokenId {
-    /// Createa a new `TokenId`
+    /// Createa a new `TokenId`.
     pub fn build(foundry_id: FoundryId, token_tag: [u8; TOKEN_TAG_LENGTH]) -> Self {
         Self(
             foundry_id
@@ -19,7 +19,7 @@ impl TokenId {
                 .copied()
                 .collect::<Vec<u8>>()
                 .try_into()
-                // safe to unwrap because we know the lengths
+                // Safe to unwrap because we know the lengths.
                 .unwrap(),
         )
     }
