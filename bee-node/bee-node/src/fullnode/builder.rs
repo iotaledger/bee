@@ -426,14 +426,7 @@ fn initialize_dashboard<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
     let node_alias = config.alias().clone();
     let bech32_hrp = config.network_spec().hrp().to_string();
 
-    bee_plugin_dashboard::init::<FullNode<S>>(
-        dashboard_cfg,
-        rest_api_cfg,
-        node_id,
-        node_alias,
-        bech32_hrp,
-        builder,
-    )
+    bee_plugin_dashboard::init::<FullNode<S>>(dashboard_cfg, rest_api_cfg, node_id, node_alias, bech32_hrp, builder)
 }
 
 #[derive(Clone)]
