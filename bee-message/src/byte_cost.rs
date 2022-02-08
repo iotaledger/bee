@@ -28,7 +28,7 @@ impl Default for ByteCostConfig {
 
 /// A trait to facilitate the computation of the byte cost of message outputs, which is central to dust protection.
 pub trait ByteCost {
-    /// Different fields in a type lead to different storage requirements on the tangle.
+    /// Different fields in a type lead to different storage requirements for the ledger state.
     fn weighted_bytes(&self, config: &ByteCostConfig) -> u64;
 }
 
