@@ -12,7 +12,7 @@ impl_id!(FoundryId, 26, "Defines the unique identifier of a foundry.");
 string_serde_impl!(FoundryId);
 
 impl FoundryId {
-    /// Createa a new `FoundryId`.
+    /// Creates a new `FoundryId`.
     pub fn build(alias_id: AliasId, serial_number: u32, token_scheme: TokenScheme) -> Self {
         Self(
             [AliasAddress::KIND]
