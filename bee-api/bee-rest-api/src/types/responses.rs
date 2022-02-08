@@ -14,20 +14,21 @@ use serde::{Deserialize, Serialize};
 pub struct InfoResponse {
     pub name: String,
     pub version: String,
+    pub status: StatusResponse,
+    pub protocol: ProtocolResponse,
+    pub metrics: MetricsResponse,
+    pub features: Vec<String>,
+    pub plugins: Vec<String>,
+}
+
+impl BodyInner for InfoResponse {}
+
+/// Returned in [`InfoResponse`].
+/// Status information about the node.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct StatusResponse {
     #[serde(rename = "isHealthy")]
     pub is_healthy: bool,
-    #[serde(rename = "networkId")]
-    pub network_id: String,
-    #[serde(rename = "bech32HRP")]
-    pub bech32_hrp: String,
-    #[serde(rename = "minPoWScore")]
-    pub min_pow_score: f64,
-    #[serde(rename = "messagesPerSecond")]
-    pub messages_per_second: f64,
-    #[serde(rename = "referencedMessagesPerSecond")]
-    pub referenced_messages_per_second: f64,
-    #[serde(rename = "referencedRate")]
-    pub referenced_rate: f64,
     #[serde(rename = "latestMilestoneTimestamp")]
     pub latest_milestone_timestamp: u64,
     #[serde(rename = "latestMilestoneIndex")]
@@ -36,10 +37,45 @@ pub struct InfoResponse {
     pub confirmed_milestone_index: u32,
     #[serde(rename = "pruningIndex")]
     pub pruning_index: u32,
-    pub features: Vec<String>,
 }
 
-impl BodyInner for InfoResponse {}
+/// Returned in [`InfoResponse`].
+/// Protocol information about the node.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ProtocolResponse {
+    #[serde(rename = "networkName")]
+    pub network_name: String,
+    #[serde(rename = "bech32HRP")]
+    pub bech32_hrp: String,
+    #[serde(rename = "minPoWScore")]
+    pub min_pow_score: f64,
+    #[serde(rename = "rentStructure")]
+    pub rent_structure: RentStructureResponse,
+}
+
+/// Returned in [`InfoResponse`].
+/// Rent information about the node.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct RentStructureResponse {
+    #[serde(rename = "vByteCost")]
+    pub vbyte_cost: u64,
+    #[serde(rename = "vByteFactorData")]
+    pub vbyte_factor_data: u64,
+    #[serde(rename = "vByteFactorKey")]
+    pub vbyte_factor_key: u64,
+}
+
+/// Returned in [`InfoResponse`].
+/// Metric information about the node.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MetricsResponse {
+    #[serde(rename = "messagesPerSecond")]
+    pub messages_per_second: f64,
+    #[serde(rename = "referencedMessagesPerSecond")]
+    pub referenced_messages_per_second: f64,
+    #[serde(rename = "referencedRate")]
+    pub referenced_rate: f64,
+}
 
 /// Response of GET /api/v1/tips.
 /// Returns non-lazy tips.

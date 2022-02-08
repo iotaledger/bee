@@ -13,7 +13,7 @@ use crate::{
         storage::StorageBackend,
         Bech32Hrp, NetworkId,
     },
-    types::responses::InfoResponse,
+    types::responses::{InfoResponse, MetricsResponse, ProtocolResponse, RentStructureResponse, StatusResponse},
 };
 
 use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
@@ -73,17 +73,28 @@ pub(crate) async fn info<B: StorageBackend>(
     Ok(warp::reply::json(&InfoResponse {
         name: node_info.name.clone(),
         version: node_info.version.clone(),
-        is_healthy: health::is_healthy(&tangle, &peer_manager).await,
-        network_id: network_id.0,
-        bech32_hrp,
-        min_pow_score: protocol_config.minimum_pow_score(),
-        messages_per_second: 0f64,            // TODO
-        referenced_messages_per_second: 0f64, // TODO
-        referenced_rate: 0f64,                // TODO
-        latest_milestone_timestamp,
-        latest_milestone_index: *latest_milestone_index,
-        confirmed_milestone_index: *tangle.get_confirmed_milestone_index(),
-        pruning_index: *tangle.get_pruning_index(),
+        status: StatusResponse {
+            is_healthy: health::is_healthy(&tangle, &peer_manager).await,
+            latest_milestone_timestamp,
+            latest_milestone_index: *latest_milestone_index,
+            confirmed_milestone_index: *tangle.get_confirmed_milestone_index(),
+            pruning_index: *tangle.get_pruning_index(),
+        },
+        protocol: ProtocolResponse {
+            network_name: network_id.0,
+            bech32_hrp,
+            min_pow_score: protocol_config.minimum_pow_score(),
+            rent_structure: RentStructureResponse {
+                vbyte_cost: 500,      // TODO
+                vbyte_factor_data: 1, // TODO
+                vbyte_factor_key: 10, // TODO
+            },
+        },
+        metrics: MetricsResponse {
+            messages_per_second: 0.0,            // TODO
+            referenced_messages_per_second: 0.0, // TODO
+            referenced_rate: 0.0,                // TODO
+        },
         features: {
             let mut features = Vec::new();
             if rest_api_config.feature_proof_of_work() {
@@ -91,5 +102,6 @@ pub(crate) async fn info<B: StorageBackend>(
             }
             features
         },
+        plugins: Vec::new(), // TODO
     }))
 }
