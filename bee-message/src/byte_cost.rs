@@ -4,6 +4,54 @@
 use crate::output::Output;
 
 use packable::PackableExt;
+use serde::Deserialize;
+
+const DEFAULT_BYTE_COST: u64 = 500;
+const DEFAULT_BYTE_COST_KEY_WEIGHT: u64 = 10;
+const DEFAULT_BYTE_COST_DATA_WEIGHT: u64 = 1;
+
+/// Builder for a [`ByteCostConfig`].
+#[derive(Default, Deserialize)]
+#[must_use]
+pub struct ByteCostConfigBuilder {
+    byte_cost: Option<u64>,
+    weight_for_key: Option<u64>,
+    weight_for_data: Option<u64>,
+}
+
+impl ByteCostConfigBuilder {
+    /// Returns a new [`ByteCostConfigBuilder`].
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    /// Sets the byte cost for dust protection.
+    pub fn byte_cost(mut self, byte_cost: u64) -> Self {
+        self.byte_cost.replace(byte_cost);
+        self
+    }
+
+    /// Sets the byte cost for dust protection.
+    pub fn weight_for_key_field(mut self, weight: u64) -> Self {
+        self.weight_for_key.replace(weight);
+        self
+    }
+
+    /// Sets the byte cost for dust protection.
+    pub fn weight_for_data_field(mut self, weight: u64) -> Self {
+        self.weight_for_key.replace(weight);
+        self
+    }
+
+    /// Returns the built [`ByteCostConfig`].
+    pub fn finish(self) -> ByteCostConfig {
+        ByteCostConfig {
+            byte_cost: self.byte_cost.unwrap_or(DEFAULT_BYTE_COST),
+            weight_for_key: self.weight_for_key.unwrap_or(DEFAULT_BYTE_COST_KEY_WEIGHT),
+            weight_for_data: self.weight_for_data.unwrap_or(DEFAULT_BYTE_COST_DATA_WEIGHT),
+        }
+    }
+}
 
 /// Specifies the current parameters for the byte cost computation.
 #[derive(Clone)]
@@ -14,6 +62,13 @@ pub struct ByteCostConfig {
     pub weight_for_key: u64,
     /// The weight factor used for data fields in the ouputs.
     pub weight_for_data: u64,
+}
+
+impl ByteCostConfig {
+    /// Returns a builder for this config.
+    pub fn build() -> ByteCostConfigBuilder {
+        ByteCostConfigBuilder::new()
+    }
 }
 
 /// A trait to facilitate the computation of the byte cost of message outputs, which is central to dust protection.

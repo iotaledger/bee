@@ -3,7 +3,10 @@
 
 use crate::types::milestone_key_range::MilestoneKeyRange;
 
-use bee_message::{byte_cost::ByteCostConfig, milestone::MilestoneIndex};
+use bee_message::{
+    byte_cost::{ByteCostConfig, ByteCostConfigBuilder},
+    milestone::MilestoneIndex,
+};
 
 use serde::Deserialize;
 
@@ -13,9 +16,6 @@ const DEFAULT_COO_PUBLIC_KEY_RANGES: [(&str, MilestoneIndex, MilestoneIndex); 0]
 const DEFAULT_MESSAGE_WORKER_CACHE: usize = 10000;
 const DEFAULT_STATUS_INTERVAL: u64 = 10;
 const DEFAULT_MILESTONE_SYNC_COUNT: u32 = 200;
-const DEFAULT_BYTE_COST: u64 = 500;
-const DEFAULT_BYTE_COST_KEY_WEIGHT: u64 = 10;
-const DEFAULT_BYTE_COST_DATA_WEIGHT: u64 = 1;
 
 #[derive(Default, Deserialize)]
 #[must_use]
@@ -37,15 +37,6 @@ struct ProtocolWorkersConfigBuilder {
     milestone_sync_count: Option<u32>,
 }
 
-/// Builder for a `ByteCostConfig`.
-#[derive(Default, Deserialize)]
-#[must_use]
-struct ProtocolByteCostConfigBuilder {
-    byte_cost: Option<u64>,
-    weight_for_key: Option<u64>,
-    weight_for_data: Option<u64>,
-}
-
 /// Builder for a `ProtocolConfig`.
 #[derive(Default, Deserialize)]
 #[must_use]
@@ -54,7 +45,7 @@ pub struct ProtocolConfigBuilder {
     minimum_pow_score: Option<f64>,
     coordinator: ProtocolCoordinatorConfigBuilder,
     workers: ProtocolWorkersConfigBuilder,
-    byte_cost: ProtocolByteCostConfigBuilder,
+    byte_cost: ByteCostConfigBuilder,
 }
 
 impl ProtocolConfigBuilder {
@@ -99,24 +90,6 @@ impl ProtocolConfigBuilder {
         self
     }
 
-    /// Sets the byte cost for dust protection.
-    pub fn byte_cost(mut self, byte_cost: u64) -> Self {
-        self.byte_cost.byte_cost.replace(byte_cost);
-        self
-    }
-
-    /// Sets the byte cost for dust protection.
-    pub fn weight_for_key_field(mut self, weight: u64) -> Self {
-        self.byte_cost.weight_for_key.replace(weight);
-        self
-    }
-
-    /// Sets the byte cost for dust protection.
-    pub fn weight_for_data_field(mut self, weight: u64) -> Self {
-        self.byte_cost.weight_for_key.replace(weight);
-        self
-    }
-
     /// Finishes the `ProtocolConfigBuilder` into a `ProtocolConfig`.
     #[must_use]
     pub fn finish(self) -> ProtocolConfig {
@@ -145,11 +118,7 @@ impl ProtocolConfigBuilder {
                     .milestone_sync_count
                     .unwrap_or(DEFAULT_MILESTONE_SYNC_COUNT),
             },
-            byte_cost: ByteCostConfig {
-                byte_cost: self.byte_cost.byte_cost.unwrap_or(DEFAULT_BYTE_COST),
-                weight_for_key: self.byte_cost.weight_for_key.unwrap_or(DEFAULT_BYTE_COST_KEY_WEIGHT),
-                weight_for_data: self.byte_cost.weight_for_data.unwrap_or(DEFAULT_BYTE_COST_DATA_WEIGHT),
-            },
+            byte_cost: self.byte_cost.finish(),
         }
     }
 }
