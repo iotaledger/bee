@@ -39,7 +39,7 @@ pub struct StatusResponse {
     pub pruning_index: u32,
 }
 
-/// Returned in InfoResponse.
+/// Returned in [`InfoResponse`].
 /// Protocol information about the node.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ProtocolResponse {
