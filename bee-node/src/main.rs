@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let (identity_field, config) = deserialize_config(cl_args);
 
     // Initialize the logger.
-    let logger_cfg = config.logger_config().clone();
+    let logger_cfg = config.logger().clone();
     fern_logger::logger_init(logger_cfg)?;
 
     // Establish identity.

@@ -47,18 +47,18 @@ pub enum NodeConfigError {
 pub struct NodeConfig<S: NodeStorageBackend> {
     pub(crate) alias: String,
     pub(crate) network_spec: NetworkSpec,
-    pub(crate) logger_config: LoggerConfig,
-    pub(crate) gossip_config: NetworkConfig,
-    pub(crate) autopeering_config: AutopeeringConfig,
-    pub(crate) protocol_config: ProtocolConfig,
-    pub(crate) rest_api_config: RestApiConfig,
-    pub(crate) snapshot_config: SnapshotConfig,
-    pub(crate) pruning_config: PruningConfig,
-    pub(crate) storage_config: S::Config,
-    pub(crate) tangle_config: TangleConfig,
-    pub(crate) mqtt_config: MqttConfig,
+    pub(crate) logger: LoggerConfig,
+    pub(crate) gossip: NetworkConfig,
+    pub(crate) autopeering: AutopeeringConfig,
+    pub(crate) protocol: ProtocolConfig,
+    pub(crate) rest_api: RestApiConfig,
+    pub(crate) snapshot: SnapshotConfig,
+    pub(crate) pruning: PruningConfig,
+    pub(crate) storage: S::Config,
+    pub(crate) tangle: TangleConfig,
+    pub(crate) mqtt: MqttConfig,
     #[cfg(feature = "dashboard")]
-    pub(crate) dashboard_config: DashboardConfig,
+    pub(crate) dashboard: DashboardConfig,
 }
 
 impl<S: NodeStorageBackend> NodeConfig<S> {
@@ -68,13 +68,13 @@ impl<S: NodeStorageBackend> NodeConfig<S> {
     }
 
     /// Returns the logger config.
-    pub fn logger_config(&self) -> &LoggerConfig {
-        &self.logger_config
+    pub fn logger(&self) -> &LoggerConfig {
+        &self.logger
     }
 
     /// Returns whether this node should run as an autopeering entry node.
     pub fn run_as_entry_node(&self) -> bool {
-        self.autopeering_config.enabled() && self.autopeering_config.run_as_entry_node()
+        self.autopeering.enabled() && self.autopeering.run_as_entry_node()
     }
 }
 
@@ -88,35 +88,21 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     #[serde(rename = "identity")]
     #[deprecated(since = "0.3.0")]
     _identity: Option<String>,
-    #[serde(rename = "alias")]
     pub(crate) alias: Option<String>,
-    #[serde(rename = "bech32_hrp")]
     pub(crate) bech32_hrp: Option<String>,
-    #[serde(rename = "network_id")]
     pub(crate) network_id: Option<String>,
-    #[serde(rename = "logger")]
-    pub(crate) logger_builder: Option<LoggerConfigBuilder>,
-    #[serde(rename = "network")]
-    pub(crate) gossip_builder: Option<NetworkConfigBuilder>,
-    #[serde(rename = "autopeering")]
-    pub(crate) autopeering_builder: Option<AutopeeringConfigBuilder>,
-    #[serde(rename = "protocol")]
-    pub(crate) protocol_builder: Option<ProtocolConfigBuilder>,
-    #[serde(rename = "rest_api")]
-    pub(crate) rest_api_builder: Option<RestApiConfigBuilder>,
-    #[serde(rename = "snapshot")]
-    pub(crate) snapshot_builder: Option<SnapshotConfigBuilder>,
-    #[serde(rename = "pruning")]
-    pub(crate) pruning_builder: Option<PruningConfigBuilder>,
-    #[serde(rename = "storage")]
-    pub(crate) storage_builder: Option<S::ConfigBuilder>,
-    #[serde(rename = "tangle")]
-    pub(crate) tangle_builder: Option<TangleConfigBuilder>,
-    #[serde(rename = "mqtt")]
-    pub(crate) mqtt_builder: Option<MqttConfigBuilder>,
+    pub(crate) logger: Option<LoggerConfigBuilder>,
+    pub(crate) gossip: Option<NetworkConfigBuilder>,
+    pub(crate) autopeering: Option<AutopeeringConfigBuilder>,
+    pub(crate) protocol: Option<ProtocolConfigBuilder>,
+    pub(crate) rest_api: Option<RestApiConfigBuilder>,
+    pub(crate) snapshot: Option<SnapshotConfigBuilder>,
+    pub(crate) pruning: Option<PruningConfigBuilder>,
+    pub(crate) storage: Option<S::ConfigBuilder>,
+    pub(crate) tangle: Option<TangleConfigBuilder>,
+    pub(crate) mqtt: Option<MqttConfigBuilder>,
     #[cfg(feature = "dashboard")]
-    #[serde(rename = "dashboard")]
-    pub(crate) dashboard_builder: Option<DashboardConfigBuilder>,
+    pub(crate) dashboard: Option<DashboardConfigBuilder>,
 }
 
 impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
@@ -133,7 +119,7 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
         // Override the log level.
         if let Some(log_level) = args.log_level() {
             // TODO: use 'option_get_or_insert_default' once stable (see issue #82901)
-            let logger = self.logger_builder.get_or_insert(LoggerConfigBuilder::default());
+            let logger = self.logger.get_or_insert(LoggerConfigBuilder::default());
 
             logger.level(LOGGER_STDOUT_NAME, log_level);
         }
@@ -141,9 +127,7 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
         // Override the entry node mode.
         if args.run_as_entry_node() {
             // TODO: use 'option_get_or_insert_default' once stable (see issue #82901)
-            let autopeering = self
-                .autopeering_builder
-                .get_or_insert(AutopeeringConfigBuilder::default());
+            let autopeering = self.autopeering.get_or_insert(AutopeeringConfigBuilder::default());
 
             autopeering.enabled = true;
             autopeering.run_as_entry_node = Some(true);
@@ -171,22 +155,22 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
             NodeConfig {
                 alias: self.alias.unwrap_or_else(|| ALIAS_DEFAULT.to_owned()),
                 network_spec,
-                logger_config: self.logger_builder.unwrap_or_default().finish(),
-                gossip_config: self
-                    .gossip_builder
+                logger: self.logger.unwrap_or_default().finish(),
+                gossip: self
+                    .gossip
                     .unwrap_or_default()
                     .finish()
                     .expect("faulty network configuration"),
-                autopeering_config: self.autopeering_builder.unwrap_or_default().finish(),
-                protocol_config: self.protocol_builder.unwrap_or_default().finish(),
-                rest_api_config: self.rest_api_builder.unwrap_or_default().finish(),
-                snapshot_config: self.snapshot_builder.unwrap_or_default().finish(),
-                pruning_config: self.pruning_builder.unwrap_or_default().finish(),
-                storage_config: self.storage_builder.unwrap_or_default().into(),
-                tangle_config: self.tangle_builder.unwrap_or_default().finish(),
-                mqtt_config: self.mqtt_builder.unwrap_or_default().finish(),
+                autopeering: self.autopeering.unwrap_or_default().finish(),
+                protocol: self.protocol.unwrap_or_default().finish(),
+                rest_api: self.rest_api.unwrap_or_default().finish(),
+                snapshot: self.snapshot.unwrap_or_default().finish(),
+                pruning: self.pruning.unwrap_or_default().finish(),
+                storage: self.storage.unwrap_or_default().into(),
+                tangle: self.tangle.unwrap_or_default().finish(),
+                mqtt: self.mqtt.unwrap_or_default().finish(),
                 #[cfg(feature = "dashboard")]
-                dashboard_config: self.dashboard_builder.unwrap_or_default().finish(),
+                dashboard: self.dashboard.unwrap_or_default().finish(),
             },
         )
     }
