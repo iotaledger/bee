@@ -21,7 +21,7 @@ use std::{error::Error, path::Path};
 
 const KEYPAIR_STR_LENGTH: usize = 128;
 
-const CONFIG_PATH: &str = "./config.toml";
+const CONFIG_PATH: &str = "./config.json";
 const IDENTITY_PATH: &str = "./identity.key";
 
 /// The entry point of the node software.

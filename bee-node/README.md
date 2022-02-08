@@ -75,7 +75,7 @@ cargo build --release
 ## Running
 
 ```sh
-cp config.example.toml config.toml
+cp config.example.json config.json
 ../target/release/bee
 ```
 

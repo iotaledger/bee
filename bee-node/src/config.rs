@@ -4,7 +4,7 @@
 //! Handles the proper configuration of a node from a single config file.
 //!
 //! ## Note
-//! All node types use a common config file (i.e. config.toml), and simply ignore
+//! All node types use a common config file (i.e. config.json), and simply ignore
 //! those parameters they don't actually require.
 
 use crate::{
