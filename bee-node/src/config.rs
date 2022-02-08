@@ -39,8 +39,8 @@ pub(crate) const ALIAS_DEFAULT: &str = "bee";
 pub enum NodeConfigError {
     #[error("reading the config file failed: {0}")]
     FileRead(#[from] std::io::Error),
-    #[error("unsupported configuration file type: {0}")]
-    UnsupportedConfigType(&'static str),
+    #[error("unsupported configuration file type")]
+    UnsupportedConfigType,
     #[error("deserializing the json config builder failed: {0}")]
     JsonConfigBuilderDeserialization(#[from] serde_json::Error),
     #[error("deserializing the toml config builder failed: {0}")]
@@ -115,16 +115,15 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
 impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
     /// Creates a node config builder from a local config file.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, NodeConfigError> {
-        // TODO
-        let extension = ".json";
-
-        match fs::read_to_string(path) {
-            Ok(string) => match extension {
-                ".json" => {
+        match fs::read_to_string(&path) {
+            Ok(string) => match path.as_ref().extension().and_then(|e| e.to_str()) {
+                Some("json") => {
                     serde_json::from_str::<Self>(&string).map_err(NodeConfigError::JsonConfigBuilderDeserialization)
                 }
-                ".toml" => toml::from_str::<Self>(&string).map_err(NodeConfigError::TomlConfigBuilderDeserialization),
-                extension => Err(NodeConfigError::UnsupportedConfigType(extension)),
+                Some("toml") => {
+                    toml::from_str::<Self>(&string).map_err(NodeConfigError::TomlConfigBuilderDeserialization)
+                }
+                _ => Err(NodeConfigError::UnsupportedConfigType),
             },
             Err(e) => Err(NodeConfigError::FileRead(e)),
         }
