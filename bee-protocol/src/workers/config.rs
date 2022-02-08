@@ -13,7 +13,7 @@ const DEFAULT_COO_PUBLIC_KEY_RANGES: [(&str, MilestoneIndex, MilestoneIndex); 0]
 const DEFAULT_MESSAGE_WORKER_CACHE: usize = 10000;
 const DEFAULT_STATUS_INTERVAL: u64 = 10;
 const DEFAULT_MILESTONE_SYNC_COUNT: u32 = 200;
-const DEFAULT_BYTE_COST: f32 = 1.0;
+const DEFAULT_BYTE_COST: u64 = 1;
 const DEFAULT_BYTE_COST_KEY_WEIGHT: u64 = 10;
 const DEFAULT_BYTE_COST_DATA_WEIGHT: u64 = 1;
 
@@ -41,7 +41,7 @@ struct ProtocolWorkersConfigBuilder {
 #[derive(Default, Deserialize)]
 #[must_use]
 struct ProtocolByteCostConfigBuilder {
-    byte_cost: Option<f32>,
+    byte_cost: Option<u64>,
     weight_for_key: Option<u64>,
     weight_for_data: Option<u64>,
 }
@@ -100,7 +100,7 @@ impl ProtocolConfigBuilder {
     }
 
     /// Sets the byte cost for dust protection.
-    pub fn byte_cost(mut self, byte_cost: f32) -> Self {
+    pub fn byte_cost(mut self, byte_cost: u64) -> Self {
         self.byte_cost.byte_cost.replace(byte_cost);
         self
     }
@@ -192,5 +192,10 @@ impl ProtocolConfig {
     /// Returns the coordinator configuration of the `ProtocolConfig`.
     pub fn coordinator(&self) -> &ProtocolCoordinatorConfig {
         &self.coordinator
+    }
+
+    /// Returns the byte cost configuration of the `ProtocolConfig`.
+    pub fn byte_cost(&self) -> &ByteCostConfig {
+        &self.byte_cost
     }
 }

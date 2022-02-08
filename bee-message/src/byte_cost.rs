@@ -9,7 +9,7 @@ use packable::PackableExt;
 #[derive(Clone)]
 pub struct ByteCostConfig {
     /// Cost in tokens coins per virtual byte.
-    pub byte_cost: f32,
+    pub byte_cost: u64,
     /// The weight factor used for key fields in the ouputs.
     pub weight_for_key: u64,
     /// The weight factor used for data fields in the ouputs.
@@ -19,7 +19,7 @@ pub struct ByteCostConfig {
 impl Default for ByteCostConfig {
     fn default() -> Self {
         Self {
-            byte_cost: 1.0,
+            byte_cost: 1,
             weight_for_key: 10,
             weight_for_data: 1,
         }
@@ -40,7 +40,7 @@ impl<T: ByteCost, const N: usize> ByteCost for [T; N] {
 
 /// Computes the storage cost for `[crate::output::Output]`s.
 pub fn min_deposit(config: &ByteCostConfig, output: &impl ByteCost) -> u64 {
-    (config.byte_cost * output.weighted_bytes(config) as f32) as u64
+    config.byte_cost * output.weighted_bytes(config)
 }
 
 impl ByteCost for Output {

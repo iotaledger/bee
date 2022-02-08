@@ -12,7 +12,7 @@ use bee_test::rand::output::{rand_alias_output, rand_basic_output, rand_foundry_
 use std::mem::size_of;
 
 const CONFIG: ByteCostConfig = ByteCostConfig {
-    byte_cost: 1.0,
+    byte_cost: 1,
     weight_for_data: 10,
     weight_for_key: 1,
 };
