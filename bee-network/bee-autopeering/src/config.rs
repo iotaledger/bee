@@ -8,7 +8,7 @@
 //! ```json
 //! "autopeering": {
 //!     "enabled": true,
-//!     "bindAddressV4": "0.0.0.0:14626",
+//!     "bindAddress": "0.0.0.0:14626",
 //!     "entryNodes": [
 //!          "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
 //!          "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
@@ -23,7 +23,7 @@
 //! ```toml
 //! [autopeering]
 //! enabled = true
-//! bind_address_v4 = "0.0.0.0:14626"
+//! bind_address = "0.0.0.0:14626"
 //! entry_nodes = [
 //!     "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
 //!     "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
