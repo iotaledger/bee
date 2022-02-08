@@ -19,25 +19,33 @@ use std::{net::SocketAddr, sync::Arc};
 pub(crate) use tokio::sync::mpsc::unbounded_channel as server_chan;
 
 const READ_BUFFER_SIZE: usize = crate::packet::MAX_PACKET_SIZE;
+const IP_V4_FLAG: bool = false;
+const IP_V6_FLAG: bool = true;
 
 pub(crate) type ServerRx = mpsc::UnboundedReceiver<IncomingPacket>;
 pub(crate) type ServerTx = mpsc::UnboundedSender<OutgoingPacket>;
 
 type IncomingPacketTx = mpsc::UnboundedSender<IncomingPacket>;
+type OutgoingPacketTx = mpsc::UnboundedSender<OutgoingPacket>;
 type OutgoingPacketRx = mpsc::UnboundedReceiver<OutgoingPacket>;
 
 pub(crate) struct ServerConfig {
-    pub bind_addr: SocketAddr,
+    pub(crate) bind_addr_v4: Option<SocketAddr>,
+    pub(crate) bind_addr_v6: Option<SocketAddr>,
 }
 
 impl ServerConfig {
+    /// Note: the constructor assumes a semantically valid config, i.e. at least one bind address is set and correct IP
+    /// versions are used.
     pub(crate) fn new(config: &AutopeeringConfig) -> Self {
         Self {
-            bind_addr: config.bind_addr(),
+            bind_addr_v4: config.bind_addr_v4(),
+            bind_addr_v6: config.bind_addr_v6(),
         }
     }
 }
 
+#[derive(Clone)]
 pub(crate) struct IncomingPacketSenders {
     pub(crate) discovery_tx: IncomingPacketTx,
     pub(crate) peering_tx: IncomingPacketTx,
@@ -51,7 +59,7 @@ pub(crate) struct Server {
 }
 
 impl Server {
-    pub fn new(config: ServerConfig, local: Local, incoming_senders: IncomingPacketSenders) -> (Self, ServerTx) {
+    pub(crate) fn new(config: ServerConfig, local: Local, incoming_senders: IncomingPacketSenders) -> (Self, ServerTx) {
         let (outgoing_tx, outgoing_rx) = server_chan::<OutgoingPacket>();
 
         (
@@ -65,7 +73,7 @@ impl Server {
         )
     }
 
-    pub async fn init<S: PeerStore, const N: usize>(self, task_mngr: &mut TaskManager<S, N>) {
+    pub(crate) async fn init<S: PeerStore>(self, task_mngr: &mut TaskManager<S>) {
         let Server {
             config,
             local,
@@ -73,52 +81,103 @@ impl Server {
             outgoing_rx,
         } = self;
 
-        // Bind the UDP socket to the configured address.
-        // Panic: We don't allow UDP socket binding to fail.
-        let socket = UdpSocket::bind(&config.bind_addr)
-            .await
-            .expect("error binding udp socket");
+        let (outgoing_tx_v4, outgoing_rx_v4) = server_chan::<OutgoingPacket>();
+        let (outgoing_tx_v6, outgoing_rx_v6) = server_chan::<OutgoingPacket>();
 
-        // The Tokio docs explain that there's no split method, and that we have to arc the UdpSocket in order to share
-        // it.
-        let incoming_socket = Arc::new(socket);
-        let outgoing_socket = Arc::clone(&incoming_socket);
-
-        let incoming_packet_handler = IncomingPacketHandler {
-            incoming_socket,
-            incoming_senders,
-            bind_addr: config.bind_addr,
-        };
-
-        let outgoing_packet_handler = OutgoingPacketHandler {
-            outgoing_socket,
+        let outgoing_packet_manager = OutgoingPacketManager {
             outgoing_rx,
-            local,
-            bind_addr: config.bind_addr,
+            outgoing_tx_v4,
+            outgoing_tx_v6,
         };
 
-        task_mngr.run::<IncomingPacketHandler>(incoming_packet_handler);
-        task_mngr.run::<OutgoingPacketHandler>(outgoing_packet_handler);
+        task_mngr.run::<OutgoingPacketManager>(outgoing_packet_manager);
+
+        let mut socket_bound = false;
+
+        // Note: the config validation guarantees that at least one of the bind addresses
+        // is set, and that `bind_addr_v6` is a true (not v4-mapped) v6 address.
+
+        // Bind a socket to the given IPv4 address.
+        if let Some(bind_addr_v4) = config.bind_addr_v4 {
+            if bind_socket::<_, IP_V4_FLAG>(
+                bind_addr_v4,
+                incoming_senders.clone(),
+                local.clone(),
+                outgoing_rx_v4,
+                task_mngr,
+            )
+            .await
+            .is_ok()
+            {
+                socket_bound = true;
+            }
+        }
+
+        // Bind a socket to the given IPv6 address.
+        if let Some(bind_addr_v6) = config.bind_addr_v6 {
+            if bind_socket::<_, IP_V6_FLAG>(bind_addr_v6, incoming_senders, local, outgoing_rx_v6, task_mngr)
+                .await
+                .is_ok()
+            {
+                socket_bound = true;
+            }
+        }
+
+        // At least one socket must be successfully bound.
+        if !socket_bound {
+            panic!("binding a socket failed");
+        }
     }
 }
 
-struct IncomingPacketHandler {
+async fn bind_socket<S: PeerStore, const USE_IP_V6: bool>(
+    bind_addr: SocketAddr,
+    incoming_senders: IncomingPacketSenders,
+    local: Local,
+    outgoing_rx: OutgoingPacketRx,
+    task_mngr: &mut TaskManager<S>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // Bind the UDP socket to the configured address.
+    // Panic: We don't allow any UDP socket binding to fail.
+    let socket = UdpSocket::bind(bind_addr).await?;
+
+    // Note: See Tokio docs for an explanation why there's no split method.
+    let incoming_socket = Arc::new(socket);
+    let outgoing_socket = Arc::clone(&incoming_socket);
+
+    let incoming_packet_handler = IncomingPacketHandler {
+        incoming_socket,
+        incoming_senders,
+        bind_addr,
+    };
+
+    let outgoing_packet_handler = OutgoingPacketHandler {
+        outgoing_socket,
+        outgoing_rx,
+        local,
+        bind_addr,
+    };
+
+    task_mngr.run::<IncomingPacketHandler<USE_IP_V6>>(incoming_packet_handler);
+    task_mngr.run::<OutgoingPacketHandler<USE_IP_V6>>(outgoing_packet_handler);
+
+    Ok(())
+}
+
+struct IncomingPacketHandler<const USE_IP_V6: bool> {
     incoming_socket: Arc<UdpSocket>,
     incoming_senders: IncomingPacketSenders,
     bind_addr: SocketAddr,
 }
 
-struct OutgoingPacketHandler {
-    outgoing_socket: Arc<UdpSocket>,
-    outgoing_rx: OutgoingPacketRx,
-    local: Local,
-    bind_addr: SocketAddr,
-}
-
 // Note: Invalid packets from peers are not logged as warnings because the fault is not on our side.
 #[async_trait::async_trait]
-impl Runnable for IncomingPacketHandler {
-    const NAME: &'static str = "IncomingPacketHandler";
+impl<const USE_IP_V6: bool> Runnable for IncomingPacketHandler<USE_IP_V6> {
+    const NAME: &'static str = if USE_IP_V6 {
+        "IncomingIPv6PacketHandler"
+    } else {
+        "IncomingIPv4PacketHandler"
+    };
     const SHUTDOWN_PRIORITY: u8 = 2;
 
     type ShutdownSignal = ShutdownRx;
@@ -218,9 +277,64 @@ impl Runnable for IncomingPacketHandler {
     }
 }
 
+struct OutgoingPacketManager {
+    outgoing_rx: OutgoingPacketRx,
+    outgoing_tx_v4: OutgoingPacketTx,
+    outgoing_tx_v6: OutgoingPacketTx,
+}
+
 #[async_trait::async_trait]
-impl Runnable for OutgoingPacketHandler {
-    const NAME: &'static str = "OutgoingPacketHandler";
+impl Runnable for OutgoingPacketManager {
+    const NAME: &'static str = "OutgoingPacketManager";
+    const SHUTDOWN_PRIORITY: u8 = 4;
+
+    type ShutdownSignal = ShutdownRx;
+
+    async fn run(self, mut shutdown_rx: Self::ShutdownSignal) {
+        let OutgoingPacketManager {
+            mut outgoing_rx,
+            outgoing_tx_v4,
+            outgoing_tx_v6,
+        } = self;
+
+        loop {
+            tokio::select! {
+            _ = &mut shutdown_rx => {
+                break;
+            }
+            o = outgoing_rx.recv() => {
+                if let Some(packet) = o {
+                    let peer_addr = packet.peer_addr;
+                    if peer_addr.is_ipv6() {
+                        // Send with IPv6 interface.
+                        if outgoing_tx_v6.send(packet).is_err() {
+                            log::debug!("Trying to send to an IPv6 address without configured IPv6 interface ({}). Ignoring packet.", peer_addr);
+                        }
+                    } else {
+                        // Send with IPv4 interface.
+                        if outgoing_tx_v4.send(packet).is_err() {
+                            log::debug!("Trying to send to an IPv4 address without configured IPv4 interface ({}). Ignoring packet.", peer_addr);
+                        }
+                    }
+                }}}
+        }
+    }
+}
+
+struct OutgoingPacketHandler<const USE_IP_V6: bool> {
+    outgoing_socket: Arc<UdpSocket>,
+    outgoing_rx: OutgoingPacketRx,
+    local: Local,
+    bind_addr: SocketAddr,
+}
+
+#[async_trait::async_trait]
+impl<const USE_IP_V6: bool> Runnable for OutgoingPacketHandler<USE_IP_V6> {
+    const NAME: &'static str = if USE_IP_V6 {
+        "OutgoingIPv6PacketHandler"
+    } else {
+        "OutgoingIPv4PacketHandler"
+    };
     const SHUTDOWN_PRIORITY: u8 = 3;
 
     type ShutdownSignal = ShutdownRx;
@@ -245,12 +359,6 @@ impl Runnable for OutgoingPacketHandler {
                             msg_bytes,
                             peer_addr,
                         } = packet;
-
-                        // TODO: support ipv6
-                        if peer_addr.is_ipv6() {
-                            log::warn!("Trying to send to an IPv6 address ({}), which is not yet supported. Ignoring packet.", peer_addr);
-                            continue 'recv;
-                        }
 
                         if peer_addr == bind_addr {
                             log::warn!("Trying to send to own bind address: {}. Ignoring packet.", peer_addr);

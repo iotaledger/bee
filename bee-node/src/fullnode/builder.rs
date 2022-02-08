@@ -360,12 +360,16 @@ fn create_local_autopeering_entity<S: NodeStorageBackend>(
 ) -> bee_autopeering::Local {
     let local = bee_autopeering::Local::from_keypair(keypair).expect("failed to create local entity");
 
+    let port = if let Some(bind_addr) = config.autopeering_config.bind_addr_v4() {
+        bind_addr.port()
+    } else if let Some(bind_addr) = config.autopeering_config.bind_addr_v6() {
+        bind_addr.port()
+    } else {
+        unreachable!("config validation ensures, that one bind address is available.");
+    };
+
     // Announce the autopeering service.
-    local.add_service(
-        AUTOPEERING_SERVICE_NAME,
-        ServiceProtocol::Udp,
-        config.autopeering.bind_addr().port(),
-    );
+    local.add_service(AUTOPEERING_SERVICE_NAME, ServiceProtocol::Udp, port);
 
     // Announce the gossip service.
     // TODO: Make the bind address a SocketAddr instead of a Multiaddr

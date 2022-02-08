@@ -54,34 +54,48 @@ pub(crate) struct RequestValue {
 pub(crate) struct RequestManager {
     version: u32,
     network_id: u32,
-    source_addr: SocketAddr,
+    source_addr_v4: Option<SocketAddr>,
+    source_addr_v6: Option<SocketAddr>,
     open_requests: Arc<RwLock<HashMap<RequestKey, RequestValue>>>,
 }
 
 impl RequestManager {
     /// Creates a new request manager.
-    pub(crate) fn new(version: u32, network_id: u32, source_addr: SocketAddr) -> Self {
+    pub(crate) fn new(
+        version: u32,
+        network_id: u32,
+        source_addr_v4: Option<SocketAddr>,
+        source_addr_v6: Option<SocketAddr>,
+    ) -> Self {
         Self {
             version,
             network_id,
-            source_addr,
+            source_addr_v4,
+            source_addr_v6,
             open_requests: Arc::new(RwLock::new(HashMap::default())),
         }
     }
 
+    // TODO: consider returning Result instead.
     /// Creates and registers an open verification request.
     pub(crate) fn create_verification_request(
         &self,
         peer_id: PeerId,
         peer_addr: IpAddr,
         response_tx: Option<ResponseTx>,
-    ) -> VerificationRequest {
+    ) -> Option<VerificationRequest> {
         let key = RequestKey {
             peer_id,
             request_id: TypeId::of::<VerificationRequest>(),
         };
 
-        let verif_req = VerificationRequest::new(self.version, self.network_id, self.source_addr, peer_addr);
+        let source_addr = if peer_addr.is_ipv6() {
+            self.source_addr_v6
+        } else {
+            self.source_addr_v4
+        }?;
+
+        let verif_req = VerificationRequest::new(self.version, self.network_id, source_addr, peer_addr);
         let timestamp = verif_req.timestamp();
 
         let request_hash = message_hash(MessageType::VerificationRequest, &verif_req.to_protobuf());
@@ -94,7 +108,7 @@ impl RequestManager {
 
         let _ = self.open_requests.write().expect("write").insert(key, value);
 
-        verif_req
+        Some(verif_req)
     }
 
     /// Creates and registers an open discovery request.
