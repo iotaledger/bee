@@ -1,0 +1,129 @@
+{
+  "alias": "bee",
+  "bech32Hrp": "atoi",
+  "networkId": "chrysalis-devnet",
+  "logger": {
+    "outputs": [
+      {
+        "name": "stdout",
+        "levelFilter": "info",
+        "targetFilters": [],
+        "targetExclusions": [],
+        "colorEnabled": true
+      },
+      {
+        "name": "warn.log",
+        "levelFilter": "warn",
+        "targetFilters": [],
+        "targetExclusions": []
+      }
+    ]
+  },
+  "network": {
+    "bindAddress": "/ip4/0.0.0.0/tcp/15600",
+    "reconnectIntervalSecs": 30,
+    "maxUnknownPeers": 4,
+    "maxDiscoveredPeers": 8,
+    "peering": {
+      "peers": []
+    }
+  },
+  "autopeering": {
+    "enabled": false,
+    "bindAddress": "0.0.0.0:14626",
+    "entryNodes": [],
+    "entryNodesPreferIpv6": false,
+    "runAsEntryNode": false,
+    "dropNeighborsOnSaltUpdate": false,
+    "peerStoragePath": "./storage/devnet/peers"
+  },
+  "protocol": {
+    "minimumPowScore": 2000,
+    "coordinator": {
+      "publicKeyCount": 2,
+      "publicKeyRanges": [
+        {
+          "publicKey": "31ea3169abd40ee4096dfa4940962c64c8500066ca2ec1eedb2c5ee9aa0db5d8",
+          "start": 0,
+          "end": 0
+        },
+        {
+          "publicKey": "5a1f0250640fb1ba82315b8aee4ebbe466da083a13adf77347c4516376cb4431",
+          "start": 0,
+          "end": 0
+        }
+      ]
+    },
+    "workers": {
+      "statusInterval": 10,
+      "milestoneSyncCount": 200
+    }
+  },
+  "restApi": {
+    "bindAddress": "/ip4/0.0.0.0/tcp/14265",
+    "featureProofOfWork": true,
+    "publicRoutes": [
+      "/health",
+      "/api/v1/info",
+      "/api/v1/tips",
+      "/api/v1/messages",
+      "/api/v1/messages/:messageId",
+      "/api/v1/messages/:messageId/metadata",
+      "/api/v1/messages/:messageId/raw",
+      "/api/v1/messages/:messageId/children",
+      "/api/v1/outputs/:outputId",
+      "/api/v1/addresses/:address",
+      "/api/v1/addresses/ed25519/:address",
+      "/api/v1/addresses/:address/outputs",
+      "/api/v1/addresses/ed25519/:address/outputs",
+      "/api/v1/receipts",
+      "/api/v1/receipts/:milestoneIndex",
+      "/api/v1/treasury",
+      "/api/v1/transactions/:transactionId/included-message",
+      "/api/v1/milestones/:milestoneIndex",
+      "/api/v1/milestones/:milestoneIndex/utxo-changes"
+    ],
+    "allowedIps": [
+      "127.0.0.1",
+      "::1"
+    ],
+    "whiteFlagSolidificationTimeout": 2
+  },
+  "snapshot": {
+    "depth": 50,
+    "intervalSynced": 50,
+    "intervalUnsynced": 1000,
+    "fullPath": "./snapshots/devnet/full_snapshot.bin",
+    "deltaPath": "./snapshots/devnet/delta_snapshot.bin",
+    "downloadUrls": [
+      {
+        "full": "http://dbfiles.chrysalis-devnet.iota.cafe/snapshots/hornet/latest-full_snapshot.bin",
+        "delta": "http://dbfiles.chrysalis-devnet.iota.cafe/snapshots/hornet/latest-delta_snapshot.bin"
+      }
+    ]
+  },
+  "pruning": {
+    "enabled": true,
+    "delay": 60480,
+    "pruneReceipts": false
+  },
+  "storage": {
+    "path": "./storage/devnet/tangle"
+  },
+  "tangle": {
+    "belowMaxDepth": 15,
+    "numPartitions": 16
+  },
+  "mqtt": {
+    "address": "tcp://localhost:1883"
+  },
+  "dashboard": {
+    "bindAddress": "/ip4/0.0.0.0/tcp/8081",
+    "auth": {
+      "sessionTimeout": 86400,
+      "user": "admin",
+      "passwordSalt": "0000000000000000000000000000000000000000000000000000000000000000",
+      "passwordHash": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  }
+}
