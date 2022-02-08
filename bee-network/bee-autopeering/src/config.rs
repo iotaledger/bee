@@ -245,7 +245,7 @@ mod tests {
         let config = create_config();
 
         // Compare whether the deserialized JSON str equals the JSON-serialized config instance.
-        assert_eq!(json_config, config.clone(), "json config de/serialization failed");
+        assert_eq!(json_config, config, "json config de/serialization failed");
 
         // Compare whether the deserialized TOML str equals the TOML-serialized config instance.
         assert_eq!(toml_config, config, "toml config de/serialization failed");
