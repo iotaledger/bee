@@ -396,7 +396,7 @@ async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
     let protocol_cfg = config.protocol_config.clone();
 
     let builder =
-        bee_rest_api::endpoints::init::<FullNode<S>>(rest_api_cfg, protocol_cfg, network_id, hrp, builder).await;
+        bee_rest_api::endpoints::init_full_node::<FullNode<S>>(rest_api_cfg, protocol_cfg, network_id, hrp, builder).await;
 
     builder
 }
