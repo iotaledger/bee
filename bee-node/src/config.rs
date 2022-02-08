@@ -17,7 +17,7 @@ use crate::{
 #[cfg(feature = "dashboard")]
 use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder};
 
-use bee_autopeering::config::{AutopeeringConfig, AutopeeringConfigTomlBuilder};
+use bee_autopeering::config::{AutopeeringConfig, AutopeeringConfigBuilder};
 use bee_gossip::{NetworkConfig, NetworkConfigBuilder};
 use bee_ledger::workers::{
     pruning::config::{PruningConfig, PruningConfigBuilder},
@@ -99,7 +99,7 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     #[serde(rename = "network")]
     pub(crate) gossip_builder: Option<NetworkConfigBuilder>,
     #[serde(rename = "autopeering")]
-    pub(crate) autopeering_builder: Option<AutopeeringConfigTomlBuilder>,
+    pub(crate) autopeering_builder: Option<AutopeeringConfigBuilder>,
     #[serde(rename = "protocol")]
     pub(crate) protocol_builder: Option<ProtocolConfigBuilder>,
     #[serde(rename = "rest_api")]
@@ -143,7 +143,7 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
             // TODO: use 'option_get_or_insert_default' once stable (see issue #82901)
             let autopeering = self
                 .autopeering_builder
-                .get_or_insert(AutopeeringConfigTomlBuilder::default());
+                .get_or_insert(AutopeeringConfigBuilder::default());
 
             autopeering.enabled = true;
             autopeering.run_as_entry_node = Some(true);

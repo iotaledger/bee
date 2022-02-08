@@ -14,8 +14,11 @@ const DEFAULT_MAX_EVICTION_RETRIES: usize = 10;
 #[derive(Default, Deserialize)]
 #[must_use]
 pub struct TangleConfigBuilder {
+    #[serde(alias = "belowMaxDepth")]
     below_max_depth: Option<u32>,
+    #[serde(alias = "numPartitions")]
     num_partitions: Option<NonZeroUsize>,
+    #[serde(alias = "maxEvictionRetries")]
     max_eviction_retries: Option<usize>,
 }
 

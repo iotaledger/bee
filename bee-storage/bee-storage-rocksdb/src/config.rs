@@ -39,8 +39,11 @@ const DEFAULT_SET_HIGH_PRIORITY_BACKGROUND_THREADS: i32 = 2;
 #[derive(Default, Deserialize)]
 #[must_use]
 pub struct StorageConfigBuilder {
+    #[serde(rename = "fetchEdgeLimit")]
     fetch_edge_limit: Option<usize>,
+    #[serde(rename = "fetchIndexLimit")]
     fetch_index_limit: Option<usize>,
+    #[serde(rename = "fetchOutputIdLimit")]
     fetch_output_id_limit: Option<usize>,
 }
 
@@ -61,7 +64,9 @@ impl StorageConfigBuilder {
 #[derive(Default, Deserialize)]
 #[must_use]
 pub struct RocksDbEnvConfigBuilder {
+    #[serde(rename = "setBackgroundThreads")]
     set_background_threads: Option<i32>,
+    #[serde(rename = "sethIghPriorityBackgroundThreads")]
     set_high_priority_background_threads: Option<i32>,
 }
 
@@ -85,27 +90,49 @@ impl RocksDbEnvConfigBuilder {
 pub struct RocksDbConfigBuilder {
     storage: Option<StorageConfigBuilder>,
     path: Option<String>,
+    #[serde(rename = "createIfMissing")]
     create_if_missing: Option<bool>,
+    #[serde(rename = "createMissingColumnFamilies")]
     create_missing_column_families: Option<bool>,
+    #[serde(rename = "enableStatistics")]
     enable_statistics: Option<bool>,
+    #[serde(rename = "increaseParallelism")]
     increase_parallelism: Option<i32>,
+    #[serde(rename = "optimizeForPointLookup")]
     optimize_for_point_lookup: Option<u64>,
+    #[serde(rename = "optimizeLevelStyleCompaction")]
     optimize_level_style_compaction: Option<usize>,
+    #[serde(rename = "optimizeUniversalStyleCompaction")]
     optimize_universal_style_compaction: Option<usize>,
+    #[serde(rename = "setAdviseRandomOnOpen")]
     set_advise_random_on_open: Option<bool>,
+    #[serde(rename = "setAllowConcurrentMemtableWrite")]
     set_allow_concurrent_memtable_write: Option<bool>,
+    #[serde(rename = "setAllowMmapReads")]
     set_allow_mmap_reads: Option<bool>,
+    #[serde(rename = "setAllowMmapWrites")]
     set_allow_mmap_writes: Option<bool>,
+    #[serde(rename = "setAtomicFlush")]
     set_atomic_flush: Option<bool>,
+    #[serde(rename = "setBytesPerSync")]
     set_bytes_per_sync: Option<u64>,
+    #[serde(rename = "SetCompactionReadaheadSize")]
     set_compaction_readahead_size: Option<usize>,
+    #[serde(rename = "setCompactionStyle")]
     set_compaction_style: Option<CompactionStyle>,
+    #[serde(rename = "setMaxWriteBufferNumber")]
     set_max_write_buffer_number: Option<i32>,
+    #[serde(rename = "setWriteBufferSize")]
     set_write_buffer_size: Option<usize>,
+    #[serde(rename = "setDbWriteBufferSize")]
     set_db_write_buffer_size: Option<usize>,
+    #[serde(rename = "setDisableAutoCompactions")]
     set_disable_auto_compactions: Option<bool>,
+    #[serde(rename = "setCompressionType")]
     set_compression_type: Option<CompressionType>,
+    #[serde(rename = "setUnorderedWrite")]
     set_unordered_write: Option<bool>,
+    #[serde(rename = "setUseDirectIoForFlushAndCompaction")]
     set_use_direct_io_for_flush_and_compaction: Option<bool>,
     env: Option<RocksDbEnvConfigBuilder>,
 }

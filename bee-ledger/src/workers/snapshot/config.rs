@@ -37,11 +37,16 @@ impl DownloadUrls {
 #[derive(Default, Deserialize)]
 #[must_use]
 pub struct SnapshotConfigBuilder {
+    #[serde(alias = "fullPath")]
     full_path: Option<PathBuf>,
+    #[serde(alias = "deltaPath")]
     delta_path: Option<PathBuf>,
+    #[serde(alias = "downloadUrls")]
     download_urls: Option<Vec<DownloadUrls>>,
     depth: Option<u32>,
+    #[serde(alias = "intervalSynced")]
     interval_synced: Option<u32>,
+    #[serde(alias = "intervalUnsynced")]
     interval_unsynced: Option<u32>,
 }
 
