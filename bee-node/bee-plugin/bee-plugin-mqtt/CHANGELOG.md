@@ -9,19 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- New `./dashboard` route;
-- Automatically migrate identity from `Config.toml`;
-- Generate new identity if none is present;
-
 ### Changed
-
-- P2P identity is now stored in a `identity.key` file;
 
 ### Deprecated
 
 ### Removed
-
-- `p2p_identity` tool;
 
 ### Fixed
 
