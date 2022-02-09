@@ -160,6 +160,7 @@ where
 }
 
 pub struct ApiWorkerEntryNode;
+
 #[async_trait]
 impl<N: Node> Worker<N> for ApiWorkerEntryNode
 where
