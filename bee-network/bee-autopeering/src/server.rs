@@ -110,6 +110,8 @@ impl Server {
             .is_ok()
             {
                 socket_bound = true;
+            } else {
+                log::warn!("Binding to the configured IPv4 address {} failed.", bind_addr_v4)
             }
         }
 
@@ -120,12 +122,14 @@ impl Server {
                 .is_ok()
             {
                 socket_bound = true;
+            } else {
+                log::warn!("Binding to the configured IPv6 ({}) failed.", bind_addr_v6)
             }
         }
 
         // At least one socket must be successfully bound.
         if !socket_bound {
-            panic!("binding a socket failed");
+            panic!("failed binding a UDP socket to an address");
         }
     }
 }

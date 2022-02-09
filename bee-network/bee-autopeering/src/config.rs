@@ -200,13 +200,14 @@ fn ensure_ipv6(addr: Option<SocketAddr>) {
     if let Some(addr) = addr {
         if !addr.is_ipv6() {
             panic!("invalid config: bind address is not IPv6");
-            // TODO: Use `to_ipv4_mapped` once stable.
-            // See issue #27709 <https://github.com/rust-lang/rust/issues/27709> for more information
-        } else if let IpAddr::V6(ipv6_addr) = addr.ip() {
-            if ipv6_addr.to_ipv4().is_some() {
-                panic!("invalid config: IPv4-mapped IPv6 addresses not supported")
-            }
-        }
+        } 
+        // else if let IpAddr::V6(ipv6_addr) = addr.ip() {
+        //     // TODO: Use `to_ipv4_mapped` once stable.
+        //     // See issue #27709 <https://github.com/rust-lang/rust/issues/27709> for more information
+        //     if ipv6_addr.to_ipv4().is_some() {
+        //         panic!("invalid config: IPv4-mapped IPv6 addresses not allowed")
+        //     }
+        // }
     }
 }
 
