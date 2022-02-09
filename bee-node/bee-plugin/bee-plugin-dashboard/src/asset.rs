@@ -4,5 +4,5 @@
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
-#[folder = "$CARGO_MANIFEST_DIR/src/frontend/build/"]
+#[folder = "src/frontend/build/"]
 pub(crate) struct Asset;

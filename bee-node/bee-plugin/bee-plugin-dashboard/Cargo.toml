@@ -27,7 +27,7 @@ hex = { version = "0.4.3", default-features = false }
 log = { version = "0.4.14", default-features = false }
 mime_guess = { version = "2.0.3", default-features = false }
 multiaddr = { version = "0.13.0", default-features = false }
-rust-embed = { version = "6.2.0", default-features = false, features = [ "interpolate-folder-path" ] }
+rust-embed = { version = "6.2.0", default-features = false }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
 serde_json = { version = "1.0.68", default-features = false }
 serde_repr = { version = "0.1.7", default-features = false }

@@ -365,6 +365,14 @@ jobs:
             ubuntu-latest-nightly-
             ubuntu-latest-
 
+      - name: Install dashboard frontend
+        run: |
+          git submodule init
+          git submodule update --recursive --remote
+          cd bee-node/bee-plugin/bee-plugin-dashboard/src/frontend/
+          npm install
+          npm run build-bee
+
       - uses: actions-rs/cargo@v1
         with:
           command: doc
