@@ -138,6 +138,9 @@ impl NodeBuilder<EntryNode> for EntryNodeBuilder {
         // Initialize autopeering (if enabled).
         let (autopeering_rx, builder) = initialize_autopeering(builder).await?;
 
+        // Initialize the API.
+        let builder = initialize_api(builder).await;
+
         // Start the version checker.
         let builder = builder.with_worker::<VersionChecker>();
 
@@ -260,6 +263,19 @@ fn create_local_autopeering_entity(keypair: Keypair, config: &EntryNodeConfig) -
     );
 
     local
+}
+
+/// Initializes the API.
+async fn initialize_api(builder: EntryNodeBuilder) -> EntryNodeBuilder {
+    log::info!("Initializing REST API...");
+
+    let config = builder.config();
+
+    let rest_api_cfg = config.rest_api_config.clone();
+
+    let builder = bee_rest_api::endpoints::init_entry_node::<EntryNode>(rest_api_cfg, builder).await;
+
+    builder
 }
 
 #[derive(Clone)]
