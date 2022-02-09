@@ -38,15 +38,11 @@ use serde::Deserialize;
 
 use std::{
     fmt::Debug,
-    net::{IpAddr, SocketAddr},
+    net::SocketAddr,
     path::{Path, PathBuf},
 };
 
 const ENABLED_DEFAULT: bool = false;
-// TODO: watch out for possible constification regarding `SocketAddr::new()`.
-// const BIND_ADDR_V4_DEFAULT: IpAddr = IpAddr::V4(Ipv4Addr::UNSPECIFIED);
-// const BIND_ADDR_V6_DEFAULT: IpAddr = IpAddr::V6(Ipv6Addr::UNSPECIFIED);
-// const BIND_PORT_DEFAULT: u16 = 14626;
 const ENTRYNODES_PREFER_IPV6_DEFAULT: bool = false;
 const RUN_AS_ENTRYNODE_DEFAULT: bool = false;
 const DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT: bool = false;
@@ -201,13 +197,6 @@ fn ensure_ipv6(addr: Option<SocketAddr>) {
         if !addr.is_ipv6() {
             panic!("invalid config: bind address is not IPv6");
         } 
-        // else if let IpAddr::V6(ipv6_addr) = addr.ip() {
-        //     // TODO: Use `to_ipv4_mapped` once stable.
-        //     // See issue #27709 <https://github.com/rust-lang/rust/issues/27709> for more information
-        //     if ipv6_addr.to_ipv4().is_some() {
-        //         panic!("invalid config: IPv4-mapped IPv6 addresses not allowed")
-        //     }
-        // }
     }
 }
 

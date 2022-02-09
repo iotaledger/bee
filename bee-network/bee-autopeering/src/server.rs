@@ -99,7 +99,7 @@ impl Server {
 
         // Bind a socket to the given IPv4 address.
         if let Some(bind_addr_v4) = config.bind_addr_v4 {
-            if bind_socket::<_, IP_V4_FLAG>(
+            if let Ok(local_addr) = bind_socket::<_, IP_V4_FLAG>(
                 bind_addr_v4,
                 incoming_senders.clone(),
                 local.clone(),
@@ -107,8 +107,8 @@ impl Server {
                 task_mngr,
             )
             .await
-            .is_ok()
             {
+                log::debug!("Bound IPv4 socket to {}.", local_addr);
                 socket_bound = true;
             } else {
                 log::warn!("Binding to the configured IPv4 address {} failed.", bind_addr_v4)
@@ -117,10 +117,10 @@ impl Server {
 
         // Bind a socket to the given IPv6 address.
         if let Some(bind_addr_v6) = config.bind_addr_v6 {
-            if bind_socket::<_, IP_V6_FLAG>(bind_addr_v6, incoming_senders, local, outgoing_rx_v6, task_mngr)
+            if let Ok(local_addr) = bind_socket::<_, IP_V6_FLAG>(bind_addr_v6, incoming_senders, local, outgoing_rx_v6, task_mngr)
                 .await
-                .is_ok()
             {
+                log::debug!("Bound IPv6 socket to {}.", local_addr);
                 socket_bound = true;
             } else {
                 log::warn!("Binding to the configured IPv6 ({}) failed.", bind_addr_v6)
@@ -140,10 +140,11 @@ async fn bind_socket<S: PeerStore, const USE_IP_V6: bool>(
     local: Local,
     outgoing_rx: OutgoingPacketRx,
     task_mngr: &mut TaskManager<S>,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<SocketAddr, Box<dyn std::error::Error>> {
     // Bind the UDP socket to the configured address.
     // Panic: We don't allow any UDP socket binding to fail.
     let socket = UdpSocket::bind(bind_addr).await?;
+    let local_addr = socket.local_addr()?;
 
     // Note: See Tokio docs for an explanation why there's no split method.
     let incoming_socket = Arc::new(socket);
@@ -165,7 +166,7 @@ async fn bind_socket<S: PeerStore, const USE_IP_V6: bool>(
     task_mngr.run::<IncomingPacketHandler<USE_IP_V6>>(incoming_packet_handler);
     task_mngr.run::<OutgoingPacketHandler<USE_IP_V6>>(outgoing_packet_handler);
 
-    Ok(())
+    Ok(local_addr)
 }
 
 struct IncomingPacketHandler<const USE_IP_V6: bool> {
