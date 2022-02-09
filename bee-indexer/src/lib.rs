@@ -12,26 +12,30 @@ pub(crate) mod types;
 // TODO: Check `pub(crate)` visibility of all types.
 
 use chrono::Local;
+use std::time::SystemTime;
 
-use bee_ledger::workers::event::{OutputConsumed, OutputCreated};
+use bee_ledger::{
+    types::CreatedOutput,
+    workers::event::{OutputConsumed, OutputCreated},
+};
 use bee_message::{
     address::Address,
     milestone::MilestoneIndex,
     output::{Output, OutputId},
 };
 
-use packable::PackableExt;
+use packable::{Packable, PackableExt};
 
 use sea_orm::{
-    prelude::*, ActiveModelTrait, Condition, ConnectionTrait, Database, DatabaseConnection,
-    EntityTrait, FromQueryResult, JoinType, NotSet, Order, Schema, Set,
+    prelude::*, ActiveModelTrait, Condition, ConnectionTrait, Database, DatabaseConnection, EntityTrait,
+    FromQueryResult, JoinType, NotSet, Order, Schema, Set,
 };
 
 use chrono::NaiveDateTime;
 
 use tokio_stream::StreamExt;
 
-use sea_query::{Cond, Expr, Alias};
+use sea_query::{Alias, Cond, Expr};
 use types::{AddressDb, MilestoneIndexDb};
 
 pub use error::IndexerError;
@@ -40,7 +44,7 @@ pub struct Indexer {
     db: DatabaseConnection,
 }
 
-pub const OFFSET_LENGTH: usize = std::mem::size_of::<MilestoneIndex>() + OutputId::LENGTH;
+pub const HEX_CURSOR_LENGTH: usize = (std::mem::size_of::<MilestoneIndex>() + OutputId::LENGTH) * 2;
 
 #[inline(always)]
 fn offset_to_naive_date_time(offset: &[u8]) -> Result<NaiveDateTime, IndexerError> {
@@ -107,7 +111,10 @@ impl Indexer {
                     // TODO: Use binary and let sqlite do the hex stuff
                     alias_id: Set(hex::encode(output.alias_id())),
                     output_id: Set(output_id.pack_to_vec()),
-                    created_at: Set(Local::now().naive_local()),
+                    created_at: Set(SystemTime::now()
+                        .duration_since(SystemTime::UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs() as u32), // TODO: Get from output
                     amount: Set(output.amount() as i64), // TODO: Fix type?
                     state_controller: Set(output.state_controller().pack_to_vec()),
                     governor: Set(output.governor().pack_to_vec()),
@@ -142,30 +149,33 @@ impl Indexer {
         &self,
         options: AliasFilterOptions,
     ) -> Result<IndexedOutputs, IndexerError> {
-        //) -> Result<Vec<(OutputResult, Option<MilestoneResult>)>, IndexerError> {
         let builder = self.db.get_database_backend();
 
         let mut stmt = sea_query::Query::select();
 
+        let cursor_alias = Alias::new("cursor");
+
         stmt.column(alias::Column::OutputId)
-            .expr_as(Expr::cust("printf('%08X', strftime('%s', `created_at`)) || hex(output_id)"), Alias::new("cursor"))
-            .column(status::Column::CurrentMilestoneIndex)
+            .expr_as(
+                Expr::cust("printf('%08X', `created_at`) || hex(output_id)"),
+                cursor_alias.clone(),
+            )
+            .column(status::Column::CurrentMilestoneIndex) // TODO: Remove if everything works
             .from(alias::Entity)
             .join(JoinType::InnerJoin, status::Entity, Cond::any())
-            .order_by(alias::Column::CreatedAt, Order::Asc)
-            .order_by(alias::Column::OutputId, Order::Asc);
+            .order_by_columns(vec![
+                (alias::Column::CreatedAt, Order::Asc),
+                (alias::Column::OutputId, Order::Asc),
+            ]);
 
         let mut filter = Condition::all();
 
         if options.page_size > 0 {
-            if let Some(offset) = options.offset {
-                if offset.len() != OFFSET_LENGTH {
-                    return Err(IndexerError::InvalidOffsetLength(offset.len()));
+            if let Some(cursor) = options.cursor {
+                if cursor.len() != HEX_CURSOR_LENGTH {
+                    return Err(IndexerError::InvalidCursorLength(cursor.len()));
                 } else {
-                    let (timestamp, output_id) = offset.split_at(MilestoneIndex::LENGTH);
-                    let created_at = offset_to_naive_date_time(&timestamp)?;
-                    filter = filter.add(alias::Column::CreatedAt.gte(created_at));
-                    filter = filter.add(alias::Column::OutputId.gte(hex::encode(output_id)));
+                    filter = filter.add(Expr::col(cursor_alias).gte(cursor.to_uppercase()));
                 }
             }
             stmt.limit(options.page_size + 1);
@@ -188,28 +198,32 @@ impl Indexer {
 
         // TODO: Pagination
 
-        let mut stream = JoinedResult::find_by_statement(builder.build(&stmt))
-            .stream(&self.db)
+        let query_results = JoinedResult::find_by_statement(builder.build(&stmt))
+            .all(&self.db)
             .await
             .map_err(IndexerError::DatabaseError)?;
 
         let mut result = IndexedOutputs {
-            output_ids: vec![],
-            milestone_index: 0.into(),
-            page_size: 0,              // TODO
-            next_offset: None,         // TODO
+            output_ids: query_results
+                .iter()
+                .map(|r| {
+                    let bytes: [u8; OutputId::LENGTH] = r.output_id.clone().try_into().unwrap();
+                    bytes.try_into().unwrap()
+                })
+                .collect(),
+            cursors: query_results.iter().map(|r| r.cursor.clone().to_lowercase()).collect(),
+            milestone_index: query_results
+                .first()
+                .map(|r| r.current_milestone_index)
+                .unwrap_or(0)
+                .into(),
+            page_size: options.page_size,
+            cursor: None,
         };
 
-        if let Some(item) = stream.try_next().await.map_err(IndexerError::DatabaseError)? {
-            result.milestone_index = item.current_milestone_index.into();
-            let bytes: [u8; OutputId::LENGTH] = item.output_id.try_into().unwrap();
-            result.output_ids.push(bytes.try_into().unwrap());
-        }
-
-        while let Some(item) = stream.try_next().await.map_err(IndexerError::DatabaseError)? {
-            // TODO: Reconsider safety implications
-            let bytes: [u8; OutputId::LENGTH] = item.output_id.try_into().unwrap();
-            result.output_ids.push(bytes.try_into().unwrap());
+        if options.page_size > 0 && query_results.len() > options.page_size as usize {
+            result.cursor = Some(query_results.last().unwrap().cursor.clone().to_lowercase());
+            result.output_ids.pop(); // We have queried one too many
         }
 
         Ok(result)
@@ -223,23 +237,24 @@ pub struct AliasFilterOptions {
     pub governor: Option<Address>,
     pub issuer: Option<Address>,
     pub sender: Option<Address>,
-    pub page_size: u64,
-    pub offset: Option<Vec<u8>>,
+    pub page_size: u64, // TODO: We should settle on a sensible default value (from config, maybe)?
+    pub cursor: Option<String>,
 }
 
 #[derive(Debug, FromQueryResult)]
 pub struct JoinedResult {
     pub output_id: AddressDb,
-    pub cursor: String,
     pub current_milestone_index: MilestoneIndexDb,
+    pub cursor: String,
 }
 
 #[derive(Debug)]
 pub struct IndexedOutputs {
     pub output_ids: Vec<OutputId>,
+    pub cursors: Vec<String>, // TODO: Remove
     pub milestone_index: MilestoneIndex,
     pub page_size: u64,
-    pub next_offset: Option<Vec<u8>>,
+    pub cursor: Option<String>,
 }
 
 #[cfg(test)]
@@ -250,7 +265,7 @@ mod test {
 
     #[test]
     fn check_offset_length() {
-        assert_eq!(OFFSET_LENGTH, 38);
+        assert_eq!(HEX_CURSOR_LENGTH, 76);
     }
 
     #[test]

@@ -5,7 +5,7 @@ use sea_orm::error::DbErr;
 
 #[derive(Debug)]
 pub enum IndexerError {
-    InvalidOffsetLength(usize),
+    InvalidCursorLength(usize),
     OffsetParseError(std::array::TryFromSliceError),
     DatabaseError(DbErr),
 }

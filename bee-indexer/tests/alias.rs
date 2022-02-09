@@ -31,17 +31,32 @@ async fn update_status() -> Result<(), IndexerError> {
         output: Output::Alias(rand_alias_output()),
     };
 
+    // println!("{:# ?}", &[created.output_id, created2.output_id]);
+
     indexer.process_created_output(&created).await?;
     indexer.process_created_output(&created2).await?;
 
     let res = indexer
         .alias_outputs_with_filters(AliasFilterOptions {
-            state_controller: Some(state_controller),
+            //state_controller: Some(state_controller),
+            page_size: 1,
             ..Default::default()
         })
         .await?;
 
-    println!("{:#?}", res);
+    println!("Page 1 {:#?}", res);
+
+    let res2 = indexer
+        .alias_outputs_with_filters(AliasFilterOptions {
+            //state_controller: Some(state_controller),
+            page_size: 1,
+            cursor: res.cursor,
+            ..Default::default()
+        })
+        .await?;
+
+    println!("Page 2 {:#?}", res2);
+
     assert!(false);
 
     Ok(())

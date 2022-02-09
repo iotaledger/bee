@@ -19,3 +19,5 @@ tokio-stream = { version = "0.1.7", default-features = false }
 
 [dev-dependencies]
 bee-test = { path = "../bee-test", default-features = false }
+
+itertools = { version = "0.10.3", default-features = false }

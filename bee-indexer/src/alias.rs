@@ -3,8 +3,6 @@
 
 use sea_orm::entity::prelude::*;
 
-use chrono::NaiveDateTime;
-
 use crate::types::{AddressDb, AliasIdDb};
 
 // TODO: Switch to BLOBs once everythign works.
@@ -13,8 +11,7 @@ use crate::types::{AddressDb, AliasIdDb};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub alias_id: AliasIdDb,
-    #[sea_orm(created_at = "created_at")]
-    pub created_at: NaiveDateTime,
+    pub created_at: u32,
     #[sea_orm(unique)]
     pub output_id: AddressDb,
     pub amount: i64,

@@ -310,6 +310,7 @@ dependencies = [
  "chrono",
  "dotenv",
  "hex",
+ "itertools",
  "packable",
  "sea-orm",
  "sea-query",
