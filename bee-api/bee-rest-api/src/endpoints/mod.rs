@@ -53,6 +53,7 @@ where
 }
 
 pub struct ApiWorkerFullNode;
+
 #[async_trait]
 impl<N: Node> Worker<N> for ApiWorkerFullNode
 where
