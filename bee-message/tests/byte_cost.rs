@@ -9,7 +9,7 @@ use bee_message::{
 };
 use bee_test::rand::output::{rand_alias_output, rand_basic_output, rand_foundry_output, rand_nft_output};
 
-use std::mem::size_of;
+use core::mem::size_of;
 
 const CONFIG: ByteCostConfig = ByteCostConfig {
     byte_cost: 500,
@@ -17,7 +17,7 @@ const CONFIG: ByteCostConfig = ByteCostConfig {
     weight_for_key: 1,
 };
 
-type ConfirmationUnixTimestamp = f32;
+type ConfirmationUnixTimestamp = u32;
 
 const OFFSET: u64 = (size_of::<OutputId>()
     + size_of::<MessageId>()

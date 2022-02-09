@@ -1,17 +1,13 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::output::Output;
-
-use packable::PackableExt;
-use serde::Deserialize;
-
 const DEFAULT_BYTE_COST: u64 = 500;
 const DEFAULT_BYTE_COST_KEY_WEIGHT: u64 = 10;
 const DEFAULT_BYTE_COST_DATA_WEIGHT: u64 = 1;
 
 /// Builder for a [`ByteCostConfig`].
-#[derive(Default, Deserialize)]
+#[derive(Default)]
+#[cfg_attr(feature = "serde1", derive(serde::Deserialize))]
 #[must_use]
 pub struct ByteCostConfigBuilder {
     byte_cost: Option<u64>,
@@ -86,13 +82,4 @@ impl<T: ByteCost, const N: usize> ByteCost for [T; N] {
 /// Computes the storage cost for `[crate::output::Output]`s.
 pub fn min_deposit(config: &ByteCostConfig, output: &impl ByteCost) -> u64 {
     config.byte_cost * output.weighted_bytes(config)
-}
-
-impl ByteCost for Output {
-    fn weighted_bytes(&self, config: &ByteCostConfig) -> u64 {
-        // The updated verison of TIP19 (https://github.com/iotaledger/tips/pull/39) has been largely simplified.
-        // Now, all fields of all outputs are marked as `data. Therefore, we can just resort to using `Packable` to
-        // compute the `weighted bytes`.
-        self.packed_len() as u64 * config.weight_for_data
-    }
 }

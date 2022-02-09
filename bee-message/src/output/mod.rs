@@ -49,10 +49,10 @@ pub(crate) use treasury::TreasuryOutputAmount;
 pub(crate) use unlock_condition::StorageDepositAmount;
 pub use unlock_condition::{UnlockCondition, UnlockConditions};
 
-use crate::{constant::IOTA_SUPPLY, Error};
+use crate::{constant::IOTA_SUPPLY, Error, byte_cost::{ByteCost, ByteCostConfig}};
 
 use derive_more::From;
-use packable::bounded::BoundedU64;
+use packable::{PackableExt, bounded::BoundedU64};
 
 use core::ops::RangeInclusive;
 
@@ -196,5 +196,14 @@ impl Output {
             Self::Foundry(output) => Some(output.immutable_feature_blocks()),
             Self::Nft(output) => Some(output.immutable_feature_blocks()),
         }
+    }
+}
+
+impl ByteCost for Output {
+    fn weighted_bytes(&self, config: &ByteCostConfig) -> u64 {
+        // The updated verison of TIP19 (https://github.com/iotaledger/tips/pull/39) has been largely simplified.
+        // Now, all fields of all outputs are marked as `data. Therefore, we can just resort to using `Packable` to
+        // compute the `weighted bytes`.
+        self.packed_len() as u64 * config.weight_for_data
     }
 }
