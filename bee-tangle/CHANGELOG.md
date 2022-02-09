@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Compilation with rustc 1.60.0-nightly (0c292c966 2022-02-08)
+- Compilation with rustc 1.60.0-nightly (0c292c966 2022-02-08);
 
 ## 0.2.0 - 2021-12-07
 
