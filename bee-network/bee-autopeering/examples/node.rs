@@ -64,7 +64,7 @@ async fn main() {
     local.add_service(
         AUTOPEERING_SERVICE_NAME,
         ServiceProtocol::Udp,
-        config.bind_addr().port(),
+        config.bind_addr_v4().unwrap().port(),
     );
     local.add_service(NETWORK_SERVICE_NAME, ServiceProtocol::Tcp, 15600);
 

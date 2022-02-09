@@ -250,8 +250,8 @@ mod tests {
     fn create_config() -> AutopeeringConfig {
         AutopeeringConfig {
             enabled: true,
-            bind_addr_v4: "0.0.0.0:14626".parse().unwrap(),
-            bind_addr_v6: "[::]:14626".parse().unwrap(),
+            bind_addr_v4: Some("0.0.0.0:14626".parse().unwrap()),
+            bind_addr_v6: Some("[::]:14626".parse().unwrap()),
             entry_nodes: vec![
                 "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb".parse().unwrap(),
                 "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2".parse().unwrap(),
