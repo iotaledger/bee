@@ -13,8 +13,8 @@ use core::mem::size_of;
 
 const CONFIG: ByteCostConfig = ByteCostConfig {
     v_byte_cost: 500,
-    v_byte_factor_data: 10,
-    v_byte_factor_key: 1,
+    v_byte_factor_data: 1,
+    v_byte_factor_key: 10,
 };
 
 type ConfirmationUnixTimestamp = u32;
