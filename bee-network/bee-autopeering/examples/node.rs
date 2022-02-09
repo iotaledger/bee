@@ -4,10 +4,8 @@
 #![allow(warnings)]
 
 use bee_autopeering::{
-    config::AutopeeringConfigBuilder,
-    init,
-    stores::InMemoryPeerStore,
-    AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
+    config::AutopeeringConfigBuilder, init, stores::InMemoryPeerStore, AutopeeringConfig, Event, Local,
+    NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 
 use libp2p_core::identity::ed25519::Keypair;
