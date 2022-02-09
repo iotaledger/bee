@@ -140,7 +140,7 @@ impl NftOutput {
     /// The [`Output`](crate::output::Output) kind of a [`NftOutput`].
     pub const KIND: u8 = 6;
     ///
-    pub const IMMUTABLE_METADATA_LENGTH_MAX: u16 = 1024;
+    pub const IMMUTABLE_METADATA_LENGTH_MAX: u16 = 8192;
 
     /// The set of allowed [`UnlockCondition`]s for an [`NftOutput`].
     const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS

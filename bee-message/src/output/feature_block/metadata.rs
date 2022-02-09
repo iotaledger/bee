@@ -36,7 +36,7 @@ impl MetadataFeatureBlock {
     pub const KIND: u8 = 2;
 
     /// Valid lengths for a [`MetadataFeatureBlock`].
-    pub const LENGTH_RANGE: RangeInclusive<u16> = 1..=1024;
+    pub const LENGTH_RANGE: RangeInclusive<u16> = 1..=8192;
 
     /// Creates a new [`MetadataFeatureBlock`].
     #[inline(always)]
