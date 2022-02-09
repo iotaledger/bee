@@ -46,6 +46,7 @@ prost-build = { version = "0.8", default-features = false }
 
 [[example]]
 name = "node"
+required-features = [ "in-memory" ]
 
 [features]
 default = [ "rocksdb" ]

@@ -6,7 +6,7 @@
 use bee_autopeering::{
     config::AutopeeringConfigBuilder,
     init,
-    stores::{InMemoryPeerStore, SledPeerStore, SledPeerStoreConfig},
+    stores::InMemoryPeerStore,
     AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 
@@ -74,10 +74,10 @@ async fn main() {
 
     // Storage config.
     // No config is  necessary for the `InMemoryPeerStore`.
-    // let peer_store_config = ();
+    let peer_store_config = ();
 
     // Sled peer store:
-    let peer_store_config = SledPeerStoreConfig::new().path("./peerstore");
+    // let peer_store_config = SledPeerStoreConfig::new().path("./peerstore");
 
     // Neighbor validator.
     let neighbor_validator = GossipNeighborValidator {};
@@ -86,7 +86,7 @@ async fn main() {
     let term_signal = ctrl_c();
 
     // Initialize the Autopeering service.
-    let mut event_rx = bee_autopeering::init::<SledPeerStore, _, _, GossipNeighborValidator>(
+    let mut event_rx = bee_autopeering::init::<InMemoryPeerStore, _, _, GossipNeighborValidator>(
         config.clone(),
         version,
         network_name,
