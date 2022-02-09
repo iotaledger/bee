@@ -12,9 +12,9 @@ use bee_test::rand::output::{rand_alias_output, rand_basic_output, rand_foundry_
 use core::mem::size_of;
 
 const CONFIG: ByteCostConfig = ByteCostConfig {
-    byte_cost: 500,
-    weight_for_data: 10,
-    weight_for_key: 1,
+    v_byte_cost: 500,
+    v_byte_factor_data: 10,
+    v_byte_factor_key: 1,
 };
 
 type ConfirmationUnixTimestamp = u32;

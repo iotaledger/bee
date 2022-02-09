@@ -10,9 +10,9 @@ const DEFAULT_BYTE_COST_DATA_WEIGHT: u64 = 1;
 #[cfg_attr(feature = "serde1", derive(serde::Deserialize))]
 #[must_use]
 pub struct ByteCostConfigBuilder {
-    byte_cost: Option<u64>,
-    weight_for_key: Option<u64>,
-    weight_for_data: Option<u64>,
+    v_byte_cost: Option<u64>,
+    v_byte_factor_key: Option<u64>,
+    v_byte_factor_data: Option<u64>,
 }
 
 impl ByteCostConfigBuilder {
@@ -23,28 +23,28 @@ impl ByteCostConfigBuilder {
 
     /// Sets the byte cost for dust protection.
     pub fn byte_cost(mut self, byte_cost: u64) -> Self {
-        self.byte_cost.replace(byte_cost);
+        self.v_byte_cost.replace(byte_cost);
         self
     }
 
     /// Sets the byte cost for dust protection.
     pub fn weight_for_key_field(mut self, weight: u64) -> Self {
-        self.weight_for_key.replace(weight);
+        self.v_byte_factor_key.replace(weight);
         self
     }
 
     /// Sets the byte cost for dust protection.
     pub fn weight_for_data_field(mut self, weight: u64) -> Self {
-        self.weight_for_key.replace(weight);
+        self.v_byte_factor_data.replace(weight);
         self
     }
 
     /// Returns the built [`ByteCostConfig`].
     pub fn finish(self) -> ByteCostConfig {
         ByteCostConfig {
-            byte_cost: self.byte_cost.unwrap_or(DEFAULT_BYTE_COST),
-            weight_for_key: self.weight_for_key.unwrap_or(DEFAULT_BYTE_COST_KEY_WEIGHT),
-            weight_for_data: self.weight_for_data.unwrap_or(DEFAULT_BYTE_COST_DATA_WEIGHT),
+            v_byte_cost: self.v_byte_cost.unwrap_or(DEFAULT_BYTE_COST),
+            v_byte_factor_key: self.v_byte_factor_key.unwrap_or(DEFAULT_BYTE_COST_KEY_WEIGHT),
+            v_byte_factor_data: self.v_byte_factor_data.unwrap_or(DEFAULT_BYTE_COST_DATA_WEIGHT),
         }
     }
 }
@@ -53,11 +53,11 @@ impl ByteCostConfigBuilder {
 #[derive(Clone)]
 pub struct ByteCostConfig {
     /// Cost in tokens coins per virtual byte.
-    pub byte_cost: u64,
+    pub v_byte_cost: u64,
     /// The weight factor used for key fields in the ouputs.
-    pub weight_for_key: u64,
+    pub v_byte_factor_key: u64,
     /// The weight factor used for data fields in the ouputs.
-    pub weight_for_data: u64,
+    pub v_byte_factor_data: u64,
 }
 
 impl ByteCostConfig {
@@ -81,5 +81,5 @@ impl<T: ByteCost, const N: usize> ByteCost for [T; N] {
 
 /// Computes the storage cost for `[crate::output::Output]`s.
 pub fn min_deposit(config: &ByteCostConfig, output: &impl ByteCost) -> u64 {
-    config.byte_cost * output.weighted_bytes(config)
+    config.v_byte_cost * output.weighted_bytes(config)
 }
