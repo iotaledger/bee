@@ -94,9 +94,6 @@ impl Server {
 
         let mut socket_bound = false;
 
-        // Note: the config validation guarantees that at least one of the bind addresses
-        // is set, and that `bind_addr_v6` is a true (not v4-mapped) v6 address.
-
         // Bind a socket to the given IPv4 address.
         if let Some(bind_addr_v4) = config.bind_addr_v4 {
             if let Ok(local_addr) = bind_socket::<_, IP_V4_FLAG>(
@@ -111,7 +108,7 @@ impl Server {
                 log::debug!("Bound IPv4 socket to {}.", local_addr);
                 socket_bound = true;
             } else {
-                log::warn!("Binding to the configured IPv4 address {} failed.", bind_addr_v4)
+                log::warn!("Binding to the configured IPv4 address ({}) failed.", bind_addr_v4)
             }
         }
 
@@ -123,7 +120,7 @@ impl Server {
                 log::debug!("Bound IPv6 socket to {}.", local_addr);
                 socket_bound = true;
             } else {
-                log::warn!("Binding to the configured IPv6 ({}) failed.", bind_addr_v6)
+                log::warn!("Binding to the configured IPv6 address ({}) failed.", bind_addr_v6)
             }
         }
 
