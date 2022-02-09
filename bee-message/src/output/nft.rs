@@ -234,7 +234,7 @@ impl Packable for NftOutput {
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let nft_id = NftId::unpack::<_, VERIFY>(unpacker).infallible()?;
         let immutable_metadata = BoxedSlicePrefix::<u8, ImmutableMetadataLength>::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| Error::InvalidImmutableMetadataLength(err.into_prefix().into()))?;
+            .map_packable_err(|err| Error::InvalidImmutableMetadataLength(err.into_prefix_err().into()))?;
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {

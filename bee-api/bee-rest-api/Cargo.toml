@@ -35,7 +35,7 @@ iota-crypto = { version = "0.9.1", default-features = false, features = [ "blake
 log = { version = "0.4.14", default-features = false, optional = true }
 multiaddr = { version = "0.13.0", default-features = false }
 num_cpus = { version = "1.13.0", default-features = false, optional = true }
-packable = { version = "0.1.0", default-features = false }
+packable = { version = "0.2.0", default-features = false }
 primitive-types = { version = "0.10.1", default-features = false, features = [ "serde" ] }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
 serde_json = { version = "1.0.68", default-features = false, features = [ "alloc" ] }

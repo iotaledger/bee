@@ -58,7 +58,7 @@ pub(crate) type NativeTokenCount = BoundedU8<0, { NativeTokens::COUNT_MAX }>;
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Deref, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = Error, with = |e| e.unwrap_packable_or_else(|p| Error::InvalidNativeTokenCount(p.into())))]
+#[packable(unpack_error = Error, with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidNativeTokenCount(p.into())))]
 pub struct NativeTokens(
     #[packable(verify_with = verify_unique_sorted)] BoxedSlicePrefix<NativeToken, NativeTokenCount>,
 );

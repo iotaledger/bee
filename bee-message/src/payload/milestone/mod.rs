@@ -187,7 +187,7 @@ impl Packable for MilestonePayload {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let essence = MilestoneEssence::unpack::<_, VERIFY>(unpacker)?;
         let signatures = VecPrefix::<Signature, SignatureCount>::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| Error::MilestoneInvalidSignatureCount(err.into_prefix().into()))?;
+            .map_packable_err(|err| Error::MilestoneInvalidSignatureCount(err.into_prefix_err().into()))?;
 
         Self::from_vec_prefix(essence, signatures).map_err(UnpackError::Packable)
     }

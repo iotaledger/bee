@@ -25,9 +25,9 @@ pub(crate) type IndexationDataLength = BoundedU32<0, { Message::LENGTH_MAX as u3
 #[packable(unpack_error = Error)]
 #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 pub struct IndexationPayload {
-    #[packable(unpack_error_with = |err| Error::InvalidIndexLength(err.into_prefix().into()))]
+    #[packable(unpack_error_with = |err| Error::InvalidIndexLength(err.into_prefix_err().into()))]
     index: BoxedSlicePrefix<u8, IndexLength>,
-    #[packable(unpack_error_with = |err| Error::InvalidIndexationDataLength(err.into_prefix().into()))]
+    #[packable(unpack_error_with = |err| Error::InvalidIndexationDataLength(err.into_prefix_err().into()))]
     data: BoxedSlicePrefix<u8, IndexationDataLength>,
 }
 

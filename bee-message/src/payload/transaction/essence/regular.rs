@@ -100,10 +100,10 @@ pub struct RegularTransactionEssence {
     /// The unique value denoting whether the message was meant for mainnet, testnet, or a private network.
     network_id: u64,
     #[packable(verify_with = verify_inputs)]
-    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| Error::InvalidInputCount(p.into())))]
+    #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidInputCount(p.into())))]
     inputs: BoxedSlicePrefix<Input, InputCount>,
     #[packable(verify_with = verify_outputs)]
-    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| Error::InvalidOutputCount(p.into())))]
+    #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidOutputCount(p.into())))]
     outputs: BoxedSlicePrefix<Output, OutputCount>,
     #[packable(verify_with = verify_payload)]
     payload: OptionalPayload,
