@@ -57,12 +57,13 @@ pub(crate) async fn output<B: StorageBackend>(
     })? {
         (Ok(response), ledger_index) => match response {
             Some(output) => {
-                let consumed_output = Fetch::<OutputId, ConsumedOutput>::fetch(&*args.storage, &output_id).map_err(|e| {
-                    error!("unable to fetch the output: {}", e);
-                    reject::custom(CustomRejection::ServiceUnavailable(
-                        "unable to fetch the output".to_string(),
-                    ))
-                })?;
+                let consumed_output =
+                    Fetch::<OutputId, ConsumedOutput>::fetch(&*args.storage, &output_id).map_err(|e| {
+                        error!("unable to fetch the output: {}", e);
+                        reject::custom(CustomRejection::ServiceUnavailable(
+                            "unable to fetch the output".to_string(),
+                        ))
+                    })?;
 
                 let (is_spent, milestone_index_spent, transaction_id_spent) =
                     if let Some(consumed_output) = consumed_output {
