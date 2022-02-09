@@ -110,8 +110,8 @@
 //! struct GossipNeighborValidator {}
 //!
 //! impl NeighborValidator for GossipNeighborValidator {
-//!     fn is_valid(&self, peer: &Peer) -> bool {
-//!         peer.has_service(NETWORK)
+//!     fn is_valid<P: AsRef<Peer>>(&self, peer: P) -> bool {
+//!         peer.as_ref().has_service(NETWORK)
 //!     }
 //! }
 //! ```
