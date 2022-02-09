@@ -15,7 +15,7 @@ bee-message = { path = "../../bee-message", default-features = false, features =
 bee-storage = { path = "../bee-storage", default-features = false }
 
 num_cpus = "1.13.0"
-packable = { version = "0.1.0", default-features = false, features = [ "io" ] }
+packable = { version = "0.2.0", default-features = false, features = [ "io" ] }
 rocksdb = { version = "0.17.0", default-features = false }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
 thiserror = { version = "1.0.30", default-features = false }

@@ -70,11 +70,11 @@ pub struct TransactionEssence {
     consensus_pledge_id: [u8; PLEDGE_ID_LENGTH],
     /// Collection of transaction [`Input`]s.
     #[packable(verify_with = validate_inputs)]
-    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| ValidationError::InvalidInputCount(p.into())))]
+    #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| ValidationError::InvalidInputCount(p.into())))]
     inputs: VecPrefix<Input, InputCount>,
     /// Collection of transaction [`Output`]s.
     #[packable(verify_with = validate_outputs)]
-    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| ValidationError::InvalidOutputCount(p.into())))]
+    #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| ValidationError::InvalidOutputCount(p.into())))]
     outputs: VecPrefix<Output, OutputCount>,
     /// Optional additional payload.
     #[packable(verify_with = validate_payload)]

@@ -34,13 +34,13 @@ pub(crate) type TimestampCount =
 fn unpack_prefix_to_conflict_validation_error(
     err: UnpackPrefixError<MessageUnpackError, <ConflictCount as TryFrom<u32>>::Error>,
 ) -> MessageUnpackError {
-    err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidConflictsCount(prefix_err.into()))
+    err.unwrap_item_err_or_else(|prefix_err| ValidationError::InvalidConflictsCount(prefix_err.into()))
 }
 
 fn unpack_prefix_to_timestamp_validation_error(
     err: UnpackPrefixError<MessageUnpackError, <TimestampCount as TryFrom<u32>>::Error>,
 ) -> MessageUnpackError {
-    err.unwrap_packable_or_else(|prefix_err| ValidationError::InvalidTimestampsCount(prefix_err.into()))
+    err.unwrap_item_err_or_else(|prefix_err| ValidationError::InvalidTimestampsCount(prefix_err.into()))
 }
 
 /// Payload describing opinions on conflicts and timestamps of messages.

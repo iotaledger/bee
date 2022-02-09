@@ -22,7 +22,7 @@ pub(crate) type DataPayloadLength = BoundedU32<0, { PAYLOAD_LENGTH_MAX - core::m
 fn unpack_prefix_to_validation_error(
     err: UnpackPrefixError<Infallible, <DataPayloadLength as TryFrom<u32>>::Error>,
 ) -> ValidationError {
-    ValidationError::InvalidDataPayloadLength(err.into_prefix().into())
+    ValidationError::InvalidDataPayloadLength(err.into_prefix_err().into())
 }
 
 /// Generic data payload, containing a collection of bytes.

@@ -27,13 +27,13 @@ pub(crate) type IndexationDataLength = BoundedU32<0, { *MESSAGE_LENGTH_RANGE.end
 fn unpack_prefix_to_invalid_index_length(
     err: UnpackPrefixError<Infallible, <IndexationIndexLength as TryFrom<u32>>::Error>,
 ) -> ValidationError {
-    ValidationError::InvalidIndexationIndexLength(err.into_prefix().into())
+    ValidationError::InvalidIndexationIndexLength(err.into_prefix_err().into())
 }
 
 fn unpack_prefix_to_invalid_data_length(
     err: UnpackPrefixError<Infallible, <IndexationDataLength as TryFrom<u32>>::Error>,
 ) -> ValidationError {
-    ValidationError::InvalidIndexationDataLength(err.into_prefix().into())
+    ValidationError::InvalidIndexationDataLength(err.into_prefix_err().into())
 }
 
 /// A payload which holds an index and associated data.

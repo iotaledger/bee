@@ -21,7 +21,7 @@ pub(crate) type EncryptedDealLength = BoundedU32<0, PAYLOAD_LENGTH_MAX>;
 fn unpack_prefix_to_validation_error(
     err: UnpackPrefixError<Infallible, <EncryptedDealLength as TryFrom<u32>>::Error>,
 ) -> ValidationError {
-    ValidationError::InvalidEncryptedDealLength(err.into_prefix().into())
+    ValidationError::InvalidEncryptedDealLength(err.into_prefix_err().into())
 }
 
 /// Encrypted share structure for a [`DkgPayload`].

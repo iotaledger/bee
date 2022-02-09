@@ -28,7 +28,7 @@ pub(crate) type UnlockBlockCount =
 #[packable(unpack_error = MessageUnpackError)]
 pub struct UnlockBlocks(
     #[packable(verify_with = validate_unlock_block_variants)]
-    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| ValidationError::InvalidUnlockBlockCount(p.into())))]
+    #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| ValidationError::InvalidUnlockBlockCount(p.into())))]
     VecPrefix<UnlockBlock, UnlockBlockCount>,
 );
 
