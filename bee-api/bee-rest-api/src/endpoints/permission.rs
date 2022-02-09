@@ -6,7 +6,7 @@ use crate::endpoints::{config::route_to_regex, rejection::CustomRejection, stora
 use auth_helper::jwt::{Claims, JsonWebToken, TokenData};
 
 use lazy_static::lazy_static;
-use regex::{Regex, RegexSet};
+use regex::RegexSet;
 use warp::{
     http::header::{HeaderMap, AUTHORIZATION},
     path::FullPath,
