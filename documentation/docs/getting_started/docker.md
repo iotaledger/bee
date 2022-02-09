@@ -18,7 +18,7 @@ Bee Docker images (amd64/x86_64 architecture) are available at [iotaledger/bee](
 
 ## Requirements
 
-1. A recent release of Docker enterprise or community edition. You can finde installation instructions in the [official Docker documentation](https://docs.docker.com/engine/install/).
+1. A recent release of Docker enterprise or community edition. You can find installation instructions in the [official Docker documentation](https://docs.docker.com/engine/install/).
 2. [GIT](https://git-scm.com/)
 4. At least 1GB available RAM
 
