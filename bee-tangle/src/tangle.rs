@@ -446,7 +446,7 @@ impl<B: StorageBackend> Tangle<B> {
             if exists {
                 v.allow_eviction();
             }
-            f(&mut *v)
+            f(v.deref_mut())
         })
     }
 
