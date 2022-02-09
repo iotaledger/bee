@@ -31,7 +31,7 @@ auth-helper = { version = "0.1.0", default-features = false }
 cap = { version = "0.1.0", default-features = false, optional = true }
 chrono = { version = "0.4.19", default-features = false }
 ed25519 = { version = "1.3.0", default-features = false, features = [ "alloc", "pkcs8" ] }
-fern-logger = { version = "0.1.0", default-features = false }
+fern-logger = { version = "0.3.0", default-features = false }
 futures = { version = "0.3.17", default-features = false }
 fxhash = { version = "0.2.1", default-features = false }
 hex = { version = "0.4.3", default-features = false }
