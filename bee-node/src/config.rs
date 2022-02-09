@@ -233,7 +233,15 @@ mod test {
     fn config_files_conformity() -> Result<(), NodeConfigError> {
         let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
+            "/config.chrysalis-comnet.json"
+        ))?;
+        let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
+            env!("CARGO_MANIFEST_DIR"),
             "/config.chrysalis-comnet.toml"
+        ))?;
+        let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/config.chrysalis-devnet.json"
         ))?;
         let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
@@ -241,8 +249,13 @@ mod test {
         ))?;
         let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
+            "/config.chrysalis-mainnet.json"
+        ))?;
+        let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
+            env!("CARGO_MANIFEST_DIR"),
             "/config.chrysalis-mainnet.toml"
         ))?;
+
         Ok(())
     }
 }
