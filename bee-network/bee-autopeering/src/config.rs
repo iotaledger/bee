@@ -196,7 +196,7 @@ fn ensure_ipv6(addr: Option<SocketAddr>) {
     if let Some(addr) = addr {
         if !addr.is_ipv6() {
             panic!("invalid config: bind address is not IPv6");
-        } 
+        }
     }
 }
 

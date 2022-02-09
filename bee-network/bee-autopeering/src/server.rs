@@ -117,8 +117,8 @@ impl Server {
 
         // Bind a socket to the given IPv6 address.
         if let Some(bind_addr_v6) = config.bind_addr_v6 {
-            if let Ok(local_addr) = bind_socket::<_, IP_V6_FLAG>(bind_addr_v6, incoming_senders, local, outgoing_rx_v6, task_mngr)
-                .await
+            if let Ok(local_addr) =
+                bind_socket::<_, IP_V6_FLAG>(bind_addr_v6, incoming_senders, local, outgoing_rx_v6, task_mngr).await
             {
                 log::debug!("Bound IPv6 socket to {}.", local_addr);
                 socket_bound = true;
