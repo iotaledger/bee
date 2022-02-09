@@ -15,6 +15,7 @@ use warp::{
 
 use std::sync::Arc;
 
+/// Bearer for JWT. Please note the whitespace " " is important for correct parsing.
 const BEARER: &str = "Bearer ";
 pub const API_AUDIENCE_CLAIM: &str = "api";
 pub const DASHBOARD_AUDIENCE_CLAIM: &str = "dashboard";

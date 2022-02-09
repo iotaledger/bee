@@ -5,10 +5,6 @@
 //! * A Bee full node;
 //! * A Bee entry node (autopeering);
 
-extern crate rpassword;
-extern crate auth_helper;
-extern crate bee_rest_api;
-
 mod cli;
 mod config;
 mod core;
