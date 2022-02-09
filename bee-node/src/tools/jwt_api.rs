@@ -5,7 +5,7 @@ use crate::{Local, NodeConfig, NodeStorageBackend};
 
 use bee_rest_api::endpoints::permission::{API_AUDIENCE_CLAIM};
 
-use auth_helper::jwt::{JsonWebToken, Claims, ClaimsBuilder};
+use auth_helper::jwt::{JsonWebToken, ClaimsBuilder};
 use structopt::StructOpt;
 use thiserror::Error;
 

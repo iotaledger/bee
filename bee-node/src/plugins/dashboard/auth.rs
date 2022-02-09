@@ -8,8 +8,10 @@ use crate::{
 
 use bee_rest_api::endpoints::permission::DASHBOARD_AUDIENCE_CLAIM;
 
-use auth_helper::jwt::ClaimsBuilder;
-use auth_helper::{jwt::JsonWebToken, password};
+use auth_helper::{
+    jwt::{ClaimsBuilder, JsonWebToken},
+    password,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use warp::{reject, Rejection, Reply};
@@ -33,6 +35,7 @@ pub(crate) async fn auth(local: Local, config: DashboardAuthConfig, body: JsonVa
             local.peer_id().to_string(),
             config.user().to_owned(),
             DASHBOARD_AUDIENCE_CLAIM.to_owned(),
+            true,
             local.keypair().secret().as_ref(),
         ) {
             Ok(_) => Ok(warp::reply::json(&AuthResponse { jwt: jwt.to_string() })),
@@ -78,12 +81,13 @@ pub(crate) async fn auth(local: Local, config: DashboardAuthConfig, body: JsonVa
         local.peer_id().to_string(),
         config.user().to_owned(),
         DASHBOARD_AUDIENCE_CLAIM.to_owned(),
-    ).with_expiry(config.session_timeout()).build()?;
+    )
+    .with_expiry(config.session_timeout())
+    .build()
+    .map_err(|_| reject::custom(CustomRejection::InternalError))?;
 
-    let jwt = JsonWebToken::new(
-        claims,
-        local.keypair().secret().as_ref(),
-    ).map_err(|_| reject::custom(CustomRejection::InternalError))?;
+    let jwt = JsonWebToken::new(claims, local.keypair().secret().as_ref())
+        .map_err(|_| reject::custom(CustomRejection::InternalError))?;
 
     Ok(warp::reply::json(&AuthResponse { jwt: jwt.to_string() }))
 }

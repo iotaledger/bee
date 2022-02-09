@@ -4,9 +4,8 @@
 use crate::{
     plugins::dashboard::{
         asset::Asset,
-        auth::{auth},
+        auth::auth,
         config::DashboardAuthConfig,
-        rejection::CustomRejection,
         websocket::{user_connected, WsUsers},
     },
     storage::NodeStorageBackend,
@@ -14,24 +13,12 @@ use crate::{
 };
 
 use bee_rest_api::endpoints::config::RestApiConfig;
-use bee_rest_api::endpoints::permission::DASHBOARD_AUDIENCE_CLAIM;
-
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 
-use auth_helper::jwt::JsonWebToken;
 use log::debug;
-use warp::{
-    filters::header::headers_cloned,
-    http::header::{HeaderMap, HeaderValue, AUTHORIZATION},
-    path::FullPath,
-    reject,
-    reply::Response,
-    Filter, Rejection, Reply,
-};
+use warp::{http::header::HeaderValue, path::FullPath, reply::Response, Filter, Rejection, Reply};
 use warp_reverse_proxy::reverse_proxy_filter;
-
-const BEARER: &str = "Bearer ";
 
 async fn serve_index() -> Result<impl Reply, Rejection> {
     serve_asset("index.html")
@@ -81,13 +68,13 @@ pub(crate) fn ws_routes<S: NodeStorageBackend>(
     storage: ResourceHandle<S>,
     tangle: ResourceHandle<Tangle<S>>,
     users: WsUsers,
-    node_id: String,
+    local: Local,
     auth_config: DashboardAuthConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     let storage_filter = warp::any().map(move || storage.clone());
     let tangle_filter = warp::any().map(move || tangle.clone());
     let users_filter = warp::any().map(move || users.clone());
-    let node_id_filter = warp::any().map(move || node_id.clone());
+    let local_filter = warp::any().map(move || local.clone());
     let auth_config_filter = warp::any().map(move || auth_config.clone());
 
     warp::path("ws")
@@ -95,34 +82,23 @@ pub(crate) fn ws_routes<S: NodeStorageBackend>(
         .and(storage_filter)
         .and(tangle_filter)
         .and(users_filter)
-        .and(node_id_filter)
+        .and(local_filter)
         .and(auth_config_filter)
-        .map(|ws: warp::ws::Ws, storage, tangle, users, node_id, auth_config| {
+        .map(|ws: warp::ws::Ws, storage, tangle, users, local, auth_config| {
             // This will call our function if the handshake succeeds.
-            ws.on_upgrade(move |socket| user_connected(socket, storage, tangle, users, node_id, auth_config))
+            ws.on_upgrade(move |socket| user_connected(socket, storage, tangle, users, local, auth_config))
         })
 }
 
 pub(crate) fn api_routes(
     rest_api_config: RestApiConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-
-    let allowed_routes = warp::get()
-        .and(warp::path!("api" / "v1" / "info" / ..))
-        .or(warp::get().and(warp::path!("api" / "v1" / "messages" / ..)))
-        .or(warp::get().and(warp::path!("api" / "v1" / "outputs" / ..)))
-        .or(warp::get().and(warp::path!("api" / "v1" / "addresses" / ..)))
-        .or(warp::get().and(warp::path!("api" / "v1" / "milestones" / ..)))
-        .or(warp::get().and(warp::path!("api" / "v1" / "peers" / ..)))
-        .or(warp::post().and(warp::path!("api" / "v1" / "peers" / ..)))
-        .or(warp::delete().and(warp::path!("api" / "v1" / "peers" / ..)));
-
-    allowed_routes
+    warp::path!("api" / ..)
         .and(reverse_proxy_filter(
             "".to_string(),
             "http://".to_owned() + &rest_api_config.bind_socket_addr().to_string() + "/",
         ))
-        .map(|_, res| res)
+        .map(|res| res)
 }
 
 pub(crate) fn auth_route(
@@ -151,13 +127,7 @@ pub(crate) fn routes<S: NodeStorageBackend>(
     index_filter()
         .or(asset_routes())
         .or(page_routes())
-        .or(ws_routes(
-            storage,
-            tangle,
-            users,
-            local.peer_id().to_string(),
-            auth_config.clone(),
-        ))
-        .or(api_routes( rest_api_config))
+        .or(ws_routes(storage, tangle, users, local.clone(), auth_config.clone()))
+        .or(api_routes(rest_api_config))
         .or(auth_route(local, auth_config))
 }

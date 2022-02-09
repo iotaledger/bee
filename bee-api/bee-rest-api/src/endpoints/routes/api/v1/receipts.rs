@@ -37,6 +37,6 @@ pub(crate) fn receipts<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> Result<impl 
     }
 
     Ok(warp::reply::json(&SuccessBody::new(ReceiptsResponse {
-        receipts: receipts_dto
+        receipts: receipts_dto,
     })))
 }

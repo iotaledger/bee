@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use multiaddr::{Multiaddr, Protocol};
-use regex::Regex;
+use regex::RegexSet;
 use serde::Deserialize;
 
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
@@ -130,31 +130,19 @@ impl RestApiConfigBuilder {
         let jwt_salt = self.jwt_salt.unwrap_or_else(|| DEFAULT_JWT_SALT.to_string());
 
         let public_routes = {
-            let mut ret = Vec::new();
-            for route in self
+            let routes = self
                 .public_routes
-                .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|s| s.to_string()).collect())
-            {
-                let mut escaped: String = regex::escape(&route);
-                escaped = escaped.replace("\\*", ".*");
-                escaped.push('$');
-                ret.push(Regex::new(&escaped).expect(&format!("invalid public route {}", route)))
-            }
-            ret.into_boxed_slice()
+                .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|r| r.to_string()).collect());
+            RegexSet::new(routes.iter().map(|r| route_to_regex(&r)).collect::<Vec<String>>())
+                .expect(&format!("invalid public route provided"))
         };
 
         let protected_routes = {
-            let mut ret = Vec::new();
-            for route in self
+            let routes = self
                 .protected_routes
-                .unwrap_or_else(|| DEFAULT_PROTECTED_ROUTES.iter().map(|s| s.to_string()).collect())
-            {
-                let mut escaped: String = regex::escape(&route);
-                escaped = escaped.replace("\\*", ".*");
-                escaped.push('$');
-                ret.push(Regex::new(&escaped).expect(&format!("invalid protected route {}", route)))
-            }
-            ret.into_boxed_slice()
+                .unwrap_or_else(|| DEFAULT_PROTECTED_ROUTES.iter().map(|r| r.to_string()).collect());
+            RegexSet::new(routes.iter().map(|r| route_to_regex(&r)).collect::<Vec<String>>())
+                .expect(&format!("invalid protected route provided"))
         };
 
         let feature_proof_of_work = self.feature_proof_of_work.unwrap_or(DEFAULT_FEATURE_PROOF_OF_WORK);
@@ -181,9 +169,9 @@ pub struct RestApiConfig {
     /// JWT salt for REST API.
     pub(crate) jwt_salt: String,
     /// Routes that are available for public use and don't need JWT authentication.
-    pub(crate) public_routes: Box<[Regex]>,
+    pub(crate) public_routes: RegexSet,
     /// Routes that are protected and need JWT authentication.
-    pub(crate) protected_routes: Box<[Regex]>,
+    pub(crate) protected_routes: RegexSet,
     /// Enables/disables the proof-of-work feature on the node.
     pub(crate) feature_proof_of_work: bool,
     /// Describes the white flag solidification timeout.
@@ -207,12 +195,12 @@ impl RestApiConfig {
     }
 
     /// Returns all the routes that are available for public use.
-    pub fn public_routes(&self) -> &[Regex] {
+    pub fn public_routes(&self) -> &RegexSet {
         &self.public_routes
     }
 
     /// Returns all the routes that need JWT authentication.
-    pub fn protected_routes(&self) -> &[Regex] {
+    pub fn protected_routes(&self) -> &RegexSet {
         &self.protected_routes
     }
 
@@ -225,4 +213,15 @@ impl RestApiConfig {
     pub fn white_flag_solidification_timeout(&self) -> u64 {
         self.white_flag_solidification_timeout
     }
+}
+
+pub fn route_to_regex(route: &str) -> String {
+    // Escape the string to make sure a regex can be built from it.
+    // Existing wildcards `*` get escaped to `\\*`.
+    let mut escaped: String = regex::escape(route);
+    // Convert the escaped wildcard to a valid regex.
+    escaped = escaped.replace("\\*", ".*");
+    // End the regex.
+    escaped.push('$');
+    escaped
 }

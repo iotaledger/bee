@@ -6,7 +6,6 @@ pub(crate) enum CustomRejection {
     InvalidCredentials,
     InvalidJwt,
     InternalError,
-    Forbidden,
     BadRequest(&'static str),
 }
 

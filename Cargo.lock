@@ -434,6 +434,7 @@ dependencies = [
  "futures",
  "hex",
  "iota-crypto",
+ "lazy_static",
  "log",
  "multiaddr",
  "num_cpus",

@@ -16,6 +16,7 @@ use crate::{
         },
     },
     storage::NodeStorageBackend,
+    Local,
 };
 
 use bee_runtime::{resource::ResourceHandle, shutdown_stream::ShutdownStream};
@@ -28,6 +29,7 @@ use tokio::sync::{mpsc, RwLock};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::ws::{Message, WebSocket};
 
+use bee_rest_api::endpoints::permission::DASHBOARD_AUDIENCE_CLAIM;
 use std::{
     collections::{HashMap, HashSet},
     sync::{
@@ -67,7 +69,7 @@ pub(crate) async fn user_connected<S: NodeStorageBackend>(
     storage: ResourceHandle<S>,
     tangle: ResourceHandle<Tangle<S>>,
     users: WsUsers,
-    node_id: String,
+    local: Local,
     auth_config: DashboardAuthConfig,
 ) {
     // Use a counter to assign a new unique ID for this user.
@@ -111,7 +113,7 @@ pub(crate) async fn user_connected<S: NodeStorageBackend>(
                 break;
             }
         };
-        user_message(user_id, msg, &users, &tangle, &storage, &node_id, &auth_config).await;
+        user_message(user_id, msg, &users, &tangle, &storage, &local, &auth_config).await;
     }
 
     // ws_rx stream will keep processing as long as the user stays
@@ -128,7 +130,7 @@ async fn user_message<S: NodeStorageBackend>(
     users: &WsUsers,
     tangle: &Tangle<S>,
     storage: &S,
-    node_id: &str,
+    local: &Local,
     auth_config: &DashboardAuthConfig,
 ) {
     if !msg.is_binary() {
@@ -166,19 +168,21 @@ async fn user_message<S: NodeStorageBackend>(
                     let jwt = JsonWebToken::from(match String::from_utf8(bytes[2..].to_vec()) {
                         Ok(jwt) => jwt,
                         Err(e) => {
-                            error!("Invalid provided JWT: {}", e);
+                            error!("Invalid JWT provided: {}", e);
                             return;
                         }
                     });
                     if jwt
                         .validate(
-                            node_id.to_owned(),
+                            local.peer_id().to_string(),
                             auth_config.user().to_owned(),
-                            AUDIENCE_CLAIM.to_owned(),
-                            b"secret",
+                            DASHBOARD_AUDIENCE_CLAIM.to_owned(),
+                            true,
+                            local.keypair().secret().as_ref(),
                         )
                         .is_err()
                     {
+                        error!("Invalid JWT provided.");
                         return;
                     }
                 }
