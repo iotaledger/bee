@@ -212,6 +212,8 @@ pub struct RegularTransactionEssenceDto {
     #[serde(rename = "networkId")]
     pub network_id: String,
     pub inputs: Vec<InputDto>,
+    #[serde(rename = "inputsCommitment")]
+    pub inputs_commitment: String,
     pub outputs: Vec<OutputDto>,
     pub payload: Option<PayloadDto>,
 }
@@ -222,6 +224,7 @@ impl From<&RegularTransactionEssence> for RegularTransactionEssenceDto {
             kind: RegularTransactionEssence::KIND,
             network_id: value.network_id().to_string(),
             inputs: value.inputs().iter().map(Into::into).collect::<Vec<_>>(),
+            inputs_commitment: hex::encode(value.inputs_commitment()),
             outputs: value.outputs().iter().map(Into::into).collect::<Vec<_>>(),
             payload: match value.payload() {
                 Some(Payload::TaggedData(i)) => Some(PayloadDto::TaggedData(Box::new(i.as_ref().into()))),
