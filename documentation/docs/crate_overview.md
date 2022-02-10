@@ -1,5 +1,5 @@
 ---
-description: In this section you will find an overview of all the crates that make up Bee.
+description: In this section, you will find an overview of all the crates that make up Bee.
 image: /img/logo/bee_logo.png
 keywords:
 - troubleshooting
@@ -8,7 +8,7 @@ keywords:
 ---
 # Overview
 
-In this section you will find an overview of all the crates that make up Bee.  
+In this section, you will find references to all of the crates that make up Bee.  
 
 
 ## bee-api
