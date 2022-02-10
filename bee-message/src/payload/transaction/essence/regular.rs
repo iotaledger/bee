@@ -45,7 +45,7 @@ impl RegularTransactionEssenceBuilder {
         self
     }
 
-    /// Add inputs_commitment to a [`RegularTransactionEssenceBuilder`].
+    /// Adds an inputs commitment to a [`RegularTransactionEssenceBuilder`].
     pub fn with_inputs_commitment(mut self, inputs_commitment: [u8; 32]) -> Self {
         self.inputs_commitment = inputs_commitment;
         self
