@@ -42,7 +42,7 @@ pub(crate) type Bech32Hrp = String;
 
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
 
-pub async fn init<N: Node>(
+pub async fn init_full_node<N: Node>(
     node_id: PeerId,
     keypair: Keypair,
     rest_api_config: RestApiConfig,
@@ -54,7 +54,7 @@ pub async fn init<N: Node>(
 where
     N::Backend: StorageBackend,
 {
-    node_builder.with_worker_cfg::<ApiWorker>((
+    node_builder.with_worker_cfg::<ApiWorkerFullNode>((
         node_id,
         keypair,
         rest_api_config,
@@ -64,9 +64,10 @@ where
     ))
 }
 
-pub struct ApiWorker;
+pub struct ApiWorkerFullNode;
+
 #[async_trait]
-impl<N: Node> Worker<N> for ApiWorker
+impl<N: Node> Worker<N> for ApiWorkerFullNode
 where
     N::Backend: StorageBackend,
 {
@@ -166,4 +167,40 @@ pub struct ApiArgs<B: StorageBackend> {
     pub message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     pub message_requester: MessageRequesterWorker,
     pub consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
+}
+
+pub async fn init_entry_node<N: Node>(rest_api_config: RestApiConfig, node_builder: N::Builder) -> N::Builder
+where
+    N::Backend: StorageBackend,
+{
+    node_builder.with_worker_cfg::<ApiWorkerEntryNode>(rest_api_config)
+}
+
+pub struct ApiWorkerEntryNode;
+
+#[async_trait]
+impl<N: Node> Worker<N> for ApiWorkerEntryNode
+where
+    N::Backend: StorageBackend,
+{
+    type Config = RestApiConfig;
+    type Error = WorkerError;
+
+    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+        node.spawn::<Self, _, _>(|shutdown| async move {
+            info!("Running.");
+
+            let health = warp::path("health").map(|| StatusCode::OK).recover(handle_rejection);
+
+            let (_, server) = warp::serve(health).bind_with_graceful_shutdown(config.bind_socket_addr(), async {
+                shutdown.await.ok();
+            });
+
+            server.await;
+
+            info!("Stopped.");
+        });
+
+        Ok(Self)
+    }
 }

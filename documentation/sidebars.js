@@ -30,6 +30,10 @@ module.exports = {
         type: 'doc',
         id: 'getting_started/security_101',
         label: 'Security 101',
+      }, {
+        type: 'doc',
+        id: 'getting_started/docker',
+        label: 'Using Docker',
       }, ],
     },
     {

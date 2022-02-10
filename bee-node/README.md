@@ -78,3 +78,7 @@ cargo build --release
 cp config.example.toml config.toml
 ../target/release/bee
 ```
+
+# Using Docker
+
+We also provide a `Dockerfile` that allows you to quickly deploy a Bee node. Please refer to the [Docker](../documentation/docs/getting_started/docker.md) section of the Bee documentation for more information.

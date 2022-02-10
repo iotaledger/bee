@@ -8,6 +8,7 @@ use crate::{
 };
 
 use bee_autopeering::AutopeeringConfig;
+use bee_rest_api::endpoints::config::RestApiConfig;
 
 use fern_logger::LoggerConfig;
 
@@ -22,6 +23,8 @@ pub struct EntryNodeConfig {
     pub logger_config: LoggerConfig,
     /// Autopeering.
     pub autopeering_config: AutopeeringConfig,
+    /// REST API.
+    pub rest_api_config: RestApiConfig,
 }
 
 impl EntryNodeConfig {
@@ -44,6 +47,7 @@ impl EntryNodeConfig {
             network_spec: node_cfg.network_spec,
             logger_config: node_cfg.logger_config,
             autopeering_config: node_cfg.autopeering_config,
+            rest_api_config: node_cfg.rest_api_config,
         }
     }
 }
