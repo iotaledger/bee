@@ -38,7 +38,7 @@ async fn update_status() -> Result<(), IndexerError> {
 
     let res = indexer
         .alias_outputs_with_filters(AliasFilterOptions {
-            //state_controller: Some(state_controller),
+            // state_controller: Some(state_controller),
             page_size: 1,
             ..Default::default()
         })
@@ -48,7 +48,7 @@ async fn update_status() -> Result<(), IndexerError> {
 
     let res2 = indexer
         .alias_outputs_with_filters(AliasFilterOptions {
-            //state_controller: Some(state_controller),
+            // state_controller: Some(state_controller),
             page_size: 1,
             cursor: res.cursor,
             ..Default::default()

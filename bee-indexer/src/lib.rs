@@ -11,29 +11,21 @@ pub(crate) mod types;
 
 // TODO: Check `pub(crate)` visibility of all types.
 
-use chrono::Local;
 use std::time::SystemTime;
 
-use bee_ledger::{
-    types::CreatedOutput,
-    workers::event::{OutputConsumed, OutputCreated},
-};
+use bee_ledger::workers::event::{OutputConsumed, OutputCreated};
 use bee_message::{
     address::Address,
     milestone::MilestoneIndex,
     output::{Output, OutputId},
 };
 
-use packable::{Packable, PackableExt};
+use packable::PackableExt;
 
 use sea_orm::{
     prelude::*, ActiveModelTrait, Condition, ConnectionTrait, Database, DatabaseConnection, EntityTrait,
     FromQueryResult, JoinType, NotSet, Order, Schema, Set,
 };
-
-use chrono::NaiveDateTime;
-
-use tokio_stream::StreamExt;
 
 use sea_query::{Alias, Cond, Expr};
 use types::{AddressDb, MilestoneIndexDb};
@@ -45,13 +37,6 @@ pub struct Indexer {
 }
 
 pub const HEX_CURSOR_LENGTH: usize = (std::mem::size_of::<MilestoneIndex>() + OutputId::LENGTH) * 2;
-
-#[inline(always)]
-fn offset_to_naive_date_time(offset: &[u8]) -> Result<NaiveDateTime, IndexerError> {
-    let bytes = (&offset[0..4]).try_into().map_err(IndexerError::OffsetParseError)?;
-    let timestamp_secs = u32::from_le_bytes(bytes) as i64;
-    Ok(NaiveDateTime::from_timestamp(timestamp_secs, 0))
-}
 
 impl Indexer {
     pub async fn new() -> Result<Self, IndexerError> {
@@ -261,19 +246,9 @@ pub struct IndexedOutputs {
 mod test {
     use super::*;
 
-    use chrono::NaiveDate;
-
     #[test]
     fn check_offset_length() {
         assert_eq!(HEX_CURSOR_LENGTH, 76);
-    }
-
-    #[test]
-    fn offset_to_date_time() {
-        let offset = &42u32.to_le_bytes();
-        let expected = NaiveDate::from_ymd(1970, 1, 1).and_hms(0, 0, 42);
-        let result = offset_to_naive_date_time(offset).unwrap();
-        assert_eq!(result, expected);
     }
 
     // TODO: Testcase for max amount transaction

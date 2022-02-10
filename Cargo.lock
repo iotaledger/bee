@@ -307,16 +307,12 @@ dependencies = [
  "bee-ledger",
  "bee-message",
  "bee-test",
- "chrono",
- "dotenv",
  "hex",
- "itertools",
  "packable",
  "sea-orm",
  "sea-query",
  "sqlx",
  "tokio",
- "tokio-stream",
 ]
 
 [[package]]

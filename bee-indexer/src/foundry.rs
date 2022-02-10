@@ -9,4 +9,3 @@ pub(crate) struct Foundry {
     pub address: Option<String>,
     pub milestone_index: String,
 }
-

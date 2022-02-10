@@ -5,14 +5,9 @@ use bee_indexer::{AliasFilterOptions, Indexer, IndexerError};
 use bee_ledger::workers::event::OutputCreated;
 use bee_message::{milestone::MilestoneIndex, output::Output};
 use bee_test::rand::{
-    bytes::rand_bytes_array,
     message::rand_message_id,
-    milestone::rand_milestone_index,
-    number::rand_number,
     output::{rand_alias_output, rand_output_id},
 };
-
-use itertools::Itertools;
 
 fn random_created_alias() -> OutputCreated {
     OutputCreated {
@@ -23,7 +18,7 @@ fn random_created_alias() -> OutputCreated {
 }
 
 #[tokio::test]
-async fn page_size() -> Result<(), IndexerError> {
+async fn pagination() -> Result<(), IndexerError> {
     let num_outputs = 10;
     let page_size = 4;
 
@@ -37,9 +32,6 @@ async fn page_size() -> Result<(), IndexerError> {
     for created in outputs.iter() {
         indexer.process_created_output(&created).await?;
     }
-
-    println!("Outputs: {:#?}", outputs.iter().map(|c| c.output_id).collect::<Vec<_>>());
-    println!("----------");
 
     assert_eq!(
         indexer
@@ -60,30 +52,24 @@ async fn page_size() -> Result<(), IndexerError> {
     assert_eq!(page_1.output_ids.len(), page_size as usize, "Page 1");
     assert!(page_1.cursor.is_some());
 
-    println!("{:#?}", page_1);
-
     let page_2 = indexer
-    .alias_outputs_with_filters(AliasFilterOptions {
-        page_size,
-        cursor: page_1.cursor,
-        ..Default::default()
-    })
-    .await?;
-
-    println!("{:#?}", page_2);
+        .alias_outputs_with_filters(AliasFilterOptions {
+            page_size,
+            cursor: page_1.cursor,
+            ..Default::default()
+        })
+        .await?;
 
     assert_eq!(page_2.output_ids.len(), page_size as usize, "Page 2");
     assert!(page_2.cursor.is_some());
 
     let page_3 = indexer
-    .alias_outputs_with_filters(AliasFilterOptions {
-        page_size,
-        cursor: page_2.cursor,
-        ..Default::default()
-    })
-    .await?;
-
-    println!("{:#?}", page_3);
+        .alias_outputs_with_filters(AliasFilterOptions {
+            page_size,
+            cursor: page_2.cursor,
+            ..Default::default()
+        })
+        .await?;
 
     assert_eq!(page_3.output_ids.len(), num_outputs % page_size as usize, "Page 3");
     assert!(page_3.cursor.is_none());
