@@ -11,7 +11,7 @@ keywords:
 # Nodes 101
 
 The IOTA network is a distributed type of network called the Tangle. The network is distributed among multiple servers
-called nodes, and nodes are the backbone of an IOTA network. Here, you will learn what nodes do in an IOTA network.
+called nodes, and nodes are the backbone of an IOTA network. In this article, you will learn what nodes do in an IOTA network.
 
 Nodes are responsible for:
 
@@ -22,7 +22,7 @@ Nodes are responsible for:
 ## Attaching New Messages to the Tangle
 
 A _message_ is a data structure that is actually being broadcast in the IOTA network and represents a vertex in the
-Tangle graph. When nodes receive a new message, they attach it to the Tangle by adding the message to their local database. For the definition of a message, take a look at our [Messages, payloads, and transactions](https://chrysalis.docs.iota.org/guides/dev_guide#messages-payloads-and-transactions) guide.
+Tangle graph. When nodes receive a new message, they attach it to the Tangle by adding the message to their local database. For the definition of a message, take a look at the [Messages, payloads, and transactions guide](https://wiki.iota.org/chrysalis-docs/guides/developer#messages-payloads-and-transactions) in the [Chrysalis documentation](https://wiki.iota.org/chrysalis-docs/welcome).
 
 As a result, at any point in time, all nodes may have different messages in their local databases. These messages make up a node's view of the Tangle.
 
@@ -48,7 +48,7 @@ When nodes detect double spends, they must decide which message to consider conf
 
 ## Keeping a Record of the Balances on Addresses Via `UTXO`
 
-All nodes keep a record of the [Unspent Transaction Outputs (UTXO)](https://chrysalis.docs.iota.org/guides/dev_guide#unspent-transaction-output-utxo) so they can do the following:
+All nodes keep a record of the [Unspent Transaction Outputs (UTXO)](https://wiki.iota.org/chrysalis-docs/guides/developer#unspent-transaction-output-utxo) so they can do the following:
 
 * Check that a transaction is not transferring more IOTA tokens than are available on the address.
 * Respond to clients' requests for their balance.
@@ -62,7 +62,7 @@ Nodes come with two set of low-level APIs:
 * [Event API](#event-api).
 
 :::info
-Developers do not need to communicate with nodes using a mentioned low-level API. Developers can leverage the [iota client libraries](https://chrysalis.docs.iota.org/libraries) that provide a high-level abstraction to all features IOTA nodes provide, either on HTTP API level or Event API level.
+You do not need to communicate with nodes using the mentioned low-level API. You can leverage the [iota client libraries](https://wiki.iota.org/chrysalis-docs/libraries/overview) that provide a high-level abstraction to all features IOTA nodes provide, either on HTTP API level or Event API level.
 :::
 
 ### HTTP Rest API

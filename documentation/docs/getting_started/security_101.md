@@ -14,7 +14,7 @@ keywords:
 This section explains how and why node security is important while also providing a checklist of steps for running a reliable and secure node.
 
 :::info
-Servers that are reachable from the Internet are a constant target from security challengers. Please, make sure you follow the minimum security essentials found here.
+Servers that are reachable from the Internet are a constant target from security challengers. Please, make sure you follow the minimum security essentials summarized in this article.
 :::
 
 ## Securing Your Device
@@ -39,7 +39,7 @@ You can use a firewall to accomplish this, and all operating systems include fir
 On cloud platforms such as AWS, Azure, or GCP, you can even block ports on VPS networking settings.
 
 ## Deciding Whether to Enable Remote Proof of Work
-When you're configuring your node, you have the option to allow it to do Proof of Work (PoW). If you enable this feature, clients can ask your node to do remote PoW.
+When you are configuring your node, you have the option to allow it to do Proof of Work (PoW). If you enable this feature, clients can ask your node to do remote PoW.
 
 PoW takes time and uses your node's computational power. So consider enabling it according to your infrastructure.
 
