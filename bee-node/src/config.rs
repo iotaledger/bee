@@ -219,3 +219,23 @@ impl NetworkSpec {
         &self.hrp
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+
+    #[cfg(feature = "rocksdb")]
+    use bee_storage_rocksdb::storage::Storage;
+    #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
+    use bee_storage_sled::storage::Storage;
+
+    #[test]
+    fn config_files_conformity() -> Result<(), NodeConfigError> {
+        let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/config.stardust-testnet.toml"
+        ))?;
+        Ok(())
+    }
+}
