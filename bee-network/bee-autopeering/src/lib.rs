@@ -18,7 +18,7 @@
 //!
 //! ```no_run
 //! use bee_autopeering::{
-//!     config::AutopeeringConfigJsonBuilder,
+//!     config::AutopeeringConfigBuilder,
 //!     init,
 //!     stores::{SledPeerStore, SledPeerStoreConfig},
 //!     AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
@@ -40,7 +40,7 @@
 //!         "runAsEntryNode": false
 //!     }"#;
 //!
-//!     serde_json::from_str::<AutopeeringConfigJsonBuilder>(config_json)
+//!     serde_json::from_str::<AutopeeringConfigBuilder>(config_json)
 //!         .expect("error deserializing json config builder")
 //!         .finish()
 //! }

@@ -11,6 +11,7 @@ use core::cmp::Ordering;
 #[derive(Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestoneKeyRange {
+    #[serde(alias = "publicKey")]
     public_key: String,
     // Inclusive bound.
     start: MilestoneIndex,

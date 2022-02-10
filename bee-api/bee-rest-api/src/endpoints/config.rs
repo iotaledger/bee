@@ -71,10 +71,15 @@ pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: u64 = 2;
 #[derive(Default, Deserialize)]
 #[must_use]
 pub struct RestApiConfigBuilder {
+    #[serde(alias = "bindAddress")]
     bind_address: Option<Multiaddr>,
+    #[serde(alias = "publicRoutes")]
     public_routes: Option<Vec<String>>,
+    #[serde(alias = "allowedIps")]
     allowed_ips: Option<Vec<IpAddr>>,
+    #[serde(alias = "featureProofOfWork")]
     feature_proof_of_work: Option<bool>,
+    #[serde(alias = "whiteFlagSolidifictionTimeout")]
     white_flag_solidification_timeout: Option<u64>,
 }
 
