@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.3.0 - 2022-XX-XX
+## 0.4.0 - 2022-XX-XX
 
 ### Changed
 
@@ -28,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - `ConflictReason::InvalidDustAllowance`;
+
+## 0.3.0 - 2022-XX-XX
+
+### Fixed
+
+- Compilation with rustc 1.60.0-nightly (0c292c966 2022-02-08);
 
 ## 0.2.0 - 2021-12-07
 
