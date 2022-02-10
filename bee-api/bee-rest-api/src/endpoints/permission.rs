@@ -49,27 +49,28 @@ pub(crate) fn check_permission<B: StorageBackend>(
                 }
 
                 let jwt = extract_jwt(&headers)?;
+                // Decode the JWT payload to find out how to validate it.
                 let jwt_payload = {
                     let jwt_string = jwt.to_string();
-                    let encoded = jwt_string.trim_start_matches(".").trim_end_matches(".");
+                    let split = jwt_string.split(".").collect::<Vec<&str>>();
+                    if split.len() < 3 {
+                        return Err(reject::custom(CustomRejection::Forbidden));
+                    }
+                    let encoded = split[1];
                     let decoded = base64::decode(encoded).map_err(|_| reject::custom(CustomRejection::Forbidden))?;
                     String::from_utf8(decoded.clone()).map_err(|_| CustomRejection::Forbidden)?
                 };
 
-                if jwt_payload.contains("api") {
-                    if let Ok(jwt) = validate_api_jwt(&jwt, &args) {
-                        if jwt.claims.audience() == API_AUDIENCE_CLAIM {
-                            if args.rest_api_config.protected_routes.is_match(path.as_str()) {
-                                return Ok(());
-                            }
+                if jwt_payload.contains(&format!("\"aud\":\"{}\"", API_AUDIENCE_CLAIM)) {
+                    if let Ok(_) = validate_api_jwt(&jwt, &args) {
+                        if args.rest_api_config.protected_routes.is_match(path.as_str()) {
+                            return Ok(());
                         }
                     }
-                } else if jwt_payload.contains("dashboard") {
-                    if let Ok(jwt) = validate_dashboard_jwt(&jwt, &args) {
-                        if jwt.claims.audience() == DASHBOARD_AUDIENCE_CLAIM {
-                            if DASHBOARD_ROUTES.is_match(path.as_str()) {
-                                return Ok(());
-                            }
+                } else if jwt_payload.contains(&format!("\"aud\":\"{}\"", DASHBOARD_AUDIENCE_CLAIM)) {
+                    if let Ok(_) = validate_dashboard_jwt(&jwt, &args) {
+                        if DASHBOARD_ROUTES.is_match(path.as_str()) {
+                            return Ok(());
                         }
                     }
                 }
