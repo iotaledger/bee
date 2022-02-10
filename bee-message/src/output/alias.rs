@@ -302,7 +302,7 @@ impl Packable for AliasOutput {
         let alias_id = AliasId::unpack::<_, VERIFY>(unpacker).infallible()?;
         let state_index = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
         let state_metadata = BoxedSlicePrefix::<u8, StateMetadataLength>::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| Error::InvalidStateMetadataLength(err.into_prefix().into()))?;
+            .map_packable_err(|err| Error::InvalidStateMetadataLength(err.into_prefix_err().into()))?;
 
         let foundry_counter = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
 

@@ -31,7 +31,7 @@ pub(crate) type ReceiptFundsCount =
 pub struct ReceiptPayload {
     migrated_at: MilestoneIndex,
     last: bool,
-    #[packable(unpack_error_with = |e| e.unwrap_packable_or_else(|p| Error::InvalidReceiptFundsCount(p.into())))]
+    #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidReceiptFundsCount(p.into())))]
     #[packable(verify_with = verify_funds)]
     funds: VecPrefix<MigratedFundsEntry, ReceiptFundsCount>,
     #[packable(verify_with = verify_transaction)]

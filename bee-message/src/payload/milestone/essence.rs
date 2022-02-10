@@ -195,7 +195,7 @@ impl Packable for MilestoneEssence {
         let next_pow_score_milestone_index = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
 
         let public_keys = VecPrefix::<[u8; Self::PUBLIC_KEY_LENGTH], PublicKeyCount>::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| Error::MilestoneInvalidSignatureCount(err.into_prefix().into()))?;
+            .map_packable_err(|err| Error::MilestoneInvalidSignatureCount(err.into_prefix_err().into()))?;
 
         let receipt = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
 

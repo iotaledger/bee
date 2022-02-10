@@ -10,10 +10,7 @@ use packable::prefix::{UnpackPrefixError, VecPrefix};
 use core::convert::Infallible;
 
 fn unpack_prefix_error_to_error(err: UnpackPrefixError<bee_message::Error, Infallible>) -> Error {
-    match err {
-        UnpackPrefixError::Packable(err) => err.into(),
-        UnpackPrefixError::Prefix(err) => match err {},
-    }
+    err.into_item_err().into()
 }
 
 /// A type to record output and treasury changes that happened within a milestone.

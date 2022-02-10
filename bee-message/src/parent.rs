@@ -23,7 +23,7 @@ pub(crate) type ParentCount = BoundedU8<{ *Parents::COUNT_RANGE.start() }, { *Pa
 #[derive(Clone, Debug, Eq, PartialEq, Deref, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[deref(forward)]
-#[packable(unpack_error = Error, with = |e| Error::InvalidParentCount(e.into_prefix().into()))]
+#[packable(unpack_error = Error, with = |e| Error::InvalidParentCount(e.into_prefix_err().into()))]
 pub struct Parents(#[packable(verify_with = verify_parents)] BoxedSlicePrefix<MessageId, ParentCount>);
 
 #[allow(clippy::len_without_is_empty)]

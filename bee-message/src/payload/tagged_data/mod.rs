@@ -22,9 +22,9 @@ pub(crate) type TaggedDataLength = BoundedU32<0, { Message::LENGTH_MAX as u32 }>
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct TaggedDataPayload {
-    #[packable(unpack_error_with = |err| Error::InvalidTagLength(err.into_prefix().into()))]
+    #[packable(unpack_error_with = |err| Error::InvalidTagLength(err.into_prefix_err().into()))]
     tag: BoxedSlicePrefix<u8, TagLength>,
-    #[packable(unpack_error_with = |err| Error::InvalidTaggedDataLength(err.into_prefix().into()))]
+    #[packable(unpack_error_with = |err| Error::InvalidTaggedDataLength(err.into_prefix_err().into()))]
     data: BoxedSlicePrefix<u8, TaggedDataLength>,
 }
 
