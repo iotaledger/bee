@@ -113,7 +113,6 @@ impl AutopeeringConfig {
 /// The autopeering config builder.
 #[derive(Clone, Debug, Deserialize)]
 #[must_use]
-#[serde(rename = "autopeering")]
 pub struct AutopeeringConfigBuilder {
     /// Whether autopeering should be enabled.
     pub enabled: bool,

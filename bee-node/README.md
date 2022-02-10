@@ -75,7 +75,7 @@ cargo build --release
 ## Running
 
 ```sh
-cp config.example.json config.json
+cp config.template.json config.json
 ../target/release/bee
 ```
 

@@ -21,8 +21,8 @@ use std::{error::Error, path::Path};
 
 const KEYPAIR_STR_LENGTH: usize = 128;
 
-const CONFIG_PATH: &str = "./config.json";
-const IDENTITY_PATH: &str = "./identity.key";
+const CONFIG_PATH_DEFAULT: &str = "./config.json";
+const IDENTITY_PATH_DEFAULT: &str = "./identity.key";
 
 /// The entry point of the node software.
 #[tokio::main(flavor = "multi_thread")]
@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Deserialize the config.
     let identity_path = cl_args
         .identity_path()
-        .unwrap_or_else(|| Path::new(IDENTITY_PATH))
+        .unwrap_or_else(|| Path::new(IDENTITY_PATH_DEFAULT))
         .to_owned();
     let (identity_field, config) = deserialize_config(cl_args);
 
@@ -135,7 +135,7 @@ fn migrate_keypair(encoded: String) -> Result<Keypair, IdentityMigrationError> {
 }
 
 fn deserialize_config(cl_args: ClArgs) -> (Option<String>, NodeConfig<Storage>) {
-    match NodeConfigBuilder::<Storage>::from_file(cl_args.config_path().unwrap_or_else(|| Path::new(CONFIG_PATH))) {
+    match NodeConfigBuilder::<Storage>::from_file(cl_args.config_path().unwrap_or_else(|| Path::new(CONFIG_PATH_DEFAULT))) {
         Ok(builder) => builder.apply_args(&cl_args).finish(),
         Err(e) => panic!("Failed to create the node config builder: {}", e),
     }
