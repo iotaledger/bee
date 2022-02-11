@@ -19,6 +19,7 @@ use alloc::vec::Vec;
 pub struct RegularTransactionEssenceBuilder {
     network_id: u64,
     inputs: Vec<Input>,
+    inputs_commitment: [u8; 32],
     outputs: Vec<Output>,
     payload: Option<Payload>,
 }
@@ -32,7 +33,7 @@ impl RegularTransactionEssenceBuilder {
         }
     }
 
-    /// Adds inputs to a [`RegularTransactionEssenceBuilder`]
+    /// Adds inputs to a [`RegularTransactionEssenceBuilder`].
     pub fn with_inputs(mut self, inputs: Vec<Input>) -> Self {
         self.inputs = inputs;
         self
@@ -41,6 +42,12 @@ impl RegularTransactionEssenceBuilder {
     /// Add an input to a [`RegularTransactionEssenceBuilder`].
     pub fn add_input(mut self, input: Input) -> Self {
         self.inputs.push(input);
+        self
+    }
+
+    /// Adds an inputs commitment to a [`RegularTransactionEssenceBuilder`].
+    pub fn with_inputs_commitment(mut self, inputs_commitment: [u8; 32]) -> Self {
+        self.inputs_commitment = inputs_commitment;
         self
     }
 
@@ -83,6 +90,7 @@ impl RegularTransactionEssenceBuilder {
         Ok(RegularTransactionEssence {
             network_id: self.network_id,
             inputs,
+            inputs_commitment: self.inputs_commitment,
             outputs,
             payload,
         })
@@ -102,6 +110,8 @@ pub struct RegularTransactionEssence {
     #[packable(verify_with = verify_inputs)]
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidInputCount(p.into())))]
     inputs: BoxedSlicePrefix<Input, InputCount>,
+    /// BLAKE2b-256 hash of the serialized outputs referenced in inputs by their OutputId.
+    inputs_commitment: [u8; 32],
     #[packable(verify_with = verify_outputs)]
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidOutputCount(p.into())))]
     outputs: BoxedSlicePrefix<Output, OutputCount>,
@@ -126,6 +136,11 @@ impl RegularTransactionEssence {
     /// Returns the inputs of a [`RegularTransactionEssence`].
     pub fn inputs(&self) -> &[Input] {
         &self.inputs
+    }
+
+    /// Returns the inputs commitment of a [`RegularTransactionEssence`].
+    pub fn inputs_commitment(&self) -> &[u8; 32] {
+        &self.inputs_commitment
     }
 
     /// Returns the outputs of a [`RegularTransactionEssence`].
