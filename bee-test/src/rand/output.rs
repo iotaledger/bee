@@ -3,7 +3,7 @@
 
 use crate::rand::{
     address::rand_alias_address,
-    bytes::{rand_bytes, rand_bytes_array},
+    bytes::rand_bytes_array,
     message::rand_message_id,
     milestone::{rand_milestone_id, rand_milestone_index},
     number::{rand_number, rand_number_range},
@@ -102,16 +102,12 @@ pub fn rand_nft_output() -> output::NftOutput {
     // We need to make sure that `NftId` and `Address` don't match.
     let nft_id = output::NftId::from(rand_bytes_array());
 
-    output::NftOutput::build(
-        rand_number_range(Output::AMOUNT_RANGE),
-        nft_id,
-        rand_bytes(rand_number_range(0..output::NftOutput::IMMUTABLE_METADATA_LENGTH_MAX) as usize),
-    )
-    .unwrap()
-    .with_feature_blocks(feature_blocks)
-    .add_unlock_condition(rand_address_unlock_condition_different_from(&nft_id).into())
-    .finish()
-    .unwrap()
+    output::NftOutput::build(rand_number_range(Output::AMOUNT_RANGE), nft_id)
+        .unwrap()
+        .with_feature_blocks(feature_blocks)
+        .add_unlock_condition(rand_address_unlock_condition_different_from(&nft_id).into())
+        .finish()
+        .unwrap()
 }
 
 /// Generates a random ledger [`TreasuryOutput`].

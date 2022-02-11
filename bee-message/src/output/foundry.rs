@@ -50,6 +50,7 @@ pub struct FoundryOutputBuilder {
     token_scheme: TokenScheme,
     unlock_conditions: Vec<UnlockCondition>,
     feature_blocks: Vec<FeatureBlock>,
+    immutable_feature_blocks: Vec<FeatureBlock>,
 }
 
 impl FoundryOutputBuilder {
@@ -74,6 +75,7 @@ impl FoundryOutputBuilder {
             token_scheme,
             unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
+            immutable_feature_blocks: Vec::new(),
         })
     }
 
@@ -120,6 +122,23 @@ impl FoundryOutputBuilder {
     }
 
     ///
+    #[inline(always)]
+    pub fn add_immutable_feature_block(mut self, immutable_feature_block: FeatureBlock) -> Self {
+        self.immutable_feature_blocks.push(immutable_feature_block);
+        self
+    }
+
+    ///
+    #[inline(always)]
+    pub fn with_immutable_feature_blocks(
+        mut self,
+        immutable_feature_blocks: impl IntoIterator<Item = FeatureBlock>,
+    ) -> Self {
+        self.immutable_feature_blocks = immutable_feature_blocks.into_iter().collect();
+        self
+    }
+
+    ///
     pub fn finish(self) -> Result<FoundryOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
@@ -128,6 +147,13 @@ impl FoundryOutputBuilder {
         let feature_blocks = FeatureBlocks::new(self.feature_blocks)?;
 
         verify_allowed_feature_blocks(&feature_blocks, FoundryOutput::ALLOWED_FEATURE_BLOCKS)?;
+
+        let immutable_feature_blocks = FeatureBlocks::new(self.immutable_feature_blocks)?;
+
+        verify_allowed_feature_blocks(
+            &immutable_feature_blocks,
+            FoundryOutput::ALLOWED_IMMUTABLE_FEATURE_BLOCKS,
+        )?;
 
         Ok(FoundryOutput {
             amount: self.amount,
@@ -139,6 +165,7 @@ impl FoundryOutputBuilder {
             token_scheme: self.token_scheme,
             unlock_conditions,
             feature_blocks,
+            immutable_feature_blocks,
         })
     }
 }
@@ -162,6 +189,7 @@ pub struct FoundryOutput {
     token_scheme: TokenScheme,
     unlock_conditions: UnlockConditions,
     feature_blocks: FeatureBlocks,
+    immutable_feature_blocks: FeatureBlocks,
 }
 
 impl FoundryOutput {
@@ -172,6 +200,8 @@ impl FoundryOutput {
     const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::IMMUTABLE_ALIAS_ADDRESS;
     /// The set of allowed [`FeatureBlock`]s for an [`FoundryOutput`].
     pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
+    /// The set of allowed immutable [`FeatureBlock`]s for an [`FoundryOutput`].
+    pub const ALLOWED_IMMUTABLE_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
 
     /// Creates a new [`FoundryOutput`].
     #[inline(always)]
@@ -295,6 +325,12 @@ impl FoundryOutput {
     pub fn feature_blocks(&self) -> &[FeatureBlock] {
         &self.feature_blocks
     }
+
+    ///
+    #[inline(always)]
+    pub fn immutable_feature_blocks(&self) -> &[FeatureBlock] {
+        &self.immutable_feature_blocks
+    }
 }
 
 impl Packable for FoundryOutput {
@@ -310,6 +346,7 @@ impl Packable for FoundryOutput {
         self.token_scheme.pack(packer)?;
         self.unlock_conditions.pack(packer)?;
         self.feature_blocks.pack(packer)?;
+        self.immutable_feature_blocks.pack(packer)?;
 
         Ok(())
     }
@@ -343,6 +380,16 @@ impl Packable for FoundryOutput {
                 .map_err(UnpackError::Packable)?;
         }
 
+        let immutable_feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
+
+        if VERIFY {
+            verify_allowed_feature_blocks(
+                &immutable_feature_blocks,
+                FoundryOutput::ALLOWED_IMMUTABLE_FEATURE_BLOCKS,
+            )
+            .map_err(UnpackError::Packable)?;
+        }
+
         Ok(Self {
             amount,
             native_tokens,
@@ -353,6 +400,7 @@ impl Packable for FoundryOutput {
             token_scheme,
             unlock_conditions,
             feature_blocks,
+            immutable_feature_blocks,
         })
     }
 }

@@ -39,7 +39,6 @@ pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme, TOKEN_TAG_LE
 pub use foundry_id::FoundryId;
 pub(crate) use native_token::NativeTokenCount;
 pub use native_token::{NativeToken, NativeTokens};
-pub(crate) use nft::ImmutableMetadataLength;
 pub use nft::{NftOutput, NftOutputBuilder};
 pub use nft_id::NftId;
 pub use output_id::OutputId;
