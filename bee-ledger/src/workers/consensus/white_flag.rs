@@ -231,6 +231,8 @@ fn apply_regular_essence<B: StorageBackend>(
 ) -> Result<ConflictReason, Error> {
     let mut context = ValidationContext::new(metadata.milestone_index, metadata.milestone_timestamp, &essence);
 
+    // TODO check inputs commitment.
+
     for (index, input) in essence.inputs().iter().enumerate() {
         let (output_id, consumed_output) = match input {
             Input::Utxo(input) => {
