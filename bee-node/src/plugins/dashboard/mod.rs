@@ -109,7 +109,7 @@ where
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         // TODO: load them differently if possible
         let node_config = node.resource::<FullNodeConfig<N::Backend>>();
-        let rest_api_config = node_config.rest_api_config.clone();
+        let rest_api_config = node_config.rest_api.clone();
         let tangle = node.resource::<Tangle<N::Backend>>();
         let storage = node.storage();
 

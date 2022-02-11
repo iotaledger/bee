@@ -26,28 +26,28 @@ pub struct FullNodeConfig<S: NodeStorageBackend> {
     /// The specification of the network the node wants to participate in.
     pub network_spec: NetworkSpec,
     /// Logger.
-    pub logger_config: LoggerConfig,
+    pub logger: LoggerConfig,
     /// Gossip layer.
-    pub gossip_config: NetworkConfig,
+    pub gossip: NetworkConfig,
     /// Autopeering.
-    pub autopeering_config: AutopeeringConfig,
+    pub autopeering: AutopeeringConfig,
     /// Protocol layer.
-    pub protocol_config: ProtocolConfig,
+    pub protocol: ProtocolConfig,
     /// Node REST API.
-    pub rest_api_config: RestApiConfig,
+    pub rest_api: RestApiConfig,
     /// Snapshots.
-    pub snapshot_config: SnapshotConfig,
+    pub snapshot: SnapshotConfig,
     /// Pruning.
-    pub pruning_config: PruningConfig,
+    pub pruning: PruningConfig,
     /// Storage layer.
-    pub storage_config: S::Config,
+    pub storage: S::Config,
     /// Tangle.
-    pub tangle_config: TangleConfig,
+    pub tangle: TangleConfig,
     /// MQTT broker.
-    pub mqtt_config: MqttConfig,
+    pub mqtt: MqttConfig,
     /// Node dashboard.
     #[cfg(feature = "dashboard")]
-    pub dashboard_config: DashboardConfig,
+    pub dashboard: DashboardConfig,
 }
 
 impl<S: NodeStorageBackend> FullNodeConfig<S> {
@@ -71,18 +71,18 @@ impl<S: NodeStorageBackend> FullNodeConfig<S> {
             alias: node_cfg.alias,
             local,
             network_spec: node_cfg.network_spec,
-            logger_config: node_cfg.logger_config,
-            gossip_config: node_cfg.gossip_config,
-            autopeering_config: node_cfg.autopeering_config,
-            protocol_config: node_cfg.protocol_config,
-            rest_api_config: node_cfg.rest_api_config,
-            snapshot_config: node_cfg.snapshot_config,
-            pruning_config: node_cfg.pruning_config,
-            storage_config: node_cfg.storage_config,
-            tangle_config: node_cfg.tangle_config,
-            mqtt_config: node_cfg.mqtt_config,
+            logger: node_cfg.logger,
+            gossip: node_cfg.gossip,
+            autopeering: node_cfg.autopeering,
+            protocol: node_cfg.protocol,
+            rest_api: node_cfg.rest_api,
+            snapshot: node_cfg.snapshot,
+            pruning: node_cfg.pruning,
+            storage: node_cfg.storage,
+            tangle: node_cfg.tangle,
+            mqtt: node_cfg.mqtt,
             #[cfg(feature = "dashboard")]
-            dashboard_config: node_cfg.dashboard_config,
+            dashboard: node_cfg.dashboard,
         }
     }
 }
@@ -93,18 +93,18 @@ impl<S: NodeStorageBackend> Clone for FullNodeConfig<S> {
             alias: self.alias.clone(),
             local: self.local.clone(),
             network_spec: self.network_spec.clone(),
-            logger_config: self.logger_config.clone(),
-            gossip_config: self.gossip_config.clone(),
-            autopeering_config: self.autopeering_config.clone(),
-            protocol_config: self.protocol_config.clone(),
-            rest_api_config: self.rest_api_config.clone(),
-            snapshot_config: self.snapshot_config.clone(),
-            pruning_config: self.pruning_config.clone(),
-            storage_config: self.storage_config.clone(),
-            tangle_config: self.tangle_config.clone(),
-            mqtt_config: self.mqtt_config.clone(),
+            logger: self.logger.clone(),
+            gossip: self.gossip.clone(),
+            autopeering: self.autopeering.clone(),
+            protocol: self.protocol.clone(),
+            rest_api: self.rest_api.clone(),
+            snapshot: self.snapshot.clone(),
+            pruning: self.pruning.clone(),
+            storage: self.storage.clone(),
+            tangle: self.tangle.clone(),
+            mqtt: self.mqtt.clone(),
             #[cfg(feature = "dashboard")]
-            dashboard_config: self.dashboard_config.clone(),
+            dashboard: self.dashboard.clone(),
         }
     }
 }

@@ -116,7 +116,7 @@ impl NodeBuilder<EntryNode> for EntryNodeBuilder {
     async fn finish(mut self) -> Result<EntryNode, Self::Error> {
         let builder = self;
 
-        if !builder.config().autopeering_config.enabled() {
+        if !builder.config().autopeering.enabled() {
             return Err(EntryNodeError::DisabledAutopeering);
         }
 
@@ -225,10 +225,8 @@ async fn initialize_autopeering(
     let mut peerstore_options = RocksDbPeerStoreConfigOptions::default();
     peerstore_options.create_if_missing(true);
     peerstore_options.create_missing_column_families(true);
-    let peerstore_cfg = RocksDbPeerStoreConfig::new(
-        builder.config().autopeering_config.peer_storage_path(),
-        peerstore_options,
-    );
+    let peerstore_cfg =
+        RocksDbPeerStoreConfig::new(builder.config().autopeering.peer_storage_path(), peerstore_options);
 
     // A local entity that can sign outgoing messages, and announce services.
     let keypair = builder.config().local().keypair().clone();
@@ -237,7 +235,7 @@ async fn initialize_autopeering(
     let quit_signal = tokio::signal::ctrl_c();
 
     let autopeering_rx = bee_autopeering::init::<RocksDbPeerStore, _, _, _>(
-        builder.config().autopeering_config.clone(),
+        builder.config().autopeering.clone(),
         AUTOPEERING_VERSION,
         network_name,
         local,
@@ -259,7 +257,7 @@ fn create_local_autopeering_entity(keypair: Keypair, config: &EntryNodeConfig) -
     local.add_service(
         AUTOPEERING_SERVICE_NAME,
         ServiceProtocol::Udp,
-        config.autopeering_config.bind_addr().port(),
+        config.autopeering.bind_addr().port(),
     );
 
     local
@@ -271,7 +269,7 @@ async fn initialize_api(builder: EntryNodeBuilder) -> EntryNodeBuilder {
 
     let config = builder.config();
 
-    let rest_api_cfg = config.rest_api_config.clone();
+    let rest_api_cfg = config.rest_api.clone();
 
     let builder = bee_rest_api::endpoints::init_entry_node::<EntryNode>(rest_api_cfg, builder).await;
 

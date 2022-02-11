@@ -37,16 +37,22 @@ pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: u64 = 2;
 #[must_use]
 pub struct RestApiConfigBuilder {
     /// REST API binding address.
+    #[serde(alias = "bindAddress")]
     bind_address: Option<Multiaddr>,
     /// JWT salt for REST API.
+    #[serde(alias = "jwtSalt")]
     jwt_salt: Option<String>,
     /// Routes that are available for public use and don't need JWT authentication.
+    #[serde(alias = "publicRoutes")]
     public_routes: Option<Vec<String>>,
     /// Routes that are protected and need JWT authentication.
+    #[serde(alias = "protectedRoutes")]
     protected_routes: Option<Vec<String>>,
     /// Enables/disables the proof-of-work feature on the node.
+    #[serde(alias = "featureProofOfWork")]
     feature_proof_of_work: Option<bool>,
     /// Describes the white flag solidification timeout.
+    #[serde(alias = "whiteFlagSolidifictionTimeout")]
     white_flag_solidification_timeout: Option<u64>,
 }
 
