@@ -112,7 +112,7 @@ fn validate_dashboard_jwt<B: StorageBackend>(
 ) -> Result<TokenData<Claims>, Rejection> {
     jwt.validate(
         args.node_id.to_string(),
-        args.rest_api_config.jwt_salt.to_owned(), // Dashboard SALT MISSING
+        args.dashboard_user.to_owned(), // Dashboard SALT MISSING
         DASHBOARD_AUDIENCE_CLAIM.to_owned(),
         true,
         args.node_key_pair.secret().as_ref(),

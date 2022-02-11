@@ -39,6 +39,7 @@ use std::{any::TypeId, convert::Infallible, sync::Arc};
 
 pub(crate) type NetworkId = (String, u64);
 pub(crate) type Bech32Hrp = String;
+pub(crate) type DashboardUser = String;
 
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
 
@@ -49,6 +50,7 @@ pub async fn init_full_node<N: Node>(
     protocol_config: ProtocolConfig,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
+    dashboard_user: DashboardUser,
     node_builder: N::Builder,
 ) -> N::Builder
 where
@@ -61,6 +63,7 @@ where
         protocol_config,
         network_id,
         bech32_hrp,
+        dashboard_user,
     ))
 }
 
@@ -71,7 +74,15 @@ impl<N: Node> Worker<N> for ApiWorkerFullNode
 where
     N::Backend: StorageBackend,
 {
-    type Config = (PeerId, Keypair, RestApiConfig, ProtocolConfig, NetworkId, Bech32Hrp);
+    type Config = (
+        PeerId,
+        Keypair,
+        RestApiConfig,
+        ProtocolConfig,
+        NetworkId,
+        Bech32Hrp,
+        DashboardUser,
+    );
     type Error = WorkerError;
 
     fn dependencies() -> &'static [TypeId] {
@@ -91,6 +102,7 @@ where
             protocol_config: config.3,
             network_id: config.4,
             bech32_hrp: config.5,
+            dashboard_username: config.6,
             storage: node.storage(),
             bus: node.bus(),
             node_info: node.info(),
@@ -157,6 +169,7 @@ pub struct ApiArgs<B: StorageBackend> {
     pub protocol_config: ProtocolConfig,
     pub network_id: NetworkId,
     pub bech32_hrp: Bech32Hrp,
+    pub dashboard_user: DashboardUser,
     pub storage: ResourceHandle<B>,
     pub bus: ResourceHandle<Bus<'static>>,
     pub node_info: ResourceHandle<NodeInfo>,
