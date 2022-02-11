@@ -258,7 +258,7 @@ async fn initialize_gossip_layer<S: NodeStorageBackend>(
 
     let keypair = config.local().keypair().clone();
     let network_id = config.network_spec().id();
-    let gossip_cfg = config.gossip.clone();
+    let gossip_cfg = config.network.clone();
 
     let (builder, network_events) =
         bee_gossip::integrated::init::<FullNode<S>>(gossip_cfg, keypair, network_id, builder)
@@ -373,7 +373,7 @@ fn create_local_autopeering_entity<S: NodeStorageBackend>(
 
     // Announce the gossip service.
     // TODO: Make the bind address a SocketAddr instead of a Multiaddr
-    let mut bind_addr = config.gossip.bind_multiaddr().clone();
+    let mut bind_addr = config.network.bind_multiaddr().clone();
     if let Some(Protocol::Tcp(port)) = bind_addr.pop() {
         local.add_service(config.network_spec().name(), ServiceProtocol::Tcp, port);
     } else {

@@ -52,7 +52,7 @@ pub struct NodeConfig<S: NodeStorageBackend> {
     pub(crate) alias: String,
     pub(crate) network_spec: NetworkSpec,
     pub(crate) logger: LoggerConfig,
-    pub(crate) gossip: NetworkConfig,
+    pub(crate) network: NetworkConfig,
     pub(crate) autopeering: AutopeeringConfig,
     pub(crate) protocol: ProtocolConfig,
     pub(crate) rest_api: RestApiConfig,
@@ -98,7 +98,7 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     #[serde(alias = "networkId")]
     pub(crate) network_id: Option<String>,
     pub(crate) logger: Option<LoggerConfigBuilder>,
-    pub(crate) gossip: Option<NetworkConfigBuilder>,
+    pub(crate) network: Option<NetworkConfigBuilder>,
     pub(crate) autopeering: Option<AutopeeringConfigBuilder>,
     pub(crate) protocol: Option<ProtocolConfigBuilder>,
     #[serde(alias = "restApi")]
@@ -171,8 +171,8 @@ impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
                 alias: self.alias.unwrap_or_else(|| ALIAS_DEFAULT.to_owned()),
                 network_spec,
                 logger: self.logger.unwrap_or_default().finish(),
-                gossip: self
-                    .gossip
+                network: self
+                    .network
                     .unwrap_or_default()
                     .finish()
                     .expect("faulty network configuration"),
