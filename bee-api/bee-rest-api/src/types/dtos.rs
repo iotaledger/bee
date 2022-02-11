@@ -1430,6 +1430,9 @@ pub struct AliasOutputDto {
     //
     #[serde(rename = "featureBlocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
+    //
+    #[serde(rename = "immutableFeatureBlocks")]
+    pub immutable_feature_blocks: Vec<FeatureBlockDto>,
 }
 
 impl From<&AliasOutput> for AliasOutputDto {
@@ -1444,6 +1447,7 @@ impl From<&AliasOutput> for AliasOutputDto {
             foundry_counter: value.foundry_counter(),
             unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
+            immutable_feature_blocks: value.immutable_feature_blocks().iter().map(Into::into).collect::<_>(),
         }
     }
 }
@@ -1467,6 +1471,9 @@ impl TryFrom<&AliasOutputDto> for AliasOutput {
         }
         for b in &value.feature_blocks {
             builder = builder.add_feature_block(b.try_into()?);
+        }
+        for b in &value.immutable_feature_blocks {
+            builder = builder.add_immutable_feature_block(b.try_into()?);
         }
         Ok(builder.finish()?)
     }
@@ -1517,6 +1524,8 @@ pub struct FoundryOutputDto {
     pub unlock_conditions: Vec<UnlockConditionDto>,
     #[serde(rename = "featureBlocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
+    #[serde(rename = "immutableFeatureBlocks")]
+    pub immutable_feature_blocks: Vec<FeatureBlockDto>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1542,6 +1551,7 @@ impl From<&FoundryOutput> for FoundryOutputDto {
             },
             unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
+            immutable_feature_blocks: value.immutable_feature_blocks().iter().map(Into::into).collect::<_>(),
         }
     }
 }
@@ -1576,6 +1586,9 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
         for b in &value.feature_blocks {
             builder = builder.add_feature_block(b.try_into()?);
         }
+        for b in &value.immutable_feature_blocks {
+            builder = builder.add_immutable_feature_block(b.try_into()?);
+        }
 
         Ok(builder.finish()?)
     }
@@ -1594,13 +1607,12 @@ pub struct NftOutputDto {
     // Unique identifier of the NFT.
     #[serde(rename = "nftId")]
     pub nft_id: NftIdDto,
-    // Binary metadata attached immutably to the NFT.
-    #[serde(rename = "immutableData")]
-    pub immutable_data: String,
     #[serde(rename = "unlockConditions")]
     pub unlock_conditions: Vec<UnlockConditionDto>,
     #[serde(rename = "featureBlocks")]
     pub feature_blocks: Vec<FeatureBlockDto>,
+    #[serde(rename = "immutableFeatureBlocks")]
+    pub immutable_feature_blocks: Vec<FeatureBlockDto>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1627,9 +1639,9 @@ impl From<&NftOutput> for NftOutputDto {
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             nft_id: NftIdDto(value.nft_id().to_string()),
-            immutable_data: hex::encode(&value.immutable_metadata()),
             unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
+            immutable_feature_blocks: value.immutable_feature_blocks().iter().map(Into::into).collect::<_>(),
         }
     }
 }
@@ -1638,11 +1650,7 @@ impl TryFrom<&NftOutputDto> for NftOutput {
     type Error = Error;
 
     fn try_from(value: &NftOutputDto) -> Result<Self, Self::Error> {
-        let mut builder = NftOutputBuilder::new(
-            value.amount,
-            (&value.nft_id).try_into()?,
-            hex::decode(&value.immutable_data).map_err(|_| Error::InvalidField("immutableData"))?,
-        )?;
+        let mut builder = NftOutputBuilder::new(value.amount, (&value.nft_id).try_into()?)?;
 
         for t in &value.native_tokens {
             builder = builder.add_native_token(t.try_into()?);
@@ -1650,8 +1658,8 @@ impl TryFrom<&NftOutputDto> for NftOutput {
         for b in &value.unlock_conditions {
             builder = builder.add_unlock_condition(b.try_into()?);
         }
-        for b in &value.feature_blocks {
-            builder = builder.add_feature_block(b.try_into()?);
+        for b in &value.immutable_feature_blocks {
+            builder = builder.add_immutable_feature_block(b.try_into()?);
         }
 
         Ok(builder.finish()?)

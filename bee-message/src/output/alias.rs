@@ -36,6 +36,7 @@ pub struct AliasOutputBuilder {
     foundry_counter: Option<u32>,
     unlock_conditions: Vec<UnlockCondition>,
     feature_blocks: Vec<FeatureBlock>,
+    immutable_feature_blocks: Vec<FeatureBlock>,
 }
 
 impl AliasOutputBuilder {
@@ -50,6 +51,7 @@ impl AliasOutputBuilder {
             foundry_counter: None,
             unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
+            immutable_feature_blocks: Vec::new(),
         })
     }
 
@@ -117,6 +119,23 @@ impl AliasOutputBuilder {
     }
 
     ///
+    #[inline(always)]
+    pub fn add_immutable_feature_block(mut self, immutable_feature_block: FeatureBlock) -> Self {
+        self.immutable_feature_blocks.push(immutable_feature_block);
+        self
+    }
+
+    ///
+    #[inline(always)]
+    pub fn with_immutable_feature_blocks(
+        mut self,
+        immutable_feature_blocks: impl IntoIterator<Item = FeatureBlock>,
+    ) -> Self {
+        self.immutable_feature_blocks = immutable_feature_blocks.into_iter().collect();
+        self
+    }
+
+    ///
     pub fn finish(self) -> Result<AliasOutput, Error> {
         let state_index = self.state_index.unwrap_or(0);
         let foundry_counter = self.foundry_counter.unwrap_or(0);
@@ -137,6 +156,10 @@ impl AliasOutputBuilder {
 
         verify_allowed_feature_blocks(&feature_blocks, AliasOutput::ALLOWED_FEATURE_BLOCKS)?;
 
+        let immutable_feature_blocks = FeatureBlocks::new(self.immutable_feature_blocks)?;
+
+        verify_allowed_feature_blocks(&immutable_feature_blocks, AliasOutput::ALLOWED_IMMUTABLE_FEATURE_BLOCKS)?;
+
         Ok(AliasOutput {
             amount: self.amount,
             native_tokens: NativeTokens::new(self.native_tokens)?,
@@ -146,6 +169,7 @@ impl AliasOutputBuilder {
             foundry_counter,
             unlock_conditions,
             feature_blocks,
+            immutable_feature_blocks,
         })
     }
 }
@@ -171,6 +195,8 @@ pub struct AliasOutput {
     unlock_conditions: UnlockConditions,
     //
     feature_blocks: FeatureBlocks,
+    //
+    immutable_feature_blocks: FeatureBlocks,
 }
 
 impl AliasOutput {
@@ -183,9 +209,10 @@ impl AliasOutput {
     const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags =
         UnlockConditionFlags::STATE_CONTROLLER_ADDRESS.union(UnlockConditionFlags::GOVERNOR_ADDRESS);
     /// The set of allowed [`FeatureBlock`]s for an [`AliasOutput`].
-    pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER
-        .union(FeatureBlockFlags::ISSUER)
-        .union(FeatureBlockFlags::METADATA);
+    pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER.union(FeatureBlockFlags::METADATA);
+    /// The set of allowed immutable [`FeatureBlock`]s for an [`AliasOutput`].
+    pub const ALLOWED_IMMUTABLE_FEATURE_BLOCKS: FeatureBlockFlags =
+        FeatureBlockFlags::ISSUER.union(FeatureBlockFlags::METADATA);
 
     /// Creates a new [`AliasOutput`].
     #[inline(always)]
@@ -276,6 +303,12 @@ impl AliasOutput {
     pub fn feature_blocks(&self) -> &[FeatureBlock] {
         &self.feature_blocks
     }
+
+    ///
+    #[inline(always)]
+    pub fn immutable_feature_blocks(&self) -> &[FeatureBlock] {
+        &self.immutable_feature_blocks
+    }
 }
 
 impl Packable for AliasOutput {
@@ -290,6 +323,7 @@ impl Packable for AliasOutput {
         self.foundry_counter.pack(packer)?;
         self.unlock_conditions.pack(packer)?;
         self.feature_blocks.pack(packer)?;
+        self.immutable_feature_blocks.pack(packer)?;
 
         Ok(())
     }
@@ -323,6 +357,13 @@ impl Packable for AliasOutput {
                 .map_err(UnpackError::Packable)?;
         }
 
+        let immutable_feature_blocks = FeatureBlocks::unpack::<_, VERIFY>(unpacker)?;
+
+        if VERIFY {
+            verify_allowed_feature_blocks(&immutable_feature_blocks, AliasOutput::ALLOWED_IMMUTABLE_FEATURE_BLOCKS)
+                .map_err(UnpackError::Packable)?;
+        }
+
         Ok(Self {
             amount,
             native_tokens,
@@ -332,6 +373,7 @@ impl Packable for AliasOutput {
             foundry_counter,
             unlock_conditions,
             feature_blocks,
+            immutable_feature_blocks,
         })
     }
 }

@@ -5,8 +5,8 @@ use crate::{
     input::UtxoInput,
     output::{
         feature_block::FeatureBlockCount, unlock_condition::UnlockConditionCount, AliasId, DustDepositAmount,
-        ImmutableMetadataLength, MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputAmount, OutputIndex,
-        StateMetadataLength, TagFeatureBlockLength, TreasuryOutputAmount,
+        MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputAmount, OutputIndex, StateMetadataLength,
+        TagFeatureBlockLength, TreasuryOutputAmount,
     },
     parent::ParentCount,
     payload::{
@@ -70,7 +70,6 @@ pub enum Error {
     InvalidInputCount(<InputCount as TryFrom<usize>>::Error),
     InvalidInputOutputIndex(<OutputIndex as TryFrom<u16>>::Error),
     InvalidMessageLength(usize),
-    InvalidImmutableMetadataLength(<ImmutableMetadataLength as TryFrom<usize>>::Error),
     InvalidStateMetadataLength(<StateMetadataLength as TryFrom<usize>>::Error),
     InvalidMetadataFeatureBlockLength(<MetadataFeatureBlockLength as TryFrom<usize>>::Error),
     InvalidMigratedFundsEntryAmount(<MigratedFundsAmount as TryFrom<u64>>::Error),
@@ -214,7 +213,6 @@ impl fmt::Display for Error {
             Error::InvalidInputOutputIndex(index) => write!(f, "invalid input or output index: {}", index),
             Error::InvalidMessageLength(length) => write!(f, "invalid message length {}", length),
             Error::InvalidStateMetadataLength(length) => write!(f, "invalid state metadata length {}", length),
-            Error::InvalidImmutableMetadataLength(length) => write!(f, "invalid immutable metadata length {}", length),
             Error::InvalidMetadataFeatureBlockLength(length) => {
                 write!(f, "invalid metadata feature block length {}", length)
             }
