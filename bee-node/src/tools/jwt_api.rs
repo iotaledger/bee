@@ -25,7 +25,7 @@ pub fn exec<B: NodeStorageBackend>(
 ) -> Result<(), JwtApiError> {
     let claims = ClaimsBuilder::new(
         local.peer_id().to_string(),
-        node_config.rest_api_config.jwt_salt().to_owned(),
+        node_config.rest_api.jwt_salt().to_owned(),
         API_AUDIENCE_CLAIM.to_owned(),
     )
     .build()?;
