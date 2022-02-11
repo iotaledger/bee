@@ -7,6 +7,7 @@ keywords:
 - Tangle
 - database
 - IOTA Network
+- explanation
 ---
 # Nodes 101
 

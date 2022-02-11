@@ -7,6 +7,7 @@ keywords:
 - configuration
 - Toml
 - config
+- reference
 ---
 # Configuration
 

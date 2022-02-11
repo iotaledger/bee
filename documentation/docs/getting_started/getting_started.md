@@ -8,7 +8,8 @@ keywords:
 - ports
 - TCP
 - IOTA Network
-- REST 
+- REST
+- explanation 
 ---
 # Getting Started
 
