@@ -196,11 +196,11 @@ impl FoundryOutput {
     /// The [`Output`](crate::output::Output) kind of a [`FoundryOutput`].
     pub const KIND: u8 = 5;
 
-    /// The set of allowed [`UnlockCondition`]s for an [`FoundryOutput`].
+    /// The set of allowed [`UnlockCondition`]s for a [`FoundryOutput`].
     const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::IMMUTABLE_ALIAS_ADDRESS;
-    /// The set of allowed [`FeatureBlock`]s for an [`FoundryOutput`].
+    /// The set of allowed [`FeatureBlock`]s for a [`FoundryOutput`].
     pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
-    /// The set of allowed immutable [`FeatureBlock`]s for an [`FoundryOutput`].
+    /// The set of allowed immutable [`FeatureBlock`]s for a [`FoundryOutput`].
     pub const ALLOWED_IMMUTABLE_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
 
     /// Creates a new [`FoundryOutput`].

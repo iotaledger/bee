@@ -147,7 +147,7 @@ pub struct NftOutput {
 }
 
 impl NftOutput {
-    /// The [`Output`](crate::output::Output) kind of a [`NftOutput`].
+    /// The [`Output`](crate::output::Output) kind of an [`NftOutput`].
     pub const KIND: u8 = 6;
 
     /// The set of allowed [`UnlockCondition`]s for an [`NftOutput`].
