@@ -102,7 +102,7 @@ where
             protocol_config: config.3,
             network_id: config.4,
             bech32_hrp: config.5,
-            dashboard_username: config.6,
+            dashboard_user: config.6,
             storage: node.storage(),
             bus: node.bus(),
             node_info: node.info(),
