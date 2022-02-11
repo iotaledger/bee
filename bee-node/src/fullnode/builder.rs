@@ -360,9 +360,9 @@ fn create_local_autopeering_entity<S: NodeStorageBackend>(
 ) -> bee_autopeering::Local {
     let local = bee_autopeering::Local::from_keypair(keypair).expect("failed to create local entity");
 
-    let port = if let Some(bind_addr) = config.autopeering_config.bind_addr_v4() {
+    let port = if let Some(bind_addr) = config.autopeering.bind_addr_v4() {
         bind_addr.port()
-    } else if let Some(bind_addr) = config.autopeering_config.bind_addr_v6() {
+    } else if let Some(bind_addr) = config.autopeering.bind_addr_v6() {
         bind_addr.port()
     } else {
         unreachable!("config validation ensures, that one bind address is available.");
