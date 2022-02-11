@@ -15,7 +15,7 @@ use bee_message::{
     input::Input,
     milestone::MilestoneIndex,
     output::{
-        AliasId, AliasOutput, ExtendedOutput, FeatureBlock, FoundryOutput, NftId, NftOutput, Output, OutputId, TokenId,
+        AliasId, AliasOutput, BasicOutput, FeatureBlock, FoundryOutput, NftId, NftOutput, Output, OutputId, TokenId,
         UnlockCondition,
     },
     payload::{
@@ -84,6 +84,9 @@ fn check_input_unlock_conditions(
                 todo!()
             }
             UnlockCondition::GovernorAddress(_) => {
+                todo!()
+            }
+            UnlockCondition::ImmutableAliasAddress(_) => {
                 todo!()
             }
         }
@@ -156,9 +159,9 @@ fn unlock_address(
     Ok(())
 }
 
-fn unlock_extended_output(
+fn unlock_basic_output(
     output_id: &OutputId,
-    output: &ExtendedOutput,
+    output: &BasicOutput,
     unlock_block: &UnlockBlock,
     context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
@@ -257,8 +260,8 @@ fn apply_regular_essence<B: StorageBackend>(
         let unlock_block = unlock_blocks.get(index).unwrap();
 
         let (amount, consumed_native_tokens) = match consumed_output.inner() {
-            Output::Extended(output) => {
-                if let Err(conflict) = unlock_extended_output(output_id, output, unlock_block, &mut context) {
+            Output::Basic(output) => {
+                if let Err(conflict) = unlock_basic_output(output_id, output, unlock_block, &mut context) {
                     return Ok(conflict);
                 }
 
@@ -309,7 +312,7 @@ fn apply_regular_essence<B: StorageBackend>(
         // TODO also check feature blocks ?
         let (amount, created_native_tokens) = match created_output {
             // TODO chain constraints
-            Output::Extended(output) => (output.amount(), output.native_tokens()),
+            Output::Basic(output) => (output.amount(), output.native_tokens()),
             Output::Alias(output) => (output.amount(), output.native_tokens()),
             Output::Foundry(output) => (output.amount(), output.native_tokens()),
             Output::Nft(output) => (output.amount(), output.native_tokens()),
