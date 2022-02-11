@@ -27,8 +27,8 @@ pub struct FullNodeConfig<S: NodeStorageBackend> {
     pub network_spec: NetworkSpec,
     /// Logger.
     pub logger: LoggerConfig,
-    /// Gossip layer.
-    pub gossip: NetworkConfig,
+    /// Network layer.
+    pub network: NetworkConfig,
     /// Autopeering.
     pub autopeering: AutopeeringConfig,
     /// Protocol layer.
@@ -72,7 +72,7 @@ impl<S: NodeStorageBackend> FullNodeConfig<S> {
             local,
             network_spec: node_cfg.network_spec,
             logger: node_cfg.logger,
-            gossip: node_cfg.gossip,
+            network: node_cfg.network,
             autopeering: node_cfg.autopeering,
             protocol: node_cfg.protocol,
             rest_api: node_cfg.rest_api,
@@ -94,7 +94,7 @@ impl<S: NodeStorageBackend> Clone for FullNodeConfig<S> {
             local: self.local.clone(),
             network_spec: self.network_spec.clone(),
             logger: self.logger.clone(),
-            gossip: self.gossip.clone(),
+            network: self.network.clone(),
             autopeering: self.autopeering.clone(),
             protocol: self.protocol.clone(),
             rest_api: self.rest_api.clone(),
