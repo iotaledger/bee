@@ -33,7 +33,6 @@ use crate::{
 
 use std::{error, future::Future, iter, time::Duration};
 
-const NUM_TASKS: usize = 9;
 const BOOTSTRAP_MAX_VERIFICATIONS: usize = 10;
 const BOOTSTRAP_VERIFICATION_DELAY: Duration = Duration::from_millis(100);
 const BOOTSTRAP_QUERY_DELAY: Duration = Duration::from_secs(2 * SECOND);
@@ -65,7 +64,13 @@ where
     log::debug!("Network name/id: {}/{}", network_name.as_ref(), network_id);
     log::debug!("Protocol_version: {}", version);
     log::debug!("Public key: {}", multiaddr::pubkey_to_base58(&local.public_key()));
-    log::info!("Bind address: {}", config.bind_addr());
+
+    if let Some(bind_addr_v4) = config.bind_addr_v4() {
+        log::info!("Bind address (v4): {:?}", bind_addr_v4);
+    }
+    if let Some(bind_addr_v6) = config.bind_addr_v6() {
+        log::info!("Bind address (v6): {:?}", bind_addr_v6);
+    }
 
     // Create or load a peer store.
     let peer_store = S::new(peer_store_config)?;
@@ -76,8 +81,7 @@ where
     let replacements = ReplacementPeersList::default();
 
     // Create a task manager to have good control over the tokio task spawning business.
-    let mut task_mngr =
-        TaskManager::<_, NUM_TASKS>::new(peer_store.clone(), active_peers.clone(), replacements.clone());
+    let mut task_mngr = TaskManager::<_>::new(peer_store.clone(), active_peers.clone(), replacements.clone());
 
     // Create channels for inbound/outbound communication with the UDP server.
     let (discovery_tx, discovery_rx) = server_chan::<IncomingPacket>();
@@ -96,7 +100,7 @@ where
     server.init(&mut task_mngr).await;
 
     // Create a request manager that creates and keeps track of outgoing requests.
-    let request_mngr = RequestManager::new(version, network_id, config.bind_addr());
+    let request_mngr = RequestManager::new(version, network_id, config.bind_addr_v4(), config.bind_addr_v6());
 
     // Create the discovery manager handling the discovery request/response protocol.
     let discovery_config = DiscoveryManagerConfig::new(&config, version, network_id);

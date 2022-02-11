@@ -34,7 +34,7 @@ pub(crate) trait Runnable {
     async fn run(self, shutdown_rx: Self::ShutdownSignal);
 }
 
-pub(crate) struct TaskManager<S: PeerStore, const N: usize> {
+pub(crate) struct TaskManager<S: PeerStore> {
     shutdown_handles: HashMap<String, JoinHandle<()>>,
     shutdown_senders: HashMap<String, ShutdownTx>,
     shutdown_order: PriorityQueue<String, u8>,
@@ -43,12 +43,12 @@ pub(crate) struct TaskManager<S: PeerStore, const N: usize> {
     replacements: ReplacementPeersList,
 }
 
-impl<S: PeerStore, const N: usize> TaskManager<S, N> {
+impl<S: PeerStore> TaskManager<S> {
     pub(crate) fn new(peer_store: S, active_peers: ActivePeersList, replacements: ReplacementPeersList) -> Self {
         Self {
-            shutdown_handles: HashMap::with_capacity(N),
-            shutdown_senders: HashMap::with_capacity(N),
-            shutdown_order: PriorityQueue::with_capacity(N),
+            shutdown_handles: HashMap::default(),
+            shutdown_senders: HashMap::default(),
+            shutdown_order: PriorityQueue::default(),
             peer_store,
             active_peers,
             replacements,

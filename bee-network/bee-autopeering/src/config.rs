@@ -38,14 +38,11 @@ use serde::Deserialize;
 
 use std::{
     fmt::Debug,
-    net::{IpAddr, Ipv4Addr, SocketAddr},
+    net::SocketAddr,
     path::{Path, PathBuf},
 };
 
-const AUTOPEERING_ENABLED_DEFAULT: bool = false;
-// TODO: watch out for possible constification regarding `SocketAddr::new()`.
-const AUTOPEERING_BIND_ADDR_DEFAULT: IpAddr = IpAddr::V4(Ipv4Addr::UNSPECIFIED);
-const AUTOPEERING_BIND_PORT_DEFAULT: u16 = 14626;
+const ENABLED_DEFAULT: bool = false;
 const ENTRYNODES_PREFER_IPV6_DEFAULT: bool = false;
 const RUN_AS_ENTRYNODE_DEFAULT: bool = false;
 const DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT: bool = false;
@@ -56,7 +53,8 @@ const PEER_STORAGE_PATH_DEFAULT: &str = "./storage/mainnet/peers";
 #[derive(Clone, Debug)]
 pub struct AutopeeringConfig {
     enabled: bool,
-    bind_addr: SocketAddr,
+    bind_addr_v4: Option<SocketAddr>,
+    bind_addr_v6: Option<SocketAddr>,
     entry_nodes: Vec<AutopeeringMultiaddr>,
     entry_nodes_prefer_ipv6: bool,
     run_as_entry_node: bool,
@@ -70,9 +68,14 @@ impl AutopeeringConfig {
         self.enabled
     }
 
-    /// The bind address for the server.
-    pub fn bind_addr(&self) -> SocketAddr {
-        self.bind_addr
+    /// The IPv4 bind address for the server.
+    pub fn bind_addr_v4(&self) -> Option<SocketAddr> {
+        self.bind_addr_v4
+    }
+
+    /// The IPv6 bind address for the server.
+    pub fn bind_addr_v6(&self) -> Option<SocketAddr> {
+        self.bind_addr_v6
     }
 
     /// The entry nodes for bootstrapping.
@@ -116,9 +119,12 @@ impl AutopeeringConfig {
 pub struct AutopeeringConfigBuilder {
     /// Whether autopeering should be enabled.
     pub enabled: bool,
-    /// The bind address for the server.
+    /// The IPv4 bind address for the server.
     #[serde(alias = "bindAddress", alias = "bind_address")]
-    pub bind_addr: SocketAddr,
+    pub bind_addr_v4: Option<SocketAddr>,
+    /// The IPv6 bind address for the server.
+    #[serde(alias = "bindAddressV6", alias = "bind_address_v6")]
+    pub bind_addr_v6: Option<SocketAddr>,
     /// The entry nodes for bootstrapping.
     #[serde(alias = "entryNodes")]
     pub entry_nodes: Vec<AutopeeringMultiaddr>,
@@ -139,9 +145,17 @@ pub struct AutopeeringConfigBuilder {
 impl AutopeeringConfigBuilder {
     /// Builds the actual `AutopeeringConfig`.
     pub fn finish(self) -> AutopeeringConfig {
+        ensure_ipv4(self.bind_addr_v4);
+        ensure_ipv6(self.bind_addr_v6);
+
+        if self.bind_addr_v4.is_none() && self.bind_addr_v6.is_none() {
+            panic!("invalid config: no bind addresses");
+        }
+
         AutopeeringConfig {
             enabled: self.enabled,
-            bind_addr: self.bind_addr,
+            bind_addr_v4: self.bind_addr_v4,
+            bind_addr_v6: self.bind_addr_v6,
             entry_nodes: self.entry_nodes,
             entry_nodes_prefer_ipv6: self.entry_nodes_prefer_ipv6.unwrap_or(ENTRYNODES_PREFER_IPV6_DEFAULT),
             run_as_entry_node: self.run_as_entry_node.unwrap_or(RUN_AS_ENTRYNODE_DEFAULT),
@@ -158,13 +172,30 @@ impl AutopeeringConfigBuilder {
 impl Default for AutopeeringConfigBuilder {
     fn default() -> Self {
         Self {
-            enabled: AUTOPEERING_ENABLED_DEFAULT,
-            bind_addr: SocketAddr::new(AUTOPEERING_BIND_ADDR_DEFAULT, AUTOPEERING_BIND_PORT_DEFAULT),
+            enabled: ENABLED_DEFAULT,
+            bind_addr_v4: None,
+            bind_addr_v6: None,
             entry_nodes: Vec::default(),
             entry_nodes_prefer_ipv6: Some(ENTRYNODES_PREFER_IPV6_DEFAULT),
             run_as_entry_node: Some(RUN_AS_ENTRYNODE_DEFAULT),
             drop_neighbors_on_salt_update: Some(DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT),
             peer_storage_path: Some(PEER_STORAGE_PATH_DEFAULT.into()),
+        }
+    }
+}
+
+fn ensure_ipv4(addr: Option<SocketAddr>) {
+    if let Some(addr) = addr {
+        if !addr.is_ipv4() {
+            panic!("invalid config: bind address is not IPv4");
+        }
+    }
+}
+
+fn ensure_ipv6(addr: Option<SocketAddr>) {
+    if let Some(addr) = addr {
+        if !addr.is_ipv6() {
+            panic!("invalid config: bind address is not IPv6");
         }
     }
 }
@@ -178,8 +209,8 @@ mod tests {
         {
             "enabled": true,
             "bindAddress": "0.0.0.0:14626",
+            "bindAddressV6": "[::]:14626",
             "entryNodes": [
-                "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
                 "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
                 "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
                 "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
@@ -199,8 +230,8 @@ mod tests {
         let toml_config_str = r#"
             enabled = true
             bind_address = "0.0.0.0:14626"
+            bind_address_v6 = "[::]:14626"
             entry_nodes = [
-                "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
                 "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
                 "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
                 "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
@@ -219,9 +250,9 @@ mod tests {
     fn create_config() -> AutopeeringConfig {
         AutopeeringConfig {
             enabled: true,
-            bind_addr: "0.0.0.0:14626".parse().unwrap(),
+            bind_addr_v4: Some("0.0.0.0:14626".parse().unwrap()),
+            bind_addr_v6: Some("[::]:14626".parse().unwrap()),
             entry_nodes: vec![
-                "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM".parse().unwrap(),
                 "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb".parse().unwrap(),
                 "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2".parse().unwrap(),
                 "/dns/entry-mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC".parse().unwrap(),
