@@ -1,27 +1,29 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_indexer::{AliasFilterOptions, Indexer, IndexerError};
+use bee_indexer::{Error, Indexer};
 use bee_ledger::workers::event::OutputCreated;
 use bee_message::{milestone::MilestoneIndex, output::Output};
 use bee_test::rand::{
-    bytes::rand_bytes_array,
     message::rand_message_id,
-    milestone::rand_milestone_index,
-    number::rand_number,
     output::{rand_alias_output, rand_output_id},
 };
 
+use serde_json::json;
+
+use packable::PackableExt;
+
 #[tokio::test]
-async fn update_status() -> Result<(), IndexerError> {
+async fn with_state_controller() -> Result<(), Error> {
     let indexer = Indexer::new().await?;
     indexer.update_status(MilestoneIndex(42)).await?;
 
+    let expected_output_id = rand_output_id();
     let alias = rand_alias_output();
     let state_controller = alias.state_controller().clone();
     let created = OutputCreated {
         message_id: rand_message_id(),
-        output_id: rand_output_id(),
+        output_id: expected_output_id.clone(),
         output: Output::Alias(alias),
     };
 
@@ -31,33 +33,16 @@ async fn update_status() -> Result<(), IndexerError> {
         output: Output::Alias(rand_alias_output()),
     };
 
-    // println!("{:# ?}", &[created.output_id, created2.output_id]);
-
     indexer.process_created_output(&created).await?;
     indexer.process_created_output(&created2).await?;
 
+    let options = json!({ "stateController": hex::encode(state_controller.pack_to_vec()) }).to_string();
+
     let res = indexer
-        .alias_outputs_with_filters(AliasFilterOptions {
-            // state_controller: Some(state_controller),
-            page_size: 1,
-            ..Default::default()
-        })
+        .alias_outputs_with_filters(serde_json::from_str(&options).unwrap())
         .await?;
 
-    println!("Page 1 {:#?}", res);
-
-    let res2 = indexer
-        .alias_outputs_with_filters(AliasFilterOptions {
-            // state_controller: Some(state_controller),
-            page_size: 1,
-            cursor: res.cursor,
-            ..Default::default()
-        })
-        .await?;
-
-    println!("Page 2 {:#?}", res2);
-
-    assert!(false);
+    assert_eq!(res.output_ids, &[expected_output_id]);
 
     Ok(())
 }

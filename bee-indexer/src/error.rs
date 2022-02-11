@@ -4,7 +4,10 @@
 use sea_orm::error::DbErr;
 
 #[derive(Debug)]
-pub enum IndexerError {
+pub enum Error {
+    InvalidJson,
+    InvalidField(&'static str),
+    InvalidCursorContent(&'static str),
     InvalidCursorLength(usize),
     OffsetParseError(std::array::TryFromSliceError),
     DatabaseError(DbErr),

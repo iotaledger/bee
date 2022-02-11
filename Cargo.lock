@@ -311,6 +311,8 @@ dependencies = [
  "packable",
  "sea-orm",
  "sea-query",
+ "serde",
+ "serde_json",
  "sqlx",
  "tokio",
 ]
