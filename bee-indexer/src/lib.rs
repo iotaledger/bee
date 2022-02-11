@@ -181,8 +181,6 @@ impl Indexer {
 
         stmt.cond_where(filter);
 
-        // TODO: Pagination
-
         let query_results = JoinedResult::find_by_statement(builder.build(&stmt))
             .all(&self.db)
             .await
@@ -207,8 +205,9 @@ impl Indexer {
         };
 
         if options.page_size > 0 && query_results.len() > options.page_size as usize {
+            // We have queried one element to many to get the cursor for the next page.
             result.cursor = Some(query_results.last().unwrap().cursor.clone().to_lowercase());
-            result.output_ids.pop(); // We have queried one too many
+            result.output_ids.pop(); 
         }
 
         Ok(result)
