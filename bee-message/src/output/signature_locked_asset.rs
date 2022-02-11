@@ -19,7 +19,7 @@ pub(crate) type AssetBalanceCount =
 fn unpack_prefix_to_validation_error(
     err: UnpackPrefixError<Infallible, <AssetBalanceCount as TryFrom<u32>>::Error>,
 ) -> ValidationError {
-    ValidationError::InvalidAssetBalanceCount(err.into_prefix().into())
+    ValidationError::InvalidAssetBalanceCount(err.into_prefix_err().into())
 }
 
 /// Tokenized asset identifier.
