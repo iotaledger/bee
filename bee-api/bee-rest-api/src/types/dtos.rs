@@ -209,8 +209,8 @@ impl TryFrom<&TransactionEssenceDto> for TransactionEssence {
 pub struct RegularTransactionEssenceDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    #[serde(rename = "networkId")]
-    pub network_id: String,
+    #[serde(rename = "networkID")]
+    pub network_id: u64,
     pub inputs: Vec<InputDto>,
     #[serde(rename = "inputsCommitment")]
     pub inputs_commitment: String,
@@ -222,7 +222,7 @@ impl From<&RegularTransactionEssence> for RegularTransactionEssenceDto {
     fn from(value: &RegularTransactionEssence) -> Self {
         RegularTransactionEssenceDto {
             kind: RegularTransactionEssence::KIND,
-            network_id: value.network_id().to_string(),
+            network_id: value.network_id(),
             inputs: value.inputs().iter().map(Into::into).collect::<Vec<_>>(),
             inputs_commitment: hex::encode(value.inputs_commitment()),
             outputs: value.outputs().iter().map(Into::into).collect::<Vec<_>>(),
@@ -250,14 +250,9 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
             .map(TryInto::try_into)
             .collect::<Result<Vec<Output>, Self::Error>>()?;
 
-        let mut builder = RegularTransactionEssence::builder(
-            value
-                .network_id
-                .parse::<u64>()
-                .map_err(|_| Error::InvalidField("networkId"))?,
-        )
-        .with_inputs(inputs)
-        .with_outputs(outputs);
+        let mut builder = RegularTransactionEssence::builder(value.network_id)
+            .with_inputs(inputs)
+            .with_outputs(outputs);
         builder = if let Some(p) = &value.payload {
             if let PayloadDto::TaggedData(i) = p {
                 builder.with_payload(Payload::TaggedData(Box::new((i.as_ref()).try_into()?)))
@@ -1238,7 +1233,7 @@ pub struct TagFeatureBlockDto {
 pub struct ImmutableAliasAddressUnlockConditionDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    pub address: AliasAddressDto,
+    pub address: AddressDto,
 }
 
 impl UnlockConditionDto {
@@ -1304,7 +1299,7 @@ impl From<&UnlockCondition> for UnlockConditionDto {
             UnlockCondition::ImmutableAliasAddress(v) => {
                 Self::ImmutableAliasAddress(ImmutableAliasAddressUnlockConditionDto {
                     kind: ImmutableAliasAddressUnlockCondition::KIND,
-                    address: v.address().into(),
+                    address: AddressDto::Alias(v.address().into()),
                 })
             }
         }
@@ -1375,11 +1370,15 @@ impl TryFrom<&UnlockConditionDto> for UnlockCondition {
                     .map_err(|_e| Error::InvalidField("GovernorAddressUnlockCondition"))?,
             )),
             UnlockConditionDto::ImmutableAliasAddress(v) => {
-                Self::ImmutableAliasAddress(ImmutableAliasAddressUnlockCondition::new(
-                    (&v.address)
-                        .try_into()
-                        .map_err(|_e| Error::InvalidField("ImmutableAliasAddressUnlockCondition"))?,
-                ))
+                let address: Address = (&v.address)
+                    .try_into()
+                    .map_err(|_e| Error::InvalidField("ImmutableAliasAddressUnlockCondition"))?;
+                // An ImmutableAliasAddressUnlockCondition must have an AliasAddress.
+                if let Address::Alias(alias_address) = &address {
+                    Self::ImmutableAliasAddress(ImmutableAliasAddressUnlockCondition::new(*alias_address))
+                } else {
+                    return Err(Error::InvalidField("ImmutableAliasAddressUnlockCondition"));
+                }
             }
         })
     }
