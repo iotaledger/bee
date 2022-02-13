@@ -253,9 +253,8 @@ where
 
     for (output_id, created_output) in metadata.created_outputs {
         bus.dispatch(OutputCreated {
-            message_id: *created_output.message_id(),
             output_id,
-            output: created_output.inner().clone(),
+            output: created_output,
         });
     }
 
