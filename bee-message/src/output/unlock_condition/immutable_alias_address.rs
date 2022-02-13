@@ -1,14 +1,17 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::address::{Address, AliasAddress};
+use crate::{
+    address::{Address, AliasAddress},
+    Error,
+};
 
 use derive_more::From;
 
 /// Defines the permanent [`AliasAddress`] that owns this output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct ImmutableAliasAddressUnlockCondition(Address);
+pub struct ImmutableAliasAddressUnlockCondition(#[packable(verify_with = verify_alias_address)] Address);
 
 impl ImmutableAliasAddressUnlockCondition {
     /// The [`UnlockCondition`](crate::output::UnlockCondition) kind of an [`ImmutableAliasAddressUnlockCondition`].
@@ -29,5 +32,17 @@ impl ImmutableAliasAddressUnlockCondition {
         } else {
             unreachable!();
         }
+    }
+}
+
+fn verify_alias_address<const VERIFY: bool>(address: &Address) -> Result<(), Error> {
+    if VERIFY {
+        if let Address::Alias(_) = address {
+            Ok(())
+        } else {
+            Err(Error::InvalidAddressKind(address.kind()))
+        }
+    } else {
+        Ok(())
     }
 }
