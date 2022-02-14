@@ -115,7 +115,7 @@ fn validate_dashboard_jwt<B: StorageBackend>(
         args.dashboard_username.to_owned(),
         DASHBOARD_AUDIENCE_CLAIM.to_owned(),
         true,
-        args.node_key_pair.secret().as_ref(),
+        args.node_keypair.secret().as_ref(),
     )
     .map_err(|_| reject::custom(CustomRejection::Forbidden))
 }

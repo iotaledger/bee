@@ -84,13 +84,13 @@ where
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let args = Arc::new(ApiArgs {
             node_id: config.node_id,
-            node_keypair: config.keypair,
+            node_keypair: config.node_keypair,
             rest_api_config: config.rest_api_config,
             protocol_config: config.protocol_config,
             network_id: config.network_id,
             bech32_hrp: config.bech32_hrp,
             #[cfg(feature = "dashboard")]
-            dashboard_username: config.dashboard_user,
+            dashboard_username: config.dashboard_username,
             storage: node.storage(),
             bus: node.bus(),
             node_info: node.info(),
