@@ -61,7 +61,7 @@
 //!         l.add_service(
 //!             AUTOPEERING_SERVICE_NAME,
 //!             ServiceProtocol::Udp,
-//!             config.bind_addr().port(),
+//!             config.bind_addr_v4().unwrap().port(),
 //!         );
 //!         l.add_service(NETWORK, ServiceProtocol::Tcp, 15600);
 //!         l

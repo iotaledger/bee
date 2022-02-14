@@ -187,7 +187,7 @@ checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 
 [[package]]
 name = "bee-autopeering"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "base64 0.13.0",
@@ -316,7 +316,7 @@ dependencies = [
 
 [[package]]
 name = "bee-node"
-version = "0.3.0-rc3"
+version = "0.3.0-rc4"
 dependencies = [
  "anymap",
  "async-trait",
