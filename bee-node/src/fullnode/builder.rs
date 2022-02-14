@@ -20,6 +20,7 @@ use bee_autopeering::{
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
+use bee_rest_api::endpoints::ApiWorkerConfigFullNode;
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder},
