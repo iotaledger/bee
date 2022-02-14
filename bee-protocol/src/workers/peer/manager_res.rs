@@ -101,7 +101,7 @@ impl PeerManager {
         self.inner.read().peers.is_empty()
     }
 
-    pub fn get_map<T>(&self, id: &PeerId, f: impl Fn(&PeerTuple) -> T) -> Option<T> {
+    pub fn get_map<T>(&self, id: &PeerId, f: impl FnOnce(&PeerTuple) -> T) -> Option<T> {
         let guard = self.inner.read();
         let output = guard.get(id).map(f);
         drop(guard);
