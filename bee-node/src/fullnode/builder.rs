@@ -398,7 +398,7 @@ async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
 
     let worker_config = ApiConfigFullNode {
         node_id: config.local.peer_id(),
-        keypair: config.local.keypair().clone(),
+        node_keypair: config.local.keypair().clone(),
         rest_api_config: config.rest_api.clone(),
         protocol_config: config.protocol.clone(),
         network_id: (network_name, network_id),
