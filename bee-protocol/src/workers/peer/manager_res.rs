@@ -11,7 +11,7 @@ use bee_runtime::{node::Node, worker::Worker};
 use async_trait::async_trait;
 use futures::channel::oneshot;
 use log::debug;
-use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use parking_lot::RwLock;
 
 use std::{
     convert::Infallible,
@@ -101,13 +101,18 @@ impl PeerManager {
         self.inner.read().peers.is_empty()
     }
 
-    // TODO find a way to only return a ref to the peer.
-    pub fn get(&self, id: &PeerId) -> Option<impl std::ops::Deref<Target = PeerTuple> + '_> {
-        RwLockReadGuard::try_map(self.inner.read(), |map| map.get(id)).ok()
+    pub fn get_map<T>(&self, id: &PeerId, f: impl Fn(&PeerTuple) -> T) -> Option<T> {
+        let guard = self.inner.read();
+        let output = guard.get(id).map(f);
+        drop(guard);
+        output
     }
 
-    pub fn get_mut(&self, id: &PeerId) -> Option<impl std::ops::DerefMut<Target = PeerTuple> + '_> {
-        RwLockWriteGuard::try_map(self.inner.write(), |map| map.get_mut(id)).ok()
+    pub fn get_mut_map<T>(&self, id: &PeerId, f: impl FnOnce(&mut PeerTuple) -> T) -> Option<T> {
+        let mut guard = self.inner.write();
+        let output = guard.get_mut(id).map(f);
+        drop(guard);
+        output
     }
 
     pub fn get_all(&self) -> Vec<Arc<Peer>> {
