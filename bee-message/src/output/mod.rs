@@ -138,6 +138,21 @@ impl Output {
         }
     }
 
+    /// Returns the feature blocks of an `Output`, if any.
+    pub fn feature_blocks(&self) -> Option<&[FeatureBlock]> {
+        match self {
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedSingle(_) => None,
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedDustAllowance(_) => None,
+            Self::Treasury(_) => None,
+            Self::Basic(output) => Some(output.feature_blocks()),
+            Self::Alias(output) => Some(output.feature_blocks()),
+            Self::Foundry(output) => Some(output.feature_blocks()),
+            Self::Nft(output) => Some(output.feature_blocks()),
+        }
+    }
+
     /// Returns the native tokens of an `Output`, if any.
     pub fn native_tokens(&self) -> Option<&[NativeToken]> {
         match self {
@@ -150,6 +165,21 @@ impl Output {
             Self::Alias(output) => Some(output.native_tokens()),
             Self::Foundry(output) => Some(output.native_tokens()),
             Self::Nft(output) => Some(output.native_tokens()),
+        }
+    }
+
+    /// Returns the unlock conditions of an `Output`, if any.
+    pub fn unlock_conditions(&self) -> Option<&[UnlockCondition]> {
+        match self {
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedSingle(_) => None,
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedDustAllowance(_) => None,
+            Self::Treasury(_) => None,
+            Self::Basic(output) => Some(output.unlock_conditions()),
+            Self::Alias(output) => Some(output.unlock_conditions()),
+            Self::Foundry(output) => Some(output.unlock_conditions()),
+            Self::Nft(output) => Some(output.unlock_conditions()),
         }
     }
 }
