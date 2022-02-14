@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgs},
+    endpoints::{
+        filters::with_args, rejection::CustomRejection, routes::api::v1::MAX_RESPONSE_RESULTS, storage::StorageBackend,
+        ApiArgs,
+    },
     types::{body::SuccessBody, responses::MessagesFindResponse},
 };
 
@@ -52,12 +55,11 @@ pub(crate) fn messages_find<B: StorageBackend>(index: String, args: Arc<ApiArgs<
         };
 
     let count = fetched.len();
-    let max_results = 1000;
-    fetched.truncate(max_results);
+    fetched.truncate(MAX_RESPONSE_RESULTS);
 
     Ok(warp::reply::json(&SuccessBody::new(MessagesFindResponse {
         index,
-        max_results,
+        max_results: MAX_RESPONSE_RESULTS,
         count,
         message_ids: fetched.iter().map(|id| id.to_string()).collect(),
     })))

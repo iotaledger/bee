@@ -31,6 +31,8 @@ use warp::{self, Filter, Rejection, Reply};
 
 use std::sync::Arc;
 
+pub(crate) const MAX_RESPONSE_RESULTS: usize = 1000;
+
 pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("v1"))
 }

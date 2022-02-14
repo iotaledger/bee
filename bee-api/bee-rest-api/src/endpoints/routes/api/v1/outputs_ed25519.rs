@@ -3,7 +3,8 @@
 
 use crate::{
     endpoints::{
-        filters::with_args, path_params::ed25519_address, rejection::CustomRejection, storage::StorageBackend, ApiArgs,
+        filters::with_args, path_params::ed25519_address, rejection::CustomRejection,
+        routes::api::v1::MAX_RESPONSE_RESULTS, storage::StorageBackend, ApiArgs,
     },
     types::{body::SuccessBody, responses::OutputsAddressResponse},
 };
@@ -69,13 +70,12 @@ pub(crate) async fn outputs_ed25519<B: StorageBackend>(
     };
 
     let count = fetched.len();
-    let max_results = 1000;
-    fetched.truncate(max_results);
+    fetched.truncate(MAX_RESPONSE_RESULTS);
 
     Ok(warp::reply::json(&SuccessBody::new(OutputsAddressResponse {
         address_type: 1,
         address: addr.to_string(),
-        max_results,
+        max_results: MAX_RESPONSE_RESULTS,
         count,
         output_ids: fetched.iter().map(|id| id.to_string()).collect(),
         ledger_index: *ledger_index,

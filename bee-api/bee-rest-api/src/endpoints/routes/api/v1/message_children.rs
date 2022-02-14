@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{filters::with_args, path_params::message_id, storage::StorageBackend, ApiArgs},
+    endpoints::{
+        filters::with_args, path_params::message_id, routes::api::v1::MAX_RESPONSE_RESULTS, storage::StorageBackend,
+        ApiArgs,
+    },
     types::{body::SuccessBody, responses::MessageChildrenResponse},
 };
 
@@ -34,11 +37,10 @@ pub async fn message_children<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     let mut children = Vec::from_iter(args.tangle.get_children(&message_id).await.unwrap_or_default());
     let count = children.len();
-    let max_results = 1000;
-    children.truncate(max_results);
+    children.truncate(MAX_RESPONSE_RESULTS);
     Ok(warp::reply::json(&SuccessBody::new(MessageChildrenResponse {
         message_id: message_id.to_string(),
-        max_results,
+        max_results: MAX_RESPONSE_RESULTS,
         count,
         children_message_ids: children.iter().map(|id| id.to_string()).collect(),
     })))
