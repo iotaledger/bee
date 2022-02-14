@@ -20,7 +20,7 @@ use bee_autopeering::{
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
-use bee_rest_api::endpoints::ApiWorkerConfigFullNode;
+use bee_rest_api::endpoints::ApiConfigFullNode;
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder},
@@ -396,7 +396,7 @@ async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
         hrp,
     } = config.network_spec().clone();
 
-    let worker_config = ApiWorkerConfigFullNode {
+    let worker_config = ApiConfigFullNode {
         node_id: config.local.peer_id(),
         keypair: config.local.keypair().clone(),
         rest_api_config: config.rest_api.clone(),
