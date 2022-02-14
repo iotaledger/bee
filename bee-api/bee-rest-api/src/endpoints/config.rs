@@ -131,7 +131,7 @@ impl RestApiConfigBuilder {
         let port = multi_addr
             .iter()
             .find_map(|x| if let Protocol::Tcp(port) = x { Some(port) } else { None })
-            .unwrap_or_else(|| panic!("unsupported protocol"));
+            .expect("unsupported protocol");
 
         let jwt_salt = self.jwt_salt.unwrap_or_else(|| DEFAULT_JWT_SALT.to_string());
 
@@ -140,7 +140,7 @@ impl RestApiConfigBuilder {
                 .public_routes
                 .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|r| r.to_string()).collect());
             RegexSet::new(routes.iter().map(|r| route_to_regex(&r)).collect::<Vec<String>>())
-                .expect(&format!("invalid public route provided"))
+                .expect("invalid public route provided")
         };
 
         let protected_routes = {
@@ -148,7 +148,7 @@ impl RestApiConfigBuilder {
                 .protected_routes
                 .unwrap_or_else(|| DEFAULT_PROTECTED_ROUTES.iter().map(|r| r.to_string()).collect());
             RegexSet::new(routes.iter().map(|r| route_to_regex(&r)).collect::<Vec<String>>())
-                .expect(&format!("invalid protected route provided"))
+                .expect("invalid protected route provided")
         };
 
         let feature_proof_of_work = self.feature_proof_of_work.unwrap_or(DEFAULT_FEATURE_PROOF_OF_WORK);
