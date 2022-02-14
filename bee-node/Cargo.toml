@@ -67,6 +67,6 @@ path = "src/main.rs"
 [features]
 default = [ "rocksdb" ]
 
-dashboard = [ "cap", "mime_guess", "rust-embed", "serde_repr", "warp-reverse-proxy" ]
+dashboard = [ "cap", "mime_guess", "rust-embed", "serde_repr", "warp-reverse-proxy", "bee-rest-api/dashboard" ]
 rocksdb = [ "bee-storage-rocksdb" ]
 sled = [ "bee-storage-sled" ]

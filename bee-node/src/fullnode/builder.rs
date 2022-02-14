@@ -391,15 +391,18 @@ async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
         hrp,
     } = config.network_spec().clone();
 
-    let node_id =  config.local.peer_id();
-    let node_key_pair = config.local.keypair().clone();
-    let network_id = (network_name, network_id);
-    let rest_api_cfg = config.rest_api.clone();
-    let protocol_cfg = config.protocol.clone();
-    let dashboard_user = config.dashboard.auth().user().to_owned();
+    let worker_config = ApiWorkerConfigFullNode {
+        node_id: config.local.peer_id(),
+        keypair: config.local.keypair().clone(),
+        rest_api_config: config.rest_api.clone(),
+        protocol_config: config.protocol.clone(),
+        network_id: (network_name, network_id),
+        bech32_hrp: hrp,
+        #[cfg(feature = "dashboard")]
+        dashboard_user: config.dashboard.auth().user().to_owned(),
+    };
 
-    let builder =
-        bee_rest_api::endpoints::init_full_node::<FullNode<S>>(node_id, node_key_pair, rest_api_cfg, protocol_cfg, network_id, hrp, dashboard_user, builder).await;
+    let builder = bee_rest_api::endpoints::init_full_node::<FullNode<S>>(worker_config, builder).await;
 
     builder
 }

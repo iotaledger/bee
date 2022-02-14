@@ -39,50 +39,40 @@ use std::{any::TypeId, convert::Infallible, sync::Arc};
 
 pub(crate) type NetworkId = (String, u64);
 pub(crate) type Bech32Hrp = String;
+#[cfg(feature = "dashboard")]
 pub(crate) type DashboardUser = String;
 
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
 
 pub async fn init_full_node<N: Node>(
-    node_id: PeerId,
-    keypair: Keypair,
-    rest_api_config: RestApiConfig,
-    protocol_config: ProtocolConfig,
-    network_id: NetworkId,
-    bech32_hrp: Bech32Hrp,
-    dashboard_user: DashboardUser,
+    worker_config: ApiWorkerConfigFullNode,
     node_builder: N::Builder,
 ) -> N::Builder
-where
-    N::Backend: StorageBackend,
+    where
+        N::Backend: StorageBackend,
 {
-    node_builder.with_worker_cfg::<ApiWorkerFullNode>((
-        node_id,
-        keypair,
-        rest_api_config,
-        protocol_config,
-        network_id,
-        bech32_hrp,
-        dashboard_user,
-    ))
+    node_builder.with_worker_cfg::<ApiWorkerFullNode>(worker_config)
+}
+
+pub struct ApiWorkerConfigFullNode {
+    pub node_id: PeerId,
+    pub keypair: Keypair,
+    pub rest_api_config: RestApiConfig,
+    pub protocol_config: ProtocolConfig,
+    pub network_id: NetworkId,
+    pub bech32_hrp: Bech32Hrp,
+    #[cfg(feature = "dashboard")]
+    pub dashboard_user: DashboardUser,
 }
 
 pub struct ApiWorkerFullNode;
 
 #[async_trait]
 impl<N: Node> Worker<N> for ApiWorkerFullNode
-where
-    N::Backend: StorageBackend,
+    where
+        N::Backend: StorageBackend,
 {
-    type Config = (
-        PeerId,
-        Keypair,
-        RestApiConfig,
-        ProtocolConfig,
-        NetworkId,
-        Bech32Hrp,
-        DashboardUser,
-    );
+    type Config = ApiWorkerConfigFullNode;
     type Error = WorkerError;
 
     fn dependencies() -> &'static [TypeId] {
@@ -91,18 +81,19 @@ where
             TypeId::of::<MessageSubmitterWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
         ]
-        .leak()
+            .leak()
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let args = Arc::new(ApiArgs {
-            node_id: config.0,
-            node_key_pair: config.1,
-            rest_api_config: config.2,
-            protocol_config: config.3,
-            network_id: config.4,
-            bech32_hrp: config.5,
-            dashboard_user: config.6,
+            node_id: config.node_id,
+            node_key_pair: config.keypair,
+            rest_api_config: config.rest_api_config,
+            protocol_config: config.protocol_config,
+            network_id: config.network_id,
+            bech32_hrp: config.bech32_hrp,
+            #[cfg(feature = "dashboard")]
+            dashboard_user: config.dashboard_user,
             storage: node.storage(),
             bus: node.bus(),
             node_info: node.info(),
@@ -169,6 +160,7 @@ pub struct ApiArgs<B: StorageBackend> {
     pub protocol_config: ProtocolConfig,
     pub network_id: NetworkId,
     pub bech32_hrp: Bech32Hrp,
+    #[cfg(feature = "dashboard")]
     pub dashboard_user: DashboardUser,
     pub storage: ResourceHandle<B>,
     pub bus: ResourceHandle<Bus<'static>>,
@@ -183,8 +175,8 @@ pub struct ApiArgs<B: StorageBackend> {
 }
 
 pub async fn init_entry_node<N: Node>(rest_api_config: RestApiConfig, node_builder: N::Builder) -> N::Builder
-where
-    N::Backend: StorageBackend,
+    where
+        N::Backend: StorageBackend,
 {
     node_builder.with_worker_cfg::<ApiWorkerEntryNode>(rest_api_config)
 }
@@ -193,8 +185,8 @@ pub struct ApiWorkerEntryNode;
 
 #[async_trait]
 impl<N: Node> Worker<N> for ApiWorkerEntryNode
-where
-    N::Backend: StorageBackend,
+    where
+        N::Backend: StorageBackend,
 {
     type Config = RestApiConfig;
     type Error = WorkerError;
