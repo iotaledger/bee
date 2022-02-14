@@ -101,7 +101,7 @@ fn validate_api_jwt<B: StorageBackend>(
         args.rest_api_config.jwt_salt.to_owned(),
         API_AUDIENCE_CLAIM.to_owned(),
         false,
-        args.node_key_pair.secret().as_ref(),
+        args.node_keypair.secret().as_ref(),
     )
     .map_err(|_| reject::custom(CustomRejection::Forbidden))
 }
@@ -112,7 +112,7 @@ fn validate_dashboard_jwt<B: StorageBackend>(
 ) -> Result<TokenData<Claims>, Rejection> {
     jwt.validate(
         args.node_id.to_string(),
-        args.dashboard_user.to_owned(), // Dashboard SALT MISSING
+        args.dashboard_username.to_owned(),
         DASHBOARD_AUDIENCE_CLAIM.to_owned(),
         true,
         args.node_key_pair.secret().as_ref(),

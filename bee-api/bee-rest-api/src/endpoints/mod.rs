@@ -40,26 +40,26 @@ use std::{any::TypeId, convert::Infallible, sync::Arc};
 pub(crate) type NetworkId = (String, u64);
 pub(crate) type Bech32Hrp = String;
 #[cfg(feature = "dashboard")]
-pub(crate) type DashboardUser = String;
+pub(crate) type DashboardUsername = String;
 
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
 
-pub async fn init_full_node<N: Node>(worker_config: ApiWorkerConfigFullNode, node_builder: N::Builder) -> N::Builder
+pub async fn init_full_node<N: Node>(worker_config: ApiConfigFullNode, node_builder: N::Builder) -> N::Builder
 where
     N::Backend: StorageBackend,
 {
     node_builder.with_worker_cfg::<ApiWorkerFullNode>(worker_config)
 }
 
-pub struct ApiWorkerConfigFullNode {
+pub struct ApiConfigFullNode {
     pub node_id: PeerId,
-    pub keypair: Keypair,
+    pub node_keypair: Keypair,
     pub rest_api_config: RestApiConfig,
     pub protocol_config: ProtocolConfig,
     pub network_id: NetworkId,
     pub bech32_hrp: Bech32Hrp,
     #[cfg(feature = "dashboard")]
-    pub dashboard_user: DashboardUser,
+    pub dashboard_username: DashboardUsername,
 }
 
 pub struct ApiWorkerFullNode;
@@ -69,7 +69,7 @@ impl<N: Node> Worker<N> for ApiWorkerFullNode
 where
     N::Backend: StorageBackend,
 {
-    type Config = ApiWorkerConfigFullNode;
+    type Config = ApiConfigFullNode;
     type Error = WorkerError;
 
     fn dependencies() -> &'static [TypeId] {
@@ -84,13 +84,13 @@ where
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let args = Arc::new(ApiArgs {
             node_id: config.node_id,
-            node_key_pair: config.keypair,
+            node_keypair: config.keypair,
             rest_api_config: config.rest_api_config,
             protocol_config: config.protocol_config,
             network_id: config.network_id,
             bech32_hrp: config.bech32_hrp,
             #[cfg(feature = "dashboard")]
-            dashboard_user: config.dashboard_user,
+            dashboard_username: config.dashboard_user,
             storage: node.storage(),
             bus: node.bus(),
             node_info: node.info(),
@@ -152,13 +152,13 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
 
 pub struct ApiArgs<B: StorageBackend> {
     pub node_id: PeerId,
-    pub node_key_pair: Keypair,
+    pub node_keypair: Keypair,
     pub rest_api_config: RestApiConfig,
     pub protocol_config: ProtocolConfig,
     pub network_id: NetworkId,
     pub bech32_hrp: Bech32Hrp,
     #[cfg(feature = "dashboard")]
-    pub dashboard_user: DashboardUser,
+    pub dashboard_username: DashboardUsername,
     pub storage: ResourceHandle<B>,
     pub bus: ResourceHandle<Bus<'static>>,
     pub node_info: ResourceHandle<NodeInfo>,
