@@ -404,7 +404,7 @@ async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
         network_id: (network_name, network_id),
         bech32_hrp: hrp,
         #[cfg(feature = "dashboard")]
-        dashboard_user: config.dashboard.auth().user().to_owned(),
+        dashboard_username: config.dashboard.auth().user().to_owned(),
     };
 
     let builder = bee_rest_api::endpoints::init_full_node::<FullNode<S>>(worker_config, builder).await;
