@@ -194,7 +194,7 @@ impl NftOutput {
 
     ///
     #[inline(always)]
-    pub fn native_tokens(&self) -> &[NativeToken] {
+    pub fn native_tokens(&self) -> &NativeTokens {
         &self.native_tokens
     }
 
@@ -213,19 +213,19 @@ impl NftOutput {
 
     ///
     #[inline(always)]
-    pub fn unlock_conditions(&self) -> &[UnlockCondition] {
+    pub fn unlock_conditions(&self) -> &UnlockConditions {
         &self.unlock_conditions
     }
 
     ///
     #[inline(always)]
-    pub fn feature_blocks(&self) -> &[FeatureBlock] {
+    pub fn feature_blocks(&self) -> &FeatureBlocks {
         &self.feature_blocks
     }
 
     ///
     #[inline(always)]
-    pub fn immutable_feature_blocks(&self) -> &[FeatureBlock] {
+    pub fn immutable_feature_blocks(&self) -> &FeatureBlocks {
         &self.immutable_feature_blocks
     }
 }

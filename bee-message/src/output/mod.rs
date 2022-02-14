@@ -139,7 +139,7 @@ impl Output {
     }
 
     /// Returns the native tokens of an `Output`, if any.
-    pub fn native_tokens(&self) -> Option<&[NativeToken]> {
+    pub fn native_tokens(&self) -> Option<&NativeTokens> {
         match self {
             #[cfg(feature = "cpt2")]
             Self::SignatureLockedSingle(_) => None,
