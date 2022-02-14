@@ -44,12 +44,9 @@ pub(crate) type DashboardUser = String;
 
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
 
-pub async fn init_full_node<N: Node>(
-    worker_config: ApiWorkerConfigFullNode,
-    node_builder: N::Builder,
-) -> N::Builder
-    where
-        N::Backend: StorageBackend,
+pub async fn init_full_node<N: Node>(worker_config: ApiWorkerConfigFullNode, node_builder: N::Builder) -> N::Builder
+where
+    N::Backend: StorageBackend,
 {
     node_builder.with_worker_cfg::<ApiWorkerFullNode>(worker_config)
 }
@@ -69,8 +66,8 @@ pub struct ApiWorkerFullNode;
 
 #[async_trait]
 impl<N: Node> Worker<N> for ApiWorkerFullNode
-    where
-        N::Backend: StorageBackend,
+where
+    N::Backend: StorageBackend,
 {
     type Config = ApiWorkerConfigFullNode;
     type Error = WorkerError;
@@ -81,7 +78,7 @@ impl<N: Node> Worker<N> for ApiWorkerFullNode
             TypeId::of::<MessageSubmitterWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
         ]
-            .leak()
+        .leak()
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
@@ -175,8 +172,8 @@ pub struct ApiArgs<B: StorageBackend> {
 }
 
 pub async fn init_entry_node<N: Node>(rest_api_config: RestApiConfig, node_builder: N::Builder) -> N::Builder
-    where
-        N::Backend: StorageBackend,
+where
+    N::Backend: StorageBackend,
 {
     node_builder.with_worker_cfg::<ApiWorkerEntryNode>(rest_api_config)
 }
@@ -185,8 +182,8 @@ pub struct ApiWorkerEntryNode;
 
 #[async_trait]
 impl<N: Node> Worker<N> for ApiWorkerEntryNode
-    where
-        N::Backend: StorageBackend,
+where
+    N::Backend: StorageBackend,
 {
     type Config = RestApiConfig;
     type Error = WorkerError;
