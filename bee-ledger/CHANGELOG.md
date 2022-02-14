@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `BalanceDiff` is now an `u64` tuple struct;
 - `Balance` is now an `u64` tuple struct;
 - Serialize and deserialize the ledger types using `packable` instead of `bee-common::packable`;
-- Dispatch CreatedOutput through OutputCreated event;
+- Dispatch `CreatedOutput` through `OutputCreated` event;
 - Update dependencies;
 
 ### Removed
