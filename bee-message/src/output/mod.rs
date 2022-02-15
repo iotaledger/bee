@@ -153,6 +153,21 @@ impl Output {
         }
     }
 
+    /// Returns the immutable feature blocks of an `Output`, if any.
+    pub fn immutable_feature_blocks(&self) -> Option<&[FeatureBlock]> {
+        match self {
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedSingle(_) => None,
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedDustAllowance(_) => None,
+            Self::Treasury(_) => None,
+            Self::Basic(_) => None,
+            Self::Alias(output) => Some(output.immutable_feature_blocks()),
+            Self::Foundry(output) => Some(output.immutable_feature_blocks()),
+            Self::Nft(output) => Some(output.immutable_feature_blocks()),
+        }
+    }
+
     /// Returns the native tokens of an `Output`, if any.
     pub fn native_tokens(&self) -> Option<&[NativeToken]> {
         match self {
