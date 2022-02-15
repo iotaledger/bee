@@ -152,4 +152,49 @@ impl Output {
             Self::Nft(output) => Some(output.native_tokens()),
         }
     }
+
+    /// Returns the unlock conditions of an `Output`, if any.
+    pub fn unlock_conditions(&self) -> Option<&UnlockConditions> {
+        match self {
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedSingle(_) => None,
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedDustAllowance(_) => None,
+            Self::Treasury(_) => None,
+            Self::Basic(output) => Some(output.unlock_conditions()),
+            Self::Alias(output) => Some(output.unlock_conditions()),
+            Self::Foundry(output) => Some(output.unlock_conditions()),
+            Self::Nft(output) => Some(output.unlock_conditions()),
+        }
+    }
+
+    /// Returns the feature blocks of an `Output`, if any.
+    pub fn feature_blocks(&self) -> Option<&FeatureBlocks> {
+        match self {
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedSingle(_) => None,
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedDustAllowance(_) => None,
+            Self::Treasury(_) => None,
+            Self::Basic(output) => Some(output.feature_blocks()),
+            Self::Alias(output) => Some(output.feature_blocks()),
+            Self::Foundry(output) => Some(output.feature_blocks()),
+            Self::Nft(output) => Some(output.feature_blocks()),
+        }
+    }
+
+    /// Returns the immutable feature blocks of an `Output`, if any.
+    pub fn immutable_feature_blocks(&self) -> Option<&FeatureBlocks> {
+        match self {
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedSingle(_) => None,
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedDustAllowance(_) => None,
+            Self::Treasury(_) => None,
+            Self::Basic(_) => None,
+            Self::Alias(output) => Some(output.immutable_feature_blocks()),
+            Self::Foundry(output) => Some(output.immutable_feature_blocks()),
+            Self::Nft(output) => Some(output.immutable_feature_blocks()),
+        }
+    }
 }
