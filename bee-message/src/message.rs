@@ -139,8 +139,11 @@ impl<P: NonceProvider> MessageBuilder<P> {
 /// Represent the Protocol id for both legacy and stardust message type.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg(feature = "cpt2")]
 pub enum ProtocolId {
+    /// Chrysalis network id
     NetworkId(u64),
+    /// Stardust protocol version
     ProtocolVersion(u8),
 }
 
