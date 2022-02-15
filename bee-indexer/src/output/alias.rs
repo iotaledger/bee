@@ -18,7 +18,7 @@ pub struct Model {
     pub created_at: UnixTimestampDb,
     #[sea_orm(unique)]
     pub output_id: AddressDb,
-    pub amount: i64,
+    pub amount: u64,
     pub state_controller: AddressDb,
     pub governor: AddressDb,
     pub issuer: Option<AddressDb>,

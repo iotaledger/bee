@@ -1,30 +1,36 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::HashSet;
 
-use bee_indexer::{ Indexer, Error};
-use bee_ledger::workers::event::OutputCreated;
+use bee_indexer::{Error, Indexer};
+use bee_ledger::{types::CreatedOutput, workers::event::OutputCreated};
 use bee_message::{milestone::MilestoneIndex, output::Output};
 use bee_test::rand::{
-    number::rand_number_range,
     message::rand_message_id,
+    milestone::rand_milestone_index,
+    number::{rand_number, rand_number_range},
     output::{rand_alias_output, rand_output_id},
 };
 
+use serde_json::json;
+
+use std::collections::HashSet;
+
 fn random_created_alias() -> OutputCreated {
     OutputCreated {
-        message_id: rand_message_id(),
         output_id: rand_output_id(),
-        output: Output::Alias(rand_alias_output()),
+        output: CreatedOutput::new(
+            rand_message_id(),
+            rand_milestone_index(),
+            rand_number(),
+            Output::Alias(rand_alias_output()),
+        ),
     }
 }
 
-use serde_json::json;
-
 #[tokio::test]
 async fn pagination() -> Result<(), Error> {
-    // TODO: Test edge cases: num_outputs: 0; page_size: 0; 
+    // TODO: Test edge cases: num_outputs: 0; page_size: 0;
     let num_outputs = rand_number_range(1..=100);
     let page_size = rand_number_range(1..=100);
 
@@ -82,8 +88,20 @@ async fn pagination() -> Result<(), Error> {
     let expected_page_count = (num_outputs as u64 + page_size - 1) / page_size;
 
     assert_eq!(page.cursor, None, "The cursor should be no cursor in the end.");
-    assert_eq!(page_index + 1, expected_page_count, "Number of outputs: {}, Page size: {}", num_outputs, page_size);
-    assert_eq!(paginated_output_ids.len(), num_outputs, "Number of outputs: {}, Page size: {}", num_outputs, page_size);
+    assert_eq!(
+        page_index + 1,
+        expected_page_count,
+        "Number of outputs: {}, Page size: {}",
+        num_outputs,
+        page_size
+    );
+    assert_eq!(
+        paginated_output_ids.len(),
+        num_outputs,
+        "Number of outputs: {}, Page size: {}",
+        num_outputs,
+        page_size
+    );
 
     Ok(())
 }

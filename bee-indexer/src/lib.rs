@@ -12,12 +12,10 @@ pub(crate) mod types;
 
 pub use error::Error;
 
-pub(crate) use types::UniversalFilterOptions;
 pub(crate) use query::QueryBuilder;
+pub(crate) use types::UniversalFilterOptions;
 
 pub use dtos::{AddressDto, AliasFilterOptionsDto};
-
-use std::time::SystemTime;
 
 use output::{alias, alias::AliasFilterOptions};
 
@@ -26,7 +24,6 @@ use bee_ledger::{
     workers::event::{OutputConsumed, OutputCreated},
 };
 use bee_message::{
-    address::Address,
     milestone::MilestoneIndex,
     output::{Output, OutputId},
 };
@@ -35,7 +32,7 @@ use packable::PackableExt;
 
 use sea_orm::{
     prelude::*, ActiveModelTrait, Condition, ConnectionTrait, Database, DatabaseConnection, EntityTrait,
-    FromQueryResult, NotSet, Schema, Set, QueryTrait,
+    FromQueryResult, NotSet, QueryTrait, Schema, Set,
 };
 
 use sea_query::{Alias, Cond, Expr, JoinType, Order};
@@ -95,18 +92,13 @@ impl Indexer {
     }
 
     pub async fn process_created_output(&self, created: &OutputCreated) -> Result<(), Error> {
-        let output_id = created.output_id;
-
-        match &created.output {
+        match created.output.inner() {
             Output::Alias(output) => {
                 let alias = alias::ActiveModel {
                     alias_id: Set(output.alias_id().pack_to_vec()),
-                    output_id: Set(output_id.pack_to_vec()),
-                    created_at: Set(SystemTime::now()
-                        .duration_since(SystemTime::UNIX_EPOCH)
-                        .unwrap()
-                        .as_secs() as u32), // TODO: Get from output
-                    amount: Set(output.amount() as i64), // TODO: Fix type?
+                    output_id: Set(created.output_id.pack_to_vec()),
+                    created_at: Set(created.output.milestone_timestamp()),
+                    amount: Set(output.amount()),
                     state_controller: Set(output.state_controller().pack_to_vec()),
                     governor: Set(output.governor().pack_to_vec()),
                     issuer: NotSet, // TODO: Fix
@@ -171,9 +163,7 @@ impl Indexer {
             cursor: None,
         };
 
-        if page_size > 0
-            && query_results.len() > page_size as usize
-        {
+        if page_size > 0 && query_results.len() > page_size as usize {
             // We have queried one element to many to get the cursor for the next page.
             result.cursor = Some(query_results.last().unwrap().cursor.clone().to_lowercase());
             result.output_ids.pop();
@@ -197,11 +187,4 @@ pub struct IndexedOutputs {
     pub milestone_index: MilestoneIndex,
     pub page_size: u64,
     pub cursor: Option<String>,
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    // TODO: Testcase for max amount transaction
 }

@@ -15,7 +15,7 @@ bee-message = { version = "0.2.0", path = "../bee-message", default-features = f
 #bee-rest-api = { version = "0.2.0", path = "../bee-api/bee-rest-api", default-features = false }
 
 hex = { version = "0.4.3", default-features = false }
-packable = { version = "0.1.0", default-features = false }
+packable = { version = "0.2.1", default-features = false }
 sea-orm = { version = "0.6.0", default-features = false, features = [ "sqlx-sqlite", "runtime-tokio-rustls", "macros" ] }
 sea-query = { version = "0.21.0", default-features = false, features = [ "backend-sqlite", "sqlx-sqlite" ] }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }

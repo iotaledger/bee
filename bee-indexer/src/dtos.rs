@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 #[derive(Debug, Default, Deserialize)]
-pub struct AddressDto(pub(crate) String);
+pub struct AddressDto(pub(crate) String); // TODO: Use `AddressDto` from bee-rest-api
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -41,3 +41,5 @@ pub struct AliasFilterOptionsDto {
     #[serde(flatten)]
     pub(crate) universal: UniversalFilterOptionsDto,
 }
+
+// TODO: Create result DTOs
