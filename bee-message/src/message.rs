@@ -20,7 +20,10 @@ use packable::{
 /// A builder to build a [`Message`].
 #[must_use]
 pub struct MessageBuilder<P: NonceProvider = Miner> {
+    #[cfg(not(feature = "cpt2"))]
     protocol_version: Option<u8>,
+    #[cfg(feature = "cpt2")]
+    protocol_id: Option<ProtocolId>,
     parents: Option<Parents>,
     payload: Option<Payload>,
     nonce_provider: Option<(P, f64)>,
@@ -29,7 +32,10 @@ pub struct MessageBuilder<P: NonceProvider = Miner> {
 impl<P: NonceProvider> Default for MessageBuilder<P> {
     fn default() -> Self {
         Self {
+            #[cfg(not(feature = "cpt2"))]
             protocol_version: None,
+            #[cfg(feature = "cpt2")]
+            protocol_id: None,
             parents: None,
             payload: None,
             nonce_provider: None,
@@ -49,11 +55,18 @@ impl<P: NonceProvider> MessageBuilder<P> {
 
     /// Adds a protocol version to a [`MessageBuilder`].
     #[inline(always)]
+    #[cfg(not(feature = "cpt2"))]
     pub fn with_protocol_version(mut self, protocol_version: u8) -> Self {
         self.protocol_version = Some(protocol_version);
         self
     }
-
+    /// Adds a protocol id to a [`MessageBuilder`].
+    #[inline(always)]
+    #[cfg(feature = "cpt2")]
+    pub fn with_protocol_id(mut self, protocol_id: ProtocolId) -> Self {
+        self.protocol_id = Some(protocol_id);
+        self
+    }
     /// Adds parents to a [`MessageBuilder`].
     #[inline(always)]
     pub fn with_parents(mut self, parents: Parents) -> Self {
@@ -77,7 +90,11 @@ impl<P: NonceProvider> MessageBuilder<P> {
 
     /// Finishes the [`MessageBuilder`] into a [`Message`].
     pub fn finish(self) -> Result<Message, Error> {
+        #[cfg(not(feature = "cpt2"))]
         let protocol_version = self.protocol_version.ok_or(Error::MissingField("protocol_version"))?;
+        #[cfg(feature = "cpt2")]
+        let protocol_id = self.protocol_id.ok_or(Error::MissingField("protocol_id"))?;
+
         let parents = self.parents.ok_or(Error::MissingField("parents"))?;
 
         if !matches!(
@@ -89,7 +106,10 @@ impl<P: NonceProvider> MessageBuilder<P> {
         }
 
         let mut message = Message {
+            #[cfg(not(feature = "cpt2"))]
             protocol_version,
+            #[cfg(feature = "cpt2")]
+            protocol_id,
             parents,
             payload: self.payload.into(),
             nonce: 0,
@@ -116,12 +136,24 @@ impl<P: NonceProvider> MessageBuilder<P> {
     }
 }
 
+/// Represent the Protocol id for both legacy and stardust message type.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub enum ProtocolId {
+    NetworkId(u64),
+    ProtocolVersion(u8),
+}
+
 /// Represent the object that nodes gossip around the network.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
     /// Protocol version of the message.
+    #[cfg(not(feature = "cpt2"))]
     protocol_version: u8,
+    // Protocol id with backward compatability
+    #[cfg(feature = "cpt2")]
+    protocol_id: ProtocolId,
     /// The [`MessageId`]s that this message directly approves.
     parents: Parents,
     /// The optional [Payload] of the message.
@@ -150,8 +182,15 @@ impl Message {
 
     /// Returns the protocol version of a [`Message`].
     #[inline(always)]
+    #[cfg(not(feature = "cpt2"))]
     pub fn protocol_version(&self) -> u8 {
         self.protocol_version
+    }
+    /// Returns the protocol id of a [`Message`].
+    #[inline(always)]
+    #[cfg(feature = "cpt2")]
+    pub fn protocol_id(&self) -> ProtocolId {
+        self.protocol_id
     }
 
     /// Returns the parents of a [`Message`].
@@ -183,7 +222,13 @@ impl Packable for Message {
     type UnpackError = Error;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        #[cfg(not(feature = "cpt2"))]
         self.protocol_version.pack(packer)?;
+        #[cfg(feature = "cpt2")]
+        match self.protocol_id {
+            ProtocolId::ProtocolVersion(protocol_version) => protocol_version.pack(packer)?,
+            ProtocolId::NetworkId(network_id) => network_id.pack(packer)?,
+        }
         self.parents.pack(packer)?;
         self.payload.pack(packer)?;
         self.nonce.pack(packer)?;
@@ -194,7 +239,12 @@ impl Packable for Message {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        #[cfg(not(feature = "cpt2"))]
         let protocol_version = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
+        #[cfg(all(feature = "cpt2", not(feature = "chrysalis")))]
+        let protocol_id = ProtocolId::ProtocolVersion(u8::unpack::<_, VERIFY>(unpacker).infallible()?);
+        #[cfg(all(feature = "cpt2", feature = "chrysalis"))]
+        let protocol_id = ProtocolId::NetworkId(u64::unpack::<_, VERIFY>(unpacker).infallible()?);
 
         let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
 
@@ -215,7 +265,10 @@ impl Packable for Message {
         let nonce = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
 
         let message = Self {
+            #[cfg(not(feature = "cpt2"))]
             protocol_version,
+            #[cfg(feature = "cpt2")]
+            protocol_id,
             parents,
             payload,
             nonce,

@@ -41,6 +41,7 @@ bee-test = { path = "../bee-test", default-features = false }
 num_cpus = { version = "1.13.0", default-features = false }
 
 [features]
+chrysalis = [ ]
 cpt2 = [ ]
 serde1 = [ "serde", "serde-big-array" ]
 std = [ ]
