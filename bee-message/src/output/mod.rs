@@ -154,7 +154,7 @@ impl Output {
     }
 
     /// Returns the unlock conditions of an `Output`, if any.
-    pub fn unlock_conditions(&self) -> Option<&[UnlockCondition]> {
+    pub fn unlock_conditions(&self) -> Option<&UnlockConditions> {
         match self {
             #[cfg(feature = "cpt2")]
             Self::SignatureLockedSingle(_) => None,
@@ -169,7 +169,7 @@ impl Output {
     }
 
     /// Returns the feature blocks of an `Output`, if any.
-    pub fn feature_blocks(&self) -> Option<&[FeatureBlock]> {
+    pub fn feature_blocks(&self) -> Option<&FeatureBlocks> {
         match self {
             #[cfg(feature = "cpt2")]
             Self::SignatureLockedSingle(_) => None,
@@ -184,7 +184,7 @@ impl Output {
     }
 
     /// Returns the immutable feature blocks of an `Output`, if any.
-    pub fn immutable_feature_blocks(&self) -> Option<&[FeatureBlock]> {
+    pub fn immutable_feature_blocks(&self) -> Option<&FeatureBlocks> {
         match self {
             #[cfg(feature = "cpt2")]
             Self::SignatureLockedSingle(_) => None,
