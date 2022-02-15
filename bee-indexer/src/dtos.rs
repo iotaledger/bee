@@ -1,7 +1,8 @@
-use serde::Deserialize;
+use std::ops::Add;
 
-#[derive(Debug, Default, Deserialize)]
-pub struct AddressDto(pub(crate) String); // TODO: Use `AddressDto` from bee-rest-api
+pub use bee_rest_api::types::dtos::AddressDto;
+
+use serde::Deserialize;
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -38,6 +39,21 @@ pub struct AliasFilterOptionsInnerDto {
 pub struct AliasFilterOptionsDto {
     #[serde(flatten)]
     pub(crate) inner: AliasFilterOptionsInnerDto,
+    #[serde(flatten)]
+    pub(crate) universal: UniversalFilterOptionsDto,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FoundryFilterOptionsInnerDto {
+    #[serde(rename(deserialize = "address"))]
+    pub(crate) unlockable_by_address: Option<AddressDto>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct FoundryFilterOptionsDto {
+    #[serde(flatten)]
+    pub(crate) inner: FoundryFilterOptionsInnerDto,
     #[serde(flatten)]
     pub(crate) universal: UniversalFilterOptionsDto,
 }

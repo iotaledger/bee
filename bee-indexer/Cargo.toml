@@ -12,7 +12,7 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 [dependencies]
 bee-ledger = { version = "0.7.0", path = "../bee-ledger", default-features = false, features = [ "workers" ] }
 bee-message = { version = "0.2.0", path = "../bee-message", default-features = false }
-#bee-rest-api = { version = "0.2.0", path = "../bee-api/bee-rest-api", default-features = false }
+bee-rest-api = { version = "0.2.0", path = "../bee-api/bee-rest-api", default-features = false }
 
 hex = { version = "0.4.3", default-features = false }
 packable = { version = "0.2.1", default-features = false }

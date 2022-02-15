@@ -306,6 +306,7 @@ version = "0.1.0"
 dependencies = [
  "bee-ledger",
  "bee-message",
+ "bee-rest-api",
  "bee-test",
  "hex",
  "packable",

@@ -15,9 +15,9 @@ pub use error::Error;
 pub(crate) use query::QueryBuilder;
 pub(crate) use types::UniversalFilterOptions;
 
-pub use dtos::{AddressDto, AliasFilterOptionsDto};
+pub use dtos::{AddressDto, FoundryFilterOptionsDto, AliasFilterOptionsDto};
 
-use output::{alias, alias::AliasFilterOptions};
+use output::{alias, alias::AliasFilterOptions, foundry, foundry::FoundryFilterOptions};
 
 use bee_ledger::{
     types::CreatedOutput,
@@ -98,7 +98,7 @@ impl Indexer {
                     alias_id: Set(output.alias_id().pack_to_vec()),
                     output_id: Set(created.output_id.pack_to_vec()),
                     created_at: Set(created.output.milestone_timestamp()),
-                    amount: Set(output.amount()),
+                    amount: Set(output.amount().to_le_bytes().to_vec()),
                     state_controller: Set(output.state_controller().pack_to_vec()),
                     governor: Set(output.governor().pack_to_vec()),
                     issuer: NotSet, // TODO: Fix
@@ -135,6 +135,49 @@ impl Indexer {
     ) -> Result<IndexedOutputs, Error> {
         let universal_options: UniversalFilterOptions = options_dto.universal.try_into()?;
         let output_options: AliasFilterOptions = options_dto.inner.try_into()?;
+
+        let page_size = universal_options.pagination.page_size;
+
+        let statement = QueryBuilder::new(universal_options, output_options).build(self.db.get_database_backend());
+
+        let query_results = JoinedResult::find_by_statement(statement)
+            .all(&self.db)
+            .await
+            .map_err(Error::DatabaseError)?;
+
+        let mut result = IndexedOutputs {
+            output_ids: query_results
+                .iter()
+                .map(|r| {
+                    let bytes: [u8; OutputId::LENGTH] = r.output_id.clone().try_into().unwrap();
+                    bytes.try_into().unwrap()
+                })
+                .collect(),
+            cursors: query_results.iter().map(|r| r.cursor.clone().to_lowercase()).collect(),
+            milestone_index: query_results
+                .first()
+                .map(|r| r.current_milestone_index)
+                .unwrap_or(0)
+                .into(),
+            page_size,
+            cursor: None,
+        };
+
+        if page_size > 0 && query_results.len() > page_size as usize {
+            // We have queried one element to many to get the cursor for the next page.
+            result.cursor = Some(query_results.last().unwrap().cursor.clone().to_lowercase());
+            result.output_ids.pop();
+        }
+
+        Ok(result)
+    }
+
+    pub async fn foundry_outputs_with_filters(
+        &self,
+        options_dto: FoundryFilterOptionsDto,
+    ) -> Result<IndexedOutputs, Error> {
+        let universal_options: UniversalFilterOptions = options_dto.universal.try_into()?;
+        let output_options: FoundryFilterOptions = options_dto.inner.try_into()?;
 
         let page_size = universal_options.pagination.page_size;
 

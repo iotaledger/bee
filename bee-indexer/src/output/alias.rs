@@ -1,14 +1,17 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_message::address::Address;
+
 use crate::{
     dtos::{AddressDto, AliasFilterOptionsInnerDto},
     query::OutputFilterOptions,
-    types::{AddressDb, AliasIdDb, UnixTimestampDb},
+    types::{AddressDb, AliasIdDb, AmountDb, UnixTimestampDb},
     Error,
 };
 
-use sea_orm::{Condition, entity::prelude::*};
+use packable::PackableExt;
+use sea_orm::{entity::prelude::*, Condition};
 
 #[derive(Clone, Debug, Eq, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "alias_outputs")]
@@ -18,7 +21,7 @@ pub struct Model {
     pub created_at: UnixTimestampDb,
     #[sea_orm(unique)]
     pub output_id: AddressDb,
-    pub amount: u64,
+    pub amount: AmountDb,
     pub state_controller: AddressDb,
     pub governor: AddressDb,
     pub issuer: Option<AddressDb>,
@@ -41,14 +44,11 @@ pub(crate) struct AliasFilterOptions {
 }
 
 #[inline(always)]
-fn parse_address_option(option: Option<AddressDto>, err_str: &'static str) -> Result<Option<AddressDb>, Error> {
-    // TODO: Perform validation
-    // option
-    //     .map(|sc| sc.parse::<Address>().map_err(|_| Error::InvalidField(err_str)))
-    //     .transpose()
-    option
-        .map(|o| hex::decode(o.0).map_err(|_| Error::InvalidField(err_str)))
-        .transpose()
+fn address_dto_option_packed(option: Option<AddressDto>, err_str: &'static str) -> Result<Option<AddressDb>, Error> {
+    Ok(option
+        .map(|a| Address::try_from(&a).map_err(|_| Error::InvalidField(err_str)))
+        .transpose()?
+        .map(|a| a.pack_to_vec()))
 }
 
 impl TryInto<AliasFilterOptions> for AliasFilterOptionsInnerDto {
@@ -56,10 +56,10 @@ impl TryInto<AliasFilterOptions> for AliasFilterOptionsInnerDto {
 
     fn try_into(self) -> Result<AliasFilterOptions, Self::Error> {
         Ok(AliasFilterOptions {
-            state_controller: parse_address_option(self.state_controller, "state_controller")?,
-            governor: parse_address_option(self.governor, "governor")?,
-            issuer: parse_address_option(self.issuer, "issuer")?,
-            sender: parse_address_option(self.sender, "sender")?,
+            state_controller: address_dto_option_packed(self.state_controller, "state controller")?,
+            governor: address_dto_option_packed(self.governor, "governor")?,
+            issuer: address_dto_option_packed(self.issuer, "issuer")?,
+            sender: address_dto_option_packed(self.sender, "sender")?,
         })
     }
 }
@@ -68,7 +68,7 @@ impl OutputFilterOptions<Entity, Column> for AliasFilterOptions {
     fn entity() -> Entity {
         Entity
     }
-    
+
     fn created_at_col() -> Column {
         Column::CreatedAt
     }

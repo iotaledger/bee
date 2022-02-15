@@ -14,8 +14,13 @@ use sea_query::{Cond, Expr, JoinType, Order, SelectStatement};
 
 use std::{mem::size_of, str::FromStr};
 
+// Unfortunately, `sqlx-sqlite` does not support `u64` yet.
+pub(crate) type AmountDb = Vec<u8>;
 pub(crate) type AddressDb = Vec<u8>;
+
 pub(crate) type AliasIdDb = Vec<u8>;
+pub(crate) type FoundryIdDb = Vec<u8>;
+
 pub(crate) type MilestoneIndexDb = u32;
 pub(crate) type UnixTimestampDb = u32;
 
