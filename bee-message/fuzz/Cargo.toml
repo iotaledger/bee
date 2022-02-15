@@ -12,7 +12,7 @@ cargo-fuzz = true
 bee-message = { path = "..", default-features = false }
 
 libfuzzer-sys = { version = "0.4.2", default-features = false }
-packable = { version = "0.2.0", default-features = false }
+packable = { version = "0.2.1", default-features = false }
 
 # Prevent this from interfering with workspaces
 [workspace]

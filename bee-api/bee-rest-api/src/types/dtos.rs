@@ -1238,7 +1238,7 @@ pub struct TagFeatureBlockDto {
 pub struct ImmutableAliasAddressUnlockConditionDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    pub address: AliasAddressDto,
+    pub address: AddressDto,
 }
 
 impl UnlockConditionDto {
@@ -1304,7 +1304,7 @@ impl From<&UnlockCondition> for UnlockConditionDto {
             UnlockCondition::ImmutableAliasAddress(v) => {
                 Self::ImmutableAliasAddress(ImmutableAliasAddressUnlockConditionDto {
                     kind: ImmutableAliasAddressUnlockCondition::KIND,
-                    address: v.address().into(),
+                    address: AddressDto::Alias(v.address().into()),
                 })
             }
         }
@@ -1375,11 +1375,15 @@ impl TryFrom<&UnlockConditionDto> for UnlockCondition {
                     .map_err(|_e| Error::InvalidField("GovernorAddressUnlockCondition"))?,
             )),
             UnlockConditionDto::ImmutableAliasAddress(v) => {
-                Self::ImmutableAliasAddress(ImmutableAliasAddressUnlockCondition::new(
-                    (&v.address)
-                        .try_into()
-                        .map_err(|_e| Error::InvalidField("ImmutableAliasAddressUnlockCondition"))?,
-                ))
+                let address: Address = (&v.address)
+                    .try_into()
+                    .map_err(|_e| Error::InvalidField("ImmutableAliasAddressUnlockCondition"))?;
+                // An ImmutableAliasAddressUnlockCondition must have an AliasAddress.
+                if let Address::Alias(alias_address) = &address {
+                    Self::ImmutableAliasAddress(ImmutableAliasAddressUnlockCondition::new(*alias_address))
+                } else {
+                    return Err(Error::InvalidField("ImmutableAliasAddressUnlockCondition"));
+                }
             }
         })
     }

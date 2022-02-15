@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    address::AliasAddress,
+    address::{Address, AliasAddress},
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{
@@ -250,7 +250,7 @@ impl FoundryOutput {
         let mut packer = SlicePacker::new(&mut bytes);
 
         // SAFETY: packing to an array of the correct length can't fail.
-        self.address().pack(&mut packer).unwrap();
+        Address::Alias(*self.address()).pack(&mut packer).unwrap();
         self.serial_number.pack(&mut packer).unwrap();
         self.token_scheme.pack(&mut packer).unwrap();
 
@@ -280,7 +280,7 @@ impl FoundryOutput {
 
     ///
     #[inline(always)]
-    pub fn native_tokens(&self) -> &[NativeToken] {
+    pub fn native_tokens(&self) -> &NativeTokens {
         &self.native_tokens
     }
 
@@ -316,19 +316,19 @@ impl FoundryOutput {
 
     ///
     #[inline(always)]
-    pub fn unlock_conditions(&self) -> &[UnlockCondition] {
+    pub fn unlock_conditions(&self) -> &UnlockConditions {
         &self.unlock_conditions
     }
 
     ///
     #[inline(always)]
-    pub fn feature_blocks(&self) -> &[FeatureBlock] {
+    pub fn feature_blocks(&self) -> &FeatureBlocks {
         &self.feature_blocks
     }
 
     ///
     #[inline(always)]
-    pub fn immutable_feature_blocks(&self) -> &[FeatureBlock] {
+    pub fn immutable_feature_blocks(&self) -> &FeatureBlocks {
         &self.immutable_feature_blocks
     }
 }
