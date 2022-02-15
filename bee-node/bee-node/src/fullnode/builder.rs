@@ -154,7 +154,7 @@ impl<S: NodeStorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
         let builder = initialize_tangle(builder);
 
         // Start the version checker.
-        let builder = builder.with_worker::<VersionCheckerPlugin>();
+        let builder = builder.with_worker_cfg::<VersionCheckerPlugin>(std::env!("CARGO_PKG_VERSION").to_string());
 
         // Start serving the dashboard (if enabled).
         #[cfg(feature = "dashboard")]

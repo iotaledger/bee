@@ -5,17 +5,22 @@
 
 #![warn(missing_docs)]
 
+mod release_info;
+
+use crate::release_info::{ReleaseInfo, ReleaseInfoBuilder};
+
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
 use futures::StreamExt;
-use log::info;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
 use std::{convert::Infallible, time::Duration};
 
-const CHECK_INTERVAL_SEC: u64 = 3600;
+const CHECK_INTERVAL_SEC: u64 = 5;
+
+type VersionCheckerConfig = String;
 
 /// Version checker plugin.
 #[derive(Default)]
@@ -23,12 +28,12 @@ pub struct VersionCheckerPlugin;
 
 #[async_trait]
 impl<N: Node> Worker<N> for VersionCheckerPlugin {
-    type Config = ();
+    type Config = VersionCheckerConfig;
     type Error = Infallible;
 
-    async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
+    async fn start(node: &mut N, current_version: Self::Config) -> Result<Self, Self::Error> {
         node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Running.");
+            log::info!("Running.");
 
             let mut ticker = ShutdownStream::new(
                 shutdown,
@@ -36,12 +41,65 @@ impl<N: Node> Worker<N> for VersionCheckerPlugin {
             );
 
             while ticker.next().await.is_some() {
-                // TODO
+                show_version_status(&current_version).await;
             }
 
-            info!("Stopped.");
+            log::info!("Stopped.");
         });
 
         Ok(Self::default())
     }
+}
+
+async fn show_version_status(current_version: &str) {
+    if let Some(release_info) = get_release_info().await {
+        match (semver::Version::parse(current_version), latest(release_info)) {
+            (Err(e), _) => println!("Error parsing current Bee version ({}): {}", current_version, e),
+            (Ok(current), Some(latest)) => {
+                if latest.version > current {
+                    log::warn!(
+                        "Found a more recent release version ({}), available at {}",
+                        latest.version,
+                        latest.html_url,
+                    );
+                } else {
+                    log::info!("On the latest release version ({})", current_version);
+                }
+            }
+            _ => log::warn!("Could not identify the latest release version"),
+        }
+    }
+}
+
+async fn get_release_info() -> Option<Vec<ReleaseInfoBuilder>> {
+    let client = reqwest::Client::builder().user_agent("bee").build().unwrap();
+
+    match client
+        .get("https://api.github.com/repos/iotaledger/bee/releases")
+        .send()
+        .await
+        .and_then(|resp| resp.error_for_status())
+    {
+        Ok(resp) => match resp.json::<Vec<ReleaseInfoBuilder>>().await {
+            Ok(releases) => Some(releases),
+            Err(e) => {
+                log::error!("{}", e);
+                None
+            }
+        },
+        Err(e) => {
+            log::error!("{}", e);
+            None
+        }
+    }
+}
+
+fn latest(release_info: Vec<ReleaseInfoBuilder>) -> Option<ReleaseInfo> {
+    let mut releases = release_info
+        .into_iter()
+        .filter_map(|info| info.build())
+        .collect::<Vec<_>>();
+
+    releases.sort();
+    releases.pop()
 }
