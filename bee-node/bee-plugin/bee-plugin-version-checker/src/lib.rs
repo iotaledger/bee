@@ -51,6 +51,8 @@ impl<N: Node> Worker<N> for VersionCheckerPlugin {
     }
 }
 
+/// Alerts the user (through a `WARN` level log event) if there is a newer release version of Bee available,
+/// and provides a URL to the release's summary webpage.
 async fn show_version_status(current_version: &str) {
     if let Some(release_info) = get_release_info().await {
         match (semver::Version::parse(current_version), latest(release_info)) {
@@ -71,6 +73,8 @@ async fn show_version_status(current_version: &str) {
     }
 }
 
+/// Returns a list of [`ReleaseInfoBuilder`]s describing all Github releases, if the API request and
+/// deserialization was successful. Otherwise, returns `None`.
 async fn get_release_info() -> Option<Vec<ReleaseInfoBuilder>> {
     let client = reqwest::Client::builder().user_agent("bee").build().unwrap();
 
@@ -83,17 +87,20 @@ async fn get_release_info() -> Option<Vec<ReleaseInfoBuilder>> {
         Ok(resp) => match resp.json::<Vec<ReleaseInfoBuilder>>().await {
             Ok(releases) => Some(releases),
             Err(e) => {
+                // Error deserializing response.
                 log::error!("{}", e);
                 None
             }
         },
         Err(e) => {
+            // Error occured during API request.
             log::error!("{}", e);
             None
         }
     }
 }
 
+/// Returns the latest full release (i.e. not a pre-release version) given a vector of [`ReleaseInfoBuilder`]s.
 fn latest(release_info: Vec<ReleaseInfoBuilder>) -> Option<ReleaseInfo> {
     let mut releases = release_info
         .into_iter()

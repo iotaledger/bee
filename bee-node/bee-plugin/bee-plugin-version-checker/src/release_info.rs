@@ -13,12 +13,18 @@ pub(crate) struct ReleaseInfoBuilder {
 }
 
 impl ReleaseInfoBuilder {
+    /// Attempts to build a [`ReleaseInfo`].
+    ///
+    /// Returns:
+    ///  - `None` if there is an error parsing a version from the release tag.
+    ///  - `None` if this is a pre-release.
+    ///  - `Some` otherwise.
     pub(crate) fn build(self) -> Option<ReleaseInfo> {
         let version = self.tag_name.replace("v", "");
 
         match Version::parse(&version) {
             Err(e) => {
-                println!("error parsing version from tag {}: {}", self.tag_name, e);
+                log::warn!("error parsing version from tag {}: {}", self.tag_name, e);
                 None
             }
             Ok(version) => version.pre.is_empty().then(|| ReleaseInfo {
