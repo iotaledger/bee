@@ -1,7 +1,6 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub(crate) mod dtos;
 pub(crate) mod error;
 pub(crate) mod output;
 pub(crate) mod query;
@@ -12,31 +11,24 @@ pub(crate) mod types;
 
 pub use error::Error;
 
+use query::OutputTable;
 pub(crate) use query::QueryBuilder;
-pub(crate) use types::UniversalFilterOptions;
 
-pub use dtos::{AddressDto, FoundryFilterOptionsDto, AliasFilterOptionsDto};
+pub use types::dtos::{AddressDto, AliasFilterOptionsDto, FoundryFilterOptionsDto};
 
-use output::{alias, alias::AliasFilterOptions, foundry, foundry::FoundryFilterOptions};
+use output::alias;
 
-use bee_ledger::{
-    types::CreatedOutput,
-    workers::event::{OutputConsumed, OutputCreated},
-};
-use bee_message::{
-    milestone::MilestoneIndex,
-    output::{Output, OutputId},
-};
+use bee_ledger::workers::event::{OutputConsumed, OutputCreated};
+use bee_message::{milestone::MilestoneIndex, output::Output};
 
 use packable::PackableExt;
 
 use sea_orm::{
-    prelude::*, ActiveModelTrait, Condition, ConnectionTrait, Database, DatabaseConnection, EntityTrait,
-    FromQueryResult, NotSet, QueryTrait, Schema, Set,
+    prelude::*, ActiveModelTrait, ConnectionTrait, Database, DatabaseConnection, EntityTrait, FromQueryResult, NotSet,
+    Schema, Set,
 };
 
-use sea_query::{Alias, Cond, Expr, JoinType, Order};
-use types::{AddressDb, MilestoneIndexDb, UnixTimestampDb};
+use types::{responses::OutputsResponse, AddressDb, MilestoneIndexDb, FilterOptions};
 
 pub struct Indexer {
     db: DatabaseConnection,
@@ -129,91 +121,91 @@ impl Indexer {
         Ok(())
     }
 
+    pub(crate) async fn outputs_with_filters<T: OutputTable>(
+        &self,
+        table: T,
+        options_dto: impl TryInto<FilterOptions<T>, Error = Error>,
+    ) -> Result<OutputsResponse, Error> {
+        let options: FilterOptions<T> = options_dto.try_into()?;
+        let page_size = options.pagination.page_size;
+
+        let statement = QueryBuilder::new(table, options).build(self.db.get_database_backend());
+
+        let query_results = JoinedResult::find_by_statement(statement)
+            .all(&self.db)
+            .await
+            .map_err(Error::DatabaseError)?;
+
+        let mut response = OutputsResponse {
+            items: query_results
+                .iter()
+                .map(|r| hex::encode(r.output_id.clone())) // TODO: Get rid of clone
+                .collect(),
+            ledger_index: query_results
+                .first()
+                .map(|r| r.current_milestone_index)
+                .unwrap_or(0)
+                .into(),
+            cursor: None,
+        };
+
+        if page_size > 0 && query_results.len() > page_size as usize {
+            // We have queried one element to many to get the cursor for the next page.
+            response.cursor = Some(query_results.last().unwrap().cursor.clone().to_lowercase());
+            response.items.pop();
+        }
+
+        Ok(response)
+    }
+    
+    // TODO: Make generic (or use macro)
     pub async fn alias_outputs_with_filters(
         &self,
         options_dto: AliasFilterOptionsDto,
-    ) -> Result<IndexedOutputs, Error> {
-        let universal_options: UniversalFilterOptions = options_dto.universal.try_into()?;
-        let output_options: AliasFilterOptions = options_dto.inner.try_into()?;
-
-        let page_size = universal_options.pagination.page_size;
-
-        let statement = QueryBuilder::new(universal_options, output_options).build(self.db.get_database_backend());
-
-        let query_results = JoinedResult::find_by_statement(statement)
-            .all(&self.db)
-            .await
-            .map_err(Error::DatabaseError)?;
-
-        let mut result = IndexedOutputs {
-            output_ids: query_results
-                .iter()
-                .map(|r| {
-                    let bytes: [u8; OutputId::LENGTH] = r.output_id.clone().try_into().unwrap();
-                    bytes.try_into().unwrap()
-                })
-                .collect(),
-            cursors: query_results.iter().map(|r| r.cursor.clone().to_lowercase()).collect(),
-            milestone_index: query_results
-                .first()
-                .map(|r| r.current_milestone_index)
-                .unwrap_or(0)
-                .into(),
-            page_size,
-            cursor: None,
-        };
-
-        if page_size > 0 && query_results.len() > page_size as usize {
-            // We have queried one element to many to get the cursor for the next page.
-            result.cursor = Some(query_results.last().unwrap().cursor.clone().to_lowercase());
-            result.output_ids.pop();
-        }
-
-        Ok(result)
+    ) -> Result<OutputsResponse, Error> {
+        self.outputs_with_filters(alias::Entity, options_dto).await
     }
 
-    pub async fn foundry_outputs_with_filters(
-        &self,
-        options_dto: FoundryFilterOptionsDto,
-    ) -> Result<IndexedOutputs, Error> {
-        let universal_options: UniversalFilterOptions = options_dto.universal.try_into()?;
-        let output_options: FoundryFilterOptions = options_dto.inner.try_into()?;
+    //     pub async fn foundry_outputs_with_filters(
+    //         &self,
+    //         options_dto: FoundryFilterOptionsDto,
+    //     ) -> Result<IndexedOutputs, Error> {
+    //         let pagination: Pagination = options_dto.universal.pagination.try_into()?;
+    //         let page_size = pagination.page_size;
 
-        let page_size = universal_options.pagination.page_size;
+    //         let statement = QueryBuilder::new(pagination).build(self.db.get_database_backend(), foundry::Entity);
 
-        let statement = QueryBuilder::new(universal_options, output_options).build(self.db.get_database_backend());
+    //         let query_results = JoinedResult::find_by_statement(statement)
+    //             .all(&self.db)
+    //             .await
+    //             .map_err(Error::DatabaseError)?;
 
-        let query_results = JoinedResult::find_by_statement(statement)
-            .all(&self.db)
-            .await
-            .map_err(Error::DatabaseError)?;
+    //         let mut result = IndexedOutputs {
+    //             output_ids: query_results
+    //                 .iter()
+    //                 .map(|r| {
+    //                     let bytes: [u8; OutputId::LENGTH] = r.output_id.clone().try_into().unwrap();
+    //                     bytes.try_into().unwrap()
+    //                 })
+    //                 .collect(),
+    //             cursors: query_results.iter().map(|r| r.cursor.clone().to_lowercase()).collect(),
+    //             milestone_index: query_results
+    //                 .first()
+    //                 .map(|r| r.current_milestone_index)
+    //                 .unwrap_or(0)
+    //                 .into(),
+    //             page_size,
+    //             cursor: None,
+    //         };
 
-        let mut result = IndexedOutputs {
-            output_ids: query_results
-                .iter()
-                .map(|r| {
-                    let bytes: [u8; OutputId::LENGTH] = r.output_id.clone().try_into().unwrap();
-                    bytes.try_into().unwrap()
-                })
-                .collect(),
-            cursors: query_results.iter().map(|r| r.cursor.clone().to_lowercase()).collect(),
-            milestone_index: query_results
-                .first()
-                .map(|r| r.current_milestone_index)
-                .unwrap_or(0)
-                .into(),
-            page_size,
-            cursor: None,
-        };
+    //         if page_size > 0 && query_results.len() > page_size as usize {
+    //             // We have queried one element to many to get the cursor for the next page.
+    //             result.cursor = Some(query_results.last().unwrap().cursor.clone().to_lowercase());
+    //             result.output_ids.pop();
+    //         }
 
-        if page_size > 0 && query_results.len() > page_size as usize {
-            // We have queried one element to many to get the cursor for the next page.
-            result.cursor = Some(query_results.last().unwrap().cursor.clone().to_lowercase());
-            result.output_ids.pop();
-        }
-
-        Ok(result)
-    }
+    //         Ok(result)
+    //     }
 }
 
 #[derive(Debug, FromQueryResult)]
@@ -221,13 +213,4 @@ pub struct JoinedResult {
     pub output_id: AddressDb,
     pub current_milestone_index: MilestoneIndexDb,
     pub cursor: String,
-}
-
-#[derive(Debug)]
-pub struct IndexedOutputs {
-    pub output_ids: Vec<OutputId>,
-    pub cursors: Vec<String>, // TODO: Remove
-    pub milestone_index: MilestoneIndex,
-    pub page_size: u64,
-    pub cursor: Option<String>,
 }

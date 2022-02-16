@@ -1,17 +1,16 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::address::Address;
-
+use super::address_dto_option_packed;
 use crate::{
-    dtos::{AddressDto, AliasFilterOptionsInnerDto},
-    query::OutputFilterOptions,
+    query::OutputTable,
+    types::FilterOptions,
     types::{AddressDb, AliasIdDb, AmountDb, UnixTimestampDb},
-    Error,
+    AliasFilterOptionsDto, Error,
 };
 
-use packable::PackableExt;
-use sea_orm::{entity::prelude::*, Condition};
+use sea_orm::entity::prelude::*;
+use sea_query::Cond;
 
 #[derive(Clone, Debug, Eq, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "alias_outputs")]
@@ -35,39 +34,8 @@ pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
-#[derive(Debug, Default)]
-pub(crate) struct AliasFilterOptions {
-    state_controller: Option<AddressDb>,
-    governor: Option<AddressDb>,
-    issuer: Option<AddressDb>,
-    sender: Option<AddressDb>,
-}
-
-#[inline(always)]
-fn address_dto_option_packed(option: Option<AddressDto>, err_str: &'static str) -> Result<Option<AddressDb>, Error> {
-    Ok(option
-        .map(|a| Address::try_from(&a).map_err(|_| Error::InvalidField(err_str)))
-        .transpose()?
-        .map(|a| a.pack_to_vec()))
-}
-
-impl TryInto<AliasFilterOptions> for AliasFilterOptionsInnerDto {
-    type Error = Error;
-
-    fn try_into(self) -> Result<AliasFilterOptions, Self::Error> {
-        Ok(AliasFilterOptions {
-            state_controller: address_dto_option_packed(self.state_controller, "state controller")?,
-            governor: address_dto_option_packed(self.governor, "governor")?,
-            issuer: address_dto_option_packed(self.issuer, "issuer")?,
-            sender: address_dto_option_packed(self.sender, "sender")?,
-        })
-    }
-}
-
-impl OutputFilterOptions<Entity, Column> for AliasFilterOptions {
-    fn entity() -> Entity {
-        Entity
-    }
+impl OutputTable for Entity {
+    type FilterOptions = AliasFilterOptions;
 
     fn created_at_col() -> Column {
         Column::CreatedAt
@@ -76,23 +44,39 @@ impl OutputFilterOptions<Entity, Column> for AliasFilterOptions {
     fn output_id_col() -> Column {
         Column::OutputId
     }
+}
 
-    fn filter(self) -> Condition {
-        let mut filter = Condition::all();
+#[derive(Debug, Default)]
+pub(crate) struct AliasFilterOptions {
+    state_controller: Option<AddressDb>,
+    governor: Option<AddressDb>,
+    issuer: Option<AddressDb>,
+    sender: Option<AddressDb>,
+}
 
-        if let Some(state_controller) = self.state_controller {
-            filter = filter.add(Column::StateController.eq(state_controller));
-        }
-        if let Some(governor) = self.governor {
-            filter = filter.add(Column::Governor.eq(governor));
-        }
-        if let Some(sender) = self.sender {
-            filter = filter.add(Column::Sender.eq(sender));
-        }
-        if let Some(issuer) = self.issuer {
-            filter = filter.add(Column::Issuer.eq(issuer));
-        }
+impl Into<sea_query::Cond> for AliasFilterOptions {
+    fn into(self) -> sea_query::Cond {
+        Cond::all()
+            .add_option(self.state_controller.map(|sc| Column::StateController.eq(sc)))
+            .add_option(self.governor.map(|governor| Column::Governor.eq(governor)))
+            .add_option(self.sender.map(|sender| Column::Sender.eq(sender)))
+            .add_option(self.issuer.map(|issuer| Column::Issuer.eq(issuer)))
+    }
+}
 
-        filter
+impl TryInto<FilterOptions<Entity>> for AliasFilterOptionsDto {
+    type Error = Error;
+
+    fn try_into(self) -> Result<FilterOptions<Entity>, Self::Error> {
+        Ok(FilterOptions {
+            inner: AliasFilterOptions {
+                state_controller: address_dto_option_packed(self.state_controller, "state controller")?,
+                governor: address_dto_option_packed(self.governor, "governor")?,
+                issuer: address_dto_option_packed(self.issuer, "issuer")?,
+                sender: address_dto_option_packed(self.sender, "sender")?,
+            },
+            pagination: self.pagination.try_into()?,
+            timestamp: self.timestamp.try_into()?,
+        })
     }
 }

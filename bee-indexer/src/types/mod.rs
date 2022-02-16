@@ -1,16 +1,21 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+pub(crate) mod dtos;
+pub(crate) mod responses;
+
 use crate::{
-    dtos::{PaginationDto, UniversalFilterOptionsDto},
-    status, Error,
+    query::{OutputTable},
+    
+    types::dtos::{PaginationDto, TimestampOptionsDto},
+    Error,
 };
 
 use bee_message::{milestone::MilestoneIndex, output::OutputId};
 
-use sea_orm::{ColumnTrait, EntityTrait};
+use sea_orm::{ColumnTrait};
 
-use sea_query::{Cond, Expr, JoinType, Order, SelectStatement};
+use sea_query::{Cond};
 
 use std::{mem::size_of, str::FromStr};
 
@@ -107,22 +112,34 @@ impl TryInto<Pagination> for PaginationDto {
 }
 
 #[derive(Debug, Default)]
-pub(crate) struct UniversalFilterOptions {
-    // general
+pub(crate) struct TimestampFilterOptions {
     pub created_before: Option<UnixTimestampDb>,
     pub created_after: Option<UnixTimestampDb>,
-    pub pagination: Pagination,
 }
 
-impl TryInto<UniversalFilterOptions> for UniversalFilterOptionsDto {
+impl TryInto<TimestampFilterOptions> for TimestampOptionsDto {
     type Error = Error;
 
-    fn try_into(self) -> Result<UniversalFilterOptions, Self::Error> {
-        Ok(UniversalFilterOptions {
-            created_after: self.timestamp.created_after,
-            created_before: self.timestamp.created_before,
-            pagination: self.pagination.try_into()?,
+    fn try_into(self) -> Result<TimestampFilterOptions, Self::Error> {
+        Ok(TimestampFilterOptions {
+            created_after: self.created_after,
+            created_before: self.created_before,
         })
+    }
+}
+
+pub(crate) struct FilterOptions<T: OutputTable> {
+    pub inner: T::FilterOptions,
+    pub pagination: Pagination,
+    pub timestamp: TimestampFilterOptions,
+}
+
+impl<T: OutputTable> Into<sea_query::Cond> for FilterOptions<T> {
+    fn into(self) -> sea_query::Cond {
+        Cond::all()
+        .add_option(self.timestamp.created_after.map(|timestamp| T::created_at_col().gt(timestamp)))
+        .add_option(self.timestamp.created_before.map(|timestamp| T::created_at_col().lt(timestamp)))
+        .add(self.inner.into())
     }
 }
 

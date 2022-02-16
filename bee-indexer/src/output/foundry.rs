@@ -1,18 +1,15 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::address::Address;
-use bee_rest_api::endpoints::routes::api::v1::add_peer;
-
+use super::address_dto_option_packed;
 use crate::{
-    dtos::{AddressDto, FoundryFilterOptionsInnerDto},
-    query::OutputFilterOptions,
-    types::{AddressDb, FoundryIdDb, AmountDb, UnixTimestampDb},
-    Error,
+    query::OutputTable,
+    types::{AddressDb, AmountDb, FoundryIdDb, UnixTimestampDb, FilterOptions},
+    Error, FoundryFilterOptionsDto,
 };
 
-use packable::PackableExt;
-use sea_orm::{entity::prelude::*, Condition};
+use sea_orm::entity::prelude::*;
+use sea_query::Cond;
 
 #[derive(Clone, Debug, Eq, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "foundry_outputs")]
@@ -33,33 +30,8 @@ pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
-#[derive(Debug, Default)]
-pub(crate) struct FoundryFilterOptions {
-    unlockable_by_address: Option<AddressDb>,
-}
-
-#[inline(always)]
-fn address_dto_option_packed(option: Option<AddressDto>, err_str: &'static str) -> Result<Option<AddressDb>, Error> {
-    Ok(option
-        .map(|a| Address::try_from(&a).map_err(|_| Error::InvalidField(err_str)))
-        .transpose()?
-        .map(|a| a.pack_to_vec()))
-}
-
-impl TryInto<FoundryFilterOptions> for FoundryFilterOptionsInnerDto {
-    type Error = Error;
-
-    fn try_into(self) -> Result<FoundryFilterOptions, Self::Error> {
-        Ok(FoundryFilterOptions {
-            unlockable_by_address: address_dto_option_packed(self.unlockable_by_address, "address")?
-        })
-    }
-}
-
-impl OutputFilterOptions<Entity, Column> for FoundryFilterOptions {
-    fn entity() -> Entity {
-        Entity
-    }
+impl OutputTable for Entity {
+    type FilterOptions = FoundryFilterOptions;
 
     fn created_at_col() -> Column {
         Column::CreatedAt
@@ -68,14 +40,29 @@ impl OutputFilterOptions<Entity, Column> for FoundryFilterOptions {
     fn output_id_col() -> Column {
         Column::OutputId
     }
+}
 
-    fn filter(self) -> Condition {
-        let mut filter = Condition::all();
+#[derive(Debug, Default)]
+pub(crate) struct FoundryFilterOptions {
+    unlockable_by_address: Option<AddressDb>,
+}
 
-        if let Some(address) = self.unlockable_by_address {
-            filter = filter.add(Column::Address.eq(address));
-        }
+impl Into<sea_query::Cond> for FoundryFilterOptions {
+    fn into(self) -> sea_query::Cond {
+        Cond::all().add_option(self.unlockable_by_address.map(|addr| Column::Address.eq(addr)))
+    }
+}
 
-        filter
+impl TryInto<FilterOptions<Entity>> for FoundryFilterOptionsDto {
+    type Error = Error;
+
+    fn try_into(self) -> Result<FilterOptions<Entity>, Self::Error> {
+        Ok(FilterOptions {
+            inner: FoundryFilterOptions {
+                unlockable_by_address: address_dto_option_packed(self.unlockable_by_address, "unlockable by address")?,
+            },
+            pagination: self.pagination.try_into()?,
+            timestamp: self.timestamp.try_into()?,
+        })
     }
 }

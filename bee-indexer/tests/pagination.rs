@@ -1,32 +1,17 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod common;
+
+use common::rand_output_created_alias;
 
 use bee_indexer::{Error, Indexer};
-use bee_ledger::{types::CreatedOutput, workers::event::OutputCreated};
-use bee_message::{milestone::MilestoneIndex, output::Output};
-use bee_test::rand::{
-    message::rand_message_id,
-    milestone::rand_milestone_index,
-    number::{rand_number, rand_number_range},
-    output::{rand_alias_output, rand_output_id},
-};
+use bee_message::milestone::MilestoneIndex;
+use bee_test::rand::number::rand_number_range;
 
 use serde_json::json;
 
 use std::collections::HashSet;
-
-fn random_created_alias() -> OutputCreated {
-    OutputCreated {
-        output_id: rand_output_id(),
-        output: CreatedOutput::new(
-            rand_message_id(),
-            rand_milestone_index(),
-            rand_number(),
-            Output::Alias(rand_alias_output()),
-        ),
-    }
-}
 
 #[tokio::test]
 async fn pagination() -> Result<(), Error> {
@@ -34,7 +19,7 @@ async fn pagination() -> Result<(), Error> {
     let num_outputs = rand_number_range(1..=100);
     let page_size = rand_number_range(1..=100);
 
-    let outputs = std::iter::repeat_with(|| random_created_alias())
+    let outputs = std::iter::repeat_with(|| rand_output_created_alias())
         .take(num_outputs)
         .collect::<Vec<_>>();
 
@@ -49,7 +34,7 @@ async fn pagination() -> Result<(), Error> {
         indexer
             .alias_outputs_with_filters(Default::default())
             .await?
-            .output_ids
+            .items
             .len(),
         num_outputs
     );
@@ -66,8 +51,8 @@ async fn pagination() -> Result<(), Error> {
         .await?;
 
     while let Some(cursor) = page.cursor {
-        assert_eq!(page.output_ids.len(), page_size as usize, "Page {}", page_index);
-        for output_id in page.output_ids {
+        assert_eq!(page.items.len(), page_size as usize, "Page {}", page_index);
+        for output_id in page.items {
             paginated_output_ids.insert(output_id);
         }
 
@@ -81,7 +66,7 @@ async fn pagination() -> Result<(), Error> {
     }
 
     // Last page
-    for output_id in page.output_ids {
+    for output_id in page.items {
         paginated_output_ids.insert(output_id);
     }
 
