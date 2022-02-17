@@ -105,7 +105,7 @@ impl<S: PeerStore + 'static> DiscoveryManager<S> {
         }
     }
 
-    pub async fn init<const N: usize>(self, task_mngr: &mut TaskManager<S, N>) -> Result<(), S::Error> {
+    pub async fn init(self, task_mngr: &mut TaskManager<S>) -> Result<(), S::Error> {
         let DiscoveryManager {
             config,
             local,
@@ -815,18 +815,21 @@ pub(crate) fn send_verification_request_to_addr(
 ) {
     log::trace!("Sending verification request to: {}/{}", peer_id, peer_addr);
 
+    // Note: Returns `None` if we don't have a corresponding interface to communicate with that peer.
     let verif_req = request_mngr.create_verification_request(*peer_id, peer_addr.ip(), response_tx);
 
-    let msg_bytes = verif_req.to_protobuf().to_vec();
+    if let Some(verif_req) = verif_req {
+        let msg_bytes = verif_req.to_protobuf().to_vec();
 
-    // Panic: we don't allow channel send errors.
-    server_tx
-        .send(OutgoingPacket {
-            msg_type: MessageType::VerificationRequest,
-            msg_bytes,
-            peer_addr,
-        })
-        .expect("error sending verification request to server");
+        // Panic: we don't allow channel send errors.
+        server_tx
+            .send(OutgoingPacket {
+                msg_type: MessageType::VerificationRequest,
+                msg_bytes,
+                peer_addr,
+            })
+            .expect("error sending verification request to server");
+    }
 }
 
 /// Sends a verification response to a peer.
