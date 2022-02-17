@@ -34,7 +34,7 @@ use warp::{self, Filter, Rejection, Reply};
 use std::net::IpAddr;
 
 pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
-    super::path().and(warp::path("v1"))
+    super::path().and(warp::path("v2"))
 }
 
 #[allow(clippy::too_many_arguments)]
