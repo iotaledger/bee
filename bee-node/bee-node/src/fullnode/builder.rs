@@ -159,14 +159,11 @@ impl<S: NodeStorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
 
         // Start the MQTT broker.
         let mqtt_cfg = builder.config().mqtt.clone();
-        let builder = builder.with_worker_cfg::<Mqtt>(mqtt_cfg);
+        let builder = builder.with_worker_cfg::<MqttPlugin>(mqtt_cfg);
 
         // Start serving the dashboard (if enabled).
         #[cfg(feature = "dashboard")]
-        let builder = {
-            let dashboard_cfg = builder.config().dashboard.clone();
-            builder.with_worker_cfg::<Dashboard>(dashboard_cfg)
-        };
+        let builder = initialize_dashboard(builder);
 
         let FullNodeBuilder {
             config,
@@ -420,8 +417,8 @@ fn initialize_dashboard<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
 
     let config = builder.config();
 
-    let dashboard_cfg = config.dashboard_config.clone();
-    let rest_api_cfg = config.rest_api_config.clone();
+    let dashboard_cfg = config.dashboard.clone();
+    let rest_api_cfg = config.rest_api.clone();
     let node_id = config.local().peer_id().to_string();
     let node_alias = config.alias().clone();
     let bech32_hrp = config.network_spec().hrp().to_string();
