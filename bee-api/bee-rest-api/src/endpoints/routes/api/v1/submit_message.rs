@@ -60,12 +60,12 @@ pub(crate) fn filter<B: StorageBackend>(
                 .and(with_rest_api_config(rest_api_config))
                 .and(with_protocol_config(protocol_config))
                 .and_then(submit_message))
-                .or(warp::header::exact("content-type", "application/octet-stream")
-                    .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
-                    .and(warp::body::bytes())
-                    .and(with_tangle(tangle))
-                    .and(with_message_submitter(message_submitter))
-                    .and_then(submit_message_raw)),
+            .or(warp::header::exact("content-type", "application/octet-stream")
+                .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
+                .and(warp::body::bytes())
+                .and(with_tangle(tangle))
+                .and(with_message_submitter(message_submitter))
+                .and_then(submit_message_raw)),
         )
         .boxed()
 }
@@ -95,11 +95,11 @@ pub(crate) async fn submit_message<B: StorageBackend>(
                 "invalid protocol version: expected an unsigned integer < 256".to_string(),
             ))
         })?)
-            .map_err(|_| {
-                reject::custom(CustomRejection::BadRequest(
-                    "invalid protocol version: expected an unsigned integer < 256".to_string(),
-                ))
-            })?;
+        .map_err(|_| {
+            reject::custom(CustomRejection::BadRequest(
+                "invalid protocol version: expected an unsigned integer < 256".to_string(),
+            ))
+        })?;
 
         // TODO: is this check really necessary here? this check should be done by the node message processing pipe,
         // right?
@@ -191,7 +191,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         rest_api_config,
         protocol_config,
     )
-        .await?;
+    .await?;
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
 
     Ok(warp::reply::with_status(
