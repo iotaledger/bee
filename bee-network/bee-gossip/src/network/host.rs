@@ -211,7 +211,7 @@ async fn dial_peer(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId, peerlist:
         address: addr, alias, ..
     } = peerlist.0.read().await.info(&peer_id).unwrap();
 
-    info!("Dialing peer: {} ({}).", alias, alias!(peer_id));
+    debug!("Dialing peer: {} ({}).", alias, alias!(peer_id));
 
     // TODO: We also use `Swarm::dial_addr` here (instead of `Swarm::dial`) for now. See if it's better to change
     // that.
