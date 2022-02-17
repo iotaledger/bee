@@ -4,8 +4,8 @@ services:
     container_name: bee
     # We can either build the Docker image
     build:
-      context: ../../
-      dockerfile: ./bee-node/docker/Dockerfile
+      context: ../../../
+      dockerfile: ./bee-node/bee-node/docker/Dockerfile
       args:
         WITH_DASHBOARD: "true"
     # Or use an already created image by uncommenting the following line (and commenting the build section above)
