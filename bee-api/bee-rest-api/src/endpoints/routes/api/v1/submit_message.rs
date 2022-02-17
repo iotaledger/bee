@@ -60,12 +60,12 @@ pub(crate) fn filter<B: StorageBackend>(
                 .and(with_rest_api_config(rest_api_config))
                 .and(with_protocol_config(protocol_config))
                 .and_then(submit_message))
-            .or(warp::header::exact("content-type", "application/octet-stream")
-                .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
-                .and(warp::body::bytes())
-                .and(with_tangle(tangle))
-                .and(with_message_submitter(message_submitter))
-                .and_then(submit_message_raw)),
+                .or(warp::header::exact("content-type", "application/octet-stream")
+                    .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
+                    .and(warp::body::bytes())
+                    .and(with_tangle(tangle))
+                    .and(with_message_submitter(message_submitter))
+                    .and_then(submit_message_raw)),
         )
         .boxed()
 }
@@ -78,30 +78,37 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Rejection> {
-    let network_id_v = &value["networkId"];
+    let protocol_version_v = &value["protocolVersion"];
     let parents_v = &value["parentMessageIds"];
     let payload_v = &value["payload"];
     let nonce_v = &value["nonce"];
 
-    // parse the values, take care of missing fields, build the message and submit it to the node for further
-    // processing
+    // Tries to build a `Message` from the provided JSON.
+    // If some fields are missing, it tries to auto-complete them.
+    // Please keep in mind, that the eventually built `Message` might be not acceptable for the node.
 
-    let network_id = if network_id_v.is_null() {
-        network_id.1
+    let protocol_version = if protocol_version_v.is_null() {
+        PROTOCOL_VERSION
     } else {
-        network_id_v
-            .as_str()
-            .ok_or_else(|| {
-                reject::custom(CustomRejection::BadRequest(
-                    "invalid network id: expected an u64-string".to_string(),
-                ))
-            })?
-            .parse::<u64>()
+        let parsed = u8::try_from(protocol_version_v.as_u64().ok_or_else(|| {
+            reject::custom(CustomRejection::BadRequest(
+                "invalid protocol version: expected an unsigned integer < 256".to_string(),
+            ))
+        })?)
             .map_err(|_| {
                 reject::custom(CustomRejection::BadRequest(
-                    "invalid network id: expected an u64-string".to_string(),
+                    "invalid protocol version: expected an unsigned integer < 256".to_string(),
                 ))
-            })?
+            })?;
+
+        // TODO: is this check really necessary here? this check should be done by the node message processing pipe,
+        // right?
+        if parsed != PROTOCOL_VERSION {
+            return Err(reject::custom(CustomRejection::BadRequest(format!(
+                "invalid protocol version: expected `{}` but received `{}`",
+                PROTOCOL_VERSION, parsed
+            ))));
+        }
     };
 
     let parents: Vec<MessageId> = if parents_v.is_null() {
@@ -122,13 +129,13 @@ pub(crate) async fn submit_message<B: StorageBackend>(
                 .as_str()
                 .ok_or_else(|| {
                     reject::custom(CustomRejection::BadRequest(
-                        "invalid parents: expected an array of message ids".to_string(),
+                        "invalid parent: expected a message id".to_string(),
                     ))
                 })?
                 .parse::<MessageId>()
                 .map_err(|_| {
                     reject::custom(CustomRejection::BadRequest(
-                        "invalid network id: expected an u64-string".to_string(),
+                        "invalid parent: expected a message id".to_string(),
                     ))
                 })?;
             message_ids.push(message_id);
@@ -141,6 +148,19 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     } else {
         let payload_dto = serde_json::from_value::<PayloadDto>(payload_v.clone())
             .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
+
+        // TODO: is this check really necessary here? this check should be done by the node message processing pipe,
+        // right? In case of a transaction payload, check if its `network_id` matches the one configured in the
+        // node.
+        if Some(PayloadDto::Transaction(t)) = payload_dto {
+            if t.essence.network_id != network_id.1 {
+                return Err(reject::custom(CustomRejection::BadRequest(format!(
+                    "invalid network: expected network id `{}` but received `{}`",
+                    t.essence.network_id, network_id.1
+                ))));
+            }
+        }
+
         Some(Payload::try_from(&payload_dto).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?)
     };
 
@@ -163,7 +183,15 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         if parsed == 0 { None } else { Some(parsed) }
     };
 
-    let message = build_message(network_id, parents, payload, nonce, rest_api_config, protocol_config).await?;
+    let message = build_message(
+        protocol_version,
+        parents,
+        payload,
+        nonce,
+        rest_api_config,
+        protocol_config,
+    )
+        .await?;
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
 
     Ok(warp::reply::with_status(
@@ -174,9 +202,8 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     ))
 }
 
-// TODO compare/set network ID and protocol version
 pub(crate) async fn build_message(
-    _network_id: u64,
+    protocol_version: u8,
     parents: Vec<MessageId>,
     payload: Option<Payload>,
     nonce: Option<u64>,
@@ -185,7 +212,7 @@ pub(crate) async fn build_message(
 ) -> Result<Message, Rejection> {
     let message = if let Some(nonce) = nonce {
         let mut builder = MessageBuilder::new()
-            .with_protocol_version(PROTOCOL_VERSION)
+            .with_protocol_version(protocol_version)
             .with_parents(
                 Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
             )
@@ -203,7 +230,7 @@ pub(crate) async fn build_message(
             )));
         }
         let mut builder = MessageBuilder::new()
-            .with_protocol_version(PROTOCOL_VERSION)
+            .with_protocol_version(protocol_version)
             .with_parents(
                 Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
             )
