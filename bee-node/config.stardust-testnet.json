@@ -1,0 +1,147 @@
+{
+  "alias": "Bee stardust-testnet node",
+  "bech32Hrp": "atoi",
+  "networkId": "stardust-testnet-2",
+  "logger": {
+    "outputs": [
+      {
+        "name": "stdout",
+        "levelFilter": "info",
+        "targetFilters": [],
+        "targetExclusions": [],
+        "colorEnabled": true
+      },
+      {
+        "name": "warn.log",
+        "levelFilter": "warn",
+        "targetFilters": [],
+        "targetExclusions": []
+      }
+    ]
+  },
+  "network": {
+    "bindAddress": "/ip4/0.0.0.0/tcp/15600",
+    "reconnectIntervalSecs": 30,
+    "maxUnknownPeers": 4,
+    "maxDiscoveredPeers": 8,
+    "peering": {
+      "peers": []
+    }
+  },
+  "autopeering": {
+    "enabled": false,
+    "bindAddress": "0.0.0.0:14626",
+    "entryNodes": [
+      "/dns/entry-hornet-0.h.stardust-testnet.iotaledger.net/udp/14626/autopeering/Bv8UUxy81fqpttowiFiBsNT6mnGMFoFNjk79iG1f9nEr",
+      "/dns/entry-hornet-1.h.stardust-testnet.iotaledger.net/udp/14626/autopeering/CbYtFzRQtqeNQJQFYRZk1WewxfKCmqXCHZ16od1d23PX"
+    ],
+    "entryNodesPreferIpv6": false,
+    "runAsEntryNode": false,
+    "dropNeighborsOnSaltUpdate": false,
+    "peerStoragePath": "./storage/shimmer/testnet/peers"
+  },
+  "protocol": {
+    "minimumPowScore": 1000,
+    "coordinator": {
+      "publicKeyCount": 3,
+      "publicKeyRanges": [
+        {
+          "publicKey": "d9922819a39e94ddf3907f4b9c8df93f39f026244fcb609205b9a879022599f2",
+          "start": 0,
+          "end": 0
+        },
+        {
+          "publicKey": "d85e5b1590d898d1e0cdebb2e3b5337c8b76270142663d78811683ba47c17c98",
+          "start": 0,
+          "end": 0
+        },
+        {
+          "publicKey": "f9d9656a60049083eef61487632187b351294c1fa23d118060d813db6d03e8b6",
+          "start": 0,
+          "end": 0
+        },
+        {
+          "publicKey": "3df80964cc83921e08c1fa0a4f5fc05810a634da45461b2b315fcbfd62f7cab7",
+          "start": 0,
+          "end": 0
+        },
+        {
+          "publicKey": "8e222ae7e2adcfb87a2984a19aad52b1979ed1472c3cb17239a73ef1d344c35a",
+          "start": 0,
+          "end": 0
+        }
+      ]
+    },
+    "workers": {
+      "statusInterval": 10,
+      "milestoneSyncCount": 200
+    }
+  },
+  "restApi": {
+    "bindAddress": "/ip4/0.0.0.0/tcp/14265",
+    "featureProofOfWork": true,
+    "publicRoutes": [
+      "/health",
+      "/api/v1/info",
+      "/api/v1/tips",
+      "/api/v1/messages",
+      "/api/v1/messages/:messageId",
+      "/api/v1/messages/:messageId/metadata",
+      "/api/v1/messages/:messageId/raw",
+      "/api/v1/messages/:messageId/children",
+      "/api/v1/outputs/:outputId",
+      "/api/v1/addresses/:address",
+      "/api/v1/addresses/ed25519/:address",
+      "/api/v1/addresses/:address/outputs",
+      "/api/v1/addresses/ed25519/:address/outputs",
+      "/api/v1/receipts",
+      "/api/v1/receipts/:milestoneIndex",
+      "/api/v1/treasury",
+      "/api/v1/transactions/:transactionId/included-message",
+      "/api/v1/milestones/:milestoneIndex",
+      "/api/v1/milestones/:milestoneIndex/utxo-changes"
+    ],
+    "allowedIps": [
+      "127.0.0.1",
+      "::1"
+    ],
+    "whiteFlagSolidificationTimeout": 2
+  },
+  "snapshot": {
+    "depth": 50,
+    "intervalSynced": 50,
+    "intervalUnsynced": 1000,
+    "fullPath": "./snapshots/shimmer/testnet/full_snapshot.bin",
+    "deltaPath": "./snapshots/shimmer/testnet/delta_snapshot.bin",
+    "downloadUrls": [
+      {
+        "full": "https://files.stardust-testnet.iotaledger.net/snapshots/latest-full_snapshot.bin",
+        "delta": "https://files.stardust-testnet.iotaledger.net/snapshots/latest-delta_snapshot.bin"
+      }
+    ]
+  },
+  "pruning": {
+    "enabled": true,
+    "delay": 60480,
+    "pruneReceipts": false
+  },
+  "storage": {
+    "path": "./storage/shimmer/testnet/tangle"
+  },
+  "tangle": {
+    "belowMaxDepth": 15,
+    "numPartitions": 16
+  },
+  "mqtt": {
+    "address": "tcp://localhost:1883"
+  },
+  "dashboard": {
+    "bindAddress": "/ip4/0.0.0.0/tcp/8081",
+    "auth": {
+      "sessionTimeout": 86400,
+      "user": "admin",
+      "passwordSalt": "0000000000000000000000000000000000000000000000000000000000000000",
+      "passwordHash": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  }
+}
