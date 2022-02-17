@@ -54,7 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed `OutputsAddressResponse` type: removed `address_type`, removed `address`;
 - Merge `InvalidSyntaxField` with `InvalidSemanticField` to `InvalidField`;
 - Renamed `IndexationPayloadDto` to `TaggedDataPayloadDto`;
-- Bump API version from `v1` to `v2`
+- Bump API version from `v1` to `v2`;
+
 ### Removed
 
 - `OutputDto::SignatureLockedSingle`;
