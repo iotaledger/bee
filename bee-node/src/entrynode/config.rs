@@ -20,11 +20,11 @@ pub struct EntryNodeConfig {
     /// The specification of the network the node wants to participate in.
     pub network_spec: NetworkSpec,
     /// Logger.
-    pub logger_config: LoggerConfig,
+    pub logger: LoggerConfig,
     /// Autopeering.
-    pub autopeering_config: AutopeeringConfig,
+    pub autopeering: AutopeeringConfig,
     /// REST API.
-    pub rest_api_config: RestApiConfig,
+    pub rest_api: RestApiConfig,
 }
 
 impl EntryNodeConfig {
@@ -45,9 +45,9 @@ impl EntryNodeConfig {
         Self {
             local,
             network_spec: node_cfg.network_spec,
-            logger_config: node_cfg.logger_config,
-            autopeering_config: node_cfg.autopeering_config,
-            rest_api_config: node_cfg.rest_api_config,
+            logger: node_cfg.logger,
+            autopeering: node_cfg.autopeering,
+            rest_api: node_cfg.rest_api,
         }
     }
 }

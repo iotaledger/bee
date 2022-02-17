@@ -200,10 +200,13 @@ impl Default for NetworkConfig {
 #[derive(Default, Deserialize)]
 #[must_use]
 pub struct NetworkConfigBuilder {
-    #[serde(rename = "bind_address")]
+    #[serde(alias = "bindAddress", alias = "bind_address")]
     bind_multiaddr: Option<Multiaddr>,
+    #[serde(alias = "reconnectIntervalSecs")]
     reconnect_interval_secs: Option<u64>,
+    #[serde(alias = "maxUnknownPeers")]
     max_unknown_peers: Option<usize>,
+    #[serde(alias = "maxDiscoveredPeers")]
     max_discovered_peers: Option<usize>,
     peering: ManualPeeringConfigBuilder,
 }
@@ -435,7 +438,7 @@ fn split_multiaddr(multiaddr: &str) -> Result<(Multiaddr, PeerId), Error> {
 #[derive(Deserialize)]
 #[must_use]
 pub struct PeerBuilder {
-    #[serde(rename = "address")]
+    #[serde(alias = "address")]
     multiaddr: String,
     alias: Option<String>,
 }

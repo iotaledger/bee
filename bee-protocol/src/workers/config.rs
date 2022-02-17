@@ -17,15 +17,20 @@ const DEFAULT_MILESTONE_SYNC_COUNT: u32 = 200;
 #[derive(Default, Deserialize)]
 #[must_use]
 struct ProtocolCoordinatorConfigBuilder {
+    #[serde(alias = "publicKeyCount")]
     public_key_count: Option<usize>,
+    #[serde(alias = "publicKeyRanges")]
     public_key_ranges: Option<Vec<MilestoneKeyRange>>,
 }
 
 #[derive(Default, Deserialize)]
 #[must_use]
 struct ProtocolWorkersConfigBuilder {
+    #[serde(alias = "messageWorkerCache")]
     message_worker_cache: Option<usize>,
+    #[serde(alias = "statusInterval")]
     status_interval: Option<u64>,
+    #[serde(alias = "milestoneSyncCount")]
     milestone_sync_count: Option<u32>,
 }
 
@@ -33,6 +38,7 @@ struct ProtocolWorkersConfigBuilder {
 #[derive(Default, Deserialize)]
 #[must_use]
 pub struct ProtocolConfigBuilder {
+    #[serde(alias = "minimumPowScore")]
     minimum_pow_score: Option<f64>,
     coordinator: ProtocolCoordinatorConfigBuilder,
     workers: ProtocolWorkersConfigBuilder,

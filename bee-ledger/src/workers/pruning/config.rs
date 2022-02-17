@@ -15,6 +15,7 @@ const DEFAULT_PRUNE_RECEIPTS: bool = false;
 pub struct PruningConfigBuilder {
     enabled: Option<bool>,
     delay: Option<u32>,
+    #[serde(alias = "pruneReceipts")]
     prune_receipts: Option<bool>,
 }
 

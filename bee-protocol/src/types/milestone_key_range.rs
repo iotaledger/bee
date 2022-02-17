@@ -5,12 +5,14 @@
 
 use bee_message::milestone::MilestoneIndex;
 
+use serde::{Deserialize, Serialize};
+
 use core::cmp::Ordering;
 
 /// A milestone key range is a milestone public key valid for a given interval of milestones.
-#[derive(Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MilestoneKeyRange {
+    #[serde(alias = "publicKey")]
     public_key: String,
     // Inclusive bound.
     start: MilestoneIndex,
