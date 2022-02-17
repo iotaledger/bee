@@ -31,7 +31,7 @@ RUN if [ "$WITH_DASHBOARD" = true ] ; then \
     && nvm alias default $NODE_VERSION \
     && nvm use default \
     && git submodule update --init --recursive \
-    && cd bee-node/src/plugins/dashboard/frontend \
+    && cd bee-node/bee-plugin/bee-plugin-dashboard/src/frontend \
     && npm install \
     && npm run build-bee \
     ; fi
