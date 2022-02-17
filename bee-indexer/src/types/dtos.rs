@@ -29,6 +29,14 @@ pub struct AliasFilterOptionsDto {
 }
 
 #[derive(Debug, Default, Deserialize)]
+pub struct BasicFilterOptionsDto {
+    #[serde(flatten)]
+    pub(crate) timestamp: TimestampOptionsDto,
+    #[serde(flatten)]
+    pub(crate) pagination: PaginationDto,
+}
+
+#[derive(Debug, Default, Deserialize)]
 pub struct FoundryFilterOptionsDto {
     #[serde(rename(deserialize = "address"))]
     pub(crate) unlockable_by_address: Option<String>,
@@ -38,3 +46,10 @@ pub struct FoundryFilterOptionsDto {
     pub(crate) pagination: PaginationDto,
 }
 
+#[derive(Debug, Default, Deserialize)]
+pub struct NftFilterOptionsDto {
+    #[serde(flatten)]
+    pub(crate) timestamp: TimestampOptionsDto,
+    #[serde(flatten)]
+    pub(crate) pagination: PaginationDto,
+}

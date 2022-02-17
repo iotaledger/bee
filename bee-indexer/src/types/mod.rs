@@ -19,11 +19,13 @@ use sea_query::{Cond};
 
 use std::{mem::size_of, str::FromStr};
 
-// Unfortunately, `sqlx-sqlite` does not support `u64` yet.
-pub(crate) type AmountDb = Vec<u8>;
+// Unfortunately, sqlite does not support `u64`. This works as long as we don't want to sort/filter on the amount.
+pub(crate) type AmountDb = i64; // TODO: Add test case
 pub(crate) type AddressDb = Vec<u8>;
 
+pub(crate) type OutputIdDb = Vec<u8>;
 pub(crate) type AliasIdDb = Vec<u8>;
+pub(crate) type NftIdDb = Vec<u8>;
 pub(crate) type FoundryIdDb = Vec<u8>;
 
 pub(crate) type MilestoneIndexDb = u32;

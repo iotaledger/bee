@@ -5,7 +5,7 @@ use super::address_dto_option_packed;
 use crate::{
     query::OutputTable,
     types::FilterOptions,
-    types::{AddressDb, AliasIdDb, AmountDb, UnixTimestampDb},
+    types::{AddressDb, AliasIdDb, AmountDb, UnixTimestampDb, OutputIdDb},
     AliasFilterOptionsDto, Error,
 };
 
@@ -17,14 +17,14 @@ use sea_query::Cond;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub alias_id: AliasIdDb,
-    pub created_at: UnixTimestampDb,
     #[sea_orm(unique)]
-    pub output_id: AddressDb,
+    pub output_id: OutputIdDb,
     pub amount: AmountDb,
     pub state_controller: AddressDb,
     pub governor: AddressDb,
     pub issuer: Option<AddressDb>,
     pub sender: Option<AddressDb>,
+    pub created_at: UnixTimestampDb,
 }
 
 // The following defintions are need by `sea-orm`.
