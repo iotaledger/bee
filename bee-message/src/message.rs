@@ -244,10 +244,8 @@ impl Packable for Message {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         #[cfg(not(feature = "cpt2"))]
         let protocol_version = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
-        #[cfg(all(feature = "cpt2", not(feature = "chrysalis")))]
+        #[cfg(feature = "cpt2")]
         let protocol_id = ProtocolId::ProtocolVersion(u8::unpack::<_, VERIFY>(unpacker).infallible()?);
-        #[cfg(all(feature = "cpt2", feature = "chrysalis"))]
-        let protocol_id = ProtocolId::NetworkId(u64::unpack::<_, VERIFY>(unpacker).infallible()?);
 
         let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
 
