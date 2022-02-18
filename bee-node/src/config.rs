@@ -233,6 +233,10 @@ mod test {
     fn config_files_conformity() -> Result<(), NodeConfigError> {
         let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
+            "/config.stardust-testnet.json"
+        ))?;
+        let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
+            env!("CARGO_MANIFEST_DIR"),
             "/config.stardust-testnet.toml"
         ))?;
 
