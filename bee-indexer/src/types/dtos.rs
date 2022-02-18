@@ -17,6 +17,7 @@ pub struct TimestampOptionsDto {
 }
 
 #[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AliasFilterOptionsDto {
     pub(crate) state_controller: Option<String>,
     pub(crate) governor: Option<String>,

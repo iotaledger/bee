@@ -11,8 +11,8 @@ pub(crate) mod types;
 
 pub use error::Error;
 
-use query::OutputTable;
 pub(crate) use query::QueryBuilder;
+use query::{IndexedOutputTable, OutputTable};
 
 pub use types::dtos::{AddressDto, AliasFilterOptionsDto, FoundryFilterOptionsDto};
 
@@ -25,10 +25,14 @@ use packable::PackableExt;
 
 use sea_orm::{
     prelude::*, ActiveModelTrait, ConnectionTrait, Database, DatabaseConnection, EntityTrait, FromQueryResult, NotSet,
-    Schema, Set,
+    QuerySelect, Schema, Set,
 };
 
-use types::{dtos::{BasicFilterOptionsDto, NftFilterOptionsDto}, responses::OutputsResponse, AddressDb, FilterOptions, MilestoneIndexDb};
+use types::{
+    dtos::{BasicFilterOptionsDto, NftFilterOptionsDto},
+    responses::OutputsResponse,
+    AddressDb, FilterOptions, MilestoneIndexDb,
+};
 
 pub struct Indexer {
     db: DatabaseConnection,
@@ -130,6 +134,26 @@ impl Indexer {
         Ok(())
     }
 
+    
+
+    pub(crate) async fn get_id<T: IndexedOutputTable>(&self, table: T, id: String) -> Result<Option<String>, Error> {
+        let id_bytes = hex::decode(id).map_err(|_| Error::InvalidId)?;
+        
+        let mut query = sea_query::Query::select();
+        let statement = query.from(table).column(T::output_id_col()).cond_where(T::id_col().eq(id_bytes));
+        let stmt = self.db.get_database_backend().build(statement);
+        // TODO: Sanitize (check for sql injections).
+        let query_result = IdResult::find_by_statement(stmt).one(&self.db).await
+        .map_err(Error::DatabaseError)?;
+            // .select_only()
+            // .column(T::id_col())
+            // .filter(T::id_col().eq(id_bytes))
+            // .one(&self.db).await.map_err(Error::DatabaseError)?;
+
+            // query_result.map(|r| r.output_id)
+            Ok(query_result.map(|r| hex::encode(r.output_id)))
+    }
+
     pub(crate) async fn outputs_with_filters<T: OutputTable>(
         &self,
         table: T,
@@ -191,13 +215,19 @@ impl Indexer {
         self.outputs_with_filters(foundry::Entity, options_dto).await
     }
 
+    pub async fn get_output_id_for_alias_id(&self, id: String) -> Result<Option<String>, Error> {
+        self.get_id(alias::Entity, id).await
+    }
+
     // TODO: Make generic (or use macro)
-    pub async fn nft_outputs_with_filters(
-        &self,
-        options_dto: NftFilterOptionsDto,
-    ) -> Result<OutputsResponse, Error> {
+    pub async fn nft_outputs_with_filters(&self, options_dto: NftFilterOptionsDto) -> Result<OutputsResponse, Error> {
         self.outputs_with_filters(nft::Entity, options_dto).await
     }
+}
+
+#[derive(Debug, FromQueryResult)]
+struct IdResult {
+    output_id: Vec<u8>,
 }
 
 #[derive(Debug, FromQueryResult)]

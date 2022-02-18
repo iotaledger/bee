@@ -17,6 +17,10 @@ where
     fn output_id_col() -> <Self as orm::EntityTrait>::Column;
 }
 
+pub(crate) trait IndexedOutputTable: OutputTable {
+    fn id_col() -> <Self as orm::EntityTrait>::Column;
+}
+
 #[must_use]
 pub(crate) struct QueryBuilder<T: OutputTable> {
     entity: T,

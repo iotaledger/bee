@@ -17,6 +17,33 @@ use serde_json::json;
 use packable::PackableExt;
 
 #[tokio::test]
+async fn get_id() -> Result<(), Error> {
+    let indexer = Indexer::new().await?;
+    indexer.update_status(MilestoneIndex(42)).await?;
+
+    let expected_output_id = rand_output_id();
+    let alias = rand_alias_output();
+    let alias_id = alias.alias_id().clone();
+    let created = OutputCreated {
+        output_id: expected_output_id.clone(),
+        output: CreatedOutput::new(
+            rand_message_id(),
+            rand_milestone_index(),
+            rand_number(),
+            Output::Alias(alias),)
+    };
+
+
+    indexer.process_created_output(&created).await?;
+
+    let res = indexer.get_output_id_for_alias_id(hex::encode(alias_id)).await?;
+
+    assert_eq!(res.unwrap(), expected_output_id.to_string());
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn with_state_controller() -> Result<(), Error> {
     let indexer = Indexer::new().await?;
     indexer.update_status(MilestoneIndex(42)).await?;

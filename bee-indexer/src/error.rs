@@ -5,6 +5,7 @@ use sea_orm::error::DbErr;
 
 #[derive(Debug)]
 pub enum Error {
+    InvalidId,
     InvalidJson,
     InvalidField(&'static str, ),
     InvalidCursorContent(&'static str),

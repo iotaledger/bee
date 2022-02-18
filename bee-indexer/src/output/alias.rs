@@ -3,7 +3,7 @@
 
 use super::address_dto_option_packed;
 use crate::{
-    query::OutputTable,
+    query::{OutputTable, IndexedOutputTable},
     types::FilterOptions,
     types::{AddressDb, AliasIdDb, AmountDb, UnixTimestampDb, OutputIdDb},
     AliasFilterOptionsDto, Error,
@@ -43,6 +43,12 @@ impl OutputTable for Entity {
 
     fn output_id_col() -> Column {
         Column::OutputId
+    }
+}
+
+impl IndexedOutputTable for Entity {
+    fn id_col() -> Column {
+        Column::AliasId
     }
 }
 
