@@ -4,10 +4,8 @@
 #![allow(warnings)]
 
 use bee_autopeering::{
-    config::AutopeeringConfigJsonBuilder,
-    init,
-    stores::{InMemoryPeerStore, SledPeerStore, SledPeerStoreConfig},
-    AutopeeringConfig, Event, Local, NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
+    config::AutopeeringConfigBuilder, init, stores::InMemoryPeerStore, AutopeeringConfig, Event, Local,
+    NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 
 use libp2p_core::identity::ed25519::Keypair;
@@ -30,7 +28,7 @@ fn setup_logger(level: LevelFilter) {
         .expect("fern");
 }
 
-fn read_config() -> AutopeeringConfigJsonBuilder {
+fn read_config() -> AutopeeringConfigBuilder {
     let config_json = r#"
     {
         "enabled": true,
@@ -64,7 +62,7 @@ async fn main() {
     local.add_service(
         AUTOPEERING_SERVICE_NAME,
         ServiceProtocol::Udp,
-        config.bind_addr().port(),
+        config.bind_addr_v4().unwrap().port(),
     );
     local.add_service(NETWORK_SERVICE_NAME, ServiceProtocol::Tcp, 15600);
 
@@ -74,10 +72,10 @@ async fn main() {
 
     // Storage config.
     // No config is  necessary for the `InMemoryPeerStore`.
-    // let peer_store_config = ();
+    let peer_store_config = ();
 
     // Sled peer store:
-    let peer_store_config = SledPeerStoreConfig::new().path("./peerstore");
+    // let peer_store_config = SledPeerStoreConfig::new().path("./peerstore");
 
     // Neighbor validator.
     let neighbor_validator = GossipNeighborValidator {};
@@ -86,7 +84,7 @@ async fn main() {
     let term_signal = ctrl_c();
 
     // Initialize the Autopeering service.
-    let mut event_rx = bee_autopeering::init::<SledPeerStore, _, _, GossipNeighborValidator>(
+    let mut event_rx = bee_autopeering::init::<InMemoryPeerStore, _, _, GossipNeighborValidator>(
         config.clone(),
         version,
         network_name,

@@ -29,16 +29,16 @@ max_discovered_peers    = 8
 #alias    = ""
 
 [autopeering]
-enabled = false
-bind_address = "0.0.0.0:14626"
-entry_nodes = [
+enabled                       = false
+bind_address                  = "0.0.0.0:14626"
+entry_nodes                   = [
     "/dns/entry-hornet-0.h.stardust-testnet.iotaledger.net/udp/14626/autopeering/Bv8UUxy81fqpttowiFiBsNT6mnGMFoFNjk79iG1f9nEr",
     "/dns/entry-hornet-1.h.stardust-testnet.iotaledger.net/udp/14626/autopeering/CbYtFzRQtqeNQJQFYRZk1WewxfKCmqXCHZ16od1d23PX"
 ]
-entry_nodes_prefer_ipv6 = false
-run_as_entry_node = false
+entry_nodes_prefer_ipv6       = false
+run_as_entry_node             = false
 drop_neighbors_on_salt_update = false
-peer_storage_path = "./storage/shimmer/testnet/peers"
+peer_storage_path             = "./storage/shimmer/testnet/peers"
 
 [protocol]
 minimum_pow_score = 1000

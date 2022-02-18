@@ -34,10 +34,14 @@ pub struct SledConfig {
 pub struct SledConfigBuilder {
     storage: Option<StorageConfigBuilder>,
     path: Option<PathBuf>,
+    #[serde(alias = "compressionFactor")]
     compression_factor: Option<Option<usize>>,
+    #[serde(alias = "cacheCapacity")]
     cache_capacity: Option<usize>,
+    #[serde(alias = "fastMode")]
     fast_mode: Option<bool>,
     temporary: Option<bool>,
+    #[serde(alias = "createNew")]
     create_new: Option<bool>,
 }
 
@@ -117,7 +121,9 @@ pub struct StorageConfig {
 #[derive(Default, Deserialize)]
 #[must_use]
 pub struct StorageConfigBuilder {
+    #[serde(alias = "fetchEdgeLimit")]
     fetch_edge_limit: Option<usize>,
+    #[serde(alias = "fetchOutputIdLimit")]
     fetch_output_id_limit: Option<usize>,
 }
 
