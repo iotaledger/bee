@@ -10,7 +10,10 @@ use crate::{
         storage::StorageBackend,
         NetworkId,
     },
-    types::{dtos::PayloadDto, responses::SubmitMessageResponse},
+    types::{
+        dtos::{PayloadDto, TransactionEssenceDto},
+        responses::SubmitMessageResponse,
+    },
 };
 
 use bee_message::{parent::Parents, payload::Payload, Message, MessageBuilder, MessageId};
@@ -101,13 +104,14 @@ pub(crate) async fn submit_message<B: StorageBackend>(
             ))
         })?;
 
-        // TODO: is this check really necessary here? this check should be done by the node message processing pipe,
-        // right?
+        // TODO: is this check really necessary here? this check should be done by the node message processing pipe?
         if parsed != PROTOCOL_VERSION {
             return Err(reject::custom(CustomRejection::BadRequest(format!(
                 "invalid protocol version: expected `{}` but received `{}`",
                 PROTOCOL_VERSION, parsed
             ))));
+        } else {
+            parsed
         }
     };
 
@@ -149,15 +153,24 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         let payload_dto = serde_json::from_value::<PayloadDto>(payload_v.clone())
             .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
 
-        // TODO: is this check really necessary here? this check should be done by the node message processing pipe,
-        // right? In case of a transaction payload, check if its `network_id` matches the one configured in the
-        // node.
-        if Some(PayloadDto::Transaction(t)) = payload_dto {
-            if t.essence.network_id != network_id.1 {
-                return Err(reject::custom(CustomRejection::BadRequest(format!(
-                    "invalid network: expected network id `{}` but received `{}`",
-                    t.essence.network_id, network_id.1
-                ))));
+        // TODO: is this check really necessary here? this check should be done by the node message processing pipe?
+        // In case of a transaction payload, check if its `network_id` matches the one configured in the node.
+        if let PayloadDto::Transaction(ref t) = payload_dto {
+            match &t.essence {
+                TransactionEssenceDto::Regular(e) => {
+                    let parsed_network_id = e.network_id.parse::<u64>().map_err(|_| {
+                        reject::custom(CustomRejection::BadRequest(
+                            "invalid network id: expected an u64-string".to_string(),
+                        ))
+                    })?;
+
+                    if parsed_network_id != network_id.1 {
+                        return Err(reject::custom(CustomRejection::BadRequest(format!(
+                            "invalid network: expected network id `{}` but received `{}`",
+                            parsed_network_id, network_id.1
+                        ))));
+                    }
+                }
             }
         }
 
