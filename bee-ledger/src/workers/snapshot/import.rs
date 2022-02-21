@@ -77,8 +77,6 @@ fn import_outputs<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
         let output_id = OutputId::unpack::<_, true>(unpacker)?;
         let milestone_index = MilestoneIndex::unpack::<_, true>(unpacker)?;
         let milestone_timestamp = u32::unpack::<_, true>(unpacker)?;
-        // This length prefix is currently needed for hornet/iota.go and not for bee but still needs to be parsed.
-        let _ = u32::unpack::<_, true>(unpacker)?;
         let output = Output::unpack::<_, true>(unpacker)?;
         let created_output = CreatedOutput::new(message_id, milestone_index, milestone_timestamp, output);
 
