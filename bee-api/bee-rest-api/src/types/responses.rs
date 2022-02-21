@@ -8,7 +8,7 @@ use crate::types::{
 
 use serde::{Deserialize, Serialize};
 
-/// Response of GET /api/v1/info.
+/// Response of GET /api/v2/info.
 /// Returns general information about the node.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InfoResponse {
@@ -77,7 +77,7 @@ pub struct MetricsResponse {
     pub referenced_rate: f64,
 }
 
-/// Response of GET /api/v1/tips.
+/// Response of GET /api/v2/tips.
 /// Returns non-lazy tips.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TipsResponse {
@@ -87,7 +87,7 @@ pub struct TipsResponse {
 
 impl BodyInner for TipsResponse {}
 
-/// Response of POST /api/v1/messages.
+/// Response of POST /api/v2/messages.
 /// Returns the message identifier of the submitted message.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SubmitMessageResponse {
@@ -97,14 +97,14 @@ pub struct SubmitMessageResponse {
 
 impl BodyInner for SubmitMessageResponse {}
 
-/// Response of GET /api/v1/messages/{message_id}.
+/// Response of GET /api/v2/messages/{message_id}.
 /// Returns a specific message.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageResponse(pub MessageDto);
 
 impl BodyInner for MessageResponse {}
 
-/// Response of GET /api/v1/messages/{message_id}/metadata.
+/// Response of GET /api/v2/messages/{message_id}/metadata.
 /// Returns the metadata of a message.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageMetadataResponse {
@@ -130,7 +130,7 @@ pub struct MessageMetadataResponse {
 
 impl BodyInner for MessageMetadataResponse {}
 
-/// Response of GET /api/v1/messages/{message_id}/children.
+/// Response of GET /api/v2/messages/{message_id}/children.
 /// Returns all children of a specific message.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageChildrenResponse {
@@ -145,7 +145,7 @@ pub struct MessageChildrenResponse {
 
 impl BodyInner for MessageChildrenResponse {}
 
-/// Response of GET /api/v1/outputs/{output_id}.
+/// Response of GET /api/v2/outputs/{output_id}.
 /// Returns all information about a specific output.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OutputResponse {
@@ -168,7 +168,7 @@ pub struct OutputResponse {
 
 impl BodyInner for OutputResponse {}
 
-/// Response of GET /api/v1/addresses/{address}.
+/// Response of GET /api/v2/addresses/{address}.
 /// Returns information about an address.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BalanceAddressResponse {
@@ -182,7 +182,7 @@ pub struct BalanceAddressResponse {
 
 impl BodyInner for BalanceAddressResponse {}
 
-/// Response of GET /api/v1/addresses/{address}/outputs.
+/// Response of GET /api/v2/addresses/{address}/outputs.
 /// Returns the outputs of an address.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OutputsAddressResponse {
@@ -198,8 +198,8 @@ pub struct OutputsAddressResponse {
 impl BodyInner for OutputsAddressResponse {}
 
 /// Response of:
-/// * GET /api/v1/receipts/{milestone_index}, returns all stored receipts for the given milestone index.
-/// * GET /api/v1/receipts, returns all stored receipts, independent of a milestone index.
+/// * GET /api/v2/receipts/{milestone_index}, returns all stored receipts for the given milestone index.
+/// * GET /api/v2/receipts, returns all stored receipts, independent of a milestone index.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceiptsResponse {
     pub receipts: Vec<ReceiptDto>,
@@ -207,7 +207,7 @@ pub struct ReceiptsResponse {
 
 impl BodyInner for ReceiptsResponse {}
 
-/// Response of GET /api/v1/treasury.
+/// Response of GET /api/v2/treasury.
 /// Returns all information about the treasury.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TreasuryResponse {
@@ -218,7 +218,7 @@ pub struct TreasuryResponse {
 
 impl BodyInner for TreasuryResponse {}
 
-/// Response of GET /api/v1/milestone/{milestone_index}.
+/// Response of GET /api/v2/milestone/{milestone_index}.
 /// Returns information about a milestone.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MilestoneResponse {
@@ -231,7 +231,7 @@ pub struct MilestoneResponse {
 
 impl BodyInner for MilestoneResponse {}
 
-/// Response of GET /api/v1/milestone/{milestone_index}/utxo-changes.
+/// Response of GET /api/v2/milestone/{milestone_index}/utxo-changes.
 /// Returns all UTXO changes that happened at a specific milestone.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UtxoChangesResponse {
@@ -244,21 +244,21 @@ pub struct UtxoChangesResponse {
 
 impl BodyInner for UtxoChangesResponse {}
 
-/// Response of GET /api/v1/peers.
+/// Response of GET /api/v2/peers.
 /// Returns information about all peers of the node.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PeersResponse(pub Vec<PeerDto>);
 
 impl BodyInner for PeersResponse {}
 
-/// Response of POST /api/v1/peers.
+/// Response of POST /api/v2/peers.
 /// Returns information about the added peer.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AddPeerResponse(pub PeerDto);
 
 impl BodyInner for AddPeerResponse {}
 
-/// Response of GET /api/v1/peer/{peer_id}.
+/// Response of GET /api/v2/peer/{peer_id}.
 /// Returns information about a specific peer of the node.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PeerResponse(pub PeerDto);

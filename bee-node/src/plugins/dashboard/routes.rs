@@ -106,20 +106,20 @@ pub(crate) fn api_routes(
     rest_api_config: RestApiConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     let allowed_routes = warp::get()
-        .and(warp::path!("api" / "v1" / "info" / ..))
-        .or(warp::get().and(warp::path!("api" / "v1" / "messages" / ..)))
-        .or(warp::get().and(warp::path!("api" / "v1" / "outputs" / ..)))
-        .or(warp::get().and(warp::path!("api" / "v1" / "addresses" / ..)))
-        .or(warp::get().and(warp::path!("api" / "v1" / "milestones" / ..)))
+        .and(warp::path!("api" / "v2" / "info" / ..))
+        .or(warp::get().and(warp::path!("api" / "v2" / "messages" / ..)))
+        .or(warp::get().and(warp::path!("api" / "v2" / "outputs" / ..)))
+        .or(warp::get().and(warp::path!("api" / "v2" / "addresses" / ..)))
+        .or(warp::get().and(warp::path!("api" / "v2" / "milestones" / ..)))
         .or(auth_filter(node_id.clone(), auth_config.clone())
             .and(warp::get())
-            .and(warp::path!("api" / "v1" / "peers" / ..)))
+            .and(warp::path!("api" / "v2" / "peers" / ..)))
         .or(auth_filter(node_id.clone(), auth_config.clone())
             .and(warp::post())
-            .and(warp::path!("api" / "v1" / "peers" / ..)))
+            .and(warp::path!("api" / "v2" / "peers" / ..)))
         .or(auth_filter(node_id, auth_config)
             .and(warp::delete())
-            .and(warp::path!("api" / "v1" / "peers" / ..)));
+            .and(warp::path!("api" / "v2" / "peers" / ..)));
 
     allowed_routes
         .and(reverse_proxy_filter(
