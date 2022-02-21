@@ -15,7 +15,7 @@ use bech32::{self, FromBase32, ToBase32, Variant};
 use derive_more::From;
 use packable::PackableExt;
 
-use alloc::{str::FromStr, string::String, vec::Vec};
+use alloc::{string::String, vec::Vec};
 
 /// A generic address supporting different address kinds.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From, packable::Packable)]
@@ -63,21 +63,5 @@ impl Address {
     #[allow(clippy::wrong_self_convention)]
     pub fn to_bech32(&self, hrp: &str) -> String {
         bech32::encode(hrp, self.pack_to_vec().to_base32(), Variant::Bech32).expect("Invalid address.")
-    }
-}
-
-impl FromStr for Address {
-    type Err = Error;
-
-    fn from_str(address: &str) -> Result<Self, Self::Err> {
-        Address::try_from_bech32(address)
-    }
-}
-
-impl TryFrom<String> for Address {
-    type Error = Error;
-
-    fn try_from(address: String) -> Result<Self, Self::Error> {
-        Address::from_str(&address)
     }
 }
