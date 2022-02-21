@@ -3,7 +3,7 @@
 
 use crate::{
     address::Address,
-    constant::{DUST_DEPOSIT_MIN, IOTA_SUPPLY},
+    constant::{IOTA_SUPPLY, STORAGE_DEPOSIT_MIN},
     payload::receipt::TailTransactionHash,
     Error,
 };
@@ -29,7 +29,7 @@ pub struct MigratedFundsEntry {
 
 impl MigratedFundsEntry {
     /// Range of valid amounts for a [`MigratedFundsEntry`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = DUST_DEPOSIT_MIN..=IOTA_SUPPLY;
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = STORAGE_DEPOSIT_MIN..=IOTA_SUPPLY;
 
     /// Creates a new [`MigratedFundsEntry`].
     pub fn new(tail_transaction_hash: TailTransactionHash, address: Address, amount: u64) -> Result<Self, Error> {
