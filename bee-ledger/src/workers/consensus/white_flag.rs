@@ -297,7 +297,7 @@ fn apply_regular_essence<B: StorageBackend>(
             .amount
             .checked_add(amount)
             .ok_or(Error::ConsumedAmountOverflow)?;
-        for native_token in consumed_native_tokens {
+        for native_token in consumed_native_tokens.iter() {
             let native_token_amount = context
                 .native_tokens_amount
                 .entry(*native_token.token_id())
@@ -322,7 +322,7 @@ fn apply_regular_essence<B: StorageBackend>(
         };
 
         context.amount = context.amount.checked_sub(amount).ok_or(Error::CreatedAmountOverflow)?;
-        for native_token in created_native_tokens {
+        for native_token in created_native_tokens.iter() {
             let native_token_amount = *context
                 .native_tokens_amount
                 .entry(*native_token.token_id())
