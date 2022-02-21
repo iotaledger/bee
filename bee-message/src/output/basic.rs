@@ -122,7 +122,7 @@ impl BasicOutput {
 
     /// The set of allowed [`UnlockCondition`]s for an [`BasicOutput`].
     const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS
-        .union(UnlockConditionFlags::DUST_DEPOSIT_RETURN)
+        .union(UnlockConditionFlags::STORAGE_DEPOSIT_RETURN)
         .union(UnlockConditionFlags::TIMELOCK)
         .union(UnlockConditionFlags::EXPIRATION);
     /// The set of allowed [`FeatureBlock`]s for an [`BasicOutput`].

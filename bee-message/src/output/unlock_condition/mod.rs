@@ -2,20 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod address;
-mod dust_deposit_return;
 mod expiration;
 mod governor_address;
 mod immutable_alias_address;
 mod state_controller_address;
+mod storage_deposit_return;
 mod timelock;
 
 pub use address::AddressUnlockCondition;
-pub(crate) use dust_deposit_return::DustDepositAmount;
-pub use dust_deposit_return::DustDepositReturnUnlockCondition;
 pub use expiration::ExpirationUnlockCondition;
 pub use governor_address::GovernorAddressUnlockCondition;
 pub use immutable_alias_address::ImmutableAliasAddressUnlockCondition;
 pub use state_controller_address::StateControllerAddressUnlockCondition;
+pub(crate) use storage_deposit_return::StorageDepositAmount;
+pub use storage_deposit_return::StorageDepositReturnUnlockCondition;
 pub use timelock::TimelockUnlockCondition;
 
 use crate::{create_bitflags, Error};
@@ -38,9 +38,9 @@ pub enum UnlockCondition {
     /// An address unlock condition.
     #[packable(tag = AddressUnlockCondition::KIND)]
     Address(AddressUnlockCondition),
-    /// A dust deposit return unlock condition.
-    #[packable(tag = DustDepositReturnUnlockCondition::KIND)]
-    DustDepositReturn(DustDepositReturnUnlockCondition),
+    /// A storage deposit return unlock condition.
+    #[packable(tag = StorageDepositReturnUnlockCondition::KIND)]
+    StorageDepositReturn(StorageDepositReturnUnlockCondition),
     /// A timelock unlock condition.
     #[packable(tag = TimelockUnlockCondition::KIND)]
     Timelock(TimelockUnlockCondition),
@@ -63,7 +63,7 @@ impl UnlockCondition {
     pub fn kind(&self) -> u8 {
         match self {
             Self::Address(_) => AddressUnlockCondition::KIND,
-            Self::DustDepositReturn(_) => DustDepositReturnUnlockCondition::KIND,
+            Self::StorageDepositReturn(_) => StorageDepositReturnUnlockCondition::KIND,
             Self::Timelock(_) => TimelockUnlockCondition::KIND,
             Self::Expiration(_) => ExpirationUnlockCondition::KIND,
             Self::StateControllerAddress(_) => StateControllerAddressUnlockCondition::KIND,
@@ -76,7 +76,7 @@ impl UnlockCondition {
     pub(crate) fn flag(&self) -> UnlockConditionFlags {
         match self {
             Self::Address(_) => UnlockConditionFlags::ADDRESS,
-            Self::DustDepositReturn(_) => UnlockConditionFlags::DUST_DEPOSIT_RETURN,
+            Self::StorageDepositReturn(_) => UnlockConditionFlags::STORAGE_DEPOSIT_RETURN,
             Self::Timelock(_) => UnlockConditionFlags::TIMELOCK,
             Self::Expiration(_) => UnlockConditionFlags::EXPIRATION,
             Self::StateControllerAddress(_) => UnlockConditionFlags::STATE_CONTROLLER_ADDRESS,
@@ -92,7 +92,7 @@ create_bitflags!(
     u16,
     [
         (ADDRESS, AddressUnlockCondition),
-        (DUST_DEPOSIT_RETURN, DustDepositReturnUnlockCondition),
+        (STORAGE_DEPOSIT_RETURN, StorageDepositReturnUnlockCondition),
         (TIMELOCK, TimelockUnlockCondition),
         (EXPIRATION, ExpirationUnlockCondition),
         (STATE_CONTROLLER_ADDRESS, StateControllerAddressUnlockCondition),
@@ -183,7 +183,7 @@ mod test {
             UnlockConditionFlags::ALL_FLAGS,
             &[
                 UnlockConditionFlags::ADDRESS,
-                UnlockConditionFlags::DUST_DEPOSIT_RETURN,
+                UnlockConditionFlags::STORAGE_DEPOSIT_RETURN,
                 UnlockConditionFlags::TIMELOCK,
                 UnlockConditionFlags::EXPIRATION,
                 UnlockConditionFlags::STATE_CONTROLLER_ADDRESS,
