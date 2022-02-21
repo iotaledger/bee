@@ -571,14 +571,15 @@ impl Serialize for AddressDto {
 pub struct Ed25519AddressDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    pub address: String,
+    #[serde(rename = "pubKeyHash")]
+    pub pub_key_hash: String,
 }
 
 impl From<&Ed25519Address> for Ed25519AddressDto {
     fn from(value: &Ed25519Address) -> Self {
         Self {
             kind: Ed25519Address::KIND,
-            address: value.to_string(),
+            pub_key_hash: value.to_string(),
         }
     }
 }
@@ -588,7 +589,7 @@ impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
 
     fn try_from(value: &Ed25519AddressDto) -> Result<Self, Self::Error> {
         value
-            .address
+            .pub_key_hash
             .parse::<Ed25519Address>()
             .map_err(|_| Error::InvalidField("Ed25519 address"))
     }
