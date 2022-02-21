@@ -167,7 +167,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
                     if parsed_network_id != network_id.1 {
                         return Err(reject::custom(CustomRejection::BadRequest(format!(
                             "invalid network: expected network id `{}` but received `{}`",
-                            parsed_network_id, network_id.1
+                            network_id.1, parsed_network_id
                         ))));
                     }
                 }
