@@ -162,7 +162,7 @@ impl Indexer {
     }
 
     pub(crate) async fn get_id<T: IndexedOutputTable>(&self, table: T, id: String) -> Result<Option<String>, Error> {
-        let id_bytes = hex::decode(id).map_err(|_| Error::InvalidId)?;
+        let id_bytes = Address::try_from_bech32(&id).map_err(|_| Error::InvalidId)?;
 
         let mut query = sea_query::Query::select();
         let statement = query

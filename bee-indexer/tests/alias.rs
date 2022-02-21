@@ -72,7 +72,7 @@ async fn with_state_controller() -> Result<(), Error> {
     indexer.process_created_output(&created).await?;
     indexer.process_created_output(&created2).await?;
 
-    let options = json!({ "stateController": hex::encode(state_controller.pack_to_vec()) }).to_string();
+    let options = json!({ "stateController": state_controller.to_bech32("atoi") }).to_string();
 
     let res = indexer
         .alias_outputs_with_filters(serde_json::from_str(&options).unwrap())

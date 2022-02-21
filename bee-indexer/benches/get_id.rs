@@ -51,7 +51,7 @@ fn indexation_benchmark(c: &mut Criterion) {
             rt.block_on(indexer.process_created_output(&created_output)).unwrap();
         }
 
-        let state_controller_enc = hex::encode(target_state_controller.unwrap().pack_to_vec());
+        let state_controller_enc = target_state_controller.unwrap().to_bech32("atoi");
         let output_id_enc = target_output_id.unwrap().to_string();
 
         group.bench_with_input(
