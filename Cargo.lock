@@ -308,6 +308,7 @@ dependencies = [
  "bee-message",
  "bee-rest-api",
  "bee-test",
+ "criterion",
  "hex",
  "packable",
  "sea-orm",

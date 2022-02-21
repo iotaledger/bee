@@ -23,7 +23,7 @@ async fn pagination() -> Result<(), Error> {
         .take(num_outputs)
         .collect::<Vec<_>>();
 
-    let indexer = Indexer::new().await?;
+    let indexer = Indexer::new_in_memory().await?;
     indexer.update_status(MilestoneIndex(42)).await?;
 
     for created in outputs.iter() {

@@ -25,7 +25,7 @@ use packable::PackableExt;
 
 use sea_orm::{
     prelude::*, ActiveModelTrait, ConnectionTrait, Database, DatabaseConnection, EntityTrait, FromQueryResult, NotSet,
-    QuerySelect, Schema, Set,
+    Schema, Set,
 };
 
 use types::{
@@ -39,9 +39,12 @@ pub struct Indexer {
 }
 
 impl Indexer {
-    pub async fn new() -> Result<Self, Error> {
-        // For now, the database lives in memory.
-        let db = Database::connect("sqlite::memory:").await.unwrap();
+    pub async fn new_in_memory() -> Result<Self, Error> {
+        Self::new("sqlite::memory:").await
+    }
+
+    pub async fn new(location: &str) -> Result<Self, Error> {
+        let db = Database::connect(location).await.unwrap();
 
         let builder = db.get_database_backend();
         let schema = Schema::new(builder);
@@ -49,6 +52,7 @@ impl Indexer {
         db.execute(builder.build(&schema.create_table_from_entity(alias::Entity)))
             .await
             .map_err(Error::DatabaseError)?;
+
         db.execute(builder.build(&schema.create_table_from_entity(basic::Entity)))
             .await
             .map_err(Error::DatabaseError)?;
@@ -118,6 +122,29 @@ impl Indexer {
         Ok(())
     }
 
+    pub async fn process_created_outputs(&self, created: Vec<OutputCreated>) -> Result<(), Error> {
+        let mut alias_models = vec![];
+        for c in created {
+        match c.output.inner() {
+            Output::Alias(output) => {
+                let alias = alias::ActiveModel {
+                    alias_id: Set(output.alias_id().pack_to_vec()),
+                    output_id: Set(c.output_id.pack_to_vec()),
+                    created_at: Set(c.output.milestone_timestamp()),
+                    amount: Set(output.amount() as i64),
+                    state_controller: Set(output.state_controller().pack_to_vec()),
+                    governor: Set(output.governor().pack_to_vec()),
+                    issuer: NotSet, // TODO: Fix
+                    sender: NotSet, // TODO: Fix
+                };
+                alias_models.push(alias);
+            }
+            _ => todo!(),
+        }}
+        alias::Entity::insert_many(alias_models).exec(&self.db).await.map_err(Error::DatabaseError)?;
+        Ok(())
+    }
+
     pub async fn process_spent_output(&self, consumed: &OutputConsumed) -> Result<(), sea_orm::error::DbErr> {
         match &consumed.output {
             Output::Alias(output) => {
@@ -134,24 +161,27 @@ impl Indexer {
         Ok(())
     }
 
-    
-
     pub(crate) async fn get_id<T: IndexedOutputTable>(&self, table: T, id: String) -> Result<Option<String>, Error> {
         let id_bytes = hex::decode(id).map_err(|_| Error::InvalidId)?;
-        
+
         let mut query = sea_query::Query::select();
-        let statement = query.from(table).column(T::output_id_col()).cond_where(T::id_col().eq(id_bytes));
+        let statement = query
+            .from(table)
+            .column(T::output_id_col())
+            .cond_where(T::id_col().eq(id_bytes));
         let stmt = self.db.get_database_backend().build(statement);
         // TODO: Sanitize (check for sql injections).
-        let query_result = IdResult::find_by_statement(stmt).one(&self.db).await
-        .map_err(Error::DatabaseError)?;
-            // .select_only()
-            // .column(T::id_col())
-            // .filter(T::id_col().eq(id_bytes))
-            // .one(&self.db).await.map_err(Error::DatabaseError)?;
+        let query_result = IdResult::find_by_statement(stmt)
+            .one(&self.db)
+            .await
+            .map_err(Error::DatabaseError)?;
+        // .select_only()
+        // .column(T::id_col())
+        // .filter(T::id_col().eq(id_bytes))
+        // .one(&self.db).await.map_err(Error::DatabaseError)?;
 
-            // query_result.map(|r| r.output_id)
-            Ok(query_result.map(|r| hex::encode(r.output_id)))
+        // query_result.map(|r| r.output_id)
+        Ok(query_result.map(|r| hex::encode(r.output_id)))
     }
 
     pub(crate) async fn outputs_with_filters<T: OutputTable>(

@@ -18,7 +18,7 @@ use packable::PackableExt;
 
 #[tokio::test]
 async fn get_id() -> Result<(), Error> {
-    let indexer = Indexer::new().await?;
+    let indexer = Indexer::new_in_memory().await?;
     indexer.update_status(MilestoneIndex(42)).await?;
 
     let expected_output_id = rand_output_id();
@@ -30,7 +30,7 @@ async fn get_id() -> Result<(), Error> {
             rand_message_id(),
             rand_milestone_index(),
             rand_number(),
-            Output::Alias(alias),)
+            alias.into())
     };
 
 
@@ -45,7 +45,7 @@ async fn get_id() -> Result<(), Error> {
 
 #[tokio::test]
 async fn with_state_controller() -> Result<(), Error> {
-    let indexer = Indexer::new().await?;
+    let indexer = Indexer::new_in_memory().await?;
     indexer.update_status(MilestoneIndex(42)).await?;
 
     let expected_output_id = rand_output_id();
@@ -85,7 +85,7 @@ async fn with_state_controller() -> Result<(), Error> {
 
 #[tokio::test]
 async fn created_after_before() -> Result<(), Error> {
-    let indexer = Indexer::new().await?;
+    let indexer = Indexer::new_in_memory().await?;
     indexer.update_status(MilestoneIndex(42)).await?;
 
     let created = OutputCreated {

@@ -20,6 +20,7 @@ pub struct Model {
     #[sea_orm(unique)]
     pub output_id: OutputIdDb,
     pub amount: AmountDb,
+    // #[sea_orm(indexed)] This seems to be buggy in `sea_orm` as of today.
     pub state_controller: AddressDb,
     pub governor: AddressDb,
     pub issuer: Option<AddressDb>,

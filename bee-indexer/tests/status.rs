@@ -6,7 +6,7 @@ use bee_message::milestone::MilestoneIndex;
 
 #[tokio::test]
 async fn update_status() -> Result<(), Error> {
-    let indexer = Indexer::new().await?;
+    let indexer = Indexer::new_in_memory().await?;
     assert_eq!(indexer.current_status().await?, MilestoneIndex(0));
     indexer.update_status(MilestoneIndex(42)).await?;
     assert_eq!(indexer.current_status().await?, MilestoneIndex(42));
