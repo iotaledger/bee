@@ -3,6 +3,7 @@
 
 use bee_message::{
     address::{Address, Ed25519Address},
+    constant::IOTA_SUPPLY,
     payload::receipt::MigratedFundsEntry,
     Error,
 };
@@ -32,9 +33,9 @@ fn new_invalid_amount() {
         MigratedFundsEntry::new(
             rand_tail_transaction_hash(),
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-            42
+            IOTA_SUPPLY + 1
         ),
-        Err(Error::InvalidMigratedFundsEntryAmount(InvalidBoundedU64(42)))
+        Err(Error::InvalidMigratedFundsEntryAmount(InvalidBoundedU64(n))) if n == IOTA_SUPPLY + 1
     ));
 }
 
@@ -69,13 +70,13 @@ fn pack_unpack_invalid_amount() {
         42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42,
         42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 0, 82, 253, 252, 7, 33,
         130, 101, 79, 22, 63, 95, 15, 154, 98, 29, 114, 149, 102, 199, 77, 16, 3, 124, 77, 123, 187, 4, 7, 209, 226,
-        198, 73, 42, 0, 0, 0, 0, 0, 0, 0,
+        198, 73, 42, 42, 42, 42, 42, 42, 42, 42,
     ];
 
     assert!(matches!(
         MigratedFundsEntry::unpack_verified(&mut bytes.as_slice()),
         Err(UnpackError::Packable(Error::InvalidMigratedFundsEntryAmount(
-            InvalidBoundedU64(42)
+            InvalidBoundedU64(3_038_287_259_199_220_266)
         )))
     ));
 }

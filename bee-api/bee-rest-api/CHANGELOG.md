@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FeatureBlockDto`;
 - `SenderFeatureBlockDto`;
 - `IssuerFeatureBlockDto`;
-- `DustDepositReturnFeatureBlockDto`;
+- `StorageDepositReturnFeatureBlockDto`;
 - `TimelockFeatureBlockDto`;
 - `ExpirationFeatureBlockDto`;
 - `IndexationFeatureBlockDto`;

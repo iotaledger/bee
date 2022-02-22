@@ -3,7 +3,7 @@
 
 use crate::{
     address::Address,
-    constant::{DUST_DEPOSIT_MIN, IOTA_SUPPLY},
+    constant::{IOTA_SUPPLY, STORAGE_DEPOSIT_MIN},
     Error,
 };
 
@@ -11,34 +11,34 @@ use packable::bounded::BoundedU64;
 
 use core::ops::RangeInclusive;
 
-pub(crate) type DustDepositAmount = BoundedU64<
-    { *DustDepositReturnUnlockCondition::AMOUNT_RANGE.start() },
-    { *DustDepositReturnUnlockCondition::AMOUNT_RANGE.end() },
+pub(crate) type StorageDepositAmount = BoundedU64<
+    { *StorageDepositReturnUnlockCondition::AMOUNT_RANGE.start() },
+    { *StorageDepositReturnUnlockCondition::AMOUNT_RANGE.end() },
 >;
 
-/// Defines the amount of IOTAs used as dust deposit that have to be returned to the return [`Address`].
+/// Defines the amount of IOTAs used as storage deposit that have to be returned to the return [`Address`].
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct DustDepositReturnUnlockCondition {
+pub struct StorageDepositReturnUnlockCondition {
     // The [`Address`] to return the amount to.
     return_address: Address,
     // Amount of IOTA coins the consuming transaction should deposit to `return_address`.
-    #[packable(unpack_error_with = Error::InvalidDustDepositAmount)]
-    amount: DustDepositAmount,
+    #[packable(unpack_error_with = Error::InvalidStorageDepositAmount)]
+    amount: StorageDepositAmount,
 }
 
-impl DustDepositReturnUnlockCondition {
-    /// The [`UnlockCondition`](crate::output::UnlockCondition) kind of a [`DustDepositReturnUnlockCondition`].
+impl StorageDepositReturnUnlockCondition {
+    /// The [`UnlockCondition`](crate::output::UnlockCondition) kind of a [`StorageDepositReturnUnlockCondition`].
     pub const KIND: u8 = 1;
-    /// Valid amounts for a [`DustDepositReturnUnlockCondition`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = DUST_DEPOSIT_MIN..=IOTA_SUPPLY;
+    /// Valid amounts for a [`StorageDepositReturnUnlockCondition`].
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = STORAGE_DEPOSIT_MIN..=IOTA_SUPPLY;
 
-    /// Creates a new [`DustDepositReturnUnlockCondition`].
+    /// Creates a new [`StorageDepositReturnUnlockCondition`].
     #[inline(always)]
     pub fn new(return_address: Address, amount: u64) -> Result<Self, Error> {
         Ok(Self {
             return_address,
-            amount: amount.try_into().map_err(Error::InvalidDustDepositAmount)?,
+            amount: amount.try_into().map_err(Error::InvalidStorageDepositAmount)?,
         })
     }
 

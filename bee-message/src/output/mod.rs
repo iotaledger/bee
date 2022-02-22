@@ -46,7 +46,7 @@ pub(crate) use output_id::OutputIndex;
 pub use token_id::TokenId;
 pub use treasury::TreasuryOutput;
 pub(crate) use treasury::TreasuryOutputAmount;
-pub(crate) use unlock_condition::DustDepositAmount;
+pub(crate) use unlock_condition::StorageDepositAmount;
 pub use unlock_condition::{UnlockCondition, UnlockConditions};
 
 use crate::{constant::IOTA_SUPPLY, Error};
