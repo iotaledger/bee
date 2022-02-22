@@ -61,7 +61,7 @@ pub(crate) async fn balance_ed25519(
     })? {
         (Ok(response), ledger_index) => match response {
             Some(balance) => Ok(warp::reply::json(&SuccessBody::new(BalanceAddressResponse {
-                address_type: 1,
+                address_type: Ed25519Address::KIND,
                 address: addr.to_string(),
                 balance: balance.amount(),
                 dust_allowed: balance.dust_allowed(),
