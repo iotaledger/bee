@@ -84,7 +84,7 @@ impl<S: NodeStorageBackend> NodeConfig<S> {
 
 // NOTE: To make the config robust against refactoring we "serde-rename" all fields even if not strictly necessary.
 /// A builder for a Bee config, that can be deserialized from a corresponding config file.
-#[derive(Default, Deserialize, PartialEq)]
+#[derive(Default, Deserialize)]
 #[must_use]
 pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     // We don't store the identity in the config file anymore.
@@ -110,6 +110,35 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     pub(crate) mqtt: Option<MqttConfigBuilder>,
     #[cfg(feature = "dashboard")]
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
+}
+
+impl<S> PartialEq for NodeConfigBuilder<S>
+where
+    S: NodeStorageBackend,
+    S::ConfigBuilder: PartialEq,
+{
+    #[allow(deprecated)]
+    fn eq(&self, other: &Self) -> bool {
+        let cmp = (self._identity == other._identity)
+            && (self.alias == other.alias)
+            && (self.bech32_hrp == other.bech32_hrp)
+            && (self.network_id == other.network_id)
+            && (self.logger == other.logger)
+            && (self.network == other.network)
+            && (self.autopeering == other.autopeering)
+            && (self.protocol == other.protocol)
+            && (self.rest_api == other.rest_api)
+            && (self.snapshot == other.snapshot)
+            && (self.pruning == other.pruning)
+            && (self.storage == other.storage)
+            && (self.tangle == other.tangle)
+            && (self.mqtt == other.mqtt);
+
+        #[cfg(feature = "dashboard")]
+        return cmp && (self.dashboard == other.dashboard);
+        #[cfg(not(feature = "dashboard"))]
+        return cmp;
+    }
 }
 
 impl<S: NodeStorageBackend> NodeConfigBuilder<S>
@@ -243,7 +272,7 @@ mod test {
             "/config.chrysalis-comnet.toml"
         ))?;
 
-        assert_eq!(json, toml);
+        assert!(json == toml);
 
         let json = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
@@ -254,7 +283,7 @@ mod test {
             "/config.chrysalis-devnet.toml"
         ))?;
 
-        assert_eq!(json, toml);
+        assert!(json == toml);
 
         let json = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
@@ -265,7 +294,7 @@ mod test {
             "/config.chrysalis-mainnet.toml"
         ))?;
 
-        assert_eq!(json, toml);
+        assert!(json == toml);
 
         Ok(())
     }
