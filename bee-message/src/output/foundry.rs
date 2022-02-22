@@ -244,34 +244,6 @@ impl FoundryOutput {
         )
     }
 
-    /// Returns the [`FoundryId`] of the [`FoundryOutput`].
-    pub fn id(&self) -> FoundryId {
-        let mut bytes = [0u8; FoundryId::LENGTH];
-        let mut packer = SlicePacker::new(&mut bytes);
-
-        // SAFETY: packing to an array of the correct length can't fail.
-        Address::Alias(*self.address()).pack(&mut packer).unwrap();
-        self.serial_number.pack(&mut packer).unwrap();
-        self.token_scheme.pack(&mut packer).unwrap();
-
-        FoundryId::new(bytes)
-    }
-
-    ///
-    #[inline(always)]
-    pub fn address(&self) -> &AliasAddress {
-        // A FoundryOutput must have an ImmutableAliasAddressUnlockCondition.
-        if let UnlockCondition::ImmutableAliasAddress(address) = self
-            .unlock_conditions
-            .get(ImmutableAliasAddressUnlockCondition::KIND)
-            .unwrap()
-        {
-            address.address()
-        } else {
-            unreachable!();
-        }
-    }
-
     ///
     #[inline(always)]
     pub fn amount(&self) -> u64 {
@@ -330,6 +302,34 @@ impl FoundryOutput {
     #[inline(always)]
     pub fn immutable_feature_blocks(&self) -> &FeatureBlocks {
         &self.immutable_feature_blocks
+    }
+
+    /// Returns the [`FoundryId`] of the [`FoundryOutput`].
+    pub fn id(&self) -> FoundryId {
+        let mut bytes = [0u8; FoundryId::LENGTH];
+        let mut packer = SlicePacker::new(&mut bytes);
+
+        // SAFETY: packing to an array of the correct length can't fail.
+        Address::Alias(*self.address()).pack(&mut packer).unwrap();
+        self.serial_number.pack(&mut packer).unwrap();
+        self.token_scheme.pack(&mut packer).unwrap();
+
+        FoundryId::new(bytes)
+    }
+
+    ///
+    #[inline(always)]
+    pub fn address(&self) -> &AliasAddress {
+        // A FoundryOutput must have an ImmutableAliasAddressUnlockCondition.
+        if let UnlockCondition::ImmutableAliasAddress(address) = self
+            .unlock_conditions
+            .get(ImmutableAliasAddressUnlockCondition::KIND)
+            .unwrap()
+        {
+            address.address()
+        } else {
+            unreachable!();
+        }
     }
 }
 

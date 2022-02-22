@@ -110,7 +110,7 @@ impl Output {
     /// Valid amounts for an [`Output`].
     pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
 
-    /// Return the output kind of an `Output`.
+    /// Return the output kind of an [`Output`].
     pub fn kind(&self) -> u8 {
         match self {
             #[cfg(feature = "cpt2")]
@@ -125,7 +125,7 @@ impl Output {
         }
     }
 
-    /// Returns the amount of an `Output`.
+    /// Returns the amount of an [`Output`].
     pub fn amount(&self) -> u64 {
         match self {
             #[cfg(feature = "cpt2")]
@@ -140,7 +140,7 @@ impl Output {
         }
     }
 
-    /// Returns the native tokens of an `Output`, if any.
+    /// Returns the native tokens of an [`Output`], if any.
     pub fn native_tokens(&self) -> Option<&NativeTokens> {
         match self {
             #[cfg(feature = "cpt2")]
@@ -155,7 +155,7 @@ impl Output {
         }
     }
 
-    /// Returns the unlock conditions of an `Output`, if any.
+    /// Returns the unlock conditions of an [`Output`], if any.
     pub fn unlock_conditions(&self) -> Option<&UnlockConditions> {
         match self {
             #[cfg(feature = "cpt2")]
@@ -170,7 +170,7 @@ impl Output {
         }
     }
 
-    /// Returns the feature blocks of an `Output`, if any.
+    /// Returns the feature blocks of an [`Output`], if any.
     pub fn feature_blocks(&self) -> Option<&FeatureBlocks> {
         match self {
             #[cfg(feature = "cpt2")]
@@ -185,7 +185,7 @@ impl Output {
         }
     }
 
-    /// Returns the immutable feature blocks of an `Output`, if any.
+    /// Returns the immutable feature blocks of an [`Output`], if any.
     pub fn immutable_feature_blocks(&self) -> Option<&FeatureBlocks> {
         match self {
             #[cfg(feature = "cpt2")]

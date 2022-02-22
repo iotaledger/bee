@@ -177,17 +177,6 @@ impl NftOutput {
 
     ///
     #[inline(always)]
-    pub fn address(&self) -> &Address {
-        // An NftOutput must have an AddressUnlockCondition.
-        if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
-            address.address()
-        } else {
-            unreachable!();
-        }
-    }
-
-    ///
-    #[inline(always)]
     pub fn amount(&self) -> u64 {
         self.amount.get()
     }
@@ -227,6 +216,17 @@ impl NftOutput {
     #[inline(always)]
     pub fn immutable_feature_blocks(&self) -> &FeatureBlocks {
         &self.immutable_feature_blocks
+    }
+
+    ///
+    #[inline(always)]
+    pub fn address(&self) -> &Address {
+        // An NftOutput must have an AddressUnlockCondition.
+        if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
+            address.address()
+        } else {
+            unreachable!();
+        }
     }
 }
 
