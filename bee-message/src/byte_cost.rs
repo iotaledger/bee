@@ -5,7 +5,7 @@ use crate::{milestone::MilestoneIndex, output::OutputId, MessageId};
 
 use core::mem::size_of;
 
-const DEFAULT_BYTE_COST: u64 = 1;
+const DEFAULT_BYTE_COST: u64 = 500;
 const DEFAULT_BYTE_COST_KEY_WEIGHT: u64 = 10;
 const DEFAULT_BYTE_COST_DATA_WEIGHT: u64 = 1;
 

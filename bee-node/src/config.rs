@@ -239,6 +239,7 @@ mod test {
             env!("CARGO_MANIFEST_DIR"),
             "/config.stardust-testnet.toml"
         ))?;
+
         Ok(())
     }
 }

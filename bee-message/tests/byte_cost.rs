@@ -31,8 +31,8 @@ fn output_in_range(output: Output, range: std::ops::RangeInclusive<u64>) {
 
 #[test]
 fn valid_byte_cost_range() {
-    output_in_range(Output::Alias(rand_alias_output()), (445)..=(29_620));
-    output_in_range(Output::Basic(rand_basic_output()), (414)..=(13_485));
-    output_in_range(Output::Foundry(rand_foundry_output()), (496)..=(21_365));
-    output_in_range(Output::Nft(rand_nft_output()), (436)..=(21_734));
+    output_in_range(Output::Alias(rand_alias_output()), 445..=29_620);
+    output_in_range(Output::Basic(rand_basic_output()), 414..=13_485);
+    output_in_range(Output::Foundry(rand_foundry_output()), 496..=21_365);
+    output_in_range(Output::Nft(rand_nft_output()), 436..=21_734);
 }
