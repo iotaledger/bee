@@ -4,6 +4,7 @@
 mod alias;
 mod alias_id;
 mod basic;
+mod byte_cost;
 mod chain_id;
 #[cfg(feature = "cpt2")]
 mod cpt2;
@@ -25,6 +26,7 @@ pub(crate) use alias::StateMetadataLength;
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
 pub use basic::{BasicOutput, BasicOutputBuilder};
+pub use byte_cost::{minimum_storage_deposit, ByteCost, ByteCostConfig, ByteCostConfigBuilder};
 pub use chain_id::ChainId;
 #[cfg(feature = "cpt2")]
 pub(crate) use cpt2::signature_locked_dust_allowance::DustAllowanceAmount;
@@ -49,11 +51,7 @@ pub(crate) use treasury::TreasuryOutputAmount;
 pub(crate) use unlock_condition::StorageDepositAmount;
 pub use unlock_condition::{UnlockCondition, UnlockConditions};
 
-use crate::{
-    byte_cost::{ByteCost, ByteCostConfig},
-    constant::IOTA_SUPPLY,
-    Error,
-};
+use crate::{constant::IOTA_SUPPLY, Error};
 
 use derive_more::From;
 use packable::{bounded::BoundedU64, PackableExt};

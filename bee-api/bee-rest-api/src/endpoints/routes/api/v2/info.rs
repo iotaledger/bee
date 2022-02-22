@@ -86,8 +86,8 @@ pub(crate) async fn info<B: StorageBackend>(
             min_pow_score: protocol_config.minimum_pow_score(),
             rent_structure: RentStructureResponse {
                 v_byte_cost: protocol_config.byte_cost().v_byte_cost,
-                v_byte_factor_data: protocol_config.byte_cost().v_byte_factor_data,
                 v_byte_factor_key: protocol_config.byte_cost().v_byte_factor_key,
+                v_byte_factor_data: protocol_config.byte_cost().v_byte_factor_data,
             },
         },
         metrics: MetricsResponse {

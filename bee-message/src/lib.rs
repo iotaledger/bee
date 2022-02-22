@@ -22,8 +22,6 @@ mod message_id;
 
 /// A module that provides types and syntactic validations of addresses.
 pub mod address;
-/// A module that provides functionality to compute the byte cost of outputs.
-pub mod byte_cost;
 /// A module that contains constants related to messages.
 pub mod constant;
 /// A module that provides types and syntactic validations of inputs.

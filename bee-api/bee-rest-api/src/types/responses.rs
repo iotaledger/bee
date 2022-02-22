@@ -59,10 +59,10 @@ pub struct ProtocolResponse {
 pub struct RentStructureResponse {
     #[serde(rename = "vByteCost")]
     pub v_byte_cost: u64,
-    #[serde(rename = "vByteFactorData")]
-    pub v_byte_factor_data: u64,
     #[serde(rename = "vByteFactorKey")]
     pub v_byte_factor_key: u64,
+    #[serde(rename = "vByteFactorData")]
+    pub v_byte_factor_data: u64,
 }
 
 /// Returned in [`InfoResponse`].

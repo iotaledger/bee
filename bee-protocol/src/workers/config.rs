@@ -4,8 +4,8 @@
 use crate::types::milestone_key_range::MilestoneKeyRange;
 
 use bee_message::{
-    byte_cost::{ByteCostConfig, ByteCostConfigBuilder},
     milestone::MilestoneIndex,
+    output::{ByteCostConfig, ByteCostConfigBuilder},
 };
 
 use serde::Deserialize;
