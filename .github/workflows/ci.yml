@@ -24,7 +24,7 @@ on:
 
 jobs:
   build-and-test-stable:
-    name: build and test (stable)
+    name: build and test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -108,7 +108,7 @@ jobs:
           args: --workspace --doc --all-features --release
 
   build-and-test-experimental:
-    name: build and test (experimental)
+    name: build and test
     needs: build-and-test-stable
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
@@ -198,12 +198,26 @@ jobs:
   no_std:
     needs: build-and-test-stable
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
+      fail-fast: false
       matrix:
-        rust: [nightly, beta, stable]
+        rust: [stable]
         crates: [
           "bee-ternary",
         ]
+        experimental: [false]
+        include:
+          - rust: beta
+            crates: [
+              "bee-ternary",
+            ]
+            experimental: true
+          - rust: nightly
+            crates: [
+              "bee-ternary",
+            ]
+            experimental: true
 
     steps:
       - uses: actions/checkout@v2
@@ -441,6 +455,7 @@ jobs:
           args: --no-deps --document-private-items
 
   missing-files:
+    name: missing files
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
