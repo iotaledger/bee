@@ -600,14 +600,15 @@ impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
 pub struct AliasAddressDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    pub address: String,
+    #[serde(rename = "aliasId")]
+    pub alias_id: String,
 }
 
 impl From<&AliasAddress> for AliasAddressDto {
     fn from(value: &AliasAddress) -> Self {
         Self {
             kind: AliasAddress::KIND,
-            address: value.to_string(),
+            alias_id: value.to_string(),
         }
     }
 }
@@ -617,7 +618,7 @@ impl TryFrom<&AliasAddressDto> for AliasAddress {
 
     fn try_from(value: &AliasAddressDto) -> Result<Self, Self::Error> {
         value
-            .address
+            .alias_id
             .parse::<AliasAddress>()
             .map_err(|_| Error::InvalidField("alias address"))
     }
@@ -628,14 +629,15 @@ impl TryFrom<&AliasAddressDto> for AliasAddress {
 pub struct NftAddressDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    pub address: String,
+    #[serde(rename = "nftId")]
+    pub nft_id: String,
 }
 
 impl From<&NftAddress> for NftAddressDto {
     fn from(value: &NftAddress) -> Self {
         Self {
             kind: NftAddress::KIND,
-            address: value.to_string(),
+            nft_id: value.to_string(),
         }
     }
 }
@@ -645,7 +647,7 @@ impl TryFrom<&NftAddressDto> for NftAddress {
 
     fn try_from(value: &NftAddressDto) -> Result<Self, Self::Error> {
         value
-            .address
+            .nft_id
             .parse::<NftAddress>()
             .map_err(|_| Error::InvalidField("NFT address"))
     }
