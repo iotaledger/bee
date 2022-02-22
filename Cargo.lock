@@ -277,6 +277,7 @@ name = "bee-message"
 version = "0.2.0"
 dependencies = [
  "bech32",
+ "bee-ledger",
  "bee-pow",
  "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",

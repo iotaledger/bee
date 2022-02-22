@@ -2,40 +2,37 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    byte_cost::{ByteCost, ByteCostConfig},
-    milestone::MilestoneIndex,
-    output::{Output, OutputId},
-    MessageId,
+    byte_cost::{minimum_storage_deposit, ByteCostConfig, ByteCostConfigBuilder},
+    output::Output,
 };
 use bee_test::rand::output::{rand_alias_output, rand_basic_output, rand_foundry_output, rand_nft_output};
 
-use core::mem::size_of;
+const BYTE_COST: u64 = 1;
+const FACTOR_KEY: u64 = 10;
+const FACTOR_DATA: u64 = 1;
 
-const CONFIG: ByteCostConfig = ByteCostConfig {
-    v_byte_cost: 500,
-    v_byte_factor_data: 1,
-    v_byte_factor_key: 10,
-};
-
-type ConfirmationUnixTimestamp = u32;
-
-const OFFSET: u64 = (size_of::<OutputId>()
-    + size_of::<MessageId>()
-    + size_of::<MilestoneIndex>()
-    + size_of::<ConfirmationUnixTimestamp>()) as u64;
+fn config() -> ByteCostConfig {
+    ByteCostConfigBuilder::new()
+        .byte_cost(BYTE_COST)
+        .key_factor(FACTOR_KEY)
+        .data_factor(FACTOR_DATA)
+        .finish()
+}
 
 fn output_in_range(output: Output, range: std::ops::RangeInclusive<u64>) {
-    let v_bytes = &output.weighted_bytes(&CONFIG);
-    assert!(range.contains(v_bytes), "{:#?} has byte cost {}", output, v_bytes);
+    let deposit = minimum_storage_deposit(&config(), &output);
+    assert!(
+        range.contains(&deposit),
+        "{:#?} has a required storage deposit of {}",
+        output,
+        deposit
+    );
 }
 
 #[test]
 fn valid_byte_cost_range() {
-    output_in_range(Output::Alias(rand_alias_output()), (445 - OFFSET)..=(29_620 - OFFSET));
-    output_in_range(Output::Basic(rand_basic_output()), (414 - OFFSET)..=(13_485 - OFFSET));
-    output_in_range(
-        Output::Foundry(rand_foundry_output()),
-        (496 - OFFSET)..=(21_365 - OFFSET),
-    );
-    output_in_range(Output::Nft(rand_nft_output()), (436 - OFFSET)..=(21_734 - OFFSET));
+    output_in_range(Output::Alias(rand_alias_output()), (445)..=(29_620));
+    output_in_range(Output::Basic(rand_basic_output()), (414)..=(13_485));
+    output_in_range(Output::Foundry(rand_foundry_output()), (496)..=(21_365));
+    output_in_range(Output::Nft(rand_nft_output()), (436)..=(21_734));
 }

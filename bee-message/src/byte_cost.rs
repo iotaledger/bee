@@ -1,17 +1,26 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const DEFAULT_BYTE_COST: u64 = 500;
+use crate::{milestone::MilestoneIndex, output::OutputId, MessageId};
+
+use core::mem::size_of;
+
+const DEFAULT_BYTE_COST: u64 = 1;
 const DEFAULT_BYTE_COST_KEY_WEIGHT: u64 = 10;
 const DEFAULT_BYTE_COST_DATA_WEIGHT: u64 = 1;
+
+type ConfirmationUnixTimestamp = u32;
 
 /// Builder for a [`ByteCostConfig`].
 #[derive(Default)]
 #[cfg_attr(feature = "serde1", derive(serde::Deserialize))]
 #[must_use]
 pub struct ByteCostConfigBuilder {
+    #[serde(alias = "vByteCost")]
     v_byte_cost: Option<u64>,
+    #[serde(alias = "vByteFactorKey")]
     v_byte_factor_key: Option<u64>,
+    #[serde(alias = "vByteFactorData")]
     v_byte_factor_data: Option<u64>,
 }
 
@@ -21,30 +30,39 @@ impl ByteCostConfigBuilder {
         Default::default()
     }
 
-    /// Sets the byte cost for dust protection.
+    /// Sets the byte cost for the storage deposit.
     pub fn byte_cost(mut self, byte_cost: u64) -> Self {
         self.v_byte_cost.replace(byte_cost);
         self
     }
 
-    /// Sets the byte cost for dust protection.
-    pub fn weight_for_key_field(mut self, weight: u64) -> Self {
+    /// Sets the virtual byte weight for the key fields.
+    pub fn key_factor(mut self, weight: u64) -> Self {
         self.v_byte_factor_key.replace(weight);
         self
     }
 
-    /// Sets the byte cost for dust protection.
-    pub fn weight_for_data_field(mut self, weight: u64) -> Self {
+    /// Sets the virtual byte weight for the data fields.
+    pub fn data_factor(mut self, weight: u64) -> Self {
         self.v_byte_factor_data.replace(weight);
         self
     }
 
     /// Returns the built [`ByteCostConfig`].
     pub fn finish(self) -> ByteCostConfig {
+        let v_byte_factor_key = self.v_byte_factor_key.unwrap_or(DEFAULT_BYTE_COST_KEY_WEIGHT);
+        let v_byte_factor_data = self.v_byte_factor_data.unwrap_or(DEFAULT_BYTE_COST_DATA_WEIGHT);
+
+        let v_byte_offset = size_of::<OutputId>() as u64 * v_byte_factor_key
+            + size_of::<MessageId>() as u64 * v_byte_factor_data
+            + size_of::<MilestoneIndex>() as u64 * v_byte_factor_data
+            + size_of::<ConfirmationUnixTimestamp>() as u64 * v_byte_factor_data;
+
         ByteCostConfig {
             v_byte_cost: self.v_byte_cost.unwrap_or(DEFAULT_BYTE_COST),
-            v_byte_factor_key: self.v_byte_factor_key.unwrap_or(DEFAULT_BYTE_COST_KEY_WEIGHT),
-            v_byte_factor_data: self.v_byte_factor_data.unwrap_or(DEFAULT_BYTE_COST_DATA_WEIGHT),
+            v_byte_factor_key,
+            v_byte_factor_data,
+            v_byte_offset,
         }
     }
 }
@@ -55,9 +73,12 @@ pub struct ByteCostConfig {
     /// Cost in tokens coins per virtual byte.
     pub v_byte_cost: u64,
     /// The weight factor used for key fields in the ouputs.
+    #[allow(unused)] // Currently, `v_byte_factor_key` is only used statically.
     pub v_byte_factor_key: u64,
     /// The weight factor used for data fields in the ouputs.
     pub v_byte_factor_data: u64,
+    /// The offset in addition to the other fields.
+    v_byte_offset: u64,
 }
 
 impl ByteCostConfig {
@@ -80,6 +101,6 @@ impl<T: ByteCost, const N: usize> ByteCost for [T; N] {
 }
 
 /// Computes the storage cost for `[crate::output::Output]`s.
-pub fn min_deposit(config: &ByteCostConfig, output: &impl ByteCost) -> u64 {
-    config.v_byte_cost * output.weighted_bytes(config)
+pub fn minimum_storage_deposit(config: &ByteCostConfig, output: &impl ByteCost) -> u64 {
+    config.v_byte_cost * output.weighted_bytes(config) + config.v_byte_offset
 }

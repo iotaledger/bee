@@ -45,6 +45,7 @@ pub struct ProtocolConfigBuilder {
     minimum_pow_score: Option<f64>,
     coordinator: ProtocolCoordinatorConfigBuilder,
     workers: ProtocolWorkersConfigBuilder,
+    #[serde(alias = "byteCost")]
     byte_cost: ByteCostConfigBuilder,
 }
 
