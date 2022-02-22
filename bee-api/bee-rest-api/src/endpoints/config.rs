@@ -79,7 +79,7 @@ pub struct RestApiConfigBuilder {
     allowed_ips: Option<Vec<IpAddr>>,
     #[serde(alias = "featureProofOfWork")]
     feature_proof_of_work: Option<bool>,
-    #[serde(alias = "whiteFlagSolidifictionTimeout")]
+    #[serde(alias = "whiteFlagSolidificationTimeout")]
     white_flag_solidification_timeout: Option<u64>,
 }
 

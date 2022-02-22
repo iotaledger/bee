@@ -120,8 +120,7 @@ where
 {
     #[allow(deprecated)]
     fn eq(&self, other: &Self) -> bool {
-        // We destructure `Self` so this implementation does not fail silently if fields are added
-        // or removed.
+        // We destructure `Self` so this implementation does not fail silently if fields are added or removed.
         let Self {
             _identity: self_identity,
             alias: self_alias,

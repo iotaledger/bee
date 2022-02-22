@@ -43,8 +43,8 @@ use std::{
 };
 
 const ENABLED_DEFAULT: bool = false;
-const ENTRYNODES_PREFER_IPV6_DEFAULT: bool = false;
-const RUN_AS_ENTRYNODE_DEFAULT: bool = false;
+const ENTRY_NODES_PREFER_IPV6_DEFAULT: bool = false;
+const RUN_AS_ENTRY_NODE_DEFAULT: bool = false;
 const DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT: bool = false;
 const PEER_STORAGE_PATH_DEFAULT: &str = "./storage/mainnet/peers";
 
@@ -157,8 +157,8 @@ impl AutopeeringConfigBuilder {
             bind_addr_v4: self.bind_addr_v4,
             bind_addr_v6: self.bind_addr_v6,
             entry_nodes: self.entry_nodes,
-            entry_nodes_prefer_ipv6: self.entry_nodes_prefer_ipv6.unwrap_or(ENTRYNODES_PREFER_IPV6_DEFAULT),
-            run_as_entry_node: self.run_as_entry_node.unwrap_or(RUN_AS_ENTRYNODE_DEFAULT),
+            entry_nodes_prefer_ipv6: self.entry_nodes_prefer_ipv6.unwrap_or(ENTRY_NODES_PREFER_IPV6_DEFAULT),
+            run_as_entry_node: self.run_as_entry_node.unwrap_or(RUN_AS_ENTRY_NODE_DEFAULT),
             drop_neighbors_on_salt_update: self
                 .drop_neighbors_on_salt_update
                 .unwrap_or(DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT),
@@ -176,8 +176,8 @@ impl Default for AutopeeringConfigBuilder {
             bind_addr_v4: None,
             bind_addr_v6: None,
             entry_nodes: Vec::default(),
-            entry_nodes_prefer_ipv6: Some(ENTRYNODES_PREFER_IPV6_DEFAULT),
-            run_as_entry_node: Some(RUN_AS_ENTRYNODE_DEFAULT),
+            entry_nodes_prefer_ipv6: Some(ENTRY_NODES_PREFER_IPV6_DEFAULT),
+            run_as_entry_node: Some(RUN_AS_ENTRY_NODE_DEFAULT),
             drop_neighbors_on_salt_update: Some(DROP_NEIGHBORS_ON_SALT_UPDATE_DEFAULT),
             peer_storage_path: Some(PEER_STORAGE_PATH_DEFAULT.into()),
         }
