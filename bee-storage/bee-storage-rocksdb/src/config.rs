@@ -36,7 +36,7 @@ const DEFAULT_SET_USE_DIRECT_IO_FOR_FLUSH_AND_COMPACTION: bool = true;
 
 const DEFAULT_SET_HIGH_PRIORITY_BACKGROUND_THREADS: i32 = 2;
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Debug, Deserialize, PartialEq)]
 #[must_use]
 pub struct StorageConfigBuilder {
     #[serde(alias = "fetchEdgeLimit")]
@@ -61,7 +61,7 @@ impl StorageConfigBuilder {
     }
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Debug, Deserialize, PartialEq)]
 #[must_use]
 pub struct RocksDbEnvConfigBuilder {
     #[serde(alias = "setBackgroundThreads")]
@@ -85,7 +85,7 @@ impl RocksDbEnvConfigBuilder {
     }
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Debug, Deserialize, PartialEq)]
 #[must_use]
 pub struct RocksDbConfigBuilder {
     storage: Option<StorageConfigBuilder>,

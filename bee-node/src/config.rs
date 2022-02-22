@@ -84,7 +84,7 @@ impl<S: NodeStorageBackend> NodeConfig<S> {
 
 // NOTE: To make the config robust against refactoring we "serde-rename" all fields even if not strictly necessary.
 /// A builder for a Bee config, that can be deserialized from a corresponding config file.
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, PartialEq)]
 #[must_use]
 pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     // We don't store the identity in the config file anymore.
@@ -112,7 +112,10 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
 }
 
-impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
+impl<S: NodeStorageBackend> NodeConfigBuilder<S>
+where
+    <S as bee_storage::backend::StorageBackend>::ConfigBuilder: core::fmt::Debug + PartialEq,
+{
     /// Creates a node config builder from a local config file.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, NodeConfigError> {
         match fs::read_to_string(&path) {
@@ -231,30 +234,38 @@ mod test {
 
     #[test]
     fn config_files_conformity() -> Result<(), NodeConfigError> {
-        let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
+        let json = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/config.chrysalis-comnet.json"
         ))?;
-        let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
+        let toml = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/config.chrysalis-comnet.toml"
         ))?;
-        let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
+
+        assert_eq!(json, toml);
+
+        let json = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/config.chrysalis-devnet.json"
         ))?;
-        let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
+        let toml = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/config.chrysalis-devnet.toml"
         ))?;
-        let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
+
+        assert_eq!(json, toml);
+
+        let json = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/config.chrysalis-mainnet.json"
         ))?;
-        let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
+        let toml = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/config.chrysalis-mainnet.toml"
         ))?;
+
+        assert_eq!(json, toml);
 
         Ok(())
     }
