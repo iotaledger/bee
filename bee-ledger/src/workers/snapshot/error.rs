@@ -30,8 +30,8 @@ pub enum Error {
         "only a delta snapshot file exists without a full snapshot file (remove the delta snapshot file and restart)"
     )]
     OnlyDeltaSnapshotFileExists,
-    #[error("parsing snapshot header failed")]
-    ParsingSnapshotHeaderFailed,
+    #[error("parsing snapshot header failed: {0}")]
+    ParsingSnapshotHeaderFailed(TypesError),
     #[error("remaining bytes in file")]
     RemainingBytes,
     #[error("types error: {0}")]

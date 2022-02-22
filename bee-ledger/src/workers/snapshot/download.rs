@@ -37,9 +37,9 @@ async fn download_snapshot_header(download_url: &str) -> Result<SnapshotHeader, 
 
                         let mut slice: &[u8] = &bytes[..SnapshotHeader::LENGTH];
 
-                        return SnapshotHeader::unpack(&mut slice).map_err(|_| {
+                        return SnapshotHeader::unpack(&mut slice).map_err(|err| {
                             warn!("Could not parse snapshot header from {}.", download_url);
-                            Error::ParsingSnapshotHeaderFailed
+                            Error::ParsingSnapshotHeaderFailed(err)
                         });
                     }
                 }
