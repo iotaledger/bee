@@ -311,7 +311,7 @@ jobs:
           args: --all-targets --all-features -- -D warnings
 
   udeps:
-    needs: clippy
+    needs: [build-and-test-stable, clippy]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -357,7 +357,7 @@ jobs:
           args: --all-targets --all-features --backend=depinfo
 
   licenses:
-    needs: clippy
+    needs: [build-and-test-stable, clippy]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -406,7 +406,7 @@ jobs:
           args: generate --workspace --all-features about.hbs
 
   docs:
-    needs: clippy
+    needs: [build-and-test-stable, clippy]
     runs-on: ubuntu-latest
     env:
       RUSTDOCFLAGS: "-D warnings"
