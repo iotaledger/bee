@@ -6,6 +6,8 @@ use crate::{
     output::{AliasId, TokenScheme},
 };
 
+use alloc::vec::Vec;
+
 impl_id!(FoundryId, 26, "Defines the unique identifier of a foundry.");
 
 #[cfg(feature = "serde1")]
