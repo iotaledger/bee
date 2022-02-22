@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update dependencies;
 
+### Fixed
+
+- Emit warning when parsing snapshot header fails instead of crashing;
+
 ## 0.6.1 - 2021-12-29
 
 ### Changed
