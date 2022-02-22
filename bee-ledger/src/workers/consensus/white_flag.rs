@@ -170,29 +170,35 @@ fn unlock_basic_output(
 
 fn unlock_alias_output(
     output_id: &OutputId,
-    output: &AliasOutput,
+    current_state: &AliasOutput,
     unlock_block: &UnlockBlock,
-    context: &ValidationContext,
+    context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
-    let alias_id = if output.alias_id().is_null() {
+    let alias_id = if current_state.alias_id().is_null() {
         AliasId::new(output_id.hash())
     } else {
-        *output.alias_id()
+        *current_state.alias_id()
     };
 
-    // fn alias_chain_constraint(current_state: &AliasOutput, next_state: Option<&AliasOutput>) {
-    //     if let Some(next_state) = next_state {
-    //         // The alias is transitioned.
-    //         if next_state.state_index() == current_state.state_index() + 1 {
-    //             // State transition.
-    //         } else if next_state.state_index() == current_state.state_index() {
-    //             // Governance transition.
-    //         } else {
-    //         }
-    //     } else {
-    //         // The alias is destroyed.
-    //     }
-    // }
+    // TODO
+    let next_state: Option<&AliasOutput> = None;
+
+    // The alias is transitioned.
+    if let Some(next_state) = next_state {
+        // State transition.
+        if next_state.state_index() == current_state.state_index() + 1 {
+            unlock_address(current_state.state_controller(), unlock_block, context)?;
+        }
+        // Governance transition.
+        else if next_state.state_index() == current_state.state_index() {
+            unlock_address(current_state.governor(), unlock_block, context)?;
+        } else {
+            // TODO Err non contiguous state increase
+        }
+    }
+    // The alias is destroyed.
+    else {
+    }
 
     Ok(())
 }
@@ -270,7 +276,7 @@ fn apply_regular_essence<B: StorageBackend>(
                 (output.amount(), output.native_tokens())
             }
             Output::Alias(output) => {
-                if let Err(conflict) = unlock_alias_output(output_id, output, unlock_block, &context) {
+                if let Err(conflict) = unlock_alias_output(output_id, output, unlock_block, &mut context) {
                     return Ok(conflict);
                 }
 
