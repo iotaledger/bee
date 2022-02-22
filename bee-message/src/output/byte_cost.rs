@@ -6,8 +6,8 @@ use crate::{milestone::MilestoneIndex, output::OutputId, MessageId};
 use core::mem::size_of;
 
 const DEFAULT_BYTE_COST: u64 = 500;
-const DEFAULT_BYTE_COST_KEY_WEIGHT: u64 = 10;
-const DEFAULT_BYTE_COST_DATA_WEIGHT: u64 = 1;
+const DEFAULT_BYTE_COST_FACTOR_KEY: u64 = 10;
+const DEFAULT_BYTE_COST_FACTOR_DATA: u64 = 1;
 
 type ConfirmationUnixTimestamp = u32;
 
@@ -50,8 +50,8 @@ impl ByteCostConfigBuilder {
 
     /// Returns the built [`ByteCostConfig`].
     pub fn finish(self) -> ByteCostConfig {
-        let v_byte_factor_key = self.v_byte_factor_key.unwrap_or(DEFAULT_BYTE_COST_KEY_WEIGHT);
-        let v_byte_factor_data = self.v_byte_factor_data.unwrap_or(DEFAULT_BYTE_COST_DATA_WEIGHT);
+        let v_byte_factor_key = self.v_byte_factor_key.unwrap_or(DEFAULT_BYTE_COST_FACTOR_KEY);
+        let v_byte_factor_data = self.v_byte_factor_data.unwrap_or(DEFAULT_BYTE_COST_FACTOR_DATA);
 
         let v_byte_offset = size_of::<OutputId>() as u64 * v_byte_factor_key
             + size_of::<MessageId>() as u64 * v_byte_factor_data
@@ -70,10 +70,9 @@ impl ByteCostConfigBuilder {
 /// Specifies the current parameters for the byte cost computation.
 #[derive(Clone)]
 pub struct ByteCostConfig {
-    /// Cost in tokens coins per virtual byte.
+    /// Cost in tokens per virtual byte.
     pub v_byte_cost: u64,
     /// The weight factor used for key fields in the ouputs.
-    #[allow(unused)] // Currently, `v_byte_factor_key` is only used statically.
     pub v_byte_factor_key: u64,
     /// The weight factor used for data fields in the ouputs.
     pub v_byte_factor_data: u64,

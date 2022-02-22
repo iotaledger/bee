@@ -203,9 +203,6 @@ impl Output {
 
 impl ByteCost for Output {
     fn weighted_bytes(&self, config: &ByteCostConfig) -> u64 {
-        // The updated verison of TIP19 (https://github.com/iotaledger/tips/pull/39) has been largely simplified.
-        // Now, all fields of all outputs are marked as `data. Therefore, we can just resort to using `Packable` to
-        // compute the `weighted bytes`.
         self.packed_len() as u64 * config.v_byte_factor_data
     }
 }
