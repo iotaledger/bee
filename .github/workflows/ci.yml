@@ -34,8 +34,22 @@ jobs:
         experimental: [false]
         include:
           - rust: beta
+            os: ubuntu-latest
             experimental: true
           - rust: nightly
+            os: ubuntu-latest
+            experimental: true
+          - rust: beta
+            os: macos-latest
+            experimental: true
+          - rust: nightly
+            os: macos-latest
+            experimental: true
+          - rust: beta
+            os: windows-latest
+            experimental: true
+          - rust: nightly
+            os: windows-latest
             experimental: true
 
     steps:
