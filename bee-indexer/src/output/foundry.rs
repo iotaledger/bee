@@ -1,10 +1,9 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::address_dto_option_packed;
 use crate::{
-    query::OutputTable,
-    types::{AddressDb, AmountDb, FoundryIdDb, UnixTimestampDb, FilterOptions, OutputIdDb},
+    output::{OutputTable,address_dto_option_packed},
+    types::{AddressDb, AmountDb, FoundryIdDb, OutputIdDb, UnixTimestampDb},
     Error, FoundryFilterOptionsDto,
 };
 
@@ -32,6 +31,9 @@ impl ActiveModelBehavior for ActiveModel {}
 
 impl OutputTable for Entity {
     type FilterOptions = FoundryFilterOptions;
+    type FilterOptionsDto = FoundryFilterOptionsDto;
+
+    const ENTITY: Self = Self;
 
     fn created_at_col() -> Column {
         Column::CreatedAt
@@ -53,16 +55,12 @@ impl Into<sea_query::Cond> for FoundryFilterOptions {
     }
 }
 
-impl TryInto<FilterOptions<Entity>> for FoundryFilterOptionsDto {
+impl TryInto<FoundryFilterOptions> for FoundryFilterOptionsDto {
     type Error = Error;
 
-    fn try_into(self) -> Result<FilterOptions<Entity>, Self::Error> {
-        Ok(FilterOptions {
-            inner: FoundryFilterOptions {
-                unlockable_by_address: address_dto_option_packed(self.unlockable_by_address, "unlockable by address")?,
-            },
-            pagination: self.pagination.try_into()?,
-            timestamp: self.timestamp.try_into()?,
+    fn try_into(self) -> Result<FoundryFilterOptions, Self::Error> {
+        Ok(FoundryFilterOptions {
+            unlockable_by_address: address_dto_option_packed(self.unlockable_by_address, "unlockable by address")?,
         })
     }
 }

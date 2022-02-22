@@ -12,4 +12,5 @@ pub enum Error {
     InvalidCursorLength(usize),
     OffsetParseError(std::array::TryFromSliceError),
     DatabaseError(DbErr),
+    DatabaseConnectionError(sqlx::Error),
 }

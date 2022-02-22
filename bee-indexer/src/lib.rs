@@ -3,7 +3,6 @@
 
 pub(crate) mod error;
 pub(crate) mod output;
-pub(crate) mod query;
 pub(crate) mod status;
 pub(crate) mod types;
 
@@ -11,27 +10,27 @@ pub(crate) mod types;
 
 pub use error::Error;
 
-pub(crate) use query::QueryBuilder;
-use query::{IndexedOutputTable, OutputTable};
+use output::{IndexedOutputTable, OutputTable};
 
-pub use types::dtos::{AddressDto, AliasFilterOptionsDto, FoundryFilterOptionsDto};
+use sqlx::SqlitePool;
+pub use types::dtos::{AddressDto, AliasFilterOptionsDto, FoundryFilterOptionsDto, FilterOptionsDto};
 
 use output::{alias, basic, foundry, nft};
 
 use bee_ledger::workers::event::{OutputConsumed, OutputCreated};
-use bee_message::{milestone::MilestoneIndex, output::Output};
+use bee_message::{address::Address, milestone::MilestoneIndex, output::Output};
 
 use packable::PackableExt;
 
 use sea_orm::{
-    prelude::*, ActiveModelTrait, ConnectionTrait, Database, DatabaseConnection, EntityTrait, FromQueryResult, NotSet,
-    Schema, Set,
+    prelude::*, ActiveModelTrait, ConnectionTrait, DatabaseConnection, EntityTrait, FromQueryResult, NotSet, Schema,
+    Set, SqlxSqliteConnector,
 };
 
 use types::{
     dtos::{BasicFilterOptionsDto, NftFilterOptionsDto},
     responses::OutputsResponse,
-    AddressDb, FilterOptions, MilestoneIndexDb,
+    AddressDb, MilestoneIndexDb, Pagination,
 };
 
 pub struct Indexer {
@@ -44,7 +43,12 @@ impl Indexer {
     }
 
     pub async fn new(location: &str) -> Result<Self, Error> {
-        let db = Database::connect(location).await.unwrap();
+        // `sea_orm` won't automatically create a database if non exists yet.
+        // To ship around this we use `sqlx` directly here.
+        let pool = SqlitePool::connect(location)
+            .await
+            .map_err(Error::DatabaseConnectionError)?;
+        let db = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool);
 
         let builder = db.get_database_backend();
         let schema = Schema::new(builder);
@@ -122,29 +126,6 @@ impl Indexer {
         Ok(())
     }
 
-    pub async fn process_created_outputs(&self, created: Vec<OutputCreated>) -> Result<(), Error> {
-        let mut alias_models = vec![];
-        for c in created {
-        match c.output.inner() {
-            Output::Alias(output) => {
-                let alias = alias::ActiveModel {
-                    alias_id: Set(output.alias_id().pack_to_vec()),
-                    output_id: Set(c.output_id.pack_to_vec()),
-                    created_at: Set(c.output.milestone_timestamp()),
-                    amount: Set(output.amount() as i64),
-                    state_controller: Set(output.state_controller().pack_to_vec()),
-                    governor: Set(output.governor().pack_to_vec()),
-                    issuer: NotSet, // TODO: Fix
-                    sender: NotSet, // TODO: Fix
-                };
-                alias_models.push(alias);
-            }
-            _ => todo!(),
-        }}
-        alias::Entity::insert_many(alias_models).exec(&self.db).await.map_err(Error::DatabaseError)?;
-        Ok(())
-    }
-
     pub async fn process_spent_output(&self, consumed: &OutputConsumed) -> Result<(), sea_orm::error::DbErr> {
         match &consumed.output {
             Output::Alias(output) => {
@@ -162,7 +143,9 @@ impl Indexer {
     }
 
     pub(crate) async fn get_id<T: IndexedOutputTable>(&self, table: T, id: String) -> Result<Option<String>, Error> {
-        let id_bytes = Address::try_from_bech32(&id).map_err(|_| Error::InvalidId)?;
+        let id_bytes = Address::try_from_bech32(&id)
+            .map_err(|_| Error::InvalidId)?
+            .pack_to_vec();
 
         let mut query = sea_query::Query::select();
         let statement = query
@@ -184,15 +167,21 @@ impl Indexer {
         Ok(query_result.map(|r| hex::encode(r.output_id)))
     }
 
-    pub(crate) async fn outputs_with_filters<T: OutputTable>(
+    pub(crate) async fn outputs_with_filters<T>(
         &self,
         table: T,
-        options_dto: impl TryInto<FilterOptions<T>, Error = Error>,
-    ) -> Result<OutputsResponse, Error> {
-        let options: FilterOptions<T> = options_dto.try_into()?;
-        let page_size = options.pagination.page_size;
+        options_dto: FilterOptionsDto<T::FilterOptionsDto>,
+    ) -> Result<OutputsResponse, Error>
+    where
+        T: OutputTable,
+    {
+        let output_options: T::FilterOptions = options_dto.inner.try_into()?;
+        let timestamp = options_dto.timestamp.try_into()?;
+        let pagination: Pagination = options_dto.pagination.try_into()?;
+        let page_size = pagination.page_size;
 
-        let statement = QueryBuilder::new(table, options).build(self.db.get_database_backend());
+        //let statement = QueryBuilder::new(table, options).build(self.db.get_database_backend());
+        let statement = T::filter_statement(self.db.get_database_backend(), pagination, timestamp, output_options);
 
         let query_results = JoinedResult::find_by_statement(statement)
             .all(&self.db)
@@ -224,35 +213,35 @@ impl Indexer {
     // TODO: Make generic (or use macro)
     pub async fn alias_outputs_with_filters(
         &self,
-        options_dto: AliasFilterOptionsDto,
+        options_dto: FilterOptionsDto<AliasFilterOptionsDto>,
     ) -> Result<OutputsResponse, Error> {
         self.outputs_with_filters(alias::Entity, options_dto).await
     }
 
-    // TODO: Make generic (or use macro)
-    pub async fn basic_outputs_with_filters(
-        &self,
-        options_dto: BasicFilterOptionsDto,
-    ) -> Result<OutputsResponse, Error> {
-        self.outputs_with_filters(basic::Entity, options_dto).await
-    }
+    // // TODO: Make generic (or use macro)
+    // pub async fn basic_outputs_with_filters(
+    //     &self,
+    //     options_dto: BasicFilterOptionsDto,
+    // ) -> Result<OutputsResponse, Error> {
+    //     self.outputs_with_filters(basic::Entity, options_dto).await
+    // }
 
-    // TODO: Make generic (or use macro)
-    pub async fn foundry_outputs_with_filters(
-        &self,
-        options_dto: FoundryFilterOptionsDto,
-    ) -> Result<OutputsResponse, Error> {
-        self.outputs_with_filters(foundry::Entity, options_dto).await
-    }
+    // // TODO: Make generic (or use macro)
+    // pub async fn foundry_outputs_with_filters(
+    //     &self,
+    //     options_dto: FoundryFilterOptionsDto,
+    // ) -> Result<OutputsResponse, Error> {
+    //     self.outputs_with_filters(foundry::Entity, options_dto).await
+    // }
 
-    pub async fn get_output_id_for_alias_id(&self, id: String) -> Result<Option<String>, Error> {
-        self.get_id(alias::Entity, id).await
-    }
+    // pub async fn get_output_id_for_alias_id(&self, id: String) -> Result<Option<String>, Error> {
+    //     self.get_id(alias::Entity, id).await
+    // }
 
-    // TODO: Make generic (or use macro)
-    pub async fn nft_outputs_with_filters(&self, options_dto: NftFilterOptionsDto) -> Result<OutputsResponse, Error> {
-        self.outputs_with_filters(nft::Entity, options_dto).await
-    }
+    // // TODO: Make generic (or use macro)
+    // pub async fn nft_outputs_with_filters(&self, options_dto: NftFilterOptionsDto) -> Result<OutputsResponse, Error> {
+    //     self.outputs_with_filters(nft::Entity, options_dto).await
+    // }
 }
 
 #[derive(Debug, FromQueryResult)]

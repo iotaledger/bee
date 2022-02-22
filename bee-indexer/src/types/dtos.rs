@@ -17,16 +17,23 @@ pub struct TimestampOptionsDto {
 }
 
 #[derive(Debug, Default, Deserialize)]
+pub struct FilterOptionsDto<T> {
+    #[serde(flatten)]
+    pub inner: T,
+    #[serde(flatten)]
+    pub timestamp: TimestampOptionsDto,
+    #[serde(flatten)]
+    pub pagination: PaginationDto,
+}
+
+#[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AliasFilterOptionsDto {
     pub state_controller: Option<String>,
     pub governor: Option<String>,
     pub issuer: Option<String>,
     pub sender: Option<String>,
-    #[serde(flatten)]
-    pub timestamp: TimestampOptionsDto,
-    #[serde(flatten)]
-    pub pagination: PaginationDto,
+    
 }
 
 #[derive(Debug, Default, Deserialize)]

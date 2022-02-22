@@ -1,11 +1,9 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::address_dto_option_packed;
 use crate::{
-    query::{OutputTable, IndexedOutputTable},
-    types::FilterOptions,
-    types::{AddressDb, AliasIdDb, AmountDb, UnixTimestampDb, OutputIdDb},
+    output::{address_dto_option_packed, IndexedOutputTable, OutputTable},
+    types::{AddressDb, AliasIdDb, AmountDb, OutputIdDb, UnixTimestampDb},
     AliasFilterOptionsDto, Error,
 };
 
@@ -37,6 +35,9 @@ impl ActiveModelBehavior for ActiveModel {}
 
 impl OutputTable for Entity {
     type FilterOptions = AliasFilterOptions;
+    type FilterOptionsDto = AliasFilterOptionsDto;
+
+    const ENTITY: Self = Self;
 
     fn created_at_col() -> Column {
         Column::CreatedAt
@@ -71,19 +72,15 @@ impl Into<sea_query::Cond> for AliasFilterOptions {
     }
 }
 
-impl TryInto<FilterOptions<Entity>> for AliasFilterOptionsDto {
+impl TryInto<AliasFilterOptions> for AliasFilterOptionsDto {
     type Error = Error;
 
-    fn try_into(self) -> Result<FilterOptions<Entity>, Self::Error> {
-        Ok(FilterOptions {
-            inner: AliasFilterOptions {
-                state_controller: address_dto_option_packed(self.state_controller, "state controller")?,
-                governor: address_dto_option_packed(self.governor, "governor")?,
-                issuer: address_dto_option_packed(self.issuer, "issuer")?,
-                sender: address_dto_option_packed(self.sender, "sender")?,
-            },
-            pagination: self.pagination.try_into()?,
-            timestamp: self.timestamp.try_into()?,
+    fn try_into(self) -> Result<AliasFilterOptions, Self::Error> {
+        Ok(AliasFilterOptions {
+            state_controller: address_dto_option_packed(self.state_controller, "state controller")?,
+            governor: address_dto_option_packed(self.governor, "governor")?,
+            issuer: address_dto_option_packed(self.issuer, "issuer")?,
+            sender: address_dto_option_packed(self.sender, "sender")?,
         })
     }
 }

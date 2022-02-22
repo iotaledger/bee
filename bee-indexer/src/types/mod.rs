@@ -5,17 +5,15 @@ pub(crate) mod dtos;
 pub(crate) mod responses;
 
 use crate::{
-    query::{OutputTable},
-    
     types::dtos::{PaginationDto, TimestampOptionsDto},
     Error,
 };
 
 use bee_message::{milestone::MilestoneIndex, output::OutputId};
 
-use sea_orm::{ColumnTrait};
+use sea_orm::ColumnTrait;
 
-use sea_query::{Cond};
+use sea_query::Cond;
 
 use std::{mem::size_of, str::FromStr};
 
@@ -127,21 +125,6 @@ impl TryInto<TimestampFilterOptions> for TimestampOptionsDto {
             created_after: self.created_after,
             created_before: self.created_before,
         })
-    }
-}
-
-pub(crate) struct FilterOptions<T: OutputTable> {
-    pub inner: T::FilterOptions,
-    pub pagination: Pagination,
-    pub timestamp: TimestampFilterOptions,
-}
-
-impl<T: OutputTable> Into<sea_query::Cond> for FilterOptions<T> {
-    fn into(self) -> sea_query::Cond {
-        Cond::all()
-        .add_option(self.timestamp.created_after.map(|timestamp| T::created_at_col().gt(timestamp)))
-        .add_option(self.timestamp.created_before.map(|timestamp| T::created_at_col().lt(timestamp)))
-        .add(self.inner.into())
     }
 }
 

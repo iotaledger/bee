@@ -1,11 +1,10 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::address_dto_option_packed;
 use crate::{
-    query::OutputTable,
+    output::{address_dto_option_packed, OutputTable},
     types::{
-        dtos::BasicFilterOptionsDto, AddressDb, AmountDb, FilterOptions, MilestoneIndexDb, OutputIdDb, UnixTimestampDb,
+        dtos::BasicFilterOptionsDto, AddressDb, AmountDb, MilestoneIndexDb, OutputIdDb, UnixTimestampDb,
     },
     Error,
 };
@@ -41,6 +40,9 @@ impl ActiveModelBehavior for ActiveModel {}
 
 impl OutputTable for Entity {
     type FilterOptions = BasicFilterOptions;
+    type FilterOptionsDto = BasicFilterOptionsDto;
+
+    const ENTITY: Self = Self;
 
     fn created_at_col() -> Column {
         Column::CreatedAt
@@ -60,14 +62,10 @@ impl Into<sea_query::Cond> for BasicFilterOptions {
     }
 }
 
-impl TryInto<FilterOptions<Entity>> for BasicFilterOptionsDto {
+impl TryInto<BasicFilterOptions> for BasicFilterOptionsDto {
     type Error = Error;
 
-    fn try_into(self) -> Result<FilterOptions<Entity>, Self::Error> {
-        Ok(FilterOptions {
-            inner: BasicFilterOptions {},
-            pagination: self.pagination.try_into()?,
-            timestamp: self.timestamp.try_into()?,
-        })
+    fn try_into(self) -> Result<BasicFilterOptions, Self::Error> {
+        Ok(BasicFilterOptions {})
     }
 }

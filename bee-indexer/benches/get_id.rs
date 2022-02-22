@@ -1,7 +1,7 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_indexer::{AliasFilterOptionsDto, Indexer};
+use bee_indexer::{FilterOptionsDto, AliasFilterOptionsDto, Indexer};
 use bee_ledger::{types::CreatedOutput, workers::event::OutputCreated};
 use bee_message::output::Output;
 use bee_test::rand::{
@@ -61,8 +61,11 @@ fn indexation_benchmark(c: &mut Criterion) {
                 b.to_async(&rt).iter(|| async {
                     assert_eq!(
                         indexer
-                            .alias_outputs_with_filters(AliasFilterOptionsDto {
-                                state_controller: black_box(Some(state_controller_enc.clone())),
+                            .alias_outputs_with_filters(FilterOptionsDto {
+                                inner: AliasFilterOptionsDto {
+                                    state_controller: black_box(Some(state_controller_enc.clone())),
+                                    ..Default::default()
+                                },
                                 ..Default::default()
                             })
                             .await

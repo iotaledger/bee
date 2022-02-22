@@ -1,11 +1,11 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::address_dto_option_packed;
 use crate::{
-    query::OutputTable,
+    output::{address_dto_option_packed, OutputTable},
     types::{
-        dtos::{BasicFilterOptionsDto, NftFilterOptionsDto}, AddressDb, AmountDb, FilterOptions, MilestoneIndexDb, OutputIdDb, UnixTimestampDb, NftIdDb,
+        dtos::{BasicFilterOptionsDto, NftFilterOptionsDto},
+        AddressDb, AmountDb, MilestoneIndexDb, NftIdDb, OutputIdDb, UnixTimestampDb,
     },
     Error,
 };
@@ -44,6 +44,9 @@ impl ActiveModelBehavior for ActiveModel {}
 
 impl OutputTable for Entity {
     type FilterOptions = NftFilterOptions;
+    type FilterOptionsDto = NftFilterOptionsDto;
+
+    const ENTITY: Self = Self;
 
     fn created_at_col() -> Column {
         Column::CreatedAt
@@ -63,14 +66,10 @@ impl Into<sea_query::Cond> for NftFilterOptions {
     }
 }
 
-impl TryInto<FilterOptions<Entity>> for NftFilterOptionsDto {
+impl TryInto<NftFilterOptions> for NftFilterOptionsDto {
     type Error = Error;
 
-    fn try_into(self) -> Result<FilterOptions<Entity>, Self::Error> {
-        Ok(FilterOptions {
-            inner: NftFilterOptions {},
-            pagination: self.pagination.try_into()?,
-            timestamp: self.timestamp.try_into()?,
-        })
+    fn try_into(self) -> Result<NftFilterOptions, Self::Error> {
+        Ok(NftFilterOptions {})
     }
 }
