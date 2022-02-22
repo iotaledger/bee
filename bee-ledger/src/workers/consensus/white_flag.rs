@@ -66,7 +66,7 @@ fn check_input_unlock_conditions(
             UnlockCondition::Address(_) => {
                 todo!()
             }
-            UnlockCondition::DustDepositReturn(_) => {
+            UnlockCondition::StorageDepositReturn(_) => {
                 todo!()
             }
             UnlockCondition::Timelock(timelock) => {
