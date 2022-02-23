@@ -141,14 +141,8 @@ jobs:
         experimental: [false]
         include:
           - rust: beta
-            crates: [
-              "bee-ternary",
-            ]
             experimental: true
           - rust: nightly
-            crates: [
-              "bee-ternary",
-            ]
             experimental: true
 
     steps:
