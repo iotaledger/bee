@@ -3,14 +3,14 @@
 
 use crate::output::FoundryId;
 
-impl_id!(TokenTag, 12, "TODO.");
+use alloc::vec::Vec;
+
+impl_id!(pub TokenTag, 12, "TODO.");
 
 #[cfg(feature = "serde1")]
 string_serde_impl!(TokenTag);
 
-use alloc::vec::Vec;
-
-impl_id!(TokenId, 38, "TODO.");
+impl_id!(pub TokenId, 38, "TODO.");
 
 #[cfg(feature = "serde1")]
 string_serde_impl!(TokenId);

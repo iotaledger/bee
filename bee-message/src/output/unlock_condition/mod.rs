@@ -90,7 +90,7 @@ impl UnlockCondition {
 
 create_bitflags!(
     /// A bitflags-based representation of the set of active [`UnlockCondition`]s.
-    UnlockConditionFlags,
+    pub UnlockConditionFlags,
     u16,
     [
         (ADDRESS, AddressUnlockCondition),

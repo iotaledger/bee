@@ -8,7 +8,7 @@ use crate::{
 
 use alloc::vec::Vec;
 
-impl_id!(FoundryId, 26, "Defines the unique identifier of a foundry.");
+impl_id!(pub FoundryId, 26, "Defines the unique identifier of a foundry.");
 
 #[cfg(feature = "serde1")]
 string_serde_impl!(FoundryId);

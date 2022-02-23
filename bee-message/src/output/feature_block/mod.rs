@@ -70,7 +70,7 @@ impl FeatureBlock {
 
 create_bitflags!(
     /// A bitflags-based representation of the set of active [`FeatureBlock`]s.
-    FeatureBlockFlags,
+    pub FeatureBlockFlags,
     u16,
     [
         (SENDER, SenderFeatureBlock),

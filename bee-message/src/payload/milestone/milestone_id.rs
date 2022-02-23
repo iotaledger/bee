@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 impl_id!(
-    MilestoneId,
+    pub MilestoneId,
     32,
     "A milestone identifier, the BLAKE2b-256 hash of the milestone bytes. See <https://www.blake2.net/> for more information."
 );
