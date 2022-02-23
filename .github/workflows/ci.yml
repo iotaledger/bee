@@ -36,19 +36,14 @@ jobs:
           - rust: beta
             os: ubuntu-latest
             experimental: true
+            # The following ensures that workflows relying on `nightly` don't break.
           - rust: nightly
             os: ubuntu-latest
             experimental: true
           - rust: beta
             os: macos-latest
             experimental: true
-          - rust: nightly
-            os: macos-latest
-            experimental: true
           - rust: beta
-            os: windows-latest
-            experimental: true
-          - rust: nightly
             os: windows-latest
             experimental: true
 
@@ -211,13 +206,22 @@ jobs:
   clippy:
     needs: format
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      matrix:
+        include:
+          - rust: stable
+            experimental: false
+          - rust: beta
+            experimental: true
+
     steps:
       - uses: actions/checkout@v2
 
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: beta
+          toolchain: ${{ matrix.rust }}
           override: true
           components: clippy
 
