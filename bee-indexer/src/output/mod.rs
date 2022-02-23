@@ -93,4 +93,13 @@ where
 
 pub(crate) trait IndexedOutputTable: OutputTable {
     fn id_col() -> <Self as orm::EntityTrait>::Column;
+
+    fn get_id_statement(backend: DatabaseBackend, id: Vec<u8>) -> Statement {
+        let mut query = sea_query::Query::select();
+        let statement = query
+            .from(Self::ENTITY)
+            .column(Self::output_id_col())
+            .cond_where(Self::id_col().eq(id));
+        backend.build(statement)
+    }
 }

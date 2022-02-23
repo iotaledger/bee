@@ -152,34 +152,23 @@ impl Indexer {
         Ok(())
     }
 
-    pub(crate) async fn get_id<T: IndexedOutputTable>(&self, table: T, id: String) -> Result<Option<String>, Error> {
-        let id_bytes = Address::try_from_bech32(&id)
-            .map_err(|_| Error::InvalidId)?
-            .pack_to_vec();
+    pub(crate) async fn get_id<T>(&self, id: String) -> Result<Option<String>, Error> where T: IndexedOutputTable {
+        let id_bytes = hex::decode(&id)
+            .map_err(|_| Error::InvalidId)?;
 
-        let mut query = sea_query::Query::select();
-        let statement = query
-            .from(table)
-            .column(T::output_id_col())
-            .cond_where(T::id_col().eq(id_bytes));
-        let stmt = self.db.get_database_backend().build(statement);
-        // TODO: Sanitize (check for sql injections).
-        let query_result = IdResult::find_by_statement(stmt)
+        let statement = T::get_id_statement(self.db.get_database_backend(), id_bytes);
+        
+        // TODO: Dow we need sanitize (check for sql injections)?
+        let query_result = IdResult::find_by_statement(statement)
             .one(&self.db)
             .await
             .map_err(Error::DatabaseError)?;
-        // .select_only()
-        // .column(T::id_col())
-        // .filter(T::id_col().eq(id_bytes))
-        // .one(&self.db).await.map_err(Error::DatabaseError)?;
 
-        // query_result.map(|r| r.output_id)
         Ok(query_result.map(|r| hex::encode(r.output_id)))
     }
 
     pub(crate) async fn outputs_with_filters<T>(
         &self,
-        table: T,
         options_dto: FilterOptionsDto<T::FilterOptionsDto>,
     ) -> Result<OutputsResponse, Error>
     where
@@ -190,7 +179,6 @@ impl Indexer {
         let pagination: Pagination = options_dto.pagination.try_into()?;
         let page_size = pagination.page_size;
 
-        //let statement = QueryBuilder::new(table, options).build(self.db.get_database_backend());
         let statement = T::filter_statement(self.db.get_database_backend(), pagination, timestamp, output_options);
 
         let query_results = JoinedResult::find_by_statement(statement)
@@ -225,7 +213,7 @@ impl Indexer {
         &self,
         options_dto: FilterOptionsDto<AliasFilterOptionsDto>,
     ) -> Result<OutputsResponse, Error> {
-        self.outputs_with_filters(alias::Entity, options_dto).await
+        self.outputs_with_filters::<alias::Entity>(options_dto).await
     }
 
     // // TODO: Make generic (or use macro)
@@ -244,9 +232,9 @@ impl Indexer {
     //     self.outputs_with_filters(foundry::Entity, options_dto).await
     // }
 
-    // pub async fn get_output_id_for_alias_id(&self, id: String) -> Result<Option<String>, Error> {
-    //     self.get_id(alias::Entity, id).await
-    // }
+    pub async fn get_output_id_for_alias_id(&self, id: String) -> Result<Option<String>, Error> {
+        self.get_id::<alias::Entity>(id).await
+    }
 
     // // TODO: Make generic (or use macro)
     // pub async fn nft_outputs_with_filters(&self, options_dto: NftFilterOptionsDto) -> Result<OutputsResponse, Error> {
