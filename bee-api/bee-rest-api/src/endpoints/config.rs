@@ -68,7 +68,7 @@ pub(crate) const DEFAULT_FEATURE_PROOF_OF_WORK: bool = true;
 pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: u64 = 2;
 
 /// REST API configuration builder.
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, PartialEq)]
 #[must_use]
 pub struct RestApiConfigBuilder {
     #[serde(alias = "bindAddress")]
@@ -79,7 +79,7 @@ pub struct RestApiConfigBuilder {
     allowed_ips: Option<Vec<IpAddr>>,
     #[serde(alias = "featureProofOfWork")]
     feature_proof_of_work: Option<bool>,
-    #[serde(alias = "whiteFlagSolidifictionTimeout")]
+    #[serde(alias = "whiteFlagSolidificationTimeout")]
     white_flag_solidification_timeout: Option<u64>,
 }
 
