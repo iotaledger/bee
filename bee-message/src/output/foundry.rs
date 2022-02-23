@@ -35,6 +35,17 @@ pub enum TokenScheme {
     Simple = 0,
 }
 
+impl TryFrom<u8> for TokenScheme {
+    type Error = Error;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(TokenScheme::Simple),
+            k => Err(Error::InvalidTokenSchemeKind(k)),
+        }
+    }
+}
+
 /// Token tag length.
 pub const TOKEN_TAG_LENGTH: usize = 12;
 
