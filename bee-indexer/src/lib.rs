@@ -53,9 +53,19 @@ impl Indexer {
         let builder = db.get_database_backend();
         let schema = Schema::new(builder);
 
+        // `alias_output` table
         db.execute(builder.build(&schema.create_table_from_entity(alias::Entity)))
             .await
             .map_err(Error::DatabaseError)?;
+        let statement = sea_query::Index::create().name("alias_state_controller").table(alias::Entity).col(alias::Column::StateController).to_owned();
+        db.execute(builder.build(&statement)).await.map_err(Error::DatabaseError)?;
+        let statement = sea_query::Index::create().name("alias_governor").table(alias::Entity).col(alias::Column::Governor).to_owned();
+        db.execute(builder.build(&statement)).await.map_err(Error::DatabaseError)?;
+        let statement = sea_query::Index::create().name("alias_issuer").table(alias::Entity).col(alias::Column::Issuer).to_owned();
+        db.execute(builder.build(&statement)).await.map_err(Error::DatabaseError)?;
+        let statement = sea_query::Index::create().name("alias_sender").table(alias::Entity).col(alias::Column::Sender).to_owned();
+        db.execute(builder.build(&statement)).await.map_err(Error::DatabaseError)?;
+        
 
         db.execute(builder.build(&schema.create_table_from_entity(basic::Entity)))
             .await
