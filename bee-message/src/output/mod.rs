@@ -4,6 +4,7 @@
 mod alias;
 mod alias_id;
 mod basic;
+mod byte_cost;
 mod chain_id;
 #[cfg(feature = "cpt2")]
 mod cpt2;
@@ -25,6 +26,7 @@ pub(crate) use alias::StateMetadataLength;
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
 pub use basic::{BasicOutput, BasicOutputBuilder};
+pub use byte_cost::{minimum_storage_deposit, ByteCost, ByteCostConfig, ByteCostConfigBuilder};
 pub use chain_id::ChainId;
 #[cfg(feature = "cpt2")]
 pub(crate) use cpt2::signature_locked_dust_allowance::DustAllowanceAmount;
@@ -52,7 +54,7 @@ pub use unlock_condition::{UnlockCondition, UnlockConditions};
 use crate::{constant::IOTA_SUPPLY, Error};
 
 use derive_more::From;
-use packable::bounded::BoundedU64;
+use packable::{bounded::BoundedU64, PackableExt};
 
 use core::ops::RangeInclusive;
 
@@ -196,5 +198,11 @@ impl Output {
             Self::Foundry(output) => Some(output.immutable_feature_blocks()),
             Self::Nft(output) => Some(output.immutable_feature_blocks()),
         }
+    }
+}
+
+impl ByteCost for Output {
+    fn weighted_bytes(&self, config: &ByteCostConfig) -> u64 {
+        self.packed_len() as u64 * config.v_byte_factor_data
     }
 }
