@@ -16,8 +16,7 @@ use bee_message::{
             StorageDepositReturnUnlockCondition, TimelockUnlockCondition, UnlockCondition,
         },
         AliasId, AliasOutput, AliasOutputBuilder, BasicOutput, BasicOutputBuilder, FoundryOutput, FoundryOutputBuilder,
-        NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme, TreasuryOutput,
-        TOKEN_TAG_LENGTH,
+        NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme, TokenTag, TreasuryOutput,
     },
     parent::Parents,
     payload::{
@@ -1519,7 +1518,7 @@ pub struct FoundryOutputDto {
     pub serial_number: u32,
     // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
     #[serde(rename = "tokenTag")]
-    pub token_tag: String,
+    pub token_tag: TokenTagDto,
     // Circulating supply of tokens controlled by this foundry.
     #[serde(rename = "circulatingSupply")]
     pub circulating_supply: U256Dto,
@@ -1537,6 +1536,23 @@ pub struct FoundryOutputDto {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TokenTagDto(pub String);
+
+impl From<&TokenTag> for TokenTagDto {
+    fn from(value: &TokenTag) -> Self {
+        Self(value.to_string())
+    }
+}
+
+impl TryFrom<&TokenTagDto> for TokenTag {
+    type Error = Error;
+
+    fn try_from(value: &TokenTagDto) -> Result<Self, Self::Error> {
+        value.0.parse::<TokenTag>().map_err(|_| Error::InvalidField("TokenTag"))
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TokenSchemeDto {
     #[serde(rename = "type")]
     pub kind: u8,
@@ -1549,7 +1565,7 @@ impl From<&FoundryOutput> for FoundryOutputDto {
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             serial_number: value.serial_number(),
-            token_tag: hex::encode(value.token_tag()),
+            token_tag: TokenTagDto(value.token_tag().to_string()),
             circulating_supply: U256Dto(value.circulating_supply().to_string()),
             maximum_supply: U256Dto(value.maximum_supply().to_string()),
             token_scheme: match value.token_scheme() {
@@ -1571,12 +1587,7 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
         let mut builder = FoundryOutputBuilder::new(
             value.amount,
             value.serial_number,
-            {
-                let mut decoded_token_tag = [0u8; TOKEN_TAG_LENGTH];
-                hex::decode_to_slice(&value.token_tag, &mut decoded_token_tag as &mut [u8])
-                    .map_err(|_| Error::InvalidField("token_tag"))?;
-                decoded_token_tag
-            },
+            (&value.token_tag).try_into()?,
             U256::from_dec_str(&value.circulating_supply.0).map_err(|_| Error::InvalidField("circulating_supply"))?,
             U256::from_dec_str(&value.maximum_supply.0).map_err(|_| Error::InvalidField("maximum_supply"))?,
             match value.token_scheme.kind {

@@ -9,7 +9,7 @@ use crate::{
             verify_allowed_unlock_conditions, ImmutableAliasAddressUnlockCondition, UnlockCondition,
             UnlockConditionFlags, UnlockConditions,
         },
-        FoundryId, NativeToken, NativeTokens, OutputAmount,
+        FoundryId, NativeToken, NativeTokens, OutputAmount, TokenTag,
     },
     Error,
 };
@@ -46,16 +46,13 @@ impl TryFrom<u8> for TokenScheme {
     }
 }
 
-/// Token tag length.
-pub const TOKEN_TAG_LENGTH: usize = 12;
-
 ///
 #[must_use]
 pub struct FoundryOutputBuilder {
     amount: OutputAmount,
     native_tokens: Vec<NativeToken>,
     serial_number: u32,
-    token_tag: [u8; TOKEN_TAG_LENGTH],
+    token_tag: TokenTag,
     circulating_supply: U256,
     maximum_supply: U256,
     token_scheme: TokenScheme,
@@ -69,7 +66,7 @@ impl FoundryOutputBuilder {
     pub fn new(
         amount: u64,
         serial_number: u32,
-        token_tag: [u8; TOKEN_TAG_LENGTH],
+        token_tag: TokenTag,
         circulating_supply: U256,
         maximum_supply: U256,
         token_scheme: TokenScheme,
@@ -192,7 +189,7 @@ pub struct FoundryOutput {
     // The serial number of the foundry with respect to the controlling alias.
     serial_number: u32,
     // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
-    token_tag: [u8; TOKEN_TAG_LENGTH],
+    token_tag: TokenTag,
     // Circulating supply of tokens controlled by this foundry.
     circulating_supply: U256,
     // Maximum supply of tokens controlled by this foundry.
@@ -219,7 +216,7 @@ impl FoundryOutput {
     pub fn new(
         amount: u64,
         serial_number: u32,
-        token_tag: [u8; TOKEN_TAG_LENGTH],
+        token_tag: TokenTag,
         circulating_supply: U256,
         maximum_supply: U256,
         token_scheme: TokenScheme,
@@ -240,7 +237,7 @@ impl FoundryOutput {
     pub fn build(
         amount: u64,
         serial_number: u32,
-        token_tag: [u8; TOKEN_TAG_LENGTH],
+        token_tag: TokenTag,
         circulating_supply: U256,
         maximum_supply: U256,
         token_scheme: TokenScheme,
@@ -275,7 +272,7 @@ impl FoundryOutput {
 
     ///
     #[inline(always)]
-    pub fn token_tag(&self) -> &[u8; TOKEN_TAG_LENGTH] {
+    pub fn token_tag(&self) -> &TokenTag {
         &self.token_tag
     }
 
@@ -368,7 +365,7 @@ impl Packable for FoundryOutput {
         let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let serial_number = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let token_tag = <[u8; TOKEN_TAG_LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let token_tag = TokenTag::unpack::<_, VERIFY>(unpacker).infallible()?;
         let circulating_supply = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
         let maximum_supply = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
 

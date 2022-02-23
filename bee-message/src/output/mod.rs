@@ -37,7 +37,7 @@ pub use cpt2::{
 };
 pub use feature_block::{FeatureBlock, FeatureBlocks};
 pub(crate) use feature_block::{MetadataFeatureBlockLength, TagFeatureBlockLength};
-pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme, TOKEN_TAG_LENGTH};
+pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme};
 pub use foundry_id::FoundryId;
 pub(crate) use native_token::NativeTokenCount;
 pub use native_token::{NativeToken, NativeTokens};
@@ -45,7 +45,7 @@ pub use nft::{NftOutput, NftOutputBuilder};
 pub use nft_id::NftId;
 pub use output_id::OutputId;
 pub(crate) use output_id::OutputIndex;
-pub use token_id::TokenId;
+pub use token_id::{TokenId, TokenTag};
 pub use treasury::TreasuryOutput;
 pub(crate) use treasury::TreasuryOutputAmount;
 pub(crate) use unlock_condition::StorageDepositAmount;
