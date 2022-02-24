@@ -107,7 +107,7 @@ impl<const N: usize, const INBOUND: bool> Neighborhood<N, INBOUND> {
 
     /// Checks whether the candidate is a preferred neighbor.
     pub(crate) fn is_preferred(&self, candidate: &Neighbor) -> bool {
-        self.write().is_preferred(candidate)
+        self.write().check_candidate(candidate)
     }
 
     /// Picks the first candidate that is closer than the currently furthest neighbor.
@@ -199,8 +199,10 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
     }
 
-    fn is_preferred(&mut self, candidate: &Neighbor) -> bool {
-        if let Some(furthest) = self.find_furthest_if_full() {
+    /// Note: If the neighborhood is not full, than any `candidate` is just good enough, and will be preferred
+    /// over an open slot in the neighborhood.
+    fn check_candidate(&mut self, candidate: &Neighbor) -> bool {
+        if let Some(furthest) = self.sort_and_get_furthest_neighbor() {
             candidate < furthest
         } else {
             true
@@ -210,7 +212,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
     fn select_from_candidate_list<'a>(&mut self, candidates: &'a [&'a Neighbor]) -> Option<&'a Peer> {
         if candidates.is_empty() {
             None
-        } else if let Some(furthest) = self.find_furthest_if_full() {
+        } else if let Some(furthest) = self.sort_and_get_furthest_neighbor() {
             for candidate in candidates {
                 if *candidate < furthest {
                     return Some(candidate.peer());
@@ -223,7 +225,8 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
     }
 
-    fn find_furthest_if_full(&mut self) -> Option<&Neighbor> {
+    /// Note: The method turns into a no-op if the neighborhood is not full and - in that case - returns `None`.
+    fn sort_and_get_furthest_neighbor(&mut self) -> Option<&Neighbor> {
         if self.neighbors.len() >= N {
             self.neighbors.sort_unstable();
             self.neighbors.last()
@@ -234,7 +237,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
 
     fn remove_furthest_if_full(&mut self) -> Option<Peer> {
         // Note: Both methods require unique access to `self`, so we need to copy the peer id.
-        if let Some(peer_id) = self.find_furthest_if_full().map(|d| *d.peer().peer_id()) {
+        if let Some(peer_id) = self.sort_and_get_furthest_neighbor().map(|d| *d.peer().peer_id()) {
             self.remove_neighbor(&peer_id)
         } else {
             None
