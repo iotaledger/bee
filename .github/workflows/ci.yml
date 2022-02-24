@@ -205,16 +205,16 @@ jobs:
 
   clippy:
     needs: format
-    name: 'Clippy ${{ matrix.experimental }}'
+    name: Clippy (${{ join([matrix.rust, matrix.experimental], ',')}})
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental == '(canary)' }}
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
         include:
           - rust: stable
-            experimental: ''
+            experimental: false
           - rust: beta
-            experimental: '(canary)'
+            experimental: true
 
     steps:
       - uses: actions/checkout@v2
