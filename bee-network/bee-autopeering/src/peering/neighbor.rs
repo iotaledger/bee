@@ -199,7 +199,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
     }
 
-    /// Note: If the neighborhood is not full, than any `candidate` is just good enough, and will be preferred
+    /// Note: if the neighborhood is not full, then any `candidate` is just good enough and will be preferred
     /// over an open slot in the neighborhood.
     fn check_candidate(&mut self, candidate: &Neighbor) -> bool {
         if let Some(furthest) = self.sort_and_get_furthest_neighbor() {
@@ -225,7 +225,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
     }
 
-    /// Note: The method turns into a no-op if the neighborhood is not full and - in that case - returns `None`.
+    /// Note: the method turns into a no-op if the neighborhood is not full and - in that case - simply returns `None`.
     fn sort_and_get_furthest_neighbor(&mut self) -> Option<&Neighbor> {
         if self.neighbors.len() >= N {
             self.neighbors.sort_unstable();
