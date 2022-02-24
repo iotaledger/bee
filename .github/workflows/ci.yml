@@ -205,15 +205,16 @@ jobs:
 
   clippy:
     needs: format
+    name: 'Clippy ${{ matrix.experimental }}'
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
+    continue-on-error: ${{ matrix.experimental == '(canary)' }}
     strategy:
       matrix:
         include:
           - rust: stable
-            experimental: false
+            experimental: ''
           - rust: beta
-            experimental: true
+            experimental: '(canary)'
 
     steps:
       - uses: actions/checkout@v2
