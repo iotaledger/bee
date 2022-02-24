@@ -199,6 +199,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
         }
     }
 
+    #[allow(clippy::wrong_self_convention)]
     fn is_preferred(&mut self, candidate: &Neighbor) -> bool {
         if let Some(furthest) = self.find_furthest_if_full() {
             candidate < furthest
