@@ -205,7 +205,7 @@ jobs:
 
   clippy:
     needs: format
-    name: Clippy ${{ format('({0})',matrix.rust) }}
+    name: Clippy ${{ format('({0}{1})',matrix.rust,matrix.experimental && ',🦜' || '') }}
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.experimental }}
     strategy:
