@@ -3,7 +3,6 @@ name: CI
 on:
   push:
     branches:
-      - dev
       - mainnet
       - mainnet-develop
       - shimmer
@@ -13,7 +12,6 @@ on:
       - '**.md'
   pull_request:
     branches:
-      - dev
       - mainnet
       - mainnet-develop
       - shimmer
@@ -137,8 +135,10 @@ jobs:
         include:
           - rust: beta
             experimental: true
+            crates: "bee-ternary"
           - rust: nightly
             experimental: true
+            crates: "bee-ternary"
 
     steps:
       - uses: actions/checkout@v2
