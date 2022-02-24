@@ -22,7 +22,7 @@ on:
 
 jobs:
   build-and-test:
-    name: Build & Test ${{ format('({0},{1}){2}', matrix.os, matrix.rust, matrix.experimental && ' - 🦜' || '') }}
+    name: Build & Test ${{ format('({0}, {1}){2}', matrix.os, matrix.rust, matrix.experimental && ' - 🦜' || '') }}
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
     strategy:
@@ -122,7 +122,7 @@ jobs:
           args: --workspace --doc --all-features --release
 
   no_std:
-    name: Check [no_std] ${{ format('({0},{1}){2}', matrix.rust, matrix.crates, matrix.experimental && ' - 🦜' || '') }}
+    name: Check [no_std] ${{ format('({0}, {1}){2}', matrix.rust, matrix.crates, matrix.experimental && ' - 🦜' || '') }}
     needs: build-and-test
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.experimental }}
