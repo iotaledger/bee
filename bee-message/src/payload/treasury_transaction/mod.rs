@@ -9,7 +9,9 @@ use crate::{input::Input, output::Output, Error};
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreasuryTransactionPayload {
+    #[packable(verify_with = verify_input)]
     input: Input,
+    #[packable(verify_with = verify_output)]
     output: Output,
 }
 
@@ -19,13 +21,8 @@ impl TreasuryTransactionPayload {
 
     /// Creates a new `TreasuryTransaction`.
     pub fn new(input: Input, output: Output) -> Result<Self, Error> {
-        if !matches!(input, Input::Treasury(_)) {
-            return Err(Error::InvalidInputKind(input.kind()));
-        }
-
-        if !matches!(output, Output::Treasury(_)) {
-            return Err(Error::InvalidOutputKind(output.kind()));
-        }
+        verify_input::<true>(&input)?;
+        verify_output::<true>(&output)?;
 
         Ok(Self { input, output })
     }
@@ -38,5 +35,21 @@ impl TreasuryTransactionPayload {
     /// Returns the output of a `TreasuryTransaction`.
     pub fn output(&self) -> &Output {
         &self.output
+    }
+}
+
+fn verify_input<const VERIFY: bool>(input: &Input) -> Result<(), Error> {
+    if VERIFY && !matches!(input, Input::Treasury(_)) {
+        Err(Error::InvalidInputKind(input.kind()))
+    } else {
+        Ok(())
+    }
+}
+
+fn verify_output<const VERIFY: bool>(output: &Output) -> Result<(), Error> {
+    if VERIFY && !matches!(output, Output::Treasury(_)) {
+        Err(Error::InvalidOutputKind(output.kind()))
+    } else {
+        Ok(())
     }
 }
