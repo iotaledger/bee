@@ -1,5 +1,3 @@
-# cargo-features = [ "strip" ]
-
 [workspace]
 members = [
 	"bee-api/bee-rest-api",
@@ -37,4 +35,4 @@ codegen-units = 1
 inherits = "release"
 lto = true
 panic = "abort"
-# strip = "symbols"
+strip = "symbols"
