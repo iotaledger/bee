@@ -3,7 +3,7 @@ name: Test Docs Wiki Build
 on:
   pull_request:
     branches:
-      - dev
+      - mainnet-develop
 jobs:
   checks:
     runs-on: ubuntu-latest
