@@ -98,7 +98,7 @@ async fn process_request(
         return;
     }
 
-    if peer_manager.is_empty() {
+    if peer_manager.is_empty().await {
         return;
     }
 
@@ -106,10 +106,10 @@ async fn process_request(
         requested_milestones.insert(index);
     }
 
-    process_request_unchecked(index, peer_id, peer_manager, metrics);
+    process_request_unchecked(index, peer_id, peer_manager, metrics).await;
 }
 
-fn process_request_unchecked(
+async fn process_request_unchecked(
     index: MilestoneIndex,
     peer_id: Option<PeerId>,
     peer_manager: &PeerManager,
@@ -119,11 +119,11 @@ fn process_request_unchecked(
 
     match peer_id {
         Some(peer_id) => {
-            Sender::<MilestoneRequestPacket>::send(&milestone_request, &peer_id, peer_manager, metrics);
+            Sender::<MilestoneRequestPacket>::send(&milestone_request, &peer_id, peer_manager, metrics).await;
         }
         None => {
-            if let Some(peer_id) = peer_manager.fair_find(|peer| peer.maybe_has_data(index)) {
-                Sender::<MilestoneRequestPacket>::send(&milestone_request, &peer_id, peer_manager, metrics);
+            if let Some(peer_id) = peer_manager.fair_find(|peer| peer.maybe_has_data(index)).await {
+                Sender::<MilestoneRequestPacket>::send(&milestone_request, &peer_id, peer_manager, metrics).await;
             }
         }
     }
@@ -135,7 +135,7 @@ async fn retry_requests<B: StorageBackend>(
     metrics: &NodeMetrics,
     tangle: &Tangle<B>,
 ) {
-    if peer_manager.is_empty() {
+    if peer_manager.is_empty().await {
         return;
     }
 
@@ -158,7 +158,7 @@ async fn retry_requests<B: StorageBackend>(
         if tangle.contains_milestone(index).await {
             requested_milestones.remove(&index);
         } else {
-            process_request_unchecked(index, None, peer_manager, metrics);
+            process_request_unchecked(index, None, peer_manager, metrics).await;
         }
     }
 

@@ -5,13 +5,14 @@
 
 use crate::types::peer::Peer;
 
-use bee_gossip::{GossipSender, PeerId};
+use bee_gossip::{GossipTx, PeerId};
 use bee_runtime::{node::Node, worker::Worker};
 
 use async_trait::async_trait;
 use futures::channel::oneshot;
 use log::debug;
-use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+// use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use std::{
     convert::Infallible,
@@ -48,7 +49,7 @@ impl<N: Node> Worker<N> for PeerManagerResWorker {
     }
 }
 
-type PeerTuple = (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>);
+type PeerTuple = (Arc<Peer>, Option<(GossipTx, oneshot::Sender<()>)>);
 
 #[derive(Default)]
 struct PeerManagerInner {
@@ -97,22 +98,23 @@ impl PeerManager {
         Self::default()
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.inner.read().peers.is_empty()
+    pub async fn is_empty(&self) -> bool {
+        self.inner.read().await.peers.is_empty()
     }
 
     // TODO find a way to only return a ref to the peer.
-    pub fn get(&self, id: &PeerId) -> Option<impl std::ops::Deref<Target = PeerTuple> + '_> {
-        RwLockReadGuard::try_map(self.inner.read(), |map| map.get(id)).ok()
+    pub async fn get(&self, id: &PeerId) -> Option<impl std::ops::Deref<Target = PeerTuple> + '_> {
+        RwLockReadGuard::try_map(self.inner.read().await, |map| map.get(id)).ok()
     }
 
-    pub fn get_mut(&self, id: &PeerId) -> Option<impl std::ops::DerefMut<Target = PeerTuple> + '_> {
-        RwLockWriteGuard::try_map(self.inner.write(), |map| map.get_mut(id)).ok()
+    pub async fn get_mut(&self, id: &PeerId) -> Option<impl std::ops::DerefMut<Target = PeerTuple> + '_> {
+        RwLockWriteGuard::try_map(self.inner.write().await, |map| map.get_mut(id)).ok()
     }
 
-    pub fn get_all(&self) -> Vec<Arc<Peer>> {
+    pub async fn get_all(&self) -> Vec<Arc<Peer>> {
         self.inner
             .read()
+            .await
             .peers
             .iter()
             .map(|(_, (peer, _))| peer)
@@ -120,26 +122,31 @@ impl PeerManager {
             .collect()
     }
 
-    pub(crate) fn add(&self, peer: Arc<Peer>) {
+    pub(crate) async fn add(&self, peer: Arc<Peer>) {
         debug!("Added peer {}.", peer.id());
-        let mut lock = self.inner.write();
+        let mut lock = self.inner.write().await;
         lock.insert(*peer.id(), (peer, None));
     }
 
-    pub(crate) fn remove(&self, id: &PeerId) -> Option<PeerTuple> {
+    pub(crate) async fn remove(&self, id: &PeerId) -> Option<PeerTuple> {
         debug!("Removed peer {}.", id);
-        let mut lock = self.inner.write();
+        let mut lock = self.inner.write().await;
         lock.remove(id)
     }
 
-    pub(crate) fn for_each<F: Fn(&PeerId, &Peer)>(&self, f: F) {
-        self.inner.read().peers.iter().for_each(|(id, (peer, _))| f(id, peer));
-    }
+    // pub(crate) async fn for_each<F: Fn(&PeerId, &Peer)>(&self, f: F) {
+    //     self.inner
+    //         .read()
+    //         .await
+    //         .peers
+    //         .iter()
+    //         .for_each(|(id, (peer, _))| f(id, peer));
+    // }
 
     /// Find one peer that satisfies a condition. If more than one peer satisfies this condition,
     /// each peer is equally likely to be returned.
-    pub(crate) fn fair_find(&self, f: impl Fn(&Peer) -> bool) -> Option<PeerId> {
-        let guard = self.inner.read();
+    pub(crate) async fn fair_find(&self, f: impl Fn(&Peer) -> bool) -> Option<PeerId> {
+        let guard = self.inner.read().await;
 
         for _ in 0..guard.peers.len() {
             let counter = self.counter.fetch_add(1, Ordering::Relaxed);
@@ -155,22 +162,24 @@ impl PeerManager {
         None
     }
 
-    pub fn is_connected(&self, id: &PeerId) -> bool {
-        self.inner.read().get(id).map_or(false, |p| p.1.is_some())
+    pub async fn is_connected(&self, id: &PeerId) -> bool {
+        self.inner.read().await.get(id).map_or(false, |p| p.1.is_some())
     }
 
-    pub fn connected_peers(&self) -> u8 {
+    pub async fn connected_peers(&self) -> u8 {
         self.inner
             .read()
+            .await
             .peers
             .iter()
             .filter(|(_, (_, ctx))| ctx.is_some())
             .count() as u8
     }
 
-    pub fn synced_peers(&self) -> u8 {
+    pub async fn synced_peers(&self) -> u8 {
         self.inner
             .read()
+            .await
             .peers
             .iter()
             .filter(|(_, (peer, ctx))| (ctx.is_some() && peer.is_synced()))

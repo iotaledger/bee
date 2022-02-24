@@ -33,12 +33,12 @@ pub(crate) fn filter(
         .and(warp::get())
         .and(has_permission(ROUTE_PEER, public_routes, allowed_ips))
         .and(with_peer_manager(peer_manager))
-        .and_then(|peer_id, peer_manager| async move { peer(peer_id, peer_manager) })
+        .and_then(|peer_id, peer_manager| async move { peer(peer_id, peer_manager).await })
         .boxed()
 }
 
-pub(crate) fn peer(peer_id: PeerId, peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Rejection> {
-    match peer_manager.get(&peer_id) {
+pub(crate) async fn peer(peer_id: PeerId, peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Rejection> {
+    match peer_manager.get(&peer_id).await {
         Some(peer_entry) => Ok(warp::reply::json(&SuccessBody::new(PeerResponse(PeerDto::from(
             peer_entry.0.as_ref(),
         ))))),

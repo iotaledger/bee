@@ -18,7 +18,7 @@ use crate::{
 use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder};
 
 use bee_autopeering::config::{AutopeeringConfig, AutopeeringConfigBuilder};
-use bee_gossip::{NetworkConfig, NetworkConfigBuilder};
+use bee_gossip::{GossipLayerConfig, GossipLayerConfigBuilder};
 use bee_ledger::workers::{
     pruning::config::{PruningConfig, PruningConfigBuilder},
     snapshot::config::{SnapshotConfig, SnapshotConfigBuilder},
@@ -52,7 +52,7 @@ pub struct NodeConfig<S: NodeStorageBackend> {
     pub(crate) alias: String,
     pub(crate) network_spec: NetworkSpec,
     pub(crate) logger: LoggerConfig,
-    pub(crate) network: NetworkConfig,
+    pub(crate) network: GossipLayerConfig,
     pub(crate) autopeering: AutopeeringConfig,
     pub(crate) protocol: ProtocolConfig,
     pub(crate) rest_api: RestApiConfig,
@@ -98,7 +98,7 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     #[serde(alias = "networkId")]
     pub(crate) network_id: Option<String>,
     pub(crate) logger: Option<LoggerConfigBuilder>,
-    pub(crate) network: Option<NetworkConfigBuilder>,
+    pub(crate) network: Option<GossipLayerConfigBuilder>,
     pub(crate) autopeering: Option<AutopeeringConfigBuilder>,
     pub(crate) protocol: Option<ProtocolConfigBuilder>,
     #[serde(alias = "restApi")]

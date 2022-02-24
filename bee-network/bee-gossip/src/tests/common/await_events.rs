@@ -3,7 +3,7 @@
 
 #![cfg(feature = "full")]
 
-use crate::{Event, GossipReceiver, GossipSender, Multiaddr, NetworkEventReceiver, PeerId};
+use crate::{Event, GossipRx, GossipTx, Multiaddr, NetworkEventReceiver, PeerId};
 
 use tokio::time::{self, Duration};
 
@@ -79,7 +79,7 @@ pub async fn get_connected_peer_id(rx: &mut NetworkEventReceiver) -> PeerId {
     }
 }
 
-pub async fn get_gossip_channels(rx: &mut NetworkEventReceiver) -> (GossipReceiver, GossipSender) {
+pub async fn get_gossip_channels(rx: &mut NetworkEventReceiver) -> (GossipRx, GossipTx) {
     let timeout = time::sleep(Duration::from_secs(20));
     tokio::pin!(timeout);
 

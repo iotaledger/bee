@@ -65,7 +65,7 @@ async fn heavy_solidification<B: StorageBackend>(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn solidify<B: StorageBackend>(
+async fn solidify<B: StorageBackend>(
     tangle: &Tangle<B>,
     consensus_worker: &mpsc::UnboundedSender<ConsensusWorkerCommand>,
     index_updater_worker: &mpsc::UnboundedSender<IndexUpdaterWorkerEvent>,
@@ -90,7 +90,7 @@ fn solidify<B: StorageBackend>(
         warn!("Sending message_id to `IndexUpdater` failed: {:?}.", e);
     }
 
-    broadcast_heartbeat(tangle, peer_manager, metrics);
+    broadcast_heartbeat(tangle, peer_manager, metrics).await;
 
     bus.dispatch(SolidMilestoneChanged {
         index,
@@ -186,7 +186,8 @@ where
                                 &bus,
                                 id,
                                 target,
-                            );
+                            )
+                            .await;
                         } else {
                             // TODO Is this actually necessary ?
                             let missing_len =

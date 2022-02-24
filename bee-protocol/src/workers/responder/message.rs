@@ -70,7 +70,8 @@ where
                         &peer_id,
                         &peer_manager,
                         &metrics,
-                    );
+                    )
+                    .await;
                 }
             }
 

@@ -5,6 +5,7 @@ mod manager;
 mod manager_res;
 mod packet_handler;
 
+use bee_gossip::GossipRx;
 pub(crate) use manager::{PeerManagerConfig, PeerManagerWorker};
 pub use manager_res::{PeerManager, PeerManagerResWorker};
 
@@ -30,7 +31,6 @@ use bee_tangle::Tangle;
 use futures::{channel::oneshot, future::FutureExt};
 use log::{debug, error, info, trace};
 use tokio::sync::mpsc;
-use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::sync::Arc;
 
@@ -78,7 +78,7 @@ impl PeerWorker {
         mut self,
         tangle: ResourceHandle<Tangle<B>>,
         requested_milestones: ResourceHandle<RequestedMilestones>,
-        receiver: UnboundedReceiverStream<Vec<u8>>,
+        receiver: GossipRx, // UnboundedReceiverStream<Vec<u8>>,
         shutdown: oneshot::Receiver<()>,
     ) {
         info!("[{}] Running.", self.peer.alias());

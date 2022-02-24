@@ -44,14 +44,14 @@ pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorker
 pub(crate) use status::StatusWorker;
 
 use bee_autopeering::event::EventRx as AutopeeringEventRx;
-use bee_gossip::NetworkEventReceiver as NetworkEventRx;
+use bee_gossip::GossipManagerEventRx as GossipEventRx;
 use bee_runtime::node::{Node, NodeBuilder};
 
 pub fn init<N: Node>(
     config: config::ProtocolConfig,
     network_id: (String, u64),
-    network_events: NetworkEventRx,
-    autopeering_events: Option<AutopeeringEventRx>,
+    gossip_event_rx: GossipEventRx,
+    peering_event_rx: Option<AutopeeringEventRx>,
     node_builder: N::Builder,
 ) -> N::Builder
 where
@@ -61,8 +61,8 @@ where
         .with_worker::<MetricsWorker>()
         .with_worker::<PeerManagerResWorker>()
         .with_worker_cfg::<PeerManagerWorker>(PeerManagerConfig {
-            network_rx: network_events,
-            peering_rx: autopeering_events,
+            gossip_event_rx,
+            peering_event_rx,
             network_name: network_id.0,
         })
         .with_worker_cfg::<HasherWorker>(config.clone())

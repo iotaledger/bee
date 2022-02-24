@@ -38,7 +38,7 @@ where
 
         while ticker.next().await.is_some() {
             let mut peers_dtos = Vec::new();
-            for peer in peer_manager.get_all() {
+            for peer in peer_manager.get_all().await {
                 peers_dtos.push(PeerDto::from(peer.as_ref()));
             }
             broadcast(PeersResponse(peers_dtos).into(), &users).await;

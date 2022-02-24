@@ -3,12 +3,12 @@
 
 use std::fmt;
 
-use bee_gossip::{Keypair, PeerId, PublicKey};
+use bee_gossip::{Ed25519Keypair, PeerId};
 
 #[derive(Clone, Debug)]
 pub struct Local {
     /// An Ed25519 keypair.
-    keypair: Keypair,
+    keypair: Ed25519Keypair,
     /// The hex/base16 encoded representation of the keypair.
     encoded: String,
     /// The local peer identity.
@@ -18,9 +18,9 @@ pub struct Local {
 }
 
 impl Local {
-    pub fn from_keypair(keypair: Keypair) -> Self {
+    pub fn from_keypair(keypair: Ed25519Keypair) -> Self {
         let encoded = hex::encode(keypair.encode());
-        let peer_id = PeerId::from_public_key(PublicKey::Ed25519(keypair.public()));
+        let peer_id = PeerId::from_public_key(keypair.public());
 
         Self {
             keypair,
@@ -30,7 +30,7 @@ impl Local {
         }
     }
 
-    pub(crate) fn keypair(&self) -> &Keypair {
+    pub(crate) fn keypair(&self) -> &Ed25519Keypair {
         &self.keypair
     }
 

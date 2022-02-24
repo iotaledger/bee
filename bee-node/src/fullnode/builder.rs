@@ -19,7 +19,7 @@ use bee_autopeering::{
     stores::{Options as RocksDbPeerStoreConfigOptions, RocksDbPeerStore, RocksDbPeerStoreConfig},
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
-use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
+use bee_gossip::{Ed25519Keypair, GossipManagerEventRx, Protocol};
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder},
@@ -251,17 +251,17 @@ fn add_node_resources<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Res
 /// Initializes the gossip layer.
 async fn initialize_gossip_layer<S: NodeStorageBackend>(
     builder: FullNodeBuilder<S>,
-) -> Result<(NetworkEventReceiver, FullNodeBuilder<S>), FullNodeError> {
+) -> Result<(GossipManagerEventRx, FullNodeBuilder<S>), FullNodeError> {
     log::info!("Initializing gossip protocol...");
 
     let config = builder.config();
 
-    let keypair = config.local().keypair().clone();
+    let local_keys = config.local().keypair().clone();
     let network_id = config.network_spec().id();
     let gossip_cfg = config.network.clone();
 
     let (builder, network_events) =
-        bee_gossip::integrated::init::<FullNode<S>>(gossip_cfg, keypair, network_id, builder)
+        bee_gossip::init::workers::init::<FullNode<S>>(gossip_cfg, local_keys, network_id, builder)
             .await
             .map_err(FullNodeError::GossipLayerInitialization)?;
 
@@ -284,7 +284,7 @@ fn initialize_ledger<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Full
 /// Initializes the protocol.
 fn initialize_protocol<S: NodeStorageBackend>(
     builder: FullNodeBuilder<S>,
-    gossip_events: NetworkEventReceiver,
+    gossip_events: GossipManagerEventRx,
     autopeering_events: Option<bee_autopeering::event::EventRx>,
 ) -> FullNodeBuilder<S> {
     log::info!("Initializing protocol layer...");
@@ -355,7 +355,7 @@ async fn initialize_autopeering<S: NodeStorageBackend>(
 
 /// Creates the local entity from a ED25519 keypair and a set of provided services.
 fn create_local_autopeering_entity<S: NodeStorageBackend>(
-    keypair: Keypair,
+    keypair: Ed25519Keypair,
     config: &FullNodeConfig<S>,
 ) -> bee_autopeering::Local {
     let local = bee_autopeering::Local::from_keypair(keypair).expect("failed to create local entity");

@@ -4,7 +4,7 @@
 use crate::{
     endpoints::{
         config::ROUTE_ADD_PEER,
-        filters::{with_network_command_sender, with_peer_manager},
+        filters::{with_gossip_command_tx, with_peer_manager},
         permission::has_permission,
         rejection::CustomRejection,
     },
@@ -15,7 +15,7 @@ use crate::{
     },
 };
 
-use bee_gossip::{Command::AddPeer, Multiaddr, NetworkCommandSender, PeerId, PeerRelation, Protocol};
+use bee_gossip::{GossipManagerCommand::AddPeer, GossipManagerCommandTx, Multiaddr, PeerId, PeerType, Protocol};
 use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
@@ -32,24 +32,24 @@ pub(crate) fn filter(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     peer_manager: ResourceHandle<PeerManager>,
-    network_command_sender: ResourceHandle<NetworkCommandSender>,
+    gossip_command_tx: ResourceHandle<GossipManagerCommandTx>,
 ) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::post())
         .and(has_permission(ROUTE_ADD_PEER, public_routes, allowed_ips))
         .and(warp::body::json())
         .and(with_peer_manager(peer_manager))
-        .and(with_network_command_sender(network_command_sender))
-        .and_then(
-            |value, peer_manager, network_controller| async move { add_peer(value, peer_manager, network_controller) },
-        )
+        .and(with_gossip_command_tx(gossip_command_tx))
+        .and_then(|value, peer_manager, gossip_command_tx| async move {
+            add_peer(value, peer_manager, gossip_command_tx).await
+        })
         .boxed()
 }
 
-pub(crate) fn add_peer(
+pub(crate) async fn add_peer(
     value: JsonValue,
     peer_manager: ResourceHandle<PeerManager>,
-    network_controller: ResourceHandle<NetworkCommandSender>,
+    gossip_command_tx: ResourceHandle<GossipManagerCommandTx>,
 ) -> Result<impl Reply, Rejection> {
     let multi_address_v = &value["multiAddress"];
     let alias_v = &value["alias"];
@@ -77,7 +77,7 @@ pub(crate) fn add_peer(
         }
     };
 
-    match peer_manager.get(&peer_id) {
+    match peer_manager.get(&peer_id).await {
         Some(peer_entry) => {
             let peer_dto = PeerDto::from(peer_entry.0.as_ref());
             Ok(warp::reply::with_status(
@@ -102,11 +102,11 @@ pub(crate) fn add_peer(
                 )
             };
 
-            if let Err(e) = network_controller.send(AddPeer {
+            if let Err(e) = gossip_command_tx.send(AddPeer {
                 peer_id,
-                multiaddr: multi_address.clone(),
-                alias: alias.clone(),
-                relation: PeerRelation::Known,
+                peer_addr: multi_address.clone(),
+                peer_alias: alias.clone(),
+                peer_type: PeerType::Manual,
             }) {
                 return Err(reject::custom(CustomRejection::NotFound(format!(
                     "failed to add peer: {}",

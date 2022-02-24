@@ -3,7 +3,7 @@
 
 #![cfg(feature = "full")]
 
-pub mod behaviour;
-pub mod builder;
-pub mod error;
-pub mod protocols;
+pub(crate) mod behaviour;
+pub(crate) mod handler;
+pub(crate) mod layer;
+pub(crate) mod protocol;

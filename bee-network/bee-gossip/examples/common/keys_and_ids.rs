@@ -3,23 +3,19 @@
 
 #![cfg(feature = "full")]
 
-use libp2p::{
-    identity::{
-        ed25519::{Keypair, SecretKey},
-        PublicKey,
-    },
-    PeerId,
-};
+use libp2p::identity::ed25519::{Keypair, SecretKey};
+
+use bee_gossip::PeerId;
 
 use std::iter::repeat;
 
 pub fn gen_random_peer_id() -> PeerId {
-    PeerId::from_public_key(libp2p_core::PublicKey::Ed25519(Keypair::generate().public()))
+    libp2p_core::PeerId::from_public_key(&libp2p_core::PublicKey::Ed25519(Keypair::generate().public())).into()
 }
 
 pub fn gen_deterministic_peer_id(gen: impl ToString) -> PeerId {
     let keys = gen_deterministic_keys(gen);
-    PeerId::from_public_key(PublicKey::Ed25519(keys.public()))
+    libp2p_core::PeerId::from_public_key(&libp2p_core::PublicKey::Ed25519(keys.public())).into()
 }
 
 pub fn gen_deterministic_keys(gen: impl ToString) -> Keypair {

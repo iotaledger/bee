@@ -23,9 +23,12 @@ use std::{any::TypeId, convert::Infallible, time::Duration};
 
 const HEARTBEAT_SEND_INTERVAL: Duration = Duration::from_secs(30);
 
-pub(crate) fn new_heartbeat<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &PeerManager) -> HeartbeatPacket {
-    let connected_peers = peer_manager.connected_peers();
-    let synced_peers = peer_manager.synced_peers();
+pub(crate) async fn new_heartbeat<B: StorageBackend>(
+    tangle: &Tangle<B>,
+    peer_manager: &PeerManager,
+) -> HeartbeatPacket {
+    let connected_peers = peer_manager.connected_peers().await;
+    let synced_peers = peer_manager.synced_peers().await;
 
     HeartbeatPacket::new(
         *tangle.get_solid_milestone_index(),
@@ -36,23 +39,26 @@ pub(crate) fn new_heartbeat<B: StorageBackend>(tangle: &Tangle<B>, peer_manager:
     )
 }
 
-pub(crate) fn send_heartbeat(
+pub(crate) async fn send_heartbeat(
     heartbeat: &HeartbeatPacket,
     peer_id: &PeerId,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
 ) {
-    Sender::<HeartbeatPacket>::send(heartbeat, peer_id, peer_manager, metrics);
+    Sender::<HeartbeatPacket>::send(heartbeat, peer_id, peer_manager, metrics).await;
 }
 
-pub(crate) fn broadcast_heartbeat<B: StorageBackend>(
+pub(crate) async fn broadcast_heartbeat<B: StorageBackend>(
     tangle: &Tangle<B>,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
 ) {
-    let heartbeat = new_heartbeat(tangle, peer_manager);
+    let heartbeat = new_heartbeat(tangle, peer_manager).await;
+    let peers = peer_manager.get_all().await;
 
-    peer_manager.for_each(|peer_id, _| send_heartbeat(&heartbeat, peer_id, peer_manager, metrics));
+    for peer_id in peers.iter().map(|p| (*p).id()) {
+        send_heartbeat(&heartbeat, peer_id, peer_manager, metrics).await;
+    }
 }
 
 #[derive(Default)]
@@ -86,7 +92,7 @@ where
             let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(HEARTBEAT_SEND_INTERVAL)));
 
             while ticker.next().await.is_some() {
-                broadcast_heartbeat(&tangle, &peer_manager, &metrics);
+                broadcast_heartbeat(&tangle, &peer_manager, &metrics).await;
             }
 
             info!("Stopped.");

@@ -16,7 +16,7 @@ use storage::StorageBackend;
 
 use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
-use bee_gossip::NetworkCommandSender;
+use bee_gossip::GossipManagerCommandTx;
 use bee_ledger::workers::consensus::ConsensusWorker;
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorker, PeerManager, PeerManagerResWorker,
@@ -84,7 +84,7 @@ where
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();
         let requested_messages = node.resource::<RequestedMessages>();
         let peer_manager = node.resource::<PeerManager>();
-        let network_controller = node.resource::<NetworkCommandSender>();
+        let gossip_command_tx = node.resource::<GossipManagerCommandTx>();
         let node_info = node.info();
         let bus = node.bus();
 
@@ -102,7 +102,7 @@ where
                 rest_api_config.clone(),
                 protocol_config,
                 peer_manager,
-                network_controller,
+                gossip_command_tx,
                 node_info,
                 bus,
                 message_requester,

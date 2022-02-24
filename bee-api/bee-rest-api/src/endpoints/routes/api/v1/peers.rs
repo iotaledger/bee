@@ -26,13 +26,13 @@ pub(crate) fn filter(
         .and(warp::get())
         .and(has_permission(ROUTE_PEERS, public_routes, allowed_ips))
         .and(with_peer_manager(peer_manager))
-        .and_then(|peer_manager| async move { peers(peer_manager) })
+        .and_then(|peer_manager| async move { peers(peer_manager).await })
         .boxed()
 }
 
-pub(crate) fn peers(peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Infallible> {
+pub(crate) async fn peers(peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Infallible> {
     let mut peers_dtos = Vec::new();
-    for peer in peer_manager.get_all() {
+    for peer in peer_manager.get_all().await {
         peers_dtos.push(PeerDto::from(peer.as_ref()));
     }
     Ok(warp::reply::json(&SuccessBody::new(PeersResponse(peers_dtos))))

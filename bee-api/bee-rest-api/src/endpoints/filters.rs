@@ -3,7 +3,7 @@
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
-use bee_gossip::NetworkCommandSender;
+use bee_gossip::GossipManagerCommandTx;
 use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorkerEvent, PeerManager, RequestedMessages,
@@ -64,10 +64,10 @@ pub(crate) fn with_peer_manager(
     warp::any().map(move || peer_manager.clone())
 }
 
-pub(crate) fn with_network_command_sender(
-    command_sender: ResourceHandle<NetworkCommandSender>,
-) -> impl Filter<Extract = (ResourceHandle<NetworkCommandSender>,), Error = Infallible> + Clone {
-    warp::any().map(move || command_sender.clone())
+pub(crate) fn with_gossip_command_tx(
+    command_tx: ResourceHandle<GossipManagerCommandTx>,
+) -> impl Filter<Extract = (ResourceHandle<GossipManagerCommandTx>,), Error = Infallible> + Clone {
+    warp::any().map(move || command_tx.clone())
 }
 
 pub(crate) fn with_node_info(

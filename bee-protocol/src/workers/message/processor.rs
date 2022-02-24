@@ -136,6 +136,7 @@ where
                             if let Some(ref peer_id) = from {
                                 peer_manager
                                     .get(peer_id)
+                                    .await
                                     .map(|peer| (*peer).0.metrics().known_messages_inc());
                             }
                             continue;

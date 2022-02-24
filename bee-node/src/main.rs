@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_gossip::Keypair;
+use bee_gossip::Ed25519Keypair;
 use bee_node::{
     plugins, print_banner_and_version, read_keypair_from_pem_file,
     tools::{self},
@@ -83,7 +83,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     identity_path.display()
                 );
 
-                Keypair::generate()
+                Ed25519Keypair::generate()
             };
 
             write_keypair_to_pem_file(identity_path, &keypair).map_err(|e| {
@@ -121,14 +121,14 @@ enum IdentityMigrationError {
     InvalidKeypair,
 }
 
-fn migrate_keypair(encoded: String) -> Result<Keypair, IdentityMigrationError> {
+fn migrate_keypair(encoded: String) -> Result<Ed25519Keypair, IdentityMigrationError> {
     if encoded.len() == KEYPAIR_STR_LENGTH {
         // Decode the keypair from hex.
         let mut decoded = [0u8; 64];
         hex::decode_to_slice(&encoded[..], &mut decoded).map_err(|_| IdentityMigrationError::DecodeHex)?;
 
         // Decode the keypair from bytes.
-        Keypair::decode(&mut decoded).map_err(|_| IdentityMigrationError::DecodeKeypair)
+        Ed25519Keypair::decode(&mut decoded).map_err(|_| IdentityMigrationError::DecodeKeypair)
     } else {
         Err(IdentityMigrationError::InvalidKeypair)
     }

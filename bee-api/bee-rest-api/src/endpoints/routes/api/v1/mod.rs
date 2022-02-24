@@ -27,7 +27,7 @@ pub mod treasury;
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
-use bee_gossip::NetworkCommandSender;
+use bee_gossip::GossipManagerCommandTx;
 use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
@@ -54,7 +54,7 @@ pub(crate) fn filter<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
     peer_manager: ResourceHandle<PeerManager>,
-    network_command_sender: ResourceHandle<NetworkCommandSender>,
+    gossip_command_tx: ResourceHandle<GossipManagerCommandTx>,
     node_info: ResourceHandle<NodeInfo>,
     consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
@@ -62,7 +62,7 @@ pub(crate) fn filter<B: StorageBackend>(
         public_routes.clone(),
         allowed_ips.clone(),
         peer_manager.clone(),
-        network_command_sender.clone(),
+        gossip_command_tx.clone(),
     )
     .or(balance_bech32::filter(
         public_routes.clone(),
@@ -155,7 +155,7 @@ pub(crate) fn filter<B: StorageBackend>(
     .or(remove_peer::filter(
         public_routes.clone(),
         allowed_ips.clone(),
-        network_command_sender,
+        gossip_command_tx,
     ))
     .or(submit_message::filter(
         public_routes.clone(),

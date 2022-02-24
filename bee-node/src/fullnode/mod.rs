@@ -27,7 +27,7 @@ pub enum FullNodeError {
     )]
     InvalidOrNoIdentityPrivateKey(String),
     #[error("{0}")]
-    GossipLayerInitialization(#[from] bee_gossip::Error),
+    GossipLayerInitialization(#[from] bee_gossip::init::BootError),
     #[error("{0}")]
     AutopeeringInitialization(Box<dyn std::error::Error>),
     #[error("{0}")]

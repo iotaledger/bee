@@ -101,7 +101,7 @@ impl MessageRequesterWorker {
     }
 }
 
-fn process_request(
+async fn process_request(
     message_id: MessageId,
     index: MilestoneIndex,
     peer_manager: &PeerManager,
@@ -112,16 +112,16 @@ fn process_request(
         return;
     }
 
-    if peer_manager.is_empty() {
+    if peer_manager.is_empty().await {
         return;
     }
 
     requested_messages.insert(message_id, index);
 
-    process_request_unchecked(message_id, index, peer_manager, metrics);
+    process_request_unchecked(message_id, index, peer_manager, metrics).await;
 }
 
-fn process_request_unchecked(
+async fn process_request_unchecked(
     message_id: MessageId,
     index: MilestoneIndex,
     peer_manager: &PeerManager,
@@ -129,11 +129,10 @@ fn process_request_unchecked(
 ) {
     let message_request = MessageRequestPacket::new(message_id);
 
-    if let Some(peer_id) = peer_manager
-        .fair_find(|peer| peer.has_data(index))
-        .or_else(|| peer_manager.fair_find(|peer| peer.maybe_has_data(index)))
-    {
-        Sender::<MessageRequestPacket>::send(&message_request, &peer_id, peer_manager, metrics)
+    if let Some(peer_id) = peer_manager.fair_find(|peer| peer.has_data(index)).await {
+        Sender::<MessageRequestPacket>::send(&message_request, &peer_id, peer_manager, metrics).await;
+    } else if let Some(peer_id) = peer_manager.fair_find(|peer| peer.maybe_has_data(index)).await {
+        Sender::<MessageRequestPacket>::send(&message_request, &peer_id, peer_manager, metrics).await;
     }
 }
 
@@ -143,7 +142,7 @@ async fn retry_requests<B: StorageBackend>(
     metrics: &NodeMetrics,
     tangle: &Tangle<B>,
 ) {
-    if peer_manager.is_empty() {
+    if peer_manager.is_empty().await {
         return;
     }
 
@@ -166,7 +165,7 @@ async fn retry_requests<B: StorageBackend>(
         if tangle.contains(&message_id).await {
             requested_messages.remove(&message_id);
         } else {
-            process_request_unchecked(message_id, index, peer_manager, metrics);
+            process_request_unchecked(message_id, index, peer_manager, metrics).await;
         }
     }
 
@@ -212,7 +211,7 @@ where
                 while let Some(MessageRequesterWorkerEvent(message_id, index)) = receiver.next().await {
                     trace!("Requesting message {}.", message_id);
 
-                    process_request(message_id, index, &peer_manager, &metrics, &requested_messages);
+                    process_request(message_id, index, &peer_manager, &metrics, &requested_messages).await;
                 }
 
                 info!("Requester stopped.");

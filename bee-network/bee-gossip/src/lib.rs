@@ -5,45 +5,41 @@
 
 #![warn(missing_docs)]
 
-mod alias;
 mod config;
-mod error;
-mod init;
-mod network;
+mod gossip;
+mod local;
+mod manager;
 mod peer;
-mod service;
-mod swarm;
+mod server;
+mod task;
+mod time;
 
-#[cfg(test)]
-mod tests;
+pub mod init;
+
+// #[cfg(test)]
+// mod tests;
 
 // Always exported
-pub use self::peer::info::{PeerInfo, PeerRelation};
-#[doc(inline)]
-pub use libp2p_core::{
-    multiaddr::{Multiaddr, Protocol},
-    PeerId,
+pub use crate::peer::{
+    peer_data::{PeerInfo, PeerRelation, PeerType},
+    peer_id::PeerId,
 };
+
+#[doc(inline)]
+pub use libp2p_core::multiaddr::{Multiaddr, Protocol};
 
 // Exported only with "full" feature flag.
 #[cfg(feature = "full")]
 #[doc(inline)]
-pub use libp2p::core::identity::{
-    ed25519::{Keypair, SecretKey},
-    PublicKey,
+pub use libp2p_core::identity::ed25519::{
+    Keypair as Ed25519Keypair, PublicKey as Ed25519PublicKey, SecretKey as Ed25519SecretKey,
 };
 
 #[cfg(feature = "full")]
 pub use crate::{
-    config::{NetworkConfig, NetworkConfigBuilder},
-    error::Error,
-    init::{integrated, standalone},
-    network::host::integrated::NetworkHost,
-    network::origin::Origin,
-    service::{
-        command::{Command, NetworkCommandSender},
-        event::{Event, NetworkEventReceiver},
-        host::integrated::ServiceHost,
+    config::{GossipLayerConfig, GossipLayerConfigBuilder},
+    manager::{
+        workers::GossipManager, GossipManagerCommand, GossipManagerCommandTx, GossipManagerEvent, GossipManagerEventRx,
+        GossipRx, GossipTx,
     },
-    swarm::protocols::iota_gossip::{GossipReceiver, GossipSender},
 };

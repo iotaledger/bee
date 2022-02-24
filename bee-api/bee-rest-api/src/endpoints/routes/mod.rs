@@ -6,7 +6,7 @@ pub mod health;
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
-use bee_gossip::NetworkCommandSender;
+use bee_gossip::GossipManagerCommandTx;
 use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorkerEvent, PeerManager, RequestedMessages,
@@ -31,7 +31,7 @@ pub(crate) fn filter_all<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
     peer_manager: ResourceHandle<PeerManager>,
-    network_command_sender: ResourceHandle<NetworkCommandSender>,
+    gossip_command_tx: ResourceHandle<GossipManagerCommandTx>,
     node_info: ResourceHandle<NodeInfo>,
     bus: ResourceHandle<Bus<'static>>,
     message_requester: MessageRequesterWorker,
@@ -49,7 +49,7 @@ pub(crate) fn filter_all<B: StorageBackend>(
         rest_api_config,
         protocol_config,
         peer_manager.clone(),
-        network_command_sender,
+        gossip_command_tx,
         node_info,
         bus,
         message_requester,

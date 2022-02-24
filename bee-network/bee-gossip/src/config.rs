@@ -3,24 +3,24 @@
 
 #![cfg(feature = "full")]
 
-use crate::alias;
+use crate::peer::peer_id::PeerId;
 
-use libp2p::{multiaddr::Protocol, Multiaddr, PeerId};
+use libp2p::{multiaddr::Protocol, Multiaddr};
 use serde::Deserialize;
 
-use std::{borrow::Cow, collections::HashSet};
+use std::{borrow::Cow, collections::HashSet, hash, time::Duration};
 
-const DEFAULT_BIND_MULTIADDR: &str = "/ip4/0.0.0.0/tcp/15600";
+const BIND_ADDR_DEFAULT: &str = "/ip4/0.0.0.0/tcp/15600";
 
-pub const DEFAULT_RECONNECT_INTERVAL_SECS: u64 = 30;
-const MIN_RECONNECT_INTERVAL_SECS: u64 = 1;
+pub const RECONNECT_INTERVAL_DEFAULT: Duration = Duration::from_secs(30);
+const RECONNECT_INTERVAL_MIN: Duration = Duration::from_secs(1);
 
-pub const DEFAULT_MAX_UNKNOWN_PEERS: usize = 4;
-pub const DEFAULT_MAX_DISCOVERED_PEERS: usize = 4;
+pub const MAX_UNKNOWN_PEERS_DEFAULT: u16 = 4;
+pub const MAX_DISCOVERED_PEERS_DEFAULT: u16 = 4;
 
-/// [`NetworkConfigBuilder`] errors.
+/// [`GossipLayerConfigBuilder`] errors.
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum GossipLayerConfigError {
     /// The provided [`Multiaddr`] has too few protocols in it.
     #[error("Multiaddr is underspecified.")]
     MultiaddrUnderspecified,
@@ -42,8 +42,8 @@ pub enum Error {
     InvalidPortProtocol,
 
     /// The peer was already added.
-    #[error("Static peer {} already added.", alias!(.0))]
-    DuplicateStaticPeer(PeerId),
+    #[error("Manual peer {0} already added.")]
+    DuplicateManualPeer(PeerId),
 
     /// The domain was unresolvable.
     #[error("Domain name '{}' couldn't be resolved to an IP address", .0)]
@@ -60,23 +60,23 @@ pub enum Error {
 
 /// The network configuration.
 #[derive(Clone)]
-pub struct NetworkConfig {
-    pub(crate) bind_multiaddr: Multiaddr,
-    pub(crate) reconnect_interval_secs: u64,
-    pub(crate) max_unknown_peers: usize,
-    pub(crate) max_discovered_peers: usize,
-    pub(crate) static_peers: HashSet<Peer>,
+pub struct GossipLayerConfig {
+    pub(crate) bind_addr: Multiaddr,
+    pub(crate) reconnect_interval: Duration,
+    pub(crate) max_unknown_peers: u16,
+    pub(crate) max_discovered_peers: u16,
+    pub(crate) manual_peers: Vec<PeerConfig>,
 }
 
-impl NetworkConfig {
+impl GossipLayerConfig {
     /// Creates a new [`NetworkConfig`].
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Returns a [`NetworkConfigBuilder`] to construct a [`NetworkConfig`] iteratively.
-    pub fn build() -> NetworkConfigBuilder {
-        NetworkConfigBuilder::new()
+    /// Returns a [`GossipLayerConfigBuilder`] to construct a [`NetworkConfig`] iteratively.
+    pub fn build() -> GossipLayerConfigBuilder {
+        GossipLayerConfigBuilder::new()
     }
 
     /// Returns an in-memory config builder to construct a [`NetworkConfig`] iteratively.
@@ -88,9 +88,9 @@ impl NetworkConfig {
     /// Replaces the address, but keeps the port of the bind address.
     ///
     /// The argument `addr` must be either the `Ip4`, `Ip6`, or `Dns` variant of [`Protocol`].
-    pub fn replace_addr(&mut self, mut addr: Protocol) -> Result<(), Error> {
+    pub fn replace_addr(&mut self, mut addr: Protocol) -> Result<(), GossipLayerConfigError> {
         if !matches!(addr, Protocol::Ip4(_) | Protocol::Ip6(_) | Protocol::Dns(_)) {
-            return Err(Error::InvalidAddressProtocol);
+            return Err(GossipLayerConfigError::InvalidAddressProtocol);
         }
 
         if let Protocol::Dns(dns) = addr {
@@ -99,12 +99,12 @@ impl NetworkConfig {
 
         // Panic:
         // The builder ensures that the following unwraps are fine.
-        let port = self.bind_multiaddr.pop().unwrap();
+        let port = self.bind_addr.pop().unwrap();
 
-        let _ = self.bind_multiaddr.pop().unwrap();
+        let _ = self.bind_addr.pop().unwrap();
 
-        self.bind_multiaddr.push(addr);
-        self.bind_multiaddr.push(port);
+        self.bind_addr.push(addr);
+        self.bind_addr.push(port);
 
         Ok(())
     }
@@ -112,69 +112,72 @@ impl NetworkConfig {
     /// Replaces the port of the bind address.
     ///
     /// The argument `port` must be the TCP variant of [`Protocol`].
-    pub fn replace_port(&mut self, port: Protocol) -> Result<(), Error> {
+    pub fn replace_port(&mut self, port: Protocol) -> Result<(), GossipLayerConfigError> {
         if !matches!(port, Protocol::Tcp(_)) {
-            return Err(Error::InvalidPortProtocol);
+            return Err(GossipLayerConfigError::InvalidPortProtocol);
         }
 
-        self.bind_multiaddr.pop();
-        self.bind_multiaddr.push(port);
+        self.bind_addr.pop();
+        self.bind_addr.push(port);
 
         Ok(())
     }
 
-    /// Adds a static peer.
-    pub fn add_static_peer(
+    /// Adds a manual peer.
+    pub fn add_manual_peer(
         &mut self,
         peer_id: PeerId,
-        multiaddr: Multiaddr,
-        alias: Option<String>,
-    ) -> Result<(), Error> {
-        if !self.static_peers.insert(Peer {
+        peer_addr: Multiaddr,
+        peer_alias: Option<String>,
+    ) -> Result<(), GossipLayerConfigError> {
+        let manual_peer = PeerConfig {
             peer_id,
-            multiaddr,
-            alias,
-        }) {
-            return Err(Error::DuplicateStaticPeer(peer_id));
-        }
+            peer_addr,
+            peer_alias,
+        };
 
-        Ok(())
+        if self.manual_peers.contains(&manual_peer) {
+            Err(GossipLayerConfigError::DuplicateManualPeer(peer_id))
+        } else {
+            self.manual_peers.push(manual_peer);
+            Ok(())
+        }
     }
 
     /// Returns the configured bind address as a [`Multiaddr`].
     pub fn bind_multiaddr(&self) -> &Multiaddr {
-        &self.bind_multiaddr
+        &self.bind_addr
     }
 
     /// Returns the number of seconds at which reconnect attempts occur.
-    pub fn reconnect_interval_secs(&self) -> u64 {
-        self.reconnect_interval_secs
+    pub fn reconnect_interval(&self) -> Duration {
+        self.reconnect_interval
     }
 
     /// Returns the maximum number of unknown peers that are allowed to connect.
-    pub fn max_unknown_peers(&self) -> usize {
+    pub fn max_unknown_peers(&self) -> u16 {
         self.max_unknown_peers
     }
 
     /// Returns the maximum number of discovered peers that are allowed to connect.
-    pub fn max_discovered_peers(&self) -> usize {
+    pub fn max_discovered_peers(&self) -> u16 {
         self.max_discovered_peers
     }
 
-    /// Returns the statically configured peers.
-    pub fn static_peers(&self) -> &HashSet<Peer> {
-        &self.static_peers
+    /// Returns the manually configured peers.
+    pub fn manual_peers(&self) -> &Vec<PeerConfig> {
+        &self.manual_peers
     }
 }
 
-fn resolve_dns_multiaddr(dns: Cow<'_, str>) -> Result<Protocol, Error> {
+fn resolve_dns_multiaddr(dns: Cow<'_, str>) -> Result<Protocol, GossipLayerConfigError> {
     use std::net::{IpAddr, ToSocketAddrs};
 
     match dns
         .to_socket_addrs()
-        .map_err(|_| Error::UnresolvableDomain(dns.to_string()))?
+        .map_err(|_| GossipLayerConfigError::UnresolvableDomain(dns.to_string()))?
         .next()
-        .ok_or_else(|| Error::UnresolvableDomain(dns.to_string()))?
+        .ok_or_else(|| GossipLayerConfigError::UnresolvableDomain(dns.to_string()))?
         .ip()
     {
         IpAddr::V4(ip4) => return Ok(Protocol::Ip4(ip4)),
@@ -182,16 +185,16 @@ fn resolve_dns_multiaddr(dns: Cow<'_, str>) -> Result<Protocol, Error> {
     }
 }
 
-impl Default for NetworkConfig {
+impl Default for GossipLayerConfig {
     fn default() -> Self {
         Self {
             // Panic:
             // Unwrapping is fine, because we made sure that the default is parsable.
-            bind_multiaddr: DEFAULT_BIND_MULTIADDR.parse().unwrap(),
-            reconnect_interval_secs: DEFAULT_RECONNECT_INTERVAL_SECS,
-            max_unknown_peers: DEFAULT_MAX_UNKNOWN_PEERS,
-            max_discovered_peers: DEFAULT_MAX_DISCOVERED_PEERS,
-            static_peers: Default::default(),
+            bind_addr: BIND_ADDR_DEFAULT.parse().unwrap(),
+            reconnect_interval: RECONNECT_INTERVAL_DEFAULT,
+            max_unknown_peers: MAX_UNKNOWN_PEERS_DEFAULT,
+            max_discovered_peers: MAX_DISCOVERED_PEERS_DEFAULT,
+            manual_peers: Default::default(),
         }
     }
 }
@@ -199,26 +202,26 @@ impl Default for NetworkConfig {
 /// A network configuration builder.
 #[derive(Default, Deserialize)]
 #[must_use]
-pub struct NetworkConfigBuilder {
+pub struct GossipLayerConfigBuilder {
     #[serde(alias = "bindAddress", alias = "bind_address")]
     bind_multiaddr: Option<Multiaddr>,
     #[serde(alias = "reconnectIntervalSecs")]
     reconnect_interval_secs: Option<u64>,
     #[serde(alias = "maxUnknownPeers")]
-    max_unknown_peers: Option<usize>,
+    max_unknown_peers: Option<u16>,
     #[serde(alias = "maxDiscoveredPeers")]
-    max_discovered_peers: Option<usize>,
+    max_discovered_peers: Option<u16>,
     peering: ManualPeeringConfigBuilder,
 }
 
-impl NetworkConfigBuilder {
+impl GossipLayerConfigBuilder {
     /// Creates a new default builder.
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Specifies the bind addresses.
-    pub fn with_bind_multiaddr(mut self, mut multiaddr: Multiaddr) -> Result<Self, Error> {
+    pub fn with_bind_multiaddr(mut self, mut multiaddr: Multiaddr) -> Result<Self, GossipLayerConfigError> {
         let mut valid = false;
         let mut is_dns = false;
 
@@ -226,7 +229,7 @@ impl NetworkConfigBuilder {
             match i {
                 0 => {
                     if !matches!(p, Protocol::Ip4(_) | Protocol::Ip6(_) | Protocol::Dns(_)) {
-                        return Err(Error::InvalidProtocol(0));
+                        return Err(GossipLayerConfigError::InvalidProtocol(0));
                     }
 
                     if matches!(p, Protocol::Dns(_)) {
@@ -235,15 +238,15 @@ impl NetworkConfigBuilder {
                 }
                 1 => {
                     if !matches!(p, Protocol::Tcp(_)) {
-                        return Err(Error::InvalidProtocol(1));
+                        return Err(GossipLayerConfigError::InvalidProtocol(1));
                     }
                     valid = true;
                 }
-                _ => return Err(Error::MultiaddrOverspecified),
+                _ => return Err(GossipLayerConfigError::MultiaddrOverspecified),
             }
         }
         if !valid {
-            return Err(Error::MultiaddrUnderspecified);
+            return Err(GossipLayerConfigError::MultiaddrUnderspecified);
         }
 
         if is_dns {
@@ -281,35 +284,38 @@ impl NetworkConfigBuilder {
     ///
     /// The allowed minimum value for the `secs` argument is `1`.
     pub fn with_reconnect_interval_secs(mut self, secs: u64) -> Self {
-        let secs = secs.max(MIN_RECONNECT_INTERVAL_SECS);
+        let secs = secs.max(RECONNECT_INTERVAL_MIN.as_secs());
         self.reconnect_interval_secs.replace(secs);
         self
     }
 
     /// Specifies the maximum number of gossip connections with unknown peers.
-    pub fn with_max_unknown_peers(mut self, n: usize) -> Self {
+    pub fn with_max_unknown_peers(mut self, n: u16) -> Self {
         self.max_unknown_peers.replace(n);
         self
     }
 
     /// Specifies the maximum number of gossip connections with discovered peers.
-    pub fn with_max_discovered_peers(mut self, n: usize) -> Self {
+    pub fn with_max_discovered_peers(mut self, n: u16) -> Self {
         self.max_discovered_peers.replace(n);
         self
     }
 
     /// Builds the network config.
-    pub fn finish(self) -> Result<NetworkConfig, Error> {
-        Ok(NetworkConfig {
-            bind_multiaddr: self
+    pub fn finish(self) -> Result<GossipLayerConfig, GossipLayerConfigError> {
+        Ok(GossipLayerConfig {
+            bind_addr: self
                 .bind_multiaddr
                 // Panic:
                 // We made sure that the default is parsable.
-                .unwrap_or_else(|| DEFAULT_BIND_MULTIADDR.parse().unwrap()),
-            reconnect_interval_secs: self.reconnect_interval_secs.unwrap_or(DEFAULT_RECONNECT_INTERVAL_SECS),
-            max_unknown_peers: self.max_unknown_peers.unwrap_or(DEFAULT_MAX_UNKNOWN_PEERS),
-            max_discovered_peers: self.max_discovered_peers.unwrap_or(DEFAULT_MAX_DISCOVERED_PEERS),
-            static_peers: self.peering.finish()?.peers,
+                .unwrap_or_else(|| BIND_ADDR_DEFAULT.parse().unwrap()),
+            reconnect_interval: Duration::from_secs(
+                self.reconnect_interval_secs
+                    .unwrap_or_else(|| RECONNECT_INTERVAL_DEFAULT.as_secs()),
+            ),
+            max_unknown_peers: self.max_unknown_peers.unwrap_or(MAX_UNKNOWN_PEERS_DEFAULT),
+            max_discovered_peers: self.max_discovered_peers.unwrap_or(MAX_DISCOVERED_PEERS_DEFAULT),
+            manual_peers: self.peering.finish()?.peers,
         })
     }
 }
@@ -347,41 +353,41 @@ impl InMemoryNetworkConfigBuilder {
 
     /// Builds the in-memory network config.
     #[must_use]
-    pub fn finish(self) -> NetworkConfig {
+    pub fn finish(self) -> GossipLayerConfig {
         const DEFAULT_BIND_MULTIADDR_MEM: &str = "/memory/0";
 
-        NetworkConfig {
-            bind_multiaddr: self
+        GossipLayerConfig {
+            bind_addr: self
                 .bind_multiaddr
                 .unwrap_or_else(|| DEFAULT_BIND_MULTIADDR_MEM.parse().unwrap()),
-            reconnect_interval_secs: DEFAULT_RECONNECT_INTERVAL_SECS,
-            max_unknown_peers: DEFAULT_MAX_UNKNOWN_PEERS,
-            max_discovered_peers: DEFAULT_MAX_DISCOVERED_PEERS,
-            static_peers: Default::default(),
+            reconnect_interval: RECONNECT_INTERVAL_DEFAULT,
+            max_unknown_peers: MAX_UNKNOWN_PEERS_DEFAULT,
+            max_discovered_peers: MAX_DISCOVERED_PEERS_DEFAULT,
+            manual_peers: Default::default(),
         }
     }
 }
 
 #[derive(Clone)]
 pub struct ManualPeeringConfig {
-    pub peers: HashSet<Peer>,
+    pub peers: Vec<PeerConfig>,
 }
 
 #[derive(Clone)]
-pub struct Peer {
+pub struct PeerConfig {
     pub peer_id: PeerId,
-    pub multiaddr: Multiaddr,
-    pub alias: Option<String>,
+    pub peer_addr: Multiaddr,
+    pub peer_alias: Option<String>,
 }
 
-impl Eq for Peer {}
-impl PartialEq for Peer {
+impl Eq for PeerConfig {}
+impl PartialEq for PeerConfig {
     fn eq(&self, other: &Self) -> bool {
         self.peer_id.eq(&other.peer_id)
     }
 }
-impl std::hash::Hash for Peer {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+impl hash::Hash for PeerConfig {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
         self.peer_id.hash(state)
     }
 }
@@ -393,7 +399,7 @@ pub struct ManualPeeringConfigBuilder {
 }
 
 impl ManualPeeringConfigBuilder {
-    pub fn finish(self) -> Result<ManualPeeringConfig, Error> {
+    pub fn finish(self) -> Result<ManualPeeringConfig, GossipLayerConfigError> {
         let peers = match self.peers {
             None => Default::default(),
             Some(peer_builders) => {
@@ -403,16 +409,16 @@ impl ManualPeeringConfigBuilder {
 
                 for builder in peer_builders {
                     let (multiaddr, peer_id) = split_multiaddr(&builder.multiaddr)?;
-                    if !peers.insert(Peer {
+                    if !peers.insert(PeerConfig {
                         peer_id,
-                        multiaddr,
-                        alias: builder.alias,
+                        peer_addr: multiaddr,
+                        peer_alias: builder.alias,
                     }) {
-                        return Err(Error::DuplicateStaticPeer(peer_id));
+                        return Err(GossipLayerConfigError::DuplicateManualPeer(peer_id));
                     }
                 }
 
-                peers
+                peers.into_iter().collect()
             }
         };
 
@@ -420,18 +426,20 @@ impl ManualPeeringConfigBuilder {
     }
 }
 
-fn split_multiaddr(multiaddr: &str) -> Result<(Multiaddr, PeerId), Error> {
+fn split_multiaddr(multiaddr: &str) -> Result<(Multiaddr, PeerId), GossipLayerConfigError> {
     let mut multiaddr: Multiaddr = multiaddr
         .parse()
-        .map_err(|_| Error::ParsingFailed(multiaddr.to_string()))?;
+        .map_err(|_| GossipLayerConfigError::ParsingFailed(multiaddr.to_string()))?;
 
-    if let Protocol::P2p(multihash) = multiaddr.pop().ok_or(Error::MultiaddrUnderspecified)? {
+    if let Protocol::P2p(multihash) = multiaddr.pop().ok_or(GossipLayerConfigError::MultiaddrUnderspecified)? {
         Ok((
             multiaddr,
-            PeerId::from_multihash(multihash).expect("Invalid peer Multiaddr: Make sure your peer's Id is complete."),
+            libp2p_core::PeerId::from_multihash(multihash)
+                .expect("Invalid peer Multiaddr: Make sure your peer's Id is complete.")
+                .into(),
         ))
     } else {
-        Err(Error::MissingP2pProtocol)
+        Err(GossipLayerConfigError::MissingP2pProtocol)
     }
 }
 
@@ -449,18 +457,18 @@ mod tests {
 
     #[test]
     fn create_default_network_config() {
-        let config = NetworkConfig::default();
+        let config = GossipLayerConfig::default();
 
         assert_eq!(
             config.bind_multiaddr(),
-            &DEFAULT_BIND_MULTIADDR.parse::<Multiaddr>().unwrap()
+            &BIND_ADDR_DEFAULT.parse::<Multiaddr>().unwrap()
         );
     }
 
     #[test]
     #[should_panic]
     fn create_with_builder_and_too_short_bind_address() {
-        let _config = NetworkConfig::build()
+        let _config = GossipLayerConfig::build()
             .with_bind_multiaddr("/ip4/127.0.0.1".parse().unwrap())
             .unwrap()
             .finish();
@@ -469,7 +477,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn create_with_builder_and_too_long_bind_address() {
-        let _config = NetworkConfig::build()
+        let _config = GossipLayerConfig::build()
             .with_bind_multiaddr(
                 "/ip4/127.0.0.1/p2p/12D3KooWJWEKvSFbben74C7H4YtKjhPMTDxd7gP7zxWSUEeF27st"
                     .parse()
@@ -481,7 +489,7 @@ mod tests {
 
     #[test]
     fn create_with_builder_and_valid_ip_bind_address() {
-        let _config = NetworkConfig::build()
+        let _config = GossipLayerConfig::build()
             .with_bind_multiaddr("/ip4/127.0.0.1/tcp/1337".parse().unwrap())
             .unwrap()
             .finish();
@@ -489,7 +497,7 @@ mod tests {
 
     #[test]
     fn create_with_builder_and_valid_dns_bind_address() {
-        let _config = NetworkConfig::build()
+        let _config = GossipLayerConfig::build()
             .with_bind_multiaddr("/dns/localhost/tcp/1337".parse().unwrap())
             .unwrap()
             .finish();
@@ -498,14 +506,14 @@ mod tests {
     #[test]
     #[should_panic]
     fn create_with_mem_builder_and_non_mem_multiaddr() {
-        let _config = NetworkConfig::build_in_memory()
+        let _config = GossipLayerConfig::build_in_memory()
             .with_bind_multiaddr("/ip4/127.0.0.1/tcp/1337".parse().unwrap())
             .finish();
     }
 
     #[test]
     fn create_with_mem_builder_and_valid_mem_multiaddr() {
-        let _config = NetworkConfig::build_in_memory()
+        let _config = GossipLayerConfig::build_in_memory()
             .with_bind_multiaddr("/memory/1337".parse().unwrap())
             .finish();
     }

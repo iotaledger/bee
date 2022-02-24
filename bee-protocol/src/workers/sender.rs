@@ -20,15 +20,15 @@ pub(crate) struct Sender<P: Packet> {
 }
 
 impl Sender<MilestoneRequestPacket> {
-    pub(crate) fn send(
+    pub(crate) async fn send(
         packet: &MilestoneRequestPacket,
         id: &PeerId,
         peer_manager: &PeerManager,
         metrics: &NodeMetrics,
     ) {
-        if let Some(ref peer) = peer_manager.get(id) {
-            if let Some(ref sender) = peer.1 {
-                match sender.0.send(tlv_to_bytes(packet)) {
+        if let Some(ref mut peer) = peer_manager.get_mut(id).await {
+            if let Some(ref mut sender) = peer.1 {
+                match sender.0.send(&tlv_to_bytes(packet)).await {
                     Ok(_) => {
                         peer.0.metrics().milestone_requests_sent_inc();
                         metrics.milestone_requests_sent_inc();
@@ -43,10 +43,10 @@ impl Sender<MilestoneRequestPacket> {
 }
 
 impl Sender<MessagePacket> {
-    pub(crate) fn send(packet: &MessagePacket, id: &PeerId, peer_manager: &PeerManager, metrics: &NodeMetrics) {
-        if let Some(ref peer) = peer_manager.get(id) {
-            if let Some(ref sender) = peer.1 {
-                match sender.0.send(tlv_to_bytes(packet)) {
+    pub(crate) async fn send(packet: &MessagePacket, id: &PeerId, peer_manager: &PeerManager, metrics: &NodeMetrics) {
+        if let Some(ref mut peer) = peer_manager.get_mut(id).await {
+            if let Some(ref mut sender) = peer.1 {
+                match sender.0.send(&tlv_to_bytes(packet)).await {
                     Ok(_) => {
                         peer.0.metrics().messages_sent_inc();
                         metrics.messages_sent_inc();
@@ -61,10 +61,15 @@ impl Sender<MessagePacket> {
 }
 
 impl Sender<MessageRequestPacket> {
-    pub(crate) fn send(packet: &MessageRequestPacket, id: &PeerId, peer_manager: &PeerManager, metrics: &NodeMetrics) {
-        if let Some(ref peer) = peer_manager.get(id) {
-            if let Some(ref sender) = peer.1 {
-                match sender.0.send(tlv_to_bytes(packet)) {
+    pub(crate) async fn send(
+        packet: &MessageRequestPacket,
+        id: &PeerId,
+        peer_manager: &PeerManager,
+        metrics: &NodeMetrics,
+    ) {
+        if let Some(ref mut peer) = peer_manager.get_mut(id).await {
+            if let Some(ref mut sender) = peer.1 {
+                match sender.0.send(&tlv_to_bytes(packet)).await {
                     Ok(_) => {
                         peer.0.metrics().message_requests_sent_inc();
                         metrics.message_requests_sent_inc();
@@ -79,10 +84,10 @@ impl Sender<MessageRequestPacket> {
 }
 
 impl Sender<HeartbeatPacket> {
-    pub(crate) fn send(packet: &HeartbeatPacket, id: &PeerId, peer_manager: &PeerManager, metrics: &NodeMetrics) {
-        if let Some(ref peer) = peer_manager.get(id) {
-            if let Some(ref sender) = peer.1 {
-                match sender.0.send(tlv_to_bytes(packet)) {
+    pub(crate) async fn send(packet: &HeartbeatPacket, id: &PeerId, peer_manager: &PeerManager, metrics: &NodeMetrics) {
+        if let Some(ref mut peer) = peer_manager.get_mut(id).await {
+            if let Some(ref mut sender) = peer.1 {
+                match sender.0.send(&tlv_to_bytes(packet)).await {
                     Ok(_) => {
                         peer.0.metrics().heartbeats_sent_inc();
                         peer.0.set_heartbeat_sent_timestamp();

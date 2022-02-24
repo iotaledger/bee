@@ -9,7 +9,7 @@ use crate::{
 use crate::plugins::dashboard::config::DashboardConfig;
 
 use bee_autopeering::config::AutopeeringConfig;
-use bee_gossip::NetworkConfig;
+use bee_gossip::GossipLayerConfig;
 use bee_ledger::workers::{pruning::config::PruningConfig, snapshot::config::SnapshotConfig};
 use bee_protocol::workers::config::ProtocolConfig;
 use bee_rest_api::endpoints::config::RestApiConfig;
@@ -28,7 +28,7 @@ pub struct FullNodeConfig<S: NodeStorageBackend> {
     /// Logger.
     pub logger: LoggerConfig,
     /// Network layer.
-    pub network: NetworkConfig,
+    pub network: GossipLayerConfig,
     /// Autopeering.
     pub autopeering: AutopeeringConfig,
     /// Protocol layer.
