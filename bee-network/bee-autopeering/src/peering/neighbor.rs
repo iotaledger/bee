@@ -232,7 +232,6 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
     }
 
     fn remove_furthest_if_full(&mut self) -> Option<Peer> {
-        // Note: Both methods require unique access to `self`, so we need to copy the peer id.
         if let Some(peer_id) = self.find_furthest_if_full().map(|d| *d.peer().peer_id()) {
             self.remove_neighbor(&peer_id)
         } else {
