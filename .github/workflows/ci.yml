@@ -22,7 +22,7 @@ on:
 
 jobs:
   build-and-test:
-    name: build and test
+    name: Build & Test ${{ format('({0},{1}){2}', matrix.os, matrix.rust, matrix.experimental && ' - 🦜' || '') }}
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
     strategy:
@@ -122,6 +122,7 @@ jobs:
           args: --workspace --doc --all-features --release
 
   no_std:
+    name: `no_std` ${{ format('({0},{1}){2}', matrix.rust, matrix.crates, matrix.experimental && ' - 🦜' || '') }}
     needs: build-and-test
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.experimental }}
@@ -187,6 +188,7 @@ jobs:
           args: --release --target=riscv64gc-unknown-none-elf --manifest-path ${{ matrix.crates }}/Cargo.toml
 
   format:
+    name: Formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -205,7 +207,6 @@ jobs:
 
   clippy:
     needs: format
-    if: ${{ (github.event_name == 'pull_request') && matrix.experimental }}
     name: Clippy ${{ format('({0}){1}', matrix.rust, matrix.experimental && ' - 🦜' || '') }}
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.experimental }}
@@ -257,6 +258,7 @@ jobs:
           args: --all-targets --all-features -- -D warnings
 
   udeps:
+    name: Dependencies
     needs: clippy
     runs-on: ubuntu-latest
     steps:
@@ -303,6 +305,7 @@ jobs:
           args: --all-targets --all-features --backend=depinfo
 
   licenses:
+    name: Licenses
     needs: clippy
     runs-on: ubuntu-latest
     steps:
@@ -352,6 +355,7 @@ jobs:
           args: generate --workspace --all-features about.hbs
 
   docs:
+    name: Documentation
     needs: clippy
     runs-on: ubuntu-latest
     env:
