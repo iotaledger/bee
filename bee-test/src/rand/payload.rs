@@ -7,7 +7,7 @@ use crate::rand::{
 };
 
 use bee_message::payload::{
-    receipt::ReceiptPayload, tagged_data::TaggedDataPayload, treasury::TreasuryTransactionPayload, Payload,
+    receipt::ReceiptPayload, tagged_data::TaggedDataPayload, treasury_transaction::TreasuryTransactionPayload, Payload,
 };
 
 /// Generates a random tagged data payload.

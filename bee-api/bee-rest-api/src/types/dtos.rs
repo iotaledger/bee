@@ -24,7 +24,7 @@ use bee_message::{
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
         tagged_data::TaggedDataPayload,
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
-        treasury::TreasuryTransactionPayload,
+        treasury_transaction::TreasuryTransactionPayload,
         Payload,
     },
     signature::{Ed25519Signature, Signature},
