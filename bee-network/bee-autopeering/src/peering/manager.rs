@@ -299,7 +299,7 @@ fn handle_peering_request<V: NeighborValidator>(
                 let neighbor = Neighbor::new(active_peer.into_peer(), distance);
 
                 // Check if the neighbor would be closer than the currently furthest in the inbound neighborhood.
-                if ctx.inbound_nbh.is_preferred(&neighbor) {
+                if ctx.inbound_nbh.check_neighbor_candidate(&neighbor) {
                     let peer = neighbor.into_peer();
 
                     if add_or_replace_neighbor::<INBOUND>(

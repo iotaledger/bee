@@ -106,8 +106,8 @@ impl<const N: usize, const INBOUND: bool> Neighborhood<N, INBOUND> {
     }
 
     /// Checks whether the candidate is a preferred neighbor.
-    pub(crate) fn is_preferred(&self, candidate: &Neighbor) -> bool {
-        self.write().check_candidate(candidate)
+    pub(crate) fn check_neighbor_candidate(&self, candidate: &Neighbor) -> bool {
+        self.write().check_neighbor_candidate(candidate)
     }
 
     /// Picks the first candidate that is closer than the currently furthest neighbor.
@@ -201,7 +201,7 @@ impl<const N: usize, const INBOUND: bool> NeighborhoodInner<N, INBOUND> {
 
     /// Note: if the neighborhood is not full, then any `candidate` is just good enough and will be preferred
     /// over an open slot in the neighborhood.
-    fn check_candidate(&mut self, candidate: &Neighbor) -> bool {
+    fn check_neighbor_candidate(&mut self, candidate: &Neighbor) -> bool {
         if let Some(furthest) = self.sort_and_get_furthest_neighbor() {
             candidate < furthest
         } else {
