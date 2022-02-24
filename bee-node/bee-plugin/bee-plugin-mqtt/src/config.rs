@@ -5,6 +5,7 @@ use serde::Deserialize;
 
 const DEFAULT_ADDRESS: &str = "tcp://localhost:1883";
 
+/// Builder struct for creating an [`MqttConfig`].
 #[derive(Default, Deserialize, PartialEq)]
 pub struct MqttConfigBuilder {
     address: Option<String>,
