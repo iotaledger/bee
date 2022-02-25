@@ -3,11 +3,10 @@ name: Coverage
 on:
   push:
     branches:
-      - dev
       - mainnet
-      - mainnet-develop
+      - 'mainnet-develop*'
       - shimmer
-      - shimmer-develop
+      - 'shimmer-develop*'
     paths:
       - '**.rs'
       - '**.toml'

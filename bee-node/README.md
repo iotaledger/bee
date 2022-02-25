@@ -52,7 +52,7 @@ rustup update
 ## Compilation
 
 ```sh
-git clone https://github.com/iotaledger/bee.git --branch dev
+git clone https://github.com/iotaledger/bee.git --branch mainnet-develop
 cd bee/bee-node
 ```
 
