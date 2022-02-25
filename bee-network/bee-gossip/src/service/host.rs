@@ -32,6 +32,7 @@ use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
 const MAX_PEER_STATE_CHECKER_DELAY_MILLIS: u64 = 2000;
+const MAX_DIAL_ATTEMPTS: usize = 3;
 
 pub struct ServiceHostConfig {
     pub local_keys: identity::Keypair,
@@ -240,10 +241,19 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
 
         // Automatically try to reconnect known **and** discovered peers. The removal of discovered peers is a decision
         // that needs to be made in the autopeering service.
-        for (peer_id, info) in peerlist_reader.filter_info(|info, state| {
+        for (peer_id, peer_info) in peerlist_reader.filter_info(|info, state| {
             (info.relation.is_known() || info.relation.is_discovered()) && state.is_disconnected()
         }) {
-            debug!("Trying to reconnect to: {} ({}).", info.alias, alias!(peer_id));
+            let dial_attempts = peerlist_reader.dial_attempts(&peer_id).expect("peer does exist").expect("peer is not connected");
+
+            if dial_attempts >= MAX_DIAL_ATTEMPTS {
+                log::debug!("Peer {} is unreachable.", peer_id);
+
+                let _ = senders.events.send(Event::PeerUnreachable { peer_id, peer_info });
+                continue;
+            }
+
+            debug!("Trying to reconnect to: {} ({}).", peer_info.alias, alias!(peer_id));
 
             // Ignore if the command fails. We can always retry the next time.
             let _ = senders.internal_commands.send(Command::DialPeer { peer_id });

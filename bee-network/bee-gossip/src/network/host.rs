@@ -182,9 +182,7 @@ async fn process_internal_command(internal_command: Command, swarm: &mut Swarm<S
                 warn!("Dialing peer {} failed. Cause: {}", alias!(peer_id), e);
             }
         }
-        Command::DisconnectPeer { peer_id } => {
-            hang_up(swarm, peer_id).await
-        }
+        Command::DisconnectPeer { peer_id } => hang_up(swarm, peer_id).await,
         _ => {}
     }
 }
@@ -212,9 +210,22 @@ async fn dial_peer(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId, peerlist:
     // We just checked, that the peer is fine to be dialed.
     let PeerInfo {
         address: addr, alias, ..
-    } = peerlist.0.read().await.info(&peer_id).unwrap();
+    } = peerlist.0.read().await.info(&peer_id).expect("peer must exist");
 
-    debug!("Dialing peer: {} ({}).", alias, alias!(peer_id));
+    let dial_attempt = peerlist
+        .0
+        .write()
+        .await
+        .log_dial_attempt(&peer_id)
+        .expect("peer must exist")
+        .expect("peer must not be connected");
+
+    debug!(
+        "Dialing peer: {} ({}) attempt: #{}.",
+        alias,
+        alias!(peer_id),
+        dial_attempt
+    );
 
     // TODO: We also use `Swarm::dial_addr` here (instead of `Swarm::dial`) for now. See if it's better to change
     // that.

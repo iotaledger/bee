@@ -187,6 +187,12 @@ where
                             info!("Disconnected peer {}.", peer.0.alias());
                         })
                         .unwrap_or_default(),
+                    NetworkEvent::PeerUnreachable { peer_id, peer_info } => {
+                        if peer_info.relation.is_discovered() {
+                            // todo: tell the autopeering to remove that neighbor
+                            log::error!("Tell autopeering to remove {}", alias!(peer_id));
+                        }
+                    }
                     _ => (), // Ignore all other events for now
                 }
             }

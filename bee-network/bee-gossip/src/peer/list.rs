@@ -63,7 +63,7 @@ impl PeerList {
                         alias: peer.alias.unwrap_or_else(|| alias!(peer_id).to_owned()),
                         relation: PeerRelation::Known,
                     },
-                    PeerState::Disconnected,
+                    PeerState::default(),
                 ),
             )
         }));
@@ -83,7 +83,7 @@ impl PeerList {
         }
 
         // Since we already checked that such a `peer_id` is not yet present, the returned value is always `None`.
-        let _ = self.peers.insert(peer_id, (peer_info, PeerState::Disconnected));
+        let _ = self.peers.insert(peer_id, (peer_info, PeerState::default()));
 
         Ok(())
     }
@@ -113,6 +113,29 @@ impl PeerList {
             .get(peer_id)
             .ok_or(Error::PeerNotPresent(*peer_id))
             .map(|(peer_info, _)| peer_info.clone())
+    }
+
+    pub fn dial_attempts(&self, peer_id: &PeerId) -> Result<Option<usize>, Error> {
+        let (_, state) = self.peers.get(peer_id).ok_or(Error::PeerNotPresent(*peer_id))?;
+
+        if let PeerState::Disconnected { dial_attempts } = state {
+            Ok(Some(*dial_attempts))
+        } else {
+            Ok(None)
+        }
+    }
+
+    // Note: no-op if peer is already connected.
+    pub fn log_dial_attempt(&mut self, peer_id: &PeerId) -> Result<Option<usize>, Error> {
+        let (_, state) = self.peers.get_mut(peer_id).ok_or(Error::PeerNotPresent(*peer_id))?;
+
+        if let PeerState::Disconnected { dial_attempts } = state {
+            *dial_attempts += 1;
+
+            Ok(Some(*dial_attempts))
+        } else {
+            Ok(None)
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -471,19 +494,19 @@ mod tests {
 
 #[derive(Clone, Debug)]
 pub enum PeerState {
-    Disconnected,
+    Disconnected { dial_attempts: usize },
     Connected(GossipSender),
 }
 
 impl Default for PeerState {
     fn default() -> Self {
-        Self::Disconnected
+        Self::Disconnected { dial_attempts: 0 }
     }
 }
 
 impl PeerState {
     pub fn is_disconnected(&self) -> bool {
-        matches!(self, Self::Disconnected)
+        matches!(self, Self::Disconnected { dial_attempts: _ })
     }
 
     pub fn is_connected(&self) -> bool {
@@ -497,7 +520,7 @@ impl PeerState {
 
     pub fn set_disconnected(&mut self) -> Option<GossipSender> {
         match take(self) {
-            Self::Disconnected => None,
+            Self::Disconnected { .. } => None,
             Self::Connected(sender) => Some(sender),
         }
     }
@@ -517,7 +540,7 @@ mod peerstate_tests {
 
     #[test]
     fn peer_state_change() {
-        let mut peerstate = PeerState::Disconnected;
+        let mut peerstate = PeerState::Disconnected { dial_attempts: 0 };
         let (tx, _rx) = channel();
 
         peerstate.set_connected(tx);
