@@ -188,7 +188,7 @@ jobs:
           args: --release --target=riscv64gc-unknown-none-elf --manifest-path ${{ matrix.crates }}/Cargo.toml
 
   format:
-    name: Formatting
+    name: Check Formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
