@@ -216,6 +216,9 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
     while interval.next().await.is_some() {
         let peerlist_reader = peerlist.0.read().await;
 
+        // How many peers we know about.
+        let num_all = peerlist_reader.len();
+
         // To how many known peers are we currently connected.
         let num_known = peerlist_reader.filter_count(|info, _| info.relation.is_known());
         let num_connected_known =
@@ -230,13 +233,14 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
             peerlist_reader.filter_count(|info, state| info.relation.is_discovered() && state.is_connected());
 
         info!(
-            "Connected peers: known {}/{} unknown {}/{} discovered {}/{}.",
+            "Connected peers: known {}/{} unknown {}/{} discovered {}/{}, All peers: {}.",
             num_connected_known,
             num_known,
             num_connected_unknown,
             global::max_unknown_peers(),
             num_connected_discovered,
-            global::max_discovered_peers()
+            global::max_discovered_peers(),
+            num_all,
         );
 
         // Automatically try to reconnect known **and** discovered peers. The removal of discovered peers is a decision

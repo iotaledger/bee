@@ -110,6 +110,7 @@ where
 
             while let Some(event) = receiver.next().await {
                 trace!("Received event {:?}.", event);
+                log::warn!{"peer_manager.len()={}", peer_manager.len()};
 
                 match event {
                     NetworkEvent::PeerAdded { peer_id, info } => {
