@@ -190,7 +190,11 @@ where
                         .unwrap_or_default(),
                     NetworkEvent::PeerUnreachable { peer_id, peer_info } => {
                         if peer_info.relation.is_discovered() {
-                            // todo: tell the autopeering to remove that neighbor
+                            // Remove that discovered peer from the manager.
+                            if let Some(peer) = peer_manager.remove(&peer_id) {
+                                info!("Removed peer {}.", peer.0.alias());
+                            }
+                            // Todo: tell the autopeering to remove that neighbor.
                             log::error!("Tell autopeering to remove {}", alias!(peer_id));
                         }
                     }
