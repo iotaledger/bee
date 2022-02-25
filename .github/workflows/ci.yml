@@ -22,28 +22,17 @@ on:
 
 jobs:
   build-and-test:
-    name: ${{ format('{0}Build & Test ({1}, {2})', matrix.experimental && '🦜 ' || '', matrix.os, matrix.rust) }}
+    name: ${{ format('{0}Build & Test ({1}, {2})', (matrix.rust != 'stable') && '🦜 ' || '', matrix.os, matrix.rust) }}
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.experimental }}
+    continue-on-error: ${{ (matrix.rust != 'stable') }}
     strategy:
       matrix:
-        rust: [stable]
+        rust: [stable, beta]
         os: [ubuntu-latest, macos-latest, windows-latest]
-        experimental: [false]
         include:
-          - rust: beta
-            os: ubuntu-latest
-            experimental: true
-          - rust: beta
-            os: macos-latest
-            experimental: true
-          - rust: beta
-            os: windows-latest
-            experimental: true
             # The following ensures that workflows relying on `nightly` don't break.
           - rust: nightly
             os: ubuntu-latest
-            experimental: true
 
     steps:
       - uses: actions/checkout@v2
@@ -122,24 +111,16 @@ jobs:
           args: --workspace --doc --all-features --release
 
   no_std:
-    name: ${{ format('{0}Check [no_std] ({1}, {2})', matrix.experimental && '🦜 ' || '', matrix.rust, matrix.crates) }}
+    name: ${{ format('{0}Check [no_std] ({1}, {2})', (matrix.rust != 'stable') && '🦜 ' || '', matrix.rust, matrix.crates) }}
     needs: build-and-test
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
+    continue-on-error: ${{ (matrix.rust != 'stable') }}
     strategy:
       matrix:
-        rust: [stable]
+        rust: [stable, beta, nightly]
         crates: [
           "bee-ternary",
         ]
-        experimental: [false]
-        include:
-          - rust: beta
-            experimental: true
-            crates: "bee-ternary"
-          - rust: nightly
-            experimental: true
-            crates: "bee-ternary"
 
     steps:
       - uses: actions/checkout@v2
@@ -207,16 +188,12 @@ jobs:
 
   clippy:
     needs: format
-    name: ${{ format('{0}Clippy ({1})', matrix.experimental && '🦜 ' || '', matrix.rust) }}
+    name: ${{ format('{0}Clippy ({1})', (matrix.rust != 'stable') && '🦜 ' || '', matrix.rust) }}
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
+    continue-on-error: ${{ (matrix.rust != 'stable') }}
     strategy:
       matrix:
-        include:
-          - rust: stable
-            experimental: false
-          - rust: beta
-            experimental: true
+        rust: [stable, beta]
 
     steps:
       - uses: actions/checkout@v2
