@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod plugins;
-pub mod v1;
+pub mod v2;
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
@@ -42,7 +42,7 @@ pub(crate) fn filter<B: StorageBackend>(
     requested_messages: ResourceHandle<RequestedMessages>,
     consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    v1::filter(
+    v2::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),

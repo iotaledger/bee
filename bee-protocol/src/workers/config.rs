@@ -3,7 +3,10 @@
 
 use crate::types::milestone_key_range::MilestoneKeyRange;
 
-use bee_message::milestone::MilestoneIndex;
+use bee_message::{
+    milestone::MilestoneIndex,
+    output::{ByteCostConfig, ByteCostConfigBuilder},
+};
 
 use serde::Deserialize;
 
@@ -42,6 +45,8 @@ pub struct ProtocolConfigBuilder {
     minimum_pow_score: Option<f64>,
     coordinator: ProtocolCoordinatorConfigBuilder,
     workers: ProtocolWorkersConfigBuilder,
+    #[serde(alias = "byteCost")]
+    byte_cost: ByteCostConfigBuilder,
 }
 
 impl ProtocolConfigBuilder {
@@ -114,6 +119,7 @@ impl ProtocolConfigBuilder {
                     .milestone_sync_count
                     .unwrap_or(DEFAULT_MILESTONE_SYNC_COUNT),
             },
+            byte_cost: self.byte_cost.finish(),
         }
     }
 }
@@ -139,6 +145,7 @@ pub struct ProtocolConfig {
     pub(crate) minimum_pow_score: f64,
     pub(crate) coordinator: ProtocolCoordinatorConfig,
     pub(crate) workers: ProtocolWorkersConfig,
+    pub(crate) byte_cost: ByteCostConfig,
 }
 
 impl ProtocolConfig {
@@ -155,5 +162,10 @@ impl ProtocolConfig {
     /// Returns the coordinator configuration of the `ProtocolConfig`.
     pub fn coordinator(&self) -> &ProtocolCoordinatorConfig {
         &self.coordinator
+    }
+
+    /// Returns the byte cost configuration of the `ProtocolConfig`.
+    pub fn byte_cost(&self) -> &ByteCostConfig {
+        &self.byte_cost
     }
 }

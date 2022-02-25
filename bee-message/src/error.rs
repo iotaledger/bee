@@ -4,8 +4,8 @@
 use crate::{
     input::UtxoInput,
     output::{
-        feature_block::FeatureBlockCount, unlock_condition::UnlockConditionCount, AliasId, DustDepositAmount,
-        MetadataFeatureBlockLength, NativeTokenCount, NftId, OutputAmount, OutputIndex, StateMetadataLength,
+        feature_block::FeatureBlockCount, unlock_condition::UnlockConditionCount, AliasId, MetadataFeatureBlockLength,
+        NativeTokenCount, NftId, OutputAmount, OutputIndex, StateMetadataLength, StorageDepositAmount,
         TagFeatureBlockLength, TreasuryOutputAmount,
     },
     parent::ParentCount,
@@ -47,7 +47,7 @@ pub enum Error {
     #[cfg(feature = "cpt2")]
     #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     InvalidDustAllowanceAmount(<DustAllowanceAmount as TryFrom<u64>>::Error),
-    InvalidDustDepositAmount(<DustDepositAmount as TryFrom<u64>>::Error),
+    InvalidStorageDepositAmount(<StorageDepositAmount as TryFrom<u64>>::Error),
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
     InvalidFeatureBlockKind(u8),
@@ -185,8 +185,8 @@ impl fmt::Display for Error {
             Error::InvalidDustAllowanceAmount(amount) => {
                 write!(f, "invalid dust allowance amount: {}", amount)
             }
-            Error::InvalidDustDepositAmount(amount) => {
-                write!(f, "invalid dust deposit amount: {}", amount)
+            Error::InvalidStorageDepositAmount(amount) => {
+                write!(f, "invalid storage deposit amount: {}", amount)
             }
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}", k),
             Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}", count),

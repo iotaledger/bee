@@ -7,7 +7,7 @@ use crate::endpoints::{
     path_params::transaction_id,
     permission::has_permission,
     rejection::CustomRejection,
-    routes::api::v1::message,
+    routes::api::v2::message,
     storage::StorageBackend,
 };
 

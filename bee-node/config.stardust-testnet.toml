@@ -69,29 +69,34 @@ end         = 0
 status_interval       = 10
 milestone_sync_count  = 200
 
+[protocol.byte_cost]
+v_byte_cost = 500
+v_byte_factor_key = 10
+v_byte_factor_data = 1
+
 [rest_api]
 bind_address          = "/ip4/0.0.0.0/tcp/14265"
 feature_proof_of_work = true
 public_routes         = [
     "/health",
-    "/api/v1/info",
-    "/api/v1/tips",
-    "/api/v1/messages",
-    "/api/v1/messages/:messageId",
-    "/api/v1/messages/:messageId/metadata",
-    "/api/v1/messages/:messageId/raw",
-    "/api/v1/messages/:messageId/children",
-    "/api/v1/outputs/:outputId",
-    "/api/v1/addresses/:address",
-    "/api/v1/addresses/ed25519/:address",
-    "/api/v1/addresses/:address/outputs",
-    "/api/v1/addresses/ed25519/:address/outputs",
-    "/api/v1/receipts",
-    "/api/v1/receipts/:milestoneIndex",
-    "/api/v1/treasury",
-    "/api/v1/transactions/:transactionId/included-message",
-    "/api/v1/milestones/:milestoneIndex",
-    "/api/v1/milestones/:milestoneIndex/utxo-changes",
+    "/api/v2/info",
+    "/api/v2/tips",
+    "/api/v2/messages",
+    "/api/v2/messages/:messageId",
+    "/api/v2/messages/:messageId/metadata",
+    "/api/v2/messages/:messageId/raw",
+    "/api/v2/messages/:messageId/children",
+    "/api/v2/outputs/:outputId",
+    "/api/v2/addresses/:address",
+    "/api/v2/addresses/ed25519/:address",
+    "/api/v2/addresses/:address/outputs",
+    "/api/v2/addresses/ed25519/:address/outputs",
+    "/api/v2/receipts",
+    "/api/v2/receipts/:milestoneIndex",
+    "/api/v2/treasury",
+    "/api/v2/transactions/:transactionId/included-message",
+    "/api/v2/milestones/:milestoneIndex",
+    "/api/v2/milestones/:milestoneIndex/utxo-changes",
 ]
 allowed_ips = [
     "127.0.0.1",

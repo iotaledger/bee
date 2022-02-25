@@ -36,7 +36,7 @@ serde-big-array = { version = "0.3.2", default-features = false, features = [ "c
 thiserror = { version = "1.0.30", default-features = false }
 
 [dev-dependencies]
-bee-test = { path = "../bee-test", default-features = false }
+bee-test = { version = "0.1.0", path = "../bee-test", default-features = false }
 
 num_cpus = { version = "1.13.0", default-features = false }
 

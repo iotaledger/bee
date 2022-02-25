@@ -11,9 +11,9 @@ use bee_message::{
     output::{
         feature_block::{FeatureBlock, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock, TagFeatureBlock},
         unlock_condition::{
-            AddressUnlockCondition, DustDepositReturnUnlockCondition, ExpirationUnlockCondition,
-            GovernorAddressUnlockCondition, ImmutableAliasAddressUnlockCondition,
-            StateControllerAddressUnlockCondition, TimelockUnlockCondition, UnlockCondition,
+            AddressUnlockCondition, ExpirationUnlockCondition, GovernorAddressUnlockCondition,
+            ImmutableAliasAddressUnlockCondition, StateControllerAddressUnlockCondition,
+            StorageDepositReturnUnlockCondition, TimelockUnlockCondition, UnlockCondition,
         },
         AliasId, AliasOutput, AliasOutputBuilder, BasicOutput, BasicOutputBuilder, FoundryOutput, FoundryOutputBuilder,
         NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme, TreasuryOutput,
@@ -571,14 +571,15 @@ impl Serialize for AddressDto {
 pub struct Ed25519AddressDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    pub address: String,
+    #[serde(rename = "pubKeyHash")]
+    pub pub_key_hash: String,
 }
 
 impl From<&Ed25519Address> for Ed25519AddressDto {
     fn from(value: &Ed25519Address) -> Self {
         Self {
             kind: Ed25519Address::KIND,
-            address: value.to_string(),
+            pub_key_hash: value.to_string(),
         }
     }
 }
@@ -588,7 +589,7 @@ impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
 
     fn try_from(value: &Ed25519AddressDto) -> Result<Self, Self::Error> {
         value
-            .address
+            .pub_key_hash
             .parse::<Ed25519Address>()
             .map_err(|_| Error::InvalidField("Ed25519 address"))
     }
@@ -599,14 +600,15 @@ impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
 pub struct AliasAddressDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    pub address: String,
+    #[serde(rename = "aliasId")]
+    pub alias_id: String,
 }
 
 impl From<&AliasAddress> for AliasAddressDto {
     fn from(value: &AliasAddress) -> Self {
         Self {
             kind: AliasAddress::KIND,
-            address: value.to_string(),
+            alias_id: value.to_string(),
         }
     }
 }
@@ -616,7 +618,7 @@ impl TryFrom<&AliasAddressDto> for AliasAddress {
 
     fn try_from(value: &AliasAddressDto) -> Result<Self, Self::Error> {
         value
-            .address
+            .alias_id
             .parse::<AliasAddress>()
             .map_err(|_| Error::InvalidField("alias address"))
     }
@@ -627,14 +629,15 @@ impl TryFrom<&AliasAddressDto> for AliasAddress {
 pub struct NftAddressDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    pub address: String,
+    #[serde(rename = "nftId")]
+    pub nft_id: String,
 }
 
 impl From<&NftAddress> for NftAddressDto {
     fn from(value: &NftAddress) -> Self {
         Self {
             kind: NftAddress::KIND,
-            address: value.to_string(),
+            nft_id: value.to_string(),
         }
     }
 }
@@ -644,7 +647,7 @@ impl TryFrom<&NftAddressDto> for NftAddress {
 
     fn try_from(value: &NftAddressDto) -> Result<Self, Self::Error> {
         value
-            .address
+            .nft_id
             .parse::<NftAddress>()
             .map_err(|_| Error::InvalidField("NFT address"))
     }
@@ -965,8 +968,8 @@ pub struct U256Dto(pub String);
 pub enum UnlockConditionDto {
     /// An address unlock condition.
     Address(AddressUnlockConditionDto),
-    /// A dust deposit return unlock condition.
-    DustDepositReturn(DustDepositReturnUnlockConditionDto),
+    /// A storage deposit return unlock condition.
+    StorageDepositReturn(StorageDepositReturnUnlockConditionDto),
     /// A timelock unlock condition.
     Timelock(TimelockUnlockConditionDto),
     /// An expiration unlock condition.
@@ -993,9 +996,9 @@ impl<'de> serde::Deserialize<'de> for UnlockConditionDto {
                         serde::de::Error::custom(format!("cannot deserialize address unlock condition: {}", e))
                     })?)
                 }
-                DustDepositReturnUnlockCondition::KIND => UnlockConditionDto::DustDepositReturn(
-                    DustDepositReturnUnlockConditionDto::deserialize(value).map_err(|e| {
-                        serde::de::Error::custom(format!("cannot deserialize dust deposit unlock condition: {}", e))
+                StorageDepositReturnUnlockCondition::KIND => UnlockConditionDto::StorageDepositReturn(
+                    StorageDepositReturnUnlockConditionDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("cannot deserialize storage deposit unlock condition: {}", e))
                     })?,
                 ),
                 TimelockUnlockCondition::KIND => {
@@ -1041,7 +1044,7 @@ impl Serialize for UnlockConditionDto {
         #[serde(untagged)]
         enum UnlockConditionDto_<'a> {
             T1(&'a AddressUnlockConditionDto),
-            T2(&'a DustDepositReturnUnlockConditionDto),
+            T2(&'a StorageDepositReturnUnlockConditionDto),
             T3(&'a TimelockUnlockConditionDto),
             T4(&'a ExpirationUnlockConditionDto),
             T5(&'a StateControllerAddressUnlockConditionDto),
@@ -1057,7 +1060,7 @@ impl Serialize for UnlockConditionDto {
             UnlockConditionDto::Address(o) => TypedUnlockCondition {
                 unlock_condition: UnlockConditionDto_::T1(o),
             },
-            UnlockConditionDto::DustDepositReturn(o) => TypedUnlockCondition {
+            UnlockConditionDto::StorageDepositReturn(o) => TypedUnlockCondition {
                 unlock_condition: UnlockConditionDto_::T2(o),
             },
             UnlockConditionDto::Timelock(o) => TypedUnlockCondition {
@@ -1170,7 +1173,7 @@ pub struct AddressUnlockConditionDto {
     pub address: AddressDto,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct DustDepositReturnUnlockConditionDto {
+pub struct StorageDepositReturnUnlockConditionDto {
     #[serde(rename = "type")]
     pub kind: u8,
     #[serde(rename = "returnAddress")]
@@ -1246,7 +1249,7 @@ impl UnlockConditionDto {
     pub fn kind(&self) -> u8 {
         match self {
             Self::Address(_) => AddressUnlockCondition::KIND,
-            Self::DustDepositReturn(_) => DustDepositReturnUnlockCondition::KIND,
+            Self::StorageDepositReturn(_) => StorageDepositReturnUnlockCondition::KIND,
             Self::Timelock(_) => TimelockUnlockCondition::KIND,
             Self::Expiration(_) => ExpirationUnlockCondition::KIND,
             Self::StateControllerAddress(_) => StateControllerAddressUnlockCondition::KIND,
@@ -1275,11 +1278,13 @@ impl From<&UnlockCondition> for UnlockConditionDto {
                 kind: AddressUnlockCondition::KIND,
                 address: v.address().into(),
             }),
-            UnlockCondition::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnUnlockConditionDto {
-                kind: DustDepositReturnUnlockCondition::KIND,
-                return_address: AddressDto::from(v.return_address()),
-                amount: v.amount(),
-            }),
+            UnlockCondition::StorageDepositReturn(v) => {
+                Self::StorageDepositReturn(StorageDepositReturnUnlockConditionDto {
+                    kind: StorageDepositReturnUnlockCondition::KIND,
+                    return_address: AddressDto::from(v.return_address()),
+                    amount: v.amount(),
+                })
+            }
             UnlockCondition::Timelock(v) => Self::Timelock(TimelockUnlockConditionDto {
                 kind: TimelockUnlockCondition::KIND,
                 milestone_index: v.milestone_index(),
@@ -1344,10 +1349,9 @@ impl TryFrom<&UnlockConditionDto> for UnlockCondition {
                     .try_into()
                     .map_err(|_e| Error::InvalidField("AddressUnlockCondition"))?,
             )),
-            UnlockConditionDto::DustDepositReturn(v) => Self::DustDepositReturn(DustDepositReturnUnlockCondition::new(
-                Address::try_from(&v.return_address)?,
-                v.amount,
-            )?),
+            UnlockConditionDto::StorageDepositReturn(v) => Self::StorageDepositReturn(
+                StorageDepositReturnUnlockCondition::new(Address::try_from(&v.return_address)?, v.amount)?,
+            ),
             UnlockConditionDto::Timelock(v) => Self::Timelock(
                 TimelockUnlockCondition::new(v.milestone_index, v.timestamp)
                     .map_err(|_| Error::InvalidField("TimelockUnlockCondition"))?,

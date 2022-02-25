@@ -3,6 +3,8 @@
 
 use crate::output::{foundry::TOKEN_TAG_LENGTH, FoundryId};
 
+use alloc::vec::Vec;
+
 impl_id!(TokenId, 38, "TODO.");
 
 #[cfg(feature = "serde1")]

@@ -9,7 +9,7 @@
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
 
 /// Protocol version currently used by the network.
-pub const PROTOCOL_VERSION: u8 = 0;
+pub const PROTOCOL_VERSION: u8 = 2;
 
 pub mod types;
 #[cfg(feature = "workers")]

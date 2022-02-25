@@ -3,7 +3,7 @@
 
 use crate::{
     address::Address,
-    constant::{DUST_DEPOSIT_MIN, IOTA_SUPPLY},
+    constant::{IOTA_SUPPLY, STORAGE_DEPOSIT_MIN},
     Error,
 };
 
@@ -46,7 +46,7 @@ impl SignatureLockedDustAllowanceOutput {
     /// The output kind of a [`SignatureLockedDustAllowanceOutput`].
     pub const KIND: u8 = 1;
     /// Valid amounts for a [`SignatureLockedDustAllowanceOutput`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = DUST_DEPOSIT_MIN..=IOTA_SUPPLY;
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = STORAGE_DEPOSIT_MIN..=IOTA_SUPPLY;
 
     /// Creates a new [`SignatureLockedDustAllowanceOutput`].
     pub fn new(address: Address, amount: u64) -> Result<Self, Error> {

@@ -75,6 +75,11 @@
     "workers": {
       "statusInterval": 10,
       "milestoneSyncCount": 200
+    },
+    "byteCost": {
+      "vByteCost": 500,
+      "vByteFactorKey": 10,
+      "vByteFactorData": 1
     }
   },
   "restApi": {
