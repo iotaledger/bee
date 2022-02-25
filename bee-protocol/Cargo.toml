@@ -46,6 +46,8 @@ tokio-stream = { version = "0.1.7", default-features = false, optional = true }
 twox-hash = { version = "1.6.1", default-features = false, optional = true }
 
 [features]
+# The following can be removed once we test crates individually in the CI.
+cpt2 = [ "bee-message/cpt2" ]
 workers = [
   "bee-gossip/full",
   "bee-ledger",
