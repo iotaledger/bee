@@ -20,6 +20,10 @@ on:
       - 'documentation/**'
       - '**.md'
 
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     name: ${{ format('{0}Build & Test ({1}, {2})', (matrix.rust != 'stable') && '🦜 ' || '', matrix.os, matrix.rust) }}
