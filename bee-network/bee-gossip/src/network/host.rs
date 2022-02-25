@@ -182,6 +182,9 @@ async fn process_internal_command(internal_command: Command, swarm: &mut Swarm<S
                 warn!("Dialing peer {} failed. Cause: {}", alias!(peer_id), e);
             }
         }
+        Command::DisconnectPeer { peer_id } => {
+            hang_up(swarm, peer_id).await
+        }
         _ => {}
     }
 }
@@ -218,4 +221,10 @@ async fn dial_peer(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId, peerlist:
     Swarm::dial_addr(swarm, addr).map_err(|e| Error::DialingPeerFailed(peer_id, e))?;
 
     Ok(())
+}
+
+async fn hang_up(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId) {
+    debug!("Hanging up on: {}.", alias!(peer_id));
+
+    let _ = Swarm::disconnect_peer_id(swarm, peer_id);
 }

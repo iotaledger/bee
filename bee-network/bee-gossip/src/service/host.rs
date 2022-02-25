@@ -367,6 +367,12 @@ async fn process_internal_event(
             // We no longer need to hold the lock.
             drop(peerlist);
 
+            // Make sure to end the underlying connection.
+            senders
+                .internal_commands
+                .send(Command::DisconnectPeer { peer_id })
+                .map_err(|_| Error::SendingEventFailed)?;
+
             senders
                 .events
                 .send(Event::PeerDisconnected { peer_id })
