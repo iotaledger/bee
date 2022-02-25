@@ -22,7 +22,7 @@ on:
 
 jobs:
   build-and-test:
-    name: Build & Test ${{ format('({0}, {1}){2}', matrix.os, matrix.rust, matrix.experimental && ' - 🦜' || '') }}
+    name: ${{ format('{0}Build & Test ({1}, {2})', matrix.experimental && '🦜 ' || '', matrix.os, matrix.rust) }}
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
     strategy:
@@ -122,7 +122,7 @@ jobs:
           args: --workspace --doc --all-features --release
 
   no_std:
-    name: Check [no_std] ${{ format('({0}, {1}){2}', matrix.rust, matrix.crates, matrix.experimental && ' - 🦜' || '') }}
+    name: ${{ format('{0}Check [no_std] ({1}, {2})', matrix.experimental && '🦜 ' || '', matrix.rust, matrix.crates) }}
     needs: build-and-test
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.experimental }}
@@ -207,7 +207,7 @@ jobs:
 
   clippy:
     needs: format
-    name: Clippy ${{ format('({0}){1}', matrix.rust, matrix.experimental && ' - 🦜' || '') }}
+    name: ${{ format('{0}Clippy ({1})', matrix.experimental && '🦜 ' || '', matrix.rust) }}
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.experimental }}
     strategy:
