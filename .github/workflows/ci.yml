@@ -65,6 +65,9 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
 
+      - name: Print CMake version
+        run: cmake --version
+
       - name: Cache cargo state
         uses: actions/cache@v2
         env:
