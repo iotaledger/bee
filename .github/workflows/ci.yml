@@ -22,12 +22,28 @@ on:
 
 jobs:
   build-and-test:
-    name: build and test
+    name: ${{ format('{0}Build & Test ({1}, {2})', matrix.experimental && '🦜 ' || '', matrix.os, matrix.rust) }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
+        rust: [stable]
         os: [ubuntu-latest, macos-latest, windows-latest]
-        rust: [nightly, beta, stable]
-    runs-on: ${{ matrix.os }}
+        experimental: [false]
+        include:
+          - rust: beta
+            os: ubuntu-latest
+            experimental: true
+          - rust: beta
+            os: macos-latest
+            experimental: true
+          - rust: beta
+            os: windows-latest
+            experimental: true
+            # The following ensures that workflows relying on `nightly` don't break.
+          - rust: nightly
+            os: ubuntu-latest
+            experimental: true
 
     steps:
       - uses: actions/checkout@v2
@@ -106,14 +122,24 @@ jobs:
           args: --workspace --doc --all-features --release
 
   no_std:
+    name: ${{ format('{0}Check [no_std] ({1}, {2})', matrix.experimental && '🦜 ' || '', matrix.rust, matrix.crates) }}
     needs: build-and-test
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-        rust: [nightly, beta, stable]
+        rust: [stable]
         crates: [
           "bee-ternary",
         ]
+        experimental: [false]
+        include:
+          - rust: beta
+            experimental: true
+            crates: "bee-ternary"
+          - rust: nightly
+            experimental: true
+            crates: "bee-ternary"
 
     steps:
       - uses: actions/checkout@v2
@@ -162,6 +188,7 @@ jobs:
           args: --release --target=riscv64gc-unknown-none-elf --manifest-path ${{ matrix.crates }}/Cargo.toml
 
   format:
+    name: Check Formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -180,14 +207,24 @@ jobs:
 
   clippy:
     needs: format
+    name: ${{ format('{0}Clippy ({1})', matrix.experimental && '🦜 ' || '', matrix.rust) }}
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      matrix:
+        include:
+          - rust: stable
+            experimental: false
+          - rust: beta
+            experimental: true
+
     steps:
       - uses: actions/checkout@v2
 
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: beta
+          toolchain: ${{ matrix.rust }}
           override: true
           components: clippy
 
@@ -221,6 +258,7 @@ jobs:
           args: --all-targets --all-features -- -D warnings
 
   udeps:
+    name: Dependencies
     needs: clippy
     runs-on: ubuntu-latest
     steps:
@@ -267,6 +305,7 @@ jobs:
           args: --all-targets --all-features --backend=depinfo
 
   licenses:
+    name: Licenses
     needs: clippy
     runs-on: ubuntu-latest
     steps:
@@ -316,6 +355,7 @@ jobs:
           args: generate --workspace --all-features about.hbs
 
   docs:
+    name: Documentation
     needs: clippy
     runs-on: ubuntu-latest
     env:
@@ -351,6 +391,7 @@ jobs:
           args: --no-deps --document-private-items
 
   missing-files:
+    name: Missing Files
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
