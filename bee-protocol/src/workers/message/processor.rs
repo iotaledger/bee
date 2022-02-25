@@ -19,8 +19,12 @@ use crate::{
 
 use bee_gossip::PeerId;
 use bee_message::{
+    output::{
+        minimum_storage_deposit, unlock_condition::StorageDepositReturnUnlockCondition, ByteCostConfig, Output,
+        UnlockCondition,
+    },
     payload::{transaction::TransactionEssence, Payload},
-    Message, MessageId, output::{unlock_condition::StorageDepositReturnUnlockCondition, Output, UnlockCondition, minimum_storage_deposit, ByteCostConfig},
+    Message, MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::MessageMetadata, Tangle, TangleWorker};

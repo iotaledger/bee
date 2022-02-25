@@ -24,9 +24,9 @@ pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
 pub(crate) use heartbeater::HeartbeaterWorker;
 pub(crate) use index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
 pub(crate) use message::{
-    HasherWorker, HasherWorkerEvent, MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent, ProcessorWorker, ProcessorWorkerConfig,
-    TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent, TransactionPayloadWorker, UnreferencedMessageInserterWorker,
-    UnreferencedMessageInserterWorkerEvent,
+    HasherWorker, HasherWorkerEvent, MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent, ProcessorWorker,
+    ProcessorWorkerConfig, TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent, TransactionPayloadWorker,
+    UnreferencedMessageInserterWorker, UnreferencedMessageInserterWorkerEvent,
 };
 pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
 pub use metrics::MetricsWorker;
@@ -66,9 +66,9 @@ where
             network_name: network_id.0,
         })
         .with_worker_cfg::<HasherWorker>(config.clone())
-        .with_worker_cfg::<ProcessorWorker>(ProcessorWorkerConfig{
+        .with_worker_cfg::<ProcessorWorker>(ProcessorWorkerConfig {
             network_id: network_id.1,
-            byte_cost: config.byte_cost.clone()
+            byte_cost: config.byte_cost.clone(),
         })
         .with_worker::<MessageResponderWorker>()
         .with_worker::<MilestoneResponderWorker>()
