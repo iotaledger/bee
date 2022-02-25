@@ -20,7 +20,7 @@ use crate::{
 use bee_gossip::PeerId;
 use bee_message::{
     payload::{transaction::TransactionEssence, Payload},
-    Message, MessageId,
+    Message, MessageId, output::{unlock_condition::StorageDepositReturnUnlockCondition, Output, UnlockCondition, minimum_storage_deposit, ByteCostConfig},
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::MessageMetadata, Tangle, TangleWorker};
@@ -44,12 +44,18 @@ pub(crate) struct ProcessorWorker {
     pub(crate) tx: mpsc::UnboundedSender<ProcessorWorkerEvent>,
 }
 
+#[derive(Clone)]
+pub(crate) struct ProcessorWorkerConfig {
+    pub(crate) network_id: u64,
+    pub(crate) byte_cost: ByteCostConfig,
+}
+
 #[async_trait]
 impl<N: Node> Worker<N> for ProcessorWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = u64;
+    type Config = ProcessorWorkerConfig;
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -102,10 +108,10 @@ where
                 let metrics = metrics.clone();
                 let peer_manager = peer_manager.clone();
                 let bus = bus.clone();
-                let network_id = config;
+                let config = config.clone();
 
                 tokio::spawn(async move {
-                    while let Ok(ProcessorWorkerEvent {
+                    'next_event: while let Ok(ProcessorWorkerEvent {
                         from,
                         message_packet,
                         notifier,
@@ -137,13 +143,47 @@ where
                         if let Some(Payload::Transaction(transaction)) = message.payload() {
                             let TransactionEssence::Regular(essence) = transaction.essence();
 
-                            if essence.network_id() != network_id {
+                            if essence.network_id() != config.network_id {
                                 notify_invalid_message(
-                                    format!("Incompatible network ID {} != {}.", essence.network_id(), network_id),
+                                    format!("Incompatible network ID {} != {}.", essence.network_id(), config.network_id),
                                     &metrics,
                                     notifier,
                                 );
-                                continue;
+                                continue 'next_event;
+                            }
+
+                            for (i, output) in essence.outputs().iter().enumerate() {
+                                let maybe_storage_deposit_condition = match output {
+                                    #[cfg(feature = "cpt2")]
+                                    SignatureLockedSingle(_) => continue,
+                                    #[cfg(feature = "cpt2")]
+                                    SignatureLockedDustAllowance(_) => continue,
+                                    Output::Treasury(_) => continue, // `TreasureOutput`s don't have `UnlockConditions`.
+                                    Output::Basic(output) => output.unlock_conditions().get(StorageDepositReturnUnlockCondition::KIND),
+                                    Output::Alias(output) => output.unlock_conditions().get(StorageDepositReturnUnlockCondition::KIND),
+                                    Output::Foundry(output) => output.unlock_conditions().get(StorageDepositReturnUnlockCondition::KIND),
+                                    Output::Nft(output) => output.unlock_conditions().get(StorageDepositReturnUnlockCondition::KIND),
+                                };
+
+                                if let Some(UnlockCondition::StorageDepositReturn(storage_deposit_condition)) = maybe_storage_deposit_condition {
+                                    let required_deposit = minimum_storage_deposit(&config.byte_cost, output);
+                                    let current_deposit = storage_deposit_condition.amount();
+                                    if current_deposit < required_deposit {
+                                        notify_invalid_message(
+                                            format!("Insufficient storage deposit for output i={i}. Found {current_deposit} tokens but a minimum of {required_deposit} is required."),
+                                            &metrics,
+                                            notifier,
+                                        );
+                                        continue 'next_event;
+                                    }
+                                } else {
+                                    notify_invalid_message(
+                                        format!("Missing required storage deposit condition for output i={i}."),
+                                        &metrics,
+                                        notifier,
+                                    );
+                                    continue 'next_event;
+                                }
                             }
                         }
 
@@ -161,7 +201,7 @@ where
                                     })
                                     .unwrap_or_default();
                             }
-                            continue;
+                            continue 'next_event;
                         };
 
                         // Send the propagation event ASAP to allow the propagator to do its thing
