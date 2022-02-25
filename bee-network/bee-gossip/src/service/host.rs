@@ -248,7 +248,10 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
         for (peer_id, peer_info) in peerlist_reader.filter_info(|info, state| {
             (info.relation.is_known() || info.relation.is_discovered()) && state.is_disconnected()
         }) {
-            let dial_attempts = peerlist_reader.dial_attempts(&peer_id).expect("peer does exist").expect("peer is not connected");
+            let dial_attempts = peerlist_reader
+                .dial_attempts(&peer_id)
+                .expect("peer does exist")
+                .expect("peer is not connected");
 
             if dial_attempts >= MAX_DIAL_ATTEMPTS {
                 log::debug!("Peer {} is unreachable.", peer_id);

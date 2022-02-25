@@ -63,7 +63,7 @@ where
         let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let metrics = node.resource::<NodeMetrics>();
-        let network_command_tx = node.resource::<NetworkCommandSender>();
+        let gossip_command_tx = node.resource::<NetworkCommandSender>();
 
         let hasher = node.worker::<HasherWorker>().unwrap().tx.clone();
         let message_responder = node.worker::<MessageResponderWorker>().unwrap().tx.clone();
@@ -87,13 +87,13 @@ where
 
                     match event {
                         AutopeeringEvent::IncomingPeering { peer, .. } => {
-                            handle_new_peering(peer, &network_name, &network_command_tx);
+                            handle_new_peering(peer, &network_name, &gossip_command_tx);
                         }
                         AutopeeringEvent::OutgoingPeering { peer, .. } => {
-                            handle_new_peering(peer, &network_name, &network_command_tx);
+                            handle_new_peering(peer, &network_name, &gossip_command_tx);
                         }
                         AutopeeringEvent::PeeringDropped { peer_id } => {
-                            handle_peering_dropped(peer_id, &network_command_tx);
+                            handle_peering_dropped(peer_id, &gossip_command_tx);
                         }
                         _ => {}
                     }
@@ -103,6 +103,8 @@ where
             });
         }
 
+        let gossip_command_tx = node.resource::<NetworkCommandSender>();
+
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Network handler running.");
 
@@ -110,7 +112,7 @@ where
 
             while let Some(event) = receiver.next().await {
                 trace!("Received event {:?}.", event);
-                log::warn!{"peer_manager.len()={}", peer_manager.len()};
+                log::warn! {"peer_manager.len()={}", peer_manager.len()};
 
                 match event {
                     NetworkEvent::PeerAdded { peer_id, info } => {
@@ -190,10 +192,11 @@ where
                         .unwrap_or_default(),
                     NetworkEvent::PeerUnreachable { peer_id, peer_info } => {
                         if peer_info.relation.is_discovered() {
-                            // Remove that discovered peer from the manager.
-                            if let Some(peer) = peer_manager.remove(&peer_id) {
-                                info!("Removed peer {}.", peer.0.alias());
-                            }
+                            // Remove that discovered peer.
+                            gossip_command_tx
+                                .send(Command::RemovePeer { peer_id })
+                                .expect("send gossip command");
+
                             // Todo: tell the autopeering to remove that neighbor.
                             log::error!("Tell autopeering to remove {}", alias!(peer_id));
                         }
