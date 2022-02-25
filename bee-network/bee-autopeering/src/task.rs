@@ -117,7 +117,10 @@ impl<S: PeerStore> TaskManager<S> {
             let shutdown_tx = shutdown_senders.remove(&task_name).unwrap();
 
             log::trace!("Shutting down: {}", task_name);
-            shutdown_tx.send(()).expect("error sending shutdown signal");
+
+            if shutdown_tx.send(()).is_err() {
+                log::error!("Error sending shutdown signal to task {task_name}. This is a bug.");
+            }
         }
 
         // Wait for all tasks to shutdown down in a certain order and maximum amount of time.
