@@ -96,6 +96,9 @@ jobs:
           npm install
           npm run build-bee
 
+      - name: Test jq
+        run: cargo metadata --format-version 1 --no-deps | jq .packages[].name
+
       - name: Build
         uses: actions-rs/cargo@v1
         with:
