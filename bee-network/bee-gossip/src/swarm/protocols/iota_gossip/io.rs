@@ -53,14 +53,12 @@ pub fn start_incoming_processor(
                 // from all once connected peers, hence if the following send fails, then it
                 // must be considered a bug.
 
-                // The remote peer dropped the connection.
-                internal_event_sender
-                    .send(InternalEvent::ProtocolDropped { peer_id })
-                    .expect("The service must not shutdown as long as there are gossip tasks running.");
-
                 break;
             }
         }
+
+        // Ignore send errors.
+        let _ = internal_event_sender.send(InternalEvent::ProtocolStopped { peer_id });
 
         // Reasons why this task might end:
         // (1) The remote dropped the TCP connection.
@@ -91,11 +89,6 @@ pub fn start_outgoing_processor(
                 // NB: The network service will not shut down before it has received the `ConnectionDropped` event
                 // from all once connected peers, hence if the following send fails, then it
                 // must be considered a bug.
-
-                internal_event_sender
-                    .send(InternalEvent::ProtocolDropped { peer_id })
-                    .expect("The service must not shutdown as long as there are gossip tasks running.");
-
                 break;
             }
 
@@ -106,6 +99,9 @@ pub fn start_outgoing_processor(
                 break;
             }
         }
+
+        // Ignore send errors.
+        let _ = internal_event_sender.send(InternalEvent::ProtocolStopped { peer_id });
 
         // Reasons why this task might end:
         // (1) The local send the shutdown message (len = 0)

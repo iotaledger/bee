@@ -354,7 +354,7 @@ async fn process_internal_event(
                 .map_err(|_| Error::SendingEventFailed)?;
         }
 
-        InternalEvent::ProtocolDropped { peer_id } => {
+        InternalEvent::ProtocolStopped { peer_id } => {
             let mut peerlist = peerlist.0.write().await;
 
             // Try to disconnect, but ignore errors in-case the peer was disconnected already.

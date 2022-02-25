@@ -123,8 +123,8 @@ pub enum InternalEvent {
         substream: Box<NegotiatedSubstream>,
     },
 
-    /// The gossip protocol has been dropped with a peer.
-    ProtocolDropped { peer_id: PeerId },
+    /// The gossip protocol with a peer was stopped.
+    ProtocolStopped { peer_id: PeerId },
 }
 
 /// Allows the user to receive [`Event`]s published by the network layer.
