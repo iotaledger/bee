@@ -132,6 +132,12 @@ pub enum InternalEvent {
 
     /// The gossip protocol with a peer was stopped.
     ProtocolStopped { peer_id: PeerId },
+
+    /// A peer didn't answer our repeated calls.
+    PeerUnreachable {
+        /// The peer's id.
+        peer_id: PeerId,
+    },
 }
 
 /// Allows the user to receive [`Event`]s published by the network layer.

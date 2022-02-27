@@ -198,7 +198,7 @@ where
                                 .expect("send gossip command");
 
                             // Todo: tell the autopeering to remove that neighbor.
-                            log::error!("Tell autopeering to remove {}", alias!(peer_id));
+                            log::warn!("TODO: tell autopeering to remove {} from neighborhood.", alias!(peer_id));
                         }
                     }
                     _ => (), // Ignore all other events for now
@@ -216,21 +216,25 @@ fn handle_new_peering(peer: bee_autopeering::Peer, network_name: &str, command_t
     if let Some(multiaddr) = peer.service_multiaddr(network_name) {
         let peer_id = peer.peer_id().libp2p_peer_id();
 
-        command_tx
-            .send(Command::AddPeer {
-                peer_id,
-                alias: Some(alias!(peer_id).to_string()),
-                multiaddr,
-                relation: PeerRelation::Discovered,
-            })
-            .expect("error sending network command");
+    // Panic:
+    // Sending commands must not fail.
+    command_tx
+        .send(Command::AddPeer {
+            peer_id,
+            alias: Some(alias!(peer_id).to_string()),
+            multiaddr,
+            relation: PeerRelation::Discovered,
+        })
+        .expect("send command to gossip layer");
     }
 }
 
 fn handle_peering_dropped(peer_id: bee_autopeering::PeerId, command_tx: &NetworkCommandSender) {
     let peer_id = peer_id.libp2p_peer_id();
 
+    // Panic:
+    // Sending commands must not fail.
     command_tx
         .send(Command::RemovePeer { peer_id })
-        .expect("error sending network command");
+        .expect("send command to gossip layer");
 }

@@ -58,7 +58,11 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehaviour {
                 trace!("Pushed Identify request to {}.", alias!(peer_id));
             }
             IdentifyEvent::Error { peer_id, error } => {
-                warn!("Identification error with {}: Cause: {:?}.", alias!(peer_id), error);
+                trace!("Identification error with {}: Cause: {:?}.", alias!(peer_id), error);
+
+                // Panic:
+                // Sending must not fail.
+                self.internal_sender.send(InternalEvent::PeerUnreachable { peer_id }).expect("send internal event");
             }
         }
     }

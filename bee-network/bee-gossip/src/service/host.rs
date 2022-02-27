@@ -172,7 +172,8 @@ async fn command_processor(shutdown: Shutdown, commands: CommandReceiver, sender
 
     while let Some(command) = commands.next().await {
         if let Err(e) = process_command(command, &senders, &peerlist).await {
-            error!("Error processing command. Cause: {}", e);
+            // Note: commands are allowed to fail as the user may not be up-to-date.
+            debug!("Command could not be executed. Cause: {}", e);
             continue;
         }
     }
@@ -478,6 +479,15 @@ async fn process_internal_event(
                 // Panic:
                 // This branch handles the error case, so unwrapping it is fine.
                 debug!("{}", accepted.unwrap_err());
+            }
+        }
+
+        InternalEvent::PeerUnreachable { peer_id } => {
+            if let Ok(peer_info) = peerlist.0.read().await.info(&peer_id) {
+                senders
+                    .events
+                    .send(Event::PeerUnreachable { peer_id, peer_info })
+                    .map_err(|_| Error::SendingEventFailed)?;
             }
         }
     }
