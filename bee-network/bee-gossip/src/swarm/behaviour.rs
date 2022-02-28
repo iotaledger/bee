@@ -44,12 +44,16 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehaviour {
         match event {
             IdentifyEvent::Received { peer_id, info } => {
                 trace!(
-                    "Received Identify request from {}. Observed address: {:?}.",
+                    "Received Identify response from {}. Observed address: {:?}.",
                     alias!(peer_id),
                     info.observed_addr,
                 );
 
-                // TODO: log supported protocols by the peer (info.protocols)
+                // Panic:
+                // Sending must not fail.
+                self.internal_sender
+                    .send(InternalEvent::PeerIdentified { peer_id })
+                    .expect("send internal event");
             }
             IdentifyEvent::Sent { peer_id } => {
                 trace!("Sent Identify request to {}.", alias!(peer_id));
@@ -62,7 +66,9 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehaviour {
 
                 // Panic:
                 // Sending must not fail.
-                self.internal_sender.send(InternalEvent::PeerUnreachable { peer_id }).expect("send internal event");
+                self.internal_sender
+                    .send(InternalEvent::PeerUnreachable { peer_id })
+                    .expect("send internal event");
             }
         }
     }

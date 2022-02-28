@@ -138,6 +138,12 @@ pub enum InternalEvent {
         /// The peer's id.
         peer_id: PeerId,
     },
+
+    /// A peer has identified itself via the `libp2p` Identify protocol.
+    PeerIdentified {
+        /// The peer's id.
+        peer_id: PeerId,
+    },
 }
 
 /// Allows the user to receive [`Event`]s published by the network layer.

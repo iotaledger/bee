@@ -212,13 +212,17 @@ async fn dial_peer(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId, peerlist:
         address: addr, alias, ..
     } = peerlist.0.read().await.info(&peer_id).expect("peer must exist");
 
-    let dial_attempt = peerlist
+    let mut dial_attempt = 0;
+    
+    peerlist
         .0
         .write()
         .await
-        .log_dial_attempt(&peer_id)
-        .expect("peer must exist")
-        .expect("peer must not be connected");
+        .update_metrics(&peer_id, |m| {
+            m.num_dials += 1;
+            dial_attempt = m.num_dials;
+        })
+        .expect("peer must exist");
 
     debug!(
         "Dialing peer: {} ({}) attempt: #{}.",

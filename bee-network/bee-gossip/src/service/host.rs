@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use super::{
     command::{Command, CommandReceiver, CommandSender},
     error::Error,
@@ -32,7 +34,7 @@ use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
 const MAX_PEER_STATE_CHECKER_DELAY_MILLIS: u64 = 2000;
-const MAX_DIAL_ATTEMPTS: usize = 3;
+const MAX_DIALS: usize = 3;
 
 pub struct ServiceHostConfig {
     pub local_keys: identity::Keypair,
@@ -215,46 +217,42 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
     // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
     // of those.
     while interval.next().await.is_some() {
-        let peerlist_reader = peerlist.0.read().await;
-
-        // How many peers we know about.
-        let num_all = peerlist_reader.len();
+        let read = peerlist.0.read().await;
 
         // To how many known peers are we currently connected.
-        let num_known = peerlist_reader.filter_count(|info, _| info.relation.is_known());
+        let num_known = read.filter_count(|info, _, _| info.relation.is_known());
         let num_connected_known =
-            peerlist_reader.filter_count(|info, state| info.relation.is_known() && state.is_connected());
+            read.filter_count(|info, state, _| info.relation.is_known() && state.is_connected());
 
         // To how many unknown peers are we currently connected.
         let num_connected_unknown =
-            peerlist_reader.filter_count(|info, state| info.relation.is_unknown() && state.is_connected());
+            read.filter_count(|info, state, _| info.relation.is_unknown() && state.is_connected());
 
         // To how many discovered peers are we currently connected.
         let num_connected_discovered =
-            peerlist_reader.filter_count(|info, state| info.relation.is_discovered() && state.is_connected());
+            read.filter_count(|info, state, _| info.relation.is_discovered() && state.is_connected());
+
+        // How many peers we know of but are currently disconnected.
+        let num_disconnected = 
+            read.filter_count(|_, state, _| state.is_disconnected());
 
         info!(
-            "Connected peers: known {}/{} unknown {}/{} discovered {}/{}, All peers: {}.",
+            "Connected peers: known {}/{} unknown {}/{} discovered {}/{} - Disconnected peers: {}.",
             num_connected_known,
             num_known,
             num_connected_unknown,
             global::max_unknown_peers(),
             num_connected_discovered,
             global::max_discovered_peers(),
-            num_all,
+            num_disconnected,
         );
 
         // Automatically try to reconnect known **and** discovered peers. The removal of discovered peers is a decision
         // that needs to be made in the autopeering service.
-        for (peer_id, peer_info) in peerlist_reader.filter_info(|info, state| {
+        for (peer_id, peer_info, peer_metrics) in read.filter(|info, state, _| {
             (info.relation.is_known() || info.relation.is_discovered()) && state.is_disconnected()
         }) {
-            let dial_attempts = peerlist_reader
-                .dial_attempts(&peer_id)
-                .expect("peer does exist")
-                .expect("peer is not connected");
-
-            if dial_attempts >= MAX_DIAL_ATTEMPTS {
+            if peer_metrics.num_dials >= MAX_DIALS {
                 log::debug!("Peer {} is unreachable.", peer_id);
 
                 let _ = senders.events.send(Event::PeerUnreachable { peer_id, peer_info });
@@ -380,7 +378,7 @@ async fn process_internal_event(
 
             // Only remove unknown peers.
             // NOTE: discovered peers should be removed manually via command if the autopeering protocol suggests it.
-            let _ = peerlist.filter_remove(&peer_id, |peer_info, _| peer_info.relation.is_unknown());
+            let _ = peerlist.filter_remove(&peer_id, |peer_info, _, _| peer_info.relation.is_unknown());
 
             // We no longer need to hold the lock.
             drop(peerlist);
@@ -489,6 +487,20 @@ async fn process_internal_event(
                     .send(Event::PeerUnreachable { peer_id, peer_info })
                     .map_err(|_| Error::SendingEventFailed)?;
             }
+        }
+
+        InternalEvent::PeerIdentified { peer_id } => {
+            let _ = peerlist.0.write().await.update_metrics(&peer_id, |m| {
+                // Reset dial count.
+                m.num_dials = 0;
+                // Update Identify timestamp.
+                m.identified = Some(
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .expect("system time")
+                        .as_secs(),
+                );
+            });
         }
     }
 
