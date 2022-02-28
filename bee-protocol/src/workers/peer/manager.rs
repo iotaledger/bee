@@ -112,7 +112,6 @@ where
 
             while let Some(event) = receiver.next().await {
                 trace!("Received event {:?}.", event);
-                log::warn! {"peer_manager.len()={}", peer_manager.len()};
 
                 match event {
                     NetworkEvent::PeerAdded { peer_id, info } => {
@@ -197,11 +196,7 @@ where
                                 .send(Command::RemovePeer { peer_id })
                                 .expect("send gossip command");
 
-                            // Todo: tell the autopeering to remove that neighbor.
-                            log::warn!(
-                                "TODO: tell autopeering to remove {} from neighborhood.",
-                                alias!(peer_id)
-                            );
+                            // Todo: tell the autopeering to remove that peer from the neighborhood.
                         }
                     }
                     _ => (), // Ignore all other events for now
