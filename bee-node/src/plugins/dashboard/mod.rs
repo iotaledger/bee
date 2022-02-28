@@ -33,8 +33,7 @@ use bee_protocol::workers::{
     event::{MessageSolidified, MpsMetricsUpdated, TipAdded, TipRemoved, VertexCreated},
     MetricsWorker, PeerManagerResWorker,
 };
-use bee_rest_api::types::body::DefaultErrorResponse;
-use bee_rest_api::types::body::ErrorBody;
+use bee_rest_api::types::body::{DefaultErrorResponse, ErrorBody};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{event::LatestMilestoneChanged, Tangle, TangleWorker};
 
@@ -43,7 +42,7 @@ use futures::stream::StreamExt;
 use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use warp::{ws::Message, http::StatusCode, Filter, Rejection, Reply};
+use warp::{http::StatusCode, ws::Message, Filter, Rejection, Reply};
 
 use std::{
     any::{Any, TypeId},
@@ -180,7 +179,8 @@ where
                 config.auth().clone(),
                 rest_api_config.clone(),
                 users.clone(),
-            ).recover(handle_rejection);
+            )
+            .recover(handle_rejection);
 
             let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(config.bind_socket_addr(), async {
                 shutdown.await.ok();
@@ -218,7 +218,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
         Some(CustomRejection::InternalError(s)) => {
             error!("dashboard error: {:?}", s);
             (StatusCode::INTERNAL_SERVER_ERROR, "500", "internal server error")
-        },
+        }
         // handle default rejections
         _ => {
             if err.is_not_found() {
