@@ -27,15 +27,21 @@ concurrency:
 jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ (matrix.rust != 'stable') }}
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
         rust: [stable, beta]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # Switch back to `windows-latest` when it reliably compiles again.
+        os: [ubuntu-latest, macos-latest, windows-2019]
+        experimental: [false]
         include:
             # The following ensures that workflows relying on `nightly` don't break.
           - rust: nightly
             os: ubuntu-latest
+            experimental: true
+          - rust: stable
+            os: windows-latest
+            experimental: true
 
     steps:
       - uses: actions/checkout@v2
@@ -94,9 +100,6 @@ jobs:
           cd bee-node/src/plugins/dashboard/frontend/
           npm install
           npm run build-bee
-
-      - name: Test jq
-        run: cargo metadata --format-version 1 --no-deps | jq .packages[].name
 
       - name: Build
         uses: actions-rs/cargo@v1
