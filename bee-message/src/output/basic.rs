@@ -170,11 +170,10 @@ impl BasicOutput {
     #[inline(always)]
     pub fn address(&self) -> &Address {
         // An BasicOutput must have an AddressUnlockCondition.
-        if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
-            address.address()
-        } else {
-            unreachable!();
-        }
+        self.unlock_conditions
+            .address()
+            .map(|unlock_condition| unlock_condition.address())
+            .unwrap()
     }
 }
 

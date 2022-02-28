@@ -284,30 +284,20 @@ impl AliasOutput {
     #[inline(always)]
     pub fn state_controller(&self) -> &Address {
         // An AliasOutput must have a StateControllerAddressUnlockCondition.
-        if let UnlockCondition::StateControllerAddress(address) = self
-            .unlock_conditions
-            .get(StateControllerAddressUnlockCondition::KIND)
+        self.unlock_conditions
+            .state_controller_address()
+            .map(|unlock_condition| unlock_condition.address())
             .unwrap()
-        {
-            address.address()
-        } else {
-            unreachable!();
-        }
     }
 
     ///
     #[inline(always)]
     pub fn governor(&self) -> &Address {
         // An AliasOutput must have a GovernorAddressUnlockCondition.
-        if let UnlockCondition::GovernorAddress(address) = self
-            .unlock_conditions
-            .get(GovernorAddressUnlockCondition::KIND)
+        self.unlock_conditions
+            .governor_address()
+            .map(|unlock_condition| unlock_condition.address())
             .unwrap()
-        {
-            address.address()
-        } else {
-            unreachable!();
-        }
     }
 }
 

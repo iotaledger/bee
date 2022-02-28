@@ -193,13 +193,6 @@ impl NftOutput {
         &self.nft_id
     }
 
-    // TODO bring back as part of #1117
-    // ///
-    // #[inline(always)]
-    // pub fn immutable_metadata(&self) -> &[u8] {
-    //     &self.immutable_metadata
-    // }
-
     ///
     #[inline(always)]
     pub fn unlock_conditions(&self) -> &UnlockConditions {
@@ -222,11 +215,10 @@ impl NftOutput {
     #[inline(always)]
     pub fn address(&self) -> &Address {
         // An NftOutput must have an AddressUnlockCondition.
-        if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
-            address.address()
-        } else {
-            unreachable!();
-        }
+        self.unlock_conditions
+            .address()
+            .map(|unlock_condition| unlock_condition.address())
+            .unwrap()
     }
 }
 

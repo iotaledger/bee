@@ -329,15 +329,10 @@ impl FoundryOutput {
     #[inline(always)]
     pub fn address(&self) -> &AliasAddress {
         // A FoundryOutput must have an ImmutableAliasAddressUnlockCondition.
-        if let UnlockCondition::ImmutableAliasAddress(address) = self
-            .unlock_conditions
-            .get(ImmutableAliasAddressUnlockCondition::KIND)
+        self.unlock_conditions
+            .immutable_alias_address()
+            .map(|unlock_condition| unlock_condition.address())
             .unwrap()
-        {
-            address.address()
-        } else {
-            unreachable!();
-        }
     }
 }
 
