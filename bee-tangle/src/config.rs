@@ -11,7 +11,7 @@ const DEFAULT_NUM_PARTITIONS: NonZeroUsize = unsafe { NonZeroUsize::new_unchecke
 const DEFAULT_MAX_EVICTION_RETRIES: usize = 10;
 
 /// A builder type for a tangle configuration.
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, PartialEq)]
 #[must_use]
 pub struct TangleConfigBuilder {
     #[serde(alias = "belowMaxDepth")]

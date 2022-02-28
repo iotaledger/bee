@@ -17,6 +17,9 @@ RUN apt-get update && \
 WORKDIR /bee
 COPY . .
 
+# The following is required for `git submodule` to work.
+COPY .git/ ./.git/
+
 ENV NVM_DIR /opt/nvm
 ENV NODE_VERSION 14.19.0
 

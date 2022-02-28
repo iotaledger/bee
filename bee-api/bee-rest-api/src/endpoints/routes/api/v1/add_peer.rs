@@ -60,16 +60,15 @@ pub(crate) async fn add_peer<B: StorageBackend>(
         }
     };
 
-    match args.peer_manager.get(&peer_id) {
-        Some(peer_entry) => {
+    args.peer_manager
+        .get_map(&peer_id, |peer_entry| {
             let peer_dto = PeerDto::from(peer_entry.0.as_ref());
             Ok(warp::reply::with_status(
                 warp::reply::json(&SuccessBody::new(AddPeerResponse(peer_dto))),
                 StatusCode::OK,
             ))
-        }
-
-        None => {
+        })
+        .unwrap_or_else(|| {
             let alias = if alias_v.is_null() {
                 None
             } else {
@@ -108,6 +107,5 @@ pub(crate) async fn add_peer<B: StorageBackend>(
                 }))),
                 StatusCode::OK,
             ))
-        }
-    }
+        })
 }

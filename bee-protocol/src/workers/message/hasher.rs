@@ -90,9 +90,11 @@ where
 
                     metrics.known_messages_inc();
                     if let Some(peer_id) = from {
-                        if let Some(ref peer) = peer_manager.get(&peer_id) {
-                            peer.0.metrics().known_messages_inc();
-                        }
+                        peer_manager
+                            .get_map(&peer_id, |peer| {
+                                peer.0.metrics().known_messages_inc();
+                            })
+                            .unwrap_or_default();
                     }
                     continue;
                 }

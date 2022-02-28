@@ -73,7 +73,7 @@ pub(crate) async fn outputs_ed25519<B: StorageBackend>(
     fetched.truncate(MAX_RESPONSE_RESULTS);
 
     Ok(warp::reply::json(&SuccessBody::new(OutputsAddressResponse {
-        address_type: 1,
+        address_type: Ed25519Address::KIND,
         address: addr.to_string(),
         max_results: MAX_RESPONSE_RESULTS,
         count,

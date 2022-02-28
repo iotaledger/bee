@@ -29,11 +29,12 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
         .boxed()
 }
 
-pub(crate) async fn peer<B: StorageBackend>(peer_id: PeerId, args: Arc<ApiArgs<B>>) -> Result<impl Reply, Rejection> {
-    match args.peer_manager.get(&peer_id) {
-        Some(peer_entry) => Ok(warp::reply::json(&SuccessBody::new(PeerResponse(PeerDto::from(
-            peer_entry.0.as_ref(),
-        ))))),
-        None => Err(reject::custom(CustomRejection::NotFound("peer not found".to_string()))),
-    }
+pub(crate) fn peer(peer_id: PeerId, args: Arc<ApiArgs<B>>) -> Result<impl Reply, Rejection> {
+    args.peer_manager
+        .get_map(&peer_id, |peer_entry| {
+            Ok(warp::reply::json(&SuccessBody::new(PeerResponse(PeerDto::from(
+                peer_entry.0.as_ref(),
+            )))))
+        })
+        .unwrap_or_else(|| Err(reject::custom(CustomRejection::NotFound("peer not found".to_string()))))
 }

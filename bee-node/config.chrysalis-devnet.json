@@ -25,14 +25,13 @@
     "maxUnknownPeers": 4,
     "maxDiscoveredPeers": 8,
     "peering": {
-      "peers": []
     }
   },
   "autopeering": {
     "enabled": false,
     "bindAddress": "0.0.0.0:14626",
     "entryNodes": [],
-    "entryNodesPreferIpv6": false,
+    "entryNodesPreferIPv6": false,
     "runAsEntryNode": false,
     "dropNeighborsOnSaltUpdate": false,
     "peerStoragePath": "./storage/devnet/peers"

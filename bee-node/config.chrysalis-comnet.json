@@ -25,7 +25,6 @@
     "maxUnknownPeers": 4,
     "maxDiscoveredPeers": 8,
     "peering": {
-      "peers": []
     }
   },
   "autopeering": {
@@ -34,7 +33,7 @@
     "entryNodes": [
       "/dns/entry.comnet.tanglebay.com/udp/14636/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
     ],
-    "entryNodesPreferIpv6": false,
+    "entryNodesPreferIPv6": false,
     "runAsEntryNode": false,
     "dropNeighborsOnSaltUpdate": false,
     "peerStoragePath": "./storage/comnet/peers"

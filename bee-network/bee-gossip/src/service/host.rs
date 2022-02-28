@@ -243,7 +243,7 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
         for (peer_id, info) in peerlist_reader.filter_info(|info, state| {
             (info.relation.is_known() || info.relation.is_discovered()) && state.is_disconnected()
         }) {
-            info!("Trying to reconnect to: {} ({}).", info.alias, alias!(peer_id));
+            debug!("Trying to reconnect to: {} ({}).", info.alias, alias!(peer_id));
 
             // Ignore if the command fails. We can always retry the next time.
             let _ = senders.internal_commands.send(Command::DialPeer { peer_id });

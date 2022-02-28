@@ -4,7 +4,7 @@
 use rocksdb::DBCompressionType;
 use serde::Deserialize;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub enum CompressionType {
     None,
     Snappy,
