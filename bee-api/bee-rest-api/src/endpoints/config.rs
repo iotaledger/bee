@@ -139,7 +139,7 @@ impl RestApiConfigBuilder {
             let routes = self
                 .public_routes
                 .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|r| r.to_string()).collect());
-            RegexSet::new(routes.iter().map(|r| route_to_regex(&r)).collect::<Vec<String>>())
+            RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<String>>())
                 .expect("invalid public route provided")
         };
 
@@ -147,7 +147,7 @@ impl RestApiConfigBuilder {
             let routes = self
                 .protected_routes
                 .unwrap_or_else(|| DEFAULT_PROTECTED_ROUTES.iter().map(|r| r.to_string()).collect());
-            RegexSet::new(routes.iter().map(|r| route_to_regex(&r)).collect::<Vec<String>>())
+            RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<String>>())
                 .expect("invalid protected route provided")
         };
 

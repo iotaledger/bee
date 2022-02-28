@@ -62,5 +62,5 @@ pub(crate) fn filter<B: StorageBackend>(
         .or(submit_message::filter(args.clone()))
         .or(tips::filter(args.clone()))
         .or(treasury::filter(args.clone()))
-        .or(transaction_included_message::filter(args.clone()))
+        .or(transaction_included_message::filter(args))
 }

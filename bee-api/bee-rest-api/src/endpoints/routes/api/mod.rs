@@ -17,5 +17,5 @@ pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clo
 pub(crate) fn filter<B: StorageBackend>(
     args: Arc<ApiArgs<B>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    v1::filter(args.clone()).or(plugins::filter(args.clone()))
+    v1::filter(args.clone()).or(plugins::filter(args))
 }

@@ -32,7 +32,7 @@ lazy_static! {
             "/api/v1/milestones/*",
             "/api/v1/peers*",
         ];
-        RegexSet::new(routes.iter().map(|r| route_to_regex(&r)).collect::<Vec<String>>()).unwrap()
+        RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<String>>()).unwrap()
     };
 }
 
@@ -53,17 +53,17 @@ pub(crate) fn check_permission<B: StorageBackend>(
                 // Decode the JWT payload to find out how to validate it.
                 let jwt_payload = {
                     let jwt_string = jwt.to_string();
-                    let split = jwt_string.split(".").collect::<Vec<&str>>();
+                    let split = jwt_string.split('.').collect::<Vec<&str>>();
                     if split.len() < 3 {
                         return Err(reject::custom(CustomRejection::Forbidden));
                     }
                     let encoded = split[1];
                     let decoded = base64::decode(encoded).map_err(|_| reject::custom(CustomRejection::Forbidden))?;
-                    String::from_utf8(decoded.clone()).map_err(|_| CustomRejection::Forbidden)?
+                    String::from_utf8(decoded).map_err(|_| CustomRejection::Forbidden)?
                 };
 
                 if jwt_payload.contains(&format!("\"aud\":\"{}\"", API_AUDIENCE_CLAIM)) {
-                    if let Ok(_) = validate_api_jwt(&jwt, &args) {
+                    if validate_api_jwt(&jwt, &args).is_ok() {
                         if args.rest_api_config.protected_routes.is_match(path.as_str()) {
                             return Ok(());
                         }
@@ -71,7 +71,7 @@ pub(crate) fn check_permission<B: StorageBackend>(
                 } else {
                     #[cfg(feature = "dashboard")]
                     if jwt_payload.contains(&format!("\"aud\":\"{}\"", DASHBOARD_AUDIENCE_CLAIM)) {
-                        if let Ok(_) = validate_dashboard_jwt(&jwt, &args) {
+                        if validate_dashboard_jwt(&jwt, &args).is_ok() {
                             if DASHBOARD_ROUTES.is_match(path.as_str()) {
                                 return Ok(());
                             }
@@ -79,7 +79,7 @@ pub(crate) fn check_permission<B: StorageBackend>(
                     }
                 }
 
-                return Err(reject::custom(CustomRejection::Forbidden));
+                Err(reject::custom(CustomRejection::Forbidden))
             }
         })
         .untuple_one()
