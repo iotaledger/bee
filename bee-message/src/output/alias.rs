@@ -282,7 +282,7 @@ impl AliasOutput {
 
     ///
     #[inline(always)]
-    pub fn state_controller(&self) -> &Address {
+    pub fn state_controller_address(&self) -> &Address {
         // An AliasOutput must have a StateControllerAddressUnlockCondition.
         self.unlock_conditions
             .state_controller_address()
@@ -292,7 +292,7 @@ impl AliasOutput {
 
     ///
     #[inline(always)]
-    pub fn governor(&self) -> &Address {
+    pub fn governor_address(&self) -> &Address {
         // An AliasOutput must have a GovernorAddressUnlockCondition.
         self.unlock_conditions
             .governor_address()
