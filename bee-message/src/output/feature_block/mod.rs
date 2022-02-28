@@ -116,7 +116,7 @@ impl FeatureBlocks {
         Ok(Self(feature_blocks))
     }
 
-    /// Gets a reference to a feature block from a feature block kind, if found.
+    /// Gets a reference to a [`FeatureBlock`] from a feature block kind, if any.
     #[inline(always)]
     pub fn get(&self, key: u8) -> Option<&FeatureBlock> {
         self.0
@@ -124,6 +124,42 @@ impl FeatureBlocks {
             // SAFETY: indexation is fine since the index has been found.
             .map(|index| &self.0[index])
             .ok()
+    }
+
+    /// Gets a reference to a [`SenderFeatureBlock`], if any.
+    pub fn sender(&self) -> Option<&SenderFeatureBlock> {
+        if let Some(FeatureBlock::Sender(sender)) = self.get(SenderFeatureBlock::KIND) {
+            Some(sender)
+        } else {
+            None
+        }
+    }
+
+    /// Gets a reference to a [`IssuerFeatureBlock`], if any.
+    pub fn issuer(&self) -> Option<&IssuerFeatureBlock> {
+        if let Some(FeatureBlock::Issuer(issuer)) = self.get(IssuerFeatureBlock::KIND) {
+            Some(issuer)
+        } else {
+            None
+        }
+    }
+
+    /// Gets a reference to a [`MetadataFeatureBlock`], if any.
+    pub fn metadata(&self) -> Option<&MetadataFeatureBlock> {
+        if let Some(FeatureBlock::Metadata(metadata)) = self.get(MetadataFeatureBlock::KIND) {
+            Some(metadata)
+        } else {
+            None
+        }
+    }
+
+    /// Gets a reference to a [`TagFeatureBlock`], if any.
+    pub fn tag(&self) -> Option<&TagFeatureBlock> {
+        if let Some(FeatureBlock::Tag(tag)) = self.get(TagFeatureBlock::KIND) {
+            Some(tag)
+        } else {
+            None
+        }
     }
 }
 
