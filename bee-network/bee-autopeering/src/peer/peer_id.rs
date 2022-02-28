@@ -98,7 +98,7 @@ impl fmt::Debug for PeerId {
 
 impl fmt::Display for PeerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.libp2p_peer_id().to_base58()[..DISPLAY_LENGTH].fmt(f)
+        self.libp2p_peer_id().to_base58()[8..8+DISPLAY_LENGTH].fmt(f)
     }
 }
 
