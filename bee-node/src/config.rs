@@ -112,7 +112,60 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
 }
 
-impl<S: NodeStorageBackend> NodeConfigBuilder<S> {
+// This cannot be derived because `S` does not implement `PartialEq`.
+impl<S> PartialEq for NodeConfigBuilder<S>
+where
+    S: NodeStorageBackend,
+    S::ConfigBuilder: PartialEq,
+{
+    #[allow(deprecated)]
+    fn eq(&self, other: &Self) -> bool {
+        // We destructure `Self` so this implementation does not fail silently if fields are added or removed.
+        let Self {
+            _identity: self_identity,
+            alias: self_alias,
+            bech32_hrp: self_bech32_hrp,
+            network_id: self_network_id,
+            logger: self_logger,
+            network: self_network,
+            autopeering: self_autopeering,
+            protocol: self_protocol,
+            rest_api: self_rest_api,
+            snapshot: self_snapshot,
+            pruning: self_pruning,
+            storage: self_storage,
+            tangle: self_tangle,
+            mqtt: self_mqtt,
+            #[cfg(feature = "dashboard")]
+                dashboard: self_dashboard,
+        } = self;
+
+        let cmp = (self_identity == &other._identity)
+            && (self_alias == &other.alias)
+            && (self_bech32_hrp == &other.bech32_hrp)
+            && (self_network_id == &other.network_id)
+            && (self_logger == &other.logger)
+            && (self_network == &other.network)
+            && (self_autopeering == &other.autopeering)
+            && (self_protocol == &other.protocol)
+            && (self_rest_api == &other.rest_api)
+            && (self_snapshot == &other.snapshot)
+            && (self_pruning == &other.pruning)
+            && (self_storage == &other.storage)
+            && (self_tangle == &other.tangle)
+            && (self_mqtt == &other.mqtt);
+
+        #[cfg(feature = "dashboard")]
+        return cmp && (self_dashboard == &other.dashboard);
+        #[cfg(not(feature = "dashboard"))]
+        return cmp;
+    }
+}
+
+impl<S: NodeStorageBackend> NodeConfigBuilder<S>
+where
+    <S as bee_storage::backend::StorageBackend>::ConfigBuilder: core::fmt::Debug + PartialEq,
+{
     /// Creates a node config builder from a local config file.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, NodeConfigError> {
         match fs::read_to_string(&path) {
@@ -231,14 +284,16 @@ mod test {
 
     #[test]
     fn config_files_conformity() -> Result<(), NodeConfigError> {
-        let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
+        let json = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/config.stardust-testnet.json"
         ))?;
-        let _ = NodeConfigBuilder::<Storage>::from_file(concat!(
+        let toml = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/config.stardust-testnet.toml"
         ))?;
+
+        assert!(json == toml);
 
         Ok(())
     }

@@ -1189,9 +1189,9 @@ dependencies = [
 
 [[package]]
 name = "fern-logger"
-version = "0.3.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d1efe219246cb5215d7c63e3699d858cd7cd93a1bbd3008e6383e85ac6dcef2"
+checksum = "d72fcbd7f804f2dcb89b295dfdfeff1a81338b1960387a45261f857ddc553a9f"
 dependencies = [
  "fern",
  "log",

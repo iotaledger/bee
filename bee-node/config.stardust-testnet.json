@@ -25,7 +25,6 @@
     "maxUnknownPeers": 4,
     "maxDiscoveredPeers": 8,
     "peering": {
-      "peers": []
     }
   },
   "autopeering": {
@@ -35,7 +34,7 @@
       "/dns/entry-hornet-0.h.stardust-testnet.iotaledger.net/udp/14626/autopeering/Bv8UUxy81fqpttowiFiBsNT6mnGMFoFNjk79iG1f9nEr",
       "/dns/entry-hornet-1.h.stardust-testnet.iotaledger.net/udp/14626/autopeering/CbYtFzRQtqeNQJQFYRZk1WewxfKCmqXCHZ16od1d23PX"
     ],
-    "entryNodesPreferIpv6": false,
+    "entryNodesPreferIPv6": false,
     "runAsEntryNode": false,
     "dropNeighborsOnSaltUpdate": false,
     "peerStoragePath": "./storage/shimmer/testnet/peers"
@@ -87,24 +86,24 @@
     "featureProofOfWork": true,
     "publicRoutes": [
       "/health",
-      "/api/v1/info",
-      "/api/v1/tips",
-      "/api/v1/messages",
-      "/api/v1/messages/:messageId",
-      "/api/v1/messages/:messageId/metadata",
-      "/api/v1/messages/:messageId/raw",
-      "/api/v1/messages/:messageId/children",
-      "/api/v1/outputs/:outputId",
-      "/api/v1/addresses/:address",
-      "/api/v1/addresses/ed25519/:address",
-      "/api/v1/addresses/:address/outputs",
-      "/api/v1/addresses/ed25519/:address/outputs",
-      "/api/v1/receipts",
-      "/api/v1/receipts/:milestoneIndex",
-      "/api/v1/treasury",
-      "/api/v1/transactions/:transactionId/included-message",
-      "/api/v1/milestones/:milestoneIndex",
-      "/api/v1/milestones/:milestoneIndex/utxo-changes"
+      "/api/v2/info",
+      "/api/v2/tips",
+      "/api/v2/messages",
+      "/api/v2/messages/:messageId",
+      "/api/v2/messages/:messageId/metadata",
+      "/api/v2/messages/:messageId/raw",
+      "/api/v2/messages/:messageId/children",
+      "/api/v2/outputs/:outputId",
+      "/api/v2/addresses/:address",
+      "/api/v2/addresses/ed25519/:address",
+      "/api/v2/addresses/:address/outputs",
+      "/api/v2/addresses/ed25519/:address/outputs",
+      "/api/v2/receipts",
+      "/api/v2/receipts/:milestoneIndex",
+      "/api/v2/treasury",
+      "/api/v2/transactions/:transactionId/included-message",
+      "/api/v2/milestones/:milestoneIndex",
+      "/api/v2/milestones/:milestoneIndex/utxo-changes"
     ],
     "allowedIps": [
       "127.0.0.1",

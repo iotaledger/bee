@@ -17,7 +17,7 @@ const DEFAULT_MESSAGE_WORKER_CACHE: usize = 10000;
 const DEFAULT_STATUS_INTERVAL: u64 = 10;
 const DEFAULT_MILESTONE_SYNC_COUNT: u32 = 200;
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, PartialEq)]
 #[must_use]
 struct ProtocolCoordinatorConfigBuilder {
     #[serde(alias = "publicKeyCount")]
@@ -26,7 +26,7 @@ struct ProtocolCoordinatorConfigBuilder {
     public_key_ranges: Option<Vec<MilestoneKeyRange>>,
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, PartialEq)]
 #[must_use]
 struct ProtocolWorkersConfigBuilder {
     #[serde(alias = "messageWorkerCache")]
@@ -38,7 +38,7 @@ struct ProtocolWorkersConfigBuilder {
 }
 
 /// Builder for a `ProtocolConfig`.
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, PartialEq)]
 #[must_use]
 pub struct ProtocolConfigBuilder {
     #[serde(alias = "minimumPowScore")]
