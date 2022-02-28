@@ -284,7 +284,7 @@ impl Packable for NftOutput {
 fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, nft_id: &NftId) -> Result<(), Error> {
     if let Some(UnlockCondition::Address(unlock_condition)) = unlock_conditions.get(AddressUnlockCondition::KIND) {
         if let Address::Nft(nft_address) = unlock_condition.address() {
-            if nft_address.id() == nft_id {
+            if nft_address.nft_id() == nft_id {
                 return Err(Error::SelfDepositNft(*nft_id));
             }
         }

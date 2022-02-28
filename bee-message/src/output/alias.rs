@@ -392,7 +392,7 @@ fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, alias_id: &Ali
         unlock_conditions.get(StateControllerAddressUnlockCondition::KIND)
     {
         if let Address::Alias(alias_address) = unlock_condition.address() {
-            if alias_address.id() == alias_id {
+            if alias_address.alias_id() == alias_id {
                 return Err(Error::SelfControlledAliasOutput(*alias_id));
             }
         }
@@ -404,7 +404,7 @@ fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, alias_id: &Ali
         unlock_conditions.get(GovernorAddressUnlockCondition::KIND)
     {
         if let Address::Alias(alias_address) = unlock_condition.address() {
-            if alias_address.id() == alias_id {
+            if alias_address.alias_id() == alias_id {
                 return Err(Error::SelfControlledAliasOutput(*alias_id));
             }
         }
