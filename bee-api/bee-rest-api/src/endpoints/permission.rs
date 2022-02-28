@@ -63,8 +63,10 @@ pub(crate) fn check_permission<B: StorageBackend>(
                 };
 
                 if jwt_payload.contains(&format!("\"aud\":\"{}\"", API_AUDIENCE_CLAIM)) {
-                    if validate_api_jwt(&jwt, &args).is_ok() && args.rest_api_config.protected_routes.is_match(path.as_str()) {
-                            return Ok(());
+                    if validate_api_jwt(&jwt, &args).is_ok()
+                        && args.rest_api_config.protected_routes.is_match(path.as_str())
+                    {
+                        return Ok(());
                     }
                 } else {
                     #[cfg(feature = "dashboard")]
