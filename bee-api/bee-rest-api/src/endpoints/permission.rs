@@ -70,10 +70,11 @@ pub(crate) fn check_permission<B: StorageBackend>(
                     }
                 } else {
                     #[cfg(feature = "dashboard")]
-                    if jwt_payload.contains(&format!("\"aud\":\"{}\"", DASHBOARD_AUDIENCE_CLAIM)) {
-                        if validate_dashboard_jwt(&jwt, &args).is_ok() && DASHBOARD_ROUTES.is_match(path.as_str()) {
-                            return Ok(());
-                        }
+                    if jwt_payload.contains(&format!("\"aud\":\"{}\"", DASHBOARD_AUDIENCE_CLAIM))
+                        && validate_dashboard_jwt(&jwt, &args).is_ok()
+                        && DASHBOARD_ROUTES.is_match(path.as_str())
+                    {
+                        return Ok(());
                     }
                 }
 
