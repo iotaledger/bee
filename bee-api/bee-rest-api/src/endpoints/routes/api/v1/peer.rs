@@ -29,7 +29,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
         .boxed()
 }
 
-pub(crate) fn peer<B: StorageBackend>(peer_id: PeerId, args: Arc<ApiArgs<B>>) -> Result<impl Reply, Rejection> {
+pub(crate) async fn peer<B: StorageBackend>(peer_id: PeerId, args: Arc<ApiArgs<B>>) -> Result<impl Reply, Rejection> {
     args.peer_manager
         .get_map(&peer_id, |peer_entry| {
             Ok(warp::reply::json(&SuccessBody::new(PeerResponse(PeerDto::from(
