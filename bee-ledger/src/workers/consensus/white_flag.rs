@@ -213,10 +213,7 @@ async fn traverse_past_cone<B: StorageBackend>(
     let mut visited = HashSet::new();
 
     while let Some(message_id) = message_ids.last() {
-        if let Some((message, meta)) = tangle
-            .get_vertex_and_then(message_id, |v| v.message_and_metadata().cloned())
-            .await
-        {
+        if let Some((message, meta)) = tangle.get_vertex_and_then(message_id, |v| v.message_and_metadata().cloned()) {
             if meta.flags().is_referenced() {
                 visited.insert(*message_id);
                 message_ids.pop();
@@ -230,7 +227,7 @@ async fn traverse_past_cone<B: StorageBackend>(
                 visited.insert(*message_id);
                 message_ids.pop();
             }
-        } else if !tangle.is_solid_entry_point(message_id).await {
+        } else if !tangle.is_solid_entry_point(message_id) {
             return Err(Error::MissingMessage(*message_id));
         } else {
             visited.insert(*message_id);

@@ -143,7 +143,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     });
 
     for parent in parents.iter() {
-        if tangle.is_solid_message(parent).await {
+        if tangle.is_solid_message(parent) {
             if let Ok(mut to_solidify) = to_solidify.lock() {
                 to_solidify.remove(parent);
             }

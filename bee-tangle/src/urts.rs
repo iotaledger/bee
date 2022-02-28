@@ -65,13 +65,13 @@ impl UrtsTipPool {
         &self.non_lazy_tips
     }
 
-    pub(crate) async fn insert<B: StorageBackend>(
+    pub(crate) fn insert<B: StorageBackend>(
         &mut self,
         tangle: &Tangle<B>,
         message_id: MessageId,
         parents: Vec<MessageId>,
     ) {
-        if let Score::NonLazy = self.tip_score::<B>(tangle, &message_id).await {
+        if let Score::NonLazy = self.tip_score::<B>(tangle, &message_id) {
             self.non_lazy_tips.insert(message_id);
             self.tips.insert(message_id, TipMetadata::new());
             for parent in &parents {
@@ -120,11 +120,11 @@ impl UrtsTipPool {
         }
     }
 
-    pub(crate) async fn update_scores<B: StorageBackend>(&mut self, tangle: &Tangle<B>) {
+    pub(crate) fn update_scores<B: StorageBackend>(&mut self, tangle: &Tangle<B>) {
         let mut to_remove = Vec::new();
 
         for tip in self.tips.keys() {
-            match self.tip_score::<B>(tangle, tip).await {
+            match self.tip_score::<B>(tangle, tip) {
                 Score::SemiLazy | Score::Lazy => {
                     to_remove.push(*tip);
                 }
@@ -140,9 +140,9 @@ impl UrtsTipPool {
         debug!("Non-lazy tips {}", self.non_lazy_tips.len());
     }
 
-    async fn tip_score<B: StorageBackend>(&self, tangle: &Tangle<B>, message_id: &MessageId) -> Score {
+    fn tip_score<B: StorageBackend>(&self, tangle: &Tangle<B>, message_id: &MessageId) -> Score {
         // in case the tip was pruned by the node, consider tip as lazy
-        if !tangle.contains(message_id).await {
+        if !tangle.contains(message_id) {
             Score::Lazy
         } else {
             let smi = *tangle.get_solid_milestone_index();
@@ -150,8 +150,8 @@ impl UrtsTipPool {
             // The tip pool only works with solid tips. Therefore, all tips added to the pool can be considered to
             // solid. The solid flag will be set together with omrsi and ymrsi values. Therefore, when a
             // message is solid, omrsi and ymrsi values are available. Therefore, unwrapping here is fine.
-            let omrsi = *tangle.omrsi(message_id).await.unwrap().index();
-            let ymrsi = *tangle.ymrsi(message_id).await.unwrap().index();
+            let omrsi = *tangle.omrsi(message_id).unwrap().index();
+            let ymrsi = *tangle.ymrsi(message_id).unwrap().index();
 
             if smi > ymrsi + YMRSI_DELTA || smi > omrsi + self.below_max_depth {
                 Score::Lazy

@@ -46,14 +46,14 @@ pub(crate) async fn health<B: StorageBackend>(
     tangle: ResourceHandle<Tangle<B>>,
     peer_manager: ResourceHandle<PeerManager>,
 ) -> Result<impl Reply, Infallible> {
-    if is_healthy(&tangle, &peer_manager).await {
+    if is_healthy(&tangle, &peer_manager) {
         Ok(StatusCode::OK)
     } else {
         Ok(StatusCode::SERVICE_UNAVAILABLE)
     }
 }
 
-pub async fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &PeerManager) -> bool {
+pub fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &PeerManager) -> bool {
     if !tangle.is_confirmed_threshold(HEALTH_CONFIRMED_THRESHOLD) {
         return false;
     }
@@ -62,7 +62,7 @@ pub async fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &Pe
         return false;
     }
 
-    match tangle.get_milestone(tangle.get_latest_milestone_index()).await {
+    match tangle.get_milestone(tangle.get_latest_milestone_index()) {
         Some(milestone) => {
             (SystemTime::now()
                 .duration_since(UNIX_EPOCH)

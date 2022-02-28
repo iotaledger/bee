@@ -66,14 +66,13 @@ pub(crate) async fn info<B: StorageBackend>(
     let latest_milestone_index = tangle.get_latest_milestone_index();
     let latest_milestone_timestamp = tangle
         .get_milestone(latest_milestone_index)
-        .await
         .map(|m| m.timestamp())
         .unwrap_or_default();
 
     Ok(warp::reply::json(&SuccessBody::new(InfoResponse {
         name: node_info.name.clone(),
         version: node_info.version.clone(),
-        is_healthy: health::is_healthy(&tangle, &peer_manager).await,
+        is_healthy: health::is_healthy(&tangle, &peer_manager),
         network_id: network_id.0,
         bech32_hrp,
         min_pow_score: protocol_config.minimum_pow_score(),

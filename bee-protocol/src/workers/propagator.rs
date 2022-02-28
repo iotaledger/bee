@@ -34,14 +34,14 @@ async fn propagate<B: StorageBackend>(
 
     'outer: while let Some(ref message_id) = children.pop() {
         // Skip messages that are already solid.
-        if tangle.is_solid_message(message_id).await {
+        if tangle.is_solid_message(message_id) {
             continue 'outer;
         }
 
-        if let Some(message) = tangle.get(message_id).await {
+        if let Some(message) = tangle.get(message_id) {
             // If one of the parents is not yet solid, we skip the current message.
             for parent in message.parents().iter() {
-                if !tangle.is_solid_message(parent).await {
+                if !tangle.is_solid_message(parent) {
                     continue 'outer;
                 }
             }
@@ -57,23 +57,20 @@ async fn propagate<B: StorageBackend>(
             let mut parent_ymrsis = Vec::new();
 
             for parent in message.parents().iter() {
-                let (parent_omrsi, parent_ymrsi) = match tangle
-                    .get_solid_entry_point_index(SolidEntryPoint::ref_cast(parent))
-                    .await
-                {
-                    Some(parent_sepi) => (IndexId::new(parent_sepi, *parent), IndexId::new(parent_sepi, *parent)),
-                    // SAFETY: 'unwrap' is safe, see explanation above.
-                    None => tangle
-                        .get_metadata(parent)
-                        .await
-                        .map(|parent_md| {
-                            (
-                                parent_md.omrsi().expect("solid msg with unset omrsi"),
-                                parent_md.ymrsi().expect("solid msg with unset ymrsi"),
-                            )
-                        })
-                        .unwrap(),
-                };
+                let (parent_omrsi, parent_ymrsi) =
+                    match tangle.get_solid_entry_point_index(SolidEntryPoint::ref_cast(parent)) {
+                        Some(parent_sepi) => (IndexId::new(parent_sepi, *parent), IndexId::new(parent_sepi, *parent)),
+                        // SAFETY: 'unwrap' is safe, see explanation above.
+                        None => tangle
+                            .get_metadata(parent)
+                            .map(|parent_md| {
+                                (
+                                    parent_md.omrsi().expect("solid msg with unset omrsi"),
+                                    parent_md.ymrsi().expect("solid msg with unset ymrsi"),
+                                )
+                            })
+                            .unwrap(),
+                    };
                 parent_omrsis.push(parent_omrsi);
                 parent_ymrsis.push(parent_ymrsi);
             }
@@ -96,11 +93,10 @@ async fn propagate<B: StorageBackend>(
                         None
                     }
                 })
-                .await
                 .expect("Failed to fetch metadata.");
 
             // Try to propagate as far as possible into the future.
-            if let Some(msg_children) = tangle.get_children(message_id).await {
+            if let Some(msg_children) = tangle.get_children(message_id) {
                 for child in msg_children {
                     children.push(child);
                 }
@@ -166,7 +162,7 @@ where
                         if (tangle.get_latest_milestone_index() - tangle.get_solid_milestone_index())
                             <= (tangle.config().below_max_depth() + SAFETY_THRESHOLD).into()
                         {
-                            tangle.insert_tip(message_id, parents).await;
+                            tangle.insert_tip(message_id, parents);
                         }
 
                         if let Some(index) = index {

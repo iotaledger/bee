@@ -39,7 +39,7 @@ pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<Tangle<B>>) -
             "the node is not synchronized".to_string(),
         )));
     }
-    match tangle.get_messages_to_approve().await {
+    match tangle.get_messages_to_approve() {
         Some(tips) => Ok(warp::reply::json(&SuccessBody::new(TipsResponse {
             tip_message_ids: tips.iter().map(|t| t.to_string()).collect(),
         }))),

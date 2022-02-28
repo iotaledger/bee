@@ -33,9 +33,7 @@ pub async fn visit_parents_depth_first<Match, Apply, ElseApply, MissingApply, B:
 
     while let Some(message_id) = parents.pop() {
         if visited.insert(message_id) {
-            let msg_meta = tangle
-                .get_vertex_and_then(&message_id, |v| v.message_and_metadata().cloned())
-                .await;
+            let msg_meta = tangle.get_vertex_and_then(&message_id, |v| v.message_and_metadata().cloned());
             match msg_meta {
                 Some((msg, meta)) => {
                     if matches(message_id, msg.clone(), meta) {

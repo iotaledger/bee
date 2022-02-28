@@ -551,6 +551,7 @@ dependencies = [
  "futures",
  "hashbrown",
  "log",
+ "parking_lot",
  "rand 0.8.4",
  "ref-cast",
  "serde",

@@ -102,7 +102,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     };
 
     let parents: Vec<MessageId> = if parents_v.is_null() {
-        tangle.get_messages_to_approve().await.ok_or_else(|| {
+        tangle.get_messages_to_approve().ok_or_else(|| {
             reject::custom(CustomRejection::ServiceUnavailable(
                 "can not auto-fill parents: no tips available".to_string(),
             ))
@@ -244,7 +244,7 @@ pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
 ) -> Result<MessageId, Rejection> {
     let (message_id, message_bytes) = message.id();
 
-    if tangle.contains(&message_id).await {
+    if tangle.contains(&message_id) {
         return Ok(message_id);
     }
 

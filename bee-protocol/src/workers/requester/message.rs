@@ -40,8 +40,8 @@ pub async fn request_message<B: StorageBackend>(
     message_id: MessageId,
     index: MilestoneIndex,
 ) {
-    if !tangle.contains(&message_id).await
-        && !tangle.is_solid_entry_point(&message_id).await
+    if !tangle.contains(&message_id)
+        && !tangle.is_solid_entry_point(&message_id)
         && !requested_messages.contains(&message_id)
     {
         message_requester.request(MessageRequesterWorkerEvent(message_id, index));
@@ -137,7 +137,7 @@ fn process_request_unchecked(
     }
 }
 
-async fn retry_requests<B: StorageBackend>(
+fn retry_requests<B: StorageBackend>(
     requested_messages: &RequestedMessages,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
@@ -163,7 +163,7 @@ async fn retry_requests<B: StorageBackend>(
     }
 
     for (message_id, index) in to_retry {
-        if tangle.contains(&message_id).await {
+        if tangle.contains(&message_id) {
             requested_messages.remove(&message_id);
         } else {
             process_request_unchecked(message_id, index, peer_manager, metrics);
@@ -230,7 +230,7 @@ where
             let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(RETRY_INTERVAL)));
 
             while ticker.next().await.is_some() {
-                retry_requests(&requested_messages, &peer_manager, &metrics, &tangle).await;
+                retry_requests(&requested_messages, &peer_manager, &metrics, &tangle);
             }
 
             info!("Retryer stopped.");

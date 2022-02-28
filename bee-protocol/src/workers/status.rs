@@ -49,7 +49,7 @@ where
                 let solid_milestone_index = *tangle.get_solid_milestone_index();
                 let confirmed_milestone_index = *tangle.get_confirmed_milestone_index();
                 let latest_milestone_index = *tangle.get_latest_milestone_index();
-                let non_lazy_tips_num = tangle.non_lazy_tips_num().await;
+                let non_lazy_tips_num = tangle.non_lazy_tips_num();
 
                 let status = if confirmed_milestone_index == latest_milestone_index {
                     format!("Synchronized and confirmed at {}", latest_milestone_index)

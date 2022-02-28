@@ -41,7 +41,7 @@ pub(crate) async fn message<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get(&message_id).await.map(|m| (*m).clone()) {
+    match tangle.get(&message_id).map(|m| (*m).clone()) {
         Some(message) => Ok(warp::reply::json(&SuccessBody::new(MessageResponse(MessageDto::from(
             &message,
         ))))),

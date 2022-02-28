@@ -20,8 +20,8 @@ use bee_runtime::resource::ResourceHandle;
 
 use hashbrown::HashMap;
 use log::info;
+use parking_lot::Mutex;
 use ref_cast::RefCast;
-use tokio::sync::Mutex;
 
 use std::{
     marker::PhantomData,
@@ -72,8 +72,8 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Shut down the tangle, terminating any and all worker tasks.
-    pub async fn shutdown(self) {
-        // TODO: Write back changes by calling self.inner.shutdown().await
+    pub fn shutdown(self) {
+        // TODO: Write back changes by calling self.inner.shutdown()
     }
 
     /// Get the configuration of this tangle.
@@ -82,19 +82,13 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Insert a message into the tangle.
-    pub async fn insert(
-        &self,
-        message: Message,
-        message_id: MessageId,
-        metadata: MessageMetadata,
-    ) -> Option<MessageRef> {
-        let exists = self.pull_message(&message_id, true).await;
+    pub fn insert(&self, message: Message, message_id: MessageId, metadata: MessageMetadata) -> Option<MessageRef> {
+        let exists = self.pull_message(&message_id, true);
 
-        let msg = self.insert_inner(message_id, message.clone(), metadata, !exists).await;
+        let msg = self.insert_inner(message_id, message.clone(), metadata, !exists);
 
         self.vertices
             .get_mut_map(&message_id, |v| v.allow_eviction())
-            .await
             .expect("Just-inserted message is missing");
 
         if msg.is_some() {
@@ -114,38 +108,31 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Add a milestone to the tangle.
-    pub async fn add_milestone(&self, idx: MilestoneIndex, milestone: Milestone) {
+    pub fn add_milestone(&self, idx: MilestoneIndex, milestone: Milestone) {
         // TODO: only insert if vacant
         self.update_metadata(milestone.message_id(), |metadata| {
             metadata.flags_mut().set_milestone(true);
             metadata.set_milestone_index(idx);
             metadata.set_omrsi(IndexId::new(idx, *milestone.message_id()));
             metadata.set_ymrsi(IndexId::new(idx, *milestone.message_id()));
-        })
-        .await;
+        });
         self.storage()
             .insert(&idx, &milestone)
             .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
-        self.milestones.lock().await.insert(idx, milestone);
+        self.milestones.lock().insert(idx, milestone);
     }
 
     /// Remove a milestone from the tangle.
-    pub async fn remove_milestone(&self, index: MilestoneIndex) {
-        self.milestones.lock().await.remove(&index);
+    pub fn remove_milestone(&self, index: MilestoneIndex) {
+        self.milestones.lock().remove(&index);
     }
 
-    async fn pull_milestone(&self, idx: MilestoneIndex) -> Option<MessageId> {
+    fn pull_milestone(&self, idx: MilestoneIndex) -> Option<MessageId> {
         if let Some(milestone) = self.storage().fetch(&idx).unwrap_or_else(|e| {
             info!("Failed to insert message {:?}", e);
             None
         }) {
-            let message_id = *self
-                .milestones
-                .lock()
-                .await
-                .entry(idx)
-                .or_insert(milestone)
-                .message_id();
+            let message_id = *self.milestones.lock().entry(idx).or_insert(milestone).message_id();
 
             Some(message_id)
         } else {
@@ -154,37 +141,37 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the milestone from the tangle that corresponds to the given milestone index.
-    pub async fn get_milestone(&self, index: MilestoneIndex) -> Option<Milestone> {
-        self.milestones.lock().await.get(&index).cloned()
+    pub fn get_milestone(&self, index: MilestoneIndex) -> Option<Milestone> {
+        self.milestones.lock().get(&index).cloned()
     }
 
     /// Get the message associated with the given milestone index from the tangle.
-    pub async fn get_milestone_message(&self, index: MilestoneIndex) -> Option<MessageRef> {
+    pub fn get_milestone_message(&self, index: MilestoneIndex) -> Option<MessageRef> {
         // TODO: use combinator instead of match
-        match self.get_milestone_message_id(index).await {
+        match self.get_milestone_message_id(index) {
             None => None,
-            Some(ref hash) => self.get(hash).await,
+            Some(ref hash) => self.get(hash),
         }
     }
 
     /// Get the message ID associated with the given milestone index from the tangle.
-    pub async fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
-        let message_id = self.milestones.lock().await.get(&index).map(|m| *m.message_id());
+    pub fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
+        let message_id = self.milestones.lock().get(&index).map(|m| *m.message_id());
 
         // TODO: use combinator instead of match
         match message_id {
             Some(m) => Some(m),
-            None => Some(self.pull_milestone(index).await?),
+            None => Some(self.pull_milestone(index)?),
         }
     }
 
     /// Return whether the tangle contains the given milestone index.
-    pub async fn contains_milestone(&self, idx: MilestoneIndex) -> bool {
+    pub fn contains_milestone(&self, idx: MilestoneIndex) -> bool {
         // Not using `||` as its first operand would keep the lock alive causing a deadlock with its second operand.
-        if self.milestones.lock().await.contains_key(&idx) {
+        if self.milestones.lock().contains_key(&idx) {
             return true;
         }
-        self.pull_milestone(idx).await.is_some()
+        self.pull_milestone(idx).is_some()
     }
 
     /// Get the index of the latest milestone.
@@ -286,65 +273,60 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the milestone index associated with the given solid entry point.
-    pub async fn get_solid_entry_point_index(&self, sep: &SolidEntryPoint) -> Option<MilestoneIndex> {
-        self.solid_entry_points.lock().await.get(sep).copied()
+    pub fn get_solid_entry_point_index(&self, sep: &SolidEntryPoint) -> Option<MilestoneIndex> {
+        self.solid_entry_points.lock().get(sep).copied()
     }
 
     /// Add the given solid entry point to the given milestone index.
-    pub async fn add_solid_entry_point(&self, sep: SolidEntryPoint, index: MilestoneIndex) {
-        self.solid_entry_points.lock().await.insert(sep, index);
+    pub fn add_solid_entry_point(&self, sep: SolidEntryPoint, index: MilestoneIndex) {
+        self.solid_entry_points.lock().insert(sep, index);
     }
 
     /// Returns a copy of all solid entry points.
-    pub async fn get_solid_entry_points(&self) -> HashMap<SolidEntryPoint, MilestoneIndex> {
-        self.solid_entry_points.lock().await.clone()
+    pub fn get_solid_entry_points(&self) -> HashMap<SolidEntryPoint, MilestoneIndex> {
+        self.solid_entry_points.lock().clone()
     }
 
     /// Removes the given solid entry point from the set of solid entry points.
-    pub async fn remove_solid_entry_point(&self, sep: &SolidEntryPoint) {
-        self.solid_entry_points.lock().await.remove(sep);
+    pub fn remove_solid_entry_point(&self, sep: &SolidEntryPoint) {
+        self.solid_entry_points.lock().remove(sep);
     }
 
     /// Clear all solid entry points.
-    pub async fn clear_solid_entry_points(&self) {
-        self.solid_entry_points.lock().await.clear();
+    pub fn clear_solid_entry_points(&self) {
+        self.solid_entry_points.lock().clear();
     }
 
     /// Replaces all solid entry points.
-    pub async fn replace_solid_entry_points(
-        &self,
-        new_seps: impl IntoIterator<Item = (SolidEntryPoint, MilestoneIndex)>,
-    ) {
-        let mut seps = self.solid_entry_points.lock().await;
+    pub fn replace_solid_entry_points(&self, new_seps: impl IntoIterator<Item = (SolidEntryPoint, MilestoneIndex)>) {
+        let mut seps = self.solid_entry_points.lock();
         seps.clear();
         seps.extend(new_seps);
     }
 
     /// Returns whether the message associated with given solid entry point is a solid entry point.
-    pub async fn is_solid_entry_point(&self, id: &MessageId) -> bool {
+    pub fn is_solid_entry_point(&self, id: &MessageId) -> bool {
         self.solid_entry_points
             .lock()
-            .await
             .contains_key(SolidEntryPoint::ref_cast(id))
     }
 
     /// Returns whether the message associated with the given message ID is solid.
-    pub async fn is_solid_message(&self, id: &MessageId) -> bool {
-        if self.is_solid_entry_point(id).await {
+    pub fn is_solid_message(&self, id: &MessageId) -> bool {
+        if self.is_solid_entry_point(id) {
             true
         } else {
             self.get_metadata(id)
-                .await
                 .map(|metadata| metadata.flags().is_solid())
                 .unwrap_or(false)
         }
     }
 
     /// Get the oldest milestone root snapshot index.
-    pub async fn omrsi(&self, id: &MessageId) -> Option<IndexId> {
-        match self.solid_entry_points.lock().await.get(SolidEntryPoint::ref_cast(id)) {
+    pub fn omrsi(&self, id: &MessageId) -> Option<IndexId> {
+        match self.solid_entry_points.lock().get(SolidEntryPoint::ref_cast(id)) {
             Some(sep) => Some(IndexId::new(*sep, *id)),
-            None => match self.get_metadata(id).await {
+            None => match self.get_metadata(id) {
                 Some(metadata) => metadata.omrsi(),
                 None => None,
             },
@@ -352,10 +334,10 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the youngest milestone root snapshot index.
-    pub async fn ymrsi(&self, id: &MessageId) -> Option<IndexId> {
-        match self.solid_entry_points.lock().await.get(SolidEntryPoint::ref_cast(id)) {
+    pub fn ymrsi(&self, id: &MessageId) -> Option<IndexId> {
+        match self.solid_entry_points.lock().get(SolidEntryPoint::ref_cast(id)) {
             Some(sep) => Some(IndexId::new(*sep, *id)),
-            None => match self.get_metadata(id).await {
+            None => match self.get_metadata(id) {
                 Some(metadata) => metadata.ymrsi(),
                 None => None,
             },
@@ -363,28 +345,28 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Insert the given message ID and parents as a tip.
-    pub async fn insert_tip(&self, message_id: MessageId, parents: Vec<MessageId>) {
-        self.tip_pool.lock().await.insert(self, message_id, parents).await;
+    pub fn insert_tip(&self, message_id: MessageId, parents: Vec<MessageId>) {
+        self.tip_pool.lock().insert(self, message_id, parents);
     }
 
     /// Update tip scores.
-    pub async fn update_tip_scores(&self) {
-        self.tip_pool.lock().await.update_scores(self).await;
+    pub fn update_tip_scores(&self) {
+        self.tip_pool.lock().update_scores(self);
     }
 
     /// Return messages that require approving.
-    pub async fn get_messages_to_approve(&self) -> Option<Vec<MessageId>> {
-        self.tip_pool.lock().await.choose_non_lazy_tips()
+    pub fn get_messages_to_approve(&self) -> Option<Vec<MessageId>> {
+        self.tip_pool.lock().choose_non_lazy_tips()
     }
 
     /// Reduce tips.
-    pub async fn reduce_tips(&self) {
-        self.tip_pool.lock().await.reduce_tips();
+    pub fn reduce_tips(&self) {
+        self.tip_pool.lock().reduce_tips();
     }
 
     /// Return the number of non-lazy tips.
-    pub async fn non_lazy_tips_num(&self) -> usize {
-        self.tip_pool.lock().await.non_lazy_tips().len()
+    pub fn non_lazy_tips_num(&self) -> usize {
+        self.tip_pool.lock().non_lazy_tips().len()
     }
 
     /// Change the maximum number of entries to store in the cache.
@@ -397,130 +379,114 @@ impl<B: StorageBackend> Tangle<B> {
         &self.storage
     }
 
-    async fn insert_inner(
+    fn insert_inner(
         &self,
         message_id: MessageId,
         message: Message,
         metadata: MessageMetadata,
         prevent_eviction: bool,
     ) -> Option<MessageRef> {
-        let opt = self
-            .vertices
-            .get_mut_or_insert_map(message_id, |vertex| {
-                if prevent_eviction {
-                    vertex.prevent_eviction();
-                }
-                if vertex.message().is_some() {
-                    None
-                } else {
-                    let parents = message.parents().clone();
+        let opt = self.vertices.get_mut_or_insert_map(message_id, |vertex| {
+            if prevent_eviction {
+                vertex.prevent_eviction();
+            }
+            if vertex.message().is_some() {
+                None
+            } else {
+                let parents = message.parents().clone();
 
-                    vertex.insert_message_and_metadata(message, metadata);
-                    let msg = vertex.message().cloned();
+                vertex.insert_message_and_metadata(message, metadata);
+                let msg = vertex.message().cloned();
 
-                    Some((msg, parents.to_vec()))
-                }
-            })
-            .await;
+                Some((msg, parents.to_vec()))
+            }
+        });
 
         let msg = if let Some((msg, parents)) = opt {
             // Insert children for parents
             for &parent in parents.iter() {
-                self.vertices
-                    .get_mut_or_insert_map(parent, |v| v.add_child(message_id))
-                    .await;
+                self.vertices.get_mut_or_insert_map(parent, |v| v.add_child(message_id));
             }
             msg
         } else {
             None
         };
 
-        self.perform_eviction().await;
+        self.perform_eviction();
 
         msg
     }
 
     /// Get the data of a vertex associated with the given `message_id`.
-    async fn get_mut_and_then<R>(&self, message_id: &MessageId, f: impl FnOnce(&mut Vertex) -> Option<R>) -> Option<R> {
-        let exists = self.pull_message(message_id, true).await;
+    fn get_mut_and_then<R>(&self, message_id: &MessageId, f: impl FnOnce(&mut Vertex) -> Option<R>) -> Option<R> {
+        let exists = self.pull_message(message_id, true);
 
-        self.vertices
-            .get_mut_and_then(message_id, |v| {
-                if exists {
-                    v.allow_eviction();
-                }
-                f(v)
-            })
-            .await
+        self.vertices.get_mut_and_then(message_id, |v| {
+            if exists {
+                v.allow_eviction();
+            }
+            f(v)
+        })
     }
 
     /// Get the data of a vertex associated with the given `message_id`.
-    pub async fn get(&self, message_id: &MessageId) -> Option<MessageRef> {
-        self.get_mut_and_then(message_id, |v| v.message().cloned()).await
+    pub fn get(&self, message_id: &MessageId) -> Option<MessageRef> {
+        self.get_mut_and_then(message_id, |v| v.message().cloned())
     }
 
-    async fn contains_inner(&self, message_id: &MessageId) -> bool {
+    fn contains_inner(&self, message_id: &MessageId) -> bool {
         self.vertices
             .get_map(message_id, |v| v.message().is_some())
-            .await
             .unwrap_or(false)
     }
 
     /// Returns whether the message is stored in the Tangle.
-    pub async fn contains(&self, message_id: &MessageId) -> bool {
-        self.contains_inner(message_id).await || self.pull_message(message_id, false).await
+    pub fn contains(&self, message_id: &MessageId) -> bool {
+        self.contains_inner(message_id) || self.pull_message(message_id, false)
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.
-    pub async fn get_metadata(&self, message_id: &MessageId) -> Option<MessageMetadata> {
-        self.get_mut_and_then(message_id, |v| v.metadata().cloned()).await
+    pub fn get_metadata(&self, message_id: &MessageId) -> Option<MessageMetadata> {
+        self.get_mut_and_then(message_id, |v| v.metadata().cloned())
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.
-    pub async fn get_vertex_and_then<T>(
-        &self,
-        message_id: &MessageId,
-        f: impl FnOnce(&Vertex) -> Option<T>,
-    ) -> Option<T> {
-        let exists = self.pull_message(message_id, true).await;
+    pub fn get_vertex_and_then<T>(&self, message_id: &MessageId, f: impl FnOnce(&Vertex) -> Option<T>) -> Option<T> {
+        let exists = self.pull_message(message_id, true);
 
-        self.vertices
-            .get_mut_and_then(message_id, |v| {
-                if exists {
-                    v.allow_eviction();
-                }
-                f(v)
-            })
-            .await
+        self.vertices.get_mut_and_then(message_id, |v| {
+            if exists {
+                v.allow_eviction();
+            }
+            f(v)
+        })
     }
 
     /// Updates the metadata of a vertex.
-    pub async fn update_metadata<R, Update>(&self, message_id: &MessageId, update: Update) -> Option<R>
+    pub fn update_metadata<R, Update>(&self, message_id: &MessageId, update: Update) -> Option<R>
     where
         Update: FnOnce(&mut MessageMetadata) -> R,
     {
-        let exists = self.pull_message(message_id, true).await;
+        let exists = self.pull_message(message_id, true);
 
-        self.vertices
-            .get_mut_and_then(message_id, |vertex| {
-                if exists {
-                    vertex.allow_eviction();
-                }
-                let r = vertex.metadata_mut().map(update);
+        self.vertices.get_mut_and_then(message_id, |vertex| {
+            if exists {
+                vertex.allow_eviction();
+            }
+            let r = vertex.metadata_mut().map(update);
 
-                if let Some((msg, meta)) = vertex.message_and_metadata() {
-                    let (msg, meta) = ((&**msg).clone(), *meta);
+            if let Some((msg, meta)) = vertex.message_and_metadata() {
+                let (msg, meta) = ((&**msg).clone(), *meta);
 
-                    self.storage_insert(*message_id, msg, meta)
-                        .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
-                }
+                self.storage_insert(*message_id, msg, meta)
+                    .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
+            }
 
-                r
-            })
-            .await
+            r
+        })
     }
 
-    async fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vec<MessageId>> + '_> {
+    fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vec<MessageId>> + '_> {
         struct Wrapper<'a> {
             children: Vec<MessageId>,
             phantom: PhantomData<&'a ()>,
@@ -534,13 +500,10 @@ impl<B: StorageBackend> Tangle<B> {
             }
         }
 
-        let children_opt = self
-            .vertices
-            .get_and_then(message_id, |v| {
-                // Skip approver lists that are not exhaustive
-                v.children_exhaustive().then(|| v.children().to_vec())
-            })
-            .await;
+        let children_opt = self.vertices.get_and_then(message_id, |v| {
+            // Skip approver lists that are not exhaustive
+            v.children_exhaustive().then(|| v.children().to_vec())
+        });
 
         let children = match children_opt {
             Some(children) => children,
@@ -554,16 +517,14 @@ impl<B: StorageBackend> Tangle<B> {
                     Ok(Some(approvers)) => approvers,
                 };
 
-                self.vertices
-                    .get_mut_or_insert_map(*message_id, |vertex| {
-                        vertex.set_exhaustive();
+                self.vertices.get_mut_or_insert_map(*message_id, |vertex| {
+                    vertex.set_exhaustive();
 
-                        for child in to_insert {
-                            vertex.add_child(child);
-                        }
-                        vertex.children().to_vec()
-                    })
-                    .await
+                    for child in to_insert {
+                        vertex.add_child(child);
+                    }
+                    vertex.children().to_vec()
+                })
             }
         };
 
@@ -574,13 +535,13 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Returns the children of a vertex, if we know about them.
-    pub async fn get_children(&self, message_id: &MessageId) -> Option<Vec<MessageId>> {
+    pub fn get_children(&self, message_id: &MessageId) -> Option<Vec<MessageId>> {
         // Effectively atomic
-        self.children_inner(message_id).await.map(|approvers| approvers.clone())
+        self.children_inner(message_id).map(|approvers| approvers.clone())
     }
 
     // Attempts to pull the message from the storage, returns true if successful.
-    async fn pull_message(&self, message_id: &MessageId, prevent_eviction: bool) -> bool {
+    fn pull_message(&self, message_id: &MessageId, prevent_eviction: bool) -> bool {
         let contains_now = if prevent_eviction {
             self.vertices
                 .get_mut_map(message_id, |v| {
@@ -591,17 +552,16 @@ impl<B: StorageBackend> Tangle<B> {
                         false
                     }
                 })
-                .await
                 .unwrap_or(false)
         } else {
-            self.contains_inner(message_id).await
+            self.contains_inner(message_id)
         };
 
         // If the tangle already contains the message, do no more work
         if contains_now {
             true
         } else if let Ok(Some((msg, metadata))) = self.storage_get(message_id) {
-            self.insert_inner(*message_id, msg, metadata, prevent_eviction).await;
+            self.insert_inner(*message_id, msg, metadata, prevent_eviction);
 
             true
         } else {
@@ -609,13 +569,13 @@ impl<B: StorageBackend> Tangle<B> {
         }
     }
 
-    async fn perform_eviction(&self) {
+    fn perform_eviction(&self) {
         let max_len = self.max_len.load(Ordering::Relaxed);
         let max_eviction_retries = self.config.max_eviction_retries();
 
         if self.vertices.len() > max_len {
             while self.vertices.len() > ((1.0 - CACHE_THRESHOLD_FACTOR) * max_len as f64) as usize {
-                if self.vertices.pop_random(max_eviction_retries).await.is_none() {
+                if self.vertices.pop_random(max_eviction_retries).is_none() {
                     log::warn!(
                         "could not perform cache eviction after {} attempts",
                         max_eviction_retries

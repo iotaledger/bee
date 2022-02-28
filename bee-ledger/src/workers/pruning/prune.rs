@@ -66,7 +66,7 @@ pub async fn prune<S: StorageBackend>(
 
         // Get the current set of SEPs.
         let get_curr_seps = Instant::now();
-        let mut curr_seps = tangle.get_solid_entry_points().await;
+        let mut curr_seps = tangle.get_solid_entry_points();
         timings.get_curr_seps = get_curr_seps.elapsed();
 
         metrics.curr_seps = curr_seps.len();
@@ -122,7 +122,7 @@ pub async fn prune<S: StorageBackend>(
 
         // Replace the old set of SEPs with the new one.
         let replace_seps = Instant::now();
-        tangle.replace_solid_entry_points(new_seps).await;
+        tangle.replace_solid_entry_points(new_seps);
         timings.replace_seps = replace_seps.elapsed();
 
         // Update entry point index

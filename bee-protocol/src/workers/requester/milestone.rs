@@ -31,27 +31,27 @@ use std::{
 
 const RETRY_INTERVAL: Duration = Duration::from_millis(2500);
 
-pub(crate) async fn request_milestone<B: StorageBackend>(
+pub(crate) fn request_milestone<B: StorageBackend>(
     tangle: &Tangle<B>,
     milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
     requested_milestones: &RequestedMilestones,
     index: MilestoneIndex,
     to: Option<PeerId>,
 ) {
-    if !requested_milestones.contains(&index) && !tangle.contains_milestone(index).await {
+    if !requested_milestones.contains(&index) && !tangle.contains_milestone(index) {
         if let Err(e) = milestone_requester.send(MilestoneRequesterWorkerEvent(index, to)) {
             warn!("Requesting milestone failed: {}.", e);
         }
     }
 }
 
-pub(crate) async fn request_latest_milestone<B: StorageBackend>(
+pub(crate) fn request_latest_milestone<B: StorageBackend>(
     tangle: &Tangle<B>,
     milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
     requested_milestones: &RequestedMilestones,
     to: Option<PeerId>,
 ) {
-    request_milestone(tangle, milestone_requester, requested_milestones, MilestoneIndex(0), to).await
+    request_milestone(tangle, milestone_requester, requested_milestones, MilestoneIndex(0), to)
 }
 
 #[derive(Default)]
@@ -129,7 +129,7 @@ fn process_request_unchecked(
     }
 }
 
-async fn retry_requests<B: StorageBackend>(
+fn retry_requests<B: StorageBackend>(
     requested_milestones: &RequestedMilestones,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
@@ -155,7 +155,7 @@ async fn retry_requests<B: StorageBackend>(
     }
 
     for index in to_retry {
-        if tangle.contains_milestone(index).await {
+        if tangle.contains_milestone(index) {
             requested_milestones.remove(&index);
         } else {
             process_request_unchecked(index, None, peer_manager, metrics);
@@ -201,7 +201,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(MilestoneRequesterWorkerEvent(index, peer_id)) = receiver.next().await {
-                if !tangle.contains_milestone(index).await {
+                if !tangle.contains_milestone(index) {
                     debug!("Requesting milestone {}.", *index);
                     process_request(index, peer_id, &peer_manager, &metrics, &requested_milestones).await;
                 }
@@ -221,7 +221,7 @@ where
             let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(RETRY_INTERVAL)));
 
             while ticker.next().await.is_some() {
-                retry_requests(&requested_milestones, &peer_manager, &metrics, &tangle).await;
+                retry_requests(&requested_milestones, &peer_manager, &metrics, &tangle);
             }
 
             info!("Retryer stopped.");

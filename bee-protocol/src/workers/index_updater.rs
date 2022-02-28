@@ -48,7 +48,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(IndexUpdaterWorkerEvent(index, milestone)) = receiver.next().await {
-                process(&tangle, milestone, index).await;
+                process(&tangle, milestone, index);
             }
 
             // Before the worker completely stops, the receiver needs to be drained for milestone cones to be updated.
@@ -58,7 +58,7 @@ where
             let mut count: usize = 0;
 
             while let Some(Some(IndexUpdaterWorkerEvent(index, milestone))) = receiver.next().now_or_never() {
-                process(&tangle, milestone, index).await;
+                process(&tangle, milestone, index);
                 count += 1;
             }
 
@@ -71,27 +71,26 @@ where
     }
 }
 
-async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: Milestone, index: MilestoneIndex) {
+fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: Milestone, index: MilestoneIndex) {
     if let Some(parents) = tangle
         .get(milestone.message_id())
-        .await
         .map(|message| message.parents().to_vec())
     {
         // Update the past cone of this milestone by setting its milestone index, and return them.
-        let roots = update_past_cone(tangle, parents, index).await;
+        let roots = update_past_cone(tangle, parents, index);
 
         // Note: For tip-selection only the most recent tangle is relevent. That means that during synchronization we do
         // not need to update xMRSI values or tip scores before (LATEST_MILESTONE_INDEX - BELOW_MAX_DEPTH).
         if index > tangle.get_latest_milestone_index() - tangle.config().below_max_depth() {
-            update_future_cone(tangle, roots).await;
+            update_future_cone(tangle, roots);
 
             // Update tip pool after all values got updated.
-            tangle.update_tip_scores().await;
+            tangle.update_tip_scores();
         }
     }
 }
 
-async fn update_past_cone<B: StorageBackend>(
+fn update_past_cone<B: StorageBackend>(
     tangle: &Tangle<B>,
     mut parents: Vec<MessageId>,
     index: MilestoneIndex,
@@ -105,10 +104,9 @@ async fn update_past_cone<B: StorageBackend>(
         // 3) check if we already updated it during a previous run
         // Note that the order of calls is important (from cheap to more expensive) for performance reasons.
         if updated.contains(&parent_id)
-            || tangle.is_solid_entry_point(&parent_id).await
+            || tangle.is_solid_entry_point(&parent_id)
             || tangle
                 .get_metadata(&parent_id)
-                .await
                 // TODO: I don't think unwrapping here is safe. Investigate!
                 .unwrap()
                 .milestone_index()
@@ -117,17 +115,15 @@ async fn update_past_cone<B: StorageBackend>(
             continue;
         }
 
-        tangle
-            .update_metadata(&parent_id, |metadata| {
-                metadata.set_milestone_index(index);
-                // TODO: That was fine in a synchronous scenario, where this algo had the newest information, but
-                // probably isn't the case in the now asynchronous scenario. Investigate!
-                metadata.set_omrsi(IndexId::new(index, parent_id));
-                metadata.set_ymrsi(IndexId::new(index, parent_id));
-            })
-            .await;
+        tangle.update_metadata(&parent_id, |metadata| {
+            metadata.set_milestone_index(index);
+            // TODO: That was fine in a synchronous scenario, where this algo had the newest information, but
+            // probably isn't the case in the now asynchronous scenario. Investigate!
+            metadata.set_omrsi(IndexId::new(index, parent_id));
+            metadata.set_ymrsi(IndexId::new(index, parent_id));
+        });
 
-        if let Some(parent) = tangle.get(&parent_id).await {
+        if let Some(parent) = tangle.get(&parent_id) {
             parents.extend_from_slice(parent.parents())
         }
 
@@ -146,16 +142,15 @@ async fn update_past_cone<B: StorageBackend>(
 
 // NOTE: Once a milestone comes in we have to walk the future cones of the root transactions and update their OMRSI and
 // YMRSI; during that time we need to block the propagator, otherwise it will propagate outdated data.
-async fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSet<MessageId>) {
+fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSet<MessageId>) {
     let mut to_process = roots.into_iter().collect::<Vec<_>>();
     let mut processed = HashSet::new();
 
     while let Some(parent_id) = to_process.pop() {
-        if let Some(children) = tangle.get_children(&parent_id).await {
+        if let Some(children) = tangle.get_children(&parent_id) {
             // Unwrap is safe with very high probability.
             let (parent_omrsi, parent_ymrsi) = tangle
                 .get_metadata(&parent_id)
-                .await
                 .map(|md| (md.omrsi(), md.ymrsi()))
                 .unwrap();
 
@@ -171,7 +166,7 @@ async fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSe
 
             // We can update the OMRSI/YMRSI of those children that inherited the value from the current parent.
             for child in &children {
-                if let Some(child_metadata) = tangle.get_metadata(child).await {
+                if let Some(child_metadata) = tangle.get_metadata(child) {
                     // We can ignore children that are already confirmed
                     // TODO: resolve ambiguity between `is_confirmed()` and `milestone_index().is_some()`
                     // if child_metadata.flags().is_confirmed() {
@@ -182,22 +177,18 @@ async fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSe
                     // If the childs OMRSI was previously inherited from the current parent, update it.
                     if let Some(child_omrsi) = child_metadata.omrsi() {
                         if child_omrsi.id().eq(&parent_id) {
-                            tangle
-                                .update_metadata(child, |md| {
-                                    md.set_omrsi(IndexId::new(parent_omrsi.index(), parent_id));
-                                })
-                                .await;
+                            tangle.update_metadata(child, |md| {
+                                md.set_omrsi(IndexId::new(parent_omrsi.index(), parent_id));
+                            });
                         }
                     }
 
                     // If the childs YMRSI was previously inherited from the current parent, update it.
                     if let Some(child_ymrsi) = child_metadata.ymrsi() {
                         if child_ymrsi.id().eq(&parent_id) {
-                            tangle
-                                .update_metadata(child, |md| {
-                                    md.set_ymrsi(IndexId::new(parent_ymrsi.index(), parent_id));
-                                })
-                                .await;
+                            tangle.update_metadata(child, |md| {
+                                md.set_ymrsi(IndexId::new(parent_ymrsi.index(), parent_id));
+                            });
                         }
                     }
 

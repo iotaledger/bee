@@ -43,7 +43,7 @@ where
             );
 
             while ticker.next().await.is_some() {
-                tangle.reduce_tips().await
+                tangle.reduce_tips()
             }
 
             info!("Stopped.");

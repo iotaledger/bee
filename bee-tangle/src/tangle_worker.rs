@@ -62,7 +62,7 @@ where
             }
         };
 
-        tangle.shutdown().await;
+        tangle.shutdown();
 
         Ok(())
     }

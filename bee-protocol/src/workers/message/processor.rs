@@ -129,7 +129,7 @@ where
                         let (message_id, _) = message.id();
                         let metadata = MessageMetadata::arrived();
 
-                        let message = if let Some(message) = tangle.insert(message, message_id, metadata).await {
+                        let message = if let Some(message) = tangle.insert(message, message_id, metadata) {
                             message
                         } else {
                             metrics.known_messages_inc();

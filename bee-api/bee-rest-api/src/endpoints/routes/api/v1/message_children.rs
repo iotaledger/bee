@@ -42,7 +42,7 @@ pub async fn message_children<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    let mut children = Vec::from_iter(tangle.get_children(&message_id).await.unwrap_or_default());
+    let mut children = Vec::from_iter(tangle.get_children(&message_id).unwrap_or_default());
     let count = children.len();
     let max_results = 1000;
     children.truncate(max_results);
