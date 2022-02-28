@@ -7,7 +7,7 @@ use bee_message::MessageId;
 
 use hashbrown::{hash_map::DefaultHashBuilder, raw::RawTable};
 use rand::Rng;
-use tokio::sync::{RwLock, RwLockMappedWriteGuard, RwLockReadGuard, RwLockWriteGuard};
+use tokio::sync::RwLock;
 
 use std::{
     hash::{BuildHasher, Hash, Hasher},
@@ -54,26 +54,52 @@ impl Vertices {
         unsafe { self.tables.get_unchecked(index) }
     }
 
-    pub(crate) async fn get(&self, message_id: &MessageId) -> Option<RwLockReadGuard<'_, Vertex>> {
+    pub(crate) async fn get_map<T>(&self, message_id: &MessageId, f: impl FnOnce(&Vertex) -> T) -> Option<T> {
         let hash = self.make_hash(message_id);
-        let table = self.get_table(hash).read().await;
 
-        RwLockReadGuard::try_map(table, |table| match table.get(hash, equivalent_id(message_id)) {
-            Some((_, v)) => Some(v),
-            None => None,
-        })
-        .ok()
+        let guard = self.get_table(hash).read().await;
+        let output = guard.get(hash, equivalent_id(message_id)).map(|(_, v)| f(v));
+        drop(guard);
+
+        output
     }
 
-    pub(crate) async fn get_mut(&self, message_id: &MessageId) -> Option<RwLockMappedWriteGuard<'_, Vertex>> {
+    pub(crate) async fn get_and_then<T>(
+        &self,
+        message_id: &MessageId,
+        f: impl FnOnce(&Vertex) -> Option<T>,
+    ) -> Option<T> {
         let hash = self.make_hash(message_id);
-        let table = self.get_table(hash).write().await;
 
-        RwLockWriteGuard::try_map(table, |table| match table.get_mut(hash, equivalent_id(message_id)) {
-            Some((_, v)) => Some(v),
-            None => None,
-        })
-        .ok()
+        let guard = self.get_table(hash).read().await;
+        let output = guard.get(hash, equivalent_id(message_id)).and_then(|(_, v)| f(v));
+        drop(guard);
+
+        output
+    }
+
+    pub(crate) async fn get_mut_map<T>(&self, message_id: &MessageId, f: impl FnOnce(&mut Vertex) -> T) -> Option<T> {
+        let hash = self.make_hash(message_id);
+
+        let mut guard = self.get_table(hash).write().await;
+        let output = guard.get_mut(hash, equivalent_id(message_id)).map(|(_, v)| f(v));
+        drop(guard);
+
+        output
+    }
+
+    pub(crate) async fn get_mut_and_then<T>(
+        &self,
+        message_id: &MessageId,
+        f: impl FnOnce(&mut Vertex) -> Option<T>,
+    ) -> Option<T> {
+        let hash = self.make_hash(message_id);
+
+        let mut guard = self.get_table(hash).write().await;
+        let output = guard.get_mut(hash, equivalent_id(message_id)).and_then(|(_, v)| f(v));
+        drop(guard);
+
+        output
     }
 
     pub(crate) async fn pop_random(&self, max_retries: usize) -> Option<Vertex> {
@@ -111,23 +137,23 @@ impl Vertices {
         None
     }
 
-    pub(crate) async fn get_mut_or_empty(&self, message_id: MessageId) -> RwLockMappedWriteGuard<'_, Vertex> {
+    pub(crate) async fn get_mut_or_insert_map<T>(&self, message_id: MessageId, f: impl FnOnce(&mut Vertex) -> T) -> T {
         let hash = self.make_hash(&message_id);
-        let table = self.get_table(hash).write().await;
+        let mut guard = self.get_table(hash).write().await;
 
-        RwLockWriteGuard::map(table, |table| {
-            let bucket = if let Some(bucket) = table.find(hash, equivalent_id(&message_id)) {
-                bucket
-            } else {
-                let bucket = table.insert(hash, (message_id, Vertex::empty()), self.make_hasher());
-                self.len.fetch_add(1, Ordering::Relaxed);
+        let bucket = if let Some(bucket) = guard.find(hash, equivalent_id(&message_id)) {
+            bucket
+        } else {
+            let bucket = guard.insert(hash, (message_id, Vertex::empty()), self.make_hasher());
+            self.len.fetch_add(1, Ordering::Relaxed);
 
-                bucket
-            };
-            // SAFETY: We are holding the lock over the table, which means that no other thread could have modified the
-            // table to make this bucket invalid.
-            unsafe { &mut bucket.as_mut().1 }
-        })
+            bucket
+        };
+        // SAFETY: We are holding the lock over the table, which means that no other thread could have modified the
+        // table to make this bucket invalid.
+        let output = f(unsafe { &mut bucket.as_mut().1 });
+        drop(guard);
+        output
     }
 
     pub(crate) fn len(&self) -> usize {

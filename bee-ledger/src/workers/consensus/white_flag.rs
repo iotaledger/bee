@@ -214,10 +214,8 @@ async fn traverse_past_cone<B: StorageBackend>(
 
     while let Some(message_id) = message_ids.last() {
         if let Some((message, meta)) = tangle
-            .get_vertex(message_id)
+            .get_vertex_and_then(message_id, |v| v.message_and_metadata().cloned())
             .await
-            .as_ref()
-            .and_then(|v| v.message_and_metadata().cloned())
         {
             if meta.flags().is_referenced() {
                 visited.insert(*message_id);
