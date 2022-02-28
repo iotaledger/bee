@@ -23,15 +23,18 @@ use crate::{
             node_status::node_status_worker, peer_metric::peer_metric_worker,
         },
     },
-    rejection::CustomRejection,
     storage::NodeStorageBackend,
 };
+
+use rejection::CustomRejection;
 
 use bee_ledger::workers::event::MilestoneConfirmed;
 use bee_protocol::workers::{
     event::{MessageSolidified, MpsMetricsUpdated, TipAdded, TipRemoved, VertexCreated},
     MetricsWorker, PeerManagerResWorker,
 };
+use bee_rest_api::types::body::DefaultErrorResponse;
+use bee_rest_api::types::body::ErrorBody;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{event::LatestMilestoneChanged, Tangle, TangleWorker};
 
@@ -40,7 +43,7 @@ use futures::stream::StreamExt;
 use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use warp::ws::Message;
+use warp::{ws::Message, http::StatusCode, Filter, Rejection, Reply};
 
 use std::{
     any::{Any, TypeId},
