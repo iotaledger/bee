@@ -48,7 +48,7 @@ jobs:
 
       - name: Install LLVM and Clang (Windows)
         uses: KyleMayes/install-llvm-action@32c4866ebb71e0949e8833eb49beeebed48532bd
-        if: matrix.os == 'windows-latest'
+        if: contains(matrix.os, 'windows')
         with:
           version: "11.0"
           directory: ${{ runner.temp }}/llvm
