@@ -55,7 +55,7 @@ jobs:
 
       - name: Set LIBCLANG_PATH (Windows)
         run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
-        if: matrix.os == 'windows-latest'
+        if: contains(matrix.os, 'windows')
 
       - name: Install ${{ matrix.rust }}
         uses: actions-rs/toolchain@v1
