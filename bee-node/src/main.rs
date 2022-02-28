@@ -138,7 +138,7 @@ fn deserialize_config(cl_args: &ClArgs) -> (Option<String>, NodeConfig<Storage>)
     match NodeConfigBuilder::<Storage>::from_file(
         cl_args.config_path().unwrap_or_else(|| Path::new(CONFIG_PATH_DEFAULT)),
     ) {
-        Ok(builder) => builder.apply_args(&cl_args).finish(),
+        Ok(builder) => builder.apply_args(cl_args).finish(),
         Err(e) => panic!("Failed to create the node config builder: {}", e),
     }
 }
