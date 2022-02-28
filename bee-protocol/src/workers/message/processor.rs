@@ -159,9 +159,9 @@ where
                             for (i, output) in essence.outputs().iter().enumerate() {
                                 let maybe_storage_deposit_condition = match output {
                                     #[cfg(feature = "cpt2")]
-                                    SignatureLockedSingle(_) => continue,
+                                    Output::SignatureLockedSingle(_) => continue,
                                     #[cfg(feature = "cpt2")]
-                                    SignatureLockedDustAllowance(_) => continue,
+                                    Output::SignatureLockedDustAllowance(_) => continue,
                                     Output::Treasury(_) => continue, // `TreasureOutput`s don't have `UnlockConditions`.
                                     Output::Basic(output) => output.unlock_conditions().get(StorageDepositReturnUnlockCondition::KIND),
                                     Output::Alias(output) => output.unlock_conditions().get(StorageDepositReturnUnlockCondition::KIND),
