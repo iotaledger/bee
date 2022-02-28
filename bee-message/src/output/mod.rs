@@ -15,6 +15,7 @@ mod nft;
 mod nft_id;
 mod output_id;
 mod token_id;
+mod token_scheme;
 mod treasury;
 
 ///
@@ -37,7 +38,7 @@ pub use cpt2::{
 };
 pub use feature_block::{FeatureBlock, FeatureBlocks};
 pub(crate) use feature_block::{MetadataFeatureBlockLength, TagFeatureBlockLength};
-pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme};
+pub use foundry::{FoundryOutput, FoundryOutputBuilder};
 pub use foundry_id::FoundryId;
 pub(crate) use native_token::NativeTokenCount;
 pub use native_token::{NativeToken, NativeTokens};
@@ -46,6 +47,7 @@ pub use nft_id::NftId;
 pub use output_id::OutputId;
 pub(crate) use output_id::OutputIndex;
 pub use token_id::{TokenId, TokenTag};
+pub use token_scheme::TokenScheme;
 pub use treasury::TreasuryOutput;
 pub(crate) use treasury::TreasuryOutputAmount;
 pub(crate) use unlock_condition::StorageDepositAmount;

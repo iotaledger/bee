@@ -9,7 +9,7 @@ use crate::{
             verify_allowed_unlock_conditions, ImmutableAliasAddressUnlockCondition, UnlockCondition,
             UnlockConditionFlags, UnlockConditions,
         },
-        FoundryId, NativeToken, NativeTokens, OutputAmount, TokenTag,
+        FoundryId, NativeToken, NativeTokens, OutputAmount, TokenScheme, TokenTag,
     },
     Error,
 };
@@ -23,28 +23,6 @@ use packable::{
 use primitive_types::U256;
 
 use alloc::vec::Vec;
-
-///
-#[repr(u8)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = Error)]
-#[packable(tag_type = u8, with_error = Error::InvalidTokenSchemeKind)]
-pub enum TokenScheme {
-    ///
-    Simple = 0,
-}
-
-impl TryFrom<u8> for TokenScheme {
-    type Error = Error;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(TokenScheme::Simple),
-            k => Err(Error::InvalidTokenSchemeKind(k)),
-        }
-    }
-}
 
 ///
 #[must_use]
