@@ -5,7 +5,7 @@ pub mod config;
 
 mod asset;
 pub mod auth;
-mod rejection;
+pub mod rejection;
 mod routes;
 mod websocket;
 mod workers;
@@ -23,6 +23,7 @@ use crate::{
             node_status::node_status_worker, peer_metric::peer_metric_worker,
         },
     },
+    rejection::CustomRejection,
     storage::NodeStorageBackend,
 };
 
@@ -176,7 +177,7 @@ where
                 config.auth().clone(),
                 rest_api_config.clone(),
                 users.clone(),
-            );
+            ).recover(handle_rejection);
 
             let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(config.bind_socket_addr(), async {
                 shutdown.await.ok();
@@ -202,6 +203,38 @@ where
 
         Ok(Self::default())
     }
+}
+
+async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
+    let (http_code, err_code, reason) = match err.find() {
+        // handle custom rejections
+        Some(CustomRejection::NoUserProvided) => (StatusCode::BAD_REQUEST, "400", "user not found"),
+        Some(CustomRejection::NoPasswordProvided) => (StatusCode::BAD_REQUEST, "400", "password not found"),
+        Some(CustomRejection::InvalidCredentials) => (StatusCode::FORBIDDEN, "403", "wrong username or password"),
+        Some(CustomRejection::InvalidJwt) => (StatusCode::FORBIDDEN, "403", "invalid JWT"),
+        Some(CustomRejection::InternalError(s)) => {
+            error!("dashboard error: {:?}", s);
+            (StatusCode::INTERNAL_SERVER_ERROR, "500", "internal server error")
+        },
+        // handle default rejections
+        _ => {
+            if err.is_not_found() {
+                (StatusCode::NOT_FOUND, "404", "data not found")
+            } else if err.find::<warp::reject::MethodNotAllowed>().is_some() {
+                (StatusCode::FORBIDDEN, "403", "access forbidden")
+            } else {
+                error!("unhandled rejection: {:?}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR, "500", "internal server error")
+            }
+        }
+    };
+    Ok(warp::reply::with_status(
+        warp::reply::json(&ErrorBody::new(DefaultErrorResponse {
+            code: err_code.to_string(),
+            message: reason.to_string(),
+        })),
+        http_code,
+    ))
 }
 
 pub(crate) async fn broadcast(event: WsEvent, users: &WsUsers) {

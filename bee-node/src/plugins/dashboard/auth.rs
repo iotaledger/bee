@@ -46,11 +46,11 @@ pub(crate) async fn auth(local: Local, config: DashboardAuthConfig, body: JsonVa
     let user_json = &body["user"];
 
     let user = if user_json.is_null() {
-        return Err(reject::custom(CustomRejection::BadRequest("No user provided")));
+        return Err(reject::custom(CustomRejection::NoUserProvided));
     } else {
         user_json
             .as_str()
-            .ok_or_else(|| reject::custom(CustomRejection::BadRequest("Invalid user provided")))?
+            .ok_or_else(|| reject::custom(CustomRejection::InvalidCredentials))?
     };
 
     if user != config.user() {
@@ -60,11 +60,11 @@ pub(crate) async fn auth(local: Local, config: DashboardAuthConfig, body: JsonVa
     let password_json = &body["password"];
 
     let password = if password_json.is_null() {
-        return Err(reject::custom(CustomRejection::BadRequest("No password provided")));
+        return Err(reject::custom(CustomRejection::NoPasswordProvided));
     } else {
         password_json
             .as_str()
-            .ok_or_else(|| reject::custom(CustomRejection::BadRequest("Invalid password provided")))?
+            .ok_or_else(|| reject::custom(CustomRejection::InvalidCredentials))?
     };
 
     if !password::password_verify(
