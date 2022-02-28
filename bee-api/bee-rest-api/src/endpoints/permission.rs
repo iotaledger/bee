@@ -19,6 +19,7 @@ use std::sync::Arc;
 /// Bearer for JWT. Please note the whitespace " " is important for correct parsing.
 const BEARER: &str = "Bearer ";
 pub const API_AUDIENCE_CLAIM: &str = "api";
+#[cfg(feature = "dashboard")]
 pub const DASHBOARD_AUDIENCE_CLAIM: &str = "dashboard";
 
 lazy_static! {
@@ -67,10 +68,13 @@ pub(crate) fn check_permission<B: StorageBackend>(
                             return Ok(());
                         }
                     }
-                } else if jwt_payload.contains(&format!("\"aud\":\"{}\"", DASHBOARD_AUDIENCE_CLAIM)) {
-                    if let Ok(_) = validate_dashboard_jwt(&jwt, &args) {
-                        if DASHBOARD_ROUTES.is_match(path.as_str()) {
-                            return Ok(());
+                } else {
+                    #[cfg(feature = "dashboard")]
+                    if jwt_payload.contains(&format!("\"aud\":\"{}\"", DASHBOARD_AUDIENCE_CLAIM)) {
+                        if let Ok(_) = validate_dashboard_jwt(&jwt, &args) {
+                            if DASHBOARD_ROUTES.is_match(path.as_str()) {
+                                return Ok(());
+                            }
                         }
                     }
                 }
@@ -106,6 +110,7 @@ fn validate_api_jwt<B: StorageBackend>(
     .map_err(|_| reject::custom(CustomRejection::Forbidden))
 }
 
+#[cfg(feature = "dashboard")]
 fn validate_dashboard_jwt<B: StorageBackend>(
     jwt: &JsonWebToken,
     args: &Arc<ApiArgs<B>>,
