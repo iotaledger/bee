@@ -393,7 +393,8 @@ async fn process_internal_event(
                 .map_err(|_| Error::SendingEventFailed)?;
 
             if was_removed {
-                log::warn!("Removed unknown {peer_id}");
+                log::trace!("Removed unknown peer: {peer_id}");
+
                 senders
                     .events
                     .send(Event::PeerRemoved { peer_id })
