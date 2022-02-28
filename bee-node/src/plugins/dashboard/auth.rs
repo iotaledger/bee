@@ -72,7 +72,7 @@ pub(crate) async fn auth(local: Local, config: DashboardAuthConfig, body: JsonVa
         &hex::decode(config.password_salt()).unwrap(),
         &hex::decode(config.password_hash()).unwrap(),
     )
-    .map_err(|_| reject::custom(CustomRejection::InternalError))?
+    .map_err(|e| reject::custom(CustomRejection::InternalError(e.to_string())))?
     {
         return Err(reject::custom(CustomRejection::InvalidCredentials));
     }
@@ -84,10 +84,10 @@ pub(crate) async fn auth(local: Local, config: DashboardAuthConfig, body: JsonVa
     )
     .with_expiry(config.session_timeout())
     .build()
-    .map_err(|_| reject::custom(CustomRejection::InternalError))?;
+    .map_err(|e| reject::custom(CustomRejection::InternalError(e.to_string())))?;
 
     let jwt = JsonWebToken::new(claims, local.keypair().secret().as_ref())
-        .map_err(|_| reject::custom(CustomRejection::InternalError))?;
+        .map_err(|e| reject::custom(CustomRejection::InternalError(e.to_string())))?;
 
     Ok(warp::reply::json(&AuthResponse { jwt: jwt.to_string() }))
 }
