@@ -147,7 +147,7 @@ async fn process_swarm_event(
                 .0
                 .write()
                 .await
-                .insert_local_addr(address)
+                .add_local_addr(address)
                 .expect("insert_local_addr");
         }
         SwarmEvent::ConnectionEstablished { peer_id, .. } => {
@@ -213,7 +213,7 @@ async fn dial_peer(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId, peerlist:
     } = peerlist.0.read().await.info(&peer_id).expect("peer must exist");
 
     let mut dial_attempt = 0;
-    
+
     peerlist
         .0
         .write()

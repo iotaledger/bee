@@ -221,8 +221,7 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
 
         // To how many known peers are we currently connected.
         let num_known = read.filter_count(|info, _, _| info.relation.is_known());
-        let num_connected_known =
-            read.filter_count(|info, state, _| info.relation.is_known() && state.is_connected());
+        let num_connected_known = read.filter_count(|info, state, _| info.relation.is_known() && state.is_connected());
 
         // To how many unknown peers are we currently connected.
         let num_connected_unknown =
@@ -233,8 +232,7 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
             read.filter_count(|info, state, _| info.relation.is_discovered() && state.is_connected());
 
         // How many peers we know of but are currently disconnected.
-        let num_disconnected = 
-            read.filter_count(|_, state, _| state.is_disconnected());
+        let num_disconnected = read.filter_count(|_, state, _| state.is_disconnected());
 
         info!(
             "Connected peers: known {}/{} unknown {}/{} discovered {}/{} - Disconnected peers: {}.",
@@ -378,7 +376,7 @@ async fn process_internal_event(
 
             // Only remove unknown peers.
             // NOTE: discovered peers should be removed manually via command if the autopeering protocol suggests it.
-            let _ = peerlist.filter_remove(&peer_id, |peer_info, _, _| peer_info.relation.is_unknown());
+            let was_removed = peerlist.filter_remove(&peer_id, |peer_info, _, _| peer_info.relation.is_unknown());
 
             // We no longer need to hold the lock.
             drop(peerlist);
@@ -393,6 +391,14 @@ async fn process_internal_event(
                 .events
                 .send(Event::PeerDisconnected { peer_id })
                 .map_err(|_| Error::SendingEventFailed)?;
+
+            if was_removed {
+                log::warn!("Removed unknown {peer_id}");
+                senders
+                    .events
+                    .send(Event::PeerRemoved { peer_id })
+                    .map_err(|_| Error::SendingEventFailed)?;
+            }
         }
 
         InternalEvent::ProtocolEstablished {
@@ -418,7 +424,7 @@ async fn process_internal_event(
                         alias: alias!(peer_id).to_string(),
                         relation: PeerRelation::Unknown,
                     };
-                    peerlist.insert_peer(peer_id, peer_info).map_err(|(_, _, e)| e)?;
+                    peerlist.add(peer_id, peer_info).map_err(|(_, _, e)| e)?;
                     peer_added = true;
                 }
 
@@ -524,7 +530,7 @@ async fn add_peer(
     let mut peerlist = peerlist.0.write().await;
 
     // If the insert fails for some reason, we get the peer data back, so it can be reused.
-    match peerlist.insert_peer(peer_id, peer_info) {
+    match peerlist.add(peer_id, peer_info) {
         Ok(()) => {
             // Panic:
             // We just added the peer_id so unwrapping here is fine.

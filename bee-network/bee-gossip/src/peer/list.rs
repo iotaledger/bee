@@ -78,7 +78,7 @@ impl PeerList {
         }
     }
 
-    pub fn insert_peer(&mut self, peer_id: PeerId, peer_info: PeerInfo) -> Result<(), (PeerId, PeerInfo, Error)> {
+    pub fn add(&mut self, peer_id: PeerId, peer_info: PeerInfo) -> Result<(), (PeerId, PeerInfo, Error)> {
         if self.contains(&peer_id) {
             return Err((peer_id, peer_info, Error::PeerIsDuplicate(peer_id)));
         }
@@ -87,16 +87,6 @@ impl PeerList {
         let _ = self
             .peers
             .insert(peer_id, (peer_info, PeerState::default(), PeerMetrics::default()));
-
-        Ok(())
-    }
-
-    pub fn insert_local_addr(&mut self, addr: Multiaddr) -> Result<(), (Multiaddr, Error)> {
-        if self.local_addrs.contains(&addr) {
-            return Err((addr.clone(), Error::AddressIsDuplicate(addr)));
-        }
-
-        let _ = self.local_addrs.insert(addr);
 
         Ok(())
     }
@@ -127,6 +117,16 @@ impl PeerList {
 
     pub fn len(&self) -> usize {
         self.peers.len()
+    }
+
+    pub fn add_local_addr(&mut self, addr: Multiaddr) -> Result<(), (Multiaddr, Error)> {
+        if self.local_addrs.contains(&addr) {
+            return Err((addr.clone(), Error::AddressIsDuplicate(addr)));
+        }
+
+        let _ = self.local_addrs.insert(addr);
+
+        Ok(())
     }
 
     pub fn update_info<U>(&mut self, peer_id: &PeerId, mut update: U) -> Result<(), Error>
@@ -187,12 +187,13 @@ impl PeerList {
     where
         P: Fn(&PeerInfo, &PeerState, &PeerMetrics) -> bool,
     {
-        self.peers.iter().fold(
-            0,
-            |count, (_, (info, state, metrics))| {
-                if predicate(info, state, metrics) { count + 1 } else { count }
-            },
-        )
+        self.peers.iter().fold(0, |count, (_, (info, state, metrics))| {
+            if predicate(info, state, metrics) {
+                count + 1
+            } else {
+                count
+            }
+        })
     }
 
     pub fn filter_remove<P>(&mut self, peer_id: &PeerId, predicate: P) -> bool
@@ -388,7 +389,7 @@ mod tests {
 
         for i in 1..=3 {
             assert!(
-                pl.insert_peer(
+                pl.add(
                     gen_random_peer_id(),
                     gen_deterministic_peer_info(i, PeerRelation::Known)
                 )
@@ -405,11 +406,11 @@ mod tests {
 
         let peer_id = gen_constant_peer_id();
 
-        assert!(pl.insert_peer(peer_id, gen_constant_peer_info()).is_ok());
+        assert!(pl.add(peer_id, gen_constant_peer_info()).is_ok());
 
         // Do not allow inserting the same peer id twice.
         assert!(matches!(
-            pl.insert_peer(peer_id, gen_constant_peer_info()),
+            pl.add(peer_id, gen_constant_peer_info()),
             Err((_, _, Error::PeerIsDuplicate(_)))
         ));
     }
@@ -434,7 +435,7 @@ mod tests {
 
         let mut pl = PeerList::new(local_id);
 
-        pl.insert_peer(peer_id, peer_info.clone()).unwrap();
+        pl.add(peer_id, peer_info.clone()).unwrap();
         pl.accepts_incoming_peer(&peer_id, &peer_info.address).unwrap();
     }
 
@@ -445,7 +446,7 @@ mod tests {
 
         let peer_id = gen_random_peer_id();
 
-        pl.insert_peer(peer_id, gen_deterministic_peer_info(0, PeerRelation::Known))
+        pl.add(peer_id, gen_deterministic_peer_info(0, PeerRelation::Known))
             .unwrap();
         assert_eq!(1, pl.len());
 
