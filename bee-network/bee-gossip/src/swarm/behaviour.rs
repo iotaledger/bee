@@ -44,9 +44,9 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehaviour {
         match event {
             IdentifyEvent::Received { peer_id, info } => {
                 trace!(
-                    "Received Identify response from {}. Observed address: {:?}.",
+                    "Received Identify response from {}: {:?}.",
                     alias!(peer_id),
-                    info.observed_addr,
+                    info,
                 );
 
                 // Panic:
