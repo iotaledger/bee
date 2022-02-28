@@ -19,8 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.1.0 - 2022-02-07
+## 0.1.0 - 2022-02-28
 
 ### Added
 
-Initial features;
+Extracted from `bee-node` crate to new crate `bee-plugin-version-checker`;
