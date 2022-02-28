@@ -18,6 +18,7 @@ use std::{
 };
 
 const DISPLAY_LENGTH: usize = 16;
+const DISPLAY_OFFSET: usize = 8;
 
 /// Represents the unique identity of a peer in the network.
 #[derive(Copy, Clone)]
@@ -98,7 +99,7 @@ impl fmt::Debug for PeerId {
 
 impl fmt::Display for PeerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.libp2p_peer_id().to_base58()[8..8+DISPLAY_LENGTH].fmt(f)
+        self.libp2p_peer_id().to_base58()[DISPLAY_OFFSET..DISPLAY_OFFSET + DISPLAY_LENGTH].fmt(f)
     }
 }
 

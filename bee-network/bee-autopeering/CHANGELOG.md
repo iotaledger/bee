@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.5.0 - 2022-02-28
+
+### Changed
+
+- Moved `PeerId` display format to start of significant part;
+
 ## 0.4.0 - 2022-02-11
 
 ### Added

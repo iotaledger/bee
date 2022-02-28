@@ -91,12 +91,14 @@ impl NetworkBehaviourEventProcess<IotaGossipEvent> for SwarmBehaviour {
             } => {
                 trace!("Successfully negotiated IOTA gossip protocol with {}.", alias!(peer_id));
 
-                self.internal_sender.send(InternalEvent::ProtocolEstablished {
-                    peer_id,
-                    peer_addr,
-                    origin,
-                    substream,
-                }).expect("send internal event");
+                self.internal_sender
+                    .send(InternalEvent::ProtocolEstablished {
+                        peer_id,
+                        peer_addr,
+                        origin,
+                        substream,
+                    })
+                    .expect("send internal event");
             }
             IotaGossipEvent::UpgradeError { peer_id, error } => {
                 debug!(

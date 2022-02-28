@@ -144,11 +144,7 @@ async fn process_swarm_event(
                 .expect("send error");
 
             // Note: We don't care if the inserted address is a duplicate.
-            let _ = peerlist
-                .0
-                .write()
-                .await
-                .add_local_addr(address);
+            let _ = peerlist.0.write().await.add_local_addr(address);
         }
         SwarmEvent::ConnectionEstablished { peer_id, .. } => {
             debug!("Swarm event: connection established with {}.", alias!(peer_id));
