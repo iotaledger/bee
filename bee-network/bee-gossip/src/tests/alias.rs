@@ -9,12 +9,12 @@ use crate::alias;
 fn alias_default() {
     let peer_id = gen_constant_peer_id();
     let alias = alias!(peer_id);
-    assert_eq!(alias, "WJWEKvSFbben74C7");
+    assert_eq!(alias, "JWEKvSFbben74C7H");
 }
 
 #[test]
 fn alias_custom() {
     let peer_id = gen_constant_peer_id();
     let alias = alias!(peer_id, 10);
-    assert_eq!(alias, "WJWEKvSFbb");
+    assert_eq!(alias, "JWEKvSFbbe");
 }
