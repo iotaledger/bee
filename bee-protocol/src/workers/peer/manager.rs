@@ -130,31 +130,42 @@ where
                         gossip_in: receiver,
                         gossip_out: sender,
                     } => {
-                        // TODO write a get_mut peer manager method
-                        if let Some(mut peer) = peer_manager.get_mut(&peer_id) {
-                            let (shutdown_tx, shutdown_rx) = oneshot::channel();
+                        {
+                            let metrics = metrics.clone();
+                            let hasher = hasher.clone();
+                            let message_responder = message_responder.clone();
+                            let milestone_responder = milestone_responder.clone();
+                            let milestone_requester = milestone_requester.clone();
+                            let tangle = tangle.clone();
+                            let requested_milestones = requested_milestones.clone();
 
-                            peer.0.set_connected(true);
-                            peer.1 = Some((sender, shutdown_tx));
+                            peer_manager
+                                .get_mut_map(&peer_id, move |peer| {
+                                    let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
-                            tokio::spawn(
-                                PeerWorker::new(
-                                    peer.0.clone(),
-                                    metrics.clone(),
-                                    hasher.clone(),
-                                    message_responder.clone(),
-                                    milestone_responder.clone(),
-                                    milestone_requester.clone(),
-                                )
-                                .run(
-                                    tangle.clone(),
-                                    requested_milestones.clone(),
-                                    receiver,
-                                    shutdown_rx,
-                                ),
-                            );
+                                    peer.0.set_connected(true);
+                                    peer.1 = Some((sender, shutdown_tx));
 
-                            info!("Connected peer {}.", peer.0.alias());
+                                    tokio::spawn(
+                                        PeerWorker::new(
+                                            peer.0.clone(),
+                                            metrics,
+                                            hasher,
+                                            message_responder,
+                                            milestone_responder,
+                                            milestone_requester,
+                                        )
+                                        .run(
+                                            tangle,
+                                            requested_milestones,
+                                            receiver,
+                                            shutdown_rx,
+                                        ),
+                                    );
+
+                                    info!("Connected peer {}.", peer.0.alias());
+                                })
+                                .unwrap_or_default();
                         }
 
                         // TODO can't do it in the if because of deadlock, but it's not really right to do it here.
@@ -165,8 +176,8 @@ where
                             &*metrics,
                         );
                     }
-                    NetworkEvent::PeerDisconnected { peer_id } => {
-                        if let Some(mut peer) = peer_manager.get_mut(&peer_id) {
+                    NetworkEvent::PeerDisconnected { peer_id } => peer_manager
+                        .get_mut_map(&peer_id, |peer| {
                             peer.0.set_connected(false);
                             if let Some((_, shutdown)) = peer.1.take() {
                                 if let Err(e) = shutdown.send(()) {
@@ -174,8 +185,8 @@ where
                                 }
                             }
                             info!("Disconnected peer {}.", peer.0.alias());
-                        }
-                    }
+                        })
+                        .unwrap_or_default(),
                     _ => (), // Ignore all other events for now
                 }
             }

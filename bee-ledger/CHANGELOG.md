@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.7.0 - 2022-XX-XX
+## 0.8.0 - 2022-XX-XX
 
 ### Added
 
@@ -32,13 +32,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Balance` is now an `u64` tuple struct;
 - Serialize and deserialize the ledger types using `packable` instead of `bee-common::packable`;
 - Dispatch `CreatedOutput` through `OutputCreated` event;
-- Update dependencies;
 
 ### Removed
 
 - `Balance`, `BalanceDiff` and `BalanceDiffs`;
 - `Error::InvalidLedgerDustState`;
 - Pruning of `PaddedIndex`;
+
+## 0.7.0 - 2022-XX-XX
+
+### Changed
+
+- Update dependencies;
+
+### Fixed
+
+- Emit warning when parsing snapshot header fails instead of crashing;
 
 ## 0.6.1 - 2021-12-29
 

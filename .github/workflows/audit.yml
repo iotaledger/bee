@@ -5,22 +5,20 @@ on:
     - cron: '0 0 * * *'
   push:
     branches:
-      - dev
       - mainnet
-      - mainnet-develop
+      - 'mainnet-develop*'
       - shimmer
-      - shimmer-develop
+      - 'shimmer-develop*'
     paths:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
       - ".github/workflows/audit.yml"
   pull_request:
     branches:
-      - dev
       - mainnet
-      - mainnet-develop
+      - 'mainnet-develop*'
       - shimmer
-      - shimmer-develop
+      - 'shimmer-develop*'
     paths:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
