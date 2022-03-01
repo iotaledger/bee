@@ -7,13 +7,13 @@ use crate::rand::{
 };
 
 use bee_message::payload::{
-    receipt::ReceiptPayload, tagged_data::TaggedDataPayload, treasury::TreasuryTransactionPayload, Payload,
+    receipt::ReceiptPayload, tagged_data::TaggedDataPayload, treasury_transaction::TreasuryTransactionPayload, Payload,
 };
 
 /// Generates a random tagged data payload.
 pub fn rand_tagged_data_payload() -> TaggedDataPayload {
     TaggedDataPayload::new(
-        rand_bytes(rand_number_range(TaggedDataPayload::LENGTH_RANGE).into()),
+        rand_bytes(rand_number_range(TaggedDataPayload::TAG_LENGTH_RANGE).into()),
         rand_bytes(rand_number_range(0..10000)),
     )
     .unwrap()

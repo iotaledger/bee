@@ -1,16 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    address::Address,
-    constant::{IOTA_SUPPLY, STORAGE_DEPOSIT_MIN},
-    payload::receipt::TailTransactionHash,
-    Error,
-};
+use crate::{address::Address, constant::IOTA_SUPPLY, payload::receipt::TailTransactionHash, Error};
 
 use packable::{bounded::BoundedU64, Packable};
 
 use core::ops::RangeInclusive;
+
+const MIGRATED_FUNDS_ENTRY_AMOUNT_MIN: u64 = 1_000_000;
 
 pub(crate) type MigratedFundsAmount =
     BoundedU64<{ *MigratedFundsEntry::AMOUNT_RANGE.start() }, { *MigratedFundsEntry::AMOUNT_RANGE.end() }>;
@@ -29,7 +26,7 @@ pub struct MigratedFundsEntry {
 
 impl MigratedFundsEntry {
     /// Range of valid amounts for a [`MigratedFundsEntry`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = STORAGE_DEPOSIT_MIN..=IOTA_SUPPLY;
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = MIGRATED_FUNDS_ENTRY_AMOUNT_MIN..=IOTA_SUPPLY;
 
     /// Creates a new [`MigratedFundsEntry`].
     pub fn new(tail_transaction_hash: TailTransactionHash, address: Address, amount: u64) -> Result<Self, Error> {

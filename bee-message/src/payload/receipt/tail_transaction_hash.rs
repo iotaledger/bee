@@ -60,6 +60,7 @@ impl fmt::Debug for TailTransactionHash {
         write!(f, "TailTransactionHash({})", self)
     }
 }
+
 impl Packable for TailTransactionHash {
     type UnpackError = Error;
 

@@ -27,7 +27,7 @@ impl NftAddress {
 
     /// Returns the [`NftId`] of an [`NftAddress`].
     #[inline(always)]
-    pub fn id(&self) -> &NftId {
+    pub fn nft_id(&self) -> &NftId {
         &self.0
     }
 }

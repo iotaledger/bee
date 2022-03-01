@@ -31,25 +31,25 @@ impl OutputId {
             .map_err(Error::InvalidInputOutputIndex)
     }
 
-    /// Returns the `TransactionId` of an `OutputId`.
+    /// Returns the [`TransactionId`] of an [`OutputId`].
     #[inline(always)]
     pub fn transaction_id(&self) -> &TransactionId {
         &self.transaction_id
     }
 
-    /// Returns the index of an `OutputId`.
+    /// Returns the index of an [`OutputId`].
     #[inline(always)]
     pub fn index(&self) -> u16 {
         self.index.get()
     }
 
-    /// Splits an `OutputId` into its `TransactionId` and index.
+    /// Splits an [`OutputId`] into its [`TransactionId`] and index.
     #[inline(always)]
     pub fn split(self) -> (TransactionId, u16) {
         (self.transaction_id, self.index())
     }
 
-    /// Hash the `OutputId` with BLAKE2b-160 for `AliasId` or `NftId`.
+    /// Hash the [`OutputId`] with BLAKE2b-160 for `AliasId` or `NftId`.
     #[inline(always)]
     pub fn hash(self) -> [u8; 20] {
         Blake2b160::digest(&self.pack_to_vec()).into()

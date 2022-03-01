@@ -80,9 +80,11 @@ fn from_to_str() {
 
 #[test]
 fn try_from_bech32() {
-    let addr = Address::Ed25519(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
+    let address1 = Address::Ed25519(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
+    let (hrp, address2) = Address::try_from_bech32(&address1.to_bech32("atoi")).unwrap();
 
-    assert_eq!(addr, Address::try_from_bech32(&addr.to_bech32("atoi")).unwrap());
+    assert_eq!(hrp, "atoi");
+    assert_eq!(address1, address2);
 }
 
 #[test]

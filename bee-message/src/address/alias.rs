@@ -27,7 +27,7 @@ impl AliasAddress {
 
     /// Returns the [`AliasId`] of an [`AliasAddress`].
     #[inline(always)]
-    pub fn id(&self) -> &AliasId {
+    pub fn alias_id(&self) -> &AliasId {
         &self.0
     }
 }

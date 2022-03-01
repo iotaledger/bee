@@ -246,36 +246,6 @@ impl AliasOutput {
 
     ///
     #[inline(always)]
-    pub fn state_controller(&self) -> &Address {
-        // An AliasOutput must have a StateControllerAddressUnlockCondition.
-        if let UnlockCondition::StateControllerAddress(address) = self
-            .unlock_conditions
-            .get(StateControllerAddressUnlockCondition::KIND)
-            .unwrap()
-        {
-            address.address()
-        } else {
-            unreachable!();
-        }
-    }
-
-    ///
-    #[inline(always)]
-    pub fn governor(&self) -> &Address {
-        // An AliasOutput must have a GovernorAddressUnlockCondition.
-        if let UnlockCondition::GovernorAddress(address) = self
-            .unlock_conditions
-            .get(GovernorAddressUnlockCondition::KIND)
-            .unwrap()
-        {
-            address.address()
-        } else {
-            unreachable!();
-        }
-    }
-
-    ///
-    #[inline(always)]
     pub fn state_index(&self) -> u32 {
         self.state_index
     }
@@ -308,6 +278,26 @@ impl AliasOutput {
     #[inline(always)]
     pub fn immutable_feature_blocks(&self) -> &FeatureBlocks {
         &self.immutable_feature_blocks
+    }
+
+    ///
+    #[inline(always)]
+    pub fn state_controller_address(&self) -> &Address {
+        // An AliasOutput must have a StateControllerAddressUnlockCondition.
+        self.unlock_conditions
+            .state_controller_address()
+            .map(|unlock_condition| unlock_condition.address())
+            .unwrap()
+    }
+
+    ///
+    #[inline(always)]
+    pub fn governor_address(&self) -> &Address {
+        // An AliasOutput must have a GovernorAddressUnlockCondition.
+        self.unlock_conditions
+            .governor_address()
+            .map(|unlock_condition| unlock_condition.address())
+            .unwrap()
     }
 }
 
@@ -392,7 +382,7 @@ fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, alias_id: &Ali
         unlock_conditions.get(StateControllerAddressUnlockCondition::KIND)
     {
         if let Address::Alias(alias_address) = unlock_condition.address() {
-            if alias_address.id() == alias_id {
+            if alias_address.alias_id() == alias_id {
                 return Err(Error::SelfControlledAliasOutput(*alias_id));
             }
         }
@@ -404,7 +394,7 @@ fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, alias_id: &Ali
         unlock_conditions.get(GovernorAddressUnlockCondition::KIND)
     {
         if let Address::Alias(alias_address) = unlock_condition.address() {
-            if alias_address.id() == alias_id {
+            if alias_address.alias_id() == alias_id {
                 return Err(Error::SelfControlledAliasOutput(*alias_id));
             }
         }

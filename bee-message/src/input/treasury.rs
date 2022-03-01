@@ -7,20 +7,21 @@ use derive_more::{Deref, From};
 
 use core::str::FromStr;
 
-/// `TreasuryInput` is an input which references a milestone which generated a `TreasuryOutput`.
+/// [`TreasuryInput`] is an input which references a milestone which generated a
+/// [`TreasuryOutput`](crate::output::TreasuryOutput).
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, From, Deref, packable::Packable)]
 pub struct TreasuryInput(MilestoneId);
 
 impl TreasuryInput {
-    /// The input kind of a `TreasuryInput`.
+    /// The input kind of a [`TreasuryInput`].
     pub const KIND: u8 = 1;
 
-    /// Creates a new `TreasuryInput`.
+    /// Creates a new [`TreasuryInput`].
     pub fn new(id: MilestoneId) -> Self {
         Self(id)
     }
 
-    /// Returns the milestones id of a `TreasuryInput`.
+    /// Returns the milestones id of a [`TreasuryInput`].
     pub fn milestone_id(&self) -> &MilestoneId {
         &self.0
     }

@@ -10,7 +10,7 @@ pub mod milestone;
 pub mod receipt;
 pub mod tagged_data;
 pub mod transaction;
-pub mod treasury;
+pub mod treasury_transaction;
 
 #[cfg(feature = "cpt2")]
 pub use cpt2::indexation::IndexationPayload;
@@ -24,7 +24,7 @@ pub use tagged_data::TaggedDataPayload;
 pub(crate) use tagged_data::{TagLength, TaggedDataLength};
 pub use transaction::TransactionPayload;
 pub(crate) use transaction::{InputCount, OutputCount};
-pub use treasury::TreasuryTransactionPayload;
+pub use treasury_transaction::TreasuryTransactionPayload;
 
 use crate::Error;
 

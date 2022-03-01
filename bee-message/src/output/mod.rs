@@ -15,6 +15,7 @@ mod nft;
 mod nft_id;
 mod output_id;
 mod token_id;
+mod token_scheme;
 mod treasury;
 
 ///
@@ -37,7 +38,7 @@ pub use cpt2::{
 };
 pub use feature_block::{FeatureBlock, FeatureBlocks};
 pub(crate) use feature_block::{MetadataFeatureBlockLength, TagFeatureBlockLength};
-pub use foundry::{FoundryOutput, FoundryOutputBuilder, TokenScheme, TOKEN_TAG_LENGTH};
+pub use foundry::{FoundryOutput, FoundryOutputBuilder};
 pub use foundry_id::FoundryId;
 pub(crate) use native_token::NativeTokenCount;
 pub use native_token::{NativeToken, NativeTokens};
@@ -45,7 +46,8 @@ pub use nft::{NftOutput, NftOutputBuilder};
 pub use nft_id::NftId;
 pub use output_id::OutputId;
 pub(crate) use output_id::OutputIndex;
-pub use token_id::TokenId;
+pub use token_id::{TokenId, TokenTag};
+pub use token_scheme::TokenScheme;
 pub use treasury::TreasuryOutput;
 pub(crate) use treasury::TreasuryOutputAmount;
 pub(crate) use unlock_condition::StorageDepositAmount;
@@ -110,7 +112,7 @@ impl Output {
     /// Valid amounts for an [`Output`].
     pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
 
-    /// Return the output kind of an `Output`.
+    /// Return the output kind of an [`Output`].
     pub fn kind(&self) -> u8 {
         match self {
             #[cfg(feature = "cpt2")]
@@ -125,7 +127,7 @@ impl Output {
         }
     }
 
-    /// Returns the amount of an `Output`.
+    /// Returns the amount of an [`Output`].
     pub fn amount(&self) -> u64 {
         match self {
             #[cfg(feature = "cpt2")]
@@ -140,7 +142,7 @@ impl Output {
         }
     }
 
-    /// Returns the native tokens of an `Output`, if any.
+    /// Returns the native tokens of an [`Output`], if any.
     pub fn native_tokens(&self) -> Option<&NativeTokens> {
         match self {
             #[cfg(feature = "cpt2")]
@@ -155,7 +157,7 @@ impl Output {
         }
     }
 
-    /// Returns the unlock conditions of an `Output`, if any.
+    /// Returns the unlock conditions of an [`Output`], if any.
     pub fn unlock_conditions(&self) -> Option<&UnlockConditions> {
         match self {
             #[cfg(feature = "cpt2")]
@@ -170,7 +172,7 @@ impl Output {
         }
     }
 
-    /// Returns the feature blocks of an `Output`, if any.
+    /// Returns the feature blocks of an [`Output`], if any.
     pub fn feature_blocks(&self) -> Option<&FeatureBlocks> {
         match self {
             #[cfg(feature = "cpt2")]
@@ -185,7 +187,7 @@ impl Output {
         }
     }
 
-    /// Returns the immutable feature blocks of an `Output`, if any.
+    /// Returns the immutable feature blocks of an [`Output`], if any.
     pub fn immutable_feature_blocks(&self) -> Option<&FeatureBlocks> {
         match self {
             #[cfg(feature = "cpt2")]

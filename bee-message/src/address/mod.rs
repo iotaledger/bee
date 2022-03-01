@@ -39,7 +39,7 @@ pub enum Address {
 }
 
 impl Address {
-    /// Returns the address kind of an `Address`.
+    /// Returns the address kind of an [`Address`].
     pub fn kind(&self) -> u8 {
         match self {
             Self::Ed25519(_) => Ed25519Address::KIND,
@@ -48,20 +48,23 @@ impl Address {
         }
     }
 
-    /// Tries to create an `Address` from a Bech32 encoded string.
-    pub fn try_from_bech32(addr: &str) -> Result<Self, Error> {
-        match bech32::decode(addr) {
-            Ok((_hrp, data, _)) => {
+    /// Tries to create an [`Address`] from a bech32 encoded string.
+    pub fn try_from_bech32<T: AsRef<str>>(address: T) -> Result<(String, Self), Error> {
+        match bech32::decode(address.as_ref()) {
+            Ok((hrp, data, _)) => {
                 let bytes = Vec::<u8>::from_base32(&data).map_err(|_| Error::InvalidAddress)?;
-                Self::unpack_verified(&mut bytes.as_slice()).map_err(|_| Error::InvalidAddress)
+                Self::unpack_verified(&mut bytes.as_slice())
+                    .map_err(|_| Error::InvalidAddress)
+                    .map(|address| (hrp, address))
             }
             Err(_) => Err(Error::InvalidAddress),
         }
     }
 
-    /// Encodes this address to a Bech32 string with the hrp (human readable part) argument as prefix.
+    /// Encodes this address to a bech32 string with the given Human Readable Part as prefix.
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_bech32(&self, hrp: &str) -> String {
-        bech32::encode(hrp, self.pack_to_vec().to_base32(), Variant::Bech32).expect("Invalid address.")
+    pub fn to_bech32<T: AsRef<str>>(&self, hrp: T) -> String {
+        // SAFETY: encoding can't fail as `self` has already been validated and built.
+        bech32::encode(hrp.as_ref(), self.pack_to_vec().to_base32(), Variant::Bech32).unwrap()
     }
 }
