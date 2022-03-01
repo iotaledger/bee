@@ -23,8 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `PeerMetrics` type, that keeps a count of dial attempts and idenfication timestamp;
-- `PeerUnreachable` event: fired after a certain number of unsuccessful dial attempts;
+- `PeerMetrics` type that keeps a count of dial attempts and identification timestamp;
+- `PeerUnreachable` event that is fired after a certain number of unsuccessful dial attempts;
 
 ### Changed
 
