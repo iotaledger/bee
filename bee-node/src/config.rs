@@ -199,6 +199,11 @@ where
 
             autopeering.enabled = true;
             autopeering.run_as_entry_node = Some(true);
+        } else if args.enable_autopeering_service() {
+            // TODO: use 'option_get_or_insert_default' once stable (see issue #82901)
+            let autopeering = self.autopeering.get_or_insert(AutopeeringConfigBuilder::default());
+
+            autopeering.enabled = true;
         }
 
         self

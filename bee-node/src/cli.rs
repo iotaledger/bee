@@ -8,11 +8,6 @@ use structopt::StructOpt;
 
 use std::path::{Path, PathBuf};
 
-/// Holds the command line arguments that were passed to the binary.
-pub struct ClArgs {
-    cli: Cli,
-}
-
 // The command-line interface.
 // BEWARE: `structopt` puts any doc comment for this struct into the output of `--help`. We don't want that.
 #[derive(Clone, Debug, StructOpt)]
@@ -45,7 +40,16 @@ struct Cli {
     commit_version: bool,
     // Whether the node should run as an (autopeering) entry node.
     #[structopt(long = "entry_node", help = "Runs as autopeering entry node")]
-    entry_node: bool,
+    run_as_entry_node: bool,
+    // Whether the node should run with enabled autopeering service.
+    #[structopt(long = "autopeering", help = "Enables the autopeering service")]
+    enable_autopeering_service: bool,
+
+}
+
+/// Holds the command line arguments that were passed to the binary.
+pub struct ClArgs {
+    cli: Cli,
 }
 
 impl Default for ClArgs {
@@ -90,7 +94,12 @@ impl ClArgs {
 
     /// Returns whether the node should run as an (autopeering) entry node.
     pub fn run_as_entry_node(&self) -> bool {
-        self.cli.entry_node
+        self.cli.run_as_entry_node
+    }
+
+    /// Returns whether the node should run with enabled autopeering service.
+    pub fn enable_autopeering_service(&self) -> bool {
+        self.cli.enable_autopeering_service
     }
 }
 
