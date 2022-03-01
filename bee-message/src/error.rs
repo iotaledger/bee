@@ -48,7 +48,7 @@ pub enum Error {
     #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     InvalidDustAllowanceAmount(<DustAllowanceAmount as TryFrom<u64>>::Error),
     InvalidStorageDepositAmount(<StorageDepositAmount as TryFrom<u64>>::Error),
-    // This is different from `InvalidStorageDepositAmount`, why is required by `Packable`.
+    // This is different from `InvalidStorageDepositAmount`, which is required by `Packable`.
     InvalidStorageDepositReturnAmount {
         required: u64,
         deposit: u64,
