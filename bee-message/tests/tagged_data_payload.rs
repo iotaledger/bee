@@ -46,11 +46,10 @@ fn new_valid_padded() {
 }
 
 #[test]
-fn new_invalid_tag_length_less_than_min() {
-    assert!(matches!(
-        TaggedDataPayload::new(vec![], vec![0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
-        Err(Error::InvalidTagLength(TryIntoBoundedU8Error::Invalid(0)))
-    ));
+fn new_valid_tag_length_min() {
+    let payload = TaggedDataPayload::new(vec![], vec![0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).unwrap();
+
+    assert!(payload.tag().is_empty());
 }
 
 #[test]
@@ -89,13 +88,10 @@ fn pack_unpack_valid() {
 }
 
 #[test]
-fn unpack_invalid_tag_length_less_than_min() {
-    assert!(matches!(
-        TaggedDataPayload::unpack_verified(&mut vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00].as_slice()),
-        Err(UnpackError::Packable(Error::InvalidTagLength(
-            TryIntoBoundedU8Error::Invalid(0)
-        )))
-    ));
+fn unpack_valid_tag_length_min() {
+    let payload = TaggedDataPayload::unpack_verified(&mut vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00].as_slice()).unwrap();
+
+    assert!(payload.tag().is_empty());
 }
 
 #[test]
