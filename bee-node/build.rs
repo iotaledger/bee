@@ -81,14 +81,16 @@ fn parse_git_information() -> Result<(), BuildError> {
 }
 
 #[cfg(feature = "dashboard")]
-mod dashboard
-{
+mod dashboard {
     use super::*;
 
     use serde::Deserialize;
     use zip::ZipArchive;
 
-    use std::{io::{self, BufReader, Cursor}, path::Path};
+    use std::{
+        io::{self, BufReader, Cursor},
+        path::Path,
+    };
 
     const ASSET_PREFIX: &str = "node-dashboard-bee-";
     const RELEASES_URL: &str = "https://api.github.com/repos/iotaledger/node-dashboard/releases/latest";
@@ -117,7 +119,9 @@ mod dashboard
             .send()
             .await
             .and_then(|resp| resp.error_for_status())
-            .map_err(|e| BuildError::DashboardRequest(e.status().map(|code| code.as_u16()), RELEASES_URL.to_string()))?;
+            .map_err(|e| {
+                BuildError::DashboardRequest(e.status().map(|code| code.as_u16()), RELEASES_URL.to_string())
+            })?;
 
         let assets = response
             .json::<LatestReleaseAssets>()
@@ -154,7 +158,9 @@ mod dashboard
         let mut archive = ZipArchive::new(BufReader::new(archive)).map_err(|_| BuildError::DashboardInvalidArchive)?;
 
         println!("extracting release archive to {}", dashboard_dir.as_ref().display());
-        archive.extract(dashboard_dir).map_err(|_| BuildError::DashboardInvalidArchive)?;
+        archive
+            .extract(dashboard_dir)
+            .map_err(|_| BuildError::DashboardInvalidArchive)?;
 
         Ok(())
     }
