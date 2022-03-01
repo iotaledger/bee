@@ -49,9 +49,9 @@ async fn propagate<B: StorageBackend>(
             // Note: There are two types of solidity carriers:
             // * solid messages (with available history)
             // * solid entry points / sep (with verified history)
-            // Because we know both parents are solid, we also know that they have set OMRSI/YMRSI values, hence
-            // we can simply unwrap. We also try to minimise unnecessary Tangle API calls if - for example - the
-            // parent in question turns out to be a SEP.
+            // Because we know all parents are solid, we also know that they have set OMRSI/YMRSI values, hence we can
+            // simply unwrap. We also try to minimise unnecessary Tangle API calls if - for example - the parent in
+            // question turns out to be a SEP.
 
             let mut parent_omrsis = Vec::new();
             let mut parent_ymrsis = Vec::new();
