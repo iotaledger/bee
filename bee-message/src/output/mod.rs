@@ -27,8 +27,8 @@ pub(crate) use alias::StateMetadataLength;
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
 pub use basic::{BasicOutput, BasicOutputBuilder};
-pub use byte_cost::{ByteCostConfig, ByteCostConfigBuilder};
 pub(crate) use byte_cost::{minimum_storage_deposit, ByteCost};
+pub use byte_cost::{ByteCostConfig, ByteCostConfigBuilder};
 pub use chain_id::ChainId;
 #[cfg(feature = "cpt2")]
 pub(crate) use cpt2::signature_locked_dust_allowance::DustAllowanceAmount;

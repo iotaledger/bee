@@ -18,11 +18,10 @@ use crate::{
 };
 
 use bee_gossip::PeerId;
-use bee_message::Error as MessageError;
 use bee_message::{
     output::ByteCostConfig,
     payload::{transaction::TransactionEssence, Payload},
-    Message, MessageId,
+    Error as MessageError, Message, MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::MessageMetadata, Tangle, TangleWorker};
