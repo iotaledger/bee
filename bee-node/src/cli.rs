@@ -43,8 +43,7 @@ struct Cli {
     run_as_entry_node: bool,
     // Whether the node should run with enabled autopeering service.
     #[structopt(long = "autopeering", help = "Enables the autopeering service")]
-    enable_autopeering_service: bool,
-
+    enable_autopeering: bool,
 }
 
 /// Holds the command line arguments that were passed to the binary.
@@ -98,8 +97,8 @@ impl ClArgs {
     }
 
     /// Returns whether the node should run with enabled autopeering service.
-    pub fn enable_autopeering_service(&self) -> bool {
-        self.cli.enable_autopeering_service
+    pub fn enable_autopeering(&self) -> bool {
+        self.cli.enable_autopeering
     }
 }
 
