@@ -39,7 +39,7 @@ struct Cli {
     #[structopt(short = "v", long = "commit_version", help = "Prints exact commit version")]
     commit_version: bool,
     // Whether the node should run as an (autopeering) entry node.
-    #[structopt(long = "entry_node", help = "Runs as autopeering entry node")]
+    #[structopt(long = "entry-node", help = "Runs as autopeering entry node")]
     run_as_entry_node: bool,
     // Whether the node should run with enabled autopeering service.
     #[structopt(long = "autopeering", help = "Enables the autopeering service")]
