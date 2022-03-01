@@ -21,8 +21,8 @@ enum BuildError {
     DashboardInvalidArchive,
     DashboardNoSuitableRelease,
     DashboardRequest(Option<u16>, String),
-    GitCommit,
     GitBranch,
+    GitCommit,
 }
 
 impl fmt::Display for BuildError {
@@ -34,7 +34,8 @@ impl fmt::Display for BuildError {
             Self::DashboardNoSuitableRelease => write!(f, "no release assets found for latest version"),
             Self::DashboardRequest(Some(code), url) => write!(f, "failed request to `{}`: status code {}", url, code),
             Self::DashboardRequest(_, url) => write!(f, "failed request to `{}`", url),
-            _ => Ok(())
+            Self::GitBranch => write!(f, "failed to retrieve git branch name"),
+            Self::GitCommit => write!(f, "failed to retrieve git commit"),
         }
     }
 }
