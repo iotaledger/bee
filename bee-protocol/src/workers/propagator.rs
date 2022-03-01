@@ -63,10 +63,16 @@ async fn propagate<B: StorageBackend>(
                 {
                     Some(parent_sepi) => (IndexId::new(parent_sepi, *parent), IndexId::new(parent_sepi, *parent)),
                     // SAFETY: 'unwrap' is safe, see explanation above.
-                    None =>  tangle.get_metadata(parent).await.map(|parent_md|{(
-                        parent_md.omrsi().expect("solid msg with unset omrsi"),
-                        parent_md.ymrsi().expect("solid msg with unset ymrsi"),
-                    )}).unwrap()
+                    None => tangle
+                        .get_metadata(parent)
+                        .await
+                        .map(|parent_md| {
+                            (
+                                parent_md.omrsi().expect("solid msg with unset omrsi"),
+                                parent_md.ymrsi().expect("solid msg with unset ymrsi"),
+                            )
+                        })
+                        .unwrap(),
                 };
                 parent_omrsis.push(parent_omrsi);
                 parent_ymrsis.push(parent_ymrsi);
