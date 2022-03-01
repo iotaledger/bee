@@ -156,19 +156,19 @@ where
                             for (i, output) in essence.outputs().iter().enumerate() {
                                 if let Err(error) = output.check_sufficient_storage_deposit(&config.byte_cost) {
                                     match error {
-                                        MessageError::InvalidStorageDepositReturnAmount{
+                                        MessageError::InsufficientStorageDepositReturnAmount{
                                             required, deposit
                                         } => {
                                             notify_invalid_message(
-                                                format!("Insufficient storage deposit for output i={i}. Found {deposit} tokens but a minimum of {required} is required."),
+                                                format!("Insufficient storage deposit return for output i={i}. Found {deposit} tokens but a minimum of {required} is required."),
                                                 &metrics,
                                                 notifier,
                                             );
                                             continue 'next_event;
                                         }
-                                        MessageError::MissingStorageDepositReturnUnlockCondition => {
+                                        MessageError::InsufficientStorageDepositAmount{required, amount} => {
                                             notify_invalid_message(
-                                                format!("Missing storage deposit unlock condition for output i={i}."),
+                                                format!("Insufficient output amount for storage deposit of output i={i}. Found {amount} tokens but a minimum of {required} is required."),
                                                 &metrics,
                                                 notifier,
                                             );

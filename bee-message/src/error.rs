@@ -48,8 +48,12 @@ pub enum Error {
     #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     InvalidDustAllowanceAmount(<DustAllowanceAmount as TryFrom<u64>>::Error),
     InvalidStorageDepositAmount(<StorageDepositAmount as TryFrom<u64>>::Error),
-    // This is different from `InvalidStorageDepositAmount`, which is required by `Packable`.
-    InvalidStorageDepositReturnAmount {
+    // The above is used by `Packable` to denote out-of-range values. The following denotes the actual amount.
+    InsufficientStorageDepositAmount {
+        required: u64,
+        amount: u64,
+    },
+    InsufficientStorageDepositReturnAmount {
         required: u64,
         deposit: u64,
     },
@@ -126,7 +130,6 @@ pub enum Error {
     MissingPayload,
     MissingRequiredSenderBlock,
     MissingStateControllerUnlockCondition,
-    MissingStorageDepositReturnUnlockCondition,
     NativeTokensNotUniqueSorted,
     NativeTokensNullAmount,
     NonZeroStateIndexOrFoundryCounter,
@@ -194,10 +197,16 @@ impl fmt::Display for Error {
             Error::InvalidStorageDepositAmount(amount) => {
                 write!(f, "invalid storage deposit amount: {}", amount)
             }
-            Error::InvalidStorageDepositReturnAmount { required, deposit } => {
+            Error::InsufficientStorageDepositAmount { required, amount } => {
                 write!(
                     f,
-                    "invalid storage deposit return: deposit of {deposit} < required {required}"
+                    "insufficient output amount for storage deposit: {amount} (should be at least {required})"
+                )
+            }
+            Error::InsufficientStorageDepositReturnAmount { required, deposit } => {
+                write!(
+                    f,
+                    "insufficient storage deposit return amount: {deposit} (should be at least {required})"
                 )
             }
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}", k),
@@ -306,9 +315,6 @@ impl fmt::Display for Error {
             Error::MissingPayload => write!(f, "missing payload"),
             Error::MissingRequiredSenderBlock => write!(f, "missing required sender block"),
             Error::MissingStateControllerUnlockCondition => write!(f, "missing state controller unlock condition"),
-            Error::MissingStorageDepositReturnUnlockCondition => {
-                write!(f, "missing storage deposit return unlock condition")
-            }
             Error::NativeTokensNotUniqueSorted => write!(f, "native tokens are not unique and/or sorted"),
             Error::NativeTokensNullAmount => write!(f, "native tokens null amount"),
             Error::NonZeroStateIndexOrFoundryCounter => {

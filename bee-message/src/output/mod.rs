@@ -235,14 +235,17 @@ impl Output {
             if deposit >= required {
                 return Ok(());
             } else {
-                return Err(Error::InvalidStorageDepositReturnAmount { required, deposit });
+                return Err(Error::InsufficientStorageDepositReturnAmount { required, deposit });
             }
         }
 
         if self.amount() >= required {
             Ok(())
         } else {
-            Err(Error::MissingStorageDepositReturnUnlockCondition)
+            Err(Error::InsufficientStorageDepositAmount {
+                required,
+                amount: self.amount(),
+            })
         }
     }
 }
