@@ -48,6 +48,11 @@ pub enum Error {
     #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     InvalidDustAllowanceAmount(<DustAllowanceAmount as TryFrom<u64>>::Error),
     InvalidStorageDepositAmount(<StorageDepositAmount as TryFrom<u64>>::Error),
+    // This is different from `InvalidStorageDepositAmount`, why is required by `Packable`.
+    InvalidStorageDepositReturnAmount {
+        required: u64,
+        deposit: u64,
+    },
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
     InvalidFeatureBlockKind(u8),
@@ -121,6 +126,7 @@ pub enum Error {
     MissingPayload,
     MissingRequiredSenderBlock,
     MissingStateControllerUnlockCondition,
+    MissingStorageDepositReturnUnlockCondition,
     NativeTokensNotUniqueSorted,
     NativeTokensNullAmount,
     NonZeroStateIndexOrFoundryCounter,
@@ -187,6 +193,12 @@ impl fmt::Display for Error {
             }
             Error::InvalidStorageDepositAmount(amount) => {
                 write!(f, "invalid storage deposit amount: {}", amount)
+            }
+            Error::InvalidStorageDepositReturnAmount { required, deposit } => {
+                write!(
+                    f,
+                    "invalid storage deposit return: deposit of {deposit} < required {required}"
+                )
             }
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}", k),
             Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}", count),
@@ -294,6 +306,9 @@ impl fmt::Display for Error {
             Error::MissingPayload => write!(f, "missing payload"),
             Error::MissingRequiredSenderBlock => write!(f, "missing required sender block"),
             Error::MissingStateControllerUnlockCondition => write!(f, "missing state controller unlock condition"),
+            Error::MissingStorageDepositReturnUnlockCondition => {
+                write!(f, "missing storage deposit return unlock condition")
+            }
             Error::NativeTokensNotUniqueSorted => write!(f, "native tokens are not unique and/or sorted"),
             Error::NativeTokensNullAmount => write!(f, "native tokens null amount"),
             Error::NonZeroStateIndexOrFoundryCounter => {

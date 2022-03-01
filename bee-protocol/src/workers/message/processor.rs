@@ -18,11 +18,9 @@ use crate::{
 };
 
 use bee_gossip::PeerId;
+use bee_message::Error as MessageError;
 use bee_message::{
-    output::{
-        minimum_storage_deposit, unlock_condition::StorageDepositReturnUnlockCondition, ByteCostConfig, Output,
-        UnlockCondition,
-    },
+    output::ByteCostConfig,
     payload::{transaction::TransactionEssence, Payload},
     Message, MessageId,
 };
@@ -157,36 +155,28 @@ where
                             }
 
                             for (i, output) in essence.outputs().iter().enumerate() {
-                                let maybe_storage_deposit_condition = match output {
-                                    #[cfg(feature = "cpt2")]
-                                    Output::SignatureLockedSingle(_) => continue,
-                                    #[cfg(feature = "cpt2")]
-                                    Output::SignatureLockedDustAllowance(_) => continue,
-                                    Output::Treasury(_) => continue, // `TreasureOutput`s don't have `UnlockConditions`.
-                                    Output::Basic(output) => output.unlock_conditions().get(StorageDepositReturnUnlockCondition::KIND),
-                                    Output::Alias(output) => output.unlock_conditions().get(StorageDepositReturnUnlockCondition::KIND),
-                                    Output::Foundry(output) => output.unlock_conditions().get(StorageDepositReturnUnlockCondition::KIND),
-                                    Output::Nft(output) => output.unlock_conditions().get(StorageDepositReturnUnlockCondition::KIND),
-                                };
-
-                                if let Some(UnlockCondition::StorageDepositReturn(storage_deposit_condition)) = maybe_storage_deposit_condition {
-                                    let required_deposit = minimum_storage_deposit(&config.byte_cost, output);
-                                    let current_deposit = storage_deposit_condition.amount();
-                                    if current_deposit < required_deposit {
-                                        notify_invalid_message(
-                                            format!("Insufficient storage deposit for output i={i}. Found {current_deposit} tokens but a minimum of {required_deposit} is required."),
-                                            &metrics,
-                                            notifier,
-                                        );
-                                        continue 'next_event;
+                                if let Err(error) = output.check_sufficient_storage_deposit(&config.byte_cost) {
+                                    match error {
+                                        MessageError::InvalidStorageDepositReturnAmount{
+                                            required, deposit
+                                        } => {
+                                            notify_invalid_message(
+                                                format!("Insufficient storage deposit for output i={i}. Found {deposit} tokens but a minimum of {required} is required."),
+                                                &metrics,
+                                                notifier,
+                                            );
+                                            continue 'next_event;
+                                        }
+                                        MessageError::MissingStorageDepositReturnUnlockCondition => {
+                                            notify_invalid_message(
+                                                format!("Missing storage deposit unlock condition for output i={i}."),
+                                                &metrics,
+                                                notifier,
+                                            );
+                                            continue 'next_event;
+                                        }
+                                        _ => unimplemented!() // That should never happen.
                                     }
-                                } else {
-                                    notify_invalid_message(
-                                        format!("Missing required storage deposit condition for output i={i}."),
-                                        &metrics,
-                                        notifier,
-                                    );
-                                    continue 'next_event;
                                 }
                             }
                         }

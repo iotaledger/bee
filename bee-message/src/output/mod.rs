@@ -27,7 +27,8 @@ pub(crate) use alias::StateMetadataLength;
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
 pub use basic::{BasicOutput, BasicOutputBuilder};
-pub use byte_cost::{minimum_storage_deposit, ByteCost, ByteCostConfig, ByteCostConfigBuilder};
+pub use byte_cost::{ByteCostConfig, ByteCostConfigBuilder};
+pub(crate) use byte_cost::{minimum_storage_deposit, ByteCost};
 pub use chain_id::ChainId;
 #[cfg(feature = "cpt2")]
 pub(crate) use cpt2::signature_locked_dust_allowance::DustAllowanceAmount;
@@ -59,6 +60,8 @@ use derive_more::From;
 use packable::{bounded::BoundedU64, PackableExt};
 
 use core::ops::RangeInclusive;
+
+use self::unlock_condition::StorageDepositReturnUnlockCondition;
 
 /// The maximum number of outputs of a transaction.
 pub const OUTPUT_COUNT_MAX: u16 = 128;
@@ -199,6 +202,47 @@ impl Output {
             Self::Alias(output) => Some(output.immutable_feature_blocks()),
             Self::Foundry(output) => Some(output.immutable_feature_blocks()),
             Self::Nft(output) => Some(output.immutable_feature_blocks()),
+        }
+    }
+
+    /// Checks if a sufficient storage deposit was made for the given [`Output`].
+    pub fn check_sufficient_storage_deposit(&self, config: &ByteCostConfig) -> Result<(), Error> {
+        let maybe_storage_deposit_condition = match self {
+            #[cfg(feature = "cpt2")]
+            Output::SignatureLockedSingle(_) => return Ok(()),
+            #[cfg(feature = "cpt2")]
+            Output::SignatureLockedDustAllowance(_) => return Ok(()),
+            Output::Treasury(_) => return Ok(()), // `TreasureOutput`s don't have `UnlockConditions`.
+            Output::Basic(output) => output
+                .unlock_conditions()
+                .get(StorageDepositReturnUnlockCondition::KIND),
+            Output::Alias(output) => output
+                .unlock_conditions()
+                .get(StorageDepositReturnUnlockCondition::KIND),
+            Output::Foundry(output) => output
+                .unlock_conditions()
+                .get(StorageDepositReturnUnlockCondition::KIND),
+            Output::Nft(output) => output
+                .unlock_conditions()
+                .get(StorageDepositReturnUnlockCondition::KIND),
+        };
+
+        let required = minimum_storage_deposit(config, self);
+
+        if let Some(UnlockCondition::StorageDepositReturn(storage_deposit_condition)) = maybe_storage_deposit_condition
+        {
+            let deposit = storage_deposit_condition.amount();
+            if deposit >= required {
+                return Ok(());
+            } else {
+                return Err(Error::InvalidStorageDepositReturnAmount { required, deposit });
+            }
+        }
+
+        if self.amount() >= required {
+            Ok(())
+        } else {
+            Err(Error::MissingStorageDepositReturnUnlockCondition)
         }
     }
 }
