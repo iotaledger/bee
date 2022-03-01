@@ -32,7 +32,7 @@ pub struct MqttConfig {
 }
 
 impl MqttConfig {
-    /// Returnns the address of the MQTT broker.
+    /// Returns the address of the MQTT broker.
     pub fn address(&self) -> &String {
         &self.address
     }

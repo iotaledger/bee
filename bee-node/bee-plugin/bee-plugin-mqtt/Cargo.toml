@@ -10,7 +10,6 @@ license = "Apache-2.0"
 keywords = [ "iota", "tangle", "bee", "plugin", "mqtt" ]
 homepage = "https://www.iota.org"
 
-
 [dependencies]
 bee-runtime = { version = "0.1.1-alpha", path = "../../../bee-runtime", default-features = false }
 bee-tangle = { version = "0.2.0", path = "../../../bee-tangle", default-features = false }

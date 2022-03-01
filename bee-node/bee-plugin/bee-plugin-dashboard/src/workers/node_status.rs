@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, Bech32Hrp, Dashboard, NodeAlias, NodeId};
+use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, Bech32Hrp, DashboardPlugin, NodeAlias, NodeId};
 
 use bee_protocol::{types::metrics::NodeMetrics, workers::PeerManager};
 use bee_rest_api::endpoints::routes::health::is_healthy;
@@ -41,7 +41,7 @@ pub(crate) fn node_status_worker<N>(
     let node_info = node.info();
     let users = users.clone();
 
-    node.spawn::<Dashboard, _, _>(|shutdown| async move {
+    node.spawn::<DashboardPlugin, _, _>(|shutdown| async move {
         debug!("Ws PublicNodeStatus/NodeStatus topics handler running.");
 
         let mut ticker = ShutdownStream::new(

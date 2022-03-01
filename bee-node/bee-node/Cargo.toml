@@ -42,7 +42,6 @@ hex = { version = "0.4.3", default-features = false }
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "ed25519", "random", "blake2b" ] }
 log = { version = "0.4.14", default-features = false }
 multiaddr = { version = "0.13.0", default-features = false }
-paho-mqtt = { version = "0.9.1", default-features = false, features = [ "bundled" ] }
 pkcs8 = { version = "0.8.0", default-features = false, features = [ "alloc", "pem", "std" ] }
 rand = { version = "0.8.4", default-features = false }
 rpassword = { version = "5.0.1", default-features = false }

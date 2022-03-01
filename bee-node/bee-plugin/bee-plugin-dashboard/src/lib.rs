@@ -72,7 +72,7 @@ pub fn init<N: Node>(
 where
     N::Backend: StorageBackend,
 {
-    node_builder.with_worker_cfg::<Dashboard>((dashboard_config, rest_api_config, node_id, node_alias, bech32_hrp))
+    node_builder.with_worker_cfg::<DashboardPlugin>((dashboard_config, rest_api_config, node_id, node_alias, bech32_hrp))
 }
 
 fn topic_handler<N, E, F>(node: &mut N, topic: &'static str, users: &WsUsers, require_node_confirmed: bool, f: F)
@@ -87,7 +87,7 @@ where
     let users = users.clone();
     let (tx, rx) = mpsc::unbounded_channel();
 
-    node.spawn::<Dashboard, _, _>(|shutdown| async move {
+    node.spawn::<DashboardPlugin, _, _>(|shutdown| async move {
         debug!("Ws {} topic handler running.", topic);
 
         let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
@@ -105,7 +105,7 @@ where
         debug!("Ws {} topic handler stopped.", topic);
     });
 
-    bus.add_listener::<Dashboard, E, _>(move |event: &E| {
+    bus.add_listener::<DashboardPlugin, E, _>(move |event: &E| {
         // The lifetime of the listeners is tied to the lifetime of the Dashboard worker so they are removed together.
         // However, topic handlers are shutdown as soon as the signal is received, causing this send to potentially
         // fail and spam the output. The return is then ignored as not being essential.
@@ -115,10 +115,10 @@ where
 
 /// Dashboard plugin.
 #[derive(Default)]
-pub struct Dashboard;
+pub struct DashboardPlugin;
 
 #[async_trait]
-impl<N: Node> Worker<N> for Dashboard
+impl<N: Node> Worker<N> for DashboardPlugin
 where
     N::Backend: StorageBackend,
 {

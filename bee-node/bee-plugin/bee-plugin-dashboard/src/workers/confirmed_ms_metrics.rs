@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, Dashboard};
+use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, DashboardPlugin};
 
 use bee_ledger::workers::event::MilestoneConfirmed;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
@@ -22,7 +22,7 @@ where
     let users = users.clone();
     let (tx, rx) = mpsc::unbounded_channel::<MilestoneConfirmed>();
 
-    node.spawn::<Dashboard, _, _>(|shutdown| async move {
+    node.spawn::<DashboardPlugin, _, _>(|shutdown| async move {
         debug!("Ws ConfirmedMilestoneMetrics topic handler running.");
 
         let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
@@ -67,7 +67,7 @@ where
         debug!("Ws ConfirmedMilestoneMetrics topic handler stopped.");
     });
 
-    bus.add_listener::<Dashboard, _, _>(move |event: &MilestoneConfirmed| {
+    bus.add_listener::<DashboardPlugin, _, _>(move |event: &MilestoneConfirmed| {
         // The lifetime of the listeners is tied to the lifetime of the Dashboard worker so they are removed together.
         // However, topic handlers are shutdown as soon as the signal is received, causing this send to potentially
         // fail and spam the output. The return is then ignored as not being essential.

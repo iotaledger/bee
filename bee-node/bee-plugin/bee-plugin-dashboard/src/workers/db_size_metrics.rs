@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, Dashboard};
+use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, DashboardPlugin};
 
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use bee_storage::backend::StorageBackend as _;
@@ -23,7 +23,7 @@ where
     let storage = node.storage();
     let users = users.clone();
 
-    node.spawn::<Dashboard, _, _>(|shutdown| async move {
+    node.spawn::<DashboardPlugin, _, _>(|shutdown| async move {
         debug!("Ws DatabaseSizeMetrics topic handler running.");
 
         let mut ticker = ShutdownStream::new(

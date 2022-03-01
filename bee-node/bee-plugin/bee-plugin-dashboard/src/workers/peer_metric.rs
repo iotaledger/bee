@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, Dashboard};
+use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, DashboardPlugin};
 
 use bee_protocol::workers::PeerManager;
 use bee_rest_api::types::{dtos::PeerDto, responses::PeersResponse};
@@ -25,7 +25,7 @@ where
     let peer_manager = node.resource::<PeerManager>();
     let users = users.clone();
 
-    node.spawn::<Dashboard, _, _>(|shutdown| async move {
+    node.spawn::<DashboardPlugin, _, _>(|shutdown| async move {
         debug!("Ws PeerMetrics topic handler running.");
 
         let mut ticker = ShutdownStream::new(
