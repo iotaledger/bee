@@ -43,11 +43,7 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehaviour {
     fn inject_event(&mut self, event: IdentifyEvent) {
         match event {
             IdentifyEvent::Received { peer_id, info } => {
-                trace!(
-                    "Received Identify response from {}: {:?}.",
-                    alias!(peer_id),
-                    info,
-                );
+                trace!("Received Identify response from {}: {:?}.", alias!(peer_id), info,);
 
                 // Panic:
                 // Sending must not fail.

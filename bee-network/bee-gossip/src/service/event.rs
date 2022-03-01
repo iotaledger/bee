@@ -100,11 +100,12 @@ pub enum Event {
         /// The peer's id.
         peer_id: PeerId,
     },
+
     /// A peer didn't answer our repeated calls.
     PeerUnreachable {
         /// The peer's id.
         peer_id: PeerId,
-        /// The relation we have with that peer.
+        /// The peer's info.
         peer_info: PeerInfo,
     },
 }
