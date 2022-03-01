@@ -25,7 +25,7 @@ pub struct DashboardAuthConfigBuilder {
 }
 
 impl DashboardAuthConfigBuilder {
-    /// Creates a new [`DashboardAuthConfigBuilder`]/
+    /// Creates a new [`DashboardAuthConfigBuilder`].
     pub fn new() -> Self {
         Self::default()
     }
