@@ -45,8 +45,8 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehaviour {
             IdentifyEvent::Received { peer_id, info } => {
                 trace!("Received Identify response from {}: {:?}.", alias!(peer_id), info,);
 
-                // Panic: we made sure that the sender (network host) is always dropped before the receiver (service host)
-                // through the worker dependencies, hence this can never panic.
+                // Panic: we made sure that the sender (network host) is always dropped before the receiver (service
+                // host) through the worker dependencies, hence this can never panic.
                 self.internal_sender
                     .send(InternalEvent::PeerIdentified { peer_id })
                     .expect("send internal event");
@@ -60,8 +60,8 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehaviour {
             IdentifyEvent::Error { peer_id, error } => {
                 debug!("Identification error with {}: Cause: {:?}.", alias!(peer_id), error);
 
-                // Panic: we made sure that the sender (network host) is always dropped before the receiver (service host)
-                // through the worker dependencies, hence this can never panic.
+                // Panic: we made sure that the sender (network host) is always dropped before the receiver (service
+                // host) through the worker dependencies, hence this can never panic.
                 self.internal_sender
                     .send(InternalEvent::PeerUnreachable { peer_id })
                     .expect("send internal event");

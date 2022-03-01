@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use super::{
     command::{Command, CommandReceiver, CommandSender},
     error::Error,
@@ -32,6 +30,8 @@ use log::*;
 use rand::Rng;
 use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
+
+use std::time::{SystemTime, UNIX_EPOCH};
 
 const MAX_PEER_STATE_CHECKER_DELAY_MILLIS: u64 = 2000;
 const MAX_DIALS: usize = 3;
@@ -436,17 +436,27 @@ async fn process_internal_event(
                 // Spin up separate buffered reader and writer to efficiently process the gossip with that peer.
                 let (r, w) = substream.split();
 
-                let reader = BufReader::with_capacity(IO_BUFFER_LEN, r);
-                let writer = BufWriter::with_capacity(IO_BUFFER_LEN, w);
+                let inbound_gossip_rx = BufReader::with_capacity(IO_BUFFER_LEN, r);
+                let outbound_gossip_tx = BufWriter::with_capacity(IO_BUFFER_LEN, w);
 
-                let (incoming_tx, incoming_rx) = iota_gossip::channel();
-                let (outgoing_tx, outgoing_rx) = iota_gossip::channel();
+                let (inbound_gossip_tx, gossip_in) = iota_gossip::channel();
+                let (gossip_out, outbound_gossip_rx) = iota_gossip::channel();
 
-                iota_gossip::start_incoming_processor(peer_id, reader, incoming_tx, senders.internal_events.clone());
-                iota_gossip::start_outgoing_processor(peer_id, writer, outgoing_rx, senders.internal_events.clone());
+                iota_gossip::start_inbound_gossip_handler(
+                    peer_id,
+                    inbound_gossip_rx,
+                    inbound_gossip_tx,
+                    senders.internal_events.clone(),
+                );
+                iota_gossip::start_outbound_gossip_handler(
+                    peer_id,
+                    outbound_gossip_tx,
+                    outbound_gossip_rx,
+                    senders.internal_events.clone(),
+                );
 
                 // We store a clone of the gossip send channel in order to send a shutdown signal.
-                let _ = peerlist.update_state(&peer_id, |state| state.set_connected(outgoing_tx.clone()));
+                let _ = peerlist.update_state(&peer_id, |state| state.set_connected(gossip_out.clone()));
 
                 // We no longer need to hold the lock.
                 drop(peerlist);
@@ -476,8 +486,8 @@ async fn process_internal_event(
                     .send(Event::PeerConnected {
                         peer_id,
                         info: peer_info,
-                        gossip_in: incoming_rx,
-                        gossip_out: outgoing_tx,
+                        gossip_in,
+                        gossip_out,
                     })
                     .map_err(|_| Error::SendingEventFailed)?;
             } else {

@@ -119,7 +119,7 @@ impl<S: PeerStore> TaskManager<S> {
             log::trace!("Shutting down: {}", task_name);
 
             if shutdown_tx.send(()).is_err() {
-                log::error!("Error sending shutdown signal to task {task_name}. This is a bug.");
+                log::error!("Error sending shutdown signal to task {task_name}.");
             }
         }
 

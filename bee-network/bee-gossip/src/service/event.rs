@@ -132,9 +132,9 @@ pub enum InternalEvent {
     },
 
     /// The gossip protocol with a peer was stopped.
-    ProtocolStopped { 
+    ProtocolStopped {
         /// The peer's id.
-        peer_id: PeerId
+        peer_id: PeerId,
     },
 
     /// A peer didn't answer our repeated calls.
