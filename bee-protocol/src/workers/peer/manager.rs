@@ -192,11 +192,13 @@ where
                     NetworkEvent::PeerUnreachable { peer_id, peer_info } => {
                         if peer_info.relation.is_discovered() {
                             // Remove that discovered peer.
+
+                            // Panic: sending commands cannot fail: same explanation as in other sender usages.
                             gossip_command_tx
                                 .send(Command::RemovePeer { peer_id })
                                 .expect("send gossip command");
 
-                            // Todo: tell the autopeering to remove that peer from the neighborhood.
+                            // TODO: tell the autopeering to remove that peer from the neighborhood.
                         }
                     }
                     _ => (), // Ignore all other events for now
@@ -210,13 +212,14 @@ where
     }
 }
 
-fn handle_new_peering(peer: bee_autopeering::Peer, network_name: &str, command_tx: &NetworkCommandSender) {
+fn handle_new_peering(peer: bee_autopeering::Peer, network_name: &str, gossip_command_tx: &NetworkCommandSender) {
     if let Some(multiaddr) = peer.service_multiaddr(network_name) {
         let peer_id = peer.peer_id().libp2p_peer_id();
 
-        // Panic:
-        // Sending commands must not fail.
-        command_tx
+        // Panic: sending commands cannot fail due to worker dependencies: because the "Peer Manager" depends on
+        // the `bee-gossip` "ServiceHost", it is guaranteed that the receiver of this channel is not dropped
+        // before the sender.
+        gossip_command_tx
             .send(Command::AddPeer {
                 peer_id,
                 alias: Some(alias!(peer_id).to_string()),
@@ -227,12 +230,11 @@ fn handle_new_peering(peer: bee_autopeering::Peer, network_name: &str, command_t
     }
 }
 
-fn handle_peering_dropped(peer_id: bee_autopeering::PeerId, command_tx: &NetworkCommandSender) {
+fn handle_peering_dropped(peer_id: bee_autopeering::PeerId, gossip_command_tx: &NetworkCommandSender) {
     let peer_id = peer_id.libp2p_peer_id();
 
-    // Panic:
-    // Sending commands must not fail.
-    command_tx
+    // Panic: sending commands cannot fail: same explanation as in other sender usages.
+    gossip_command_tx
         .send(Command::RemovePeer { peer_id })
         .expect("send command to gossip layer");
 }
