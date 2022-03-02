@@ -21,20 +21,9 @@ use packable::{
 #[must_use]
 pub struct MessageBuilder<P: NonceProvider = Miner> {
     protocol_version: Option<u8>,
-    parents: Option<Parents>,
+    parents: Parents,
     payload: Option<Payload>,
     nonce_provider: Option<(P, f64)>,
-}
-
-impl<P: NonceProvider> Default for MessageBuilder<P> {
-    fn default() -> Self {
-        Self {
-            protocol_version: None,
-            parents: None,
-            payload: None,
-            nonce_provider: None,
-        }
-    }
 }
 
 impl<P: NonceProvider> MessageBuilder<P> {
@@ -43,21 +32,19 @@ impl<P: NonceProvider> MessageBuilder<P> {
 
     /// Creates a new [`MessageBuilder`].
     #[inline(always)]
-    pub fn new() -> Self {
-        Default::default()
+    pub fn new(parents: Parents) -> Self {
+        Self {
+            protocol_version: None,
+            parents,
+            payload: None,
+            nonce_provider: None,
+        }
     }
 
     /// Adds a protocol version to a [`MessageBuilder`].
     #[inline(always)]
     pub fn with_protocol_version(mut self, protocol_version: u8) -> Self {
         self.protocol_version = Some(protocol_version);
-        self
-    }
-
-    /// Adds parents to a [`MessageBuilder`].
-    #[inline(always)]
-    pub fn with_parents(mut self, parents: Parents) -> Self {
-        self.parents = Some(parents);
         self
     }
 
@@ -78,7 +65,6 @@ impl<P: NonceProvider> MessageBuilder<P> {
     /// Finishes the [`MessageBuilder`] into a [`Message`].
     pub fn finish(self) -> Result<Message, Error> {
         let protocol_version = self.protocol_version.ok_or(Error::MissingField("protocol_version"))?;
-        let parents = self.parents.ok_or(Error::MissingField("parents"))?;
 
         if !matches!(
             self.payload,
@@ -90,7 +76,7 @@ impl<P: NonceProvider> MessageBuilder<P> {
 
         let mut message = Message {
             protocol_version,
-            parents,
+            parents: self.parents,
             payload: self.payload.into(),
             nonce: 0,
         };
@@ -138,8 +124,8 @@ impl Message {
 
     /// Creates a new [`MessageBuilder`] to construct an instance of a [`Message`].
     #[inline(always)]
-    pub fn builder() -> MessageBuilder {
-        MessageBuilder::new()
+    pub fn builder(parents: Parents) -> MessageBuilder {
+        MessageBuilder::new(parents)
     }
 
     /// Computes the identifier of the message.

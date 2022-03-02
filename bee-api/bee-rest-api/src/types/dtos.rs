@@ -71,18 +71,18 @@ impl TryFrom<&MessageDto> for Message {
     type Error = Error;
 
     fn try_from(value: &MessageDto) -> Result<Self, Self::Error> {
-        let mut builder = MessageBuilder::new()
+        let parents = Parents::new(
+            value
+                .parents
+                .iter()
+                .map(|m| {
+                    m.parse::<MessageId>()
+                        .map_err(|_| Error::InvalidField("parentMessageIds"))
+                })
+                .collect::<Result<Vec<MessageId>, Error>>()?,
+        )?;
+        let mut builder = MessageBuilder::new(parents)
             .with_protocol_version(value.protocol_version)
-            .with_parents(Parents::new(
-                value
-                    .parents
-                    .iter()
-                    .map(|m| {
-                        m.parse::<MessageId>()
-                            .map_err(|_| Error::InvalidField("parentMessageIds"))
-                    })
-                    .collect::<Result<Vec<MessageId>, Error>>()?,
-            )?)
             .with_nonce_provider(
                 value.nonce.parse::<u64>().map_err(|_| Error::InvalidField("nonce"))?,
                 0f64,
