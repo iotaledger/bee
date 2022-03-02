@@ -6,10 +6,9 @@ use std::{fmt, process::Command};
 #[allow(dead_code)]
 #[derive(Debug)]
 enum BuildError {
-    DashboardDecode,
     DashboardDownload,
     DashboardInvalidArchive,
-    DashboardNoSuitableRelease,
+    DashboardInvalidChecksum,
     DashboardRequest(Option<u16>, String),
     GitBranch,
     GitCommit,
@@ -18,10 +17,12 @@ enum BuildError {
 impl fmt::Display for BuildError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
-            Self::DashboardDecode => write!(f, "failed to decode response from JSON"),
             Self::DashboardDownload => write!(f, "failed to download latest release archive"),
             Self::DashboardInvalidArchive => write!(f, "failed to open or extract release archive"),
-            Self::DashboardNoSuitableRelease => write!(f, "no release assets found for latest version"),
+            Self::DashboardInvalidChecksum => write!(
+                f,
+                "checksum of downloaded archive did not match that specified in the release"
+            ),
             Self::DashboardRequest(Some(code), url) => write!(f, "failed request to `{}`: status code {}", url, code),
             Self::DashboardRequest(_, url) => write!(f, "failed request to `{}`", url),
             Self::GitBranch => write!(f, "failed to retrieve git branch name"),
@@ -92,7 +93,7 @@ fn parse_git_information() -> Result<(), BuildError> {
 mod dashboard {
     use super::*;
 
-    use serde::Deserialize;
+    use sha2::{Digest, Sha256};
     use zip::ZipArchive;
 
     use std::{
@@ -100,65 +101,39 @@ mod dashboard {
         path::Path,
     };
 
-    const ASSET_PREFIX: &str = "node-dashboard-bee-";
-    const RELEASES_URL: &str = "https://api.github.com/repos/iotaledger/node-dashboard/releases/latest";
-
-    #[derive(Deserialize, Debug)]
-    struct LatestReleaseAssets {
-        assets: Vec<ReleaseAsset>,
-    }
-
-    #[derive(Deserialize, Debug)]
-    struct ReleaseAsset {
-        name: String,
-        browser_download_url: String,
-    }
+    const RELEASE_URL: &str =
+        "https://github.com/iotaledger/node-dashboard/releases/download/v1.0.0/node-dashboard-bee-1.0.0.zip";
+    const RELEASE_CHECKSUM: &str = "d61bce7d70b51ea88536b22c5341ccdc3c4651bf8e02e093a771312f3f046c30";
 
     pub(super) fn fetch<P: AsRef<Path>>(dashboard_dir: P) -> Result<(), BuildError> {
-        println!("fetching latest dashboard release");
+        println!("downloading latest dashboard release from {}", RELEASE_URL);
 
         let client = reqwest::blocking::Client::builder()
             .user_agent("bee-fetch-dashboard")
             .build()
             .expect("could not create client");
 
-        let response = client
-            .get(RELEASES_URL)
-            .send()
-            .and_then(|resp| resp.error_for_status())
-            .map_err(|e| {
-                BuildError::DashboardRequest(e.status().map(|code| code.as_u16()), RELEASES_URL.to_string())
-            })?;
-
-        let assets = response
-            .json::<LatestReleaseAssets>()
-            .map_err(|_| BuildError::DashboardDecode)?
-            .assets;
-
-        let release_asset = assets
-            .iter()
-            .find(|asset| asset.name.starts_with(ASSET_PREFIX))
-            .ok_or(BuildError::DashboardNoSuitableRelease)?;
-
-        println!(
-            "downloading latest dashboard release `{}` from {}",
-            release_asset.name, release_asset.browser_download_url
-        );
-
         let mut archive = tempfile::tempfile().expect("could not create temp file");
 
         let response = client
-            .get(&release_asset.browser_download_url)
+            .get(RELEASE_URL)
             .send()
             .and_then(|resp| resp.error_for_status())
-            .map_err(|e| {
-                BuildError::DashboardRequest(
-                    e.status().map(|code| code.as_u16()),
-                    release_asset.browser_download_url.clone(),
-                )
-            })?;
+            .map_err(|e| BuildError::DashboardRequest(e.status().map(|code| code.as_u16()), RELEASE_URL.to_string()))?;
 
-        let mut content = Cursor::new(response.bytes().map_err(|_| BuildError::DashboardDownload)?);
+        let content = response.bytes().map_err(|_| BuildError::DashboardDownload)?;
+
+        let mut sha256 = Sha256::new();
+        sha256.update(&content);
+        let checksum = format!("{:x}", sha256.finalize());
+
+        if checksum != RELEASE_CHECKSUM {
+            return Err(BuildError::DashboardInvalidChecksum);
+        }
+
+        println!("checksum ok");
+
+        let mut content = Cursor::new(content);
         io::copy(&mut content, &mut archive).expect("copying failed");
         let mut archive = ZipArchive::new(BufReader::new(archive)).map_err(|_| BuildError::DashboardInvalidArchive)?;
 
