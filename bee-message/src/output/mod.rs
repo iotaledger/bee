@@ -231,11 +231,13 @@ impl Output {
 
         if let Some(UnlockCondition::StorageDepositReturn(storage_deposit_condition)) = maybe_storage_deposit_condition
         {
-            let deposit = storage_deposit_condition.amount();
-            if deposit >= required {
+            if storage_deposit_condition.amount() >= required {
                 return Ok(());
             } else {
-                return Err(Error::InsufficientStorageDepositReturnAmount { required, deposit });
+                return Err(Error::InsufficientStorageDepositReturnAmount {
+                    required,
+                    deposit: storage_deposit_condition.amount(),
+                });
             }
         }
 
