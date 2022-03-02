@@ -32,15 +32,12 @@ jobs:
       matrix:
         rust: [stable, beta]
         # Switch back to `windows-latest` when it reliably compiles again.
-        os: [ubuntu-latest, macos-latest, windows-2019]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         experimental: [false]
         include:
             # The following ensures that workflows relying on `nightly` don't break.
           - rust: nightly
             os: ubuntu-latest
-            experimental: true
-          - rust: stable
-            os: windows-latest
             experimental: true
 
     steps:
