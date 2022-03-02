@@ -13,6 +13,10 @@ on:
       - '.github/workflows/coverage.yml'
       - '.github/workflows/scripts/coverage.sh'
 
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   coverage:
     runs-on: ubuntu-latest
