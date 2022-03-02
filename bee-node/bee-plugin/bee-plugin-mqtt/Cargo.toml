@@ -1,0 +1,24 @@
+[package]
+name = "bee-plugin-mqtt"
+version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
+edition = "2021"
+description = "MQTT plugin for the Bee node."
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "plugin", "mqtt" ]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-runtime = { version = "0.1.1-alpha", path = "../../../bee-runtime", default-features = false }
+bee-tangle = { version = "0.2.0", path = "../../../bee-tangle", default-features = false }
+
+async-trait = { version = "0.1.51", default-features = false }
+futures = { version = "0.3.17", default-features = false }
+log = { version = "0.4.14", default-features = false }
+paho-mqtt = { version = "0.9.1", default-features = false, features = [ "bundled" ] }
+thiserror = { version = "1.0.30", default-features = false }
+serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
+tokio = { version = "1.12.0", default-features = false, features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
+tokio-stream = { version = "0.1.7", default-features = false }
