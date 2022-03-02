@@ -121,13 +121,11 @@ impl PeerList {
 
     /// Note: Returns an error if the address trying to be added is a duplicate.
     pub fn add_local_addr(&mut self, addr: Multiaddr) -> Result<(), (Multiaddr, Error)> {
-        if self.local_addrs.contains(&addr) {
-            return Err((addr.clone(), Error::AddressIsDuplicate(addr)));
+        if self.local_addrs.insert(addr.clone()) {
+            Ok(())
+        } else {
+            Err((addr.clone(), Error::AddressIsDuplicate(addr)))
         }
-
-        let _ = self.local_addrs.insert(addr);
-
-        Ok(())
     }
 
     pub fn update_info<U>(&mut self, peer_id: &PeerId, mut update: U) -> Result<(), Error>
