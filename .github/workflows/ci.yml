@@ -10,6 +10,7 @@ on:
     paths-ignore:
       - 'documentation/**'
       - '**.md'
+      - 'bee-node/docker/**'
   pull_request:
     branches:
       - mainnet
@@ -19,7 +20,7 @@ on:
     paths-ignore:
       - 'documentation/**'
       - '**.md'
-      - 'bee-node/docker'
+      - 'bee-node/docker/**'
 
 concurrency: 
   group: ${{ github.workflow }}-${{ github.ref }}
