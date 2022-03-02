@@ -41,11 +41,23 @@ async fn main() -> Result<(), BuildError> {
     parse_git_information()?;
 
     let should_fetch = std::env::var("FETCH_DASHBOARD").map(|val| val == "1").unwrap_or(false);
+
     let dashboard_dir = std::env::var("OUT_DIR").unwrap() + "/dashboard";
-
     println!("cargo:rustc-env=DASHBOARD_DIR={}", dashboard_dir);
+    
+    // Rebuild if FETCH_DASHBOARD environment variable has changed.
+    println!("cargo:rerun-if-env-changed=FETCH_DASHBOARD");
+    // Rebuild if DASHBOARD_DIR has changed to a different path.
+    println!("cargo:rerun-if-env-changed=DASHBOARD_DIR");
 
-    if should_fetch || !std::path::Path::new(&dashboard_dir).exists() {
+    let dashboard_dir = std::path::Path::new(&dashboard_dir);
+
+    if should_fetch  {
+        if dashboard_dir.exists() {
+            // If the path already exists, we are re-downloading: remove the old files.
+            std::fs::remove_dir_all(dashboard_dir).expect("could not remove existing dashboard");
+        }
+
         dashboard::fetch(dashboard_dir).await?;
     }
 
