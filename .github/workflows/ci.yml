@@ -19,6 +19,7 @@ on:
     paths-ignore:
       - 'documentation/**'
       - '**.md'
+      - 'bee-node/docker'
 
 concurrency: 
   group: ${{ github.workflow }}-${{ github.ref }}
