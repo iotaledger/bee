@@ -18,6 +18,6 @@ services:
     tty: true # for colored logs
     network_mode: host
     volumes:
-      - ../config.chrysalis-mainnet.toml:/config.toml
+      - ../config.chrysalis-mainnet.json:/config.json
       - ../storage:/storage
       - ../snapshots:/snapshots

@@ -68,4 +68,8 @@ COPY --from=build /bee/bee-node/config.chrysalis-comnet.toml .
 COPY --from=build /bee/bee-node/config.chrysalis-devnet.toml .
 COPY --from=build /bee/bee-node/config.chrysalis-mainnet.toml .
 
+COPY --from=build /bee/bee-node/config.chrysalis-comnet.json .
+COPY --from=build /bee/bee-node/config.chrysalis-devnet.json .
+COPY --from=build /bee/bee-node/config.chrysalis-mainnet.json .
+
 ENTRYPOINT ["/bee"]
