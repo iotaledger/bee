@@ -16,7 +16,6 @@ use bee_autopeering::{
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
-use bee_plugin_mqtt::MqttPlugin;
 use bee_plugin_version_checker::VersionCheckerPlugin;
 use bee_runtime::{
     event::Bus,
@@ -156,10 +155,6 @@ impl<S: NodeStorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
 
         // Start the version checker.
         let builder = builder.with_worker::<VersionCheckerPlugin>();
-
-        // Start the MQTT broker.
-        let mqtt_cfg = builder.config().mqtt.clone();
-        let builder = builder.with_worker_cfg::<MqttPlugin>(mqtt_cfg);
 
         // Start serving the dashboard (if enabled).
         #[cfg(feature = "dashboard")]

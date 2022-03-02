@@ -12,7 +12,6 @@ members = [
 	"bee-node/bee-plugin/bee-plugin",
 	"bee-node/bee-plugin/bee-plugin-dashboard",
 	"bee-node/bee-plugin/bee-plugin-mps",
-	"bee-node/bee-plugin/bee-plugin-mqtt",
 	"bee-node/bee-plugin/bee-plugin-version-checker",
 	"bee-pow",
 	"bee-protocol",

@@ -105,9 +105,6 @@ path = "./storage/devnet/tangle"
 below_max_depth = 15
 num_partitions  = 16
 
-[mqtt]
-address = "tcp://localhost:1883"
-
 [dashboard]
 bind_address    = "/ip4/0.0.0.0/tcp/8081"
 [dashboard.auth]
