@@ -32,23 +32,24 @@ impl fmt::Display for BuildError {
 }
 
 fn main() -> Result<(), BuildError> {
+    println!("cargo:rerun-if-env-changed=CARGO_FEATURE_DASHBOARD");
+
     parse_git_information()?;
 
     #[cfg(feature = "dashboard")]
     {
-        let should_fetch = std::env::var("FETCH_DASHBOARD").map(|val| val == "1").unwrap_or(false);
-
         let dashboard_dir = std::env::var("OUT_DIR").unwrap() + "/dashboard";
         println!("cargo:rustc-env=DASHBOARD_DIR={}", dashboard_dir);
+        let dashboard_dir = std::path::Path::new(&dashboard_dir);
 
         // Rebuild if FETCH_DASHBOARD environment variable has changed.
         println!("cargo:rerun-if-env-changed=FETCH_DASHBOARD");
         // Rebuild if DASHBOARD_DIR has changed to a different path.
         println!("cargo:rerun-if-env-changed=DASHBOARD_DIR");
 
-        let dashboard_dir = std::path::Path::new(&dashboard_dir);
+        let should_fetch = std::env::var("FETCH_DASHBOARD").map(|val| val == "1").unwrap_or(false);
 
-        if should_fetch {
+        if should_fetch || !dashboard_dir.exists() {
             if dashboard_dir.exists() {
                 // If the path already exists, we are re-downloading: remove the old files.
                 std::fs::remove_dir_all(dashboard_dir).expect("could not remove existing dashboard");
