@@ -352,6 +352,7 @@ where
                                         .await
                                 {
                                     error!("Pruning failed: {:?}.", e);
+                                    unreachable!()
                                 }
                             }
                             Err(reason) => {
