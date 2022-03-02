@@ -63,35 +63,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
 
-      - name: Cache cargo state
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-cargo
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ~/.cargo/bin
-          key: ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-build
-          restore-keys: |
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-
-            ${{ matrix.os }}-
-
-      - name: Cache target dir
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-target
-        with:
-          path: |
-            target/
-          key: ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-build
-          restore-keys: |
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-${{ env.cache-name }}-
-            ${{ matrix.os }}-${{ matrix.rust }}-
-            ${{ matrix.os }}-
+      - uses: Swatinem/rust-cache@v1
 
       - name: Install dashboard frontend
         run: |
@@ -140,35 +112,7 @@ jobs:
           target: riscv64gc-unknown-none-elf
           override: true
 
-      - name: Cache cargo state
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-cargo
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ~/.cargo/bin
-          key: ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-build
-          restore-keys: |
-            ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-
-            ubuntu-latest-${{ matrix.rust }}-
-            ubuntu-latest-
-
-      - name: Cache target dir
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-target
-        with:
-          path: |
-            target/
-          key: ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-build
-          restore-keys: |
-            ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ubuntu-latest-${{ matrix.rust }}-${{ env.cache-name }}-
-            ubuntu-latest-${{ matrix.rust }}-
-            ubuntu-latest-
+      - uses: Swatinem/rust-cache@v1
 
       - name: Check
         uses: actions-rs/cargo@v1
@@ -211,21 +155,7 @@ jobs:
           override: true
           components: clippy
 
-      - name: Cache cargo state
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-cargo
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ~/.cargo/bin
-          key: ubuntu-latest-beta-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
-          restore-keys: |
-            ubuntu-latest-beta-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ubuntu-latest-beta-${{ env.cache-name }}-
-            ubuntu-latest-beta-
-            ubuntu-latest-
+      - uses: Swatinem/rust-cache@v1
 
       - name: Install dashboard frontend
         run: |
@@ -252,21 +182,7 @@ jobs:
           toolchain: nightly
           override: true
 
-      - name: Cache cargo state
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-cargo
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ~/.cargo/bin
-          key: ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
-          restore-keys: |
-            ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ubuntu-latest-nightly-${{ env.cache-name }}-
-            ubuntu-latest-nightly-
-            ubuntu-latest-
+      - uses: Swatinem/rust-cache@v1
 
       - name: Install dashboard frontend
         run: |
@@ -298,21 +214,7 @@ jobs:
             toolchain: nightly
             override: true
 
-      - name: Cache cargo state
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-cargo
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ~/.cargo/bin
-          key: ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
-          restore-keys: |
-            ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ubuntu-latest-nightly-${{ env.cache-name }}-
-            ubuntu-latest-nightly-
-            ubuntu-latest-
+      - uses: Swatinem/rust-cache@v1
 
       - uses: actions-rs/cargo@v1
         name: Install cargo-about
@@ -349,21 +251,7 @@ jobs:
             toolchain: nightly
             override: true
 
-      - name: Cache cargo state
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-cargo
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ~/.cargo/bin
-          key: ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-other
-          restore-keys: |
-            ubuntu-latest-nightly-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}-
-            ubuntu-latest-nightly-${{ env.cache-name }}-
-            ubuntu-latest-nightly-
-            ubuntu-latest-
+      - uses: Swatinem/rust-cache@v1
 
       - uses: actions-rs/cargo@v1
         with:
