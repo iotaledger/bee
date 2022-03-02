@@ -72,7 +72,13 @@ pub fn init<N: Node>(
 where
     N::Backend: StorageBackend,
 {
-    node_builder.with_worker_cfg::<DashboardPlugin>((dashboard_config, rest_api_config, node_id, node_alias, bech32_hrp))
+    node_builder.with_worker_cfg::<DashboardPlugin>((
+        dashboard_config,
+        rest_api_config,
+        node_id,
+        node_alias,
+        bech32_hrp,
+    ))
 }
 
 fn topic_handler<N, E, F>(node: &mut N, topic: &'static str, users: &WsUsers, require_node_confirmed: bool, f: F)
