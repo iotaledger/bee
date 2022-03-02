@@ -511,7 +511,7 @@ async fn process_internal_event(
                 // Reset dial count.
                 m.num_dials = 0;
                 // Update Identify timestamp.
-                m.identified = Some(
+                m.identified_at = Some(
                     SystemTime::now()
                         .duration_since(UNIX_EPOCH)
                         .expect("system time")

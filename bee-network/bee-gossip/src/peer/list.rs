@@ -499,7 +499,7 @@ pub enum PeerState {
 #[derive(Clone, Debug, Default)]
 pub struct PeerMetrics {
     pub(crate) num_dials: usize,
-    pub(crate) identified: Option<u64>,
+    pub(crate) identified_at: Option<u64>,
 }
 
 impl Default for PeerState {
