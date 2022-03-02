@@ -32,19 +32,19 @@ num-derive = { version = "0.3.3", default-features = false  }
 num-traits = { version = "0.2.14" , default-features = false }
 priority-queue = { version = "1.2.0" , default-features = false }
 prost = { version = "0.8", default-features = false, features = [ "std" ] }
-rand = { version = "0.8.4" , default-features = false, features = [ "std", "std_rng" ] }
+rand = { version = "0.8.5" , default-features = false, features = [ "std", "std_rng" ] }
 ring = { version = "0.16.20" , default-features = false }
-rocksdb = { version = "0.17.0", default-features = false, optional = true }
+rocksdb = { version = "0.18.0", default-features = false, optional = true }
 serde = { version = "1.0", default-features = false , features = [ "derive" ] }
 sled = { version = "0.34.7", default-features = false, optional = true }
 thiserror = { version = "1.0.29", default-features = false  }
-tokio = { version = "1.11", default-features = false , features = [ "macros", "rt", "time", "net" ] }
+tokio = { version = "1.17", default-features = false , features = [ "macros", "rt", "time", "net" ] }
 tokio-stream = { version = "0.1", default-features = false  }
 
 [dev-dependencies]
 fern = { version = "0.6.0", default-features = false }
-serde_json = { version = "1.0.68", default-features = false, features = [ "std" ] }
-tokio = { version = "1.11.0", default-features = false, features = [ "rt", "rt-multi-thread", "macros", "signal", "time", "io-std", "io-util" ] }
+serde_json = { version = "1.0.79", default-features = false, features = [ "std" ] }
+tokio = { version = "1.17.0", default-features = false, features = [ "rt", "rt-multi-thread", "macros", "signal", "time", "io-std", "io-util" ] }
 toml = { version = "0.5.8", default-features = false }
 
 [build-dependencies]

@@ -38,9 +38,9 @@ num_cpus = { version = "1.13.0", default-features = false, optional = true }
 packable = { version = "0.2.1", default-features = false }
 primitive-types = { version = "0.10.1", default-features = false, features = [ "serde" ] }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
-serde_json = { version = "1.0.68", default-features = false, features = [ "alloc" ] }
+serde_json = { version = "1.0.79", default-features = false, features = [ "alloc" ] }
 thiserror = { version = "1.0.30", default-features = false }
-tokio = { version = "1.12.0", default-features = false, optional = true }
+tokio = { version = "1.17.0", default-features = false, optional = true }
 warp = { version = "0.3.1", default-features = false, optional = true }
 
 [features]
