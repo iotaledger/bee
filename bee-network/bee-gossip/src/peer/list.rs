@@ -33,7 +33,7 @@ impl PeerListWrapper {
 pub struct PeerList {
     local_id: PeerId,
     local_addrs: HashSet<Multiaddr>,
-    peers: HashMap<PeerId, (PeerInfo, PeerState)>,
+    peers: HashMap<PeerId, (PeerInfo, PeerState, PeerMetrics)>,
     banned_peers: HashSet<PeerId>,
     banned_addrs: HashSet<Multiaddr>,
 }
@@ -63,7 +63,8 @@ impl PeerList {
                         alias: peer.alias.unwrap_or_else(|| alias!(peer_id).to_owned()),
                         relation: PeerRelation::Known,
                     },
-                    PeerState::Disconnected,
+                    PeerState::default(),
+                    PeerMetrics::default(),
                 ),
             )
         }));
@@ -77,29 +78,21 @@ impl PeerList {
         }
     }
 
-    pub fn insert_peer(&mut self, peer_id: PeerId, peer_info: PeerInfo) -> Result<(), (PeerId, PeerInfo, Error)> {
+    pub fn add(&mut self, peer_id: PeerId, peer_info: PeerInfo) -> Result<(), (PeerId, PeerInfo, Error)> {
         if self.contains(&peer_id) {
             return Err((peer_id, peer_info, Error::PeerIsDuplicate(peer_id)));
         }
 
         // Since we already checked that such a `peer_id` is not yet present, the returned value is always `None`.
-        let _ = self.peers.insert(peer_id, (peer_info, PeerState::Disconnected));
-
-        Ok(())
-    }
-
-    pub fn insert_local_addr(&mut self, addr: Multiaddr) -> Result<(), (Multiaddr, Error)> {
-        if self.local_addrs.contains(&addr) {
-            return Err((addr.clone(), Error::AddressIsDuplicate(addr)));
-        }
-
-        let _ = self.local_addrs.insert(addr);
+        let _ = self
+            .peers
+            .insert(peer_id, (peer_info, PeerState::default(), PeerMetrics::default()));
 
         Ok(())
     }
 
     pub fn remove(&mut self, peer_id: &PeerId) -> Result<PeerInfo, Error> {
-        let (info, _) = self.peers.remove(peer_id).ok_or(Error::PeerNotPresent(*peer_id))?;
+        let (info, _, _) = self.peers.remove(peer_id).ok_or(Error::PeerNotPresent(*peer_id))?;
 
         Ok(info)
     }
@@ -112,18 +105,34 @@ impl PeerList {
         self.peers
             .get(peer_id)
             .ok_or(Error::PeerNotPresent(*peer_id))
-            .map(|(peer_info, _)| peer_info.clone())
+            .map(|(info, _, _)| info.clone())
+    }
+
+    pub fn metrics(&self, peer_id: &PeerId) -> Result<PeerMetrics, Error> {
+        self.peers
+            .get(peer_id)
+            .ok_or(Error::PeerNotPresent(*peer_id))
+            .map(|(_, _, metrics)| metrics.clone())
     }
 
     pub fn len(&self) -> usize {
         self.peers.len()
     }
 
+    /// Note: Returns an error if the address trying to be added is a duplicate.
+    pub fn add_local_addr(&mut self, addr: Multiaddr) -> Result<(), (Multiaddr, Error)> {
+        if self.local_addrs.insert(addr.clone()) {
+            Ok(())
+        } else {
+            Err((addr.clone(), Error::AddressIsDuplicate(addr)))
+        }
+    }
+
     pub fn update_info<U>(&mut self, peer_id: &PeerId, mut update: U) -> Result<(), Error>
     where
         U: FnMut(&mut PeerInfo),
     {
-        let (info, _) = self.peers.get_mut(peer_id).ok_or(Error::PeerNotPresent(*peer_id))?;
+        let (info, _, _) = self.peers.get_mut(peer_id).ok_or(Error::PeerNotPresent(*peer_id))?;
 
         update(info);
 
@@ -134,28 +143,39 @@ impl PeerList {
     where
         U: FnMut(&mut PeerState) -> Option<GossipSender>,
     {
-        let (_, state) = self.peers.get_mut(peer_id).ok_or(Error::PeerNotPresent(*peer_id))?;
+        let (_, state, _) = self.peers.get_mut(peer_id).ok_or(Error::PeerNotPresent(*peer_id))?;
 
         Ok(update(state))
     }
 
+    pub fn update_metrics<U>(&mut self, peer_id: &PeerId, mut update: U) -> Result<(), Error>
+    where
+        U: FnMut(&mut PeerMetrics),
+    {
+        let (_, _, metrics) = self.peers.get_mut(peer_id).ok_or(Error::PeerNotPresent(*peer_id))?;
+
+        update(metrics);
+
+        Ok(())
+    }
+
     pub fn satisfies<P>(&self, peer_id: &PeerId, predicate: P) -> Result<bool, Error>
     where
-        P: Fn(&PeerInfo, &PeerState) -> bool,
+        P: Fn(&PeerInfo, &PeerState, &PeerMetrics) -> bool,
     {
         self.peers
             .get(peer_id)
             .ok_or(Error::PeerNotPresent(*peer_id))
-            .map(|(info, state)| predicate(info, state))
+            .map(|(info, state, metrics)| predicate(info, state, metrics))
     }
 
-    pub fn filter_info<'a, P: 'a>(&'a self, predicate: P) -> impl Iterator<Item = (PeerId, PeerInfo)> + '_
+    pub fn filter<'a, P: 'a>(&'a self, predicate: P) -> impl Iterator<Item = (PeerId, PeerInfo, PeerMetrics)> + '_
     where
-        P: Fn(&PeerInfo, &PeerState) -> bool,
+        P: Fn(&PeerInfo, &PeerState, &PeerMetrics) -> bool,
     {
-        self.peers.iter().filter_map(move |(peer_id, (info, state))| {
-            if predicate(info, state) {
-                Some((*peer_id, info.clone()))
+        self.peers.iter().filter_map(move |(peer_id, (info, state, metrics))| {
+            if predicate(info, state, metrics) {
+                Some((*peer_id, info.clone(), metrics.clone()))
             } else {
                 None
             }
@@ -164,19 +184,20 @@ impl PeerList {
 
     pub fn filter_count<P>(&self, predicate: P) -> usize
     where
-        P: Fn(&PeerInfo, &PeerState) -> bool,
+        P: Fn(&PeerInfo, &PeerState, &PeerMetrics) -> bool,
     {
-        self.peers.iter().fold(
-            0,
-            |count, (_, (info, state))| {
-                if predicate(info, state) { count + 1 } else { count }
-            },
-        )
+        self.peers.iter().fold(0, |count, (_, (info, state, metrics))| {
+            if predicate(info, state, metrics) {
+                count + 1
+            } else {
+                count
+            }
+        })
     }
 
     pub fn filter_remove<P>(&mut self, peer_id: &PeerId, predicate: P) -> bool
     where
-        P: Fn(&PeerInfo, &PeerState) -> bool,
+        P: Fn(&PeerInfo, &PeerState, &PeerMetrics) -> bool,
     {
         // NB: Since we drop a potential reference to `&(PeerInfo, PeerState)` this code won't create a deadlock in case
         // we refactor `PeerList` in a way that `.remove` would only take a `&self`.
@@ -184,7 +205,7 @@ impl PeerList {
         if self
             .peers
             .get(peer_id)
-            .filter(|(info, state)| predicate(info, state))
+            .filter(|(info, state, metrics)| predicate(info, state, metrics))
             .is_some()
         {
             // Should always return `true`, because we know it's there.
@@ -261,16 +282,16 @@ impl PeerList {
         } else if self.banned_addrs.contains(peer_addr) {
             Err(Error::AddressIsBanned(peer_addr.clone()))
         } else if self
-            .satisfies(peer_id, |_, state| state.is_connected())
+            .satisfies(peer_id, |_, state, _| state.is_connected())
             .unwrap_or(false)
         {
             Err(Error::PeerIsConnected(*peer_id))
         } else if !self.contains(peer_id)
-            && self.filter_count(|info, _| info.relation.is_unknown()) >= global::max_unknown_peers()
+            && self.filter_count(|info, _, _| info.relation.is_unknown()) >= global::max_unknown_peers()
         {
             Err(Error::ExceedsUnknownPeerLimit(global::max_unknown_peers()))
         } else if !self.contains(peer_id)
-            && self.filter_count(|info, _| info.relation.is_discovered()) >= global::max_discovered_peers()
+            && self.filter_count(|info, _, _| info.relation.is_discovered()) >= global::max_discovered_peers()
         {
             Err(Error::ExceedsDiscoveredPeerLimit(global::max_discovered_peers()))
         } else {
@@ -296,24 +317,24 @@ impl PeerList {
         } else if self.banned_peers.contains(peer_id) {
             Err(Error::PeerIsBanned(*peer_id))
         } else if self
-            .satisfies(peer_id, |_, state| state.is_connected())
+            .satisfies(peer_id, |_, state, _| state.is_connected())
             .unwrap_or(false)
         {
             Err(Error::PeerIsConnected(*peer_id))
         } else {
-            let (peer_info, _) = self.peers.get(peer_id).unwrap();
+            let (peer_info, _, _) = self.peers.get(peer_id).unwrap();
 
             if self.local_addrs.contains(&peer_info.address) {
                 Err(Error::AddressIsLocal(peer_info.address.clone()))
             } else if self.banned_addrs.contains(&peer_info.address) {
                 Err(Error::AddressIsBanned(peer_info.address.clone()))
             } else if peer_info.relation.is_unknown()
-                && self.filter_count(|info, status| info.relation.is_unknown() && status.is_connected())
+                && self.filter_count(|info, status, _| info.relation.is_unknown() && status.is_connected())
                     >= global::max_unknown_peers()
             {
                 Err(Error::ExceedsUnknownPeerLimit(global::max_unknown_peers()))
             } else if peer_info.relation.is_discovered()
-                && self.filter_count(|info, status| info.relation.is_discovered() && status.is_connected())
+                && self.filter_count(|info, status, _| info.relation.is_discovered() && status.is_connected())
                     >= global::max_discovered_peers()
             {
                 Err(Error::ExceedsDiscoveredPeerLimit(global::max_discovered_peers()))
@@ -342,9 +363,9 @@ impl PeerList {
     }
 
     fn find_peer_if_connected(&self, addr: &Multiaddr) -> Option<PeerId> {
-        self.filter_info(|info, state| state.is_connected() && info.address == *addr)
+        self.filter(|info, state, _| state.is_connected() && info.address == *addr)
             .next()
-            .map(|(peer_id, _)| peer_id)
+            .map(|(peer_id, _, _)| peer_id)
     }
 }
 
@@ -367,7 +388,7 @@ mod tests {
 
         for i in 1..=3 {
             assert!(
-                pl.insert_peer(
+                pl.add(
                     gen_random_peer_id(),
                     gen_deterministic_peer_info(i, PeerRelation::Known)
                 )
@@ -384,11 +405,11 @@ mod tests {
 
         let peer_id = gen_constant_peer_id();
 
-        assert!(pl.insert_peer(peer_id, gen_constant_peer_info()).is_ok());
+        assert!(pl.add(peer_id, gen_constant_peer_info()).is_ok());
 
         // Do not allow inserting the same peer id twice.
         assert!(matches!(
-            pl.insert_peer(peer_id, gen_constant_peer_info()),
+            pl.add(peer_id, gen_constant_peer_info()),
             Err((_, _, Error::PeerIsDuplicate(_)))
         ));
     }
@@ -413,7 +434,7 @@ mod tests {
 
         let mut pl = PeerList::new(local_id);
 
-        pl.insert_peer(peer_id, peer_info.clone()).unwrap();
+        pl.add(peer_id, peer_info.clone()).unwrap();
         pl.accepts_incoming_peer(&peer_id, &peer_info.address).unwrap();
     }
 
@@ -424,14 +445,14 @@ mod tests {
 
         let peer_id = gen_random_peer_id();
 
-        pl.insert_peer(peer_id, gen_deterministic_peer_info(0, PeerRelation::Known))
+        pl.add(peer_id, gen_deterministic_peer_info(0, PeerRelation::Known))
             .unwrap();
         assert_eq!(1, pl.len());
 
-        pl.filter_remove(&peer_id, |info, _| info.relation.is_unknown());
+        pl.filter_remove(&peer_id, |info, _, _| info.relation.is_unknown());
         assert_eq!(1, pl.len());
 
-        pl.filter_remove(&peer_id, |info, _| info.relation.is_known());
+        pl.filter_remove(&peer_id, |info, _, _| info.relation.is_known());
         assert_eq!(0, pl.len());
     }
 
@@ -473,6 +494,12 @@ mod tests {
 pub enum PeerState {
     Disconnected,
     Connected(GossipSender),
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct PeerMetrics {
+    pub(crate) num_dials: usize,
+    pub(crate) identified_at: Option<u64>,
 }
 
 impl Default for PeerState {

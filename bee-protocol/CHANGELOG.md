@@ -19,7 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.2.0 - 2022-XX-XX
+## 0.2.1 - 2022-02-28
+
+### Changed
+
+- Peer manager handles new bee-gossip `PeerUnreachable` event;
+
+## 0.2.0 - 2022-01-27
 
 ### Added
 

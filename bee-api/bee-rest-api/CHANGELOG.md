@@ -19,7 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.2.0 - 2022-XX-XX
+## 0.2.1 - 2022-02-28
+
+- Update `bee-gossip` dependency to 0.5.0;
+
+## 0.2.0 - 2022-01-28
 
 ### Added
 

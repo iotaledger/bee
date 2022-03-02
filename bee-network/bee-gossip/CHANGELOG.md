@@ -19,6 +19,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.5.0 - 2022-02-28
+
+### Added
+
+- `PeerMetrics` type that keeps a count of dial attempts and identification timestamp;
+- `PeerUnreachable` event that is fired after a certain number of unsuccessful dial attempts;
+
+### Changed
+
+- `PeerList` type keeps metrics for each peer;
+
+### Fixed
+
+- Missing `PeerRemoved` event for disconnected unknown peers;
+
 ## 0.4.0 - 2022-01-20
 
 ### Fixed

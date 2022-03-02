@@ -100,6 +100,14 @@ pub enum Event {
         /// The peer's id.
         peer_id: PeerId,
     },
+
+    /// A peer didn't answer our repeated calls.
+    PeerUnreachable {
+        /// The peer's id.
+        peer_id: PeerId,
+        /// The peer's info.
+        peer_info: PeerInfo,
+    },
 }
 
 /// Describes the internal events.
@@ -123,8 +131,23 @@ pub enum InternalEvent {
         substream: Box<NegotiatedSubstream>,
     },
 
-    /// The gossip protocol has been dropped with a peer.
-    ProtocolDropped { peer_id: PeerId },
+    /// The gossip protocol with a peer was stopped.
+    ProtocolStopped {
+        /// The peer's id.
+        peer_id: PeerId,
+    },
+
+    /// A peer didn't answer our repeated calls.
+    PeerUnreachable {
+        /// The peer's id.
+        peer_id: PeerId,
+    },
+
+    /// A peer has identified itself via the `libp2p` Identify protocol.
+    PeerIdentified {
+        /// The peer's id.
+        peer_id: PeerId,
+    },
 }
 
 /// Allows the user to receive [`Event`]s published by the network layer.

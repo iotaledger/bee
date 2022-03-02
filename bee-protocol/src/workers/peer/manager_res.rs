@@ -181,4 +181,8 @@ impl PeerManager {
             .filter(|(_, (peer, ctx))| (ctx.is_some() && peer.is_synced()))
             .count() as u8
     }
+
+    pub fn len(&self) -> usize {
+        self.inner.read().peers.len()
+    }
 }
