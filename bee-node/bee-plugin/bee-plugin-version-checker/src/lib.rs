@@ -18,7 +18,7 @@ use tokio_stream::wrappers::IntervalStream;
 
 use std::{convert::Infallible, time::Duration};
 
-const CHECK_INTERVAL_SEC: u64 = 5;
+const CHECK_INTERVAL_SEC: u64 = 3600;
 
 type VersionCheckerConfig = String;
 
