@@ -30,35 +30,31 @@ impl fmt::Display for BuildError {
     }
 }
 
-#[cfg(not(feature = "dashboard"))]
 fn main() -> Result<(), BuildError> {
-    parse_git_information()
-}
-
-#[cfg(feature = "dashboard")]
-#[tokio::main]
-async fn main() -> Result<(), BuildError> {
     parse_git_information()?;
 
-    let should_fetch = std::env::var("FETCH_DASHBOARD").map(|val| val == "1").unwrap_or(false);
+    #[cfg(feature = "dashboard")]
+    {
+        let should_fetch = std::env::var("FETCH_DASHBOARD").map(|val| val == "1").unwrap_or(false);
 
-    let dashboard_dir = std::env::var("OUT_DIR").unwrap() + "/dashboard";
-    println!("cargo:rustc-env=DASHBOARD_DIR={}", dashboard_dir);
-    
-    // Rebuild if FETCH_DASHBOARD environment variable has changed.
-    println!("cargo:rerun-if-env-changed=FETCH_DASHBOARD");
-    // Rebuild if DASHBOARD_DIR has changed to a different path.
-    println!("cargo:rerun-if-env-changed=DASHBOARD_DIR");
+        let dashboard_dir = std::env::var("OUT_DIR").unwrap() + "/dashboard";
+        println!("cargo:rustc-env=DASHBOARD_DIR={}", dashboard_dir);
 
-    let dashboard_dir = std::path::Path::new(&dashboard_dir);
+        // Rebuild if FETCH_DASHBOARD environment variable has changed.
+        println!("cargo:rerun-if-env-changed=FETCH_DASHBOARD");
+        // Rebuild if DASHBOARD_DIR has changed to a different path.
+        println!("cargo:rerun-if-env-changed=DASHBOARD_DIR");
 
-    if should_fetch  {
-        if dashboard_dir.exists() {
-            // If the path already exists, we are re-downloading: remove the old files.
-            std::fs::remove_dir_all(dashboard_dir).expect("could not remove existing dashboard");
+        let dashboard_dir = std::path::Path::new(&dashboard_dir);
+
+        if should_fetch {
+            if dashboard_dir.exists() {
+                // If the path already exists, we are re-downloading: remove the old files.
+                std::fs::remove_dir_all(dashboard_dir).expect("could not remove existing dashboard");
+            }
+
+            dashboard::fetch(dashboard_dir)?;
         }
-
-        dashboard::fetch(dashboard_dir).await?;
     }
 
     Ok(())
@@ -118,10 +114,10 @@ mod dashboard {
         browser_download_url: String,
     }
 
-    pub(super) async fn fetch<P: AsRef<Path>>(dashboard_dir: P) -> Result<(), BuildError> {
+    pub(super) fn fetch<P: AsRef<Path>>(dashboard_dir: P) -> Result<(), BuildError> {
         println!("fetching latest dashboard release");
 
-        let client = reqwest::Client::builder()
+        let client = reqwest::blocking::Client::builder()
             .user_agent("bee-fetch-dashboard")
             .build()
             .expect("could not create client");
@@ -129,7 +125,6 @@ mod dashboard {
         let response = client
             .get(RELEASES_URL)
             .send()
-            .await
             .and_then(|resp| resp.error_for_status())
             .map_err(|e| {
                 BuildError::DashboardRequest(e.status().map(|code| code.as_u16()), RELEASES_URL.to_string())
@@ -137,7 +132,6 @@ mod dashboard {
 
         let assets = response
             .json::<LatestReleaseAssets>()
-            .await
             .map_err(|_| BuildError::DashboardDecode)?
             .assets;
 
@@ -156,7 +150,6 @@ mod dashboard {
         let response = client
             .get(&release_asset.browser_download_url)
             .send()
-            .await
             .and_then(|resp| resp.error_for_status())
             .map_err(|e| {
                 BuildError::DashboardRequest(
@@ -165,7 +158,7 @@ mod dashboard {
                 )
             })?;
 
-        let mut content = Cursor::new(response.bytes().await.map_err(|_| BuildError::DashboardDownload)?);
+        let mut content = Cursor::new(response.bytes().map_err(|_| BuildError::DashboardDownload)?);
         io::copy(&mut content, &mut archive).expect("copying failed");
         let mut archive = ZipArchive::new(BufReader::new(archive)).map_err(|_| BuildError::DashboardInvalidArchive)?;
 

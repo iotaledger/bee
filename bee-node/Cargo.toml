@@ -57,11 +57,10 @@ warp = { version = "0.3.1", default-features = false }
 warp-reverse-proxy = { version = "0.4.0", default-features = false, optional = true }
 
 [build-dependencies]
-reqwest = { version = "0.11.5", default-features = false, features = [ "default-tls", "json" ], optional = true }
+reqwest = { version = "0.11.5", default-features = false, features = [ "blocking", "default-tls", "json" ], optional = true }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ], optional = true }
 serde_json = { version = "1.0.68", default-features = false, optional = true }
 tempfile = { version = "3.3.0", default-features = false, optional = true }
-tokio = { version = "1.12.0", default-features = false, features = [ "signal", "rt", "macros", "rt-multi-thread" ], optional = true }
 zip = { version = "0.5.13", default-features = false, features = [ "bzip2", "deflate" ], optional = true }
 
 [lib]
@@ -75,6 +74,6 @@ path = "src/main.rs"
 [features]
 default = [ "rocksdb" ]
 
-dashboard = [ "cap", "mime_guess", "reqwest", "rust-embed", "serde", "serde_repr", "serde_json", "tempfile", "tokio", "warp-reverse-proxy", "zip" ]
+dashboard = [ "cap", "mime_guess", "reqwest", "rust-embed", "serde", "serde_repr", "serde_json", "tempfile", "warp-reverse-proxy", "zip" ]
 rocksdb = [ "bee-storage-rocksdb" ]
 sled = [ "bee-storage-sled" ]
