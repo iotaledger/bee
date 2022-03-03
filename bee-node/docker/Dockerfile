@@ -20,22 +20,6 @@ COPY . .
 # The following is required for `git submodule` to work.
 COPY .git/ ./.git/
 
-ENV NVM_DIR /opt/nvm
-ENV NODE_VERSION 14.19.0
-
-RUN if [ "$WITH_DASHBOARD" = true ] ; then \ 
-    mkdir $NVM_DIR \
-    &&curl https://raw.githubusercontent.com/creationix/nvm/v0.39.1/install.sh | bash \
-    && . $NVM_DIR/nvm.sh \
-    && nvm install $NODE_VERSION \
-    && nvm alias default $NODE_VERSION \
-    && nvm use default \
-    && git submodule update --init --recursive \
-    && cd bee-node/src/plugins/dashboard/frontend \
-    && npm install \
-    && npm run build-bee \
-    ; fi
-
 RUN if [ "$WITH_DASHBOARD" = true ] ; then cargo build --profile production --features dashboard --bin bee ; else cargo build --profile production --bin bee ; fi
 
 ############################

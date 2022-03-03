@@ -38,7 +38,6 @@ values={[
 To run a Bee node in a Debian base system you will need to install the following packages:
 
 - [git](https://git-scm.com/).
-- [npm](https://www.npmjs.com/).
 - [build-essential](https://packages.debian.org/sid/build-essential).
 - [cmake](https://cmake.org/).
 - [pkg-config](https://packages.debian.org/sid/pkg-config).
@@ -53,7 +52,7 @@ To install all of these packages, you can run the following commands:
 ```shell
 apt-get update
 apt-get upgrade
-apt-get install git npm build-essential cmake pkg-config librocksdb-dev llvm clang libclang-dev libssl-dev
+apt-get install git build-essential cmake pkg-config librocksdb-dev llvm clang libclang-dev libssl-dev
 ```
 
 </TabItem>
@@ -62,7 +61,6 @@ apt-get install git npm build-essential cmake pkg-config librocksdb-dev llvm cla
 To run a Bee node in a macOS system, you will need to install the following packages using the [brew](https://brew.sh/) package manager:
 
 - [cmake](https://cmake.org/).
-- [npm](https://www.npmjs.com/).
 
 You can run the following command to install brew:
 
@@ -73,7 +71,7 @@ You can run the following command to install brew:
 After the installer finishes, you can use brew to install the required packages by running:
 
 ```shell
-brew install cmake npm
+brew install cmake
 ```
 
 </TabItem>
@@ -83,7 +81,6 @@ To run a Bee node in a Windows system, you will need to install the following pa
 [chocolatey](https://chocolatey.org/) package manager:
 
 - [cmake](https://cmake.org/).
-- [nodejs-lts](https://nodejs.org/).
 - [git](https://git-scm.com/).
 
 To install chocolatey, open Powershell and execute the following command:
@@ -95,7 +92,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 After the installer finishes, you can use chocolatey to install the required packages by running:
 
 ```shell
-choco install git --params '/NoAutoCrlf' nodejs-lts cmake --installargs 'ADD_CMAKE_TO_PATH=System' llvm
+choco install git --params '/NoAutoCrlf' cmake --installargs 'ADD_CMAKE_TO_PATH=System' llvm
 ```
 
 :::info
@@ -176,52 +173,9 @@ You can compile Bee in two manners:
 
 If you want to build Bee with its Dashboard, you should run the following commands:
 
-<Tabs
-  groupId="operating-systems"
-  defaultValue="debian"
-  values={[
-    {label: 'Debian', value: 'debian'},
-    {label: 'macOS', value: 'mac'},
-    {label: 'Windows', value: 'win'},
-  ]
-}>
-<TabItem value="debian">
-
 ```shell
-git submodule update --init
-cd src/plugins/dashboard/frontend
-npm install
-npm run build-bee
-cd -
 cargo build --release --features dashboard
 ```
-
-</TabItem>
-<TabItem value="mac">
-
-```shell
-git submodule update --init
-cd src/plugins/dashboard/frontend
-npm install
-npm run build-bee
-cd -
-cargo build --release --features dashboard
-```
-
-</TabItem>
-<TabItem value="win">
-
-```shell
-git submodule update --init
-cd src/plugins/dashboard/frontend
-npm install
-npm run build-bee
-cd ../../../../
-cargo build --release --features dashboard
-```
-
-</TabItem>
-</Tabs>
 
 #### Without dashboard
 

@@ -95,14 +95,6 @@ jobs:
             ${{ matrix.os }}-${{ matrix.rust }}-
             ${{ matrix.os }}-
 
-      - name: Install dashboard frontend
-        run: |
-          git submodule init
-          git submodule update --recursive --remote
-          cd bee-node/src/plugins/dashboard/frontend/
-          npm install
-          npm run build-bee
-
       - name: Build
         uses: actions-rs/cargo@v1
         with:
@@ -229,14 +221,6 @@ jobs:
             ubuntu-latest-beta-
             ubuntu-latest-
 
-      - name: Install dashboard frontend
-        run: |
-          git submodule init
-          git submodule update --recursive --remote
-          cd bee-node/src/plugins/dashboard/frontend/
-          npm install
-          npm run build-bee
-
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -269,14 +253,6 @@ jobs:
             ubuntu-latest-nightly-${{ env.cache-name }}-
             ubuntu-latest-nightly-
             ubuntu-latest-
-
-      - name: Install dashboard frontend
-        run: |
-          git submodule init
-          git submodule update --recursive --remote
-          cd bee-node/src/plugins/dashboard/frontend/
-          npm install
-          npm run build-bee
 
       - uses: actions-rs/cargo@v1
         with:
