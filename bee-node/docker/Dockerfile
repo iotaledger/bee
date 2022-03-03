@@ -17,9 +17,6 @@ RUN apt-get update && \
 WORKDIR /bee
 COPY . .
 
-# The following is required for `git submodule` to work.
-COPY .git/ ./.git/
-
 RUN if [ "$WITH_DASHBOARD" = true ] ; then cargo build --profile production --features dashboard --bin bee ; else cargo build --profile production --bin bee ; fi
 
 ############################
