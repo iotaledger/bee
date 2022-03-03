@@ -21,7 +21,7 @@ impl Plugin for Mps {
     async fn start(_: Self::Config, bus: &Bus<'_>) -> Result<Self, Self::Error> {
         bus.add_listener::<(), MpsMetricsUpdated, _>(|metrics| {
             info!(
-                "incoming {} new {} known {} invalid {} outgoing {}",
+                "Mps: incoming {} new {} known {} invalid {} outgoing {}",
                 metrics.incoming, metrics.new, metrics.known, metrics.invalid, metrics.outgoing
             );
         });
