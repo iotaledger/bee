@@ -50,12 +50,12 @@ pub enum Error {
     InvalidStorageDepositAmount(<StorageDepositAmount as TryFrom<u64>>::Error),
     // The above is used by `Packable` to denote out-of-range values. The following denotes the actual amount.
     InsufficientStorageDepositAmount {
-        required: u64,
         amount: u64,
+        required: u64,
     },
     InsufficientStorageDepositReturnAmount {
-        required: u64,
         deposit: u64,
+        required: u64,
     },
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
@@ -197,13 +197,13 @@ impl fmt::Display for Error {
             Error::InvalidStorageDepositAmount(amount) => {
                 write!(f, "invalid storage deposit amount: {}", amount)
             }
-            Error::InsufficientStorageDepositAmount { required, amount } => {
+            Error::InsufficientStorageDepositAmount { amount, required } => {
                 write!(
                     f,
                     "insufficient output amount for storage deposit: {amount} (should be at least {required})"
                 )
             }
-            Error::InsufficientStorageDepositReturnAmount { required, deposit } => {
+            Error::InsufficientStorageDepositReturnAmount { deposit, required } => {
                 write!(
                     f,
                     "insufficient storage deposit return amount: {deposit} (should be at least {required})"

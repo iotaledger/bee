@@ -213,7 +213,7 @@ impl Output {
             Output::Treasury(_) => return Ok(()), // `TreasuryOutput`s don't have `UnlockConditions`.
             Output::Basic(_) | Output::Alias(_) | Output::Foundry(_) | Output::Nft(_) => self
                 .unlock_conditions()
-                .and_then(|conds| conds.get(StorageDepositReturnUnlockCondition::KIND))
+                .and_then(|conds| conds.get(StorageDepositReturnUnlockCondition::KIND)),
         };
 
         let required = minimum_storage_deposit(config, self);
@@ -228,15 +228,15 @@ impl Output {
         if self.amount() >= required {
             match maybe_deposit {
                 Some(deposit) if deposit >= required => Ok(()),
-                Some(deposit) => Err(Error::InsufficientStorageDepositReturnAmount { required, deposit }),
+                Some(deposit) => Err(Error::InsufficientStorageDepositReturnAmount { deposit, required }),
                 None => Ok(()),
             }
         } else {
             match maybe_deposit {
                 Some(deposit) if deposit >= required => Ok(()),
                 _ => Err(Error::InsufficientStorageDepositAmount {
-                    required,
                     amount: self.amount(),
+                    required,
                 }),
             }
         }
