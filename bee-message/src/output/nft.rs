@@ -5,10 +5,7 @@ use crate::{
     address::Address,
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
-        unlock_condition::{
-            verify_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
-            UnlockConditions,
-        },
+        unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
         NativeToken, NativeTokens, NftId, OutputAmount,
     },
     Error,
@@ -274,7 +271,7 @@ impl Packable for NftOutput {
 }
 
 fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, nft_id: &NftId) -> Result<(), Error> {
-    if let Some(UnlockCondition::Address(unlock_condition)) = unlock_conditions.get(AddressUnlockCondition::KIND) {
+    if let Some(unlock_condition) = unlock_conditions.address() {
         if let Address::Nft(nft_address) = unlock_condition.address() {
             if nft_address.nft_id() == nft_id {
                 return Err(Error::SelfDepositNft(*nft_id));

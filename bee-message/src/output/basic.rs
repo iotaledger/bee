@@ -5,10 +5,7 @@ use crate::{
     address::Address,
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
-        unlock_condition::{
-            verify_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
-            UnlockConditions,
-        },
+        unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
         NativeToken, NativeTokens, OutputAmount,
     },
     Error,
@@ -179,7 +176,7 @@ impl BasicOutput {
 
 fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
     if VERIFY {
-        if unlock_conditions.get(AddressUnlockCondition::KIND).is_none() {
+        if unlock_conditions.address().is_none() {
             Err(Error::MissingAddressUnlockCondition)
         } else {
             verify_allowed_unlock_conditions(unlock_conditions, BasicOutput::ALLOWED_UNLOCK_CONDITIONS)
