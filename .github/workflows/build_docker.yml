@@ -6,6 +6,10 @@ on:
       - "bee-node/bee-node/docker/Dockerfile"
       - "bee-node/bee-node/docker/docker-compose.yml"
 
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build Docker

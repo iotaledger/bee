@@ -54,8 +54,6 @@ RUN rm -rf /var/lib/apt
 EXPOSE 14265/tcp
 # Gossip
 EXPOSE 15600/tcp
-# MQTT
-EXPOSE 1883/tcp
 # Dashboard
 EXPOSE 8081/tcp
 # Autopeering

@@ -19,7 +19,6 @@ bee-message = { version = "0.1.6", path = "../../bee-message", default-features 
 bee-plugin = { version = "0.1.0", path = "../bee-plugin/bee-plugin", default-features = false }
 bee-plugin-dashboard = { version = "0.1.0", path = "../bee-plugin/bee-plugin-dashboard", default-features = false, optional = true }
 bee-plugin-mps = { version = "0.1.0", path = "../bee-plugin/bee-plugin-mps", default-features = false }
-bee-plugin-mqtt = { version = "0.1.0", path = "../bee-plugin/bee-plugin-mqtt", default-features = false }
 bee-plugin-version-checker = { version = "0.1.0", path = "../bee-plugin/bee-plugin-version-checker", default-features = false }
 bee-protocol = { version = "0.2.0", path = "../../bee-protocol", default-features = false, features = [ "workers" ] }
 bee-rest-api = { version = "0.2.0", path = "../../bee-api/bee-rest-api", default-features = false, features = [ "endpoints", "peer" ] }

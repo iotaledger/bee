@@ -9,7 +9,6 @@ use bee_plugin_dashboard::config::DashboardConfig;
 use bee_autopeering::config::AutopeeringConfig;
 use bee_gossip::NetworkConfig;
 use bee_ledger::workers::{pruning::config::PruningConfig, snapshot::config::SnapshotConfig};
-use bee_plugin_mqtt::config::MqttConfig;
 use bee_protocol::workers::config::ProtocolConfig;
 use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_tangle::config::TangleConfig;
@@ -42,8 +41,6 @@ pub struct FullNodeConfig<S: NodeStorageBackend> {
     pub storage: S::Config,
     /// Tangle.
     pub tangle: TangleConfig,
-    /// MQTT broker.
-    pub mqtt: MqttConfig,
     /// Node dashboard.
     #[cfg(feature = "dashboard")]
     pub dashboard: DashboardConfig,
@@ -79,7 +76,6 @@ impl<S: NodeStorageBackend> FullNodeConfig<S> {
             pruning: node_cfg.pruning,
             storage: node_cfg.storage,
             tangle: node_cfg.tangle,
-            mqtt: node_cfg.mqtt,
             #[cfg(feature = "dashboard")]
             dashboard: node_cfg.dashboard,
         }
@@ -101,7 +97,6 @@ impl<S: NodeStorageBackend> Clone for FullNodeConfig<S> {
             pruning: self.pruning.clone(),
             storage: self.storage.clone(),
             tangle: self.tangle.clone(),
-            mqtt: self.mqtt.clone(),
             #[cfg(feature = "dashboard")]
             dashboard: self.dashboard.clone(),
         }

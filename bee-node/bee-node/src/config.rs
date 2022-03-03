@@ -18,7 +18,6 @@ use bee_ledger::workers::{
     pruning::config::{PruningConfig, PruningConfigBuilder},
     snapshot::config::{SnapshotConfig, SnapshotConfigBuilder},
 };
-use bee_plugin_mqtt::config::{MqttConfig, MqttConfigBuilder};
 use bee_protocol::workers::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::endpoints::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_tangle::config::{TangleConfig, TangleConfigBuilder};
@@ -56,7 +55,6 @@ pub struct NodeConfig<S: NodeStorageBackend> {
     pub(crate) pruning: PruningConfig,
     pub(crate) storage: S::Config,
     pub(crate) tangle: TangleConfig,
-    pub(crate) mqtt: MqttConfig,
     #[cfg(feature = "dashboard")]
     pub(crate) dashboard: DashboardConfig,
 }
@@ -103,7 +101,6 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     pub(crate) pruning: Option<PruningConfigBuilder>,
     pub(crate) storage: Option<S::ConfigBuilder>,
     pub(crate) tangle: Option<TangleConfigBuilder>,
-    pub(crate) mqtt: Option<MqttConfigBuilder>,
     #[cfg(feature = "dashboard")]
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
 }
@@ -131,7 +128,6 @@ where
             pruning: self_pruning,
             storage: self_storage,
             tangle: self_tangle,
-            mqtt: self_mqtt,
             #[cfg(feature = "dashboard")]
                 dashboard: self_dashboard,
         } = self;
@@ -148,8 +144,7 @@ where
             && (self_snapshot == &other.snapshot)
             && (self_pruning == &other.pruning)
             && (self_storage == &other.storage)
-            && (self_tangle == &other.tangle)
-            && (self_mqtt == &other.mqtt);
+            && (self_tangle == &other.tangle);
 
         #[cfg(feature = "dashboard")]
         return cmp && (self_dashboard == &other.dashboard);
@@ -232,7 +227,6 @@ where
                 pruning: self.pruning.unwrap_or_default().finish(),
                 storage: self.storage.unwrap_or_default().into(),
                 tangle: self.tangle.unwrap_or_default().finish(),
-                mqtt: self.mqtt.unwrap_or_default().finish(),
                 #[cfg(feature = "dashboard")]
                 dashboard: self.dashboard.unwrap_or_default().finish(),
             },

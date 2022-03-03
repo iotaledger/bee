@@ -142,9 +142,6 @@
     "belowMaxDepth": 15,
     "numPartitions": 16
   },
-  "mqtt": {
-    "address": "tcp://localhost:1883"
-  },
   "dashboard": {
     "bindAddress": "/ip4/0.0.0.0/tcp/8081",
     "auth": {
