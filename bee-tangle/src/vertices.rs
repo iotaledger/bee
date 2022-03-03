@@ -5,7 +5,10 @@ use crate::vertex::Vertex;
 
 use bee_message::MessageId;
 
-use hashbrown::{hash_map::DefaultHashBuilder, raw::RawTable};
+use hashbrown::{
+    hash_map::DefaultHashBuilder,
+    raw::{Bucket, RawTable},
+};
 use rand::Rng;
 use tokio::sync::{RwLock, RwLockMappedWriteGuard, RwLockReadGuard, RwLockWriteGuard};
 
@@ -20,6 +23,45 @@ fn equivalent_id(message_id: &MessageId) -> impl Fn(&(MessageId, Vertex)) -> boo
 }
 
 type Table = RwLock<RawTable<(MessageId, Vertex)>>;
+
+pub(crate) struct OccupiedEntry<'a> {
+    hash: u64,
+    message_id: Option<MessageId>,
+    elem: Bucket<(MessageId, Vertex)>,
+    table: RwLockWriteGuard<'a, RawTable<(MessageId, Vertex)>>,
+}
+
+pub(crate) struct VacantEntry<'a> {
+    hash: u64,
+    message_id: MessageId,
+    table: RwLockWriteGuard<'a, RawTable<(MessageId, Vertex)>>,
+    hash_builder: DefaultHashBuilder,
+}
+
+pub(crate) enum Entry<'a> {
+    Occupied(OccupiedEntry<'a>),
+    Vacant(VacantEntry<'a>),
+}
+
+impl<'a> Entry<'a> {
+    pub(crate) fn or_empty(self) -> RwLockMappedWriteGuard<'a, Vertex> {
+        match self {
+            Entry::Occupied(entry) => RwLockWriteGuard::map(entry.table, |_| unsafe { &mut entry.elem.as_mut().1 }),
+            Entry::Vacant(entry) => RwLockWriteGuard::map(entry.table, |table| {
+                let entry = table.insert_entry(
+                    entry.hash,
+                    (entry.message_id, Vertex::empty()),
+                    move |(message_id, _)| {
+                        let mut state = entry.hash_builder.build_hasher();
+                        message_id.hash(&mut state);
+                        state.finish()
+                    },
+                );
+                &mut entry.1
+            }),
+        }
+    }
+}
 
 pub(crate) struct Vertices {
     hash_builder: DefaultHashBuilder,
@@ -111,23 +153,25 @@ impl Vertices {
         None
     }
 
-    pub(crate) async fn get_mut_or_empty(&self, message_id: MessageId) -> RwLockMappedWriteGuard<'_, Vertex> {
+    pub(crate) async fn entry(&self, message_id: MessageId) -> Entry<'_> {
         let hash = self.make_hash(&message_id);
         let table = self.get_table(hash).write().await;
 
-        RwLockWriteGuard::map(table, |table| {
-            let bucket = if let Some(bucket) = table.find(hash, equivalent_id(&message_id)) {
-                bucket
-            } else {
-                let bucket = table.insert(hash, (message_id, Vertex::empty()), self.make_hasher());
-                self.len.fetch_add(1, Ordering::Relaxed);
-
-                bucket
-            };
-            // SAFETY: We are holding the lock over the table, which means that no other thread could have modified the
-            // table to make this bucket invalid.
-            unsafe { &mut bucket.as_mut().1 }
-        })
+        if let Some(elem) = table.find(hash, equivalent_id(&message_id)) {
+            Entry::Occupied(OccupiedEntry {
+                hash,
+                message_id: Some(message_id),
+                elem,
+                table,
+            })
+        } else {
+            Entry::Vacant(VacantEntry {
+                hash,
+                message_id,
+                table,
+                hash_builder: self.hash_builder.clone(),
+            })
+        }
     }
 
     pub(crate) fn len(&self) -> usize {

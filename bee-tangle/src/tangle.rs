@@ -405,7 +405,7 @@ impl<B: StorageBackend> Tangle<B> {
         metadata: MessageMetadata,
         prevent_eviction: bool,
     ) -> Option<MessageRef> {
-        let mut vertex = self.vertices.get_mut_or_empty(message_id).await;
+        let mut vertex = self.vertices.entry(message_id).await.or_empty();
 
         if prevent_eviction {
             vertex.prevent_eviction();
@@ -423,7 +423,7 @@ impl<B: StorageBackend> Tangle<B> {
 
             // Insert children for parents
             for &parent in parents.iter() {
-                self.vertices.get_mut_or_empty(parent).await.add_child(message_id);
+                self.vertices.entry(parent).await.or_empty().add_child(message_id);
             }
 
             msg
@@ -550,7 +550,7 @@ impl<B: StorageBackend> Tangle<B> {
                     Ok(Some(approvers)) => approvers,
                 };
 
-                let mut vertex = self.vertices.get_mut_or_empty(*message_id).await;
+                let mut vertex = self.vertices.entry(*message_id).await.or_empty();
 
                 // We've just fetched approvers from the database, so we have all the information available to us now.
                 // Therefore, the approvers list is exhaustive (i.e: it contains all knowledge we have).
