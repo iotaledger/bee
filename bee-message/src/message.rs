@@ -17,6 +17,8 @@ use packable::{
     Packable, PackableExt,
 };
 
+use core::ops::Deref;
+
 /// A builder to build a [`Message`].
 #[must_use]
 pub struct MessageBuilder<P: NonceProvider = Miner> {
@@ -66,13 +68,7 @@ impl<P: NonceProvider> MessageBuilder<P> {
     pub fn finish(self) -> Result<Message, Error> {
         let protocol_version = self.protocol_version.ok_or(Error::MissingField("protocol_version"))?;
 
-        if !matches!(
-            self.payload,
-            None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::TaggedData(_))
-        ) {
-            // Safe to unwrap since it's known not to be None.
-            return Err(Error::InvalidPayloadKind(self.payload.unwrap().kind()));
-        }
+        verify_payload(self.payload.as_ref())?;
 
         let mut message = Message {
             protocol_version,
@@ -181,21 +177,11 @@ impl Packable for Message {
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let protocol_version = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
-
         let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
-
         let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
 
-        if VERIFY
-            && !matches!(
-                *payload,
-                None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::TaggedData(_))
-            )
-        {
-            // Safe to unwrap since it's known not to be None.
-            return Err(UnpackError::Packable(Error::InvalidPayloadKind(
-                Into::<Option<Payload>>::into(payload).unwrap().kind(),
-            )));
+        if VERIFY {
+            verify_payload(payload.deref().as_ref()).map_err(UnpackError::Packable)?;
         }
 
         let nonce = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
@@ -220,5 +206,17 @@ impl Packable for Message {
         }
 
         Ok(message)
+    }
+}
+
+fn verify_payload(payload: Option<&Payload>) -> Result<(), Error> {
+    if !matches!(
+        payload,
+        None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::TaggedData(_))
+    ) {
+        // Safe to unwrap since it's known not to be None.
+        Err(Error::InvalidPayloadKind(payload.unwrap().kind()))
+    } else {
+        Ok(())
     }
 }
