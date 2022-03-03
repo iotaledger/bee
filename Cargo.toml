@@ -23,6 +23,7 @@ members = [
 	"bee-ternary",
 	"bee-test",
 ]
+resolver = "2"
 
 [profile.dev]
 panic = "abort"

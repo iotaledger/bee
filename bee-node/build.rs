@@ -94,13 +94,10 @@ fn parse_git_information() -> Result<(), BuildError> {
 mod dashboard {
     use super::*;
 
-    use sha2::{Digest, Sha256};
+    use checksums::Algorithm;
     use zip::ZipArchive;
 
-    use std::{
-        io::{self, BufReader, Cursor},
-        path::Path,
-    };
+    use std::path::Path;
 
     const RELEASE_URL: &str =
         "https://github.com/iotaledger/node-dashboard/releases/download/v1.0.0/node-dashboard-bee-1.0.0.zip";
@@ -114,19 +111,17 @@ mod dashboard {
             .build()
             .expect("could not create client");
 
-        let mut archive = tempfile::tempfile().expect("could not create temp file");
+        let mut tmp_file = tempfile::NamedTempFile::new().expect("could not create temp file");
 
-        let response = client
+        client
             .get(RELEASE_URL)
             .send()
             .and_then(|resp| resp.error_for_status())
-            .map_err(|e| BuildError::DashboardRequest(e.status().map(|code| code.as_u16()), RELEASE_URL.to_string()))?;
+            .map_err(|e| BuildError::DashboardRequest(e.status().map(|code| code.as_u16()), RELEASE_URL.to_string()))?
+            .copy_to(&mut tmp_file)
+            .expect("copying failed");
 
-        let content = response.bytes().map_err(|_| BuildError::DashboardDownload)?;
-
-        let mut sha256 = Sha256::new();
-        sha256.update(&content);
-        let checksum = format!("{:x}", sha256.finalize());
+        let checksum = checksums::hash_file(tmp_file.path(), Algorithm::SHA2256).to_lowercase();
 
         if checksum != RELEASE_CHECKSUM {
             return Err(BuildError::DashboardInvalidChecksum);
@@ -134,9 +129,7 @@ mod dashboard {
 
         println!("checksum ok");
 
-        let mut content = Cursor::new(content);
-        io::copy(&mut content, &mut archive).expect("copying failed");
-        let mut archive = ZipArchive::new(BufReader::new(archive)).map_err(|_| BuildError::DashboardInvalidArchive)?;
+        let mut archive = ZipArchive::new(tmp_file).map_err(|_| BuildError::DashboardInvalidArchive)?;
 
         println!("extracting release archive to {}", dashboard_dir.as_ref().display());
         archive
