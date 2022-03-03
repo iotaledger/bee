@@ -29,7 +29,7 @@ You can find details about future development plans in our [roadmap](https://roa
 ## Design
 
 Bee will be a central reference implementation for the most important
-data structures and algorithms. This implementation will be verified during a [Request for Comments](https://github.com/iotaledger/bee-rfcs/) (RFC) process, and eventually certified.
+data structures and algorithms. This implementation will be verified during the [Tangle Improvement Proposal](https://github.com/iotaledger/tips/) (TIP) process, and eventually certified.
 
 By using this approach, we hope that improvements to core components will quickly propagate to all other client libraries, rather than
 having to fix each one individually.
@@ -39,6 +39,19 @@ having to fix each one individually.
 We have chosen the Rust programming language for Bee because of its C/C++ like performance, and its strong memory safety guarantees. [Learn more about Rust](https://www.rust-lang.org/).
 
 :::
+
+## Development
+
+The Bee repository has different branches:
+
+|Branch|Description|
+|------|-----------|
+|`mainnet`|The latest release for the IOTA protocol|
+|`mainnet-develop*`|Ongoing development for the IOTA protocol|
+|`shimmer`|The latest release for the Shimmer protocol|
+|`shimmer-develop*`|Ongoing development for the Shimmer protocol|
+
+With every release, the `*-develop` branches will be merged into their associated release branches.
 
 ## Supporting the Project
 
