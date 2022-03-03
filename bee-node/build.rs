@@ -94,10 +94,10 @@ fn parse_git_information() -> Result<(), BuildError> {
 mod dashboard {
     use super::*;
 
-    use checksums::Algorithm;
+    use sha2::{Digest, Sha256};
     use zip::ZipArchive;
 
-    use std::path::Path;
+    use std::{io, path::Path};
 
     const RELEASE_URL: &str =
         "https://github.com/iotaledger/node-dashboard/releases/download/v1.0.0/node-dashboard-bee-1.0.0.zip";
@@ -121,7 +121,11 @@ mod dashboard {
             .copy_to(&mut tmp_file)
             .expect("copying failed");
 
-        let checksum = checksums::hash_file(tmp_file.path(), Algorithm::SHA2256).to_lowercase();
+        let mut hasher = Sha256::new();
+        io::copy(&mut tmp_file.reopen().expect("could not open temp file"), &mut hasher).expect("io error");
+        let checksum = format!("{:x}", hasher.finalize());
+
+        println!("checksum: {}\noriginal: {}", checksum, RELEASE_CHECKSUM);
 
         if checksum != RELEASE_CHECKSUM {
             return Err(BuildError::DashboardInvalidChecksum);
