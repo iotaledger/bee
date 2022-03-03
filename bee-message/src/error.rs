@@ -53,9 +53,10 @@ pub enum Error {
         amount: u64,
         required: u64,
     },
-    InsufficientStorageDepositReturnAmount {
+    InvalidStorageDepositReturnAmount {
         deposit: u64,
-        required: u64,
+        minimum: u64,
+        maximum: u64,
     },
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
@@ -203,10 +204,14 @@ impl fmt::Display for Error {
                     "insufficient output amount for storage deposit: {amount} (should be at least {required})"
                 )
             }
-            Error::InsufficientStorageDepositReturnAmount { deposit, required } => {
+            Error::InvalidStorageDepositReturnAmount {
+                deposit,
+                minimum,
+                maximum,
+            } => {
                 write!(
                     f,
-                    "insufficient storage deposit return amount: {deposit} (should be at least {required})"
+                    "storage deposit return amount of {deposit} has to be at least {minimum} and at most {maximum}"
                 )
             }
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}", k),

@@ -207,7 +207,16 @@ impl Output {
 
     /// Checks if a sufficient storage deposit was made for the given [`Output`].
     pub fn check_sufficient_storage_deposit(&self, config: &ByteCostConfig) -> Result<(), Error> {
-        let maybe_deposit_condition = match self {
+        let required = minimum_storage_deposit(config, self);
+
+        if self.amount() < required {
+            return Err(Error::InsufficientStorageDepositAmount {
+                amount: self.amount(),
+                required,
+            });
+        }
+
+        let maybe_return_condition = match self {
             #[cfg(feature = "cpt2")]
             Output::SignatureLockedSingle(_) | Output::SignatureLockedDustAllowance(_) => return Ok(()),
             Output::Treasury(_) => return Ok(()), // `TreasuryOutput`s don't have `UnlockConditions`.
@@ -216,30 +225,19 @@ impl Output {
                 .and_then(|conds| conds.get(StorageDepositReturnUnlockCondition::KIND)),
         };
 
-        let required = minimum_storage_deposit(config, self);
-
-        let maybe_deposit =
-            if let Some(UnlockCondition::StorageDepositReturn(storage_deposit_condition)) = maybe_deposit_condition {
-                Some(storage_deposit_condition.amount())
-            } else {
-                None
-            };
-
-        if self.amount() >= required {
-            match maybe_deposit {
-                Some(deposit) if deposit >= required => Ok(()),
-                Some(deposit) => Err(Error::InsufficientStorageDepositReturnAmount { deposit, required }),
-                None => Ok(()),
+        if let Some(UnlockCondition::StorageDepositReturn(return_condition)) = maybe_return_condition {
+            let minimum = self.amount() - required;
+            let maximum = self.amount();
+            if !(minimum..=maximum).contains(&return_condition.amount()) {
+                return Err(Error::InvalidStorageDepositReturnAmount {
+                    deposit: return_condition.amount(),
+                    minimum,
+                    maximum,
+                });
             }
-        } else {
-            match maybe_deposit {
-                Some(deposit) if deposit >= required => Ok(()),
-                _ => Err(Error::InsufficientStorageDepositAmount {
-                    amount: self.amount(),
-                    required,
-                }),
-            }
-        }
+        };
+
+        Ok(())
     }
 }
 
