@@ -210,7 +210,7 @@ impl Output {
         let maybe_deposit_condition = match self {
             #[cfg(feature = "cpt2")]
             Output::SignatureLockedSingle(_) | Output::SignatureLockedDustAllowance(_) => return Ok(()),
-            Output::Treasury(_) => return Ok(()), // `TreasureOutput`s don't have `UnlockConditions`.
+            Output::Treasury(_) => return Ok(()), // `TreasuryOutput`s don't have `UnlockConditions`.
             Output::Basic(_) | Output::Alias(_) | Output::Foundry(_) | Output::Nft(_) => self
                 .unlock_conditions()
                 .map(|conds| conds.get(StorageDepositReturnUnlockCondition::KIND))
