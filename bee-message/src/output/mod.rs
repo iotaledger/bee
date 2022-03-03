@@ -213,8 +213,7 @@ impl Output {
             Output::Treasury(_) => return Ok(()), // `TreasuryOutput`s don't have `UnlockConditions`.
             Output::Basic(_) | Output::Alias(_) | Output::Foundry(_) | Output::Nft(_) => self
                 .unlock_conditions()
-                .map(|conds| conds.get(StorageDepositReturnUnlockCondition::KIND))
-                .flatten(),
+                .and_then(|conds| conds.get(StorageDepositReturnUnlockCondition::KIND))
         };
 
         let required = minimum_storage_deposit(config, self);
