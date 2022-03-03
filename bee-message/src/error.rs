@@ -211,7 +211,7 @@ impl fmt::Display for Error {
             } => {
                 write!(
                     f,
-                    "storage deposit return amount of {deposit} has to be at least {minimum} and at most {maximum}"
+                    "storage deposit return amount has to be at least {minimum} and at most {maximum} but is {deposit}"
                 )
             }
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}", k),
