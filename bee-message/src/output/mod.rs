@@ -209,22 +209,12 @@ impl Output {
     pub fn check_sufficient_storage_deposit(&self, config: &ByteCostConfig) -> Result<(), Error> {
         let maybe_deposit_condition = match self {
             #[cfg(feature = "cpt2")]
-            Output::SignatureLockedSingle(_) => return Ok(()),
-            #[cfg(feature = "cpt2")]
-            Output::SignatureLockedDustAllowance(_) => return Ok(()),
+            Output::SignatureLockedSingle(_) | Output::SignatureLockedDustAllowance(_) => return Ok(()),
             Output::Treasury(_) => return Ok(()), // `TreasureOutput`s don't have `UnlockConditions`.
-            Output::Basic(output) => output
+            Output::Basic(_) | Output::Alias(_) | Output::Foundry(_) | Output::Nft(_) => self
                 .unlock_conditions()
-                .get(StorageDepositReturnUnlockCondition::KIND),
-            Output::Alias(output) => output
-                .unlock_conditions()
-                .get(StorageDepositReturnUnlockCondition::KIND),
-            Output::Foundry(output) => output
-                .unlock_conditions()
-                .get(StorageDepositReturnUnlockCondition::KIND),
-            Output::Nft(output) => output
-                .unlock_conditions()
-                .get(StorageDepositReturnUnlockCondition::KIND),
+                .map(|conds| conds.get(StorageDepositReturnUnlockCondition::KIND))
+                .flatten(),
         };
 
         let required = minimum_storage_deposit(config, self);
