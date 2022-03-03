@@ -207,7 +207,7 @@ impl Output {
 
     /// Checks if a sufficient storage deposit was made for the given [`Output`].
     pub fn check_sufficient_storage_deposit(&self, config: &ByteCostConfig) -> Result<(), Error> {
-        let maybe_storage_deposit_condition = match self {
+        let maybe_deposit_condition = match self {
             #[cfg(feature = "cpt2")]
             Output::SignatureLockedSingle(_) => return Ok(()),
             #[cfg(feature = "cpt2")]
@@ -229,25 +229,27 @@ impl Output {
 
         let required = minimum_storage_deposit(config, self);
 
-        if let Some(UnlockCondition::StorageDepositReturn(storage_deposit_condition)) = maybe_storage_deposit_condition
-        {
-            if storage_deposit_condition.amount() >= required {
-                return Ok(());
+        let maybe_deposit =
+            if let Some(UnlockCondition::StorageDepositReturn(storage_deposit_condition)) = maybe_deposit_condition {
+                Some(storage_deposit_condition.amount())
             } else {
-                return Err(Error::InsufficientStorageDepositReturnAmount {
-                    required,
-                    deposit: storage_deposit_condition.amount(),
-                });
-            }
-        }
+                None
+            };
 
         if self.amount() >= required {
-            Ok(())
+            match maybe_deposit {
+                Some(deposit) if deposit >= required => Ok(()),
+                Some(deposit) => Err(Error::InsufficientStorageDepositReturnAmount { required, deposit }),
+                None => Ok(()),
+            }
         } else {
-            Err(Error::InsufficientStorageDepositAmount {
-                required,
-                amount: self.amount(),
-            })
+            match maybe_deposit {
+                Some(deposit) if deposit >= required => Ok(()),
+                _ => Err(Error::InsufficientStorageDepositAmount {
+                    required,
+                    amount: self.amount(),
+                }),
+            }
         }
     }
 }
