@@ -156,19 +156,19 @@ where
                             for (i, output) in essence.outputs().iter().enumerate() {
                                 if let Err(error) = output.check_sufficient_storage_deposit(&config.byte_cost) {
                                     match error {
-                                        MessageError::InsufficientStorageDepositReturnAmount{
-                                            required, deposit
-                                        } => {
+                                        MessageError::InsufficientStorageDepositAmount{required, amount} => {
                                             notify_invalid_message(
-                                                format!("Insufficient storage deposit return for output i={i}. Found {deposit} tokens but a minimum of {required} is required."),
+                                                format!("Insufficient amount in output i={i}: {amount} (should be at least {required})"),
                                                 &metrics,
                                                 notifier,
                                             );
                                             continue 'next_event;
-                                        }
-                                        MessageError::InsufficientStorageDepositAmount{required, amount} => {
+                                        },
+                                        MessageError::InvalidStorageDepositReturnAmount{
+                                            deposit, minimum, maximum,
+                                        } => {
                                             notify_invalid_message(
-                                                format!("Insufficient output amount for storage deposit of output i={i}. Found {amount} tokens but a minimum of {required} is required."),
+                                                format!("Invalid storage deposit return amount in unlock condition of output i={i}: {deposit} (has to be at least {minimum} and at most {maximum})"),
                                                 &metrics,
                                                 notifier,
                                             );

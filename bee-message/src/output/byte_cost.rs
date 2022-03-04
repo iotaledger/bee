@@ -91,6 +91,11 @@ impl ByteCostConfig {
 pub trait ByteCost {
     /// Different fields in a type lead to different storage requirements for the ledger state.
     fn weighted_bytes(&self, config: &ByteCostConfig) -> u64;
+
+    /// Computes the byte cost given a [`ByteCostConfig`].
+    fn byte_cost(&self, config: &ByteCostConfig) -> u64 {
+        config.v_byte_cost * self.weighted_bytes(config) + config.v_byte_offset
+    }
 }
 
 impl<T: ByteCost, const N: usize> ByteCost for [T; N] {
@@ -99,16 +104,13 @@ impl<T: ByteCost, const N: usize> ByteCost for [T; N] {
     }
 }
 
-/// Computes the storage cost for `[crate::output::Output]`s.
-pub fn minimum_storage_deposit(config: &ByteCostConfig, output: &impl ByteCost) -> u64 {
-    config.v_byte_cost * output.weighted_bytes(config) + config.v_byte_offset
-}
-
 #[cfg(test)]
 mod test {
-    use super::{minimum_storage_deposit, ByteCostConfig, ByteCostConfigBuilder};
-    use crate::output::Output;
+    use super::{ByteCostConfig, ByteCostConfigBuilder};
+    use crate::output::{ByteCost, Output};
+
     use bee_test::rand::output::{rand_alias_output, rand_basic_output, rand_foundry_output, rand_nft_output};
+    use packable::{Packable, PackableExt};
 
     const BYTE_COST: u64 = 1;
     const FACTOR_KEY: u64 = 10;
@@ -122,21 +124,29 @@ mod test {
             .finish()
     }
 
+    // We have to jump through hoops here because the randomly generated outputs from `bee_test` have a different
+    // type then the Outputs of this crate (although they are technically the same).
+    fn convert<T: PackableExt>(rand_output: impl Packable) -> T {
+        let bytes = rand_output.pack_to_vec();
+        // Safety: We know it's the right type.
+        T::unpack_unverified(bytes).unwrap()
+    }
+
     fn output_in_range(output: Output, range: std::ops::RangeInclusive<u64>) {
-        let deposit = minimum_storage_deposit(&config(), &output);
+        let cost = output.byte_cost(&config());
         assert!(
-            range.contains(&deposit),
-            "{:#?} has a required storage deposit of {}",
+            range.contains(&cost),
+            "{:#?} has a required byte cost of {}",
             output,
-            deposit
+            cost
         );
     }
 
     #[test]
     fn valid_byte_cost_range() {
-        output_in_range(Output::Alias(rand_alias_output()), 445..=29_620);
-        output_in_range(Output::Basic(rand_basic_output()), 414..=13_485);
-        output_in_range(Output::Foundry(rand_foundry_output()), 496..=21_365);
-        output_in_range(Output::Nft(rand_nft_output()), 435..=21_734);
+        output_in_range(Output::Alias(convert(rand_alias_output())), 445..=29_620);
+        output_in_range(Output::Basic(convert(rand_basic_output())), 414..=13_485);
+        output_in_range(Output::Foundry(convert(rand_foundry_output())), 496..=21_365);
+        output_in_range(Output::Nft(convert(rand_nft_output())), 435..=21_734);
     }
 }
