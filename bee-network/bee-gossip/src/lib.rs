@@ -17,19 +17,8 @@ mod swarm;
 #[cfg(test)]
 mod tests;
 
-// Always exported
-// Exported only with "full" feature flag.
-#[cfg(feature = "full")]
 #[doc(inline)]
-pub use libp2p_core::identity::{
-    ed25519::{Keypair, SecretKey},
-    PublicKey,
-};
-#[doc(inline)]
-pub use libp2p_core::{
-    multiaddr::{Multiaddr, Protocol},
-    PeerId,
-};
+pub use libp2p_core::multiaddr::{Multiaddr, Protocol};
 
 pub use self::peer::info::{PeerInfo, PeerRelation};
 #[cfg(feature = "full")]

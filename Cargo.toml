@@ -3,6 +3,7 @@ members = [
 	"bee-api/bee-rest-api",
 	"bee-common/bee-common",
 	"bee-common/bee-common-derive",
+	"bee-identity",
 	"bee-ledger",
 	"bee-message",
 	"bee-metrics",

@@ -33,6 +33,7 @@ async fn main() {
     };
 
     use bee_gossip::{alias, standalone::init, Event, Multiaddr, NetworkConfig, Protocol};
+    use bee_identity::Identity;
     use tokio::signal::ctrl_c;
     use tokio_stream::StreamExt;
 
@@ -68,13 +69,14 @@ async fn main() {
     let _config_bind_multiaddr = config.bind_multiaddr().clone();
 
     let keys = gen_deterministic_keys(bind_port);
+    let identity = Identity::from_keypair(keys);
     let network_id = gen_constant_net_id();
     let shutdown = Box::new(Box::pin(async move {
         let _ = ctrl_c().await;
     }));
 
     let mut _my_local_id = None;
-    let (_tx, mut rx) = init(config, keys, network_id, shutdown).await.expect("init failed");
+    let (_tx, mut rx) = init(config, identity, network_id, shutdown).await.expect("init failed");
 
     loop {
         if let Some(event) = rx.recv().await {

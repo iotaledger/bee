@@ -14,6 +14,7 @@ homepage = "https://www.iota.org"
 bee-autopeering = { version = "0.5.0", path = "../../bee-network/bee-autopeering", default-features = false, features = [ "rocksdb1" ] }
 bee-common = { version = "0.6.0", path = "../../bee-common/bee-common", default-features = false }
 bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false, features = [ "full" ] }
+bee-identity = { version = "0.1.0", path = "../../bee-identity", default-features = false }
 bee-ledger = { version = "0.6.1", path = "../../bee-ledger", default-features = false, features = [ "workers" ] }
 bee-message = { version = "0.1.6", path = "../../bee-message", default-features = false }
 bee-metrics = { version = "0.1.0", path = "../../bee-metrics", default-features = false }

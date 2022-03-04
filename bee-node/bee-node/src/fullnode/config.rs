@@ -3,6 +3,7 @@
 
 use bee_autopeering::config::AutopeeringConfig;
 use bee_gossip::NetworkConfig;
+use bee_identity::Identity;
 use bee_ledger::workers::{pruning::config::PruningConfig, snapshot::config::SnapshotConfig};
 #[cfg(feature = "dashboard")]
 use bee_plugin_dashboard::config::DashboardConfig;
@@ -11,14 +12,14 @@ use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_tangle::config::TangleConfig;
 use fern_logger::LoggerConfig;
 
-use crate::{config::NetworkSpec, local::Local, storage::NodeStorageBackend, workers::MetricsConfig, NodeConfig};
+use crate::{config::NetworkSpec, storage::NodeStorageBackend, workers::MetricsConfig, NodeConfig};
 
 /// The config of a Bee full node.
 pub struct FullNodeConfig<S: NodeStorageBackend> {
     /// The node alias.
     pub alias: String,
-    /// The local entity.
-    pub local: Local,
+    /// The local identity.
+    pub identity: Identity,
     /// The specification of the network the node wants to participate in.
     pub network_spec: NetworkSpec,
     /// Logger.
@@ -52,9 +53,9 @@ impl<S: NodeStorageBackend> FullNodeConfig<S> {
         &self.alias
     }
 
-    /// Returns the local entity associated with the node.
-    pub fn local(&self) -> &Local {
-        &self.local
+    /// Returns the local identity associated with the node.
+    pub fn identity(&self) -> &Identity {
+        &self.identity
     }
 
     /// Returns the network specification.
@@ -62,10 +63,10 @@ impl<S: NodeStorageBackend> FullNodeConfig<S> {
         &self.network_spec
     }
 
-    pub fn from(local: Local, node_cfg: NodeConfig<S>) -> Self {
+    pub fn from(identity: Identity, node_cfg: NodeConfig<S>) -> Self {
         Self {
             alias: node_cfg.alias,
-            local,
+            identity,
             network_spec: node_cfg.network_spec,
             logger: node_cfg.logger,
             network: node_cfg.network,
@@ -87,7 +88,7 @@ impl<S: NodeStorageBackend> Clone for FullNodeConfig<S> {
     fn clone(&self) -> Self {
         Self {
             alias: self.alias.clone(),
-            local: self.local.clone(),
+            identity: self.identity.clone(),
             network_spec: self.network_spec.clone(),
             logger: self.logger.clone(),
             network: self.network.clone(),

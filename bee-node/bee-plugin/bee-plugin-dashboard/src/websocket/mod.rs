@@ -14,7 +14,7 @@ use std::{
 };
 
 use auth_helper::jwt::JsonWebToken;
-use bee_gossip::{Keypair, PeerId};
+use bee_identity::{Keypair, PeerId};
 use bee_rest_api::endpoints::permission::DASHBOARD_AUDIENCE_CLAIM;
 use bee_runtime::{resource::ResourceHandle, shutdown_stream::ShutdownStream};
 use bee_tangle::Tangle;

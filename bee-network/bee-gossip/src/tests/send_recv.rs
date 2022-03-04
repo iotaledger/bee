@@ -3,6 +3,7 @@
 
 #![cfg(feature = "full")]
 
+use bee_identity::Identity;
 use tokio_stream::StreamExt;
 
 use super::common::{await_events::*, keys_and_ids::*, network_config::*, shutdown::*};
@@ -12,17 +13,17 @@ use crate::{standalone::init, Command, PeerRelation};
 #[serial_test::serial]
 async fn send_recv() {
     let config1 = get_in_memory_network_config(1337);
-    let keys1 = gen_random_keys();
+    let identity1 = Identity::default();
 
     let config2 = get_in_memory_network_config(4242);
-    let keys2 = gen_random_keys();
+    let identity2 = Identity::default();
 
     let network_id = gen_constant_net_id();
 
-    let (tx1, mut rx1) = init(config1, keys1, network_id, shutdown(10))
+    let (tx1, mut rx1) = init(config1, identity1, network_id, shutdown(10))
         .await
         .expect("init failed");
-    let (_tx2, mut rx2) = init(config2, keys2, network_id, shutdown(10))
+    let (_tx2, mut rx2) = init(config2, identity2, network_id, shutdown(10))
         .await
         .expect("init failed");
 

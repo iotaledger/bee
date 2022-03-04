@@ -3,12 +3,12 @@
 
 use std::{error::Error, path::Path};
 
-use bee_gossip::Keypair;
+use bee_identity::{pem_file, Identity, Keypair};
 #[cfg(feature = "trace")]
 use bee_node::trace;
 use bee_node::{
-    print_banner_and_version, read_keypair_from_pem_file, tools, write_keypair_to_pem_file, ClArgs, EntryNodeBuilder,
-    EntryNodeConfig, FullNodeBuilder, FullNodeConfig, Local, NodeConfig, NodeConfigBuilder, PemFileError,
+    print_banner_and_version, tools, ClArgs, EntryNodeBuilder, EntryNodeConfig, FullNodeBuilder, FullNodeConfig,
+    NodeConfig, NodeConfigBuilder,
 };
 use bee_plugin_mps::MpsPlugin;
 use bee_runtime::node::NodeBuilder as _;
@@ -47,7 +47,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let flamegrapher = trace::init(config.logger().clone(), config.tracing().clone())?;
 
     // Establish identity.
-    let keypair = match read_keypair_from_pem_file(&identity_path) {
+    let keypair = match pem_file::read_keypair_from_pem_file(&identity_path) {
         Ok(keypair) => {
             if identity_field.is_some() {
                 warn!(
@@ -56,7 +56,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
             Ok(keypair)
         }
-        Err(PemFileError::Read(_)) => {
+        Err(pem_file::PemFileError::Read(_)) => {
             // If we can't read from the file (which means it probably doesn't exist) we either migrate from the
             // existing config or generate a new identity.
             let keypair = if let Some(identity_encoded) = identity_field {
@@ -78,7 +78,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 Keypair::generate()
             };
 
-            write_keypair_to_pem_file(identity_path, &keypair).map_err(|e| {
+            pem_file::write_keypair_to_pem_file(identity_path, &keypair).map_err(|e| {
                 error!("Failed to write PEM file: {}", e);
                 e
             })?;
@@ -91,11 +91,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     }?;
 
-    let local = Local::from_keypair(keypair);
+    let identity = Identity::from_keypair(keypair);
 
     // Execute one of Bee's tools and exit.
     if let Some(tool) = cl_args.tool() {
-        return tools::exec(tool, &local, &config).map_err(|e| e.into());
+        return tools::exec(tool, &identity, &config).map_err(|e| e.into());
     }
 
     // Just show the version and exit.
@@ -108,9 +108,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // Start running the node.
     if config.run_as_entry_node() {
-        start_entrynode(local, config).await;
+        start_entrynode(identity, config).await;
     } else {
-        start_fullnode(local, config).await;
+        start_fullnode(identity, config).await;
     }
 
     #[cfg(feature = "trace")]
@@ -154,8 +154,8 @@ fn deserialize_config(cl_args: &ClArgs, pid: u32) -> (Option<String>, NodeConfig
 }
 
 #[cfg_attr(feature = "trace", trace_tools::observe)]
-async fn start_entrynode(local: Local, config: NodeConfig<Storage>) {
-    let entry_node_config = EntryNodeConfig::from(local, config);
+async fn start_entrynode(identity: Identity, config: NodeConfig<Storage>) {
+    let entry_node_config = EntryNodeConfig::from(identity, config);
     let node_builder = EntryNodeBuilder::new(entry_node_config);
 
     match node_builder {
@@ -172,8 +172,8 @@ async fn start_entrynode(local: Local, config: NodeConfig<Storage>) {
 }
 
 #[cfg_attr(feature = "trace", trace_tools::observe)]
-async fn start_fullnode(local: Local, config: NodeConfig<Storage>) {
-    let full_node_config = FullNodeConfig::from(local, config);
+async fn start_fullnode(identity: Identity, config: NodeConfig<Storage>) {
+    let full_node_config = FullNodeConfig::from(identity, config);
     let node_builder = FullNodeBuilder::<Storage>::new(full_node_config);
 
     match node_builder {

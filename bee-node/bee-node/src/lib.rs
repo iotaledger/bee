@@ -10,8 +10,6 @@ mod config;
 mod core;
 mod entrynode;
 mod fullnode;
-mod identity;
-mod local;
 mod shutdown;
 mod storage;
 mod util;
@@ -26,8 +24,6 @@ pub use self::{
     config::{NodeConfig, NodeConfigBuilder},
     entrynode::{builder::EntryNodeBuilder, config::EntryNodeConfig, EntryNode},
     fullnode::{builder::FullNodeBuilder, config::FullNodeConfig, FullNode},
-    identity::{read_keypair_from_pem_file, write_keypair_to_pem_file, PemFileError},
-    local::Local,
     storage::NodeStorageBackend,
     util::print_banner_and_version,
 };

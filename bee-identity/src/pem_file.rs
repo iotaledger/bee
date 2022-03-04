@@ -1,20 +1,28 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! TODO
+
 use std::{fs, path::Path};
 
-use bee_gossip::{Keypair, SecretKey};
 use ed25519::KeypairBytes;
 use pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding};
 
+use crate::keypair::{Keypair, SecretKey};
+
+/// TODO
 #[derive(Debug, thiserror::Error)]
 pub enum PemFileError {
+    /// TODO
     #[error("reading the identity file failed: {0}")]
     Read(std::io::Error),
+    /// TODO
     #[error("writing the identity file failed: {0}")]
     Write(std::io::Error),
+    /// TODO
     #[error("could not parse PEM file")]
     Parse,
+    /// TODO
     #[error("could not decode keypair")]
     DecodeKeypair,
 }
@@ -42,6 +50,7 @@ fn keypair_to_pem_entry(keypair: &Keypair) -> Result<String, PemFileError> {
     }
 }
 
+/// TODO
 pub fn read_keypair_from_pem_file<P: AsRef<Path>>(path: P) -> Result<Keypair, PemFileError> {
     match fs::read_to_string(path) {
         Ok(pem_file) => pem_entry_to_keypair(pem_file),
@@ -49,6 +58,7 @@ pub fn read_keypair_from_pem_file<P: AsRef<Path>>(path: P) -> Result<Keypair, Pe
     }
 }
 
+/// TODO
 pub fn write_keypair_to_pem_file<P: AsRef<Path>>(path: P, keypair: &Keypair) -> Result<(), PemFileError> {
     fs::write(path, keypair_to_pem_entry(keypair)?).map_err(PemFileError::Write)
 }

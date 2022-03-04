@@ -6,7 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use bee_gossip::PeerId;
+use bee_identity::PeerId;
 use bee_protocol::{types::metrics::NodeMetrics, workers::PeerManager};
 use bee_rest_api::endpoints::routes::health::is_healthy;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};

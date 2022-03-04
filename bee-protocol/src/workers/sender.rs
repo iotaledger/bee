@@ -3,7 +3,7 @@
 
 use std::marker::PhantomData;
 
-use bee_gossip::PeerId;
+use bee_identity::PeerId;
 use log::warn;
 
 use crate::{

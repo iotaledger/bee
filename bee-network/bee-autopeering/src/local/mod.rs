@@ -9,6 +9,7 @@ use std::{
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
+use bee_identity::Identity;
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, SECRET_KEY_LENGTH};
 use libp2p_core::identity::ed25519::Keypair;
 
@@ -229,6 +230,12 @@ impl Eq for Local {}
 impl PartialEq for Local {
     fn eq(&self, other: &Self) -> bool {
         self.read().peer_id() == other.read().peer_id()
+    }
+}
+
+impl From<Identity> for Local {
+    fn from(_: Identity) -> Self {
+        todo!("from bee_identity::Identity")
     }
 }
 

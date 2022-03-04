@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_gossip::{Keypair, PeerId};
+use bee_identity::{Keypair, PeerId};
 use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;

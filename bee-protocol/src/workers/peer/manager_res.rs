@@ -12,7 +12,8 @@ use std::{
 };
 
 use async_trait::async_trait;
-use bee_gossip::{GossipSender, PeerId};
+use bee_gossip::GossipSender;
+use bee_identity::PeerId;
 use bee_runtime::{node::Node, worker::Worker};
 use futures::channel::oneshot;
 use log::debug;

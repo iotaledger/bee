@@ -4,7 +4,7 @@
 use std::{any::TypeId, convert::Infallible, time::Duration};
 
 use async_trait::async_trait;
-use bee_gossip::PeerId;
+use bee_identity::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{Tangle, TangleWorker};
 use futures::stream::StreamExt;

@@ -13,7 +13,8 @@ pub mod storage;
 use std::{any::TypeId, convert::Infallible, ops::Deref, sync::Arc};
 
 use async_trait::async_trait;
-use bee_gossip::{Keypair, NetworkCommandSender, PeerId};
+use bee_gossip::NetworkCommandSender;
+use bee_identity::{Keypair, PeerId};
 use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorker, MessageSubmitterWorkerEvent, PeerManager,

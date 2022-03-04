@@ -12,7 +12,7 @@ use bee_autopeering::{
     stores::{Options as RocksDbPeerStoreConfigOptions, RocksDbPeerStore, RocksDbPeerStoreConfig},
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
-use bee_gossip::Keypair;
+use bee_identity::Keypair;
 use bee_plugin_version_checker::VersionCheckerPlugin;
 use bee_rest_api::endpoints::InitConfigEntryNode;
 use bee_runtime::{
