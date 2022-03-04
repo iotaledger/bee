@@ -25,8 +25,8 @@ fn equivalent_id(message_id: &MessageId) -> impl Fn(&(MessageId, Vertex)) -> boo
 type Table = RwLock<RawTable<(MessageId, Vertex)>>;
 
 pub(crate) struct OccupiedEntry<'a> {
-    hash: u64,
-    message_id: Option<MessageId>,
+    // hash: u64,
+    // message_id: Option<MessageId>,
     elem: Bucket<(MessageId, Vertex)>,
     table: RwLockWriteGuard<'a, RawTable<(MessageId, Vertex)>>,
 }
@@ -48,9 +48,7 @@ impl<'a> VacantEntry<'a> {
     pub(crate) fn insert_empty(self) -> RwLockMappedWriteGuard<'a, Vertex> {
         RwLockWriteGuard::map(self.table, |table| {
             let entry = table.insert_entry(self.hash, (self.message_id, Vertex::empty()), move |(message_id, _)| {
-                let mut state = self.hash_builder.build_hasher();
-                message_id.hash(&mut state);
-                state.finish()
+                make_hash(&self.hash_builder, message_id)
             });
             &mut entry.1
         })
@@ -71,6 +69,12 @@ impl<'a> Entry<'a> {
     }
 }
 
+fn make_hash(hash_builder: &DefaultHashBuilder, message_id: &MessageId) -> u64 {
+    let mut state = hash_builder.build_hasher();
+    message_id.hash(&mut state);
+    state.finish()
+}
+
 pub(crate) struct Vertices {
     hash_builder: DefaultHashBuilder,
     tables: Box<[Table]>,
@@ -88,16 +92,6 @@ impl Vertices {
         }
     }
 
-    fn make_hash(&self, message_id: &MessageId) -> u64 {
-        let mut state = self.hash_builder.build_hasher();
-        message_id.hash(&mut state);
-        state.finish()
-    }
-
-    fn make_hasher(&self) -> impl Fn(&(MessageId, Vertex)) -> u64 + '_ {
-        move |(message_id, _)| self.make_hash(message_id)
-    }
-
     fn get_table(&self, hash: u64) -> &Table {
         let index = hash as usize % self.tables.len();
         // SAFETY: `index < self.tables.len()` by construction.
@@ -105,7 +99,7 @@ impl Vertices {
     }
 
     pub(crate) async fn get(&self, message_id: &MessageId) -> Option<RwLockReadGuard<'_, Vertex>> {
-        let hash = self.make_hash(message_id);
+        let hash = make_hash(&self.hash_builder, message_id);
         let table = self.get_table(hash).read().await;
 
         RwLockReadGuard::try_map(table, |table| match table.get(hash, equivalent_id(message_id)) {
@@ -116,7 +110,7 @@ impl Vertices {
     }
 
     pub(crate) async fn get_mut(&self, message_id: &MessageId) -> Option<RwLockMappedWriteGuard<'_, Vertex>> {
-        let hash = self.make_hash(message_id);
+        let hash = make_hash(&self.hash_builder, message_id);
         let table = self.get_table(hash).write().await;
 
         RwLockWriteGuard::try_map(table, |table| match table.get_mut(hash, equivalent_id(message_id)) {
@@ -162,13 +156,13 @@ impl Vertices {
     }
 
     pub(crate) async fn entry(&self, message_id: MessageId) -> Entry<'_> {
-        let hash = self.make_hash(&message_id);
+        let hash = make_hash(&self.hash_builder, &message_id);
         let table = self.get_table(hash).write().await;
 
         if let Some(elem) = table.find(hash, equivalent_id(&message_id)) {
             Entry::Occupied(OccupiedEntry {
-                hash,
-                message_id: Some(message_id),
+                // hash,
+                // message_id: Some(message_id),
                 elem,
                 table,
             })
