@@ -24,7 +24,7 @@ bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = 
 
 num_cpus = { version = "1.13.0", default-features = false }
 packable = { version = "0.2.1", default-features = false, features = [ "serde" ] }
-rocksdb = { version = "0.17.0", default-features = false }
+rocksdb = { version = "0.18.0", default-features = false }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
 thiserror = { version = "1.0.30", default-features = false }
 

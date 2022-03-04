@@ -42,23 +42,23 @@ fxhash = { version = "0.2.1", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "ed25519", "random", "blake2b" ] }
 log = { version = "0.4.14", default-features = false }
-mime_guess = { version = "2.0.3", default-features = false, optional = true }
+mime_guess = { version = "2.0.4", default-features = false, optional = true }
 multiaddr = { version = "0.13.0", default-features = false }
 paho-mqtt = { version = "0.9.1", default-features = false, features = [ "bundled" ] }
 packable = { version = "0.2.1", default-features = false, features = [ "io" ] }
 pkcs8 = { version = "0.8.0", default-features = false, features = [ "alloc", "pem", "std" ] }
-rand = { version = "0.8.4", default-features = false }
+rand = { version = "0.8.5", default-features = false }
 rpassword = { version = "5.0.1", default-features = false }
 rust-embed = { version = "6.2.0", default-features = false, features = [ "interpolate-folder-path" ], optional = true }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
-serde_json = { version = "1.0.68", default-features = false }
+serde_json = { version = "1.0.79", default-features = false }
 serde_repr = { version = "0.1.7", default-features = false, optional = true }
 structopt = { version = "0.3.23", default-features = false }
 thiserror = { version = "1.0.30", default-features = false }
-tokio = { version = "1.12.0", default-features = false, features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
+tokio = { version = "1.17.0", default-features = false, features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
 tokio-stream = { version = "0.1.7", default-features = false }
 toml = { version = "0.5.8", default-features = false }
-tracing = { version = "0.1.29", default-features = false, optional = true }
+tracing = { version = "0.1.31", default-features = false, optional = true }
 warp = { version = "0.3.1", default-features = false }
 warp-reverse-proxy = { version = "0.4.0", default-features = false, optional = true }
 

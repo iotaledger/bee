@@ -25,4 +25,4 @@ futures = { version = "0.3.17", default-features = false, features = [ "std", "a
 log = { version = "0.4.14", default-features = false, features = [ "serde" ] }
 
 [dev-dependencies]
-tokio = { version = "1.12.0", default-features = false, features = [ "rt", "macros", "time" ] }
+tokio = { version = "1.17.0", default-features = false, features = [ "rt", "macros", "time" ] }
