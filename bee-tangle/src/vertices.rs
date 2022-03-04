@@ -31,11 +31,30 @@ pub(crate) struct OccupiedEntry<'a> {
     table: RwLockWriteGuard<'a, RawTable<(MessageId, Vertex)>>,
 }
 
+impl<'a> OccupiedEntry<'a> {
+    pub(crate) fn into_mut(self) -> RwLockMappedWriteGuard<'a, Vertex> {
+        RwLockWriteGuard::map(self.table, |_| unsafe { &mut self.elem.as_mut().1 })
+    }
+}
+
 pub(crate) struct VacantEntry<'a> {
     hash: u64,
     message_id: MessageId,
     table: RwLockWriteGuard<'a, RawTable<(MessageId, Vertex)>>,
-    hash_builder: DefaultHashBuilder,
+    hash_builder: &'a DefaultHashBuilder,
+}
+
+impl<'a> VacantEntry<'a> {
+    pub(crate) fn insert_empty(self) -> RwLockMappedWriteGuard<'a, Vertex> {
+        RwLockWriteGuard::map(self.table, |table| {
+            let entry = table.insert_entry(self.hash, (self.message_id, Vertex::empty()), move |(message_id, _)| {
+                let mut state = self.hash_builder.build_hasher();
+                message_id.hash(&mut state);
+                state.finish()
+            });
+            &mut entry.1
+        })
+    }
 }
 
 pub(crate) enum Entry<'a> {
@@ -46,19 +65,8 @@ pub(crate) enum Entry<'a> {
 impl<'a> Entry<'a> {
     pub(crate) fn or_empty(self) -> RwLockMappedWriteGuard<'a, Vertex> {
         match self {
-            Entry::Occupied(entry) => RwLockWriteGuard::map(entry.table, |_| unsafe { &mut entry.elem.as_mut().1 }),
-            Entry::Vacant(entry) => RwLockWriteGuard::map(entry.table, |table| {
-                let entry = table.insert_entry(
-                    entry.hash,
-                    (entry.message_id, Vertex::empty()),
-                    move |(message_id, _)| {
-                        let mut state = entry.hash_builder.build_hasher();
-                        message_id.hash(&mut state);
-                        state.finish()
-                    },
-                );
-                &mut entry.1
-            }),
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(entry) => entry.insert_empty(),
         }
     }
 }
@@ -169,7 +177,7 @@ impl Vertices {
                 hash,
                 message_id,
                 table,
-                hash_builder: self.hash_builder.clone(),
+                hash_builder: &self.hash_builder,
             })
         }
     }
