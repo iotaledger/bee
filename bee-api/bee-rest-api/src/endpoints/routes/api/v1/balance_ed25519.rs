@@ -59,18 +59,17 @@ pub(crate) async fn balance_ed25519(
             "unable to fetch the balance of the address".to_string(),
         ))
     })? {
-        (Ok(response), ledger_index) => match response {
-            Some(balance) => Ok(warp::reply::json(&SuccessBody::new(BalanceAddressResponse {
-                address_type: Ed25519Address::KIND,
-                address: addr.to_string(),
-                balance: balance.amount(),
-                dust_allowed: balance.dust_allowed(),
-                ledger_index: *ledger_index,
-            }))),
-            None => Err(reject::custom(CustomRejection::NotFound(
-                "balance not found".to_string(),
-            ))),
-        },
+        (Ok(response), ledger_index) => Ok(warp::reply::json(&SuccessBody::new(BalanceAddressResponse {
+            address_type: Ed25519Address::KIND,
+            address: addr.to_string(),
+            balance: if let Some(balance) = response {
+                balance.amount()
+            } else {
+                0
+            },
+            dust_allowed: balance.dust_allowed(),
+            ledger_index: *ledger_index,
+        }))),
         (Err(e), _) => {
             error!("unable to fetch the balance of the address: {}", e);
             Err(reject::custom(CustomRejection::ServiceUnavailable(
