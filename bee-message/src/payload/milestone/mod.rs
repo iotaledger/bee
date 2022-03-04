@@ -65,14 +65,14 @@ pub struct MilestonePayload {
 }
 
 impl MilestonePayload {
-    /// The payload kind of a `MilestonePayload`.
+    /// The payload kind of a [`MilestonePayload`].
     pub const KIND: u32 = 1;
     /// Range of allowed milestones signatures key numbers.
     pub const SIGNATURE_COUNT_RANGE: RangeInclusive<u8> = 1..=255;
     /// Length of a milestone signature.
     pub const SIGNATURE_LENGTH: usize = 64;
 
-    /// Creates a new `MilestonePayload`.
+    /// Creates a new [`MilestonePayload`].
     pub fn new(
         essence: MilestoneEssence,
         signatures: Vec<[u8; MilestonePayload::SIGNATURE_LENGTH]>,
@@ -82,24 +82,22 @@ impl MilestonePayload {
         )
         .map_err(Error::MilestoneInvalidSignatureCount)?;
 
-        Self::from_vec_prefix(essence, signatures)
-    }
-
-    fn from_vec_prefix(
-        essence: MilestoneEssence,
-        signatures: VecPrefix<Signature, SignatureCount>,
-    ) -> Result<Self, Error> {
-        if essence.public_keys().len() != signatures.len() {
-            return Err(Error::MilestonePublicKeysSignaturesCountMismatch {
-                key_count: essence.public_keys().len(),
-                sig_count: signatures.len(),
-            });
-        };
+        verify_essence_signatures(&essence, &signatures)?;
 
         Ok(Self { essence, signatures })
     }
 
-    /// Computes the identifier of a `MilestonePayload`.
+    /// Returns the essence of a [`MilestonePayload`].
+    pub fn essence(&self) -> &MilestoneEssence {
+        &self.essence
+    }
+
+    /// Returns the signatures of a [`MilestonePayload`].
+    pub fn signatures(&self) -> impl Iterator<Item = &[u8; Self::SIGNATURE_LENGTH]> + '_ {
+        self.signatures.iter().map(|s| &s.0)
+    }
+
+    /// Computes the identifier of a [`MilestonePayload`].
     pub fn id(&self) -> MilestoneId {
         let mut hasher = Blake2b256::new();
 
@@ -109,17 +107,7 @@ impl MilestonePayload {
         MilestoneId::new(hasher.finalize().into())
     }
 
-    /// Returns the essence of a `MilestonePayload`.
-    pub fn essence(&self) -> &MilestoneEssence {
-        &self.essence
-    }
-
-    /// Returns the signatures of a `MilestonePayload`.
-    pub fn signatures(&self) -> impl Iterator<Item = &[u8; Self::SIGNATURE_LENGTH]> + '_ {
-        self.signatures.iter().map(|s| &s.0)
-    }
-
-    /// Semantically validate a `MilestonePayload`.
+    /// Semantically validate a [`MilestonePayload`].
     pub fn validate(
         &self,
         applicable_public_keys: &[String],
@@ -189,6 +177,21 @@ impl Packable for MilestonePayload {
         let signatures = VecPrefix::<Signature, SignatureCount>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|err| Error::MilestoneInvalidSignatureCount(err.into_prefix_err().into()))?;
 
-        Self::from_vec_prefix(essence, signatures).map_err(UnpackError::Packable)
+        if VERIFY {
+            verify_essence_signatures(&essence, &signatures).map_err(UnpackError::Packable)?;
+        }
+
+        Ok(Self { essence, signatures })
+    }
+}
+
+fn verify_essence_signatures(essence: &MilestoneEssence, signatures: &[Signature]) -> Result<(), Error> {
+    if essence.public_keys().len() != signatures.len() {
+        Err(Error::MilestonePublicKeysSignaturesCountMismatch {
+            key_count: essence.public_keys().len(),
+            sig_count: signatures.len(),
+        })
+    } else {
+        Ok(())
     }
 }
