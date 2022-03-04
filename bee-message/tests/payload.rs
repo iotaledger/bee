@@ -11,7 +11,7 @@ use bee_message::{
     payload::{
         milestone::{MilestoneEssence, MilestoneId, MilestonePayload},
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
-        transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayloadBuilder},
+        transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload, TaggedDataPayload, TreasuryTransactionPayload,
     },
     signature::{Ed25519Signature, Signature},
@@ -64,11 +64,7 @@ fn transaction() {
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
 
-    let tx_payload = TransactionPayloadBuilder::new()
-        .with_essence(essence)
-        .with_unlock_blocks(unlock_blocks)
-        .finish()
-        .unwrap();
+    let tx_payload = TransactionPayload::new(essence, unlock_blocks).unwrap();
 
     let payload: Payload = tx_payload.into();
     let packed = payload.pack_to_vec();
@@ -134,14 +130,12 @@ fn receipt() {
     let payload: Payload = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                1_000_000,
-            )
-            .unwrap(),
-        ],
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            1_000_000,
+        )
+        .unwrap()],
         Payload::TreasuryTransaction(Box::new(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),

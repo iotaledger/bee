@@ -170,11 +170,11 @@ impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
         for b in &value.unlock_blocks {
             unlock_blocks.push(b.try_into()?);
         }
-        let builder = TransactionPayload::builder()
-            .with_essence((&value.essence).try_into()?)
-            .with_unlock_blocks(UnlockBlocks::new(unlock_blocks)?);
 
-        Ok(builder.finish()?)
+        Ok(TransactionPayload::new(
+            (&value.essence).try_into()?,
+            UnlockBlocks::new(unlock_blocks)?,
+        )?)
     }
 }
 
