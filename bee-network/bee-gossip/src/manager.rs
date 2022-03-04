@@ -494,6 +494,9 @@ async fn handle_server_event(
                 let writer = GossipTx::new(BufWriter::with_capacity(BUFFER_SIZE, writer));
                 let reader = GossipRx::new(BufReader::with_capacity(BUFFER_SIZE, reader));
 
+                // Publish that data to the user.
+                // Panic:
+                // Sending must not fail.
                 senders
                     .manager_event_tx
                     .send(GossipManagerEvent::PeerConnected {

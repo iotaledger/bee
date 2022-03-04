@@ -10,7 +10,7 @@ pub struct PeerInfo {
     pub address: Multiaddr,
     /// The peer's alias.
     pub alias: String,
-    /// The type of relation the layer has with this peer.
+    /// The type of relation the node has with this peer.
     pub relation: PeerRelation,
 }
 

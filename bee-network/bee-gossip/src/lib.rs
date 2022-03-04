@@ -13,6 +13,7 @@ mod peer;
 mod server;
 mod task;
 mod time;
+mod interval_timer;
 
 pub mod init;
 
