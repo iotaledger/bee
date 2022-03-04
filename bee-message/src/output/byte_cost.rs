@@ -106,8 +106,7 @@ impl<T: ByteCost, const N: usize> ByteCost for [T; N] {
 
 #[cfg(test)]
 mod test {
-    use super::{ByteCostConfig, ByteCostConfigBuilder};
-    use crate::output::{ByteCost, Output};
+    use crate::output::{ByteCost, ByteCostConfig, ByteCostConfigBuilder, Output};
 
     use bee_test::rand::output::{rand_alias_output, rand_basic_output, rand_foundry_output, rand_nft_output};
     use packable::{Packable, PackableExt};
