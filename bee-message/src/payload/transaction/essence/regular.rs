@@ -26,10 +26,13 @@ pub struct RegularTransactionEssenceBuilder {
 
 impl RegularTransactionEssenceBuilder {
     /// Creates a new [`RegularTransactionEssenceBuilder`].
-    pub fn new(network_id: u64) -> Self {
+    pub fn new(network_id: u64, inputs_commitment: [u8; 32]) -> Self {
         Self {
             network_id,
-            ..Default::default()
+            inputs: Vec::new(),
+            inputs_commitment,
+            outputs: Vec::new(),
+            payload: None,
         }
     }
 
@@ -42,12 +45,6 @@ impl RegularTransactionEssenceBuilder {
     /// Add an input to a [`RegularTransactionEssenceBuilder`].
     pub fn add_input(mut self, input: Input) -> Self {
         self.inputs.push(input);
-        self
-    }
-
-    /// Adds an inputs commitment to a [`RegularTransactionEssenceBuilder`].
-    pub fn with_inputs_commitment(mut self, inputs_commitment: [u8; 32]) -> Self {
-        self.inputs_commitment = inputs_commitment;
         self
     }
 
@@ -76,15 +73,19 @@ impl RegularTransactionEssenceBuilder {
             .into_boxed_slice()
             .try_into()
             .map_err(Error::InvalidInputCount)?;
+
+        verify_inputs::<true>(&inputs)?;
+
         let outputs: BoxedSlicePrefix<Output, OutputCount> = self
             .outputs
             .into_boxed_slice()
             .try_into()
             .map_err(Error::InvalidOutputCount)?;
+
+        verify_outputs::<true>(&outputs)?;
+
         let payload = OptionalPayload::from(self.payload);
 
-        verify_inputs::<true>(&inputs)?;
-        verify_outputs::<true>(&outputs)?;
         verify_payload::<true>(&payload)?;
 
         Ok(RegularTransactionEssence {
@@ -124,8 +125,8 @@ impl RegularTransactionEssence {
     pub const KIND: u8 = 0;
 
     /// Creates a new [`RegularTransactionEssenceBuilder`] to build a [`RegularTransactionEssence`].
-    pub fn builder(network_id: u64) -> RegularTransactionEssenceBuilder {
-        RegularTransactionEssenceBuilder::new(network_id)
+    pub fn builder(network_id: u64, inputs_commitment: [u8; 32]) -> RegularTransactionEssenceBuilder {
+        RegularTransactionEssenceBuilder::new(network_id, inputs_commitment)
     }
 
     /// Returns the network ID of a [`RegularTransactionEssence`].

@@ -17,7 +17,10 @@ use bee_message::{
     signature::{Ed25519Signature, Signature},
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
 };
-use bee_test::rand::{bytes::rand_bytes, parents::rand_parents};
+use bee_test::rand::{
+    bytes::{rand_bytes, rand_bytes_array},
+    parents::rand_parents,
+};
 
 use packable::PackableExt;
 
@@ -50,7 +53,7 @@ fn transaction() {
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder(0)
+        RegularTransactionEssence::builder(0, rand_bytes_array())
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()

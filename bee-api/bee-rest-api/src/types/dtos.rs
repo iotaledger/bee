@@ -31,6 +31,7 @@ use bee_message::{
     unlock_block::{
         AliasUnlockBlock, NftUnlockBlock, ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks,
     },
+    util::hex_decode,
     Message, MessageBuilder, MessageId,
 };
 #[cfg(feature = "cpt2")]
@@ -254,6 +255,7 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
                 .network_id
                 .parse::<u64>()
                 .map_err(|_| Error::InvalidField("networkId"))?,
+            hex_decode(&value.inputs_commitment)?,
         )
         .with_inputs(inputs)
         .with_outputs(outputs);
