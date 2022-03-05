@@ -1,28 +1,35 @@
 ---
-description: Bee uses the Toml standard as a configuration file. The default configuration file is `config.toml`. You can change the configuration file's path or name by using the `-c` or `--config` flag.
+description: Bee config files
 image: /img/logo/bee_logo.png
 keywords:
 - REST
 - API
 - configuration
-- Toml
+- TOML
+- JSON
 - config
 - reference
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Configuration
 
 Here, you will find the more technical references of Bee. 
 
-Bee uses the Toml standard as a configuration file. If you are unsure about syntax, you can have a look at the [official Toml specifications](https://toml.io).
-
-The default configuration file is `config.toml`. You can change the configuration file's path or name by using the `-c` or `--config` flag.
+Bee uses the JSON standard as a configuration file. If you are unsure about syntax, you can have a look at the [official JSON specifications](https://www.json.org).  
+The default configuration file is `config.json`. You can change the configuration file's path or name by using the `-c` or `--config` flag.
 
 For example: 
 
 ```bash
-bee -c config_example.toml
+bee -c config_example.json
 ```
 
+:::info  
+Bee supports the TOML standard for the configuration file too. Just use a `config.toml` file. If you are unsure about syntax, you can have a look at the [official TOML specifications](https://toml.io).  
+:::
 
 ## Node
 
@@ -53,6 +60,34 @@ bee -c config_example.toml
 
 Example:
 
+<Tabs groupId="format">
+<TabItem value="json" label="JSON" default>
+
+```json
+  "logger": {
+    "target_width": 42,
+    "level_width": 5,
+    "outputs": [
+      {
+        "name": "stdout",
+        "levelFilter": "info",
+        "targetFilters": ["bee_network"],
+        "targetExclusions": [],
+        "colorEnabled": true
+      },
+      {
+        "name": "error.log",
+        "levelFilter": "error",
+        "targetFilters": [],
+        "targetExclusions": ["bee_network"]
+      }
+    ]
+  },
+```
+
+</TabItem>
+<TabItem value="toml" label="TOML">
+
 ```toml
 [logger]
 target_width = 42
@@ -67,6 +102,9 @@ name              = "error.log"
 level_filter      = "error"
 target_exclusions = ["bee_network"] 
 ```
+
+</TabItem>
+</Tabs>
 
 ## Network
 
@@ -86,6 +124,37 @@ target_exclusions = ["bee_network"]
 
 Example:
 
+<Tabs groupId="format">
+<TabItem value="json" label="JSON" default>
+
+```json
+  "network": {
+    "bindAddress": "/ip4/0.0.0.0/tcp/15600",
+    "reconnectIntervalSecs": 30,
+    "maxUnknownPeers": 4,
+    "maxDiscoveredPeers": 8,
+    "peering": {
+      "peers": [
+        {
+          "address": "/ip4/192.0.2.0/tcp/15600/p2p/PeerID",
+          "alias": "some peer"
+        },
+        {
+          "address": "/ip6/2001:db8::/tcp/15600/p2p/PeerID",
+          "alias": "another peer"
+        },
+        {
+          "address": "/dns/example.com/tcp/15600/p2p/PeerID",
+          "alias": "yet another peer"
+        }
+      ]
+    }
+  },
+```
+
+</TabItem>
+<TabItem value="toml" label="TOML">
+
 ```toml
 [network]
 bind_address             = "/ip4/0.0.0.0/tcp/15600"
@@ -103,6 +172,9 @@ alias   = "another peer"
 address = "/dns/example.com/tcp/15600/p2p/PeerID"
 alias   = "yet another peer"
 ```
+
+</TabItem>
+</Tabs>
 
 ## Protocol
 
@@ -137,6 +209,44 @@ alias   = "yet another peer"
 
 Example:
 
+<Tabs groupId="format">
+<TabItem value="json" label="JSON" default>
+
+```json
+  "protocol": {
+    "minimum_pow_score": 4000,
+    "handshake_window": 10,
+    "coordinator": {
+      "public_key_count": 2,
+      "public_key_ranges": [
+        {
+          "public_key": "7205c145525cee64f1c9363696811d239919d830ad964b4e29359e6475848f5a",
+          "start": 0,
+          "end": 0
+        },
+        {
+          "public_key": "e468e82df33d10dea3bd0eadcd7867946a674d207c39f5af4cc44365d268a7e6",
+          "start": 0,
+          "end": 0
+        },
+        {
+          "public_key": "0758028d34508079ba1f223907ac3bb5ce8f6bdccc6b961c7c85a2f460b30c1d",
+          "start": 0,
+          "end": 0
+        }
+      ]
+    },
+    "workers": {
+      "message_worker_cache": 10000,
+      "status_interval": 10,
+      "ms_sync_count": 200
+    }
+  },
+```
+
+</TabItem>
+<TabItem value="toml" label="TOML" default>
+
 ```toml
 [protocol]
 minimum_pow_score = 4000
@@ -161,6 +271,9 @@ status_interval = 10
 ms_sync_count = 200
 ```
 
+</TabItem>
+</Tabs>
+
 ## REST API
 
 | Name                              | Description                       | Type             |
@@ -173,6 +286,53 @@ ms_sync_count = 200
 | allowed_ips                       | list of whitelisted IPs           | string[IpAddr]   |
 
 Example:
+
+<Tabs groupId="format">
+<TabItem value="json" label="JSON" default>
+
+```json
+  "rest_api": {
+    "binding_port": 14265,
+    "binding_ip_addr": "0.0.0.0",
+    "feature_proof_of_work": true,
+    "public_routes": [
+      "/api/v1/peers",
+      "/api/v1/addresses/:address",
+      "/api/v1/addresses/ed25519/:address",
+      "/health",
+      "/api/v1/info",
+      "/api/v1/messages/:messageId",
+      "/api/v1/messages/:messageId/children",
+      "/api/v1/messages/:messageId/metadata",
+      "/api/v1/messages/:messageId/raw",
+      "/api/v1/messages",
+      "/api/v1/milestones/:milestoneIndex",
+      "/api/v1/milestones/:milestoneIndex/utxo-changes",
+      "/api/v1/outputs/:outputId",
+      "/api/v1/addresses/:address/outputs",
+      "/api/v1/addresses/ed25519/:address/outputs",
+      "/api/v1/peers/:peerId",
+      "/api/v1/peers",
+      "/api/v1/peers/:peerId",
+      "/api/v1/messages",
+      "/api/v1/messages",
+      "/api/v1/tips",
+      "/api/v1/receipts",
+      "/api/v1/receipts/:milestoneIndex",
+      "/api/v1/treasury",
+      "/api/v1/transactions/:transactionId/included-message",
+      "/api/plugins/debug/whiteflag"
+    ],
+    "allowed_ips": [
+      "127.0.0.1",
+      "::1"
+    ],
+    "white_flag_solidification_timeout": 2
+  },
+```
+
+</TabItem>
+<TabItem value="toml" label="TOML">
 
 ```toml
 [rest_api]
@@ -214,6 +374,9 @@ allowed_ips = [
 white_flag_solidification_timeout = 2
 ```
 
+</TabItem>
+</Tabs>
+
 ## Snapshot
 
 | Name              | Description                                                                                | Type             |
@@ -227,6 +390,25 @@ white_flag_solidification_timeout = 2
 
 Example:
 
+<Tabs groupId="format">
+<TabItem value="json" label="JSON" default>
+
+```json
+  "snapshot": {
+    "full_path": "./snapshots/alphanet/full_snapshot.bin",
+    "delta_path": "./snapshots/alphanet/delta_snapshot.bin",
+    "download_urls": [
+      "https://dbfiles.testnet.chrysalis2.com/"
+    ],
+    "depth": 50,
+    "interval_synced": 50,
+    "interval_unsynced": 1000
+  },
+```
+
+</TabItem>
+<TabItem value="toml" label="TOML">
+
 ```toml
 [snapshot]
 full_path         = "./snapshots/alphanet/full_snapshot.bin"
@@ -239,6 +421,9 @@ interval_synced   = 50
 interval_unsynced = 1000
 ```
 
+</TabItem>
+</Tabs>
+
 ## Pruning
 
 | Name           | Description                                           | Type         |
@@ -249,12 +434,29 @@ interval_unsynced = 1000
 
 Example:
 
+<Tabs groupId="format">
+<TabItem value="json" label="JSON" default>
+
+```json
+  "pruning": {
+    "enabled": true,
+    "delay": 60480,
+    "prune_receipts": false
+  },
+```
+
+</TabItem>
+<TabItem value="toml" label="TOML">
+
 ```toml
 [pruning]
 enabled         = true
 delay           = 60480
 prune_receipts  = false
 ```
+
+</TabItem>
+</Tabs>
 
 ## Storage
 
@@ -304,6 +506,50 @@ prune_receipts  = false
 
 Example:
 
+<Tabs groupId="format">
+<TabItem value="json" label="JSON" default>
+
+```json
+  "storage": {
+    "path": "./storage/alphanet",
+    "create_if_missing": true,
+    "create_missing_column_families": true,
+    "enable_statistics": false,
+    "increase_parallelism": 4,
+    "optimize_for_point_lookup": 67108864,
+    "optimize_level_style_compaction": 0,
+    "optimize_universal_style_compaction": 0,
+    "set_advise_random_on_open": true,
+    "set_allow_concurrent_memtable_write": true,
+    "set_allow_mmap_reads": false,
+    "set_allow_mmap_writes": false,
+    "set_atomic_flush": false,
+    "set_bytes_per_sync": 0,
+    "set_compaction_readahead_size": 0,
+    "set_max_write_buffer_number": 2,
+    "set_write_buffer_size": 67108864,
+    "set_db_write_buffer_size": 67108864,
+    "set_disable_auto_compactions": false,
+    "set_unordered_write": true,
+    "set_use_direct_io_for_flush_and_compaction": true,
+    "set_compaction_style": "Fifo",
+    "set_compression_type": "None",
+    "storage": {
+      "fetch_edge_limit": 1000,
+      "fetch_index_limit": 1000,
+      "fetch_output_id_limit": 1000,
+      "iteration_budget": 100
+    },
+    "env": {
+      "set_background_threads": 4,
+      "set_high_priority_background_threads": 2
+    }
+  },
+```
+
+</TabItem>
+<TabItem value="toml" label="TOML">
+
 ```toml
 [storage]
 path = "./storage/alphanet"
@@ -339,17 +585,36 @@ set_background_threads = 4 # defaults to the number of cpu cores
 set_high_priority_background_threads = 2
 ```
 
+</TabItem>
+</Tabs>
+
 ## Tangle
 
 | Name            | Description | Type   |
 | :-------------- | :---------- | :----- |
 | below_max_depth | TO-DO       | string |
 
-Example
+Example:
+
+<Tabs groupId="format">
+<TabItem value="json" label="JSON" default>
+
+```json
+  "tangle": {
+    "below_max_depth": 15
+  },
+```
+
+</TabItem>
+<TabItem value="toml" label="TOML">
+
 ```toml
 [tangle]
 below_max_depth = 15
 ```
+
+</TabItem>
+</Tabs>
 
 ## Mqtt
 
@@ -359,10 +624,25 @@ below_max_depth = 15
 
 Example:
 
+<Tabs groupId="format">
+<TabItem value="json" label="JSON" default>
+
+```json
+  "mqtt": {
+    "address": "tcp://localhost:1883"
+  },
+```
+
+</TabItem>
+<TabItem value="toml" label="TOML">
+
 ```toml
 [mqtt]
 address = "tcp://localhost:1883"
 ```
+
+</TabItem>
+</Tabs>
 
 ## Dashboard
 
@@ -382,6 +662,24 @@ address = "tcp://localhost:1883"
 
 Example:
 
+<Tabs groupId="format">
+<TabItem value="json" label="JSON" default>
+
+```json
+  "dashboard": {
+    "port": 8081,
+    "auth": {
+      "session_timeout": 86400,
+      "user": "admin",
+      "password_salt": "0000000000000000000000000000000000000000000000000000000000000000",
+      "password_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  }
+```
+
+</TabItem>
+<TabItem value="toml" label="TOML">
+
 ```toml
 [dashboard]
 port  = 8081
@@ -391,3 +689,5 @@ user            = "admin"
 password_salt   = "0000000000000000000000000000000000000000000000000000000000000000"
 password_hash   = "0000000000000000000000000000000000000000000000000000000000000000"
 ```
+</TabItem>
+</Tabs>
