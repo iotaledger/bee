@@ -50,6 +50,14 @@ macro_rules! impl_id {
                 write!(f, "{}({})", stringify!($name), self)
             }
         }
+
+        impl core::ops::Deref for $name {
+            type Target = [u8; $name::LENGTH];
+
+            fn deref(&self) -> &Self::Target {
+                &self.0
+            }
+        }
     };
 }
 

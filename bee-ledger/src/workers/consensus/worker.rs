@@ -129,9 +129,7 @@ where
 
     let migration = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
         let milestone_id = milestone.id();
-
-        // Safe to unwrap since sizes are known to be the same
-        let transaction_id = TransactionId::new(milestone_id.as_ref().to_vec().try_into().unwrap());
+        let transaction_id = TransactionId::from(milestone_id);
 
         for (index, fund) in receipt.funds().iter().enumerate() {
             metadata.created_outputs.insert(
