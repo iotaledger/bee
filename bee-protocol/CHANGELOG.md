@@ -24,8 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Bump deps: 
-  + `bee-autopeering` ~> 0.4.2;
-  + `bee-gossip` ~> 0.5.1;
+  + `bee-autopeering` ~> 0.5.0;
+  + `bee-gossip` ~> 0.6.0;
 
 ## 0.2.1 - 2022-02-28
 
