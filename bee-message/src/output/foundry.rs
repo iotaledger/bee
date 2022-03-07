@@ -5,10 +5,7 @@ use crate::{
     address::{Address, AliasAddress},
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
-        unlock_condition::{
-            verify_allowed_unlock_conditions, ImmutableAliasAddressUnlockCondition, UnlockCondition,
-            UnlockConditionFlags, UnlockConditions,
-        },
+        unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
         FoundryId, NativeToken, NativeTokens, OutputAmount, TokenScheme, TokenTag,
     },
     Error,
@@ -406,10 +403,7 @@ fn verify_supply(circulating_supply: &U256, maximum_supply: &U256) -> Result<(),
 }
 
 fn verify_unlock_conditions(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
-    if unlock_conditions
-        .get(ImmutableAliasAddressUnlockCondition::KIND)
-        .is_none()
-    {
+    if unlock_conditions.immutable_alias_address().is_none() {
         Err(Error::MissingAddressUnlockCondition)
     } else {
         verify_allowed_unlock_conditions(unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)

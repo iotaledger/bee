@@ -8,6 +8,7 @@ use bee_message::{
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     Error,
 };
+use bee_test::rand::bytes::rand_bytes_array;
 
 use packable::{error::UnpackError, PackableExt};
 
@@ -30,7 +31,7 @@ fn essence_kind() {
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder(0)
+        RegularTransactionEssence::builder(0, rand_bytes_array())
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()

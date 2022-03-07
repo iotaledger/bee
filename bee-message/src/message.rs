@@ -17,24 +17,15 @@ use packable::{
     Packable, PackableExt,
 };
 
+use core::ops::Deref;
+
 /// A builder to build a [`Message`].
 #[must_use]
 pub struct MessageBuilder<P: NonceProvider = Miner> {
     protocol_version: Option<u8>,
-    parents: Option<Parents>,
+    parents: Parents,
     payload: Option<Payload>,
     nonce_provider: Option<(P, f64)>,
-}
-
-impl<P: NonceProvider> Default for MessageBuilder<P> {
-    fn default() -> Self {
-        Self {
-            protocol_version: None,
-            parents: None,
-            payload: None,
-            nonce_provider: None,
-        }
-    }
 }
 
 impl<P: NonceProvider> MessageBuilder<P> {
@@ -43,21 +34,19 @@ impl<P: NonceProvider> MessageBuilder<P> {
 
     /// Creates a new [`MessageBuilder`].
     #[inline(always)]
-    pub fn new() -> Self {
-        Default::default()
+    pub fn new(parents: Parents) -> Self {
+        Self {
+            protocol_version: None,
+            parents,
+            payload: None,
+            nonce_provider: None,
+        }
     }
 
     /// Adds a protocol version to a [`MessageBuilder`].
     #[inline(always)]
     pub fn with_protocol_version(mut self, protocol_version: u8) -> Self {
         self.protocol_version = Some(protocol_version);
-        self
-    }
-
-    /// Adds parents to a [`MessageBuilder`].
-    #[inline(always)]
-    pub fn with_parents(mut self, parents: Parents) -> Self {
-        self.parents = Some(parents);
         self
     }
 
@@ -78,19 +67,12 @@ impl<P: NonceProvider> MessageBuilder<P> {
     /// Finishes the [`MessageBuilder`] into a [`Message`].
     pub fn finish(self) -> Result<Message, Error> {
         let protocol_version = self.protocol_version.ok_or(Error::MissingField("protocol_version"))?;
-        let parents = self.parents.ok_or(Error::MissingField("parents"))?;
 
-        if !matches!(
-            self.payload,
-            None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::TaggedData(_))
-        ) {
-            // Safe to unwrap since it's known not to be None.
-            return Err(Error::InvalidPayloadKind(self.payload.unwrap().kind()));
-        }
+        verify_payload(self.payload.as_ref())?;
 
         let mut message = Message {
             protocol_version,
-            parents,
+            parents: self.parents,
             payload: self.payload.into(),
             nonce: 0,
         };
@@ -138,8 +120,8 @@ impl Message {
 
     /// Creates a new [`MessageBuilder`] to construct an instance of a [`Message`].
     #[inline(always)]
-    pub fn builder() -> MessageBuilder {
-        MessageBuilder::new()
+    pub fn builder(parents: Parents) -> MessageBuilder {
+        MessageBuilder::new(parents)
     }
 
     /// Computes the identifier of the message.
@@ -195,21 +177,11 @@ impl Packable for Message {
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let protocol_version = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
-
         let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
-
         let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
 
-        if VERIFY
-            && !matches!(
-                *payload,
-                None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::TaggedData(_))
-            )
-        {
-            // Safe to unwrap since it's known not to be None.
-            return Err(UnpackError::Packable(Error::InvalidPayloadKind(
-                Into::<Option<Payload>>::into(payload).unwrap().kind(),
-            )));
+        if VERIFY {
+            verify_payload(payload.deref().as_ref()).map_err(UnpackError::Packable)?;
         }
 
         let nonce = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
@@ -234,5 +206,17 @@ impl Packable for Message {
         }
 
         Ok(message)
+    }
+}
+
+fn verify_payload(payload: Option<&Payload>) -> Result<(), Error> {
+    if !matches!(
+        payload,
+        None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::TaggedData(_))
+    ) {
+        // Safe to unwrap since it's known not to be None.
+        Err(Error::InvalidPayloadKind(payload.unwrap().kind()))
+    } else {
+        Ok(())
     }
 }

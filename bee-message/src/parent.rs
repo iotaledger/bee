@@ -33,12 +33,11 @@ impl Parents {
 
     /// Creates new [`Parents`].
     pub fn new(inner: Vec<MessageId>) -> Result<Self, Error> {
-        let inner: BoxedSlicePrefix<MessageId, ParentCount> =
-            inner.into_boxed_slice().try_into().map_err(Error::InvalidParentCount)?;
-
         verify_parents::<true>(&inner)?;
 
-        Ok(Self(inner))
+        Ok(Self(
+            inner.into_boxed_slice().try_into().map_err(Error::InvalidParentCount)?,
+        ))
     }
 
     /// Returns the number of parents.

@@ -124,7 +124,7 @@ impl TryFrom<Vec<UnlockCondition>> for UnlockConditions {
 
 impl UnlockConditions {
     ///
-    pub const COUNT_MAX: u8 = 6;
+    pub const COUNT_MAX: u8 = 7;
 
     /// Creates a new [`UnlockConditions`].
     pub fn new(unlock_conditions: Vec<UnlockCondition>) -> Result<Self, Error> {

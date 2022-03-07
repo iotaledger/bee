@@ -31,6 +31,7 @@ use bee_message::{
     unlock_block::{
         AliasUnlockBlock, NftUnlockBlock, ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks,
     },
+    util::hex_decode,
     Message, MessageBuilder, MessageId,
 };
 #[cfg(feature = "cpt2")]
@@ -71,18 +72,18 @@ impl TryFrom<&MessageDto> for Message {
     type Error = Error;
 
     fn try_from(value: &MessageDto) -> Result<Self, Self::Error> {
-        let mut builder = MessageBuilder::new()
+        let parents = Parents::new(
+            value
+                .parents
+                .iter()
+                .map(|m| {
+                    m.parse::<MessageId>()
+                        .map_err(|_| Error::InvalidField("parentMessageIds"))
+                })
+                .collect::<Result<Vec<MessageId>, Error>>()?,
+        )?;
+        let mut builder = MessageBuilder::new(parents)
             .with_protocol_version(value.protocol_version)
-            .with_parents(Parents::new(
-                value
-                    .parents
-                    .iter()
-                    .map(|m| {
-                        m.parse::<MessageId>()
-                            .map_err(|_| Error::InvalidField("parentMessageIds"))
-                    })
-                    .collect::<Result<Vec<MessageId>, Error>>()?,
-            )?)
             .with_nonce_provider(
                 value.nonce.parse::<u64>().map_err(|_| Error::InvalidField("nonce"))?,
                 0f64,
@@ -170,11 +171,11 @@ impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
         for b in &value.unlock_blocks {
             unlock_blocks.push(b.try_into()?);
         }
-        let builder = TransactionPayload::builder()
-            .with_essence((&value.essence).try_into()?)
-            .with_unlock_blocks(UnlockBlocks::new(unlock_blocks)?);
 
-        Ok(builder.finish()?)
+        Ok(TransactionPayload::new(
+            (&value.essence).try_into()?,
+            UnlockBlocks::new(unlock_blocks)?,
+        )?)
     }
 }
 
@@ -254,6 +255,7 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
                 .network_id
                 .parse::<u64>()
                 .map_err(|_| Error::InvalidField("networkId"))?,
+            hex_decode(&value.inputs_commitment)?,
         )
         .with_inputs(inputs)
         .with_outputs(outputs);

@@ -11,13 +11,16 @@ use bee_message::{
     payload::{
         milestone::{MilestoneEssence, MilestoneId, MilestonePayload},
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
-        transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayloadBuilder},
+        transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload, TaggedDataPayload, TreasuryTransactionPayload,
     },
     signature::{Ed25519Signature, Signature},
     unlock_block::{ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks},
 };
-use bee_test::rand::{bytes::rand_bytes, parents::rand_parents};
+use bee_test::rand::{
+    bytes::{rand_bytes, rand_bytes_array},
+    parents::rand_parents,
+};
 
 use packable::PackableExt;
 
@@ -50,7 +53,7 @@ fn transaction() {
             .unwrap(),
     );
     let essence = TransactionEssence::Regular(
-        RegularTransactionEssence::builder(0)
+        RegularTransactionEssence::builder(0, rand_bytes_array())
             .with_inputs(vec![input1, input2])
             .add_output(output)
             .finish()
@@ -64,11 +67,7 @@ fn transaction() {
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
 
-    let tx_payload = TransactionPayloadBuilder::new()
-        .with_essence(essence)
-        .with_unlock_blocks(unlock_blocks)
-        .finish()
-        .unwrap();
+    let tx_payload = TransactionPayload::new(essence, unlock_blocks).unwrap();
 
     let payload: Payload = tx_payload.into();
     let packed = payload.pack_to_vec();

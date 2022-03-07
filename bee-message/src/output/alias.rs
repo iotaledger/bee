@@ -5,10 +5,7 @@ use crate::{
     address::Address,
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
-        unlock_condition::{
-            verify_allowed_unlock_conditions, GovernorAddressUnlockCondition, StateControllerAddressUnlockCondition,
-            UnlockCondition, UnlockConditionFlags, UnlockConditions,
-        },
+        unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
         AliasId, NativeToken, NativeTokens, OutputAmount,
     },
     Error,
@@ -378,9 +375,7 @@ fn verify_index_counter(alias_id: &AliasId, state_index: u32, foundry_counter: u
 }
 
 fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, alias_id: &AliasId) -> Result<(), Error> {
-    if let Some(UnlockCondition::StateControllerAddress(unlock_condition)) =
-        unlock_conditions.get(StateControllerAddressUnlockCondition::KIND)
-    {
+    if let Some(unlock_condition) = unlock_conditions.state_controller_address() {
         if let Address::Alias(alias_address) = unlock_condition.address() {
             if alias_address.alias_id() == alias_id {
                 return Err(Error::SelfControlledAliasOutput(*alias_id));
@@ -390,9 +385,7 @@ fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, alias_id: &Ali
         return Err(Error::MissingStateControllerUnlockCondition);
     }
 
-    if let Some(UnlockCondition::GovernorAddress(unlock_condition)) =
-        unlock_conditions.get(GovernorAddressUnlockCondition::KIND)
-    {
+    if let Some(unlock_condition) = unlock_conditions.governor_address() {
         if let Address::Alias(alias_address) = unlock_condition.address() {
             if alias_address.alias_id() == alias_id {
                 return Err(Error::SelfControlledAliasOutput(*alias_id));
