@@ -27,7 +27,7 @@ hex = { version = "0.4.3", default-features = false }
 log = { version = "0.4.14", default-features = false }
 mime_guess = { version = "2.0.3", default-features = false }
 multiaddr = { version = "0.13.0", default-features = false }
-rust-embed = { version = "6.2.0", default-features = false }
+rust-embed = { version = "6.2.0", default-features = false, features = [ "interpolate-folder-path" ] }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
 serde_json = { version = "1.0.68", default-features = false }
 serde_repr = { version = "0.1.7", default-features = false }
@@ -35,3 +35,9 @@ tokio = { version = "1.12.0", default-features = false, features = [ "signal", "
 tokio-stream = { version = "0.1.7", default-features = false }
 warp = { version = "0.3.1", default-features = false }
 warp-reverse-proxy = { version = "0.4.0", default-features = false }
+
+[build-dependencies]
+reqwest = { version = "0.11.5", default-features = false, features = [ "blocking", "default-tls", "json" ] }
+sha2 = { version = "0.9.6", default-features = false }
+tempfile = { version = "3.3.0", default-features = false }
+zip = { version = "0.5.13", default-features = false, features = [ "bzip2", "deflate" ] }

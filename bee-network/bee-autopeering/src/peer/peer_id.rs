@@ -18,6 +18,7 @@ use std::{
 };
 
 const DISPLAY_LENGTH: usize = 16;
+const DISPLAY_OFFSET: usize = 8;
 
 /// Represents the unique identity of a peer in the network.
 #[derive(Copy, Clone)]
@@ -61,7 +62,7 @@ impl PeerId {
 
 /// Creates the corresponding `libp2p_core::PeerId` from a crypto.rs ED25519 public key.
 pub fn libp2p_peer_id(public_key: &PublicKey) -> libp2p_core::PeerId {
-    libp2p_core::PeerId::from_public_key(libp2p_public_key(public_key))
+    libp2p_core::PeerId::from_public_key(&libp2p_public_key(public_key))
 }
 
 /// Creates the corresponding `libp2p_core::PublicKey` from a crypto.rs ED25519 public key.
@@ -98,7 +99,7 @@ impl fmt::Debug for PeerId {
 
 impl fmt::Display for PeerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.libp2p_peer_id().to_base58()[..DISPLAY_LENGTH].fmt(f)
+        self.libp2p_peer_id().to_base58()[DISPLAY_OFFSET..DISPLAY_OFFSET + DISPLAY_LENGTH].fmt(f)
     }
 }
 

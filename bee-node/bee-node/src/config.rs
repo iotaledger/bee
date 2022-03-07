@@ -183,13 +183,15 @@ where
             logger.level(LOGGER_STDOUT_NAME, log_level);
         }
 
+        // TODO: use 'option_get_or_insert_default' once stable (see issue #82901)
+        let autopeering = self.autopeering.get_or_insert(AutopeeringConfigBuilder::default());
+
         // Override the entry node mode.
         if args.run_as_entry_node() {
-            // TODO: use 'option_get_or_insert_default' once stable (see issue #82901)
-            let autopeering = self.autopeering.get_or_insert(AutopeeringConfigBuilder::default());
-
             autopeering.enabled = true;
             autopeering.run_as_entry_node = Some(true);
+        } else if args.enable_autopeering() {
+            autopeering.enabled = true;
         }
 
         self

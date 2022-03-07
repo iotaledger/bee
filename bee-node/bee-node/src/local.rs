@@ -20,7 +20,7 @@ pub struct Local {
 impl Local {
     pub fn from_keypair(keypair: Keypair) -> Self {
         let encoded = hex::encode(keypair.encode());
-        let peer_id = PeerId::from_public_key(PublicKey::Ed25519(keypair.public()));
+        let peer_id = PeerId::from_public_key(&PublicKey::Ed25519(keypair.public()));
 
         Self {
             keypair,

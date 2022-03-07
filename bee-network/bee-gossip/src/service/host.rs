@@ -31,7 +31,10 @@ use rand::Rng;
 use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
+use std::time::{SystemTime, UNIX_EPOCH};
+
 const MAX_PEER_STATE_CHECKER_DELAY_MILLIS: u64 = 2000;
+const MAX_DIALS: usize = 3;
 
 pub struct ServiceHostConfig {
     pub local_keys: identity::Keypair,
@@ -171,7 +174,8 @@ async fn command_processor(shutdown: Shutdown, commands: CommandReceiver, sender
 
     while let Some(command) = commands.next().await {
         if let Err(e) = process_command(command, &senders, &peerlist).await {
-            error!("Error processing command. Cause: {}", e);
+            // Note: commands are allowed to fail as the user may not be up-to-date.
+            debug!("Command could not be executed. Cause: {}", e);
             continue;
         }
     }
@@ -213,37 +217,47 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
     // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
     // of those.
     while interval.next().await.is_some() {
-        let peerlist_reader = peerlist.0.read().await;
+        let read = peerlist.0.read().await;
 
         // To how many known peers are we currently connected.
-        let num_known = peerlist_reader.filter_count(|info, _| info.relation.is_known());
-        let num_connected_known =
-            peerlist_reader.filter_count(|info, state| info.relation.is_known() && state.is_connected());
+        let num_known = read.filter_count(|info, _, _| info.relation.is_known());
+        let num_connected_known = read.filter_count(|info, state, _| info.relation.is_known() && state.is_connected());
 
         // To how many unknown peers are we currently connected.
         let num_connected_unknown =
-            peerlist_reader.filter_count(|info, state| info.relation.is_unknown() && state.is_connected());
+            read.filter_count(|info, state, _| info.relation.is_unknown() && state.is_connected());
 
         // To how many discovered peers are we currently connected.
         let num_connected_discovered =
-            peerlist_reader.filter_count(|info, state| info.relation.is_discovered() && state.is_connected());
+            read.filter_count(|info, state, _| info.relation.is_discovered() && state.is_connected());
+
+        // How many peers we know of but are currently disconnected.
+        let num_disconnected = read.filter_count(|_, state, _| state.is_disconnected());
 
         info!(
-            "Connected peers: known {}/{} unknown {}/{} discovered {}/{}.",
+            "Connected peers: known {}/{} unknown {}/{} discovered {}/{} - Disconnected peers: {}.",
             num_connected_known,
             num_known,
             num_connected_unknown,
             global::max_unknown_peers(),
             num_connected_discovered,
-            global::max_discovered_peers()
+            global::max_discovered_peers(),
+            num_disconnected,
         );
 
         // Automatically try to reconnect known **and** discovered peers. The removal of discovered peers is a decision
         // that needs to be made in the autopeering service.
-        for (peer_id, info) in peerlist_reader.filter_info(|info, state| {
+        for (peer_id, peer_info, peer_metrics) in read.filter(|info, state, _| {
             (info.relation.is_known() || info.relation.is_discovered()) && state.is_disconnected()
         }) {
-            debug!("Trying to reconnect to: {} ({}).", info.alias, alias!(peer_id));
+            if peer_metrics.num_dials >= MAX_DIALS {
+                log::debug!("Peer {} is unreachable.", peer_id);
+
+                let _ = senders.events.send(Event::PeerUnreachable { peer_id, peer_info });
+                continue;
+            }
+
+            debug!("Trying to reconnect to: {} ({}).", peer_info.alias, alias!(peer_id));
 
             // Ignore if the command fails. We can always retry the next time.
             let _ = senders.internal_commands.send(Command::DialPeer { peer_id });
@@ -354,7 +368,7 @@ async fn process_internal_event(
                 .map_err(|_| Error::SendingEventFailed)?;
         }
 
-        InternalEvent::ProtocolDropped { peer_id } => {
+        InternalEvent::ProtocolStopped { peer_id } => {
             let mut peerlist = peerlist.0.write().await;
 
             // Try to disconnect, but ignore errors in-case the peer was disconnected already.
@@ -362,15 +376,30 @@ async fn process_internal_event(
 
             // Only remove unknown peers.
             // NOTE: discovered peers should be removed manually via command if the autopeering protocol suggests it.
-            let _ = peerlist.filter_remove(&peer_id, |peer_info, _| peer_info.relation.is_unknown());
+            let was_removed = peerlist.filter_remove(&peer_id, |peer_info, _, _| peer_info.relation.is_unknown());
 
             // We no longer need to hold the lock.
             drop(peerlist);
+
+            // Make sure to end the underlying connection.
+            senders
+                .internal_commands
+                .send(Command::DisconnectPeer { peer_id })
+                .map_err(|_| Error::SendingEventFailed)?;
 
             senders
                 .events
                 .send(Event::PeerDisconnected { peer_id })
                 .map_err(|_| Error::SendingEventFailed)?;
+
+            if was_removed {
+                log::trace!("Removed unknown peer: {peer_id}");
+
+                senders
+                    .events
+                    .send(Event::PeerRemoved { peer_id })
+                    .map_err(|_| Error::SendingEventFailed)?;
+            }
         }
 
         InternalEvent::ProtocolEstablished {
@@ -396,7 +425,7 @@ async fn process_internal_event(
                         alias: alias!(peer_id).to_string(),
                         relation: PeerRelation::Unknown,
                     };
-                    peerlist.insert_peer(peer_id, peer_info).map_err(|(_, _, e)| e)?;
+                    peerlist.add(peer_id, peer_info).map_err(|(_, _, e)| e)?;
                     peer_added = true;
                 }
 
@@ -407,17 +436,27 @@ async fn process_internal_event(
                 // Spin up separate buffered reader and writer to efficiently process the gossip with that peer.
                 let (r, w) = substream.split();
 
-                let reader = BufReader::with_capacity(IO_BUFFER_LEN, r);
-                let writer = BufWriter::with_capacity(IO_BUFFER_LEN, w);
+                let inbound_gossip_rx = BufReader::with_capacity(IO_BUFFER_LEN, r);
+                let outbound_gossip_tx = BufWriter::with_capacity(IO_BUFFER_LEN, w);
 
-                let (incoming_tx, incoming_rx) = iota_gossip::channel();
-                let (outgoing_tx, outgoing_rx) = iota_gossip::channel();
+                let (inbound_gossip_tx, gossip_in) = iota_gossip::channel();
+                let (gossip_out, outbound_gossip_rx) = iota_gossip::channel();
 
-                iota_gossip::start_incoming_processor(peer_id, reader, incoming_tx, senders.internal_events.clone());
-                iota_gossip::start_outgoing_processor(peer_id, writer, outgoing_rx, senders.internal_events.clone());
+                iota_gossip::start_inbound_gossip_handler(
+                    peer_id,
+                    inbound_gossip_rx,
+                    inbound_gossip_tx,
+                    senders.internal_events.clone(),
+                );
+                iota_gossip::start_outbound_gossip_handler(
+                    peer_id,
+                    outbound_gossip_tx,
+                    outbound_gossip_rx,
+                    senders.internal_events.clone(),
+                );
 
                 // We store a clone of the gossip send channel in order to send a shutdown signal.
-                let _ = peerlist.update_state(&peer_id, |state| state.set_connected(outgoing_tx.clone()));
+                let _ = peerlist.update_state(&peer_id, |state| state.set_connected(gossip_out.clone()));
 
                 // We no longer need to hold the lock.
                 drop(peerlist);
@@ -447,8 +486,8 @@ async fn process_internal_event(
                     .send(Event::PeerConnected {
                         peer_id,
                         info: peer_info,
-                        gossip_in: incoming_rx,
-                        gossip_out: outgoing_tx,
+                        gossip_in,
+                        gossip_out,
                     })
                     .map_err(|_| Error::SendingEventFailed)?;
             } else {
@@ -456,6 +495,29 @@ async fn process_internal_event(
                 // This branch handles the error case, so unwrapping it is fine.
                 debug!("{}", accepted.unwrap_err());
             }
+        }
+
+        InternalEvent::PeerUnreachable { peer_id } => {
+            if let Ok(peer_info) = peerlist.0.read().await.info(&peer_id) {
+                senders
+                    .events
+                    .send(Event::PeerUnreachable { peer_id, peer_info })
+                    .map_err(|_| Error::SendingEventFailed)?;
+            }
+        }
+
+        InternalEvent::PeerIdentified { peer_id } => {
+            let _ = peerlist.0.write().await.update_metrics(&peer_id, |m| {
+                // Reset dial count.
+                m.num_dials = 0;
+                // Update Identify timestamp.
+                m.identified_at = Some(
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .expect("system time")
+                        .as_secs(),
+                );
+            });
         }
     }
 
@@ -479,7 +541,7 @@ async fn add_peer(
     let mut peerlist = peerlist.0.write().await;
 
     // If the insert fails for some reason, we get the peer data back, so it can be reused.
-    match peerlist.insert_peer(peer_id, peer_info) {
+    match peerlist.add(peer_id, peer_info) {
         Ok(()) => {
             // Panic:
             // We just added the peer_id so unwrapping here is fine.

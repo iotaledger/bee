@@ -1,5 +1,0 @@
-[submodule "bee-node/bee-plugin/bee-plugin-dashboard/src/frontend"]
-	path = bee-node/bee-plugin/bee-plugin-dashboard/src/frontend
-	url = https://github.com/iotaledger/node-dashboard.git
-	branch = main
-	ignore = dirty
