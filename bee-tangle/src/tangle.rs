@@ -493,20 +493,15 @@ impl<B: StorageBackend> Tangle<B> {
         let was_vacant = matches!(entry, Entry::Vacant(_));
         let mut vertex = entry.or_empty();
 
+        let mut parents = None;
+
         if was_vacant || vertex.message().is_none() {
             if let Ok(Some((msg, metadata))) = self.storage_get(message_id) {
                 vertex.prevent_eviction();
 
                 if vertex.message().is_none() {
-                    let parents = msg.parents().clone();
-
+                    parents = Some(msg.parents().clone());
                     vertex.insert_message_and_metadata(msg, metadata);
-
-                    // Insert children for parents
-                    // This can deadlock if the parent is inserted in the same partition as `vertex`.
-                    for &parent in parents.iter() {
-                        self.vertices.entry(parent).await.or_empty().add_child(*message_id);
-                    }
                 };
 
                 // This shouldn't deadlock because `pop_random` calls `try_write` over a random
@@ -517,17 +512,25 @@ impl<B: StorageBackend> Tangle<B> {
             }
         }
 
-        let r = vertex.metadata_mut().map(update);
+        let output = vertex.metadata_mut().map(update);
 
         if let Some((msg, meta)) = vertex.message_and_metadata() {
-            let (msg, meta) = ((&**msg).clone(), *meta);
-
-            self.storage_insert(*message_id, msg, meta)
+            self.storage_insert(*message_id, (&**msg).clone(), *meta)
                 .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
         }
+
         drop(vertex);
 
-        r
+        if let Some(parents) = parents {
+            // Insert children for parents
+            for &parent in parents.iter() {
+                self.vertices.entry(parent).await.or_empty().add_child(*message_id);
+            }
+
+            self.perform_eviction();
+        }
+
+        output
     }
 
     async fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vec<MessageId>> + '_> {
