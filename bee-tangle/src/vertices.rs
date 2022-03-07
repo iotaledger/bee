@@ -42,6 +42,7 @@ pub(crate) struct VacantEntry<'a> {
     message_id: MessageId,
     table: RwLockWriteGuard<'a, RawTable<(MessageId, Vertex)>>,
     hash_builder: &'a DefaultHashBuilder,
+    len: &'a AtomicUsize,
 }
 
 impl<'a> VacantEntry<'a> {
@@ -50,6 +51,7 @@ impl<'a> VacantEntry<'a> {
             let entry = table.insert_entry(self.hash, (self.message_id, Vertex::empty()), move |(message_id, _)| {
                 make_hash(&self.hash_builder, message_id)
             });
+            self.len.fetch_add(1, Ordering::Relaxed);
             &mut entry.1
         })
     }
@@ -172,6 +174,7 @@ impl Vertices {
                 message_id,
                 table,
                 hash_builder: &self.hash_builder,
+                len: &self.len,
             })
         }
     }
