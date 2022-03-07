@@ -1,6 +1,6 @@
 [package]
 name = "bee-rest-api"
-version = "0.2.0"
+version = "0.2.2"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "The default REST API implementation for the IOTA Bee node software."
@@ -17,11 +17,11 @@ all-features = true
 rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
-bee-gossip = { version = "0.4.0", path = "../../bee-network/bee-gossip", default-features = false, optional = true }
+bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false, optional = true }
 bee-ledger = { version = "0.7.0", path = "../../bee-ledger", default-features = false }
 bee-message = { version = "0.2.0", path = "../../bee-message", default-features = false }
 bee-pow = { version = "0.2.0", path = "../../bee-pow", default-features = false }
-bee-protocol = { version = "0.2.0", path = "../../bee-protocol", default-features = false, optional = true }
+bee-protocol = { version = "0.2.2", path = "../../bee-protocol", default-features = false, optional = true }
 bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true  }
 bee-storage = { version = "0.9.0", path = "../../bee-storage/bee-storage", default-features = false, optional = true }
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false, optional = true }

@@ -500,10 +500,10 @@ impl<B: StorageBackend> Tangle<B> {
             if let Some((msg, meta)) = vertex.message_and_metadata() {
                 let (msg, meta) = ((&**msg).clone(), *meta);
 
-                drop(vertex);
-
                 self.storage_insert(*message_id, msg, meta)
                     .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
+
+                drop(vertex);
             }
 
             r
