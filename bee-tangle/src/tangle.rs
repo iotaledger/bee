@@ -526,6 +526,12 @@ impl<B: StorageBackend> Tangle<B> {
             self.perform_eviction();
         }
 
+        let cache_size = self.vertices.real_len().await;
+
+        if cache_size % 128 == 0 {
+            info!("Cache size: {}. Estimated size: {}", cache_size, self.vertices.len());
+        }
+
         output
     }
 

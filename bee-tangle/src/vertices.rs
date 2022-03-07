@@ -182,4 +182,12 @@ impl Vertices {
     pub(crate) fn len(&self) -> usize {
         self.len.load(Ordering::Relaxed)
     }
+
+    pub(crate) async fn real_len(&self) -> usize {
+        let mut len = 0;
+        for table in self.tables.iter() {
+            len += table.read().await.len();
+        }
+        len
+    }
 }
