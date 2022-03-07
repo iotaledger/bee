@@ -497,8 +497,6 @@ impl<B: StorageBackend> Tangle<B> {
 
         if was_vacant || vertex.message().is_none() {
             if let Ok(Some((msg, metadata))) = self.storage_get(message_id) {
-                vertex.prevent_eviction();
-
                 if vertex.message().is_none() {
                     parents = Some(msg.parents().clone());
                     vertex.insert_message_and_metadata(msg, metadata);
@@ -507,8 +505,6 @@ impl<B: StorageBackend> Tangle<B> {
                 // This shouldn't deadlock because `pop_random` calls `try_write` over a random
                 // lock and this is non-blocking.
                 self.perform_eviction();
-
-                vertex.allow_eviction();
             }
         }
 
