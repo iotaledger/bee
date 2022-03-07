@@ -10,10 +10,10 @@ use crate::{
 
 use libp2p::{
     identify::{Identify, IdentifyConfig, IdentifyEvent},
-    identity::PublicKey,
     swarm::NetworkBehaviourEventProcess,
     NetworkBehaviour,
 };
+use libp2p_core::identity::PublicKey;
 use log::*;
 
 const IOTA_PROTOCOL_VERSION: &str = "iota/0.1.0";

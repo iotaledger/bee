@@ -11,7 +11,7 @@ pub fn gen_constant_peer_id() -> PeerId {
 mod full {
 
     use super::*;
-    use libp2p::identity::{
+    use libp2p_core::identity::{
         ed25519::{Keypair, SecretKey},
         PublicKey,
     };
