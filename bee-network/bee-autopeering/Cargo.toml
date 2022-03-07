@@ -1,6 +1,6 @@
 [package]
 name = "bee-autopeering"
-version = "0.4.1"
+version = "0.4.2"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Allows peers in the same IOTA network to automatically discover each other."

@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.4.2 - 2022-03-07
+
+### Changed
+
+- Bump dep: `libp2p-core` ~> 0.30.0;
+
 ## 0.4.1 - 2022-02-28
 
 ### Changed
