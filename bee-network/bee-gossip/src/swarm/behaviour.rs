@@ -19,6 +19,7 @@ use log::*;
 const IOTA_PROTOCOL_VERSION: &str = "iota/0.1.0";
 
 #[derive(NetworkBehaviour)]
+#[behaviour(event_process = true)]
 pub struct SwarmBehaviour {
     identify: Identify,
     gossip: IotaGossipProtocol,

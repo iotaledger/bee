@@ -18,12 +18,12 @@ mod full {
     use std::iter::repeat;
 
     pub fn gen_random_peer_id() -> PeerId {
-        PeerId::from_public_key(libp2p_core::PublicKey::Ed25519(Keypair::generate().public()))
+        PeerId::from_public_key(&libp2p_core::PublicKey::Ed25519(Keypair::generate().public()))
     }
 
     pub fn gen_deterministic_peer_id(gen: impl ToString) -> PeerId {
         let keys = gen_deterministic_keys(gen);
-        PeerId::from_public_key(PublicKey::Ed25519(keys.public()))
+        PeerId::from_public_key(&PublicKey::Ed25519(keys.public()))
     }
 
     pub fn gen_deterministic_keys(gen: impl ToString) -> Keypair {
