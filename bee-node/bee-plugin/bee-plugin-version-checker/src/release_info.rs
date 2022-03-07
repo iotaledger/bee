@@ -20,7 +20,8 @@ impl ReleaseInfoBuilder {
     ///  - `None` if this is a pre-release.
     ///  - `Some` otherwise.
     pub(crate) fn build(self) -> Option<ReleaseInfo> {
-        let version = self.tag_name.replace("v", "");
+        let mut version = self.tag_name.clone();
+        version.retain(|c| c != 'v');
 
         match Version::parse(&version) {
             Err(e) => {
