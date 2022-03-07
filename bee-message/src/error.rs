@@ -210,7 +210,7 @@ impl fmt::Display for Error {
                     f,
                     "insufficient output amount for storage deposit: {amount} (should be at least {required})"
                 )
-            },
+            }
             Error::InsufficientStorageDepositReturnAmount { deposit, required } => {
                 write!(
                     f,
@@ -221,8 +221,10 @@ impl fmt::Display for Error {
                 f,
                 "storage deposit return of {deposit} exceeds the original output amount of {amount}"
             ),
-            Error::UnnecessaryStorageDepositReturnCondition { remainder, required} => write!(f, 
-            "no storage deposit return is needed, because remaining amount of {remainder} already covers required deposit of {required}"),
+            Error::UnnecessaryStorageDepositReturnCondition { remainder, required } => write!(
+                f,
+                "no storage deposit return is needed, because remaining amount of {remainder} already covers required deposit of {required}"
+            ),
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}", k),
             Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}", count),
             Error::InvalidFeatureBlockKind(k) => write!(f, "invalid feature block kind: {}", k),
