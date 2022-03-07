@@ -191,7 +191,7 @@ async fn dial_addr(swarm: &mut Swarm<SwarmBehaviour>, addr: Multiaddr, peerlist:
 
     info!("Dialing address: {}.", addr);
 
-    Swarm::dial_addr(swarm, addr.clone()).map_err(|e| Error::DialingAddressFailed(addr, e))?;
+    Swarm::dial(swarm, addr.clone()).map_err(|e| Error::DialingAddressFailed(addr, e))?;
 
     Ok(())
 }
@@ -229,7 +229,7 @@ async fn dial_peer(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId, peerlist:
 
     // TODO: We also use `Swarm::dial_addr` here (instead of `Swarm::dial`) for now. See if it's better to change
     // that.
-    Swarm::dial_addr(swarm, addr).map_err(|e| Error::DialingPeerFailed(peer_id, e))?;
+    Swarm::dial(swarm, addr).map_err(|e| Error::DialingPeerFailed(peer_id, e))?;
 
     Ok(())
 }

@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use libp2p_core::ProtocolName;
-
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -14,14 +12,14 @@ impl IotaGossipIdentifier {
     }
 }
 
-impl ProtocolName for IotaGossipIdentifier {
-    fn protocol_name(&self) -> &[u8] {
-        self.0.as_bytes()
-    }
-}
-
 impl fmt::Display for IotaGossipIdentifier {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl AsRef<[u8]> for IotaGossipIdentifier {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
     }
 }

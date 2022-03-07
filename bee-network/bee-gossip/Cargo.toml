@@ -1,6 +1,6 @@
 [package]
 name = "bee-gossip"
-version = "0.5.0"
+version = "0.6.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Allows peers in the same IOTA network to exchange gossip messages with each other."
@@ -43,8 +43,8 @@ bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-fea
 async-trait = { version = "0.1.51", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false, optional = true }
 hashbrown = { version = "0.11.2", default-features = false, features = [ "ahash", "inline-more" ] }
-libp2p = { version = "0.39.1", default-features = false, optional = true }
-libp2p-core = { version = "0.29.0", default-features = false }
+libp2p = { version = "0.41.0", default-features = false, optional = true }
+libp2p-core = { version = "0.30.0", default-features = false }
 log = { version = "0.4.14", default-features = false, optional = true }
 once_cell = { version = "1.8.0", default-features = false, optional = true }
 rand = { version = "0.8.4", default-features = false, optional = true }

@@ -11,7 +11,7 @@ use crate::{alias, init::global::network_id, network::origin::Origin};
 
 use libp2p::{
     core::{connection::ConnectionId, ConnectedPoint},
-    swarm::{NetworkBehaviour, NetworkBehaviourAction, NotifyHandler, PollParameters},
+    swarm::{IntoProtocolsHandler, NetworkBehaviour, NetworkBehaviourAction, NotifyHandler, PollParameters},
     Multiaddr, PeerId,
 };
 use log::debug;
@@ -23,6 +23,8 @@ use std::{
 
 const IOTA_GOSSIP_NAME: &str = "iota-gossip";
 const IOTA_GOSSIP_VERSION: &str = "1.0.0";
+
+type GossipBehaviourAction = NetworkBehaviourAction<IotaGossipEvent, GossipProtocolHandler, IotaGossipHandlerInEvent>;
 
 struct ConnectionInfo {
     addr: Multiaddr,
@@ -44,7 +46,7 @@ pub struct IotaGossipProtocol {
     num_outbounds: usize,
 
     /// Events produced for the behaviour and handlers.
-    events: VecDeque<NetworkBehaviourAction<IotaGossipHandlerInEvent, IotaGossipEvent>>,
+    events: VecDeque<GossipBehaviourAction>,
 
     /// Maps peers to their connection infos. Peers can only have 1 gossip connection, hence the mapping is 1:1.
     peers: HashMap<PeerId, ConnectionInfo>,
@@ -116,7 +118,13 @@ impl NetworkBehaviour for IotaGossipProtocol {
     /// **libp2p docs**:
     ///
     /// Informs the behaviour about a newly established connection to a peer.
-    fn inject_connection_established(&mut self, peer_id: &PeerId, conn_id: &ConnectionId, endpoint: &ConnectedPoint) {
+    fn inject_connection_established(
+        &mut self,
+        peer_id: &PeerId,
+        conn_id: &ConnectionId,
+        endpoint: &ConnectedPoint,
+        _failed_addresses: Option<&Vec<Multiaddr>>,
+    ) {
         let (peer_addr, origin) = match endpoint {
             ConnectedPoint::Dialer { address } => (address.clone(), Origin::Outbound),
             ConnectedPoint::Listener { send_back_addr, .. } => (send_back_addr.clone(), Origin::Inbound),
@@ -204,7 +212,13 @@ impl NetworkBehaviour for IotaGossipProtocol {
     /// A call to this method is always paired with an earlier call to
     /// `inject_connection_established` with the same peer ID, connection ID and
     /// endpoint.
-    fn inject_connection_closed(&mut self, peer_id: &PeerId, _: &ConnectionId, _: &ConnectedPoint) {
+    fn inject_connection_closed(
+        &mut self,
+        peer_id: &PeerId,
+        _: &ConnectionId,
+        _: &ConnectedPoint,
+        _: <Self::ProtocolsHandler as IntoProtocolsHandler>::Handler,
+    ) {
         debug!("gossip behaviour: connection with {} closed.", alias!(peer_id));
     }
 
@@ -234,11 +248,7 @@ impl NetworkBehaviour for IotaGossipProtocol {
         debug!("gossip behaviour: address of {} changed.", alias!(peer_id));
     }
 
-    fn poll(
-        &mut self,
-        _: &mut Context<'_>,
-        _: &mut impl PollParameters,
-    ) -> Poll<NetworkBehaviourAction<IotaGossipHandlerInEvent, Self::OutEvent>> {
+    fn poll(&mut self, _: &mut Context<'_>, _: &mut impl PollParameters) -> Poll<GossipBehaviourAction> {
         if let Some(event) = self.events.pop_front() {
             Poll::Ready(event)
         } else {

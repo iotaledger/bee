@@ -9,7 +9,8 @@ use crate::{
     swarm::protocols::iota_gossip::{GossipReceiver, GossipSender},
 };
 
-use libp2p::{swarm::NegotiatedSubstream, Multiaddr, PeerId};
+use libp2p::swarm::NegotiatedSubstream;
+use libp2p_core::{Multiaddr, PeerId};
 use tokio::sync::mpsc;
 
 pub type EventSender = mpsc::UnboundedSender<Event>;

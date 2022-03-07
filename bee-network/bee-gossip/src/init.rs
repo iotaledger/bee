@@ -181,7 +181,7 @@ fn init(
     let (internal_event_sender, internal_event_receiver) = event_channel::<InternalEvent>();
 
     let local_keys = identity::Keypair::Ed25519(keys);
-    let local_id = PeerId::from_public_key(local_keys.public());
+    let local_id = PeerId::from_public_key(&local_keys.public());
 
     event_sender
         .send(Event::LocalIdCreated { local_id })

@@ -25,7 +25,7 @@ pub fn build_swarm(
     internal_sender: InternalEventSender,
 ) -> Result<Swarm<SwarmBehaviour>, Error> {
     let local_pk = local_keys.public();
-    let local_id = local_pk.clone().into_peer_id();
+    let local_id = local_pk.to_peer_id();
 
     let noise_keys = noise::Keypair::<noise::X25519Spec>::new()
         .into_authentic(local_keys)

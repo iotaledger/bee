@@ -62,7 +62,7 @@ impl PeerId {
 
 /// Creates the corresponding `libp2p_core::PeerId` from a crypto.rs ED25519 public key.
 pub fn libp2p_peer_id(public_key: &PublicKey) -> libp2p_core::PeerId {
-    libp2p_core::PeerId::from_public_key(libp2p_public_key(public_key))
+    libp2p_core::PeerId::from_public_key(&libp2p_public_key(public_key))
 }
 
 /// Creates the corresponding `libp2p_core::PublicKey` from a crypto.rs ED25519 public key.

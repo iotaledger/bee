@@ -463,7 +463,7 @@ mod tests {
     }
 
     pub fn gen_random_peer_id() -> PeerId {
-        PeerId::from_public_key(libp2p_core::PublicKey::Ed25519(Keypair::generate().public()))
+        PeerId::from_public_key(&libp2p_core::PublicKey::Ed25519(Keypair::generate().public()))
     }
 
     pub fn gen_deterministic_peer_info(port: u16, relation: PeerRelation) -> PeerInfo {
