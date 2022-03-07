@@ -46,7 +46,6 @@ pub struct IotaGossipProtocol {
     num_outbounds: usize,
 
     /// Events produced for the behaviour and handlers.
-    // events: VecDeque<NetworkBehaviourAction<IotaGossipHandlerInEvent, IotaGossipEvent>>,
     events: VecDeque<GossipBehaviourAction>,
 
     /// Maps peers to their connection infos. Peers can only have 1 gossip connection, hence the mapping is 1:1.
