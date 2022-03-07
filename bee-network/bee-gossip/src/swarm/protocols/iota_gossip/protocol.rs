@@ -118,7 +118,6 @@ impl NetworkBehaviour for IotaGossipProtocol {
     /// **libp2p docs**:
     ///
     /// Informs the behaviour about a newly established connection to a peer.
-
     fn inject_connection_established(
         &mut self,
         peer_id: &PeerId,
