@@ -35,24 +35,28 @@ use std::collections::{HashMap, HashSet};
 
 struct ValidationContext {
     milestone_index: MilestoneIndex,
-    timestamp: u64,
-    amount: u64,
-    native_tokens_amount: HashMap<TokenId, U256>,
+    milestone_timestamp: u64,
+    inputs_amount: u64,
+    outputs_amount: u64,
+    inputs_native_tokens: HashMap<TokenId, U256>,
+    outputs_native_tokens: HashMap<TokenId, U256>,
     consumed_outputs: Vec<(OutputId, CreatedOutput)>,
     essence_hash: [u8; 32],
-    verified_addresses: HashSet<Address>,
+    unlocked_addresses: HashSet<Address>,
 }
 
 impl ValidationContext {
-    fn new(milestone_index: MilestoneIndex, timestamp: u64, essence: &RegularTransactionEssence) -> Self {
+    fn new(milestone_index: MilestoneIndex, milestone_timestamp: u64, essence: &RegularTransactionEssence) -> Self {
         Self {
             milestone_index,
-            timestamp,
-            amount: 0,
-            native_tokens_amount: HashMap::<TokenId, U256>::new(),
+            milestone_timestamp,
+            inputs_amount: 0,
+            outputs_amount: 0,
+            inputs_native_tokens: HashMap::<TokenId, U256>::new(),
+            outputs_native_tokens: HashMap::<TokenId, U256>::new(),
             consumed_outputs: Vec::with_capacity(essence.inputs().len()),
             essence_hash: TransactionEssence::from(essence.clone()).hash(),
-            verified_addresses: HashSet::new(),
+            unlocked_addresses: HashSet::new(),
         }
     }
 }
@@ -73,7 +77,7 @@ fn check_input_unlock_conditions(
                 if *timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index() {
                     return Err(ConflictReason::TimelockMilestoneIndex);
                 }
-                if timelock.timestamp() != 0 && context.timestamp < timelock.timestamp() as u64 {
+                if timelock.timestamp() != 0 && context.milestone_timestamp < timelock.timestamp() as u64 {
                     return Err(ConflictReason::TimelockUnix);
                 }
             }
@@ -102,7 +106,7 @@ fn check_output_feature_blocks(
     for feature_block in feature_blocks {
         match feature_block {
             FeatureBlock::Sender(sender) => {
-                if !context.verified_addresses.contains(sender.address()) {
+                if !context.unlocked_addresses.contains(sender.address()) {
                     return Err(ConflictReason::UnverifiedSender);
                 }
             }
@@ -154,7 +158,7 @@ fn unlock_address(
         _ => return Err(ConflictReason::IncorrectUnlockMethod),
     }
 
-    context.verified_addresses.insert(*address);
+    context.unlocked_addresses.insert(*address);
 
     Ok(())
 }
@@ -299,13 +303,13 @@ fn apply_regular_essence<B: StorageBackend>(
             _ => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
         };
 
-        context.amount = context
-            .amount
+        context.inputs_amount = context
+            .inputs_amount
             .checked_add(amount)
             .ok_or(Error::ConsumedAmountOverflow)?;
         for native_token in consumed_native_tokens.iter() {
             let native_token_amount = context
-                .native_tokens_amount
+                .inputs_native_tokens
                 .entry(*native_token.token_id())
                 .or_default();
             *native_token_amount = native_token_amount
@@ -327,10 +331,10 @@ fn apply_regular_essence<B: StorageBackend>(
             _ => return Err(Error::UnsupportedOutputKind(created_output.kind())),
         };
 
-        context.amount = context.amount.checked_sub(amount).ok_or(Error::CreatedAmountOverflow)?;
+        context.outputs_amount = context.outputs_amount.checked_sub(amount).ok_or(Error::CreatedAmountOverflow)?;
         for native_token in created_native_tokens.iter() {
             let native_token_amount = *context
-                .native_tokens_amount
+                .outputs_native_tokens
                 .entry(*native_token.token_id())
                 .or_default();
             native_token_amount
@@ -339,14 +343,12 @@ fn apply_regular_essence<B: StorageBackend>(
         }
     }
 
-    if context.amount != 0 {
+    if context.inputs_amount != context.outputs_amount {
         return Ok(ConflictReason::CreatedConsumedAmountMismatch);
     }
 
-    for (_, amount) in context.native_tokens_amount {
-        if !amount.is_zero() {
-            return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
-        }
+    if context.inputs_native_tokens != context.outputs_native_tokens {
+        return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
 
         // TODO The transaction is balanced in terms of native tokens, meaning the amount of native tokens present in
         // inputs equals to that of outputs. Otherwise, the foundry outputs controlling outstanding native token
