@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.2.2 - 2022-03-07
+
+### Changed
+
+- Bump dep: `bee-gossip` ~> 0.5.1;
+
 ## 0.2.1 - 2022-02-28
 
 ### Changed

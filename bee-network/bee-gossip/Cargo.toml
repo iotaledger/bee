@@ -1,6 +1,6 @@
 [package]
 name = "bee-gossip"
-version = "0.5.0"
+version = "0.5.1"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Allows peers in the same IOTA network to exchange gossip messages with each other."
