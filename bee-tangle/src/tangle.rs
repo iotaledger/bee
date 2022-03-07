@@ -8,7 +8,7 @@ use crate::{
     storage::StorageBackend,
     urts::UrtsTipPool,
     vertex::Vertex,
-    vertices::Vertices,
+    vertices::{Entry, Vertices},
     MessageRef,
 };
 
@@ -429,7 +429,7 @@ impl<B: StorageBackend> Tangle<B> {
             msg
         };
 
-        self.perform_eviction().await;
+        self.perform_eviction();
 
         msg
     }
@@ -489,27 +489,45 @@ impl<B: StorageBackend> Tangle<B> {
     where
         Update: FnOnce(&mut MessageMetadata) -> R,
     {
-        let exists = self.pull_message(message_id, true).await;
+        let entry = self.vertices.entry(*message_id).await;
+        let was_vacant = matches!(entry, Entry::Vacant(_));
+        let mut vertex = entry.or_empty();
 
-        if let Some(mut vertex) = self.vertices.get_mut(message_id).await {
-            if exists {
+        if was_vacant || vertex.message().is_none() {
+            if let Ok(Some((msg, metadata))) = self.storage_get(message_id) {
+                vertex.prevent_eviction();
+
+                if vertex.message().is_none() {
+                    let parents = msg.parents().clone();
+
+                    vertex.insert_message_and_metadata(msg, metadata);
+
+                    // Insert children for parents
+                    // This can deadlock if the parent is inserted in the same partition as `vertex`.
+                    for &parent in parents.iter() {
+                        self.vertices.entry(parent).await.or_empty().add_child(*message_id);
+                    }
+                };
+
+                // This shouldn't deadlock because `pop_random` calls `try_write` over a random
+                // lock and this is non-blocking.
+                self.perform_eviction();
+
                 vertex.allow_eviction();
             }
-            let r = vertex.metadata_mut().map(update);
-
-            if let Some((msg, meta)) = vertex.message_and_metadata() {
-                let (msg, meta) = ((&**msg).clone(), *meta);
-
-                self.storage_insert(*message_id, msg, meta)
-                    .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
-
-                drop(vertex);
-            }
-
-            r
-        } else {
-            None
         }
+
+        let r = vertex.metadata_mut().map(update);
+
+        if let Some((msg, meta)) = vertex.message_and_metadata() {
+            let (msg, meta) = ((&**msg).clone(), *meta);
+
+            self.storage_insert(*message_id, msg, meta)
+                .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
+        }
+        drop(vertex);
+
+        r
     }
 
     async fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vec<MessageId>> + '_> {
@@ -605,13 +623,13 @@ impl<B: StorageBackend> Tangle<B> {
         }
     }
 
-    async fn perform_eviction(&self) {
+    fn perform_eviction(&self) {
         let max_len = self.max_len.load(Ordering::Relaxed);
         let max_eviction_retries = self.config.max_eviction_retries();
 
         if self.vertices.len() > max_len {
             while self.vertices.len() > ((1.0 - CACHE_THRESHOLD_FACTOR) * max_len as f64) as usize {
-                if self.vertices.pop_random(max_eviction_retries).await.is_none() {
+                if self.vertices.pop_random(max_eviction_retries).is_none() {
                     log::warn!(
                         "could not perform cache eviction after {} attempts",
                         max_eviction_retries

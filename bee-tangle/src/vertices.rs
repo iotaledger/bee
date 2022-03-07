@@ -120,7 +120,7 @@ impl Vertices {
         .ok()
     }
 
-    pub(crate) async fn pop_random(&self, max_retries: usize) -> Option<Vertex> {
+    pub(crate) fn pop_random(&self, max_retries: usize) -> Option<Vertex> {
         let mut retries = 0;
 
         while retries < max_retries {
