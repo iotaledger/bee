@@ -158,17 +158,37 @@ where
                                     match error {
                                         MessageError::InsufficientStorageDepositAmount{required, amount} => {
                                             notify_invalid_message(
-                                                format!("Insufficient amount in output i={i}: {amount} (should be at least {required})"),
+                                                format!("Insufficient amount in output {i}: {amount} (should be at least {required})"),
+                                                &metrics,
+                                                notifier,
+                                            );
+                                            continue 'next_event;
+                                        }
+                                        MessageError::StorageDepositReturnExceedsOutputAmount{
+                                            deposit, amount,
+                                        } => {
+                                            notify_invalid_message(
+                                                format!("Storage deposit return exceeds amount of output {i}: {deposit} > {amount}"),
                                                 &metrics,
                                                 notifier,
                                             );
                                             continue 'next_event;
                                         },
-                                        MessageError::InvalidStorageDepositReturnAmount{
-                                            deposit, minimum, maximum,
+                                        MessageError::InsufficientStorageDepositReturnAmount{
+                                            deposit, required,
                                         } => {
                                             notify_invalid_message(
-                                                format!("Invalid storage deposit return amount in unlock condition of output i={i}: {deposit} (has to be at least {minimum} and at most {maximum})"),
+                                                format!("Insufficient storage deposit return for output {i}: {deposit} (should be at least {required})"),
+                                                &metrics,
+                                                notifier,
+                                            );
+                                            continue 'next_event;
+                                        }
+                                        MessageError::UnnecessaryStorageDepositReturnCondition{
+                                            remainder, required,
+                                        } => {
+                                            notify_invalid_message(
+                                                format!("Unnecessary storage deposit return for output {i}: remainder of {remainder} is less than required deposit {required}"),
                                                 &metrics,
                                                 notifier,
                                             );

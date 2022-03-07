@@ -53,10 +53,17 @@ pub enum Error {
         amount: u64,
         required: u64,
     },
-    InvalidStorageDepositReturnAmount {
+    StorageDepositReturnExceedsOutputAmount {
         deposit: u64,
-        minimum: u64,
-        maximum: u64,
+        amount: u64,
+    },
+    InsufficientStorageDepositReturnAmount {
+        deposit: u64,
+        required: u64,
+    },
+    UnnecessaryStorageDepositReturnCondition {
+        remainder: u64,
+        required: u64,
     },
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
@@ -203,17 +210,19 @@ impl fmt::Display for Error {
                     f,
                     "insufficient output amount for storage deposit: {amount} (should be at least {required})"
                 )
-            }
-            Error::InvalidStorageDepositReturnAmount {
-                deposit,
-                minimum,
-                maximum,
-            } => {
+            },
+            Error::InsufficientStorageDepositReturnAmount { deposit, required } => {
                 write!(
                     f,
-                    "storage deposit return amount has to be at least {minimum} and at most {maximum} but is {deposit}"
+                    "the return deposit ({deposit}) must be greater than the minimum storage deposit ({required})"
                 )
             }
+            Error::StorageDepositReturnExceedsOutputAmount { deposit, amount } => write!(
+                f,
+                "storage deposit return of {deposit} exceeds the original output amount of {amount}"
+            ),
+            Error::UnnecessaryStorageDepositReturnCondition { remainder, required} => write!(f, 
+            "no storage deposit return is needed, because remaining amount of {remainder} already covers required deposit of {required}"),
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}", k),
             Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}", count),
             Error::InvalidFeatureBlockKind(k) => write!(f, "invalid feature block kind: {}", k),

@@ -207,12 +207,12 @@ impl Output {
 
     /// Checks if a sufficient storage deposit was made for the given [`Output`].
     pub fn check_sufficient_storage_deposit(&self, config: &ByteCostConfig) -> Result<(), Error> {
-        let required = self.byte_cost(config);
+        let required_output = self.byte_cost(config);
 
-        if self.amount() < required {
+        if self.amount() < required_output {
             return Err(Error::InsufficientStorageDepositAmount {
                 amount: self.amount(),
-                required,
+                required: required_output,
             });
         }
 
@@ -226,14 +226,31 @@ impl Output {
         };
 
         if let Some(UnlockCondition::StorageDepositReturn(return_condition)) = maybe_return_condition {
-            let required_deposit = minimum_storage_deposit(config, return_condition.return_address());
-            let minimum = self.amount() - required_deposit;
-            let maximum = self.amount();
-            if !(minimum..=maximum).contains(&return_condition.amount()) {
-                return Err(Error::InvalidStorageDepositReturnAmount {
+            // We can't return more tokens than were originally contained in the output.
+            // `0` ≤ `Amount` - `Return Amount`
+            if return_condition.amount() > self.amount() {
+                return Err(Error::StorageDepositReturnExceedsOutputAmount {
                     deposit: return_condition.amount(),
-                    minimum,
-                    maximum,
+                    amount: self.amount(),
+                });
+            }
+
+            let minimum_deposit = minimum_storage_deposit(config, return_condition.return_address());
+
+            // `Return Amount` must be ≥ than `Minimum Storage Deposit`
+            if return_condition.amount() < minimum_deposit {
+                return Err(Error::InsufficientStorageDepositReturnAmount {
+                    deposit: return_condition.amount(),
+                    required: minimum_deposit,
+                });
+            }
+
+            // Check if the storage deposit return was required in the first place.
+            // `Amount` - `Return Amount` ≤ `Required Storage Deposit of the Output`
+            if self.amount() - return_condition.amount() > required_output {
+                return Err(Error::UnnecessaryStorageDepositReturnCondition {
+                    remainder: self.amount() - return_condition.amount(),
+                    required: required_output,
                 });
             }
         };
