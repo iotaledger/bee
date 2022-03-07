@@ -61,7 +61,7 @@ use packable::{bounded::BoundedU64, PackableExt};
 
 use core::ops::RangeInclusive;
 
-use self::unlock_condition::{AddressUnlockCondition, StorageDepositReturnUnlockCondition};
+use self::unlock_condition::AddressUnlockCondition;
 
 /// The maximum number of outputs of a transaction.
 pub const OUTPUT_COUNT_MAX: u16 = 128;
@@ -216,16 +216,10 @@ impl Output {
             });
         }
 
-        let maybe_return_condition = match self {
-            #[cfg(feature = "cpt2")]
-            Output::SignatureLockedSingle(_) | Output::SignatureLockedDustAllowance(_) => return Ok(()),
-            Output::Treasury(_) => return Ok(()), // `TreasuryOutput`s don't have `UnlockConditions`.
-            Output::Basic(_) | Output::Alias(_) | Output::Foundry(_) | Output::Nft(_) => self
-                .unlock_conditions()
-                .and_then(|conds| conds.get(StorageDepositReturnUnlockCondition::KIND)),
-        };
-
-        if let Some(UnlockCondition::StorageDepositReturn(return_condition)) = maybe_return_condition {
+        if let Some(return_condition) = self
+            .unlock_conditions()
+            .and_then(UnlockConditions::storage_deposit_return)
+        {
             // We can't return more tokens than were originally contained in the output.
             // `0` ≤ `Amount` - `Return Amount`
             if return_condition.amount() > self.amount() {
@@ -253,7 +247,7 @@ impl Output {
                     required: required_output,
                 });
             }
-        };
+        }
 
         Ok(())
     }
