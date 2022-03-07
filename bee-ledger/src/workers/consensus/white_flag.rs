@@ -134,7 +134,7 @@ fn unlock_address(
         (Address::Alias(alias_address), UnlockBlock::Alias(unlock_block)) => {
             // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
             if let Output::Alias(alias_output) = context.consumed_outputs[unlock_block.index() as usize].1.inner() {
-                if alias_output.alias_id() != alias_address.id() {
+                if alias_output.alias_id() != alias_address.alias_id() {
                     return Err(ConflictReason::IncorrectUnlockMethod);
                 }
             } else {
@@ -144,7 +144,7 @@ fn unlock_address(
         (Address::Nft(nft_address), UnlockBlock::Nft(unlock_block)) => {
             // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
             if let Output::Nft(nft_output) = context.consumed_outputs[unlock_block.index() as usize].1.inner() {
-                if nft_output.nft_id() != nft_address.id() {
+                if nft_output.nft_id() != nft_address.nft_id() {
                     return Err(ConflictReason::IncorrectUnlockMethod);
                 }
             } else {
@@ -187,11 +187,11 @@ fn unlock_alias_output(
     if let Some(next_state) = next_state {
         // State transition.
         if next_state.state_index() == current_state.state_index() + 1 {
-            unlock_address(current_state.state_controller(), unlock_block, context)?;
+            unlock_address(current_state.state_controller_address(), unlock_block, context)?;
         }
         // Governance transition.
         else if next_state.state_index() == current_state.state_index() {
-            unlock_address(current_state.governor(), unlock_block, context)?;
+            unlock_address(current_state.governor_address(), unlock_block, context)?;
         } else {
             // TODO Err non contiguous state increase
         }
