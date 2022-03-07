@@ -185,10 +185,10 @@ where
                                             continue 'next_event;
                                         }
                                         MessageError::UnnecessaryStorageDepositReturnCondition{
-                                            remainder, required,
+                                            logical_amount, required,
                                         } => {
                                             notify_invalid_message(
-                                                format!("Unnecessary storage deposit return for output {i}: remainder of {remainder} is less than required deposit {required}"),
+                                                format!("Unnecessary storage deposit return for output {i}: the logical output amount {logical_amount} already satisfies storage deposit {required}"),
                                                 &metrics,
                                                 notifier,
                                             );

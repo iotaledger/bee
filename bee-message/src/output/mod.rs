@@ -243,7 +243,7 @@ impl Output {
             // `Amount` - `Return Amount` ≤ `Required Storage Deposit of the Output`
             if self.amount() - return_condition.amount() > required_output {
                 return Err(Error::UnnecessaryStorageDepositReturnCondition {
-                    remainder: self.amount() - return_condition.amount(),
+                    logical_amount: self.amount() - return_condition.amount(),
                     required: required_output,
                 });
             }
