@@ -212,7 +212,6 @@ impl NetworkBehaviour for IotaGossipProtocol {
     /// A call to this method is always paired with an earlier call to
     /// `inject_connection_established` with the same peer ID, connection ID and
     /// endpoint.
-
     fn inject_connection_closed(
         &mut self,
         peer_id: &PeerId,
