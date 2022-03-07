@@ -1,6 +1,6 @@
 [package]
 name = "bee-node"
-version = "0.3.0-rc4"
+version = "0.3.0-rc5"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Default node implementations."
@@ -11,16 +11,16 @@ keywords = [ "iota", "tangle", "bee", "framework", "node" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-autopeering = { version = "0.4.0", path = "../../bee-network/bee-autopeering", default-features = false, features = [ "rocksdb" ] }
+bee-autopeering = { version = "0.5.0", path = "../../bee-network/bee-autopeering", default-features = false, features = [ "rocksdb" ] }
 bee-common = { version = "0.6.0", path = "../../bee-common/bee-common", default-features = false }
-bee-gossip = { version = "0.4.0", path = "../../bee-network/bee-gossip", default-features = false, features = [ "full" ] }
+bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false, features = [ "full" ] }
 bee-ledger = { version = "0.6.1", path = "../../bee-ledger", default-features = false, features = [ "workers" ] }
 bee-message = { version = "0.1.6", path = "../../bee-message", default-features = false }
 bee-plugin = { version = "0.1.0", path = "../bee-plugin/bee-plugin", default-features = false }
 bee-plugin-dashboard = { version = "0.1.0", path = "../bee-plugin/bee-plugin-dashboard", default-features = false, optional = true }
 bee-plugin-mps = { version = "0.1.0", path = "../bee-plugin/bee-plugin-mps", default-features = false }
 bee-plugin-version-checker = { version = "0.1.0", path = "../bee-plugin/bee-plugin-version-checker", default-features = false }
-bee-protocol = { version = "0.2.0", path = "../../bee-protocol", default-features = false, features = [ "workers" ] }
+bee-protocol = { version = "0.2.2", path = "../../bee-protocol", default-features = false, features = [ "workers" ] }
 bee-rest-api = { version = "0.2.0", path = "../../bee-api/bee-rest-api", default-features = false, features = [ "endpoints", "peer" ] }
 bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false }
 bee-storage = { version = "0.9.0", path = "../../bee-storage/bee-storage", default-features = false }

@@ -9,14 +9,14 @@
 ```sh
 apt-get update
 apt-get upgrade
-apt-get install git npm build-essential cmake pkg-config librocksdb-dev llvm clang libclang-dev libssl-dev
+apt-get install git build-essential cmake pkg-config librocksdb-dev llvm clang libclang-dev libssl-dev
 ```
 
 ### MacOS
 
 ```sh
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew install cmake npm
+brew install cmake
 ```
 
 ### Windows
@@ -24,7 +24,7 @@ brew install cmake npm
 Open Powershell and execute the following commands:
 ```sh
 Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-choco install git --params '/NoAutoCrlf' nodejs-lts cmake --installargs 'ADD_CMAKE_TO_PATH=System' llvm
+choco install git --params '/NoAutoCrlf' cmake --installargs 'ADD_CMAKE_TO_PATH=System' llvm
 ```
 Restart Powershell
 
@@ -59,11 +59,6 @@ cd bee/bee-node/bee-node
 With dashboard
 
 ```sh
-git submodule update --init
-cd ../bee-plugin/bee-plugin-dashboard/src/frontend
-npm install
-npm run build-bee
-cd ../../../../bee-node
 cargo build --release --features dashboard
 ```
 

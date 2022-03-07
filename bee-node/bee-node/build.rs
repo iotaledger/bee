@@ -1,12 +1,21 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::process::Command;
+use std::{fmt, process::Command};
 
 #[derive(Debug)]
 enum BuildError {
-    GitCommit,
     GitBranch,
+    GitCommit,
+}
+
+impl fmt::Display for BuildError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self {
+            Self::GitBranch => write!(f, "failed to retrieve git branch name"),
+            Self::GitCommit => write!(f, "failed to retrieve git commit"),
+        }
+    }
 }
 
 fn main() -> Result<(), BuildError> {
