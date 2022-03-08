@@ -37,17 +37,21 @@ EXPOSE 8081/tcp
 # Autopeering
 EXPOSE 14626/udp
 
-COPY --chown=nonroot:nonroot --from=build /bee/target/production/bee /
+COPY --chown=nonroot:nonroot --from=build /bee/target/production/bee /app/bee
 
 # Copy the profiles
-COPY --from=build /bee/bee-node/config.chrysalis-comnet.toml .
-COPY --from=build /bee/bee-node/config.chrysalis-devnet.toml .
-COPY --from=build /bee/bee-node/config.chrysalis-mainnet.toml .
+COPY --from=build /bee/bee-node/config.chrysalis-comnet.toml /app/.
+COPY --from=build /bee/bee-node/config.chrysalis-devnet.toml /app/.
+COPY --from=build /bee/bee-node/config.chrysalis-mainnet.toml /app/.
 
-COPY --from=build /bee/bee-node/config.chrysalis-comnet.json .
-COPY --from=build /bee/bee-node/config.chrysalis-devnet.json .
-COPY --from=build /bee/bee-node/config.chrysalis-mainnet.json .
+COPY --from=build /bee/bee-node/config.chrysalis-comnet.json /app/.
+COPY --from=build /bee/bee-node/config.chrysalis-devnet.json /app/.
+COPY --from=build /bee/bee-node/config.chrysalis-mainnet.json /app/.
 
 USER nonroot
 
-ENTRYPOINT ["/bee"]
+WORKDIR /app
+
+ENTRYPOINT ["/app/bee"]
+
+CMD ["--config", "config.chrysalis-mainnet.json"]
