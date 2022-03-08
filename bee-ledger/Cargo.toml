@@ -34,6 +34,10 @@ tokio = { version = "1.12.0", default-features = false, features = [ "sync", "fs
 tokio-stream = { version = "0.1.7", default-features = false, optional = true }
 url = { version = "2.2.2", default-features = false, optional = true }
 
+# `udeps` false positives
+[package.metadata.cargo-udeps.ignore]
+normal = [ "time-helper" ]
+
 [features]
 workers = [
   "bee-runtime",

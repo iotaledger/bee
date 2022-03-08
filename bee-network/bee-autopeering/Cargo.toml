@@ -23,17 +23,21 @@ libp2p-core = { version = "0.30.0", default-features = false }
 log = { version = "0.4", default-features = false }
 num = { version = "0.4.0", default-features = false }
 num-derive = { version = "0.3.3", default-features = false  }
-num-traits = { version = "0.2.14" , default-features = false }
-priority-queue = { version = "1.2.0" , default-features = false }
+num-traits = { version = "0.2.14", default-features = false }
+priority-queue = { version = "1.2.0", default-features = false }
 prost = { version = "0.8", default-features = false, features = [ "std" ] }
-rand = { version = "0.8.4" , default-features = false, features = [ "std", "std_rng" ] }
-ring = { version = "0.16.20" , default-features = false }
+rand = { version = "0.8.4", default-features = false, features = [ "std", "std_rng" ] }
+ring = { version = "0.16.20", default-features = false }
 rocksdb = { version = "0.17.0", default-features = false, optional = true }
-serde = { version = "1.0", default-features = false , features = [ "derive" ] }
+serde = { version = "1.0", default-features = false, features = [ "derive" ] }
 sled = { version = "0.34.7", default-features = false, optional = true }
 thiserror = { version = "1.0.29", default-features = false  }
-tokio = { version = "1.11", default-features = false , features = [ "macros", "rt", "time", "net" ] }
+tokio = { version = "1.11", default-features = false, features = [ "macros", "rt", "time", "net" ] }
 tokio-stream = { version = "0.1", default-features = false  }
+
+# `udeps` false positives
+[package.metadata.cargo-udeps.ignore]
+normal = [ "bincode", "tokio-stream" ]
 
 [dev-dependencies]
 fern = { version = "0.6.0", default-features = false }
