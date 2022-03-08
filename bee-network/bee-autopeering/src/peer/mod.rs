@@ -145,7 +145,10 @@ impl Peer {
     pub(crate) fn into_id(self) -> PeerId {
         self.peer_id
     }
+}
 
+#[cfg(any(feature = "rocksdb", feature = "sled"))]
+impl Peer {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
         bincode::serialize(self).expect("serialization error")
     }
