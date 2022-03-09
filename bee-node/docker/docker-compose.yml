@@ -17,7 +17,8 @@ services:
     stop_grace_period: 5m
     tty: true # for colored logs
     network_mode: host
+    working_dir: /app
+    command: ["--config", "config.chrysalis-mainnet.json"]
     volumes:
-      - ../config.chrysalis-mainnet.json:/config.json
-      - ../storage:/storage
-      - ../snapshots:/snapshots
+      - ../storage:/app/storage
+      - ../snapshots:/app/snapshots

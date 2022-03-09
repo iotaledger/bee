@@ -56,9 +56,9 @@ We recommend that you run on host network to improve performance.  Otherwise, yo
 
 ```sh
 docker run \
-  -v $(pwd)/config.json:/config.json:ro \
-  -v $(pwd)/storage:/storage \
-  -v $(pwd)/snapshots:/snapshots \
+  -v $(pwd)/config.json:/app/config.json:ro \
+  -v $(pwd)/storage:/app/storage \
+  -v $(pwd)/snapshots:/app/snapshots \
   --name bee\
   --net=host \
   --ulimit nofile=8192:8192 \
