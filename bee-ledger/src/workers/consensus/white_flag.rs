@@ -358,7 +358,6 @@ fn apply_regular_essence<B: StorageBackend>(
     for created_output in essence.outputs() {
         // TODO also check feature blocks ?
         let (amount, created_native_tokens) = match created_output {
-            // TODO chain constraints
             Output::Basic(output) => (output.amount(), output.native_tokens()),
             Output::Alias(output) => (output.amount(), output.native_tokens()),
             Output::Foundry(output) => (output.amount(), output.native_tokens()),
@@ -394,7 +393,18 @@ fn apply_regular_essence<B: StorageBackend>(
         // the outstanding balances are valid.
     }
 
-    // TODO check chain constraints
+    for (chain_id, current_state) in context.input_chains.iter() {
+        Output::state_transition(
+            Some(current_state),
+            context.output_chains.get(&chain_id).map(core::ops::Deref::deref),
+        );
+    }
+
+    for (chain_id, next_state) in context.output_chains.iter() {
+        if context.input_chains.get(&chain_id).is_none() {
+            Output::state_transition(None, Some(next_state));
+        }
+    }
 
     for (output_id, created_output) in consumed_outputs {
         metadata.consumed_outputs.insert(

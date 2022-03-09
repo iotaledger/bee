@@ -6,7 +6,7 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        AliasId, ChainId, NativeToken, NativeTokens, OutputAmount,
+        AliasId, ChainId, NativeToken, NativeTokens, OutputAmount, StateTransition,
     },
     Error,
 };
@@ -302,6 +302,14 @@ impl AliasOutput {
     pub fn chain_id(&self) -> ChainId {
         ChainId::Alias(self.alias_id)
     }
+}
+
+impl StateTransition for AliasOutput {
+    fn creation(_next_state: &Self) {}
+
+    fn transition(_current_state: &Self, _next_state: &Self) {}
+
+    fn destruction(_current_state: &Self) {}
 }
 
 impl Packable for AliasOutput {

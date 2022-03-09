@@ -6,7 +6,7 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ChainId, FoundryId, NativeToken, NativeTokens, OutputAmount, TokenScheme, TokenTag,
+        ChainId, FoundryId, NativeToken, NativeTokens, OutputAmount, StateTransition, TokenScheme, TokenTag,
     },
     Error,
 };
@@ -331,6 +331,14 @@ impl FoundryOutput {
     pub fn chain_id(&self) -> ChainId {
         ChainId::Foundry(self.id())
     }
+}
+
+impl StateTransition for FoundryOutput {
+    fn creation(_next_state: &Self) {}
+
+    fn transition(_current_state: &Self, _next_state: &Self) {}
+
+    fn destruction(_current_state: &Self) {}
 }
 
 impl Packable for FoundryOutput {

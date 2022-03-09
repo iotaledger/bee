@@ -14,6 +14,7 @@ mod native_token;
 mod nft;
 mod nft_id;
 mod output_id;
+mod state_transition;
 mod token_id;
 mod token_scheme;
 mod treasury;
@@ -46,6 +47,7 @@ pub use nft::{NftOutput, NftOutputBuilder};
 pub use nft_id::NftId;
 pub use output_id::OutputId;
 pub(crate) use output_id::OutputIndex;
+pub use state_transition::StateTransition;
 pub use token_id::{TokenId, TokenTag};
 pub use token_scheme::TokenScheme;
 pub use treasury::TreasuryOutput;
@@ -214,6 +216,33 @@ impl Output {
             Self::Alias(output) => Some(output.chain_id()),
             Self::Foundry(output) => Some(output.chain_id()),
             Self::Nft(output) => Some(output.chain_id()),
+        }
+    }
+
+    ///
+    pub fn state_transition(current_state: Option<&Output>, next_state: Option<&Output>) {
+        match (current_state, next_state) {
+            // Creations.
+            (None, Some(Output::Alias(next_state))) => AliasOutput::creation(next_state),
+            (None, Some(Output::Foundry(next_state))) => FoundryOutput::creation(next_state),
+            (None, Some(Output::Nft(next_state))) => NftOutput::creation(next_state),
+
+            // Transitions.
+            (Some(Output::Alias(current_state)), Some(Output::Alias(next_state))) => {
+                AliasOutput::transition(current_state, next_state)
+            }
+            (Some(Output::Foundry(current_state)), Some(Output::Foundry(next_state))) => {
+                FoundryOutput::transition(current_state, next_state)
+            }
+            (Some(Output::Nft(current_state)), Some(Output::Nft(next_state))) => {
+                NftOutput::transition(current_state, next_state)
+            }
+
+            // Destructions.
+            (Some(Output::Alias(current_state)), None) => AliasOutput::destruction(current_state),
+            (Some(Output::Foundry(current_state)), None) => FoundryOutput::destruction(current_state),
+            (Some(Output::Nft(current_state)), None) => NftOutput::destruction(current_state),
+            _ => panic!("TODO"),
         }
     }
 
