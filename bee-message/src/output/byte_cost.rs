@@ -94,7 +94,7 @@ pub trait ByteCost {
 
     /// Computes the byte cost given a [`ByteCostConfig`].
     fn byte_cost(&self, config: &ByteCostConfig) -> u64 {
-        config.v_byte_cost * self.weighted_bytes(config) + config.v_byte_offset
+        config.v_byte_cost * (self.weighted_bytes(config) + config.v_byte_offset)
     }
 }
 
