@@ -204,15 +204,16 @@ impl Output {
     }
 
     /// Verify if a valid storage deposit was made. Each [`Output`] has to have an [`OutputAmount`] amount that covers
-    /// its associated byte cost, given by [`ByteCostConfig`]. If there is a [`StorageDepositReturnUnlockCondition`](unlock_condition::StorageDepositReturnUnlockCondition),
-    /// its amount is also checked.
+    /// its associated byte cost, given by [`ByteCostConfig`]. If there is a
+    /// [`StorageDepositReturnUnlockCondition`](unlock_condition::StorageDepositReturnUnlockCondition), its amount
+    /// is also checked.
     pub fn verify_storage_deposit(&self, config: &ByteCostConfig) -> Result<(), Error> {
-        let required_output = self.byte_cost(config);
+        let required_output_amount = self.byte_cost(config);
 
-        if self.amount() < required_output {
+        if self.amount() < required_output_amount {
             return Err(Error::InsufficientStorageDepositAmount {
                 amount: self.amount(),
-                required: required_output,
+                required: required_output_amount,
             });
         }
 
@@ -241,10 +242,10 @@ impl Output {
 
             // Check if the storage deposit return was required in the first place.
             // `Amount` - `Return Amount` ≤ `Required Storage Deposit of the Output`
-            if self.amount() - return_condition.amount() > required_output {
+            if self.amount() - return_condition.amount() > required_output_amount {
                 return Err(Error::UnnecessaryStorageDepositReturnCondition {
                     logical_amount: self.amount() - return_condition.amount(),
-                    required: required_output,
+                    required: required_output_amount,
                 });
             }
         }
