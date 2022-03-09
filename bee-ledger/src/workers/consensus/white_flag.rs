@@ -15,8 +15,8 @@ use bee_message::{
     input::Input,
     milestone::MilestoneIndex,
     output::{
-        AliasId, AliasOutput, BasicOutput, FeatureBlock, FoundryOutput, NftId, NftOutput, Output, OutputId, TokenId,
-        UnlockCondition,
+        AliasId, AliasOutput, BasicOutput, ChainId, FeatureBlock, FoundryOutput, NftId, NftOutput, Output, OutputId,
+        TokenId, UnlockCondition,
     },
     payload::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
@@ -33,29 +33,42 @@ use primitive_types::U256;
 
 use std::collections::{HashMap, HashSet};
 
-struct ValidationContext {
+struct ValidationContext<'a> {
+    essence: &'a RegularTransactionEssence,
+    essence_hash: [u8; 32],
+    unlock_blocks: &'a UnlockBlocks,
     milestone_index: MilestoneIndex,
     milestone_timestamp: u64,
-    inputs_amount: u64,
-    outputs_amount: u64,
-    inputs_native_tokens: HashMap<TokenId, U256>,
-    outputs_native_tokens: HashMap<TokenId, U256>,
+    input_amount: u64,
+    input_native_tokens: HashMap<TokenId, U256>,
+    input_chains: HashMap<ChainId, Output>,
+    output_amount: u64,
+    output_native_tokens: HashMap<TokenId, U256>,
+    output_chains: HashMap<ChainId, Output>,
     consumed_outputs: Vec<(OutputId, CreatedOutput)>,
-    essence_hash: [u8; 32],
     unlocked_addresses: HashSet<Address>,
 }
 
-impl ValidationContext {
-    fn new(milestone_index: MilestoneIndex, milestone_timestamp: u64, essence: &RegularTransactionEssence) -> Self {
+impl<'a> ValidationContext<'a> {
+    fn new(
+        essence: &'a RegularTransactionEssence,
+        unlock_blocks: &'a UnlockBlocks,
+        milestone_index: MilestoneIndex,
+        milestone_timestamp: u64,
+    ) -> Self {
         Self {
+            essence,
+            unlock_blocks,
+            essence_hash: TransactionEssence::from(essence.clone()).hash(),
             milestone_index,
             milestone_timestamp,
-            inputs_amount: 0,
-            outputs_amount: 0,
-            inputs_native_tokens: HashMap::<TokenId, U256>::new(),
-            outputs_native_tokens: HashMap::<TokenId, U256>::new(),
+            input_amount: 0,
+            input_native_tokens: HashMap::<TokenId, U256>::new(),
+            input_chains: HashMap::new(),
+            output_amount: 0,
+            output_native_tokens: HashMap::<TokenId, U256>::new(),
+            output_chains: HashMap::new(),
             consumed_outputs: Vec::with_capacity(essence.inputs().len()),
-            essence_hash: TransactionEssence::from(essence.clone()).hash(),
             unlocked_addresses: HashSet::new(),
         }
     }
@@ -239,7 +252,12 @@ fn apply_regular_essence<B: StorageBackend>(
     unlock_blocks: &UnlockBlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
-    let mut context = ValidationContext::new(metadata.milestone_index, metadata.milestone_timestamp, &essence);
+    let mut context = ValidationContext::new(
+        essence,
+        unlock_blocks,
+        metadata.milestone_index,
+        metadata.milestone_timestamp,
+    );
 
     // TODO check inputs commitment.
 
@@ -303,15 +321,12 @@ fn apply_regular_essence<B: StorageBackend>(
             _ => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
         };
 
-        context.inputs_amount = context
-            .inputs_amount
+        context.input_amount = context
+            .input_amount
             .checked_add(amount)
             .ok_or(Error::ConsumedAmountOverflow)?;
         for native_token in consumed_native_tokens.iter() {
-            let native_token_amount = context
-                .inputs_native_tokens
-                .entry(*native_token.token_id())
-                .or_default();
+            let native_token_amount = context.input_native_tokens.entry(*native_token.token_id()).or_default();
             *native_token_amount = native_token_amount
                 .checked_add(*native_token.amount())
                 .ok_or(Error::ConsumedNativeTokensAmountOverflow)?;
@@ -331,13 +346,13 @@ fn apply_regular_essence<B: StorageBackend>(
             _ => return Err(Error::UnsupportedOutputKind(created_output.kind())),
         };
 
-        context.outputs_amount = context
-            .outputs_amount
+        context.output_amount = context
+            .output_amount
             .checked_sub(amount)
             .ok_or(Error::CreatedAmountOverflow)?;
         for native_token in created_native_tokens.iter() {
             let native_token_amount = *context
-                .outputs_native_tokens
+                .output_native_tokens
                 .entry(*native_token.token_id())
                 .or_default();
             native_token_amount
@@ -346,11 +361,11 @@ fn apply_regular_essence<B: StorageBackend>(
         }
     }
 
-    if context.inputs_amount != context.outputs_amount {
+    if context.input_amount != context.output_amount {
         return Ok(ConflictReason::CreatedConsumedAmountMismatch);
     }
 
-    if context.inputs_native_tokens != context.outputs_native_tokens {
+    if context.input_native_tokens != context.output_native_tokens {
         return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
 
         // TODO The transaction is balanced in terms of native tokens, meaning the amount of native tokens present in

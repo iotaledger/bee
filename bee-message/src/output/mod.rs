@@ -202,6 +202,21 @@ impl Output {
         }
     }
 
+    /// Returns the chain identifier of an [`Output`], if any.
+    pub fn chain_id(&self) -> Option<ChainId> {
+        match self {
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedSingle(_) => None,
+            #[cfg(feature = "cpt2")]
+            Self::SignatureLockedDustAllowance(_) => None,
+            Self::Treasury(_) => None,
+            Self::Basic(_) => None,
+            Self::Alias(output) => Some(output.chain_id()),
+            Self::Foundry(output) => Some(output.chain_id()),
+            Self::Nft(output) => Some(output.chain_id()),
+        }
+    }
+
     /// Verify if a valid storage deposit was made. Each [`Output`] has to have an amount that covers its associated
     /// byte cost, given by [`ByteCostConfig`]. If there is a
     /// [`StorageDepositReturnUnlockCondition`](unlock_condition::StorageDepositReturnUnlockCondition), its amount

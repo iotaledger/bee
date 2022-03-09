@@ -6,7 +6,7 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        FoundryId, NativeToken, NativeTokens, OutputAmount, TokenScheme, TokenTag,
+        ChainId, FoundryId, NativeToken, NativeTokens, OutputAmount, TokenScheme, TokenTag,
     },
     Error,
 };
@@ -324,6 +324,12 @@ impl FoundryOutput {
             .immutable_alias_address()
             .map(|unlock_condition| unlock_condition.address())
             .unwrap()
+    }
+
+    ///
+    #[inline(always)]
+    pub fn chain_id(&self) -> ChainId {
+        ChainId::Foundry(self.id())
     }
 }
 

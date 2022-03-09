@@ -6,7 +6,7 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        NativeToken, NativeTokens, NftId, OutputAmount,
+        ChainId, NativeToken, NativeTokens, NftId, OutputAmount,
     },
     Error,
 };
@@ -216,6 +216,12 @@ impl NftOutput {
             .address()
             .map(|unlock_condition| unlock_condition.address())
             .unwrap()
+    }
+
+    ///
+    #[inline(always)]
+    pub fn chain_id(&self) -> ChainId {
+        ChainId::Nft(self.nft_id)
     }
 }
 
