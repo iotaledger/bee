@@ -4,7 +4,7 @@
 use bee_gossip::Keypair;
 use bee_node::{
     print_banner_and_version, read_keypair_from_pem_file,
-    tools::{self},
+    tools, trace,
     write_keypair_to_pem_file, ClArgs, EntryNodeBuilder, EntryNodeConfig, FullNodeBuilder, FullNodeConfig, Local,
     NodeConfig, NodeConfigBuilder, PemFileError,
 };
@@ -51,21 +51,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .to_owned();
     let (identity_field, config) = deserialize_config(cl_args);
 
-    let logger_cfg = config.logger().clone();
-    
     #[cfg(not(feature = "trace"))]
     {
         // Initialize the logger.
-        fern_logger::logger_init(logger_cfg)?;
+        fern_logger::logger_init(config.logger().clone())?;
     }
     #[cfg(feature = "trace")]
     {
         // Initialize the subscriber.
-        let _ = trace_tools::subscriber::build()
-            .with_console_layer()
-            .with_log_layer(logger_cfg)
-            .init()
-            .expect("failed initialize the tracing subscriber");
+        let logger_config = config.logger().clone();
+        let tracing_config = config.tracing().clone();
+
+        let _ = trace::init(logger_config, tracing_config);
     }
 
     // Establish identity.

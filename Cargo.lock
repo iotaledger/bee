@@ -399,6 +399,7 @@ dependencies = [
  "bee-storage-rocksdb",
  "bee-storage-sled",
  "bee-tangle",
+ "cfg-if",
  "chrono",
  "ed25519",
  "fern-logger",
