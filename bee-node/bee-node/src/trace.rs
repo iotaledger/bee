@@ -92,6 +92,14 @@ pub fn init(
 
     if let Some(flamegraph_config) = tracing_config.flamegraph {
         builder = builder.with_flamegraph_layer(flamegraph_config.stack_filename);
+
+        let flamegrapher = builder.init()?;
+
+        if let Some(flamegrapher) = flamegrapher {
+            return Ok(Some(flamegrapher.with_graph_file(flamegraph_config.graph_filename)?));
+        } else {
+            return Ok(flamegrapher);
+        }
     }
 
     builder.init()
