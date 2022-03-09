@@ -350,19 +350,6 @@ Example
 below_max_depth = 15
 ```
 
-## Mqtt
-
-| Name    | Description | Type   |
-| :------ | :---------- | :----- |
-| address | address     | string |
-
-Example:
-
-```toml
-[mqtt]
-address = "tcp://localhost:1883"
-```
-
 ## Dashboard
 
 | Name | Description    | Type         |

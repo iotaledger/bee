@@ -49,9 +49,9 @@ async fn propagate<B: StorageBackend>(
             // Note: There are two types of solidity carriers:
             // * solid messages (with available history)
             // * solid entry points / sep (with verified history)
-            // Because we know both parents are solid, we also know that they have set OMRSI/YMRSI values, hence
-            // we can simply unwrap. We also try to minimise unnecessary Tangle API calls if - for example - the
-            // parent in question turns out to be a SEP.
+            // Because we know all parents are solid, we also know that they have set OMRSI/YMRSI values, hence we can
+            // simply unwrap. We also try to minimise unnecessary Tangle API calls if - for example - the parent in
+            // question turns out to be a SEP.
 
             let mut parent_omrsis = Vec::new();
             let mut parent_ymrsis = Vec::new();
@@ -62,14 +62,17 @@ async fn propagate<B: StorageBackend>(
                     .await
                 {
                     Some(parent_sepi) => (IndexId::new(parent_sepi, *parent), IndexId::new(parent_sepi, *parent)),
-                    None => match tangle.get_metadata(parent).await {
-                        // 'unwrap' is safe (see explanation above)
-                        Some(parent_md) => (
-                            parent_md.omrsi().expect("solid msg with unset omrsi"),
-                            parent_md.ymrsi().expect("solid msg with unset ymrsi"),
-                        ),
-                        None => continue 'outer,
-                    },
+                    // SAFETY: 'unwrap' is safe, see explanation above.
+                    None => tangle
+                        .get_metadata(parent)
+                        .await
+                        .map(|parent_md| {
+                            (
+                                parent_md.omrsi().expect("solid msg with unset omrsi"),
+                                parent_md.ymrsi().expect("solid msg with unset ymrsi"),
+                            )
+                        })
+                        .unwrap(),
                 };
                 parent_omrsis.push(parent_omrsi);
                 parent_ymrsis.push(parent_ymrsi);

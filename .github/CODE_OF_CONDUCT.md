@@ -54,10 +54,6 @@ Project maintainers may further define and clarify what is meant by representati
 
 ## Enforcement
 
-You may report instances of abusive, harassing, or otherwise unacceptable behavior by contacting the project team at [bee@iotmod.de](mailto:bee@iotmod.de). 
-
-All complaints will be reviewed, investigated, and will result in a response that is deemed necessary and appropriate to the circumstances. The project team is obligated to maintain confidentiality in regard to the reporter of an incident.  Project maintainers may post details of specific enforcement policies may separately.
-
 Project maintainers who do not follow or enforce the Code of Conduct in good faith may face temporary or permanent repercussions as determined by other members of the project's leadership.
 
 ## Attribution
