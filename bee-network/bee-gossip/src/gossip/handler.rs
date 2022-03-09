@@ -140,6 +140,17 @@ impl ProtocolsHandler for GossipHandler {
     fn connection_keep_alive(&self) -> KeepAlive {
         KeepAlive::Yes
     }
+
+    // Default members
+
+    fn inject_address_change(&mut self, _new_address: &Multiaddr) {}
+
+    fn inject_listen_upgrade_error(
+        &mut self,
+        _: Self::InboundOpenInfo,
+        _: ProtocolsHandlerUpgrErr<<Self::InboundProtocol as libp2p::swarm::protocols_handler::InboundUpgradeSend>::Error>,
+    ) {
+    }
 }
 
 impl Drop for GossipHandler {
