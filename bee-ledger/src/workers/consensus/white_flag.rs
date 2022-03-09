@@ -331,7 +331,10 @@ fn apply_regular_essence<B: StorageBackend>(
             _ => return Err(Error::UnsupportedOutputKind(created_output.kind())),
         };
 
-        context.outputs_amount = context.outputs_amount.checked_sub(amount).ok_or(Error::CreatedAmountOverflow)?;
+        context.outputs_amount = context
+            .outputs_amount
+            .checked_sub(amount)
+            .ok_or(Error::CreatedAmountOverflow)?;
         for native_token in created_native_tokens.iter() {
             let native_token_amount = *context
                 .outputs_native_tokens
