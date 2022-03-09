@@ -13,15 +13,15 @@ use crate::{
 use bee_message::{
     address::Address,
     input::Input,
-    milestone::MilestoneIndex,
     output::{
-        AliasId, AliasOutput, BasicOutput, ChainId, FeatureBlock, FoundryOutput, NftId, NftOutput, Output, OutputId,
-        TokenId, UnlockCondition,
+        AliasId, AliasOutput, BasicOutput, FeatureBlock, FoundryOutput, NftId, NftOutput, Output, OutputId,
+        UnlockCondition,
     },
     payload::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
     },
+    semantic::ValidationContext,
     signature::Signature,
     unlock_block::{UnlockBlock, UnlockBlocks},
     Message, MessageId,
@@ -29,55 +29,8 @@ use bee_message::{
 use bee_tangle::{ConflictReason, Tangle};
 
 use crypto::hashes::blake2b::Blake2b256;
-use primitive_types::U256;
 
-use std::collections::{HashMap, HashSet};
-
-struct ValidationContext<'a> {
-    essence: &'a RegularTransactionEssence,
-    essence_hash: [u8; 32],
-    unlock_blocks: &'a UnlockBlocks,
-    milestone_index: MilestoneIndex,
-    milestone_timestamp: u64,
-    input_amount: u64,
-    input_native_tokens: HashMap<TokenId, U256>,
-    input_chains: HashMap<ChainId, &'a Output>,
-    output_amount: u64,
-    output_native_tokens: HashMap<TokenId, U256>,
-    output_chains: HashMap<ChainId, &'a Output>,
-    unlocked_addresses: HashSet<Address>,
-}
-
-impl<'a> ValidationContext<'a> {
-    fn new(
-        essence: &'a RegularTransactionEssence,
-        inputs: impl Iterator<Item = &'a Output>,
-        unlock_blocks: &'a UnlockBlocks,
-        milestone_index: MilestoneIndex,
-        milestone_timestamp: u64,
-    ) -> Self {
-        Self {
-            essence,
-            unlock_blocks,
-            essence_hash: TransactionEssence::from(essence.clone()).hash(),
-            milestone_index,
-            milestone_timestamp,
-            input_amount: 0,
-            input_native_tokens: HashMap::<TokenId, U256>::new(),
-            input_chains: inputs
-                .filter_map(|input| input.chain_id().map(|chain_id| (chain_id, input)))
-                .collect(),
-            output_amount: 0,
-            output_native_tokens: HashMap::<TokenId, U256>::new(),
-            output_chains: essence
-                .outputs()
-                .iter()
-                .filter_map(|output| output.chain_id().map(|chain_id| (chain_id, output)))
-                .collect(),
-            unlocked_addresses: HashSet::new(),
-        }
-    }
-}
+use std::collections::HashSet;
 
 fn check_input_unlock_conditions(
     unlock_conditions: &[UnlockCondition],
@@ -405,6 +358,9 @@ fn apply_regular_essence<B: StorageBackend>(
             Output::state_transition(None, Some(next_state));
         }
     }
+
+    // Explicitly dropping the context to release the borrow of inputs and avoid cloning in the loop below.
+    drop(context);
 
     for (output_id, created_output) in consumed_outputs {
         metadata.consumed_outputs.insert(
