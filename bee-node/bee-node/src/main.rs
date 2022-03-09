@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_gossip::Keypair;
+#[cfg(feature = "trace")]
+use bee_node::trace;
 use bee_node::{
-    print_banner_and_version, read_keypair_from_pem_file,
-    tools, trace,
-    write_keypair_to_pem_file, ClArgs, EntryNodeBuilder, EntryNodeConfig, FullNodeBuilder, FullNodeConfig, Local,
-    NodeConfig, NodeConfigBuilder, PemFileError,
+    print_banner_and_version, read_keypair_from_pem_file, tools, write_keypair_to_pem_file, ClArgs, EntryNodeBuilder,
+    EntryNodeConfig, FullNodeBuilder, FullNodeConfig, Local, NodeConfig, NodeConfigBuilder, PemFileError,
 };
 use bee_plugin_mps::MpsPlugin;
 use bee_runtime::node::NodeBuilder as _;

@@ -142,9 +142,9 @@ where
             storage: self_storage,
             tangle: self_tangle,
             #[cfg(feature = "dashboard")]
-            dashboard: self_dashboard,
+                dashboard: self_dashboard,
             #[cfg(feature = "trace")]
-            tracing: self_tracing,
+                tracing: self_tracing,
         } = self;
 
         #[allow(unused_mut)]

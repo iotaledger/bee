@@ -17,7 +17,7 @@ pub struct TraceConfigBuilder {
     /// Enables the console layer.
     #[serde(alias = "consoleEnabled")]
     pub console_enabled: bool,
-    
+
     /// Options for the flamegraph layer. If this is present, the layer is enabled.
     pub flamegraph: Option<FlamegraphConfigBuilder>,
 }
@@ -59,8 +59,12 @@ impl FlamegraphConfigBuilder {
     /// Builds the flamegraph layer configuration.
     pub fn finish(self) -> FlamegraphConfig {
         FlamegraphConfig {
-            stack_filename: self.stack_filename.unwrap_or_else(|| DEFAULT_STACK_FILENAME.to_string()),
-            graph_filename: self.graph_filename.unwrap_or_else(|| DEFAULT_GRAPH_FILENAME.to_string()),
+            stack_filename: self
+                .stack_filename
+                .unwrap_or_else(|| DEFAULT_STACK_FILENAME.to_string()),
+            graph_filename: self
+                .graph_filename
+                .unwrap_or_else(|| DEFAULT_GRAPH_FILENAME.to_string()),
         }
     }
 }
@@ -76,7 +80,10 @@ pub struct FlamegraphConfig {
 }
 
 /// Initialise tracing features with a given configuration.
-pub fn init(logger_config: LoggerConfig, tracing_config: TraceConfig) -> Result<Option<Flamegrapher>, trace_tools::Error> {
+pub fn init(
+    logger_config: LoggerConfig,
+    tracing_config: TraceConfig,
+) -> Result<Option<Flamegrapher>, trace_tools::Error> {
     let mut builder = subscriber::build().with_log_layer(logger_config);
 
     if tracing_config.console_enabled {
