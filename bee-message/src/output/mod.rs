@@ -27,7 +27,8 @@ pub(crate) use alias::StateMetadataLength;
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
 pub use basic::{BasicOutput, BasicOutputBuilder};
-pub use byte_cost::{minimum_storage_deposit, ByteCost, ByteCostConfig, ByteCostConfigBuilder};
+pub(crate) use byte_cost::ByteCost;
+pub use byte_cost::{ByteCostConfig, ByteCostConfigBuilder};
 pub use chain_id::ChainId;
 #[cfg(feature = "cpt2")]
 pub(crate) use cpt2::signature_locked_dust_allowance::DustAllowanceAmount;
@@ -51,9 +52,9 @@ pub use token_scheme::TokenScheme;
 pub use treasury::TreasuryOutput;
 pub(crate) use treasury::TreasuryOutputAmount;
 pub(crate) use unlock_condition::StorageDepositAmount;
-pub use unlock_condition::{UnlockCondition, UnlockConditions};
+pub use unlock_condition::{AddressUnlockCondition, UnlockCondition, UnlockConditions};
 
-use crate::{constant::IOTA_SUPPLY, Error};
+use crate::{address::Address, constant::IOTA_SUPPLY, Error};
 
 use derive_more::From;
 use packable::{bounded::BoundedU64, PackableExt};
@@ -201,10 +202,74 @@ impl Output {
             Self::Nft(output) => Some(output.immutable_feature_blocks()),
         }
     }
+
+    /// Verify if a valid storage deposit was made. Each [`Output`] has to have an amount that covers its associated
+    /// byte cost, given by [`ByteCostConfig`]. If there is a
+    /// [`StorageDepositReturnUnlockCondition`](unlock_condition::StorageDepositReturnUnlockCondition), its amount
+    /// is also checked.
+    pub fn verify_storage_deposit(&self, config: &ByteCostConfig) -> Result<(), Error> {
+        let required_output_amount = self.byte_cost(config);
+
+        if self.amount() < required_output_amount {
+            return Err(Error::InsufficientStorageDepositAmount {
+                amount: self.amount(),
+                required: required_output_amount,
+            });
+        }
+
+        if let Some(return_condition) = self
+            .unlock_conditions()
+            .and_then(UnlockConditions::storage_deposit_return)
+        {
+            // We can't return more tokens than were originally contained in the output.
+            // `0` ≤ `Amount` - `Return Amount`
+            if return_condition.amount() > self.amount() {
+                return Err(Error::StorageDepositReturnExceedsOutputAmount {
+                    deposit: return_condition.amount(),
+                    amount: self.amount(),
+                });
+            }
+
+            let minimum_deposit = minimum_storage_deposit(config, return_condition.return_address());
+
+            // `Return Amount` must be ≥ than `Minimum Storage Deposit`
+            if return_condition.amount() < minimum_deposit {
+                return Err(Error::InsufficientStorageDepositReturnAmount {
+                    deposit: return_condition.amount(),
+                    required: minimum_deposit,
+                });
+            }
+
+            // Check if the storage deposit return was required in the first place.
+            // `Amount` - `Return Amount` ≤ `Required Storage Deposit of the Output`
+            if self.amount() - return_condition.amount() > required_output_amount {
+                return Err(Error::UnnecessaryStorageDepositReturnCondition {
+                    logical_amount: self.amount() - return_condition.amount(),
+                    required: required_output_amount,
+                });
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl ByteCost for Output {
     fn weighted_bytes(&self, config: &ByteCostConfig) -> u64 {
         self.packed_len() as u64 * config.v_byte_factor_data
     }
+}
+
+/// Computes the minimum amount that a storage deposit has to match to allow creating a return [`Output`] back to the
+/// sender [`Address`].
+fn minimum_storage_deposit(config: &ByteCostConfig, address: &Address) -> u64 {
+    let address_condition = UnlockCondition::Address(AddressUnlockCondition::new(*address));
+    // Safety: This can never fail because the amount will always be within the valid range. Also, the actual value is
+    // not important, we are only interested in the storage requirements of the type.
+    let basic_output = BasicOutputBuilder::new(OutputAmount::MIN)
+        .unwrap()
+        .add_unlock_condition(address_condition)
+        .finish()
+        .unwrap();
+    Output::Basic(basic_output).byte_cost(config)
 }

@@ -19,6 +19,7 @@ use crate::{
 
 use bee_gossip::PeerId;
 use bee_message::{
+    output::ByteCostConfig,
     payload::{transaction::TransactionEssence, Payload},
     Message, MessageId,
 };
@@ -44,12 +45,18 @@ pub(crate) struct ProcessorWorker {
     pub(crate) tx: mpsc::UnboundedSender<ProcessorWorkerEvent>,
 }
 
+#[derive(Clone)]
+pub(crate) struct ProcessorWorkerConfig {
+    pub(crate) network_id: u64,
+    pub(crate) byte_cost: ByteCostConfig,
+}
+
 #[async_trait]
 impl<N: Node> Worker<N> for ProcessorWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = u64;
+    type Config = ProcessorWorkerConfig;
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -102,10 +109,10 @@ where
                 let metrics = metrics.clone();
                 let peer_manager = peer_manager.clone();
                 let bus = bus.clone();
-                let network_id = config;
+                let config = config.clone();
 
                 tokio::spawn(async move {
-                    while let Ok(ProcessorWorkerEvent {
+                    'next_event: while let Ok(ProcessorWorkerEvent {
                         from,
                         message_packet,
                         notifier,
@@ -137,13 +144,28 @@ where
                         if let Some(Payload::Transaction(transaction)) = message.payload() {
                             let TransactionEssence::Regular(essence) = transaction.essence();
 
-                            if essence.network_id() != network_id {
+                            if essence.network_id() != config.network_id {
                                 notify_invalid_message(
-                                    format!("Incompatible network ID {} != {}.", essence.network_id(), network_id),
+                                    format!(
+                                        "Incompatible network ID {} != {}.",
+                                        essence.network_id(),
+                                        config.network_id
+                                    ),
                                     &metrics,
                                     notifier,
                                 );
-                                continue;
+                                continue 'next_event;
+                            }
+
+                            for (i, output) in essence.outputs().iter().enumerate() {
+                                if let Err(error) = output.verify_storage_deposit(&config.byte_cost) {
+                                    notify_invalid_message(
+                                        format!("Invalid output i={i}: {}", error),
+                                        &metrics,
+                                        notifier,
+                                    );
+                                    continue 'next_event;
+                                }
                             }
                         }
 
@@ -161,7 +183,7 @@ where
                                     })
                                     .unwrap_or_default();
                             }
-                            continue;
+                            continue 'next_event;
                         };
 
                         // Send the propagation event ASAP to allow the propagator to do its thing
