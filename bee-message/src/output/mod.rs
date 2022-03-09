@@ -52,7 +52,7 @@ pub use token_scheme::TokenScheme;
 pub use treasury::TreasuryOutput;
 pub(crate) use treasury::TreasuryOutputAmount;
 pub(crate) use unlock_condition::StorageDepositAmount;
-pub use unlock_condition::{UnlockCondition, UnlockConditions};
+pub use unlock_condition::{AddressUnlockCondition, UnlockCondition, UnlockConditions};
 
 use crate::{address::Address, constant::IOTA_SUPPLY, Error};
 
@@ -60,8 +60,6 @@ use derive_more::From;
 use packable::{bounded::BoundedU64, PackableExt};
 
 use core::ops::RangeInclusive;
-
-use self::unlock_condition::AddressUnlockCondition;
 
 /// The maximum number of outputs of a transaction.
 pub const OUTPUT_COUNT_MAX: u16 = 128;
@@ -205,8 +203,10 @@ impl Output {
         }
     }
 
-    /// Checks if a sufficient storage deposit was made for the given [`Output`].
-    pub fn check_sufficient_storage_deposit(&self, config: &ByteCostConfig) -> Result<(), Error> {
+    /// Verify if a valid storage deposit was made. Each [`Output`] has to have an [`OutputAmount`] amount that covers
+    /// its associated byte cost, given by [`ByteCostConfig`]. If there is a [`StorageDepositReturnUnlockCondition`](unlock_condition::StorageDepositReturnUnlockCondition),
+    /// its amount is also checked.
+    pub fn verify_storage_deposit(&self, config: &ByteCostConfig) -> Result<(), Error> {
         let required_output = self.byte_cost(config);
 
         if self.amount() < required_output {

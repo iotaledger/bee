@@ -21,7 +21,7 @@ use bee_gossip::PeerId;
 use bee_message::{
     output::ByteCostConfig,
     payload::{transaction::TransactionEssence, Payload},
-    Error as MessageError, Message, MessageId,
+    Message, MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::MessageMetadata, Tangle, TangleWorker};
@@ -146,7 +146,11 @@ where
 
                             if essence.network_id() != config.network_id {
                                 notify_invalid_message(
-                                    format!("Incompatible network ID {} != {}.", essence.network_id(), config.network_id),
+                                    format!(
+                                        "Incompatible network ID {} != {}.",
+                                        essence.network_id(),
+                                        config.network_id
+                                    ),
                                     &metrics,
                                     notifier,
                                 );
@@ -154,48 +158,13 @@ where
                             }
 
                             for (i, output) in essence.outputs().iter().enumerate() {
-                                if let Err(error) = output.check_sufficient_storage_deposit(&config.byte_cost) {
-                                    match error {
-                                        MessageError::InsufficientStorageDepositAmount{required, amount} => {
-                                            notify_invalid_message(
-                                                format!("Insufficient amount in output {i}: {amount} (should be at least {required})"),
-                                                &metrics,
-                                                notifier,
-                                            );
-                                            continue 'next_event;
-                                        }
-                                        MessageError::StorageDepositReturnExceedsOutputAmount{
-                                            deposit, amount,
-                                        } => {
-                                            notify_invalid_message(
-                                                format!("Storage deposit return exceeds amount of output {i}: {deposit} > {amount}"),
-                                                &metrics,
-                                                notifier,
-                                            );
-                                            continue 'next_event;
-                                        },
-                                        MessageError::InsufficientStorageDepositReturnAmount{
-                                            deposit, required,
-                                        } => {
-                                            notify_invalid_message(
-                                                format!("Insufficient storage deposit return for output {i}: {deposit} (should be at least {required})"),
-                                                &metrics,
-                                                notifier,
-                                            );
-                                            continue 'next_event;
-                                        }
-                                        MessageError::UnnecessaryStorageDepositReturnCondition{
-                                            logical_amount, required,
-                                        } => {
-                                            notify_invalid_message(
-                                                format!("Unnecessary storage deposit return for output {i}: the logical output amount {logical_amount} already satisfies storage deposit {required}"),
-                                                &metrics,
-                                                notifier,
-                                            );
-                                            continue 'next_event;
-                                        }
-                                        _ => unimplemented!() // That should never happen.
-                                    }
+                                if let Err(error) = output.verify_storage_deposit(&config.byte_cost) {
+                                    notify_invalid_message(
+                                        format!("Invalid output i={i}: {}", error.to_string()),
+                                        &metrics,
+                                        notifier,
+                                    );
+                                    continue 'next_event;
                                 }
                             }
                         }

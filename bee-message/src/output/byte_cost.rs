@@ -109,6 +109,7 @@ mod test {
     use crate::output::{ByteCost, ByteCostConfig, ByteCostConfigBuilder, Output};
 
     use bee_test::rand::output::{rand_alias_output, rand_basic_output, rand_foundry_output, rand_nft_output};
+
     use packable::{Packable, PackableExt};
 
     const BYTE_COST: u64 = 1;
