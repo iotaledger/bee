@@ -203,8 +203,8 @@ impl Output {
         }
     }
 
-    /// Verify if a valid storage deposit was made. Each [`Output`] has to have an [`OutputAmount`] amount that covers
-    /// its associated byte cost, given by [`ByteCostConfig`]. If there is a
+    /// Verify if a valid storage deposit was made. Each [`Output`] has to have an amount that covers its associated
+    /// byte cost, given by [`ByteCostConfig`]. If there is a
     /// [`StorageDepositReturnUnlockCondition`](unlock_condition::StorageDepositReturnUnlockCondition), its amount
     /// is also checked.
     pub fn verify_storage_deposit(&self, config: &ByteCostConfig) -> Result<(), Error> {
