@@ -41,17 +41,17 @@ struct ValidationContext<'a> {
     milestone_timestamp: u64,
     input_amount: u64,
     input_native_tokens: HashMap<TokenId, U256>,
-    input_chains: HashMap<ChainId, Output>,
+    input_chains: HashMap<ChainId, &'a Output>,
     output_amount: u64,
     output_native_tokens: HashMap<TokenId, U256>,
     output_chains: HashMap<ChainId, &'a Output>,
-    consumed_outputs: Vec<(OutputId, CreatedOutput)>,
     unlocked_addresses: HashSet<Address>,
 }
 
 impl<'a> ValidationContext<'a> {
     fn new(
         essence: &'a RegularTransactionEssence,
+        inputs: impl Iterator<Item = &'a Output>,
         unlock_blocks: &'a UnlockBlocks,
         milestone_index: MilestoneIndex,
         milestone_timestamp: u64,
@@ -64,15 +64,16 @@ impl<'a> ValidationContext<'a> {
             milestone_timestamp,
             input_amount: 0,
             input_native_tokens: HashMap::<TokenId, U256>::new(),
-            input_chains: HashMap::new(),
+            input_chains: inputs
+                .filter_map(|input| input.chain_id().map(|chain_id| (chain_id, input)))
+                .collect(),
             output_amount: 0,
             output_native_tokens: HashMap::<TokenId, U256>::new(),
             output_chains: essence
                 .outputs()
                 .iter()
-                .filter_map(|output| output.chain_id().map(|id| (id, output)))
+                .filter_map(|output| output.chain_id().map(|chain_id| (chain_id, output)))
                 .collect(),
-            consumed_outputs: Vec::with_capacity(essence.inputs().len()),
             unlocked_addresses: HashSet::new(),
         }
     }
@@ -140,6 +141,7 @@ fn check_output_feature_blocks(
 fn unlock_address(
     address: &Address,
     unlock_block: &UnlockBlock,
+    inputs: &[(OutputId, &Output)],
     context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
     match (address, unlock_block) {
@@ -154,7 +156,7 @@ fn unlock_address(
         }
         (Address::Alias(alias_address), UnlockBlock::Alias(unlock_block)) => {
             // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
-            if let Output::Alias(alias_output) = context.consumed_outputs[unlock_block.index() as usize].1.inner() {
+            if let Output::Alias(alias_output) = inputs[unlock_block.index() as usize].1 {
                 if alias_output.alias_id() != alias_address.alias_id() {
                     return Err(ConflictReason::IncorrectUnlockMethod);
                 }
@@ -164,7 +166,7 @@ fn unlock_address(
         }
         (Address::Nft(nft_address), UnlockBlock::Nft(unlock_block)) => {
             // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
-            if let Output::Nft(nft_output) = context.consumed_outputs[unlock_block.index() as usize].1.inner() {
+            if let Output::Nft(nft_output) = inputs[unlock_block.index() as usize].1 {
                 if nft_output.nft_id() != nft_address.nft_id() {
                     return Err(ConflictReason::IncorrectUnlockMethod);
                 }
@@ -184,15 +186,17 @@ fn unlock_basic_output(
     output_id: &OutputId,
     output: &BasicOutput,
     unlock_block: &UnlockBlock,
+    inputs: &[(OutputId, &Output)],
     context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
-    unlock_address(output.address(), unlock_block, context)
+    unlock_address(output.address(), unlock_block, inputs, context)
 }
 
 fn unlock_alias_output(
     output_id: &OutputId,
     current_state: &AliasOutput,
     unlock_block: &UnlockBlock,
+    inputs: &[(OutputId, &Output)],
     context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
     let alias_id = if current_state.alias_id().is_null() {
@@ -208,11 +212,11 @@ fn unlock_alias_output(
     if let Some(next_state) = next_state {
         // State transition.
         if next_state.state_index() == current_state.state_index() + 1 {
-            unlock_address(current_state.state_controller_address(), unlock_block, context)?;
+            unlock_address(current_state.state_controller_address(), unlock_block, inputs, context)?;
         }
         // Governance transition.
         else if next_state.state_index() == current_state.state_index() {
-            unlock_address(current_state.governor_address(), unlock_block, context)?;
+            unlock_address(current_state.governor_address(), unlock_block, inputs, context)?;
         } else {
             // TODO Err non contiguous state increase
         }
@@ -228,6 +232,7 @@ fn unlock_foundry_output(
     output_id: &OutputId,
     output: &FoundryOutput,
     unlock_block: &UnlockBlock,
+    inputs: &[(OutputId, &Output)],
     context: &ValidationContext,
 ) -> Result<(), ConflictReason> {
     Ok(())
@@ -237,6 +242,7 @@ fn unlock_nft_output(
     output_id: &OutputId,
     output: &NftOutput,
     unlock_block: &UnlockBlock,
+    inputs: &[(OutputId, &Output)],
     context: &ValidationContext,
 ) -> Result<(), ConflictReason> {
     let nft_id = if output.nft_id().is_null() {
@@ -256,12 +262,7 @@ fn apply_regular_essence<B: StorageBackend>(
     unlock_blocks: &UnlockBlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
-    let mut context = ValidationContext::new(
-        essence,
-        unlock_blocks,
-        metadata.milestone_index,
-        metadata.milestone_timestamp,
-    );
+    let mut consumed_outputs = Vec::<(OutputId, CreatedOutput)>::new();
 
     // TODO check inputs commitment.
 
@@ -290,39 +291,56 @@ fn apply_regular_essence<B: StorageBackend>(
             }
         };
 
+        consumed_outputs.push((*output_id, consumed_output));
+    }
+
+    let inputs: Vec<(OutputId, &Output)> = consumed_outputs
+        .iter()
+        .map(|(output_id, created_output)| (*output_id, created_output.inner()))
+        .collect();
+
+    let mut context = ValidationContext::new(
+        essence,
+        inputs.iter().map(|(_, input)| *input),
+        unlock_blocks,
+        metadata.milestone_index,
+        metadata.milestone_timestamp,
+    );
+
+    for (index, (output_id, consumed_output)) in inputs.iter().enumerate() {
         // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
         let unlock_block = unlock_blocks.get(index).unwrap();
 
-        let (amount, consumed_native_tokens) = match consumed_output.inner() {
+        let (amount, consumed_native_tokens) = match consumed_output {
             Output::Basic(output) => {
-                if let Err(conflict) = unlock_basic_output(output_id, output, unlock_block, &mut context) {
+                if let Err(conflict) = unlock_basic_output(output_id, output, unlock_block, &inputs, &mut context) {
                     return Ok(conflict);
                 }
 
                 (output.amount(), output.native_tokens())
             }
             Output::Alias(output) => {
-                if let Err(conflict) = unlock_alias_output(output_id, output, unlock_block, &mut context) {
+                if let Err(conflict) = unlock_alias_output(output_id, output, unlock_block, &inputs, &mut context) {
                     return Ok(conflict);
                 }
 
                 (output.amount(), output.native_tokens())
             }
             Output::Foundry(output) => {
-                if let Err(conflict) = unlock_foundry_output(output_id, output, unlock_block, &context) {
+                if let Err(conflict) = unlock_foundry_output(output_id, output, unlock_block, &inputs, &context) {
                     return Ok(conflict);
                 }
 
                 (output.amount(), output.native_tokens())
             }
             Output::Nft(output) => {
-                if let Err(conflict) = unlock_nft_output(output_id, output, unlock_block, &context) {
+                if let Err(conflict) = unlock_nft_output(output_id, output, unlock_block, &inputs, &context) {
                     return Ok(conflict);
                 }
 
                 (output.amount(), output.native_tokens())
             }
-            _ => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
+            _ => return Err(Error::UnsupportedOutputKind(consumed_output.kind())),
         };
 
         context.input_amount = context
@@ -335,8 +353,6 @@ fn apply_regular_essence<B: StorageBackend>(
                 .checked_add(*native_token.amount())
                 .ok_or(Error::ConsumedNativeTokensAmountOverflow)?;
         }
-
-        context.consumed_outputs.push((*output_id, consumed_output));
     }
 
     for created_output in essence.outputs() {
@@ -380,7 +396,7 @@ fn apply_regular_essence<B: StorageBackend>(
 
     // TODO check chain constraints
 
-    for (output_id, created_output) in context.consumed_outputs {
+    for (output_id, created_output) in consumed_outputs {
         metadata.consumed_outputs.insert(
             output_id,
             (
