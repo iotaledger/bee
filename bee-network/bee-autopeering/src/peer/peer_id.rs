@@ -8,6 +8,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 
+use bee_identity::Identity;
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, PUBLIC_KEY_LENGTH};
 use serde::{
     de::{SeqAccess, Visitor},
@@ -112,6 +113,14 @@ impl AsRef<PeerId> for PeerId {
 impl AsRef<[u8]> for PeerId {
     fn as_ref(&self) -> &[u8] {
         self.public_key.as_ref()
+    }
+}
+
+impl From<Identity> for PeerId {
+    fn from(identity: Identity) -> Self {
+        Self::from_public_key(
+            PublicKey::try_from_bytes(identity.keypair().public().encode()).expect("public key from bytes"),
+        )
     }
 }
 
