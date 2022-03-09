@@ -160,7 +160,7 @@ where
                             for (i, output) in essence.outputs().iter().enumerate() {
                                 if let Err(error) = output.verify_storage_deposit(&config.byte_cost) {
                                     notify_invalid_message(
-                                        format!("Invalid output i={i}: {}", error.to_string()),
+                                        format!("Invalid output i={i}: {}", error),
                                         &metrics,
                                         notifier,
                                     );
