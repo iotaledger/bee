@@ -44,7 +44,7 @@ struct ValidationContext<'a> {
     input_chains: HashMap<ChainId, Output>,
     output_amount: u64,
     output_native_tokens: HashMap<TokenId, U256>,
-    output_chains: HashMap<ChainId, Output>,
+    output_chains: HashMap<ChainId, &'a Output>,
     consumed_outputs: Vec<(OutputId, CreatedOutput)>,
     unlocked_addresses: HashSet<Address>,
 }
@@ -67,7 +67,11 @@ impl<'a> ValidationContext<'a> {
             input_chains: HashMap::new(),
             output_amount: 0,
             output_native_tokens: HashMap::<TokenId, U256>::new(),
-            output_chains: HashMap::new(),
+            output_chains: essence
+                .outputs()
+                .iter()
+                .filter_map(|output| output.chain_id().map(|id| (id, output)))
+                .collect(),
             consumed_outputs: Vec::with_capacity(essence.inputs().len()),
             unlocked_addresses: HashSet::new(),
         }
