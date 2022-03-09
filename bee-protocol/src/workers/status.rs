@@ -35,6 +35,7 @@ where
         .leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();

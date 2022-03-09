@@ -34,6 +34,8 @@ sled = { version = "0.34.7", default-features = false, optional = true }
 thiserror = { version = "1.0.29", default-features = false  }
 tokio = { version = "1.11", default-features = false , features = [ "macros", "rt", "time", "net" ] }
 tokio-stream = { version = "0.1", default-features = false  }
+trace-tools = { version = "0.3.0", default-features = false, optional = true }
+tracing = { version = "0.1.29", default-features = false, optional = true }
 
 [dev-dependencies]
 fern = { version = "0.6.0", default-features = false }
@@ -51,3 +53,4 @@ required-features = [ "in-memory" ]
 [features]
 default = [ "rocksdb" ]
 in-memory = [ ]
+trace = [ "trace-tools/tokio-console", "tracing" ]

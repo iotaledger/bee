@@ -37,6 +37,8 @@ serde = { version = "1.0.130", default-features = false, features = [ "derive" ]
 thiserror = { version = "1.0.30", default-features = false, optional = true }
 tokio = { version = "1.12.0", default-features = false, features = [ "rt-multi-thread" ], optional = true }
 tokio-stream = { version = "0.1.7", default-features = false, optional = true }
+trace-tools = { version = "0.3.0", default-features = false, optional = true }
+tracing = { version = "0.1.29", default-features = false, optional = true }
 twox-hash = { version = "1.6.1", default-features = false, optional = true }
 
 [features]
@@ -63,6 +65,15 @@ workers = [
   "tokio",
   "tokio-stream",
   "twox-hash",
+]
+trace = [ 
+  "bee-common/trace", 
+  "bee-gossip/trace", 
+  "bee-ledger/trace", 
+  "bee-pow/trace", 
+  "bee-tangle/trace", 
+  "trace-tools/tokio-console", 
+  "tracing",
 ]
 
 [dev-dependencies]

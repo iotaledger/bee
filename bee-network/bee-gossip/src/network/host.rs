@@ -50,6 +50,7 @@ pub mod integrated {
             vec![TypeId::of::<ServiceHost>()].leak()
         }
 
+        #[cfg_attr(feature = "trace", trace_tools::observe)]
         async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
             node.spawn::<Self, _, _>(|shutdown| async move {
                 network_host_processor(config, shutdown)
@@ -94,6 +95,7 @@ pub mod standalone {
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn network_host_processor(
     config: NetworkHostConfig,
     mut shutdown: oneshot::Receiver<()>,
@@ -128,6 +130,7 @@ async fn network_host_processor(
     Ok(())
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn process_swarm_event(
     event: SwarmEvent<(), impl std::error::Error>,
     internal_event_sender: &InternalEventSender,
@@ -166,6 +169,7 @@ async fn process_swarm_event(
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn process_internal_command(internal_command: Command, swarm: &mut Swarm<SwarmBehaviour>, peerlist: &PeerList) {
     match internal_command {
         Command::DialAddress { address } => {
@@ -183,6 +187,7 @@ async fn process_internal_command(internal_command: Command, swarm: &mut Swarm<S
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn dial_addr(swarm: &mut Swarm<SwarmBehaviour>, addr: Multiaddr, peerlist: &PeerList) -> Result<(), Error> {
     if let Err(e) = peerlist.0.read().await.allows_dialing_addr(&addr) {
         warn!("Dialing address {} denied. Cause: {:?}", addr, e);
@@ -196,6 +201,7 @@ async fn dial_addr(swarm: &mut Swarm<SwarmBehaviour>, addr: Multiaddr, peerlist:
     Ok(())
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn dial_peer(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId, peerlist: &PeerList) -> Result<(), Error> {
     if let Err(e) = peerlist.0.read().await.allows_dialing_peer(&peer_id) {
         warn!("Dialing peer {} denied. Cause: {:?}", alias!(peer_id), e);

@@ -51,6 +51,7 @@ thiserror = { version = "1.0.30", default-features = false }
 tokio = { version = "1.12.0", default-features = false, features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
 tokio-stream = { version = "0.1.7", default-features = false }
 toml = { version = "0.5.8", default-features = false }
+trace-tools = { version = "0.3.0", default-features = false, optional = true }
 tracing = { version = "0.1.29", default-features = false, optional = true }
 warp = { version = "0.3.1", default-features = false }
 
@@ -68,3 +69,14 @@ default = [ "rocksdb" ]
 dashboard = [ "bee-plugin-dashboard" ]
 rocksdb = [ "bee-storage-rocksdb" ]
 sled = [ "bee-storage-sled" ]
+trace = [
+  "bee-autopeering/trace",
+  "bee-common/trace",
+  "bee-gossip/trace", 
+  "bee-ledger/trace", 
+  "bee-protocol/trace",
+  "bee-rest-api/trace", 
+  "bee-tangle/trace",
+  "trace-tools/tokio-console", 
+  "tracing",
+]

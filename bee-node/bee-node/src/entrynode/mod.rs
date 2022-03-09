@@ -43,6 +43,7 @@ impl EntryNode {
     }
 
     /// Starts running the entry node.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn run(mut self) -> Result<(), EntryNodeError> {
         log::info!("Entry node running.");
 
@@ -110,6 +111,7 @@ impl Node for EntryNode {
     }
 
     /// Stops the entry node.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn stop(mut self) -> Result<(), Self::Error> {
         for worker_id in self.core.worker_order.clone().into_iter().rev() {
             // Panic: unwrapping is fine since worker_id is from the list of workers.

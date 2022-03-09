@@ -44,6 +44,7 @@ pub(crate) struct MilestonePayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<MilestonePayloadWorkerEvent>,
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 fn validate(
     message_id: MessageId,
     message: &Message,
@@ -68,6 +69,7 @@ fn validate(
 }
 
 #[allow(clippy::too_many_arguments)]
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn process<B: StorageBackend>(
     tangle: &Tangle<B>,
     message_id: MessageId,
@@ -137,6 +139,7 @@ where
         .leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let milestone_solidifier = node.worker::<MilestoneSolidifierWorker>().unwrap().tx.clone();
         let tangle = node.resource::<Tangle<N::Backend>>();

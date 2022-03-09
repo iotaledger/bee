@@ -342,6 +342,7 @@ pub(crate) fn rollback_milestone<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 pub(crate) fn fetch_balance<B: StorageBackend>(storage: &B, address: &Address) -> Result<Option<Balance>, Error> {
     Fetch::<Address, Balance>::fetch(storage, address).map_err(|e| Error::Storage(Box::new(e)))
 }
@@ -397,10 +398,12 @@ pub(crate) fn insert_snapshot_info<B: StorageBackend>(storage: &B, snapshot_info
     Insert::<(), SnapshotInfo>::insert(&*storage, &(), snapshot_info).map_err(|e| Error::Storage(Box::new(e)))
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 pub(crate) fn fetch_snapshot_info<B: StorageBackend>(storage: &B) -> Result<Option<SnapshotInfo>, Error> {
     Fetch::<(), SnapshotInfo>::fetch(storage, &()).map_err(|e| Error::Storage(Box::new(e)))
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 pub(crate) fn fetch_output<B: StorageBackend>(
     storage: &B,
     output_id: &OutputId,
@@ -408,6 +411,7 @@ pub(crate) fn fetch_output<B: StorageBackend>(
     Fetch::<OutputId, CreatedOutput>::fetch(storage, output_id).map_err(|e| Error::Storage(Box::new(e)))
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 pub(crate) fn fetch_outputs_for_ed25519_address<B: StorageBackend>(
     storage: &B,
     address: &Ed25519Address,

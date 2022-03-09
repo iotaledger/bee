@@ -30,6 +30,7 @@ impl PoWScorer {
 
     /// Returns the Proof of Work hash of given bytes.
     /// Panic: expects at least 8 bytes.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn hash(&mut self, bytes: &[u8]) -> TritBuf<T1B1Buf> {
         debug_assert!(bytes.len() >= std::mem::size_of::<u8>());
 

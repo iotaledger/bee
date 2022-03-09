@@ -184,6 +184,7 @@ impl<const USE_IP_V6: bool> Runnable for IncomingPacketHandler<USE_IP_V6> {
 
     type ShutdownSignal = ShutdownRx;
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn run(self, mut shutdown_rx: Self::ShutdownSignal) {
         let IncomingPacketHandler {
             incoming_socket,
@@ -292,6 +293,7 @@ impl Runnable for OutgoingPacketManager {
 
     type ShutdownSignal = ShutdownRx;
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn run(self, mut shutdown_rx: Self::ShutdownSignal) {
         let OutgoingPacketManager {
             mut outgoing_rx,
@@ -341,6 +343,7 @@ impl<const USE_IP_V6: bool> Runnable for OutgoingPacketHandler<USE_IP_V6> {
 
     type ShutdownSignal = ShutdownRx;
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn run(self, mut shutdown_rx: Self::ShutdownSignal) {
         let OutgoingPacketHandler {
             outgoing_socket,

@@ -156,6 +156,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of new messages of the `NodeMetrics`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn new_messages_inc(&self) -> u64 {
         self.new_messages.fetch_add(1, Ordering::SeqCst)
     }
@@ -166,6 +167,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of known messages of the `NodeMetrics`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn known_messages_inc(&self) -> u64 {
         self.known_messages.fetch_add(1, Ordering::SeqCst)
     }
@@ -176,6 +178,7 @@ impl NodeMetrics {
     }
 
     /// Sets the average messages latency of the `NodeMetrics`
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn messages_average_latency_set(&self, val: u64) {
         self.messages_average_latency.store(val, Ordering::Relaxed)
     }
@@ -186,6 +189,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of referenced messages of the `NodeMetrics`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn referenced_messages_inc(&self, value: u64) -> u64 {
         self.referenced_messages.fetch_add(value, Ordering::SeqCst)
     }
@@ -196,6 +200,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of excluded messages - because without transaction - of the `NodeMetrics`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn excluded_no_transaction_messages_inc(&self, value: u64) -> u64 {
         self.excluded_no_transaction_messages.fetch_add(value, Ordering::SeqCst)
     }
@@ -206,6 +211,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of excluded messages - because conflicting - of the `NodeMetrics`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn excluded_conflicting_messages_inc(&self, value: u64) -> u64 {
         self.excluded_conflicting_messages.fetch_add(value, Ordering::SeqCst)
     }
@@ -216,6 +222,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of included messages of the `NodeMetrics`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn included_messages_inc(&self, value: u64) -> u64 {
         self.included_messages.fetch_add(value, Ordering::SeqCst)
     }
@@ -226,6 +233,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of created outputs of the `NodeMetrics`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn created_outputs_inc(&self, value: u64) -> u64 {
         self.created_outputs.fetch_add(value, Ordering::SeqCst)
     }
@@ -236,6 +244,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of consumed outputs of the `NodeMetrics`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn consumed_outputs_inc(&self, value: u64) -> u64 {
         self.consumed_outputs.fetch_add(value, Ordering::SeqCst)
     }
@@ -246,6 +255,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of receipts of the `NodeMetrics`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn receipts_inc(&self, value: u64) -> u64 {
         self.receipts.fetch_add(value, Ordering::SeqCst)
     }
@@ -256,6 +266,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of transaction payloads of the `NodeMetrics`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn transaction_payloads_inc(&self, value: u64) -> u64 {
         self.transaction_payloads.fetch_add(value, Ordering::SeqCst)
     }
@@ -266,6 +277,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of milestone payloads of the `NodeMetrics`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn milestone_payloads_inc(&self, value: u64) -> u64 {
         self.milestone_payloads.fetch_add(value, Ordering::SeqCst)
     }
@@ -276,7 +288,8 @@ impl NodeMetrics {
     }
 
     /// Increments the number of indexation payloads of the `NodeMetrics`.
-    pub fn indexation_payload_inc(&self, value: u64) -> u64 {
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
+    pub fn indexation_payloads_inc(&self, value: u64) -> u64 {
         self.indexation_payloads.fetch_add(value, Ordering::SeqCst)
     }
 
@@ -286,6 +299,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of snapshots of the `NodeMetrics`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn snapshots_inc(&self, value: u64) -> u64 {
         self.snapshots.fetch_add(value, Ordering::SeqCst)
     }
@@ -296,6 +310,7 @@ impl NodeMetrics {
     }
 
     /// Increments the number of prunings of the `NodeMetrics`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn prunings_inc(&self, value: u64) -> u64 {
         self.prunings.fetch_add(value, Ordering::SeqCst)
     }
@@ -358,7 +373,7 @@ mod tests {
         metrics.receipts_inc(1);
         metrics.transaction_payloads_inc(1);
         metrics.milestone_payloads_inc(1);
-        metrics.indexation_payload_inc(1);
+        metrics.indexation_payloads_inc(1);
         metrics.snapshots_inc(1);
         metrics.prunings_inc(1);
 

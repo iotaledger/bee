@@ -38,6 +38,7 @@ impl Vertices {
         }
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     fn make_hash(&self, message_id: &MessageId) -> u64 {
         let mut state = self.hash_builder.build_hasher();
         message_id.hash(&mut state);
@@ -54,6 +55,7 @@ impl Vertices {
         unsafe { self.tables.get_unchecked(index) }
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub(crate) async fn get(&self, message_id: &MessageId) -> Option<RwLockReadGuard<'_, Vertex>> {
         let hash = self.make_hash(message_id);
         let table = self.get_table(hash).read().await;
@@ -65,6 +67,7 @@ impl Vertices {
         .ok()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub(crate) async fn get_mut(&self, message_id: &MessageId) -> Option<RwLockMappedWriteGuard<'_, Vertex>> {
         let hash = self.make_hash(message_id);
         let table = self.get_table(hash).write().await;
@@ -76,6 +79,7 @@ impl Vertices {
         .ok()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub(crate) async fn pop_random(&self, max_retries: usize) -> Option<Vertex> {
         let mut retries = 0;
 
@@ -111,6 +115,7 @@ impl Vertices {
         None
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub(crate) async fn get_mut_or_empty(&self, message_id: MessageId) -> RwLockMappedWriteGuard<'_, Vertex> {
         let hash = self.make_hash(&message_id);
         let table = self.get_table(hash).write().await;

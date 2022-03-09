@@ -32,6 +32,7 @@ pub(crate) struct PayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<PayloadWorkerEvent>,
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn process(
     message_id: MessageId,
     message: MessageRef,
@@ -86,6 +87,7 @@ where
         .leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let transaction_payload_worker = node.worker::<TransactionPayloadWorker>().unwrap().tx.clone();
         let milestone_payload_worker = node.worker::<MilestonePayloadWorker>().unwrap().tx.clone();

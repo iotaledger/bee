@@ -30,6 +30,7 @@ impl<N: Node> Worker<N> for MpsWorker {
         vec![TypeId::of::<MetricsWorker>()].leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let bus = node.bus();
         let metrics = node.resource::<NodeMetrics>();

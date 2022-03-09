@@ -15,6 +15,12 @@ bee-ternary = { version = "0.5.2", default-features = false }
 
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "blake2b", "digest", "curl-p" ] }
 thiserror = { version = "1.0.30", default-features = false }
+trace-tools = { version = "0.3.0", default-features = false, optional = true }
+tracing = { version = "0.1.29", default-features = false, optional = true }
 
 [dev-dependencies]
 bee-test = { path = "../bee-test", default-features = false }
+
+[features]
+default = [ ]
+trace = [ "trace-tools/tokio-console", "tracing" ]

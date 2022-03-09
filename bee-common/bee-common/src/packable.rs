@@ -32,6 +32,7 @@ pub trait Packable {
 
     /// Reads bytes from the passed reader and unpacks them into an instance.
     /// Applies syntactic checks.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
     where
         Self: Sized,

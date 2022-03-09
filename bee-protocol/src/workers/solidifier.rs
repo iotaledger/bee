@@ -35,6 +35,7 @@ pub(crate) struct MilestoneSolidifierWorker {
     pub(crate) tx: mpsc::UnboundedSender<MilestoneSolidifierWorkerEvent>,
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn heavy_solidification<B: StorageBackend>(
     tangle: &Tangle<B>,
     message_requester: &MessageRequesterWorker,
@@ -120,6 +121,7 @@ where
         .leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();

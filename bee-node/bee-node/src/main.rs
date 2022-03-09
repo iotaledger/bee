@@ -51,9 +51,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .to_owned();
     let (identity_field, config) = deserialize_config(cl_args);
 
-    // Initialize the logger.
     let logger_cfg = config.logger().clone();
-    fern_logger::logger_init(logger_cfg)?;
+    
+    #[cfg(not(feature = "trace"))]
+    {
+        // Initialize the logger.
+        fern_logger::logger_init(logger_cfg)?;
+    }
+    #[cfg(feature = "trace")]
+    {
+        // Initialize the subscriber.
+        let _ = trace_tools::subscriber::build()
+            .with_console_layer()
+            .with_log_layer(logger_cfg)
+            .init()
+            .expect("failed initialize the tracing subscriber");
+    }
 
     // Establish identity.
     let keypair = match read_keypair_from_pem_file(&identity_path) {
@@ -144,6 +157,7 @@ fn deserialize_config(cl_args: ClArgs) -> (Option<String>, NodeConfig<Storage>) 
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn start_entrynode(local: Local, config: NodeConfig<Storage>) {
     let entry_node_config = EntryNodeConfig::from(local, config);
     let node_builder = EntryNodeBuilder::new(entry_node_config);
@@ -161,6 +175,7 @@ async fn start_entrynode(local: Local, config: NodeConfig<Storage>) {
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn start_fullnode(local: Local, config: NodeConfig<Storage>) {
     let full_node_config = FullNodeConfig::from(local, config);
     let node_builder = FullNodeBuilder::<Storage>::new(full_node_config);

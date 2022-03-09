@@ -47,6 +47,7 @@ impl<S: NodeStorageBackend> FullNode<S> {
     }
 
     /// Starts running the full node.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn run(mut self) -> Result<(), FullNodeError> {
         log::info!("Full node running.");
 
@@ -114,6 +115,7 @@ impl<S: NodeStorageBackend> Node for FullNode<S> {
     }
 
     /// Stops the full node.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn stop(mut self) -> Result<(), Self::Error> {
         for worker_id in self.core.worker_order.clone().into_iter().rev() {
             // Panic: unwrapping is fine since worker_id is from the list of workers.

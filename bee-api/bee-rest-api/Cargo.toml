@@ -34,6 +34,8 @@ serde = { version = "1.0.130", default-features = false, features = [ "derive" ]
 serde_json = { version = "1.0.68", default-features = false, features = [ "alloc" ] }
 thiserror = { version = "1.0.30", default-features = false }
 tokio = { version = "1.12.0", default-features = false, optional = true }
+trace-tools = { version = "0.3.0", default-features = false, optional = true }
+tracing = { version = "0.1.29", default-features = false, optional = true }
 warp = { version = "0.3.1", default-features = false, optional = true }
 
 [features]
@@ -56,3 +58,11 @@ endpoints = [
   "warp",
 ]
 peer = [ "bee-protocol" ]
+trace = [ 
+  "bee-common/trace", 
+  "bee-gossip/trace", 
+  "bee-protocol/trace", 
+  "bee-tangle/trace", 
+  "trace-tools/tokio-console", 
+  "tracing",
+]
