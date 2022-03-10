@@ -2557,14 +2557,6 @@ state as metadata into the UTXO ledger.
 There are two types of transitions: `state transition` and `governance transition`.
 - State transition:
     - The unlock block must correspond to the `Address` of <i>State Controller Address Unlock Condition</i>.
-    - State transition can only change the following fields in the next state:
-      - `IOTA Amount`,
-      - `Native Tokens`,
-      - `State Index`,
-      - `State Metadata Length`,
-      - `State Metadata`,
-      - `Foundry Counter` and
-      - `Sender Block` in `Blocks`.
     - `Foundry Counter` field must increase by the number of foundry outputs created in the transaction that map to
       `Alias ID`. The `Serial Number` fields of the created foundries must be the set of natural numbers that cover the
        open-ended interval between the previous and next values of the `Foundry Counter` field in the alias output.
@@ -2574,17 +2566,7 @@ There are two types of transitions: `state transition` and `governance transitio
     - Newly created foundries in the transaction that map to different aliases can be interleaved when it comes to
       sorting.
 - Governance transition:
-    - A governance transition is identified by an unchanged `State Index` in next state. If there is no alias output on
-      the output side with a corresponding explicit `Alias ID`, the alias is being destroyed. The next state is the
-      empty state.
     - The unlock block must correspond to the `Address` of <i>Governor Address Unlock Condition</i>.
-    - Governance transition must only change the following fields:
-       - `Address` of <i>State Controller Address Unlock Condition</i>,
-       - `Address` of <i>Governor Address Unlock Condition</i>,
-       - `Metadata Block` and `Sender Block` in `Blocks`.
-    - The `Metadata Block` is optional, the governor can put additional info about the chain here, for example chain
-      name, fee structure, supported VMs, list of access nodes, etc., anything that helps clients to fetch info (i.e.
-      account balances) about the layer 2 network.
 
 #### Created Outputs
 
@@ -2943,32 +2925,8 @@ are encoded in inputs and outputs respectively.
       `Token Tag` field of the foundry output.
     - Additional token schemes will be defined that make use of the `Foundry Diff` as well, for example validating that
       a certain amount of tokens can only be minted/melted after a certain date.
-- When neither `Current State` nor `Next State` is empty:
-    - `Maximum Suppply` field must not change.
-    - <i>Immutable Alias Address Unlock Condition</i> must not change.
-    - `Serial Number` must not change.
-    - `Token Tag` must not change.
-    - `Token Scheme Type` must not change.
-    - <i>Blocks</i> in `Immutable Blocks` must not change.
-
-### Notes
-
-- A token scheme is a list of hard coded constraints. It is not feasible at the moment to foresee the future
-  needs/requirements of hard coded constraints, so it is impossible to design token schemes as any possible combination
-  of those constraints. A better design would be to have a list of possible constraints (and their related fields) from
-  which the user can choose. The chosen combination should still be encoded as a bitmask inside the `Token ID`.
-- For now, only token scheme `0` is supported. Additional token schemes will be designed iteratively when the need arises.
-- The `Foundry ID` of a foundry output should be queryable in indexers, so that given a `Foundry ID`, the
-  `Output ID` of the foundry output can be retrieved. `Foundry ID` behaves like an address that can't unlock anything.
-  While it is not necessarily needed for the protocol, it is needed for client side operations, such as:
-    - Retrieving the current state of the foundry.
-    - Accessing token metadata in foundry based on `Foundry ID` derived from `Tokend ID`.
 
 ## NFT Output
-
-Each NFT output gets assigned a unique identifier `NFT ID` upon creation by the protocol. `NFT ID` is BLAKE2b-160 hash
-of the <i>Output ID</i>  that created the NFT. The address of the NFT is the concatenation of `NFT Address Type` ||
-`NFT ID`.
 
 The NFT may contain immutable metadata set upon creation, and a verified `Issuer`. The output type supports all
 non-alias specific (state controller, governor) unlock conditions and optional feature blocks so that the output can be
@@ -3720,17 +3678,8 @@ sent as a request to smart contract chain accounts.
 - The unlock block of the input corresponds to `Address` field of the <i>Address Unlock Condition</i> and the unlock is
   valid.
 - The unlock is valid if and only if all unlock conditions and feature blocks present in the output validate.
-- When a consumed NFT output has a corresponding NFT output on the output side, `Immutable Blocks` field must not
-  change.
 - When a consumed NFT output has no corresponding NFT output on the output side, the NFT it is being burned. Funds
   and assets inside the burned NFT output must be redistributed to other outputs in the burning transaction.
-
-| :bangbang:  Careful with NFT burning :bangbang: |
-|-------------------------------------------------|
-
-_Other outputs in the ledger that are locked to the address of the NFT can only be unlocked by including the NFT itself
-in the transaction. If the NFT is burned, such funds are locked forever. It is strongly advised to always check and
-sweep what the NFT owns in the ledger before burning it._
 
 #### Created Outputs
 - When `Issuer Block` is present in an output and explicit `NFT ID` is zeroed out, an input with `Address` field that
@@ -3738,11 +3687,6 @@ sweep what the NFT owns in the ledger before burning it._
   <i>NFT Address</i>, their corresponding outputs (defined by `Alias ID` and `NFT ID`) must be unlocked in the transaction.
 - All <i>Unlock Condition</i> imposed transaction validation criteria must be fulfilled.
 - All <i>Feature Block</i> imposed transaction validation criteria must be fulfilled.
-
-### Notes
-- It would be possible to have two-step issuer verification: First NFT is minted, and then metadata can be immutably
-  locked into the output. The metadata contains an issuer public key plus a signature of the unique `NFT ID`. This way
-  a smart contract chain can mint on behalf of the user, and then push the issuer signature in a next step.
 
 ## Unlocking Chain Script Locked Outputs
 

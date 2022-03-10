@@ -306,7 +306,11 @@ impl AliasOutput {
 }
 
 impl StateTransition for AliasOutput {
-    fn creation(_next_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+    fn creation(next_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+        if !next_state.alias_id.is_null() {
+            return Err(StateTransitionError::NonZeroCreatedId);
+        }
+
         Ok(())
     }
 
@@ -315,19 +319,33 @@ impl StateTransition for AliasOutput {
         next_state: &Self,
         _context: &ValidationContext,
     ) -> Result<(), StateTransitionError> {
-        if next_state.state_index() == current_state.state_index() + 1 {
-            // State transition.
-        } else if next_state.state_index() == current_state.state_index() {
-            // Governance transition.
-        } else {
-            return Err(StateTransitionError::UnsupportedStateIndexOperation {
-                current_state: current_state.state_index(),
-                next_state: next_state.state_index(),
-            });
+        if current_state.immutable_feature_blocks != next_state.immutable_feature_blocks {
+            return Err(StateTransitionError::MutatedImmutableField);
         }
 
-        if current_state.immutable_feature_blocks() != next_state.immutable_feature_blocks() {
-            return Err(StateTransitionError::MutatedImmutableFeatureBlocks);
+        if next_state.state_index == current_state.state_index + 1 {
+            // State transition.
+            if current_state.state_controller_address() != next_state.state_controller_address()
+                || current_state.governor_address() != next_state.governor_address()
+                || current_state.feature_blocks.metadata() != next_state.feature_blocks.metadata()
+            {
+                return Err(StateTransitionError::MutatedFieldWithoutRights);
+            }
+        } else if next_state.state_index == current_state.state_index {
+            // Governance transition.
+            if current_state.amount != next_state.amount
+                || current_state.native_tokens != next_state.native_tokens
+                || current_state.state_index != next_state.state_index
+                || current_state.state_metadata != next_state.state_metadata
+                || current_state.foundry_counter != next_state.foundry_counter
+            {
+                return Err(StateTransitionError::MutatedFieldWithoutRights);
+            }
+        } else {
+            return Err(StateTransitionError::UnsupportedStateIndexOperation {
+                current_state: current_state.state_index,
+                next_state: next_state.state_index,
+            });
         }
 
         Ok(())

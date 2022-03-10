@@ -6,7 +6,9 @@ use crate::semantic::ValidationContext;
 ///
 #[allow(missing_docs)]
 pub enum StateTransitionError {
-    MutatedImmutableFeatureBlocks,
+    MutatedFieldWithoutRights,
+    MutatedImmutableField,
+    NonZeroCreatedId,
     UnsupportedStateIndexOperation { current_state: u32, next_state: u32 },
 }
 

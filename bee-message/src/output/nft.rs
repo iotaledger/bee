@@ -227,15 +227,23 @@ impl NftOutput {
 }
 
 impl StateTransition for NftOutput {
-    fn creation(_next_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+    fn creation(next_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+        if !next_state.nft_id.is_null() {
+            return Err(StateTransitionError::NonZeroCreatedId);
+        }
+
         Ok(())
     }
 
     fn transition(
-        _current_state: &Self,
-        _next_state: &Self,
+        current_state: &Self,
+        next_state: &Self,
         _context: &ValidationContext,
     ) -> Result<(), StateTransitionError> {
+        if current_state.immutable_feature_blocks != next_state.immutable_feature_blocks {
+            return Err(StateTransitionError::MutatedImmutableField);
+        }
+
         Ok(())
     }
 
