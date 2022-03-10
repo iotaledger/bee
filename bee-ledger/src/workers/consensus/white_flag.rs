@@ -350,12 +350,13 @@ fn apply_regular_essence<B: StorageBackend>(
         Output::state_transition(
             Some(current_state),
             context.output_chains.get(&chain_id).map(core::ops::Deref::deref),
+            &context
         );
     }
 
     for (chain_id, next_state) in context.output_chains.iter() {
         if context.input_chains.get(&chain_id).is_none() {
-            Output::state_transition(None, Some(next_state));
+            Output::state_transition(None, Some(next_state), &context);
         }
     }
 

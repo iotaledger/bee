@@ -8,6 +8,7 @@ use crate::{
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
         ChainId, FoundryId, NativeToken, NativeTokens, OutputAmount, StateTransition, TokenScheme, TokenTag,
     },
+    semantic::ValidationContext,
     Error,
 };
 
@@ -334,11 +335,11 @@ impl FoundryOutput {
 }
 
 impl StateTransition for FoundryOutput {
-    fn creation(_next_state: &Self) {}
+    fn creation(_next_state: &Self, _context: &ValidationContext) {}
 
-    fn transition(_current_state: &Self, _next_state: &Self) {}
+    fn transition(_current_state: &Self, _next_state: &Self, _context: &ValidationContext) {}
 
-    fn destruction(_current_state: &Self) {}
+    fn destruction(_current_state: &Self, _context: &ValidationContext) {}
 }
 
 impl Packable for FoundryOutput {

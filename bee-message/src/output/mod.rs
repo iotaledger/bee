@@ -55,7 +55,7 @@ pub(crate) use treasury::TreasuryOutputAmount;
 pub(crate) use unlock_condition::StorageDepositAmount;
 pub use unlock_condition::{AddressUnlockCondition, UnlockCondition, UnlockConditions};
 
-use crate::{address::Address, constant::IOTA_SUPPLY, Error};
+use crate::{address::Address, constant::IOTA_SUPPLY, semantic::ValidationContext, Error};
 
 use derive_more::From;
 use packable::{bounded::BoundedU64, PackableExt};
@@ -220,28 +220,28 @@ impl Output {
     }
 
     ///
-    pub fn state_transition(current_state: Option<&Output>, next_state: Option<&Output>) {
+    pub fn state_transition(current_state: Option<&Output>, next_state: Option<&Output>, context: &ValidationContext) {
         match (current_state, next_state) {
             // Creations.
-            (None, Some(Output::Alias(next_state))) => AliasOutput::creation(next_state),
-            (None, Some(Output::Foundry(next_state))) => FoundryOutput::creation(next_state),
-            (None, Some(Output::Nft(next_state))) => NftOutput::creation(next_state),
+            (None, Some(Output::Alias(next_state))) => AliasOutput::creation(next_state, context),
+            (None, Some(Output::Foundry(next_state))) => FoundryOutput::creation(next_state, context),
+            (None, Some(Output::Nft(next_state))) => NftOutput::creation(next_state, context),
 
             // Transitions.
             (Some(Output::Alias(current_state)), Some(Output::Alias(next_state))) => {
-                AliasOutput::transition(current_state, next_state)
+                AliasOutput::transition(current_state, next_state, context)
             }
             (Some(Output::Foundry(current_state)), Some(Output::Foundry(next_state))) => {
-                FoundryOutput::transition(current_state, next_state)
+                FoundryOutput::transition(current_state, next_state, context)
             }
             (Some(Output::Nft(current_state)), Some(Output::Nft(next_state))) => {
-                NftOutput::transition(current_state, next_state)
+                NftOutput::transition(current_state, next_state, context)
             }
 
             // Destructions.
-            (Some(Output::Alias(current_state)), None) => AliasOutput::destruction(current_state),
-            (Some(Output::Foundry(current_state)), None) => FoundryOutput::destruction(current_state),
-            (Some(Output::Nft(current_state)), None) => NftOutput::destruction(current_state),
+            (Some(Output::Alias(current_state)), None) => AliasOutput::destruction(current_state, context),
+            (Some(Output::Foundry(current_state)), None) => FoundryOutput::destruction(current_state, context),
+            (Some(Output::Nft(current_state)), None) => NftOutput::destruction(current_state, context),
             _ => panic!("TODO"),
         }
     }

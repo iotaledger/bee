@@ -8,6 +8,7 @@ use crate::{
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
         ChainId, NativeToken, NativeTokens, NftId, OutputAmount, StateTransition,
     },
+    semantic::ValidationContext,
     Error,
 };
 
@@ -226,11 +227,11 @@ impl NftOutput {
 }
 
 impl StateTransition for NftOutput {
-    fn creation(_next_state: &Self) {}
+    fn creation(_next_state: &Self, _context: &ValidationContext) {}
 
-    fn transition(_current_state: &Self, _next_state: &Self) {}
+    fn transition(_current_state: &Self, _next_state: &Self, _context: &ValidationContext) {}
 
-    fn destruction(_current_state: &Self) {}
+    fn destruction(_current_state: &Self, _context: &ValidationContext) {}
 }
 
 impl Packable for NftOutput {
