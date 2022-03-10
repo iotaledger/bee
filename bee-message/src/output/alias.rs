@@ -6,7 +6,7 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        AliasId, ChainId, NativeToken, NativeTokens, OutputAmount, StateTransition, StateTransitionError,
+        AliasId, ChainId, NativeToken, NativeTokens, Output, OutputAmount, StateTransition, StateTransitionError,
     },
     semantic::ValidationContext,
     Error,
@@ -317,7 +317,7 @@ impl StateTransition for AliasOutput {
     fn transition(
         current_state: &Self,
         next_state: &Self,
-        _context: &ValidationContext,
+        context: &ValidationContext,
     ) -> Result<(), StateTransitionError> {
         if current_state.immutable_feature_blocks != next_state.immutable_feature_blocks {
             return Err(StateTransitionError::MutatedImmutableField);
@@ -330,6 +330,24 @@ impl StateTransition for AliasOutput {
                 || current_state.feature_blocks.metadata() != next_state.feature_blocks.metadata()
             {
                 return Err(StateTransitionError::MutatedFieldWithoutRights);
+            }
+
+            let created_foundries = context
+                .essence
+                .outputs()
+                .iter()
+                .filter(|output| {
+                    if let Output::Foundry(foundry) = output {
+                        !context.input_chains.contains_key(&foundry.chain_id())
+                            && foundry.address().alias_id() == &current_state.alias_id
+                    } else {
+                        false
+                    }
+                })
+                .count() as u32;
+
+            if current_state.foundry_counter + created_foundries != next_state.foundry_counter {
+                return Err(StateTransitionError::InconsistentCreatedFoundriesCount);
             }
         } else if next_state.state_index == current_state.state_index {
             // Governance transition.

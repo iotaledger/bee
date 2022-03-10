@@ -2573,15 +2573,6 @@ There are two types of transitions: `state transition` and `governance transitio
 - When <i>Issuer Block</i> is present in an output and explicit `Alias ID` is zeroed out, an input with `Address` field
   that corresponds to `Issuer` must be unlocked in the transaction.
 
-### Notes
-- <i>Governor Address Unlock Condition</i> field is made mandatory for now to help formal verification. When the same
-  entity is defined for state and governance controllers, the output is self governed. Later, for compression reasons,
-  it is possible to make the governance controller optional and define a self-governed alias as one that does not have
-  the governance <i>Governor Address Unlock Condition</i> set.
-- Indexers and node plugins shall map the alias address of the output derived with `Alias ID` to the regular
-  <i>address -> output</i> mapping table, so that given an <i>Alias Address</i>, its most recent unspent alias output
-  can be retrieved.
-
 ## Foundry Output
 
 A foundry output is an output that **controls the supply of user defined native tokens.** It can mint and burn tokens
@@ -2874,21 +2865,11 @@ controlled by a specific foundry is the concatenation of `Foundry ID` || `Token 
 
 ### Additional Transaction Semantic Validation Rules
 
-A foundry is essentially a UTXO state machine. A transaction might either create a new foundry with a unique
-`Foundry ID`, transition an already existing foundry or destroy it. The current and next states of the state machine
-are encoded in inputs and outputs respectively.
-
 - The **current state of the foundry** with `Foundry ID` `X` in a transaction is defined as the consumed foundry output
   where `Foundry ID` = `X`.
 - The **next state of the foundry** with `Foundry ID` `X` in a transaction is defined as the created foundry output
   where `Foundry ID` = `X`.
 - `Foundry Diff` is the pair of the **current and next state** of the foundry output in the transaction.
-
-| A transaction that...   | Current State           | Next State               |
-|-------------------------|-------------------------|--------------------------|
-| Creates the foundry     | Empty                   | Output with `Foundry ID` |
-| Transitions the foundry | Input with `Foundry ID` | Output with `Foundry ID` |
-| Destroys the foundry    | Input with `Foundry ID` | Empty                    |
 
 - The foundry output must be unlocked like any other output type where the <i>Address Unlock Condition</i> defines an
   <i>Alias Address</i>, by transitioning the alias in the very same transaction. See section
