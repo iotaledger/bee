@@ -39,7 +39,7 @@ The next portion of the guide assumes you are executing commands from the root d
 Choose the `config.json` for the network that you want to join: and copy it to `/.config.json`:
 
 ```sh
-cp ./config.chrysalis-<insert network here>.json config.json. 
+cp ./config.chrysalis-<insert network here>.json config.json.
 ```
 
 If you want to use alternative ports, edit the `config.json` file.
@@ -114,7 +114,7 @@ You can edit `config.json` and customize the _dashboard_ section to your needs.
 You can build your own Docker image by running the following command:
 
 ```sh
-docker build -f bee-node/docker/Dockerfile -t bee:latest .
+docker build -f bee-node/bee-node/docker/Dockerfile -t bee:latest .
 ```
 
 Or pull it from Docker Hub (only available for amd64/x86_64):
@@ -178,16 +178,16 @@ docker container rm bee
 
 ## Setup using `docker-compose`
 
-You can keep track of different configurations of the node using the [`docker-compose`](https://docs.docker.com/compose/). An example `docker-compose.yml` is in `./bee-node/docker/`, if you just quickly want to try out the node software on its own.
+You can keep track of different configurations of the node using the [`docker-compose`](https://docs.docker.com/compose/). An example `docker-compose.yml` is in `./bee-node/bee-node/docker/`, if you just quickly want to try out the node software on its own.
 
 If you want to run the latest release from Docker Hub you can call:
 
 ```sh
-docker-compose -f bee-node/docker/docker-compose.yml up --no-build
+docker-compose -f bee-node/bee-node/docker/docker-compose.yml up --no-build
 ```
 
 Or, if you want to build the latest version of Bee from source, you can use:
 
 ```sh
-docker-compose -f bee-node/docker/docker-compose.yml up --build
+docker-compose -f bee-node/bee-node/docker/docker-compose.yml up --build
 ```
