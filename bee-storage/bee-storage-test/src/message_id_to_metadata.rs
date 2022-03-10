@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::MessageId;
+use bee_message::{prelude::MilestoneIndex, MessageId};
 use bee_storage::{
-    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate, Update},
     backend,
 };
 use bee_tangle::metadata::MessageMetadata;
@@ -20,6 +20,7 @@ pub trait StorageBackend:
     + Batch<MessageId, MessageMetadata>
     + for<'a> AsIterator<'a, MessageId, MessageMetadata>
     + Truncate<MessageId, MessageMetadata>
+    + Update<MessageId, MessageMetadata>
 {
 }
 
@@ -34,6 +35,7 @@ impl<T> StorageBackend for T where
         + Batch<MessageId, MessageMetadata>
         + for<'a> AsIterator<'a, MessageId, MessageMetadata>
         + Truncate<MessageId, MessageMetadata>
+        + Update<MessageId, MessageMetadata>
 {
 }
 
@@ -66,6 +68,20 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &metadata));
+
+    let milestone_index = MilestoneIndex(0);
+
+    Update::<MessageId, MessageMetadata>::update(storage, &message_id, |metadata: &mut MessageMetadata| {
+        metadata.set_milestone_index(milestone_index);
+    })
+    .unwrap();
+    assert_eq!(
+        Some(milestone_index),
+        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+            .unwrap()
+            .unwrap()
+            .milestone_index()
+    );
 
     Delete::<MessageId, MessageMetadata>::delete(storage, &message_id).unwrap();
 
