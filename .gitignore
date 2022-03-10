@@ -12,11 +12,11 @@ coverage/
 *.key
 
 # bee-node
-bee-node/config.toml
-bee-node/config.json
-bee-node/snapshots/
-bee-node/storage/
-bee-node/*.log
+bee-node/bee-node/config.toml
+bee-node/bee-node/config.json
+bee-node/bee-node/snapshots/
+bee-node/bee-node/storage/
+bee-node/bee-node/*.log
 
 # mdBook
 book
