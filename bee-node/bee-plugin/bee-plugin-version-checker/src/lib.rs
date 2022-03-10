@@ -7,7 +7,7 @@
 
 mod release_info;
 
-use crate::release_info::{ReleaseInfo, ReleaseInfoBuilder};
+use release_info::{ReleaseInfo, ReleaseInfoBuilder};
 
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
@@ -33,7 +33,7 @@ impl<N: Node> Worker<N> for VersionCheckerPlugin {
 
     async fn start(node: &mut N, current_version: Self::Config) -> Result<Self, Self::Error> {
         node.spawn::<Self, _, _>(|shutdown| async move {
-            log::info!("Running.");
+            log::info!("Version checker running.");
 
             let mut ticker = ShutdownStream::new(
                 shutdown,
@@ -44,7 +44,7 @@ impl<N: Node> Worker<N> for VersionCheckerPlugin {
                 show_version_status(&current_version).await;
             }
 
-            log::info!("Stopped.");
+            log::info!("Version checker stopped.");
         });
 
         Ok(Self::default())
@@ -56,19 +56,19 @@ impl<N: Node> Worker<N> for VersionCheckerPlugin {
 async fn show_version_status(current_version: &str) {
     if let Some(release_info) = get_release_info().await {
         match (semver::Version::parse(current_version), latest(release_info)) {
-            (Err(e), _) => println!("Error parsing current Bee version ({}): {}", current_version, e),
+            (Err(e), _) => println!("Error parsing current Bee version ({}): {}.", current_version, e),
             (Ok(current), Some(latest)) => {
                 if latest.version > current {
                     log::warn!(
-                        "Found a more recent release version ({}), available at {}",
+                        "Found a more recent release version ({}), available at {}.",
                         latest.version,
                         latest.html_url,
                     );
                 } else {
-                    log::info!("On the latest release version ({})", current_version);
+                    log::info!("On the latest release version ({}).", current_version);
                 }
             }
-            _ => log::warn!("Could not identify the latest release version"),
+            _ => log::warn!("Could not identify the latest release version."),
         }
     }
 }

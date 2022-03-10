@@ -8,7 +8,7 @@ use crate::{
     core::{Core, CoreError, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
     shutdown,
     storage::NodeStorageBackend,
-    util, AUTOPEERING_VERSION,
+    util, AUTOPEERING_VERSION, BEE_VERSION,
 };
 
 use bee_autopeering::{
@@ -154,7 +154,7 @@ impl<S: NodeStorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
         let builder = initialize_tangle(builder);
 
         // Start the version checker.
-        let builder = builder.with_worker_cfg::<VersionCheckerPlugin>(std::env!("CARGO_PKG_VERSION").to_string());
+        let builder = builder.with_worker_cfg::<VersionCheckerPlugin>(BEE_VERSION.to_string());
 
         // Start serving the dashboard (if enabled).
         #[cfg(feature = "dashboard")]
