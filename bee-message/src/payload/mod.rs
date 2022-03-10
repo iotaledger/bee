@@ -16,6 +16,8 @@ pub mod treasury_transaction;
 pub use cpt2::indexation::IndexationPayload;
 #[cfg(feature = "cpt2")]
 pub(crate) use cpt2::indexation::{IndexLength, IndexationDataLength};
+#[cfg(feature = "cpt2")]
+pub use cpt2::transaction::ChrysalisTransactionPayload;
 pub use milestone::MilestonePayload;
 pub(crate) use milestone::{PublicKeyCount, SignatureCount};
 pub use receipt::ReceiptPayload;
@@ -48,6 +50,11 @@ use core::ops::Deref;
 #[packable(unpack_error = Error)]
 #[packable(tag_type = u32, with_error = Error::InvalidPayloadKind)]
 pub enum Payload {
+    /// A Chrysalis transaction payload.
+    #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
+    #[packable(tag = ChrysalisTransactionPayload::KIND)]
+    ChrysalisTransaction(Box<ChrysalisTransactionPayload>),
     /// A transaction payload.
     #[packable(tag = TransactionPayload::KIND)]
     Transaction(Box<TransactionPayload>),
@@ -111,6 +118,8 @@ impl Payload {
     /// Returns the payload kind of a `Payload`.
     pub fn kind(&self) -> u32 {
         match self {
+            #[cfg(feature = "cpt2")]
+            Self::ChrysalisTransaction(_) => ChrysalisTransactionPayload::KIND,
             Self::Transaction(_) => TransactionPayload::KIND,
             Self::Milestone(_) => MilestonePayload::KIND,
             #[cfg(feature = "cpt2")]

@@ -4,3 +4,4 @@
 //! Module containing backwards compatible payload types for Chrysalis part 2
 
 pub mod indexation;
+pub mod transaction;

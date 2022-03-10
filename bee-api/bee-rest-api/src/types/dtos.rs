@@ -37,8 +37,9 @@ use bee_message::{
 #[cfg(feature = "cpt2")]
 use bee_message::{
     output::{SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput},
-    payload::IndexationPayload,
+    payload::{ChrysalisTransactionPayload, IndexationPayload},
 };
+
 #[cfg(feature = "peer")]
 use bee_protocol::types::peer::Peer;
 
@@ -100,11 +101,14 @@ impl TryFrom<&MessageDto> for Message {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PayloadDto {
+    #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
+    ChrysalisTransaction(Box<cpt2::ChrysalisTransactionPayloadDto>),
     Transaction(Box<TransactionPayloadDto>),
     Milestone(Box<MilestonePayloadDto>),
     #[cfg(feature = "cpt2")]
     #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-    Indexation(Box<IndexationPayloadDto>),
+    Indexation(Box<cpt2::IndexationPayloadDto>),
     Receipt(Box<ReceiptPayloadDto>),
     TreasuryTransaction(Box<TreasuryTransactionPayloadDto>),
     TaggedData(Box<TaggedDataPayloadDto>),
@@ -113,10 +117,14 @@ pub enum PayloadDto {
 impl From<&Payload> for PayloadDto {
     fn from(value: &Payload) -> Self {
         match value {
+            #[cfg(feature = "cpt2")]
+            Payload::ChrysalisTransaction(p) => {
+                PayloadDto::ChrysalisTransaction(Box::new(cpt2::ChrysalisTransactionPayloadDto::from(p.as_ref())))
+            }
             Payload::Transaction(p) => PayloadDto::Transaction(Box::new(TransactionPayloadDto::from(p.as_ref()))),
             Payload::Milestone(p) => PayloadDto::Milestone(Box::new(MilestonePayloadDto::from(p.as_ref()))),
             #[cfg(feature = "cpt2")]
-            Payload::Indexation(p) => PayloadDto::Indexation(Box::new(IndexationPayloadDto::from(p.as_ref()))),
+            Payload::Indexation(p) => PayloadDto::Indexation(Box::new(cpt2::IndexationPayloadDto::from(p.as_ref()))),
             Payload::Receipt(p) => PayloadDto::Receipt(Box::new(ReceiptPayloadDto::from(p.as_ref()))),
             Payload::TreasuryTransaction(p) => {
                 PayloadDto::TreasuryTransaction(Box::new(TreasuryTransactionPayloadDto::from(p.as_ref())))
@@ -130,6 +138,10 @@ impl TryFrom<&PayloadDto> for Payload {
     type Error = Error;
     fn try_from(value: &PayloadDto) -> Result<Self, Self::Error> {
         Ok(match value {
+            #[cfg(feature = "cpt2")]
+            PayloadDto::ChrysalisTransaction(p) => {
+                Payload::ChrysalisTransaction(Box::new(ChrysalisTransactionPayload::try_from(p.as_ref())?))
+            }
             PayloadDto::Transaction(p) => Payload::Transaction(Box::new(TransactionPayload::try_from(p.as_ref())?)),
             PayloadDto::Milestone(p) => Payload::Milestone(Box::new(MilestonePayload::try_from(p.as_ref())?)),
             #[cfg(feature = "cpt2")]
@@ -1890,40 +1902,6 @@ impl TryFrom<&TaggedDataPayloadDto> for TaggedDataPayload {
     }
 }
 
-/// The payload type to define a indexation payload.
-#[cfg(feature = "cpt2")]
-#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct IndexationPayloadDto {
-    #[serde(rename = "type")]
-    pub kind: u32,
-    pub index: String,
-    pub data: String,
-}
-
-#[cfg(feature = "cpt2")]
-impl From<&IndexationPayload> for IndexationPayloadDto {
-    fn from(value: &IndexationPayload) -> Self {
-        IndexationPayloadDto {
-            kind: IndexationPayload::KIND,
-            index: hex::encode(value.index()),
-            data: hex::encode(value.data()),
-        }
-    }
-}
-
-#[cfg(feature = "cpt2")]
-impl TryFrom<&IndexationPayloadDto> for IndexationPayload {
-    type Error = Error;
-
-    fn try_from(value: &IndexationPayloadDto) -> Result<Self, Self::Error> {
-        Ok(IndexationPayload::new(
-            hex::decode(value.index.clone()).map_err(|_| Error::InvalidField("index"))?,
-            hex::decode(value.data.clone()).map_err(|_| Error::InvalidField("data"))?,
-        )?)
-    }
-}
-
 /// The payload type to define a receipt.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceiptPayloadDto {
@@ -2168,4 +2146,159 @@ pub enum LedgerInclusionStateDto {
     Included,
     #[serde(rename = "noTransaction")]
     NoTransaction,
+}
+
+#[cfg(feature = "cpt2")]
+mod cpt2 {
+    use super::*;
+    use bee_message::payload::cpt2::transaction::*;
+    /// The payload type to define a indexation payload.
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct IndexationPayloadDto {
+        #[serde(rename = "type")]
+        pub kind: u32,
+        pub index: String,
+        pub data: String,
+    }
+
+    #[cfg(feature = "cpt2")]
+    impl From<&IndexationPayload> for IndexationPayloadDto {
+        fn from(value: &IndexationPayload) -> Self {
+            IndexationPayloadDto {
+                kind: IndexationPayload::KIND,
+                index: hex::encode(value.index()),
+                data: hex::encode(value.data()),
+            }
+        }
+    }
+
+    #[cfg(feature = "cpt2")]
+    impl TryFrom<&IndexationPayloadDto> for IndexationPayload {
+        type Error = Error;
+
+        fn try_from(value: &IndexationPayloadDto) -> Result<Self, Self::Error> {
+            Ok(IndexationPayload::new(
+                hex::decode(value.index.clone()).map_err(|_| Error::InvalidField("index"))?,
+                hex::decode(value.data.clone()).map_err(|_| Error::InvalidField("data"))?,
+            )?)
+        }
+    }
+    /// The payload type to define a value transaction.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct ChrysalisTransactionPayloadDto {
+        #[serde(rename = "type")]
+        pub kind: u32,
+        pub essence: ChrysalisTransactionEssenceDto,
+        #[serde(rename = "unlockBlocks")]
+        pub unlock_blocks: Vec<UnlockBlockDto>,
+    }
+
+    impl From<&ChrysalisTransactionPayload> for ChrysalisTransactionPayloadDto {
+        fn from(value: &ChrysalisTransactionPayload) -> Self {
+            Self {
+                kind: ChrysalisTransactionPayload::KIND,
+                essence: value.essence().into(),
+                unlock_blocks: value.unlock_blocks().iter().map(Into::into).collect::<Vec<_>>(),
+            }
+        }
+    }
+
+    impl TryFrom<&ChrysalisTransactionPayloadDto> for ChrysalisTransactionPayload {
+        type Error = Error;
+
+        fn try_from(value: &ChrysalisTransactionPayloadDto) -> Result<Self, Self::Error> {
+            let mut unlock_blocks = Vec::new();
+            for b in &value.unlock_blocks {
+                unlock_blocks.push(b.try_into()?);
+            }
+
+            Ok(ChrysalisTransactionPayload::new(
+                (&value.essence).try_into()?,
+                UnlockBlocks::new(unlock_blocks)?,
+            )?)
+        }
+    }
+
+    /// Describes all the different essence types.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[serde(untagged)]
+    pub enum ChrysalisTransactionEssenceDto {
+        Regular(ChrysalisRegularTransactionEssenceDto),
+    }
+
+    impl From<&ChrysalisTransactionEssence> for ChrysalisTransactionEssenceDto {
+        fn from(value: &ChrysalisTransactionEssence) -> Self {
+            match value {
+                ChrysalisTransactionEssence::Regular(r) => ChrysalisTransactionEssenceDto::Regular(r.into()),
+            }
+        }
+    }
+
+    impl TryFrom<&ChrysalisTransactionEssenceDto> for ChrysalisTransactionEssence {
+        type Error = Error;
+
+        fn try_from(value: &ChrysalisTransactionEssenceDto) -> Result<Self, Self::Error> {
+            match value {
+                ChrysalisTransactionEssenceDto::Regular(r) => Ok(ChrysalisTransactionEssence::Regular(r.try_into()?)),
+            }
+        }
+    }
+
+    /// Describes the essence data making up a transaction by defining its inputs and outputs and an optional payload.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct ChrysalisRegularTransactionEssenceDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        pub inputs: Vec<InputDto>,
+        pub outputs: Vec<OutputDto>,
+        pub payload: Option<PayloadDto>,
+    }
+
+    impl From<&ChrysalisRegularTransactionEssence> for ChrysalisRegularTransactionEssenceDto {
+        fn from(value: &ChrysalisRegularTransactionEssence) -> Self {
+            ChrysalisRegularTransactionEssenceDto {
+                kind: ChrysalisRegularTransactionEssence::KIND,
+                inputs: value.inputs().iter().map(Into::into).collect::<Vec<_>>(),
+                outputs: value.outputs().iter().map(Into::into).collect::<Vec<_>>(),
+                payload: match value.payload() {
+                    Some(Payload::Indexation(i)) => Some(PayloadDto::Indexation(Box::new(i.as_ref().into()))),
+                    Some(_) => unimplemented!(),
+                    None => None,
+                },
+            }
+        }
+    }
+
+    impl TryFrom<&ChrysalisRegularTransactionEssenceDto> for ChrysalisRegularTransactionEssence {
+        type Error = Error;
+
+        fn try_from(value: &ChrysalisRegularTransactionEssenceDto) -> Result<Self, Self::Error> {
+            let inputs = value
+                .inputs
+                .iter()
+                .map(TryInto::try_into)
+                .collect::<Result<Vec<Input>, Self::Error>>()?;
+            let outputs = value
+                .outputs
+                .iter()
+                .map(TryInto::try_into)
+                .collect::<Result<Vec<Output>, Self::Error>>()?;
+
+            let mut builder = ChrysalisRegularTransactionEssence::builder()
+                .with_inputs(inputs)
+                .with_outputs(outputs);
+            builder = if let Some(p) = &value.payload {
+                if let PayloadDto::Indexation(i) = p {
+                    builder.with_payload(Payload::Indexation(Box::new((i.as_ref()).try_into()?)))
+                } else {
+                    return Err(Error::InvalidField("payload"));
+                }
+            } else {
+                builder
+            };
+
+            builder.finish().map_err(Into::into)
+        }
+    }
 }
