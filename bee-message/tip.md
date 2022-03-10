@@ -2554,12 +2554,8 @@ state as metadata into the UTXO ledger.
 
 #### Consumed Outputs
 
-The **current state** is defined as the **consumed alias output**, while the **next state** is defined as the **alias
-output with the same explicit `AliasID` on the output side**. There are two types of transitions: `state transition`
-and `governance transition`.
+There are two types of transitions: `state transition` and `governance transition`.
 - State transition:
-    - A state transition is identified by an incremented `State Index`.
-    - The `State Index` must be incremented by 1.
     - The unlock block must correspond to the `Address` of <i>State Controller Address Unlock Condition</i>.
     - State transition can only change the following fields in the next state:
       - `IOTA Amount`,
@@ -2589,8 +2585,6 @@ and `governance transition`.
     - The `Metadata Block` is optional, the governor can put additional info about the chain here, for example chain
       name, fee structure, supported VMs, list of access nodes, etc., anything that helps clients to fetch info (i.e.
       account balances) about the layer 2 network.
-- When a consumed alias output has <i>Blocks</i> defined in `Immutable Blocks` and a corresponding alias output on the
-  output side, `Immutable Blocks` is not allowed to change.
 
 #### Created Outputs
 

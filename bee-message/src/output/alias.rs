@@ -311,10 +311,25 @@ impl StateTransition for AliasOutput {
     }
 
     fn transition(
-        _current_state: &Self,
-        _next_state: &Self,
+        current_state: &Self,
+        next_state: &Self,
         _context: &ValidationContext,
     ) -> Result<(), StateTransitionError> {
+        if next_state.state_index() == current_state.state_index() + 1 {
+            // State transition.
+        } else if next_state.state_index() == current_state.state_index() {
+            // Governance transition.
+        } else {
+            return Err(StateTransitionError::UnsupportedStateIndexOperation {
+                current_state: current_state.state_index(),
+                next_state: next_state.state_index(),
+            });
+        }
+
+        if current_state.immutable_feature_blocks() != next_state.immutable_feature_blocks() {
+            return Err(StateTransitionError::MutatedImmutableFeatureBlocks);
+        }
+
         Ok(())
     }
 

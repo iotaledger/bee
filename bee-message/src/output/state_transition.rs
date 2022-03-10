@@ -4,7 +4,11 @@
 use crate::semantic::ValidationContext;
 
 ///
-pub enum StateTransitionError {}
+#[allow(missing_docs)]
+pub enum StateTransitionError {
+    MutatedImmutableFeatureBlocks,
+    UnsupportedStateIndexOperation { current_state: u32, next_state: u32 },
+}
 
 ///
 pub trait StateTransition {
