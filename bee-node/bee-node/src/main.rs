@@ -52,18 +52,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let (identity_field, config) = deserialize_config(cl_args);
 
     #[cfg(not(feature = "trace"))]
-    {
-        // Initialize the logger.
-        fern_logger::logger_init(config.logger().clone())?;
-    }
-    #[cfg(feature = "trace")]
-    {
-        // Initialize the subscriber.
-        let logger_config = config.logger().clone();
-        let tracing_config = config.tracing().clone();
+    // Initialize the logger.
+    fern_logger::logger_init(config.logger().clone())?;
 
-        let _ = trace::init(logger_config, tracing_config);
-    }
+    #[cfg(feature = "trace")]
+    // Initialize the subscriber.
+    let flamegrapher = trace::init(config.logger().clone(), config.tracing().clone())?;
 
     // Establish identity.
     let keypair = match read_keypair_from_pem_file(&identity_path) {
@@ -117,6 +111,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         start_entrynode(local, config).await;
     } else {
         start_fullnode(local, config).await;
+    }
+
+    #[cfg(feature = "trace")]
+    if let Some(f) = flamegrapher {
+        f.write_flamegraph()?;
     }
 
     Ok(())

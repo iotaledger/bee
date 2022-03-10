@@ -5,21 +5,30 @@ use fern_logger::LoggerConfig;
 use serde::Deserialize;
 use trace_tools::{subscriber, util::Flamegrapher};
 
+use std::{fs, path::PathBuf};
+
+/// Default flamegraph output directory.
+const DEFAULT_FLAMEGRAPH_OUT_PATH: &str = "./flamegraph";
 /// Default folded stack filename.
 const DEFAULT_STACK_FILENAME: &str = "stack.folded";
 /// Default flamegraph filename.
-const DEFAULT_GRAPH_FILENAME: &str = "flamegraph.svg";
+const DEFAULT_GRAPH_FILENAME: &str = "flamegraph";
 
 /// Builder for the tracing configuration.
 #[derive(Default, Deserialize, PartialEq)]
 #[must_use]
 pub struct TraceConfigBuilder {
     /// Enables the console layer.
-    #[serde(alias = "consoleEnabled")]
+    #[serde(alias = "consoleEnabled", default)]
     pub console_enabled: bool,
 
-    /// Options for the flamegraph layer. If this is present, the layer is enabled.
-    pub flamegraph: Option<FlamegraphConfigBuilder>,
+    /// Enables the flamegraph layer.
+    #[serde(alias = "flamegraphEnabled", default)]
+    pub flamegraph_enabled: bool,
+
+    /// Specifies the output directory of the flamegraph layer.
+    #[serde(alias = "flamegraphOutputPath")]
+    pub flamegraph_output_path: Option<String>,
 }
 
 impl TraceConfigBuilder {
@@ -27,7 +36,11 @@ impl TraceConfigBuilder {
     pub fn finish(self) -> TraceConfig {
         TraceConfig {
             console_enabled: self.console_enabled,
-            flamegraph: self.flamegraph.map(|builder| builder.finish()),
+            flamegraph_enabled: self.flamegraph_enabled,
+            flamegraph_output_path: PathBuf::from(
+                self.flamegraph_output_path
+                    .unwrap_or_else(|| DEFAULT_FLAMEGRAPH_OUT_PATH.to_string()),
+            ),
         }
     }
 }
@@ -38,45 +51,11 @@ pub struct TraceConfig {
     /// Enables the console layer.
     pub console_enabled: bool,
 
-    /// Options for the flamegraph layer.
-    pub flamegraph: Option<FlamegraphConfig>,
-}
+    /// Enables the flamegraph layer.
+    pub flamegraph_enabled: bool,
 
-/// Builder for the flamegraph layer configuration.
-#[derive(Default, Deserialize, PartialEq)]
-#[must_use]
-pub struct FlamegraphConfigBuilder {
-    /// Folded stack filename, relative to the crate root. If not present, defaults to "stack.folded".
-    #[serde(alias = "stackFilename")]
-    pub stack_filename: Option<String>,
-
-    /// Flamegraph filename, relative to the crate root. If not present, defaults to "flamegraph.svg".
-    #[serde(alias = "graphFilename")]
-    pub graph_filename: Option<String>,
-}
-
-impl FlamegraphConfigBuilder {
-    /// Builds the flamegraph layer configuration.
-    pub fn finish(self) -> FlamegraphConfig {
-        FlamegraphConfig {
-            stack_filename: self
-                .stack_filename
-                .unwrap_or_else(|| DEFAULT_STACK_FILENAME.to_string()),
-            graph_filename: self
-                .graph_filename
-                .unwrap_or_else(|| DEFAULT_GRAPH_FILENAME.to_string()),
-        }
-    }
-}
-
-/// Flamegraph layer configuration options.
-#[derive(Clone)]
-pub struct FlamegraphConfig {
-    /// Folded stack filename, relative to the crate root.
-    pub stack_filename: String,
-
-    /// Flamegraph filename, relative to the crate root.
-    pub graph_filename: String,
+    /// Specifies the output directory of the flamegraph layer.
+    pub flamegraph_output_path: PathBuf,
 }
 
 /// Initialise tracing features with a given configuration.
@@ -90,13 +69,19 @@ pub fn init(
         builder = builder.with_console_layer();
     }
 
-    if let Some(flamegraph_config) = tracing_config.flamegraph {
-        builder = builder.with_flamegraph_layer(flamegraph_config.stack_filename);
+    if tracing_config.flamegraph_enabled {
+        fs::create_dir_all(tracing_config.flamegraph_output_path.clone())
+            .map_err(|err| trace_tools::Error::Flamegrapher(err.into()))?;
+
+        let stack_filename = tracing_config.flamegraph_output_path.join(DEFAULT_STACK_FILENAME);
+        let graph_filename = tracing_config.flamegraph_output_path.join(DEFAULT_GRAPH_FILENAME);
+
+        builder = builder.with_flamegraph_layer(stack_filename);
 
         let flamegrapher = builder.init()?;
 
         if let Some(flamegrapher) = flamegrapher {
-            return Ok(Some(flamegrapher.with_graph_file(flamegraph_config.graph_filename)?));
+            return Ok(Some(flamegrapher.with_graph_file(graph_filename)?));
         } else {
             return Ok(flamegrapher);
         }

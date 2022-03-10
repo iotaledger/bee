@@ -165,7 +165,7 @@ where
         cfg_if::cfg_if! {
             if #[cfg(feature = "dashboard")] {
                 cmp = cmp && (self_dashboard == &other.dashboard);
-            } 
+            }
         }
 
         cfg_if::cfg_if! {
