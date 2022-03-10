@@ -147,9 +147,8 @@ pub struct NftOutput {
 impl NftOutput {
     /// The [`Output`](crate::output::Output) kind of an [`NftOutput`].
     pub const KIND: u8 = 6;
-
     /// The set of allowed [`UnlockCondition`]s for an [`NftOutput`].
-    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS
+    pub const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS
         .union(UnlockConditionFlags::STORAGE_DEPOSIT_RETURN)
         .union(UnlockConditionFlags::TIMELOCK)
         .union(UnlockConditionFlags::EXPIRATION);
