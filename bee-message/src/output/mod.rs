@@ -27,7 +27,7 @@ pub(crate) use alias::StateMetadataLength;
 pub use alias::{AliasOutput, AliasOutputBuilder};
 pub use alias_id::AliasId;
 pub use basic::{BasicOutput, BasicOutputBuilder};
-pub(crate) use byte_cost::ByteCost;
+pub use byte_cost::ByteCost;
 pub use byte_cost::{ByteCostConfig, ByteCostConfigBuilder};
 pub use chain_id::ChainId;
 #[cfg(feature = "cpt2")]
