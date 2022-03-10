@@ -4,8 +4,8 @@
 use crate::{
     address::Address,
     milestone::MilestoneIndex,
-    output::{ChainId, Output, TokenId},
-    payload::transaction::{RegularTransactionEssence, TransactionEssence},
+    output::{ChainId, Output, OutputId, TokenId},
+    payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     unlock_block::UnlockBlocks,
 };
 
@@ -43,8 +43,9 @@ pub struct ValidationContext<'a> {
 impl<'a> ValidationContext<'a> {
     ///
     pub fn new(
+        transaction_id: &TransactionId,
         essence: &'a RegularTransactionEssence,
-        inputs: impl Iterator<Item = &'a Output>,
+        inputs: impl Iterator<Item = (&'a OutputId, &'a Output)>,
         unlock_blocks: &'a UnlockBlocks,
         milestone_index: MilestoneIndex,
         milestone_timestamp: u64,
@@ -58,14 +59,26 @@ impl<'a> ValidationContext<'a> {
             input_amount: 0,
             input_native_tokens: HashMap::<TokenId, U256>::new(),
             input_chains: inputs
-                .filter_map(|input| input.chain_id().map(|chain_id| (chain_id, input)))
+                .filter_map(|(output_id, input)| {
+                    input
+                        .chain_id()
+                        .map(|chain_id| (chain_id.or_from_output_id(*output_id), input))
+                })
                 .collect(),
             output_amount: 0,
             output_native_tokens: HashMap::<TokenId, U256>::new(),
             output_chains: essence
                 .outputs()
                 .iter()
-                .filter_map(|output| output.chain_id().map(|chain_id| (chain_id, output)))
+                .enumerate()
+                .filter_map(|(index, output)| {
+                    output.chain_id().map(|chain_id| {
+                        (
+                            chain_id.or_from_output_id(OutputId::new(*transaction_id, index as u16).unwrap()),
+                            output,
+                        )
+                    })
+                })
                 .collect(),
             unlocked_addresses: HashSet::new(),
         }

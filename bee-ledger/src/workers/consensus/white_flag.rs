@@ -253,8 +253,9 @@ fn apply_regular_essence<B: StorageBackend>(
         .collect();
 
     let mut context = ValidationContext::new(
+        transaction_id,
         essence,
-        inputs.iter().map(|(_, input)| *input),
+        inputs.iter().map(|(output_id, input)| (output_id, *input)),
         unlock_blocks,
         metadata.milestone_index,
         metadata.milestone_timestamp,

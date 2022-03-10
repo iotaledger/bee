@@ -8,8 +8,8 @@ impl_id!(pub NftId, 20, "TODO.");
 #[cfg(feature = "serde1")]
 string_serde_impl!(NftId);
 
-impl From<&OutputId> for NftId {
-    fn from(output_id: &OutputId) -> Self {
+impl From<OutputId> for NftId {
+    fn from(output_id: OutputId) -> Self {
         Self::from(output_id.hash())
     }
 }
