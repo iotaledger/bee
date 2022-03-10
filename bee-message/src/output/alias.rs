@@ -6,7 +6,7 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        AliasId, ChainId, NativeToken, NativeTokens, OutputAmount, StateTransition,
+        AliasId, ChainId, NativeToken, NativeTokens, OutputAmount, StateTransition, StateTransitionError,
     },
     semantic::ValidationContext,
     Error,
@@ -306,11 +306,21 @@ impl AliasOutput {
 }
 
 impl StateTransition for AliasOutput {
-    fn creation(_next_state: &Self, _context: &ValidationContext) {}
+    fn creation(_next_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+        Ok(())
+    }
 
-    fn transition(_current_state: &Self, _next_state: &Self, _context: &ValidationContext) {}
+    fn transition(
+        _current_state: &Self,
+        _next_state: &Self,
+        _context: &ValidationContext,
+    ) -> Result<(), StateTransitionError> {
+        Ok(())
+    }
 
-    fn destruction(_current_state: &Self, _context: &ValidationContext) {}
+    fn destruction(_current_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+        Ok(())
+    }
 }
 
 impl Packable for AliasOutput {

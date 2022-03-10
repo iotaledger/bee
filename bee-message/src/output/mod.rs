@@ -47,13 +47,13 @@ pub use nft::{NftOutput, NftOutputBuilder};
 pub use nft_id::NftId;
 pub use output_id::OutputId;
 pub(crate) use output_id::OutputIndex;
-pub use state_transition::StateTransition;
+pub use state_transition::{StateTransition, StateTransitionError};
 pub use token_id::{TokenId, TokenTag};
 pub use token_scheme::TokenScheme;
 pub use treasury::TreasuryOutput;
 pub(crate) use treasury::TreasuryOutputAmount;
-pub(crate) use unlock_condition::StorageDepositAmount;
-pub use unlock_condition::{AddressUnlockCondition, UnlockCondition, UnlockConditions};
+pub(crate) use unlock_condition::{AddressUnlockCondition, StorageDepositAmount};
+pub use unlock_condition::{UnlockCondition, UnlockConditions};
 
 use crate::{address::Address, constant::IOTA_SUPPLY, semantic::ValidationContext, Error};
 
@@ -220,7 +220,11 @@ impl Output {
     }
 
     ///
-    pub fn state_transition(current_state: Option<&Output>, next_state: Option<&Output>, context: &ValidationContext) {
+    pub fn state_transition(
+        current_state: Option<&Output>,
+        next_state: Option<&Output>,
+        context: &ValidationContext,
+    ) -> Result<(), StateTransitionError> {
         match (current_state, next_state) {
             // Creations.
             (None, Some(Output::Alias(next_state))) => AliasOutput::creation(next_state, context),

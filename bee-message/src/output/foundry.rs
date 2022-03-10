@@ -6,7 +6,8 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ChainId, FoundryId, NativeToken, NativeTokens, OutputAmount, StateTransition, TokenScheme, TokenTag,
+        ChainId, FoundryId, NativeToken, NativeTokens, OutputAmount, StateTransition, StateTransitionError,
+        TokenScheme, TokenTag,
     },
     semantic::ValidationContext,
     Error,
@@ -335,11 +336,21 @@ impl FoundryOutput {
 }
 
 impl StateTransition for FoundryOutput {
-    fn creation(_next_state: &Self, _context: &ValidationContext) {}
+    fn creation(_next_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+        Ok(())
+    }
 
-    fn transition(_current_state: &Self, _next_state: &Self, _context: &ValidationContext) {}
+    fn transition(
+        _current_state: &Self,
+        _next_state: &Self,
+        _context: &ValidationContext,
+    ) -> Result<(), StateTransitionError> {
+        Ok(())
+    }
 
-    fn destruction(_current_state: &Self, _context: &ValidationContext) {}
+    fn destruction(_current_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+        Ok(())
+    }
 }
 
 impl Packable for FoundryOutput {
