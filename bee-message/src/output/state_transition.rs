@@ -10,6 +10,7 @@ pub enum StateTransitionError {
     MutatedFieldWithoutRights,
     MutatedImmutableField,
     NonZeroCreatedId,
+    UnsortedCreatedFoundries,
     UnsupportedStateIndexOperation { current_state: u32, next_state: u32 },
 }
 

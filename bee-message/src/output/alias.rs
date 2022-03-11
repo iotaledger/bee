@@ -331,21 +331,31 @@ impl StateTransition for AliasOutput {
                 return Err(StateTransitionError::MutatedFieldWithoutRights);
             }
 
-            let created_foundries = context
-                .essence
-                .outputs()
-                .iter()
-                .filter(|output| {
-                    if let Output::Foundry(foundry) = output {
-                        !context.input_chains.contains_key(&foundry.chain_id())
-                            && foundry.address().alias_id() == &current_state.alias_id
+            let created_foundries = context.essence.outputs().iter().filter_map(|output| {
+                if let Output::Foundry(foundry) = output {
+                    if foundry.address().alias_id() == &current_state.alias_id
+                        && !context.input_chains.contains_key(&foundry.chain_id())
+                    {
+                        Some(foundry)
                     } else {
-                        false
+                        None
                     }
-                })
-                .count() as u32;
+                } else {
+                    None
+                }
+            });
 
-            if current_state.foundry_counter + created_foundries != next_state.foundry_counter {
+            let mut created_foundries_count = 0;
+
+            for foundry in created_foundries {
+                if foundry.serial_number() != current_state.foundry_counter + created_foundries_count {
+                    return Err(StateTransitionError::UnsortedCreatedFoundries);
+                }
+
+                created_foundries_count += 1;
+            }
+
+            if current_state.foundry_counter + created_foundries_count != next_state.foundry_counter {
                 return Err(StateTransitionError::InconsistentCreatedFoundriesCount);
             }
         } else if next_state.state_index == current_state.state_index {

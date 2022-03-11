@@ -1192,24 +1192,6 @@ constraints to transaction validation when they are placed in outputs.
 
 ## Basic Output
 
-<i>Basic Output</i> can hold native tokens and might have several unlock conditions and optional feature blocks. The
-combination of several features provide the base functionality for the output to be used as an on-ledger smart contract
-request:
-- Verified `Sender`,
-- Attached `Metadata` that can encode the request payload for layer 2,
-- `Return Amount` to get back the storage deposit,
-- `Timelock` to be able to time requests,
-- `Expiration` to recover funds in case of chain inactivity.
-
-Besides, the <i>Tag Block</i> feature is a tool to store arbitrary, indexed data with verified origin in the
-ledger.
-
-Note, that a <i>Basic Output</i> in its simplest possible form with only an <i>Address Unlock Condition</i> and
-without feature blocks or native tokens is functionally equivalent to a <i>SigLockedSingleOutput</i>: it has an address
-and an IOTA balance. Therefore,
-aforementioned output type, that was [introduced for Chrysalis Part 2 via TIP-7](../TIP-0007/tip-0007.md)
-is deprecated with the replacement of the [draft TIP-20 Transaction Payload](https://github.com/iotaledger/tips/pull/40).
-
 ### Additional Transaction Syntactic Validation Rules
 
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
@@ -1250,15 +1232,6 @@ is deprecated with the replacement of the [draft TIP-20 Transaction Payload](htt
 - All <i>Feature Block</i> imposed transaction validation criteria must be fulfilled.
 
 ## Alias Output
-
-The <i>Alias Output</i> is a specific implementation of a UTXO state machine. `Alias ID`, the unique identifier of an
-instance of the deployed state machine, is generated deterministically by the protocol and is not allowed to change in
-any future state transitions.
-
-<i>Alias Output</i> represents an alias account in the ledger with two control levels and a permanent
-<i>Alias Address</i>. The account owns other outputs that are locked under <i>Alias Address</i>. The account keeps
-track of state transitions (`State Index` counter), controlled foundries (`Foundry Counter`) and anchors the layer 2
-state as metadata into the UTXO ledger.
 
 ### Additional Transaction Syntactic Validation Rules
 
@@ -1310,14 +1283,6 @@ state as metadata into the UTXO ledger.
 There are two types of transitions: `state transition` and `governance transition`.
 - State transition:
     - The unlock block must correspond to the `Address` of <i>State Controller Address Unlock Condition</i>.
-    - `Foundry Counter` field must increase by the number of foundry outputs created in the transaction that map to
-      `Alias ID`. The `Serial Number` fields of the created foundries must be the set of natural numbers that cover the
-       open-ended interval between the previous and next values of the `Foundry Counter` field in the alias output.
-    - The created foundry outputs must be sorted in the list of outputs by their `Serial Number`. Note, that any
-      foundry that maps to `Alias ID` and has a `Serial Number` that is less or equal to the `Foundry Counter` of the
-      input alias is ignored when it comes to sorting.
-    - Newly created foundries in the transaction that map to different aliases can be interleaved when it comes to
-      sorting.
 - Governance transition:
     - The unlock block must correspond to the `Address` of <i>Governor Address Unlock Condition</i>.
 
@@ -1327,13 +1292,6 @@ There are two types of transitions: `state transition` and `governance transitio
   that corresponds to `Issuer` must be unlocked in the transaction.
 
 ## Foundry Output
-
-A foundry output is an output that **controls the supply of user defined native tokens.** It can mint and burn tokens
-according to the **policy** defined in the `Token Scheme` field of the output. Foundries can only be created and
-controlled by aliases.
-
-**The concatenation of `Address` || `Serial Number` || `Token Scheme Type` fields defines the unique identifier of the
-foundry, the `Foundry ID`.**
 
 Upon creation of the foundry, the alias defined in the `Address` field of the
 <i>Immutable Alias Address Unlock Condition</i> must be unlocked in the same transaction, and its `Foundry Counter`
@@ -1414,6 +1372,8 @@ controlled by a specific foundry is the concatenation of `Foundry ID` || `Token 
       `Token Tag` field of the foundry output.
     - Additional token schemes will be defined that make use of the `Foundry Diff` as well, for example validating that
       a certain amount of tokens can only be minted/melted after a certain date.
+
+Check that created foundries are within the bounds of the associated alias ?
 
 ## NFT Output
 
