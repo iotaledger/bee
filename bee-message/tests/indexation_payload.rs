@@ -7,7 +7,7 @@ mod cpt2 {
     use bee_test::rand::bytes::rand_bytes;
 
     use packable::{
-        bounded::{TryIntoBoundedU32Error, TryIntoBoundedU8Error},
+        bounded::{TryIntoBoundedU16Error, TryIntoBoundedU32Error},
         error::UnpackError,
         PackableExt,
     };
@@ -51,7 +51,7 @@ mod cpt2 {
     fn new_invalid_index_length_less_than_min() {
         assert!(matches!(
             IndexationPayload::new(vec![], vec![0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
-            Err(Error::InvalidIndexLength(TryIntoBoundedU8Error::Invalid(0)))
+            Err(Error::InvalidIndexLength(TryIntoBoundedU16Error::Invalid(0)))
         ));
     }
 
@@ -59,7 +59,7 @@ mod cpt2 {
     fn new_invalid_index_length_more_than_max() {
         assert!(matches!(
             IndexationPayload::new(rand_bytes(65), vec![0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
-            Err(Error::InvalidIndexLength(TryIntoBoundedU8Error::Invalid(65)))
+            Err(Error::InvalidIndexLength(TryIntoBoundedU16Error::Invalid(65)))
         ));
     }
 
@@ -96,7 +96,7 @@ mod cpt2 {
         assert!(matches!(
             IndexationPayload::unpack_verified(&mut vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00].as_slice()),
             Err(UnpackError::Packable(Error::InvalidIndexLength(
-                TryIntoBoundedU8Error::Invalid(0)
+                TryIntoBoundedU16Error::Invalid(0)
             )))
         ));
     }
@@ -115,7 +115,7 @@ mod cpt2 {
                 .as_slice()
             ),
             Err(UnpackError::Packable(Error::InvalidIndexLength(
-                TryIntoBoundedU8Error::Invalid(65)
+                TryIntoBoundedU16Error::Invalid(65)
             )))
         ));
     }
