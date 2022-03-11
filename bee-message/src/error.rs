@@ -232,7 +232,7 @@ impl fmt::Display for Error {
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}", k),
             Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}", count),
             Error::InvalidFeatureBlockKind(k) => write!(f, "invalid feature block kind: {}", k),
-            Error::InvalidFoundryOutputSupply { minted, melted,max } => write!(
+            Error::InvalidFoundryOutputSupply { minted, melted, max } => write!(
                 f,
                 "invalid foundry output supply: minted {minted}, melted {melted} max {max}",
             ),
