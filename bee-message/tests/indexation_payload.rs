@@ -76,8 +76,8 @@ mod cpt2 {
         let indexation_data =
             IndexationPayload::new(rand_bytes(10), vec![0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).unwrap();
 
-        assert_eq!(indexation_data.packed_len(), 1 + 10 + 4 + 8);
-        assert_eq!(indexation_data.pack_to_vec().len(), 1 + 10 + 4 + 8);
+        assert_eq!(indexation_data.packed_len(), 2 + 10 + 4 + 8);
+        assert_eq!(indexation_data.pack_to_vec().len(), 2 + 10 + 4 + 8);
     }
 
     #[test]
@@ -123,7 +123,7 @@ mod cpt2 {
     #[test]
     fn unpack_invalid_data_length_more_than_max() {
         assert!(matches!(
-            IndexationPayload::unpack_verified(&mut vec![0x02, 0x00, 0x00, 0x35, 0x82, 0x00, 0x00].as_slice()),
+            IndexationPayload::unpack_verified(&mut vec![0x02, 0x00, 0x00, 0x00, 0x35, 0x82, 0x00, 0x00].as_slice()),
             Err(UnpackError::Packable(Error::InvalidIndexationDataLength(
                 TryIntoBoundedU32Error::Invalid(33333)
             )))
