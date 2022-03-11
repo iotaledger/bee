@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::output::{ByteCost, ByteCostConfig, ByteCostConfigBuilder, Output};
-
 use bee_test::rand::output::{rand_alias_output, rand_basic_output, rand_foundry_output, rand_nft_output};
 
 const BYTE_COST: u64 = 1;
