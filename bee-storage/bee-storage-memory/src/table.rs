@@ -48,9 +48,7 @@ impl<K: Hash + Eq + Clone, V: Clone> Table<K, V> {
     }
 
     pub(crate) fn update(&mut self, k: &K, f: impl FnOnce(&mut V)) {
-        if let Some(v) = self.inner.get_mut(k) {
-            f(v)
-        }
+        self.inner.get_mut(k).map(f);
     }
 
     pub(crate) fn iter(&self) -> TableIter<K, V> {
