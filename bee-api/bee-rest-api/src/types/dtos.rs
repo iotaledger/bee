@@ -2160,7 +2160,7 @@ mod cpt2 {
         pub network_id: String,
         #[serde(rename = "parentMessageIds")]
         pub parents: Vec<String>,
-        pub payload: Option<bee_rest_api::types::dtos::PayloadDto>,
+        pub payload: Option<PayloadDto>,
         pub nonce: String,
     }
 
