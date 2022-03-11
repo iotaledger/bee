@@ -28,7 +28,8 @@ pub struct FoundryOutputBuilder {
     native_tokens: Vec<NativeToken>,
     serial_number: u32,
     token_tag: TokenTag,
-    circulating_supply: U256,
+    minted_tokens: U256,
+    melted_tokens: U256,
     maximum_supply: U256,
     token_scheme: TokenScheme,
     unlock_conditions: Vec<UnlockCondition>,
@@ -42,18 +43,20 @@ impl FoundryOutputBuilder {
         amount: u64,
         serial_number: u32,
         token_tag: TokenTag,
-        circulating_supply: U256,
+        minted_tokens: U256,
+        melted_tokens: U256,
         maximum_supply: U256,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        verify_supply(&circulating_supply, &maximum_supply)?;
+        verify_supply(&minted_tokens, &melted_tokens, &maximum_supply)?;
 
         Ok(Self {
             amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: Vec::new(),
             serial_number,
             token_tag,
-            circulating_supply,
+            minted_tokens,
+            melted_tokens,
             maximum_supply,
             token_scheme,
             unlock_conditions: Vec::new(),
@@ -143,7 +146,8 @@ impl FoundryOutputBuilder {
             native_tokens: NativeTokens::new(self.native_tokens)?,
             serial_number: self.serial_number,
             token_tag: self.token_tag,
-            circulating_supply: self.circulating_supply,
+            minted_tokens: self.minted_tokens,
+            melted_tokens: self.melted_tokens,
             maximum_supply: self.maximum_supply,
             token_scheme: self.token_scheme,
             unlock_conditions,
@@ -165,8 +169,10 @@ pub struct FoundryOutput {
     serial_number: u32,
     // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
     token_tag: TokenTag,
-    // Circulating supply of tokens controlled by this foundry.
-    circulating_supply: U256,
+    // Amount of tokens minted by this foundry.
+    minted_tokens: U256,
+    // Amount of tokens melted by this foundry.
+    melted_tokens: U256,
     // Maximum supply of tokens controlled by this foundry.
     maximum_supply: U256,
     token_scheme: TokenScheme,
@@ -192,7 +198,8 @@ impl FoundryOutput {
         amount: u64,
         serial_number: u32,
         token_tag: TokenTag,
-        circulating_supply: U256,
+        minted_tokens: U256,
+        melted_tokens: U256,
         maximum_supply: U256,
         token_scheme: TokenScheme,
     ) -> Result<Self, Error> {
@@ -200,7 +207,8 @@ impl FoundryOutput {
             amount,
             serial_number,
             token_tag,
-            circulating_supply,
+            minted_tokens,
+            melted_tokens,
             maximum_supply,
             token_scheme,
         )?
@@ -213,7 +221,8 @@ impl FoundryOutput {
         amount: u64,
         serial_number: u32,
         token_tag: TokenTag,
-        circulating_supply: U256,
+        minted_tokens: U256,
+        melted_tokens: U256,
         maximum_supply: U256,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
@@ -221,7 +230,8 @@ impl FoundryOutput {
             amount,
             serial_number,
             token_tag,
-            circulating_supply,
+            minted_tokens,
+            melted_tokens,
             maximum_supply,
             token_scheme,
         )
@@ -253,8 +263,14 @@ impl FoundryOutput {
 
     ///
     #[inline(always)]
-    pub fn circulating_supply(&self) -> &U256 {
-        &self.circulating_supply
+    pub fn minted_tokens(&self) -> &U256 {
+        &self.minted_tokens
+    }
+
+    ///
+    #[inline(always)]
+    pub fn melted_tokens(&self) -> &U256 {
+        &self.melted_tokens
     }
 
     ///
@@ -319,7 +335,8 @@ impl Packable for FoundryOutput {
         self.native_tokens.pack(packer)?;
         self.serial_number.pack(packer)?;
         self.token_tag.pack(packer)?;
-        self.circulating_supply.pack(packer)?;
+        self.minted_tokens.pack(packer)?;
+        self.melted_tokens.pack(packer)?;
         self.maximum_supply.pack(packer)?;
         self.token_scheme.pack(packer)?;
         self.unlock_conditions.pack(packer)?;
@@ -336,11 +353,12 @@ impl Packable for FoundryOutput {
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let serial_number = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
         let token_tag = TokenTag::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let circulating_supply = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let minted_tokens = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let melted_tokens = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
         let maximum_supply = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
 
         if VERIFY {
-            verify_supply(&circulating_supply, &maximum_supply).map_err(UnpackError::Packable)?;
+            verify_supply(&minted_tokens, &melted_tokens, &maximum_supply).map_err(UnpackError::Packable)?;
         }
 
         let token_scheme = TokenScheme::unpack::<_, VERIFY>(unpacker)?;
@@ -373,7 +391,8 @@ impl Packable for FoundryOutput {
             native_tokens,
             serial_number,
             token_tag,
-            circulating_supply,
+            minted_tokens,
+            melted_tokens,
             maximum_supply,
             token_scheme,
             unlock_conditions,
@@ -384,17 +403,11 @@ impl Packable for FoundryOutput {
 }
 
 #[inline]
-fn verify_supply(circulating_supply: &U256, maximum_supply: &U256) -> Result<(), Error> {
-    if maximum_supply.is_zero() {
+fn verify_supply(minted_tokens: &U256, melted_tokens: &U256, maximum_supply: &U256) -> Result<(), Error> {
+    if maximum_supply.is_zero() || minted_tokens > maximum_supply || melted_tokens > minted_tokens {
         return Err(Error::InvalidFoundryOutputSupply {
-            circulating: *circulating_supply,
-            max: *maximum_supply,
-        });
-    }
-
-    if circulating_supply > maximum_supply {
-        return Err(Error::InvalidFoundryOutputSupply {
-            circulating: *circulating_supply,
+            minted: *minted_tokens,
+            melted: *melted_tokens,
             max: *maximum_supply,
         });
     }

@@ -1521,9 +1521,12 @@ pub struct FoundryOutputDto {
     // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
     #[serde(rename = "tokenTag")]
     pub token_tag: TokenTagDto,
-    // Circulating supply of tokens controlled by this foundry.
-    #[serde(rename = "circulatingSupply")]
-    pub circulating_supply: U256Dto,
+    // Amount of tokens minted by this foundry.
+    #[serde(rename = "mintedTokens")]
+    pub minted_tokens: U256Dto,
+    // Amount of tokens melted by this foundry.
+    #[serde(rename = "meltedTokens")]
+    pub melted_tokens: U256Dto,
     // Maximum supply of tokens controlled by this foundry.
     #[serde(rename = "maximumSupply")]
     pub maximum_supply: U256Dto,
@@ -1568,7 +1571,8 @@ impl From<&FoundryOutput> for FoundryOutputDto {
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             serial_number: value.serial_number(),
             token_tag: TokenTagDto(value.token_tag().to_string()),
-            circulating_supply: U256Dto(value.circulating_supply().to_string()),
+            minted_tokens: U256Dto(value.minted_tokens().to_string()),
+            melted_tokens: U256Dto(value.melted_tokens().to_string()),
             maximum_supply: U256Dto(value.maximum_supply().to_string()),
             token_scheme: match value.token_scheme() {
                 TokenScheme::Simple => TokenSchemeDto {
@@ -1590,7 +1594,8 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
             value.amount,
             value.serial_number,
             (&value.token_tag).try_into()?,
-            U256::from_dec_str(&value.circulating_supply.0).map_err(|_| Error::InvalidField("circulating_supply"))?,
+            U256::from_dec_str(&value.minted_tokens.0).map_err(|_| Error::InvalidField("minted_tokens"))?,
+            U256::from_dec_str(&value.melted_tokens.0).map_err(|_| Error::InvalidField("melted_tokens"))?,
             U256::from_dec_str(&value.maximum_supply.0).map_err(|_| Error::InvalidField("maximum_supply"))?,
             match value.token_scheme.kind {
                 0 => TokenScheme::Simple,
