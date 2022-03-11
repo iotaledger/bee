@@ -34,10 +34,16 @@ impl Exist<MessageId, Message> for Storage {
 
 impl Exist<MessageId, MessageMetadata> for Storage {
     fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
-        Ok(self
+        let guard = self.locks.message_id_to_metadata.read();
+
+        let exists = self
             .inner
             .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?
-            .is_some())
+            .is_some();
+
+        drop(guard);
+
+        Ok(exists)
     }
 }
 

@@ -45,11 +45,17 @@ impl Fetch<MessageId, Message> for Storage {
 
 impl Fetch<MessageId, MessageMetadata> for Storage {
     fn fetch(&self, message_id: &MessageId) -> Result<Option<MessageMetadata>, <Self as StorageBackend>::Error> {
-        Ok(self
+        let guard = self.locks.message_id_to_metadata.read();
+
+        let metadata = self
             .inner
             .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?
             // Unpacking from storage is fine.
-            .map(|v| MessageMetadata::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| MessageMetadata::unpack_unchecked(&mut v.as_slice()).unwrap());
+
+        drop(guard);
+
+        Ok(metadata)
     }
 }
 
