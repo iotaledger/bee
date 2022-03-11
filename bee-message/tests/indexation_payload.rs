@@ -12,6 +12,8 @@ mod cpt2 {
         PackableExt,
     };
 
+    use core::mem::size_of;
+
     #[test]
     fn kind() {
         assert_eq!(IndexationPayload::KIND, 2);
@@ -76,8 +78,14 @@ mod cpt2 {
         let indexation_data =
             IndexationPayload::new(rand_bytes(10), vec![0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).unwrap();
 
-        assert_eq!(indexation_data.packed_len(), 2 + 10 + 4 + 8);
-        assert_eq!(indexation_data.pack_to_vec().len(), 2 + 10 + 4 + 8);
+        assert_eq!(
+            indexation_data.packed_len(),
+            size_of::<u16>() + 10 + size_of::<u32>() + 8
+        );
+        assert_eq!(
+            indexation_data.pack_to_vec().len(),
+            size_of::<u16>() + 10 + size_of::<u32>() + 8
+        );
     }
 
     #[test]
