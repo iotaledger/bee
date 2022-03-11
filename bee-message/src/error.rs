@@ -1,6 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[cfg(feature = "cpt2")]
+use crate::{
+    address::Address,
+    output::DustAllowanceAmount,
+    payload::{IndexLength, IndexationDataLength},
+};
+
 use crate::{
     input::UtxoInput,
     output::{
@@ -15,11 +22,6 @@ use crate::{
     },
     unlock_block::{UnlockBlockCount, UnlockBlockIndex},
 };
-#[cfg(feature = "cpt2")]
-use crate::{
-    output::DustAllowanceAmount,
-    payload::{IndexLength, IndexationDataLength},
-};
 
 use crypto::Error as CryptoError;
 use primitive_types::U256;
@@ -32,6 +34,9 @@ use core::{convert::Infallible, fmt};
 #[allow(missing_docs)]
 pub enum Error {
     CryptoError(CryptoError),
+    #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
+    DuplicateAddress(Address),
     DuplicateSignatureUnlockBlock(u16),
     DuplicateUtxo(UtxoInput),
     ExpirationUnlockConditionZero,
@@ -164,6 +169,12 @@ pub enum Error {
         kind: u8,
     },
     UnlockConditionsNotUniqueSorted,
+    #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
+    TransactionInputsNotSorted,
+    #[cfg(feature = "cpt2")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
+    TransactionOutputsNotSorted,
 }
 
 #[cfg(feature = "std")]
@@ -173,6 +184,8 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::CryptoError(e) => write!(f, "cryptographic error: {}", e),
+            #[cfg(feature = "cpt2")]
+            Error::DuplicateAddress(address) => write!(f, "Duplicate address {:?} in outputs of same kind.", address),
             Error::DuplicateSignatureUnlockBlock(index) => {
                 write!(f, "duplicate signature unlock block at index: {0}", index)
             }
@@ -381,6 +394,10 @@ impl fmt::Display for Error {
                 write!(f, "unallowed unlock condition at index {} with kind {}", index, kind)
             }
             Error::UnlockConditionsNotUniqueSorted => write!(f, "unlock conditions are not unique and/or sorted"),
+            #[cfg(feature = "cpt2")]
+            Error::TransactionInputsNotSorted => write!(f, "Transaction inputs are not sorted."),
+            #[cfg(feature = "cpt2")]
+            Error::TransactionOutputsNotSorted => write!(f, "Transaction outputs are not sorted."),
         }
     }
 }
