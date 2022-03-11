@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    tags:        
+    tags:
       - '*'
 
 jobs:
@@ -37,7 +37,7 @@ jobs:
       - name: Build and push to Docker Hub
         uses: docker/build-push-action@v2
         with:
-          file: ./bee-node/docker/Dockerfile
+          file: ./bee-node/bee-node/docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           build-args: WITH_DASHBOARD=true
           push: true

@@ -5,7 +5,7 @@ use crate::peer::info::PeerRelation;
 
 use super::error::Error;
 
-use libp2p::{Multiaddr, PeerId};
+use libp2p_core::{Multiaddr, PeerId};
 use tokio::sync::mpsc;
 
 pub type CommandReceiver = mpsc::UnboundedReceiver<Command>;

@@ -13,6 +13,10 @@ on:
       - '.github/workflows/coverage.yml'
       - '.github/workflows/scripts/coverage.sh'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   coverage:
     runs-on: ubuntu-latest
@@ -35,14 +39,6 @@ jobs:
         with:
           crate: rustfilt
           version: 0.2.1
-
-      - name: Install dashboard frontend
-        run: |
-          git submodule init
-          git submodule update --recursive --remote
-          cd bee-node/src/plugins/dashboard/frontend/
-          npm install
-          npm run build-bee
 
       - name: Run test coverage
         run: bash .github/workflows/scripts/coverage.sh

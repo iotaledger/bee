@@ -7,9 +7,9 @@
 #[macro_export]
 macro_rules! alias {
     ($peer_id:expr) => {
-        &$peer_id.to_base58()[46..]
+        &$peer_id.to_base58()[8..24]
     };
     ($peer_id:expr, $len:expr) => {
-        &$peer_id.to_base58()[(52 - $len)..]
+        &$peer_id.to_base58()[8..8 + $len]
     };
 }

@@ -1,0 +1,119 @@
+{
+  "alias": "bee",
+  "bech32Hrp": "atoi",
+  "networkId": "comnet1",
+  "logger": {
+    "outputs": [
+      {
+        "name": "stdout",
+        "levelFilter": "info",
+        "targetFilters": [],
+        "targetExclusions": [],
+        "colorEnabled": true
+      },
+      {
+        "name": "warn.log",
+        "levelFilter": "warn",
+        "targetFilters": [],
+        "targetExclusions": []
+      }
+    ]
+  },
+  "network": {
+    "bindAddress": "/ip4/0.0.0.0/tcp/15600",
+    "reconnectIntervalSecs": 30,
+    "maxUnknownPeers": 4,
+    "maxDiscoveredPeers": 8,
+    "peering": {
+    }
+  },
+  "autopeering": {
+    "enabled": false,
+    "bindAddress": "0.0.0.0:14626",
+    "entryNodes": [
+      "/dns/entry.comnet.tanglebay.com/udp/14636/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
+    ],
+    "entryNodesPreferIPv6": false,
+    "runAsEntryNode": false,
+    "dropNeighborsOnSaltUpdate": false,
+    "peerStoragePath": "./storage/comnet/peers"
+  },
+  "protocol": {
+    "minimumPowScore": 2000,
+    "coordinator": {
+      "publicKeyCount": 2,
+      "publicKeyRanges": [
+        {
+          "publicKey": "2b2ae4ed9d74f0feb362eb9b40d5d5b7ca01b84f1eaf328510f69b7ed3fbb0a5",
+          "start": 0,
+          "end": 0
+        },
+        {
+          "publicKey": "68ac543fa797c5b555eba02e0d5e594d691c983aba7e029dc097eaf9f3ae5e55",
+          "start": 0,
+          "end": 0
+        }
+      ]
+    },
+    "workers": {
+      "statusInterval": 10,
+      "milestoneSyncCount": 200
+    }
+  },
+  "restApi": {
+    "bindAddress": "/ip4/0.0.0.0/tcp/14265",
+    "jwtSalt": "Bee",
+    "publicRoutes": [
+      "/health",
+      "/api/v1/info",
+      "/api/v1/tips",
+      "/api/v1/messages*",
+      "/api/v1/transactions*",
+      "/api/v1/milestones*",
+      "/api/v1/outputs*",
+      "/api/v1/addresses*",
+      "/api/v1/treasury",
+      "/api/v1/receipts*"
+    ],
+    "protectedRoutes": [
+      "/api/v1/*",
+      "/api/plugins/*"
+    ],
+    "featureProofOfWork": true,
+    "whiteFlagSolidificationTimeout": 2
+  },
+  "snapshot": {
+    "depth": 50,
+    "intervalSynced": 50,
+    "intervalUnsynced": 1000,
+    "fullPath": "./snapshots/comnet/full_snapshot.bin",
+    "deltaPath": "./snapshots/comnet/delta_snapshot.bin",
+    "downloadUrls": [
+      {
+        "full": "https://cdn.tanglebay.com/snapshots/comnet/full_snapshot.bin",
+        "delta": "https://cdn.tanglebay.com/snapshots/comnet/delta_snapshot.bin"
+      }
+    ]
+  },
+  "pruning": {
+    "enabled": true,
+    "delay": 60480,
+    "pruneReceipts": false
+  },
+  "storage": {
+    "path": "./storage/comnet/tangle"
+  },
+  "tangle": {
+    "belowMaxDepth": 15,
+    "numPartitions": 16
+  },
+  "dashboard": {
+    "bindAddress": "/ip4/0.0.0.0/tcp/8081",
+    "auth": {
+      "sessionTimeout": 86400,
+      "user": "admin",
+      "passwordSalt": "0000000000000000000000000000000000000000000000000000000000000000",
+      "passwordHash": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  }
+}
