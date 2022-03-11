@@ -139,7 +139,7 @@ impl ChrysalisRegularTransactionEssence {
 
 fn verify_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
     // Inputs must be lexicographically sorted in their serialised forms.
-    if !is_sorted(inputs.iter().map(|o| o.pack_to_vec())) {
+    if !is_sorted(inputs.iter().map(|i| i.pack_to_vec())) {
         return Err(Error::TransactionInputsNotSorted);
     }
 
