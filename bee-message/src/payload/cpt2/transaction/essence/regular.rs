@@ -12,7 +12,9 @@ use crate::{
     Error,
 };
 
-use packable::{prefix::BoxedSlicePrefix, Packable};
+use packable::{prefix::BoxedSlicePrefix, Packable, PackableExt};
+
+use iterator_sorted::is_sorted;
 
 use alloc::vec::Vec;
 
@@ -136,6 +138,11 @@ impl ChrysalisRegularTransactionEssence {
 }
 
 fn verify_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
+    // Inputs must be lexicographically sorted in their serialised forms.
+    if !is_sorted(inputs.iter().map(|o| o.pack_to_vec())) {
+        return Err(Error::TransactionInputsNotSorted);
+    }
+
     for input in inputs.iter() {
         match input {
             Input::Utxo(u) => {
@@ -149,14 +156,38 @@ fn verify_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
 
     Ok(())
 }
-
 fn verify_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
+    // Outputs must be lexicographically sorted in their serialised forms.
+    if !is_sorted(outputs.iter().map(|o| o.pack_to_vec())) {
+        return Err(Error::TransactionOutputsNotSorted);
+    }
+
     let mut amount_sum: u64 = 0;
 
     for output in outputs.iter() {
         let amount = match output {
-            Output::SignatureLockedSingle(output) => (output.amount()),
-            Output::SignatureLockedDustAllowance(output) => (output.amount()),
+            Output::SignatureLockedSingle(output) => {
+                if outputs
+                    .iter()
+                    .filter(|o| matches!(o, Output::SignatureLockedSingle(s) if s.address() == output.address()))
+                    .count()
+                    > 1
+                {
+                    return Err(Error::DuplicateAddress(*output.address()));
+                }
+                output.amount()
+            }
+            Output::SignatureLockedDustAllowance(output) => {
+                if outputs
+                    .iter()
+                    .filter(|o| matches!(o, Output::SignatureLockedDustAllowance(s) if s.address() == output.address()))
+                    .count()
+                    > 1
+                {
+                    return Err(Error::DuplicateAddress(*output.address()));
+                }
+                output.amount()
+            }
             _ => return Err(Error::InvalidOutputKind(output.kind())),
         };
 
