@@ -8,8 +8,8 @@ use bee_message::{
 
 use packable::PackableExt;
 
-const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const ED25519_ADDRESS_BAD: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64x";
+const ED25519_ADDRESS: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
+const ED25519_ADDRESS_BAD: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64x";
 
 // The kind of an `Address` is the kind of the underlying address.
 #[test]

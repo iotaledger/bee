@@ -1,16 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{payload::milestone::MilestoneId, Error};
+use bee_message::payload::milestone::MilestoneId;
 
 use packable::PackableExt;
 
 use core::str::FromStr;
 
-const MILESTONE_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const MILESTONE_ID_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64x";
-const MILESTONE_ID_INVALID_LEN_TOO_SHORT: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6";
-const MILESTONE_ID_INVALID_LEN_TOO_LONG: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64900";
+const MILESTONE_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
 fn debug_impl() {
@@ -18,7 +15,7 @@ fn debug_impl() {
 
     assert_eq!(
         format!("{:?}", MilestoneId::new(id_bytes)),
-        "MilestoneId(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+        "MilestoneId(0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
     );
 }
 
@@ -33,33 +30,6 @@ fn as_ref() {
 #[test]
 fn from_str_valid() {
     MilestoneId::from_str(MILESTONE_ID).unwrap();
-}
-
-#[test]
-fn from_str_invalid_hex() {
-    assert!(matches!(
-        MilestoneId::from_str(MILESTONE_ID_INVALID_HEX),
-        Err(Error::InvalidHexadecimalChar(hex))
-            if hex == MILESTONE_ID_INVALID_HEX
-    ));
-}
-
-#[test]
-fn from_str_invalid_len_too_short() {
-    assert!(matches!(
-        MilestoneId::from_str(MILESTONE_ID_INVALID_LEN_TOO_SHORT),
-        Err(Error::InvalidHexadecimalLength{expected, actual})
-            if expected == MilestoneId::LENGTH * 2 && actual == MilestoneId::LENGTH * 2 - 2
-    ));
-}
-
-#[test]
-fn from_str_invalid_len_too_long() {
-    assert!(matches!(
-        MilestoneId::from_str(MILESTONE_ID_INVALID_LEN_TOO_LONG),
-        Err(Error::InvalidHexadecimalLength{expected, actual})
-            if expected == MilestoneId::LENGTH * 2 && actual == MilestoneId::LENGTH * 2 + 2
-    ));
 }
 
 #[test]

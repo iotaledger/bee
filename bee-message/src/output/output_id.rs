@@ -1,7 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{output::OUTPUT_INDEX_RANGE, payload::transaction::TransactionId, util::hex_decode, Error};
+use crate::{
+    hex::{hex_decode_prefix, hex_encode_prefix},
+    output::OUTPUT_INDEX_RANGE,
+    payload::transaction::TransactionId,
+    Error,
+};
 
 use crypto::hashes::{blake2b::Blake2b160, Digest};
 use packable::{bounded::BoundedU16, PackableExt};
@@ -78,13 +83,19 @@ impl FromStr for OutputId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::try_from(hex_decode(s)?)
+        let bytes: [u8; OutputId::LENGTH] = hex_decode_prefix(s)?;
+        Self::try_from(bytes)
     }
 }
 
 impl core::fmt::Display for OutputId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}{}", self.transaction_id, hex::encode(self.index().to_le_bytes()))
+        write!(
+            f,
+            "{}{}",
+            self.transaction_id,
+            hex_encode_prefix(self.index().to_le_bytes())
+        )
     }
 }
 

@@ -10,7 +10,7 @@ pub use essence::MilestoneEssence;
 pub(crate) use essence::PublicKeyCount;
 pub use milestone_id::MilestoneId;
 
-use crate::Error;
+use crate::{hex::hex_encode_prefix, Error};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
@@ -140,8 +140,10 @@ impl MilestonePayload {
             .zip(self.signatures.iter())
             .enumerate()
         {
-            if !applicable_public_keys.contains(&hex::encode(public_key)) {
-                return Err(MilestoneValidationError::UnapplicablePublicKey(hex::encode(public_key)));
+            if !applicable_public_keys.contains(&hex_encode_prefix(public_key)) {
+                return Err(MilestoneValidationError::UnapplicablePublicKey(hex_encode_prefix(
+                    public_key,
+                )));
             }
 
             let ed25519_public_key =
@@ -151,7 +153,7 @@ impl MilestonePayload {
             if !ed25519_public_key.verify(&ed25519_signature, &essence_hash) {
                 return Err(MilestoneValidationError::InvalidSignature(
                     index,
-                    hex::encode(public_key),
+                    hex_encode_prefix(public_key),
                 ));
             }
         }

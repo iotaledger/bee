@@ -35,13 +35,13 @@ macro_rules! impl_id {
             type Err = crate::Error;
 
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                Ok($name::from(crate::util::hex_decode(s)?))
+                Ok($name::from(<[u8; Self::LENGTH] as crate::hex::FromHexPrefix>::from_hex_prefix(s)?))
             }
         }
 
         impl core::fmt::Display for $name {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                write!(f, "{}", hex::encode(self.0))
+                write!(f, "{}", crate::hex::ToHexPrefix::to_hex_prefix(&self.0))
             }
         }
 

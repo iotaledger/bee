@@ -10,8 +10,6 @@ use core::str::FromStr;
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const OUTPUT_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00";
 const OUTPUT_ID_INVALID_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6498000";
-const OUTPUT_ID_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f0x";
-const OUTPUT_ID_INVALID_LEN: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f";
 
 #[test]
 fn debug_impl() {
@@ -84,24 +82,6 @@ fn from_str_invalid_index() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_INDEX),
         Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(128)))
-    ));
-}
-
-#[test]
-fn from_str_invalid_hex() {
-    assert!(matches!(
-        OutputId::from_str(OUTPUT_ID_INVALID_HEX),
-        Err(Error::InvalidHexadecimalChar(hex))
-            if hex == OUTPUT_ID_INVALID_HEX
-    ));
-}
-
-#[test]
-fn from_str_invalid_len() {
-    assert!(matches!(
-        OutputId::from_str(OUTPUT_ID_INVALID_LEN),
-        Err(Error::InvalidHexadecimalLength{expected, actual})
-            if expected == OutputId::LENGTH * 2 && actual == OutputId::LENGTH * 2 - 2
     ));
 }
 

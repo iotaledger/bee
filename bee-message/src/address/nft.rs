@@ -1,7 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{output::NftId, util::hex_decode, Error};
+use crate::{
+    hex::{hex_decode_prefix, hex_encode_prefix},
+    output::NftId,
+    Error,
+};
 
 use derive_more::{AsRef, Deref, From};
 
@@ -39,13 +43,13 @@ impl FromStr for NftAddress {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(NftAddress::from(NftId::from(hex_decode(s)?)))
+        Ok(NftAddress::from(NftId::new(hex_decode_prefix(s)?)))
     }
 }
 
 impl core::fmt::Display for NftAddress {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", hex::encode(self.0))
+        write!(f, "{}", hex_encode_prefix(self.0))
     }
 }
 

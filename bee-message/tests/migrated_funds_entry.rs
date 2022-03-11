@@ -13,7 +13,7 @@ use packable::{bounded::InvalidBoundedU64, error::UnpackError, PackableExt};
 
 use core::str::FromStr;
 
-const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
+const ED25519_ADDRESS: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
 fn new_valid() {

@@ -1,14 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{input::TreasuryInput, payload::milestone::MilestoneId, Error};
+use bee_message::{input::TreasuryInput, payload::milestone::MilestoneId};
 
 use packable::PackableExt;
 
 use core::str::FromStr;
 
 const MILESTONE_ID_VALID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const MILESTONE_ID_INVALID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6";
 
 #[test]
 fn kind() {
@@ -48,15 +47,6 @@ fn from_str_valid() {
 
     assert_eq!(*input.milestone_id(), milestone_id);
     assert_eq!(*input, milestone_id);
-}
-
-#[test]
-fn from_str_invalid() {
-    assert!(matches!(
-        TreasuryInput::from_str(MILESTONE_ID_INVALID),
-        Err(Error::InvalidHexadecimalLength{expected, actual})
-            if expected == MilestoneId::LENGTH * 2 && actual == MilestoneId::LENGTH * 2 - 2
-    ));
 }
 
 #[test]

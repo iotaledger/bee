@@ -15,6 +15,7 @@ use crate::{
 
 use bee_message::{
     address::Address,
+    hex::hex_encode_prefix,
     milestone::MilestoneIndex,
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, OutputId},
     payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
@@ -118,8 +119,8 @@ where
     if !metadata.merkle_proof.eq(&milestone.essence().merkle_proof()) {
         return Err(Error::MerkleProofMismatch(
             milestone.essence().index(),
-            hex::encode(metadata.merkle_proof),
-            hex::encode(milestone.essence().merkle_proof()),
+            hex_encode_prefix(metadata.merkle_proof),
+            hex_encode_prefix(milestone.essence().merkle_proof()),
         ));
     }
 

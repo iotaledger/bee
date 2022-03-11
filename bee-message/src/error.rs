@@ -28,7 +28,7 @@ use alloc::string::String;
 use core::{convert::Infallible, fmt};
 
 /// Error occurring when creating/parsing/validating messages.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[allow(missing_docs)]
 pub enum Error {
     CryptoError(CryptoError),
@@ -72,11 +72,20 @@ pub enum Error {
         circulating: U256,
         max: U256,
     },
-    InvalidHexadecimalChar(String),
-    InvalidHexadecimalLength {
+    HexInvalidPrefix {
+        c0: char,
+        c1: char,
+    },
+    HexInvalidHexCharacter {
+        c: char,
+        index: usize,
+    },
+    HexInvalidStringLength,
+    HexInvalidStringLengthSlice {
         expected: usize,
         actual: usize,
     },
+    HexOddLength,
     #[cfg(feature = "cpt2")]
     #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     InvalidIndexationDataLength(<IndexationDataLength as TryFrom<usize>>::Error),
@@ -236,10 +245,18 @@ impl fmt::Display for Error {
                 "invalid foundry output supply: circulating {}, max {}",
                 circulating, max
             ),
-            Error::InvalidHexadecimalChar(hex) => write!(f, "invalid hexadecimal character: {}", hex),
-            Error::InvalidHexadecimalLength { expected, actual } => {
-                write!(f, "invalid hexadecimal length: expected {} got {}", expected, actual)
+            Error::HexInvalidPrefix { c0, c1 } => {
+                write!(f, "Invalid prefix `{c0}{c1}`, should be `0x`")
             }
+            Error::HexInvalidHexCharacter { c, index } => {
+                write!(f, "Invalid character {:?} at position {}", c, index)
+            }
+            Error::HexInvalidStringLength => write!(f, "Invalid string length"),
+            Error::HexInvalidStringLengthSlice { expected, actual } => write!(
+                f,
+                "invalid hexadecimal length for slice: expected {expected} got {actual}"
+            ),
+            Error::HexOddLength => write!(f, "Odd number of digits in hex string"),
             #[cfg(feature = "cpt2")]
             Error::InvalidIndexationDataLength(length) => {
                 write!(f, "invalid indexation data length {}", length)
