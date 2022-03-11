@@ -69,7 +69,8 @@ pub enum Error {
     InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
     InvalidFeatureBlockKind(u8),
     InvalidFoundryOutputSupply {
-        circulating: U256,
+        minted: U256,
+        melted: U256,
         max: U256,
     },
     InvalidHexadecimalChar(String),
@@ -231,10 +232,9 @@ impl fmt::Display for Error {
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}", k),
             Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}", count),
             Error::InvalidFeatureBlockKind(k) => write!(f, "invalid feature block kind: {}", k),
-            Error::InvalidFoundryOutputSupply { circulating, max } => write!(
+            Error::InvalidFoundryOutputSupply { minted, melted,max } => write!(
                 f,
-                "invalid foundry output supply: circulating {}, max {}",
-                circulating, max
+                "invalid foundry output supply: minted {minted}, melted {melted} max {max}",
             ),
             Error::InvalidHexadecimalChar(hex) => write!(f, "invalid hexadecimal character: {}", hex),
             Error::InvalidHexadecimalLength { expected, actual } => {
