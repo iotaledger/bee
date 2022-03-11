@@ -35,7 +35,7 @@ impl IndexationPayload {
     /// The payload kind of an [`IndexationPayload`].
     pub const KIND: u32 = 2;
     /// Valid lengths for an index.
-    pub const LENGTH_RANGE: RangeInclusive<u8> = 1..=64;
+    pub const LENGTH_RANGE: RangeInclusive<u16> = 1..=64;
 
     /// Creates a new [`IndexationPayload`].
     pub fn new(index: Vec<u8>, data: Vec<u8>) -> Result<Self, Error> {
