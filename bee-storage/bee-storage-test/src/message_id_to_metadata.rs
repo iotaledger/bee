@@ -95,6 +95,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     assert!(Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
         .unwrap()
         .is_none());
+
     let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
