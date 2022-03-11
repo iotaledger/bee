@@ -6,7 +6,7 @@
 use crate::{Error, Message};
 
 use packable::{
-    bounded::{BoundedU32, BoundedU8},
+    bounded::{BoundedU16, BoundedU32},
     prefix::BoxedSlicePrefix,
     Packable,
 };
@@ -15,7 +15,7 @@ use core::ops::RangeInclusive;
 
 #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 pub(crate) type IndexLength =
-    BoundedU8<{ *IndexationPayload::LENGTH_RANGE.start() }, { *IndexationPayload::LENGTH_RANGE.end() }>;
+    BoundedU16<{ *IndexationPayload::LENGTH_RANGE.start() }, { *IndexationPayload::LENGTH_RANGE.end() }>;
 #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 pub(crate) type IndexationDataLength = BoundedU32<0, { Message::LENGTH_MAX as u32 }>;
 

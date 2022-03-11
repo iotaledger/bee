@@ -2152,6 +2152,18 @@ pub enum LedgerInclusionStateDto {
 mod cpt2 {
     use super::*;
     use bee_message::payload::cpt2::transaction::*;
+
+    /// The message object that nodes gossip around in the chrysalis network.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct ChrysalisMessageDto {
+        #[serde(rename = "networkId")]
+        pub network_id: String,
+        #[serde(rename = "parentMessageIds")]
+        pub parents: Vec<String>,
+        pub payload: Option<bee_rest_api::types::dtos::PayloadDto>,
+        pub nonce: String,
+    }
+
     /// The payload type to define a indexation payload.
     #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     #[derive(Clone, Debug, Serialize, Deserialize)]
