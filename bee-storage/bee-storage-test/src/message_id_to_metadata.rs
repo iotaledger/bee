@@ -43,11 +43,9 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
 
     assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
-    assert!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-            .unwrap()
-            .is_none()
-    );
+    assert!(Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        .unwrap()
+        .is_none());
     let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
@@ -69,28 +67,34 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &metadata));
 
-    let milestone_index = MilestoneIndex(0);
+    let milestone_index = {
+        let index = Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+            .unwrap()
+            .unwrap()
+            .milestone_index();
+
+        MilestoneIndex(index.map_or(0, |i| i.wrapping_add(1)))
+    };
 
     Update::<MessageId, MessageMetadata>::update(storage, &message_id, |metadata: &mut MessageMetadata| {
         metadata.set_milestone_index(milestone_index);
     })
     .unwrap();
+
     assert_eq!(
-        Some(milestone_index),
         Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
             .unwrap()
             .unwrap()
-            .milestone_index()
+            .milestone_index(),
+        Some(milestone_index),
     );
 
     Delete::<MessageId, MessageMetadata>::delete(storage, &message_id).unwrap();
 
     assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
-    assert!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-            .unwrap()
-            .is_none()
-    );
+    assert!(Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        .unwrap()
+        .is_none());
     let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
