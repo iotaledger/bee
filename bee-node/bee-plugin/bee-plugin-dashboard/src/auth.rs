@@ -23,7 +23,7 @@ pub(crate) async fn auth(
     node_id: PeerId,
     keypair: Keypair,
     config: DashboardAuthConfig,
-    body: JsonValue
+    body: JsonValue,
 ) -> Result<impl Reply, Rejection> {
     let jwt_json = &body["jwt"];
 

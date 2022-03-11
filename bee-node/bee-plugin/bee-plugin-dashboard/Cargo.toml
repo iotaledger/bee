@@ -11,6 +11,7 @@ keywords = [ "iota", "tangle", "bee", "plugin", "dashboard" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
+bee-gossip = { version = "0.6.0", path = "../../../bee-network/bee-gossip", default-features = false}
 bee-ledger = { version = "0.6.1", path = "../../../bee-ledger", default-features = false, features = [ "workers" ] }
 bee-message = { version = "0.1.6", path = "../../../bee-message", default-features = false }
 bee-protocol = { version = "0.2.0", path = "../../../bee-protocol", default-features = false, features = [ "workers" ] }
@@ -20,7 +21,7 @@ bee-storage = { version = "0.9.0", path = "../../../bee-storage/bee-storage", de
 bee-tangle = { version = "0.2.0", path = "../../../bee-tangle", default-features = false }
 
 async-trait = { version = "0.1.51", default-features = false }
-auth-helper = { version = "0.1.0", default-features = false }
+auth-helper = { version = "0.2.0", default-features = false }
 cap = { version = "0.1.0", default-features = false }
 futures = { version = "0.3.17", default-features = false }
 hex = { version = "0.4.3", default-features = false }

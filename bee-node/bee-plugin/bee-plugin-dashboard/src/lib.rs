@@ -9,8 +9,8 @@
 pub mod config;
 
 mod asset;
-pub mod auth;
-pub mod rejection;
+mod auth;
+mod rejection;
 mod routes;
 mod storage;
 mod websocket;
@@ -37,7 +37,10 @@ use bee_protocol::workers::{
     event::{MessageSolidified, MpsMetricsUpdated, TipAdded, TipRemoved, VertexCreated},
     MetricsWorker, PeerManagerResWorker,
 };
-use bee_rest_api::types::body::{DefaultErrorResponse, ErrorBody};
+use bee_rest_api::{
+    endpoints::config::RestApiConfig,
+    types::body::{DefaultErrorResponse, ErrorBody},
+};
 use bee_runtime::{
     node::{Node, NodeBuilder},
     shutdown_stream::ShutdownStream,
@@ -200,7 +203,7 @@ where
         // run sub-workers
         confirmed_ms_metrics_worker(node, &users);
         db_size_metrics_worker(node, &users);
-        node_status_worker(node, node_id.clone(), node_alias, bech32_hrp, &users);
+        node_status_worker(node, node_id, node_alias, bech32_hrp, &users);
         peer_metric_worker(node, &users);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
@@ -209,7 +212,7 @@ where
             let routes = routes::routes(
                 storage.clone(),
                 tangle.clone(),
-                node_id.clone(),
+                node_id,
                 node_keypair.clone(),
                 config.auth().clone(),
                 rest_api_config.clone(),

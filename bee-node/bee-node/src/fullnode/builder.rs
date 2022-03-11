@@ -420,11 +420,20 @@ fn initialize_dashboard<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
 
     let dashboard_cfg = config.dashboard.clone();
     let rest_api_cfg = config.rest_api.clone();
-    let node_id = config.local().peer_id().to_string();
+    let node_id = config.local().peer_id();
+    let node_keypair = config.local().keypair().clone();
     let node_alias = config.alias().clone();
     let bech32_hrp = config.network_spec().hrp().to_string();
 
-    bee_plugin_dashboard::init::<FullNode<S>>(dashboard_cfg, rest_api_cfg, node_id, node_alias, bech32_hrp, builder)
+    bee_plugin_dashboard::init::<FullNode<S>>(
+        dashboard_cfg,
+        rest_api_cfg,
+        node_id,
+        node_keypair,
+        node_alias,
+        bech32_hrp,
+        builder,
+    )
 }
 
 #[derive(Clone)]

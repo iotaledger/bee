@@ -390,6 +390,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "auth-helper",
+ "bee-gossip",
  "bee-ledger",
  "bee-message",
  "bee-protocol",

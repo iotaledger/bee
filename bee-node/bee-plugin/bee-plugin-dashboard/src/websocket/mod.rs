@@ -112,7 +112,17 @@ pub(crate) async fn user_connected<S: StorageBackend>(
                 break;
             }
         };
-        user_message(user_id, msg, &users, &tangle, &storage, &node_id, &node_keypair, &auth_config).await;
+        user_message(
+            user_id,
+            msg,
+            &users,
+            &tangle,
+            &storage,
+            &node_id,
+            &node_keypair,
+            &auth_config,
+        )
+        .await;
     }
 
     // ws_rx stream will keep processing as long as the user stays
@@ -123,6 +133,7 @@ pub(crate) async fn user_connected<S: StorageBackend>(
     let _ = shutdown_ready_tx.send(());
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn user_message<S: StorageBackend>(
     user_id: usize,
     msg: Message,
@@ -174,11 +185,11 @@ async fn user_message<S: StorageBackend>(
                     });
                     if jwt
                         .validate(
-                            peer_id.to_string(),
+                            node_id.to_string(),
                             auth_config.user().to_owned(),
                             DASHBOARD_AUDIENCE_CLAIM.to_owned(),
                             true,
-                            keypair.secret().as_ref(),
+                            node_keypair.secret().as_ref(),
                         )
                         .is_err()
                     {

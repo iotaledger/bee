@@ -9,6 +9,7 @@ use crate::{
     websocket::{user_connected, WsUsers},
 };
 
+use bee_gossip::{Keypair, PeerId};
 use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
@@ -72,7 +73,7 @@ pub(crate) fn ws_routes<S: StorageBackend>(
     let storage_filter = warp::any().map(move || storage.clone());
     let tangle_filter = warp::any().map(move || tangle.clone());
     let users_filter = warp::any().map(move || users.clone());
-    let node_id_filter = warp::any().map(move || node_id.clone());
+    let node_id_filter = warp::any().map(move || node_id);
     let node_keypair_filter = warp::any().map(move || node_keypair.clone());
     let auth_config_filter = warp::any().map(move || auth_config.clone());
 
@@ -84,10 +85,14 @@ pub(crate) fn ws_routes<S: StorageBackend>(
         .and(node_id_filter)
         .and(node_keypair_filter)
         .and(auth_config_filter)
-        .map(|ws: warp::ws::Ws, storage, tangle, users, node_id, node_keypair, auth_config| {
-            // This will call our function if the handshake succeeds.
-            ws.on_upgrade(move |socket| user_connected(socket, storage, tangle, users, node_id, node_keypair, auth_config))
-        })
+        .map(
+            |ws: warp::ws::Ws, storage, tangle, users, node_id, node_keypair, auth_config| {
+                // This will call our function if the handshake succeeds.
+                ws.on_upgrade(move |socket| {
+                    user_connected(socket, storage, tangle, users, node_id, node_keypair, auth_config)
+                })
+            },
+        )
 }
 
 pub(crate) fn api_routes(
@@ -106,9 +111,8 @@ pub(crate) fn auth_route(
     node_keypair: Keypair,
     auth_config: DashboardAuthConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    let node_id_filter = warp::any().map(move || node_id.clone());
-    let node_keypair_filter = warp::any().map(move || node_id.clone());
-    let node_id_filter = warp::any().map(move || node_id.clone());
+    let node_id_filter = warp::any().map(move || node_id);
+    let node_keypair_filter = warp::any().map(move || node_keypair.clone());
     let auth_config_filter = warp::any().map(move || auth_config.clone());
 
     warp::post()
@@ -132,7 +136,14 @@ pub(crate) fn routes<S: StorageBackend>(
     index_filter()
         .or(asset_routes())
         .or(page_routes())
-        .or(ws_routes(storage, tangle, users, node_id.clone(), node_keypair.clone(), auth_config.clone()))
+        .or(ws_routes(
+            storage,
+            tangle,
+            users,
+            node_id,
+            node_keypair.clone(),
+            auth_config.clone(),
+        ))
         .or(api_routes(rest_api_config))
         .or(auth_route(node_id, node_keypair, auth_config))
 }
