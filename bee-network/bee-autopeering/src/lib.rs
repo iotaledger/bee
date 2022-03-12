@@ -81,9 +81,9 @@
 //!     // With initializing the autopeering system you receive an event stream receiver.
 //!     let mut event_rx = bee_autopeering::init::<SledPeerStore, _, _, GossipNeighborValidator>(
 //!         config.clone(),
+//!         local,
 //!         VERSION,
 //!         NETWORK,
-//!         local,
 //!         peer_store_config,
 //!         term_signal,
 //!         neighbor_validator,
