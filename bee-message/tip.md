@@ -31,25 +31,12 @@ This unlock condition is employed to achieve conditional sending. An output that
   their return amounts per `Return Addresses` are summed up and the output side of the transaction must deposit this
   total sum per `Return Address`.
 
-This unlock condition makes it possible to send small amounts of IOTA coins or native tokens to addresses without having
-to lose control of the required storage deposit. It is also a vehicle to send on-chain requests to ISCP chains that do not
-require fees. To prevent the receiving party from blocking access to the storage deposit, it is advised to be used
-together with the [Expiration Unlock Conditions](#expiration-unlock-conditions). The receiving party then has a sender-defined
-time window to agree to the transfer by consuming the output, or the sender regains total control after expiration.
-
 ##### Timelock Unlock Conditions
-
-An output that contains a <i>Timelock Unlock Condition</i> can not be unlocked before the specified timelock has
-expired. The timelock is expired when the timestamp and/or milestone index of the confirming milestone is equal or past
-the timestamp and/or milestone defined in the <i>Timelock Unlock Condition</i>.
 
 The timelock can be specified as a unix timestamp or as a milestone index. When specified in both ways, both conditions
 have to pass in order for the unlock to be valid. The zero value of one if the timestamp fields signals that it should be
 ignored during validation.
 
-###### Additional syntactic transaction validation rules:
-- If both `Milestone Index` and `Unix Time` fields are `0`, the unlock condition, and hence the output and transaction
-  that contain it, is invalid.
 ###### Additional semantic transaction validation rules:
 - An output that has <i>Timelock Unlock Condition</i> specified must only be consumed and unlocked in a
   transaction, if the confirming milestone index is ≥ than the `Milestone Index` specified in the unlock condition.
@@ -58,20 +45,6 @@ ignored during validation.
   condition.
 
 ##### Expiration Unlock Conditions
-
-The expiration feature of outputs makes it possible for the return address to reclaim an output after a given expiration
-time has been passed. The expiration might be specified as a unix timestamp or as a milestone index. When specified in
-both ways, both conditions have to pass in order for the unlock to be valid.
-
-The expiration feature can be viewed as an opt-in receive feature, because the recipient loses access to the received
-funds after the output expires, while the return address specified by the sender regains control over them. This feature
-is a big help for on-chain smart contract requests. Those that have expiration set and are sent to dormant smart contract
-chains can be recovered by their senders. Not to mention the possibility to time requests by specifying both a
-timelock and an expiration unlock condition.
-
-###### Additional syntactic transaction validation rules:
-- If both `Milestone Index` and `Unix Time` fields are `0`, the unlock condition, and hence the output and transaction
-  that contain it, is invalid.
 
 ###### Additional semantic transaction validation rules:
 
@@ -96,18 +69,6 @@ timelock and an expiration unlock condition.
 - Semantic validation of an output that has <i>Expiration Unlock Condition</i> set and is unlocked by the
   `Return Address` must ignore:
   - [Semantic validation of <i>Storage Deposit Return Unlock Condition</i>](#storage-deposit-return-unlock-condition) if present.
-
-##### State Controller Address Unlock Condition
-
-An unlock condition defined solely for <i>Alias Output</i>. It is functionally equivalent to an
-<i>Address Unlock Condition</i>, however there are additional transition constraints defined for the Alias UTXO state
-machine that can only be carried out by the `State Controller Address`, hence the distinct unlock condition type.
-
-##### Governor Address Unlock Condition
-
-An unlock condition defined solely for <i>Alias Output</i>. It is functionally equivalent to an
-<i>Address Unlock Condition</i>, however there are additional transition constraints defined for the Alias UTXO state
-machine that can only be carried out by the `Governor Address`, hence the distinct unlock condition type.
 
 ##### Immutable Alias Address Unlock Condition
 
@@ -160,43 +121,6 @@ checked that the issuer block is still present and unchanged.
 ##### Additional syntactic transaction validation rules:
 - An output with <i>Tag Block</i> is valid, if and only if 0 < `Tag Length` ≤
   `Max Tag Length`.
-
-### Chain Constraint in UTXO
-
-Previously created transaction outputs are destroyed when they are consumed in a subsequent transaction as an input.
-The chain constraint makes it possible to **carry the UTXO state machine state encoded in outputs across transactions.**
-When an output with chain constraint is consumed, that transaction has to create a single subsequent output that
-carries the state forward. The **state can be updated according to the transition rules defined for the given type of
-output and its current state**. As a consequence, each such output has a unique successor, and together they form a path
-or *chain* in the graph induced by the UTXO spends. Each chain is identified by its globally unique identifier.
-
-## Output Design
-
-In the following, we define four new output types. They are all designed with specific use cases in mind:
-- **Basic Output**: transfer of funds with attached metadata and optional spending restrictions. Main use cases are
-  on-ledger ISC requests, native asset transfers and indexed data storage in the UTXO ledger.
-- **Alias Output**: representing ISC chain accounts on L1 that can process requests and transfer funds.
-- **Foundry Output**: supply control of user defined native tokens. A vehicle for cross-chain asset transfers and asset
-  wrapping.
-- **NFT Output**: an output that represents a Non-fungible token with attached metadata and proof-of-origin. A NFT is
-  represented as an output so that the token and metadata are transferred together, for example as a smart contract
-  requests. NFTs are possible to implement with native tokens as well, but then ownership of the token does not mean
-  ownership of the foundry that holds its metadata.
-
-The validation of outputs is part of the transaction validation process. There are two levels of validation for
-transactions: syntactic and semantic validation. The former validates the structure of the transaction (and outputs),
-while the latter validates whether protocol rules are respected in the semantic context of the transaction. Outputs
-hence are validated on both levels:
-1. **Transaction Syntactic Validation**: validates the structure of each output created by the transaction.
-2. **Transaction Semantic Validation**:
-    - **For consumed outputs**: validates whether the output can be unlocked in a transaction given the semantic
-      transaction context.
-    - **For created outputs**: validates whether the output can be created in a transaction given the semantic
-      transaction context.
-
-Each new output type may add its own validation rules which become part of the transaction validation rules if the
-output is placed inside a transaction. <i>Unlock Conditions</i> and <i>Feature Blocks</i> described previously also add
-constraints to transaction validation when they are placed in outputs.
 
 ## Basic Output
 
@@ -362,10 +286,6 @@ Check that created foundries are within the bounds of the associated alias ?
 
 ## NFT Output
 
-The NFT may contain immutable metadata set upon creation, and a verified `Issuer`. The output type supports all
-non-alias specific (state controller, governor) unlock conditions and optional feature blocks so that the output can be
-sent as a request to smart contract chain accounts.
-
 ### Additional Transaction Syntactic Validation Rules
 
 #### Output Syntactic Validation
@@ -416,24 +336,11 @@ sent as a request to smart contract chain accounts.
 
 ## Unlocking Chain Script Locked Outputs
 
-Two of the introduced output types ([Alias](#alias-output), [NFT](#nft-output)) implement the so-called UTXO chain
-constraint. These outputs receive their unique identifiers upon creation, generated by the protocol, and carry it
-forward with them through transactions until they are destroyed. These unique identifiers (`Alias ID`, `NFT ID`) also
-function as global addresses for the state machines, but unlike <i>Ed25519 Addresses</i>, they are not backed by private
-keys that could be used for signing. The rightful owners who can unlock these addresses are defined in the outputs
-themselves.
-
-Since such addresses are accounts in the ledger, it is possible to send funds to these addresses. The unlock mechanism
-of such funds is designed in a way that **proving ownership of the address is reduced to the ability to unlock the
-corresponding output that defines the address.**
-
 ### Alias Locking & Unlocking
 
 A transaction may consume a (non-alias) output that belongs to an <i>Alias Address</i> by also consuming (and thus
 unlocking) the alias output with the matching `Alias ID`. This serves the exact same purpose as providing a signature
 to unlock an output locked under a private key backed address, such as <i>Ed25519 Addresses</i>.
-
-On protocol level, alias unlocking is done using a new unlock block type, called **Alias Unlock Block**.
 
 This unlock block is similar to the <i>Reference Unlock Block</i>. However, it is valid if and only if the input of the
 transaction at index `Alias Reference Unlock Index` is an alias output with the same `Alias ID` as the one derived from
@@ -449,10 +356,6 @@ For example the scenario where `Alias A` is locked to the address of `Alias B` w
 address of `Alias A` introduces a circular dependency and is not well-defined. By requiring the *Unlock Blocks* to be
 ordered as described above, a transaction consuming `Alias A` as well as `Alias B` can never be valid as there would
 always need to be one *Alias Unlock Block* referencing a greater index.
-
-#### Alias Unlock Block Syntactic Validation
-
- - It must hold that 0 ≤ `Alias Reference Unlock Index` < `Max Inputs Count`.
 
 #### Alias Unlock Block Semantic Validation
 
@@ -480,10 +383,6 @@ output with the same `NFT ID` as the one derived from the `Address` field of the
 
 If the i-th *Unlock Block* of a transaction is an *NFT Unlock Block* and has `NFT Reference Unlock Index` set to k, it
 must hold that i > k. Hence, an <i>NFT Unlock Block</i> can only reference an *Unlock Block* at a smaller index.
-
-#### NFT Unlock Block Syntactic Validation
-
-- It must hold that 0 ≤ `NFT Reference Unlock Index` < `Max Inputs Count`.
 
 #### NFT Unlock Block Semantic Validation
 
