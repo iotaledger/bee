@@ -2,13 +2,6 @@ ce4feebb00f0dd7968b58334465651b95bd21722
 
 ### Native Tokens in Outputs
 
-#### Additional syntactic output validation rules:
-
-- `Native Tokens` must be lexicographically sorted based on `Token ID`.
-- Each <i>Native Token</i> must be unique in the set of `Native Tokens` based on its `Token ID`. No duplicates are
-  allowed.
-- `Amount` of any <i>Native Token</i> must not be `0`.
-
 #### Additional semantic transaction validation rules:
 
 - The transaction is balanced in terms of native tokens, that is, the sum of native token balances in consumed outputs
@@ -46,12 +39,6 @@ time window to agree to the transfer by consuming the output, or the sender rega
 
 ##### Timelock Unlock Conditions
 
-The notion of time in the Tangle is introduced via milestones. Each milestone
-[carries the current milestone index and the unix timestamp](../TIP-0008/tip-0008.md#structure)
-corresponding to that index. Whenever a new milestone appears, nodes perform the white-flag ordering and transaction
-validation on its past cone. The timestamp and milestone index of the confirming milestone provide the time as an input
-parameter to transaction validation.
-
 An output that contains a <i>Timelock Unlock Condition</i> can not be unlocked before the specified timelock has
 expired. The timelock is expired when the timestamp and/or milestone index of the confirming milestone is equal or past
 the timestamp and/or milestone defined in the <i>Timelock Unlock Condition</i>.
@@ -59,10 +46,6 @@ the timestamp and/or milestone defined in the <i>Timelock Unlock Condition</i>.
 The timelock can be specified as a unix timestamp or as a milestone index. When specified in both ways, both conditions
 have to pass in order for the unlock to be valid. The zero value of one if the timestamp fields signals that it should be
 ignored during validation.
-
-The two time representations help to protect against the possible downtime of the Coordinator. If the Coordinator is
-down, "milestone index clock" essentially stops advancing, while "real time clock" does not. An output that specifies
-time in both clocks must satisfy both conditions (AND relation).
 
 ###### Additional syntactic transaction validation rules:
 - If both `Milestone Index` and `Unix Time` fields are `0`, the unlock condition, and hence the output and transaction
@@ -120,15 +103,11 @@ An unlock condition defined solely for <i>Alias Output</i>. It is functionally e
 <i>Address Unlock Condition</i>, however there are additional transition constraints defined for the Alias UTXO state
 machine that can only be carried out by the `State Controller Address`, hence the distinct unlock condition type.
 
-The additional constraints are defined in [Alias Output Design](#alias-output) section.
-
 ##### Governor Address Unlock Condition
 
 An unlock condition defined solely for <i>Alias Output</i>. It is functionally equivalent to an
 <i>Address Unlock Condition</i>, however there are additional transition constraints defined for the Alias UTXO state
 machine that can only be carried out by the `Governor Address`, hence the distinct unlock condition type.
-
-The additional constraints are defined in [Alias Output Design](#alias-output) section.
 
 ##### Immutable Alias Address Unlock Condition
 
@@ -141,14 +120,6 @@ however there are additional transition constraints: the next state of the UTXO 
 ###### Additional semantic transaction validation rules:
  - The output must be unlocked with an <i>[Alias Unlock Block](#alias-unlock-block-semantic-validation)</i>.
  - The next state of the UTXO state machine must have the same <i>Immutable Alias Address Unlock Condition</i> defined.
-
-### Feature Blocks
-
-New output features that do not introduce unlocking conditions, but rather add new functionality and add constraints on
-output creation are grouped under <i>Feature Blocks</i>.
-
-Each output **must not contain more than one block of each type** and not all block types are supported for each output
-type.
 
 ##### Sender Block
 
@@ -179,35 +150,12 @@ checked that the issuer block is still present and unchanged.
   and unlocked in the transaction. If `Issuer` is either <i>Alias Address</i> or
   <i>NFT Address</i>, their corresponding outputs (defined by `Alias ID` and `NFT ID`) must be unlocked in the transaction.
 
-The main use case is proving authenticity of NFTs. Whenever an NFT is minted as an NFT output, the creator (issuer) can
-fill the <i>Issuer Block</i> with their address that they have to unlock in the transaction. Issuers then can publicly
-disclose their addresses to prove the authenticity of the NFT once it is in circulation.
-
-Whenever a chain account mints an NFT on layer 1 on behalf of some user, the `Issuer` field can only contain the
-chain's address, since user does not sign the layer 1 transaction. As a consequence, artist would have to mint NFTs
-themselves on layer 1 and then deposit it to chains if they want to place their own address in the `Issuer` field.
-
 ##### Metadata Block
-
-Outputs may carry additional data with them that is interpreted by higher layer applications built on the Tangle. The
-protocol treats this metadata as pure binary data, it has no effect on the validity of an output except that it
-increases the required storage deposit. ISC is a great example of a higher layer protocol that makes use of
-<i>Metadata Block</i>: smart contract request parameters are encoded in the metadata field of outputs.
 
 ###### Additional syntactic transaction validation rules:
 - An output with <i>Metadata Block</i> is valid, if and only if 0 < `Data Length` ≤ `Max Metadata Length`.
 
 #### Tag Block
-
-A <i>Tag Block</i> makes it possible to tag outputs with an index, so they can be retrieved through an indexer API not
-only by their address, but also based on the the `Tag`. **The combination of a <i>Tag Block</i>, a
-<i>Metadata Block</i> and a <i>Sender Block</i> makes it possible to retrieve data associated to an address and stored
-in outputs that were created by a specific party (`Sender`) for a specific purpose (`Tag`).**
-
-An example use case is voting on the Tangle via the [participation](https://github.com/iota-community/treasury/blob/main/specifications/hornet-participation-plugin.md) plugin.
-
-Storing indexed data in outputs however incurs greater storage deposit for such outputs, because they create look-up
-entries in nodes' databases.
 
 ##### Additional syntactic transaction validation rules:
 - An output with <i>Tag Block</i> is valid, if and only if 0 < `Tag Length` ≤
@@ -255,12 +203,6 @@ constraints to transaction validation when they are placed in outputs.
 ### Additional Transaction Syntactic Validation Rules
 
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
-- `Amount` field must be ≤ `Max IOTA Supply`.
-- `Native Tokens Count` must not be greater than `Max Native Tokens Count`.
-- `Native Tokens` must be lexicographically sorted based on `Token ID`.
-- Each <i>Native Token</i> must be unique in the set of `Native Tokens` based on its `Token ID`. No duplicates are
-  allowed.
-- `Amount` of any <i>Native Token</i> must not be `0`.
 - It must hold true that `1` ≤ `Unlock Conditions Count` ≤ `4`.
 - `Unlock Condition Type` of an <i>Unlock Condition</i> must define on of the following types:
   - <i>Address Unlock Condition</i>
@@ -268,7 +210,6 @@ constraints to transaction validation when they are placed in outputs.
   - <i>Timelock Unlock Condition</i>
   - <i>Expiration Unlock Condition</i>
 - <i>Unlock Conditions</i> must be sorted in ascending order based on their `Unlock Condition Type`.
-- Syntactic validation of all present unlock conditions must pass.
 - <i>Address Unlock Condition</i> must be present.
 - It must hold true that `0` ≤ `Blocks Count` ≤ `3`.
 - `Block Type` of a <i>Block</i> must define on of the following types:
@@ -276,7 +217,6 @@ constraints to transaction validation when they are placed in outputs.
   - <i>Metadata Block</i>
   - <i>Tag Block</i>
 - <i>Blocks</i> must be sorted in ascending order based on their `Block Type`.
-- Syntactic validation of all present feature blocks must pass.
 
 ### Additional Transaction Semantic Validation Rules
 
@@ -298,18 +238,11 @@ constraints to transaction validation when they are placed in outputs.
 #### Output Syntactic Validation
 
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
-- `Amount` field must be ≤ `Max IOTA Supply`.
-- `Native Tokens Count` must not be greater than `Max Native Tokens Count`.
-- `Native Tokens` must be lexicographically sorted based on `Token ID`.
-- Each <i>Native Token</i> must be unique in the set of `Native Tokens` based on its `Token ID`. No duplicates are
-  allowed.
-- `Amount` of any <i>Native Token</i> must not be `0`.
 - It must hold true that `Unlock Conditions Count` = `2`.
 - `Unlock Condition Type` of an <i>Unlock Condition</i> must define one of the following types:
   - <i>State Controller Address Unlock Condition</i>
   - <i>Governor Address Unlock Condition</i>
 - <i>Unlock Conditions</i> must be sorted in ascending order based on their `Unlock Condition Type`.
-- Syntactic validation of all present unlock conditions must pass.
 - It must hold true that `0` ≤ `Blocks Count` ≤ `2`.
 - `Block Type` of a <i>Block</i> in `Blocks` must define on of the following types:
   - <i>Sender Block</i>
@@ -320,7 +253,6 @@ constraints to transaction validation when they are placed in outputs.
   - <i>Metadata Block</i>
 - <i>Blocks</i> must be sorted in ascending order based on their `Block Type` both in `Blocks` and `Immutable Blocks`
   fields.
-- Syntactic validation of all present feature blocks must pass.
 - When `Alias ID` is zeroed out, `State Index` and `Foundry Counter` must be `0`.
 - `State Metadata Length` must not be greater than `Max Metadata Length`.
 - `Address` of <i>State Controller Address Unlock Condition</i> and `Address` of
@@ -368,12 +300,6 @@ controlled by a specific foundry is the concatenation of `Foundry ID` || `Token 
 #### Output Syntactic Validation
 
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
-- `Amount` field must be ≤ `Max IOTA Supply`.
-- `Native Tokens Count` must not be greater than `Max Native Tokens Count`.
-- `Native Tokens` must be lexicographically sorted based on `Token ID`.
-- Each <i>Native Token</i> must be unique in the set of `Native Tokens` based on its `Token ID`. No duplicates are
-  allowed.
-- `Amount` of any <i>Native Token</i> must not be `0`.
 - It must hold true that `Unlock Conditions Count` = `1`.
 - `Unlock Condition Type` of an <i>Unlock Condition</i> must define on of the following types:
   - <i>Immutable Alias Address Unlock Condition</i>
@@ -383,7 +309,6 @@ controlled by a specific foundry is the concatenation of `Foundry ID` || `Token 
 - It must hold true that `0` ≤ `Immutable Blocks Count` ≤ `1`.
 - `Block Type` of a <i>Block</i> in `Immutable Blocks` must define on of the following types:
   - <i>Metadata Block</i>
-- Syntactic validation of all present feature blocks must pass.
 - `Token Scheme Type` must match one of the supported schemes. Any other value results in invalid output.
 - `Minted Tokens` must not be greater than `Maximum Supply`.
 - `Melted Tokens` must not be greater than `Minted Tokens`.
@@ -446,12 +371,6 @@ sent as a request to smart contract chain accounts.
 #### Output Syntactic Validation
 
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
-- `Amount` field must be ≤ `Max IOTA Supply`.
-- `Native Tokens Count` must not be greater than `Max Native Tokens Count`.
-- `Native Tokens` must be lexicographically sorted based on `Token ID`.
-- Each <i>Native Token</i> must be unique in the set of `Native Tokens` based on its `Token ID`. No duplicates are
-  allowed.
-- `Amount` of any <i>Native Token</i> must not be `0`.
 - It must hold true that `1` ≤ `Unlock Conditions Count` ≤ `4`.
 - `Unlock Condition Type` of an <i>Unlock Condition</i> must define on of the following types:
   - <i>Address Unlock Condition</i>
@@ -459,7 +378,6 @@ sent as a request to smart contract chain accounts.
   - <i>Timelock Unlock Condition</i>
   - <i>Expiration Unlock Condition</i>
 - <i>Unlock Conditions</i> must be sorted in ascending order based on their `Unlock Condition Type`.
-- Syntactic validation of all present unlock conditions must pass.
 - <i>Address Unlock Condition</i> must be present.
 - It must hold true that `0` ≤ `Blocks Count` ≤ `3`.
 - `Block Type` of a <i>Block</i> in `Blocks` must define on of the following types:
@@ -472,7 +390,6 @@ sent as a request to smart contract chain accounts.
   - <i>Metadata Block</i>
 - <i>Blocks</i> must be sorted in ascending order based on their `Block Type` both in `Blocks` and `Immutable Blocks`
   fields.
-- Syntactic validation of all present feature blocks must pass.
 - `Address` field of the <i>Address Unlock Condition</i> must not be the same as the NFT address derived from `NFT ID`.
 
 ### Additional Transaction Semantic Validation Rules

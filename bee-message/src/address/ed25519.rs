@@ -5,7 +5,7 @@ use crate::{signature::Ed25519Signature, util::hex_decode, Error};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
-    signatures::ed25519::{PublicKey, Signature},
+    signatures::ed25519::{PublicKey, Signature, PUBLIC_KEY_LENGTH},
 };
 use derive_more::{AsRef, From};
 
@@ -21,7 +21,7 @@ impl Ed25519Address {
     /// The [`Address`](crate::address::Address) kind of an [`Ed25519Signature`].
     pub const KIND: u8 = 0;
     /// The length of an [`Ed25519Signature`].
-    pub const LENGTH: usize = 32;
+    pub const LENGTH: usize = PUBLIC_KEY_LENGTH;
 
     /// Creates a new Ed25519 address.
     #[inline(always)]
