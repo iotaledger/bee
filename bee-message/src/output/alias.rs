@@ -453,7 +453,7 @@ impl Packable for AliasOutput {
 #[inline]
 fn verify_index_counter(alias_id: &AliasId, state_index: u32, foundry_counter: u32) -> Result<(), Error> {
     if alias_id.is_null() && (state_index != 0 || foundry_counter != 0) {
-        Err(Error::NonZeroStateIndexOrFoundryCounter);
+        Err(Error::NonZeroStateIndexOrFoundryCounter)
     } else {
         Ok(())
     }

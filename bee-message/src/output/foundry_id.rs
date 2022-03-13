@@ -6,7 +6,7 @@ use crate::{
     output::{AliasId, TokenScheme},
 };
 
-use alloc::vec::Vec;
+use packable::{packer::SlicePacker, Packable};
 
 impl_id!(pub FoundryId, 26, "Defines the unique identifier of a foundry.");
 
@@ -15,19 +15,16 @@ string_serde_impl!(FoundryId);
 
 impl FoundryId {
     /// Builds a new [`FoundryId`] from its components.
-    pub fn build(alias_id: AliasId, serial_number: u32, token_scheme: TokenScheme) -> Self {
-        Self(
-            [AliasAddress::KIND]
-                .iter()
-                .chain(alias_id.as_ref())
-                .chain(&serial_number.to_le_bytes())
-                .chain(&[token_scheme as u8])
-                .copied()
-                .collect::<Vec<u8>>()
-                .try_into()
-                // SAFETY: the lengths are known.
-                .unwrap(),
-        )
+    pub fn build(alias_address: &AliasAddress, serial_number: u32, token_scheme: TokenScheme) -> Self {
+        let mut bytes = [0u8; FoundryId::LENGTH];
+        let mut packer = SlicePacker::new(&mut bytes);
+
+        // SAFETY: packing to an array of the correct length can't fail.
+        alias_address.pack(&mut packer).unwrap();
+        serial_number.pack(&mut packer).unwrap();
+        token_scheme.pack(&mut packer).unwrap();
+
+        FoundryId::new(bytes)
     }
 
     /// Returns the [`AliasId`] of the [`FoundryId`].

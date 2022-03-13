@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    address::{Address, AliasAddress},
+    address::AliasAddress,
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ChainId, FoundryId, NativeToken, NativeTokens, OutputAmount, StateTransition, StateTransitionError,
+        ChainId, FoundryId, NativeToken, NativeTokens, OutputAmount, StateTransition, StateTransitionError, TokenId,
         TokenScheme, TokenTag,
     },
     semantic::ValidationContext,
@@ -15,7 +15,7 @@ use crate::{
 
 use packable::{
     error::{UnpackError, UnpackErrorExt},
-    packer::{Packer, SlicePacker},
+    packer::Packer,
     unpacker::Unpacker,
     Packable,
 };
@@ -316,15 +316,12 @@ impl FoundryOutput {
 
     /// Returns the [`FoundryId`] of the [`FoundryOutput`].
     pub fn id(&self) -> FoundryId {
-        let mut bytes = [0u8; FoundryId::LENGTH];
-        let mut packer = SlicePacker::new(&mut bytes);
+        FoundryId::build(self.alias_address(), self.serial_number, self.token_scheme)
+    }
 
-        // SAFETY: packing to an array of the correct length can't fail.
-        Address::Alias(*self.alias_address()).pack(&mut packer).unwrap();
-        self.serial_number.pack(&mut packer).unwrap();
-        self.token_scheme.pack(&mut packer).unwrap();
-
-        FoundryId::new(bytes)
+    /// Returns the [`TokenId`] of the [`FoundryOutput`].
+    pub fn token_id(&self) -> TokenId {
+        TokenId::build(&self.id(), &self.token_tag)
     }
 
     ///
