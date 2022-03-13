@@ -37,10 +37,12 @@ impl Receipt {
     /// Semantically validates the `Receipt`.
     pub fn validate(&self, consumed_treasury_output: &TreasuryOutput) -> Result<(), Error> {
         let mut migrated_amount: u64 = 0;
-        let transaction = if let Payload::TreasuryTransaction(transaction) = self.inner().transaction() {
+        let transaction = if let Payload::TreasuryTransaction(transaction) = self.inner().treasury_transaction() {
             transaction
         } else {
-            return Err(Error::UnsupportedPayloadKind(self.inner().transaction().kind()));
+            return Err(Error::UnsupportedPayloadKind(
+                self.inner().treasury_transaction().kind(),
+            ));
         };
 
         for funds in self.inner().funds() {

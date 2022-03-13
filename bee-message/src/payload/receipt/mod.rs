@@ -34,56 +34,56 @@ pub struct ReceiptPayload {
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidReceiptFundsCount(p.into())))]
     #[packable(verify_with = verify_funds)]
     funds: VecPrefix<MigratedFundsEntry, ReceiptFundsCount>,
-    #[packable(verify_with = verify_transaction)]
-    transaction: Payload,
+    #[packable(verify_with = verify_treasury_transaction)]
+    treasury_transaction: Payload,
 }
 
 impl ReceiptPayload {
-    /// The payload kind of a `ReceiptPayload`.
+    /// The payload kind of a [`ReceiptPayload`].
     pub const KIND: u32 = 3;
 
-    /// Creates a new `ReceiptPayload`.
+    /// Creates a new [`ReceiptPayload`].
     pub fn new(
         migrated_at: MilestoneIndex,
         last: bool,
         funds: Vec<MigratedFundsEntry>,
-        transaction: Payload,
+        treasury_transaction: Payload,
     ) -> Result<Self, Error> {
         let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::try_from(funds)
             .map_err(Error::InvalidReceiptFundsCount)?;
 
-        verify_transaction::<true>(&transaction)?;
+        verify_treasury_transaction::<true>(&treasury_transaction)?;
         verify_funds::<true>(&funds)?;
 
         Ok(Self {
             migrated_at,
             last,
             funds,
-            transaction,
+            treasury_transaction,
         })
     }
 
-    /// Returns the milestone index at which the funds of a `ReceiptPayload` were migrated at in the legacy network.
+    /// Returns the milestone index at which the funds of a [`ReceiptPayload`] were migrated at in the legacy network.
     pub fn migrated_at(&self) -> MilestoneIndex {
         self.migrated_at
     }
 
-    /// Returns whether a `ReceiptPayload` is the final one for a given migrated at index.
+    /// Returns whether a [`ReceiptPayload`] is the final one for a given migrated at index.
     pub fn last(&self) -> bool {
         self.last
     }
 
-    /// The funds which were migrated with a `ReceiptPayload`.
+    /// The funds which were migrated with a [`ReceiptPayload`].
     pub fn funds(&self) -> &[MigratedFundsEntry] {
         &self.funds
     }
 
-    /// The `TreasuryTransaction` used to fund the funds of a `ReceiptPayload`.
-    pub fn transaction(&self) -> &Payload {
-        &self.transaction
+    /// The [`TreasuryTransaction`] used to fund the funds of a [`ReceiptPayload`].
+    pub fn treasury_transaction(&self) -> &Payload {
+        &self.treasury_transaction
     }
 
-    /// Returns the sum of all `MigratedFundsEntry` items within a `ReceiptPayload`.
+    /// Returns the sum of all [`MigratedFundsEntry`] items within a [`ReceiptPayload`].
     pub fn amount(&self) -> u64 {
         self.funds.iter().fold(0, |acc, funds| acc + funds.amount())
     }
@@ -108,9 +108,9 @@ fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<(), 
     Ok(())
 }
 
-fn verify_transaction<const VERIFY: bool>(transaction: &Payload) -> Result<(), Error> {
-    if !matches!(transaction, Payload::TreasuryTransaction(_)) {
-        Err(Error::InvalidPayloadKind(transaction.kind()))
+fn verify_treasury_transaction<const VERIFY: bool>(treasury_transaction: &Payload) -> Result<(), Error> {
+    if !matches!(treasury_transaction, Payload::TreasuryTransaction(_)) {
+        Err(Error::InvalidPayloadKind(treasury_transaction.kind()))
     } else {
         Ok(())
     }

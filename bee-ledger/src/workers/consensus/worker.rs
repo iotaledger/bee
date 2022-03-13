@@ -69,14 +69,16 @@ pub(crate) async fn migration_from_milestone(
     receipt.validate(&consumed_treasury)?;
 
     let created_treasury = TreasuryOutput::new(
-        if let Payload::TreasuryTransaction(treasury) = receipt.inner().transaction() {
+        if let Payload::TreasuryTransaction(treasury) = receipt.inner().treasury_transaction() {
             if let Output::Treasury(output) = treasury.output() {
                 output.clone()
             } else {
                 return Err(Error::UnsupportedOutputKind(treasury.output().kind()));
             }
         } else {
-            return Err(Error::UnsupportedPayloadKind(receipt.inner().transaction().kind()));
+            return Err(Error::UnsupportedPayloadKind(
+                receipt.inner().treasury_transaction().kind(),
+            ));
         },
         milestone_id,
     );

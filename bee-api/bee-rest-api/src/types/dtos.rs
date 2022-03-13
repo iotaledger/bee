@@ -1949,7 +1949,7 @@ impl From<&ReceiptPayload> for ReceiptPayloadDto {
             migrated_at: *value.migrated_at(),
             last: value.last(),
             funds: value.funds().iter().map(Into::into).collect::<_>(),
-            transaction: value.transaction().into(),
+            transaction: value.treasury_transaction().into(),
         }
     }
 }

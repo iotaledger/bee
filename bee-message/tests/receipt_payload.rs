@@ -37,14 +37,12 @@ fn new_valid() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                AMOUNT,
-            )
-            .unwrap(),
-        ],
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            AMOUNT,
+        )
+        .unwrap()],
         Payload::from(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
@@ -113,14 +111,12 @@ fn new_invalid_payload_kind() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                AMOUNT,
-            )
-            .unwrap(),
-        ],
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            AMOUNT,
+        )
+        .unwrap()],
         Payload::from(TaggedDataPayload::new(rand_bytes(32), vec![]).unwrap()),
     );
 
@@ -196,14 +192,12 @@ fn pack_unpack_valid() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                AMOUNT,
-            )
-            .unwrap(),
-        ],
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            AMOUNT,
+        )
+        .unwrap()],
         Payload::from(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
@@ -227,14 +221,12 @@ fn pack_unpack_valid() {
 fn getters() {
     let migrated_at = MilestoneIndex::new(rand_number());
     let last = true;
-    let funds = vec![
-        MigratedFundsEntry::new(
-            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-            AMOUNT,
-        )
-        .unwrap(),
-    ];
+    let funds = vec![MigratedFundsEntry::new(
+        TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+        Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+        AMOUNT,
+    )
+    .unwrap()];
     let payload: Payload = TreasuryTransactionPayload::new(
         Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
         Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
@@ -247,6 +239,6 @@ fn getters() {
     assert_eq!(receipt.migrated_at(), migrated_at);
     assert_eq!(receipt.last(), last);
     assert_eq!(receipt.funds(), funds.as_slice());
-    assert_eq!(*receipt.transaction(), payload);
+    assert_eq!(*receipt.treasury_transaction(), payload);
     assert_eq!(receipt.amount(), AMOUNT);
 }
