@@ -158,26 +158,6 @@ fn unlock_alias_output(
         *current_state.alias_id()
     };
 
-    // TODO
-    let next_state: Option<&AliasOutput> = None;
-
-    // The alias is transitioned.
-    if let Some(next_state) = next_state {
-        // State transition.
-        if next_state.state_index() == current_state.state_index() + 1 {
-            unlock_address(current_state.state_controller_address(), unlock_block, inputs, context)?;
-        }
-        // Governance transition.
-        else if next_state.state_index() == current_state.state_index() {
-            unlock_address(current_state.governor_address(), unlock_block, inputs, context)?;
-        } else {
-            // TODO Err non contiguous state increase
-        }
-    }
-    // The alias is destroyed.
-    else {
-    }
-
     Ok(())
 }
 

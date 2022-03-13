@@ -333,7 +333,7 @@ impl StateTransition for AliasOutput {
 
             let created_foundries = context.essence.outputs().iter().filter_map(|output| {
                 if let Output::Foundry(foundry) = output {
-                    if foundry.address().alias_id() == &current_state.alias_id
+                    if foundry.alias_address().alias_id() == &current_state.alias_id
                         && !context.input_chains.contains_key(&foundry.chain_id())
                     {
                         Some(foundry)

@@ -304,27 +304,27 @@ impl FoundryOutput {
         &self.immutable_feature_blocks
     }
 
+    ///
+    #[inline(always)]
+    pub fn alias_address(&self) -> &AliasAddress {
+        // A FoundryOutput must have an ImmutableAliasAddressUnlockCondition.
+        self.unlock_conditions
+            .immutable_alias_address()
+            .map(|unlock_condition| unlock_condition.address())
+            .unwrap()
+    }
+
     /// Returns the [`FoundryId`] of the [`FoundryOutput`].
     pub fn id(&self) -> FoundryId {
         let mut bytes = [0u8; FoundryId::LENGTH];
         let mut packer = SlicePacker::new(&mut bytes);
 
         // SAFETY: packing to an array of the correct length can't fail.
-        Address::Alias(*self.address()).pack(&mut packer).unwrap();
+        Address::Alias(*self.alias_address()).pack(&mut packer).unwrap();
         self.serial_number.pack(&mut packer).unwrap();
         self.token_scheme.pack(&mut packer).unwrap();
 
         FoundryId::new(bytes)
-    }
-
-    ///
-    #[inline(always)]
-    pub fn address(&self) -> &AliasAddress {
-        // A FoundryOutput must have an ImmutableAliasAddressUnlockCondition.
-        self.unlock_conditions
-            .immutable_alias_address()
-            .map(|unlock_condition| unlock_condition.address())
-            .unwrap()
     }
 
     ///
@@ -335,7 +335,16 @@ impl FoundryOutput {
 }
 
 impl StateTransition for FoundryOutput {
-    fn creation(_next_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+    fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
+        let alias_chain_id = ChainId::from(*next_state.alias_address().alias_id());
+
+        if let (Some(_input_alias), Some(_output_alias)) = (
+            context.input_chains.get(&alias_chain_id),
+            context.output_chains.get(&alias_chain_id),
+        ) {
+            // TODO check serial
+        }
+
         Ok(())
     }
 
@@ -345,7 +354,7 @@ impl StateTransition for FoundryOutput {
         _context: &ValidationContext,
     ) -> Result<(), StateTransitionError> {
         if current_state.maximum_supply != next_state.maximum_supply
-            || current_state.address() != next_state.address()
+            || current_state.alias_address() != next_state.alias_address()
             || current_state.serial_number != next_state.serial_number
             || current_state.token_tag != next_state.token_tag
             || current_state.token_scheme != next_state.token_scheme

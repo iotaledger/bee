@@ -145,12 +145,6 @@ field must increment. This incremented value defines `Serial Number`, while the 
 - `Maximum Supply` must be larger than zero.
 
 ### Additional Transaction Semantic Validation Rules
-- The **current state of the foundry** with `Foundry ID` `X` in a transaction is defined as the consumed foundry output
-  where `Foundry ID` = `X`.
-- The **next state of the foundry** with `Foundry ID` `X` in a transaction is defined as the created foundry output
-  where `Foundry ID` = `X`.
-- `Foundry Diff` is the pair of the **current and next state** of the foundry output in the transaction.
-
 - The foundry output must be unlocked like any other output type where the <i>Address Unlock Condition</i> defines an
   <i>Alias Address</i>, by transitioning the alias in the very same transaction. See section
   [alias unlocking](#unlocking-chain-script-locked-outputs) for more details.
@@ -186,8 +180,6 @@ field must increment. This incremented value defines `Serial Number`, while the 
       `Token Tag` field of the foundry output.
     - Additional token schemes will be defined that make use of the `Foundry Diff` as well, for example validating that
       a certain amount of tokens can only be minted/melted after a certain date.
-
-Check that created foundries are within the bounds of the associated alias ?
 
 ## NFT Output
 
