@@ -85,9 +85,6 @@ checked that the issuer block is still present and unchanged.
 
 ### Additional Transaction Syntactic Validation Rules
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
-- It must hold true that `1` ≤ `Unlock Conditions Count` ≤ `4`.
-- <i>Address Unlock Condition</i> must be present.
-- It must hold true that `0` ≤ `Blocks Count` ≤ `3`.
 
 #### Consumed Outputs
 - The unlock block of the input must correspond to `Address` field in the <i>Address Unlock Condition</i> and the
@@ -102,10 +99,6 @@ checked that the issuer block is still present and unchanged.
 
 ### Additional Transaction Syntactic Validation Rules
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
-- It must hold true that `Unlock Conditions Count` = `2`.
-- It must hold true that `0` ≤ `Blocks Count` ≤ `2`.
-- It must hold true that `0` ≤ `Immutable Blocks Count` ≤ `2`.
-- When `Alias ID` is zeroed out, `State Index` and `Foundry Counter` must be `0`.
 - `State Metadata Length` must not be greater than `Max Metadata Length`.
 - `Address` of <i>State Controller Address Unlock Condition</i> and `Address` of
   <i>Governor Address Unlock Condition</i> must be different from the alias address derived from `Alias ID`.

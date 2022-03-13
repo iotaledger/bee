@@ -32,7 +32,7 @@ macro_rules! impl_id {
 
             #[doc = concat!("Checks if the [`", stringify!($ty),"`] is null.")]
             pub fn is_null(&self) -> bool {
-                true
+                self.0.iter().all(|&b| b == 0)
             }
         }
 
