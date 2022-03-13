@@ -1,8 +1,7 @@
 ce4feebb00f0dd7968b58334465651b95bd21722
 
 ### Native Tokens in Outputs Additional semantic transaction validation rules:
-- The transaction is balanced in terms of native tokens, that is, the sum of native token balances in consumed outputs
-  equals that of the created outputs.
+- The transaction is balanced in terms of native tokens, that is, the sum of native token balances in consumed outputs equals that of the created outputs.
 - When the transaction is **imbalanced** and there is a surplus of native tokens on the:
   - **output side of the transaction:** the foundry outputs controlling outstanding native token balances must be present in the transaction. The validation of the foundry output(s) determines if the minting operations are valid.
   - **input side of the transaction:** the transaction destroys tokens. The presence and validation of the foundry outputs of the native tokens determines whether the tokens are burned (removed from the ledger) or melted in the foundry.
@@ -87,8 +86,7 @@ checked that the issuer block is still present and unchanged.
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
 
 #### Consumed Outputs
-- The unlock block of the input must correspond to `Address` field in the <i>Address Unlock Condition</i> and the
-  unlock must be valid.
+- The unlock block of the input must correspond to `Address` field in the <i>Address Unlock Condition</i> and the unlock must be valid.
 - The unlock is valid if and only if all unlock conditions and feature blocks present in the output validate.
 
 #### Created Outputs
@@ -99,9 +97,6 @@ checked that the issuer block is still present and unchanged.
 
 ### Additional Transaction Syntactic Validation Rules
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
-- `State Metadata Length` must not be greater than `Max Metadata Length`.
-- `Address` of <i>State Controller Address Unlock Condition</i> and `Address` of
-  <i>Governor Address Unlock Condition</i> must be different from the alias address derived from `Alias ID`.
 
 ### Additional Transaction Semantic Validation Rules
 - Explicit `Alias ID`: `Alias ID` is taken as the value of the `Alias ID` field in the alias output.
@@ -113,10 +108,8 @@ checked that the issuer block is still present and unchanged.
 
 #### Consumed Outputs
 There are two types of transitions: `state transition` and `governance transition`.
-- State transition:
-    - The unlock block must correspond to the `Address` of <i>State Controller Address Unlock Condition</i>.
-- Governance transition:
-    - The unlock block must correspond to the `Address` of <i>Governor Address Unlock Condition</i>.
+- State transition: The unlock block must correspond to the `Address` of <i>State Controller Address Unlock Condition</i>.
+- Governance transition: The unlock block must correspond to the `Address` of <i>Governor Address Unlock Condition</i>.
 
 #### Created Outputs
 - When <i>Issuer Block</i> is present in an output and explicit `Alias ID` is zeroed out, an input with `Address` field
@@ -129,13 +122,6 @@ field must increment. This incremented value defines `Serial Number`, while the 
 
 ### Additional Transaction Syntactic Validation Rules
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
-- It must hold true that `Unlock Conditions Count` = `1`.
-- It must hold true that `0` ≤ `Blocks Count` ≤ `1`.
-- It must hold true that `0` ≤ `Immutable Blocks Count` ≤ `1`.
-- `Token Scheme Type` must match one of the supported schemes. Any other value results in invalid output.
-- `Minted Tokens` must not be greater than `Maximum Supply`.
-- `Melted Tokens` must not be greater than `Minted Tokens`.
-- `Maximum Supply` must be larger than zero.
 
 ### Additional Transaction Semantic Validation Rules
 - The foundry output must be unlocked like any other output type where the <i>Address Unlock Condition</i> defines an
@@ -178,11 +164,6 @@ field must increment. This incremented value defines `Serial Number`, while the 
 
 #### Output Syntactic Validation
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
-- It must hold true that `1` ≤ `Unlock Conditions Count` ≤ `4`.
-- <i>Address Unlock Condition</i> must be present.
-- It must hold true that `0` ≤ `Blocks Count` ≤ `3`.
-- It must hold true that `0` ≤ `Immutable Blocks Count` ≤ `2`.
-- `Address` field of the <i>Address Unlock Condition</i> must not be the same as the NFT address derived from `NFT ID`.
 
 ### Additional Transaction Semantic Validation Rules
 - Explicit `NFT ID`: `NFT ID` is taken as the value of the `NFT ID` field in the NFT output.
@@ -192,8 +173,7 @@ field must increment. This incremented value defines `Serial Number`, while the 
   corresponding NFT has the explicit or implicit `NFT ID` equal to that of the NFT on the output side.
 
 #### Consumed Outputs
-- The unlock block of the input corresponds to `Address` field of the <i>Address Unlock Condition</i> and the unlock is
-  valid.
+- The unlock block of the input corresponds to `Address` field of the <i>Address Unlock Condition</i> and the unlock is valid.
 - The unlock is valid if and only if all unlock conditions and feature blocks present in the output validate.
 - When a consumed NFT output has no corresponding NFT output on the output side, the NFT it is being burned. Funds
   and assets inside the burned NFT output must be redistributed to other outputs in the burning transaction.
@@ -207,15 +187,13 @@ field must increment. This incremented value defines `Serial Number`, while the 
 
 #### Alias Unlock Block Semantic Validation
  - The address of the unlocking condition of the input being unlocked must be an <i>Alias Address</i>.
- - The index `i` of the <i>Alias Unlock Block</i> is the index of the input in the transaction that it unlocks.
-   `Alias Reference Unlock Index` must be < `i`.
+ - The index `i` of the <i>Alias Unlock Block</i> is the index of the input in the transaction that it unlocks. `Alias Reference Unlock Index` must be < `i`.
  - `Alias Reference Unlock Index` defines a previous input of the transaction and its unlock block. This input must
    be an <i>Alias Output</i> with `Alias ID` that refers to the <i>Alias Address</i> being unlocked.
  - The referenced <i>Alias Output</i> must be unlocked for state transition.
 
 #### NFT Unlock Block Semantic Validation
  - The address of the input being unlocked must be an <i>NFT Address</i>.
- - The index `i` of the <i>NFT Unlock Block</i> is the index of the input in the transaction that it unlocks.
-   `NFT Reference Unlock Index` must be < `i`.
+ - The index `i` of the <i>NFT Unlock Block</i> is the index of the input in the transaction that it unlocks. `NFT Reference Unlock Index` must be < `i`.
  - `NFT Reference Unlock Index` defines a previous input of the transaction and its unlock block. This input must
    be an <i>NFT Output</i> with `NFT ID` that refers to the <i>NFT Address</i> being unlocked.
