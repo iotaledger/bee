@@ -199,6 +199,7 @@ fn apply_regular_essence<B: StorageBackend>(
 
     // TODO check inputs commitment.
 
+    // Fetch inputs from the storage or from current milestone metadata.
     for (index, input) in essence.inputs().iter().enumerate() {
         let (output_id, consumed_output) = match input {
             Input::Utxo(input) => {
@@ -241,41 +242,39 @@ fn apply_regular_essence<B: StorageBackend>(
         metadata.milestone_timestamp,
     );
 
+    // Validation of inputs.
     for (index, (output_id, consumed_output)) in inputs.iter().enumerate() {
         // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
+        // NOTE: do not rework this into a zip together with inputs as `get` also resolve reference links.
         let unlock_block = unlock_blocks.get(index).unwrap();
 
-        let (amount, consumed_native_tokens) = match consumed_output {
-            Output::Basic(output) => {
-                if let Err(conflict) = unlock_basic_output(output_id, output, unlock_block, &inputs, &mut context) {
-                    return Ok(conflict);
-                }
-
-                (output.amount(), output.native_tokens())
-            }
-            Output::Alias(output) => {
-                if let Err(conflict) = unlock_alias_output(output_id, output, unlock_block, &inputs, &mut context) {
-                    return Ok(conflict);
-                }
-
-                (output.amount(), output.native_tokens())
-            }
-            Output::Foundry(output) => {
-                if let Err(conflict) = unlock_foundry_output(output_id, output, unlock_block, &inputs, &context) {
-                    return Ok(conflict);
-                }
-
-                (output.amount(), output.native_tokens())
-            }
-            Output::Nft(output) => {
-                if let Err(conflict) = unlock_nft_output(output_id, output, unlock_block, &inputs, &context) {
-                    return Ok(conflict);
-                }
-
-                (output.amount(), output.native_tokens())
-            }
+        let (conflict, amount, consumed_native_tokens) = match consumed_output {
+            Output::Basic(output) => (
+                unlock_basic_output(output_id, output, unlock_block, &inputs, &mut context),
+                output.amount(),
+                output.native_tokens(),
+            ),
+            Output::Alias(output) => (
+                unlock_alias_output(output_id, output, unlock_block, &inputs, &mut context),
+                output.amount(),
+                output.native_tokens(),
+            ),
+            Output::Foundry(output) => (
+                unlock_foundry_output(output_id, output, unlock_block, &inputs, &context),
+                output.amount(),
+                output.native_tokens(),
+            ),
+            Output::Nft(output) => (
+                unlock_nft_output(output_id, output, unlock_block, &inputs, &context),
+                output.amount(),
+                output.native_tokens(),
+            ),
             _ => return Err(Error::UnsupportedOutputKind(consumed_output.kind())),
         };
+
+        if let Err(conflict) = conflict {
+            return Ok(conflict);
+        }
 
         context.input_amount = context
             .input_amount
@@ -289,6 +288,7 @@ fn apply_regular_essence<B: StorageBackend>(
         }
     }
 
+    // Validation of outputs.
     for created_output in essence.outputs() {
         // TODO also check feature blocks ?
         let (amount, created_native_tokens) = match created_output {
@@ -314,10 +314,12 @@ fn apply_regular_essence<B: StorageBackend>(
         }
     }
 
+    // Validation of amounts.
     if context.input_amount != context.output_amount {
         return Ok(ConflictReason::CreatedConsumedAmountMismatch);
     }
 
+    // Validation of native tokens.
     if context.input_native_tokens != context.output_native_tokens {
         return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
 
@@ -327,6 +329,7 @@ fn apply_regular_essence<B: StorageBackend>(
         // the outstanding balances are valid.
     }
 
+    // Validation of state creations and transitions.
     for (chain_id, current_state) in context.input_chains.iter() {
         Output::state_transition(
             Some(current_state),
@@ -335,6 +338,7 @@ fn apply_regular_essence<B: StorageBackend>(
         );
     }
 
+    // Validation of state destructions.
     for (chain_id, next_state) in context.output_chains.iter() {
         if context.input_chains.get(&chain_id).is_none() {
             Output::state_transition(None, Some(next_state), &context);
