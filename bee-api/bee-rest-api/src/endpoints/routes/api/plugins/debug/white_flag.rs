@@ -4,9 +4,6 @@
 use crate::{
     endpoints::{
         config::{RestApiConfig, ROUTE_WHITE_FLAG},
-        filters::{
-            with_bus, with_message_requester, with_requested_messages, with_rest_api_config, with_storage, with_tangle,
-        },
         permission::has_permission,
         rejection::CustomRejection,
         storage::StorageBackend,

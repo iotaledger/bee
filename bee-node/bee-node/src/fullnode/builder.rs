@@ -17,6 +17,7 @@ use bee_autopeering::{
 };
 use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
 use bee_plugin_version_checker::VersionCheckerPlugin;
+use bee_rest_api::endpoints::InitConfigFullNode;
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder},
@@ -386,11 +387,16 @@ async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
     } = config.network_spec().clone();
 
     let network_id = (network_name, network_id);
-    let rest_api_cfg = config.rest_api.clone();
-    let protocol_cfg = config.protocol.clone();
+
+    let init_config = InitConfigFullNode {
+        rest_api_config: config.rest_api.clone(),
+        protocol_config: config.protocol.clone(),
+        network_id,
+        bech32_hrp: hrp
+    };
 
     let builder =
-        bee_rest_api::endpoints::init_full_node::<FullNode<S>>(rest_api_cfg, protocol_cfg, network_id, hrp, builder)
+        bee_rest_api::endpoints::init_full_node::<FullNode<S>>(init_config, builder)
             .await;
 
     builder

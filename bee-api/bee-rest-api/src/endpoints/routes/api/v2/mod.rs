@@ -20,132 +20,30 @@ pub mod tips;
 pub mod transaction_included_message;
 pub mod treasury;
 
-use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
+use crate::endpoints::{storage::StorageBackend};
 
-use bee_gossip::NetworkCommandSender;
-use bee_ledger::workers::consensus::ConsensusWorkerCommand;
-use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
-use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
-use bee_tangle::Tangle;
+use axum::Router;
 
-use tokio::sync::mpsc;
-use warp::{self, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
-
-pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
-    super::path().and(warp::path("v2"))
-}
-
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<Tangle<B>>,
-    storage: ResourceHandle<B>,
-    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
-    network_id: NetworkId,
-    bech32_hrp: Bech32Hrp,
-    rest_api_config: RestApiConfig,
-    protocol_config: ProtocolConfig,
-    peer_manager: ResourceHandle<PeerManager>,
-    network_command_sender: ResourceHandle<NetworkCommandSender>,
-    node_info: ResourceHandle<NodeInfo>,
-    consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    add_peer::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        peer_manager.clone(),
-        network_command_sender.clone(),
-    )
-    .or(info::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-        network_id.clone(),
-        bech32_hrp,
-        rest_api_config.clone(),
-        protocol_config.clone(),
-        node_info,
-        peer_manager.clone(),
-    ))
-    .or(message::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-    ))
-    .or(message_children::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-    ))
-    .or(message_metadata::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-    ))
-    .or(message_raw::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-    ))
-    .or(milestone::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-    ))
-    .or(milestone_utxo_changes::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        storage.clone(),
-    ))
-    .or(output::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        storage.clone(),
-        consensus_worker,
-    ))
-    .or(peer::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        peer_manager.clone(),
-    ))
-    .or(peers::filter(public_routes.clone(), allowed_ips.clone(), peer_manager))
-    .or(receipts::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        storage.clone(),
-    ))
-    .or(receipts_at::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        storage.clone(),
-    ))
-    .or(remove_peer::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        network_command_sender,
-    ))
-    .or(submit_message::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-        message_submitter,
-        network_id,
-        rest_api_config,
-        protocol_config,
-    ))
-    .or(tips::filter(public_routes.clone(), allowed_ips.clone(), tangle.clone()))
-    .or(treasury::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        storage.clone(),
-    ))
-    .or(transaction_included_message::filter(
-        public_routes,
-        allowed_ips,
-        storage,
-        tangle,
-    ))
+pub(crate) fn filter<B: StorageBackend>() -> Router {
+    Router::new()
+        .nest("v2",
+              add_peer::filter()
+                  .merge(info::filter())
+                  .merge(message::filter())
+                  .merge(message_children::filter())
+                  .merge(message_metadata::filter())
+                  .merge(message_raw::filter())
+                  .merge(milestone::filter())
+                  .merge(milestone_utxo_changes::filter())
+                  .merge(output::filter())
+                  .merge(peer::filter( ))
+                  .merge(peers::filter())
+                  .merge(receipts::filter())
+                  .merge(receipts_at::filter())
+                  .merge(remove_peer::filter())
+                  .merge(submit_message::filter())
+                  .merge(tips::filter())
+                  .merge(treasury::filter())
+                  .merge(transaction_included_message::filter())
+        )
 }

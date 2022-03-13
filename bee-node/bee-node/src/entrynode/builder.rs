@@ -31,6 +31,7 @@ use std::{
     collections::HashMap,
     convert::Infallible,
 };
+use bee_rest_api::endpoints::InitConfigEntryNode;
 
 /// A builder to create a Bee entry node (autopeering).
 pub struct EntryNodeBuilder {
@@ -273,9 +274,11 @@ async fn initialize_api(builder: EntryNodeBuilder) -> EntryNodeBuilder {
 
     let config = builder.config();
 
-    let rest_api_cfg = config.rest_api.clone();
+    let init_config = InitConfigEntryNode {
+        rest_api_config: config.rest_api.clone(),
+    };
 
-    let builder = bee_rest_api::endpoints::init_entry_node::<EntryNode>(rest_api_cfg, builder).await;
+    let builder = bee_rest_api::endpoints::init_entry_node::<EntryNode>(init_config, builder).await;
 
     builder
 }
