@@ -31,12 +31,10 @@ pub mod unreferenced_message;
 /// The URTS tips pool.
 pub mod urts;
 
-mod conflict;
 mod vec_set;
 mod vertex;
 mod vertices;
 
-pub use conflict::ConflictReason;
 pub use tangle::Tangle;
 pub use tangle_worker::TangleWorker;
 

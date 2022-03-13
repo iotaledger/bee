@@ -21,12 +21,12 @@ use bee_message::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
     },
-    semantic::ValidationContext,
+    semantic::{ConflictReason, ValidationContext},
     signature::Signature,
     unlock_block::{UnlockBlock, UnlockBlocks},
     Message, MessageId,
 };
-use bee_tangle::{ConflictReason, Tangle};
+use bee_tangle::Tangle;
 
 use crypto::hashes::blake2b::Blake2b256;
 

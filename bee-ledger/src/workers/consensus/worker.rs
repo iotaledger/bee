@@ -18,10 +18,11 @@ use bee_message::{
     milestone::MilestoneIndex,
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, OutputId},
     payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
+    semantic::ConflictReason,
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{ConflictReason, Tangle, TangleWorker};
+use bee_tangle::{Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{channel::oneshot, stream::StreamExt};

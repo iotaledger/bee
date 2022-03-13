@@ -3,8 +3,7 @@
 
 use crate::types::{ConsumedOutput, CreatedOutput};
 
-use bee_message::{milestone::MilestoneIndex, output::OutputId, MessageId};
-use bee_tangle::ConflictReason;
+use bee_message::{milestone::MilestoneIndex, output::OutputId, semantic::ConflictReason, MessageId};
 
 use std::collections::HashMap;
 

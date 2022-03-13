@@ -8,9 +8,9 @@ use crate::types::CreatedOutput;
 use bee_message::{
     milestone::MilestoneIndex,
     output::{Output, OutputId},
+    semantic::ConflictReason,
     MessageId,
 };
-use bee_tangle::ConflictReason;
 
 /// An event that indicates that a milestone was confirmed.
 #[derive(Clone)]

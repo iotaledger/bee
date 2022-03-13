@@ -1,12 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    conflict::{ConflictError, ConflictReason},
-    flags::Flags,
-};
+use crate::flags::Flags;
 
-use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_message::{
+    milestone::MilestoneIndex,
+    semantic::{ConflictError, ConflictReason},
+    MessageId,
+};
 
 use packable::Packable;
 use serde::Serialize;
