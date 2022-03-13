@@ -284,15 +284,8 @@ pub enum InputDto {
 impl From<&Input> for InputDto {
     fn from(value: &Input) -> Self {
         match value {
-            Input::Utxo(u) => InputDto::Utxo(UtxoInputDto {
-                kind: UtxoInput::KIND,
-                transaction_id: u.output_id().transaction_id().to_string(),
-                transaction_output_index: u.output_id().index(),
-            }),
-            Input::Treasury(t) => InputDto::Treasury(TreasuryInputDto {
-                kind: TreasuryInput::KIND,
-                milestone_id: t.milestone_id().to_string(),
-            }),
+            Input::Utxo(u) => InputDto::Utxo(u.into()),
+            Input::Treasury(t) => InputDto::Treasury(t.into()),
         }
     }
 }
@@ -302,21 +295,13 @@ impl TryFrom<&InputDto> for Input {
 
     fn try_from(value: &InputDto) -> Result<Self, Self::Error> {
         match value {
-            InputDto::Utxo(i) => Ok(Input::Utxo(UtxoInput::new(
-                i.transaction_id
-                    .parse::<TransactionId>()
-                    .map_err(|_| Error::InvalidField("transactionId"))?,
-                i.transaction_output_index,
-            )?)),
-            InputDto::Treasury(t) => Ok(Input::Treasury(
-                t.milestone_id
-                    .parse::<MilestoneId>()
-                    .map_err(|_| Error::InvalidField("milestoneId"))?
-                    .into(),
-            )),
+            InputDto::Utxo(u) => Ok(Input::Utxo(u.try_into()?)),
+            InputDto::Treasury(t) => Ok(Input::Treasury(t.try_into()?)),
         }
     }
 }
+
+//.map_err(|_| Error::InvalidField("transactionId"))?,
 
 /// Describes an input which references an unspent transaction output to consume.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -329,6 +314,30 @@ pub struct UtxoInputDto {
     pub transaction_output_index: u16,
 }
 
+impl From<&UtxoInput> for UtxoInputDto {
+    fn from(value: &UtxoInput) -> Self {
+        UtxoInputDto {
+            kind: UtxoInput::KIND,
+            transaction_id: value.output_id().transaction_id().to_string(),
+            transaction_output_index: value.output_id().index(),
+        }
+    }
+}
+
+impl TryFrom<&UtxoInputDto> for UtxoInput {
+    type Error = Error;
+
+    fn try_from(value: &UtxoInputDto) -> Result<Self, Self::Error> {
+        Ok(UtxoInput::new(
+            value
+                .transaction_id
+                .parse::<TransactionId>()
+                .map_err(|_| Error::InvalidField("transactionId"))?,
+            value.transaction_output_index,
+        )?)
+    }
+}
+
 /// Describes an input which references an unspent treasury output to consume.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TreasuryInputDto {
@@ -336,6 +345,28 @@ pub struct TreasuryInputDto {
     pub kind: u8,
     #[serde(rename = "milestoneId")]
     pub milestone_id: String,
+}
+
+impl From<&TreasuryInput> for TreasuryInputDto {
+    fn from(value: &TreasuryInput) -> Self {
+        TreasuryInputDto {
+            kind: TreasuryInput::KIND,
+            milestone_id: value.milestone_id().to_string(),
+        }
+    }
+}
+
+impl TryFrom<&TreasuryInputDto> for TreasuryInput {
+    type Error = Error;
+
+    fn try_from(value: &TreasuryInputDto) -> Result<Self, Self::Error> {
+        Ok(TreasuryInput::new(
+            value
+                .milestone_id
+                .parse::<MilestoneId>()
+                .map_err(|_| Error::InvalidField("milestoneId"))?,
+        ))
+    }
 }
 
 /// Describes all the different output types.
@@ -1937,8 +1968,7 @@ pub struct ReceiptPayloadDto {
     #[serde(rename = "migratedAt")]
     pub migrated_at: u32,
     pub funds: Vec<MigratedFundsEntryDto>,
-    #[serde(rename = "transaction")]
-    pub treasury_transaction: PayloadDto,
+    pub transaction: PayloadDto,
     #[serde(rename = "final")]
     pub last: bool,
 }
@@ -1950,8 +1980,8 @@ impl From<&ReceiptPayload> for ReceiptPayloadDto {
             migrated_at: *value.migrated_at(),
             last: value.last(),
             funds: value.funds().iter().map(Into::into).collect::<_>(),
-            treasury_transaction: PayloadDto::TreasuryTransaction(
-                TreasuryTransactionPayloadDto::from(value.treasury_transaction()).into(),
+            transaction: PayloadDto::TreasuryTransaction(
+                TreasuryTransactionPayloadDto::from(value.transaction()).into(),
             ),
         }
     }
@@ -1965,8 +1995,8 @@ impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
             MilestoneIndex(value.migrated_at),
             value.last,
             value.funds.iter().map(TryInto::try_into).collect::<Result<_, _>>()?,
-            if let PayloadDto::TreasuryTransaction(ref treasury_transaction) = value.treasury_transaction {
-                (treasury_transaction.as_ref()).try_into()?
+            if let PayloadDto::TreasuryTransaction(ref transaction) = value.transaction {
+                (transaction.as_ref()).try_into()?
             } else {
                 return Err(Error::InvalidField("transaction"));
             },
@@ -2020,8 +2050,8 @@ impl From<&TreasuryTransactionPayload> for TreasuryTransactionPayloadDto {
     fn from(value: &TreasuryTransactionPayload) -> Self {
         TreasuryTransactionPayloadDto {
             kind: TreasuryTransactionPayload::KIND,
-            input: value.input().into(),
-            output: value.output().into(),
+            input: InputDto::Treasury(TreasuryInputDto::from(value.input())),
+            output: OutputDto::Treasury(TreasuryOutputDto::from(value.output())),
         }
     }
 }
@@ -2031,8 +2061,16 @@ impl TryFrom<&TreasuryTransactionPayloadDto> for TreasuryTransactionPayload {
 
     fn try_from(value: &TreasuryTransactionPayloadDto) -> Result<Self, Self::Error> {
         Ok(TreasuryTransactionPayload::new(
-            Input::try_from(&value.input)?,
-            Output::try_from(&value.output)?,
+            if let InputDto::Treasury(ref input) = value.input {
+                input.try_into()?
+            } else {
+                return Err(Error::InvalidField("input"));
+            },
+            if let OutputDto::Treasury(ref output) = value.output {
+                output.try_into()?
+            } else {
+                return Err(Error::InvalidField("output"));
+            },
         )?)
     }
 }

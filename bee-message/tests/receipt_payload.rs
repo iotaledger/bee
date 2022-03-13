@@ -3,9 +3,9 @@
 
 use bee_message::{
     address::{Address, Ed25519Address},
-    input::{Input, TreasuryInput},
+    input::TreasuryInput,
     milestone::MilestoneIndex,
-    output::{Output, TreasuryOutput},
+    output::TreasuryOutput,
     payload::{
         milestone::MilestoneId,
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
@@ -44,8 +44,8 @@ fn new_valid() {
         )
         .unwrap()],
         TreasuryTransactionPayload::new(
-            Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-            Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(AMOUNT).unwrap(),
         )
         .unwrap(),
     );
@@ -60,8 +60,8 @@ fn new_invalid_receipt_funds_count_low() {
         true,
         vec![],
         TreasuryTransactionPayload::new(
-            Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-            Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(AMOUNT).unwrap(),
         )
         .unwrap(),
     );
@@ -88,8 +88,8 @@ fn new_invalid_receipt_funds_count_high() {
             })
             .collect(),
         TreasuryTransactionPayload::new(
-            Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-            Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(AMOUNT).unwrap(),
         )
         .unwrap(),
     );
@@ -125,8 +125,8 @@ fn new_invalid_transaction_outputs_not_sorted() {
         true,
         migrated_funds,
         TreasuryTransactionPayload::new(
-            Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-            Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(AMOUNT).unwrap(),
         )
         .unwrap(),
     );
@@ -148,8 +148,8 @@ fn new_invalid_tail_transaction_hashes_not_unique() {
         true,
         vec![migrated_funds; 2],
         TreasuryTransactionPayload::new(
-            Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-            Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(AMOUNT).unwrap(),
         )
         .unwrap(),
     );
@@ -169,8 +169,8 @@ fn pack_unpack_valid() {
         )
         .unwrap()],
         TreasuryTransactionPayload::new(
-            Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-            Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(AMOUNT).unwrap(),
         )
         .unwrap(),
     )
@@ -195,17 +195,17 @@ fn getters() {
         AMOUNT,
     )
     .unwrap()];
-    let treasury_transaction = TreasuryTransactionPayload::new(
-        Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-        Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
+    let transaction = TreasuryTransactionPayload::new(
+        TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+        TreasuryOutput::new(AMOUNT).unwrap(),
     )
     .unwrap();
 
-    let receipt = ReceiptPayload::new(migrated_at, last, funds.clone(), treasury_transaction.clone()).unwrap();
+    let receipt = ReceiptPayload::new(migrated_at, last, funds.clone(), transaction.clone()).unwrap();
 
     assert_eq!(receipt.migrated_at(), migrated_at);
     assert_eq!(receipt.last(), last);
     assert_eq!(receipt.funds(), funds.as_slice());
-    assert_eq!(receipt.treasury_transaction(), &treasury_transaction);
+    assert_eq!(receipt.transaction(), &transaction);
     assert_eq!(receipt.amount(), AMOUNT);
 }

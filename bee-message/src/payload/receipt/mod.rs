@@ -39,8 +39,8 @@ pub struct ReceiptPayload {
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidReceiptFundsCount(p.into())))]
     #[packable(verify_with = verify_funds)]
     funds: VecPrefix<MigratedFundsEntry, ReceiptFundsCount>,
-    #[packable(verify_with = verify_treasury_transaction)]
-    treasury_transaction: Payload,
+    #[packable(verify_with = verify_transaction)]
+    transaction: Payload,
 }
 
 impl ReceiptPayload {
@@ -52,7 +52,7 @@ impl ReceiptPayload {
         migrated_at: MilestoneIndex,
         last: bool,
         funds: Vec<MigratedFundsEntry>,
-        treasury_transaction: TreasuryTransactionPayload,
+        transaction: TreasuryTransactionPayload,
     ) -> Result<Self, Error> {
         let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::try_from(funds)
             .map_err(Error::InvalidReceiptFundsCount)?;
@@ -63,7 +63,7 @@ impl ReceiptPayload {
             migrated_at,
             last,
             funds,
-            treasury_transaction: treasury_transaction.into(),
+            transaction: transaction.into(),
         })
     }
 
@@ -83,9 +83,9 @@ impl ReceiptPayload {
     }
 
     /// The [`TreasuryTransaction`] used to fund the funds of a [`ReceiptPayload`].
-    pub fn treasury_transaction(&self) -> &TreasuryTransactionPayload {
-        if let Payload::TreasuryTransaction(ref treasury_transaction) = self.treasury_transaction {
-            treasury_transaction
+    pub fn transaction(&self) -> &TreasuryTransactionPayload {
+        if let Payload::TreasuryTransaction(ref transaction) = self.transaction {
+            transaction
         } else {
             unreachable!()
         }
@@ -116,9 +116,9 @@ fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<(), 
     Ok(())
 }
 
-fn verify_treasury_transaction<const VERIFY: bool>(treasury_transaction: &Payload) -> Result<(), Error> {
-    if !matches!(treasury_transaction, Payload::TreasuryTransaction(_)) {
-        Err(Error::InvalidPayloadKind(treasury_transaction.kind()))
+fn verify_transaction<const VERIFY: bool>(transaction: &Payload) -> Result<(), Error> {
+    if !matches!(transaction, Payload::TreasuryTransaction(_)) {
+        Err(Error::InvalidPayloadKind(transaction.kind()))
     } else {
         Ok(())
     }

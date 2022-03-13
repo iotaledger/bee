@@ -3,9 +3,7 @@
 
 use crate::types::{error::Error, TreasuryOutput};
 
-use bee_message::{
-    constant::IOTA_SUPPLY, input::Input, milestone::MilestoneIndex, output::Output, payload::receipt::ReceiptPayload,
-};
+use bee_message::{constant::IOTA_SUPPLY, milestone::MilestoneIndex, payload::receipt::ReceiptPayload};
 
 /// A type that wraps a receipt and the index of the milestone in which it was included.
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
@@ -33,7 +31,7 @@ impl Receipt {
     /// Semantically validates the `Receipt`.
     pub fn validate(&self, consumed_treasury_output: &TreasuryOutput) -> Result<(), Error> {
         let mut migrated_amount: u64 = 0;
-        let treasury_transaction = self.inner().treasury_transaction();
+        let transaction = self.inner().transaction();
 
         for funds in self.inner().funds() {
             migrated_amount = migrated_amount
@@ -45,23 +43,16 @@ impl Receipt {
             return Err(Error::InvalidMigratedFundsAmount(migrated_amount));
         }
 
-        if let Input::Treasury(input) = treasury_transaction.input() {
-            if input.milestone_id() != consumed_treasury_output.milestone_id() {
-                return Err(Error::ConsumedTreasuryOutputMismatch(
-                    *input.milestone_id(),
-                    *consumed_treasury_output.milestone_id(),
-                ));
-            }
-        } else {
-            return Err(Error::UnsupportedInputKind(treasury_transaction.input().kind()));
+        let input = transaction.input();
+
+        if input.milestone_id() != consumed_treasury_output.milestone_id() {
+            return Err(Error::ConsumedTreasuryOutputMismatch(
+                *input.milestone_id(),
+                *consumed_treasury_output.milestone_id(),
+            ));
         }
 
-        let created_treasury_output = if let Output::Treasury(output) = treasury_transaction.output() {
-            output
-        } else {
-            return Err(Error::UnsupportedOutputKind(treasury_transaction.output().kind()));
-        };
-
+        let created_treasury_output = transaction.output();
         let created_amount = consumed_treasury_output
             .inner()
             .amount()

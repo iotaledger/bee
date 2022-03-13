@@ -142,8 +142,8 @@ fn receipt() {
             .unwrap(),
         ],
         TreasuryTransactionPayload::new(
-            Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-            Output::Treasury(TreasuryOutput::new(1_000_000).unwrap()),
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(1_000_000).unwrap(),
         )
         .unwrap(),
     )
@@ -161,8 +161,8 @@ fn receipt() {
 #[test]
 fn treasury_transaction() {
     let payload: Payload = TreasuryTransactionPayload::new(
-        Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap()),
-        Output::from(TreasuryOutput::new(1_000_000).unwrap()),
+        TreasuryInput::from_str(MESSAGE_ID).unwrap(),
+        TreasuryOutput::new(1_000_000).unwrap(),
     )
     .unwrap()
     .into();

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    input::{Input, TreasuryInput},
+    input::TreasuryInput,
     milestone::MilestoneIndex,
-    output::{Output, TreasuryOutput},
+    output::TreasuryOutput,
     payload::{milestone::MilestoneEssence, Payload, ReceiptPayload, TaggedDataPayload, TreasuryTransactionPayload},
     Error,
 };
@@ -178,8 +178,8 @@ fn getters() {
             true,
             vec![rand::receipt::rand_migrated_funds_entry()],
             TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(rand::milestone::rand_milestone_id())),
-                Output::Treasury(TreasuryOutput::new(1_000_000).unwrap()),
+                TreasuryInput::new(rand::milestone::rand_milestone_id()),
+                TreasuryOutput::new(1_000_000).unwrap(),
             )
             .unwrap(),
         )
