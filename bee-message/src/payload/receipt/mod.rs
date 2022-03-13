@@ -10,7 +10,12 @@ pub(crate) use migrated_funds_entry::MigratedFundsAmount;
 pub use migrated_funds_entry::MigratedFundsEntry;
 pub use tail_transaction_hash::TailTransactionHash;
 
-use crate::{milestone::MilestoneIndex, output::OUTPUT_COUNT_RANGE, payload::Payload, Error};
+use crate::{
+    milestone::MilestoneIndex,
+    output::OUTPUT_COUNT_RANGE,
+    payload::{Payload, TreasuryTransactionPayload},
+    Error,
+};
 
 use hashbrown::HashMap;
 use iterator_sorted::is_unique_sorted;
@@ -47,19 +52,18 @@ impl ReceiptPayload {
         migrated_at: MilestoneIndex,
         last: bool,
         funds: Vec<MigratedFundsEntry>,
-        treasury_transaction: Payload,
+        treasury_transaction: TreasuryTransactionPayload,
     ) -> Result<Self, Error> {
         let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::try_from(funds)
             .map_err(Error::InvalidReceiptFundsCount)?;
 
-        verify_treasury_transaction::<true>(&treasury_transaction)?;
         verify_funds::<true>(&funds)?;
 
         Ok(Self {
             migrated_at,
             last,
             funds,
-            treasury_transaction,
+            treasury_transaction: treasury_transaction.into(),
         })
     }
 
@@ -79,8 +83,12 @@ impl ReceiptPayload {
     }
 
     /// The [`TreasuryTransaction`] used to fund the funds of a [`ReceiptPayload`].
-    pub fn treasury_transaction(&self) -> &Payload {
-        &self.treasury_transaction
+    pub fn treasury_transaction(&self) -> &TreasuryTransactionPayload {
+        if let Payload::TreasuryTransaction(ref treasury_transaction) = self.treasury_transaction {
+            treasury_transaction
+        } else {
+            unreachable!()
+        }
     }
 
     /// Returns the sum of all [`MigratedFundsEntry`] items within a [`ReceiptPayload`].

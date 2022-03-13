@@ -177,13 +177,11 @@ fn getters() {
             index,
             true,
             vec![rand::receipt::rand_migrated_funds_entry()],
-            Payload::TreasuryTransaction(Box::new(
-                TreasuryTransactionPayload::new(
-                    Input::Treasury(TreasuryInput::new(rand::milestone::rand_milestone_id())),
-                    Output::Treasury(TreasuryOutput::new(1_000_000).unwrap()),
-                )
-                .unwrap(),
-            )),
+            TreasuryTransactionPayload::new(
+                Input::Treasury(TreasuryInput::new(rand::milestone::rand_milestone_id())),
+                Output::Treasury(TreasuryOutput::new(1_000_000).unwrap()),
+            )
+            .unwrap(),
         )
         .unwrap(),
     )));

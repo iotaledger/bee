@@ -141,13 +141,11 @@ fn receipt() {
             )
             .unwrap(),
         ],
-        Payload::TreasuryTransaction(Box::new(
-            TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-                Output::Treasury(TreasuryOutput::new(1_000_000).unwrap()),
-            )
-            .unwrap(),
-        )),
+        TreasuryTransactionPayload::new(
+            Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
+            Output::Treasury(TreasuryOutput::new(1_000_000).unwrap()),
+        )
+        .unwrap(),
     )
     .unwrap()
     .into();

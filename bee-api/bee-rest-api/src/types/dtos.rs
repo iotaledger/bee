@@ -1937,7 +1937,8 @@ pub struct ReceiptPayloadDto {
     #[serde(rename = "migratedAt")]
     pub migrated_at: u32,
     pub funds: Vec<MigratedFundsEntryDto>,
-    pub transaction: PayloadDto,
+    #[serde(rename = "transaction")]
+    pub treasury_transaction: PayloadDto,
     #[serde(rename = "final")]
     pub last: bool,
 }
@@ -1949,7 +1950,9 @@ impl From<&ReceiptPayload> for ReceiptPayloadDto {
             migrated_at: *value.migrated_at(),
             last: value.last(),
             funds: value.funds().iter().map(Into::into).collect::<_>(),
-            transaction: value.treasury_transaction().into(),
+            treasury_transaction: PayloadDto::TreasuryTransaction(
+                TreasuryTransactionPayloadDto::from(value.treasury_transaction()).into(),
+            ),
         }
     }
 }
@@ -1962,7 +1965,11 @@ impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
             MilestoneIndex(value.migrated_at),
             value.last,
             value.funds.iter().map(TryInto::try_into).collect::<Result<_, _>>()?,
-            (&value.transaction).try_into()?,
+            if let PayloadDto::TreasuryTransaction(ref treasury_transaction) = value.treasury_transaction {
+                (treasury_transaction.as_ref()).try_into()?
+            } else {
+                return Err(Error::InvalidField("transaction"));
+            },
         )?)
     }
 }

@@ -4,11 +4,7 @@
 use crate::types::{error::Error, TreasuryOutput};
 
 use bee_message::{
-    constant::IOTA_SUPPLY,
-    input::Input,
-    milestone::MilestoneIndex,
-    output::Output,
-    payload::{receipt::ReceiptPayload, Payload},
+    constant::IOTA_SUPPLY, input::Input, milestone::MilestoneIndex, output::Output, payload::receipt::ReceiptPayload,
 };
 
 /// A type that wraps a receipt and the index of the milestone in which it was included.
@@ -37,13 +33,7 @@ impl Receipt {
     /// Semantically validates the `Receipt`.
     pub fn validate(&self, consumed_treasury_output: &TreasuryOutput) -> Result<(), Error> {
         let mut migrated_amount: u64 = 0;
-        let transaction = if let Payload::TreasuryTransaction(transaction) = self.inner().treasury_transaction() {
-            transaction
-        } else {
-            return Err(Error::UnsupportedPayloadKind(
-                self.inner().treasury_transaction().kind(),
-            ));
-        };
+        let treasury_transaction = self.inner().treasury_transaction();
 
         for funds in self.inner().funds() {
             migrated_amount = migrated_amount
@@ -55,7 +45,7 @@ impl Receipt {
             return Err(Error::InvalidMigratedFundsAmount(migrated_amount));
         }
 
-        if let Input::Treasury(input) = transaction.input() {
+        if let Input::Treasury(input) = treasury_transaction.input() {
             if input.milestone_id() != consumed_treasury_output.milestone_id() {
                 return Err(Error::ConsumedTreasuryOutputMismatch(
                     *input.milestone_id(),
@@ -63,13 +53,13 @@ impl Receipt {
                 ));
             }
         } else {
-            return Err(Error::UnsupportedInputKind(transaction.input().kind()));
+            return Err(Error::UnsupportedInputKind(treasury_transaction.input().kind()));
         }
 
-        let created_treasury_output = if let Output::Treasury(output) = transaction.output() {
+        let created_treasury_output = if let Output::Treasury(output) = treasury_transaction.output() {
             output
         } else {
-            return Err(Error::UnsupportedOutputKind(transaction.output().kind()));
+            return Err(Error::UnsupportedOutputKind(treasury_transaction.output().kind()));
         };
 
         let created_amount = consumed_treasury_output
