@@ -57,6 +57,7 @@ pub use unlock_condition::{UnlockCondition, UnlockConditions};
 
 use crate::{address::Address, constant::IOTA_SUPPLY, semantic::ValidationContext, Error};
 
+use crypto::hashes::{blake2b::Blake2b256, Digest};
 use derive_more::From;
 use packable::{bounded::BoundedU64, PackableExt};
 
@@ -319,4 +320,13 @@ fn minimum_storage_deposit(config: &ByteCostConfig, address: &Address) -> u64 {
         .finish()
         .unwrap();
     Output::Basic(basic_output).byte_cost(config)
+}
+
+///
+pub fn inputs_commitment<'a>(inputs: impl Iterator<Item = &'a Output>) -> [u8; 32] {
+    let mut hasher = Blake2b256::new();
+
+    inputs.for_each(|output| hasher.update(output.pack_to_vec()));
+
+    hasher.finalize().into()
 }

@@ -4,7 +4,7 @@
 use crate::{
     address::Address,
     milestone::MilestoneIndex,
-    output::{ChainId, Output, OutputId, TokenId},
+    output::{inputs_commitment, ChainId, Output, OutputId, TokenId},
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     unlock_block::UnlockBlocks,
 };
@@ -58,6 +58,8 @@ pub enum ConflictReason {
     UnverifiedSender = 10,
     /// An incorrect unlock method was used.
     IncorrectUnlockMethod = 11,
+    /// The inputs commitments do not match.
+    InputsCommitmentsMismatch = 12,
     /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
 }
@@ -85,6 +87,7 @@ impl TryFrom<u8> for ConflictReason {
             9 => Self::TimelockUnix,
             10 => Self::UnverifiedSender,
             11 => Self::IncorrectUnlockMethod,
+            12 => Self::InputsCommitmentsMismatch,
             255 => Self::SemanticValidationFailed,
             x => return Err(Self::Error::InvalidConflict(x)),
         })
@@ -97,6 +100,8 @@ pub struct ValidationContext<'a> {
     pub essence: &'a RegularTransactionEssence,
     ///
     pub essence_hash: [u8; 32],
+    ///
+    pub inputs_commitment: [u8; 32],
     ///
     pub unlock_blocks: &'a UnlockBlocks,
     ///
@@ -124,7 +129,7 @@ impl<'a> ValidationContext<'a> {
     pub fn new(
         transaction_id: &TransactionId,
         essence: &'a RegularTransactionEssence,
-        inputs: impl Iterator<Item = (&'a OutputId, &'a Output)>,
+        inputs: impl Iterator<Item = (&'a OutputId, &'a Output)> + Clone,
         unlock_blocks: &'a UnlockBlocks,
         milestone_index: MilestoneIndex,
         milestone_timestamp: u64,
@@ -133,6 +138,7 @@ impl<'a> ValidationContext<'a> {
             essence,
             unlock_blocks,
             essence_hash: TransactionEssence::from(essence.clone()).hash(),
+            inputs_commitment: inputs_commitment(inputs.clone().map(|(_, output)| output)),
             milestone_index,
             milestone_timestamp,
             input_amount: 0,

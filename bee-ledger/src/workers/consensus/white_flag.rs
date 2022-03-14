@@ -197,8 +197,6 @@ fn apply_regular_essence<B: StorageBackend>(
 ) -> Result<ConflictReason, Error> {
     let mut consumed_outputs = Vec::<(OutputId, CreatedOutput)>::new();
 
-    // TODO check inputs commitment.
-
     // Fetch inputs from the storage or from current milestone metadata.
     for (index, input) in essence.inputs().iter().enumerate() {
         let (output_id, consumed_output) = match input {
@@ -241,6 +239,11 @@ fn apply_regular_essence<B: StorageBackend>(
         metadata.milestone_index,
         metadata.milestone_timestamp,
     );
+
+    // Validation of the inputs commitment.
+    if context.essence.inputs_commitment() != &context.inputs_commitment {
+        return Ok(ConflictReason::InputsCommitmentsMismatch);
+    }
 
     // Validation of inputs.
     for (index, (output_id, consumed_output)) in inputs.iter().enumerate() {
