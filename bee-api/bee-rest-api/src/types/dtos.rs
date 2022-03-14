@@ -409,6 +409,18 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
                 .and_then(Value::as_u64)
                 .ok_or_else(|| serde::de::Error::custom("invalid output type"))? as u8
             {
+                #[cfg(feature = "cpt2")]
+                SignatureLockedSingleOutput::KIND => {
+                    OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).map_err(
+                        |e| serde::de::Error::custom(format!("can not deserialize legacy single output: {}", e)),
+                    )?)
+                }
+                #[cfg(feature = "cpt2")]
+                SignatureLockedDustAllowanceOutput::KIND => OutputDto::SignatureLockedDustAllowance(
+                    SignatureLockedDustAllowanceOutputDto::deserialize(value).map_err(|e| {
+                        serde::de::Error::custom(format!("can not deserialize legacy dust output: {}", e))
+                    })?,
+                ),
                 TreasuryOutput::KIND => OutputDto::Treasury(
                     TreasuryOutputDto::deserialize(value)
                         .map_err(|e| serde::de::Error::custom(format!("cannot deserialize treasury output: {}", e)))?,
@@ -2314,3 +2326,6 @@ mod cpt2 {
         }
     }
 }
+
+#[cfg(feature = "cpt2")]
+pub use cpt2::ChrysalisMessageDto;
