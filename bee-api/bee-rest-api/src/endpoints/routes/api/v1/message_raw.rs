@@ -40,7 +40,7 @@ pub async fn message_raw<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get(&message_id).await.map(|m| (*m).clone()) {
+    match tangle.get(&message_id).await {
         Some(message) => Ok(Response::builder()
             .header("Content-Type", "application/octet-stream")
             .body(message.pack_new())),
