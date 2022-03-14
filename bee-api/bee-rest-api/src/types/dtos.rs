@@ -411,14 +411,18 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
             {
                 #[cfg(feature = "cpt2")]
                 SignatureLockedSingleOutput::KIND => {
-                    OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).map_err(
-                        |e| serde::de::Error::custom(format!("can not deserialize legacy single output: {}", e)),
-                    )?)
+                    println!("deserizling output",);
+                    let r =
+                        OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).map_err(
+                            |e| serde::de::Error::custom(format!("cannot deserialize legacy single output: {}", e)),
+                        )?);
+                    println!("deserizlied output",);
+                    r
                 }
                 #[cfg(feature = "cpt2")]
                 SignatureLockedDustAllowanceOutput::KIND => OutputDto::SignatureLockedDustAllowance(
                     SignatureLockedDustAllowanceOutputDto::deserialize(value).map_err(|e| {
-                        serde::de::Error::custom(format!("can not deserialize legacy dust output: {}", e))
+                        serde::de::Error::custom(format!("cannot deserialize legacy dust output: {}", e))
                     })?,
                 ),
                 TreasuryOutput::KIND => OutputDto::Treasury(
@@ -541,10 +545,13 @@ impl<'de> serde::Deserialize<'de> for AddressDto {
                 .and_then(Value::as_u64)
                 .ok_or_else(|| serde::de::Error::custom("invalid address type"))? as u8
             {
-                Ed25519Address::KIND => AddressDto::Ed25519(
-                    Ed25519AddressDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize ed25519 address: {}", e)))?,
-                ),
+                Ed25519Address::KIND => AddressDto::Ed25519({
+                    println!("got value of address");
+                    let r = Ed25519AddressDto::deserialize(value)
+                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize ed25519 address: {}", e)));
+                    println!("got value of address {:?}", r);
+                    r?
+                }),
                 AliasAddress::KIND => AddressDto::Alias(
                     AliasAddressDto::deserialize(value)
                         .map_err(|e| serde::de::Error::custom(format!("cannot deserialize alias address: {}", e)))?,
@@ -1718,7 +1725,7 @@ impl TryFrom<&NftOutputDto> for NftOutput {
 pub struct SignatureLockedSingleOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    pub address: AddressDto,
+    pub address: cpt2::ChrysalisAddressDto,
     pub amount: u64,
 }
 
@@ -1749,7 +1756,6 @@ impl TryFrom<&SignatureLockedSingleOutputDto> for SignatureLockedSingleOutput {
 
 /// Output type for deposits that enables an address to receive dust outputs. It can be consumed as an input like a
 /// regular SigLockedSingleOutput.
-#[cfg(feature = "cpt2")]
 #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureLockedDustAllowanceOutputDto {
@@ -2323,6 +2329,57 @@ mod cpt2 {
             };
 
             builder.finish().map_err(Into::into)
+        }
+    }
+    /// Describes all the different address types.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[serde(untagged)]
+    pub enum ChrysalisAddressDto {
+        Ed25519(ChrysalisEd25519AddressDto),
+    }
+    impl From<&Address> for ChrysalisAddressDto {
+        fn from(value: &Address) -> Self {
+            match value {
+                Address::Ed25519(a) => ChrysalisAddressDto::Ed25519(a.into()),
+                _ => unimplemented!(),
+            }
+        }
+    }
+    impl TryFrom<&ChrysalisAddressDto> for Address {
+        type Error = Error;
+
+        fn try_from(value: &ChrysalisAddressDto) -> Result<Self, Self::Error> {
+            match value {
+                ChrysalisAddressDto::Ed25519(a) => Ok(Address::Ed25519(a.try_into()?)),
+            }
+        }
+    }
+
+    /// Describes an Ed25519 address.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct ChrysalisEd25519AddressDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        pub address: String,
+    }
+
+    impl From<&Ed25519Address> for ChrysalisEd25519AddressDto {
+        fn from(value: &Ed25519Address) -> Self {
+            Self {
+                kind: Ed25519Address::KIND,
+                address: value.to_string(),
+            }
+        }
+    }
+
+    impl TryFrom<&ChrysalisEd25519AddressDto> for Ed25519Address {
+        type Error = Error;
+
+        fn try_from(value: &ChrysalisEd25519AddressDto) -> Result<Self, Self::Error> {
+            value
+                .address
+                .parse::<Ed25519Address>()
+                .map_err(|_| Error::InvalidField("address"))
         }
     }
 }
