@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.5.0 - 2022-03-11
+
+### Added
+
+- Implementation of `Update` for `Storage`;
+
 ## 0.4.0 - 2021-06-15
 
 ### Changed
