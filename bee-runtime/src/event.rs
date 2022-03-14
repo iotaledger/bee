@@ -3,9 +3,9 @@
 
 //! A module that provides a generic, type-safe event bus for arbitrary event types.
 
-use dashmap::DashMap;
-
 use std::any::{Any, TypeId};
+
+use dashmap::DashMap;
 
 type Listener<'a> = dyn Fn(&dyn Any) + Send + Sync + 'a;
 

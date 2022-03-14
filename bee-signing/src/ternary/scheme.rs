@@ -1,11 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::ternary::seed::Seed;
-
 use bee_ternary::{T1B1Buf, TritBuf, Trits, T1B1};
-
 use zeroize::Zeroize;
+
+use crate::ternary::seed::Seed;
 
 /// Generates a ternary private key.
 pub trait PrivateKeyGenerator {
@@ -24,13 +23,14 @@ pub trait PrivateKeyGenerator {
     /// # Example
     ///
     /// ```
+    /// use std::str::FromStr;
+    ///
     /// use bee_crypto::ternary::sponge::Kerl;
     /// use bee_signing::ternary::{
     ///     seed::Seed,
     ///     wots::{WotsSecurityLevel, WotsSpongePrivateKeyGeneratorBuilder},
     ///     PrivateKeyGenerator,
     /// };
-    /// use std::str::FromStr;
     ///
     /// let seed =
     ///     Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();
@@ -53,13 +53,14 @@ pub trait PrivateKeyGenerator {
     /// # Example
     ///
     /// ```
+    /// use std::str::FromStr;
+    ///
     /// use bee_crypto::ternary::sponge::Kerl;
     /// use bee_signing::ternary::{
     ///     seed::Seed,
     ///     wots::{WotsSecurityLevel, WotsSpongePrivateKeyGeneratorBuilder},
     ///     PrivateKeyGenerator,
     /// };
-    /// use std::str::FromStr;
     ///
     /// let seed =
     ///     Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();

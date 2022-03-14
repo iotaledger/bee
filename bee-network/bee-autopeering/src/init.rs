@@ -3,6 +3,8 @@
 
 //! Autopeering initialization.
 
+use std::{error, future::Future, iter, time::Duration};
+
 use crate::{
     config::AutopeeringConfig,
     delay,
@@ -30,8 +32,6 @@ use crate::{
     task::{TaskManager, MAX_SHUTDOWN_PRIORITY},
     time::SECOND,
 };
-
-use std::{error, future::Future, iter, time::Duration};
 
 const BOOTSTRAP_MAX_VERIFICATIONS: usize = 10;
 const BOOTSTRAP_VERIFICATION_DELAY: Duration = Duration::from_millis(100);

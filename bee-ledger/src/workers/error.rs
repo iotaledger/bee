@@ -3,12 +3,12 @@
 
 //! Module containing the errors that can occur during ledger operations.
 
+use bee_message::{address::Address, milestone::MilestoneIndex, Error as MessageError, MessageId};
+
 use crate::{
     types::{Balance, Error as TypesError, Unspent},
     workers::snapshot::error::Error as SnapshotError,
 };
-
-use bee_message::{address::Address, milestone::MilestoneIndex, Error as MessageError, MessageId};
 
 /// Errors occurring during ledger workers operations.
 #[derive(Debug, thiserror::Error)]

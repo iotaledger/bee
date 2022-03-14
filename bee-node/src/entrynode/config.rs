@@ -1,16 +1,15 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_autopeering::AutopeeringConfig;
+use bee_rest_api::endpoints::config::RestApiConfig;
+use fern_logger::LoggerConfig;
+
 use crate::{
     config::{NetworkSpec, NodeConfig},
     local::Local,
     storage::NodeStorageBackend,
 };
-
-use bee_autopeering::AutopeeringConfig;
-use bee_rest_api::endpoints::config::RestApiConfig;
-
-use fern_logger::LoggerConfig;
 
 /// The config of a Bee entry node.
 #[derive(Clone)]

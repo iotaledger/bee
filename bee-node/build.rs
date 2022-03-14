@@ -92,12 +92,12 @@ fn parse_git_information() -> Result<(), BuildError> {
 
 #[cfg(feature = "dashboard")]
 mod dashboard {
-    use super::*;
+    use std::{io, path::Path};
 
     use sha2::{Digest, Sha256};
     use zip::ZipArchive;
 
-    use std::{io, path::Path};
+    use super::*;
 
     const RELEASE_URL: &str =
         "https://github.com/iotaledger/node-dashboard/releases/download/v1.0.0/node-dashboard-bee-1.0.0.zip";

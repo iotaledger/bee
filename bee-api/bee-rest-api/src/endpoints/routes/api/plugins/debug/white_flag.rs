@@ -1,6 +1,24 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{
+    any::TypeId,
+    collections::HashSet,
+    net::IpAddr,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
+
+use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
+use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_protocol::workers::{event::MessageSolidified, request_message, MessageRequesterWorker, RequestedMessages};
+use bee_runtime::{event::Bus, resource::ResourceHandle};
+use bee_tangle::Tangle;
+use futures::channel::oneshot;
+use serde_json::Value as JsonValue;
+use tokio::time::timeout;
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         config::{RestApiConfig, ROUTE_WHITE_FLAG},
@@ -12,25 +30,6 @@ use crate::{
         storage::StorageBackend,
     },
     types::{body::SuccessBody, responses::WhiteFlagResponse},
-};
-
-use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
-use bee_message::{milestone::MilestoneIndex, MessageId};
-use bee_protocol::workers::{event::MessageSolidified, request_message, MessageRequesterWorker, RequestedMessages};
-use bee_runtime::{event::Bus, resource::ResourceHandle};
-use bee_tangle::Tangle;
-
-use futures::channel::oneshot;
-use serde_json::Value as JsonValue;
-use tokio::time::timeout;
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
-
-use std::{
-    any::TypeId,
-    collections::HashSet,
-    net::IpAddr,
-    sync::{Arc, Mutex},
-    time::Duration,
 };
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {

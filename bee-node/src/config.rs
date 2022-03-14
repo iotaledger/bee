@@ -7,15 +7,7 @@
 //! All node types use a common config file (e.g. config.json), and simply ignore
 //! those parameters they don't actually require.
 
-use crate::{
-    cli::ClArgs,
-    plugins::mqtt::config::{MqttConfig, MqttConfigBuilder},
-    storage::NodeStorageBackend,
-    util, BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT,
-};
-
-#[cfg(feature = "dashboard")]
-use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder};
+use std::{fs, path::Path};
 
 use bee_autopeering::config::{AutopeeringConfig, AutopeeringConfigBuilder};
 use bee_gossip::{NetworkConfig, NetworkConfigBuilder};
@@ -26,11 +18,17 @@ use bee_ledger::workers::{
 use bee_protocol::workers::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::endpoints::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_tangle::config::{TangleConfig, TangleConfigBuilder};
-
 use fern_logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
 use serde::Deserialize;
 
-use std::{fs, path::Path};
+#[cfg(feature = "dashboard")]
+use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder};
+use crate::{
+    cli::ClArgs,
+    plugins::mqtt::config::{MqttConfig, MqttConfigBuilder},
+    storage::NodeStorageBackend,
+    util, BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT,
+};
 
 pub(crate) const ALIAS_DEFAULT: &str = "bee";
 
@@ -277,12 +275,12 @@ impl NetworkSpec {
 #[cfg(test)]
 mod test {
 
-    use super::*;
-
     #[cfg(feature = "rocksdb")]
     use bee_storage_rocksdb::storage::Storage;
     #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
     use bee_storage_sled::storage::Storage;
+
+    use super::*;
 
     #[test]
     fn config_files_conformity() -> Result<(), NodeConfigError> {

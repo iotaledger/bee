@@ -1,13 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::plugins::mqtt::config::MqttConfig;
+use std::time::Duration;
 
 use log::{error, warn};
 use paho_mqtt as mqtt;
 use thiserror::Error;
 
-use std::time::Duration;
+use crate::plugins::mqtt::config::MqttConfig;
 
 #[derive(Error, Debug)]
 pub(crate) enum Error {

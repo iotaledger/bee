@@ -1,22 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    plugins::dashboard::{
-        asset::Asset,
-        auth::{auth, AUDIENCE_CLAIM},
-        config::DashboardAuthConfig,
-        rejection::CustomRejection,
-        websocket::{user_connected, WsUsers},
-    },
-    storage::NodeStorageBackend,
-};
-
+use auth_helper::jwt::JsonWebToken;
 use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
-
-use auth_helper::jwt::JsonWebToken;
 use log::debug;
 use warp::{
     filters::header::headers_cloned,
@@ -27,6 +15,17 @@ use warp::{
     Filter, Rejection, Reply,
 };
 use warp_reverse_proxy::reverse_proxy_filter;
+
+use crate::{
+    plugins::dashboard::{
+        asset::Asset,
+        auth::{auth, AUDIENCE_CLAIM},
+        config::DashboardAuthConfig,
+        rejection::CustomRejection,
+        websocket::{user_connected, WsUsers},
+    },
+    storage::NodeStorageBackend,
+};
 
 const BEARER: &str = "Bearer ";
 

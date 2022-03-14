@@ -3,14 +3,14 @@
 
 //! Events published to the user.
 
+use std::fmt;
+
+use tokio::sync::mpsc;
+
 use crate::{
     peer::{Peer, PeerId},
     peering::neighbor::Distance,
 };
-
-use tokio::sync::mpsc;
-
-use std::fmt;
 
 /// Autopeering related events.
 #[derive(Debug)]

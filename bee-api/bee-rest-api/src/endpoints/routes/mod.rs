@@ -4,7 +4,7 @@
 pub mod api;
 pub mod health;
 
-use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
+use std::net::IpAddr;
 
 use bee_gossip::NetworkCommandSender;
 use bee_ledger::workers::consensus::ConsensusWorkerCommand;
@@ -13,11 +13,10 @@ use bee_protocol::workers::{
 };
 use bee_runtime::{event::Bus, node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
-
 use tokio::sync::mpsc;
 use warp::{self, Filter, Rejection, Reply};
 
-use std::net::IpAddr;
+use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn filter_all<B: StorageBackend>(

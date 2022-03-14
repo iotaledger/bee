@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_rest_api::types::responses::PeersResponse;
+use serde::Serialize;
+
 use crate::plugins::dashboard::websocket::{
     responses::{
         confirmed_info::ConfirmedInfoResponse, confirmed_milestone_metrics::ConfirmedMilestoneMetricsResponse,
@@ -11,10 +14,6 @@ use crate::plugins::dashboard::websocket::{
     },
     topics::WsTopic,
 };
-
-use bee_rest_api::types::responses::PeersResponse;
-
-use serde::Serialize;
 
 pub(crate) mod confirmed_info;
 pub(crate) mod confirmed_milestone_metrics;

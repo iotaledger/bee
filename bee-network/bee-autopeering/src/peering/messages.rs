@@ -1,13 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{local::salt::Salt, proto, request::Request};
+use std::fmt;
 
 use base64 as bs64;
 use crypto::hashes::sha::SHA256_LEN;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 
-use std::fmt;
+use crate::{local::salt::Salt, proto, request::Request};
 
 #[derive(Clone)]
 pub(crate) struct PeeringRequest {

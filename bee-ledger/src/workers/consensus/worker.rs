@@ -1,6 +1,23 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::any::TypeId;
+
+use async_trait::async_trait;
+use bee_message::{
+    address::Address,
+    milestone::MilestoneIndex,
+    output::{Output, OutputId},
+    payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
+    MessageId,
+};
+use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::{ConflictReason, Tangle, TangleWorker};
+use futures::{channel::oneshot, stream::StreamExt};
+use log::{debug, error, info, warn};
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
+
 use crate::{
     types::{Balance, CreatedOutput, LedgerIndex, Migration, Receipt, TreasuryOutput},
     workers::{
@@ -12,24 +29,6 @@ use crate::{
         storage::{self, StorageBackend},
     },
 };
-
-use bee_message::{
-    address::Address,
-    milestone::MilestoneIndex,
-    output::{Output, OutputId},
-    payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
-    MessageId,
-};
-use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{ConflictReason, Tangle, TangleWorker};
-
-use async_trait::async_trait;
-use futures::{channel::oneshot, stream::StreamExt};
-use log::{debug, error, info, warn};
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::UnboundedReceiverStream;
-
-use std::any::TypeId;
 
 pub(crate) const EXTRA_SNAPSHOT_DEPTH: u32 = 5;
 pub(crate) const EXTRA_PRUNING_DEPTH: u32 = 5;

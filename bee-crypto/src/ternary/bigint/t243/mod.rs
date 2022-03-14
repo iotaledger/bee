@@ -11,6 +11,9 @@
 
 mod constants;
 
+use std::cmp::Ordering;
+
+use bee_ternary::{Btrit, ShiftTernary, T1B1Buf, Trit, TritBuf, Utrit};
 pub use constants::{BTRIT_0, BTRIT_1, BTRIT_NEG_1, UTRIT_0, UTRIT_1, UTRIT_2, UTRIT_U384_MAX, UTRIT_U384_MAX_HALF};
 
 use crate::ternary::bigint::{
@@ -18,10 +21,6 @@ use crate::ternary::bigint::{
     endianness::{BigEndian, LittleEndian},
     I384, T242, U384,
 };
-
-use bee_ternary::{Btrit, ShiftTernary, T1B1Buf, Trit, TritBuf, Utrit};
-
-use std::cmp::Ordering;
 
 def_and_impl_ternary!(T243, 243);
 

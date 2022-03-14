@@ -4,13 +4,12 @@
 mod transform;
 mod u256;
 
+use std::convert::Infallible;
+
+use bee_ternary::{Btrit, Trits};
 use u256::U256;
 
 use crate::ternary::sponge::{Sponge, HASH_LENGTH};
-
-use bee_ternary::{Btrit, Trits};
-
-use std::convert::Infallible;
 
 enum SpongeDirection {
     Absorb,

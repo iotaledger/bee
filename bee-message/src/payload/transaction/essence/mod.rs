@@ -3,13 +3,11 @@
 
 mod regular;
 
+use bee_common::packable::{Packable, Read, Write};
+use crypto::hashes::{blake2b::Blake2b256, Digest};
 pub use regular::{RegularEssence, RegularEssenceBuilder};
 
 use crate::Error;
-
-use bee_common::packable::{Packable, Read, Write};
-
-use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 /// A generic essence that can represent different types defining transaction essences.
 #[derive(Clone, Debug, Eq, PartialEq)]

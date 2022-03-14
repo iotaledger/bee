@@ -1,6 +1,17 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{any::TypeId, convert::Infallible, time::Duration};
+
+use async_trait::async_trait;
+use bee_gossip::PeerId;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::{Tangle, TangleWorker};
+use futures::stream::StreamExt;
+use log::info;
+use tokio::time::interval;
+use tokio_stream::wrappers::IntervalStream;
+
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
@@ -8,18 +19,6 @@ use crate::{
         PeerManagerResWorker,
     },
 };
-
-use bee_gossip::PeerId;
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{Tangle, TangleWorker};
-
-use async_trait::async_trait;
-use futures::stream::StreamExt;
-use log::info;
-use tokio::time::interval;
-use tokio_stream::wrappers::IntervalStream;
-
-use std::{any::TypeId, convert::Infallible, time::Duration};
 
 const HEARTBEAT_SEND_INTERVAL: Duration = Duration::from_secs(30);
 

@@ -1,19 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    plugins::dashboard::{broadcast, websocket::WsUsers, Dashboard},
-    storage::NodeStorageBackend,
-};
-
 use bee_ledger::workers::event::MilestoneConfirmed;
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
-
 use bee_protocol::types::metrics::NodeMetrics;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use futures::StreamExt;
 use log::{debug, error};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
+
+use crate::{
+    plugins::dashboard::{broadcast, websocket::WsUsers, Dashboard},
+    storage::NodeStorageBackend,
+};
 
 pub(crate) fn confirmed_ms_metrics_worker<N>(node: &mut N, users: &WsUsers)
 where

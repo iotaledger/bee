@@ -1,6 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_ledger::workers::event::MilestoneConfirmed;
+use bee_tangle::{event::LatestMilestoneChanged, Tangle};
+use serde::Serialize;
+
 use crate::{
     plugins::dashboard::websocket::{
         responses::{WsEvent, WsEventInner},
@@ -8,11 +12,6 @@ use crate::{
     },
     storage::NodeStorageBackend,
 };
-
-use bee_ledger::workers::event::MilestoneConfirmed;
-use bee_tangle::{event::LatestMilestoneChanged, Tangle};
-
-use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct SyncStatusResponse {

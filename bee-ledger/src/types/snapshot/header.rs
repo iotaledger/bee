@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{error::Error, snapshot::SnapshotKind};
-
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{milestone::MilestoneIndex, payload::milestone::MilestoneId};
+
+use crate::types::{error::Error, snapshot::SnapshotKind};
 
 const SNAPSHOT_VERSION: u8 = 1;
 

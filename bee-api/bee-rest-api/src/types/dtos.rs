@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::error::Error;
-
 use bee_ledger::types::Receipt;
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
@@ -27,9 +25,10 @@ use bee_message::{
 };
 #[cfg(feature = "peer")]
 use bee_protocol::types::peer::Peer;
-
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
+
+use crate::types::error::Error;
 
 /// The message object that nodes gossip around in the network.
 #[derive(Clone, Debug, Serialize, Deserialize)]

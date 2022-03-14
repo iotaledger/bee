@@ -1,20 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{config::FullNodeConfig, FullNode, FullNodeError};
-
-use crate::{
-    config::NetworkSpec,
-    core::{Core, CoreError, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
-    plugins::{self, Mqtt, VersionChecker},
-    shutdown,
-    storage::NodeStorageBackend,
-    util, AUTOPEERING_VERSION,
+use std::{
+    any::{type_name, Any, TypeId},
+    collections::HashMap,
 };
 
-#[cfg(feature = "dashboard")]
-use crate::plugins::Dashboard;
-
+use async_trait::async_trait;
 use bee_autopeering::{
     stores::{Options as RocksDbPeerStoreConfigOptions, RocksDbPeerStore, RocksDbPeerStoreConfig},
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
@@ -26,13 +18,18 @@ use bee_runtime::{
     worker::Worker,
 };
 use bee_storage::system::StorageHealth;
-
-use async_trait::async_trait;
 use fxhash::FxBuildHasher;
 
-use std::{
-    any::{type_name, Any, TypeId},
-    collections::HashMap,
+use super::{config::FullNodeConfig, FullNode, FullNodeError};
+#[cfg(feature = "dashboard")]
+use crate::plugins::Dashboard;
+use crate::{
+    config::NetworkSpec,
+    core::{Core, CoreError, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
+    plugins::{self, Mqtt, VersionChecker},
+    shutdown,
+    storage::NodeStorageBackend,
+    util, AUTOPEERING_VERSION,
 };
 
 /// A builder to create a Bee full node.

@@ -1,6 +1,18 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{
+    any::TypeId,
+    collections::HashMap,
+    fmt::Debug,
+    net::{IpAddr, SocketAddr},
+    sync::{Arc, RwLock},
+    time::Duration,
+};
+
+pub(crate) use oneshot::channel as response_chan;
+use tokio::sync::oneshot;
+
 use crate::{
     discovery::messages::{DiscoveryRequest, VerificationRequest},
     hash,
@@ -11,19 +23,6 @@ use crate::{
     peering::messages::PeeringRequest,
     task::Repeat,
     time::{self, Timestamp},
-};
-
-use tokio::sync::oneshot;
-
-pub(crate) use oneshot::channel as response_chan;
-
-use std::{
-    any::TypeId,
-    collections::HashMap,
-    fmt::Debug,
-    net::{IpAddr, SocketAddr},
-    sync::{Arc, RwLock},
-    time::Duration,
 };
 
 type RequestHash = [u8; hash::SHA256_LEN];

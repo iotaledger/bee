@@ -1,6 +1,20 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{any::TypeId, convert::Infallible, sync::Arc};
+
+use async_trait::async_trait;
+use bee_autopeering::event::{Event as AutopeeringEvent, EventRx as AutopeeringEventRx};
+use bee_gossip::{
+    alias, Command, Event as NetworkEvent, NetworkCommandSender, NetworkEventReceiver as NetworkEventRx, PeerRelation,
+    ServiceHost,
+};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::{Tangle, TangleWorker};
+use futures::{channel::oneshot, StreamExt};
+use log::{info, trace, warn};
+use tokio_stream::wrappers::UnboundedReceiverStream;
+
 use crate::{
     types::{metrics::NodeMetrics, peer::Peer},
     workers::{
@@ -11,21 +25,6 @@ use crate::{
         PeerManagerResWorker, PeerWorker, RequestedMilestones,
     },
 };
-
-use bee_autopeering::event::{Event as AutopeeringEvent, EventRx as AutopeeringEventRx};
-use bee_gossip::{
-    alias, Command, Event as NetworkEvent, NetworkCommandSender, NetworkEventReceiver as NetworkEventRx, PeerRelation,
-    ServiceHost,
-};
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{Tangle, TangleWorker};
-
-use async_trait::async_trait;
-use futures::{channel::oneshot, StreamExt};
-use log::{info, trace, warn};
-use tokio_stream::wrappers::UnboundedReceiverStream;
-
-use std::{any::TypeId, convert::Infallible, sync::Arc};
 
 pub(crate) struct PeerManagerConfig {
     pub(crate) network_rx: NetworkEventRx,

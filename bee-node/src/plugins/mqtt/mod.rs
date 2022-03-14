@@ -6,20 +6,18 @@ mod topics;
 
 pub mod config;
 
-use config::MqttConfig;
-use manager::MqttManager;
-use topics::*;
-
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::event::{LatestMilestoneChanged, SolidMilestoneChanged};
+use std::{any::Any, convert::Infallible};
 
 use async_trait::async_trait;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::event::{LatestMilestoneChanged, SolidMilestoneChanged};
+use config::MqttConfig;
 use futures::stream::StreamExt;
 use log::{debug, warn};
+use manager::MqttManager;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-
-use std::{any::Any, convert::Infallible};
+use topics::*;
 
 #[derive(Default)]
 pub struct Mqtt;

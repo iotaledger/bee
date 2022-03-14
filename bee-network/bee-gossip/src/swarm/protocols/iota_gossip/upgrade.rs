@@ -1,13 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::id::IotaGossipIdentifier;
+use std::{io, iter};
 
 use futures::{future, AsyncRead, AsyncWrite};
 use libp2p::{core::UpgradeInfo, InboundUpgrade, OutboundUpgrade};
 use log::*;
 
-use std::{io, iter};
+use super::id::IotaGossipIdentifier;
 
 #[derive(Debug, Clone)]
 pub struct IotaGossipProtocolUpgrade {

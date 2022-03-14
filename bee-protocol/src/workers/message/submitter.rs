@@ -1,25 +1,24 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::metrics::NodeMetrics,
-    workers::{packets::MessagePacket, storage::StorageBackend, HasherWorker, HasherWorkerEvent},
-};
+use std::{any::TypeId, fmt};
 
+use async_trait::async_trait;
 use bee_message::MessageId;
 use bee_runtime::{
     node::Node,
     shutdown_stream::ShutdownStream,
     worker::{Error as WorkerError, Worker},
 };
-
-use async_trait::async_trait;
 use futures::{channel::oneshot::Sender, stream::StreamExt};
 use log::{error, info, trace};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, fmt};
+use crate::{
+    types::metrics::NodeMetrics,
+    workers::{packets::MessagePacket, storage::StorageBackend, HasherWorker, HasherWorkerEvent},
+};
 
 pub(crate) fn notify_invalid_message(
     error: String,

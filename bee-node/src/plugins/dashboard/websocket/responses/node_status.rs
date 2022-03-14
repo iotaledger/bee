@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use serde::Serialize;
+
 use crate::plugins::dashboard::{
     websocket::{
         responses::{WsEvent, WsEventInner},
@@ -8,8 +10,6 @@ use crate::plugins::dashboard::{
     },
     workers::node_status::NodeStatus,
 };
-
-use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct NodeStatusResponse(pub NodeStatus);

@@ -1,20 +1,19 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::snapshot::SnapshotHeader,
-    workers::snapshot::{config::DownloadUrls, error::Error},
-};
+use std::{io::Read, path::Path};
 
 use bee_common::packable::Packable;
 use bee_message::milestone::MilestoneIndex;
-
 use bytes::Buf;
 use futures::{future::join_all, StreamExt};
 use log::{debug, info, warn};
 use reqwest::Response;
 
-use std::{io::Read, path::Path};
+use crate::{
+    types::snapshot::SnapshotHeader,
+    workers::snapshot::{config::DownloadUrls, error::Error},
+};
 
 async fn download_snapshot_header(download_url: &str) -> Result<SnapshotHeader, Error> {
     debug!("Downloading snapshot header {}...", download_url);

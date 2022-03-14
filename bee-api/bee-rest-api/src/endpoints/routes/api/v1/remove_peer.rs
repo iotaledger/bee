@@ -1,17 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_gossip::{Command::RemovePeer, NetworkCommandSender, PeerId};
+use bee_runtime::resource::ResourceHandle;
+use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
+
 use crate::endpoints::{
     config::ROUTE_REMOVE_PEER, filters::with_network_command_sender, path_params::peer_id, permission::has_permission,
     rejection::CustomRejection,
 };
-
-use bee_gossip::{Command::RemovePeer, NetworkCommandSender, PeerId};
-use bee_runtime::resource::ResourceHandle;
-
-use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (PeerId,), Error = warp::Rejection> + Clone {
     super::path()

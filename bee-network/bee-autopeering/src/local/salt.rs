@@ -1,16 +1,15 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::Error;
+use std::time::{Duration, SystemTime};
 
+use ring::rand::{SecureRandom as _, SystemRandom};
+
+use super::Error;
 use crate::{
     proto,
     time::{self, Timestamp, HOUR},
 };
-
-use ring::rand::{SecureRandom as _, SystemRandom};
-
-use std::time::{Duration, SystemTime};
 
 const SALT_BYTE_LEN: usize = 20;
 pub(crate) const SALT_LIFETIME_SECS: Duration = Duration::from_secs(2 * HOUR);

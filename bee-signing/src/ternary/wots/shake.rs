@@ -1,10 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::ternary::{
-    wots::{Error as WotsError, WotsPrivateKey, WotsSecurityLevel},
-    PrivateKeyGenerator, SIGNATURE_FRAGMENT_LENGTH,
-};
+use std::marker::PhantomData;
 
 use bee_crypto::ternary::{
     bigint::{binary_representation::U8Repr, endianness::BigEndian, I384, T242, T243},
@@ -12,13 +9,15 @@ use bee_crypto::ternary::{
     HASH_LENGTH,
 };
 use bee_ternary::{Btrit, T1B1Buf, TritBuf, Trits, T1B1};
-
 use sha3::{
     digest::{ExtendableOutput, Update, XofReader},
     Shake256,
 };
 
-use std::marker::PhantomData;
+use crate::ternary::{
+    wots::{Error as WotsError, WotsPrivateKey, WotsSecurityLevel},
+    PrivateKeyGenerator, SIGNATURE_FRAGMENT_LENGTH,
+};
 
 /// Shake-based Winternitz One Time Signature private key generator builder.
 #[derive(Default)]

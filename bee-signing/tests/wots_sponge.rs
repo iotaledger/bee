@@ -3,6 +3,8 @@
 
 #![allow(deprecated)]
 
+use std::str::FromStr;
+
 use bee_crypto::ternary::sponge::{CurlP27, CurlP81, Kerl, Sponge};
 use bee_signing::ternary::{
     seed::Seed,
@@ -10,8 +12,6 @@ use bee_signing::ternary::{
     PrivateKey, PrivateKeyGenerator, PublicKey, RecoverableSignature,
 };
 use bee_ternary::{T1B1Buf, TryteBuf};
-
-use std::str::FromStr;
 
 const SEED: &str = "NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN";
 const MESSAGE: &str = "CHXHLHQLOPYP9NSUXTMWWABIBSBLUFXFRNWOZXJPVJPBCIDI99YBSCFYILCHPXHTSEYSYWIGQFERCRVDD";

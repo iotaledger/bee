@@ -1,12 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{BalanceDiffs, ConsumedOutput, CreatedOutput};
+use std::collections::HashMap;
 
 use bee_message::{milestone::MilestoneIndex, output::OutputId, MessageId};
 use bee_tangle::ConflictReason;
 
-use std::collections::HashMap;
+use crate::types::{BalanceDiffs, ConsumedOutput, CreatedOutput};
 
 /// White flag metadata of a milestone confirmation.
 pub struct WhiteFlagMetadata {

@@ -85,13 +85,12 @@ pub(crate) fn tlv_to_bytes<P: Packet>(packet: &P) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
+    use rand::Rng;
 
+    use super::*;
     use crate::workers::packets::{
         HeartbeatPacket, MessagePacket, MessageRequestPacket, MilestoneRequestPacket, Packet,
     };
-
-    use rand::Rng;
 
     fn invalid_advertised_type<P: Packet>() {
         match tlv_from_bytes::<P>(

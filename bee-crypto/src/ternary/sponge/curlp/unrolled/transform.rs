@@ -1,9 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{u256::U256, HASH_LENGTH};
-
 use lazy_static::lazy_static;
+
+use super::{u256::U256, HASH_LENGTH};
 
 const NUM_ROUNDS: usize = 81;
 const ROTATION_OFFSET: usize = 364;

@@ -6,15 +6,14 @@
 mod bct;
 mod bct_curlp;
 
-use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge, HASH_LENGTH};
-
 use bct::{BcTrit, BcTritArr, BcTritBuf};
 use bct_curlp::BctCurlP;
-
 use bee_ternary::{
     raw::{RawEncoding, RawEncodingBuf},
     Btrit, T1B1Buf, TritBuf,
 };
+
+use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge, HASH_LENGTH};
 
 /// The number of inputs that can be processed in a single batch.
 pub const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();

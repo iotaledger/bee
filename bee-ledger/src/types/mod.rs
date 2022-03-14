@@ -20,7 +20,6 @@ mod unspent;
 
 pub use balance::Balance;
 pub use balance_diff::{BalanceDiff, BalanceDiffs};
-
 pub use consumed_output::ConsumedOutput;
 pub use created_output::CreatedOutput;
 pub use error::Error;

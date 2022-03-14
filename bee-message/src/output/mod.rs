@@ -6,6 +6,7 @@ mod signature_locked_dust_allowance;
 mod signature_locked_single;
 mod treasury;
 
+use bee_common::packable::{Packable, Read, Write};
 pub use output_id::{OutputId, OUTPUT_ID_LENGTH};
 pub use signature_locked_dust_allowance::{
     dust_outputs_max, SignatureLockedDustAllowanceOutput, DUST_ALLOWANCE_DIVISOR, DUST_OUTPUTS_MAX, DUST_THRESHOLD,
@@ -15,8 +16,6 @@ pub use signature_locked_single::{SignatureLockedSingleOutput, SIGNATURE_LOCKED_
 pub use treasury::{TreasuryOutput, TREASURY_OUTPUT_AMOUNT};
 
 use crate::Error;
-
-use bee_common::packable::{Packable, Read, Write};
 
 /// A generic output that can represent different types defining the deposit of funds.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]

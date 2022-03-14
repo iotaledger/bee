@@ -5,6 +5,15 @@
 
 mod constants;
 
+use std::{
+    cmp::Ordering,
+    fmt,
+    marker::PhantomData,
+    ops::{Deref, DerefMut},
+};
+
+use bee_ternary::Btrit;
+use byteorder::{self, ByteOrder};
 pub use constants::{
     BE_U32_0, BE_U32_1, BE_U32_2, BE_U32_MAX, BE_U32_MIN, BE_U32_NEG_1, BE_U32_NEG_2, BE_U8_0, BE_U8_1, BE_U8_2,
     BE_U8_MAX, BE_U8_MIN, BE_U8_NEG_1, BE_U8_NEG_2, LE_U32_0, LE_U32_1, LE_U32_2, LE_U32_MAX, LE_U32_MIN, LE_U32_NEG_1,
@@ -19,17 +28,6 @@ use crate::ternary::bigint::{
     error::Error,
     overflowing_add::OverflowingAdd,
     u384, T242, T243, U384,
-};
-
-use bee_ternary::Btrit;
-
-use byteorder::{self, ByteOrder};
-
-use std::{
-    cmp::Ordering,
-    fmt,
-    marker::PhantomData,
-    ops::{Deref, DerefMut},
 };
 
 /// A big integer encoding a signed integer with 384 bits.
