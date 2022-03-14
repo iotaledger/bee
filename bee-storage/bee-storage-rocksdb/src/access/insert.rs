@@ -50,11 +50,15 @@ impl Insert<MessageId, MessageMetadata> for Storage {
         message_id: &MessageId,
         metadata: &MessageMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
+        let guard = self.locks.message_id_to_metadata.read();
+
         self.inner.put_cf(
             self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?,
             message_id,
             metadata.pack_new(),
         )?;
+
+        drop(guard);
 
         Ok(())
     }

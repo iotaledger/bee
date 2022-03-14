@@ -47,6 +47,10 @@ impl<K: Hash + Eq + Clone, V: Clone> Table<K, V> {
         self.inner.clear();
     }
 
+    pub(crate) fn update(&mut self, k: &K, f: impl FnOnce(&mut V)) {
+        self.inner.get_mut(k).map(f);
+    }
+
     pub(crate) fn iter(&self) -> TableIter<K, V> {
         self.inner.clone().into_iter().map(Ok)
     }

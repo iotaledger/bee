@@ -18,6 +18,7 @@ use bee_message::{
     MESSAGE_ID_LENGTH,
 };
 
+use parking_lot::RwLock;
 use rocksdb::{
     ColumnFamily, ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, FlushOptions, Options,
     SliceTransform, DB,
@@ -25,9 +26,14 @@ use rocksdb::{
 
 pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(9);
 
+pub struct Locks {
+    pub(crate) message_id_to_metadata: RwLock<()>,
+}
+
 pub struct Storage {
     pub(crate) config: StorageConfig,
     pub(crate) inner: DB,
+    pub(crate) locks: Locks,
 }
 
 impl Storage {
@@ -154,6 +160,9 @@ impl Storage {
         Ok(Storage {
             config: config.storage,
             inner: db,
+            locks: Locks {
+                message_id_to_metadata: RwLock::new(()),
+            },
         })
     }
 

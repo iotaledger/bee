@@ -161,13 +161,11 @@ async fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSe
 
             // TODO: investigate data race
             // Skip vertices with unset omrsi/ymrsi
-            let (parent_omrsi, parent_ymrsi) = {
-                if parent_omrsi.is_none() || parent_ymrsi.is_none() {
-                    continue;
-                } else {
-                    (parent_omrsi.unwrap(), parent_ymrsi.unwrap())
-                }
-            };
+            if parent_omrsi.zip(parent_ymrsi).is_none() {
+                continue;
+            }
+
+            let (parent_omrsi, parent_ymrsi) = (parent_omrsi.unwrap(), parent_ymrsi.unwrap());
 
             // We can update the OMRSI/YMRSI of those children that inherited the value from the current parent.
             for child in &children {

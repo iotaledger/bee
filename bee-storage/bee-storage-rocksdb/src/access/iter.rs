@@ -23,6 +23,7 @@ use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
+use parking_lot::RwLockReadGuard;
 use rocksdb::{DBIterator, IteratorMode};
 
 use std::marker::PhantomData;
@@ -30,13 +31,15 @@ use std::marker::PhantomData;
 pub struct StorageIterator<'a, K, V> {
     inner: DBIterator<'a>,
     marker: PhantomData<(K, V)>,
+    _guard: Option<RwLockReadGuard<'a, ()>>,
 }
 
 impl<'a, K, V> StorageIterator<'a, K, V> {
-    fn new(inner: DBIterator<'a>) -> Self {
+    fn new(inner: DBIterator<'a>, guard: Option<RwLockReadGuard<'a, ()>>) -> Self {
         StorageIterator::<K, V> {
             inner,
             marker: PhantomData,
+            _guard: guard,
         }
     }
 }
@@ -49,6 +52,7 @@ macro_rules! impl_iter {
             fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
                 Ok(StorageIterator::new(
                     self.inner.iterator_cf(self.cf_handle($cf)?, IteratorMode::Start),
+                    None,
                 ))
             }
         }
@@ -302,7 +306,6 @@ impl<'a> StorageIterator<'a, (bool, TreasuryOutput), ()> {
 
 impl_iter!(u8, System, CF_SYSTEM);
 impl_iter!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
-impl_iter!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_iter!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
 impl_iter!((PaddedIndex, MessageId), (), CF_INDEX_TO_MESSAGE_ID);
 impl_iter!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
@@ -322,3 +325,34 @@ impl_iter!(
 );
 impl_iter!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
 impl_iter!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);
+
+impl<'a> AsIterator<'a, MessageId, MessageMetadata> for Storage {
+    type AsIter = StorageIterator<'a, MessageId, MessageMetadata>;
+
+    fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
+        Ok(StorageIterator::new(
+            self.inner
+                .iterator_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, IteratorMode::Start),
+            Some(self.locks.message_id_to_metadata.read()),
+        ))
+    }
+}
+
+/// An iterator over all key-value pairs of a column family.
+impl<'a> Iterator for StorageIterator<'a, MessageId, MessageMetadata> {
+    type Item = Result<(MessageId, MessageMetadata), <Storage as StorageBackend>::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner
+            .next()
+            .map(|(key, value)| Ok(Self::unpack_key_value(&key, &value)))
+
+        // inner.status()?;
+        //
+        // if inner.valid() {
+        //     Poll::Ready(item)
+        // } else {
+        //     Poll::Ready(None)
+        // }
+    }
+}
