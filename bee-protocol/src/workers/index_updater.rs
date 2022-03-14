@@ -122,8 +122,8 @@ async fn update_past_cone<B: StorageBackend>(
                 metadata.set_milestone_index(index);
                 // TODO: That was fine in a synchronous scenario, where this algo had the newest information, but
                 // probably isn't the case in the now asynchronous scenario. Investigate!
-                metadata.set_omrsi(IndexId::new(index, parent_id));
-                metadata.set_ymrsi(IndexId::new(index, parent_id));
+                let index = IndexId::new(index, parent_id);
+                metadata.set_omrsi_and_ymrsi(index, index);
             })
             .await;
 
@@ -153,60 +153,54 @@ async fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSe
     while let Some(parent_id) = to_process.pop() {
         if let Some(children) = tangle.get_children(&parent_id).await {
             // Unwrap is safe with very high probability.
-            let (parent_omrsi, parent_ymrsi) = tangle
+            let parent_omrsi_and_ymrsi = tangle
                 .get_metadata(&parent_id)
                 .await
-                .map(|md| (md.omrsi(), md.ymrsi()))
+                .map(|md| md.omrsi_and_ymrsi())
                 .unwrap();
 
             // TODO: investigate data race
             // Skip vertices with unset omrsi/ymrsi
-            if parent_omrsi.zip(parent_ymrsi).is_none() {
-                continue;
-            }
+            match parent_omrsi_and_ymrsi {
+                None => continue,
+                Some((parent_omrsi, parent_ymrsi)) => {
+                    // We can update the OMRSI/YMRSI of those children that inherited the value from the current parent.
+                    for child in &children {
+                        let continue_walk = tangle
+                            .update_metadata(child, |child_metadata| {
+                                // We can ignore children that are already confirmed
+                                // TODO: resolve ambiguity between `is_confirmed()` and `milestone_index().is_some()`
+                                // if child_metadata.flags().is_confirmed() {
+                                if child_metadata.milestone_index().is_some() {
+                                    return false;
+                                }
 
-            let (parent_omrsi, parent_ymrsi) = (parent_omrsi.unwrap(), parent_ymrsi.unwrap());
+                                // If the childs OMRSI and YMRSI was previously inherited from the current parent,
+                                // update it.
+                                child_metadata.update_omrsi_and_ymrsi(|child_omrsi, child_ymrsi| {
+                                    if child_omrsi.id() == parent_id {
+                                        *child_omrsi = IndexId::new(parent_omrsi.index(), parent_id);
+                                    }
 
-            // We can update the OMRSI/YMRSI of those children that inherited the value from the current parent.
-            for child in &children {
-                if let Some(child_metadata) = tangle.get_metadata(child).await {
-                    // We can ignore children that are already confirmed
-                    // TODO: resolve ambiguity between `is_confirmed()` and `milestone_index().is_some()`
-                    // if child_metadata.flags().is_confirmed() {
-                    if child_metadata.milestone_index().is_some() {
-                        continue;
-                    }
+                                    if child_ymrsi.id() == parent_id {
+                                        *child_ymrsi = IndexId::new(parent_ymrsi.index(), parent_id);
+                                    }
+                                });
 
-                    // If the childs OMRSI was previously inherited from the current parent, update it.
-                    if let Some(child_omrsi) = child_metadata.omrsi() {
-                        if child_omrsi.id().eq(&parent_id) {
-                            tangle
-                                .update_metadata(child, |md| {
-                                    md.set_omrsi(IndexId::new(parent_omrsi.index(), parent_id));
-                                })
-                                .await;
+                                true
+                            })
+                            .await
+                            .unwrap_or_default();
+
+                        // Continue the future walk for that child, if we haven't landed on it earlier already.
+                        if continue_walk && !processed.contains(child) {
+                            to_process.push(*child);
                         }
                     }
 
-                    // If the childs YMRSI was previously inherited from the current parent, update it.
-                    if let Some(child_ymrsi) = child_metadata.ymrsi() {
-                        if child_ymrsi.id().eq(&parent_id) {
-                            tangle
-                                .update_metadata(child, |md| {
-                                    md.set_ymrsi(IndexId::new(parent_ymrsi.index(), parent_id));
-                                })
-                                .await;
-                        }
-                    }
-
-                    // Continue the future walk for that child, if we haven't landed on it earlier already.
-                    if !processed.contains(child) {
-                        to_process.push(*child);
-                    }
+                    processed.insert(parent_id);
                 }
             }
-
-            processed.insert(parent_id);
         }
     }
 

@@ -85,12 +85,12 @@ impl<B: StorageBackend> Tangle<B> {
 
     /// Add a milestone to the tangle.
     pub async fn add_milestone(&self, idx: MilestoneIndex, milestone: Milestone) {
+        let index = IndexId::new(idx, *milestone.message_id());
         // TODO: only insert if vacant
         self.update_metadata(milestone.message_id(), |metadata| {
             metadata.flags_mut().set_milestone(true);
             metadata.set_milestone_index(idx);
-            metadata.set_omrsi(IndexId::new(idx, *milestone.message_id()));
-            metadata.set_ymrsi(IndexId::new(idx, *milestone.message_id()));
+            metadata.set_omrsi_and_ymrsi(index, index);
         })
         .await;
         self.storage
@@ -304,23 +304,15 @@ impl<B: StorageBackend> Tangle<B> {
         }
     }
 
-    /// Get the oldest milestone root snapshot index.
-    pub async fn omrsi(&self, id: &MessageId) -> Option<IndexId> {
+    /// Get the oldest and youngest milestone root snapshot index.
+    pub async fn omrsi_and_ymrsi(&self, id: &MessageId) -> Option<(IndexId, IndexId)> {
         match self.solid_entry_points.lock().await.get(SolidEntryPoint::ref_cast(id)) {
-            Some(sep) => Some(IndexId::new(*sep, *id)),
+            Some(sep) => {
+                let index = IndexId::new(*sep, *id);
+                Some((index, index))
+            }
             None => match self.get_metadata(id).await {
-                Some(metadata) => metadata.omrsi(),
-                None => None,
-            },
-        }
-    }
-
-    /// Get the youngest milestone root snapshot index.
-    pub async fn ymrsi(&self, id: &MessageId) -> Option<IndexId> {
-        match self.solid_entry_points.lock().await.get(SolidEntryPoint::ref_cast(id)) {
-            Some(sep) => Some(IndexId::new(*sep, *id)),
-            None => match self.get_metadata(id).await {
-                Some(metadata) => metadata.ymrsi(),
+                Some(metadata) => metadata.omrsi_and_ymrsi(),
                 None => None,
             },
         }

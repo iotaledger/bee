@@ -67,10 +67,9 @@ async fn propagate<B: StorageBackend>(
                         .get_metadata(parent)
                         .await
                         .map(|parent_md| {
-                            (
-                                parent_md.omrsi().expect("solid msg with unset omrsi"),
-                                parent_md.ymrsi().expect("solid msg with unset ymrsi"),
-                            )
+                            parent_md
+                                .omrsi_and_ymrsi()
+                                .expect("solid msg with unset omrsi and ymrsi")
                         })
                         .unwrap(),
                 };
@@ -91,8 +90,7 @@ async fn propagate<B: StorageBackend>(
                     if metadata.flags().is_milestone() {
                         metadata.milestone_index()
                     } else {
-                        metadata.set_omrsi(*child_omrsi);
-                        metadata.set_ymrsi(*child_ymrsi);
+                        metadata.set_omrsi_and_ymrsi(*child_omrsi, *child_ymrsi);
                         None
                     }
                 })

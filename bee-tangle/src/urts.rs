@@ -150,8 +150,11 @@ impl UrtsTipPool {
             // The tip pool only works with solid tips. Therefore, all tips added to the pool can be considered to
             // solid. The solid flag will be set together with omrsi and ymrsi values. Therefore, when a
             // message is solid, omrsi and ymrsi values are available. Therefore, unwrapping here is fine.
-            let omrsi = *tangle.omrsi(message_id).await.unwrap().index();
-            let ymrsi = *tangle.ymrsi(message_id).await.unwrap().index();
+            let (omrsi, ymrsi) = tangle
+                .omrsi_and_ymrsi(message_id)
+                .await
+                .map(|(o, y)| (*o.index(), *y.index()))
+                .unwrap();
 
             if smi > ymrsi + YMRSI_DELTA || smi > omrsi + self.below_max_depth {
                 Score::Lazy
