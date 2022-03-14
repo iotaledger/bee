@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod plugins;
-pub mod v2;
+//pub mod v2;
 
 use crate::endpoints::{storage::StorageBackend};
 
@@ -10,5 +10,8 @@ use axum::Router;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new()
-        .nest("api", v2::filter().merge(plugins::filter()))
+        .nest("api",
+              plugins::filter::<B>()
+                  //.merge(v2::filter())
+        )
 }

@@ -11,6 +11,8 @@
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
 
 extern crate axum;
+extern crate warp;
+extern crate serde_json;
 
 #[cfg(feature = "endpoints")]
 pub mod endpoints;

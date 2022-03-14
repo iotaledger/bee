@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//pub mod api;
+pub mod api;
 pub mod health;
 
 use axum::extract::Extension;
@@ -12,6 +12,6 @@ use crate::endpoints::{storage::StorageBackend};
 
 pub(crate) fn filter_all<B: StorageBackend>() -> Router {
     Router::new()
-       // .api::filter()
+        .merge(api::filter())
         .merge(health::filter::<B>())
 }

@@ -12,6 +12,7 @@ use bee_tangle::Tangle;
 use warp::{self, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
+use axum::Router;
 
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {

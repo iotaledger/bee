@@ -6,6 +6,7 @@ pub mod permission;
 pub mod rejection;
 pub mod routes;
 pub mod storage;
+pub mod error;
 
 use config::RestApiConfig;
 use storage::StorageBackend;

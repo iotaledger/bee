@@ -27,7 +27,7 @@ bee-storage = { version = "0.9.0", path = "../../bee-storage/bee-storage", defau
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false, optional = true }
 
 async-trait = { version = "0.1.51", default-features = false, optional = true }
-axum = { version = "0.4.8", default-features = false}
+axum = { version = "0.4.8", default-features = false, features = [ "json" ] }
 bech32 = { version = "0.8.1", default-features = false, optional = true }
 digest = { version = "0.9.0", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false, optional = true }
