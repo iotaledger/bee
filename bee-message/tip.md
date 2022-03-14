@@ -63,12 +63,6 @@ ignored during validation.
  - The output must be unlocked with an <i>[Alias Unlock Block](#alias-unlock-block-semantic-validation)</i>.
  - The next state of the UTXO state machine must have the same <i>Immutable Alias Address Unlock Condition</i> defined.
 
-##### Sender Block Additional semantic transaction validation rule:
-- The <i>Sender Block</i>, and hence the output and transaction that contain it, is valid, if and only if an output
-  with the corresponding `Address` is consumed and unlocked in the transaction. If `Address` is either
-  <i>Alias Address</i> or <i>NFT Address</i>, their corresponding outputs (defined by `Alias ID` and `NFT ID`) must be
-  unlocked in the transaction.
-
 ## Basic Output
 
 ### Additional Transaction Syntactic Validation Rules

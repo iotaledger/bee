@@ -14,7 +14,7 @@ use bee_message::{
     address::Address,
     input::Input,
     output::{
-        AliasId, AliasOutput, BasicOutput, FeatureBlock, FoundryOutput, NftId, NftOutput, Output, OutputId,
+        AliasId, AliasOutput, BasicOutput, FoundryOutput, NftId, NftOutput, Output, OutputId,
         UnlockCondition,
     },
     payload::{
@@ -64,24 +64,6 @@ fn check_input_unlock_conditions(
             UnlockCondition::ImmutableAliasAddress(_) => {
                 todo!()
             }
-        }
-    }
-
-    Ok(())
-}
-
-fn check_output_feature_blocks(
-    feature_blocks: &[FeatureBlock],
-    context: &ValidationContext,
-) -> Result<(), ConflictReason> {
-    for feature_block in feature_blocks {
-        match feature_block {
-            FeatureBlock::Sender(sender) => {
-                if !context.unlocked_addresses.contains(sender.address()) {
-                    return Err(ConflictReason::UnverifiedSender);
-                }
-            }
-            _ => {}
         }
     }
 
@@ -288,14 +270,19 @@ fn apply_regular_essence<B: StorageBackend>(
 
     // Validation of outputs.
     for created_output in essence.outputs() {
-        // TODO also check feature blocks ?
-        let (amount, created_native_tokens) = match created_output {
-            Output::Basic(output) => (output.amount(), output.native_tokens()),
-            Output::Alias(output) => (output.amount(), output.native_tokens()),
-            Output::Foundry(output) => (output.amount(), output.native_tokens()),
-            Output::Nft(output) => (output.amount(), output.native_tokens()),
+        let (amount, created_native_tokens, feature_blocks) = match created_output {
+            Output::Basic(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
+            Output::Alias(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
+            Output::Foundry(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
+            Output::Nft(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
             _ => return Err(Error::UnsupportedOutputKind(created_output.kind())),
         };
+
+        if let Some(sender) = feature_blocks.sender() {
+            if !context.unlocked_addresses.contains(sender.address()) {
+                return Ok(ConflictReason::UnverifiedSender);
+            }
+        }
 
         context.output_amount = context
             .output_amount
