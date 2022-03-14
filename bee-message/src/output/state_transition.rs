@@ -7,6 +7,7 @@ use crate::semantic::ValidationContext;
 #[allow(missing_docs)]
 pub enum StateTransitionError {
     InconsistentCreatedFoundriesCount,
+    IssuerNotUnlocked,
     MutatedFieldWithoutRights,
     MutatedImmutableField,
     NonZeroCreatedId,

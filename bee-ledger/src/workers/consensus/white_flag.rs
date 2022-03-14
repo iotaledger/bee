@@ -81,9 +81,6 @@ fn check_output_feature_blocks(
                     return Err(ConflictReason::UnverifiedSender);
                 }
             }
-            FeatureBlock::Issuer(_) => {
-                todo!()
-            }
             _ => {}
         }
     }

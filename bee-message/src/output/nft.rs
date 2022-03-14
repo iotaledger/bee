@@ -226,9 +226,15 @@ impl NftOutput {
 }
 
 impl StateTransition for NftOutput {
-    fn creation(next_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+    fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
         if !next_state.nft_id.is_null() {
             return Err(StateTransitionError::NonZeroCreatedId);
+        }
+
+        if let Some(issuer) = next_state.immutable_feature_blocks().issuer() {
+            if !context.unlocked_addresses.contains(issuer.address()) {
+                return Err(StateTransitionError::IssuerNotUnlocked);
+            }
         }
 
         Ok(())

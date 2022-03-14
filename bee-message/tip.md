@@ -69,17 +69,6 @@ ignored during validation.
   <i>Alias Address</i> or <i>NFT Address</i>, their corresponding outputs (defined by `Alias ID` and `NFT ID`) must be
   unlocked in the transaction.
 
-##### Issuer Block
-Only when the state machine is created (e.g. minted) it is checked during transaction validation that an output
-corresponding to the `Issuer` address is consumed. In every future transition of the state machine, it is instead
-checked that the issuer block is still present and unchanged.
-
-###### Additional semantic transaction validation rule:
-- When an <i>Issuer Block</i> is present in an output representing the initial state of an UTXO state machine, the
-  transaction that contains this output is valid, if and only if an output with the corresponding `Address` is consumed
-  and unlocked in the transaction. If `Issuer` is either <i>Alias Address</i> or
-  <i>NFT Address</i>, their corresponding outputs (defined by `Alias ID` and `NFT ID`) must be unlocked in the transaction.
-
 ## Basic Output
 
 ### Additional Transaction Syntactic Validation Rules
