@@ -9,3 +9,4 @@ pub mod insert;
 pub mod iter;
 pub mod multi_fetch;
 pub mod truncate;
+pub mod update;

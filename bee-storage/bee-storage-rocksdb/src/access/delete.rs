@@ -34,8 +34,12 @@ impl Delete<MessageId, Message> for Storage {
 
 impl Delete<MessageId, MessageMetadata> for Storage {
     fn delete(&self, message_id: &MessageId) -> Result<(), <Self as StorageBackend>::Error> {
+        let guard = self.locks.message_id_to_metadata.read();
+
         self.inner
             .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?;
+
+        drop(guard);
 
         Ok(())
     }
