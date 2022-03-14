@@ -99,11 +99,9 @@ fn unlock_address(
 ) -> Result<(), ConflictReason> {
     match (address, unlock_block) {
         (Address::Ed25519(ed25519_address), UnlockBlock::Signature(unlock_block)) => {
-            if let Signature::Ed25519(signature) = unlock_block.signature() {
-                if ed25519_address.verify(&context.essence_hash, signature).is_err() {
-                    return Err(ConflictReason::InvalidSignature);
-                }
-            } else {
+            let Signature::Ed25519(signature) = unlock_block.signature();
+
+            if signature.is_valid(&context.essence_hash, ed25519_address).is_err() {
                 return Err(ConflictReason::InvalidSignature);
             }
         }
