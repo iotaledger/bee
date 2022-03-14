@@ -24,8 +24,7 @@
     "reconnectIntervalSecs": 30,
     "maxUnknownPeers": 4,
     "maxDiscoveredPeers": 8,
-    "peering": {
-    }
+    "peering": {}
   },
   "autopeering": {
     "enabled": false,
@@ -133,9 +132,19 @@
     ]
   },
   "pruning": {
-    "enabled": true,
-    "delay": 60480,
-    "pruneReceipts": false
+    "milestones": {
+      "enabled": false,
+      "maxMilestonesToKeep": 60480
+    },
+    "size": {
+      "enabled": true,
+      "targetSize": "30GB",
+      "thresholdPercentage": 10.0,
+      "cooldownTime": "5m"
+    },
+    "receipts": {
+      "enabled": false
+    }
   },
   "storage": {
     "path": "./storage/mainnet/tangle"

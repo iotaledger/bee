@@ -119,9 +119,16 @@ full        = "https://cdn.tanglebay.com/snapshots/mainnet/full_snapshot.bin"
 delta       = "https://cdn.tanglebay.com/snapshots/mainnet/delta_snapshot.bin"
 
 [pruning]
-enabled         = true
-delay           = 60480
-prune_receipts  = false
+[pruning.milestones]
+enabled                = true
+max_milestones_to_keep = 60480
+[pruning.receipts]
+enabled                = false
+[pruning.size]
+enabled                = true
+target_size            = 30GB
+threshold_percentage   = 10.0
+cooldown_time          = 5m
 
 [storage]
 path = "./storage/mainnet/tangle"
