@@ -8,7 +8,10 @@ use crate::{
     Error,
 };
 
-use crypto::hashes::{blake2b::Blake2b256, Digest};
+use crypto::{
+    hashes::{blake2b::Blake2b256, Digest},
+    signatures::ed25519::PUBLIC_KEY_LENGTH,
+};
 use iterator_sorted::is_unique_sorted;
 use packable::{
     bounded::BoundedU8,
@@ -48,7 +51,7 @@ impl MilestoneEssence {
     /// Range of allowed milestones public key numbers.
     pub const PUBLIC_KEY_COUNT_RANGE: RangeInclusive<u8> = 1..=255;
     /// Length of a milestone public key.
-    pub const PUBLIC_KEY_LENGTH: usize = 32;
+    pub const PUBLIC_KEY_LENGTH: usize = PUBLIC_KEY_LENGTH;
 
     /// Creates a new [`MilestoneEssence`].
     #[allow(clippy::too_many_arguments)]
@@ -62,51 +65,12 @@ impl MilestoneEssence {
         public_keys: Vec<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH]>,
         receipt: Option<Payload>,
     ) -> Result<Self, Error> {
-        let public_keys = VecPrefix::<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH], PublicKeyCount>::try_from(public_keys)
-            .map_err(Error::MilestoneInvalidPublicKeyCount)?;
+        verify_pow_scores(index, next_pow_score, next_pow_score_milestone_index)?;
+        verify_public_keys(public_keys.as_slice())?;
 
-        Self::from_vec_prefix(
-            index,
-            timestamp,
-            parents,
-            merkle_proof,
-            next_pow_score,
-            next_pow_score_milestone_index,
-            public_keys,
-            receipt.into(),
-        )
-    }
+        let receipt = OptionalPayload::from(receipt);
 
-    #[allow(clippy::too_many_arguments)]
-    fn from_vec_prefix(
-        index: MilestoneIndex,
-        timestamp: u64,
-        parents: Parents,
-        merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
-        next_pow_score: u32,
-        next_pow_score_milestone_index: u32,
-        public_keys: VecPrefix<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH], PublicKeyCount>,
-        receipt: OptionalPayload,
-    ) -> Result<Self, Error> {
-        if next_pow_score == 0 && next_pow_score_milestone_index != 0
-            || next_pow_score != 0 && next_pow_score_milestone_index <= *index
-        {
-            return Err(Error::InvalidPowScoreValues {
-                nps: next_pow_score,
-                npsmi: next_pow_score_milestone_index,
-            });
-        }
-
-        if !is_unique_sorted(public_keys.iter()) {
-            return Err(Error::MilestonePublicKeysNotUniqueSorted);
-        }
-
-        if !matches!(*receipt, None | Some(Payload::Receipt(_))) {
-            // Safe to unwrap since it's known not to be None.
-            return Err(Error::InvalidPayloadKind(
-                Into::<Option<Payload>>::into(receipt).unwrap().kind(),
-            ));
-        }
+        verify_payload(&receipt)?;
 
         Ok(Self {
             index,
@@ -115,7 +79,7 @@ impl MilestoneEssence {
             merkle_proof,
             next_pow_score,
             next_pow_score_milestone_index,
-            public_keys,
+            public_keys: public_keys.try_into().map_err(Error::MilestoneInvalidPublicKeyCount)?,
             receipt,
         })
     }
@@ -194,12 +158,24 @@ impl Packable for MilestoneEssence {
         let next_pow_score = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
         let next_pow_score_milestone_index = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
 
+        if VERIFY {
+            verify_pow_scores(index, next_pow_score, next_pow_score_milestone_index).map_err(UnpackError::Packable)?;
+        }
+
         let public_keys = VecPrefix::<[u8; Self::PUBLIC_KEY_LENGTH], PublicKeyCount>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|err| Error::MilestoneInvalidSignatureCount(err.into_prefix_err().into()))?;
 
+        if VERIFY {
+            verify_public_keys(&public_keys).map_err(UnpackError::Packable)?;
+        }
+
         let receipt = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
 
-        Self::from_vec_prefix(
+        if VERIFY {
+            verify_payload(&receipt).map_err(UnpackError::Packable)?;
+        }
+
+        Ok(Self {
             index,
             timestamp,
             parents,
@@ -208,7 +184,38 @@ impl Packable for MilestoneEssence {
             next_pow_score_milestone_index,
             public_keys,
             receipt,
-        )
-        .map_err(UnpackError::Packable)
+        })
+    }
+}
+
+fn verify_pow_scores(
+    index: MilestoneIndex,
+    next_pow_score: u32,
+    next_pow_score_milestone_index: u32,
+) -> Result<(), Error> {
+    if next_pow_score == 0 && next_pow_score_milestone_index != 0
+        || next_pow_score != 0 && next_pow_score_milestone_index <= *index
+    {
+        Err(Error::InvalidPowScoreValues {
+            nps: next_pow_score,
+            npsmi: next_pow_score_milestone_index,
+        })
+    } else {
+        Ok(())
+    }
+}
+
+fn verify_public_keys(public_keys: &[[u8; MilestoneEssence::PUBLIC_KEY_LENGTH]]) -> Result<(), Error> {
+    if !is_unique_sorted(public_keys.iter()) {
+        Err(Error::MilestonePublicKeysNotUniqueSorted)
+    } else {
+        Ok(())
+    }
+}
+
+fn verify_payload(payload: &OptionalPayload) -> Result<(), Error> {
+    match &payload.0 {
+        Some(Payload::Receipt(_)) | None => Ok(()),
+        Some(payload) => Err(Error::InvalidPayloadKind(payload.kind())),
     }
 }

@@ -219,6 +219,7 @@ fn apply_regular_essence<B: StorageBackend>(
             return Ok(conflict);
         }
 
+        // TODO maybe put in unlocks methods.
         if let Some(timelock) = unlock_conditions.timelock() {
             if *timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index() {
                 return Ok(ConflictReason::TimelockMilestoneIndex);
