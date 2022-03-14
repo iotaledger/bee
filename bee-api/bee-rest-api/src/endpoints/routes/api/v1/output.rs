@@ -3,7 +3,8 @@
 
 use crate::{
     endpoints::{
-        filters::with_args, path_params::output_id, rejection::CustomRejection, storage::StorageBackend, ApiArgs,
+        filters::with_args, path_params::output_id, rejection::CustomRejection, storage::StorageBackend,
+        ApiArgsFullNode,
     },
     types::{body::SuccessBody, responses::OutputResponse},
 };
@@ -28,7 +29,7 @@ fn path() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Clone {
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -38,7 +39,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
 
 pub(crate) async fn output<B: StorageBackend>(
     output_id: OutputId,
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<impl Reply, Rejection> {
     let (cmd_tx, cmd_rx) = oneshot::channel::<(Result<Option<CreatedOutput>, Error>, LedgerIndex)>();
 

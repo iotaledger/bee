@@ -3,7 +3,8 @@
 
 use crate::{
     endpoints::{
-        filters::with_args, path_params::milestone_index, rejection::CustomRejection, storage::StorageBackend, ApiArgs,
+        filters::with_args, path_params::milestone_index, rejection::CustomRejection, storage::StorageBackend,
+        ApiArgsFullNode,
     },
     types::{body::SuccessBody, dtos::ReceiptDto, responses::ReceiptsResponse},
 };
@@ -23,7 +24,7 @@ fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -33,7 +34,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
 
 pub(crate) fn receipts_at<B: StorageBackend>(
     milestone_index: MilestoneIndex,
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<impl Reply, Rejection> {
     let mut receipts_dto = Vec::new();
 

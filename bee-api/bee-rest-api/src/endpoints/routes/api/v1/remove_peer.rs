@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::endpoints::{
-    filters::with_args, path_params::peer_id, rejection::CustomRejection, storage::StorageBackend, ApiArgs,
+    filters::with_args, path_params::peer_id, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode,
 };
 
 use bee_gossip::{Command::RemovePeer, PeerId};
@@ -18,7 +18,7 @@ fn path() -> impl Filter<Extract = (PeerId,), Error = warp::Rejection> + Clone {
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::delete())
         .and(with_args(args))
@@ -28,7 +28,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
 
 pub(crate) async fn remove_peer<B: StorageBackend>(
     peer_id: PeerId,
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<impl Reply, Rejection> {
     if let Err(e) = args.network_command_sender.send(RemovePeer { peer_id }) {
         return Err(reject::custom(CustomRejection::NotFound(format!(

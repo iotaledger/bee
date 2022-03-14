@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{config::route_to_regex, rejection::CustomRejection, storage::StorageBackend, ApiArgs};
+use crate::endpoints::{config::route_to_regex, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode};
 
 use auth_helper::jwt::{Claims, JsonWebToken, TokenData};
 use base64;
@@ -36,7 +36,7 @@ lazy_static! {
 }
 
 pub(crate) fn check_permission<B: StorageBackend>(
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> impl Filter<Extract = (), Error = Rejection> + Clone {
     warp::any()
         .and(warp::filters::path::full())
@@ -96,7 +96,7 @@ fn extract_jwt(headers: &HeaderMap) -> Result<JsonWebToken, Rejection> {
 
 fn validate_api_jwt<B: StorageBackend>(
     jwt: &JsonWebToken,
-    args: &Arc<ApiArgs<B>>,
+    args: &Arc<ApiArgsFullNode<B>>,
 ) -> Result<TokenData<Claims>, Rejection> {
     jwt.validate(
         args.node_id.to_string(),
@@ -111,7 +111,7 @@ fn validate_api_jwt<B: StorageBackend>(
 #[cfg(feature = "dashboard")]
 fn validate_dashboard_jwt<B: StorageBackend>(
     jwt: &JsonWebToken,
-    args: &Arc<ApiArgs<B>>,
+    args: &Arc<ApiArgsFullNode<B>>,
 ) -> Result<TokenData<Claims>, Rejection> {
     jwt.validate(
         args.node_id.to_string(),

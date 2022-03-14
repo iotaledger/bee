@@ -3,7 +3,7 @@
 
 use crate::endpoints::{
     filters::with_args, path_params::bech32_address, routes::api::v1::outputs_ed25519::outputs_ed25519,
-    storage::StorageBackend, ApiArgs,
+    storage::StorageBackend, ApiArgsFullNode,
 };
 
 use bee_message::address::Address;
@@ -20,7 +20,7 @@ fn path() -> impl Filter<Extract = (Address,), Error = Rejection> + Clone {
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -30,7 +30,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
 
 pub(crate) async fn outputs_bech32<B: StorageBackend>(
     addr: Address,
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<impl Reply, Rejection> {
     match addr {
         Address::Ed25519(a) => outputs_ed25519(a, args).await,

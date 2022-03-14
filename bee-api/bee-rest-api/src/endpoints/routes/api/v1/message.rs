@@ -3,7 +3,8 @@
 
 use crate::{
     endpoints::{
-        filters::with_args, path_params::message_id, rejection::CustomRejection, storage::StorageBackend, ApiArgs,
+        filters::with_args, path_params::message_id, rejection::CustomRejection, storage::StorageBackend,
+        ApiArgsFullNode,
     },
     types::{body::SuccessBody, dtos::MessageDto, responses::MessageResponse},
 };
@@ -21,7 +22,7 @@ fn path() -> impl Filter<Extract = (MessageId,), Error = Rejection> + Clone {
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -31,7 +32,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
 
 pub(crate) async fn message<B: StorageBackend>(
     message_id: MessageId,
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<impl Reply, Rejection> {
     match args.tangle.get(&message_id).await.map(|m| (*m).clone()) {
         Some(message) => Ok(warp::reply::json(&SuccessBody::new(MessageResponse(MessageDto::from(

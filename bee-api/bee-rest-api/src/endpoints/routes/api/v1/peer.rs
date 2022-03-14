@@ -3,7 +3,7 @@
 
 use crate::{
     endpoints::{
-        filters::with_args, path_params::peer_id, rejection::CustomRejection, storage::StorageBackend, ApiArgs,
+        filters::with_args, path_params::peer_id, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode,
     },
     types::{body::SuccessBody, dtos::PeerDto, responses::PeerResponse},
 };
@@ -21,7 +21,7 @@ fn path() -> impl Filter<Extract = (PeerId,), Error = Rejection> + Clone {
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -29,7 +29,10 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
         .boxed()
 }
 
-pub(crate) async fn peer<B: StorageBackend>(peer_id: PeerId, args: Arc<ApiArgs<B>>) -> Result<impl Reply, Rejection> {
+pub(crate) async fn peer<B: StorageBackend>(
+    peer_id: PeerId,
+    args: Arc<ApiArgsFullNode<B>>,
+) -> Result<impl Reply, Rejection> {
     args.peer_manager
         .get_map(&peer_id, |peer_entry| {
             Ok(warp::reply::json(&SuccessBody::new(PeerResponse(PeerDto::from(

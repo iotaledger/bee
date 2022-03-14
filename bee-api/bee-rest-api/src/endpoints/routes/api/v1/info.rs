@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{filters::with_args, routes::health, storage::StorageBackend, ApiArgs},
+    endpoints::{filters::with_args, routes::health, storage::StorageBackend, ApiArgsFullNode},
     types::{body::SuccessBody, responses::InfoResponse},
 };
 
@@ -14,7 +14,7 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("info")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -22,7 +22,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
         .boxed()
 }
 
-pub(crate) async fn info<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> Result<impl Reply, Infallible> {
+pub(crate) async fn info<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> Result<impl Reply, Infallible> {
     let latest_milestone_index = args.tangle.get_latest_milestone_index();
     let latest_milestone_timestamp = args
         .tangle

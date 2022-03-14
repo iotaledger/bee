@@ -3,7 +3,8 @@
 
 use crate::{
     endpoints::{
-        filters::with_args, path_params::milestone_index, rejection::CustomRejection, storage::StorageBackend, ApiArgs,
+        filters::with_args, path_params::milestone_index, rejection::CustomRejection, storage::StorageBackend,
+        ApiArgsFullNode,
     },
     types::{body::SuccessBody, responses::MilestoneResponse},
 };
@@ -21,7 +22,7 @@ fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -31,7 +32,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
 
 pub(crate) async fn milestone<B: StorageBackend>(
     milestone_index: MilestoneIndex,
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<impl Reply, Rejection> {
     match args.tangle.get_milestone_message_id(milestone_index).await {
         Some(message_id) => match args.tangle.get_metadata(&message_id).await {

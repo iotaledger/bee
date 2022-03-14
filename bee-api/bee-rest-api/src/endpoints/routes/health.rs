@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{filters::with_args, storage::StorageBackend, ApiArgs};
+use crate::endpoints::{filters::with_args, storage::StorageBackend, ApiArgsFullNode};
 
 use bee_protocol::workers::PeerManager;
 use bee_tangle::Tangle;
@@ -21,7 +21,7 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     warp::path("health").and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -29,7 +29,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
         .boxed()
 }
 
-pub(crate) async fn health<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> Result<impl Reply, Infallible> {
+pub(crate) async fn health<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> Result<impl Reply, Infallible> {
     if is_healthy(&args.tangle, &args.peer_manager).await {
         Ok(StatusCode::OK)
     } else {

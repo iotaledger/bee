@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgs},
+    endpoints::{filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode},
     types::{
         body::SuccessBody,
         dtos::{PeerDto, RelationDto},
@@ -21,7 +21,7 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("peers")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::post())
         .and(warp::body::json())
@@ -32,7 +32,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
 
 pub(crate) async fn add_peer<B: StorageBackend>(
     value: JsonValue,
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<impl Reply, Rejection> {
     let multi_address_v = &value["multiAddress"];
     let alias_v = &value["alias"];

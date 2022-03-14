@@ -15,7 +15,7 @@ use serde_json::Value as JsonValue;
 use tokio::time::timeout;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
-use crate::endpoints::ApiArgs;
+use crate::endpoints::ApiArgsFullNode;
 use std::sync::Arc;
 
 use std::{any::TypeId, collections::HashSet, sync::Mutex, time::Duration};
@@ -25,7 +25,7 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::post())
         .and(warp::body::json())
@@ -36,7 +36,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
 
 pub(crate) async fn white_flag<B: StorageBackend>(
     body: JsonValue,
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<impl Reply, Rejection> {
     let index_json = &body["index"];
     let parents_json = &body["parentMessageIds"];

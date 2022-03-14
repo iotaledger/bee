@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::endpoints::{
-    filters::with_args, path_params::message_id, rejection::CustomRejection, storage::StorageBackend, ApiArgs,
+    filters::with_args, path_params::message_id, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode,
 };
 
 use bee_common::packable::Packable;
@@ -20,7 +20,7 @@ fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clon
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -30,7 +30,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
 
 pub async fn message_raw<B: StorageBackend>(
     message_id: MessageId,
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<impl Reply, Rejection> {
     match args.tangle.get(&message_id).await.map(|m| (*m).clone()) {
         Some(message) => Ok(Response::builder()

@@ -4,7 +4,7 @@
 use crate::{
     endpoints::{
         filters::with_args, rejection::CustomRejection, routes::api::v1::MAX_RESPONSE_RESULTS, storage::StorageBackend,
-        ApiArgs,
+        ApiArgsFullNode,
     },
     types::{body::SuccessBody, responses::MessagesFindResponse},
 };
@@ -23,7 +23,7 @@ fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("messages")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(warp::query().and_then(|query: HashMap<String, String>| async move {
@@ -39,7 +39,10 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
         .boxed()
 }
 
-pub(crate) fn messages_find<B: StorageBackend>(index: String, args: Arc<ApiArgs<B>>) -> Result<impl Reply, Rejection> {
+pub(crate) fn messages_find<B: StorageBackend>(
+    index: String,
+    args: Arc<ApiArgsFullNode<B>>,
+) -> Result<impl Reply, Rejection> {
     let index_bytes = hex::decode(index.clone())
         .map_err(|_| reject::custom(CustomRejection::BadRequest("Invalid index".to_owned())))?;
     let hashed_index = IndexationPayload::new(&index_bytes, &[]).unwrap().padded_index();

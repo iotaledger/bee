@@ -3,7 +3,7 @@
 
 use crate::endpoints::{
     filters::with_args, path_params::transaction_id, rejection::CustomRejection, routes::api::v1::message,
-    storage::StorageBackend, ApiArgs,
+    storage::StorageBackend, ApiArgsFullNode,
 };
 
 use bee_ledger::types::CreatedOutput;
@@ -22,7 +22,7 @@ fn path() -> impl Filter<Extract = (TransactionId,), Error = Rejection> + Clone 
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -32,7 +32,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
 
 pub(crate) async fn transaction_included_message<B: StorageBackend>(
     transaction_id: TransactionId,
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<impl Reply, Rejection> {
     // Safe to unwrap since 0 is a valid index;
     let output_id = OutputId::new(transaction_id, 0).unwrap();

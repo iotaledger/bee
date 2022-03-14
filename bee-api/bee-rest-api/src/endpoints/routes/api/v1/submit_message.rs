@@ -3,7 +3,7 @@
 
 use crate::{
     endpoints::{
-        config::RestApiConfig, filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgs,
+        config::RestApiConfig, filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode,
     },
     types::{body::SuccessBody, dtos::PayloadDto, responses::SubmitMessageResponse},
 };
@@ -28,7 +28,7 @@ fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("messages")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::post())
         .and(
@@ -46,7 +46,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
 
 pub(crate) async fn submit_message<B: StorageBackend>(
     value: JsonValue,
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<impl Reply, Rejection> {
     let network_id_v = &value["networkId"];
     let parents_v = &value["parentMessageIds"];
@@ -200,7 +200,7 @@ pub(crate) async fn build_message(
 
 pub(crate) async fn submit_message_raw<B: StorageBackend>(
     buf: warp::hyper::body::Bytes,
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<impl Reply, Rejection> {
     let message = Message::unpack(&mut &(*buf)).map_err(|e| {
         reject::custom(CustomRejection::BadRequest(format!(

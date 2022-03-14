@@ -3,7 +3,7 @@
 
 mod white_flag;
 
-use crate::endpoints::{storage::StorageBackend, ApiArgs};
+use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
 
 use warp::{self, Filter, Rejection, Reply};
 
@@ -14,7 +14,7 @@ pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clo
 }
 
 pub(crate) fn filter<B: StorageBackend>(
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     white_flag::filter(args)
 }

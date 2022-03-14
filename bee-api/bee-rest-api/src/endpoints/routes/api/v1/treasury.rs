@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgs},
+    endpoints::{filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode},
     types::{body::SuccessBody, responses::TreasuryResponse},
 };
 
@@ -16,7 +16,7 @@ fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("treasury")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -24,7 +24,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
         .boxed()
 }
 
-pub(crate) fn treasury<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> Result<impl Reply, Rejection> {
+pub(crate) fn treasury<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> Result<impl Reply, Rejection> {
     let treasury =
         storage::fetch_unspent_treasury_output(&*args.storage).map_err(|_| CustomRejection::StorageBackend)?;
 

@@ -3,8 +3,8 @@
 
 use crate::{
     endpoints::{
-        filters::with_args, path_params::message_id, rejection::CustomRejection, storage::StorageBackend, ApiArgs,
-        CONFIRMED_THRESHOLD,
+        filters::with_args, path_params::message_id, rejection::CustomRejection, storage::StorageBackend,
+        ApiArgsFullNode, CONFIRMED_THRESHOLD,
     },
     types::{body::SuccessBody, dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
 };
@@ -24,7 +24,7 @@ fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clon
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -34,7 +34,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
 
 pub(crate) async fn message_metadata<B: StorageBackend>(
     message_id: MessageId,
-    args: Arc<ApiArgs<B>>,
+    args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<impl Reply, Rejection> {
     if !args.tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
         return Err(reject::custom(CustomRejection::ServiceUnavailable(

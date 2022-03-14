@@ -44,14 +44,21 @@ pub(crate) type DashboardUsername = String;
 
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
 
-pub async fn init_full_node<N: Node>(worker_config: ApiConfigFullNode, node_builder: N::Builder) -> N::Builder
+pub async fn init_full_node<N: Node>(init_config: InitConfigFullNode, node_builder: N::Builder) -> N::Builder
 where
     N::Backend: StorageBackend,
 {
-    node_builder.with_worker_cfg::<ApiWorkerFullNode>(worker_config)
+    node_builder.with_worker_cfg::<ApiWorkerFullNode>(init_config)
 }
 
-pub struct ApiConfigFullNode {
+pub async fn init_entry_node<N: Node>(init_config: InitConfigEntryNode, node_builder: N::Builder) -> N::Builder
+where
+    N::Backend: StorageBackend,
+{
+    node_builder.with_worker_cfg::<ApiWorkerEntryNode>(init_config)
+}
+
+pub struct InitConfigFullNode {
     pub node_id: PeerId,
     pub node_keypair: Keypair,
     pub rest_api_config: RestApiConfig,
@@ -62,6 +69,31 @@ pub struct ApiConfigFullNode {
     pub dashboard_username: DashboardUsername,
 }
 
+pub struct InitConfigEntryNode {
+    pub rest_api_config: RestApiConfig,
+}
+
+pub struct ApiArgsFullNode<B: StorageBackend> {
+    pub node_id: PeerId,
+    pub node_keypair: Keypair,
+    pub rest_api_config: RestApiConfig,
+    pub protocol_config: ProtocolConfig,
+    pub network_id: NetworkId,
+    pub bech32_hrp: Bech32Hrp,
+    #[cfg(feature = "dashboard")]
+    pub dashboard_username: DashboardUsername,
+    pub storage: ResourceHandle<B>,
+    pub bus: ResourceHandle<Bus<'static>>,
+    pub node_info: ResourceHandle<NodeInfo>,
+    pub tangle: ResourceHandle<Tangle<B>>,
+    pub peer_manager: ResourceHandle<PeerManager>,
+    pub requested_messages: ResourceHandle<RequestedMessages>,
+    pub network_command_sender: ResourceHandle<NetworkCommandSender>,
+    pub message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+    pub message_requester: MessageRequesterWorker,
+    pub consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
+}
+
 pub struct ApiWorkerFullNode;
 
 #[async_trait]
@@ -69,7 +101,7 @@ impl<N: Node> Worker<N> for ApiWorkerFullNode
 where
     N::Backend: StorageBackend,
 {
-    type Config = ApiConfigFullNode;
+    type Config = InitConfigFullNode;
     type Error = WorkerError;
 
     fn dependencies() -> &'static [TypeId] {
@@ -82,7 +114,7 @@ where
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let args = Arc::new(ApiArgs {
+        let args = Arc::new(ApiArgsFullNode {
             node_id: config.node_id,
             node_keypair: config.node_keypair,
             rest_api_config: config.rest_api_config,
@@ -122,6 +154,36 @@ where
     }
 }
 
+pub struct ApiWorkerEntryNode;
+
+#[async_trait]
+impl<N: Node> Worker<N> for ApiWorkerEntryNode
+where
+    N::Backend: StorageBackend,
+{
+    type Config = InitConfigEntryNode;
+    type Error = WorkerError;
+
+    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+        node.spawn::<Self, _, _>(|shutdown| async move {
+            info!("Running.");
+
+            let health = warp::path("health").map(|| StatusCode::OK).recover(handle_rejection);
+
+            let (_, server) =
+                warp::serve(health).bind_with_graceful_shutdown(config.rest_api_config.bind_socket_addr(), async {
+                    shutdown.await.ok();
+                });
+
+            server.await;
+
+            info!("Stopped.");
+        });
+
+        Ok(Self)
+    }
+}
+
 async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let (http_code, err_code, reason) = match err.find() {
         // handle custom rejections
@@ -148,61 +210,4 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
         })),
         http_code,
     ))
-}
-
-pub struct ApiArgs<B: StorageBackend> {
-    pub node_id: PeerId,
-    pub node_keypair: Keypair,
-    pub rest_api_config: RestApiConfig,
-    pub protocol_config: ProtocolConfig,
-    pub network_id: NetworkId,
-    pub bech32_hrp: Bech32Hrp,
-    #[cfg(feature = "dashboard")]
-    pub dashboard_username: DashboardUsername,
-    pub storage: ResourceHandle<B>,
-    pub bus: ResourceHandle<Bus<'static>>,
-    pub node_info: ResourceHandle<NodeInfo>,
-    pub tangle: ResourceHandle<Tangle<B>>,
-    pub peer_manager: ResourceHandle<PeerManager>,
-    pub requested_messages: ResourceHandle<RequestedMessages>,
-    pub network_command_sender: ResourceHandle<NetworkCommandSender>,
-    pub message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
-    pub message_requester: MessageRequesterWorker,
-    pub consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
-}
-
-pub async fn init_entry_node<N: Node>(rest_api_config: RestApiConfig, node_builder: N::Builder) -> N::Builder
-where
-    N::Backend: StorageBackend,
-{
-    node_builder.with_worker_cfg::<ApiWorkerEntryNode>(rest_api_config)
-}
-
-pub struct ApiWorkerEntryNode;
-
-#[async_trait]
-impl<N: Node> Worker<N> for ApiWorkerEntryNode
-where
-    N::Backend: StorageBackend,
-{
-    type Config = RestApiConfig;
-    type Error = WorkerError;
-
-    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Running.");
-
-            let health = warp::path("health").map(|| StatusCode::OK).recover(handle_rejection);
-
-            let (_, server) = warp::serve(health).bind_with_graceful_shutdown(config.bind_socket_addr(), async {
-                shutdown.await.ok();
-            });
-
-            server.await;
-
-            info!("Stopped.");
-        });
-
-        Ok(Self)
-    }
 }

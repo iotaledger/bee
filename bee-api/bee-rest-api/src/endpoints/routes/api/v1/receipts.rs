@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgs},
+    endpoints::{filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode},
     types::{body::SuccessBody, dtos::ReceiptDto, responses::ReceiptsResponse},
 };
 
@@ -18,7 +18,7 @@ fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("receipts")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -26,7 +26,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> BoxedFilter<(i
         .boxed()
 }
 
-pub(crate) fn receipts<B: StorageBackend>(args: Arc<ApiArgs<B>>) -> Result<impl Reply, Rejection> {
+pub(crate) fn receipts<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> Result<impl Reply, Rejection> {
     let mut receipts_dto = Vec::new();
     let iterator = AsIterator::<(MilestoneIndex, Receipt), ()>::iter(&*args.storage)
         .map_err(|_| CustomRejection::InternalError)?;
