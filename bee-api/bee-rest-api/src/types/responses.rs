@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 /// Response of GET /api/v2/info.
 /// Returns general information about the node.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct InfoResponse {
     pub name: String,
     pub version: String,
@@ -25,7 +25,7 @@ impl BodyInner for InfoResponse {}
 
 /// Returned in [`InfoResponse`].
 /// Status information about the node.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct StatusResponse {
     #[serde(rename = "isHealthy")]
     pub is_healthy: bool,
@@ -41,7 +41,7 @@ pub struct StatusResponse {
 
 /// Returned in [`InfoResponse`].
 /// Protocol information about the node.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ProtocolResponse {
     #[serde(rename = "networkName")]
     pub network_name: String,
@@ -55,7 +55,7 @@ pub struct ProtocolResponse {
 
 /// Returned in [`InfoResponse`].
 /// Rent information about the node.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct RentStructureResponse {
     #[serde(rename = "vByteCost")]
     pub v_byte_cost: u64,
@@ -67,7 +67,7 @@ pub struct RentStructureResponse {
 
 /// Returned in [`InfoResponse`].
 /// Metric information about the node.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MetricsResponse {
     #[serde(rename = "messagesPerSecond")]
     pub messages_per_second: f64,

@@ -143,12 +143,8 @@ async fn process_swarm_event(
                 })
                 .expect("send error");
 
-            peerlist
-                .0
-                .write()
-                .await
-                .insert_local_addr(address)
-                .expect("insert_local_addr");
+            // Note: We don't care if the inserted address is a duplicate.
+            let _ = peerlist.0.write().await.add_local_addr(address);
         }
         SwarmEvent::ConnectionEstablished { peer_id, .. } => {
             debug!("Swarm event: connection established with {}.", alias!(peer_id));
@@ -182,6 +178,7 @@ async fn process_internal_command(internal_command: Command, swarm: &mut Swarm<S
                 warn!("Dialing peer {} failed. Cause: {}", alias!(peer_id), e);
             }
         }
+        Command::DisconnectPeer { peer_id } => hang_up(swarm, peer_id).await,
         _ => {}
     }
 }
@@ -194,7 +191,7 @@ async fn dial_addr(swarm: &mut Swarm<SwarmBehaviour>, addr: Multiaddr, peerlist:
 
     info!("Dialing address: {}.", addr);
 
-    Swarm::dial_addr(swarm, addr.clone()).map_err(|e| Error::DialingAddressFailed(addr, e))?;
+    Swarm::dial(swarm, addr.clone()).map_err(|e| Error::DialingAddressFailed(addr, e))?;
 
     Ok(())
 }
@@ -209,13 +206,36 @@ async fn dial_peer(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId, peerlist:
     // We just checked, that the peer is fine to be dialed.
     let PeerInfo {
         address: addr, alias, ..
-    } = peerlist.0.read().await.info(&peer_id).unwrap();
+    } = peerlist.0.read().await.info(&peer_id).expect("peer must exist");
 
-    info!("Dialing peer: {} ({}).", alias, alias!(peer_id));
+    let mut dial_attempt = 0;
+
+    peerlist
+        .0
+        .write()
+        .await
+        .update_metrics(&peer_id, |m| {
+            m.num_dials += 1;
+            dial_attempt = m.num_dials;
+        })
+        .expect("peer must exist");
+
+    debug!(
+        "Dialing peer: {} ({}) attempt: #{}.",
+        alias,
+        alias!(peer_id),
+        dial_attempt
+    );
 
     // TODO: We also use `Swarm::dial_addr` here (instead of `Swarm::dial`) for now. See if it's better to change
     // that.
-    Swarm::dial_addr(swarm, addr).map_err(|e| Error::DialingPeerFailed(peer_id, e))?;
+    Swarm::dial(swarm, addr).map_err(|e| Error::DialingPeerFailed(peer_id, e))?;
 
     Ok(())
+}
+
+async fn hang_up(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId) {
+    debug!("Hanging up on: {}.", alias!(peer_id));
+
+    let _ = Swarm::disconnect_peer_id(swarm, peer_id);
 }

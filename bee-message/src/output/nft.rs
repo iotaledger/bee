@@ -5,10 +5,7 @@ use crate::{
     address::Address,
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
-        unlock_condition::{
-            verify_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
-            UnlockConditions,
-        },
+        unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
         NativeToken, NativeTokens, NftId, OutputAmount,
     },
     Error,
@@ -177,17 +174,6 @@ impl NftOutput {
 
     ///
     #[inline(always)]
-    pub fn address(&self) -> &Address {
-        // An NftOutput must have an AddressUnlockCondition.
-        if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
-            address.address()
-        } else {
-            unreachable!();
-        }
-    }
-
-    ///
-    #[inline(always)]
     pub fn amount(&self) -> u64 {
         self.amount.get()
     }
@@ -203,13 +189,6 @@ impl NftOutput {
     pub fn nft_id(&self) -> &NftId {
         &self.nft_id
     }
-
-    // TODO bring back as part of #1117
-    // ///
-    // #[inline(always)]
-    // pub fn immutable_metadata(&self) -> &[u8] {
-    //     &self.immutable_metadata
-    // }
 
     ///
     #[inline(always)]
@@ -227,6 +206,16 @@ impl NftOutput {
     #[inline(always)]
     pub fn immutable_feature_blocks(&self) -> &FeatureBlocks {
         &self.immutable_feature_blocks
+    }
+
+    ///
+    #[inline(always)]
+    pub fn address(&self) -> &Address {
+        // An NftOutput must have an AddressUnlockCondition.
+        self.unlock_conditions
+            .address()
+            .map(|unlock_condition| unlock_condition.address())
+            .unwrap()
     }
 }
 
@@ -282,9 +271,9 @@ impl Packable for NftOutput {
 }
 
 fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, nft_id: &NftId) -> Result<(), Error> {
-    if let Some(UnlockCondition::Address(unlock_condition)) = unlock_conditions.get(AddressUnlockCondition::KIND) {
+    if let Some(unlock_condition) = unlock_conditions.address() {
         if let Address::Nft(nft_address) = unlock_condition.address() {
-            if nft_address.id() == nft_id {
+            if nft_address.nft_id() == nft_id {
                 return Err(Error::SelfDepositNft(*nft_id));
             }
         }

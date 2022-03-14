@@ -1,5 +1,5 @@
 ---
-description: You can find the source code for Bee in the official Bee repository. Before you can install Bee from source, you will need to install some required dependencies.
+description: You can find the source code for Bee in the official Bee repository. Before you can install Bee from the source, you will need to install some required dependencies.
 image: /img/logo/bee_logo.png
 keywords:
 - nodes
@@ -9,13 +9,14 @@ keywords:
 - macOS
 - linux
 - Debian
+- how to
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 # Set Up a Node
 
-You can find the source code for Bee in the [official Bee repository](https://github.com/iotaledger/bee).  Before you can install Bee from source, you will need to install some required dependencies.
+You can find the source code for Bee in the [official Bee repository](https://github.com/iotaledger/bee). Before you can install Bee from the source, you will need to install some required dependencies.
 
 ## Installing from Source
 
@@ -36,23 +37,22 @@ values={[
 
 To run a Bee node in a Debian base system you will need to install the following packages:
 
-- [git](https://git-scm.com/)
-- [npm](https://www.npmjs.com/)
-- [build-essential](https://packages.debian.org/sid/build-essential)
-- [cmake](https://cmake.org/)
-- [pkg-config](https://packages.debian.org/sid/pkg-config)
-- [librocksdb-dev](https://packages.debian.org/sid/librocksdb-dev)
-- [llvm](https://apt.llvm.org/)
-- [clang](https://packages.debian.org/search?keywords=clang)
-- [libclang-dev](https://packages.debian.org/unstable/libclang-dev)
-- [libssl-dev](https://packages.debian.org/jessie/libssl-dev)
+- [git](https://git-scm.com/).
+- [build-essential](https://packages.debian.org/sid/build-essential).
+- [cmake](https://cmake.org/).
+- [pkg-config](https://packages.debian.org/sid/pkg-config).
+- [librocksdb-dev](https://packages.debian.org/sid/librocksdb-dev).
+- [llvm](https://apt.llvm.org/).
+- [clang](https://packages.debian.org/search?keywords=clang).
+- [libclang-dev](https://packages.debian.org/unstable/libclang-dev).
+- [libssl-dev](https://packages.debian.org/jessie/libssl-dev).
 
 To install all of these packages, you can run the following commands:
 
 ```shell
 apt-get update
 apt-get upgrade
-apt-get install git npm build-essential cmake pkg-config librocksdb-dev llvm clang libclang-dev libssl-dev
+apt-get install git build-essential cmake pkg-config librocksdb-dev llvm clang libclang-dev libssl-dev
 ```
 
 </TabItem>
@@ -60,8 +60,7 @@ apt-get install git npm build-essential cmake pkg-config librocksdb-dev llvm cla
 
 To run a Bee node in a macOS system, you will need to install the following packages using the [brew](https://brew.sh/) package manager:
 
-- [cmake](https://cmake.org/)
-- [npm](https://www.npmjs.com/)
+- [cmake](https://cmake.org/).
 
 You can run the following command to install brew:
 
@@ -72,7 +71,7 @@ You can run the following command to install brew:
 After the installer finishes, you can use brew to install the required packages by running:
 
 ```shell
-brew install cmake npm
+brew install cmake
 ```
 
 </TabItem>
@@ -81,9 +80,8 @@ brew install cmake npm
 To run a Bee node in a Windows system, you will need to install the following packages using the
 [chocolatey](https://chocolatey.org/) package manager:
 
-- [cmake](https://cmake.org/)
-- [nodejs-lts](https://nodejs.org/)
-- [git](https://git-scm.com/)
+- [cmake](https://cmake.org/).
+- [git](https://git-scm.com/).
 
 To install chocolatey, open Powershell and execute the following command:
 
@@ -94,7 +92,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 After the installer finishes, you can use chocolatey to install the required packages by running:
 
 ```shell
-choco install git --params '/NoAutoCrlf' nodejs-lts cmake --installargs 'ADD_CMAKE_TO_PATH=System' llvm
+choco install git --params '/NoAutoCrlf' cmake --installargs 'ADD_CMAKE_TO_PATH=System' llvm
 ```
 
 :::info
@@ -106,7 +104,7 @@ You will need to restart Powershell for your changes to take effect.
 
 ### Installing Rust
 
-You will need to install [Rust](https://www.rust-lang.org/) in order to run a Bee node.  You should install version is [1.51](https://blog.rust-lang.org/2021/03/25/Rust-1.51.0.html), or above.
+You will need to install [Rust](https://www.rust-lang.org/) to run a Bee node. You should install version [1.51](https://blog.rust-lang.org/2021/03/25/Rust-1.51.0.html), or above.
 
 <Tabs
   groupId="operating-systems"
@@ -156,14 +154,14 @@ rustup update
 
 ### Download the Source
 
-Once you have installed all the required dependencies, you can start compiling the Bee Node.  To do so, you can simply clone the source code by running the following command.
+Once you have installed all the required dependencies, you can start compiling the Bee Node. To get started, you should clone the source code by running the following command.
 
 ```shell
-git clone https://github.com/iotaledger/bee.git --branch dev
+git clone https://github.com/iotaledger/bee.git --branch mainnet-develop
 ```
 
-#### Compiling
-Before you start compiling Bee, you should change your current directory to `bee/bee-node`.  You can do so by running the following command from the same directory where you downloaded the source:
+### Compiling
+Before you start compiling Bee, you should change your current directory to `bee/bee-node`. You can do so by running the following command from the same directory where you downloaded the source:
 
 ```shell
 cd bee/bee-node
@@ -171,58 +169,15 @@ cd bee/bee-node
 
 You can compile Bee in two manners:
 
-### With Dashboard
+#### With Dashboard
 
 If you want to build Bee with its Dashboard, you should run the following commands:
 
-<Tabs
-  groupId="operating-systems"
-  defaultValue="debian"
-  values={[
-    {label: 'Debian', value: 'debian'},
-    {label: 'macOS', value: 'mac'},
-    {label: 'Windows', value: 'win'},
-  ]
-}>
-<TabItem value="debian">
-
 ```shell
-git submodule update --init
-cd src/plugins/dashboard/frontend
-npm install
-npm run build-bee
-cd -
 cargo build --release --features dashboard
 ```
 
-</TabItem>
-<TabItem value="mac">
-
-```shell
-git submodule update --init
-cd src/plugins/dashboard/frontend
-npm install
-npm run build-bee
-cd -
-cargo build --release --features dashboard
-```
-
-</TabItem>
-<TabItem value="win">
-
-```shell
-git submodule update --init
-cd src/plugins/dashboard/frontend
-npm install
-npm run build-bee
-cd ../../../../
-cargo build --release --features dashboard
-```
-
-</TabItem>
-</Tabs>
-
-### Without dashboard
+#### Without dashboard
 
 If you want to build Bee without its Dashboard, you should run the following command:
 
@@ -232,7 +187,7 @@ cargo build --release
 
 ### Running
 
-Once you have downloaded and compiled Bee, you should copy make a copy of the example config file.  Be sure to review and update your configuration.  You can find more information on configuring bee in the [configuration section](configuration.md).
+Once you have downloaded and compiled Bee, you should copy make a copy of the example config file. Be sure to review and update your configuration. You can find more information on configuring bee in the [configuration section](configuration.md).
 
 To copy the example configuration file, you should run the following command:
 ```shell

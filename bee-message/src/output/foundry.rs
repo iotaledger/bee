@@ -5,11 +5,8 @@ use crate::{
     address::{Address, AliasAddress},
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
-        unlock_condition::{
-            verify_allowed_unlock_conditions, ImmutableAliasAddressUnlockCondition, UnlockCondition,
-            UnlockConditionFlags, UnlockConditions,
-        },
-        FoundryId, NativeToken, NativeTokens, OutputAmount,
+        unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
+        FoundryId, NativeToken, NativeTokens, OutputAmount, TokenScheme, TokenTag,
     },
     Error,
 };
@@ -25,27 +22,14 @@ use primitive_types::U256;
 use alloc::vec::Vec;
 
 ///
-#[repr(u8)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = Error)]
-#[packable(tag_type = u8, with_error = Error::InvalidTokenSchemeKind)]
-pub enum TokenScheme {
-    ///
-    Simple = 0,
-}
-
-/// Token tag length.
-pub const TOKEN_TAG_LENGTH: usize = 12;
-
-///
 #[must_use]
 pub struct FoundryOutputBuilder {
     amount: OutputAmount,
     native_tokens: Vec<NativeToken>,
     serial_number: u32,
-    token_tag: [u8; TOKEN_TAG_LENGTH],
-    circulating_supply: U256,
+    token_tag: TokenTag,
+    minted_tokens: U256,
+    melted_tokens: U256,
     maximum_supply: U256,
     token_scheme: TokenScheme,
     unlock_conditions: Vec<UnlockCondition>,
@@ -58,19 +42,21 @@ impl FoundryOutputBuilder {
     pub fn new(
         amount: u64,
         serial_number: u32,
-        token_tag: [u8; TOKEN_TAG_LENGTH],
-        circulating_supply: U256,
+        token_tag: TokenTag,
+        minted_tokens: U256,
+        melted_tokens: U256,
         maximum_supply: U256,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        verify_supply(&circulating_supply, &maximum_supply)?;
+        verify_supply(&minted_tokens, &melted_tokens, &maximum_supply)?;
 
         Ok(Self {
             amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: Vec::new(),
             serial_number,
             token_tag,
-            circulating_supply,
+            minted_tokens,
+            melted_tokens,
             maximum_supply,
             token_scheme,
             unlock_conditions: Vec::new(),
@@ -160,7 +146,8 @@ impl FoundryOutputBuilder {
             native_tokens: NativeTokens::new(self.native_tokens)?,
             serial_number: self.serial_number,
             token_tag: self.token_tag,
-            circulating_supply: self.circulating_supply,
+            minted_tokens: self.minted_tokens,
+            melted_tokens: self.melted_tokens,
             maximum_supply: self.maximum_supply,
             token_scheme: self.token_scheme,
             unlock_conditions,
@@ -181,9 +168,11 @@ pub struct FoundryOutput {
     // The serial number of the foundry with respect to the controlling alias.
     serial_number: u32,
     // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
-    token_tag: [u8; TOKEN_TAG_LENGTH],
-    // Circulating supply of tokens controlled by this foundry.
-    circulating_supply: U256,
+    token_tag: TokenTag,
+    // Amount of tokens minted by this foundry.
+    minted_tokens: U256,
+    // Amount of tokens melted by this foundry.
+    melted_tokens: U256,
     // Maximum supply of tokens controlled by this foundry.
     maximum_supply: U256,
     token_scheme: TokenScheme,
@@ -208,8 +197,9 @@ impl FoundryOutput {
     pub fn new(
         amount: u64,
         serial_number: u32,
-        token_tag: [u8; TOKEN_TAG_LENGTH],
-        circulating_supply: U256,
+        token_tag: TokenTag,
+        minted_tokens: U256,
+        melted_tokens: U256,
         maximum_supply: U256,
         token_scheme: TokenScheme,
     ) -> Result<Self, Error> {
@@ -217,7 +207,8 @@ impl FoundryOutput {
             amount,
             serial_number,
             token_tag,
-            circulating_supply,
+            minted_tokens,
+            melted_tokens,
             maximum_supply,
             token_scheme,
         )?
@@ -229,8 +220,9 @@ impl FoundryOutput {
     pub fn build(
         amount: u64,
         serial_number: u32,
-        token_tag: [u8; TOKEN_TAG_LENGTH],
-        circulating_supply: U256,
+        token_tag: TokenTag,
+        minted_tokens: U256,
+        melted_tokens: U256,
         maximum_supply: U256,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
@@ -238,38 +230,11 @@ impl FoundryOutput {
             amount,
             serial_number,
             token_tag,
-            circulating_supply,
+            minted_tokens,
+            melted_tokens,
             maximum_supply,
             token_scheme,
         )
-    }
-
-    /// Returns the [`FoundryId`] of the [`FoundryOutput`].
-    pub fn id(&self) -> FoundryId {
-        let mut bytes = [0u8; FoundryId::LENGTH];
-        let mut packer = SlicePacker::new(&mut bytes);
-
-        // SAFETY: packing to an array of the correct length can't fail.
-        Address::Alias(*self.address()).pack(&mut packer).unwrap();
-        self.serial_number.pack(&mut packer).unwrap();
-        self.token_scheme.pack(&mut packer).unwrap();
-
-        FoundryId::new(bytes)
-    }
-
-    ///
-    #[inline(always)]
-    pub fn address(&self) -> &AliasAddress {
-        // A FoundryOutput must have an ImmutableAliasAddressUnlockCondition.
-        if let UnlockCondition::ImmutableAliasAddress(address) = self
-            .unlock_conditions
-            .get(ImmutableAliasAddressUnlockCondition::KIND)
-            .unwrap()
-        {
-            address.address()
-        } else {
-            unreachable!();
-        }
     }
 
     ///
@@ -292,14 +257,20 @@ impl FoundryOutput {
 
     ///
     #[inline(always)]
-    pub fn token_tag(&self) -> &[u8; TOKEN_TAG_LENGTH] {
+    pub fn token_tag(&self) -> &TokenTag {
         &self.token_tag
     }
 
     ///
     #[inline(always)]
-    pub fn circulating_supply(&self) -> &U256 {
-        &self.circulating_supply
+    pub fn minted_tokens(&self) -> &U256 {
+        &self.minted_tokens
+    }
+
+    ///
+    #[inline(always)]
+    pub fn melted_tokens(&self) -> &U256 {
+        &self.melted_tokens
     }
 
     ///
@@ -331,6 +302,29 @@ impl FoundryOutput {
     pub fn immutable_feature_blocks(&self) -> &FeatureBlocks {
         &self.immutable_feature_blocks
     }
+
+    /// Returns the [`FoundryId`] of the [`FoundryOutput`].
+    pub fn id(&self) -> FoundryId {
+        let mut bytes = [0u8; FoundryId::LENGTH];
+        let mut packer = SlicePacker::new(&mut bytes);
+
+        // SAFETY: packing to an array of the correct length can't fail.
+        Address::Alias(*self.address()).pack(&mut packer).unwrap();
+        self.serial_number.pack(&mut packer).unwrap();
+        self.token_scheme.pack(&mut packer).unwrap();
+
+        FoundryId::new(bytes)
+    }
+
+    ///
+    #[inline(always)]
+    pub fn address(&self) -> &AliasAddress {
+        // A FoundryOutput must have an ImmutableAliasAddressUnlockCondition.
+        self.unlock_conditions
+            .immutable_alias_address()
+            .map(|unlock_condition| unlock_condition.address())
+            .unwrap()
+    }
 }
 
 impl Packable for FoundryOutput {
@@ -341,7 +335,8 @@ impl Packable for FoundryOutput {
         self.native_tokens.pack(packer)?;
         self.serial_number.pack(packer)?;
         self.token_tag.pack(packer)?;
-        self.circulating_supply.pack(packer)?;
+        self.minted_tokens.pack(packer)?;
+        self.melted_tokens.pack(packer)?;
         self.maximum_supply.pack(packer)?;
         self.token_scheme.pack(packer)?;
         self.unlock_conditions.pack(packer)?;
@@ -357,12 +352,13 @@ impl Packable for FoundryOutput {
         let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let serial_number = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let token_tag = <[u8; TOKEN_TAG_LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let circulating_supply = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let token_tag = TokenTag::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let minted_tokens = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let melted_tokens = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
         let maximum_supply = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
 
         if VERIFY {
-            verify_supply(&circulating_supply, &maximum_supply).map_err(UnpackError::Packable)?;
+            verify_supply(&minted_tokens, &melted_tokens, &maximum_supply).map_err(UnpackError::Packable)?;
         }
 
         let token_scheme = TokenScheme::unpack::<_, VERIFY>(unpacker)?;
@@ -395,7 +391,8 @@ impl Packable for FoundryOutput {
             native_tokens,
             serial_number,
             token_tag,
-            circulating_supply,
+            minted_tokens,
+            melted_tokens,
             maximum_supply,
             token_scheme,
             unlock_conditions,
@@ -406,17 +403,11 @@ impl Packable for FoundryOutput {
 }
 
 #[inline]
-fn verify_supply(circulating_supply: &U256, maximum_supply: &U256) -> Result<(), Error> {
-    if maximum_supply.is_zero() {
+fn verify_supply(minted_tokens: &U256, melted_tokens: &U256, maximum_supply: &U256) -> Result<(), Error> {
+    if maximum_supply.is_zero() || minted_tokens > maximum_supply || melted_tokens > minted_tokens {
         return Err(Error::InvalidFoundryOutputSupply {
-            circulating: *circulating_supply,
-            max: *maximum_supply,
-        });
-    }
-
-    if circulating_supply > maximum_supply {
-        return Err(Error::InvalidFoundryOutputSupply {
-            circulating: *circulating_supply,
+            minted: *minted_tokens,
+            melted: *melted_tokens,
             max: *maximum_supply,
         });
     }
@@ -425,10 +416,7 @@ fn verify_supply(circulating_supply: &U256, maximum_supply: &U256) -> Result<(),
 }
 
 fn verify_unlock_conditions(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
-    if unlock_conditions
-        .get(ImmutableAliasAddressUnlockCondition::KIND)
-        .is_none()
-    {
+    if unlock_conditions.immutable_alias_address().is_none() {
         Err(Error::MissingAddressUnlockCondition)
     } else {
         verify_allowed_unlock_conditions(unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)

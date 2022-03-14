@@ -1,0 +1,50 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, DashboardPlugin};
+
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
+use bee_storage::backend::StorageBackend as _;
+
+use futures::StreamExt;
+use log::debug;
+use tokio::time::interval;
+use tokio_stream::wrappers::IntervalStream;
+
+use std::time::Duration;
+
+const DB_SIZE_METRICS_WORKER_INTERVAL_SEC: u64 = 60;
+
+pub(crate) fn db_size_metrics_worker<N>(node: &mut N, users: &WsUsers)
+where
+    N: Node,
+    N::Backend: StorageBackend,
+{
+    let storage = node.storage();
+    let users = users.clone();
+
+    node.spawn::<DashboardPlugin, _, _>(|shutdown| async move {
+        debug!("Ws DatabaseSizeMetrics topic handler running.");
+
+        let mut ticker = ShutdownStream::new(
+            shutdown,
+            IntervalStream::new(interval(Duration::from_secs(DB_SIZE_METRICS_WORKER_INTERVAL_SEC))),
+        );
+
+        while ticker.next().await.is_some() {
+            let metrics = DatabaseSizeMetrics {
+                total: storage.size().unwrap().unwrap() as u64,
+                ts: 0, // replace with appropriate storage function
+            };
+            broadcast(metrics.into(), &users).await;
+        }
+
+        debug!("Ws DatabaseSizeMetrics topic handler stopped.");
+    });
+}
+
+#[derive(Clone)]
+pub struct DatabaseSizeMetrics {
+    pub total: u64,
+    pub ts: u64,
+}

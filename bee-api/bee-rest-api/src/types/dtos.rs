@@ -16,8 +16,7 @@ use bee_message::{
             StorageDepositReturnUnlockCondition, TimelockUnlockCondition, UnlockCondition,
         },
         AliasId, AliasOutput, AliasOutputBuilder, BasicOutput, BasicOutputBuilder, FoundryOutput, FoundryOutputBuilder,
-        NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme, TreasuryOutput,
-        TOKEN_TAG_LENGTH,
+        NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme, TokenTag, TreasuryOutput,
     },
     parent::Parents,
     payload::{
@@ -25,13 +24,14 @@ use bee_message::{
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
         tagged_data::TaggedDataPayload,
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
-        treasury::TreasuryTransactionPayload,
+        treasury_transaction::TreasuryTransactionPayload,
         Payload,
     },
     signature::{Ed25519Signature, Signature},
     unlock_block::{
         AliasUnlockBlock, NftUnlockBlock, ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks,
     },
+    util::hex_decode,
     Message, MessageBuilder, MessageId,
 };
 #[cfg(feature = "cpt2")]
@@ -72,18 +72,18 @@ impl TryFrom<&MessageDto> for Message {
     type Error = Error;
 
     fn try_from(value: &MessageDto) -> Result<Self, Self::Error> {
-        let mut builder = MessageBuilder::new()
+        let parents = Parents::new(
+            value
+                .parents
+                .iter()
+                .map(|m| {
+                    m.parse::<MessageId>()
+                        .map_err(|_| Error::InvalidField("parentMessageIds"))
+                })
+                .collect::<Result<Vec<MessageId>, Error>>()?,
+        )?;
+        let mut builder = MessageBuilder::new(parents)
             .with_protocol_version(value.protocol_version)
-            .with_parents(Parents::new(
-                value
-                    .parents
-                    .iter()
-                    .map(|m| {
-                        m.parse::<MessageId>()
-                            .map_err(|_| Error::InvalidField("parentMessageIds"))
-                    })
-                    .collect::<Result<Vec<MessageId>, Error>>()?,
-            )?)
             .with_nonce_provider(
                 value.nonce.parse::<u64>().map_err(|_| Error::InvalidField("nonce"))?,
                 0f64,
@@ -171,11 +171,11 @@ impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
         for b in &value.unlock_blocks {
             unlock_blocks.push(b.try_into()?);
         }
-        let builder = TransactionPayload::builder()
-            .with_essence((&value.essence).try_into()?)
-            .with_unlock_blocks(UnlockBlocks::new(unlock_blocks)?);
 
-        Ok(builder.finish()?)
+        Ok(TransactionPayload::new(
+            (&value.essence).try_into()?,
+            UnlockBlocks::new(unlock_blocks)?,
+        )?)
     }
 }
 
@@ -255,6 +255,7 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
                 .network_id
                 .parse::<u64>()
                 .map_err(|_| Error::InvalidField("networkId"))?,
+            hex_decode(&value.inputs_commitment)?,
         )
         .with_inputs(inputs)
         .with_outputs(outputs);
@@ -1519,10 +1520,13 @@ pub struct FoundryOutputDto {
     pub serial_number: u32,
     // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
     #[serde(rename = "tokenTag")]
-    pub token_tag: String,
-    // Circulating supply of tokens controlled by this foundry.
-    #[serde(rename = "circulatingSupply")]
-    pub circulating_supply: U256Dto,
+    pub token_tag: TokenTagDto,
+    // Amount of tokens minted by this foundry.
+    #[serde(rename = "mintedTokens")]
+    pub minted_tokens: U256Dto,
+    // Amount of tokens melted by this foundry.
+    #[serde(rename = "meltedTokens")]
+    pub melted_tokens: U256Dto,
     // Maximum supply of tokens controlled by this foundry.
     #[serde(rename = "maximumSupply")]
     pub maximum_supply: U256Dto,
@@ -1534,6 +1538,23 @@ pub struct FoundryOutputDto {
     pub feature_blocks: Vec<FeatureBlockDto>,
     #[serde(rename = "immutableFeatureBlocks")]
     pub immutable_feature_blocks: Vec<FeatureBlockDto>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TokenTagDto(pub String);
+
+impl From<&TokenTag> for TokenTagDto {
+    fn from(value: &TokenTag) -> Self {
+        Self(value.to_string())
+    }
+}
+
+impl TryFrom<&TokenTagDto> for TokenTag {
+    type Error = Error;
+
+    fn try_from(value: &TokenTagDto) -> Result<Self, Self::Error> {
+        value.0.parse::<TokenTag>().map_err(|_| Error::InvalidField("TokenTag"))
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1549,8 +1570,9 @@ impl From<&FoundryOutput> for FoundryOutputDto {
             amount: value.amount(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             serial_number: value.serial_number(),
-            token_tag: hex::encode(value.token_tag()),
-            circulating_supply: U256Dto(value.circulating_supply().to_string()),
+            token_tag: TokenTagDto(value.token_tag().to_string()),
+            minted_tokens: U256Dto(value.minted_tokens().to_string()),
+            melted_tokens: U256Dto(value.melted_tokens().to_string()),
             maximum_supply: U256Dto(value.maximum_supply().to_string()),
             token_scheme: match value.token_scheme() {
                 TokenScheme::Simple => TokenSchemeDto {
@@ -1571,13 +1593,9 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
         let mut builder = FoundryOutputBuilder::new(
             value.amount,
             value.serial_number,
-            {
-                let mut decoded_token_tag = [0u8; TOKEN_TAG_LENGTH];
-                hex::decode_to_slice(&value.token_tag, &mut decoded_token_tag as &mut [u8])
-                    .map_err(|_| Error::InvalidField("token_tag"))?;
-                decoded_token_tag
-            },
-            U256::from_dec_str(&value.circulating_supply.0).map_err(|_| Error::InvalidField("circulating_supply"))?,
+            (&value.token_tag).try_into()?,
+            U256::from_dec_str(&value.minted_tokens.0).map_err(|_| Error::InvalidField("minted_tokens"))?,
+            U256::from_dec_str(&value.melted_tokens.0).map_err(|_| Error::InvalidField("melted_tokens"))?,
             U256::from_dec_str(&value.maximum_supply.0).map_err(|_| Error::InvalidField("maximum_supply"))?,
             match value.token_scheme.kind {
                 0 => TokenScheme::Simple,

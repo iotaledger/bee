@@ -12,15 +12,15 @@ const DEFAULT_BYTE_COST_FACTOR_DATA: u64 = 1;
 type ConfirmationUnixTimestamp = u32;
 
 /// Builder for a [`ByteCostConfig`].
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Deserialize))]
 #[must_use]
 pub struct ByteCostConfigBuilder {
-    #[serde(alias = "vByteCost")]
+    #[cfg_attr(feature = "serde1", serde(alias = "vByteCost"))]
     v_byte_cost: Option<u64>,
-    #[serde(alias = "vByteFactorKey")]
+    #[cfg_attr(feature = "serde1", serde(alias = "vByteFactorKey"))]
     v_byte_factor_key: Option<u64>,
-    #[serde(alias = "vByteFactorData")]
+    #[cfg_attr(feature = "serde1", serde(alias = "vByteFactorData"))]
     v_byte_factor_data: Option<u64>,
 }
 
@@ -91,15 +91,15 @@ impl ByteCostConfig {
 pub trait ByteCost {
     /// Different fields in a type lead to different storage requirements for the ledger state.
     fn weighted_bytes(&self, config: &ByteCostConfig) -> u64;
+
+    /// Computes the byte cost given a [`ByteCostConfig`].
+    fn byte_cost(&self, config: &ByteCostConfig) -> u64 {
+        config.v_byte_cost * (self.weighted_bytes(config) + config.v_byte_offset)
+    }
 }
 
 impl<T: ByteCost, const N: usize> ByteCost for [T; N] {
     fn weighted_bytes(&self, config: &ByteCostConfig) -> u64 {
         self.iter().map(|elem| elem.weighted_bytes(config)).sum()
     }
-}
-
-/// Computes the storage cost for `[crate::output::Output]`s.
-pub fn minimum_storage_deposit(config: &ByteCostConfig, output: &impl ByteCost) -> u64 {
-    config.v_byte_cost * output.weighted_bytes(config) + config.v_byte_offset
 }

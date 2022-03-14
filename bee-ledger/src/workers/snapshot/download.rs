@@ -37,13 +37,16 @@ async fn download_snapshot_header(download_url: &str) -> Result<SnapshotHeader, 
 
                         let mut slice: &[u8] = &bytes[..SnapshotHeader::LENGTH];
 
-                        return Ok(SnapshotHeader::unpack_verified(&mut slice).map_err(|err| match err {
-                            UnpackError::Packable(err) => err,
+                        return SnapshotHeader::unpack_verified(&mut slice).map_err(|err| match err {
+                            UnpackError::Packable(err) => {
+                                warn!("Could not parse snapshot header from {}: {}.", download_url, err);
+                                Error::ParsingSnapshotHeaderFailed(err)
+                            }
                             // This should never happen because we are unpacking from a slice of
-                            // `SnapshotHeader::LENGTH` length. Which means we should always have the
-                            // exact number of bytes to unpack a `SnapshotHeader`.
+                            // `SnapshotHeader::LENGTH` length. Which means we should always have the exact number of
+                            // bytes to unpack a `SnapshotHeader`.
                             UnpackError::Unpacker(_) => unreachable!(),
-                        })?);
+                        });
                     }
                 }
             } else {

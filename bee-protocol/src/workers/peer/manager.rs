@@ -63,7 +63,7 @@ where
         let tangle = node.resource::<Tangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let metrics = node.resource::<NodeMetrics>();
-        let network_command_tx = node.resource::<NetworkCommandSender>();
+        let gossip_command_tx = node.resource::<NetworkCommandSender>();
 
         let hasher = node.worker::<HasherWorker>().unwrap().tx.clone();
         let message_responder = node.worker::<MessageResponderWorker>().unwrap().tx.clone();
@@ -87,13 +87,13 @@ where
 
                     match event {
                         AutopeeringEvent::IncomingPeering { peer, .. } => {
-                            handle_new_peering(peer, &network_name, &network_command_tx);
+                            handle_new_peering(peer, &network_name, &gossip_command_tx);
                         }
                         AutopeeringEvent::OutgoingPeering { peer, .. } => {
-                            handle_new_peering(peer, &network_name, &network_command_tx);
+                            handle_new_peering(peer, &network_name, &gossip_command_tx);
                         }
                         AutopeeringEvent::PeeringDropped { peer_id } => {
-                            handle_peering_dropped(peer_id, &network_command_tx);
+                            handle_peering_dropped(peer_id, &gossip_command_tx);
                         }
                         _ => {}
                     }
@@ -102,6 +102,8 @@ where
                 info!("Autopeering handler stopped.");
             });
         }
+
+        let gossip_command_tx = node.resource::<NetworkCommandSender>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Network handler running.");
@@ -130,31 +132,42 @@ where
                         gossip_in: receiver,
                         gossip_out: sender,
                     } => {
-                        // TODO write a get_mut peer manager method
-                        if let Some(mut peer) = peer_manager.get_mut(&peer_id) {
-                            let (shutdown_tx, shutdown_rx) = oneshot::channel();
+                        {
+                            let metrics = metrics.clone();
+                            let hasher = hasher.clone();
+                            let message_responder = message_responder.clone();
+                            let milestone_responder = milestone_responder.clone();
+                            let milestone_requester = milestone_requester.clone();
+                            let tangle = tangle.clone();
+                            let requested_milestones = requested_milestones.clone();
 
-                            peer.0.set_connected(true);
-                            peer.1 = Some((sender, shutdown_tx));
+                            peer_manager
+                                .get_mut_map(&peer_id, move |peer| {
+                                    let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
-                            tokio::spawn(
-                                PeerWorker::new(
-                                    peer.0.clone(),
-                                    metrics.clone(),
-                                    hasher.clone(),
-                                    message_responder.clone(),
-                                    milestone_responder.clone(),
-                                    milestone_requester.clone(),
-                                )
-                                .run(
-                                    tangle.clone(),
-                                    requested_milestones.clone(),
-                                    receiver,
-                                    shutdown_rx,
-                                ),
-                            );
+                                    peer.0.set_connected(true);
+                                    peer.1 = Some((sender, shutdown_tx));
 
-                            info!("Connected peer {}.", peer.0.alias());
+                                    tokio::spawn(
+                                        PeerWorker::new(
+                                            peer.0.clone(),
+                                            metrics,
+                                            hasher,
+                                            message_responder,
+                                            milestone_responder,
+                                            milestone_requester,
+                                        )
+                                        .run(
+                                            tangle,
+                                            requested_milestones,
+                                            receiver,
+                                            shutdown_rx,
+                                        ),
+                                    );
+
+                                    info!("Connected peer {}.", peer.0.alias());
+                                })
+                                .unwrap_or_default();
                         }
 
                         // TODO can't do it in the if because of deadlock, but it's not really right to do it here.
@@ -165,8 +178,8 @@ where
                             &*metrics,
                         );
                     }
-                    NetworkEvent::PeerDisconnected { peer_id } => {
-                        if let Some(mut peer) = peer_manager.get_mut(&peer_id) {
+                    NetworkEvent::PeerDisconnected { peer_id } => peer_manager
+                        .get_mut_map(&peer_id, |peer| {
                             peer.0.set_connected(false);
                             if let Some((_, shutdown)) = peer.1.take() {
                                 if let Err(e) = shutdown.send(()) {
@@ -174,6 +187,18 @@ where
                                 }
                             }
                             info!("Disconnected peer {}.", peer.0.alias());
+                        })
+                        .unwrap_or_default(),
+                    NetworkEvent::PeerUnreachable { peer_id, peer_info } => {
+                        if peer_info.relation.is_discovered() {
+                            // Remove that discovered peer.
+
+                            // Panic: sending commands cannot fail: same explanation as in other sender usages.
+                            gossip_command_tx
+                                .send(Command::RemovePeer { peer_id })
+                                .expect("send gossip command");
+
+                            // TODO: tell the autopeering to remove that peer from the neighborhood.
                         }
                     }
                     _ => (), // Ignore all other events for now
@@ -187,25 +212,29 @@ where
     }
 }
 
-fn handle_new_peering(peer: bee_autopeering::Peer, network_name: &str, command_tx: &NetworkCommandSender) {
+fn handle_new_peering(peer: bee_autopeering::Peer, network_name: &str, gossip_command_tx: &NetworkCommandSender) {
     if let Some(multiaddr) = peer.service_multiaddr(network_name) {
         let peer_id = peer.peer_id().libp2p_peer_id();
 
-        command_tx
+        // Panic: sending commands cannot fail due to worker dependencies: because the "Peer Manager" depends on
+        // the `bee-gossip` "ServiceHost", it is guaranteed that the receiver of this channel is not dropped
+        // before the sender.
+        gossip_command_tx
             .send(Command::AddPeer {
                 peer_id,
                 alias: Some(alias!(peer_id).to_string()),
                 multiaddr,
                 relation: PeerRelation::Discovered,
             })
-            .expect("error sending network command");
+            .expect("send command to gossip layer");
     }
 }
 
-fn handle_peering_dropped(peer_id: bee_autopeering::PeerId, command_tx: &NetworkCommandSender) {
+fn handle_peering_dropped(peer_id: bee_autopeering::PeerId, gossip_command_tx: &NetworkCommandSender) {
     let peer_id = peer_id.libp2p_peer_id();
 
-    command_tx
+    // Panic: sending commands cannot fail: same explanation as in other sender usages.
+    gossip_command_tx
         .send(Command::RemovePeer { peer_id })
-        .expect("error sending network command");
+        .expect("send command to gossip layer");
 }

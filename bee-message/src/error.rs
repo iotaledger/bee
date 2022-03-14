@@ -48,11 +48,29 @@ pub enum Error {
     #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     InvalidDustAllowanceAmount(<DustAllowanceAmount as TryFrom<u64>>::Error),
     InvalidStorageDepositAmount(<StorageDepositAmount as TryFrom<u64>>::Error),
+    // The above is used by `Packable` to denote out-of-range values. The following denotes the actual amount.
+    InsufficientStorageDepositAmount {
+        amount: u64,
+        required: u64,
+    },
+    StorageDepositReturnExceedsOutputAmount {
+        deposit: u64,
+        amount: u64,
+    },
+    InsufficientStorageDepositReturnAmount {
+        deposit: u64,
+        required: u64,
+    },
+    UnnecessaryStorageDepositReturnCondition {
+        logical_amount: u64,
+        required: u64,
+    },
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
     InvalidFeatureBlockKind(u8),
     InvalidFoundryOutputSupply {
-        circulating: U256,
+        minted: U256,
+        melted: U256,
         max: U256,
     },
     InvalidHexadecimalChar(String),
@@ -188,13 +206,35 @@ impl fmt::Display for Error {
             Error::InvalidStorageDepositAmount(amount) => {
                 write!(f, "invalid storage deposit amount: {}", amount)
             }
+            Error::InsufficientStorageDepositAmount { amount, required } => {
+                write!(
+                    f,
+                    "insufficient output amount for storage deposit: {amount} (should be at least {required})"
+                )
+            }
+            Error::InsufficientStorageDepositReturnAmount { deposit, required } => {
+                write!(
+                    f,
+                    "the return deposit ({deposit}) must be greater than the minimum storage deposit ({required})"
+                )
+            }
+            Error::StorageDepositReturnExceedsOutputAmount { deposit, amount } => write!(
+                f,
+                "storage deposit return of {deposit} exceeds the original output amount of {amount}"
+            ),
+            Error::UnnecessaryStorageDepositReturnCondition {
+                logical_amount,
+                required,
+            } => write!(
+                f,
+                "no storage deposit return is needed, the logical output amount {logical_amount} already covers the required deposit {required}"
+            ),
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}", k),
             Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}", count),
             Error::InvalidFeatureBlockKind(k) => write!(f, "invalid feature block kind: {}", k),
-            Error::InvalidFoundryOutputSupply { circulating, max } => write!(
+            Error::InvalidFoundryOutputSupply { minted, melted, max } => write!(
                 f,
-                "invalid foundry output supply: circulating {}, max {}",
-                circulating, max
+                "invalid foundry output supply: minted {minted}, melted {melted} max {max}",
             ),
             Error::InvalidHexadecimalChar(hex) => write!(f, "invalid hexadecimal character: {}", hex),
             Error::InvalidHexadecimalLength { expected, actual } => {

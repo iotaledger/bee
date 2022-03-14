@@ -1,6 +1,6 @@
 [package]
 name = "bee-autopeering"
-version = "0.4.0"
+version = "0.5.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Allows peers in the same IOTA network to automatically discover each other."
@@ -20,35 +20,35 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 async-trait = { version = "0.1.51", default-features = false }
 base64 = { version = "0.13.0", default-features = false, features = [ "alloc" ] }
 bincode = { version = "1.3.3", default-features = false }
-bs58 = { version = "0.4", default-features = false, features = [ "alloc" ] }
-bytes = { version = "1.0", default-features = false }
+bs58 = { version = "0.4.0", default-features = false, features = [ "alloc" ] }
+bytes = { version = "1.1.0", default-features = false }
 hash32 = { version = "0.2.1", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "ed25519", "random", "sha" ] }
-libp2p-core = { version = "0.29.0", default-features = false }
-log = { version = "0.4", default-features = false }
+libp2p-core = { version = "0.30.0", default-features = false }
+log = { version = "0.4.14", default-features = false }
 num = { version = "0.4.0", default-features = false }
 num-derive = { version = "0.3.3", default-features = false  }
 num-traits = { version = "0.2.14" , default-features = false }
 priority-queue = { version = "1.2.0" , default-features = false }
-prost = { version = "0.8", default-features = false, features = [ "std" ] }
-rand = { version = "0.8.4" , default-features = false, features = [ "std", "std_rng" ] }
+prost = { version = "0.8.0", default-features = false, features = [ "std" ] }
+rand = { version = "0.8.5" , default-features = false, features = [ "std", "std_rng" ] }
 ring = { version = "0.16.20" , default-features = false }
-rocksdb = { version = "0.17.0", default-features = false, optional = true }
-serde = { version = "1.0", default-features = false , features = [ "derive" ] }
+rocksdb = { version = "0.18.0", default-features = false, optional = true }
+serde = { version = "1.0.136", default-features = false , features = [ "derive" ] }
 sled = { version = "0.34.7", default-features = false, optional = true }
 thiserror = { version = "1.0.29", default-features = false  }
-tokio = { version = "1.11", default-features = false , features = [ "macros", "rt", "time", "net" ] }
-tokio-stream = { version = "0.1", default-features = false  }
+tokio = { version = "1.17.0", default-features = false , features = [ "macros", "rt", "time", "net" ] }
+tokio-stream = { version = "0.1.8", default-features = false  }
 
 [dev-dependencies]
 fern = { version = "0.6.0", default-features = false }
-serde_json = { version = "1.0.68", default-features = false, features = [ "std" ] }
-tokio = { version = "1.11.0", default-features = false, features = [ "rt", "rt-multi-thread", "macros", "signal", "time", "io-std", "io-util" ] }
+serde_json = { version = "1.0.79", default-features = false, features = [ "std" ] }
+tokio = { version = "1.17.0", default-features = false, features = [ "rt", "rt-multi-thread", "macros", "signal", "time", "io-std", "io-util" ] }
 toml = { version = "0.5.8", default-features = false }
 
 [build-dependencies]
-prost-build = { version = "0.8", default-features = false }
+prost-build = { version = "0.8.0", default-features = false }
 
 [[example]]
 name = "node"

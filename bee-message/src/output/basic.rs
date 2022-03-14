@@ -5,10 +5,7 @@ use crate::{
     address::Address,
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
-        unlock_condition::{
-            verify_allowed_unlock_conditions, AddressUnlockCondition, UnlockCondition, UnlockConditionFlags,
-            UnlockConditions,
-        },
+        unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
         NativeToken, NativeTokens, OutputAmount,
     },
     Error,
@@ -144,17 +141,6 @@ impl BasicOutput {
 
     ///
     #[inline(always)]
-    pub fn address(&self) -> &Address {
-        // An BasicOutput must have an AddressUnlockCondition.
-        if let UnlockCondition::Address(address) = self.unlock_conditions.get(AddressUnlockCondition::KIND).unwrap() {
-            address.address()
-        } else {
-            unreachable!();
-        }
-    }
-
-    ///
-    #[inline(always)]
     pub fn amount(&self) -> u64 {
         self.amount.get()
     }
@@ -176,11 +162,21 @@ impl BasicOutput {
     pub fn feature_blocks(&self) -> &FeatureBlocks {
         &self.feature_blocks
     }
+
+    ///
+    #[inline(always)]
+    pub fn address(&self) -> &Address {
+        // An BasicOutput must have an AddressUnlockCondition.
+        self.unlock_conditions
+            .address()
+            .map(|unlock_condition| unlock_condition.address())
+            .unwrap()
+    }
 }
 
 fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
     if VERIFY {
-        if unlock_conditions.get(AddressUnlockCondition::KIND).is_none() {
+        if unlock_conditions.address().is_none() {
             Err(Error::MissingAddressUnlockCondition)
         } else {
             verify_allowed_unlock_conditions(unlock_conditions, BasicOutput::ALLOWED_UNLOCK_CONDITIONS)

@@ -104,7 +104,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
             ))
         })?;
 
-        // TODO: is this check really necessary here? this check should be done by the node message processing pipe?
+        // TODO: is this check really necessary here? or should this be checked by the node message processing pipe?
         if parsed != PROTOCOL_VERSION {
             return Err(reject::custom(CustomRejection::BadRequest(format!(
                 "invalid protocol version: expected `{}` but received `{}`",

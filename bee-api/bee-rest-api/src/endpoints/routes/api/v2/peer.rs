@@ -38,8 +38,9 @@ pub(crate) fn filter(
 }
 
 pub(crate) fn peer(peer_id: PeerId, peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Rejection> {
-    match peer_manager.get(&peer_id) {
-        Some(peer_entry) => Ok(warp::reply::json(&PeerResponse(PeerDto::from(peer_entry.0.as_ref())))),
-        None => Err(reject::custom(CustomRejection::NotFound("peer not found".to_string()))),
-    }
+    peer_manager
+        .get_map(&peer_id, |peer_entry| {
+            Ok(warp::reply::json(&PeerResponse(PeerDto::from(peer_entry.0.as_ref()))))
+        })
+        .unwrap_or_else(|| Err(reject::custom(CustomRejection::NotFound("peer not found".to_string()))))
 }

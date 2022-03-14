@@ -90,7 +90,7 @@ impl UnlockCondition {
 
 create_bitflags!(
     /// A bitflags-based representation of the set of active [`UnlockCondition`]s.
-    UnlockConditionFlags,
+    pub UnlockConditionFlags,
     u16,
     [
         (ADDRESS, AddressUnlockCondition),
@@ -124,7 +124,7 @@ impl TryFrom<Vec<UnlockCondition>> for UnlockConditions {
 
 impl UnlockConditions {
     ///
-    pub const COUNT_MAX: u8 = 6;
+    pub const COUNT_MAX: u8 = 7;
 
     /// Creates a new [`UnlockConditions`].
     pub fn new(unlock_conditions: Vec<UnlockCondition>) -> Result<Self, Error> {
@@ -139,7 +139,7 @@ impl UnlockConditions {
         Ok(Self(unlock_conditions))
     }
 
-    /// Gets a reference to an unlock condition from an unlock condition kind, if found.
+    /// Gets a reference to an [`UnlockCondition`] from an unlock condition kind, if any.
     #[inline(always)]
     pub fn get(&self, key: u8) -> Option<&UnlockCondition> {
         self.0
@@ -147,6 +147,83 @@ impl UnlockConditions {
             // SAFETY: indexation is fine since the index has been found.
             .map(|index| &self.0[index])
             .ok()
+    }
+
+    /// Gets a reference to an [`AddressUnlockCondition`], if any.
+    #[inline(always)]
+    pub fn address(&self) -> Option<&AddressUnlockCondition> {
+        if let Some(UnlockCondition::Address(address)) = self.get(AddressUnlockCondition::KIND) {
+            Some(address)
+        } else {
+            None
+        }
+    }
+
+    /// Gets a reference to a [`StorageDepositReturnUnlockCondition`], if any.
+    #[inline(always)]
+    pub fn storage_deposit_return(&self) -> Option<&StorageDepositReturnUnlockCondition> {
+        if let Some(UnlockCondition::StorageDepositReturn(storage_deposit_return)) =
+            self.get(StorageDepositReturnUnlockCondition::KIND)
+        {
+            Some(storage_deposit_return)
+        } else {
+            None
+        }
+    }
+
+    /// Gets a reference to a [`TimelockUnlockCondition`], if any.
+    #[inline(always)]
+    pub fn timelock(&self) -> Option<&TimelockUnlockCondition> {
+        if let Some(UnlockCondition::Timelock(timelock)) = self.get(TimelockUnlockCondition::KIND) {
+            Some(timelock)
+        } else {
+            None
+        }
+    }
+
+    /// Gets a reference to an [`ExpirationUnlockCondition`], if any.
+    #[inline(always)]
+    pub fn expiration(&self) -> Option<&ExpirationUnlockCondition> {
+        if let Some(UnlockCondition::Expiration(expiration)) = self.get(ExpirationUnlockCondition::KIND) {
+            Some(expiration)
+        } else {
+            None
+        }
+    }
+
+    /// Gets a reference to a [`StateControllerAddressUnlockCondition`], if any.
+    #[inline(always)]
+    pub fn state_controller_address(&self) -> Option<&StateControllerAddressUnlockCondition> {
+        if let Some(UnlockCondition::StateControllerAddress(state_controller_address)) =
+            self.get(StateControllerAddressUnlockCondition::KIND)
+        {
+            Some(state_controller_address)
+        } else {
+            None
+        }
+    }
+
+    /// Gets a reference to a [`GovernorAddressUnlockCondition`], if any.
+    #[inline(always)]
+    pub fn governor_address(&self) -> Option<&GovernorAddressUnlockCondition> {
+        if let Some(UnlockCondition::GovernorAddress(governor_address)) = self.get(GovernorAddressUnlockCondition::KIND)
+        {
+            Some(governor_address)
+        } else {
+            None
+        }
+    }
+
+    /// Gets a reference to an [`ImmutableAliasAddressUnlockCondition`], if any.
+    #[inline(always)]
+    pub fn immutable_alias_address(&self) -> Option<&ImmutableAliasAddressUnlockCondition> {
+        if let Some(UnlockCondition::ImmutableAliasAddress(immutable_alias_address)) =
+            self.get(ImmutableAliasAddressUnlockCondition::KIND)
+        {
+            Some(immutable_alias_address)
+        } else {
+            None
+        }
     }
 }
 

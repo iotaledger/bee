@@ -36,13 +36,13 @@ The next portion of the guide assumes you are executing commands from the root d
 
 ## Prepare
 
-Choose the `config.toml` for the network that you want to join: and copy it to `/.config.toml`:
+Choose the `config.json` for the network that you want to join: and copy it to `/.config.json`:
 
 ```sh
-cp ./config.chrysalis-<insert network here>.toml config.toml. 
+cp ./config.chrysalis-<insert network here>.json config.json. 
 ```
 
-If you want to use alternative ports, edit the `config.toml` file.
+If you want to use alternative ports, edit the `config.json` file.
 
 ## Run
 
@@ -56,7 +56,7 @@ We recommend that you run on host network to improve performance.  Otherwise, yo
 
 ```sh
 docker run \
-  -v $(pwd)/config.toml:/config.toml:ro \
+  -v $(pwd)/config.json:/config.json:ro \
   -v $(pwd)/storage:/storage \
   -v $(pwd)/snapshots:/snapshots \
   --name bee\
@@ -67,7 +67,7 @@ docker run \
 ```
 
 * `$(pwd)` Stands for the present working directory. All mentioned directories are mapped to the container, so the Bee in the container persists the data directly to those directories.
-* `-v $(pwd)/config.toml:/app/config.toml:ro` Maps the local `config.toml` file into the container in `readonly` mode.
+* `-v $(pwd)/config.json:/app/config.json:ro` Maps the local `config.json` file into the container in `readonly` mode.
 * `-v $(pwd)/storage:/storage` Maps the local `storage` directory into the container.
 * `-v $(pwd)/snapshots:/snapshots` Maps the local `snapshots` directory into the container.
 * `--name bee` Name of the running container instance. You can refer to the given container by this name.
@@ -95,16 +95,18 @@ Password salt: [password salt]
 Password hash: [password hash]
 ```
 
-You can edit `config.toml` and customize the _dashboard_ section to your needs.
+You can edit `config.json` and customize the _dashboard_ section to your needs.
 
-```toml
-[dashboard]
-bind_address    = "/ip4/0.0.0.0/tcp/8081"
-[dashboard.auth]
-session_timeout = 86400
-user            = "admin"
-password_salt   = "[password salt]"
-password_hash   = "[password hash]"
+```json
+"dashboard": {
+    "bindAddress": "/ip4/0.0.0.0/tcp/8081",
+    "auth": {
+      "sessionTimeout": 86400,
+      "user": "admin",
+      "passwordSalt": "[password salt]",
+      "passwordHash": "[password hash]"
+    }
+  }
 ```
 
 ## Build Your Own Bee Image

@@ -7,10 +7,12 @@ mod cpt2 {
     use bee_test::rand::bytes::rand_bytes;
 
     use packable::{
-        bounded::{TryIntoBoundedU32Error, TryIntoBoundedU8Error},
+        bounded::{TryIntoBoundedU16Error, TryIntoBoundedU32Error},
         error::UnpackError,
         PackableExt,
     };
+
+    use core::mem::size_of;
 
     #[test]
     fn kind() {
@@ -51,7 +53,7 @@ mod cpt2 {
     fn new_invalid_index_length_less_than_min() {
         assert!(matches!(
             IndexationPayload::new(vec![], vec![0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
-            Err(Error::InvalidIndexLength(TryIntoBoundedU8Error::Invalid(0)))
+            Err(Error::InvalidIndexLength(TryIntoBoundedU16Error::Invalid(0)))
         ));
     }
 
@@ -59,7 +61,7 @@ mod cpt2 {
     fn new_invalid_index_length_more_than_max() {
         assert!(matches!(
             IndexationPayload::new(rand_bytes(65), vec![0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
-            Err(Error::InvalidIndexLength(TryIntoBoundedU8Error::Invalid(65)))
+            Err(Error::InvalidIndexLength(TryIntoBoundedU16Error::Invalid(65)))
         ));
     }
 
@@ -76,8 +78,14 @@ mod cpt2 {
         let indexation_data =
             IndexationPayload::new(rand_bytes(10), vec![0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).unwrap();
 
-        assert_eq!(indexation_data.packed_len(), 1 + 10 + 4 + 8);
-        assert_eq!(indexation_data.pack_to_vec().len(), 1 + 10 + 4 + 8);
+        assert_eq!(
+            indexation_data.packed_len(),
+            size_of::<u16>() + 10 + size_of::<u32>() + 8
+        );
+        assert_eq!(
+            indexation_data.pack_to_vec().len(),
+            size_of::<u16>() + 10 + size_of::<u32>() + 8
+        );
     }
 
     #[test]
@@ -96,7 +104,7 @@ mod cpt2 {
         assert!(matches!(
             IndexationPayload::unpack_verified(&mut vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00].as_slice()),
             Err(UnpackError::Packable(Error::InvalidIndexLength(
-                TryIntoBoundedU8Error::Invalid(0)
+                TryIntoBoundedU16Error::Invalid(0)
             )))
         ));
     }
@@ -115,7 +123,7 @@ mod cpt2 {
                 .as_slice()
             ),
             Err(UnpackError::Packable(Error::InvalidIndexLength(
-                TryIntoBoundedU8Error::Invalid(65)
+                TryIntoBoundedU16Error::Invalid(65)
             )))
         ));
     }
@@ -123,7 +131,7 @@ mod cpt2 {
     #[test]
     fn unpack_invalid_data_length_more_than_max() {
         assert!(matches!(
-            IndexationPayload::unpack_verified(&mut vec![0x02, 0x00, 0x00, 0x35, 0x82, 0x00, 0x00].as_slice()),
+            IndexationPayload::unpack_verified(&mut vec![0x02, 0x00, 0x00, 0x00, 0x35, 0x82, 0x00, 0x00].as_slice()),
             Err(UnpackError::Packable(Error::InvalidIndexationDataLength(
                 TryIntoBoundedU32Error::Invalid(33333)
             )))

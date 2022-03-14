@@ -1,7 +1,7 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::output::{minimum_storage_deposit, ByteCostConfig, ByteCostConfigBuilder, Output};
+use bee_message::output::{ByteCost, ByteCostConfig, ByteCostConfigBuilder, Output};
 use bee_test::rand::output::{rand_alias_output, rand_basic_output, rand_foundry_output, rand_nft_output};
 
 const BYTE_COST: u64 = 1;
@@ -17,12 +17,12 @@ fn config() -> ByteCostConfig {
 }
 
 fn output_in_range(output: Output, range: std::ops::RangeInclusive<u64>) {
-    let deposit = minimum_storage_deposit(&config(), &output);
+    let cost = output.byte_cost(&config());
     assert!(
-        range.contains(&deposit),
-        "{:#?} has a required storage deposit of {}",
+        range.contains(&cost),
+        "{:#?} has a required byte cost of {}",
         output,
-        deposit
+        cost
     );
 }
 

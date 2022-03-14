@@ -15,8 +15,9 @@ use alloc::vec::Vec;
 use core::ops::RangeInclusive;
 
 pub(crate) type TagLength =
-    BoundedU8<{ *TaggedDataPayload::LENGTH_RANGE.start() }, { *TaggedDataPayload::LENGTH_RANGE.end() }>;
-pub(crate) type TaggedDataLength = BoundedU32<0, { Message::LENGTH_MAX as u32 }>;
+    BoundedU8<{ *TaggedDataPayload::TAG_LENGTH_RANGE.start() }, { *TaggedDataPayload::TAG_LENGTH_RANGE.end() }>;
+pub(crate) type TaggedDataLength =
+    BoundedU32<{ *TaggedDataPayload::DATA_LENGTH_RANGE.start() }, { *TaggedDataPayload::DATA_LENGTH_RANGE.end() }>;
 
 /// A payload which holds a tag and associated data.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
@@ -32,8 +33,10 @@ pub struct TaggedDataPayload {
 impl TaggedDataPayload {
     /// The payload kind of a [`TaggedDataPayload`].
     pub const KIND: u32 = 5;
-    /// Valid lengths for a tag.
-    pub const LENGTH_RANGE: RangeInclusive<u8> = 1..=64;
+    /// Valid lengths for the tag.
+    pub const TAG_LENGTH_RANGE: RangeInclusive<u8> = 0..=64;
+    /// Valid lengths for the data.
+    pub const DATA_LENGTH_RANGE: RangeInclusive<u32> = 0..=Message::LENGTH_MAX as u32;
 
     /// Creates a new [`TaggedDataPayload`].
     pub fn new(tag: Vec<u8>, data: Vec<u8>) -> Result<Self, Error> {

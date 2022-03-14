@@ -1,6 +1,6 @@
 [package]
 name = "bee-protocol"
-version = "0.2.0"
+version = "0.2.2"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "All types and workers enabling the IOTA protocol"
@@ -17,8 +17,8 @@ all-features = true
 rustdoc-args = [ "--cfg", "doc_cfg" ]
 
 [dependencies]
-bee-autopeering = { version = "0.4.0", path = "../bee-network/bee-autopeering", default-features = false }
-bee-gossip = { version = "0.4.0", path = "../bee-network/bee-gossip", default-features = false }
+bee-autopeering = { version = "0.5.0", path = "../bee-network/bee-autopeering", default-features = false }
+bee-gossip = { version = "0.6.0", path = "../bee-network/bee-gossip", default-features = false }
 bee-ledger = { version = "0.7.0", path = "../bee-ledger", default-features = false, features = [ "workers" ], optional = true }
 bee-message = { version = "0.2.0", path = "../bee-message", default-features = false, features = [ "serde1" ] }
 bee-pow = { version = "0.2.0", path = "../bee-pow", default-features = false }
@@ -36,12 +36,12 @@ hex = { version = "0.4.3", default-features = false, optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 num_cpus = { version = "1.13.0", default-features = false, optional = true }
 packable = { version = "0.2.1", default-features = false }
-parking_lot = { version = "0.11.2", default-features = false, optional = true }
-rand = { version = "0.8.4", default-features = false, optional = true }
+parking_lot = { version = "0.12.0", default-features = false, optional = true }
+rand = { version = "0.8.5", default-features = false, optional = true }
 ref-cast = { version = "1.0.6", default-features = false, optional = true }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ]}
 thiserror = { version = "1.0.30", default-features = false, optional = true }
-tokio = { version = "1.12.0", default-features = false, features = [ "rt-multi-thread" ], optional = true }
+tokio = { version = "1.17.0", default-features = false, features = [ "rt-multi-thread" ], optional = true }
 tokio-stream = { version = "0.1.7", default-features = false, optional = true }
 twox-hash = { version = "1.6.1", default-features = false, optional = true }
 
@@ -71,4 +71,4 @@ workers = [
 ]
 
 [dev-dependencies]
-tokio = { version = "1.12.0", default-features = false, features = [ "macros" ] }
+tokio = { version = "1.17.0", default-features = false, features = [ "macros" ] }

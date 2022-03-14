@@ -1,5 +1,5 @@
 ---
-description: Bee uses the Toml standard as a configuration file. The default configuration file is `config.toml`. You can change the configuration file's path or name  by using the `-c` or `--config` flag.
+description: Bee uses the Toml standard as a configuration file. The default configuration file is `config.toml`. You can change the configuration file's path or name by using the `-c` or `--config` flag.
 image: /img/logo/bee_logo.png
 keywords:
 - REST
@@ -7,12 +7,15 @@ keywords:
 - configuration
 - Toml
 - config
+- reference
 ---
 # Configuration
 
+Here, you will find the more technical references of Bee. 
+
 Bee uses the Toml standard as a configuration file. If you are unsure about syntax, you can have a look at the [official Toml specifications](https://toml.io).
 
-The default configuration file is `config.toml`. You can change the configuration file's path or name  by using the `-c` or `--config` flag.
+The default configuration file is `config.toml`. You can change the configuration file's path or name by using the `-c` or `--config` flag.
 
 For example:
 
@@ -345,19 +348,6 @@ Example
 ```toml
 [tangle]
 below_max_depth = 15
-```
-
-## Mqtt
-
-| Name    | Description | Type   |
-| :------ | :---------- | :----- |
-| address | address     | string |
-
-Example:
-
-```toml
-[mqtt]
-address = "tcp://localhost:1883"
 ```
 
 ## Dashboard

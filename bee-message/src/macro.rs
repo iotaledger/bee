@@ -4,7 +4,7 @@
 /// TODO
 #[macro_export]
 macro_rules! impl_id {
-    ($name:ident, $length:literal, $doc:literal) => {
+    ($vis:vis $name:ident, $length:literal, $doc:literal) => {
         #[doc = $doc]
         #[derive(
             Clone,
@@ -19,14 +19,14 @@ macro_rules! impl_id {
             packable::Packable,
         )]
         #[as_ref(forward)]
-        pub struct $name([u8; $name::LENGTH]);
+        $vis struct $name([u8; $name::LENGTH]);
 
         impl $name {
             #[doc = concat!("The length of a [`", stringify!($ty),"`].")]
-            pub const LENGTH: usize = $length;
+            $vis const LENGTH: usize = $length;
 
             #[doc = concat!("Creates a new [`", stringify!($ty),"`].")]
-            pub fn new(bytes: [u8; $name::LENGTH]) -> Self {
+            $vis fn new(bytes: [u8; $name::LENGTH]) -> Self {
                 Self::from(bytes)
             }
         }
@@ -50,6 +50,14 @@ macro_rules! impl_id {
                 write!(f, "{}({})", stringify!($name), self)
             }
         }
+
+        impl core::ops::Deref for $name {
+            type Target = [u8; $name::LENGTH];
+
+            fn deref(&self) -> &Self::Target {
+                &self.0
+            }
+        }
     };
 }
 
@@ -58,24 +66,22 @@ macro_rules! impl_id {
 #[cfg(feature = "serde1")]
 macro_rules! string_serde_impl {
     ($type:ty) => {
-        use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
-
-        impl Serialize for $type {
-            fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        impl serde::Serialize for $type {
+            fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 use alloc::string::ToString;
 
                 s.serialize_str(&self.to_string())
             }
         }
 
-        impl<'de> Deserialize<'de> for $type {
+        impl<'de> serde::Deserialize<'de> for $type {
             fn deserialize<D>(deserializer: D) -> Result<$type, D::Error>
             where
-                D: Deserializer<'de>,
+                D: serde::Deserializer<'de>,
             {
                 struct StringVisitor;
 
-                impl<'de> Visitor<'de> for StringVisitor {
+                impl<'de> serde::de::Visitor<'de> for StringVisitor {
                     type Value = $type;
 
                     fn expecting(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -102,10 +108,10 @@ macro_rules! string_serde_impl {
 /// constant `pub const ALL_FLAGS: &'static []`.
 #[macro_export]
 macro_rules! create_bitflags {
-    ($(#[$meta:meta])* $Name:ident, $TagType:ty, [$(($FlagName:ident, $TypeName:ident),)+]) => {
+    ($(#[$meta:meta])* $vis:vis $Name:ident, $TagType:ty, [$(($FlagName:ident, $TypeName:ident),)+]) => {
         bitflags! {
             $(#[$meta])*
-            pub struct $Name: $TagType {
+            $vis struct $Name: $TagType {
                 $(
                     #[doc = concat!("Signals the presence of a [`", stringify!($TypeName), "`].")]
                     const $FlagName = 1 << $TypeName::KIND;
@@ -116,7 +122,7 @@ macro_rules! create_bitflags {
         impl $Name {
             #[allow(dead_code)]
             /// Returns a slice of all possible base flags.
-            pub const ALL_FLAGS: &'static [$Name] = &[$($Name::$FlagName),*];
+            $vis const ALL_FLAGS: &'static [$Name] = &[$($Name::$FlagName),*];
         }
     };
 }
