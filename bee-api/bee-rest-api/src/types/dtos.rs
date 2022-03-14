@@ -542,11 +542,8 @@ impl<'de> serde::Deserialize<'de> for AddressDto {
                 .ok_or_else(|| serde::de::Error::custom("invalid address type"))? as u8
             {
                 Ed25519Address::KIND => AddressDto::Ed25519({
-                    println!("got value of address");
-                    let r = Ed25519AddressDto::deserialize(value)
-                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize ed25519 address: {}", e)));
-                    println!("got value of address {:?}", r);
-                    r?
+                    Ed25519AddressDto::deserialize(value)
+                        .map_err(|e| serde::de::Error::custom(format!("cannot deserialize ed25519 address: {}", e)))?
                 }),
                 AliasAddress::KIND => AddressDto::Alias(
                     AliasAddressDto::deserialize(value)
