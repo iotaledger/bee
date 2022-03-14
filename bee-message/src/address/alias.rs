@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{hex::hex_encode_prefix, output::AliasId, Error};
+use crate::{output::AliasId, Error};
 
 use derive_more::{AsRef, Deref, From};
 
@@ -45,7 +45,7 @@ impl FromStr for AliasAddress {
 
 impl core::fmt::Display for AliasAddress {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", hex_encode_prefix(self.0))
+        write!(f, "{}", self.0)
     }
 }
 

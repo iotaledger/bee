@@ -1,11 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    hex::{hex_decode_prefix, hex_encode_prefix},
-    signature::Ed25519Signature,
-    Error,
-};
+use crate::{signature::Ed25519Signature, Error};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
@@ -39,8 +35,8 @@ impl Ed25519Address {
 
         if self.0 != *address {
             return Err(Error::SignaturePublicKeyMismatch {
-                expected: hex_encode_prefix(self.0),
-                actual: hex_encode_prefix(address),
+                expected: prefix_hex::encode(self.0),
+                actual: prefix_hex::encode(address.as_slice()),
             });
         }
 
@@ -62,13 +58,13 @@ impl FromStr for Ed25519Address {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Ed25519Address::new(hex_decode_prefix(s)?))
+        Ok(Ed25519Address::new(prefix_hex::decode(s).map_err(Error::HexError)?))
     }
 }
 
 impl core::fmt::Display for Ed25519Address {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", hex_encode_prefix(self.0))
+        write!(f, "{}", prefix_hex::encode(self.0))
     }
 }
 

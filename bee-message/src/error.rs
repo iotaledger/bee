@@ -22,6 +22,7 @@ use crate::{
 };
 
 use crypto::Error as CryptoError;
+use prefix_hex::Error as HexError;
 use primitive_types::U256;
 
 use alloc::string::String;
@@ -72,20 +73,7 @@ pub enum Error {
         circulating: U256,
         max: U256,
     },
-    HexInvalidPrefix {
-        c0: char,
-        c1: char,
-    },
-    HexInvalidHexCharacter {
-        c: char,
-        index: usize,
-    },
-    HexInvalidStringLength,
-    HexInvalidStringLengthSlice {
-        expected: usize,
-        actual: usize,
-    },
-    HexOddLength,
+    HexError(HexError),
     #[cfg(feature = "cpt2")]
     #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     InvalidIndexationDataLength(<IndexationDataLength as TryFrom<usize>>::Error),
@@ -245,18 +233,7 @@ impl fmt::Display for Error {
                 "invalid foundry output supply: circulating {}, max {}",
                 circulating, max
             ),
-            Error::HexInvalidPrefix { c0, c1 } => {
-                write!(f, "Invalid prefix `{c0}{c1}`, should be `0x`")
-            }
-            Error::HexInvalidHexCharacter { c, index } => {
-                write!(f, "Invalid character {:?} at position {}", c, index)
-            }
-            Error::HexInvalidStringLength => write!(f, "Invalid string length"),
-            Error::HexInvalidStringLengthSlice { expected, actual } => write!(
-                f,
-                "invalid hexadecimal length for slice: expected {expected} got {actual}"
-            ),
-            Error::HexOddLength => write!(f, "Odd number of digits in hex string"),
+            Error::HexError(error) => write!(f, "hex error: {}", error),
             #[cfg(feature = "cpt2")]
             Error::InvalidIndexationDataLength(length) => {
                 write!(f, "invalid indexation data length {}", length)

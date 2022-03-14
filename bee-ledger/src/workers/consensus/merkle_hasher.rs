@@ -96,7 +96,7 @@ mod tests {
         let hash = MerkleHasher::<Blake2b256>::new().digest(&hashes);
 
         assert_eq!(
-            hex_encode_prefix(hash),
+            prefix_hex::encode(hash),
             "0xbf67ce7ba23e8c0951b5abaec4f5524360d2c26d971ff226d3359fa70cdb0beb"
         )
     }

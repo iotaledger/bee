@@ -7,7 +7,7 @@ use packable::PackableExt;
 
 use core::str::FromStr;
 
-const MILESTONE_ID_VALID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
+const MILESTONE_ID_VALID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
 fn kind() {
@@ -18,7 +18,7 @@ fn kind() {
 fn debug_impl() {
     assert_eq!(
         format!("{:?}", TreasuryInput::from_str(MILESTONE_ID_VALID).unwrap()),
-        "TreasuryInput(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+        "TreasuryInput(0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
     );
 }
 

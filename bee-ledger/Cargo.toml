@@ -27,7 +27,7 @@ bytes = { version = "1.0.1", default-features = false, optional = true }
 digest = { version = "0.9.0", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false, optional = true }
 hashbrown = { version = "0.12.0", default-features = false, optional = true }
-hex = { version = "0.4.3", default-features = false, optional = true }
+prefix-hex = { version = "0.2.0", default-features = false, optional = true }
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "blake2b" ], optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 packable = { version = "0.2.1", default-features = false, features = [ "serde", "io" ] }
@@ -51,7 +51,7 @@ workers = [
   "digest",
   "futures",
   "hashbrown",
-  "hex",
+  "prefix-hex",
   "iota-crypto",
   "log",
   "ref-cast",

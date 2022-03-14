@@ -14,16 +14,16 @@ const ED25519_ADDRESS_BAD: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d100
 // The kind of an `Address` is the kind of the underlying address.
 #[test]
 fn kind() {
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
-    let ed25519_address = Address::from(Ed25519Address::new(bytes));
+    let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS).unwrap();
+    let ed25519_address = Address::from(Ed25519Address::new(bytes.try_into().unwrap()));
 
     assert_eq!(ed25519_address.kind(), 0);
 }
 
 #[test]
 fn generate_bech32_string() {
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
-    let address = Address::from(Ed25519Address::new(bytes));
+    let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS).unwrap();
+    let address = Address::from(Ed25519Address::new(bytes.try_into().unwrap()));
     let bech32_string = address.to_bech32("iota");
 
     assert_eq!(
@@ -34,7 +34,7 @@ fn generate_bech32_string() {
 
 #[test]
 fn generate_bech32_testnet_string() {
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+    let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let bech32_string = address.to_bech32("atoi");
 
@@ -46,7 +46,7 @@ fn generate_bech32_testnet_string() {
 
 #[test]
 fn bech32_string_to_address() {
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+    let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS).unwrap();
 
     let (hrp, address) =
         Address::try_from_bech32(&Address::from(Ed25519Address::new(bytes)).to_bech32("iota")).unwrap();
@@ -77,7 +77,7 @@ fn invalid_bech32_string_to_address() {
 
 #[test]
 fn pack_unpack_valid_ed25519() {
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+    let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let address_packed = address.pack_to_vec();
 

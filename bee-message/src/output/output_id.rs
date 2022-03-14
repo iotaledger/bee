@@ -1,12 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    hex::{hex_decode_prefix, hex_encode_prefix},
-    output::OUTPUT_INDEX_RANGE,
-    payload::transaction::TransactionId,
-    Error,
-};
+use crate::{output::OUTPUT_INDEX_RANGE, payload::transaction::TransactionId, Error};
 
 use crypto::hashes::{blake2b::Blake2b160, Digest};
 use packable::{bounded::BoundedU16, PackableExt};
@@ -83,19 +78,18 @@ impl FromStr for OutputId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; OutputId::LENGTH] = hex_decode_prefix(s)?;
+        let bytes: [u8; OutputId::LENGTH] = prefix_hex::decode(s).map_err(Error::HexError)?;
         Self::try_from(bytes)
     }
 }
 
 impl core::fmt::Display for OutputId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(
-            f,
-            "{}{}",
-            self.transaction_id,
-            hex_encode_prefix(self.index().to_le_bytes())
-        )
+        let mut buffer = [0u8; OutputId::LENGTH];
+        let (transaction_id, index) = buffer.split_at_mut(TransactionId::LENGTH);
+        transaction_id.copy_from_slice(self.transaction_id.as_ref());
+        index.copy_from_slice(&self.index().to_le_bytes());
+        write!(f, "{}", prefix_hex::encode(buffer))
     }
 }
 

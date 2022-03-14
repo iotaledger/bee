@@ -11,7 +11,7 @@ const MILESTONE_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7b
 
 #[test]
 fn debug_impl() {
-    let id_bytes: [u8; 32] = hex::decode(MILESTONE_ID).unwrap().try_into().unwrap();
+    let id_bytes: [u8; 32] = prefix_hex::decode(MILESTONE_ID).unwrap();
 
     assert_eq!(
         format!("{:?}", MilestoneId::new(id_bytes)),
@@ -21,7 +21,7 @@ fn debug_impl() {
 
 #[test]
 fn as_ref() {
-    let id_bytes = hex::decode(MILESTONE_ID).unwrap().try_into().unwrap();
+    let id_bytes = prefix_hex::decode(MILESTONE_ID).unwrap();
     let milestone = MilestoneId::new(id_bytes);
 
     assert_eq!(milestone.as_ref(), &id_bytes);

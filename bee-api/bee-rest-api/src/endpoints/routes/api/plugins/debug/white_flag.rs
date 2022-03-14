@@ -15,7 +15,7 @@ use crate::{
 };
 
 use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
-use bee_message::{hex::hex_encode_prefix, milestone::MilestoneIndex, MessageId};
+use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_protocol::workers::{event::MessageSolidified, request_message, MessageRequesterWorker, RequestedMessages};
 use bee_runtime::{event::Bus, resource::ResourceHandle};
 use bee_tangle::Tangle;
@@ -177,7 +177,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
 
             Ok(warp::reply::json(&WhiteFlagResponse {
-                merkle_tree_hash: hex_encode_prefix(metadata.merkle_proof()),
+                merkle_tree_hash: prefix_hex::encode(metadata.merkle_proof()),
             }))
         }
         Err(_) => {

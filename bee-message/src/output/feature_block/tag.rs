@@ -1,7 +1,7 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{hex::hex_encode_prefix, Error};
+use crate::Error;
 
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix};
 
@@ -53,7 +53,7 @@ impl TagFeatureBlock {
 
 impl core::fmt::Display for TagFeatureBlock {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", hex_encode_prefix(&*self.0))
+        write!(f, "{}", prefix_hex::encode(self.tag()))
     }
 }
 

@@ -24,8 +24,6 @@ mod message_id;
 pub mod address;
 /// A module that contains constants related to messages.
 pub mod constant;
-/// A module to perform hex conversions.
-pub mod hex;
 /// A module that provides types and syntactic validations of inputs.
 pub mod input;
 /// A module that provides types and syntactic validations of milestones.

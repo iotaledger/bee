@@ -1,19 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{
-    address::{Address, Ed25519Address},
-    Error,
-};
+use bee_message::address::{Address, Ed25519Address};
 
 use packable::PackableExt;
 
 use core::str::FromStr;
 
 const ED25519_ADDRESS: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const ED25519_ADDRESS_INVALID_LEN_TOO_SHORT: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6";
-const ED25519_ADDRESS_INVALID_LEN_TOO_LONG: &str =
-    "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64900";
 
 #[test]
 fn kind() {
@@ -41,24 +35,6 @@ fn generate_address() {
 #[test]
 fn from_str_valid() {
     Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
-}
-
-#[test]
-fn from_str_invalid_len_too_short() {
-    assert!(matches!(
-        Ed25519Address::from_str(ED25519_ADDRESS_INVALID_LEN_TOO_SHORT),
-        Err(Error::HexInvalidStringLengthSlice{expected, actual})
-            if expected == Ed25519Address::LENGTH * 2 && actual == Ed25519Address::LENGTH * 2 - 2
-    ));
-}
-
-#[test]
-fn from_str_invalid_len_too_long() {
-    assert!(matches!(
-        Ed25519Address::from_str(ED25519_ADDRESS_INVALID_LEN_TOO_LONG),
-        Err(Error::HexInvalidStringLengthSlice{expected, actual})
-            if expected == Ed25519Address::LENGTH * 2 && actual == Ed25519Address::LENGTH * 2 + 2
-    ));
 }
 
 #[test]
