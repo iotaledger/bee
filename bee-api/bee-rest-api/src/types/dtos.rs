@@ -411,13 +411,9 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
             {
                 #[cfg(feature = "cpt2")]
                 SignatureLockedSingleOutput::KIND => {
-                    println!("deserizling output",);
-                    let r =
-                        OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).map_err(
-                            |e| serde::de::Error::custom(format!("cannot deserialize legacy single output: {}", e)),
-                        )?);
-                    println!("deserizlied output",);
-                    r
+                    OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).map_err(
+                        |e| serde::de::Error::custom(format!("cannot deserialize legacy single output: {}", e)),
+                    )?)
                 }
                 #[cfg(feature = "cpt2")]
                 SignatureLockedDustAllowanceOutput::KIND => OutputDto::SignatureLockedDustAllowance(
