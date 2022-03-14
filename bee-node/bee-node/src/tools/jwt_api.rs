@@ -31,7 +31,7 @@ pub fn exec<B: NodeStorageBackend>(
     .build()?;
     let jwt = JsonWebToken::new(claims, local.keypair().secret().as_ref())?;
 
-    println!("Generated JWT: {}", jwt);
+    println!("{}", jwt);
 
     Ok(())
 }
