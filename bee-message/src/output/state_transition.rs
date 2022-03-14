@@ -13,6 +13,7 @@ pub enum StateTransitionError {
     NonZeroCreatedId,
     UnsortedCreatedFoundries,
     UnsupportedStateIndexOperation { current_state: u32, next_state: u32 },
+    UnsupportedStateTransition,
 }
 
 ///

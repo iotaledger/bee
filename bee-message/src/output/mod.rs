@@ -247,7 +247,9 @@ impl Output {
             (Some(Output::Alias(current_state)), None) => AliasOutput::destruction(current_state, context),
             (Some(Output::Foundry(current_state)), None) => FoundryOutput::destruction(current_state, context),
             (Some(Output::Nft(current_state)), None) => NftOutput::destruction(current_state, context),
-            _ => panic!("TODO"),
+
+            // Unsupported.
+            _ => Err(StateTransitionError::UnsupportedStateTransition),
         }
     }
 
