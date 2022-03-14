@@ -292,15 +292,15 @@ where
 
         let snapshot_pruning_delta = bmd + EXTRA_PRUNING_DEPTH;
         let pruning_delay_min = snapshot_depth + snapshot_pruning_delta;
-        let pruning_delay = if pruning_config.delay() < pruning_delay_min {
+        let pruning_delay = if pruning_config.pruning_milestones().max_milestones_to_keep() < pruning_delay_min {
             warn!(
                 "Configuration value for \"pruning.delay\" is too low ({}), value changed to {}.",
-                pruning_config.delay(),
+                pruning_config.pruning_milestones().max_milestones_to_keep(),
                 pruning_delay_min
             );
             pruning_delay_min
         } else {
-            pruning_config.delay()
+            pruning_config.pruning_milestones().max_milestones_to_keep()
         };
 
         // Unwrap is fine because ledger index was already in storage or just added by the snapshot worker.

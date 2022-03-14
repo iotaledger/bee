@@ -23,7 +23,7 @@ pub(crate) fn should_prune<B: StorageBackend>(
     pruning_delay: u32,
     config: &PruningConfig,
 ) -> Result<(MilestoneIndex, MilestoneIndex), PruningSkipReason> {
-    if config.disabled() {
+    if !config.pruning_milestones().enabled() {
         return Err(PruningSkipReason::Disabled);
     }
 

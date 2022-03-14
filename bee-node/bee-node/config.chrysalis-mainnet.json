@@ -136,14 +136,14 @@
       "enabled": false,
       "maxMilestonesToKeep": 60480
     },
-    "size": {
+    "receipts": {
+      "enabled": false
+    },
+    "bySize": {
       "enabled": true,
       "targetSize": "30GB",
       "thresholdPercentage": 10.0,
       "cooldownTime": "5m"
-    },
-    "receipts": {
-      "enabled": false
     }
   },
   "storage": {
