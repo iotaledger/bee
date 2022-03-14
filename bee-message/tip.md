@@ -24,18 +24,6 @@ This unlock condition is employed to achieve conditional sending. An output that
   their return amounts per `Return Addresses` are summed up and the output side of the transaction must deposit this
   total sum per `Return Address`.
 
-##### Timelock Unlock Conditions
-The timelock can be specified as a unix timestamp or as a milestone index. When specified in both ways, both conditions
-have to pass in order for the unlock to be valid. The zero value of one if the timestamp fields signals that it should be
-ignored during validation.
-
-###### Additional semantic transaction validation rules:
-- An output that has <i>Timelock Unlock Condition</i> specified must only be consumed and unlocked in a
-  transaction, if the confirming milestone index is ≥ than the `Milestone Index` specified in the unlock condition.
-- An output that has <i>Timelock Unlock Condition</i> specified must only be consumed and unlocked in a
-  transaction, if the timestamp of the confirming milestone is equal or past the `Unix Time` specified in the unlock
-  condition.
-
 ##### Expiration Unlock Conditions Additional semantic transaction validation rules:
 - If `Milestone Index` != `0`, an output that has <i>Expiration Unlock Condition</i> set must only be consumed and
   unlocked by the target `Address` (defined in <i>Address Unlock Condition</i>) in a transaction that has a confirming

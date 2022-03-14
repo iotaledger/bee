@@ -13,10 +13,7 @@ use crate::{
 use bee_message::{
     address::Address,
     input::Input,
-    output::{
-        AliasId, AliasOutput, BasicOutput, FoundryOutput, NftId, NftOutput, Output, OutputId,
-        UnlockCondition,
-    },
+    output::{AliasId, AliasOutput, BasicOutput, FoundryOutput, NftId, NftOutput, Output, OutputId},
     payload::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
@@ -31,44 +28,6 @@ use bee_tangle::Tangle;
 use crypto::hashes::blake2b::Blake2b256;
 
 use std::collections::HashSet;
-
-fn check_input_unlock_conditions(
-    unlock_conditions: &[UnlockCondition],
-    context: &ValidationContext,
-) -> Result<(), ConflictReason> {
-    for unlock_condition in unlock_conditions {
-        match unlock_condition {
-            UnlockCondition::Address(_) => {
-                todo!()
-            }
-            UnlockCondition::StorageDepositReturn(_) => {
-                todo!()
-            }
-            UnlockCondition::Timelock(timelock) => {
-                if *timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index() {
-                    return Err(ConflictReason::TimelockMilestoneIndex);
-                }
-                if timelock.timestamp() != 0 && context.milestone_timestamp < timelock.timestamp() as u64 {
-                    return Err(ConflictReason::TimelockUnix);
-                }
-            }
-            UnlockCondition::Expiration(_) => {
-                todo!()
-            }
-            UnlockCondition::StateControllerAddress(_) => {
-                todo!()
-            }
-            UnlockCondition::GovernorAddress(_) => {
-                todo!()
-            }
-            UnlockCondition::ImmutableAliasAddress(_) => {
-                todo!()
-            }
-        }
-    }
-
-    Ok(())
-}
 
 fn unlock_address(
     address: &Address,
@@ -228,32 +187,45 @@ fn apply_regular_essence<B: StorageBackend>(
         // NOTE: do not rework this into a zip together with inputs as `get` also resolve reference links.
         let unlock_block = unlock_blocks.get(index).unwrap();
 
-        let (conflict, amount, consumed_native_tokens) = match consumed_output {
+        let (conflict, amount, consumed_native_tokens, unlock_conditions) = match consumed_output {
             Output::Basic(output) => (
                 unlock_basic_output(output_id, output, unlock_block, &inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
+                output.unlock_conditions(),
             ),
             Output::Alias(output) => (
                 unlock_alias_output(output_id, output, unlock_block, &inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
+                output.unlock_conditions(),
             ),
             Output::Foundry(output) => (
                 unlock_foundry_output(output_id, output, unlock_block, &inputs, &context),
                 output.amount(),
                 output.native_tokens(),
+                output.unlock_conditions(),
             ),
             Output::Nft(output) => (
                 unlock_nft_output(output_id, output, unlock_block, &inputs, &context),
                 output.amount(),
                 output.native_tokens(),
+                output.unlock_conditions(),
             ),
             _ => return Err(Error::UnsupportedOutputKind(consumed_output.kind())),
         };
 
         if let Err(conflict) = conflict {
             return Ok(conflict);
+        }
+
+        if let Some(timelock) = unlock_conditions.timelock() {
+            if *timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index() {
+                return Ok(ConflictReason::TimelockMilestoneIndex);
+            }
+            if timelock.timestamp() != 0 && context.milestone_timestamp < timelock.timestamp() as u64 {
+                return Ok(ConflictReason::TimelockUnix);
+            }
         }
 
         context.input_amount = context
