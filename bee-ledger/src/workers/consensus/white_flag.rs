@@ -11,9 +11,9 @@ use crate::{
 };
 
 use bee_message::{
-    address::Address,
+    address::{Address, AliasAddress, NftAddress},
     input::Input,
-    output::{AliasId, AliasOutput, BasicOutput, ChainId, FoundryOutput, NftOutput, Output, OutputId},
+    output::{AliasId, AliasOutput, BasicOutput, ChainId, FoundryOutput, NftId, NftOutput, Output, OutputId},
     payload::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
@@ -46,6 +46,8 @@ fn unlock_address(
             if signature.is_valid(&context.essence_hash, ed25519_address).is_err() {
                 return Err(ConflictReason::InvalidSignature);
             }
+
+            context.unlocked_addresses.insert(*address);
         }
         (Address::Ed25519(_ed25519_address), UnlockBlock::Reference(_unlock_block)) => {
             // TODO actually check that it was unlocked by the same signature.
@@ -76,8 +78,6 @@ fn unlock_address(
         }
         _ => return Err(ConflictReason::IncorrectUnlockMethod),
     }
-
-    context.unlocked_addresses.insert(*address);
 
     Ok(())
 }
@@ -120,7 +120,13 @@ fn unlock_alias_output(
         None => output.governor_address(),
     };
 
-    unlock_address(locked_address, unlock_block, inputs, context)
+    unlock_address(locked_address, unlock_block, inputs, context)?;
+
+    context
+        .unlocked_addresses
+        .insert(Address::from(AliasAddress::from(alias_id)));
+
+    Ok(())
 }
 
 fn unlock_foundry_output(
@@ -143,13 +149,19 @@ fn unlock_nft_output(
     context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
     let locked_address = output.address();
-    // let nft_id = if output.nft_id().is_null() {
-    //     NftId::new(output_id.hash())
-    // } else {
-    //     *output.nft_id()
-    // };
+    let nft_id = if output.nft_id().is_null() {
+        NftId::new(output_id.hash())
+    } else {
+        *output.nft_id()
+    };
 
-    unlock_address(locked_address, unlock_block, inputs, context)
+    unlock_address(locked_address, unlock_block, inputs, context)?;
+
+    context
+        .unlocked_addresses
+        .insert(Address::from(NftAddress::from(nft_id)));
+
+    Ok(())
 }
 
 fn apply_regular_essence<B: StorageBackend>(
