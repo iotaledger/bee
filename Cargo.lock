@@ -436,7 +436,7 @@ dependencies = [
  "futures",
  "log",
  "reqwest",
- "semver 1.0.4",
+ "semver 1.0.6",
  "serde",
  "serde_json",
  "tokio",

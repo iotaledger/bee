@@ -25,7 +25,7 @@ impl ReleaseInfoBuilder {
 
         match Version::parse(&version) {
             Err(e) => {
-                log::warn!("error parsing version from tag {}: {}", self.tag_name, e);
+                log::warn!("Error parsing version from tag {}: {}", self.tag_name, e);
                 None
             }
             Ok(version) => version.pre.is_empty().then(|| ReleaseInfo {
