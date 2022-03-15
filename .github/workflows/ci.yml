@@ -223,7 +223,7 @@ jobs:
       - uses: Swatinem/rust-cache@v1
 
       - name: Run doc
-        run: .github/workflows/scripts/for_each_crate.sh "doc" "--no-deps --document-private-items"
+        run: .github/workflows/scripts/for_each_crate.sh "doc" "--all-features --no-deps --document-private-items"
 
   missing-files:
     runs-on: ubuntu-latest
