@@ -13,7 +13,7 @@ use crate::{
 use bee_message::{
     address::Address,
     input::Input,
-    output::{AliasId, AliasOutput, BasicOutput, ChainId, FoundryOutput, NftId, NftOutput, Output, OutputId},
+    output::{AliasId, AliasOutput, BasicOutput, ChainId, FoundryOutput, NftOutput, Output, OutputId},
     payload::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
@@ -37,9 +37,18 @@ fn unlock_address(
 ) -> Result<(), ConflictReason> {
     match (address, unlock_block) {
         (Address::Ed25519(ed25519_address), UnlockBlock::Signature(unlock_block)) => {
+            if context.unlocked_addresses.contains(address) {
+                return Err(ConflictReason::SemanticValidationFailed);
+            }
+
             let Signature::Ed25519(signature) = unlock_block.signature();
 
             if signature.is_valid(&context.essence_hash, ed25519_address).is_err() {
+                return Err(ConflictReason::InvalidSignature);
+            }
+        }
+        (Address::Ed25519(ed25519_address), UnlockBlock::Reference(unlock_block)) => {
+            if !context.unlocked_addresses.contains(address) {
                 return Err(ConflictReason::InvalidSignature);
             }
         }
@@ -200,11 +209,7 @@ fn apply_regular_essence<B: StorageBackend>(
     }
 
     // Validation of inputs.
-    for (index, (output_id, consumed_output)) in inputs.iter().enumerate() {
-        // SAFETY: it is already known that there is the same amount of inputs and unlock blocks.
-        // NOTE: do not rework this into a zip together with inputs as `get` also resolve reference links.
-        let unlock_block = unlock_blocks.get(index).unwrap();
-
+    for (index, ((output_id, consumed_output), unlock_block)) in inputs.iter().zip(unlock_blocks.iter()).enumerate() {
         let (conflict, amount, consumed_native_tokens, unlock_conditions) = match consumed_output {
             Output::Basic(output) => (
                 unlock_basic_output(output_id, output, unlock_block, &inputs, &mut context),
