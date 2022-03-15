@@ -21,21 +21,20 @@ impl ReleaseInfoBuilder {
     ///  - `Some` otherwise.
     pub(crate) fn build(self, pre_release: bool) -> Option<ReleaseInfo> {
         let mut version = self.tag_name.clone();
-        version.retain(|c| c != 'v');
+        
+        if version.starts_with('v') {
+            version.remove(0);
+        }
 
         match Version::parse(&version) {
             Err(e) => {
                 log::warn!("Error parsing version from tag {}: {}", self.tag_name, e);
                 None
             }
-            Ok(version) => {
-                let selected = if pre_release { true } else { version.pre.is_empty() };
-
-                selected.then(|| ReleaseInfo {
-                    html_url: self.html_url,
-                    version,
-                })
-            }
+            Ok(version) => (pre_release || version.pre.is_empty()).then(|| ReleaseInfo {
+                html_url: self.html_url,
+                version,
+            }),
         }
     }
 }
