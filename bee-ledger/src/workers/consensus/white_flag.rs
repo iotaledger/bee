@@ -47,7 +47,8 @@ fn unlock_address(
                 return Err(ConflictReason::InvalidSignature);
             }
         }
-        (Address::Ed25519(ed25519_address), UnlockBlock::Reference(unlock_block)) => {
+        (Address::Ed25519(_ed25519_address), UnlockBlock::Reference(_unlock_block)) => {
+            // TODO actually check that it was unlocked by the same signature.
             if !context.unlocked_addresses.contains(address) {
                 return Err(ConflictReason::InvalidSignature);
             }
@@ -55,7 +56,8 @@ fn unlock_address(
         (Address::Alias(alias_address), UnlockBlock::Alias(unlock_block)) => {
             // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
             if let Output::Alias(alias_output) = inputs[unlock_block.index() as usize].1 {
-                if alias_output.alias_id() != alias_address.alias_id() {
+                if alias_output.alias_id() != alias_address.alias_id() || !context.unlocked_addresses.contains(address)
+                {
                     return Err(ConflictReason::IncorrectUnlockMethod);
                 }
             } else {
@@ -65,7 +67,7 @@ fn unlock_address(
         (Address::Nft(nft_address), UnlockBlock::Nft(unlock_block)) => {
             // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
             if let Output::Nft(nft_output) = inputs[unlock_block.index() as usize].1 {
-                if nft_output.nft_id() != nft_address.nft_id() {
+                if nft_output.nft_id() != nft_address.nft_id() || !context.unlocked_addresses.contains(address) {
                     return Err(ConflictReason::IncorrectUnlockMethod);
                 }
             } else {
