@@ -57,7 +57,6 @@ This unlock condition is employed to achieve conditional sending. An output that
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
 
 #### Consumed Outputs
-- The unlock block of the input must correspond to `Address` field in the <i>Address Unlock Condition</i> and the unlock must be valid.
 - The unlock is valid if and only if all unlock conditions and feature blocks present in the output validate.
 
 #### Created Outputs
@@ -70,16 +69,8 @@ This unlock condition is employed to achieve conditional sending. An output that
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
 
 ### Additional Transaction Semantic Validation Rules
-- Explicit `Alias ID`: `Alias ID` is taken as the value of the `Alias ID` field in the alias output.
-- Implicit `Alias ID`: When an alias output is consumed as an input in a transaction and `Alias ID` field is zeroed out
-  while `State Index` and `Foundry Counter` are zero, take the BLAKE2b-160 hash of the `Output ID` of the input as
-  `Alias ID`.
 - For every non-zero explicit `Alias ID` on the output side there must be a corresponding alias on the input side. The
   corresponding alias has the explicit or implicit `Alias ID` equal to that of the alias on the output side.
-
-#### Consumed Outputs
-- State transition: The unlock block must correspond to the `Address` of <i>State Controller Address Unlock Condition</i>.
-- Governance transition: The unlock block must correspond to the `Address` of <i>Governor Address Unlock Condition</i>.
 
 ## Foundry Output
 Upon creation of the foundry, the alias defined in the `Address` field of the
@@ -132,14 +123,10 @@ field must increment. This incremented value defines `Serial Number`, while the 
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
 
 ### Additional Transaction Semantic Validation Rules
-- Explicit `NFT ID`: `NFT ID` is taken as the value of the `NFT ID` field in the NFT output.
-- Implicit `NFT ID`: When an NFT output is consumed as an input in a transaction and `NFT ID` field is zeroed out, take
-  the BLAKE2b-160 hash of the `Output ID` of the input as `NFT ID`.
 - For every non-zero explicit `NFT ID` on the output side there must be a corresponding NFT on the input side. The
   corresponding NFT has the explicit or implicit `NFT ID` equal to that of the NFT on the output side.
 
 #### Consumed Outputs
-- The unlock block of the input corresponds to `Address` field of the <i>Address Unlock Condition</i> and the unlock is valid.
 - The unlock is valid if and only if all unlock conditions and feature blocks present in the output validate.
 - When a consumed NFT output has no corresponding NFT output on the output side, the NFT it is being burned. Funds
   and assets inside the burned NFT output must be redistributed to other outputs in the burning transaction.

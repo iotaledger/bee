@@ -310,6 +310,14 @@ impl StateTransition for AliasOutput {
             return Err(StateTransitionError::NonZeroCreatedId);
         }
 
+        if next_state.state_index != 0 {
+            return Err(StateTransitionError::NonZeroCreatedStateIndex);
+        }
+
+        if next_state.foundry_counter != 0 {
+            return Err(StateTransitionError::NonZeroCreatedFoundryCounter);
+        }
+
         if let Some(issuer) = next_state.immutable_feature_blocks().issuer() {
             if !context.unlocked_addresses.contains(issuer.address()) {
                 return Err(StateTransitionError::IssuerNotUnlocked);
