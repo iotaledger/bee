@@ -13,7 +13,7 @@ use crate::{
 use bee_message::{
     address::Address,
     input::Input,
-    output::{AliasId, AliasOutput, BasicOutput, FoundryOutput, NftId, NftOutput, Output, OutputId},
+    output::{AliasId, AliasOutput, BasicOutput, ChainId, FoundryOutput, NftId, NftOutput, Output, OutputId},
     payload::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
@@ -78,20 +78,33 @@ fn unlock_basic_output(
     inputs: &[(OutputId, &Output)],
     context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
-    unlock_address(output.address(), unlock_block, inputs, context)
+    let locked_address = output.address();
+
+    unlock_address(locked_address, unlock_block, inputs, context)
 }
 
 fn unlock_alias_output(
     output_id: &OutputId,
-    current_state: &AliasOutput,
+    output: &AliasOutput,
     unlock_block: &UnlockBlock,
     inputs: &[(OutputId, &Output)],
     context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
-    let alias_id = if current_state.alias_id().is_null() {
+    let alias_id = if output.alias_id().is_null() {
         AliasId::new(output_id.hash())
     } else {
-        *current_state.alias_id()
+        *output.alias_id()
+    };
+    let next_state = context.output_chains.get(&ChainId::from(alias_id));
+
+    let locked_address = if let Some(next_state) = next_state {
+        if output.state_index() == next_state.state_index() {
+            output.governor_address()
+        } else {
+            output.state_controller_address()
+        }
+    } else {
+        output.governor_address()
     };
 
     Ok(())
@@ -104,6 +117,8 @@ fn unlock_foundry_output(
     inputs: &[(OutputId, &Output)],
     context: &ValidationContext,
 ) -> Result<(), ConflictReason> {
+    let locked_address = output.alias_address();
+
     Ok(())
 }
 
@@ -114,11 +129,12 @@ fn unlock_nft_output(
     inputs: &[(OutputId, &Output)],
     context: &ValidationContext,
 ) -> Result<(), ConflictReason> {
-    let nft_id = if output.nft_id().is_null() {
-        NftId::new(output_id.hash())
-    } else {
-        *output.nft_id()
-    };
+    let locked_address = output.address();
+    // let nft_id = if output.nft_id().is_null() {
+    //     NftId::new(output_id.hash())
+    // } else {
+    //     *output.nft_id()
+    // };
 
     Ok(())
 }
