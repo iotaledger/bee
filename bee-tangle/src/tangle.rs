@@ -120,7 +120,7 @@ impl<B: StorageBackend> Tangle<B> {
 
     /// Return whether the tangle contains the given milestone index.
     pub async fn contains_milestone(&self, index: MilestoneIndex) -> bool {
-        self.get_milestone(index).await.is_some()
+        self.storage.exist(&index).unwrap_or_default()
     }
 
     /// Get the index of the latest milestone.
@@ -321,7 +321,7 @@ impl<B: StorageBackend> Tangle<B> {
 
     /// Returns whether the message is stored in the Tangle.
     pub async fn contains(&self, message_id: &MessageId) -> bool {
-        self.get_message_and_metadata(message_id).await.is_some()
+        self.storage.exist(message_id).unwrap_or_default()
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.

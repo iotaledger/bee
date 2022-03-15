@@ -9,7 +9,7 @@ use bee_message::{
 };
 
 use bee_storage::{
-    access::{Fetch, Insert, Update},
+    access::{Exist, Fetch, Insert, Update},
     backend,
 };
 
@@ -21,6 +21,8 @@ pub trait StorageBackend:
     + Insert<(MessageId, MessageId), ()>
     + Insert<MilestoneIndex, Milestone>
     + Insert<SolidEntryPoint, MilestoneIndex>
+    + Exist<MessageId, Message>
+    + Exist<MilestoneIndex, Milestone>
     + Fetch<MessageId, Message>
     + Fetch<MessageId, MessageMetadata>
     + Fetch<MessageId, Vec<MessageId>>
@@ -36,6 +38,8 @@ impl<T> StorageBackend for T where
         + Insert<(MessageId, MessageId), ()>
         + Insert<MilestoneIndex, Milestone>
         + Insert<SolidEntryPoint, MilestoneIndex>
+        + Exist<MessageId, Message>
+        + Exist<MilestoneIndex, Milestone>
         + Fetch<MessageId, Message>
         + Fetch<MessageId, MessageMetadata>
         + Fetch<MessageId, Vec<MessageId>>
