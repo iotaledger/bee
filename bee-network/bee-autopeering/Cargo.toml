@@ -33,16 +33,16 @@ serde = { version = "1.0", default-features = false, features = [ "derive" ] }
 sled = { version = "0.34.7", default-features = false, optional = true }
 thiserror = { version = "1.0.29", default-features = false  }
 tokio = { version = "1.11", default-features = false, features = [ "macros", "rt", "time", "net" ] }
-tokio-stream = { version = "0.1", default-features = false  }
 
 # `udeps` false positives
 [package.metadata.cargo-udeps.ignore]
-normal = [ "bincode", "tokio-stream" ]
+normal = [ "bincode" ]
 
 [dev-dependencies]
 fern = { version = "0.6.0", default-features = false }
 serde_json = { version = "1.0.68", default-features = false, features = [ "std" ] }
 tokio = { version = "1.11.0", default-features = false, features = [ "rt", "rt-multi-thread", "macros", "signal", "time", "io-std", "io-util" ] }
+tokio-stream = { version = "0.1", default-features = false  }
 toml = { version = "0.5.8", default-features = false }
 
 [build-dependencies]
