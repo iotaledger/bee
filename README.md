@@ -46,12 +46,10 @@ The Bee repository has different branches:
 
 |Branch|Description|
 |------|-----------|
-|`mainnet`|The latest release for the IOTA protocol|
-|`mainnet-develop*`|Ongoing development for the IOTA protocol|
-|`shimmer`|The latest release for the Shimmer protocol|
-|`shimmer-develop*`|Ongoing development for the Shimmer protocol|
-
-With every release, the `*-develop` branches will be merged into their associated release branches.
+|`production`|The latest release for the IOTA networks (`mainnet`, `devnet`, `comnet`).|
+|`develop`|The ongoing development for future releases of these networks. With every release, the `develop` branch will be merged into `production`.|
+|`staging`|The latest release for the Shimmer networks (`testnet`).|
+| other | Branches with codenames like `stardust` reflect current projects. Similar to `develop` these project branches will find their way into `staging` once they are ready.| 
 
 ## Supporting the Project
 
