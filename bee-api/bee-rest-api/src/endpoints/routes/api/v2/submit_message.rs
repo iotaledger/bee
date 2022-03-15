@@ -52,7 +52,7 @@ pub(crate) fn filter<B: StorageBackend>(
                     allowed_ips.clone(),
                 ))
                 .and(warp::body::json())
-                .and(with_tangle(tangle.clone()))
+                .and(with_tangle(tangle))
                 .and(with_message_submitter(message_submitter.clone()))
                 .and(with_rest_api_config(rest_api_config))
                 .and(with_protocol_config(protocol_config))

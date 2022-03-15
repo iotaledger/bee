@@ -63,7 +63,7 @@ pub(crate) fn filter<B: StorageBackend>(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),
-        network_id.clone(),
+        network_id,
         bech32_hrp,
         rest_api_config.clone(),
         protocol_config.clone(),
