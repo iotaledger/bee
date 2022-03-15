@@ -29,7 +29,6 @@ const CONFIRMED_THRESHOLD: u32 = 2;
 pub struct Tangle<B> {
     config: TangleConfig,
     storage: ResourceHandle<B>,
-    milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
     solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
     latest_milestone_index: AtomicU32,
     solid_milestone_index: AtomicU32,
@@ -45,7 +44,6 @@ impl<B: StorageBackend> Tangle<B> {
     pub fn new(config: TangleConfig, storage: ResourceHandle<B>) -> Self {
         Self {
             storage,
-            milestones: Default::default(),
             solid_entry_points: Default::default(),
             latest_milestone_index: Default::default(),
             solid_milestone_index: Default::default(),
@@ -96,36 +94,14 @@ impl<B: StorageBackend> Tangle<B> {
         self.storage
             .insert(&idx, &milestone)
             .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
-        self.milestones.lock().await.insert(idx, milestone);
-    }
-
-    /// Remove a milestone from the tangle.
-    pub async fn remove_milestone(&self, index: MilestoneIndex) {
-        self.milestones.lock().await.remove(&index);
-    }
-
-    async fn pull_milestone(&self, idx: MilestoneIndex) -> Option<MessageId> {
-        if let Some(milestone) = self.storage.fetch(&idx).unwrap_or_else(|e| {
-            info!("Failed to insert message {:?}", e);
-            None
-        }) {
-            let message_id = *self
-                .milestones
-                .lock()
-                .await
-                .entry(idx)
-                .or_insert(milestone)
-                .message_id();
-
-            Some(message_id)
-        } else {
-            None
-        }
     }
 
     /// Get the milestone from the tangle that corresponds to the given milestone index.
     pub async fn get_milestone(&self, index: MilestoneIndex) -> Option<Milestone> {
-        self.milestones.lock().await.get(&index).cloned()
+        self.storage.fetch(&index).unwrap_or_else(|e| {
+            info!("Failed to fetch milestone {:?}", e);
+            None
+        })
     }
 
     /// Get the message associated with the given milestone index from the tangle.
@@ -139,22 +115,12 @@ impl<B: StorageBackend> Tangle<B> {
 
     /// Get the message ID associated with the given milestone index from the tangle.
     pub async fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
-        let message_id = self.milestones.lock().await.get(&index).map(|m| *m.message_id());
-
-        // TODO: use combinator instead of match
-        match message_id {
-            Some(m) => Some(m),
-            None => Some(self.pull_milestone(index).await?),
-        }
+        self.get_milestone(index).await.map(|m| *m.message_id())
     }
 
     /// Return whether the tangle contains the given milestone index.
-    pub async fn contains_milestone(&self, idx: MilestoneIndex) -> bool {
-        // Not using `||` as its first operand would keep the lock alive causing a deadlock with its second operand.
-        if self.milestones.lock().await.contains_key(&idx) {
-            return true;
-        }
-        self.pull_milestone(idx).await.is_some()
+    pub async fn contains_milestone(&self, index: MilestoneIndex) -> bool {
+        self.get_milestone(index).await.is_some()
     }
 
     /// Get the index of the latest milestone.
