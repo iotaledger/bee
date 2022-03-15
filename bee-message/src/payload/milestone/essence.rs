@@ -66,7 +66,11 @@ impl MilestoneEssence {
         receipt: Option<Payload>,
     ) -> Result<Self, Error> {
         verify_pow_scores(index, next_pow_score, next_pow_score_milestone_index)?;
-        verify_public_keys(public_keys.as_slice())?;
+
+        let public_keys = VecPrefix::<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH], PublicKeyCount>::try_from(public_keys)
+            .map_err(Error::MilestoneInvalidPublicKeyCount)?;
+
+        verify_public_keys(&public_keys)?;
 
         let receipt = OptionalPayload::from(receipt);
 
@@ -79,7 +83,7 @@ impl MilestoneEssence {
             merkle_proof,
             next_pow_score,
             next_pow_score_milestone_index,
-            public_keys: public_keys.try_into().map_err(Error::MilestoneInvalidPublicKeyCount)?,
+            public_keys,
             receipt,
         })
     }

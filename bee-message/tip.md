@@ -78,13 +78,8 @@ This unlock condition is employed to achieve conditional sending. An output that
   corresponding alias has the explicit or implicit `Alias ID` equal to that of the alias on the output side.
 
 #### Consumed Outputs
-There are two types of transitions: `state transition` and `governance transition`.
 - State transition: The unlock block must correspond to the `Address` of <i>State Controller Address Unlock Condition</i>.
 - Governance transition: The unlock block must correspond to the `Address` of <i>Governor Address Unlock Condition</i>.
-
-#### Created Outputs
-- When <i>Issuer Block</i> is present in an output and explicit `Alias ID` is zeroed out, an input with `Address` field
-  that corresponds to `Issuer` must be unlocked in the transaction.
 
 ## Foundry Output
 Upon creation of the foundry, the alias defined in the `Address` field of the
@@ -150,9 +145,6 @@ field must increment. This incremented value defines `Serial Number`, while the 
   and assets inside the burned NFT output must be redistributed to other outputs in the burning transaction.
 
 #### Created Outputs
-- When `Issuer Block` is present in an output and explicit `NFT ID` is zeroed out, an input with `Address` field that
-  corresponds to `Issuer` must be unlocked in the transaction. If `Address` is either <i>Alias Address</i> or
-  <i>NFT Address</i>, their corresponding outputs (defined by `Alias ID` and `NFT ID`) must be unlocked in the transaction.
 - All <i>Unlock Condition</i> imposed transaction validation criteria must be fulfilled.
 - All <i>Feature Block</i> imposed transaction validation criteria must be fulfilled.
 
