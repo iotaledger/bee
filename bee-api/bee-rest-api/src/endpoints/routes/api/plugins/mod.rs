@@ -16,5 +16,5 @@ use axum::Router;
 
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().nest("plugins", debug::filter())
+    Router::new().nest("plugins", debug::filter::<B>())
 }

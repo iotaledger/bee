@@ -20,7 +20,7 @@ use bee_tangle::Tangle;
 use futures::channel::oneshot;
 use serde_json::{Value as JsonValue, Value};
 use tokio::time::timeout;
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, reject, Rejection, Reply};
 
 use std::{
     any::TypeId,
@@ -45,14 +45,14 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 pub(crate) async fn white_flag<B: StorageBackend>(
     Json(body): Json<Value>,
     Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, ApiError> {
     let index_json = &body["index"];
     let parents_json = &body["parentMessageIds"];
 
     let index = if index_json.is_null() {
-        return ApiError::BadRequest(
+        return Err(ApiError::BadRequest(
             "Invalid index: expected a MilestoneIndex".to_string(),
-        );
+        ));
     } else {
         MilestoneIndex(index_json.as_u64().ok_or_else(|| {
            ApiError::BadRequest(
@@ -62,9 +62,9 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     };
 
     let parents = if parents_json.is_null() {
-        return ApiError::BadRequest(
+        return Err(ApiError::BadRequest(
             "Invalid parents: expected an array of MessageId".to_string(),
-        );
+        ));
     } else {
         let array = parents_json.as_array().ok_or_else(|| {
             ApiError::BadRequest(
@@ -151,15 +151,15 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 .await
                 .map_err(|e| ApiError::BadRequest(e.to_string()))?;
 
-            Ok(warp::reply::json(&WhiteFlagResponse {
+            Ok(Json(WhiteFlagResponse {
                 merkle_tree_hash: hex::encode(metadata.merkle_proof()),
             }))
         }
         Err(_) => {
             // Did timeout, parents are not solid and white flag can not happen.
-            ApiError::ServiceUnavailable(
+            Err(ApiError::ServiceUnavailable(
                 "parents not solid".to_string(),
-            )
+            ))
         }
     };
 
