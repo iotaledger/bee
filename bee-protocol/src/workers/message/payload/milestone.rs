@@ -68,7 +68,7 @@ fn validate(
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn process<B: StorageBackend>(
+fn process<B: StorageBackend>(
     tangle: &Tangle<B>,
     message_id: MessageId,
     message: MessageRef,
@@ -90,7 +90,7 @@ async fn process<B: StorageBackend>(
 
         match validate(message_id, &message, milestone, key_manager) {
             Ok(milestone) => {
-                tangle.add_milestone(index, milestone.clone()).await;
+                tangle.add_milestone(index, milestone.clone());
                 if index > tangle.get_latest_milestone_index() {
                     info!("New milestone {} {}.", index, milestone.message_id());
                     tangle.update_latest_milestone_index(index);
@@ -166,8 +166,7 @@ where
                     &milestone_solidifier,
                     &key_manager,
                     &bus,
-                )
-                .await;
+                );
             }
 
             // Before the worker completely stops, the receiver needs to be drained for milestone payloads to be
@@ -187,8 +186,7 @@ where
                     &milestone_solidifier,
                     &key_manager,
                     &bus,
-                )
-                .await;
+                );
                 count += 1;
             }
 

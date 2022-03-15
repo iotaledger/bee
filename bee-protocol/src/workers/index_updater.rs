@@ -74,7 +74,6 @@ where
 async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: Milestone, index: MilestoneIndex) {
     if let Some(parents) = tangle
         .get(milestone.message_id())
-        .await
         .map(|message| message.parents().to_vec())
     {
         // Update the past cone of this milestone by setting its milestone index, and return them.
@@ -83,7 +82,7 @@ async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: Milestone, in
         // Note: For tip-selection only the most recent tangle is relevent. That means that during synchronization we do
         // not need to update xMRSI values or tip scores before (LATEST_MILESTONE_INDEX - BELOW_MAX_DEPTH).
         if index > tangle.get_latest_milestone_index() - tangle.config().below_max_depth() {
-            update_future_cone(tangle, roots).await;
+            update_future_cone(tangle, roots);
 
             // Update tip pool after all values got updated.
             tangle.update_tip_scores().await;
@@ -108,7 +107,6 @@ async fn update_past_cone<B: StorageBackend>(
             || tangle.is_solid_entry_point(&parent_id).await
             || tangle
                 .get_metadata(&parent_id)
-                .await
                 // TODO: I don't think unwrapping here is safe. Investigate!
                 .unwrap()
                 .milestone_index()
@@ -117,17 +115,15 @@ async fn update_past_cone<B: StorageBackend>(
             continue;
         }
 
-        tangle
-            .update_metadata(&parent_id, |metadata| {
-                metadata.set_milestone_index(index);
-                // TODO: That was fine in a synchronous scenario, where this algo had the newest information, but
-                // probably isn't the case in the now asynchronous scenario. Investigate!
-                let index = IndexId::new(index, parent_id);
-                metadata.set_omrsi_and_ymrsi(index, index);
-            })
-            .await;
+        tangle.update_metadata(&parent_id, |metadata| {
+            metadata.set_milestone_index(index);
+            // TODO: That was fine in a synchronous scenario, where this algo had the newest information, but
+            // probably isn't the case in the now asynchronous scenario. Investigate!
+            let index = IndexId::new(index, parent_id);
+            metadata.set_omrsi_and_ymrsi(index, index);
+        });
 
-        if let Some(parent) = tangle.get(&parent_id).await {
+        if let Some(parent) = tangle.get(&parent_id) {
             parents.extend_from_slice(parent.parents())
         }
 
@@ -146,18 +142,14 @@ async fn update_past_cone<B: StorageBackend>(
 
 // NOTE: Once a milestone comes in we have to walk the future cones of the root transactions and update their OMRSI and
 // YMRSI; during that time we need to block the propagator, otherwise it will propagate outdated data.
-async fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSet<MessageId>) {
+fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSet<MessageId>) {
     let mut to_process = roots.into_iter().collect::<Vec<_>>();
     let mut processed = HashSet::new();
 
     while let Some(parent_id) = to_process.pop() {
-        if let Some(children) = tangle.get_children(&parent_id).await {
+        if let Some(children) = tangle.get_children(&parent_id) {
             // Unwrap is safe with very high probability.
-            let parent_omrsi_and_ymrsi = tangle
-                .get_metadata(&parent_id)
-                .await
-                .map(|md| md.omrsi_and_ymrsi())
-                .unwrap();
+            let parent_omrsi_and_ymrsi = tangle.get_metadata(&parent_id).map(|md| md.omrsi_and_ymrsi()).unwrap();
 
             // TODO: investigate data race
             // Skip vertices with unset omrsi/ymrsi
@@ -189,7 +181,6 @@ async fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSe
 
                                 true
                             })
-                            .await
                             .unwrap_or_default();
 
                         // Continue the future walk for that child, if we haven't landed on it earlier already.

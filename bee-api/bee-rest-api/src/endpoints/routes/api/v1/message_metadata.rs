@@ -34,11 +34,11 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_METADATA, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(message_metadata)
+        .and_then(|message_id, tangle| async move { message_metadata(message_id, tangle) })
         .boxed()
 }
 
-pub(crate) async fn message_metadata<B: StorageBackend>(
+pub(crate) fn message_metadata<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
@@ -48,10 +48,10 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
         )));
     }
 
-    match tangle.get(&message_id).await {
+    match tangle.get(&message_id) {
         Some(message) => {
             // existing message <=> existing metadata, therefore unwrap() is safe
-            let metadata = tangle.get_metadata(&message_id).await.unwrap();
+            let metadata = tangle.get_metadata(&message_id).unwrap();
 
             // TODO: access constants from URTS
             let ymrsi_delta = 8;

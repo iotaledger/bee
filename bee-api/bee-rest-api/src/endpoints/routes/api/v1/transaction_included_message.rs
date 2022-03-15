@@ -44,11 +44,13 @@ pub(crate) fn filter<B: StorageBackend>(
         ))
         .and(with_storage(storage))
         .and(with_tangle(tangle))
-        .and_then(transaction_included_message)
+        .and_then(|transaction_id, storage, tangle| async move {
+            transaction_included_message(transaction_id, storage, tangle)
+        })
         .boxed()
 }
 
-pub(crate) async fn transaction_included_message<B: StorageBackend>(
+pub(crate) fn transaction_included_message<B: StorageBackend>(
     transaction_id: TransactionId,
     storage: ResourceHandle<B>,
     tangle: ResourceHandle<Tangle<B>>,
@@ -61,7 +63,7 @@ pub(crate) async fn transaction_included_message<B: StorageBackend>(
             "Can not fetch from storage".to_string(),
         ))
     })? {
-        Some(output) => message::message(*output.message_id(), tangle).await,
+        Some(output) => message::message(*output.message_id(), tangle),
         None => Err(reject::custom(CustomRejection::NotFound(
             "Can not find output".to_string(),
         ))),

@@ -142,7 +142,7 @@ impl UrtsTipPool {
 
     async fn tip_score<B: StorageBackend>(&self, tangle: &Tangle<B>, message_id: &MessageId) -> Score {
         // in case the tip was pruned by the node, consider tip as lazy
-        if !tangle.contains(message_id).await {
+        if !tangle.contains(message_id) {
             Score::Lazy
         } else {
             let smi = *tangle.get_solid_milestone_index();

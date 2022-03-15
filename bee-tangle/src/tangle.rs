@@ -68,36 +68,34 @@ impl<B: StorageBackend> Tangle<B> {
 
     /// Insert a message into the tangle.
     pub async fn insert(&self, message: Message, message_id: MessageId, metadata: MessageMetadata) -> Option<Message> {
-        match self.storage_insert(&message_id, &message, &metadata) {
-            Ok(()) => {
-                for &parent in message.parents().iter() {
-                    self.storage
-                        .insert(&(parent, message_id), &())
-                        .unwrap_or_else(|e| info!("Failed to update approvers for message {:?}", e));
-                }
-                Some(message)
-            }
-            Err(_) => None,
+        self.storage.insert(&message_id, &message).ok()?;
+        self.storage.insert(&message_id, &metadata).ok()?;
+
+        for &parent in message.parents().iter() {
+            self.storage
+                .insert(&(parent, message_id), &())
+                .unwrap_or_else(|e| info!("Failed to update approvers for message {:?}", e));
         }
+
+        Some(message)
     }
 
     /// Add a milestone to the tangle.
-    pub async fn add_milestone(&self, idx: MilestoneIndex, milestone: Milestone) {
+    pub fn add_milestone(&self, idx: MilestoneIndex, milestone: Milestone) {
         let index = IndexId::new(idx, *milestone.message_id());
         // TODO: only insert if vacant
         self.update_metadata(milestone.message_id(), |metadata| {
             metadata.flags_mut().set_milestone(true);
             metadata.set_milestone_index(idx);
             metadata.set_omrsi_and_ymrsi(index, index);
-        })
-        .await;
+        });
         self.storage
             .insert(&idx, &milestone)
             .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
     }
 
     /// Get the milestone from the tangle that corresponds to the given milestone index.
-    pub async fn get_milestone(&self, index: MilestoneIndex) -> Option<Milestone> {
+    pub fn get_milestone(&self, index: MilestoneIndex) -> Option<Milestone> {
         self.storage.fetch(&index).unwrap_or_else(|e| {
             info!("Failed to fetch milestone {:?}", e);
             None
@@ -105,21 +103,17 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the message associated with the given milestone index from the tangle.
-    pub async fn get_milestone_message(&self, index: MilestoneIndex) -> Option<Message> {
-        // TODO: use combinator instead of match
-        match self.get_milestone_message_id(index).await {
-            None => None,
-            Some(ref hash) => self.get(hash).await,
-        }
+    pub fn get_milestone_message(&self, index: MilestoneIndex) -> Option<Message> {
+        self.get_milestone_message_id(index).and_then(|hash| self.get(&hash))
     }
 
     /// Get the message ID associated with the given milestone index from the tangle.
-    pub async fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
-        self.get_milestone(index).await.map(|m| *m.message_id())
+    pub fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
+        self.get_milestone(index).map(|m| *m.message_id())
     }
 
     /// Return whether the tangle contains the given milestone index.
-    pub async fn contains_milestone(&self, index: MilestoneIndex) -> bool {
+    pub fn contains_milestone(&self, index: MilestoneIndex) -> bool {
         self.storage.exist(&index).unwrap_or_default()
     }
 
@@ -264,7 +258,6 @@ impl<B: StorageBackend> Tangle<B> {
             true
         } else {
             self.get_metadata(id)
-                .await
                 .map(|metadata| metadata.flags().is_solid())
                 .unwrap_or(false)
         }
@@ -277,10 +270,7 @@ impl<B: StorageBackend> Tangle<B> {
                 let index = IndexId::new(*sep, *id);
                 Some((index, index))
             }
-            None => match self.get_metadata(id).await {
-                Some(metadata) => metadata.omrsi_and_ymrsi(),
-                None => None,
-            },
+            None => self.get_metadata(id).and_then(|metadata| metadata.omrsi_and_ymrsi()),
         }
     }
 
@@ -310,27 +300,30 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the data of a vertex associated with the given `message_id`.
-    pub async fn get(&self, message_id: &MessageId) -> Option<Message> {
-        self.get_message_and_metadata(message_id).await.map(|(m, _)| m)
+    pub fn get(&self, message_id: &MessageId) -> Option<Message> {
+        self.storage.fetch(message_id).unwrap_or_default()
     }
 
     /// Get the data and metadata of a vertex associated with the given `message_id`.
-    pub async fn get_message_and_metadata(&self, message_id: &MessageId) -> Option<(Message, MessageMetadata)> {
-        self.storage_get(message_id).unwrap_or_default()
+    pub fn get_message_and_metadata(&self, message_id: &MessageId) -> Option<(Message, MessageMetadata)> {
+        let msg = self.storage.fetch(message_id).unwrap_or_default()?;
+        let meta = self.storage.fetch(message_id).unwrap_or_default()?;
+
+        Some((msg, meta))
     }
 
     /// Returns whether the message is stored in the Tangle.
-    pub async fn contains(&self, message_id: &MessageId) -> bool {
+    pub fn contains(&self, message_id: &MessageId) -> bool {
         self.storage.exist(message_id).unwrap_or_default()
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.
-    pub async fn get_metadata(&self, message_id: &MessageId) -> Option<MessageMetadata> {
-        self.get_message_and_metadata(message_id).await.map(|(_, m)| m)
+    pub fn get_metadata(&self, message_id: &MessageId) -> Option<MessageMetadata> {
+        self.storage.fetch(message_id).unwrap_or_default()
     }
 
     /// Updates the metadata of a vertex.
-    pub async fn update_metadata<R>(
+    pub fn update_metadata<R>(
         &self,
         message_id: &MessageId,
         update: impl FnOnce(&mut MessageMetadata) -> R + Copy,
@@ -345,26 +338,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Returns the children of a vertex, if we know about them.
-    pub async fn get_children(&self, message_id: &MessageId) -> Option<Vec<MessageId>> {
+    pub fn get_children(&self, message_id: &MessageId) -> Option<Vec<MessageId>> {
         self.storage.fetch(message_id).unwrap_or_default()
-    }
-
-    fn storage_get(&self, message_id: &MessageId) -> Result<Option<(Message, MessageMetadata)>, B::Error> {
-        let msg = self.storage.fetch(message_id)?;
-        let meta = self.storage.fetch(message_id)?;
-
-        Ok(msg.zip(meta))
-    }
-
-    fn storage_insert(
-        &self,
-        message_id: &MessageId,
-        message: &Message,
-        metadata: &MessageMetadata,
-    ) -> Result<(), B::Error> {
-        self.storage.insert(message_id, message)?;
-        self.storage.insert(message_id, metadata)?;
-
-        Ok(())
     }
 }

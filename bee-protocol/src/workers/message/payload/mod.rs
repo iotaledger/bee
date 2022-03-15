@@ -32,7 +32,7 @@ pub(crate) struct PayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<PayloadWorkerEvent>,
 }
 
-async fn process(
+fn process(
     message_id: MessageId,
     message: MessageRef,
     transaction_payload_worker: &mpsc::UnboundedSender<TransactionPayloadWorkerEvent>,
@@ -104,8 +104,7 @@ where
                     &transaction_payload_worker,
                     &milestone_payload_worker,
                     &indexation_payload_worker,
-                )
-                .await;
+                );
             }
 
             // Before the worker completely stops, the receiver needs to be drained for payloads to be analysed.
@@ -121,8 +120,7 @@ where
                     &transaction_payload_worker,
                     &milestone_payload_worker,
                     &indexation_payload_worker,
-                )
-                .await;
+                );
                 count += 1;
             }
 

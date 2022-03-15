@@ -22,13 +22,11 @@ async fn insert(tangle: &Tangle<NullStorage>, message: Message, id: MessageId, m
     tangle.insert(message, id, metadata).await;
 }
 
-async fn update_metadata(tangle: &Tangle<NullStorage>, id: &MessageId, timestamp: u64) {
-    tangle
-        .update_metadata(id, |metadata| {
-            metadata.set_conflict(ConflictReason::InputUtxoAlreadySpent);
-            metadata.reference(timestamp);
-        })
-        .await;
+fn update_metadata(tangle: &Tangle<NullStorage>, id: &MessageId, timestamp: u64) {
+    tangle.update_metadata(id, |metadata| {
+        metadata.set_conflict(ConflictReason::InputUtxoAlreadySpent);
+        metadata.reference(timestamp);
+    });
 }
 
 fn insert_bench(c: &mut Criterion) {
@@ -61,7 +59,7 @@ fn update_metadata_bench(c: &mut Criterion) {
     }
 
     c.bench_function("update_metadata", |b| {
-        b.to_async(&rt).iter_batched(
+        b.iter_batched(
             || (ids.choose(&mut rand::thread_rng()).unwrap(), rand_number::<u64>()),
             |(id, timestamp)| update_metadata(&tangle, id, timestamp),
             BatchSize::SmallInput,

@@ -33,16 +33,16 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MILESTONE, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(milestone)
+        .and_then(|milestone_index, tangle| async move { milestone(milestone_index, tangle) })
         .boxed()
 }
 
-pub(crate) async fn milestone<B: StorageBackend>(
+pub(crate) fn milestone<B: StorageBackend>(
     milestone_index: MilestoneIndex,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get_milestone_message_id(milestone_index).await {
-        Some(message_id) => match tangle.get_metadata(&message_id).await {
+    match tangle.get_milestone_message_id(milestone_index) {
+        Some(message_id) => match tangle.get_metadata(&message_id) {
             Some(metadata) => Ok(warp::reply::json(&SuccessBody::new(MilestoneResponse {
                 milestone_index: *milestone_index,
                 message_id: message_id.to_string(),

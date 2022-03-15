@@ -38,7 +38,7 @@ async fn propagate<B: StorageBackend>(
             continue 'outer;
         }
 
-        if let Some(message) = tangle.get(message_id).await {
+        if let Some(message) = tangle.get(message_id) {
             // If one of the parents is not yet solid, we skip the current message.
             for parent in message.parents().iter() {
                 if !tangle.is_solid_message(parent).await {
@@ -65,7 +65,6 @@ async fn propagate<B: StorageBackend>(
                     // SAFETY: 'unwrap' is safe, see explanation above.
                     None => tangle
                         .get_metadata(parent)
-                        .await
                         .map(|parent_md| {
                             parent_md
                                 .omrsi_and_ymrsi()
@@ -94,11 +93,10 @@ async fn propagate<B: StorageBackend>(
                         None
                     }
                 })
-                .await
                 .expect("Failed to fetch metadata.");
 
             // Try to propagate as far as possible into the future.
-            if let Some(msg_children) = tangle.get_children(message_id).await {
+            if let Some(msg_children) = tangle.get_children(message_id) {
                 for child in msg_children {
                     children.push(child);
                 }

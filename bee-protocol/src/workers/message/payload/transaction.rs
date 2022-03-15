@@ -30,7 +30,7 @@ pub(crate) struct TransactionPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<TransactionPayloadWorkerEvent>,
 }
 
-async fn process(
+fn process(
     message_id: MessageId,
     message: MessageRef,
     indexation_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
@@ -85,7 +85,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(TransactionPayloadWorkerEvent { message_id, message }) = receiver.next().await {
-                process(message_id, message, &indexation_payload_worker, &metrics).await;
+                process(message_id, message, &indexation_payload_worker, &metrics);
             }
 
             // Before the worker completely stops, the receiver needs to be drained for transaction payloads to be
@@ -96,7 +96,7 @@ where
 
             while let Some(Some(TransactionPayloadWorkerEvent { message_id, message })) = receiver.next().now_or_never()
             {
-                process(message_id, message, &indexation_payload_worker, &metrics).await;
+                process(message_id, message, &indexation_payload_worker, &metrics);
                 count += 1;
             }
 

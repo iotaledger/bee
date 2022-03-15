@@ -213,7 +213,7 @@ async fn traverse_past_cone<B: StorageBackend>(
     let mut visited = HashSet::new();
 
     while let Some(message_id) = message_ids.last() {
-        if let Some((message, meta)) = tangle.get_message_and_metadata(message_id).await {
+        if let Some((message, meta)) = tangle.get_message_and_metadata(message_id) {
             if meta.flags().is_referenced() {
                 visited.insert(*message_id);
                 message_ids.pop();
