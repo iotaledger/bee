@@ -4,11 +4,10 @@
 use crate::{
     endpoints::{
         config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW},
-        filters::{with_message_submitter, with_network_id, with_protocol_config, with_rest_api_config, with_tangle},
+        filters::{with_message_submitter, with_protocol_config, with_rest_api_config, with_tangle},
         permission::has_permission,
         rejection::CustomRejection,
         storage::StorageBackend,
-        NetworkId,
     },
     types::{dtos::PayloadDto, responses::SubmitMessageResponse},
 };
@@ -61,7 +60,6 @@ pub(crate) fn filter<B: StorageBackend>(
             .or(warp::header::exact("content-type", "application/octet-stream")
                 .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
                 .and(warp::body::bytes())
-                .and(with_tangle(tangle))
                 .and(with_message_submitter(message_submitter))
                 .and_then(submit_message_raw)),
         )
@@ -158,7 +156,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     };
 
     let message = build_message(parents, payload, nonce, rest_api_config, protocol_config).await?;
-    let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
+    let message_id = forward_to_message_submitter(message.pack_to_vec(), message_submitter).await?;
 
     Ok(warp::reply::with_status(
         warp::reply::json(&SubmitMessageResponse {
@@ -211,17 +209,11 @@ pub(crate) async fn build_message(
     Ok(message)
 }
 
-pub(crate) async fn submit_message_raw<B: StorageBackend>(
+pub(crate) async fn submit_message_raw(
     buf: warp::hyper::body::Bytes,
-    tangle: ResourceHandle<Tangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<impl Reply, Rejection> {
-    let message = Message::unpack_verified(&mut &(*buf)).map_err(|_| {
-        reject::custom(CustomRejection::BadRequest(
-            "can not submit message: invalid bytes provided".to_string(),
-        ))
-    })?;
-    let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
+    let message_id = forward_to_message_submitter((*buf).to_vec(), message_submitter).await?;
     Ok(warp::reply::with_status(
         warp::reply::json(&SubmitMessageResponse {
             message_id: message_id.to_string(),
@@ -230,18 +222,10 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
     ))
 }
 
-pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
-    message: Message,
-    tangle: ResourceHandle<Tangle<B>>,
+pub(crate) async fn forward_to_message_submitter(
+    message_bytes: Vec<u8>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<MessageId, Rejection> {
-    let message_id = message.id();
-    let message_bytes = message.pack_to_vec();
-
-    if tangle.contains(&message_id).await {
-        return Ok(message_id);
-    }
-
     let (notifier, waiter) = oneshot::channel::<Result<MessageId, MessageSubmitterError>>();
 
     message_submitter
