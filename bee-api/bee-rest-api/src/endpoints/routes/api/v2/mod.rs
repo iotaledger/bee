@@ -132,7 +132,6 @@ pub(crate) fn filter<B: StorageBackend>(
         allowed_ips.clone(),
         tangle.clone(),
         message_submitter,
-        network_id,
         rest_api_config,
         protocol_config,
     ))

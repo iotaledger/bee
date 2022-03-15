@@ -10,10 +10,7 @@ use crate::{
         storage::StorageBackend,
         NetworkId,
     },
-    types::{
-        dtos::{PayloadDto, TransactionEssenceDto},
-        responses::SubmitMessageResponse,
-    },
+    types::{dtos::PayloadDto, responses::SubmitMessageResponse},
 };
 
 use bee_message::{parent::Parents, payload::Payload, Message, MessageBuilder, MessageId};
@@ -43,7 +40,6 @@ pub(crate) fn filter<B: StorageBackend>(
     allowed_ips: Box<[IpAddr]>,
     tangle: ResourceHandle<Tangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
-    network_id: NetworkId,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> BoxedFilter<(impl Reply,)> {
@@ -59,7 +55,6 @@ pub(crate) fn filter<B: StorageBackend>(
                 .and(warp::body::json())
                 .and(with_tangle(tangle.clone()))
                 .and(with_message_submitter(message_submitter.clone()))
-                .and(with_network_id(network_id))
                 .and(with_rest_api_config(rest_api_config))
                 .and(with_protocol_config(protocol_config))
                 .and_then(submit_message))
@@ -77,7 +72,6 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     value: JsonValue,
     tangle: ResourceHandle<Tangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
-    network_id: NetworkId,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Rejection> {
