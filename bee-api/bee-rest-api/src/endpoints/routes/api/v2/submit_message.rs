@@ -81,48 +81,39 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Rejection> {
-    let protocol_version_v = &value["protocolVersion"];
-    let parents_v = &value["parentMessageIds"];
-    let payload_v = &value["payload"];
-    let nonce_v = &value["nonce"];
+    let protocol_version_json = &value["protocolVersion"];
+    let parents_json = &value["parentMessageIds"];
+    let payload_json = &value["payload"];
+    let nonce_json = &value["nonce"];
 
-    // Tries to build a `Message` from the provided JSON.
+    // Tries to build a `Message` from the given JSON.
     // If some fields are missing, it tries to auto-complete them.
-    // Please keep in mind, that the eventually built `Message` might be not acceptable for the node.
 
-    let protocol_version = if protocol_version_v.is_null() {
-        PROTOCOL_VERSION
-    } else {
-        let parsed = u8::try_from(protocol_version_v.as_u64().ok_or_else(|| {
+    if !protocol_version_json.is_null() {
+        let parsed = protocol_version_json.as_u64().ok_or_else(|| {
             reject::custom(CustomRejection::BadRequest(
                 "invalid protocol version: expected an unsigned integer < 256".to_string(),
             ))
-        })?)
-        .map_err(|_| {
-            reject::custom(CustomRejection::BadRequest(
-                "invalid protocol version: expected an unsigned integer < 256".to_string(),
-            ))
-        })?;
+        })? as u8;
 
-        // TODO: is this check really necessary here? or should this be checked by the node message processing pipe?
+        // TODO: is this check really necessary here considering that the "node processing pipe" anyways checks the
+        // field for incoming messages?
         if parsed != PROTOCOL_VERSION {
             return Err(reject::custom(CustomRejection::BadRequest(format!(
                 "invalid protocol version: expected `{}` but received `{}`",
                 PROTOCOL_VERSION, parsed
             ))));
-        } else {
-            parsed
         }
-    };
+    }
 
-    let parents: Vec<MessageId> = if parents_v.is_null() {
+    let parents: Vec<MessageId> = if parents_json.is_null() {
         tangle.get_messages_to_approve().await.ok_or_else(|| {
             reject::custom(CustomRejection::ServiceUnavailable(
                 "can not auto-fill parents: no tips available".to_string(),
             ))
         })?
     } else {
-        let array = parents_v.as_array().ok_or_else(|| {
+        let array = parents_json.as_array().ok_or_else(|| {
             reject::custom(CustomRejection::BadRequest(
                 "invalid parents: expected an array of message ids".to_string(),
             ))
@@ -147,14 +138,15 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         message_ids
     };
 
-    let payload = if payload_v.is_null() {
+    let payload = if payload_json.is_null() {
         None
     } else {
-        let payload_dto = serde_json::from_value::<PayloadDto>(payload_v.clone())
+        let payload_dto = serde_json::from_value::<PayloadDto>(payload_json.clone())
             .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
 
-        // TODO: is this check really necessary here? this check should be done by the node message processing pipe?
-        // In case of a transaction payload, check if its `network_id` matches the one configured in the node.
+        // TODO: is this check really necessary here considering that the "node processing pipe" anyways checks the
+        // field for incoming messages? In case of a transaction payload, check if its `network_id` matches the
+        // one configured in the node.
         if let PayloadDto::Transaction(ref t) = payload_dto {
             match &t.essence {
                 TransactionEssenceDto::Regular(e) => {
@@ -166,7 +158,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
 
                     if parsed_network_id != network_id.1 {
                         return Err(reject::custom(CustomRejection::BadRequest(format!(
-                            "invalid network: expected network id `{}` but received `{}`",
+                            "invalid network id: expected `{}` but received `{}`",
                             network_id.1, parsed_network_id
                         ))));
                     }
@@ -177,10 +169,10 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         Some(Payload::try_from(&payload_dto).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?)
     };
 
-    let nonce = if nonce_v.is_null() {
+    let nonce = if nonce_json.is_null() {
         None
     } else {
-        let parsed = nonce_v
+        let parsed = nonce_json
             .as_str()
             .ok_or_else(|| {
                 reject::custom(CustomRejection::BadRequest(
@@ -196,15 +188,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         if parsed == 0 { None } else { Some(parsed) }
     };
 
-    let message = build_message(
-        protocol_version,
-        parents,
-        payload,
-        nonce,
-        rest_api_config,
-        protocol_config,
-    )
-    .await?;
+    let message = build_message(parents, payload, nonce, rest_api_config, protocol_config).await?;
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
 
     Ok(warp::reply::with_status(
@@ -216,7 +200,6 @@ pub(crate) async fn submit_message<B: StorageBackend>(
 }
 
 pub(crate) async fn build_message(
-    protocol_version: u8,
     parents: Vec<MessageId>,
     payload: Option<Payload>,
     nonce: Option<u64>,
@@ -224,12 +207,11 @@ pub(crate) async fn build_message(
     protocol_config: ProtocolConfig,
 ) -> Result<Message, Rejection> {
     let message = if let Some(nonce) = nonce {
-        let mut builder = MessageBuilder::new()
-            .with_protocol_version(protocol_version)
-            .with_parents(
-                Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
-            )
-            .with_nonce_provider(nonce, 0f64);
+        let mut builder = MessageBuilder::new(
+            Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
+        )
+        .with_protocol_version(PROTOCOL_VERSION)
+        .with_nonce_provider(nonce, 0f64);
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
@@ -242,15 +224,14 @@ pub(crate) async fn build_message(
                 "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
             )));
         }
-        let mut builder = MessageBuilder::new()
-            .with_protocol_version(protocol_version)
-            .with_parents(
-                Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
-            )
-            .with_nonce_provider(
-                MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
-                protocol_config.minimum_pow_score(),
-            );
+        let mut builder = MessageBuilder::new(
+            Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
+        )
+        .with_protocol_version(PROTOCOL_VERSION)
+        .with_nonce_provider(
+            MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
+            protocol_config.minimum_pow_score(),
+        );
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
@@ -268,7 +249,7 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     let message = Message::unpack_verified(&mut &(*buf)).map_err(|_| {
         reject::custom(CustomRejection::BadRequest(
-            "can not submit message: invalid bytes provided: the message format is not respected".to_string(),
+            "can not submit message: invalid bytes provided".to_string(),
         ))
     })?;
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
