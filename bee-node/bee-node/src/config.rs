@@ -174,7 +174,7 @@ where
             }
         }
 
-        return cmp;
+        cmp
     }
 }
 
