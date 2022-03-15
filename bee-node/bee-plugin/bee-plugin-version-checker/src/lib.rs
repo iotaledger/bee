@@ -41,7 +41,9 @@ impl<N: Node> Worker<N> for VersionCheckerPlugin {
             );
 
             while ticker.next().await.is_some() {
-                show_version_status(&current_version).await;
+                if let Some(release_info) = get_release_info().await {
+                    show_version_status(&current_version, release_info).await;
+                }
             }
 
             log::info!("Stopped.");
@@ -53,27 +55,32 @@ impl<N: Node> Worker<N> for VersionCheckerPlugin {
 
 /// Alerts the user (through a `WARN` level log event) if there is a newer release version of Bee available,
 /// and provides a URL to the release's summary webpage.
-async fn show_version_status(current_version: &str) {
-    if let Some(release_info) = get_release_info().await {
-        match (semver::Version::parse(current_version), latest(release_info)) {
-            (Err(e), _) => log::error!("Error parsing current Bee version ({}): {}.", current_version, e),
-            (Ok(current), Some(latest)) => {
-                if latest.version > current {
-                    log::warn!(
-                        "Found a more recent release version ({}), available at {}.",
-                        latest.version,
-                        latest.html_url,
-                    );
-                } else {
-                    log::info!("On the latest release version ({}).", current_version);
-                }
-            }
-            _ => log::warn!("Could not identify the latest release version."),
+async fn show_version_status(current_version: &str, release_info: Vec<ReleaseInfoBuilder>) {
+    let current_version = match semver::Version::parse(current_version) {
+        Err(e) => {
+            log::error!("Error parsing current Bee version ({}): {}.", current_version, e);
+            return;
         }
+        Ok(current_version) => current_version,
+    };
+
+    match latest(release_info, !current_version.pre.is_empty()) {
+        Some(latest) => {
+            if latest.version > current_version {
+                log::warn!(
+                    "Found a more recent release version ({}), available at {}.",
+                    latest.version,
+                    latest.html_url,
+                );
+            } else {
+                log::info!("On the latest release version ({}).", current_version);
+            }
+        }
+        None => log::warn!("Could not identify the latest release version."),
     }
 }
 
-/// Returns a list of [`ReleaseInfoBuilder`]s describing all Github releases, if the API request and
+/// Returns a list of [`ReleaseInfoBuilder`]s describing all Github releases if the API request and
 /// deserialization was successful. Otherwise, returns `None`.
 async fn get_release_info() -> Option<Vec<ReleaseInfoBuilder>> {
     let client = reqwest::Client::builder().user_agent("bee").build().unwrap();
@@ -100,7 +107,65 @@ async fn get_release_info() -> Option<Vec<ReleaseInfoBuilder>> {
     }
 }
 
-/// Returns the latest full release (i.e. not a pre-release version) given a vector of [`ReleaseInfoBuilder`]s.
-fn latest(release_info: Vec<ReleaseInfoBuilder>) -> Option<ReleaseInfo> {
-    release_info.into_iter().filter_map(|info| info.build()).max()
+/// Returns the latest release given a vector of [`ReleaseInfoBuilder`]s.
+///
+/// If the current `bee-node` version is a pre-release, this will include later pre-release versions.
+fn latest(release_info: Vec<ReleaseInfoBuilder>, pre_release: bool) -> Option<ReleaseInfo> {
+    release_info
+        .into_iter()
+        .filter_map(|info| info.build(pre_release))
+        .max()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn full_release() {
+        let current_version = semver::Version::parse("0.2.0").unwrap();
+        let release_info = vec![
+            ReleaseInfoBuilder {
+                html_url: "".to_string(),
+                tag_name: "v0.1.0".to_string(),
+            },
+            ReleaseInfoBuilder {
+                html_url: "".to_string(),
+                tag_name: "v0.2.0".to_string(),
+            },
+            ReleaseInfoBuilder {
+                html_url: "".to_string(),
+                tag_name: "v0.3.0".to_string(),
+            },
+        ];
+
+        let latest = latest(release_info, false).unwrap();
+
+        assert!(current_version < latest.version);
+        assert_eq!(latest.version.to_string(), "0.3.0".to_string());
+    }
+
+    #[test]
+    fn pre_release() {
+        let current_version = semver::Version::parse("0.3.0-rc4").unwrap();
+        let release_info = vec![
+            ReleaseInfoBuilder {
+                html_url: "".to_string(),
+                tag_name: "v0.2.0".to_string(),
+            },
+            ReleaseInfoBuilder {
+                html_url: "".to_string(),
+                tag_name: "v0.3.0-rc4".to_string(),
+            },
+            ReleaseInfoBuilder {
+                html_url: "".to_string(),
+                tag_name: "v0.3.0-rc5".to_string(),
+            },
+        ];
+
+        let latest = latest(release_info, true).unwrap();
+
+        assert!(current_version < latest.version);
+        assert_eq!(latest.version.to_string(), "0.3.0-rc5".to_string());
+    }
 }

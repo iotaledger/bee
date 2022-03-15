@@ -7,9 +7,9 @@ use serde::Deserialize;
 use std::cmp;
 
 #[derive(Deserialize, Debug, Clone)]
-pub(crate) struct ReleaseInfoBuilder {
-    html_url: String,
-    tag_name: String,
+pub struct ReleaseInfoBuilder {
+    pub html_url: String,
+    pub tag_name: String,
 }
 
 impl ReleaseInfoBuilder {
@@ -17,9 +17,9 @@ impl ReleaseInfoBuilder {
     ///
     /// Returns:
     ///  - `None` if there is an error parsing a version from the release tag.
-    ///  - `None` if this is a pre-release.
+    ///  - `None` if this is a pre-release, and the current `bee-node` is *not* a pre-release.
     ///  - `Some` otherwise.
-    pub(crate) fn build(self) -> Option<ReleaseInfo> {
+    pub(crate) fn build(self, pre_release: bool) -> Option<ReleaseInfo> {
         let mut version = self.tag_name.clone();
         version.retain(|c| c != 'v');
 
@@ -28,16 +28,20 @@ impl ReleaseInfoBuilder {
                 log::warn!("Error parsing version from tag {}: {}", self.tag_name, e);
                 None
             }
-            Ok(version) => version.pre.is_empty().then(|| ReleaseInfo {
-                html_url: self.html_url,
-                version,
-            }),
+            Ok(version) => {
+                let selected = if pre_release { true } else { version.pre.is_empty() };
+
+                selected.then(|| ReleaseInfo {
+                    html_url: self.html_url,
+                    version,
+                })
+            }
         }
     }
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct ReleaseInfo {
+pub struct ReleaseInfo {
     pub html_url: String,
     pub version: Version,
 }
