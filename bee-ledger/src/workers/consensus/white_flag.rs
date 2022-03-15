@@ -97,17 +97,19 @@ fn unlock_alias_output(
     };
     let next_state = context.output_chains.get(&ChainId::from(alias_id));
 
-    let locked_address = if let Some(next_state) = next_state {
-        if output.state_index() == next_state.state_index() {
-            output.governor_address()
-        } else {
-            output.state_controller_address()
+    let locked_address = match next_state {
+        Some(Output::Alias(next_state)) => {
+            if output.state_index() == next_state.state_index() {
+                output.governor_address()
+            } else {
+                output.state_controller_address()
+            }
         }
-    } else {
-        output.governor_address()
+        Some(_) => unreachable!(),
+        None => output.governor_address(),
     };
 
-    Ok(())
+    unlock_address(locked_address, unlock_block, inputs, context)
 }
 
 fn unlock_foundry_output(
@@ -115,11 +117,11 @@ fn unlock_foundry_output(
     output: &FoundryOutput,
     unlock_block: &UnlockBlock,
     inputs: &[(OutputId, &Output)],
-    context: &ValidationContext,
+    context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
-    let locked_address = output.alias_address();
+    let locked_address = Address::from(*output.alias_address());
 
-    Ok(())
+    unlock_address(&locked_address, unlock_block, inputs, context)
 }
 
 fn unlock_nft_output(
@@ -127,7 +129,7 @@ fn unlock_nft_output(
     output: &NftOutput,
     unlock_block: &UnlockBlock,
     inputs: &[(OutputId, &Output)],
-    context: &ValidationContext,
+    context: &mut ValidationContext,
 ) -> Result<(), ConflictReason> {
     let locked_address = output.address();
     // let nft_id = if output.nft_id().is_null() {
@@ -136,7 +138,7 @@ fn unlock_nft_output(
     //     *output.nft_id()
     // };
 
-    Ok(())
+    unlock_address(locked_address, unlock_block, inputs, context)
 }
 
 fn apply_regular_essence<B: StorageBackend>(
@@ -217,13 +219,13 @@ fn apply_regular_essence<B: StorageBackend>(
                 output.unlock_conditions(),
             ),
             Output::Foundry(output) => (
-                unlock_foundry_output(output_id, output, unlock_block, &inputs, &context),
+                unlock_foundry_output(output_id, output, unlock_block, &inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),
             ),
             Output::Nft(output) => (
-                unlock_nft_output(output_id, output, unlock_block, &inputs, &context),
+                unlock_nft_output(output_id, output, unlock_block, &inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),
