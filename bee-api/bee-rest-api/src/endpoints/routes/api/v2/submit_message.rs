@@ -90,18 +90,16 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     // If some fields are missing, it tries to auto-complete them.
 
     if !protocol_version_json.is_null() {
-        let parsed = protocol_version_json.as_u64().ok_or_else(|| {
+        let parsed_protocol_version = protocol_version_json.as_u64().ok_or_else(|| {
             reject::custom(CustomRejection::BadRequest(
                 "invalid protocol version: expected an unsigned integer < 256".to_string(),
             ))
         })? as u8;
 
-        // TODO: is this check really necessary here considering that the "node processing pipe" anyways checks the
-        // field for incoming messages?
-        if parsed != PROTOCOL_VERSION {
+        if parsed_protocol_version != PROTOCOL_VERSION {
             return Err(reject::custom(CustomRejection::BadRequest(format!(
                 "invalid protocol version: expected `{}` but received `{}`",
-                PROTOCOL_VERSION, parsed
+                PROTOCOL_VERSION, parsed_protocol_version
             ))));
         }
     }
@@ -113,14 +111,14 @@ pub(crate) async fn submit_message<B: StorageBackend>(
             ))
         })?
     } else {
-        let array = parents_json.as_array().ok_or_else(|| {
+        let parents = parents_json.as_array().ok_or_else(|| {
             reject::custom(CustomRejection::BadRequest(
                 "invalid parents: expected an array of message ids".to_string(),
             ))
         })?;
-        let mut message_ids = Vec::with_capacity(array.len());
-        for s in array {
-            let message_id = s
+        let mut message_ids = Vec::with_capacity(parents.len());
+        for message_id in parents {
+            let message_id = message_id
                 .as_str()
                 .ok_or_else(|| {
                     reject::custom(CustomRejection::BadRequest(
@@ -143,36 +141,13 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     } else {
         let payload_dto = serde_json::from_value::<PayloadDto>(payload_json.clone())
             .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
-
-        // TODO: is this check really necessary here considering that the "node processing pipe" anyways checks the
-        // field for incoming messages? In case of a transaction payload, check if its `network_id` matches the
-        // one configured in the node.
-        if let PayloadDto::Transaction(ref t) = payload_dto {
-            match &t.essence {
-                TransactionEssenceDto::Regular(e) => {
-                    let parsed_network_id = e.network_id.parse::<u64>().map_err(|_| {
-                        reject::custom(CustomRejection::BadRequest(
-                            "invalid network id: expected an u64-string".to_string(),
-                        ))
-                    })?;
-
-                    if parsed_network_id != network_id.1 {
-                        return Err(reject::custom(CustomRejection::BadRequest(format!(
-                            "invalid network id: expected `{}` but received `{}`",
-                            network_id.1, parsed_network_id
-                        ))));
-                    }
-                }
-            }
-        }
-
         Some(Payload::try_from(&payload_dto).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?)
     };
 
     let nonce = if nonce_json.is_null() {
         None
     } else {
-        let parsed = nonce_json
+        let parsed_nonce = nonce_json
             .as_str()
             .ok_or_else(|| {
                 reject::custom(CustomRejection::BadRequest(
@@ -185,7 +160,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
                     "invalid nonce: expected an u64-string".to_string(),
                 ))
             })?;
-        if parsed == 0 { None } else { Some(parsed) }
+        if parsed_nonce == 0 { None } else { Some(parsed_nonce) }
     };
 
     let message = build_message(parents, payload, nonce, rest_api_config, protocol_config).await?;
