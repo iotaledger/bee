@@ -21,7 +21,7 @@ impl ReleaseInfoBuilder {
     ///  - `Some` otherwise.
     pub(crate) fn build(self, pre_release: bool) -> Option<ReleaseInfo> {
         let mut version = self.tag_name.clone();
-        
+
         if version.starts_with('v') {
             version.remove(0);
         }
