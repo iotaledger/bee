@@ -65,66 +65,90 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
     value: JsonValue,
     args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<Response, ApiError> {
-    let network_id_v = &value["networkId"];
-    let parents_v = &value["parentMessageIds"];
-    let payload_v = &value["payload"];
-    let nonce_v = &value["nonce"];
+    let protocol_version_json = &value["protocolVersion"];
+    let parents_json = &value["parentMessageIds"];
+    let payload_json = &value["payload"];
+    let nonce_json = &value["nonce"];
 
-    // parse the values, take care of missing fields, build the message and submit it to the node for further
-    // processing
+    // Tries to build a `Message` from the given JSON.
+    // If some fields are missing, it tries to auto-complete them.
 
-    let network_id = if network_id_v.is_null() {
-        args.network_id.1
+    if !protocol_version_json.is_null() {
+        let parsed_protocol_version = protocol_version_json.as_u64().ok_or_else(|| {
+            reject::custom(CustomRejection::BadRequest(
+                "invalid protocol version: expected an unsigned integer < 256".to_string(),
+            ))
+        })? as u8;
+
+        if parsed_protocol_version != PROTOCOL_VERSION {
+            return Err(reject::custom(CustomRejection::BadRequest(format!(
+                "invalid protocol version: expected `{}` but received `{}`",
+                PROTOCOL_VERSION, parsed_protocol_version
+            ))));
+        }
+    }
+
+    let parents: Vec<MessageId> = if parents_json.is_null() {
+        tangle.get_messages_to_approve().await.ok_or_else(|| {
+            reject::custom(CustomRejection::ServiceUnavailable(
+                "can not auto-fill parents: no tips available".to_string(),
+            ))
+        })?
     } else {
-        network_id_v
-            .as_str()
-            .ok_or_else(|| ApiError::BadRequest("invalid network id: expected an u64-string".to_string()))?
-            .parse::<u64>()
-            .map_err(|_| ApiError::BadRequest("invalid network id: expected an u64-string".to_string()))?
-    };
-
-    let parents: Vec<MessageId> = if parents_v.is_null() {
-        args.tangle
-            .get_messages_to_approve()
-            .await
-            .ok_or_else(|| ApiError::ServiceUnavailable("can not auto-fill parents: no tips available".to_string()))?
-    } else {
-        let array = parents_v
-            .as_array()
-            .ok_or_else(|| ApiError::BadRequest("invalid parents: expected an array of message ids".to_string()))?;
-        let mut message_ids = Vec::with_capacity(array.len());
-        for s in array {
-            let message_id = s
+        let parents = parents_json.as_array().ok_or_else(|| {
+            reject::custom(CustomRejection::BadRequest(
+                "invalid parents: expected an array of message ids".to_string(),
+            ))
+        })?;
+        let mut message_ids = Vec::with_capacity(parents.len());
+        for message_id in parents {
+            let message_id = message_id
                 .as_str()
-                .ok_or_else(|| ApiError::BadRequest("invalid parents: expected an array of message ids".to_string()))?
+                .ok_or_else(|| {
+                    reject::custom(CustomRejection::BadRequest(
+                        "invalid parent: expected a message id".to_string(),
+                    ))
+                })?
                 .parse::<MessageId>()
-                .map_err(|_| ApiError::BadRequest("invalid network id: expected an u64-string".to_string()))?;
+                .map_err(|_| {
+                    reject::custom(CustomRejection::BadRequest(
+                        "invalid parent: expected a message id".to_string(),
+                    ))
+                })?;
             message_ids.push(message_id);
         }
         message_ids
     };
 
-    let payload = if payload_v.is_null() {
+    let payload = if payload_json.is_null() {
         None
     } else {
-        let payload_dto =
-            serde_json::from_value::<PayloadDto>(payload_v.clone()).map_err(|e| ApiError::BadRequest(e.to_string()))?;
-        Some(Payload::try_from(&payload_dto).map_err(|e| ApiError::BadRequest(e.to_string()))?)
+        let payload_dto = serde_json::from_value::<PayloadDto>(payload_json.clone())
+            .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
+        Some(Payload::try_from(&payload_dto).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?)
     };
 
-    let nonce = if nonce_v.is_null() {
+    let nonce = if nonce_json.is_null() {
         None
     } else {
-        let parsed = nonce_v
+        let parsed_nonce = nonce_json
             .as_str()
-            .ok_or_else(|| ApiError::BadRequest("invalid nonce: expected an u64-string".to_string()))?
+            .ok_or_else(|| {
+                reject::custom(CustomRejection::BadRequest(
+                    "invalid nonce: expected an u64-string".to_string(),
+                ))
+            })?
             .parse::<u64>()
-            .map_err(|_| ApiError::BadRequest("invalid nonce: expected an u64-string".to_string()))?;
-        if parsed == 0 { None } else { Some(parsed) }
+            .map_err(|_| {
+                reject::custom(CustomRejection::BadRequest(
+                    "invalid nonce: expected an u64-string".to_string(),
+                ))
+            })?;
+        if parsed_nonce == 0 { None } else { Some(parsed_nonce) }
     };
 
-    let message = build_message(network_id, parents, payload, nonce, args.clone()).await?;
-    let message_id = forward_to_message_submitter(message, args).await?;
+    let message = build_message(parents, payload, nonce, args.clone()).await?;
+    let message_id = forward_to_message_submitter(message.pack_to_vec(), args).await?;
 
     Ok((
         StatusCode::CREATED,
@@ -135,9 +159,7 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
         .into_response())
 }
 
-// TODO compare/set network ID and protocol version
-pub(crate) async fn build_message<B: StorageBackend>(
-    _network_id: u64,
+pub(crate) async fn build_message(
     parents: Vec<MessageId>,
     payload: Option<Payload>,
     nonce: Option<u64>,
@@ -172,15 +194,10 @@ pub(crate) async fn build_message<B: StorageBackend>(
 }
 
 pub(crate) async fn submit_message_raw<B: StorageBackend>(
-    bytes: Vec<u8>,
+    message_bytes: Vec<u8>,
     args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<Response, ApiError> {
-    let message = Message::unpack_verified(&bytes).map_err(|_| {
-        ApiError::BadRequest(
-            "can not submit message: invalid bytes provided: the message format is not respected".to_string(),
-        )
-    })?;
-    let message_id = forward_to_message_submitter(message, args).await?;
+    let message_id = forward_to_message_submitter(message_bytes, args).await?;
     Ok((
         StatusCode::CREATED,
         Json(SubmitMessageResponse {
@@ -191,16 +208,9 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
 }
 
 pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
-    message: Message,
+    message_bytes: Vec<u8>,
     args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<MessageId, ApiError> {
-    let message_id = message.id();
-    let message_bytes = message.pack_to_vec();
-
-    if args.tangle.contains(&message_id).await {
-        return Ok(message_id);
-    }
-
     let (notifier, waiter) = oneshot::channel::<Result<MessageId, MessageSubmitterError>>();
 
     args.message_submitter
