@@ -3,7 +3,7 @@
 
 use crate::{
     endpoints::{
-        config::ROUTE_MILESTONE_UTXO_CHANGES, filters::with_storage, path_params::milestone_index,
+        config::ROUTE_MILESTONE_UTXO_CHANGES,  path_params::milestone_index,
         permission::has_permission, rejection::CustomRejection, storage::StorageBackend,
     },
     types::responses::UtxoChangesResponse,
@@ -18,45 +18,39 @@ use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
-fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
-    super::path()
-        .and(warp::path("milestones"))
-        .and(milestone_index())
-        .and(warp::path("utxo-changes"))
-        .and(warp::path::end())
+use axum::extract::Extension;
+use crate::endpoints::ApiArgsFullNode;
+use axum::extract::Json;
+use axum::Router;
+use axum::routing::get;
+use axum::response::IntoResponse;
+use crate::endpoints::error::ApiError;
+use std::sync::Arc;
+use axum::extract::Path;
+
+pub(crate) fn filter<B: StorageBackend>() -> Router {
+    Router::new()
+        .route("/milestones/:milestone_index/utxo-changes", get(milestone_utxo_changes::<B>))
 }
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    storage: ResourceHandle<B>,
-) -> BoxedFilter<(impl Reply,)> {
-    self::path()
-        .and(warp::get())
-        .and(has_permission(ROUTE_MILESTONE_UTXO_CHANGES, public_routes, allowed_ips))
-        .and(with_storage(storage))
-        .and_then(|index, storage| async move { milestone_utxo_changes(index, storage) })
-        .boxed()
-}
-
-pub(crate) fn milestone_utxo_changes<B: StorageBackend>(
-    index: MilestoneIndex,
-    storage: ResourceHandle<B>,
-) -> Result<impl Reply, Rejection> {
-    let fetched = Fetch::<MilestoneIndex, OutputDiff>::fetch(&*storage, &index)
+pub(crate) async fn milestone_utxo_changes<B: StorageBackend>(
+    Path(milestone_index): Path<MilestoneIndex>,
+    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
+) -> Result<impl IntoResponse, ApiError> {
+    let fetched = Fetch::<MilestoneIndex, OutputDiff>::fetch(&*args.storage, &milestone_index)
         .map_err(|_| {
-            reject::custom(CustomRejection::ServiceUnavailable(
+            ApiError::ServiceUnavailable(
                 "can not fetch from storage".to_string(),
-            ))
+            )
         })?
         .ok_or_else(|| {
-            reject::custom(CustomRejection::NotFound(
+            ApiError::NotFound(
                 "can not find Utxo changes for given milestone index".to_string(),
-            ))
+            )
         })?;
 
-    Ok(warp::reply::json(&UtxoChangesResponse {
-        index: *index,
+    Ok(Json(UtxoChangesResponse {
+        index: *milestone_index,
         created_outputs: fetched.created_outputs().iter().map(|id| id.to_string()).collect(),
         consumed_outputs: fetched.consumed_outputs().iter().map(|id| id.to_string()).collect(),
     }))

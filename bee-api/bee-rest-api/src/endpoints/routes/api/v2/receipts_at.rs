@@ -3,7 +3,7 @@
 
 use crate::{
     endpoints::{
-        config::ROUTE_RECEIPTS_AT, filters::with_storage, path_params::milestone_index, permission::has_permission,
+        config::ROUTE_RECEIPTS_AT, path_params::milestone_index, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend,
     },
     types::{dtos::ReceiptDto, responses::ReceiptsResponse},
@@ -18,39 +18,35 @@ use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
-fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
-    super::path()
-        .and(warp::path("receipts"))
-        .and(milestone_index())
-        .and(warp::path::end())
+
+use axum::extract::Extension;
+use crate::endpoints::ApiArgsFullNode;
+use axum::extract::Json;
+use axum::Router;
+use axum::routing::get;
+use axum::response::IntoResponse;
+use crate::endpoints::error::ApiError;
+use std::sync::Arc;
+use axum::extract::Path;
+
+pub(crate) fn filter<B: StorageBackend>() -> Router {
+    Router::new()
+        .route("/receipts/:milestone_index", get(receipts_at::<B>))
 }
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    storage: ResourceHandle<B>,
-) -> BoxedFilter<(impl Reply,)> {
-    self::path()
-        .and(warp::get())
-        .and(has_permission(ROUTE_RECEIPTS_AT, public_routes, allowed_ips))
-        .and(with_storage(storage))
-        .and_then(|milestone_index, storage| async move { receipts_at(milestone_index, storage) })
-        .boxed()
-}
-
-pub(crate) fn receipts_at<B: StorageBackend>(
-    milestone_index: MilestoneIndex,
-    storage: ResourceHandle<B>,
-) -> Result<impl Reply, Rejection> {
+pub(crate) async fn receipts_at<B: StorageBackend>(
+    Path(milestone_index): Path<MilestoneIndex>,
+    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>
+) -> Result<impl IntoResponse, ApiError> {
     let mut receipts_dto = Vec::new();
 
-    if let Some(receipts) = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&*storage, &milestone_index)
-        .map_err(|_| CustomRejection::InternalError)?
+    if let Some(receipts) = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&*args.storage, &milestone_index)
+        .map_err(|_| ApiError::InternalError)?
     {
         for receipt in receipts {
-            receipts_dto.push(ReceiptDto::try_from(receipt).map_err(|_| CustomRejection::InternalError)?);
+            receipts_dto.push(ReceiptDto::try_from(receipt).map_err(|_| ApiError::InternalError)?);
         }
     }
 
-    Ok(warp::reply::json(&ReceiptsResponse { receipts: receipts_dto }))
+    Ok(Json(ReceiptsResponse { receipts: receipts_dto }))
 }

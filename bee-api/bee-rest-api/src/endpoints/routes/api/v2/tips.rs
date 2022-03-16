@@ -3,7 +3,7 @@
 
 use crate::{
     endpoints::{
-        config::ROUTE_TIPS, filters::with_tangle, permission::has_permission, rejection::CustomRejection,
+        config::ROUTE_TIPS, permission::has_permission, rejection::CustomRejection,
         storage::StorageBackend, CONFIRMED_THRESHOLD,
     },
     types::responses::TipsResponse,
@@ -16,35 +16,33 @@ use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
-fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
-    super::path().and(warp::path("tips")).and(warp::path::end())
+use axum::extract::Extension;
+use crate::endpoints::ApiArgsFullNode;
+use axum::extract::Json;
+use axum::Router;
+use axum::routing::get;
+use axum::response::IntoResponse;
+use crate::endpoints::error::ApiError;
+use std::sync::Arc;
+use axum::extract::Path;
+
+pub(crate) fn filter<B: StorageBackend>() -> Router {
+    Router::new()
+        .route("/tips", get(tips::<B>))
 }
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<Tangle<B>>,
-) -> BoxedFilter<(impl Reply,)> {
-    self::path()
-        .and(warp::get())
-        .and(has_permission(ROUTE_TIPS, public_routes, allowed_ips))
-        .and(with_tangle(tangle))
-        .and_then(tips)
-        .boxed()
-}
-
-pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<Tangle<B>>) -> Result<impl Reply, Rejection> {
-    if !tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
-        return Err(reject::custom(CustomRejection::ServiceUnavailable(
+pub(crate) async fn tips<B: StorageBackend>(Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,) -> Result<impl IntoResponse, ApiError> {
+    if !args.tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
+        return Err(ApiError::ServiceUnavailable(
             "the node is not synchronized".to_string(),
-        )));
+        ));
     }
-    match tangle.get_messages_to_approve().await {
-        Some(tips) => Ok(warp::reply::json(&TipsResponse {
+    match args.tangle.get_messages_to_approve().await {
+        Some(tips) => Ok(Json(TipsResponse {
             tip_message_ids: tips.iter().map(|t| t.to_string()).collect(),
         })),
-        None => Err(reject::custom(CustomRejection::ServiceUnavailable(
+        None => Err(ApiError::ServiceUnavailable(
             "tip pool is empty".to_string(),
-        ))),
+        )),
     }
 }

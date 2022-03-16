@@ -4,7 +4,6 @@
 use crate::{
     endpoints::{
         config::ROUTE_OUTPUT,
-        filters::{with_consensus_worker, with_storage},
         path_params::output_id,
         permission::has_permission,
         rejection::CustomRejection,
@@ -28,57 +27,47 @@ use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
-fn path() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Clone {
-    super::path()
-        .and(warp::path("outputs"))
-        .and(output_id())
-        .and(warp::path::end())
-}
+use axum::extract::Extension;
+use crate::endpoints::ApiArgsFullNode;
+use axum::extract::Json;
+use axum::Router;
+use axum::routing::get;
+use axum::response::IntoResponse;
+use crate::endpoints::error::ApiError;
+use std::sync::Arc;
+use axum::extract::Path;
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    storage: ResourceHandle<B>,
-    consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
-) -> BoxedFilter<(impl Reply,)> {
-    self::path()
-        .and(warp::get())
-        .and(has_permission(ROUTE_OUTPUT, public_routes, allowed_ips))
-        .and(with_storage(storage))
-        .and(with_consensus_worker(consensus_worker))
-        .and_then(
-            |output_id, storage, consensus_worker| async move { output(output_id, storage, consensus_worker).await },
-        )
-        .boxed()
+pub(crate) fn filter<B: StorageBackend>() -> Router {
+    Router::new()
+        .route("/outputs/:output_id", get(output::<B>))
 }
 
 pub(crate) async fn output<B: StorageBackend>(
-    output_id: OutputId,
-    storage: ResourceHandle<B>,
-    consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
-) -> Result<impl Reply, Rejection> {
+    Path(output_id): Path<OutputId>,
+    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
+) -> Result<impl IntoResponse, ApiError> {
     let (cmd_tx, cmd_rx) = oneshot::channel::<(Result<Option<CreatedOutput>, Error>, LedgerIndex)>();
 
-    if let Err(e) = consensus_worker.send(ConsensusWorkerCommand::FetchOutput(output_id, cmd_tx)) {
+    if let Err(e) = args.consensus_worker.send(ConsensusWorkerCommand::FetchOutput(output_id, cmd_tx)) {
         error!("request to consensus worker failed: {}.", e);
     }
 
     match cmd_rx.await.map_err(|e| {
         error!("response from consensus worker failed: {}.", e);
-        reject::custom(CustomRejection::ServiceUnavailable(
+        ApiError::ServiceUnavailable(
             "unable to fetch the output".to_string(),
-        ))
+        )
     })? {
         (Ok(response), ledger_index) => match response {
             Some(output) => {
-                let is_spent = Fetch::<OutputId, ConsumedOutput>::fetch(&*storage, &output_id).map_err(|e| {
+                let is_spent = Fetch::<OutputId, ConsumedOutput>::fetch(&*args.storage, &output_id).map_err(|e| {
                     error!("unable to fetch the output: {}", e);
-                    reject::custom(CustomRejection::ServiceUnavailable(
+                   ApiError::ServiceUnavailable(
                         "unable to fetch the output".to_string(),
-                    ))
+                    )
                 })?;
 
-                Ok(warp::reply::json(&OutputResponse {
+                Ok(Json(OutputResponse {
                     message_id: output.message_id().to_string(),
                     transaction_id: output_id.transaction_id().to_string(),
                     output_index: output_id.index(),
@@ -91,15 +80,15 @@ pub(crate) async fn output<B: StorageBackend>(
                     output: output.inner().into(),
                 }))
             }
-            None => Err(reject::custom(CustomRejection::NotFound(
+            None => Err(ApiError::NotFound(
                 "output not found".to_string(),
-            ))),
+            )),
         },
         (Err(e), _) => {
             error!("unable to fetch the output: {}", e);
-            Err(reject::custom(CustomRejection::ServiceUnavailable(
+            Err(ApiError::ServiceUnavailable(
                 "unable to fetch the output".to_string(),
-            )))
+            ))
         }
     }
 }

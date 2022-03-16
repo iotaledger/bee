@@ -3,7 +3,7 @@
 
 use crate::endpoints::{
     config::ROUTE_TRANSACTION_INCLUDED_MESSAGE,
-    filters::{with_storage, with_tangle},
+
     path_params::transaction_id,
     permission::has_permission,
     rejection::CustomRejection,
@@ -21,49 +21,36 @@ use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
-fn path() -> impl Filter<Extract = (TransactionId,), Error = Rejection> + Clone {
-    super::path()
-        .and(warp::path("transactions"))
-        .and(transaction_id())
-        .and(warp::path("included-message"))
-        .and(warp::path::end())
-}
+use axum::extract::Extension;
+use crate::endpoints::ApiArgsFullNode;
+use axum::extract::Json;
+use axum::Router;
+use axum::routing::get;
+use axum::response::IntoResponse;
+use crate::endpoints::error::ApiError;
+use std::sync::Arc;
+use axum::extract::Path;
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    storage: ResourceHandle<B>,
-    tangle: ResourceHandle<Tangle<B>>,
-) -> BoxedFilter<(impl Reply,)> {
-    self::path()
-        .and(warp::get())
-        .and(has_permission(
-            ROUTE_TRANSACTION_INCLUDED_MESSAGE,
-            public_routes,
-            allowed_ips,
-        ))
-        .and(with_storage(storage))
-        .and(with_tangle(tangle))
-        .and_then(transaction_included_message)
-        .boxed()
+pub(crate) fn filter<B: StorageBackend>() -> Router {
+    Router::new()
+        .route("/transactions/:transaction_id/included-message", get(transaction_included_message::<B>))
 }
 
 pub(crate) async fn transaction_included_message<B: StorageBackend>(
-    transaction_id: TransactionId,
-    storage: ResourceHandle<B>,
-    tangle: ResourceHandle<Tangle<B>>,
-) -> Result<impl Reply, Rejection> {
+    Path(transaction_id): Path<TransactionId>,
+    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
+) -> Result<impl IntoResponse, ApiError> {
     // Safe to unwrap since 0 is a valid index;
     let output_id = OutputId::new(transaction_id, 0).unwrap();
 
-    match Fetch::<OutputId, CreatedOutput>::fetch(&*storage, &output_id).map_err(|_| {
-        reject::custom(CustomRejection::ServiceUnavailable(
+    match Fetch::<OutputId, CreatedOutput>::fetch(&*args.storage, &output_id).map_err(|_| {
+        ApiError::ServiceUnavailable(
             "Can not fetch from storage".to_string(),
-        ))
+        )
     })? {
-        Some(output) => message::message(*output.message_id(), tangle).await,
-        None => Err(reject::custom(CustomRejection::NotFound(
+        Some(output) => message::message(Path(*output.message_id()), Extension(args)).await,
+        None => Err(ApiError::NotFound(
             "Can not find output".to_string(),
-        ))),
+        )),
     }
 }

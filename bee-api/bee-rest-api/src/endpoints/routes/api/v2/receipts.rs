@@ -3,7 +3,7 @@
 
 use crate::{
     endpoints::{
-        config::ROUTE_RECEIPTS, filters::with_storage, permission::has_permission, rejection::CustomRejection,
+        config::ROUTE_RECEIPTS,  permission::has_permission, rejection::CustomRejection,
         storage::StorageBackend,
     },
     types::{dtos::ReceiptDto, responses::ReceiptsResponse},
@@ -18,32 +18,30 @@ use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
-fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    super::path().and(warp::path("receipts")).and(warp::path::end())
+use axum::extract::Extension;
+use crate::endpoints::ApiArgsFullNode;
+use axum::extract::Json;
+use axum::Router;
+use axum::routing::get;
+use axum::response::IntoResponse;
+use crate::endpoints::error::ApiError;
+use std::sync::Arc;
+use axum::extract::Path;
+
+pub(crate) fn filter<B: StorageBackend>() -> Router {
+    Router::new()
+        .route("/receipts", get(receipts::<B>))
 }
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    storage: ResourceHandle<B>,
-) -> BoxedFilter<(impl Reply,)> {
-    self::path()
-        .and(warp::get())
-        .and(has_permission(ROUTE_RECEIPTS, public_routes, allowed_ips))
-        .and(with_storage(storage))
-        .and_then(|storage| async move { receipts(storage) })
-        .boxed()
-}
-
-pub(crate) fn receipts<B: StorageBackend>(storage: ResourceHandle<B>) -> Result<impl Reply, Rejection> {
+pub(crate) async fn receipts<B: StorageBackend>(Extension(args): Extension<Arc<ApiArgsFullNode<B>>>) -> Result<impl IntoResponse, ApiError> {
     let mut receipts_dto = Vec::new();
     let iterator =
-        AsIterator::<(MilestoneIndex, Receipt), ()>::iter(&*storage).map_err(|_| CustomRejection::InternalError)?;
+        AsIterator::<(MilestoneIndex, Receipt), ()>::iter(&*args.storage).map_err(|_| ApiError::InternalError)?;
 
     for result in iterator {
-        let ((_, receipt), _) = result.map_err(|_| CustomRejection::InternalError)?;
-        receipts_dto.push(ReceiptDto::try_from(receipt).map_err(|_| CustomRejection::InternalError)?);
+        let ((_, receipt), _) = result.map_err(|_| ApiError::InternalError)?;
+        receipts_dto.push(ReceiptDto::try_from(receipt).map_err(|_| ApiError::InternalError)?);
     }
 
-    Ok(warp::reply::json(&ReceiptsResponse { receipts: receipts_dto }))
+    Ok(Json(ReceiptsResponse { receipts: receipts_dto }))
 }

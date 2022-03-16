@@ -3,7 +3,7 @@
 
 use crate::{
     endpoints::{
-        config::ROUTE_TREASURY, filters::with_storage, permission::has_permission, rejection::CustomRejection,
+        config::ROUTE_TREASURY, permission::has_permission, rejection::CustomRejection,
         storage::StorageBackend,
     },
     types::responses::TreasuryResponse,
@@ -16,27 +16,25 @@ use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
-fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    super::path().and(warp::path("treasury")).and(warp::path::end())
+use axum::extract::Extension;
+use crate::endpoints::ApiArgsFullNode;
+use axum::extract::Json;
+use axum::Router;
+use axum::routing::get;
+use axum::response::IntoResponse;
+use crate::endpoints::error::ApiError;
+use std::sync::Arc;
+use axum::extract::Path;
+
+pub(crate) fn filter<B: StorageBackend>() -> Router {
+    Router::new()
+        .route("/treasury", get(treasury::<B>))
 }
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    storage: ResourceHandle<B>,
-) -> BoxedFilter<(impl Reply,)> {
-    self::path()
-        .and(warp::get())
-        .and(has_permission(ROUTE_TREASURY, public_routes, allowed_ips))
-        .and(with_storage(storage))
-        .and_then(|storage| async move { treasury(storage) })
-        .boxed()
-}
+pub(crate) async fn treasury<B: StorageBackend>(Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,) -> Result<impl IntoResponse, ApiError> {
+    let treasury = storage::fetch_unspent_treasury_output(&*args.storage).map_err(|_| ApiError::StorageBackend)?;
 
-pub(crate) fn treasury<B: StorageBackend>(storage: ResourceHandle<B>) -> Result<impl Reply, Rejection> {
-    let treasury = storage::fetch_unspent_treasury_output(&*storage).map_err(|_| CustomRejection::StorageBackend)?;
-
-    Ok(warp::reply::json(&TreasuryResponse {
+    Ok(Json(TreasuryResponse {
         milestone_id: treasury.milestone_id().to_string(),
         amount: treasury.inner().amount(),
     }))

@@ -27,7 +27,7 @@ bee-storage = { version = "0.9.0", path = "../../bee-storage/bee-storage", defau
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false, optional = true }
 
 async-trait = { version = "0.1.51", default-features = false, optional = true }
-axum = { version = "0.4.8", default-features = false, features = [ "json" ] }
+axum = { version = "0.4.8", default-features = false, features = [ "json", "headers" ], optional = true }
 bech32 = { version = "0.8.1", default-features = false, optional = true }
 digest = { version = "0.9.0", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false, optional = true }
@@ -42,7 +42,6 @@ serde = { version = "1.0.130", default-features = false, features = [ "derive" ]
 serde_json = { version = "1.0.79", default-features = false, features = [ "alloc" ] }
 thiserror = { version = "1.0.30", default-features = false }
 tokio = { version = "1.17.0", default-features = false, optional = true }
-warp = { version = "0.3.1", default-features = false, optional = true }
 
 [features]
 default = [ "peer" ]
@@ -61,6 +60,6 @@ endpoints = [
   "log",
   "num_cpus",
   "tokio",
-  "warp",
+  "axum"
 ]
 peer = [ "bee-protocol" ]

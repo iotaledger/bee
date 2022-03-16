@@ -192,6 +192,7 @@ dependencies = [
  "bitflags",
  "bytes",
  "futures-util",
+ "headers",
  "http",
  "http-body",
  "hyper",
@@ -536,7 +537,6 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tokio",
- "warp",
 ]
 
 [[package]]

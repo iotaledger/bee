@@ -1,9 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 pub mod config;
-pub mod path_params;
 pub mod permission;
-pub mod rejection;
 pub mod routes;
 pub mod storage;
 pub mod error;

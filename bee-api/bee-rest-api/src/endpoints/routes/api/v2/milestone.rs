@@ -3,7 +3,7 @@
 
 use crate::{
     endpoints::{
-        config::ROUTE_MILESTONE, filters::with_tangle, path_params::milestone_index, permission::has_permission,
+        config::ROUTE_MILESTONE,  path_params::milestone_index, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend,
     },
     types::responses::MilestoneResponse,
@@ -17,43 +17,38 @@ use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
-fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
-    super::path()
-        .and(warp::path("milestones"))
-        .and(milestone_index())
-        .and(warp::path::end())
-}
+use axum::extract::Extension;
+use crate::endpoints::ApiArgsFullNode;
+use axum::extract::Json;
+use axum::Router;
+use axum::routing::get;
+use axum::response::IntoResponse;
+use crate::endpoints::error::ApiError;
+use std::sync::Arc;
+use axum::extract::Path;
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<Tangle<B>>,
-) -> BoxedFilter<(impl Reply,)> {
-    self::path()
-        .and(warp::get())
-        .and(has_permission(ROUTE_MILESTONE, public_routes, allowed_ips))
-        .and(with_tangle(tangle))
-        .and_then(milestone)
-        .boxed()
+pub(crate) fn filter<B: StorageBackend>() -> Router {
+    Router::new()
+        .route("/milestones/:milestone_index", get(milestone::<B>))
 }
 
 pub(crate) async fn milestone<B: StorageBackend>(
-    milestone_index: MilestoneIndex,
-    tangle: ResourceHandle<Tangle<B>>,
-) -> Result<impl Reply, Rejection> {
-    match tangle.get_milestone_message_id(milestone_index).await {
-        Some(message_id) => match tangle.get_metadata(&message_id).await {
-            Some(metadata) => Ok(warp::reply::json(&MilestoneResponse {
+    Path(milestone_index): Path<MilestoneIndex>,
+    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
+) -> Result<impl IntoResponse, ApiError> {
+    match args.tangle.get_milestone_message_id(milestone_index).await {
+        Some(message_id) => match args.tangle.get_metadata(&message_id).await {
+            Some(metadata) => Ok(Json(MilestoneResponse {
                 milestone_index: *milestone_index,
                 message_id: message_id.to_string(),
                 timestamp: metadata.arrival_timestamp(),
             })),
-            None => Err(reject::custom(CustomRejection::NotFound(
+            None => Err(ApiError::NotFound(
                 "can not find metadata for milestone".to_string(),
-            ))),
+            )),
         },
-        None => Err(reject::custom(CustomRejection::NotFound(
+        None => Err(ApiError::NotFound(
             "can not find milestone".to_string(),
-        ))),
+        )),
     }
 }
