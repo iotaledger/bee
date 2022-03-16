@@ -48,11 +48,8 @@ pub(crate) fn message_metadata<B: StorageBackend>(
         )));
     }
 
-    match tangle.get(&message_id) {
-        Some(message) => {
-            // existing message <=> existing metadata, therefore unwrap() is safe
-            let metadata = tangle.get_metadata(&message_id).unwrap();
-
+    match tangle.get_message_and_metadata(&message_id) {
+        Some((message, metadata)) => {
             // TODO: access constants from URTS
             let ymrsi_delta = 8;
             let omrsi_delta = 13;

@@ -48,7 +48,7 @@ async fn heavy_solidification<B: StorageBackend>(
     traversal::visit_parents_depth_first(
         tangle,
         target_id,
-        |id, _, metadata| !metadata.flags().is_solid() && !requested_messages.contains(&id),
+        |id, _, metadata| !metadata.flags().is_solid() && !requested_messages.contains(id),
         |_, _, _| {},
         |_, _, _| {},
         |missing_id| missing.push(*missing_id),

@@ -23,7 +23,7 @@ pub fn visit_parents_depth_first<Match, Apply, ElseApply, MissingApply, B: Stora
     mut else_apply: ElseApply,
     mut missing_apply: MissingApply,
 ) where
-    Match: Fn(MessageId, Message, MessageMetadata) -> bool,
+    Match: Fn(&MessageId, &Message, &MessageMetadata) -> bool,
     Apply: FnMut(&MessageId, &Message, &MessageMetadata),
     ElseApply: FnMut(&MessageId, &Message, &MessageMetadata),
     MissingApply: FnMut(&MessageId),
@@ -36,7 +36,7 @@ pub fn visit_parents_depth_first<Match, Apply, ElseApply, MissingApply, B: Stora
             let msg_meta = tangle.get_message_and_metadata(&message_id);
             match msg_meta {
                 Some((msg, meta)) => {
-                    if matches(message_id, msg.clone(), meta) {
+                    if matches(&message_id, &msg, &meta) {
                         apply(&message_id, &msg, &meta);
 
                         parents.extend_from_slice(msg.parents());

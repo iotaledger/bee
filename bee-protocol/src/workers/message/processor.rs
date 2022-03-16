@@ -179,13 +179,9 @@ where
                             }
                         };
 
-                        if payload_worker
-                            .send(PayloadWorkerEvent {
-                                message_id,
-                                message: message.clone(),
-                            })
-                            .is_err()
-                        {
+                        let parent_message_ids = message.parents().to_vec();
+
+                        if payload_worker.send(PayloadWorkerEvent { message_id, message }).is_err() {
                             error!("Sending message {} to payload worker failed.", message_id);
                         }
 
@@ -196,7 +192,7 @@ where
                         // TODO: boolean values are false at this point in time? trigger event from another location?
                         bus.dispatch(VertexCreated {
                             message_id,
-                            parent_message_ids: message.parents().to_vec(),
+                            parent_message_ids,
                             is_solid: false,
                             is_referenced: false,
                             is_conflicting: false,
