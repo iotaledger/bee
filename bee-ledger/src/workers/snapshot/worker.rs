@@ -69,7 +69,6 @@ where
         // Unwrap is fine because snapshot info was either just inserted or already present in storage.
         let snapshot_info = storage::fetch_snapshot_info(&*storage)?.unwrap();
 
-        // TODO(Adam) extract to separate traced method.
         tangle.replace_solid_entry_points(solid_entry_points).await;
         tangle.update_snapshot_index(snapshot_info.snapshot_index());
         tangle.update_pruning_index(snapshot_info.pruning_index());

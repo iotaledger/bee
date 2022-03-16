@@ -21,11 +21,9 @@ pub struct TraceConfigBuilder {
     /// Enables the console layer.
     #[serde(alias = "consoleEnabled", default)]
     pub console_enabled: bool,
-
     /// Enables the flamegraph layer.
     #[serde(alias = "flamegraphEnabled", default)]
     pub flamegraph_enabled: bool,
-
     /// Specifies the output directory of the flamegraph layer.
     #[serde(alias = "flamegraphOutputPath")]
     pub flamegraph_output_path: Option<String>,
@@ -50,10 +48,8 @@ impl TraceConfigBuilder {
 pub struct TraceConfig {
     /// Enables the console layer.
     pub console_enabled: bool,
-
     /// Enables the flamegraph layer.
     pub flamegraph_enabled: bool,
-
     /// Specifies the output directory of the flamegraph layer.
     pub flamegraph_output_path: PathBuf,
 }
@@ -63,6 +59,12 @@ pub fn init(
     logger_config: LoggerConfig,
     tracing_config: TraceConfig,
 ) -> Result<Option<Flamegrapher>, trace_tools::Error> {
+    #![allow(clippy::assertions_on_constants)]
+    assert!(
+        cfg!(tokio_unstable),
+        "`trace` feature requires building with RUSTFLAGS=\"--cfg tokio_unstable\"!"
+    );
+
     let mut builder = subscriber::build().with_log_layer(logger_config);
 
     if tracing_config.console_enabled {

@@ -51,12 +51,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .to_owned();
     let (identity_field, config) = deserialize_config(cl_args);
 
-    #[cfg(not(feature = "trace"))]
     // Initialize the logger.
+    #[cfg(not(feature = "trace"))]
     fern_logger::logger_init(config.logger().clone())?;
 
-    #[cfg(feature = "trace")]
     // Initialize the subscriber.
+    #[cfg(feature = "trace")]
     let flamegrapher = trace::init(config.logger().clone(), config.tracing().clone())?;
 
     // Establish identity.

@@ -1,2 +1,0 @@
-[target.'cfg(feature = "trace")']
-rustflags = [ "--cfg", "tokio_unstable" ]
