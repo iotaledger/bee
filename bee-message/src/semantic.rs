@@ -12,9 +12,6 @@ use crate::{
 use hashbrown::{HashMap, HashSet};
 use primitive_types::U256;
 
-// Copyright 2020-2021 IOTA Stiftung
-// SPDX-License-Identifier: Apache-2.0
-
 use serde::{Deserialize, Serialize};
 
 /// Errors related to ledger types.
