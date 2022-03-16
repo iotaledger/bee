@@ -13,3 +13,14 @@ impl From<OutputId> for NftId {
         Self::from(output_id.hash())
     }
 }
+
+impl NftId {
+    ///
+    pub fn or_from_output_id(self, output_id: OutputId) -> NftId {
+        if self.is_null() {
+            NftId::from(output_id)
+        } else {
+            self
+        }
+    }
+}

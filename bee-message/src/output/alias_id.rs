@@ -13,3 +13,14 @@ impl From<OutputId> for AliasId {
         Self::from(output_id.hash())
     }
 }
+
+impl AliasId {
+    ///
+    pub fn or_from_output_id(self, output_id: OutputId) -> AliasId {
+        if self.is_null() {
+            AliasId::from(output_id)
+        } else {
+            self
+        }
+    }
+}

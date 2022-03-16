@@ -134,16 +134,3 @@ field must increment. This incremented value defines `Serial Number`, while the 
 #### Created Outputs
 - All <i>Unlock Condition</i> imposed transaction validation criteria must be fulfilled.
 - All <i>Feature Block</i> imposed transaction validation criteria must be fulfilled.
-
-#### Alias Unlock Block Semantic Validation
- - The address of the unlocking condition of the input being unlocked must be an <i>Alias Address</i>.
- - The index `i` of the <i>Alias Unlock Block</i> is the index of the input in the transaction that it unlocks. `Alias Reference Unlock Index` must be < `i`.
- - `Alias Reference Unlock Index` defines a previous input of the transaction and its unlock block. This input must
-   be an <i>Alias Output</i> with `Alias ID` that refers to the <i>Alias Address</i> being unlocked.
- - The referenced <i>Alias Output</i> must be unlocked for state transition.
-
-#### NFT Unlock Block Semantic Validation
- - The address of the input being unlocked must be an <i>NFT Address</i>.
- - The index `i` of the <i>NFT Unlock Block</i> is the index of the input in the transaction that it unlocks. `NFT Reference Unlock Index` must be < `i`.
- - `NFT Reference Unlock Index` defines a previous input of the transaction and its unlock block. This input must
-   be an <i>NFT Output</i> with `NFT ID` that refers to the <i>NFT Address</i> being unlocked.
