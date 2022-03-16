@@ -1,17 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    endpoints::{config::ROUTE_MILESTONE_UTXO_CHANGES, storage::StorageBackend},
-    types::responses::UtxoChangesResponse,
-};
+use crate::{endpoints::storage::StorageBackend, types::responses::UtxoChangesResponse};
 
 use bee_ledger::types::OutputDiff;
 use bee_message::milestone::MilestoneIndex;
-use bee_runtime::resource::ResourceHandle;
-use bee_storage::access::Fetch;
 
-use std::net::IpAddr;
+use bee_storage::access::Fetch;
 
 use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{

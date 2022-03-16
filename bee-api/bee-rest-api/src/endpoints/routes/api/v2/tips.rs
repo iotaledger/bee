@@ -2,18 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{config::ROUTE_TIPS, storage::StorageBackend, CONFIRMED_THRESHOLD},
+    endpoints::{storage::StorageBackend, CONFIRMED_THRESHOLD},
     types::responses::TipsResponse,
 };
 
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
-
-use std::net::IpAddr;
-
 use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{
-    extract::{Extension, Json, Path},
+    extract::{Extension, Json},
     response::IntoResponse,
     routing::get,
     Router,

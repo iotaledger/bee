@@ -2,35 +2,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{
-        config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW},
-        storage::StorageBackend,
-        NetworkId,
-    },
+    endpoints::storage::StorageBackend,
     types::{dtos::PayloadDto, responses::SubmitMessageResponse},
 };
 
 use bee_message::{parent::Parents, payload::Payload, Message, MessageBuilder, MessageId};
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
 use bee_protocol::{
-    workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent},
+    workers::{MessageSubmitterError, MessageSubmitterWorkerEvent},
     PROTOCOL_VERSION,
 };
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
 
 use futures::channel::oneshot;
 use log::error;
 use packable::PackableExt;
 use serde_json::Value as JsonValue;
-use tokio::sync::mpsc;
-
-use std::net::IpAddr;
 
 use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{
     body::Bytes,
-    extract::{Extension, Json, Path, TypedHeader},
+    extract::{Extension, Json},
     http::{
         header::{HeaderMap, HeaderValue},
         StatusCode,

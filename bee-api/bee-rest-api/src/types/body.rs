@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 
 /// A marker trait to represent the data that can be included into `SuccessBody` and `ErrorBody`.

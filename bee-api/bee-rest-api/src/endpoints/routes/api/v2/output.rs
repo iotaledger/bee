@@ -1,24 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    endpoints::{config::ROUTE_OUTPUT, storage::StorageBackend},
-    types::responses::OutputResponse,
-};
+use crate::{endpoints::storage::StorageBackend, types::responses::OutputResponse};
 
 use bee_ledger::{
     types::{ConsumedOutput, CreatedOutput, LedgerIndex},
     workers::{consensus::ConsensusWorkerCommand, error::Error},
 };
 use bee_message::output::OutputId;
-use bee_runtime::resource::ResourceHandle;
+
 use bee_storage::access::Fetch;
 
 use futures::channel::oneshot;
 use log::error;
-use tokio::sync::mpsc;
-
-use std::net::IpAddr;
 
 use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{

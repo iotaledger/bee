@@ -2,20 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{config::ROUTE_ADD_PEER, storage::StorageBackend},
+    endpoints::storage::StorageBackend,
     types::{
         dtos::{PeerDto, RelationDto},
         responses::AddPeerResponse,
     },
 };
 
-use bee_gossip::{Command::AddPeer, Multiaddr, NetworkCommandSender, PeerId, PeerRelation, Protocol};
-use bee_protocol::workers::PeerManager;
-use bee_runtime::resource::ResourceHandle;
+use bee_gossip::{Command::AddPeer, Multiaddr, PeerId, PeerRelation, Protocol};
 
 use serde_json::Value;
-
-use std::net::IpAddr;
 
 use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{

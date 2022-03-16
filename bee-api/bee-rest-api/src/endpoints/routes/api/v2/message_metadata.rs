@@ -2,15 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{config::ROUTE_MESSAGE_METADATA, storage::StorageBackend, CONFIRMED_THRESHOLD},
+    endpoints::{storage::StorageBackend, CONFIRMED_THRESHOLD},
     types::{dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
 };
 
 use bee_message::{payload::Payload, MessageId};
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::{ConflictReason, Tangle};
 
-use std::net::IpAddr;
+use bee_tangle::ConflictReason;
 
 use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{

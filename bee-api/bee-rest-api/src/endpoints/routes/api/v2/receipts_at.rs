@@ -2,16 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{config::ROUTE_RECEIPTS_AT, storage::StorageBackend},
+    endpoints::storage::StorageBackend,
     types::{dtos::ReceiptDto, responses::ReceiptsResponse},
 };
 
 use bee_ledger::types::Receipt;
 use bee_message::milestone::MilestoneIndex;
-use bee_runtime::resource::ResourceHandle;
-use bee_storage::access::Fetch;
 
-use std::net::IpAddr;
+use bee_storage::access::Fetch;
 
 use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{

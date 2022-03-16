@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::endpoints::storage::StorageBackend;
+use axum::Router;
+
 pub mod add_peer;
 pub mod info;
 pub mod message;
@@ -19,10 +22,6 @@ pub mod submit_message;
 pub mod tips;
 pub mod transaction_included_message;
 pub mod treasury;
-
-use crate::endpoints::storage::StorageBackend;
-
-use axum::Router;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().nest(

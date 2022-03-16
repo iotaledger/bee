@@ -1,19 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    endpoints::config::ROUTE_PEERS,
-    types::{dtos::PeerDto, responses::PeersResponse},
-};
+use crate::types::{dtos::PeerDto, responses::PeersResponse};
 
-use bee_protocol::workers::PeerManager;
-use bee_runtime::resource::ResourceHandle;
-
-use std::{convert::Infallible, net::IpAddr};
-
-use crate::endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
+use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
 use axum::{
-    extract::{Extension, Json, Path},
+    extract::{Extension, Json},
     response::IntoResponse,
     routing::get,
     Router,

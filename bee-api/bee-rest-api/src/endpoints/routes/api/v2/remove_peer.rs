@@ -1,16 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::config::ROUTE_REMOVE_PEER;
-
-use bee_gossip::{Command::RemovePeer, NetworkCommandSender, PeerId};
-use bee_runtime::resource::ResourceHandle;
-
-use std::net::IpAddr;
+use bee_gossip::{Command::RemovePeer, PeerId};
 
 use crate::endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
 use axum::{
-    extract::{Extension, Json, Path},
+    extract::{Extension, Path},
     http::StatusCode,
     response::IntoResponse,
     routing::delete,

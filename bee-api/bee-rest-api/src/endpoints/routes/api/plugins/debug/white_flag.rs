@@ -1,22 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    endpoints::{
-        config::{RestApiConfig, ROUTE_WHITE_FLAG},
-        storage::StorageBackend,
-    },
-    types::responses::WhiteFlagResponse,
-};
+use crate::{endpoints::storage::StorageBackend, types::responses::WhiteFlagResponse};
 
 use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
 use bee_message::{milestone::MilestoneIndex, MessageId};
-use bee_protocol::workers::{event::MessageSolidified, request_message, MessageRequesterWorker, RequestedMessages};
-use bee_runtime::{event::Bus, resource::ResourceHandle};
-use bee_tangle::Tangle;
+use bee_protocol::workers::{event::MessageSolidified, request_message};
 
 use futures::channel::oneshot;
-use serde_json::Value as JsonValue;
+use serde_json::Value;
 use tokio::time::timeout;
 
 use crate::endpoints::{error::ApiError, ApiArgsFullNode};
@@ -29,7 +21,6 @@ use axum::{
 use std::{
     any::TypeId,
     collections::HashSet,
-    net::IpAddr,
     sync::{Arc, Mutex},
     time::Duration,
 };

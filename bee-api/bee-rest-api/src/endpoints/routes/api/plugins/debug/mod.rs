@@ -3,14 +3,8 @@
 
 mod white_flag;
 
-use crate::endpoints::{config::RestApiConfig, storage::StorageBackend};
-
-use bee_protocol::workers::{MessageRequesterWorker, RequestedMessages};
-use bee_runtime::{event::Bus, resource::ResourceHandle};
-use bee_tangle::Tangle;
-
+use crate::endpoints::storage::StorageBackend;
 use axum::Router;
-use std::net::IpAddr;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().nest("debug", white_flag::filter::<B>())

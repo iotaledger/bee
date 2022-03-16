@@ -9,32 +9,28 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, ToSocketAddrs};
 pub(crate) const DEFAULT_BIND_ADDRESS: &str = "/ip4/0.0.0.0/tcp/14265";
 
 // all available routes
-pub(crate) const ROUTE_ADD_PEER: &str = "/api/v2/peers";
-pub(crate) const ROUTE_BALANCE_BECH32: &str = "/api/v2/addresses/:address";
-pub(crate) const ROUTE_BALANCE_ED25519: &str = "/api/v2/addresses/ed25519/:address";
-pub(crate) const ROUTE_HEALTH: &str = "/health";
-pub(crate) const ROUTE_INFO: &str = "/api/v2/info";
-pub(crate) const ROUTE_MESSAGE: &str = "/api/v2/messages/:messageId";
-pub(crate) const ROUTE_MESSAGE_CHILDREN: &str = "/api/v2/messages/:messageId/children";
-pub(crate) const ROUTE_MESSAGE_METADATA: &str = "/api/v2/messages/:messageId/metadata";
-pub(crate) const ROUTE_MESSAGE_RAW: &str = "/api/v2/messages/:messageId/raw";
-pub(crate) const ROUTE_MESSAGES_FIND: &str = "/api/v2/messages";
-pub(crate) const ROUTE_MILESTONE: &str = "/api/v2/milestones/:milestoneIndex";
-pub(crate) const ROUTE_MILESTONE_UTXO_CHANGES: &str = "/api/v2/milestones/:milestoneIndex/utxo-changes";
-pub(crate) const ROUTE_OUTPUT: &str = "/api/v2/outputs/:outputId";
-pub(crate) const ROUTE_OUTPUTS_BECH32: &str = "/api/v2/addresses/:address/outputs";
-pub(crate) const ROUTE_OUTPUTS_ED25519: &str = "/api/v2/addresses/ed25519/:address/outputs";
-pub(crate) const ROUTE_PEER: &str = "/api/v2/peers/:peerId";
-pub(crate) const ROUTE_PEERS: &str = "/api/v2/peers";
-pub(crate) const ROUTE_REMOVE_PEER: &str = "/api/v2/peers/:peerId";
-pub(crate) const ROUTE_SUBMIT_MESSAGE: &str = "/api/v2/messages";
-pub(crate) const ROUTE_SUBMIT_MESSAGE_RAW: &str = "/api/v2/messages";
-pub(crate) const ROUTE_TIPS: &str = "/api/v2/tips";
-pub(crate) const ROUTE_RECEIPTS: &str = "/api/v2/receipts";
-pub(crate) const ROUTE_RECEIPTS_AT: &str = "/api/v2/receipts/:milestoneIndex";
-pub(crate) const ROUTE_TREASURY: &str = "/api/v2/treasury";
-pub(crate) const ROUTE_TRANSACTION_INCLUDED_MESSAGE: &str = "/api/v2/transactions/:transactionId/included-message";
-pub(crate) const ROUTE_WHITE_FLAG: &str = "/api/plugins/debug/whiteflag";
+
+const ROUTE_BALANCE_BECH32: &str = "/api/v2/addresses/:address";
+const ROUTE_BALANCE_ED25519: &str = "/api/v2/addresses/ed25519/:address";
+const ROUTE_HEALTH: &str = "/health";
+const ROUTE_INFO: &str = "/api/v2/info";
+const ROUTE_MESSAGE: &str = "/api/v2/messages/:messageId";
+const ROUTE_MESSAGE_CHILDREN: &str = "/api/v2/messages/:messageId/children";
+const ROUTE_MESSAGE_METADATA: &str = "/api/v2/messages/:messageId/metadata";
+const ROUTE_MESSAGE_RAW: &str = "/api/v2/messages/:messageId/raw";
+const ROUTE_MESSAGES_FIND: &str = "/api/v2/messages";
+const ROUTE_MILESTONE: &str = "/api/v2/milestones/:milestoneIndex";
+const ROUTE_MILESTONE_UTXO_CHANGES: &str = "/api/v2/milestones/:milestoneIndex/utxo-changes";
+const ROUTE_OUTPUT: &str = "/api/v2/outputs/:outputId";
+const ROUTE_OUTPUTS_BECH32: &str = "/api/v2/addresses/:address/outputs";
+const ROUTE_OUTPUTS_ED25519: &str = "/api/v2/addresses/ed25519/:address/outputs";
+const ROUTE_SUBMIT_MESSAGE: &str = "/api/v2/messages";
+const ROUTE_SUBMIT_MESSAGE_RAW: &str = "/api/v2/messages";
+const ROUTE_TIPS: &str = "/api/v2/tips";
+const ROUTE_RECEIPTS: &str = "/api/v2/receipts";
+const ROUTE_RECEIPTS_AT: &str = "/api/v2/receipts/:milestoneIndex";
+const ROUTE_TREASURY: &str = "/api/v2/treasury";
+const ROUTE_TRANSACTION_INCLUDED_MESSAGE: &str = "/api/v2/transactions/:transactionId/included-message";
 
 /// the routes that are available for public use
 pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 21] = [

@@ -1,19 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{config::ROUTE_TRANSACTION_INCLUDED_MESSAGE, routes::api::v2::message, storage::StorageBackend};
+use crate::endpoints::{routes::api::v2::message, storage::StorageBackend};
 
 use bee_ledger::types::CreatedOutput;
 use bee_message::{output::OutputId, payload::transaction::TransactionId};
-use bee_runtime::resource::ResourceHandle;
-use bee_storage::access::Fetch;
-use bee_tangle::Tangle;
 
-use std::net::IpAddr;
+use bee_storage::access::Fetch;
 
 use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{
-    extract::{Extension, Json, Path},
+    extract::{Extension, Path},
     response::IntoResponse,
     routing::get,
     Router,
