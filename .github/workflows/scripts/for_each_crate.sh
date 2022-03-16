@@ -10,7 +10,6 @@
 set -e # Abort script on first error.
 
 CRATES=`cargo metadata --format-version 1 --no-deps | jq .packages[].name`
-FLAGS="--all-targets --all-features --release"
 
 for PACKAGE in ${CRATES}
 do
