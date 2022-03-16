@@ -13,7 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 async-trait = { version = "0.1.51", default-features = false }
 base64 = { version = "0.13.0", default-features = false, features = [ "alloc" ] }
-bincode = { version = "1.3.3", default-features = false }
+bincode = { version = "1.3.3", default-features = false, optional = true }
 bs58 = { version = "0.4", default-features = false, features = [ "alloc" ] }
 bytes = { version = "1.0", default-features = false }
 hash32 = { version = "0.2.1", default-features = false }
@@ -34,10 +34,6 @@ sled = { version = "0.34.7", default-features = false, optional = true }
 thiserror = { version = "1.0.29", default-features = false  }
 tokio = { version = "1.11", default-features = false, features = [ "macros", "rt", "time", "net" ] }
 
-# `udeps` false positives
-[package.metadata.cargo-udeps.ignore]
-normal = [ "bincode" ]
-
 [dev-dependencies]
 fern = { version = "0.6.0", default-features = false }
 serde_json = { version = "1.0.68", default-features = false, features = [ "std" ] }
@@ -53,5 +49,7 @@ name = "node"
 required-features = [ "in-memory" ]
 
 [features]
-default = [ "rocksdb" ]
+default = [ "rocksdb1" ]
 in-memory = [ ]
+rocksdb1 = [ "rocksdb", "bincode" ]
+sled1 = [ "sled", "bincode" ]

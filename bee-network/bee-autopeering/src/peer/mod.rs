@@ -147,7 +147,7 @@ impl Peer {
     }
 }
 
-#[cfg(any(feature = "rocksdb", feature = "sled"))]
+#[cfg(any(feature = "rocksdb1", feature = "sled1"))]
 impl Peer {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
         bincode::serialize(self).expect("serialization error")
