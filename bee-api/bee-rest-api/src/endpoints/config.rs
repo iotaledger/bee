@@ -63,7 +63,7 @@ impl RestApiConfigBuilder {
     }
 
     /// Sets the binding address for the REST API.
-    pub fn bind_address(mut self, addr: String) -> Self {
+    pub fn bind_address(mut self, addr: &str) -> Self {
         match addr.parse() {
             Ok(addr) => {
                 self.bind_address.replace(addr);
@@ -138,7 +138,7 @@ impl RestApiConfigBuilder {
         let public_routes = {
             let routes = self
                 .public_routes
-                .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|r| r.to_string()).collect());
+                .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(ToString::to_string).collect());
             RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<_>>())
                 .expect("invalid public route provided")
         };
@@ -146,8 +146,8 @@ impl RestApiConfigBuilder {
         let protected_routes = {
             let routes = self
                 .protected_routes
-                .unwrap_or_else(|| DEFAULT_PROTECTED_ROUTES.iter().map(|r| r.to_string()).collect());
-            RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<_>>())
+                .unwrap_or_else(|| DEFAULT_PROTECTED_ROUTES.iter().map(ToString::to_string).collect());
+            RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<String>>())
                 .expect("invalid protected route provided")
         };
 
