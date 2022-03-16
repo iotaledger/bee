@@ -5,9 +5,9 @@
 
 // TODO: Refactor all of this into methods on `Tangle`.
 
-use crate::{metadata::MessageMetadata, storage::StorageBackend, tangle::Tangle, MessageRef};
+use crate::{metadata::MessageMetadata, storage::StorageBackend, tangle::Tangle};
 
-use bee_message::MessageId;
+use bee_message::{Message, MessageId};
 
 use std::collections::HashSet;
 
@@ -23,9 +23,9 @@ pub fn visit_parents_depth_first<Match, Apply, ElseApply, MissingApply, B: Stora
     mut else_apply: ElseApply,
     mut missing_apply: MissingApply,
 ) where
-    Match: Fn(MessageId, MessageRef, MessageMetadata) -> bool,
-    Apply: FnMut(&MessageId, &MessageRef, &MessageMetadata),
-    ElseApply: FnMut(&MessageId, &MessageRef, &MessageMetadata),
+    Match: Fn(MessageId, Message, MessageMetadata) -> bool,
+    Apply: FnMut(&MessageId, &Message, &MessageMetadata),
+    ElseApply: FnMut(&MessageId, &Message, &MessageMetadata),
     MissingApply: FnMut(&MessageId),
 {
     let mut parents = vec![root];

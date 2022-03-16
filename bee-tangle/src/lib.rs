@@ -38,11 +38,7 @@ pub use tangle_worker::TangleWorker;
 
 use tip_pool_cleaner_worker::TipPoolCleanerWorker;
 
-use bee_message::Message;
 use bee_runtime::node::{Node, NodeBuilder};
-
-/// A thread-safe reference to a `Message`.
-pub type MessageRef = Message;
 
 /// Initiate the tangle on top of the given node builder.
 pub fn init<N: Node>(tangle_config: &config::TangleConfig, node_builder: N::Builder) -> N::Builder

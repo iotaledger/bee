@@ -8,10 +8,9 @@ use crate::{
 
 use bee_message::{
     payload::{transaction::Essence, Payload},
-    MessageId,
+    Message, MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::MessageRef;
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -23,7 +22,7 @@ use std::{any::TypeId, convert::Infallible};
 
 pub(crate) struct TransactionPayloadWorkerEvent {
     pub(crate) message_id: MessageId,
-    pub(crate) message: MessageRef,
+    pub(crate) message: Message,
 }
 
 pub(crate) struct TransactionPayloadWorker {
@@ -32,7 +31,7 @@ pub(crate) struct TransactionPayloadWorker {
 
 fn process(
     message_id: MessageId,
-    message: MessageRef,
+    message: Message,
     indexation_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
     metrics: &NodeMetrics,
 ) {

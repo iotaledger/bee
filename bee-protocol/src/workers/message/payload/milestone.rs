@@ -19,7 +19,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{event::LatestMilestoneChanged, MessageRef, Tangle, TangleWorker};
+use bee_tangle::{event::LatestMilestoneChanged, Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -37,7 +37,7 @@ pub(crate) enum Error {
 
 pub(crate) struct MilestonePayloadWorkerEvent {
     pub(crate) message_id: MessageId,
-    pub(crate) message: MessageRef,
+    pub(crate) message: Message,
 }
 
 pub(crate) struct MilestonePayloadWorker {
@@ -71,7 +71,7 @@ fn validate(
 fn process<B: StorageBackend>(
     tangle: &Tangle<B>,
     message_id: MessageId,
-    message: MessageRef,
+    message: Message,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     requested_milestones: &RequestedMilestones,
