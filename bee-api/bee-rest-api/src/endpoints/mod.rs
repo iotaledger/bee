@@ -80,8 +80,6 @@ pub struct ApiArgsFullNode<B: StorageBackend> {
     pub protocol_config: ProtocolConfig,
     pub network_id: NetworkId,
     pub bech32_hrp: Bech32Hrp,
-    #[cfg(feature = "dashboard")]
-    pub dashboard_username: DashboardUsername,
     pub storage: ResourceHandle<B>,
     pub bus: ResourceHandle<Bus<'static>>,
     pub node_info: ResourceHandle<NodeInfo>,
@@ -92,6 +90,8 @@ pub struct ApiArgsFullNode<B: StorageBackend> {
     pub message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     pub message_requester: MessageRequesterWorker,
     pub consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
+    #[cfg(feature = "dashboard")]
+    pub dashboard_username: DashboardUsername,
 }
 
 pub struct ApiWorkerFullNode;

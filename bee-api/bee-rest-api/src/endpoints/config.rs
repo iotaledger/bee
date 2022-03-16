@@ -63,7 +63,7 @@ impl RestApiConfigBuilder {
     }
 
     /// Sets the binding address for the REST API.
-    pub fn bind_address(mut self, addr: &str) -> Self {
+    pub fn bind_address(mut self, addr: String) -> Self {
         match addr.parse() {
             Ok(addr) => {
                 self.bind_address.replace(addr);
@@ -74,8 +74,8 @@ impl RestApiConfigBuilder {
     }
 
     /// Sets the JWT salt.
-    pub fn jwt_salt(mut self, jwt_salt: &str) -> Self {
-        self.jwt_salt.replace(jwt_salt.to_string());
+    pub fn jwt_salt(mut self, jwt_salt: String) -> Self {
+        self.jwt_salt.replace(jwt_salt);
         self
     }
 
@@ -139,7 +139,7 @@ impl RestApiConfigBuilder {
             let routes = self
                 .public_routes
                 .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|r| r.to_string()).collect());
-            RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<String>>())
+            RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<_>>())
                 .expect("invalid public route provided")
         };
 
@@ -147,7 +147,7 @@ impl RestApiConfigBuilder {
             let routes = self
                 .protected_routes
                 .unwrap_or_else(|| DEFAULT_PROTECTED_ROUTES.iter().map(|r| r.to_string()).collect());
-            RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<String>>())
+            RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<_>>())
                 .expect("invalid protected route provided")
         };
 
@@ -157,7 +157,7 @@ impl RestApiConfigBuilder {
             .unwrap_or(DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT);
 
         RestApiConfig {
-            binding_socket_addr: SocketAddr::new(address, port),
+            bind_socket_addr: SocketAddr::new(address, port),
             jwt_salt,
             public_routes,
             protected_routes,
@@ -171,7 +171,7 @@ impl RestApiConfigBuilder {
 #[derive(Clone)]
 pub struct RestApiConfig {
     /// REST API binding address.
-    pub(crate) binding_socket_addr: SocketAddr,
+    pub(crate) bind_socket_addr: SocketAddr,
     /// JWT salt for REST API.
     pub(crate) jwt_salt: String,
     /// Routes that are available for public use and don't need JWT authentication.
@@ -192,11 +192,11 @@ impl RestApiConfig {
 
     /// Returns the binding address.
     pub fn bind_socket_addr(&self) -> SocketAddr {
-        self.binding_socket_addr
+        self.bind_socket_addr
     }
 
     /// Returns the JWT salt.
-    pub fn jwt_salt(&self) -> &String {
+    pub fn jwt_salt(&self) -> &str {
         &self.jwt_salt
     }
 
@@ -221,7 +221,7 @@ impl RestApiConfig {
     }
 }
 
-pub fn route_to_regex(route: &str) -> String {
+pub(crate) fn route_to_regex(route: &str) -> String {
     // Escape the string to make sure a regex can be built from it.
     // Existing wildcards `*` get escaped to `\\*`.
     let mut escaped: String = regex::escape(route);
