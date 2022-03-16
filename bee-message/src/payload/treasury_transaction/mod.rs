@@ -9,7 +9,7 @@ use crate::{
     Error,
 };
 
-/// [`TreasuryTransaction`] represents a transaction which moves funds from the treasury.
+/// [`TreasuryTransactionPayload`] represents a transaction which moves funds from the treasury.
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreasuryTransactionPayload {
@@ -20,10 +20,10 @@ pub struct TreasuryTransactionPayload {
 }
 
 impl TreasuryTransactionPayload {
-    /// The payload kind of a [`TreasuryTransaction`].
+    /// The payload kind of a [`TreasuryTransactionPayload`].
     pub const KIND: u32 = 4;
 
-    /// Creates a new [`TreasuryTransaction`].
+    /// Creates a new [`TreasuryTransactionPayload`].
     pub fn new(input: TreasuryInput, output: TreasuryOutput) -> Result<Self, Error> {
         Ok(Self {
             input: input.into(),
@@ -31,7 +31,7 @@ impl TreasuryTransactionPayload {
         })
     }
 
-    /// Returns the input of a [`TreasuryTransaction`].
+    /// Returns the input of a [`TreasuryTransactionPayload`].
     pub fn input(&self) -> &TreasuryInput {
         if let Input::Treasury(ref input) = self.input {
             input
@@ -40,7 +40,7 @@ impl TreasuryTransactionPayload {
         }
     }
 
-    /// Returns the output of a [`TreasuryTransaction`].
+    /// Returns the output of a [`TreasuryTransactionPayload`].
     pub fn output(&self) -> &TreasuryOutput {
         if let Output::Treasury(ref output) = self.output {
             output

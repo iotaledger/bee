@@ -15,9 +15,9 @@ pub struct Ed25519Address([u8; Self::LENGTH]);
 
 #[allow(clippy::len_without_is_empty)]
 impl Ed25519Address {
-    /// The [`Address`](crate::address::Address) kind of an [`Ed25519Signature`].
+    /// The [`Address`](crate::address::Address) kind of an [`Ed25519Address`].
     pub const KIND: u8 = 0;
-    /// The length of an [`Ed25519Signature`].
+    /// The length of an [`Ed25519Address`].
     pub const LENGTH: usize = PUBLIC_KEY_LENGTH;
 
     /// Creates a new [`Ed25519Address`].

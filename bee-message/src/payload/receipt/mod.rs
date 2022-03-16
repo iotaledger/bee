@@ -82,7 +82,8 @@ impl ReceiptPayload {
         &self.funds
     }
 
-    /// The [`TreasuryTransaction`] used to fund the funds of a [`ReceiptPayload`].
+    /// The [`TreasuryTransactionPayload`](crate::payload::treasury_transaction::TreasuryTransactionPayload) used to
+    /// fund the funds of a [`ReceiptPayload`].
     pub fn transaction(&self) -> &TreasuryTransactionPayload {
         if let Payload::TreasuryTransaction(ref transaction) = self.transaction {
             transaction
