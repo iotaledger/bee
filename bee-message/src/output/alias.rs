@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    address::Address,
+    address::{Address, AliasAddress},
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        AliasId, ChainId, NativeToken, NativeTokens, Output, OutputAmount, StateTransition, StateTransitionError,
+        AliasId, ChainId, NativeToken, NativeTokens, Output, OutputAmount, OutputId, StateTransition,
+        StateTransitionError,
     },
-    semantic::ValidationContext,
+    semantic::{ConflictReason, ValidationContext},
+    unlock_block::UnlockBlock,
     Error,
 };
 
@@ -301,6 +303,42 @@ impl AliasOutput {
     #[inline(always)]
     pub fn chain_id(&self) -> ChainId {
         ChainId::Alias(self.alias_id)
+    }
+
+    ///
+    pub fn unlock(
+        &self,
+        output_id: &OutputId,
+        unlock_block: &UnlockBlock,
+        inputs: &[(OutputId, &Output)],
+        context: &mut ValidationContext,
+    ) -> Result<(), ConflictReason> {
+        let alias_id = if self.alias_id().is_null() {
+            AliasId::new(output_id.hash())
+        } else {
+            *self.alias_id()
+        };
+        let next_state = context.output_chains.get(&ChainId::from(alias_id));
+
+        let locked_address = match next_state {
+            Some(Output::Alias(next_state)) => {
+                if self.state_index() == next_state.state_index() {
+                    self.governor_address()
+                } else {
+                    self.state_controller_address()
+                }
+            }
+            Some(_) => unreachable!(),
+            None => self.governor_address(),
+        };
+
+        locked_address.unlock(unlock_block, inputs, context)?;
+
+        context
+            .unlocked_addresses
+            .insert(Address::from(AliasAddress::from(alias_id)));
+
+        Ok(())
     }
 }
 

@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    address::AliasAddress,
+    address::{Address, AliasAddress},
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ChainId, FoundryId, NativeToken, NativeTokens, OutputAmount, StateTransition, StateTransitionError, TokenId,
-        TokenScheme, TokenTag,
+        ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount, OutputId, StateTransition,
+        StateTransitionError, TokenId, TokenScheme, TokenTag,
     },
-    semantic::ValidationContext,
+    semantic::{ConflictReason, ValidationContext},
+    unlock_block::UnlockBlock,
     Error,
 };
 
@@ -328,6 +329,19 @@ impl FoundryOutput {
     #[inline(always)]
     pub fn chain_id(&self) -> ChainId {
         ChainId::Foundry(self.id())
+    }
+
+    ///
+    pub fn unlock(
+        &self,
+        _output_id: &OutputId,
+        unlock_block: &UnlockBlock,
+        inputs: &[(OutputId, &Output)],
+        context: &mut ValidationContext,
+    ) -> Result<(), ConflictReason> {
+        let locked_address = Address::from(*self.alias_address());
+
+        locked_address.unlock(unlock_block, inputs, context)
     }
 }
 

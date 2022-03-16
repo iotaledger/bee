@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    address::Address,
+    address::{Address, NftAddress},
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ChainId, NativeToken, NativeTokens, NftId, OutputAmount, StateTransition, StateTransitionError,
+        ChainId, NativeToken, NativeTokens, NftId, Output, OutputAmount, OutputId, StateTransition,
+        StateTransitionError,
     },
-    semantic::ValidationContext,
+    semantic::{ConflictReason, ValidationContext},
+    unlock_block::UnlockBlock,
     Error,
 };
 
@@ -222,6 +224,30 @@ impl NftOutput {
     #[inline(always)]
     pub fn chain_id(&self) -> ChainId {
         ChainId::Nft(self.nft_id)
+    }
+
+    ///
+    pub fn unlock(
+        &self,
+        output_id: &OutputId,
+        unlock_block: &UnlockBlock,
+        inputs: &[(OutputId, &Output)],
+        context: &mut ValidationContext,
+    ) -> Result<(), ConflictReason> {
+        let locked_address = self.address();
+        let nft_id = if self.nft_id().is_null() {
+            NftId::new(output_id.hash())
+        } else {
+            *self.nft_id()
+        };
+
+        locked_address.unlock(unlock_block, inputs, context)?;
+
+        context
+            .unlocked_addresses
+            .insert(Address::from(NftAddress::from(nft_id)));
+
+        Ok(())
     }
 }
 

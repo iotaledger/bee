@@ -11,16 +11,14 @@ use crate::{
 };
 
 use bee_message::{
-    address::{Address, AliasAddress, NftAddress},
     input::Input,
-    output::{AliasId, AliasOutput, BasicOutput, ChainId, FoundryOutput, NftId, NftOutput, Output, OutputId},
+    output::{Output, OutputId},
     payload::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
     },
     semantic::{ConflictReason, ValidationContext},
-    signature::Signature,
-    unlock_block::{UnlockBlock, UnlockBlocks},
+    unlock_block::UnlockBlocks,
     Message, MessageId,
 };
 use bee_tangle::Tangle;
@@ -28,141 +26,6 @@ use bee_tangle::Tangle;
 use crypto::hashes::blake2b::Blake2b256;
 
 use std::collections::HashSet;
-
-fn unlock_address(
-    address: &Address,
-    unlock_block: &UnlockBlock,
-    inputs: &[(OutputId, &Output)],
-    context: &mut ValidationContext,
-) -> Result<(), ConflictReason> {
-    match (address, unlock_block) {
-        (Address::Ed25519(ed25519_address), UnlockBlock::Signature(unlock_block)) => {
-            if context.unlocked_addresses.contains(address) {
-                return Err(ConflictReason::SemanticValidationFailed);
-            }
-
-            let Signature::Ed25519(signature) = unlock_block.signature();
-
-            if signature.is_valid(&context.essence_hash, ed25519_address).is_err() {
-                return Err(ConflictReason::InvalidSignature);
-            }
-
-            context.unlocked_addresses.insert(*address);
-        }
-        (Address::Ed25519(_ed25519_address), UnlockBlock::Reference(_unlock_block)) => {
-            // TODO actually check that it was unlocked by the same signature.
-            if !context.unlocked_addresses.contains(address) {
-                return Err(ConflictReason::InvalidSignature);
-            }
-        }
-        (Address::Alias(alias_address), UnlockBlock::Alias(unlock_block)) => {
-            // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
-            if let Output::Alias(alias_output) = inputs[unlock_block.index() as usize].1 {
-                if alias_output.alias_id() != alias_address.alias_id() || !context.unlocked_addresses.contains(address)
-                {
-                    return Err(ConflictReason::IncorrectUnlockMethod);
-                }
-            } else {
-                return Err(ConflictReason::IncorrectUnlockMethod);
-            }
-        }
-        (Address::Nft(nft_address), UnlockBlock::Nft(unlock_block)) => {
-            // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
-            if let Output::Nft(nft_output) = inputs[unlock_block.index() as usize].1 {
-                if nft_output.nft_id() != nft_address.nft_id() || !context.unlocked_addresses.contains(address) {
-                    return Err(ConflictReason::IncorrectUnlockMethod);
-                }
-            } else {
-                return Err(ConflictReason::IncorrectUnlockMethod);
-            }
-        }
-        _ => return Err(ConflictReason::IncorrectUnlockMethod),
-    }
-
-    Ok(())
-}
-
-fn unlock_basic_output(
-    output_id: &OutputId,
-    output: &BasicOutput,
-    unlock_block: &UnlockBlock,
-    inputs: &[(OutputId, &Output)],
-    context: &mut ValidationContext,
-) -> Result<(), ConflictReason> {
-    let locked_address = output.address();
-
-    unlock_address(locked_address, unlock_block, inputs, context)
-}
-
-fn unlock_alias_output(
-    output_id: &OutputId,
-    output: &AliasOutput,
-    unlock_block: &UnlockBlock,
-    inputs: &[(OutputId, &Output)],
-    context: &mut ValidationContext,
-) -> Result<(), ConflictReason> {
-    let alias_id = if output.alias_id().is_null() {
-        AliasId::new(output_id.hash())
-    } else {
-        *output.alias_id()
-    };
-    let next_state = context.output_chains.get(&ChainId::from(alias_id));
-
-    let locked_address = match next_state {
-        Some(Output::Alias(next_state)) => {
-            if output.state_index() == next_state.state_index() {
-                output.governor_address()
-            } else {
-                output.state_controller_address()
-            }
-        }
-        Some(_) => unreachable!(),
-        None => output.governor_address(),
-    };
-
-    unlock_address(locked_address, unlock_block, inputs, context)?;
-
-    context
-        .unlocked_addresses
-        .insert(Address::from(AliasAddress::from(alias_id)));
-
-    Ok(())
-}
-
-fn unlock_foundry_output(
-    output_id: &OutputId,
-    output: &FoundryOutput,
-    unlock_block: &UnlockBlock,
-    inputs: &[(OutputId, &Output)],
-    context: &mut ValidationContext,
-) -> Result<(), ConflictReason> {
-    let locked_address = Address::from(*output.alias_address());
-
-    unlock_address(&locked_address, unlock_block, inputs, context)
-}
-
-fn unlock_nft_output(
-    output_id: &OutputId,
-    output: &NftOutput,
-    unlock_block: &UnlockBlock,
-    inputs: &[(OutputId, &Output)],
-    context: &mut ValidationContext,
-) -> Result<(), ConflictReason> {
-    let locked_address = output.address();
-    let nft_id = if output.nft_id().is_null() {
-        NftId::new(output_id.hash())
-    } else {
-        *output.nft_id()
-    };
-
-    unlock_address(locked_address, unlock_block, inputs, context)?;
-
-    context
-        .unlocked_addresses
-        .insert(Address::from(NftAddress::from(nft_id)));
-
-    Ok(())
-}
 
 fn apply_regular_essence<B: StorageBackend>(
     storage: &B,
@@ -175,7 +38,7 @@ fn apply_regular_essence<B: StorageBackend>(
     let mut consumed_outputs = Vec::<(OutputId, CreatedOutput)>::new();
 
     // Fetch inputs from the storage or from current milestone metadata.
-    for (index, input) in essence.inputs().iter().enumerate() {
+    for input in essence.inputs().iter() {
         let (output_id, consumed_output) = match input {
             Input::Utxo(input) => {
                 let output_id = input.output_id();
@@ -223,28 +86,28 @@ fn apply_regular_essence<B: StorageBackend>(
     }
 
     // Validation of inputs.
-    for (index, ((output_id, consumed_output), unlock_block)) in inputs.iter().zip(unlock_blocks.iter()).enumerate() {
+    for ((output_id, consumed_output), unlock_block) in inputs.iter().zip(unlock_blocks.iter()) {
         let (conflict, amount, consumed_native_tokens, unlock_conditions) = match consumed_output {
             Output::Basic(output) => (
-                unlock_basic_output(output_id, output, unlock_block, &inputs, &mut context),
+                output.unlock(output_id, unlock_block, &inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),
             ),
             Output::Alias(output) => (
-                unlock_alias_output(output_id, output, unlock_block, &inputs, &mut context),
+                output.unlock(output_id, unlock_block, &inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),
             ),
             Output::Foundry(output) => (
-                unlock_foundry_output(output_id, output, unlock_block, &inputs, &mut context),
+                output.unlock(output_id, unlock_block, &inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),
             ),
             Output::Nft(output) => (
-                unlock_nft_output(output_id, output, unlock_block, &inputs, &mut context),
+                output.unlock(output_id, unlock_block, &inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),
@@ -317,11 +180,6 @@ fn apply_regular_essence<B: StorageBackend>(
     // Validation of native tokens.
     if context.input_native_tokens != context.output_native_tokens {
         return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
-
-        // TODO The transaction is balanced in terms of native tokens, meaning the amount of native tokens present in
-        // inputs equals to that of outputs. Otherwise, the foundry outputs controlling outstanding native token
-        // balances must be present in the transaction. The validation of the foundry output(s) determines if
-        // the outstanding balances are valid.
     }
 
     // Validation of state creations and transitions.

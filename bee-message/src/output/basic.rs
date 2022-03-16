@@ -6,8 +6,10 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        NativeToken, NativeTokens, OutputAmount,
+        NativeToken, NativeTokens, Output, OutputAmount, OutputId,
     },
+    semantic::{ConflictReason, ValidationContext},
+    unlock_block::UnlockBlock,
     Error,
 };
 
@@ -171,6 +173,19 @@ impl BasicOutput {
             .address()
             .map(|unlock_condition| unlock_condition.address())
             .unwrap()
+    }
+
+    ///
+    pub fn unlock(
+        &self,
+        _output_id: &OutputId,
+        unlock_block: &UnlockBlock,
+        inputs: &[(OutputId, &Output)],
+        context: &mut ValidationContext,
+    ) -> Result<(), ConflictReason> {
+        let locked_address = self.address();
+
+        locked_address.unlock(unlock_block, inputs, context)
     }
 }
 
