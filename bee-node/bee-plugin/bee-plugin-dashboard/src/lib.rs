@@ -248,7 +248,7 @@ where
 
 async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let (http_code, err_code, reason) = match err.find() {
-        // handle custom rejections
+        // Handle custom rejections.
         Some(CustomRejection::NoUserProvided) => (StatusCode::BAD_REQUEST, "400", "user not found"),
         Some(CustomRejection::NoPasswordProvided) => (StatusCode::BAD_REQUEST, "400", "password not found"),
         Some(CustomRejection::InvalidCredentials) => (StatusCode::FORBIDDEN, "403", "wrong username or password"),
