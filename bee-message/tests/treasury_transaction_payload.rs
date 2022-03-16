@@ -18,7 +18,7 @@ fn kind() {
 fn new_valid() {
     let input = TreasuryInput::from_str(MESSAGE_ID).unwrap();
     let output = TreasuryOutput::new(1_000).unwrap();
-    let transaction = TreasuryTransactionPayload::new(input.clone(), output.clone()).unwrap();
+    let transaction = TreasuryTransactionPayload::new(input, output.clone()).unwrap();
 
     assert_eq!(*transaction.input(), input);
     assert_eq!(*transaction.output(), output);

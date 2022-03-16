@@ -21,7 +21,7 @@ pub fn rand_tagged_data_payload() -> TaggedDataPayload {
 
 /// Generates a random treasury transaction payload.
 pub fn rand_treasury_transaction_payload() -> TreasuryTransactionPayload {
-    TreasuryTransactionPayload::new(rand_treasury_input().into(), rand_treasury_output().into()).unwrap()
+    TreasuryTransactionPayload::new(rand_treasury_input(), rand_treasury_output()).unwrap()
 }
 
 /// Generates a random receipt payload.
@@ -30,7 +30,7 @@ pub fn rand_receipt_payload() -> ReceiptPayload {
         rand_milestone_index(),
         rand_bool(),
         vec![rand_migrated_funds_entry()],
-        rand_treasury_transaction_payload().into(),
+        rand_treasury_transaction_payload(),
     )
     .unwrap()
 }
