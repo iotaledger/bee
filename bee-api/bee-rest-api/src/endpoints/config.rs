@@ -146,7 +146,7 @@ impl RestApiConfigBuilder {
         let protected_routes = {
             let routes = self
                 .protected_routes
-                .unwrap_or_else(|| DEFAULT_PROTECTED_ROUTES.iter().map(|r| r.to_string()).collect());
+                .unwrap_or_else(|| DEFAULT_PROTECTED_ROUTES.iter().map(ToString::to_string).collect());
             RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<String>>())
                 .expect("invalid protected route provided")
         };
