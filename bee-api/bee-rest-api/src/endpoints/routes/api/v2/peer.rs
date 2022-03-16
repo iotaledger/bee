@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{
-        config::ROUTE_PEER,  path_params::peer_id, permission::has_permission,
-        rejection::CustomRejection,
-    },
+    endpoints::config::ROUTE_PEER,
     types::{dtos::PeerDto, responses::PeerResponse},
 };
 
@@ -13,24 +10,19 @@ use bee_gossip::PeerId;
 use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
-
 use std::net::IpAddr;
 
-
-use axum::extract::Extension;
-use crate::endpoints::ApiArgsFullNode;
-use axum::extract::Json;
-use axum::Router;
-use axum::routing::get;
-use axum::response::IntoResponse;
-use crate::endpoints::error::ApiError;
+use crate::endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
+use axum::{
+    extract::{Extension, Json, Path},
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
 use std::sync::Arc;
-use axum::extract::Path;
-use crate::endpoints::storage::StorageBackend;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new()
-        .route("/peers/:peer_id", get(peer::<B>))
+    Router::new().route("/peers/:peer_id", get(peer::<B>))
 }
 
 pub(crate) async fn peer<B: StorageBackend>(

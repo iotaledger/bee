@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{
-        config::ROUTE_MILESTONE,  path_params::milestone_index, permission::has_permission,
-        rejection::CustomRejection, storage::StorageBackend,
-    },
+    endpoints::{config::ROUTE_MILESTONE, storage::StorageBackend},
     types::responses::MilestoneResponse,
 };
 
@@ -13,23 +10,19 @@ use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
-
 use std::net::IpAddr;
 
-use axum::extract::Extension;
-use crate::endpoints::ApiArgsFullNode;
-use axum::extract::Json;
-use axum::Router;
-use axum::routing::get;
-use axum::response::IntoResponse;
-use crate::endpoints::error::ApiError;
+use crate::endpoints::{error::ApiError, ApiArgsFullNode};
+use axum::{
+    extract::{Extension, Json, Path},
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
 use std::sync::Arc;
-use axum::extract::Path;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new()
-        .route("/milestones/:milestone_index", get(milestone::<B>))
+    Router::new().route("/milestones/:milestone_index", get(milestone::<B>))
 }
 
 pub(crate) async fn milestone<B: StorageBackend>(
@@ -43,12 +36,8 @@ pub(crate) async fn milestone<B: StorageBackend>(
                 message_id: message_id.to_string(),
                 timestamp: metadata.arrival_timestamp(),
             })),
-            None => Err(ApiError::NotFound(
-                "can not find metadata for milestone".to_string(),
-            )),
+            None => Err(ApiError::NotFound("can not find metadata for milestone".to_string())),
         },
-        None => Err(ApiError::NotFound(
-            "can not find milestone".to_string(),
-        )),
+        None => Err(ApiError::NotFound("can not find milestone".to_string())),
     }
 }

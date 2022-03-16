@@ -4,7 +4,6 @@
 use crate::{
     endpoints::{
         config::{RestApiConfig, ROUTE_INFO},
-        permission::has_permission,
         routes::health,
         storage::StorageBackend,
         Bech32Hrp, NetworkId,
@@ -16,29 +15,25 @@ use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
 
-use warp::{filters::BoxedFilter, Filter, Reply};
-
 use std::{convert::Infallible, net::IpAddr};
 
-use axum::extract::Extension;
-use crate::endpoints::ApiArgsFullNode;
-use axum::extract::Json;
-use axum::Router;
-use axum::routing::get;
-use axum::response::IntoResponse;
-use crate::endpoints::error::ApiError;
+use crate::endpoints::{error::ApiError, ApiArgsFullNode};
+use axum::{
+    extract::{Extension, Json},
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
 use std::sync::Arc;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new()
-        .route("/info", get(info::<B>))
+    Router::new().route("/info", get(info::<B>))
 }
 
-pub(crate) async fn info<B: StorageBackend>(
-    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
-) -> impl IntoResponse {
+pub(crate) async fn info<B: StorageBackend>(Extension(args): Extension<Arc<ApiArgsFullNode<B>>>) -> impl IntoResponse {
     let latest_milestone_index = args.tangle.get_latest_milestone_index();
-    let latest_milestone_timestamp = args.tangle
+    let latest_milestone_timestamp = args
+        .tangle
         .get_milestone(latest_milestone_index)
         .await
         .map(|m| m.timestamp())

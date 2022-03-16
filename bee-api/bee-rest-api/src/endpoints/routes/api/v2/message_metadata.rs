@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{
-        config::ROUTE_MESSAGE_METADATA,  path_params::message_id, permission::has_permission,
-        rejection::CustomRejection, storage::StorageBackend, CONFIRMED_THRESHOLD,
-    },
+    endpoints::{config::ROUTE_MESSAGE_METADATA, storage::StorageBackend, CONFIRMED_THRESHOLD},
     types::{dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
 };
 
@@ -13,23 +10,19 @@ use bee_message::{payload::Payload, MessageId};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::{ConflictReason, Tangle};
 
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
-
 use std::net::IpAddr;
 
-use axum::extract::Extension;
-use crate::endpoints::ApiArgsFullNode;
-use axum::extract::Json;
-use axum::Router;
-use axum::routing::get;
-use axum::response::IntoResponse;
-use crate::endpoints::error::ApiError;
+use crate::endpoints::{error::ApiError, ApiArgsFullNode};
+use axum::{
+    extract::{Extension, Json, Path},
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
 use std::sync::Arc;
-use axum::extract::Path;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new()
-        .route("/messages/:message_id/metadata", get(message_metadata::<B>))
+    Router::new().route("/messages/:message_id/metadata", get(message_metadata::<B>))
 }
 
 pub(crate) async fn message_metadata<B: StorageBackend>(
@@ -37,9 +30,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
     Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
 ) -> Result<impl IntoResponse, ApiError> {
     if !args.tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
-        return Err(ApiError::ServiceUnavailable(
-            "the node is not synchronized".to_string(),
-        ));
+        return Err(ApiError::ServiceUnavailable("the node is not synchronized".to_string()));
     }
 
     match args.tangle.get(&message_id).await.map(|m| (*m).clone()) {
@@ -154,8 +145,6 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                 should_reattach,
             }))
         }
-        None => Err(ApiError::NotFound(
-            "can not find message".to_string(),
-        )),
+        None => Err(ApiError::NotFound("can not find message".to_string())),
     }
 }

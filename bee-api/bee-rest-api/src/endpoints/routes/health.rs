@@ -1,44 +1,34 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{
-    config::ROUTE_HEALTH,
-    permission::has_permission,
-    storage::StorageBackend,
-};
+use crate::endpoints::{config::ROUTE_HEALTH, storage::StorageBackend};
 
 use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 
-use warp::{filters::BoxedFilter, http::StatusCode, Filter, Reply};
-
-use std::{
-    convert::Infallible,
-    net::IpAddr,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use crate::endpoints::ApiArgsFullNode;
 use axum::{
+    extract::Extension,
+    http::StatusCode,
+    response::IntoResponse,
     routing::{get, post},
     Router,
 };
-use crate::endpoints::ApiArgsFullNode;
-use axum::extract::Extension;
-use std::sync::Arc;
-use axum::response::IntoResponse;
+use std::{
+    convert::Infallible,
+    net::IpAddr,
+    sync::Arc,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 const HEALTH_CONFIRMED_THRESHOLD: u32 = 2; // in milestones
 const HEALTH_MILESTONE_AGE_MAX: u64 = 5 * 60; // in seconds
 
-
 pub(crate) fn filter<B: StorageBackend>() -> Router {
+    Router::new().route("/health", get(health::<B>))
 
-    Router::new()
-        .route("/health", get(health::<B>))
-
-
-        // .and(has_permission(ROUTE_HEALTH, public_routes, allowed_ips))
-
+    // .and(has_permission(ROUTE_HEALTH, public_routes, allowed_ips))
 }
 
 pub(crate) async fn health<B: StorageBackend>(
@@ -51,10 +41,7 @@ pub(crate) async fn health<B: StorageBackend>(
     }
 }
 
-pub async fn is_healthy<B: StorageBackend>(
-    tangle: &Tangle<B>,
-    peer_manager: &PeerManager,
-) -> bool {
+pub async fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &PeerManager) -> bool {
     if !tangle.is_confirmed_threshold(HEALTH_CONFIRMED_THRESHOLD) {
         return false;
     }

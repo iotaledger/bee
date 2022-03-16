@@ -27,4 +27,3 @@ pub struct DefaultErrorResponse {
 }
 
 impl BodyInner for DefaultErrorResponse {}
-

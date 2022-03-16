@@ -4,8 +4,6 @@
 use crate::{
     endpoints::{
         config::{RestApiConfig, ROUTE_WHITE_FLAG},
-        permission::has_permission,
-        rejection::CustomRejection,
         storage::StorageBackend,
     },
     types::responses::WhiteFlagResponse,
@@ -18,10 +16,16 @@ use bee_runtime::{event::Bus, resource::ResourceHandle};
 use bee_tangle::Tangle;
 
 use futures::channel::oneshot;
-use serde_json::{Value as JsonValue, Value};
+use serde_json::Value as JsonValue;
 use tokio::time::timeout;
-use warp::{filters::BoxedFilter, reject, Rejection, Reply};
 
+use crate::endpoints::{error::ApiError, ApiArgsFullNode};
+use axum::{
+    extract::{Extension, Json},
+    response::IntoResponse,
+    routing::post,
+    Router,
+};
 use std::{
     any::TypeId,
     collections::HashSet,
@@ -29,17 +33,9 @@ use std::{
     sync::{Arc, Mutex},
     time::Duration,
 };
-use axum::extract::Extension;
-use crate::endpoints::ApiArgsFullNode;
-use axum::extract::Json;
-use axum::Router;
-use axum::routing::post;
-use axum::response::IntoResponse;
-use crate::endpoints::error::ApiError;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new()
-        .route("/whiteflag", post(white_flag::<B>))
+    Router::new().route("/whiteflag", post(white_flag::<B>))
 }
 
 pub(crate) async fn white_flag<B: StorageBackend>(
@@ -54,11 +50,12 @@ pub(crate) async fn white_flag<B: StorageBackend>(
             "Invalid index: expected a MilestoneIndex".to_string(),
         ));
     } else {
-        MilestoneIndex(index_json.as_u64().ok_or_else(|| {
-           ApiError::BadRequest(
-                "Invalid index: expected a MilestoneIndex".to_string(),
-            )
-        })? as u32)
+        MilestoneIndex(
+            index_json
+                .as_u64()
+                .ok_or_else(|| ApiError::BadRequest("Invalid index: expected a MilestoneIndex".to_string()))?
+                as u32,
+        )
     };
 
     let parents = if parents_json.is_null() {
@@ -66,26 +63,16 @@ pub(crate) async fn white_flag<B: StorageBackend>(
             "Invalid parents: expected an array of MessageId".to_string(),
         ));
     } else {
-        let array = parents_json.as_array().ok_or_else(|| {
-            ApiError::BadRequest(
-                "Invalid parents: expected an array of MessageId".to_string(),
-            )
-        })?;
+        let array = parents_json
+            .as_array()
+            .ok_or_else(|| ApiError::BadRequest("Invalid parents: expected an array of MessageId".to_string()))?;
         let mut message_ids = Vec::new();
         for s in array {
             let message_id = s
                 .as_str()
-                .ok_or_else(|| {
-                    ApiError::BadRequest(
-                        "Invalid parents: expected an array of MessageId".to_string(),
-                    )
-                })?
+                .ok_or_else(|| ApiError::BadRequest("Invalid parents: expected an array of MessageId".to_string()))?
                 .parse::<MessageId>()
-                .map_err(|_| {
-                   ApiError::BadRequest(
-                        "Invalid parents: expected an array of MessageId".to_string(),
-                    )
-                })?;
+                .map_err(|_| ApiError::BadRequest("Invalid parents: expected an array of MessageId".to_string()))?;
             message_ids.push(message_id);
         }
         message_ids
@@ -123,7 +110,14 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 to_solidify.remove(parent);
             }
         } else {
-            request_message(&*args.tangle, &args.message_requester, &*args.requested_messages, *parent, index).await;
+            request_message(
+                &*args.tangle,
+                &args.message_requester,
+                &*args.requested_messages,
+                *parent,
+                index,
+            )
+            .await;
         }
     }
 
@@ -157,9 +151,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
         }
         Err(_) => {
             // Did timeout, parents are not solid and white flag can not happen.
-            Err(ApiError::ServiceUnavailable(
-                "parents not solid".to_string(),
-            ))
+            Err(ApiError::ServiceUnavailable("parents not solid".to_string()))
         }
     };
 

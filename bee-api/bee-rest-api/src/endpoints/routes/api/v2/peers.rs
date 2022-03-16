@@ -2,31 +2,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{config::ROUTE_PEERS,  permission::has_permission},
+    endpoints::config::ROUTE_PEERS,
     types::{dtos::PeerDto, responses::PeersResponse},
 };
 
 use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
-use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
-
 use std::{convert::Infallible, net::IpAddr};
 
-use axum::extract::Extension;
-use crate::endpoints::ApiArgsFullNode;
-use axum::extract::Json;
-use axum::Router;
-use axum::routing::get;
-use axum::response::IntoResponse;
-use crate::endpoints::error::ApiError;
+use crate::endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
+use axum::{
+    extract::{Extension, Json, Path},
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
 use std::sync::Arc;
-use axum::extract::Path;
-use crate::endpoints::storage::StorageBackend;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new()
-        .route("/peers", get(peers::<B>))
+    Router::new().route("/peers", get(peers::<B>))
 }
 
 pub(crate) async fn peers<B: StorageBackend>(Extension(args): Extension<Arc<ApiArgsFullNode<B>>>) -> impl IntoResponse {

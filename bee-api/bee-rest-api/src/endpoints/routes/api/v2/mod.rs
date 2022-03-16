@@ -20,31 +20,30 @@ pub mod tips;
 pub mod transaction_included_message;
 pub mod treasury;
 
-use crate::endpoints::{storage::StorageBackend};
+use crate::endpoints::storage::StorageBackend;
 
 use axum::Router;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new()
-        .nest("v2",
-              add_peer::filter::<B>()
-                .merge(info::filter::<B>())
-                .merge(message::filter::<B>())
-                .merge(message_children::filter::<B>())
-                .merge(message_metadata::filter::<B>())
-                .merge(message_raw::filter::<B>())
-                .merge(milestone::filter::<B>())
-                .merge(milestone_utxo_changes::filter::<B>())
-                .merge(output::filter::<B>())
-                .merge(peer::filter::<B>( ))
-                .merge(peers::filter::<B>())
-                .merge(receipts::filter::<B>())
-                .merge(receipts_at::filter::<B>())
-                .merge(remove_peer::filter::<B>())
-                .merge(submit_message::filter::<B>())
-                .merge(tips::filter::<B>())
-                .merge(transaction_included_message::filter::<B>())
-                .merge(treasury::filter::<B>())
-
-        )
+    Router::new().nest(
+        "v2",
+        add_peer::filter::<B>()
+            .merge(info::filter::<B>())
+            .merge(message::filter::<B>())
+            .merge(message_children::filter::<B>())
+            .merge(message_metadata::filter::<B>())
+            .merge(message_raw::filter::<B>())
+            .merge(milestone::filter::<B>())
+            .merge(milestone_utxo_changes::filter::<B>())
+            .merge(output::filter::<B>())
+            .merge(peer::filter::<B>())
+            .merge(peers::filter::<B>())
+            .merge(receipts::filter::<B>())
+            .merge(receipts_at::filter::<B>())
+            .merge(remove_peer::filter::<B>())
+            .merge(submit_message::filter::<B>())
+            .merge(tips::filter::<B>())
+            .merge(transaction_included_message::filter::<B>())
+            .merge(treasury::filter::<B>()),
+    )
 }

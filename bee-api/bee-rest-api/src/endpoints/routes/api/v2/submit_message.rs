@@ -4,8 +4,6 @@
 use crate::{
     endpoints::{
         config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW},
-        permission::has_permission,
-        rejection::CustomRejection,
         storage::StorageBackend,
         NetworkId,
     },
@@ -26,27 +24,25 @@ use log::error;
 use packable::PackableExt;
 use serde_json::Value as JsonValue;
 use tokio::sync::mpsc;
-use warp::{ http::StatusCode, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
-use axum::extract::{Extension, TypedHeader};
-use crate::endpoints::ApiArgsFullNode;
-use axum::extract::Json;
-use axum::Router;
-use axum::routing::post;
-use axum::response::IntoResponse;
-use crate::endpoints::error::ApiError;
+use crate::endpoints::{error::ApiError, ApiArgsFullNode};
+use axum::{
+    body::Bytes,
+    extract::{Extension, Json, Path, TypedHeader},
+    http::{
+        header::{HeaderMap, HeaderValue},
+        StatusCode,
+    },
+    response::{IntoResponse, Response},
+    routing::post,
+    Router,
+};
 use std::sync::Arc;
-use axum::extract::Path;
-use axum::http::header::{HeaderMap, HeaderValue};
-use axum::response::Response;
-use axum::body::Bytes;
-
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new()
-        .route("/messages", post(submit_message::<B>))
+    Router::new().route("/messages", post(submit_message::<B>))
 }
 
 pub(crate) async fn submit_message<B: StorageBackend>(
@@ -58,10 +54,19 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         if value.eq(&"application/octet-stream".parse::<HeaderValue>().unwrap()) {
             submit_message_raw::<B>(bytes.to_vec(), args.clone()).await
         } else {
-            submit_message_json::<B>(serde_json::from_slice(&bytes.to_vec()).map_err(|_| ApiError::BadRequest("invalid JSON".to_string()))?, args.clone()).await
+            submit_message_json::<B>(
+                serde_json::from_slice(&bytes.to_vec())
+                    .map_err(|_| ApiError::BadRequest("invalid JSON".to_string()))?,
+                args.clone(),
+            )
+            .await
         }
     } else {
-        submit_message_json::<B>(serde_json::from_slice(&bytes.to_vec()).map_err(|_| ApiError::BadRequest("invalid JSON".to_string()))?, args.clone()).await
+        submit_message_json::<B>(
+            serde_json::from_slice(&bytes.to_vec()).map_err(|_| ApiError::BadRequest("invalid JSON".to_string()))?,
+            args.clone(),
+        )
+        .await
     }
 }
 
@@ -82,46 +87,27 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
     } else {
         network_id_v
             .as_str()
-            .ok_or_else(|| {
-                ApiError::BadRequest(
-                    "invalid network id: expected an u64-string".to_string(),
-                )
-            })?
+            .ok_or_else(|| ApiError::BadRequest("invalid network id: expected an u64-string".to_string()))?
             .parse::<u64>()
-            .map_err(|_| {
-                ApiError::BadRequest(
-                    "invalid network id: expected an u64-string".to_string(),
-                )
-            })?
+            .map_err(|_| ApiError::BadRequest("invalid network id: expected an u64-string".to_string()))?
     };
 
     let parents: Vec<MessageId> = if parents_v.is_null() {
-        args.tangle.get_messages_to_approve().await.ok_or_else(|| {
-            ApiError::ServiceUnavailable(
-                "can not auto-fill parents: no tips available".to_string(),
-            )
-        })?
+        args.tangle
+            .get_messages_to_approve()
+            .await
+            .ok_or_else(|| ApiError::ServiceUnavailable("can not auto-fill parents: no tips available".to_string()))?
     } else {
-        let array = parents_v.as_array().ok_or_else(|| {
-            ApiError::BadRequest(
-                "invalid parents: expected an array of message ids".to_string(),
-            )
-        })?;
+        let array = parents_v
+            .as_array()
+            .ok_or_else(|| ApiError::BadRequest("invalid parents: expected an array of message ids".to_string()))?;
         let mut message_ids = Vec::with_capacity(array.len());
         for s in array {
             let message_id = s
                 .as_str()
-                .ok_or_else(|| {
-                    ApiError::BadRequest(
-                        "invalid parents: expected an array of message ids".to_string(),
-                    )
-                })?
+                .ok_or_else(|| ApiError::BadRequest("invalid parents: expected an array of message ids".to_string()))?
                 .parse::<MessageId>()
-                .map_err(|_| {
-                    ApiError::BadRequest(
-                        "invalid network id: expected an u64-string".to_string(),
-                    )
-                })?;
+                .map_err(|_| ApiError::BadRequest("invalid network id: expected an u64-string".to_string()))?;
             message_ids.push(message_id);
         }
         message_ids
@@ -130,8 +116,8 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
     let payload = if payload_v.is_null() {
         None
     } else {
-        let payload_dto = serde_json::from_value::<PayloadDto>(payload_v.clone())
-            .map_err(|e| ApiError::BadRequest(e.to_string()))?;
+        let payload_dto =
+            serde_json::from_value::<PayloadDto>(payload_v.clone()).map_err(|e| ApiError::BadRequest(e.to_string()))?;
         Some(Payload::try_from(&payload_dto).map_err(|e| ApiError::BadRequest(e.to_string()))?)
     };
 
@@ -140,28 +126,22 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
     } else {
         let parsed = nonce_v
             .as_str()
-            .ok_or_else(|| {
-                ApiError::BadRequest(
-                    "invalid nonce: expected an u64-string".to_string(),
-                )
-            })?
+            .ok_or_else(|| ApiError::BadRequest("invalid nonce: expected an u64-string".to_string()))?
             .parse::<u64>()
-            .map_err(|_| {
-                ApiError::BadRequest(
-                    "invalid nonce: expected an u64-string".to_string(),
-                )
-            })?;
+            .map_err(|_| ApiError::BadRequest("invalid nonce: expected an u64-string".to_string()))?;
         if parsed == 0 { None } else { Some(parsed) }
     };
 
     let message = build_message(network_id, parents, payload, nonce, args.clone()).await?;
     let message_id = forward_to_message_submitter(message, args).await?;
 
-    Ok((StatusCode::CREATED, Json(SubmitMessageResponse {
+    Ok((
+        StatusCode::CREATED,
+        Json(SubmitMessageResponse {
             message_id: message_id.to_string(),
-        })
-
-    ).into_response())
+        }),
+    )
+        .into_response())
 }
 
 // TODO compare/set network ID and protocol version
@@ -173,37 +153,29 @@ pub(crate) async fn build_message<B: StorageBackend>(
     args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<Message, ApiError> {
     let message = if let Some(nonce) = nonce {
-        let mut builder = MessageBuilder::new(
-            Parents::new(parents).map_err(|e| ApiError::BadRequest(e.to_string()))?,
-        )
-        .with_protocol_version(PROTOCOL_VERSION)
-        .with_nonce_provider(nonce, 0f64);
+        let mut builder = MessageBuilder::new(Parents::new(parents).map_err(|e| ApiError::BadRequest(e.to_string()))?)
+            .with_protocol_version(PROTOCOL_VERSION)
+            .with_nonce_provider(nonce, 0f64);
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
-        builder
-            .finish()
-            .map_err(|e| ApiError::BadRequest(e.to_string()))?
+        builder.finish().map_err(|e| ApiError::BadRequest(e.to_string()))?
     } else {
         if !args.rest_api_config.feature_proof_of_work() {
             return Err(ApiError::ServiceUnavailable(
                 "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
             ));
         }
-        let mut builder = MessageBuilder::new(
-            Parents::new(parents).map_err(|e| ApiError::BadRequest(e.to_string()))?,
-        )
-        .with_protocol_version(PROTOCOL_VERSION)
-        .with_nonce_provider(
-            MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
-            args.protocol_config.minimum_pow_score(),
-        );
+        let mut builder = MessageBuilder::new(Parents::new(parents).map_err(|e| ApiError::BadRequest(e.to_string()))?)
+            .with_protocol_version(PROTOCOL_VERSION)
+            .with_nonce_provider(
+                MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
+                args.protocol_config.minimum_pow_score(),
+            );
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
-        builder
-            .finish()
-            .map_err(|e| ApiError::BadRequest(e.to_string()))?
+        builder.finish().map_err(|e| ApiError::BadRequest(e.to_string()))?
     };
     Ok(message)
 }
@@ -218,10 +190,13 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
         )
     })?;
     let message_id = forward_to_message_submitter(message, args).await?;
-    Ok((StatusCode::CREATED, Json(SubmitMessageResponse {
+    Ok((
+        StatusCode::CREATED,
+        Json(SubmitMessageResponse {
             message_id: message_id.to_string(),
         }),
-    ).into_response())
+    )
+        .into_response())
 }
 
 pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
@@ -244,16 +219,12 @@ pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
         })
         .map_err(|e| {
             error!("can not submit message: {}", e);
-            ApiError::ServiceUnavailable(
-                "can not submit message".to_string(),
-            )
+            ApiError::ServiceUnavailable("can not submit message".to_string())
         })?;
 
     match waiter.await.map_err(|e| {
         error!("can not submit message: {}", e);
-        ApiError::ServiceUnavailable(
-            "can not submit message".to_string(),
-        )
+        ApiError::ServiceUnavailable("can not submit message".to_string())
     })? {
         Ok(message_id) => Ok(message_id),
         Err(e) => Err(ApiError::BadRequest(format!(

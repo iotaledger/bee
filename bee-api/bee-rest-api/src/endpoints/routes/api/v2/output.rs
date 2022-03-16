@@ -2,13 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{
-        config::ROUTE_OUTPUT,
-        path_params::output_id,
-        permission::has_permission,
-        rejection::CustomRejection,
-        storage::StorageBackend,
-    },
+    endpoints::{config::ROUTE_OUTPUT, storage::StorageBackend},
     types::responses::OutputResponse,
 };
 
@@ -23,23 +17,20 @@ use bee_storage::access::Fetch;
 use futures::channel::oneshot;
 use log::error;
 use tokio::sync::mpsc;
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
-use axum::extract::Extension;
-use crate::endpoints::ApiArgsFullNode;
-use axum::extract::Json;
-use axum::Router;
-use axum::routing::get;
-use axum::response::IntoResponse;
-use crate::endpoints::error::ApiError;
+use crate::endpoints::{error::ApiError, ApiArgsFullNode};
+use axum::{
+    extract::{Extension, Json, Path},
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
 use std::sync::Arc;
-use axum::extract::Path;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new()
-        .route("/outputs/:output_id", get(output::<B>))
+    Router::new().route("/outputs/:output_id", get(output::<B>))
 }
 
 pub(crate) async fn output<B: StorageBackend>(
@@ -48,23 +39,22 @@ pub(crate) async fn output<B: StorageBackend>(
 ) -> Result<impl IntoResponse, ApiError> {
     let (cmd_tx, cmd_rx) = oneshot::channel::<(Result<Option<CreatedOutput>, Error>, LedgerIndex)>();
 
-    if let Err(e) = args.consensus_worker.send(ConsensusWorkerCommand::FetchOutput(output_id, cmd_tx)) {
+    if let Err(e) = args
+        .consensus_worker
+        .send(ConsensusWorkerCommand::FetchOutput(output_id, cmd_tx))
+    {
         error!("request to consensus worker failed: {}.", e);
     }
 
     match cmd_rx.await.map_err(|e| {
         error!("response from consensus worker failed: {}.", e);
-        ApiError::ServiceUnavailable(
-            "unable to fetch the output".to_string(),
-        )
+        ApiError::ServiceUnavailable("unable to fetch the output".to_string())
     })? {
         (Ok(response), ledger_index) => match response {
             Some(output) => {
                 let is_spent = Fetch::<OutputId, ConsumedOutput>::fetch(&*args.storage, &output_id).map_err(|e| {
                     error!("unable to fetch the output: {}", e);
-                   ApiError::ServiceUnavailable(
-                        "unable to fetch the output".to_string(),
-                    )
+                    ApiError::ServiceUnavailable("unable to fetch the output".to_string())
                 })?;
 
                 Ok(Json(OutputResponse {
@@ -80,15 +70,11 @@ pub(crate) async fn output<B: StorageBackend>(
                     output: output.inner().into(),
                 }))
             }
-            None => Err(ApiError::NotFound(
-                "output not found".to_string(),
-            )),
+            None => Err(ApiError::NotFound("output not found".to_string())),
         },
         (Err(e), _) => {
             error!("unable to fetch the output: {}", e);
-            Err(ApiError::ServiceUnavailable(
-                "unable to fetch the output".to_string(),
-            ))
+            Err(ApiError::ServiceUnavailable("unable to fetch the output".to_string()))
         }
     }
 }

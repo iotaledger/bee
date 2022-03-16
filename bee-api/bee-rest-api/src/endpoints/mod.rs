@@ -1,15 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 pub mod config;
-pub mod permission;
+// pub mod permission;
+pub mod error;
 pub mod routes;
 pub mod storage;
-pub mod error;
 
 use config::RestApiConfig;
 use storage::StorageBackend;
 
-use bee_gossip::{NetworkCommandSender};
+use bee_gossip::NetworkCommandSender;
 use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorker, MessageSubmitterWorkerEvent, PeerManager,
@@ -24,19 +24,13 @@ use bee_runtime::{
 use bee_tangle::{Tangle, TangleWorker};
 
 use async_trait::async_trait;
-use axum::{
-    routing::get,
-    http::StatusCode,
-    Router,
-};
-use axum::extract::Extension;
+use axum::{extract::Extension, http::StatusCode, routing::get, Router};
 
-use log::{info};
+use log::info;
 use tokio::sync::mpsc;
 
-use std::{any::TypeId};
-use std::sync::Arc;
 use crate::endpoints::routes::filter_all;
+use std::{any::TypeId, sync::Arc};
 
 pub(crate) type NetworkId = (String, u64);
 pub(crate) type Bech32Hrp = String;
@@ -51,8 +45,8 @@ where
 }
 
 pub async fn init_entry_node<N: Node>(init_config: InitConfigEntryNode, node_builder: N::Builder) -> N::Builder
-    where
-        N::Backend: StorageBackend,
+where
+    N::Backend: StorageBackend,
 {
     node_builder.with_worker_cfg::<ApiWorkerEntryNode>(init_config)
 }
@@ -125,9 +119,9 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            //let routes = routes::filter_all(
-           // )
-           // .recover(handle_rejection);
+            // let routes = routes::filter_all(
+            // )
+            // .recover(handle_rejection);
 
             let app = Router::new()
                 .merge(filter_all::<N::Backend>())
@@ -166,10 +160,9 @@ where
                 StatusCode::OK
             }
 
-            let app = Router::new()
-                .route("/health", get(health_handler));
+            let app = Router::new().route("/health", get(health_handler));
 
-             axum::Server::bind(&config.rest_api_config.bind_socket_addr())
+            axum::Server::bind(&config.rest_api_config.bind_socket_addr())
                 .serve(app.into_make_service())
                 .with_graceful_shutdown(async {
                     shutdown.await.ok();

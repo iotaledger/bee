@@ -1,15 +1,19 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-
-use axum::{async_trait, extract::{Extension, Path}, http::StatusCode, response::{IntoResponse, Response}, routing::{get, post}, Json, Router, body};
+use axum::{
+    async_trait, body,
+    extract::{Extension, Path},
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    routing::{get, post},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::{net::SocketAddr, sync::Arc};
 
-use crate::types::body::DefaultErrorResponse;
-use crate::types::body::ErrorBody;
-
+use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
 pub(crate) enum ApiError {
     Forbidden,
@@ -22,7 +26,6 @@ pub(crate) enum ApiError {
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-
         let (status, error_message) = match self {
             ApiError::Forbidden => (StatusCode::FORBIDDEN, "access forbidden".to_string()),
             ApiError::BadRequest(s) => (StatusCode::BAD_REQUEST, s),
@@ -34,7 +37,7 @@ impl IntoResponse for ApiError {
 
         let body = Json(ErrorBody::new(DefaultErrorResponse {
             code: status.to_string(),
-            message: error_message
+            message: error_message,
         }));
 
         (status, body).into_response()
