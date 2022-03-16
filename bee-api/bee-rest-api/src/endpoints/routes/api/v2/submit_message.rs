@@ -75,46 +75,33 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
 
     if !protocol_version_json.is_null() {
         let parsed_protocol_version = protocol_version_json.as_u64().ok_or_else(|| {
-            reject::custom(CustomRejection::BadRequest(
-                "invalid protocol version: expected an unsigned integer < 256".to_string(),
-            ))
+            ApiError::BadRequest("invalid protocol version: expected an unsigned integer < 256".to_string())
         })? as u8;
 
         if parsed_protocol_version != PROTOCOL_VERSION {
-            return Err(reject::custom(CustomRejection::BadRequest(format!(
+            return Err(ApiError::BadRequest(format!(
                 "invalid protocol version: expected `{}` but received `{}`",
                 PROTOCOL_VERSION, parsed_protocol_version
-            ))));
+            )));
         }
     }
 
     let parents: Vec<MessageId> = if parents_json.is_null() {
-        tangle.get_messages_to_approve().await.ok_or_else(|| {
-            reject::custom(CustomRejection::ServiceUnavailable(
-                "can not auto-fill parents: no tips available".to_string(),
-            ))
-        })?
+        args.tangle
+            .get_messages_to_approve()
+            .await
+            .ok_or_else(|| ApiError::ServiceUnavailable("can not auto-fill parents: no tips available".to_string()))?
     } else {
-        let parents = parents_json.as_array().ok_or_else(|| {
-            reject::custom(CustomRejection::BadRequest(
-                "invalid parents: expected an array of message ids".to_string(),
-            ))
-        })?;
+        let parents = parents_json
+            .as_array()
+            .ok_or_else(|| ApiError::BadRequest("invalid parents: expected an array of message ids".to_string()))?;
         let mut message_ids = Vec::with_capacity(parents.len());
         for message_id in parents {
             let message_id = message_id
                 .as_str()
-                .ok_or_else(|| {
-                    reject::custom(CustomRejection::BadRequest(
-                        "invalid parent: expected a message id".to_string(),
-                    ))
-                })?
+                .ok_or_else(|| ApiError::BadRequest("invalid parent: expected a message id".to_string()))?
                 .parse::<MessageId>()
-                .map_err(|_| {
-                    reject::custom(CustomRejection::BadRequest(
-                        "invalid parent: expected a message id".to_string(),
-                    ))
-                })?;
+                .map_err(|_| ApiError::BadRequest("invalid parent: expected a message id".to_string()))?;
             message_ids.push(message_id);
         }
         message_ids
@@ -124,8 +111,8 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
         None
     } else {
         let payload_dto = serde_json::from_value::<PayloadDto>(payload_json.clone())
-            .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
-        Some(Payload::try_from(&payload_dto).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?)
+            .map_err(|e| ApiError::BadRequest(e.to_string()))?;
+        Some(Payload::try_from(&payload_dto).map_err(|e| ApiError::BadRequest(e.to_string()))?)
     };
 
     let nonce = if nonce_json.is_null() {
@@ -133,17 +120,9 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
     } else {
         let parsed_nonce = nonce_json
             .as_str()
-            .ok_or_else(|| {
-                reject::custom(CustomRejection::BadRequest(
-                    "invalid nonce: expected an u64-string".to_string(),
-                ))
-            })?
+            .ok_or_else(|| ApiError::BadRequest("invalid nonce: expected an u64-string".to_string()))?
             .parse::<u64>()
-            .map_err(|_| {
-                reject::custom(CustomRejection::BadRequest(
-                    "invalid nonce: expected an u64-string".to_string(),
-                ))
-            })?;
+            .map_err(|_| ApiError::BadRequest("invalid nonce: expected an u64-string".to_string()))?;
         if parsed_nonce == 0 { None } else { Some(parsed_nonce) }
     };
 
@@ -159,7 +138,7 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
         .into_response())
 }
 
-pub(crate) async fn build_message(
+pub(crate) async fn build_message<B: StorageBackend>(
     parents: Vec<MessageId>,
     payload: Option<Payload>,
     nonce: Option<u64>,

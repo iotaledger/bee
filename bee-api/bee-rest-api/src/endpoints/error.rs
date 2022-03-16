@@ -15,6 +15,7 @@ pub(crate) enum ApiError {
     ServiceUnavailable(String),
     InternalError,
     StorageBackend,
+    Forbidden,
 }
 
 impl IntoResponse for ApiError {
