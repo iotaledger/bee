@@ -44,15 +44,20 @@ pub(crate) fn check_permission<B: StorageBackend>(
         .and_then(move |path: FullPath, headers| {
             let args = args.clone();
             async move {
+                // Check if the requested endpoint is for public use.
                 if args.rest_api_config.public_routes.is_match(path.as_str()) {
                     return Ok(());
                 }
 
+                // Else the requested endpoint is protected / or not even exposed.
                 let jwt = extract_jwt(&headers)?;
                 // Decode the JWT payload to find out how to validate it.
                 let jwt_payload = {
                     let jwt_string = jwt.to_string();
+                    // Every JWT consists of 3 parts: 1) header, 2) payload, 3) signature.
+                    // The different parts are separated by `.`.
                     let split = jwt_string.split('.').collect::<Vec<&str>>();
+                    // If there are less then 3 parts the given JWT is invalid.
                     if split.len() < 3 {
                         return Err(reject::custom(CustomRejection::Forbidden));
                     }
