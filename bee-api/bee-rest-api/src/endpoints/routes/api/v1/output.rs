@@ -61,9 +61,9 @@ pub(crate) async fn output<B: StorageBackend>(
                 let consumed_output = match Fetch::<OutputId, ConsumedOutput>::fetch(&*args.storage, &output_id) {
                     Err(e) => {
                         error!("unable to fetch the output: {}", e);
-                        return reject::custom(CustomRejection::ServiceUnavailable(
+                        return Err(reject::custom(CustomRejection::ServiceUnavailable(
                             "unable to fetch the output".to_string(),
-                        ));
+                        )));
                     }
                     Ok(output) => output,
                 };
