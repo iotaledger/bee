@@ -43,11 +43,9 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
 
     assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
-    assert!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-            .unwrap()
-            .is_none()
-    );
+    assert!(Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        .unwrap()
+        .is_none());
     let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
@@ -57,6 +55,8 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
     assert!(Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
 
+    // calling `insert_strict` with the same `MessageId` but a different `MessageMetadata` should
+    // not overwrite the old value.
     {
         let index = metadata.milestone_index().map_or(0, |i| *i + 1);
         let mut metadata = metadata.clone();
@@ -64,14 +64,15 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
         InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &rand_message_metadata())
             .unwrap();
+        assert_eq!(
+            Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+                .unwrap()
+                .unwrap(),
+            metadata,
+            "`InsertStrict` should not overwrite"
+        );
     }
 
-    assert_eq!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-            .unwrap()
-            .unwrap(),
-        metadata
-    );
     let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
@@ -103,11 +104,9 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     Delete::<MessageId, MessageMetadata>::delete(storage, &message_id).unwrap();
 
     assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
-    assert!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-            .unwrap()
-            .is_none()
-    );
+    assert!(Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        .unwrap()
+        .is_none());
 
     let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
         .unwrap()
