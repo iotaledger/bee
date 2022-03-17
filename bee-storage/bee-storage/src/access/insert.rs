@@ -14,6 +14,6 @@ pub trait Insert<K, V>: StorageBackend {
 /// (key: K, value: V) pair; therefore, it should be explicitly implemented for the corresponding
 /// `StorageBackend`.
 pub trait InsertStrict<K, V>: StorageBackend {
-    /// Inserts the (K, V) pair in the storage without ovewriting the value if it already exists.
+    /// Inserts the (K, V) pair in the storage without overwriting the value if it already exists.
     fn insert_strict(&self, key: &K, value: &V) -> Result<(), Self::Error>;
 }
