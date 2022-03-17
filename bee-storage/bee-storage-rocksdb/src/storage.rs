@@ -43,6 +43,8 @@ impl Storage {
         let cf_message_id_to_message = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE, Options::default());
 
         fn keep_current(_key: &[u8], existing_val: Option<&[u8]>, operands: &MergeOperands) -> Option<Vec<u8>> {
+            // Keep the existing value, if the value does not exist, take the first operand
+            // instead.
             existing_val.or_else(|| operands.into_iter().next()).map(|v| v.to_vec())
         }
         let mut options = Options::default();
