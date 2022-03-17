@@ -129,6 +129,17 @@ fn apply_regular_essence<B: StorageBackend>(
             }
         }
 
+        if let Some(storage_deposit_return) = unlock_conditions.storage_deposit_return() {
+            let amount = context
+                .storage_deposit_returns
+                .entry(*storage_deposit_return.return_address())
+                .or_default();
+
+            *amount = amount
+                .checked_add(storage_deposit_return.amount())
+                .ok_or(Error::StorageDepositReturnOverflow)?;
+        }
+
         context.input_amount = context
             .input_amount
             .checked_add(amount)
@@ -169,6 +180,28 @@ fn apply_regular_essence<B: StorageBackend>(
             native_token_amount
                 .checked_sub(*native_token.amount())
                 .ok_or(Error::CreatedNativeTokensAmountOverflow)?;
+        }
+    }
+
+    // Validation of storage deposit returns.
+    for (return_address, return_amount) in context.storage_deposit_returns.iter() {
+        if context
+            .essence
+            .outputs()
+            .iter()
+            .find(|output| {
+                if let Output::Basic(output) = output {
+                    output.address() == return_address
+                        && output.amount() == *return_amount
+                        && output.unlock_conditions().len() == 1
+                        && output.feature_blocks().len() == 0
+                } else {
+                    false
+                }
+            })
+            .is_none()
+        {
+            return Ok(ConflictReason::StorageDepositReturnMismatch);
         }
     }
 

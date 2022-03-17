@@ -15,14 +15,6 @@ amounts per `Return Addresses` are summed up and the output side must deposit th
 - `Return Amount` must be ≥ than `Minimum Storage Deposit` and must not be `0`.
 - It must hold true, that `0` ≤ `Amount` - `Return Amount` ≤ `Required Storage Deposit of the Output`.
 
-###### Additional semantic transaction validation rule:
-- An output that has <i>Storage Deposit Return Unlock Condition</i> specified must only be consumed and unlocked in a
-  transaction that deposits `Return Amount` IOTA coins to `Return Address` via an output that has no additional spending
-  constraints. (<i>Basic Output</i> with only an <i>Address Unlock Condition</i>)
-- When several outputs with <i>Storage Deposit Return Unlock Condition</i> and the same `Return Address` are consumed,
-  their return amounts per `Return Addresses` are summed up and the output side of the transaction must deposit this
-  total sum per `Return Address`.
-
 ##### Expiration Unlock Conditions Additional semantic transaction validation rules:
 - If `Milestone Index` != `0`, an output that has <i>Expiration Unlock Condition</i> set must only be consumed and
   unlocked by the target `Address` (defined in <i>Address Unlock Condition</i>) in a transaction that has a confirming

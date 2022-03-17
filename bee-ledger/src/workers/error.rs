@@ -83,6 +83,9 @@ pub enum Error {
     /// Storage backend error.
     #[error("storage backend error: {0}")]
     Storage(Box<dyn std::error::Error + Send>),
+    /// Storage deposit return overflow.
+    #[error("storage deposit return overflow")]
+    StorageDepositReturnOverflow,
 }
 
 impl<E: Into<Error>> From<UnpackError<E, std::io::Error>> for Error {

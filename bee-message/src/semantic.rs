@@ -57,6 +57,8 @@ pub enum ConflictReason {
     IncorrectUnlockMethod = 11,
     /// The inputs commitments do not match.
     InputsCommitmentsMismatch = 12,
+    /// Storage deposit return mismatch.
+    StorageDepositReturnMismatch = 13,
     /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
 }
@@ -85,6 +87,7 @@ impl TryFrom<u8> for ConflictReason {
             10 => Self::UnverifiedSender,
             11 => Self::IncorrectUnlockMethod,
             12 => Self::InputsCommitmentsMismatch,
+            13 => Self::StorageDepositReturnMismatch,
             255 => Self::SemanticValidationFailed,
             x => return Err(Self::Error::InvalidConflict(x)),
         })
@@ -119,6 +122,8 @@ pub struct ValidationContext<'a> {
     pub output_chains: HashMap<ChainId, &'a Output>,
     ///
     pub unlocked_addresses: HashSet<Address>,
+    ///
+    pub storage_deposit_returns: HashMap<Address, u64>,
 }
 
 impl<'a> ValidationContext<'a> {
@@ -163,6 +168,7 @@ impl<'a> ValidationContext<'a> {
                 })
                 .collect(),
             unlocked_addresses: HashSet::new(),
+            storage_deposit_returns: HashMap::new(),
         }
     }
 }
