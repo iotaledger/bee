@@ -70,7 +70,8 @@ jobs:
 
       - uses: actions-rs/cargo@v1
         with:
-          command: install cargo-hack
+          command: install
+          args: --force cargo-hack
 
       - name: Build crates
         uses: actions-rs/cargo@v1
@@ -90,7 +91,8 @@ jobs:
       - name: Install cargo-cache
         uses: actions-rs/cargo@v1
         with:
-          command: install cargo-cache --no-default-features --features ci-autoclean
+          command: install
+          args: --force cargo-cache --no-default-features --features ci-autoclean
 
       - name: Clean cache
         uses: actions-rs/cargo@v1
@@ -129,7 +131,8 @@ jobs:
       - name: Install cargo-cache
         uses: actions-rs/cargo@v1
         with:
-          command: install cargo-cache --no-default-features --features ci-autoclean
+          command: install
+          args: --force cargo-cache --no-default-features --features ci-autoclean
 
       - name: Clean cache
         uses: actions-rs/cargo@v1
@@ -174,7 +177,8 @@ jobs:
 
       - uses: actions-rs/cargo@v1
         with:
-          command: install cargo-hack
+          command: install
+          args: --force cargo-hack
 
       - name: Run clippy
         uses: actions-rs/cargo@v1
@@ -184,7 +188,8 @@ jobs:
       - name: Install cargo-cache
         uses: actions-rs/cargo@v1
         with:
-          command: install cargo-cache --no-default-features --features ci-autoclean
+          command: install
+          args: --force cargo-cache --no-default-features --features ci-autoclean
 
       - name: Clean cache
         uses: actions-rs/cargo@v1
@@ -212,7 +217,8 @@ jobs:
 
       - uses: actions-rs/cargo@v1
         with:
-          command: install cargo-hack
+          command: install
+          args: --force cargo-hack
 
       - name: Run udeps
         uses: actions-rs/cargo@v1
@@ -222,7 +228,8 @@ jobs:
       - name: Install cargo-cache
         uses: actions-rs/cargo@v1
         with:
-          command: install cargo-cache --no-default-features --features ci-autoclean
+          command: install
+          args: --force cargo-cache --no-default-features --features ci-autoclean
 
       - name: Clean cache
         uses: actions-rs/cargo@v1
@@ -267,7 +274,8 @@ jobs:
       - name: Install cargo-cache
         uses: actions-rs/cargo@v1
         with:
-          command: install cargo-cache --no-default-features --features ci-autoclean
+          command: install
+          args: --force cargo-cache --no-default-features --features ci-autoclean
 
       - name: Clean cache
         uses: actions-rs/cargo@v1
@@ -292,7 +300,8 @@ jobs:
 
       - uses: actions-rs/cargo@v1
         with:
-          command: install cargo-hack
+          command: install
+          args: --force cargo-hack
 
       - name: Run doc
         uses: actions-rs/cargo@v1
@@ -302,7 +311,8 @@ jobs:
       - name: Install cargo-cache
         uses: actions-rs/cargo@v1
         with:
-          command: install cargo-cache --no-default-features --features ci-autoclean
+          command: install
+          args: --force cargo-cache --no-default-features --features ci-autoclean
 
       - name: Clean cache
         uses: actions-rs/cargo@v1
