@@ -10,13 +10,11 @@ use crate::{
 
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
-use std::sync::Arc;
-
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("tips")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -24,7 +22,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedF
         .boxed()
 }
 
-pub(crate) async fn tips<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> Result<impl Reply, Rejection> {
+pub(crate) async fn tips<B: StorageBackend>(args: ApiArgsFullNode<B>) -> Result<impl Reply, Rejection> {
     if !args.tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
         return Err(reject::custom(CustomRejection::ServiceUnavailable(
             "the node is not synchronized".to_string(),

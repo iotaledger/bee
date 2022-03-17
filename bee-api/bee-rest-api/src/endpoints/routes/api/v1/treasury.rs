@@ -10,13 +10,11 @@ use bee_ledger::workers::storage;
 
 use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
-use std::sync::Arc;
-
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("treasury")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -24,7 +22,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedF
         .boxed()
 }
 
-pub(crate) fn treasury<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> Result<impl Reply, Rejection> {
+pub(crate) fn treasury<B: StorageBackend>(args: ApiArgsFullNode<B>) -> Result<impl Reply, Rejection> {
     let treasury =
         storage::fetch_unspent_treasury_output(&*args.storage).map_err(|_| CustomRejection::StorageBackend)?;
 

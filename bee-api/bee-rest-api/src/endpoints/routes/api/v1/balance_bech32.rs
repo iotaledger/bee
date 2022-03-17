@@ -10,8 +10,6 @@ use bee_message::address::Address;
 
 use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
-use std::sync::Arc;
-
 fn path() -> impl Filter<Extract = (Address,), Error = warp::Rejection> + Clone {
     super::path()
         .and(warp::path("addresses"))
@@ -19,7 +17,7 @@ fn path() -> impl Filter<Extract = (Address,), Error = warp::Rejection> + Clone 
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -29,7 +27,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedF
 
 pub(crate) async fn balance_bech32<B: StorageBackend>(
     addr: Address,
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
     match addr {
         Address::Ed25519(a) => balance_ed25519(a, args).await,

@@ -8,13 +8,13 @@ use crate::{
 
 use warp::{filters::BoxedFilter, Filter, Reply};
 
-use std::{convert::Infallible, sync::Arc};
+use std::convert::Infallible;
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("info")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -22,7 +22,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedF
         .boxed()
 }
 
-pub(crate) async fn info<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> Result<impl Reply, Infallible> {
+pub(crate) async fn info<B: StorageBackend>(args: ApiArgsFullNode<B>) -> Result<impl Reply, Infallible> {
     let latest_milestone_index = args.tangle.get_latest_milestone_index();
     let latest_milestone_timestamp = args
         .tangle

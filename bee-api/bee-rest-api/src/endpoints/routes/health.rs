@@ -10,7 +10,6 @@ use warp::{filters::BoxedFilter, http::StatusCode, Filter, Reply};
 
 use std::{
     convert::Infallible,
-    sync::Arc,
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -21,7 +20,7 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     warp::path("health").and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -29,7 +28,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedF
         .boxed()
 }
 
-pub(crate) async fn health<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> Result<impl Reply, Infallible> {
+pub(crate) async fn health<B: StorageBackend>(args: ApiArgsFullNode<B>) -> Result<impl Reply, Infallible> {
     if is_healthy(&args.tangle, &args.peer_manager).await {
         Ok(StatusCode::OK)
     } else {

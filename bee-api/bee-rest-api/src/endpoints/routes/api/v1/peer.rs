@@ -12,8 +12,6 @@ use bee_gossip::PeerId;
 
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
-use std::sync::Arc;
-
 fn path() -> impl Filter<Extract = (PeerId,), Error = Rejection> + Clone {
     super::path()
         .and(warp::path("peers"))
@@ -21,7 +19,7 @@ fn path() -> impl Filter<Extract = (PeerId,), Error = Rejection> + Clone {
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -31,7 +29,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedF
 
 pub(crate) async fn peer<B: StorageBackend>(
     peer_id: PeerId,
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
     args.peer_manager
         .get_map(&peer_id, |peer_entry| {

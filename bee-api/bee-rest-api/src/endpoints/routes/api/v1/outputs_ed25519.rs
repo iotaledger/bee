@@ -19,8 +19,6 @@ use futures::channel::oneshot;
 use log::error;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
-use std::sync::Arc;
-
 fn path() -> impl Filter<Extract = (Ed25519Address,), Error = Rejection> + Clone {
     super::path()
         .and(warp::path("addresses"))
@@ -30,7 +28,7 @@ fn path() -> impl Filter<Extract = (Ed25519Address,), Error = Rejection> + Clone
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -40,7 +38,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedF
 
 pub(crate) async fn outputs_ed25519<B: StorageBackend>(
     addr: Ed25519Address,
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
     let (cmd_tx, cmd_rx) = oneshot::channel::<(Result<Option<Vec<OutputId>>, Error>, LedgerIndex)>();
 

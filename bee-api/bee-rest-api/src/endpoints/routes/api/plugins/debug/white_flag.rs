@@ -25,7 +25,7 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::post())
         .and(warp::body::json())
@@ -36,7 +36,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedF
 
 pub(crate) async fn white_flag<B: StorageBackend>(
     body: JsonValue,
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
     let index_json = &body["index"];
     let parents_json = &body["parentMessageIds"];

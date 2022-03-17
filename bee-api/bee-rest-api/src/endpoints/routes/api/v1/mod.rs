@@ -29,8 +29,6 @@ use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
 
 use warp::{self, Filter, Rejection, Reply};
 
-use std::sync::Arc;
-
 pub(crate) const MAX_RESPONSE_RESULTS: usize = 1000;
 
 pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
@@ -38,7 +36,7 @@ pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clo
 }
 
 pub(crate) fn filter<B: StorageBackend>(
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     add_peer::filter(args.clone())
         .or(balance_bech32::filter(args.clone()))

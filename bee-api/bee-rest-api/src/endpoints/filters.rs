@@ -5,10 +5,10 @@ use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
 
 use warp::Filter;
 
-use std::{convert::Infallible, sync::Arc};
+use std::convert::Infallible;
 
 pub(crate) fn with_args<B: StorageBackend>(
-    args: Arc<ApiArgsFullNode<B>>,
-) -> impl Filter<Extract = (Arc<ApiArgsFullNode<B>>,), Error = Infallible> + Clone {
+    args: ApiArgsFullNode<B>,
+) -> impl Filter<Extract = (ApiArgsFullNode<B>,), Error = Infallible> + Clone {
     warp::any().map(move || args.clone())
 }

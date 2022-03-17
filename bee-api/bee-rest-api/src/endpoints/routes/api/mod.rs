@@ -8,14 +8,12 @@ use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
 
 use warp::{self, Filter, Rejection, Reply};
 
-use std::sync::Arc;
-
 pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     warp::path("api")
 }
 
 pub(crate) fn filter<B: StorageBackend>(
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     v1::filter(args.clone()).or(plugins::filter(args))
 }

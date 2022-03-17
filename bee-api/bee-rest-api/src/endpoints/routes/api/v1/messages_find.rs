@@ -17,13 +17,13 @@ use bee_storage::access::Fetch;
 
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("messages")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(warp::query().and_then(|query: HashMap<String, String>| async move {
@@ -41,7 +41,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedF
 
 pub(crate) fn messages_find<B: StorageBackend>(
     index: String,
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
     let index_bytes = hex::decode(index.clone())
         .map_err(|_| reject::custom(CustomRejection::BadRequest("Invalid index".to_owned())))?;

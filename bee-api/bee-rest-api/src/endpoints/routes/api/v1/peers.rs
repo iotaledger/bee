@@ -8,13 +8,13 @@ use crate::{
 
 use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
-use std::{convert::Infallible, sync::Arc};
+use std::convert::Infallible;
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("peers")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -22,7 +22,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedF
         .boxed()
 }
 
-pub(crate) async fn peers<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> Result<impl Reply, Infallible> {
+pub(crate) async fn peers<B: StorageBackend>(args: ApiArgsFullNode<B>) -> Result<impl Reply, Infallible> {
     let mut peers_dtos = Vec::new();
     for peer in args.peer_manager.get_all() {
         peers_dtos.push(PeerDto::from(peer.as_ref()));

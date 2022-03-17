@@ -12,8 +12,6 @@ use bee_storage::access::Fetch;
 
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
-use std::sync::Arc;
-
 fn path() -> impl Filter<Extract = (TransactionId,), Error = Rejection> + Clone {
     super::path()
         .and(warp::path("transactions"))
@@ -22,7 +20,7 @@ fn path() -> impl Filter<Extract = (TransactionId,), Error = Rejection> + Clone 
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -32,7 +30,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedF
 
 pub(crate) async fn transaction_included_message<B: StorageBackend>(
     transaction_id: TransactionId,
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
     // Safe to unwrap since 0 is a valid index;
     let output_id = OutputId::new(transaction_id, 0).unwrap();

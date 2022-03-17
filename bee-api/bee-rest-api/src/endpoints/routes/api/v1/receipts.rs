@@ -12,13 +12,11 @@ use bee_storage::access::AsIterator;
 
 use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
-use std::sync::Arc;
-
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("receipts")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
         .and(with_args(args))
@@ -26,7 +24,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedF
         .boxed()
 }
 
-pub(crate) fn receipts<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> Result<impl Reply, Rejection> {
+pub(crate) fn receipts<B: StorageBackend>(args: ApiArgsFullNode<B>) -> Result<impl Reply, Rejection> {
     let mut receipts_dto = Vec::new();
     let iterator = AsIterator::<(MilestoneIndex, Receipt), ()>::iter(&*args.storage)
         .map_err(|_| CustomRejection::InternalError)?;

@@ -22,13 +22,11 @@ use serde_json::Value as JsonValue;
 use tokio::sync::mpsc;
 use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
 
-use std::sync::Arc;
-
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("messages")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::post())
         .and(
@@ -46,7 +44,7 @@ pub(crate) fn filter<B: StorageBackend>(args: Arc<ApiArgsFullNode<B>>) -> BoxedF
 
 pub(crate) async fn submit_message<B: StorageBackend>(
     value: JsonValue,
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
     let network_id_v = &value["networkId"];
     let parents_v = &value["parentMessageIds"];
@@ -200,7 +198,7 @@ pub(crate) async fn build_message(
 
 pub(crate) async fn submit_message_raw<B: StorageBackend>(
     buf: warp::hyper::body::Bytes,
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
     let message = Message::unpack(&mut &(*buf)).map_err(|e| {
         reject::custom(CustomRejection::BadRequest(format!(
