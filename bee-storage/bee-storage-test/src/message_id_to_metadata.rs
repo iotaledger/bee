@@ -43,9 +43,11 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
 
     assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
-    assert!(Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+            .unwrap()
+            .is_none()
+    );
     let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
@@ -104,9 +106,11 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     Delete::<MessageId, MessageMetadata>::delete(storage, &message_id).unwrap();
 
     assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
-    assert!(Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+            .unwrap()
+            .is_none()
+    );
 
     let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
         .unwrap()
