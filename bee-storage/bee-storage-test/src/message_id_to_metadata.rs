@@ -64,16 +64,15 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         let mut metadata = metadata.clone();
         metadata.set_milestone_index(MilestoneIndex(index));
 
-        InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &rand_message_metadata())
-            .unwrap();
-        assert_eq!(
-            Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-                .unwrap()
-                .unwrap(),
-            metadata,
-            "`InsertStrict` should not overwrite"
-        );
+        InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
     }
+    assert_eq!(
+        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+            .unwrap()
+            .unwrap(),
+        metadata,
+        "`InsertStrict` should not overwrite"
+    );
 
     let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
         .unwrap()
