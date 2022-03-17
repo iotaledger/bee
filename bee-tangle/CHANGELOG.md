@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - `TangleConfig::{num_partitions, max_eviction_retries}`;
+- Cache mechanism;
 
 ### Fixed
 
