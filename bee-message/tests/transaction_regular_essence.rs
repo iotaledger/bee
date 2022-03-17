@@ -26,7 +26,7 @@ const ED25519_ADDRESS_2: &str = "efda4275375ac3675abff85235fd25a1522a2044cc6027a
 
 #[test]
 fn kind() {
-    assert_eq!(RegularTransactionEssence::KIND, 0);
+    assert_eq!(RegularTransactionEssence::KIND, 1);
 }
 
 #[test]
