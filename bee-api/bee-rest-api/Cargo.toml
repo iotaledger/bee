@@ -19,7 +19,7 @@ bee-pow = { version = "0.2.0", path = "../../bee-pow", default-features = false 
 bee-protocol = { version = "0.2.2", path = "../../bee-protocol", default-features = false, optional = true }
 bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true  }
 bee-storage = { version = "0.10.0", path = "../../bee-storage/bee-storage", default-features = false, optional = true }
-bee-tangle = { version = "0.2.0", path = "../../bee-tangle", default-features = false, optional = true }
+bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false, optional = true }
 
 async-trait = { version = "0.1.51", default-features = false, optional = true }
 bech32 = { version = "0.8.1", default-features = false, optional = true }

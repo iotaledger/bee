@@ -15,7 +15,7 @@ bee-common = { version = "0.6.0", path = "../../bee-common/bee-common", default-
 bee-ledger = { version = "0.6.1", path = "../../bee-ledger", default-features = false }
 bee-message = { version = "0.1.6", path = "../../bee-message", default-features = false }
 bee-storage = { version = "0.10.0", path = "../bee-storage", default-features = false }
-bee-tangle = { version = "0.2.0", path = "../../bee-tangle", default-features = false }
+bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false }
 
 num_cpus = { version = "1.13.0", default-features = false }
 serde = { version = "1.0.130", default-features = false, features = [ "std", "derive" ] }
