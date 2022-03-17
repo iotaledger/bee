@@ -19,7 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.3.0 - 2022-xx-xx
+## 0.3.0 - 2022-03-17
+
+### Removed
+
+- `TangleConfig::{num_partitions, max_eviction_retries}`;
 
 ### Fixed
 
