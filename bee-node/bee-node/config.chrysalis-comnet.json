@@ -125,8 +125,8 @@
     }
   },
   "tracing": {
-    "consoleEnabled": true,
-    "flamegraphEnabled": true,
+    "consoleEnabled": false,
+    "flamegraphEnabled": false,
     "flamegraphOutputPath": "./flamegraph"
   }
 }
