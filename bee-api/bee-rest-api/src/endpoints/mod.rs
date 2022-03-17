@@ -90,24 +90,24 @@ impl<B: StorageBackend> Clone for ApiArgsFullNode<B> {
 }
 
 pub(crate) struct ApiArgsFullNodeInner<B: StorageBackend> {
-    pub node_id: PeerId,
-    pub node_keypair: Keypair,
-    pub rest_api_config: RestApiConfig,
-    pub protocol_config: ProtocolConfig,
-    pub network_id: NetworkId,
-    pub bech32_hrp: Bech32Hrp,
-    pub storage: ResourceHandle<B>,
-    pub bus: ResourceHandle<Bus<'static>>,
-    pub node_info: ResourceHandle<NodeInfo>,
-    pub tangle: ResourceHandle<Tangle<B>>,
-    pub peer_manager: ResourceHandle<PeerManager>,
-    pub requested_messages: ResourceHandle<RequestedMessages>,
-    pub network_command_sender: ResourceHandle<NetworkCommandSender>,
-    pub message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
-    pub message_requester: MessageRequesterWorker,
-    pub consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
+    pub(crate) node_id: PeerId,
+    pub(crate) node_keypair: Keypair,
+    pub(crate) rest_api_config: RestApiConfig,
+    pub(crate) protocol_config: ProtocolConfig,
+    pub(crate) network_id: NetworkId,
+    pub(crate) bech32_hrp: Bech32Hrp,
+    pub(crate) storage: ResourceHandle<B>,
+    pub(crate) bus: ResourceHandle<Bus<'static>>,
+    pub(crate) node_info: ResourceHandle<NodeInfo>,
+    pub(crate) tangle: ResourceHandle<Tangle<B>>,
+    pub(crate) peer_manager: ResourceHandle<PeerManager>,
+    pub(crate) requested_messages: ResourceHandle<RequestedMessages>,
+    pub(crate) network_command_sender: ResourceHandle<NetworkCommandSender>,
+    pub(crate) message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+    pub(crate) message_requester: MessageRequesterWorker,
+    pub(crate) consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
     #[cfg(feature = "dashboard")]
-    pub dashboard_username: DashboardUsername,
+    pub(crate) dashboard_username: DashboardUsername,
 }
 
 pub struct ApiWorkerFullNode;
