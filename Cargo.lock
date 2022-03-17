@@ -435,6 +435,10 @@ dependencies = [
  "bee-runtime",
  "futures",
  "log",
+ "reqwest",
+ "semver 1.0.6",
+ "serde",
+ "serde_json",
  "tokio",
  "tokio-stream",
 ]
