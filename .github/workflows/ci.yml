@@ -68,14 +68,34 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
+      - uses: actions-rs/cargo@v1
+        with:
+          command: install cargo-hack
+
       - name: Build crates
-        run: .github/workflows/scripts/for_each_crate.sh "build" "--all-targets --all-features --release"
+        uses: actions-rs/cargo@v1
+        with:
+          command: ci-build
 
       - name: Test crates
-        run: .github/workflows/scripts/for_each_crate.sh "test" "--all-targets --all-features --release"
+        uses: actions-rs/cargo@v1
+        with:
+          command: ci-test
 
       - name: Doc test crates
-        run: .github/workflows/scripts/for_each_crate.sh "test" "--doc --all-features --release"
+        uses: actions-rs/cargo@v1
+        with:
+          command: ci-doctest
+
+      - name: Install cargo-cache
+        uses: actions-rs/cargo@v1
+        with:
+          command: install cargo-cache --no-default-features --features ci-autoclean
+
+      - name: Clean cache
+        uses: actions-rs/cargo@v1
+        with:
+          command: cache
 
   no_std:
     needs: build-and-test
@@ -106,6 +126,16 @@ jobs:
           command: check
           args: --release --target=riscv64gc-unknown-none-elf --manifest-path ${{ matrix.crates }}/Cargo.toml
 
+      - name: Install cargo-cache
+        uses: actions-rs/cargo@v1
+        with:
+          command: install cargo-cache --no-default-features --features ci-autoclean
+
+      - name: Clean cache
+        uses: actions-rs/cargo@v1
+        with:
+          command: cache
+
   format:
     runs-on: ubuntu-latest
     steps:
@@ -120,8 +150,7 @@ jobs:
 
       - uses: actions-rs/cargo@v1
         with:
-          command: fmt
-          args: --all -- --check
+          command: ci-fmt
 
   clippy:
     needs: format
@@ -143,8 +172,24 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
+      - uses: actions-rs/cargo@v1
+        with:
+          command: install cargo-hack
+
       - name: Run clippy
-        run: .github/workflows/scripts/for_each_crate.sh "clippy" "--all-targets --all-features -- -D warnings"
+        uses: actions-rs/cargo@v1
+        with:
+          command: ci-clippy
+
+      - name: Install cargo-cache
+        uses: actions-rs/cargo@v1
+        with:
+          command: install cargo-cache --no-default-features --features ci-autoclean
+
+      - name: Clean cache
+        uses: actions-rs/cargo@v1
+        with:
+          command: cache
 
   udeps:
     needs: clippy
@@ -160,13 +205,29 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
+      - uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-udeps
+          version: latest
+
       - uses: actions-rs/cargo@v1
         with:
-          command: install
-          args: --force cargo-udeps
+          command: install cargo-hack
 
       - name: Run udeps
-        run: .github/workflows/scripts/for_each_crate.sh "udeps" "--all-targets --all-features --backend=depinfo"
+        uses: actions-rs/cargo@v1
+        with:
+          command: ci-udeps
+
+      - name: Install cargo-cache
+        uses: actions-rs/cargo@v1
+        with:
+          command: install cargo-cache --no-default-features --features ci-autoclean
+
+      - name: Clean cache
+        uses: actions-rs/cargo@v1
+        with:
+          command: cache
 
   licenses:
     needs: clippy
@@ -203,6 +264,16 @@ jobs:
           command: about
           args: generate --workspace --all-features about.hbs
 
+      - name: Install cargo-cache
+        uses: actions-rs/cargo@v1
+        with:
+          command: install cargo-cache --no-default-features --features ci-autoclean
+
+      - name: Clean cache
+        uses: actions-rs/cargo@v1
+        with:
+          command: cache
+
   docs:
     needs: clippy
     runs-on: ubuntu-latest
@@ -219,8 +290,24 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
+      - uses: actions-rs/cargo@v1
+        with:
+          command: install cargo-hack
+
       - name: Run doc
-        run: .github/workflows/scripts/for_each_crate.sh "doc" "--no-deps --document-private-items"
+        uses: actions-rs/cargo@v1
+        with:
+          command: ci-doc
+      
+      - name: Install cargo-cache
+        uses: actions-rs/cargo@v1
+        with:
+          command: install cargo-cache --no-default-features --features ci-autoclean
+
+      - name: Clean cache
+        uses: actions-rs/cargo@v1
+        with:
+          command: cache
 
   missing-files:
     runs-on: ubuntu-latest

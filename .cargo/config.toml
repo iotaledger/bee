@@ -1,0 +1,8 @@
+[alias]
+ci-build = "hack --all build --all-targets --all-features --release"
+ci-test = "hack --all test --all-targets --all-features --release"
+ci-doctest = "hack --all test --doc --all-features --release"
+ci-doc = "hack --all doc --all-features --no-deps --document-private-items"
+ci-udeps = "hack --all udeps --all-targets --all-features --backend=depinfo"
+ci-clippy = "hack --all clippy --all-targets --all-features -- -D warnings"
+ci-fmt = "fmt --all -- --check"
