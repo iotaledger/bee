@@ -129,9 +129,7 @@ where
                         let (message_id, _) = message.id();
                         let metadata = MessageMetadata::arrived();
 
-                        let message = if let Some(message) = tangle.insert(message, message_id, metadata).await {
-                            message
-                        } else {
+                        if tangle.contains(&message_id) {
                             metrics.known_messages_inc();
                             if let Some(ref peer_id) = from {
                                 peer_manager
@@ -141,7 +139,9 @@ where
                                     .unwrap_or_default();
                             }
                             continue;
-                        };
+                        } else {
+                            tangle.insert(&message, &message_id, &metadata);
+                        }
 
                         // Send the propagation event ASAP to allow the propagator to do its thing
                         if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {

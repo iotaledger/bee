@@ -67,17 +67,22 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Insert a message into the tangle.
-    pub async fn insert(&self, message: Message, message_id: MessageId, metadata: MessageMetadata) -> Option<Message> {
-        self.storage.insert(&message_id, &message).ok()?;
-        self.storage.insert(&message_id, &metadata).ok()?;
+    pub fn insert(&self, message: &Message, message_id: &MessageId, metadata: &MessageMetadata) {
+        self.storage
+            .insert(message_id, message)
+            .ok()
+            .and_then(|()| {
+                self.storage.insert(message_id, metadata).ok()?;
 
-        for &parent in message.parents().iter() {
-            self.storage
-                .insert(&(parent, message_id), &())
-                .unwrap_or_else(|e| warn!("Failed to update approvers for message {:?}", e));
-        }
-
-        Some(message)
+                let message_id = *message_id;
+                for &parent in message.parents().iter() {
+                    self.storage
+                        .insert(&(parent, message_id), &())
+                        .unwrap_or_else(|e| warn!("Failed to update approvers for message {:?}", e));
+                }
+                Some(())
+            })
+            .unwrap_or_default()
     }
 
     /// Add a milestone to the tangle.
