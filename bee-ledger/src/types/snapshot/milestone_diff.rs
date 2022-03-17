@@ -4,14 +4,12 @@
 use crate::types::{ConsumedOutput, CreatedOutput, Error};
 
 use bee_message::{
-    milestone::MilestoneIndex,
-    output::{Output, OutputId, TreasuryOutput},
+    output::{OutputId, TreasuryOutput},
     payload::{
         milestone::{MilestoneId, MilestonePayload},
         transaction::TransactionId,
         Payload,
     },
-    MessageId,
 };
 
 use packable::{
@@ -75,21 +73,15 @@ impl Packable for MilestoneDiff {
         (self.created_outputs.len() as u64).pack(packer)?;
 
         for (output_id, created) in self.created_outputs.iter() {
-            created.message_id().pack(packer)?;
             output_id.pack(packer)?;
-            created.milestone_index().pack(packer)?;
-            created.milestone_timestamp().pack(packer)?;
-            created.inner().pack(packer)?;
+            created.pack(packer)?;
         }
 
         (self.consumed_outputs.len() as u64).pack(packer)?;
 
         for (output_id, (created, consumed)) in self.consumed_outputs.iter() {
-            created.message_id().pack(packer)?;
             output_id.pack(packer)?;
-            created.milestone_index().pack(packer)?;
-            created.milestone_timestamp().pack(packer)?;
-            created.inner().pack(packer)?;
+            created.pack(packer)?;
             consumed.target().pack(packer)?;
         }
 
@@ -131,33 +123,24 @@ impl Packable for MilestoneDiff {
         let mut created_outputs = HashMap::with_capacity(created_count as usize);
 
         for _ in 0..created_count {
-            let message_id = MessageId::unpack::<_, VERIFY>(unpacker).infallible()?;
             let output_id = OutputId::unpack::<_, VERIFY>(unpacker).coerce()?;
-            let milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
-            let milestone_timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
-            let output = Output::unpack::<_, VERIFY>(unpacker).coerce()?;
+            let created_output = CreatedOutput::unpack::<_, VERIFY>(unpacker).coerce()?;
 
-            created_outputs.insert(
-                output_id,
-                CreatedOutput::new(message_id, milestone_index, milestone_timestamp, output),
-            );
+            created_outputs.insert(output_id, created_output);
         }
 
         let consumed_count = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
         let mut consumed_outputs = HashMap::with_capacity(consumed_count as usize);
 
         for _ in 0..consumed_count {
-            let message_id = MessageId::unpack::<_, VERIFY>(unpacker).infallible()?;
             let output_id = OutputId::unpack::<_, VERIFY>(unpacker).coerce()?;
-            let milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).infallible()?;
-            let milestone_timestamp = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
-            let output = Output::unpack::<_, VERIFY>(unpacker).coerce()?;
+            let created_output = CreatedOutput::unpack::<_, VERIFY>(unpacker).coerce()?;
             let target = TransactionId::unpack::<_, VERIFY>(unpacker).infallible()?;
 
             consumed_outputs.insert(
                 output_id,
                 (
-                    CreatedOutput::new(message_id, milestone_index, milestone_timestamp, output),
+                    created_output,
                     ConsumedOutput::new(
                         target,
                         milestone.essence().index(),
