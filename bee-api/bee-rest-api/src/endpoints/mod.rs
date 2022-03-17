@@ -73,7 +73,7 @@ pub struct InitConfigEntryNode {
     pub rest_api_config: RestApiConfig,
 }
 
-pub struct ApiArgsFullNode<B: StorageBackend>(Arc<ApiArgsFullNodeInner<B>>);
+pub(crate) struct ApiArgsFullNode<B: StorageBackend>(Arc<ApiArgsFullNodeInner<B>>);
 
 impl<B: StorageBackend> Deref for ApiArgsFullNode<B> {
     type Target = Arc<ApiArgsFullNodeInner<B>>;
@@ -89,7 +89,7 @@ impl<B: StorageBackend> Clone for ApiArgsFullNode<B> {
     }
 }
 
-pub struct ApiArgsFullNodeInner<B: StorageBackend> {
+pub(crate) struct ApiArgsFullNodeInner<B: StorageBackend> {
     pub node_id: PeerId,
     pub node_keypair: Keypair,
     pub rest_api_config: RestApiConfig,

@@ -26,7 +26,7 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
         .boxed()
 }
 
-pub async fn message_raw<B: StorageBackend>(
+pub(crate) async fn message_raw<B: StorageBackend>(
     message_id: MessageId,
     args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
