@@ -127,7 +127,6 @@ where
                         }
 
                         let (message_id, _) = message.id();
-                        let metadata = MessageMetadata::arrived();
 
                         if tangle.contains(&message_id) {
                             metrics.known_messages_inc();
@@ -140,6 +139,7 @@ where
                             }
                             continue;
                         } else {
+                            let metadata = MessageMetadata::arrived();
                             tangle.insert(&message, &message_id, &metadata);
                         }
 

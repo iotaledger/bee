@@ -66,13 +66,13 @@ impl<B: StorageBackend> Tangle<B> {
         &self.config
     }
 
-    /// Insert a message into the tangle.
+    /// Insert a message into the tangle without overwriting its metadata if it already exists.
     pub fn insert(&self, message: &Message, message_id: &MessageId, metadata: &MessageMetadata) {
         self.storage
             .insert(message_id, message)
             .ok()
             .and_then(|()| {
-                self.storage.insert(message_id, metadata).ok()?;
+                self.storage.insert_strict(message_id, metadata).ok()?;
 
                 let message_id = *message_id;
                 for &parent in message.parents().iter() {
