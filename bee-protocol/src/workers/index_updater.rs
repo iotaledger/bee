@@ -117,8 +117,7 @@ async fn update_past_cone<B: StorageBackend>(
 
         tangle.update_metadata(&parent_id, |metadata| {
             metadata.set_milestone_index(index);
-            // TODO: That was fine in a synchronous scenario, where this algo had the newest information, but
-            // probably isn't the case in the now asynchronous scenario. Investigate!
+
             let index = IndexId::new(index, parent_id);
             metadata.set_omrsi_and_ymrsi(index, index);
         });

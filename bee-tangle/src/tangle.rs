@@ -83,7 +83,7 @@ impl<B: StorageBackend> Tangle<B> {
     /// Add a milestone to the tangle.
     pub fn add_milestone(&self, idx: MilestoneIndex, milestone: Milestone) {
         let index = IndexId::new(idx, *milestone.message_id());
-        // TODO: only insert if vacant
+
         self.update_metadata(milestone.message_id(), |metadata| {
             metadata.flags_mut().set_milestone(true);
             metadata.set_milestone_index(idx);
