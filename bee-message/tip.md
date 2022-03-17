@@ -7,10 +7,9 @@ ce4feebb00f0dd7968b58334465651b95bd21722
   - **input side of the transaction:** the transaction destroys tokens. The presence and validation of the foundry outputs of the native tokens determines whether the tokens are burned (removed from the ledger) or melted in the foundry.
 
 ##### Storage Deposit Return Unlock Condition
-This unlock condition is employed to achieve conditional sending. An output that has
-<i>Storage Deposit Return Unlock Condition</i> specified can only be consumed in a transaction that deposits
-`Return Amount` IOTA coins into `Return Address`. When several of such outputs are consumed, their return amounts per
-`Return Addresses` are summed up and the output side must deposit this total sum per `Return Address`.
+An output that has <i>Storage Deposit Return Unlock Condition</i> specified can only be consumed in a transaction that
+deposits `Return Amount` IOTA coins into `Return Address`. When several of such outputs are consumed, their return
+amounts per `Return Addresses` are summed up and the output side must deposit this total sum per `Return Address`.
 
 ###### Additional syntactic transaction validation rule:
 - `Return Amount` must be ≥ than `Minimum Storage Deposit` and must not be `0`.
@@ -53,19 +52,10 @@ This unlock condition is employed to achieve conditional sending. An output that
 
 ## Basic Output
 
-### Additional Transaction Syntactic Validation Rules
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
-
-#### Consumed Outputs
-- The unlock is valid if and only if all unlock conditions and feature blocks present in the output validate.
-
-#### Created Outputs
-- All <i>Unlock Condition</i> imposed transaction validation criteria must be fulfilled.
-- All <i>Feature Block</i> imposed transaction validation criteria must be fulfilled.
 
 ## Alias Output
 
-### Additional Transaction Syntactic Validation Rules
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
 
 ### Additional Transaction Semantic Validation Rules
@@ -73,11 +63,7 @@ This unlock condition is employed to achieve conditional sending. An output that
   corresponding alias has the explicit or implicit `Alias ID` equal to that of the alias on the output side.
 
 ## Foundry Output
-Upon creation of the foundry, the alias defined in the `Address` field of the
-<i>Immutable Alias Address Unlock Condition</i> must be unlocked in the same transaction, and its `Foundry Counter`
-field must increment. This incremented value defines `Serial Number`, while the `Token Scheme` can be chosen freely.
 
-### Additional Transaction Syntactic Validation Rules
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
 
 ### Additional Transaction Semantic Validation Rules
@@ -119,7 +105,6 @@ field must increment. This incremented value defines `Serial Number`, while the 
 
 ## NFT Output
 
-#### Output Syntactic Validation
 - `Amount` field must fulfill the dust protection requirements and must not be `0`.
 
 ### Additional Transaction Semantic Validation Rules
@@ -127,10 +112,5 @@ field must increment. This incremented value defines `Serial Number`, while the 
   corresponding NFT has the explicit or implicit `NFT ID` equal to that of the NFT on the output side.
 
 #### Consumed Outputs
-- The unlock is valid if and only if all unlock conditions and feature blocks present in the output validate.
 - When a consumed NFT output has no corresponding NFT output on the output side, the NFT it is being burned. Funds
   and assets inside the burned NFT output must be redistributed to other outputs in the burning transaction.
-
-#### Created Outputs
-- All <i>Unlock Condition</i> imposed transaction validation criteria must be fulfilled.
-- All <i>Feature Block</i> imposed transaction validation criteria must be fulfilled.
