@@ -1,6 +1,6 @@
 [package]
 name = "bee-storage-sled"
-version = "0.5.0"
+version = "0.6.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "A bee-storage implementation for the Sled backend"
@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 bee-common = { version = "0.6.0", path = "../../bee-common/bee-common", default-features = false }
 bee-ledger = { version = "0.6.1", path = "../../bee-ledger", default-features = false }
 bee-message = { version = "0.1.6", path = "../../bee-message", default-features = false }
-bee-storage = { version = "0.10.0", path = "../bee-storage", default-features = false }
+bee-storage = { version = "0.11.0", path = "../bee-storage", default-features = false }
 bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false }
 
 num_cpus = { version = "1.13.0", default-features = false }

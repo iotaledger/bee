@@ -1,6 +1,6 @@
 [package]
 name = "bee-storage"
-version = "0.10.0"
+version = "0.11.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "A general purpose storage backend crate with key value abstraction API"
