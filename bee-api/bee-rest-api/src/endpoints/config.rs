@@ -5,7 +5,10 @@ use multiaddr::{Multiaddr, Protocol};
 use regex::RegexSet;
 use serde::Deserialize;
 
-use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
+use std::{
+    net::{IpAddr, SocketAddr, ToSocketAddrs},
+    time::Duration,
+};
 
 /// Default REST API binding address.
 pub(crate) const DEFAULT_BIND_ADDRESS: &str = "/ip4/0.0.0.0/tcp/14265";
@@ -52,7 +55,7 @@ pub struct RestApiConfigBuilder {
     #[serde(alias = "featureProofOfWork")]
     feature_proof_of_work: Option<bool>,
     /// Describes the white flag solidification timeout.
-    #[serde(alias = "whiteFlagSolidificationTimeout")]
+    #[serde(alias = "whiteFlagSolidificationTimeoutSecs")]
     white_flag_solidification_timeout: Option<u64>,
 }
 
@@ -152,9 +155,12 @@ impl RestApiConfigBuilder {
         };
 
         let feature_proof_of_work = self.feature_proof_of_work.unwrap_or(DEFAULT_FEATURE_PROOF_OF_WORK);
-        let white_flag_solidification_timeout = self
-            .white_flag_solidification_timeout
-            .unwrap_or(DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT);
+
+        let white_flag_solidification_timeout = Duration::new(
+            self.white_flag_solidification_timeout
+                .unwrap_or(DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT),
+            0,
+        );
 
         RestApiConfig {
             bind_socket_addr: SocketAddr::new(address, port),
@@ -181,7 +187,7 @@ pub struct RestApiConfig {
     /// Enables/disables the proof-of-work feature on the node.
     pub(crate) feature_proof_of_work: bool,
     /// Describes the white flag solidification timeout.
-    pub(crate) white_flag_solidification_timeout: u64,
+    pub(crate) white_flag_solidification_timeout: Duration,
 }
 
 impl RestApiConfig {
@@ -216,8 +222,8 @@ impl RestApiConfig {
     }
 
     /// Returns the white flag solidification timeout.
-    pub fn white_flag_solidification_timeout(&self) -> u64 {
-        self.white_flag_solidification_timeout
+    pub fn white_flag_solidification_timeout(&self) -> &Duration {
+        &self.white_flag_solidification_timeout
     }
 }
 

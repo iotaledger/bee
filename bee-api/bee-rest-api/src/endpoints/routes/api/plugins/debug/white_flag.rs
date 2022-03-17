@@ -18,7 +18,7 @@ use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 use crate::endpoints::ApiArgsFullNode;
 use std::sync::Arc;
 
-use std::{any::TypeId, collections::HashSet, sync::Mutex, time::Duration};
+use std::{any::TypeId, collections::HashSet, sync::Mutex};
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("whiteflag")).and(warp::path::end())
@@ -137,12 +137,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     let mut metadata = WhiteFlagMetadata::new(index);
 
     // Wait for either all parents to get solid or the timeout to expire.
-    let response = match timeout(
-        Duration::from_secs(args.rest_api_config.white_flag_solidification_timeout()),
-        receiver,
-    )
-    .await
-    {
+    let response = match timeout(*args.rest_api_config.white_flag_solidification_timeout(), receiver).await {
         Ok(_) => {
             // Did not timeout, parents are solid and white flag can happen.
             consensus::white_flag::<B>(&args.tangle, &args.storage, &parents, &mut metadata)
