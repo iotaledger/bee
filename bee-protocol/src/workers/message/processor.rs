@@ -140,6 +140,13 @@ where
                             continue;
                         } else {
                             let metadata = MessageMetadata::arrived();
+                            // There is no data race here even if the `Message` and
+                            // `MessageMetadata` are inserted between the call to `tangle.contains`
+                            // and here because:
+                            // - Both `Message`s are the same because they have the same hash.
+                            // - `MessageMetadata` is not overwritten.
+                            // - Some extra code is executing due to not calling `continue` but
+                            // this does not create inconsistencies.
                             tangle.insert(&message, &message_id, &metadata);
                         }
 
