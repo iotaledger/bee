@@ -2,7 +2,7 @@
 
 alias      = "Bee stardust-testnet node"
 bech32_hrp = "atoi"
-network_id = "stardust-testnet-2"
+network_id = "stardust-testnet-3"
 
 [logger]
 [[logger.outputs]]

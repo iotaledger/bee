@@ -25,7 +25,7 @@ pub struct TransactionPayload {
 
 impl TransactionPayload {
     /// The payload kind of a [`TransactionPayload`].
-    pub const KIND: u32 = 0;
+    pub const KIND: u32 = 6;
 
     /// Creates a new [`TransactionPayload`].
     pub fn new(essence: TransactionEssence, unlock_blocks: UnlockBlocks) -> Result<TransactionPayload, Error> {

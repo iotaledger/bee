@@ -66,9 +66,8 @@ impl Packable for MilestoneDiff {
                 milestone_id.pack(packer)?;
                 treasury_output.pack(packer)?;
             } else {
-                // This never happens because `MilestoneDiff` values can only be created by
-                // unpacking them and the `unpack` implementation guarantees that the
-                // `consumed_treasury` field is some if the receipt is some.
+                // This never happens because `MilestoneDiff` values can only be created by unpacking them and the
+                // `unpack` implementation guarantees that the `consumed_treasury` field is some if the receipt is some.
                 unreachable!()
             }
         }
@@ -78,7 +77,9 @@ impl Packable for MilestoneDiff {
         for (output_id, created) in self.created_outputs.iter() {
             created.message_id().pack(packer)?;
             output_id.pack(packer)?;
-            created.pack(packer)?;
+            created.milestone_index().pack(packer)?;
+            created.milestone_timestamp().pack(packer)?;
+            created.inner().pack(packer)?;
         }
 
         (self.consumed_outputs.len() as u64).pack(packer)?;
@@ -86,6 +87,8 @@ impl Packable for MilestoneDiff {
         for (output_id, (created, consumed)) in self.consumed_outputs.iter() {
             created.message_id().pack(packer)?;
             output_id.pack(packer)?;
+            created.milestone_index().pack(packer)?;
+            created.milestone_timestamp().pack(packer)?;
             created.inner().pack(packer)?;
             consumed.target().pack(packer)?;
         }
@@ -130,16 +133,13 @@ impl Packable for MilestoneDiff {
         for _ in 0..created_count {
             let message_id = MessageId::unpack::<_, VERIFY>(unpacker).infallible()?;
             let output_id = OutputId::unpack::<_, VERIFY>(unpacker).coerce()?;
+            let milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
+            let milestone_timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
             let output = Output::unpack::<_, VERIFY>(unpacker).coerce()?;
 
             created_outputs.insert(
                 output_id,
-                CreatedOutput::new(
-                    message_id,
-                    milestone.essence().index(),
-                    milestone.essence().timestamp() as u32,
-                    output,
-                ),
+                CreatedOutput::new(message_id, milestone_index, milestone_timestamp, output),
             );
         }
 
@@ -158,7 +158,11 @@ impl Packable for MilestoneDiff {
                 output_id,
                 (
                     CreatedOutput::new(message_id, milestone_index, milestone_timestamp, output),
-                    ConsumedOutput::new(target, milestone.essence().index()),
+                    ConsumedOutput::new(
+                        target,
+                        milestone.essence().index(),
+                        milestone.essence().timestamp() as u32,
+                    ),
                 ),
             );
         }

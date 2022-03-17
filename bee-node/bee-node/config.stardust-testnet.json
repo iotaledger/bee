@@ -1,7 +1,7 @@
 {
   "alias": "Bee stardust-testnet node",
   "bech32Hrp": "atoi",
-  "networkId": "stardust-testnet-2",
+  "networkId": "stardust-testnet-3",
   "logger": {
     "outputs": [
       {

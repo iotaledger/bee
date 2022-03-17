@@ -8,14 +8,16 @@ use bee_message::{milestone::MilestoneIndex, payload::transaction::TransactionId
 pub struct ConsumedOutput {
     target: TransactionId,
     milestone_index: MilestoneIndex,
+    milestone_timestamp: u32,
 }
 
 impl ConsumedOutput {
     /// Creates a new [`ConsumedOutput`].
-    pub fn new(target: TransactionId, milestone_index: MilestoneIndex) -> Self {
+    pub fn new(target: TransactionId, milestone_index: MilestoneIndex, milestone_timestamp: u32) -> Self {
         Self {
             target,
             milestone_index,
+            milestone_timestamp,
         }
     }
 
@@ -26,6 +28,11 @@ impl ConsumedOutput {
 
     /// Returns the milestone index of the [`ConsumedOutput`].
     pub fn milestone_index(&self) -> MilestoneIndex {
+        self.milestone_index
+    }
+
+    /// Returns the milestone timestamp of the [`ConsumedOutput`].
+    pub fn milestone_timestamp(&self) -> MilestoneIndex {
         self.milestone_index
     }
 }

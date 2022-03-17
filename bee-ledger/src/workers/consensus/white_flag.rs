@@ -137,7 +137,7 @@ fn apply_regular_essence<B: StorageBackend>(
             output_id,
             (
                 created_output,
-                ConsumedOutput::new(*transaction_id, metadata.milestone_index),
+                ConsumedOutput::new(*transaction_id, metadata.milestone_index, metadata.milestone_timestamp as u32),
             ),
         );
     }
