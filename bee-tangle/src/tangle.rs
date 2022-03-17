@@ -16,7 +16,7 @@ use bee_message::{
 use bee_runtime::resource::ResourceHandle;
 
 use hashbrown::HashMap;
-use log::info;
+use log::warn;
 use ref_cast::RefCast;
 use tokio::sync::Mutex;
 
@@ -74,7 +74,7 @@ impl<B: StorageBackend> Tangle<B> {
         for &parent in message.parents().iter() {
             self.storage
                 .insert(&(parent, message_id), &())
-                .unwrap_or_else(|e| info!("Failed to update approvers for message {:?}", e));
+                .unwrap_or_else(|e| warn!("Failed to update approvers for message {:?}", e));
         }
 
         Some(message)
@@ -91,13 +91,13 @@ impl<B: StorageBackend> Tangle<B> {
         });
         self.storage
             .insert(&idx, &milestone)
-            .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
+            .unwrap_or_else(|e| warn!("Failed to insert milestone message {:?}", e));
     }
 
     /// Get the milestone from the tangle that corresponds to the given milestone index.
     pub fn get_milestone(&self, index: MilestoneIndex) -> Option<Milestone> {
         self.storage.fetch(&index).unwrap_or_else(|e| {
-            info!("Failed to fetch milestone {:?}", e);
+            warn!("Failed to fetch milestone {:?}", e);
             None
         })
     }
