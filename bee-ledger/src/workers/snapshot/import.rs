@@ -18,9 +18,8 @@ use crate::{
 
 use bee_message::{
     milestone::MilestoneIndex,
-    output::{self, Output, OutputId},
+    output::{self, OutputId},
     payload::Payload,
-    MessageId,
 };
 use bee_storage::access::{Insert, Truncate};
 use bee_tangle::solid_entry_point::SolidEntryPoint;
@@ -73,12 +72,8 @@ fn import_outputs<U: Unpacker<Error = std::io::Error>, B: StorageBackend>(
     output_count: u64,
 ) -> Result<(), Error> {
     for _ in 0..output_count {
-        let message_id = MessageId::unpack::<_, true>(unpacker)?;
         let output_id = OutputId::unpack::<_, true>(unpacker)?;
-        let milestone_index = MilestoneIndex::unpack::<_, true>(unpacker)?;
-        let milestone_timestamp = u32::unpack::<_, true>(unpacker)?;
-        let output = Output::unpack::<_, true>(unpacker)?;
-        let created_output = CreatedOutput::new(message_id, milestone_index, milestone_timestamp, output);
+        let created_output = CreatedOutput::unpack::<_, true>(unpacker)?;
 
         create_output(&*storage, &output_id, &created_output)?;
     }
