@@ -243,7 +243,7 @@ pub struct RegularTransactionEssenceDto {
     pub network_id: String,
     pub inputs: Vec<InputDto>,
     #[serde(rename = "inputsCommitment")]
-    pub inputs_commitment: String,
+    pub inputs_commitment: HexString,
     pub outputs: Vec<OutputDto>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub payload: Option<PayloadDto>,
@@ -255,7 +255,7 @@ impl From<&RegularTransactionEssence> for RegularTransactionEssenceDto {
             kind: RegularTransactionEssence::KIND,
             network_id: value.network_id().to_string(),
             inputs: value.inputs().iter().map(Into::into).collect::<Vec<_>>(),
-            inputs_commitment: prefix_hex::encode(value.inputs_commitment()),
+            inputs_commitment: prefix_hex::encode(value.inputs_commitment()).into(),
             outputs: value.outputs().iter().map(Into::into).collect::<Vec<_>>(),
             payload: match value.payload() {
                 Some(Payload::TaggedData(i)) => Some(PayloadDto::TaggedData(Box::new(i.as_ref().into()))),
@@ -286,7 +286,7 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
                 .network_id
                 .parse::<u64>()
                 .map_err(|_| Error::InvalidField("networkId"))?,
-            prefix_hex::decode(&value.inputs_commitment).map_err(MessageError::HexError)?,
+            prefix_hex::decode(&value.inputs_commitment.0).map_err(MessageError::HexError)?,
         )
         .with_inputs(inputs)
         .with_outputs(outputs);
