@@ -45,15 +45,21 @@ use primitive_types::U256;
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct IntegerString(String);
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct HexString(String);
+
 /// The message object that nodes gossip around in the network.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
     #[serde(rename = "protocolVersion")]
     pub protocol_version: u8,
     #[serde(rename = "parentMessageIds")]
-    pub parents: Vec<String>,
+    pub parents: Vec<HexString>,
     pub payload: Option<PayloadDto>,
-    pub nonce: String,
+    pub nonce: IntegerString,
 }
 
 impl From<&Message> for MessageDto {
@@ -1952,7 +1958,7 @@ impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MigratedFundsEntryDto {
     #[serde(rename = "tailTransactionHash")]
-    pub tail_transaction_hash: String,
+    pub tail_transaction_hash: HexString,
     pub address: AddressDto,
     pub deposit: u64,
 }

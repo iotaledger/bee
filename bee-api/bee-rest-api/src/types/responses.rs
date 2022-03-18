@@ -3,7 +3,7 @@
 
 use crate::types::{
     body::BodyInner,
-    dtos::{LedgerInclusionStateDto, MessageDto, OutputDto, PeerDto, ReceiptDto},
+    dtos::{HexString, IntegerString, LedgerInclusionStateDto, MessageDto, OutputDto, PeerDto, ReceiptDto},
 };
 
 use serde::{Deserialize, Serialize};
@@ -82,7 +82,7 @@ pub struct MetricsResponse {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TipsResponse {
     #[serde(rename = "tipMessageIds")]
-    pub tip_message_ids: Vec<String>,
+    pub tip_message_ids: Vec<HexString>,
 }
 
 impl BodyInner for TipsResponse {}
@@ -92,7 +92,7 @@ impl BodyInner for TipsResponse {}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SubmitMessageResponse {
     #[serde(rename = "messageId")]
-    pub message_id: String,
+    pub message_id: HexString,
 }
 
 impl BodyInner for SubmitMessageResponse {}
@@ -109,9 +109,9 @@ impl BodyInner for MessageResponse {}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageMetadataResponse {
     #[serde(rename = "messageId")]
-    pub message_id: String,
+    pub message_id: HexString,
     #[serde(rename = "parentMessageIds")]
-    pub parent_message_ids: Vec<String>,
+    pub parent_message_ids: Vec<HexString>,
     #[serde(rename = "isSolid")]
     pub is_solid: bool,
     #[serde(rename = "referencedByMilestoneIndex", skip_serializing_if = "Option::is_none")]
@@ -135,12 +135,12 @@ impl BodyInner for MessageMetadataResponse {}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageChildrenResponse {
     #[serde(rename = "messageId")]
-    pub message_id: String,
+    pub message_id: HexString,
     #[serde(rename = "maxResults")]
     pub max_results: usize,
     pub count: usize,
     #[serde(rename = "childrenMessageIds")]
-    pub children_message_ids: Vec<String>,
+    pub children_message_ids: Vec<HexString>,
 }
 
 impl BodyInner for MessageChildrenResponse {}
@@ -150,13 +150,19 @@ impl BodyInner for MessageChildrenResponse {}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OutputResponse {
     #[serde(rename = "messageId")]
-    pub message_id: String,
+    pub message_id: HexString,
     #[serde(rename = "transactionId")]
-    pub transaction_id: String,
+    pub transaction_id: HexString,
     #[serde(rename = "outputIndex")]
     pub output_index: u16,
     #[serde(rename = "isSpent")]
     pub is_spent: bool,
+    #[serde(rename = "milestoneIndexSpent")]
+    pub milestone_index_spent: Option<u32>,
+    #[serde(rename = "milestoneTimestampSpent")]
+    pub milestone_timestamp_spent: Option<u64>,
+    #[serde(rename = "transactionIdSpent")]
+    pub transaction_id_spent: Option<HexString>,
     #[serde(rename = "milestoneIndexBooked")]
     pub milestone_index_booked: u32,
     #[serde(rename = "milestoneTimestampBooked")]
@@ -170,6 +176,7 @@ impl BodyInner for OutputResponse {}
 
 /// Response of GET /api/v2/addresses/{address}.
 /// Returns information about an address.
+#[deprecated(note = "Not in the API anymore")]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BalanceAddressResponse {
     #[serde(rename = "addressType")]
@@ -184,6 +191,7 @@ impl BodyInner for BalanceAddressResponse {}
 
 /// Response of GET /api/v2/addresses/{address}/outputs.
 /// Returns the outputs of an address.
+#[deprecated(note = "Not in the API anymore")]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OutputsAddressResponse {
     #[serde(rename = "maxResults")]
@@ -213,7 +221,7 @@ impl BodyInner for ReceiptsResponse {}
 pub struct TreasuryResponse {
     #[serde(rename = "milestoneId")]
     pub milestone_id: String,
-    pub amount: u64,
+    pub amount: IntegerString,
 }
 
 impl BodyInner for TreasuryResponse {}
@@ -225,7 +233,7 @@ pub struct MilestoneResponse {
     #[serde(rename = "index")]
     pub milestone_index: u32,
     #[serde(rename = "messageId")]
-    pub message_id: String,
+    pub message_id: HexString,
     pub timestamp: u64,
 }
 
@@ -237,9 +245,9 @@ impl BodyInner for MilestoneResponse {}
 pub struct UtxoChangesResponse {
     pub index: u32,
     #[serde(rename = "createdOutputs")]
-    pub created_outputs: Vec<String>,
+    pub created_outputs: Vec<HexString>,
     #[serde(rename = "consumedOutputs")]
-    pub consumed_outputs: Vec<String>,
+    pub consumed_outputs: Vec<HexString>,
 }
 
 impl BodyInner for UtxoChangesResponse {}
@@ -267,6 +275,7 @@ impl BodyInner for PeerResponse {}
 
 /// Response of GET /api/plugins/debug/whiteflag.
 /// Returns the computed merkle tree hash for the given white flag traversal.
+#[deprecated(note = "Not in the API anymore")]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WhiteFlagResponse {
     #[serde(rename = "merkleTreeHash")]
