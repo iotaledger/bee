@@ -14,9 +14,9 @@ impl Update<MessageId, MessageMetadata> for Storage {
 
         let guard = self.locks.message_id_to_metadata.write();
 
-        if let Some(v) = self.inner.get_cf(cf_handle, message_id)? {
+        if let Some(v) = self.inner.get_pinned_cf(cf_handle, message_id)? {
             // Unpacking from storage is fine.
-            let mut metadata = MessageMetadata::unpack_unchecked(&mut v.as_slice()).unwrap();
+            let mut metadata = MessageMetadata::unpack_unchecked(&mut &*v).unwrap();
 
             f(&mut metadata);
 

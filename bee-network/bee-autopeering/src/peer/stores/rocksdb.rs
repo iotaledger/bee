@@ -99,18 +99,18 @@ impl PeerStore for RocksDbPeerStore {
 
     fn contains(&self, peer_id: &PeerId) -> Result<bool, Self::Error> {
         let cf = self.open_cf(ACTIVE_PEERS_CF);
-        if self.db.get_cf(&cf, peer_id)?.is_some() {
+        if self.db.get_pinned_cf(&cf, peer_id)?.is_some() {
             Ok(true)
         } else {
             let cf = self.open_cf(REPLACEMENTS_CF);
-            Ok(self.db.get_cf(&cf, peer_id)?.is_some())
+            Ok(self.db.get_pinned_cf(&cf, peer_id)?.is_some())
         }
     }
 
     fn fetch_active(&self, peer_id: &PeerId) -> Result<Option<ActivePeer>, Self::Error> {
         let cf = self.open_cf(ACTIVE_PEERS_CF);
 
-        Ok(self.db.get_cf(&cf, peer_id)?.map(|b| ActivePeer::from_bytes(&b)))
+        Ok(self.db.get_pinned_cf(&cf, peer_id)?.map(|b| ActivePeer::from_bytes(&b)))
     }
 
     fn fetch_all_active(&self) -> Result<Vec<ActivePeer>, Self::Error> {
