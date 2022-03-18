@@ -33,10 +33,9 @@ pub mod urts;
 mod conflict;
 
 use bee_runtime::node::{Node, NodeBuilder};
-pub use conflict::ConflictReason;
-use tip_pool_cleaner_worker::TipPoolCleanerWorker;
 
-pub use self::{tangle::Tangle, tangle_worker::TangleWorker};
+use self::tip_pool_cleaner_worker::TipPoolCleanerWorker;
+pub use self::{conflict::ConflictReason, tangle::Tangle, tangle_worker::TangleWorker};
 
 /// Initiate the tangle on top of the given node builder.
 pub fn init<N: Node>(tangle_config: &config::TangleConfig, node_builder: N::Builder) -> N::Builder

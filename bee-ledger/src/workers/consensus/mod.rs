@@ -9,6 +9,8 @@ pub(crate) mod state;
 pub(crate) mod white_flag;
 pub(crate) mod worker;
 
-pub use worker::{ConsensusWorker, ConsensusWorkerCommand};
-
-pub use self::{metadata::WhiteFlagMetadata, white_flag::white_flag};
+pub use self::{
+    metadata::WhiteFlagMetadata,
+    white_flag::white_flag,
+    worker::{ConsensusWorker, ConsensusWorkerCommand},
+};

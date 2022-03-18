@@ -11,13 +11,12 @@ use std::{any::Any, convert::Infallible};
 use async_trait::async_trait;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::event::{LatestMilestoneChanged, SolidMilestoneChanged};
-use config::MqttConfig;
 use futures::stream::StreamExt;
 use log::{debug, warn};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use self::{manager::MqttManager, topics::*};
+use self::{config::MqttConfig, manager::MqttManager, topics::*};
 
 #[derive(Default)]
 pub struct Mqtt;

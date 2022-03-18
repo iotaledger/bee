@@ -14,11 +14,11 @@ use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-pub(crate) use transaction::{TransactionPayloadWorker, TransactionPayloadWorkerEvent};
 
 pub(crate) use self::{
     indexation::{IndexationPayloadWorker, IndexationPayloadWorkerEvent},
     milestone::{MilestonePayloadWorker, MilestonePayloadWorkerEvent},
+    transaction::{TransactionPayloadWorker, TransactionPayloadWorkerEvent},
 };
 use crate::workers::storage::StorageBackend;
 

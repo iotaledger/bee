@@ -20,10 +20,9 @@ use serde::{
     ser::SerializeStruct,
     Deserialize, Serialize,
 };
-pub use stores::PeerStore;
 
 use self::lists::{ActivePeersList, ReplacementPeersList};
-pub use self::peer_id::PeerId;
+pub use self::{peer_id::PeerId, stores::PeerStore};
 use crate::{
     local::{
         services::{ServiceMap, ServiceProtocol},
