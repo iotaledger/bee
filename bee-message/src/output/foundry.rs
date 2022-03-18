@@ -325,6 +325,12 @@ impl FoundryOutput {
             .map(|unlock_condition| unlock_condition.address())
             .unwrap()
     }
+
+    ///
+    #[inline(always)]
+    pub fn circulating_supply(&self) -> U256 {
+        self.minted_tokens - self.melted_tokens
+    }
 }
 
 impl Packable for FoundryOutput {
