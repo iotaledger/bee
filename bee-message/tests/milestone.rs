@@ -8,7 +8,7 @@ use packable::PackableExt;
 
 use core::str::FromStr;
 
-const MESSAGE_ID: &str = "9e23e9fccb816af4ad355c27d904b6a6e88618e0bed1b640df3d4c19f4579bc9";
+const MESSAGE_ID: &str = "0x9e23e9fccb816af4ad355c27d904b6a6e88618e0bed1b640df3d4c19f4579bc9";
 
 #[test]
 fn debug_impl() {
@@ -16,7 +16,7 @@ fn debug_impl() {
 
     assert_eq!(
         format!("{:?}", milestone),
-        "Milestone { message_id: MessageId(9e23e9fccb816af4ad355c27d904b6a6e88618e0bed1b640df3d4c19f4579bc9), timestamp: 0 }",
+        "Milestone { message_id: MessageId(0x9e23e9fccb816af4ad355c27d904b6a6e88618e0bed1b640df3d4c19f4579bc9), timestamp: 0 }",
     );
 }
 
