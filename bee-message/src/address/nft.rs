@@ -39,9 +39,7 @@ impl FromStr for NftAddress {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(NftAddress::from(NftId::new(
-            prefix_hex::decode(s).map_err(Error::HexError)?,
-        )))
+        Ok(NftAddress::from(NftId::from_str(s)?))
     }
 }
 
