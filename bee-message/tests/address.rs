@@ -15,7 +15,7 @@ const ED25519_ADDRESS_BAD: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d100
 #[test]
 fn kind() {
     let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS).unwrap();
-    let ed25519_address = Address::from(Ed25519Address::new(bytes.try_into().unwrap()));
+    let ed25519_address = Address::from(Ed25519Address::new(bytes));
 
     assert_eq!(ed25519_address.kind(), 0);
 }
@@ -23,7 +23,7 @@ fn kind() {
 #[test]
 fn generate_bech32_string() {
     let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS).unwrap();
-    let address = Address::from(Ed25519Address::new(bytes.try_into().unwrap()));
+    let address = Address::from(Ed25519Address::new(bytes));
     let bech32_string = address.to_bech32("iota");
 
     assert_eq!(
