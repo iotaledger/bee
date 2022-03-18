@@ -332,6 +332,12 @@ impl FoundryOutput {
     }
 
     ///
+    #[inline(always)]
+    pub fn circulating_supply(&self) -> U256 {
+        self.minted_tokens - self.melted_tokens
+    }
+
+    ///
     pub fn unlock(
         &self,
         _output_id: &OutputId,

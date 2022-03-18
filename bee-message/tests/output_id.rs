@@ -7,17 +7,15 @@ use packable::{bounded::InvalidBoundedU16, error::UnpackError, PackableExt};
 
 use core::str::FromStr;
 
-const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const OUTPUT_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00";
-const OUTPUT_ID_INVALID_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6498000";
-const OUTPUT_ID_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f0x";
-const OUTPUT_ID_INVALID_LEN: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f";
+const TRANSACTION_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
+const OUTPUT_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00";
+const OUTPUT_ID_INVALID_INDEX: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6498000";
 
 #[test]
 fn debug_impl() {
     assert_eq!(
         format!("{:?}", OutputId::from_str(OUTPUT_ID).unwrap()),
-        "OutputId(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00)"
+        "OutputId(0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00)"
     );
 }
 
@@ -53,7 +51,7 @@ fn new_invalid() {
 #[test]
 fn try_from_valid() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
-    let output_id_bytes: [u8; OutputId::LENGTH] = hex::decode(OUTPUT_ID).unwrap().try_into().unwrap();
+    let output_id_bytes: [u8; OutputId::LENGTH] = prefix_hex::decode(OUTPUT_ID).unwrap();
     let output_id = OutputId::try_from(output_id_bytes).unwrap();
 
     assert_eq!(*output_id.transaction_id(), transaction_id);
@@ -62,7 +60,7 @@ fn try_from_valid() {
 
 #[test]
 fn try_from_invalid() {
-    let output_id_bytes: [u8; OutputId::LENGTH] = hex::decode(OUTPUT_ID_INVALID_INDEX).unwrap().try_into().unwrap();
+    let output_id_bytes: [u8; OutputId::LENGTH] = prefix_hex::decode(OUTPUT_ID_INVALID_INDEX).unwrap();
 
     assert!(matches!(
         OutputId::try_from(output_id_bytes),
@@ -84,24 +82,6 @@ fn from_str_invalid_index() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_INDEX),
         Err(Error::InvalidInputOutputIndex(InvalidBoundedU16(128)))
-    ));
-}
-
-#[test]
-fn from_str_invalid_hex() {
-    assert!(matches!(
-        OutputId::from_str(OUTPUT_ID_INVALID_HEX),
-        Err(Error::InvalidHexadecimalChar(hex))
-            if hex == OUTPUT_ID_INVALID_HEX
-    ));
-}
-
-#[test]
-fn from_str_invalid_len() {
-    assert!(matches!(
-        OutputId::from_str(OUTPUT_ID_INVALID_LEN),
-        Err(Error::InvalidHexadecimalLength{expected, actual})
-            if expected == OutputId::LENGTH * 2 && actual == OutputId::LENGTH * 2 - 2
     ));
 }
 

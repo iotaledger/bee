@@ -48,8 +48,8 @@ impl Ed25519Signature {
 
         if address.deref() != &signature_address {
             return Err(Error::SignaturePublicKeyMismatch {
-                expected: hex::encode(address.as_ref()),
-                actual: hex::encode(signature_address),
+                expected: prefix_hex::encode(address.as_ref()),
+                actual: prefix_hex::encode(signature_address),
             });
         }
 

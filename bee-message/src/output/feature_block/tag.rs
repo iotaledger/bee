@@ -52,7 +52,7 @@ impl TagFeatureBlock {
 
 impl core::fmt::Display for TagFeatureBlock {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", hex::encode(&*self.0))
+        write!(f, "{}", prefix_hex::encode(self.tag()))
     }
 }
 

@@ -140,8 +140,10 @@ impl MilestonePayload {
             .zip(self.signatures.iter())
             .enumerate()
         {
-            if !applicable_public_keys.contains(&hex::encode(public_key)) {
-                return Err(MilestoneValidationError::UnapplicablePublicKey(hex::encode(public_key)));
+            if !applicable_public_keys.contains(&prefix_hex::encode(public_key)) {
+                return Err(MilestoneValidationError::UnapplicablePublicKey(prefix_hex::encode(
+                    *public_key,
+                )));
             }
 
             let ed25519_public_key =
@@ -151,7 +153,7 @@ impl MilestonePayload {
             if !ed25519_public_key.verify(&ed25519_signature, &essence_hash) {
                 return Err(MilestoneValidationError::InvalidSignature(
                     index,
-                    hex::encode(public_key),
+                    prefix_hex::encode(public_key),
                 ));
             }
         }

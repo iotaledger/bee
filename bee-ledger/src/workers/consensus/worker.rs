@@ -108,8 +108,8 @@ where
     if !metadata.merkle_proof.eq(&milestone.essence().merkle_proof()) {
         return Err(Error::MerkleProofMismatch(
             milestone.essence().index(),
-            hex::encode(metadata.merkle_proof),
-            hex::encode(milestone.essence().merkle_proof()),
+            prefix_hex::encode(metadata.merkle_proof),
+            prefix_hex::encode(milestone.essence().merkle_proof()),
         ));
     }
 

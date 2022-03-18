@@ -31,8 +31,7 @@ use bee_message::{
     unlock_block::{
         AliasUnlockBlock, NftUnlockBlock, ReferenceUnlockBlock, SignatureUnlockBlock, UnlockBlock, UnlockBlocks,
     },
-    util::hex_decode,
-    Message, MessageBuilder, MessageId,
+    Error as MessageError, Message, MessageBuilder, MessageId,
 };
 #[cfg(feature = "cpt2")]
 use bee_message::{
@@ -224,7 +223,7 @@ impl From<&RegularTransactionEssence> for RegularTransactionEssenceDto {
             kind: RegularTransactionEssence::KIND,
             network_id: value.network_id().to_string(),
             inputs: value.inputs().iter().map(Into::into).collect::<Vec<_>>(),
-            inputs_commitment: hex::encode(value.inputs_commitment()),
+            inputs_commitment: prefix_hex::encode(value.inputs_commitment()),
             outputs: value.outputs().iter().map(Into::into).collect::<Vec<_>>(),
             payload: match value.payload() {
                 Some(Payload::TaggedData(i)) => Some(PayloadDto::TaggedData(Box::new(i.as_ref().into()))),
@@ -255,7 +254,7 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
                 .network_id
                 .parse::<u64>()
                 .map_err(|_| Error::InvalidField("networkId"))?,
-            hex_decode(&value.inputs_commitment)?,
+            prefix_hex::decode(&value.inputs_commitment).map_err(MessageError::HexError)?,
         )
         .with_inputs(inputs)
         .with_outputs(outputs);
@@ -725,8 +724,8 @@ impl From<&UnlockBlock> for UnlockBlockDto {
                     kind: SignatureUnlockBlock::KIND,
                     signature: SignatureDto::Ed25519(Ed25519SignatureDto {
                         kind: Ed25519Signature::KIND,
-                        public_key: hex::encode(ed.public_key()),
-                        signature: hex::encode(ed.signature()),
+                        public_key: prefix_hex::encode(ed.public_key()),
+                        signature: prefix_hex::encode(ed.signature()),
                     }),
                 }),
             },
@@ -753,13 +752,9 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
         match value {
             UnlockBlockDto::Signature(s) => match &s.signature {
                 SignatureDto::Ed25519(ed) => {
-                    let mut public_key = [0u8; Ed25519Address::LENGTH];
-                    hex::decode_to_slice(&ed.public_key, &mut public_key)
-                        .map_err(|_| Error::InvalidField("publicKey"))?;
-                    // TODO const
-                    let mut signature = [0u8; 64];
-                    hex::decode_to_slice(&ed.signature, &mut signature)
-                        .map_err(|_| Error::InvalidField("signature"))?;
+                    let public_key =
+                        prefix_hex::decode(&ed.public_key).map_err(|_| Error::InvalidField("publicKey"))?;
+                    let signature = prefix_hex::decode(&ed.signature).map_err(|_| Error::InvalidField("signature"))?;
                     Ok(UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(
                         Ed25519Signature::new(public_key, signature),
                     ))))
@@ -1431,10 +1426,10 @@ impl TryFrom<&FeatureBlockDto> for FeatureBlock {
             FeatureBlockDto::Sender(v) => Self::Sender(SenderFeatureBlock::new((&v.address).try_into()?)),
             FeatureBlockDto::Issuer(v) => Self::Issuer(IssuerFeatureBlock::new((&v.address).try_into()?)),
             FeatureBlockDto::Metadata(v) => Self::Metadata(MetadataFeatureBlock::new(
-                hex::decode(&v.data).map_err(|_e| Error::InvalidField("MetadataFeatureBlock"))?,
+                prefix_hex::decode(&v.data).map_err(|_e| Error::InvalidField("MetadataFeatureBlock"))?,
             )?),
             FeatureBlockDto::Tag(v) => Self::Tag(TagFeatureBlock::new(
-                hex::decode(&v.tag).map_err(|_e| Error::InvalidField("TagFeatureBlock"))?,
+                prefix_hex::decode(&v.tag).map_err(|_e| Error::InvalidField("TagFeatureBlock"))?,
             )?),
         })
     }
@@ -1481,7 +1476,7 @@ impl From<&AliasOutput> for AliasOutputDto {
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             alias_id: AliasIdDto(value.alias_id().to_string()),
             state_index: value.state_index(),
-            state_metadata: hex::encode(value.state_metadata()),
+            state_metadata: prefix_hex::encode(value.state_metadata()),
             foundry_counter: value.foundry_counter(),
             unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
@@ -1497,7 +1492,7 @@ impl TryFrom<&AliasOutputDto> for AliasOutput {
         let mut builder = AliasOutputBuilder::new(value.amount, (&value.alias_id).try_into()?)?;
         builder = builder.with_state_index(value.state_index);
         builder = builder.with_state_metadata(
-            hex::decode(&value.state_metadata).map_err(|_| Error::InvalidField("state_metadata"))?,
+            prefix_hex::decode(&value.state_metadata).map_err(|_| Error::InvalidField("state_metadata"))?,
         );
         builder = builder.with_foundry_counter(value.foundry_counter);
 
@@ -1822,12 +1817,12 @@ impl From<&MilestonePayload> for MilestonePayloadDto {
             index: *value.essence().index(),
             timestamp: value.essence().timestamp(),
             parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
-            inclusion_merkle_proof: hex::encode(value.essence().merkle_proof()),
+            inclusion_merkle_proof: prefix_hex::encode(value.essence().merkle_proof()),
             next_pow_score: value.essence().next_pow_score(),
             next_pow_score_milestone_index: value.essence().next_pow_score_milestone_index(),
-            public_keys: value.essence().public_keys().iter().map(hex::encode).collect(),
+            public_keys: value.essence().public_keys().iter().map(prefix_hex::encode).collect(),
             receipt: value.essence().receipt().map(Into::into),
-            signatures: value.signatures().map(hex::encode).collect(),
+            signatures: value.signatures().map(prefix_hex::encode).collect(),
         }
     }
 }
@@ -1847,22 +1842,13 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
                         .map_err(|_| Error::InvalidField("parentMessageIds"))?,
                 );
             }
-            let merkle_proof = {
-                let mut buf = [0u8; MilestoneEssence::MERKLE_PROOF_LENGTH];
-                hex::decode_to_slice(&value.inclusion_merkle_proof, &mut buf)
-                    .map_err(|_| Error::InvalidField("inclusionMerkleProof"))?;
-                buf
-            };
+            let merkle_proof = prefix_hex::decode(&value.inclusion_merkle_proof)
+                .map_err(|_| Error::InvalidField("inclusionMerkleProof"))?;
             let next_pow_score = value.next_pow_score;
             let next_pow_score_milestone_index = value.next_pow_score_milestone_index;
             let mut public_keys = Vec::new();
             for v in &value.public_keys {
-                let key = {
-                    let mut buf = [0u8; MilestoneEssence::PUBLIC_KEY_LENGTH];
-                    hex::decode_to_slice(v, &mut buf).map_err(|_| Error::InvalidField("publicKeys"))?;
-                    buf
-                };
-                public_keys.push(key);
+                public_keys.push(prefix_hex::decode(v).map_err(|_| Error::InvalidField("publicKeys"))?);
             }
             let receipt = if let Some(receipt) = value.receipt.as_ref() {
                 Some(receipt.try_into()?)
@@ -1882,12 +1868,8 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
         };
         let mut signatures = Vec::new();
         for v in &value.signatures {
-            signatures.push(
-                hex::decode(v)
-                    .map_err(|_| Error::InvalidField("signatures"))?
-                    .try_into()
-                    .map_err(|_| Error::InvalidField("signatures"))?,
-            )
+            let sig: Vec<u8> = prefix_hex::decode(v).map_err(|_| Error::InvalidField("signatures"))?;
+            signatures.push(sig.try_into().map_err(|_| Error::InvalidField("signatures"))?)
         }
 
         Ok(MilestonePayload::new(essence, signatures)?)
@@ -1907,8 +1889,8 @@ impl From<&TaggedDataPayload> for TaggedDataPayloadDto {
     fn from(value: &TaggedDataPayload) -> Self {
         TaggedDataPayloadDto {
             kind: TaggedDataPayload::KIND,
-            tag: hex::encode(value.tag()),
-            data: hex::encode(value.data()),
+            tag: prefix_hex::encode(value.tag()),
+            data: prefix_hex::encode(value.data()),
         }
     }
 }
@@ -1918,8 +1900,8 @@ impl TryFrom<&TaggedDataPayloadDto> for TaggedDataPayload {
 
     fn try_from(value: &TaggedDataPayloadDto) -> Result<Self, Self::Error> {
         Ok(TaggedDataPayload::new(
-            hex::decode(value.tag.clone()).map_err(|_| Error::InvalidField("tag"))?,
-            hex::decode(value.data.clone()).map_err(|_| Error::InvalidField("data"))?,
+            prefix_hex::decode(&value.tag).map_err(|_| Error::InvalidField("tag"))?,
+            prefix_hex::decode(&value.data).map_err(|_| Error::InvalidField("data"))?,
         )?)
     }
 }
@@ -1940,8 +1922,8 @@ impl From<&IndexationPayload> for IndexationPayloadDto {
     fn from(value: &IndexationPayload) -> Self {
         IndexationPayloadDto {
             kind: IndexationPayload::KIND,
-            index: hex::encode(value.index()),
-            data: hex::encode(value.data()),
+            index: prefix_hex::encode(value.index()),
+            data: prefix_hex::encode(value.data()),
         }
     }
 }
@@ -1952,8 +1934,8 @@ impl TryFrom<&IndexationPayloadDto> for IndexationPayload {
 
     fn try_from(value: &IndexationPayloadDto) -> Result<Self, Self::Error> {
         Ok(IndexationPayload::new(
-            hex::decode(value.index.clone()).map_err(|_| Error::InvalidField("index"))?,
-            hex::decode(value.data.clone()).map_err(|_| Error::InvalidField("data"))?,
+            prefix_hex::decode(&value.index).map_err(|_| Error::InvalidField("index"))?,
+            prefix_hex::decode(&value.data).map_err(|_| Error::InvalidField("data"))?,
         )?)
     }
 }
@@ -2013,7 +1995,7 @@ pub struct MigratedFundsEntryDto {
 impl From<&MigratedFundsEntry> for MigratedFundsEntryDto {
     fn from(value: &MigratedFundsEntry) -> Self {
         MigratedFundsEntryDto {
-            tail_transaction_hash: hex::encode(value.tail_transaction_hash().as_ref()),
+            tail_transaction_hash: prefix_hex::encode(value.tail_transaction_hash().as_ref()),
             address: value.address().into(),
             deposit: value.amount(),
         }
@@ -2024,9 +2006,8 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
     type Error = Error;
 
     fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
-        let mut tail_transaction_hash = [0u8; TailTransactionHash::LENGTH];
-        hex::decode_to_slice(&value.tail_transaction_hash, &mut tail_transaction_hash)
-            .map_err(|_| Error::InvalidField("tailTransactionHash"))?;
+        let tail_transaction_hash =
+            prefix_hex::decode(&value.tail_transaction_hash).map_err(|_| Error::InvalidField("tailTransactionHash"))?;
         Ok(MigratedFundsEntry::new(
             TailTransactionHash::new(tail_transaction_hash)?,
             (&value.address).try_into()?,
