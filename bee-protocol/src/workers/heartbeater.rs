@@ -45,6 +45,7 @@ pub(crate) fn send_heartbeat(
     Sender::<HeartbeatPacket>::send(heartbeat, peer_id, peer_manager, metrics);
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 pub(crate) fn broadcast_heartbeat<B: StorageBackend>(
     tangle: &Tangle<B>,
     peer_manager: &PeerManager,
@@ -75,6 +76,7 @@ where
         .leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let tangle = node.resource::<Tangle<N::Backend>>();
         let peer_manager = node.resource::<PeerManager>();

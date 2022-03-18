@@ -29,6 +29,7 @@ const KEEP_INITIAL_SNAPSHOT_SEPS: usize = 50;
 static NUM_PRUNINGS: AtomicUsize = AtomicUsize::new(0);
 
 /// Performs pruning of data from `start_index` to `target_index`.
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 pub async fn prune<S: StorageBackend>(
     tangle: &Tangle<S>,
     storage: &S,

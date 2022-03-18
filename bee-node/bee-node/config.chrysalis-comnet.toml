@@ -114,3 +114,8 @@ session_timeout = 86400
 user            = "admin"
 password_salt   = "0000000000000000000000000000000000000000000000000000000000000000"
 password_hash   = "0000000000000000000000000000000000000000000000000000000000000000"
+
+[tracing]
+console_enabled = false
+flamegraph_enabled = false
+flamegraph_output_path = "./flamegraph"

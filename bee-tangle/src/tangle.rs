@@ -82,6 +82,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Insert a message into the tangle.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn insert(
         &self,
         message: Message,
@@ -115,6 +116,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Add a milestone to the tangle.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn add_milestone(&self, idx: MilestoneIndex, milestone: Milestone) {
         // TODO: only insert if vacant
         self.update_metadata(milestone.message_id(), |metadata| {
@@ -131,10 +133,12 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Remove a milestone from the tangle.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn remove_milestone(&self, index: MilestoneIndex) {
         self.milestones.lock().await.remove(&index);
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn pull_milestone(&self, idx: MilestoneIndex) -> Option<MessageId> {
         if let Some(milestone) = self.storage().fetch(&idx).unwrap_or_else(|e| {
             info!("Failed to insert message {:?}", e);
@@ -155,11 +159,13 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the milestone from the tangle that corresponds to the given milestone index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn get_milestone(&self, index: MilestoneIndex) -> Option<Milestone> {
         self.milestones.lock().await.get(&index).cloned()
     }
 
     /// Get the message associated with the given milestone index from the tangle.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn get_milestone_message(&self, index: MilestoneIndex) -> Option<MessageRef> {
         // TODO: use combinator instead of match
         match self.get_milestone_message_id(index).await {
@@ -169,6 +175,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the message ID associated with the given milestone index from the tangle.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
         let message_id = self.milestones.lock().await.get(&index).map(|m| *m.message_id());
 
@@ -180,6 +187,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Return whether the tangle contains the given milestone index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn contains_milestone(&self, idx: MilestoneIndex) -> bool {
         // Not using `||` as its first operand would keep the lock alive causing a deadlock with its second operand.
         if self.milestones.lock().await.contains_key(&idx) {
@@ -189,22 +197,26 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the index of the latest milestone.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get_latest_milestone_index(&self) -> MilestoneIndex {
         self.latest_milestone_index.load(Ordering::Relaxed).into()
     }
 
     /// Update the index of the lastest milestone.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn update_latest_milestone_index(&self, new_index: MilestoneIndex) {
         // TODO: `fetch_max`? Swap and ensure the old is smaller?
         self.latest_milestone_index.store(*new_index, Ordering::Relaxed);
     }
 
     /// Get the latest solid milestone index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get_solid_milestone_index(&self) -> MilestoneIndex {
         self.solid_milestone_index.load(Ordering::Relaxed).into()
     }
 
     /// Update the latest solid milestone index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn update_solid_milestone_index(&self, new_index: MilestoneIndex) {
         self.solid_milestone_index.store(*new_index, Ordering::Relaxed);
 
@@ -216,52 +228,62 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the latest confirmed milestone index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get_confirmed_milestone_index(&self) -> MilestoneIndex {
         self.confirmed_milestone_index.load(Ordering::Relaxed).into()
     }
 
     /// Update the latest confirmed milestone index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn update_confirmed_milestone_index(&self, new_index: MilestoneIndex) {
         self.confirmed_milestone_index.store(*new_index, Ordering::Relaxed);
     }
 
     /// Get the snapshot index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get_snapshot_index(&self) -> MilestoneIndex {
         self.snapshot_index.load(Ordering::Relaxed).into()
     }
 
     /// Update the snapshot index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn update_snapshot_index(&self, new_index: MilestoneIndex) {
         self.snapshot_index.store(*new_index, Ordering::Relaxed);
     }
 
     /// Get the pruning index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get_pruning_index(&self) -> MilestoneIndex {
         self.pruning_index.load(Ordering::Relaxed).into()
     }
 
     /// Update the pruning index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn update_pruning_index(&self, new_index: MilestoneIndex) {
         self.pruning_index.store(*new_index, Ordering::Relaxed);
     }
 
     /// Get the entry point index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get_entry_point_index(&self) -> MilestoneIndex {
         self.entry_point_index.load(Ordering::Relaxed).into()
     }
 
     /// Update the entry point index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn update_entry_point_index(&self, new_index: MilestoneIndex) {
         self.entry_point_index.store(*new_index, Ordering::Relaxed);
     }
 
     /// Return whether the tangle is within the default sync threshold.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn is_synced(&self) -> bool {
         // TODO reduce to one atomic value ?
         self.is_synced_threshold(SYNCED_THRESHOLD)
     }
 
     /// Get the number of milestones until the tangle is synced.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get_sync_threshold(&self) -> u32 {
         // TODO reduce to one atomic value ?
         self.get_latest_milestone_index()
@@ -269,49 +291,58 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Return whether the tangle is within the given sync threshold.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn is_synced_threshold(&self, threshold: u32) -> bool {
         // TODO reduce to one atomic value ?
         *self.get_solid_milestone_index() >= self.get_latest_milestone_index().saturating_sub(threshold)
     }
 
     /// Return whether the tangle is fully confirmed.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn is_confirmed(&self) -> bool {
         // TODO reduce to one atomic value ?
         self.is_confirmed_threshold(CONFIRMED_THRESHOLD)
     }
 
     /// Return whether the tangle is within the given confirmation threshold.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn is_confirmed_threshold(&self, threshold: u32) -> bool {
         // TODO reduce to one atomic value ?
         *self.get_confirmed_milestone_index() >= self.get_latest_milestone_index().saturating_sub(threshold)
     }
 
     /// Get the milestone index associated with the given solid entry point.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn get_solid_entry_point_index(&self, sep: &SolidEntryPoint) -> Option<MilestoneIndex> {
         self.solid_entry_points.lock().await.get(sep).copied()
     }
 
     /// Add the given solid entry point to the given milestone index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn add_solid_entry_point(&self, sep: SolidEntryPoint, index: MilestoneIndex) {
         self.solid_entry_points.lock().await.insert(sep, index);
     }
 
     /// Returns a copy of all solid entry points.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn get_solid_entry_points(&self) -> HashMap<SolidEntryPoint, MilestoneIndex> {
         self.solid_entry_points.lock().await.clone()
     }
 
     /// Removes the given solid entry point from the set of solid entry points.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn remove_solid_entry_point(&self, sep: &SolidEntryPoint) {
         self.solid_entry_points.lock().await.remove(sep);
     }
 
     /// Clear all solid entry points.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn clear_solid_entry_points(&self) {
         self.solid_entry_points.lock().await.clear();
     }
 
     /// Replaces all solid entry points.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn replace_solid_entry_points(
         &self,
         new_seps: impl IntoIterator<Item = (SolidEntryPoint, MilestoneIndex)>,
@@ -322,6 +353,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Returns whether the message associated with given solid entry point is a solid entry point.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn is_solid_entry_point(&self, id: &MessageId) -> bool {
         self.solid_entry_points
             .lock()
@@ -330,6 +362,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Returns whether the message associated with the given message ID is solid.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn is_solid_message(&self, id: &MessageId) -> bool {
         if self.is_solid_entry_point(id).await {
             true
@@ -342,6 +375,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the oldest milestone root snapshot index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn omrsi(&self, id: &MessageId) -> Option<IndexId> {
         match self.solid_entry_points.lock().await.get(SolidEntryPoint::ref_cast(id)) {
             Some(sep) => Some(IndexId::new(*sep, *id)),
@@ -353,6 +387,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the youngest milestone root snapshot index.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn ymrsi(&self, id: &MessageId) -> Option<IndexId> {
         match self.solid_entry_points.lock().await.get(SolidEntryPoint::ref_cast(id)) {
             Some(sep) => Some(IndexId::new(*sep, *id)),
@@ -364,31 +399,37 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Insert the given message ID and parents as a tip.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn insert_tip(&self, message_id: MessageId, parents: Vec<MessageId>) {
         self.tip_pool.lock().await.insert(self, message_id, parents).await;
     }
 
     /// Update tip scores.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn update_tip_scores(&self) {
         self.tip_pool.lock().await.update_scores(self).await;
     }
 
     /// Return messages that require approving.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn get_messages_to_approve(&self) -> Option<Vec<MessageId>> {
         self.tip_pool.lock().await.choose_non_lazy_tips()
     }
 
     /// Reduce tips.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn reduce_tips(&self) {
         self.tip_pool.lock().await.reduce_tips();
     }
 
     /// Return the number of non-lazy tips.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn non_lazy_tips_num(&self) -> usize {
         self.tip_pool.lock().await.non_lazy_tips().len()
     }
 
     /// Change the maximum number of entries to store in the cache.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     fn resize(&self, len: usize) {
         self.max_len.store(len, Ordering::Relaxed);
     }
@@ -398,6 +439,7 @@ impl<B: StorageBackend> Tangle<B> {
         &self.storage
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn insert_inner(
         &self,
         message_id: MessageId,
@@ -434,10 +476,12 @@ impl<B: StorageBackend> Tangle<B> {
         msg
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn get_inner(&self, message_id: &MessageId) -> Option<impl DerefMut<Target = Vertex> + '_> {
         self.vertices.get_mut(message_id).await
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     /// Get the data of a vertex associated with the given `message_id`.
     async fn get_with<R>(&self, message_id: &MessageId, f: impl FnOnce(&mut Vertex) -> R) -> Option<R> {
         let exists = self.pull_message(message_id, true).await;
@@ -451,10 +495,12 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Get the data of a vertex associated with the given `message_id`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn get(&self, message_id: &MessageId) -> Option<MessageRef> {
         self.get_with(message_id, |v| v.message().cloned()).await.flatten()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn contains_inner(&self, message_id: &MessageId) -> bool {
         self.vertices
             .get(message_id)
@@ -463,16 +509,19 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Returns whether the message is stored in the Tangle.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn contains(&self, message_id: &MessageId) -> bool {
         self.contains_inner(message_id).await || self.pull_message(message_id, false).await
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn get_metadata(&self, message_id: &MessageId) -> Option<MessageMetadata> {
         self.get_with(message_id, |v| v.metadata().cloned()).await.flatten()
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn get_vertex(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex> + '_> {
         let exists = self.pull_message(message_id, true).await;
 
@@ -485,6 +534,7 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Updates the metadata of a vertex.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn update_metadata<R, Update>(&self, message_id: &MessageId, update: Update) -> Option<R>
     where
         Update: FnOnce(&mut MessageMetadata) -> R,
@@ -512,6 +562,7 @@ impl<B: StorageBackend> Tangle<B> {
         }
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vec<MessageId>> + '_> {
         struct Wrapper<'a> {
             children: Vec<MessageId>,
@@ -573,12 +624,14 @@ impl<B: StorageBackend> Tangle<B> {
     }
 
     /// Returns the children of a vertex, if we know about them.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub async fn get_children(&self, message_id: &MessageId) -> Option<Vec<MessageId>> {
         // Effectively atomic
         self.children_inner(message_id).await.map(|approvers| approvers.clone())
     }
 
     // Attempts to pull the message from the storage, returns true if successful.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn pull_message(&self, message_id: &MessageId, prevent_eviction: bool) -> bool {
         let contains_now = if prevent_eviction {
             self.vertices.get_mut(message_id).await.map_or(false, |mut v| {
@@ -605,6 +658,7 @@ impl<B: StorageBackend> Tangle<B> {
         }
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn perform_eviction(&self) {
         let max_len = self.max_len.load(Ordering::Relaxed);
         let max_eviction_retries = self.config.max_eviction_retries();

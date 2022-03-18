@@ -148,6 +148,7 @@ fn check_header(header: &SnapshotHeader, kind: SnapshotKind, network_id: u64) ->
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id: u64) -> Result<(), Error> {
     info!("Importing full snapshot file {}...", &path.to_string_lossy());
 
@@ -212,6 +213,7 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
     Ok(())
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id: u64) -> Result<(), Error> {
     info!("Importing delta snapshot file {}...", &path.to_string_lossy());
 
@@ -266,6 +268,7 @@ async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, netw
     Ok(())
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 pub(crate) async fn import_snapshots<B: StorageBackend>(
     storage: &B,
     network_id: u64,

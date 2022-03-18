@@ -27,6 +27,8 @@ serde = { version = "1.0.130", default-features = false, features = [ "derive" ]
 thiserror = { version = "1.0.30", default-features = false }
 tokio = { version = "1.12.0", default-features = false, features = [ "sync", "time" ] }
 tokio-stream = { version = "0.1.7", default-features = false, features = [ "time" ] }
+trace-tools = { version = "0.3.0", default-features = false, optional = true }
+tracing = { version = "0.1.29", default-features = false, optional = true }
 
 [dev-dependencies]
 bee-storage-null = { version = "0.2.0", path = "../bee-storage/bee-storage-null", default-features = false }
@@ -35,6 +37,10 @@ bee-test = { path = "../bee-test", default-features = false }
 criterion = { version = "0.3.5", default-features = false, features = [ "async_tokio" ] }
 rand = { version = "0.8.4", default-features = false }
 tokio = { version = "1.12.0", default-features = false, features = [ "rt", "rt-multi-thread", "sync", "time" ] }
+
+[features]
+default = [ ]
+trace = [ "bee-common/trace", "trace-tools/tokio-console", "tracing" ]
 
 [[bench]]
 name = "tangle_bench"

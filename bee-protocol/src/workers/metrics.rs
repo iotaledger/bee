@@ -23,6 +23,7 @@ impl<N: Node> Worker<N> for MetricsWorker {
     type Config = ();
     type Error = Infallible;
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         node.register_resource(NodeMetrics::new());
 

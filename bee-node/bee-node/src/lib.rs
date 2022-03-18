@@ -18,6 +18,9 @@ mod util;
 
 pub mod tools;
 
+#[cfg(feature = "trace")]
+pub mod trace;
+
 pub use cli::ClArgs;
 pub use config::{NodeConfig, NodeConfigBuilder};
 pub use entrynode::{builder::EntryNodeBuilder, config::EntryNodeConfig, EntryNode};

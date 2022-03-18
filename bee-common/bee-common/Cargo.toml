@@ -10,5 +10,12 @@ license = "Apache-2.0"
 keywords = [ "iota", "tangle", "bee", "framework", "common" ]
 homepage = "https://www.iota.org"
 
+[dependencies]
+trace-tools = { version = "0.3.0", default-features = false, optional = true }
+tracing = { version = "0.1.29", default-features = false, optional = true }
+
 [build-dependencies]
 autocfg = { version = "1.0.0", default-features = false }
+
+[features]
+trace = [ "trace-tools/tokio-console", "tracing" ] 

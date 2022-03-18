@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_gossip::Keypair;
+#[cfg(feature = "trace")]
+use bee_node::trace;
 use bee_node::{
-    print_banner_and_version, read_keypair_from_pem_file,
-    tools::{self},
-    write_keypair_to_pem_file, ClArgs, EntryNodeBuilder, EntryNodeConfig, FullNodeBuilder, FullNodeConfig, Local,
-    NodeConfig, NodeConfigBuilder, PemFileError,
+    print_banner_and_version, read_keypair_from_pem_file, tools, write_keypair_to_pem_file, ClArgs, EntryNodeBuilder,
+    EntryNodeConfig, FullNodeBuilder, FullNodeConfig, Local, NodeConfig, NodeConfigBuilder, PemFileError,
 };
 use bee_plugin_mps::MpsPlugin;
 use bee_runtime::node::NodeBuilder as _;
@@ -52,8 +52,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let (identity_field, config) = deserialize_config(cl_args);
 
     // Initialize the logger.
-    let logger_cfg = config.logger().clone();
-    fern_logger::logger_init(logger_cfg)?;
+    #[cfg(not(feature = "trace"))]
+    fern_logger::logger_init(config.logger().clone())?;
+
+    // Initialize the subscriber.
+    #[cfg(feature = "trace")]
+    let flamegrapher = trace::init(config.logger().clone(), config.tracing().clone())?;
 
     // Establish identity.
     let keypair = match read_keypair_from_pem_file(&identity_path) {
@@ -109,6 +113,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         start_fullnode(local, config).await;
     }
 
+    #[cfg(feature = "trace")]
+    if let Some(f) = flamegrapher {
+        f.write_flamegraph()?;
+    }
+
     Ok(())
 }
 
@@ -144,6 +153,7 @@ fn deserialize_config(cl_args: ClArgs) -> (Option<String>, NodeConfig<Storage>) 
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn start_entrynode(local: Local, config: NodeConfig<Storage>) {
     let entry_node_config = EntryNodeConfig::from(local, config);
     let node_builder = EntryNodeBuilder::new(entry_node_config);
@@ -161,6 +171,7 @@ async fn start_entrynode(local: Local, config: NodeConfig<Storage>) {
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn start_fullnode(local: Local, config: NodeConfig<Storage>) {
     let full_node_config = FullNodeConfig::from(local, config);
     let node_builder = FullNodeBuilder::<Storage>::new(full_node_config);

@@ -25,6 +25,7 @@ pub(crate) struct PropagatorWorker {
     pub(crate) tx: mpsc::UnboundedSender<PropagatorWorkerEvent>,
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn propagate<B: StorageBackend>(
     message_id: MessageId,
     tangle: &Tangle<B>,
@@ -129,6 +130,7 @@ where
         vec![TypeId::of::<TangleWorker>(), TypeId::of::<MilestoneSolidifierWorker>()].leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
         let milestone_solidifier = node.worker::<MilestoneSolidifierWorker>().unwrap().tx.clone();

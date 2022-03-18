@@ -31,6 +31,7 @@ use std::{
 
 const RETRY_INTERVAL: Duration = Duration::from_millis(2500);
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 pub(crate) async fn request_milestone<B: StorageBackend>(
     tangle: &Tangle<B>,
     milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
@@ -45,6 +46,7 @@ pub(crate) async fn request_milestone<B: StorageBackend>(
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 pub(crate) async fn request_latest_milestone<B: StorageBackend>(
     tangle: &Tangle<B>,
     milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
@@ -87,6 +89,7 @@ pub(crate) struct MilestoneRequesterWorker {
     pub(crate) tx: mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn process_request(
     index: MilestoneIndex,
     peer_id: Option<PeerId>,
@@ -109,6 +112,7 @@ async fn process_request(
     process_request_unchecked(index, peer_id, peer_manager, metrics);
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 fn process_request_unchecked(
     index: MilestoneIndex,
     peer_id: Option<PeerId>,
@@ -129,6 +133,7 @@ fn process_request_unchecked(
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn retry_requests<B: StorageBackend>(
     requested_milestones: &RequestedMilestones,
     peer_manager: &PeerManager,
@@ -184,6 +189,7 @@ where
         .leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 

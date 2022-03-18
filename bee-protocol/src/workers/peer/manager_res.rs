@@ -28,12 +28,14 @@ impl<N: Node> Worker<N> for PeerManagerResWorker {
     type Config = ();
     type Error = Infallible;
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         node.register_resource(PeerManager::new());
 
         Ok(Self {})
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn stop(self, node: &mut N) -> Result<(), Self::Error> {
         if let Some(peer_manager) = node.remove_resource::<PeerManager>() {
             for (_, (_, sender)) in peer_manager.inner.into_inner().peers {
@@ -101,6 +103,7 @@ impl PeerManager {
         self.inner.read().peers.is_empty()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get_map<T>(&self, id: &PeerId, f: impl FnOnce(&PeerTuple) -> T) -> Option<T> {
         let guard = self.inner.read();
         let output = guard.get(id).map(f);
@@ -108,6 +111,7 @@ impl PeerManager {
         output
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub fn get_mut_map<T>(&self, id: &PeerId, f: impl FnOnce(&mut PeerTuple) -> T) -> Option<T> {
         let mut guard = self.inner.write();
         let output = guard.get_mut(id).map(f);
@@ -137,12 +141,14 @@ impl PeerManager {
         lock.remove(id)
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub(crate) fn for_each<F: Fn(&PeerId, &Peer)>(&self, f: F) {
         self.inner.read().peers.iter().for_each(|(id, (peer, _))| f(id, peer));
     }
 
     /// Find one peer that satisfies a condition. If more than one peer satisfies this condition,
     /// each peer is equally likely to be returned.
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     pub(crate) fn fair_find(&self, f: impl Fn(&Peer) -> bool) -> Option<PeerId> {
         let guard = self.inner.read();
 
