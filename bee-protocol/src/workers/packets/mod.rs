@@ -12,7 +12,7 @@ mod tlv;
 
 use std::ops::Range;
 
-pub(crate) use header::{HeaderPacket, HEADER_SIZE};
+pub(crate) use self::header::{HeaderPacket, HEADER_SIZE};
 pub(crate) use heartbeat::HeartbeatPacket;
 pub(crate) use message::MessagePacket;
 pub(crate) use message_request::MessageRequestPacket;

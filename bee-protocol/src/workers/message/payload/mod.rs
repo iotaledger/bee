@@ -12,7 +12,7 @@ use bee_message::{payload::Payload, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MessageRef;
 use futures::{future::FutureExt, stream::StreamExt};
-pub(crate) use indexation::{IndexationPayloadWorker, IndexationPayloadWorkerEvent};
+pub(crate) use self::indexation::{IndexationPayloadWorker, IndexationPayloadWorkerEvent};
 use log::{debug, error, info};
 pub(crate) use milestone::{MilestonePayloadWorker, MilestonePayloadWorkerEvent};
 use tokio::sync::mpsc;

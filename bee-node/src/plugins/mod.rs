@@ -12,7 +12,7 @@ use std::{any::type_name, error::Error, fmt};
 use async_trait::async_trait;
 use bee_runtime::{event::Bus, node::Node, worker::Worker};
 #[cfg(feature = "dashboard")]
-pub use dashboard::Dashboard;
+pub use self::dashboard::Dashboard;
 pub use mps::Mps;
 pub use mqtt::Mqtt;
 pub use version_checker::VersionChecker;

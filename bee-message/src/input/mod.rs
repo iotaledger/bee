@@ -5,7 +5,7 @@ mod treasury;
 mod utxo;
 
 use bee_common::packable::{Packable, Read, Write};
-pub use treasury::TreasuryInput;
+pub use self::treasury::TreasuryInput;
 pub use utxo::UtxoInput;
 
 use crate::Error;

@@ -24,12 +24,10 @@ use bee_runtime::{
     worker::{Error as WorkerError, Worker},
 };
 use bee_tangle::{Tangle, TangleWorker};
-use config::RestApiConfig;
 use log::{error, info};
-use rejection::CustomRejection;
-use storage::StorageBackend;
 use warp::{http::StatusCode, Filter, Rejection, Reply};
 
+use self::{config::RestApiConfig, rejection::CustomRejection, storage::StorageBackend};
 use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
 pub(crate) type NetworkId = (String, u64);

@@ -14,7 +14,7 @@ use std::{
 use bytes::BytesMut;
 use crypto::signatures::ed25519::PublicKey;
 use libp2p_core::{multiaddr::Protocol, Multiaddr};
-use lists::{ActivePeersList, ReplacementPeersList};
+use self::lists::{ActivePeersList, ReplacementPeersList};
 pub use peer_id::PeerId;
 use prost::{DecodeError, EncodeError, Message};
 use serde::{

@@ -19,7 +19,7 @@ mod util;
 pub mod plugins;
 pub mod tools;
 
-pub use cli::ClArgs;
+pub use self::cli::ClArgs;
 pub use config::{NodeConfig, NodeConfigBuilder};
 pub use entrynode::{builder::EntryNodeBuilder, config::EntryNodeConfig, EntryNode};
 pub use fullnode::{builder::FullNodeBuilder, config::FullNodeConfig, FullNode};

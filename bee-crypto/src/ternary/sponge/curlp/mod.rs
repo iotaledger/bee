@@ -9,9 +9,9 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-pub use batched::{BatchHasher, BATCH_SIZE};
+pub use self::batched::{BatchHasher, BATCH_SIZE};
 use bee_ternary::{Btrit, TritBuf, Trits};
-pub use unrolled::UnrolledCurlP81;
+pub use self::unrolled::UnrolledCurlP81;
 
 use crate::ternary::{sponge::Sponge, HASH_LENGTH};
 

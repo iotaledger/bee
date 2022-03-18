@@ -23,7 +23,7 @@ mod truncate;
 /// Holds the contract for update access operations.
 mod update;
 
-pub use batch::{Batch, BatchBuilder};
+pub use self::batch::{Batch, BatchBuilder};
 pub use delete::Delete;
 pub use exist::Exist;
 pub use fetch::Fetch;

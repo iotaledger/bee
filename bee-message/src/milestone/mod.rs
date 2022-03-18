@@ -6,7 +6,7 @@ use crate::Error;
 mod index;
 
 use bee_common::packable::{Packable, Read, Write};
-pub use index::MilestoneIndex;
+pub use self::index::MilestoneIndex;
 
 use crate::MessageId;
 

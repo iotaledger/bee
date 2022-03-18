@@ -14,12 +14,12 @@ use std::{
 
 use bee_ternary::Btrit;
 use byteorder::{self, ByteOrder};
-pub use constants::{
+
+pub use self::constants::{
     BE_U32_0, BE_U32_1, BE_U32_2, BE_U32_MAX, BE_U32_MIN, BE_U32_NEG_1, BE_U32_NEG_2, BE_U8_0, BE_U8_1, BE_U8_2,
     BE_U8_MAX, BE_U8_MIN, BE_U8_NEG_1, BE_U8_NEG_2, LE_U32_0, LE_U32_1, LE_U32_2, LE_U32_MAX, LE_U32_MIN, LE_U32_NEG_1,
     LE_U32_NEG_2, LE_U8_0, LE_U8_1, LE_U8_2, LE_U8_MAX, LE_U8_MIN, LE_U8_NEG_1, LE_U8_NEG_2,
 };
-
 use crate::ternary::bigint::{
     binary_representation::{
         BinaryRepresentation, U32Repr, U8Repr, BINARY_LEN_IN_U32 as LEN_IN_U32, BINARY_LEN_IN_U8 as LEN_IN_U8,

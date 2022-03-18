@@ -11,7 +11,7 @@ use std::collections::HashMap;
 
 use bee_common::packable::{Packable, Read, Write};
 use iterator_sorted::is_unique_sorted;
-pub use migrated_funds_entry::{MigratedFundsEntry, VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS};
+pub use self::migrated_funds_entry::{MigratedFundsEntry, VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS};
 pub use tail_transaction_hash::{TailTransactionHash, TAIL_TRANSACTION_HASH_LEN};
 
 use crate::{

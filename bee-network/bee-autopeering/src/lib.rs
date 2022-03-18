@@ -141,7 +141,7 @@ pub mod init;
 pub use config::AutopeeringConfig;
 pub use event::Event;
 pub use init::init;
-pub use local::{
+pub use self::local::{
     services::{ServiceEndpoint, ServiceMap, ServiceName, ServiceProtocol, AUTOPEERING_SERVICE_NAME},
     Local,
 };

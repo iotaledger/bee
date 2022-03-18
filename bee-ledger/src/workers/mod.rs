@@ -11,8 +11,8 @@ pub mod snapshot;
 pub mod storage;
 
 use bee_runtime::node::{Node, NodeBuilder};
-use consensus::ConsensusWorker;
-use pruning::config::PruningConfig;
+use self::consensus::ConsensusWorker;
+use self::pruning::config::PruningConfig;
 use snapshot::{config::SnapshotConfig, worker::SnapshotWorker};
 pub use storage::StorageBackend;
 

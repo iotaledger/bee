@@ -8,6 +8,6 @@ mod io;
 mod protocol;
 mod upgrade;
 
-pub use event::*;
+pub use self::event::*;
 pub use io::*;
 pub use protocol::*;
