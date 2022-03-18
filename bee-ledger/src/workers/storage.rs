@@ -197,14 +197,32 @@ pub(crate) fn delete_created_output_batch<B: StorageBackend>(
 
     match output.inner() {
         #[cfg(feature = "cpt2")]
-        Output::SignatureLockedSingle(_) => todo!(),
+        Output::SignatureLockedSingle(_) => {
+            // TODO
+            Ok(())
+        }
         #[cfg(feature = "cpt2")]
-        Output::SignatureLockedDustAllowance(_) => todo!(),
+        Output::SignatureLockedDustAllowance(_) => {
+            // TODO
+            Ok(())
+        }
         Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
-        Output::Basic(_) => todo!(),
-        Output::Alias(_) => todo!(),
-        Output::Foundry(_) => todo!(),
-        Output::Nft(_) => todo!(),
+        Output::Basic(_) => {
+            // TODO
+            Ok(())
+        }
+        Output::Alias(_) => {
+            // TODO
+            Ok(())
+        }
+        Output::Foundry(_) => {
+            // TODO
+            Ok(())
+        }
+        Output::Nft(_) => {
+            // TODO
+            Ok(())
+        }
     }
 }
 

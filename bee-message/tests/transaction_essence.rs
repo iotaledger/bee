@@ -12,15 +12,15 @@ use bee_test::rand::bytes::rand_bytes_array;
 
 use packable::{error::UnpackError, PackableExt};
 
-const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
+const TRANSACTION_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
+const ED25519_ADDRESS: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
 fn essence_kind() {
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
+    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
     let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+    let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
@@ -44,7 +44,7 @@ fn essence_kind() {
 #[test]
 fn essence_unpack_invalid_kind() {
     assert!(matches!(
-        TransactionEssence::unpack_verified(&mut vec![1u8; 32].as_slice()),
-        Err(UnpackError::Packable(Error::InvalidEssenceKind(1)))
+        TransactionEssence::unpack_verified(&mut vec![2u8; 32].as_slice()),
+        Err(UnpackError::Packable(Error::InvalidEssenceKind(2)))
     ));
 }

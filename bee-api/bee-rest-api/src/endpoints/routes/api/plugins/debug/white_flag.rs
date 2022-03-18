@@ -137,7 +137,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 .map_err(|e| ApiError::BadRequest(e.to_string()))?;
 
             Ok(Json(WhiteFlagResponse {
-                merkle_tree_hash: hex::encode(metadata.merkle_proof()),
+                merkle_tree_hash: prefix_hex::encode(metadata.merkle_proof()),
             }))
         }
         Err(_) => {

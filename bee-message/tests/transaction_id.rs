@@ -1,45 +1,25 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{payload::transaction::TransactionId, Error};
+use bee_message::payload::transaction::TransactionId;
 
 use packable::PackableExt;
 
 use core::str::FromStr;
 
-const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const TRANSACTION_ID_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64x";
-const TRANSACTION_ID_INVALID_LEN: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6";
+const TRANSACTION_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
 fn debug_impl() {
     assert_eq!(
         format!("{:?}", TransactionId::from_str(TRANSACTION_ID).unwrap()),
-        "TransactionId(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+        "TransactionId(0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
     );
 }
 
 #[test]
 fn from_str_valid() {
     TransactionId::from_str(TRANSACTION_ID).unwrap();
-}
-
-#[test]
-fn from_str_invalid_hex() {
-    assert!(matches!(
-        TransactionId::from_str(TRANSACTION_ID_INVALID_HEX),
-        Err(Error::InvalidHexadecimalChar(hex))
-            if hex == TRANSACTION_ID_INVALID_HEX
-    ));
-}
-
-#[test]
-fn from_str_invalid_len() {
-    assert!(matches!(
-        TransactionId::from_str(TRANSACTION_ID_INVALID_LEN),
-        Err(Error::InvalidHexadecimalLength{expected, actual})
-            if expected == TransactionId::LENGTH * 2 && actual == TransactionId::LENGTH * 2 - 2
-    ));
 }
 
 #[test]

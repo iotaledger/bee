@@ -318,10 +318,10 @@ dependencies = [
  "digest 0.9.0",
  "futures",
  "hashbrown 0.12.0",
- "hex",
  "iota-crypto",
  "log",
  "packable",
+ "prefix-hex",
  "ref-cast",
  "reqwest",
  "serde",
@@ -345,11 +345,11 @@ dependencies = [
  "derive_more",
  "digest 0.9.0",
  "hashbrown 0.12.0",
- "hex",
  "iota-crypto",
  "iterator-sorted",
  "num_cpus",
  "packable",
+ "prefix-hex",
  "primitive-types",
  "serde",
  "serde-big-array",
@@ -526,12 +526,12 @@ dependencies = [
  "bee-tangle",
  "digest 0.9.0",
  "futures",
- "hex",
  "iota-crypto",
  "log",
  "multiaddr",
  "num_cpus",
  "packable",
+ "prefix-hex",
  "primitive-types",
  "serde",
  "serde_json",
@@ -3032,6 +3032,17 @@ name = "ppv-lite86"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb9f9e6e233e5c4a35559a617bf40a4ec447db2e84c20b55a6f83167b7e57872"
+
+[[package]]
+name = "prefix-hex"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f120947380f07a50dd8d9985d3591f6632d688b8060321c3783aac91fa902c7"
+dependencies = [
+ "hex",
+ "primitive-types",
+ "uint",
+]
 
 [[package]]
 name = "primitive-types"

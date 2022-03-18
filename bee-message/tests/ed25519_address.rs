@@ -1,19 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{
-    address::{Address, Ed25519Address},
-    Error,
-};
+use bee_message::address::{Address, Ed25519Address};
 
 use packable::PackableExt;
 
 use core::str::FromStr;
 
-const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const ED25519_ADDRESS_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64x";
-const ED25519_ADDRESS_INVALID_LEN_TOO_SHORT: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6";
-const ED25519_ADDRESS_INVALID_LEN_TOO_LONG: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64900";
+const ED25519_ADDRESS: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
 fn kind() {
@@ -24,7 +18,7 @@ fn kind() {
 fn debug_impl() {
     assert_eq!(
         format!("{:?}", Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-        "Ed25519Address(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+        "Ed25519Address(0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
     );
 }
 
@@ -41,33 +35,6 @@ fn generate_address() {
 #[test]
 fn from_str_valid() {
     Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
-}
-
-#[test]
-fn from_str_invalid_hex() {
-    assert!(matches!(
-        Ed25519Address::from_str(ED25519_ADDRESS_INVALID_HEX),
-        Err(Error::InvalidHexadecimalChar(hex))
-            if hex == ED25519_ADDRESS_INVALID_HEX
-    ));
-}
-
-#[test]
-fn from_str_invalid_len_too_short() {
-    assert!(matches!(
-        Ed25519Address::from_str(ED25519_ADDRESS_INVALID_LEN_TOO_SHORT),
-        Err(Error::InvalidHexadecimalLength{expected, actual})
-            if expected == Ed25519Address::LENGTH * 2 && actual == Ed25519Address::LENGTH * 2 - 2
-    ));
-}
-
-#[test]
-fn from_str_invalid_len_too_long() {
-    assert!(matches!(
-        Ed25519Address::from_str(ED25519_ADDRESS_INVALID_LEN_TOO_LONG),
-        Err(Error::InvalidHexadecimalLength{expected, actual})
-            if expected == Ed25519Address::LENGTH * 2 && actual == Ed25519Address::LENGTH * 2 + 2
-    ));
 }
 
 #[test]

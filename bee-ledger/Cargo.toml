@@ -27,10 +27,10 @@ bytes = { version = "1.0.1", default-features = false, optional = true }
 digest = { version = "0.9.0", default-features = false, optional = true }
 futures = { version = "0.3.17", default-features = false, optional = true }
 hashbrown = { version = "0.12.0", default-features = false, optional = true }
-hex = { version = "0.4.3", default-features = false, optional = true }
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "blake2b" ], optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 packable = { version = "0.2.1", default-features = false, features = [ "serde", "io" ] }
+prefix-hex = { version = "0.2.0", default-features = false, optional = true }
 ref-cast = { version = "1.0.6", default-features = false, optional = true }
 reqwest = { version = "0.11.5", default-features = false, features = [ "default-tls", "stream" ], optional = true }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ], optional = true }
@@ -51,9 +51,9 @@ workers = [
   "digest",
   "futures",
   "hashbrown",
-  "hex",
   "iota-crypto",
   "log",
+  "prefix-hex",
   "ref-cast",
   "reqwest",
   "serde",

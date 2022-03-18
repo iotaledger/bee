@@ -22,13 +22,14 @@ use crate::{
 };
 
 use crypto::Error as CryptoError;
+use prefix_hex::Error as HexError;
 use primitive_types::U256;
 
 use alloc::string::String;
 use core::{convert::Infallible, fmt};
 
 /// Error occurring when creating/parsing/validating messages.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[allow(missing_docs)]
 pub enum Error {
     CryptoError(CryptoError),
@@ -73,11 +74,7 @@ pub enum Error {
         melted: U256,
         max: U256,
     },
-    InvalidHexadecimalChar(String),
-    InvalidHexadecimalLength {
-        expected: usize,
-        actual: usize,
-    },
+    HexError(HexError),
     #[cfg(feature = "cpt2")]
     #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
     InvalidIndexationDataLength(<IndexationDataLength as TryFrom<usize>>::Error),
@@ -236,10 +233,7 @@ impl fmt::Display for Error {
                 f,
                 "invalid foundry output supply: minted {minted}, melted {melted} max {max}",
             ),
-            Error::InvalidHexadecimalChar(hex) => write!(f, "invalid hexadecimal character: {}", hex),
-            Error::InvalidHexadecimalLength { expected, actual } => {
-                write!(f, "invalid hexadecimal length: expected {} got {}", expected, actual)
-            }
+            Error::HexError(error) => write!(f, "hex error: {}", error),
             #[cfg(feature = "cpt2")]
             Error::InvalidIndexationDataLength(length) => {
                 write!(f, "invalid indexation data length {}", length)

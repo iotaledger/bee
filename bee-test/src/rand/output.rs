@@ -131,7 +131,7 @@ pub fn rand_output() -> Output {
 
 /// Generates a random [`ConsumedOutput`].
 pub fn rand_consumed_output() -> ConsumedOutput {
-    ConsumedOutput::new(rand_transaction_id(), rand_milestone_index())
+    ConsumedOutput::new(rand_transaction_id(), rand_milestone_index(), rand_number())
 }
 
 /// Generates a random [`CreatedOutput`].

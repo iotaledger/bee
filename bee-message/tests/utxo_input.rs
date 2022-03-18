@@ -7,7 +7,7 @@ use packable::PackableExt;
 
 use core::str::FromStr;
 
-const OUTPUT_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00";
+const OUTPUT_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00";
 
 #[test]
 fn kind() {
@@ -18,7 +18,7 @@ fn kind() {
 fn debug_impl() {
     assert_eq!(
         format!("{:?}", UtxoInput::from_str(OUTPUT_ID).unwrap()),
-        "UtxoInput(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00)"
+        "UtxoInput(0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00)"
     );
 }
 

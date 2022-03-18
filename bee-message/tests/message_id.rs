@@ -1,22 +1,19 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{Error, MessageId};
+use bee_message::MessageId;
 
 use packable::PackableExt;
 
 use core::str::FromStr;
 
-const MESSAGE_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const MESSAGE_ID_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64x";
-const MESSAGE_ID_INVALID_LEN_TOO_SHORT: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6";
-const MESSAGE_ID_INVALID_LEN_TOO_LONG: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64900";
+const MESSAGE_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
 fn debug_impl() {
     assert_eq!(
         format!("{:?}", MessageId::from_str(MESSAGE_ID).unwrap()),
-        "MessageId(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+        "MessageId(0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
     );
 }
 
@@ -29,35 +26,8 @@ fn from_str_valid() {
 fn null() {
     assert_eq!(
         format!("{:?}", MessageId::null()),
-        "MessageId(0000000000000000000000000000000000000000000000000000000000000000)"
+        "MessageId(0x0000000000000000000000000000000000000000000000000000000000000000)"
     );
-}
-
-#[test]
-fn from_str_invalid_hex() {
-    assert!(matches!(
-        MessageId::from_str(MESSAGE_ID_INVALID_HEX),
-        Err(Error::InvalidHexadecimalChar(hex))
-            if hex == MESSAGE_ID_INVALID_HEX
-    ));
-}
-
-#[test]
-fn from_str_invalid_len_too_short() {
-    assert!(matches!(
-        MessageId::from_str(MESSAGE_ID_INVALID_LEN_TOO_SHORT),
-        Err(Error::InvalidHexadecimalLength{expected, actual})
-            if expected == MessageId::LENGTH * 2 && actual == MessageId::LENGTH * 2 - 2
-    ));
-}
-
-#[test]
-fn from_str_invalid_len_too_long() {
-    assert!(matches!(
-        MessageId::from_str(MESSAGE_ID_INVALID_LEN_TOO_LONG),
-        Err(Error::InvalidHexadecimalLength{expected, actual})
-            if expected == MessageId::LENGTH * 2 && actual == MessageId::LENGTH * 2 + 2
-    ));
 }
 
 #[test]

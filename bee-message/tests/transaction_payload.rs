@@ -14,14 +14,14 @@ use bee_test::rand::bytes::rand_bytes_array;
 
 use packable::PackableExt;
 
-const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const ED25519_PUBLIC_KEY: &str = "1da5ddd11ba3f961acab68fafee3177d039875eaa94ac5fdbff8b53f0c50bfb9";
-const ED25519_SIGNATURE: &str = "c6a40edf9a089f42c18f4ebccb35fe4b578d93b879e99b87f63573324a710d3456b03fb6d1fcc027e6401cbd9581f790ee3ed7a3f68e9c225fcb9f1cd7b7110d";
+const TRANSACTION_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
+const ED25519_ADDRESS: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
+const ED25519_PUBLIC_KEY: &str = "0x1da5ddd11ba3f961acab68fafee3177d039875eaa94ac5fdbff8b53f0c50bfb9";
+const ED25519_SIGNATURE: &str = "0xc6a40edf9a089f42c18f4ebccb35fe4b578d93b879e99b87f63573324a710d3456b03fb6d1fcc027e6401cbd9581f790ee3ed7a3f68e9c225fcb9f1cd7b7110d";
 
 #[test]
 fn kind() {
-    assert_eq!(TransactionPayload::KIND, 0);
+    assert_eq!(TransactionPayload::KIND, 6);
 }
 
 // Validate that attempting to construct a `TransactionPayload` with too few unlock blocks is an
@@ -29,10 +29,10 @@ fn kind() {
 #[test]
 fn builder_no_essence_too_few_unlock_blocks() {
     // Construct a transaction essence with two inputs and one output.
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
+    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
     let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+    let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
@@ -51,8 +51,8 @@ fn builder_no_essence_too_few_unlock_blocks() {
     );
 
     // Construct a list with a single unlock block, whereas we have 2 tx inputs.
-    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
-    let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
+    let pub_key_bytes: [u8; 32] = prefix_hex::decode(ED25519_PUBLIC_KEY).unwrap();
+    let sig_bytes: [u8; 64] = prefix_hex::decode(ED25519_SIGNATURE).unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block]).unwrap();
@@ -68,9 +68,9 @@ fn builder_no_essence_too_few_unlock_blocks() {
 #[test]
 fn builder_no_essence_too_many_unlock_blocks() {
     // Construct a transaction essence with one input and one output.
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
+    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+    let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
@@ -89,8 +89,8 @@ fn builder_no_essence_too_many_unlock_blocks() {
     );
 
     // Construct a list of two unlock blocks, whereas we only have 1 tx input.
-    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
-    let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
+    let pub_key_bytes: [u8; 32] = prefix_hex::decode(ED25519_PUBLIC_KEY).unwrap();
+    let sig_bytes: [u8; 64] = prefix_hex::decode(ED25519_SIGNATURE).unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
@@ -107,10 +107,10 @@ fn builder_no_essence_too_many_unlock_blocks() {
 #[test]
 fn pack_unpack_valid() {
     // Construct a transaction essence with two inputs and one output.
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
+    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
     let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+    let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
@@ -129,8 +129,8 @@ fn pack_unpack_valid() {
     );
 
     // Construct a list of two unlock blocks, whereas we only have 1 tx input.
-    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
-    let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
+    let pub_key_bytes: [u8; 32] = prefix_hex::decode(ED25519_PUBLIC_KEY).unwrap();
+    let sig_bytes: [u8; 64] = prefix_hex::decode(ED25519_SIGNATURE).unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
@@ -149,10 +149,10 @@ fn pack_unpack_valid() {
 #[test]
 fn getters() {
     // Construct a transaction essence with two inputs and one output.
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
+    let txid = TransactionId::new(prefix_hex::decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
     let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+    let bytes: [u8; 32] = prefix_hex::decode(ED25519_ADDRESS).unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
@@ -171,8 +171,8 @@ fn getters() {
     );
 
     // Construct a list of two unlock blocks, whereas we only have 1 tx input.
-    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
-    let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
+    let pub_key_bytes: [u8; 32] = prefix_hex::decode(ED25519_PUBLIC_KEY).unwrap();
+    let sig_bytes: [u8; 64] = prefix_hex::decode(ED25519_SIGNATURE).unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(signature)));
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlockBlock::new(0).unwrap());
