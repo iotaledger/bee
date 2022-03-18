@@ -15,11 +15,7 @@ pub struct AuthResponse {
     pub jwt: String,
 }
 
-pub(crate) async fn auth(
-    node_id: String,
-    config: DashboardAuthConfig,
-    body: JsonValue,
-) -> Result<impl Reply, Rejection> {
+pub(crate) fn auth(node_id: String, config: DashboardAuthConfig, body: JsonValue) -> Result<impl Reply, Rejection> {
     let jwt_json = &body["jwt"];
 
     if !jwt_json.is_null() {

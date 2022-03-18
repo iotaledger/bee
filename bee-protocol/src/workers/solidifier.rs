@@ -47,12 +47,11 @@ async fn heavy_solidification<B: StorageBackend>(
     traversal::visit_parents_depth_first(
         tangle,
         target_id,
-        |id, _, metadata| !metadata.flags().is_solid() && !requested_messages.contains(&id),
+        |id, _, metadata| !metadata.flags().is_solid() && !requested_messages.contains(id),
         |_, _, _| {},
         |_, _, _| {},
         |missing_id| missing.push(*missing_id),
-    )
-    .await;
+    );
 
     let missing_len = missing.len();
 
@@ -146,13 +145,13 @@ where
 
                 // Request all milestones within a range.
                 while next <= cmp::min(smi + MilestoneIndex(milestone_sync_count), lmi) {
-                    request_milestone(&tangle, &milestone_requester, &*requested_milestones, next, None).await;
+                    request_milestone(&tangle, &milestone_requester, &*requested_milestones, next, None);
                     next = next + MilestoneIndex(1);
                 }
 
                 if index < next {
-                    if let Some(message_id) = tangle.get_milestone_message_id(index).await {
-                        if let Some(message) = tangle.get(&message_id).await {
+                    if let Some(message_id) = tangle.get_milestone_message_id(index) {
+                        if let Some(message) = tangle.get(&message_id) {
                             debug!(
                                 "Light solidification of milestone {} {} in [{};{}].",
                                 index,
@@ -174,7 +173,7 @@ where
                 let mut target = smi + MilestoneIndex(1);
 
                 while target <= lmi {
-                    if let Some(id) = tangle.get_milestone_message_id(target).await {
+                    if let Some(id) = tangle.get_milestone_message_id(target) {
                         if tangle.is_solid_message(&id).await {
                             solidify(
                                 &tangle,

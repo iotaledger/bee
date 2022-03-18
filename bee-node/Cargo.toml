@@ -11,7 +11,7 @@ keywords = [ "iota", "tangle", "bee", "framework", "node" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-autopeering = { version = "0.5.0", path = "../bee-network/bee-autopeering", default-features = false, features = [ "rocksdb" ] }
+bee-autopeering = { version = "0.5.0", path = "../bee-network/bee-autopeering", default-features = false, features = [ "rocksdb1" ] }
 bee-common = { version = "0.6.0", path = "../bee-common/bee-common", default-features = false }
 bee-gossip = { version = "0.6.0", path = "../bee-network/bee-gossip", default-features = false, features = [ "full" ] }
 bee-ledger = { version = "0.6.1", path = "../bee-ledger", default-features = false, features = [ "workers" ] }
@@ -19,11 +19,11 @@ bee-message = { version = "0.1.6", path = "../bee-message", default-features = f
 bee-protocol = { version = "0.2.2", path = "../bee-protocol", default-features = false, features = [ "workers" ] }
 bee-rest-api = { version = "0.2.0", path = "../bee-api/bee-rest-api", default-features = false, features = [ "endpoints", "peer" ] }
 bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", default-features = false }
-bee-storage = { version = "0.10.0", path = "../bee-storage/bee-storage", default-features = false }
-bee-storage-null = { version = "0.2.0", path = "../bee-storage/bee-storage-null", default-features = false }
-bee-storage-rocksdb = { version = "0.6.0", path = "../bee-storage/bee-storage-rocksdb", default-features = false, optional = true }
-bee-storage-sled = { version = "0.5.0", path = "../bee-storage/bee-storage-sled", default-features = false, optional = true }
-bee-tangle = { version = "0.2.0", path = "../bee-tangle", default-features = false }
+bee-storage = { version = "0.11.0", path = "../bee-storage/bee-storage", default-features = false }
+bee-storage-null = { version = "0.3.0", path = "../bee-storage/bee-storage-null", default-features = false }
+bee-storage-rocksdb = { version = "0.7.0", path = "../bee-storage/bee-storage-rocksdb", default-features = false, optional = true }
+bee-storage-sled = { version = "0.6.0", path = "../bee-storage/bee-storage-sled", default-features = false, optional = true }
+bee-tangle = { version = "0.3.0", path = "../bee-tangle", default-features = false }
 
 anymap = { version = "0.12.1", default-features = false }
 async-trait = { version = "0.1.51", default-features = false }

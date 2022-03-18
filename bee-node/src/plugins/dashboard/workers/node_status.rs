@@ -53,7 +53,7 @@ where
             let public_node_status = PublicNodeStatus {
                 snapshot_index: *tangle.get_snapshot_index(),
                 pruning_index: *tangle.get_pruning_index(),
-                is_healthy: is_healthy(&tangle, &peer_manager).await,
+                is_healthy: is_healthy(&tangle, &peer_manager),
                 is_synced: tangle.is_synced(),
             };
 

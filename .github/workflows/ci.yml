@@ -26,6 +26,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  RUSTFLAGS: -Dwarnings
+  RUST_BACKTRACE: 1
+
 jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}
@@ -67,23 +71,14 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --workspace --all-targets --all-features --release
+      - name: Build crates
+        run: .github/workflows/scripts/for_each_crate.sh "build" "--all-targets --all-features --release"
 
-      - name: Test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --workspace --all-targets --all-features --release
+      - name: Test crates
+        run: .github/workflows/scripts/for_each_crate.sh "test" "--all-targets --all-features --release"
 
-      - name: Doc Test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --workspace --doc --all-features --release
+      - name: Doc test crates
+        run: .github/workflows/scripts/for_each_crate.sh "test" "--doc --all-features --release"
 
   no_std:
     needs: build-and-test
@@ -151,10 +146,8 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
-      - uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-targets --all-features -- -D warnings
+      - name: Run clippy
+        run: .github/workflows/scripts/for_each_crate.sh "clippy" "--all-targets --all-features -- -D warnings"
 
   udeps:
     needs: clippy
@@ -175,10 +168,8 @@ jobs:
           command: install
           args: --force cargo-udeps
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: udeps
-          args: --all-targets --all-features --backend=depinfo
+      - name: Run udeps
+        run: .github/workflows/scripts/for_each_crate.sh "udeps" "--all-targets --all-features --backend=depinfo"
 
   licenses:
     needs: clippy
@@ -231,10 +222,8 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --no-deps --document-private-items
+      - name: Run doc
+        run: .github/workflows/scripts/for_each_crate.sh "doc" "--all-features --no-deps --document-private-items"
 
   missing-files:
     runs-on: ubuntu-latest

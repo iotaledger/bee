@@ -25,7 +25,7 @@ mod update;
 
 pub use exist::Exist;
 pub use fetch::Fetch;
-pub use insert::Insert;
+pub use insert::{Insert, InsertStrict};
 pub use iter::AsIterator;
 pub use multi_fetch::MultiFetch;
 pub use truncate::Truncate;

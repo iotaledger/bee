@@ -29,11 +29,11 @@ use crate::{
 
 const BEARER: &str = "Bearer ";
 
-async fn serve_index() -> Result<impl Reply, Rejection> {
+fn serve_index() -> Result<impl Reply, Rejection> {
     serve_asset("index.html")
 }
 
-async fn serve_full_path(path: FullPath) -> Result<impl Reply, Rejection> {
+fn serve_full_path(path: FullPath) -> Result<impl Reply, Rejection> {
     serve_asset(&path.as_str()[1..])
 }
 
@@ -52,25 +52,27 @@ fn serve_asset(path: &str) -> Result<impl Reply, Rejection> {
 }
 
 pub(crate) fn index_filter() -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path::end().and_then(serve_index)
+    warp::path::end().and_then(|| async move { serve_index() })
 }
 
 pub(crate) fn asset_routes() -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("branding")
         .and(warp::path::full())
-        .and_then(serve_full_path)
-        .or(warp::path("static").and(warp::path::full()).and_then(serve_full_path))
+        .and_then(|path| async move { serve_full_path(path) })
+        .or(warp::path("static")
+            .and(warp::path::full())
+            .and_then(|path| async move { serve_full_path(path) }))
 }
 
 pub(crate) fn page_routes() -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path!("analytics" / ..)
-        .and_then(serve_index)
-        .or(warp::path!("dashboard" / ..).and_then(serve_index))
-        .or(warp::path!("explorer" / ..).and_then(serve_index))
-        .or(warp::path!("login" / ..).and_then(serve_index))
-        .or(warp::path!("peers" / ..).and_then(serve_index))
-        .or(warp::path!("settings" / ..).and_then(serve_index))
-        .or(warp::path!("visualizer" / ..).and_then(serve_index))
+        .and_then(|| async { serve_index() })
+        .or(warp::path!("dashboard" / ..).and_then(|| async { serve_index() }))
+        .or(warp::path!("explorer" / ..).and_then(|| async { serve_index() }))
+        .or(warp::path!("login" / ..).and_then(|| async { serve_index() }))
+        .or(warp::path!("peers" / ..).and_then(|| async { serve_index() }))
+        .or(warp::path!("settings" / ..).and_then(|| async { serve_index() }))
+        .or(warp::path!("visualizer" / ..).and_then(|| async { serve_index() }))
 }
 
 pub(crate) fn ws_routes<S: NodeStorageBackend>(
@@ -185,7 +187,7 @@ pub(crate) fn auth_route(
         .and(node_id_filter)
         .and(auth_config_filter)
         .and(warp::body::json())
-        .and_then(auth)
+        .and_then(|node_id, config, body| async move { auth(node_id, config, body) })
 }
 
 pub(crate) fn routes<S: NodeStorageBackend>(

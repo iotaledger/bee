@@ -203,3 +203,33 @@ impl_packable_for_num!(u64);
 impl_packable_for_num!(i128);
 #[cfg(has_u128)]
 impl_packable_for_num!(u128);
+
+impl<A, B> Packable for (A, B)
+where
+    A: Packable,
+    B: Packable,
+    B::Error: Into<A::Error>,
+{
+    type Error = A::Error;
+
+    fn packed_len(&self) -> usize {
+        self.0.packed_len() + self.1.packed_len()
+    }
+
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        self.0.pack(writer)?;
+        self.1.pack(writer).map_err(Into::into)?;
+
+        Ok(())
+    }
+
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error>
+    where
+        Self: Sized,
+    {
+        Ok((
+            A::unpack_inner::<R, CHECK>(reader)?,
+            B::unpack_inner::<R, CHECK>(reader).map_err(Into::into)?,
+        ))
+    }
+}

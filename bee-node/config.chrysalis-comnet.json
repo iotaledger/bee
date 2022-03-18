@@ -112,8 +112,7 @@
     "path": "./storage/comnet/tangle"
   },
   "tangle": {
-    "belowMaxDepth": 15,
-    "numPartitions": 16
+    "belowMaxDepth": 15
   },
   "mqtt": {
     "address": "tcp://localhost:1883"

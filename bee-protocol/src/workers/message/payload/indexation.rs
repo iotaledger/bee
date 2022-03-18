@@ -6,11 +6,10 @@ use std::{any::TypeId, convert::Infallible};
 use async_trait::async_trait;
 use bee_message::{
     payload::{indexation::PaddedIndex, transaction::Essence, Payload},
-    MessageId,
+    Message, MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_storage::access::Insert;
-use bee_tangle::MessageRef;
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
 use tokio::sync::mpsc;
@@ -23,14 +22,14 @@ use crate::{
 
 pub(crate) struct IndexationPayloadWorkerEvent {
     pub(crate) message_id: MessageId,
-    pub(crate) message: MessageRef,
+    pub(crate) message: Message,
 }
 
 pub(crate) struct IndexationPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
 }
 
-fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: MessageId, message: MessageRef) {
+fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: MessageId, message: Message) {
     let indexation = match message.payload() {
         Some(Payload::Indexation(indexation)) => indexation,
         Some(Payload::Transaction(transaction)) => {
