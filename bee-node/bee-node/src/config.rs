@@ -9,6 +9,9 @@
 
 use crate::{cli::ClArgs, storage::NodeStorageBackend, util, BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT};
 
+#[cfg(feature = "trace")]
+use crate::trace::{TraceConfig, TraceConfigBuilder};
+
 #[cfg(feature = "dashboard")]
 use bee_plugin_dashboard::config::{DashboardConfig, DashboardConfigBuilder};
 
@@ -57,6 +60,8 @@ pub struct NodeConfig<S: NodeStorageBackend> {
     pub(crate) tangle: TangleConfig,
     #[cfg(feature = "dashboard")]
     pub(crate) dashboard: DashboardConfig,
+    #[cfg(feature = "trace")]
+    pub(crate) tracing: TraceConfig,
 }
 
 impl<S: NodeStorageBackend> NodeConfig<S> {
@@ -68,6 +73,12 @@ impl<S: NodeStorageBackend> NodeConfig<S> {
     /// Returns the logger config.
     pub fn logger(&self) -> &LoggerConfig {
         &self.logger
+    }
+
+    /// Returns the tracing config.
+    #[cfg(feature = "trace")]
+    pub fn tracing(&self) -> &TraceConfig {
+        &self.tracing
     }
 
     /// Returns whether this node should run as an autopeering entry node.
@@ -103,6 +114,8 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     pub(crate) tangle: Option<TangleConfigBuilder>,
     #[cfg(feature = "dashboard")]
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
+    #[cfg(feature = "trace")]
+    pub(crate) tracing: Option<TraceConfigBuilder>,
 }
 
 // This cannot be derived because `S` does not implement `PartialEq`.
@@ -130,9 +143,12 @@ where
             tangle: self_tangle,
             #[cfg(feature = "dashboard")]
                 dashboard: self_dashboard,
+            #[cfg(feature = "trace")]
+                tracing: self_tracing,
         } = self;
 
-        let cmp = (self_identity == &other._identity)
+        #[allow(unused_mut)]
+        let mut cmp = (self_identity == &other._identity)
             && (self_alias == &other.alias)
             && (self_bech32_hrp == &other.bech32_hrp)
             && (self_network_id == &other.network_id)
@@ -146,10 +162,19 @@ where
             && (self_storage == &other.storage)
             && (self_tangle == &other.tangle);
 
-        #[cfg(feature = "dashboard")]
-        return cmp && (self_dashboard == &other.dashboard);
-        #[cfg(not(feature = "dashboard"))]
-        return cmp;
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "dashboard")] {
+                cmp = cmp && (self_dashboard == &other.dashboard);
+            }
+        }
+
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "trace")] {
+                cmp = cmp && (self_tracing == &other.tracing);
+            }
+        }
+
+        cmp
     }
 }
 
@@ -231,6 +256,8 @@ where
                 tangle: self.tangle.unwrap_or_default().finish(),
                 #[cfg(feature = "dashboard")]
                 dashboard: self.dashboard.unwrap_or_default().finish(),
+                #[cfg(feature = "trace")]
+                tracing: self.tracing.unwrap_or_default().finish(),
             },
         )
     }

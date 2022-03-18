@@ -277,6 +277,7 @@ where
         vec![TypeId::of::<TangleWorker>(), TypeId::of::<SnapshotWorker>()].leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (snapshot_config, pruning_config) = config;
         let (tx, rx) = mpsc::unbounded_channel();

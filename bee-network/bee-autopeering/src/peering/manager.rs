@@ -89,6 +89,7 @@ impl<V: NeighborValidator> Runnable for PeeringManager<V> {
 
     type ShutdownSignal = ShutdownRx;
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn run(self, mut shutdown_rx: Self::ShutdownSignal) {
         let PeeringManager {
             local,

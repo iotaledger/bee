@@ -129,6 +129,7 @@ where
         .leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let args = ApiArgsFullNode(Arc::new(ApiArgsFullNodeInner {
             node_id: config.node_id,

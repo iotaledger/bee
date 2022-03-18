@@ -142,5 +142,10 @@
       "passwordSalt": "0000000000000000000000000000000000000000000000000000000000000000",
       "passwordHash": "0000000000000000000000000000000000000000000000000000000000000000"
     }
+  },
+  "tracing": {
+    "consoleEnabled": false,
+    "flamegraphEnabled": false,
+    "flamegraphOutputPath": "./flamegraph"
   }
 }

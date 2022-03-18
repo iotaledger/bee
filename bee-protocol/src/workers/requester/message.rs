@@ -33,6 +33,7 @@ use std::{
 
 const RETRY_INTERVAL: Duration = Duration::from_millis(2500);
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 pub async fn request_message<B: StorageBackend>(
     tangle: &Tangle<B>,
     message_requester: &MessageRequesterWorker,
@@ -101,6 +102,7 @@ impl MessageRequesterWorker {
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 fn process_request(
     message_id: MessageId,
     index: MilestoneIndex,
@@ -121,6 +123,7 @@ fn process_request(
     process_request_unchecked(message_id, index, peer_manager, metrics);
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 fn process_request_unchecked(
     message_id: MessageId,
     index: MilestoneIndex,
@@ -137,6 +140,7 @@ fn process_request_unchecked(
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn retry_requests<B: StorageBackend>(
     requested_messages: &RequestedMessages,
     peer_manager: &PeerManager,
@@ -192,6 +196,7 @@ where
         .leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let req_queue = Arc::new(PriorityQueue::new());
 

@@ -32,6 +32,7 @@ bee-tangle = { version = "0.2.0", path = "../../bee-tangle", default-features = 
 anymap = { version = "0.12.1", default-features = false }
 async-trait = { version = "0.1.51", default-features = false }
 auth-helper = { version = "0.2.0", default-features = false }
+cfg-if = { version = "1.0.0", default-features = false }
 chrono = { version = "0.4.19", default-features = false }
 ed25519 = { version = "1.3.0", default-features = false, features = [ "alloc", "pkcs8" ] }
 fern-logger = { version = "0.5.0", default-features = false }
@@ -51,6 +52,7 @@ thiserror = { version = "1.0.30", default-features = false }
 tokio = { version = "1.12.0", default-features = false, features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
 tokio-stream = { version = "0.1.7", default-features = false }
 toml = { version = "0.5.8", default-features = false }
+trace-tools = { version = "0.3.0", default-features = false, optional = true }
 tracing = { version = "0.1.29", default-features = false, optional = true }
 warp = { version = "0.3.1", default-features = false }
 
@@ -68,3 +70,14 @@ default = [ "rocksdb" ]
 dashboard = [ "bee-plugin-dashboard", "bee-rest-api/dashboard" ]
 rocksdb = [ "bee-storage-rocksdb" ]
 sled = [ "bee-storage-sled" ]
+trace = [
+  "bee-autopeering/trace",
+  "bee-common/trace",
+  "bee-gossip/trace",
+  "bee-ledger/trace",
+  "bee-protocol/trace",
+  "bee-rest-api/trace",
+  "bee-tangle/trace",
+  "trace-tools/tokio-console",
+  "tracing",
+]

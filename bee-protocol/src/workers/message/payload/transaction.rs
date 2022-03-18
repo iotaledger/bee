@@ -30,6 +30,7 @@ pub(crate) struct TransactionPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<TransactionPayloadWorkerEvent>,
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn process(
     message_id: MessageId,
     message: MessageRef,
@@ -73,6 +74,7 @@ where
         vec![TypeId::of::<IndexationPayloadWorker>(), TypeId::of::<MetricsWorker>()].leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         // SAFETY: unwrapping is fine because IndexationPayloadWorker is in the dependencies.
         let indexation_payload_worker = node.worker::<IndexationPayloadWorker>().unwrap().tx.clone();

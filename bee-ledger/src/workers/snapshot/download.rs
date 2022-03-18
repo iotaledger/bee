@@ -186,6 +186,7 @@ async fn download_snapshot_file(path: &Path, download_url: &str) -> Result<(), E
 /// * `full_snapshot_path` - The location where the full snapshot will be stored.
 /// * `full_snapshot_path` - The location where the delta snapshot will be stored.
 /// * `download_urls` - The list of snapshot sources.
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 pub(crate) async fn download_latest_snapshot_files(
     wanted_network_id: u64,
     full_snapshot_path: &Path,

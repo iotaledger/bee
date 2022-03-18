@@ -37,6 +37,7 @@ where
         vec![TypeId::of::<TangleWorker>()].leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 
@@ -71,6 +72,7 @@ where
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: Milestone, index: MilestoneIndex) {
     if let Some(parents) = tangle
         .get(milestone.message_id())
@@ -91,6 +93,7 @@ async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: Milestone, in
     }
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn update_past_cone<B: StorageBackend>(
     tangle: &Tangle<B>,
     mut parents: Vec<MessageId>,
@@ -146,6 +149,7 @@ async fn update_past_cone<B: StorageBackend>(
 
 // NOTE: Once a milestone comes in we have to walk the future cones of the root transactions and update their OMRSI and
 // YMRSI; during that time we need to block the propagator, otherwise it will propagate outdated data.
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 async fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSet<MessageId>) {
     let mut to_process = roots.into_iter().collect::<Vec<_>>();
     let mut processed = HashSet::new();

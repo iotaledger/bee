@@ -31,6 +31,7 @@ pub(crate) struct IndexationPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
 }
 
+#[cfg_attr(feature = "trace", trace_tools::observe)]
 fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: MessageId, message: MessageRef) {
     let indexation = match message.payload() {
         Some(Payload::Indexation(indexation)) => indexation,
@@ -56,7 +57,7 @@ fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: Me
         }
     };
 
-    metrics.indexation_payload_inc(1);
+    metrics.indexation_payloads_inc(1);
 
     if let Err(e) =
         Insert::<(PaddedIndex, MessageId), ()>::insert(&*storage, &(indexation.padded_index(), message_id), &())
@@ -81,6 +82,7 @@ where
         vec![TypeId::of::<MetricsWorker>()].leak()
     }
 
+    #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let storage = node.storage();
         let metrics = node.resource::<NodeMetrics>();

@@ -36,6 +36,7 @@ full = [
   "tokio",
   "tokio-stream",
 ]
+trace = [ "trace-tools/tokio-console", "tracing" ]
 
 [dependencies]
 bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true }
@@ -52,6 +53,8 @@ serde = { version = "1.0.130", default-features = false, features = [ "derive" ]
 thiserror = { version = "1.0.30", default-features = false, optional = true }
 tokio = { version = "1.12.0", default-features = false, features = [ "macros", "rt", "time" ], optional = true }
 tokio-stream = { version = "0.1.7", default-features = false, features = [ "time" ], optional = true }
+trace-tools = { version = "0.3.0", default-features = false, features = [ "tokio-console" ], optional = true }
+tracing = { version = "0.1.29", default-features = false, optional = true }
 
 [dev-dependencies]
 fern = { version = "0.6.0", default-features = false }
