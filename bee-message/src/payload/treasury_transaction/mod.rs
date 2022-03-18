@@ -36,6 +36,7 @@ impl TreasuryTransactionPayload {
         if let Input::Treasury(ref input) = self.input {
             input
         } else {
+            // It has already been validated at construction that `input` is a `TreasuryInput`.
             unreachable!()
         }
     }
@@ -45,6 +46,7 @@ impl TreasuryTransactionPayload {
         if let Output::Treasury(ref output) = self.output {
             output
         } else {
+            // It has already been validated at construction that `output` is a `TreasuryOutput`.
             unreachable!()
         }
     }

@@ -98,16 +98,17 @@ impl Address {
             (Address::Ed25519(_ed25519_address), UnlockBlock::Reference(_unlock_block)) => {
                 // TODO actually check that it was unlocked by the same signature.
                 if !context.unlocked_addresses.contains(self) {
-                    return Err(ConflictReason::InvalidSignature);
+                    return Err(ConflictReason::AddressNotUnlocked);
                 }
             }
             (Address::Alias(alias_address), UnlockBlock::Alias(unlock_block)) => {
                 // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
                 if let (output_id, Output::Alias(alias_output)) = inputs[unlock_block.index() as usize] {
-                    if &alias_output.alias_id().or_from_output_id(output_id) != alias_address.alias_id()
-                        || !context.unlocked_addresses.contains(self)
-                    {
-                        return Err(ConflictReason::IncorrectUnlockMethod);
+                    if &alias_output.alias_id().or_from_output_id(output_id) != alias_address.alias_id() {
+                        return Err(ConflictReason::UnlockAddressMismatch);
+                    }
+                    if !context.unlocked_addresses.contains(self) {
+                        return Err(ConflictReason::AddressNotUnlocked);
                     }
                 } else {
                     return Err(ConflictReason::IncorrectUnlockMethod);
@@ -116,10 +117,11 @@ impl Address {
             (Address::Nft(nft_address), UnlockBlock::Nft(unlock_block)) => {
                 // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
                 if let (output_id, Output::Nft(nft_output)) = inputs[unlock_block.index() as usize] {
-                    if &nft_output.nft_id().or_from_output_id(output_id) != nft_address.nft_id()
-                        || !context.unlocked_addresses.contains(self)
-                    {
-                        return Err(ConflictReason::IncorrectUnlockMethod);
+                    if &nft_output.nft_id().or_from_output_id(output_id) != nft_address.nft_id() {
+                        return Err(ConflictReason::UnlockAddressMismatch);
+                    }
+                    if !context.unlocked_addresses.contains(self) {
+                        return Err(ConflictReason::AddressNotUnlocked);
                     }
                 } else {
                     return Err(ConflictReason::IncorrectUnlockMethod);

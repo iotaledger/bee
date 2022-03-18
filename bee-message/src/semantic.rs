@@ -43,22 +43,24 @@ pub enum ConflictReason {
     CreatedConsumedAmountMismatch = 4,
     /// The unlock block signature is invalid.
     InvalidSignature = 5,
-    /// The dust allowance for the address is invalid.
-    InvalidDustAllowance = 6,
     /// The created native tokens amount does not match the consumed native tokens amount.
-    CreatedConsumedNativeTokensAmountMismatch = 7,
+    CreatedConsumedNativeTokensAmountMismatch = 6,
     /// The milestone index timelock was no satisfied.
-    TimelockMilestoneIndex = 8,
+    TimelockMilestoneIndex = 7,
     /// The unix timelock was no satisfied.
-    TimelockUnix = 9,
+    TimelockUnix = 8,
     /// The sender was not verified.
-    UnverifiedSender = 10,
+    UnverifiedSender = 9,
     /// An incorrect unlock method was used.
-    IncorrectUnlockMethod = 11,
+    IncorrectUnlockMethod = 10,
     /// The inputs commitments do not match.
-    InputsCommitmentsMismatch = 12,
+    InputsCommitmentsMismatch = 11,
     /// Storage deposit return mismatch.
-    StorageDepositReturnMismatch = 13,
+    StorageDepositReturnMismatch = 12,
+    /// Unlock and address types mismatch.
+    UnlockAddressMismatch = 13,
+    /// The address was not previously unlocked.
+    AddressNotUnlocked = 14,
     /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
 }
@@ -80,14 +82,15 @@ impl TryFrom<u8> for ConflictReason {
             3 => Self::InputUtxoNotFound,
             4 => Self::CreatedConsumedAmountMismatch,
             5 => Self::InvalidSignature,
-            6 => Self::InvalidDustAllowance,
-            7 => Self::CreatedConsumedNativeTokensAmountMismatch,
-            8 => Self::TimelockMilestoneIndex,
-            9 => Self::TimelockUnix,
-            10 => Self::UnverifiedSender,
-            11 => Self::IncorrectUnlockMethod,
-            12 => Self::InputsCommitmentsMismatch,
-            13 => Self::StorageDepositReturnMismatch,
+            6 => Self::CreatedConsumedNativeTokensAmountMismatch,
+            7 => Self::TimelockMilestoneIndex,
+            8 => Self::TimelockUnix,
+            9 => Self::UnverifiedSender,
+            10 => Self::IncorrectUnlockMethod,
+            11 => Self::InputsCommitmentsMismatch,
+            12 => Self::StorageDepositReturnMismatch,
+            13 => Self::UnlockAddressMismatch,
+            14 => Self::AddressNotUnlocked,
             255 => Self::SemanticValidationFailed,
             x => return Err(Self::Error::InvalidConflict(x)),
         })

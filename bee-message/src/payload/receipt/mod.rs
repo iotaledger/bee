@@ -88,6 +88,7 @@ impl ReceiptPayload {
         if let Payload::TreasuryTransaction(ref transaction) = self.transaction {
             transaction
         } else {
+            // It has already been validated at construction that `transaction` is a `TreasuryTransactionPayload`.
             unreachable!()
         }
     }

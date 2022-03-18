@@ -301,8 +301,6 @@ impl TryFrom<&InputDto> for Input {
     }
 }
 
-//.map_err(|_| Error::InvalidField("transactionId"))?,
-
 /// Describes an input which references an unspent transaction output to consume.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UtxoInputDto {
