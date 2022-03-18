@@ -275,6 +275,12 @@ impl FoundryOutput {
 
     ///
     #[inline(always)]
+    pub fn circulating_supply(&self) -> U256 {
+        self.minted_tokens - self.melted_tokens
+    }
+
+    ///
+    #[inline(always)]
     pub fn maximum_supply(&self) -> &U256 {
         &self.maximum_supply
     }
