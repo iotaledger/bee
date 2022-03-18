@@ -122,7 +122,7 @@ pub struct RegularTransactionEssence {
 
 impl RegularTransactionEssence {
     /// The essence kind of a [`RegularTransactionEssence`].
-    pub const KIND: u8 = 0;
+    pub const KIND: u8 = 1;
 
     /// Creates a new [`RegularTransactionEssenceBuilder`] to build a [`RegularTransactionEssence`].
     pub fn builder(network_id: u64, inputs_commitment: [u8; 32]) -> RegularTransactionEssenceBuilder {

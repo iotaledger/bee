@@ -72,7 +72,7 @@ fn transaction() {
     let payload: Payload = tx_payload.into();
     let packed = payload.pack_to_vec();
 
-    assert_eq!(payload.kind(), 0);
+    assert_eq!(payload.kind(), 6);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::Transaction(_)));
     assert_eq!(payload, PackableExt::unpack_verified(&mut packed.as_slice()).unwrap());

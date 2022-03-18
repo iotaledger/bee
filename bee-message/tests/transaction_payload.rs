@@ -21,7 +21,7 @@ const ED25519_SIGNATURE: &str = "c6a40edf9a089f42c18f4ebccb35fe4b578d93b879e99b8
 
 #[test]
 fn kind() {
-    assert_eq!(TransactionPayload::KIND, 0);
+    assert_eq!(TransactionPayload::KIND, 6);
 }
 
 // Validate that attempting to construct a `TransactionPayload` with too few unlock blocks is an
