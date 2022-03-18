@@ -149,8 +149,8 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
             };
 
             Ok(warp::reply::json(&MessageMetadataResponse {
-                message_id: message_id.to_string(),
-                parent_message_ids: message.parents().iter().map(|id| id.to_string()).collect(),
+                message_id: message_id.into(),
+                parent_message_ids: message.parents().iter().map(Into::into).collect(),
                 is_solid,
                 referenced_by_milestone_index,
                 milestone_index,

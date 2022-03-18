@@ -47,9 +47,9 @@ pub async fn message_children<B: StorageBackend>(
     let max_results = 1000;
     children.truncate(max_results);
     Ok(warp::reply::json(&MessageChildrenResponse {
-        message_id: message_id.to_string(),
+        message_id: message_id.into(),
         max_results,
         count,
-        children_message_ids: children.iter().map(|id| id.to_string()).collect(),
+        children_message_ids: children.iter().map(Into::into).collect(),
     }))
 }

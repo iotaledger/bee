@@ -45,7 +45,7 @@ pub(crate) async fn milestone<B: StorageBackend>(
         Some(message_id) => match tangle.get_metadata(&message_id).await {
             Some(metadata) => Ok(warp::reply::json(&MilestoneResponse {
                 milestone_index: *milestone_index,
-                message_id: message_id.to_string(),
+                message_id: message_id.into(),
                 timestamp: metadata.arrival_timestamp(),
             })),
             None => Err(reject::custom(CustomRejection::NotFound(

@@ -275,7 +275,6 @@ impl BodyInner for PeerResponse {}
 
 /// Response of GET /api/plugins/debug/whiteflag.
 /// Returns the computed merkle tree hash for the given white flag traversal.
-#[deprecated(note = "Not in the API anymore")]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WhiteFlagResponse {
     #[serde(rename = "merkleTreeHash")]

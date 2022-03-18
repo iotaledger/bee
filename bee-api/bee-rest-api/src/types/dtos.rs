@@ -48,8 +48,32 @@ use serde_json::Value;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct IntegerString(String);
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+// impl From<u32> for IntegerString {
+//     fn from(value: u64) -> Self {
+//         IntegerString(value.to_string())
+//     }
+// }
+
+impl From<u64> for IntegerString {
+    fn from(value: u64) -> Self {
+        IntegerString(value.to_string())
+    }
+}
+
+// impl From<usize> for IntegerString {
+//     fn from(value: u64) -> Self {
+//         IntegerString(value.to_string())
+//     }
+// }
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct HexString(String);
+
+impl<T: core::fmt::Display> From<T> for HexString {
+    fn from(value: T) -> Self {
+        HexString(value.to_string())
+    }
+}
 
 /// The message object that nodes gossip around in the network.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -66,9 +90,9 @@ impl From<&Message> for MessageDto {
     fn from(value: &Message) -> Self {
         MessageDto {
             protocol_version: value.protocol_version(),
-            parents: value.parents().iter().map(|p| p.to_string()).collect(),
+            parents: value.parents().iter().map(Into::into).collect(),
             payload: value.payload().map(Into::into),
-            nonce: value.nonce().to_string(),
+            nonce: value.nonce().into(),
         }
     }
 }
@@ -82,7 +106,7 @@ impl TryFrom<&MessageDto> for Message {
                 .parents
                 .iter()
                 .map(|m| {
-                    m.parse::<MessageId>()
+                    m.0.parse::<MessageId>()
                         .map_err(|_| Error::InvalidField("parentMessageIds"))
                 })
                 .collect::<Result<Vec<MessageId>, Error>>()?,
@@ -90,7 +114,7 @@ impl TryFrom<&MessageDto> for Message {
         let mut builder = MessageBuilder::new(parents)
             .with_protocol_version(value.protocol_version)
             .with_nonce_provider(
-                value.nonce.parse::<u64>().map_err(|_| Error::InvalidField("nonce"))?,
+                value.nonce.0.parse::<u64>().map_err(|_| Error::InvalidField("nonce"))?,
                 0f64,
             );
         if let Some(p) = value.payload.as_ref() {
@@ -1966,7 +1990,7 @@ pub struct MigratedFundsEntryDto {
 impl From<&MigratedFundsEntry> for MigratedFundsEntryDto {
     fn from(value: &MigratedFundsEntry) -> Self {
         MigratedFundsEntryDto {
-            tail_transaction_hash: prefix_hex::encode(value.tail_transaction_hash().as_ref()),
+            tail_transaction_hash: HexString(prefix_hex::encode(value.tail_transaction_hash().as_ref())),
             address: value.address().into(),
             deposit: value.amount(),
         }
@@ -1978,7 +2002,7 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
 
     fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
         let tail_transaction_hash =
-            prefix_hex::decode(&value.tail_transaction_hash).map_err(|_| Error::InvalidField("tailTransactionHash"))?;
+            prefix_hex::decode(&value.tail_transaction_hash.0).map_err(|_| Error::InvalidField("tailTransactionHash"))?;
         Ok(MigratedFundsEntry::new(
             TailTransactionHash::new(tail_transaction_hash)?,
             (&value.address).try_into()?,

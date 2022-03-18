@@ -57,7 +57,7 @@ pub(crate) fn milestone_utxo_changes<B: StorageBackend>(
 
     Ok(warp::reply::json(&UtxoChangesResponse {
         index: *index,
-        created_outputs: fetched.created_outputs().iter().map(|id| id.to_string()).collect(),
-        consumed_outputs: fetched.consumed_outputs().iter().map(|id| id.to_string()).collect(),
+        created_outputs: fetched.created_outputs().iter().map(Into::into).collect(),
+        consumed_outputs: fetched.consumed_outputs().iter().map(Into::into).collect(),
     }))
 }

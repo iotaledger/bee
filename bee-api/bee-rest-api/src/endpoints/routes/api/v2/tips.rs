@@ -41,7 +41,7 @@ pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<Tangle<B>>) -
     }
     match tangle.get_messages_to_approve().await {
         Some(tips) => Ok(warp::reply::json(&TipsResponse {
-            tip_message_ids: tips.iter().map(|t| t.to_string()).collect(),
+            tip_message_ids: tips.iter().map(Into::into).collect(),
         })),
         None => Err(reject::custom(CustomRejection::ServiceUnavailable(
             "tip pool is empty".to_string(),
