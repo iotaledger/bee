@@ -47,15 +47,17 @@ pub(crate) fn messages_find<B: StorageBackend>(
         .map_err(|_| reject::custom(CustomRejection::BadRequest("Invalid index".to_owned())))?;
     let hashed_index = IndexationPayload::new(&index_bytes, &[]).unwrap().padded_index();
 
-    let mut fetched =
-        match Fetch::<PaddedIndex, Vec<MessageId>>::fetch(&*args.storage, &hashed_index).map_err(|_| {
-            reject::custom(CustomRejection::ServiceUnavailable(
-                "can not fetch from storage".to_string(),
-            ))
-        })? {
+    let mut fetched = match Fetch::<PaddedIndex, Vec<MessageId>>::fetch(&*args.storage, &hashed_index) {
+        Ok(result) => match result {
             Some(ids) => ids,
             None => vec![],
-        };
+        },
+        Err(_) => {
+            return Err(reject::custom(CustomRejection::ServiceUnavailable(
+                "can not fetch from storage".to_string(),
+            )));
+        }
+    };
 
     let count = fetched.len();
     fetched.truncate(MAX_RESPONSE_RESULTS);
