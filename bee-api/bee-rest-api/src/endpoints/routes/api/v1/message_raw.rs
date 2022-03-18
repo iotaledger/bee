@@ -32,15 +32,15 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_RAW, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(message_raw)
+        .and_then(|message_id, tangle| async move { message_raw(message_id, tangle) })
         .boxed()
 }
 
-pub async fn message_raw<B: StorageBackend>(
+pub fn message_raw<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get(&message_id).await.map(|m| (*m).clone()) {
+    match tangle.get(&message_id) {
         Some(message) => Ok(Response::builder()
             .header("Content-Type", "application/octet-stream")
             .body(message.pack_new())),

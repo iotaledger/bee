@@ -34,11 +34,11 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_METADATA, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(message_metadata)
+        .and_then(|message_id, tangle| async move { message_metadata(message_id, tangle) })
         .boxed()
 }
 
-pub(crate) async fn message_metadata<B: StorageBackend>(
+pub(crate) fn message_metadata<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
@@ -48,11 +48,8 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
         )));
     }
 
-    match tangle.get(&message_id).await.map(|m| (*m).clone()) {
-        Some(message) => {
-            // existing message <=> existing metadata, therefore unwrap() is safe
-            let metadata = tangle.get_metadata(&message_id).await.unwrap();
-
+    match tangle.get_message_and_metadata(&message_id) {
+        Some((message, metadata)) => {
             // TODO: access constants from URTS
             let ymrsi_delta = 8;
             let omrsi_delta = 13;
@@ -113,13 +110,17 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                     conflict_reason = None;
 
                     let cmi = *tangle.get_confirmed_milestone_index();
+
                     // unwrap() of OMRSI/YMRSI is safe since message is solid
-                    if (cmi - *metadata.omrsi().unwrap().index()) > below_max_depth {
+                    let (omrsi, ymrsi) = metadata
+                        .omrsi_and_ymrsi()
+                        .map(|(o, y)| (*o.index(), *y.index()))
+                        .unwrap();
+
+                    if (cmi - omrsi) > below_max_depth {
                         should_promote = Some(false);
                         should_reattach = Some(true);
-                    } else if (cmi - *metadata.ymrsi().unwrap().index()) > ymrsi_delta
-                        || (cmi - *metadata.omrsi().unwrap().index()) > omrsi_delta
-                    {
+                    } else if (cmi - ymrsi) > ymrsi_delta || (cmi - omrsi) > omrsi_delta {
                         should_promote = Some(true);
                         should_reattach = Some(false);
                     } else {

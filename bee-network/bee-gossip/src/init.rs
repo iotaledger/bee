@@ -130,7 +130,7 @@ pub mod integrated {
     use bee_runtime::node::{Node, NodeBuilder};
 
     /// Initializes the network.
-    pub async fn init<N: Node>(
+    pub fn init<N: Node>(
         config: NetworkConfig,
         keys: Keypair,
         network_id: u64,

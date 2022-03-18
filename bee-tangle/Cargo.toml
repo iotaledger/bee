@@ -1,6 +1,6 @@
 [package]
 name = "bee-tangle"
-version = "0.2.0"
+version = "0.3.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "A distributed, directed, acyclic graph that underpins the DLT for IOTA's Bee node"
@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 bee-common = { version = "0.6.0", path = "../bee-common/bee-common", default-features = false }
 bee-message = { version = "0.1.6", path = "../bee-message", default-features = false, features = [ "serde" ] }
 bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", default-features = false }
-bee-storage = { version = "0.10.0", path = "../bee-storage/bee-storage", default-features = false }
+bee-storage = { version = "0.11.0", path = "../bee-storage/bee-storage", default-features = false }
 
 async-trait = { version = "0.1.51", default-features = false }
 bitflags = { version = "1.2.1", default-features = false }
@@ -29,7 +29,7 @@ tokio = { version = "1.12.0", default-features = false, features = [ "sync", "ti
 tokio-stream = { version = "0.1.7", default-features = false, features = [ "time" ] }
 
 [dev-dependencies]
-bee-storage-null = { version = "0.2.0", path = "../bee-storage/bee-storage-null", default-features = false }
+bee-storage-null = { version = "0.3.0", path = "../bee-storage/bee-storage-null", default-features = false }
 bee-test = { path = "../bee-test", default-features = false }
 
 criterion = { version = "0.3.5", default-features = false, features = [ "async_tokio" ] }

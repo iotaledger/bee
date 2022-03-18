@@ -29,11 +29,11 @@ pub(crate) fn filter(
         .and(warp::delete())
         .and(has_permission(ROUTE_REMOVE_PEER, public_routes, allowed_ips))
         .and(with_network_command_sender(network_command_sender))
-        .and_then(remove_peer)
+        .and_then(|peer_id, network_controller| async move { remove_peer(peer_id, network_controller) })
         .boxed()
 }
 
-pub(crate) async fn remove_peer(
+pub(crate) fn remove_peer(
     peer_id: PeerId,
     network_controller: ResourceHandle<NetworkCommandSender>,
 ) -> Result<impl Reply, Rejection> {

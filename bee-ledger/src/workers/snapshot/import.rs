@@ -76,7 +76,7 @@ fn import_outputs<R: Read, B: StorageBackend>(reader: &mut R, storage: &B, outpu
     apply_balance_diffs(&*storage, &balance_diffs)
 }
 
-async fn import_milestone_diffs<R: Read, B: StorageBackend>(
+fn import_milestone_diffs<R: Read, B: StorageBackend>(
     reader: &mut R,
     storage: &B,
     milestone_diff_count: u64,
@@ -107,15 +107,12 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
                 .ok_or(Error::Snapshot(SnapshotError::MissingConsumedTreasury))?
                 .clone();
 
-            Some(
-                migration_from_milestone(
-                    index,
-                    diff.milestone().id(),
-                    receipt,
-                    TreasuryOutput::new(consumed_treasury.0, consumed_treasury.1),
-                )
-                .await?,
-            )
+            Some(migration_from_milestone(
+                index,
+                diff.milestone().id(),
+                receipt,
+                TreasuryOutput::new(consumed_treasury.0, consumed_treasury.1),
+            )?)
         } else {
             None
         };
@@ -148,7 +145,7 @@ fn check_header(header: &SnapshotHeader, kind: SnapshotKind, network_id: u64) ->
     }
 }
 
-async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id: u64) -> Result<(), Error> {
+fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id: u64) -> Result<(), Error> {
     info!("Importing full snapshot file {}...", &path.to_string_lossy());
 
     let mut reader = snapshot_reader(path)?;
@@ -193,7 +190,7 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
 
     import_solid_entry_points(&mut reader, storage, full_header.sep_count(), header.sep_index())?;
     import_outputs(&mut reader, storage, full_header.output_count())?;
-    import_milestone_diffs(&mut reader, storage, full_header.milestone_diff_count()).await?;
+    import_milestone_diffs(&mut reader, storage, full_header.milestone_diff_count())?;
 
     if reader.bytes().next().is_some() {
         return Err(Error::Snapshot(SnapshotError::RemainingBytes));
@@ -212,7 +209,7 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
     Ok(())
 }
 
-async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id: u64) -> Result<(), Error> {
+fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id: u64) -> Result<(), Error> {
     info!("Importing delta snapshot file {}...", &path.to_string_lossy());
 
     let mut reader = snapshot_reader(path)?;
@@ -248,7 +245,7 @@ async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, netw
     )?;
 
     import_solid_entry_points(&mut reader, storage, delta_header.sep_count(), header.sep_index())?;
-    import_milestone_diffs(&mut reader, storage, delta_header.milestone_diff_count()).await?;
+    import_milestone_diffs(&mut reader, storage, delta_header.milestone_diff_count())?;
 
     if reader.bytes().next().is_some() {
         return Err(Error::Snapshot(SnapshotError::RemainingBytes));
@@ -286,11 +283,11 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
         .await?;
     }
 
-    import_full_snapshot(storage, config.full_path(), network_id).await?;
+    import_full_snapshot(storage, config.full_path(), network_id)?;
 
     if let Some(delta_path) = config.delta_path() {
         if delta_path.exists() {
-            import_delta_snapshot(storage, delta_path, network_id).await?;
+            import_delta_snapshot(storage, delta_path, network_id)?;
         }
     }
 

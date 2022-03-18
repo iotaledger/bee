@@ -34,15 +34,15 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_CHILDREN, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(message_children)
+        .and_then(|message_id, tangle| async move { message_children(message_id, tangle) })
         .boxed()
 }
 
-pub async fn message_children<B: StorageBackend>(
+pub fn message_children<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    let mut children = Vec::from_iter(tangle.get_children(&message_id).await.unwrap_or_default());
+    let mut children = Vec::from_iter(tangle.get_children(&message_id).unwrap_or_default());
     let count = children.len();
     let max_results = 1000;
     children.truncate(max_results);

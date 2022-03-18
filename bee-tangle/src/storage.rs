@@ -9,7 +9,7 @@ use bee_message::{
 };
 
 use bee_storage::{
-    access::{Fetch, Insert},
+    access::{Exist, Fetch, Insert, InsertStrict, Update},
     backend,
 };
 
@@ -17,27 +17,33 @@ use bee_storage::{
 pub trait StorageBackend:
     backend::StorageBackend
     + Insert<MessageId, Message>
-    + Insert<MessageId, MessageMetadata>
     + Insert<(MessageId, MessageId), ()>
     + Insert<MilestoneIndex, Milestone>
     + Insert<SolidEntryPoint, MilestoneIndex>
+    + InsertStrict<MessageId, MessageMetadata>
+    + Exist<MessageId, Message>
+    + Exist<MilestoneIndex, Milestone>
     + Fetch<MessageId, Message>
     + Fetch<MessageId, MessageMetadata>
     + Fetch<MessageId, Vec<MessageId>>
     + Fetch<MilestoneIndex, Milestone>
+    + Update<MessageId, MessageMetadata>
 {
 }
 
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Insert<MessageId, Message>
-        + Insert<MessageId, MessageMetadata>
         + Insert<(MessageId, MessageId), ()>
         + Insert<MilestoneIndex, Milestone>
         + Insert<SolidEntryPoint, MilestoneIndex>
+        + InsertStrict<MessageId, MessageMetadata>
+        + Exist<MessageId, Message>
+        + Exist<MilestoneIndex, Milestone>
         + Fetch<MessageId, Message>
         + Fetch<MessageId, MessageMetadata>
         + Fetch<MessageId, Vec<MessageId>>
         + Fetch<MilestoneIndex, Milestone>
+        + Update<MessageId, MessageMetadata>
 {
 }

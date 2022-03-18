@@ -127,11 +127,8 @@ where
                         }
 
                         let (message_id, _) = message.id();
-                        let metadata = MessageMetadata::arrived();
 
-                        let message = if let Some(message) = tangle.insert(message, message_id, metadata).await {
-                            message
-                        } else {
+                        if tangle.contains(&message_id) {
                             metrics.known_messages_inc();
                             if let Some(ref peer_id) = from {
                                 peer_manager
@@ -141,7 +138,17 @@ where
                                     .unwrap_or_default();
                             }
                             continue;
-                        };
+                        } else {
+                            let metadata = MessageMetadata::arrived();
+                            // There is no data race here even if the `Message` and
+                            // `MessageMetadata` are inserted between the call to `tangle.contains`
+                            // and here because:
+                            // - Both `Message`s are the same because they have the same hash.
+                            // - `MessageMetadata` is not overwritten.
+                            // - Some extra code is executing due to not calling `continue` but
+                            // this does not create inconsistencies.
+                            tangle.insert(&message, &message_id, &metadata);
+                        }
 
                         // Send the propagation event ASAP to allow the propagator to do its thing
                         if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {
@@ -179,13 +186,9 @@ where
                             }
                         };
 
-                        if payload_worker
-                            .send(PayloadWorkerEvent {
-                                message_id,
-                                message: message.clone(),
-                            })
-                            .is_err()
-                        {
+                        let parent_message_ids = message.parents().to_vec();
+
+                        if payload_worker.send(PayloadWorkerEvent { message_id, message }).is_err() {
                             error!("Sending message {} to payload worker failed.", message_id);
                         }
 
@@ -196,7 +199,7 @@ where
                         // TODO: boolean values are false at this point in time? trigger event from another location?
                         bus.dispatch(VertexCreated {
                             message_id,
-                            parent_message_ids: message.parents().to_vec(),
+                            parent_message_ids,
                             is_solid: false,
                             is_referenced: false,
                             is_conflicting: false,

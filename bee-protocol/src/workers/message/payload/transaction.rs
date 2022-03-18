@@ -8,10 +8,9 @@ use crate::{
 
 use bee_message::{
     payload::{transaction::Essence, Payload},
-    MessageId,
+    Message, MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::MessageRef;
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -23,16 +22,16 @@ use std::{any::TypeId, convert::Infallible};
 
 pub(crate) struct TransactionPayloadWorkerEvent {
     pub(crate) message_id: MessageId,
-    pub(crate) message: MessageRef,
+    pub(crate) message: Message,
 }
 
 pub(crate) struct TransactionPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<TransactionPayloadWorkerEvent>,
 }
 
-async fn process(
+fn process(
     message_id: MessageId,
-    message: MessageRef,
+    message: Message,
     indexation_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
     metrics: &NodeMetrics,
 ) {
@@ -85,7 +84,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(TransactionPayloadWorkerEvent { message_id, message }) = receiver.next().await {
-                process(message_id, message, &indexation_payload_worker, &metrics).await;
+                process(message_id, message, &indexation_payload_worker, &metrics);
             }
 
             // Before the worker completely stops, the receiver needs to be drained for transaction payloads to be
@@ -96,7 +95,7 @@ where
 
             while let Some(Some(TransactionPayloadWorkerEvent { message_id, message })) = receiver.next().now_or_never()
             {
-                process(message_id, message, &indexation_payload_worker, &metrics).await;
+                process(message_id, message, &indexation_payload_worker, &metrics);
                 count += 1;
             }
 
