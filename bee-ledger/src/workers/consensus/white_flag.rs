@@ -189,22 +189,16 @@ fn apply_regular_essence<B: StorageBackend>(
 
     // Validation of storage deposit returns.
     for (return_address, return_amount) in context.storage_deposit_returns.iter() {
-        if context
-            .essence
-            .outputs()
-            .iter()
-            .find(|output| {
-                if let Output::Basic(output) = output {
-                    output.address() == return_address
-                        && output.amount() == *return_amount
-                        && output.unlock_conditions().len() == 1
-                        && output.feature_blocks().len() == 0
-                } else {
-                    false
-                }
-            })
-            .is_none()
-        {
+        if !context.essence.outputs().iter().any(|output| {
+            if let Output::Basic(output) = output {
+                output.address() == return_address
+                    && output.amount() == *return_amount
+                    && output.unlock_conditions().len() == 1
+                    && output.feature_blocks().len() == 0
+            } else {
+                false
+            }
+        }) {
             return Ok(ConflictReason::StorageDepositReturnMismatch);
         }
     }
