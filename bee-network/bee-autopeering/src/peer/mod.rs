@@ -14,7 +14,6 @@ use std::{
 use bytes::BytesMut;
 use crypto::signatures::ed25519::PublicKey;
 use libp2p_core::{multiaddr::Protocol, Multiaddr};
-pub use self::peer_id::PeerId;
 use prost::{DecodeError, EncodeError, Message};
 use serde::{
     de::{SeqAccess, Visitor},
@@ -24,6 +23,7 @@ use serde::{
 pub use stores::PeerStore;
 
 use self::lists::{ActivePeersList, ReplacementPeersList};
+pub use self::peer_id::PeerId;
 use crate::{
     local::{
         services::{ServiceMap, ServiceProtocol},

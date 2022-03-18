@@ -16,9 +16,8 @@ use futures::stream::StreamExt;
 use log::{debug, warn};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use self::topics::*;
 
-use self::manager::MqttManager;
+use self::{manager::MqttManager, topics::*};
 
 #[derive(Default)]
 pub struct Mqtt;

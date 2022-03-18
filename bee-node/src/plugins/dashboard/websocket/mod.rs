@@ -20,10 +20,9 @@ use futures::{channel::oneshot, FutureExt, StreamExt};
 use log::{debug, error};
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use self::topics::WsTopic;
 use warp::ws::{Message, WebSocket};
 
-use self::commands::WsCommand;
+use self::{commands::WsCommand, topics::WsTopic};
 use crate::{
     plugins::dashboard::{
         auth::AUDIENCE_CLAIM,

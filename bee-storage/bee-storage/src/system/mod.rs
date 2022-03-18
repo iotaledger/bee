@@ -7,9 +7,11 @@ mod health;
 mod version;
 
 use bee_common::packable::{Packable, Read, Write};
-pub use self::version::StorageVersion;
 
-pub use self::health::{Error as StorageHealthError, StorageHealth};
+pub use self::{
+    health::{Error as StorageHealthError, StorageHealth},
+    version::StorageVersion,
+};
 
 /// Key used to store the system version.
 pub const SYSTEM_VERSION_KEY: u8 = 0;

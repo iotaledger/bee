@@ -12,13 +12,15 @@ mod tlv;
 
 use std::ops::Range;
 
-pub(crate) use self::heartbeat::HeartbeatPacket;
 pub(crate) use message::MessagePacket;
 pub(crate) use message_request::MessageRequestPacket;
 pub(crate) use milestone_request::MilestoneRequestPacket;
 pub(crate) use tlv::{tlv_from_bytes, tlv_to_bytes, Error as TlvError};
 
-pub(crate) use self::header::{HeaderPacket, HEADER_SIZE};
+pub(crate) use self::{
+    header::{HeaderPacket, HEADER_SIZE},
+    heartbeat::HeartbeatPacket,
+};
 
 /// A trait describing the behavior of a packet.
 ///
