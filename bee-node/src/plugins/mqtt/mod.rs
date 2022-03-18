@@ -14,10 +14,11 @@ use bee_tangle::event::{LatestMilestoneChanged, SolidMilestoneChanged};
 use config::MqttConfig;
 use futures::stream::StreamExt;
 use log::{debug, warn};
-use self::manager::MqttManager;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use topics::*;
+
+use self::manager::MqttManager;
 
 #[derive(Default)]
 pub struct Mqtt;

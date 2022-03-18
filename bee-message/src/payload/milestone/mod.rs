@@ -15,9 +15,9 @@ use crypto::{
     signatures::ed25519,
     Error as CryptoError,
 };
-pub use self::essence::{MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH};
 pub use milestone_id::{MilestoneId, MILESTONE_ID_LENGTH};
 
+pub use self::essence::{MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH};
 use crate::Error;
 
 /// Range of allowed milestones signatures key numbers.

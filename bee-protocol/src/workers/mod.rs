@@ -23,7 +23,6 @@ mod status;
 use bee_autopeering::event::EventRx as AutopeeringEventRx;
 use bee_gossip::NetworkEventReceiver as NetworkEventRx;
 use bee_runtime::node::{Node, NodeBuilder};
-pub(crate) use self::broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
 pub(crate) use heartbeater::HeartbeaterWorker;
 pub(crate) use index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
 pub(crate) use message::{
@@ -45,6 +44,8 @@ pub(crate) use responder::{
 };
 pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
 pub(crate) use status::StatusWorker;
+
+pub(crate) use self::broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
 
 pub fn init<N: Node>(
     config: config::ProtocolConfig,

@@ -141,9 +141,10 @@ pub mod init;
 pub use config::AutopeeringConfig;
 pub use event::Event;
 pub use init::init;
+pub use peer::{peer_id, peer_id::PeerId, stores, Peer};
+pub use peering::{Distance, NeighborValidator, Status};
+
 pub use self::local::{
     services::{ServiceEndpoint, ServiceMap, ServiceName, ServiceProtocol, AUTOPEERING_SERVICE_NAME},
     Local,
 };
-pub use peer::{peer_id, peer_id::PeerId, stores, Peer};
-pub use peering::{Distance, NeighborValidator, Status};

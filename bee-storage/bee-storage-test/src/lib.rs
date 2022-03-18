@@ -19,7 +19,6 @@ mod snapshot_info;
 mod solid_entry_point_to_milestone_index;
 mod spent_to_treasury_output;
 
-pub use self::address_to_balance::address_to_balance_access;
 pub use ed25519_address_to_output_id::ed25519_address_to_output_id_access;
 pub use index_to_message_id::index_to_message_id_access;
 pub use ledger_index::ledger_index_access;
@@ -36,3 +35,5 @@ pub use output_id_unspent::output_id_unspent_access;
 pub use snapshot_info::snapshot_info_access;
 pub use solid_entry_point_to_milestone_index::solid_entry_point_to_milestone_index_access;
 pub use spent_to_treasury_output::spent_to_treasury_output_access;
+
+pub use self::address_to_balance::address_to_balance_access;

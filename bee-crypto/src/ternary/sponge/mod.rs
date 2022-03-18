@@ -10,10 +10,12 @@ mod kind;
 use std::ops::DerefMut;
 
 use bee_ternary::{TritBuf, Trits};
-pub use self::curlp::{BatchHasher, CurlP, CurlP27, CurlP81, CurlPRounds, UnrolledCurlP81, BATCH_SIZE};
-pub use self::kerl::Kerl;
-pub use self::kind::SpongeKind;
 
+pub use self::{
+    curlp::{BatchHasher, CurlP, CurlP27, CurlP81, CurlPRounds, UnrolledCurlP81, BATCH_SIZE},
+    kerl::Kerl,
+    kind::SpongeKind,
+};
 use super::HASH_LENGTH;
 
 /// The common interface of ternary cryptographic hash functions that follow the sponge construction.

@@ -16,12 +16,12 @@ use std::{
 use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
 use bee_crypto::ternary::{sponge::Sponge, HASH_LENGTH};
 use bee_ternary::{T1B1Buf, TritBuf, Trits, Tryte, T1B1};
-pub use self::normalize::{normalize, Error as NormalizeError};
 pub use shake::{WotsShakePrivateKeyGenerator, WotsShakePrivateKeyGeneratorBuilder};
 pub use sponge::{WotsSpongePrivateKeyGenerator, WotsSpongePrivateKeyGeneratorBuilder};
 use thiserror::Error;
 use zeroize::Zeroize;
 
+pub use self::normalize::{normalize, Error as NormalizeError};
 use crate::ternary::{PrivateKey, PublicKey, RecoverableSignature, Signature, SIGNATURE_FRAGMENT_LENGTH};
 
 /// Errors occuring during WOTS operations.
