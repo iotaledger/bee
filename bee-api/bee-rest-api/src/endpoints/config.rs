@@ -55,7 +55,7 @@ pub struct RestApiConfigBuilder {
     #[serde(alias = "featureProofOfWork")]
     feature_proof_of_work: Option<bool>,
     /// Describes the white flag solidification timeout.
-    #[serde(alias = "whiteFlagSolidificationTimeoutSecs")]
+    #[serde(alias = "whiteFlagSolidificationTimeout")]
     white_flag_solidification_timeout: Option<u64>,
 }
 
