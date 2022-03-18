@@ -157,11 +157,11 @@ pub struct OutputResponse {
     pub output_index: u16,
     #[serde(rename = "isSpent")]
     pub is_spent: bool,
-    #[serde(rename = "milestoneIndexSpent")]
+    #[serde(rename = "milestoneIndexSpent", skip_serializing_if = "Option::is_none")]
     pub milestone_index_spent: Option<u32>,
-    #[serde(rename = "milestoneTimestampSpent")]
+    #[serde(rename = "milestoneTimestampSpent", skip_serializing_if = "Option::is_none")]
     pub milestone_timestamp_spent: Option<u64>,
-    #[serde(rename = "transactionIdSpent")]
+    #[serde(rename = "transactionIdSpent", skip_serializing_if = "Option::is_none")]
     pub transaction_id_spent: Option<HexString>,
     #[serde(rename = "milestoneIndexBooked")]
     pub milestone_index_booked: u32,

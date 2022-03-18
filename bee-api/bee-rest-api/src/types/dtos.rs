@@ -82,6 +82,7 @@ pub struct MessageDto {
     pub protocol_version: u8,
     #[serde(rename = "parentMessageIds")]
     pub parents: Vec<HexString>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub payload: Option<PayloadDto>,
     pub nonce: IntegerString,
 }
@@ -244,6 +245,7 @@ pub struct RegularTransactionEssenceDto {
     #[serde(rename = "inputsCommitment")]
     pub inputs_commitment: String,
     pub outputs: Vec<OutputDto>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub payload: Option<PayloadDto>,
 }
 
@@ -1807,6 +1809,7 @@ pub struct MilestonePayloadDto {
     pub next_pow_score_milestone_index: u32,
     #[serde(rename = "publicKeys")]
     pub public_keys: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub receipt: Option<PayloadDto>,
     pub signatures: Vec<String>,
 }
