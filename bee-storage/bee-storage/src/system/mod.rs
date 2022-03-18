@@ -7,7 +7,7 @@ mod health;
 mod version;
 
 use bee_common::packable::{Packable, Read, Write};
-pub use version::StorageVersion;
+pub use self::version::StorageVersion;
 
 pub use self::health::{Error as StorageHealthError, StorageHealth};
 

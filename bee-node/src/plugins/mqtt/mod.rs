@@ -16,7 +16,7 @@ use futures::stream::StreamExt;
 use log::{debug, warn};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use topics::*;
+use self::topics::*;
 
 use self::manager::MqttManager;
 

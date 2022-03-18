@@ -6,6 +6,6 @@
 pub mod node;
 pub mod peer;
 
-pub use peer::PeerMetrics;
+pub use self::peer::PeerMetrics;
 
 pub use self::node::NodeMetrics;

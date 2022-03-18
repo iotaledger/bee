@@ -11,7 +11,7 @@ use std::{any::type_name, error::Error, fmt};
 
 use async_trait::async_trait;
 use bee_runtime::{event::Bus, node::Node, worker::Worker};
-pub use mps::Mps;
+pub use self::mps::Mps;
 pub use mqtt::Mqtt;
 pub use version_checker::VersionChecker;
 

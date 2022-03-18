@@ -16,7 +16,7 @@ use std::{
 use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
 use bee_crypto::ternary::{sponge::Sponge, HASH_LENGTH};
 use bee_ternary::{T1B1Buf, TritBuf, Trits, Tryte, T1B1};
-pub use shake::{WotsShakePrivateKeyGenerator, WotsShakePrivateKeyGeneratorBuilder};
+pub use self::shake::{WotsShakePrivateKeyGenerator, WotsShakePrivateKeyGeneratorBuilder};
 pub use sponge::{WotsSpongePrivateKeyGenerator, WotsSpongePrivateKeyGeneratorBuilder};
 use thiserror::Error;
 use zeroize::Zeroize;

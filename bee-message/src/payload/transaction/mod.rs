@@ -8,7 +8,7 @@ mod transaction_id;
 
 use bee_common::packable::{Packable, Read, Write};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
-pub use transaction_id::{TransactionId, TRANSACTION_ID_LENGTH};
+pub use self::transaction_id::{TransactionId, TRANSACTION_ID_LENGTH};
 
 pub use self::essence::{Essence, RegularEssence, RegularEssenceBuilder};
 use crate::{unlock::UnlockBlocks, Error};

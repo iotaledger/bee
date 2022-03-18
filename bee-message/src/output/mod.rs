@@ -7,7 +7,7 @@ mod signature_locked_single;
 mod treasury;
 
 use bee_common::packable::{Packable, Read, Write};
-pub use signature_locked_dust_allowance::{
+pub use self::signature_locked_dust_allowance::{
     dust_outputs_max, SignatureLockedDustAllowanceOutput, DUST_ALLOWANCE_DIVISOR, DUST_OUTPUTS_MAX, DUST_THRESHOLD,
     SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT,
 };

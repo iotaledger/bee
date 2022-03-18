@@ -20,7 +20,7 @@ use futures::{channel::oneshot, FutureExt, StreamExt};
 use log::{debug, error};
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use topics::WsTopic;
+use self::topics::WsTopic;
 use warp::ws::{Message, WebSocket};
 
 use self::commands::WsCommand;

@@ -40,7 +40,7 @@ use std::{ops::Deref, sync::Arc};
 use bee_message::Message;
 use bee_runtime::node::{Node, NodeBuilder};
 pub use conflict::ConflictReason;
-pub use tangle_worker::TangleWorker;
+pub use self::tangle_worker::TangleWorker;
 use tip_pool_cleaner_worker::TipPoolCleanerWorker;
 
 pub use self::tangle::Tangle;

@@ -8,7 +8,7 @@ mod processor;
 mod submitter;
 mod unreferenced_inserter;
 
-pub(crate) use hasher::{HasherWorker, HasherWorkerEvent};
+pub(crate) use self::hasher::{HasherWorker, HasherWorkerEvent};
 pub(crate) use payload::{
     IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent,
     TransactionPayloadWorker,

@@ -19,7 +19,7 @@ mod util;
 pub mod plugins;
 pub mod tools;
 
-pub use config::{NodeConfig, NodeConfigBuilder};
+pub use self::config::{NodeConfig, NodeConfigBuilder};
 pub use entrynode::{builder::EntryNodeBuilder, config::EntryNodeConfig, EntryNode};
 pub use fullnode::{builder::FullNodeBuilder, config::FullNodeConfig, FullNode};
 pub use identity::{read_keypair_from_pem_file, write_keypair_to_pem_file, PemFileError};

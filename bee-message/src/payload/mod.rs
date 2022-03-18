@@ -12,7 +12,7 @@ pub mod treasury;
 use alloc::boxed::Box;
 
 use bee_common::packable::{Packable, Read, Write};
-use milestone::MilestonePayload;
+use self::milestone::MilestonePayload;
 use receipt::ReceiptPayload;
 use transaction::TransactionPayload;
 use treasury::TreasuryTransactionPayload;
