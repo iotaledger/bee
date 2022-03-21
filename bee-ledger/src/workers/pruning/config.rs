@@ -96,6 +96,7 @@ impl PruningConfig {
 #[must_use]
 pub struct PruningMilestonesConfigBuilder {
     enabled: Option<bool>,
+    #[serde(alias = "maxMilestonesToKeep")]
     max_milestones_to_keep: Option<u32>,
 }
 
@@ -150,8 +151,11 @@ impl PruningReceiptsConfigBuilder {
 #[must_use]
 pub struct PruningBySizeConfigBuilder {
     enabled: Option<bool>,
+    #[serde(alias = "targetSize")]
     target_size: Option<String>,
+    #[serde(alias = "thresholdPercentage")]
     threshold_percentage: Option<f32>,
+    #[serde(alias = "cooldownTime")]
     cooldown_time: Option<String>,
 }
 

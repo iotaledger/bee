@@ -126,9 +126,9 @@ max_milestones_to_keep = 60480
 enabled                = false
 [pruning.by_size]
 enabled                = true
-target_size            = 30GB
+target_size            = "30GB"
 threshold_percentage   = 10.0
-cooldown_time          = 5m
+cooldown_time          = "5m"
 
 [storage]
 path = "./storage/mainnet/tangle"
