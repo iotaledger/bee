@@ -72,7 +72,8 @@ pub const OUTPUT_INDEX_MAX: u16 = OUTPUT_COUNT_MAX - 1; // 127
 /// The range of valid indices of outputs of a transaction .
 pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; // [0..127]
 
-pub(crate) type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *Output::AMOUNT_RANGE.end() }>;
+/// Type representing an output amount.
+pub type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *Output::AMOUNT_RANGE.end() }>;
 
 /// A generic output that can represent different types defining the deposit of funds.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
