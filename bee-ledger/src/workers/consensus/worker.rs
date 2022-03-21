@@ -345,7 +345,7 @@ where
                             }
                         }
 
-                        match should_prune(&tangle, ledger_index, pruning_delay, &pruning_config) {
+                        match should_prune(&tangle, &storage, ledger_index, pruning_delay, &pruning_config) {
                             Ok((start_index, target_index)) => {
                                 if let Err(e) =
                                     prune::prune(&tangle, &storage, &bus, start_index, target_index, &pruning_config)

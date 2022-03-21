@@ -58,7 +58,6 @@ pub async fn prune<S: StorageBackend>(
         let index = MilestoneIndex(index);
 
         debug!("Pruning milestone {}...", index);
-        debug!("Storage size: actual {} limit {}", storage.size().expect("ok storage size").expect("some storage size"), config.pruning_by_size().target_size());
 
         // Measurement of the full pruning step.
         let full_prune = Instant::now();

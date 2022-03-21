@@ -17,25 +17,33 @@ pub enum PruningSkipReason {
     BelowThreshold { reached_in: u32 },
 }
 
-pub(crate) fn should_prune<B: StorageBackend>(
-    tangle: &Tangle<B>,
+pub(crate) fn should_prune<S: StorageBackend>(
+    tangle: &Tangle<S>,
+    storage: &S,
     ledger_index: LedgerIndex,
-    pruning_delay: u32,
+    max_milestones_to_keep: u32,
     config: &PruningConfig,
-) -> Result<(MilestoneIndex, MilestoneIndex), PruningSkipReason> {
-    if !config.pruning_milestones().enabled() {
+) -> Result<(MilestoneIndex, MilestoneIndex), PruningSkipReason>
+{
+    log::debug!(
+        "Storage size: actual {} limit {}",
+        storage.size().expect("ok storage size").expect("some storage size"),
+        config.pruning_by_size().target_size()
+    );
+
+    if !config.pruning_milestones().enabled() && !config.pruning_by_size().enabled() {
         return Err(PruningSkipReason::Disabled);
     }
 
     let pruning_index = *tangle.get_pruning_index() + 1;
-    let pruning_threshold = pruning_index + pruning_delay;
+    let pruning_threshold = pruning_index + max_milestones_to_keep;
 
     if *ledger_index < pruning_threshold {
         Err(PruningSkipReason::BelowThreshold {
             reached_in: pruning_threshold - *ledger_index,
         })
     } else {
-        let target_pruning_index = *ledger_index - pruning_delay;
+        let target_pruning_index = *ledger_index - max_milestones_to_keep;
 
         Ok((
             pruning_index.into(),
