@@ -2004,8 +2004,8 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
     type Error = Error;
 
     fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
-        let tail_transaction_hash =
-            prefix_hex::decode(&value.tail_transaction_hash.0).map_err(|_| Error::InvalidField("tailTransactionHash"))?;
+        let tail_transaction_hash = prefix_hex::decode(&value.tail_transaction_hash.0)
+            .map_err(|_| Error::InvalidField("tailTransactionHash"))?;
         Ok(MigratedFundsEntry::new(
             TailTransactionHash::new(tail_transaction_hash)?,
             (&value.address).try_into()?,
