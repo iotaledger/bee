@@ -127,6 +127,8 @@ pub struct ValidationContext<'a> {
     pub unlocked_addresses: HashSet<Address>,
     ///
     pub storage_deposit_returns: HashMap<Address, u64>,
+    ///
+    pub simple_deposits: HashMap<Address, u64>,
 }
 
 impl<'a> ValidationContext<'a> {
@@ -172,6 +174,7 @@ impl<'a> ValidationContext<'a> {
                 .collect(),
             unlocked_addresses: HashSet::new(),
             storage_deposit_returns: HashMap::new(),
+            simple_deposits: HashMap::new(),
         }
     }
 }

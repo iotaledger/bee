@@ -12,7 +12,7 @@ use crate::{
 
 use bee_message::{
     input::Input,
-    output::{Output, OutputId},
+    output::{Output, OutputId, UnlockCondition},
     payload::{
         transaction::{RegularTransactionEssence, TransactionEssence, TransactionId, TransactionPayload},
         Payload,
@@ -157,7 +157,16 @@ fn apply_regular_essence<B: StorageBackend>(
     // Validation of outputs.
     for created_output in essence.outputs() {
         let (amount, created_native_tokens, feature_blocks) = match created_output {
-            Output::Basic(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
+            Output::Basic(output) => {
+                if let [UnlockCondition::Address(ref address)] = output.unlock_conditions().as_ref() {
+                    let amount = context.simple_deposits.entry(*address.address()).or_default();
+
+                    *amount = amount
+                        .checked_add(output.amount())
+                        .ok_or(Error::CreatedAmountOverflow)?;
+                }
+                (output.amount(), output.native_tokens(), output.feature_blocks())
+            }
             Output::Alias(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
             Output::Foundry(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
             Output::Nft(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
@@ -189,16 +198,11 @@ fn apply_regular_essence<B: StorageBackend>(
 
     // Validation of storage deposit returns.
     for (return_address, return_amount) in context.storage_deposit_returns.iter() {
-        if !context.essence.outputs().iter().any(|output| {
-            if let Output::Basic(output) = output {
-                output.address() == return_address
-                    && output.amount() == *return_amount
-                    && output.unlock_conditions().len() == 1
-                    && output.feature_blocks().len() == 0
-            } else {
-                false
+        if let Some(deposit_amount) = context.simple_deposits.get(return_address) {
+            if deposit_amount < return_amount {
+                return Ok(ConflictReason::StorageDepositReturnMismatch);
             }
-        }) {
+        } else {
             return Ok(ConflictReason::StorageDepositReturnMismatch);
         }
     }
