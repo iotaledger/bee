@@ -227,7 +227,7 @@ impl From<&RegularTransactionEssence> for RegularTransactionEssenceDto {
             kind: RegularTransactionEssence::KIND,
             network_id: value.network_id().to_string(),
             inputs: value.inputs().iter().map(Into::into).collect::<Vec<_>>(),
-            inputs_commitment: prefix_hex::encode(value.inputs_commitment()).into(),
+            inputs_commitment: prefix_hex::encode(value.inputs_commitment()),
             outputs: value.outputs().iter().map(Into::into).collect::<Vec<_>>(),
             payload: match value.payload() {
                 Some(Payload::TaggedData(i)) => Some(PayloadDto::TaggedData(Box::new(i.as_ref().into()))),
