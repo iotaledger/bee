@@ -14,7 +14,7 @@ const PRUNING_BY_SIZE_ENABLED_DEFAULT: bool = true;
 const MAX_MILESTONES_TO_KEEP_DEFAULT: u32 = 60480;
 const THRESHOLD_PERCENTAGE_DEFAULT: f32 = 10.0;
 const COOLDOWN_TIME_DEFAULT: &str = "5m";
-const TARGET_SIZE_DEFAULT: &str =  "30Gb";
+const TARGET_SIZE_DEFAULT: &str = "30Gb";
 
 /// Builder for a [`PruningConfig`].
 #[derive(Default, Deserialize, PartialEq)]

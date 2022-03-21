@@ -212,9 +212,7 @@ impl StorageBackend for Storage {
     }
 
     fn size(&self) -> Result<Option<usize>, Self::Error> {
-        Ok(Some(
-            self.inner.live_files()?.iter().fold(0, |acc, file| acc + file.size),
-        ))
+        Ok(Some(self.inner.live_files()?.iter().map(|file| file.size).sum()))
     }
 
     fn get_health(&self) -> Result<Option<StorageHealth>, Self::Error> {
