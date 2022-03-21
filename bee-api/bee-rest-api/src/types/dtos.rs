@@ -47,55 +47,25 @@ use serde_json::Value;
 
 use core::str::FromStr;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct IntegerString(String);
-
-// impl From<u32> for IntegerString {
-//     fn from(value: u64) -> Self {
-//         IntegerString(value.to_string())
-//     }
-// }
-
-impl From<u64> for IntegerString {
-    fn from(value: u64) -> Self {
-        IntegerString(value.to_string())
-    }
-}
-
-// impl From<usize> for IntegerString {
-//     fn from(value: u64) -> Self {
-//         IntegerString(value.to_string())
-//     }
-// }
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct HexString(pub String);
-
-impl<T: core::fmt::Display> From<T> for HexString {
-    fn from(value: T) -> Self {
-        HexString(value.to_string())
-    }
-}
-
 /// The message object that nodes gossip around in the network.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
     #[serde(rename = "protocolVersion")]
     pub protocol_version: u8,
     #[serde(rename = "parentMessageIds")]
-    pub parents: Vec<HexString>,
+    pub parents: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub payload: Option<PayloadDto>,
-    pub nonce: IntegerString,
+    pub nonce: String,
 }
 
 impl From<&Message> for MessageDto {
     fn from(value: &Message) -> Self {
         MessageDto {
             protocol_version: value.protocol_version(),
-            parents: value.parents().iter().map(Into::into).collect(),
+            parents: value.parents().iter().map(MessageId::to_string).collect(),
             payload: value.payload().map(Into::into),
-            nonce: value.nonce().into(),
+            nonce: value.nonce().to_string(),
         }
     }
 }
@@ -109,7 +79,7 @@ impl TryFrom<&MessageDto> for Message {
                 .parents
                 .iter()
                 .map(|m| {
-                    m.0.parse::<MessageId>()
+                    m.parse::<MessageId>()
                         .map_err(|_| Error::InvalidField("parentMessageIds"))
                 })
                 .collect::<Result<Vec<MessageId>, Error>>()?,
@@ -117,7 +87,7 @@ impl TryFrom<&MessageDto> for Message {
         let mut builder = MessageBuilder::new(parents)
             .with_protocol_version(value.protocol_version)
             .with_nonce_provider(
-                value.nonce.0.parse::<u64>().map_err(|_| Error::InvalidField("nonce"))?,
+                value.nonce.parse::<u64>().map_err(|_| Error::InvalidField("nonce"))?,
                 0f64,
             );
         if let Some(p) = value.payload.as_ref() {
@@ -245,7 +215,7 @@ pub struct RegularTransactionEssenceDto {
     pub network_id: String,
     pub inputs: Vec<InputDto>,
     #[serde(rename = "inputsCommitment")]
-    pub inputs_commitment: HexString,
+    pub inputs_commitment: String,
     pub outputs: Vec<OutputDto>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub payload: Option<PayloadDto>,
@@ -288,7 +258,7 @@ impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
                 .network_id
                 .parse::<u64>()
                 .map_err(|_| Error::InvalidField("networkId"))?,
-            prefix_hex::decode(&value.inputs_commitment.0).map_err(MessageError::HexError)?,
+            prefix_hex::decode(&value.inputs_commitment).map_err(MessageError::HexError)?,
         )
         .with_inputs(inputs)
         .with_outputs(outputs);
@@ -1751,7 +1721,7 @@ impl From<&SignatureLockedSingleOutput> for SignatureLockedSingleOutputDto {
         Self {
             kind: SignatureLockedSingleOutput::KIND,
             address: value.address().into(),
-            amount: value.amount(),
+            amount: value.amount().to_string(),
         }
     }
 }
@@ -1765,7 +1735,7 @@ impl TryFrom<&SignatureLockedSingleOutputDto> for SignatureLockedSingleOutput {
             (&value.address)
                 .try_into()
                 .map_err(|_e| Error::InvalidField("address"))?,
-            value.amount,
+            value.amount.parse::<u64>().map_err(|_| Error::InvalidField("amount"))?,
         )?)
     }
 }
@@ -1788,7 +1758,7 @@ impl From<&SignatureLockedDustAllowanceOutput> for SignatureLockedDustAllowanceO
         Self {
             kind: SignatureLockedDustAllowanceOutput::KIND,
             address: value.address().into(),
-            amount: value.amount(),
+            amount: value.amount().to_string(),
         }
     }
 }
@@ -1802,7 +1772,7 @@ impl TryFrom<&SignatureLockedDustAllowanceOutputDto> for SignatureLockedDustAllo
             (&value.address)
                 .try_into()
                 .map_err(|_e| Error::InvalidField("address"))?,
-            value.amount,
+            value.amount.parse::<u64>().map_err(|_| Error::InvalidField("amount"))?,
         )?)
     }
 }
@@ -2000,7 +1970,7 @@ impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MigratedFundsEntryDto {
     #[serde(rename = "tailTransactionHash")]
-    pub tail_transaction_hash: HexString,
+    pub tail_transaction_hash: String,
     pub address: AddressDto,
     pub deposit: u64,
 }
@@ -2008,7 +1978,7 @@ pub struct MigratedFundsEntryDto {
 impl From<&MigratedFundsEntry> for MigratedFundsEntryDto {
     fn from(value: &MigratedFundsEntry) -> Self {
         MigratedFundsEntryDto {
-            tail_transaction_hash: HexString(prefix_hex::encode(value.tail_transaction_hash().as_ref())),
+            tail_transaction_hash: prefix_hex::encode(value.tail_transaction_hash().as_ref()),
             address: value.address().into(),
             deposit: value.amount(),
         }
@@ -2019,8 +1989,8 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
     type Error = Error;
 
     fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
-        let tail_transaction_hash = prefix_hex::decode(&value.tail_transaction_hash.0)
-            .map_err(|_| Error::InvalidField("tailTransactionHash"))?;
+        let tail_transaction_hash =
+            prefix_hex::decode(&value.tail_transaction_hash).map_err(|_| Error::InvalidField("tailTransactionHash"))?;
         Ok(MigratedFundsEntry::new(
             TailTransactionHash::new(tail_transaction_hash)?,
             (&value.address).try_into()?,

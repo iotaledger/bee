@@ -9,6 +9,7 @@ use crate::{
     types::responses::TipsResponse,
 };
 
+use bee_message::MessageId;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 
@@ -41,7 +42,7 @@ pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<Tangle<B>>) -
     }
     match tangle.get_messages_to_approve().await {
         Some(tips) => Ok(warp::reply::json(&TipsResponse {
-            tip_message_ids: tips.iter().map(Into::into).collect(),
+            tip_message_ids: tips.iter().map(MessageId::to_string).collect(),
         })),
         None => Err(reject::custom(CustomRejection::ServiceUnavailable(
             "tip pool is empty".to_string(),

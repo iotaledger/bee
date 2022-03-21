@@ -10,7 +10,7 @@ use crate::{
 };
 
 use bee_ledger::types::OutputDiff;
-use bee_message::milestone::MilestoneIndex;
+use bee_message::{milestone::MilestoneIndex, output::OutputId};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
@@ -57,7 +57,7 @@ pub(crate) fn milestone_utxo_changes<B: StorageBackend>(
 
     Ok(warp::reply::json(&UtxoChangesResponse {
         index: *index,
-        created_outputs: fetched.created_outputs().iter().map(Into::into).collect(),
-        consumed_outputs: fetched.consumed_outputs().iter().map(Into::into).collect(),
+        created_outputs: fetched.created_outputs().iter().map(OutputId::to_string).collect(),
+        consumed_outputs: fetched.consumed_outputs().iter().map(OutputId::to_string).collect(),
     }))
 }

@@ -160,7 +160,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
 
     Ok(warp::reply::with_status(
         warp::reply::json(&SubmitMessageResponse {
-            message_id: message_id.into(),
+            message_id: message_id.to_string(),
         }),
         StatusCode::CREATED,
     ))
@@ -216,7 +216,7 @@ pub(crate) async fn submit_message_raw(
     let message_id = forward_to_message_submitter((*buf).to_vec(), message_submitter).await?;
     Ok(warp::reply::with_status(
         warp::reply::json(&SubmitMessageResponse {
-            message_id: message_id.into(),
+            message_id: message_id.to_string(),
         }),
         StatusCode::CREATED,
     ))

@@ -3,7 +3,7 @@
 
 use crate::types::{
     body::BodyInner,
-    dtos::{HexString, IntegerString, LedgerInclusionStateDto, MessageDto, OutputDto, PeerDto, ReceiptDto},
+    dtos::{LedgerInclusionStateDto, MessageDto, OutputDto, PeerDto, ReceiptDto},
 };
 
 use serde::{Deserialize, Serialize};
@@ -82,7 +82,7 @@ pub struct MetricsResponse {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TipsResponse {
     #[serde(rename = "tipMessageIds")]
-    pub tip_message_ids: Vec<HexString>,
+    pub tip_message_ids: Vec<String>,
 }
 
 impl BodyInner for TipsResponse {}
@@ -92,7 +92,7 @@ impl BodyInner for TipsResponse {}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SubmitMessageResponse {
     #[serde(rename = "messageId")]
-    pub message_id: HexString,
+    pub message_id: String,
 }
 
 impl BodyInner for SubmitMessageResponse {}
@@ -109,9 +109,9 @@ impl BodyInner for MessageResponse {}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageMetadataResponse {
     #[serde(rename = "messageId")]
-    pub message_id: HexString,
+    pub message_id: String,
     #[serde(rename = "parentMessageIds")]
-    pub parent_message_ids: Vec<HexString>,
+    pub parent_message_ids: Vec<String>,
     #[serde(rename = "isSolid")]
     pub is_solid: bool,
     #[serde(rename = "referencedByMilestoneIndex", skip_serializing_if = "Option::is_none")]
@@ -135,12 +135,12 @@ impl BodyInner for MessageMetadataResponse {}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageChildrenResponse {
     #[serde(rename = "messageId")]
-    pub message_id: HexString,
+    pub message_id: String,
     #[serde(rename = "maxResults")]
     pub max_results: usize,
     pub count: usize,
     #[serde(rename = "childrenMessageIds")]
-    pub children_message_ids: Vec<HexString>,
+    pub children_message_ids: Vec<String>,
 }
 
 impl BodyInner for MessageChildrenResponse {}
@@ -150,9 +150,9 @@ impl BodyInner for MessageChildrenResponse {}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OutputResponse {
     #[serde(rename = "messageId")]
-    pub message_id: HexString,
+    pub message_id: String,
     #[serde(rename = "transactionId")]
-    pub transaction_id: HexString,
+    pub transaction_id: String,
     #[serde(rename = "outputIndex")]
     pub output_index: u16,
     #[serde(rename = "isSpent")]
@@ -162,7 +162,7 @@ pub struct OutputResponse {
     #[serde(rename = "milestoneTimestampSpent", skip_serializing_if = "Option::is_none")]
     pub milestone_timestamp_spent: Option<u64>,
     #[serde(rename = "transactionIdSpent", skip_serializing_if = "Option::is_none")]
-    pub transaction_id_spent: Option<HexString>,
+    pub transaction_id_spent: Option<String>,
     #[serde(rename = "milestoneIndexBooked")]
     pub milestone_index_booked: u32,
     #[serde(rename = "milestoneTimestampBooked")]
@@ -221,7 +221,7 @@ impl BodyInner for ReceiptsResponse {}
 pub struct TreasuryResponse {
     #[serde(rename = "milestoneId")]
     pub milestone_id: String,
-    pub amount: IntegerString,
+    pub amount: String,
 }
 
 impl BodyInner for TreasuryResponse {}
@@ -233,7 +233,7 @@ pub struct MilestoneResponse {
     #[serde(rename = "index")]
     pub milestone_index: u32,
     #[serde(rename = "messageId")]
-    pub message_id: HexString,
+    pub message_id: String,
     pub timestamp: u64,
 }
 
@@ -245,9 +245,9 @@ impl BodyInner for MilestoneResponse {}
 pub struct UtxoChangesResponse {
     pub index: u32,
     #[serde(rename = "createdOutputs")]
-    pub created_outputs: Vec<HexString>,
+    pub created_outputs: Vec<String>,
     #[serde(rename = "consumedOutputs")]
-    pub consumed_outputs: Vec<HexString>,
+    pub consumed_outputs: Vec<String>,
 }
 
 impl BodyInner for UtxoChangesResponse {}

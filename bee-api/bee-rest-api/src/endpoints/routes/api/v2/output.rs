@@ -79,8 +79,8 @@ pub(crate) async fn output<B: StorageBackend>(
                 })?;
 
                 Ok(warp::reply::json(&OutputResponse {
-                    message_id: output.message_id().into(),
-                    transaction_id: output_id.transaction_id().into(),
+                    message_id: output.message_id().to_string(),
+                    transaction_id: output_id.transaction_id().to_string(),
                     output_index: output_id.index(),
                     is_spent: is_spent.is_some(),
                     // TODO

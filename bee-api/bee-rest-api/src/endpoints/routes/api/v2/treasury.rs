@@ -38,6 +38,6 @@ pub(crate) fn treasury<B: StorageBackend>(storage: ResourceHandle<B>) -> Result<
 
     Ok(warp::reply::json(&TreasuryResponse {
         milestone_id: treasury.milestone_id().to_string(),
-        amount: treasury.inner().amount().into(),
+        amount: treasury.inner().amount().to_string(),
     }))
 }
