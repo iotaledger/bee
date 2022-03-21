@@ -1,15 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::{metrics::NodeMetrics, milestone_key_manager::MilestoneKeyManager},
-    workers::{
-        config::ProtocolConfig, heartbeater::broadcast_heartbeat, peer::PeerManager, storage::StorageBackend,
-        MetricsWorker, MilestoneRequesterWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
-        PeerManagerResWorker, RequestedMilestones,
-    },
-};
+use std::{any::TypeId, convert::Infallible};
 
+use async_trait::async_trait;
 use bee_message::{
     milestone::Milestone,
     payload::{
@@ -20,14 +14,19 @@ use bee_message::{
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{event::LatestMilestoneChanged, Tangle, TangleWorker};
-
-use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, convert::Infallible};
+use crate::{
+    types::{metrics::NodeMetrics, milestone_key_manager::MilestoneKeyManager},
+    workers::{
+        config::ProtocolConfig, heartbeater::broadcast_heartbeat, peer::PeerManager, storage::StorageBackend,
+        MetricsWorker, MilestoneRequesterWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
+        PeerManagerResWorker, RequestedMilestones,
+    },
+};
 
 #[derive(Debug)]
 pub(crate) enum Error {

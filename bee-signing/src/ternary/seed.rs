@@ -3,18 +3,17 @@
 
 //! Ternary seed to derive private keys, public keys and signatures from.
 
+use std::str::FromStr;
+
 use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
 use bee_crypto::ternary::{
     sponge::{Kerl, Sponge},
     HASH_LENGTH,
 };
 use bee_ternary::{Btrit, T1B1Buf, Trit, TritBuf, Trits, TryteBuf, T1B1};
-
 use rand::distributions::{Distribution, Uniform};
 use thiserror::Error;
 use zeroize::Zeroize;
-
-use std::str::FromStr;
 
 /// Errors occuring when handling a `Seed`.
 #[derive(Debug, Error, PartialEq)]

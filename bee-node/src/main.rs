@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{error::Error, path::Path};
+
 use bee_gossip::Keypair;
 use bee_node::{
     plugins, print_banner_and_version, read_keypair_from_pem_file,
@@ -9,15 +11,11 @@ use bee_node::{
     NodeConfig, NodeConfigBuilder, PemFileError,
 };
 use bee_runtime::node::NodeBuilder as _;
-
 #[cfg(feature = "rocksdb")]
 use bee_storage_rocksdb::storage::Storage;
 #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
 use bee_storage_sled::storage::Storage;
-
 use log::{error, info, warn};
-
-use std::{error::Error, path::Path};
 
 const KEYPAIR_STR_LENGTH: usize = 128;
 

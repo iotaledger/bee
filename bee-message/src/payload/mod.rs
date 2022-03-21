@@ -9,17 +9,15 @@ pub mod receipt;
 pub mod transaction;
 pub mod treasury;
 
-use indexation::IndexationPayload;
-use milestone::MilestonePayload;
-use receipt::ReceiptPayload;
-use transaction::TransactionPayload;
-use treasury::TreasuryTransactionPayload;
-
-use crate::Error;
+use alloc::boxed::Box;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use alloc::boxed::Box;
+use self::{
+    indexation::IndexationPayload, milestone::MilestonePayload, receipt::ReceiptPayload,
+    transaction::TransactionPayload, treasury::TreasuryTransactionPayload,
+};
+use crate::Error;
 
 /// A generic payload that can represent different types defining message payloads.
 #[derive(Clone, Debug, Eq, PartialEq)]

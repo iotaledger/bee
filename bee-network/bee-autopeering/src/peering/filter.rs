@@ -1,14 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    peer::{peer_id::PeerId, Peer},
-    NeighborValidator,
-};
-
 use std::{
     collections::HashSet,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
+};
+
+use crate::{
+    peer::{peer_id::PeerId, Peer},
+    NeighborValidator,
 };
 
 #[derive(Clone)]
@@ -101,12 +101,11 @@ impl<V: NeighborValidator> NeighborFilterInner<V> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::{
         local::services::{ServiceProtocol, AUTOPEERING_SERVICE_NAME},
         peer::Peer,
     };
-
-    use super::*;
 
     #[derive(Clone)]
     struct DummyValidator {}

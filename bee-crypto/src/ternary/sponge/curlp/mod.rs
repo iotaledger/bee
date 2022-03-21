@@ -4,17 +4,18 @@
 mod batched;
 mod unrolled;
 
-pub use batched::{BatchHasher, BATCH_SIZE};
-pub use unrolled::UnrolledCurlP81;
-
-use crate::ternary::{sponge::Sponge, HASH_LENGTH};
-
-use bee_ternary::{Btrit, TritBuf, Trits};
-
 use std::{
     convert::Infallible,
     ops::{Deref, DerefMut},
 };
+
+use bee_ternary::{Btrit, TritBuf, Trits};
+
+pub use self::{
+    batched::{BatchHasher, BATCH_SIZE},
+    unrolled::UnrolledCurlP81,
+};
+use crate::ternary::{sponge::Sponge, HASH_LENGTH};
 
 const STATE_LENGTH: usize = HASH_LENGTH * 3;
 const HALF_STATE_LENGTH: usize = STATE_LENGTH / 2;

@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{Btrit, RawEncoding, RawEncodingBuf, TritBuf, Trits, Utrit};
+use core::{fmt, marker::PhantomData};
 
 use serde::{
     de::{Error, SeqAccess, Unexpected, Visitor},
@@ -9,7 +9,7 @@ use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
 };
 
-use core::{fmt, marker::PhantomData};
+use crate::{Btrit, RawEncoding, RawEncodingBuf, TritBuf, Trits, Utrit};
 
 // Serialisation
 

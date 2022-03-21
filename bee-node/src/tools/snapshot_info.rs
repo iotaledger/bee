@@ -1,17 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{fs::OpenOptions, io::BufReader, path::Path};
+
 use bee_common::packable::Packable;
 use bee_ledger::types::{
     snapshot::{DeltaSnapshotHeader, FullSnapshotHeader, SnapshotHeader, SnapshotKind},
     Error as SnapshotError,
 };
-
 use chrono::{offset::TimeZone, Utc};
 use structopt::StructOpt;
 use thiserror::Error;
-
-use std::{fs::OpenOptions, io::BufReader, path::Path};
 
 #[derive(Debug, Error)]
 pub enum SnapshotInfoError {

@@ -3,15 +3,14 @@
 
 //! The sled storage backend.
 
-use crate::config::{SledConfig, SledConfigBuilder};
-
 use bee_storage::{
     access::{Fetch, Insert},
     backend::StorageBackend,
     system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
-
 use thiserror::Error;
+
+use crate::config::{SledConfig, SledConfigBuilder};
 
 /// Error to be raised when a backend operation fails.
 #[derive(Debug, Error)]

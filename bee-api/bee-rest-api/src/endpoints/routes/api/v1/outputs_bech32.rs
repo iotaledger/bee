@@ -1,18 +1,17 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_ledger::workers::consensus::ConsensusWorkerCommand;
+use bee_message::address::Address;
+use tokio::sync::mpsc;
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
+
 use crate::endpoints::{
     config::ROUTE_OUTPUTS_BECH32, filters::with_consensus_worker, path_params::bech32_address,
     permission::has_permission, routes::api::v1::outputs_ed25519::outputs_ed25519,
 };
-
-use bee_ledger::workers::consensus::ConsensusWorkerCommand;
-use bee_message::address::Address;
-
-use tokio::sync::mpsc;
-use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (Address,), Error = Rejection> + Clone {
     super::path()

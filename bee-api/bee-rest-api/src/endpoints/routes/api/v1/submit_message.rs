@@ -1,6 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_common::packable::Packable;
+use bee_message::{parents::Parents, payload::Payload, Message, MessageBuilder, MessageId};
+use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
+use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::Tangle;
+use futures::channel::oneshot;
+use log::error;
+use serde_json::Value as JsonValue;
+use tokio::sync::mpsc;
+use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW},
@@ -12,21 +26,6 @@ use crate::{
     },
     types::{body::SuccessBody, dtos::PayloadDto, responses::SubmitMessageResponse},
 };
-
-use bee_common::packable::Packable;
-use bee_message::{parents::Parents, payload::Payload, Message, MessageBuilder, MessageId};
-use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
-use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
-
-use futures::channel::oneshot;
-use log::error;
-use serde_json::Value as JsonValue;
-use tokio::sync::mpsc;
-use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("messages")).and(warp::path::end())

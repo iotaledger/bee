@@ -1,6 +1,18 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{any::TypeId, convert::Infallible};
+
+use async_trait::async_trait;
+use bee_gossip::PeerId;
+use bee_message::MessageId;
+use bee_pow::score;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use futures::{channel::oneshot::Sender, StreamExt};
+use log::{error, info, trace, warn};
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
+
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
@@ -13,19 +25,6 @@ use crate::{
         MetricsWorker, PeerManager, PeerManagerResWorker,
     },
 };
-
-use bee_gossip::PeerId;
-use bee_message::MessageId;
-use bee_pow::score;
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-
-use async_trait::async_trait;
-use futures::{channel::oneshot::Sender, StreamExt};
-use log::{error, info, trace, warn};
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::UnboundedReceiverStream;
-
-use std::{any::TypeId, convert::Infallible};
 
 pub(crate) struct HasherWorkerEvent {
     pub(crate) from: Option<PeerId>,

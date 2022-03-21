@@ -3,20 +3,19 @@
 
 //! Contains the base types to build a Bee node.
 
-use crate::shutdown::ShutdownTx;
-
-use bee_runtime::{node::Node, worker::Worker};
-
-use anymap::{any::Any as AnyMapAny, Map};
-use futures::Future;
-use fxhash::FxBuildHasher;
-use tokio::task;
-
 use std::{
     any::{type_name, TypeId},
     collections::{HashMap, HashSet},
     pin::Pin,
 };
+
+use anymap::{any::Any as AnyMapAny, Map};
+use bee_runtime::{node::Node, worker::Worker};
+use futures::Future;
+use fxhash::FxBuildHasher;
+use tokio::task;
+
+use crate::shutdown::ShutdownTx;
 
 pub(crate) type WorkerStart<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + 'a>>;
 pub(crate) type WorkerStop<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> + Send;

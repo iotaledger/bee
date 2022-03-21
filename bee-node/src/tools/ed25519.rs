@@ -5,7 +5,6 @@ use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
     signatures::ed25519::SecretKey,
 };
-
 use structopt::StructOpt;
 use thiserror::Error;
 

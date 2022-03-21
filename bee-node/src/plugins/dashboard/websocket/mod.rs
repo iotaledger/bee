@@ -5,9 +5,24 @@ mod commands;
 pub(crate) mod responses;
 mod topics;
 
-use commands::WsCommand;
-use topics::WsTopic;
+use std::{
+    collections::{HashMap, HashSet},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+};
 
+use auth_helper::jwt::JsonWebToken;
+use bee_runtime::{resource::ResourceHandle, shutdown_stream::ShutdownStream};
+use bee_tangle::Tangle;
+use futures::{channel::oneshot, FutureExt, StreamExt};
+use log::{debug, error};
+use tokio::sync::{mpsc, RwLock};
+use tokio_stream::wrappers::UnboundedReceiverStream;
+use warp::ws::{Message, WebSocket};
+
+use self::{commands::WsCommand, topics::WsTopic};
 use crate::{
     plugins::dashboard::{
         auth::AUDIENCE_CLAIM,
@@ -17,24 +32,6 @@ use crate::{
         },
     },
     storage::NodeStorageBackend,
-};
-
-use bee_runtime::{resource::ResourceHandle, shutdown_stream::ShutdownStream};
-use bee_tangle::Tangle;
-
-use auth_helper::jwt::JsonWebToken;
-use futures::{channel::oneshot, FutureExt, StreamExt};
-use log::{debug, error};
-use tokio::sync::{mpsc, RwLock};
-use tokio_stream::wrappers::UnboundedReceiverStream;
-use warp::ws::{Message, WebSocket};
-
-use std::{
-    collections::{HashMap, HashSet},
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc,
-    },
 };
 
 /// Our global unique user id counter.

@@ -19,14 +19,16 @@ mod util;
 pub mod plugins;
 pub mod tools;
 
-pub use cli::ClArgs;
-pub use config::{NodeConfig, NodeConfigBuilder};
-pub use entrynode::{builder::EntryNodeBuilder, config::EntryNodeConfig, EntryNode};
-pub use fullnode::{builder::FullNodeBuilder, config::FullNodeConfig, FullNode};
-pub use identity::{read_keypair_from_pem_file, write_keypair_to_pem_file, PemFileError};
-pub use local::Local;
-pub use storage::NodeStorageBackend;
-pub use util::print_banner_and_version;
+pub use self::{
+    cli::ClArgs,
+    config::{NodeConfig, NodeConfigBuilder},
+    entrynode::{builder::EntryNodeBuilder, config::EntryNodeConfig, EntryNode},
+    fullnode::{builder::FullNodeBuilder, config::FullNodeConfig, FullNode},
+    identity::{read_keypair_from_pem_file, write_keypair_to_pem_file, PemFileError},
+    local::Local,
+    storage::NodeStorageBackend,
+    util::print_banner_and_version,
+};
 
 pub(crate) const BEE_NAME: &str = "Bee";
 pub(crate) const BEE_VERSION: &str = env!("CARGO_PKG_VERSION");

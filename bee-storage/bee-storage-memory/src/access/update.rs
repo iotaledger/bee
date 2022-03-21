@@ -3,11 +3,11 @@
 
 //! Update access operations.
 
-use crate::storage::Storage;
-
 use bee_message::MessageId;
 use bee_storage::{access::Update, backend::StorageBackend};
 use bee_tangle::metadata::MessageMetadata;
+
+use crate::storage::Storage;
 
 macro_rules! impl_update {
     ($key:ty, $value:ty, $field:ident) => {

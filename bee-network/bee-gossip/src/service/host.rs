@@ -1,25 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{
-    command::{Command, CommandReceiver, CommandSender},
-    error::Error,
-    event::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
-};
-
-use crate::{
-    alias,
-    init::global::{self, reconnect_interval_secs},
-    peer::{
-        error::Error as PeerError,
-        info::{PeerInfo, PeerRelation},
-        list::PeerListWrapper as PeerList,
-    },
-    swarm::protocols::iota_gossip,
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use bee_runtime::shutdown_stream::ShutdownStream;
-
 use futures::{
     channel::oneshot,
     io::{BufReader, BufWriter},
@@ -31,7 +15,21 @@ use rand::Rng;
 use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
-use std::time::{SystemTime, UNIX_EPOCH};
+use super::{
+    command::{Command, CommandReceiver, CommandSender},
+    error::Error,
+    event::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
+};
+use crate::{
+    alias,
+    init::global::{self, reconnect_interval_secs},
+    peer::{
+        error::Error as PeerError,
+        info::{PeerInfo, PeerRelation},
+        list::PeerListWrapper as PeerList,
+    },
+    swarm::protocols::iota_gossip,
+};
 
 const MAX_PEER_STATE_CHECKER_DELAY_MILLIS: u64 = 2000;
 const MAX_DIALS: usize = 3;
@@ -60,13 +58,12 @@ type Shutdown = oneshot::Receiver<()>;
 const IO_BUFFER_LEN: usize = 32 * 1024;
 
 pub mod integrated {
-    use super::*;
-
-    use bee_runtime::{node::Node, worker::Worker};
+    use std::{any::TypeId, convert::Infallible};
 
     use async_trait::async_trait;
+    use bee_runtime::{node::Node, worker::Worker};
 
-    use std::{any::TypeId, convert::Infallible};
+    use super::*;
 
     /// A node worker, that deals with processing user commands, and publishing events.
     ///

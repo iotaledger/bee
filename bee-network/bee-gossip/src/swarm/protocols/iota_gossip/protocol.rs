@@ -1,13 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{
-    event::{IotaGossipEvent, IotaGossipHandlerEvent},
-    handler::{GossipProtocolHandler, IotaGossipHandlerInEvent},
-    id::IotaGossipIdentifier,
+use std::{
+    collections::{HashMap, VecDeque},
+    task::{Context, Poll},
 };
-
-use crate::{alias, init::global::network_id, network::origin::Origin};
 
 use libp2p::{
     core::{connection::ConnectionId, ConnectedPoint},
@@ -16,10 +13,12 @@ use libp2p::{
 };
 use log::debug;
 
-use std::{
-    collections::{HashMap, VecDeque},
-    task::{Context, Poll},
+use super::{
+    event::{IotaGossipEvent, IotaGossipHandlerEvent},
+    handler::{GossipProtocolHandler, IotaGossipHandlerInEvent},
+    id::IotaGossipIdentifier,
 };
+use crate::{alias, init::global::network_id, network::origin::Origin};
 
 const IOTA_GOSSIP_NAME: &str = "iota-gossip";
 const IOTA_GOSSIP_VERSION: &str = "1.0.0";

@@ -1,6 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::sync::atomic::{AtomicU32, Ordering};
+
+use bee_message::{
+    milestone::{Milestone, MilestoneIndex},
+    Message, MessageId,
+};
+use bee_runtime::resource::ResourceHandle;
+use hashbrown::HashMap;
+use log::warn;
+use ref_cast::RefCast;
+use tokio::sync::Mutex;
+
 use crate::{
     config::TangleConfig,
     metadata::{IndexId, MessageMetadata},
@@ -8,19 +20,6 @@ use crate::{
     storage::StorageBackend,
     urts::UrtsTipPool,
 };
-
-use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
-    Message, MessageId,
-};
-use bee_runtime::resource::ResourceHandle;
-
-use hashbrown::HashMap;
-use log::warn;
-use ref_cast::RefCast;
-use tokio::sync::Mutex;
-
-use std::sync::atomic::{AtomicU32, Ordering};
 
 const SYNCED_THRESHOLD: u32 = 2;
 const CONFIRMED_THRESHOLD: u32 = 2;

@@ -10,6 +10,25 @@ mod routes;
 mod websocket;
 mod workers;
 
+use std::{
+    any::{Any, TypeId},
+    convert::Infallible,
+};
+
+use async_trait::async_trait;
+use bee_ledger::workers::event::MilestoneConfirmed;
+use bee_protocol::workers::{
+    event::{MessageSolidified, MpsMetricsUpdated, TipAdded, TipRemoved, VertexCreated},
+    MetricsWorker, PeerManagerResWorker,
+};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::{event::LatestMilestoneChanged, Tangle, TangleWorker};
+use futures::stream::StreamExt;
+use log::{debug, error, info};
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
+use warp::ws::Message;
+
 use crate::{
     fullnode::config::FullNodeConfig,
     plugins::dashboard::{
@@ -24,26 +43,6 @@ use crate::{
         },
     },
     storage::NodeStorageBackend,
-};
-
-use bee_ledger::workers::event::MilestoneConfirmed;
-use bee_protocol::workers::{
-    event::{MessageSolidified, MpsMetricsUpdated, TipAdded, TipRemoved, VertexCreated},
-    MetricsWorker, PeerManagerResWorker,
-};
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{event::LatestMilestoneChanged, Tangle, TangleWorker};
-
-use async_trait::async_trait;
-use futures::stream::StreamExt;
-use log::{debug, error, info};
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::UnboundedReceiverStream;
-use warp::ws::Message;
-
-use std::{
-    any::{Any, TypeId},
-    convert::Infallible,
 };
 
 const CONFIRMED_THRESHOLD: u32 = 5;

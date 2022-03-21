@@ -3,18 +3,17 @@
 
 #![allow(warnings)]
 
+use std::{future::Future, io, net::SocketAddr, pin::Pin};
+
 use bee_autopeering::{
     config::AutopeeringConfigBuilder, init, stores::InMemoryPeerStore, AutopeeringConfig, Event, Local,
     NeighborValidator, Peer, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
-
 use libp2p_core::identity::ed25519::Keypair;
 use log::LevelFilter;
 use serde_json::Value;
 use tokio::signal::ctrl_c;
 use tokio_stream::StreamExt;
-
-use std::{future::Future, io, net::SocketAddr, pin::Pin};
 
 const AUTOPEERING_VERSION: u32 = 1;
 const NETWORK_SERVICE_NAME: &str = "chrysalis-mainnet";

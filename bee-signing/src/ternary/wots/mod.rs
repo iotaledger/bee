@@ -8,23 +8,23 @@ mod normalize;
 mod shake;
 mod sponge;
 
-pub use normalize::{normalize, Error as NormalizeError};
-pub use shake::{WotsShakePrivateKeyGenerator, WotsShakePrivateKeyGeneratorBuilder};
-pub use sponge::{WotsSpongePrivateKeyGenerator, WotsSpongePrivateKeyGeneratorBuilder};
-
-use crate::ternary::{PrivateKey, PublicKey, RecoverableSignature, Signature, SIGNATURE_FRAGMENT_LENGTH};
-
-use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
-use bee_crypto::ternary::{sponge::Sponge, HASH_LENGTH};
-use bee_ternary::{T1B1Buf, TritBuf, Trits, Tryte, T1B1};
-
-use thiserror::Error;
-use zeroize::Zeroize;
-
 use std::{
     fmt::{self, Display, Formatter},
     marker::PhantomData,
 };
+
+use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
+use bee_crypto::ternary::{sponge::Sponge, HASH_LENGTH};
+use bee_ternary::{T1B1Buf, TritBuf, Trits, Tryte, T1B1};
+use thiserror::Error;
+use zeroize::Zeroize;
+
+pub use self::{
+    normalize::{normalize, Error as NormalizeError},
+    shake::{WotsShakePrivateKeyGenerator, WotsShakePrivateKeyGeneratorBuilder},
+    sponge::{WotsSpongePrivateKeyGenerator, WotsSpongePrivateKeyGeneratorBuilder},
+};
+use crate::ternary::{PrivateKey, PublicKey, RecoverableSignature, Signature, SIGNATURE_FRAGMENT_LENGTH};
 
 /// Errors occuring during WOTS operations.
 #[derive(Debug, Error, PartialEq)]

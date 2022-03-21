@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
+
 use multiaddr::{Multiaddr, Protocol};
 use serde::Deserialize;
-
-use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 
 const DEFAULT_SESSION_TIMEOUT: u64 = 86400;
 const DEFAULT_USER: &str = "admin";

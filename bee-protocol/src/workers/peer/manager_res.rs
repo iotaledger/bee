@@ -3,16 +3,6 @@
 
 // TODO This exist to avoid a cyclic dependency, there has to be another way.
 
-use crate::types::peer::Peer;
-
-use bee_gossip::{GossipSender, PeerId};
-use bee_runtime::{node::Node, worker::Worker};
-
-use async_trait::async_trait;
-use futures::channel::oneshot;
-use log::debug;
-use parking_lot::RwLock;
-
 use std::{
     convert::Infallible,
     sync::{
@@ -20,6 +10,15 @@ use std::{
         Arc,
     },
 };
+
+use async_trait::async_trait;
+use bee_gossip::{GossipSender, PeerId};
+use bee_runtime::{node::Node, worker::Worker};
+use futures::channel::oneshot;
+use log::debug;
+use parking_lot::RwLock;
+
+use crate::types::peer::Peer;
 
 pub struct PeerManagerResWorker {}
 

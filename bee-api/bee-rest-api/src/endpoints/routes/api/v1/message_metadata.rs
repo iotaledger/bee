@@ -1,6 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_message::{payload::Payload, MessageId};
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::{ConflictReason, Tangle};
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         config::ROUTE_MESSAGE_METADATA, filters::with_tangle, path_params::message_id, permission::has_permission,
@@ -8,14 +15,6 @@ use crate::{
     },
     types::{body::SuccessBody, dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
 };
-
-use bee_message::{payload::Payload, MessageId};
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::{ConflictReason, Tangle};
-
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clone {
     super::path()

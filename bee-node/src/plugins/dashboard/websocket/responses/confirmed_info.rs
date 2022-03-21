@@ -1,15 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_ledger::workers::event::MilestoneConfirmed;
+use bee_message::MessageId;
+use serde::Serialize;
+
 use crate::plugins::dashboard::websocket::{
     responses::{WsEvent, WsEventInner},
     topics::WsTopic,
 };
-
-use bee_ledger::workers::event::MilestoneConfirmed;
-use bee_message::MessageId;
-
-use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct ConfirmedInfoResponse {

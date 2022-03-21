@@ -1,12 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{column_families::*, storage::Storage};
-
 use bee_common::packable::Packable;
 use bee_message::MessageId;
 use bee_storage::access::Update;
 use bee_tangle::metadata::MessageMetadata;
+
+use crate::{column_families::*, storage::Storage};
 
 impl Update<MessageId, MessageMetadata> for Storage {
     fn update(&self, message_id: &MessageId, mut f: impl FnMut(&mut MessageMetadata)) -> Result<(), Self::Error> {

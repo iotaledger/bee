@@ -1,15 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::TangleConfig, storage::StorageBackend, tangle::Tangle};
+use std::time::Instant;
 
 use bee_message::MessageId;
-
 use hashbrown::{hash_map::Entry, HashMap, HashSet};
 use log::debug;
 use rand::seq::IteratorRandom;
 
-use std::time::Instant;
+use crate::{config::TangleConfig, storage::StorageBackend, tangle::Tangle};
 
 #[allow(clippy::enum_variant_names)]
 enum Score {

@@ -25,18 +25,17 @@ pub mod tips;
 pub mod transaction_included_message;
 pub mod treasury;
 
-use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
+use std::net::IpAddr;
 
 use bee_gossip::NetworkCommandSender;
 use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
-
 use tokio::sync::mpsc;
 use warp::{self, Filter, Rejection, Reply};
 
-use std::net::IpAddr;
+use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
 pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("v1"))

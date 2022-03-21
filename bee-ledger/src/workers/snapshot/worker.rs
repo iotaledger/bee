@@ -1,22 +1,21 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{any::TypeId, collections::HashMap};
+
+use async_trait::async_trait;
+use bee_message::milestone::MilestoneIndex;
+use bee_runtime::{node::Node, worker::Worker};
+use bee_storage::{access::AsIterator, backend::StorageBackend as _, system::StorageHealth};
+use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
+use log::info;
+use time_helper as time;
+
 use crate::workers::{
     error::Error,
     snapshot::{config::SnapshotConfig, error::Error as SnapshotError, import::import_snapshots},
     storage::{self, StorageBackend},
 };
-
-use bee_message::milestone::MilestoneIndex;
-use bee_runtime::{node::Node, worker::Worker};
-use bee_storage::{access::AsIterator, backend::StorageBackend as _, system::StorageHealth};
-use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
-
-use async_trait::async_trait;
-use log::info;
-use time_helper as time;
-
-use std::{any::TypeId, collections::HashMap};
 
 pub struct SnapshotWorker {}
 

@@ -3,8 +3,6 @@
 
 //! Insert access operations.
 
-use crate::{storage::Storage, trees::*};
-
 use bee_common::packable::Packable;
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
@@ -25,6 +23,8 @@ use bee_storage::{
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
+
+use crate::{storage::Storage, trees::*};
 
 impl Insert<u8, System> for Storage {
     fn insert(&self, key: &u8, value: &System) -> Result<(), <Self as StorageBackend>::Error> {

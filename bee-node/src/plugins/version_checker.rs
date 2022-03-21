@@ -1,15 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use std::{convert::Infallible, time::Duration};
 
 use async_trait::async_trait;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use futures::StreamExt;
 use log::info;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
-
-use std::{convert::Infallible, time::Duration};
 
 const CHECK_INTERVAL_SEC: u64 = 3600;
 

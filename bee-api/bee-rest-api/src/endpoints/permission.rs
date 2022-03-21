@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::rejection::CustomRejection;
+use std::net::{IpAddr, SocketAddr};
 
 use warp::{reject, Filter, Rejection};
 
-use std::net::{IpAddr, SocketAddr};
+use crate::endpoints::rejection::CustomRejection;
 
 pub fn has_permission(
     route: &'static str,

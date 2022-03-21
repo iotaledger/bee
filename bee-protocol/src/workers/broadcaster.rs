@@ -1,21 +1,20 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::metrics::NodeMetrics,
-    workers::{packets::MessagePacket, peer::PeerManager, sender::Sender, MetricsWorker, PeerManagerResWorker},
-};
-
-use bee_gossip::PeerId;
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use std::{any::TypeId, convert::Infallible};
 
 use async_trait::async_trait;
+use bee_gossip::PeerId;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use futures::stream::StreamExt;
 use log::info;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, convert::Infallible};
+use crate::{
+    types::metrics::NodeMetrics,
+    workers::{packets::MessagePacket, peer::PeerManager, sender::Sender, MetricsWorker, PeerManagerResWorker},
+};
 
 pub(crate) struct BroadcasterWorkerEvent {
     pub(crate) source: Option<PeerId>,

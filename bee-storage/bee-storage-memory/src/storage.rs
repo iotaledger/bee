@@ -3,7 +3,7 @@
 
 //! An in-memory storage backend.
 
-use crate::table::{SingletonTable, Table, VecBinTable, VecTable};
+use std::sync::{PoisonError, RwLock};
 
 use bee_ledger::types::{
     snapshot::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
@@ -23,10 +23,9 @@ use bee_storage::{
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
-
 use thiserror::Error;
 
-use std::sync::{PoisonError, RwLock};
+use crate::table::{SingletonTable, Table, VecBinTable, VecTable};
 
 /// Error to be raised when a backend operation fails.
 #[derive(Debug, Error)]

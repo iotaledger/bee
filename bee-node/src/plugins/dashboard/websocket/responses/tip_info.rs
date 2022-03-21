@@ -1,14 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_protocol::workers::event::{TipAdded, TipRemoved};
+use serde::Serialize;
+
 use crate::plugins::dashboard::websocket::{
     responses::{WsEvent, WsEventInner},
     topics::WsTopic,
 };
-
-use bee_protocol::workers::event::{TipAdded, TipRemoved};
-
-use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct TipInfoResponse {

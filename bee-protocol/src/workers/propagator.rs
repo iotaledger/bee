@@ -1,22 +1,21 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::workers::{
-    event::MessageSolidified, storage::StorageBackend, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
-};
+use std::{any::TypeId, convert::Infallible};
 
+use async_trait::async_trait;
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::IndexId, solid_entry_point::SolidEntryPoint, Tangle, TangleWorker};
-
-use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
 use log::*;
 use ref_cast::RefCast;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, convert::Infallible};
+use crate::workers::{
+    event::MessageSolidified, storage::StorageBackend, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
+};
 
 #[derive(Debug)]
 pub(crate) struct PropagatorWorkerEvent(pub(crate) MessageId);

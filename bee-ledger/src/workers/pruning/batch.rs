@@ -1,17 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::{ConsumedOutput, CreatedOutput, OutputDiff, Receipt},
-    workers::{
-        consensus::worker::EXTRA_PRUNING_DEPTH,
-        pruning::{
-            error::Error,
-            metrics::{ConfirmedDataPruningMetrics, MilestoneDataPruningMetrics, UnconfirmedDataPruningMetrics},
-        },
-        storage::StorageBackend,
-    },
-};
+use std::collections::VecDeque;
 
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
@@ -27,11 +17,20 @@ use bee_storage::access::{Batch, Fetch};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage, Tangle,
 };
-
 use hashbrown::{HashMap, HashSet};
 use ref_cast::RefCast;
 
-use std::collections::VecDeque;
+use crate::{
+    types::{ConsumedOutput, CreatedOutput, OutputDiff, Receipt},
+    workers::{
+        consensus::worker::EXTRA_PRUNING_DEPTH,
+        pruning::{
+            error::Error,
+            metrics::{ConfirmedDataPruningMetrics, MilestoneDataPruningMetrics, UnconfirmedDataPruningMetrics},
+        },
+        storage::StorageBackend,
+    },
+};
 
 pub type Messages = HashSet<MessageId>;
 pub type ApproverCache = HashMap<MessageId, MilestoneIndex>;
