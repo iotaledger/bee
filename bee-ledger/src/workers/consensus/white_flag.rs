@@ -76,14 +76,6 @@ fn apply_regular_essence<B: StorageBackend>(
         let _essence_hash = TransactionEssence::from(essence.clone()).hash();
 
         match consumed_output.inner() {
-            #[cfg(feature = "cpt2")]
-            Output::SignatureLockedSingle(_) => {
-                // TODO
-            }
-            #[cfg(feature = "cpt2")]
-            Output::SignatureLockedDustAllowance(_) => {
-                // TODO
-            }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
             Output::Basic(_) => {
                 // TODO
@@ -104,14 +96,6 @@ fn apply_regular_essence<B: StorageBackend>(
 
     for created_output in essence.outputs() {
         match created_output {
-            #[cfg(feature = "cpt2")]
-            Output::SignatureLockedSingle(_) => {
-                // TODO
-            }
-            #[cfg(feature = "cpt2")]
-            Output::SignatureLockedDustAllowance(_) => {
-                // TODO
-            }
             Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
             Output::Basic(_) => {
                 // TODO

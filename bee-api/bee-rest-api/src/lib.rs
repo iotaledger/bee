@@ -3,8 +3,6 @@
 
 //! Bee REST API
 //!
-//! ## Feature Flags
-//! - `cpt2`: Enable support for backwards compatible output and transaction payload types.
 
 // #![deny(missing_docs, warnings)]
 
