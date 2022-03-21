@@ -174,37 +174,6 @@ pub struct OutputResponse {
 
 impl BodyInner for OutputResponse {}
 
-/// Response of GET /api/v2/addresses/{address}.
-/// Returns information about an address.
-#[deprecated(note = "Not in the API anymore")]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BalanceAddressResponse {
-    #[serde(rename = "addressType")]
-    pub address_type: u8,
-    pub address: String,
-    pub balance: u64,
-    #[serde(rename = "ledgerIndex", default)]
-    pub ledger_index: u32,
-}
-
-impl BodyInner for BalanceAddressResponse {}
-
-/// Response of GET /api/v2/addresses/{address}/outputs.
-/// Returns the outputs of an address.
-#[deprecated(note = "Not in the API anymore")]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct OutputsAddressResponse {
-    #[serde(rename = "maxResults")]
-    pub max_results: usize,
-    pub count: usize,
-    #[serde(rename = "outputIds")]
-    pub output_ids: Vec<String>,
-    #[serde(rename = "ledgerIndex", default)]
-    pub ledger_index: u32,
-}
-
-impl BodyInner for OutputsAddressResponse {}
-
 /// Response of:
 /// * GET /api/v2/receipts/{milestone_index}, returns all stored receipts for the given milestone index.
 /// * GET /api/v2/receipts, returns all stored receipts, independent of a milestone index.
