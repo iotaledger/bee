@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Bee REST API
-//!
 
 // #![deny(missing_docs, warnings)]
 

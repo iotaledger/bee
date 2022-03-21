@@ -114,7 +114,6 @@ fn tagged_data() {
     assert!(matches!(payload, Payload::TaggedData(_)));
 }
 
-
 #[test]
 fn receipt() {
     let payload: Payload = ReceiptPayload::new(
