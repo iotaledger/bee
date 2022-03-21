@@ -14,7 +14,6 @@ use crate::{
 };
 
 use bee_message::{
-    address::Address,
     milestone::MilestoneIndex,
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, OutputId},
     payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
@@ -44,11 +43,6 @@ pub enum ConsensusWorkerCommand {
     FetchOutput(
         OutputId,
         oneshot::Sender<(Result<Option<CreatedOutput>, Error>, LedgerIndex)>,
-    ),
-    /// Command to fetch the outputs of an address.
-    FetchOutputs(
-        Address,
-        oneshot::Sender<(Result<Option<Vec<OutputId>>, Error>, LedgerIndex)>,
     ),
 }
 
@@ -366,18 +360,6 @@ where
                             error!("Error while sending output: {:?}", e);
                         }
                     }
-                    ConsensusWorkerCommand::FetchOutputs(address, sender) => match address {
-                        Address::Ed25519(address) => {
-                            if let Err(e) = sender.send((
-                                storage::fetch_outputs_for_ed25519_address(&*storage, &address),
-                                ledger_index,
-                            )) {
-                                error!("Error while sending output: {:?}", e);
-                            }
-                        }
-                        Address::Alias(_address) => todo!(),
-                        Address::Nft(_address) => todo!(),
-                    },
                 }
             }
 
