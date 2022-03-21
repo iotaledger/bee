@@ -84,6 +84,12 @@ pub(crate) async fn output<B: StorageBackend>(
                     output_index: output_id.index(),
                     is_spent: is_spent.is_some(),
                     // TODO
+                    milestone_index_spent: None,
+                    // TODO
+                    milestone_timestamp_spent: None,
+                    // TODO
+                    transaction_id_spent: None,
+                    // TODO
                     milestone_index_booked: 0,
                     // TODO
                     milestone_timestamp_booked: 0,
