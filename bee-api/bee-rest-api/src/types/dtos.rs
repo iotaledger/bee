@@ -959,7 +959,8 @@ impl TryFrom<&TokenIdDto> for TokenId {
     type Error = Error;
 
     fn try_from(value: &TokenIdDto) -> Result<Self, Self::Error> {
-        let token_id: [u8; 38] = prefix_hex::decode(&value.0).map_err(|_e| Error::InvalidField("tokenId"))?;
+        let token_id: [u8; TokenId::LENGTH] =
+            prefix_hex::decode(&value.0).map_err(|_e| Error::InvalidField("tokenId"))?;
         Ok(TokenId::new(token_id))
     }
 }
