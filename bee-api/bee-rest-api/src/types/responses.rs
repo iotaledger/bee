@@ -1,12 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use serde::{Deserialize, Serialize};
+
 use crate::types::{
     body::BodyInner,
     dtos::{LedgerInclusionStateDto, MessageDto, OutputDto, PeerDto, ReceiptDto},
 };
-
-use serde::{Deserialize, Serialize};
 
 /// Response of GET /api/v1/info.
 /// Returns general information about the node.

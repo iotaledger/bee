@@ -3,11 +3,11 @@
 
 #![allow(deprecated)]
 
+use std::str::FromStr;
+
 use bee_crypto::ternary::sponge::{Kerl, Sponge};
 use bee_signing::ternary::seed::{Error, Seed};
 use bee_ternary::{T1B1Buf, TritBuf, TryteBuf};
-
-use std::str::FromStr;
 
 const SEED: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9";
 

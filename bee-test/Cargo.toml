@@ -13,7 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-ledger = { version = "0.6.1", path = "../bee-ledger", default-features = false }
 bee-message = { version = "0.1.6", path = "../bee-message", default-features = false }
-bee-tangle = { version = "0.2.0", path = "../bee-tangle", default-features = false }
+bee-tangle = { version = "0.3.0", path = "../bee-tangle", default-features = false }
 bee-ternary = { version = "0.5.2", default-features = false, features = [ "serde1" ] }
 
 bytemuck = { version = "1.7.2", default-features = false }
@@ -21,5 +21,5 @@ rand = { version = "0.8.4", default-features = false }
 
 [dev-dependencies]
 hex = { version = "0.4.3", default-features = false }
-serde = { version = "1.0.130", default-features = false }
+serde = { version = "1.0.130", default-features = false, features = [ "alloc" ] }
 serde_json = { version = "1.0.68", default-features = false, features = [ "alloc" ] }

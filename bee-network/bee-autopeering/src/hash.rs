@@ -1,15 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::packet::MessageType;
-
+pub(crate) use crypto::hashes::sha::SHA256_LEN;
 use crypto::hashes::{
     sha::{Sha256, SHA256},
     Digest,
 };
 use hash32::{FnvHasher, Hasher as _};
 
-pub(crate) use crypto::hashes::sha::SHA256_LEN;
+use crate::packet::MessageType;
 
 /// Creates the SHA-256 hash of a generic byte sequence.
 pub(crate) fn data_hash(data: &[u8]) -> [u8; SHA256_LEN] {

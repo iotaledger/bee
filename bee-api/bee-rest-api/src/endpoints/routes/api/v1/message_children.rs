@@ -1,6 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_message::MessageId;
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::Tangle;
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         config::ROUTE_MESSAGE_CHILDREN, filters::with_tangle, path_params::message_id, permission::has_permission,
@@ -8,14 +15,6 @@ use crate::{
     },
     types::{body::SuccessBody, responses::MessageChildrenResponse},
 };
-
-use bee_message::MessageId;
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
-
-use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clone {
     super::path()
@@ -34,15 +33,15 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_CHILDREN, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(message_children)
+        .and_then(|message_id, tangle| async move { message_children(message_id, tangle) })
         .boxed()
 }
 
-pub async fn message_children<B: StorageBackend>(
+pub fn message_children<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    let mut children = Vec::from_iter(tangle.get_children(&message_id).await.unwrap_or_default());
+    let mut children = Vec::from_iter(tangle.get_children(&message_id).unwrap_or_default());
     let count = children.len();
     let max_results = 1000;
     children.truncate(max_results);

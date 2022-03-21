@@ -1,8 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::workers::storage::StorageBackend;
-
+use async_trait::async_trait;
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::{
     node::Node,
@@ -11,12 +10,12 @@ use bee_runtime::{
 };
 use bee_storage::access::{Batch, BatchBuilder, Insert};
 use bee_tangle::unreferenced_message::UnreferencedMessage;
-
-use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
+
+use crate::workers::storage::StorageBackend;
 
 const UNREFERENCED_MESSAGE_BATCH_SIZE: usize = 1000;
 

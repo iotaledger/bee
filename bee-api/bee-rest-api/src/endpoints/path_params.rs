@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::rejection::CustomRejection;
-
 use bee_gossip::PeerId;
 use bee_message::{
     address::{Address, Ed25519Address},
@@ -11,8 +9,9 @@ use bee_message::{
     payload::transaction::TransactionId,
     MessageId,
 };
-
 use warp::{reject, Filter, Rejection};
+
+use crate::endpoints::rejection::CustomRejection;
 
 pub(super) fn output_id() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Copy {
     warp::path::param().and_then(|value: String| async move {

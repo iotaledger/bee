@@ -4,20 +4,19 @@
 pub(crate) mod salt;
 pub mod services;
 
-use self::{
-    salt::{Salt, SALT_LIFETIME_SECS},
-    services::{ServiceMap, ServiceProtocol},
-};
-
-use crate::peer::PeerId;
-
-use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, SECRET_KEY_LENGTH};
-use libp2p_core::identity::ed25519::Keypair;
-
 use std::{
     fmt,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
+
+use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, Signature, SECRET_KEY_LENGTH};
+use libp2p_core::identity::ed25519::Keypair;
+
+use self::{
+    salt::{Salt, SALT_LIFETIME_SECS},
+    services::{ServiceMap, ServiceProtocol},
+};
+use crate::peer::PeerId;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

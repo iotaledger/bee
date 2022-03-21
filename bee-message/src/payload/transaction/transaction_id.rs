@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use core::str::FromStr;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::str::FromStr;
+use crate::Error;
 
 /// The length of a transaction identifier.
 pub const TRANSACTION_ID_LENGTH: usize = 32;

@@ -3,12 +3,12 @@
 
 //! Insert access operations.
 
-use crate::{storage::Storage, trees::*};
-
 use bee_common::packable::Packable;
 use bee_message::MessageId;
 use bee_storage::access::Update;
 use bee_tangle::metadata::MessageMetadata;
+
+use crate::{storage::Storage, trees::*};
 
 impl Update<MessageId, MessageMetadata> for Storage {
     fn update(&self, message_id: &MessageId, mut f: impl FnMut(&mut MessageMetadata)) -> Result<(), Self::Error> {

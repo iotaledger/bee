@@ -1,11 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Storage;
+use std::marker::PhantomData;
 
 use bee_storage::{access::MultiFetch, backend::StorageBackend};
 
-use std::marker::PhantomData;
+use crate::Storage;
 
 pub struct MultiIter<K, V> {
     marker: PhantomData<(K, V)>,

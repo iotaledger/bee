@@ -1,6 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_ledger::workers::storage;
+use bee_runtime::resource::ResourceHandle;
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         config::ROUTE_TREASURY, filters::with_storage, permission::has_permission, rejection::CustomRejection,
@@ -8,13 +14,6 @@ use crate::{
     },
     types::{body::SuccessBody, responses::TreasuryResponse},
 };
-
-use bee_ledger::workers::storage;
-use bee_runtime::resource::ResourceHandle;
-
-use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("treasury")).and(warp::path::end())

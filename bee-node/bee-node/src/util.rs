@@ -1,13 +1,12 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{BEE_GIT_COMMIT, BEE_NAME, BEE_VERSION};
+use std::convert::TryInto;
 
 use bee_runtime::node::NodeInfo;
-
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
-use std::convert::TryInto;
+use crate::{BEE_GIT_COMMIT, BEE_NAME, BEE_VERSION};
 
 /// Creates the corresponding network id from a network name.
 pub(crate) fn create_id_from_network_name(network_name: &impl AsRef<str>) -> u64 {

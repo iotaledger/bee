@@ -3,11 +3,6 @@
 
 //! Iter access operations.
 
-use crate::{
-    storage::Storage,
-    table::{SingletonTableIter, TableIter, VecTableIter},
-};
-
 use bee_ledger::types::{
     snapshot::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
@@ -22,6 +17,11 @@ use bee_message::{
 use bee_storage::{access::AsIterator, backend::StorageBackend, system::System};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+};
+
+use crate::{
+    storage::Storage,
+    table::{SingletonTableIter, TableIter, VecTableIter},
 };
 
 macro_rules! impl_iter {

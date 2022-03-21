@@ -10,12 +10,14 @@ pub fn gen_constant_peer_id() -> PeerId {
 #[cfg(feature = "full")]
 mod full {
 
-    use super::*;
+    use std::iter::repeat;
+
     use libp2p_core::identity::{
         ed25519::{Keypair, SecretKey},
         PublicKey,
     };
-    use std::iter::repeat;
+
+    use super::*;
 
     pub fn gen_random_peer_id() -> PeerId {
         PeerId::from_public_key(&libp2p_core::PublicKey::Ed25519(Keypair::generate().public()))

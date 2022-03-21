@@ -1,13 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{Btrit, ShiftTernary, Trit};
-
-use crate::convert;
+use core::fmt;
 
 use num_traits::{CheckedAdd, CheckedSub, Num};
 
-use core::fmt;
+use super::{Btrit, ShiftTernary, Trit};
+use crate::convert;
 
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[repr(i8)]

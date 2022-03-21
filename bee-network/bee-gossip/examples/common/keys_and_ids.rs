@@ -3,6 +3,8 @@
 
 #![cfg(feature = "full")]
 
+use std::iter::repeat;
+
 use libp2p::{
     identity::{
         ed25519::{Keypair, SecretKey},
@@ -10,8 +12,6 @@ use libp2p::{
     },
     PeerId,
 };
-
-use std::iter::repeat;
 
 pub fn gen_random_peer_id() -> PeerId {
     PeerId::from_public_key(&libp2p_core::PublicKey::Ed25519(Keypair::generate().public()))

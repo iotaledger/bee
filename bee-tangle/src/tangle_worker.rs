@@ -1,18 +1,17 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::TangleConfig, storage::StorageBackend, Tangle};
-
-use bee_runtime::{node::Node, worker::Worker};
-
-use async_trait::async_trait;
-use log::{error, warn};
-use tokio::time::interval;
-
 use std::{
     convert::Infallible,
     time::{Duration, Instant},
 };
+
+use async_trait::async_trait;
+use bee_runtime::{node::Node, worker::Worker};
+use log::{error, warn};
+use tokio::time::interval;
+
+use crate::{config::TangleConfig, storage::StorageBackend, Tangle};
 
 /// A type representing a tangle node worker.
 pub struct TangleWorker;

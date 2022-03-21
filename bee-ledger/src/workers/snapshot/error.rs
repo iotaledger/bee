@@ -1,11 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{snapshot::SnapshotKind, Error as TypesError};
-
 use bee_message::milestone::MilestoneIndex;
-
 use thiserror::Error;
+
+use crate::types::{snapshot::SnapshotKind, Error as TypesError};
 
 /// Errors occurring during snapshot operations.
 #[derive(Debug, Error)]

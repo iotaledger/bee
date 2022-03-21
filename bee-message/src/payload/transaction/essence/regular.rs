@@ -1,6 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use alloc::{boxed::Box, vec::Vec};
+
+use bee_common::packable::{Packable, Read, Write};
+use iterator_sorted::is_sorted;
+
 use crate::{
     constants::{INPUT_OUTPUT_COUNT_RANGE, IOTA_SUPPLY},
     input::Input,
@@ -8,12 +13,6 @@ use crate::{
     payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error,
 };
-
-use bee_common::packable::{Packable, Read, Write};
-
-use iterator_sorted::is_sorted;
-
-use alloc::{boxed::Box, vec::Vec};
 
 /// A transaction regular essence consuming inputs, creating outputs and carrying an optional payload.
 #[derive(Clone, Debug, Eq, PartialEq)]

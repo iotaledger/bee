@@ -1,18 +1,18 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    hash,
-    local::{salt::Salt, Local},
-    peer::{peer_id::PeerId, Peer},
-};
-
-use prost::bytes::{Buf, Bytes};
-
 use std::{
     cmp, fmt,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
     vec,
+};
+
+use prost::bytes::{Buf, Bytes};
+
+use crate::{
+    hash,
+    local::{salt::Salt, Local},
+    peer::{peer_id::PeerId, Peer},
 };
 
 /// The distance between the local entity and a neighbor.

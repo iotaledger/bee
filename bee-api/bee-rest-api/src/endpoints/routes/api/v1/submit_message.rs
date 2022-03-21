@@ -1,6 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_common::packable::Packable;
+use bee_message::{parents::Parents, payload::Payload, Message, MessageBuilder, MessageId};
+use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
+use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::Tangle;
+use futures::channel::oneshot;
+use log::error;
+use serde_json::Value as JsonValue;
+use tokio::sync::mpsc;
+use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW},
@@ -12,21 +26,6 @@ use crate::{
     },
     types::{body::SuccessBody, dtos::PayloadDto, responses::SubmitMessageResponse},
 };
-
-use bee_common::packable::Packable;
-use bee_message::{parents::Parents, payload::Payload, Message, MessageBuilder, MessageId};
-use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
-use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
-
-use futures::channel::oneshot;
-use log::error;
-use serde_json::Value as JsonValue;
-use tokio::sync::mpsc;
-use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("messages")).and(warp::path::end())
@@ -160,7 +159,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         if parsed == 0 { None } else { Some(parsed) }
     };
 
-    let message = build_message(network_id, parents, payload, nonce, rest_api_config, protocol_config).await?;
+    let message = build_message(network_id, parents, payload, nonce, rest_api_config, protocol_config)?;
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
 
     Ok(warp::reply::with_status(
@@ -171,7 +170,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     ))
 }
 
-pub(crate) async fn build_message(
+pub(crate) fn build_message(
     network_id: u64,
     parents: Vec<MessageId>,
     payload: Option<Payload>,
@@ -244,7 +243,7 @@ pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
 ) -> Result<MessageId, Rejection> {
     let (message_id, message_bytes) = message.id();
 
-    if tangle.contains(&message_id).await {
+    if tangle.contains(&message_id) {
         return Ok(message_id);
     }
 

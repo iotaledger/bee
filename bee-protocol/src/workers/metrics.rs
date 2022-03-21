@@ -1,18 +1,17 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::metrics::NodeMetrics;
-
-use bee_ledger::workers::event::{MilestoneConfirmed, PrunedIndex, SnapshottedIndex};
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use std::{convert::Infallible, time::Duration};
 
 use async_trait::async_trait;
+use bee_ledger::workers::event::{MilestoneConfirmed, PrunedIndex, SnapshottedIndex};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use futures::StreamExt;
 use log::info;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
-use std::{convert::Infallible, time::Duration};
+use crate::types::metrics::NodeMetrics;
 
 const METRICS_INTERVAL: Duration = Duration::from_secs(60);
 

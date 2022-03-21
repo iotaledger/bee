@@ -1,14 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::{BalanceDiffs, ConsumedOutput, CreatedOutput},
-    workers::{
-        consensus::{merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
-        error::Error,
-        storage::{self, StorageBackend},
-    },
-};
+use std::collections::{HashMap, HashSet};
 
 use bee_message::{
     address::Address,
@@ -22,10 +15,16 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_tangle::{ConflictReason, Tangle};
-
 use crypto::hashes::blake2b::Blake2b256;
 
-use std::collections::{HashMap, HashSet};
+use crate::{
+    types::{BalanceDiffs, ConsumedOutput, CreatedOutput},
+    workers::{
+        consensus::{merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
+        error::Error,
+        storage::{self, StorageBackend},
+    },
+};
 
 fn verify_signature(address: &Address, unlock_blocks: &UnlockBlocks, index: usize, essence_hash: &[u8; 32]) -> bool {
     if let Some(UnlockBlock::Signature(signature)) = unlock_blocks.get(index) {
@@ -213,12 +212,7 @@ async fn traverse_past_cone<B: StorageBackend>(
     let mut visited = HashSet::new();
 
     while let Some(message_id) = message_ids.last() {
-        if let Some((message, meta)) = tangle
-            .get_vertex(message_id)
-            .await
-            .as_ref()
-            .and_then(|v| v.message_and_metadata().cloned())
-        {
+        if let Some((message, meta)) = tangle.get_message_and_metadata(message_id) {
             if meta.flags().is_referenced() {
                 visited.insert(*message_id);
                 message_ids.pop();

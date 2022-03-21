@@ -1,11 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::milestone_key_range::MilestoneKeyRange;
-
 use bee_message::milestone::MilestoneIndex;
-
 use serde::Deserialize;
+
+use crate::types::milestone_key_range::MilestoneKeyRange;
 
 const DEFAULT_MINIMUM_POW_SCORE: f64 = 4000.0;
 const DEFAULT_COO_PUBLIC_KEY_COUNT: usize = 2;

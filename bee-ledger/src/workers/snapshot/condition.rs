@@ -1,9 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{types::LedgerIndex, workers::snapshot::config::SnapshotConfig};
-
 use bee_tangle::{storage::StorageBackend, Tangle};
+
+use crate::{types::LedgerIndex, workers::snapshot::config::SnapshotConfig};
 
 /// Reasons for skipping snapshotting.
 #[derive(Debug)]

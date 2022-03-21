@@ -3,8 +3,6 @@
 
 //! Types that allow access to and management of node resources.
 
-use log::warn;
-
 use std::{
     any::{type_name, Any},
     collections::HashMap,
@@ -15,6 +13,8 @@ use std::{
         Arc, Mutex, Weak,
     },
 };
+
+use log::warn;
 
 static RESOURCE_ID: AtomicUsize = AtomicUsize::new(0);
 

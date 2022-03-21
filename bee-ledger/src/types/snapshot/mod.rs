@@ -12,7 +12,9 @@ pub mod kind;
 /// Module containing a type to describe the ledger changes occurring within a milestone.
 pub mod milestone_diff;
 
-pub use header::{DeltaSnapshotHeader, FullSnapshotHeader, SnapshotHeader};
-pub use info::SnapshotInfo;
-pub use kind::SnapshotKind;
-pub use milestone_diff::MilestoneDiff;
+pub use self::{
+    header::{DeltaSnapshotHeader, FullSnapshotHeader, SnapshotHeader},
+    info::SnapshotInfo,
+    kind::SnapshotKind,
+    milestone_diff::MilestoneDiff,
+};

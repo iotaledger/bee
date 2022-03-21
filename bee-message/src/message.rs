@@ -1,16 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_common::packable::{Packable, Read, Write};
+use bee_pow::providers::{miner::Miner, NonceProvider, NonceProviderBuilder};
+use crypto::hashes::{blake2b::Blake2b256, Digest};
+
 use crate::{
     parents::Parents,
     payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error, MessageId,
 };
-
-use bee_common::packable::{Packable, Read, Write};
-use bee_pow::providers::{miner::Miner, NonceProvider, NonceProviderBuilder};
-
-use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 /// The minimum number of bytes in a message.
 pub const MESSAGE_LENGTH_MIN: usize = 53;

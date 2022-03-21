@@ -1,6 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_ledger::types::CreatedOutput;
+use bee_message::{output::OutputId, payload::transaction::TransactionId};
+use bee_runtime::resource::ResourceHandle;
+use bee_storage::access::Fetch;
+use bee_tangle::Tangle;
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::endpoints::{
     config::ROUTE_TRANSACTION_INCLUDED_MESSAGE,
     filters::{with_storage, with_tangle},
@@ -10,16 +19,6 @@ use crate::endpoints::{
     routes::api::v1::message,
     storage::StorageBackend,
 };
-
-use bee_ledger::types::CreatedOutput;
-use bee_message::{output::OutputId, payload::transaction::TransactionId};
-use bee_runtime::resource::ResourceHandle;
-use bee_storage::access::Fetch;
-use bee_tangle::Tangle;
-
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (TransactionId,), Error = Rejection> + Clone {
     super::path()
@@ -44,11 +43,13 @@ pub(crate) fn filter<B: StorageBackend>(
         ))
         .and(with_storage(storage))
         .and(with_tangle(tangle))
-        .and_then(transaction_included_message)
+        .and_then(|transaction_id, storage, tangle| async move {
+            transaction_included_message(transaction_id, storage, tangle)
+        })
         .boxed()
 }
 
-pub(crate) async fn transaction_included_message<B: StorageBackend>(
+pub(crate) fn transaction_included_message<B: StorageBackend>(
     transaction_id: TransactionId,
     storage: ResourceHandle<B>,
     tangle: ResourceHandle<Tangle<B>>,
@@ -61,7 +62,7 @@ pub(crate) async fn transaction_included_message<B: StorageBackend>(
             "Can not fetch from storage".to_string(),
         ))
     })? {
-        Some(output) => message::message(*output.message_id(), tangle).await,
+        Some(output) => message::message(*output.message_id(), tangle),
         None => Err(reject::custom(CustomRejection::NotFound(
             "Can not find output".to_string(),
         ))),

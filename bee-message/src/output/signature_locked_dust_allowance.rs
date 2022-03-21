@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{address::Address, constants::IOTA_SUPPLY, Error};
+use core::ops::RangeInclusive;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::ops::RangeInclusive;
+use crate::{address::Address, constants::IOTA_SUPPLY, Error};
 
 /// Amount of tokens below which an output is considered a dust output.
 pub const DUST_THRESHOLD: u64 = 1_000_000;

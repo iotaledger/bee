@@ -10,12 +10,9 @@ pub mod rejection;
 pub mod routes;
 pub mod storage;
 
-use config::RestApiConfig;
-use rejection::CustomRejection;
-use storage::StorageBackend;
+use std::{any::TypeId, convert::Infallible};
 
-use crate::types::body::{DefaultErrorResponse, ErrorBody};
-
+use async_trait::async_trait;
 use bee_gossip::NetworkCommandSender;
 use bee_ledger::workers::consensus::ConsensusWorker;
 use bee_protocol::workers::{
@@ -27,19 +24,18 @@ use bee_runtime::{
     worker::{Error as WorkerError, Worker},
 };
 use bee_tangle::{Tangle, TangleWorker};
-
-use async_trait::async_trait;
 use log::{error, info};
 use warp::{http::StatusCode, Filter, Rejection, Reply};
 
-use std::{any::TypeId, convert::Infallible};
+use self::{config::RestApiConfig, rejection::CustomRejection, storage::StorageBackend};
+use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
 pub(crate) type NetworkId = (String, u64);
 pub(crate) type Bech32Hrp = String;
 
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
 
-pub async fn init_full_node<N: Node>(
+pub fn init_full_node<N: Node>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
     network_id: NetworkId,
@@ -110,7 +106,7 @@ where
                 requested_messages,
                 consensus_worker,
             )
-            .recover(handle_rejection);
+            .recover(|err| async { handle_rejection(err) });
 
             let (_, server) =
                 warp::serve(routes).bind_with_graceful_shutdown(rest_api_config.bind_socket_addr(), async {
@@ -126,7 +122,7 @@ where
     }
 }
 
-async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
+fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let (http_code, err_code, reason) = match err.find() {
         // handle custom rejections
         Some(CustomRejection::Forbidden) => (StatusCode::FORBIDDEN, "403", "access forbidden"),
@@ -154,7 +150,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     ))
 }
 
-pub async fn init_entry_node<N: Node>(rest_api_config: RestApiConfig, node_builder: N::Builder) -> N::Builder
+pub fn init_entry_node<N: Node>(rest_api_config: RestApiConfig, node_builder: N::Builder) -> N::Builder
 where
     N::Backend: StorageBackend,
 {
@@ -175,7 +171,9 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let health = warp::path("health").map(|| StatusCode::OK).recover(handle_rejection);
+            let health = warp::path("health")
+                .map(|| StatusCode::OK)
+                .recover(|err| async { handle_rejection(err) });
 
             let (_, server) = warp::serve(health).bind_with_graceful_shutdown(config.bind_socket_addr(), async {
                 shutdown.await.ok();

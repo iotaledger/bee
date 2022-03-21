@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{error::Error, BalanceDiff};
-
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{constants::IOTA_SUPPLY, output::dust_outputs_max};
+
+use crate::types::{error::Error, BalanceDiff};
 
 /// Holds the balance of an address.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]

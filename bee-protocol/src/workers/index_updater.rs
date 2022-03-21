@@ -1,22 +1,21 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::workers::storage::StorageBackend;
+use std::{any::TypeId, collections::HashSet, convert::Infallible};
 
+use async_trait::async_trait;
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::IndexId, Tangle, TangleWorker};
-
-use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, collections::HashSet, convert::Infallible};
+use crate::workers::storage::StorageBackend;
 
 #[derive(Debug)]
 pub(crate) struct IndexUpdaterWorkerEvent(pub(crate) MilestoneIndex, pub(crate) Milestone);
@@ -76,7 +75,6 @@ where
 async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: Milestone, index: MilestoneIndex) {
     if let Some(parents) = tangle
         .get(milestone.message_id())
-        .await
         .map(|message| message.parents().to_vec())
     {
         // Update the past cone of this milestone by setting its milestone index, and return them.
@@ -85,7 +83,7 @@ async fn process<B: StorageBackend>(tangle: &Tangle<B>, milestone: Milestone, in
         // Note: For tip-selection only the most recent tangle is relevent. That means that during synchronization we do
         // not need to update xMRSI values or tip scores before (LATEST_MILESTONE_INDEX - BELOW_MAX_DEPTH).
         if index > tangle.get_latest_milestone_index() - tangle.config().below_max_depth() {
-            update_future_cone(tangle, roots).await;
+            update_future_cone(tangle, roots);
 
             // Update tip pool after all values got updated.
             tangle.update_tip_scores().await;
@@ -111,7 +109,6 @@ async fn update_past_cone<B: StorageBackend>(
             || tangle.is_solid_entry_point(&parent_id).await
             || tangle
                 .get_metadata(&parent_id)
-                .await
                 // TODO: I don't think unwrapping here is safe. Investigate!
                 .unwrap()
                 .milestone_index()
@@ -120,17 +117,14 @@ async fn update_past_cone<B: StorageBackend>(
             continue;
         }
 
-        tangle
-            .update_metadata(&parent_id, |metadata| {
-                metadata.set_milestone_index(index);
-                // TODO: That was fine in a synchronous scenario, where this algo had the newest information, but
-                // probably isn't the case in the now asynchronous scenario. Investigate!
-                metadata.set_omrsi(IndexId::new(index, parent_id));
-                metadata.set_ymrsi(IndexId::new(index, parent_id));
-            })
-            .await;
+        tangle.update_metadata(&parent_id, |metadata| {
+            metadata.set_milestone_index(index);
 
-        if let Some(parent) = tangle.get(&parent_id).await {
+            let index = IndexId::new(index, parent_id);
+            metadata.set_omrsi_and_ymrsi(index, index);
+        });
+
+        if let Some(parent) = tangle.get(&parent_id) {
             parents.extend_from_slice(parent.parents())
         }
 
@@ -150,67 +144,56 @@ async fn update_past_cone<B: StorageBackend>(
 // NOTE: Once a milestone comes in we have to walk the future cones of the root transactions and update their OMRSI and
 // YMRSI; during that time we need to block the propagator, otherwise it will propagate outdated data.
 #[cfg_attr(feature = "trace", trace_tools::observe)]
-async fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSet<MessageId>) {
+fn update_future_cone<B: StorageBackend>(tangle: &Tangle<B>, roots: HashSet<MessageId>) {
     let mut to_process = roots.into_iter().collect::<Vec<_>>();
     let mut processed = HashSet::new();
 
     while let Some(parent_id) = to_process.pop() {
-        if let Some(children) = tangle.get_children(&parent_id).await {
+        if let Some(children) = tangle.get_children(&parent_id) {
             // Unwrap is safe with very high probability.
-            let (parent_omrsi, parent_ymrsi) = tangle
-                .get_metadata(&parent_id)
-                .await
-                .map(|md| (md.omrsi(), md.ymrsi()))
-                .unwrap();
+            let parent_omrsi_and_ymrsi = tangle.get_metadata(&parent_id).map(|md| md.omrsi_and_ymrsi()).unwrap();
 
             // TODO: investigate data race
             // Skip vertices with unset omrsi/ymrsi
-            if parent_omrsi.zip(parent_ymrsi).is_none() {
-                continue;
-            }
+            match parent_omrsi_and_ymrsi {
+                None => continue,
+                Some((parent_omrsi, parent_ymrsi)) => {
+                    // We can update the OMRSI/YMRSI of those children that inherited the value from the current parent.
+                    for child in &children {
+                        let continue_walk = tangle
+                            .update_metadata(child, |child_metadata| {
+                                // We can ignore children that are already confirmed
+                                // TODO: resolve ambiguity between `is_confirmed()` and `milestone_index().is_some()`
+                                // if child_metadata.flags().is_confirmed() {
+                                if child_metadata.milestone_index().is_some() {
+                                    return false;
+                                }
 
-            let (parent_omrsi, parent_ymrsi) = (parent_omrsi.unwrap(), parent_ymrsi.unwrap());
+                                // If the childs OMRSI and YMRSI was previously inherited from the current parent,
+                                // update it.
+                                child_metadata.update_omrsi_and_ymrsi(|child_omrsi, child_ymrsi| {
+                                    if child_omrsi.id() == parent_id {
+                                        *child_omrsi = IndexId::new(parent_omrsi.index(), parent_id);
+                                    }
 
-            // We can update the OMRSI/YMRSI of those children that inherited the value from the current parent.
-            for child in &children {
-                if let Some(child_metadata) = tangle.get_metadata(child).await {
-                    // We can ignore children that are already confirmed
-                    // TODO: resolve ambiguity between `is_confirmed()` and `milestone_index().is_some()`
-                    // if child_metadata.flags().is_confirmed() {
-                    if child_metadata.milestone_index().is_some() {
-                        continue;
-                    }
+                                    if child_ymrsi.id() == parent_id {
+                                        *child_ymrsi = IndexId::new(parent_ymrsi.index(), parent_id);
+                                    }
+                                });
 
-                    // If the childs OMRSI was previously inherited from the current parent, update it.
-                    if let Some(child_omrsi) = child_metadata.omrsi() {
-                        if child_omrsi.id().eq(&parent_id) {
-                            tangle
-                                .update_metadata(child, |md| {
-                                    md.set_omrsi(IndexId::new(parent_omrsi.index(), parent_id));
-                                })
-                                .await;
+                                true
+                            })
+                            .unwrap_or_default();
+
+                        // Continue the future walk for that child, if we haven't landed on it earlier already.
+                        if continue_walk && !processed.contains(child) {
+                            to_process.push(*child);
                         }
                     }
 
-                    // If the childs YMRSI was previously inherited from the current parent, update it.
-                    if let Some(child_ymrsi) = child_metadata.ymrsi() {
-                        if child_ymrsi.id().eq(&parent_id) {
-                            tangle
-                                .update_metadata(child, |md| {
-                                    md.set_ymrsi(IndexId::new(parent_ymrsi.index(), parent_id));
-                                })
-                                .await;
-                        }
-                    }
-
-                    // Continue the future walk for that child, if we haven't landed on it earlier already.
-                    if !processed.contains(child) {
-                        to_process.push(*child);
-                    }
+                    processed.insert(parent_id);
                 }
             }
-
-            processed.insert(parent_id);
         }
     }
 

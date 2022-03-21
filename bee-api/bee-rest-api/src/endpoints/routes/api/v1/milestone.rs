@@ -1,6 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_message::milestone::MilestoneIndex;
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::Tangle;
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         config::ROUTE_MILESTONE, filters::with_tangle, path_params::milestone_index, permission::has_permission,
@@ -8,14 +15,6 @@ use crate::{
     },
     types::{body::SuccessBody, responses::MilestoneResponse},
 };
-
-use bee_message::milestone::MilestoneIndex;
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
-
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
     super::path()
@@ -33,16 +32,16 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MILESTONE, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(milestone)
+        .and_then(|milestone_index, tangle| async move { milestone(milestone_index, tangle) })
         .boxed()
 }
 
-pub(crate) async fn milestone<B: StorageBackend>(
+pub(crate) fn milestone<B: StorageBackend>(
     milestone_index: MilestoneIndex,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get_milestone_message_id(milestone_index).await {
-        Some(message_id) => match tangle.get_metadata(&message_id).await {
+    match tangle.get_milestone_message_id(milestone_index) {
+        Some(message_id) => match tangle.get_metadata(&message_id) {
             Some(metadata) => Ok(warp::reply::json(&SuccessBody::new(MilestoneResponse {
                 milestone_index: *milestone_index,
                 message_id: message_id.to_string(),

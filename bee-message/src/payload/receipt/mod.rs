@@ -6,22 +6,22 @@
 mod migrated_funds_entry;
 mod tail_transaction_hash;
 
-pub use migrated_funds_entry::{MigratedFundsEntry, VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS};
-pub use tail_transaction_hash::{TailTransactionHash, TAIL_TRANSACTION_HASH_LEN};
+use core::ops::RangeInclusive;
+use std::collections::HashMap;
 
+use bee_common::packable::{Packable, Read, Write};
+use iterator_sorted::is_unique_sorted;
+
+pub use self::{
+    migrated_funds_entry::{MigratedFundsEntry, VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS},
+    tail_transaction_hash::{TailTransactionHash, TAIL_TRANSACTION_HASH_LEN},
+};
 use crate::{
     constants::INPUT_OUTPUT_COUNT_RANGE,
     milestone::MilestoneIndex,
     payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error,
 };
-
-use bee_common::packable::{Packable, Read, Write};
-
-use iterator_sorted::is_unique_sorted;
-
-use core::ops::RangeInclusive;
-use std::collections::HashMap;
 
 const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = INPUT_OUTPUT_COUNT_RANGE;
 

@@ -1,13 +1,13 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{config::EntryNodeConfig, EntryNode, EntryNodeError};
-
-use crate::{
-    core::{Core, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
-    shutdown, util, AUTOPEERING_VERSION,
+use std::{
+    any::{type_name, Any, TypeId},
+    collections::HashMap,
+    convert::Infallible,
 };
 
+use async_trait::async_trait;
 use bee_autopeering::{
     stores::{Options as RocksDbPeerStoreConfigOptions, RocksDbPeerStore, RocksDbPeerStoreConfig},
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
@@ -20,16 +20,14 @@ use bee_runtime::{
     shutdown_stream::ShutdownStream,
     worker::Worker,
 };
-
-use async_trait::async_trait;
 use futures::StreamExt;
 use fxhash::FxBuildHasher;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{
-    any::{type_name, Any, TypeId},
-    collections::HashMap,
-    convert::Infallible,
+use super::{config::EntryNodeConfig, EntryNode, EntryNodeError};
+use crate::{
+    core::{Core, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
+    shutdown, util, AUTOPEERING_VERSION,
 };
 
 /// A builder to create a Bee entry node (autopeering).
@@ -139,7 +137,7 @@ impl NodeBuilder<EntryNode> for EntryNodeBuilder {
         let (autopeering_rx, builder) = initialize_autopeering(builder).await?;
 
         // Initialize the API.
-        let builder = initialize_api(builder).await;
+        let builder = initialize_api(builder);
 
         // Start the version checker.
         let builder = builder.with_worker::<VersionCheckerPlugin>();
@@ -268,16 +266,14 @@ fn create_local_autopeering_entity(keypair: Keypair, config: &EntryNodeConfig) -
 }
 
 /// Initializes the API.
-async fn initialize_api(builder: EntryNodeBuilder) -> EntryNodeBuilder {
+fn initialize_api(builder: EntryNodeBuilder) -> EntryNodeBuilder {
     log::info!("Initializing REST API...");
 
     let config = builder.config();
 
     let rest_api_cfg = config.rest_api.clone();
 
-    let builder = bee_rest_api::endpoints::init_entry_node::<EntryNode>(rest_api_cfg, builder).await;
-
-    builder
+    bee_rest_api::endpoints::init_entry_node::<EntryNode>(rest_api_cfg, builder)
 }
 
 #[derive(Clone)]

@@ -1,15 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::TangleConfig, storage::StorageBackend, tangle::Tangle};
+use std::time::Instant;
 
 use bee_message::MessageId;
-
 use hashbrown::{hash_map::Entry, HashMap, HashSet};
 use log::debug;
 use rand::seq::IteratorRandom;
 
-use std::time::Instant;
+use crate::{config::TangleConfig, storage::StorageBackend, tangle::Tangle};
 
 #[allow(clippy::enum_variant_names)]
 enum Score {
@@ -142,7 +141,7 @@ impl UrtsTipPool {
 
     async fn tip_score<B: StorageBackend>(&self, tangle: &Tangle<B>, message_id: &MessageId) -> Score {
         // in case the tip was pruned by the node, consider tip as lazy
-        if !tangle.contains(message_id).await {
+        if !tangle.contains(message_id) {
             Score::Lazy
         } else {
             let smi = *tangle.get_solid_milestone_index();
@@ -150,8 +149,11 @@ impl UrtsTipPool {
             // The tip pool only works with solid tips. Therefore, all tips added to the pool can be considered to
             // solid. The solid flag will be set together with omrsi and ymrsi values. Therefore, when a
             // message is solid, omrsi and ymrsi values are available. Therefore, unwrapping here is fine.
-            let omrsi = *tangle.omrsi(message_id).await.unwrap().index();
-            let ymrsi = *tangle.ymrsi(message_id).await.unwrap().index();
+            let (omrsi, ymrsi) = tangle
+                .omrsi_and_ymrsi(message_id)
+                .await
+                .map(|(o, y)| (*o.index(), *y.index()))
+                .unwrap();
 
             if smi > ymrsi + YMRSI_DELTA || smi > omrsi + self.below_max_depth {
                 Score::Lazy

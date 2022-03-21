@@ -5,25 +5,24 @@
 
 #[cfg(feature = "in-memory")]
 mod in_memory;
-#[cfg(feature = "rocksdb")]
+#[cfg(feature = "rocksdb1")]
 mod rocksdb;
-#[cfg(feature = "sled")]
+#[cfg(feature = "sled1")]
 mod sled;
+
+use std::error::Error;
 
 #[cfg(feature = "in-memory")]
 pub use self::in_memory::*;
-#[cfg(feature = "rocksdb")]
+#[cfg(feature = "rocksdb1")]
 pub use self::rocksdb::*;
-#[cfg(feature = "sled")]
+#[cfg(feature = "sled1")]
 pub use self::sled::*;
-
 use super::{
     lists::{ActivePeer, ActivePeersList, ReplacementPeersList},
     peer_id::PeerId,
     Peer,
 };
-
-use std::error::Error;
 
 /// Mandatory functionality of any peer store.
 pub trait PeerStore: Clone + Send + Sync {

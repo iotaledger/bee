@@ -7,15 +7,16 @@ mod curlp;
 mod kerl;
 mod kind;
 
-use super::HASH_LENGTH;
-
-pub use curlp::{BatchHasher, CurlP, CurlP27, CurlP81, CurlPRounds, UnrolledCurlP81, BATCH_SIZE};
-pub use kerl::Kerl;
-pub use kind::SpongeKind;
+use std::ops::DerefMut;
 
 use bee_ternary::{TritBuf, Trits};
 
-use std::ops::DerefMut;
+pub use self::{
+    curlp::{BatchHasher, CurlP, CurlP27, CurlP81, CurlPRounds, UnrolledCurlP81, BATCH_SIZE},
+    kerl::Kerl,
+    kind::SpongeKind,
+};
+use super::HASH_LENGTH;
 
 /// The common interface of ternary cryptographic hash functions that follow the sponge construction.
 pub trait Sponge {

@@ -5,14 +5,13 @@
 
 mod padded;
 
-use crate::{Error, MESSAGE_LENGTH_MAX};
-
-pub use padded::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH};
+use alloc::boxed::Box;
+use core::ops::RangeInclusive;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use alloc::boxed::Box;
-use core::ops::RangeInclusive;
+pub use self::padded::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH};
+use crate::{Error, MESSAGE_LENGTH_MAX};
 
 /// Valid lengths for an indexation payload index.
 pub const INDEXATION_INDEX_LENGTH_RANGE: RangeInclusive<usize> = 1..=INDEXATION_PADDED_INDEX_LENGTH;

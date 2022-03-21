@@ -1,30 +1,28 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::metrics::NodeMetrics,
-    workers::{storage::StorageBackend, MetricsWorker},
-};
+use std::{any::TypeId, convert::Infallible};
 
+use async_trait::async_trait;
 use bee_message::{
     payload::{indexation::PaddedIndex, transaction::Essence, Payload},
-    MessageId,
+    Message, MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_storage::access::Insert;
-use bee_tangle::MessageRef;
-
-use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, convert::Infallible};
+use crate::{
+    types::metrics::NodeMetrics,
+    workers::{storage::StorageBackend, MetricsWorker},
+};
 
 pub(crate) struct IndexationPayloadWorkerEvent {
     pub(crate) message_id: MessageId,
-    pub(crate) message: MessageRef,
+    pub(crate) message: Message,
 }
 
 pub(crate) struct IndexationPayloadWorker {
@@ -32,7 +30,7 @@ pub(crate) struct IndexationPayloadWorker {
 }
 
 #[cfg_attr(feature = "trace", trace_tools::observe)]
-fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: MessageId, message: MessageRef) {
+fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: MessageId, message: Message) {
     let indexation = match message.payload() {
         Some(Payload::Indexation(indexation)) => indexation,
         Some(Payload::Transaction(transaction)) => {
