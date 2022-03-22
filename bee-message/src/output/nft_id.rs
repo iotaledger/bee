@@ -17,10 +17,6 @@ impl From<OutputId> for NftId {
 impl NftId {
     ///
     pub fn or_from_output_id(self, output_id: OutputId) -> Self {
-        if self.is_null() {
-            Self::from(output_id)
-        } else {
-            self
-        }
+        if self.is_null() { Self::from(output_id) } else { self }
     }
 }
