@@ -4,5 +4,7 @@
 mod message;
 mod milestone;
 
-pub(crate) use self::message::{MessageResponderWorker, MessageResponderWorkerEvent};
-pub(crate) use self::milestone::{MilestoneResponderWorker, MilestoneResponderWorkerEvent};
+pub(crate) use self::{
+    message::{MessageResponderWorker, MessageResponderWorkerEvent},
+    milestone::{MilestoneResponderWorker, MilestoneResponderWorkerEvent},
+};

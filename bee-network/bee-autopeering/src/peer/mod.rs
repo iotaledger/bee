@@ -14,16 +14,15 @@ use std::{
 use bytes::BytesMut;
 use crypto::signatures::ed25519::PublicKey;
 use libp2p_core::{multiaddr::Protocol, Multiaddr};
-use self::lists::{ActivePeersList, ReplacementPeersList};
-pub use self::peer_id::PeerId;
 use prost::{DecodeError, EncodeError, Message};
 use serde::{
     de::{SeqAccess, Visitor},
     ser::SerializeStruct,
     Deserialize, Serialize,
 };
-pub use self::stores::PeerStore;
 
+use self::lists::{ActivePeersList, ReplacementPeersList};
+pub use self::{peer_id::PeerId, stores::PeerStore};
 use crate::{
     local::{
         services::{ServiceMap, ServiceProtocol},

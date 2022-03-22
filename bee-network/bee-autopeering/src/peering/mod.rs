@@ -7,5 +7,7 @@ pub(crate) mod messages;
 pub(crate) mod neighbor;
 pub(crate) mod update;
 
-pub use self::manager::Status;
-pub use self::neighbor::{Distance, NeighborValidator};
+pub use self::{
+    manager::Status,
+    neighbor::{Distance, NeighborValidator},
+};

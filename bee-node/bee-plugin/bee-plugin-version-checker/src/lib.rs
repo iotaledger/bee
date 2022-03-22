@@ -12,9 +12,10 @@ use std::{convert::Infallible, time::Duration};
 use async_trait::async_trait;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use futures::StreamExt;
-use self::release_info::{ReleaseInfo, ReleaseInfoBuilder};
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
+
+use self::release_info::{ReleaseInfo, ReleaseInfoBuilder};
 
 const CHECK_INTERVAL_SEC: u64 = 3600;
 

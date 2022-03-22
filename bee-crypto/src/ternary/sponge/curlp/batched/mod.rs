@@ -6,13 +6,15 @@
 mod bct;
 mod bct_curlp;
 
-use self::bct::{BcTrit, BcTritArr, BcTritBuf};
-use self::bct_curlp::BctCurlP;
 use bee_ternary::{
     raw::{RawEncoding, RawEncodingBuf},
     Btrit, T1B1Buf, TritBuf,
 };
 
+use self::{
+    bct::{BcTrit, BcTritArr, BcTritBuf},
+    bct_curlp::BctCurlP,
+};
 use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge, HASH_LENGTH};
 
 /// The number of inputs that can be processed in a single batch.

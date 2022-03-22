@@ -21,14 +21,16 @@ pub mod tools;
 #[cfg(feature = "trace")]
 pub mod trace;
 
-pub use self::cli::ClArgs;
-pub use self::config::{NodeConfig, NodeConfigBuilder};
-pub use self::entrynode::{builder::EntryNodeBuilder, config::EntryNodeConfig, EntryNode};
-pub use self::fullnode::{builder::FullNodeBuilder, config::FullNodeConfig, FullNode};
-pub use self::identity::{read_keypair_from_pem_file, write_keypair_to_pem_file, PemFileError};
-pub use self::local::Local;
-pub use self::storage::NodeStorageBackend;
-pub use self::util::print_banner_and_version;
+pub use self::{
+    cli::ClArgs,
+    config::{NodeConfig, NodeConfigBuilder},
+    entrynode::{builder::EntryNodeBuilder, config::EntryNodeConfig, EntryNode},
+    fullnode::{builder::FullNodeBuilder, config::FullNodeConfig, FullNode},
+    identity::{read_keypair_from_pem_file, write_keypair_to_pem_file, PemFileError},
+    local::Local,
+    storage::NodeStorageBackend,
+    util::print_banner_and_version,
+};
 
 pub(crate) const BEE_NAME: &str = "Bee";
 pub(crate) const BEE_VERSION: &str = env!("CARGO_PKG_VERSION");

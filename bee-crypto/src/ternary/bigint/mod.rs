@@ -18,7 +18,4 @@ pub mod t242;
 pub mod t243;
 pub mod u384;
 
-pub use self::i384::I384;
-pub use self::t242::T242;
-pub use self::t243::T243;
-pub use self::u384::U384;
+pub use self::{i384::I384, t242::T242, t243::T243, u384::U384};

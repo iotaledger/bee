@@ -7,8 +7,8 @@ use core::ops::Deref;
 use std::collections::HashSet;
 
 use bee_common::packable::{Packable, Read, Write};
-pub use self::reference::ReferenceUnlock;
 
+pub use self::reference::ReferenceUnlock;
 use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, signature::SignatureUnlock, Error};
 
 /// Defines the mechanism by which a transaction input is authorized to be consumed.

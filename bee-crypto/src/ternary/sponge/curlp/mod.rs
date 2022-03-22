@@ -9,10 +9,12 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-pub use self::batched::{BatchHasher, BATCH_SIZE};
 use bee_ternary::{Btrit, TritBuf, Trits};
-pub use self::unrolled::UnrolledCurlP81;
 
+pub use self::{
+    batched::{BatchHasher, BATCH_SIZE},
+    unrolled::UnrolledCurlP81,
+};
 use crate::ternary::{sponge::Sponge, HASH_LENGTH};
 
 const STATE_LENGTH: usize = HASH_LENGTH * 3;

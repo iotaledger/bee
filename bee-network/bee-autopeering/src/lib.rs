@@ -138,12 +138,14 @@ pub mod config;
 pub mod event;
 pub mod init;
 
-pub use self::config::AutopeeringConfig;
-pub use self::event::Event;
-pub use self::init::init;
-pub use self::local::{
-    services::{ServiceEndpoint, ServiceMap, ServiceName, ServiceProtocol, AUTOPEERING_SERVICE_NAME},
-    Local,
+pub use self::{
+    config::AutopeeringConfig,
+    event::Event,
+    init::init,
+    local::{
+        services::{ServiceEndpoint, ServiceMap, ServiceName, ServiceProtocol, AUTOPEERING_SERVICE_NAME},
+        Local,
+    },
+    peer::{peer_id, peer_id::PeerId, stores, Peer},
+    peering::{Distance, NeighborValidator, Status},
 };
-pub use self::peer::{peer_id, peer_id::PeerId, stores, Peer};
-pub use self::peering::{Distance, NeighborValidator, Status};

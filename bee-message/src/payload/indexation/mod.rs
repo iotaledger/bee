@@ -9,8 +9,8 @@ use alloc::boxed::Box;
 use core::ops::RangeInclusive;
 
 use bee_common::packable::{Packable, Read, Write};
-pub use self::padded::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH};
 
+pub use self::padded::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH};
 use crate::{Error, MESSAGE_LENGTH_MAX};
 
 /// Valid lengths for an indexation payload index.

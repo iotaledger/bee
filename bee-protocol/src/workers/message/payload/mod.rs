@@ -12,13 +12,15 @@ use bee_message::{payload::Payload, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MessageRef;
 use futures::{future::FutureExt, stream::StreamExt};
-pub(crate) use self::indexation::{IndexationPayloadWorker, IndexationPayloadWorkerEvent};
 use log::{debug, error, info};
-pub(crate) use self::milestone::{MilestonePayloadWorker, MilestonePayloadWorkerEvent};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-pub(crate) use self::transaction::{TransactionPayloadWorker, TransactionPayloadWorkerEvent};
 
+pub(crate) use self::{
+    indexation::{IndexationPayloadWorker, IndexationPayloadWorkerEvent},
+    milestone::{MilestonePayloadWorker, MilestonePayloadWorkerEvent},
+    transaction::{TransactionPayloadWorker, TransactionPayloadWorkerEvent},
+};
 use crate::workers::storage::StorageBackend;
 
 pub(crate) struct PayloadWorkerEvent {

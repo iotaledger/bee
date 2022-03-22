@@ -16,14 +16,13 @@ use std::{
 use auth_helper::jwt::JsonWebToken;
 use bee_runtime::{resource::ResourceHandle, shutdown_stream::ShutdownStream};
 use bee_tangle::Tangle;
-use self::commands::WsCommand;
 use futures::{channel::oneshot, FutureExt, StreamExt};
 use log::{debug, error};
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use self::topics::WsTopic;
 use warp::ws::{Message, WebSocket};
 
+use self::{commands::WsCommand, topics::WsTopic};
 use crate::{
     auth::AUDIENCE_CLAIM,
     config::DashboardAuthConfig,

@@ -12,12 +12,11 @@ pub mod treasury;
 use alloc::boxed::Box;
 
 use bee_common::packable::{Packable, Read, Write};
-use self::indexation::IndexationPayload;
-use self::milestone::MilestonePayload;
-use self::receipt::ReceiptPayload;
-use self::transaction::TransactionPayload;
-use self::treasury::TreasuryTransactionPayload;
 
+use self::{
+    indexation::IndexationPayload, milestone::MilestonePayload, receipt::ReceiptPayload,
+    transaction::TransactionPayload, treasury::TreasuryTransactionPayload,
+};
 use crate::Error;
 
 /// A generic payload that can represent different types defining message payloads.
