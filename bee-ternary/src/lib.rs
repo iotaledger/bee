@@ -55,8 +55,6 @@
 
 extern crate alloc;
 
-use core::slice;
-
 /// Utility functions for encoding and decoding B1T6 encoding.
 pub mod b1t6;
 /// Conversions between to and from standard types.
@@ -90,6 +88,7 @@ use core::{
     ops::{
         Deref, DerefMut, Index, IndexMut, Neg, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
     },
+    slice,
 };
 
 use crate::raw::{RawEncoding, RawEncodingBuf};

@@ -110,8 +110,7 @@
     "path": "./storage/devnet/tangle"
   },
   "tangle": {
-    "belowMaxDepth": 15,
-    "numPartitions": 16
+    "belowMaxDepth": 15
   },
   "dashboard": {
     "bindAddress": "/ip4/0.0.0.0/tcp/8081",

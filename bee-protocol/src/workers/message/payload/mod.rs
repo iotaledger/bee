@@ -8,9 +8,8 @@ mod transaction;
 use std::{any::TypeId, convert::Infallible};
 
 use async_trait::async_trait;
-use bee_message::{payload::Payload, MessageId};
+use bee_message::{payload::Payload, Message, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::MessageRef;
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
 use tokio::sync::mpsc;
@@ -25,7 +24,7 @@ use crate::workers::storage::StorageBackend;
 
 pub(crate) struct PayloadWorkerEvent {
     pub(crate) message_id: MessageId,
-    pub(crate) message: MessageRef,
+    pub(crate) message: Message,
 }
 
 pub(crate) struct PayloadWorker {
@@ -33,9 +32,9 @@ pub(crate) struct PayloadWorker {
 }
 
 #[cfg_attr(feature = "trace", trace_tools::observe)]
-async fn process(
+fn process(
     message_id: MessageId,
-    message: MessageRef,
+    message: Message,
     transaction_payload_worker: &mpsc::UnboundedSender<TransactionPayloadWorkerEvent>,
     milestone_payload_worker: &mpsc::UnboundedSender<MilestonePayloadWorkerEvent>,
     indexation_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
@@ -106,8 +105,7 @@ where
                     &transaction_payload_worker,
                     &milestone_payload_worker,
                     &indexation_payload_worker,
-                )
-                .await;
+                );
             }
 
             // Before the worker completely stops, the receiver needs to be drained for payloads to be analysed.
@@ -123,8 +121,7 @@ where
                     &transaction_payload_worker,
                     &milestone_payload_worker,
                     &indexation_payload_worker,
-                )
-                .await;
+                );
                 count += 1;
             }
 

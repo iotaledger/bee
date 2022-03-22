@@ -32,15 +32,15 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(message)
+        .and_then(|message_id, tangle| async move { message(message_id, tangle) })
         .boxed()
 }
 
-pub(crate) async fn message<B: StorageBackend>(
+pub(crate) fn message<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get(&message_id).await.map(|m| (*m).clone()) {
+    match tangle.get(&message_id) {
         Some(message) => Ok(warp::reply::json(&SuccessBody::new(MessageResponse(MessageDto::from(
             &message,
         ))))),
