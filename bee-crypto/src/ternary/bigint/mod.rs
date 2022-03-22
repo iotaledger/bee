@@ -5,7 +5,6 @@
 
 #[macro_use]
 mod macros;
-
 mod sealed;
 
 pub mod binary_representation;
