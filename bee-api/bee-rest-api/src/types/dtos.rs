@@ -33,7 +33,6 @@ use bee_message::{
     },
     Error as MessageError, Message, MessageBuilder, MessageId,
 };
-
 #[cfg(feature = "peer")]
 use bee_protocol::types::peer::Peer;
 
