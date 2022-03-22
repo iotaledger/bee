@@ -14,6 +14,7 @@ mod entrynode;
 mod fullnode;
 mod identity;
 mod local;
+mod plugin;
 mod shutdown;
 mod storage;
 mod util;
