@@ -15,7 +15,11 @@ use bee_message::{
     payload::indexation::PaddedIndex,
     Message, MessageId,
 };
-use bee_storage::{access::Insert, backend::StorageBackend, system::System};
+use bee_storage::{
+    access::{Insert, InsertStrict},
+    backend::StorageBackend,
+    system::System,
+};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
@@ -40,15 +44,17 @@ impl Insert<MessageId, Message> for Storage {
     }
 }
 
-impl Insert<MessageId, MessageMetadata> for Storage {
-    fn insert(
+impl InsertStrict<MessageId, MessageMetadata> for Storage {
+    fn insert_strict(
         &self,
         message_id: &MessageId,
         metadata: &MessageMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
-            .insert(message_id, metadata.pack_new())?;
+            .update_and_fetch(message_id, |old_metadata| {
+                old_metadata.map(|b| b.to_vec()).or_else(|| Some(metadata.pack_new()))
+            })?;
 
         Ok(())
     }

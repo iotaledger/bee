@@ -129,7 +129,7 @@ pub mod integrated {
     use crate::{network::host::integrated::NetworkHost, service::host::integrated::ServiceHost};
 
     /// Initializes the network.
-    pub async fn init<N: Node>(
+    pub fn init<N: Node>(
         config: NetworkConfig,
         keys: Keypair,
         network_id: u64,

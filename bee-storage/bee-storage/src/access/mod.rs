@@ -28,7 +28,7 @@ pub use self::{
     delete::Delete,
     exist::Exist,
     fetch::Fetch,
-    insert::Insert,
+    insert::{Insert, InsertStrict},
     iter::AsIterator,
     multi_fetch::MultiFetch,
     truncate::Truncate,
