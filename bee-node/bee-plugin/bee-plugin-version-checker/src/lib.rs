@@ -12,7 +12,7 @@ use std::{convert::Infallible, time::Duration};
 use async_trait::async_trait;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use futures::StreamExt;
-use release_info::{ReleaseInfo, ReleaseInfoBuilder};
+use self::release_info::{ReleaseInfo, ReleaseInfoBuilder};
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 

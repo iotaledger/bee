@@ -7,7 +7,7 @@ use alloc::{str::FromStr, string::String};
 
 use bech32::{self, FromBase32, ToBase32, Variant};
 use bee_common::packable::{Packable, Read, Write};
-pub use ed25519::{Ed25519Address, ED25519_ADDRESS_LENGTH};
+pub use self::ed25519::{Ed25519Address, ED25519_ADDRESS_LENGTH};
 
 use crate::{signature::SignatureUnlock, Error};
 

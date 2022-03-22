@@ -7,7 +7,7 @@ mod u256;
 use std::convert::Infallible;
 
 use bee_ternary::{Btrit, Trits};
-use u256::U256;
+use self::u256::U256;
 
 use crate::ternary::sponge::{Sponge, HASH_LENGTH};
 

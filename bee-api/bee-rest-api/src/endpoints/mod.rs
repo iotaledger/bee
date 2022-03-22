@@ -24,10 +24,10 @@ use bee_runtime::{
     worker::{Error as WorkerError, Worker},
 };
 use bee_tangle::{Tangle, TangleWorker};
-use config::RestApiConfig;
+use self::config::RestApiConfig;
 use log::{error, info};
-use rejection::CustomRejection;
-use storage::StorageBackend;
+use self::rejection::CustomRejection;
+use self::storage::StorageBackend;
 use warp::{http::StatusCode, Filter, Rejection, Reply};
 
 use crate::types::body::{DefaultErrorResponse, ErrorBody};

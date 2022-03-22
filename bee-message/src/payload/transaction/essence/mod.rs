@@ -5,7 +5,7 @@ mod regular;
 
 use bee_common::packable::{Packable, Read, Write};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
-pub use regular::{RegularEssence, RegularEssenceBuilder};
+pub use self::regular::{RegularEssence, RegularEssenceBuilder};
 
 use crate::Error;
 

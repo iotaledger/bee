@@ -39,10 +39,10 @@ use std::{ops::Deref, sync::Arc};
 
 use bee_message::Message;
 use bee_runtime::node::{Node, NodeBuilder};
-pub use conflict::ConflictReason;
-pub use tangle::Tangle;
-pub use tangle_worker::TangleWorker;
-use tip_pool_cleaner_worker::TipPoolCleanerWorker;
+pub use self::conflict::ConflictReason;
+pub use self::tangle::Tangle;
+pub use self::tangle_worker::TangleWorker;
+use self::tip_pool_cleaner_worker::TipPoolCleanerWorker;
 
 use crate::vec_set::VecSet;
 

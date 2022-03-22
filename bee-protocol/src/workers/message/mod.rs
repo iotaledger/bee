@@ -8,12 +8,12 @@ mod processor;
 mod submitter;
 mod unreferenced_inserter;
 
-pub(crate) use hash_cache::HashCache;
-pub(crate) use hasher::{HasherWorker, HasherWorkerEvent};
-pub(crate) use payload::{
+pub(crate) use self::hash_cache::HashCache;
+pub(crate) use self::hasher::{HasherWorker, HasherWorkerEvent};
+pub(crate) use self::payload::{
     IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent,
     TransactionPayloadWorker,
 };
-pub(crate) use processor::{ProcessorWorker, ProcessorWorkerEvent};
-pub use submitter::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
-pub(crate) use unreferenced_inserter::{UnreferencedMessageInserterWorker, UnreferencedMessageInserterWorkerEvent};
+pub(crate) use self::processor::{ProcessorWorker, ProcessorWorkerEvent};
+pub use self::submitter::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
+pub(crate) use self::unreferenced_inserter::{UnreferencedMessageInserterWorker, UnreferencedMessageInserterWorkerEvent};

@@ -6,8 +6,8 @@
 mod bct;
 mod bct_curlp;
 
-use bct::{BcTrit, BcTritArr, BcTritBuf};
-use bct_curlp::BctCurlP;
+use self::bct::{BcTrit, BcTritArr, BcTritBuf};
+use self::bct_curlp::BctCurlP;
 use bee_ternary::{
     raw::{RawEncoding, RawEncodingBuf},
     Btrit, T1B1Buf, TritBuf,

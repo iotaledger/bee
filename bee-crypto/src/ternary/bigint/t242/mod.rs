@@ -14,7 +14,7 @@ mod constants;
 use std::cmp::Ordering;
 
 use bee_ternary::{Btrit, ShiftTernary, T1B1Buf, Trit, TritBuf, Utrit};
-pub use constants::{
+pub use self::constants::{
     BTRIT_0, BTRIT_1, BTRIT_MAX, BTRIT_MIN, BTRIT_NEG_1, UTRIT_0, UTRIT_1, UTRIT_2, UTRIT_U384_MAX, UTRIT_U384_MAX_HALF,
 };
 
