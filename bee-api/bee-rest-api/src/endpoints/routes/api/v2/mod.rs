@@ -25,7 +25,7 @@ pub mod treasury;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().nest(
-        "v2",
+        "/v2",
         add_peer::filter::<B>()
             .merge(info::filter::<B>())
             .merge(message::filter::<B>())

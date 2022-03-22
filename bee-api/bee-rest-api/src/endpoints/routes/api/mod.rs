@@ -9,5 +9,5 @@ use crate::endpoints::storage::StorageBackend;
 use axum::Router;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().nest("api", plugins::filter::<B>().merge(v2::filter::<B>()))
+    Router::new().nest("/api", plugins::filter::<B>().merge(v2::filter::<B>()))
 }

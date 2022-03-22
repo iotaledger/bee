@@ -7,5 +7,5 @@ use crate::endpoints::storage::StorageBackend;
 use axum::Router;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
-    Router::new().nest("plugins", debug::filter::<B>())
+    Router::new().nest("/plugins", debug::filter::<B>())
 }
