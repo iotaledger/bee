@@ -1,12 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::ternary::{constants::MESSAGE_FRAGMENT_LENGTH, wots::WotsSecurityLevel};
-
 use bee_crypto::ternary::HASH_LENGTH;
 use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, Trits, Tryte, T1B1, T3B1};
-
 use thiserror::Error;
+
+use crate::ternary::{constants::MESSAGE_FRAGMENT_LENGTH, wots::WotsSecurityLevel};
 
 /// Errors occuring during normalization.
 #[derive(Debug, Error, PartialEq)]

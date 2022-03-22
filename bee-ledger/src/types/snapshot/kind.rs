@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::Error;
-
 use bee_common::packable::{Packable, Read, Write};
+
+use crate::types::Error;
 
 /// The kind of a snapshot.
 #[repr(u8)]

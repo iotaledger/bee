@@ -1,7 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::Error;
+use std::collections::{
+    hash_map::{IntoIter, Iter, IterMut},
+    HashMap,
+};
 
 use bee_message::{
     address::Address,
@@ -9,10 +12,7 @@ use bee_message::{
     output::{Output, DUST_THRESHOLD},
 };
 
-use std::collections::{
-    hash_map::{IntoIter, Iter, IterMut},
-    HashMap,
-};
+use crate::types::Error;
 
 /// Records a balance difference to apply to an address.
 #[derive(Clone, Debug, Default)]

@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_ledger::types::{OutputDiff, TreasuryDiff};
+
 use crate::rand::{
     milestone::rand_milestone_id, number::rand_number_range, option::rand_option, output::rand_output_id,
 };
-
-use bee_ledger::types::{OutputDiff, TreasuryDiff};
 
 /// Generates a random treasury diff.
 pub fn rand_treasury_diff() -> TreasuryDiff {

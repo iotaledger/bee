@@ -3,8 +3,6 @@
 
 //! Exist access operations.
 
-use crate::{storage::Storage, trees::*};
-
 use bee_common::packable::Packable;
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
@@ -21,6 +19,8 @@ use bee_storage::{access::Exist, backend::StorageBackend};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
+
+use crate::{storage::Storage, trees::*};
 
 impl Exist<MessageId, Message> for Storage {
     fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {

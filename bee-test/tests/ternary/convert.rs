@@ -1,15 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{
+    io::{self, Write},
+    time::Instant,
+};
+
 use bee_ternary::{
     convert::*,
     trit::{Btrit, Utrit},
     T1B1Buf, TritBuf,
-};
-
-use std::{
-    io::{self, Write},
-    time::Instant,
 };
 
 #[test]

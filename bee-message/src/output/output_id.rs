@@ -1,15 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::str::FromStr;
+
+use bee_common::packable::{Packable, Read, Write};
+
 use crate::{
     constants::INPUT_OUTPUT_INDEX_RANGE,
     payload::transaction::{TransactionId, TRANSACTION_ID_LENGTH},
     Error,
 };
-
-use bee_common::packable::{Packable, Read, Write};
-
-use core::str::FromStr;
 
 /// The length of an `OutputId`.
 pub const OUTPUT_ID_LENGTH: usize = TRANSACTION_ID_LENGTH + std::mem::size_of::<u16>();

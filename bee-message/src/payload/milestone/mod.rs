@@ -6,21 +6,19 @@
 mod essence;
 mod milestone_id;
 
-pub use essence::{MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH};
-pub use milestone_id::{MilestoneId, MILESTONE_ID_LENGTH};
-
-use crate::Error;
+use alloc::{boxed::Box, vec::Vec};
+use core::ops::RangeInclusive;
 
 use bee_common::packable::{Packable, Read, Write};
-
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
     signatures::ed25519,
     Error as CryptoError,
 };
+pub use essence::{MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH};
+pub use milestone_id::{MilestoneId, MILESTONE_ID_LENGTH};
 
-use alloc::{boxed::Box, vec::Vec};
-use core::ops::RangeInclusive;
+use crate::Error;
 
 /// Range of allowed milestones signatures key numbers.
 pub const MILESTONE_SIGNATURE_COUNT_RANGE: RangeInclusive<usize> = 1..=255;

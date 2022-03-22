@@ -1,24 +1,23 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, Bech32Hrp, DashboardPlugin, NodeAlias, NodeId};
+use std::{
+    alloc,
+    time::{Duration, Instant},
+};
 
 use bee_protocol::{types::metrics::NodeMetrics, workers::PeerManager};
 use bee_rest_api::endpoints::routes::health::is_healthy;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use bee_tangle::Tangle;
-
+use cap::Cap;
 use futures::StreamExt;
 use log::debug;
 use serde::Serialize;
-use std::time::Instant;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
-use std::time::Duration;
-
-use cap::Cap;
-use std::alloc;
+use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, Bech32Hrp, DashboardPlugin, NodeAlias, NodeId};
 
 #[global_allocator]
 pub static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_value());

@@ -1,6 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::marker::PhantomData;
+
+use bee_gossip::PeerId;
+use log::warn;
+
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
@@ -8,12 +13,6 @@ use crate::{
         peer::PeerManager,
     },
 };
-
-use bee_gossip::PeerId;
-
-use log::warn;
-
-use std::marker::PhantomData;
 
 pub(crate) struct Sender<P: Packet> {
     marker: PhantomData<P>,

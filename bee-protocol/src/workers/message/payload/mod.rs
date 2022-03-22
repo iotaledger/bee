@@ -5,23 +5,21 @@ mod indexation;
 mod milestone;
 mod transaction;
 
-pub(crate) use indexation::{IndexationPayloadWorker, IndexationPayloadWorkerEvent};
-pub(crate) use milestone::{MilestonePayloadWorker, MilestonePayloadWorkerEvent};
-pub(crate) use transaction::{TransactionPayloadWorker, TransactionPayloadWorkerEvent};
+use std::{any::TypeId, convert::Infallible};
 
-use crate::workers::storage::StorageBackend;
-
+use async_trait::async_trait;
 use bee_message::{payload::Payload, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MessageRef;
-
-use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
+pub(crate) use indexation::{IndexationPayloadWorker, IndexationPayloadWorkerEvent};
 use log::{debug, error, info};
+pub(crate) use milestone::{MilestonePayloadWorker, MilestonePayloadWorkerEvent};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
+pub(crate) use transaction::{TransactionPayloadWorker, TransactionPayloadWorkerEvent};
 
-use std::{any::TypeId, convert::Infallible};
+use crate::workers::storage::StorageBackend;
 
 pub(crate) struct PayloadWorkerEvent {
     pub(crate) message_id: MessageId,

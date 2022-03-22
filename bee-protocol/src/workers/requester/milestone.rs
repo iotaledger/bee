@@ -1,20 +1,18 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::metrics::NodeMetrics,
-    workers::{
-        packets::MilestoneRequestPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
-        PeerManagerResWorker,
-    },
+use std::{
+    any::TypeId,
+    collections::HashMap,
+    convert::Infallible,
+    time::{Duration, Instant},
 };
 
+use async_trait::async_trait;
 use bee_gossip::PeerId;
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{Tangle, TangleWorker};
-
-use async_trait::async_trait;
 use futures::StreamExt;
 use fxhash::FxBuildHasher;
 use log::{debug, info, warn};
@@ -22,11 +20,12 @@ use parking_lot::RwLock;
 use tokio::{sync::mpsc, time::interval};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
-use std::{
-    any::TypeId,
-    collections::HashMap,
-    convert::Infallible,
-    time::{Duration, Instant},
+use crate::{
+    types::metrics::NodeMetrics,
+    workers::{
+        packets::MilestoneRequestPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
+        PeerManagerResWorker,
+    },
 };
 
 const RETRY_INTERVAL: Duration = Duration::from_millis(2500);

@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{constants::IOTA_SUPPLY, Error};
+use core::ops::RangeInclusive;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::ops::RangeInclusive;
+use crate::{constants::IOTA_SUPPLY, Error};
 
 /// The allowed range of the amount of a `TreasuryOutput`.
 pub const TREASURY_OUTPUT_AMOUNT: RangeInclusive<u64> = 0..=IOTA_SUPPLY;

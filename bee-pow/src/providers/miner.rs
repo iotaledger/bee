@@ -3,10 +3,15 @@
 
 //! Contains a nonce provider that mine nonces.
 
-use crate::providers::{NonceProvider, NonceProviderBuilder};
+use std::{
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    thread,
+};
 
 use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf};
-
 use crypto::hashes::{
     blake2b::Blake2b256,
     ternary::{
@@ -17,13 +22,7 @@ use crypto::hashes::{
 };
 use thiserror::Error;
 
-use std::{
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-    thread,
-};
+use crate::providers::{NonceProvider, NonceProviderBuilder};
 
 const DEFAULT_NUM_WORKERS: usize = 1;
 // Precomputed natural logarithm of 3 for performance reasons.

@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use alloc::boxed::Box;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use alloc::boxed::Box;
+use crate::Error;
 
 const ED25519_PUBLIC_KEY_LENGTH: usize = 32;
 const ED25519_SIGNATURE_LENGTH: usize = 64;

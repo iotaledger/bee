@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{address::Address, input::UtxoInput};
+use core::fmt;
 
 use crypto::Error as CryptoError;
 
-use core::fmt;
+use crate::{address::Address, input::UtxoInput};
 
 /// Error occurring when creating/parsing/validating messages.
 #[derive(Debug)]

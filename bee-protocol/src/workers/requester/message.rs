@@ -1,27 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::metrics::NodeMetrics,
-    workers::{
-        packets::MessageRequestPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
-        PeerManagerResWorker,
-    },
-};
-
-use bee_message::{milestone::MilestoneIndex, MessageId};
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{Tangle, TangleWorker};
-
-use async_priority_queue::PriorityQueue;
-use async_trait::async_trait;
-use futures::StreamExt;
-use fxhash::FxBuildHasher;
-use log::{debug, info, trace};
-use parking_lot::RwLock;
-use tokio::time::interval;
-use tokio_stream::wrappers::IntervalStream;
-
 use std::{
     any::TypeId,
     cmp::{Ord, Ordering, PartialOrd},
@@ -29,6 +8,26 @@ use std::{
     convert::Infallible,
     sync::Arc,
     time::{Duration, Instant},
+};
+
+use async_priority_queue::PriorityQueue;
+use async_trait::async_trait;
+use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::{Tangle, TangleWorker};
+use futures::StreamExt;
+use fxhash::FxBuildHasher;
+use log::{debug, info, trace};
+use parking_lot::RwLock;
+use tokio::time::interval;
+use tokio_stream::wrappers::IntervalStream;
+
+use crate::{
+    types::metrics::NodeMetrics,
+    workers::{
+        packets::MessageRequestPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
+        PeerManagerResWorker,
+    },
 };
 
 const RETRY_INTERVAL: Duration = Duration::from_millis(2500);

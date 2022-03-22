@@ -3,7 +3,7 @@
 
 //! Multi-fetch access operations.
 
-use crate::storage::Storage;
+use std::{iter::Map, vec::IntoIter};
 
 use bee_ledger::types::{Balance, ConsumedOutput, CreatedOutput, OutputDiff};
 use bee_message::{
@@ -15,7 +15,7 @@ use bee_message::{
 use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
 use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
 
-use std::{iter::Map, vec::IntoIter};
+use crate::storage::Storage;
 
 macro_rules! impl_multi_fetch {
     ($key:ty, $value:ty, $field:ident) => {

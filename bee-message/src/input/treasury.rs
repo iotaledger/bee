@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::milestone::MilestoneId, Error};
+use core::{convert::From, ops::Deref, str::FromStr};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{convert::From, ops::Deref, str::FromStr};
+use crate::{payload::milestone::MilestoneId, Error};
 
 /// `TreasuryInput` is an input which references a milestone which generated a `TreasuryOutput`.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]

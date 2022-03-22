@@ -3,15 +3,14 @@
 
 mod white_flag;
 
-use crate::endpoints::{config::RestApiConfig, storage::StorageBackend};
+use std::net::IpAddr;
 
 use bee_protocol::workers::{MessageRequesterWorker, RequestedMessages};
 use bee_runtime::{event::Bus, resource::ResourceHandle};
 use bee_tangle::Tangle;
-
 use warp::{self, Filter, Rejection, Reply};
 
-use std::net::IpAddr;
+use crate::endpoints::{config::RestApiConfig, storage::StorageBackend};
 
 pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("debug"))

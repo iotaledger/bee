@@ -1,11 +1,11 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{fs, path::PathBuf};
+
 use fern_logger::LoggerConfig;
 use serde::Deserialize;
 use trace_tools::{subscriber, util::Flamegrapher};
-
-use std::{fs, path::PathBuf};
 
 /// Default flamegraph output directory.
 const DEFAULT_FLAMEGRAPH_OUT_PATH: &str = "./flamegraph";

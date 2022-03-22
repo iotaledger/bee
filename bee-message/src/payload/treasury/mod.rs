@@ -3,9 +3,9 @@
 
 //! Module describing the treasury payload.
 
-use crate::{input::Input, output::Output, Error};
-
 use bee_common::packable::{Packable, Read, Write};
+
+use crate::{input::Input, output::Output, Error};
 
 /// `TreasuryTransaction` represents a transaction which moves funds from the treasury.
 #[derive(Clone, Debug, Eq, PartialEq)]

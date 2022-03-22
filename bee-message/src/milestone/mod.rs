@@ -5,11 +5,10 @@ use crate::Error;
 
 mod index;
 
+use bee_common::packable::{Packable, Read, Write};
 pub use index::MilestoneIndex;
 
 use crate::MessageId;
-
-use bee_common::packable::{Packable, Read, Write};
 
 /// Defines a coordinator milestone.
 #[derive(Clone, Debug, Eq, PartialEq)]

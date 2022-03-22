@@ -1,14 +1,14 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use sled::{Batch, Db};
+
 use crate::peer::{
     lists::{ActivePeer, ActivePeersList, ReplacementPeersList},
     peer_id::PeerId,
     stores::PeerStore,
     Peer,
 };
-
-use sled::{Batch, Db};
 
 const ACTIVE_PEERS_TREE: &str = "active_peers";
 const REPLACEMENTS_TREE: &str = "replacements";

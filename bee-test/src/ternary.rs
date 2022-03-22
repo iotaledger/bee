@@ -4,11 +4,10 @@
 // Workaround for cargo/rustc unused warning bug
 #![allow(dead_code)]
 
-use bee_ternary::*;
-
-use rand::prelude::*;
-
 use std::ops::Range;
+
+use bee_ternary::*;
+use rand::prelude::*;
 
 /// Generates a random balanced i8 trit.
 pub fn gen_trit_balanced() -> i8 {

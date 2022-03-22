@@ -7,16 +7,14 @@
 
 mod release_info;
 
-use release_info::{ReleaseInfo, ReleaseInfoBuilder};
-
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use std::{convert::Infallible, time::Duration};
 
 use async_trait::async_trait;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use futures::StreamExt;
+use release_info::{ReleaseInfo, ReleaseInfoBuilder};
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
-
-use std::{convert::Infallible, time::Duration};
 
 const CHECK_INTERVAL_SEC: u64 = 3600;
 

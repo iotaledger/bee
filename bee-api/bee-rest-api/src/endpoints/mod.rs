@@ -10,12 +10,9 @@ pub mod rejection;
 pub mod routes;
 pub mod storage;
 
-use config::RestApiConfig;
-use rejection::CustomRejection;
-use storage::StorageBackend;
+use std::{any::TypeId, convert::Infallible};
 
-use crate::types::body::{DefaultErrorResponse, ErrorBody};
-
+use async_trait::async_trait;
 use bee_gossip::NetworkCommandSender;
 use bee_ledger::workers::consensus::ConsensusWorker;
 use bee_protocol::workers::{
@@ -27,12 +24,13 @@ use bee_runtime::{
     worker::{Error as WorkerError, Worker},
 };
 use bee_tangle::{Tangle, TangleWorker};
-
-use async_trait::async_trait;
+use config::RestApiConfig;
 use log::{error, info};
+use rejection::CustomRejection;
+use storage::StorageBackend;
 use warp::{http::StatusCode, Filter, Rejection, Reply};
 
-use std::{any::TypeId, convert::Infallible};
+use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
 pub(crate) type NetworkId = (String, u64);
 pub(crate) type Bech32Hrp = String;
