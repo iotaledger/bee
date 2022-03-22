@@ -154,16 +154,6 @@ pub(crate) fn insert_created_output_batch<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     match output.inner() {
-        #[cfg(feature = "cpt2")]
-        Output::SignatureLockedSingle(_) => {
-            // TODO
-            Ok(())
-        }
-        #[cfg(feature = "cpt2")]
-        Output::SignatureLockedDustAllowance(_) => {
-            // TODO
-            Ok(())
-        }
         Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
         Output::Basic(_) => {
             // TODO
@@ -196,16 +186,6 @@ pub(crate) fn delete_created_output_batch<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     match output.inner() {
-        #[cfg(feature = "cpt2")]
-        Output::SignatureLockedSingle(_) => {
-            // TODO
-            Ok(())
-        }
-        #[cfg(feature = "cpt2")]
-        Output::SignatureLockedDustAllowance(_) => {
-            // TODO
-            Ok(())
-        }
         Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
         Output::Basic(_) => {
             // TODO
