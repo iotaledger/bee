@@ -13,7 +13,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{event::LatestMilestoneChanged, MessageRef, Tangle, TangleWorker};
+use bee_tangle::{event::LatestMilestoneChanged, Tangle, TangleWorker};
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
 use tokio::sync::mpsc;
@@ -36,7 +36,7 @@ pub(crate) enum Error {
 
 pub(crate) struct MilestonePayloadWorkerEvent {
     pub(crate) message_id: MessageId,
-    pub(crate) message: MessageRef,
+    pub(crate) message: Message,
 }
 
 pub(crate) struct MilestonePayloadWorker {
@@ -69,10 +69,10 @@ fn validate(
 
 #[allow(clippy::too_many_arguments)]
 #[cfg_attr(feature = "trace", trace_tools::observe)]
-async fn process<B: StorageBackend>(
+fn process<B: StorageBackend>(
     tangle: &Tangle<B>,
     message_id: MessageId,
-    message: MessageRef,
+    message: Message,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     requested_milestones: &RequestedMilestones,
@@ -91,7 +91,7 @@ async fn process<B: StorageBackend>(
 
         match validate(message_id, &message, milestone, key_manager) {
             Ok(milestone) => {
-                tangle.add_milestone(index, milestone.clone()).await;
+                tangle.add_milestone(index, milestone.clone());
                 if index > tangle.get_latest_milestone_index() {
                     info!("New milestone {} {}.", index, milestone.message_id());
                     tangle.update_latest_milestone_index(index);
@@ -168,8 +168,7 @@ where
                     &milestone_solidifier,
                     &key_manager,
                     &bus,
-                )
-                .await;
+                );
             }
 
             // Before the worker completely stops, the receiver needs to be drained for milestone payloads to be
@@ -189,8 +188,7 @@ where
                     &milestone_solidifier,
                     &key_manager,
                     &bus,
-                )
-                .await;
+                );
                 count += 1;
             }
 

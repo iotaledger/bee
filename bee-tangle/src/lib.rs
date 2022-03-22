@@ -31,30 +31,11 @@ pub mod unreferenced_message;
 pub mod urts;
 
 mod conflict;
-mod vec_set;
-mod vertex;
-mod vertices;
 
-use std::{ops::Deref, sync::Arc};
-
-use bee_message::Message;
 use bee_runtime::node::{Node, NodeBuilder};
 
 use self::tip_pool_cleaner_worker::TipPoolCleanerWorker;
 pub use self::{conflict::ConflictReason, tangle::Tangle, tangle_worker::TangleWorker};
-use crate::vec_set::VecSet;
-
-/// A thread-safe reference to a `Message`.
-#[derive(Clone)]
-pub struct MessageRef(pub(crate) Arc<Message>);
-
-impl Deref for MessageRef {
-    type Target = Message;
-
-    fn deref(&self) -> &Self::Target {
-        &*self.0
-    }
-}
 
 /// Initiate the tangle on top of the given node builder.
 pub fn init<N: Node>(tangle_config: &config::TangleConfig, node_builder: N::Builder) -> N::Builder
