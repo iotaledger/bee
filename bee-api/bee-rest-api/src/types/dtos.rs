@@ -1697,6 +1697,9 @@ impl TryFrom<&NftOutputDto> for NftOutput {
         for b in &value.unlock_conditions {
             builder = builder.add_unlock_condition(b.try_into()?);
         }
+        for b in &value.feature_blocks {
+            builder = builder.add_feature_block(b.try_into()?);
+        }
         for b in &value.immutable_feature_blocks {
             builder = builder.add_immutable_feature_block(b.try_into()?);
         }
