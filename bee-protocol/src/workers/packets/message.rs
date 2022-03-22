@@ -3,11 +3,11 @@
 
 //! Message packet of the protocol.
 
-use crate::workers::packets::Packet;
+use std::ops::Range;
 
 use bee_message::{MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN};
 
-use std::ops::Range;
+use crate::workers::packets::Packet;
 
 /// A packet to send a message.
 #[derive(Clone)]

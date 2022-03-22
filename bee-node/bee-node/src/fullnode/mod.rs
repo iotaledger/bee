@@ -4,20 +4,18 @@
 pub mod builder;
 pub mod config;
 
-use self::{builder::FullNodeBuilder, config::FullNodeConfig};
+use std::any::{type_name, Any, TypeId};
 
+use async_trait::async_trait;
+use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Worker};
+use futures::{channel::oneshot, future::Future};
+
+use self::{builder::FullNodeBuilder, config::FullNodeConfig};
 use crate::{
     core::{Core, CoreError},
     shutdown::ShutdownRx,
     storage::NodeStorageBackend,
 };
-
-use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Worker};
-
-use async_trait::async_trait;
-use futures::{channel::oneshot, future::Future};
-
-use std::any::{type_name, Any, TypeId};
 
 /// Full node related errors.
 #[derive(Debug, thiserror::Error)]

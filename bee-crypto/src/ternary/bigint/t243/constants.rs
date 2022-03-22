@@ -1,11 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::ternary::bigint::{binary_representation::U32Repr, endianness::LittleEndian, T243, U384};
-
 use bee_ternary::{Btrit, Utrit};
-
 use lazy_static::lazy_static;
+
+use crate::ternary::bigint::{binary_representation::U32Repr, endianness::LittleEndian, T243, U384};
 
 lazy_static! {
     /// T243 balanced trits represented 0.

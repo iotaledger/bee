@@ -1,19 +1,18 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::vertex::Vertex;
-
-use bee_message::MessageId;
-
-use hashbrown::{hash_map::DefaultHashBuilder, raw::RawTable};
-use rand::Rng;
-use tokio::sync::{RwLock, RwLockMappedWriteGuard, RwLockReadGuard, RwLockWriteGuard};
-
 use std::{
     hash::{BuildHasher, Hash, Hasher},
     num::NonZeroUsize,
     sync::atomic::{AtomicUsize, Ordering},
 };
+
+use bee_message::MessageId;
+use hashbrown::{hash_map::DefaultHashBuilder, raw::RawTable};
+use rand::Rng;
+use tokio::sync::{RwLock, RwLockMappedWriteGuard, RwLockReadGuard, RwLockWriteGuard};
+
+use crate::vertex::Vertex;
 
 fn equivalent_id(message_id: &MessageId) -> impl Fn(&(MessageId, Vertex)) -> bool + '_ {
     move |(k, _)| message_id.eq(k)

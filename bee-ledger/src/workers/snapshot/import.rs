@@ -1,6 +1,25 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{
+    collections::HashMap,
+    fs::{File, OpenOptions},
+    io::BufReader,
+    path::Path,
+};
+
+use bee_common::packable::{Packable, Read};
+use bee_message::{
+    milestone::MilestoneIndex,
+    output::{self, Output, OutputId},
+    payload::Payload,
+    MessageId,
+};
+use bee_storage::access::{Insert, Truncate};
+use bee_tangle::solid_entry_point::SolidEntryPoint;
+use log::info;
+use time_helper as time;
+
 use crate::{
     types::{
         snapshot::{
@@ -14,26 +33,6 @@ use crate::{
         snapshot::{config::SnapshotConfig, download::download_latest_snapshot_files, error::Error as SnapshotError},
         storage::{self, apply_balance_diffs, apply_milestone, create_output, rollback_milestone, StorageBackend},
     },
-};
-
-use bee_common::packable::{Packable, Read};
-use bee_message::{
-    milestone::MilestoneIndex,
-    output::{self, Output, OutputId},
-    payload::Payload,
-    MessageId,
-};
-use bee_storage::access::{Insert, Truncate};
-use bee_tangle::solid_entry_point::SolidEntryPoint;
-
-use log::info;
-use time_helper as time;
-
-use std::{
-    collections::HashMap,
-    fs::{File, OpenOptions},
-    io::BufReader,
-    path::Path,
 };
 
 fn snapshot_reader(path: &Path) -> Result<BufReader<File>, Error> {

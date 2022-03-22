@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{types::LedgerIndex, workers::pruning::config::PruningConfig};
-
 use bee_message::milestone::MilestoneIndex;
 use bee_tangle::{storage::StorageBackend, Tangle};
+
+use crate::{types::LedgerIndex, workers::pruning::config::PruningConfig};
 
 const PRUNING_BATCH_SIZE_MAX: u32 = 200;
 

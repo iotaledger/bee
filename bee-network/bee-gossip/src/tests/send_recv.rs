@@ -3,11 +3,10 @@
 
 #![cfg(feature = "full")]
 
-use super::common::{await_events::*, keys_and_ids::*, network_config::*, shutdown::*};
-
-use crate::{standalone::init, Command, PeerRelation};
-
 use tokio_stream::StreamExt;
+
+use super::common::{await_events::*, keys_and_ids::*, network_config::*, shutdown::*};
+use crate::{standalone::init, Command, PeerRelation};
 
 #[tokio::test]
 #[serial_test::serial]

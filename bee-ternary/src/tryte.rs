@@ -3,14 +3,14 @@
 
 extern crate alloc;
 
-use crate::{Btrit, Error, Trits, T3B1};
-
 use alloc::vec::Vec;
 use core::{
     fmt,
     ops::{Deref, DerefMut},
     str::FromStr,
 };
+
+use crate::{Btrit, Error, Trits, T3B1};
 
 /// A ternary tryte. Equivalent to 3 trits.
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]

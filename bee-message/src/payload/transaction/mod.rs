@@ -6,14 +6,14 @@
 mod essence;
 mod transaction_id;
 
-use crate::{unlock::UnlockBlocks, Error};
-
-pub use essence::{Essence, RegularEssence, RegularEssenceBuilder};
-pub use transaction_id::{TransactionId, TRANSACTION_ID_LENGTH};
-
 use bee_common::packable::{Packable, Read, Write};
-
 use crypto::hashes::{blake2b::Blake2b256, Digest};
+
+pub use self::{
+    essence::{Essence, RegularEssence, RegularEssenceBuilder},
+    transaction_id::{TransactionId, TRANSACTION_ID_LENGTH},
+};
+use crate::{unlock::UnlockBlocks, Error};
 
 /// A transaction to move funds.
 #[derive(Clone, Debug, Eq, PartialEq)]

@@ -5,12 +5,21 @@
 
 mod constants;
 
-pub use constants::{
+use std::{
+    cmp::Ordering,
+    fmt,
+    marker::PhantomData,
+    ops::{Deref, DerefMut},
+};
+
+use bee_ternary::Utrit;
+use byteorder::{self, ByteOrder};
+
+pub use self::constants::{
     BE_U32_0, BE_U32_1, BE_U32_2, BE_U32_HALF_MAX, BE_U32_HALF_MAX_T242, BE_U32_MAX, BE_U8_0, BE_U8_1, BE_U8_2,
     BE_U8_MAX, LE_U32_0, LE_U32_1, LE_U32_2, LE_U32_HALF_MAX, LE_U32_HALF_MAX_T242, LE_U32_MAX, LE_U32_MAX_T242,
     LE_U32_NEG_HALF_MAX_T242, LE_U32_ONLY_T243_OCCUPIED, LE_U8_0, LE_U8_1, LE_U8_2, LE_U8_MAX,
 };
-
 use crate::ternary::bigint::{
     binary_representation::{BinaryRepresentation, U32Repr, U8Repr},
     endianness::{BigEndian, LittleEndian},
@@ -18,17 +27,6 @@ use crate::ternary::bigint::{
     overflowing_add::OverflowingAdd,
     split_integer::SplitInteger,
     t243, I384, T242, T243,
-};
-
-use bee_ternary::Utrit;
-
-use byteorder::{self, ByteOrder};
-
-use std::{
-    cmp::Ordering,
-    fmt,
-    marker::PhantomData,
-    ops::{Deref, DerefMut},
 };
 
 /// A big integer encoding an unsigned integer with 384 bits.

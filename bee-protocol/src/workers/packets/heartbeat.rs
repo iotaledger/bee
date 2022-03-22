@@ -3,9 +3,9 @@
 
 //! Heartbeat packet of the protocol.
 
-use crate::workers::packets::Packet;
-
 use std::ops::Range;
+
+use crate::workers::packets::Packet;
 
 const SOLID_MILESTONE_INDEX_SIZE: usize = 4;
 const PRUNED_INDEX_SIZE: usize = 4;

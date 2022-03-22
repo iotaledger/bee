@@ -1,16 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::ops::RangeInclusive;
+
+use bee_common::packable::{Packable, Read, Write};
+
 use crate::{
     constants::IOTA_SUPPLY,
     output::{SignatureLockedSingleOutput, DUST_THRESHOLD},
     payload::receipt::TailTransactionHash,
     Error,
 };
-
-use bee_common::packable::{Packable, Read, Write};
-
-use core::ops::RangeInclusive;
 
 /// Range of valid amounts for migrated funds entries.
 pub const VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS: RangeInclusive<u64> = DUST_THRESHOLD..=IOTA_SUPPLY;

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::{Packable, Read, Write};
-
 use bitflags::bitflags;
 use serde::Serialize;
 

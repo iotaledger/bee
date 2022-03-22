@@ -4,9 +4,9 @@
 //! This module forms the backend layer which holds the contracts of starting and shutting down the backend, as well as
 //! accessing backend properties.
 
-use crate::system::StorageHealth;
-
 use serde::de::DeserializeOwned;
+
+use crate::system::StorageHealth;
 
 /// Trait to be implemented on a storage backend.
 /// Determines how to start and shutdown the backend.

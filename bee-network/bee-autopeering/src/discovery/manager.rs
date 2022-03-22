@@ -1,6 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{net::SocketAddr, time::Duration};
+
+use rand::{seq::index, Rng as _};
+
 use crate::{
     config::AutopeeringConfig,
     discovery::messages::{DiscoveryRequest, DiscoveryResponse, VerificationRequest, VerificationResponse},
@@ -24,10 +28,6 @@ use crate::{
     task::{Runnable, ShutdownRx, TaskManager},
     time::{HOUR, SECOND},
 };
-
-use rand::{seq::index, Rng as _};
-
-use std::{net::SocketAddr, time::Duration};
 
 // Time interval after which the next peer is reverified.
 pub(crate) const REVERIFY_INTERVAL_DEFAULT: Duration = Duration::from_secs(10 * SECOND);

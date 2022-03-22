@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::error::Error;
-
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{milestone::MilestoneIndex, payload::transaction::TransactionId};
+
+use crate::types::error::Error;
 
 /// Represents a newly consumed output.
 #[derive(Clone, Debug, Eq, PartialEq)]

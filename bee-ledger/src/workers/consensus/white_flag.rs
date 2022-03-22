@@ -1,14 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::{BalanceDiffs, ConsumedOutput, CreatedOutput},
-    workers::{
-        consensus::{merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
-        error::Error,
-        storage::{self, StorageBackend},
-    },
-};
+use std::collections::{HashMap, HashSet};
 
 use bee_message::{
     address::Address,
@@ -22,10 +15,16 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_tangle::{ConflictReason, Tangle};
-
 use crypto::hashes::blake2b::Blake2b256;
 
-use std::collections::{HashMap, HashSet};
+use crate::{
+    types::{BalanceDiffs, ConsumedOutput, CreatedOutput},
+    workers::{
+        consensus::{merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
+        error::Error,
+        storage::{self, StorageBackend},
+    },
+};
 
 fn verify_signature(address: &Address, unlock_blocks: &UnlockBlocks, index: usize, essence_hash: &[u8; 32]) -> bool {
     if let Some(UnlockBlock::Signature(signature)) = unlock_blocks.get(index) {

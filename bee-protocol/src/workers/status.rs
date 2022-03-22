@@ -1,19 +1,18 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::workers::{storage::StorageBackend, MessageRequesterWorker, RequestedMessages};
+use std::{any::TypeId, convert::Infallible, time::Duration};
 
+use async_trait::async_trait;
 use bee_ledger::workers::consensus::ConsensusWorker;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{Tangle, TangleWorker};
-
-use async_trait::async_trait;
 use futures::StreamExt;
 use log::info;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
-use std::{any::TypeId, convert::Infallible, time::Duration};
+use crate::workers::{storage::StorageBackend, MessageRequesterWorker, RequestedMessages};
 
 #[derive(Default)]
 pub(crate) struct StatusWorker;

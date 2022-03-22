@@ -3,8 +3,6 @@
 
 //! Batch access operations.
 
-use crate::{storage::Storage, table::TableBatch};
-
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
     TreasuryOutput, Unspent,
@@ -23,6 +21,8 @@ use bee_storage::{
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
+
+use crate::{storage::Storage, table::TableBatch};
 
 /// A writing batch that can be applied atomically.
 #[derive(Default)]

@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::collections::HashMap;
+
 use bee_ledger::types::Receipt;
 use bee_message::milestone::MilestoneIndex;
 use bee_storage::{
@@ -8,8 +10,6 @@ use bee_storage::{
     backend,
 };
 use bee_test::rand::{milestone::rand_milestone_index, receipt::rand_ledger_receipt};
-
-use std::collections::HashMap;
 
 pub trait StorageBackend:
     backend::StorageBackend

@@ -35,18 +35,14 @@ mod vec_set;
 mod vertex;
 mod vertices;
 
-pub use conflict::ConflictReason;
-pub use tangle::Tangle;
-pub use tangle_worker::TangleWorker;
-
-use tip_pool_cleaner_worker::TipPoolCleanerWorker;
-
-use crate::vec_set::VecSet;
+use std::{ops::Deref, sync::Arc};
 
 use bee_message::Message;
 use bee_runtime::node::{Node, NodeBuilder};
 
-use std::{ops::Deref, sync::Arc};
+use self::tip_pool_cleaner_worker::TipPoolCleanerWorker;
+pub use self::{conflict::ConflictReason, tangle::Tangle, tangle_worker::TangleWorker};
+use crate::vec_set::VecSet;
 
 /// A thread-safe reference to a `Message`.
 #[derive(Clone)]

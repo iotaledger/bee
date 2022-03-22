@@ -1,14 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::{
-    address::rand_address,
-    message::rand_message_id,
-    milestone::{rand_milestone_id, rand_milestone_index},
-    number::{rand_number, rand_number_range},
-    transaction::rand_transaction_id,
-};
-
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
 use bee_message::{
     constants::INPUT_OUTPUT_INDEX_RANGE,
@@ -16,6 +8,14 @@ use bee_message::{
         self, Output, OutputId, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput,
         SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT, SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT, TREASURY_OUTPUT_AMOUNT,
     },
+};
+
+use crate::rand::{
+    address::rand_address,
+    message::rand_message_id,
+    milestone::{rand_milestone_id, rand_milestone_index},
+    number::{rand_number, rand_number_range},
+    transaction::rand_transaction_id,
 };
 
 /// Generates a random output id.

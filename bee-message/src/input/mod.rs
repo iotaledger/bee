@@ -4,12 +4,10 @@
 mod treasury;
 mod utxo;
 
-pub use treasury::TreasuryInput;
-pub use utxo::UtxoInput;
-
-use crate::Error;
-
 use bee_common::packable::{Packable, Read, Write};
+
+pub use self::{treasury::TreasuryInput, utxo::UtxoInput};
+use crate::Error;
 
 /// A generic input supporting different input kinds.
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]

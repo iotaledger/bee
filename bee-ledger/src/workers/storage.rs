@@ -3,13 +3,7 @@
 
 //! Module containing ledger storage operations.
 
-use crate::{
-    types::{
-        snapshot::SnapshotInfo, Balance, BalanceDiffs, ConsumedOutput, CreatedOutput, LedgerIndex, Migration,
-        OutputDiff, Receipt, TreasuryDiff, TreasuryOutput, Unspent,
-    },
-    workers::error::Error,
-};
+use std::collections::HashMap;
 
 use bee_message::{
     address::{Address, Ed25519Address},
@@ -26,7 +20,13 @@ use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
-use std::collections::HashMap;
+use crate::{
+    types::{
+        snapshot::SnapshotInfo, Balance, BalanceDiffs, ConsumedOutput, CreatedOutput, LedgerIndex, Migration,
+        OutputDiff, Receipt, TreasuryDiff, TreasuryOutput, Unspent,
+    },
+    workers::error::Error,
+};
 
 /// A blanket-implemented helper trait for the storage layer.
 pub trait StorageBackend:
