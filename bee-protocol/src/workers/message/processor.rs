@@ -190,6 +190,8 @@ where
                             error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
                         }
 
+                        let bytes = message_packet.bytes.clone();
+
                         match requested_messages.remove(&message_id) {
                             // Message was requested.
                             Some((index, instant)) => {
@@ -233,7 +235,7 @@ where
 
                         notify_message(message_id, notifier);
 
-                        bus.dispatch(MessageProcessed { message_id });
+                        bus.dispatch(MessageProcessed { message_id, bytes });
 
                         // TODO: boolean values are false at this point in time? trigger event from another location?
                         bus.dispatch(VertexCreated {

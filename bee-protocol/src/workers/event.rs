@@ -8,6 +8,8 @@ use bee_message::MessageId;
 pub struct MessageProcessed {
     /// Message identifier of the processed message.
     pub message_id: MessageId,
+    /// Bytes of the processed message.
+    pub bytes: Vec<u8>,
 }
 
 /// An event that indicates that a message was solidified.
@@ -15,6 +17,8 @@ pub struct MessageProcessed {
 pub struct MessageSolidified {
     /// Message identifier of the solidified message.
     pub message_id: MessageId,
+    /// Parents of the solidified message.
+    pub parents: Vec<MessageId>,
 }
 
 /// An event that indicates that the MPS metrics were updated.

@@ -60,6 +60,7 @@ pub struct MessageSubmitterWorkerEvent {
     pub notifier: Sender<Result<MessageId, MessageSubmitterError>>,
 }
 
+#[derive(Clone)]
 pub struct MessageSubmitterWorker {
     pub tx: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 }

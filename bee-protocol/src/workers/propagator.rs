@@ -138,14 +138,18 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let (solidified_tx, solidified_rx) = async_channel::unbounded();
+            let (solidified_tx, solidified_rx) =
+                async_channel::unbounded::<(MessageId, Vec<MessageId>, Option<MilestoneIndex>)>();
 
             tokio::spawn({
                 let tangle = tangle.clone();
 
                 async move {
                     while let Ok((message_id, parents, index)) = solidified_rx.recv().await {
-                        bus.dispatch(MessageSolidified { message_id });
+                        bus.dispatch(MessageSolidified {
+                            message_id,
+                            parents: parents.clone(),
+                        });
 
                         const SAFETY_THRESHOLD: u32 = 5; // Number of ms before eligible section of the Tangle begins
 
