@@ -12,15 +12,19 @@ use self::inx::inx_server::Inx;
 use bee_ledger::types::LedgerIndex;
 use bee_message::milestone::MilestoneIndex;
 use bee_protocol::workers::storage::StorageBackend;
-use bee_runtime::{node::Node, resource::ResourceHandle};
+use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle};
 use bee_storage::{access::Fetch, system::StorageHealth};
-use bee_tangle::Tangle;
+use bee_tangle::{
+    event::{ConfirmedMilestoneChanged, LatestMilestoneChanged},
+    Tangle,
+};
 
 use tonic::{Request, Response, Status};
 
 struct PluginServer<B> {
     tangle: ResourceHandle<Tangle<B>>,
     storage: ResourceHandle<B>,
+    bus: ResourceHandle<Bus<'static>>,
 }
 
 impl<B: StorageBackend> PluginServer<B> {
@@ -28,6 +32,7 @@ impl<B: StorageBackend> PluginServer<B> {
         Self {
             tangle: node.resource(),
             storage: node.storage(),
+            bus: node.bus(),
         }
     }
 
@@ -87,22 +92,63 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
         Ok(Response::new(self.get_milestone(milestone_index).await))
     }
 
+    // FIXME: avoid dynamic dispatch
     type ListenToLatestMilestoneStream = InxStream<inx::Milestone>;
 
     async fn listen_to_latest_milestone(
         &self,
         request: Request<inx::NoParams>,
     ) -> Result<Response<Self::ListenToLatestMilestoneStream>, Status> {
-        todo!()
+        let inx::NoParams {} = request.into_inner();
+        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+
+        // FIXME: `TypeId` might not be good enough
+        self.bus.add_listener::<Self, LatestMilestoneChanged, _>(move |event| {
+            tx.send(Ok(inx::Milestone {
+                milestone_index: *event.index,
+                // FIXME: unwrap
+                milestone_timestamp: event.milestone.timestamp().try_into().unwrap(),
+                message_id: Some(inx::MessageId {
+                    id: event.milestone.message_id().as_ref().to_vec(),
+                }),
+            }))
+            // FIXME: unwrap
+            .unwrap();
+        });
+
+        Ok(Response::new(Box::pin(
+            tokio_stream::wrappers::UnboundedReceiverStream::new(rx),
+        )))
     }
 
+    // FIXME: avoid dynamic dispatch
     type ListenToConfirmedMilestoneStream = InxStream<inx::Milestone>;
 
     async fn listen_to_confirmed_milestone(
         &self,
         request: Request<inx::NoParams>,
     ) -> Result<Response<Self::ListenToConfirmedMilestoneStream>, Status> {
-        todo!()
+        let inx::NoParams {} = request.into_inner();
+        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+
+        // FIXME: `TypeId` might not be good enough
+        self.bus
+            .add_listener::<Self, ConfirmedMilestoneChanged, _>(move |event| {
+                tx.send(Ok(inx::Milestone {
+                    milestone_index: *event.index,
+                    // FIXME: unwrap
+                    milestone_timestamp: event.milestone.timestamp().try_into().unwrap(),
+                    message_id: Some(inx::MessageId {
+                        id: event.milestone.message_id().as_ref().to_vec(),
+                    }),
+                }))
+                // FIXME: unwrap
+                .unwrap();
+            });
+
+        Ok(Response::new(Box::pin(
+            tokio_stream::wrappers::UnboundedReceiverStream::new(rx),
+        )))
     }
 
     type ListenToMessagesStream = InxStream<inx::Message>;
