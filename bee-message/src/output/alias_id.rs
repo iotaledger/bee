@@ -16,7 +16,11 @@ impl From<OutputId> for AliasId {
 
 impl AliasId {
     ///
-    pub fn or_from_output_id(self, output_id: OutputId) -> AliasId {
-        if self.is_null() { AliasId::from(output_id) } else { self }
+    pub fn or_from_output_id(self, output_id: OutputId) -> Self {
+        if self.is_null() {
+            Self::from(output_id)
+        } else {
+            self
+        }
     }
 }

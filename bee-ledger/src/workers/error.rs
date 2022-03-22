@@ -63,13 +63,13 @@ pub enum Error {
     #[error("consumed amount overflow")]
     ConsumedAmountOverflow,
     /// Created amount overflow.
-    #[error("created amount overflow.")]
+    #[error("created amount overflow")]
     CreatedAmountOverflow,
     /// Consumed native tokens amount overflow.
-    #[error("consumed native tokens amount overflow.")]
+    #[error("consumed native tokens amount overflow")]
     ConsumedNativeTokensAmountOverflow,
     /// Created native tokens amount overflow.
-    #[error("created native tokens amount overflow.")]
+    #[error("created native tokens amount overflow")]
     CreatedNativeTokensAmountOverflow,
     /// Ledger state overflow.
     #[error("ledger state overflow: {0}")]

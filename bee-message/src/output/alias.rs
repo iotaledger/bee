@@ -314,7 +314,7 @@ impl AliasOutput {
         context: &mut ValidationContext,
     ) -> Result<(), ConflictReason> {
         let alias_id = if self.alias_id().is_null() {
-            AliasId::new(output_id.hash())
+            AliasId::from(*output_id)
         } else {
             *self.alias_id()
         };
@@ -328,8 +328,9 @@ impl AliasOutput {
                     self.state_controller_address()
                 }
             }
-            Some(_) => unreachable!(),
             None => self.governor_address(),
+            // The next state can only be an alias output since it is identified by an alias chain identifier.
+            Some(_) => unreachable!(),
         };
 
         locked_address.unlock(unlock_block, inputs, context)?;

@@ -118,19 +118,19 @@ fn verify_unlock_blocks<const VERIFY: bool>(unlock_blocks: &[UnlockBlock]) -> Re
             }
             UnlockBlock::Reference(reference) => {
                 if index == 0
-                    || reference.index() >= index as u16
+                    || reference.index() >= index
                     || !matches!(unlock_blocks[reference.index() as usize], UnlockBlock::Signature(_))
                 {
                     return Err(Error::InvalidUnlockBlockReference(index));
                 }
             }
             UnlockBlock::Alias(alias) => {
-                if index == 0 || alias.index() >= index as u16 {
+                if index == 0 || alias.index() >= index {
                     return Err(Error::InvalidUnlockBlockAlias(index));
                 }
             }
             UnlockBlock::Nft(nft) => {
-                if index == 0 || nft.index() >= index as u16 {
+                if index == 0 || nft.index() >= index {
                     return Err(Error::InvalidUnlockBlockNft(index));
                 }
             }

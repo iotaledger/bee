@@ -166,10 +166,6 @@ impl Output {
     /// Returns the chain identifier of an [`Output`], if any.
     pub fn chain_id(&self) -> Option<ChainId> {
         match self {
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedSingle(_) => None,
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedDustAllowance(_) => None,
             Self::Treasury(_) => None,
             Self::Basic(_) => None,
             Self::Alias(output) => Some(output.chain_id()),

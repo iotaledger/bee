@@ -13,7 +13,6 @@ use core::str::FromStr;
 #[as_ref(forward)]
 pub struct Ed25519Address([u8; Self::LENGTH]);
 
-#[allow(clippy::len_without_is_empty)]
 impl Ed25519Address {
     /// The [`Address`](crate::address::Address) kind of an [`Ed25519Address`].
     pub const KIND: u8 = 0;

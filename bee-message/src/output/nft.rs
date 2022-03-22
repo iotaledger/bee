@@ -236,7 +236,7 @@ impl NftOutput {
     ) -> Result<(), ConflictReason> {
         let locked_address = self.address();
         let nft_id = if self.nft_id().is_null() {
-            NftId::new(output_id.hash())
+            NftId::from(*output_id)
         } else {
             *self.nft_id()
         };
