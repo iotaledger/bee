@@ -6,8 +6,6 @@ mod alias_id;
 mod basic;
 mod byte_cost;
 mod chain_id;
-#[cfg(feature = "cpt2")]
-mod cpt2;
 mod foundry;
 mod foundry_id;
 mod native_token;
@@ -30,13 +28,6 @@ pub use alias_id::AliasId;
 pub use basic::{BasicOutput, BasicOutputBuilder};
 pub use byte_cost::{ByteCost, ByteCostConfig, ByteCostConfigBuilder};
 pub use chain_id::ChainId;
-#[cfg(feature = "cpt2")]
-pub(crate) use cpt2::signature_locked_dust_allowance::DustAllowanceAmount;
-#[cfg(feature = "cpt2")]
-pub use cpt2::{
-    signature_locked_dust_allowance::{dust_outputs_max, SignatureLockedDustAllowanceOutput},
-    signature_locked_single::SignatureLockedSingleOutput,
-};
 pub use feature_block::{FeatureBlock, FeatureBlocks};
 pub(crate) use feature_block::{MetadataFeatureBlockLength, TagFeatureBlockLength};
 pub use foundry::{FoundryOutput, FoundryOutputBuilder};
@@ -85,16 +76,6 @@ pub type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *Output:
 #[packable(unpack_error = Error)]
 #[packable(tag_type = u8, with_error = Error::InvalidOutputKind)]
 pub enum Output {
-    /// A chrysalis pt2 signature locked single output.
-    #[cfg(feature = "cpt2")]
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-    #[packable(tag = SignatureLockedSingleOutput::KIND)]
-    SignatureLockedSingle(SignatureLockedSingleOutput),
-    /// A chrysalis pt2 signature locked dust allowance output.
-    #[cfg(feature = "cpt2")]
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-    #[packable(tag = SignatureLockedDustAllowanceOutput::KIND)]
-    SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput),
     /// A treasury output.
     #[packable(tag = TreasuryOutput::KIND)]
     Treasury(TreasuryOutput),
@@ -119,10 +100,6 @@ impl Output {
     /// Return the output kind of an [`Output`].
     pub fn kind(&self) -> u8 {
         match self {
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedSingle(_) => SignatureLockedSingleOutput::KIND,
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedDustAllowance(_) => SignatureLockedDustAllowanceOutput::KIND,
             Self::Treasury(_) => TreasuryOutput::KIND,
             Self::Basic(_) => BasicOutput::KIND,
             Self::Alias(_) => AliasOutput::KIND,
@@ -134,10 +111,6 @@ impl Output {
     /// Returns the amount of an [`Output`].
     pub fn amount(&self) -> u64 {
         match self {
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedSingle(output) => output.amount(),
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedDustAllowance(output) => output.amount(),
             Self::Treasury(output) => output.amount(),
             Self::Basic(output) => output.amount(),
             Self::Alias(output) => output.amount(),
@@ -149,10 +122,6 @@ impl Output {
     /// Returns the native tokens of an [`Output`], if any.
     pub fn native_tokens(&self) -> Option<&NativeTokens> {
         match self {
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedSingle(_) => None,
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedDustAllowance(_) => None,
             Self::Treasury(_) => None,
             Self::Basic(output) => Some(output.native_tokens()),
             Self::Alias(output) => Some(output.native_tokens()),
@@ -164,10 +133,6 @@ impl Output {
     /// Returns the unlock conditions of an [`Output`], if any.
     pub fn unlock_conditions(&self) -> Option<&UnlockConditions> {
         match self {
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedSingle(_) => None,
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedDustAllowance(_) => None,
             Self::Treasury(_) => None,
             Self::Basic(output) => Some(output.unlock_conditions()),
             Self::Alias(output) => Some(output.unlock_conditions()),
@@ -179,10 +144,6 @@ impl Output {
     /// Returns the feature blocks of an [`Output`], if any.
     pub fn feature_blocks(&self) -> Option<&FeatureBlocks> {
         match self {
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedSingle(_) => None,
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedDustAllowance(_) => None,
             Self::Treasury(_) => None,
             Self::Basic(output) => Some(output.feature_blocks()),
             Self::Alias(output) => Some(output.feature_blocks()),
@@ -194,10 +155,6 @@ impl Output {
     /// Returns the immutable feature blocks of an [`Output`], if any.
     pub fn immutable_feature_blocks(&self) -> Option<&FeatureBlocks> {
         match self {
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedSingle(_) => None,
-            #[cfg(feature = "cpt2")]
-            Self::SignatureLockedDustAllowance(_) => None,
             Self::Treasury(_) => None,
             Self::Basic(_) => None,
             Self::Alias(output) => Some(output.immutable_feature_blocks()),

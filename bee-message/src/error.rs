@@ -15,11 +15,6 @@ use crate::{
     },
     unlock_block::{UnlockBlockCount, UnlockBlockIndex},
 };
-#[cfg(feature = "cpt2")]
-use crate::{
-    output::DustAllowanceAmount,
-    payload::{IndexLength, IndexationDataLength},
-};
 
 use crypto::Error as CryptoError;
 use prefix_hex::Error as HexError;
@@ -37,50 +32,22 @@ pub enum Error {
     DuplicateUtxo(UtxoInput),
     ExpirationUnlockConditionZero,
     FeatureBlocksNotUniqueSorted,
-    InputUnlockBlockCountMismatch {
-        input_count: usize,
-        block_count: usize,
-    },
+    InputUnlockBlockCountMismatch { input_count: usize, block_count: usize },
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAliasIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
     InvalidControllerKind(u8),
-    #[cfg(feature = "cpt2")]
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-    InvalidDustAllowanceAmount(<DustAllowanceAmount as TryFrom<u64>>::Error),
     InvalidStorageDepositAmount(<StorageDepositAmount as TryFrom<u64>>::Error),
     // The above is used by `Packable` to denote out-of-range values. The following denotes the actual amount.
-    InsufficientStorageDepositAmount {
-        amount: u64,
-        required: u64,
-    },
-    StorageDepositReturnExceedsOutputAmount {
-        deposit: u64,
-        amount: u64,
-    },
-    InsufficientStorageDepositReturnAmount {
-        deposit: u64,
-        required: u64,
-    },
-    UnnecessaryStorageDepositReturnCondition {
-        logical_amount: u64,
-        required: u64,
-    },
+    InsufficientStorageDepositAmount { amount: u64, required: u64 },
+    StorageDepositReturnExceedsOutputAmount { deposit: u64, amount: u64 },
+    InsufficientStorageDepositReturnAmount { deposit: u64, required: u64 },
+    UnnecessaryStorageDepositReturnCondition { logical_amount: u64, required: u64 },
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
     InvalidFeatureBlockKind(u8),
-    InvalidFoundryOutputSupply {
-        minted: U256,
-        melted: U256,
-        max: U256,
-    },
+    InvalidFoundryOutputSupply { minted: U256, melted: U256, max: U256 },
     HexError(HexError),
-    #[cfg(feature = "cpt2")]
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-    InvalidIndexationDataLength(<IndexationDataLength as TryFrom<usize>>::Error),
-    #[cfg(feature = "cpt2")]
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-    InvalidIndexLength(<IndexLength as TryFrom<usize>>::Error),
     InvalidInputKind(u8),
     InvalidInputCount(<InputCount as TryFrom<usize>>::Error),
     InvalidInputOutputIndex(<OutputIndex as TryFrom<u16>>::Error),
@@ -95,14 +62,8 @@ pub enum Error {
     InvalidOutputKind(u8),
     InvalidParentCount(<ParentCount as TryFrom<usize>>::Error),
     InvalidPayloadKind(u32),
-    InvalidPayloadLength {
-        expected: usize,
-        actual: usize,
-    },
-    InvalidPowScoreValues {
-        nps: u32,
-        npsmi: u32,
-    },
+    InvalidPayloadLength { expected: usize, actual: usize },
+    InvalidPowScoreValues { nps: u32, npsmi: u32 },
     InvalidReceiptFundsCount(<ReceiptFundsCount as TryFrom<usize>>::Error),
     InvalidReferenceIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
     InvalidSignature,
@@ -126,10 +87,7 @@ pub enum Error {
     MilestoneInvalidPublicKeyCount(<PublicKeyCount as TryFrom<usize>>::Error),
     MilestoneInvalidSignatureCount(<SignatureCount as TryFrom<usize>>::Error),
     MilestonePublicKeysNotUniqueSorted,
-    MilestonePublicKeysSignaturesCountMismatch {
-        key_count: usize,
-        sig_count: usize,
-    },
+    MilestonePublicKeysSignaturesCountMismatch { key_count: usize, sig_count: usize },
     MissingAddressUnlockCondition,
     MissingField(&'static str),
     MissingGovernorUnlockCondition,
@@ -144,23 +102,11 @@ pub enum Error {
     RemainingBytesAfterMessage,
     SelfControlledAliasOutput(AliasId),
     SelfDepositNft(NftId),
-    SignaturePublicKeyMismatch {
-        expected: String,
-        actual: String,
-    },
-    TailTransactionHashNotUnique {
-        previous: usize,
-        current: usize,
-    },
+    SignaturePublicKeyMismatch { expected: String, actual: String },
+    TailTransactionHashNotUnique { previous: usize, current: usize },
     TimelockUnlockConditionZero,
-    UnallowedFeatureBlock {
-        index: usize,
-        kind: u8,
-    },
-    UnallowedUnlockCondition {
-        index: usize,
-        kind: u8,
-    },
+    UnallowedFeatureBlock { index: usize, kind: u8 },
+    UnallowedUnlockCondition { index: usize, kind: u8 },
     UnlockConditionsNotUniqueSorted,
 }
 
@@ -196,10 +142,6 @@ impl fmt::Display for Error {
             Error::InvalidAddressKind(k) => write!(f, "invalid address kind: {}", k),
             Error::InvalidAliasIndex(index) => write!(f, "invalid alias index: {}", index),
             Error::InvalidControllerKind(k) => write!(f, "invalid controller kind: {}", k),
-            #[cfg(feature = "cpt2")]
-            Error::InvalidDustAllowanceAmount(amount) => {
-                write!(f, "invalid dust allowance amount: {}", amount)
-            }
             Error::InvalidStorageDepositAmount(amount) => {
                 write!(f, "invalid storage deposit amount: {}", amount)
             }
@@ -234,14 +176,6 @@ impl fmt::Display for Error {
                 "invalid foundry output supply: minted {minted}, melted {melted} max {max}",
             ),
             Error::HexError(error) => write!(f, "hex error: {}", error),
-            #[cfg(feature = "cpt2")]
-            Error::InvalidIndexationDataLength(length) => {
-                write!(f, "invalid indexation data length {}", length)
-            }
-            #[cfg(feature = "cpt2")]
-            Error::InvalidIndexLength(length) => {
-                write!(f, "invalid index length {}", length)
-            }
             Error::InvalidInputKind(k) => write!(f, "invalid input kind: {}", k),
             Error::InvalidInputCount(count) => write!(f, "invalid input count: {}", count),
             Error::InvalidInputOutputIndex(index) => write!(f, "invalid input or output index: {}", index),

@@ -33,17 +33,14 @@ use bee_message::{
     },
     Error as MessageError, Message, MessageBuilder, MessageId,
 };
-#[cfg(feature = "cpt2")]
-use bee_message::{
-    output::{SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput},
-    payload::IndexationPayload,
-};
 #[cfg(feature = "peer")]
 use bee_protocol::types::peer::Peer;
 
 use primitive_types::U256;
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
+
+use core::str::FromStr;
 
 /// The message object that nodes gossip around in the network.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -52,6 +49,7 @@ pub struct MessageDto {
     pub protocol_version: u8,
     #[serde(rename = "parentMessageIds")]
     pub parents: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub payload: Option<PayloadDto>,
     pub nonce: String,
 }
@@ -60,7 +58,7 @@ impl From<&Message> for MessageDto {
     fn from(value: &Message) -> Self {
         MessageDto {
             protocol_version: value.protocol_version(),
-            parents: value.parents().iter().map(|p| p.to_string()).collect(),
+            parents: value.parents().iter().map(MessageId::to_string).collect(),
             payload: value.payload().map(Into::into),
             nonce: value.nonce().to_string(),
         }
@@ -101,9 +99,6 @@ impl TryFrom<&MessageDto> for Message {
 pub enum PayloadDto {
     Transaction(Box<TransactionPayloadDto>),
     Milestone(Box<MilestonePayloadDto>),
-    #[cfg(feature = "cpt2")]
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-    Indexation(Box<IndexationPayloadDto>),
     Receipt(Box<ReceiptPayloadDto>),
     TreasuryTransaction(Box<TreasuryTransactionPayloadDto>),
     TaggedData(Box<TaggedDataPayloadDto>),
@@ -114,8 +109,6 @@ impl From<&Payload> for PayloadDto {
         match value {
             Payload::Transaction(p) => PayloadDto::Transaction(Box::new(TransactionPayloadDto::from(p.as_ref()))),
             Payload::Milestone(p) => PayloadDto::Milestone(Box::new(MilestonePayloadDto::from(p.as_ref()))),
-            #[cfg(feature = "cpt2")]
-            Payload::Indexation(p) => PayloadDto::Indexation(Box::new(IndexationPayloadDto::from(p.as_ref()))),
             Payload::Receipt(p) => PayloadDto::Receipt(Box::new(ReceiptPayloadDto::from(p.as_ref()))),
             Payload::TreasuryTransaction(p) => {
                 PayloadDto::TreasuryTransaction(Box::new(TreasuryTransactionPayloadDto::from(p.as_ref())))
@@ -131,8 +124,6 @@ impl TryFrom<&PayloadDto> for Payload {
         Ok(match value {
             PayloadDto::Transaction(p) => Payload::Transaction(Box::new(TransactionPayload::try_from(p.as_ref())?)),
             PayloadDto::Milestone(p) => Payload::Milestone(Box::new(MilestonePayload::try_from(p.as_ref())?)),
-            #[cfg(feature = "cpt2")]
-            PayloadDto::Indexation(p) => Payload::Indexation(Box::new(IndexationPayload::try_from(p.as_ref())?)),
             PayloadDto::Receipt(p) => Payload::Receipt(Box::new(ReceiptPayload::try_from(p.as_ref())?)),
             PayloadDto::TreasuryTransaction(p) => {
                 Payload::TreasuryTransaction(Box::new(TreasuryTransactionPayload::try_from(p.as_ref())?))
@@ -214,6 +205,7 @@ pub struct RegularTransactionEssenceDto {
     #[serde(rename = "inputsCommitment")]
     pub inputs_commitment: String,
     pub outputs: Vec<OutputDto>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub payload: Option<PayloadDto>,
 }
 
@@ -369,12 +361,6 @@ impl TryFrom<&TreasuryInputDto> for TreasuryInput {
 /// Describes all the different output types.
 #[derive(Clone, Debug)]
 pub enum OutputDto {
-    #[cfg(feature = "cpt2")]
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-    SignatureLockedSingle(SignatureLockedSingleOutputDto),
-    #[cfg(feature = "cpt2")]
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-    SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto),
     Treasury(TreasuryOutputDto),
     Basic(BasicOutputDto),
     Alias(AliasOutputDto),
@@ -385,10 +371,6 @@ pub enum OutputDto {
 impl From<&Output> for OutputDto {
     fn from(value: &Output) -> Self {
         match value {
-            #[cfg(feature = "cpt2")]
-            Output::SignatureLockedSingle(o) => OutputDto::SignatureLockedSingle(o.into()),
-            #[cfg(feature = "cpt2")]
-            Output::SignatureLockedDustAllowance(o) => OutputDto::SignatureLockedDustAllowance(o.into()),
             Output::Treasury(o) => OutputDto::Treasury(o.into()),
             Output::Basic(o) => OutputDto::Basic(o.into()),
             Output::Alias(o) => OutputDto::Alias(o.into()),
@@ -403,10 +385,6 @@ impl TryFrom<&OutputDto> for Output {
 
     fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
         match value {
-            #[cfg(feature = "cpt2")]
-            OutputDto::SignatureLockedSingle(o) => Ok(Output::SignatureLockedSingle(o.try_into()?)),
-            #[cfg(feature = "cpt2")]
-            OutputDto::SignatureLockedDustAllowance(o) => Ok(Output::SignatureLockedDustAllowance(o.try_into()?)),
             OutputDto::Treasury(o) => Ok(Output::Treasury(o.try_into()?)),
             OutputDto::Basic(o) => Ok(Output::Basic(o.try_into()?)),
             OutputDto::Alias(o) => Ok(Output::Alias(o.try_into()?)),
@@ -459,15 +437,11 @@ impl Serialize for OutputDto {
         #[derive(Serialize)]
         #[serde(untagged)]
         enum OutputDto_<'a> {
-            #[cfg(feature = "cpt2")]
-            T1(&'a SignatureLockedSingleOutputDto),
-            #[cfg(feature = "cpt2")]
-            T2(&'a SignatureLockedDustAllowanceOutputDto),
-            T3(&'a TreasuryOutputDto),
-            T4(&'a BasicOutputDto),
-            T5(&'a AliasOutputDto),
-            T6(&'a FoundryOutputDto),
-            T7(&'a NftOutputDto),
+            T1(&'a TreasuryOutputDto),
+            T2(&'a BasicOutputDto),
+            T3(&'a AliasOutputDto),
+            T4(&'a FoundryOutputDto),
+            T5(&'a NftOutputDto),
         }
         #[derive(Serialize)]
         struct TypedOutput<'a> {
@@ -475,28 +449,20 @@ impl Serialize for OutputDto {
             output: OutputDto_<'a>,
         }
         let output = match self {
-            #[cfg(feature = "cpt2")]
-            OutputDto::SignatureLockedSingle(o) => TypedOutput {
+            OutputDto::Treasury(o) => TypedOutput {
                 output: OutputDto_::T1(o),
             },
-            #[cfg(feature = "cpt2")]
-            OutputDto::SignatureLockedDustAllowance(o) => TypedOutput {
+            OutputDto::Basic(o) => TypedOutput {
                 output: OutputDto_::T2(o),
             },
-            OutputDto::Treasury(o) => TypedOutput {
+            OutputDto::Alias(o) => TypedOutput {
                 output: OutputDto_::T3(o),
             },
-            OutputDto::Basic(o) => TypedOutput {
+            OutputDto::Foundry(o) => TypedOutput {
                 output: OutputDto_::T4(o),
             },
-            OutputDto::Alias(o) => TypedOutput {
-                output: OutputDto_::T5(o),
-            },
-            OutputDto::Foundry(o) => TypedOutput {
-                output: OutputDto_::T6(o),
-            },
             OutputDto::Nft(o) => TypedOutput {
-                output: OutputDto_::T7(o),
+                output: OutputDto_::T5(o),
             },
         };
         output.serialize(serializer)
@@ -687,14 +653,14 @@ impl TryFrom<&NftAddressDto> for NftAddress {
 pub struct TreasuryOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    pub amount: u64,
+    pub amount: String,
 }
 
 impl From<&TreasuryOutput> for TreasuryOutputDto {
     fn from(value: &TreasuryOutput) -> Self {
         Self {
             kind: TreasuryOutput::KIND,
-            amount: value.amount(),
+            amount: value.amount().to_string(),
         }
     }
 }
@@ -703,7 +669,9 @@ impl TryFrom<&TreasuryOutputDto> for TreasuryOutput {
     type Error = Error;
 
     fn try_from(value: &TreasuryOutputDto) -> Result<Self, Self::Error> {
-        Ok(Self::new(value.amount)?)
+        Ok(Self::new(
+            value.amount.parse::<u64>().map_err(|_| Error::InvalidField("amount"))?,
+        )?)
     }
 }
 
@@ -896,7 +864,7 @@ pub struct BasicOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
     // Amount of IOTA tokens held by the output.
-    pub amount: u64,
+    pub amount: String,
     // Native tokens held by the output.
     #[serde(rename = "nativeTokens")]
     pub native_tokens: Vec<NativeTokenDto>,
@@ -910,7 +878,7 @@ impl From<&BasicOutput> for BasicOutputDto {
     fn from(value: &BasicOutput) -> Self {
         Self {
             kind: BasicOutput::KIND,
-            amount: value.amount(),
+            amount: value.amount().to_string(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
@@ -922,7 +890,8 @@ impl TryFrom<&BasicOutputDto> for BasicOutput {
     type Error = Error;
 
     fn try_from(value: &BasicOutputDto) -> Result<Self, Self::Error> {
-        let mut builder = BasicOutputBuilder::new(value.amount)?;
+        let mut builder =
+            BasicOutputBuilder::new(value.amount.parse::<u64>().map_err(|_| Error::InvalidField("amount"))?)?;
         for t in &value.native_tokens {
             builder = builder.add_native_token(t.try_into()?);
         }
@@ -942,7 +911,7 @@ pub struct NativeTokenDto {
     // Identifier of the native token.
     #[serde(rename = "id")]
     pub token_id: TokenIdDto,
-    // Amount of native tokens.
+    // Amount of native tokens hex encoded.
     pub amount: U256Dto,
 }
 
@@ -950,7 +919,7 @@ impl From<&NativeToken> for NativeTokenDto {
     fn from(value: &NativeToken) -> Self {
         Self {
             token_id: TokenIdDto(value.token_id().to_string()),
-            amount: U256Dto(value.amount().to_string()),
+            amount: U256Dto(serde_json::to_string(value.amount()).expect("Invalid NativeToken amount")),
         }
     }
 }
@@ -961,7 +930,7 @@ impl TryFrom<&NativeTokenDto> for NativeToken {
     fn try_from(value: &NativeTokenDto) -> Result<Self, Self::Error> {
         Self::new(
             (&value.token_id).try_into()?,
-            U256::from_dec_str(&value.amount.0).map_err(|_| Error::InvalidField("amount"))?,
+            U256::from_str(&value.amount.0).map_err(|_| Error::InvalidField("amount"))?,
         )
         .map_err(|_| Error::InvalidField("nativeTokens"))
     }
@@ -973,7 +942,7 @@ pub struct TokenIdDto(pub String);
 
 impl From<&TokenId> for TokenIdDto {
     fn from(value: &TokenId) -> Self {
-        Self(value.to_string())
+        Self(prefix_hex::encode(**value))
     }
 }
 
@@ -981,7 +950,9 @@ impl TryFrom<&TokenIdDto> for TokenId {
     type Error = Error;
 
     fn try_from(value: &TokenIdDto) -> Result<Self, Self::Error> {
-        value.0.parse::<TokenId>().map_err(|_| Error::InvalidField("token id"))
+        let token_id: [u8; TokenId::LENGTH] =
+            prefix_hex::decode(&value.0).map_err(|_e| Error::InvalidField("tokenId"))?;
+        Ok(TokenId::new(token_id))
     }
 }
 
@@ -1203,7 +1174,7 @@ pub struct StorageDepositReturnUnlockConditionDto {
     pub kind: u8,
     #[serde(rename = "returnAddress")]
     pub return_address: AddressDto,
-    pub amount: u64,
+    pub amount: String,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TimelockUnlockConditionDto {
@@ -1307,7 +1278,7 @@ impl From<&UnlockCondition> for UnlockConditionDto {
                 Self::StorageDepositReturn(StorageDepositReturnUnlockConditionDto {
                     kind: StorageDepositReturnUnlockCondition::KIND,
                     return_address: AddressDto::from(v.return_address()),
-                    amount: v.amount(),
+                    amount: v.amount().to_string(),
                 })
             }
             UnlockCondition::Timelock(v) => Self::Timelock(TimelockUnlockConditionDto {
@@ -1374,9 +1345,12 @@ impl TryFrom<&UnlockConditionDto> for UnlockCondition {
                     .try_into()
                     .map_err(|_e| Error::InvalidField("AddressUnlockCondition"))?,
             )),
-            UnlockConditionDto::StorageDepositReturn(v) => Self::StorageDepositReturn(
-                StorageDepositReturnUnlockCondition::new(Address::try_from(&v.return_address)?, v.amount)?,
-            ),
+            UnlockConditionDto::StorageDepositReturn(v) => {
+                Self::StorageDepositReturn(StorageDepositReturnUnlockCondition::new(
+                    Address::try_from(&v.return_address)?,
+                    v.amount.parse::<u64>().map_err(|_| Error::InvalidField("amount"))?,
+                )?)
+            }
             UnlockConditionDto::Timelock(v) => Self::Timelock(
                 TimelockUnlockCondition::new(v.milestone_index, v.timestamp)
                     .map_err(|_| Error::InvalidField("TimelockUnlockCondition"))?,
@@ -1441,7 +1415,7 @@ pub struct AliasOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
     // Amount of IOTA tokens held by the output.
-    pub amount: u64,
+    pub amount: String,
     // Native tokens held by the output.
     #[serde(rename = "nativeTokens")]
     pub native_tokens: Vec<NativeTokenDto>,
@@ -1472,7 +1446,7 @@ impl From<&AliasOutput> for AliasOutputDto {
     fn from(value: &AliasOutput) -> Self {
         Self {
             kind: AliasOutput::KIND,
-            amount: value.amount(),
+            amount: value.amount().to_string(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             alias_id: AliasIdDto(value.alias_id().to_string()),
             state_index: value.state_index(),
@@ -1489,7 +1463,10 @@ impl TryFrom<&AliasOutputDto> for AliasOutput {
     type Error = Error;
 
     fn try_from(value: &AliasOutputDto) -> Result<Self, Self::Error> {
-        let mut builder = AliasOutputBuilder::new(value.amount, (&value.alias_id).try_into()?)?;
+        let mut builder = AliasOutputBuilder::new(
+            value.amount.parse::<u64>().map_err(|_| Error::InvalidField("amount"))?,
+            (&value.alias_id).try_into()?,
+        )?;
         builder = builder.with_state_index(value.state_index);
         builder = builder.with_state_metadata(
             prefix_hex::decode(&value.state_metadata).map_err(|_| Error::InvalidField("state_metadata"))?,
@@ -1535,7 +1512,7 @@ pub struct FoundryOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
     // Amount of IOTA tokens held by the output.
-    pub amount: u64,
+    pub amount: String,
     // Native tokens held by the output.
     #[serde(rename = "nativeTokens")]
     pub native_tokens: Vec<NativeTokenDto>,
@@ -1591,7 +1568,7 @@ impl From<&FoundryOutput> for FoundryOutputDto {
     fn from(value: &FoundryOutput) -> Self {
         Self {
             kind: FoundryOutput::KIND,
-            amount: value.amount(),
+            amount: value.amount().to_string(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             serial_number: value.serial_number(),
             token_tag: TokenTagDto(value.token_tag().to_string()),
@@ -1615,12 +1592,12 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
 
     fn try_from(value: &FoundryOutputDto) -> Result<Self, Self::Error> {
         let mut builder = FoundryOutputBuilder::new(
-            value.amount,
+            value.amount.parse::<u64>().map_err(|_| Error::InvalidField("amount"))?,
             value.serial_number,
             (&value.token_tag).try_into()?,
-            U256::from_dec_str(&value.minted_tokens.0).map_err(|_| Error::InvalidField("minted_tokens"))?,
-            U256::from_dec_str(&value.melted_tokens.0).map_err(|_| Error::InvalidField("melted_tokens"))?,
-            U256::from_dec_str(&value.maximum_supply.0).map_err(|_| Error::InvalidField("maximum_supply"))?,
+            U256::from_str(&value.minted_tokens.0).map_err(|_| Error::InvalidField("mintedTokens"))?,
+            U256::from_str(&value.melted_tokens.0).map_err(|_| Error::InvalidField("meltedTokens"))?,
+            U256::from_str(&value.maximum_supply.0).map_err(|_| Error::InvalidField("maximumSupply"))?,
             match value.token_scheme.kind {
                 0 => TokenScheme::Simple,
                 _ => return Err(Error::InvalidField("token_scheme")),
@@ -1650,7 +1627,7 @@ pub struct NftOutputDto {
     #[serde(rename = "type")]
     pub kind: u8,
     // Amount of IOTA tokens held by the output.
-    pub amount: u64,
+    pub amount: String,
     // Native tokens held by the output.
     #[serde(rename = "nativeTokens")]
     pub native_tokens: Vec<NativeTokenDto>,
@@ -1686,7 +1663,7 @@ impl From<&NftOutput> for NftOutputDto {
     fn from(value: &NftOutput) -> Self {
         Self {
             kind: NftOutput::KIND,
-            amount: value.amount(),
+            amount: value.amount().to_string(),
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             nft_id: NftIdDto(value.nft_id().to_string()),
             unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
@@ -1700,7 +1677,10 @@ impl TryFrom<&NftOutputDto> for NftOutput {
     type Error = Error;
 
     fn try_from(value: &NftOutputDto) -> Result<Self, Self::Error> {
-        let mut builder = NftOutputBuilder::new(value.amount, (&value.nft_id).try_into()?)?;
+        let mut builder = NftOutputBuilder::new(
+            value.amount.parse::<u64>().map_err(|_| Error::InvalidField("amount"))?,
+            (&value.nft_id).try_into()?,
+        )?;
 
         for t in &value.native_tokens {
             builder = builder.add_native_token(t.try_into()?);
@@ -1708,84 +1688,14 @@ impl TryFrom<&NftOutputDto> for NftOutput {
         for b in &value.unlock_conditions {
             builder = builder.add_unlock_condition(b.try_into()?);
         }
+        for b in &value.feature_blocks {
+            builder = builder.add_feature_block(b.try_into()?);
+        }
         for b in &value.immutable_feature_blocks {
             builder = builder.add_immutable_feature_block(b.try_into()?);
         }
 
         Ok(builder.finish()?)
-    }
-}
-
-/// Describes a deposit to a single address which is unlocked via a signature.
-#[cfg(feature = "cpt2")]
-#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SignatureLockedSingleOutputDto {
-    #[serde(rename = "type")]
-    pub kind: u8,
-    pub address: AddressDto,
-    pub amount: u64,
-}
-
-#[cfg(feature = "cpt2")]
-impl From<&SignatureLockedSingleOutput> for SignatureLockedSingleOutputDto {
-    fn from(value: &SignatureLockedSingleOutput) -> Self {
-        Self {
-            kind: SignatureLockedSingleOutput::KIND,
-            address: value.address().into(),
-            amount: value.amount(),
-        }
-    }
-}
-
-#[cfg(feature = "cpt2")]
-impl TryFrom<&SignatureLockedSingleOutputDto> for SignatureLockedSingleOutput {
-    type Error = Error;
-
-    fn try_from(value: &SignatureLockedSingleOutputDto) -> Result<Self, Self::Error> {
-        Ok(Self::new(
-            (&value.address)
-                .try_into()
-                .map_err(|_e| Error::InvalidField("address"))?,
-            value.amount,
-        )?)
-    }
-}
-
-/// Output type for deposits that enables an address to receive dust outputs. It can be consumed as an input like a
-/// regular SigLockedSingleOutput.
-#[cfg(feature = "cpt2")]
-#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SignatureLockedDustAllowanceOutputDto {
-    #[serde(rename = "type")]
-    pub kind: u8,
-    pub address: AddressDto,
-    pub amount: u64,
-}
-
-#[cfg(feature = "cpt2")]
-impl From<&SignatureLockedDustAllowanceOutput> for SignatureLockedDustAllowanceOutputDto {
-    fn from(value: &SignatureLockedDustAllowanceOutput) -> Self {
-        Self {
-            kind: SignatureLockedDustAllowanceOutput::KIND,
-            address: value.address().into(),
-            amount: value.amount(),
-        }
-    }
-}
-
-#[cfg(feature = "cpt2")]
-impl TryFrom<&SignatureLockedDustAllowanceOutputDto> for SignatureLockedDustAllowanceOutput {
-    type Error = Error;
-
-    fn try_from(value: &SignatureLockedDustAllowanceOutputDto) -> Result<Self, Self::Error> {
-        Ok(Self::new(
-            (&value.address)
-                .try_into()
-                .map_err(|_e| Error::InvalidField("address"))?,
-            value.amount,
-        )?)
     }
 }
 
@@ -1806,6 +1716,7 @@ pub struct MilestonePayloadDto {
     pub next_pow_score_milestone_index: u32,
     #[serde(rename = "publicKeys")]
     pub public_keys: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub receipt: Option<PayloadDto>,
     pub signatures: Vec<String>,
 }
@@ -1901,40 +1812,6 @@ impl TryFrom<&TaggedDataPayloadDto> for TaggedDataPayload {
     fn try_from(value: &TaggedDataPayloadDto) -> Result<Self, Self::Error> {
         Ok(TaggedDataPayload::new(
             prefix_hex::decode(&value.tag).map_err(|_| Error::InvalidField("tag"))?,
-            prefix_hex::decode(&value.data).map_err(|_| Error::InvalidField("data"))?,
-        )?)
-    }
-}
-
-/// The payload type to define a indexation payload.
-#[cfg(feature = "cpt2")]
-#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct IndexationPayloadDto {
-    #[serde(rename = "type")]
-    pub kind: u32,
-    pub index: String,
-    pub data: String,
-}
-
-#[cfg(feature = "cpt2")]
-impl From<&IndexationPayload> for IndexationPayloadDto {
-    fn from(value: &IndexationPayload) -> Self {
-        IndexationPayloadDto {
-            kind: IndexationPayload::KIND,
-            index: prefix_hex::encode(value.index()),
-            data: prefix_hex::encode(value.data()),
-        }
-    }
-}
-
-#[cfg(feature = "cpt2")]
-impl TryFrom<&IndexationPayloadDto> for IndexationPayload {
-    type Error = Error;
-
-    fn try_from(value: &IndexationPayloadDto) -> Result<Self, Self::Error> {
-        Ok(IndexationPayload::new(
-            prefix_hex::decode(&value.index).map_err(|_| Error::InvalidField("index"))?,
             prefix_hex::decode(&value.data).map_err(|_| Error::InvalidField("data"))?,
         )?)
     }
