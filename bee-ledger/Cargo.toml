@@ -36,10 +36,6 @@ trace-tools = { version = "0.3.0", default-features = false, optional = true }
 tracing = { version = "0.1.29", default-features = false, optional = true }
 url = { version = "2.2.2", default-features = false, optional = true }
 
-# `udeps` false positives
-[package.metadata.cargo-udeps.ignore]
-normal = [ "time-helper" ]
-
 [features]
 workers = [
   "bee-runtime",
