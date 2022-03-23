@@ -1,10 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::workers::packets::{HeaderPacket, HEADER_SIZE};
-
 use bee_gossip::Multiaddr;
-
 use futures::{
     channel::oneshot,
     future::{self, FutureExt},
@@ -13,6 +10,8 @@ use futures::{
 use log::trace;
 use tokio::select;
 use tokio_stream::wrappers::UnboundedReceiverStream;
+
+use crate::workers::packets::{HeaderPacket, HEADER_SIZE};
 
 type EventRecv = UnboundedReceiverStream<Vec<u8>>;
 type ShutdownRecv = future::Fuse<oneshot::Receiver<()>>;
@@ -161,11 +160,13 @@ impl EventHandler {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use futures::{channel::oneshot, future::FutureExt};
     use std::time::Duration;
+
+    use futures::{channel::oneshot, future::FutureExt};
     use tokio::{spawn, sync::mpsc, time::sleep};
     use tokio_stream::wrappers::UnboundedReceiverStream;
+
+    use super::*;
 
     /// Generate a vector of events filled with packets of a desired length.
     fn gen_events(event_len: usize, msg_size: usize, n_msg: usize) -> Vec<Vec<u8>> {

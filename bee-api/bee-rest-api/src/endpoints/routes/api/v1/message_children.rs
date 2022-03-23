@@ -25,15 +25,15 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
     self::path()
         .and(warp::get())
         .and(with_args(args))
-        .and_then(message_children)
+        .and_then(|message_id, args| async move { message_children(message_id, args) })
         .boxed()
 }
 
-pub(crate) async fn message_children<B: StorageBackend>(
+pub fn message_children<B: StorageBackend>(
     message_id: MessageId,
     args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
-    let mut children = Vec::from_iter(args.tangle.get_children(&message_id).await.unwrap_or_default());
+    let mut children = Vec::from_iter(args.tangle.get_children(&message_id).unwrap_or_default());
     let count = children.len();
     children.truncate(MAX_RESPONSE_RESULTS);
     Ok(warp::reply::json(&SuccessBody::new(MessageChildrenResponse {

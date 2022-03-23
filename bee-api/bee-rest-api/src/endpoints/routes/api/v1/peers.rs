@@ -18,11 +18,11 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
     self::path()
         .and(warp::get())
         .and(with_args(args))
-        .and_then(peers)
+        .and_then(|args| async move { peers(args) })
         .boxed()
 }
 
-pub(crate) async fn peers<B: StorageBackend>(args: ApiArgsFullNode<B>) -> Result<impl Reply, Infallible> {
+pub(crate) fn peers<B: StorageBackend>(args: ApiArgsFullNode<B>) -> Result<impl Reply, Infallible> {
     let mut peers_dtos = Vec::new();
     for peer in args.peer_manager.get_all() {
         peers_dtos.push(PeerDto::from(peer.as_ref()));

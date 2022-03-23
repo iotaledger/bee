@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{Btrit, RawEncoding, RawEncodingBuf, Trit, TritBuf, Trits, Utrit};
+use core::cmp::PartialOrd;
 
 use num_traits::{AsPrimitive, CheckedAdd, CheckedSub, FromPrimitive, Num, Signed};
 
-use core::cmp::PartialOrd;
+use crate::{Btrit, RawEncoding, RawEncodingBuf, Trit, TritBuf, Trits, Utrit};
 
 /// An error that may be produced during numeric conversion.
 #[derive(Debug, PartialEq)]

@@ -5,7 +5,6 @@
 
 use bee_crypto::ternary::sponge::{BatchHasher, CurlP81, CurlPRounds, Sponge, UnrolledCurlP81, BATCH_SIZE};
 use bee_ternary::{T1B1Buf, T5B1Buf, TritBuf, TryteBuf};
-
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use crypto::hashes::ternary::curl_p::CurlP;
 

@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{address::Address, constants::IOTA_SUPPLY, Error};
+use core::ops::RangeInclusive;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::ops::RangeInclusive;
+use crate::{address::Address, constants::IOTA_SUPPLY, Error};
 
 /// Valid amounts for a signature locked single output.
 pub const SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;

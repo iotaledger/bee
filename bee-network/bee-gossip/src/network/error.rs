@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::alias;
-
 use libp2p::{swarm::DialError, Multiaddr, PeerId};
+
+use crate::alias;
 
 #[derive(Debug, thiserror::Error)]
 // TODO

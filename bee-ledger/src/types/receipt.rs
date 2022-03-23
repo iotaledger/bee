@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{error::Error, TreasuryOutput};
-
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
     constants::IOTA_SUPPLY,
@@ -11,6 +9,8 @@ use bee_message::{
     output::Output,
     payload::{receipt::ReceiptPayload, Payload},
 };
+
+use crate::types::{error::Error, TreasuryOutput};
 
 /// A type that wraps a receipt and the index of the milestone in which it was included.
 #[derive(Clone, Debug, Eq, PartialEq)]

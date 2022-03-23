@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
+
 use bee_ledger::types::{
     snapshot::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
@@ -25,11 +27,8 @@ use bee_storage_rocksdb::{
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
-
 use structopt::StructOpt;
 use thiserror::Error;
-
-use std::str::FromStr;
 
 #[derive(Clone, Debug, StructOpt)]
 pub enum RocksdbCommand {

@@ -55,8 +55,6 @@
 
 extern crate alloc;
 
-use core::slice;
-
 /// Utility functions for encoding and decoding B1T6 encoding.
 pub mod b1t6;
 /// Conversions between to and from standard types.
@@ -81,18 +79,6 @@ pub mod tryte;
 #[cfg(feature = "serde1")]
 mod serde;
 
-use crate::raw::{RawEncoding, RawEncodingBuf};
-
-pub use crate::{
-    t1b1::{T1B1Buf, T1B1},
-    t2b1::{T2B1Buf, T2B1},
-    t3b1::{T3B1Buf, T3B1},
-    t4b1::{T4B1Buf, T4B1},
-    t5b1::{T5B1Buf, T5B1},
-    trit::{Btrit, ShiftTernary, Trit, Utrit},
-    tryte::{Tryte, TryteBuf},
-};
-
 use alloc::borrow::ToOwned;
 use core::{
     any,
@@ -102,6 +88,18 @@ use core::{
     ops::{
         Deref, DerefMut, Index, IndexMut, Neg, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
     },
+    slice,
+};
+
+use crate::raw::{RawEncoding, RawEncodingBuf};
+pub use crate::{
+    t1b1::{T1B1Buf, T1B1},
+    t2b1::{T2B1Buf, T2B1},
+    t3b1::{T3B1Buf, T3B1},
+    t4b1::{T4B1Buf, T4B1},
+    t5b1::{T5B1Buf, T5B1},
+    trit::{Btrit, ShiftTernary, Trit, Utrit},
+    tryte::{Tryte, TryteBuf},
 };
 
 /// An error that may be produced as a result of fallible conversions.

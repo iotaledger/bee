@@ -1,11 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    column_families::*,
-    storage::{Storage, StorageBackend},
-};
-
 use bee_common::packable::Packable;
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
@@ -23,13 +18,18 @@ use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
+use crate::{
+    column_families::*,
+    storage::{Storage, StorageBackend},
+};
+
 impl Fetch<u8, System> for Storage {
     fn fetch(&self, key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_SYSTEM)?, [*key])?
+            .get_pinned_cf(self.cf_handle(CF_SYSTEM)?, [*key])?
             // Unpacking from storage is fine.
-            .map(|v| System::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| System::unpack_unchecked(&mut &*v).unwrap()))
     }
 }
 
@@ -37,9 +37,9 @@ impl Fetch<MessageId, Message> for Storage {
     fn fetch(&self, message_id: &MessageId) -> Result<Option<Message>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id)?
+            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id)?
             // Unpacking from storage is fine.
-            .map(|v| Message::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| Message::unpack_unchecked(&mut &*v).unwrap()))
     }
 }
 
@@ -49,9 +49,9 @@ impl Fetch<MessageId, MessageMetadata> for Storage {
 
         let metadata = self
             .inner
-            .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?
+            .get_pinned_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?
             // Unpacking from storage is fine.
-            .map(|v| MessageMetadata::unpack_unchecked(&mut v.as_slice()).unwrap());
+            .map(|v| MessageMetadata::unpack_unchecked(&mut &*v).unwrap());
 
         drop(guard);
 
@@ -97,9 +97,9 @@ impl Fetch<OutputId, CreatedOutput> for Storage {
     fn fetch(&self, output_id: &OutputId) -> Result<Option<CreatedOutput>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)?, output_id.pack_new())?
+            .get_pinned_cf(self.cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)?, output_id.pack_new())?
             // Unpacking from storage is fine.
-            .map(|v| CreatedOutput::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| CreatedOutput::unpack_unchecked(&mut &*v).unwrap()))
     }
 }
 
@@ -107,9 +107,9 @@ impl Fetch<OutputId, ConsumedOutput> for Storage {
     fn fetch(&self, output_id: &OutputId) -> Result<Option<ConsumedOutput>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)?, output_id.pack_new())?
+            .get_pinned_cf(self.cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)?, output_id.pack_new())?
             // Unpacking from storage is fine.
-            .map(|v| ConsumedOutput::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| ConsumedOutput::unpack_unchecked(&mut &*v).unwrap()))
     }
 }
 
@@ -133,9 +133,9 @@ impl Fetch<(), LedgerIndex> for Storage {
     fn fetch(&self, (): &()) -> Result<Option<LedgerIndex>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_LEDGER_INDEX)?, [0x00u8])?
+            .get_pinned_cf(self.cf_handle(CF_LEDGER_INDEX)?, [0x00u8])?
             // Unpacking from storage is fine.
-            .map(|v| LedgerIndex::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| LedgerIndex::unpack_unchecked(&mut &*v).unwrap()))
     }
 }
 
@@ -143,9 +143,9 @@ impl Fetch<MilestoneIndex, Milestone> for Storage {
     fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Milestone>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_new())?
+            .get_pinned_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_new())?
             // Unpacking from storage is fine.
-            .map(|v| Milestone::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| Milestone::unpack_unchecked(&mut &*v).unwrap()))
     }
 }
 
@@ -153,9 +153,9 @@ impl Fetch<(), SnapshotInfo> for Storage {
     fn fetch(&self, (): &()) -> Result<Option<SnapshotInfo>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_SNAPSHOT_INFO)?, [0x00u8])?
+            .get_pinned_cf(self.cf_handle(CF_SNAPSHOT_INFO)?, [0x00u8])?
             // Unpacking from storage is fine.
-            .map(|v| SnapshotInfo::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| SnapshotInfo::unpack_unchecked(&mut &*v).unwrap()))
     }
 }
 
@@ -163,9 +163,9 @@ impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
     fn fetch(&self, sep: &SolidEntryPoint) -> Result<Option<MilestoneIndex>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?, sep.as_ref())?
+            .get_pinned_cf(self.cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?, sep.as_ref())?
             // Unpacking from storage is fine.
-            .map(|v| MilestoneIndex::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| MilestoneIndex::unpack_unchecked(&mut &*v).unwrap()))
     }
 }
 
@@ -173,9 +173,9 @@ impl Fetch<MilestoneIndex, OutputDiff> for Storage {
     fn fetch(&self, index: &MilestoneIndex) -> Result<Option<OutputDiff>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?, index.pack_new())?
+            .get_pinned_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?, index.pack_new())?
             // Unpacking from storage is fine.
-            .map(|v| OutputDiff::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| OutputDiff::unpack_unchecked(&mut &*v).unwrap()))
     }
 }
 
@@ -183,9 +183,9 @@ impl Fetch<Address, Balance> for Storage {
     fn fetch(&self, address: &Address) -> Result<Option<Balance>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_ADDRESS_TO_BALANCE)?, address.pack_new())?
+            .get_pinned_cf(self.cf_handle(CF_ADDRESS_TO_BALANCE)?, address.pack_new())?
             // Unpacking from storage is fine.
-            .map(|v| Balance::unpack_unchecked(&mut v.as_slice()).unwrap()))
+            .map(|v| Balance::unpack_unchecked(&mut &*v).unwrap()))
     }
 }
 

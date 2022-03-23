@@ -3,11 +3,10 @@
 
 mod ed25519;
 
-pub use ed25519::Ed25519Signature;
-
-use crate::Error;
-
 use bee_common::packable::{Packable, Read, Write};
+
+pub use self::ed25519::Ed25519Signature;
+use crate::Error;
 
 /// A `SignatureUnlock` contains a signature which is used to unlock a transaction input.
 ///

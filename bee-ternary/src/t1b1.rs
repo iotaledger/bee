@@ -3,10 +3,10 @@
 
 extern crate alloc;
 
-use crate::{trit::ShiftTernary, Btrit, RawEncoding, RawEncodingBuf, Trit};
-
 use alloc::vec::Vec;
 use core::{hash, marker::PhantomData, ops::Range};
+
+use crate::{trit::ShiftTernary, Btrit, RawEncoding, RawEncodingBuf, Trit};
 
 const TRITS_PER_BYTE: usize = 1;
 

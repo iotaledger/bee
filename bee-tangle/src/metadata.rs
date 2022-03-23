@@ -1,31 +1,29 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    conflict::{ConflictError, ConflictReason},
-    flags::Flags,
-};
-
-use bee_common::packable::{OptionError, Packable, Read, Write};
-use bee_message::{milestone::MilestoneIndex, MessageId};
-
-use serde::Serialize;
-
 use std::{
     cmp::Ordering,
     time::{SystemTime, UNIX_EPOCH},
 };
 
+use bee_common::packable::{OptionError, Packable, Read, Write};
+use bee_message::{milestone::MilestoneIndex, MessageId};
+use serde::Serialize;
+
+use crate::{
+    conflict::{ConflictError, ConflictReason},
+    flags::Flags,
+};
+
 /// Metadata associated with a tangle message.
-#[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Serialize)]
 pub struct MessageMetadata {
     flags: Flags,
     milestone_index: Option<MilestoneIndex>,
     arrival_timestamp: u64,
     solidification_timestamp: u64,
     reference_timestamp: u64,
-    omrsi: Option<IndexId>,
-    ymrsi: Option<IndexId>,
+    omrsi_and_ymrsi: Option<(IndexId, IndexId)>,
     conflict: ConflictReason,
 }
 
@@ -38,8 +36,7 @@ impl MessageMetadata {
         arrival_timestamp: u64,
         solidification_timestamp: u64,
         reference_timestamp: u64,
-        omrsi: Option<IndexId>,
-        ymrsi: Option<IndexId>,
+        omrsi_and_ymrsi: Option<(IndexId, IndexId)>,
         conflict: ConflictReason,
     ) -> Self {
         Self {
@@ -48,8 +45,7 @@ impl MessageMetadata {
             arrival_timestamp,
             solidification_timestamp,
             reference_timestamp,
-            omrsi,
-            ymrsi,
+            omrsi_and_ymrsi,
             conflict,
         }
     }
@@ -95,24 +91,22 @@ impl MessageMetadata {
         self.solidification_timestamp
     }
 
-    /// Get the oldest message root snapshot index of this message.
-    pub fn omrsi(&self) -> Option<IndexId> {
-        self.omrsi
+    /// Get the oldest and youngest message root snapshot index of this message.
+    pub fn omrsi_and_ymrsi(&self) -> Option<(IndexId, IndexId)> {
+        self.omrsi_and_ymrsi
     }
 
-    /// Set the oldest message root snapshot index of this message.
-    pub fn set_omrsi(&mut self, omrsi: IndexId) {
-        self.omrsi = Some(omrsi);
+    /// Set the oldest and youngest message root snapshot index of this message.
+    pub fn set_omrsi_and_ymrsi(&mut self, omrsi: IndexId, ymrsi: IndexId) {
+        self.omrsi_and_ymrsi = Some((omrsi, ymrsi));
     }
 
-    /// Get the youngest message root snapshot index of this message.
-    pub fn ymrsi(&self) -> Option<IndexId> {
-        self.ymrsi
-    }
-
-    /// Set the youngest message root snapshot index of this message.
-    pub fn set_ymrsi(&mut self, ymrsi: IndexId) {
-        self.ymrsi = Some(ymrsi);
+    /// Update the oldest and youngest message root snapshot index of this message if they have
+    /// been set already.
+    pub fn update_omrsi_and_ymrsi(&mut self, f: impl FnOnce(&mut IndexId, &mut IndexId)) {
+        if let Some((omrsi, ymrsi)) = self.omrsi_and_ymrsi.as_mut() {
+            f(omrsi, ymrsi);
+        }
     }
 
     /// Get the reference timestamp (seconds from the unix epoch) of this message.
@@ -186,8 +180,7 @@ impl Packable for MessageMetadata {
             + self.arrival_timestamp.packed_len()
             + self.solidification_timestamp.packed_len()
             + self.reference_timestamp.packed_len()
-            + self.omrsi.packed_len()
-            + self.ymrsi.packed_len()
+            + self.omrsi_and_ymrsi.packed_len()
             + self.conflict.packed_len()
     }
 
@@ -197,8 +190,7 @@ impl Packable for MessageMetadata {
         self.arrival_timestamp.pack(writer)?;
         self.solidification_timestamp.pack(writer)?;
         self.reference_timestamp.pack(writer)?;
-        self.omrsi.pack(writer)?;
-        self.ymrsi.pack(writer)?;
+        self.omrsi_and_ymrsi.pack(writer)?;
         self.conflict.pack(writer).map_err(MessageMetadataError::Conflict)?;
 
         Ok(())
@@ -211,8 +203,7 @@ impl Packable for MessageMetadata {
             arrival_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
             solidification_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
             reference_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
-            omrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
-            ymrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
+            omrsi_and_ymrsi: Option::<(IndexId, IndexId)>::unpack_inner::<R, CHECK>(reader)?,
             conflict: ConflictReason::unpack_inner::<R, CHECK>(reader).map_err(MessageMetadataError::Conflict)?,
         })
     }

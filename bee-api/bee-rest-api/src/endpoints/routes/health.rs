@@ -24,19 +24,19 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
     self::path()
         .and(warp::get())
         .and(with_args(args))
-        .and_then(health)
+        .and_then(|args| async move { health(args) })
         .boxed()
 }
 
-pub(crate) async fn health<B: StorageBackend>(args: ApiArgsFullNode<B>) -> Result<impl Reply, Infallible> {
-    if is_healthy(&args.tangle, &args.peer_manager).await {
+pub(crate) fn health<B: StorageBackend>(args: ApiArgsFullNode<B>) -> Result<impl Reply, Infallible> {
+    if is_healthy(&args.tangle, &args.peer_manager) {
         Ok(StatusCode::OK)
     } else {
         Ok(StatusCode::SERVICE_UNAVAILABLE)
     }
 }
 
-pub async fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &PeerManager) -> bool {
+pub fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &PeerManager) -> bool {
     if !tangle.is_confirmed_threshold(HEALTH_CONFIRMED_THRESHOLD) {
         return false;
     }
@@ -45,7 +45,7 @@ pub async fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &Pe
         return false;
     }
 
-    match tangle.get_milestone(tangle.get_latest_milestone_index()).await {
+    match tangle.get_milestone(tangle.get_latest_milestone_index()) {
         Some(milestone) => {
             (SystemTime::now()
                 .duration_since(UNIX_EPOCH)

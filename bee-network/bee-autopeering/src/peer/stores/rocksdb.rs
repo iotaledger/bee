@@ -1,19 +1,19 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::peer::{
-    lists::{ActivePeer, ActivePeersList, ReplacementPeersList},
-    peer_id::PeerId,
-    stores::PeerStore,
-    Peer,
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
 };
 
 pub use rocksdb::Options;
 use rocksdb::{AsColumnFamilyRef, DBWithThreadMode, IteratorMode, MultiThreaded, WriteBatch};
 
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
+use crate::peer::{
+    lists::{ActivePeer, ActivePeersList, ReplacementPeersList},
+    peer_id::PeerId,
+    stores::PeerStore,
+    Peer,
 };
 
 const ACTIVE_PEERS_CF: &str = "active_peers";
@@ -99,18 +99,18 @@ impl PeerStore for RocksDbPeerStore {
 
     fn contains(&self, peer_id: &PeerId) -> Result<bool, Self::Error> {
         let cf = self.open_cf(ACTIVE_PEERS_CF);
-        if self.db.get_cf(&cf, peer_id)?.is_some() {
+        if self.db.get_pinned_cf(&cf, peer_id)?.is_some() {
             Ok(true)
         } else {
             let cf = self.open_cf(REPLACEMENTS_CF);
-            Ok(self.db.get_cf(&cf, peer_id)?.is_some())
+            Ok(self.db.get_pinned_cf(&cf, peer_id)?.is_some())
         }
     }
 
     fn fetch_active(&self, peer_id: &PeerId) -> Result<Option<ActivePeer>, Self::Error> {
         let cf = self.open_cf(ACTIVE_PEERS_CF);
 
-        Ok(self.db.get_cf(&cf, peer_id)?.map(|b| ActivePeer::from_bytes(&b)))
+        Ok(self.db.get_pinned_cf(&cf, peer_id)?.map(|b| ActivePeer::from_bytes(&b)))
     }
 
     fn fetch_all_active(&self) -> Result<Vec<ActivePeer>, Self::Error> {

@@ -24,15 +24,15 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
     self::path()
         .and(warp::get())
         .and(with_args(args))
-        .and_then(message)
+        .and_then(|message_id, args| async move { message(message_id, tangle) })
         .boxed()
 }
 
-pub(crate) async fn message<B: StorageBackend>(
+pub(crate) fn message<B: StorageBackend>(
     message_id: MessageId,
     args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
-    match args.tangle.get(&message_id).await.map(|m| (*m).clone()) {
+    match args.tangle.get(&message_id) {
         Some(message) => Ok(warp::reply::json(&SuccessBody::new(MessageResponse(MessageDto::from(
             &message,
         ))))),

@@ -7,7 +7,6 @@ use bee_crypto::ternary::{
     sponge::{BatchHasher, CurlPRounds, BATCH_SIZE},
     HASH_LENGTH,
 };
-
 use bee_ternary::{
     raw::{RawEncoding, RawEncodingBuf},
     Btrit, T1B1Buf, T5B1Buf, TryteBuf, T1B1, T5B1,

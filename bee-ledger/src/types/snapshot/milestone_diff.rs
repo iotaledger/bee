@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{ConsumedOutput, CreatedOutput, Error};
+use std::collections::HashMap;
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
@@ -14,7 +14,7 @@ use bee_message::{
     MessageId,
 };
 
-use std::collections::HashMap;
+use crate::types::{ConsumedOutput, CreatedOutput, Error};
 
 /// Describe the ledger changes occurring within a milestone.
 pub struct MilestoneDiff {

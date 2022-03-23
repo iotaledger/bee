@@ -1,14 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::collections::HashMap;
+
 use bee_ledger::types::TreasuryOutput;
 use bee_storage::{
     access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
 use bee_test::rand::{bool::rand_bool, output::rand_ledger_treasury_output};
-
-use std::collections::HashMap;
 
 pub trait StorageBackend:
     backend::StorageBackend

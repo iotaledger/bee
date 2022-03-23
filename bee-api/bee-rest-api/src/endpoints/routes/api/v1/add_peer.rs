@@ -24,11 +24,13 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
         .and(warp::post())
         .and(warp::body::json())
         .and(with_args(args))
-        .and_then(add_peer)
+        .and_then(
+            |value, args| async move { add_peer(value, args) },
+        )
         .boxed()
 }
 
-pub(crate) async fn add_peer<B: StorageBackend>(
+pub(crate) fn add_peer<B: StorageBackend>(
     value: JsonValue,
     args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {

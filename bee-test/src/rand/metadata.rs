@@ -1,14 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::{
-    message::rand_message_id, milestone::rand_milestone_index, number::rand_number, option::rand_option,
-};
-
 use bee_tangle::{
     flags::Flags,
     metadata::{IndexId, MessageMetadata},
     ConflictReason,
+};
+
+use crate::rand::{
+    message::rand_message_id, milestone::rand_milestone_index, number::rand_number, option::rand_option,
 };
 
 /// Generates a random conflict reason.
@@ -24,8 +24,10 @@ pub fn rand_message_metadata() -> MessageMetadata {
         rand_number(),
         rand_number(),
         rand_number(),
-        rand_option(IndexId::new(rand_milestone_index(), rand_message_id())),
-        rand_option(IndexId::new(rand_milestone_index(), rand_message_id())),
+        rand_option((
+            IndexId::new(rand_milestone_index(), rand_message_id()),
+            IndexId::new(rand_milestone_index(), rand_message_id()),
+        )),
         rand_conflict_reason(),
     )
 }

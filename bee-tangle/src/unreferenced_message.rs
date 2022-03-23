@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
+
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::MessageId;
-
-use std::ops::Deref;
 
 /// A type representing an unreferenced message.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]

@@ -44,14 +44,14 @@ pub(crate) type DashboardUsername = String;
 
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
 
-pub async fn init_full_node<N: Node>(init_config: InitConfigFullNode, node_builder: N::Builder) -> N::Builder
+pub fn init_full_node<N: Node>(init_config: InitConfigFullNode, node_builder: N::Builder) -> N::Builder
 where
     N::Backend: StorageBackend,
 {
     node_builder.with_worker_cfg::<ApiWorkerFullNode>(init_config)
 }
 
-pub async fn init_entry_node<N: Node>(init_config: InitConfigEntryNode, node_builder: N::Builder) -> N::Builder
+pub fn init_entry_node<N: Node>(init_config: InitConfigEntryNode, node_builder: N::Builder) -> N::Builder
 where
     N::Backend: StorageBackend,
 {
@@ -155,7 +155,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let routes = routes::filter_all(args.clone()).recover(handle_rejection);
+            let routes = routes::filter_all(args.clone()).recover(|err| async { handle_rejection(err) });
 
             let (_, server) =
                 warp::serve(routes).bind_with_graceful_shutdown(args.rest_api_config.bind_socket_addr(), async {
@@ -201,7 +201,7 @@ where
     }
 }
 
-async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
+fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let (http_code, err_code, reason) = match err.find() {
         // handle custom rejections
         Some(CustomRejection::Forbidden) => (StatusCode::FORBIDDEN, "403", "access forbidden"),

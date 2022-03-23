@@ -6,17 +6,9 @@ pub(crate) mod lists;
 pub mod peer_id;
 pub mod stores;
 
-pub use peer_id::PeerId;
-pub use stores::PeerStore;
-
-use lists::{ActivePeersList, ReplacementPeersList};
-
-use crate::{
-    local::{
-        services::{ServiceMap, ServiceProtocol},
-        Local,
-    },
-    proto,
+use std::{
+    fmt,
+    net::{IpAddr, SocketAddr},
 };
 
 use bytes::BytesMut;
@@ -29,9 +21,14 @@ use serde::{
     Deserialize, Serialize,
 };
 
-use std::{
-    fmt,
-    net::{IpAddr, SocketAddr},
+use self::lists::{ActivePeersList, ReplacementPeersList};
+pub use self::{peer_id::PeerId, stores::PeerStore};
+use crate::{
+    local::{
+        services::{ServiceMap, ServiceProtocol},
+        Local,
+    },
+    proto,
 };
 
 /// Represents a peer.
@@ -145,7 +142,10 @@ impl Peer {
     pub(crate) fn into_id(self) -> PeerId {
         self.peer_id
     }
+}
 
+#[cfg(any(feature = "rocksdb1", feature = "sled1"))]
+impl Peer {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
         bincode::serialize(self).expect("serialization error")
     }
@@ -343,10 +343,10 @@ pub enum Error {
 
 #[cfg(test)]
 mod tests {
-    use crate::local::services::AUTOPEERING_SERVICE_NAME;
+    use crypto::signatures::ed25519::SecretKey as PrivateKey;
 
     use super::*;
-    use crypto::signatures::ed25519::SecretKey as PrivateKey;
+    use crate::local::services::AUTOPEERING_SERVICE_NAME;
 
     impl Peer {
         pub(crate) fn new_test_peer(index: u8) -> Self {

@@ -31,7 +31,7 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
     self::path()
         .and(warp::get())
         .and(with_args(args))
-        .and_then(|addr, consensus_worker| async move { balance_ed25519(addr, consensus_worker).await })
+        .and_then(balance_ed25519)
         .boxed()
 }
 

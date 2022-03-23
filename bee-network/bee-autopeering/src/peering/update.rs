@@ -1,12 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::time::Duration;
+
 use super::{
     filter::NeighborFilter,
     manager::{self, OutboundNeighborhood},
     neighbor::{salt_distance, Neighbor},
 };
-
 use crate::{
     delay::ManualDelayFactory,
     discovery::manager::get_verified_peers,
@@ -18,8 +19,6 @@ use crate::{
     time::{self, MINUTE, SECOND},
     NeighborValidator,
 };
-
-use std::time::Duration;
 
 /// Outbound neighborhood update interval if there are remaining slots.
 #[allow(clippy::identity_op)]

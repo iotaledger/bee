@@ -1,14 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::network::origin::Origin;
+use std::io;
 
 use libp2p::{
     swarm::{NegotiatedSubstream, ProtocolsHandlerUpgrErr},
     Multiaddr, PeerId,
 };
 
-use std::io;
+use crate::network::origin::Origin;
 
 /// Gossip events that may occur while establishing the IOTA gossip protocol with a peer.
 #[derive(Debug)]

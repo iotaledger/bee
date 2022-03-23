@@ -4,7 +4,6 @@
 //! Contains utilities to score Proof of Work.
 
 use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf, Trits, T1B1};
-
 use crypto::hashes::{
     blake2b::Blake2b256,
     ternary::{curl_p::CurlP, HASH_LENGTH},

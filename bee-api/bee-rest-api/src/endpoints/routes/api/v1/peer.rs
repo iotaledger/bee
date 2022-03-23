@@ -23,11 +23,11 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
     self::path()
         .and(warp::get())
         .and(with_args(args))
-        .and_then(peer)
+        .and_then(|peer_id, args| async move { peer(peer_id, args) })
         .boxed()
 }
 
-pub(crate) async fn peer<B: StorageBackend>(
+pub(crate) fn peer<B: StorageBackend>(
     peer_id: PeerId,
     args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {

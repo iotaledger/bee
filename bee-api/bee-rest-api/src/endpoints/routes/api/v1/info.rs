@@ -18,23 +18,26 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
     self::path()
         .and(warp::get())
         .and(with_args(args))
-        .and_then(info)
+        .and_then(
+            |args| async {
+                info(args)
+            },
+        )
         .boxed()
 }
 
-pub(crate) async fn info<B: StorageBackend>(args: ApiArgsFullNode<B>) -> Result<impl Reply, Infallible> {
+pub(crate) fn info<B: StorageBackend>(args: ApiArgsFullNode<B>) -> Result<impl Reply, Infallible> {
     let latest_milestone_index = args.tangle.get_latest_milestone_index();
     let latest_milestone_timestamp = args
         .tangle
         .get_milestone(latest_milestone_index)
-        .await
         .map(|m| m.timestamp())
         .unwrap_or_default();
 
     Ok(warp::reply::json(&SuccessBody::new(InfoResponse {
         name: args.node_info.name.clone(),
         version: args.node_info.version.clone(),
-        is_healthy: health::is_healthy(&args.tangle, &args.peer_manager).await,
+        is_healthy: health::is_healthy(&args.tangle, &args.peer_manager),
         network_id: args.network_id.0.to_owned(),
         bech32_hrp: args.bech32_hrp.to_owned(),
         min_pow_score: args.protocol_config.minimum_pow_score(),

@@ -602,7 +602,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "bee-common",
  "serde",
@@ -611,7 +611,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-memory"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -626,14 +626,14 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-null"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bee-storage",
 ]
 
 [[package]]
 name = "bee-storage-rocksdb"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -651,7 +651,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-sled"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -668,7 +668,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-test"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -680,7 +680,7 @@ dependencies = [
 
 [[package]]
 name = "bee-tangle"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -2318,14 +2318,16 @@ dependencies = [
 
 [[package]]
 name = "librocksdb-sys"
-version = "6.20.3"
+version = "0.6.1+6.28.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c309a9d2470844aceb9a4a098cf5286154d20596868b75a6b36357d2bb9ca25d"
+checksum = "81bc587013734dadb7cf23468e531aa120788b87243648be42e2d3a072186291"
 dependencies = [
  "bindgen",
+ "bzip2-sys",
  "cc",
  "glob",
  "libc",
+ "libz-sys",
 ]
 
 [[package]]
@@ -2374,6 +2376,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3db8d6ba2cec9eacc40e6e8ccc98931840301f1006e95647ceb2dd5c3aa06f7c"
 dependencies = [
  "libsecp256k1-core",
+]
+
+[[package]]
+name = "libz-sys"
+version = "1.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f35facd4a5673cb5a48822be2be1d4236c1c99cb4113cab7061ac720d5bf859"
+dependencies = [
+ "cc",
+ "pkg-config",
+ "vcpkg",
 ]
 
 [[package]]
@@ -3487,9 +3500,9 @@ dependencies = [
 
 [[package]]
 name = "rocksdb"
-version = "0.17.0"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a62eca5cacf2c8261128631bed9f045598d40bfbe4b29f5163f0f802f8f44a7"
+checksum = "620f4129485ff1a7128d184bc687470c21c7951b64779ebc9cfdad3dcd920290"
 dependencies = [
  "libc",
  "librocksdb-sys",

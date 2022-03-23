@@ -1,17 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::{ConsumedOutput, CreatedOutput, OutputDiff, Receipt},
-    workers::{
-        consensus::worker::EXTRA_PRUNING_DEPTH,
-        pruning::{
-            error::Error,
-            metrics::{ConfirmedDataPruningMetrics, MilestoneDataPruningMetrics, UnconfirmedDataPruningMetrics},
-        },
-        storage::StorageBackend,
-    },
-};
+use std::collections::VecDeque;
 
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
@@ -27,11 +17,20 @@ use bee_storage::access::{Batch, Fetch};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage, Tangle,
 };
-
 use hashbrown::{HashMap, HashSet};
 use ref_cast::RefCast;
 
-use std::collections::VecDeque;
+use crate::{
+    types::{ConsumedOutput, CreatedOutput, OutputDiff, Receipt},
+    workers::{
+        consensus::worker::EXTRA_PRUNING_DEPTH,
+        pruning::{
+            error::Error,
+            metrics::{ConfirmedDataPruningMetrics, MilestoneDataPruningMetrics, UnconfirmedDataPruningMetrics},
+        },
+        storage::StorageBackend,
+    },
+};
 
 pub type Messages = HashSet<MessageId>;
 pub type ApproverCache = HashMap<MessageId, MilestoneIndex>;
@@ -43,7 +42,7 @@ pub struct Edge {
     pub to_child: MessageId,
 }
 
-pub async fn prune_confirmed_data<S: StorageBackend>(
+pub fn prune_confirmed_data<S: StorageBackend>(
     tangle: &Tangle<S>,
     storage: &S,
     batch: &mut S::Batch,
@@ -222,7 +221,7 @@ pub async fn prune_confirmed_data<S: StorageBackend>(
     Ok((new_seps, metrics))
 }
 
-pub async fn prune_unconfirmed_data<S: StorageBackend>(
+pub fn prune_unconfirmed_data<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     prune_index: MilestoneIndex,
@@ -344,7 +343,7 @@ pub async fn prune_unconfirmed_data<S: StorageBackend>(
     Ok(metrics)
 }
 
-pub async fn prune_milestone_data<S: StorageBackend>(
+pub fn prune_milestone_data<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     prune_index: MilestoneIndex,
@@ -352,12 +351,12 @@ pub async fn prune_milestone_data<S: StorageBackend>(
 ) -> Result<MilestoneDataPruningMetrics, Error> {
     let mut metrics = MilestoneDataPruningMetrics::default();
 
-    prune_milestone(storage, batch, prune_index).await?;
+    prune_milestone(storage, batch, prune_index)?;
 
-    prune_output_diff(storage, batch, prune_index).await?;
+    prune_output_diff(storage, batch, prune_index)?;
 
     if should_prune_receipts {
-        metrics.receipts = prune_receipts(storage, batch, prune_index).await?;
+        metrics.receipts = prune_receipts(storage, batch, prune_index)?;
     }
 
     Ok(metrics)
@@ -396,22 +395,14 @@ fn prune_indexation_data<S: StorageBackend>(
     Ok(())
 }
 
-async fn prune_milestone<S: StorageBackend>(
-    storage: &S,
-    batch: &mut S::Batch,
-    index: MilestoneIndex,
-) -> Result<(), Error> {
+fn prune_milestone<S: StorageBackend>(storage: &S, batch: &mut S::Batch, index: MilestoneIndex) -> Result<(), Error> {
     Batch::<MilestoneIndex, Milestone>::batch_delete(storage, batch, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     Ok(())
 }
 
-async fn prune_output_diff<S: StorageBackend>(
-    storage: &S,
-    batch: &mut S::Batch,
-    index: MilestoneIndex,
-) -> Result<(), Error> {
+fn prune_output_diff<S: StorageBackend>(storage: &S, batch: &mut S::Batch, index: MilestoneIndex) -> Result<(), Error> {
     if let Some(output_diff) =
         Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index).map_err(|e| Error::Storage(Box::new(e)))?
     {
@@ -433,11 +424,7 @@ async fn prune_output_diff<S: StorageBackend>(
     Ok(())
 }
 
-async fn prune_receipts<S: StorageBackend>(
-    storage: &S,
-    batch: &mut S::Batch,
-    index: MilestoneIndex,
-) -> Result<usize, Error> {
+fn prune_receipts<S: StorageBackend>(storage: &S, batch: &mut S::Batch, index: MilestoneIndex) -> Result<usize, Error> {
     let receipts = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?
         // Fine since Fetch of a Vec<_> always returns Some(Vec<_>).
@@ -476,11 +463,7 @@ fn unwrap_indexation(payload: Option<&Payload>) -> Option<&IndexationPayload> {
 
 // TODO: consider using this instead of 'truncate'
 #[allow(dead_code)]
-async fn prune_seps<S: StorageBackend>(
-    storage: &S,
-    batch: &mut S::Batch,
-    seps: &[SolidEntryPoint],
-) -> Result<usize, Error> {
+fn prune_seps<S: StorageBackend>(storage: &S, batch: &mut S::Batch, seps: &[SolidEntryPoint]) -> Result<usize, Error> {
     let mut num = 0;
     for sep in seps {
         Batch::<SolidEntryPoint, MilestoneIndex>::batch_delete(storage, batch, sep)

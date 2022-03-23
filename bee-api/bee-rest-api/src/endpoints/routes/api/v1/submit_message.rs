@@ -150,7 +150,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     ))
 }
 
-pub(crate) async fn build_message(
+pub(crate) fn build_message(
     network_id: u64,
     parents: Vec<MessageId>,
     payload: Option<Payload>,
@@ -222,7 +222,7 @@ pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
 ) -> Result<MessageId, Rejection> {
     let (message_id, message_bytes) = message.id();
 
-    if tangle.contains(&message_id).await {
+    if tangle.contains(&message_id) {
         return Ok(message_id);
     }
 

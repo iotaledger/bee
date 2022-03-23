@@ -1,10 +1,10 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::cmp;
+
 use semver::Version;
 use serde::Deserialize;
-
-use std::cmp;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ReleaseInfoBuilder {

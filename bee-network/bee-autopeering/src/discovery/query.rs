@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use rand::{thread_rng, Rng as _};
+
 use crate::{
     discovery::manager,
     event::EventTx,
@@ -12,8 +14,6 @@ use crate::{
     server::ServerTx,
     task::Repeat,
 };
-
-use rand::{thread_rng, Rng as _};
 
 #[derive(Clone)]
 pub(crate) struct QueryContext {

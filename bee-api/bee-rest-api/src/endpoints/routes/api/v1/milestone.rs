@@ -24,16 +24,16 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
     self::path()
         .and(warp::get())
         .and(with_args(args))
-        .and_then(milestone)
+        .and_then(|milestone_index, args| async move { milestone(milestone_index, args) })
         .boxed()
 }
 
-pub(crate) async fn milestone<B: StorageBackend>(
+pub(crate) fn milestone<B: StorageBackend>(
     milestone_index: MilestoneIndex,
     args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
-    match args.tangle.get_milestone_message_id(milestone_index).await {
-        Some(message_id) => match args.tangle.get_metadata(&message_id).await {
+    match args.tangle.get_milestone_message_id(milestone_index) {
+        Some(message_id) => match args.tangle.get_metadata(&message_id) {
             Some(metadata) => Ok(warp::reply::json(&SuccessBody::new(MilestoneResponse {
                 milestone_index: *milestone_index,
                 message_id: message_id.to_string(),

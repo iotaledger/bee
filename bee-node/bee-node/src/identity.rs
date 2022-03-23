@@ -1,12 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_gossip::{Keypair, SecretKey};
+use std::{fs, path::Path};
 
+use bee_gossip::{Keypair, SecretKey};
 use ed25519::KeypairBytes;
 use pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding};
-
-use std::{fs, path::Path};
 
 #[derive(Debug, thiserror::Error)]
 pub enum PemFileError {

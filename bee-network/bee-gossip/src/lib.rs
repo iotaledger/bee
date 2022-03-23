@@ -18,13 +18,6 @@ mod swarm;
 mod tests;
 
 // Always exported
-pub use self::peer::info::{PeerInfo, PeerRelation};
-#[doc(inline)]
-pub use libp2p_core::{
-    multiaddr::{Multiaddr, Protocol},
-    PeerId,
-};
-
 // Exported only with "full" feature flag.
 #[cfg(feature = "full")]
 #[doc(inline)]
@@ -32,7 +25,13 @@ pub use libp2p_core::identity::{
     ed25519::{Keypair, SecretKey},
     PublicKey,
 };
+#[doc(inline)]
+pub use libp2p_core::{
+    multiaddr::{Multiaddr, Protocol},
+    PeerId,
+};
 
+pub use self::peer::info::{PeerInfo, PeerRelation};
 #[cfg(feature = "full")]
 pub use crate::{
     config::{NetworkConfig, NetworkConfigBuilder},

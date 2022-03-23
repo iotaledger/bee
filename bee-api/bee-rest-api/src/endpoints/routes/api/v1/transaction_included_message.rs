@@ -24,11 +24,13 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
     self::path()
         .and(warp::get())
         .and(with_args(args))
-        .and_then(transaction_included_message)
+        .and_then(|transaction_id, args| async move {
+            transaction_included_message(transaction_id, args)
+        })
         .boxed()
 }
 
-pub(crate) async fn transaction_included_message<B: StorageBackend>(
+pub(crate) fn transaction_included_message<B: StorageBackend>(
     transaction_id: TransactionId,
     args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
@@ -40,7 +42,7 @@ pub(crate) async fn transaction_included_message<B: StorageBackend>(
             "Can not fetch from storage".to_string(),
         ))
     })? {
-        Some(output) => message::message(*output.message_id(), args).await,
+        Some(output) => message::message(*output.message_id(), args),
         None => Err(reject::custom(CustomRejection::NotFound(
             "Can not find output".to_string(),
         ))),

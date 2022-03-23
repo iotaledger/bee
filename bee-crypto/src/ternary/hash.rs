@@ -1,13 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ternary::{raw::RawEncoding, Btrit, Trits, T1B1};
-
 use std::{
     cmp::PartialEq,
     fmt, hash,
     ops::{Deref, DerefMut},
 };
+
+use bee_ternary::{raw::RawEncoding, Btrit, Trits, T1B1};
 
 #[derive(Debug)]
 pub enum Error {

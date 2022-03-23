@@ -3,14 +3,13 @@
 
 //! Traits used to represent bee nodes and allow for their instantiation.
 
-use crate::{event::Bus, resource::ResourceHandle, worker::Worker};
-
-use bee_storage::backend::StorageBackend;
+use std::any::Any;
 
 use async_trait::async_trait;
+use bee_storage::backend::StorageBackend;
 use futures::{channel::oneshot, future::Future};
 
-use std::any::Any;
+use crate::{event::Bus, resource::ResourceHandle, worker::Worker};
 
 /// A type holding information about a node.
 pub struct NodeInfo {

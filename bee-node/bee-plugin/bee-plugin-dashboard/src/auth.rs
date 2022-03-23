@@ -19,7 +19,7 @@ pub struct AuthResponse {
     pub jwt: String,
 }
 
-pub(crate) async fn auth(
+pub(crate) fn auth(
     node_id: PeerId,
     keypair: Keypair,
     config: DashboardAuthConfig,

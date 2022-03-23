@@ -7,6 +7,11 @@
 //!
 //! The code was adapted from: https://kanejaku.org/posts/2021/01/2021-01-27/ (CC-BY 4.0)
 
+use std::{
+    alloc::{GlobalAlloc, Layout, System},
+    sync::atomic::{AtomicUsize, Ordering::SeqCst},
+};
+
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
 use bee_pow::{
@@ -14,11 +19,6 @@ use bee_pow::{
     score::PoWScorer,
 };
 use bee_test::rand::parents::rand_parents;
-
-use std::{
-    alloc::{GlobalAlloc, Layout, System},
-    sync::atomic::{AtomicUsize, Ordering::SeqCst},
-};
 
 struct CheckAlloc;
 

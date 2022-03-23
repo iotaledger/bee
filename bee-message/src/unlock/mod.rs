@@ -3,14 +3,13 @@
 
 mod reference;
 
-pub use reference::ReferenceUnlock;
-
-use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, signature::SignatureUnlock, Error};
+use core::ops::Deref;
+use std::collections::HashSet;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::ops::Deref;
-use std::collections::HashSet;
+pub use self::reference::ReferenceUnlock;
+use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, signature::SignatureUnlock, Error};
 
 /// Defines the mechanism by which a transaction input is authorized to be consumed.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
