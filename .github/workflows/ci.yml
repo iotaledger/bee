@@ -68,10 +68,10 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
-      - uses: actions-rs/cargo@v1
+      - uses: actions-rs/install@v0.1
         with:
-          command: install
-          args: --force cargo-hack
+          crate: cargo-hack
+          version: latest
 
       - name: Build crates
         uses: actions-rs/cargo@v1
@@ -175,10 +175,10 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
-      - uses: actions-rs/cargo@v1
+      - uses: actions-rs/install@v0.1
         with:
-          command: install
-          args: --force cargo-hack
+          crate: cargo-hack
+          version: latest
 
       - name: Run clippy
         uses: actions-rs/cargo@v1
@@ -215,10 +215,10 @@ jobs:
           crate: cargo-udeps
           version: latest
 
-      - uses: actions-rs/cargo@v1
+      - uses: actions-rs/install@v0.1
         with:
-          command: install
-          args: --force cargo-hack
+          crate: cargo-hack
+          version: latest
 
       - name: Run udeps
         uses: actions-rs/cargo@v1
@@ -250,11 +250,10 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
-      - uses: actions-rs/cargo@v1
-        name: Install cargo-about
+      - uses: actions-rs/install@v0.1
         with:
-          command: install
-          args: --force cargo-about
+          crate: cargo-about
+          version: latest
 
       - name: Move `about.toml` to project root
         run: mv .github/workflows/about.toml .
@@ -298,10 +297,10 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
-      - uses: actions-rs/cargo@v1
+      - uses: actions-rs/install@v0.1
         with:
-          command: install
-          args: --force cargo-hack
+          crate: cargo-hack
+          version: latest
 
       - name: Run doc
         uses: actions-rs/cargo@v1
