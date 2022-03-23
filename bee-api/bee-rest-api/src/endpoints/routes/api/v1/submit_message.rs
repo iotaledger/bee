@@ -136,8 +136,8 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         nonce,
         &args.rest_api_config,
         &args.protocol_config,
-    )
-    .await?;
+    )?;
+
     let message_id = forward_to_message_submitter(message, &args.tangle, &args.message_submitter).await?;
 
     Ok(warp::reply::with_status(

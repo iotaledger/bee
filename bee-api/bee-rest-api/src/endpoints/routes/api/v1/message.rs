@@ -23,7 +23,7 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
     self::path()
         .and(warp::get())
         .and(with_args(args))
-        .and_then(|message_id, args| async move { message(message_id, tangle) })
+        .and_then(|message_id, args| async move { message(message_id, args) })
         .boxed()
 }
 

@@ -123,7 +123,7 @@ pub(crate) fn auth_route(
         .and(node_keypair_filter)
         .and(auth_config_filter)
         .and(warp::body::json())
-        .and_then(|node_id, config, body| async move { auth(node_id, config, body) })
+        .and_then(|node_id, keypair, config, body| async move { auth(node_id, keypair, config, body) })
 }
 
 pub(crate) fn routes<S: StorageBackend>(

@@ -183,7 +183,9 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let health = warp::path("health").map(|| StatusCode::OK).recover(handle_rejection);
+            let health = warp::path("health")
+                .map(|| StatusCode::OK)
+                .recover(|err| async { handle_rejection(err) });
 
             let (_, server) =
                 warp::serve(health).bind_with_graceful_shutdown(config.rest_api_config.bind_socket_addr(), async {

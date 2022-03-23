@@ -20,7 +20,7 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
     self::path()
         .and(warp::get())
         .and(with_args(args))
-        .and_then(balance_bech32(addr, args))
+        .and_then(balance_bech32)
         .boxed()
 }
 
