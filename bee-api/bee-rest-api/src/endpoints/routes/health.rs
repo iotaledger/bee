@@ -1,17 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{filters::with_args, storage::StorageBackend, ApiArgsFullNode};
-
-use bee_protocol::workers::PeerManager;
-use bee_tangle::Tangle;
-
-use warp::{filters::BoxedFilter, http::StatusCode, Filter, Reply};
-
 use std::{
     convert::Infallible,
     time::{SystemTime, UNIX_EPOCH},
 };
+
+use bee_protocol::workers::PeerManager;
+use bee_tangle::Tangle;
+use warp::{filters::BoxedFilter, http::StatusCode, Filter, Reply};
+
+use crate::endpoints::{filters::with_args, storage::StorageBackend, ApiArgsFullNode};
 
 const HEALTH_CONFIRMED_THRESHOLD: u32 = 2; // in milestones
 const HEALTH_MILESTONE_AGE_MAX: u64 = 5 * 60; // in seconds

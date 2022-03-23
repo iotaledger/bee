@@ -1,6 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_ledger::types::Receipt;
+use bee_message::milestone::MilestoneIndex;
+use bee_storage::access::Fetch;
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         filters::with_args, path_params::milestone_index, rejection::CustomRejection, storage::StorageBackend,
@@ -8,12 +13,6 @@ use crate::{
     },
     types::{body::SuccessBody, dtos::ReceiptDto, responses::ReceiptsResponse},
 };
-
-use bee_ledger::types::Receipt;
-use bee_message::milestone::MilestoneIndex;
-use bee_storage::access::Fetch;
-
-use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
 fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
     super::path()

@@ -1,13 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_gossip::{Command::RemovePeer, PeerId};
+use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
+
 use crate::endpoints::{
     filters::with_args, path_params::peer_id, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode,
 };
-
-use bee_gossip::{Command::RemovePeer, PeerId};
-
-use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
 
 fn path() -> impl Filter<Extract = (PeerId,), Error = warp::Rejection> + Clone {
     super::path()

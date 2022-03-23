@@ -1,24 +1,24 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    endpoints::{filters::with_args, rejection::CustomRejection, storage::StorageBackend},
-    types::{body::SuccessBody, responses::WhiteFlagResponse},
+use std::{
+    any::TypeId,
+    collections::HashSet,
+    sync::{Arc, Mutex},
 };
 
 use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_protocol::workers::{event::MessageSolidified, request_message};
-
 use futures::channel::oneshot;
 use serde_json::Value as JsonValue;
 use tokio::time::timeout;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
-use crate::endpoints::ApiArgsFullNode;
-use std::sync::Arc;
-
-use std::{any::TypeId, collections::HashSet, sync::Mutex};
+use crate::{
+    endpoints::{filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode},
+    types::{body::SuccessBody, responses::WhiteFlagResponse},
+};
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("whiteflag")).and(warp::path::end())

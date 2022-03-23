@@ -1,13 +1,13 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{config::EntryNodeConfig, EntryNode, EntryNodeError};
-
-use crate::{
-    core::{Core, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
-    shutdown, util, AUTOPEERING_VERSION,
+use std::{
+    any::{type_name, Any, TypeId},
+    collections::HashMap,
+    convert::Infallible,
 };
 
+use async_trait::async_trait;
 use bee_autopeering::{
     stores::{Options as RocksDbPeerStoreConfigOptions, RocksDbPeerStore, RocksDbPeerStoreConfig},
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
@@ -21,16 +21,14 @@ use bee_runtime::{
     shutdown_stream::ShutdownStream,
     worker::Worker,
 };
-
-use async_trait::async_trait;
 use futures::StreamExt;
 use fxhash::FxBuildHasher;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{
-    any::{type_name, Any, TypeId},
-    collections::HashMap,
-    convert::Infallible,
+use super::{config::EntryNodeConfig, EntryNode, EntryNodeError};
+use crate::{
+    core::{Core, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
+    shutdown, util, AUTOPEERING_VERSION,
 };
 
 /// A builder to create a Bee entry node (autopeering).

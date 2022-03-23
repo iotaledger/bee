@@ -1,6 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_gossip::{Command::AddPeer, Multiaddr, PeerId, PeerRelation, Protocol};
+use serde_json::Value as JsonValue;
+use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode},
     types::{
@@ -9,11 +13,6 @@ use crate::{
         responses::AddPeerResponse,
     },
 };
-
-use bee_gossip::{Command::AddPeer, Multiaddr, PeerId, PeerRelation, Protocol};
-
-use serde_json::Value as JsonValue;
-use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("peers")).and(warp::path::end())
@@ -24,16 +23,11 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
         .and(warp::post())
         .and(warp::body::json())
         .and(with_args(args))
-        .and_then(
-            |value, args| async move { add_peer(value, args) },
-        )
+        .and_then(|value, args| async move { add_peer(value, args) })
         .boxed()
 }
 
-pub(crate) fn add_peer<B: StorageBackend>(
-    value: JsonValue,
-    args: ApiArgsFullNode<B>,
-) -> Result<impl Reply, Rejection> {
+pub(crate) fn add_peer<B: StorageBackend>(value: JsonValue, args: ApiArgsFullNode<B>) -> Result<impl Reply, Rejection> {
     let multi_address_v = &value["multiAddress"];
     let alias_v = &value["alias"];
 

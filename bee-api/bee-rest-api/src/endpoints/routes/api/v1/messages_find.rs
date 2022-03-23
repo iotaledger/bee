@@ -1,6 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::collections::HashMap;
+
+use bee_message::{
+    payload::indexation::{IndexationPayload, PaddedIndex},
+    MessageId,
+};
+use bee_storage::access::Fetch;
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         filters::with_args, rejection::CustomRejection, routes::api::v1::MAX_RESPONSE_RESULTS, storage::StorageBackend,
@@ -8,16 +17,6 @@ use crate::{
     },
     types::{body::SuccessBody, responses::MessagesFindResponse},
 };
-
-use bee_message::{
-    payload::indexation::{IndexationPayload, PaddedIndex},
-    MessageId,
-};
-use bee_storage::access::Fetch;
-
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
-
-use std::collections::HashMap;
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("messages")).and(warp::path::end())

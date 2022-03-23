@@ -25,9 +25,9 @@ pub mod tips;
 pub mod transaction_included_message;
 pub mod treasury;
 
-use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
-
 use warp::{self, Filter, Rejection, Reply};
+
+use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
 
 pub(crate) const MAX_RESPONSE_RESULTS: usize = 1000;
 

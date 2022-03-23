@@ -1,14 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::convert::Infallible;
+
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{filters::with_args, storage::StorageBackend, ApiArgsFullNode},
     types::{body::SuccessBody, dtos::PeerDto, responses::PeersResponse},
 };
-
-use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
-
-use std::convert::Infallible;
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("peers")).and(warp::path::end())

@@ -1,14 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_message::address::Address;
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
+
 use crate::endpoints::{
     filters::with_args, path_params::bech32_address, routes::api::v1::outputs_ed25519::outputs_ed25519,
     storage::StorageBackend, ApiArgsFullNode,
 };
-
-use bee_message::address::Address;
-
-use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
 fn path() -> impl Filter<Extract = (Address,), Error = Rejection> + Clone {
     super::path()

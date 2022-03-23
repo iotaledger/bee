@@ -1,6 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_ledger::{
+    types::{ConsumedOutput, CreatedOutput, LedgerIndex},
+    workers::{consensus::ConsensusWorkerCommand, error::Error},
+};
+use bee_message::output::OutputId;
+use bee_storage::access::Fetch;
+use futures::channel::oneshot;
+use log::error;
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         filters::with_args, path_params::output_id, rejection::CustomRejection, storage::StorageBackend,
@@ -8,17 +18,6 @@ use crate::{
     },
     types::{body::SuccessBody, responses::OutputResponse},
 };
-
-use bee_ledger::{
-    types::{ConsumedOutput, CreatedOutput, LedgerIndex},
-    workers::{consensus::ConsensusWorkerCommand, error::Error},
-};
-use bee_message::output::OutputId;
-use bee_storage::access::Fetch;
-
-use futures::channel::oneshot;
-use log::error;
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 fn path() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Clone {
     super::path()

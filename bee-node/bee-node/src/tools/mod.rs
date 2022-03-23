@@ -10,10 +10,10 @@ mod rocksdb;
 mod sled;
 mod snapshot_info;
 
-use crate::{Local, NodeConfig, NodeStorageBackend};
-
 use structopt::StructOpt;
 use thiserror::Error;
+
+use crate::{Local, NodeConfig, NodeStorageBackend};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, StructOpt)]

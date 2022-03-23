@@ -4,9 +4,9 @@
 pub mod api;
 pub mod health;
 
-use crate::endpoints::{permission::check_permission, storage::StorageBackend, ApiArgsFullNode};
-
 use warp::{self, Filter, Rejection, Reply};
+
+use crate::endpoints::{permission::check_permission, storage::StorageBackend, ApiArgsFullNode};
 
 pub(crate) fn filter_all<B: StorageBackend>(
     args: ApiArgsFullNode<B>,

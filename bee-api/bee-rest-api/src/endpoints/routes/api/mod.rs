@@ -4,9 +4,9 @@
 pub mod plugins;
 pub mod v1;
 
-use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
-
 use warp::{self, Filter, Rejection, Reply};
+
+use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
 
 pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     warp::path("api")

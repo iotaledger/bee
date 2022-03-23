@@ -1,16 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_ledger::types::CreatedOutput;
+use bee_message::{output::OutputId, payload::transaction::TransactionId};
+use bee_storage::access::Fetch;
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::endpoints::{
     filters::with_args, path_params::transaction_id, rejection::CustomRejection, routes::api::v1::message,
     storage::StorageBackend, ApiArgsFullNode,
 };
-
-use bee_ledger::types::CreatedOutput;
-use bee_message::{output::OutputId, payload::transaction::TransactionId};
-use bee_storage::access::Fetch;
-
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 fn path() -> impl Filter<Extract = (TransactionId,), Error = Rejection> + Clone {
     super::path()
@@ -24,9 +23,7 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
     self::path()
         .and(warp::get())
         .and(with_args(args))
-        .and_then(|transaction_id, args| async move {
-            transaction_included_message(transaction_id, args)
-        })
+        .and_then(|transaction_id, args| async move { transaction_included_message(transaction_id, args) })
         .boxed()
 }
 

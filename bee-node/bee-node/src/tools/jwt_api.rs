@@ -1,13 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{Local, NodeConfig, NodeStorageBackend};
-
-use bee_rest_api::endpoints::permission::API_AUDIENCE_CLAIM;
-
 use auth_helper::jwt::{ClaimsBuilder, JsonWebToken};
+use bee_rest_api::endpoints::permission::API_AUDIENCE_CLAIM;
 use structopt::StructOpt;
 use thiserror::Error;
+
+use crate::{Local, NodeConfig, NodeStorageBackend};
 
 #[derive(Debug, Error)]
 pub enum JwtApiError {

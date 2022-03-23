@@ -1,11 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{config::route_to_regex, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode};
-
 use auth_helper::jwt::{Claims, JsonWebToken, TokenData};
 use base64;
-
 use lazy_static::lazy_static;
 use regex::RegexSet;
 use warp::{
@@ -13,6 +10,8 @@ use warp::{
     path::FullPath,
     reject, Filter, Rejection,
 };
+
+use crate::endpoints::{config::route_to_regex, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode};
 
 /// Bearer for JWT. Please note the whitespace " " is important for correct parsing.
 const BEARER: &str = "Bearer ";

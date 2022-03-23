@@ -3,9 +3,9 @@
 
 mod debug;
 
-use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
-
 use warp::{self, Filter, Rejection, Reply};
+
+use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
 
 pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("plugins"))

@@ -1,14 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_ledger::workers::storage;
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode},
     types::{body::SuccessBody, responses::TreasuryResponse},
 };
-
-use bee_ledger::workers::storage;
-
-use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("treasury")).and(warp::path::end())

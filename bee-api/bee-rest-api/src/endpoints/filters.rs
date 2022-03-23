@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
+use std::convert::Infallible;
 
 use warp::Filter;
 
-use std::convert::Infallible;
+use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
 
 pub(crate) fn with_args<B: StorageBackend>(
     args: ApiArgsFullNode<B>,

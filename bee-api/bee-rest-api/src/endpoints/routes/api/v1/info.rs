@@ -1,14 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::convert::Infallible;
+
+use warp::{filters::BoxedFilter, Filter, Reply};
+
 use crate::{
     endpoints::{filters::with_args, routes::health, storage::StorageBackend, ApiArgsFullNode},
     types::{body::SuccessBody, responses::InfoResponse},
 };
-
-use warp::{filters::BoxedFilter, Filter, Reply};
-
-use std::convert::Infallible;
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("info")).and(warp::path::end())
@@ -18,11 +18,7 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
     self::path()
         .and(warp::get())
         .and(with_args(args))
-        .and_then(
-            |args| async {
-                info(args)
-            },
-        )
+        .and_then(|args| async { info(args) })
         .boxed()
 }
 

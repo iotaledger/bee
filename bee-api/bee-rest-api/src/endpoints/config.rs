@@ -1,14 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use multiaddr::{Multiaddr, Protocol};
-use regex::RegexSet;
-use serde::Deserialize;
-
 use std::{
     net::{IpAddr, SocketAddr, ToSocketAddrs},
     time::Duration,
 };
+
+use multiaddr::{Multiaddr, Protocol};
+use regex::RegexSet;
+use serde::Deserialize;
 
 /// Default REST API binding address.
 pub(crate) const DEFAULT_BIND_ADDRESS: &str = "/ip4/0.0.0.0/tcp/14265";

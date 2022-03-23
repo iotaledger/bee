@@ -1,14 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_common::packable::Packable;
+use bee_message::MessageId;
+use warp::{filters::BoxedFilter, http::Response, reject, Filter, Rejection, Reply};
+
 use crate::endpoints::{
     filters::with_args, path_params::message_id, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode,
 };
-
-use bee_common::packable::Packable;
-use bee_message::MessageId;
-
-use warp::{filters::BoxedFilter, http::Response, reject, Filter, Rejection, Reply};
 
 fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clone {
     super::path()

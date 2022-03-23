@@ -1,16 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_gossip::PeerId;
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         filters::with_args, path_params::peer_id, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode,
     },
     types::{body::SuccessBody, dtos::PeerDto, responses::PeerResponse},
 };
-
-use bee_gossip::PeerId;
-
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 fn path() -> impl Filter<Extract = (PeerId,), Error = Rejection> + Clone {
     super::path()
@@ -27,10 +26,7 @@ pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter
         .boxed()
 }
 
-pub(crate) fn peer<B: StorageBackend>(
-    peer_id: PeerId,
-    args: ApiArgsFullNode<B>,
-) -> Result<impl Reply, Rejection> {
+pub(crate) fn peer<B: StorageBackend>(peer_id: PeerId, args: ApiArgsFullNode<B>) -> Result<impl Reply, Rejection> {
     args.peer_manager
         .get_map(&peer_id, |peer_entry| {
             Ok(warp::reply::json(&SuccessBody::new(PeerResponse(PeerDto::from(

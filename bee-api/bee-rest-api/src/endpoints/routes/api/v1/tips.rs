@@ -1,14 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode, CONFIRMED_THRESHOLD,
     },
     types::{body::SuccessBody, responses::TipsResponse},
 };
-
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("tips")).and(warp::path::end())
