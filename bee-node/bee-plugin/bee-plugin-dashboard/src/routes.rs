@@ -1,6 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_gossip::{Keypair, PeerId};
+use bee_rest_api::endpoints::config::RestApiConfig;
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::Tangle;
+use log::debug;
+use warp::{http::header::HeaderValue, path::FullPath, reply::Response, Filter, Rejection, Reply};
+use warp_reverse_proxy::reverse_proxy_filter;
+
 use crate::{
     asset::Asset,
     auth::auth,
@@ -8,15 +16,6 @@ use crate::{
     storage::StorageBackend,
     websocket::{user_connected, WsUsers},
 };
-
-use bee_gossip::{Keypair, PeerId};
-use bee_rest_api::endpoints::config::RestApiConfig;
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
-
-use log::debug;
-use warp::{http::header::HeaderValue, path::FullPath, reply::Response, Filter, Rejection, Reply};
-use warp_reverse_proxy::reverse_proxy_filter;
 
 fn serve_index() -> Result<impl Reply, Rejection> {
     serve_asset("index.html")
