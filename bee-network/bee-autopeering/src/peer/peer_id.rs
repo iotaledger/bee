@@ -3,7 +3,10 @@
 
 //! A module for creating peer identities.
 
-use crate::hash;
+use std::{
+    fmt,
+    hash::{Hash, Hasher},
+};
 
 use crypto::signatures::ed25519::{PublicKey, SecretKey as PrivateKey, PUBLIC_KEY_LENGTH};
 use serde::{
@@ -12,10 +15,7 @@ use serde::{
     Deserialize, Serialize,
 };
 
-use std::{
-    fmt,
-    hash::{Hash, Hasher},
-};
+use crate::hash;
 
 const DISPLAY_LENGTH: usize = 16;
 const DISPLAY_OFFSET: usize = 8;

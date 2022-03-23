@@ -3,13 +3,12 @@
 
 //! The parents module defines the core data type for storing the messages directly approved by a message.
 
-use crate::{Error, MessageId, MESSAGE_ID_LENGTH};
+use core::ops::{Deref, RangeInclusive};
 
 use bee_common::packable::{Packable, Read, Write};
-
 use iterator_sorted::is_unique_sorted;
 
-use core::ops::{Deref, RangeInclusive};
+use crate::{Error, MessageId, MESSAGE_ID_LENGTH};
 
 /// The range representing the valid number of parents.
 pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;

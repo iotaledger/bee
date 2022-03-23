@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::number::rand_number_range;
-
 use bee_ledger::types::Balance;
 use bee_message::constants::IOTA_SUPPLY;
+
+use crate::rand::number::rand_number_range;
 
 /// Generates a random balance.
 pub fn rand_balance() -> Balance {

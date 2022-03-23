@@ -3,15 +3,15 @@
 
 //! A module that provides a type describing peers.
 
-use crate::types::metrics::PeerMetrics;
-
-use bee_gossip::{Multiaddr, PeerId, PeerInfo, PeerRelation};
-use bee_message::milestone::MilestoneIndex;
-
 use std::{
     sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicU8, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
+
+use bee_gossip::{Multiaddr, PeerId, PeerInfo, PeerRelation};
+use bee_message::milestone::MilestoneIndex;
+
+use crate::types::metrics::PeerMetrics;
 
 const SYNCED_THRESHOLD: u32 = 2;
 

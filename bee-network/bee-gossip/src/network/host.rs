@@ -1,8 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::error::Error;
+use futures::{channel::oneshot, StreamExt};
+use libp2p::{swarm::SwarmEvent, Multiaddr, PeerId, Swarm};
+use log::*;
 
+use super::error::Error;
 use crate::{
     alias,
     peer::{info::PeerInfo, list::PeerListWrapper as PeerList},
@@ -13,10 +16,6 @@ use crate::{
     swarm::behaviour::SwarmBehaviour,
 };
 
-use futures::{channel::oneshot, StreamExt};
-use libp2p::{swarm::SwarmEvent, Multiaddr, PeerId, Swarm};
-use log::*;
-
 pub struct NetworkHostConfig {
     pub internal_event_sender: InternalEventSender,
     pub internal_command_receiver: CommandReceiver,
@@ -26,14 +25,13 @@ pub struct NetworkHostConfig {
 }
 
 pub mod integrated {
-    use super::*;
-    use crate::service::host::integrated::ServiceHost;
-
-    use bee_runtime::{node::Node, worker::Worker};
+    use std::{any::TypeId, convert::Infallible};
 
     use async_trait::async_trait;
+    use bee_runtime::{node::Node, worker::Worker};
 
-    use std::{any::TypeId, convert::Infallible};
+    use super::*;
+    use crate::service::host::integrated::ServiceHost;
 
     /// A node worker, that deals with accepting and initiating connections with remote peers.
     ///
@@ -182,7 +180,7 @@ async fn process_internal_command(internal_command: Command, swarm: &mut Swarm<S
                 warn!("Dialing peer {} failed. Cause: {}", alias!(peer_id), e);
             }
         }
-        Command::DisconnectPeer { peer_id } => hang_up(swarm, peer_id).await,
+        Command::DisconnectPeer { peer_id } => hang_up(swarm, peer_id),
         _ => {}
     }
 }
@@ -240,7 +238,7 @@ async fn dial_peer(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId, peerlist:
     Ok(())
 }
 
-async fn hang_up(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId) {
+fn hang_up(swarm: &mut Swarm<SwarmBehaviour>, peer_id: PeerId) {
     debug!("Hanging up on: {}.", alias!(peer_id));
 
     let _ = Swarm::disconnect_peer_id(swarm, peer_id);

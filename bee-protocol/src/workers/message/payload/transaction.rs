@@ -1,29 +1,27 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::metrics::NodeMetrics,
-    workers::{storage::StorageBackend, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MetricsWorker},
-};
-
-use bee_message::{
-    payload::{transaction::Essence, Payload},
-    MessageId,
-};
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::MessageRef;
+use std::{any::TypeId, convert::Infallible};
 
 use async_trait::async_trait;
+use bee_message::{
+    payload::{transaction::Essence, Payload},
+    Message, MessageId,
+};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, convert::Infallible};
+use crate::{
+    types::metrics::NodeMetrics,
+    workers::{storage::StorageBackend, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MetricsWorker},
+};
 
 pub(crate) struct TransactionPayloadWorkerEvent {
     pub(crate) message_id: MessageId,
-    pub(crate) message: MessageRef,
+    pub(crate) message: Message,
 }
 
 pub(crate) struct TransactionPayloadWorker {
@@ -31,9 +29,9 @@ pub(crate) struct TransactionPayloadWorker {
 }
 
 #[cfg_attr(feature = "trace", trace_tools::observe)]
-async fn process(
+fn process(
     message_id: MessageId,
-    message: MessageRef,
+    message: Message,
     indexation_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
     metrics: &NodeMetrics,
 ) {
@@ -87,7 +85,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(TransactionPayloadWorkerEvent { message_id, message }) = receiver.next().await {
-                process(message_id, message, &indexation_payload_worker, &metrics).await;
+                process(message_id, message, &indexation_payload_worker, &metrics);
             }
 
             // Before the worker completely stops, the receiver needs to be drained for transaction payloads to be
@@ -98,7 +96,7 @@ where
 
             while let Some(Some(TransactionPayloadWorkerEvent { message_id, message })) = receiver.next().now_or_never()
             {
-                process(message_id, message, &indexation_payload_worker, &metrics).await;
+                process(message_id, message, &indexation_payload_worker, &metrics);
                 count += 1;
             }
 

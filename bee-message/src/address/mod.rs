@@ -3,15 +3,13 @@
 
 mod ed25519;
 
-pub use ed25519::{Ed25519Address, ED25519_ADDRESS_LENGTH};
-
-use crate::{signature::SignatureUnlock, Error};
-
-use bee_common::packable::{Packable, Read, Write};
+use alloc::{str::FromStr, string::String};
 
 use bech32::{self, FromBase32, ToBase32, Variant};
+use bee_common::packable::{Packable, Read, Write};
 
-use alloc::{str::FromStr, string::String};
+pub use self::ed25519::{Ed25519Address, ED25519_ADDRESS_LENGTH};
+use crate::{signature::SignatureUnlock, Error};
 
 /// A generic address supporting different address kinds.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]

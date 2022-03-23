@@ -13,7 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 async-trait = { version = "0.1.51", default-features = false }
 base64 = { version = "0.13.0", default-features = false, features = [ "alloc" ] }
-bincode = { version = "1.3.3", default-features = false }
+bincode = { version = "1.3.3", default-features = false, optional = true }
 bs58 = { version = "0.4", default-features = false, features = [ "alloc" ] }
 bytes = { version = "1.0", default-features = false }
 hash32 = { version = "0.2.1", default-features = false }
@@ -28,23 +28,19 @@ priority-queue = { version = "1.2.0", default-features = false }
 prost = { version = "0.8", default-features = false, features = [ "std" ] }
 rand = { version = "0.8.4", default-features = false, features = [ "std", "std_rng" ] }
 ring = { version = "0.16.20", default-features = false }
-rocksdb = { version = "0.17.0", default-features = false, optional = true }
+rocksdb = { version = "0.18.0", default-features = false, optional = true }
 serde = { version = "1.0", default-features = false, features = [ "derive" ] }
 sled = { version = "0.34.7", default-features = false, optional = true }
 thiserror = { version = "1.0.29", default-features = false  }
 tokio = { version = "1.11", default-features = false, features = [ "macros", "rt", "time", "net" ] }
-tokio-stream = { version = "0.1", default-features = false  }
 trace-tools = { version = "0.3.0", default-features = false, optional = true }
 tracing = { version = "0.1.29", default-features = false, optional = true }
-
-# `udeps` false positives
-[package.metadata.cargo-udeps.ignore]
-normal = [ "bincode", "tokio-stream" ]
 
 [dev-dependencies]
 fern = { version = "0.6.0", default-features = false }
 serde_json = { version = "1.0.68", default-features = false, features = [ "std" ] }
 tokio = { version = "1.11.0", default-features = false, features = [ "rt", "rt-multi-thread", "macros", "signal", "time", "io-std", "io-util" ] }
+tokio-stream = { version = "0.1", default-features = false }
 toml = { version = "0.5.8", default-features = false }
 
 [build-dependencies]
@@ -55,6 +51,8 @@ name = "node"
 required-features = [ "in-memory" ]
 
 [features]
-default = [ "rocksdb" ]
+default = [ "rocksdb1" ]
 in-memory = [ ]
+rocksdb1 = [ "rocksdb", "bincode" ]
+sled1 = [ "sled", "bincode" ]
 trace = [ "trace-tools/tokio-console", "tracing" ]

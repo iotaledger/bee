@@ -8,4 +8,4 @@ mod hash;
 pub mod bigint;
 pub mod sponge;
 
-pub use hash::{Hash, HASH_LENGTH};
+pub use self::hash::{Hash, HASH_LENGTH};

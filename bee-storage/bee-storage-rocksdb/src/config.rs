@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{compaction::CompactionStyle, compression::CompressionType};
+use std::path::PathBuf;
 
 use serde::Deserialize;
 
-use std::path::PathBuf;
+use crate::{compaction::CompactionStyle, compression::CompressionType};
 
 const DEFAULT_FETCH_EDGE_LIMIT: usize = 1_000;
 const DEFAULT_FETCH_INDEX_LIMIT: usize = 1_000;

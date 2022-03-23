@@ -4,7 +4,6 @@
 #![allow(deprecated)]
 
 use bee_signing::ternary::wots::{normalize, NormalizeError};
-
 use bee_ternary::{T1B1Buf, TryteBuf};
 
 #[test]

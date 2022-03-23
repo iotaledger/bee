@@ -5,11 +5,10 @@
 
 #![warn(missing_docs)]
 
-use bee_runtime::{event::Bus, node::Node, worker::Worker};
+use std::{any::type_name, error::Error, fmt};
 
 use async_trait::async_trait;
-
-use std::{any::type_name, error::Error, fmt};
+use bee_runtime::{event::Bus, node::Node, worker::Worker};
 
 /// Plugin trait for necessary plugin operation.
 #[async_trait]

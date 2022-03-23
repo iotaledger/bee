@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use serde::Serialize;
+
 use crate::{
     websocket::{
         responses::{WsEvent, WsEventInner},
@@ -8,8 +10,6 @@ use crate::{
     },
     workers::db_size_metrics::DatabaseSizeMetrics,
 };
-
-use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct DatabaseSizeMetricsResponse {

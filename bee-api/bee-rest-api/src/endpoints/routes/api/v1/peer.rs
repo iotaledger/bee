@@ -1,6 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_gossip::PeerId;
+use bee_protocol::workers::PeerManager;
+use bee_runtime::resource::ResourceHandle;
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         config::ROUTE_PEER, filters::with_peer_manager, path_params::peer_id, permission::has_permission,
@@ -8,14 +15,6 @@ use crate::{
     },
     types::{body::SuccessBody, dtos::PeerDto, responses::PeerResponse},
 };
-
-use bee_gossip::PeerId;
-use bee_protocol::workers::PeerManager;
-use bee_runtime::resource::ResourceHandle;
-
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (PeerId,), Error = Rejection> + Clone {
     super::path()

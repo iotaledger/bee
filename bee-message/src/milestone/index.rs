@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::{Packable, Read, Write};
-
 use core::ops::{Add, Deref, Sub};
+
+use bee_common::packable::{Packable, Read, Write};
 
 /// A wrapper around a `u32` that represents a milestone index.
 #[repr(transparent)]

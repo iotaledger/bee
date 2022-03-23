@@ -3,18 +3,17 @@
 
 #![cfg(feature = "full")]
 
-use super::{
-    error::Error,
-    info::{PeerInfo, PeerRelation},
-};
-
-use crate::{alias, config::Peer, init::global, swarm::protocols::iota_gossip::GossipSender};
+use std::{mem::take, sync::Arc};
 
 use hashbrown::{HashMap, HashSet};
 use libp2p::{Multiaddr, PeerId};
 use tokio::sync::RwLock;
 
-use std::{mem::take, sync::Arc};
+use super::{
+    error::Error,
+    info::{PeerInfo, PeerRelation},
+};
+use crate::{alias, config::Peer, init::global, swarm::protocols::iota_gossip::GossipSender};
 
 const REMOTE_PEERS_INITIAL_CAP: usize = 8;
 const LOCAL_ADDRS_INITIAL_CAP: usize = 4;
@@ -371,8 +370,9 @@ impl PeerList {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use libp2p::{identity::ed25519::Keypair, multiaddr::Protocol};
+
+    use super::*;
 
     #[test]
     fn new_list() {

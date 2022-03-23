@@ -1,6 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{convert::Infallible, net::IpAddr};
+
+use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
+use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
+use bee_tangle::Tangle;
+use warp::{filters::BoxedFilter, Filter, Reply};
+
 use crate::{
     endpoints::{
         config::{RestApiConfig, ROUTE_INFO},
@@ -15,14 +22,6 @@ use crate::{
     },
     types::{body::SuccessBody, responses::InfoResponse},
 };
-
-use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
-use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
-use bee_tangle::Tangle;
-
-use warp::{filters::BoxedFilter, Filter, Reply};
-
-use std::{convert::Infallible, net::IpAddr};
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("info")).and(warp::path::end())
@@ -50,11 +49,23 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(with_protocol_config(protocol_config))
         .and(with_node_info(node_info))
         .and(with_peer_manager(peer_manager))
-        .and_then(info)
+        .and_then(
+            |tangle, network_id, bech32_hrp, rest_api_config, protocol_config, node_info, peer_manager| async {
+                info(
+                    tangle,
+                    network_id,
+                    bech32_hrp,
+                    rest_api_config,
+                    protocol_config,
+                    node_info,
+                    peer_manager,
+                )
+            },
+        )
         .boxed()
 }
 
-pub(crate) async fn info<B: StorageBackend>(
+pub(crate) fn info<B: StorageBackend>(
     tangle: ResourceHandle<Tangle<B>>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
@@ -66,14 +77,13 @@ pub(crate) async fn info<B: StorageBackend>(
     let latest_milestone_index = tangle.get_latest_milestone_index();
     let latest_milestone_timestamp = tangle
         .get_milestone(latest_milestone_index)
-        .await
         .map(|m| m.timestamp())
         .unwrap_or_default();
 
     Ok(warp::reply::json(&SuccessBody::new(InfoResponse {
         name: node_info.name.clone(),
         version: node_info.version.clone(),
-        is_healthy: health::is_healthy(&tangle, &peer_manager).await,
+        is_healthy: health::is_healthy(&tangle, &peer_manager),
         network_id: network_id.0,
         bech32_hrp,
         min_pow_score: protocol_config.minimum_pow_score(),

@@ -1,11 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
-
-use serde::{Deserialize, Serialize};
-
 use std::io::{Read, Write};
+
+use bee_common::packable::Packable;
+use serde::{Deserialize, Serialize};
 
 /// Errors related to ledger types.
 #[derive(Debug, thiserror::Error)]

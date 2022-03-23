@@ -1,10 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{fmt, io, path::Path};
+
 use sha2::{Digest, Sha256};
 use zip::ZipArchive;
-
-use std::{fmt, io, path::Path};
 
 const RELEASE_URL: &str =
     "https://github.com/iotaledger/node-dashboard/releases/download/v1.0.0/node-dashboard-bee-1.0.0.zip";

@@ -3,18 +3,17 @@
 
 //! Merkle Signature Scheme.
 
-use crate::ternary::{
-    seed::Seed, PrivateKey, PrivateKeyGenerator, PublicKey, RecoverableSignature, Signature, SIGNATURE_FRAGMENT_LENGTH,
-};
+use std::marker::PhantomData;
 
 use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
 use bee_crypto::ternary::{sponge::Sponge, HASH_LENGTH};
 use bee_ternary::{T1B1Buf, TritBuf, Trits, T1B1};
-
 use thiserror::Error;
 use zeroize::Zeroize;
 
-use std::marker::PhantomData;
+use crate::ternary::{
+    seed::Seed, PrivateKey, PrivateKeyGenerator, PublicKey, RecoverableSignature, Signature, SIGNATURE_FRAGMENT_LENGTH,
+};
 
 const MAX_MSS_DEPTH: u8 = 20;
 

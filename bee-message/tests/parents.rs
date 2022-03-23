@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
+
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
 use bee_test::rand::message::{rand_message_id, rand_message_ids};
-
-use std::ops::Deref;
 
 #[test]
 fn new_valid_iter() {

@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{output::OutputId, payload::transaction::TransactionId, Error};
+use core::{convert::From, str::FromStr};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{convert::From, str::FromStr};
+use crate::{output::OutputId, payload::transaction::TransactionId, Error};
 
 /// Represents an input referencing an output.
 #[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]

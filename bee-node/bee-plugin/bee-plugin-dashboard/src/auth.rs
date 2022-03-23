@@ -1,12 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::DashboardAuthConfig, rejection::CustomRejection};
-
 use auth_helper::{jwt::JsonWebToken, password};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use warp::{reject, Rejection, Reply};
+
+use crate::{config::DashboardAuthConfig, rejection::CustomRejection};
 
 pub(crate) const AUDIENCE_CLAIM: &str = "dashboard";
 
@@ -15,11 +15,7 @@ pub struct AuthResponse {
     pub jwt: String,
 }
 
-pub(crate) async fn auth(
-    node_id: String,
-    config: DashboardAuthConfig,
-    body: JsonValue,
-) -> Result<impl Reply, Rejection> {
+pub(crate) fn auth(node_id: String, config: DashboardAuthConfig, body: JsonValue) -> Result<impl Reply, Rejection> {
     let jwt_json = &body["jwt"];
 
     if !jwt_json.is_null() {

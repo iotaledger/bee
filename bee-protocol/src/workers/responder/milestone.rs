@@ -1,6 +1,18 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{any::TypeId, convert::Infallible};
+
+use async_trait::async_trait;
+use bee_common::packable::Packable;
+use bee_gossip::PeerId;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::{Tangle, TangleWorker};
+use futures::stream::StreamExt;
+use log::info;
+use tokio::sync::mpsc::{self, UnboundedSender};
+use tokio_stream::wrappers::UnboundedReceiverStream;
+
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
@@ -11,19 +23,6 @@ use crate::{
         MetricsWorker, PeerManagerResWorker,
     },
 };
-
-use bee_common::packable::Packable;
-use bee_gossip::PeerId;
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{Tangle, TangleWorker};
-
-use async_trait::async_trait;
-use futures::stream::StreamExt;
-use log::info;
-use tokio::sync::mpsc::{self, UnboundedSender};
-use tokio_stream::wrappers::UnboundedReceiverStream;
-
-use std::{any::TypeId, convert::Infallible};
 
 pub(crate) struct MilestoneResponderWorkerEvent {
     pub(crate) peer_id: PeerId,
@@ -70,7 +69,7 @@ where
                     request.index.into()
                 };
 
-                if let Some(message) = tangle.get_milestone_message(index).await {
+                if let Some(message) = tangle.get_milestone_message(index) {
                     Sender::<MessagePacket>::send(
                         &MessagePacket::new(message.pack_new()),
                         &peer_id,

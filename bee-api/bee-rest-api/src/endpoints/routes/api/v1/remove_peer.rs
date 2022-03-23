@@ -1,17 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_gossip::{Command::RemovePeer, NetworkCommandSender, PeerId};
+use bee_runtime::resource::ResourceHandle;
+use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
+
 use crate::endpoints::{
     config::ROUTE_REMOVE_PEER, filters::with_network_command_sender, path_params::peer_id, permission::has_permission,
     rejection::CustomRejection,
 };
-
-use bee_gossip::{Command::RemovePeer, NetworkCommandSender, PeerId};
-use bee_runtime::resource::ResourceHandle;
-
-use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (PeerId,), Error = warp::Rejection> + Clone {
     super::path()
@@ -29,11 +28,11 @@ pub(crate) fn filter(
         .and(warp::delete())
         .and(has_permission(ROUTE_REMOVE_PEER, public_routes, allowed_ips))
         .and(with_network_command_sender(network_command_sender))
-        .and_then(remove_peer)
+        .and_then(|peer_id, network_controller| async move { remove_peer(peer_id, network_controller) })
         .boxed()
 }
 
-pub(crate) async fn remove_peer(
+pub(crate) fn remove_peer(
     peer_id: PeerId,
     network_controller: ResourceHandle<NetworkCommandSender>,
 ) -> Result<impl Reply, Rejection> {

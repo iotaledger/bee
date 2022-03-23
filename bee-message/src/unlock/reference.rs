@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{constants::INPUT_OUTPUT_INDEX_RANGE, Error};
-
 use bee_common::packable::{Packable, Read, Write};
+
+use crate::{constants::INPUT_OUTPUT_INDEX_RANGE, Error};
 
 /// An [`UnlockBlock`](crate::unlock::UnlockBlock) that refers to another unlock block.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]

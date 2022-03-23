@@ -1,12 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
-
 use bee_common::packable::{Packable, Read, Write};
 use bee_ternary::{T5B1Buf, TritBuf, Trits, T5B1};
-
 use bytemuck::cast_slice;
+
+use crate::Error;
 
 /// The length of a tail transaction hash.
 pub const TAIL_TRANSACTION_HASH_LEN: usize = 49;

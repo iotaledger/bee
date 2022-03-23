@@ -128,7 +128,6 @@ path = "./storage/mainnet/tangle"
 
 [tangle]
 below_max_depth = 15
-num_partitions  = 16
 
 [dashboard]
 bind_address    = "/ip4/0.0.0.0/tcp/8081"

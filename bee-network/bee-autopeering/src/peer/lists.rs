@@ -1,11 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{peer_id::PeerId, Peer};
-
-use crate::{
-    discovery::manager::VERIFICATION_EXPIRATION,
-    time::{self, Timestamp},
+use std::{
+    collections::{HashSet, VecDeque},
+    fmt,
+    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
 use serde::{
@@ -14,10 +13,10 @@ use serde::{
     Deserialize, Serialize,
 };
 
-use std::{
-    collections::{HashSet, VecDeque},
-    fmt,
-    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
+use super::{peer_id::PeerId, Peer};
+use crate::{
+    discovery::manager::VERIFICATION_EXPIRATION,
+    time::{self, Timestamp},
 };
 
 // Maximum number of peers that can be managed.
@@ -68,7 +67,7 @@ impl ActivePeer {
     }
 }
 
-#[cfg(any(feature = "rocksdb", feature = "sled"))]
+#[cfg(any(feature = "rocksdb1", feature = "sled1"))]
 impl ActivePeer {
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
         bincode::serialize(self).expect("serialization error")

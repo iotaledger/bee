@@ -1,6 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_ledger::types::Receipt;
+use bee_message::milestone::MilestoneIndex;
+use bee_runtime::resource::ResourceHandle;
+use bee_storage::access::AsIterator;
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         config::ROUTE_RECEIPTS, filters::with_storage, permission::has_permission, rejection::CustomRejection,
@@ -8,15 +16,6 @@ use crate::{
     },
     types::{body::SuccessBody, dtos::ReceiptDto, responses::ReceiptsResponse},
 };
-
-use bee_ledger::types::Receipt;
-use bee_message::milestone::MilestoneIndex;
-use bee_runtime::resource::ResourceHandle;
-use bee_storage::access::AsIterator;
-
-use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("receipts")).and(warp::path::end())

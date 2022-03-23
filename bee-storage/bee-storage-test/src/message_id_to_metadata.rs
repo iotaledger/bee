@@ -3,7 +3,7 @@
 
 use bee_message::{prelude::MilestoneIndex, MessageId};
 use bee_storage::{
-    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate, Update},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, InsertStrict, MultiFetch, Truncate, Update},
     backend,
 };
 use bee_tangle::metadata::MessageMetadata;
@@ -14,7 +14,7 @@ pub trait StorageBackend:
     + Exist<MessageId, MessageMetadata>
     + Fetch<MessageId, MessageMetadata>
     + for<'a> MultiFetch<'a, MessageId, MessageMetadata>
-    + Insert<MessageId, MessageMetadata>
+    + InsertStrict<MessageId, MessageMetadata>
     + Delete<MessageId, MessageMetadata>
     + BatchBuilder
     + Batch<MessageId, MessageMetadata>
@@ -29,7 +29,7 @@ impl<T> StorageBackend for T where
         + Exist<MessageId, MessageMetadata>
         + Fetch<MessageId, MessageMetadata>
         + for<'a> MultiFetch<'a, MessageId, MessageMetadata>
-        + Insert<MessageId, MessageMetadata>
+        + InsertStrict<MessageId, MessageMetadata>
         + Delete<MessageId, MessageMetadata>
         + BatchBuilder
         + Batch<MessageId, MessageMetadata>
@@ -54,15 +54,26 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    Insert::<MessageId, MessageMetadata>::insert(storage, &message_id, &metadata).unwrap();
-
+    InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
     assert!(Exist::<MessageId, MessageMetadata>::exist(storage, &message_id).unwrap());
+
+    // calling `insert_strict` with the same `MessageId` but a different `MessageMetadata` should
+    // not overwrite the old value.
+    {
+        let index = metadata.milestone_index().map_or(0, |i| *i + 1);
+        let mut metadata = metadata.clone();
+        metadata.set_milestone_index(MilestoneIndex(index));
+
+        InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
+    }
     assert_eq!(
         Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
             .unwrap()
             .unwrap(),
-        metadata
+        metadata,
+        "`InsertStrict` should not overwrite"
     );
+
     let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
         .unwrap()
         .collect::<Vec<_>>();
@@ -112,7 +123,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
-        Insert::<MessageId, MessageMetadata>::insert(storage, &message_id, &metadata).unwrap();
+        InsertStrict::<MessageId, MessageMetadata>::insert_strict(storage, &message_id, &metadata).unwrap();
         Batch::<MessageId, MessageMetadata>::batch_delete(storage, &mut batch, &message_id).unwrap();
         message_ids.push(message_id);
         metadatas.push((message_id, None));

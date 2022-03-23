@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
+use std::convert::Infallible;
 
 use bee_gossip::NetworkCommandSender;
 use bee_ledger::workers::consensus::ConsensusWorkerCommand;
@@ -10,11 +10,10 @@ use bee_protocol::workers::{
 };
 use bee_runtime::{event::Bus, node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
-
 use tokio::sync::mpsc;
 use warp::Filter;
 
-use std::convert::Infallible;
+use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
 pub(crate) fn with_network_id(
     network_id: NetworkId,

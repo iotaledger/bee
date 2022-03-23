@@ -18,16 +18,17 @@ mod treasury_diff;
 mod treasury_output;
 mod unspent;
 
-pub use balance::Balance;
-pub use balance_diff::{BalanceDiff, BalanceDiffs};
-
-pub use consumed_output::ConsumedOutput;
-pub use created_output::CreatedOutput;
-pub use error::Error;
-pub use ledger_index::LedgerIndex;
-pub use migration::Migration;
-pub use output_diff::OutputDiff;
-pub use receipt::Receipt;
-pub use treasury_diff::TreasuryDiff;
-pub use treasury_output::TreasuryOutput;
-pub use unspent::Unspent;
+pub use self::{
+    balance::Balance,
+    balance_diff::{BalanceDiff, BalanceDiffs},
+    consumed_output::ConsumedOutput,
+    created_output::CreatedOutput,
+    error::Error,
+    ledger_index::LedgerIndex,
+    migration::Migration,
+    output_diff::OutputDiff,
+    receipt::Receipt,
+    treasury_diff::TreasuryDiff,
+    treasury_output::TreasuryOutput,
+    unspent::Unspent,
+};
