@@ -16,7 +16,6 @@ string_serde_impl!(TransactionId);
 
 impl From<MilestoneId> for TransactionId {
     fn from(milestone_id: MilestoneId) -> Self {
-        // SAFETY: lengths are known to be the same.
         Self::new(*milestone_id.deref())
     }
 }

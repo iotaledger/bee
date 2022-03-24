@@ -54,6 +54,21 @@ impl Address {
         }
     }
 
+    /// Checks whether the address is an [`Ed25519Address`].
+    pub fn is_ed25519(&self) -> bool {
+        matches!(self, Self::Ed25519(_))
+    }
+
+    /// Checks whether the address is an [`AliasAddress`].
+    pub fn is_alias(&self) -> bool {
+        matches!(self, Self::Alias(_))
+    }
+
+    /// Checks whether the address is an [`NftAddress`].
+    pub fn is_nft(&self) -> bool {
+        matches!(self, Self::Nft(_))
+    }
+
     /// Tries to create an [`Address`] from a bech32 encoded string.
     pub fn try_from_bech32<T: AsRef<str>>(address: T) -> Result<(String, Self), Error> {
         match bech32::decode(address.as_ref()) {
@@ -70,7 +85,7 @@ impl Address {
     /// Encodes this address to a bech32 string with the given Human Readable Part as prefix.
     #[allow(clippy::wrong_self_convention)]
     pub fn to_bech32<T: AsRef<str>>(&self, hrp: T) -> String {
-        // SAFETY: encoding can't fail as `self` has already been validated and built.
+        // PANIC: encoding can't fail as `self` has already been validated and built.
         bech32::encode(hrp.as_ref(), self.pack_to_vec().to_base32(), Variant::Bech32).unwrap()
     }
 
@@ -102,7 +117,7 @@ impl Address {
                 }
             }
             (Address::Alias(alias_address), UnlockBlock::Alias(unlock_block)) => {
-                // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
+                // PANIC: indexing is fine as it is already syntactically verified that indexes reference below.
                 if let (output_id, Output::Alias(alias_output)) = inputs[unlock_block.index() as usize] {
                     if &alias_output.alias_id().or_from_output_id(output_id) != alias_address.alias_id() {
                         return Err(ConflictReason::UnlockAddressMismatch);
@@ -115,7 +130,7 @@ impl Address {
                 }
             }
             (Address::Nft(nft_address), UnlockBlock::Nft(unlock_block)) => {
-                // SAFETY: indexing is fine as it is already syntactically verified that indexes reference below.
+                // PANIC: indexing is fine as it is already syntactically verified that indexes reference below.
                 if let (output_id, Output::Nft(nft_output)) = inputs[unlock_block.index() as usize] {
                     if &nft_output.nft_id().or_from_output_id(output_id) != nft_address.nft_id() {
                         return Err(ConflictReason::UnlockAddressMismatch);

@@ -124,11 +124,11 @@ where
                     milestone.essence().timestamp() as u32,
                     Output::from(
                         BasicOutput::build(fund.amount())
-                            // SAFETY: funds are already syntactically verified as part of the receipt validation.
+                            // PANIC: funds are already syntactically verified as part of the receipt validation.
                             .unwrap()
                             .add_unlock_condition(AddressUnlockCondition::new(*fund.address()).into())
                             .finish()
-                            // SAFETY: these parameters are certified fine.
+                            // PANIC: these parameters are certified fine.
                             .unwrap(),
                     ),
                 ),

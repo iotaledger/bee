@@ -19,7 +19,7 @@ impl FoundryId {
         let mut bytes = [0u8; FoundryId::LENGTH];
         let mut packer = SlicePacker::new(&mut bytes);
 
-        // SAFETY: packing to an array of the correct length can't fail.
+        // PANIC: packing to an array of the correct length can't fail.
         alias_address.pack(&mut packer).unwrap();
         serial_number.pack(&mut packer).unwrap();
         token_scheme.pack(&mut packer).unwrap();
@@ -29,13 +29,13 @@ impl FoundryId {
 
     /// Returns the [`AliasId`] of the [`FoundryId`].
     pub fn alias_id(&self) -> AliasId {
-        // SAFETY: the lengths are known.
+        // PANIC: the lengths are known.
         AliasId::new(self.0[0..AliasId::LENGTH].try_into().unwrap())
     }
 
     /// Returns the serial number of the [`FoundryId`].
     pub fn serial_number(&self) -> u32 {
-        // SAFETY: the lengths are known.
+        // PANIC: the lengths are known.
         u32::from_le_bytes(
             self.0[AliasId::LENGTH..AliasId::LENGTH + core::mem::size_of::<u32>()]
                 .try_into()
@@ -45,7 +45,7 @@ impl FoundryId {
 
     /// Returns the [`TokenScheme`] of the [`FoundryId`].
     pub fn token_scheme(&self) -> TokenScheme {
-        // SAFETY: the lengths are known and the token scheme kind has to be valid.
+        // PANIC: the lengths are known and the token scheme kind has to be valid.
         (*self.0.last().unwrap()).try_into().unwrap()
     }
 }

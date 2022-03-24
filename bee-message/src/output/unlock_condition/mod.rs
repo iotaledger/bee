@@ -144,7 +144,7 @@ impl UnlockConditions {
     pub fn get(&self, key: u8) -> Option<&UnlockCondition> {
         self.0
             .binary_search_by_key(&key, UnlockCondition::kind)
-            // SAFETY: indexation is fine since the index has been found.
+            // PANIC: indexation is fine since the index has been found.
             .map(|index| &self.0[index])
             .ok()
     }

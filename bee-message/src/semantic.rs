@@ -4,7 +4,7 @@
 use crate::{
     address::Address,
     milestone::MilestoneIndex,
-    output::{inputs_commitment, ChainId, Output, OutputId, TokenId},
+    output::{create_inputs_commitment, ChainId, Output, OutputId, TokenId},
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     unlock_block::UnlockBlocks,
 };
@@ -145,7 +145,7 @@ impl<'a> ValidationContext<'a> {
             essence,
             unlock_blocks,
             essence_hash: TransactionEssence::from(essence.clone()).hash(),
-            inputs_commitment: inputs_commitment(inputs.clone().map(|(_, output)| output)),
+            inputs_commitment: create_inputs_commitment(inputs.clone().map(|(_, output)| output)),
             milestone_index,
             milestone_timestamp,
             input_amount: 0,

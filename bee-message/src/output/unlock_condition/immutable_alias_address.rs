@@ -37,7 +37,7 @@ impl ImmutableAliasAddressUnlockCondition {
 }
 
 fn verify_alias_address<const VERIFY: bool>(address: &Address) -> Result<(), Error> {
-    if VERIFY && !matches!(address, Address::Alias(_)) {
+    if VERIFY && !address.is_alias() {
         Err(Error::InvalidAddressKind(address.kind()))
     } else {
         Ok(())

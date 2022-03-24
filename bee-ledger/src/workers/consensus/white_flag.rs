@@ -219,7 +219,7 @@ fn apply_regular_essence<B: StorageBackend>(
 
     // Validation of state creations and transitions.
     for (chain_id, current_state) in context.input_chains.iter() {
-        if Output::state_transition(
+        if Output::verify_state_transition(
             Some(current_state),
             context.output_chains.get(chain_id).map(core::ops::Deref::deref),
             &context,
@@ -233,7 +233,7 @@ fn apply_regular_essence<B: StorageBackend>(
     // Validation of state destructions.
     for (chain_id, next_state) in context.output_chains.iter() {
         if context.input_chains.get(chain_id).is_none()
-            && Output::state_transition(None, Some(next_state), &context).is_err()
+            && Output::verify_state_transition(None, Some(next_state), &context).is_err()
         {
             return Ok(ConflictReason::SemanticValidationFailed);
         }

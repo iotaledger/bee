@@ -175,7 +175,7 @@ impl Output {
     }
 
     ///
-    pub fn state_transition(
+    pub fn verify_state_transition(
         current_state: Option<&Output>,
         next_state: Option<&Output>,
         context: &ValidationContext,
@@ -268,7 +268,7 @@ impl ByteCost for Output {
 /// sender [`Address`].
 fn minimum_storage_deposit(config: &ByteCostConfig, address: &Address) -> u64 {
     let address_condition = UnlockCondition::Address(AddressUnlockCondition::new(*address));
-    // Safety: This can never fail because the amount will always be within the valid range. Also, the actual value is
+    // PANIC: This can never fail because the amount will always be within the valid range. Also, the actual value is
     // not important, we are only interested in the storage requirements of the type.
     let basic_output = BasicOutputBuilder::new(OutputAmount::MIN)
         .unwrap()
@@ -279,7 +279,7 @@ fn minimum_storage_deposit(config: &ByteCostConfig, address: &Address) -> u64 {
 }
 
 ///
-pub fn inputs_commitment<'a>(inputs: impl Iterator<Item = &'a Output>) -> [u8; 32] {
+pub fn create_inputs_commitment<'a>(inputs: impl Iterator<Item = &'a Output>) -> [u8; 32] {
     let mut hasher = Blake2b256::new();
 
     inputs.for_each(|output| hasher.update(output.pack_to_vec()));
