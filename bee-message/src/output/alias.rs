@@ -6,8 +6,8 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        AliasId, ChainId, NativeToken, NativeTokens, Output, OutputAmount, OutputId, StateTransition,
-        StateTransitionError,
+        AliasId, ChainId, NativeToken, NativeTokens, Output, OutputAmount, OutputId, StateTransitionError,
+        StateTransitionVerifier,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -343,7 +343,7 @@ impl AliasOutput {
     }
 }
 
-impl StateTransition for AliasOutput {
+impl StateTransitionVerifier for AliasOutput {
     fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
         if !next_state.alias_id.is_null() {
             return Err(StateTransitionError::NonZeroCreatedId);

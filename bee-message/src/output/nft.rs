@@ -6,8 +6,8 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ChainId, NativeToken, NativeTokens, NftId, Output, OutputAmount, OutputId, StateTransition,
-        StateTransitionError,
+        ChainId, NativeToken, NativeTokens, NftId, Output, OutputAmount, OutputId, StateTransitionError,
+        StateTransitionVerifier,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -251,7 +251,7 @@ impl NftOutput {
     }
 }
 
-impl StateTransition for NftOutput {
+impl StateTransitionVerifier for NftOutput {
     fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
         if !next_state.nft_id.is_null() {
             return Err(StateTransitionError::NonZeroCreatedId);

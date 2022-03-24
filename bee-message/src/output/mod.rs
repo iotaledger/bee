@@ -38,7 +38,7 @@ pub use nft::{NftOutput, NftOutputBuilder};
 pub use nft_id::NftId;
 pub use output_id::OutputId;
 pub(crate) use output_id::OutputIndex;
-pub use state_transition::{StateTransition, StateTransitionError};
+pub use state_transition::{StateTransitionError, StateTransitionVerifier};
 pub use token_id::{TokenId, TokenTag};
 pub use token_scheme::TokenScheme;
 pub use treasury::TreasuryOutput;

@@ -19,7 +19,7 @@ pub enum StateTransitionError {
 }
 
 ///
-pub trait StateTransition {
+pub trait StateTransitionVerifier {
     ///
     fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError>;
 

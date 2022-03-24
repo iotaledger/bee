@@ -6,8 +6,8 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount, OutputId, StateTransition,
-        StateTransitionError, TokenId, TokenScheme, TokenTag,
+        ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount, OutputId, StateTransitionError,
+        StateTransitionVerifier, TokenId, TokenScheme, TokenTag,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -351,7 +351,7 @@ impl FoundryOutput {
     }
 }
 
-impl StateTransition for FoundryOutput {
+impl StateTransitionVerifier for FoundryOutput {
     fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
         let alias_chain_id = ChainId::from(*next_state.alias_address().alias_id());
 
