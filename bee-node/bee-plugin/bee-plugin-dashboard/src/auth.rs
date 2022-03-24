@@ -1,18 +1,17 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::DashboardAuthConfig, rejection::CustomRejection};
-
-use bee_gossip::{Keypair, PeerId};
-use bee_rest_api::endpoints::permission::DASHBOARD_AUDIENCE_CLAIM;
-
 use auth_helper::{
     jwt::{ClaimsBuilder, JsonWebToken},
     password,
 };
+use bee_gossip::{Keypair, PeerId};
+use bee_rest_api::endpoints::permission::DASHBOARD_AUDIENCE_CLAIM;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use warp::{reject, Rejection, Reply};
+
+use crate::{config::DashboardAuthConfig, rejection::CustomRejection};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AuthResponse {
