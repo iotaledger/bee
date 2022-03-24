@@ -33,7 +33,7 @@ pub(crate) const DEFAULT_PROTECTED_ROUTES: [&str; 2] = ["/api/v1/*", "/api/plugi
 /// Enables the proof-of-work feature on the node per default.
 pub(crate) const DEFAULT_FEATURE_PROOF_OF_WORK: bool = true;
 /// Default value for the white flag solidification timeout.
-pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: Duration = Duration::new(2, 0);
+pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: Duration = Duration::from_secs(2);
 
 /// REST API configuration builder.
 #[derive(Default, Deserialize, PartialEq)]
