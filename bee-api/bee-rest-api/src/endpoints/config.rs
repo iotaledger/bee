@@ -176,17 +176,17 @@ impl RestApiConfigBuilder {
 #[derive(Clone)]
 pub struct RestApiConfig {
     /// REST API binding address.
-    pub(crate) bind_socket_addr: SocketAddr,
+    bind_socket_addr: SocketAddr,
     /// JWT salt for REST API.
-    pub(crate) jwt_salt: String,
+    jwt_salt: String,
     /// Routes that are available for public use and don't need JWT authentication.
-    pub(crate) public_routes: RegexSet,
+    public_routes: RegexSet,
     /// Routes that are protected and need JWT authentication.
-    pub(crate) protected_routes: RegexSet,
+    protected_routes: RegexSet,
     /// Enables/disables the proof-of-work feature on the node.
-    pub(crate) feature_proof_of_work: bool,
+    feature_proof_of_work: bool,
     /// Describes the white flag solidification timeout.
-    pub(crate) white_flag_solidification_timeout: Duration,
+    white_flag_solidification_timeout: Duration,
 }
 
 impl RestApiConfig {
