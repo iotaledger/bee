@@ -98,3 +98,45 @@ fn verify_unique_sorted<const VERIFY: bool>(native_tokens: &[NativeToken]) -> Re
         Ok(())
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use core::str::FromStr;
+
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{dto::U256Dto, error::dto::DtoError, output::token_id::dto::TokenIdDto};
+
+    /// Describes a native token.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct NativeTokenDto {
+        // Identifier of the native token.
+        #[serde(rename = "id")]
+        pub token_id: TokenIdDto,
+        // Amount of native tokens hex encoded.
+        pub amount: U256Dto,
+    }
+
+    impl From<&NativeToken> for NativeTokenDto {
+        fn from(value: &NativeToken) -> Self {
+            Self {
+                token_id: TokenIdDto(value.token_id().to_string()),
+                amount: U256Dto(serde_json::to_string(value.amount()).expect("Invalid NativeToken amount")),
+            }
+        }
+    }
+
+    impl TryFrom<&NativeTokenDto> for NativeToken {
+        type Error = DtoError;
+
+        fn try_from(value: &NativeTokenDto) -> Result<Self, Self::Error> {
+            Self::new(
+                (&value.token_id).try_into()?,
+                U256::from_str(&value.amount.0).map_err(|_| DtoError::InvalidField("amount"))?,
+            )
+            .map_err(|_| DtoError::InvalidField("nativeTokens"))
+        }
+    }
+}

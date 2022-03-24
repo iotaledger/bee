@@ -27,3 +27,19 @@ impl SignatureUnlockBlock {
         &self.0
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use crate::signature::dto::SignatureDto;
+
+    /// Defines an unlock block containing signature(s) unlocking input(s).
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct SignatureUnlockBlockDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        pub signature: SignatureDto,
+    }
+}

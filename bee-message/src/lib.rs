@@ -17,6 +17,9 @@ mod error;
 mod message;
 mod message_id;
 
+#[cfg(feature = "dto")]
+pub(crate) mod dto;
+
 /// A module that provides types and syntactic validations of addresses.
 pub mod address;
 /// A module that contains constants related to messages.
@@ -39,5 +42,7 @@ pub mod signature;
 pub mod unlock_block;
 
 pub use error::Error;
+#[cfg(feature = "dto")]
+pub use message::dto::MessageDto;
 pub use message::{Message, MessageBuilder};
 pub use message_id::MessageId;

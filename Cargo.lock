@@ -308,6 +308,7 @@ dependencies = [
  "primitive-types",
  "serde",
  "serde-big-array",
+ "serde_json",
  "thiserror",
 ]
 

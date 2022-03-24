@@ -139,3 +139,155 @@ fn verify_unlock_blocks<const VERIFY: bool>(unlock_blocks: &[UnlockBlock]) -> Re
 
     Ok(())
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize, Serializer};
+    use serde_json::Value;
+
+    use super::*;
+    pub use super::{
+        alias::dto::AliasUnlockBlockDto, nft::dto::NftUnlockBlockDto, reference::dto::ReferenceUnlockBlockDto,
+        signature::dto::SignatureUnlockBlockDto,
+    };
+    use crate::{
+        error::dto::DtoError,
+        signature::{
+            dto::{Ed25519SignatureDto, SignatureDto},
+            Ed25519Signature, Signature,
+        },
+    };
+
+    /// Describes all the different unlock types.
+    #[derive(Clone, Debug)]
+    pub enum UnlockBlockDto {
+        Signature(SignatureUnlockBlockDto),
+        Reference(ReferenceUnlockBlockDto),
+        Alias(AliasUnlockBlockDto),
+        Nft(NftUnlockBlockDto),
+    }
+
+    impl From<&UnlockBlock> for UnlockBlockDto {
+        fn from(value: &UnlockBlock) -> Self {
+            match value {
+                UnlockBlock::Signature(signature) => match signature.signature() {
+                    Signature::Ed25519(ed) => UnlockBlockDto::Signature(SignatureUnlockBlockDto {
+                        kind: SignatureUnlockBlock::KIND,
+                        signature: SignatureDto::Ed25519(Ed25519SignatureDto {
+                            kind: Ed25519Signature::KIND,
+                            public_key: prefix_hex::encode(ed.public_key()),
+                            signature: prefix_hex::encode(ed.signature()),
+                        }),
+                    }),
+                },
+                UnlockBlock::Reference(r) => UnlockBlockDto::Reference(ReferenceUnlockBlockDto {
+                    kind: ReferenceUnlockBlock::KIND,
+                    index: r.index(),
+                }),
+                UnlockBlock::Alias(a) => UnlockBlockDto::Alias(AliasUnlockBlockDto {
+                    kind: AliasUnlockBlock::KIND,
+                    index: a.index(),
+                }),
+                UnlockBlock::Nft(n) => UnlockBlockDto::Nft(NftUnlockBlockDto {
+                    kind: NftUnlockBlock::KIND,
+                    index: n.index(),
+                }),
+            }
+        }
+    }
+
+    impl TryFrom<&UnlockBlockDto> for UnlockBlock {
+        type Error = DtoError;
+
+        fn try_from(value: &UnlockBlockDto) -> Result<Self, Self::Error> {
+            match value {
+                UnlockBlockDto::Signature(s) => match &s.signature {
+                    SignatureDto::Ed25519(ed) => {
+                        let public_key =
+                            prefix_hex::decode(&ed.public_key).map_err(|_| DtoError::InvalidField("publicKey"))?;
+                        let signature =
+                            prefix_hex::decode(&ed.signature).map_err(|_| DtoError::InvalidField("signature"))?;
+                        Ok(UnlockBlock::Signature(SignatureUnlockBlock::from(Signature::Ed25519(
+                            Ed25519Signature::new(public_key, signature),
+                        ))))
+                    }
+                },
+                UnlockBlockDto::Reference(r) => Ok(UnlockBlock::Reference(ReferenceUnlockBlock::new(r.index)?)),
+                UnlockBlockDto::Alias(a) => Ok(UnlockBlock::Alias(AliasUnlockBlock::new(a.index)?)),
+                UnlockBlockDto::Nft(n) => Ok(UnlockBlock::Nft(NftUnlockBlock::new(n.index)?)),
+            }
+        }
+    }
+
+    impl<'de> Deserialize<'de> for UnlockBlockDto {
+        fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+            let value = Value::deserialize(d)?;
+            Ok(
+                match value
+                    .get("type")
+                    .and_then(Value::as_u64)
+                    .ok_or_else(|| serde::de::Error::custom("invalid unlock block type"))? as u8
+                {
+                    SignatureUnlockBlock::KIND => {
+                        UnlockBlockDto::Signature(SignatureUnlockBlockDto::deserialize(value).map_err(|e| {
+                            serde::de::Error::custom(format!("cannot deserialize signature unlock block: {}", e))
+                        })?)
+                    }
+                    ReferenceUnlockBlock::KIND => {
+                        UnlockBlockDto::Reference(ReferenceUnlockBlockDto::deserialize(value).map_err(|e| {
+                            serde::de::Error::custom(format!("cannot deserialize reference unlock block: {}", e))
+                        })?)
+                    }
+                    AliasUnlockBlock::KIND => {
+                        UnlockBlockDto::Alias(AliasUnlockBlockDto::deserialize(value).map_err(|e| {
+                            serde::de::Error::custom(format!("cannot deserialize alias unlock block: {}", e))
+                        })?)
+                    }
+                    NftUnlockBlock::KIND => {
+                        UnlockBlockDto::Nft(NftUnlockBlockDto::deserialize(value).map_err(|e| {
+                            serde::de::Error::custom(format!("cannot deserialize NFT unlock block: {}", e))
+                        })?)
+                    }
+                    _ => return Err(serde::de::Error::custom("invalid unlock block type")),
+                },
+            )
+        }
+    }
+
+    impl Serialize for UnlockBlockDto {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            #[derive(Serialize)]
+            #[serde(untagged)]
+            enum UnlockBlockDto_<'a> {
+                T1(&'a SignatureUnlockBlockDto),
+                T2(&'a ReferenceUnlockBlockDto),
+                T3(&'a AliasUnlockBlockDto),
+                T4(&'a NftUnlockBlockDto),
+            }
+            #[derive(Serialize)]
+            struct TypedUnlockBlock<'a> {
+                #[serde(flatten)]
+                unlock_block: UnlockBlockDto_<'a>,
+            }
+            let unlock_block = match self {
+                UnlockBlockDto::Signature(o) => TypedUnlockBlock {
+                    unlock_block: UnlockBlockDto_::T1(o),
+                },
+                UnlockBlockDto::Reference(o) => TypedUnlockBlock {
+                    unlock_block: UnlockBlockDto_::T2(o),
+                },
+                UnlockBlockDto::Alias(o) => TypedUnlockBlock {
+                    unlock_block: UnlockBlockDto_::T3(o),
+                },
+                UnlockBlockDto::Nft(o) => TypedUnlockBlock {
+                    unlock_block: UnlockBlockDto_::T4(o),
+                },
+            };
+            unlock_block.serialize(serializer)
+        }
+    }
+}

@@ -36,3 +36,18 @@ impl Signature {
         }
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    pub use super::ed25519::dto::Ed25519SignatureDto;
+
+    /// Describes all the different signature types.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[serde(untagged)]
+    pub enum SignatureDto {
+        Ed25519(Ed25519SignatureDto),
+    }
+}

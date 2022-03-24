@@ -483,3 +483,116 @@ fn verify_unlock_conditions(unlock_conditions: &UnlockConditions) -> Result<(), 
         verify_allowed_unlock_conditions(unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use core::str::FromStr;
+
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{
+        dto::U256Dto,
+        error::dto::DtoError,
+        output::{
+            feature_block::dto::FeatureBlockDto, native_token::dto::NativeTokenDto, token_id::dto::TokenTagDto,
+            token_scheme::dto::TokenSchemeDto, unlock_condition::dto::UnlockConditionDto,
+        },
+    };
+
+    /// Describes a foundry output that is controlled by an alias.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct FoundryOutputDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        // Amount of IOTA tokens held by the output.
+        pub amount: String,
+        // Native tokens held by the output.
+        #[serde(rename = "nativeTokens")]
+        pub native_tokens: Vec<NativeTokenDto>,
+        // The serial number of the foundry with respect to the controlling alias.
+        #[serde(rename = "serialNumber")]
+        pub serial_number: u32,
+        // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
+        #[serde(rename = "tokenTag")]
+        pub token_tag: TokenTagDto,
+        // Amount of tokens minted by this foundry.
+        #[serde(rename = "mintedTokens")]
+        pub minted_tokens: U256Dto,
+        // Amount of tokens melted by this foundry.
+        #[serde(rename = "meltedTokens")]
+        pub melted_tokens: U256Dto,
+        // Maximum supply of tokens controlled by this foundry.
+        #[serde(rename = "maximumSupply")]
+        pub maximum_supply: U256Dto,
+        #[serde(rename = "tokenScheme")]
+        pub token_scheme: TokenSchemeDto,
+        #[serde(rename = "unlockConditions")]
+        pub unlock_conditions: Vec<UnlockConditionDto>,
+        #[serde(rename = "featureBlocks")]
+        pub feature_blocks: Vec<FeatureBlockDto>,
+        #[serde(rename = "immutableFeatureBlocks")]
+        pub immutable_feature_blocks: Vec<FeatureBlockDto>,
+    }
+
+    impl From<&FoundryOutput> for FoundryOutputDto {
+        fn from(value: &FoundryOutput) -> Self {
+            Self {
+                kind: FoundryOutput::KIND,
+                amount: value.amount().to_string(),
+                native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
+                serial_number: value.serial_number(),
+                token_tag: TokenTagDto(value.token_tag().to_string()),
+                minted_tokens: U256Dto(value.minted_tokens().to_string()),
+                melted_tokens: U256Dto(value.melted_tokens().to_string()),
+                maximum_supply: U256Dto(value.maximum_supply().to_string()),
+                token_scheme: match value.token_scheme() {
+                    TokenScheme::Simple => TokenSchemeDto {
+                        kind: TokenScheme::Simple as u8,
+                    },
+                },
+                unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
+                feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
+                immutable_feature_blocks: value.immutable_feature_blocks().iter().map(Into::into).collect::<_>(),
+            }
+        }
+    }
+
+    impl TryFrom<&FoundryOutputDto> for FoundryOutput {
+        type Error = DtoError;
+
+        fn try_from(value: &FoundryOutputDto) -> Result<Self, Self::Error> {
+            let mut builder = FoundryOutputBuilder::new(
+                value
+                    .amount
+                    .parse::<u64>()
+                    .map_err(|_| DtoError::InvalidField("amount"))?,
+                value.serial_number,
+                (&value.token_tag).try_into()?,
+                U256::from_str(&value.minted_tokens.0).map_err(|_| DtoError::InvalidField("mintedTokens"))?,
+                U256::from_str(&value.melted_tokens.0).map_err(|_| DtoError::InvalidField("meltedTokens"))?,
+                U256::from_str(&value.maximum_supply.0).map_err(|_| DtoError::InvalidField("maximumSupply"))?,
+                match value.token_scheme.kind {
+                    0 => TokenScheme::Simple,
+                    _ => return Err(DtoError::InvalidField("token_scheme")),
+                },
+            )?;
+
+            for t in &value.native_tokens {
+                builder = builder.add_native_token(t.try_into()?);
+            }
+            for b in &value.unlock_conditions {
+                builder = builder.add_unlock_condition(b.try_into()?);
+            }
+            for b in &value.feature_blocks {
+                builder = builder.add_feature_block(b.try_into()?);
+            }
+            for b in &value.immutable_feature_blocks {
+                builder = builder.add_immutable_feature_block(b.try_into()?);
+            }
+
+            Ok(builder.finish()?)
+        }
+    }
+}

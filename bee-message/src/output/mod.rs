@@ -286,3 +286,130 @@ pub fn create_inputs_commitment<'a>(inputs: impl Iterator<Item = &'a Output>) ->
 
     hasher.finalize().into()
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize, Serializer};
+    use serde_json::Value;
+
+    use super::*;
+    pub use super::{
+        alias::dto::AliasOutputDto, basic::dto::BasicOutputDto, foundry::dto::FoundryOutputDto, nft::dto::NftOutputDto,
+        treasury::dto::TreasuryOutputDto,
+    };
+    use crate::error::dto::DtoError;
+
+    /// Describes all the different output types.
+    #[derive(Clone, Debug)]
+    pub enum OutputDto {
+        Treasury(TreasuryOutputDto),
+        Basic(BasicOutputDto),
+        Alias(AliasOutputDto),
+        Foundry(FoundryOutputDto),
+        Nft(NftOutputDto),
+    }
+
+    impl From<&Output> for OutputDto {
+        fn from(value: &Output) -> Self {
+            match value {
+                Output::Treasury(o) => OutputDto::Treasury(o.into()),
+                Output::Basic(o) => OutputDto::Basic(o.into()),
+                Output::Alias(o) => OutputDto::Alias(o.into()),
+                Output::Foundry(o) => OutputDto::Foundry(o.into()),
+                Output::Nft(o) => OutputDto::Nft(o.into()),
+            }
+        }
+    }
+
+    impl TryFrom<&OutputDto> for Output {
+        type Error = DtoError;
+
+        fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
+            match value {
+                OutputDto::Treasury(o) => Ok(Output::Treasury(o.try_into()?)),
+                OutputDto::Basic(o) => Ok(Output::Basic(o.try_into()?)),
+                OutputDto::Alias(o) => Ok(Output::Alias(o.try_into()?)),
+                OutputDto::Foundry(o) => Ok(Output::Foundry(o.try_into()?)),
+                OutputDto::Nft(o) => Ok(Output::Nft(o.try_into()?)),
+            }
+        }
+    }
+
+    impl<'de> Deserialize<'de> for OutputDto {
+        fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+            let value = Value::deserialize(d)?;
+            Ok(
+                match value
+                    .get("type")
+                    .and_then(Value::as_u64)
+                    .ok_or_else(|| serde::de::Error::custom("invalid output type"))? as u8
+                {
+                    TreasuryOutput::KIND => {
+                        OutputDto::Treasury(TreasuryOutputDto::deserialize(value).map_err(|e| {
+                            serde::de::Error::custom(format!("cannot deserialize treasury output: {}", e))
+                        })?)
+                    }
+                    BasicOutput::KIND => OutputDto::Basic(
+                        BasicOutputDto::deserialize(value)
+                            .map_err(|e| serde::de::Error::custom(format!("cannot deserialize basic output: {}", e)))?,
+                    ),
+                    AliasOutput::KIND => OutputDto::Alias(
+                        AliasOutputDto::deserialize(value)
+                            .map_err(|e| serde::de::Error::custom(format!("cannot deserialize alias output: {}", e)))?,
+                    ),
+                    FoundryOutput::KIND => {
+                        OutputDto::Foundry(FoundryOutputDto::deserialize(value).map_err(|e| {
+                            serde::de::Error::custom(format!("cannot deserialize foundry output: {}", e))
+                        })?)
+                    }
+                    NftOutput::KIND => OutputDto::Nft(
+                        NftOutputDto::deserialize(value)
+                            .map_err(|e| serde::de::Error::custom(format!("cannot deserialize NFT output: {}", e)))?,
+                    ),
+                    _ => return Err(serde::de::Error::custom("invalid output type")),
+                },
+            )
+        }
+    }
+
+    impl Serialize for OutputDto {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            #[derive(Serialize)]
+            #[serde(untagged)]
+            enum OutputDto_<'a> {
+                T1(&'a TreasuryOutputDto),
+                T2(&'a BasicOutputDto),
+                T3(&'a AliasOutputDto),
+                T4(&'a FoundryOutputDto),
+                T5(&'a NftOutputDto),
+            }
+            #[derive(Serialize)]
+            struct TypedOutput<'a> {
+                #[serde(flatten)]
+                output: OutputDto_<'a>,
+            }
+            let output = match self {
+                OutputDto::Treasury(o) => TypedOutput {
+                    output: OutputDto_::T1(o),
+                },
+                OutputDto::Basic(o) => TypedOutput {
+                    output: OutputDto_::T2(o),
+                },
+                OutputDto::Alias(o) => TypedOutput {
+                    output: OutputDto_::T3(o),
+                },
+                OutputDto::Foundry(o) => TypedOutput {
+                    output: OutputDto_::T4(o),
+                },
+                OutputDto::Nft(o) => TypedOutput {
+                    output: OutputDto_::T5(o),
+                },
+            };
+            output.serialize(serializer)
+        }
+    }
+}

@@ -49,3 +49,41 @@ impl Input {
         }
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    pub use super::{treasury::dto::TreasuryInputDto, utxo::dto::UtxoInputDto};
+    use crate::error::dto::DtoError;
+
+    /// Describes all the different input types.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[serde(untagged)]
+    pub enum InputDto {
+        Utxo(UtxoInputDto),
+        Treasury(TreasuryInputDto),
+    }
+
+    impl From<&Input> for InputDto {
+        fn from(value: &Input) -> Self {
+            match value {
+                Input::Utxo(u) => InputDto::Utxo(u.into()),
+                Input::Treasury(t) => InputDto::Treasury(t.into()),
+            }
+        }
+    }
+
+    impl TryFrom<&InputDto> for Input {
+        type Error = DtoError;
+
+        fn try_from(value: &InputDto) -> Result<Self, Self::Error> {
+            match value {
+                InputDto::Utxo(u) => Ok(Input::Utxo(u.try_into()?)),
+                InputDto::Treasury(t) => Ok(Input::Treasury(t.try_into()?)),
+            }
+        }
+    }
+}

@@ -220,3 +220,70 @@ fn verify_payload(payload: Option<&Payload>) -> Result<(), Error> {
         Ok(())
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{error::dto::DtoError, payload::dto::PayloadDto};
+
+    /// The message object that nodes gossip around in the network.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct MessageDto {
+        ///
+        #[serde(rename = "protocolVersion")]
+        pub protocol_version: u8,
+        #[serde(rename = "parentMessageIds")]
+        ///
+        pub parents: Vec<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        ///
+        pub payload: Option<PayloadDto>,
+        ///
+        pub nonce: String,
+    }
+
+    impl From<&Message> for MessageDto {
+        fn from(value: &Message) -> Self {
+            MessageDto {
+                protocol_version: value.protocol_version(),
+                parents: value.parents().iter().map(MessageId::to_string).collect(),
+                payload: value.payload().map(Into::into),
+                nonce: value.nonce().to_string(),
+            }
+        }
+    }
+
+    impl TryFrom<&MessageDto> for Message {
+        type Error = DtoError;
+
+        fn try_from(value: &MessageDto) -> Result<Self, Self::Error> {
+            let parents = Parents::new(
+                value
+                    .parents
+                    .iter()
+                    .map(|m| {
+                        m.parse::<MessageId>()
+                            .map_err(|_| DtoError::InvalidField("parentMessageIds"))
+                    })
+                    .collect::<Result<Vec<MessageId>, DtoError>>()?,
+            )?;
+            let mut builder = MessageBuilder::new(parents)
+                .with_protocol_version(value.protocol_version)
+                .with_nonce_provider(
+                    value
+                        .nonce
+                        .parse::<u64>()
+                        .map_err(|_| DtoError::InvalidField("nonce"))?,
+                    0f64,
+                );
+            if let Some(p) = value.payload.as_ref() {
+                builder = builder.with_payload(p.try_into()?);
+            }
+
+            Ok(builder.finish()?)
+        }
+    }
+}

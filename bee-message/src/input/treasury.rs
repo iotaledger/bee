@@ -49,3 +49,43 @@ impl core::fmt::Debug for TreasuryInput {
         write!(f, "TreasuryInput({})", self.0)
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::error::dto::DtoError;
+
+    /// Describes an input which references an unspent treasury output to consume.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct TreasuryInputDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        #[serde(rename = "milestoneId")]
+        pub milestone_id: String,
+    }
+
+    impl From<&TreasuryInput> for TreasuryInputDto {
+        fn from(value: &TreasuryInput) -> Self {
+            TreasuryInputDto {
+                kind: TreasuryInput::KIND,
+                milestone_id: value.milestone_id().to_string(),
+            }
+        }
+    }
+
+    impl TryFrom<&TreasuryInputDto> for TreasuryInput {
+        type Error = DtoError;
+
+        fn try_from(value: &TreasuryInputDto) -> Result<Self, Self::Error> {
+            Ok(TreasuryInput::new(
+                value
+                    .milestone_id
+                    .parse::<MilestoneId>()
+                    .map_err(|_| DtoError::InvalidField("milestoneId"))?,
+            ))
+        }
+    }
+}

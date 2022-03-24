@@ -60,3 +60,19 @@ impl Ed25519Signature {
         Ok(())
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    /// Defines an Ed25519 signature.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct Ed25519SignatureDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        #[serde(rename = "publicKey")]
+        pub public_key: String,
+        pub signature: String,
+    }
+}

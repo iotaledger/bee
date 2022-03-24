@@ -48,3 +48,47 @@ impl core::fmt::Debug for UtxoInput {
         write!(f, "UtxoInput({})", self.0)
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::error::dto::DtoError;
+
+    /// Describes an input which references an unspent transaction output to consume.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct UtxoInputDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        #[serde(rename = "transactionId")]
+        pub transaction_id: String,
+        #[serde(rename = "transactionOutputIndex")]
+        pub transaction_output_index: u16,
+    }
+
+    impl From<&UtxoInput> for UtxoInputDto {
+        fn from(value: &UtxoInput) -> Self {
+            UtxoInputDto {
+                kind: UtxoInput::KIND,
+                transaction_id: value.output_id().transaction_id().to_string(),
+                transaction_output_index: value.output_id().index(),
+            }
+        }
+    }
+
+    impl TryFrom<&UtxoInputDto> for UtxoInput {
+        type Error = DtoError;
+
+        fn try_from(value: &UtxoInputDto) -> Result<Self, Self::Error> {
+            Ok(UtxoInput::new(
+                value
+                    .transaction_id
+                    .parse::<TransactionId>()
+                    .map_err(|_| DtoError::InvalidField("transactionId"))?,
+                value.transaction_output_index,
+            )?)
+        }
+    }
+}

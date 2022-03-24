@@ -33,6 +33,7 @@ prefix-hex = { version = "0.2.0", default-features = false, features = [ "primit
 primitive-types = { version = "0.10.1", default-features = false, features = [ "serde" ] }
 serde = { version = "1.0.130", default-features = false, optional = true }
 serde-big-array = { version = "0.3.2", default-features = false, features = [ "const-generics" ], optional = true }
+serde_json = { version = "1.0.79", default-features = false, features = [ "alloc" ], optional = true }
 thiserror = { version = "1.0.30", default-features = false }
 
 [dev-dependencies]
@@ -41,5 +42,6 @@ bee-test = { version = "0.1.0", path = "../bee-test", default-features = false }
 num_cpus = { version = "1.13.0", default-features = false }
 
 [features]
+dto = [ "serde", "serde_json" ]
 serde1 = [ "serde", "serde-big-array" ]
 std = [ ]

@@ -24,3 +24,15 @@ impl TryFrom<u8> for TokenScheme {
         }
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct TokenSchemeDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+    }
+}
