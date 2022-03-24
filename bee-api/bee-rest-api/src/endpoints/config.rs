@@ -33,7 +33,7 @@ pub(crate) const DEFAULT_PROTECTED_ROUTES: [&str; 2] = ["/api/v1/*", "/api/plugi
 /// Enables the proof-of-work feature on the node per default.
 pub(crate) const DEFAULT_FEATURE_PROOF_OF_WORK: bool = true;
 /// Default value for the white flag solidification timeout.
-pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: u64 = 2;
+pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: Duration = Duration::new(2, 0);
 
 /// REST API configuration builder.
 #[derive(Default, Deserialize, PartialEq)]
@@ -150,17 +150,16 @@ impl RestApiConfigBuilder {
             let routes = self
                 .protected_routes
                 .unwrap_or_else(|| DEFAULT_PROTECTED_ROUTES.iter().map(ToString::to_string).collect());
-            RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<String>>())
+            RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<_>>())
                 .expect("invalid protected route provided")
         };
 
         let feature_proof_of_work = self.feature_proof_of_work.unwrap_or(DEFAULT_FEATURE_PROOF_OF_WORK);
 
-        let white_flag_solidification_timeout = Duration::new(
-            self.white_flag_solidification_timeout
-                .unwrap_or(DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT),
-            0,
-        );
+        let white_flag_solidification_timeout = match self.white_flag_solidification_timeout {
+            Some(timeout) => Duration::new(timeout, 0),
+            None => DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT,
+        };
 
         RestApiConfig {
             bind_socket_addr: SocketAddr::new(address, port),
