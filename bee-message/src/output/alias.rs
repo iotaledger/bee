@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    address::Address,
+    address::{Address, AliasAddress},
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        AliasId, NativeToken, NativeTokens, OutputAmount,
+        AliasId, ChainId, NativeToken, NativeTokens, Output, OutputAmount, OutputId, StateTransitionError,
+        StateTransitionVerifier,
     },
+    semantic::{ConflictReason, ValidationContext},
+    unlock_block::UnlockBlock,
     Error,
 };
 
@@ -201,9 +204,8 @@ impl AliasOutput {
     pub const KIND: u8 = 4;
     /// Maximum possible length in bytes of the state metadata.
     pub const STATE_METADATA_LENGTH_MAX: u16 = 8192;
-
     /// The set of allowed [`UnlockCondition`]s for an [`AliasOutput`].
-    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags =
+    pub const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags =
         UnlockConditionFlags::STATE_CONTROLLER_ADDRESS.union(UnlockConditionFlags::GOVERNOR_ADDRESS);
     /// The set of allowed [`FeatureBlock`]s for an [`AliasOutput`].
     pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER.union(FeatureBlockFlags::METADATA);
@@ -296,6 +298,142 @@ impl AliasOutput {
             .map(|unlock_condition| unlock_condition.address())
             .unwrap()
     }
+
+    ///
+    #[inline(always)]
+    pub fn chain_id(&self) -> ChainId {
+        ChainId::Alias(self.alias_id)
+    }
+
+    ///
+    pub fn unlock(
+        &self,
+        output_id: &OutputId,
+        unlock_block: &UnlockBlock,
+        inputs: &[(OutputId, &Output)],
+        context: &mut ValidationContext,
+    ) -> Result<(), ConflictReason> {
+        let alias_id = if self.alias_id().is_null() {
+            AliasId::from(*output_id)
+        } else {
+            *self.alias_id()
+        };
+        let next_state = context.output_chains.get(&ChainId::from(alias_id));
+
+        let locked_address = match next_state {
+            Some(Output::Alias(next_state)) => {
+                if self.state_index() == next_state.state_index() {
+                    self.governor_address()
+                } else {
+                    self.state_controller_address()
+                }
+            }
+            None => self.governor_address(),
+            // The next state can only be an alias output since it is identified by an alias chain identifier.
+            Some(_) => unreachable!(),
+        };
+
+        locked_address.unlock(unlock_block, inputs, context)?;
+
+        context
+            .unlocked_addresses
+            .insert(Address::from(AliasAddress::from(alias_id)));
+
+        Ok(())
+    }
+}
+
+impl StateTransitionVerifier for AliasOutput {
+    fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
+        if !next_state.alias_id.is_null() {
+            return Err(StateTransitionError::NonZeroCreatedId);
+        }
+
+        if next_state.state_index != 0 {
+            return Err(StateTransitionError::NonZeroCreatedStateIndex);
+        }
+
+        if next_state.foundry_counter != 0 {
+            return Err(StateTransitionError::NonZeroCreatedFoundryCounter);
+        }
+
+        if let Some(issuer) = next_state.immutable_feature_blocks().issuer() {
+            if !context.unlocked_addresses.contains(issuer.address()) {
+                return Err(StateTransitionError::IssuerNotUnlocked);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn transition(
+        current_state: &Self,
+        next_state: &Self,
+        context: &ValidationContext,
+    ) -> Result<(), StateTransitionError> {
+        if current_state.immutable_feature_blocks != next_state.immutable_feature_blocks {
+            return Err(StateTransitionError::MutatedImmutableField);
+        }
+
+        if next_state.state_index == current_state.state_index + 1 {
+            // State transition.
+            if current_state.state_controller_address() != next_state.state_controller_address()
+                || current_state.governor_address() != next_state.governor_address()
+                || current_state.feature_blocks.metadata() != next_state.feature_blocks.metadata()
+            {
+                return Err(StateTransitionError::MutatedFieldWithoutRights);
+            }
+
+            let created_foundries = context.essence.outputs().iter().filter_map(|output| {
+                if let Output::Foundry(foundry) = output {
+                    if foundry.alias_address().alias_id() == &current_state.alias_id
+                        && !context.input_chains.contains_key(&foundry.chain_id())
+                    {
+                        Some(foundry)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            });
+
+            let mut created_foundries_count = 0;
+
+            for foundry in created_foundries {
+                if foundry.serial_number() != current_state.foundry_counter + created_foundries_count {
+                    return Err(StateTransitionError::UnsortedCreatedFoundries);
+                }
+
+                created_foundries_count += 1;
+            }
+
+            if current_state.foundry_counter + created_foundries_count != next_state.foundry_counter {
+                return Err(StateTransitionError::InconsistentCreatedFoundriesCount);
+            }
+        } else if next_state.state_index == current_state.state_index {
+            // Governance transition.
+            if current_state.amount != next_state.amount
+                || current_state.native_tokens != next_state.native_tokens
+                || current_state.state_index != next_state.state_index
+                || current_state.state_metadata != next_state.state_metadata
+                || current_state.foundry_counter != next_state.foundry_counter
+            {
+                return Err(StateTransitionError::MutatedFieldWithoutRights);
+            }
+        } else {
+            return Err(StateTransitionError::UnsupportedStateIndexOperation {
+                current_state: current_state.state_index,
+                next_state: next_state.state_index,
+            });
+        }
+
+        Ok(())
+    }
+
+    fn destruction(_current_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+        Ok(())
+    }
 }
 
 impl Packable for AliasOutput {
@@ -367,11 +505,11 @@ impl Packable for AliasOutput {
 
 #[inline]
 fn verify_index_counter(alias_id: &AliasId, state_index: u32, foundry_counter: u32) -> Result<(), Error> {
-    if alias_id.as_ref().iter().all(|&b| b == 0) && (state_index != 0 || foundry_counter != 0) {
-        return Err(Error::NonZeroStateIndexOrFoundryCounter);
+    if alias_id.is_null() && (state_index != 0 || foundry_counter != 0) {
+        Err(Error::NonZeroStateIndexOrFoundryCounter)
+    } else {
+        Ok(())
     }
-
-    Ok(())
 }
 
 fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, alias_id: &AliasId) -> Result<(), Error> {

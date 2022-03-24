@@ -121,7 +121,7 @@ impl FeatureBlocks {
     pub fn get(&self, key: u8) -> Option<&FeatureBlock> {
         self.0
             .binary_search_by_key(&key, FeatureBlock::kind)
-            // SAFETY: indexation is fine since the index has been found.
+            // PANIC: indexation is fine since the index has been found.
             .map(|index| &self.0[index])
             .ok()
     }

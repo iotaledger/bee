@@ -12,9 +12,8 @@ use crate::{
 };
 
 use bee_message::{
-    address::Ed25519Address,
     milestone::{Milestone, MilestoneIndex},
-    output::{Output, OutputId},
+    output::OutputId,
     Message, MessageId,
 };
 use bee_storage::{
@@ -36,7 +35,6 @@ pub trait StorageBackend:
     + Batch<Unspent, ()>
     + Batch<(), LedgerIndex>
     + Batch<MilestoneIndex, OutputDiff>
-    + Batch<(Ed25519Address, OutputId), ()>
     + Batch<(MilestoneIndex, Receipt), ()>
     + Batch<(bool, TreasuryOutput), ()>
     + Batch<SolidEntryPoint, MilestoneIndex>
@@ -50,7 +48,6 @@ pub trait StorageBackend:
     + Fetch<OutputId, CreatedOutput>
     + Fetch<(), LedgerIndex>
     + Fetch<bool, Vec<TreasuryOutput>>
-    + Fetch<Ed25519Address, Vec<OutputId>>
     + Fetch<MilestoneIndex, Milestone>
     + Fetch<MilestoneIndex, Vec<Receipt>>
     + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
@@ -73,7 +70,6 @@ impl<T> StorageBackend for T where
         + Batch<Unspent, ()>
         + Batch<(), LedgerIndex>
         + Batch<MilestoneIndex, OutputDiff>
-        + Batch<(Ed25519Address, OutputId), ()>
         + Batch<(MilestoneIndex, Receipt), ()>
         + Batch<(bool, TreasuryOutput), ()>
         + Batch<SolidEntryPoint, MilestoneIndex>
@@ -87,7 +83,6 @@ impl<T> StorageBackend for T where
         + Fetch<OutputId, CreatedOutput>
         + Fetch<(), LedgerIndex>
         + Fetch<bool, Vec<TreasuryOutput>>
-        + Fetch<Ed25519Address, Vec<OutputId>>
         + Fetch<MilestoneIndex, Milestone>
         + Fetch<MilestoneIndex, Vec<Receipt>>
         + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
@@ -102,46 +97,6 @@ impl<T> StorageBackend for T where
 {
 }
 
-// pub(crate) fn insert_output_id_for_address_batch<B: StorageBackend>(
-//     storage: &B,
-//     batch: &mut <B as BatchBuilder>::Batch,
-//     address: &Address,
-//     output_id: &OutputId,
-// ) -> Result<(), Error> {
-//     match address {
-//         Address::Ed25519(address) => {
-//             Batch::<(Ed25519Address, OutputId), ()>::batch_insert(storage, batch, &(*address, *output_id), &())
-//                 .map_err(|e| Error::Storage(Box::new(e)))
-//         }
-//         Address::Alias(_address) => {
-//             todo!();
-//         }
-//         Address::Nft(_address) => {
-//             todo!();
-//         }
-//     }
-// }
-//
-// pub(crate) fn delete_output_id_for_address_batch<B: StorageBackend>(
-//     storage: &B,
-//     batch: &mut <B as BatchBuilder>::Batch,
-//     address: &Address,
-//     output_id: &OutputId,
-// ) -> Result<(), Error> {
-//     match address {
-//         Address::Ed25519(address) => {
-//             Batch::<(Ed25519Address, OutputId), ()>::batch_delete(storage, batch, &(*address, *output_id))
-//                 .map_err(|e| Error::Storage(Box::new(e)))
-//         }
-//         Address::Alias(_address) => {
-//             todo!();
-//         }
-//         Address::Nft(_address) => {
-//             todo!();
-//         }
-//     }
-// }
-
 pub(crate) fn insert_created_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
@@ -151,59 +106,18 @@ pub(crate) fn insert_created_output_batch<B: StorageBackend>(
     Batch::<OutputId, CreatedOutput>::batch_insert(storage, batch, output_id, output)
         .map_err(|e| Error::Storage(Box::new(e)))?;
     Batch::<Unspent, ()>::batch_insert(storage, batch, &(*output_id).into(), &())
-        .map_err(|e| Error::Storage(Box::new(e)))?;
-
-    match output.inner() {
-        Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
-        Output::Basic(_) => {
-            // TODO
-            Ok(())
-        }
-        Output::Alias(_) => {
-            // TODO
-            Ok(())
-        }
-        Output::Foundry(_) => {
-            // TODO
-            Ok(())
-        }
-        Output::Nft(_) => {
-            // TODO
-            Ok(())
-        }
-    }
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn delete_created_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
-    output: &CreatedOutput,
+    _output: &CreatedOutput,
 ) -> Result<(), Error> {
     Batch::<OutputId, CreatedOutput>::batch_delete(storage, batch, output_id)
         .map_err(|e| Error::Storage(Box::new(e)))?;
-    Batch::<Unspent, ()>::batch_delete(storage, batch, &(*output_id).into())
-        .map_err(|e| Error::Storage(Box::new(e)))?;
-
-    match output.inner() {
-        Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
-        Output::Basic(_) => {
-            // TODO
-            Ok(())
-        }
-        Output::Alias(_) => {
-            // TODO
-            Ok(())
-        }
-        Output::Foundry(_) => {
-            // TODO
-            Ok(())
-        }
-        Output::Nft(_) => {
-            // TODO
-            Ok(())
-        }
-    }
+    Batch::<Unspent, ()>::batch_delete(storage, batch, &(*output_id).into()).map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn create_output<B: StorageBackend>(
@@ -386,13 +300,6 @@ pub(crate) fn fetch_output<B: StorageBackend>(
     output_id: &OutputId,
 ) -> Result<Option<CreatedOutput>, Error> {
     Fetch::<OutputId, CreatedOutput>::fetch(storage, output_id).map_err(|e| Error::Storage(Box::new(e)))
-}
-
-pub(crate) fn fetch_outputs_for_ed25519_address<B: StorageBackend>(
-    storage: &B,
-    address: &Ed25519Address,
-) -> Result<Option<Vec<OutputId>>, Error> {
-    Fetch::<Ed25519Address, Vec<OutputId>>::fetch(&*storage, address).map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn is_output_unspent<B: StorageBackend>(storage: &B, output_id: &OutputId) -> Result<bool, Error> {

@@ -9,9 +9,9 @@ use crate::{
     types::{dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
 };
 
-use bee_message::{payload::Payload, MessageId};
+use bee_message::{payload::Payload, semantic::ConflictReason, MessageId};
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::{ConflictReason, Tangle};
+use bee_tangle::Tangle;
 
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 

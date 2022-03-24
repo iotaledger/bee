@@ -31,6 +31,8 @@ pub mod output;
 pub mod parent;
 /// A module that provides types and syntactic validations of payloads.
 pub mod payload;
+/// A module that provides types and rules for semantic validation.
+pub mod semantic;
 /// A module that provides types and syntactic validations of signatures.
 pub mod signature;
 /// A module that provides types and syntactic validations of unlock blocks.

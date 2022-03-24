@@ -6,14 +6,17 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        FoundryId, NativeToken, NativeTokens, OutputAmount, TokenScheme, TokenTag,
+        ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount, OutputId, StateTransitionError,
+        StateTransitionVerifier, TokenId, TokenScheme, TokenTag,
     },
+    semantic::{ConflictReason, ValidationContext},
+    unlock_block::UnlockBlock,
     Error,
 };
 
 use packable::{
     error::{UnpackError, UnpackErrorExt},
-    packer::{Packer, SlicePacker},
+    packer::Packer,
     unpacker::Unpacker,
     Packable,
 };
@@ -184,9 +187,8 @@ pub struct FoundryOutput {
 impl FoundryOutput {
     /// The [`Output`](crate::output::Output) kind of a [`FoundryOutput`].
     pub const KIND: u8 = 5;
-
     /// The set of allowed [`UnlockCondition`]s for a [`FoundryOutput`].
-    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::IMMUTABLE_ALIAS_ADDRESS;
+    pub const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::IMMUTABLE_ALIAS_ADDRESS;
     /// The set of allowed [`FeatureBlock`]s for a [`FoundryOutput`].
     pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
     /// The set of allowed immutable [`FeatureBlock`]s for a [`FoundryOutput`].
@@ -303,22 +305,9 @@ impl FoundryOutput {
         &self.immutable_feature_blocks
     }
 
-    /// Returns the [`FoundryId`] of the [`FoundryOutput`].
-    pub fn id(&self) -> FoundryId {
-        let mut bytes = [0u8; FoundryId::LENGTH];
-        let mut packer = SlicePacker::new(&mut bytes);
-
-        // SAFETY: packing to an array of the correct length can't fail.
-        Address::Alias(*self.address()).pack(&mut packer).unwrap();
-        self.serial_number.pack(&mut packer).unwrap();
-        self.token_scheme.pack(&mut packer).unwrap();
-
-        FoundryId::new(bytes)
-    }
-
     ///
     #[inline(always)]
-    pub fn address(&self) -> &AliasAddress {
+    pub fn alias_address(&self) -> &AliasAddress {
         // A FoundryOutput must have an ImmutableAliasAddressUnlockCondition.
         self.unlock_conditions
             .immutable_alias_address()
@@ -326,10 +315,76 @@ impl FoundryOutput {
             .unwrap()
     }
 
+    /// Returns the [`FoundryId`] of the [`FoundryOutput`].
+    pub fn id(&self) -> FoundryId {
+        FoundryId::build(self.alias_address(), self.serial_number, self.token_scheme)
+    }
+
+    /// Returns the [`TokenId`] of the [`FoundryOutput`].
+    pub fn token_id(&self) -> TokenId {
+        TokenId::build(&self.id(), &self.token_tag)
+    }
+
+    ///
+    #[inline(always)]
+    pub fn chain_id(&self) -> ChainId {
+        ChainId::Foundry(self.id())
+    }
+
     ///
     #[inline(always)]
     pub fn circulating_supply(&self) -> U256 {
         self.minted_tokens - self.melted_tokens
+    }
+
+    ///
+    pub fn unlock(
+        &self,
+        _output_id: &OutputId,
+        unlock_block: &UnlockBlock,
+        inputs: &[(OutputId, &Output)],
+        context: &mut ValidationContext,
+    ) -> Result<(), ConflictReason> {
+        let locked_address = Address::from(*self.alias_address());
+
+        locked_address.unlock(unlock_block, inputs, context)
+    }
+}
+
+impl StateTransitionVerifier for FoundryOutput {
+    fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
+        let alias_chain_id = ChainId::from(*next_state.alias_address().alias_id());
+
+        if let (Some(_input_alias), Some(_output_alias)) = (
+            context.input_chains.get(&alias_chain_id),
+            context.output_chains.get(&alias_chain_id),
+        ) {
+            // TODO check serial
+        }
+
+        Ok(())
+    }
+
+    fn transition(
+        current_state: &Self,
+        next_state: &Self,
+        _context: &ValidationContext,
+    ) -> Result<(), StateTransitionError> {
+        if current_state.maximum_supply != next_state.maximum_supply
+            || current_state.alias_address() != next_state.alias_address()
+            || current_state.serial_number != next_state.serial_number
+            || current_state.token_tag != next_state.token_tag
+            || current_state.token_scheme != next_state.token_scheme
+            || current_state.immutable_feature_blocks != next_state.immutable_feature_blocks
+        {
+            return Err(StateTransitionError::MutatedImmutableField);
+        }
+
+        Ok(())
+    }
+
+    fn destruction(_current_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+        Ok(())
     }
 }
 

@@ -60,7 +60,7 @@ pub enum UnlockBlock {
 }
 
 impl UnlockBlock {
-    /// Returns the unlock kind of an `UnlockBlock`.
+    /// Returns the unlock kind of an [`UnlockBlock`].
     pub fn kind(&self) -> u8 {
         match self {
             Self::Signature(_) => SignatureUnlockBlock::KIND,
@@ -83,7 +83,7 @@ pub struct UnlockBlocks(
 );
 
 impl UnlockBlocks {
-    /// Creates a new `UnlockBlocks`.
+    /// Creates a new [`UnlockBlocks`].
     pub fn new(unlock_blocks: Vec<UnlockBlock>) -> Result<Self, Error> {
         let unlock_blocks: BoxedSlicePrefix<UnlockBlock, UnlockBlockCount> = unlock_blocks
             .into_boxed_slice()
@@ -95,7 +95,7 @@ impl UnlockBlocks {
         Ok(Self(unlock_blocks))
     }
 
-    /// Gets an `UnlockBlock` from an `UnlockBlocks`.
+    /// Gets an [`UnlockBlock`] from an [`UnlockBlocks`].
     /// Returns the referenced unlock block if the requested unlock block was a reference.
     pub fn get(&self, index: usize) -> Option<&UnlockBlock> {
         match self.0.get(index) {
@@ -118,19 +118,19 @@ fn verify_unlock_blocks<const VERIFY: bool>(unlock_blocks: &[UnlockBlock]) -> Re
             }
             UnlockBlock::Reference(reference) => {
                 if index == 0
-                    || reference.index() >= index as u16
-                    || matches!(unlock_blocks[reference.index() as usize], UnlockBlock::Reference(_))
+                    || reference.index() >= index
+                    || !matches!(unlock_blocks[reference.index() as usize], UnlockBlock::Signature(_))
                 {
                     return Err(Error::InvalidUnlockBlockReference(index));
                 }
             }
             UnlockBlock::Alias(alias) => {
-                if index == 0 || alias.index() >= index as u16 {
+                if index == 0 || alias.index() >= index {
                     return Err(Error::InvalidUnlockBlockAlias(index));
                 }
             }
             UnlockBlock::Nft(nft) => {
-                if index == 0 || nft.index() >= index as u16 {
+                if index == 0 || nft.index() >= index {
                     return Err(Error::InvalidUnlockBlockNft(index));
                 }
             }

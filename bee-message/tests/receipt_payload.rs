@@ -3,17 +3,17 @@
 
 use bee_message::{
     address::{Address, Ed25519Address},
-    input::{Input, TreasuryInput},
+    input::TreasuryInput,
     milestone::MilestoneIndex,
-    output::{Output, TreasuryOutput},
+    output::TreasuryOutput,
     payload::{
         milestone::MilestoneId,
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
-        Payload, TaggedDataPayload, TreasuryTransactionPayload,
+        TreasuryTransactionPayload,
     },
     Error,
 };
-use bee_test::rand::{bytes::rand_bytes, number::rand_number};
+use bee_test::rand::number::rand_number;
 
 use packable::{bounded::TryIntoBoundedU16Error, PackableExt};
 
@@ -45,13 +45,11 @@ fn new_valid() {
             )
             .unwrap(),
         ],
-        Payload::from(
-            TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
-            )
-            .unwrap(),
-        ),
+        TreasuryTransactionPayload::new(
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(AMOUNT).unwrap(),
+        )
+        .unwrap(),
     );
 
     assert!(receipt.is_ok());
@@ -63,13 +61,11 @@ fn new_invalid_receipt_funds_count_low() {
         MilestoneIndex::new(0),
         true,
         vec![],
-        Payload::from(
-            TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
-            )
-            .unwrap(),
-        ),
+        TreasuryTransactionPayload::new(
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(AMOUNT).unwrap(),
+        )
+        .unwrap(),
     );
 
     assert!(matches!(
@@ -93,40 +89,16 @@ fn new_invalid_receipt_funds_count_high() {
                 .unwrap()
             })
             .collect(),
-        Payload::from(
-            TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
-            )
-            .unwrap(),
-        ),
+        TreasuryTransactionPayload::new(
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(AMOUNT).unwrap(),
+        )
+        .unwrap(),
     );
 
     assert!(matches!(
         receipt,
         Err(Error::InvalidReceiptFundsCount(TryIntoBoundedU16Error::Invalid(129)))
-    ));
-}
-
-#[test]
-fn new_invalid_payload_kind() {
-    let receipt = ReceiptPayload::new(
-        MilestoneIndex::new(0),
-        true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                AMOUNT,
-            )
-            .unwrap(),
-        ],
-        Payload::from(TaggedDataPayload::new(rand_bytes(32), vec![]).unwrap()),
-    );
-
-    assert!(matches!(
-        receipt,
-        Err(Error::InvalidPayloadKind(TaggedDataPayload::KIND))
     ));
 }
 
@@ -154,13 +126,11 @@ fn new_invalid_transaction_outputs_not_sorted() {
         MilestoneIndex::new(0),
         true,
         migrated_funds,
-        Payload::from(
-            TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
-            )
-            .unwrap(),
-        ),
+        TreasuryTransactionPayload::new(
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(AMOUNT).unwrap(),
+        )
+        .unwrap(),
     );
 
     assert!(matches!(receipt, Err(Error::ReceiptFundsNotUniqueSorted)));
@@ -179,13 +149,11 @@ fn new_invalid_tail_transaction_hashes_not_unique() {
         MilestoneIndex::new(0),
         true,
         vec![migrated_funds; 2],
-        Payload::from(
-            TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
-            )
-            .unwrap(),
-        ),
+        TreasuryTransactionPayload::new(
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(AMOUNT).unwrap(),
+        )
+        .unwrap(),
     );
 
     assert!(matches!(receipt, Err(Error::ReceiptFundsNotUniqueSorted)));
@@ -204,13 +172,11 @@ fn pack_unpack_valid() {
             )
             .unwrap(),
         ],
-        Payload::from(
-            TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
-            )
-            .unwrap(),
-        ),
+        TreasuryTransactionPayload::new(
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(AMOUNT).unwrap(),
+        )
+        .unwrap(),
     )
     .unwrap();
 
@@ -235,18 +201,17 @@ fn getters() {
         )
         .unwrap(),
     ];
-    let payload: Payload = TreasuryTransactionPayload::new(
-        Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-        Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
+    let transaction = TreasuryTransactionPayload::new(
+        TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+        TreasuryOutput::new(AMOUNT).unwrap(),
     )
-    .unwrap()
-    .into();
+    .unwrap();
 
-    let receipt = ReceiptPayload::new(migrated_at, last, funds.clone(), payload.clone()).unwrap();
+    let receipt = ReceiptPayload::new(migrated_at, last, funds.clone(), transaction.clone()).unwrap();
 
     assert_eq!(receipt.migrated_at(), migrated_at);
     assert_eq!(receipt.last(), last);
     assert_eq!(receipt.funds(), funds.as_slice());
-    assert_eq!(*receipt.transaction(), payload);
+    assert_eq!(receipt.transaction(), &transaction);
     assert_eq!(receipt.amount(), AMOUNT);
 }

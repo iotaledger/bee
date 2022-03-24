@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    address::Address,
+    address::{Address, NftAddress},
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        NativeToken, NativeTokens, NftId, OutputAmount,
+        ChainId, NativeToken, NativeTokens, NftId, Output, OutputAmount, OutputId, StateTransitionError,
+        StateTransitionVerifier,
     },
+    semantic::{ConflictReason, ValidationContext},
+    unlock_block::UnlockBlock,
     Error,
 };
 
@@ -146,9 +149,8 @@ pub struct NftOutput {
 impl NftOutput {
     /// The [`Output`](crate::output::Output) kind of an [`NftOutput`].
     pub const KIND: u8 = 6;
-
     /// The set of allowed [`UnlockCondition`]s for an [`NftOutput`].
-    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS
+    pub const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS
         .union(UnlockConditionFlags::STORAGE_DEPOSIT_RETURN)
         .union(UnlockConditionFlags::TIMELOCK)
         .union(UnlockConditionFlags::EXPIRATION);
@@ -216,6 +218,68 @@ impl NftOutput {
             .address()
             .map(|unlock_condition| unlock_condition.address())
             .unwrap()
+    }
+
+    ///
+    #[inline(always)]
+    pub fn chain_id(&self) -> ChainId {
+        ChainId::Nft(self.nft_id)
+    }
+
+    ///
+    pub fn unlock(
+        &self,
+        output_id: &OutputId,
+        unlock_block: &UnlockBlock,
+        inputs: &[(OutputId, &Output)],
+        context: &mut ValidationContext,
+    ) -> Result<(), ConflictReason> {
+        let locked_address = self.address();
+        let nft_id = if self.nft_id().is_null() {
+            NftId::from(*output_id)
+        } else {
+            *self.nft_id()
+        };
+
+        locked_address.unlock(unlock_block, inputs, context)?;
+
+        context
+            .unlocked_addresses
+            .insert(Address::from(NftAddress::from(nft_id)));
+
+        Ok(())
+    }
+}
+
+impl StateTransitionVerifier for NftOutput {
+    fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
+        if !next_state.nft_id.is_null() {
+            return Err(StateTransitionError::NonZeroCreatedId);
+        }
+
+        if let Some(issuer) = next_state.immutable_feature_blocks().issuer() {
+            if !context.unlocked_addresses.contains(issuer.address()) {
+                return Err(StateTransitionError::IssuerNotUnlocked);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn transition(
+        current_state: &Self,
+        next_state: &Self,
+        _context: &ValidationContext,
+    ) -> Result<(), StateTransitionError> {
+        if current_state.immutable_feature_blocks != next_state.immutable_feature_blocks {
+            return Err(StateTransitionError::MutatedImmutableField);
+        }
+
+        Ok(())
+    }
+
+    fn destruction(_current_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+        Ok(())
     }
 }
 

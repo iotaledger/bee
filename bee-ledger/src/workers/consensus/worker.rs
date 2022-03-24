@@ -14,14 +14,14 @@ use crate::{
 };
 
 use bee_message::{
-    address::Address,
     milestone::MilestoneIndex,
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, OutputId},
     payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
+    semantic::ConflictReason,
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{ConflictReason, Tangle, TangleWorker};
+use bee_tangle::{Tangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{channel::oneshot, stream::StreamExt};
@@ -44,11 +44,6 @@ pub enum ConsensusWorkerCommand {
         OutputId,
         oneshot::Sender<(Result<Option<CreatedOutput>, Error>, LedgerIndex)>,
     ),
-    /// Command to fetch the outputs of an address.
-    FetchOutputs(
-        Address,
-        oneshot::Sender<(Result<Option<Vec<OutputId>>, Error>, LedgerIndex)>,
-    ),
 }
 
 /// The consensus worker.
@@ -67,18 +62,7 @@ pub(crate) async fn migration_from_milestone(
 
     receipt.validate(&consumed_treasury)?;
 
-    let created_treasury = TreasuryOutput::new(
-        if let Payload::TreasuryTransaction(treasury) = receipt.inner().transaction() {
-            if let Output::Treasury(output) = treasury.output() {
-                output.clone()
-            } else {
-                return Err(Error::UnsupportedOutputKind(treasury.output().kind()));
-            }
-        } else {
-            return Err(Error::UnsupportedPayloadKind(receipt.inner().transaction().kind()));
-        },
-        milestone_id,
-    );
+    let created_treasury = TreasuryOutput::new(receipt.inner().transaction().output().clone(), milestone_id);
 
     Ok(Migration::new(receipt, consumed_treasury, created_treasury))
 }
@@ -140,11 +124,11 @@ where
                     milestone.essence().timestamp() as u32,
                     Output::from(
                         BasicOutput::build(fund.amount())
-                            // SAFETY: funds are already syntactically verified as part of the receipt validation.
+                            // PANIC: funds are already syntactically verified as part of the receipt validation.
                             .unwrap()
                             .add_unlock_condition(AddressUnlockCondition::new(*fund.address()).into())
                             .finish()
-                            // SAFETY: these parameters are certified fine.
+                            // PANIC: these parameters are certified fine.
                             .unwrap(),
                     ),
                 ),
@@ -376,18 +360,6 @@ where
                             error!("Error while sending output: {:?}", e);
                         }
                     }
-                    ConsensusWorkerCommand::FetchOutputs(address, sender) => match address {
-                        Address::Ed25519(address) => {
-                            if let Err(e) = sender.send((
-                                storage::fetch_outputs_for_ed25519_address(&*storage, &address),
-                                ledger_index,
-                            )) {
-                                error!("Error while sending output: {:?}", e);
-                            }
-                        }
-                        Address::Alias(_address) => todo!(),
-                        Address::Nft(_address) => todo!(),
-                    },
                 }
             }
 

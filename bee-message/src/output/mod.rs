@@ -12,6 +12,7 @@ mod native_token;
 mod nft;
 mod nft_id;
 mod output_id;
+mod state_transition;
 mod token_id;
 mod token_scheme;
 mod treasury;
@@ -37,15 +38,17 @@ pub use nft::{NftOutput, NftOutputBuilder};
 pub use nft_id::NftId;
 pub use output_id::OutputId;
 pub(crate) use output_id::OutputIndex;
+pub use state_transition::{StateTransitionError, StateTransitionVerifier};
 pub use token_id::{TokenId, TokenTag};
 pub use token_scheme::TokenScheme;
 pub use treasury::TreasuryOutput;
 pub(crate) use treasury::TreasuryOutputAmount;
-pub(crate) use unlock_condition::StorageDepositAmount;
-pub use unlock_condition::{AddressUnlockCondition, UnlockCondition, UnlockConditions};
+pub(crate) use unlock_condition::{AddressUnlockCondition, StorageDepositAmount};
+pub use unlock_condition::{UnlockCondition, UnlockConditions};
 
-use crate::{address::Address, constant::IOTA_SUPPLY, Error};
+use crate::{address::Address, constant::IOTA_SUPPLY, semantic::ValidationContext, Error};
 
+use crypto::hashes::{blake2b::Blake2b256, Digest};
 use derive_more::From;
 use packable::{bounded::BoundedU64, PackableExt};
 
@@ -60,7 +63,8 @@ pub const OUTPUT_INDEX_MAX: u16 = OUTPUT_COUNT_MAX - 1; // 127
 /// The range of valid indices of outputs of a transaction .
 pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; // [0..127]
 
-pub(crate) type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *Output::AMOUNT_RANGE.end() }>;
+/// Type representing an output amount.
+pub type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *Output::AMOUNT_RANGE.end() }>;
 
 /// A generic output that can represent different types defining the deposit of funds.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
@@ -159,10 +163,54 @@ impl Output {
         }
     }
 
-    /// Verify if a valid storage deposit was made. Each [`Output`] has to have an amount that covers its associated
-    /// byte cost, given by [`ByteCostConfig`]. If there is a
-    /// [`StorageDepositReturnUnlockCondition`](unlock_condition::StorageDepositReturnUnlockCondition), its amount
-    /// is also checked.
+    /// Returns the chain identifier of an [`Output`], if any.
+    pub fn chain_id(&self) -> Option<ChainId> {
+        match self {
+            Self::Treasury(_) => None,
+            Self::Basic(_) => None,
+            Self::Alias(output) => Some(output.chain_id()),
+            Self::Foundry(output) => Some(output.chain_id()),
+            Self::Nft(output) => Some(output.chain_id()),
+        }
+    }
+
+    ///
+    pub fn verify_state_transition(
+        current_state: Option<&Output>,
+        next_state: Option<&Output>,
+        context: &ValidationContext,
+    ) -> Result<(), StateTransitionError> {
+        match (current_state, next_state) {
+            // Creations.
+            (None, Some(Output::Alias(next_state))) => AliasOutput::creation(next_state, context),
+            (None, Some(Output::Foundry(next_state))) => FoundryOutput::creation(next_state, context),
+            (None, Some(Output::Nft(next_state))) => NftOutput::creation(next_state, context),
+
+            // Transitions.
+            (Some(Output::Alias(current_state)), Some(Output::Alias(next_state))) => {
+                AliasOutput::transition(current_state, next_state, context)
+            }
+            (Some(Output::Foundry(current_state)), Some(Output::Foundry(next_state))) => {
+                FoundryOutput::transition(current_state, next_state, context)
+            }
+            (Some(Output::Nft(current_state)), Some(Output::Nft(next_state))) => {
+                NftOutput::transition(current_state, next_state, context)
+            }
+
+            // Destructions.
+            (Some(Output::Alias(current_state)), None) => AliasOutput::destruction(current_state, context),
+            (Some(Output::Foundry(current_state)), None) => FoundryOutput::destruction(current_state, context),
+            (Some(Output::Nft(current_state)), None) => NftOutput::destruction(current_state, context),
+
+            // Unsupported.
+            _ => Err(StateTransitionError::UnsupportedStateTransition),
+        }
+    }
+
+    /// Verifies if a valid storage deposit was made. Each [`Output`] has to have an amount that covers its associated
+    /// byte cost, given by [`ByteCostConfig`].
+    /// If there is a [`StorageDepositReturnUnlockCondition`](unlock_condition::StorageDepositReturnUnlockCondition),
+    /// its amount is also checked.
     pub fn verify_storage_deposit(&self, config: &ByteCostConfig) -> Result<(), Error> {
         let required_output_amount = self.byte_cost(config);
 
@@ -220,7 +268,7 @@ impl ByteCost for Output {
 /// sender [`Address`].
 fn minimum_storage_deposit(config: &ByteCostConfig, address: &Address) -> u64 {
     let address_condition = UnlockCondition::Address(AddressUnlockCondition::new(*address));
-    // Safety: This can never fail because the amount will always be within the valid range. Also, the actual value is
+    // PANIC: This can never fail because the amount will always be within the valid range. Also, the actual value is
     // not important, we are only interested in the storage requirements of the type.
     let basic_output = BasicOutputBuilder::new(OutputAmount::MIN)
         .unwrap()
@@ -228,4 +276,13 @@ fn minimum_storage_deposit(config: &ByteCostConfig, address: &Address) -> u64 {
         .finish()
         .unwrap();
     Output::Basic(basic_output).byte_cost(config)
+}
+
+///
+pub fn create_inputs_commitment<'a>(inputs: impl Iterator<Item = &'a Output>) -> [u8; 32] {
+    let mut hasher = Blake2b256::new();
+
+    inputs.for_each(|output| hasher.update(output.pack_to_vec()));
+
+    hasher.finalize().into()
 }

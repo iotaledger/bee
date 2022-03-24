@@ -1,22 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{
-    address::{Address, Ed25519Address},
-    constant::IOTA_SUPPLY,
-    input::{Input, TreasuryInput, UtxoInput},
-    output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, TreasuryOutput},
-    payload::TreasuryTransactionPayload,
-    Error,
-};
+use bee_message::{input::TreasuryInput, output::TreasuryOutput, payload::TreasuryTransactionPayload};
 
 use packable::PackableExt;
 
 use core::str::FromStr;
 
 const MESSAGE_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const UTXO_INPUT: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00";
-const ED25519_ADDRESS: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
 fn kind() {
@@ -25,49 +16,19 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    let input = Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap());
-    let output = Output::from(TreasuryOutput::new(1_000).unwrap());
-    let transaction = TreasuryTransactionPayload::new(input.clone(), output.clone()).unwrap();
+    let input = TreasuryInput::from_str(MESSAGE_ID).unwrap();
+    let output = TreasuryOutput::new(1_000).unwrap();
+    let transaction = TreasuryTransactionPayload::new(input, output.clone()).unwrap();
 
     assert_eq!(*transaction.input(), input);
     assert_eq!(*transaction.output(), output);
 }
 
 #[test]
-fn new_invalid_input() {
-    let input = Input::from(UtxoInput::from_str(UTXO_INPUT).unwrap());
-    let output = Output::from(TreasuryOutput::new(1_000).unwrap());
-
-    assert!(matches!(
-        TreasuryTransactionPayload::new(input.clone(), output),
-        Err(Error::InvalidInputKind(k)) if k == input.kind()
-    ));
-}
-
-#[test]
-fn new_invalid_output() {
-    let input = Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap());
-    let output = Output::from(
-        BasicOutput::build(IOTA_SUPPLY)
-            .unwrap()
-            .add_unlock_condition(
-                AddressUnlockCondition::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap())).into(),
-            )
-            .finish()
-            .unwrap(),
-    );
-
-    assert!(matches!(
-        TreasuryTransactionPayload::new(input, output.clone()),
-        Err(Error::InvalidOutputKind(k)) if k == output.kind()
-    ));
-}
-
-#[test]
 fn packed_len() {
     let treasury_transaction = TreasuryTransactionPayload::new(
-        Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap()),
-        Output::from(TreasuryOutput::new(1_000).unwrap()),
+        TreasuryInput::from_str(MESSAGE_ID).unwrap(),
+        TreasuryOutput::new(1_000).unwrap(),
     )
     .unwrap();
 
@@ -78,8 +39,8 @@ fn packed_len() {
 #[test]
 fn pack_unpack_valid() {
     let transaction_1 = TreasuryTransactionPayload::new(
-        Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap()),
-        Output::from(TreasuryOutput::new(1_000).unwrap()),
+        TreasuryInput::from_str(MESSAGE_ID).unwrap(),
+        TreasuryOutput::new(1_000).unwrap(),
     )
     .unwrap();
     let transaction_2 =

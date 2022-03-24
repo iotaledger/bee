@@ -30,18 +30,15 @@ impl ImmutableAliasAddressUnlockCondition {
         if let Address::Alias(alias_address) = &self.0 {
             alias_address
         } else {
+            // It has already been validated at construction that the address is an `AliasAddress`.
             unreachable!();
         }
     }
 }
 
 fn verify_alias_address<const VERIFY: bool>(address: &Address) -> Result<(), Error> {
-    if VERIFY {
-        if let Address::Alias(_) = address {
-            Ok(())
-        } else {
-            Err(Error::InvalidAddressKind(address.kind()))
-        }
+    if VERIFY && !address.is_alias() {
+        Err(Error::InvalidAddressKind(address.kind()))
     } else {
         Ok(())
     }

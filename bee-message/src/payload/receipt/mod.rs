@@ -10,7 +10,12 @@ pub(crate) use migrated_funds_entry::MigratedFundsAmount;
 pub use migrated_funds_entry::MigratedFundsEntry;
 pub use tail_transaction_hash::TailTransactionHash;
 
-use crate::{milestone::MilestoneIndex, output::OUTPUT_COUNT_RANGE, payload::Payload, Error};
+use crate::{
+    milestone::MilestoneIndex,
+    output::OUTPUT_COUNT_RANGE,
+    payload::{Payload, TreasuryTransactionPayload},
+    Error,
+};
 
 use hashbrown::HashMap;
 use iterator_sorted::is_unique_sorted;
@@ -39,51 +44,56 @@ pub struct ReceiptPayload {
 }
 
 impl ReceiptPayload {
-    /// The payload kind of a `ReceiptPayload`.
+    /// The payload kind of a [`ReceiptPayload`].
     pub const KIND: u32 = 3;
 
-    /// Creates a new `ReceiptPayload`.
+    /// Creates a new [`ReceiptPayload`].
     pub fn new(
         migrated_at: MilestoneIndex,
         last: bool,
         funds: Vec<MigratedFundsEntry>,
-        transaction: Payload,
+        transaction: TreasuryTransactionPayload,
     ) -> Result<Self, Error> {
         let funds = VecPrefix::<MigratedFundsEntry, ReceiptFundsCount>::try_from(funds)
             .map_err(Error::InvalidReceiptFundsCount)?;
 
-        verify_transaction::<true>(&transaction)?;
         verify_funds::<true>(&funds)?;
 
         Ok(Self {
             migrated_at,
             last,
             funds,
-            transaction,
+            transaction: transaction.into(),
         })
     }
 
-    /// Returns the milestone index at which the funds of a `ReceiptPayload` were migrated at in the legacy network.
+    /// Returns the milestone index at which the funds of a [`ReceiptPayload`] were migrated at in the legacy network.
     pub fn migrated_at(&self) -> MilestoneIndex {
         self.migrated_at
     }
 
-    /// Returns whether a `ReceiptPayload` is the final one for a given migrated at index.
+    /// Returns whether a [`ReceiptPayload`] is the final one for a given migrated at index.
     pub fn last(&self) -> bool {
         self.last
     }
 
-    /// The funds which were migrated with a `ReceiptPayload`.
+    /// The funds which were migrated with a [`ReceiptPayload`].
     pub fn funds(&self) -> &[MigratedFundsEntry] {
         &self.funds
     }
 
-    /// The `TreasuryTransaction` used to fund the funds of a `ReceiptPayload`.
-    pub fn transaction(&self) -> &Payload {
-        &self.transaction
+    /// The [`TreasuryTransactionPayload`](crate::payload::treasury_transaction::TreasuryTransactionPayload) used to
+    /// fund the funds of a [`ReceiptPayload`].
+    pub fn transaction(&self) -> &TreasuryTransactionPayload {
+        if let Payload::TreasuryTransaction(ref transaction) = self.transaction {
+            transaction
+        } else {
+            // It has already been validated at construction that `transaction` is a `TreasuryTransactionPayload`.
+            unreachable!()
+        }
     }
 
-    /// Returns the sum of all `MigratedFundsEntry` items within a `ReceiptPayload`.
+    /// Returns the sum of all [`MigratedFundsEntry`] items within a [`ReceiptPayload`].
     pub fn amount(&self) -> u64 {
         self.funds.iter().fold(0, |acc, funds| acc + funds.amount())
     }

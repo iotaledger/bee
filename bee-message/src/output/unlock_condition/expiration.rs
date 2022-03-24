@@ -96,7 +96,7 @@ impl Packable for ExpirationUnlockCondition {
 #[inline]
 fn verify_milestone_index_timestamp(milestone_index: MilestoneIndex, timestamp: u32) -> Result<(), Error> {
     if *milestone_index == 0 && timestamp == 0 {
-        Err(Error::TimelockUnlockConditionZero)
+        Err(Error::ExpirationUnlockConditionZero)
     } else {
         Ok(())
     }

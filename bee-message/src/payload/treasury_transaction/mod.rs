@@ -3,9 +3,13 @@
 
 //! Module describing the treasury payload.
 
-use crate::{input::Input, output::Output, Error};
+use crate::{
+    input::{Input, TreasuryInput},
+    output::{Output, TreasuryOutput},
+    Error,
+};
 
-/// `TreasuryTransaction` represents a transaction which moves funds from the treasury.
+/// [`TreasuryTransactionPayload`] represents a transaction which moves funds from the treasury.
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreasuryTransactionPayload {
@@ -16,25 +20,35 @@ pub struct TreasuryTransactionPayload {
 }
 
 impl TreasuryTransactionPayload {
-    /// The payload kind of a `TreasuryTransaction`.
+    /// The payload kind of a [`TreasuryTransactionPayload`].
     pub const KIND: u32 = 4;
 
-    /// Creates a new `TreasuryTransaction`.
-    pub fn new(input: Input, output: Output) -> Result<Self, Error> {
-        verify_input::<true>(&input)?;
-        verify_output::<true>(&output)?;
-
-        Ok(Self { input, output })
+    /// Creates a new [`TreasuryTransactionPayload`].
+    pub fn new(input: TreasuryInput, output: TreasuryOutput) -> Result<Self, Error> {
+        Ok(Self {
+            input: input.into(),
+            output: output.into(),
+        })
     }
 
-    /// Returns the input of a `TreasuryTransaction`.
-    pub fn input(&self) -> &Input {
-        &self.input
+    /// Returns the input of a [`TreasuryTransactionPayload`].
+    pub fn input(&self) -> &TreasuryInput {
+        if let Input::Treasury(ref input) = self.input {
+            input
+        } else {
+            // It has already been validated at construction that `input` is a `TreasuryInput`.
+            unreachable!()
+        }
     }
 
-    /// Returns the output of a `TreasuryTransaction`.
-    pub fn output(&self) -> &Output {
-        &self.output
+    /// Returns the output of a [`TreasuryTransactionPayload`].
+    pub fn output(&self) -> &TreasuryOutput {
+        if let Output::Treasury(ref output) = self.output {
+            output
+        } else {
+            // It has already been validated at construction that `output` is a `TreasuryOutput`.
+            unreachable!()
+        }
     }
 }
 

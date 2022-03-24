@@ -9,6 +9,7 @@ use crate::{
     Error,
 };
 
+use hashbrown::HashSet;
 use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 
 use alloc::vec::Vec;
@@ -156,11 +157,13 @@ impl RegularTransactionEssence {
 }
 
 fn verify_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
+    let mut seen_utxos = HashSet::new();
+
     for input in inputs.iter() {
         match input {
-            Input::Utxo(u) => {
-                if inputs.iter().filter(|i| *i == input).count() > 1 {
-                    return Err(Error::DuplicateUtxo(u.clone()));
+            Input::Utxo(utxo) => {
+                if !seen_utxos.insert(utxo) {
+                    return Err(Error::DuplicateUtxo(utxo.clone()));
                 }
             }
             _ => return Err(Error::InvalidInputKind(input.kind())),
