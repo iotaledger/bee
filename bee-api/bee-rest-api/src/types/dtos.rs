@@ -16,7 +16,8 @@ use bee_message::{
             StorageDepositReturnUnlockCondition, TimelockUnlockCondition, UnlockCondition,
         },
         AliasId, AliasOutput, AliasOutputBuilder, BasicOutput, BasicOutputBuilder, FoundryOutput, FoundryOutputBuilder,
-        NativeToken, NftId, NftOutput, NftOutputBuilder, Output, TokenId, TokenScheme, TokenTag, TreasuryOutput,
+        NativeToken, NftId, NftOutput, NftOutputBuilder, Output, SimpleTokenScheme, TokenId, TokenScheme, TokenTag,
+        TreasuryOutput,
     },
     parent::Parents,
     payload::{
@@ -1522,15 +1523,6 @@ pub struct FoundryOutputDto {
     // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
     #[serde(rename = "tokenTag")]
     pub token_tag: TokenTagDto,
-    // Amount of tokens minted by this foundry.
-    #[serde(rename = "mintedTokens")]
-    pub minted_tokens: U256Dto,
-    // Amount of tokens melted by this foundry.
-    #[serde(rename = "meltedTokens")]
-    pub melted_tokens: U256Dto,
-    // Maximum supply of tokens controlled by this foundry.
-    #[serde(rename = "maximumSupply")]
-    pub maximum_supply: U256Dto,
     #[serde(rename = "tokenScheme")]
     pub token_scheme: TokenSchemeDto,
     #[serde(rename = "unlockConditions")]
@@ -1559,9 +1551,67 @@ impl TryFrom<&TokenTagDto> for TokenTag {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TokenSchemeDto {
+pub enum TokenSchemeDto {
+    /// A simple token scheme.
+    Simple(SimpleTokenSchemeDto),
+}
+
+impl From<&TokenScheme> for TokenSchemeDto {
+    fn from(value: &TokenScheme) -> Self {
+        match value {
+            TokenScheme::Simple(v) => Self::Simple(v.into()),
+        }
+    }
+}
+
+impl TryFrom<&TokenSchemeDto> for TokenScheme {
+    type Error = Error;
+
+    fn try_from(value: &TokenSchemeDto) -> Result<Self, Self::Error> {
+        Ok(match value {
+            TokenSchemeDto::Simple(v) => Self::Simple(v.try_into()?),
+        })
+    }
+}
+
+/// Describes a foundry output that is controlled by an alias.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SimpleTokenSchemeDto {
     #[serde(rename = "type")]
     pub kind: u8,
+    // Amount of tokens minted by a foundry.
+    #[serde(rename = "mintedTokens")]
+    pub minted_tokens: U256Dto,
+    // Amount of tokens melted by a foundry.
+    #[serde(rename = "meltedTokens")]
+    pub melted_tokens: U256Dto,
+    // Maximum supply of tokens controlled by a foundry.
+    #[serde(rename = "maximumSupply")]
+    pub maximum_supply: U256Dto,
+}
+
+impl From<&SimpleTokenScheme> for SimpleTokenSchemeDto {
+    fn from(value: &SimpleTokenScheme) -> Self {
+        Self {
+            kind: TokenScheme::Simple as u8,
+            minted_tokens: U256Dto(value.minted_tokens().to_string()),
+            melted_tokens: U256Dto(value.melted_tokens().to_string()),
+            maximum_supply: U256Dto(value.maximum_supply().to_string()),
+        }
+    }
+}
+
+impl TryFrom<&SimpleTokenSchemeDto> for SimpleTokenScheme {
+    type Error = Error;
+
+    fn try_from(value: &SimpleTokenSchemeDto) -> Result<Self, Self::Error> {
+        Self::new(
+            U256::from_str(&value.minted_tokens.0).map_err(|_| Error::InvalidField("mintedTokens"))?,
+            U256::from_str(&value.melted_tokens.0).map_err(|_| Error::InvalidField("meltedTokens"))?,
+            U256::from_str(&value.maximum_supply.0).map_err(|_| Error::InvalidField("maximumSupply"))?,
+        )
+        .map_err(|e| Error::Message(e))
+    }
 }
 
 impl From<&FoundryOutput> for FoundryOutputDto {
@@ -1572,14 +1622,7 @@ impl From<&FoundryOutput> for FoundryOutputDto {
             native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
             serial_number: value.serial_number(),
             token_tag: TokenTagDto(value.token_tag().to_string()),
-            minted_tokens: U256Dto(value.minted_tokens().to_string()),
-            melted_tokens: U256Dto(value.melted_tokens().to_string()),
-            maximum_supply: U256Dto(value.maximum_supply().to_string()),
-            token_scheme: match value.token_scheme() {
-                TokenScheme::Simple => TokenSchemeDto {
-                    kind: TokenScheme::Simple as u8,
-                },
-            },
+            token_scheme: value.token_scheme().into(),
             unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
             feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
             immutable_feature_blocks: value.immutable_feature_blocks().iter().map(Into::into).collect::<_>(),
@@ -1595,13 +1638,7 @@ impl TryFrom<&FoundryOutputDto> for FoundryOutput {
             value.amount.parse::<u64>().map_err(|_| Error::InvalidField("amount"))?,
             value.serial_number,
             (&value.token_tag).try_into()?,
-            U256::from_str(&value.minted_tokens.0).map_err(|_| Error::InvalidField("mintedTokens"))?,
-            U256::from_str(&value.melted_tokens.0).map_err(|_| Error::InvalidField("meltedTokens"))?,
-            U256::from_str(&value.maximum_supply.0).map_err(|_| Error::InvalidField("maximumSupply"))?,
-            match value.token_scheme.kind {
-                0 => TokenScheme::Simple,
-                _ => return Err(Error::InvalidField("token_scheme")),
-            },
+            (&value.token_scheme).try_into()?,
         )?;
 
         for t in &value.native_tokens {
