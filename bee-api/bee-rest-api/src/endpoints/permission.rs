@@ -43,7 +43,7 @@ pub(crate) fn check_permission<B: StorageBackend>(
             let args = args.clone();
             async move {
                 // Check if the requested endpoint is open for public use.
-                if args.rest_api_config.public_routes.is_match(path.as_str()) {
+                if args.rest_api_config.public_routes().is_match(path.as_str()) {
                     return Ok(());
                 }
 
@@ -55,7 +55,7 @@ pub(crate) fn check_permission<B: StorageBackend>(
                     let jwt_string = jwt.to_string();
                     // Every JWT consists of 3 parts: 1) header, 2) payload, 3) signature.
                     // The different parts are separated by `.`.
-                    let split = jwt_string.split('.').collect::<Vec<&str>>();
+                    let split = jwt_string.split('.').collect::<Vec<_>>();
                     // If there are less or more then 3 parts the given JWT is invalid.
                     if split.len() != 3 {
                         return Err(reject::custom(CustomRejection::Forbidden));
@@ -72,7 +72,7 @@ pub(crate) fn check_permission<B: StorageBackend>(
 
                 if jwt_payload.contains(&format!("\"aud\":\"{}\"", API_AUDIENCE_CLAIM)) {
                     if validate_api_jwt(&jwt, &args).is_ok()
-                        && args.rest_api_config.protected_routes.is_match(path.as_str())
+                        && args.rest_api_config.protected_routes().is_match(path.as_str())
                     {
                         return Ok(());
                     }
@@ -109,7 +109,7 @@ fn validate_api_jwt<B: StorageBackend>(
 ) -> Result<TokenData<Claims>, Rejection> {
     jwt.validate(
         args.node_id.to_string(),
-        args.rest_api_config.jwt_salt.to_owned(),
+        args.rest_api_config.jwt_salt().to_owned(),
         API_AUDIENCE_CLAIM.to_owned(),
         false,
         args.node_keypair.secret().as_ref(),
