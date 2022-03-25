@@ -25,7 +25,7 @@ pub struct SimpleTokenScheme {
 
 impl SimpleTokenScheme {
     /// The [`TokenScheme`](crate::output::TokenScheme) kind of a [`SimpleTokenScheme`].
-    pub const KIND: u8 = 5;
+    pub const KIND: u8 = 0;
 
     /// Creates a new [`SimpleTokenScheme`].
     #[inline(always)]

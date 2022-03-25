@@ -27,10 +27,10 @@ impl FoundryId {
         FoundryId::new(bytes)
     }
 
-    /// Returns the [`AliasId`] of the [`FoundryId`].
-    pub fn alias_id(&self) -> AliasId {
+    /// Returns the [`AliasAddress`] of the [`FoundryId`].
+    pub fn alias_address(&self) -> AliasAddress {
         // PANIC: the lengths are known.
-        AliasId::new(self.0[0..AliasId::LENGTH].try_into().unwrap())
+        AliasAddress::from(AliasId::new(self.0[0..AliasId::LENGTH].try_into().unwrap()))
     }
 
     /// Returns the serial number of the [`FoundryId`].
@@ -46,10 +46,6 @@ impl FoundryId {
     /// Returns the [`TokenScheme`] kind of the [`FoundryId`].
     pub fn token_scheme_kind(&self) -> u8 {
         // PANIC: the lengths are known.
-        u8::from_le_bytes(
-            self.0[AliasId::LENGTH + core::mem::size_of::<u32>()..AliasId::LENGTH + core::mem::size_of::<u32>() + 1]
-                .try_into()
-                .unwrap(),
-        )
+        *self.0.last().unwrap()
     }
 }
