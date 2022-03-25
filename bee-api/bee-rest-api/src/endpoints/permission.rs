@@ -28,7 +28,7 @@ lazy_static! {
             "/api/v1/milestones/*",
             "/api/v1/peers*",
         ];
-        // It is safe to use unwrap() because route_to_regex() generates valid expressions.
+        // Panic: unwrapping is fine because all strings in `routes` can be turned into valid regular expressions.
         RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<_>>()).unwrap()
     };
 }
