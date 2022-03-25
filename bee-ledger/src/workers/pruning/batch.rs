@@ -194,7 +194,14 @@ pub fn batch_prunable_confirmed_data<S: StorageBackend>(
                 //     prune_index + mitigation_threshold
                 // });
 
-                let conf_index = unvisited_md.milestone_index().expect("mitigation required");
+                // A non-existing milestone index means the message wasn't confirmed. In that case such an approver
+                // is irrelevant for a message to be considered an SEP, because the next past-cone traversals won't
+                // go through such an unconfirmed message. We can therefore assign smallest possible index which
+                // means that this approver is irrelevant.
+                let conf_index = unvisited_md.milestone_index().unwrap_or_else(|| {
+                    log::trace!("Unconfirmed approver (no milestone index): {unvisited_id}");
+                    prune_index
+                });
 
                 // Update the approver cache.
                 approver_cache.insert(unvisited_id, conf_index);
