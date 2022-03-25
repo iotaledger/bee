@@ -1593,7 +1593,7 @@ pub struct SimpleTokenSchemeDto {
 impl From<&SimpleTokenScheme> for SimpleTokenSchemeDto {
     fn from(value: &SimpleTokenScheme) -> Self {
         Self {
-            kind: TokenScheme::Simple as u8,
+            kind: SimpleTokenScheme::KIND,
             minted_tokens: U256Dto(value.minted_tokens().to_string()),
             melted_tokens: U256Dto(value.melted_tokens().to_string()),
             maximum_supply: U256Dto(value.maximum_supply().to_string()),
@@ -1610,7 +1610,7 @@ impl TryFrom<&SimpleTokenSchemeDto> for SimpleTokenScheme {
             U256::from_str(&value.melted_tokens.0).map_err(|_| Error::InvalidField("meltedTokens"))?,
             U256::from_str(&value.maximum_supply.0).map_err(|_| Error::InvalidField("maximumSupply"))?,
         )
-        .map_err(|e| Error::Message(e))
+        .map_err(Error::Message)
     }
 }
 

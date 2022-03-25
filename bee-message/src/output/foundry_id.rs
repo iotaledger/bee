@@ -45,7 +45,11 @@ impl FoundryId {
 
     /// Returns the [`TokenScheme`] kind of the [`FoundryId`].
     pub fn token_scheme_kind(&self) -> u8 {
-        // PANIC: the lengths are known and the token scheme kind has to be valid.
-        (*self.0.last().unwrap()).try_into().unwrap()
+        // PANIC: the lengths are known.
+        u8::from_le_bytes(
+            self.0[AliasId::LENGTH + core::mem::size_of::<u32>()..AliasId::LENGTH + core::mem::size_of::<u32>() + 1]
+                .try_into()
+                .unwrap(),
+        )
     }
 }

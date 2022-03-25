@@ -96,7 +96,7 @@ impl Packable for SimpleTokenScheme {
 
 #[inline]
 fn verify_supply(minted_tokens: &U256, melted_tokens: &U256, maximum_supply: &U256) -> Result<(), Error> {
-    if maximum_supply.is_zero() || melted_tokens > minted_tokens || minted_tokens - melted_tokens > maximum_supply {
+    if maximum_supply.is_zero() || melted_tokens > minted_tokens || minted_tokens - melted_tokens > *maximum_supply {
         return Err(Error::InvalidFoundryOutputSupply {
             minted: *minted_tokens,
             melted: *melted_tokens,
