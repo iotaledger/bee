@@ -30,7 +30,7 @@ impl MilestoneKeyManager {
         self.min_threshold
     }
 
-    /// Returns the keys ranges that are applicable for a given milestone index.
+    /// Returns the key ranges that are applicable for a given milestone index.
     pub fn applicable_key_ranges(&self, index: MilestoneIndex) -> impl Iterator<Item = &MilestoneKeyRange> {
         self.key_ranges
             .iter()
