@@ -56,8 +56,9 @@ fn validate(
     milestone
         .validate(
             &key_manager
-                .get_public_keys(milestone.essence().index())
-                .into_iter()
+                .applicable_key_ranges(milestone.essence().index())
+                .map(|key_range| key_range.public_key())
+                .cloned()
                 .collect::<Vec<String>>(),
             key_manager.min_threshold(),
         )
