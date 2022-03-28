@@ -40,11 +40,9 @@ EXPOSE 14626/udp
 COPY --chown=nonroot:nonroot --from=build /bee/target/production/bee /app/bee
 
 # Copy the profiles
-COPY --from=build /bee/bee-node/config.chrysalis-comnet.toml /app/.
 COPY --from=build /bee/bee-node/config.chrysalis-devnet.toml /app/.
 COPY --from=build /bee/bee-node/config.chrysalis-mainnet.toml /app/.
 
-COPY --from=build /bee/bee-node/config.chrysalis-comnet.json /app/.
 COPY --from=build /bee/bee-node/config.chrysalis-devnet.json /app/.
 COPY --from=build /bee/bee-node/config.chrysalis-mainnet.json /app/.
 

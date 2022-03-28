@@ -286,17 +286,6 @@ mod test {
     fn config_files_conformity() -> Result<(), NodeConfigError> {
         let json = NodeConfigBuilder::<Storage>::from_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/config.chrysalis-comnet.json"
-        ))?;
-        let toml = NodeConfigBuilder::<Storage>::from_file(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/config.chrysalis-comnet.toml"
-        ))?;
-
-        assert!(json == toml);
-
-        let json = NodeConfigBuilder::<Storage>::from_file(concat!(
-            env!("CARGO_MANIFEST_DIR"),
             "/config.chrysalis-devnet.json"
         ))?;
         let toml = NodeConfigBuilder::<Storage>::from_file(concat!(
