@@ -66,7 +66,7 @@ impl RestApiConfigBuilder {
     }
 
     /// Sets the binding address for the REST API.
-    pub fn bind_address(mut self, addr: &str) -> Self {
+    pub fn with_bind_address(mut self, addr: &str) -> Self {
         match addr.parse() {
             Ok(addr) => {
                 self.bind_address.replace(addr);
@@ -77,31 +77,31 @@ impl RestApiConfigBuilder {
     }
 
     /// Sets the JWT salt.
-    pub fn jwt_salt(mut self, jwt_salt: String) -> Self {
+    pub fn with_jwt_salt(mut self, jwt_salt: String) -> Self {
         self.jwt_salt.replace(jwt_salt);
         self
     }
 
     /// Sets all the routes that are available for public use.
-    pub fn public_routes(mut self, routes: Vec<String>) -> Self {
+    pub fn with_public_routes(mut self, routes: Vec<String>) -> Self {
         self.public_routes.replace(routes);
         self
     }
 
     /// Sets all the routes that need JWT authentication.
-    pub fn protected_routes(mut self, routes: Vec<String>) -> Self {
+    pub fn with_protected_routes(mut self, routes: Vec<String>) -> Self {
         self.protected_routes.replace(routes);
         self
     }
 
     /// Set if the feature proof-of-work should be enabled or not.
-    pub fn feature_proof_of_work(mut self, value: bool) -> Self {
+    pub fn with_feature_proof_of_work(mut self, value: bool) -> Self {
         self.feature_proof_of_work.replace(value);
         self
     }
 
     /// Sets the while flag solidification timeout.
-    pub fn white_flag_solidification_timeout(mut self, timeout: u64) -> Self {
+    pub fn with_white_flag_solidification_timeout(mut self, timeout: u64) -> Self {
         self.white_flag_solidification_timeout.replace(timeout);
         self
     }
