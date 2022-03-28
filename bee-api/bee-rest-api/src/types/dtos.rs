@@ -2122,6 +2122,6 @@ fn is_zero(num: &u32) -> bool {
     *num == 0
 }
 
-fn is_zero_milestone(num: &Milestone) -> bool {
+fn is_zero_milestone(num: &MilestoneIndex) -> bool {
     *num == 0
 }
