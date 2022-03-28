@@ -20,7 +20,6 @@ use packable::{
     unpacker::Unpacker,
     Packable,
 };
-use primitive_types::U256;
 
 use alloc::vec::Vec;
 
@@ -31,9 +30,6 @@ pub struct FoundryOutputBuilder {
     native_tokens: Vec<NativeToken>,
     serial_number: u32,
     token_tag: TokenTag,
-    minted_tokens: U256,
-    melted_tokens: U256,
-    maximum_supply: U256,
     token_scheme: TokenScheme,
     unlock_conditions: Vec<UnlockCondition>,
     feature_blocks: Vec<FeatureBlock>,
@@ -46,21 +42,13 @@ impl FoundryOutputBuilder {
         amount: u64,
         serial_number: u32,
         token_tag: TokenTag,
-        minted_tokens: U256,
-        melted_tokens: U256,
-        maximum_supply: U256,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        verify_supply(&minted_tokens, &melted_tokens, &maximum_supply)?;
-
         Ok(Self {
             amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: Vec::new(),
             serial_number,
             token_tag,
-            minted_tokens,
-            melted_tokens,
-            maximum_supply,
             token_scheme,
             unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
@@ -149,9 +137,6 @@ impl FoundryOutputBuilder {
             native_tokens: NativeTokens::new(self.native_tokens)?,
             serial_number: self.serial_number,
             token_tag: self.token_tag,
-            minted_tokens: self.minted_tokens,
-            melted_tokens: self.melted_tokens,
-            maximum_supply: self.maximum_supply,
             token_scheme: self.token_scheme,
             unlock_conditions,
             feature_blocks,
@@ -172,12 +157,6 @@ pub struct FoundryOutput {
     serial_number: u32,
     // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
     token_tag: TokenTag,
-    // Amount of tokens minted by this foundry.
-    minted_tokens: U256,
-    // Amount of tokens melted by this foundry.
-    melted_tokens: U256,
-    // Maximum supply of tokens controlled by this foundry.
-    maximum_supply: U256,
     token_scheme: TokenScheme,
     unlock_conditions: UnlockConditions,
     feature_blocks: FeatureBlocks,
@@ -196,25 +175,8 @@ impl FoundryOutput {
 
     /// Creates a new [`FoundryOutput`].
     #[inline(always)]
-    pub fn new(
-        amount: u64,
-        serial_number: u32,
-        token_tag: TokenTag,
-        minted_tokens: U256,
-        melted_tokens: U256,
-        maximum_supply: U256,
-        token_scheme: TokenScheme,
-    ) -> Result<Self, Error> {
-        FoundryOutputBuilder::new(
-            amount,
-            serial_number,
-            token_tag,
-            minted_tokens,
-            melted_tokens,
-            maximum_supply,
-            token_scheme,
-        )?
-        .finish()
+    pub fn new(amount: u64, serial_number: u32, token_tag: TokenTag, token_scheme: TokenScheme) -> Result<Self, Error> {
+        FoundryOutputBuilder::new(amount, serial_number, token_tag, token_scheme)?.finish()
     }
 
     /// Creates a new [`FoundryOutputBuilder`].
@@ -223,20 +185,9 @@ impl FoundryOutput {
         amount: u64,
         serial_number: u32,
         token_tag: TokenTag,
-        minted_tokens: U256,
-        melted_tokens: U256,
-        maximum_supply: U256,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        FoundryOutputBuilder::new(
-            amount,
-            serial_number,
-            token_tag,
-            minted_tokens,
-            melted_tokens,
-            maximum_supply,
-            token_scheme,
-        )
+        FoundryOutputBuilder::new(amount, serial_number, token_tag, token_scheme)
     }
 
     ///
@@ -265,26 +216,8 @@ impl FoundryOutput {
 
     ///
     #[inline(always)]
-    pub fn minted_tokens(&self) -> &U256 {
-        &self.minted_tokens
-    }
-
-    ///
-    #[inline(always)]
-    pub fn melted_tokens(&self) -> &U256 {
-        &self.melted_tokens
-    }
-
-    ///
-    #[inline(always)]
-    pub fn maximum_supply(&self) -> &U256 {
-        &self.maximum_supply
-    }
-
-    ///
-    #[inline(always)]
-    pub fn token_scheme(&self) -> TokenScheme {
-        self.token_scheme
+    pub fn token_scheme(&self) -> &TokenScheme {
+        &self.token_scheme
     }
 
     ///
@@ -317,7 +250,7 @@ impl FoundryOutput {
 
     /// Returns the [`FoundryId`] of the [`FoundryOutput`].
     pub fn id(&self) -> FoundryId {
-        FoundryId::build(self.alias_address(), self.serial_number, self.token_scheme)
+        FoundryId::build(self.alias_address(), self.serial_number, &self.token_scheme)
     }
 
     /// Returns the [`TokenId`] of the [`FoundryOutput`].
@@ -329,12 +262,6 @@ impl FoundryOutput {
     #[inline(always)]
     pub fn chain_id(&self) -> ChainId {
         ChainId::Foundry(self.id())
-    }
-
-    ///
-    #[inline(always)]
-    pub fn circulating_supply(&self) -> U256 {
-        self.minted_tokens - self.melted_tokens
     }
 
     ///
@@ -370,13 +297,19 @@ impl StateTransitionVerifier for FoundryOutput {
         next_state: &Self,
         _context: &ValidationContext,
     ) -> Result<(), StateTransitionError> {
-        if current_state.maximum_supply != next_state.maximum_supply
-            || current_state.alias_address() != next_state.alias_address()
+        if current_state.alias_address() != next_state.alias_address()
             || current_state.serial_number != next_state.serial_number
             || current_state.token_tag != next_state.token_tag
             || current_state.token_scheme != next_state.token_scheme
             || current_state.immutable_feature_blocks != next_state.immutable_feature_blocks
         {
+            return Err(StateTransitionError::MutatedImmutableField);
+        }
+
+        let TokenScheme::Simple(ref current_token_scheme) = current_state.token_scheme;
+        let TokenScheme::Simple(ref next_token_scheme) = next_state.token_scheme;
+
+        if current_token_scheme.maximum_supply() != next_token_scheme.maximum_supply() {
             return Err(StateTransitionError::MutatedImmutableField);
         }
 
@@ -396,9 +329,6 @@ impl Packable for FoundryOutput {
         self.native_tokens.pack(packer)?;
         self.serial_number.pack(packer)?;
         self.token_tag.pack(packer)?;
-        self.minted_tokens.pack(packer)?;
-        self.melted_tokens.pack(packer)?;
-        self.maximum_supply.pack(packer)?;
         self.token_scheme.pack(packer)?;
         self.unlock_conditions.pack(packer)?;
         self.feature_blocks.pack(packer)?;
@@ -414,14 +344,6 @@ impl Packable for FoundryOutput {
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
         let serial_number = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
         let token_tag = TokenTag::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let minted_tokens = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let melted_tokens = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let maximum_supply = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
-
-        if VERIFY {
-            verify_supply(&minted_tokens, &melted_tokens, &maximum_supply).map_err(UnpackError::Packable)?;
-        }
-
         let token_scheme = TokenScheme::unpack::<_, VERIFY>(unpacker)?;
 
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
@@ -452,28 +374,12 @@ impl Packable for FoundryOutput {
             native_tokens,
             serial_number,
             token_tag,
-            minted_tokens,
-            melted_tokens,
-            maximum_supply,
             token_scheme,
             unlock_conditions,
             feature_blocks,
             immutable_feature_blocks,
         })
     }
-}
-
-#[inline]
-fn verify_supply(minted_tokens: &U256, melted_tokens: &U256, maximum_supply: &U256) -> Result<(), Error> {
-    if maximum_supply.is_zero() || minted_tokens > maximum_supply || melted_tokens > minted_tokens {
-        return Err(Error::InvalidFoundryOutputSupply {
-            minted: *minted_tokens,
-            melted: *melted_tokens,
-            max: *maximum_supply,
-        });
-    }
-
-    Ok(())
 }
 
 fn verify_unlock_conditions(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
