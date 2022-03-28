@@ -12,22 +12,30 @@ use crate::{
 use hashbrown::{HashMap, HashSet};
 use primitive_types::U256;
 
-use serde::{Deserialize, Serialize};
+use core::fmt;
 
 /// Errors related to ledger types.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum ConflictError {
-    /// I/O error.
-    #[error("i/o error: {0}")]
-    Io(#[from] std::io::Error),
     /// Invalid conflict byte.
-    #[error("invalid conflict byte")]
     InvalidConflict(u8),
 }
 
+impl fmt::Display for ConflictError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ConflictError::InvalidConflict(byte) => write!(f, "invalid conflict byte {byte}"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ConflictError {}
+
 /// Represents the different reasons why a transaction can conflict with the ledger state.
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, packable::Packable)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, packable::Packable)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = ConflictError)]
 #[packable(tag_type = u8, with_error = ConflictError::InvalidConflict)]
 pub enum ConflictReason {

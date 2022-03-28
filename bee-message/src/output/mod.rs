@@ -40,7 +40,7 @@ pub use output_id::OutputId;
 pub(crate) use output_id::OutputIndex;
 pub use state_transition::{StateTransitionError, StateTransitionVerifier};
 pub use token_id::{TokenId, TokenTag};
-pub use token_scheme::TokenScheme;
+pub use token_scheme::{SimpleTokenScheme, TokenScheme};
 pub use treasury::TreasuryOutput;
 pub(crate) use treasury::TreasuryOutputAmount;
 pub(crate) use unlock_condition::{AddressUnlockCondition, StorageDepositAmount};

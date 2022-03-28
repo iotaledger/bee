@@ -102,8 +102,6 @@ fn verify_unique_sorted<const VERIFY: bool>(native_tokens: &[NativeToken]) -> Re
 #[cfg(feature = "dto")]
 #[allow(missing_docs)]
 pub mod dto {
-    use core::str::FromStr;
-
     use serde::{Deserialize, Serialize};
 
     use super::*;
@@ -123,7 +121,7 @@ pub mod dto {
         fn from(value: &NativeToken) -> Self {
             Self {
                 token_id: TokenIdDto(value.token_id().to_string()),
-                amount: U256Dto(serde_json::to_string(value.amount()).expect("Invalid NativeToken amount")),
+                amount: value.amount().into(),
             }
         }
     }
@@ -134,7 +132,7 @@ pub mod dto {
         fn try_from(value: &NativeTokenDto) -> Result<Self, Self::Error> {
             Self::new(
                 (&value.token_id).try_into()?,
-                U256::from_str(&value.amount.0).map_err(|_| DtoError::InvalidField("amount"))?,
+                U256::try_from(&value.amount).map_err(|_| DtoError::InvalidField("amount"))?,
             )
             .map_err(|_| DtoError::InvalidField("nativeTokens"))
         }

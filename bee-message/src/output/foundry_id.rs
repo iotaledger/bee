@@ -15,22 +15,22 @@ string_serde_impl!(FoundryId);
 
 impl FoundryId {
     /// Builds a new [`FoundryId`] from its components.
-    pub fn build(alias_address: &AliasAddress, serial_number: u32, token_scheme: TokenScheme) -> Self {
+    pub fn build(alias_address: &AliasAddress, serial_number: u32, token_scheme: &TokenScheme) -> Self {
         let mut bytes = [0u8; FoundryId::LENGTH];
         let mut packer = SlicePacker::new(&mut bytes);
 
         // PANIC: packing to an array of the correct length can't fail.
         alias_address.pack(&mut packer).unwrap();
         serial_number.pack(&mut packer).unwrap();
-        token_scheme.pack(&mut packer).unwrap();
+        token_scheme.kind().pack(&mut packer).unwrap();
 
         FoundryId::new(bytes)
     }
 
-    /// Returns the [`AliasId`] of the [`FoundryId`].
-    pub fn alias_id(&self) -> AliasId {
+    /// Returns the [`AliasAddress`] of the [`FoundryId`].
+    pub fn alias_address(&self) -> AliasAddress {
         // PANIC: the lengths are known.
-        AliasId::new(self.0[0..AliasId::LENGTH].try_into().unwrap())
+        AliasAddress::from(AliasId::new(self.0[0..AliasId::LENGTH].try_into().unwrap()))
     }
 
     /// Returns the serial number of the [`FoundryId`].
@@ -43,9 +43,9 @@ impl FoundryId {
         )
     }
 
-    /// Returns the [`TokenScheme`] of the [`FoundryId`].
-    pub fn token_scheme(&self) -> TokenScheme {
-        // PANIC: the lengths are known and the token scheme kind has to be valid.
-        (*self.0.last().unwrap()).try_into().unwrap()
+    /// Returns the [`TokenScheme`] kind of the [`FoundryId`].
+    pub fn token_scheme_kind(&self) -> u8 {
+        // PANIC: the lengths are known.
+        *self.0.last().unwrap()
     }
 }
