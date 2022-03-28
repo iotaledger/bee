@@ -17,6 +17,9 @@ use crate::endpoints::{config::route_to_regex, rejection::CustomRejection, stora
 const BEARER: &str = "Bearer ";
 pub const API_AUDIENCE_CLAIM: &str = "api";
 pub const DASHBOARD_AUDIENCE_CLAIM: &str = "dashboard";
+const API_JWT_HINT: &str = "\"aud\":\"api\"";
+#[cfg(feature = "dashboard")]
+const DASHBOARD_JWT_HINT: &str = "\"aud\":\"dashboard\"";
 
 lazy_static! {
     static ref DASHBOARD_ROUTES: RegexSet = {
@@ -70,7 +73,7 @@ pub(crate) fn check_permission<B: StorageBackend>(
                     String::from_utf8(decoded_payload_bytes).map_err(|_| CustomRejection::Forbidden)?
                 };
 
-                if jwt_payload.contains(&format!("\"aud\":\"{}\"", API_AUDIENCE_CLAIM)) {
+                if jwt_payload.contains(API_JWT_HINT) {
                     if validate_api_jwt(&jwt, &args).is_ok()
                         && args.rest_api_config.protected_routes().is_match(path.as_str())
                     {
@@ -78,7 +81,7 @@ pub(crate) fn check_permission<B: StorageBackend>(
                     }
                 } else {
                     #[cfg(feature = "dashboard")]
-                    if jwt_payload.contains(&format!("\"aud\":\"{}\"", DASHBOARD_AUDIENCE_CLAIM))
+                    if jwt_payload.contains(DASHBOARD_JWT_HINT)
                         && validate_dashboard_jwt(&jwt, &args).is_ok()
                         && DASHBOARD_ROUTES.is_match(path.as_str())
                     {
