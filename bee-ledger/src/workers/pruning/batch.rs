@@ -167,10 +167,9 @@ pub fn batch_prunable_confirmed_data<S: StorageBackend>(
                     .map_err(|e| Error::Storage(Box::new(e)))?
                     .ok_or(Error::MissingMetadata(unvisited_id))?;
 
-                // A non-existing milestone index means the message wasn't confirmed. In that case such an approver
-                // is irrelevant for a message to be considered as an SEP, because the next past-cone traversals won't
-                // go through such an unconfirmed message. We can therefore assign smallest possible index which
-                // means that this approver is irrelevant.
+                // A non-existing milestone index means that a message remained unconfirmed and therefore is neglibable
+                // for its parent in terms of SEP consideration. This can be expressed by assigning the
+                // current pruning index.
                 let conf_index = unvisited_md.milestone_index().unwrap_or_else(|| {
                     log::trace!("Unconfirmed approver (no milestone index): {unvisited_id}");
                     prune_index
