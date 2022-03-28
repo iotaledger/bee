@@ -41,8 +41,6 @@ use primitive_types::U256;
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
-use core::str::FromStr;
-
 /// The message object that nodes gossip around in the network.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
@@ -920,7 +918,7 @@ impl From<&NativeToken> for NativeTokenDto {
     fn from(value: &NativeToken) -> Self {
         Self {
             token_id: TokenIdDto(value.token_id().to_string()),
-            amount: U256Dto(serde_json::to_string(value.amount()).expect("Invalid NativeToken amount")),
+            amount: value.amount().into(),
         }
     }
 }
@@ -931,7 +929,7 @@ impl TryFrom<&NativeTokenDto> for NativeToken {
     fn try_from(value: &NativeTokenDto) -> Result<Self, Self::Error> {
         Self::new(
             (&value.token_id).try_into()?,
-            U256::from_str(&value.amount.0).map_err(|_| Error::InvalidField("amount"))?,
+            U256::try_from(&value.amount).map_err(|_| Error::InvalidField("amount"))?,
         )
         .map_err(|_| Error::InvalidField("nativeTokens"))
     }
@@ -960,6 +958,20 @@ impl TryFrom<&TokenIdDto> for TokenId {
 /// Describes an U256.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct U256Dto(pub String);
+
+impl From<&U256> for U256Dto {
+    fn from(value: &U256) -> Self {
+        Self(prefix_hex::encode(*value))
+    }
+}
+
+impl TryFrom<&U256Dto> for U256 {
+    type Error = prefix_hex::Error;
+
+    fn try_from(value: &U256Dto) -> Result<Self, Self::Error> {
+        prefix_hex::decode(&value.0)
+    }
+}
 
 #[derive(Clone, Debug)]
 pub enum UnlockConditionDto {
@@ -1594,9 +1606,9 @@ impl From<&SimpleTokenScheme> for SimpleTokenSchemeDto {
     fn from(value: &SimpleTokenScheme) -> Self {
         Self {
             kind: SimpleTokenScheme::KIND,
-            minted_tokens: U256Dto(value.minted_tokens().to_string()),
-            melted_tokens: U256Dto(value.melted_tokens().to_string()),
-            maximum_supply: U256Dto(value.maximum_supply().to_string()),
+            minted_tokens: value.minted_tokens().into(),
+            melted_tokens: value.melted_tokens().into(),
+            maximum_supply: value.maximum_supply().into(),
         }
     }
 }
@@ -1606,9 +1618,9 @@ impl TryFrom<&SimpleTokenSchemeDto> for SimpleTokenScheme {
 
     fn try_from(value: &SimpleTokenSchemeDto) -> Result<Self, Self::Error> {
         Self::new(
-            U256::from_str(&value.minted_tokens.0).map_err(|_| Error::InvalidField("mintedTokens"))?,
-            U256::from_str(&value.melted_tokens.0).map_err(|_| Error::InvalidField("meltedTokens"))?,
-            U256::from_str(&value.maximum_supply.0).map_err(|_| Error::InvalidField("maximumSupply"))?,
+            U256::try_from(&value.minted_tokens).map_err(|_| Error::InvalidField("mintedTokens"))?,
+            U256::try_from(&value.melted_tokens).map_err(|_| Error::InvalidField("meltedTokens"))?,
+            U256::try_from(&value.maximum_supply).map_err(|_| Error::InvalidField("maximumSupply"))?,
         )
         .map_err(Error::Message)
     }
