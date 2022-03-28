@@ -56,8 +56,6 @@ pub fn batch_prunable_confirmed_data<S: StorageBackend>(
     let mut new_seps = Seps::with_capacity(512);
     // We collect stats during the traversal, and return them as a result of this function.
     let mut metrics = ConfirmedDataPruningMetrics::default();
-    // // FIXME: mitigation code
-    // let mitigation_threshold = tangle.config().below_max_depth() + EXTRA_PRUNING_DEPTH; // = BMD + 5
 
     // Get the `MessageId` of the milestone we are about to prune from the storage.
     let prune_id = *Fetch::<MilestoneIndex, Milestone>::fetch(storage, &prune_index)
