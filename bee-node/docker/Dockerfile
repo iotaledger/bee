@@ -9,7 +9,7 @@ LABEL org.label-schema.description="Bee node software to connect to the IOTA and
 LABEL org.label-schema.name="iotaledger/bee"
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.vcs-url="https://github.com/iotaledger/bee"
-LABEL org.label-schema.usage="https://github.com/iotaledger/bee/blob/mainnet/documentation/docs/getting_started/docker.md"
+LABEL org.label-schema.usage="https://github.com/iotaledger/bee/blob/production/documentation/docs/getting_started/docker.md"
 
 RUN apt-get update && \
     apt-get install cmake clang -y
