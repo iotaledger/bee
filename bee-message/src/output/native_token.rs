@@ -72,6 +72,15 @@ impl TryFrom<Vec<NativeToken>> for NativeTokens {
     }
 }
 
+impl IntoIterator for NativeTokens {
+    type Item = NativeToken;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Into::<Box<[NativeToken]>>::into(self.0).into_vec().into_iter()
+    }
+}
+
 impl NativeTokens {
     /// Maximum number of different native tokens that can be referenced in one transaction.
     pub const COUNT_MAX: u8 = 64;

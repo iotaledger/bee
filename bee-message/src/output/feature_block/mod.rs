@@ -99,6 +99,15 @@ impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
     }
 }
 
+impl IntoIterator for FeatureBlocks {
+    type Item = FeatureBlock;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Into::<Box<[FeatureBlock]>>::into(self.0).into_vec().into_iter()
+    }
+}
+
 impl FeatureBlocks {
     ///
     pub const COUNT_MAX: u8 = 4;
