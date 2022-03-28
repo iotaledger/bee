@@ -77,7 +77,7 @@ impl IntoIterator for NativeTokens {
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
-        Into::<Box<[NativeToken]>>::into(self.0).into_vec().into_iter()
+        Vec::from(Into::<Box<[NativeToken]>>::into(self.0)).into_iter()
     }
 }
 

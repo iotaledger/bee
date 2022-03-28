@@ -96,7 +96,7 @@ impl IntoIterator for UnlockBlocks {
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
-        Into::<Box<[UnlockBlock]>>::into(self.0).into_vec().into_iter()
+        Vec::from(Into::<Box<[UnlockBlock]>>::into(self.0)).into_iter()
     }
 }
 

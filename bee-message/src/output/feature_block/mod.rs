@@ -104,7 +104,7 @@ impl IntoIterator for FeatureBlocks {
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
-        Into::<Box<[FeatureBlock]>>::into(self.0).into_vec().into_iter()
+        Vec::from(Into::<Box<[FeatureBlock]>>::into(self.0)).into_iter()
     }
 }
 
