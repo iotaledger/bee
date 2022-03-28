@@ -156,10 +156,9 @@ impl RestApiConfigBuilder {
 
         let feature_proof_of_work = self.feature_proof_of_work.unwrap_or(DEFAULT_FEATURE_PROOF_OF_WORK);
 
-        let white_flag_solidification_timeout = match self.white_flag_solidification_timeout {
-            Some(timeout) => Duration::from_secs(timeout),
-            None => DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT,
-        };
+        let white_flag_solidification_timeout = self
+            .white_flag_solidification_timeout
+            .map_or_else(|| DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT, Duration::from_secs);
 
         RestApiConfig {
             bind_socket_addr: SocketAddr::new(address, port),
