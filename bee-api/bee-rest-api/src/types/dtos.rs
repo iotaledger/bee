@@ -920,7 +920,7 @@ impl From<&NativeToken> for NativeTokenDto {
     fn from(value: &NativeToken) -> Self {
         Self {
             token_id: TokenIdDto(value.token_id().to_string()),
-            amount: U256Dto(serde_json::to_string(value.amount()).expect("Invalid NativeToken amount")),
+            amount: value.amount().into(),
         }
     }
 }
@@ -931,7 +931,7 @@ impl TryFrom<&NativeTokenDto> for NativeToken {
     fn try_from(value: &NativeTokenDto) -> Result<Self, Self::Error> {
         Self::new(
             (&value.token_id).try_into()?,
-            U256::from_str(&value.amount.0).map_err(|_| Error::InvalidField("amount"))?,
+            U256::try_from(&value.amount).map_err(|_| Error::InvalidField("amount"))?,
         )
         .map_err(|_| Error::InvalidField("nativeTokens"))
     }
@@ -960,6 +960,20 @@ impl TryFrom<&TokenIdDto> for TokenId {
 /// Describes an U256.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct U256Dto(pub String);
+
+impl From<&U256> for U256Dto {
+    fn from(value: &U256) -> Self {
+        Self(prefix_hex::encode(*value))
+    }
+}
+
+impl TryFrom<&U256Dto> for U256 {
+    type Error = prefix_hex::Error;
+
+    fn try_from(value: &U256Dto) -> Result<Self, Self::Error> {
+        prefix_hex::decode(&value.0)
+    }
+}
 
 #[derive(Clone, Debug)]
 pub enum UnlockConditionDto {
