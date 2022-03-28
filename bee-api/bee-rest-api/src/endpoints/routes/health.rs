@@ -3,7 +3,7 @@
 
 use std::{
     convert::Infallible,
-    time::{SystemTime, UNIX_EPOCH},
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 use bee_protocol::workers::PeerManager;
@@ -13,7 +13,7 @@ use warp::{filters::BoxedFilter, http::StatusCode, Filter, Reply};
 use crate::endpoints::{filters::with_args, storage::StorageBackend, ApiArgsFullNode};
 
 const HEALTH_CONFIRMED_THRESHOLD: u32 = 2; // in milestones
-const HEALTH_MILESTONE_AGE_MAX: u64 = 5 * 60; // in seconds
+const HEALTH_MILESTONE_AGE_MAX: Duration = Duration::from_secs(5 * 60);
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     warp::path("health").and(warp::path::end())
@@ -51,7 +51,7 @@ pub fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &PeerMana
                 .expect("Clock may have gone backwards")
                 .as_secs() as u64)
                 .saturating_sub(milestone.timestamp())
-                <= HEALTH_MILESTONE_AGE_MAX
+                <= HEALTH_MILESTONE_AGE_MAX.as_secs()
         }
         None => false,
     }
