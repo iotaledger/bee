@@ -220,8 +220,8 @@ impl RestApiConfig {
     }
 
     /// Returns the white flag solidification timeout.
-    pub fn white_flag_solidification_timeout(&self) -> &Duration {
-        &self.white_flag_solidification_timeout
+    pub fn white_flag_solidification_timeout(&self) -> Duration {
+        self.white_flag_solidification_timeout
     }
 }
 
