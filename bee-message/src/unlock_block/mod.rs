@@ -82,6 +82,24 @@ pub struct UnlockBlocks(
     #[packable(verify_with = verify_unlock_blocks)] BoxedSlicePrefix<UnlockBlock, UnlockBlockCount>,
 );
 
+impl TryFrom<Vec<UnlockBlock>> for UnlockBlocks {
+    type Error = Error;
+
+    #[inline(always)]
+    fn try_from(unlock_blocks: Vec<UnlockBlock>) -> Result<Self, Self::Error> {
+        Self::new(unlock_blocks)
+    }
+}
+
+impl IntoIterator for UnlockBlocks {
+    type Item = UnlockBlock;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Vec::from(Into::<Box<[UnlockBlock]>>::into(self.0)).into_iter()
+    }
+}
+
 impl UnlockBlocks {
     /// Creates a new [`UnlockBlocks`].
     pub fn new(unlock_blocks: Vec<UnlockBlock>) -> Result<Self, Error> {
