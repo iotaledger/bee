@@ -1608,9 +1608,9 @@ impl From<&SimpleTokenScheme> for SimpleTokenSchemeDto {
     fn from(value: &SimpleTokenScheme) -> Self {
         Self {
             kind: SimpleTokenScheme::KIND,
-            minted_tokens: U256Dto(value.minted_tokens().to_string()),
-            melted_tokens: U256Dto(value.melted_tokens().to_string()),
-            maximum_supply: U256Dto(value.maximum_supply().to_string()),
+            minted_tokens: value.minted_tokens().into(),
+            melted_tokens: value.melted_tokens().into(),
+            maximum_supply: value.maximum_supply().into(),
         }
     }
 }
@@ -1620,9 +1620,9 @@ impl TryFrom<&SimpleTokenSchemeDto> for SimpleTokenScheme {
 
     fn try_from(value: &SimpleTokenSchemeDto) -> Result<Self, Self::Error> {
         Self::new(
-            U256::from_str(&value.minted_tokens.0).map_err(|_| Error::InvalidField("mintedTokens"))?,
-            U256::from_str(&value.melted_tokens.0).map_err(|_| Error::InvalidField("meltedTokens"))?,
-            U256::from_str(&value.maximum_supply.0).map_err(|_| Error::InvalidField("maximumSupply"))?,
+            U256::try_from(&value.minted_tokens).map_err(|_| Error::InvalidField("mintedTokens"))?,
+            U256::try_from(&value.melted_tokens).map_err(|_| Error::InvalidField("meltedTokens"))?,
+            U256::try_from(&value.maximum_supply).map_err(|_| Error::InvalidField("maximumSupply"))?,
         )
         .map_err(Error::Message)
     }
