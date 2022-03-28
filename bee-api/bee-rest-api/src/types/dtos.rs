@@ -1182,12 +1182,10 @@ pub struct TimelockUnlockConditionDto {
     #[serde(rename = "type")]
     pub kind: u8,
     #[serde(rename = "milestoneIndex")]
-    #[serde(skip_serializing_if = "is_zero_milestone")]
-    #[serde(default)]
+    #[serde(skip_serializing_if = "is_zero_milestone", default)]
     pub milestone_index: MilestoneIndex,
     #[serde(rename = "unixTime")]
-    #[serde(skip_serializing_if = "is_zero")]
-    #[serde(default)]
+    #[serde(skip_serializing_if = "is_zero", default)]
     pub timestamp: u32,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1197,10 +1195,10 @@ pub struct ExpirationUnlockConditionDto {
     #[serde(rename = "returnAddress")]
     pub return_address: AddressDto,
     #[serde(rename = "milestoneIndex")]
+    #[serde(skip_serializing_if = "is_zero_milestone", default)]
     pub milestone_index: MilestoneIndex,
     #[serde(rename = "unixTime")]
-    #[serde(skip_serializing_if = "is_zero")]
-    #[serde(default)]
+    #[serde(skip_serializing_if = "is_zero", default)]
     pub timestamp: u32,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
