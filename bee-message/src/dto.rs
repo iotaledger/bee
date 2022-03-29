@@ -6,7 +6,7 @@ use crate::milestone::MilestoneIndex;
 use primitive_types::U256;
 use serde::{Deserialize, Serialize};
 
-/// Describes an U256.
+/// Describes a U256.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct U256Dto(pub String);
 
