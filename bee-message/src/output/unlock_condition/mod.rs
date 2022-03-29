@@ -122,6 +122,15 @@ impl TryFrom<Vec<UnlockCondition>> for UnlockConditions {
     }
 }
 
+impl IntoIterator for UnlockConditions {
+    type Item = UnlockCondition;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Vec::from(Into::<Box<[UnlockCondition]>>::into(self.0)).into_iter()
+    }
+}
+
 impl UnlockConditions {
     ///
     pub const COUNT_MAX: u8 = 7;

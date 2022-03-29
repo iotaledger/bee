@@ -90,15 +90,20 @@ fn verify_milestone_index_timestamp(milestone_index: MilestoneIndex, timestamp: 
 pub mod dto {
     use serde::{Deserialize, Serialize};
 
-    use crate::milestone::MilestoneIndex;
+    use crate::{
+        dto::{is_zero, is_zero_milestone},
+        milestone::MilestoneIndex,
+    };
 
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct TimelockUnlockConditionDto {
         #[serde(rename = "type")]
         pub kind: u8,
         #[serde(rename = "milestoneIndex")]
+        #[serde(skip_serializing_if = "is_zero_milestone", default)]
         pub milestone_index: MilestoneIndex,
         #[serde(rename = "unixTime")]
+        #[serde(skip_serializing_if = "is_zero", default)]
         pub timestamp: u32,
     }
 }

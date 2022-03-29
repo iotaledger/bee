@@ -1,11 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    address::Address,
-    constant::{IOTA_SUPPLY, STORAGE_DEPOSIT_MIN},
-    Error,
-};
+use crate::{address::Address, constant::IOTA_SUPPLY, Error};
 
 use packable::bounded::BoundedU64;
 
@@ -31,7 +27,7 @@ impl StorageDepositReturnUnlockCondition {
     /// The [`UnlockCondition`](crate::output::UnlockCondition) kind of a [`StorageDepositReturnUnlockCondition`].
     pub const KIND: u8 = 1;
     /// Valid amounts for a [`StorageDepositReturnUnlockCondition`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = STORAGE_DEPOSIT_MIN..=IOTA_SUPPLY;
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
 
     /// Creates a new [`StorageDepositReturnUnlockCondition`].
     #[inline(always)]
