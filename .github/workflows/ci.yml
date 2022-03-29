@@ -3,9 +3,9 @@ name: CI
 on:
   push:
     branches:
-      - mainnet
+      - production
       - 'mainnet-develop*'
-      - shimmer
+      - staging
       - 'shimmer-develop*'
     paths-ignore:
       - 'documentation/**'
@@ -13,16 +13,16 @@ on:
       - 'bee-node/docker/**'
   pull_request:
     branches:
-      - mainnet
+      - production
       - 'mainnet-develop*'
-      - shimmer
+      - staging
       - 'shimmer-develop*'
     paths-ignore:
       - 'documentation/**'
       - '**.md'
       - 'bee-node/docker/**'
 
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
