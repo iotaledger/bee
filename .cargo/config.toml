@@ -1,11 +1,2 @@
 [advisories]
 ignore = ["RUSTSEC-2020-0159", "RUSTSEC-2020-0071", "RUSTSEC-2021-0127"]
-
-[alias]
-ci-build = "hack --all build --all-targets --all-features --release"
-ci-test = "hack --all test --all-targets --all-features --release"
-ci-doctest = "hack --all test --doc --all-features --release"
-ci-doc = "hack --all doc --all-features --no-deps --document-private-items"
-ci-udeps = "hack --all udeps --all-targets --all-features --backend=depinfo"
-ci-clippy = "hack --all clippy --all-targets --all-features -- -D warnings"
-ci-fmt = "fmt --all -- --check"
