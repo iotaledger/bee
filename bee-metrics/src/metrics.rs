@@ -19,20 +19,23 @@ impl ResidentSetSize {
     }
 
     pub async fn update(&self) {
-        let output = Command::new("ps")
-            .arg("-o")
-            .arg("rss=")
-            .arg("--pid")
-            .arg(&self.pid)
-            .output()
-            .await
-            .unwrap();
+        if cfg!(unix) {
+            let output = Command::new("ps")
+                .arg("-o")
+                .arg("rss=")
+                .arg("--pid")
+                .arg(&self.pid)
+                .output()
+                .await
+                .unwrap();
 
-        if output.status.success() {
-            let stdout = String::from_utf8(output.stdout).unwrap();
-            let value: u64 = stdout.trim_start().trim_end_matches('\n').parse().unwrap();
-            println!("Setting gauge metric to {}", value);
-            self.gauge.set(value);
+            if output.status.success() {
+                let stdout = String::from_utf8(output.stdout).unwrap();
+                let value: u64 = stdout.trim_start().trim_end_matches('\n').parse().unwrap();
+                self.gauge.set(value);
+            }
+        } else {
+            // FIXME: handle windows.
         }
     }
 }
