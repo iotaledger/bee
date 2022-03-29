@@ -22,7 +22,10 @@ mod status;
 
 use bee_autopeering::event::EventRx as AutopeeringEventRx;
 use bee_gossip::NetworkEventReceiver as NetworkEventRx;
-use bee_runtime::node::{Node, NodeBuilder};
+use bee_runtime::{
+    node::{Node, NodeBuilder},
+    worker::Worker,
+};
 
 use self::peer::PeerManagerConfig;
 pub(crate) use self::{
@@ -46,7 +49,7 @@ pub(crate) use self::{
 };
 pub use self::{
     message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent},
-    metrics::MetricsWorker,
+    metrics::{MetricsWorker, MetricsWorkerConfig, MetricsWorkerConfigBuilder},
     peer::{PeerManager, PeerManagerResWorker},
     requester::{request_message, MessageRequesterWorker, RequestedMessages, RequestedMilestones},
 };
@@ -57,12 +60,13 @@ pub fn init<N: Node>(
     network_events: NetworkEventRx,
     autopeering_events: Option<AutopeeringEventRx>,
     node_builder: N::Builder,
+    metrics_config: <MetricsWorker as Worker<N>>::Config,
 ) -> N::Builder
 where
     N::Backend: storage::StorageBackend,
 {
     node_builder
-        .with_worker::<MetricsWorker>()
+        .with_worker_cfg::<MetricsWorker>(metrics_config)
         .with_worker::<PeerManagerResWorker>()
         .with_worker_cfg::<PeerManagerWorker>(PeerManagerConfig {
             network_rx: network_events,

@@ -26,6 +26,8 @@ const IDENTITY_PATH_DEFAULT: &str = "./identity.key";
 /// The entry point of the node software.
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn Error>> {
+    let pid = std::process::id();
+
     // Load the command line arguments passed to the binary.
     let cl_args = ClArgs::load();
 
@@ -34,7 +36,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .identity_path()
         .unwrap_or_else(|| Path::new(IDENTITY_PATH_DEFAULT))
         .to_owned();
-    let (identity_field, config) = deserialize_config(&cl_args);
+    let (identity_field, config) = deserialize_config(&cl_args, pid);
 
     // Initialize the logger.
     #[cfg(not(feature = "trace"))]
@@ -142,11 +144,11 @@ fn migrate_keypair(encoded: String) -> Result<Keypair, IdentityMigrationError> {
     }
 }
 
-fn deserialize_config(cl_args: &ClArgs) -> (Option<String>, NodeConfig<Storage>) {
+fn deserialize_config(cl_args: &ClArgs, pid: u32) -> (Option<String>, NodeConfig<Storage>) {
     match NodeConfigBuilder::<Storage>::from_file(
         cl_args.config_path().unwrap_or_else(|| Path::new(CONFIG_PATH_DEFAULT)),
     ) {
-        Ok(builder) => builder.apply_args(cl_args).finish(),
+        Ok(builder) => builder.apply_args(cl_args).with_pid(pid).finish(),
         Err(e) => panic!("Failed to create the node config builder: {}", e),
     }
 }

@@ -17,7 +17,10 @@ use bee_ledger::workers::{
 };
 #[cfg(feature = "dashboard")]
 use bee_plugin_dashboard::config::{DashboardConfig, DashboardConfigBuilder};
-use bee_protocol::workers::config::{ProtocolConfig, ProtocolConfigBuilder};
+use bee_protocol::workers::{
+    config::{ProtocolConfig, ProtocolConfigBuilder},
+    MetricsWorkerConfig, MetricsWorkerConfigBuilder,
+};
 use bee_rest_api::endpoints::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_tangle::config::{TangleConfig, TangleConfigBuilder};
 use fern_logger::{LoggerConfig, LoggerConfigBuilder, LOGGER_STDOUT_NAME};
@@ -59,6 +62,7 @@ pub struct NodeConfig<S: NodeStorageBackend> {
     pub(crate) dashboard: DashboardConfig,
     #[cfg(feature = "trace")]
     pub(crate) tracing: TraceConfig,
+    pub(crate) metrics: MetricsWorkerConfig,
 }
 
 impl<S: NodeStorageBackend> NodeConfig<S> {
@@ -113,6 +117,7 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
     #[cfg(feature = "trace")]
     pub(crate) tracing: Option<TraceConfigBuilder>,
+    pub(crate) metrics: Option<MetricsWorkerConfigBuilder>,
 }
 
 // This cannot be derived because `S` does not implement `PartialEq`.
@@ -142,6 +147,7 @@ where
                 dashboard: self_dashboard,
             #[cfg(feature = "trace")]
                 tracing: self_tracing,
+            metrics: self_metrics,
         } = self;
 
         #[allow(unused_mut)]
@@ -157,7 +163,8 @@ where
             && (self_snapshot == &other.snapshot)
             && (self_pruning == &other.pruning)
             && (self_storage == &other.storage)
-            && (self_tangle == &other.tangle);
+            && (self_tangle == &other.tangle)
+            && (self_metrics == &other.metrics);
 
         cfg_if::cfg_if! {
             if #[cfg(feature = "dashboard")] {
@@ -219,6 +226,15 @@ where
         self
     }
 
+    pub fn with_pid(mut self, pid: u32) -> Self {
+        self.metrics = self
+            .metrics
+            .or_else(|| Some(MetricsWorkerConfigBuilder::default()))
+            .map(|metrics| metrics.with_pid(pid));
+
+        self
+    }
+
     /// Returns the built node config.
     pub fn finish(self) -> (Option<String>, NodeConfig<S>) {
         // Create the necessary info about the network.
@@ -255,6 +271,7 @@ where
                 dashboard: self.dashboard.unwrap_or_default().finish(),
                 #[cfg(feature = "trace")]
                 tracing: self.tracing.unwrap_or_default().finish(),
+                metrics: self.metrics.unwrap().finish(),
             },
         )
     }

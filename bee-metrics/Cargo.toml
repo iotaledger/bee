@@ -1,0 +1,17 @@
+[package]
+name = "bee-metrics"
+version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
+edition = "2021"
+description = "Track metrics using prometheus"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "metrics", "prometheus" ]
+homepage = "https://www.iota.org"
+
+[dependencies]
+prometheus-client = "0.15.1"
+axum = "0.4.8"
+tokio = { version = "1", features = ["full"] }
+parking_lot = "0.12.0"

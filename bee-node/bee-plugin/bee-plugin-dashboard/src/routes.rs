@@ -102,7 +102,7 @@ pub(crate) fn api_routes(
     warp::path!("api" / ..)
         .and(reverse_proxy_filter(
             "".to_string(),
-            "http://".to_owned() + &rest_api_config.bind_socket_addr().to_string() + "/",
+            format!("http://{}/", rest_api_config.bind_socket_addr()),
         ))
         .map(|res| res)
 }
