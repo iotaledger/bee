@@ -1,5 +1,12 @@
+// Copyright 2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+//! Expose metrics via a prometheus-compatible client.
+
+#![deny(missing_docs)]
+
 pub mod metrics;
-pub mod registry;
+mod registry;
 
 use std::net::SocketAddr;
 
@@ -11,7 +18,7 @@ use axum::{
 };
 use prometheus_client::encoding::text::encode;
 
-use crate::registry::Registry;
+pub use crate::registry::Registry;
 
 async fn get_metrics(state: Extension<Registry>) -> (StatusCode, HeaderMap, Vec<u8>) {
     let mut headers = HeaderMap::new();
@@ -26,6 +33,8 @@ async fn get_metrics(state: Extension<Registry>) -> (StatusCode, HeaderMap, Vec<
     (StatusCode::OK, headers, encoded)
 }
 
+/// Serve the metrics registered in the provided [`Registry`] using the provided `SocketAddr`. This
+/// endpoint can be scraped by Prometheus to collect the metrics.
 pub async fn serve_metrics(addr: SocketAddr, registry: Registry) -> Result<(), axum::Error> {
     let app = Router::new()
         .route("/metrics", get(get_metrics))

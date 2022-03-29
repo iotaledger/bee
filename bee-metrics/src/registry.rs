@@ -1,3 +1,6 @@
+// Copyright 2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::{ops::Deref, sync::Arc};
 
 use parking_lot::RwLock;
@@ -21,12 +24,14 @@ impl EncodeMetric for Box<dyn SendSyncEncodeMetric> {
     }
 }
 
+/// A type used to register metrics so they can be scraped later.
 #[derive(Clone)]
 pub struct Registry {
     pub(crate) registry: Arc<RwLock<PrometheusRegistry<Box<dyn SendSyncEncodeMetric + 'static>>>>,
 }
 
 impl Registry {
+    /// Registers a new metric with a name and a help message.
     pub fn register(
         &self,
         name: impl Into<String>,
