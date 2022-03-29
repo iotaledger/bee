@@ -45,6 +45,7 @@ pub enum ConsensusWorkerCommand {
     ),
 }
 
+#[derive(Clone)]
 /// The consensus worker.
 pub struct ConsensusWorker {
     /// Communication channel of the consensus worker.

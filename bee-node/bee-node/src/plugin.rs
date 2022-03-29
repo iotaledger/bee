@@ -1,4 +1,3 @@
-// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 mod inx {
@@ -7,15 +6,17 @@ mod inx {
 
 use self::inx::inx_server::Inx;
 
-use bee_ledger::types::LedgerIndex;
-use bee_message::{milestone::MilestoneIndex, payload::Payload, Message, MessageId};
+use bee_ledger::types::{ConsumedOutput, CreatedOutput, LedgerIndex, Unspent};
+use bee_message::{milestone::MilestoneIndex, output::OutputId, payload::Payload, Message, MessageId};
 use bee_protocol::workers::{
     event::{MessageProcessed, MessageSolidified},
-    storage::StorageBackend,
     MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent,
 };
 use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle};
-use bee_storage::{access::Fetch, system::StorageHealth};
+use bee_storage::{
+    access::{Exist, Fetch},
+    system::StorageHealth,
+};
 use bee_tangle::{
     event::{ConfirmedMilestoneChanged, LatestMilestoneChanged},
     metadata::MessageMetadata,
@@ -26,6 +27,22 @@ use packable::PackableExt;
 use tonic::{Request, Response, Status};
 
 use std::pin::Pin;
+
+pub trait StorageBackend:
+    Fetch<OutputId, ConsumedOutput>
+    + bee_storage::backend::StorageBackend
+    + bee_protocol::workers::storage::StorageBackend
+    + bee_ledger::workers::storage::StorageBackend
+{
+}
+
+impl<T> StorageBackend for T where
+    T: Fetch<OutputId, ConsumedOutput>
+        + bee_storage::backend::StorageBackend
+        + bee_protocol::workers::storage::StorageBackend
+        + bee_ledger::workers::storage::StorageBackend
+{
+}
 
 struct PluginServer<B> {
     tangle: ResourceHandle<Tangle<B>>,
@@ -181,7 +198,7 @@ impl<B: StorageBackend> PluginServer<B> {
                 .into_iter()
                 .map(|message_id| message_id.as_ref().to_vec())
                 .collect(),
-            solid: metadata.flags().is_solid(),
+            solid: is_solid,
             // FIXME: unwrap
             should_promote: should_promote.unwrap_or_default(),
             // FIXME: unwrap
@@ -224,6 +241,8 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
         &self,
         request: Request<inx::NoParams>,
     ) -> Result<Response<inx::ProtocolParameters>, Status> {
+        let inx::NoParams {} = request.into_inner();
+
         todo!()
     }
 
@@ -330,6 +349,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
         request: Request<inx::MessageFilter>,
     ) -> Result<Response<Self::ListenToSolidMessagesStream>, Status> {
         let inx::MessageFilter {} = request.into_inner();
+
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
 
         let storage = self.storage.clone();
@@ -357,6 +377,8 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
         &self,
         request: Request<inx::MessageFilter>,
     ) -> Result<Response<Self::ListenToReferencedMessagesStream>, Status> {
+        let inx::MessageFilter {} = request.into_inner();
+
         todo!()
     }
 
@@ -414,6 +436,8 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
         &self,
         request: Request<inx::NoParams>,
     ) -> Result<Response<Self::ReadUnspentOutputsStream>, Status> {
+        let inx::NoParams {} = request.into_inner();
+
         todo!()
     }
 
@@ -427,7 +451,53 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
     }
 
     async fn read_output(&self, request: Request<inx::OutputId>) -> Result<Response<inx::OutputResponse>, Status> {
-        todo!()
+        let inx::OutputId { id: bytes } = request.into_inner();
+        // FIXME: unwrap
+        let output_id = OutputId::unpack_verified(&bytes).unwrap();
+
+        // FIXME: unwrap
+        let output = Fetch::<OutputId, CreatedOutput>::fetch(&*self.storage, &output_id)
+            .unwrap()
+            .unwrap();
+
+        // FIXME: unwrap
+        let is_spent = !Exist::<Unspent, ()>::exist(&*self.storage, &Unspent::from(output_id.clone())).unwrap();
+
+        // FIXME: unwrap
+        let ledger_index = Fetch::<(), LedgerIndex>::fetch(&*self.storage, &()).unwrap().unwrap();
+
+        let created_output = inx::LedgerOutput {
+            output_id: Some(inx::OutputId { id: bytes }),
+            message_id: Some(inx::MessageId {
+                id: output.message_id().as_ref().to_vec(),
+            }),
+            // TODO
+            milestone_index_booked: 0,
+            // TODO
+            milestone_timestamp_booked: 0,
+            output: output.pack_to_vec(),
+        };
+
+        let payload = if is_spent {
+            // FIXME: unwrap
+            let consumed_output = Fetch::<OutputId, ConsumedOutput>::fetch(&*self.storage, &output_id)
+                .unwrap()
+                .unwrap();
+
+            inx::output_response::Payload::Spent(inx::LedgerSpent {
+                output: Some(created_output),
+                transaction_id_spent: consumed_output.target().pack_to_vec(),
+                milestone_index_spent: *consumed_output.milestone_index(),
+                milestone_timestamp_spent: consumed_output.milestone_timestamp(),
+            })
+        } else {
+            inx::output_response::Payload::Output(created_output)
+        };
+
+        Ok(Response::new(inx::OutputResponse {
+            ledger_index: *ledger_index,
+            payload: Some(payload),
+        }))
     }
 
     type ListenToMigrationReceiptsStream = InxStream<inx::RawReceipt>;
