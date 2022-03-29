@@ -96,12 +96,18 @@ impl<N: Node> Worker<N> for MetricsWorker {
             let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(METRICS_INTERVAL)));
 
             while ticker.next().await.is_some() {
-                rss.update().await;
-
                 info!("{:?}", *metrics);
             }
 
             info!("Stopped.");
+        });
+
+        node.spawn::<Self, _, _>(|shutdown| async move {
+            let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(Duration::from_secs(1))));
+
+            while ticker.next().await.is_some() {
+                rss.update().await;
+            }
         });
 
         node.spawn::<Self, _, _>(|shutdown| async move {
