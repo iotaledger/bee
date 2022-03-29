@@ -1194,8 +1194,10 @@ pub struct TimelockUnlockConditionDto {
     #[serde(rename = "type")]
     pub kind: u8,
     #[serde(rename = "milestoneIndex")]
+    #[serde(skip_serializing_if = "is_zero_milestone", default)]
     pub milestone_index: MilestoneIndex,
     #[serde(rename = "unixTime")]
+    #[serde(skip_serializing_if = "is_zero", default)]
     pub timestamp: u32,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1205,8 +1207,10 @@ pub struct ExpirationUnlockConditionDto {
     #[serde(rename = "returnAddress")]
     pub return_address: AddressDto,
     #[serde(rename = "milestoneIndex")]
+    #[serde(skip_serializing_if = "is_zero_milestone", default)]
     pub milestone_index: MilestoneIndex,
     #[serde(rename = "unixTime")]
+    #[serde(skip_serializing_if = "is_zero", default)]
     pub timestamp: u32,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -2123,4 +2127,13 @@ pub enum LedgerInclusionStateDto {
     Included,
     #[serde(rename = "noTransaction")]
     NoTransaction,
+}
+
+#[allow(clippy::trivially_copy_pass_by_ref)]
+fn is_zero(num: &u32) -> bool {
+    *num == 0
+}
+
+fn is_zero_milestone(num: &MilestoneIndex) -> bool {
+    num.0 == 0
 }
