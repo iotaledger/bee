@@ -250,7 +250,7 @@ impl FoundryOutput {
 
     /// Returns the [`FoundryId`] of the [`FoundryOutput`].
     pub fn id(&self) -> FoundryId {
-        FoundryId::build(self.alias_address(), self.serial_number, &self.token_scheme)
+        FoundryId::build(self.alias_address(), self.serial_number, self.token_scheme.kind())
     }
 
     /// Returns the [`TokenId`] of the [`FoundryOutput`].

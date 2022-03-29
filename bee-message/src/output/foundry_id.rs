@@ -1,10 +1,7 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    address::AliasAddress,
-    output::{AliasId, TokenScheme},
-};
+use crate::{address::AliasAddress, output::AliasId};
 
 use packable::{packer::SlicePacker, Packable};
 
@@ -15,14 +12,14 @@ string_serde_impl!(FoundryId);
 
 impl FoundryId {
     /// Builds a new [`FoundryId`] from its components.
-    pub fn build(alias_address: &AliasAddress, serial_number: u32, token_scheme: &TokenScheme) -> Self {
+    pub fn build(alias_address: &AliasAddress, serial_number: u32, token_scheme_kind: u8) -> Self {
         let mut bytes = [0u8; FoundryId::LENGTH];
         let mut packer = SlicePacker::new(&mut bytes);
 
         // PANIC: packing to an array of the correct length can't fail.
         alias_address.pack(&mut packer).unwrap();
         serial_number.pack(&mut packer).unwrap();
-        token_scheme.kind().pack(&mut packer).unwrap();
+        token_scheme_kind.pack(&mut packer).unwrap();
 
         FoundryId::new(bytes)
     }

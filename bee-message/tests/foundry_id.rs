@@ -16,7 +16,7 @@ fn getters() {
     let serial_number = 42;
     let token_scheme =
         TokenScheme::from(SimpleTokenScheme::new(U256::from(100u8), U256::from(0u8), U256::from(100u8)).unwrap());
-    let foundry_id = FoundryId::build(&alias_address, serial_number, &token_scheme);
+    let foundry_id = FoundryId::build(&alias_address, serial_number, token_scheme.kind());
 
     assert_eq!(foundry_id.alias_address(), alias_address);
     assert_eq!(foundry_id.serial_number(), serial_number);
