@@ -410,7 +410,9 @@ fn handle_peering_response<V: NeighborValidator>(
     if let Some(tx) = peer_reqval.response_tx {
         // Note: if sending fails, then the response arrived a tiny bit too late for the predefined timeout (race
         // condition), so we just ignore the error in that case.
-        let _ = tx.send(ctx.msg_bytes.to_vec());
+        if tx.send(ctx.msg_bytes.to_vec()).is_err() {
+            log::debug!("Failed to send response notification. Receiver already dropped.");
+        }
     }
 }
 
