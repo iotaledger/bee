@@ -276,14 +276,14 @@ ms_sync_count = 200
 
 ## REST API
 
-| Name                              | Description                       | Type             |
-| :-------------------------------- | :-------------------------------- | :--------------- |
-| binding_port                      | binding port for rest API         | integer[u16]     |
-| binding_ip_addr                   | binding address for rest API      | string[IpAddr]   |
-| feature_proof_of_work             | enable pow                        | bool             |
-| white_flag_solidification_timeout | white flag solidification timeout | integer[u64]     |
-| public_routes                     | API routes which should be public | array of strings |
-| allowed_ips                       | list of whitelisted IPs           | string[IpAddr]   |
+| Name                              | Description                                                                 | Type              |
+| :-------------------------------- | :-------------------------------------------------------------------------- | :---------------- |
+| bind_address                      | REST API bind address.                                                      | string[Multiaddr] |
+| jwt_salt                          | JWT salt for REST API                                                       | string            |
+| public_routes                     | Routes that are available for public use and don't need JWT authentication. | array of strings  |
+| protected_routes                  | Routes that are protected and need JWT authentication.                      | array of strings  |
+| feature_proof_of_work             | Enables/disables the proof-of-work feature on the node.                     | bool              |
+| white_flag_solidification_timeout | Describes the white flag solidification timeout.                            | integer[u64]      |
 
 Example:
 
@@ -291,43 +291,27 @@ Example:
 <TabItem value="json" label="JSON" default>
 
 ```json
-  "rest_api": {
-    "binding_port": 14265,
-    "binding_ip_addr": "0.0.0.0",
-    "feature_proof_of_work": true,
-    "public_routes": [
-      "/api/v1/peers",
-      "/api/v1/addresses/:address",
-      "/api/v1/addresses/ed25519/:address",
+  "restApi": {
+    "bindAddress": "/ip4/0.0.0.0/tcp/14265",
+    "jwtSalt": "Bee",
+    "publicRoutes": [
       "/health",
       "/api/v1/info",
-      "/api/v1/messages/:messageId",
-      "/api/v1/messages/:messageId/children",
-      "/api/v1/messages/:messageId/metadata",
-      "/api/v1/messages/:messageId/raw",
-      "/api/v1/messages",
-      "/api/v1/milestones/:milestoneIndex",
-      "/api/v1/milestones/:milestoneIndex/utxo-changes",
-      "/api/v1/outputs/:outputId",
-      "/api/v1/addresses/:address/outputs",
-      "/api/v1/addresses/ed25519/:address/outputs",
-      "/api/v1/peers/:peerId",
-      "/api/v1/peers",
-      "/api/v1/peers/:peerId",
-      "/api/v1/messages",
-      "/api/v1/messages",
       "/api/v1/tips",
-      "/api/v1/receipts",
-      "/api/v1/receipts/:milestoneIndex",
+      "/api/v1/messages*",
+      "/api/v1/transactions*",
+      "/api/v1/milestones*",
+      "/api/v1/outputs*",
+      "/api/v1/addresses*",
       "/api/v1/treasury",
-      "/api/v1/transactions/:transactionId/included-message",
-      "/api/plugins/debug/whiteflag"
+      "/api/v1/receipts*"
     ],
-    "allowed_ips": [
-      "127.0.0.1",
-      "::1"
+    "protectedRoutes": [
+      "/api/v1/*",
+      "/api/plugins/*"
     ],
-    "white_flag_solidification_timeout": 2
+    "featureProofOfWork": true,
+    "whiteFlagSolidificationTimeout": 2
   },
 ```
 
@@ -335,42 +319,25 @@ Example:
 <TabItem value="toml" label="TOML">
 
 ```toml
-[rest_api]
-binding_port          = 14265
-binding_ip_addr       = "0.0.0.0"
-feature_proof_of_work = true
+bind_address          = "/ip4/0.0.0.0/tcp/14265"
+jwt_salt              = "Bee"
 public_routes         = [
-    "/api/v1/peers",
-    "/api/v1/addresses/:address",
-    "/api/v1/addresses/ed25519/:address",
-    "/health",
-    "/api/v1/info",
-    "/api/v1/messages/:messageId",
-    "/api/v1/messages/:messageId/children",
-    "/api/v1/messages/:messageId/metadata",
-    "/api/v1/messages/:messageId/raw",
-    "/api/v1/messages",
-    "/api/v1/milestones/:milestoneIndex",
-    "/api/v1/milestones/:milestoneIndex/utxo-changes",
-    "/api/v1/outputs/:outputId",
-    "/api/v1/addresses/:address/outputs",
-    "/api/v1/addresses/ed25519/:address/outputs",
-    "/api/v1/peers/:peerId",
-    "/api/v1/peers",
-    "/api/v1/peers/:peerId",
-    "/api/v1/messages",
-    "/api/v1/messages",
-    "/api/v1/tips",
-    "/api/v1/receipts",
-    "/api/v1/receipts/:milestoneIndex",
-    "/api/v1/treasury",
-    "/api/v1/transactions/:transactionId/included-message",
-    "/api/plugins/debug/whiteflag",
+      "/health",
+      "/api/v1/info",
+      "/api/v1/tips",
+      "/api/v1/messages*",
+      "/api/v1/transactions*",
+      "/api/v1/milestones*",
+      "/api/v1/outputs*",
+      "/api/v1/addresses*",
+      "/api/v1/treasury",
+      "/api/v1/receipts*",
 ]
-allowed_ips = [
-    "127.0.0.1",
-    "::1"
+protected_routes       = [
+      "/api/v1/*",
+      "/api/plugins/*"
 ]
+feature_proof_of_work = true
 white_flag_solidification_timeout = 2
 ```
 
