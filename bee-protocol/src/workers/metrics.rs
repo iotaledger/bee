@@ -63,7 +63,11 @@ impl<N: Node> Worker<N> for MetricsWorker {
 
         let rss = MemoryUsage::new(config.pid);
 
-        registry.register("bee_memory_usage", "Memory currently allocated by the node", rss.clone());
+        registry.register(
+            "bee_memory_usage",
+            "Memory currently allocated by the node",
+            rss.clone(),
+        );
 
         node.register_resource(NodeMetrics::new());
 
