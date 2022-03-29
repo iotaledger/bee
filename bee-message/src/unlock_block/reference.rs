@@ -39,8 +39,8 @@ impl ReferenceUnlockBlock {
 pub mod dto {
     use serde::{Deserialize, Serialize};
 
-    /// References a previous unlock block in order to substitute the duplication of the same unlock block data for inputs
-    /// which unlock through the same data.
+    /// References a previous unlock block in order to substitute the duplication of the same unlock block data for
+    /// inputs which unlock through the same data.
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct ReferenceUnlockBlockDto {
         #[serde(rename = "type")]

@@ -9,10 +9,14 @@ use crate::{
         rejection::CustomRejection,
         storage::StorageBackend,
     },
-    types::{responses::SubmitMessageResponse},
+    types::responses::SubmitMessageResponse,
 };
 
-use bee_message::{parent::Parents, payload::{Payload, dto::PayloadDto}, Message, MessageBuilder, MessageId};
+use bee_message::{
+    parent::Parents,
+    payload::{dto::PayloadDto, Payload},
+    Message, MessageBuilder, MessageId,
+};
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
 use bee_protocol::{
     workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent},
