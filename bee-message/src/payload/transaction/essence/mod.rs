@@ -40,3 +40,38 @@ impl TransactionEssence {
         Blake2b256::digest(&self.pack_to_vec()).into()
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    pub use super::regular::dto::RegularTransactionEssenceDto;
+    use super::*;
+    use crate::error::dto::DtoError;
+
+    /// Describes all the different essence types.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[serde(untagged)]
+    pub enum TransactionEssenceDto {
+        Regular(RegularTransactionEssenceDto),
+    }
+
+    impl From<&TransactionEssence> for TransactionEssenceDto {
+        fn from(value: &TransactionEssence) -> Self {
+            match value {
+                TransactionEssence::Regular(r) => TransactionEssenceDto::Regular(r.into()),
+            }
+        }
+    }
+
+    impl TryFrom<&TransactionEssenceDto> for TransactionEssence {
+        type Error = DtoError;
+
+        fn try_from(value: &TransactionEssenceDto) -> Result<Self, Self::Error> {
+            match value {
+                TransactionEssenceDto::Regular(r) => Ok(TransactionEssence::Regular(r.try_into()?)),
+            }
+        }
+    }
+}

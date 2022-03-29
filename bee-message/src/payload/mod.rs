@@ -170,3 +170,56 @@ impl Into<Option<Payload>> for OptionalPayload {
         self.0
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    pub use super::{
+        milestone::dto::MilestonePayloadDto, receipt::dto::ReceiptPayloadDto, tagged_data::dto::TaggedDataPayloadDto,
+        transaction::dto::TransactionPayloadDto, treasury_transaction::dto::TreasuryTransactionPayloadDto,
+    };
+    use crate::error::dto::DtoError;
+
+    /// Describes all the different payload types.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[serde(untagged)]
+    pub enum PayloadDto {
+        Transaction(Box<TransactionPayloadDto>),
+        Milestone(Box<MilestonePayloadDto>),
+        Receipt(Box<ReceiptPayloadDto>),
+        TreasuryTransaction(Box<TreasuryTransactionPayloadDto>),
+        TaggedData(Box<TaggedDataPayloadDto>),
+    }
+
+    impl From<&Payload> for PayloadDto {
+        fn from(value: &Payload) -> Self {
+            match value {
+                Payload::Transaction(p) => PayloadDto::Transaction(Box::new(TransactionPayloadDto::from(p.as_ref()))),
+                Payload::Milestone(p) => PayloadDto::Milestone(Box::new(MilestonePayloadDto::from(p.as_ref()))),
+                Payload::Receipt(p) => PayloadDto::Receipt(Box::new(ReceiptPayloadDto::from(p.as_ref()))),
+                Payload::TreasuryTransaction(p) => {
+                    PayloadDto::TreasuryTransaction(Box::new(TreasuryTransactionPayloadDto::from(p.as_ref())))
+                }
+                Payload::TaggedData(p) => PayloadDto::TaggedData(Box::new(TaggedDataPayloadDto::from(p.as_ref()))),
+            }
+        }
+    }
+
+    impl TryFrom<&PayloadDto> for Payload {
+        type Error = DtoError;
+        fn try_from(value: &PayloadDto) -> Result<Self, Self::Error> {
+            Ok(match value {
+                PayloadDto::Transaction(p) => Payload::Transaction(Box::new(TransactionPayload::try_from(p.as_ref())?)),
+                PayloadDto::Milestone(p) => Payload::Milestone(Box::new(MilestonePayload::try_from(p.as_ref())?)),
+                PayloadDto::Receipt(p) => Payload::Receipt(Box::new(ReceiptPayload::try_from(p.as_ref())?)),
+                PayloadDto::TreasuryTransaction(p) => {
+                    Payload::TreasuryTransaction(Box::new(TreasuryTransactionPayload::try_from(p.as_ref())?))
+                }
+                PayloadDto::TaggedData(p) => Payload::TaggedData(Box::new(TaggedDataPayload::try_from(p.as_ref())?)),
+            })
+        }
+    }
+}

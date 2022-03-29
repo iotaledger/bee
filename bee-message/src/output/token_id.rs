@@ -40,3 +40,52 @@ impl TokenId {
         TokenTag::new(self.0[FoundryId::LENGTH..].try_into().unwrap())
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::error::dto::DtoError;
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct TokenTagDto(pub String);
+
+    impl From<&TokenTag> for TokenTagDto {
+        fn from(value: &TokenTag) -> Self {
+            Self(value.to_string())
+        }
+    }
+
+    impl TryFrom<&TokenTagDto> for TokenTag {
+        type Error = DtoError;
+
+        fn try_from(value: &TokenTagDto) -> Result<Self, Self::Error> {
+            value
+                .0
+                .parse::<TokenTag>()
+                .map_err(|_| DtoError::InvalidField("TokenTag"))
+        }
+    }
+
+    /// Describes a token id.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct TokenIdDto(pub String);
+
+    impl From<&TokenId> for TokenIdDto {
+        fn from(value: &TokenId) -> Self {
+            Self(prefix_hex::encode(**value))
+        }
+    }
+
+    impl TryFrom<&TokenIdDto> for TokenId {
+        type Error = DtoError;
+
+        fn try_from(value: &TokenIdDto) -> Result<Self, Self::Error> {
+            let token_id: [u8; TokenId::LENGTH] =
+                prefix_hex::decode(&value.0).map_err(|_e| DtoError::InvalidField("tokenId"))?;
+            Ok(TokenId::new(token_id))
+        }
+    }
+}

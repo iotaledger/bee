@@ -50,3 +50,20 @@ impl StorageDepositReturnUnlockCondition {
         self.amount.get()
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use crate::address::dto::AddressDto;
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct StorageDepositReturnUnlockConditionDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        #[serde(rename = "returnAddress")]
+        pub return_address: AddressDto,
+        pub amount: String,
+    }
+}

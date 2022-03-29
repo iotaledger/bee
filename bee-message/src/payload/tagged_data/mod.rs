@@ -59,3 +59,42 @@ impl TaggedDataPayload {
         &self.data
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::error::dto::DtoError;
+
+    /// The payload type to define a tagged data payload.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct TaggedDataPayloadDto {
+        #[serde(rename = "type")]
+        pub kind: u32,
+        pub tag: String,
+        pub data: String,
+    }
+
+    impl From<&TaggedDataPayload> for TaggedDataPayloadDto {
+        fn from(value: &TaggedDataPayload) -> Self {
+            TaggedDataPayloadDto {
+                kind: TaggedDataPayload::KIND,
+                tag: prefix_hex::encode(value.tag()),
+                data: prefix_hex::encode(value.data()),
+            }
+        }
+    }
+
+    impl TryFrom<&TaggedDataPayloadDto> for TaggedDataPayload {
+        type Error = DtoError;
+
+        fn try_from(value: &TaggedDataPayloadDto) -> Result<Self, Self::Error> {
+            Ok(TaggedDataPayload::new(
+                prefix_hex::decode(&value.tag).map_err(|_| DtoError::InvalidField("tag"))?,
+                prefix_hex::decode(&value.data).map_err(|_| DtoError::InvalidField("data"))?,
+            )?)
+        }
+    }
+}

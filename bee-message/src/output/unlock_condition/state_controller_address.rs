@@ -27,3 +27,18 @@ impl StateControllerAddressUnlockCondition {
         &self.0
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use crate::address::dto::AddressDto;
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct StateControllerAddressUnlockConditionDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        pub address: AddressDto,
+    }
+}

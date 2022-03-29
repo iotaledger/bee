@@ -347,3 +347,82 @@ fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, nft_id: &NftId
 
     verify_allowed_unlock_conditions(unlock_conditions, NftOutput::ALLOWED_UNLOCK_CONDITIONS)
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{
+        error::dto::DtoError,
+        output::{
+            feature_block::dto::FeatureBlockDto, native_token::dto::NativeTokenDto, nft_id::dto::NftIdDto,
+            unlock_condition::dto::UnlockConditionDto,
+        },
+    };
+
+    /// Describes an NFT output, a globally unique token with metadata attached.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct NftOutputDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        // Amount of IOTA tokens held by the output.
+        pub amount: String,
+        // Native tokens held by the output.
+        #[serde(rename = "nativeTokens")]
+        pub native_tokens: Vec<NativeTokenDto>,
+        // Unique identifier of the NFT.
+        #[serde(rename = "nftId")]
+        pub nft_id: NftIdDto,
+        #[serde(rename = "unlockConditions")]
+        pub unlock_conditions: Vec<UnlockConditionDto>,
+        #[serde(rename = "featureBlocks")]
+        pub feature_blocks: Vec<FeatureBlockDto>,
+        #[serde(rename = "immutableFeatureBlocks")]
+        pub immutable_feature_blocks: Vec<FeatureBlockDto>,
+    }
+
+    impl From<&NftOutput> for NftOutputDto {
+        fn from(value: &NftOutput) -> Self {
+            Self {
+                kind: NftOutput::KIND,
+                amount: value.amount().to_string(),
+                native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
+                nft_id: NftIdDto(value.nft_id().to_string()),
+                unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
+                feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
+                immutable_feature_blocks: value.immutable_feature_blocks().iter().map(Into::into).collect::<_>(),
+            }
+        }
+    }
+
+    impl TryFrom<&NftOutputDto> for NftOutput {
+        type Error = DtoError;
+
+        fn try_from(value: &NftOutputDto) -> Result<Self, Self::Error> {
+            let mut builder = NftOutputBuilder::new(
+                value
+                    .amount
+                    .parse::<u64>()
+                    .map_err(|_| DtoError::InvalidField("amount"))?,
+                (&value.nft_id).try_into()?,
+            )?;
+
+            for t in &value.native_tokens {
+                builder = builder.add_native_token(t.try_into()?);
+            }
+            for b in &value.unlock_conditions {
+                builder = builder.add_unlock_condition(b.try_into()?);
+            }
+            for b in &value.feature_blocks {
+                builder = builder.add_feature_block(b.try_into()?);
+            }
+            for b in &value.immutable_feature_blocks {
+                builder = builder.add_immutable_feature_block(b.try_into()?);
+            }
+
+            Ok(builder.finish()?)
+        }
+    }
+}

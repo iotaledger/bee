@@ -20,3 +20,29 @@ impl NftId {
         if self.is_null() { Self::from(output_id) } else { self }
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::error::dto::DtoError;
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct NftIdDto(pub String);
+
+    impl From<&NftId> for NftIdDto {
+        fn from(value: &NftId) -> Self {
+            Self(value.to_string())
+        }
+    }
+
+    impl TryFrom<&NftIdDto> for NftId {
+        type Error = DtoError;
+
+        fn try_from(value: &NftIdDto) -> Result<Self, Self::Error> {
+            value.0.parse::<NftId>().map_err(|_| DtoError::InvalidField("NFT id"))
+        }
+    }
+}

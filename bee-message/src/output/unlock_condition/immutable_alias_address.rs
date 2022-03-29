@@ -43,3 +43,18 @@ fn verify_alias_address<const VERIFY: bool>(address: &Address) -> Result<(), Err
         Ok(())
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use crate::address::dto::AddressDto;
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct ImmutableAliasAddressUnlockConditionDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        pub address: AddressDto,
+    }
+}

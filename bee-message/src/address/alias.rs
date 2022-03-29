@@ -54,3 +54,41 @@ impl core::fmt::Debug for AliasAddress {
         write!(f, "AliasAddress({})", self)
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::error::dto::DtoError;
+
+    /// Describes an alias address.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct AliasAddressDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        #[serde(rename = "aliasId")]
+        pub alias_id: String,
+    }
+
+    impl From<&AliasAddress> for AliasAddressDto {
+        fn from(value: &AliasAddress) -> Self {
+            Self {
+                kind: AliasAddress::KIND,
+                alias_id: value.to_string(),
+            }
+        }
+    }
+
+    impl TryFrom<&AliasAddressDto> for AliasAddress {
+        type Error = DtoError;
+
+        fn try_from(value: &AliasAddressDto) -> Result<Self, Self::Error> {
+            value
+                .alias_id
+                .parse::<AliasAddress>()
+                .map_err(|_| DtoError::InvalidField("alias address"))
+        }
+    }
+}

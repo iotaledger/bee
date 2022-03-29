@@ -67,3 +67,54 @@ fn verify_output<const VERIFY: bool>(output: &Output) -> Result<(), Error> {
         Ok(())
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{
+        error::dto::DtoError,
+        input::dto::{InputDto, TreasuryInputDto},
+        output::dto::{OutputDto, TreasuryOutputDto},
+    };
+
+    /// The payload type to define a treasury transaction.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct TreasuryTransactionPayloadDto {
+        #[serde(rename = "type")]
+        pub kind: u32,
+        pub input: InputDto,
+        pub output: OutputDto,
+    }
+
+    impl From<&TreasuryTransactionPayload> for TreasuryTransactionPayloadDto {
+        fn from(value: &TreasuryTransactionPayload) -> Self {
+            TreasuryTransactionPayloadDto {
+                kind: TreasuryTransactionPayload::KIND,
+                input: InputDto::Treasury(TreasuryInputDto::from(value.input())),
+                output: OutputDto::Treasury(TreasuryOutputDto::from(value.output())),
+            }
+        }
+    }
+
+    impl TryFrom<&TreasuryTransactionPayloadDto> for TreasuryTransactionPayload {
+        type Error = DtoError;
+
+        fn try_from(value: &TreasuryTransactionPayloadDto) -> Result<Self, Self::Error> {
+            Ok(TreasuryTransactionPayload::new(
+                if let InputDto::Treasury(ref input) = value.input {
+                    input.try_into()?
+                } else {
+                    return Err(DtoError::InvalidField("input"));
+                },
+                if let OutputDto::Treasury(ref output) = value.output {
+                    output.try_into()?
+                } else {
+                    return Err(DtoError::InvalidField("output"));
+                },
+            )?)
+        }
+    }
+}

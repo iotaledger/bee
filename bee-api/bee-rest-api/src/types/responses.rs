@@ -3,9 +3,10 @@
 
 use crate::types::{
     body::BodyInner,
-    dtos::{LedgerInclusionStateDto, MessageDto, OutputDto, PeerDto, ReceiptDto},
+    dtos::{LedgerInclusionStateDto, PeerDto, ReceiptDto},
 };
 
+use bee_message::{output::dto::OutputDto, MessageDto};
 use serde::{Deserialize, Serialize};
 
 /// Response of GET /api/v2/info.

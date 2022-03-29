@@ -389,3 +389,91 @@ fn verify_unlock_conditions(unlock_conditions: &UnlockConditions) -> Result<(), 
         verify_allowed_unlock_conditions(unlock_conditions, FoundryOutput::ALLOWED_UNLOCK_CONDITIONS)
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{
+        error::dto::DtoError,
+        output::{
+            feature_block::dto::FeatureBlockDto, native_token::dto::NativeTokenDto, token_id::dto::TokenTagDto,
+            token_scheme::dto::TokenSchemeDto, unlock_condition::dto::UnlockConditionDto,
+        },
+    };
+
+    /// Describes a foundry output that is controlled by an alias.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct FoundryOutputDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        // Amount of IOTA tokens held by the output.
+        pub amount: String,
+        // Native tokens held by the output.
+        #[serde(rename = "nativeTokens")]
+        pub native_tokens: Vec<NativeTokenDto>,
+        // The serial number of the foundry with respect to the controlling alias.
+        #[serde(rename = "serialNumber")]
+        pub serial_number: u32,
+        // Data that is always the last 12 bytes of ID of the tokens produced by this foundry.
+        #[serde(rename = "tokenTag")]
+        pub token_tag: TokenTagDto,
+        #[serde(rename = "tokenScheme")]
+        pub token_scheme: TokenSchemeDto,
+        #[serde(rename = "unlockConditions")]
+        pub unlock_conditions: Vec<UnlockConditionDto>,
+        #[serde(rename = "featureBlocks")]
+        pub feature_blocks: Vec<FeatureBlockDto>,
+        #[serde(rename = "immutableFeatureBlocks")]
+        pub immutable_feature_blocks: Vec<FeatureBlockDto>,
+    }
+
+    impl From<&FoundryOutput> for FoundryOutputDto {
+        fn from(value: &FoundryOutput) -> Self {
+            Self {
+                kind: FoundryOutput::KIND,
+                amount: value.amount().to_string(),
+                native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
+                serial_number: value.serial_number(),
+                token_tag: TokenTagDto(value.token_tag().to_string()),
+                token_scheme: value.token_scheme().into(),
+                unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
+                feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
+                immutable_feature_blocks: value.immutable_feature_blocks().iter().map(Into::into).collect::<_>(),
+            }
+        }
+    }
+
+    impl TryFrom<&FoundryOutputDto> for FoundryOutput {
+        type Error = DtoError;
+
+        fn try_from(value: &FoundryOutputDto) -> Result<Self, Self::Error> {
+            let mut builder = FoundryOutputBuilder::new(
+                value
+                    .amount
+                    .parse::<u64>()
+                    .map_err(|_| DtoError::InvalidField("amount"))?,
+                value.serial_number,
+                (&value.token_tag).try_into()?,
+                (&value.token_scheme).try_into()?,
+            )?;
+
+            for t in &value.native_tokens {
+                builder = builder.add_native_token(t.try_into()?);
+            }
+            for b in &value.unlock_conditions {
+                builder = builder.add_unlock_condition(b.try_into()?);
+            }
+            for b in &value.feature_blocks {
+                builder = builder.add_feature_block(b.try_into()?);
+            }
+            for b in &value.immutable_feature_blocks {
+                builder = builder.add_immutable_feature_block(b.try_into()?);
+            }
+
+            Ok(builder.finish()?)
+        }
+    }
+}

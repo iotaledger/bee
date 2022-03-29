@@ -6,10 +6,10 @@ use crate::{
         config::ROUTE_MESSAGE, filters::with_tangle, path_params::message_id, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend,
     },
-    types::{dtos::MessageDto, responses::MessageResponse},
+    types::responses::MessageResponse,
 };
 
-use bee_message::MessageId;
+use bee_message::{MessageDto, MessageId};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 

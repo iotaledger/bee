@@ -101,3 +101,29 @@ fn verify_milestone_index_timestamp(milestone_index: MilestoneIndex, timestamp: 
         Ok(())
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use crate::{
+        address::dto::AddressDto,
+        dto::{is_zero, is_zero_milestone},
+        milestone::MilestoneIndex,
+    };
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct ExpirationUnlockConditionDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        #[serde(rename = "returnAddress")]
+        pub return_address: AddressDto,
+        #[serde(rename = "milestoneIndex")]
+        #[serde(skip_serializing_if = "is_zero_milestone", default)]
+        pub milestone_index: MilestoneIndex,
+        #[serde(rename = "unixTime")]
+        #[serde(skip_serializing_if = "is_zero", default)]
+        pub timestamp: u32,
+    }
+}

@@ -106,3 +106,52 @@ fn verify_supply(minted_tokens: &U256, melted_tokens: &U256, maximum_supply: &U2
 
     Ok(())
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{dto::U256Dto, error::dto::DtoError};
+
+    /// Describes a foundry output that is controlled by an alias.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct SimpleTokenSchemeDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        // Amount of tokens minted by a foundry.
+        #[serde(rename = "mintedTokens")]
+        pub minted_tokens: U256Dto,
+        // Amount of tokens melted by a foundry.
+        #[serde(rename = "meltedTokens")]
+        pub melted_tokens: U256Dto,
+        // Maximum supply of tokens controlled by a foundry.
+        #[serde(rename = "maximumSupply")]
+        pub maximum_supply: U256Dto,
+    }
+
+    impl From<&SimpleTokenScheme> for SimpleTokenSchemeDto {
+        fn from(value: &SimpleTokenScheme) -> Self {
+            Self {
+                kind: SimpleTokenScheme::KIND,
+                minted_tokens: value.minted_tokens().into(),
+                melted_tokens: value.melted_tokens().into(),
+                maximum_supply: value.maximum_supply().into(),
+            }
+        }
+    }
+
+    impl TryFrom<&SimpleTokenSchemeDto> for SimpleTokenScheme {
+        type Error = DtoError;
+
+        fn try_from(value: &SimpleTokenSchemeDto) -> Result<Self, Self::Error> {
+            Self::new(
+                U256::try_from(&value.minted_tokens).map_err(|_| DtoError::InvalidField("mintedTokens"))?,
+                U256::try_from(&value.melted_tokens).map_err(|_| DtoError::InvalidField("meltedTokens"))?,
+                U256::try_from(&value.maximum_supply).map_err(|_| DtoError::InvalidField("maximumSupply"))?,
+            )
+            .map_err(DtoError::Message)
+        }
+    }
+}

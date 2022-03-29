@@ -58,3 +58,44 @@ impl MigratedFundsEntry {
         self.amount.get()
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{address::dto::AddressDto, error::dto::DtoError};
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct MigratedFundsEntryDto {
+        #[serde(rename = "tailTransactionHash")]
+        pub tail_transaction_hash: String,
+        pub address: AddressDto,
+        pub deposit: u64,
+    }
+
+    impl From<&MigratedFundsEntry> for MigratedFundsEntryDto {
+        fn from(value: &MigratedFundsEntry) -> Self {
+            MigratedFundsEntryDto {
+                tail_transaction_hash: prefix_hex::encode(value.tail_transaction_hash().as_ref()),
+                address: value.address().into(),
+                deposit: value.amount(),
+            }
+        }
+    }
+
+    impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
+        type Error = DtoError;
+
+        fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
+            let tail_transaction_hash = prefix_hex::decode(&value.tail_transaction_hash)
+                .map_err(|_| DtoError::InvalidField("tailTransactionHash"))?;
+            Ok(MigratedFundsEntry::new(
+                TailTransactionHash::new(tail_transaction_hash)?,
+                (&value.address).try_into()?,
+                value.deposit,
+            )?)
+        }
+    }
+}

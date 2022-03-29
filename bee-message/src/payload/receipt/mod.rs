@@ -125,3 +125,60 @@ fn verify_transaction<const VERIFY: bool>(transaction: &Payload) -> Result<(), E
         Ok(())
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    pub use super::migrated_funds_entry::dto::MigratedFundsEntryDto;
+    use super::*;
+    use crate::{
+        error::dto::DtoError,
+        payload::dto::{PayloadDto, TreasuryTransactionPayloadDto},
+    };
+
+    /// The payload type to define a receipt.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct ReceiptPayloadDto {
+        #[serde(rename = "type")]
+        pub kind: u32,
+        #[serde(rename = "migratedAt")]
+        pub migrated_at: u32,
+        pub funds: Vec<MigratedFundsEntryDto>,
+        pub transaction: PayloadDto,
+        #[serde(rename = "final")]
+        pub last: bool,
+    }
+
+    impl From<&ReceiptPayload> for ReceiptPayloadDto {
+        fn from(value: &ReceiptPayload) -> Self {
+            ReceiptPayloadDto {
+                kind: ReceiptPayload::KIND,
+                migrated_at: *value.migrated_at(),
+                last: value.last(),
+                funds: value.funds().iter().map(Into::into).collect::<_>(),
+                transaction: PayloadDto::TreasuryTransaction(
+                    TreasuryTransactionPayloadDto::from(value.transaction()).into(),
+                ),
+            }
+        }
+    }
+
+    impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
+        type Error = DtoError;
+
+        fn try_from(value: &ReceiptPayloadDto) -> Result<Self, Self::Error> {
+            Ok(ReceiptPayload::new(
+                MilestoneIndex(value.migrated_at),
+                value.last,
+                value.funds.iter().map(TryInto::try_into).collect::<Result<_, _>>()?,
+                if let PayloadDto::TreasuryTransaction(ref transaction) = value.transaction {
+                    (transaction.as_ref()).try_into()?
+                } else {
+                    return Err(DtoError::InvalidField("transaction"));
+                },
+            )?)
+        }
+    }
+}

@@ -48,3 +48,41 @@ impl core::fmt::Debug for Ed25519Address {
         write!(f, "Ed25519Address({})", self)
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::error::dto::DtoError;
+
+    /// Describes an Ed25519 address.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct Ed25519AddressDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        #[serde(rename = "pubKeyHash")]
+        pub pub_key_hash: String,
+    }
+
+    impl From<&Ed25519Address> for Ed25519AddressDto {
+        fn from(value: &Ed25519Address) -> Self {
+            Self {
+                kind: Ed25519Address::KIND,
+                pub_key_hash: value.to_string(),
+            }
+        }
+    }
+
+    impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
+        type Error = DtoError;
+
+        fn try_from(value: &Ed25519AddressDto) -> Result<Self, Self::Error> {
+            value
+                .pub_key_hash
+                .parse::<Ed25519Address>()
+                .map_err(|_| DtoError::InvalidField("Ed25519 address"))
+        }
+    }
+}

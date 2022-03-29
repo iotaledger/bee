@@ -324,3 +324,33 @@ impl From<Infallible> for Error {
         match err {}
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use super::*;
+
+    #[derive(Debug)]
+    pub enum DtoError {
+        InvalidField(&'static str),
+        Message(Error),
+    }
+
+    impl fmt::Display for DtoError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                DtoError::InvalidField(field) => write!(f, "{field}"),
+                DtoError::Message(error) => write!(f, "{error}"),
+            }
+        }
+    }
+
+    impl From<Error> for DtoError {
+        fn from(error: Error) -> Self {
+            DtoError::Message(error)
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for DtoError {}
+}
