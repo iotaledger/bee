@@ -1,3 +1,10 @@
+[advisories]
+ignore = [
+    "RUSTSEC-2020-0159", # `chrono` Potential segfault in `localtime_r` invocations
+    "RUSTSEC-2020-0071", # `time` Potential segfault in the time crate
+    "RUSTSEC-2021-0127", # `serde_cbor` is unmaintained
+]
+
 [alias]
 ci-build = "hack --all build --all-targets --all-features --release"
 ci-test = "hack --all test --all-targets --all-features --release"
