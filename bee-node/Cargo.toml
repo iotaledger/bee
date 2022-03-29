@@ -1,6 +1,6 @@
 [package]
 name = "bee-node"
-version = "0.3.0-rc6"
+version = "0.3.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Default node implementations."
