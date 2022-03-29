@@ -3,9 +3,9 @@ name: Coverage
 on:
   push:
     branches:
-      - mainnet
+      - production
       - 'mainnet-develop*'
-      - shimmer
+      - staging
       - 'shimmer-develop*'
     paths:
       - '**.rs'
