@@ -13,6 +13,7 @@ on:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
       - ".github/workflows/audit.yml"
+      - ".cargo/config.toml"
   pull_request:
     branches:
       - mainnet
@@ -22,7 +23,7 @@ on:
     paths:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
-      - ".github/workflows/audit.yml"
+      - ".cargo/config.toml"
 
 jobs:
   audit:
