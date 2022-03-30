@@ -682,9 +682,11 @@ fn handle_verification_response(verif_res: VerificationResponse, verif_reqval: R
 
     // Send the response notification.
     if let Some(tx) = verif_reqval.response_tx {
-        // Panic: we don't allow channel send errors.
-        tx.send(verif_res.to_protobuf().to_vec())
-            .expect("error sending response signal");
+        // Note: if sending fails, then the response arrived a tiny bit too late for the predefined timeout (race
+        // condition), so we just ignore the error in that case.
+        if tx.send(verif_res.to_protobuf().to_vec()).is_err() {
+            log::debug!("Failed to send response notification. Receiver already dropped.");
+        }
     }
 }
 
@@ -737,8 +739,11 @@ fn handle_discovery_response(disc_res: DiscoveryResponse, disc_reqval: RequestVa
 
     // Send the response notification.
     if let Some(tx) = disc_reqval.response_tx {
-        // Panic: we don't allow channel send errors.
-        tx.send(ctx.msg_bytes.to_vec()).expect("error sending response signal");
+        // Note: if sending fails, then the response arrived a tiny bit too late for the predefined timeout (race
+        // condition), so we just ignore the error in that case.
+        if tx.send(ctx.msg_bytes.to_vec()).is_err() {
+            log::debug!("Failed to send response notification. Receiver already dropped.");
+        }
     }
 }
 

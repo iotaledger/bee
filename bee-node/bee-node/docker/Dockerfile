@@ -9,7 +9,7 @@ LABEL org.label-schema.description="Bee node software to connect to the IOTA and
 LABEL org.label-schema.name="iotaledger/bee"
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.vcs-url="https://github.com/iotaledger/bee"
-LABEL org.label-schema.usage="https://github.com/iotaledger/bee/blob/mainnet/documentation/docs/getting_started/docker.md"
+LABEL org.label-schema.usage="https://github.com/iotaledger/bee/blob/production/documentation/docs/getting_started/docker.md"
 
 RUN apt-get update && \
     apt-get install cmake clang -y
@@ -38,11 +38,9 @@ EXPOSE 14626/udp
 COPY --chown=nonroot:nonroot --from=build /bee/target/production/bee /app/bee
 
 # Copy the profiles
-COPY --from=build /bee/bee-node/bee-node/config.chrysalis-comnet.toml /app/.
 COPY --from=build /bee/bee-node/bee-node/config.chrysalis-devnet.toml /app/.
 COPY --from=build /bee/bee-node/bee-node/config.chrysalis-mainnet.toml /app/.
 
-COPY --from=build /bee/bee-node/bee-node/config.chrysalis-comnet.json /app/.
 COPY --from=build /bee/bee-node/bee-node/config.chrysalis-devnet.json /app/.
 COPY --from=build /bee/bee-node/bee-node/config.chrysalis-mainnet.json /app/.
 

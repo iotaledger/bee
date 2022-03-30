@@ -5,9 +5,9 @@ on:
     - cron: '0 0 * * *'
   push:
     branches:
-      - mainnet
+      - production
       - 'mainnet-develop*'
-      - shimmer
+      - staging
       - 'shimmer-develop*'
     paths:
       - "**/Cargo.lock"
@@ -15,9 +15,9 @@ on:
       - ".github/workflows/audit.yml"
   pull_request:
     branches:
-      - mainnet
+      - production
       - 'mainnet-develop*'
-      - shimmer
+      - staging
       - 'shimmer-develop*'
     paths:
       - "**/Cargo.lock"

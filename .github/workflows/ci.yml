@@ -3,9 +3,9 @@ name: CI
 on:
   push:
     branches:
-      - mainnet
+      - production
       - 'mainnet-develop*'
-      - shimmer
+      - staging
       - 'shimmer-develop*'
     paths-ignore:
       - 'documentation/**'
@@ -13,9 +13,9 @@ on:
       - 'bee-node/bee-node/docker/**'
   pull_request:
     branches:
-      - mainnet
+      - production
       - 'mainnet-develop*'
-      - shimmer
+      - staging
       - 'shimmer-develop*'
     paths-ignore:
       - 'documentation/**'
