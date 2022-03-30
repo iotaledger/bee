@@ -49,6 +49,7 @@ pub(crate) type SignatureCount =
 pub struct MilestonePayload {
     essence: MilestoneEssence,
     #[packable(verify_with = verify_signatures)]
+    #[packable(unpack_error_with = |e| Error::MilestoneInvalidSignatureCount(e.into_prefix_err().into()))]
     signatures: VecPrefix<Ed25519Signature, SignatureCount>,
 }
 
