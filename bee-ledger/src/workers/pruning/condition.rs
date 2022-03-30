@@ -23,15 +23,14 @@ pub(crate) fn should_prune<S: StorageBackend>(
     ledger_index: LedgerIndex,
     max_milestones_to_keep: u32,
     config: &PruningConfig,
-) -> Result<(MilestoneIndex, MilestoneIndex), PruningSkipReason>
-{
+) -> Result<(MilestoneIndex, MilestoneIndex), PruningSkipReason> {
     log::debug!(
         "Storage size: actual {} limit {}",
         storage.size().expect("ok storage size").expect("some storage size"),
-        config.pruning_by_size().target_size()
+        config.size().target_size()
     );
 
-    if !config.pruning_milestones().enabled() && !config.pruning_by_size().enabled() {
+    if !config.milestones().enabled() && !config.size().enabled() {
         return Err(PruningSkipReason::Disabled);
     }
 

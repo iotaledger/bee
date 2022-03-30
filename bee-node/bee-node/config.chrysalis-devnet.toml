@@ -89,13 +89,13 @@ delta       = "http://dbfiles.chrysalis-devnet.iota.cafe/snapshots/hornet/latest
 [pruning.milestones]
 enabled                = true
 max_milestones_to_keep = 60480
-[pruning.receipts]
-enabled                = false
-[pruning.by_size]
+[pruning.size]
 enabled                = true
 target_size            = "30GB"
 threshold_percentage   = 10.0
 cooldown_time          = "5m"
+[pruning.receipts]
+enabled                = false
 
 [storage]
 path = "./storage/devnet/tangle"

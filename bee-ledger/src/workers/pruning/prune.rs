@@ -128,7 +128,7 @@ pub async fn prune<S: StorageBackend>(
 
         let batch_milestones = Instant::now();
         let milestone_data_metrics =
-            batch::prune_milestone_data(storage, &mut batch, index, config.pruning_receipts().enabled())?;
+            batch::prune_milestone_data(storage, &mut batch, index, config.receipts().enabled())?;
         timings.batch_milestone_data = batch_milestones.elapsed();
 
         metrics.receipts = milestone_data_metrics.receipts;

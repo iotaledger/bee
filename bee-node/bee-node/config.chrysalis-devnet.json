@@ -94,17 +94,17 @@
   },
   "pruning": {
     "milestones": {
-      "enabled": false,
+      "enabled": true,
       "maxMilestonesToKeep": 60480
     },
-    "receipts": {
-      "enabled": false
-    },
-    "bySize": {
+    "size": {
       "enabled": true,
       "targetSize": "30GB",
       "thresholdPercentage": 10.0,
       "cooldownTime": "5m"
+    },
+    "receipts": {
+      "enabled": false
     }
   },
   "storage": {

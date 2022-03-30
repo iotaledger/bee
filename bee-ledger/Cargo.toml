@@ -37,6 +37,10 @@ trace-tools = { version = "0.3.0", default-features = false, optional = true }
 tracing = { version = "0.1.29", default-features = false, optional = true }
 url = { version = "2.2.2", default-features = false, optional = true }
 
+[dev-dependencies]
+serde_json = { version = "1.0.68", default-features = false, features = [ "std" ] }
+toml = { version = "0.5.8", default-features = false }
+
 [features]
 workers = [
   "bee-runtime",
