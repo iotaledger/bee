@@ -18,6 +18,6 @@ services:
     tty: true # for colored logs
     network_mode: host
     volumes:
-      - ../config.stardust-testnet.toml:/config.json
+      - ../config.alphanet.toml:/config.json
       - ../storage:/storage
       - ../snapshots:/snapshots
