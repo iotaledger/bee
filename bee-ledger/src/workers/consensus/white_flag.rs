@@ -119,7 +119,6 @@ fn apply_regular_essence<B: StorageBackend>(
             return Ok(conflict);
         }
 
-        // TODO maybe put in unlocks methods.
         if let Some(timelock) = unlock_conditions.timelock() {
             if *timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index() {
                 return Ok(ConflictReason::TimelockMilestoneIndex);
@@ -158,12 +157,14 @@ fn apply_regular_essence<B: StorageBackend>(
     for created_output in essence.outputs() {
         let (amount, created_native_tokens, feature_blocks) = match created_output {
             Output::Basic(output) => {
-                if let [UnlockCondition::Address(ref address)] = output.unlock_conditions().as_ref() {
-                    let amount = context.simple_deposits.entry(*address.address()).or_default();
+                if let [UnlockCondition::Address(address)] = output.unlock_conditions().as_ref() {
+                    if output.feature_blocks().is_empty() {
+                        let amount = context.simple_deposits.entry(*address.address()).or_default();
 
-                    *amount = amount
-                        .checked_add(output.amount())
-                        .ok_or(Error::CreatedAmountOverflow)?;
+                        *amount = amount
+                            .checked_add(output.amount())
+                            .ok_or(Error::CreatedAmountOverflow)?;
+                    }
                 }
                 (output.amount(), output.native_tokens(), output.feature_blocks())
             }
