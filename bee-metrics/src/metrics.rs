@@ -3,6 +3,7 @@
 
 //! Module containing some predefined useful metrics.
 
+pub use prometheus_client::metrics::{counter, gauge};
 use prometheus_client::{
     encoding::text::{EncodeMetric, Encoder},
     metrics::{gauge::Gauge, MetricType},

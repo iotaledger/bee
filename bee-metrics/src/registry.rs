@@ -1,28 +1,12 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{ops::Deref, sync::Arc};
+use std::sync::Arc;
 
 use parking_lot::RwLock;
-use prometheus_client::{
-    encoding::text::{EncodeMetric, Encoder, SendEncodeMetric},
-    metrics::MetricType,
-    registry::Registry as PrometheusRegistry,
-};
+use prometheus_client::registry::Registry as PrometheusRegistry;
 
-pub trait SendSyncEncodeMetric: SendEncodeMetric + Sync {}
-
-impl<T: SendEncodeMetric + Sync> SendSyncEncodeMetric for T {}
-
-impl EncodeMetric for Box<dyn SendSyncEncodeMetric> {
-    fn encode(&self, encoder: Encoder) -> Result<(), std::io::Error> {
-        self.deref().encode(encoder)
-    }
-
-    fn metric_type(&self) -> MetricType {
-        self.deref().metric_type()
-    }
-}
+use crate::encoding::SendSyncEncodeMetric;
 
 /// A type used to register metrics so they can be scraped later.
 #[derive(Clone)]

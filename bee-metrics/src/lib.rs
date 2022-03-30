@@ -5,6 +5,7 @@
 
 #![deny(missing_docs)]
 
+pub mod encoding;
 pub mod metrics;
 mod registry;
 
