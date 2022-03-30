@@ -5,7 +5,7 @@ use std::{convert::Infallible, net::SocketAddr, time::Duration};
 
 use async_trait::async_trait;
 use bee_ledger::workers::event::{MilestoneConfirmed, PrunedIndex, SnapshottedIndex};
-use bee_metrics::{metrics::MemoryUsage, Registry};
+use bee_metrics::{metrics::ProcessMetrics, Registry};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use futures::StreamExt;
 use log::info;
@@ -62,13 +62,12 @@ impl<N: Node> Worker<N> for MetricsWorker {
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let registry = Registry::default();
 
-        let rss = MemoryUsage::new(config.pid);
+        let process_metrics = ProcessMetrics::new(config.pid);
+        let (mem_metric, cpu_metric) = process_metrics.metrics();
 
-        registry.register(
-            "bee_memory_usage",
-            "Memory currently allocated by the node",
-            rss.clone(),
-        );
+        registry.register("bee_memory_usage", "Memory currently allocated by the node", mem_metric);
+
+        registry.register("bee_cpu_usage", "CPU pecentage currently used by the node", cpu_metric);
 
         node.register_resource(NodeMetrics::new());
 
@@ -112,7 +111,7 @@ impl<N: Node> Worker<N> for MetricsWorker {
                 ShutdownStream::new(shutdown, IntervalStream::new(interval(MEMORY_METRIC_UPDATE_INTERVAL)));
 
             while ticker.next().await.is_some() {
-                rss.update().await;
+                process_metrics.update().await;
             }
         });
 

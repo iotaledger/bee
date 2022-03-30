@@ -10,26 +10,30 @@ use prometheus_client::{
 };
 use tokio::process::Command;
 
-/// Metric that tracks the memory used by a process in Kilobytes.
-///
-/// On unix-like platforms this metric takes the RSS (resident set size) reported by the `ps`
-/// command.
+/// Type used to track and update metrics about an specific OS process.
 #[derive(Clone)]
-pub struct MemoryUsage {
-    gauge: Gauge,
+pub struct ProcessMetrics {
+    mem: Gauge,
+    cpu: Gauge<f64>,
     pid: String,
 }
 
-impl MemoryUsage {
-    /// Creates a new metric for the desired PID.
+impl ProcessMetrics {
+    /// Creates a new set of metrics for the desired PID.
     pub fn new(pid: u32) -> Self {
         Self {
-            gauge: Gauge::default(),
+            mem: Gauge::default(),
+            cpu: Gauge::default(),
             pid: pid.to_string(),
         }
     }
 
-    /// Updates the memory value tracked by the metric.
+    /// Obtains the metrics tracked by this value.
+    pub fn metrics(&self) -> (MemoryUsage, CpuUsage) {
+        (MemoryUsage(self.mem.clone()), CpuUsage(self.cpu.clone()))
+    }
+
+    /// Updates the metrics values.
     ///
     /// The value is not updated if the command used to retrieve the new value:
     ///  - cannot be spawned,
@@ -39,7 +43,7 @@ impl MemoryUsage {
         if cfg!(unix) {
             if let Ok(output) = Command::new("ps")
                 .arg("-o")
-                .arg("rss=")
+                .arg("%cpu= rss=")
                 .arg("--pid")
                 .arg(&self.pid)
                 .output()
@@ -47,8 +51,14 @@ impl MemoryUsage {
             {
                 if output.status.success() {
                     if let Ok(stdout) = String::from_utf8(output.stdout) {
-                        if let Ok(value) = stdout.trim_start().trim_end_matches('\n').parse::<u64>() {
-                            self.gauge.set(value);
+                        if let Some((cpu_str, rss_str)) = stdout.trim_start().trim_end_matches('\n').split_once(' ') {
+                            if let Ok(value) = cpu_str.parse::<f64>() {
+                                self.cpu.set(value);
+                            }
+
+                            if let Ok(value) = rss_str.parse::<u64>() {
+                                self.mem.set(value);
+                            }
                         }
                     }
                 }
@@ -59,12 +69,38 @@ impl MemoryUsage {
     }
 }
 
+/// Metric that tracks the memory used by a process in Kilobytes.
+///
+/// On unix-like platforms this metric takes the RSS (resident set size) reported by the `ps`
+/// command.
+///
+/// This metric can be created from a [`ProcessMetrics`] value.
+pub struct MemoryUsage(Gauge);
+
 impl EncodeMetric for MemoryUsage {
     fn encode(&self, encoder: Encoder) -> Result<(), std::io::Error> {
-        self.gauge.encode(encoder)
+        self.0.encode(encoder)
     }
 
     fn metric_type(&self) -> MetricType {
-        self.gauge.metric_type()
+        self.0.metric_type()
+    }
+}
+
+/// Metric that tracks the CPU usage as a percentage.
+///
+/// On unix-like platforms this metric takes the %CPU (cpu utilization of the process) reported by
+/// the `ps` command.
+///
+/// This metric can be created from a [`ProcessMetrics`] value.
+pub struct CpuUsage(Gauge<f64>);
+
+impl EncodeMetric for CpuUsage {
+    fn encode(&self, encoder: Encoder) -> Result<(), std::io::Error> {
+        self.0.encode(encoder)
+    }
+
+    fn metric_type(&self) -> MetricType {
+        self.0.metric_type()
     }
 }
