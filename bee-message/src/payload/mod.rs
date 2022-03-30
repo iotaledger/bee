@@ -10,7 +10,7 @@ pub mod transaction;
 pub mod treasury_transaction;
 
 pub use milestone::MilestonePayload;
-pub(crate) use milestone::{PublicKeyCount, SignatureCount};
+pub(crate) use milestone::SignatureCount;
 pub use receipt::ReceiptPayload;
 pub(crate) use receipt::{MigratedFundsAmount, ReceiptFundsCount};
 pub use tagged_data::TaggedDataPayload;

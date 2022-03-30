@@ -66,6 +66,9 @@ impl Ed25519Signature {
 pub mod dto {
     use serde::{Deserialize, Serialize};
 
+    use super::*;
+    use crate::error::dto::DtoError;
+
     /// Defines an Ed25519 signature.
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct Ed25519SignatureDto {
@@ -74,5 +77,26 @@ pub mod dto {
         #[serde(rename = "publicKey")]
         pub public_key: String,
         pub signature: String,
+    }
+
+    impl From<&Ed25519Signature> for Ed25519SignatureDto {
+        fn from(value: &Ed25519Signature) -> Self {
+            Ed25519SignatureDto {
+                kind: Ed25519Signature::KIND,
+                public_key: prefix_hex::encode(value.public_key),
+                signature: prefix_hex::encode(value.signature),
+            }
+        }
+    }
+
+    impl TryFrom<&Ed25519SignatureDto> for Ed25519Signature {
+        type Error = DtoError;
+
+        fn try_from(value: &Ed25519SignatureDto) -> Result<Self, Self::Error> {
+            Ok(Ed25519Signature::new(
+                prefix_hex::decode(&value.public_key).map_err(|_| DtoError::InvalidField("publicKey"))?,
+                prefix_hex::decode(&value.signature).map_err(|_| DtoError::InvalidField("signature"))?,
+            ))
+        }
     }
 }
