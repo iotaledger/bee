@@ -46,16 +46,18 @@ fn new_invalid_pow_score_lower_than_index() {
 
 #[test]
 fn new_valid() {
-    assert!(MilestoneEssence::new(
-        MilestoneIndex(0),
-        0,
-        rand_parents(),
-        [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-        0,
-        0,
-        None,
-    )
-    .is_ok());
+    assert!(
+        MilestoneEssence::new(
+            MilestoneIndex(0),
+            0,
+            rand_parents(),
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+            0,
+            0,
+            None,
+        )
+        .is_ok()
+    );
 }
 
 #[test]

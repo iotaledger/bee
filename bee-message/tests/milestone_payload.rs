@@ -19,20 +19,22 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    assert!(MilestonePayload::new(
-        MilestoneEssence::new(
-            MilestoneIndex(0),
-            0,
-            rand_parents(),
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-            0,
-            0,
-            None,
+    assert!(
+        MilestonePayload::new(
+            MilestoneEssence::new(
+                MilestoneIndex(0),
+                0,
+                rand_parents(),
+                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+                0,
+                0,
+                None,
+            )
+            .unwrap(),
+            vec![Ed25519Signature::new([0; 32], [0; 64])]
         )
-        .unwrap(),
-        vec![Ed25519Signature::new([0; 32], [0; 64])]
-    )
-    .is_ok());
+        .is_ok()
+    );
 }
 
 #[test]
