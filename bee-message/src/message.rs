@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::{OptionalPayload, Payload},
     Error, MessageId,
@@ -22,7 +23,6 @@ use core::ops::Deref;
 /// A builder to build a [`Message`].
 #[must_use]
 pub struct MessageBuilder<P: NonceProvider = Miner> {
-    protocol_version: Option<u8>,
     parents: Parents,
     payload: Option<Payload>,
     nonce_provider: Option<(P, f64)>,
@@ -36,18 +36,10 @@ impl<P: NonceProvider> MessageBuilder<P> {
     #[inline(always)]
     pub fn new(parents: Parents) -> Self {
         Self {
-            protocol_version: None,
             parents,
             payload: None,
             nonce_provider: None,
         }
-    }
-
-    /// Adds a protocol version to a [`MessageBuilder`].
-    #[inline(always)]
-    pub fn with_protocol_version(mut self, protocol_version: u8) -> Self {
-        self.protocol_version = Some(protocol_version);
-        self
     }
 
     /// Adds a payload to a [`MessageBuilder`].
@@ -66,12 +58,10 @@ impl<P: NonceProvider> MessageBuilder<P> {
 
     /// Finishes the [`MessageBuilder`] into a [`Message`].
     pub fn finish(self) -> Result<Message, Error> {
-        let protocol_version = self.protocol_version.ok_or(Error::MissingField("protocol_version"))?;
-
         verify_payload(self.payload.as_ref())?;
 
         let mut message = Message {
-            protocol_version,
+            protocol_version: PROTOCOL_VERSION,
             parents: self.parents,
             payload: self.payload.into(),
             nonce: 0,
@@ -120,14 +110,8 @@ impl Message {
 
     /// Creates a new [`MessageBuilder`] to construct an instance of a [`Message`].
     #[inline(always)]
-    pub fn builder(parents: Parents) -> MessageBuilder {
+    pub fn build(parents: Parents) -> MessageBuilder {
         MessageBuilder::new(parents)
-    }
-
-    /// Computes the identifier of the message.
-    #[inline(always)]
-    pub fn id(&self) -> MessageId {
-        MessageId::new(Blake2b256::digest(&self.pack_to_vec()).into())
     }
 
     /// Returns the protocol version of a [`Message`].
@@ -154,6 +138,12 @@ impl Message {
         self.nonce
     }
 
+    /// Computes the identifier of the message.
+    #[inline(always)]
+    pub fn id(&self) -> MessageId {
+        MessageId::new(Blake2b256::digest(&self.pack_to_vec()).into())
+    }
+
     /// Consumes the [`Message`], and returns ownership over its [`Parents`].
     #[inline(always)]
     pub fn into_parents(self) -> Parents {
@@ -177,6 +167,14 @@ impl Packable for Message {
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let protocol_version = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
+
+        if VERIFY && protocol_version != PROTOCOL_VERSION {
+            return Err(UnpackError::Packable(Error::ProtocolVersionMismatch {
+                expected: PROTOCOL_VERSION,
+                actual: protocol_version,
+            }));
+        }
+
         let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
         let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
 
@@ -185,6 +183,11 @@ impl Packable for Message {
         }
 
         let nonce = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+
+        // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
+        if VERIFY && u8::unpack::<_, VERIFY>(unpacker).is_ok() {
+            return Err(UnpackError::Packable(Error::RemainingBytesAfterMessage));
+        }
 
         let message = Self {
             protocol_version,
@@ -198,11 +201,6 @@ impl Packable for Message {
         // FIXME: compute this in a more efficient way.
         if VERIFY && message_len > Message::LENGTH_MAX {
             return Err(UnpackError::Packable(Error::InvalidMessageLength(message_len)));
-        }
-
-        // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
-        if VERIFY && u8::unpack::<_, VERIFY>(unpacker).is_ok() {
-            return Err(UnpackError::Packable(Error::RemainingBytesAfterMessage));
         }
 
         Ok(message)
@@ -260,6 +258,14 @@ pub mod dto {
         type Error = DtoError;
 
         fn try_from(value: &MessageDto) -> Result<Self, Self::Error> {
+            if value.protocol_version != PROTOCOL_VERSION {
+                return Err(Error::ProtocolVersionMismatch {
+                    expected: PROTOCOL_VERSION,
+                    actual: value.protocol_version,
+                }
+                .into());
+            }
+
             let parents = Parents::new(
                 value
                     .parents
@@ -270,15 +276,14 @@ pub mod dto {
                     })
                     .collect::<Result<Vec<MessageId>, DtoError>>()?,
             )?;
-            let mut builder = MessageBuilder::new(parents)
-                .with_protocol_version(value.protocol_version)
-                .with_nonce_provider(
-                    value
-                        .nonce
-                        .parse::<u64>()
-                        .map_err(|_| DtoError::InvalidField("nonce"))?,
-                    0f64,
-                );
+
+            let mut builder = MessageBuilder::new(parents).with_nonce_provider(
+                value
+                    .nonce
+                    .parse::<u64>()
+                    .map_err(|_| DtoError::InvalidField("nonce"))?,
+                0f64,
+            );
             if let Some(p) = value.payload.as_ref() {
                 builder = builder.with_payload(p.try_into()?);
             }

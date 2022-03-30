@@ -14,11 +14,11 @@ use crate::{
         PayloadWorker, PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent,
         RequestedMessages, UnreferencedMessageInserterWorker, UnreferencedMessageInserterWorkerEvent,
     },
-    PROTOCOL_VERSION,
 };
 
 use bee_gossip::PeerId;
 use bee_message::{
+    constant::PROTOCOL_VERSION,
     output::ByteCostConfig,
     payload::{transaction::TransactionEssence, Payload},
     Message, MessageId,
