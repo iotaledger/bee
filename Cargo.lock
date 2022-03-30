@@ -363,12 +363,12 @@ dependencies = [
  "futures",
  "fxhash",
  "hex",
+ "inx",
  "iota-crypto",
  "log",
  "multiaddr",
  "packable",
  "pkcs8",
- "prost 0.8.0",
  "rand 0.8.5",
  "rpassword",
  "serde",
@@ -378,8 +378,6 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "toml",
- "tonic",
- "tonic-build",
  "tracing",
  "warp",
 ]
@@ -1889,6 +1887,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "inx"
+version = "0.1.0"
+source = "git+https://github.com/iotaledger/inx#aea974cfb1daee0342252a800365a6a39f2cc830"
+dependencies = [
+ "prost 0.8.0",
+ "tonic",
+ "tonic-build",
 ]
 
 [[package]]
@@ -4271,9 +4279,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-attributes"
-version = "0.1.19"
+version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8276d9a4a3a558d7b7ad5303ad50b53d58264641b82914b7ada36bd762e7a716"
+checksum = "2e65ce065b4b5c53e73bb28912318cb8c9e9ad3921f1d669eb0e68b4c8143a2b"
 dependencies = [
  "proc-macro2",
  "quote",

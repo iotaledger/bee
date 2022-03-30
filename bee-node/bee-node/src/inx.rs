@@ -1,13 +1,12 @@
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod inx {
-    tonic::include_proto!("inx");
-}
-
-use self::inx::inx_server::Inx;
+use std::pin::Pin;
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, LedgerIndex, Unspent};
-use bee_message::{milestone::MilestoneIndex, output::OutputId, payload::Payload, Message, MessageId};
+use bee_message::{
+    milestone::MilestoneIndex, output::OutputId, payload::Payload, semantic::ConflictReason, Message, MessageId,
+};
 use bee_protocol::workers::{
     event::{MessageProcessed, MessageSolidified},
     MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent,
@@ -20,13 +19,10 @@ use bee_storage::{
 use bee_tangle::{
     event::{ConfirmedMilestoneChanged, LatestMilestoneChanged},
     metadata::MessageMetadata,
-    ConflictReason, Tangle,
+    Tangle,
 };
-
+use inx::{proto, server::Inx, Request, Response, Status};
 use packable::PackableExt;
-use tonic::{Request, Response, Status};
-
-use std::pin::Pin;
 
 pub trait StorageBackend:
     Fetch<OutputId, ConsumedOutput>
@@ -62,18 +58,18 @@ impl<B: StorageBackend> PluginServer<B> {
         }
     }
 
-    async fn get_milestone(&self, milestone_index: u32) -> inx::Milestone {
+    async fn get_milestone(&self, milestone_index: u32) -> proto::Milestone {
         let milestone = self
             .tangle
             .get_milestone(MilestoneIndex(milestone_index))
             .await
             .unwrap();
 
-        inx::Milestone {
+        proto::Milestone {
             milestone_index,
             // FIXME: unwrap
             milestone_timestamp: milestone.timestamp().try_into().unwrap(),
-            message_id: Some(inx::MessageId {
+            message_id: Some(proto::MessageId {
                 id: milestone.message_id().as_ref().to_vec(),
             }),
         }
@@ -84,7 +80,7 @@ impl<B: StorageBackend> PluginServer<B> {
         storage: &B,
         message_id: &MessageId,
         parents: &[MessageId],
-    ) -> inx::MessageMetadata {
+    ) -> proto::MessageMetadata {
         // FIXME: unwrap
         let message = Fetch::<MessageId, Message>::fetch(storage, message_id)
             .unwrap()
@@ -190,14 +186,11 @@ impl<B: StorageBackend> PluginServer<B> {
             )
         };
 
-        inx::MessageMetadata {
-            message_id: Some(inx::MessageId {
+        proto::MessageMetadata {
+            message_id: Some(proto::MessageId {
                 id: message_id.as_ref().to_vec(),
             }),
-            parents: parents
-                .into_iter()
-                .map(|message_id| message_id.as_ref().to_vec())
-                .collect(),
+            parents: parents.iter().map(|message_id| message_id.as_ref().to_vec()).collect(),
             solid: is_solid,
             // FIXME: unwrap
             should_promote: should_promote.unwrap_or_default(),
@@ -221,12 +214,12 @@ impl<T, S: futures::Stream<Item = Result<T, Status>> + Sync + Send + 'static> St
 
 type InxStream<T> = Pin<Box<dyn Stream<T>>>;
 
-#[tonic::async_trait]
+#[async_trait::async_trait]
 impl<B: StorageBackend> Inx for PluginServer<B> {
-    async fn read_node_status(&self, request: Request<inx::NoParams>) -> Result<Response<inx::NodeStatus>, Status> {
-        let inx::NoParams {} = request.into_inner();
+    async fn read_node_status(&self, request: Request<proto::NoParams>) -> Result<Response<proto::NodeStatus>, Status> {
+        let proto::NoParams {} = request.into_inner();
 
-        Ok(Response::new(inx::NodeStatus {
+        Ok(Response::new(proto::NodeStatus {
             // FIXME: unwrap
             is_healthy: self.storage.get_health().unwrap().unwrap() == StorageHealth::Healthy,
             latest_milestone: Some(self.get_milestone(*self.tangle.get_latest_milestone_index()).await),
@@ -239,39 +232,39 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
 
     async fn read_protocol_parameters(
         &self,
-        request: Request<inx::NoParams>,
-    ) -> Result<Response<inx::ProtocolParameters>, Status> {
-        let inx::NoParams {} = request.into_inner();
+        request: Request<proto::NoParams>,
+    ) -> Result<Response<proto::ProtocolParameters>, Status> {
+        let proto::NoParams {} = request.into_inner();
 
         todo!()
     }
 
     async fn read_milestone(
         &self,
-        request: Request<inx::MilestoneRequest>,
-    ) -> Result<Response<inx::Milestone>, Status> {
-        let inx::MilestoneRequest { milestone_index } = request.into_inner();
+        request: Request<proto::MilestoneRequest>,
+    ) -> Result<Response<proto::Milestone>, Status> {
+        let proto::MilestoneRequest { milestone_index } = request.into_inner();
 
         Ok(Response::new(self.get_milestone(milestone_index).await))
     }
 
     // FIXME: avoid dynamic dispatch
-    type ListenToLatestMilestoneStream = InxStream<inx::Milestone>;
+    type ListenToLatestMilestoneStream = InxStream<proto::Milestone>;
 
     async fn listen_to_latest_milestone(
         &self,
-        request: Request<inx::NoParams>,
+        request: Request<proto::NoParams>,
     ) -> Result<Response<Self::ListenToLatestMilestoneStream>, Status> {
-        let inx::NoParams {} = request.into_inner();
+        let proto::NoParams {} = request.into_inner();
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
 
         // FIXME: `TypeId` might not be good enough
         self.bus.add_listener::<Self, LatestMilestoneChanged, _>(move |event| {
-            tx.send(Ok(inx::Milestone {
+            tx.send(Ok(proto::Milestone {
                 milestone_index: *event.index,
                 // FIXME: unwrap
                 milestone_timestamp: event.milestone.timestamp().try_into().unwrap(),
-                message_id: Some(inx::MessageId {
+                message_id: Some(proto::MessageId {
                     id: event.milestone.message_id().as_ref().to_vec(),
                 }),
             }))
@@ -285,23 +278,23 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
     }
 
     // FIXME: avoid dynamic dispatch
-    type ListenToConfirmedMilestoneStream = InxStream<inx::Milestone>;
+    type ListenToConfirmedMilestoneStream = InxStream<proto::Milestone>;
 
     async fn listen_to_confirmed_milestone(
         &self,
-        request: Request<inx::NoParams>,
+        request: Request<proto::NoParams>,
     ) -> Result<Response<Self::ListenToConfirmedMilestoneStream>, Status> {
-        let inx::NoParams {} = request.into_inner();
+        let proto::NoParams {} = request.into_inner();
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
 
         // FIXME: `TypeId` might not be good enough
         self.bus
             .add_listener::<Self, ConfirmedMilestoneChanged, _>(move |event| {
-                tx.send(Ok(inx::Milestone {
+                tx.send(Ok(proto::Milestone {
                     milestone_index: *event.index,
                     // FIXME: unwrap
                     milestone_timestamp: event.milestone.timestamp().try_into().unwrap(),
-                    message_id: Some(inx::MessageId {
+                    message_id: Some(proto::MessageId {
                         id: event.milestone.message_id().as_ref().to_vec(),
                     }),
                 }))
@@ -314,22 +307,22 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
         )))
     }
 
-    type ListenToMessagesStream = InxStream<inx::Message>;
+    type ListenToMessagesStream = InxStream<proto::Message>;
 
     async fn listen_to_messages(
         &self,
-        request: Request<inx::MessageFilter>,
+        request: Request<proto::MessageFilter>,
     ) -> Result<Response<Self::ListenToMessagesStream>, Status> {
-        let inx::MessageFilter {} = request.into_inner();
+        let proto::MessageFilter {} = request.into_inner();
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
 
         // FIXME: `TypeId` might not be good enough
         self.bus.add_listener::<Self, MessageProcessed, _>(move |event| {
-            tx.send(Ok(inx::Message {
-                message_id: Some(inx::MessageId {
+            tx.send(Ok(proto::Message {
+                message_id: Some(proto::MessageId {
                     id: event.message_id.as_ref().to_vec(),
                 }),
-                message: Some(inx::RawMessage {
+                message: Some(proto::RawMessage {
                     data: event.bytes.clone(),
                 }),
             }))
@@ -342,13 +335,13 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
         )))
     }
 
-    type ListenToSolidMessagesStream = InxStream<inx::MessageMetadata>;
+    type ListenToSolidMessagesStream = InxStream<proto::MessageMetadata>;
 
     async fn listen_to_solid_messages(
         &self,
-        request: Request<inx::MessageFilter>,
+        request: Request<proto::MessageFilter>,
     ) -> Result<Response<Self::ListenToSolidMessagesStream>, Status> {
-        let inx::MessageFilter {} = request.into_inner();
+        let proto::MessageFilter {} = request.into_inner();
 
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
 
@@ -371,19 +364,19 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
         )))
     }
 
-    type ListenToReferencedMessagesStream = InxStream<inx::MessageMetadata>;
+    type ListenToReferencedMessagesStream = InxStream<proto::MessageMetadata>;
 
     async fn listen_to_referenced_messages(
         &self,
-        request: Request<inx::MessageFilter>,
+        request: Request<proto::MessageFilter>,
     ) -> Result<Response<Self::ListenToReferencedMessagesStream>, Status> {
-        let inx::MessageFilter {} = request.into_inner();
+        let proto::MessageFilter {} = request.into_inner();
 
         todo!()
     }
 
-    async fn submit_message(&self, request: Request<inx::RawMessage>) -> Result<Response<inx::MessageId>, Status> {
-        let inx::RawMessage { data: message } = request.into_inner();
+    async fn submit_message(&self, request: Request<proto::RawMessage>) -> Result<Response<proto::MessageId>, Status> {
+        let proto::RawMessage { data: message } = request.into_inner();
 
         let (notifier, waiter) = futures::channel::oneshot::channel::<Result<MessageId, MessageSubmitterError>>();
         // FIXME: unwrap
@@ -393,18 +386,18 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
             .ok()
             .unwrap();
 
-        Ok(Response::new(inx::MessageId {
+        Ok(Response::new(proto::MessageId {
             // FIXME: unwrap
             id: waiter.await.unwrap().unwrap().as_ref().to_vec(),
         }))
     }
 
-    async fn read_message(&self, request: Request<inx::MessageId>) -> Result<Response<inx::RawMessage>, Status> {
-        let inx::MessageId { id: bytes } = request.into_inner();
+    async fn read_message(&self, request: Request<proto::MessageId>) -> Result<Response<proto::RawMessage>, Status> {
+        let proto::MessageId { id: bytes } = request.into_inner();
         // FIXME: unwrap
         let message_id = MessageId::new(bytes.try_into().unwrap());
 
-        Ok(Response::new(inx::RawMessage {
+        Ok(Response::new(proto::RawMessage {
             // FIXME: unwrap
             data: self.tangle.get(&message_id).await.unwrap().pack_to_vec(),
         }))
@@ -412,9 +405,9 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
 
     async fn read_message_metadata(
         &self,
-        request: Request<inx::MessageId>,
-    ) -> Result<Response<inx::MessageMetadata>, Status> {
-        let inx::MessageId { id: bytes } = request.into_inner();
+        request: Request<proto::MessageId>,
+    ) -> Result<Response<proto::MessageMetadata>, Status> {
+        let proto::MessageId { id: bytes } = request.into_inner();
         // FIXME: unwrap
         let message_id = MessageId::new(bytes.try_into().unwrap());
         // FIXME: unwrap
@@ -430,28 +423,28 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
         )))
     }
 
-    type ReadUnspentOutputsStream = InxStream<inx::UnspentOutput>;
+    type ReadUnspentOutputsStream = InxStream<proto::UnspentOutput>;
 
     async fn read_unspent_outputs(
         &self,
-        request: Request<inx::NoParams>,
+        request: Request<proto::NoParams>,
     ) -> Result<Response<Self::ReadUnspentOutputsStream>, Status> {
-        let inx::NoParams {} = request.into_inner();
+        let proto::NoParams {} = request.into_inner();
 
         todo!()
     }
 
-    type ListenToLedgerUpdatesStream = InxStream<inx::LedgerUpdate>;
+    type ListenToLedgerUpdatesStream = InxStream<proto::LedgerUpdate>;
 
     async fn listen_to_ledger_updates(
         &self,
-        request: Request<inx::LedgerUpdateRequest>,
+        request: Request<proto::LedgerUpdateRequest>,
     ) -> Result<Response<Self::ListenToLedgerUpdatesStream>, Status> {
         todo!()
     }
 
-    async fn read_output(&self, request: Request<inx::OutputId>) -> Result<Response<inx::OutputResponse>, Status> {
-        let inx::OutputId { id: bytes } = request.into_inner();
+    async fn read_output(&self, request: Request<proto::OutputId>) -> Result<Response<proto::OutputResponse>, Status> {
+        let proto::OutputId { id: bytes } = request.into_inner();
         // FIXME: unwrap
         let output_id = OutputId::unpack_verified(&bytes).unwrap();
 
@@ -461,14 +454,14 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
             .unwrap();
 
         // FIXME: unwrap
-        let is_spent = !Exist::<Unspent, ()>::exist(&*self.storage, &Unspent::from(output_id.clone())).unwrap();
+        let is_spent = !Exist::<Unspent, ()>::exist(&*self.storage, &Unspent::from(output_id)).unwrap();
 
         // FIXME: unwrap
         let ledger_index = Fetch::<(), LedgerIndex>::fetch(&*self.storage, &()).unwrap().unwrap();
 
-        let created_output = inx::LedgerOutput {
-            output_id: Some(inx::OutputId { id: bytes }),
-            message_id: Some(inx::MessageId {
+        let created_output = proto::LedgerOutput {
+            output_id: Some(proto::OutputId { id: bytes }),
+            message_id: Some(proto::MessageId {
                 id: output.message_id().as_ref().to_vec(),
             }),
             // TODO
@@ -484,49 +477,49 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
                 .unwrap()
                 .unwrap();
 
-            inx::output_response::Payload::Spent(inx::LedgerSpent {
+            proto::output_response::Payload::Spent(proto::LedgerSpent {
                 output: Some(created_output),
                 transaction_id_spent: consumed_output.target().pack_to_vec(),
                 milestone_index_spent: *consumed_output.milestone_index(),
                 milestone_timestamp_spent: consumed_output.milestone_timestamp(),
             })
         } else {
-            inx::output_response::Payload::Output(created_output)
+            proto::output_response::Payload::Output(created_output)
         };
 
-        Ok(Response::new(inx::OutputResponse {
+        Ok(Response::new(proto::OutputResponse {
             ledger_index: *ledger_index,
             payload: Some(payload),
         }))
     }
 
-    type ListenToMigrationReceiptsStream = InxStream<inx::RawReceipt>;
+    type ListenToMigrationReceiptsStream = InxStream<proto::RawReceipt>;
 
     async fn listen_to_migration_receipts(
         &self,
-        request: Request<inx::NoParams>,
+        request: Request<proto::NoParams>,
     ) -> Result<Response<Self::ListenToMigrationReceiptsStream>, Status> {
         todo!()
     }
 
     async fn register_api_route(
         &self,
-        request: Request<inx::ApiRouteRequest>,
-    ) -> Result<Response<inx::NoParams>, Status> {
+        request: Request<proto::ApiRouteRequest>,
+    ) -> Result<Response<proto::NoParams>, Status> {
         todo!()
     }
 
     async fn unregister_api_route(
         &self,
-        request: Request<inx::ApiRouteRequest>,
-    ) -> Result<Response<inx::NoParams>, Status> {
+        request: Request<proto::ApiRouteRequest>,
+    ) -> Result<Response<proto::NoParams>, Status> {
         todo!()
     }
 
     async fn perform_api_request(
         &self,
-        request: Request<inx::ApiRequest>,
-    ) -> Result<Response<inx::ApiResponse>, Status> {
+        request: Request<proto::ApiRequest>,
+    ) -> Result<Response<proto::ApiResponse>, Status> {
         todo!()
     }
 }

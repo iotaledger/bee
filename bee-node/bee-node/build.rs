@@ -7,7 +7,6 @@ use std::{fmt, process::Command};
 enum BuildError {
     GitBranch,
     GitCommit,
-    Io(std::io::Error),
 }
 
 impl fmt::Display for BuildError {
@@ -15,7 +14,6 @@ impl fmt::Display for BuildError {
         match &self {
             Self::GitBranch => write!(f, "failed to retrieve git branch name"),
             Self::GitCommit => write!(f, "failed to retrieve git commit"),
-            Self::Io(err) => err.fmt(f),
         }
     }
 }
@@ -44,8 +42,6 @@ fn main() -> Result<(), BuildError> {
         }
         Err(_) => return Err(BuildError::GitBranch),
     }
-
-    tonic_build::compile_protos("proto/inx.proto").map_err(BuildError::Io)?;
 
     Ok(())
 }
