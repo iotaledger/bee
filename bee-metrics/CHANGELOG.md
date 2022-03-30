@@ -21,10 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.1.0 - 2022-03-29
+## 0.1.0 - 2022-03-30
 
 ### Added
 
 - `Registry` type to register metrics;
-- `MemoryUsage` type to track memory usage;
+- `ProcessMetrics`, `MemoryUsage` and `CpuUsage` types to track OS process related metrics;
 - `serve_metrics` function to serve the metrics to Prometheus;
+- Re-exported `prometheus_client` types to write custom metrics;
