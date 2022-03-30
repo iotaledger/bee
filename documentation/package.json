@@ -13,6 +13,6 @@
     "node": ">=14.14.0"
   },
   "dependencies": {
-    "@iota-community/iota-wiki-cli": "^1.7.0"
+    "@iota-community/iota-wiki-cli": "^1.7.1"
   }
 }
