@@ -7,6 +7,7 @@ keywords:
 # Examples
 
 ## Generate a JWT for the REST API for your node
+
 To generate a JWT for the REST API for your node run following command: 
 `cargo release -- jwt-api`
 
