@@ -89,7 +89,6 @@ pub enum Error {
     MilestonePublicKeysNotUniqueSorted,
     MilestonePublicKeysSignaturesCountMismatch { key_count: usize, sig_count: usize },
     MissingAddressUnlockCondition,
-    MissingField(&'static str),
     MissingGovernorUnlockCondition,
     MissingPayload,
     MissingRequiredSenderBlock,
@@ -98,6 +97,7 @@ pub enum Error {
     NativeTokensNullAmount,
     NonZeroStateIndexOrFoundryCounter,
     ParentsNotUniqueSorted,
+    ProtocolVersionMismatch { expected: u8, actual: u8 },
     ReceiptFundsNotUniqueSorted,
     RemainingBytesAfterMessage,
     SelfControlledAliasOutput(AliasId),
@@ -257,7 +257,6 @@ impl fmt::Display for Error {
                 )
             }
             Error::MissingAddressUnlockCondition => write!(f, "missing address unlock condition"),
-            Error::MissingField(s) => write!(f, "missing required field: {}", s),
             Error::MissingGovernorUnlockCondition => write!(f, "missing governor unlock condition"),
             Error::MissingPayload => write!(f, "missing payload"),
             Error::MissingRequiredSenderBlock => write!(f, "missing required sender block"),
@@ -269,6 +268,9 @@ impl fmt::Display for Error {
             }
             Error::ParentsNotUniqueSorted => {
                 write!(f, "parents are not unique and/or sorted")
+            }
+            Error::ProtocolVersionMismatch { expected, actual } => {
+                write!(f, "protocol version mismatch: expected {expected}, got {actual}")
             }
             Error::ReceiptFundsNotUniqueSorted => {
                 write!(f, "receipt funds are not unique and/or sorted")

@@ -179,7 +179,6 @@ pub(crate) async fn build_message(
         let mut builder = MessageBuilder::new(
             Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
         )
-        .with_protocol_version(PROTOCOL_VERSION)
         .with_nonce_provider(nonce, 0f64);
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
@@ -196,7 +195,6 @@ pub(crate) async fn build_message(
         let mut builder = MessageBuilder::new(
             Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
         )
-        .with_protocol_version(PROTOCOL_VERSION)
         .with_nonce_provider(
             MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
             protocol_config.minimum_pow_score(),
