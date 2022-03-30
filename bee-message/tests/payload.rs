@@ -86,11 +86,10 @@ fn milestone() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
-            vec![[0; 32]],
             None,
         )
         .unwrap(),
-        vec![[0; 64]],
+        vec![Ed25519Signature::new([0; 32], [0; 64])],
     )
     .unwrap()
     .into();
@@ -119,14 +118,12 @@ fn receipt() {
     let payload: Payload = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                1_000_000,
-            )
-            .unwrap(),
-        ],
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            1_000_000,
+        )
+        .unwrap()],
         TreasuryTransactionPayload::new(
             TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
             TreasuryOutput::new(1_000_000).unwrap(),

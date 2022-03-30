@@ -5,6 +5,7 @@ use bee_message::{
     milestone::MilestoneIndex,
     parent::Parents,
     payload::milestone::{MilestoneEssence, MilestonePayload},
+    signature::Ed25519Signature,
     Error,
 };
 use bee_test::rand::{self, message::rand_message_ids, parents::rand_parents};
@@ -18,23 +19,20 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    assert!(
-        MilestonePayload::new(
-            MilestoneEssence::new(
-                MilestoneIndex(0),
-                0,
-                rand_parents(),
-                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-                0,
-                0,
-                vec![[0; 32]],
-                None,
-            )
-            .unwrap(),
-            vec![[0; 64]],
+    assert!(MilestonePayload::new(
+        MilestoneEssence::new(
+            MilestoneIndex(0),
+            0,
+            rand_parents(),
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+            0,
+            0,
+            None,
         )
-        .is_ok()
-    );
+        .unwrap(),
+        vec![Ed25519Signature::new([0; 32], [0; 64])]
+    )
+    .is_ok());
 }
 
 #[test]
@@ -48,7 +46,6 @@ fn new_invalid_no_signature() {
                 [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 0,
                 0,
-                vec![[0; 32]],
                 None,
             )
             .unwrap(),
@@ -69,39 +66,14 @@ fn new_invalid_too_many_signatures() {
                 [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 0,
                 0,
-                vec![[0; 32]],
                 None,
             )
             .unwrap(),
-            vec![[0u8; 64]; 300],
+            vec![Ed25519Signature::new([0; 32], [0; 64]); 300]
         ),
         Err(Error::MilestoneInvalidSignatureCount(TryIntoBoundedU8Error::Truncated(
             300
         )))
-    ));
-}
-
-#[test]
-fn new_invalid_public_keys_sgnatures_count_mismatch() {
-    assert!(matches!(
-        MilestonePayload::new(
-            MilestoneEssence::new(
-                MilestoneIndex(0),
-                0,
-                rand_parents(),
-                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-                0,
-                0,
-                vec![[0; 32], [1; 32]],
-                None,
-            )
-            .unwrap(),
-            vec![[0; 64], [1; 64], [3; 64]],
-        ),
-        Err(Error::MilestonePublicKeysSignaturesCountMismatch {
-            key_count: 2,
-            sig_count: 3
-        })
     ));
 }
 
@@ -115,16 +87,18 @@ fn packed_len() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
-            vec![[0; 32], [1; 32]],
             None,
         )
         .unwrap(),
-        vec![[0; 64], [1; 64]],
+        vec![
+            Ed25519Signature::new([0; 32], [0; 64]),
+            Ed25519Signature::new([1; 32], [1; 64]),
+        ],
     )
     .unwrap();
 
-    assert_eq!(ms.packed_len(), 379);
-    assert_eq!(ms.pack_to_vec().len(), 379);
+    assert_eq!(ms.packed_len(), 378);
+    assert_eq!(ms.pack_to_vec().len(), 378);
 }
 
 #[test]
@@ -137,11 +111,10 @@ fn pack_unpack_valid() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
-            vec![[0; 32]],
             None,
         )
         .unwrap(),
-        vec![[0; 64]],
+        vec![Ed25519Signature::new([0; 32], [0; 64])],
     )
     .unwrap();
 
@@ -160,16 +133,15 @@ fn getters() {
         [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
         0,
         0,
-        vec![[0; 32]],
         None,
     )
     .unwrap();
-    let signatures = vec![[0; 64]];
+    let signatures = vec![Ed25519Signature::new([0; 32], [0; 64])];
     let milestone = MilestonePayload::new(essence.clone(), signatures.clone()).unwrap();
 
     assert_eq!(essence, *milestone.essence());
 
-    assert_eq!(signatures.len(), milestone.signatures().count());
+    assert_eq!(signatures.len(), milestone.signatures().len());
     for (s1, s2) in signatures.iter().zip(milestone.signatures()) {
         assert_eq!(s1, s2);
     }
