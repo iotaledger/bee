@@ -6,7 +6,7 @@ use bee_gossip::NetworkConfig;
 use bee_ledger::workers::{pruning::config::PruningConfig, snapshot::config::SnapshotConfig};
 #[cfg(feature = "dashboard")]
 use bee_plugin_dashboard::config::DashboardConfig;
-use bee_protocol::workers::{config::ProtocolConfig, MetricsWorkerConfig};
+use bee_protocol::workers::{config::ProtocolConfig, MetricsConfig};
 use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_tangle::config::TangleConfig;
 use fern_logger::LoggerConfig;
@@ -43,7 +43,7 @@ pub struct FullNodeConfig<S: NodeStorageBackend> {
     #[cfg(feature = "dashboard")]
     pub dashboard: DashboardConfig,
     /// Metrics worker.
-    pub metrics: MetricsWorkerConfig,
+    pub metrics: MetricsConfig,
 }
 
 impl<S: NodeStorageBackend> FullNodeConfig<S> {

@@ -19,7 +19,7 @@ use bee_ledger::workers::{
 use bee_plugin_dashboard::config::{DashboardConfig, DashboardConfigBuilder};
 use bee_protocol::workers::{
     config::{ProtocolConfig, ProtocolConfigBuilder},
-    MetricsWorkerConfig, MetricsWorkerConfigBuilder,
+    MetricsConfig, MetricsConfigBuilder,
 };
 use bee_rest_api::endpoints::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_tangle::config::{TangleConfig, TangleConfigBuilder};
@@ -62,7 +62,7 @@ pub struct NodeConfig<S: NodeStorageBackend> {
     pub(crate) dashboard: DashboardConfig,
     #[cfg(feature = "trace")]
     pub(crate) tracing: TraceConfig,
-    pub(crate) metrics: MetricsWorkerConfig,
+    pub(crate) metrics: MetricsConfig,
 }
 
 impl<S: NodeStorageBackend> NodeConfig<S> {
@@ -117,7 +117,7 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
     #[cfg(feature = "trace")]
     pub(crate) tracing: Option<TraceConfigBuilder>,
-    pub(crate) metrics: Option<MetricsWorkerConfigBuilder>,
+    pub(crate) metrics: Option<MetricsConfigBuilder>,
 }
 
 // This cannot be derived because `S` does not implement `PartialEq`.
@@ -229,7 +229,7 @@ where
     pub fn with_pid(mut self, pid: u32) -> Self {
         self.metrics = self
             .metrics
-            .or_else(|| Some(MetricsWorkerConfigBuilder::default()))
+            .or_else(|| Some(MetricsConfigBuilder::default()))
             .map(|metrics| metrics.with_pid(pid));
 
         self

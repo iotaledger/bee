@@ -21,21 +21,21 @@ const DEFAULT_BIND_ADDRESS: &str = "0.0.0.0:3030";
 
 #[derive(Default, Deserialize, PartialEq)]
 #[must_use]
-pub struct MetricsWorkerConfigBuilder {
+pub struct MetricsConfigBuilder {
     #[serde(skip)]
     pid: Option<u32>,
     #[serde(alias = "bindAddress")]
     bind_address: Option<SocketAddr>,
 }
 
-impl MetricsWorkerConfigBuilder {
+impl MetricsConfigBuilder {
     pub fn with_pid(mut self, pid: u32) -> Self {
         self.pid = Some(pid);
         self
     }
 
-    pub fn finish(self) -> MetricsWorkerConfig {
-        MetricsWorkerConfig {
+    pub fn finish(self) -> MetricsConfig {
+        MetricsConfig {
             pid: self.pid.unwrap(),
             bind_address: self
                 .bind_address
@@ -45,7 +45,7 @@ impl MetricsWorkerConfigBuilder {
 }
 
 #[derive(Clone)]
-pub struct MetricsWorkerConfig {
+pub struct MetricsConfig {
     pid: u32,
     bind_address: SocketAddr,
 }
@@ -54,7 +54,7 @@ pub struct MetricsWorker {}
 
 #[async_trait]
 impl<N: Node> Worker<N> for MetricsWorker {
-    type Config = MetricsWorkerConfig;
+    type Config = MetricsConfig;
     type Error = Infallible;
 
     #[cfg_attr(feature = "trace", trace_tools::observe)]

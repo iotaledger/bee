@@ -49,7 +49,7 @@ pub(crate) use self::{
 };
 pub use self::{
     message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent},
-    metrics::{MetricsWorker, MetricsWorkerConfig, MetricsWorkerConfigBuilder},
+    metrics::{MetricsConfig, MetricsConfigBuilder, MetricsWorker},
     peer::{PeerManager, PeerManagerResWorker},
     requester::{request_message, MessageRequesterWorker, RequestedMessages, RequestedMilestones},
 };
