@@ -1,21 +1,29 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use auth_helper::{jwt::JsonWebToken, password};
+use auth_helper::{
+    jwt::{ClaimsBuilder, JsonWebToken},
+    password,
+};
+use bee_gossip::{Keypair, PeerId};
+use bee_rest_api::endpoints::permission::DASHBOARD_AUDIENCE_CLAIM;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use warp::{reject, Rejection, Reply};
 
 use crate::{config::DashboardAuthConfig, rejection::CustomRejection};
 
-pub(crate) const AUDIENCE_CLAIM: &str = "dashboard";
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AuthResponse {
     pub jwt: String,
 }
 
-pub(crate) fn auth(node_id: String, config: DashboardAuthConfig, body: JsonValue) -> Result<impl Reply, Rejection> {
+pub(crate) fn auth(
+    node_id: PeerId,
+    keypair: Keypair,
+    config: DashboardAuthConfig,
+    body: JsonValue,
+) -> Result<impl Reply, Rejection> {
     let jwt_json = &body["jwt"];
 
     if !jwt_json.is_null() {
@@ -25,7 +33,13 @@ pub(crate) fn auth(node_id: String, config: DashboardAuthConfig, body: JsonValue
                 .ok_or_else(|| reject::custom(CustomRejection::InvalidJwt))?
                 .to_owned(),
         );
-        return match jwt.validate(node_id, config.user().to_owned(), AUDIENCE_CLAIM.to_owned(), b"secret") {
+        return match jwt.validate(
+            node_id.to_string(),
+            config.user().to_owned(),
+            DASHBOARD_AUDIENCE_CLAIM.to_owned(),
+            true,
+            keypair.secret().as_ref(),
+        ) {
             Ok(_) => Ok(warp::reply::json(&AuthResponse { jwt: jwt.to_string() })),
             Err(_) => Err(reject::custom(CustomRejection::InvalidJwt)),
         };
@@ -34,11 +48,11 @@ pub(crate) fn auth(node_id: String, config: DashboardAuthConfig, body: JsonValue
     let user_json = &body["user"];
 
     let user = if user_json.is_null() {
-        return Err(reject::custom(CustomRejection::BadRequest("No user provided")));
+        return Err(reject::custom(CustomRejection::NoUserProvided));
     } else {
         user_json
             .as_str()
-            .ok_or_else(|| reject::custom(CustomRejection::BadRequest("Invalid user provided")))?
+            .ok_or_else(|| reject::custom(CustomRejection::InvalidCredentials))?
     };
 
     if user != config.user() {
@@ -48,11 +62,11 @@ pub(crate) fn auth(node_id: String, config: DashboardAuthConfig, body: JsonValue
     let password_json = &body["password"];
 
     let password = if password_json.is_null() {
-        return Err(reject::custom(CustomRejection::BadRequest("No password provided")));
+        return Err(reject::custom(CustomRejection::NoPasswordProvided));
     } else {
         password_json
             .as_str()
-            .ok_or_else(|| reject::custom(CustomRejection::BadRequest("Invalid password provided")))?
+            .ok_or_else(|| reject::custom(CustomRejection::InvalidCredentials))?
     };
 
     if !password::password_verify(
@@ -60,19 +74,22 @@ pub(crate) fn auth(node_id: String, config: DashboardAuthConfig, body: JsonValue
         &hex::decode(config.password_salt()).unwrap(),
         &hex::decode(config.password_hash()).unwrap(),
     )
-    .map_err(|_| reject::custom(CustomRejection::InternalError))?
+    .map_err(|e| reject::custom(CustomRejection::InternalError(e.to_string())))?
     {
         return Err(reject::custom(CustomRejection::InvalidCredentials));
     }
 
-    let jwt = JsonWebToken::new(
-        node_id,
+    let claims = ClaimsBuilder::new(
+        node_id.to_string(),
         config.user().to_owned(),
-        AUDIENCE_CLAIM.to_owned(),
-        config.session_timeout(),
-        b"secret",
+        DASHBOARD_AUDIENCE_CLAIM.to_owned(),
     )
-    .map_err(|_| reject::custom(CustomRejection::InternalError))?;
+    .with_expiry(config.session_timeout())
+    .build()
+    .map_err(|e| reject::custom(CustomRejection::InternalError(e.to_string())))?;
+
+    let jwt = JsonWebToken::new(claims, keypair.secret().as_ref())
+        .map_err(|e| reject::custom(CustomRejection::InternalError(e.to_string())))?;
 
     Ok(warp::reply::json(&AuthResponse { jwt: jwt.to_string() }))
 }

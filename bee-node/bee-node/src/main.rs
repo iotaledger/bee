@@ -29,25 +29,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Load the command line arguments passed to the binary.
     let cl_args = ClArgs::load();
 
-    // Execute one of Bee's tools and exit.
-    if let Some(tool) = cl_args.tool() {
-        return tools::exec(tool).map_err(|e| e.into());
-    }
-
-    // Just show the version and exit.
-    if cl_args.print_commit_version() {
-        print_banner_and_version(false);
-        return Ok(());
-    }
-
-    print_banner_and_version(true);
-
     // Deserialize the config.
     let identity_path = cl_args
         .identity_path()
         .unwrap_or_else(|| Path::new(IDENTITY_PATH_DEFAULT))
         .to_owned();
-    let (identity_field, config) = deserialize_config(cl_args);
+    let (identity_field, config) = deserialize_config(&cl_args);
 
     // Initialize the logger.
     #[cfg(not(feature = "trace"))]
@@ -104,6 +91,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let local = Local::from_keypair(keypair);
 
+    // Execute one of Bee's tools and exit.
+    if let Some(tool) = cl_args.tool() {
+        return tools::exec(tool, &local, &config).map_err(|e| e.into());
+    }
+
+    // Just show the version and exit.
+    if cl_args.print_commit_version() {
+        print_banner_and_version(false);
+        return Ok(());
+    }
+
+    print_banner_and_version(true);
+
     // Start running the node.
     if config.run_as_entry_node() {
         start_entrynode(local, config).await;
@@ -142,11 +142,11 @@ fn migrate_keypair(encoded: String) -> Result<Keypair, IdentityMigrationError> {
     }
 }
 
-fn deserialize_config(cl_args: ClArgs) -> (Option<String>, NodeConfig<Storage>) {
+fn deserialize_config(cl_args: &ClArgs) -> (Option<String>, NodeConfig<Storage>) {
     match NodeConfigBuilder::<Storage>::from_file(
         cl_args.config_path().unwrap_or_else(|| Path::new(CONFIG_PATH_DEFAULT)),
     ) {
-        Ok(builder) => builder.apply_args(&cl_args).finish(),
+        Ok(builder) => builder.apply_args(cl_args).finish(),
         Err(e) => panic!("Failed to create the node config builder: {}", e),
     }
 }

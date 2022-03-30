@@ -6,6 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use bee_gossip::PeerId;
 use bee_protocol::{types::metrics::NodeMetrics, workers::PeerManager};
 use bee_rest_api::endpoints::routes::health::is_healthy;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
@@ -17,7 +18,7 @@ use serde::Serialize;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
-use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, Bech32Hrp, DashboardPlugin, NodeAlias, NodeId};
+use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, Bech32Hrp, DashboardPlugin, NodeAlias};
 
 #[global_allocator]
 pub static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_value());
@@ -26,7 +27,7 @@ const NODE_STATUS_METRICS_WORKER_INTERVAL_SEC: u64 = 1;
 
 pub(crate) fn node_status_worker<N>(
     node: &mut N,
-    node_id: NodeId,
+    node_id: PeerId,
     node_alias: NodeAlias,
     bech32_hrp: Bech32Hrp,
     users: &WsUsers,
@@ -61,7 +62,7 @@ pub(crate) fn node_status_worker<N>(
                 version: node_info.version.clone(),
                 latest_version: node_info.version.clone(),
                 uptime: uptime.elapsed().as_millis() as u64,
-                node_id: node_id.clone(),
+                node_id: node_id.to_string(),
                 node_alias: node_alias.clone(),
                 bech32_hrp: bech32_hrp.clone(),
                 connected_peers_count: 0,

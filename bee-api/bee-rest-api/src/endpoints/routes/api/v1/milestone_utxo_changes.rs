@@ -1,18 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::net::IpAddr;
-
 use bee_ledger::types::OutputDiff;
 use bee_message::milestone::MilestoneIndex;
-use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use crate::{
     endpoints::{
-        config::ROUTE_MILESTONE_UTXO_CHANGES, filters::with_storage, path_params::milestone_index,
-        permission::has_permission, rejection::CustomRejection, storage::StorageBackend,
+        filters::with_args, path_params::milestone_index, rejection::CustomRejection, storage::StorageBackend,
+        ApiArgsFullNode,
     },
     types::{body::SuccessBody, responses::UtxoChangesResponse},
 };
@@ -25,24 +22,19 @@ fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    storage: ResourceHandle<B>,
-) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
-        .and(has_permission(ROUTE_MILESTONE_UTXO_CHANGES, public_routes, allowed_ips))
-        .and(with_storage(storage))
-        .and_then(|index, storage| async move { milestone_utxo_changes(index, storage) })
+        .and(with_args(args))
+        .and_then(|index, args| async move { milestone_utxo_changes(index, args) })
         .boxed()
 }
 
 pub(crate) fn milestone_utxo_changes<B: StorageBackend>(
     index: MilestoneIndex,
-    storage: ResourceHandle<B>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
-    let fetched = Fetch::<MilestoneIndex, OutputDiff>::fetch(&*storage, &index)
+    let fetched = Fetch::<MilestoneIndex, OutputDiff>::fetch(&*args.storage, &index)
         .map_err(|_| {
             reject::custom(CustomRejection::ServiceUnavailable(
                 "can not fetch from storage".to_string(),

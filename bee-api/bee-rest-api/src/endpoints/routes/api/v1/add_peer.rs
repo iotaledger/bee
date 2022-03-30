@@ -1,21 +1,12 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::net::IpAddr;
-
-use bee_gossip::{Command::AddPeer, Multiaddr, NetworkCommandSender, PeerId, PeerRelation, Protocol};
-use bee_protocol::workers::PeerManager;
-use bee_runtime::resource::ResourceHandle;
+use bee_gossip::{Command::AddPeer, Multiaddr, PeerId, PeerRelation, Protocol};
 use serde_json::Value as JsonValue;
 use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
 
 use crate::{
-    endpoints::{
-        config::ROUTE_ADD_PEER,
-        filters::{with_network_command_sender, with_peer_manager},
-        permission::has_permission,
-        rejection::CustomRejection,
-    },
+    endpoints::{filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode},
     types::{
         body::SuccessBody,
         dtos::{PeerDto, RelationDto},
@@ -27,29 +18,16 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("peers")).and(warp::path::end())
 }
 
-pub(crate) fn filter(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    peer_manager: ResourceHandle<PeerManager>,
-    network_command_sender: ResourceHandle<NetworkCommandSender>,
-) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::post())
-        .and(has_permission(ROUTE_ADD_PEER, public_routes, allowed_ips))
         .and(warp::body::json())
-        .and(with_peer_manager(peer_manager))
-        .and(with_network_command_sender(network_command_sender))
-        .and_then(
-            |value, peer_manager, network_controller| async move { add_peer(value, peer_manager, network_controller) },
-        )
+        .and(with_args(args))
+        .and_then(|value, args| async move { add_peer(value, args) })
         .boxed()
 }
 
-pub(crate) fn add_peer(
-    value: JsonValue,
-    peer_manager: ResourceHandle<PeerManager>,
-    network_controller: ResourceHandle<NetworkCommandSender>,
-) -> Result<impl Reply, Rejection> {
+pub(crate) fn add_peer<B: StorageBackend>(value: JsonValue, args: ApiArgsFullNode<B>) -> Result<impl Reply, Rejection> {
     let multi_address_v = &value["multiAddress"];
     let alias_v = &value["alias"];
 
@@ -76,7 +54,7 @@ pub(crate) fn add_peer(
         }
     };
 
-    peer_manager
+    args.peer_manager
         .get_map(&peer_id, |peer_entry| {
             let peer_dto = PeerDto::from(peer_entry.0.as_ref());
             Ok(warp::reply::with_status(
@@ -100,7 +78,7 @@ pub(crate) fn add_peer(
                 )
             };
 
-            if let Err(e) = network_controller.send(AddPeer {
+            if let Err(e) = args.network_command_sender.send(AddPeer {
                 peer_id,
                 multiaddr: multi_address.clone(),
                 alias: alias.clone(),

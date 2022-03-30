@@ -198,14 +198,15 @@ dependencies = [
 
 [[package]]
 name = "auth-helper"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7299231e2941a1568afb5c7c97c3d5373f507acf4b5a7fc0b49cdc4a57ecfca0"
+checksum = "574c56c72f9945f1cd1298fe362ec1d5bd7e6c7a5c6e55925748d4986cebb6fb"
 dependencies = [
  "jsonwebtoken",
  "rand 0.8.5",
  "rust-argon2",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -438,6 +439,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "auth-helper",
+ "bee-gossip",
  "bee-ledger",
  "bee-message",
  "bee-protocol",
@@ -543,6 +545,8 @@ name = "bee-rest-api"
 version = "0.2.2"
 dependencies = [
  "async-trait",
+ "auth-helper",
+ "base64 0.13.0",
  "bech32",
  "bee-common",
  "bee-gossip",
@@ -557,9 +561,11 @@ dependencies = [
  "futures 0.3.21",
  "hex",
  "iota-crypto",
+ "lazy_static",
  "log",
  "multiaddr",
  "num_cpus",
+ "regex",
  "serde",
  "serde_json",
  "thiserror",

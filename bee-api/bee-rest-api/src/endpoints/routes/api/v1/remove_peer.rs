@@ -1,15 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::net::IpAddr;
-
-use bee_gossip::{Command::RemovePeer, NetworkCommandSender, PeerId};
-use bee_runtime::resource::ResourceHandle;
+use bee_gossip::{Command::RemovePeer, PeerId};
 use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
 
 use crate::endpoints::{
-    config::ROUTE_REMOVE_PEER, filters::with_network_command_sender, path_params::peer_id, permission::has_permission,
-    rejection::CustomRejection,
+    filters::with_args, path_params::peer_id, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode,
 };
 
 fn path() -> impl Filter<Extract = (PeerId,), Error = warp::Rejection> + Clone {
@@ -19,24 +15,19 @@ fn path() -> impl Filter<Extract = (PeerId,), Error = warp::Rejection> + Clone {
         .and(warp::path::end())
 }
 
-pub(crate) fn filter(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    network_command_sender: ResourceHandle<NetworkCommandSender>,
-) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::delete())
-        .and(has_permission(ROUTE_REMOVE_PEER, public_routes, allowed_ips))
-        .and(with_network_command_sender(network_command_sender))
-        .and_then(|peer_id, network_controller| async move { remove_peer(peer_id, network_controller) })
+        .and(with_args(args))
+        .and_then(|peer_id, args| async move { remove_peer(peer_id, args) })
         .boxed()
 }
 
-pub(crate) fn remove_peer(
+pub(crate) fn remove_peer<B: StorageBackend>(
     peer_id: PeerId,
-    network_controller: ResourceHandle<NetworkCommandSender>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
-    if let Err(e) = network_controller.send(RemovePeer { peer_id }) {
+    if let Err(e) = args.network_command_sender.send(RemovePeer { peer_id }) {
         return Err(reject::custom(CustomRejection::NotFound(format!(
             "failed to remove peer: {}",
             e

@@ -85,32 +85,24 @@ milestone_sync_count  = 200
 
 [rest_api]
 bind_address          = "/ip4/0.0.0.0/tcp/14265"
-feature_proof_of_work = true
+jwt_salt              = "Bee"
 public_routes         = [
-    "/health",
-    "/api/v1/info",
-    "/api/v1/tips",
-    "/api/v1/messages",
-    "/api/v1/messages/:messageId",
-    "/api/v1/messages/:messageId/metadata",
-    "/api/v1/messages/:messageId/raw",
-    "/api/v1/messages/:messageId/children",
-    "/api/v1/outputs/:outputId",
-    "/api/v1/addresses/:address",
-    "/api/v1/addresses/ed25519/:address",
-    "/api/v1/addresses/:address/outputs",
-    "/api/v1/addresses/ed25519/:address/outputs",
-    "/api/v1/receipts",
-    "/api/v1/receipts/:milestoneIndex",
-    "/api/v1/treasury",
-    "/api/v1/transactions/:transactionId/included-message",
-    "/api/v1/milestones/:milestoneIndex",
-    "/api/v1/milestones/:milestoneIndex/utxo-changes",
+      "/health",
+      "/api/v1/info",
+      "/api/v1/tips",
+      "/api/v1/messages*",
+      "/api/v1/transactions*",
+      "/api/v1/milestones*",
+      "/api/v1/outputs*",
+      "/api/v1/addresses*",
+      "/api/v1/treasury",
+      "/api/v1/receipts*",
 ]
-allowed_ips = [
-    "127.0.0.1",
-    "::1"
+protected_routes       = [
+      "/api/v1/*",
+      "/api/plugins/*"
 ]
+feature_proof_of_work = true
 white_flag_solidification_timeout = 2
 
 [snapshot]

@@ -1,31 +1,21 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use auth_helper::jwt::JsonWebToken;
+use bee_gossip::{Keypair, PeerId};
 use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 use log::debug;
-use warp::{
-    filters::header::headers_cloned,
-    http::header::{HeaderMap, HeaderValue, AUTHORIZATION},
-    path::FullPath,
-    reject,
-    reply::Response,
-    Filter, Rejection, Reply,
-};
+use warp::{http::header::HeaderValue, path::FullPath, reply::Response, Filter, Rejection, Reply};
 use warp_reverse_proxy::reverse_proxy_filter;
 
 use crate::{
     asset::Asset,
-    auth::{auth, AUDIENCE_CLAIM},
+    auth::auth,
     config::DashboardAuthConfig,
-    rejection::CustomRejection,
     storage::StorageBackend,
     websocket::{user_connected, WsUsers},
 };
-
-const BEARER: &str = "Bearer ";
 
 fn serve_index() -> Result<impl Reply, Rejection> {
     serve_asset("index.html")
@@ -77,13 +67,15 @@ pub(crate) fn ws_routes<S: StorageBackend>(
     storage: ResourceHandle<S>,
     tangle: ResourceHandle<Tangle<S>>,
     users: WsUsers,
-    node_id: String,
+    node_id: PeerId,
+    node_keypair: Keypair,
     auth_config: DashboardAuthConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     let storage_filter = warp::any().map(move || storage.clone());
     let tangle_filter = warp::any().map(move || tangle.clone());
     let users_filter = warp::any().map(move || users.clone());
-    let node_id_filter = warp::any().map(move || node_id.clone());
+    let node_id_filter = warp::any().map(move || node_id);
+    let node_keypair_filter = warp::any().map(move || node_keypair.clone());
     let auth_config_filter = warp::any().map(move || auth_config.clone());
 
     warp::path("ws")
@@ -92,106 +84,52 @@ pub(crate) fn ws_routes<S: StorageBackend>(
         .and(tangle_filter)
         .and(users_filter)
         .and(node_id_filter)
+        .and(node_keypair_filter)
         .and(auth_config_filter)
-        .map(|ws: warp::ws::Ws, storage, tangle, users, node_id, auth_config| {
-            // This will call our function if the handshake succeeds.
-            ws.on_upgrade(move |socket| user_connected(socket, storage, tangle, users, node_id, auth_config))
-        })
+        .map(
+            |ws: warp::ws::Ws, storage, tangle, users, node_id, node_keypair, auth_config| {
+                // This will call our function if the handshake succeeds.
+                ws.on_upgrade(move |socket| {
+                    user_connected(socket, storage, tangle, users, node_id, node_keypair, auth_config)
+                })
+            },
+        )
 }
 
 pub(crate) fn api_routes(
-    node_id: String,
-    auth_config: DashboardAuthConfig,
     rest_api_config: RestApiConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    let allowed_routes = warp::get()
-        .and(warp::path!("api" / "v1" / "info" / ..))
-        .or(warp::get().and(warp::path!("api" / "v1" / "messages" / ..)))
-        .or(warp::get().and(warp::path!("api" / "v1" / "outputs" / ..)))
-        .or(warp::get().and(warp::path!("api" / "v1" / "addresses" / ..)))
-        .or(warp::get().and(warp::path!("api" / "v1" / "milestones" / ..)))
-        .or(auth_filter(node_id.clone(), auth_config.clone())
-            .and(warp::get())
-            .and(warp::path!("api" / "v1" / "peers" / ..)))
-        .or(auth_filter(node_id.clone(), auth_config.clone())
-            .and(warp::post())
-            .and(warp::path!("api" / "v1" / "peers" / ..)))
-        .or(auth_filter(node_id, auth_config)
-            .and(warp::delete())
-            .and(warp::path!("api" / "v1" / "peers" / ..)));
-
-    allowed_routes
+    warp::path!("api" / ..)
         .and(reverse_proxy_filter(
             "".to_string(),
             "http://".to_owned() + &rest_api_config.bind_socket_addr().to_string() + "/",
         ))
-        .map(|_, res| res)
-}
-
-pub fn auth_filter(
-    node_id: String,
-    auth_config: DashboardAuthConfig,
-) -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    let node_id_filter = warp::any().map(move || node_id.clone());
-    let auth_config_filter = warp::any().map(move || auth_config.clone());
-
-    headers_cloned()
-        .map(move |headers: HeaderMap<HeaderValue>| (headers))
-        .and(node_id_filter)
-        .and(auth_config_filter)
-        .and_then(
-            move |headers: HeaderMap<HeaderValue>, node_id: String, auth_config: DashboardAuthConfig| async move {
-                let header = match headers.get(AUTHORIZATION) {
-                    Some(v) => v,
-                    None => return Err(reject::custom(CustomRejection::Forbidden)),
-                };
-                let auth_header = match std::str::from_utf8(header.as_bytes()) {
-                    Ok(v) => v,
-                    Err(_) => return Err(reject::custom(CustomRejection::Forbidden)),
-                };
-                if !auth_header.starts_with(BEARER) {
-                    return Err(reject::custom(CustomRejection::Forbidden));
-                }
-
-                let jwt = JsonWebToken::from(auth_header.trim_start_matches(BEARER).to_owned());
-
-                if jwt
-                    .validate(
-                        node_id.clone(),
-                        auth_config.user().to_owned(),
-                        AUDIENCE_CLAIM.to_owned(),
-                        b"secret",
-                    )
-                    .is_err()
-                {
-                    return Err(reject::custom(CustomRejection::Forbidden));
-                }
-
-                Ok(())
-            },
-        )
-        .untuple_one()
+        .map(|res| res)
 }
 
 pub(crate) fn auth_route(
-    node_id: String,
+    node_id: PeerId,
+    node_keypair: Keypair,
     auth_config: DashboardAuthConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    let node_id_filter = warp::any().map(move || node_id.clone());
+    let node_id_filter = warp::any().map(move || node_id);
+    let node_keypair_filter = warp::any().map(move || node_keypair.clone());
     let auth_config_filter = warp::any().map(move || auth_config.clone());
 
     warp::post()
         .and(warp::path("auth"))
         .and(node_id_filter)
+        .and(node_keypair_filter)
         .and(auth_config_filter)
         .and(warp::body::json())
-        .and_then(|node_id, config, body| async move { auth(node_id, config, body) })
+        .and_then(|node_id, keypair, config, body| async move { auth(node_id, keypair, config, body) })
 }
 
 pub(crate) fn routes<S: StorageBackend>(
     storage: ResourceHandle<S>,
     tangle: ResourceHandle<Tangle<S>>,
-    node_id: String,
+    node_id: PeerId,
+    node_keypair: Keypair,
     auth_config: DashboardAuthConfig,
     rest_api_config: RestApiConfig,
     users: WsUsers,
@@ -199,7 +137,14 @@ pub(crate) fn routes<S: StorageBackend>(
     index_filter()
         .or(asset_routes())
         .or(page_routes())
-        .or(ws_routes(storage, tangle, users, node_id.clone(), auth_config.clone()))
-        .or(api_routes(node_id.clone(), auth_config.clone(), rest_api_config))
-        .or(auth_route(node_id, auth_config))
+        .or(ws_routes(
+            storage,
+            tangle,
+            users,
+            node_id,
+            node_keypair.clone(),
+            auth_config.clone(),
+        ))
+        .or(api_routes(rest_api_config))
+        .or(auth_route(node_id, node_keypair, auth_config))
 }

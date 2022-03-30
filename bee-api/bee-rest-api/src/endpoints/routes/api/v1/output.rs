@@ -1,28 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::net::IpAddr;
-
 use bee_ledger::{
     types::{ConsumedOutput, CreatedOutput, LedgerIndex},
     workers::{consensus::ConsensusWorkerCommand, error::Error},
 };
 use bee_message::output::OutputId;
-use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 use futures::channel::oneshot;
 use log::error;
-use tokio::sync::mpsc;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use crate::{
     endpoints::{
-        config::ROUTE_OUTPUT,
-        filters::{with_consensus_worker, with_storage},
-        path_params::output_id,
-        permission::has_permission,
-        rejection::CustomRejection,
-        storage::StorageBackend,
+        filters::with_args, path_params::output_id, rejection::CustomRejection, storage::StorageBackend,
+        ApiArgsFullNode,
     },
     types::{body::SuccessBody, responses::OutputResponse},
 };
@@ -34,31 +26,24 @@ fn path() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Clone {
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    storage: ResourceHandle<B>,
-    consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
-) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
-        .and(has_permission(ROUTE_OUTPUT, public_routes, allowed_ips))
-        .and(with_storage(storage))
-        .and(with_consensus_worker(consensus_worker))
-        .and_then(
-            |output_id, storage, consensus_worker| async move { output(output_id, storage, consensus_worker).await },
-        )
+        .and(with_args(args))
+        .and_then(|output_id, args| async move { output(output_id, args).await })
         .boxed()
 }
 
 pub(crate) async fn output<B: StorageBackend>(
     output_id: OutputId,
-    storage: ResourceHandle<B>,
-    consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
     let (cmd_tx, cmd_rx) = oneshot::channel::<(Result<Option<CreatedOutput>, Error>, LedgerIndex)>();
 
-    if let Err(e) = consensus_worker.send(ConsensusWorkerCommand::FetchOutput(output_id, cmd_tx)) {
+    if let Err(e) = args
+        .consensus_worker
+        .send(ConsensusWorkerCommand::FetchOutput(output_id, cmd_tx))
+    {
         error!("request to consensus worker failed: {}.", e);
     }
 
@@ -70,12 +55,15 @@ pub(crate) async fn output<B: StorageBackend>(
     })? {
         (Ok(response), ledger_index) => match response {
             Some(output) => {
-                let consumed_output = Fetch::<OutputId, ConsumedOutput>::fetch(&*storage, &output_id).map_err(|e| {
-                    error!("unable to fetch the output: {}", e);
-                    reject::custom(CustomRejection::ServiceUnavailable(
-                        "unable to fetch the output".to_string(),
-                    ))
-                })?;
+                let consumed_output = match Fetch::<OutputId, ConsumedOutput>::fetch(&*args.storage, &output_id) {
+                    Err(e) => {
+                        error!("unable to fetch the output: {}", e);
+                        return Err(reject::custom(CustomRejection::ServiceUnavailable(
+                            "unable to fetch the output".to_string(),
+                        )));
+                    }
+                    Ok(output) => output,
+                };
 
                 let (is_spent, milestone_index_spent, transaction_id_spent) =
                     if let Some(consumed_output) = consumed_output {

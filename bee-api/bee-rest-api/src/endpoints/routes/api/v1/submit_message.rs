@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::net::IpAddr;
-
 use bee_common::packable::Packable;
 use bee_message::{parents::Parents, payload::Payload, Message, MessageBuilder, MessageId};
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
@@ -17,12 +15,7 @@ use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Re
 
 use crate::{
     endpoints::{
-        config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW},
-        filters::{with_message_submitter, with_network_id, with_protocol_config, with_rest_api_config, with_tangle},
-        permission::has_permission,
-        rejection::CustomRejection,
-        storage::StorageBackend,
-        NetworkId,
+        config::RestApiConfig, filters::with_args, rejection::CustomRejection, storage::StorageBackend, ApiArgsFullNode,
     },
     types::{body::SuccessBody, dtos::PayloadDto, responses::SubmitMessageResponse},
 };
@@ -31,36 +24,17 @@ fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("messages")).and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-    tangle: ResourceHandle<Tangle<B>>,
-    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
-    network_id: NetworkId,
-    rest_api_config: RestApiConfig,
-    protocol_config: ProtocolConfig,
-) -> BoxedFilter<(impl Reply,)> {
+pub(crate) fn filter<B: StorageBackend>(args: ApiArgsFullNode<B>) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::post())
         .and(
             (warp::header::exact("content-type", "application/json")
-                .and(has_permission(
-                    ROUTE_SUBMIT_MESSAGE,
-                    public_routes.clone(),
-                    allowed_ips.clone(),
-                ))
                 .and(warp::body::json())
-                .and(with_tangle(tangle.clone()))
-                .and(with_message_submitter(message_submitter.clone()))
-                .and(with_network_id(network_id))
-                .and(with_rest_api_config(rest_api_config))
-                .and(with_protocol_config(protocol_config))
+                .and(with_args(args.clone()))
                 .and_then(submit_message))
             .or(warp::header::exact("content-type", "application/octet-stream")
-                .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
                 .and(warp::body::bytes())
-                .and(with_tangle(tangle))
-                .and(with_message_submitter(message_submitter))
+                .and(with_args(args))
                 .and_then(submit_message_raw)),
         )
         .boxed()
@@ -68,11 +42,7 @@ pub(crate) fn filter<B: StorageBackend>(
 
 pub(crate) async fn submit_message<B: StorageBackend>(
     value: JsonValue,
-    tangle: ResourceHandle<Tangle<B>>,
-    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
-    network_id: NetworkId,
-    rest_api_config: RestApiConfig,
-    protocol_config: ProtocolConfig,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
     let network_id_v = &value["networkId"];
     let parents_v = &value["parentMessageIds"];
@@ -83,7 +53,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     // processing
 
     let network_id = if network_id_v.is_null() {
-        network_id.1
+        args.network_id.1
     } else {
         network_id_v
             .as_str()
@@ -101,7 +71,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     };
 
     let parents: Vec<MessageId> = if parents_v.is_null() {
-        tangle.get_messages_to_approve().await.ok_or_else(|| {
+        args.tangle.get_messages_to_approve().await.ok_or_else(|| {
             reject::custom(CustomRejection::ServiceUnavailable(
                 "can not auto-fill parents: no tips available".to_string(),
             ))
@@ -159,8 +129,16 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         if parsed == 0 { None } else { Some(parsed) }
     };
 
-    let message = build_message(network_id, parents, payload, nonce, rest_api_config, protocol_config)?;
-    let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
+    let message = build_message(
+        network_id,
+        parents,
+        payload,
+        nonce,
+        &args.rest_api_config,
+        &args.protocol_config,
+    )?;
+
+    let message_id = forward_to_message_submitter(message, &args.tangle, &args.message_submitter).await?;
 
     Ok(warp::reply::with_status(
         warp::reply::json(&SuccessBody::new(SubmitMessageResponse {
@@ -175,8 +153,8 @@ pub(crate) fn build_message(
     parents: Vec<MessageId>,
     payload: Option<Payload>,
     nonce: Option<u64>,
-    rest_api_config: RestApiConfig,
-    protocol_config: ProtocolConfig,
+    rest_api_config: &RestApiConfig,
+    protocol_config: &ProtocolConfig,
 ) -> Result<Message, Rejection> {
     let message = if let Some(nonce) = nonce {
         let mut builder = MessageBuilder::new()
@@ -218,8 +196,7 @@ pub(crate) fn build_message(
 
 pub(crate) async fn submit_message_raw<B: StorageBackend>(
     buf: warp::hyper::body::Bytes,
-    tangle: ResourceHandle<Tangle<B>>,
-    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
     let message = Message::unpack(&mut &(*buf)).map_err(|e| {
         reject::custom(CustomRejection::BadRequest(format!(
@@ -227,7 +204,7 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
             e
         )))
     })?;
-    let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
+    let message_id = forward_to_message_submitter(message, &args.tangle, &args.message_submitter).await?;
     Ok(warp::reply::with_status(
         warp::reply::json(&SuccessBody::new(SubmitMessageResponse {
             message_id: message_id.to_string(),
@@ -238,8 +215,8 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
 
 pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
     message: Message,
-    tangle: ResourceHandle<Tangle<B>>,
-    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+    tangle: &ResourceHandle<Tangle<B>>,
+    message_submitter: &mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<MessageId, Rejection> {
     let (message_id, message_bytes) = message.id();
 

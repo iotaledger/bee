@@ -13,6 +13,7 @@ use bee_autopeering::{
 };
 use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
 use bee_plugin_version_checker::VersionCheckerPlugin;
+use bee_rest_api::endpoints::InitConfigFullNode;
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder},
@@ -382,11 +383,18 @@ fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> FullNod
         hrp,
     } = config.network_spec().clone();
 
-    let network_id = (network_name, network_id);
-    let rest_api_cfg = config.rest_api.clone();
-    let protocol_cfg = config.protocol.clone();
+    let init_config = InitConfigFullNode {
+        node_id: config.local.peer_id(),
+        node_keypair: config.local.keypair().clone(),
+        rest_api_config: config.rest_api.clone(),
+        protocol_config: config.protocol.clone(),
+        network_id: (network_name, network_id),
+        bech32_hrp: hrp,
+        #[cfg(feature = "dashboard")]
+        dashboard_username: config.dashboard.auth().user().to_owned(),
+    };
 
-    bee_rest_api::endpoints::init_full_node::<FullNode<S>>(rest_api_cfg, protocol_cfg, network_id, hrp, builder)
+    bee_rest_api::endpoints::init_full_node::<FullNode<S>>(init_config, builder)
 }
 
 /// Initializes the Tangle.
@@ -407,11 +415,20 @@ fn initialize_dashboard<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
 
     let dashboard_cfg = config.dashboard.clone();
     let rest_api_cfg = config.rest_api.clone();
-    let node_id = config.local().peer_id().to_string();
+    let node_id = config.local().peer_id();
+    let node_keypair = config.local().keypair().clone();
     let node_alias = config.alias().clone();
     let bech32_hrp = config.network_spec().hrp().to_string();
 
-    bee_plugin_dashboard::init::<FullNode<S>>(dashboard_cfg, rest_api_cfg, node_id, node_alias, bech32_hrp, builder)
+    bee_plugin_dashboard::init::<FullNode<S>>(
+        dashboard_cfg,
+        rest_api_cfg,
+        node_id,
+        node_keypair,
+        node_alias,
+        bech32_hrp,
+        builder,
+    )
 }
 
 #[derive(Clone)]
