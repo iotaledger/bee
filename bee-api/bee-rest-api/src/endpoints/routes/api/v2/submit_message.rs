@@ -13,15 +13,13 @@ use crate::{
 };
 
 use bee_message::{
+    constant::PROTOCOL_VERSION,
     parent::Parents,
     payload::{dto::PayloadDto, Payload},
     Message, MessageBuilder, MessageId,
 };
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
-use bee_protocol::{
-    workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent},
-    PROTOCOL_VERSION,
-};
+use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 
