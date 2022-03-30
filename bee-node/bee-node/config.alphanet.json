@@ -1,7 +1,7 @@
 {
-  "alias": "Bee stardust-testnet node",
+  "alias": "Bee alphanet node",
   "bech32Hrp": "atoi",
-  "networkId": "stardust-testnet-4",
+  "networkId": "alphanet-1",
   "logger": {
     "outputs": [
       {
@@ -31,13 +31,13 @@
     "enabled": false,
     "bindAddress": "0.0.0.0:14626",
     "entryNodes": [
-      "/dns/entry-hornet-0.h.stardust-testnet.iotaledger.net/udp/14626/autopeering/Bv8UUxy81fqpttowiFiBsNT6mnGMFoFNjk79iG1f9nEr",
-      "/dns/entry-hornet-1.h.stardust-testnet.iotaledger.net/udp/14626/autopeering/CbYtFzRQtqeNQJQFYRZk1WewxfKCmqXCHZ16od1d23PX"
+      "/dns/entry-hornet-0.h.alphanet.iotaledger.net/udp/14626/autopeering/Bv8UUxy81fqpttowiFiBsNT6mnGMFoFNjk79iG1f9nEr",
+      "/dns/entry-hornet-1.h.alphanet.iotaledger.net/udp/14626/autopeering/CbYtFzRQtqeNQJQFYRZk1WewxfKCmqXCHZ16od1d23PX"
     ],
     "entryNodesPreferIPv6": false,
     "runAsEntryNode": false,
     "dropNeighborsOnSaltUpdate": false,
-    "peerStoragePath": "./storage/shimmer/testnet/peers"
+    "peerStoragePath": "./storage/alphanet/peers"
   },
   "protocol": {
     "minimumPowScore": 1000,
@@ -115,12 +115,12 @@
     "depth": 50,
     "intervalSynced": 50,
     "intervalUnsynced": 1000,
-    "fullPath": "./snapshots/shimmer/testnet/full_snapshot.bin",
-    "deltaPath": "./snapshots/shimmer/testnet/delta_snapshot.bin",
+    "fullPath": "./snapshots/alphanet/full_snapshot.bin",
+    "deltaPath": "./snapshots/alphanet/delta_snapshot.bin",
     "downloadUrls": [
       {
-        "full": "https://files.stardust-testnet.iotaledger.net/snapshots/latest-full_snapshot.bin",
-        "delta": "https://files.stardust-testnet.iotaledger.net/snapshots/latest-delta_snapshot.bin"
+        "full": "https://files.alphanet.iotaledger.net/snapshots/latest-full_snapshot.bin",
+        "delta": "https://files.alphanet.iotaledger.net/snapshots/latest-delta_snapshot.bin"
       }
     ]
   },
@@ -130,7 +130,7 @@
     "pruneReceipts": false
   },
   "storage": {
-    "path": "./storage/shimmer/testnet/tangle"
+    "path": "./storage/alphanet/tangle"
   },
   "tangle": {
     "belowMaxDepth": 15,

@@ -276,14 +276,10 @@ mod test {
 
     #[test]
     fn config_files_conformity() -> Result<(), NodeConfigError> {
-        let json = NodeConfigBuilder::<Storage>::from_file(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/config.stardust-testnet.json"
-        ))?;
-        let toml = NodeConfigBuilder::<Storage>::from_file(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/config.stardust-testnet.toml"
-        ))?;
+        let json =
+            NodeConfigBuilder::<Storage>::from_file(concat!(env!("CARGO_MANIFEST_DIR"), "/config.alphanet.json"))?;
+        let toml =
+            NodeConfigBuilder::<Storage>::from_file(concat!(env!("CARGO_MANIFEST_DIR"), "/config.alphanet.toml"))?;
 
         assert!(json == toml);
 
