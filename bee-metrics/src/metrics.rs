@@ -12,7 +12,7 @@ use tokio::process::Command;
 
 /// Metric that tracks the memory used by a process in Kilobytes.
 ///
-/// In unix-like platforms this metric takes the RSS (resident set size) reported by the `ps`
+/// On unix-like platforms this metric takes the RSS (resident set size) reported by the `ps`
 /// command.
 #[derive(Clone)]
 pub struct MemoryUsage {
@@ -21,7 +21,7 @@ pub struct MemoryUsage {
 }
 
 impl MemoryUsage {
-    /// Create a new metric for the desired PID.
+    /// Creates a new metric for the desired PID.
     pub fn new(pid: u32) -> Self {
         Self {
             gauge: Gauge::default(),
@@ -29,12 +29,12 @@ impl MemoryUsage {
         }
     }
 
-    /// Update the memory value tracked by the metric.
+    /// Updates the memory value tracked by the metric.
     ///
     /// The value is not updated if the command used to retrieve the new value:
-    ///  - Cannot be spawned.
-    ///  - Returns an unsuccessful exit code.
-    ///  - Has a non-integer output.
+    ///  - cannot be spawned,
+    ///  - returns an unsuccessful exit code,
+    ///  - has a non-integer output.
     pub async fn update(&self) {
         if cfg!(unix) {
             if let Ok(output) = Command::new("ps")
