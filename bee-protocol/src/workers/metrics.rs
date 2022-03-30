@@ -16,6 +16,7 @@ use tokio_stream::wrappers::IntervalStream;
 use crate::types::metrics::NodeMetrics;
 
 const METRICS_INTERVAL: Duration = Duration::from_secs(60);
+const MEMORY_METRIC_UPDATE_INTERVAL: Duration = Duration::from_secs(5);
 
 const DEFAULT_BIND_ADDRESS: &str = "0.0.0.0:3030";
 
@@ -107,7 +108,8 @@ impl<N: Node> Worker<N> for MetricsWorker {
         });
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(Duration::from_secs(5))));
+            let mut ticker =
+                ShutdownStream::new(shutdown, IntervalStream::new(interval(MEMORY_METRIC_UPDATE_INTERVAL)));
 
             while ticker.next().await.is_some() {
                 rss.update().await;
