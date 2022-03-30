@@ -34,7 +34,7 @@ impl MemoryUsage {
     /// The value is not updated if the command used to retrieve the new value:
     ///  - cannot be spawned,
     ///  - returns an unsuccessful exit code,
-    ///  - has a non-integer output.
+    ///  - its output cannot be parsed.
     pub async fn update(&self) {
         if cfg!(unix) {
             if let Ok(output) = Command::new("ps")
@@ -46,9 +46,10 @@ impl MemoryUsage {
                 .await
             {
                 if output.status.success() {
-                    let stdout = String::from_utf8(output.stdout).unwrap();
-                    if let Ok(value) = stdout.trim_start().trim_end_matches('\n').parse::<u64>() {
-                        self.gauge.set(value);
+                    if let Ok(stdout) = String::from_utf8(output.stdout) {
+                        if let Ok(value) = stdout.trim_start().trim_end_matches('\n').parse::<u64>() {
+                            self.gauge.set(value);
+                        }
                     }
                 }
             }
