@@ -271,7 +271,7 @@ where
                 dashboard: self.dashboard.unwrap_or_default().finish(),
                 #[cfg(feature = "trace")]
                 tracing: self.tracing.unwrap_or_default().finish(),
-                metrics: self.metrics.unwrap().finish(),
+                metrics: self.metrics.unwrap_or_default().finish(),
             },
         )
     }
