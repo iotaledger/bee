@@ -4,7 +4,6 @@
 mod simple;
 
 pub use self::simple::SimpleTokenScheme;
-
 use crate::Error;
 
 ///

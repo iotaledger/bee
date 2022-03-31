@@ -7,9 +7,8 @@ mod utxo;
 use core::ops::RangeInclusive;
 
 use derive_more::From;
-pub use self::treasury::TreasuryInput;
-pub use self::utxo::UtxoInput;
 
+pub use self::{treasury::TreasuryInput, utxo::UtxoInput};
 use crate::Error;
 
 /// The maximum number of inputs of a transaction.

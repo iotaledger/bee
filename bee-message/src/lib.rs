@@ -43,8 +43,10 @@ pub mod unlock_block;
 
 #[cfg(feature = "dto")]
 pub use self::error::dto::DtoError;
-pub use self::error::Error;
 #[cfg(feature = "dto")]
 pub use self::message::dto::MessageDto;
-pub use self::message::{Message, MessageBuilder};
-pub use self::message_id::MessageId;
+pub use self::{
+    error::Error,
+    message::{Message, MessageBuilder},
+    message_id::MessageId,
+};

@@ -12,22 +12,23 @@ pub mod treasury_transaction;
 use alloc::boxed::Box;
 use core::ops::Deref;
 
-pub use self::milestone::MilestonePayload;
-pub(crate) use self::milestone::SignatureCount;
 use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
     Packable, PackableExt,
 };
-pub use self::receipt::ReceiptPayload;
-pub(crate) use self::receipt::{MigratedFundsAmount, ReceiptFundsCount};
-pub use self::tagged_data::TaggedDataPayload;
-pub(crate) use self::tagged_data::{TagLength, TaggedDataLength};
-pub use self::transaction::TransactionPayload;
-pub(crate) use self::transaction::{InputCount, OutputCount};
-pub use self::treasury_transaction::TreasuryTransactionPayload;
 
+pub use self::{
+    milestone::MilestonePayload, receipt::ReceiptPayload, tagged_data::TaggedDataPayload,
+    transaction::TransactionPayload, treasury_transaction::TreasuryTransactionPayload,
+};
+pub(crate) use self::{
+    milestone::SignatureCount,
+    receipt::{MigratedFundsAmount, ReceiptFundsCount},
+    tagged_data::{TagLength, TaggedDataLength},
+    transaction::{InputCount, OutputCount},
+};
 use crate::Error;
 
 /// A generic payload that can represent different types defining message payloads.

@@ -14,11 +14,10 @@ use crypto::{
     signatures::ed25519,
     Error as CryptoError,
 };
-pub use self::essence::MilestoneEssence;
 use iterator_sorted::is_unique_sorted;
-pub use self::milestone_id::MilestoneId;
 use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable, PackableExt};
 
+pub use self::{essence::MilestoneEssence, milestone_id::MilestoneId};
 use crate::{signature::Signature, Error};
 
 #[derive(Debug)]

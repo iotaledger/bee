@@ -10,15 +10,13 @@ use alloc::vec::Vec;
 
 use bitflags::bitflags;
 use derive_more::{Deref, From};
-pub use self::issuer::IssuerFeatureBlock;
 use iterator_sorted::is_unique_sorted;
-pub use self::metadata::MetadataFeatureBlock;
-pub(crate) use self::metadata::MetadataFeatureBlockLength;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
-pub use self::sender::SenderFeatureBlock;
-pub use self::tag::TagFeatureBlock;
-pub(crate) use self::tag::TagFeatureBlockLength;
 
+pub use self::{
+    issuer::IssuerFeatureBlock, metadata::MetadataFeatureBlock, sender::SenderFeatureBlock, tag::TagFeatureBlock,
+};
+pub(crate) use self::{metadata::MetadataFeatureBlockLength, tag::TagFeatureBlockLength};
 use crate::{create_bitflags, Error};
 
 ///
