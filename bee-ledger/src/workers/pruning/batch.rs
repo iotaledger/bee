@@ -15,7 +15,7 @@ use bee_message::{
 };
 use bee_storage::access::{Batch, Fetch};
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage, Tangle,
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 use hashbrown::{HashMap, HashSet};
 use ref_cast::RefCast;
@@ -42,7 +42,6 @@ pub struct Edge {
 }
 
 pub fn batch_prunable_confirmed_data<S: StorageBackend>(
-    _tangle: &Tangle<S>,
     storage: &S,
     batch: &mut S::Batch,
     prune_index: MilestoneIndex,
