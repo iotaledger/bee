@@ -55,7 +55,7 @@ pub struct MilestonePayload {
 
 impl MilestonePayload {
     /// The payload kind of a [`MilestonePayload`].
-    pub const KIND: u32 = 1;
+    pub const KIND: u32 = 7
     /// Range of allowed milestones signatures key numbers.
     pub const SIGNATURE_COUNT_RANGE: RangeInclusive<u8> = 1..=255;
     /// Length of a milestone signature.
