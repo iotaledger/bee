@@ -10,8 +10,7 @@ use crate::{
     },
     parent::ParentCount,
     payload::{
-        InputCount, MigratedFundsAmount, OutputCount, PublicKeyCount, ReceiptFundsCount, SignatureCount, TagLength,
-        TaggedDataLength,
+        InputCount, MigratedFundsAmount, OutputCount, ReceiptFundsCount, SignatureCount, TagLength, TaggedDataLength,
     },
     unlock_block::{UnlockBlockCount, UnlockBlockIndex},
 };
@@ -84,10 +83,9 @@ pub enum Error {
     InvalidUnlockConditionCount(<UnlockConditionCount as TryFrom<usize>>::Error),
     InvalidUnlockConditionKind(u8),
     MigratedFundsNotSorted,
-    MilestoneInvalidPublicKeyCount(<PublicKeyCount as TryFrom<usize>>::Error),
     MilestoneInvalidSignatureCount(<SignatureCount as TryFrom<usize>>::Error),
-    MilestonePublicKeysNotUniqueSorted,
     MilestonePublicKeysSignaturesCountMismatch { key_count: usize, sig_count: usize },
+    MilestoneSignaturesNotUniqueSorted,
     MissingAddressUnlockCondition,
     MissingGovernorUnlockCondition,
     MissingPayload,
@@ -240,14 +238,8 @@ impl fmt::Display for Error {
             Error::MigratedFundsNotSorted => {
                 write!(f, "migrated funds are not sorted")
             }
-            Error::MilestoneInvalidPublicKeyCount(count) => {
-                write!(f, "invalid milestone public key count: {}", count)
-            }
             Error::MilestoneInvalidSignatureCount(count) => {
                 write!(f, "invalid milestone signature count: {}", count)
-            }
-            Error::MilestonePublicKeysNotUniqueSorted => {
-                write!(f, "milestone public keys are not unique and/or sorted")
             }
             Error::MilestonePublicKeysSignaturesCountMismatch { key_count, sig_count } => {
                 write!(
@@ -255,6 +247,9 @@ impl fmt::Display for Error {
                     "milestone public keys and signatures count mismatch: {0} != {1}",
                     key_count, sig_count
                 )
+            }
+            Error::MilestoneSignaturesNotUniqueSorted => {
+                write!(f, "milestone signatures are not unique and/or sorted")
             }
             Error::MissingAddressUnlockCondition => write!(f, "missing address unlock condition"),
             Error::MissingGovernorUnlockCondition => write!(f, "missing governor unlock condition"),
