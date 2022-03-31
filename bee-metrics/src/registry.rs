@@ -1,17 +1,14 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::encoding::SendSyncEncodeMetric;
-
 use parking_lot::RwLock;
 use prometheus_client::registry::Registry as PrometheusRegistry;
 
-use std::sync::Arc;
+use crate::encoding::SendSyncEncodeMetric;
 
 /// A type used to register metrics so they can be scraped later.
-#[derive(Clone)]
 pub struct Registry {
-    pub(crate) registry: Arc<RwLock<PrometheusRegistry<Box<dyn SendSyncEncodeMetric + 'static>>>>,
+    pub(crate) registry: RwLock<PrometheusRegistry<Box<dyn SendSyncEncodeMetric + 'static>>>,
 }
 
 impl Registry {
@@ -29,7 +26,7 @@ impl Registry {
 impl Default for Registry {
     fn default() -> Self {
         Self {
-            registry: Arc::new(RwLock::new(Default::default())),
+            registry: RwLock::new(Default::default()),
         }
     }
 }

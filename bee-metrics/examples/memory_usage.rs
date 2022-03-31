@@ -1,8 +1,9 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_metrics::{metrics::ProcessMetrics, serve_metrics, Registry};
+use std::sync::Arc;
 
+use bee_metrics::{metrics::ProcessMetrics, serve_metrics, Registry};
 use tokio::time::Duration;
 
 async fn update_memory_usage(memory_usage: ProcessMetrics) {
@@ -20,7 +21,7 @@ async fn update_memory_usage(memory_usage: ProcessMetrics) {
 
 #[tokio::main]
 async fn main() {
-    let registry = Registry::default();
+    let registry = Arc::new(Registry::default());
 
     let metrics = ProcessMetrics::new(std::process::id());
     let (mem_metric, _cpu_metric) = metrics.metrics();

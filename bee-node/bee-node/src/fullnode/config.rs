@@ -6,12 +6,12 @@ use bee_gossip::NetworkConfig;
 use bee_ledger::workers::{pruning::config::PruningConfig, snapshot::config::SnapshotConfig};
 #[cfg(feature = "dashboard")]
 use bee_plugin_dashboard::config::DashboardConfig;
-use bee_protocol::workers::{config::ProtocolConfig, MetricsConfig};
+use bee_protocol::workers::config::ProtocolConfig;
 use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_tangle::config::TangleConfig;
 use fern_logger::LoggerConfig;
 
-use crate::{config::NetworkSpec, local::Local, storage::NodeStorageBackend, NodeConfig};
+use crate::{config::NetworkSpec, local::Local, storage::NodeStorageBackend, workers::MetricsConfig, NodeConfig};
 
 /// The config of a Bee full node.
 pub struct FullNodeConfig<S: NodeStorageBackend> {

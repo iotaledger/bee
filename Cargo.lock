@@ -572,7 +572,6 @@ dependencies = [
  "bee-gossip",
  "bee-ledger",
  "bee-message",
- "bee-metrics",
  "bee-pow",
  "bee-runtime",
  "bee-storage",

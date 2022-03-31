@@ -28,7 +28,9 @@ use crate::{
     core::{Core, CoreError, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
     shutdown,
     storage::NodeStorageBackend,
-    util, AUTOPEERING_VERSION, BEE_VERSION,
+    util,
+    workers::MetricsRegistryWorker,
+    AUTOPEERING_VERSION, BEE_VERSION,
 };
 
 /// A builder to create a Bee full node.
@@ -271,7 +273,7 @@ fn initialize_ledger<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Full
 
 /// Initializes the protocol.
 fn initialize_protocol<S: NodeStorageBackend>(
-    builder: FullNodeBuilder<S>,
+    mut builder: FullNodeBuilder<S>,
     gossip_events: NetworkEventReceiver,
     autopeering_events: Option<bee_autopeering::event::EventRx>,
 ) -> FullNodeBuilder<S> {
@@ -287,7 +289,8 @@ fn initialize_protocol<S: NodeStorageBackend>(
 
     let protocol_cfg = config.protocol.clone();
 
-    let metrics = builder.config().metrics.clone();
+    let metrics_cfg = builder.config().metrics.clone();
+    builder = builder.with_worker_cfg::<MetricsRegistryWorker>(metrics_cfg);
 
     bee_protocol::workers::init::<FullNode<S>>(
         protocol_cfg,
@@ -295,7 +298,6 @@ fn initialize_protocol<S: NodeStorageBackend>(
         gossip_events,
         autopeering_events,
         builder,
-        metrics,
     )
 }
 

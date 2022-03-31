@@ -9,7 +9,7 @@ pub mod encoding;
 pub mod metrics;
 mod registry;
 
-use std::net::SocketAddr;
+use std::{net::SocketAddr, ops::Deref};
 
 use axum::{
     extract::Extension,
@@ -21,7 +21,10 @@ use prometheus_client::encoding::text::encode;
 
 pub use self::registry::Registry;
 
-async fn get_metrics(state: Extension<Registry>) -> (StatusCode, HeaderMap, Vec<u8>) {
+async fn get_metrics<T>(state: Extension<T>) -> (StatusCode, HeaderMap, Vec<u8>)
+where
+    T: Deref<Target = Registry>,
+{
     let mut headers = HeaderMap::new();
     headers.insert(
         HeaderName::from_static("content-type"),
@@ -37,9 +40,12 @@ async fn get_metrics(state: Extension<Registry>) -> (StatusCode, HeaderMap, Vec<
 
 /// Serve the metrics registered in the provided [`Registry`] using the provided `SocketAddr`. This
 /// endpoint can be scraped by Prometheus to collect the metrics.
-pub async fn serve_metrics(addr: SocketAddr, registry: Registry) -> Result<(), axum::Error> {
+pub async fn serve_metrics<T>(addr: SocketAddr, registry: T) -> Result<(), axum::Error>
+where
+    T: Deref<Target = Registry> + Clone + Send + Sync + 'static,
+{
     let app = Router::new()
-        .route("/metrics", get(get_metrics))
+        .route("/metrics", get(get_metrics::<T>))
         .layer(Extension(registry));
 
     Server::bind(&addr)
