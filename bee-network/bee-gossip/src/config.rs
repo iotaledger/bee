@@ -3,12 +3,12 @@
 
 #![cfg(feature = "full")]
 
-use crate::alias;
+use std::{borrow::Cow, collections::HashSet};
 
 use libp2p::{multiaddr::Protocol, Multiaddr, PeerId};
 use serde::Deserialize;
 
-use std::{borrow::Cow, collections::HashSet};
+use crate::alias;
 
 const DEFAULT_BIND_MULTIADDR: &str = "/ip4/0.0.0.0/tcp/15600";
 

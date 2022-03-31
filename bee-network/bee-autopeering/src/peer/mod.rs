@@ -6,10 +6,23 @@ pub(crate) mod lists;
 pub mod peer_id;
 pub mod stores;
 
-pub use peer_id::PeerId;
-pub use stores::PeerStore;
+use std::{
+    fmt,
+    net::{IpAddr, SocketAddr},
+};
 
+use bytes::BytesMut;
+use crypto::signatures::ed25519::PublicKey;
+use libp2p_core::{multiaddr::Protocol, Multiaddr};
 use lists::{ActivePeersList, ReplacementPeersList};
+pub use peer_id::PeerId;
+use prost::{DecodeError, EncodeError, Message};
+use serde::{
+    de::{SeqAccess, Visitor},
+    ser::SerializeStruct,
+    Deserialize, Serialize,
+};
+pub use stores::PeerStore;
 
 use crate::{
     local::{
@@ -17,21 +30,6 @@ use crate::{
         Local,
     },
     proto,
-};
-
-use bytes::BytesMut;
-use crypto::signatures::ed25519::PublicKey;
-use libp2p_core::{multiaddr::Protocol, Multiaddr};
-use prost::{DecodeError, EncodeError, Message};
-use serde::{
-    de::{SeqAccess, Visitor},
-    ser::SerializeStruct,
-    Deserialize, Serialize,
-};
-
-use std::{
-    fmt,
-    net::{IpAddr, SocketAddr},
 };
 
 /// Represents a peer.
@@ -343,10 +341,10 @@ pub enum Error {
 
 #[cfg(test)]
 mod tests {
-    use crate::local::services::AUTOPEERING_SERVICE_NAME;
+    use crypto::signatures::ed25519::SecretKey as PrivateKey;
 
     use super::*;
-    use crypto::signatures::ed25519::SecretKey as PrivateKey;
+    use crate::local::services::AUTOPEERING_SERVICE_NAME;
 
     impl Peer {
         pub(crate) fn new_test_peer(index: u8) -> Self {

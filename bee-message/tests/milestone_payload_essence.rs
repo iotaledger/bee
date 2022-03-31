@@ -9,7 +9,6 @@ use bee_message::{
     Error,
 };
 use bee_test::rand::{self, bytes::rand_bytes, parents::rand_parents};
-
 use packable::PackableExt;
 
 #[test]

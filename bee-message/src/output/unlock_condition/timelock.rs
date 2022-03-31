@@ -1,8 +1,6 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{milestone::MilestoneIndex, Error};
-
 use derive_more::From;
 use packable::{
     error::{UnpackError, UnpackErrorExt},
@@ -10,6 +8,8 @@ use packable::{
     unpacker::Unpacker,
     Packable,
 };
+
+use crate::{milestone::MilestoneIndex, Error};
 
 /// Defines a milestone index and/or unix timestamp until which the output can not be unlocked.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]

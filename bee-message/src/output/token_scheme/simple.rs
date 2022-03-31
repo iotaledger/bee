@@ -1,8 +1,6 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::Error;
-
 use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
@@ -10,6 +8,8 @@ use packable::{
     Packable,
 };
 use primitive_types::U256;
+
+use crate::error::Error;
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]

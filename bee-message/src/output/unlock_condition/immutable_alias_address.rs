@@ -1,12 +1,12 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use derive_more::From;
+
 use crate::{
     address::{Address, AliasAddress},
     Error,
 };
-
-use derive_more::From;
 
 /// Defines the permanent [`AliasAddress`] that owns this output.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]

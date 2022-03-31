@@ -6,8 +6,14 @@ mod nft;
 mod reference;
 mod signature;
 
+use alloc::vec::Vec;
+use core::ops::RangeInclusive;
+
 pub use alias::AliasUnlockBlock;
+use derive_more::{Deref, From};
+use hashbrown::HashSet;
 pub use nft::NftUnlockBlock;
+use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
 pub use reference::ReferenceUnlockBlock;
 pub use signature::SignatureUnlockBlock;
 
@@ -15,13 +21,6 @@ use crate::{
     input::{INPUT_COUNT_MAX, INPUT_COUNT_RANGE, INPUT_INDEX_MAX, INPUT_INDEX_RANGE},
     Error,
 };
-
-use derive_more::{Deref, From};
-use hashbrown::HashSet;
-use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
-
-use alloc::vec::Vec;
-use core::ops::RangeInclusive;
 
 /// The maximum number of unlock blocks of a transaction.
 pub const UNLOCK_BLOCK_COUNT_MAX: u16 = INPUT_COUNT_MAX; // 128

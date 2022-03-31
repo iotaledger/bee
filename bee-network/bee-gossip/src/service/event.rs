@@ -1,17 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::command::Command;
+use libp2p::swarm::NegotiatedSubstream;
+use libp2p_core::{Multiaddr, PeerId};
+use tokio::sync::mpsc;
 
+use super::command::Command;
 use crate::{
     network::origin::Origin,
     peer::{error::Error as PeerError, info::PeerInfo},
     swarm::protocols::iota_gossip::{GossipReceiver, GossipSender},
 };
-
-use libp2p::swarm::NegotiatedSubstream;
-use libp2p_core::{Multiaddr, PeerId};
-use tokio::sync::mpsc;
 
 pub type EventSender = mpsc::UnboundedSender<Event>;
 pub type EventReceiver = mpsc::UnboundedReceiver<Event>;

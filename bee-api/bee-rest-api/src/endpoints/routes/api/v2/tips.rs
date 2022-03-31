@@ -1,6 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_message::MessageId;
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::Tangle;
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         config::ROUTE_TIPS, filters::with_tangle, permission::has_permission, rejection::CustomRejection,
@@ -8,14 +15,6 @@ use crate::{
     },
     types::responses::TipsResponse,
 };
-
-use bee_message::MessageId;
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
-
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("tips")).and(warp::path::end())

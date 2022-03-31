@@ -1,19 +1,17 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, DashboardPlugin};
+use std::time::Duration;
 
 use bee_protocol::workers::PeerManager;
 use bee_rest_api::types::{dtos::PeerDto, responses::PeersResponse};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
-
 use futures::StreamExt;
 use log::debug;
-
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
-use std::time::Duration;
+use crate::{broadcast, storage::StorageBackend, websocket::WsUsers, DashboardPlugin};
 
 const NODE_STATUS_METRICS_WORKER_INTERVAL_SEC: u64 = 1;
 

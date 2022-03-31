@@ -20,6 +20,9 @@ mod sender;
 mod solidifier;
 mod status;
 
+use bee_autopeering::event::EventRx as AutopeeringEventRx;
+use bee_gossip::NetworkEventReceiver as NetworkEventRx;
+use bee_runtime::node::{Node, NodeBuilder};
 pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
 pub(crate) use heartbeater::HeartbeaterWorker;
 pub(crate) use index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
@@ -42,10 +45,6 @@ pub(crate) use responder::{
 };
 pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
 pub(crate) use status::StatusWorker;
-
-use bee_autopeering::event::EventRx as AutopeeringEventRx;
-use bee_gossip::NetworkEventReceiver as NetworkEventRx;
-use bee_runtime::node::{Node, NodeBuilder};
 
 pub fn init<N: Node>(
     config: config::ProtocolConfig,

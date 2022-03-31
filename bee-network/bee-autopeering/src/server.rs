@@ -1,6 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{net::SocketAddr, sync::Arc};
+
+pub(crate) use tokio::sync::mpsc::unbounded_channel as server_chan;
+use tokio::{net::UdpSocket, sync::mpsc};
+
 use crate::{
     config::AutopeeringConfig,
     local::Local,
@@ -11,12 +16,6 @@ use crate::{
     peer::{peer_id::PeerId, PeerStore},
     task::{Runnable, ShutdownRx, TaskManager},
 };
-
-use tokio::{net::UdpSocket, sync::mpsc};
-
-use std::{net::SocketAddr, sync::Arc};
-
-pub(crate) use tokio::sync::mpsc::unbounded_channel as server_chan;
 
 const READ_BUFFER_SIZE: usize = crate::packet::MAX_PACKET_SIZE;
 const IP_V4_FLAG: bool = false;

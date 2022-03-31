@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{constant::IOTA_SUPPLY, Error};
+use core::ops::RangeInclusive;
 
 use packable::bounded::BoundedU64;
 
-use core::ops::RangeInclusive;
+use crate::{constant::IOTA_SUPPLY, Error};
 
 pub(crate) type TreasuryOutputAmount =
     BoundedU64<{ *TreasuryOutput::AMOUNT_RANGE.start() }, { *TreasuryOutput::AMOUNT_RANGE.end() }>;

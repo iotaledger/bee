@@ -1,12 +1,12 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use alloc::vec::Vec;
+use core::ops::RangeInclusive;
 
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix};
 
-use alloc::vec::Vec;
-use core::ops::RangeInclusive;
+use crate::Error;
 
 pub(crate) type TagFeatureBlockLength =
     BoundedU8<{ *TagFeatureBlock::LENGTH_RANGE.start() }, { *TagFeatureBlock::LENGTH_RANGE.end() }>;

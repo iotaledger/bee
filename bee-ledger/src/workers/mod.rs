@@ -10,13 +10,11 @@ pub mod pruning;
 pub mod snapshot;
 pub mod storage;
 
-pub use storage::StorageBackend;
-
+use bee_runtime::node::{Node, NodeBuilder};
 use consensus::ConsensusWorker;
 use pruning::config::PruningConfig;
 use snapshot::{config::SnapshotConfig, worker::SnapshotWorker};
-
-use bee_runtime::node::{Node, NodeBuilder};
+pub use storage::StorageBackend;
 
 /// Initializes the ledger workers.
 pub fn init<N>(

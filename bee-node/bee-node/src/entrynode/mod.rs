@@ -4,20 +4,18 @@
 pub mod builder;
 pub mod config;
 
-use self::{builder::EntryNodeBuilder, config::EntryNodeConfig};
+use std::any::{type_name, Any, TypeId};
 
+use async_trait::async_trait;
+use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Worker};
+use bee_storage_null::Storage as NullStorage;
+use futures::{channel::oneshot, Future};
+
+use self::{builder::EntryNodeBuilder, config::EntryNodeConfig};
 use crate::{
     core::{Core, CoreError},
     shutdown::ShutdownRx,
 };
-
-use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Worker};
-use bee_storage_null::Storage as NullStorage;
-
-use async_trait::async_trait;
-use futures::{channel::oneshot, Future};
-
-use std::any::{type_name, Any, TypeId};
 
 /// Entry node related errors.
 #[derive(Debug, thiserror::Error)]

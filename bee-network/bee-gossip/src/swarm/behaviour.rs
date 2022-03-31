@@ -1,13 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::protocols::iota_gossip::{IotaGossipEvent, IotaGossipProtocol};
-
-use crate::{
-    alias,
-    service::event::{InternalEvent, InternalEventSender},
-};
-
 use libp2p::{
     identify::{Identify, IdentifyConfig, IdentifyEvent},
     swarm::NetworkBehaviourEventProcess,
@@ -15,6 +8,12 @@ use libp2p::{
 };
 use libp2p_core::identity::PublicKey;
 use log::*;
+
+use super::protocols::iota_gossip::{IotaGossipEvent, IotaGossipProtocol};
+use crate::{
+    alias,
+    service::event::{InternalEvent, InternalEventSender},
+};
 
 const IOTA_PROTOCOL_VERSION: &str = "iota/0.1.0";
 

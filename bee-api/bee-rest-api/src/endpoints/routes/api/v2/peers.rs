@@ -1,17 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{convert::Infallible, net::IpAddr};
+
+use bee_protocol::workers::PeerManager;
+use bee_runtime::resource::ResourceHandle;
+use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{config::ROUTE_PEERS, filters::with_peer_manager, permission::has_permission},
     types::{dtos::PeerDto, responses::PeersResponse},
 };
-
-use bee_protocol::workers::PeerManager;
-use bee_runtime::resource::ResourceHandle;
-
-use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
-
-use std::{convert::Infallible, net::IpAddr};
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("peers")).and(warp::path::end())

@@ -1,13 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{error::Error, TreasuryDiff};
+use core::convert::Infallible;
 
 use bee_message::output::OutputId;
-
 use packable::prefix::{UnpackPrefixError, VecPrefix};
 
-use core::convert::Infallible;
+use crate::types::{error::Error, TreasuryDiff};
 
 fn unpack_prefix_error_to_error(err: UnpackPrefixError<bee_message::Error, Infallible>) -> Error {
     err.into_item_err().into()

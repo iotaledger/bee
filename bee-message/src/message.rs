@@ -1,15 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    constant::PROTOCOL_VERSION,
-    parent::Parents,
-    payload::{OptionalPayload, Payload},
-    Error, MessageId,
-};
+use core::ops::Deref;
 
 use bee_pow::providers::{miner::Miner, NonceProvider, NonceProviderBuilder};
-
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 use packable::{
     error::{UnpackError, UnpackErrorExt},
@@ -18,7 +12,12 @@ use packable::{
     Packable, PackableExt,
 };
 
-use core::ops::Deref;
+use crate::{
+    constant::PROTOCOL_VERSION,
+    parent::Parents,
+    payload::{OptionalPayload, Payload},
+    Error, MessageId,
+};
 
 /// A builder to build a [`Message`].
 #[must_use]

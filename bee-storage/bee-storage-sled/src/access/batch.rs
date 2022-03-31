@@ -3,7 +3,7 @@
 
 //! Batch access operations.
 
-use crate::{storage::Storage, trees::*};
+use std::{collections::BTreeMap, convert::Infallible};
 
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
@@ -22,11 +22,10 @@ use bee_storage::{
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
-
 use packable::{Packable, PackableExt};
 use sled::{transaction::TransactionError, Transactional};
 
-use std::{collections::BTreeMap, convert::Infallible};
+use crate::{storage::Storage, trees::*};
 
 /// A writing batch that can be applied atomically.
 #[derive(Default)]

@@ -1,6 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_ledger::types::CreatedOutput;
+use bee_message::{output::OutputId, payload::transaction::TransactionId};
+use bee_runtime::resource::ResourceHandle;
+use bee_storage::access::Fetch;
+use bee_tangle::Tangle;
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::endpoints::{
     config::ROUTE_TRANSACTION_INCLUDED_MESSAGE,
     filters::{with_storage, with_tangle},
@@ -10,16 +19,6 @@ use crate::endpoints::{
     routes::api::v2::message,
     storage::StorageBackend,
 };
-
-use bee_ledger::types::CreatedOutput;
-use bee_message::{output::OutputId, payload::transaction::TransactionId};
-use bee_runtime::resource::ResourceHandle;
-use bee_storage::access::Fetch;
-use bee_tangle::Tangle;
-
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (TransactionId,), Error = Rejection> + Clone {
     super::path()

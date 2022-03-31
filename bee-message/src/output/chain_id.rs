@@ -1,9 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::output::{AliasId, FoundryId, NftId, OutputId};
-
 use derive_more::From;
+
+use crate::output::{AliasId, FoundryId, NftId, OutputId};
 
 ///
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, From)]

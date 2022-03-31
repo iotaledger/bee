@@ -1,12 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::{bytes::rand_bytes_array, message::rand_message_id, number::rand_number};
-
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     payload::milestone::MilestoneId,
 };
+
+use crate::rand::{bytes::rand_bytes_array, message::rand_message_id, number::rand_number};
 
 /// Generates a random milestone index.
 pub fn rand_milestone_index() -> MilestoneIndex {

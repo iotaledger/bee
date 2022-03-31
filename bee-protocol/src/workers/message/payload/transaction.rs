@@ -1,25 +1,24 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::metrics::NodeMetrics,
-    workers::{storage::StorageBackend, MetricsWorker, TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent},
-};
+use std::{any::TypeId, convert::Infallible};
 
+use async_trait::async_trait;
 use bee_message::{
     payload::{transaction::TransactionEssence, Payload},
     MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MessageRef;
-
-use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, convert::Infallible};
+use crate::{
+    types::metrics::NodeMetrics,
+    workers::{storage::StorageBackend, MetricsWorker, TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent},
+};
 
 pub(crate) struct TransactionPayloadWorkerEvent {
     pub(crate) message_id: MessageId,

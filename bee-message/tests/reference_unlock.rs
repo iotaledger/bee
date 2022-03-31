@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{unlock_block::ReferenceUnlockBlock, Error};
-
 use packable::{bounded::InvalidBoundedU16, error::UnpackError, PackableExt};
 
 #[test]

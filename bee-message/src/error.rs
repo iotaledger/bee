@@ -1,6 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use alloc::string::String;
+use core::{convert::Infallible, fmt};
+
+use crypto::Error as CryptoError;
+use prefix_hex::Error as HexError;
+use primitive_types::U256;
+
 use crate::{
     input::UtxoInput,
     output::{
@@ -14,13 +21,6 @@ use crate::{
     },
     unlock_block::{UnlockBlockCount, UnlockBlockIndex},
 };
-
-use crypto::Error as CryptoError;
-use prefix_hex::Error as HexError;
-use primitive_types::U256;
-
-use alloc::string::String;
-use core::{convert::Infallible, fmt};
 
 /// Error occurring when creating/parsing/validating messages.
 #[derive(Debug, PartialEq)]

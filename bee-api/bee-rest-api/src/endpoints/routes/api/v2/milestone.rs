@@ -1,6 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_message::milestone::MilestoneIndex;
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::Tangle;
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         config::ROUTE_MILESTONE, filters::with_tangle, path_params::milestone_index, permission::has_permission,
@@ -8,14 +15,6 @@ use crate::{
     },
     types::responses::MilestoneResponse,
 };
-
-use bee_message::milestone::MilestoneIndex;
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
-
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
     super::path()

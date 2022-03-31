@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::Error as MessageError;
-
 use thiserror::Error;
 
 #[derive(Debug, Error)]

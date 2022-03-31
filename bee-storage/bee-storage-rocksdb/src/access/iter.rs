@@ -1,10 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    column_families::*,
-    storage::{Storage, StorageBackend},
-};
+use std::marker::PhantomData;
 
 use bee_ledger::types::{
     snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
@@ -19,11 +16,13 @@ use bee_storage::{access::AsIterator, system::System};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
-
 use packable::PackableExt;
 use rocksdb::{DBIterator, IteratorMode};
 
-use std::marker::PhantomData;
+use crate::{
+    column_families::*,
+    storage::{Storage, StorageBackend},
+};
 
 pub struct StorageIterator<'a, K, V> {
     inner: DBIterator<'a>,

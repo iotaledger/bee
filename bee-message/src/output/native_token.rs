@@ -1,14 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{output::TokenId, Error};
+use alloc::vec::Vec;
 
 use derive_more::Deref;
 use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 use primitive_types::U256;
 
-use alloc::vec::Vec;
+use crate::{output::TokenId, Error};
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]

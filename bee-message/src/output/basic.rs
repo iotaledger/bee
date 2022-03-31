@@ -1,6 +1,10 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use alloc::vec::Vec;
+
+use packable::Packable;
+
 use crate::{
     address::Address,
     output::{
@@ -12,10 +16,6 @@ use crate::{
     unlock_block::UnlockBlock,
     Error,
 };
-
-use packable::Packable;
-
-use alloc::vec::Vec;
 
 ///
 #[must_use]

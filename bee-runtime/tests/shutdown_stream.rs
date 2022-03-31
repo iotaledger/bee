@@ -1,15 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_runtime::shutdown_stream::ShutdownStream;
+use std::time::Duration;
 
+use bee_runtime::shutdown_stream::ShutdownStream;
 use futures::{
     channel::{mpsc, oneshot},
     SinkExt, StreamExt,
 };
 use tokio::{task::spawn, time::sleep};
-
-use std::time::Duration;
 
 #[tokio::test]
 async fn no_shutdown() {

@@ -1,16 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    endpoints::{
-        config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW},
-        filters::{with_message_submitter, with_protocol_config, with_rest_api_config, with_tangle},
-        permission::has_permission,
-        rejection::CustomRejection,
-        storage::StorageBackend,
-    },
-    types::responses::SubmitMessageResponse,
-};
+use std::net::IpAddr;
 
 use bee_message::{
     constant::PROTOCOL_VERSION,
@@ -22,7 +13,6 @@ use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
 use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
-
 use futures::channel::oneshot;
 use log::error;
 use packable::PackableExt;
@@ -30,7 +20,16 @@ use serde_json::Value as JsonValue;
 use tokio::sync::mpsc;
 use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
 
-use std::net::IpAddr;
+use crate::{
+    endpoints::{
+        config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW},
+        filters::{with_message_submitter, with_protocol_config, with_rest_api_config, with_tangle},
+        permission::has_permission,
+        rejection::CustomRejection,
+        storage::StorageBackend,
+    },
+    types::responses::SubmitMessageResponse,
+};
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("messages")).and(warp::path::end())

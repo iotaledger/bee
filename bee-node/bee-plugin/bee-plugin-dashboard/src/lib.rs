@@ -16,19 +16,12 @@ mod storage;
 mod websocket;
 mod workers;
 
-use crate::{
-    config::DashboardConfig,
-    storage::StorageBackend,
-    websocket::{
-        responses::{milestone, milestone_info, sync_status, WsEvent},
-        WsUsers,
-    },
-    workers::{
-        confirmed_ms_metrics::confirmed_ms_metrics_worker, db_size_metrics::db_size_metrics_worker,
-        node_status::node_status_worker, peer_metric::peer_metric_worker,
-    },
+use std::{
+    any::{Any, TypeId},
+    convert::Infallible,
 };
 
+use async_trait::async_trait;
 use bee_ledger::workers::event::MilestoneConfirmed;
 use bee_protocol::workers::{
     event::{MessageSolidified, MpsMetricsUpdated, TipAdded, TipRemoved, VertexCreated},
@@ -41,17 +34,23 @@ use bee_runtime::{
     worker::Worker,
 };
 use bee_tangle::{event::LatestMilestoneChanged, Tangle, TangleWorker};
-
-use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::ws::Message;
 
-use std::{
-    any::{Any, TypeId},
-    convert::Infallible,
+use crate::{
+    config::DashboardConfig,
+    storage::StorageBackend,
+    websocket::{
+        responses::{milestone, milestone_info, sync_status, WsEvent},
+        WsUsers,
+    },
+    workers::{
+        confirmed_ms_metrics::confirmed_ms_metrics_worker, db_size_metrics::db_size_metrics_worker,
+        node_status::node_status_worker, peer_metric::peer_metric_worker,
+    },
 };
 
 pub(crate) type Bech32Hrp = String;

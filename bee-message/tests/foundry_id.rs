@@ -1,14 +1,13 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::str::FromStr;
+
 use bee_message::{
     address::AliasAddress,
     output::{AliasId, FoundryId, SimpleTokenScheme, TokenScheme},
 };
-
 use primitive_types::U256;
-
-use core::str::FromStr;
 
 #[test]
 fn getters() {

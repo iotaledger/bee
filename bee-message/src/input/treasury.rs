@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::milestone::MilestoneId, Error};
+use core::str::FromStr;
 
 use derive_more::{Deref, From};
 
-use core::str::FromStr;
+use crate::{payload::milestone::MilestoneId, Error};
 
 /// [`TreasuryInput`] is an input which references a milestone which generated a
 /// [`TreasuryOutput`](crate::output::TreasuryOutput).

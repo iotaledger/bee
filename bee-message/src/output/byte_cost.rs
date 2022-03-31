@@ -1,9 +1,9 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{milestone::MilestoneIndex, output::OutputId, MessageId};
-
 use core::mem::size_of;
+
+use crate::{milestone::MilestoneIndex, output::OutputId, MessageId};
 
 const DEFAULT_BYTE_COST: u64 = 500;
 const DEFAULT_BYTE_COST_FACTOR_KEY: u64 = 10;

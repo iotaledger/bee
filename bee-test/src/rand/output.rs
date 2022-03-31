@@ -28,7 +28,6 @@ use bee_message::output::{
     self, unlock_condition::ImmutableAliasAddressUnlockCondition, Output, OutputId, SimpleTokenScheme, TokenScheme,
     TokenTag, OUTPUT_INDEX_RANGE,
 };
-
 use primitive_types::U256;
 
 /// Generates a random [`OutputId`].

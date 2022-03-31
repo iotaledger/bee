@@ -9,7 +9,6 @@ use bee_message::{
     Error,
 };
 use bee_test::rand::bytes::rand_bytes_array;
-
 use packable::{error::UnpackError, PackableExt};
 
 const TRANSACTION_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";

@@ -1,8 +1,6 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::storage::Error;
-
 use std::{
     collections::{hash_map::IntoIter as HashMapIter, HashMap},
     hash::Hash,
@@ -10,6 +8,8 @@ use std::{
     option::IntoIter as OptionIter,
     vec::IntoIter as VecIter,
 };
+
+use crate::storage::Error;
 
 pub(crate) type TableIter<K, V> = Map<HashMapIter<K, V>, fn((K, V)) -> Result<(K, V), Error>>;
 pub(crate) type TableMultiFetchIter<V> = Map<VecIter<Option<V>>, fn(Option<V>) -> Result<Option<V>, Error>>;

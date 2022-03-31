@@ -1,13 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_message::{output::dto::OutputDto, MessageDto};
+use serde::{Deserialize, Serialize};
+
 use crate::types::{
     body::BodyInner,
     dtos::{LedgerInclusionStateDto, PeerDto, ReceiptDto},
 };
-
-use bee_message::{output::dto::OutputDto, MessageDto};
-use serde::{Deserialize, Serialize};
 
 /// Response of GET /api/v2/info.
 /// Returns general information about the node.

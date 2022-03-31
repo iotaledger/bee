@@ -1,6 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{collections::HashMap, future::Future, time::Duration};
+
+use priority_queue::PriorityQueue;
+use tokio::{sync::oneshot, task::JoinHandle, time};
+
 use crate::{
     peer::{
         lists::{ActivePeersList, ReplacementPeersList},
@@ -8,11 +13,6 @@ use crate::{
     },
     time::SECOND,
 };
-
-use priority_queue::PriorityQueue;
-use tokio::{sync::oneshot, task::JoinHandle, time};
-
-use std::{collections::HashMap, future::Future, time::Duration};
 
 pub(crate) const MAX_SHUTDOWN_PRIORITY: u8 = 255;
 const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(5 * SECOND);

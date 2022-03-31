@@ -1,9 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{event::IotaGossipHandlerEvent, id::IotaGossipIdentifier, upgrade::IotaGossipProtocolUpgrade};
-
-use crate::network::origin::Origin;
+use std::{
+    collections::VecDeque,
+    io,
+    task::{Context, Poll},
+};
 
 use libp2p::{
     core::upgrade::OutboundUpgrade,
@@ -16,14 +18,10 @@ use libp2p::{
     },
     Multiaddr,
 };
-
 use log::*;
 
-use std::{
-    collections::VecDeque,
-    io,
-    task::{Context, Poll},
-};
+use super::{event::IotaGossipHandlerEvent, id::IotaGossipIdentifier, upgrade::IotaGossipProtocolUpgrade};
+use crate::network::origin::Origin;
 
 pub struct GossipProtocolHandler {
     /// Exchanged protocol information necessary during negotiation.

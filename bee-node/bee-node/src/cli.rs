@@ -1,12 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::tools::Tool;
+use std::path::{Path, PathBuf};
 
 use log::LevelFilter;
 use structopt::StructOpt;
 
-use std::path::{Path, PathBuf};
+use crate::tools::Tool;
 
 // The command-line interface.
 // BEWARE: `structopt` puts any doc comment for this struct into the output of `--help`. We don't want that.

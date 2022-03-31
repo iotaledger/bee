@@ -1,14 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{address::Ed25519Address, Error};
+use core::ops::Deref;
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
     signatures::ed25519::{PublicKey, Signature, PUBLIC_KEY_LENGTH, SIGNATURE_LENGTH},
 };
 
-use core::ops::Deref;
+use crate::{address::Ed25519Address, Error};
 
 /// An Ed25519 signature.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, packable::Packable)]

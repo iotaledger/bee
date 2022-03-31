@@ -1,11 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::MessageId;
-
-use crypto::hashes::{Digest, Output};
-
 use std::marker::PhantomData;
+
+use bee_message::MessageId;
+use crypto::hashes::{Digest, Output};
 
 /// Leaf domain separation prefix.
 const LEAF_HASH_PREFIX: u8 = 0x00;
@@ -72,11 +71,11 @@ impl<D: Default + Digest> MerkleHasher<D> {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
+    use std::str::FromStr;
 
     use crypto::hashes::blake2b::Blake2b256;
 
-    use std::str::FromStr;
+    use super::*;
 
     #[test]
     fn tree() {

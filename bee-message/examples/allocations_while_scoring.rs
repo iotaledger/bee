@@ -7,19 +7,18 @@
 //!
 //! The code was adapted from: https://kanejaku.org/posts/2021/01/2021-01-27/ (CC-BY 4.0)
 
+use std::{
+    alloc::{GlobalAlloc, Layout, System},
+    sync::atomic::{AtomicUsize, Ordering::SeqCst},
+};
+
 use bee_message::MessageBuilder;
 use bee_pow::{
     providers::{miner::MinerBuilder, NonceProviderBuilder},
     score::PoWScorer,
 };
 use bee_test::rand::parents::rand_parents;
-
 use packable::PackableExt;
-
-use std::{
-    alloc::{GlobalAlloc, Layout, System},
-    sync::atomic::{AtomicUsize, Ordering::SeqCst},
-};
 
 struct CheckAlloc;
 

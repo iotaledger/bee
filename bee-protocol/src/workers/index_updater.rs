@@ -1,22 +1,21 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::workers::storage::StorageBackend;
+use std::{any::TypeId, collections::HashSet, convert::Infallible};
 
+use async_trait::async_trait;
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::IndexId, Tangle, TangleWorker};
-
-use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, collections::HashSet, convert::Infallible};
+use crate::workers::storage::StorageBackend;
 
 #[derive(Debug)]
 pub(crate) struct IndexUpdaterWorkerEvent(pub(crate) MilestoneIndex, pub(crate) Milestone);

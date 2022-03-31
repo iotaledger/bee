@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::convert;
+use core::{fmt, hash};
 
 use num_traits::{CheckedAdd, CheckedSub, Num};
 
-use core::{fmt, hash};
+use crate::convert;
 
 /// Balanced trits.
 pub mod balanced;

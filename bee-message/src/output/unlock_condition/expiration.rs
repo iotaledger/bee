@@ -1,8 +1,6 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{address::Address, milestone::MilestoneIndex, Error};
-
 use derive_more::From;
 use packable::{
     error::{UnpackError, UnpackErrorExt},
@@ -10,6 +8,8 @@ use packable::{
     unpacker::Unpacker,
     Packable,
 };
+
+use crate::{address::Address, milestone::MilestoneIndex, Error};
 
 /// Defines a milestone index and/or unix time until which only Address, defined in Address Unlock Condition, is allowed
 /// to unlock the output. After the milestone index and/or unix time, only Return Address can unlock it.

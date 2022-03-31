@@ -1,6 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_message::{
+    constant::IOTA_SUPPLY,
+    output::{self},
+};
+use bee_storage::access::AsIterator;
+
 use crate::{
     types::Unspent,
     workers::{
@@ -8,12 +14,6 @@ use crate::{
         storage::{self, StorageBackend},
     },
 };
-
-use bee_message::{
-    constant::IOTA_SUPPLY,
-    output::{self},
-};
-use bee_storage::access::AsIterator;
 
 fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
     let iterator = AsIterator::<Unspent, ()>::iter(storage).map_err(|e| Error::Storage(Box::new(e)))?;

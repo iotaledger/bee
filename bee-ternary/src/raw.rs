@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{Trit, TritBuf};
-
 use core::ops::Range;
+
+use crate::{Trit, TritBuf};
 
 /// A trait to be implemented by alternative trit encoding scheme slices.
 #[allow(clippy::len_without_is_empty)]

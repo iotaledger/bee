@@ -4,7 +4,7 @@
 pub mod plugins;
 pub mod v2;
 
-use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
+use std::net::IpAddr;
 
 use bee_gossip::NetworkCommandSender;
 use bee_ledger::workers::consensus::ConsensusWorkerCommand;
@@ -13,11 +13,10 @@ use bee_protocol::workers::{
 };
 use bee_runtime::{event::Bus, node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::Tangle;
-
 use tokio::sync::mpsc;
 use warp::{self, Filter, Rejection, Reply};
 
-use std::net::IpAddr;
+use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
 pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     warp::path("api")

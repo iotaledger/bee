@@ -3,7 +3,7 @@
 
 //! Iter access operations.
 
-use crate::{storage::Storage, trees::*};
+use std::marker::PhantomData;
 
 use bee_ledger::types::{
     snapshot::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent,
@@ -18,10 +18,9 @@ use bee_storage::{access::AsIterator, backend::StorageBackend, system::System};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
-
 use packable::PackableExt;
 
-use std::marker::PhantomData;
+use crate::{storage::Storage, trees::*};
 
 /// Type used to iterate a subtree.
 pub struct StorageIterator<'a, K, V> {

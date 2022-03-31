@@ -1,9 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::address::Address;
-
 use derive_more::From;
+
+use crate::address::Address;
 
 /// Identifies the validated issuer of the UTXO state machine.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]

@@ -3,11 +3,11 @@
 
 //! MessageRequest packet of the protocol.
 
-use crate::workers::packets::Packet;
+use std::ops::Range;
 
 use bee_message::MessageId;
 
-use std::ops::Range;
+use crate::workers::packets::Packet;
 
 const MESSAGE_ID_SIZE: usize = 32;
 const CONSTANT_SIZE: usize = MESSAGE_ID_SIZE;

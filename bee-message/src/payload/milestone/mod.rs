@@ -6,21 +6,20 @@
 mod essence;
 mod milestone_id;
 
-pub use essence::MilestoneEssence;
-pub use milestone_id::MilestoneId;
-
-use crate::{signature::Signature, Error};
+use alloc::{string::String, vec::Vec};
+use core::{fmt::Debug, ops::RangeInclusive};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
     signatures::ed25519,
     Error as CryptoError,
 };
+pub use essence::MilestoneEssence;
 use iterator_sorted::is_unique_sorted;
+pub use milestone_id::MilestoneId;
 use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable, PackableExt};
 
-use alloc::{string::String, vec::Vec};
-use core::{fmt::Debug, ops::RangeInclusive};
+use crate::{signature::Signature, Error};
 
 #[derive(Debug)]
 #[allow(missing_docs)]

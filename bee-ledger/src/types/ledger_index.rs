@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::milestone::MilestoneIndex;
-
 use core::ops::Deref;
+
+use bee_message::milestone::MilestoneIndex;
 
 /// A wrapper type to represent the current ledger index.
 #[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, packable::Packable)]

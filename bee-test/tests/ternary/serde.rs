@@ -3,7 +3,6 @@
 
 use bee_ternary::{raw::*, *};
 use bee_test::ternary::*;
-
 use serde::{de::DeserializeOwned, *};
 
 fn serialize_generic<T: raw::RawEncodingBuf>()

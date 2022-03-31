@@ -1,12 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use core::str::FromStr;
 
 use crypto::signatures::ed25519::PUBLIC_KEY_LENGTH;
 use derive_more::{AsRef, Deref, From};
 
-use core::str::FromStr;
+use crate::Error;
 
 /// An Ed25519 address.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, Deref, packable::Packable)]

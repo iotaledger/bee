@@ -25,14 +25,15 @@ mod common;
 
 #[tokio::main]
 async fn main() {
-    use bee_gossip::{alias, standalone::init, Event, Multiaddr, NetworkConfig, Protocol};
-    use common::keys_and_ids::{gen_constant_net_id, gen_deterministic_keys, gen_deterministic_peer_id};
     use std::{
         env,
         io::{stdin, stdout, Write},
         net::Ipv4Addr,
         thread,
     };
+
+    use bee_gossip::{alias, standalone::init, Event, Multiaddr, NetworkConfig, Protocol};
+    use common::keys_and_ids::{gen_constant_net_id, gen_deterministic_keys, gen_deterministic_peer_id};
     use tokio::signal::ctrl_c;
     use tokio_stream::StreamExt;
 
