@@ -36,6 +36,7 @@ pub mod dto {
     use crate::error::dto::DtoError;
 
     #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[serde(untagged)]
     pub enum TokenSchemeDto {
         /// A simple token scheme.
         Simple(SimpleTokenSchemeDto),
