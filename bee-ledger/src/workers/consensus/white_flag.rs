@@ -182,7 +182,7 @@ fn apply_regular_essence<B: StorageBackend>(
 
         context.output_amount = context
             .output_amount
-            .checked_sub(amount)
+            .checked_add(amount)
             .ok_or(Error::CreatedAmountOverflow)?;
 
         for native_token in created_native_tokens.iter() {
@@ -192,7 +192,7 @@ fn apply_regular_essence<B: StorageBackend>(
                 .or_default();
 
             native_token_amount
-                .checked_sub(*native_token.amount())
+                .checked_add(*native_token.amount())
                 .ok_or(Error::CreatedNativeTokensAmountOverflow)?;
         }
     }
