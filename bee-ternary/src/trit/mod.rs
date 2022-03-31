@@ -1,19 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::{fmt, hash};
-
-use num_traits::{CheckedAdd, CheckedSub, Num};
-
-use crate::convert;
-
 /// Balanced trits.
 pub mod balanced;
 /// Unbalanced trits.
 pub mod unbalanced;
 
+use core::{fmt, hash};
+
+use num_traits::{CheckedAdd, CheckedSub, Num};
+
 // Reexports
 pub use self::{balanced::Btrit, unbalanced::Utrit};
+use crate::convert;
 
 /// A trait implemented by both balanced ([`Btrit`]) and unbalanced ([`Utrit`]) trits.
 pub trait Trit:
