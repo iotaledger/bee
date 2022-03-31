@@ -1,23 +1,21 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{
-    column_families::*,
-    config::{RocksDbConfig, RocksDbConfigBuilder, StorageConfig},
-    error::Error,
-};
-
+use bee_message::{address::Ed25519Address, milestone::MilestoneIndex, MessageId};
 pub use bee_storage::{
     access::{Fetch, Insert},
     backend::StorageBackend,
     system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
-
-use bee_message::{address::Ed25519Address, milestone::MilestoneIndex, MessageId};
-
 use rocksdb::{
     ColumnFamily, ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, FlushOptions, Options,
     SliceTransform, DB,
+};
+
+use super::{
+    column_families::*,
+    config::{RocksDbConfig, RocksDbConfigBuilder, StorageConfig},
+    error::Error,
 };
 
 pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(9);

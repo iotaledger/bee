@@ -1,11 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::{address::rand_address, bytes::rand_bytes, number::rand_number_range};
-
 use bee_message::output::feature_block::{
     FeatureBlock, FeatureBlockFlags, IssuerFeatureBlock, MetadataFeatureBlock, SenderFeatureBlock, TagFeatureBlock,
 };
+
+use crate::rand::{address::rand_address, bytes::rand_bytes, number::rand_number_range};
 
 /// Generates a random [`SenderFeatureBlock`].
 pub fn rand_sender_feature_block() -> SenderFeatureBlock {

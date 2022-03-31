@@ -5,9 +5,18 @@ mod manager;
 mod manager_res;
 mod packet_handler;
 
-pub(crate) use manager::{PeerManagerConfig, PeerManagerWorker};
-pub use manager_res::{PeerManager, PeerManagerResWorker};
+use std::sync::Arc;
 
+use bee_message::milestone::MilestoneIndex;
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::Tangle;
+use futures::{channel::oneshot, future::FutureExt};
+use log::{debug, error, info, trace};
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
+
+pub(crate) use self::manager::{PeerManagerConfig, PeerManagerWorker};
+pub use self::manager_res::{PeerManager, PeerManagerResWorker};
 use crate::{
     types::{metrics::NodeMetrics, peer::Peer},
     workers::{
@@ -22,17 +31,6 @@ use crate::{
         RequestedMilestones,
     },
 };
-
-use bee_message::milestone::MilestoneIndex;
-use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
-
-use futures::{channel::oneshot, future::FutureExt};
-use log::{debug, error, info, trace};
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::UnboundedReceiverStream;
-
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub(crate) enum Error {

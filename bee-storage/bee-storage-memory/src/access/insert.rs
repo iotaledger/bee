@@ -3,8 +3,6 @@
 
 //! Insert access operations.
 
-use crate::storage::Storage;
-
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
     Unspent,
@@ -19,6 +17,8 @@ use bee_storage::{access::Insert, backend::StorageBackend, system::System};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
+
+use crate::storage::Storage;
 
 macro_rules! impl_insert {
     ($key:ty, $value:ty, $field:ident) => {

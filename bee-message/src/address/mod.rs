@@ -5,10 +5,13 @@ mod alias;
 mod ed25519;
 mod nft;
 
-pub use alias::AliasAddress;
-pub use ed25519::Ed25519Address;
-pub use nft::NftAddress;
+use alloc::{string::String, vec::Vec};
 
+use bech32::{self, FromBase32, ToBase32, Variant};
+use derive_more::From;
+use packable::PackableExt;
+
+pub use self::{alias::AliasAddress, ed25519::Ed25519Address, nft::NftAddress};
 use crate::{
     output::{Output, OutputId},
     semantic::{ConflictReason, ValidationContext},
@@ -16,12 +19,6 @@ use crate::{
     unlock_block::UnlockBlock,
     Error,
 };
-
-use bech32::{self, FromBase32, ToBase32, Variant};
-use derive_more::From;
-use packable::PackableExt;
-
-use alloc::{string::String, vec::Vec};
 
 /// A generic address supporting different address kinds.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, From, packable::Packable)]

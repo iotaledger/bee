@@ -1,6 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{convert::Infallible, net::IpAddr};
+
+use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
+use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
+use bee_tangle::Tangle;
+use warp::{filters::BoxedFilter, Filter, Reply};
+
 use crate::{
     endpoints::{
         config::{RestApiConfig, ROUTE_INFO},
@@ -15,14 +22,6 @@ use crate::{
     },
     types::responses::{InfoResponse, MetricsResponse, ProtocolResponse, RentStructureResponse, StatusResponse},
 };
-
-use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
-use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
-use bee_tangle::Tangle;
-
-use warp::{filters::BoxedFilter, Filter, Reply};
-
-use std::{convert::Infallible, net::IpAddr};
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("info")).and(warp::path::end())

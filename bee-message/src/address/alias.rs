@@ -1,11 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{output::AliasId, Error};
+use core::str::FromStr;
 
 use derive_more::{AsRef, Deref, From};
 
-use core::str::FromStr;
+use crate::{output::AliasId, Error};
 
 /// An alias address.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, Deref, packable::Packable)]

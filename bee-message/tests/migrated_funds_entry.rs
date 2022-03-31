@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::str::FromStr;
+
 use bee_message::{
     address::{Address, Ed25519Address},
     constant::IOTA_SUPPLY,
@@ -8,10 +10,7 @@ use bee_message::{
     Error,
 };
 use bee_test::rand::receipt::rand_tail_transaction_hash;
-
 use packable::{bounded::InvalidBoundedU64, error::UnpackError, PackableExt};
-
-use core::str::FromStr;
 
 const ED25519_ADDRESS: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 

@@ -1,6 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use alloc::vec::Vec;
+
+use hashbrown::HashSet;
+use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
+
 use crate::{
     constant::IOTA_SUPPLY,
     input::{Input, INPUT_COUNT_RANGE},
@@ -8,11 +13,6 @@ use crate::{
     payload::{OptionalPayload, Payload},
     Error,
 };
-
-use hashbrown::HashSet;
-use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
-
-use alloc::vec::Vec;
 
 /// A builder to build a [`RegularTransactionEssence`].
 #[derive(Debug, Default)]

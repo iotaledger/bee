@@ -1,10 +1,10 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::milestone::MilestoneIndex;
-
 use primitive_types::U256;
 use serde::{Deserialize, Serialize};
+
+use crate::milestone::MilestoneIndex;
 
 /// Describes a U256.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]

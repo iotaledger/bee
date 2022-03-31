@@ -1,19 +1,19 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    milestone::MilestoneIndex,
-    parent::Parents,
-    payload::{OptionalPayload, Payload},
-    Error,
-};
-
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
     Packable, PackableExt,
+};
+
+use crate::{
+    milestone::MilestoneIndex,
+    parent::Parents,
+    payload::{OptionalPayload, Payload},
+    Error,
 };
 
 /// Essence of a milestone payload.

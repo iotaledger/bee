@@ -5,7 +5,6 @@ use bee_ledger::types::Receipt;
 use bee_message::payload::dto::ReceiptPayloadDto;
 #[cfg(feature = "peer")]
 use bee_protocol::types::peer::Peer;
-
 use serde::{Deserialize, Serialize};
 
 /// Describes a peer.

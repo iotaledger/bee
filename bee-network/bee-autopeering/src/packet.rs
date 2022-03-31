@@ -3,14 +3,14 @@
 
 //! IOTA network packets.
 
-use crate::{peer::peer_id::PeerId, proto};
+use std::{fmt, net::SocketAddr, ops::Range};
 
 use base64 as bs64;
 use crypto::signatures::ed25519::{PublicKey, Signature};
 use num_derive::FromPrimitive;
 use prost::{bytes::BytesMut, DecodeError, EncodeError, Message};
 
-use std::{fmt, net::SocketAddr, ops::Range};
+use crate::{peer::peer_id::PeerId, proto};
 
 // From `hive.go` docs:
 // * specifies the maximum allowed size of packets;

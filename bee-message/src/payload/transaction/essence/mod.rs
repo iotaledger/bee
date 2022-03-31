@@ -3,14 +3,13 @@
 
 mod regular;
 
-pub(crate) use regular::{InputCount, OutputCount};
-pub use regular::{RegularTransactionEssence, RegularTransactionEssenceBuilder};
-
-use crate::Error;
-
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 use derive_more::From;
 use packable::PackableExt;
+
+pub(crate) use self::regular::{InputCount, OutputCount};
+pub use self::regular::{RegularTransactionEssence, RegularTransactionEssenceBuilder};
+use crate::Error;
 
 /// A generic essence that can represent different types defining transaction essences.
 #[derive(Clone, Debug, Eq, PartialEq, From, packable::Packable)]

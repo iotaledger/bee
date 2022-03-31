@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{address::Address, constant::IOTA_SUPPLY, payload::receipt::TailTransactionHash, Error};
+use core::ops::RangeInclusive;
 
 use packable::{bounded::BoundedU64, Packable};
 
-use core::ops::RangeInclusive;
+use crate::{address::Address, constant::IOTA_SUPPLY, payload::receipt::TailTransactionHash, Error};
 
 const MIGRATED_FUNDS_ENTRY_AMOUNT_MIN: u64 = 1_000_000;
 

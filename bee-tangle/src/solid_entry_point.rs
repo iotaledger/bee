@@ -5,11 +5,10 @@
 //! or their past in the database. They often come from a snapshot file and allow a node to solidify
 //! without needing the full tangle history.
 
-use bee_message::MessageId;
-
-use ref_cast::RefCast;
-
 use core::{convert::AsRef, ops::Deref};
+
+use bee_message::MessageId;
+use ref_cast::RefCast;
 
 /// A SolidEntryPoint is a [`MessageId`] of a message that is solid even if we do not have them
 /// or their past in the database. They often come from a snapshot file and allow a node to solidify

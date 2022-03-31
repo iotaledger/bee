@@ -1,6 +1,11 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::fmt;
+
+use hashbrown::{HashMap, HashSet};
+use primitive_types::U256;
+
 use crate::{
     address::Address,
     milestone::MilestoneIndex,
@@ -8,11 +13,6 @@ use crate::{
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     unlock_block::UnlockBlocks,
 };
-
-use hashbrown::{HashMap, HashSet};
-use primitive_types::U256;
-
-use core::fmt;
 
 /// Errors related to ledger types.
 #[derive(Debug)]

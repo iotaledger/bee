@@ -9,17 +9,8 @@ pub mod tagged_data;
 pub mod transaction;
 pub mod treasury_transaction;
 
-pub use milestone::MilestonePayload;
-pub(crate) use milestone::SignatureCount;
-pub use receipt::ReceiptPayload;
-pub(crate) use receipt::{MigratedFundsAmount, ReceiptFundsCount};
-pub use tagged_data::TaggedDataPayload;
-pub(crate) use tagged_data::{TagLength, TaggedDataLength};
-pub use transaction::TransactionPayload;
-pub(crate) use transaction::{InputCount, OutputCount};
-pub use treasury_transaction::TreasuryTransactionPayload;
-
-use crate::Error;
+use alloc::boxed::Box;
+use core::ops::Deref;
 
 use packable::{
     error::{UnpackError, UnpackErrorExt},
@@ -28,8 +19,17 @@ use packable::{
     Packable, PackableExt,
 };
 
-use alloc::boxed::Box;
-use core::ops::Deref;
+pub use self::{
+    milestone::MilestonePayload, receipt::ReceiptPayload, tagged_data::TaggedDataPayload,
+    transaction::TransactionPayload, treasury_transaction::TreasuryTransactionPayload,
+};
+pub(crate) use self::{
+    milestone::SignatureCount,
+    receipt::{MigratedFundsAmount, ReceiptFundsCount},
+    tagged_data::{TagLength, TaggedDataLength},
+    transaction::{InputCount, OutputCount},
+};
+use crate::Error;
 
 /// A generic payload that can represent different types defining message payloads.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]

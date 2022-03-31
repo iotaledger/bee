@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use serde::Deserialize;
-
 use std::num::NonZeroUsize;
+
+use serde::Deserialize;
 
 const DEFAULT_BELOW_MAX_DEPTH: u32 = 15;
 // SAFETY: initialised with a non-zero value.

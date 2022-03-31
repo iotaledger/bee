@@ -3,9 +3,9 @@
 
 //! Types related to the backend configuration.
 
-use serde::Deserialize;
-
 use std::path::PathBuf;
+
+use serde::Deserialize;
 
 const DEFAULT_PATH: &str = "./storage/mainnet/tangle";
 const DEFAULT_COMPRESSION_FACTOR: Option<usize> = None;

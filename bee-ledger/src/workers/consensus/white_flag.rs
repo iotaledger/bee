@@ -1,14 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::{ConsumedOutput, CreatedOutput},
-    workers::{
-        consensus::{merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
-        error::Error,
-        storage::{self, StorageBackend},
-    },
-};
+use std::collections::HashSet;
 
 use bee_message::{
     input::Input,
@@ -22,10 +15,16 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_tangle::Tangle;
-
 use crypto::hashes::blake2b::Blake2b256;
 
-use std::collections::HashSet;
+use crate::{
+    types::{ConsumedOutput, CreatedOutput},
+    workers::{
+        consensus::{merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
+        error::Error,
+        storage::{self, StorageBackend},
+    },
+};
 
 fn apply_regular_essence<B: StorageBackend>(
     storage: &B,

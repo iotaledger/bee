@@ -1,9 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::signature::Signature;
-
 use derive_more::{Deref, From};
+
+use crate::signature::Signature;
 
 /// An [`UnlockBlock`](crate::unlock_block::UnlockBlock) which is used to unlock a signature locked
 /// [`Input`](crate::input::Input).

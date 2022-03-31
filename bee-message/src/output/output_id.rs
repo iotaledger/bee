@@ -1,12 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{output::OUTPUT_INDEX_RANGE, payload::transaction::TransactionId, Error};
+use core::str::FromStr;
 
 use crypto::hashes::{blake2b::Blake2b160, Digest};
 use packable::{bounded::BoundedU16, PackableExt};
 
-use core::str::FromStr;
+use crate::{output::OUTPUT_INDEX_RANGE, payload::transaction::TransactionId, Error};
 
 pub(crate) type OutputIndex = BoundedU16<{ *OUTPUT_INDEX_RANGE.start() }, { *OUTPUT_INDEX_RANGE.end() }>;
 

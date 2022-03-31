@@ -1,9 +1,9 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::address::Address;
-
 use derive_more::From;
+
+use crate::address::Address;
 
 /// Defines the Governor Address that owns this output, that is, it can unlock it with the proper Unlock Block in a
 /// transaction that governance transitions the alias output.

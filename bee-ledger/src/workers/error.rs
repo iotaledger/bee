@@ -3,16 +3,15 @@
 
 //! Module containing the errors that can occur during ledger operations.
 
+use std::convert::Infallible;
+
+use bee_message::{milestone::MilestoneIndex, Error as MessageError, MessageId};
+use packable::error::UnpackError;
+
 use crate::{
     types::{Error as TypesError, Unspent},
     workers::snapshot::error::Error as SnapshotError,
 };
-
-use bee_message::{milestone::MilestoneIndex, Error as MessageError, MessageId};
-
-use packable::error::UnpackError;
-
-use std::convert::Infallible;
 
 /// Errors occurring during ledger workers operations.
 #[derive(Debug, thiserror::Error)]

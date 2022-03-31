@@ -1,13 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_message::payload::{
+    receipt::ReceiptPayload, tagged_data::TaggedDataPayload, treasury_transaction::TreasuryTransactionPayload, Payload,
+};
+
 use crate::rand::{
     bool::rand_bool, bytes::rand_bytes, input::rand_treasury_input, milestone::rand_milestone_index,
     number::rand_number_range, output::rand_treasury_output, receipt::rand_migrated_funds_entry,
-};
-
-use bee_message::payload::{
-    receipt::ReceiptPayload, tagged_data::TaggedDataPayload, treasury_transaction::TreasuryTransactionPayload, Payload,
 };
 
 /// Generates a random tagged data payload.

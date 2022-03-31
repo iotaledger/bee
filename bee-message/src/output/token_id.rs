@@ -1,9 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::output::FoundryId;
-
 use packable::{packer::SlicePacker, Packable};
+
+use crate::output::FoundryId;
 
 impl_id!(pub TokenTag, 12, "TODO.");
 

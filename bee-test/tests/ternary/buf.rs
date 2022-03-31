@@ -3,7 +3,6 @@
 
 use bee_ternary::*;
 use bee_test::ternary::*;
-
 use rand::prelude::*;
 
 fn create_generic<T: raw::RawEncodingBuf>() {

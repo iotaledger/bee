@@ -22,37 +22,40 @@ pub mod feature_block;
 ///
 pub mod unlock_condition;
 
-pub(crate) use alias::StateMetadataLength;
-pub use alias::{AliasOutput, AliasOutputBuilder};
-pub use alias_id::AliasId;
-pub use basic::{BasicOutput, BasicOutputBuilder};
-pub use byte_cost::{ByteCost, ByteCostConfig, ByteCostConfigBuilder};
-pub use chain_id::ChainId;
-pub use feature_block::{FeatureBlock, FeatureBlocks};
-pub(crate) use feature_block::{MetadataFeatureBlockLength, TagFeatureBlockLength};
-pub use foundry::{FoundryOutput, FoundryOutputBuilder};
-pub use foundry_id::FoundryId;
-pub(crate) use native_token::NativeTokenCount;
-pub use native_token::{NativeToken, NativeTokens};
-pub use nft::{NftOutput, NftOutputBuilder};
-pub use nft_id::NftId;
-pub use output_id::OutputId;
-pub(crate) use output_id::OutputIndex;
-pub use state_transition::{StateTransitionError, StateTransitionVerifier};
-pub use token_id::{TokenId, TokenTag};
-pub use token_scheme::{SimpleTokenScheme, TokenScheme};
-pub use treasury::TreasuryOutput;
-pub(crate) use treasury::TreasuryOutputAmount;
-pub(crate) use unlock_condition::{AddressUnlockCondition, StorageDepositAmount};
-pub use unlock_condition::{UnlockCondition, UnlockConditions};
-
-use crate::{address::Address, constant::IOTA_SUPPLY, semantic::ValidationContext, Error};
+use core::ops::RangeInclusive;
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 use derive_more::From;
 use packable::{bounded::BoundedU64, PackableExt};
 
-use core::ops::RangeInclusive;
+pub(crate) use self::{
+    alias::StateMetadataLength,
+    feature_block::{MetadataFeatureBlockLength, TagFeatureBlockLength},
+    native_token::NativeTokenCount,
+    output_id::OutputIndex,
+    treasury::TreasuryOutputAmount,
+    unlock_condition::{AddressUnlockCondition, StorageDepositAmount},
+};
+pub use self::{
+    alias::{AliasOutput, AliasOutputBuilder},
+    alias_id::AliasId,
+    basic::{BasicOutput, BasicOutputBuilder},
+    byte_cost::{ByteCost, ByteCostConfig, ByteCostConfigBuilder},
+    chain_id::ChainId,
+    feature_block::{FeatureBlock, FeatureBlocks},
+    foundry::{FoundryOutput, FoundryOutputBuilder},
+    foundry_id::FoundryId,
+    native_token::{NativeToken, NativeTokens},
+    nft::{NftOutput, NftOutputBuilder},
+    nft_id::NftId,
+    output_id::OutputId,
+    state_transition::{StateTransitionError, StateTransitionVerifier},
+    token_id::{TokenId, TokenTag},
+    token_scheme::{SimpleTokenScheme, TokenScheme},
+    treasury::TreasuryOutput,
+    unlock_condition::{UnlockCondition, UnlockConditions},
+};
+use crate::{address::Address, constant::IOTA_SUPPLY, semantic::ValidationContext, Error};
 
 /// The maximum number of outputs of a transaction.
 pub const OUTPUT_COUNT_MAX: u16 = 128;

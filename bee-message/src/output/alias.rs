@@ -1,6 +1,17 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use alloc::vec::Vec;
+
+use packable::{
+    bounded::BoundedU16,
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    prefix::BoxedSlicePrefix,
+    unpacker::Unpacker,
+    Packable,
+};
+
 use crate::{
     address::{Address, AliasAddress},
     output::{
@@ -13,17 +24,6 @@ use crate::{
     unlock_block::UnlockBlock,
     Error,
 };
-
-use packable::{
-    bounded::BoundedU16,
-    error::{UnpackError, UnpackErrorExt},
-    packer::Packer,
-    prefix::BoxedSlicePrefix,
-    unpacker::Unpacker,
-    Packable,
-};
-
-use alloc::vec::Vec;
 
 ///
 #[must_use]

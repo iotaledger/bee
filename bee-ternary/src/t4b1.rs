@@ -3,10 +3,10 @@
 
 extern crate alloc;
 
-use crate::{Btrit, RawEncoding, RawEncodingBuf, ShiftTernary, Utrit};
-
 use alloc::vec::Vec;
 use core::ops::Range;
+
+use crate::{Btrit, RawEncoding, RawEncodingBuf, ShiftTernary, Utrit};
 
 const TRITS_PER_BYTE: usize = 4;
 // Number required to push a byte between balanced and unbalanced representationsconst TPB: usize = 4;

@@ -1,11 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{address::Address, constant::IOTA_SUPPLY, Error};
+use core::ops::RangeInclusive;
 
 use packable::bounded::BoundedU64;
 
-use core::ops::RangeInclusive;
+use crate::{address::Address, constant::IOTA_SUPPLY, Error};
 
 pub(crate) type StorageDepositAmount = BoundedU64<
     { *StorageDepositReturnUnlockCondition::AMOUNT_RANGE.start() },

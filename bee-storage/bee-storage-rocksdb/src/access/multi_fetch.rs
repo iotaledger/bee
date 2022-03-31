@@ -1,10 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    column_families::*,
-    storage::{Storage, StorageBackend},
-};
+use std::{marker::PhantomData, vec::IntoIter};
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, OutputDiff};
 use bee_message::{
@@ -14,10 +11,12 @@ use bee_message::{
 };
 use bee_storage::{access::MultiFetch, system::System};
 use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
-
 use packable::{Packable, PackableExt};
 
-use std::{marker::PhantomData, vec::IntoIter};
+use crate::{
+    column_families::*,
+    storage::{Storage, StorageBackend},
+};
 
 pub struct MultiIter<V, E> {
     iter: IntoIter<Result<Option<Vec<u8>>, rocksdb::Error>>,

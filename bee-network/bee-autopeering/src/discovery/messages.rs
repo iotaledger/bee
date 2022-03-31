@@ -1,15 +1,15 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{local::services::ServiceMap, peer::Peer, proto, request::Request};
-
-use crypto::hashes::sha::SHA256_LEN;
-use prost::{bytes::BytesMut, DecodeError, EncodeError, Message as _};
-
 use std::{
     fmt,
     net::{AddrParseError, IpAddr, SocketAddr},
 };
+
+use crypto::hashes::sha::SHA256_LEN;
+use prost::{bytes::BytesMut, DecodeError, EncodeError, Message as _};
+
+use crate::{local::services::ServiceMap, peer::Peer, proto, request::Request};
 
 #[derive(Clone, Copy)]
 pub(crate) struct VerificationRequest {

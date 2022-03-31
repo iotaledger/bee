@@ -3,9 +3,9 @@
 
 //! MilestoneRequest packet of the protocol.
 
-use crate::workers::packets::Packet;
-
 use std::ops::Range;
+
+use crate::workers::packets::Packet;
 
 const INDEX_SIZE: usize = 4;
 const CONSTANT_SIZE: usize = INDEX_SIZE;

@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{metadata::MessageMetadata, MessageRef, VecSet};
+use std::sync::Arc;
 
 use bee_message::{Message, MessageId};
 
-use std::sync::Arc;
+use crate::{metadata::MessageMetadata, MessageRef, VecSet};
 
 #[derive(Clone)]
 pub struct Vertex {

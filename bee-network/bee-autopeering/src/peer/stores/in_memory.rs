@@ -1,17 +1,17 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{
+    collections::HashMap,
+    convert::Infallible,
+    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
+};
+
 use crate::peer::{
     lists::{ActivePeer, ActivePeersList, ReplacementPeersList},
     peer_id::PeerId,
     stores::PeerStore,
     Peer,
-};
-
-use std::{
-    collections::HashMap,
-    convert::Infallible,
-    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
 /// A non-persistent/in-memory peer store.

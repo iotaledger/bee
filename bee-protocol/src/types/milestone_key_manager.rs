@@ -3,11 +3,11 @@
 
 //! A module that provides a milestone key range manager type.
 
-use crate::types::milestone_key_range::MilestoneKeyRange;
+use std::collections::HashSet;
 
 use bee_message::milestone::MilestoneIndex;
 
-use std::collections::HashSet;
+use crate::types::milestone_key_range::MilestoneKeyRange;
 
 /// A key manager is managing a set of `MilestoneKeyRange`s.
 #[derive(Clone)]

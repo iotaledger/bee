@@ -5,15 +5,13 @@
 
 #![warn(missing_docs)]
 
-use bee_plugin::Plugin;
-
-use bee_protocol::workers::event::MpsMetricsUpdated;
-use bee_runtime::event::Bus;
+use std::convert::Infallible;
 
 use async_trait::async_trait;
+use bee_plugin::Plugin;
+use bee_protocol::workers::event::MpsMetricsUpdated;
+use bee_runtime::event::Bus;
 use log::info;
-
-use std::convert::Infallible;
 
 /// MPS plugin, for logging MPS metrics.
 pub struct MpsPlugin;

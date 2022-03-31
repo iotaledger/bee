@@ -5,7 +5,6 @@ use bee_message::{
     address::{Address, Ed25519Address},
     Error,
 };
-
 use packable::PackableExt;
 
 const ED25519_ADDRESS: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";

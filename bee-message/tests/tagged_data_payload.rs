@@ -3,7 +3,6 @@
 
 use bee_message::{payload::tagged_data::TaggedDataPayload, Error, Message};
 use bee_test::rand::bytes::rand_bytes;
-
 use packable::{
     bounded::{TryIntoBoundedU32Error, TryIntoBoundedU8Error},
     error::UnpackError,

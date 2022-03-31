@@ -7,7 +7,6 @@ use bee_message::{
     Error,
 };
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
-
 use packable::{error::UnpackError, PackableExt};
 
 #[test]

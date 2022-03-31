@@ -6,21 +6,18 @@ mod metadata;
 mod sender;
 mod tag;
 
-pub use issuer::IssuerFeatureBlock;
-pub use metadata::MetadataFeatureBlock;
-pub(crate) use metadata::MetadataFeatureBlockLength;
-pub use sender::SenderFeatureBlock;
-pub use tag::TagFeatureBlock;
-pub(crate) use tag::TagFeatureBlockLength;
-
-use crate::{create_bitflags, Error};
+use alloc::vec::Vec;
 
 use bitflags::bitflags;
 use derive_more::{Deref, From};
 use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
-use alloc::vec::Vec;
+pub use self::{
+    issuer::IssuerFeatureBlock, metadata::MetadataFeatureBlock, sender::SenderFeatureBlock, tag::TagFeatureBlock,
+};
+pub(crate) use self::{metadata::MetadataFeatureBlockLength, tag::TagFeatureBlockLength};
+use crate::{create_bitflags, Error};
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, Packable)]

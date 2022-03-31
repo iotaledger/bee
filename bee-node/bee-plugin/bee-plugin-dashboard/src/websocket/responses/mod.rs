@@ -1,21 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::websocket::{
-    responses::{
-        confirmed_info::ConfirmedInfoResponse, confirmed_milestone_metrics::ConfirmedMilestoneMetricsResponse,
-        database_size_metrics::DatabaseSizeMetricsResponse, milestone::MilestoneResponse,
-        milestone_info::MilestoneInfoResponse, mps_metrics_updated::MpsMetricsUpdatedResponse,
-        node_status::NodeStatusResponse, public_node_status::PublicNodeStatusResponse, solid_info::SolidInfoResponse,
-        sync_status::SyncStatusResponse, tip_info::TipInfoResponse, vertex::VertexResponse,
-    },
-    topics::WsTopic,
-};
-
-use bee_rest_api::types::responses::PeersResponse;
-
-use serde::Serialize;
-
 pub(crate) mod confirmed_info;
 pub(crate) mod confirmed_milestone_metrics;
 pub(crate) mod database_size_metrics;
@@ -29,6 +14,18 @@ pub(crate) mod solid_info;
 pub(crate) mod sync_status;
 pub(crate) mod tip_info;
 pub(crate) mod vertex;
+
+use bee_rest_api::types::responses::PeersResponse;
+use serde::Serialize;
+
+use self::{
+    confirmed_info::ConfirmedInfoResponse, confirmed_milestone_metrics::ConfirmedMilestoneMetricsResponse,
+    database_size_metrics::DatabaseSizeMetricsResponse, milestone::MilestoneResponse,
+    milestone_info::MilestoneInfoResponse, mps_metrics_updated::MpsMetricsUpdatedResponse,
+    node_status::NodeStatusResponse, public_node_status::PublicNodeStatusResponse, solid_info::SolidInfoResponse,
+    sync_status::SyncStatusResponse, tip_info::TipInfoResponse, vertex::VertexResponse,
+};
+use crate::websocket::topics::WsTopic;
 
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct WsEvent {

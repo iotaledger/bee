@@ -21,6 +21,8 @@
 //! }
 //! ```
 
+use std::{marker::Unpin, pin::Pin};
+
 use futures::{
     channel::oneshot,
     future::{self, FusedFuture},
@@ -28,8 +30,6 @@ use futures::{
     task::{Context, Poll},
     FutureExt, Stream, StreamExt,
 };
-
-use std::{marker::Unpin, pin::Pin};
 
 type Shutdown = oneshot::Receiver<()>;
 type FusedShutdown = future::Fuse<Shutdown>;

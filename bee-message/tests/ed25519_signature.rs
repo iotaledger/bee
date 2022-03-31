@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::signature::Ed25519Signature;
-
 use packable::PackableExt;
 
 const ED25519_PUBLIC_KEY: &str = "0x1da5ddd11ba3f961acab68fafee3177d039875eaa94ac5fdbff8b53f0c50bfb9";

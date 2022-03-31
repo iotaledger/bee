@@ -9,7 +9,6 @@ use bee_message::{
     Error,
 };
 use bee_test::rand::{self, message::rand_message_ids, parents::rand_parents};
-
 use packable::{bounded::TryIntoBoundedU8Error, PackableExt};
 
 #[test]

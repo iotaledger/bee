@@ -1,9 +1,9 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{address::AliasAddress, output::AliasId};
-
 use packable::{packer::SlicePacker, Packable};
+
+use crate::{address::AliasAddress, output::AliasId};
 
 impl_id!(pub FoundryId, 26, "Defines the unique identifier of a foundry.");
 

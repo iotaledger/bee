@@ -3,7 +3,8 @@
 
 //! Module describing the tagged data payload.
 
-use crate::{Error, Message};
+use alloc::vec::Vec;
+use core::ops::RangeInclusive;
 
 use packable::{
     bounded::{BoundedU32, BoundedU8},
@@ -11,8 +12,7 @@ use packable::{
     Packable,
 };
 
-use alloc::vec::Vec;
-use core::ops::RangeInclusive;
+use crate::{Error, Message};
 
 pub(crate) type TagLength =
     BoundedU8<{ *TaggedDataPayload::TAG_LENGTH_RANGE.start() }, { *TaggedDataPayload::TAG_LENGTH_RANGE.end() }>;

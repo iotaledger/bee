@@ -3,14 +3,14 @@
 
 //! Module containing the event occurring during ledger operations.
 
-use crate::types::CreatedOutput;
-
 use bee_message::{
     milestone::MilestoneIndex,
     output::{Output, OutputId},
     semantic::ConflictReason,
     MessageId,
 };
+
+use crate::types::CreatedOutput;
 
 /// An event that indicates that a milestone was confirmed.
 #[derive(Clone)]

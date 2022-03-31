@@ -6,23 +6,21 @@
 mod migrated_funds_entry;
 mod tail_transaction_hash;
 
-pub(crate) use migrated_funds_entry::MigratedFundsAmount;
-pub use migrated_funds_entry::MigratedFundsEntry;
-pub use tail_transaction_hash::TailTransactionHash;
+use alloc::vec::Vec;
+use core::ops::RangeInclusive;
 
+use hashbrown::HashMap;
+use iterator_sorted::is_unique_sorted;
+use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable, PackableExt};
+
+pub(crate) use self::migrated_funds_entry::MigratedFundsAmount;
+pub use self::{migrated_funds_entry::MigratedFundsEntry, tail_transaction_hash::TailTransactionHash};
 use crate::{
     milestone::MilestoneIndex,
     output::OUTPUT_COUNT_RANGE,
     payload::{Payload, TreasuryTransactionPayload},
     Error,
 };
-
-use hashbrown::HashMap;
-use iterator_sorted::is_unique_sorted;
-use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable, PackableExt};
-
-use alloc::vec::Vec;
-use core::ops::RangeInclusive;
 
 const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<u16> = OUTPUT_COUNT_RANGE;
 

@@ -1,6 +1,17 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{
+    sync::atomic::{AtomicUsize, Ordering},
+    time::{Instant, SystemTime},
+};
+
+use bee_message::milestone::MilestoneIndex;
+use bee_runtime::event::Bus;
+use bee_storage::access::{Batch, Truncate};
+use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle};
+use log::{debug, info};
+
 use crate::workers::{
     event::PrunedIndex,
     pruning::{
@@ -10,18 +21,6 @@ use crate::workers::{
         metrics::{PruningMetrics, Timings},
     },
     storage::{self, StorageBackend},
-};
-
-use bee_message::milestone::MilestoneIndex;
-use bee_runtime::event::Bus;
-use bee_storage::access::{Batch, Truncate};
-use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle};
-
-use log::{debug, info};
-
-use std::{
-    sync::atomic::{AtomicUsize, Ordering},
-    time::{Instant, SystemTime},
 };
 
 const KEEP_INITIAL_SNAPSHOT_SEPS: usize = 50;

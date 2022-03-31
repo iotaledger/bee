@@ -3,11 +3,10 @@
 
 mod ed25519;
 
-pub use ed25519::Ed25519Signature;
-
-use crate::Error;
-
 use derive_more::From;
+
+pub use self::ed25519::Ed25519Signature;
+use crate::Error;
 
 /// A `Signature` contains a signature which is used to unlock a transaction input.
 ///

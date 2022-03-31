@@ -1,6 +1,20 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::collections::VecDeque;
+
+use bee_message::{
+    milestone::{Milestone, MilestoneIndex},
+    output::OutputId,
+    Message, MessageId,
+};
+use bee_storage::access::{Batch, Fetch};
+use bee_tangle::{
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage, Tangle,
+};
+use hashbrown::{HashMap, HashSet};
+use ref_cast::RefCast;
+
 use crate::{
     types::{ConsumedOutput, CreatedOutput, OutputDiff, Receipt},
     workers::{
@@ -12,21 +26,6 @@ use crate::{
         storage::StorageBackend,
     },
 };
-
-use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
-    output::OutputId,
-    Message, MessageId,
-};
-use bee_storage::access::{Batch, Fetch};
-use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage, Tangle,
-};
-
-use hashbrown::{HashMap, HashSet};
-use ref_cast::RefCast;
-
-use std::collections::VecDeque;
 
 pub type Messages = HashSet<MessageId>;
 pub type ApproverCache = HashMap<MessageId, MilestoneIndex>;

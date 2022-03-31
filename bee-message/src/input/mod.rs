@@ -4,14 +4,12 @@
 mod treasury;
 mod utxo;
 
-pub use treasury::TreasuryInput;
-pub use utxo::UtxoInput;
-
-use crate::Error;
+use core::ops::RangeInclusive;
 
 use derive_more::From;
 
-use core::ops::RangeInclusive;
+pub use self::{treasury::TreasuryInput, utxo::UtxoInput};
+use crate::Error;
 
 /// The maximum number of inputs of a transaction.
 pub const INPUT_COUNT_MAX: u16 = 128;

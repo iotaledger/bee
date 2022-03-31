@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use bee_message::milestone::MilestoneIndex;
-
 pub use packable::PackableExt;
 
 #[test]

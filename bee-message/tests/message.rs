@@ -20,7 +20,6 @@ use bee_test::rand::{
     parents::rand_parents,
     payload::{rand_tagged_data_payload, rand_treasury_transaction_payload},
 };
-
 use packable::{error::UnpackError, PackableExt};
 
 #[test]
