@@ -42,9 +42,7 @@ pub mod signature;
 pub mod unlock_block;
 
 #[cfg(feature = "dto")]
-pub use self::error::dto::DtoError;
-#[cfg(feature = "dto")]
-pub use self::message::dto::MessageDto;
+pub use self::{error::dto::DtoError, message::dto::MessageDto};
 pub use self::{
     error::Error,
     message::{Message, MessageBuilder},

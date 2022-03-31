@@ -40,9 +40,8 @@ use std::{ops::Deref, sync::Arc};
 use bee_message::Message;
 use bee_runtime::node::{Node, NodeBuilder};
 
-use self::tip_pool_cleaner_worker::TipPoolCleanerWorker;
 pub use self::{tangle::Tangle, tangle_worker::TangleWorker};
-use crate::vec_set::VecSet;
+use self::{tip_pool_cleaner_worker::TipPoolCleanerWorker, vec_set::VecSet};
 
 /// A thread-safe reference to a `Message`.
 #[derive(Clone)]

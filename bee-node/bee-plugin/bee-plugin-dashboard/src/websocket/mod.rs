@@ -22,15 +22,14 @@ use tokio::sync::{mpsc, RwLock};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::ws::{Message, WebSocket};
 
-use self::{commands::WsCommand, topics::WsTopic};
-use crate::{
-    auth::AUDIENCE_CLAIM,
-    config::DashboardAuthConfig,
-    storage::StorageBackend,
-    websocket::responses::{
+use self::{
+    commands::WsCommand,
+    responses::{
         database_size_metrics::DatabaseSizeMetricsResponse, sync_status::SyncStatusResponse, WsEvent, WsEventInner,
     },
+    topics::WsTopic,
 };
+use crate::{auth::AUDIENCE_CLAIM, config::DashboardAuthConfig, storage::StorageBackend};
 
 /// Our global unique user id counter.
 static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);

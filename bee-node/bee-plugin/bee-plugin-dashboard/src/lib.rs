@@ -40,7 +40,7 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::ws::Message;
 
-use crate::{
+use self::{
     config::DashboardConfig,
     storage::StorageBackend,
     websocket::{

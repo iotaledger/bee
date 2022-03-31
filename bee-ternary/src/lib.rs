@@ -93,8 +93,8 @@ use core::{
     },
 };
 
-use crate::raw::{RawEncoding, RawEncodingBuf};
-pub use crate::{
+use self::raw::{RawEncoding, RawEncodingBuf};
+pub use self::{
     t1b1::{T1B1Buf, T1B1},
     t2b1::{T2B1Buf, T2B1},
     t3b1::{T3B1Buf, T3B1},

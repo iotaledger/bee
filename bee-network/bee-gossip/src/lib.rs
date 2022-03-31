@@ -34,12 +34,11 @@ pub use libp2p_core::{
 
 pub use self::peer::info::{PeerInfo, PeerRelation};
 #[cfg(feature = "full")]
-pub use crate::{
+pub use self::{
     config::{NetworkConfig, NetworkConfigBuilder},
     error::Error,
     init::{integrated, standalone},
-    network::host::integrated::NetworkHost,
-    network::origin::Origin,
+    network::{host::integrated::NetworkHost, origin::Origin},
     service::{
         command::{Command, NetworkCommandSender},
         event::{Event, NetworkEventReceiver},
