@@ -292,19 +292,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-crypto"
-version = "0.3.0"
-dependencies = [
- "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "byteorder",
- "criterion",
- "iota-crypto",
- "lazy_static",
- "thiserror",
- "tiny-keccak",
-]
-
-[[package]]
 name = "bee-gossip"
 version = "0.6.0"
 dependencies = [
@@ -588,19 +575,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-signing"
-version = "0.2.0"
-dependencies = [
- "bee-common-derive",
- "bee-crypto",
- "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "rand 0.8.5",
- "sha3",
- "thiserror",
- "zeroize",
-]
-
-[[package]]
 name = "bee-storage"
 version = "0.11.0"
 dependencies = [
@@ -801,7 +775,6 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4152116fd6e9dadb291ae18fc1ec3575ed6d84c29642d97890f4b4a3417297e4"
 dependencies = [
- "block-padding",
  "generic-array",
 ]
 
@@ -813,12 +786,6 @@ checksum = "0bf7fe51849ea569fd452f37822f606a5cabb684dc918707a0193fd4664ff324"
 dependencies = [
  "generic-array",
 ]
-
-[[package]]
-name = "block-padding"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "bs58"
@@ -2075,12 +2042,6 @@ dependencies = [
  "serde_json",
  "simple_asn1",
 ]
-
-[[package]]
-name = "keccak"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67c21572b4949434e4fc1e1978b99c5f77064153c59d998bf13ecd96fb5ecba7"
 
 [[package]]
 name = "lazy_static"
@@ -3814,18 +3775,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sha3"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f81199417d4e5de3f04b1e871023acea7389672c4135918f05aa9cbf2f2fa809"
-dependencies = [
- "block-buffer 0.9.0",
- "digest 0.9.0",
- "keccak",
- "opaque-debug",
-]
-
-[[package]]
 name = "sharded-slab"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4110,15 +4059,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17c30f0091717eeeff0b556d830302d5563de8b72fd49127aa5899a06a369808"
 dependencies = [
  "time 0.3.9",
-]
-
-[[package]]
-name = "tiny-keccak"
-version = "2.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c9d3793400a45f954c52e73d068316d76b6f4e36977e3fcebb13a2721e80237"
-dependencies = [
- "crunchy",
 ]
 
 [[package]]
