@@ -6,7 +6,7 @@ members = [
 	"bee-crypto",
 	"bee-ledger",
 	"bee-message",
-  "bee-metrics",
+	"bee-metrics",
 	"bee-network/bee-autopeering",
 	"bee-network/bee-gossip",
 	"bee-node/bee-node",
