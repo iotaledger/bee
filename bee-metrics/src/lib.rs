@@ -19,7 +19,7 @@ use axum::{
 };
 use prometheus_client::encoding::text::encode;
 
-pub use crate::registry::Registry;
+pub use self::registry::Registry;
 
 async fn get_metrics(state: Extension<Registry>) -> (StatusCode, HeaderMap, Vec<u8>) {
     let mut headers = HeaderMap::new();

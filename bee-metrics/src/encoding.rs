@@ -1,7 +1,7 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Types and traits related to metric encoding.
+//! Types and traits related to metrics encoding.
 
 use std::ops::Deref;
 

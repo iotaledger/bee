@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_metrics::{metrics::ProcessMetrics, serve_metrics, Registry};
+
 use tokio::time::Duration;
 
 async fn update_memory_usage(memory_usage: ProcessMetrics) {

@@ -1,12 +1,12 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
+use crate::encoding::SendSyncEncodeMetric;
 
 use parking_lot::RwLock;
 use prometheus_client::registry::Registry as PrometheusRegistry;
 
-use crate::encoding::SendSyncEncodeMetric;
+use std::sync::Arc;
 
 /// A type used to register metrics so they can be scraped later.
 #[derive(Clone)]
