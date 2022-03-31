@@ -9,7 +9,7 @@ mod milestone_id;
 pub use essence::MilestoneEssence;
 pub use milestone_id::MilestoneId;
 
-use crate::{signature::Ed25519Signature, Error};
+use crate::{signature::Signature, Error};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
@@ -49,21 +49,21 @@ pub(crate) type SignatureCount =
 pub struct MilestonePayload {
     essence: MilestoneEssence,
     #[packable(verify_with = verify_signatures)]
-    #[packable(unpack_error_with = |e| Error::MilestoneInvalidSignatureCount(e.into_prefix_err().into()))]
-    signatures: VecPrefix<Ed25519Signature, SignatureCount>,
+    #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::MilestoneInvalidSignatureCount(p.into())))]
+    signatures: VecPrefix<Signature, SignatureCount>,
 }
 
 impl MilestonePayload {
     /// The payload kind of a [`MilestonePayload`].
-    pub const KIND: u32 = 7
+    pub const KIND: u32 = 7;
     /// Range of allowed milestones signatures key numbers.
     pub const SIGNATURE_COUNT_RANGE: RangeInclusive<u8> = 1..=255;
     /// Length of a milestone signature.
     pub const SIGNATURE_LENGTH: usize = 64;
 
     /// Creates a new [`MilestonePayload`].
-    pub fn new(essence: MilestoneEssence, signatures: Vec<Ed25519Signature>) -> Result<Self, Error> {
-        let signatures = VecPrefix::<Ed25519Signature, SignatureCount>::try_from(signatures)
+    pub fn new(essence: MilestoneEssence, signatures: Vec<Signature>) -> Result<Self, Error> {
+        let signatures = VecPrefix::<Signature, SignatureCount>::try_from(signatures)
             .map_err(Error::MilestoneInvalidSignatureCount)?;
 
         Ok(Self { essence, signatures })
@@ -75,7 +75,7 @@ impl MilestonePayload {
     }
 
     /// Returns the signatures of a [`MilestonePayload`].
-    pub fn signatures(&self) -> &[Ed25519Signature] {
+    pub fn signatures(&self) -> &[Signature] {
         &self.signatures
     }
 
@@ -116,6 +116,8 @@ impl MilestonePayload {
         let essence_hash = self.essence().hash();
 
         for (index, signature) in self.signatures().iter().enumerate() {
+            let Signature::Ed25519(signature) = signature;
+
             if !applicable_public_keys.contains(&prefix_hex::encode(signature.public_key())) {
                 return Err(MilestoneValidationError::UnapplicablePublicKey(prefix_hex::encode(
                     *signature.public_key(),
@@ -138,8 +140,13 @@ impl MilestonePayload {
     }
 }
 
-fn verify_signatures<const VERIFY: bool>(signatures: &[Ed25519Signature]) -> Result<(), Error> {
-    if VERIFY && !is_unique_sorted(signatures.iter().map(|s| s.public_key())) {
+fn verify_signatures<const VERIFY: bool>(signatures: &[Signature]) -> Result<(), Error> {
+    if VERIFY
+        && !is_unique_sorted(signatures.iter().map(|signature| {
+            let Signature::Ed25519(signature) = signature;
+            signature.public_key()
+        }))
+    {
         Err(Error::MilestoneSignaturesNotUniqueSorted)
     } else {
         Ok(())
@@ -154,7 +161,7 @@ pub mod dto {
     use super::*;
     use crate::{
         error::dto::DtoError, milestone::MilestoneIndex, parent::Parents, payload::dto::PayloadDto,
-        signature::dto::Ed25519SignatureDto, MessageId,
+        signature::dto::SignatureDto, MessageId,
     };
 
     /// The payload type to define a milestone.
@@ -174,7 +181,7 @@ pub mod dto {
         pub next_pow_score_milestone_index: u32,
         #[serde(skip_serializing_if = "Option::is_none")]
         pub receipt: Option<PayloadDto>,
-        pub signatures: Vec<Ed25519SignatureDto>,
+        pub signatures: Vec<SignatureDto>,
     }
 
     impl From<&MilestonePayload> for MilestonePayloadDto {

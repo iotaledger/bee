@@ -89,14 +89,14 @@ fn milestone() {
             None,
         )
         .unwrap(),
-        vec![Ed25519Signature::new([0; 32], [0; 64])],
+        vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))],
     )
     .unwrap()
     .into();
 
     let packed = payload.pack_to_vec();
 
-    assert_eq!(payload.kind(), 1);
+    assert_eq!(payload.kind(), 7);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::Milestone(_)));
     assert_eq!(payload, PackableExt::unpack_verified(&mut packed.as_slice()).unwrap());

@@ -43,11 +43,31 @@ pub mod dto {
     use serde::{Deserialize, Serialize};
 
     pub use super::ed25519::dto::Ed25519SignatureDto;
+    use super::*;
+    use crate::error::dto::DtoError;
 
     /// Describes all the different signature types.
     #[derive(Clone, Debug, Serialize, Deserialize)]
     #[serde(untagged)]
     pub enum SignatureDto {
         Ed25519(Ed25519SignatureDto),
+    }
+
+    impl From<&Signature> for SignatureDto {
+        fn from(value: &Signature) -> Self {
+            match value {
+                Signature::Ed25519(s) => SignatureDto::Ed25519(s.into()),
+            }
+        }
+    }
+
+    impl TryFrom<&SignatureDto> for Signature {
+        type Error = DtoError;
+
+        fn try_from(value: &SignatureDto) -> Result<Self, Self::Error> {
+            match value {
+                SignatureDto::Ed25519(s) => Ok(Signature::Ed25519(s.try_into()?)),
+            }
+        }
     }
 }

@@ -5,7 +5,7 @@ use bee_message::{
     milestone::MilestoneIndex,
     parent::Parents,
     payload::milestone::{MilestoneEssence, MilestonePayload},
-    signature::Ed25519Signature,
+    signature::{Ed25519Signature, Signature},
     Error,
 };
 use bee_test::rand::{self, message::rand_message_ids, parents::rand_parents};
@@ -14,7 +14,7 @@ use packable::{bounded::TryIntoBoundedU8Error, PackableExt};
 
 #[test]
 fn kind() {
-    assert_eq!(MilestonePayload::KIND, 1);
+    assert_eq!(MilestonePayload::KIND, 7);
 }
 
 #[test]
@@ -31,7 +31,7 @@ fn new_valid() {
                 None,
             )
             .unwrap(),
-            vec![Ed25519Signature::new([0; 32], [0; 64])]
+            vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))]
         )
         .is_ok()
     );
@@ -71,7 +71,7 @@ fn new_invalid_too_many_signatures() {
                 None,
             )
             .unwrap(),
-            vec![Ed25519Signature::new([0; 32], [0; 64]); 300]
+            vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64])); 300]
         ),
         Err(Error::MilestoneInvalidSignatureCount(TryIntoBoundedU8Error::Truncated(
             300
@@ -93,14 +93,14 @@ fn packed_len() {
         )
         .unwrap(),
         vec![
-            Ed25519Signature::new([0; 32], [0; 64]),
-            Ed25519Signature::new([1; 32], [1; 64]),
+            Signature::from(Ed25519Signature::new([0; 32], [0; 64])),
+            Signature::from(Ed25519Signature::new([1; 32], [1; 64])),
         ],
     )
     .unwrap();
 
-    assert_eq!(ms.packed_len(), 378);
-    assert_eq!(ms.pack_to_vec().len(), 378);
+    assert_eq!(ms.packed_len(), 380);
+    assert_eq!(ms.pack_to_vec().len(), 380);
 }
 
 #[test]
@@ -116,7 +116,7 @@ fn pack_unpack_valid() {
             None,
         )
         .unwrap(),
-        vec![Ed25519Signature::new([0; 32], [0; 64])],
+        vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))],
     )
     .unwrap();
 
@@ -138,7 +138,7 @@ fn getters() {
         None,
     )
     .unwrap();
-    let signatures = vec![Ed25519Signature::new([0; 32], [0; 64])];
+    let signatures = vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))];
     let milestone = MilestonePayload::new(essence.clone(), signatures.clone()).unwrap();
 
     assert_eq!(essence, *milestone.essence());
