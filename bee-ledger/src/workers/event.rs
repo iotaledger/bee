@@ -10,7 +10,7 @@ use bee_message::{
     MessageId,
 };
 
-use crate::types::CreatedOutput;
+use crate::types::{CreatedOutput, Receipt};
 
 /// An event that indicates that a milestone was confirmed.
 #[derive(Clone)]
@@ -77,3 +77,7 @@ pub struct PrunedIndex {
     /// The pruned index.
     pub index: MilestoneIndex,
 }
+
+/// An event that indicates that a receipt was created.
+#[derive(Clone)]
+pub struct ReceiptCreated(pub Receipt);

@@ -23,7 +23,7 @@ use crate::{
     workers::{
         consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
         error::Error,
-        event::{MessageReferenced, MilestoneConfirmed, OutputConsumed, OutputCreated},
+        event::{MessageReferenced, MilestoneConfirmed, OutputConsumed, OutputCreated, ReceiptCreated},
         pruning::{condition::should_prune, config::PruningConfig, prune},
         snapshot::{condition::should_snapshot, config::SnapshotConfig, worker::SnapshotWorker},
         storage::{self, StorageBackend},
@@ -245,6 +245,10 @@ where
             output_id,
             output: created_output.inner().clone(),
         });
+    }
+
+    if let Some(migration) = migration {
+        bus.dispatch(ReceiptCreated(migration.into_receipt()));
     }
 
     Ok(())
