@@ -118,7 +118,7 @@ impl MilestonePayload {
         for (index, signature) in self.signatures().iter().enumerate() {
             let Signature::Ed25519(signature) = signature;
 
-            if !applicable_public_keys.contains(&prefix_hex::encode(signature.public_key())) {
+            if !applicable_public_keys.contains(&hex::encode(signature.public_key())) {
                 return Err(MilestoneValidationError::UnapplicablePublicKey(prefix_hex::encode(
                     *signature.public_key(),
                 )));
