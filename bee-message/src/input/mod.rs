@@ -7,8 +7,8 @@ mod utxo;
 use core::ops::RangeInclusive;
 
 use derive_more::From;
-pub use treasury::TreasuryInput;
-pub use utxo::UtxoInput;
+pub use self::treasury::TreasuryInput;
+pub use self::utxo::UtxoInput;
 
 use crate::Error;
 

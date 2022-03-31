@@ -11,10 +11,10 @@ use core::ops::RangeInclusive;
 
 use hashbrown::HashMap;
 use iterator_sorted::is_unique_sorted;
-pub(crate) use migrated_funds_entry::MigratedFundsAmount;
-pub use migrated_funds_entry::MigratedFundsEntry;
+pub(crate) use self::migrated_funds_entry::MigratedFundsAmount;
+pub use self::migrated_funds_entry::MigratedFundsEntry;
 use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable, PackableExt};
-pub use tail_transaction_hash::TailTransactionHash;
+pub use self::tail_transaction_hash::TailTransactionHash;
 
 use crate::{
     milestone::MilestoneIndex,

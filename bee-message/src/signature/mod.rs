@@ -4,7 +4,7 @@
 mod ed25519;
 
 use derive_more::From;
-pub use ed25519::Ed25519Signature;
+pub use self::ed25519::Ed25519Signature;
 
 use crate::Error;
 

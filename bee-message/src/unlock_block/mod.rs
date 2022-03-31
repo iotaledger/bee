@@ -9,13 +9,13 @@ mod signature;
 use alloc::vec::Vec;
 use core::ops::RangeInclusive;
 
-pub use alias::AliasUnlockBlock;
+pub use self::alias::AliasUnlockBlock;
 use derive_more::{Deref, From};
 use hashbrown::HashSet;
-pub use nft::NftUnlockBlock;
+pub use self::nft::NftUnlockBlock;
 use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
-pub use reference::ReferenceUnlockBlock;
-pub use signature::SignatureUnlockBlock;
+pub use self::reference::ReferenceUnlockBlock;
+pub use self::signature::SignatureUnlockBlock;
 
 use crate::{
     input::{INPUT_COUNT_MAX, INPUT_COUNT_RANGE, INPUT_INDEX_MAX, INPUT_INDEX_RANGE},

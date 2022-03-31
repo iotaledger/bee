@@ -3,7 +3,7 @@
 
 mod simple;
 
-pub use simple::SimpleTokenScheme;
+pub use self::simple::SimpleTokenScheme;
 
 use crate::Error;
 

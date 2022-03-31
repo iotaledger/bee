@@ -14,9 +14,9 @@ use crypto::{
     signatures::ed25519,
     Error as CryptoError,
 };
-pub use essence::MilestoneEssence;
+pub use self::essence::MilestoneEssence;
 use iterator_sorted::is_unique_sorted;
-pub use milestone_id::MilestoneId;
+pub use self::milestone_id::MilestoneId;
 use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable, PackableExt};
 
 use crate::{signature::Signature, Error};

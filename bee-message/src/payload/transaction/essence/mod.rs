@@ -6,8 +6,8 @@ mod regular;
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 use derive_more::From;
 use packable::PackableExt;
-pub(crate) use regular::{InputCount, OutputCount};
-pub use regular::{RegularTransactionEssence, RegularTransactionEssenceBuilder};
+pub(crate) use self::regular::{InputCount, OutputCount};
+pub use self::regular::{RegularTransactionEssence, RegularTransactionEssenceBuilder};
 
 use crate::Error;
 

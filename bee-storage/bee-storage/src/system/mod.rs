@@ -8,8 +8,8 @@ mod version;
 
 use core::convert::Infallible;
 
-pub use health::{Error as StorageHealthError, StorageHealth};
-pub use version::StorageVersion;
+pub use self::health::{Error as StorageHealthError, StorageHealth};
+pub use self::version::StorageVersion;
 
 /// Key used to store the system version.
 pub const SYSTEM_VERSION_KEY: u8 = 0;

@@ -12,21 +12,21 @@ pub mod treasury_transaction;
 use alloc::boxed::Box;
 use core::ops::Deref;
 
-pub use milestone::MilestonePayload;
-pub(crate) use milestone::SignatureCount;
+pub use self::milestone::MilestonePayload;
+pub(crate) use self::milestone::SignatureCount;
 use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::Unpacker,
     Packable, PackableExt,
 };
-pub use receipt::ReceiptPayload;
-pub(crate) use receipt::{MigratedFundsAmount, ReceiptFundsCount};
-pub use tagged_data::TaggedDataPayload;
-pub(crate) use tagged_data::{TagLength, TaggedDataLength};
-pub use transaction::TransactionPayload;
-pub(crate) use transaction::{InputCount, OutputCount};
-pub use treasury_transaction::TreasuryTransactionPayload;
+pub use self::receipt::ReceiptPayload;
+pub(crate) use self::receipt::{MigratedFundsAmount, ReceiptFundsCount};
+pub use self::tagged_data::TaggedDataPayload;
+pub(crate) use self::tagged_data::{TagLength, TaggedDataLength};
+pub use self::transaction::TransactionPayload;
+pub(crate) use self::transaction::{InputCount, OutputCount};
+pub use self::treasury_transaction::TreasuryTransactionPayload;
 
 use crate::Error;
 

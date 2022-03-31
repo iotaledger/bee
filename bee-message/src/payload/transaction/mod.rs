@@ -7,10 +7,10 @@ mod essence;
 mod transaction_id;
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
-pub(crate) use essence::{InputCount, OutputCount};
-pub use essence::{RegularTransactionEssence, RegularTransactionEssenceBuilder, TransactionEssence};
+pub(crate) use self::essence::{InputCount, OutputCount};
+pub use self::essence::{RegularTransactionEssence, RegularTransactionEssenceBuilder, TransactionEssence};
 use packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable, PackableExt};
-pub use transaction_id::TransactionId;
+pub use self::transaction_id::TransactionId;
 
 use crate::{unlock_block::UnlockBlocks, Error};
 

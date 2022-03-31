@@ -23,28 +23,28 @@ mod status;
 use bee_autopeering::event::EventRx as AutopeeringEventRx;
 use bee_gossip::NetworkEventReceiver as NetworkEventRx;
 use bee_runtime::node::{Node, NodeBuilder};
-pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
-pub(crate) use heartbeater::HeartbeaterWorker;
-pub(crate) use index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
-pub(crate) use message::{
+pub(crate) use self::broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
+pub(crate) use self::heartbeater::HeartbeaterWorker;
+pub(crate) use self::index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
+pub(crate) use self::message::{
     HasherWorker, HasherWorkerEvent, MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent, ProcessorWorker,
     ProcessorWorkerConfig, TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent, TransactionPayloadWorker,
     UnreferencedMessageInserterWorker, UnreferencedMessageInserterWorkerEvent,
 };
-pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
-pub use metrics::MetricsWorker;
-pub(crate) use mps::MpsWorker;
-use peer::PeerManagerConfig;
-pub use peer::{PeerManager, PeerManagerResWorker};
-pub(crate) use peer::{PeerManagerWorker, PeerWorker};
-pub(crate) use propagator::{PropagatorWorker, PropagatorWorkerEvent};
-pub use requester::{request_message, MessageRequesterWorker, RequestedMessages, RequestedMilestones};
-pub(crate) use requester::{MilestoneRequesterWorker, MilestoneRequesterWorkerEvent};
-pub(crate) use responder::{
+pub use self::message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
+pub use self::metrics::MetricsWorker;
+pub(crate) use self::mps::MpsWorker;
+use self::peer::PeerManagerConfig;
+pub use self::peer::{PeerManager, PeerManagerResWorker};
+pub(crate) use self::peer::{PeerManagerWorker, PeerWorker};
+pub(crate) use self::propagator::{PropagatorWorker, PropagatorWorkerEvent};
+pub use self::requester::{request_message, MessageRequesterWorker, RequestedMessages, RequestedMilestones};
+pub(crate) use self::requester::{MilestoneRequesterWorker, MilestoneRequesterWorkerEvent};
+pub(crate) use self::responder::{
     MessageResponderWorker, MessageResponderWorkerEvent, MilestoneResponderWorker, MilestoneResponderWorkerEvent,
 };
-pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
-pub(crate) use status::StatusWorker;
+pub(crate) use self::solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
+pub(crate) use self::status::StatusWorker;
 
 pub fn init<N: Node>(
     config: config::ProtocolConfig,

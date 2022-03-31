@@ -7,11 +7,11 @@ mod nft;
 
 use alloc::{string::String, vec::Vec};
 
-pub use alias::AliasAddress;
+pub use self::alias::AliasAddress;
 use bech32::{self, FromBase32, ToBase32, Variant};
 use derive_more::From;
-pub use ed25519::Ed25519Address;
-pub use nft::NftAddress;
+pub use self::ed25519::Ed25519Address;
+pub use self::nft::NftAddress;
 use packable::PackableExt;
 
 use crate::{
