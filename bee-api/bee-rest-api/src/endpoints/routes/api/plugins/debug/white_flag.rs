@@ -1,28 +1,29 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{endpoints::storage::StorageBackend, types::responses::WhiteFlagResponse};
+use std::{
+    any::TypeId,
+    collections::HashSet,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
-use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
-use bee_message::{milestone::MilestoneIndex, MessageId};
-use bee_protocol::workers::{event::MessageSolidified, request_message};
-
-use futures::channel::oneshot;
-use serde_json::Value;
-use tokio::time::timeout;
-
-use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{
     extract::{Extension, Json},
     response::IntoResponse,
     routing::post,
     Router,
 };
-use std::{
-    any::TypeId,
-    collections::HashSet,
-    sync::{Arc, Mutex},
-    time::Duration,
+use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
+use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_protocol::workers::{event::MessageSolidified, request_message};
+use futures::channel::oneshot;
+use serde_json::Value;
+use tokio::time::timeout;
+
+use crate::{
+    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    types::responses::WhiteFlagResponse,
 };
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {

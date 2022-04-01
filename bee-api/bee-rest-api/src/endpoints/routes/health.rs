@@ -1,19 +1,17 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::storage::StorageBackend;
-
-use bee_protocol::workers::PeerManager;
-
-use bee_tangle::Tangle;
-
-use crate::endpoints::ApiArgsFullNode;
-use axum::{extract::Extension, http::StatusCode, response::IntoResponse, routing::get, Router};
 use std::{
     convert::Infallible,
     sync::Arc,
     time::{SystemTime, UNIX_EPOCH},
 };
+
+use axum::{extract::Extension, http::StatusCode, response::IntoResponse, routing::get, Router};
+use bee_protocol::workers::PeerManager;
+use bee_tangle::Tangle;
+
+use crate::endpoints::{storage::StorageBackend, ApiArgsFullNode};
 
 const HEALTH_CONFIRMED_THRESHOLD: u32 = 2; // in milestones
 const HEALTH_MILESTONE_AGE_MAX: u64 = 5 * 60; // in seconds

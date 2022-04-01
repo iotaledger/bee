@@ -1,24 +1,22 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    endpoints::storage::StorageBackend,
-    types::{dtos::ReceiptDto, responses::ReceiptsResponse},
-};
+use std::sync::Arc;
 
-use bee_ledger::types::Receipt;
-use bee_message::milestone::MilestoneIndex;
-
-use bee_storage::access::AsIterator;
-
-use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{
     extract::{Extension, Json},
     response::IntoResponse,
     routing::get,
     Router,
 };
-use std::sync::Arc;
+use bee_ledger::types::Receipt;
+use bee_message::milestone::MilestoneIndex;
+use bee_storage::access::AsIterator;
+
+use crate::{
+    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    types::{dtos::ReceiptDto, responses::ReceiptsResponse},
+};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/receipts", get(receipts::<B>))

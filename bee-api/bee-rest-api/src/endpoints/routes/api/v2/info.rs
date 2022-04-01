@@ -1,19 +1,19 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    endpoints::{routes::health, storage::StorageBackend},
-    types::responses::{InfoResponse, MetricsResponse, ProtocolResponse, RentStructureResponse, StatusResponse},
-};
+use std::sync::Arc;
 
-use crate::endpoints::ApiArgsFullNode;
 use axum::{
     extract::{Extension, Json},
     response::IntoResponse,
     routing::get,
     Router,
 };
-use std::sync::Arc;
+
+use crate::{
+    endpoints::{routes::health, storage::StorageBackend, ApiArgsFullNode},
+    types::responses::{InfoResponse, MetricsResponse, ProtocolResponse, RentStructureResponse, StatusResponse},
+};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/info", get(info::<B>))

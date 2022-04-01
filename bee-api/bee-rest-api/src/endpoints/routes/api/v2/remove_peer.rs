@@ -1,9 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_gossip::{Command::RemovePeer, PeerId};
+use std::sync::Arc;
 
-use crate::endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
 use axum::{
     extract::{Extension, Path},
     http::StatusCode,
@@ -11,7 +10,9 @@ use axum::{
     routing::delete,
     Router,
 };
-use std::sync::Arc;
+use bee_gossip::{Command::RemovePeer, PeerId};
+
+use crate::endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/peers/:peer_id", delete(remove_peer::<B>))

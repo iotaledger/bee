@@ -1,26 +1,24 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    endpoints::storage::StorageBackend,
-    types::{
-        dtos::{PeerDto, RelationDto},
-        responses::AddPeerResponse,
-    },
-};
+use std::sync::Arc;
 
-use bee_gossip::{Command::AddPeer, Multiaddr, PeerId, PeerRelation, Protocol};
-
-use serde_json::Value;
-
-use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{
     extract::{Extension, Json},
     response::IntoResponse,
     routing::post,
     Router,
 };
-use std::sync::Arc;
+use bee_gossip::{Command::AddPeer, Multiaddr, PeerId, PeerRelation, Protocol};
+use serde_json::Value;
+
+use crate::{
+    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    types::{
+        dtos::{PeerDto, RelationDto},
+        responses::AddPeerResponse,
+    },
+};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/peers", post(add_peer::<B>))

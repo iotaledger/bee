@@ -3,8 +3,9 @@
 
 mod debug;
 
-use crate::endpoints::storage::StorageBackend;
 use axum::Router;
+
+use crate::endpoints::storage::StorageBackend;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().nest("/plugins", debug::filter::<B>())

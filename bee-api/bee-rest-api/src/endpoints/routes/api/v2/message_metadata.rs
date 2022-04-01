@@ -1,23 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    endpoints::{storage::StorageBackend, CONFIRMED_THRESHOLD},
-    types::{dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
-};
+use std::sync::Arc;
 
-use bee_message::{payload::Payload, MessageId};
-
-use bee_tangle::ConflictReason;
-
-use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{
     extract::{Extension, Json, Path},
     response::IntoResponse,
     routing::get,
     Router,
 };
-use std::sync::Arc;
+use bee_message::{payload::Payload, semantic::ConflictReason, MessageId};
+
+use crate::{
+    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode, CONFIRMED_THRESHOLD},
+    types::{dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
+};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/messages/:message_id/metadata", get(message_metadata::<B>))

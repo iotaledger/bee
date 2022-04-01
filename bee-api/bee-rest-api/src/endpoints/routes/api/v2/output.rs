@@ -1,26 +1,27 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{endpoints::storage::StorageBackend, types::responses::OutputResponse};
+use std::sync::Arc;
 
-use bee_ledger::{
-    types::{ConsumedOutput, CreatedOutput, LedgerIndex},
-    workers::{consensus::ConsensusWorkerCommand, error::Error},
-};
-use bee_message::output::OutputId;
-
-use bee_storage::access::Fetch;
-use futures::channel::oneshot;
-use log::error;
-
-use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{
     extract::{Extension, Json, Path},
     response::IntoResponse,
     routing::get,
     Router,
 };
-use std::sync::Arc;
+use bee_ledger::{
+    types::{ConsumedOutput, CreatedOutput, LedgerIndex},
+    workers::{consensus::ConsensusWorkerCommand, error::Error},
+};
+use bee_message::output::OutputId;
+use bee_storage::access::Fetch;
+use futures::channel::oneshot;
+use log::error;
+
+use crate::{
+    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    types::responses::OutputResponse,
+};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/outputs/:output_id", get(output::<B>))

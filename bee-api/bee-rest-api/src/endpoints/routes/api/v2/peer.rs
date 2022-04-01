@@ -1,18 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{dtos::PeerDto, responses::PeerResponse};
+use std::sync::Arc;
 
-use bee_gossip::PeerId;
-
-use crate::endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
 use axum::{
     extract::{Extension, Json, Path},
     response::IntoResponse,
     routing::get,
     Router,
 };
-use std::sync::Arc;
+use bee_gossip::PeerId;
+
+use crate::{
+    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
+    types::{dtos::PeerDto, responses::PeerResponse},
+};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/peers/:peer_id", get(peer::<B>))

@@ -4,9 +4,9 @@
 pub mod plugins;
 pub mod v2;
 
-use crate::endpoints::storage::StorageBackend;
-
 use axum::Router;
+
+use crate::endpoints::storage::StorageBackend;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().nest("/api", plugins::filter::<B>().merge(v2::filter::<B>()))

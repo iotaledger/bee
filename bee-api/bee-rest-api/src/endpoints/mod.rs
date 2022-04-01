@@ -6,9 +6,10 @@ pub mod error;
 pub mod routes;
 pub mod storage;
 
-use config::RestApiConfig;
-use storage::StorageBackend;
+use std::{any::TypeId, sync::Arc};
 
+use async_trait::async_trait;
+use axum::{extract::Extension, http::StatusCode, routing::get, Router};
 use bee_gossip::NetworkCommandSender;
 use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
 use bee_protocol::workers::{
@@ -22,15 +23,12 @@ use bee_runtime::{
     worker::{Error as WorkerError, Worker},
 };
 use bee_tangle::{Tangle, TangleWorker};
-
-use async_trait::async_trait;
-use axum::{extract::Extension, http::StatusCode, routing::get, Router};
-
+use config::RestApiConfig;
 use log::info;
+use storage::StorageBackend;
 use tokio::sync::mpsc;
 
 use crate::endpoints::routes::filter_all;
-use std::{any::TypeId, sync::Arc};
 
 pub(crate) type NetworkId = (String, u64);
 pub(crate) type Bech32Hrp = String;

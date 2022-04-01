@@ -1,19 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    endpoints::{storage::StorageBackend, CONFIRMED_THRESHOLD},
-    types::responses::TipsResponse,
-};
+use std::sync::Arc;
 
-use crate::endpoints::{error::ApiError, ApiArgsFullNode};
 use axum::{
     extract::{Extension, Json},
     response::IntoResponse,
     routing::get,
     Router,
 };
-use std::sync::Arc;
+use bee_message::MessageId;
+
+use crate::{
+    endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode, CONFIRMED_THRESHOLD},
+    types::responses::TipsResponse,
+};
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/tips", get(tips::<B>))
