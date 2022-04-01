@@ -36,3 +36,18 @@ impl NftUnlockBlock {
         self.0.get()
     }
 }
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    /// Points to the unlock block of a consumed NFT output.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct NftUnlockBlockDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        #[serde(rename = "reference")]
+        pub index: u16,
+    }
+}

@@ -3,14 +3,16 @@
 
 //! Module containing the event occurring during ledger operations.
 
-use crate::types::CreatedOutput;
+use std::collections::HashMap;
 
 use bee_message::{
     milestone::MilestoneIndex,
     output::{Output, OutputId},
+    semantic::ConflictReason,
     MessageId,
 };
-use bee_tangle::ConflictReason;
+
+use crate::types::{ConsumedOutput, CreatedOutput, Receipt};
 
 /// An event that indicates that a milestone was confirmed.
 #[derive(Clone)]
@@ -76,4 +78,19 @@ pub struct SnapshottedIndex {
 pub struct PrunedIndex {
     /// The pruned index.
     pub index: MilestoneIndex,
+}
+
+/// An event that indicates that a receipt was created.
+#[derive(Clone)]
+pub struct ReceiptCreated(pub Receipt);
+
+/// An event that indicates that the ledger was updated.
+#[derive(Clone)]
+pub struct LedgerUpdated {
+    /// Index of the confirmed milestone.
+    pub milestone_index: MilestoneIndex,
+    /// The outputs created within the confirmed milestone.
+    pub created_outputs: HashMap<OutputId, CreatedOutput>,
+    /// The outputs consumed within the confirmed milestone.
+    pub consumed_outputs: HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
 }

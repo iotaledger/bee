@@ -19,7 +19,7 @@ rustdoc-args = [ "--cfg", "doc_cfg" ]
 [dependencies]
 bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false, optional = true }
 bee-ledger = { version = "0.7.0", path = "../../bee-ledger", default-features = false }
-bee-message = { version = "0.2.0", path = "../../bee-message", default-features = false }
+bee-message = { version = "0.2.0", path = "../../bee-message", default-features = false, features = [ "dto" ] }
 bee-pow = { version = "0.2.0", path = "../../bee-pow", default-features = false }
 bee-protocol = { version = "0.2.2", path = "../../bee-protocol", default-features = false, optional = true }
 bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true  }
@@ -45,7 +45,6 @@ tokio = { version = "1.17.0", default-features = false, optional = true }
 
 [features]
 default = [ "peer" ]
-cpt2 = [ "bee-message/cpt2", "bee-ledger/cpt2" ]
 endpoints = [
   "bee-gossip",
   "bee-protocol/workers",

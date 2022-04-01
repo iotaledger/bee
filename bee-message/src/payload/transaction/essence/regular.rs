@@ -1,6 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use alloc::vec::Vec;
+
+use hashbrown::HashSet;
+use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
+
 use crate::{
     constant::IOTA_SUPPLY,
     input::{Input, INPUT_COUNT_RANGE},
@@ -8,10 +13,6 @@ use crate::{
     payload::{OptionalPayload, Payload},
     Error,
 };
-
-use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix, Packable};
-
-use alloc::vec::Vec;
 
 /// A builder to build a [`RegularTransactionEssence`].
 #[derive(Debug, Default)]
@@ -156,11 +157,13 @@ impl RegularTransactionEssence {
 }
 
 fn verify_inputs<const VERIFY: bool>(inputs: &[Input]) -> Result<(), Error> {
+    let mut seen_utxos = HashSet::new();
+
     for input in inputs.iter() {
         match input {
-            Input::Utxo(u) => {
-                if inputs.iter().filter(|i| *i == input).count() > 1 {
-                    return Err(Error::DuplicateUtxo(u.clone()));
+            Input::Utxo(utxo) => {
+                if !seen_utxos.insert(utxo) {
+                    return Err(Error::DuplicateUtxo(utxo.clone()));
                 }
             }
             _ => return Err(Error::InvalidInputKind(input.kind())),
@@ -208,5 +211,84 @@ fn verify_payload<const VERIFY: bool>(payload: &OptionalPayload) -> Result<(), E
     match &payload.0 {
         Some(Payload::TaggedData(_)) | None => Ok(()),
         Some(payload) => Err(Error::InvalidPayloadKind(payload.kind())),
+    }
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{error::dto::DtoError, input::dto::InputDto, output::dto::OutputDto, payload::dto::PayloadDto};
+
+    /// Describes the essence data making up a transaction by defining its inputs and outputs and an optional payload.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct RegularTransactionEssenceDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        #[serde(rename = "networkId")]
+        pub network_id: String,
+        pub inputs: Vec<InputDto>,
+        #[serde(rename = "inputsCommitment")]
+        pub inputs_commitment: String,
+        pub outputs: Vec<OutputDto>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub payload: Option<PayloadDto>,
+    }
+
+    impl From<&RegularTransactionEssence> for RegularTransactionEssenceDto {
+        fn from(value: &RegularTransactionEssence) -> Self {
+            RegularTransactionEssenceDto {
+                kind: RegularTransactionEssence::KIND,
+                network_id: value.network_id().to_string(),
+                inputs: value.inputs().iter().map(Into::into).collect::<Vec<_>>(),
+                inputs_commitment: prefix_hex::encode(value.inputs_commitment()),
+                outputs: value.outputs().iter().map(Into::into).collect::<Vec<_>>(),
+                payload: match value.payload() {
+                    Some(Payload::TaggedData(i)) => Some(PayloadDto::TaggedData(Box::new(i.as_ref().into()))),
+                    Some(_) => unimplemented!(),
+                    None => None,
+                },
+            }
+        }
+    }
+
+    impl TryFrom<&RegularTransactionEssenceDto> for RegularTransactionEssence {
+        type Error = DtoError;
+
+        fn try_from(value: &RegularTransactionEssenceDto) -> Result<Self, Self::Error> {
+            let inputs = value
+                .inputs
+                .iter()
+                .map(TryInto::try_into)
+                .collect::<Result<Vec<Input>, Self::Error>>()?;
+            let outputs = value
+                .outputs
+                .iter()
+                .map(TryInto::try_into)
+                .collect::<Result<Vec<Output>, Self::Error>>()?;
+
+            let mut builder = RegularTransactionEssence::builder(
+                value
+                    .network_id
+                    .parse::<u64>()
+                    .map_err(|_| DtoError::InvalidField("networkId"))?,
+                prefix_hex::decode(&value.inputs_commitment).map_err(Error::HexError)?,
+            )
+            .with_inputs(inputs)
+            .with_outputs(outputs);
+            builder = if let Some(p) = &value.payload {
+                if let PayloadDto::TaggedData(i) = p {
+                    builder.with_payload(Payload::TaggedData(Box::new((i.as_ref()).try_into()?)))
+                } else {
+                    return Err(DtoError::InvalidField("payload"));
+                }
+            } else {
+                builder
+            };
+
+            builder.finish().map_err(Into::into)
+        }
     }
 }

@@ -3,8 +3,7 @@
 
 mod index;
 
-pub use index::MilestoneIndex;
-
+pub use self::index::MilestoneIndex;
 use crate::MessageId;
 
 /// Defines a coordinator milestone.

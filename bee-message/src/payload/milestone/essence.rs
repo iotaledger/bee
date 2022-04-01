@@ -1,31 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crypto::hashes::{blake2b::Blake2b256, Digest};
+use packable::{
+    error::{UnpackError, UnpackErrorExt},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable, PackableExt,
+};
+
 use crate::{
     milestone::MilestoneIndex,
     parent::Parents,
     payload::{OptionalPayload, Payload},
     Error,
 };
-
-use crypto::hashes::{blake2b::Blake2b256, Digest};
-use iterator_sorted::is_unique_sorted;
-use packable::{
-    bounded::BoundedU8,
-    error::{UnpackError, UnpackErrorExt},
-    packer::Packer,
-    prefix::VecPrefix,
-    unpacker::Unpacker,
-    Packable, PackableExt,
-};
-
-use alloc::vec::Vec;
-use core::ops::RangeInclusive;
-
-pub(crate) type PublicKeyCount = BoundedU8<
-    { *MilestoneEssence::PUBLIC_KEY_COUNT_RANGE.start() },
-    { *MilestoneEssence::PUBLIC_KEY_COUNT_RANGE.end() },
->;
 
 /// Essence of a milestone payload.
 /// This is the signed part of a milestone payload.
@@ -38,17 +27,12 @@ pub struct MilestoneEssence {
     merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
     next_pow_score: u32,
     next_pow_score_milestone_index: u32,
-    public_keys: VecPrefix<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH], PublicKeyCount>,
     receipt: OptionalPayload,
 }
 
 impl MilestoneEssence {
     /// Length of a milestone merkle proof.
     pub const MERKLE_PROOF_LENGTH: usize = 32;
-    /// Range of allowed milestones public key numbers.
-    pub const PUBLIC_KEY_COUNT_RANGE: RangeInclusive<u8> = 1..=255;
-    /// Length of a milestone public key.
-    pub const PUBLIC_KEY_LENGTH: usize = 32;
 
     /// Creates a new [`MilestoneEssence`].
     #[allow(clippy::too_many_arguments)]
@@ -59,54 +43,13 @@ impl MilestoneEssence {
         merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
         next_pow_score: u32,
         next_pow_score_milestone_index: u32,
-        public_keys: Vec<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH]>,
         receipt: Option<Payload>,
     ) -> Result<Self, Error> {
-        let public_keys = VecPrefix::<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH], PublicKeyCount>::try_from(public_keys)
-            .map_err(Error::MilestoneInvalidPublicKeyCount)?;
+        verify_pow_scores(index, next_pow_score, next_pow_score_milestone_index)?;
 
-        Self::from_vec_prefix(
-            index,
-            timestamp,
-            parents,
-            merkle_proof,
-            next_pow_score,
-            next_pow_score_milestone_index,
-            public_keys,
-            receipt.into(),
-        )
-    }
+        let receipt = OptionalPayload::from(receipt);
 
-    #[allow(clippy::too_many_arguments)]
-    fn from_vec_prefix(
-        index: MilestoneIndex,
-        timestamp: u64,
-        parents: Parents,
-        merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
-        next_pow_score: u32,
-        next_pow_score_milestone_index: u32,
-        public_keys: VecPrefix<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH], PublicKeyCount>,
-        receipt: OptionalPayload,
-    ) -> Result<Self, Error> {
-        if next_pow_score == 0 && next_pow_score_milestone_index != 0
-            || next_pow_score != 0 && next_pow_score_milestone_index <= *index
-        {
-            return Err(Error::InvalidPowScoreValues {
-                nps: next_pow_score,
-                npsmi: next_pow_score_milestone_index,
-            });
-        }
-
-        if !is_unique_sorted(public_keys.iter()) {
-            return Err(Error::MilestonePublicKeysNotUniqueSorted);
-        }
-
-        if !matches!(*receipt, None | Some(Payload::Receipt(_))) {
-            // Safe to unwrap since it's known not to be None.
-            return Err(Error::InvalidPayloadKind(
-                Into::<Option<Payload>>::into(receipt).unwrap().kind(),
-            ));
-        }
+        verify_payload(&receipt)?;
 
         Ok(Self {
             index,
@@ -115,7 +58,6 @@ impl MilestoneEssence {
             merkle_proof,
             next_pow_score,
             next_pow_score_milestone_index,
-            public_keys,
             receipt,
         })
     }
@@ -150,11 +92,6 @@ impl MilestoneEssence {
         self.next_pow_score_milestone_index
     }
 
-    /// Returns the public keys of a [`MilestoneEssence`].
-    pub fn public_keys(&self) -> &Vec<[u8; MilestoneEssence::PUBLIC_KEY_LENGTH]> {
-        &self.public_keys
-    }
-
     /// Returns the optional receipt of a [`MilestoneEssence`].
     pub fn receipt(&self) -> Option<&Payload> {
         self.receipt.as_ref()
@@ -176,7 +113,6 @@ impl Packable for MilestoneEssence {
         self.merkle_proof.pack(packer)?;
         self.next_pow_score.pack(packer)?;
         self.next_pow_score_milestone_index.pack(packer)?;
-        self.public_keys.pack(packer)?;
         self.receipt.pack(packer)?;
 
         Ok(())
@@ -194,21 +130,48 @@ impl Packable for MilestoneEssence {
         let next_pow_score = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
         let next_pow_score_milestone_index = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
 
-        let public_keys = VecPrefix::<[u8; Self::PUBLIC_KEY_LENGTH], PublicKeyCount>::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| Error::MilestoneInvalidSignatureCount(err.into_prefix_err().into()))?;
+        if VERIFY {
+            verify_pow_scores(index, next_pow_score, next_pow_score_milestone_index).map_err(UnpackError::Packable)?;
+        }
 
         let receipt = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
 
-        Self::from_vec_prefix(
+        if VERIFY {
+            verify_payload(&receipt).map_err(UnpackError::Packable)?;
+        }
+
+        Ok(Self {
             index,
             timestamp,
             parents,
             merkle_proof,
             next_pow_score,
             next_pow_score_milestone_index,
-            public_keys,
             receipt,
-        )
-        .map_err(UnpackError::Packable)
+        })
+    }
+}
+
+fn verify_pow_scores(
+    index: MilestoneIndex,
+    next_pow_score: u32,
+    next_pow_score_milestone_index: u32,
+) -> Result<(), Error> {
+    if next_pow_score == 0 && next_pow_score_milestone_index != 0
+        || next_pow_score != 0 && next_pow_score_milestone_index <= *index
+    {
+        Err(Error::InvalidPowScoreValues {
+            nps: next_pow_score,
+            npsmi: next_pow_score_milestone_index,
+        })
+    } else {
+        Ok(())
+    }
+}
+
+fn verify_payload(payload: &OptionalPayload) -> Result<(), Error> {
+    match &payload.0 {
+        Some(Payload::Receipt(_)) | None => Ok(()),
+        Some(payload) => Err(Error::InvalidPayloadKind(payload.kind())),
     }
 }

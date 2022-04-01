@@ -1,13 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{error::Error, TreasuryDiff};
+use core::convert::Infallible;
 
 use bee_message::output::OutputId;
-
 use packable::prefix::{UnpackPrefixError, VecPrefix};
 
-use core::convert::Infallible;
+use crate::types::{error::Error, TreasuryDiff};
 
 fn unpack_prefix_error_to_error(err: UnpackPrefixError<bee_message::Error, Infallible>) -> Error {
     err.into_item_err().into()
@@ -24,7 +23,7 @@ pub struct OutputDiff {
 }
 
 impl OutputDiff {
-    /// Creates a new `OutputDiff`.
+    /// Creates a new [`OutputDiff`].
     pub fn new(
         created_outputs: Vec<OutputId>,
         consumed_outputs: Vec<OutputId>,
@@ -37,17 +36,17 @@ impl OutputDiff {
         })
     }
 
-    /// Returns the created outputs of the `OutputDiff`.
+    /// Returns the created outputs of the [`OutputDiff`].
     pub fn created_outputs(&self) -> &[OutputId] {
         &self.created_outputs
     }
 
-    /// Returns the consumed outputs of the `OutputDiff`.
+    /// Returns the consumed outputs of the [`OutputDiff`].
     pub fn consumed_outputs(&self) -> &[OutputId] {
         &self.consumed_outputs
     }
 
-    /// Returns the treasury diff of the `OutputDiff`.
+    /// Returns the treasury diff of the [`OutputDiff`].
     pub fn treasury_diff(&self) -> Option<&TreasuryDiff> {
         self.treasury_diff.as_ref()
     }

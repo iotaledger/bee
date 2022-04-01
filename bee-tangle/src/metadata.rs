@@ -1,21 +1,21 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    conflict::{ConflictError, ConflictReason},
-    flags::Flags,
-};
-
-use bee_message::{milestone::MilestoneIndex, MessageId};
-
-use packable::Packable;
-use serde::Serialize;
-
 use std::{
     cmp::Ordering,
     convert::Infallible,
     time::{SystemTime, UNIX_EPOCH},
 };
+
+use bee_message::{
+    milestone::MilestoneIndex,
+    semantic::{ConflictError, ConflictReason},
+    MessageId,
+};
+use packable::Packable;
+use serde::Serialize;
+
+use crate::flags::Flags;
 
 /// Metadata associated with a tangle message.
 #[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Serialize, Packable)]

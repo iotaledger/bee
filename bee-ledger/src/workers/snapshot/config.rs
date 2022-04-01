@@ -3,10 +3,10 @@
 
 //! Module containing snapshot configuration.
 
+use std::path::{Path, PathBuf};
+
 use serde::Deserialize;
 use url::Url;
-
-use std::path::{Path, PathBuf};
 
 const DEFAULT_FULL_PATH: &str = "./snapshots/mainnet/latest-full_snapshot.bin";
 const DEFAULT_DOWNLOAD_URLS: Vec<DownloadUrls> = Vec::new();

@@ -3,7 +3,7 @@
 
 //! Multi-fetch access operations.
 
-use crate::{storage::Storage, trees::*};
+use std::{marker::PhantomData, slice::Iter};
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, OutputDiff};
 use bee_message::{
@@ -13,10 +13,9 @@ use bee_message::{
 };
 use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
 use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
-
 use packable::{Packable, PackableExt};
 
-use std::{marker::PhantomData, slice::Iter};
+use crate::{storage::Storage, trees::*};
 
 /// Multi-fetch iterator over an inner tree.
 pub struct TreeIter<'a, K, V, E> {

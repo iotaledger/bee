@@ -1,15 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    address::Address,
-    output::{
-        feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
-        unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        AliasId, NativeToken, NativeTokens, OutputAmount,
-    },
-    Error,
-};
+use alloc::vec::Vec;
 
 use packable::{
     bounded::BoundedU16,
@@ -20,7 +12,18 @@ use packable::{
     Packable,
 };
 
-use alloc::vec::Vec;
+use crate::{
+    address::{Address, AliasAddress},
+    output::{
+        feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
+        unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
+        AliasId, ChainId, NativeToken, NativeTokens, Output, OutputAmount, OutputId, StateTransitionError,
+        StateTransitionVerifier,
+    },
+    semantic::{ConflictReason, ValidationContext},
+    unlock_block::UnlockBlock,
+    Error,
+};
 
 ///
 #[must_use]
@@ -201,9 +204,8 @@ impl AliasOutput {
     pub const KIND: u8 = 4;
     /// Maximum possible length in bytes of the state metadata.
     pub const STATE_METADATA_LENGTH_MAX: u16 = 8192;
-
     /// The set of allowed [`UnlockCondition`]s for an [`AliasOutput`].
-    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags =
+    pub const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags =
         UnlockConditionFlags::STATE_CONTROLLER_ADDRESS.union(UnlockConditionFlags::GOVERNOR_ADDRESS);
     /// The set of allowed [`FeatureBlock`]s for an [`AliasOutput`].
     pub const ALLOWED_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::SENDER.union(FeatureBlockFlags::METADATA);
@@ -296,6 +298,142 @@ impl AliasOutput {
             .map(|unlock_condition| unlock_condition.address())
             .unwrap()
     }
+
+    ///
+    #[inline(always)]
+    pub fn chain_id(&self) -> ChainId {
+        ChainId::Alias(self.alias_id)
+    }
+
+    ///
+    pub fn unlock(
+        &self,
+        output_id: &OutputId,
+        unlock_block: &UnlockBlock,
+        inputs: &[(OutputId, &Output)],
+        context: &mut ValidationContext,
+    ) -> Result<(), ConflictReason> {
+        let alias_id = if self.alias_id().is_null() {
+            AliasId::from(*output_id)
+        } else {
+            *self.alias_id()
+        };
+        let next_state = context.output_chains.get(&ChainId::from(alias_id));
+
+        let locked_address = match next_state {
+            Some(Output::Alias(next_state)) => {
+                if self.state_index() == next_state.state_index() {
+                    self.governor_address()
+                } else {
+                    self.state_controller_address()
+                }
+            }
+            None => self.governor_address(),
+            // The next state can only be an alias output since it is identified by an alias chain identifier.
+            Some(_) => unreachable!(),
+        };
+
+        locked_address.unlock(unlock_block, inputs, context)?;
+
+        context
+            .unlocked_addresses
+            .insert(Address::from(AliasAddress::from(alias_id)));
+
+        Ok(())
+    }
+}
+
+impl StateTransitionVerifier for AliasOutput {
+    fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
+        if !next_state.alias_id.is_null() {
+            return Err(StateTransitionError::NonZeroCreatedId);
+        }
+
+        if next_state.state_index != 0 {
+            return Err(StateTransitionError::NonZeroCreatedStateIndex);
+        }
+
+        if next_state.foundry_counter != 0 {
+            return Err(StateTransitionError::NonZeroCreatedFoundryCounter);
+        }
+
+        if let Some(issuer) = next_state.immutable_feature_blocks().issuer() {
+            if !context.unlocked_addresses.contains(issuer.address()) {
+                return Err(StateTransitionError::IssuerNotUnlocked);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn transition(
+        current_state: &Self,
+        next_state: &Self,
+        context: &ValidationContext,
+    ) -> Result<(), StateTransitionError> {
+        if current_state.immutable_feature_blocks != next_state.immutable_feature_blocks {
+            return Err(StateTransitionError::MutatedImmutableField);
+        }
+
+        if next_state.state_index == current_state.state_index + 1 {
+            // State transition.
+            if current_state.state_controller_address() != next_state.state_controller_address()
+                || current_state.governor_address() != next_state.governor_address()
+                || current_state.feature_blocks.metadata() != next_state.feature_blocks.metadata()
+            {
+                return Err(StateTransitionError::MutatedFieldWithoutRights);
+            }
+
+            let created_foundries = context.essence.outputs().iter().filter_map(|output| {
+                if let Output::Foundry(foundry) = output {
+                    if foundry.alias_address().alias_id() == &current_state.alias_id
+                        && !context.input_chains.contains_key(&foundry.chain_id())
+                    {
+                        Some(foundry)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            });
+
+            let mut created_foundries_count = 0;
+
+            for foundry in created_foundries {
+                if foundry.serial_number() != current_state.foundry_counter + created_foundries_count {
+                    return Err(StateTransitionError::UnsortedCreatedFoundries);
+                }
+
+                created_foundries_count += 1;
+            }
+
+            if current_state.foundry_counter + created_foundries_count != next_state.foundry_counter {
+                return Err(StateTransitionError::InconsistentCreatedFoundriesCount);
+            }
+        } else if next_state.state_index == current_state.state_index {
+            // Governance transition.
+            if current_state.amount != next_state.amount
+                || current_state.native_tokens != next_state.native_tokens
+                || current_state.state_index != next_state.state_index
+                || current_state.state_metadata != next_state.state_metadata
+                || current_state.foundry_counter != next_state.foundry_counter
+            {
+                return Err(StateTransitionError::MutatedFieldWithoutRights);
+            }
+        } else {
+            return Err(StateTransitionError::UnsupportedStateIndexOperation {
+                current_state: current_state.state_index,
+                next_state: next_state.state_index,
+            });
+        }
+
+        Ok(())
+    }
+
+    fn destruction(_current_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+        Ok(())
+    }
 }
 
 impl Packable for AliasOutput {
@@ -367,11 +505,11 @@ impl Packable for AliasOutput {
 
 #[inline]
 fn verify_index_counter(alias_id: &AliasId, state_index: u32, foundry_counter: u32) -> Result<(), Error> {
-    if alias_id.as_ref().iter().all(|&b| b == 0) && (state_index != 0 || foundry_counter != 0) {
-        return Err(Error::NonZeroStateIndexOrFoundryCounter);
+    if alias_id.is_null() && (state_index != 0 || foundry_counter != 0) {
+        Err(Error::NonZeroStateIndexOrFoundryCounter)
+    } else {
+        Ok(())
     }
-
-    Ok(())
 }
 
 fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, alias_id: &AliasId) -> Result<(), Error> {
@@ -396,4 +534,102 @@ fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, alias_id: &Ali
     }
 
     verify_allowed_unlock_conditions(unlock_conditions, AliasOutput::ALLOWED_UNLOCK_CONDITIONS)
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{
+        error::dto::DtoError,
+        output::{
+            alias_id::dto::AliasIdDto, feature_block::dto::FeatureBlockDto, native_token::dto::NativeTokenDto,
+            unlock_condition::dto::UnlockConditionDto,
+        },
+    };
+
+    /// Describes an alias account in the ledger that can be controlled by the state and governance controllers.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct AliasOutputDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        // Amount of IOTA tokens held by the output.
+        pub amount: String,
+        // Native tokens held by the output.
+        #[serde(rename = "nativeTokens")]
+        pub native_tokens: Vec<NativeTokenDto>,
+        // Unique identifier of the alias.
+        #[serde(rename = "aliasId")]
+        pub alias_id: AliasIdDto,
+        // A counter that must increase by 1 every time the alias is state transitioned.
+        #[serde(rename = "stateIndex")]
+        pub state_index: u32,
+        // Metadata that can only be changed by the state controller.
+        #[serde(rename = "stateMetadata")]
+        pub state_metadata: String,
+        // A counter that denotes the number of foundries created by this alias account.
+        #[serde(rename = "foundryCounter")]
+        pub foundry_counter: u32,
+        //
+        #[serde(rename = "unlockConditions")]
+        pub unlock_conditions: Vec<UnlockConditionDto>,
+        //
+        #[serde(rename = "featureBlocks")]
+        pub feature_blocks: Vec<FeatureBlockDto>,
+        //
+        #[serde(rename = "immutableFeatureBlocks")]
+        pub immutable_feature_blocks: Vec<FeatureBlockDto>,
+    }
+
+    impl From<&AliasOutput> for AliasOutputDto {
+        fn from(value: &AliasOutput) -> Self {
+            Self {
+                kind: AliasOutput::KIND,
+                amount: value.amount().to_string(),
+                native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
+                alias_id: AliasIdDto(value.alias_id().to_string()),
+                state_index: value.state_index(),
+                state_metadata: prefix_hex::encode(value.state_metadata()),
+                foundry_counter: value.foundry_counter(),
+                unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
+                feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
+                immutable_feature_blocks: value.immutable_feature_blocks().iter().map(Into::into).collect::<_>(),
+            }
+        }
+    }
+
+    impl TryFrom<&AliasOutputDto> for AliasOutput {
+        type Error = DtoError;
+
+        fn try_from(value: &AliasOutputDto) -> Result<Self, Self::Error> {
+            let mut builder = AliasOutputBuilder::new(
+                value
+                    .amount
+                    .parse::<u64>()
+                    .map_err(|_| DtoError::InvalidField("amount"))?,
+                (&value.alias_id).try_into()?,
+            )?;
+            builder = builder.with_state_index(value.state_index);
+            builder = builder.with_state_metadata(
+                prefix_hex::decode(&value.state_metadata).map_err(|_| DtoError::InvalidField("state_metadata"))?,
+            );
+            builder = builder.with_foundry_counter(value.foundry_counter);
+
+            for t in &value.native_tokens {
+                builder = builder.add_native_token(t.try_into()?);
+            }
+            for b in &value.unlock_conditions {
+                builder = builder.add_unlock_condition(b.try_into()?);
+            }
+            for b in &value.feature_blocks {
+                builder = builder.add_feature_block(b.try_into()?);
+            }
+            for b in &value.immutable_feature_blocks {
+                builder = builder.add_immutable_feature_block(b.try_into()?);
+            }
+            Ok(builder.finish()?)
+        }
+    }
 }

@@ -1,8 +1,8 @@
 # Duplicate this file to config.toml to use it
 
-alias      = "Bee stardust-testnet node"
+alias      = "Bee alphanet node"
 bech32_hrp = "atoi"
-network_id = "stardust-testnet-4"
+network_id = "alphanet-1"
 
 [logger]
 [[logger.outputs]]
@@ -32,13 +32,13 @@ max_discovered_peers    = 8
 enabled                       = false
 bind_address                  = "0.0.0.0:14626"
 entry_nodes                   = [
-    "/dns/entry-hornet-0.h.stardust-testnet.iotaledger.net/udp/14626/autopeering/Bv8UUxy81fqpttowiFiBsNT6mnGMFoFNjk79iG1f9nEr",
-    "/dns/entry-hornet-1.h.stardust-testnet.iotaledger.net/udp/14626/autopeering/CbYtFzRQtqeNQJQFYRZk1WewxfKCmqXCHZ16od1d23PX"
+    "/dns/entry-hornet-0.h.alphanet.iotaledger.net/udp/14626/autopeering/Bv8UUxy81fqpttowiFiBsNT6mnGMFoFNjk79iG1f9nEr",
+    "/dns/entry-hornet-1.h.alphanet.iotaledger.net/udp/14626/autopeering/CbYtFzRQtqeNQJQFYRZk1WewxfKCmqXCHZ16od1d23PX"
 ]
 entry_nodes_prefer_ipv6       = false
 run_as_entry_node             = false
 drop_neighbors_on_salt_update = false
-peer_storage_path             = "./storage/shimmer/testnet/peers"
+peer_storage_path             = "./storage/alphanet/peers"
 
 [protocol]
 minimum_pow_score = 1000
@@ -108,11 +108,11 @@ white_flag_solidification_timeout = 2
 depth             = 50
 interval_synced   = 50
 interval_unsynced = 1000
-full_path   = "./snapshots/shimmer/testnet/full_snapshot.bin"
-delta_path  = "./snapshots/shimmer/testnet/delta_snapshot.bin"
+full_path   = "./snapshots/alphanet/full_snapshot.bin"
+delta_path  = "./snapshots/alphanet/delta_snapshot.bin"
 [[snapshot.download_urls]]
-full        = "https://files.stardust-testnet.iotaledger.net/snapshots/latest-full_snapshot.bin"
-delta       = "https://files.stardust-testnet.iotaledger.net/snapshots/latest-delta_snapshot.bin"
+full        = "https://files.alphanet.iotaledger.net/snapshots/latest-full_snapshot.bin"
+delta       = "https://files.alphanet.iotaledger.net/snapshots/latest-delta_snapshot.bin"
 
 [pruning]
 enabled         = true
@@ -120,7 +120,7 @@ delay           = 60480
 prune_receipts  = false
 
 [storage]
-path = "./storage/shimmer/testnet/tangle"
+path = "./storage/alphanet/tangle"
 
 [tangle]
 below_max_depth = 15

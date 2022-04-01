@@ -3,30 +3,14 @@
 
 //! The payload module defines the core data types for representing message payloads.
 
-#[cfg(feature = "cpt2")]
-#[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-pub mod cpt2;
 pub mod milestone;
 pub mod receipt;
 pub mod tagged_data;
 pub mod transaction;
 pub mod treasury_transaction;
 
-#[cfg(feature = "cpt2")]
-pub use cpt2::indexation::IndexationPayload;
-#[cfg(feature = "cpt2")]
-pub(crate) use cpt2::indexation::{IndexLength, IndexationDataLength};
-pub use milestone::MilestonePayload;
-pub(crate) use milestone::{PublicKeyCount, SignatureCount};
-pub use receipt::ReceiptPayload;
-pub(crate) use receipt::{MigratedFundsAmount, ReceiptFundsCount};
-pub use tagged_data::TaggedDataPayload;
-pub(crate) use tagged_data::{TagLength, TaggedDataLength};
-pub use transaction::TransactionPayload;
-pub(crate) use transaction::{InputCount, OutputCount};
-pub use treasury_transaction::TreasuryTransactionPayload;
-
-use crate::Error;
+use alloc::boxed::Box;
+use core::ops::Deref;
 
 use packable::{
     error::{UnpackError, UnpackErrorExt},
@@ -35,8 +19,17 @@ use packable::{
     Packable, PackableExt,
 };
 
-use alloc::boxed::Box;
-use core::ops::Deref;
+pub use self::{
+    milestone::MilestonePayload, receipt::ReceiptPayload, tagged_data::TaggedDataPayload,
+    transaction::TransactionPayload, treasury_transaction::TreasuryTransactionPayload,
+};
+pub(crate) use self::{
+    milestone::SignatureCount,
+    receipt::{MigratedFundsAmount, ReceiptFundsCount},
+    tagged_data::{TagLength, TaggedDataLength},
+    transaction::{InputCount, OutputCount},
+};
+use crate::Error;
 
 /// A generic payload that can represent different types defining message payloads.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
@@ -54,11 +47,6 @@ pub enum Payload {
     /// A milestone payload.
     #[packable(tag = MilestonePayload::KIND)]
     Milestone(Box<MilestonePayload>),
-    /// An indexation payload.
-    #[cfg(feature = "cpt2")]
-    #[cfg_attr(doc_cfg, doc(cfg(feature = "cpt2")))]
-    #[packable(tag = IndexationPayload::KIND)]
-    Indexation(Box<IndexationPayload>),
     /// A receipt payload.
     #[packable(tag = ReceiptPayload::KIND)]
     Receipt(Box<ReceiptPayload>),
@@ -79,13 +67,6 @@ impl From<TransactionPayload> for Payload {
 impl From<MilestonePayload> for Payload {
     fn from(payload: MilestonePayload) -> Self {
         Self::Milestone(Box::new(payload))
-    }
-}
-
-#[cfg(feature = "cpt2")]
-impl From<IndexationPayload> for Payload {
-    fn from(payload: IndexationPayload) -> Self {
-        Self::Indexation(Box::new(payload))
     }
 }
 
@@ -113,8 +94,6 @@ impl Payload {
         match self {
             Self::Transaction(_) => TransactionPayload::KIND,
             Self::Milestone(_) => MilestonePayload::KIND,
-            #[cfg(feature = "cpt2")]
-            Self::Indexation(_) => IndexationPayload::KIND,
             Self::Receipt(_) => ReceiptPayload::KIND,
             Self::TreasuryTransaction(_) => TreasuryTransactionPayload::KIND,
             Self::TaggedData(_) => TaggedDataPayload::KIND,
@@ -189,5 +168,58 @@ impl From<Option<Payload>> for OptionalPayload {
 impl Into<Option<Payload>> for OptionalPayload {
     fn into(self) -> Option<Payload> {
         self.0
+    }
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    pub use super::{
+        milestone::dto::MilestonePayloadDto, receipt::dto::ReceiptPayloadDto, tagged_data::dto::TaggedDataPayloadDto,
+        transaction::dto::TransactionPayloadDto, treasury_transaction::dto::TreasuryTransactionPayloadDto,
+    };
+    use crate::error::dto::DtoError;
+
+    /// Describes all the different payload types.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    #[serde(untagged)]
+    pub enum PayloadDto {
+        Transaction(Box<TransactionPayloadDto>),
+        Milestone(Box<MilestonePayloadDto>),
+        Receipt(Box<ReceiptPayloadDto>),
+        TreasuryTransaction(Box<TreasuryTransactionPayloadDto>),
+        TaggedData(Box<TaggedDataPayloadDto>),
+    }
+
+    impl From<&Payload> for PayloadDto {
+        fn from(value: &Payload) -> Self {
+            match value {
+                Payload::Transaction(p) => PayloadDto::Transaction(Box::new(TransactionPayloadDto::from(p.as_ref()))),
+                Payload::Milestone(p) => PayloadDto::Milestone(Box::new(MilestonePayloadDto::from(p.as_ref()))),
+                Payload::Receipt(p) => PayloadDto::Receipt(Box::new(ReceiptPayloadDto::from(p.as_ref()))),
+                Payload::TreasuryTransaction(p) => {
+                    PayloadDto::TreasuryTransaction(Box::new(TreasuryTransactionPayloadDto::from(p.as_ref())))
+                }
+                Payload::TaggedData(p) => PayloadDto::TaggedData(Box::new(TaggedDataPayloadDto::from(p.as_ref()))),
+            }
+        }
+    }
+
+    impl TryFrom<&PayloadDto> for Payload {
+        type Error = DtoError;
+        fn try_from(value: &PayloadDto) -> Result<Self, Self::Error> {
+            Ok(match value {
+                PayloadDto::Transaction(p) => Payload::Transaction(Box::new(TransactionPayload::try_from(p.as_ref())?)),
+                PayloadDto::Milestone(p) => Payload::Milestone(Box::new(MilestonePayload::try_from(p.as_ref())?)),
+                PayloadDto::Receipt(p) => Payload::Receipt(Box::new(ReceiptPayload::try_from(p.as_ref())?)),
+                PayloadDto::TreasuryTransaction(p) => {
+                    Payload::TreasuryTransaction(Box::new(TreasuryTransactionPayload::try_from(p.as_ref())?))
+                }
+                PayloadDto::TaggedData(p) => Payload::TaggedData(Box::new(TaggedDataPayload::try_from(p.as_ref())?)),
+            })
+        }
     }
 }

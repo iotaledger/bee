@@ -8,7 +8,6 @@ use bee_storage::{
     backend,
 };
 use bee_test::rand::{milestone::rand_milestone_index, output_diff::rand_output_diff};
-
 use packable::PackableExt;
 
 pub trait StorageBackend:

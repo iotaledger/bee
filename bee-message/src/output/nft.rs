@@ -1,15 +1,7 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    address::Address,
-    output::{
-        feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
-        unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        NativeToken, NativeTokens, NftId, OutputAmount,
-    },
-    Error,
-};
+use alloc::vec::Vec;
 
 use packable::{
     error::{UnpackError, UnpackErrorExt},
@@ -18,7 +10,18 @@ use packable::{
     Packable,
 };
 
-use alloc::vec::Vec;
+use crate::{
+    address::{Address, NftAddress},
+    output::{
+        feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
+        unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
+        ChainId, NativeToken, NativeTokens, NftId, Output, OutputAmount, OutputId, StateTransitionError,
+        StateTransitionVerifier,
+    },
+    semantic::{ConflictReason, ValidationContext},
+    unlock_block::UnlockBlock,
+    Error,
+};
 
 ///
 #[must_use]
@@ -146,9 +149,8 @@ pub struct NftOutput {
 impl NftOutput {
     /// The [`Output`](crate::output::Output) kind of an [`NftOutput`].
     pub const KIND: u8 = 6;
-
     /// The set of allowed [`UnlockCondition`]s for an [`NftOutput`].
-    const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS
+    pub const ALLOWED_UNLOCK_CONDITIONS: UnlockConditionFlags = UnlockConditionFlags::ADDRESS
         .union(UnlockConditionFlags::STORAGE_DEPOSIT_RETURN)
         .union(UnlockConditionFlags::TIMELOCK)
         .union(UnlockConditionFlags::EXPIRATION);
@@ -217,6 +219,68 @@ impl NftOutput {
             .map(|unlock_condition| unlock_condition.address())
             .unwrap()
     }
+
+    ///
+    #[inline(always)]
+    pub fn chain_id(&self) -> ChainId {
+        ChainId::Nft(self.nft_id)
+    }
+
+    ///
+    pub fn unlock(
+        &self,
+        output_id: &OutputId,
+        unlock_block: &UnlockBlock,
+        inputs: &[(OutputId, &Output)],
+        context: &mut ValidationContext,
+    ) -> Result<(), ConflictReason> {
+        let locked_address = self.address();
+        let nft_id = if self.nft_id().is_null() {
+            NftId::from(*output_id)
+        } else {
+            *self.nft_id()
+        };
+
+        locked_address.unlock(unlock_block, inputs, context)?;
+
+        context
+            .unlocked_addresses
+            .insert(Address::from(NftAddress::from(nft_id)));
+
+        Ok(())
+    }
+}
+
+impl StateTransitionVerifier for NftOutput {
+    fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
+        if !next_state.nft_id.is_null() {
+            return Err(StateTransitionError::NonZeroCreatedId);
+        }
+
+        if let Some(issuer) = next_state.immutable_feature_blocks().issuer() {
+            if !context.unlocked_addresses.contains(issuer.address()) {
+                return Err(StateTransitionError::IssuerNotUnlocked);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn transition(
+        current_state: &Self,
+        next_state: &Self,
+        _context: &ValidationContext,
+    ) -> Result<(), StateTransitionError> {
+        if current_state.immutable_feature_blocks != next_state.immutable_feature_blocks {
+            return Err(StateTransitionError::MutatedImmutableField);
+        }
+
+        Ok(())
+    }
+
+    fn destruction(_current_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+        Ok(())
+    }
 }
 
 impl Packable for NftOutput {
@@ -282,4 +346,83 @@ fn verify_unlock_conditions(unlock_conditions: &UnlockConditions, nft_id: &NftId
     }
 
     verify_allowed_unlock_conditions(unlock_conditions, NftOutput::ALLOWED_UNLOCK_CONDITIONS)
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{
+        error::dto::DtoError,
+        output::{
+            feature_block::dto::FeatureBlockDto, native_token::dto::NativeTokenDto, nft_id::dto::NftIdDto,
+            unlock_condition::dto::UnlockConditionDto,
+        },
+    };
+
+    /// Describes an NFT output, a globally unique token with metadata attached.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct NftOutputDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        // Amount of IOTA tokens held by the output.
+        pub amount: String,
+        // Native tokens held by the output.
+        #[serde(rename = "nativeTokens")]
+        pub native_tokens: Vec<NativeTokenDto>,
+        // Unique identifier of the NFT.
+        #[serde(rename = "nftId")]
+        pub nft_id: NftIdDto,
+        #[serde(rename = "unlockConditions")]
+        pub unlock_conditions: Vec<UnlockConditionDto>,
+        #[serde(rename = "featureBlocks")]
+        pub feature_blocks: Vec<FeatureBlockDto>,
+        #[serde(rename = "immutableFeatureBlocks")]
+        pub immutable_feature_blocks: Vec<FeatureBlockDto>,
+    }
+
+    impl From<&NftOutput> for NftOutputDto {
+        fn from(value: &NftOutput) -> Self {
+            Self {
+                kind: NftOutput::KIND,
+                amount: value.amount().to_string(),
+                native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
+                nft_id: NftIdDto(value.nft_id().to_string()),
+                unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
+                feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
+                immutable_feature_blocks: value.immutable_feature_blocks().iter().map(Into::into).collect::<_>(),
+            }
+        }
+    }
+
+    impl TryFrom<&NftOutputDto> for NftOutput {
+        type Error = DtoError;
+
+        fn try_from(value: &NftOutputDto) -> Result<Self, Self::Error> {
+            let mut builder = NftOutputBuilder::new(
+                value
+                    .amount
+                    .parse::<u64>()
+                    .map_err(|_| DtoError::InvalidField("amount"))?,
+                (&value.nft_id).try_into()?,
+            )?;
+
+            for t in &value.native_tokens {
+                builder = builder.add_native_token(t.try_into()?);
+            }
+            for b in &value.unlock_conditions {
+                builder = builder.add_unlock_condition(b.try_into()?);
+            }
+            for b in &value.feature_blocks {
+                builder = builder.add_feature_block(b.try_into()?);
+            }
+            for b in &value.immutable_feature_blocks {
+                builder = builder.add_immutable_feature_block(b.try_into()?);
+            }
+
+            Ok(builder.finish()?)
+        }
+    }
 }

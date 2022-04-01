@@ -3,9 +3,13 @@
 
 //! Module describing the treasury payload.
 
-use crate::{input::Input, output::Output, Error};
+use crate::{
+    input::{Input, TreasuryInput},
+    output::{Output, TreasuryOutput},
+    Error,
+};
 
-/// `TreasuryTransaction` represents a transaction which moves funds from the treasury.
+/// [`TreasuryTransactionPayload`] represents a transaction which moves funds from the treasury.
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreasuryTransactionPayload {
@@ -16,25 +20,35 @@ pub struct TreasuryTransactionPayload {
 }
 
 impl TreasuryTransactionPayload {
-    /// The payload kind of a `TreasuryTransaction`.
+    /// The payload kind of a [`TreasuryTransactionPayload`].
     pub const KIND: u32 = 4;
 
-    /// Creates a new `TreasuryTransaction`.
-    pub fn new(input: Input, output: Output) -> Result<Self, Error> {
-        verify_input::<true>(&input)?;
-        verify_output::<true>(&output)?;
-
-        Ok(Self { input, output })
+    /// Creates a new [`TreasuryTransactionPayload`].
+    pub fn new(input: TreasuryInput, output: TreasuryOutput) -> Result<Self, Error> {
+        Ok(Self {
+            input: input.into(),
+            output: output.into(),
+        })
     }
 
-    /// Returns the input of a `TreasuryTransaction`.
-    pub fn input(&self) -> &Input {
-        &self.input
+    /// Returns the input of a [`TreasuryTransactionPayload`].
+    pub fn input(&self) -> &TreasuryInput {
+        if let Input::Treasury(ref input) = self.input {
+            input
+        } else {
+            // It has already been validated at construction that `input` is a `TreasuryInput`.
+            unreachable!()
+        }
     }
 
-    /// Returns the output of a `TreasuryTransaction`.
-    pub fn output(&self) -> &Output {
-        &self.output
+    /// Returns the output of a [`TreasuryTransactionPayload`].
+    pub fn output(&self) -> &TreasuryOutput {
+        if let Output::Treasury(ref output) = self.output {
+            output
+        } else {
+            // It has already been validated at construction that `output` is a `TreasuryOutput`.
+            unreachable!()
+        }
     }
 }
 
@@ -51,5 +65,56 @@ fn verify_output<const VERIFY: bool>(output: &Output) -> Result<(), Error> {
         Err(Error::InvalidOutputKind(output.kind()))
     } else {
         Ok(())
+    }
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{
+        error::dto::DtoError,
+        input::dto::{InputDto, TreasuryInputDto},
+        output::dto::{OutputDto, TreasuryOutputDto},
+    };
+
+    /// The payload type to define a treasury transaction.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct TreasuryTransactionPayloadDto {
+        #[serde(rename = "type")]
+        pub kind: u32,
+        pub input: InputDto,
+        pub output: OutputDto,
+    }
+
+    impl From<&TreasuryTransactionPayload> for TreasuryTransactionPayloadDto {
+        fn from(value: &TreasuryTransactionPayload) -> Self {
+            TreasuryTransactionPayloadDto {
+                kind: TreasuryTransactionPayload::KIND,
+                input: InputDto::Treasury(TreasuryInputDto::from(value.input())),
+                output: OutputDto::Treasury(TreasuryOutputDto::from(value.output())),
+            }
+        }
+    }
+
+    impl TryFrom<&TreasuryTransactionPayloadDto> for TreasuryTransactionPayload {
+        type Error = DtoError;
+
+        fn try_from(value: &TreasuryTransactionPayloadDto) -> Result<Self, Self::Error> {
+            Ok(TreasuryTransactionPayload::new(
+                if let InputDto::Treasury(ref input) = value.input {
+                    input.try_into()?
+                } else {
+                    return Err(DtoError::InvalidField("input"));
+                },
+                if let OutputDto::Treasury(ref output) = value.output {
+                    output.try_into()?
+                } else {
+                    return Err(DtoError::InvalidField("output"));
+                },
+            )?)
+        }
     }
 }

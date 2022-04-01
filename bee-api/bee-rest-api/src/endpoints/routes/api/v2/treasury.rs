@@ -25,6 +25,6 @@ pub(crate) async fn treasury<B: StorageBackend>(
 
     Ok(Json(TreasuryResponse {
         milestone_id: treasury.milestone_id().to_string(),
-        amount: treasury.inner().amount(),
+        amount: treasury.inner().amount().to_string(),
     }))
 }

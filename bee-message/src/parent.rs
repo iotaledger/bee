@@ -3,14 +3,14 @@
 
 //! The parents module defines the core data type for storing the messages directly approved by a message.
 
-use crate::{Error, MessageId};
+use alloc::vec::Vec;
+use core::ops::RangeInclusive;
 
 use derive_more::Deref;
 use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
-use alloc::vec::Vec;
-use core::ops::RangeInclusive;
+use crate::{Error, MessageId};
 
 pub(crate) type ParentCount = BoundedU8<{ *Parents::COUNT_RANGE.start() }, { *Parents::COUNT_RANGE.end() }>;
 

@@ -10,7 +10,6 @@ use bee_ledger::{
 use bee_message::output::OutputId;
 
 use bee_storage::access::Fetch;
-
 use futures::channel::oneshot;
 use log::error;
 
@@ -56,6 +55,12 @@ pub(crate) async fn output<B: StorageBackend>(
                     transaction_id: output_id.transaction_id().to_string(),
                     output_index: output_id.index(),
                     is_spent: is_spent.is_some(),
+                    // TODO
+                    milestone_index_spent: None,
+                    // TODO
+                    milestone_timestamp_spent: None,
+                    // TODO
+                    transaction_id_spent: None,
                     // TODO
                     milestone_index_booked: 0,
                     // TODO

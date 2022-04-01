@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use alloc::string::String;
+use core::fmt;
 
 use bee_ternary::{T5B1Buf, TritBuf, Trits, T5B1};
-
 use bytemuck::cast_slice;
 use packable::{
     error::{UnpackError, UnpackErrorExt},
@@ -13,8 +13,7 @@ use packable::{
     Packable,
 };
 
-use alloc::string::String;
-use core::fmt;
+use crate::Error;
 
 /// Represents a tail transaction hash of a legacy bundle.
 #[derive(Clone, Eq, PartialEq)]

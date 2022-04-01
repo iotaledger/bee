@@ -1,11 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    alias,
-    service::event::{InternalEvent, InternalEventSender},
-};
-
 use futures::{
     io::{BufReader, BufWriter, ReadHalf, WriteHalf},
     AsyncReadExt, AsyncWriteExt, StreamExt,
@@ -14,6 +9,11 @@ use libp2p::{swarm::NegotiatedSubstream, PeerId};
 use log::*;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
+
+use crate::{
+    alias,
+    service::event::{InternalEvent, InternalEventSender},
+};
 
 const MSG_BUFFER_LEN: usize = 32768;
 

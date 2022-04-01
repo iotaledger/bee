@@ -17,7 +17,6 @@ use bee_test::rand::{
     bytes::rand_bytes_array,
     payload::{rand_tagged_data_payload, rand_treasury_transaction_payload},
 };
-
 use packable::bounded::TryIntoBoundedU16Error;
 
 const TRANSACTION_ID: &str = "0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";

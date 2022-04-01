@@ -6,21 +6,18 @@ mod metadata;
 mod sender;
 mod tag;
 
-pub use issuer::IssuerFeatureBlock;
-pub use metadata::MetadataFeatureBlock;
-pub(crate) use metadata::MetadataFeatureBlockLength;
-pub use sender::SenderFeatureBlock;
-pub use tag::TagFeatureBlock;
-pub(crate) use tag::TagFeatureBlockLength;
-
-use crate::{create_bitflags, Error};
+use alloc::vec::Vec;
 
 use bitflags::bitflags;
 use derive_more::{Deref, From};
 use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 
-use alloc::vec::Vec;
+pub use self::{
+    issuer::IssuerFeatureBlock, metadata::MetadataFeatureBlock, sender::SenderFeatureBlock, tag::TagFeatureBlock,
+};
+pub(crate) use self::{metadata::MetadataFeatureBlockLength, tag::TagFeatureBlockLength};
+use crate::{create_bitflags, Error};
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, Packable)]
@@ -99,6 +96,15 @@ impl TryFrom<Vec<FeatureBlock>> for FeatureBlocks {
     }
 }
 
+impl IntoIterator for FeatureBlocks {
+    type Item = FeatureBlock;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Vec::from(Into::<Box<[FeatureBlock]>>::into(self.0)).into_iter()
+    }
+}
+
 impl FeatureBlocks {
     ///
     pub const COUNT_MAX: u8 = 4;
@@ -121,7 +127,7 @@ impl FeatureBlocks {
     pub fn get(&self, key: u8) -> Option<&FeatureBlock> {
         self.0
             .binary_search_by_key(&key, FeatureBlock::kind)
-            // SAFETY: indexation is fine since the index has been found.
+            // PANIC: indexation is fine since the index has been found.
             .map(|index| &self.0[index])
             .ok()
     }
@@ -203,5 +209,154 @@ mod test {
                 FeatureBlockFlags::TAG
             ]
         );
+    }
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize, Serializer};
+    use serde_json::Value;
+
+    pub use self::{
+        issuer::dto::IssuerFeatureBlockDto, metadata::dto::MetadataFeatureBlockDto, sender::dto::SenderFeatureBlockDto,
+        tag::dto::TagFeatureBlockDto,
+    };
+    use super::*;
+    use crate::error::dto::DtoError;
+
+    #[derive(Clone, Debug)]
+    pub enum FeatureBlockDto {
+        /// A sender feature block.
+        Sender(SenderFeatureBlockDto),
+        /// An issuer feature block.
+        Issuer(IssuerFeatureBlockDto),
+        /// A metadata feature block.
+        Metadata(MetadataFeatureBlockDto),
+        /// A tag feature block.
+        Tag(TagFeatureBlockDto),
+    }
+
+    impl<'de> Deserialize<'de> for FeatureBlockDto {
+        fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+            let value = Value::deserialize(d)?;
+            Ok(
+                match value
+                    .get("type")
+                    .and_then(Value::as_u64)
+                    .ok_or_else(|| serde::de::Error::custom("invalid feature block type"))? as u8
+                {
+                    SenderFeatureBlock::KIND => {
+                        FeatureBlockDto::Sender(SenderFeatureBlockDto::deserialize(value).map_err(|e| {
+                            serde::de::Error::custom(format!("cannot deserialize sender feature block: {}", e))
+                        })?)
+                    }
+                    IssuerFeatureBlock::KIND => {
+                        FeatureBlockDto::Issuer(IssuerFeatureBlockDto::deserialize(value).map_err(|e| {
+                            serde::de::Error::custom(format!("cannot deserialize issuer feature block: {}", e))
+                        })?)
+                    }
+                    MetadataFeatureBlock::KIND => {
+                        FeatureBlockDto::Metadata(MetadataFeatureBlockDto::deserialize(value).map_err(|e| {
+                            serde::de::Error::custom(format!("cannot deserialize metadata feature block: {}", e))
+                        })?)
+                    }
+                    TagFeatureBlock::KIND => {
+                        FeatureBlockDto::Tag(TagFeatureBlockDto::deserialize(value).map_err(|e| {
+                            serde::de::Error::custom(format!("cannot deserialize tag feature block: {}", e))
+                        })?)
+                    }
+                    _ => return Err(serde::de::Error::custom("invalid feature block type")),
+                },
+            )
+        }
+    }
+
+    impl Serialize for FeatureBlockDto {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            #[derive(Serialize)]
+            #[serde(untagged)]
+            enum FeatureBlockDto_<'a> {
+                T1(&'a SenderFeatureBlockDto),
+                T2(&'a IssuerFeatureBlockDto),
+                T3(&'a MetadataFeatureBlockDto),
+                T4(&'a TagFeatureBlockDto),
+            }
+            #[derive(Serialize)]
+            struct TypedFeatureBlock<'a> {
+                #[serde(flatten)]
+                feature_block: FeatureBlockDto_<'a>,
+            }
+            let feature_block = match self {
+                FeatureBlockDto::Sender(o) => TypedFeatureBlock {
+                    feature_block: FeatureBlockDto_::T1(o),
+                },
+                FeatureBlockDto::Issuer(o) => TypedFeatureBlock {
+                    feature_block: FeatureBlockDto_::T2(o),
+                },
+                FeatureBlockDto::Metadata(o) => TypedFeatureBlock {
+                    feature_block: FeatureBlockDto_::T3(o),
+                },
+                FeatureBlockDto::Tag(o) => TypedFeatureBlock {
+                    feature_block: FeatureBlockDto_::T4(o),
+                },
+            };
+            feature_block.serialize(serializer)
+        }
+    }
+
+    impl From<&FeatureBlock> for FeatureBlockDto {
+        fn from(value: &FeatureBlock) -> Self {
+            match value {
+                FeatureBlock::Sender(v) => Self::Sender(SenderFeatureBlockDto {
+                    kind: SenderFeatureBlock::KIND,
+                    address: v.address().into(),
+                }),
+                FeatureBlock::Issuer(v) => Self::Issuer(IssuerFeatureBlockDto {
+                    kind: IssuerFeatureBlock::KIND,
+                    address: v.address().into(),
+                }),
+                FeatureBlock::Metadata(v) => Self::Metadata(MetadataFeatureBlockDto {
+                    kind: MetadataFeatureBlock::KIND,
+                    data: v.to_string(),
+                }),
+                FeatureBlock::Tag(v) => Self::Tag(TagFeatureBlockDto {
+                    kind: TagFeatureBlock::KIND,
+                    tag: v.to_string(),
+                }),
+            }
+        }
+    }
+
+    impl TryFrom<&FeatureBlockDto> for FeatureBlock {
+        type Error = DtoError;
+
+        fn try_from(value: &FeatureBlockDto) -> Result<Self, Self::Error> {
+            Ok(match value {
+                FeatureBlockDto::Sender(v) => Self::Sender(SenderFeatureBlock::new((&v.address).try_into()?)),
+                FeatureBlockDto::Issuer(v) => Self::Issuer(IssuerFeatureBlock::new((&v.address).try_into()?)),
+                FeatureBlockDto::Metadata(v) => Self::Metadata(MetadataFeatureBlock::new(
+                    prefix_hex::decode(&v.data).map_err(|_e| DtoError::InvalidField("MetadataFeatureBlock"))?,
+                )?),
+                FeatureBlockDto::Tag(v) => Self::Tag(TagFeatureBlock::new(
+                    prefix_hex::decode(&v.tag).map_err(|_e| DtoError::InvalidField("TagFeatureBlock"))?,
+                )?),
+            })
+        }
+    }
+
+    impl FeatureBlockDto {
+        /// Return the feature block kind of a `FeatureBlockDto`.
+        pub fn kind(&self) -> u8 {
+            match self {
+                Self::Sender(_) => SenderFeatureBlock::KIND,
+                Self::Issuer(_) => IssuerFeatureBlock::KIND,
+                Self::Metadata(_) => MetadataFeatureBlock::KIND,
+                Self::Tag(_) => TagFeatureBlock::KIND,
+            }
+        }
     }
 }

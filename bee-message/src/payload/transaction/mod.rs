@@ -6,14 +6,15 @@
 mod essence;
 mod transaction_id;
 
-pub(crate) use essence::{InputCount, OutputCount};
-pub use essence::{RegularTransactionEssence, RegularTransactionEssenceBuilder, TransactionEssence};
-pub use transaction_id::TransactionId;
-
-use crate::{unlock_block::UnlockBlocks, Error};
-
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 use packable::{error::UnpackError, packer::Packer, unpacker::Unpacker, Packable, PackableExt};
+
+pub(crate) use self::essence::{InputCount, OutputCount};
+pub use self::{
+    essence::{RegularTransactionEssence, RegularTransactionEssenceBuilder, TransactionEssence},
+    transaction_id::TransactionId,
+};
+use crate::{unlock_block::UnlockBlocks, Error};
 
 /// A transaction to move funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -92,4 +93,50 @@ fn verify_essence_unlock_blocks(essence: &TransactionEssence, unlock_blocks: &Un
     }
 
     Ok(())
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    pub use super::essence::dto::TransactionEssenceDto;
+    use super::*;
+    use crate::{error::dto::DtoError, unlock_block::dto::UnlockBlockDto};
+
+    /// The payload type to define a value transaction.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct TransactionPayloadDto {
+        #[serde(rename = "type")]
+        pub kind: u32,
+        pub essence: TransactionEssenceDto,
+        #[serde(rename = "unlockBlocks")]
+        pub unlock_blocks: Vec<UnlockBlockDto>,
+    }
+
+    impl From<&TransactionPayload> for TransactionPayloadDto {
+        fn from(value: &TransactionPayload) -> Self {
+            TransactionPayloadDto {
+                kind: TransactionPayload::KIND,
+                essence: value.essence().into(),
+                unlock_blocks: value.unlock_blocks().iter().map(Into::into).collect::<Vec<_>>(),
+            }
+        }
+    }
+
+    impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
+        type Error = DtoError;
+
+        fn try_from(value: &TransactionPayloadDto) -> Result<Self, Self::Error> {
+            let mut unlock_blocks = Vec::new();
+            for b in &value.unlock_blocks {
+                unlock_blocks.push(b.try_into()?);
+            }
+
+            Ok(TransactionPayload::new(
+                (&value.essence).try_into()?,
+                UnlockBlocks::new(unlock_blocks)?,
+            )?)
+        }
+    }
 }

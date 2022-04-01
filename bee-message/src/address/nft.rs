@@ -1,11 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{output::NftId, Error};
+use core::str::FromStr;
 
 use derive_more::{AsRef, Deref, From};
 
-use core::str::FromStr;
+use crate::{output::NftId, Error};
 
 /// An NFT address.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, From, AsRef, Deref, packable::Packable)]
@@ -52,5 +52,43 @@ impl core::fmt::Display for NftAddress {
 impl core::fmt::Debug for NftAddress {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "NftAddress({})", self)
+    }
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::error::dto::DtoError;
+
+    /// Describes an NFT address.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct NftAddressDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        #[serde(rename = "nftId")]
+        pub nft_id: String,
+    }
+
+    impl From<&NftAddress> for NftAddressDto {
+        fn from(value: &NftAddress) -> Self {
+            Self {
+                kind: NftAddress::KIND,
+                nft_id: value.to_string(),
+            }
+        }
+    }
+
+    impl TryFrom<&NftAddressDto> for NftAddress {
+        type Error = DtoError;
+
+        fn try_from(value: &NftAddressDto) -> Result<Self, Self::Error> {
+            value
+                .nft_id
+                .parse::<NftAddress>()
+                .map_err(|_| DtoError::InvalidField("NFT address"))
+        }
     }
 }

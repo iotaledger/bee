@@ -1,6 +1,24 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{any::TypeId, convert::Infallible, time::Instant};
+
+use async_trait::async_trait;
+use bee_gossip::PeerId;
+use bee_message::{
+    constant::PROTOCOL_VERSION,
+    output::ByteCostConfig,
+    payload::{transaction::TransactionEssence, Payload},
+    Message, MessageId,
+};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::{metadata::MessageMetadata, Tangle, TangleWorker};
+use futures::{channel::oneshot::Sender, stream::StreamExt};
+use log::{error, info, trace};
+use packable::PackableExt;
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
+
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
@@ -14,26 +32,7 @@ use crate::{
         PayloadWorker, PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent,
         RequestedMessages, UnreferencedMessageInserterWorker, UnreferencedMessageInserterWorkerEvent,
     },
-    PROTOCOL_VERSION,
 };
-
-use bee_gossip::PeerId;
-use bee_message::{
-    output::ByteCostConfig,
-    payload::{transaction::TransactionEssence, Payload},
-    Message, MessageId,
-};
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{metadata::MessageMetadata, Tangle, TangleWorker};
-
-use async_trait::async_trait;
-use futures::{channel::oneshot::Sender, stream::StreamExt};
-use log::{error, info, trace};
-use packable::PackableExt;
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::UnboundedReceiverStream;
-
-use std::{any::TypeId, convert::Infallible, time::Instant};
 
 pub(crate) struct ProcessorWorkerEvent {
     pub(crate) from: Option<PeerId>,

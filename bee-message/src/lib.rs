@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Core data types for messages in the tangle.
-//!
-//! ## Feature Flags
-//! - `cpt2`: Enable support for backwards compatible output and transaction payload types.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
@@ -20,6 +17,9 @@ mod error;
 mod message;
 mod message_id;
 
+#[cfg(feature = "dto")]
+pub(crate) mod dto;
+
 /// A module that provides types and syntactic validations of addresses.
 pub mod address;
 /// A module that contains constants related to messages.
@@ -34,11 +34,17 @@ pub mod output;
 pub mod parent;
 /// A module that provides types and syntactic validations of payloads.
 pub mod payload;
+/// A module that provides types and rules for semantic validation.
+pub mod semantic;
 /// A module that provides types and syntactic validations of signatures.
 pub mod signature;
 /// A module that provides types and syntactic validations of unlock blocks.
 pub mod unlock_block;
 
-pub use error::Error;
-pub use message::{Message, MessageBuilder};
-pub use message_id::MessageId;
+#[cfg(feature = "dto")]
+pub use self::{error::dto::DtoError, message::dto::MessageDto};
+pub use self::{
+    error::Error,
+    message::{Message, MessageBuilder},
+    message_id::MessageId,
+};

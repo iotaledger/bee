@@ -1,12 +1,12 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use alloc::vec::Vec;
+use core::ops::RangeInclusive;
 
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix};
 
-use alloc::vec::Vec;
-use core::ops::RangeInclusive;
+use crate::Error;
 
 pub(crate) type TagFeatureBlockLength =
     BoundedU8<{ *TagFeatureBlock::LENGTH_RANGE.start() }, { *TagFeatureBlock::LENGTH_RANGE.end() }>;
@@ -34,7 +34,6 @@ impl TryFrom<Vec<u8>> for TagFeatureBlock {
 impl TagFeatureBlock {
     /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of an [`TagFeatureBlock`].
     pub const KIND: u8 = 3;
-
     /// Valid lengths for an [`TagFeatureBlock`].
     pub const LENGTH_RANGE: RangeInclusive<u8> = 1..=64;
 
@@ -60,5 +59,18 @@ impl core::fmt::Display for TagFeatureBlock {
 impl core::fmt::Debug for TagFeatureBlock {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "TagFeatureBlock({})", self)
+    }
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct TagFeatureBlockDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        pub tag: String,
     }
 }

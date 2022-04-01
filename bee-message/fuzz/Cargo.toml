@@ -19,6 +19,54 @@ packable = { version = "0.2.1", default-features = false }
 members = [ "." ]
 
 [[bin]]
+name = "fuzz_address"
+path = "fuzz_targets/fuzz_address.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_input"
+path = "fuzz_targets/fuzz_input.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_output"
+path = "fuzz_targets/fuzz_output.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_feature_block"
+path = "fuzz_targets/fuzz_feature_block.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_unlock_condition"
+path = "fuzz_targets/fuzz_unlock_condition.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_payload"
+path = "fuzz_targets/fuzz_payload.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_signature"
+path = "fuzz_targets/fuzz_signature.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_unlock_block"
+path = "fuzz_targets/fuzz_unlock_block.rs"
+test = false
+doc = false
+
+[[bin]]
 name = "fuzz_message"
 path = "fuzz_targets/fuzz_message.rs"
 test = false

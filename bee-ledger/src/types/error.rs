@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{payload::milestone::MilestoneId, Error as MessageError};
-
 use core::{convert::Infallible, num::TryFromIntError};
+
+use bee_message::{payload::milestone::MilestoneId, Error as MessageError};
 
 /// Errors related to ledger types.
 #[derive(Debug, thiserror::Error)]

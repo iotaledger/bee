@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::output::OutputId;
-
 use std::ops::Deref;
+
+use bee_message::output::OutputId;
 
 /// Represents an output id as unspent.
 #[derive(Clone, Eq, PartialEq, Hash, packable::Packable)]

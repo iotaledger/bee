@@ -1,20 +1,19 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::metrics::NodeMetrics,
-    workers::{event::MpsMetricsUpdated, MetricsWorker},
-};
-
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use std::{any::TypeId, convert::Infallible, time::Duration};
 
 use async_trait::async_trait;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use futures::StreamExt;
 use log::info;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
-use std::{any::TypeId, convert::Infallible, time::Duration};
+use crate::{
+    types::metrics::NodeMetrics,
+    workers::{event::MpsMetricsUpdated, MetricsWorker},
+};
 
 const MPS_INTERVAL: Duration = Duration::from_secs(1);
 

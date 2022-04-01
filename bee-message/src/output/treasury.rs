@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{constant::IOTA_SUPPLY, Error};
+use core::ops::RangeInclusive;
 
 use packable::bounded::BoundedU64;
 
-use core::ops::RangeInclusive;
+use crate::{constant::IOTA_SUPPLY, Error};
 
 pub(crate) type TreasuryOutputAmount =
     BoundedU64<{ *TreasuryOutput::AMOUNT_RANGE.start() }, { *TreasuryOutput::AMOUNT_RANGE.end() }>;
@@ -36,5 +36,44 @@ impl TreasuryOutput {
     #[inline(always)]
     pub fn amount(&self) -> u64 {
         self.amount.get()
+    }
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::error::dto::DtoError;
+
+    /// Describes a treasury output.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct TreasuryOutputDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        pub amount: String,
+    }
+
+    impl From<&TreasuryOutput> for TreasuryOutputDto {
+        fn from(value: &TreasuryOutput) -> Self {
+            Self {
+                kind: TreasuryOutput::KIND,
+                amount: value.amount().to_string(),
+            }
+        }
+    }
+
+    impl TryFrom<&TreasuryOutputDto> for TreasuryOutput {
+        type Error = DtoError;
+
+        fn try_from(value: &TreasuryOutputDto) -> Result<Self, Self::Error> {
+            Ok(Self::new(
+                value
+                    .amount
+                    .parse::<u64>()
+                    .map_err(|_| DtoError::InvalidField("amount"))?,
+            )?)
+        }
     }
 }

@@ -7,19 +7,18 @@
 //!
 //! The code was adapted from: https://kanejaku.org/posts/2021/01/2021-01-27/ (CC-BY 4.0)
 
+use std::{
+    alloc::{GlobalAlloc, Layout, System},
+    sync::atomic::{AtomicUsize, Ordering::SeqCst},
+};
+
 use bee_message::MessageBuilder;
 use bee_pow::{
     providers::{miner::MinerBuilder, NonceProviderBuilder},
     score::PoWScorer,
 };
 use bee_test::rand::parents::rand_parents;
-
 use packable::PackableExt;
-
-use std::{
-    alloc::{GlobalAlloc, Layout, System},
-    sync::atomic::{AtomicUsize, Ordering::SeqCst},
-};
 
 struct CheckAlloc;
 
@@ -41,7 +40,6 @@ static A: CheckAlloc = CheckAlloc;
 
 fn main() {
     let message = MessageBuilder::new(rand_parents())
-        .with_protocol_version(0)
         .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64)
         .finish()
         .unwrap();

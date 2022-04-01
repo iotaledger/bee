@@ -1,19 +1,19 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::peer::{
-    lists::{ActivePeer, ActivePeersList, ReplacementPeersList},
-    peer_id::PeerId,
-    stores::PeerStore,
-    Peer,
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
 };
 
 pub use rocksdb::Options;
 use rocksdb::{AsColumnFamilyRef, DBWithThreadMode, IteratorMode, MultiThreaded, WriteBatch};
 
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
+use crate::peer::{
+    lists::{ActivePeer, ActivePeersList, ReplacementPeersList},
+    peer_id::PeerId,
+    stores::PeerStore,
+    Peer,
 };
 
 const ACTIVE_PEERS_CF: &str = "active_peers";

@@ -21,11 +21,13 @@ mod multi_fetch;
 /// Holds the contract for truncate access operations.
 mod truncate;
 
-pub use batch::{Batch, BatchBuilder};
-pub use delete::Delete;
-pub use exist::Exist;
-pub use fetch::Fetch;
-pub use insert::Insert;
-pub use iter::AsIterator;
-pub use multi_fetch::MultiFetch;
-pub use truncate::Truncate;
+pub use self::{
+    batch::{Batch, BatchBuilder},
+    delete::Delete,
+    exist::Exist,
+    fetch::Fetch,
+    insert::Insert,
+    iter::AsIterator,
+    multi_fetch::MultiFetch,
+    truncate::Truncate,
+};

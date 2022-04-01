@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::common::keys_and_ids::gen_constant_peer_id;
-
 use crate::alias;
 
 #[test]

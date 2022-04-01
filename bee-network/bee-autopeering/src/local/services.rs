@@ -1,12 +1,12 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::proto;
+use std::{collections::HashMap, fmt, io, str::FromStr};
 
 use libp2p_core::multiaddr::Protocol;
 use serde::{Deserialize, Serialize};
 
-use std::{collections::HashMap, fmt, io, str::FromStr};
+use crate::proto;
 
 /// Represents the name of a service.
 pub type ServiceName = String;

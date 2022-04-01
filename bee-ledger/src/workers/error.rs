@@ -3,16 +3,15 @@
 
 //! Module containing the errors that can occur during ledger operations.
 
+use std::convert::Infallible;
+
+use bee_message::{milestone::MilestoneIndex, Error as MessageError, MessageId};
+use packable::error::UnpackError;
+
 use crate::{
     types::{Error as TypesError, Unspent},
     workers::snapshot::error::Error as SnapshotError,
 };
-
-use bee_message::{milestone::MilestoneIndex, Error as MessageError, MessageId};
-
-use packable::error::UnpackError;
-
-use std::convert::Infallible;
 
 /// Errors occurring during ledger workers operations.
 #[derive(Debug, thiserror::Error)]
@@ -60,11 +59,17 @@ pub enum Error {
     #[error("invalid ledger unspent state: {0}")]
     InvalidLedgerUnspentState(u64),
     /// Consumed amount overflow.
-    #[error("consumed amount overflow: {0}")]
-    ConsumedAmountOverflow(u128),
+    #[error("consumed amount overflow")]
+    ConsumedAmountOverflow,
     /// Created amount overflow.
-    #[error("created amount overflow: {0}")]
-    CreatedAmountOverflow(u128),
+    #[error("created amount overflow")]
+    CreatedAmountOverflow,
+    /// Consumed native tokens amount overflow.
+    #[error("consumed native tokens amount overflow")]
+    ConsumedNativeTokensAmountOverflow,
+    /// Created native tokens amount overflow.
+    #[error("created native tokens amount overflow")]
+    CreatedNativeTokensAmountOverflow,
     /// Ledger state overflow.
     #[error("ledger state overflow: {0}")]
     LedgerStateOverflow(u128),
@@ -77,6 +82,9 @@ pub enum Error {
     /// Storage backend error.
     #[error("storage backend error: {0}")]
     Storage(Box<dyn std::error::Error + Send>),
+    /// Storage deposit return overflow.
+    #[error("storage deposit return overflow")]
+    StorageDepositReturnOverflow,
 }
 
 impl<E: Into<Error>> From<UnpackError<E, std::io::Error>> for Error {

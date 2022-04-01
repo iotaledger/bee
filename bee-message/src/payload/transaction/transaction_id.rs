@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::payload::milestone::MilestoneId;
-
 use core::ops::Deref;
+
+use crate::payload::milestone::MilestoneId;
 
 impl_id!(
     pub TransactionId,
@@ -16,7 +16,6 @@ string_serde_impl!(TransactionId);
 
 impl From<MilestoneId> for TransactionId {
     fn from(milestone_id: MilestoneId) -> Self {
-        // SAFETY: lengths are known to be the same.
         Self::new(*milestone_id.deref())
     }
 }

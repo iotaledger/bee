@@ -1,8 +1,6 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{address::Address, milestone::MilestoneIndex, Error};
-
 use derive_more::From;
 use packable::{
     error::{UnpackError, UnpackErrorExt},
@@ -10,6 +8,8 @@ use packable::{
     unpacker::Unpacker,
     Packable,
 };
+
+use crate::{address::Address, milestone::MilestoneIndex, Error};
 
 /// Defines a milestone index and/or unix time until which only Address, defined in Address Unlock Condition, is allowed
 /// to unlock the output. After the milestone index and/or unix time, only Return Address can unlock it.
@@ -96,8 +96,34 @@ impl Packable for ExpirationUnlockCondition {
 #[inline]
 fn verify_milestone_index_timestamp(milestone_index: MilestoneIndex, timestamp: u32) -> Result<(), Error> {
     if *milestone_index == 0 && timestamp == 0 {
-        Err(Error::TimelockUnlockConditionZero)
+        Err(Error::ExpirationUnlockConditionZero)
     } else {
         Ok(())
+    }
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use crate::{
+        address::dto::AddressDto,
+        dto::{is_zero, is_zero_milestone},
+        milestone::MilestoneIndex,
+    };
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct ExpirationUnlockConditionDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        #[serde(rename = "returnAddress")]
+        pub return_address: AddressDto,
+        #[serde(rename = "milestoneIndex")]
+        #[serde(skip_serializing_if = "is_zero_milestone", default)]
+        pub milestone_index: MilestoneIndex,
+        #[serde(rename = "unixTime")]
+        #[serde(skip_serializing_if = "is_zero", default)]
+        pub timestamp: u32,
     }
 }

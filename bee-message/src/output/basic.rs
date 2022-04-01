@@ -1,19 +1,21 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use alloc::vec::Vec;
+
+use packable::Packable;
+
 use crate::{
     address::Address,
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        NativeToken, NativeTokens, OutputAmount,
+        NativeToken, NativeTokens, Output, OutputAmount, OutputId,
     },
+    semantic::{ConflictReason, ValidationContext},
+    unlock_block::UnlockBlock,
     Error,
 };
-
-use packable::Packable;
-
-use alloc::vec::Vec;
 
 ///
 #[must_use]
@@ -172,6 +174,19 @@ impl BasicOutput {
             .map(|unlock_condition| unlock_condition.address())
             .unwrap()
     }
+
+    ///
+    pub fn unlock(
+        &self,
+        _output_id: &OutputId,
+        unlock_block: &UnlockBlock,
+        inputs: &[(OutputId, &Output)],
+        context: &mut ValidationContext,
+    ) -> Result<(), ConflictReason> {
+        let locked_address = self.address();
+
+        locked_address.unlock(unlock_block, inputs, context)
+    }
 }
 
 fn verify_unlock_conditions<const VERIFY: bool>(unlock_conditions: &UnlockConditions) -> Result<(), Error> {
@@ -191,5 +206,71 @@ fn verify_feature_blocks<const VERIFY: bool>(blocks: &FeatureBlocks) -> Result<(
         verify_allowed_feature_blocks(blocks, BasicOutput::ALLOWED_FEATURE_BLOCKS)
     } else {
         Ok(())
+    }
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{
+        error::dto::DtoError,
+        output::{
+            feature_block::dto::FeatureBlockDto, native_token::dto::NativeTokenDto,
+            unlock_condition::dto::UnlockConditionDto,
+        },
+    };
+
+    /// Describes a basic output.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct BasicOutputDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        // Amount of IOTA tokens held by the output.
+        pub amount: String,
+        // Native tokens held by the output.
+        #[serde(rename = "nativeTokens")]
+        pub native_tokens: Vec<NativeTokenDto>,
+        #[serde(rename = "unlockConditions")]
+        pub unlock_conditions: Vec<UnlockConditionDto>,
+        #[serde(rename = "featureBlocks")]
+        pub feature_blocks: Vec<FeatureBlockDto>,
+    }
+
+    impl From<&BasicOutput> for BasicOutputDto {
+        fn from(value: &BasicOutput) -> Self {
+            Self {
+                kind: BasicOutput::KIND,
+                amount: value.amount().to_string(),
+                native_tokens: value.native_tokens().iter().map(Into::into).collect::<_>(),
+                unlock_conditions: value.unlock_conditions().iter().map(Into::into).collect::<_>(),
+                feature_blocks: value.feature_blocks().iter().map(Into::into).collect::<_>(),
+            }
+        }
+    }
+
+    impl TryFrom<&BasicOutputDto> for BasicOutput {
+        type Error = DtoError;
+
+        fn try_from(value: &BasicOutputDto) -> Result<Self, Self::Error> {
+            let mut builder = BasicOutputBuilder::new(
+                value
+                    .amount
+                    .parse::<u64>()
+                    .map_err(|_| DtoError::InvalidField("amount"))?,
+            )?;
+            for t in &value.native_tokens {
+                builder = builder.add_native_token(t.try_into()?);
+            }
+            for b in &value.unlock_conditions {
+                builder = builder.add_unlock_condition(b.try_into()?);
+            }
+            for b in &value.feature_blocks {
+                builder = builder.add_feature_block(b.try_into()?);
+            }
+            Ok(builder.finish()?)
+        }
     }
 }

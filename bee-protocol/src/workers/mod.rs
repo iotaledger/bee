@@ -20,32 +20,36 @@ mod sender;
 mod solidifier;
 mod status;
 
-pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
-pub(crate) use heartbeater::HeartbeaterWorker;
-pub(crate) use index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
-pub(crate) use message::{
-    HasherWorker, HasherWorkerEvent, MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent, ProcessorWorker,
-    ProcessorWorkerConfig, TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent, TransactionPayloadWorker,
-    UnreferencedMessageInserterWorker, UnreferencedMessageInserterWorkerEvent,
-};
-pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
-pub use metrics::MetricsWorker;
-pub(crate) use mps::MpsWorker;
-use peer::PeerManagerConfig;
-pub use peer::{PeerManager, PeerManagerResWorker};
-pub(crate) use peer::{PeerManagerWorker, PeerWorker};
-pub(crate) use propagator::{PropagatorWorker, PropagatorWorkerEvent};
-pub use requester::{request_message, MessageRequesterWorker, RequestedMessages, RequestedMilestones};
-pub(crate) use requester::{MilestoneRequesterWorker, MilestoneRequesterWorkerEvent};
-pub(crate) use responder::{
-    MessageResponderWorker, MessageResponderWorkerEvent, MilestoneResponderWorker, MilestoneResponderWorkerEvent,
-};
-pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
-pub(crate) use status::StatusWorker;
-
 use bee_autopeering::event::EventRx as AutopeeringEventRx;
 use bee_gossip::NetworkEventReceiver as NetworkEventRx;
 use bee_runtime::node::{Node, NodeBuilder};
+
+use self::peer::PeerManagerConfig;
+pub(crate) use self::{
+    broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent},
+    heartbeater::HeartbeaterWorker,
+    index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent},
+    message::{
+        HasherWorker, HasherWorkerEvent, MilestonePayloadWorker, PayloadWorker, PayloadWorkerEvent, ProcessorWorker,
+        ProcessorWorkerConfig, TaggedDataPayloadWorker, TaggedDataPayloadWorkerEvent, TransactionPayloadWorker,
+        UnreferencedMessageInserterWorker, UnreferencedMessageInserterWorkerEvent,
+    },
+    mps::MpsWorker,
+    peer::{PeerManagerWorker, PeerWorker},
+    propagator::{PropagatorWorker, PropagatorWorkerEvent},
+    requester::{MilestoneRequesterWorker, MilestoneRequesterWorkerEvent},
+    responder::{
+        MessageResponderWorker, MessageResponderWorkerEvent, MilestoneResponderWorker, MilestoneResponderWorkerEvent,
+    },
+    solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent},
+    status::StatusWorker,
+};
+pub use self::{
+    message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent},
+    metrics::MetricsWorker,
+    peer::{PeerManager, PeerManagerResWorker},
+    requester::{request_message, MessageRequesterWorker, RequestedMessages, RequestedMilestones},
+};
 
 pub fn init<N: Node>(
     config: config::ProtocolConfig,

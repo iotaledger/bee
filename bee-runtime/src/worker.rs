@@ -3,11 +3,11 @@
 
 //! A module that deals with asynchronous workers in general.
 
-use crate::node::Node;
+use std::any::{Any, TypeId};
 
 use async_trait::async_trait;
 
-use std::any::{Any, TypeId};
+use crate::node::Node;
 
 /// Errors that might occur during the lifetime of asynchronous workers.
 #[derive(Debug)]

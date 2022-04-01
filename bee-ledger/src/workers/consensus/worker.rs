@@ -1,35 +1,34 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::{CreatedOutput, LedgerIndex, Migration, Receipt, TreasuryOutput},
-    workers::{
-        consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
-        error::Error,
-        event::{MessageReferenced, MilestoneConfirmed, OutputConsumed, OutputCreated},
-        pruning::{condition::should_prune, config::PruningConfig, prune},
-        snapshot::{condition::should_snapshot, config::SnapshotConfig, worker::SnapshotWorker},
-        storage::{self, StorageBackend},
-    },
-};
+use std::any::TypeId;
 
+use async_trait::async_trait;
 use bee_message::{
-    address::Address,
     milestone::MilestoneIndex,
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, OutputId},
     payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
+    semantic::ConflictReason,
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{ConflictReason, Tangle, TangleWorker};
-
-use async_trait::async_trait;
+use bee_tangle::{Tangle, TangleWorker};
 use futures::{channel::oneshot, stream::StreamExt};
 use log::{debug, error, info, warn};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::any::TypeId;
+use crate::{
+    types::{CreatedOutput, LedgerIndex, Migration, Receipt, TreasuryOutput},
+    workers::{
+        consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
+        error::Error,
+        event::{LedgerUpdated, MessageReferenced, MilestoneConfirmed, OutputConsumed, OutputCreated, ReceiptCreated},
+        pruning::{condition::should_prune, config::PruningConfig, prune},
+        snapshot::{condition::should_snapshot, config::SnapshotConfig, worker::SnapshotWorker},
+        storage::{self, StorageBackend},
+    },
+};
 
 pub(crate) const EXTRA_SNAPSHOT_DEPTH: u32 = 5;
 pub(crate) const EXTRA_PRUNING_DEPTH: u32 = 5;
@@ -43,11 +42,6 @@ pub enum ConsensusWorkerCommand {
     FetchOutput(
         OutputId,
         oneshot::Sender<(Result<Option<CreatedOutput>, Error>, LedgerIndex)>,
-    ),
-    /// Command to fetch the outputs of an address.
-    FetchOutputs(
-        Address,
-        oneshot::Sender<(Result<Option<Vec<OutputId>>, Error>, LedgerIndex)>,
     ),
 }
 
@@ -67,18 +61,7 @@ pub(crate) async fn migration_from_milestone(
 
     receipt.validate(&consumed_treasury)?;
 
-    let created_treasury = TreasuryOutput::new(
-        if let Payload::TreasuryTransaction(treasury) = receipt.inner().transaction() {
-            if let Output::Treasury(output) = treasury.output() {
-                output.clone()
-            } else {
-                return Err(Error::UnsupportedOutputKind(treasury.output().kind()));
-            }
-        } else {
-            return Err(Error::UnsupportedPayloadKind(receipt.inner().transaction().kind()));
-        },
-        milestone_id,
-    );
+    let created_treasury = TreasuryOutput::new(receipt.inner().transaction().output().clone(), milestone_id);
 
     Ok(Migration::new(receipt, consumed_treasury, created_treasury))
 }
@@ -140,11 +123,11 @@ where
                     milestone.essence().timestamp() as u32,
                     Output::from(
                         BasicOutput::build(fund.amount())
-                            // SAFETY: funds are already syntactically verified as part of the receipt validation.
+                            // PANIC: funds are already syntactically verified as part of the receipt validation.
                             .unwrap()
                             .add_unlock_condition(AddressUnlockCondition::new(*fund.address()).into())
                             .finish()
-                            // SAFETY: these parameters are certified fine.
+                            // PANIC: these parameters are certified fine.
                             .unwrap(),
                     ),
                 ),
@@ -249,19 +232,29 @@ where
         receipt: migration.is_some(),
     });
 
-    for (output_id, created_output) in metadata.created_outputs {
+    for (output_id, created_output) in metadata.created_outputs.iter() {
         bus.dispatch(OutputCreated {
-            output_id,
-            output: created_output,
+            output_id: *output_id,
+            output: created_output.clone(),
         });
     }
 
-    for (output_id, (created_output, _consumed_output)) in metadata.consumed_outputs {
+    for (output_id, (created_output, _consumed_output)) in metadata.consumed_outputs.iter() {
         bus.dispatch(OutputConsumed {
             message_id: *created_output.message_id(),
-            output_id,
+            output_id: *output_id,
             output: created_output.inner().clone(),
         });
+    }
+
+    bus.dispatch(LedgerUpdated {
+        milestone_index: milestone.essence().index(),
+        created_outputs: metadata.created_outputs,
+        consumed_outputs: metadata.consumed_outputs,
+    });
+
+    if let Some(migration) = migration {
+        bus.dispatch(ReceiptCreated(migration.into_receipt()));
     }
 
     Ok(())
@@ -376,18 +369,6 @@ where
                             error!("Error while sending output: {:?}", e);
                         }
                     }
-                    ConsensusWorkerCommand::FetchOutputs(address, sender) => match address {
-                        Address::Ed25519(address) => {
-                            if let Err(e) = sender.send((
-                                storage::fetch_outputs_for_ed25519_address(&*storage, &address),
-                                ledger_index,
-                            )) {
-                                error!("Error while sending output: {:?}", e);
-                            }
-                        }
-                        Address::Alias(_address) => todo!(),
-                        Address::Nft(_address) => todo!(),
-                    },
                 }
             }
 

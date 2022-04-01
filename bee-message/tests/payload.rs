@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#[cfg(feature = "cpt2")]
-use bee_message::payload::IndexationPayload;
+use core::str::FromStr;
+
 use bee_message::{
     address::{Address, Ed25519Address},
     input::{Input, TreasuryInput, UtxoInput},
@@ -21,10 +21,7 @@ use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     parents::rand_parents,
 };
-
 use packable::PackableExt;
-
-use core::str::FromStr;
 
 const TRANSACTION_ID: &str = "0x24a1f46bdb6b2bf38f1c59f73cdd4ae5b418804bb231d76d06fbf246498d5883";
 const ED25519_ADDRESS: &str = "0xe594f9a895c0e0a6760dd12cffc2c3d1e1cbf7269b328091f96ce3d0dd550b75";
@@ -88,18 +85,17 @@ fn milestone() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
-            vec![[0; 32]],
             None,
         )
         .unwrap(),
-        vec![[0; 64]],
+        vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))],
     )
     .unwrap()
     .into();
 
     let packed = payload.pack_to_vec();
 
-    assert_eq!(payload.kind(), 1);
+    assert_eq!(payload.kind(), 7);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::Milestone(_)));
     assert_eq!(payload, PackableExt::unpack_verified(&mut packed.as_slice()).unwrap());
@@ -116,18 +112,6 @@ fn tagged_data() {
     assert!(matches!(payload, Payload::TaggedData(_)));
 }
 
-#[cfg(feature = "cpt2")]
-#[test]
-fn indexation() {
-    let payload: Payload = IndexationPayload::new(rand_bytes(32), vec![]).unwrap().into();
-
-    let packed = payload.pack_to_vec();
-
-    assert_eq!(payload.kind(), 2);
-    assert_eq!(payload.packed_len(), packed.len());
-    assert!(matches!(payload, Payload::Indexation(_)));
-}
-
 #[test]
 fn receipt() {
     let payload: Payload = ReceiptPayload::new(
@@ -141,13 +125,11 @@ fn receipt() {
             )
             .unwrap(),
         ],
-        Payload::TreasuryTransaction(Box::new(
-            TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
-                Output::Treasury(TreasuryOutput::new(1_000_000).unwrap()),
-            )
-            .unwrap(),
-        )),
+        TreasuryTransactionPayload::new(
+            TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap()),
+            TreasuryOutput::new(1_000_000).unwrap(),
+        )
+        .unwrap(),
     )
     .unwrap()
     .into();
@@ -163,8 +145,8 @@ fn receipt() {
 #[test]
 fn treasury_transaction() {
     let payload: Payload = TreasuryTransactionPayload::new(
-        Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap()),
-        Output::from(TreasuryOutput::new(1_000_000).unwrap()),
+        TreasuryInput::from_str(MESSAGE_ID).unwrap(),
+        TreasuryOutput::new(1_000_000).unwrap(),
     )
     .unwrap()
     .into();

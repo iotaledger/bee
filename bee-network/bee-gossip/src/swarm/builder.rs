@@ -1,9 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{behaviour::SwarmBehaviour, error::Error};
-
-use crate::service::event::InternalEventSender;
+use std::time::Duration;
 
 use libp2p::{
     core::{
@@ -15,7 +13,8 @@ use libp2p::{
     tcp, yamux, Swarm, Transport,
 };
 
-use std::time::Duration;
+use super::{behaviour::SwarmBehaviour, error::Error};
+use crate::service::event::InternalEventSender;
 
 const MAX_CONNECTIONS_PER_PEER: u32 = 1;
 const DEFAULT_CONNECTION_TIMEOUT_SECS: u64 = 10;

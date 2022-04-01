@@ -3,6 +3,9 @@
 
 #![cfg(feature = "full")]
 
+use libp2p::identity;
+use once_cell::sync::OnceCell;
+
 use super::{
     config::NetworkConfig,
     error::Error,
@@ -16,16 +19,12 @@ use super::{
     },
     Keypair, PeerId,
 };
-
 use crate::{
     alias,
     network::host::NetworkHostConfig,
     service::host::{self, ServiceHostConfig},
     swarm::builder::build_swarm,
 };
-
-use libp2p::identity;
-use once_cell::sync::OnceCell;
 
 pub mod global {
     use super::*;
@@ -88,12 +87,12 @@ pub mod global {
 
 /// Initializes a "standalone" version of the network layer.
 pub mod standalone {
-    use super::*;
-    use crate::{network::host::standalone::NetworkHost, service::host::standalone::ServiceHost};
+    use std::future::Future;
 
     use futures::channel::oneshot;
 
-    use std::future::Future;
+    use super::*;
+    use crate::{network::host::standalone::NetworkHost, service::host::standalone::ServiceHost};
 
     /// Initializes the network.
     pub async fn init(
@@ -124,10 +123,10 @@ pub mod standalone {
 
 /// Initializes an "integrated" version of the network layer, which is used in the Bee node.
 pub mod integrated {
+    use bee_runtime::node::{Node, NodeBuilder};
+
     use super::*;
     use crate::{network::host::integrated::NetworkHost, service::host::integrated::ServiceHost};
-
-    use bee_runtime::node::{Node, NodeBuilder};
 
     /// Initializes the network.
     pub async fn init<N: Node>(

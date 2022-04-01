@@ -30,6 +30,6 @@ pub(crate) async fn message_children<B: StorageBackend>(
         message_id: message_id.to_string(),
         max_results,
         count,
-        children_message_ids: children.iter().map(|id| id.to_string()).collect(),
+        children_message_ids: children.iter().map(MessageId::to_string).collect(),
     }))
 }

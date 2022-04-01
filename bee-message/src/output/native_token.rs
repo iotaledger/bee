@@ -1,14 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{output::TokenId, Error};
+use alloc::vec::Vec;
 
 use derive_more::Deref;
 use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 use primitive_types::U256;
 
-use alloc::vec::Vec;
+use crate::{output::TokenId, Error};
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
@@ -72,6 +72,15 @@ impl TryFrom<Vec<NativeToken>> for NativeTokens {
     }
 }
 
+impl IntoIterator for NativeTokens {
+    type Item = NativeToken;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Vec::from(Into::<Box<[NativeToken]>>::into(self.0)).into_iter()
+    }
+}
+
 impl NativeTokens {
     /// Maximum number of different native tokens that can be referenced in one transaction.
     pub const COUNT_MAX: u8 = 64;
@@ -96,5 +105,45 @@ fn verify_unique_sorted<const VERIFY: bool>(native_tokens: &[NativeToken]) -> Re
         Err(Error::NativeTokensNotUniqueSorted)
     } else {
         Ok(())
+    }
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{dto::U256Dto, error::dto::DtoError, output::token_id::dto::TokenIdDto};
+
+    /// Describes a native token.
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct NativeTokenDto {
+        // Identifier of the native token.
+        #[serde(rename = "id")]
+        pub token_id: TokenIdDto,
+        // Amount of native tokens hex encoded.
+        pub amount: U256Dto,
+    }
+
+    impl From<&NativeToken> for NativeTokenDto {
+        fn from(value: &NativeToken) -> Self {
+            Self {
+                token_id: TokenIdDto(value.token_id().to_string()),
+                amount: value.amount().into(),
+            }
+        }
+    }
+
+    impl TryFrom<&NativeTokenDto> for NativeToken {
+        type Error = DtoError;
+
+        fn try_from(value: &NativeTokenDto) -> Result<Self, Self::Error> {
+            Self::new(
+                (&value.token_id).try_into()?,
+                U256::try_from(&value.amount).map_err(|_| DtoError::InvalidField("amount"))?,
+            )
+            .map_err(|_| DtoError::InvalidField("nativeTokens"))
+        }
     }
 }

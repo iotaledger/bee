@@ -43,7 +43,7 @@ EXPOSE 14626/udp
 COPY --from=build /bee/target/production/bee /
 
 # Copy the profiles
-COPY --from=build /bee/bee-node/bee-node/config.stardust-testnet.toml .
-COPY --from=build /bee/bee-node/bee-node/config.stardust-testnet.json .
+COPY --from=build /bee/bee-node/bee-node/config.alphanet.toml .
+COPY --from=build /bee/bee-node/bee-node/config.alphanet.json .
 
 ENTRYPOINT ["/bee"]

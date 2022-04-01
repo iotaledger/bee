@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_message::{parent::Parents, Message, MessageBuilder, MessageId};
+
 use crate::rand::{
     bytes::rand_bytes_array, number::rand_number, parents::rand_parents, payload::rand_payload_for_message,
 };
-
-use bee_message::{parent::Parents, Message, MessageBuilder, MessageId};
 
 /// Generates a random message id.
 pub fn rand_message_id() -> MessageId {
@@ -22,7 +22,6 @@ pub fn rand_message_ids(len: usize) -> Vec<MessageId> {
 /// Generates a random message with given parents.
 pub fn rand_message_with_parents(parents: Parents) -> Message {
     MessageBuilder::<u64>::new(parents)
-        .with_protocol_version(rand_number())
         .with_payload(rand_payload_for_message())
         .with_nonce_provider(rand_number(), 0f64)
         .finish()

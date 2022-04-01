@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use derive_more::{Deref, From};
-
 use core::ops::{Add, Sub};
+
+use derive_more::{Deref, From};
 
 /// A wrapper around a `u32` that represents a milestone index.
 #[repr(transparent)]

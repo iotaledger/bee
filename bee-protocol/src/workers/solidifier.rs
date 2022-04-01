@@ -1,6 +1,21 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{any::TypeId, cmp, convert::Infallible};
+
+use async_trait::async_trait;
+use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
+use bee_message::{
+    milestone::{Milestone, MilestoneIndex},
+    MessageId,
+};
+use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::{event::SolidMilestoneChanged, traversal, Tangle, TangleWorker};
+use futures::StreamExt;
+use log::{debug, error, info, warn};
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
+
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
@@ -12,22 +27,6 @@ use crate::{
         PeerManagerResWorker, RequestedMessages, RequestedMilestones,
     },
 };
-
-use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
-use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
-    MessageId,
-};
-use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{event::SolidMilestoneChanged, traversal, Tangle, TangleWorker};
-
-use async_trait::async_trait;
-use futures::StreamExt;
-use log::{debug, error, info, warn};
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::UnboundedReceiverStream;
-
-use std::{any::TypeId, cmp, convert::Infallible};
 
 pub(crate) struct MilestoneSolidifierWorkerEvent(pub MilestoneIndex);
 

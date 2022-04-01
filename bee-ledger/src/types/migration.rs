@@ -11,7 +11,7 @@ pub struct Migration {
 }
 
 impl Migration {
-    /// Creates a new `Migration`.
+    /// Creates a new [`Migration`].
     pub fn new(receipt: Receipt, consumed_treasury: TreasuryOutput, created_treasury: TreasuryOutput) -> Self {
         Self {
             receipt,
@@ -20,18 +20,23 @@ impl Migration {
         }
     }
 
-    /// Returns the receipt of the `Migration`.
+    /// Returns the receipt of the [`Migration`].
     pub fn receipt(&self) -> &Receipt {
         &self.receipt
     }
 
-    /// Returns the consumed treasury output of the `Migration`.
+    /// Returns the consumed treasury output of the [`Migration`].
     pub fn consumed_treasury(&self) -> &TreasuryOutput {
         &self.consumed_treasury
     }
 
-    /// Returns the created treasury output of the `Migration`.
+    /// Returns the created treasury output of the [`Migration`].
     pub fn created_treasury(&self) -> &TreasuryOutput {
         &self.created_treasury
+    }
+
+    /// Consumes the [`Migration`] and returns the receipt.
+    pub fn into_receipt(self) -> Receipt {
+        self.receipt
     }
 }

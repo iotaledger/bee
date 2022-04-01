@@ -6,13 +6,21 @@ use crate::{
     types::{dtos::PayloadDto, responses::SubmitMessageResponse},
 };
 
-use bee_message::{parent::Parents, payload::Payload, Message, MessageBuilder, MessageId};
+use bee_message::{
+    constant::PROTOCOL_VERSION,
+    parent::Parents,
+    payload::{dto::PayloadDto, Payload},
+    Message, MessageBuilder, MessageId,
+};
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
 use bee_protocol::{
     workers::{MessageSubmitterError, MessageSubmitterWorkerEvent},
-    PROTOCOL_VERSION,
+    constant::PROTOCOL_VERSION,
 };
 
+use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::Tangle;
 use futures::channel::oneshot;
 use log::error;
 use packable::PackableExt;
@@ -145,9 +153,10 @@ pub(crate) async fn build_message<B: StorageBackend>(
     args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<Message, ApiError> {
     let message = if let Some(nonce) = nonce {
-        let mut builder = MessageBuilder::new(Parents::new(parents).map_err(|e| ApiError::BadRequest(e.to_string()))?)
-            .with_protocol_version(PROTOCOL_VERSION)
-            .with_nonce_provider(nonce, 0f64);
+        let mut builder = MessageBuilder::new(
+            Parents::new(parents).map_err(|e| reject::custom(ApiError::BadRequest(e.to_string())))?,
+        )
+        .with_nonce_provider(nonce, 0f64);
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
@@ -158,12 +167,13 @@ pub(crate) async fn build_message<B: StorageBackend>(
                 "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
             ));
         }
-        let mut builder = MessageBuilder::new(Parents::new(parents).map_err(|e| ApiError::BadRequest(e.to_string()))?)
-            .with_protocol_version(PROTOCOL_VERSION)
-            .with_nonce_provider(
-                MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
-                args.protocol_config.minimum_pow_score(),
-            );
+        let mut builder = MessageBuilder::new(
+            Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
+        )
+        .with_nonce_provider(
+            MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
+            args.protocol_config.minimum_pow_score(),
+        );
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }

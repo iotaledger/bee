@@ -1,12 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{net::SocketAddr, time::Duration};
+
 use super::{
     filter::NeighborFilter,
     messages::{DropPeeringRequest, PeeringRequest, PeeringResponse},
     neighbor::{self, Neighborhood, SIZE_INBOUND, SIZE_OUTBOUND},
 };
-
 use crate::{
     event::{Event, EventTx},
     hash::message_hash,
@@ -24,8 +25,6 @@ use crate::{
     time::SECOND,
     NeighborValidator,
 };
-
-use std::{net::SocketAddr, time::Duration};
 
 /// Salt update interval.
 pub(crate) const SALT_UPDATE_SECS: Duration = Duration::from_secs(SALT_LIFETIME_SECS.as_secs() - SECOND);

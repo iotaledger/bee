@@ -1,15 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    address::Address,
-    constant::{IOTA_SUPPLY, STORAGE_DEPOSIT_MIN},
-    Error,
-};
+use core::ops::RangeInclusive;
 
 use packable::bounded::BoundedU64;
 
-use core::ops::RangeInclusive;
+use crate::{address::Address, constant::IOTA_SUPPLY, Error};
 
 pub(crate) type StorageDepositAmount = BoundedU64<
     { *StorageDepositReturnUnlockCondition::AMOUNT_RANGE.start() },
@@ -31,7 +27,7 @@ impl StorageDepositReturnUnlockCondition {
     /// The [`UnlockCondition`](crate::output::UnlockCondition) kind of a [`StorageDepositReturnUnlockCondition`].
     pub const KIND: u8 = 1;
     /// Valid amounts for a [`StorageDepositReturnUnlockCondition`].
-    pub const AMOUNT_RANGE: RangeInclusive<u64> = STORAGE_DEPOSIT_MIN..=IOTA_SUPPLY;
+    pub const AMOUNT_RANGE: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
 
     /// Creates a new [`StorageDepositReturnUnlockCondition`].
     #[inline(always)]
@@ -52,5 +48,22 @@ impl StorageDepositReturnUnlockCondition {
     #[inline(always)]
     pub fn amount(&self) -> u64 {
         self.amount.get()
+    }
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use crate::address::dto::AddressDto;
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct StorageDepositReturnUnlockConditionDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        #[serde(rename = "returnAddress")]
+        pub return_address: AddressDto,
+        pub amount: String,
     }
 }

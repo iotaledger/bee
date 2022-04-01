@@ -1,9 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{event::IotaGossipHandlerEvent, id::IotaGossipIdentifier, upgrade::IotaGossipProtocolUpgrade};
-
-use crate::network::origin::Origin;
+use std::{
+    collections::VecDeque,
+    io,
+    task::{Context, Poll},
+};
 
 use libp2p::{
     core::upgrade::OutboundUpgrade,
@@ -16,14 +18,10 @@ use libp2p::{
     },
     Multiaddr,
 };
-
 use log::*;
 
-use std::{
-    collections::VecDeque,
-    io,
-    task::{Context, Poll},
-};
+use super::{event::IotaGossipHandlerEvent, id::IotaGossipIdentifier, upgrade::IotaGossipProtocolUpgrade};
+use crate::network::origin::Origin;
 
 pub struct GossipProtocolHandler {
     /// Exchanged protocol information necessary during negotiation.
@@ -66,9 +64,9 @@ impl ProtocolsHandler for GossipProtocolHandler {
     /// substreams to negotiate the desired protocols.
     ///
     /// > **Note**: The returned `InboundUpgrade` should always accept all the generally
-    /// >           supported protocols, even if in a specific context a particular one is
-    /// >           not supported, (eg. when only allowing one substream at a time for a protocol).
-    /// >           This allows a remote to put the list of supported protocols in a cache.
+    /// > supported protocols, even if in a specific context a particular one is
+    /// > not supported, (eg. when only allowing one substream at a time for a protocol).
+    /// > This allows a remote to put the list of supported protocols in a cache.
     fn listen_protocol(&self) -> SubstreamProtocol<Self::InboundProtocol, Self::InboundOpenInfo> {
         debug!("gossip handler: responding to listen protocol request.");
 

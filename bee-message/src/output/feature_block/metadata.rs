@@ -1,12 +1,12 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use alloc::vec::Vec;
+use core::ops::RangeInclusive;
 
 use packable::{bounded::BoundedU16, prefix::BoxedSlicePrefix};
 
-use alloc::vec::Vec;
-use core::ops::RangeInclusive;
+use crate::Error;
 
 pub(crate) type MetadataFeatureBlockLength =
     BoundedU16<{ *MetadataFeatureBlock::LENGTH_RANGE.start() }, { *MetadataFeatureBlock::LENGTH_RANGE.end() }>;
@@ -34,7 +34,6 @@ impl TryFrom<Vec<u8>> for MetadataFeatureBlock {
 impl MetadataFeatureBlock {
     /// The [`FeatureBlock`](crate::output::FeatureBlock) kind of [`MetadataFeatureBlock`].
     pub const KIND: u8 = 2;
-
     /// Valid lengths for a [`MetadataFeatureBlock`].
     pub const LENGTH_RANGE: RangeInclusive<u16> = 1..=8192;
 
@@ -60,5 +59,18 @@ impl core::fmt::Display for MetadataFeatureBlock {
 impl core::fmt::Debug for MetadataFeatureBlock {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "MetadataFeatureBlock({})", self)
+    }
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct MetadataFeatureBlockDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        pub data: String,
     }
 }

@@ -25,9 +25,9 @@ pub mod unlock_condition;
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, TreasuryOutput, Unspent};
 use bee_message::output::{
-    self, unlock_condition::ImmutableAliasAddressUnlockCondition, Output, OutputId, TokenTag, OUTPUT_INDEX_RANGE,
+    self, unlock_condition::ImmutableAliasAddressUnlockCondition, Output, OutputId, SimpleTokenScheme, TokenScheme,
+    TokenTag, OUTPUT_INDEX_RANGE,
 };
-
 use primitive_types::U256;
 
 /// Generates a random [`OutputId`].
@@ -73,22 +73,24 @@ pub fn rand_alias_output() -> output::AliasOutput {
         .unwrap()
 }
 
-/// Generates a random [`FoundryOutput`](output::FoundryOutput).
-pub fn rand_foundry_output() -> output::FoundryOutput {
-    let feature_blocks = rand_allowed_feature_blocks(output::FoundryOutput::ALLOWED_FEATURE_BLOCKS);
-
+/// Generates a random [`TokenScheme`].
+pub fn rand_token_scheme() -> TokenScheme {
     let max = U256::from(rand_bytes_array()).saturating_add(U256::one());
     let minted = U256::from(rand_bytes_array()) % max.saturating_add(U256::one());
     let melted = U256::from(rand_bytes_array()) % minted.saturating_add(U256::one());
+
+    TokenScheme::Simple(SimpleTokenScheme::new(minted, melted, max).unwrap())
+}
+
+/// Generates a random [`FoundryOutput`](output::FoundryOutput).
+pub fn rand_foundry_output() -> output::FoundryOutput {
+    let feature_blocks = rand_allowed_feature_blocks(output::FoundryOutput::ALLOWED_FEATURE_BLOCKS);
 
     output::FoundryOutput::build(
         rand_number_range(Output::AMOUNT_RANGE),
         rand_number(),
         TokenTag::new(rand_bytes_array()),
-        minted,
-        melted,
-        max,
-        output::TokenScheme::Simple,
+        rand_token_scheme(),
     )
     .unwrap()
     .with_feature_blocks(feature_blocks)

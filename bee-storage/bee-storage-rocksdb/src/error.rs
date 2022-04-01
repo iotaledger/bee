@@ -1,11 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::storage::StorageVersion;
-
 use bee_storage::system::StorageHealth;
-
 use thiserror::Error;
+
+use crate::storage::StorageVersion;
 
 #[derive(Debug, Error)]
 pub enum Error {

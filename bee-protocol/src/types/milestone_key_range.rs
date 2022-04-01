@@ -3,11 +3,10 @@
 
 //! A module that provides a milestone key range type.
 
-use bee_message::milestone::MilestoneIndex;
-
-use serde::{Deserialize, Serialize};
-
 use core::cmp::Ordering;
+
+use bee_message::milestone::MilestoneIndex;
+use serde::{Deserialize, Serialize};
 
 /// A milestone key range is a milestone public key valid for a given interval of milestones.
 #[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]

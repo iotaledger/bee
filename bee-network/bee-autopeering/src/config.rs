@@ -32,15 +32,15 @@
 //! entry_nodes_prefer_ipv6 = true
 //! ```
 
-use crate::multiaddr::AutopeeringMultiaddr;
-
-use serde::Deserialize;
-
 use std::{
     fmt::Debug,
     net::SocketAddr,
     path::{Path, PathBuf},
 };
+
+use serde::Deserialize;
+
+use crate::multiaddr::AutopeeringMultiaddr;
 
 const ENABLED_DEFAULT: bool = false;
 const ENTRY_NODES_PREFER_IPV6_DEFAULT: bool = false;

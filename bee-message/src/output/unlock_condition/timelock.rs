@@ -1,8 +1,6 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{milestone::MilestoneIndex, Error};
-
 use derive_more::From;
 use packable::{
     error::{UnpackError, UnpackErrorExt},
@@ -10,6 +8,8 @@ use packable::{
     unpacker::Unpacker,
     Packable,
 };
+
+use crate::{milestone::MilestoneIndex, Error};
 
 /// Defines a milestone index and/or unix timestamp until which the output can not be unlocked.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
@@ -82,5 +82,28 @@ fn verify_milestone_index_timestamp(milestone_index: MilestoneIndex, timestamp: 
         Err(Error::TimelockUnlockConditionZero)
     } else {
         Ok(())
+    }
+}
+
+#[cfg(feature = "dto")]
+#[allow(missing_docs)]
+pub mod dto {
+    use serde::{Deserialize, Serialize};
+
+    use crate::{
+        dto::{is_zero, is_zero_milestone},
+        milestone::MilestoneIndex,
+    };
+
+    #[derive(Clone, Debug, Serialize, Deserialize)]
+    pub struct TimelockUnlockConditionDto {
+        #[serde(rename = "type")]
+        pub kind: u8,
+        #[serde(rename = "milestoneIndex")]
+        #[serde(skip_serializing_if = "is_zero_milestone", default)]
+        pub milestone_index: MilestoneIndex,
+        #[serde(rename = "unixTime")]
+        #[serde(skip_serializing_if = "is_zero", default)]
+        pub timestamp: u32,
     }
 }
