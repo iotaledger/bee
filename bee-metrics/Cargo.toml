@@ -11,7 +11,7 @@ keywords = [ "iota", "tangle", "bee", "metrics", "prometheus" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-axum = { version = "0.4.8", default-features = false, features = ["http2"] }
+axum = { version = "0.4.8", default-features = false, features = [ "http2" ] }
 parking_lot = { version = "0.12.0", default-features = false }
 prometheus-client = { version = "0.15.1", default-features = false }
 tokio = { version = "1.17.0", default-features = false, features = [ "process" ] }
