@@ -386,7 +386,7 @@ impl StateTransitionVerifier for AliasOutput {
 
             let created_foundries = context.essence.outputs().iter().filter_map(|output| {
                 if let Output::Foundry(foundry) = output {
-                    if foundry.alias_address().alias_id() == &current_state.alias_id
+                    if foundry.alias_address().alias_id() == &next_state.alias_id
                         && !context.input_chains.contains_key(&foundry.chain_id())
                     {
                         Some(foundry)
@@ -401,11 +401,11 @@ impl StateTransitionVerifier for AliasOutput {
             let mut created_foundries_count = 0;
 
             for foundry in created_foundries {
+                created_foundries_count += 1;
+
                 if foundry.serial_number() != current_state.foundry_counter + created_foundries_count {
                     return Err(StateTransitionError::UnsortedCreatedFoundries);
                 }
-
-                created_foundries_count += 1;
             }
 
             if current_state.foundry_counter + created_foundries_count != next_state.foundry_counter {
