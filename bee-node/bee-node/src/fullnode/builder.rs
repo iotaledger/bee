@@ -146,6 +146,10 @@ impl<S: NodeStorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
         // Add the resources that are shared throughout the node.
         let builder = add_node_resources(builder)?;
 
+        // Start the metrics registry worker.
+        let metrics_cfg = builder.config.metrics.clone();
+        let builder = builder.with_worker_cfg::<MetricsRegistryWorker>(metrics_cfg);
+
         // Initialize everything.
         let (gossip_rx, builder) = initialize_gossip_layer(builder)?;
         let (autopeering_rx, builder) = initialize_autopeering(builder).await?;
@@ -273,7 +277,7 @@ fn initialize_ledger<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Full
 
 /// Initializes the protocol.
 fn initialize_protocol<S: NodeStorageBackend>(
-    mut builder: FullNodeBuilder<S>,
+    builder: FullNodeBuilder<S>,
     gossip_events: NetworkEventReceiver,
     autopeering_events: Option<bee_autopeering::event::EventRx>,
 ) -> FullNodeBuilder<S> {
@@ -288,9 +292,6 @@ fn initialize_protocol<S: NodeStorageBackend>(
     } = config.network_spec().clone();
 
     let protocol_cfg = config.protocol.clone();
-
-    let metrics_cfg = builder.config().metrics.clone();
-    builder = builder.with_worker_cfg::<MetricsRegistryWorker>(metrics_cfg);
 
     bee_protocol::workers::init::<FullNode<S>>(
         protocol_cfg,
