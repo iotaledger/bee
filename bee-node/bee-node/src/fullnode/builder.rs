@@ -12,6 +12,7 @@ use bee_autopeering::{
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
+use bee_metrics::Registry;
 use bee_plugin_version_checker::VersionCheckerPlugin;
 use bee_rest_api::endpoints::InitConfigFullNode;
 use bee_runtime::{
@@ -227,7 +228,8 @@ fn add_node_resources<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Res
         .with_resource(config)
         .with_resource(node_info)
         .with_resource(storage)
-        .with_resource(Bus::<TypeId>::default());
+        .with_resource(Bus::<TypeId>::default())
+        .with_resource(Registry::default());
 
     #[cfg(unix)]
     let shutdown_rx = shutdown::shutdown_listener(vec![

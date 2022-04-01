@@ -56,7 +56,6 @@ impl<N: Node> Worker<N> for MetricsRegistryWorker {
 
     #[cfg_attr(feature = "trace", trace_tools::observe)]
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        node.register_resource(Registry::default());
         let registry = node.resource::<Registry>();
 
         let process_metrics = ProcessMetrics::new(config.pid);
