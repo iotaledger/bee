@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use axum::Router;
@@ -23,6 +23,8 @@ pub mod submit_message;
 pub mod tips;
 pub mod transaction_included_message;
 pub mod treasury;
+
+pub(crate) const MAX_RESPONSE_RESULTS: usize = 1000;
 
 pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().nest(

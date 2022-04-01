@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::sync::Arc;
@@ -30,9 +30,9 @@ pub(crate) async fn transaction_included_message<B: StorageBackend>(
     let output_id = OutputId::new(transaction_id, 0).unwrap();
 
     match Fetch::<OutputId, CreatedOutput>::fetch(&*args.storage, &output_id)
-        .map_err(|_| ApiError::ServiceUnavailable("Can not fetch from storage".to_string()))?
+        .map_err(|_| ApiError::ServiceUnavailable("can not fetch from storage".to_string()))?
     {
         Some(output) => message::message(Path(*output.message_id()), Extension(args)).await,
-        None => Err(ApiError::NotFound("Can not find output".to_string())),
+        None => Err(ApiError::NotFound("can not find output".to_string())),
     }
 }

@@ -9,7 +9,7 @@ use axum::{
 
 use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
-pub(crate) enum ApiError {
+pub enum ApiError {
     BadRequest(String),
     NotFound(String),
     ServiceUnavailable(String),

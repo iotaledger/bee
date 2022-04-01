@@ -1,11 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::{
     any::TypeId,
     collections::HashSet,
     sync::{Arc, Mutex},
-    time::Duration,
 };
 
 use axum::{
@@ -121,16 +120,10 @@ pub(crate) async fn white_flag<B: StorageBackend>(
         }
     }
 
-    // TODO
     let mut metadata = WhiteFlagMetadata::new(index, 0);
 
     // Wait for either all parents to get solid or the timeout to expire.
-    let response = match timeout(
-        Duration::from_secs(args.rest_api_config.white_flag_solidification_timeout()),
-        receiver,
-    )
-    .await
-    {
+    let response = match timeout(args.rest_api_config.white_flag_solidification_timeout(), receiver).await {
         Ok(_) => {
             // Did not timeout, parents are solid and white flag can happen.
             consensus::white_flag::<B>(&args.tangle, &args.storage, &parents, &mut metadata)

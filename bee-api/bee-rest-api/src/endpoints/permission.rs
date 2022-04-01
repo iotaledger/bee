@@ -1,27 +1,126 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{marker::PhantomData, sync::Arc};
 
-use std::net::{IpAddr, SocketAddr};
+use auth_helper::jwt::{Claims, JsonWebToken, TokenData};
+use axum::{
+    async_trait,
+    extract::{Extension, FromRequest, OriginalUri, RequestParts, TypedHeader},
+    headers::{authorization::Bearer, Authorization},
+    http::Uri,
+};
+use serde::{Deserialize, Serialize};
 
-pub fn has_permission(
-    route: &'static str,
-    public_routes: Box<[String]>,
-    allowed_ips: Box<[IpAddr]>,
-) -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    warp::addr::remote()
-        .and_then(move |addr: Option<SocketAddr>| {
-            let route = route.to_owned();
-            let public_routes = public_routes.clone();
-            let allowed_ips = allowed_ips.clone();
-            async move {
-                if let Some(v) = addr {
-                    if allowed_ips.contains(&v.ip()) || public_routes.contains(&route) {
-                        return Ok(());
-                    }
-                }
-                Err(reject::custom(CustomRejection::Forbidden))
-            }
-        })
-        .untuple_one()
+use crate::endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
+
+pub const API_AUDIENCE_CLAIM: &str = "api";
+pub const DASHBOARD_AUDIENCE_CLAIM: &str = "dashboard";
+const API_JWT_HINT: &str = "\"aud\":\"api\"";
+#[cfg(feature = "dashboard")]
+const DASHBOARD_JWT_HINT: &str = "\"aud\":\"dashboard\"";
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct JwtAuth<S> {
+    phantom: PhantomData<S>,
+}
+
+#[async_trait]
+impl<B, S> FromRequest<B> for JwtAuth<S>
+where
+    B: Send + Sync,
+    S: StorageBackend,
+{
+    type Rejection = ApiError;
+
+    async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
+        let OriginalUri(uri) = OriginalUri::from_request(req).await.map_err(|_| ApiError::Forbidden)?;
+
+        // Extract the token from the authorization header
+        let jwt = {
+            let TypedHeader(Authorization(bearer)) = TypedHeader::<Authorization<Bearer>>::from_request(req)
+                .await
+                .map_err(|_| ApiError::Forbidden)?;
+            JsonWebToken::from(bearer.token().to_string())
+        };
+
+        let Extension(args) = Extension::<Arc<ApiArgsFullNode<S>>>::from_request(req)
+            .await
+            .map_err(|_| ApiError::Forbidden)?;
+
+        validate_jwt(uri, jwt, args).await?;
+
+        Ok(JwtAuth { phantom: PhantomData })
+    }
+}
+
+async fn validate_jwt<B: StorageBackend>(
+    uri: Uri,
+    jwt: JsonWebToken,
+    args: Arc<ApiArgsFullNode<B>>,
+) -> Result<(), ApiError> {
+    // Decode the JWT payload to find out how to validate it. The `aud` claim will indicate if it's an API
+    // JWT or a Dashboard JWT.
+    let jwt_payload = {
+        let jwt_string = jwt.to_string();
+        // Every JWT consists of 3 parts: 1) header, 2) payload, 3) signature.
+        // The different parts are separated by `.`.
+        let split = jwt_string.split('.').collect::<Vec<_>>();
+        // If there are less or more then 3 parts the given JWT is invalid.
+        if split.len() != 3 {
+            return Err(ApiError::Forbidden);
+        }
+
+        // Get the base64 encoded payload.
+        let encoded_payload = split[1];
+        // Base64-decode the payload to bytes.
+        let decoded_payload_bytes = base64::decode(encoded_payload).map_err(|_| ApiError::Forbidden)?;
+        // Create a UTF-8 string from the decoded bytes.
+        String::from_utf8(decoded_payload_bytes).map_err(|_| ApiError::Forbidden)?
+    };
+
+    if jwt_payload.contains(API_JWT_HINT) {
+        if validate_api_jwt(&jwt, &args).is_ok() && args.rest_api_config.protected_routes().is_match(&uri.to_string()) {
+            return Ok(());
+        }
+    } else {
+        #[cfg(feature = "dashboard")]
+        if jwt_payload.contains(DASHBOARD_JWT_HINT)
+            && validate_dashboard_jwt(&jwt, &args).is_ok()
+            && DASHBOARD_ROUTES.is_match(path.as_str())
+        {
+            return Ok(());
+        }
+    }
+
+    Err(ApiError::Forbidden)
+}
+
+fn validate_api_jwt<B: StorageBackend>(
+    jwt: &JsonWebToken,
+    args: &ApiArgsFullNode<B>,
+) -> Result<TokenData<Claims>, ApiError> {
+    jwt.validate(
+        args.node_id.to_string(),
+        args.rest_api_config.jwt_salt().to_owned(),
+        API_AUDIENCE_CLAIM.to_owned(),
+        false,
+        args.node_keypair.secret().as_ref(),
+    )
+    .map_err(|_| ApiError::Forbidden)
+}
+
+#[cfg(feature = "dashboard")]
+fn validate_dashboard_jwt<B: StorageBackend>(
+    jwt: &JsonWebToken,
+    args: &ApiArgsFullNode<B>,
+) -> Result<TokenData<Claims>, ApiError> {
+    jwt.validate(
+        args.node_id.to_string(),
+        args.dashboard_username.to_owned(),
+        DASHBOARD_AUDIENCE_CLAIM.to_owned(),
+        true,
+        args.node_keypair.secret().as_ref(),
+    )
+    .map_err(|_| ApiError::Forbidden)
 }

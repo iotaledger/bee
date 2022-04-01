@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::sync::Arc;
@@ -49,9 +49,9 @@ pub(crate) async fn info<B: StorageBackend>(Extension(args): Extension<Arc<ApiAr
             },
         },
         metrics: MetricsResponse {
-            messages_per_second: 0.0,            // TODO
-            referenced_messages_per_second: 0.0, // TODO
-            referenced_rate: 0.0,                // TODO
+            messages_per_second: 0f64,            // TODO
+            referenced_messages_per_second: 0f64, // TODO
+            referenced_rate: 0f64,                // TODO
         },
         features: {
             let mut features = Vec::new();

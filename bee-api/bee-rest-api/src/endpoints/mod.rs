@@ -1,16 +1,18 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
 pub mod config;
-// pub mod permission;
 pub mod error;
 pub mod routes;
 pub mod storage;
+
+pub mod permission;
 
 use std::{any::TypeId, sync::Arc};
 
 use async_trait::async_trait;
 use axum::{extract::Extension, http::StatusCode, routing::get, Router};
-use bee_gossip::NetworkCommandSender;
+use bee_gossip::{Keypair, NetworkCommandSender, PeerId};
 use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorker, MessageSubmitterWorkerEvent, PeerManager,
@@ -50,10 +52,14 @@ where
 }
 
 pub struct InitConfigFullNode {
+    pub node_id: PeerId,
+    pub node_keypair: Keypair,
     pub rest_api_config: RestApiConfig,
     pub protocol_config: ProtocolConfig,
     pub network_id: NetworkId,
     pub bech32_hrp: Bech32Hrp,
+    #[cfg(feature = "dashboard")]
+    pub dashboard_username: DashboardUsername,
 }
 
 pub struct InitConfigEntryNode {
@@ -61,20 +67,24 @@ pub struct InitConfigEntryNode {
 }
 
 pub struct ApiArgsFullNode<B: StorageBackend> {
-    pub rest_api_config: RestApiConfig,
-    pub protocol_config: ProtocolConfig,
-    pub network_id: NetworkId,
-    pub bech32_hrp: Bech32Hrp,
-    pub storage: ResourceHandle<B>,
-    pub bus: ResourceHandle<Bus<'static>>,
-    pub node_info: ResourceHandle<NodeInfo>,
-    pub tangle: ResourceHandle<Tangle<B>>,
-    pub peer_manager: ResourceHandle<PeerManager>,
-    pub requested_messages: ResourceHandle<RequestedMessages>,
-    pub network_command_sender: ResourceHandle<NetworkCommandSender>,
-    pub message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
-    pub message_requester: MessageRequesterWorker,
-    pub consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
+    pub(crate) node_id: PeerId,
+    pub(crate) node_keypair: Keypair,
+    pub(crate) rest_api_config: RestApiConfig,
+    pub(crate) protocol_config: ProtocolConfig,
+    pub(crate) network_id: NetworkId,
+    pub(crate) bech32_hrp: Bech32Hrp,
+    pub(crate) storage: ResourceHandle<B>,
+    pub(crate) bus: ResourceHandle<Bus<'static>>,
+    pub(crate) node_info: ResourceHandle<NodeInfo>,
+    pub(crate) tangle: ResourceHandle<Tangle<B>>,
+    pub(crate) peer_manager: ResourceHandle<PeerManager>,
+    pub(crate) requested_messages: ResourceHandle<RequestedMessages>,
+    pub(crate) network_command_sender: ResourceHandle<NetworkCommandSender>,
+    pub(crate) message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+    pub(crate) message_requester: MessageRequesterWorker,
+    pub(crate) consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
+    #[cfg(feature = "dashboard")]
+    pub(crate) dashboard_username: DashboardUsername,
 }
 
 pub struct ApiWorkerFullNode;
@@ -98,10 +108,14 @@ where
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let args = Arc::new(ApiArgsFullNode {
+            node_id: config.node_id,
+            node_keypair: config.node_keypair,
             rest_api_config: config.rest_api_config,
             protocol_config: config.protocol_config,
             network_id: config.network_id,
             bech32_hrp: config.bech32_hrp,
+            #[cfg(feature = "dashboard")]
+            dashboard_username: config.dashboard_username,
             storage: node.storage(),
             bus: node.bus(),
             node_info: node.info(),
@@ -117,13 +131,14 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            // let routes = routes::filter_all(
-            // )
-            // .recover(handle_rejection);
+            use axum::extract::extractor_middleware;
+
+            use crate::endpoints::permission::JwtAuth;
 
             let app = Router::new()
                 .merge(filter_all::<N::Backend>())
-                .layer(Extension(args.clone()));
+                .layer(Extension(args.clone()))
+                .route_layer(extractor_middleware::<JwtAuth<N::Backend>>());
 
             axum::Server::bind(&args.rest_api_config.bind_socket_addr())
                 .serve(app.into_make_service())

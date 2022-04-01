@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::sync::Arc;
@@ -25,7 +25,7 @@ use bee_protocol::workers::{MessageSubmitterError, MessageSubmitterWorkerEvent};
 use futures::channel::oneshot;
 use log::error;
 use packable::PackableExt;
-use serde_json::Value as JsonValue;
+use serde_json::Value;
 
 use crate::{
     endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
@@ -46,15 +46,14 @@ pub(crate) async fn submit_message<B: StorageBackend>(
             submit_message_raw::<B>(bytes.to_vec(), args.clone()).await
         } else {
             submit_message_json::<B>(
-                serde_json::from_slice(&bytes.to_vec())
-                    .map_err(|_| ApiError::BadRequest("invalid JSON".to_string()))?,
+                serde_json::from_slice(&bytes.to_vec()).map_err(|e| ApiError::BadRequest(e.to_string()))?,
                 args.clone(),
             )
             .await
         }
     } else {
         submit_message_json::<B>(
-            serde_json::from_slice(&bytes.to_vec()).map_err(|_| ApiError::BadRequest("invalid JSON".to_string()))?,
+            serde_json::from_slice(&bytes.to_vec()).map_err(|e| ApiError::BadRequest(e.to_string()))?,
             args.clone(),
         )
         .await
@@ -62,7 +61,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
 }
 
 pub(crate) async fn submit_message_json<B: StorageBackend>(
-    value: JsonValue,
+    value: Value,
     args: Arc<ApiArgsFullNode<B>>,
 ) -> Result<Response, ApiError> {
     let protocol_version_json = &value["protocolVersion"];
@@ -74,9 +73,12 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
     // If some fields are missing, it tries to auto-complete them.
 
     if !protocol_version_json.is_null() {
-        let parsed_protocol_version = protocol_version_json.as_u64().ok_or_else(|| {
+        let parsed_protocol_version = u8::try_from(protocol_version_json.as_u64().ok_or_else(|| {
             ApiError::BadRequest("invalid protocol version: expected an unsigned integer < 256".to_string())
-        })? as u8;
+        })?)
+        .map_err(|_| {
+            ApiError::BadRequest("invalid protocol version: expected an unsigned integer < 256".to_string())
+        })?;
 
         if parsed_protocol_version != PROTOCOL_VERSION {
             return Err(ApiError::BadRequest(format!(

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::sync::Arc;
@@ -46,16 +46,19 @@ pub(crate) async fn output<B: StorageBackend>(
     })? {
         (Ok(response), ledger_index) => match response {
             Some(output) => {
-                let is_spent = Fetch::<OutputId, ConsumedOutput>::fetch(&*args.storage, &output_id).map_err(|e| {
-                    error!("unable to fetch the output: {}", e);
-                    ApiError::ServiceUnavailable("unable to fetch the output".to_string())
-                })?;
+                let consumed_output = match Fetch::<OutputId, ConsumedOutput>::fetch(&*args.storage, &output_id) {
+                    Err(e) => {
+                        error!("unable to fetch the output: {}", e);
+                        return Err(ApiError::ServiceUnavailable("unable to fetch the output".to_string()));
+                    }
+                    Ok(output) => output,
+                };
 
                 Ok(Json(OutputResponse {
                     message_id: output.message_id().to_string(),
                     transaction_id: output_id.transaction_id().to_string(),
                     output_index: output_id.index(),
-                    is_spent: is_spent.is_some(),
+                    is_spent: consumed_output.is_some(),
                     // TODO
                     milestone_index_spent: None,
                     // TODO

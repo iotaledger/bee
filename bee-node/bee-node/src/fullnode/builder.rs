@@ -387,10 +387,14 @@ async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
     let network_id = (network_name, network_id);
 
     let init_config = InitConfigFullNode {
+        node_id: config.local.peer_id(),
+        node_keypair: config.local.keypair().clone(),
         rest_api_config: config.rest_api.clone(),
         protocol_config: config.protocol.clone(),
         network_id,
-        bech32_hrp: hrp
+        bech32_hrp: hrp,
+        #[cfg(feature = "dashboard")]
+        dashboard_username: config.dashboard.auth().user().to_owned(),
     };
 
     let builder =
