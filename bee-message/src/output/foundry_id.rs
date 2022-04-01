@@ -3,7 +3,10 @@
 
 use packable::{packer::SlicePacker, Packable};
 
-use crate::{address::AliasAddress, output::AliasId};
+use crate::{
+    address::{Address, AliasAddress},
+    output::AliasId,
+};
 
 impl_id!(pub FoundryId, 26, "Defines the unique identifier of a foundry.");
 
@@ -17,7 +20,7 @@ impl FoundryId {
         let mut packer = SlicePacker::new(&mut bytes);
 
         // PANIC: packing to an array of the correct length can't fail.
-        alias_address.pack(&mut packer).unwrap();
+        Address::Alias(*alias_address).pack(&mut packer).unwrap();
         serial_number.pack(&mut packer).unwrap();
         token_scheme_kind.pack(&mut packer).unwrap();
 
