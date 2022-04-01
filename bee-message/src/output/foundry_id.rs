@@ -3,7 +3,10 @@
 
 use packable::{packer::SlicePacker, Packable};
 
-use crate::{address::AliasAddress, output::AliasId};
+use crate::{
+    address::{Address, AliasAddress},
+    output::AliasId,
+};
 
 impl_id!(pub FoundryId, 26, "Defines the unique identifier of a foundry.");
 
@@ -17,7 +20,7 @@ impl FoundryId {
         let mut packer = SlicePacker::new(&mut bytes);
 
         // PANIC: packing to an array of the correct length can't fail.
-        alias_address.pack(&mut packer).unwrap();
+        Address::Alias(*alias_address).pack(&mut packer).unwrap();
         serial_number.pack(&mut packer).unwrap();
         token_scheme_kind.pack(&mut packer).unwrap();
 
@@ -27,14 +30,14 @@ impl FoundryId {
     /// Returns the [`AliasAddress`] of the [`FoundryId`].
     pub fn alias_address(&self) -> AliasAddress {
         // PANIC: the lengths are known.
-        AliasAddress::from(AliasId::new(self.0[0..AliasId::LENGTH].try_into().unwrap()))
+        AliasAddress::from(AliasId::new(self.0[1..AliasId::LENGTH + 1].try_into().unwrap()))
     }
 
     /// Returns the serial number of the [`FoundryId`].
     pub fn serial_number(&self) -> u32 {
         // PANIC: the lengths are known.
         u32::from_le_bytes(
-            self.0[AliasId::LENGTH..AliasId::LENGTH + core::mem::size_of::<u32>()]
+            self.0[AliasId::LENGTH + 1..AliasId::LENGTH + 1 + core::mem::size_of::<u32>()]
                 .try_into()
                 .unwrap(),
         )
