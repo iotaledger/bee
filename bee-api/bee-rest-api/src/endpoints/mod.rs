@@ -137,8 +137,8 @@ where
 
             let app = Router::new()
                 .merge(filter_all::<N::Backend>())
-                .layer(Extension(args.clone()))
-                .route_layer(extractor_middleware::<Auth<N::Backend>>());
+                .route_layer(extractor_middleware::<Auth<N::Backend>>())
+                .layer(Extension(args.clone()));
 
             axum::Server::bind(&args.rest_api_config.bind_socket_addr())
                 .serve(app.into_make_service())
