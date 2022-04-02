@@ -6,12 +6,17 @@ pub mod error;
 pub mod routes;
 pub mod storage;
 
-pub mod permission;
+pub mod auth;
 
 use std::{any::TypeId, sync::Arc};
 
 use async_trait::async_trait;
-use axum::{extract::Extension, http::StatusCode, routing::get, Router};
+use axum::{
+    extract::{extractor_middleware, Extension},
+    http::StatusCode,
+    routing::get,
+    Router,
+};
 use bee_gossip::{Keypair, NetworkCommandSender, PeerId};
 use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
 use bee_protocol::workers::{
@@ -30,7 +35,7 @@ use log::info;
 use storage::StorageBackend;
 use tokio::sync::mpsc;
 
-use crate::endpoints::routes::filter_all;
+use crate::endpoints::{auth::Auth, routes::filter_all};
 
 pub(crate) type NetworkId = (String, u64);
 pub(crate) type Bech32Hrp = String;
@@ -130,10 +135,6 @@ where
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
-
-            use axum::extract::extractor_middleware;
-
-            use crate::endpoints::permission::Auth;
 
             let app = Router::new()
                 .merge(filter_all::<N::Backend>())

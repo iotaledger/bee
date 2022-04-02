@@ -42,7 +42,7 @@ where
 
         // Check if the requested endpoint is open for public use.
         if args.rest_api_config.public_routes().is_match(&uri.to_string()) {
-            return Ok(Auth { phantom: PhantomData })
+            return Ok(Auth { phantom: PhantomData });
         }
 
         // Extract the token from the authorization header
