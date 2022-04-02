@@ -41,7 +41,7 @@ where
             .map_err(|_| ApiError::Forbidden)?;
 
         // Check if the requested endpoint is open for public use.
-        if args.rest_api_config.public_routes().is_match(path.as_str()) {
+        if args.rest_api_config.public_routes().is_match(&uri.to_string()) {
             return Ok(Auth { phantom: PhantomData })
         }
 
