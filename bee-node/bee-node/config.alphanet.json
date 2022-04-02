@@ -83,32 +83,23 @@
   },
   "restApi": {
     "bindAddress": "/ip4/0.0.0.0/tcp/14265",
-    "featureProofOfWork": true,
+    "jwtSalt": "Bee",
     "publicRoutes": [
       "/health",
       "/api/v2/info",
       "/api/v2/tips",
-      "/api/v2/messages",
-      "/api/v2/messages/:messageId",
-      "/api/v2/messages/:messageId/metadata",
-      "/api/v2/messages/:messageId/raw",
-      "/api/v2/messages/:messageId/children",
-      "/api/v2/outputs/:outputId",
-      "/api/v2/addresses/:address",
-      "/api/v2/addresses/ed25519/:address",
-      "/api/v2/addresses/:address/outputs",
-      "/api/v2/addresses/ed25519/:address/outputs",
-      "/api/v2/receipts",
-      "/api/v2/receipts/:milestoneIndex",
+      "/api/v2/messages*",
+      "/api/v2/transactions*",
+      "/api/v2/milestones*",
+      "/api/v2/outputs*",
       "/api/v2/treasury",
-      "/api/v2/transactions/:transactionId/included-message",
-      "/api/v2/milestones/:milestoneIndex",
-      "/api/v2/milestones/:milestoneIndex/utxo-changes"
+      "/api/v2/receipts*"
     ],
-    "allowedIps": [
-      "127.0.0.1",
-      "::1"
+    "protectedRoutes": [
+      "/api/v2/*",
+      "/api/plugins/*"
     ],
+    "featureProofOfWork": true,
     "whiteFlagSolidificationTimeout": 2
   },
   "snapshot": {
