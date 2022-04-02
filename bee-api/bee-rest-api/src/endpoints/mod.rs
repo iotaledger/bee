@@ -133,12 +133,12 @@ where
 
             use axum::extract::extractor_middleware;
 
-            use crate::endpoints::permission::JwtAuth;
+            use crate::endpoints::permission::Auth;
 
             let app = Router::new()
                 .merge(filter_all::<N::Backend>())
                 .layer(Extension(args.clone()))
-                .route_layer(extractor_middleware::<JwtAuth<N::Backend>>());
+                .route_layer(extractor_middleware::<Auth<N::Backend>>());
 
             axum::Server::bind(&args.rest_api_config.bind_socket_addr())
                 .serve(app.into_make_service())

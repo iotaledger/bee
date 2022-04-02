@@ -21,12 +21,12 @@ const API_JWT_HINT: &str = "\"aud\":\"api\"";
 const DASHBOARD_JWT_HINT: &str = "\"aud\":\"dashboard\"";
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct JwtAuth<S> {
+pub struct Auth<S> {
     phantom: PhantomData<S>,
 }
 
 #[async_trait]
-impl<B, S> FromRequest<B> for JwtAuth<S>
+impl<B, S> FromRequest<B> for Auth<S>
 where
     B: Send + Sync,
     S: StorageBackend,
@@ -36,6 +36,15 @@ where
     async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
         let OriginalUri(uri) = OriginalUri::from_request(req).await.map_err(|_| ApiError::Forbidden)?;
 
+        let Extension(args) = Extension::<Arc<ApiArgsFullNode<S>>>::from_request(req)
+            .await
+            .map_err(|_| ApiError::Forbidden)?;
+
+        // Check if the requested endpoint is open for public use.
+        if args.rest_api_config.public_routes().is_match(path.as_str()) {
+            return Ok(Auth { phantom: PhantomData })
+        }
+
         // Extract the token from the authorization header
         let jwt = {
             let TypedHeader(Authorization(bearer)) = TypedHeader::<Authorization<Bearer>>::from_request(req)
@@ -44,13 +53,9 @@ where
             JsonWebToken::from(bearer.token().to_string())
         };
 
-        let Extension(args) = Extension::<Arc<ApiArgsFullNode<S>>>::from_request(req)
-            .await
-            .map_err(|_| ApiError::Forbidden)?;
-
         validate_jwt(uri, jwt, args).await?;
 
-        Ok(JwtAuth { phantom: PhantomData })
+        Ok(Auth { phantom: PhantomData })
     }
 }
 
