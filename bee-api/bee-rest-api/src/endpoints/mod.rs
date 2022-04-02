@@ -196,6 +196,6 @@ where
     }
 }
 
-async fn fallback(uri: Uri) -> impl IntoResponse {
+async fn fallback() -> impl IntoResponse {
     ApiError::Forbidden
 }
