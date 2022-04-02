@@ -33,12 +33,11 @@ use bee_runtime::{
 };
 use bee_tangle::{Tangle, TangleWorker};
 use config::RestApiConfig;
-use endpoints::error::ApiError;
 use log::info;
 use storage::StorageBackend;
 use tokio::sync::mpsc;
 
-use crate::endpoints::{auth::Auth, routes::filter_all};
+use crate::endpoints::{auth::Auth, error::ApiError, routes::filter_all};
 
 pub(crate) type NetworkId = (String, u64);
 pub(crate) type Bech32Hrp = String;
