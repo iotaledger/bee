@@ -13,6 +13,7 @@ use std::{any::TypeId, sync::Arc};
 use async_trait::async_trait;
 use axum::{
     extract::{extractor_middleware, Extension},
+    handler::Handler,
     http::StatusCode,
     routing::get,
     Router,
@@ -31,6 +32,7 @@ use bee_runtime::{
 };
 use bee_tangle::{Tangle, TangleWorker};
 use config::RestApiConfig;
+use endpoints::error::ApiError;
 use log::info;
 use storage::StorageBackend;
 use tokio::sync::mpsc;
@@ -139,7 +141,8 @@ where
             let app = Router::new()
                 .merge(filter_all::<N::Backend>())
                 .route_layer(extractor_middleware::<Auth<N::Backend>>())
-                .layer(Extension(args.clone()));
+                .layer(Extension(args.clone()))
+                .fallback(fallback.into_service());
 
             axum::Server::bind(&args.rest_api_config.bind_socket_addr())
                 .serve(app.into_make_service())
@@ -174,7 +177,9 @@ where
                 StatusCode::OK
             }
 
-            let app = Router::new().route("/health", get(health_handler));
+            let app = Router::new()
+                .route("/health", get(health_handler))
+                .fallback(fallback.into_service());
 
             axum::Server::bind(&config.rest_api_config.bind_socket_addr())
                 .serve(app.into_make_service())
@@ -189,4 +194,8 @@ where
 
         Ok(Self)
     }
+}
+
+async fn fallback(uri: Uri) -> impl IntoResponse {
+    ApiError::Forbidden
 }
