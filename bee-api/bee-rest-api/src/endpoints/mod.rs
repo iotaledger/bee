@@ -15,6 +15,7 @@ use axum::{
     extract::{extractor_middleware, Extension},
     handler::Handler,
     http::StatusCode,
+    response::IntoResponse,
     routing::get,
     Router,
 };
