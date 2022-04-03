@@ -117,9 +117,7 @@ fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<(), 
 
         funds_sum = funds_sum
             .checked_add(funds.amount())
-            .ok_or(Error::InvalidReceiptFundsSum(
-                funds_sum as u128 + funds.amount() as u128,
-            ))?;
+            .ok_or_else(|| Error::InvalidReceiptFundsSum(funds_sum as u128 + funds.amount() as u128))?;
 
         if funds_sum > IOTA_SUPPLY {
             return Err(Error::InvalidReceiptFundsSum(funds_sum as u128));

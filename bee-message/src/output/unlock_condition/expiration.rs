@@ -70,9 +70,9 @@ impl ExpirationUnlockCondition {
             } else {
                 None
             }
-        } else if *self.milestone_index() != 0 && milestone_index >= self.milestone_index() {
-            Some(&self.return_address)
-        } else if self.timestamp() != 0 && timestamp >= self.timestamp() {
+        } else if *self.milestone_index() != 0 && milestone_index >= self.milestone_index()
+            || self.timestamp() != 0 && timestamp >= self.timestamp()
+        {
             Some(&self.return_address)
         } else {
             None

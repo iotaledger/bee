@@ -203,25 +203,25 @@ pub fn semantic_validation(
     for ((output_id, consumed_output), unlock_block) in inputs.iter().zip(unlock_blocks.iter()) {
         let (conflict, amount, consumed_native_tokens, unlock_conditions) = match consumed_output {
             Output::Basic(output) => (
-                output.unlock(output_id, unlock_block, &inputs, &mut context),
+                output.unlock(output_id, unlock_block, inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),
             ),
             Output::Alias(output) => (
-                output.unlock(output_id, unlock_block, &inputs, &mut context),
+                output.unlock(output_id, unlock_block, inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),
             ),
             Output::Foundry(output) => (
-                output.unlock(output_id, unlock_block, &inputs, &mut context),
+                output.unlock(output_id, unlock_block, inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),
             ),
             Output::Nft(output) => (
-                output.unlock(output_id, unlock_block, &inputs, &mut context),
+                output.unlock(output_id, unlock_block, inputs, &mut context),
                 output.amount(),
                 output.native_tokens(),
                 output.unlock_conditions(),
