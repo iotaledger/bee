@@ -23,7 +23,7 @@ pub use self::{
     state_controller_address::StateControllerAddressUnlockCondition,
     storage_deposit_return::StorageDepositReturnUnlockCondition, timelock::TimelockUnlockCondition,
 };
-use crate::{create_bitflags, Error};
+use crate::{address::Address, create_bitflags, milestone::MilestoneIndex, Error};
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, Packable)]
@@ -231,6 +231,19 @@ impl UnlockConditions {
         } else {
             None
         }
+    }
+
+    /// Returns the address to be unlocked.
+    #[inline(always)]
+    pub fn locked_address<'a>(
+        &'a self,
+        address: &'a Address,
+        milestone_index: MilestoneIndex,
+        milestone_timestamp: u64,
+    ) -> &'a Address {
+        self.expiration()
+            .and_then(|e| e.return_address_expired(milestone_index, milestone_timestamp as u32))
+            .unwrap_or(address)
     }
 }
 

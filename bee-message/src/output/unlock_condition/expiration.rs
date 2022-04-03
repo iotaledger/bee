@@ -61,6 +61,23 @@ impl ExpirationUnlockCondition {
     pub fn timestamp(&self) -> u32 {
         self.timestamp
     }
+
+    /// Returns the return address if the condition has expired.
+    pub fn return_address_expired(&self, milestone_index: MilestoneIndex, timestamp: u32) -> Option<&Address> {
+        if *self.milestone_index() != 0 && self.timestamp() != 0 {
+            if milestone_index >= self.milestone_index() && timestamp >= self.timestamp() {
+                Some(&self.return_address)
+            } else {
+                None
+            }
+        } else if *self.milestone_index() != 0 && milestone_index >= self.milestone_index() {
+            Some(&self.return_address)
+        } else if self.timestamp() != 0 && timestamp >= self.timestamp() {
+            Some(&self.return_address)
+        } else {
+            None
+        }
+    }
 }
 
 impl Packable for ExpirationUnlockCondition {
