@@ -8,8 +8,9 @@ use primitive_types::U256;
 
 use crate::{
     address::Address,
+    error::Error,
     milestone::MilestoneIndex,
-    output::{create_inputs_commitment, ChainId, Output, OutputId, TokenId},
+    output::{create_inputs_commitment, ChainId, Output, OutputId, TokenId, UnlockCondition},
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     unlock_block::UnlockBlocks,
 };
@@ -185,4 +186,173 @@ impl<'a> ValidationContext<'a> {
             simple_deposits: HashMap::new(),
         }
     }
+}
+
+///
+pub fn semantic_validation(
+    mut context: ValidationContext,
+    inputs: &[(OutputId, &Output)],
+    unlock_blocks: &UnlockBlocks,
+) -> Result<ConflictReason, Error> {
+    // Validation of the inputs commitment.
+    if context.essence.inputs_commitment() != &context.inputs_commitment {
+        return Ok(ConflictReason::InputsCommitmentsMismatch);
+    }
+
+    // Validation of inputs.
+    for ((output_id, consumed_output), unlock_block) in inputs.iter().zip(unlock_blocks.iter()) {
+        let (conflict, amount, consumed_native_tokens, unlock_conditions) = match consumed_output {
+            Output::Basic(output) => (
+                output.unlock(output_id, unlock_block, &inputs, &mut context),
+                output.amount(),
+                output.native_tokens(),
+                output.unlock_conditions(),
+            ),
+            Output::Alias(output) => (
+                output.unlock(output_id, unlock_block, &inputs, &mut context),
+                output.amount(),
+                output.native_tokens(),
+                output.unlock_conditions(),
+            ),
+            Output::Foundry(output) => (
+                output.unlock(output_id, unlock_block, &inputs, &mut context),
+                output.amount(),
+                output.native_tokens(),
+                output.unlock_conditions(),
+            ),
+            Output::Nft(output) => (
+                output.unlock(output_id, unlock_block, &inputs, &mut context),
+                output.amount(),
+                output.native_tokens(),
+                output.unlock_conditions(),
+            ),
+            _ => return Err(Error::UnsupportedOutputKind(consumed_output.kind())),
+        };
+
+        if let Err(conflict) = conflict {
+            return Ok(conflict);
+        }
+
+        if let Some(timelock) = unlock_conditions.timelock() {
+            if *timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index() {
+                return Ok(ConflictReason::TimelockMilestoneIndex);
+            }
+            if timelock.timestamp() != 0 && context.milestone_timestamp < timelock.timestamp() as u64 {
+                return Ok(ConflictReason::TimelockUnix);
+            }
+        }
+
+        if let Some(storage_deposit_return) = unlock_conditions.storage_deposit_return() {
+            let amount = context
+                .storage_deposit_returns
+                .entry(*storage_deposit_return.return_address())
+                .or_default();
+
+            *amount = amount
+                .checked_add(storage_deposit_return.amount())
+                .ok_or(Error::StorageDepositReturnOverflow)?;
+        }
+
+        context.input_amount = context
+            .input_amount
+            .checked_add(amount)
+            .ok_or(Error::ConsumedAmountOverflow)?;
+
+        for native_token in consumed_native_tokens.iter() {
+            let native_token_amount = context.input_native_tokens.entry(*native_token.token_id()).or_default();
+
+            *native_token_amount = native_token_amount
+                .checked_add(*native_token.amount())
+                .ok_or(Error::ConsumedNativeTokensAmountOverflow)?;
+        }
+    }
+
+    // Validation of outputs.
+    for created_output in context.essence.outputs() {
+        let (amount, created_native_tokens, feature_blocks) = match created_output {
+            Output::Basic(output) => {
+                if let [UnlockCondition::Address(address)] = output.unlock_conditions().as_ref() {
+                    if output.feature_blocks().is_empty() {
+                        let amount = context.simple_deposits.entry(*address.address()).or_default();
+
+                        *amount = amount
+                            .checked_add(output.amount())
+                            .ok_or(Error::CreatedAmountOverflow)?;
+                    }
+                }
+                (output.amount(), output.native_tokens(), output.feature_blocks())
+            }
+            Output::Alias(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
+            Output::Foundry(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
+            Output::Nft(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
+            _ => return Err(Error::UnsupportedOutputKind(created_output.kind())),
+        };
+
+        if let Some(sender) = feature_blocks.sender() {
+            if !context.unlocked_addresses.contains(sender.address()) {
+                return Ok(ConflictReason::UnverifiedSender);
+            }
+        }
+
+        context.output_amount = context
+            .output_amount
+            .checked_add(amount)
+            .ok_or(Error::CreatedAmountOverflow)?;
+
+        for native_token in created_native_tokens.iter() {
+            let native_token_amount = *context
+                .output_native_tokens
+                .entry(*native_token.token_id())
+                .or_default();
+
+            native_token_amount
+                .checked_add(*native_token.amount())
+                .ok_or(Error::CreatedNativeTokensAmountOverflow)?;
+        }
+    }
+
+    // Validation of storage deposit returns.
+    for (return_address, return_amount) in context.storage_deposit_returns.iter() {
+        if let Some(deposit_amount) = context.simple_deposits.get(return_address) {
+            if deposit_amount < return_amount {
+                return Ok(ConflictReason::StorageDepositReturnMismatch);
+            }
+        } else {
+            return Ok(ConflictReason::StorageDepositReturnMismatch);
+        }
+    }
+
+    // Validation of amounts.
+    if context.input_amount != context.output_amount {
+        return Ok(ConflictReason::CreatedConsumedAmountMismatch);
+    }
+
+    // Validation of native tokens.
+    if context.input_native_tokens != context.output_native_tokens {
+        return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
+    }
+
+    // Validation of state creations and transitions.
+    for (chain_id, current_state) in context.input_chains.iter() {
+        if Output::verify_state_transition(
+            Some(current_state),
+            context.output_chains.get(chain_id).map(core::ops::Deref::deref),
+            &context,
+        )
+        .is_err()
+        {
+            return Ok(ConflictReason::SemanticValidationFailed);
+        }
+    }
+
+    // Validation of state destructions.
+    for (chain_id, next_state) in context.output_chains.iter() {
+        if context.input_chains.get(chain_id).is_none()
+            && Output::verify_state_transition(None, Some(next_state), &context).is_err()
+        {
+            return Ok(ConflictReason::SemanticValidationFailed);
+        }
+    }
+
+    Ok(ConflictReason::None)
 }

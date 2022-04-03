@@ -26,6 +26,10 @@ use crate::{
 #[derive(Debug, PartialEq)]
 #[allow(missing_docs)]
 pub enum Error {
+    ConsumedAmountOverflow,
+    ConsumedNativeTokensAmountOverflow,
+    CreatedAmountOverflow,
+    CreatedNativeTokensAmountOverflow,
     CryptoError(CryptoError),
     DuplicateSignatureUnlockBlock(u16),
     DuplicateUtxo(UtxoInput),
@@ -102,11 +106,13 @@ pub enum Error {
     SelfControlledAliasOutput(AliasId),
     SelfDepositNft(NftId),
     SignaturePublicKeyMismatch { expected: String, actual: String },
+    StorageDepositReturnOverflow,
     TailTransactionHashNotUnique { previous: usize, current: usize },
     TimelockUnlockConditionZero,
     UnallowedFeatureBlock { index: usize, kind: u8 },
     UnallowedUnlockCondition { index: usize, kind: u8 },
     UnlockConditionsNotUniqueSorted,
+    UnsupportedOutputKind(u8),
 }
 
 #[cfg(feature = "std")]
@@ -115,6 +121,10 @@ impl std::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Error::ConsumedAmountOverflow => write!(f, "consumed amount overflow"),
+            Error::ConsumedNativeTokensAmountOverflow => write!(f, "consumed native tokens amount overflow"),
+            Error::CreatedAmountOverflow => write!(f, "created amount overflow"),
+            Error::CreatedNativeTokensAmountOverflow => write!(f, "created native tokens amount overflow"),
             Error::CryptoError(e) => write!(f, "cryptographic error: {}", e),
             Error::DuplicateSignatureUnlockBlock(index) => {
                 write!(f, "duplicate signature unlock block at index: {0}", index)
@@ -288,6 +298,9 @@ impl fmt::Display for Error {
                     expected, actual
                 )
             }
+            Error::StorageDepositReturnOverflow => {
+                write!(f, "storage deposit return overflow",)
+            }
             Error::TailTransactionHashNotUnique { previous, current } => {
                 write!(
                     f,
@@ -308,6 +321,7 @@ impl fmt::Display for Error {
                 write!(f, "unallowed unlock condition at index {} with kind {}", index, kind)
             }
             Error::UnlockConditionsNotUniqueSorted => write!(f, "unlock conditions are not unique and/or sorted"),
+            Error::UnsupportedOutputKind(k) => write!(f, "unsupported output kind: {k}"),
         }
     }
 }
