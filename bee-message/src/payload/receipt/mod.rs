@@ -16,6 +16,7 @@ use packable::{bounded::BoundedU16, prefix::VecPrefix, Packable, PackableExt};
 pub(crate) use self::migrated_funds_entry::MigratedFundsAmount;
 pub use self::{migrated_funds_entry::MigratedFundsEntry, tail_transaction_hash::TailTransactionHash};
 use crate::{
+    constant::IOTA_SUPPLY,
     milestone::MilestoneIndex,
     output::OUTPUT_COUNT_RANGE,
     payload::{Payload, TreasuryTransactionPayload},
@@ -104,12 +105,24 @@ fn verify_funds<const VERIFY: bool>(funds: &[MigratedFundsEntry]) -> Result<(), 
     }
 
     let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
+    let mut funds_sum: u64 = 0;
+
     for (index, funds) in funds.iter().enumerate() {
         if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash().as_ref(), index) {
             return Err(Error::TailTransactionHashNotUnique {
                 previous,
                 current: index,
             });
+        }
+
+        funds_sum = funds_sum
+            .checked_add(funds.amount())
+            .ok_or(Error::InvalidReceiptFundsSum(
+                funds_sum as u128 + funds.amount() as u128,
+            ))?;
+
+        if funds_sum > IOTA_SUPPLY {
+            return Err(Error::InvalidReceiptFundsSum(funds_sum as u128));
         }
     }
 

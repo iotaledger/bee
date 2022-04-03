@@ -64,6 +64,7 @@ pub enum Error {
     InvalidPayloadLength { expected: usize, actual: usize },
     InvalidPowScoreValues { nps: u32, npsmi: u32 },
     InvalidReceiptFundsCount(<ReceiptFundsCount as TryFrom<usize>>::Error),
+    InvalidReceiptFundsSum(u128),
     InvalidReferenceIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
     InvalidSignature,
     InvalidSignatureKind(u8),
@@ -203,6 +204,7 @@ impl fmt::Display for Error {
                 nps, npsmi
             ),
             Error::InvalidReceiptFundsCount(count) => write!(f, "invalid receipt funds count: {}", count),
+            Error::InvalidReceiptFundsSum(sum) => write!(f, "invalid receipt amount sum: {sum}"),
             Error::InvalidReferenceIndex(index) => write!(f, "invalid reference index: {}", index),
             Error::InvalidSignature => write!(f, "invalid signature provided"),
             Error::InvalidSignatureKind(k) => write!(f, "invalid signature kind: {}", k),
