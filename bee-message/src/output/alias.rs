@@ -320,18 +320,22 @@ impl AliasOutput {
         };
         let next_state = context.output_chains.get(&ChainId::from(alias_id));
 
-        let locked_address = match next_state {
-            Some(Output::Alias(next_state)) => {
-                if self.state_index() == next_state.state_index() {
-                    self.governor_address()
-                } else {
-                    self.state_controller_address()
+        let locked_address = self.unlock_conditions().locked_address(
+            match next_state {
+                Some(Output::Alias(next_state)) => {
+                    if self.state_index() == next_state.state_index() {
+                        self.governor_address()
+                    } else {
+                        self.state_controller_address()
+                    }
                 }
-            }
-            None => self.governor_address(),
-            // The next state can only be an alias output since it is identified by an alias chain identifier.
-            Some(_) => unreachable!(),
-        };
+                None => self.governor_address(),
+                // The next state can only be an alias output since it is identified by an alias chain identifier.
+                Some(_) => unreachable!(),
+            },
+            context.milestone_index,
+            context.milestone_timestamp,
+        );
 
         locked_address.unlock(unlock_block, inputs, context)?;
 

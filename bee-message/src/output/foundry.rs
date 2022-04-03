@@ -274,6 +274,12 @@ impl FoundryOutput {
     ) -> Result<(), ConflictReason> {
         let locked_address = Address::from(*self.alias_address());
 
+        let locked_address = self.unlock_conditions().locked_address(
+            &locked_address,
+            context.milestone_index,
+            context.milestone_timestamp,
+        );
+
         locked_address.unlock(unlock_block, inputs, context)
     }
 }
@@ -282,11 +288,17 @@ impl StateTransitionVerifier for FoundryOutput {
     fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
         let alias_chain_id = ChainId::from(*next_state.alias_address().alias_id());
 
-        if let (Some(_input_alias), Some(_output_alias)) = (
+        if let (Some(Output::Alias(input_alias)), Some(Output::Alias(output_alias))) = (
             context.input_chains.get(&alias_chain_id),
             context.output_chains.get(&alias_chain_id),
         ) {
-            // TODO check serial
+            if input_alias.foundry_counter() >= next_state.serial_number()
+                || next_state.serial_number() > output_alias.foundry_counter()
+            {
+                return Err(StateTransitionError::InconsistentFoundrySerialNumber);
+            }
+        } else {
+            return Err(StateTransitionError::MissingAliasForFoundry);
         }
 
         Ok(())
