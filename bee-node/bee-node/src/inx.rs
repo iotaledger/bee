@@ -4,6 +4,7 @@
 use std::pin::Pin;
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, LedgerIndex, Unspent};
+use bee_ledger::workers::event::LedgerUpdated;
 use bee_message::{
     milestone::MilestoneIndex, output::OutputId, payload::Payload, semantic::ConflictReason, Message, MessageId,
 };
@@ -440,7 +441,60 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
         &self,
         request: Request<proto::LedgerUpdateRequest>,
     ) -> Result<Response<Self::ListenToLedgerUpdatesStream>, Status> {
-        todo!()
+        let proto::LedgerUpdateRequest { start_milestone_index } = request.into_inner();
+
+        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+
+        // FIXME: `TypeId` might not be good enough
+        self.bus.add_listener::<Self, LedgerUpdated, _>(move |event| {
+            let milestone_index = *event.milestone_index;
+            if milestone_index >= start_milestone_index {
+                tx.send(Ok(proto::LedgerUpdate {
+                    milestone_index,
+                    consumed: event
+                        .consumed_outputs
+                        .iter()
+                        .map(|(output_id, (created_output, consumed_output))| proto::LedgerSpent {
+                            output: Some(proto::LedgerOutput {
+                                output_id: Some(proto::OutputId {
+                                    id: output_id.pack_to_vec(),
+                                }),
+                                message_id: Some(proto::MessageId {
+                                    id: created_output.message_id().as_ref().to_vec(),
+                                }),
+                                milestone_index_booked: *created_output.milestone_index(),
+                                milestone_timestamp_booked: created_output.milestone_timestamp(),
+                                output: created_output.inner().pack_to_vec(),
+                            }),
+                            milestone_index_spent: *consumed_output.milestone_index(),
+                            milestone_timestamp_spent: consumed_output.milestone_timestamp(),
+                            transaction_id_spent: consumed_output.target().pack_to_vec(),
+                        })
+                        .collect(),
+                    created: event
+                        .created_outputs
+                        .iter()
+                        .map(|(output_id, created_output)| proto::LedgerOutput {
+                            output_id: Some(proto::OutputId {
+                                id: output_id.pack_to_vec(),
+                            }),
+                            message_id: Some(proto::MessageId {
+                                id: created_output.message_id().as_ref().to_vec(),
+                            }),
+                            milestone_index_booked: *created_output.milestone_index(),
+                            milestone_timestamp_booked: created_output.milestone_timestamp(),
+                            output: created_output.inner().pack_to_vec(),
+                        })
+                        .collect(),
+                }))
+                // FIXME: unwrap
+                .unwrap();
+            }
+        });
+
+        Ok(Response::new(Box::pin(
+            tokio_stream::wrappers::UnboundedReceiverStream::new(rx),
+        )))
     }
 
     async fn read_output(&self, request: Request<proto::OutputId>) -> Result<Response<proto::OutputResponse>, Status> {
