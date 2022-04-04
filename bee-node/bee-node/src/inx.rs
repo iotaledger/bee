@@ -4,7 +4,7 @@
 use std::pin::Pin;
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, LedgerIndex, Unspent};
-use bee_ledger::workers::event::LedgerUpdated;
+use bee_ledger::workers::event::{LedgerUpdated, ReceiptCreated};
 use bee_message::{
     milestone::MilestoneIndex, output::OutputId, payload::Payload, semantic::ConflictReason, Message, MessageId,
 };
@@ -553,7 +553,21 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
         &self,
         request: Request<proto::NoParams>,
     ) -> Result<Response<Self::ListenToMigrationReceiptsStream>, Status> {
-        todo!()
+        let proto::NoParams {} = request.into_inner();
+
+        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+
+        self.bus.add_listener::<Self, ReceiptCreated, _>(move |event| {
+            tx.send(Ok(proto::RawReceipt {
+                data: event.0.pack_to_vec(),
+            }))
+            // FIXME: unwrap
+            .unwrap();
+        });
+
+        Ok(Response::new(Box::pin(
+            tokio_stream::wrappers::UnboundedReceiverStream::new(rx),
+        )))
     }
 
     async fn register_api_route(
