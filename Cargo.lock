@@ -377,7 +377,7 @@ version = "1.0.0-alpha1"
 dependencies = [
  "anymap",
  "async-trait",
- "auth-helper 0.1.0",
+ "auth-helper 0.2.0",
  "bee-autopeering",
  "bee-gossip",
  "bee-ledger",
