@@ -352,6 +352,9 @@ where
                                         .await
                                 {
                                     error!("Pruning failed: {:?}.", e);
+                                    // TODO: consider initiating an emergency (but graceful) shutdown instead of just
+                                    // panicking.
+                                    panic!("Aborting due to an unexpected pruning error.");
                                 }
                             }
                             Err(reason) => {

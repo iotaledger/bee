@@ -92,6 +92,13 @@ impl<B: StorageBackend> Tangle<B> {
 
         self.update_metadata(milestone.message_id(), |metadata| {
             metadata.flags_mut().set_milestone(true);
+
+            log::trace!(
+                "Milestone message {} (Milestone index = {}).",
+                milestone.message_id(),
+                idx
+            );
+
             metadata.set_milestone_index(idx);
             metadata.set_omrsi_and_ymrsi(index, index);
         });

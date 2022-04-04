@@ -118,6 +118,8 @@ async fn update_past_cone<B: StorageBackend>(
         }
 
         tangle.update_metadata(&parent_id, |metadata| {
+            log::trace!("Confirmed message {parent_id} (Milestone index = {index}).");
+
             metadata.set_milestone_index(index);
 
             let index = IndexId::new(index, parent_id);

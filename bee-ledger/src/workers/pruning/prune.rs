@@ -78,7 +78,7 @@ pub async fn prune<S: StorageBackend>(
         // NOTE: This is the most costly thing during pruning, because it has to perform a past-cone traversal.
         let batch_confirmed_data = Instant::now();
         let (mut new_seps, confirmed_data_metrics) =
-            batch::prune_confirmed_data(tangle, storage, &mut batch, index, &curr_seps)?;
+            batch::batch_prunable_confirmed_data(storage, &mut batch, index, &curr_seps)?;
         timings.batch_confirmed_data = batch_confirmed_data.elapsed();
 
         metrics.new_seps = new_seps.len();
@@ -136,7 +136,7 @@ pub async fn prune<S: StorageBackend>(
 
         // Add unconfirmed data to the delete batch.
         let batch_unconfirmed_data = Instant::now();
-        let unconfirmed_data_metrics = batch::prune_unconfirmed_data(storage, &mut batch, index)?;
+        let unconfirmed_data_metrics = batch::batch_prunable_unconfirmed_data(storage, &mut batch, index)?;
         timings.batch_unconfirmed_data = batch_unconfirmed_data.elapsed();
 
         metrics.messages += unconfirmed_data_metrics.prunable_messages;
