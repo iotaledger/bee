@@ -1892,7 +1892,7 @@ dependencies = [
 [[package]]
 name = "inx"
 version = "0.1.0"
-source = "git+https://github.com/iotaledger/inx#aea974cfb1daee0342252a800365a6a39f2cc830"
+source = "git+https://github.com/pvdrz/inx?branch=reexport-server#108fe526dd87a015ac84e4aa03bf0135b7b28ff9"
 dependencies = [
  "prost 0.8.0",
  "tonic",

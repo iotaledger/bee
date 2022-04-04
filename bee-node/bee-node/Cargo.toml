@@ -38,7 +38,7 @@ futures = { version = "0.3.17", default-features = false }
 fxhash = { version = "0.2.1", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "ed25519", "random", "blake2b" ] }
-inx = { version = "0.1.0", git = "https://github.com/iotaledger/inx", default-features = false }
+inx = { version = "0.1.0", git = "https://github.com/pvdrz/inx", branch = "reexport-server", default-features = false }
 log = { version = "0.4.14", default-features = false }
 multiaddr = { version = "0.13.0", default-features = false }
 packable = { version = "0.2.1", default-features = false, features = [ "io" ] }

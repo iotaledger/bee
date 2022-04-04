@@ -13,7 +13,7 @@ use bee_protocol::workers::{
     event::{MessageProcessed, MessageSolidified},
     MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent,
 };
-use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle};
+use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Worker};
 use bee_storage::{
     access::{Exist, Fetch},
     system::StorageHealth,
@@ -23,7 +23,11 @@ use bee_tangle::{
     metadata::MessageMetadata,
     Tangle,
 };
-use inx::{proto, server::Inx, Request, Response, Status};
+use inx::{
+    proto,
+    server::{Inx, InxServer},
+    Request, Response, Status,
+};
 use packable::PackableExt;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -35,7 +39,37 @@ fn convert_message_id(message_id: &MessageId) -> proto::MessageId {
     }
 }
 
-struct InxServer<B: NodeStorageBackend> {
+pub struct InxWorker {}
+
+#[async_trait::async_trait]
+impl<B: NodeStorageBackend> Worker<FullNode<B>> for InxWorker {
+    type Config = ();
+
+    type Error = std::convert::Infallible;
+
+    async fn start(node: &mut FullNode<B>, _config: Self::Config) -> Result<Self, Self::Error> {
+        // FIXME: pass address from config
+        let addr = "[::1]:50051".parse().unwrap();
+        let handler = InxHandler::new(node);
+
+        // FIXME: handle shutdown
+        node.spawn::<Self, _, _>(|_shutdown| async move {
+            log::info!("Starting inx server...");
+
+            inx::Server::builder()
+                .add_service(InxServer::new(handler))
+                .serve(addr)
+                .await
+                .unwrap();
+
+            log::info!("Stopping inx server...");
+        });
+
+        Ok(Self {})
+    }
+}
+
+struct InxHandler<B: NodeStorageBackend> {
     protocol_parameters: proto::ProtocolParameters,
     tangle: ResourceHandle<Tangle<B>>,
     storage: ResourceHandle<B>,
@@ -43,8 +77,8 @@ struct InxServer<B: NodeStorageBackend> {
     message_submitter: MessageSubmitterWorker,
 }
 
-impl<B: NodeStorageBackend> InxServer<B> {
-    fn new(node: FullNode<B>) -> Self {
+impl<B: NodeStorageBackend> InxHandler<B> {
+    fn new(node: &FullNode<B>) -> Self {
         let network_spec = node.config.network_spec();
         let byte_cost = node.config.protocol.byte_cost();
 
@@ -217,7 +251,7 @@ impl<B: NodeStorageBackend> InxServer<B> {
 type InxStream<T> = UnboundedReceiverStream<Result<T, Status>>;
 
 #[async_trait::async_trait]
-impl<B: NodeStorageBackend> Inx for InxServer<B> {
+impl<B: NodeStorageBackend> Inx for InxHandler<B> {
     async fn read_node_status(&self, request: Request<proto::NoParams>) -> Result<Response<proto::NodeStatus>, Status> {
         let proto::NoParams {} = request.into_inner();
 

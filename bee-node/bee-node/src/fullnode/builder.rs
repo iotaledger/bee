@@ -25,6 +25,7 @@ use super::{config::FullNodeConfig, FullNode, FullNodeError};
 use crate::{
     config::NetworkSpec,
     core::{Core, CoreError, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
+    inx::InxWorker,
     shutdown,
     storage::NodeStorageBackend,
     util, AUTOPEERING_VERSION,
@@ -153,6 +154,9 @@ impl<S: NodeStorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
 
         // Start the version checker.
         let builder = builder.with_worker::<VersionCheckerPlugin>();
+
+        // Start the inx worker
+        let builder = builder.with_worker::<InxWorker>();
 
         // Start serving the dashboard (if enabled).
         #[cfg(feature = "dashboard")]
