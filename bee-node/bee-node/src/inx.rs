@@ -493,10 +493,8 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
         let created_output = proto::LedgerOutput {
             output_id: Some(proto::OutputId { id: bytes }),
             message_id: Some(convert_message_id(output.message_id())),
-            // TODO
-            milestone_index_booked: 0,
-            // TODO
-            milestone_timestamp_booked: 0,
+            milestone_index_booked: *output.milestone_index(),
+            milestone_timestamp_booked: output.milestone_timestamp(),
             output: output.pack_to_vec(),
         };
 
