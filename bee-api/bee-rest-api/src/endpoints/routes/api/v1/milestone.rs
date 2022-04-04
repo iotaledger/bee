@@ -47,7 +47,7 @@ pub(crate) fn milestone<B: StorageBackend>(
             timestamp: milestone.timestamp(),
         }))),
         None => Err(reject::custom(CustomRejection::NotFound(
-            "can not find milestone".to_string(),
+            "cannot find milestone".to_string(),
         ))),
     }
 }
