@@ -22,12 +22,16 @@ use std::{
 };
 
 use async_trait::async_trait;
+use bee_gossip::{Keypair, PeerId};
 use bee_ledger::workers::event::MilestoneConfirmed;
 use bee_protocol::workers::{
     event::{MessageSolidified, MpsMetricsUpdated, TipAdded, TipRemoved, VertexCreated},
     MetricsWorker, PeerManagerResWorker,
 };
-use bee_rest_api::endpoints::config::RestApiConfig;
+use bee_rest_api::{
+    endpoints::config::RestApiConfig,
+    types::body::{DefaultErrorResponse, ErrorBody},
+};
 use bee_runtime::{
     node::{Node, NodeBuilder},
     shutdown_stream::ShutdownStream,
@@ -36,11 +40,12 @@ use bee_runtime::{
 use bee_tangle::{event::LatestMilestoneChanged, Tangle, TangleWorker};
 use futures::stream::StreamExt;
 use log::{debug, error, info};
+use rejection::CustomRejection;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use warp::ws::Message;
+use warp::{http::StatusCode, ws::Message, Filter, Rejection, Reply};
 
-use self::{
+use crate::{
     config::DashboardConfig,
     storage::StorageBackend,
     websocket::{
@@ -55,7 +60,6 @@ use self::{
 
 pub(crate) type Bech32Hrp = String;
 pub(crate) type NodeAlias = String;
-pub(crate) type NodeId = String;
 
 const CONFIRMED_THRESHOLD: u32 = 5;
 
@@ -63,7 +67,8 @@ const CONFIRMED_THRESHOLD: u32 = 5;
 pub fn init<N: Node>(
     dashboard_config: DashboardConfig,
     rest_api_config: RestApiConfig,
-    node_id: NodeId,
+    node_id: PeerId,
+    node_keypair: Keypair,
     node_alias: NodeAlias,
     bech32_hrp: Bech32Hrp,
     node_builder: N::Builder,
@@ -75,6 +80,7 @@ where
         dashboard_config,
         rest_api_config,
         node_id,
+        node_keypair,
         node_alias,
         bech32_hrp,
     ))
@@ -127,7 +133,7 @@ impl<N: Node> Worker<N> for DashboardPlugin
 where
     N::Backend: StorageBackend,
 {
-    type Config = (DashboardConfig, RestApiConfig, NodeId, NodeAlias, Bech32Hrp);
+    type Config = (DashboardConfig, RestApiConfig, PeerId, Keypair, NodeAlias, Bech32Hrp);
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -141,7 +147,7 @@ where
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         // TODO: load them differently if possible
-        let (config, rest_api_config, node_id, node_alias, bech32_hrp) = config;
+        let (config, rest_api_config, node_id, node_keypair, node_alias, bech32_hrp) = config;
         let tangle = node.resource::<Tangle<N::Backend>>();
         let storage = node.storage();
 
@@ -195,7 +201,7 @@ where
         // run sub-workers
         confirmed_ms_metrics_worker(node, &users);
         db_size_metrics_worker(node, &users);
-        node_status_worker(node, node_id.clone(), node_alias, bech32_hrp, &users);
+        node_status_worker(node, node_id, node_alias, bech32_hrp, &users);
         peer_metric_worker(node, &users);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
@@ -204,11 +210,13 @@ where
             let routes = routes::routes(
                 storage.clone(),
                 tangle.clone(),
-                node_id.clone(),
+                node_id,
+                node_keypair.clone(),
                 config.auth().clone(),
                 rest_api_config.clone(),
                 users.clone(),
-            );
+            )
+            .recover(handle_rejection);
 
             let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(config.bind_socket_addr(), async {
                 shutdown.await.ok();
@@ -234,6 +242,38 @@ where
 
         Ok(Self::default())
     }
+}
+
+async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
+    let (http_code, err_code, reason) = match err.find() {
+        // Handle custom rejections.
+        Some(CustomRejection::NoUserProvided) => (StatusCode::BAD_REQUEST, "400", "user not found"),
+        Some(CustomRejection::NoPasswordProvided) => (StatusCode::BAD_REQUEST, "400", "password not found"),
+        Some(CustomRejection::InvalidCredentials) => (StatusCode::FORBIDDEN, "403", "wrong username or password"),
+        Some(CustomRejection::InvalidJwt) => (StatusCode::FORBIDDEN, "403", "invalid JWT"),
+        Some(CustomRejection::InternalError(s)) => {
+            error!("dashboard error: {:?}", s);
+            (StatusCode::INTERNAL_SERVER_ERROR, "500", "internal server error")
+        }
+        // handle default rejections
+        _ => {
+            if err.is_not_found() {
+                (StatusCode::NOT_FOUND, "404", "data not found")
+            } else if err.find::<warp::reject::MethodNotAllowed>().is_some() {
+                (StatusCode::FORBIDDEN, "403", "access forbidden")
+            } else {
+                error!("unhandled rejection: {:?}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR, "500", "internal server error")
+            }
+        }
+    };
+    Ok(warp::reply::with_status(
+        warp::reply::json(&ErrorBody::new(DefaultErrorResponse {
+            code: err_code.to_string(),
+            message: reason.to_string(),
+        })),
+        http_code,
+    ))
 }
 
 pub(crate) async fn broadcast(event: WsEvent, users: &WsUsers) {
