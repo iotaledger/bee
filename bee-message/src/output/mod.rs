@@ -273,7 +273,7 @@ fn minimum_storage_deposit(config: &ByteCostConfig, address: &Address) -> u64 {
     let address_condition = UnlockCondition::Address(AddressUnlockCondition::new(*address));
     // PANIC: This can never fail because the amount will always be within the valid range. Also, the actual value is
     // not important, we are only interested in the storage requirements of the type.
-    BasicOutputBuilder::new_with_byte_cost(config.clone())
+    BasicOutputBuilder::new_with_minimum_storage_deposit(config.clone())
         .unwrap()
         .add_unlock_condition(address_condition)
         .finish()

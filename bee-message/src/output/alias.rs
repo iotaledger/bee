@@ -58,7 +58,8 @@ impl AliasOutputBuilder {
     }
 
     /// Creates an [`AliasOutputBuilder`] with a provided byte cost config.
-    pub fn new_with_byte_cost(
+    /// The amount will be set to the minimum storage deposit.
+    pub fn new_with_minimum_storage_deposit(
         byte_cost_config: ByteCostConfig,
         alias_id: AliasId,
     ) -> Result<AliasOutputBuilder, Error> {
@@ -252,9 +253,13 @@ impl AliasOutput {
     }
 
     /// Creates a new [`AliasOutput`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_byte_cost(byte_cost_config: ByteCostConfig, alias_id: AliasId) -> Result<Self, Error> {
-        AliasOutputBuilder::new_with_byte_cost(byte_cost_config, alias_id)?.finish()
+    pub fn new_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        alias_id: AliasId,
+    ) -> Result<Self, Error> {
+        AliasOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, alias_id)?.finish()
     }
 
     /// Creates a new [`AliasOutputBuilder`] with a provided amount.
@@ -264,12 +269,13 @@ impl AliasOutput {
     }
 
     /// Creates a new [`AliasOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn build_with_byte_cost(
+    pub fn build_with_minimum_storage_deposit(
         byte_cost_config: ByteCostConfig,
         alias_id: AliasId,
     ) -> Result<AliasOutputBuilder, Error> {
-        AliasOutputBuilder::new_with_byte_cost(byte_cost_config, alias_id)
+        AliasOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, alias_id)
     }
 
     ///

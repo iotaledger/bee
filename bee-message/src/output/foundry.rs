@@ -59,7 +59,8 @@ impl FoundryOutputBuilder {
     }
 
     /// Creates a [`FoundryOutputBuilder`] with a provided byte cost config.
-    pub fn new_with_byte_cost(
+    /// The amount will be set to the minimum storage deposit.
+    pub fn new_with_minimum_storage_deposit(
         byte_cost_config: ByteCostConfig,
         serial_number: u32,
         token_tag: TokenTag,
@@ -218,14 +219,21 @@ impl FoundryOutput {
     }
 
     /// Creates a new [`FoundryOutput`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_byte_cost(
+    pub fn new_with_minimum_storage_deposit(
         byte_cost_config: ByteCostConfig,
         serial_number: u32,
         token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<Self, Error> {
-        FoundryOutputBuilder::new_with_byte_cost(byte_cost_config, serial_number, token_tag, token_scheme)?.finish()
+        FoundryOutputBuilder::new_with_minimum_storage_deposit(
+            byte_cost_config,
+            serial_number,
+            token_tag,
+            token_scheme,
+        )?
+        .finish()
     }
 
     /// Creates a new [`FoundryOutputBuilder`] with a provided amount.
@@ -240,14 +248,15 @@ impl FoundryOutput {
     }
 
     /// Creates a new [`FoundryOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn build_with_byte_cost(
+    pub fn build_with_minimum_storage_deposit(
         byte_cost_config: ByteCostConfig,
         serial_number: u32,
         token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        FoundryOutputBuilder::new_with_byte_cost(byte_cost_config, serial_number, token_tag, token_scheme)
+        FoundryOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, serial_number, token_tag, token_scheme)
     }
 
     ///

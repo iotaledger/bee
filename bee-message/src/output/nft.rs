@@ -50,7 +50,11 @@ impl NftOutputBuilder {
     }
 
     /// Creates an [`NftOutputBuilder`] with a provided byte cost config.
-    pub fn new_with_byte_cost(byte_cost_config: ByteCostConfig, nft_id: NftId) -> Result<NftOutputBuilder, Error> {
+    /// The amount will be set to the minimum storage deposit.
+    pub fn new_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        nft_id: NftId,
+    ) -> Result<NftOutputBuilder, Error> {
         Ok(Self {
             amount: None,
             byte_cost_config: Some(byte_cost_config),
@@ -195,9 +199,10 @@ impl NftOutput {
     }
 
     /// Creates a new [`NftOutput`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_byte_cost(byte_cost_config: ByteCostConfig, nft_id: NftId) -> Result<Self, Error> {
-        NftOutputBuilder::new_with_byte_cost(byte_cost_config, nft_id)?.finish()
+    pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig, nft_id: NftId) -> Result<Self, Error> {
+        NftOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, nft_id)?.finish()
     }
 
     /// Creates a new [`NftOutputBuilder`] with a provided amount.
@@ -207,9 +212,13 @@ impl NftOutput {
     }
 
     /// Creates a new [`NftOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn build_with_byte_cost(byte_cost_config: ByteCostConfig, nft_id: NftId) -> Result<NftOutputBuilder, Error> {
-        NftOutputBuilder::new_with_byte_cost(byte_cost_config, nft_id)
+    pub fn build_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        nft_id: NftId,
+    ) -> Result<NftOutputBuilder, Error> {
+        NftOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, nft_id)
     }
 
     ///

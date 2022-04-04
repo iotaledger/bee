@@ -41,8 +41,9 @@ impl BasicOutputBuilder {
     }
 
     /// Creates an [`BasicOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_byte_cost(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
+    pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
         Ok(Self {
             amount: None,
             byte_cost_config: Some(byte_cost_config),
@@ -161,9 +162,10 @@ impl BasicOutput {
     }
 
     /// Creates a new [`BasicOutput`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn new_with_byte_cost(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
-        BasicOutputBuilder::new_with_byte_cost(byte_cost_config)?.finish()
+    pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)?.finish()
     }
 
     /// Creates a new [`BasicOutputBuilder`] with a provided amount.
@@ -173,9 +175,10 @@ impl BasicOutput {
     }
 
     /// Creates a new [`BasicOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn build_with_byte_cost(byte_cost_config: ByteCostConfig) -> Result<BasicOutputBuilder, Error> {
-        BasicOutputBuilder::new_with_byte_cost(byte_cost_config)
+    pub fn build_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<BasicOutputBuilder, Error> {
+        BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)
     }
 
     ///
