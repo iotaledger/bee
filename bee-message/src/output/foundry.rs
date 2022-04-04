@@ -15,8 +15,8 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ByteCost, ByteCostConfig, ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount, OutputId,
-        StateTransitionError, StateTransitionVerifier, TokenId, TokenScheme, TokenTag,
+        ByteCost, ByteCostConfig, ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount,
+        OutputBuilderAmount, OutputId, StateTransitionError, StateTransitionVerifier, TokenId, TokenScheme, TokenTag,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -26,8 +26,7 @@ use crate::{
 ///
 #[must_use]
 pub struct FoundryOutputBuilder {
-    amount: Option<OutputAmount>,
-    byte_cost_config: Option<ByteCostConfig>,
+    amount: OutputBuilderAmount,
     native_tokens: Vec<NativeToken>,
     serial_number: u32,
     token_tag: TokenTag,
@@ -46,8 +45,7 @@ impl FoundryOutputBuilder {
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
         Ok(Self {
-            amount: Some(amount.try_into().map_err(Error::InvalidOutputAmount)?),
-            byte_cost_config: None,
+            amount: OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
             native_tokens: Vec::new(),
             serial_number,
             token_tag,
@@ -67,8 +65,7 @@ impl FoundryOutputBuilder {
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
         Ok(Self {
-            amount: None,
-            byte_cost_config: Some(byte_cost_config),
+            amount: OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config),
             native_tokens: Vec::new(),
             serial_number,
             token_tag,
@@ -166,13 +163,12 @@ impl FoundryOutputBuilder {
             immutable_feature_blocks,
         };
 
-        output.amount = match (self.amount, self.byte_cost_config) {
-            (Some(amount), None) => amount,
-            (None, Some(byte_cost_config)) => Output::Foundry(output.clone())
+        output.amount = match self.amount {
+            OutputBuilderAmount::Amount(amount) => amount,
+            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config) => Output::Foundry(output.clone())
                 .byte_cost(&byte_cost_config)
                 .try_into()
                 .map_err(Error::InvalidOutputAmount)?,
-            _ => unreachable!(),
         };
 
         Ok(output)

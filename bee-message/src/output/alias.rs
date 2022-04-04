@@ -17,8 +17,8 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        AliasId, ByteCost, ByteCostConfig, ChainId, NativeToken, NativeTokens, Output, OutputAmount, OutputId,
-        StateTransitionError, StateTransitionVerifier,
+        AliasId, ByteCost, ByteCostConfig, ChainId, NativeToken, NativeTokens, Output, OutputAmount,
+        OutputBuilderAmount, OutputId, StateTransitionError, StateTransitionVerifier,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -28,8 +28,7 @@ use crate::{
 ///
 #[must_use]
 pub struct AliasOutputBuilder {
-    amount: Option<OutputAmount>,
-    byte_cost_config: Option<ByteCostConfig>,
+    amount: OutputBuilderAmount,
     native_tokens: Vec<NativeToken>,
     alias_id: AliasId,
     state_index: Option<u32>,
@@ -44,8 +43,7 @@ impl AliasOutputBuilder {
     /// Creates an [`AliasOutputBuilder`] with a provided amount.
     pub fn new_with_amount(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
         Ok(Self {
-            amount: Some(amount.try_into().map_err(Error::InvalidOutputAmount)?),
-            byte_cost_config: None,
+            amount: OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
             native_tokens: Vec::new(),
             alias_id,
             state_index: None,
@@ -64,8 +62,7 @@ impl AliasOutputBuilder {
         alias_id: AliasId,
     ) -> Result<AliasOutputBuilder, Error> {
         Ok(Self {
-            amount: None,
-            byte_cost_config: Some(byte_cost_config),
+            amount: OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config),
             native_tokens: Vec::new(),
             alias_id,
             state_index: None,
@@ -194,13 +191,12 @@ impl AliasOutputBuilder {
             immutable_feature_blocks,
         };
 
-        output.amount = match (self.amount, self.byte_cost_config) {
-            (Some(amount), None) => amount,
-            (None, Some(byte_cost_config)) => Output::Alias(output.clone())
+        output.amount = match self.amount {
+            OutputBuilderAmount::Amount(amount) => amount,
+            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config) => Output::Alias(output.clone())
                 .byte_cost(&byte_cost_config)
                 .try_into()
                 .map_err(Error::InvalidOutputAmount)?,
-            _ => unreachable!(),
         };
 
         Ok(output)
