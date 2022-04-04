@@ -6,7 +6,8 @@ use bee_ledger::{
     workers::event::{LedgerUpdated, ReceiptCreated},
 };
 use bee_message::{
-    milestone::MilestoneIndex, output::OutputId, payload::Payload, semantic::ConflictReason, Message, MessageId,
+    constant::PROTOCOL_VERSION, milestone::MilestoneIndex, output::OutputId, payload::Payload,
+    semantic::ConflictReason, Message, MessageId,
 };
 use bee_protocol::workers::{
     event::{MessageProcessed, MessageSolidified},
@@ -26,21 +27,7 @@ use inx::{proto, server::Inx, Request, Response, Status};
 use packable::PackableExt;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-pub trait StorageBackend:
-    Fetch<OutputId, ConsumedOutput>
-    + bee_storage::backend::StorageBackend
-    + bee_protocol::workers::storage::StorageBackend
-    + bee_ledger::workers::storage::StorageBackend
-{
-}
-
-impl<T> StorageBackend for T where
-    T: Fetch<OutputId, ConsumedOutput>
-        + bee_storage::backend::StorageBackend
-        + bee_protocol::workers::storage::StorageBackend
-        + bee_ledger::workers::storage::StorageBackend
-{
-}
+use crate::{FullNode, NodeStorageBackend};
 
 fn convert_message_id(message_id: &MessageId) -> proto::MessageId {
     proto::MessageId {
@@ -48,16 +35,31 @@ fn convert_message_id(message_id: &MessageId) -> proto::MessageId {
     }
 }
 
-struct PluginServer<B> {
+struct PluginServer<B: NodeStorageBackend> {
+    protocol_parameters: proto::ProtocolParameters,
     tangle: ResourceHandle<Tangle<B>>,
     storage: ResourceHandle<B>,
     bus: ResourceHandle<Bus<'static>>,
     message_submitter: MessageSubmitterWorker,
 }
 
-impl<B: StorageBackend> PluginServer<B> {
-    fn new<N: Node<Backend = B>>(node: N) -> Self {
+impl<B: NodeStorageBackend> PluginServer<B> {
+    fn new(node: FullNode<B>) -> Self {
+        let network_spec = node.config.network_spec();
+        let byte_cost = node.config.protocol.byte_cost();
+
         Self {
+            protocol_parameters: proto::ProtocolParameters {
+                protocol_version: PROTOCOL_VERSION.into(),
+                network_name: network_spec.name.clone(),
+                bech32_hrp: network_spec.hrp.clone(),
+                min_po_w_score: node.config.protocol.minimum_pow_score() as f32,
+                rent_structure: Some(proto::RentStructure {
+                    v_byte_cost: byte_cost.v_byte_cost,
+                    v_byte_factor_data: byte_cost.v_byte_factor_data,
+                    v_byte_factor_key: byte_cost.v_byte_factor_key,
+                }),
+            },
             tangle: node.resource(),
             storage: node.storage(),
             bus: node.bus(),
@@ -215,7 +217,7 @@ impl<B: StorageBackend> PluginServer<B> {
 type InxStream<T> = UnboundedReceiverStream<Result<T, Status>>;
 
 #[async_trait::async_trait]
-impl<B: StorageBackend> Inx for PluginServer<B> {
+impl<B: NodeStorageBackend> Inx for PluginServer<B> {
     async fn read_node_status(&self, request: Request<proto::NoParams>) -> Result<Response<proto::NodeStatus>, Status> {
         let proto::NoParams {} = request.into_inner();
 
@@ -236,7 +238,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
     ) -> Result<Response<proto::ProtocolParameters>, Status> {
         let proto::NoParams {} = request.into_inner();
 
-        todo!()
+        Ok(Response::new(self.protocol_parameters.clone()))
     }
 
     async fn read_milestone(
