@@ -1,10 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::pin::Pin;
-
-use bee_ledger::types::{ConsumedOutput, CreatedOutput, LedgerIndex, Unspent};
-use bee_ledger::workers::event::{LedgerUpdated, ReceiptCreated};
+use bee_ledger::{
+    types::{ConsumedOutput, CreatedOutput, LedgerIndex, Unspent},
+    workers::event::{LedgerUpdated, ReceiptCreated},
+};
 use bee_message::{
     milestone::MilestoneIndex, output::OutputId, payload::Payload, semantic::ConflictReason, Message, MessageId,
 };
@@ -24,6 +24,7 @@ use bee_tangle::{
 };
 use inx::{proto, server::Inx, Request, Response, Status};
 use packable::PackableExt;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 pub trait StorageBackend:
     Fetch<OutputId, ConsumedOutput>
@@ -215,7 +216,7 @@ trait Stream<T>: futures::Stream<Item = Result<T, Status>> + Sync + Send + 'stat
 
 impl<T, S: futures::Stream<Item = Result<T, Status>> + Sync + Send + 'static> Stream<T> for S {}
 
-type InxStream<T> = Pin<Box<dyn Stream<T>>>;
+type InxStream<T> = UnboundedReceiverStream<Result<T, Status>>;
 
 #[async_trait::async_trait]
 impl<B: StorageBackend> Inx for PluginServer<B> {
@@ -273,9 +274,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
             .unwrap();
         });
 
-        Ok(Response::new(Box::pin(
-            tokio_stream::wrappers::UnboundedReceiverStream::new(rx),
-        )))
+        Ok(Response::new(UnboundedReceiverStream::new(rx)))
     }
 
     // FIXME: avoid dynamic dispatch
@@ -301,9 +300,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
                 .unwrap();
             });
 
-        Ok(Response::new(Box::pin(
-            tokio_stream::wrappers::UnboundedReceiverStream::new(rx),
-        )))
+        Ok(Response::new(UnboundedReceiverStream::new(rx)))
     }
 
     type ListenToMessagesStream = InxStream<proto::Message>;
@@ -327,9 +324,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
             .unwrap();
         });
 
-        Ok(Response::new(Box::pin(
-            tokio_stream::wrappers::UnboundedReceiverStream::new(rx),
-        )))
+        Ok(Response::new(UnboundedReceiverStream::new(rx)))
     }
 
     type ListenToSolidMessagesStream = InxStream<proto::MessageMetadata>;
@@ -356,9 +351,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
             .unwrap();
         });
 
-        Ok(Response::new(Box::pin(
-            tokio_stream::wrappers::UnboundedReceiverStream::new(rx),
-        )))
+        Ok(Response::new(UnboundedReceiverStream::new(rx)))
     }
 
     type ListenToReferencedMessagesStream = InxStream<proto::MessageMetadata>;
@@ -482,9 +475,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
             }
         });
 
-        Ok(Response::new(Box::pin(
-            tokio_stream::wrappers::UnboundedReceiverStream::new(rx),
-        )))
+        Ok(Response::new(UnboundedReceiverStream::new(rx)))
     }
 
     async fn read_output(&self, request: Request<proto::OutputId>) -> Result<Response<proto::OutputResponse>, Status> {
@@ -553,9 +544,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
             .unwrap();
         });
 
-        Ok(Response::new(Box::pin(
-            tokio_stream::wrappers::UnboundedReceiverStream::new(rx),
-        )))
+        Ok(Response::new(UnboundedReceiverStream::new(rx)))
     }
 
     async fn register_api_route(
