@@ -35,7 +35,7 @@ fn builder_no_essence_too_few_unlock_blocks() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -73,7 +73,7 @@ fn builder_no_essence_too_many_unlock_blocks() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -113,7 +113,7 @@ fn pack_unpack_valid() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -155,7 +155,7 @@ fn getters() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()

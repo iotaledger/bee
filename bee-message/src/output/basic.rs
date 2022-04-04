@@ -10,7 +10,7 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        NativeToken, NativeTokens, Output, OutputAmount, OutputId,
+        ByteCost, ByteCostConfig, NativeToken, NativeTokens, Output, OutputAmount, OutputId,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -20,18 +20,32 @@ use crate::{
 ///
 #[must_use]
 pub struct BasicOutputBuilder {
-    amount: OutputAmount,
+    amount: Option<OutputAmount>,
+    byte_cost_config: Option<ByteCostConfig>,
     native_tokens: Vec<NativeToken>,
     unlock_conditions: Vec<UnlockCondition>,
     feature_blocks: Vec<FeatureBlock>,
 }
 
 impl BasicOutputBuilder {
-    ///
+    /// Creates a [`BasicOutputBuilder`] with a provided amount.
     #[inline(always)]
-    pub fn new(amount: u64) -> Result<Self, Error> {
+    pub fn new_with_amount(amount: u64) -> Result<Self, Error> {
         Ok(Self {
-            amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount: Some(amount.try_into().map_err(Error::InvalidOutputAmount)?),
+            byte_cost_config: None,
+            native_tokens: Vec::new(),
+            unlock_conditions: Vec::new(),
+            feature_blocks: Vec::new(),
+        })
+    }
+
+    /// Creates an [`BasicOutputBuilder`] with a provided byte cost config.
+    #[inline(always)]
+    pub fn new_with_byte_cost(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
+        Ok(Self {
+            amount: None,
+            byte_cost_config: Some(byte_cost_config),
             native_tokens: Vec::new(),
             unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
@@ -90,12 +104,23 @@ impl BasicOutputBuilder {
 
         verify_feature_blocks::<true>(&feature_blocks)?;
 
-        Ok(BasicOutput {
-            amount: self.amount,
+        let mut output = BasicOutput {
+            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             unlock_conditions,
             feature_blocks,
-        })
+        };
+
+        output.amount = match (self.amount, self.byte_cost_config) {
+            (Some(amount), None) => amount,
+            (None, Some(byte_cost_config)) => Output::Basic(output.clone())
+                .byte_cost(&byte_cost_config)
+                .try_into()
+                .map_err(Error::InvalidOutputAmount)?,
+            _ => unreachable!(),
+        };
+
+        Ok(output)
     }
 }
 
@@ -129,16 +154,28 @@ impl BasicOutput {
         .union(FeatureBlockFlags::METADATA)
         .union(FeatureBlockFlags::TAG);
 
-    /// Creates a new [`BasicOutput`].
+    /// Creates a new [`BasicOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new(amount: u64) -> Result<Self, Error> {
-        BasicOutputBuilder::new(amount)?.finish()
+    pub fn new_with_amount(amount: u64) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_amount(amount)?.finish()
     }
 
-    /// Creates a new [`BasicOutputBuilder`].
+    /// Creates a new [`BasicOutput`] with a provided byte cost config.
     #[inline(always)]
-    pub fn build(amount: u64) -> Result<BasicOutputBuilder, Error> {
-        BasicOutputBuilder::new(amount)
+    pub fn new_with_byte_cost(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_byte_cost(byte_cost_config)?.finish()
+    }
+
+    /// Creates a new [`BasicOutputBuilder`] with a provided amount.
+    #[inline(always)]
+    pub fn build_with_amount(amount: u64) -> Result<BasicOutputBuilder, Error> {
+        BasicOutputBuilder::new_with_amount(amount)
+    }
+
+    /// Creates a new [`BasicOutputBuilder`] with a provided byte cost config.
+    #[inline(always)]
+    pub fn build_with_byte_cost(byte_cost_config: ByteCostConfig) -> Result<BasicOutputBuilder, Error> {
+        BasicOutputBuilder::new_with_byte_cost(byte_cost_config)
     }
 
     ///
@@ -259,7 +296,7 @@ pub mod dto {
         type Error = DtoError;
 
         fn try_from(value: &BasicOutputDto) -> Result<Self, Self::Error> {
-            let mut builder = BasicOutputBuilder::new(
+            let mut builder = BasicOutputBuilder::new_with_amount(
                 value
                     .amount
                     .parse::<u64>()

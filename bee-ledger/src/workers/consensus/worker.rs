@@ -122,7 +122,7 @@ where
                     milestone.essence().index(),
                     milestone.essence().timestamp() as u32,
                     Output::from(
-                        BasicOutput::build(fund.amount())
+                        BasicOutput::build_with_amount(fund.amount())
                             // PANIC: funds are already syntactically verified as part of the receipt validation.
                             .unwrap()
                             .add_unlock_condition(AddressUnlockCondition::new(*fund.address()).into())

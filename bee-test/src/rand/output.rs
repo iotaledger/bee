@@ -49,7 +49,7 @@ pub fn rand_treasury_output() -> output::TreasuryOutput {
 pub fn rand_basic_output() -> output::BasicOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::BasicOutput::ALLOWED_FEATURE_BLOCKS);
     // TODO: Add `NativeTokens`
-    output::BasicOutput::build(rand_number_range(Output::AMOUNT_RANGE))
+    output::BasicOutput::build_with_amount(rand_number_range(Output::AMOUNT_RANGE))
         .unwrap()
         .with_feature_blocks(feature_blocks)
         .add_unlock_condition(rand_address_unlock_condition().into())
@@ -64,7 +64,7 @@ pub fn rand_alias_output() -> output::AliasOutput {
     // We need to make sure that `AliasId` and `Address` don't match.
     let alias_id = output::AliasId::from(rand_bytes_array());
 
-    output::AliasOutput::build(rand_number_range(Output::AMOUNT_RANGE), alias_id)
+    output::AliasOutput::build_with_amount(rand_number_range(Output::AMOUNT_RANGE), alias_id)
         .unwrap()
         .with_feature_blocks(feature_blocks)
         .add_unlock_condition(rand_state_controller_address_unlock_condition_different_from(&alias_id).into())
@@ -86,7 +86,7 @@ pub fn rand_token_scheme() -> TokenScheme {
 pub fn rand_foundry_output() -> output::FoundryOutput {
     let feature_blocks = rand_allowed_feature_blocks(output::FoundryOutput::ALLOWED_FEATURE_BLOCKS);
 
-    output::FoundryOutput::build(
+    output::FoundryOutput::build_with_amount(
         rand_number_range(Output::AMOUNT_RANGE),
         rand_number(),
         TokenTag::new(rand_bytes_array()),
@@ -106,7 +106,7 @@ pub fn rand_nft_output() -> output::NftOutput {
     // We need to make sure that `NftId` and `Address` don't match.
     let nft_id = output::NftId::from(rand_bytes_array());
 
-    output::NftOutput::build(rand_number_range(Output::AMOUNT_RANGE), nft_id)
+    output::NftOutput::build_with_amount(rand_number_range(Output::AMOUNT_RANGE), nft_id)
         .unwrap()
         .with_feature_blocks(feature_blocks)
         .add_unlock_condition(rand_address_unlock_condition_different_from(&nft_id).into())

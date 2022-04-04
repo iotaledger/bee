@@ -17,8 +17,8 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        AliasId, ChainId, NativeToken, NativeTokens, Output, OutputAmount, OutputId, StateTransitionError,
-        StateTransitionVerifier,
+        AliasId, ByteCost, ByteCostConfig, ChainId, NativeToken, NativeTokens, Output, OutputAmount, OutputId,
+        StateTransitionError, StateTransitionVerifier,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -28,7 +28,8 @@ use crate::{
 ///
 #[must_use]
 pub struct AliasOutputBuilder {
-    amount: OutputAmount,
+    amount: Option<OutputAmount>,
+    byte_cost_config: Option<ByteCostConfig>,
     native_tokens: Vec<NativeToken>,
     alias_id: AliasId,
     state_index: Option<u32>,
@@ -40,10 +41,30 @@ pub struct AliasOutputBuilder {
 }
 
 impl AliasOutputBuilder {
-    ///
-    pub fn new(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
+    /// Creates an [`AliasOutputBuilder`] with a provided amount.
+    pub fn new_with_amount(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
         Ok(Self {
-            amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount: Some(amount.try_into().map_err(Error::InvalidOutputAmount)?),
+            byte_cost_config: None,
+            native_tokens: Vec::new(),
+            alias_id,
+            state_index: None,
+            state_metadata: Vec::new(),
+            foundry_counter: None,
+            unlock_conditions: Vec::new(),
+            feature_blocks: Vec::new(),
+            immutable_feature_blocks: Vec::new(),
+        })
+    }
+
+    /// Creates an [`AliasOutputBuilder`] with a provided byte cost config.
+    pub fn new_with_byte_cost(
+        byte_cost_config: ByteCostConfig,
+        alias_id: AliasId,
+    ) -> Result<AliasOutputBuilder, Error> {
+        Ok(Self {
+            amount: None,
+            byte_cost_config: Some(byte_cost_config),
             native_tokens: Vec::new(),
             alias_id,
             state_index: None,
@@ -160,8 +181,8 @@ impl AliasOutputBuilder {
 
         verify_allowed_feature_blocks(&immutable_feature_blocks, AliasOutput::ALLOWED_IMMUTABLE_FEATURE_BLOCKS)?;
 
-        Ok(AliasOutput {
-            amount: self.amount,
+        let mut output = AliasOutput {
+            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             alias_id: self.alias_id,
             state_index,
@@ -170,7 +191,18 @@ impl AliasOutputBuilder {
             unlock_conditions,
             feature_blocks,
             immutable_feature_blocks,
-        })
+        };
+
+        output.amount = match (self.amount, self.byte_cost_config) {
+            (Some(amount), None) => amount,
+            (None, Some(byte_cost_config)) => Output::Alias(output.clone())
+                .byte_cost(&byte_cost_config)
+                .try_into()
+                .map_err(Error::InvalidOutputAmount)?,
+            _ => unreachable!(),
+        };
+
+        Ok(output)
     }
 }
 
@@ -213,16 +245,31 @@ impl AliasOutput {
     pub const ALLOWED_IMMUTABLE_FEATURE_BLOCKS: FeatureBlockFlags =
         FeatureBlockFlags::ISSUER.union(FeatureBlockFlags::METADATA);
 
-    /// Creates a new [`AliasOutput`].
+    /// Creates a new [`AliasOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new(amount: u64, alias_id: AliasId) -> Result<Self, Error> {
-        AliasOutputBuilder::new(amount, alias_id)?.finish()
+    pub fn new_with_amount(amount: u64, alias_id: AliasId) -> Result<Self, Error> {
+        AliasOutputBuilder::new_with_amount(amount, alias_id)?.finish()
     }
 
-    /// Creates a new [`AliasOutputBuilder`].
+    /// Creates a new [`AliasOutput`] with a provided byte cost config.
     #[inline(always)]
-    pub fn build(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
-        AliasOutputBuilder::new(amount, alias_id)
+    pub fn new_with_byte_cost(byte_cost_config: ByteCostConfig, alias_id: AliasId) -> Result<Self, Error> {
+        AliasOutputBuilder::new_with_byte_cost(byte_cost_config, alias_id)?.finish()
+    }
+
+    /// Creates a new [`AliasOutputBuilder`] with a provided amount.
+    #[inline(always)]
+    pub fn build_with_amount(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
+        AliasOutputBuilder::new_with_amount(amount, alias_id)
+    }
+
+    /// Creates a new [`AliasOutputBuilder`] with a provided byte cost config.
+    #[inline(always)]
+    pub fn build_with_byte_cost(
+        byte_cost_config: ByteCostConfig,
+        alias_id: AliasId,
+    ) -> Result<AliasOutputBuilder, Error> {
+        AliasOutputBuilder::new_with_byte_cost(byte_cost_config, alias_id)
     }
 
     ///
@@ -608,7 +655,7 @@ pub mod dto {
         type Error = DtoError;
 
         fn try_from(value: &AliasOutputDto) -> Result<Self, Self::Error> {
-            let mut builder = AliasOutputBuilder::new(
+            let mut builder = AliasOutputBuilder::new_with_amount(
                 value
                     .amount
                     .parse::<u64>()
