@@ -397,9 +397,7 @@ async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
         dashboard_username: config.dashboard.auth().user().to_owned(),
     };
 
-    let builder =
-        bee_rest_api::endpoints::init_full_node::<FullNode<S>>(init_config, builder)
-            .await;
+    let builder = bee_rest_api::endpoints::init_full_node::<FullNode<S>>(init_config, builder).await;
 
     builder
 }

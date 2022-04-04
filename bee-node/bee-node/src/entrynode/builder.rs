@@ -14,6 +14,7 @@ use bee_autopeering::{
 };
 use bee_gossip::Keypair;
 use bee_plugin_version_checker::VersionCheckerPlugin;
+use bee_rest_api::endpoints::InitConfigEntryNode;
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder},
@@ -29,7 +30,6 @@ use crate::{
     core::{Core, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
     shutdown, util, AUTOPEERING_VERSION,
 };
-use bee_rest_api::endpoints::InitConfigEntryNode;
 
 /// A builder to create a Bee entry node (autopeering).
 pub struct EntryNodeBuilder {

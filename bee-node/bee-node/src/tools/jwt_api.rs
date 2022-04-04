@@ -27,7 +27,7 @@ pub fn exec<B: NodeStorageBackend>(
         node_config.rest_api.jwt_salt().to_owned(),
         API_AUDIENCE_CLAIM.to_owned(),
     )
-        .build()?;
+    .build()?;
     let jwt = JsonWebToken::new(claims, local.keypair().secret().as_ref())?;
 
     println!("{}", jwt);

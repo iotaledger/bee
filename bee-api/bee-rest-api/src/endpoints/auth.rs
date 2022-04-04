@@ -14,7 +14,7 @@ use lazy_static::lazy_static;
 use regex::RegexSet;
 use serde::{Deserialize, Serialize};
 
-use crate::endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
+use crate::endpoints::{config::route_to_regex, error::ApiError, storage::StorageBackend, ApiArgsFullNode};
 
 pub const API_AUDIENCE_CLAIM: &str = "api";
 pub const DASHBOARD_AUDIENCE_CLAIM: &str = "dashboard";
@@ -109,7 +109,7 @@ async fn validate_jwt<B: StorageBackend>(
         #[cfg(feature = "dashboard")]
         if jwt_payload.contains(DASHBOARD_JWT_HINT)
             && validate_dashboard_jwt(&jwt, &args).is_ok()
-            && DASHBOARD_ROUTES.is_match(path.as_str())
+            && DASHBOARD_ROUTES.is_match(&uri.to_string())
         {
             return Ok(());
         }
