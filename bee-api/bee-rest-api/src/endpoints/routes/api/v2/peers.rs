@@ -18,11 +18,11 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 pub(crate) async fn peers<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>) -> impl IntoResponse {
-    let mut peers_dtos = Vec::new();
+    let mut peers = Vec::new();
 
     for peer in args.peer_manager.get_all() {
-        peers_dtos.push(PeerDto::from(peer.as_ref()));
+        peers.push(PeerDto::from(peer.as_ref()));
     }
 
-    Json(PeersResponse(peers_dtos))
+    Json(PeersResponse(peers))
 }

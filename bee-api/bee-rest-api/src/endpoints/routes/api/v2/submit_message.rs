@@ -209,6 +209,6 @@ pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
 
     match result {
         Ok(message_id) => Ok(message_id),
-        Err(e) => Err(ApiError::BadRequest(format!("invalid message: {}", e))),
+        Err(e) => Err(ApiError::BadRequest(format!("cannot submit message: invalid message: {}", e))),
     }
 }
