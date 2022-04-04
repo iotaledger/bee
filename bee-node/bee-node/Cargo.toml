@@ -65,6 +65,6 @@ path = "src/main.rs"
 [features]
 default = [ "rocksdb" ]
 
-dashboard = [ "bee-plugin-dashboard" ]
+dashboard = [ "bee-plugin-dashboard", "bee-rest-api/dashboard" ]
 rocksdb = [ "bee-storage-rocksdb" ]
 sled = [ "bee-storage-sled" ]
