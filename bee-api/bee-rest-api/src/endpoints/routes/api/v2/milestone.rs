@@ -24,7 +24,7 @@ pub(crate) async fn milestone<B: StorageBackend>(
     Path(milestone_index): Path<MilestoneIndex>,
     Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
 ) -> Result<impl IntoResponse, ApiError> {
-    match tangle.get_milestone(milestone_index).await {
+    match args.tangle.get_milestone(milestone_index).await {
         Some(milestone) => Ok(Json(MilestoneResponse {
             milestone_index: *milestone_index,
             message_id: milestone.message_id().to_string(),
