@@ -165,18 +165,6 @@ dependencies = [
 
 [[package]]
 name = "auth-helper"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7299231e2941a1568afb5c7c97c3d5373f507acf4b5a7fc0b49cdc4a57ecfca0"
-dependencies = [
- "jsonwebtoken",
- "rand 0.8.5",
- "rust-argon2",
- "serde",
-]
-
-[[package]]
-name = "auth-helper"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "574c56c72f9945f1cd1298fe362ec1d5bd7e6c7a5c6e55925748d4986cebb6fb"
@@ -377,7 +365,7 @@ version = "1.0.0-alpha1"
 dependencies = [
  "anymap",
  "async-trait",
- "auth-helper 0.2.0",
+ "auth-helper",
  "bee-autopeering",
  "bee-gossip",
  "bee-ledger",
@@ -431,7 +419,7 @@ name = "bee-plugin-dashboard"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "auth-helper 0.1.0",
+ "auth-helper",
  "bee-ledger",
  "bee-message",
  "bee-protocol",
@@ -529,7 +517,7 @@ name = "bee-rest-api"
 version = "0.2.2"
 dependencies = [
  "async-trait",
- "auth-helper 0.2.0",
+ "auth-helper",
  "axum",
  "base64 0.13.0",
  "bech32",
