@@ -35,7 +35,7 @@ fn convert_message_id(message_id: &MessageId) -> proto::MessageId {
     }
 }
 
-struct PluginServer<B: NodeStorageBackend> {
+struct InxServer<B: NodeStorageBackend> {
     protocol_parameters: proto::ProtocolParameters,
     tangle: ResourceHandle<Tangle<B>>,
     storage: ResourceHandle<B>,
@@ -43,7 +43,7 @@ struct PluginServer<B: NodeStorageBackend> {
     message_submitter: MessageSubmitterWorker,
 }
 
-impl<B: NodeStorageBackend> PluginServer<B> {
+impl<B: NodeStorageBackend> InxServer<B> {
     fn new(node: FullNode<B>) -> Self {
         let network_spec = node.config.network_spec();
         let byte_cost = node.config.protocol.byte_cost();
@@ -217,7 +217,7 @@ impl<B: NodeStorageBackend> PluginServer<B> {
 type InxStream<T> = UnboundedReceiverStream<Result<T, Status>>;
 
 #[async_trait::async_trait]
-impl<B: NodeStorageBackend> Inx for PluginServer<B> {
+impl<B: NodeStorageBackend> Inx for InxServer<B> {
     async fn read_node_status(&self, request: Request<proto::NoParams>) -> Result<Response<proto::NodeStatus>, Status> {
         let proto::NoParams {} = request.into_inner();
 
@@ -547,20 +547,26 @@ impl<B: NodeStorageBackend> Inx for PluginServer<B> {
         &self,
         request: Request<proto::ApiRouteRequest>,
     ) -> Result<Response<proto::NoParams>, Status> {
-        todo!()
+        let proto::ApiRouteRequest { .. } = request.into_inner();
+
+        Err(Status::unimplemented("`register_api_route` is not implemented"))
     }
 
     async fn unregister_api_route(
         &self,
         request: Request<proto::ApiRouteRequest>,
     ) -> Result<Response<proto::NoParams>, Status> {
-        todo!()
+        let proto::ApiRouteRequest { .. } = request.into_inner();
+
+        Err(Status::unimplemented("`unregister_api_route` is not implemented"))
     }
 
     async fn perform_api_request(
         &self,
         request: Request<proto::ApiRequest>,
     ) -> Result<Response<proto::ApiResponse>, Status> {
-        todo!()
+        let proto::ApiRequest { .. } = request.into_inner();
+
+        Err(Status::unimplemented("`perform_api_request` is not implemented"))
     }
 }
