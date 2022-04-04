@@ -9,6 +9,7 @@ use axum::{
     Router,
 };
 use bee_gossip::{Command::RemovePeer, PeerId};
+use log::error;
 
 use crate::endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
 
@@ -25,7 +26,9 @@ pub(crate) async fn remove_peer<B: StorageBackend>(
         .map_err(|_| ApiError::BadRequest("invalid peer id".to_string()))?;
 
     if let Err(e) = args.network_command_sender.send(RemovePeer { peer_id }) {
-        return Err(ApiError::NotFound(format!("failed to remove peer: {}", e)));
+        error!("cannot remove peer: {}", e);
+        return Err(ApiError::InternalError);
     }
+
     Ok(StatusCode::NO_CONTENT)
 }

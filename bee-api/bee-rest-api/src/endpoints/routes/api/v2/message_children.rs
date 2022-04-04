@@ -25,6 +25,7 @@ pub(crate) async fn message_children<B: StorageBackend>(
     let mut children = Vec::from_iter(args.tangle.get_children(&message_id).await.unwrap_or_default());
     let count = children.len();
     children.truncate(MAX_RESPONSE_RESULTS);
+
     Ok(Json(MessageChildrenResponse {
         message_id: message_id.to_string(),
         max_results: MAX_RESPONSE_RESULTS,

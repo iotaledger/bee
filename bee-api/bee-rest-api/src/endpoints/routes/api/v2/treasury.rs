@@ -8,6 +8,7 @@ use axum::{
     Router,
 };
 use bee_ledger::workers::storage;
+use log::error;
 
 use crate::{
     endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
@@ -21,7 +22,10 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 pub(crate) async fn treasury<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let treasury = storage::fetch_unspent_treasury_output(&*args.storage).map_err(|_| ApiError::StorageBackend)?;
+    let treasury = storage::fetch_unspent_treasury_output(&*args.storage).map_err(|e| {
+        error!("cannot fetch from storage: {}", e);
+        ApiError::InternalError
+    })?;
 
     Ok(Json(TreasuryResponse {
         milestone_id: treasury.milestone_id().to_string(),

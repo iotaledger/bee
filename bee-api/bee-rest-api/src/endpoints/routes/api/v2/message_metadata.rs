@@ -138,6 +138,6 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                 should_reattach,
             }))
         }
-        None => Err(ApiError::NotFound("can not find message".to_string())),
+        None => Err(ApiError::NotFound("cannot find message".to_string())),
     }
 }

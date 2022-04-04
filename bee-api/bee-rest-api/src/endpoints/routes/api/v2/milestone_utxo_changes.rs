@@ -28,8 +28,8 @@ pub(crate) async fn milestone_utxo_changes<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let fetched = Fetch::<MilestoneIndex, OutputDiff>::fetch(&*args.storage, &milestone_index)
-        .map_err(|_| ApiError::ServiceUnavailable("can not fetch from storage".to_string()))?
-        .ok_or_else(|| ApiError::NotFound("can not find UTXO changes for given milestone index".to_string()))?;
+        .map_err(|_| ApiError::ServiceUnavailable("cannot fetch from storage".to_string()))?
+        .ok_or_else(|| ApiError::NotFound("cannot find UTXO changes for given milestone index".to_string()))?;
 
     Ok(Json(UtxoChangesResponse {
         index: *milestone_index,

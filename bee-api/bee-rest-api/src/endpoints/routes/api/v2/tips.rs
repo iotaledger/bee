@@ -28,6 +28,6 @@ pub(crate) async fn tips<B: StorageBackend>(
         Some(tips) => Ok(Json(TipsResponse {
             tip_message_ids: tips.iter().map(MessageId::to_string).collect(),
         })),
-        None => Err(ApiError::ServiceUnavailable("tip pool is empty".to_string())),
+        None => Err(ApiError::ServiceUnavailable("no tips available".to_string())),
     }
 }

@@ -24,6 +24,6 @@ pub(crate) async fn message<B: StorageBackend>(
 ) -> Result<impl IntoResponse, ApiError> {
     match args.tangle.get(&message_id).await.map(|m| (*m).clone()) {
         Some(message) => Ok(Json(MessageResponse(MessageDto::from(&message)))),
-        None => Err(ApiError::NotFound("can not find message".to_string())),
+        None => Err(ApiError::NotFound("cannot find message".to_string())),
     }
 }

@@ -155,7 +155,7 @@ pub(crate) async fn build_message<B: StorageBackend>(
         builder.finish().map_err(|e| ApiError::BadRequest(e.to_string()))?
     } else {
         if !args.rest_api_config.feature_proof_of_work() {
-            return Err(ApiError::ServiceUnavailable(
+            return Err(ApiError::BadRequest(
                 "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
             ));
         }
@@ -198,18 +198,17 @@ pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
             notifier,
         })
         .map_err(|e| {
-            error!("can not submit message: {}", e);
-            ApiError::ServiceUnavailable("can not submit message".to_string())
+            error!("cannot submit message: {}", e);
+            ApiError::InternalError
         })?;
 
-    match waiter.await.map_err(|e| {
-        error!("can not submit message: {}", e);
-        ApiError::ServiceUnavailable("can not submit message".to_string())
-    })? {
+    let result = waiter.await.map_err(|e| {
+        error!("cannot submit message: {}", e);
+        ApiError::InternalError
+    })?;
+
+    match result {
         Ok(message_id) => Ok(message_id),
-        Err(e) => Err(ApiError::BadRequest(format!(
-            "can not submit message: message is invalid: {}",
-            e
-        ))),
+        Err(e) => Err(ApiError::BadRequest(format!("invalid message: {}", e))),
     }
 }

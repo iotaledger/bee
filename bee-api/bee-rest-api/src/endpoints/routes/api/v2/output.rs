@@ -35,22 +35,23 @@ pub(crate) async fn output<B: StorageBackend>(
         .consensus_worker
         .send(ConsensusWorkerCommand::FetchOutput(output_id, cmd_tx))
     {
-        error!("request to consensus worker failed: {}.", e);
+        error!("request to consensus worker failed: {}", e);
+        return Err(ApiError::InternalError);
     }
 
-    match cmd_rx.await.map_err(|e| {
-        error!("response from consensus worker failed: {}.", e);
-        ApiError::ServiceUnavailable("unable to fetch the output".to_string())
-    })? {
+    let consensus_worker_response = cmd_rx.await.map_err(|e| {
+        error!("response from consensus worker failed: {}", e);
+        ApiError::InternalError
+    })?;
+
+    match consensus_worker_response {
         (Ok(response), ledger_index) => match response {
             Some(output) => {
-                let consumed_output = match Fetch::<OutputId, ConsumedOutput>::fetch(&*args.storage, &output_id) {
-                    Err(e) => {
-                        error!("unable to fetch the output: {}", e);
-                        return Err(ApiError::ServiceUnavailable("unable to fetch the output".to_string()));
-                    }
-                    Ok(output) => output,
-                };
+                let consumed_output =
+                    Fetch::<OutputId, ConsumedOutput>::fetch(&*args.storage, &output_id).map_err(|e| {
+                        error!("cannot fetch from storage: {}", e);
+                        ApiError::InternalError
+                    })?;
 
                 Ok(Json(OutputResponse {
                     message_id: output.message_id().to_string(),
@@ -71,7 +72,8 @@ pub(crate) async fn output<B: StorageBackend>(
                     output: output.inner().into(),
                 }))
             }
-            None => Err(ApiError::NotFound("output not found".to_string())),
+
+            None => Err(ApiError::NotFound("cannot find output".to_string())),
         },
         (Err(e), _) => {
             error!("unable to fetch the output: {}", e);

@@ -134,8 +134,6 @@ where
             protocol_config: config.protocol_config,
             network_name: config.network_name,
             bech32_hrp: config.bech32_hrp,
-            #[cfg(feature = "dashboard")]
-            dashboard_username: config.dashboard_username,
             storage: node.storage(),
             bus: node.bus(),
             node_info: node.info(),
@@ -146,6 +144,8 @@ where
             message_submitter: node.worker::<MessageSubmitterWorker>().unwrap().tx.clone(),
             message_requester: node.worker::<MessageRequesterWorker>().unwrap().clone(),
             consensus_worker: node.worker::<ConsensusWorker>().unwrap().tx.clone(),
+            #[cfg(feature = "dashboard")]
+            dashboard_username: config.dashboard_username,
         }));
 
         node.spawn::<Self, _, _>(|shutdown| async move {

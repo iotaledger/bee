@@ -14,7 +14,6 @@ pub enum ApiError {
     NotFound(String),
     ServiceUnavailable(String),
     InternalError,
-    StorageBackend,
     Forbidden,
 }
 
@@ -26,7 +25,6 @@ impl IntoResponse for ApiError {
             ApiError::NotFound(s) => (StatusCode::NOT_FOUND, s),
             ApiError::ServiceUnavailable(s) => (StatusCode::SERVICE_UNAVAILABLE, s),
             ApiError::InternalError => (StatusCode::INTERNAL_SERVER_ERROR, "internal server error".to_string()),
-            ApiError::StorageBackend => (StatusCode::INTERNAL_SERVER_ERROR, "internal server error".to_string()),
         };
 
         let body = Json(ErrorBody::new(DefaultErrorResponse {

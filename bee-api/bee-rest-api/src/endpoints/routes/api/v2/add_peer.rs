@@ -8,6 +8,7 @@ use axum::{
     Router,
 };
 use bee_gossip::{Command::AddPeer, Multiaddr, PeerId, PeerRelation, Protocol};
+use log::error;
 use serde_json::Value;
 
 use crate::{
@@ -31,16 +32,16 @@ pub(crate) async fn add_peer<B: StorageBackend>(
 
     let mut multi_address = multi_address_v
         .as_str()
-        .ok_or_else(|| ApiError::BadRequest("invalid multi address: expected a string".to_string()))?
+        .ok_or_else(|| ApiError::BadRequest("invalid multiaddress".to_string()))?
         .parse::<Multiaddr>()
-        .map_err(|e| ApiError::BadRequest(format!("invalid multi address: {}", e)))?;
+        .map_err(|_| ApiError::BadRequest("invalid multiaddress".to_string()))?;
 
     let peer_id = match multi_address.pop() {
         Some(Protocol::P2p(multihash)) => PeerId::from_multihash(multihash)
-            .map_err(|_| ApiError::BadRequest("invalid multi address: can not parse peer id".to_string()))?,
+            .map_err(|_| ApiError::BadRequest("invalid multiaddress: can not parse peer id".to_string()))?,
         _ => {
             return Err(ApiError::BadRequest(
-                "invalid multi address: invalid protocol type".to_string(),
+                "invalid multi address: invalid protocol".to_string(),
             ));
         }
     };
@@ -68,7 +69,8 @@ pub(crate) async fn add_peer<B: StorageBackend>(
                 alias: alias.clone(),
                 relation: PeerRelation::Known,
             }) {
-                return Err(ApiError::NotFound(format!("failed to add peer: {}", e)));
+                error!("cannot add peer: {}", e);
+                return Err(ApiError::InternalError);
             }
 
             Ok(Json(AddPeerResponse(PeerDto {
