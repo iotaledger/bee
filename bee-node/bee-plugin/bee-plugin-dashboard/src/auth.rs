@@ -6,7 +6,7 @@ use auth_helper::{
     password,
 };
 use bee_gossip::{Keypair, PeerId};
-use bee_rest_api::endpoints::permission::DASHBOARD_AUDIENCE_CLAIM;
+use bee_rest_api::endpoints::auth::DASHBOARD_AUDIENCE_CLAIM;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use warp::{reject, Rejection, Reply};
