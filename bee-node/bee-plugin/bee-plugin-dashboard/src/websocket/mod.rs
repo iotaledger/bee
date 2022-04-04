@@ -120,7 +120,7 @@ pub(crate) async fn user_connected<S: StorageBackend>(
             &node_keypair,
             &auth_config,
         )
-            .await;
+        .await;
     }
 
     // ws_rx stream will keep processing as long as the user stays

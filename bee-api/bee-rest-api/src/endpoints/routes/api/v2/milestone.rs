@@ -30,8 +30,6 @@ pub(crate) async fn milestone<B: StorageBackend>(
             message_id: milestone.message_id().to_string(),
             timestamp: milestone.timestamp(),
         })),
-        None => Err(ApiError::NotFound(
-            "cannot find milestone".to_string(),
-        )),
+        None => Err(ApiError::NotFound("cannot find milestone".to_string())),
     }
 }
