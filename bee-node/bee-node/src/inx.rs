@@ -41,6 +41,12 @@ impl<T> StorageBackend for T where
 {
 }
 
+fn convert_message_id(message_id: &MessageId) -> proto::MessageId {
+    proto::MessageId {
+        id: message_id.as_ref().to_vec(),
+    }
+}
+
 struct PluginServer<B> {
     tangle: ResourceHandle<Tangle<B>>,
     storage: ResourceHandle<B>,
@@ -70,9 +76,7 @@ impl<B: StorageBackend> PluginServer<B> {
             milestone_index,
             // FIXME: unwrap
             milestone_timestamp: milestone.timestamp().try_into().unwrap(),
-            message_id: Some(proto::MessageId {
-                id: milestone.message_id().as_ref().to_vec(),
-            }),
+            message_id: Some(convert_message_id(milestone.message_id())),
         }
     }
 
@@ -188,9 +192,7 @@ impl<B: StorageBackend> PluginServer<B> {
         };
 
         proto::MessageMetadata {
-            message_id: Some(proto::MessageId {
-                id: message_id.as_ref().to_vec(),
-            }),
+            message_id: Some(convert_message_id(message_id)),
             parents: parents.iter().map(|message_id| message_id.as_ref().to_vec()).collect(),
             solid: is_solid,
             // FIXME: unwrap
@@ -265,9 +267,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
                 milestone_index: *event.index,
                 // FIXME: unwrap
                 milestone_timestamp: event.milestone.timestamp().try_into().unwrap(),
-                message_id: Some(proto::MessageId {
-                    id: event.milestone.message_id().as_ref().to_vec(),
-                }),
+                message_id: Some(convert_message_id(event.milestone.message_id())),
             }))
             // FIXME: unwrap
             .unwrap();
@@ -295,9 +295,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
                     milestone_index: *event.index,
                     // FIXME: unwrap
                     milestone_timestamp: event.milestone.timestamp().try_into().unwrap(),
-                    message_id: Some(proto::MessageId {
-                        id: event.milestone.message_id().as_ref().to_vec(),
-                    }),
+                    message_id: Some(convert_message_id(event.milestone.message_id())),
                 }))
                 // FIXME: unwrap
                 .unwrap();
@@ -320,9 +318,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
         // FIXME: `TypeId` might not be good enough
         self.bus.add_listener::<Self, MessageProcessed, _>(move |event| {
             tx.send(Ok(proto::Message {
-                message_id: Some(proto::MessageId {
-                    id: event.message_id.as_ref().to_vec(),
-                }),
+                message_id: Some(convert_message_id(&event.message_id)),
                 message: Some(proto::RawMessage {
                     data: event.bytes.clone(),
                 }),
@@ -387,10 +383,8 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
             .ok()
             .unwrap();
 
-        Ok(Response::new(proto::MessageId {
-            // FIXME: unwrap
-            id: waiter.await.unwrap().unwrap().as_ref().to_vec(),
-        }))
+        // FIXME: unwrap
+        Ok(Response::new(convert_message_id(&waiter.await.unwrap().unwrap())))
     }
 
     async fn read_message(&self, request: Request<proto::MessageId>) -> Result<Response<proto::RawMessage>, Status> {
@@ -459,9 +453,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
                                 output_id: Some(proto::OutputId {
                                     id: output_id.pack_to_vec(),
                                 }),
-                                message_id: Some(proto::MessageId {
-                                    id: created_output.message_id().as_ref().to_vec(),
-                                }),
+                                message_id: Some(convert_message_id(created_output.message_id())),
                                 milestone_index_booked: *created_output.milestone_index(),
                                 milestone_timestamp_booked: created_output.milestone_timestamp(),
                                 output: created_output.inner().pack_to_vec(),
@@ -478,9 +470,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
                             output_id: Some(proto::OutputId {
                                 id: output_id.pack_to_vec(),
                             }),
-                            message_id: Some(proto::MessageId {
-                                id: created_output.message_id().as_ref().to_vec(),
-                            }),
+                            message_id: Some(convert_message_id(created_output.message_id())),
                             milestone_index_booked: *created_output.milestone_index(),
                             milestone_timestamp_booked: created_output.milestone_timestamp(),
                             output: created_output.inner().pack_to_vec(),
@@ -515,9 +505,7 @@ impl<B: StorageBackend> Inx for PluginServer<B> {
 
         let created_output = proto::LedgerOutput {
             output_id: Some(proto::OutputId { id: bytes }),
-            message_id: Some(proto::MessageId {
-                id: output.message_id().as_ref().to_vec(),
-            }),
+            message_id: Some(convert_message_id(output.message_id())),
             // TODO
             milestone_index_booked: 0,
             // TODO
