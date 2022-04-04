@@ -41,6 +41,8 @@ use crate::endpoints::{auth::Auth, error::ApiError, routes::filter_all};
 
 pub(crate) type NetworkId = (String, u64);
 pub(crate) type Bech32Hrp = String;
+#[cfg(feature = "dashboard")]
+pub(crate) type DashboardUsername = String;
 
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
 
