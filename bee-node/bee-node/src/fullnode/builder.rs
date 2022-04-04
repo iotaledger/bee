@@ -420,13 +420,6 @@ fn initialize_dashboard<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
 
     let dashboard_cfg = config.dashboard.clone();
     let rest_api_cfg = config.rest_api.clone();
-    let node_id = config.local().peer_id().to_string();
-    let node_keypair = config.local().keypair().clone();
-    let node_alias = config.alias().clone();
-    let bech32_hrp = config.network_spec().hrp().to_string();
-
-    let dashboard_cfg = config.dashboard.clone();
-    let rest_api_cfg = config.rest_api.clone();
     let node_id = config.local().peer_id();
     let node_keypair = config.local().keypair().clone();
     let node_alias = config.alias().clone();
