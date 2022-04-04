@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{marker::PhantomData, sync::Arc};
+use std::marker::PhantomData;
 
 use auth_helper::jwt::{Claims, JsonWebToken, TokenData};
 use axum::{
@@ -79,7 +79,7 @@ where
 async fn validate_jwt<B: StorageBackend>(
     uri: Uri,
     jwt: JsonWebToken,
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<(), ApiError> {
     // Decode the JWT payload to find out how to validate it. The `aud` claim will indicate if it's an API
     // JWT or a Dashboard JWT.
