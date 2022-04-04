@@ -10,6 +10,8 @@ use axum::{
     headers::{authorization::Bearer, Authorization},
     http::Uri,
 };
+use lazy_static::lazy_static;
+use regex::RegexSet;
 use serde::{Deserialize, Serialize};
 
 use crate::endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode};
@@ -19,6 +21,21 @@ pub const DASHBOARD_AUDIENCE_CLAIM: &str = "dashboard";
 const API_JWT_HINT: &str = "\"aud\":\"api\"";
 #[cfg(feature = "dashboard")]
 const DASHBOARD_JWT_HINT: &str = "\"aud\":\"dashboard\"";
+
+lazy_static! {
+    static ref DASHBOARD_ROUTES: RegexSet = {
+        let routes = vec![
+            "/api/v1/info",
+            "/api/v1/messages/*",
+            "/api/v1/outputs/*",
+            "/api/v1/addresses/*",
+            "/api/v1/milestones/*",
+            "/api/v1/peers*",
+        ];
+        // Panic: unwrapping is fine because all strings in `routes` can be turned into valid regular expressions.
+        RegexSet::new(routes.iter().map(|r| route_to_regex(r)).collect::<Vec<_>>()).unwrap()
+    };
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Auth<S> {

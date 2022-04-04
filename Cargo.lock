@@ -544,6 +544,7 @@ dependencies = [
  "digest 0.9.0",
  "futures",
  "iota-crypto",
+ "lazy_static",
  "log",
  "multiaddr",
  "num_cpus",
