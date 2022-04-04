@@ -212,10 +212,6 @@ impl<B: StorageBackend> PluginServer<B> {
     }
 }
 
-trait Stream<T>: futures::Stream<Item = Result<T, Status>> + Sync + Send + 'static {}
-
-impl<T, S: futures::Stream<Item = Result<T, Status>> + Sync + Send + 'static> Stream<T> for S {}
-
 type InxStream<T> = UnboundedReceiverStream<Result<T, Status>>;
 
 #[async_trait::async_trait]
