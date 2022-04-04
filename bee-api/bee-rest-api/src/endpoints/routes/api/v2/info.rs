@@ -39,7 +39,7 @@ pub(crate) async fn info<B: StorageBackend>(Extension(args): Extension<Arc<ApiAr
             pruning_index: *args.tangle.get_pruning_index(),
         },
         protocol: ProtocolResponse {
-            network_name: args.network_id.0.clone(),
+            network_name: args.network_name.clone(),
             bech32_hrp: args.bech32_hrp.clone(),
             min_pow_score: args.protocol_config.minimum_pow_score(),
             rent_structure: RentStructureResponse {

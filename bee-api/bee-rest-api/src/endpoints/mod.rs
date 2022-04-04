@@ -39,11 +39,6 @@ use tokio::sync::mpsc;
 
 use crate::endpoints::{auth::Auth, error::ApiError, routes::filter_all};
 
-pub(crate) type NetworkId = (String, u64);
-pub(crate) type Bech32Hrp = String;
-#[cfg(feature = "dashboard")]
-pub(crate) type DashboardUsername = String;
-
 pub(crate) const CONFIRMED_THRESHOLD: u32 = 5;
 
 pub async fn init_full_node<N: Node>(init_config: InitConfigFullNode, node_builder: N::Builder) -> N::Builder
@@ -65,10 +60,10 @@ pub struct InitConfigFullNode {
     pub node_keypair: Keypair,
     pub rest_api_config: RestApiConfig,
     pub protocol_config: ProtocolConfig,
-    pub network_id: NetworkId,
-    pub bech32_hrp: Bech32Hrp,
+    pub network_name: String,
+    pub bech32_hrp: String,
     #[cfg(feature = "dashboard")]
-    pub dashboard_username: DashboardUsername,
+    pub dashboard_username: String,
 }
 
 pub struct InitConfigEntryNode {
@@ -80,8 +75,8 @@ pub struct ApiArgsFullNode<B: StorageBackend> {
     pub(crate) node_keypair: Keypair,
     pub(crate) rest_api_config: RestApiConfig,
     pub(crate) protocol_config: ProtocolConfig,
-    pub(crate) network_id: NetworkId,
-    pub(crate) bech32_hrp: Bech32Hrp,
+    pub(crate) network_name: String,
+    pub(crate) bech32_hrp: String,
     pub(crate) storage: ResourceHandle<B>,
     pub(crate) bus: ResourceHandle<Bus<'static>>,
     pub(crate) node_info: ResourceHandle<NodeInfo>,
@@ -93,7 +88,7 @@ pub struct ApiArgsFullNode<B: StorageBackend> {
     pub(crate) message_requester: MessageRequesterWorker,
     pub(crate) consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
     #[cfg(feature = "dashboard")]
-    pub(crate) dashboard_username: DashboardUsername,
+    pub(crate) dashboard_username: String,
 }
 
 pub struct ApiWorkerFullNode;
@@ -121,7 +116,7 @@ where
             node_keypair: config.node_keypair,
             rest_api_config: config.rest_api_config,
             protocol_config: config.protocol_config,
-            network_id: config.network_id,
+            network_name: config.network_name,
             bech32_hrp: config.bech32_hrp,
             #[cfg(feature = "dashboard")]
             dashboard_username: config.dashboard_username,
