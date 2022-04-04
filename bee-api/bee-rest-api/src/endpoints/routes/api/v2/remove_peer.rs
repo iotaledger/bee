@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
-
 use axum::{
     extract::{Extension, Path},
     http::StatusCode,
@@ -20,7 +18,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 
 pub(crate) async fn remove_peer<B: StorageBackend>(
     Path(peer_id): Path<String>,
-    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
+    Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let peer_id = peer_id
         .parse::<PeerId>()

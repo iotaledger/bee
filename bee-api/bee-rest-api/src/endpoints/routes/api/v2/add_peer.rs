@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
-
 use axum::{
     extract::{Extension, Json},
     response::IntoResponse,
@@ -26,7 +24,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 
 pub(crate) async fn add_peer<B: StorageBackend>(
     Json(value): Json<Value>,
-    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
+    Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let multi_address_v = &value["multiAddress"];
     let alias_v = &value["alias"];

@@ -31,7 +31,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 
 pub(crate) async fn white_flag<B: StorageBackend>(
     Json(body): Json<Value>,
-    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
+    Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let index_json = &body["index"];
     let parents_json = &body["parentMessageIds"];

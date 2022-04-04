@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
-
 use axum::{
     extract::{Extension, Json},
     response::IntoResponse,
@@ -19,7 +17,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
     Router::new().route("/info", get(info::<B>))
 }
 
-pub(crate) async fn info<B: StorageBackend>(Extension(args): Extension<Arc<ApiArgsFullNode<B>>>) -> impl IntoResponse {
+pub(crate) async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFullNode<B>>) -> impl IntoResponse {
     let latest_milestone_index = args.tangle.get_latest_milestone_index();
     let latest_milestone_timestamp = args
         .tangle

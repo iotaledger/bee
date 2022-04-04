@@ -3,7 +3,6 @@
 
 use std::{
     convert::Infallible,
-    sync::Arc,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
@@ -21,7 +20,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 pub(crate) async fn health<B: StorageBackend>(
-    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
+    Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, Infallible> {
     if is_healthy(&args.tangle, &args.peer_manager).await {
         Ok(StatusCode::OK)

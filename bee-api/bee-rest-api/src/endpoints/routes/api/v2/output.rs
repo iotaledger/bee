@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
-
 use axum::{
     extract::{Extension, Json, Path},
     response::IntoResponse,
@@ -29,7 +27,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 
 pub(crate) async fn output<B: StorageBackend>(
     Path(output_id): Path<OutputId>,
-    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
+    Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let (cmd_tx, cmd_rx) = oneshot::channel::<(Result<Option<CreatedOutput>, Error>, LedgerIndex)>();
 

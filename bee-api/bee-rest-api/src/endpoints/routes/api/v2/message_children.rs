@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
-
 use axum::{
     extract::{Extension, Json, Path},
     response::IntoResponse,
@@ -22,7 +20,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 
 pub(crate) async fn message_children<B: StorageBackend>(
     Path(message_id): Path<MessageId>,
-    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
+    Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let mut children = Vec::from_iter(args.tangle.get_children(&message_id).await.unwrap_or_default());
     let count = children.len();

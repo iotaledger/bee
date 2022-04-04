@@ -8,7 +8,7 @@ pub mod storage;
 
 pub mod auth;
 
-use std::{any::TypeId, sync::Arc};
+use std::{any::TypeId, ops::Deref, sync::Arc};
 
 use async_trait::async_trait;
 use axum::{
@@ -70,7 +70,23 @@ pub struct InitConfigEntryNode {
     pub rest_api_config: RestApiConfig,
 }
 
-pub struct ApiArgsFullNode<B: StorageBackend> {
+pub(crate) struct ApiArgsFullNode<B: StorageBackend>(Arc<ApiArgsFullNodeInner<B>>);
+
+impl<B: StorageBackend> Deref for ApiArgsFullNode<B> {
+    type Target = Arc<ApiArgsFullNodeInner<B>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<B: StorageBackend> Clone for ApiArgsFullNode<B> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
+pub struct ApiArgsFullNodeInner<B: StorageBackend> {
     pub(crate) node_id: PeerId,
     pub(crate) node_keypair: Keypair,
     pub(crate) rest_api_config: RestApiConfig,
@@ -111,7 +127,7 @@ where
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let args = Arc::new(ApiArgsFullNode {
+        let args = ApiArgsFullNode(Arc::new(ApiArgsFullNodeInner {
             node_id: config.node_id,
             node_keypair: config.node_keypair,
             rest_api_config: config.rest_api_config,
@@ -130,7 +146,7 @@ where
             message_submitter: node.worker::<MessageSubmitterWorker>().unwrap().tx.clone(),
             message_requester: node.worker::<MessageRequesterWorker>().unwrap().clone(),
             consensus_worker: node.worker::<ConsensusWorker>().unwrap().tx.clone(),
-        });
+        }));
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
-
 use axum::{
     body::Bytes,
     extract::{Extension, Json},
@@ -39,7 +37,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 pub(crate) async fn submit_message<B: StorageBackend>(
     bytes: Bytes,
     headers: HeaderMap,
-    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
+    Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<Response, ApiError> {
     if let Some(value) = headers.get(axum::http::header::CONTENT_TYPE) {
         if value.eq(&"application/octet-stream".parse::<HeaderValue>().unwrap()) {
@@ -62,7 +60,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
 
 pub(crate) async fn submit_message_json<B: StorageBackend>(
     value: Value,
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<Response, ApiError> {
     let protocol_version_json = &value["protocolVersion"];
     let parents_json = &value["parentMessageIds"];
@@ -144,7 +142,7 @@ pub(crate) async fn build_message<B: StorageBackend>(
     parents: Vec<MessageId>,
     payload: Option<Payload>,
     nonce: Option<u64>,
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<Message, ApiError> {
     let message = if let Some(nonce) = nonce {
         let mut builder = MessageBuilder::new(Parents::new(parents).map_err(|e| ApiError::BadRequest(e.to_string()))?)
@@ -174,7 +172,7 @@ pub(crate) async fn build_message<B: StorageBackend>(
 
 pub(crate) async fn submit_message_raw<B: StorageBackend>(
     message_bytes: Vec<u8>,
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<Response, ApiError> {
     let message_id = forward_to_message_submitter(message_bytes, args).await?;
     Ok((
@@ -188,7 +186,7 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
 
 pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
     message_bytes: Vec<u8>,
-    args: Arc<ApiArgsFullNode<B>>,
+    args: ApiArgsFullNode<B>,
 ) -> Result<MessageId, ApiError> {
     let (notifier, waiter) = oneshot::channel::<Result<MessageId, MessageSubmitterError>>();
 

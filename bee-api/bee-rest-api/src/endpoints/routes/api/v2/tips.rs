@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
-
 use axum::{
     extract::{Extension, Json},
     response::IntoResponse,
@@ -21,7 +19,7 @@ pub(crate) fn filter<B: StorageBackend>() -> Router {
 }
 
 pub(crate) async fn tips<B: StorageBackend>(
-    Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
+    Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     if !args.tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
         return Err(ApiError::ServiceUnavailable("the node is not synchronized".to_string()));
