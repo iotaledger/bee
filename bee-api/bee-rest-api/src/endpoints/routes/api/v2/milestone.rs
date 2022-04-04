@@ -24,15 +24,14 @@ pub(crate) async fn milestone<B: StorageBackend>(
     Path(milestone_index): Path<MilestoneIndex>,
     Extension(args): Extension<Arc<ApiArgsFullNode<B>>>,
 ) -> Result<impl IntoResponse, ApiError> {
-    match args.tangle.get_milestone_message_id(milestone_index).await {
-        Some(message_id) => match args.tangle.get_metadata(&message_id).await {
-            Some(metadata) => Ok(Json(MilestoneResponse {
-                milestone_index: *milestone_index,
-                message_id: message_id.to_string(),
-                timestamp: metadata.arrival_timestamp(),
-            })),
-            None => Err(ApiError::NotFound("can not find metadata for milestone".to_string())),
-        },
-        None => Err(ApiError::NotFound("can not find milestone".to_string())),
+    match tangle.get_milestone(milestone_index).await {
+        Some(milestone) => Ok(Json(MilestoneResponse {
+            milestone_index: *milestone_index,
+            message_id: milestone.message_id().to_string(),
+            timestamp: milestone.timestamp(),
+        })),
+        None => Err(ApiError::NotFound(
+            "cannot find milestone".to_string(),
+        )),
     }
 }

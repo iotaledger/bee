@@ -87,18 +87,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let local = Local::from_keypair(keypair);
 
-        // Execute one of Bee's tools and exit.
-        if let Some(tool) = cl_args.tool() {
-            return tools::exec(tool, &local, &config).map_err(|e| e.into());
-        }
+    // Execute one of Bee's tools and exit.
+    if let Some(tool) = cl_args.tool() {
+        return tools::exec(tool, &local, &config).map_err(|e| e.into());
+    }
 
-        // Just show the version and exit.
-        if cl_args.print_commit_version() {
-            print_banner_and_version(false);
-            return Ok(());
-        }
+    // Just show the version and exit.
+    if cl_args.print_commit_version() {
+        print_banner_and_version(false);
+        return Ok(());
+    }
 
-        print_banner_and_version(true);
+    print_banner_and_version(true);
 
     // Start running the node.
     if config.run_as_entry_node() {
