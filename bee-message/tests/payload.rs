@@ -85,6 +85,7 @@ fn milestone() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
+            vec![],
             None,
         )
         .unwrap(),

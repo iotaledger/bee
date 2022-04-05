@@ -17,7 +17,8 @@ use crate::{
     },
     parent::ParentCount,
     payload::{
-        InputCount, MigratedFundsAmount, OutputCount, ReceiptFundsCount, SignatureCount, TagLength, TaggedDataLength,
+        InputCount, MigratedFundsAmount, MilestoneMetadataLength, OutputCount, ReceiptFundsCount, SignatureCount,
+        TagLength, TaggedDataLength,
     },
     unlock_block::{UnlockBlockCount, UnlockBlockIndex},
 };
@@ -56,6 +57,7 @@ pub enum Error {
     InvalidMessageLength(usize),
     InvalidStateMetadataLength(<StateMetadataLength as TryFrom<usize>>::Error),
     InvalidMetadataFeatureBlockLength(<MetadataFeatureBlockLength as TryFrom<usize>>::Error),
+    InvalidMilestoneMetadataLength(<MilestoneMetadataLength as TryFrom<usize>>::Error),
     InvalidMigratedFundsEntryAmount(<MigratedFundsAmount as TryFrom<u64>>::Error),
     InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
     InvalidNftIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
@@ -183,10 +185,13 @@ impl fmt::Display for Error {
             Error::InvalidMessageLength(length) => write!(f, "invalid message length {}", length),
             Error::InvalidStateMetadataLength(length) => write!(f, "invalid state metadata length {}", length),
             Error::InvalidMetadataFeatureBlockLength(length) => {
-                write!(f, "invalid metadata feature block length {}", length)
+                write!(f, "invalid metadata feature block length {length}")
+            }
+            Error::InvalidMilestoneMetadataLength(length) => {
+                write!(f, "invalid milestone metadata length {length}")
             }
             Error::InvalidMigratedFundsEntryAmount(amount) => {
-                write!(f, "invalid migrated funds entry amount: {}", amount)
+                write!(f, "invalid migrated funds entry amount: {amount}")
             }
             Error::InvalidNativeTokenCount(count) => write!(f, "invalid native token count: {}", count),
             Error::InvalidNftIndex(index) => write!(f, "invalid nft index: {}", index),
