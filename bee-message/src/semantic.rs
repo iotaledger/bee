@@ -10,7 +10,7 @@ use crate::{
     address::Address,
     error::Error,
     milestone::MilestoneIndex,
-    output::{create_inputs_commitment, ChainId, Output, OutputId, TokenId, UnlockCondition},
+    output::{create_inputs_commitment, ChainId, NativeTokens, Output, OutputId, TokenId, UnlockCondition},
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     unlock_block::UnlockBlocks,
 };
@@ -70,6 +70,8 @@ pub enum ConflictReason {
     UnlockAddressMismatch = 13,
     /// The address was not previously unlocked.
     AddressNotUnlocked = 14,
+    /// Too many native tokens.
+    TooManyNativeTokens = 15,
     /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
 }
@@ -100,6 +102,7 @@ impl TryFrom<u8> for ConflictReason {
             12 => Self::StorageDepositReturnMismatch,
             13 => Self::UnlockAddressMismatch,
             14 => Self::AddressNotUnlocked,
+            15 => Self::TooManyNativeTokens,
             255 => Self::SemanticValidationFailed,
             x => return Err(Self::Error::InvalidConflict(x)),
         })
@@ -327,6 +330,8 @@ pub fn semantic_validation(
         return Ok(ConflictReason::CreatedConsumedAmountMismatch);
     }
 
+    let mut native_token_ids = HashSet::new();
+
     // Validation of input native tokens.
     for (token_id, input_amount) in context.input_native_tokens.iter() {
         let output_amount = context.output_native_tokens.get(token_id).copied().unwrap_or_default();
@@ -338,6 +343,8 @@ pub fn semantic_validation(
         {
             return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
         }
+
+        native_token_ids.insert(token_id);
     }
 
     // Validation of output native tokens.
@@ -351,6 +358,12 @@ pub fn semantic_validation(
         {
             return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
         }
+
+        native_token_ids.insert(token_id);
+    }
+
+    if native_token_ids.len() > NativeTokens::COUNT_MAX as usize {
+        return Ok(ConflictReason::TooManyNativeTokens);
     }
 
     // Validation of state creations and transitions.
