@@ -91,7 +91,7 @@ fn packed_len() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
-            vec![],
+            vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a],
             None,
         )
         .unwrap(),
@@ -102,8 +102,8 @@ fn packed_len() {
     )
     .unwrap();
 
-    assert_eq!(ms.packed_len(), 380);
-    assert_eq!(ms.pack_to_vec().len(), 380);
+    assert_eq!(ms.packed_len(), 387);
+    assert_eq!(ms.pack_to_vec().len(), 387);
 }
 
 #[test]
