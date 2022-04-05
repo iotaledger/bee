@@ -45,7 +45,6 @@ pub enum Error {
     InsufficientStorageDepositAmount { amount: u64, required: u64 },
     StorageDepositReturnExceedsOutputAmount { deposit: u64, amount: u64 },
     InsufficientStorageDepositReturnAmount { deposit: u64, required: u64 },
-    UnnecessaryStorageDepositReturnCondition { logical_amount: u64, required: u64 },
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
     InvalidFeatureBlockKind(u8),
@@ -169,13 +168,6 @@ impl fmt::Display for Error {
             Error::StorageDepositReturnExceedsOutputAmount { deposit, amount } => write!(
                 f,
                 "storage deposit return of {deposit} exceeds the original output amount of {amount}"
-            ),
-            Error::UnnecessaryStorageDepositReturnCondition {
-                logical_amount,
-                required,
-            } => write!(
-                f,
-                "no storage deposit return is needed, the logical output amount {logical_amount} already covers the required deposit {required}"
             ),
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}", k),
             Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}", count),
