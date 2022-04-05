@@ -153,7 +153,7 @@ impl Packable for MilestoneEssence {
         }
 
         let metadata = BoxedSlicePrefix::<u8, MilestoneMetadataLength>::unpack::<_, VERIFY>(unpacker)
-            .map_packable_err(|err| Error::InvalidMilestoneMetadataLength(err.into_prefix_err().into()))?;
+            .map_packable_err(|e| Error::InvalidMilestoneMetadataLength(e.into_prefix_err().into()))?;
 
         let receipt = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
 
