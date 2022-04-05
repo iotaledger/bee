@@ -234,7 +234,7 @@ impl Output {
             .and_then(UnlockConditions::storage_deposit_return)
         {
             // We can't return more tokens than were originally contained in the output.
-            // `0` ≤ `Amount` - `Return Amount`
+            // `Return Amount` ≤ `Amount`.
             if return_condition.amount() > self.amount() {
                 return Err(Error::StorageDepositReturnExceedsOutputAmount {
                     deposit: return_condition.amount(),
@@ -244,20 +244,11 @@ impl Output {
 
             let minimum_deposit = minimum_storage_deposit(config, return_condition.return_address());
 
-            // `Return Amount` must be ≥ than `Minimum Storage Deposit`
+            // `Minimum Storage Deposit` ≤  `Return Amount`
             if return_condition.amount() < minimum_deposit {
                 return Err(Error::InsufficientStorageDepositReturnAmount {
                     deposit: return_condition.amount(),
                     required: minimum_deposit,
-                });
-            }
-
-            // Check if the storage deposit return was required in the first place.
-            // `Amount` - `Return Amount` ≤ `Required Storage Deposit of the Output`
-            if self.amount() - return_condition.amount() > required_output_amount {
-                return Err(Error::UnnecessaryStorageDepositReturnCondition {
-                    logical_amount: self.amount() - return_condition.amount(),
-                    required: required_output_amount,
                 });
             }
         }
