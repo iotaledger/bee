@@ -300,12 +300,12 @@ pub fn semantic_validation(
             .ok_or(Error::CreatedAmountOverflow)?;
 
         for native_token in created_native_tokens.iter() {
-            let native_token_amount = *context
+            let native_token_amount = context
                 .output_native_tokens
                 .entry(*native_token.token_id())
                 .or_default();
 
-            native_token_amount
+            *native_token_amount = native_token_amount
                 .checked_add(*native_token.amount())
                 .ok_or(Error::CreatedNativeTokensAmountOverflow)?;
         }
