@@ -199,7 +199,7 @@ impl fmt::Display for Error {
                 write!(f, "invalid milestone metadata length {length}")
             }
             Error::InvalidMigratedFundsEntryAmount(amount) => {
-                write!(f, "invalid migrated funds entry amount: {}", amount)
+                write!(f, "invalid migrated funds entry amount: {amount}")
             }
             Error::InvalidNativeTokenCount(count) => write!(f, "invalid native token count: {}", count),
             Error::InvalidNftIndex(index) => write!(f, "invalid nft index: {}", index),
