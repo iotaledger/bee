@@ -193,7 +193,7 @@ impl fmt::Display for Error {
             Error::InvalidMessageLength(length) => write!(f, "invalid message length {}", length),
             Error::InvalidStateMetadataLength(length) => write!(f, "invalid state metadata length {}", length),
             Error::InvalidMetadataFeatureBlockLength(length) => {
-                write!(f, "invalid metadata feature block length {}", length)
+                write!(f, "invalid metadata feature block length {length}")
             }
             Error::InvalidMilestoneMetadataLength(length) => {
                 write!(f, "invalid milestone metadata length {length}")
