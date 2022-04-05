@@ -366,14 +366,6 @@ impl StateTransitionVerifier for FoundryOutput {
             return Err(StateTransitionError::MissingAliasForFoundry);
         }
 
-        // let token_id = next_state.token_id();
-        // let token_diff = context.output_native_tokens.get(&token_id).copied().unwrap_or_default();
-        // let TokenScheme::Simple(ref next_token_scheme) = next_state.token_scheme;
-        //
-        // if &token_diff != next_token_scheme.minted_tokens() || !next_token_scheme.melted_tokens().is_zero() {
-        //     // TODO
-        // }
-
         Ok(())
     }
 
@@ -391,9 +383,6 @@ impl StateTransitionVerifier for FoundryOutput {
             return Err(StateTransitionError::MutatedImmutableField);
         }
 
-        // let token_id = next_state.token_id();
-        // let input_tokens = context.input_native_tokens.get(&token_id).copied().unwrap_or_default();
-        // let output_tokens = context.output_native_tokens.get(&token_id).copied().unwrap_or_default();
         let TokenScheme::Simple(ref current_token_scheme) = current_state.token_scheme;
         let TokenScheme::Simple(ref next_token_scheme) = next_state.token_scheme;
 
@@ -405,15 +394,6 @@ impl StateTransitionVerifier for FoundryOutput {
     }
 
     fn destruction(_current_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
-        // let token_id = next_state.token_id();
-        // let input_tokens = context.input_native_tokens.get(&token_id).copied().unwrap_or_default();
-        // let output_tokens = context.output_native_tokens.get(&token_id).copied().unwrap_or_default();
-        // let TokenScheme::Simple(ref current_token_scheme) = current_state.token_scheme;
-        //
-        // // if &token_diff != next_token_scheme.minted_tokens() || !next_token_scheme.melted_tokens().is_zero() {
-        // //     // TODO
-        // // }
-
         Ok(())
     }
 }
