@@ -21,6 +21,7 @@ fn new_invalid_pow_score_non_zero() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             4242,
+            vec![],
             None,
         ),
         Err(Error::InvalidPowScoreValues { nps: 0, npsmi: 4242 })
@@ -37,6 +38,7 @@ fn new_invalid_pow_score_lower_than_index() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             4000,
             4241,
+            vec![],
             None,
         ),
         Err(Error::InvalidPowScoreValues { nps: 4000, npsmi: 4241 })
@@ -53,6 +55,7 @@ fn new_valid() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
+            vec![],
             None,
         )
         .is_ok()
@@ -69,6 +72,7 @@ fn new_invalid_payload_kind() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
+            vec![],
             Some(Payload::TaggedData(Box::new(
                 TaggedDataPayload::new(rand_bytes(32), vec![]).unwrap()
             ))),
@@ -106,6 +110,7 @@ fn getters() {
         merkel_proof,
         next_pow_score,
         next_pow_score_milestone_index,
+        vec![],
         receipt.clone(),
     )
     .unwrap();
@@ -131,6 +136,7 @@ fn pack_unpack_valid() {
         [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
         0,
         0,
+        vec![],
         None,
     )
     .unwrap();

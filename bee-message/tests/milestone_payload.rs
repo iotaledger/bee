@@ -27,6 +27,7 @@ fn new_valid() {
                 [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 0,
                 0,
+                vec![],
                 None,
             )
             .unwrap(),
@@ -47,6 +48,7 @@ fn new_invalid_no_signature() {
                 [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 0,
                 0,
+                vec![],
                 None,
             )
             .unwrap(),
@@ -67,6 +69,7 @@ fn new_invalid_too_many_signatures() {
                 [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 0,
                 0,
+                vec![],
                 None,
             )
             .unwrap(),
@@ -88,6 +91,7 @@ fn packed_len() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
+            vec![],
             None,
         )
         .unwrap(),
@@ -112,6 +116,7 @@ fn pack_unpack_valid() {
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
+            vec![],
             None,
         )
         .unwrap(),
@@ -134,6 +139,7 @@ fn getters() {
         [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
         0,
         0,
+        vec![],
         None,
     )
     .unwrap();

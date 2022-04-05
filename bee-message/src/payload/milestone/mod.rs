@@ -17,6 +17,7 @@ use crypto::{
 use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable, PackableExt};
 
+pub(crate) use self::essence::MilestoneMetadataLength;
 pub use self::{essence::MilestoneEssence, milestone_id::MilestoneId};
 use crate::{signature::Signature, Error};
 
@@ -177,6 +178,7 @@ pub mod dto {
         pub next_pow_score: u32,
         #[serde(rename = "nextPoWScoreMilestoneIndex")]
         pub next_pow_score_milestone_index: u32,
+        pub metadata: String,
         #[serde(skip_serializing_if = "Option::is_none")]
         pub receipt: Option<PayloadDto>,
         pub signatures: Vec<SignatureDto>,
@@ -192,6 +194,7 @@ pub mod dto {
                 inclusion_merkle_proof: prefix_hex::encode(value.essence().merkle_proof()),
                 next_pow_score: value.essence().next_pow_score(),
                 next_pow_score_milestone_index: value.essence().next_pow_score_milestone_index(),
+                metadata: prefix_hex::encode(value.essence().metadata()),
                 receipt: value.essence().receipt().map(Into::into),
                 signatures: value.signatures().iter().map(From::from).collect(),
             }
@@ -217,6 +220,7 @@ pub mod dto {
                     .map_err(|_| DtoError::InvalidField("inclusionMerkleProof"))?;
                 let next_pow_score = value.next_pow_score;
                 let next_pow_score_milestone_index = value.next_pow_score_milestone_index;
+                let metadata = prefix_hex::decode(&value.metadata).map_err(|_e| DtoError::InvalidField("metadata"))?;
                 let receipt = if let Some(receipt) = value.receipt.as_ref() {
                     Some(receipt.try_into()?)
                 } else {
@@ -229,6 +233,7 @@ pub mod dto {
                     merkle_proof,
                     next_pow_score,
                     next_pow_score_milestone_index,
+                    metadata,
                     receipt,
                 )?
             };

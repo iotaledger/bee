@@ -24,7 +24,7 @@ pub use self::{
     transaction::TransactionPayload, treasury_transaction::TreasuryTransactionPayload,
 };
 pub(crate) use self::{
-    milestone::SignatureCount,
+    milestone::{MilestoneMetadataLength, SignatureCount},
     receipt::{MigratedFundsAmount, ReceiptFundsCount},
     tagged_data::{TagLength, TaggedDataLength},
     transaction::{InputCount, OutputCount},

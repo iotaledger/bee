@@ -3,8 +3,10 @@
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 use packable::{
+    bounded::BoundedU16,
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
+    prefix::BoxedSlicePrefix,
     unpacker::Unpacker,
     Packable, PackableExt,
 };
@@ -15,6 +17,8 @@ use crate::{
     payload::{OptionalPayload, Payload},
     Error,
 };
+
+pub(crate) type MilestoneMetadataLength = BoundedU16<{ u16::MIN }, { u16::MAX }>;
 
 /// Essence of a milestone payload.
 /// This is the signed part of a milestone payload.
@@ -27,6 +31,7 @@ pub struct MilestoneEssence {
     merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
     next_pow_score: u32,
     next_pow_score_milestone_index: u32,
+    metadata: BoxedSlicePrefix<u8, MilestoneMetadataLength>,
     receipt: OptionalPayload,
 }
 
@@ -43,9 +48,15 @@ impl MilestoneEssence {
         merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
         next_pow_score: u32,
         next_pow_score_milestone_index: u32,
+        metadata: Vec<u8>,
         receipt: Option<Payload>,
     ) -> Result<Self, Error> {
         verify_pow_scores(index, next_pow_score, next_pow_score_milestone_index)?;
+
+        let metadata = metadata
+            .into_boxed_slice()
+            .try_into()
+            .map_err(Error::InvalidMilestoneMetadataLength)?;
 
         let receipt = OptionalPayload::from(receipt);
 
@@ -58,6 +69,7 @@ impl MilestoneEssence {
             merkle_proof,
             next_pow_score,
             next_pow_score_milestone_index,
+            metadata,
             receipt,
         })
     }
@@ -92,6 +104,11 @@ impl MilestoneEssence {
         self.next_pow_score_milestone_index
     }
 
+    /// Returns the metadata.
+    pub fn metadata(&self) -> &[u8] {
+        &self.metadata
+    }
+
     /// Returns the optional receipt of a [`MilestoneEssence`].
     pub fn receipt(&self) -> Option<&Payload> {
         self.receipt.as_ref()
@@ -113,6 +130,7 @@ impl Packable for MilestoneEssence {
         self.merkle_proof.pack(packer)?;
         self.next_pow_score.pack(packer)?;
         self.next_pow_score_milestone_index.pack(packer)?;
+        self.metadata.pack(packer)?;
         self.receipt.pack(packer)?;
 
         Ok(())
@@ -134,6 +152,9 @@ impl Packable for MilestoneEssence {
             verify_pow_scores(index, next_pow_score, next_pow_score_milestone_index).map_err(UnpackError::Packable)?;
         }
 
+        let metadata = BoxedSlicePrefix::<u8, MilestoneMetadataLength>::unpack::<_, VERIFY>(unpacker)
+            .map_packable_err(|err| Error::InvalidMilestoneMetadataLength(err.into_prefix_err().into()))?;
+
         let receipt = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
@@ -147,6 +168,7 @@ impl Packable for MilestoneEssence {
             merkle_proof,
             next_pow_score,
             next_pow_score_milestone_index,
+            metadata,
             receipt,
         })
     }
