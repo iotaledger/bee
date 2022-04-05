@@ -13,7 +13,6 @@ use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
 const PROCESS_METRICS_UPDATE_INTERVAL: Duration = Duration::from_secs(5);
-
 const DEFAULT_BIND_ADDRESS: &str = "0.0.0.0:3030";
 
 #[derive(Default, Deserialize, PartialEq)]
