@@ -327,9 +327,30 @@ pub fn semantic_validation(
         return Ok(ConflictReason::CreatedConsumedAmountMismatch);
     }
 
-    // Validation of native tokens.
-    if context.input_native_tokens != context.output_native_tokens {
-        return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
+    // Validation of input native tokens.
+    for (token_id, input_amount) in context.input_native_tokens.iter() {
+        let output_amount = context.output_native_tokens.get(token_id).copied().unwrap_or_default();
+
+        if input_amount > &output_amount
+            && !context
+                .output_chains
+                .contains_key(&ChainId::from(token_id.foundry_id()))
+        {
+            return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
+        }
+    }
+
+    // Validation of output native tokens.
+    for (token_id, output_amount) in context.output_native_tokens.iter() {
+        let input_amount = context.input_native_tokens.get(token_id).copied().unwrap_or_default();
+
+        if output_amount > &input_amount
+            && !context
+                .output_chains
+                .contains_key(&ChainId::from(token_id.foundry_id()))
+        {
+            return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
+        }
     }
 
     // Validation of state creations and transitions.
