@@ -64,9 +64,9 @@ impl ProtocolsHandler for GossipProtocolHandler {
     /// substreams to negotiate the desired protocols.
     ///
     /// > **Note**: The returned `InboundUpgrade` should always accept all the generally
-    /// >           supported protocols, even if in a specific context a particular one is
-    /// >           not supported, (eg. when only allowing one substream at a time for a protocol).
-    /// >           This allows a remote to put the list of supported protocols in a cache.
+    /// > supported protocols, even if in a specific context a particular one is
+    /// > not supported, (eg. when only allowing one substream at a time for a protocol).
+    /// > This allows a remote to put the list of supported protocols in a cache.
     fn listen_protocol(&self) -> SubstreamProtocol<Self::InboundProtocol, Self::InboundOpenInfo> {
         debug!("gossip handler: responding to listen protocol request.");
 
