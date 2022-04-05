@@ -220,7 +220,7 @@ pub mod dto {
                     .map_err(|_| DtoError::InvalidField("inclusionMerkleProof"))?;
                 let next_pow_score = value.next_pow_score;
                 let next_pow_score_milestone_index = value.next_pow_score_milestone_index;
-                let metadata = prefix_hex::decode(&value.metadata).map_err(|_e| DtoError::InvalidField("metadata"))?;
+                let metadata = prefix_hex::decode(&value.metadata).map_err(|_| DtoError::InvalidField("metadata"))?;
                 let receipt = if let Some(receipt) = value.receipt.as_ref() {
                     Some(receipt.try_into()?)
                 } else {
