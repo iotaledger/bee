@@ -10,7 +10,7 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        NativeToken, NativeTokens, Output, OutputAmount, OutputId,
+        ByteCost, ByteCostConfig, NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -20,18 +20,30 @@ use crate::{
 ///
 #[must_use]
 pub struct BasicOutputBuilder {
-    amount: OutputAmount,
+    amount: OutputBuilderAmount,
     native_tokens: Vec<NativeToken>,
     unlock_conditions: Vec<UnlockCondition>,
     feature_blocks: Vec<FeatureBlock>,
 }
 
 impl BasicOutputBuilder {
-    ///
+    /// Creates a [`BasicOutputBuilder`] with a provided amount.
     #[inline(always)]
-    pub fn new(amount: u64) -> Result<Self, Error> {
+    pub fn new_with_amount(amount: u64) -> Result<Self, Error> {
         Ok(Self {
-            amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount: OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
+            native_tokens: Vec::new(),
+            unlock_conditions: Vec::new(),
+            feature_blocks: Vec::new(),
+        })
+    }
+
+    /// Creates an [`BasicOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
+    #[inline(always)]
+    pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
+        Ok(Self {
+            amount: OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config),
             native_tokens: Vec::new(),
             unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
@@ -90,12 +102,22 @@ impl BasicOutputBuilder {
 
         verify_feature_blocks::<true>(&feature_blocks)?;
 
-        Ok(BasicOutput {
-            amount: self.amount,
+        let mut output = BasicOutput {
+            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             unlock_conditions,
             feature_blocks,
-        })
+        };
+
+        output.amount = match self.amount {
+            OutputBuilderAmount::Amount(amount) => amount,
+            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config) => Output::Basic(output.clone())
+                .byte_cost(&byte_cost_config)
+                .try_into()
+                .map_err(Error::InvalidOutputAmount)?,
+        };
+
+        Ok(output)
     }
 }
 
@@ -129,16 +151,30 @@ impl BasicOutput {
         .union(FeatureBlockFlags::METADATA)
         .union(FeatureBlockFlags::TAG);
 
-    /// Creates a new [`BasicOutput`].
+    /// Creates a new [`BasicOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new(amount: u64) -> Result<Self, Error> {
-        BasicOutputBuilder::new(amount)?.finish()
+    pub fn new_with_amount(amount: u64) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_amount(amount)?.finish()
     }
 
-    /// Creates a new [`BasicOutputBuilder`].
+    /// Creates a new [`BasicOutput`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn build(amount: u64) -> Result<BasicOutputBuilder, Error> {
-        BasicOutputBuilder::new(amount)
+    pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)?.finish()
+    }
+
+    /// Creates a new [`BasicOutputBuilder`] with a provided amount.
+    #[inline(always)]
+    pub fn build_with_amount(amount: u64) -> Result<BasicOutputBuilder, Error> {
+        BasicOutputBuilder::new_with_amount(amount)
+    }
+
+    /// Creates a new [`BasicOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
+    #[inline(always)]
+    pub fn build_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<BasicOutputBuilder, Error> {
+        BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)
     }
 
     ///
@@ -259,7 +295,7 @@ pub mod dto {
         type Error = DtoError;
 
         fn try_from(value: &BasicOutputDto) -> Result<Self, Self::Error> {
-            let mut builder = BasicOutputBuilder::new(
+            let mut builder = BasicOutputBuilder::new_with_amount(
                 value
                     .amount
                     .parse::<u64>()

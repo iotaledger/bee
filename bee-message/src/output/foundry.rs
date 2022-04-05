@@ -15,8 +15,8 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount, OutputId, StateTransitionError,
-        StateTransitionVerifier, TokenId, TokenScheme, TokenTag,
+        ByteCost, ByteCostConfig, ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount,
+        OutputBuilderAmount, OutputId, StateTransitionError, StateTransitionVerifier, TokenId, TokenScheme, TokenTag,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -26,7 +26,7 @@ use crate::{
 ///
 #[must_use]
 pub struct FoundryOutputBuilder {
-    amount: OutputAmount,
+    amount: OutputBuilderAmount,
     native_tokens: Vec<NativeToken>,
     serial_number: u32,
     token_tag: TokenTag,
@@ -37,15 +37,35 @@ pub struct FoundryOutputBuilder {
 }
 
 impl FoundryOutputBuilder {
-    ///
-    pub fn new(
+    /// Creates a [`FoundryOutputBuilder`] with a provided amount.
+    pub fn new_with_amount(
         amount: u64,
         serial_number: u32,
         token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
         Ok(Self {
-            amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount: OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
+            native_tokens: Vec::new(),
+            serial_number,
+            token_tag,
+            token_scheme,
+            unlock_conditions: Vec::new(),
+            feature_blocks: Vec::new(),
+            immutable_feature_blocks: Vec::new(),
+        })
+    }
+
+    /// Creates a [`FoundryOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
+    pub fn new_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        serial_number: u32,
+        token_tag: TokenTag,
+        token_scheme: TokenScheme,
+    ) -> Result<FoundryOutputBuilder, Error> {
+        Ok(Self {
+            amount: OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config),
             native_tokens: Vec::new(),
             serial_number,
             token_tag,
@@ -132,8 +152,8 @@ impl FoundryOutputBuilder {
             FoundryOutput::ALLOWED_IMMUTABLE_FEATURE_BLOCKS,
         )?;
 
-        Ok(FoundryOutput {
-            amount: self.amount,
+        let mut output = FoundryOutput {
+            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             serial_number: self.serial_number,
             token_tag: self.token_tag,
@@ -141,7 +161,17 @@ impl FoundryOutputBuilder {
             unlock_conditions,
             feature_blocks,
             immutable_feature_blocks,
-        })
+        };
+
+        output.amount = match self.amount {
+            OutputBuilderAmount::Amount(amount) => amount,
+            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config) => Output::Foundry(output.clone())
+                .byte_cost(&byte_cost_config)
+                .try_into()
+                .map_err(Error::InvalidOutputAmount)?,
+        };
+
+        Ok(output)
     }
 }
 
@@ -173,21 +203,56 @@ impl FoundryOutput {
     /// The set of allowed immutable [`FeatureBlock`]s for a [`FoundryOutput`].
     pub const ALLOWED_IMMUTABLE_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
 
-    /// Creates a new [`FoundryOutput`].
+    /// Creates a new [`FoundryOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new(amount: u64, serial_number: u32, token_tag: TokenTag, token_scheme: TokenScheme) -> Result<Self, Error> {
-        FoundryOutputBuilder::new(amount, serial_number, token_tag, token_scheme)?.finish()
+    pub fn new_with_amount(
+        amount: u64,
+        serial_number: u32,
+        token_tag: TokenTag,
+        token_scheme: TokenScheme,
+    ) -> Result<Self, Error> {
+        FoundryOutputBuilder::new_with_amount(amount, serial_number, token_tag, token_scheme)?.finish()
     }
 
-    /// Creates a new [`FoundryOutputBuilder`].
+    /// Creates a new [`FoundryOutput`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn build(
+    pub fn new_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        serial_number: u32,
+        token_tag: TokenTag,
+        token_scheme: TokenScheme,
+    ) -> Result<Self, Error> {
+        FoundryOutputBuilder::new_with_minimum_storage_deposit(
+            byte_cost_config,
+            serial_number,
+            token_tag,
+            token_scheme,
+        )?
+        .finish()
+    }
+
+    /// Creates a new [`FoundryOutputBuilder`] with a provided amount.
+    #[inline(always)]
+    pub fn build_with_amount(
         amount: u64,
         serial_number: u32,
         token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        FoundryOutputBuilder::new(amount, serial_number, token_tag, token_scheme)
+        FoundryOutputBuilder::new_with_amount(amount, serial_number, token_tag, token_scheme)
+    }
+
+    /// Creates a new [`FoundryOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
+    #[inline(always)]
+    pub fn build_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        serial_number: u32,
+        token_tag: TokenTag,
+        token_scheme: TokenScheme,
+    ) -> Result<FoundryOutputBuilder, Error> {
+        FoundryOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, serial_number, token_tag, token_scheme)
     }
 
     ///
@@ -462,7 +527,7 @@ pub mod dto {
         type Error = DtoError;
 
         fn try_from(value: &FoundryOutputDto) -> Result<Self, Self::Error> {
-            let mut builder = FoundryOutputBuilder::new(
+            let mut builder = FoundryOutputBuilder::new_with_amount(
                 value
                     .amount
                     .parse::<u64>()

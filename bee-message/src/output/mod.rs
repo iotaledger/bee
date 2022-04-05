@@ -69,6 +69,11 @@ pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; // [0.
 /// Type representing an output amount.
 pub type OutputAmount = BoundedU64<{ *Output::AMOUNT_RANGE.start() }, { *Output::AMOUNT_RANGE.end() }>;
 
+pub(crate) enum OutputBuilderAmount {
+    Amount(OutputAmount),
+    MinimumStorageDeposit(ByteCostConfig),
+}
+
 /// A generic output that can represent different types defining the deposit of funds.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, packable::Packable)]
 #[cfg_attr(
@@ -273,12 +278,12 @@ fn minimum_storage_deposit(config: &ByteCostConfig, address: &Address) -> u64 {
     let address_condition = UnlockCondition::Address(AddressUnlockCondition::new(*address));
     // PANIC: This can never fail because the amount will always be within the valid range. Also, the actual value is
     // not important, we are only interested in the storage requirements of the type.
-    let basic_output = BasicOutputBuilder::new(OutputAmount::MIN)
+    BasicOutputBuilder::new_with_minimum_storage_deposit(config.clone())
         .unwrap()
         .add_unlock_condition(address_condition)
         .finish()
-        .unwrap();
-    Output::Basic(basic_output).byte_cost(config)
+        .unwrap()
+        .amount()
 }
 
 ///

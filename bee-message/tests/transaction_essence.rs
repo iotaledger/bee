@@ -23,7 +23,7 @@ fn essence_kind() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
