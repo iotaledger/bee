@@ -58,15 +58,15 @@ pub(crate) async fn output<B: StorageBackend>(
                     transaction_id: output_id.transaction_id().to_string(),
                     output_index: output_id.index(),
                     is_spent: consumed_output.is_some(),
-                    // TODO
+                    // TODO: replace with the milestone index for which the output was spent
                     milestone_index_spent: None,
-                    // TODO
+                    // TODO: replace with the timestamp of the milestone for which the output was spent
                     milestone_timestamp_spent: None,
-                    // TODO
+                    // TODO: replace with the transaction id that spent the output
                     transaction_id_spent: None,
-                    // TODO
+                    // TODO: replace with the milestone index that booked the output
                     milestone_index_booked: 0,
-                    // TODO
+                    // TODO: replace with the timestamp of the milestone that booked the output
                     milestone_timestamp_booked: 0,
                     ledger_index: *ledger_index,
                     output: output.inner().into(),
