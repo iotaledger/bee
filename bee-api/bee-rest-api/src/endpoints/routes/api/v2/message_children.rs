@@ -22,14 +22,18 @@ pub(crate) async fn message_children<B: StorageBackend>(
     Path(message_id): Path<MessageId>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let mut children = Vec::from_iter(args.tangle.get_children(&message_id).await.unwrap_or_default());
-    let count = children.len();
-    children.truncate(MAX_RESPONSE_RESULTS);
+    let mut all_children = Vec::from_iter(args.tangle.get_children(&message_id).await.unwrap_or_default());
+
+    let truncated_children = all_children
+        .iter()
+        .take(MAX_RESPONSE_RESULTS)
+        .map(MessageId::to_string)
+        .collect();
 
     Ok(Json(MessageChildrenResponse {
         message_id: message_id.to_string(),
         max_results: MAX_RESPONSE_RESULTS,
-        count,
-        children_message_ids: children.iter().map(MessageId::to_string).collect(),
+        count: truncated_children.len(),
+        children_message_ids: truncated_children,
     }))
 }
