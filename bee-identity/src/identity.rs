@@ -1,7 +1,7 @@
 // Copyright 2021-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! TODO
+//! Holds the `Identity` type.
 
 use std::{fmt, path::Path};
 
@@ -14,10 +14,6 @@ use crate::{migration, pem_file, Keypair as Ed25519Keypair, PublicKey as Ed25519
 pub struct Identity {
     /// An Ed25519 keypair.
     keypair: Ed25519Keypair,
-    /// The hex/base16 encoded representation of the keypair.
-    encoded: String,
-    /// The local peer identity.
-    peer_id: PeerId,
     /// Whether the identity has been newly generated.
     is_fresh: bool,
 }
@@ -30,13 +26,8 @@ impl Identity {
 
     /// Restores a [`Local`] from a [`Keypair`](crate::keypair::Keypair).
     pub fn from_keypair(keypair: Ed25519Keypair) -> Self {
-        let encoded = hex::encode(keypair.encode());
-        let peer_id = PeerId::from_public_key(&PublicKey::Ed25519(keypair.public()));
-
         Self {
             keypair,
-            encoded,
-            peer_id,
             is_fresh: false,
         }
     }
@@ -51,14 +42,9 @@ impl Identity {
         self.keypair.public()
     }
 
-    /// Returns the hex representation of this identity.
-    pub fn encoded(&self) -> &str {
-        &self.encoded
-    }
-
     /// Returns the corresponding [`libp2p_core::PeerId`].
     pub fn peer_id(&self) -> PeerId {
-        self.peer_id
+        PeerId::from_public_key(&PublicKey::Ed25519(self.keypair.public()))
     }
 
     /// Returns whether this identity has been newly generated.
@@ -130,13 +116,9 @@ impl Identity {
 impl Default for Identity {
     fn default() -> Self {
         let keypair = Ed25519Keypair::generate();
-        let encoded = hex::encode(keypair.encode());
-        let peer_id = PeerId::from_public_key(&PublicKey::Ed25519(keypair.public()));
 
         Self {
             keypair,
-            encoded,
-            peer_id,
             is_fresh: true,
         }
     }
@@ -144,6 +126,7 @@ impl Default for Identity {
 
 impl fmt::Display for Identity {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.peer_id)
+        let encoded = hex::encode(self.keypair.encode());
+        write!(f, "{}", encoded)
     }
 }
