@@ -235,9 +235,9 @@ async fn initialize_autopeering(
 
     let autopeering_rx = bee_autopeering::init::<RocksDbPeerStore, _, _, _>(
         builder.config().autopeering.clone(),
+        local,
         AUTOPEERING_VERSION,
         network_name,
-        local,
         peerstore_cfg,
         quit_signal,
         neighbor_validator,

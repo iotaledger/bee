@@ -332,9 +332,9 @@ async fn initialize_autopeering<S: NodeStorageBackend>(
 
         let autopeering_rx = bee_autopeering::init::<RocksDbPeerStore, _, _, _>(
             autopeering_cfg,
+            local,
             AUTOPEERING_VERSION,
             network_name,
-            local,
             peerstore_cfg,
             quit_signal,
             neighbor_validator,
