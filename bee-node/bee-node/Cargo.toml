@@ -36,7 +36,6 @@ async-trait = { version = "0.1.51", default-features = false }
 auth-helper = { version = "0.2.0", default-features = false }
 cfg-if = { version = "1.0.0", default-features = false }
 chrono = { version = "0.4.19", default-features = false }
-ed25519 = { version = "1.3.0", default-features = false, features = [ "alloc", "pkcs8" ] }
 fern-logger = { version = "0.5.0", default-features = false }
 futures = { version = "0.3.17", default-features = false }
 fxhash = { version = "0.2.1", default-features = false }
@@ -44,7 +43,6 @@ hex = { version = "0.4.3", default-features = false }
 iota-crypto = { version = "0.9.1", default-features = false, features = [ "ed25519", "random", "blake2b" ] }
 log = { version = "0.4.14", default-features = false }
 multiaddr = { version = "0.13.0", default-features = false }
-pkcs8 = { version = "0.8.0", default-features = false, features = [ "alloc", "pem", "std" ] }
 rand = { version = "0.8.4", default-features = false }
 rpassword = { version = "5.0.1", default-features = false }
 serde = { version = "1.0.130", default-features = false, features = [ "derive" ] }
