@@ -8,7 +8,7 @@ use std::{fs, path::Path};
 use ed25519::KeypairBytes;
 use pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding};
 
-use crate::keypair::{Keypair, SecretKey};
+use crate::ed25519::{Keypair, SecretKey};
 
 /// TODO
 #[derive(Debug, thiserror::Error)]
