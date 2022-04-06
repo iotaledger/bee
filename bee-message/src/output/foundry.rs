@@ -403,11 +403,14 @@ impl StateTransitionVerifier for FoundryOutput {
         let TokenScheme::Simple(ref current_token_scheme) = current_state.token_scheme;
         let TokenScheme::Simple(ref next_token_scheme) = next_state.token_scheme;
 
+        if current_token_scheme.maximum_supply() != next_token_scheme.maximum_supply() {
+            return Err(StateTransitionError::MutatedImmutableField);
+        }
+
         if current_token_scheme.minted_tokens() > next_token_scheme.minted_tokens()
             || current_token_scheme.melted_tokens() > next_token_scheme.melted_tokens()
-            || current_token_scheme.maximum_supply() != next_token_scheme.maximum_supply()
         {
-            return Err(StateTransitionError::MutatedImmutableField);
+            return Err(StateTransitionError::NonMonotonicallyIncreasingNativeTokens);
         }
 
         match input_tokens.cmp(&output_tokens) {
