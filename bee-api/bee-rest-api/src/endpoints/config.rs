@@ -96,7 +96,7 @@ impl RestApiConfigBuilder {
         self
     }
 
-    /// Sets the while flag solidification timeout.
+    /// Sets the while flag solidification timeout in seconds.
     pub fn with_white_flag_solidification_timeout(mut self, timeout: u64) -> Self {
         self.white_flag_solidification_timeout.replace(timeout);
         self
