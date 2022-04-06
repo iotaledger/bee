@@ -8,7 +8,11 @@ use crate::semantic::ValidationContext;
 pub enum StateTransitionError {
     InconsistentCreatedFoundriesCount,
     InconsistentFoundrySerialNumber,
-    InconsistentNativeTokens,
+    InconsistentNativeTokensFoundryCreation,
+    InconsistentNativeTokensFoundryDestruction,
+    InconsistentNativeTokensMint,
+    InconsistentNativeTokensTransition,
+    InconsistentNativeTokensMeltBurn,
     IssuerNotUnlocked,
     MissingAliasForFoundry,
     MutatedFieldWithoutRights,

@@ -373,11 +373,11 @@ impl StateTransitionVerifier for FoundryOutput {
 
         // No native tokens should be referenced prior to the foundry creation.
         if context.input_native_tokens.contains_key(&token_id) {
-            return Err(StateTransitionError::InconsistentNativeTokens);
+            return Err(StateTransitionError::InconsistentNativeTokensFoundryCreation);
         }
 
         if &output_tokens != next_token_scheme.minted_tokens() || !next_token_scheme.melted_tokens().is_zero() {
-            return Err(StateTransitionError::InconsistentNativeTokens);
+            return Err(StateTransitionError::InconsistentNativeTokensFoundryCreation);
         }
 
         Ok(())
@@ -412,37 +412,37 @@ impl StateTransitionVerifier for FoundryOutput {
 
         match input_tokens.cmp(&output_tokens) {
             Ordering::Less => {
-                // Minting
+                // Mint
 
                 if &(current_token_scheme.minted_tokens() + (output_tokens - input_tokens))
                     != next_token_scheme.minted_tokens()
                     || current_token_scheme.melted_tokens() != next_token_scheme.melted_tokens()
                 {
-                    return Err(StateTransitionError::InconsistentNativeTokens);
+                    return Err(StateTransitionError::InconsistentNativeTokensMint);
                 }
             }
             Ordering::Equal => {
-                // Transitioning
+                // Transition
 
                 if current_token_scheme.minted_tokens() != next_token_scheme.minted_tokens()
                     || current_token_scheme.melted_tokens() != next_token_scheme.melted_tokens()
                 {
-                    return Err(StateTransitionError::InconsistentNativeTokens);
+                    return Err(StateTransitionError::InconsistentNativeTokensTransition);
                 }
             }
             Ordering::Greater => {
-                // Melting / Burning
+                // Melt / Burn
 
                 if current_token_scheme.melted_tokens() != next_token_scheme.melted_tokens()
                     && current_token_scheme.minted_tokens() != next_token_scheme.minted_tokens()
                 {
-                    return Err(StateTransitionError::InconsistentNativeTokens);
+                    return Err(StateTransitionError::InconsistentNativeTokensMeltBurn);
                 }
 
                 if next_token_scheme.melted_tokens() - current_token_scheme.melted_tokens()
                     > input_tokens - output_tokens
                 {
-                    return Err(StateTransitionError::InconsistentNativeTokens);
+                    return Err(StateTransitionError::InconsistentNativeTokensMeltBurn);
                 }
             }
         }
@@ -457,11 +457,11 @@ impl StateTransitionVerifier for FoundryOutput {
 
         // No native tokens should be referenced after the foundry destruction.
         if context.output_native_tokens.contains_key(&token_id) {
-            return Err(StateTransitionError::InconsistentNativeTokens);
+            return Err(StateTransitionError::InconsistentNativeTokensFoundryDestruction);
         }
 
         if current_token_scheme.minted_tokens() != &(current_token_scheme.melted_tokens() + input_tokens) {
-            return Err(StateTransitionError::InconsistentNativeTokens);
+            return Err(StateTransitionError::InconsistentNativeTokensFoundryDestruction);
         }
 
         Ok(())
