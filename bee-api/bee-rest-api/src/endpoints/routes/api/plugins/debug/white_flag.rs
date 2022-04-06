@@ -122,7 +122,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
 
     let mut metadata = WhiteFlagMetadata::new(index, 0);
 
-    // Wait for either all parents to get solid or the timeout to expire.
+    // Wait for all parents to get solid or the timeout to expire.
     let response = match timeout(args.rest_api_config.white_flag_solidification_timeout(), receiver).await {
         Ok(_) => {
             // Did not timeout, parents are solid and white flag can happen.
