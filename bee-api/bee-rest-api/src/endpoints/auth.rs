@@ -62,7 +62,7 @@ where
             return Ok(Auth { phantom: PhantomData });
         }
 
-        // Extract the token from the authorization header
+        // Extract the token from the authorization header.
         let jwt = {
             let TypedHeader(Authorization(bearer)) = TypedHeader::<Authorization<Bearer>>::from_request(req)
                 .await
