@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use alloc::vec::Vec;
+use core::cmp::Ordering;
 
 use packable::{
     error::{UnpackError, UnpackErrorExt},
@@ -366,13 +367,26 @@ impl StateTransitionVerifier for FoundryOutput {
             return Err(StateTransitionError::MissingAliasForFoundry);
         }
 
+        let token_id = next_state.token_id();
+        let output_tokens = context.output_native_tokens.get(&token_id).copied().unwrap_or_default();
+        let TokenScheme::Simple(ref next_token_scheme) = next_state.token_scheme;
+
+        // No native tokens should be referenced prior to the foundry creation.
+        if context.input_native_tokens.contains_key(&token_id) {
+            return Err(StateTransitionError::InconsistentNativeTokensFoundryCreation);
+        }
+
+        if &output_tokens != next_token_scheme.minted_tokens() || !next_token_scheme.melted_tokens().is_zero() {
+            return Err(StateTransitionError::InconsistentNativeTokensFoundryCreation);
+        }
+
         Ok(())
     }
 
     fn transition(
         current_state: &Self,
         next_state: &Self,
-        _context: &ValidationContext,
+        context: &ValidationContext,
     ) -> Result<(), StateTransitionError> {
         if current_state.alias_address() != next_state.alias_address()
             || current_state.serial_number != next_state.serial_number
@@ -383,17 +397,73 @@ impl StateTransitionVerifier for FoundryOutput {
             return Err(StateTransitionError::MutatedImmutableField);
         }
 
+        let token_id = next_state.token_id();
+        let input_tokens = context.input_native_tokens.get(&token_id).copied().unwrap_or_default();
+        let output_tokens = context.output_native_tokens.get(&token_id).copied().unwrap_or_default();
         let TokenScheme::Simple(ref current_token_scheme) = current_state.token_scheme;
         let TokenScheme::Simple(ref next_token_scheme) = next_state.token_scheme;
 
-        if current_token_scheme.maximum_supply() != next_token_scheme.maximum_supply() {
+        if current_token_scheme.minted_tokens() > next_token_scheme.minted_tokens()
+            || current_token_scheme.melted_tokens() > next_token_scheme.melted_tokens()
+            || current_token_scheme.maximum_supply() != next_token_scheme.maximum_supply()
+        {
             return Err(StateTransitionError::MutatedImmutableField);
+        }
+
+        match input_tokens.cmp(&output_tokens) {
+            Ordering::Less => {
+                // Mint
+
+                if &(current_token_scheme.minted_tokens() + (output_tokens - input_tokens))
+                    != next_token_scheme.minted_tokens()
+                    || current_token_scheme.melted_tokens() != next_token_scheme.melted_tokens()
+                {
+                    return Err(StateTransitionError::InconsistentNativeTokensMint);
+                }
+            }
+            Ordering::Equal => {
+                // Transition
+
+                if current_token_scheme.minted_tokens() != next_token_scheme.minted_tokens()
+                    || current_token_scheme.melted_tokens() != next_token_scheme.melted_tokens()
+                {
+                    return Err(StateTransitionError::InconsistentNativeTokensTransition);
+                }
+            }
+            Ordering::Greater => {
+                // Melt / Burn
+
+                if current_token_scheme.melted_tokens() != next_token_scheme.melted_tokens()
+                    && current_token_scheme.minted_tokens() != next_token_scheme.minted_tokens()
+                {
+                    return Err(StateTransitionError::InconsistentNativeTokensMeltBurn);
+                }
+
+                if next_token_scheme.melted_tokens() - current_token_scheme.melted_tokens()
+                    > input_tokens - output_tokens
+                {
+                    return Err(StateTransitionError::InconsistentNativeTokensMeltBurn);
+                }
+            }
         }
 
         Ok(())
     }
 
-    fn destruction(_current_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+    fn destruction(current_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
+        let token_id = current_state.token_id();
+        let input_tokens = context.input_native_tokens.get(&token_id).copied().unwrap_or_default();
+        let TokenScheme::Simple(ref current_token_scheme) = current_state.token_scheme;
+
+        // No native tokens should be referenced after the foundry destruction.
+        if context.output_native_tokens.contains_key(&token_id) {
+            return Err(StateTransitionError::InconsistentNativeTokensFoundryDestruction);
+        }
+
+        if current_token_scheme.minted_tokens() != &(current_token_scheme.melted_tokens() + input_tokens) {
+            return Err(StateTransitionError::InconsistentNativeTokensFoundryDestruction);
+        }
+
         Ok(())
     }
 }
