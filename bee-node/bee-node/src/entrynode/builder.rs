@@ -250,7 +250,7 @@ async fn initialize_autopeering(
 
 /// Creates the local entity from a ED25519 keypair and a set of provided services.
 fn create_local_autopeering_entity(keypair: Keypair, config: &EntryNodeConfig) -> bee_autopeering::Local {
-    let local = bee_autopeering::Local::from_keypair(keypair).expect("failed to create local entity");
+    let local = bee_autopeering::Local::from_keypair(&keypair).expect("failed to create local entity");
 
     let port = if let Some(bind_addr) = config.autopeering.bind_addr_v4() {
         bind_addr.port()

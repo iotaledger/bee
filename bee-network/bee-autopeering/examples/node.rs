@@ -55,7 +55,7 @@ async fn main() {
 
     // Set up a local peer, that provides the Autopeering service.
     let mut keypair = hex::decode(BS16_ED25519_PRIVATE_KEY).expect("error decoding keypair");
-    let local = Local::from_keypair(Keypair::decode(&mut keypair).expect("error decoding keypair"))
+    let local = Local::from_keypair(&Keypair::decode(&mut keypair).expect("error decoding keypair"))
         .expect("error creating local");
 
     local.add_service(
@@ -85,9 +85,9 @@ async fn main() {
     // Initialize the Autopeering service.
     let mut event_rx = bee_autopeering::init::<InMemoryPeerStore, _, _, GossipNeighborValidator>(
         config.clone(),
+        local,
         version,
         network_name,
-        local,
         peer_store_config,
         term_signal,
         neighbor_validator,
