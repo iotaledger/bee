@@ -72,6 +72,8 @@ pub enum ConflictReason {
     AddressNotUnlocked = 14,
     /// Too many native tokens.
     TooManyNativeTokens = 15,
+    /// Non unique token id for founfry.
+    NonUniqueTokenIdForFoundry = 16,
     /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
 }
@@ -103,6 +105,7 @@ impl TryFrom<u8> for ConflictReason {
             13 => Self::UnlockAddressMismatch,
             14 => Self::AddressNotUnlocked,
             15 => Self::TooManyNativeTokens,
+            16 => Self::NonUniqueTokenIdForFoundry,
             255 => Self::SemanticValidationFailed,
             x => return Err(Self::Error::InvalidConflict(x)),
         })
@@ -330,7 +333,7 @@ pub fn semantic_validation(
         return Ok(ConflictReason::CreatedConsumedAmountMismatch);
     }
 
-    let mut native_token_ids = HashSet::new();
+    let mut native_token_ids = HashMap::new();
 
     // Validation of input native tokens.
     for (token_id, input_amount) in context.input_native_tokens.iter() {
@@ -344,7 +347,11 @@ pub fn semantic_validation(
             return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
         }
 
-        native_token_ids.insert(token_id);
+        if let Some(token_tag) = native_token_ids.insert(token_id.foundry_id(), token_id.token_tag()) {
+            if token_tag != token_id.token_tag() {
+                return Ok(ConflictReason::NonUniqueTokenIdForFoundry);
+            }
+        }
     }
 
     // Validation of output native tokens.
@@ -359,7 +366,11 @@ pub fn semantic_validation(
             return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
         }
 
-        native_token_ids.insert(token_id);
+        if let Some(token_tag) = native_token_ids.insert(token_id.foundry_id(), token_id.token_tag()) {
+            if token_tag != token_id.token_tag() {
+                return Ok(ConflictReason::NonUniqueTokenIdForFoundry);
+            }
+        }
     }
 
     if native_token_ids.len() > NativeTokens::COUNT_MAX as usize {
