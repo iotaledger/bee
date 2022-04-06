@@ -12,9 +12,7 @@ use crate::{migration, pem_file, Keypair as Ed25519Keypair, PublicKey as Ed25519
 /// Represents a node identity.
 #[derive(Clone, Debug)]
 pub struct Identity {
-    /// An Ed25519 keypair.
     keypair: Ed25519Keypair,
-    /// Whether the identity has been newly generated.
     is_fresh: bool,
 }
 
@@ -24,7 +22,7 @@ impl Identity {
         Self::default()
     }
 
-    /// Restores a [`Local`] from a [`Keypair`](crate::keypair::Keypair).
+    /// Restores an [`Identity`] from a [`Keypair`](crate::ed25519::Keypair).
     pub fn from_keypair(keypair: Ed25519Keypair) -> Self {
         Self {
             keypair,
@@ -32,12 +30,12 @@ impl Identity {
         }
     }
 
-    /// Returns the [`Keypair`](crate::keypair::Keypair) of this identity.
+    /// Returns the backing [`Keypair`](crate::ed25519::Keypair) of this identity.
     pub fn keypair(&self) -> &Ed25519Keypair {
         &self.keypair
     }
 
-    /// Returns the [`PublicKey`](crate::keypair::PublicKey) of this identity.
+    /// Returns the [`PublicKey`](crate::ed25519::PublicKey) of this identity.
     pub fn public_key(&self) -> Ed25519PublicKey {
         self.keypair.public()
     }
