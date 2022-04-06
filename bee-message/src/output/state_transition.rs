@@ -17,6 +17,7 @@ pub enum StateTransitionError {
     MissingAliasForFoundry,
     MutatedFieldWithoutRights,
     MutatedImmutableField,
+    NonMonotonicallyIncreasingNativeTokens,
     NonZeroCreatedId,
     NonZeroCreatedFoundryCounter,
     NonZeroCreatedStateIndex,
