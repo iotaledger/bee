@@ -67,12 +67,8 @@ impl RestApiConfigBuilder {
 
     /// Sets the binding address for the REST API.
     pub fn with_bind_address(mut self, addr: &str) -> Self {
-        match addr.parse() {
-            Ok(addr) => {
-                self.bind_address.replace(addr);
-            }
-            Err(e) => panic!("Error parsing IP address: {:?}", e),
-        }
+        self.bind_address
+            .replace(addr.parse().expect("error parsing IP address"));
         self
     }
 
