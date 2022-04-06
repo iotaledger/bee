@@ -366,7 +366,7 @@ pub fn semantic_validation(
         return Ok(ConflictReason::TooManyNativeTokens);
     }
 
-    // Validation of state creations and transitions.
+    // Validation of state transitions and destructions.
     for (chain_id, current_state) in context.input_chains.iter() {
         if Output::verify_state_transition(
             Some(current_state),
@@ -379,7 +379,7 @@ pub fn semantic_validation(
         }
     }
 
-    // Validation of state destructions.
+    // Validation of state creations.
     for (chain_id, next_state) in context.output_chains.iter() {
         if context.input_chains.get(chain_id).is_none()
             && Output::verify_state_transition(None, Some(next_state), &context).is_err()
