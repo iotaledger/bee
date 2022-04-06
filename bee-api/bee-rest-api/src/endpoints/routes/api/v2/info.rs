@@ -47,9 +47,9 @@ pub(crate) async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFu
             },
         },
         metrics: MetricsResponse {
-            messages_per_second: 0f64,            // TODO
-            referenced_messages_per_second: 0f64, // TODO
-            referenced_rate: 0f64,                // TODO
+            messages_per_second: 0f64,            // TODO: use actual metrics values
+            referenced_messages_per_second: 0f64, // TODO: use actual metrics values
+            referenced_rate: 0f64,                // TODO: use actual metrics values
         },
         features: {
             let mut features = Vec::new();
@@ -58,6 +58,6 @@ pub(crate) async fn info<B: StorageBackend>(Extension(args): Extension<ApiArgsFu
             }
             features
         },
-        plugins: Vec::new(), // TODO
+        plugins: Vec::new(), // TODO: add actual plugin that the node supports
     })
 }
