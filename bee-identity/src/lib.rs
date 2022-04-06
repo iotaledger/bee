@@ -5,6 +5,8 @@
 
 #![deny(missing_docs)]
 
+mod migration;
+
 pub mod identity;
 /// Ed25519 keys.
 pub mod ed25519 {
@@ -13,7 +15,10 @@ pub mod ed25519 {
 }
 pub mod pem_file;
 
-pub use crate::identity::Identity;
-pub use crate::ed25519::{Keypair, PublicKey, SecretKey};
 #[doc(inline)]
 pub use libp2p_core::PeerId;
+
+pub use crate::{
+    ed25519::{Keypair, PublicKey, SecretKey},
+    identity::Identity,
+};

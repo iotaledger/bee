@@ -215,14 +215,10 @@ fn add_node_resources<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Res
     // TODO block ? Make new async ?
     let storage = S::start(storage_cfg).map_err(|e| CoreError::StorageBackend(Box::new(e)))?;
 
-    if config.identity().is_new() {
+    if config.identity().is_fresh() {
         storage
             .set_health(StorageHealth::Healthy)
             .map_err(|e| CoreError::StorageBackend(Box::new(e)))?;
-
-        return Err(FullNodeError::InvalidOrNoIdentityPrivateKey(
-            builder.config().identity().encoded().to_string(),
-        ));
     }
 
     let builder = builder

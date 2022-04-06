@@ -3,7 +3,7 @@
 
 use std::{error::Error, path::Path};
 
-use bee_identity::{pem_file, Identity, Keypair};
+use bee_identity::Identity;
 #[cfg(feature = "trace")]
 use bee_node::trace;
 use bee_node::{
@@ -16,9 +16,6 @@ use bee_runtime::node::NodeBuilder as _;
 use bee_storage_rocksdb::storage::Storage;
 #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
 use bee_storage_sled::storage::Storage;
-use log::{error, info, warn};
-
-const KEYPAIR_STR_LENGTH: usize = 128;
 
 const CONFIG_PATH_DEFAULT: &str = "./config.json";
 const IDENTITY_PATH_DEFAULT: &str = "./identity.key";
@@ -46,52 +43,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     #[cfg(feature = "trace")]
     let flamegrapher = trace::init(config.logger().clone(), config.tracing().clone())?;
 
-    // Establish identity.
-    let keypair = match pem_file::read_keypair_from_pem_file(&identity_path) {
-        Ok(keypair) => {
-            if identity_field.is_some() {
-                warn!(
-                    "The config file contains an `identity` field which will be ignored. You may safely delete this field to suppress this warning."
-                );
-            }
-            Ok(keypair)
-        }
-        Err(pem_file::PemFileError::Read(_)) => {
-            // If we can't read from the file (which means it probably doesn't exist) we either migrate from the
-            // existing config or generate a new identity.
-            let keypair = if let Some(identity_encoded) = identity_field {
-                warn!(
-                    "There is no identity file at `{}`. Migrating identity from the existing config file.",
-                    identity_path.display(),
-                );
-
-                migrate_keypair(identity_encoded).map_err(|e| {
-                    error!("Failed to migrate keypair: {}", e);
-                    e
-                })?
-            } else {
-                info!(
-                    "There is no identity file at `{}`. Generating a new one.",
-                    identity_path.display()
-                );
-
-                Keypair::generate()
-            };
-
-            pem_file::write_keypair_to_pem_file(identity_path, &keypair).map_err(|e| {
-                error!("Failed to write PEM file: {}", e);
-                e
-            })?;
-
-            Ok(keypair)
-        }
-        Err(e) => {
-            error!("Could not extract private key from PEM file: {}", e);
-            Err(e)
-        }
-    }?;
-
-    let identity = Identity::from_keypair(keypair);
+    // Restore or create new identity.
+    let identity = Identity::restore_or_new(identity_path, identity_field)?;
 
     // Execute one of Bee's tools and exit.
     if let Some(tool) = cl_args.tool() {
@@ -119,29 +72,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     Ok(())
-}
-
-#[derive(Debug, thiserror::Error)]
-enum IdentityMigrationError {
-    #[error("hex decoding failed")]
-    DecodeHex,
-    #[error("keypair decoding failed")]
-    DecodeKeypair,
-    #[error("invalid keypair")]
-    InvalidKeypair,
-}
-
-fn migrate_keypair(encoded: String) -> Result<Keypair, IdentityMigrationError> {
-    if encoded.len() == KEYPAIR_STR_LENGTH {
-        // Decode the keypair from hex.
-        let mut decoded = [0u8; 64];
-        hex::decode_to_slice(&encoded[..], &mut decoded).map_err(|_| IdentityMigrationError::DecodeHex)?;
-
-        // Decode the keypair from bytes.
-        Keypair::decode(&mut decoded).map_err(|_| IdentityMigrationError::DecodeKeypair)
-    } else {
-        Err(IdentityMigrationError::InvalidKeypair)
-    }
 }
 
 fn deserialize_config(cl_args: &ClArgs, pid: u32) -> (Option<String>, NodeConfig<Storage>) {

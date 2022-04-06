@@ -20,10 +20,6 @@ use crate::{
 /// Full node related errors.
 #[derive(Debug, thiserror::Error)]
 pub enum FullNodeError {
-    #[error(
-        "invalid or no identity private key provided. Add the newly generated `identity = \"{0}\"` (or generate one with `bee p2p-identity`) to the configuration file and re-run the node."
-    )]
-    InvalidOrNoIdentityPrivateKey(String),
     #[error("{0}")]
     GossipLayerInitialization(#[from] bee_gossip::Error),
     #[error("{0}")]
