@@ -372,7 +372,7 @@ impl StateTransitionVerifier for FoundryOutput {
         let TokenScheme::Simple(ref next_token_scheme) = next_state.token_scheme;
 
         // No native tokens should be referenced prior to the foundry creation.
-        if context.input_native_tokens.get(&token_id).is_some() {
+        if context.input_native_tokens.contains_key(&token_id) {
             return Err(StateTransitionError::InconsistentNativeTokens);
         }
 
@@ -455,8 +455,8 @@ impl StateTransitionVerifier for FoundryOutput {
         let input_tokens = context.input_native_tokens.get(&token_id).copied().unwrap_or_default();
         let TokenScheme::Simple(ref current_token_scheme) = current_state.token_scheme;
 
-        // No native tokens should be referenced after to the foundry destruction.
-        if context.output_native_tokens.get(&token_id).is_some() {
+        // No native tokens should be referenced after the foundry destruction.
+        if context.output_native_tokens.contains_key(&token_id) {
             return Err(StateTransitionError::InconsistentNativeTokens);
         }
 
