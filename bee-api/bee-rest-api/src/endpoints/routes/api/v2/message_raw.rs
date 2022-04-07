@@ -22,6 +22,6 @@ pub(crate) async fn message_raw<B: StorageBackend>(
 ) -> Result<impl IntoResponse, ApiError> {
     match args.tangle.get(&message_id).await.map(|m| (*m).clone()) {
         Some(message) => Ok(message.pack_to_vec()),
-        None => Err(ApiError::NotFound("cannot find message".to_string())),
+        None => Err(ApiError::NotFound),
     }
 }

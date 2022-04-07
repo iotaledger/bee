@@ -10,6 +10,7 @@ use axum::{
 use bee_ledger::types::OutputDiff;
 use bee_message::{milestone::MilestoneIndex, output::OutputId};
 use bee_storage::access::Fetch;
+use log::error;
 
 use crate::{
     endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
@@ -28,8 +29,11 @@ pub(crate) async fn milestone_utxo_changes<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let fetched = Fetch::<MilestoneIndex, OutputDiff>::fetch(&*args.storage, &milestone_index)
-        .map_err(|_| ApiError::ServiceUnavailable("cannot fetch from storage".to_string()))?
-        .ok_or_else(|| ApiError::NotFound("cannot find UTXO changes for given milestone index".to_string()))?;
+        .map_err(|e| {
+            error!("cannot fetch from storage: {}", e);
+            ApiError::InternalError
+        })?
+        .ok_or_else(|| ApiError::NotFound)?;
 
     Ok(Json(UtxoChangesResponse {
         index: *milestone_index,

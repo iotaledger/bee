@@ -73,7 +73,7 @@ pub(crate) async fn output<B: StorageBackend>(
                 }))
             }
 
-            None => Err(ApiError::NotFound("cannot find output".to_string())),
+            None => Err(ApiError::NotFound),
         },
         (Err(e), _) => {
             error!("response from consensus worker failed: {}", e);

@@ -35,6 +35,6 @@ pub(crate) async fn transaction_included_message<B: StorageBackend>(
 
     match fetched {
         Some(output) => message::message(Path(*output.message_id()), Extension(args)).await,
-        None => Err(ApiError::NotFound("cannot find the corresponding message".to_string())),
+        None => Err(ApiError::NotFound),
     }
 }

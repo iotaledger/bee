@@ -11,7 +11,7 @@ use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
 pub enum ApiError {
     BadRequest(String),
-    NotFound(String),
+    NotFound,
     ServiceUnavailable(String),
     InternalError,
     Forbidden,
@@ -22,13 +22,13 @@ impl IntoResponse for ApiError {
         let (status, error_message) = match self {
             ApiError::Forbidden => (StatusCode::FORBIDDEN, "access forbidden".to_string()),
             ApiError::BadRequest(s) => (StatusCode::BAD_REQUEST, s),
-            ApiError::NotFound(s) => (StatusCode::NOT_FOUND, s),
+            ApiError::NotFound => (StatusCode::NOT_FOUND, "could not find data".to_string()),
             ApiError::ServiceUnavailable(s) => (StatusCode::SERVICE_UNAVAILABLE, s),
             ApiError::InternalError => (StatusCode::INTERNAL_SERVER_ERROR, "internal server error".to_string()),
         };
 
         let body = Json(ErrorBody::new(DefaultErrorResponse {
-            code: status.to_string(),
+            code: status.as_u16().to_string(),
             message: error_message,
         }));
 
