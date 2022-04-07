@@ -5,7 +5,7 @@
 
 use libp2p::{Multiaddr, PeerId};
 
-/// [`PeerList`](crate::peer::peer_list::PeerList) errors.
+/// P2P errors.
 #[derive(Clone, Debug, thiserror::Error)]
 pub enum Error {
     /// A failure due to an address being added twice.
