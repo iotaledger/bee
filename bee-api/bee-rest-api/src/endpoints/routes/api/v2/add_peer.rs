@@ -27,10 +27,10 @@ pub(crate) async fn add_peer<B: StorageBackend>(
     Json(value): Json<Value>,
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let multi_address_v = &value["multiAddress"];
-    let alias_v = &value["alias"];
+    let multi_address_json = &value["multiAddress"];
+    let alias_json = &value["alias"];
 
-    let mut multi_address = multi_address_v
+    let mut multi_address = multi_address_json
         .as_str()
         .ok_or_else(|| ApiError::BadRequest("invalid multiaddress".to_string()))?
         .parse::<Multiaddr>()
@@ -52,11 +52,11 @@ pub(crate) async fn add_peer<B: StorageBackend>(
             Ok(Json(AddPeerResponse(peer_dto)))
         })
         .unwrap_or_else(|| {
-            let alias = if alias_v.is_null() {
+            let alias = if alias_json.is_null() {
                 None
             } else {
                 Some(
-                    alias_v
+                    alias_json
                         .as_str()
                         .ok_or_else(|| ApiError::BadRequest("invalid alias: expected a string".to_string()))?
                         .to_string(),
