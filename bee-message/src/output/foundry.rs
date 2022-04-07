@@ -417,10 +417,16 @@ impl StateTransitionVerifier for FoundryOutput {
             Ordering::Less => {
                 // Mint
 
-                if &(current_token_scheme.minted_tokens() + (output_tokens - input_tokens))
-                    != next_token_scheme.minted_tokens()
-                    || current_token_scheme.melted_tokens() != next_token_scheme.melted_tokens()
-                {
+                // This can't underflow as it is known that current_minted_tokens <= next_minted_tokens.
+                let minted_diff = next_token_scheme.minted_tokens() - current_token_scheme.minted_tokens();
+                // This can't underflow as it is known that input_tokens < output_tokens (Ordering::Less).
+                let token_diff = output_tokens - input_tokens;
+
+                if minted_diff != token_diff {
+                    return Err(StateTransitionError::InconsistentNativeTokensMint);
+                }
+
+                if current_token_scheme.melted_tokens() != next_token_scheme.melted_tokens() {
                     return Err(StateTransitionError::InconsistentNativeTokensMint);
                 }
             }
@@ -442,9 +448,12 @@ impl StateTransitionVerifier for FoundryOutput {
                     return Err(StateTransitionError::InconsistentNativeTokensMeltBurn);
                 }
 
-                if next_token_scheme.melted_tokens() - current_token_scheme.melted_tokens()
-                    > input_tokens - output_tokens
-                {
+                // This can't underflow as it is known that current_melted_tokens <= next_melted_tokens.
+                let melted_diff = next_token_scheme.melted_tokens() - current_token_scheme.melted_tokens();
+                // This can't underflow as it is known that input_tokens > output_tokens (Ordering::Greater).
+                let token_diff = input_tokens - output_tokens;
+
+                if melted_diff > token_diff {
                     return Err(StateTransitionError::InconsistentNativeTokensMeltBurn);
                 }
             }
@@ -463,7 +472,10 @@ impl StateTransitionVerifier for FoundryOutput {
             return Err(StateTransitionError::InconsistentNativeTokensFoundryDestruction);
         }
 
-        if current_token_scheme.minted_tokens() != &(current_token_scheme.melted_tokens() + input_tokens) {
+        // This can't underflow as it is known that minted_tokens >= melted_tokens (syntactic rule).
+        let minted_melted_diff = current_token_scheme.minted_tokens() - current_token_scheme.melted_tokens();
+
+        if minted_melted_diff != input_tokens {
             return Err(StateTransitionError::InconsistentNativeTokensFoundryDestruction);
         }
 
