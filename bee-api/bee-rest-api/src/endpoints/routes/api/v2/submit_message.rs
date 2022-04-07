@@ -87,10 +87,11 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
     }
 
     let parents: Vec<MessageId> = if parents_json.is_null() {
-        let mut parents =
-            args.tangle.get_messages_to_approve().await.ok_or_else(|| {
-                ApiError::ServiceUnavailable("can not auto-fill parents: no tips available".to_string())
-            })?;
+        let mut parents = args
+            .tangle
+            .get_messages_to_approve()
+            .await
+            .ok_or_else(|| ApiError::ServiceUnavailable("can not auto-fill parents: no tips available"))?;
         parents.sort_by(|a, b| a.as_ref().cmp(b.as_ref()));
         parents
     } else {

@@ -22,12 +22,12 @@ pub(crate) async fn tips<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     if !args.tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
-        return Err(ApiError::ServiceUnavailable("the node is not synchronized".to_string()));
+        return Err(ApiError::ServiceUnavailable("the node is not synchronized"));
     }
     match args.tangle.get_messages_to_approve().await {
         Some(tips) => Ok(Json(TipsResponse {
             tip_message_ids: tips.iter().map(MessageId::to_string).collect(),
         })),
-        None => Err(ApiError::ServiceUnavailable("no tips available".to_string())),
+        None => Err(ApiError::ServiceUnavailable("no tips available")),
     }
 }

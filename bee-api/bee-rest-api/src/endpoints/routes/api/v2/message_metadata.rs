@@ -23,7 +23,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     if !args.tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
-        return Err(ApiError::ServiceUnavailable("the node is not synchronized".to_string()));
+        return Err(ApiError::ServiceUnavailable("the node is not synchronized"));
     }
 
     match args.tangle.get(&message_id).await.map(|m| (*m).clone()) {

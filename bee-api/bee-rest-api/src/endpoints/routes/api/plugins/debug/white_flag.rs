@@ -136,7 +136,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
         }
         Err(_) => {
             // Did timeout, parents are not solid and white flag can not happen.
-            Err(ApiError::ServiceUnavailable("parents not solid".to_string()))
+            Err(ApiError::ServiceUnavailable("parents not solid"))
         }
     };
 

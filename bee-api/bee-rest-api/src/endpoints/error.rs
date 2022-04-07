@@ -12,7 +12,7 @@ use crate::types::body::{DefaultErrorResponse, ErrorBody};
 pub enum ApiError {
     BadRequest(String),
     NotFound,
-    ServiceUnavailable(String),
+    ServiceUnavailable(&'static str),
     InternalError,
     Forbidden,
 }
@@ -23,7 +23,7 @@ impl IntoResponse for ApiError {
             ApiError::Forbidden => (StatusCode::FORBIDDEN, "access forbidden".to_string()),
             ApiError::BadRequest(s) => (StatusCode::BAD_REQUEST, s),
             ApiError::NotFound => (StatusCode::NOT_FOUND, "could not find data".to_string()),
-            ApiError::ServiceUnavailable(s) => (StatusCode::SERVICE_UNAVAILABLE, s),
+            ApiError::ServiceUnavailable(s) => (StatusCode::SERVICE_UNAVAILABLE, s.to_string()),
             ApiError::InternalError => (StatusCode::INTERNAL_SERVER_ERROR, "internal server error".to_string()),
         };
 
