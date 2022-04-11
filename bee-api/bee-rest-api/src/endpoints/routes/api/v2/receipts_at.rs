@@ -10,6 +10,7 @@ use axum::{
 use bee_ledger::types::Receipt;
 use bee_message::milestone::MilestoneIndex;
 use bee_storage::access::Fetch;
+use log::error;
 
 use crate::{
     endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
@@ -26,11 +27,14 @@ pub(crate) async fn receipts_at<B: StorageBackend>(
 ) -> Result<impl IntoResponse, ApiError> {
     let mut receipts_dto = Vec::new();
 
-    if let Some(receipts) = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&*args.storage, &milestone_index)
-        .map_err(|_| ApiError::InternalError)?
+    if let Some(receipts) =
+        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&*args.storage, &milestone_index).map_err(|e| {
+            error!("cannot fetch from storage: {}", e);
+            ApiError::InternalError
+        })?
     {
         for receipt in receipts {
-            receipts_dto.push(ReceiptDto::try_from(receipt).map_err(|_| ApiError::InternalError)?);
+            receipts_dto.push(ReceiptDto::from(receipt));
         }
     }
 

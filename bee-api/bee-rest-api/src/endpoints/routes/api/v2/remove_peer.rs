@@ -23,7 +23,7 @@ pub(crate) async fn remove_peer<B: StorageBackend>(
 ) -> Result<impl IntoResponse, ApiError> {
     let peer_id = peer_id
         .parse::<PeerId>()
-        .map_err(|_| ApiError::BadRequest("invalid peer id".to_string()))?;
+        .map_err(|_| ApiError::BadRequest("invalid peer id"))?;
 
     if let Err(e) = args.network_command_sender.send(RemovePeer { peer_id }) {
         error!("cannot remove peer: {}", e);

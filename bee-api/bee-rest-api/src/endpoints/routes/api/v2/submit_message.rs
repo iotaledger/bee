@@ -44,14 +44,14 @@ pub(crate) async fn submit_message<B: StorageBackend>(
             submit_message_raw::<B>(bytes.to_vec(), args.clone()).await
         } else {
             submit_message_json::<B>(
-                serde_json::from_slice(&bytes.to_vec()).map_err(|e| ApiError::BadRequest(e.to_string()))?,
+                serde_json::from_slice(&bytes.to_vec()).map_err(|e| ApiError::InvalidJsonProvided(e))?,
                 args.clone(),
             )
             .await
         }
     } else {
         submit_message_json::<B>(
-            serde_json::from_slice(&bytes.to_vec()).map_err(|e| ApiError::BadRequest(e.to_string()))?,
+            serde_json::from_slice(&bytes.to_vec()).map_err(|e| ApiError::InvalidJsonProvided(e))?,
             args.clone(),
         )
         .await
@@ -71,18 +71,15 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
     // If some fields are missing, it tries to auto-complete them.
 
     if !protocol_version_json.is_null() {
-        let parsed_protocol_version = u8::try_from(protocol_version_json.as_u64().ok_or_else(|| {
-            ApiError::BadRequest("invalid protocol version: expected an unsigned integer < 256".to_string())
-        })?)
-        .map_err(|_| {
-            ApiError::BadRequest("invalid protocol version: expected an unsigned integer < 256".to_string())
-        })?;
+        let parsed_protocol_version = u8::try_from(
+            protocol_version_json
+                .as_u64()
+                .ok_or_else(|| ApiError::BadRequest("invalid protocol version: expected an unsigned integer < 256"))?,
+        )
+        .map_err(|_| ApiError::BadRequest("invalid protocol version: expected an unsigned integer < 256"))?;
 
         if parsed_protocol_version != PROTOCOL_VERSION {
-            return Err(ApiError::BadRequest(format!(
-                "invalid protocol version: expected `{}` but received `{}`",
-                PROTOCOL_VERSION, parsed_protocol_version
-            )));
+            return Err(ApiError::BadRequest("invalid protocol version"));
         }
     }
 
@@ -97,14 +94,14 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
     } else {
         let parents = parents_json
             .as_array()
-            .ok_or_else(|| ApiError::BadRequest("invalid parents: expected an array of message ids".to_string()))?;
+            .ok_or_else(|| ApiError::BadRequest("invalid parents: expected an array of message ids"))?;
         let mut message_ids = Vec::with_capacity(parents.len());
         for message_id in parents {
             let message_id = message_id
                 .as_str()
-                .ok_or_else(|| ApiError::BadRequest("invalid parent: expected a message id".to_string()))?
+                .ok_or_else(|| ApiError::BadRequest("invalid parent: expected a message id"))?
                 .parse::<MessageId>()
-                .map_err(|_| ApiError::BadRequest("invalid parent: expected a message id".to_string()))?;
+                .map_err(|_| ApiError::BadRequest("invalid parent: expected a message id"))?;
             message_ids.push(message_id);
         }
         message_ids
@@ -113,9 +110,9 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
     let payload = if payload_json.is_null() {
         None
     } else {
-        let payload_dto = serde_json::from_value::<PayloadDto>(payload_json.clone())
-            .map_err(|e| ApiError::BadRequest(e.to_string()))?;
-        Some(Payload::try_from(&payload_dto).map_err(|e| ApiError::BadRequest(e.to_string()))?)
+        let payload_dto =
+            serde_json::from_value::<PayloadDto>(payload_json.clone()).map_err(|e| ApiError::InvalidJsonProvided(e))?;
+        Some(Payload::try_from(&payload_dto).map_err(|e| ApiError::InvalidDto(e))?)
     };
 
     let nonce = if nonce_json.is_null() {
@@ -123,9 +120,9 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
     } else {
         let parsed_nonce = nonce_json
             .as_str()
-            .ok_or_else(|| ApiError::BadRequest("invalid nonce: expected an u64-string".to_string()))?
+            .ok_or_else(|| ApiError::BadRequest("invalid nonce: expected an u64-string"))?
             .parse::<u64>()
-            .map_err(|_| ApiError::BadRequest("invalid nonce: expected an u64-string".to_string()))?;
+            .map_err(|_| ApiError::BadRequest("invalid nonce: expected an u64-string"))?;
         if parsed_nonce == 0 { None } else { Some(parsed_nonce) }
     };
 
@@ -148,19 +145,19 @@ pub(crate) async fn build_message<B: StorageBackend>(
     args: ApiArgsFullNode<B>,
 ) -> Result<Message, ApiError> {
     let message = if let Some(nonce) = nonce {
-        let mut builder = MessageBuilder::new(Parents::new(parents).map_err(|e| ApiError::BadRequest(e.to_string()))?)
+        let mut builder = MessageBuilder::new(Parents::new(parents).map_err(|e| ApiError::InvalidMessage(e))?)
             .with_nonce_provider(nonce, 0f64);
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
-        builder.finish().map_err(|e| ApiError::BadRequest(e.to_string()))?
+        builder.finish().map_err(|e| ApiError::InvalidMessage(e))?
     } else {
         if !args.rest_api_config.feature_proof_of_work() {
             return Err(ApiError::BadRequest(
-                "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
+                "can not auto-fill nonce: feature `PoW` not enabled",
             ));
         }
-        let mut builder = MessageBuilder::new(Parents::new(parents).map_err(|e| ApiError::BadRequest(e.to_string()))?)
+        let mut builder = MessageBuilder::new(Parents::new(parents).map_err(|e| ApiError::InvalidMessage(e))?)
             .with_nonce_provider(
                 MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
                 args.protocol_config.minimum_pow_score(),
@@ -168,7 +165,7 @@ pub(crate) async fn build_message<B: StorageBackend>(
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
-        builder.finish().map_err(|e| ApiError::BadRequest(e.to_string()))?
+        builder.finish().map_err(|e| ApiError::InvalidMessage(e))?
     };
     Ok(message)
 }
@@ -208,11 +205,5 @@ pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
         ApiError::InternalError
     })?;
 
-    match result {
-        Ok(message_id) => Ok(message_id),
-        Err(e) => Err(ApiError::BadRequest(format!(
-            "cannot submit message: invalid message: {}",
-            e
-        ))),
-    }
+    result.map_err(|e| ApiError::InvalidMessageSubmitted(e))
 }

@@ -37,33 +37,30 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     let parents_json = &body["parentMessageIds"];
 
     let index = if index_json.is_null() {
-        return Err(ApiError::BadRequest(
-            "Invalid index: expected a MilestoneIndex".to_string(),
-        ));
+        return Err(ApiError::BadRequest("invalid index: expected a `MilestoneIndex`"));
     } else {
         MilestoneIndex(
             index_json
                 .as_u64()
-                .ok_or_else(|| ApiError::BadRequest("Invalid index: expected a MilestoneIndex".to_string()))?
-                as u32,
+                .ok_or_else(|| ApiError::BadRequest("invalid index: expected a `MilestoneIndex`"))? as u32,
         )
     };
 
     let parents = if parents_json.is_null() {
         return Err(ApiError::BadRequest(
-            "Invalid parents: expected an array of MessageId".to_string(),
+            "invalid parents: expected an array of `MessageId`",
         ));
     } else {
         let array = parents_json
             .as_array()
-            .ok_or_else(|| ApiError::BadRequest("Invalid parents: expected an array of MessageId".to_string()))?;
+            .ok_or_else(|| ApiError::BadRequest("invalid parents: expected an array of `MessageId`"))?;
         let mut message_ids = Vec::new();
         for s in array {
             let message_id = s
                 .as_str()
-                .ok_or_else(|| ApiError::BadRequest("Invalid parents: expected an array of MessageId".to_string()))?
+                .ok_or_else(|| ApiError::BadRequest("invalid parents: expected an array of `MessageId`"))?
                 .parse::<MessageId>()
-                .map_err(|_| ApiError::BadRequest("Invalid parents: expected an array of MessageId".to_string()))?;
+                .map_err(|_| ApiError::BadRequest("invalid parents: expected an array of `MessageId`"))?;
             message_ids.push(message_id);
         }
         message_ids
@@ -128,7 +125,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
             // Did not timeout, parents are solid and white flag can happen.
             consensus::white_flag::<B>(&args.tangle, &args.storage, &parents, &mut metadata)
                 .await
-                .map_err(|e| ApiError::BadRequest(e.to_string()))?;
+                .map_err(|e| ApiError::InvalidWhiteflag(e))?;
 
             Ok(Json(WhiteFlagResponse {
                 merkle_tree_hash: prefix_hex::encode(metadata.merkle_proof()),

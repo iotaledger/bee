@@ -24,7 +24,7 @@ pub(crate) async fn peer<B: StorageBackend>(
 ) -> Result<impl IntoResponse, ApiError> {
     let peer_id = peer_id
         .parse::<PeerId>()
-        .map_err(|_| ApiError::BadRequest("invalid peer id".to_string()))?;
+        .map_err(|_| ApiError::BadRequest("invalid peer id"))?;
 
     args.peer_manager
         .get_map(&peer_id, |peer_entry| {

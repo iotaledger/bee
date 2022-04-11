@@ -10,6 +10,7 @@ use axum::{
 use bee_ledger::types::Receipt;
 use bee_message::milestone::MilestoneIndex;
 use bee_storage::access::AsIterator;
+use log::error;
 
 use crate::{
     endpoints::{error::ApiError, storage::StorageBackend, ApiArgsFullNode},
@@ -24,12 +25,17 @@ pub(crate) async fn receipts<B: StorageBackend>(
     Extension(args): Extension<ApiArgsFullNode<B>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let mut receipts_dto = Vec::new();
-    let iterator =
-        AsIterator::<(MilestoneIndex, Receipt), ()>::iter(&*args.storage).map_err(|_| ApiError::InternalError)?;
+    let iterator = AsIterator::<(MilestoneIndex, Receipt), ()>::iter(&*args.storage).map_err(|e| {
+        error!("cannot fetch from storage: {}", e);
+        ApiError::InternalError
+    })?;
 
     for result in iterator {
-        let ((_, receipt), _) = result.map_err(|_| ApiError::InternalError)?;
-        receipts_dto.push(ReceiptDto::try_from(receipt).map_err(|_| ApiError::InternalError)?);
+        let ((_, receipt), _) = result.map_err(|e| {
+            error!("cannot iterate fetched receipts : {}", e);
+            ApiError::InternalError
+        })?;
+        receipts_dto.push(ReceiptDto::from(receipt));
     }
 
     Ok(Json(ReceiptsResponse { receipts: receipts_dto }))
