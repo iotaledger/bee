@@ -71,10 +71,9 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
     // If some fields are missing, it tries to auto-complete them.
 
     if !protocol_version_json.is_null() {
-        let parsed_protocol_version = u8::try_from(
-            protocol_version_json
-                .as_u64().ok_or(ApiError::BadRequest("invalid protocol version: expected an unsigned integer < 256"))?,
-        )
+        let parsed_protocol_version = u8::try_from(protocol_version_json.as_u64().ok_or(ApiError::BadRequest(
+            "invalid protocol version: expected an unsigned integer < 256",
+        ))?)
         .map_err(|_| ApiError::BadRequest("invalid protocol version: expected an unsigned integer < 256"))?;
 
         if parsed_protocol_version != PROTOCOL_VERSION {
@@ -86,16 +85,21 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
         let mut parents = args
             .tangle
             .get_messages_to_approve()
-            .await.ok_or(ApiError::ServiceUnavailable("can not auto-fill parents: no tips available"))?;
+            .await
+            .ok_or(ApiError::ServiceUnavailable(
+                "can not auto-fill parents: no tips available",
+            ))?;
         parents.sort_by(|a, b| a.as_ref().cmp(b.as_ref()));
         parents
     } else {
-        let parents = parents_json
-            .as_array().ok_or(ApiError::BadRequest("invalid parents: expected an array of message ids"))?;
+        let parents = parents_json.as_array().ok_or(ApiError::BadRequest(
+            "invalid parents: expected an array of message ids",
+        ))?;
         let mut message_ids = Vec::with_capacity(parents.len());
         for message_id in parents {
             let message_id = message_id
-                .as_str().ok_or(ApiError::BadRequest("invalid parent: expected a message id"))?
+                .as_str()
+                .ok_or(ApiError::BadRequest("invalid parent: expected a message id"))?
                 .parse::<MessageId>()
                 .map_err(|_| ApiError::BadRequest("invalid parent: expected a message id"))?;
             message_ids.push(message_id);
@@ -115,7 +119,8 @@ pub(crate) async fn submit_message_json<B: StorageBackend>(
         None
     } else {
         let parsed_nonce = nonce_json
-            .as_str().ok_or(ApiError::BadRequest("invalid nonce: expected an u64-string"))?
+            .as_str()
+            .ok_or(ApiError::BadRequest("invalid nonce: expected an u64-string"))?
             .parse::<u64>()
             .map_err(|_| ApiError::BadRequest("invalid nonce: expected an u64-string"))?;
         if parsed_nonce == 0 { None } else { Some(parsed_nonce) }

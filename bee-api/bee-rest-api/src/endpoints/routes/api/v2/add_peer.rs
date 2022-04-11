@@ -31,7 +31,8 @@ pub(crate) async fn add_peer<B: StorageBackend>(
     let alias_json = &value["alias"];
 
     let mut multi_address = multi_address_json
-        .as_str().ok_or(ApiError::BadRequest("invalid multiaddress"))?
+        .as_str()
+        .ok_or(ApiError::BadRequest("invalid multiaddress"))?
         .parse::<Multiaddr>()
         .map_err(|_| ApiError::BadRequest("invalid multiaddress"))?;
 
@@ -39,7 +40,7 @@ pub(crate) async fn add_peer<B: StorageBackend>(
         Some(Protocol::P2p(multihash)) => PeerId::from_multihash(multihash)
             .map_err(|_| ApiError::BadRequest("invalid multiaddress: can not parse peer id"))?,
         _ => {
-            return Err(ApiError::BadRequest("invalid multi address: invalid protocol"));
+            return Err(ApiError::BadRequest("invalid multiaddress: invalid protocol"));
         }
     };
 
@@ -54,7 +55,8 @@ pub(crate) async fn add_peer<B: StorageBackend>(
             } else {
                 Some(
                     alias_json
-                        .as_str().ok_or(ApiError::BadRequest("invalid alias: expected a string"))?
+                        .as_str()
+                        .ok_or(ApiError::BadRequest("invalid alias: expected a string"))?
                         .to_string(),
                 )
             };

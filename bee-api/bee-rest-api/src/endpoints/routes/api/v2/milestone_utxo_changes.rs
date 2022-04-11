@@ -32,7 +32,8 @@ pub(crate) async fn milestone_utxo_changes<B: StorageBackend>(
         .map_err(|e| {
             error!("cannot fetch from storage: {}", e);
             ApiError::InternalError
-        })?.ok_or(ApiError::NotFound)?;
+        })?
+        .ok_or(ApiError::NotFound)?;
 
     Ok(Json(UtxoChangesResponse {
         index: *milestone_index,
