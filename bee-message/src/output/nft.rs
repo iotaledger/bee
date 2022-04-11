@@ -157,6 +157,19 @@ impl NftOutputBuilder {
     }
 }
 
+impl From<&NftOutput> for NftOutputBuilder {
+    fn from(output: &NftOutput) -> Self {
+        NftOutputBuilder {
+            amount: OutputBuilderAmount::Amount(output.amount),
+            native_tokens: output.native_tokens.to_vec(),
+            nft_id: output.nft_id,
+            unlock_conditions: output.unlock_conditions.to_vec(),
+            feature_blocks: output.feature_blocks.to_vec(),
+            immutable_feature_blocks: output.immutable_feature_blocks.to_vec(),
+        }
+    }
+}
+
 /// Describes an NFT output, a globally unique token with metadata attached.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
