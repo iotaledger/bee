@@ -121,6 +121,17 @@ impl BasicOutputBuilder {
     }
 }
 
+impl From<&BasicOutput> for BasicOutputBuilder {
+    fn from(output: &BasicOutput) -> Self {
+        BasicOutputBuilder {
+            amount: OutputBuilderAmount::Amount(output.amount),
+            native_tokens: output.native_tokens.to_vec(),
+            unlock_conditions: output.unlock_conditions.to_vec(),
+            feature_blocks: output.feature_blocks.to_vec(),
+        }
+    }
+}
+
 /// Describes a basic output with optional features.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

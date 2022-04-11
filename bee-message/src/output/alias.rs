@@ -203,6 +203,22 @@ impl AliasOutputBuilder {
     }
 }
 
+impl From<&AliasOutput> for AliasOutputBuilder {
+    fn from(output: &AliasOutput) -> Self {
+        AliasOutputBuilder {
+            amount: OutputBuilderAmount::Amount(output.amount),
+            native_tokens: output.native_tokens.to_vec(),
+            alias_id: output.alias_id,
+            state_index: Some(output.state_index),
+            state_metadata: output.state_metadata.to_vec(),
+            foundry_counter: Some(output.foundry_counter),
+            unlock_conditions: output.unlock_conditions.to_vec(),
+            feature_blocks: output.feature_blocks.to_vec(),
+            immutable_feature_blocks: output.immutable_feature_blocks.to_vec(),
+        }
+    }
+}
+
 pub(crate) type StateMetadataLength = BoundedU16<0, { AliasOutput::STATE_METADATA_LENGTH_MAX }>;
 
 /// Describes an alias account in the ledger that can be controlled by the state and governance controllers.
