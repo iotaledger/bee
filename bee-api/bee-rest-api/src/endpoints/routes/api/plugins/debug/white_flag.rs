@@ -41,8 +41,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     } else {
         MilestoneIndex(
             index_json
-                .as_u64()
-                .ok_or_else(|| ApiError::BadRequest("invalid index: expected a `MilestoneIndex`"))? as u32,
+                .as_u64().ok_or(ApiError::BadRequest("invalid index: expected a `MilestoneIndex`"))? as u32,
         )
     };
 
@@ -52,13 +51,11 @@ pub(crate) async fn white_flag<B: StorageBackend>(
         ));
     } else {
         let array = parents_json
-            .as_array()
-            .ok_or_else(|| ApiError::BadRequest("invalid parents: expected an array of `MessageId`"))?;
+            .as_array().ok_or(ApiError::BadRequest("invalid parents: expected an array of `MessageId`"))?;
         let mut message_ids = Vec::new();
         for s in array {
             let message_id = s
-                .as_str()
-                .ok_or_else(|| ApiError::BadRequest("invalid parents: expected an array of `MessageId`"))?
+                .as_str().ok_or(ApiError::BadRequest("invalid parents: expected an array of `MessageId`"))?
                 .parse::<MessageId>()
                 .map_err(|_| ApiError::BadRequest("invalid parents: expected an array of `MessageId`"))?;
             message_ids.push(message_id);
@@ -125,7 +122,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
             // Did not timeout, parents are solid and white flag can happen.
             consensus::white_flag::<B>(&args.tangle, &args.storage, &parents, &mut metadata)
                 .await
-                .map_err(|e| ApiError::InvalidWhiteflag(e))?;
+                .map_err(ApiError::InvalidWhiteflag)?;
 
             Ok(Json(WhiteFlagResponse {
                 merkle_tree_hash: prefix_hex::encode(metadata.merkle_proof()),

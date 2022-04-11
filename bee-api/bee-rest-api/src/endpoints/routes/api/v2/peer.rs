@@ -29,6 +29,5 @@ pub(crate) async fn peer<B: StorageBackend>(
     args.peer_manager
         .get_map(&peer_id, |peer_entry| {
             Ok(Json(PeerResponse(PeerDto::from(peer_entry.0.as_ref()))))
-        })
-        .unwrap_or_else(|| Err(ApiError::NotFound))
+        }).unwrap_or(Err(ApiError::NotFound))
 }
