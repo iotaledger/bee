@@ -32,7 +32,7 @@ where
     );
 
     let mut encoded = Vec::new();
-    // Panic: writing to a `Vec` cannot fail unless we run out of memory.`
+    // Panic: writing to a `Vec` cannot fail unless we run out of memory.
     encode(&mut encoded, &state.0.registry.read()).unwrap();
 
     (StatusCode::OK, headers, encoded)
