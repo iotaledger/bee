@@ -12,17 +12,14 @@ use crate::ed25519::{Keypair, SecretKey};
 
 /// PEM file errors.
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
 pub enum PemFileError {
-    /// Read error.
     #[error("reading the identity file failed: {0}")]
     Read(std::io::Error),
-    /// Write error.
     #[error("writing the identity file failed: {0}")]
     Write(std::io::Error),
-    /// Parse error.
     #[error("could not parse PEM file")]
     Parse,
-    /// Decode error.
     #[error("could not decode keypair")]
     DecodeKeypair,
 }

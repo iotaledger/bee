@@ -13,7 +13,7 @@ use crate::{migration, pem_file, Keypair as Ed25519Keypair, PublicKey as Ed25519
 #[derive(Clone, Debug)]
 pub struct Identity {
     keypair: Ed25519Keypair,
-    is_fresh: bool,
+    restored_from_file: bool,
 }
 
 impl Identity {
@@ -26,7 +26,7 @@ impl Identity {
     pub fn from_keypair(keypair: Ed25519Keypair) -> Self {
         Self {
             keypair,
-            is_fresh: false,
+            restored_from_file: true,
         }
     }
 
@@ -45,9 +45,9 @@ impl Identity {
         PeerId::from_public_key(&PublicKey::Ed25519(self.keypair.public()))
     }
 
-    /// Returns whether this identity has been newly generated.
-    pub fn is_fresh(&self) -> bool {
-        self.is_fresh
+    /// Returns whether this identity has been restored from a file.
+    pub fn is_restored(&self) -> bool {
+        self.restored_from_file
     }
 
     /// Stores this identity to a file.
@@ -117,7 +117,7 @@ impl Default for Identity {
 
         Self {
             keypair,
-            is_fresh: true,
+            restored_from_file: false,
         }
     }
 }
