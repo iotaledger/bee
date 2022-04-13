@@ -242,17 +242,17 @@ impl PruningSizeConfig {
         self.enabled
     }
 
-    /// Returns the target size.
+    /// Returns the target size of the database.
     pub fn target_size(&self) -> usize {
         self.target_size
     }
 
-    /// TODO
+    /// Returns the percentage the database gets reduced if the target size is reached.
     pub fn threshold_percentage(&self) -> f32 {
         self.threshold_percentage
     }
 
-    /// TODO
+    /// Returns the cooldown time between two pruning-by-database size events.
     pub fn cooldown_time(&self) -> Duration {
         self.cooldown_time
     }
