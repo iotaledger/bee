@@ -3,7 +3,7 @@
 
 use bee_ledger::{
     types::{ConsumedOutput, CreatedOutput, LedgerIndex, Unspent},
-    workers::event::{LedgerUpdated, ReceiptCreated},
+    workers::event::{LedgerUpdated, MessageReferenced, ReceiptCreated},
 };
 use bee_message::{
     constant::PROTOCOL_VERSION, milestone::MilestoneIndex, output::OutputId, payload::Payload,
@@ -23,12 +23,14 @@ use bee_tangle::{
     metadata::MessageMetadata,
     Tangle,
 };
+use futures::channel::oneshot;
 use inx::{
     proto,
     server::{Inx, InxServer},
     Request, Response, Status,
 };
 use packable::PackableExt;
+use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::{FullNode, NodeStorageBackend};
@@ -292,7 +294,7 @@ impl<B: NodeStorageBackend> Inx for InxHandler<B> {
         request: Request<proto::NoParams>,
     ) -> Result<Response<Self::ListenToLatestMilestoneStream>, Status> {
         let proto::NoParams {} = request.into_inner();
-        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         // FIXME: `TypeId` might not be good enough
         self.bus.add_listener::<Self, LatestMilestoneChanged, _>(move |event| {
@@ -317,7 +319,7 @@ impl<B: NodeStorageBackend> Inx for InxHandler<B> {
         request: Request<proto::NoParams>,
     ) -> Result<Response<Self::ListenToConfirmedMilestoneStream>, Status> {
         let proto::NoParams {} = request.into_inner();
-        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         // FIXME: `TypeId` might not be good enough
         self.bus
@@ -342,7 +344,7 @@ impl<B: NodeStorageBackend> Inx for InxHandler<B> {
         request: Request<proto::MessageFilter>,
     ) -> Result<Response<Self::ListenToMessagesStream>, Status> {
         let proto::MessageFilter {} = request.into_inner();
-        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         // FIXME: `TypeId` might not be good enough
         self.bus.add_listener::<Self, MessageProcessed, _>(move |event| {
@@ -367,7 +369,7 @@ impl<B: NodeStorageBackend> Inx for InxHandler<B> {
     ) -> Result<Response<Self::ListenToSolidMessagesStream>, Status> {
         let proto::MessageFilter {} = request.into_inner();
 
-        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         let storage = self.storage.clone();
         let tangle = self.tangle.clone();
@@ -393,14 +395,30 @@ impl<B: NodeStorageBackend> Inx for InxHandler<B> {
         request: Request<proto::MessageFilter>,
     ) -> Result<Response<Self::ListenToReferencedMessagesStream>, Status> {
         let proto::MessageFilter {} = request.into_inner();
+        let (tx, rx) = mpsc::unbounded_channel();
 
-        todo!()
+        let storage = self.storage.clone();
+        let tangle = self.tangle.clone();
+
+        // FIXME: `TypeId` might not be good enough
+        self.bus.add_listener::<Self, MessageReferenced, _>(move |event| {
+            // FIXME: unwrap
+            let parents = Fetch::<MessageId, Vec<MessageId>>::fetch(&*storage, &event.message_id)
+                .unwrap()
+                .unwrap();
+
+            tx.send(Ok(Self::get_metadata(&*tangle, &*storage, &event.message_id, &parents)))
+                // FIXME: unwrap
+                .unwrap();
+        });
+
+        Ok(Response::new(UnboundedReceiverStream::new(rx)))
     }
 
     async fn submit_message(&self, request: Request<proto::RawMessage>) -> Result<Response<proto::MessageId>, Status> {
         let proto::RawMessage { data: message } = request.into_inner();
 
-        let (notifier, waiter) = futures::channel::oneshot::channel::<Result<MessageId, MessageSubmitterError>>();
+        let (notifier, waiter) = oneshot::channel::<Result<MessageId, MessageSubmitterError>>();
         // FIXME: unwrap
         self.message_submitter
             .tx
@@ -462,7 +480,7 @@ impl<B: NodeStorageBackend> Inx for InxHandler<B> {
     ) -> Result<Response<Self::ListenToLedgerUpdatesStream>, Status> {
         let proto::LedgerUpdateRequest { start_milestone_index } = request.into_inner();
 
-        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         // FIXME: `TypeId` might not be good enough
         self.bus.add_listener::<Self, LedgerUpdated, _>(move |event| {
@@ -564,7 +582,7 @@ impl<B: NodeStorageBackend> Inx for InxHandler<B> {
     ) -> Result<Response<Self::ListenToMigrationReceiptsStream>, Status> {
         let proto::NoParams {} = request.into_inner();
 
-        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         self.bus.add_listener::<Self, ReceiptCreated, _>(move |event| {
             tx.send(Ok(proto::RawReceipt {
