@@ -24,7 +24,11 @@ use crate::{
         consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
         error::Error,
         event::{MessageReferenced, MilestoneConfirmed, OutputConsumed, OutputCreated},
-        pruning::{condition::should_prune, config::PruningConfig, prune},
+        pruning::{
+            condition::{should_prune, PruningTask},
+            config::PruningConfig,
+            prune,
+        },
         snapshot::{condition::should_snapshot, config::SnapshotConfig, worker::SnapshotWorker},
         storage::{self, StorageBackend},
     },
@@ -291,14 +295,14 @@ where
         };
 
         let snapshot_pruning_delta = bmd + EXTRA_PRUNING_DEPTH;
-        let pruning_delay_min = snapshot_depth + snapshot_pruning_delta;
-        let pruning_delay = if pruning_config.milestones().max_milestones_to_keep() < pruning_delay_min {
+        let milestones_to_keep_min = snapshot_depth + snapshot_pruning_delta;
+        let milestones_to_keep = if pruning_config.milestones().max_milestones_to_keep() < milestones_to_keep_min {
             warn!(
-                "Configuration value for \"pruning.delay\" is too low ({}), value changed to {}.",
+                "Configuration value for \"max_milestones_to_keep\" is too low ({}), value changed to {}.",
                 pruning_config.milestones().max_milestones_to_keep(),
-                pruning_delay_min
+                milestones_to_keep_min
             );
-            pruning_delay_min
+            milestones_to_keep_min
         } else {
             pruning_config.milestones().max_milestones_to_keep()
         };
@@ -345,18 +349,29 @@ where
                             }
                         }
 
-                        match should_prune(&tangle, &storage, ledger_index, pruning_delay, &pruning_config) {
-                            Ok((start_index, target_index)) => {
-                                if let Err(e) =
-                                    prune::prune(&tangle, &storage, &bus, start_index, target_index, &pruning_config)
-                                        .await
-                                {
-                                    error!("Pruning failed: {:?}.", e);
-                                    // TODO: consider initiating an emergency (but graceful) shutdown instead of just
-                                    // panicking.
-                                    panic!("Aborting due to an unexpected pruning error.");
+                        match should_prune(&tangle, &storage, ledger_index, milestones_to_keep, &pruning_config) {
+                            Ok(pruning_task) => match pruning_task {
+                                PruningTask::ByRange(start_index, target_index) => {
+                                    if let Err(e) = prune::prune_by_range(
+                                        &tangle,
+                                        &storage,
+                                        &bus,
+                                        start_index,
+                                        target_index,
+                                        &pruning_config,
+                                    )
+                                    .await
+                                    {
+                                        error!("Pruning failed: {e:?}.");
+                                        // TODO: consider initiating an emergency (but graceful) shutdown instead of just
+                                        // panicking.
+                                        panic!("Aborting due to an unexpected pruning error.");
+                                    }
                                 }
-                            }
+                                PruningTask::BySize(reduced_size) => {
+                                    todo!("pruning by size");
+                                }
+                            },
                             Err(reason) => {
                                 debug!("Pruning skipped: {:?}", reason);
                             }

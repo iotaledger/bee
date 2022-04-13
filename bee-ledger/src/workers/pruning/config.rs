@@ -289,7 +289,9 @@ mod tests {
 
     impl NodeConfigBuilder {
         fn finish(self) -> NodeConfig {
-            NodeConfig { pruning: self.pruning.unwrap().finish()}
+            NodeConfig {
+                pruning: self.pruning.unwrap().finish(),
+            }
         }
     }
 
@@ -335,8 +337,8 @@ mod tests {
         enabled                = true
         "#;
 
-        let node_config_builder = toml::from_str::<NodeConfigBuilder>(config_toml_str)
-            .expect("error deserializing toml config str");
+        let node_config_builder =
+            toml::from_str::<NodeConfigBuilder>(config_toml_str).expect("error deserializing toml config str");
 
         println!("{:?}", node_config_builder);
         let node_config = node_config_builder.finish();
@@ -364,7 +366,5 @@ mod tests {
         assert_eq!(toml_config.size().cooldown_time(), Duration::from_secs(60));
         assert!(!toml_config.size().enabled());
         assert!(toml_config.receipts().enabled());
-
     }
-
 }
