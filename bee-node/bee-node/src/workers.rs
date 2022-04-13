@@ -19,20 +19,20 @@ const DEFAULT_BIND_ADDRESS: &str = "0.0.0.0:3030";
 #[must_use]
 pub struct MetricsConfigBuilder {
     #[serde(skip)]
-    pid: Option<u32>,
+    pid: u32,
     #[serde(alias = "bindAddress")]
     bind_address: Option<SocketAddr>,
 }
 
 impl MetricsConfigBuilder {
     pub fn with_pid(mut self, pid: u32) -> Self {
-        self.pid = Some(pid);
+        self.pid = pid;
         self
     }
 
     pub fn finish(self) -> MetricsConfig {
         MetricsConfig {
-            pid: self.pid.unwrap(),
+            pid: self.pid,
             bind_address: self
                 .bind_address
                 .unwrap_or_else(|| DEFAULT_BIND_ADDRESS.parse().unwrap()),
