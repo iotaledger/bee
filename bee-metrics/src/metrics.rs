@@ -10,7 +10,7 @@ use prometheus_client::{
 };
 use tokio::process::Command;
 
-/// Type used to track and update metrics about an specific OS process.
+/// Type used to track and update metrics about a specific OS process.
 #[derive(Clone)]
 pub struct ProcessMetrics {
     mem: Gauge,
