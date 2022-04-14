@@ -229,17 +229,8 @@ where
         self
     }
 
-    pub fn with_pid(mut self, pid: u32) -> Self {
-        self.metrics = self
-            .metrics
-            .or_else(|| Some(MetricsConfigBuilder::default()))
-            .map(|metrics| metrics.with_pid(pid));
-
-        self
-    }
-
     /// Returns the built node config.
-    pub fn finish(self) -> (Option<String>, NodeConfig<S>) {
+    pub fn finish(self, pid: u32) -> (Option<String>, NodeConfig<S>) {
         // Create the necessary info about the network.
         let bech32_hrp = self.bech32_hrp.unwrap_or_else(|| BECH32_HRP_DEFAULT.to_owned());
         let network_name = self.network_id.unwrap_or_else(|| NETWORK_NAME_DEFAULT.to_string());
@@ -274,7 +265,7 @@ where
                 dashboard: self.dashboard.unwrap_or_default().finish(),
                 #[cfg(feature = "trace")]
                 tracing: self.tracing.unwrap_or_default().finish(),
-                metrics: self.metrics.unwrap_or_default().finish(),
+                metrics: self.metrics.unwrap_or_default().finish(pid),
             },
         )
     }
