@@ -18,7 +18,7 @@ pub mod pem_file;
 #[doc(inline)]
 pub use libp2p_core::PeerId;
 
-pub use crate::{
+pub use self::{
     ed25519::{Keypair, PublicKey, SecretKey},
     identity::Identity,
 };
