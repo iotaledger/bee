@@ -1,13 +1,18 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Manages persistence of identities using the PEM file format.
+
 use std::{fs, path::Path};
 
-use bee_gossip::{Keypair, SecretKey};
 use ed25519::KeypairBytes;
 use pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding};
 
+use crate::ed25519::{Keypair, SecretKey};
+
+/// PEM file errors.
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
 pub enum PemFileError {
     #[error("reading the identity file failed: {0}")]
     Read(std::io::Error),
@@ -26,7 +31,6 @@ fn pem_entry_to_keypair(pem_entry: String) -> Result<Keypair, PemFileError> {
 }
 
 fn keypair_to_pem_entry(keypair: &Keypair) -> Result<String, PemFileError> {
-    // Safety: We know that this has the correct size.
     let secret_key: [u8; 32] = keypair
         .secret()
         .as_ref()
@@ -42,14 +46,14 @@ fn keypair_to_pem_entry(keypair: &Keypair) -> Result<String, PemFileError> {
     }
 }
 
-pub fn read_keypair_from_pem_file<P: AsRef<Path>>(path: P) -> Result<Keypair, PemFileError> {
+pub(crate) fn read_keypair_from_pem_file<P: AsRef<Path>>(path: P) -> Result<Keypair, PemFileError> {
     match fs::read_to_string(path) {
         Ok(pem_file) => pem_entry_to_keypair(pem_file),
         Err(e) => Err(PemFileError::Read(e)),
     }
 }
 
-pub fn write_keypair_to_pem_file<P: AsRef<Path>>(path: P, keypair: &Keypair) -> Result<(), PemFileError> {
+pub(crate) fn write_keypair_to_pem_file<P: AsRef<Path>>(path: P, keypair: &Keypair) -> Result<(), PemFileError> {
     fs::write(path, keypair_to_pem_entry(keypair)?).map_err(PemFileError::Write)
 }
 

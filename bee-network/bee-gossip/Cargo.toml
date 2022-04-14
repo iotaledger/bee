@@ -39,6 +39,7 @@ full = [
 trace = [ "trace-tools/tokio-console", "tracing" ]
 
 [dependencies]
+bee-identity = { version = "0.1.0", path = "../../bee-identity", default-features = false }
 bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true }
 
 async-trait = { version = "0.1.51", default-features = false, optional = true }

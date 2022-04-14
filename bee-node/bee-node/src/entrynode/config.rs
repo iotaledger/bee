@@ -2,20 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_autopeering::AutopeeringConfig;
+use bee_identity::Identity;
 use bee_rest_api::endpoints::config::RestApiConfig;
 use fern_logger::LoggerConfig;
 
 use crate::{
     config::{NetworkSpec, NodeConfig},
-    local::Local,
     storage::NodeStorageBackend,
 };
 
 /// The config of a Bee entry node.
 #[derive(Clone)]
 pub struct EntryNodeConfig {
-    /// The local entity.
-    pub local: Local,
+    /// The local identity.
+    pub identity: Identity,
     /// The specification of the network the node wants to participate in.
     pub network_spec: NetworkSpec,
     /// Logger.
@@ -27,9 +27,9 @@ pub struct EntryNodeConfig {
 }
 
 impl EntryNodeConfig {
-    /// Returns the local entity.
-    pub fn local(&self) -> &Local {
-        &self.local
+    /// Returns the local identity.
+    pub fn local(&self) -> &Identity {
+        &self.identity
     }
 
     /// Returns the network specification the full node is trying to join.
@@ -37,12 +37,12 @@ impl EntryNodeConfig {
         &self.network_spec
     }
 
-    pub fn from<S>(local: Local, node_cfg: NodeConfig<S>) -> Self
+    pub fn from<S>(identity: Identity, node_cfg: NodeConfig<S>) -> Self
     where
         S: NodeStorageBackend,
     {
         Self {
-            local,
+            identity,
             network_spec: node_cfg.network_spec,
             logger: node_cfg.logger,
             autopeering: node_cfg.autopeering,

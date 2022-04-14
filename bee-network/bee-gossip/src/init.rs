@@ -3,6 +3,7 @@
 
 #![cfg(feature = "full")]
 
+use bee_identity::{Identity, PeerId};
 use libp2p::identity;
 use once_cell::sync::OnceCell;
 
@@ -17,7 +18,6 @@ use super::{
         command::{command_channel, NetworkCommandSender},
         event::{event_channel, Event, InternalEvent, NetworkEventReceiver},
     },
-    Keypair, PeerId,
 };
 use crate::{
     alias,
@@ -97,12 +97,12 @@ pub mod standalone {
     /// Initializes the network.
     pub async fn init(
         config: NetworkConfig,
-        keys: Keypair,
+        identity: Identity,
         network_id: u64,
         shutdown: impl Future + Send + Unpin + 'static,
     ) -> Result<(NetworkCommandSender, NetworkEventReceiver), Error> {
         let (network_config, service_config, network_command_sender, network_event_receiver) =
-            super::init(config, keys, network_id)?;
+            super::init(config, identity, network_id)?;
 
         let (shutdown_signal_tx1, shutdown_signal_rx1) = oneshot::channel::<()>();
         let (shutdown_signal_tx2, shutdown_signal_rx2) = oneshot::channel::<()>();
@@ -131,12 +131,12 @@ pub mod integrated {
     /// Initializes the network.
     pub fn init<N: Node>(
         config: NetworkConfig,
-        keys: Keypair,
+        identity: Identity,
         network_id: u64,
         mut node_builder: N::Builder,
     ) -> Result<(N::Builder, NetworkEventReceiver), Error> {
         let (host_config, service_config, network_command_sender, network_event_receiver) =
-            super::init(config, keys, network_id)?;
+            super::init(config, identity, network_id)?;
 
         node_builder = node_builder
             .with_worker_cfg::<NetworkHost>(host_config)
@@ -149,7 +149,7 @@ pub mod integrated {
 
 fn init(
     config: NetworkConfig,
-    keys: Keypair,
+    identity: Identity,
     network_id: u64,
 ) -> Result<
     (
@@ -179,15 +179,17 @@ fn init(
     let (event_sender, event_receiver) = event_channel::<Event>();
     let (internal_event_sender, internal_event_receiver) = event_channel::<InternalEvent>();
 
-    let local_keys = identity::Keypair::Ed25519(keys);
-    let local_id = PeerId::from_public_key(&local_keys.public());
+    let local_keys = identity::Keypair::Ed25519(identity.keypair().clone());
+    let local_peer_id = PeerId::from_public_key(&local_keys.public());
 
     event_sender
-        .send(Event::LocalIdCreated { local_id })
+        .send(Event::LocalIdCreated {
+            local_id: local_peer_id,
+        })
         .map_err(|_| Error::LocalIdAnnouncementFailed)?;
 
     // TODO: rename to PeerStateMap.
-    let peerlist = PeerListWrapper::new(PeerList::from_peers(local_id, peers.iter().cloned().collect()));
+    let peerlist = PeerListWrapper::new(PeerList::from_peers(local_peer_id, peers.iter().cloned().collect()));
 
     // Publish which known peers were added initially.
     for peer in peers.into_iter() {
@@ -205,7 +207,8 @@ fn init(
     }
 
     // Create the transport layer.
-    let swarm = build_swarm(&local_keys, internal_event_sender.clone()).map_err(|_| Error::CreatingTransportFailed)?;
+    let swarm = build_swarm(&local_keys, local_peer_id, internal_event_sender.clone())
+        .map_err(|_| Error::CreatingTransportFailed)?;
 
     let network_host_config = NetworkHostConfig {
         internal_event_sender: internal_event_sender.clone(),

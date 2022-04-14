@@ -41,9 +41,9 @@ const BOOTSTRAP_UPDATE_DELAY: Duration = Duration::from_secs(4 * SECOND);
 /// Initializes the autopeering service.
 pub async fn init<S, I, Q, V>(
     config: AutopeeringConfig,
+    local: Local,
     version: u32,
     network_name: I,
-    local: Local,
     peer_store_config: <S as PeerStore>::Config,
     term_signal: Q,
     neighbor_validator: V,

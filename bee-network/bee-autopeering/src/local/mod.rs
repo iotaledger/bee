@@ -30,7 +30,7 @@ pub enum Error {
     DeserializeFromProtobuf,
 }
 
-/// Represents a local entity.
+/// Represents a local autopeering entity.
 ///
 /// It allows:
 /// * message signing and verification;
@@ -50,7 +50,7 @@ pub struct LocalInner {
 }
 
 impl Local {
-    /// Generates a new random local identity.
+    /// Generates a new random local entity.
     pub fn generate() -> Self {
         // Panic: will only fail if there's an OS issue.
         let private_key = PrivateKey::generate().expect("error generating private key");
@@ -69,8 +69,8 @@ impl Local {
         }
     }
 
-    /// Creates a local identity from an ED25519 keypair.
-    pub fn from_keypair(keypair: Keypair) -> Result<Self, Error> {
+    /// Creates a local entity from an ED25519 keypair.
+    pub fn from_keypair(keypair: &Keypair) -> Result<Self, Error> {
         let private_key_bytes: [u8; SECRET_KEY_LENGTH] = keypair
             .secret()
             .as_ref()
@@ -80,7 +80,7 @@ impl Local {
         Ok(Self::from_private_key_bytes(private_key_bytes))
     }
 
-    /// Creates a local identity from a 'base16/hex' encoded ED25519 private key.
+    /// Creates a local entity from a 'base16/hex' encoded ED25519 private key.
     pub fn from_bs16_encoded_private_key(private_key: impl AsRef<str>) -> Result<Self, Error> {
         let mut private_key_bytes = [0u8; SECRET_KEY_LENGTH];
         hex::decode_to_slice(private_key.as_ref(), &mut private_key_bytes)
@@ -89,7 +89,7 @@ impl Local {
         Ok(Self::from_private_key_bytes(private_key_bytes))
     }
 
-    /// Creates a local identity from a 'base58' encoded ED25519 private key.
+    /// Creates a local entity from a 'base58' encoded ED25519 private key.
     pub fn from_bs58_encoded_private_key(private_key: impl AsRef<str>) -> Result<Self, Error> {
         // Restore the private key
         let mut private_key_bytes = [0u8; SECRET_KEY_LENGTH];
@@ -100,7 +100,7 @@ impl Local {
         Ok(Self::from_private_key_bytes(private_key_bytes))
     }
 
-    /// Creates a local identity from bytes representing an ED25519 private key.
+    /// Creates a local entity from bytes representing an ED25519 private key.
     pub fn from_private_key_bytes(private_key_bytes: [u8; SECRET_KEY_LENGTH]) -> Self {
         let private_key = PrivateKey::from_bytes(private_key_bytes);
         let public_key = private_key.public_key();
@@ -117,17 +117,17 @@ impl Local {
         }
     }
 
-    /// Returns the peer id of this identity.
+    /// Returns the peer id of this entity.
     pub(crate) fn peer_id(&self) -> PeerId {
         *self.read().peer_id()
     }
 
-    /// Returns the public key of this identity.
+    /// Returns the public key of this entity.
     pub(crate) fn public_key(&self) -> PublicKey {
         *self.read().public_key()
     }
 
-    /// Returns the current private salt of this identity.
+    /// Returns the current private salt of this entity.
     pub(crate) fn private_salt(&self) -> Salt {
         self.read().private_salt().clone()
     }
@@ -137,7 +137,7 @@ impl Local {
         self.write().set_private_salt(salt);
     }
 
-    /// Returns the current public salt of this identity.
+    /// Returns the current public salt of this entity.
     pub(crate) fn public_salt(&self) -> Salt {
         self.read().public_salt().clone()
     }
@@ -157,7 +157,7 @@ impl Local {
         self.write().add_service(service_name, protocol, port);
     }
 
-    /// Returns the list of services this identity supports.
+    /// Returns the list of services this entity supports.
     pub(crate) fn services(&self) -> ServiceMap {
         self.read().services().clone()
     }

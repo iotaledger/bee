@@ -4,7 +4,7 @@
 use std::{any::TypeId, convert::Infallible};
 
 use async_trait::async_trait;
-use bee_gossip::PeerId;
+use bee_identity::PeerId;
 use bee_message::MessageId;
 use bee_pow::score;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};

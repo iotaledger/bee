@@ -5,7 +5,7 @@ use auth_helper::{
     jwt::{ClaimsBuilder, JsonWebToken},
     password,
 };
-use bee_gossip::{Keypair, PeerId};
+use bee_identity::{Keypair, PeerId};
 use bee_rest_api::endpoints::permission::DASHBOARD_AUDIENCE_CLAIM;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;

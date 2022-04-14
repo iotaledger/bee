@@ -12,7 +12,7 @@ use bee_autopeering::{
     stores::{Options as RocksDbPeerStoreConfigOptions, RocksDbPeerStore, RocksDbPeerStoreConfig},
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
-use bee_gossip::Keypair;
+use bee_identity::Keypair;
 use bee_plugin_version_checker::VersionCheckerPlugin;
 use bee_rest_api::endpoints::InitConfigEntryNode;
 use bee_runtime::{
@@ -235,9 +235,9 @@ async fn initialize_autopeering(
 
     let autopeering_rx = bee_autopeering::init::<RocksDbPeerStore, _, _, _>(
         builder.config().autopeering.clone(),
+        local,
         AUTOPEERING_VERSION,
         network_name,
-        local,
         peerstore_cfg,
         quit_signal,
         neighbor_validator,
@@ -250,7 +250,7 @@ async fn initialize_autopeering(
 
 /// Creates the local entity from a ED25519 keypair and a set of provided services.
 fn create_local_autopeering_entity(keypair: Keypair, config: &EntryNodeConfig) -> bee_autopeering::Local {
-    let local = bee_autopeering::Local::from_keypair(keypair).expect("failed to create local entity");
+    let local = bee_autopeering::Local::from_keypair(&keypair).expect("failed to create local entity");
 
     let port = if let Some(bind_addr) = config.autopeering.bind_addr_v4() {
         bind_addr.port()

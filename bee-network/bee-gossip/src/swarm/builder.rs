@@ -10,7 +10,7 @@ use libp2p::{
     },
     dns, identity, mplex, noise,
     swarm::SwarmBuilder,
-    tcp, yamux, Swarm, Transport,
+    tcp, yamux, PeerId, Swarm, Transport,
 };
 
 use super::{behaviour::SwarmBehaviour, error::Error};
@@ -21,10 +21,10 @@ const DEFAULT_CONNECTION_TIMEOUT_SECS: u64 = 10;
 
 pub fn build_swarm(
     local_keys: &identity::Keypair,
+    local_peer_id: PeerId,
     internal_sender: InternalEventSender,
 ) -> Result<Swarm<SwarmBehaviour>, Error> {
     let local_pk = local_keys.public();
-    let local_id = local_pk.to_peer_id();
 
     let noise_keys = noise::Keypair::<noise::X25519Spec>::new()
         .into_authentic(local_keys)
@@ -58,7 +58,7 @@ pub fn build_swarm(
     let behaviour = SwarmBehaviour::new(local_pk, internal_sender);
     let limits = ConnectionLimits::default().with_max_established_per_peer(Some(MAX_CONNECTIONS_PER_PEER));
 
-    let swarm = SwarmBuilder::new(transport, behaviour, local_id)
+    let swarm = SwarmBuilder::new(transport, behaviour, local_peer_id)
         .connection_limits(limits)
         // We want the connection background tasks to be spawned
         // onto the tokio runtime.

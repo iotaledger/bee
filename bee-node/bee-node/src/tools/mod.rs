@@ -10,10 +10,11 @@ mod rocksdb;
 mod sled;
 mod snapshot_info;
 
+use bee_identity::Identity;
 use structopt::StructOpt;
 use thiserror::Error;
 
-use crate::{Local, NodeConfig, NodeStorageBackend};
+use crate::{NodeConfig, NodeStorageBackend};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, StructOpt)]
@@ -52,7 +53,11 @@ pub enum ToolError {
     JwtApi(#[from] jwt_api::JwtApiError),
 }
 
-pub fn exec<B: NodeStorageBackend>(tool: &Tool, local: &Local, node_config: &NodeConfig<B>) -> Result<(), ToolError> {
+pub fn exec<B: NodeStorageBackend>(
+    tool: &Tool,
+    identity: &Identity,
+    node_config: &NodeConfig<B>,
+) -> Result<(), ToolError> {
     match tool {
         Tool::Ed25519(tool) => ed25519::exec(tool)?,
         #[cfg(feature = "rocksdb")]
@@ -61,7 +66,7 @@ pub fn exec<B: NodeStorageBackend>(tool: &Tool, local: &Local, node_config: &Nod
         Tool::Sled(tool) => sled::exec(tool)?,
         Tool::SnapshotInfo(tool) => snapshot_info::exec(tool)?,
         Tool::Password(tool) => password::exec(tool)?,
-        Tool::JwtApi(tool) => jwt_api::exec(tool, local, node_config)?,
+        Tool::JwtApi(tool) => jwt_api::exec(tool, identity, node_config)?,
     }
 
     Ok(())

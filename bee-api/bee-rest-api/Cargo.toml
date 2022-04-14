@@ -13,6 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-common = { version = "0.6.0", path = "../../bee-common/bee-common", default-features = false, optional = true }
 bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false, optional = true }
+bee-identity = { version = "0.1.0", path = "../../bee-identity", default-features = false }
 bee-ledger = { version = "0.6.1", path = "../../bee-ledger", default-features = false }
 bee-message = { version = "0.1.6", path = "../../bee-message", default-features = false }
 bee-pow = { version = "0.2.0", path = "../../bee-pow", default-features = false }

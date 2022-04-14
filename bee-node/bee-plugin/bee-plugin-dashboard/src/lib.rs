@@ -22,7 +22,7 @@ use std::{
 };
 
 use async_trait::async_trait;
-use bee_gossip::{Keypair, PeerId};
+use bee_identity::{Keypair, PeerId};
 use bee_ledger::workers::event::MilestoneConfirmed;
 use bee_protocol::workers::{
     event::{MessageSolidified, MpsMetricsUpdated, TipAdded, TipRemoved, VertexCreated},

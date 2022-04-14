@@ -11,7 +11,8 @@ use bee_autopeering::{
     stores::{Options as RocksDbPeerStoreConfigOptions, RocksDbPeerStore, RocksDbPeerStoreConfig},
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
-use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
+use bee_gossip::{NetworkEventReceiver, Protocol};
+use bee_identity::Keypair;
 use bee_metrics::Registry;
 use bee_plugin_version_checker::VersionCheckerPlugin;
 use bee_rest_api::endpoints::InitConfigFullNode;
@@ -20,7 +21,6 @@ use bee_runtime::{
     node::{Node, NodeBuilder},
     worker::Worker,
 };
-use bee_storage::system::StorageHealth;
 use fxhash::FxBuildHasher;
 
 use super::{config::FullNodeConfig, FullNode, FullNodeError};
@@ -142,7 +142,7 @@ impl<S: NodeStorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
         );
 
         // Print the local entity data.
-        log::info!("{}", builder.config().local());
+        log::info!("{}", builder.config().identity());
 
         // Add the resources that are shared throughout the node.
         let builder = add_node_resources(builder)?;
@@ -214,16 +214,6 @@ fn add_node_resources<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Res
     // TODO block ? Make new async ?
     let storage = S::start(storage_cfg).map_err(|e| CoreError::StorageBackend(Box::new(e)))?;
 
-    if config.local().is_new() {
-        storage
-            .set_health(StorageHealth::Healthy)
-            .map_err(|e| CoreError::StorageBackend(Box::new(e)))?;
-
-        return Err(FullNodeError::InvalidOrNoIdentityPrivateKey(
-            builder.config().local().encoded().to_string(),
-        ));
-    }
-
     let builder = builder
         .with_resource(config)
         .with_resource(node_info)
@@ -253,12 +243,12 @@ fn initialize_gossip_layer<S: NodeStorageBackend>(
 
     let config = builder.config();
 
-    let keypair = config.local().keypair().clone();
+    let identity = config.identity().clone();
     let network_id = config.network_spec().id();
     let gossip_cfg = config.network.clone();
 
     let (builder, network_events) =
-        bee_gossip::integrated::init::<FullNode<S>>(gossip_cfg, keypair, network_id, builder)
+        bee_gossip::integrated::init::<FullNode<S>>(gossip_cfg, identity, network_id, builder)
             .map_err(FullNodeError::GossipLayerInitialization)?;
 
     Ok((network_events, builder))
@@ -328,16 +318,16 @@ async fn initialize_autopeering<S: NodeStorageBackend>(
         let peerstore_cfg = RocksDbPeerStoreConfig::new(autopeering_cfg.peer_storage_path(), peerstore_options);
 
         // A local entity that can sign outgoing messages, and announce services.
-        let keypair = config.local().keypair().clone();
+        let keypair = config.identity().keypair().clone();
         let local = create_local_autopeering_entity(keypair, config);
 
         let quit_signal = tokio::signal::ctrl_c();
 
         let autopeering_rx = bee_autopeering::init::<RocksDbPeerStore, _, _, _>(
             autopeering_cfg,
+            local,
             AUTOPEERING_VERSION,
             network_name,
-            local,
             peerstore_cfg,
             quit_signal,
             neighbor_validator,
@@ -354,7 +344,7 @@ fn create_local_autopeering_entity<S: NodeStorageBackend>(
     keypair: Keypair,
     config: &FullNodeConfig<S>,
 ) -> bee_autopeering::Local {
-    let local = bee_autopeering::Local::from_keypair(keypair).expect("failed to create local entity");
+    let local = bee_autopeering::Local::from_keypair(&keypair).expect("failed to create local entity");
 
     let port = if let Some(bind_addr) = config.autopeering.bind_addr_v4() {
         bind_addr.port()
@@ -392,8 +382,8 @@ fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> FullNod
     } = config.network_spec().clone();
 
     let init_config = InitConfigFullNode {
-        node_id: config.local.peer_id(),
-        node_keypair: config.local.keypair().clone(),
+        node_id: config.identity.peer_id(),
+        node_keypair: config.identity.keypair().clone(),
         rest_api_config: config.rest_api.clone(),
         protocol_config: config.protocol.clone(),
         network_id: (network_name, network_id),
@@ -423,8 +413,8 @@ fn initialize_dashboard<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
 
     let dashboard_cfg = config.dashboard.clone();
     let rest_api_cfg = config.rest_api.clone();
-    let node_id = config.local().peer_id();
-    let node_keypair = config.local().keypair().clone();
+    let node_id = config.identity().peer_id();
+    let node_keypair = config.identity().keypair().clone();
     let node_alias = config.alias().clone();
     let bech32_hrp = config.network_spec().hrp().to_string();
 

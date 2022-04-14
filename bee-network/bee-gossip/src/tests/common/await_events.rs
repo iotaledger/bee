@@ -3,9 +3,10 @@
 
 #![cfg(feature = "full")]
 
+use bee_identity::PeerId;
 use tokio::time::{self, Duration};
 
-use crate::{Event, GossipReceiver, GossipSender, Multiaddr, NetworkEventReceiver, PeerId};
+use crate::{Event, GossipReceiver, GossipSender, Multiaddr, NetworkEventReceiver};
 
 pub async fn get_bind_address(rx: &mut NetworkEventReceiver) -> Multiaddr {
     let timeout = time::sleep(Duration::from_secs(5));

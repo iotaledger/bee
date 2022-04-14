@@ -1,7 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_gossip::{Command::AddPeer, Multiaddr, PeerId, PeerRelation, Protocol};
+use bee_gossip::{Command::AddPeer, Multiaddr, PeerRelation, Protocol};
+use bee_identity::PeerId;
 use serde_json::Value as JsonValue;
 use warp::{filters::BoxedFilter, http::StatusCode, reject, Filter, Rejection, Reply};
 

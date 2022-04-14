@@ -8,7 +8,8 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use bee_gossip::{Multiaddr, PeerId, PeerInfo, PeerRelation};
+use bee_gossip::{Multiaddr, PeerInfo, PeerRelation};
+use bee_identity::PeerId;
 use bee_message::milestone::MilestoneIndex;
 
 use crate::types::metrics::PeerMetrics;
