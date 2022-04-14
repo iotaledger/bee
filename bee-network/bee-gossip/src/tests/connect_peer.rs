@@ -12,10 +12,10 @@ use crate::{standalone::init, Command, PeerRelation};
 #[serial_test::serial]
 async fn connect_peer() {
     let config1 = get_in_memory_network_config(1337);
-    let identity1 = Identity::default();
+    let identity1 = Identity::generate();
 
     let config2 = get_in_memory_network_config(4242);
-    let identity2 = Identity::default();
+    let identity2 = Identity::generate();
 
     let network_id = gen_constant_net_id();
 

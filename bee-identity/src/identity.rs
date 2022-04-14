@@ -17,9 +17,14 @@ pub struct Identity {
 }
 
 impl Identity {
-    /// Creates a new identity.
-    pub fn new() -> Self {
-        Self::default()
+    /// Generates a new random identity.
+    pub fn generate() -> Self {
+        let keypair = Ed25519Keypair::generate();
+
+        Self {
+            keypair,
+            restored: false,
+        }
     }
 
     /// Restores an [`Identity`] from a [`Keypair`](crate::ed25519::Keypair).
@@ -96,7 +101,7 @@ impl Identity {
                         identity_path.as_ref().display()
                     );
 
-                    Identity::new()
+                    Identity::generate()
                 };
 
                 identity.store(identity_path)?;
@@ -107,17 +112,6 @@ impl Identity {
                 log::error!("Could not extract private key from PEM file: {}", e);
                 Err(Box::new(e))
             }
-        }
-    }
-}
-
-impl Default for Identity {
-    fn default() -> Self {
-        let keypair = Ed25519Keypair::generate();
-
-        Self {
-            keypair,
-            restored: false,
         }
     }
 }

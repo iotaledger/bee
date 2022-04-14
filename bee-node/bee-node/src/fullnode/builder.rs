@@ -21,7 +21,6 @@ use bee_runtime::{
     node::{Node, NodeBuilder},
     worker::Worker,
 };
-use bee_storage::system::StorageHealth;
 use fxhash::FxBuildHasher;
 
 use super::{config::FullNodeConfig, FullNode, FullNodeError};
