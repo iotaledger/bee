@@ -119,6 +119,7 @@ impl AsRef<[u8]> for PeerId {
 impl From<Identity> for PeerId {
     fn from(identity: Identity) -> Self {
         Self::from_public_key(
+            // Panic: cannot panic because we can always ensure that the same signature scheme is used.
             PublicKey::try_from_bytes(identity.keypair().public().encode()).expect("public key from bytes"),
         )
     }
