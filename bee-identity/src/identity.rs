@@ -27,7 +27,7 @@ impl Identity {
         }
     }
 
-    /// Restores an [`Identity`] from a [`Keypair`](crate::ed25519::Keypair).
+    /// Restores an [`Identity`] from an [`Ed25519Keypair`](crate::ed25519::Keypair).
     pub fn from_keypair(keypair: Ed25519Keypair) -> Self {
         Self {
             keypair,
@@ -35,12 +35,12 @@ impl Identity {
         }
     }
 
-    /// Returns the backing [`Keypair`](crate::ed25519::Keypair) of this identity.
+    /// Returns the backing [`Ed25519Keypair`](crate::ed25519::Keypair) of this identity.
     pub fn keypair(&self) -> &Ed25519Keypair {
         &self.keypair
     }
 
-    /// Returns the [`PublicKey`](crate::ed25519::PublicKey) of this identity.
+    /// Returns the [`Ed25519PublicKey`](crate::ed25519::PublicKey) of this identity.
     pub fn public_key(&self) -> Ed25519PublicKey {
         self.keypair.public()
     }
