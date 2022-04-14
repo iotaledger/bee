@@ -54,7 +54,6 @@ impl<N: Node> Worker<N> for MetricsRegistryWorker {
         let (mem_metric, cpu_metric) = process_metrics.metrics();
 
         registry.register("bee_memory_usage", "Memory currently allocated by the node", mem_metric);
-
         registry.register("bee_cpu_usage", "CPU pecentage currently used by the node", cpu_metric);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
