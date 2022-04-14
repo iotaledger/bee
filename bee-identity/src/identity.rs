@@ -50,7 +50,7 @@ impl Identity {
         PeerId::from_public_key(&PublicKey::Ed25519(self.keypair.public()))
     }
 
-    /// Returns whether this identity has been restored from a file.
+    /// Returns whether this identity has been restored from an already existing keypair.
     pub fn is_restored(&self) -> bool {
         self.restored
     }
