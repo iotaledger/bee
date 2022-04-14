@@ -11,7 +11,7 @@ use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_tangle::config::TangleConfig;
 use fern_logger::LoggerConfig;
 
-use crate::{config::NetworkSpec, local::Local, storage::NodeStorageBackend, NodeConfig};
+use crate::{config::NetworkSpec, local::Local, storage::NodeStorageBackend, workers::MetricsConfig, NodeConfig};
 
 /// The config of a Bee full node.
 pub struct FullNodeConfig<S: NodeStorageBackend> {
@@ -42,6 +42,8 @@ pub struct FullNodeConfig<S: NodeStorageBackend> {
     /// Node dashboard.
     #[cfg(feature = "dashboard")]
     pub dashboard: DashboardConfig,
+    /// Metrics worker.
+    pub metrics: MetricsConfig,
 }
 
 impl<S: NodeStorageBackend> FullNodeConfig<S> {
@@ -76,6 +78,7 @@ impl<S: NodeStorageBackend> FullNodeConfig<S> {
             tangle: node_cfg.tangle,
             #[cfg(feature = "dashboard")]
             dashboard: node_cfg.dashboard,
+            metrics: node_cfg.metrics,
         }
     }
 }
@@ -97,6 +100,7 @@ impl<S: NodeStorageBackend> Clone for FullNodeConfig<S> {
             tangle: self.tangle.clone(),
             #[cfg(feature = "dashboard")]
             dashboard: self.dashboard.clone(),
+            metrics: self.metrics.clone(),
         }
     }
 }

@@ -5,6 +5,7 @@ members = [
 	"bee-common/bee-common-derive",
 	"bee-ledger",
 	"bee-message",
+	"bee-metrics",
 	"bee-network/bee-autopeering",
 	"bee-network/bee-gossip",
 	"bee-node/bee-node",

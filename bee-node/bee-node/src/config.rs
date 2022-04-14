@@ -25,7 +25,13 @@ use serde::Deserialize;
 
 #[cfg(feature = "trace")]
 use crate::trace::{TraceConfig, TraceConfigBuilder};
-use crate::{cli::ClArgs, storage::NodeStorageBackend, util, BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT};
+use crate::{
+    cli::ClArgs,
+    storage::NodeStorageBackend,
+    util,
+    workers::{MetricsConfig, MetricsConfigBuilder},
+    BECH32_HRP_DEFAULT, NETWORK_NAME_DEFAULT,
+};
 
 pub(crate) const ALIAS_DEFAULT: &str = "bee";
 
@@ -59,6 +65,7 @@ pub struct NodeConfig<S: NodeStorageBackend> {
     pub(crate) dashboard: DashboardConfig,
     #[cfg(feature = "trace")]
     pub(crate) tracing: TraceConfig,
+    pub(crate) metrics: MetricsConfig,
 }
 
 impl<S: NodeStorageBackend> NodeConfig<S> {
@@ -113,6 +120,7 @@ pub struct NodeConfigBuilder<S: NodeStorageBackend> {
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
     #[cfg(feature = "trace")]
     pub(crate) tracing: Option<TraceConfigBuilder>,
+    pub(crate) metrics: Option<MetricsConfigBuilder>,
 }
 
 // This cannot be derived because `S` does not implement `PartialEq`.
@@ -142,6 +150,7 @@ where
                 dashboard: self_dashboard,
             #[cfg(feature = "trace")]
                 tracing: self_tracing,
+            metrics: self_metrics,
         } = self;
 
         #[allow(unused_mut)]
@@ -157,7 +166,8 @@ where
             && (self_snapshot == &other.snapshot)
             && (self_pruning == &other.pruning)
             && (self_storage == &other.storage)
-            && (self_tangle == &other.tangle);
+            && (self_tangle == &other.tangle)
+            && (self_metrics == &other.metrics);
 
         cfg_if::cfg_if! {
             if #[cfg(feature = "dashboard")] {
@@ -220,7 +230,7 @@ where
     }
 
     /// Returns the built node config.
-    pub fn finish(self) -> (Option<String>, NodeConfig<S>) {
+    pub fn finish(self, pid: u32) -> (Option<String>, NodeConfig<S>) {
         // Create the necessary info about the network.
         let bech32_hrp = self.bech32_hrp.unwrap_or_else(|| BECH32_HRP_DEFAULT.to_owned());
         let network_name = self.network_id.unwrap_or_else(|| NETWORK_NAME_DEFAULT.to_string());
@@ -255,6 +265,7 @@ where
                 dashboard: self.dashboard.unwrap_or_default().finish(),
                 #[cfg(feature = "trace")]
                 tracing: self.tracing.unwrap_or_default().finish(),
+                metrics: self.metrics.unwrap_or_default().finish(pid),
             },
         )
     }

@@ -66,13 +66,13 @@ workers = [
   "tokio-stream",
   "twox-hash",
 ]
-trace = [ 
-  "bee-common/trace", 
-  "bee-gossip/trace", 
-  "bee-ledger/trace", 
-  "bee-pow/trace", 
-  "bee-tangle/trace", 
-  "trace-tools/tokio-console", 
+trace = [
+  "bee-common/trace",
+  "bee-gossip/trace",
+  "bee-ledger/trace",
+  "bee-pow/trace",
+  "bee-tangle/trace",
+  "trace-tools/tokio-console",
   "tracing",
 ]
 

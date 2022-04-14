@@ -15,6 +15,7 @@ mod local;
 mod shutdown;
 mod storage;
 mod util;
+mod workers;
 
 pub mod tools;
 #[cfg(feature = "trace")]

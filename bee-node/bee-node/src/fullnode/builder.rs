@@ -12,6 +12,7 @@ use bee_autopeering::{
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
 };
 use bee_gossip::{Keypair, NetworkEventReceiver, Protocol};
+use bee_metrics::Registry;
 use bee_plugin_version_checker::VersionCheckerPlugin;
 use bee_rest_api::endpoints::InitConfigFullNode;
 use bee_runtime::{
@@ -28,7 +29,9 @@ use crate::{
     core::{Core, CoreError, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
     shutdown,
     storage::NodeStorageBackend,
-    util, AUTOPEERING_VERSION, BEE_VERSION,
+    util,
+    workers::MetricsRegistryWorker,
+    AUTOPEERING_VERSION, BEE_VERSION,
 };
 
 /// A builder to create a Bee full node.
@@ -144,6 +147,10 @@ impl<S: NodeStorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
         // Add the resources that are shared throughout the node.
         let builder = add_node_resources(builder)?;
 
+        // Start the metrics registry worker.
+        let metrics_cfg = builder.config.metrics.clone();
+        let builder = builder.with_worker_cfg::<MetricsRegistryWorker>(metrics_cfg);
+
         // Initialize everything.
         let (gossip_rx, builder) = initialize_gossip_layer(builder)?;
         let (autopeering_rx, builder) = initialize_autopeering(builder).await?;
@@ -221,7 +228,8 @@ fn add_node_resources<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Res
         .with_resource(config)
         .with_resource(node_info)
         .with_resource(storage)
-        .with_resource(Bus::<TypeId>::default());
+        .with_resource(Bus::<TypeId>::default())
+        .with_resource(Registry::default());
 
     #[cfg(unix)]
     let shutdown_rx = shutdown::shutdown_listener(vec![
