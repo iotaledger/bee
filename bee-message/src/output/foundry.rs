@@ -45,16 +45,12 @@ impl FoundryOutputBuilder {
         token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        Ok(Self {
-            amount: OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
-            native_tokens: Vec::new(),
+        Self::new(
+            OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
             serial_number,
             token_tag,
             token_scheme,
-            unlock_conditions: Vec::new(),
-            feature_blocks: Vec::new(),
-            immutable_feature_blocks: Vec::new(),
-        })
+        )
     }
 
     /// Creates a [`FoundryOutputBuilder`] with a provided byte cost config.
@@ -65,8 +61,22 @@ impl FoundryOutputBuilder {
         token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
+        Self::new(
+            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config),
+            serial_number,
+            token_tag,
+            token_scheme,
+        )
+    }
+
+    fn new(
+        amount: OutputBuilderAmount,
+        serial_number: u32,
+        token_tag: TokenTag,
+        token_scheme: TokenScheme,
+    ) -> Result<FoundryOutputBuilder, Error> {
         Ok(Self {
-            amount: OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config),
+            amount,
             native_tokens: Vec::new(),
             serial_number,
             token_tag,
@@ -106,6 +116,19 @@ impl FoundryOutputBuilder {
     }
 
     ///
+    pub fn replace_unlock_condition(mut self, unlock_condition: UnlockCondition) -> Result<Self, Error> {
+        match self
+            .unlock_conditions
+            .iter_mut()
+            .find(|u| u.kind() == unlock_condition.kind())
+        {
+            Some(u) => *u = unlock_condition,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
+    }
+
+    ///
     #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
@@ -117,6 +140,19 @@ impl FoundryOutputBuilder {
     pub fn with_feature_blocks(mut self, feature_blocks: impl IntoIterator<Item = FeatureBlock>) -> Self {
         self.feature_blocks = feature_blocks.into_iter().collect();
         self
+    }
+
+    ///
+    pub fn replace_feature_block(mut self, feature_block: FeatureBlock) -> Result<Self, Error> {
+        match self
+            .feature_blocks
+            .iter_mut()
+            .find(|f| f.kind() == feature_block.kind())
+        {
+            Some(f) => *f = feature_block,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
     }
 
     ///
@@ -134,6 +170,19 @@ impl FoundryOutputBuilder {
     ) -> Self {
         self.immutable_feature_blocks = immutable_feature_blocks.into_iter().collect();
         self
+    }
+
+    ///
+    pub fn replace_immutable_feature_block(mut self, immutable_feature_block: FeatureBlock) -> Result<Self, Error> {
+        match self
+            .immutable_feature_blocks
+            .iter_mut()
+            .find(|f| f.kind() == immutable_feature_block.kind())
+        {
+            Some(f) => *f = immutable_feature_block,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
     }
 
     ///
