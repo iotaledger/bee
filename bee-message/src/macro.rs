@@ -68,7 +68,7 @@ macro_rules! impl_id {
 
 /// Helper macro to serialize types to string via serde.
 #[macro_export]
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 macro_rules! string_serde_impl {
     ($type:ty) => {
         impl serde::Serialize for $type {

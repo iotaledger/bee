@@ -23,7 +23,7 @@ pub const INPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=INPUT_INDEX_MAX; // [0..1
 /// A generic input supporting different input kinds.
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd, From, packable::Packable)]
 #[cfg_attr(
-    feature = "serde1",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]

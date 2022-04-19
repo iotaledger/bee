@@ -12,7 +12,7 @@ pub(crate) type TreasuryOutputAmount =
 
 /// [`TreasuryOutput`] is an output which holds the treasury of a network.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, packable::Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = Error::InvalidTreasuryOutputAmount)]
 pub struct TreasuryOutput {
     amount: TreasuryOutputAmount,

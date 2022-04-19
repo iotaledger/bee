@@ -23,7 +23,7 @@ pub(crate) type MilestoneMetadataLength = BoundedU16<{ u16::MIN }, { u16::MAX }>
 /// Essence of a milestone payload.
 /// This is the signed part of a milestone payload.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestoneEssence {
     index: MilestoneIndex,
     timestamp: u64,

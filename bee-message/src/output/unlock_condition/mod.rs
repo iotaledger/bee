@@ -28,7 +28,7 @@ use crate::{address::Address, create_bitflags, milestone::MilestoneIndex, Error}
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, Packable)]
 #[cfg_attr(
-    feature = "serde1",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
@@ -105,7 +105,7 @@ pub(crate) type UnlockConditionCount = BoundedU8<0, { UnlockConditions::COUNT_MA
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Deref, Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidUnlockConditionCount(p.into())))]
 pub struct UnlockConditions(
     #[packable(verify_with = verify_unique_sorted)] BoxedSlicePrefix<UnlockCondition, UnlockConditionCount>,

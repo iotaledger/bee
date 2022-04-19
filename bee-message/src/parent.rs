@@ -21,7 +21,7 @@ pub(crate) type ParentCount = BoundedU8<{ *Parents::COUNT_RANGE.start() }, { *Pa
 /// * lexicographically sorted;
 /// * unique;
 #[derive(Clone, Debug, Eq, PartialEq, Deref, Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[deref(forward)]
 #[packable(unpack_error = Error, with = |e| Error::InvalidParentCount(e.into_prefix_err().into()))]
 pub struct Parents(#[packable(verify_with = verify_parents)] BoxedSlicePrefix<MessageId, ParentCount>);

@@ -36,7 +36,7 @@ pub(crate) type UnlockBlockIndex =
 /// Defines the mechanism by which a transaction input is authorized to be consumed.
 #[derive(Clone, Debug, Eq, PartialEq, Hash, From, Packable)]
 #[cfg_attr(
-    feature = "serde1",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
@@ -74,7 +74,7 @@ pub(crate) type UnlockBlockCount =
 
 /// A collection of unlock blocks.
 #[derive(Clone, Debug, Eq, PartialEq, Deref, Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidUnlockBlockCount(p.into())))]
 pub struct UnlockBlocks(
     #[packable(verify_with = verify_unlock_blocks)] BoxedSlicePrefix<UnlockBlock, UnlockBlockCount>,

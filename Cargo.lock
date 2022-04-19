@@ -293,7 +293,7 @@ version = "0.2.0"
 dependencies = [
  "bech32",
  "bee-pow",
- "bee-ternary 0.5.2",
+ "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
  "bitflags",
  "bytemuck",
@@ -616,12 +616,22 @@ checksum = "8e8479555c8e9bf3cad36daf16e6a2f77771774e977276a08df4d8ac5f1dda66"
 dependencies = [
  "autocfg",
  "num-traits",
+]
+
+[[package]]
+name = "bee-ternary"
+version = "0.6.0"
+dependencies = [
+ "autocfg",
+ "num-traits",
  "serde",
 ]
 
 [[package]]
 name = "bee-ternary"
 version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0b9489a68e42231e9f4f1443c765d3f80433a52101510ab413e6a9cd2240d21"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -635,7 +645,7 @@ dependencies = [
  "bee-ledger",
  "bee-message",
  "bee-tangle",
- "bee-ternary 0.5.2",
+ "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytemuck",
  "hex",
  "primitive-types",

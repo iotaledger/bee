@@ -5,7 +5,7 @@ use crate::output::OutputId;
 
 impl_id!(pub AliasId, 20, "TODO.");
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 string_serde_impl!(AliasId);
 
 impl From<OutputId> for AliasId {

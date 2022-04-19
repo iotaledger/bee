@@ -89,7 +89,7 @@ impl<P: NonceProvider> MessageBuilder<P> {
 
 /// Represent the object that nodes gossip around the network.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
     /// Protocol version of the message.
     protocol_version: u8,

@@ -26,7 +26,7 @@ impl UtxoInput {
     }
 }
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 string_serde_impl!(UtxoInput);
 
 impl FromStr for UtxoInput {

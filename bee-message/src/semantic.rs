@@ -36,7 +36,7 @@ impl std::error::Error for ConflictError {}
 /// Represents the different reasons why a transaction can conflict with the ledger state.
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, packable::Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = ConflictError)]
 #[packable(tag_type = u8, with_error = ConflictError::InvalidConflict)]
 pub enum ConflictReason {

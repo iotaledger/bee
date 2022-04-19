@@ -26,7 +26,7 @@ impl Ed25519Address {
     }
 }
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 string_serde_impl!(Ed25519Address);
 
 impl FromStr for Ed25519Address {
