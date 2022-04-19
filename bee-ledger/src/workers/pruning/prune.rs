@@ -80,10 +80,11 @@ pub async fn prune_by_size<S: StorageBackend>(
     let mut metrics = PruningMetrics::default();
 
     loop {
+        // Panic: already checked that size() returns a valid result.
         let actual_size = storage.size().expect("ok storage size").expect("some storage size");
 
         if actual_size > reduced_size {
-            let index = *tangle.get_pruning_index();
+            let index = *tangle.get_pruning_index() + 1;
             prune_milestone(index, tangle, storage, bus, &mut timings, &mut metrics, config).await?;
         } else {
             break;

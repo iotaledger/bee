@@ -62,7 +62,6 @@ pub(crate) fn should_prune<S: StorageBackend>(
             ))
         }
     } else if config.size().enabled() {
-        // TODO: return `PruningTAskNotSupported` if we can't get the size of the storage.
         let actual_size = {
             if let Ok(size) = storage.size() {
                 if let Some(size) = size {
