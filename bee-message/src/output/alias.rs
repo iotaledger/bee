@@ -42,17 +42,10 @@ pub struct AliasOutputBuilder {
 impl AliasOutputBuilder {
     /// Creates an [`AliasOutputBuilder`] with a provided amount.
     pub fn new_with_amount(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
-        Ok(Self {
-            amount: OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
-            native_tokens: Vec::new(),
+        Self::new(
+            OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
             alias_id,
-            state_index: None,
-            state_metadata: Vec::new(),
-            foundry_counter: None,
-            unlock_conditions: Vec::new(),
-            feature_blocks: Vec::new(),
-            immutable_feature_blocks: Vec::new(),
-        })
+        )
     }
 
     /// Creates an [`AliasOutputBuilder`] with a provided byte cost config.
@@ -61,8 +54,12 @@ impl AliasOutputBuilder {
         byte_cost_config: ByteCostConfig,
         alias_id: AliasId,
     ) -> Result<AliasOutputBuilder, Error> {
+        Self::new(OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config), alias_id)
+    }
+
+    fn new(amount: OutputBuilderAmount, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
         Ok(Self {
-            amount: OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config),
+            amount,
             native_tokens: Vec::new(),
             alias_id,
             state_index: None,
@@ -124,6 +121,19 @@ impl AliasOutputBuilder {
     }
 
     ///
+    pub fn replace_unlock_condition(mut self, unlock_condition: UnlockCondition) -> Self {
+        match self
+            .unlock_conditions
+            .iter_mut()
+            .find(|u| u.kind() == unlock_condition.kind())
+        {
+            Some(u) => *u = unlock_condition,
+            None => self.unlock_conditions.push(unlock_condition),
+        }
+        self
+    }
+
+    ///
     #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
@@ -134,6 +144,19 @@ impl AliasOutputBuilder {
     #[inline(always)]
     pub fn with_feature_blocks(mut self, feature_blocks: impl IntoIterator<Item = FeatureBlock>) -> Self {
         self.feature_blocks = feature_blocks.into_iter().collect();
+        self
+    }
+
+    ///
+    pub fn replace_feature_block(mut self, feature_block: FeatureBlock) -> Self {
+        match self
+            .feature_blocks
+            .iter_mut()
+            .find(|f| f.kind() == feature_block.kind())
+        {
+            Some(f) => *f = feature_block,
+            None => self.feature_blocks.push(feature_block),
+        }
         self
     }
 
@@ -151,6 +174,19 @@ impl AliasOutputBuilder {
         immutable_feature_blocks: impl IntoIterator<Item = FeatureBlock>,
     ) -> Self {
         self.immutable_feature_blocks = immutable_feature_blocks.into_iter().collect();
+        self
+    }
+
+    ///
+    pub fn replace_immutable_feature_block(mut self, immutable_feature_block: FeatureBlock) -> Self {
+        match self
+            .immutable_feature_blocks
+            .iter_mut()
+            .find(|f| f.kind() == immutable_feature_block.kind())
+        {
+            Some(f) => *f = immutable_feature_block,
+            None => self.immutable_feature_blocks.push(immutable_feature_block),
+        }
         self
     }
 

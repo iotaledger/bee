@@ -30,20 +30,21 @@ impl BasicOutputBuilder {
     /// Creates a [`BasicOutputBuilder`] with a provided amount.
     #[inline(always)]
     pub fn new_with_amount(amount: u64) -> Result<Self, Error> {
-        Ok(Self {
-            amount: OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
-            native_tokens: Vec::new(),
-            unlock_conditions: Vec::new(),
-            feature_blocks: Vec::new(),
-        })
+        Self::new(OutputBuilderAmount::Amount(
+            amount.try_into().map_err(Error::InvalidOutputAmount)?,
+        ))
     }
 
     /// Creates an [`BasicOutputBuilder`] with a provided byte cost config.
     /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
     pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
+        Self::new(OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config))
+    }
+
+    fn new(amount: OutputBuilderAmount) -> Result<Self, Error> {
         Ok(Self {
-            amount: OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config),
+            amount,
             native_tokens: Vec::new(),
             unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
@@ -79,6 +80,19 @@ impl BasicOutputBuilder {
     }
 
     ///
+    pub fn replace_unlock_condition(mut self, unlock_condition: UnlockCondition) -> Self {
+        match self
+            .unlock_conditions
+            .iter_mut()
+            .find(|u| u.kind() == unlock_condition.kind())
+        {
+            Some(u) => *u = unlock_condition,
+            None => self.unlock_conditions.push(unlock_condition),
+        }
+        self
+    }
+
+    ///
     #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
@@ -89,6 +103,19 @@ impl BasicOutputBuilder {
     #[inline(always)]
     pub fn with_feature_blocks(mut self, feature_blocks: impl IntoIterator<Item = FeatureBlock>) -> Self {
         self.feature_blocks = feature_blocks.into_iter().collect();
+        self
+    }
+
+    ///
+    pub fn replace_feature_block(mut self, feature_block: FeatureBlock) -> Self {
+        match self
+            .feature_blocks
+            .iter_mut()
+            .find(|f| f.kind() == feature_block.kind())
+        {
+            Some(f) => *f = feature_block,
+            None => self.feature_blocks.push(feature_block),
+        }
         self
     }
 
