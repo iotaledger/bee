@@ -12,10 +12,10 @@ use crate::{address::Ed25519Address, Error};
 
 /// An Ed25519 signature.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, packable::Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Ed25519Signature {
     public_key: [u8; Self::PUBLIC_KEY_LENGTH],
-    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))]
+    #[cfg_attr(feature = "serde", serde(with = "serde_big_array::BigArray"))]
     signature: [u8; Self::SIGNATURE_LENGTH],
 }
 

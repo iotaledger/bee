@@ -7,12 +7,12 @@ use crate::output::FoundryId;
 
 impl_id!(pub TokenTag, 12, "TODO.");
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 string_serde_impl!(TokenTag);
 
 impl_id!(pub TokenId, 38, "TODO.");
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 string_serde_impl!(TokenId);
 
 impl TokenId {

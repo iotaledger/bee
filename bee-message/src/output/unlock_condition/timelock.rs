@@ -13,7 +13,7 @@ use crate::{milestone::MilestoneIndex, Error};
 
 /// Defines a milestone index and/or unix timestamp until which the output can not be unlocked.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TimelockUnlockCondition {
     // The milestone index starting from which the output can be consumed.
     milestone_index: MilestoneIndex,

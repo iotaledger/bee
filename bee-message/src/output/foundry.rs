@@ -242,7 +242,7 @@ impl From<&FoundryOutput> for FoundryOutputBuilder {
 
 /// Describes a foundry output that is controlled by an alias.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FoundryOutput {
     // Amount of IOTA tokens held by the output.
     amount: OutputAmount,

@@ -32,7 +32,7 @@ impl AliasAddress {
     }
 }
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 string_serde_impl!(AliasAddress);
 
 impl FromStr for AliasAddress {

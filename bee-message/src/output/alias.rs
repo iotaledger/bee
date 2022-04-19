@@ -259,7 +259,7 @@ pub(crate) type StateMetadataLength = BoundedU16<0, { AliasOutput::STATE_METADAT
 
 /// Describes an alias account in the ledger that can be controlled by the state and governance controllers.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AliasOutput {
     // Amount of IOTA tokens held by the output.
     amount: OutputAmount,

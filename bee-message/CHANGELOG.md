@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `ByteCost` and storage deposit verification;
+- Minimum `rust_version = "1.60"`
 
 ### Changed
 
@@ -31,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed `IndexationPayload` to `TaggedDataPayload`;
 - Update dependencies;
 - Feature gate Chrysalis Part 2 output and transaction payload types;
+- Renamed feature `serde1` to `serde`;
 
 ### Removed
 

@@ -14,5 +14,5 @@ impl MessageId {
     }
 }
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 string_serde_impl!(MessageId);

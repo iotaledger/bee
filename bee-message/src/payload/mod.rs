@@ -34,7 +34,7 @@ use crate::Error;
 /// A generic payload that can represent different types defining message payloads.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(
-    feature = "serde1",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
@@ -104,7 +104,7 @@ impl Payload {
 /// Representation of an optional [`Payload`].
 /// Essentially an `Option<Payload>` with a different [`Packable`] implementation, to conform to specs.
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OptionalPayload(Option<Payload>);
 
 impl OptionalPayload {

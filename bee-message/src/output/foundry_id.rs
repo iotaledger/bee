@@ -10,7 +10,7 @@ use crate::{
 
 impl_id!(pub FoundryId, 26, "Defines the unique identifier of a foundry.");
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 string_serde_impl!(FoundryId);
 
 impl FoundryId {

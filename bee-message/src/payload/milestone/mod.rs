@@ -43,7 +43,7 @@ pub(crate) type SignatureCount =
 
 /// A payload which defines the inclusion set of other messages in the Tangle.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct MilestonePayload {
     essence: MilestoneEssence,

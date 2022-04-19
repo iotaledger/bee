@@ -14,7 +14,7 @@ pub(crate) type MigratedFundsAmount =
 
 /// Describes funds which were migrated from a legacy network.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MigratedFundsEntry {
     tail_transaction_hash: TailTransactionHash,
     // The target address of the migrated funds.

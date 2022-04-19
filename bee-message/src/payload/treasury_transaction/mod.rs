@@ -11,7 +11,7 @@ use crate::{
 
 /// [`TreasuryTransactionPayload`] represents a transaction which moves funds from the treasury.
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreasuryTransactionPayload {
     #[packable(verify_with = verify_input)]
     input: Input,

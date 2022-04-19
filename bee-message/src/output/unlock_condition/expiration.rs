@@ -14,7 +14,7 @@ use crate::{address::Address, milestone::MilestoneIndex, Error};
 /// Defines a milestone index and/or unix time until which only Address, defined in Address Unlock Condition, is allowed
 /// to unlock the output. After the milestone index and/or unix time, only Return Address can unlock it.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExpirationUnlockCondition {
     // The address that can unlock the expired output.
     return_address: Address,

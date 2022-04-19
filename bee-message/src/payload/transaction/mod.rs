@@ -18,7 +18,7 @@ use crate::{unlock_block::UnlockBlocks, Error};
 
 /// A transaction to move funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionPayload {
     essence: TransactionEssence,
     unlock_blocks: UnlockBlocks,

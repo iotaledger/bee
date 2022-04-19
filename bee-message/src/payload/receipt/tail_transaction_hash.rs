@@ -17,7 +17,7 @@ use crate::Error;
 
 /// Represents a tail transaction hash of a legacy bundle.
 #[derive(Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TailTransactionHash(TritBuf<T5B1Buf>);
 
 impl TailTransactionHash {

@@ -14,7 +14,7 @@ pub(crate) type StorageDepositAmount = BoundedU64<
 
 /// Defines the amount of IOTAs used as storage deposit that have to be returned to the return [`Address`].
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, packable::Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StorageDepositReturnUnlockCondition {
     // The [`Address`] to return the amount to.
     return_address: Address,
