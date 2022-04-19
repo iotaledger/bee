@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 bee-ledger = { version = "0.7.0", path = "../bee-ledger", default-features = false }
 bee-message = { version = "0.2.0", path = "../bee-message", default-features = false }
 bee-tangle = { version = "0.3.0", path = "../bee-tangle", default-features = false }
-bee-ternary = { version = "0.5.2", default-features = false, features = [ "serde" ] }
+bee-ternary = { version = "0.6.0", default-features = false, features = [ "serde" ] }
 
 bytemuck = { version = "1.8.0", default-features = false }
 primitive-types = { version = "0.10.1", default-features = false, features = [ "serde" ] }

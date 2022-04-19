@@ -616,7 +616,6 @@ checksum = "8e8479555c8e9bf3cad36daf16e6a2f77771774e977276a08df4d8ac5f1dda66"
 dependencies = [
  "autocfg",
  "num-traits",
- "serde",
 ]
 
 [[package]]
@@ -646,7 +645,7 @@ dependencies = [
  "bee-ledger",
  "bee-message",
  "bee-tangle",
- "bee-ternary 0.5.2",
+ "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytemuck",
  "hex",
  "primitive-types",
