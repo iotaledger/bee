@@ -555,12 +555,12 @@ impl Packable for AliasOutput {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
-        let alias_id = AliasId::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let state_index = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let alias_id = AliasId::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let state_index = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
         let state_metadata = BoxedSlicePrefix::<u8, StateMetadataLength>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|err| Error::InvalidStateMetadataLength(err.into_prefix_err().into()))?;
 
-        let foundry_counter = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let foundry_counter = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         if VERIFY {
             verify_index_counter(&alias_id, state_index, foundry_counter).map_err(UnpackError::Packable)?;

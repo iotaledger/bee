@@ -78,9 +78,9 @@ impl Packable for SimpleTokenScheme {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let minted_tokens = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let melted_tokens = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let maximum_supply = U256::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let minted_tokens = U256::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let melted_tokens = U256::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let maximum_supply = U256::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         if VERIFY {
             verify_supply(&minted_tokens, &melted_tokens, &maximum_supply).map_err(UnpackError::Packable)?;

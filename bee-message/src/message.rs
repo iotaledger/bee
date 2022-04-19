@@ -165,7 +165,7 @@ impl Packable for Message {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let protocol_version = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let protocol_version = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         if VERIFY && protocol_version != PROTOCOL_VERSION {
             return Err(UnpackError::Packable(Error::ProtocolVersionMismatch {
@@ -181,7 +181,7 @@ impl Packable for Message {
             verify_payload(payload.deref().as_ref()).map_err(UnpackError::Packable)?;
         }
 
-        let nonce = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let nonce = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
         if VERIFY && u8::unpack::<_, VERIFY>(unpacker).is_ok() {

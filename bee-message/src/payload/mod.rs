@@ -135,7 +135,7 @@ impl Packable for OptionalPayload {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let len = u32::unpack::<_, VERIFY>(unpacker).infallible()? as usize;
+        let len = u32::unpack::<_, VERIFY>(unpacker).coerce()? as usize;
 
         if len > 0 {
             unpacker.ensure_bytes(len)?;
