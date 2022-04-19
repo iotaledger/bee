@@ -6,11 +6,11 @@ use bee_tangle::{storage::StorageBackend, Tangle};
 use crate::{types::LedgerIndex, workers::snapshot::config::SnapshotConfig};
 
 /// Reasons for skipping snapshotting.
-#[derive(Debug)]
-pub enum SnapshottingSkipReason {
-    /// Not enough data yet to create a snapshot.
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum SnapshottingSkipReason {
+    #[error("Snapshotting skipped for the next {reached_in} indexes.")]
     BelowThreshold { reached_in: u32 },
-    /// Snapshotting is deferred to a later milestone.
+    #[error("Snapshotting deferred for the next {next_in} indexes.")]
     Deferred { next_in: u32 },
 }
 

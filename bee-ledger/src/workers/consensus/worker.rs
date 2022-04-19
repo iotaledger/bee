@@ -362,18 +362,20 @@ where
                                     )
                                     .await
                                     {
-                                        error!("Pruning failed: {e:?}.");
-                                        // TODO: consider initiating an emergency (but graceful) shutdown instead of just
-                                        // panicking.
-                                        panic!("Aborting due to an unexpected pruning error.");
+                                        error!("Pruning milestone range failed: {}.", e);
                                     }
                                 }
                                 PruningTask::BySize(reduced_size) => {
-                                    todo!("pruning by size");
+                                    if let Err(e) =
+                                        prune::prune_by_size(&tangle, &storage, &bus, reduced_size, &pruning_config)
+                                            .await
+                                    {
+                                        error!("Pruning by storage size failed: {}.", e);
+                                    }
                                 }
                             },
                             Err(reason) => {
-                                debug!("Pruning skipped: {:?}", reason);
+                                debug!("Pruning skipped: {}", reason);
                             }
                         }
                     }

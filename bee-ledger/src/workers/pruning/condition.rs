@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::time::Duration;
+// use std::time::Duration;
 
 use bee_message::milestone::MilestoneIndex;
 use bee_tangle::{storage::StorageBackend, Tangle};
@@ -11,18 +11,20 @@ use crate::{types::LedgerIndex, workers::pruning::config::PruningConfig};
 const PRUNING_BATCH_SIZE_MAX: u32 = 200;
 
 /// Reasons for skipping pruning.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub(crate) enum PruningSkipReason {
-    /// Pruning is disabled in the config.
+    #[error("Pruning disabled.")]
     Disabled,
-    /// The storage in use doesn't support this pruning task.
-    PruningTaskNotSupported,
-    /// Not enough history yet to be pruned.
-    BelowMaxMilestonesToKeepThreshold { reached_in: u32 },
-    /// The database has not yet reached its target size.
-    BelowTargetSize { reached_in: usize },
-    /// The cooldown time has not yet been passed.
-    BelowCooldownTimeThreshold { reached_in: Duration },
+    #[error("Pruning by size is not supported by the storage layer.")]
+    PruningBySizeUnsupported,
+    #[error("Pruning by size is currently unavailable.")]
+    PruningBySizeUnavailable,
+    #[error("Pruning milestones skipped for the next {reached_in} indexes.")]
+    BelowMilestoneIndexThreshold { reached_in: u32 },
+    #[error("Pruning by storage size skipped because current size < {target_size}.")]
+    BelowStorageSizeThreshold { target_size: usize },
+    // #[error("Pruning by storage size is skipped because of cooldown.")]
+    // BelowCooldownTimeThreshold { reached_in: Duration },
 }
 
 pub(crate) enum PruningTask {
@@ -44,7 +46,7 @@ pub(crate) fn should_prune<S: StorageBackend>(
         let pruning_threshold = pruning_index + milestones_to_keep;
 
         if *ledger_index < pruning_threshold {
-            Err(PruningSkipReason::BelowMaxMilestonesToKeepThreshold {
+            Err(PruningSkipReason::BelowMilestoneIndexThreshold {
                 reached_in: pruning_threshold - *ledger_index,
             })
         } else {
@@ -61,16 +63,23 @@ pub(crate) fn should_prune<S: StorageBackend>(
         }
     } else if config.size().enabled() {
         // TODO: return `PruningTAskNotSupported` if we can't get the size of the storage.
-        let actual_size = storage.size().expect("ok storage size").expect("some storage size");
+        let actual_size = {
+            if let Ok(size) = storage.size() {
+                if let Some(size) = size {
+                    size
+                } else {
+                    return Err(PruningSkipReason::PruningBySizeUnavailable);
+                }
+            } else {
+                return Err(PruningSkipReason::PruningBySizeUnsupported);
+            }
+        };
         let target_size = config.size().target_size();
 
         log::debug!("Storage size: actual {actual_size} target {target_size}");
 
         if actual_size < target_size {
-            // Panic: cannot underflow.
-            Err(PruningSkipReason::BelowTargetSize {
-                reached_in: target_size - actual_size,
-            })
+            Err(PruningSkipReason::BelowStorageSizeThreshold { target_size })
         } else {
             let reduced_size =
                 actual_size - (config.size().threshold_percentage() as f64 / 100.0 * target_size as f64) as usize;

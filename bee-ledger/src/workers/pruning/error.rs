@@ -4,7 +4,7 @@
 use bee_message::{milestone::MilestoneIndex, MessageId};
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum PruningError {
     #[error("pruning target index {selected} below minimum {minimum}")]
     InvalidTargetIndex {
         selected: MilestoneIndex,

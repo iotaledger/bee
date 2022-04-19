@@ -4,10 +4,10 @@
 //! Module that contains the pruning logic.
 
 mod batch;
-mod error;
 mod metrics;
 
 pub(crate) mod condition;
+pub(crate) mod error;
 pub(crate) mod prune;
 
 pub mod config;

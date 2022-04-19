@@ -17,7 +17,7 @@ use crate::workers::{
     pruning::{
         batch,
         config::PruningConfig,
-        error::Error,
+        error::PruningError,
         metrics::{PruningMetrics, Timings},
     },
     storage::{self, StorageBackend},
@@ -36,12 +36,12 @@ pub async fn prune_by_range<S: StorageBackend>(
     start_index: MilestoneIndex,
     target_index: MilestoneIndex,
     config: &PruningConfig,
-) -> Result<(), Error> {
+) -> Result<(), PruningError> {
     let mut timings = Timings::default();
     let mut metrics = PruningMetrics::default();
 
     if target_index < start_index {
-        return Err(Error::InvalidTargetIndex {
+        return Err(PruningError::InvalidTargetIndex {
             selected: target_index,
             minimum: start_index,
         });
@@ -75,7 +75,7 @@ pub async fn prune_by_size<S: StorageBackend>(
     bus: &Bus<'_>,
     reduced_size: usize,
     config: &PruningConfig,
-) -> Result<(), Error> {
+) -> Result<(), PruningError> {
     let mut timings = Timings::default();
     let mut metrics = PruningMetrics::default();
 
@@ -102,7 +102,7 @@ async fn prune_milestone<S: StorageBackend>(
     timings: &mut Timings,
     metrics: &mut PruningMetrics,
     config: &PruningConfig,
-) -> Result<(), Error> {
+) -> Result<(), PruningError> {
     let index = MilestoneIndex(index);
 
     debug!("Pruning milestone {}...", index);
@@ -162,7 +162,7 @@ async fn prune_milestone<S: StorageBackend>(
     let batch_new_seps = Instant::now();
     for (new_sep, index) in &new_seps {
         Batch::<SolidEntryPoint, MilestoneIndex>::batch_insert(storage, &mut batch, new_sep, index)
-            .map_err(|e| Error::Storage(Box::new(e)))?;
+            .map_err(|e| PruningError::Storage(Box::new(e)))?;
     }
     timings.batch_new_seps = batch_new_seps.elapsed();
 
@@ -203,7 +203,7 @@ async fn prune_milestone<S: StorageBackend>(
     let batch_commit = Instant::now();
     storage
         .batch_commit(batch, true)
-        .map_err(|e| Error::Storage(Box::new(e)))?;
+        .map_err(|e| PruningError::Storage(Box::new(e)))?;
     timings.batch_commit = batch_commit.elapsed();
 
     // Update the pruning index.
@@ -215,11 +215,11 @@ async fn prune_milestone<S: StorageBackend>(
         .expect("error creating timestamp")
         .as_secs();
     let mut snapshot_info = storage::fetch_snapshot_info(storage)
-        .map_err(|e| Error::Storage(Box::new(e)))?
-        .ok_or(Error::MissingSnapshotInfo)?;
+        .map_err(|e| PruningError::Storage(Box::new(e)))?
+        .ok_or(PruningError::MissingSnapshotInfo)?;
     snapshot_info.update_pruning_index(index);
     snapshot_info.update_timestamp(timestamp);
-    storage::insert_snapshot_info(storage, &snapshot_info).map_err(|e| Error::Storage(Box::new(e)))?;
+    storage::insert_snapshot_info(storage, &snapshot_info).map_err(|e| PruningError::Storage(Box::new(e)))?;
 
     timings.full_prune = full_prune.elapsed();
 
