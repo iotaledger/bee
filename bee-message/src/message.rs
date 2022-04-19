@@ -8,7 +8,7 @@ use crypto::hashes::{blake2b::Blake2b256, Digest};
 use packable::{
     error::{UnpackError, UnpackErrorExt},
     packer::Packer,
-    unpacker::Unpacker,
+    unpacker::{CounterUnpacker, Unpacker},
     Packable, PackableExt,
 };
 
@@ -165,7 +165,9 @@ impl Packable for Message {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let protocol_version = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let mut unpacker = CounterUnpacker::new(unpacker);
+
+        let protocol_version = u8::unpack::<_, VERIFY>(&mut unpacker).coerce()?;
 
         if VERIFY && protocol_version != PROTOCOL_VERSION {
             return Err(UnpackError::Packable(Error::ProtocolVersionMismatch {
@@ -174,17 +176,17 @@ impl Packable for Message {
             }));
         }
 
-        let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
-        let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
+        let parents = Parents::unpack::<_, VERIFY>(&mut unpacker)?;
+        let payload = OptionalPayload::unpack::<_, VERIFY>(&mut unpacker)?;
 
         if VERIFY {
             verify_payload(payload.deref().as_ref()).map_err(UnpackError::Packable)?;
         }
 
-        let nonce = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let nonce = u64::unpack::<_, VERIFY>(&mut unpacker).coerce()?;
 
         // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
-        if VERIFY && u8::unpack::<_, VERIFY>(unpacker).is_ok() {
+        if VERIFY && u8::unpack::<_, VERIFY>(&mut unpacker).is_ok() {
             return Err(UnpackError::Packable(Error::RemainingBytesAfterMessage));
         }
 
@@ -195,9 +197,8 @@ impl Packable for Message {
             nonce,
         };
 
-        let message_len = message.packed_len();
+        let message_len = unpacker.counter();
 
-        // FIXME: compute this in a more efficient way.
         if VERIFY && message_len > Message::LENGTH_MAX {
             return Err(UnpackError::Packable(Error::InvalidMessageLength(message_len)));
         }

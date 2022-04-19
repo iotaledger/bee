@@ -95,8 +95,8 @@ impl Packable for ExpirationUnlockCondition {
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let return_address = Address::unpack::<_, VERIFY>(unpacker)?;
-        let milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let timestamp = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         if VERIFY {
             verify_milestone_index_timestamp(milestone_index, timestamp).map_err(UnpackError::Packable)?;

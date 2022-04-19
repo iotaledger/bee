@@ -90,7 +90,7 @@ impl Packable for MilestoneDiff {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let milestone_len = u32::unpack::<_, VERIFY>(unpacker).infallible()? as usize;
+        let milestone_len = u32::unpack::<_, VERIFY>(unpacker).coerce()? as usize;
         let payload = Payload::unpack::<_, VERIFY>(unpacker).coerce()?;
         let milestone = match payload {
             Payload::Milestone(milestone) => milestone,
@@ -107,8 +107,8 @@ impl Packable for MilestoneDiff {
         }
 
         let consumed_treasury = if milestone.essence().receipt().is_some() {
-            let milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker).infallible()?;
-            let amount = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+            let milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker).coerce()?;
+            let amount = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
 
             Some((
                 TreasuryOutput::new(amount).map_err(UnpackError::from_packable)?,
@@ -118,7 +118,7 @@ impl Packable for MilestoneDiff {
             None
         };
 
-        let created_count = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let created_count = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
         let mut created_outputs = HashMap::with_capacity(created_count as usize);
 
         for _ in 0..created_count {
@@ -128,13 +128,13 @@ impl Packable for MilestoneDiff {
             created_outputs.insert(output_id, created_output);
         }
 
-        let consumed_count = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let consumed_count = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
         let mut consumed_outputs = HashMap::with_capacity(consumed_count as usize);
 
         for _ in 0..consumed_count {
             let output_id = OutputId::unpack::<_, VERIFY>(unpacker).coerce()?;
             let created_output = CreatedOutput::unpack::<_, VERIFY>(unpacker).coerce()?;
-            let target = TransactionId::unpack::<_, VERIFY>(unpacker).infallible()?;
+            let target = TransactionId::unpack::<_, VERIFY>(unpacker).coerce()?;
 
             consumed_outputs.insert(
                 output_id,

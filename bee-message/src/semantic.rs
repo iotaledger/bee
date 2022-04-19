@@ -1,7 +1,7 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::fmt;
+use core::{convert::Infallible, fmt};
 
 use hashbrown::{HashMap, HashSet};
 use primitive_types::U256;
@@ -27,6 +27,12 @@ impl fmt::Display for ConflictError {
         match self {
             ConflictError::InvalidConflict(byte) => write!(f, "invalid conflict byte {byte}"),
         }
+    }
+}
+
+impl From<Infallible> for ConflictError {
+    fn from(err: Infallible) -> Self {
+        match err {}
     }
 }
 

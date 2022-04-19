@@ -139,14 +139,14 @@ impl Packable for MilestoneEssence {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let timestamp = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let timestamp = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
         let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
 
-        let merkle_proof = <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let merkle_proof = <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
 
-        let next_pow_score = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let next_pow_score_milestone_index = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let next_pow_score = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let next_pow_score_milestone_index = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         if VERIFY {
             verify_pow_scores(index, next_pow_score, next_pow_score_milestone_index).map_err(UnpackError::Packable)?;
