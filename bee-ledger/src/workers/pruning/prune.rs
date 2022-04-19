@@ -10,7 +10,6 @@ use bee_message::milestone::MilestoneIndex;
 use bee_runtime::event::Bus;
 use bee_storage::access::{Batch, Truncate};
 use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle};
-use log::{debug, info};
 
 use crate::workers::{
     event::PrunedIndex,
@@ -48,7 +47,7 @@ pub async fn prune_by_range<S: StorageBackend>(
     }
 
     if start_index != target_index {
-        info!(
+        log::info!(
             "Pruning from milestone {} to milestone {}...",
             start_index, target_index
         );
@@ -59,9 +58,9 @@ pub async fn prune_by_range<S: StorageBackend>(
     }
 
     if start_index == target_index {
-        info!("Pruned milestone {}.", start_index);
+        log::info!("Pruned milestone {}.", start_index);
     } else {
-        info!("Pruned from milestone {} to milestone {}.", start_index, target_index);
+        log::info!("Pruned from milestone {} to milestone {}.", start_index, target_index);
     }
 
     Ok(())
@@ -82,6 +81,7 @@ pub async fn prune_by_size<S: StorageBackend>(
     loop {
         // Panic: already checked that size() returns a valid result.
         let actual_size = storage.size().expect("ok storage size").expect("some storage size");
+        log::debug!("Storage size: actual {actual_size} reduced {reduced_size}");
 
         if actual_size > reduced_size {
             let index = *tangle.get_pruning_index() + 1;
@@ -106,7 +106,7 @@ async fn prune_milestone<S: StorageBackend>(
 ) -> Result<(), PruningError> {
     let index = MilestoneIndex(index);
 
-    debug!("Pruning milestone {}...", index);
+    log::debug!("Pruning milestone {}...", index);
 
     // Measurement of the full pruning step.
     let full_prune = Instant::now();
@@ -224,15 +224,15 @@ async fn prune_milestone<S: StorageBackend>(
 
     timings.full_prune = full_prune.elapsed();
 
-    debug!("{:?}.", metrics);
-    debug!("{:?}", confirmed_data_metrics);
-    debug!("{:?}", unconfirmed_data_metrics);
-    debug!("{:?}.", timings);
-    debug!(
+    log::debug!("{:?}.", metrics);
+    log::debug!("{:?}", confirmed_data_metrics);
+    log::debug!("{:?}", unconfirmed_data_metrics);
+    log::debug!("{:?}.", timings);
+    log::debug!(
         "Entry point index now at {} with {} solid entry points..",
         index, num_next_seps
     );
-    debug!("Pruned milestone {}.", index);
+    log::debug!("Pruned milestone {}.", index);
 
     bus.dispatch(PrunedIndex { index });
 
