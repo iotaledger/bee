@@ -46,7 +46,7 @@ pub(crate) fn messages_find<B: StorageBackend>(
         .map_err(|_| reject::custom(CustomRejection::BadRequest("Invalid index".to_owned())))?;
     let hashed_index = IndexationPayload::new(&index_bytes, &[]).unwrap().padded_index();
 
-    let mut fetched = match Fetch::<PaddedIndex, Vec<MessageId>>::fetch(&*args.storage, &hashed_index) {
+    let all_message_ids = match Fetch::<PaddedIndex, Vec<MessageId>>::fetch(&*args.storage, &hashed_index) {
         Ok(result) => match result {
             Some(ids) => ids,
             None => vec![],
@@ -58,13 +58,16 @@ pub(crate) fn messages_find<B: StorageBackend>(
         }
     };
 
-    let count = fetched.len();
-    fetched.truncate(MAX_RESPONSE_RESULTS);
+    let truncated_message_ids = all_message_ids
+        .iter()
+        .take(MAX_RESPONSE_RESULTS)
+        .map(MessageId::to_string)
+        .collect::<Vec<String>>();
 
     Ok(warp::reply::json(&SuccessBody::new(MessagesFindResponse {
         index,
         max_results: MAX_RESPONSE_RESULTS,
-        count,
-        message_ids: fetched.iter().map(|id| id.to_string()).collect(),
+        count: truncated_message_ids.len(),
+        message_ids: truncated_message_ids,
     })))
 }

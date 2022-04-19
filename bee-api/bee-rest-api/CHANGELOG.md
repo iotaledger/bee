@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.2.3 - 2022-04-19
+
+### Fixed
+
+- Make `count` return the number of truncated results in:
+  + `MessageChildrenResponse`;
+  + `MessagesFindResponse`;
+  + `OutputsAddressResponse`;
+
 ## 0.2.2 - 2022-03-07
 
 ### Changed

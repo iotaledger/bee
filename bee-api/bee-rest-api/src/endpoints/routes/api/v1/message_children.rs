@@ -32,13 +32,18 @@ pub(crate) fn message_children<B: StorageBackend>(
     message_id: MessageId,
     args: ApiArgsFullNode<B>,
 ) -> Result<impl Reply, Rejection> {
-    let mut children = Vec::from_iter(args.tangle.get_children(&message_id).unwrap_or_default());
-    let count = children.len();
-    children.truncate(MAX_RESPONSE_RESULTS);
+    let all_children = Vec::from_iter(args.tangle.get_children(&message_id).unwrap_or_default());
+
+    let truncated_children = all_children
+        .iter()
+        .take(MAX_RESPONSE_RESULTS)
+        .map(MessageId::to_string)
+        .collect::<Vec<String>>();
+
     Ok(warp::reply::json(&SuccessBody::new(MessageChildrenResponse {
         message_id: message_id.to_string(),
         max_results: MAX_RESPONSE_RESULTS,
-        count,
-        children_message_ids: children.iter().map(|id| id.to_string()).collect(),
+        count: truncated_children.len(),
+        children_message_ids: truncated_children,
     })))
 }
