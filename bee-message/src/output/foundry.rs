@@ -116,16 +116,16 @@ impl FoundryOutputBuilder {
     }
 
     ///
-    pub fn replace_unlock_condition(mut self, unlock_condition: UnlockCondition) -> Self {
+    pub fn replace_unlock_condition(mut self, unlock_condition: UnlockCondition) -> Result<Self, Error> {
         match self
             .unlock_conditions
             .iter_mut()
             .find(|u| u.kind() == unlock_condition.kind())
         {
             Some(u) => *u = unlock_condition,
-            None => self.unlock_conditions.push(unlock_condition),
+            None => return Err(Error::CannotReplaceMissingField),
         }
-        self
+        Ok(self)
     }
 
     ///
@@ -143,16 +143,16 @@ impl FoundryOutputBuilder {
     }
 
     ///
-    pub fn replace_feature_block(mut self, feature_block: FeatureBlock) -> Self {
+    pub fn replace_feature_block(mut self, feature_block: FeatureBlock) -> Result<Self, Error> {
         match self
             .feature_blocks
             .iter_mut()
             .find(|f| f.kind() == feature_block.kind())
         {
             Some(f) => *f = feature_block,
-            None => self.feature_blocks.push(feature_block),
+            None => return Err(Error::CannotReplaceMissingField),
         }
-        self
+        Ok(self)
     }
 
     ///
@@ -173,16 +173,16 @@ impl FoundryOutputBuilder {
     }
 
     ///
-    pub fn replace_immutable_feature_block(mut self, immutable_feature_block: FeatureBlock) -> Self {
+    pub fn replace_immutable_feature_block(mut self, immutable_feature_block: FeatureBlock) -> Result<Self, Error> {
         match self
             .immutable_feature_blocks
             .iter_mut()
             .find(|f| f.kind() == immutable_feature_block.kind())
         {
             Some(f) => *f = immutable_feature_block,
-            None => self.immutable_feature_blocks.push(immutable_feature_block),
+            None => return Err(Error::CannotReplaceMissingField),
         }
-        self
+        Ok(self)
     }
 
     ///

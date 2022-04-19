@@ -27,6 +27,7 @@ use crate::{
 #[derive(Debug, PartialEq)]
 #[allow(missing_docs)]
 pub enum Error {
+    CannotReplaceMissingField,
     ConsumedAmountOverflow,
     ConsumedNativeTokensAmountOverflow,
     CreatedAmountOverflow,
@@ -122,6 +123,7 @@ impl std::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Error::CannotReplaceMissingField => write!(f, "cannot replace missing field"),
             Error::ConsumedAmountOverflow => write!(f, "consumed amount overflow"),
             Error::ConsumedNativeTokensAmountOverflow => write!(f, "consumed native tokens amount overflow"),
             Error::CreatedAmountOverflow => write!(f, "created amount overflow"),
