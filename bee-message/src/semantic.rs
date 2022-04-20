@@ -342,17 +342,7 @@ pub fn semantic_validation(
     let mut native_token_ids = HashMap::new();
 
     // Validation of input native tokens.
-    for (token_id, input_amount) in context.input_native_tokens.iter() {
-        let output_amount = context.output_native_tokens.get(token_id).copied().unwrap_or_default();
-
-        if input_amount > &output_amount
-            && !context
-                .output_chains
-                .contains_key(&ChainId::from(token_id.foundry_id()))
-        {
-            return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
-        }
-
+    for (token_id, _input_amount) in context.input_native_tokens.iter() {
         if let Some(token_tag) = native_token_ids.insert(token_id.foundry_id(), token_id.token_tag()) {
             if token_tag != token_id.token_tag() {
                 return Ok(ConflictReason::NonUniqueTokenIdForFoundry);
