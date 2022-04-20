@@ -185,7 +185,8 @@ async fn prune_milestone<S: StorageBackend, const BY_SIZE: bool>(
 
     // Add unconfirmed data to the delete batch.
     let batch_unconfirmed_data = Instant::now();
-    let (num_bytes, unconfirmed_data_metrics) = batch::batch_prunable_unconfirmed_data::<_, BY_SIZE>(storage, &mut batch, index)?;
+    let (num_bytes, unconfirmed_data_metrics) =
+        batch::batch_prunable_unconfirmed_data::<_, BY_SIZE>(storage, &mut batch, index)?;
     timings.batch_unconfirmed_data = batch_unconfirmed_data.elapsed();
 
     byte_length += num_bytes;

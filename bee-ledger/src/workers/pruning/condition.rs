@@ -3,7 +3,10 @@
 
 // use std::time::Duration;
 
-use std::{time::{Duration, SystemTime, UNIX_EPOCH}, sync::atomic::{AtomicU64, Ordering}};
+use std::{
+    sync::atomic::{AtomicU64, Ordering},
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 
 use bee_message::milestone::MilestoneIndex;
 use bee_tangle::{storage::StorageBackend, Tangle};
@@ -66,9 +69,8 @@ pub(crate) fn should_prune<S: StorageBackend>(
             ))
         }
     } else if config.size().enabled() {
-
         let last = Duration::from_secs(LAST_PRUNING_BY_SIZE.load(Ordering::Relaxed));
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();     
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
 
         if now < last + config.size().cooldown_time() {
             return Err(PruningSkipReason::BelowCooldownTimeThreshold);
