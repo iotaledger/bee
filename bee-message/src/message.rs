@@ -208,14 +208,16 @@ impl Packable for Message {
             nonce,
         };
 
-        let message_len = if let (Some(start), Some(end)) = (start_opt, unpacker.read_bytes()) {
-            end - start
-        } else {
-            message.packed_len()
-        };
+        if VERIFY {
+            let message_len = if let (Some(start), Some(end)) = (start_opt, unpacker.read_bytes()) {
+                end - start
+            } else {
+                message.packed_len()
+            };
 
-        if VERIFY && message_len > Message::LENGTH_MAX {
-            return Err(UnpackError::Packable(Error::InvalidMessageLength(message_len)));
+            if message_len > Message::LENGTH_MAX {
+                return Err(UnpackError::Packable(Error::InvalidMessageLength(message_len)));
+            }
         }
 
         Ok(message)
