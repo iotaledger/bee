@@ -12,7 +12,7 @@ pub struct WhiteFlagMetadata {
     /// Index of the confirmed milestone.
     pub(crate) milestone_index: MilestoneIndex,
     /// Timestamp of the confirmed milestone.
-    pub(crate) milestone_timestamp: u64,
+    pub(crate) milestone_timestamp: u32,
     /// The number of messages which were referenced by the confirmed milestone.
     pub(crate) referenced_messages: usize,
     /// The messages which were excluded because they did not include a transaction.
@@ -31,7 +31,7 @@ pub struct WhiteFlagMetadata {
 
 impl WhiteFlagMetadata {
     /// Creates a new [`WhiteFlagMetadata`].
-    pub fn new(milestone_index: MilestoneIndex, milestone_timestamp: u64) -> WhiteFlagMetadata {
+    pub fn new(milestone_index: MilestoneIndex, milestone_timestamp: u32) -> WhiteFlagMetadata {
         WhiteFlagMetadata {
             milestone_index,
             milestone_timestamp,

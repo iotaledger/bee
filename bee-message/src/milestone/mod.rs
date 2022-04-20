@@ -10,12 +10,12 @@ use crate::MessageId;
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 pub struct Milestone {
     message_id: MessageId,
-    timestamp: u64,
+    timestamp: u32,
 }
 
 impl Milestone {
     /// Creates a new `Milestone`.
-    pub fn new(message_id: MessageId, timestamp: u64) -> Self {
+    pub fn new(message_id: MessageId, timestamp: u32) -> Self {
         Self { message_id, timestamp }
     }
 
@@ -25,7 +25,7 @@ impl Milestone {
     }
 
     /// Returns the timestamp of a `Milestone`.
-    pub fn timestamp(&self) -> u64 {
+    pub fn timestamp(&self) -> u32 {
         self.timestamp
     }
 }

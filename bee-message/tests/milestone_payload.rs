@@ -102,8 +102,8 @@ fn packed_len() {
     )
     .unwrap();
 
-    assert_eq!(ms.packed_len(), 387);
-    assert_eq!(ms.pack_to_vec().len(), 387);
+    assert_eq!(ms.packed_len(), 383);
+    assert_eq!(ms.pack_to_vec().len(), 383);
 }
 
 #[test]
@@ -134,7 +134,7 @@ fn pack_unpack_valid() {
 fn getters() {
     let essence = MilestoneEssence::new(
         rand::milestone::rand_milestone_index(),
-        rand::number::rand_number::<u64>(),
+        rand::number::rand_number::<u32>(),
         rand_parents(),
         [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
         0,

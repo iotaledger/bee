@@ -26,7 +26,7 @@ pub(crate) type MilestoneMetadataLength = BoundedU16<{ u16::MIN }, { u16::MAX }>
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestoneEssence {
     index: MilestoneIndex,
-    timestamp: u64,
+    timestamp: u32,
     parents: Parents,
     merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
     next_pow_score: u32,
@@ -43,7 +43,7 @@ impl MilestoneEssence {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         index: MilestoneIndex,
-        timestamp: u64,
+        timestamp: u32,
         parents: Parents,
         merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
         next_pow_score: u32,
@@ -80,7 +80,7 @@ impl MilestoneEssence {
     }
 
     /// Returns the timestamp of a [`MilestoneEssence`].
-    pub fn timestamp(&self) -> u64 {
+    pub fn timestamp(&self) -> u32 {
         self.timestamp
     }
 
@@ -140,7 +140,7 @@ impl Packable for MilestoneEssence {
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let timestamp = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
         let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
 
         let merkle_proof = <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;

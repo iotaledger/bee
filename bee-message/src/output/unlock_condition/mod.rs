@@ -239,7 +239,7 @@ impl UnlockConditions {
         &'a self,
         address: &'a Address,
         milestone_index: MilestoneIndex,
-        milestone_timestamp: u64,
+        milestone_timestamp: u32,
     ) -> &'a Address {
         self.expiration()
             .and_then(|e| e.return_address_expired(milestone_index, milestone_timestamp as u32))

@@ -84,7 +84,7 @@ fn new_invalid_payload_kind() {
 #[test]
 fn getters() {
     let index = rand::milestone::rand_milestone_index();
-    let timestamp = rand::number::rand_number::<u64>();
+    let timestamp = rand::number::rand_number::<u32>();
     let parents = rand_parents();
     let merkel_proof = [0; MilestoneEssence::MERKLE_PROOF_LENGTH];
     let next_pow_score = 0;

@@ -23,7 +23,7 @@ fn debug_impl() {
 fn packed_len() {
     let milestone = rand_milestone();
     assert_eq!(milestone.packed_len(), milestone.pack_to_vec().len());
-    assert_eq!(milestone.packed_len(), 32 + 8);
+    assert_eq!(milestone.packed_len(), 32 + 4);
 }
 
 #[test]
@@ -37,7 +37,7 @@ fn pack_unpack() {
 #[test]
 fn getters() {
     let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
-    let timestamp = rand_number::<u64>();
+    let timestamp = rand_number::<u32>();
     let milestone = Milestone::new(message_id, timestamp);
 
     assert_eq!(message_id, *milestone.message_id());

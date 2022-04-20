@@ -22,7 +22,7 @@ pub struct MilestoneConfirmed {
     /// The index of the milestone.
     pub index: MilestoneIndex,
     /// The timestamp of the milestone.
-    pub timestamp: u64,
+    pub timestamp: u32,
     /// The number of messages referenced by the milestone.
     pub referenced_messages: usize,
     /// The messages that were excluded because not containing a transaction.

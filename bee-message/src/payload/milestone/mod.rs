@@ -169,7 +169,7 @@ pub mod dto {
         #[serde(rename = "type")]
         pub kind: u32,
         pub index: u32,
-        pub timestamp: u64,
+        pub timestamp: u32,
         #[serde(rename = "parentMessageIds")]
         pub parents: Vec<String>,
         #[serde(rename = "inclusionMerkleProof")]
