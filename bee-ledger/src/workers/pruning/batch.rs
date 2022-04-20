@@ -333,7 +333,7 @@ fn prune_message_and_metadata<S: StorageBackend, const BY_SIZE: bool>(
             .unwrap();
         byte_length += msg.packed_len();
 
-        let md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        let md = Fetch::<MessageId, MessageMetadata>::fetch(storage, message_id)
             .map_err(|e| PruningError::Storage(Box::new(e)))?
             .unwrap();
         byte_length += md.packed_len();
