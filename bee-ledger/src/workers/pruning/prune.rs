@@ -203,7 +203,7 @@ async fn prune_milestone<S: StorageBackend>(
     // Execute the batch operation.
     let batch_commit = Instant::now();
     storage
-        .batch_commit(batch, true)
+        .batch_commit(batch, false)
         .map_err(|e| PruningError::Storage(Box::new(e)))?;
     timings.batch_commit = batch_commit.elapsed();
 
