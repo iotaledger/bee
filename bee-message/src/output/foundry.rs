@@ -455,7 +455,6 @@ impl StateTransitionVerifier for FoundryOutput {
         if current_state.alias_address() != next_state.alias_address()
             || current_state.serial_number != next_state.serial_number
             || current_state.token_tag != next_state.token_tag
-            || current_state.token_scheme != next_state.token_scheme
             || current_state.immutable_feature_blocks != next_state.immutable_feature_blocks
         {
             return Err(StateTransitionError::MutatedImmutableField);
