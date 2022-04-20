@@ -3,12 +3,16 @@
 
 // use std::time::Duration;
 
+use std::{time::{Duration, SystemTime, UNIX_EPOCH}, sync::atomic::{AtomicU64, Ordering}};
+
 use bee_message::milestone::MilestoneIndex;
 use bee_tangle::{storage::StorageBackend, Tangle};
 
 use crate::{types::LedgerIndex, workers::pruning::config::PruningConfig};
 
 const PRUNING_BATCH_SIZE_MAX: u32 = 200;
+
+static LAST_PRUNING_BY_SIZE: AtomicU64 = AtomicU64::new(0);
 
 /// Reasons for skipping pruning.
 #[derive(Debug, thiserror::Error)]
@@ -23,8 +27,8 @@ pub(crate) enum PruningSkipReason {
     BelowMilestoneIndexThreshold { reached_in: u32 },
     #[error("Pruning by storage size skipped because current size < {target_size}.")]
     BelowStorageSizeThreshold { target_size: usize },
-    // #[error("Pruning by storage size is skipped because of cooldown.")]
-    // BelowCooldownTimeThreshold { reached_in: Duration },
+    #[error("Pruning by storage size is skipped because of cooldown.")]
+    BelowCooldownTimeThreshold,
 }
 
 pub(crate) enum PruningTask {
@@ -62,6 +66,14 @@ pub(crate) fn should_prune<S: StorageBackend>(
             ))
         }
     } else if config.size().enabled() {
+
+        let last = Duration::from_secs(LAST_PRUNING_BY_SIZE.load(Ordering::Relaxed));
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();     
+
+        if now < last + config.size().cooldown_time() {
+            return Err(PruningSkipReason::BelowCooldownTimeThreshold);
+        }
+
         let actual_size = {
             if let Ok(size) = storage.size() {
                 if let Some(size) = size {
@@ -84,6 +96,9 @@ pub(crate) fn should_prune<S: StorageBackend>(
                 (config.size().threshold_percentage() as f64 / 100.0 * target_size as f64) as usize;
 
             log::debug!("Num bytes to prune: {num_bytes_to_prune}");
+
+            // Store the time we issued a pruning-by-size.
+            LAST_PRUNING_BY_SIZE.store(now.as_secs(), Ordering::Relaxed);
 
             Ok(PruningTask::BySize(num_bytes_to_prune))
         }

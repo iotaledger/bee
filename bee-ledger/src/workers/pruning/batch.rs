@@ -445,23 +445,19 @@ fn prune_output_diff<S: StorageBackend, const BY_SIZE: bool>(
 
                 byte_length += consumed_output_id.packed_len();
                 byte_length += consumed_output.packed_len();
+
+                let created_output = Fetch::<OutputId, CreatedOutput>::fetch(storage, consumed_output_id)
+                    .map_err(|e| PruningError::Storage(Box::new(e)))?
+                    .unwrap();
+
+                byte_length += consumed_output_id.packed_len();
+                byte_length += created_output.packed_len();
             }
 
             Batch::<OutputId, ConsumedOutput>::batch_delete(storage, batch, consumed_output_id)
                 .map_err(|e| PruningError::Storage(Box::new(e)))?;
-        }
 
-        for created_output_id in output_diff.created_outputs() {
-            if BY_SIZE {
-                let created_output = Fetch::<OutputId, CreatedOutput>::fetch(storage, created_output_id)
-                    .map_err(|e| PruningError::Storage(Box::new(e)))?
-                    .unwrap();
-
-                byte_length += created_output_id.packed_len();
-                byte_length += created_output.packed_len();
-            }
-
-            Batch::<OutputId, CreatedOutput>::batch_delete(storage, batch, created_output_id)
+            Batch::<OutputId, CreatedOutput>::batch_delete(storage, batch, consumed_output_id)
                 .map_err(|e| PruningError::Storage(Box::new(e)))?;
         }
 
