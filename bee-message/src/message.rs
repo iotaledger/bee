@@ -150,7 +150,7 @@ impl Message {
     }
 
     /// Unpacks a [`Message`] from a sequence of bytes doing syntactical checks and verifying that
-    /// there are no traling bytes in the secuence.
+    /// there are no trailing bytes in the sequence.
     pub fn unpack_strict<T: AsRef<[u8]>>(
         bytes: T,
     ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
