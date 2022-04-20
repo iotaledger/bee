@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Module describing the receipt payload.
+//! Module describing the receipt milestone option.
 
 mod migrated_funds_entry;
 mod tail_transaction_hash;
@@ -32,7 +32,7 @@ pub(crate) type ReceiptFundsCount =
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
-pub struct ReceiptPayload {
+pub struct ReceiptMilestoneOption {
     migrated_at: MilestoneIndex,
     last: bool,
     #[packable(unpack_error_with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidReceiptFundsCount(p.into())))]
@@ -42,11 +42,11 @@ pub struct ReceiptPayload {
     transaction: Payload,
 }
 
-impl ReceiptPayload {
-    /// The payload kind of a [`ReceiptPayload`].
-    pub const KIND: u32 = 3;
+impl ReceiptMilestoneOption {
+    /// The milestone option kind of a [`ReceiptMilestoneOption`].
+    pub const KIND: u32 = 0;
 
-    /// Creates a new [`ReceiptPayload`].
+    /// Creates a new [`ReceiptMilestoneOption`].
     pub fn new(
         migrated_at: MilestoneIndex,
         last: bool,
@@ -66,23 +66,24 @@ impl ReceiptPayload {
         })
     }
 
-    /// Returns the milestone index at which the funds of a [`ReceiptPayload`] were migrated at in the legacy network.
+    /// Returns the milestone index at which the funds of a [`ReceiptMilestoneOption`] were migrated at in the legacy
+    /// network.
     pub fn migrated_at(&self) -> MilestoneIndex {
         self.migrated_at
     }
 
-    /// Returns whether a [`ReceiptPayload`] is the final one for a given migrated at index.
+    /// Returns whether a [`ReceiptMilestoneOption`] is the final one for a given migrated at index.
     pub fn last(&self) -> bool {
         self.last
     }
 
-    /// The funds which were migrated with a [`ReceiptPayload`].
+    /// The funds which were migrated with a [`ReceiptMilestoneOption`].
     pub fn funds(&self) -> &[MigratedFundsEntry] {
         &self.funds
     }
 
     /// The [`TreasuryTransactionPayload`](crate::payload::treasury_transaction::TreasuryTransactionPayload) used to
-    /// fund the funds of a [`ReceiptPayload`].
+    /// fund the funds of a [`ReceiptMilestoneOption`].
     pub fn transaction(&self) -> &TreasuryTransactionPayload {
         if let Payload::TreasuryTransaction(ref transaction) = self.transaction {
             transaction
@@ -92,7 +93,7 @@ impl ReceiptPayload {
         }
     }
 
-    /// Returns the sum of all [`MigratedFundsEntry`] items within a [`ReceiptPayload`].
+    /// Returns the sum of all [`MigratedFundsEntry`] items within a [`ReceiptMilestoneOption`].
     pub fn amount(&self) -> u64 {
         self.funds.iter().fold(0, |acc, funds| acc + funds.amount())
     }
@@ -149,7 +150,7 @@ pub mod dto {
 
     /// The payload type to define a receipt.
     #[derive(Clone, Debug, Serialize, Deserialize)]
-    pub struct ReceiptPayloadDto {
+    pub struct ReceiptMilestoneOptionDto {
         #[serde(rename = "type")]
         pub kind: u32,
         #[serde(rename = "migratedAt")]
@@ -160,10 +161,10 @@ pub mod dto {
         pub last: bool,
     }
 
-    impl From<&ReceiptPayload> for ReceiptPayloadDto {
-        fn from(value: &ReceiptPayload) -> Self {
-            ReceiptPayloadDto {
-                kind: ReceiptPayload::KIND,
+    impl From<&ReceiptMilestoneOption> for ReceiptMilestoneOptionDto {
+        fn from(value: &ReceiptMilestoneOption) -> Self {
+            ReceiptMilestoneOptionDto {
+                kind: ReceiptMilestoneOption::KIND,
                 migrated_at: *value.migrated_at(),
                 last: value.last(),
                 funds: value.funds().iter().map(Into::into).collect::<_>(),
@@ -174,11 +175,11 @@ pub mod dto {
         }
     }
 
-    impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
+    impl TryFrom<&ReceiptMilestoneOptionDto> for ReceiptMilestoneOption {
         type Error = DtoError;
 
-        fn try_from(value: &ReceiptPayloadDto) -> Result<Self, Self::Error> {
-            Ok(ReceiptPayload::new(
+        fn try_from(value: &ReceiptMilestoneOptionDto) -> Result<Self, Self::Error> {
+            Ok(ReceiptMilestoneOption::new(
                 MilestoneIndex(value.migrated_at),
                 value.last,
                 value.funds.iter().map(TryInto::try_into).collect::<Result<_, _>>()?,

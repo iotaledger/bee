@@ -5,10 +5,13 @@ use bee_message::{
     input::TreasuryInput,
     milestone::MilestoneIndex,
     output::TreasuryOutput,
-    payload::{milestone::MilestoneEssence, Payload, ReceiptPayload, TaggedDataPayload, TreasuryTransactionPayload},
+    payload::{
+        milestone::{MilestoneEssence, MilestoneOption, MilestoneOptions, ReceiptMilestoneOption},
+        TreasuryTransactionPayload,
+    },
     Error,
 };
-use bee_test::rand::{self, bytes::rand_bytes, parents::rand_parents};
+use bee_test::rand::{self, parents::rand_parents};
 use packable::PackableExt;
 
 #[test]
@@ -22,7 +25,7 @@ fn new_invalid_pow_score_non_zero() {
             0,
             4242,
             vec![],
-            None,
+            MilestoneOptions::new(vec![]).unwrap(),
         ),
         Err(Error::InvalidPowScoreValues { nps: 0, npsmi: 4242 })
     ));
@@ -39,7 +42,7 @@ fn new_invalid_pow_score_lower_than_index() {
             4000,
             4241,
             vec![],
-            None,
+            MilestoneOptions::new(vec![]).unwrap(),
         ),
         Err(Error::InvalidPowScoreValues { nps: 4000, npsmi: 4241 })
     ));
@@ -56,29 +59,10 @@ fn new_valid() {
             0,
             0,
             vec![],
-            None,
+            MilestoneOptions::new(vec![]).unwrap(),
         )
         .is_ok()
     );
-}
-
-#[test]
-fn new_invalid_payload_kind() {
-    assert!(matches!(
-        MilestoneEssence::new(
-            MilestoneIndex(0),
-            0,
-            rand_parents(),
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-            0,
-            0,
-            vec![],
-            Some(Payload::TaggedData(Box::new(
-                TaggedDataPayload::new(rand_bytes(32), vec![]).unwrap()
-            ))),
-        ),
-        Err(Error::InvalidPayloadKind(5))
-    ));
 }
 
 #[test]
@@ -89,19 +73,18 @@ fn getters() {
     let merkel_proof = [0; MilestoneEssence::MERKLE_PROOF_LENGTH];
     let next_pow_score = 0;
     let next_pow_score_milestone_index = 0;
-    let receipt = Some(Payload::Receipt(Box::new(
-        ReceiptPayload::new(
-            index,
-            true,
-            vec![rand::receipt::rand_migrated_funds_entry()],
-            TreasuryTransactionPayload::new(
-                TreasuryInput::new(rand::milestone::rand_milestone_id()),
-                TreasuryOutput::new(1_000_000).unwrap(),
-            )
-            .unwrap(),
+    let receipt = ReceiptMilestoneOption::new(
+        index,
+        true,
+        vec![rand::receipt::rand_migrated_funds_entry()],
+        TreasuryTransactionPayload::new(
+            TreasuryInput::new(rand::milestone::rand_milestone_id()),
+            TreasuryOutput::new(1_000_000).unwrap(),
         )
         .unwrap(),
-    )));
+    )
+    .unwrap();
+    let options = MilestoneOptions::new(vec![MilestoneOption::Receipt(receipt.clone())]).unwrap();
 
     let milestone_payload = MilestoneEssence::new(
         index,
@@ -111,7 +94,7 @@ fn getters() {
         next_pow_score,
         next_pow_score_milestone_index,
         vec![],
-        receipt.clone(),
+        options,
     )
     .unwrap();
 
@@ -124,7 +107,7 @@ fn getters() {
         milestone_payload.next_pow_score_milestone_index(),
         next_pow_score_milestone_index
     );
-    assert_eq!(*milestone_payload.receipt().unwrap(), receipt.unwrap());
+    assert_eq!(*milestone_payload.options().receipt().unwrap(), receipt);
 }
 
 #[test]
@@ -137,7 +120,7 @@ fn pack_unpack_valid() {
         0,
         0,
         vec![],
-        None,
+        MilestoneOptions::new(vec![]).unwrap(),
     )
     .unwrap();
 

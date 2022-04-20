@@ -4,7 +4,7 @@
 use bee_message::{
     milestone::MilestoneIndex,
     parent::Parents,
-    payload::milestone::{MilestoneEssence, MilestonePayload},
+    payload::milestone::{MilestoneEssence, MilestoneOptions, MilestonePayload},
     signature::{Ed25519Signature, Signature},
     Error,
 };
@@ -28,7 +28,7 @@ fn new_valid() {
                 0,
                 0,
                 vec![],
-                None,
+                MilestoneOptions::new(vec![]).unwrap(),
             )
             .unwrap(),
             vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))]
@@ -49,7 +49,7 @@ fn new_invalid_no_signature() {
                 0,
                 0,
                 vec![],
-                None,
+                MilestoneOptions::new(vec![]).unwrap(),
             )
             .unwrap(),
             vec![]
@@ -70,7 +70,7 @@ fn new_invalid_too_many_signatures() {
                 0,
                 0,
                 vec![],
-                None,
+                MilestoneOptions::new(vec![]).unwrap(),
             )
             .unwrap(),
             vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64])); 300]
@@ -92,7 +92,7 @@ fn packed_len() {
             0,
             0,
             vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a],
-            None,
+            MilestoneOptions::new(vec![]).unwrap(),
         )
         .unwrap(),
         vec![
@@ -117,7 +117,7 @@ fn pack_unpack_valid() {
             0,
             0,
             vec![],
-            None,
+            MilestoneOptions::new(vec![]).unwrap(),
         )
         .unwrap(),
         vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))],
@@ -140,7 +140,7 @@ fn getters() {
         0,
         0,
         vec![],
-        None,
+        MilestoneOptions::new(vec![]).unwrap(),
     )
     .unwrap();
     let signatures = vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))];

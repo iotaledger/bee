@@ -7,7 +7,11 @@ use async_trait::async_trait;
 use bee_message::{
     milestone::MilestoneIndex,
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, OutputId},
-    payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
+    payload::{
+        milestone::{MilestoneId, ReceiptMilestoneOption},
+        transaction::TransactionId,
+        Payload,
+    },
     semantic::ConflictReason,
     MessageId,
 };
@@ -54,7 +58,7 @@ pub struct ConsensusWorker {
 pub(crate) async fn migration_from_milestone(
     milestone_index: MilestoneIndex,
     milestone_id: MilestoneId,
-    receipt: &ReceiptPayload,
+    receipt: &ReceiptMilestoneOption,
     consumed_treasury: TreasuryOutput,
 ) -> Result<Migration, Error> {
     let receipt = Receipt::new(receipt.clone(), milestone_index);
@@ -110,7 +114,7 @@ where
     metadata.referenced_messages += 1;
     metadata.excluded_no_transaction_messages.push(message_id);
 
-    let migration = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
+    let migration = if let Some(receipt) = milestone.essence().options().receipt() {
         let milestone_id = milestone.id();
         let transaction_id = TransactionId::from(milestone_id);
 
@@ -216,7 +220,7 @@ where
         metadata.included_messages.len(),
         metadata.consumed_outputs.len(),
         metadata.created_outputs.len(),
-        milestone.essence().receipt().is_some()
+        milestone.essence().options().receipt().is_some()
     );
 
     bus.dispatch(MilestoneConfirmed {

@@ -1,25 +1,25 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{constant::IOTA_SUPPLY, milestone::MilestoneIndex, payload::receipt::ReceiptPayload};
+use bee_message::{constant::IOTA_SUPPLY, milestone::MilestoneIndex, payload::milestone::ReceiptMilestoneOption};
 
 use crate::types::{error::Error, TreasuryOutput};
 
 /// A type that wraps a receipt and the index of the milestone in which it was included.
 #[derive(Clone, Debug, Eq, PartialEq, packable::Packable)]
 pub struct Receipt {
-    inner: ReceiptPayload,
+    inner: ReceiptMilestoneOption,
     included_in: MilestoneIndex,
 }
 
 impl Receipt {
     /// Creates a new `Receipt`.
-    pub fn new(inner: ReceiptPayload, included_in: MilestoneIndex) -> Self {
+    pub fn new(inner: ReceiptMilestoneOption, included_in: MilestoneIndex) -> Self {
         Self { inner, included_in }
     }
 
     /// Returns the inner receipt of the `Receipt`.
-    pub fn inner(&self) -> &ReceiptPayload {
+    pub fn inner(&self) -> &ReceiptMilestoneOption {
         &self.inner
     }
 

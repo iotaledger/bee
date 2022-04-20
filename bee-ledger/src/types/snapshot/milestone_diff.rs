@@ -58,7 +58,7 @@ impl Packable for MilestoneDiff {
         MilestonePayload::KIND.pack(packer)?;
         self.milestone.pack(packer)?;
 
-        if self.milestone.essence().receipt().is_some() {
+        if self.milestone.essence().options().receipt().is_some() {
             if let Some((treasury_output, milestone_id)) = self.consumed_treasury.as_ref() {
                 milestone_id.pack(packer)?;
                 treasury_output.pack(packer)?;
@@ -106,7 +106,7 @@ impl Packable for MilestoneDiff {
             )));
         }
 
-        let consumed_treasury = if milestone.essence().receipt().is_some() {
+        let consumed_treasury = if milestone.essence().options().receipt().is_some() {
             let milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker).coerce()?;
             let amount = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
 

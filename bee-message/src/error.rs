@@ -17,8 +17,8 @@ use crate::{
     },
     parent::ParentCount,
     payload::{
-        InputCount, MigratedFundsAmount, MilestoneMetadataLength, OutputCount, ReceiptFundsCount, SignatureCount,
-        TagLength, TaggedDataLength,
+        InputCount, MigratedFundsAmount, MilestoneMetadataLength, MilestoneOptionCount, OutputCount, ReceiptFundsCount,
+        SignatureCount, TagLength, TaggedDataLength,
     },
     unlock_block::{UnlockBlockCount, UnlockBlockIndex},
 };
@@ -59,6 +59,8 @@ pub enum Error {
     InvalidStateMetadataLength(<StateMetadataLength as TryFrom<usize>>::Error),
     InvalidMetadataFeatureBlockLength(<MetadataFeatureBlockLength as TryFrom<usize>>::Error),
     InvalidMilestoneMetadataLength(<MilestoneMetadataLength as TryFrom<usize>>::Error),
+    InvalidMilestoneOptionCount(<MilestoneOptionCount as TryFrom<usize>>::Error),
+    InvalidMilestoneOptionKind(u32),
     InvalidMigratedFundsEntryAmount(<MigratedFundsAmount as TryFrom<u64>>::Error),
     InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
     InvalidNftIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
@@ -92,6 +94,7 @@ pub enum Error {
     MigratedFundsNotSorted,
     MilestoneInvalidSignatureCount(<SignatureCount as TryFrom<usize>>::Error),
     MilestonePublicKeysSignaturesCountMismatch { key_count: usize, sig_count: usize },
+    MilestoneOptionsNotUniqueSorted,
     MilestoneSignaturesNotUniqueSorted,
     MissingAddressUnlockCondition,
     MissingGovernorUnlockCondition,
@@ -192,6 +195,8 @@ impl fmt::Display for Error {
             Error::InvalidMilestoneMetadataLength(length) => {
                 write!(f, "invalid milestone metadata length {length}")
             }
+            Error::InvalidMilestoneOptionCount(count) => write!(f, "invalid milestone option count: {count}"),
+            Error::InvalidMilestoneOptionKind(k) => write!(f, "invalid milestone option kind: {k}"),
             Error::InvalidMigratedFundsEntryAmount(amount) => {
                 write!(f, "invalid migrated funds entry amount: {amount}")
             }
@@ -258,6 +263,9 @@ impl fmt::Display for Error {
                     "milestone public keys and signatures count mismatch: {0} != {1}",
                     key_count, sig_count
                 )
+            }
+            Error::MilestoneOptionsNotUniqueSorted => {
+                write!(f, "milestone options are not unique and/or sorted")
             }
             Error::MilestoneSignaturesNotUniqueSorted => {
                 write!(f, "milestone signatures are not unique and/or sorted")

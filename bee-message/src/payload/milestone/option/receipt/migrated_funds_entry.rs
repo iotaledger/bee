@@ -5,7 +5,7 @@ use core::ops::RangeInclusive;
 
 use packable::{bounded::BoundedU64, Packable};
 
-use crate::{address::Address, constant::IOTA_SUPPLY, payload::receipt::TailTransactionHash, Error};
+use crate::{address::Address, constant::IOTA_SUPPLY, payload::milestone::option::receipt::TailTransactionHash, Error};
 
 const MIGRATED_FUNDS_ENTRY_AMOUNT_MIN: u64 = 1_000_000;
 

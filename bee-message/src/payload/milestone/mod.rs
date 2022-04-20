@@ -6,6 +6,9 @@
 mod essence;
 mod milestone_id;
 
+///
+pub mod option;
+
 use alloc::{string::String, vec::Vec};
 use core::{fmt::Debug, ops::RangeInclusive};
 
@@ -15,10 +18,15 @@ use crypto::{
     Error as CryptoError,
 };
 use iterator_sorted::is_unique_sorted;
+pub(crate) use option::{MigratedFundsAmount, MilestoneOptionCount, ReceiptFundsCount};
 use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable, PackableExt};
 
 pub(crate) use self::essence::MilestoneMetadataLength;
-pub use self::{essence::MilestoneEssence, milestone_id::MilestoneId};
+pub use self::{
+    essence::MilestoneEssence,
+    milestone_id::MilestoneId,
+    option::{MilestoneOption, MilestoneOptions, ReceiptMilestoneOption},
+};
 use crate::{signature::Signature, Error};
 
 #[derive(Debug)]
@@ -157,10 +165,10 @@ fn verify_signatures<const VERIFY: bool>(signatures: &[Signature]) -> Result<(),
 pub mod dto {
     use serde::{Deserialize, Serialize};
 
+    use self::option::dto::MilestoneOptionDto;
     use super::*;
     use crate::{
-        error::dto::DtoError, milestone::MilestoneIndex, parent::Parents, payload::dto::PayloadDto,
-        signature::dto::SignatureDto, MessageId,
+        error::dto::DtoError, milestone::MilestoneIndex, parent::Parents, signature::dto::SignatureDto, MessageId,
     };
 
     /// The payload type to define a milestone.
@@ -179,8 +187,7 @@ pub mod dto {
         #[serde(rename = "nextPoWScoreMilestoneIndex")]
         pub next_pow_score_milestone_index: u32,
         pub metadata: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        pub receipt: Option<PayloadDto>,
+        pub options: Vec<MilestoneOptionDto>,
         pub signatures: Vec<SignatureDto>,
     }
 
@@ -195,7 +202,7 @@ pub mod dto {
                 next_pow_score: value.essence().next_pow_score(),
                 next_pow_score_milestone_index: value.essence().next_pow_score_milestone_index(),
                 metadata: prefix_hex::encode(value.essence().metadata()),
-                receipt: value.essence().receipt().map(Into::into),
+                options: value.essence().options().iter().map(Into::into).collect::<_>(),
                 signatures: value.signatures().iter().map(From::from).collect(),
             }
         }
@@ -221,11 +228,14 @@ pub mod dto {
                 let next_pow_score = value.next_pow_score;
                 let next_pow_score_milestone_index = value.next_pow_score_milestone_index;
                 let metadata = prefix_hex::decode(&value.metadata).map_err(|_| DtoError::InvalidField("metadata"))?;
-                let receipt = if let Some(receipt) = value.receipt.as_ref() {
-                    Some(receipt.try_into()?)
-                } else {
-                    None
-                };
+                let options = MilestoneOptions::try_from(
+                    value
+                        .options
+                        .iter()
+                        .map(TryInto::try_into)
+                        .collect::<Result<Vec<_>, _>>()?,
+                )?;
+
                 MilestoneEssence::new(
                     MilestoneIndex(index),
                     timestamp,
@@ -234,7 +244,7 @@ pub mod dto {
                     next_pow_score,
                     next_pow_score_milestone_index,
                     metadata,
-                    receipt,
+                    options,
                 )?
             };
             let mut signatures = Vec::new();

@@ -6,7 +6,7 @@ use core::str::FromStr;
 use bee_message::{
     address::{Address, Ed25519Address},
     constant::IOTA_SUPPLY,
-    payload::receipt::MigratedFundsEntry,
+    payload::milestone::option::MigratedFundsEntry,
     Error,
 };
 use bee_test::rand::receipt::rand_tail_transaction_hash;

@@ -11,12 +11,7 @@ use packable::{
     Packable, PackableExt,
 };
 
-use crate::{
-    milestone::MilestoneIndex,
-    parent::Parents,
-    payload::{OptionalPayload, Payload},
-    Error,
-};
+use crate::{milestone::MilestoneIndex, parent::Parents, payload::MilestoneOptions, Error};
 
 pub(crate) type MilestoneMetadataLength = BoundedU16<{ u16::MIN }, { u16::MAX }>;
 
@@ -32,7 +27,7 @@ pub struct MilestoneEssence {
     next_pow_score: u32,
     next_pow_score_milestone_index: u32,
     metadata: BoxedSlicePrefix<u8, MilestoneMetadataLength>,
-    receipt: OptionalPayload,
+    options: MilestoneOptions,
 }
 
 impl MilestoneEssence {
@@ -49,7 +44,7 @@ impl MilestoneEssence {
         next_pow_score: u32,
         next_pow_score_milestone_index: u32,
         metadata: Vec<u8>,
-        receipt: Option<Payload>,
+        options: MilestoneOptions,
     ) -> Result<Self, Error> {
         verify_pow_scores(index, next_pow_score, next_pow_score_milestone_index)?;
 
@@ -57,10 +52,6 @@ impl MilestoneEssence {
             .into_boxed_slice()
             .try_into()
             .map_err(Error::InvalidMilestoneMetadataLength)?;
-
-        let receipt = OptionalPayload::from(receipt);
-
-        verify_payload(&receipt)?;
 
         Ok(Self {
             index,
@@ -70,7 +61,7 @@ impl MilestoneEssence {
             next_pow_score,
             next_pow_score_milestone_index,
             metadata,
-            receipt,
+            options,
         })
     }
 
@@ -109,9 +100,9 @@ impl MilestoneEssence {
         &self.metadata
     }
 
-    /// Returns the optional receipt of a [`MilestoneEssence`].
-    pub fn receipt(&self) -> Option<&Payload> {
-        self.receipt.as_ref()
+    /// Returns the options of a [`MilestoneEssence`].
+    pub fn options(&self) -> &MilestoneOptions {
+        &self.options
     }
 
     /// Hashes the [`MilestoneEssence`] to be signed.
@@ -131,7 +122,7 @@ impl Packable for MilestoneEssence {
         self.next_pow_score.pack(packer)?;
         self.next_pow_score_milestone_index.pack(packer)?;
         self.metadata.pack(packer)?;
-        self.receipt.pack(packer)?;
+        self.options.pack(packer)?;
 
         Ok(())
     }
@@ -155,11 +146,7 @@ impl Packable for MilestoneEssence {
         let metadata = BoxedSlicePrefix::<u8, MilestoneMetadataLength>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|e| Error::InvalidMilestoneMetadataLength(e.into_prefix_err().into()))?;
 
-        let receipt = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
-
-        if VERIFY {
-            verify_payload(&receipt).map_err(UnpackError::Packable)?;
-        }
+        let options = MilestoneOptions::unpack::<_, VERIFY>(unpacker)?;
 
         Ok(Self {
             index,
@@ -169,7 +156,7 @@ impl Packable for MilestoneEssence {
             next_pow_score,
             next_pow_score_milestone_index,
             metadata,
-            receipt,
+            options,
         })
     }
 }
@@ -188,12 +175,5 @@ fn verify_pow_scores(
         })
     } else {
         Ok(())
-    }
-}
-
-fn verify_payload(payload: &OptionalPayload) -> Result<(), Error> {
-    match &payload.0 {
-        Some(Payload::Receipt(_)) | None => Ok(()),
-        Some(payload) => Err(Error::InvalidPayloadKind(payload.kind())),
     }
 }
