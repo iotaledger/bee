@@ -140,8 +140,15 @@ impl Packable for OptionalPayload {
         if len > 0 {
             unpacker.ensure_bytes(len)?;
 
+            let start_opt = unpacker.read_bytes();
+
             let payload = Payload::unpack::<_, VERIFY>(unpacker)?;
-            let actual_len = payload.packed_len();
+
+            let actual_len = if let (Some(start), Some(end)) = (start_opt, unpacker.read_bytes()) {
+                end - start
+            } else {
+                payload.packed_len()
+            };
 
             if len != actual_len {
                 Err(UnpackError::Packable(Error::InvalidPayloadLength {
