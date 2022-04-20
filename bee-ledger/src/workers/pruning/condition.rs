@@ -30,7 +30,7 @@ pub(crate) enum PruningSkipReason {
 pub(crate) enum PruningTask {
     // TODO: consider using named structs: start index, target index
     ByRange(MilestoneIndex, MilestoneIndex),
-    // TODO: same: reduced size
+    // TODO: same: num_bytes_to_prune
     BySize(usize),
 }
 
@@ -80,12 +80,12 @@ pub(crate) fn should_prune<S: StorageBackend>(
         if actual_size < target_size {
             Err(PruningSkipReason::BelowStorageSizeThreshold { target_size })
         } else {
-            let reduced_size =
-                actual_size - (config.size().threshold_percentage() as f64 / 100.0 * target_size as f64) as usize;
+            let num_bytes_to_prune =
+                (config.size().threshold_percentage() as f64 / 100.0 * target_size as f64) as usize;
 
-            log::debug!("Reduced size: {reduced_size}");
+            log::debug!("Num bytes to prune: {num_bytes_to_prune}");
 
-            Ok(PruningTask::BySize(reduced_size))
+            Ok(PruningTask::BySize(num_bytes_to_prune))
         }
     } else {
         Err(PruningSkipReason::Disabled)

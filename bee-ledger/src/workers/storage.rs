@@ -51,6 +51,7 @@ pub trait StorageBackend:
     + Exist<Unspent, ()>
     + Fetch<(), SnapshotInfo>
     + Fetch<OutputId, CreatedOutput>
+    + Fetch<OutputId, ConsumedOutput>
     + Fetch<(), LedgerIndex>
     + Fetch<Address, Balance>
     + Fetch<bool, Vec<TreasuryOutput>>
@@ -92,6 +93,7 @@ impl<T> StorageBackend for T where
         + Exist<Unspent, ()>
         + Fetch<(), SnapshotInfo>
         + Fetch<OutputId, CreatedOutput>
+        + Fetch<OutputId, ConsumedOutput>
         + Fetch<(), LedgerIndex>
         + Fetch<Address, Balance>
         + Fetch<bool, Vec<TreasuryOutput>>

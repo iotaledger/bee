@@ -365,10 +365,15 @@ where
                                         error!("Pruning milestone range failed: {}.", e);
                                     }
                                 }
-                                PruningTask::BySize(reduced_size) => {
-                                    if let Err(e) =
-                                        prune::prune_by_size(&tangle, &storage, &bus, reduced_size, &pruning_config)
-                                            .await
+                                PruningTask::BySize(num_bytes_to_prune) => {
+                                    if let Err(e) = prune::prune_by_size(
+                                        &tangle,
+                                        &storage,
+                                        &bus,
+                                        num_bytes_to_prune,
+                                        &pruning_config,
+                                    )
+                                    .await
                                     {
                                         error!("Pruning by storage size failed: {}.", e);
                                     }

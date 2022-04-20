@@ -49,12 +49,13 @@ pub async fn prune_by_range<S: StorageBackend>(
     if start_index != target_index {
         log::info!(
             "Pruning from milestone {} to milestone {}...",
-            start_index, target_index
+            start_index,
+            target_index
         );
     }
 
     for index in *start_index..=*target_index {
-        prune_milestone(index, tangle, storage, bus, &mut timings, &mut metrics, config).await?;
+        prune_milestone::<_, false>(index, tangle, storage, bus, &mut timings, &mut metrics, config).await?;
     }
 
     if start_index == target_index {
@@ -72,30 +73,26 @@ pub async fn prune_by_size<S: StorageBackend>(
     tangle: &Tangle<S>,
     storage: &S,
     bus: &Bus<'_>,
-    reduced_size: usize,
+    num_bytes_to_prune: usize,
     config: &PruningConfig,
 ) -> Result<(), PruningError> {
     let mut timings = Timings::default();
     let mut metrics = PruningMetrics::default();
+    let mut num_pruned_bytes = 0;
 
-    loop {
-        // Panic: already checked that size() returns a valid result.
-        let actual_size = storage.size().expect("ok storage size").expect("some storage size");
-        log::debug!("Storage size: actual {actual_size} reduced {reduced_size}");
+    while num_pruned_bytes < num_bytes_to_prune {
+        log::debug!("Pruned {num_pruned_bytes}/{num_bytes_to_prune} bytes.");
 
-        if actual_size > reduced_size {
-            let index = *tangle.get_pruning_index() + 1;
-            prune_milestone(index, tangle, storage, bus, &mut timings, &mut metrics, config).await?;
-        } else {
-            break;
-        }
+        let index = *tangle.get_pruning_index() + 1;
+        num_pruned_bytes +=
+            prune_milestone::<_, true>(index, tangle, storage, bus, &mut timings, &mut metrics, config).await?;
     }
 
     Ok(())
 }
 
 /// Prunes a single milestone.
-async fn prune_milestone<S: StorageBackend>(
+async fn prune_milestone<S: StorageBackend, const BY_SIZE: bool>(
     index: u32,
     tangle: &Tangle<S>,
     storage: &S,
@@ -103,7 +100,8 @@ async fn prune_milestone<S: StorageBackend>(
     timings: &mut Timings,
     metrics: &mut PruningMetrics,
     config: &PruningConfig,
-) -> Result<(), PruningError> {
+) -> Result<usize, PruningError> {
+    let mut byte_length = 0usize;
     let index = MilestoneIndex(index);
 
     log::debug!("Pruning milestone {}...", index);
@@ -124,9 +122,11 @@ async fn prune_milestone<S: StorageBackend>(
     // Add confirmed data to the delete batch.
     // NOTE: This is the most costly thing during pruning, because it has to perform a past-cone traversal.
     let batch_confirmed_data = Instant::now();
-    let (mut new_seps, confirmed_data_metrics) =
-        batch::batch_prunable_confirmed_data(storage, &mut batch, index, &curr_seps)?;
+    let (mut new_seps, confirmed_data_metrics, num_bytes) =
+        batch::batch_prunable_confirmed_data::<_, BY_SIZE>(storage, &mut batch, index, &curr_seps)?;
     timings.batch_confirmed_data = batch_confirmed_data.elapsed();
+
+    byte_length += num_bytes;
 
     metrics.new_seps = new_seps.len();
     metrics.messages = confirmed_data_metrics.prunable_messages;
@@ -176,15 +176,19 @@ async fn prune_milestone<S: StorageBackend>(
     tangle.update_entry_point_index(index);
 
     let batch_milestones = Instant::now();
-    let milestone_data_metrics = batch::prune_milestone_data(storage, &mut batch, index, config.receipts().enabled())?;
+    let (num_bytes, milestone_data_metrics) =
+        batch::prune_milestone_data::<_, BY_SIZE>(storage, &mut batch, index, config.receipts().enabled())?;
     timings.batch_milestone_data = batch_milestones.elapsed();
 
+    byte_length += num_bytes;
     metrics.receipts = milestone_data_metrics.receipts;
 
     // Add unconfirmed data to the delete batch.
     let batch_unconfirmed_data = Instant::now();
-    let unconfirmed_data_metrics = batch::batch_prunable_unconfirmed_data(storage, &mut batch, index)?;
+    let (num_bytes, unconfirmed_data_metrics) = batch::batch_prunable_unconfirmed_data::<_, BY_SIZE>(storage, &mut batch, index)?;
     timings.batch_unconfirmed_data = batch_unconfirmed_data.elapsed();
+
+    byte_length += num_bytes;
 
     metrics.messages += unconfirmed_data_metrics.prunable_messages;
     metrics.edges += unconfirmed_data_metrics.prunable_edges;
@@ -230,11 +234,16 @@ async fn prune_milestone<S: StorageBackend>(
     log::debug!("{:?}.", timings);
     log::debug!(
         "Entry point index now at {} with {} solid entry points..",
-        index, num_next_seps
+        index,
+        num_next_seps
     );
-    log::debug!("Pruned milestone {}.", index);
+    if BY_SIZE {
+        log::debug!("Pruned milestone {}: {} bytes", index, byte_length);
+    } else {
+        log::debug!("Pruned milestone {}", index);
+    }
 
     bus.dispatch(PrunedIndex { index });
 
-    Ok(())
+    Ok(byte_length)
 }
