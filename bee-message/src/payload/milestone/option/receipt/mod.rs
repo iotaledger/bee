@@ -44,7 +44,7 @@ pub struct ReceiptMilestoneOption {
 
 impl ReceiptMilestoneOption {
     /// The milestone option kind of a [`ReceiptMilestoneOption`].
-    pub const KIND: u32 = 0;
+    pub const KIND: u8 = 0;
 
     /// Creates a new [`ReceiptMilestoneOption`].
     pub fn new(
@@ -152,7 +152,7 @@ pub mod dto {
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct ReceiptMilestoneOptionDto {
         #[serde(rename = "type")]
-        pub kind: u32,
+        pub kind: u8,
         #[serde(rename = "migratedAt")]
         pub migrated_at: u32,
         pub funds: Vec<MigratedFundsEntryDto>,

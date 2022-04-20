@@ -60,7 +60,7 @@ pub enum Error {
     InvalidMetadataFeatureBlockLength(<MetadataFeatureBlockLength as TryFrom<usize>>::Error),
     InvalidMilestoneMetadataLength(<MilestoneMetadataLength as TryFrom<usize>>::Error),
     InvalidMilestoneOptionCount(<MilestoneOptionCount as TryFrom<usize>>::Error),
-    InvalidMilestoneOptionKind(u32),
+    InvalidMilestoneOptionKind(u8),
     InvalidMigratedFundsEntryAmount(<MigratedFundsAmount as TryFrom<u64>>::Error),
     InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
     InvalidNftIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),

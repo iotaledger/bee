@@ -19,7 +19,7 @@ use crate::Error;
     serde(tag = "type", content = "data")
 )]
 #[packable(unpack_error = Error)]
-#[packable(tag_type = u32, with_error = Error::InvalidMilestoneOptionKind)]
+#[packable(tag_type = u8, with_error = Error::InvalidMilestoneOptionKind)]
 pub enum MilestoneOption {
     /// A receipt milestone option.
     #[packable(tag = ReceiptMilestoneOption::KIND)]
@@ -28,7 +28,7 @@ pub enum MilestoneOption {
 
 impl MilestoneOption {
     /// Return the milestone option kind of a [`MilestoneOption`].
-    pub fn kind(&self) -> u32 {
+    pub fn kind(&self) -> u8 {
         match self {
             Self::Receipt(_) => ReceiptMilestoneOption::KIND,
         }
@@ -82,7 +82,7 @@ impl MilestoneOptions {
 
     /// Gets a reference to a [`MilestoneOption`] from a milestone option kind, if any.
     #[inline(always)]
-    pub fn get(&self, key: u32) -> Option<&MilestoneOption> {
+    pub fn get(&self, key: u8) -> Option<&MilestoneOption> {
         self.0
             .binary_search_by_key(&key, MilestoneOption::kind)
             // PANIC: indexation is fine since the index has been found.
@@ -133,7 +133,7 @@ pub mod dto {
                     .get("type")
                     .and_then(Value::as_u64)
                     .ok_or_else(|| serde::de::Error::custom("invalid milestone option type"))?
-                    as u32
+                    as u8
                 {
                     ReceiptMilestoneOption::KIND => {
                         MilestoneOptionDto::Receipt(ReceiptMilestoneOptionDto::deserialize(value).map_err(|e| {
@@ -190,7 +190,7 @@ pub mod dto {
 
     impl MilestoneOptionDto {
         /// Return the milestone option kind of a [`MilestoneOptionDto`].
-        pub fn kind(&self) -> u32 {
+        pub fn kind(&self) -> u8 {
             match self {
                 Self::Receipt(_) => ReceiptMilestoneOption::KIND,
             }
