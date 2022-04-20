@@ -6,7 +6,7 @@ use core::ops::Deref;
 use bee_pow::providers::{miner::Miner, NonceProvider, NonceProviderBuilder};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 use packable::{
-    error::{UnpackError, UnpackErrorExt},
+    error::{UnexpectedEOF, UnpackError, UnpackErrorExt},
     packer::Packer,
     unpacker::{CounterUnpacker, Unpacker},
     Packable, PackableExt,
@@ -148,6 +148,22 @@ impl Message {
     pub fn into_parents(self) -> Parents {
         self.parents
     }
+
+    /// Unpacks a [`Message`] from a sequence of bytes doing syntactical checks and verifying that
+    /// there are no traling bytes in the secuence.
+    pub fn unpack_strict<T: AsRef<[u8]>>(
+        bytes: T,
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
+        let mut unpacker = CounterUnpacker::new(bytes.as_ref());
+        let message = Self::unpack::<_, true>(&mut unpacker)?;
+
+        // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
+        if u8::unpack::<_, true>(&mut unpacker).is_ok() {
+            return Err(UnpackError::Packable(Error::RemainingBytesAfterMessage));
+        }
+
+        Ok(message)
+    }
 }
 
 impl Packable for Message {
@@ -165,7 +181,6 @@ impl Packable for Message {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-
         let start_opt = unpacker.read_bytes();
 
         let protocol_version = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
@@ -185,11 +200,6 @@ impl Packable for Message {
         }
 
         let nonce = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
-
-        // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
-        if VERIFY && u8::unpack::<_, VERIFY>(unpacker).is_ok() {
-            return Err(UnpackError::Packable(Error::RemainingBytesAfterMessage));
-        }
 
         let message = Self {
             protocol_version,
