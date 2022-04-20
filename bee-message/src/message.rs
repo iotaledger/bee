@@ -165,9 +165,10 @@ impl Packable for Message {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let mut unpacker = CounterUnpacker::new(unpacker);
 
-        let protocol_version = u8::unpack::<_, VERIFY>(&mut unpacker).coerce()?;
+        let start_opt = unpacker.read_bytes();
+
+        let protocol_version = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         if VERIFY && protocol_version != PROTOCOL_VERSION {
             return Err(UnpackError::Packable(Error::ProtocolVersionMismatch {
@@ -176,17 +177,17 @@ impl Packable for Message {
             }));
         }
 
-        let parents = Parents::unpack::<_, VERIFY>(&mut unpacker)?;
-        let payload = OptionalPayload::unpack::<_, VERIFY>(&mut unpacker)?;
+        let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
+        let payload = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
             verify_payload(payload.deref().as_ref()).map_err(UnpackError::Packable)?;
         }
 
-        let nonce = u64::unpack::<_, VERIFY>(&mut unpacker).coerce()?;
+        let nonce = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
-        if VERIFY && u8::unpack::<_, VERIFY>(&mut unpacker).is_ok() {
+        if VERIFY && u8::unpack::<_, VERIFY>(unpacker).is_ok() {
             return Err(UnpackError::Packable(Error::RemainingBytesAfterMessage));
         }
 
@@ -197,7 +198,11 @@ impl Packable for Message {
             nonce,
         };
 
-        let message_len = unpacker.counter();
+        let message_len = if let (Some(start), Some(end)) = (start_opt, unpacker.read_bytes()) {
+            end - start
+        } else {
+            message.packed_len()
+        };
 
         if VERIFY && message_len > Message::LENGTH_MAX {
             return Err(UnpackError::Packable(Error::InvalidMessageLength(message_len)));
