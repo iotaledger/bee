@@ -12,14 +12,10 @@ pub mod option;
 use alloc::{string::String, vec::Vec};
 use core::{fmt::Debug, ops::RangeInclusive};
 
-use crypto::{
-    hashes::{blake2b::Blake2b256, Digest},
-    signatures::ed25519,
-    Error as CryptoError,
-};
+use crypto::{signatures::ed25519, Error as CryptoError};
 use iterator_sorted::is_unique_sorted;
 pub(crate) use option::{MigratedFundsAmount, MilestoneOptionCount, ReceiptFundsCount};
-use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable, PackableExt};
+use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable};
 
 pub(crate) use self::essence::MilestoneMetadataLength;
 pub use self::{
@@ -88,12 +84,7 @@ impl MilestonePayload {
 
     /// Computes the identifier of a [`MilestonePayload`].
     pub fn id(&self) -> MilestoneId {
-        let mut hasher = Blake2b256::new();
-
-        hasher.update(Self::KIND.to_le_bytes());
-        hasher.update(self.pack_to_vec());
-
-        MilestoneId::new(hasher.finalize().into())
+        MilestoneId::new(self.essence().hash())
     }
 
     /// Semantically validate a [`MilestonePayload`].
