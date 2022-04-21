@@ -48,7 +48,7 @@ pub(crate) async fn outputs_ed25519<B: StorageBackend>(
         error!("Request to consensus worker failed: {}.", e);
     }
 
-    let (mut fetched, ledger_index) = match cmd_rx.await.map_err(|e| {
+    let (all_outputs, ledger_index) = match cmd_rx.await.map_err(|e| {
         error!("Response from consensus worker failed: {}.", e);
         reject::custom(CustomRejection::ServiceUnavailable(
             "unable to fetch the outputs of the address".to_string(),
@@ -66,15 +66,18 @@ pub(crate) async fn outputs_ed25519<B: StorageBackend>(
         }
     };
 
-    let count = fetched.len();
-    fetched.truncate(MAX_RESPONSE_RESULTS);
+    let truncated_outputs = all_outputs
+        .iter()
+        .take(MAX_RESPONSE_RESULTS)
+        .map(OutputId::to_string)
+        .collect::<Vec<String>>();
 
     Ok(warp::reply::json(&SuccessBody::new(OutputsAddressResponse {
         address_type: Ed25519Address::KIND,
         address: addr.to_string(),
         max_results: MAX_RESPONSE_RESULTS,
-        count,
-        output_ids: fetched.iter().map(|id| id.to_string()).collect(),
+        count: truncated_outputs.len(),
+        output_ids: truncated_outputs,
         ledger_index: *ledger_index,
     })))
 }
