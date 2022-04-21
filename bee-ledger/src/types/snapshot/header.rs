@@ -17,7 +17,7 @@ const SNAPSHOT_VERSION: u8 = 2;
 #[derive(Clone)]
 pub struct SnapshotHeader {
     kind: SnapshotKind,
-    timestamp: u64,
+    timestamp: u32,
     network_id: u64,
     sep_index: MilestoneIndex,
     ledger_index: MilestoneIndex,
@@ -33,7 +33,7 @@ impl SnapshotHeader {
     }
 
     /// Returns the timestamp of a `SnapshotHeader`.
-    pub fn timestamp(&self) -> u64 {
+    pub fn timestamp(&self) -> u32 {
         self.timestamp
     }
 
@@ -80,7 +80,7 @@ impl Packable for SnapshotHeader {
         }
 
         let kind = SnapshotKind::unpack::<_, VERIFY>(unpacker)?;
-        let timestamp = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
         let network_id = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
         let sep_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
         let ledger_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;

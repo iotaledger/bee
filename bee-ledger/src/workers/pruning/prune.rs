@@ -165,7 +165,7 @@ pub async fn prune<S: StorageBackend>(
         let timestamp = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .expect("error creating timestamp")
-            .as_secs();
+            .as_secs() as u32;
         let mut snapshot_info = storage::fetch_snapshot_info(storage)
             .map_err(|e| Error::Storage(Box::new(e)))?
             .ok_or(Error::MissingSnapshotInfo)?;
