@@ -6,7 +6,7 @@ mod receipt;
 
 use derive_more::{Deref, From};
 use iterator_sorted::is_unique_sorted;
-use packable::{bounded::BoundedU32, prefix::BoxedSlicePrefix, Packable};
+use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 pub(crate) use receipt::{MigratedFundsAmount, ReceiptFundsCount};
 
 pub use self::{
@@ -43,7 +43,7 @@ impl MilestoneOption {
     }
 }
 
-pub(crate) type MilestoneOptionCount = BoundedU32<0, { MilestoneOptions::COUNT_MAX }>;
+pub(crate) type MilestoneOptionCount = BoundedU8<0, { MilestoneOptions::COUNT_MAX }>;
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Deref, Packable)]
@@ -73,7 +73,7 @@ impl IntoIterator for MilestoneOptions {
 
 impl MilestoneOptions {
     ///
-    pub const COUNT_MAX: u32 = 2;
+    pub const COUNT_MAX: u8 = 2;
 
     /// Creates a new [`MilestoneOptions`].
     pub fn new(milestone_options: Vec<MilestoneOption>) -> Result<Self, Error> {
