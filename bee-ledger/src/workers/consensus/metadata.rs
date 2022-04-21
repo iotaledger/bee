@@ -3,7 +3,9 @@
 
 use std::collections::HashMap;
 
-use bee_message::{milestone::MilestoneIndex, output::OutputId, semantic::ConflictReason, MessageId};
+use bee_message::{
+    milestone::MilestoneIndex, output::OutputId, payload::milestone::MilestoneId, semantic::ConflictReason, MessageId,
+};
 
 use crate::types::{ConsumedOutput, CreatedOutput};
 
@@ -13,6 +15,10 @@ pub struct WhiteFlagMetadata {
     pub(crate) milestone_index: MilestoneIndex,
     /// Timestamp of the confirmed milestone.
     pub(crate) milestone_timestamp: u32,
+    /// The id of the previous milestone.
+    pub(crate) previous_milestone_id: Option<MilestoneId>,
+    /// Whether the previous milestone has been found in the past cone of the current milestone.
+    pub(crate) found_previous_milestone: bool,
     /// The messages which were referenced by the confirmed milestone.
     pub(crate) referenced_messages: Vec<MessageId>,
     /// The messages which were excluded because they did not include a transaction.
@@ -33,10 +39,16 @@ pub struct WhiteFlagMetadata {
 
 impl WhiteFlagMetadata {
     /// Creates a new [`WhiteFlagMetadata`].
-    pub fn new(milestone_index: MilestoneIndex, milestone_timestamp: u32) -> WhiteFlagMetadata {
+    pub fn new(
+        milestone_index: MilestoneIndex,
+        milestone_timestamp: u32,
+        previous_milestone_id: Option<MilestoneId>,
+    ) -> WhiteFlagMetadata {
         WhiteFlagMetadata {
             milestone_index,
             milestone_timestamp,
+            previous_milestone_id,
+            found_previous_milestone: false,
             referenced_messages: Vec::new(),
             excluded_no_transaction_messages: Vec::new(),
             excluded_conflicting_messages: Vec::new(),

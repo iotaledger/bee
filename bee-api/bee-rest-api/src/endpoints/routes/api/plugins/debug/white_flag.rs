@@ -159,8 +159,8 @@ pub(crate) async fn white_flag<B: StorageBackend>(
         }
     }
 
-    // TODO
-    let mut metadata = WhiteFlagMetadata::new(index, 0);
+    // TODO Actually pass the previous milestone id ?
+    let mut metadata = WhiteFlagMetadata::new(index, 0, None);
 
     // Wait for either all parents to get solid or the timeout to expire.
     let response = match timeout(

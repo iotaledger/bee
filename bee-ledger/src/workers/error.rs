@@ -88,6 +88,9 @@ pub enum Error {
     /// Storage deposit return overflow.
     #[error("storage deposit return overflow")]
     StorageDepositReturnOverflow,
+    /// The previous milestone was not found in the past cone.
+    #[error("previous milestone not found in the past cone")]
+    PreviousMilestoneNotFound,
 }
 
 impl<E: Into<Error>> From<UnpackError<E, std::io::Error>> for Error {

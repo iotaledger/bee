@@ -147,6 +147,14 @@ fn apply_message<B: StorageBackend>(
                 conflict => metadata.excluded_conflicting_messages.push((*message_id, conflict)),
             }
         }
+        Some(Payload::Milestone(milestone)) => {
+            if let Some(previous_milestone_id) = metadata.previous_milestone_id {
+                if previous_milestone_id == milestone.id() {
+                    metadata.found_previous_milestone = true;
+                }
+            }
+            metadata.excluded_no_transaction_messages.push(*message_id);
+        }
         _ => metadata.excluded_no_transaction_messages.push(*message_id),
     }
 
@@ -206,6 +214,10 @@ pub async fn white_flag<B: StorageBackend>(
 
     metadata.confirmed_merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.referenced_messages);
     metadata.applied_merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
+
+    if metadata.previous_milestone_id.is_some() && !metadata.found_previous_milestone {
+        return Err(Error::PreviousMilestoneNotFound);
+    }
 
     if metadata.referenced_messages.len()
         != metadata.excluded_no_transaction_messages.len()
