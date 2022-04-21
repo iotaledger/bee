@@ -49,9 +49,12 @@ pub enum Error {
     /// Non contiguous milestones.
     #[error("non contiguous milestones: tried to confirm {0} on top of {1}")]
     NonContiguousMilestones(u32, u32),
-    /// Merkle proof mismatch.
-    #[error("merkle proof mismatch on milestone {0}: computed {1} != provided {2}")]
-    MerkleProofMismatch(MilestoneIndex, String, String),
+    /// Confirmed merkle proof mismatch.
+    #[error("confirmed merkle proof mismatch on milestone {0}: computed {1} != provided {2}")]
+    ConfirmedMerkleProofMismatch(MilestoneIndex, String, String),
+    /// Applied Merkle proof mismatch.
+    #[error("applied merkle proof mismatch on milestone {0}: computed {1} != provided {2}")]
+    AppliedMerkleProofMismatch(MilestoneIndex, String, String),
     /// Invalid messages count.
     #[error("invalid messages count: referenced ({0}) != no transaction ({1}) + conflicting ({2}) + included ({3})")]
     InvalidMessagesCount(usize, usize, usize, usize),

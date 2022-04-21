@@ -138,7 +138,7 @@ fn apply_message<B: StorageBackend>(
     message: &Message,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
-    metadata.referenced_messages += 1;
+    metadata.referenced_messages.push(*message_id);
 
     match message.payload() {
         Some(Payload::Transaction(transaction)) => {
@@ -177,8 +177,10 @@ async fn traverse_past_cone<B: StorageBackend>(
             if let Some(unvisited) = message.parents().iter().find(|p| !visited.contains(p)) {
                 message_ids.push(*unvisited);
             } else {
-                apply_message(storage, message_id, &message, metadata)?;
-                visited.insert(*message_id);
+                if !visited.contains(message_id) {
+                    apply_message(storage, message_id, &message, metadata)?;
+                    visited.insert(*message_id);
+                }
                 message_ids.pop();
             }
         } else if !tangle.is_solid_entry_point(message_id).await {
@@ -202,15 +204,16 @@ pub async fn white_flag<B: StorageBackend>(
 ) -> Result<(), Error> {
     traverse_past_cone(tangle, storage, message_ids.iter().rev().copied().collect(), metadata).await?;
 
+    metadata.confirmed_merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.referenced_messages);
     metadata.applied_merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
 
-    if metadata.referenced_messages
+    if metadata.referenced_messages.len()
         != metadata.excluded_no_transaction_messages.len()
             + metadata.excluded_conflicting_messages.len()
             + metadata.included_messages.len()
     {
         return Err(Error::InvalidMessagesCount(
-            metadata.referenced_messages,
+            metadata.referenced_messages.len(),
             metadata.excluded_no_transaction_messages.len(),
             metadata.excluded_conflicting_messages.len(),
             metadata.included_messages.len(),

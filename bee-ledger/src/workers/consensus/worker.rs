@@ -106,7 +106,7 @@ where
         .confirmed_merkle_proof
         .eq(&milestone.essence().confirmed_merkle_proof())
     {
-        return Err(Error::MerkleProofMismatch(
+        return Err(Error::ConfirmedMerkleProofMismatch(
             milestone.essence().index(),
             prefix_hex::encode(metadata.confirmed_merkle_proof),
             prefix_hex::encode(milestone.essence().confirmed_merkle_proof()),
@@ -117,16 +117,12 @@ where
         .applied_merkle_proof
         .eq(&milestone.essence().applied_merkle_proof())
     {
-        return Err(Error::MerkleProofMismatch(
+        return Err(Error::AppliedMerkleProofMismatch(
             milestone.essence().index(),
             prefix_hex::encode(metadata.applied_merkle_proof),
             prefix_hex::encode(milestone.essence().applied_merkle_proof()),
         ));
     }
-
-    // Account for the milestone itself.
-    metadata.referenced_messages += 1;
-    metadata.excluded_no_transaction_messages.push(message_id);
 
     let migration = if let Some(receipt) = milestone.essence().options().receipt() {
         let milestone_id = milestone.id();
@@ -228,7 +224,7 @@ where
     info!(
         "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}, consumed {}, created {}, receipt {}.",
         milestone.essence().index(),
-        metadata.referenced_messages,
+        metadata.referenced_messages.len(),
         metadata.excluded_no_transaction_messages.len(),
         metadata.excluded_conflicting_messages.len(),
         metadata.included_messages.len(),
@@ -241,7 +237,7 @@ where
         message_id,
         index: milestone.essence().index(),
         timestamp: milestone.essence().timestamp(),
-        referenced_messages: metadata.referenced_messages,
+        referenced_messages: metadata.referenced_messages.len(),
         excluded_no_transaction_messages: metadata.excluded_no_transaction_messages,
         excluded_conflicting_messages: metadata.excluded_conflicting_messages,
         included_messages: metadata.included_messages,
