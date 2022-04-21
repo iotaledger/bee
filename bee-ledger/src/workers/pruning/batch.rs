@@ -460,10 +460,6 @@ fn prune_output_diff<S: StorageBackend, const BY_SIZE: bool>(
             Batch::<OutputId, CreatedOutput>::batch_delete(storage, batch, consumed_output_id)
                 .map_err(|e| PruningError::Storage(Box::new(e)))?;
         }
-
-        if let Some(_treasury_diff) = output_diff.treasury_diff() {
-            // TODO
-        }
     }
 
     Batch::<MilestoneIndex, OutputDiff>::batch_delete(storage, batch, &index)
@@ -520,7 +516,7 @@ fn unwrap_indexation(payload: Option<&Payload>) -> Option<&IndexationPayload> {
     }
 }
 
-// TODO: consider using this instead of 'truncate'
+// TODO: consider using this instead of 'truncate'.
 #[allow(dead_code)]
 fn prune_seps<S: StorageBackend, const BY_SIZE: bool>(
     storage: &S,

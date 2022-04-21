@@ -351,7 +351,7 @@ where
 
                         match should_prune(&tangle, &storage, ledger_index, milestones_to_keep, &pruning_config) {
                             Ok(pruning_task) => match pruning_task {
-                                PruningTask::ByRange(start_index, target_index) => {
+                                PruningTask::ByRange { start_index, target_index } => {
                                     if let Err(e) = prune::prune_by_range(
                                         &tangle,
                                         &storage,
@@ -365,7 +365,7 @@ where
                                         error!("Pruning milestone range failed: {}.", e);
                                     }
                                 }
-                                PruningTask::BySize(num_bytes_to_prune) => {
+                                PruningTask::BySize { num_bytes_to_prune } => {
                                     if let Err(e) = prune::prune_by_size(
                                         &tangle,
                                         &storage,

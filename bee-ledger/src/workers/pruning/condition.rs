@@ -35,10 +35,13 @@ pub(crate) enum PruningSkipReason {
 }
 
 pub(crate) enum PruningTask {
-    // TODO: consider using named structs: start index, target index
-    ByRange(MilestoneIndex, MilestoneIndex),
-    // TODO: same: num_bytes_to_prune
-    BySize(usize),
+    ByRange {
+        start_index: MilestoneIndex,
+        target_index: MilestoneIndex,
+    },
+    BySize {
+        num_bytes_to_prune: usize,
+    },
 }
 
 pub(crate) fn should_prune<S: StorageBackend>(
@@ -57,14 +60,14 @@ pub(crate) fn should_prune<S: StorageBackend>(
         } else {
             let target_pruning_index = *ledger_index - milestones_to_keep;
 
-            Ok(PruningTask::ByRange(
-                pruning_index.into(),
-                if target_pruning_index > pruning_index + PRUNING_BATCH_SIZE_MAX {
+            Ok(PruningTask::ByRange {
+                start_index: pruning_index.into(),
+                target_index: if target_pruning_index > pruning_index + PRUNING_BATCH_SIZE_MAX {
                     (pruning_index + PRUNING_BATCH_SIZE_MAX).into()
                 } else {
                     target_pruning_index.into()
                 },
-            ))
+            })
         }
     } else if config.size().enabled() {
         let last = Duration::from_secs(LAST_PRUNING_BY_SIZE.load(Ordering::Relaxed));
@@ -94,15 +97,15 @@ pub(crate) fn should_prune<S: StorageBackend>(
         } else {
             // Panic: cannot underflow due to actual_size >= threshold_size.
             let excess = actual_size - threshold_size;
-            let num_bytes_to_prune = excess + 
-                (config.size().threshold_percentage() as f64 / 100.0 * threshold_size as f64) as usize;
+            let num_bytes_to_prune =
+                excess + (config.size().threshold_percentage() as f64 / 100.0 * threshold_size as f64) as usize;
 
             log::debug!("Num bytes to prune: {num_bytes_to_prune}");
 
             // Store the time we issued a pruning-by-size.
             LAST_PRUNING_BY_SIZE.store(now.as_secs(), Ordering::Relaxed);
 
-            Ok(PruningTask::BySize(num_bytes_to_prune))
+            Ok(PruningTask::BySize { num_bytes_to_prune })
         }
     } else {
         Err(PruningSkipReason::Disabled)

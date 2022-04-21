@@ -116,19 +116,19 @@ impl PruningSizeConfigBuilder {
         self
     }
 
-    /// TODO
+    /// Sets the target size (i.e. the maximum size) of the database.
     pub fn target_size(mut self, target_size: String) -> Self {
         self.target_size.replace(target_size);
         self
     }
 
-    /// TODO
+    /// Sets the percentage of the target size that is pruned from the database.
     pub fn threshold_percentage(mut self, threshold_percentage: f32) -> Self {
         self.threshold_percentage.replace(threshold_percentage);
         self
     }
 
-    /// TODO
+    /// Sets the cooldown time (i.e. the sleep interval) between two subsequent pruning-by-size events.
     pub fn cooldown_time(mut self, cooldown_time: String) -> Self {
         self.cooldown_time.replace(cooldown_time);
         self
