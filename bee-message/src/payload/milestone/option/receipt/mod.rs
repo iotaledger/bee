@@ -148,7 +148,7 @@ pub mod dto {
         payload::dto::{PayloadDto, TreasuryTransactionPayloadDto},
     };
 
-    /// The payload type to define a receipt.
+    ///
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct ReceiptMilestoneOptionDto {
         #[serde(rename = "type")]

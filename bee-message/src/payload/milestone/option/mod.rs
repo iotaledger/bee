@@ -1,6 +1,7 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod pow;
 mod receipt;
 
 use derive_more::{Deref, From};
@@ -8,7 +9,10 @@ use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU32, prefix::BoxedSlicePrefix, Packable};
 pub(crate) use receipt::{MigratedFundsAmount, ReceiptFundsCount};
 
-pub use self::receipt::{MigratedFundsEntry, ReceiptMilestoneOption, TailTransactionHash};
+pub use self::{
+    pow::PowMilestoneOption,
+    receipt::{MigratedFundsEntry, ReceiptMilestoneOption, TailTransactionHash},
+};
 use crate::Error;
 
 ///
@@ -24,6 +28,9 @@ pub enum MilestoneOption {
     /// A receipt milestone option.
     #[packable(tag = ReceiptMilestoneOption::KIND)]
     Receipt(ReceiptMilestoneOption),
+    /// A PoW milestone option.
+    #[packable(tag = PowMilestoneOption::KIND)]
+    Pow(PowMilestoneOption),
 }
 
 impl MilestoneOption {
@@ -31,6 +38,7 @@ impl MilestoneOption {
     pub fn kind(&self) -> u8 {
         match self {
             Self::Receipt(_) => ReceiptMilestoneOption::KIND,
+            Self::Pow(_) => PowMilestoneOption::KIND,
         }
     }
 }
@@ -98,6 +106,15 @@ impl MilestoneOptions {
             None
         }
     }
+
+    /// Gets a reference to a [`PowMilestoneOption`], if any.
+    pub fn pow(&self) -> Option<&PowMilestoneOption> {
+        if let Some(MilestoneOption::Pow(pow)) = self.get(PowMilestoneOption::KIND) {
+            Some(pow)
+        } else {
+            None
+        }
+    }
 }
 
 #[inline]
@@ -115,7 +132,7 @@ pub mod dto {
     use serde::{Deserialize, Serialize, Serializer};
     use serde_json::Value;
 
-    pub use self::receipt::dto::ReceiptMilestoneOptionDto;
+    pub use self::{pow::dto::PowMilestoneOptionDto, receipt::dto::ReceiptMilestoneOptionDto};
     use super::*;
     use crate::error::dto::DtoError;
 
@@ -123,6 +140,8 @@ pub mod dto {
     pub enum MilestoneOptionDto {
         /// A receipt milestone option.
         Receipt(ReceiptMilestoneOptionDto),
+        /// A pow milestone option.
+        Pow(PowMilestoneOptionDto),
     }
 
     impl<'de> Deserialize<'de> for MilestoneOptionDto {
@@ -137,6 +156,11 @@ pub mod dto {
                 {
                     ReceiptMilestoneOption::KIND => {
                         MilestoneOptionDto::Receipt(ReceiptMilestoneOptionDto::deserialize(value).map_err(|e| {
+                            serde::de::Error::custom(format!("cannot deserialize receipt milestone option: {}", e))
+                        })?)
+                    }
+                    PowMilestoneOption::KIND => {
+                        MilestoneOptionDto::Pow(PowMilestoneOptionDto::deserialize(value).map_err(|e| {
                             serde::de::Error::custom(format!("cannot deserialize receipt milestone option: {}", e))
                         })?)
                     }
@@ -155,6 +179,7 @@ pub mod dto {
             #[serde(untagged)]
             enum MilestoneOptionDto_<'a> {
                 T1(&'a ReceiptMilestoneOptionDto),
+                T2(&'a PowMilestoneOptionDto),
             }
             #[derive(Serialize)]
             struct TypedMilestoneOption<'a> {
@@ -165,6 +190,9 @@ pub mod dto {
                 MilestoneOptionDto::Receipt(o) => TypedMilestoneOption {
                     milestone_option: MilestoneOptionDto_::T1(o),
                 },
+                MilestoneOptionDto::Pow(o) => TypedMilestoneOption {
+                    milestone_option: MilestoneOptionDto_::T2(o),
+                },
             };
             milestone_option.serialize(serializer)
         }
@@ -174,6 +202,7 @@ pub mod dto {
         fn from(value: &MilestoneOption) -> Self {
             match value {
                 MilestoneOption::Receipt(v) => Self::Receipt(v.into()),
+                MilestoneOption::Pow(v) => Self::Pow(v.into()),
             }
         }
     }
@@ -184,6 +213,7 @@ pub mod dto {
         fn try_from(value: &MilestoneOptionDto) -> Result<Self, Self::Error> {
             Ok(match value {
                 MilestoneOptionDto::Receipt(v) => Self::Receipt(v.try_into()?),
+                MilestoneOptionDto::Pow(v) => Self::Pow(v.try_into()?),
             })
         }
     }
@@ -193,6 +223,7 @@ pub mod dto {
         pub fn kind(&self) -> u8 {
             match self {
                 Self::Receipt(_) => ReceiptMilestoneOption::KIND,
+                Self::Pow(_) => PowMilestoneOption::KIND,
             }
         }
     }

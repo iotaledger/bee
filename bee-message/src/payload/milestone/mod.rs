@@ -21,7 +21,7 @@ pub(crate) use self::essence::MilestoneMetadataLength;
 pub use self::{
     essence::MilestoneEssence,
     milestone_id::MilestoneId,
-    option::{MilestoneOption, MilestoneOptions, ReceiptMilestoneOption},
+    option::{MilestoneOption, MilestoneOptions, PowMilestoneOption, ReceiptMilestoneOption},
 };
 use crate::{signature::Signature, Error};
 
@@ -179,10 +179,6 @@ pub mod dto {
         pub confirmed_merkle_proof: String,
         #[serde(rename = "appliedMerkleProof")]
         pub applied_merkle_proof: String,
-        #[serde(rename = "nextPoWScore")]
-        pub next_pow_score: u32,
-        #[serde(rename = "nextPoWScoreMilestoneIndex")]
-        pub next_pow_score_milestone_index: u32,
         pub metadata: String,
         pub options: Vec<MilestoneOptionDto>,
         pub signatures: Vec<SignatureDto>,
@@ -198,8 +194,6 @@ pub mod dto {
                 parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
                 confirmed_merkle_proof: prefix_hex::encode(value.essence().confirmed_merkle_proof()),
                 applied_merkle_proof: prefix_hex::encode(value.essence().applied_merkle_proof()),
-                next_pow_score: value.essence().next_pow_score(),
-                next_pow_score_milestone_index: value.essence().next_pow_score_milestone_index(),
                 metadata: prefix_hex::encode(value.essence().metadata()),
                 options: value.essence().options().iter().map(Into::into).collect::<_>(),
                 signatures: value.signatures().iter().map(From::from).collect(),
@@ -228,8 +222,6 @@ pub mod dto {
                     .map_err(|_| DtoError::InvalidField("confirmedMerkleProof"))?;
                 let applied_merkle_proof = prefix_hex::decode(&value.applied_merkle_proof)
                     .map_err(|_| DtoError::InvalidField("appliedMerkleProof"))?;
-                let next_pow_score = value.next_pow_score;
-                let next_pow_score_milestone_index = value.next_pow_score_milestone_index;
                 let metadata = prefix_hex::decode(&value.metadata).map_err(|_| DtoError::InvalidField("metadata"))?;
                 let options = MilestoneOptions::try_from(
                     value
@@ -246,8 +238,6 @@ pub mod dto {
                     Parents::new(parent_ids)?,
                     confirmed_merkle_proof,
                     applied_merkle_proof,
-                    next_pow_score,
-                    next_pow_score_milestone_index,
                     metadata,
                     options,
                 )?

@@ -80,8 +80,6 @@ fn milestone() {
             rand_parents(),
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-            0,
-            0,
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
         )

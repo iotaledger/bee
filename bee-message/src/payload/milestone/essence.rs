@@ -31,8 +31,6 @@ pub struct MilestoneEssence {
     parents: Parents,
     confirmed_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
     applied_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
-    next_pow_score: u32,
-    next_pow_score_milestone_index: u32,
     metadata: BoxedSlicePrefix<u8, MilestoneMetadataLength>,
     options: MilestoneOptions,
 }
@@ -50,13 +48,9 @@ impl MilestoneEssence {
         parents: Parents,
         confirmed_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
         applied_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
-        next_pow_score: u32,
-        next_pow_score_milestone_index: u32,
         metadata: Vec<u8>,
         options: MilestoneOptions,
     ) -> Result<Self, Error> {
-        verify_pow_scores(index, next_pow_score, next_pow_score_milestone_index)?;
-
         let metadata = metadata
             .into_boxed_slice()
             .try_into()
@@ -69,8 +63,6 @@ impl MilestoneEssence {
             parents,
             confirmed_merkle_proof,
             applied_merkle_proof,
-            next_pow_score,
-            next_pow_score_milestone_index,
             metadata,
             options,
         })
@@ -106,16 +98,6 @@ impl MilestoneEssence {
         &self.applied_merkle_proof
     }
 
-    /// Returns the next proof of work score of a [`MilestoneEssence`].
-    pub fn next_pow_score(&self) -> u32 {
-        self.next_pow_score
-    }
-
-    /// Returns the newt proof of work index of a [`MilestoneEssence`].
-    pub fn next_pow_score_milestone_index(&self) -> u32 {
-        self.next_pow_score_milestone_index
-    }
-
     /// Returns the metadata.
     pub fn metadata(&self) -> &[u8] {
         &self.metadata
@@ -142,8 +124,6 @@ impl Packable for MilestoneEssence {
         self.parents.pack(packer)?;
         self.confirmed_merkle_proof.pack(packer)?;
         self.applied_merkle_proof.pack(packer)?;
-        self.next_pow_score.pack(packer)?;
-        self.next_pow_score_milestone_index.pack(packer)?;
         self.metadata.pack(packer)?;
         self.options.pack(packer)?;
 
@@ -161,12 +141,6 @@ impl Packable for MilestoneEssence {
             <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
         let applied_merkle_proof =
             <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let next_pow_score = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let next_pow_score_milestone_index = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
-
-        if VERIFY {
-            verify_pow_scores(index, next_pow_score, next_pow_score_milestone_index).map_err(UnpackError::Packable)?;
-        }
 
         let metadata = BoxedSlicePrefix::<u8, MilestoneMetadataLength>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|e| Error::InvalidMilestoneMetadataLength(e.into_prefix_err().into()))?;
@@ -180,27 +154,8 @@ impl Packable for MilestoneEssence {
             parents,
             confirmed_merkle_proof,
             applied_merkle_proof,
-            next_pow_score,
-            next_pow_score_milestone_index,
             metadata,
             options,
         })
-    }
-}
-
-fn verify_pow_scores(
-    index: MilestoneIndex,
-    next_pow_score: u32,
-    next_pow_score_milestone_index: u32,
-) -> Result<(), Error> {
-    if next_pow_score == 0 && next_pow_score_milestone_index != 0
-        || next_pow_score != 0 && next_pow_score_milestone_index <= *index
-    {
-        Err(Error::InvalidPowScoreValues {
-            nps: next_pow_score,
-            npsmi: next_pow_score_milestone_index,
-        })
-    } else {
-        Ok(())
     }
 }

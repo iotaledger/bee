@@ -18,23 +18,23 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    assert!(MilestonePayload::new(
-        MilestoneEssence::new(
-            MilestoneIndex(0),
-            0,
-            rand_milestone_id(),
-            rand_parents(),
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-            0,
-            0,
-            vec![],
-            MilestoneOptions::new(vec![]).unwrap(),
+    assert!(
+        MilestonePayload::new(
+            MilestoneEssence::new(
+                MilestoneIndex(0),
+                0,
+                rand_milestone_id(),
+                rand_parents(),
+                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+                vec![],
+                MilestoneOptions::new(vec![]).unwrap(),
+            )
+            .unwrap(),
+            vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))]
         )
-        .unwrap(),
-        vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))]
-    )
-    .is_ok());
+        .is_ok()
+    );
 }
 
 #[test]
@@ -48,8 +48,6 @@ fn new_invalid_no_signature() {
                 rand_parents(),
                 [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-                0,
-                0,
                 vec![],
                 MilestoneOptions::new(vec![]).unwrap(),
             )
@@ -71,8 +69,6 @@ fn new_invalid_too_many_signatures() {
                 rand_parents(),
                 [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-                0,
-                0,
                 vec![],
                 MilestoneOptions::new(vec![]).unwrap(),
             )
@@ -95,8 +91,6 @@ fn packed_len() {
             Parents::new(rand_message_ids(4)).unwrap(),
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-            0,
-            0,
             vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a],
             MilestoneOptions::new(vec![]).unwrap(),
         )
@@ -108,8 +102,8 @@ fn packed_len() {
     )
     .unwrap();
 
-    assert_eq!(ms.packed_len(), 447);
-    assert_eq!(ms.pack_to_vec().len(), 447);
+    assert_eq!(ms.packed_len(), 439);
+    assert_eq!(ms.pack_to_vec().len(), 439);
 }
 
 #[test]
@@ -122,8 +116,6 @@ fn pack_unpack_valid() {
             rand_parents(),
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-            0,
-            0,
             vec![],
             MilestoneOptions::new(vec![]).unwrap(),
         )
@@ -147,8 +139,6 @@ fn getters() {
         rand_parents(),
         [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
         [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-        0,
-        0,
         vec![],
         MilestoneOptions::new(vec![]).unwrap(),
     )
