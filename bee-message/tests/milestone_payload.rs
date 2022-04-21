@@ -8,7 +8,7 @@ use bee_message::{
     signature::{Ed25519Signature, Signature},
     Error,
 };
-use bee_test::rand::{self, message::rand_message_ids, parents::rand_parents};
+use bee_test::rand::{self, message::rand_message_ids, milestone::rand_milestone_id, parents::rand_parents};
 use packable::{bounded::TryIntoBoundedU8Error, PackableExt};
 
 #[test]
@@ -18,23 +18,23 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    assert!(
-        MilestonePayload::new(
-            MilestoneEssence::new(
-                MilestoneIndex(0),
-                0,
-                rand_parents(),
-                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
-                0,
-                0,
-                vec![],
-                MilestoneOptions::new(vec![]).unwrap(),
-            )
-            .unwrap(),
-            vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))]
+    assert!(MilestonePayload::new(
+        MilestoneEssence::new(
+            MilestoneIndex(0),
+            0,
+            rand_milestone_id(),
+            rand_parents(),
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
+            0,
+            0,
+            vec![],
+            MilestoneOptions::new(vec![]).unwrap(),
         )
-        .is_ok()
-    );
+        .unwrap(),
+        vec![Signature::from(Ed25519Signature::new([0; 32], [0; 64]))]
+    )
+    .is_ok());
 }
 
 #[test]
@@ -44,7 +44,9 @@ fn new_invalid_no_signature() {
             MilestoneEssence::new(
                 MilestoneIndex(0),
                 0,
+                rand_milestone_id(),
                 rand_parents(),
+                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 0,
                 0,
@@ -65,7 +67,9 @@ fn new_invalid_too_many_signatures() {
             MilestoneEssence::new(
                 MilestoneIndex(0),
                 0,
+                rand_milestone_id(),
                 rand_parents(),
+                [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
                 0,
                 0,
@@ -87,7 +91,9 @@ fn packed_len() {
         MilestoneEssence::new(
             MilestoneIndex(0),
             0,
+            rand_milestone_id(),
             Parents::new(rand_message_ids(4)).unwrap(),
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
@@ -102,8 +108,8 @@ fn packed_len() {
     )
     .unwrap();
 
-    assert_eq!(ms.packed_len(), 383);
-    assert_eq!(ms.pack_to_vec().len(), 383);
+    assert_eq!(ms.packed_len(), 447);
+    assert_eq!(ms.pack_to_vec().len(), 447);
 }
 
 #[test]
@@ -112,7 +118,9 @@ fn pack_unpack_valid() {
         MilestoneEssence::new(
             MilestoneIndex(0),
             0,
+            rand_milestone_id(),
             rand_parents(),
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
@@ -135,7 +143,9 @@ fn getters() {
     let essence = MilestoneEssence::new(
         rand::milestone::rand_milestone_index(),
         rand::number::rand_number::<u32>(),
+        rand_milestone_id(),
         rand_parents(),
+        [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
         [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
         0,
         0,

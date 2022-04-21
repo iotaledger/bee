@@ -25,8 +25,10 @@ pub struct WhiteFlagMetadata {
     pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
     /// The outputs consumed within the confirmed milestone.
     pub(crate) consumed_outputs: HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
-    /// The merkle proof of the milestone.
-    pub(crate) merkle_proof: Vec<u8>,
+    /// The confirmed merkle proof of the milestone.
+    pub(crate) confirmed_merkle_proof: Vec<u8>,
+    /// The applied merkle proof of the milestone.
+    pub(crate) applied_merkle_proof: Vec<u8>,
 }
 
 impl WhiteFlagMetadata {
@@ -41,12 +43,18 @@ impl WhiteFlagMetadata {
             included_messages: Vec::new(),
             created_outputs: HashMap::new(),
             consumed_outputs: HashMap::new(),
-            merkle_proof: Vec::new(),
+            confirmed_merkle_proof: Vec::new(),
+            applied_merkle_proof: Vec::new(),
         }
     }
 
-    /// Returns the merkle proof of a [`WhiteFlagMetadata`].
-    pub fn merkle_proof(&self) -> &[u8] {
-        &self.merkle_proof
+    /// Returns the confirmed merkle proof of a [`WhiteFlagMetadata`].
+    pub fn confirmed_merkle_proof(&self) -> &[u8] {
+        &self.confirmed_merkle_proof
+    }
+
+    /// Returns the applied merkle proof of a [`WhiteFlagMetadata`].
+    pub fn applied_merkle_proof(&self) -> &[u8] {
+        &self.applied_merkle_proof
     }
 }

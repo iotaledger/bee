@@ -102,11 +102,25 @@ where
 
     white_flag(tangle, storage, message.parents(), &mut metadata).await?;
 
-    if !metadata.merkle_proof.eq(&milestone.essence().merkle_proof()) {
+    if !metadata
+        .confirmed_merkle_proof
+        .eq(&milestone.essence().confirmed_merkle_proof())
+    {
         return Err(Error::MerkleProofMismatch(
             milestone.essence().index(),
-            prefix_hex::encode(metadata.merkle_proof),
-            prefix_hex::encode(milestone.essence().merkle_proof()),
+            prefix_hex::encode(metadata.confirmed_merkle_proof),
+            prefix_hex::encode(milestone.essence().confirmed_merkle_proof()),
+        ));
+    }
+
+    if !metadata
+        .applied_merkle_proof
+        .eq(&milestone.essence().applied_merkle_proof())
+    {
+        return Err(Error::MerkleProofMismatch(
+            milestone.essence().index(),
+            prefix_hex::encode(metadata.applied_merkle_proof),
+            prefix_hex::encode(milestone.essence().applied_merkle_proof()),
         ));
     }
 

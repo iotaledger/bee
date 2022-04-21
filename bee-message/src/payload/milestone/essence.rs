@@ -11,7 +11,12 @@ use packable::{
     Packable, PackableExt,
 };
 
-use crate::{milestone::MilestoneIndex, parent::Parents, payload::MilestoneOptions, Error};
+use crate::{
+    milestone::MilestoneIndex,
+    parent::Parents,
+    payload::milestone::{MilestoneId, MilestoneOptions},
+    Error,
+};
 
 pub(crate) type MilestoneMetadataLength = BoundedU16<{ u16::MIN }, { u16::MAX }>;
 
@@ -22,8 +27,10 @@ pub(crate) type MilestoneMetadataLength = BoundedU16<{ u16::MIN }, { u16::MAX }>
 pub struct MilestoneEssence {
     index: MilestoneIndex,
     timestamp: u32,
+    previous_milestone_id: MilestoneId,
     parents: Parents,
-    merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
+    confirmed_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
+    applied_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
     next_pow_score: u32,
     next_pow_score_milestone_index: u32,
     metadata: BoxedSlicePrefix<u8, MilestoneMetadataLength>,
@@ -39,8 +46,10 @@ impl MilestoneEssence {
     pub fn new(
         index: MilestoneIndex,
         timestamp: u32,
+        previous_milestone_id: MilestoneId,
         parents: Parents,
-        merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
+        confirmed_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
+        applied_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
         next_pow_score: u32,
         next_pow_score_milestone_index: u32,
         metadata: Vec<u8>,
@@ -56,8 +65,10 @@ impl MilestoneEssence {
         Ok(Self {
             index,
             timestamp,
+            previous_milestone_id,
             parents,
-            merkle_proof,
+            confirmed_merkle_proof,
+            applied_merkle_proof,
             next_pow_score,
             next_pow_score_milestone_index,
             metadata,
@@ -75,14 +86,24 @@ impl MilestoneEssence {
         self.timestamp
     }
 
+    /// Returns the previous milestone ID of a [`MilestoneEssence`].
+    pub fn previous_milestone_id(&self) -> &MilestoneId {
+        &self.previous_milestone_id
+    }
+
     /// Returns the parents of a [`MilestoneEssence`].
     pub fn parents(&self) -> &Parents {
         &self.parents
     }
 
-    /// Returns the merkle proof of a [`MilestoneEssence`].
-    pub fn merkle_proof(&self) -> &[u8] {
-        &self.merkle_proof
+    /// Returns the confirmed merkle proof of a [`MilestoneEssence`].
+    pub fn confirmed_merkle_proof(&self) -> &[u8] {
+        &self.confirmed_merkle_proof
+    }
+
+    /// Returns the applied merkle proof of a [`MilestoneEssence`].
+    pub fn applied_merkle_proof(&self) -> &[u8] {
+        &self.applied_merkle_proof
     }
 
     /// Returns the next proof of work score of a [`MilestoneEssence`].
@@ -117,8 +138,10 @@ impl Packable for MilestoneEssence {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.index.pack(packer)?;
         self.timestamp.pack(packer)?;
+        self.previous_milestone_id.pack(packer)?;
         self.parents.pack(packer)?;
-        self.merkle_proof.pack(packer)?;
+        self.confirmed_merkle_proof.pack(packer)?;
+        self.applied_merkle_proof.pack(packer)?;
         self.next_pow_score.pack(packer)?;
         self.next_pow_score_milestone_index.pack(packer)?;
         self.metadata.pack(packer)?;
@@ -132,10 +155,12 @@ impl Packable for MilestoneEssence {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
         let timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let previous_milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker).coerce()?;
         let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
-
-        let merkle_proof = <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
-
+        let confirmed_merkle_proof =
+            <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let applied_merkle_proof =
+            <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
         let next_pow_score = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
         let next_pow_score_milestone_index = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
 
@@ -151,8 +176,10 @@ impl Packable for MilestoneEssence {
         Ok(Self {
             index,
             timestamp,
+            previous_milestone_id,
             parents,
-            merkle_proof,
+            confirmed_merkle_proof,
+            applied_merkle_proof,
             next_pow_score,
             next_pow_score_milestone_index,
             metadata,

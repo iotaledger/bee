@@ -18,6 +18,7 @@ use bee_message::{
 };
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
+    milestone::rand_milestone_id,
     parents::rand_parents,
 };
 use packable::PackableExt;
@@ -75,7 +76,9 @@ fn milestone() {
         MilestoneEssence::new(
             MilestoneIndex(0),
             0,
+            rand_milestone_id(),
             rand_parents(),
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,

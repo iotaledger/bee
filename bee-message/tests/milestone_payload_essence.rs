@@ -11,7 +11,7 @@ use bee_message::{
     },
     Error,
 };
-use bee_test::rand::{self, parents::rand_parents};
+use bee_test::rand::{self, milestone::rand_milestone_id, parents::rand_parents};
 use packable::PackableExt;
 
 #[test]
@@ -20,7 +20,9 @@ fn new_invalid_pow_score_non_zero() {
         MilestoneEssence::new(
             MilestoneIndex(0),
             0,
+            rand_milestone_id(),
             rand_parents(),
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             4242,
@@ -37,7 +39,9 @@ fn new_invalid_pow_score_lower_than_index() {
         MilestoneEssence::new(
             MilestoneIndex(4242),
             0,
+            rand_milestone_id(),
             rand_parents(),
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             4000,
             4241,
@@ -54,7 +58,9 @@ fn new_valid() {
         MilestoneEssence::new(
             MilestoneIndex(0),
             0,
+            rand_milestone_id(),
             rand_parents(),
+            [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
             0,
             0,
@@ -69,8 +75,10 @@ fn new_valid() {
 fn getters() {
     let index = rand::milestone::rand_milestone_index();
     let timestamp = rand::number::rand_number::<u32>();
+    let previous_milestone_id = rand_milestone_id();
     let parents = rand_parents();
-    let merkel_proof = [0; MilestoneEssence::MERKLE_PROOF_LENGTH];
+    let confirmed_merkle_proof = [0; MilestoneEssence::MERKLE_PROOF_LENGTH];
+    let applied_merkle_proof = [0; MilestoneEssence::MERKLE_PROOF_LENGTH];
     let next_pow_score = 0;
     let next_pow_score_milestone_index = 0;
     let receipt = ReceiptMilestoneOption::new(
@@ -89,8 +97,10 @@ fn getters() {
     let milestone_payload = MilestoneEssence::new(
         index,
         timestamp,
+        previous_milestone_id,
         parents.clone(),
-        merkel_proof,
+        confirmed_merkle_proof,
+        applied_merkle_proof,
         next_pow_score,
         next_pow_score_milestone_index,
         vec![],
@@ -100,8 +110,10 @@ fn getters() {
 
     assert_eq!(milestone_payload.index(), index);
     assert_eq!(milestone_payload.timestamp(), timestamp);
+    assert_eq!(milestone_payload.previous_milestone_id(), &previous_milestone_id);
     assert_eq!(*milestone_payload.parents(), parents);
-    assert_eq!(milestone_payload.merkle_proof(), merkel_proof);
+    assert_eq!(milestone_payload.confirmed_merkle_proof(), confirmed_merkle_proof);
+    assert_eq!(milestone_payload.applied_merkle_proof(), applied_merkle_proof);
     assert_eq!(milestone_payload.next_pow_score(), next_pow_score);
     assert_eq!(
         milestone_payload.next_pow_score_milestone_index(),
@@ -115,7 +127,9 @@ fn pack_unpack_valid() {
     let milestone_payload = MilestoneEssence::new(
         MilestoneIndex(0),
         0,
+        rand_milestone_id(),
         rand_parents(),
+        [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
         [0; MilestoneEssence::MERKLE_PROOF_LENGTH],
         0,
         0,

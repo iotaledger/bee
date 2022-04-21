@@ -202,7 +202,7 @@ pub async fn white_flag<B: StorageBackend>(
 ) -> Result<(), Error> {
     traverse_past_cone(tangle, storage, message_ids.iter().rev().copied().collect(), metadata).await?;
 
-    metadata.merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
+    metadata.applied_merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
 
     if metadata.referenced_messages
         != metadata.excluded_no_transaction_messages.len()

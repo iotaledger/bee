@@ -163,6 +163,8 @@ fn verify_signatures<const VERIFY: bool>(signatures: &[Signature]) -> Result<(),
 #[cfg(feature = "dto")]
 #[allow(missing_docs)]
 pub mod dto {
+    use core::str::FromStr;
+
     use serde::{Deserialize, Serialize};
 
     use self::option::dto::MilestoneOptionDto;
@@ -178,10 +180,14 @@ pub mod dto {
         pub kind: u32,
         pub index: u32,
         pub timestamp: u32,
+        #[serde(rename = "lastMilestoneId")]
+        pub previous_milestone_id: String,
         #[serde(rename = "parentMessageIds")]
         pub parents: Vec<String>,
-        #[serde(rename = "inclusionMerkleProof")]
-        pub inclusion_merkle_proof: String,
+        #[serde(rename = "confirmedMerkleProof")]
+        pub confirmed_merkle_proof: String,
+        #[serde(rename = "appliedMerkleProof")]
+        pub applied_merkle_proof: String,
         #[serde(rename = "nextPoWScore")]
         pub next_pow_score: u32,
         #[serde(rename = "nextPoWScoreMilestoneIndex")]
@@ -197,8 +203,10 @@ pub mod dto {
                 kind: MilestonePayload::KIND,
                 index: *value.essence().index(),
                 timestamp: value.essence().timestamp(),
+                previous_milestone_id: value.essence().previous_milestone_id().to_string(),
                 parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
-                inclusion_merkle_proof: prefix_hex::encode(value.essence().merkle_proof()),
+                confirmed_merkle_proof: prefix_hex::encode(value.essence().confirmed_merkle_proof()),
+                applied_merkle_proof: prefix_hex::encode(value.essence().applied_merkle_proof()),
                 next_pow_score: value.essence().next_pow_score(),
                 next_pow_score_milestone_index: value.essence().next_pow_score_milestone_index(),
                 metadata: prefix_hex::encode(value.essence().metadata()),
@@ -215,6 +223,8 @@ pub mod dto {
             let essence = {
                 let index = value.index;
                 let timestamp = value.timestamp;
+                let previous_milestone_id = MilestoneId::from_str(&value.previous_milestone_id)
+                    .map_err(|_| DtoError::InvalidField("lastMilestoneId"))?;
                 let mut parent_ids = Vec::new();
                 for msg_id in &value.parents {
                     parent_ids.push(
@@ -223,8 +233,10 @@ pub mod dto {
                             .map_err(|_| DtoError::InvalidField("parentMessageIds"))?,
                     );
                 }
-                let merkle_proof = prefix_hex::decode(&value.inclusion_merkle_proof)
-                    .map_err(|_| DtoError::InvalidField("inclusionMerkleProof"))?;
+                let confirmed_merkle_proof = prefix_hex::decode(&value.confirmed_merkle_proof)
+                    .map_err(|_| DtoError::InvalidField("confirmedMerkleProof"))?;
+                let applied_merkle_proof = prefix_hex::decode(&value.applied_merkle_proof)
+                    .map_err(|_| DtoError::InvalidField("appliedMerkleProof"))?;
                 let next_pow_score = value.next_pow_score;
                 let next_pow_score_milestone_index = value.next_pow_score_milestone_index;
                 let metadata = prefix_hex::decode(&value.metadata).map_err(|_| DtoError::InvalidField("metadata"))?;
@@ -239,8 +251,10 @@ pub mod dto {
                 MilestoneEssence::new(
                     MilestoneIndex(index),
                     timestamp,
+                    previous_milestone_id,
                     Parents::new(parent_ids)?,
-                    merkle_proof,
+                    confirmed_merkle_proof,
+                    applied_merkle_proof,
                     next_pow_score,
                     next_pow_score_milestone_index,
                     metadata,
