@@ -11,7 +11,8 @@ use serde::Deserialize;
 const PRUNING_MILESTONES_ENABLED_DEFAULT: bool = true;
 const PRUNING_SIZE_ENABLED_DEFAULT: bool = true;
 const PRUNING_RECEIPTS_ENABLED_DEFAULT: bool = false;
-const MAX_MILESTONES_TO_KEEP_DEFAULT: u32 = 99999; //60480;
+const MAX_MILESTONES_TO_KEEP_DEFAULT: u32 = 60480;
+pub(crate) const MAX_MILESTONES_TO_KEEP_MINIMUM: u32 = 50;
 const THRESHOLD_PERCENTAGE_DEFAULT: f32 = 10.0;
 const COOLDOWN_TIME_DEFAULT: &str = "5m";
 const TARGET_SIZE_DEFAULT: &str = "30Gb";
@@ -77,7 +78,10 @@ impl PruningMilestonesConfigBuilder {
     }
 
     /// Sets how many milestones to hold available in the storage.
+    ///
+    /// Note: You cannot set a value below [`MAX_MILESTONES_TO_KEEP_MINIMUM`].
     pub fn max_milestones_to_keep(mut self, max_milestones_to_keep: u32) -> Self {
+        let max_milestones_to_keep = max_milestones_to_keep.max(MAX_MILESTONES_TO_KEEP_MINIMUM);
         self.max_milestones_to_keep.replace(max_milestones_to_keep);
         self
     }

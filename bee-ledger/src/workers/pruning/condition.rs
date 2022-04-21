@@ -22,15 +22,15 @@ static LAST_PRUNING_BY_SIZE: AtomicU64 = AtomicU64::new(0);
 pub(crate) enum PruningSkipReason {
     #[error("Pruning disabled.")]
     Disabled,
-    #[error("Pruning by size is not supported by the storage layer.")]
+    #[error("Pruning by milestone below index threshold.")]
+    BelowMilestoneIndexThreshold,
+    #[error("Pruning by size not supported by the storage layer.")]
     PruningBySizeUnsupported,
-    #[error("Pruning by size is currently unavailable.")]
+    #[error("Pruning by size currently unavailable.")]
     PruningBySizeUnavailable,
-    #[error("Pruning milestones skipped for the next {reached_in} indexes.")]
-    BelowMilestoneIndexThreshold { reached_in: u32 },
-    #[error("Pruning by storage size skipped because current size < {target_size}.")]
-    BelowStorageSizeThreshold { target_size: usize },
-    #[error("Pruning by storage size is skipped because of cooldown.")]
+    #[error("Pruning by size below size threshold.")]
+    BelowStorageSizeThreshold,
+    #[error("Pruning by size below cooldown threshold.")]
     BelowCooldownTimeThreshold,
 }
 
@@ -53,9 +53,7 @@ pub(crate) fn should_prune<S: StorageBackend>(
         let pruning_threshold = pruning_index + milestones_to_keep;
 
         if *ledger_index < pruning_threshold {
-            Err(PruningSkipReason::BelowMilestoneIndexThreshold {
-                reached_in: pruning_threshold - *ledger_index,
-            })
+            Err(PruningSkipReason::BelowMilestoneIndexThreshold)
         } else {
             let target_pruning_index = *ledger_index - milestones_to_keep;
 
@@ -87,15 +85,15 @@ pub(crate) fn should_prune<S: StorageBackend>(
                 return Err(PruningSkipReason::PruningBySizeUnsupported);
             }
         };
-        let target_size = config.size().target_size();
+        let threshold_size = config.size().target_size();
 
-        log::debug!("Storage size: actual {actual_size} target {target_size}");
+        log::debug!("Storage size: actual {actual_size} limit {threshold_size}");
 
-        if actual_size < target_size {
-            Err(PruningSkipReason::BelowStorageSizeThreshold { target_size })
+        if actual_size < threshold_size {
+            Err(PruningSkipReason::BelowStorageSizeThreshold)
         } else {
             let num_bytes_to_prune =
-                (config.size().threshold_percentage() as f64 / 100.0 * target_size as f64) as usize;
+                (config.size().threshold_percentage() as f64 / 100.0 * threshold_size as f64) as usize;
 
             log::debug!("Num bytes to prune: {num_bytes_to_prune}");
 

@@ -370,6 +370,7 @@ where
                                         &tangle,
                                         &storage,
                                         &bus,
+                                        ledger_index,
                                         num_bytes_to_prune,
                                         &pruning_config,
                                     )

@@ -11,15 +11,18 @@ use bee_runtime::event::Bus;
 use bee_storage::access::{Batch, Truncate};
 use bee_tangle::{solid_entry_point::SolidEntryPoint, Tangle};
 
-use crate::workers::{
-    event::PrunedIndex,
-    pruning::{
-        batch,
-        config::PruningConfig,
-        error::PruningError,
-        metrics::{PruningMetrics, Timings},
+use crate::{
+    types::LedgerIndex,
+    workers::{
+        event::PrunedIndex,
+        pruning::{
+            batch,
+            config::{PruningConfig, MAX_MILESTONES_TO_KEEP_MINIMUM},
+            error::PruningError,
+            metrics::{PruningMetrics, Timings},
+        },
+        storage::{self, StorageBackend},
     },
-    storage::{self, StorageBackend},
 };
 
 const KEEP_INITIAL_SNAPSHOT_SEPS: usize = 50;
@@ -73,6 +76,7 @@ pub async fn prune_by_size<S: StorageBackend>(
     tangle: &Tangle<S>,
     storage: &S,
     bus: &Bus<'_>,
+    ledger_index: LedgerIndex,
     num_bytes_to_prune: usize,
     config: &PruningConfig,
 ) -> Result<(), PruningError> {
@@ -81,11 +85,17 @@ pub async fn prune_by_size<S: StorageBackend>(
     let mut num_pruned_bytes = 0;
 
     while num_pruned_bytes < num_bytes_to_prune {
-        log::debug!("Pruned {num_pruned_bytes}/{num_bytes_to_prune} bytes.");
-
         let index = *tangle.get_pruning_index() + 1;
+
+        if *ledger_index < index + MAX_MILESTONES_TO_KEEP_MINIMUM {
+            log::debug!("Minimum pruning index reached.");
+            break;
+        }
+
         num_pruned_bytes +=
             prune_milestone::<_, true>(index, tangle, storage, bus, &mut timings, &mut metrics, config).await?;
+
+        log::debug!("Pruned {num_pruned_bytes}/{num_bytes_to_prune} bytes.");
     }
 
     Ok(())
