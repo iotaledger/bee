@@ -428,7 +428,7 @@ dependencies = [
 name = "bee-pow"
 version = "0.2.0"
 dependencies = [
- "bee-ternary 0.5.2",
+ "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
  "iota-crypto",
  "thiserror",
