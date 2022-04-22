@@ -204,7 +204,7 @@ pub struct MilestoneResponse {
     pub milestone_index: u32,
     #[serde(rename = "messageId")]
     pub message_id: String,
-    pub timestamp: u64,
+    pub timestamp: u32,
 }
 
 impl BodyInner for MilestoneResponse {}
