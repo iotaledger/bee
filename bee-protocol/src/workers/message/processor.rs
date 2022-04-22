@@ -122,7 +122,6 @@ where
                         let message = match Message::unpack_verified(&mut &message_packet.bytes[..]) {
                             Ok(message) => message,
                             Err(e) => {
-                                println!("{:?}", e);
                                 notify_invalid_message(format!("Invalid message: {:?}.", e), &metrics, notifier);
                                 continue;
                             }
