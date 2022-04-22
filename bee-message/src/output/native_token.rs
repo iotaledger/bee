@@ -96,6 +96,16 @@ impl NativeTokensBuilder {
     }
 }
 
+impl From<NativeTokens> for NativeTokensBuilder {
+    fn from(native_tokens: NativeTokens) -> Self {
+        let mut builder = NativeTokensBuilder::new();
+
+        // PANIC: safe as `native_tokens` was already built and then valid.
+        builder.add_native_tokens(native_tokens).unwrap();
+        builder
+    }
+}
+
 pub(crate) type NativeTokenCount = BoundedU8<0, { NativeTokens::COUNT_MAX }>;
 
 ///
