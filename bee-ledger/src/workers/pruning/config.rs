@@ -12,7 +12,7 @@ const PRUNING_MILESTONES_ENABLED_DEFAULT: bool = true;
 const PRUNING_SIZE_ENABLED_DEFAULT: bool = true;
 const PRUNING_RECEIPTS_ENABLED_DEFAULT: bool = false;
 const MAX_MILESTONES_TO_KEEP_DEFAULT: u32 = 60480;
-pub(crate) const MAX_MILESTONES_TO_KEEP_MINIMUM: u32 = 50;
+pub(crate) const MILESTONES_TO_KEEP_MIN: u32 = 50;
 const THRESHOLD_PERCENTAGE_DEFAULT: f32 = 10.0;
 const COOLDOWN_TIME_DEFAULT: &str = "5m";
 const TARGET_SIZE_DEFAULT: &str = "30Gb";
@@ -22,7 +22,8 @@ const TARGET_SIZE_DEFAULT: &str = "30Gb";
 #[must_use]
 pub struct PruningConfigBuilder {
     milestones: Option<PruningMilestonesConfigBuilder>,
-    size: Option<PruningSizeConfigBuilder>,
+    #[serde(rename = "size")]
+    db_size: Option<PruningDbSizeConfigBuilder>,
     receipts: Option<PruningReceiptsConfigBuilder>,
 }
 
@@ -38,9 +39,9 @@ impl PruningConfigBuilder {
         self
     }
 
-    /// Sets the [`PruningSizeConfigBuilder`].
-    pub fn size(mut self, builder: PruningSizeConfigBuilder) -> Self {
-        self.size.replace(builder);
+    /// Sets the [`PruningDbSizeConfigBuilder`].
+    pub fn db_size(mut self, builder: PruningDbSizeConfigBuilder) -> Self {
+        self.db_size.replace(builder);
         self
     }
 
@@ -55,8 +56,8 @@ impl PruningConfigBuilder {
     pub fn finish(self) -> PruningConfig {
         PruningConfig {
             milestones: self.milestones.unwrap_or_default().finish(),
+            db_size: self.db_size.unwrap_or_default().finish(),
             receipts: self.receipts.unwrap_or_default().finish(),
-            size: self.size.unwrap_or_default().finish(),
         }
     }
 }
@@ -79,9 +80,9 @@ impl PruningMilestonesConfigBuilder {
 
     /// Sets how many milestones to hold available in the storage.
     ///
-    /// Note: You cannot set a value below [`MAX_MILESTONES_TO_KEEP_MINIMUM`].
+    /// Note: values below [`MILESTONES_TO_KEEP_MIN`] are not accepted.
     pub fn max_milestones_to_keep(mut self, max_milestones_to_keep: u32) -> Self {
-        let max_milestones_to_keep = max_milestones_to_keep.max(MAX_MILESTONES_TO_KEEP_MINIMUM);
+        let max_milestones_to_keep = max_milestones_to_keep.max(MILESTONES_TO_KEEP_MIN);
         self.max_milestones_to_keep.replace(max_milestones_to_keep);
         self
     }
@@ -99,7 +100,7 @@ impl PruningMilestonesConfigBuilder {
 /// Builder for a [`PruningSizeConfig`].
 #[derive(Default, Debug, Deserialize, PartialEq)]
 #[must_use]
-pub struct PruningSizeConfigBuilder {
+pub struct PruningDbSizeConfigBuilder {
     enabled: Option<bool>,
     #[serde(alias = "targetSize")]
     target_size: Option<String>,
@@ -109,7 +110,7 @@ pub struct PruningSizeConfigBuilder {
     cooldown_time: Option<String>,
 }
 
-impl PruningSizeConfigBuilder {
+impl PruningDbSizeConfigBuilder {
     /// Sets whether pruning based on storage size is enabled.
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.enabled.replace(enabled);
@@ -136,7 +137,7 @@ impl PruningSizeConfigBuilder {
 
     /// Finishes this builder into a [`PruningSizeConfig`].
     #[must_use]
-    pub fn finish(self) -> PruningSizeConfig {
+    pub fn finish(self) -> PruningDbSizeConfig {
         let target_size = self.target_size.unwrap_or_else(|| TARGET_SIZE_DEFAULT.to_string());
         let target_size = target_size
             .parse::<bytes::Bytes>()
@@ -147,7 +148,7 @@ impl PruningSizeConfigBuilder {
         let cooldown_time =
             duration::parse(cooldown_time.as_ref()).expect("parse human-readable pruning cooldown time");
 
-        PruningSizeConfig {
+        PruningDbSizeConfig {
             enabled: self.enabled.unwrap_or(PRUNING_SIZE_ENABLED_DEFAULT),
             target_size,
             threshold_percentage: self.threshold_percentage.unwrap_or(THRESHOLD_PERCENTAGE_DEFAULT),
@@ -183,7 +184,7 @@ impl PruningReceiptsConfigBuilder {
 #[derive(Clone, Debug)]
 pub struct PruningConfig {
     milestones: PruningMilestonesConfig,
-    size: PruningSizeConfig,
+    db_size: PruningDbSizeConfig,
     receipts: PruningReceiptsConfig,
 }
 
@@ -201,8 +202,8 @@ impl PruningConfig {
 
     /// Returns the `[PruningSizeConfig`].
     #[inline(always)]
-    pub fn size(&self) -> &PruningSizeConfig {
-        &self.size
+    pub fn db_size(&self) -> &PruningDbSizeConfig {
+        &self.db_size
     }
 
     /// Returns the `[PruningReceiptsConfig`].
@@ -233,14 +234,14 @@ impl PruningMilestonesConfig {
 
 /// The config associated with storage size based pruning.
 #[derive(Clone, Debug)]
-pub struct PruningSizeConfig {
+pub struct PruningDbSizeConfig {
     enabled: bool,
     target_size: usize,
     threshold_percentage: f32,
     cooldown_time: Duration,
 }
 
-impl PruningSizeConfig {
+impl PruningDbSizeConfig {
     /// Returns whether pruning based on a target storage size is enabled.
     pub fn enabled(&self) -> bool {
         self.enabled
@@ -357,18 +358,18 @@ mod tests {
 
         assert!(!json_config.milestones().enabled());
         assert_eq!(json_config.milestones().max_milestones_to_keep(), 200);
-        assert_eq!(json_config.size().target_size(), 500000000);
-        assert_eq!(json_config.size().threshold_percentage(), 20.0);
-        assert_eq!(json_config.size().cooldown_time(), Duration::from_secs(60));
-        assert!(!json_config.size().enabled());
+        assert_eq!(json_config.db_size().target_size(), 500000000);
+        assert_eq!(json_config.db_size().threshold_percentage(), 20.0);
+        assert_eq!(json_config.db_size().cooldown_time(), Duration::from_secs(60));
+        assert!(!json_config.db_size().enabled());
         assert!(json_config.receipts().enabled());
 
         assert!(!toml_config.milestones().enabled());
         assert_eq!(toml_config.milestones().max_milestones_to_keep(), 200);
-        assert_eq!(toml_config.size().target_size(), 500000000);
-        assert_eq!(toml_config.size().threshold_percentage(), 20.0);
-        assert_eq!(toml_config.size().cooldown_time(), Duration::from_secs(60));
-        assert!(!toml_config.size().enabled());
+        assert_eq!(toml_config.db_size().target_size(), 500000000);
+        assert_eq!(toml_config.db_size().threshold_percentage(), 20.0);
+        assert_eq!(toml_config.db_size().cooldown_time(), Duration::from_secs(60));
+        assert!(!toml_config.db_size().enabled());
         assert!(toml_config.receipts().enabled());
     }
 }

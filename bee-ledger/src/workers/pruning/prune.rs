@@ -17,7 +17,7 @@ use crate::{
         event::PrunedIndex,
         pruning::{
             batch,
-            config::{PruningConfig, MAX_MILESTONES_TO_KEEP_MINIMUM},
+            config::{PruningConfig, MILESTONES_TO_KEEP_MIN},
             error::PruningError,
             metrics::{PruningMetrics, Timings},
         },
@@ -87,7 +87,7 @@ pub async fn prune_by_size<S: StorageBackend>(
     while num_pruned_bytes < num_bytes_to_prune {
         let index = *tangle.get_pruning_index() + 1;
 
-        if *ledger_index < index + MAX_MILESTONES_TO_KEEP_MINIMUM {
+        if *ledger_index < index + MILESTONES_TO_KEEP_MIN {
             log::debug!("Minimum pruning index reached.");
             break;
         }

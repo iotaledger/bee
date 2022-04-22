@@ -69,11 +69,11 @@ pub(crate) fn should_prune<S: StorageBackend>(
                 },
             })
         }
-    } else if config.size().enabled() {
+    } else if config.db_size().enabled() {
         let last = Duration::from_secs(LAST_PRUNING_BY_SIZE.load(Ordering::Relaxed));
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
 
-        if now < last + config.size().cooldown_time() {
+        if now < last + config.db_size().cooldown_time() {
             return Err(PruningSkipReason::BelowCooldownTimeThreshold);
         }
 
@@ -88,17 +88,17 @@ pub(crate) fn should_prune<S: StorageBackend>(
                 return Err(PruningSkipReason::PruningBySizeUnsupported);
             }
         };
-        let threshold_size = config.size().target_size();
+        let threshold_size = config.db_size().target_size();
 
-        log::debug!("Storage size: actual {actual_size} limit {threshold_size}");
+        log::debug!("Storage size: actual {actual_size} threshold {threshold_size}");
 
         if actual_size < threshold_size {
             Err(PruningSkipReason::BelowStorageSizeThreshold)
         } else {
             // Panic: cannot underflow due to actual_size >= threshold_size.
-            let excess = actual_size - threshold_size;
+            let excess_size = actual_size - threshold_size;
             let num_bytes_to_prune =
-                excess + (config.size().threshold_percentage() as f64 / 100.0 * threshold_size as f64) as usize;
+                excess_size + (config.db_size().threshold_percentage() as f64 / 100.0 * threshold_size as f64) as usize;
 
             log::debug!("Num bytes to prune: {num_bytes_to_prune}");
 
