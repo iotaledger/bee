@@ -102,8 +102,8 @@ fn packed_len() {
     )
     .unwrap();
 
-    assert_eq!(ms.packed_len(), 439);
-    assert_eq!(ms.pack_to_vec().len(), 439);
+    assert_eq!(ms.packed_len(), 436);
+    assert_eq!(ms.pack_to_vec().len(), 436);
 }
 
 #[test]
