@@ -219,7 +219,7 @@ pub mod dto {
     }
 
     impl MilestoneOptionDto {
-        /// Return the milestone option kind of a [`MilestoneOptionDto`].
+        /// Returns the milestone option kind of a [`MilestoneOptionDto`].
         pub fn kind(&self) -> u8 {
             match self {
                 Self::Receipt(_) => ReceiptMilestoneOption::KIND,
