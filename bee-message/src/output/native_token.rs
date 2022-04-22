@@ -55,6 +55,7 @@ fn verify_amount<const VERIFY: bool>(amount: &U256) -> Result<(), Error> {
 }
 
 /// A builder for [`NativeTokens`].
+#[derive(Default)]
 #[must_use]
 pub struct NativeTokensBuilder(HashMap<TokenId, U256>);
 
@@ -62,7 +63,7 @@ impl NativeTokensBuilder {
     /// Creates a new [`NativeTokensBuilder`].
     #[inline(always)]
     pub fn new() -> Self {
-        Self(HashMap::new())
+        Self::default()
     }
 
     /// Adds the given [`NativeToken`].
