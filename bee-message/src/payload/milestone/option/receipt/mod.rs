@@ -95,7 +95,7 @@ impl ReceiptMilestoneOption {
 
     /// Returns the sum of all [`MigratedFundsEntry`] items within a [`ReceiptMilestoneOption`].
     pub fn amount(&self) -> u64 {
-        self.funds.iter().fold(0, |acc, funds| acc + funds.amount())
+        self.funds.iter().map(|f| f.amount()).sum()
     }
 }
 
