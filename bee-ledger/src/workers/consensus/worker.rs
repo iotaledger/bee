@@ -351,7 +351,10 @@ where
 
                         match should_prune(&tangle, &storage, ledger_index, milestones_to_keep, &pruning_config) {
                             Ok(pruning_task) => match pruning_task {
-                                PruningTask::ByRange { start_index, target_index } => {
+                                PruningTask::ByRange {
+                                    start_index,
+                                    target_index,
+                                } => {
                                     if let Err(e) = prune::prune_by_range(
                                         &tangle,
                                         &storage,
