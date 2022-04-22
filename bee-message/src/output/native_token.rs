@@ -4,6 +4,7 @@
 use alloc::vec::Vec;
 
 use derive_more::Deref;
+use hashbrown::HashMap;
 use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
 use primitive_types::U256;
@@ -53,6 +54,47 @@ fn verify_amount<const VERIFY: bool>(amount: &U256) -> Result<(), Error> {
     }
 }
 
+/// A builder for [`NativeTokens`].
+#[must_use]
+pub struct NativeTokensBuilder(HashMap<TokenId, U256>);
+
+impl NativeTokensBuilder {
+    /// Creates a new [`NativeTokensBuilder`].
+    #[inline(always)]
+    pub fn new() -> Self {
+        Self(HashMap::new())
+    }
+
+    /// Adds the given [`NativeToken`].
+    pub fn add_native_token(&mut self, native_token: NativeToken) -> Result<(), Error> {
+        let entry = self.0.entry(*native_token.token_id()).or_default();
+        *entry = entry
+            .checked_add(*native_token.amount())
+            .ok_or(Error::NativeTokensOverflow)?;
+
+        Ok(())
+    }
+
+    /// Adds the given [`NativeTokens`].
+    pub fn add_native_tokens(&mut self, native_tokens: NativeTokens) -> Result<(), Error> {
+        for native_token in native_tokens {
+            self.add_native_token(native_token)?;
+        }
+
+        Ok(())
+    }
+
+    /// Finishes the [`NativeTokensBuilder`] into [`NativeTokens`].
+    pub fn finish(self) -> Result<NativeTokens, Error> {
+        NativeTokens::try_from(
+            self.0
+                .into_iter()
+                .map(|(token_id, amount)| NativeToken::new(token_id, amount))
+                .collect::<Result<Vec<_>, _>>()?,
+        )
+    }
+}
+
 pub(crate) type NativeTokenCount = BoundedU8<0, { NativeTokens::COUNT_MAX }>;
 
 ///
@@ -96,6 +138,12 @@ impl NativeTokens {
         verify_unique_sorted::<true>(&native_tokens)?;
 
         Ok(Self(native_tokens))
+    }
+
+    /// Creates a new [`NativeTokensBuilder`].
+    #[inline(always)]
+    pub fn build() -> NativeTokensBuilder {
+        NativeTokensBuilder::new()
     }
 }
 

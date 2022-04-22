@@ -45,7 +45,7 @@ pub use self::{
     feature_block::{FeatureBlock, FeatureBlocks},
     foundry::{FoundryOutput, FoundryOutputBuilder},
     foundry_id::FoundryId,
-    native_token::{NativeToken, NativeTokens},
+    native_token::{NativeToken, NativeTokens, NativeTokensBuilder},
     nft::{NftOutput, NftOutputBuilder},
     nft_id::NftId,
     output_id::OutputId,
