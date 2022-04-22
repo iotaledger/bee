@@ -130,7 +130,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 .await
                 .map_err(ApiError::InvalidWhiteflag)?;
 
-            Ok(warp::reply::json(&WhiteFlagResponse {
+            Ok(Json(WhiteFlagResponse {
                 merkle_tree_hash: prefix_hex::encode(metadata.applied_merkle_proof()),
             }))
         }
