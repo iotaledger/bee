@@ -26,7 +26,7 @@ pub struct MessageMetadata {
     milestone_index: Option<MilestoneIndex>,
     arrival_timestamp: u64,
     solidification_timestamp: u64,
-    reference_timestamp: u64,
+    reference_timestamp: u32,
     #[packable(unpack_error_with = MessageMetadataError::OptionIndexId)]
     omrsi: Option<IndexId>,
     #[packable(unpack_error_with = MessageMetadataError::OptionIndexId)]
@@ -43,7 +43,7 @@ impl MessageMetadata {
         milestone_index: Option<MilestoneIndex>,
         arrival_timestamp: u64,
         solidification_timestamp: u64,
-        reference_timestamp: u64,
+        reference_timestamp: u32,
         omrsi: Option<IndexId>,
         ymrsi: Option<IndexId>,
         conflict: ConflictReason,
@@ -122,7 +122,7 @@ impl MessageMetadata {
     }
 
     /// Get the reference timestamp (seconds from the unix epoch) of this message.
-    pub fn reference_timestamp(&self) -> u64 {
+    pub fn reference_timestamp(&self) -> u32 {
         self.reference_timestamp
     }
 
@@ -136,7 +136,7 @@ impl MessageMetadata {
     }
 
     /// Reference this message with the given timestamp.
-    pub fn reference(&mut self, timestamp: u64) {
+    pub fn reference(&mut self, timestamp: u32) {
         self.flags.set_referenced(true);
         self.reference_timestamp = timestamp;
     }

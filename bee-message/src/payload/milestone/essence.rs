@@ -14,7 +14,7 @@ use packable::{
 use crate::{
     milestone::MilestoneIndex,
     parent::Parents,
-    payload::{OptionalPayload, Payload},
+    payload::milestone::{MilestoneId, MilestoneOptions},
     Error,
 };
 
@@ -26,13 +26,13 @@ pub(crate) type MilestoneMetadataLength = BoundedU16<{ u16::MIN }, { u16::MAX }>
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestoneEssence {
     index: MilestoneIndex,
-    timestamp: u64,
+    timestamp: u32,
+    previous_milestone_id: MilestoneId,
     parents: Parents,
-    merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
-    next_pow_score: u32,
-    next_pow_score_milestone_index: u32,
+    confirmed_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
+    applied_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
     metadata: BoxedSlicePrefix<u8, MilestoneMetadataLength>,
-    receipt: OptionalPayload,
+    options: MilestoneOptions,
 }
 
 impl MilestoneEssence {
@@ -43,34 +43,28 @@ impl MilestoneEssence {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         index: MilestoneIndex,
-        timestamp: u64,
+        timestamp: u32,
+        previous_milestone_id: MilestoneId,
         parents: Parents,
-        merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
-        next_pow_score: u32,
-        next_pow_score_milestone_index: u32,
+        confirmed_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
+        applied_merkle_proof: [u8; MilestoneEssence::MERKLE_PROOF_LENGTH],
         metadata: Vec<u8>,
-        receipt: Option<Payload>,
+        options: MilestoneOptions,
     ) -> Result<Self, Error> {
-        verify_pow_scores(index, next_pow_score, next_pow_score_milestone_index)?;
-
         let metadata = metadata
             .into_boxed_slice()
             .try_into()
             .map_err(Error::InvalidMilestoneMetadataLength)?;
 
-        let receipt = OptionalPayload::from(receipt);
-
-        verify_payload(&receipt)?;
-
         Ok(Self {
             index,
             timestamp,
+            previous_milestone_id,
             parents,
-            merkle_proof,
-            next_pow_score,
-            next_pow_score_milestone_index,
+            confirmed_merkle_proof,
+            applied_merkle_proof,
             metadata,
-            receipt,
+            options,
         })
     }
 
@@ -80,8 +74,13 @@ impl MilestoneEssence {
     }
 
     /// Returns the timestamp of a [`MilestoneEssence`].
-    pub fn timestamp(&self) -> u64 {
+    pub fn timestamp(&self) -> u32 {
         self.timestamp
+    }
+
+    /// Returns the previous milestone ID of a [`MilestoneEssence`].
+    pub fn previous_milestone_id(&self) -> &MilestoneId {
+        &self.previous_milestone_id
     }
 
     /// Returns the parents of a [`MilestoneEssence`].
@@ -89,19 +88,14 @@ impl MilestoneEssence {
         &self.parents
     }
 
-    /// Returns the merkle proof of a [`MilestoneEssence`].
-    pub fn merkle_proof(&self) -> &[u8] {
-        &self.merkle_proof
+    /// Returns the confirmed merkle proof of a [`MilestoneEssence`].
+    pub fn confirmed_merkle_proof(&self) -> &[u8] {
+        &self.confirmed_merkle_proof
     }
 
-    /// Returns the next proof of work score of a [`MilestoneEssence`].
-    pub fn next_pow_score(&self) -> u32 {
-        self.next_pow_score
-    }
-
-    /// Returns the newt proof of work index of a [`MilestoneEssence`].
-    pub fn next_pow_score_milestone_index(&self) -> u32 {
-        self.next_pow_score_milestone_index
+    /// Returns the applied merkle proof of a [`MilestoneEssence`].
+    pub fn applied_merkle_proof(&self) -> &[u8] {
+        &self.applied_merkle_proof
     }
 
     /// Returns the metadata.
@@ -109,9 +103,9 @@ impl MilestoneEssence {
         &self.metadata
     }
 
-    /// Returns the optional receipt of a [`MilestoneEssence`].
-    pub fn receipt(&self) -> Option<&Payload> {
-        self.receipt.as_ref()
+    /// Returns the options of a [`MilestoneEssence`].
+    pub fn options(&self) -> &MilestoneOptions {
+        &self.options
     }
 
     /// Hashes the [`MilestoneEssence`] to be signed.
@@ -126,12 +120,12 @@ impl Packable for MilestoneEssence {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         self.index.pack(packer)?;
         self.timestamp.pack(packer)?;
+        self.previous_milestone_id.pack(packer)?;
         self.parents.pack(packer)?;
-        self.merkle_proof.pack(packer)?;
-        self.next_pow_score.pack(packer)?;
-        self.next_pow_score_milestone_index.pack(packer)?;
+        self.confirmed_merkle_proof.pack(packer)?;
+        self.applied_merkle_proof.pack(packer)?;
         self.metadata.pack(packer)?;
-        self.receipt.pack(packer)?;
+        self.options.pack(packer)?;
 
         Ok(())
     }
@@ -140,60 +134,28 @@ impl Packable for MilestoneEssence {
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let timestamp = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let previous_milestone_id = MilestoneId::unpack::<_, VERIFY>(unpacker).coerce()?;
         let parents = Parents::unpack::<_, VERIFY>(unpacker)?;
-
-        let merkle_proof = <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
-
-        let next_pow_score = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
-        let next_pow_score_milestone_index = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
-
-        if VERIFY {
-            verify_pow_scores(index, next_pow_score, next_pow_score_milestone_index).map_err(UnpackError::Packable)?;
-        }
+        let confirmed_merkle_proof =
+            <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let applied_merkle_proof =
+            <[u8; MilestoneEssence::MERKLE_PROOF_LENGTH]>::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         let metadata = BoxedSlicePrefix::<u8, MilestoneMetadataLength>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|e| Error::InvalidMilestoneMetadataLength(e.into_prefix_err().into()))?;
 
-        let receipt = OptionalPayload::unpack::<_, VERIFY>(unpacker)?;
-
-        if VERIFY {
-            verify_payload(&receipt).map_err(UnpackError::Packable)?;
-        }
+        let options = MilestoneOptions::unpack::<_, VERIFY>(unpacker)?;
 
         Ok(Self {
             index,
             timestamp,
+            previous_milestone_id,
             parents,
-            merkle_proof,
-            next_pow_score,
-            next_pow_score_milestone_index,
+            confirmed_merkle_proof,
+            applied_merkle_proof,
             metadata,
-            receipt,
+            options,
         })
-    }
-}
-
-fn verify_pow_scores(
-    index: MilestoneIndex,
-    next_pow_score: u32,
-    next_pow_score_milestone_index: u32,
-) -> Result<(), Error> {
-    if next_pow_score == 0 && next_pow_score_milestone_index != 0
-        || next_pow_score != 0 && next_pow_score_milestone_index <= *index
-    {
-        Err(Error::InvalidPowScoreValues {
-            nps: next_pow_score,
-            npsmi: next_pow_score_milestone_index,
-        })
-    } else {
-        Ok(())
-    }
-}
-
-fn verify_payload(payload: &OptionalPayload) -> Result<(), Error> {
-    match &payload.0 {
-        Some(Payload::Receipt(_)) | None => Ok(()),
-        Some(payload) => Err(Error::InvalidPayloadKind(payload.kind())),
     }
 }

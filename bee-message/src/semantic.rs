@@ -131,7 +131,7 @@ pub struct ValidationContext<'a> {
     ///
     pub milestone_index: MilestoneIndex,
     ///
-    pub milestone_timestamp: u64,
+    pub milestone_timestamp: u32,
     ///
     pub input_amount: u64,
     ///
@@ -160,7 +160,7 @@ impl<'a> ValidationContext<'a> {
         inputs: impl Iterator<Item = (&'a OutputId, &'a Output)> + Clone,
         unlock_blocks: &'a UnlockBlocks,
         milestone_index: MilestoneIndex,
-        milestone_timestamp: u64,
+        milestone_timestamp: u32,
     ) -> Self {
         Self {
             essence,
@@ -249,7 +249,7 @@ pub fn semantic_validation(
             if *timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index() {
                 return Ok(ConflictReason::TimelockMilestoneIndex);
             }
-            if timelock.timestamp() != 0 && context.milestone_timestamp < timelock.timestamp() as u64 {
+            if timelock.timestamp() != 0 && context.milestone_timestamp < timelock.timestamp() {
                 return Ok(ConflictReason::TimelockUnix);
             }
         }

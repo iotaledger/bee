@@ -6,19 +6,23 @@
 mod essence;
 mod milestone_id;
 
+///
+pub mod option;
+
 use alloc::{string::String, vec::Vec};
 use core::{fmt::Debug, ops::RangeInclusive};
 
-use crypto::{
-    hashes::{blake2b::Blake2b256, Digest},
-    signatures::ed25519,
-    Error as CryptoError,
-};
+use crypto::{signatures::ed25519, Error as CryptoError};
 use iterator_sorted::is_unique_sorted;
-use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable, PackableExt};
+pub(crate) use option::{MigratedFundsAmount, MilestoneOptionCount, ReceiptFundsCount};
+use packable::{bounded::BoundedU8, prefix::VecPrefix, Packable};
 
 pub(crate) use self::essence::MilestoneMetadataLength;
-pub use self::{essence::MilestoneEssence, milestone_id::MilestoneId};
+pub use self::{
+    essence::MilestoneEssence,
+    milestone_id::MilestoneId,
+    option::{MilestoneOption, MilestoneOptions, PowMilestoneOption, ReceiptMilestoneOption},
+};
 use crate::{signature::Signature, Error};
 
 #[derive(Debug)]
@@ -80,12 +84,7 @@ impl MilestonePayload {
 
     /// Computes the identifier of a [`MilestonePayload`].
     pub fn id(&self) -> MilestoneId {
-        let mut hasher = Blake2b256::new();
-
-        hasher.update(Self::KIND.to_le_bytes());
-        hasher.update(self.pack_to_vec());
-
-        MilestoneId::new(hasher.finalize().into())
+        MilestoneId::new(self.essence().hash())
     }
 
     /// Semantically validate a [`MilestonePayload`].
@@ -155,12 +154,14 @@ fn verify_signatures<const VERIFY: bool>(signatures: &[Signature]) -> Result<(),
 #[cfg(feature = "dto")]
 #[allow(missing_docs)]
 pub mod dto {
+    use core::str::FromStr;
+
     use serde::{Deserialize, Serialize};
 
+    use self::option::dto::MilestoneOptionDto;
     use super::*;
     use crate::{
-        error::dto::DtoError, milestone::MilestoneIndex, parent::Parents, payload::dto::PayloadDto,
-        signature::dto::SignatureDto, MessageId,
+        error::dto::DtoError, milestone::MilestoneIndex, parent::Parents, signature::dto::SignatureDto, MessageId,
     };
 
     /// The payload type to define a milestone.
@@ -169,18 +170,17 @@ pub mod dto {
         #[serde(rename = "type")]
         pub kind: u32,
         pub index: u32,
-        pub timestamp: u64,
+        pub timestamp: u32,
+        #[serde(rename = "lastMilestoneId")]
+        pub previous_milestone_id: String,
         #[serde(rename = "parentMessageIds")]
         pub parents: Vec<String>,
-        #[serde(rename = "inclusionMerkleProof")]
-        pub inclusion_merkle_proof: String,
-        #[serde(rename = "nextPoWScore")]
-        pub next_pow_score: u32,
-        #[serde(rename = "nextPoWScoreMilestoneIndex")]
-        pub next_pow_score_milestone_index: u32,
+        #[serde(rename = "confirmedMerkleProof")]
+        pub confirmed_merkle_proof: String,
+        #[serde(rename = "appliedMerkleProof")]
+        pub applied_merkle_proof: String,
         pub metadata: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        pub receipt: Option<PayloadDto>,
+        pub options: Vec<MilestoneOptionDto>,
         pub signatures: Vec<SignatureDto>,
     }
 
@@ -190,12 +190,12 @@ pub mod dto {
                 kind: MilestonePayload::KIND,
                 index: *value.essence().index(),
                 timestamp: value.essence().timestamp(),
+                previous_milestone_id: value.essence().previous_milestone_id().to_string(),
                 parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
-                inclusion_merkle_proof: prefix_hex::encode(value.essence().merkle_proof()),
-                next_pow_score: value.essence().next_pow_score(),
-                next_pow_score_milestone_index: value.essence().next_pow_score_milestone_index(),
+                confirmed_merkle_proof: prefix_hex::encode(value.essence().confirmed_merkle_proof()),
+                applied_merkle_proof: prefix_hex::encode(value.essence().applied_merkle_proof()),
                 metadata: prefix_hex::encode(value.essence().metadata()),
-                receipt: value.essence().receipt().map(Into::into),
+                options: value.essence().options().iter().map(Into::into).collect::<_>(),
                 signatures: value.signatures().iter().map(From::from).collect(),
             }
         }
@@ -208,6 +208,8 @@ pub mod dto {
             let essence = {
                 let index = value.index;
                 let timestamp = value.timestamp;
+                let previous_milestone_id = MilestoneId::from_str(&value.previous_milestone_id)
+                    .map_err(|_| DtoError::InvalidField("lastMilestoneId"))?;
                 let mut parent_ids = Vec::new();
                 for msg_id in &value.parents {
                     parent_ids.push(
@@ -216,25 +218,28 @@ pub mod dto {
                             .map_err(|_| DtoError::InvalidField("parentMessageIds"))?,
                     );
                 }
-                let merkle_proof = prefix_hex::decode(&value.inclusion_merkle_proof)
-                    .map_err(|_| DtoError::InvalidField("inclusionMerkleProof"))?;
-                let next_pow_score = value.next_pow_score;
-                let next_pow_score_milestone_index = value.next_pow_score_milestone_index;
+                let confirmed_merkle_proof = prefix_hex::decode(&value.confirmed_merkle_proof)
+                    .map_err(|_| DtoError::InvalidField("confirmedMerkleProof"))?;
+                let applied_merkle_proof = prefix_hex::decode(&value.applied_merkle_proof)
+                    .map_err(|_| DtoError::InvalidField("appliedMerkleProof"))?;
                 let metadata = prefix_hex::decode(&value.metadata).map_err(|_| DtoError::InvalidField("metadata"))?;
-                let receipt = if let Some(receipt) = value.receipt.as_ref() {
-                    Some(receipt.try_into()?)
-                } else {
-                    None
-                };
+                let options = MilestoneOptions::try_from(
+                    value
+                        .options
+                        .iter()
+                        .map(TryInto::try_into)
+                        .collect::<Result<Vec<_>, _>>()?,
+                )?;
+
                 MilestoneEssence::new(
                     MilestoneIndex(index),
                     timestamp,
+                    previous_milestone_id,
                     Parents::new(parent_ids)?,
-                    merkle_proof,
-                    next_pow_score,
-                    next_pow_score_milestone_index,
+                    confirmed_merkle_proof,
+                    applied_merkle_proof,
                     metadata,
-                    receipt,
+                    options,
                 )?
             };
             let mut signatures = Vec::new();

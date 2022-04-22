@@ -20,5 +20,5 @@ pub fn rand_milestone_id() -> MilestoneId {
 
 /// Generates a random milestone.
 pub fn rand_milestone() -> Milestone {
-    Milestone::new(rand_message_id(), rand_number::<u64>())
+    Milestone::new(rand_message_id(), rand_number())
 }

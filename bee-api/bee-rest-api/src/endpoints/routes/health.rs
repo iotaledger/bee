@@ -67,7 +67,7 @@ pub async fn is_healthy<B: StorageBackend>(tangle: &Tangle<B>, peer_manager: &Pe
                 .duration_since(UNIX_EPOCH)
                 .expect("Clock may have gone backwards")
                 .as_secs() as u64)
-                .saturating_sub(milestone.timestamp())
+                .saturating_sub(milestone.timestamp().into())
                 <= HEALTH_MILESTONE_AGE_MAX
         }
         None => false,

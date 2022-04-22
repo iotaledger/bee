@@ -31,7 +31,7 @@ pub struct StatusResponse {
     #[serde(rename = "isHealthy")]
     pub is_healthy: bool,
     #[serde(rename = "latestMilestoneTimestamp")]
-    pub latest_milestone_timestamp: u64,
+    pub latest_milestone_timestamp: u32,
     #[serde(rename = "latestMilestoneIndex")]
     pub latest_milestone_index: u32,
     #[serde(rename = "confirmedMilestoneIndex")]

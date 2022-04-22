@@ -7,7 +7,11 @@ use async_trait::async_trait;
 use bee_message::{
     milestone::MilestoneIndex,
     output::{unlock_condition::AddressUnlockCondition, BasicOutput, Output, OutputId},
-    payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
+    payload::{
+        milestone::{MilestoneId, ReceiptMilestoneOption},
+        transaction::TransactionId,
+        Payload,
+    },
     semantic::ConflictReason,
     MessageId,
 };
@@ -54,7 +58,7 @@ pub struct ConsensusWorker {
 pub(crate) async fn migration_from_milestone(
     milestone_index: MilestoneIndex,
     milestone_id: MilestoneId,
-    receipt: &ReceiptPayload,
+    receipt: &ReceiptMilestoneOption,
     consumed_treasury: TreasuryOutput,
 ) -> Result<Migration, Error> {
     let receipt = Receipt::new(receipt.clone(), milestone_index);
@@ -94,23 +98,31 @@ where
         ));
     }
 
-    let mut metadata = WhiteFlagMetadata::new(milestone.essence().index(), milestone.essence().timestamp());
+    let mut metadata = WhiteFlagMetadata::new(
+        milestone.essence().index(),
+        milestone.essence().timestamp(),
+        Some(*milestone.essence().previous_milestone_id()),
+    );
 
     white_flag(tangle, storage, message.parents(), &mut metadata).await?;
 
-    if !metadata.merkle_proof.eq(&milestone.essence().merkle_proof()) {
-        return Err(Error::MerkleProofMismatch(
+    if metadata.confirmed_merkle_proof != milestone.essence().confirmed_merkle_proof() {
+        return Err(Error::ConfirmedMerkleProofMismatch(
             milestone.essence().index(),
-            prefix_hex::encode(metadata.merkle_proof),
-            prefix_hex::encode(milestone.essence().merkle_proof()),
+            prefix_hex::encode(metadata.confirmed_merkle_proof),
+            prefix_hex::encode(milestone.essence().confirmed_merkle_proof()),
         ));
     }
 
-    // Account for the milestone itself.
-    metadata.referenced_messages += 1;
-    metadata.excluded_no_transaction_messages.push(message_id);
+    if metadata.applied_merkle_proof != milestone.essence().applied_merkle_proof() {
+        return Err(Error::AppliedMerkleProofMismatch(
+            milestone.essence().index(),
+            prefix_hex::encode(metadata.applied_merkle_proof),
+            prefix_hex::encode(milestone.essence().applied_merkle_proof()),
+        ));
+    }
 
-    let migration = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
+    let migration = if let Some(receipt) = milestone.essence().options().receipt() {
         let milestone_id = milestone.id();
         let transaction_id = TransactionId::from(milestone_id);
 
@@ -210,20 +222,20 @@ where
     info!(
         "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}, consumed {}, created {}, receipt {}.",
         milestone.essence().index(),
-        metadata.referenced_messages,
+        metadata.referenced_messages.len(),
         metadata.excluded_no_transaction_messages.len(),
         metadata.excluded_conflicting_messages.len(),
         metadata.included_messages.len(),
         metadata.consumed_outputs.len(),
         metadata.created_outputs.len(),
-        milestone.essence().receipt().is_some()
+        milestone.essence().options().receipt().is_some()
     );
 
     bus.dispatch(MilestoneConfirmed {
         message_id,
         index: milestone.essence().index(),
         timestamp: milestone.essence().timestamp(),
-        referenced_messages: metadata.referenced_messages,
+        referenced_messages: metadata.referenced_messages.len(),
         excluded_no_transaction_messages: metadata.excluded_no_transaction_messages,
         excluded_conflicting_messages: metadata.excluded_conflicting_messages,
         included_messages: metadata.included_messages,

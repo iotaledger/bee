@@ -4,7 +4,6 @@
 //! The payload module defines the core data types for representing message payloads.
 
 pub mod milestone;
-pub mod receipt;
 pub mod tagged_data;
 pub mod transaction;
 pub mod treasury_transaction;
@@ -19,15 +18,18 @@ use packable::{
     Packable, PackableExt,
 };
 
-pub use self::{
-    milestone::MilestonePayload, receipt::ReceiptPayload, tagged_data::TaggedDataPayload,
-    transaction::TransactionPayload, treasury_transaction::TreasuryTransactionPayload,
-};
 pub(crate) use self::{
-    milestone::{MilestoneMetadataLength, SignatureCount},
-    receipt::{MigratedFundsAmount, ReceiptFundsCount},
+    milestone::{
+        MigratedFundsAmount, MilestoneMetadataLength, MilestoneOptionCount, ReceiptFundsCount, SignatureCount,
+    },
     tagged_data::{TagLength, TaggedDataLength},
     transaction::{InputCount, OutputCount},
+};
+pub use self::{
+    milestone::{MilestoneOptions, MilestonePayload},
+    tagged_data::TaggedDataPayload,
+    transaction::TransactionPayload,
+    treasury_transaction::TreasuryTransactionPayload,
 };
 use crate::Error;
 
@@ -47,9 +49,6 @@ pub enum Payload {
     /// A milestone payload.
     #[packable(tag = MilestonePayload::KIND)]
     Milestone(Box<MilestonePayload>),
-    /// A receipt payload.
-    #[packable(tag = ReceiptPayload::KIND)]
-    Receipt(Box<ReceiptPayload>),
     /// A treasury transaction payload.
     #[packable(tag = TreasuryTransactionPayload::KIND)]
     TreasuryTransaction(Box<TreasuryTransactionPayload>),
@@ -67,12 +66,6 @@ impl From<TransactionPayload> for Payload {
 impl From<MilestonePayload> for Payload {
     fn from(payload: MilestonePayload) -> Self {
         Self::Milestone(Box::new(payload))
-    }
-}
-
-impl From<ReceiptPayload> for Payload {
-    fn from(payload: ReceiptPayload) -> Self {
-        Self::Receipt(Box::new(payload))
     }
 }
 
@@ -94,7 +87,6 @@ impl Payload {
         match self {
             Self::Transaction(_) => TransactionPayload::KIND,
             Self::Milestone(_) => MilestonePayload::KIND,
-            Self::Receipt(_) => ReceiptPayload::KIND,
             Self::TreasuryTransaction(_) => TreasuryTransactionPayload::KIND,
             Self::TaggedData(_) => TaggedDataPayload::KIND,
         }
@@ -185,7 +177,7 @@ pub mod dto {
 
     use super::*;
     pub use super::{
-        milestone::dto::MilestonePayloadDto, receipt::dto::ReceiptPayloadDto, tagged_data::dto::TaggedDataPayloadDto,
+        milestone::dto::MilestonePayloadDto, tagged_data::dto::TaggedDataPayloadDto,
         transaction::dto::TransactionPayloadDto, treasury_transaction::dto::TreasuryTransactionPayloadDto,
     };
     use crate::error::dto::DtoError;
@@ -196,7 +188,6 @@ pub mod dto {
     pub enum PayloadDto {
         Transaction(Box<TransactionPayloadDto>),
         Milestone(Box<MilestonePayloadDto>),
-        Receipt(Box<ReceiptPayloadDto>),
         TreasuryTransaction(Box<TreasuryTransactionPayloadDto>),
         TaggedData(Box<TaggedDataPayloadDto>),
     }
@@ -206,7 +197,6 @@ pub mod dto {
             match value {
                 Payload::Transaction(p) => PayloadDto::Transaction(Box::new(TransactionPayloadDto::from(p.as_ref()))),
                 Payload::Milestone(p) => PayloadDto::Milestone(Box::new(MilestonePayloadDto::from(p.as_ref()))),
-                Payload::Receipt(p) => PayloadDto::Receipt(Box::new(ReceiptPayloadDto::from(p.as_ref()))),
                 Payload::TreasuryTransaction(p) => {
                     PayloadDto::TreasuryTransaction(Box::new(TreasuryTransactionPayloadDto::from(p.as_ref())))
                 }
@@ -221,7 +211,6 @@ pub mod dto {
             Ok(match value {
                 PayloadDto::Transaction(p) => Payload::Transaction(Box::new(TransactionPayload::try_from(p.as_ref())?)),
                 PayloadDto::Milestone(p) => Payload::Milestone(Box::new(MilestonePayload::try_from(p.as_ref())?)),
-                PayloadDto::Receipt(p) => Payload::Receipt(Box::new(ReceiptPayload::try_from(p.as_ref())?)),
                 PayloadDto::TreasuryTransaction(p) => {
                     Payload::TreasuryTransaction(Box::new(TreasuryTransactionPayload::try_from(p.as_ref())?))
                 }

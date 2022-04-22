@@ -9,8 +9,10 @@ use bee_message::{
     milestone::MilestoneIndex,
     output::TreasuryOutput,
     payload::{
-        milestone::MilestoneId,
-        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
+        milestone::{
+            option::{MigratedFundsEntry, ReceiptMilestoneOption, TailTransactionHash},
+            MilestoneId,
+        },
         TreasuryTransactionPayload,
     },
     Error,
@@ -28,12 +30,12 @@ const TAIL_TRANSACTION_HASH_BYTES: [u8; 49] = [
 
 #[test]
 fn kind() {
-    assert_eq!(ReceiptPayload::KIND, 3);
+    assert_eq!(ReceiptMilestoneOption::KIND, 0);
 }
 
 #[test]
 fn new_valid() {
-    let receipt = ReceiptPayload::new(
+    let receipt = ReceiptMilestoneOption::new(
         MilestoneIndex::new(0),
         true,
         vec![
@@ -56,7 +58,7 @@ fn new_valid() {
 
 #[test]
 fn new_invalid_receipt_funds_count_low() {
-    let receipt = ReceiptPayload::new(
+    let receipt = ReceiptMilestoneOption::new(
         MilestoneIndex::new(0),
         true,
         vec![],
@@ -75,7 +77,7 @@ fn new_invalid_receipt_funds_count_low() {
 
 #[test]
 fn new_invalid_receipt_funds_count_high() {
-    let receipt = ReceiptPayload::new(
+    let receipt = ReceiptMilestoneOption::new(
         MilestoneIndex::new(0),
         false,
         (0..129)
@@ -121,7 +123,7 @@ fn new_invalid_transaction_outputs_not_sorted() {
         .unwrap(),
     ];
 
-    let receipt = ReceiptPayload::new(
+    let receipt = ReceiptMilestoneOption::new(
         MilestoneIndex::new(0),
         true,
         migrated_funds,
@@ -144,7 +146,7 @@ fn new_invalid_tail_transaction_hashes_not_unique() {
     )
     .unwrap();
 
-    let receipt = ReceiptPayload::new(
+    let receipt = ReceiptMilestoneOption::new(
         MilestoneIndex::new(0),
         true,
         vec![migrated_funds; 2],
@@ -160,7 +162,7 @@ fn new_invalid_tail_transaction_hashes_not_unique() {
 
 #[test]
 fn pack_unpack_valid() {
-    let receipt = ReceiptPayload::new(
+    let receipt = ReceiptMilestoneOption::new(
         MilestoneIndex::new(0),
         true,
         vec![
@@ -206,7 +208,7 @@ fn getters() {
     )
     .unwrap();
 
-    let receipt = ReceiptPayload::new(migrated_at, last, funds.clone(), transaction.clone()).unwrap();
+    let receipt = ReceiptMilestoneOption::new(migrated_at, last, funds.clone(), transaction.clone()).unwrap();
 
     assert_eq!(receipt.migrated_at(), migrated_at);
     assert_eq!(receipt.last(), last);
