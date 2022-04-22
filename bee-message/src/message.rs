@@ -6,9 +6,9 @@ use core::ops::Deref;
 use bee_pow::providers::{miner::Miner, NonceProvider, NonceProviderBuilder};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 use packable::{
-    error::{UnpackError, UnpackErrorExt},
+    error::{UnexpectedEOF, UnpackError, UnpackErrorExt},
     packer::Packer,
-    unpacker::Unpacker,
+    unpacker::{CounterUnpacker, Unpacker},
     Packable, PackableExt,
 };
 
@@ -89,7 +89,7 @@ impl<P: NonceProvider> MessageBuilder<P> {
 
 /// Represent the object that nodes gossip around the network.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
     /// Protocol version of the message.
     protocol_version: u8,
@@ -148,6 +148,22 @@ impl Message {
     pub fn into_parents(self) -> Parents {
         self.parents
     }
+
+    /// Unpacks a [`Message`] from a sequence of bytes doing syntactical checks and verifying that
+    /// there are no trailing bytes in the sequence.
+    pub fn unpack_strict<T: AsRef<[u8]>>(
+        bytes: T,
+    ) -> Result<Self, UnpackError<<Self as Packable>::UnpackError, UnexpectedEOF>> {
+        let mut unpacker = CounterUnpacker::new(bytes.as_ref());
+        let message = Self::unpack::<_, true>(&mut unpacker)?;
+
+        // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
+        if u8::unpack::<_, true>(&mut unpacker).is_ok() {
+            return Err(UnpackError::Packable(Error::RemainingBytesAfterMessage));
+        }
+
+        Ok(message)
+    }
 }
 
 impl Packable for Message {
@@ -165,7 +181,9 @@ impl Packable for Message {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let protocol_version = u8::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let start_opt = unpacker.read_bytes();
+
+        let protocol_version = u8::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         if VERIFY && protocol_version != PROTOCOL_VERSION {
             return Err(UnpackError::Packable(Error::ProtocolVersionMismatch {
@@ -181,12 +199,7 @@ impl Packable for Message {
             verify_payload(payload.deref().as_ref()).map_err(UnpackError::Packable)?;
         }
 
-        let nonce = u64::unpack::<_, VERIFY>(unpacker).infallible()?;
-
-        // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
-        if VERIFY && u8::unpack::<_, VERIFY>(unpacker).is_ok() {
-            return Err(UnpackError::Packable(Error::RemainingBytesAfterMessage));
-        }
+        let nonce = u64::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         let message = Self {
             protocol_version,
@@ -195,11 +208,16 @@ impl Packable for Message {
             nonce,
         };
 
-        let message_len = message.packed_len();
+        if VERIFY {
+            let message_len = if let (Some(start), Some(end)) = (start_opt, unpacker.read_bytes()) {
+                end - start
+            } else {
+                message.packed_len()
+            };
 
-        // FIXME: compute this in a more efficient way.
-        if VERIFY && message_len > Message::LENGTH_MAX {
-            return Err(UnpackError::Packable(Error::InvalidMessageLength(message_len)));
+            if message_len > Message::LENGTH_MAX {
+                return Err(UnpackError::Packable(Error::InvalidMessageLength(message_len)));
+            }
         }
 
         Ok(message)

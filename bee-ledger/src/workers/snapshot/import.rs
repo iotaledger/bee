@@ -11,7 +11,6 @@ use std::{
 use bee_message::{
     milestone::MilestoneIndex,
     output::{self, OutputId},
-    payload::Payload,
 };
 use bee_storage::access::{Insert, Truncate};
 use bee_tangle::solid_entry_point::SolidEntryPoint;
@@ -99,7 +98,7 @@ async fn import_milestone_diffs<U: Unpacker<Error = std::io::Error>, B: StorageB
             })
             .collect::<Result<HashMap<_, _>, _>>()?;
 
-        let migration = if let Some(Payload::Receipt(receipt)) = diff.milestone().essence().receipt() {
+        let migration = if let Some(receipt) = diff.milestone().essence().options().receipt() {
             let consumed_treasury = diff
                 .consumed_treasury()
                 .ok_or(Error::Snapshot(SnapshotError::MissingConsumedTreasury))?

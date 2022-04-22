@@ -14,7 +14,7 @@ use crate::{address::Address, milestone::MilestoneIndex, Error};
 /// Defines a milestone index and/or unix time until which only Address, defined in Address Unlock Condition, is allowed
 /// to unlock the output. After the milestone index and/or unix time, only Return Address can unlock it.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExpirationUnlockCondition {
     // The address that can unlock the expired output.
     return_address: Address,
@@ -61,6 +61,23 @@ impl ExpirationUnlockCondition {
     pub fn timestamp(&self) -> u32 {
         self.timestamp
     }
+
+    /// Returns the return address if the condition has expired.
+    pub fn return_address_expired(&self, milestone_index: MilestoneIndex, timestamp: u32) -> Option<&Address> {
+        if *self.milestone_index() != 0 && self.timestamp() != 0 {
+            if milestone_index >= self.milestone_index() && timestamp >= self.timestamp() {
+                Some(&self.return_address)
+            } else {
+                None
+            }
+        } else if *self.milestone_index() != 0 && milestone_index >= self.milestone_index()
+            || self.timestamp() != 0 && timestamp >= self.timestamp()
+        {
+            Some(&self.return_address)
+        } else {
+            None
+        }
+    }
 }
 
 impl Packable for ExpirationUnlockCondition {
@@ -78,8 +95,8 @@ impl Packable for ExpirationUnlockCondition {
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let return_address = Address::unpack::<_, VERIFY>(unpacker)?;
-        let milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let timestamp = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         if VERIFY {
             verify_milestone_index_timestamp(milestone_index, timestamp).map_err(UnpackError::Packable)?;

@@ -17,8 +17,8 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        AliasId, ChainId, NativeToken, NativeTokens, Output, OutputAmount, OutputId, StateTransitionError,
-        StateTransitionVerifier,
+        AliasId, ByteCost, ByteCostConfig, ChainId, NativeToken, NativeTokens, Output, OutputAmount,
+        OutputBuilderAmount, OutputId, StateTransitionError, StateTransitionVerifier,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -28,7 +28,7 @@ use crate::{
 ///
 #[must_use]
 pub struct AliasOutputBuilder {
-    amount: OutputAmount,
+    amount: OutputBuilderAmount,
     native_tokens: Vec<NativeToken>,
     alias_id: AliasId,
     state_index: Option<u32>,
@@ -40,10 +40,26 @@ pub struct AliasOutputBuilder {
 }
 
 impl AliasOutputBuilder {
-    ///
-    pub fn new(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
+    /// Creates an [`AliasOutputBuilder`] with a provided amount.
+    pub fn new_with_amount(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
+        Self::new(
+            OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
+            alias_id,
+        )
+    }
+
+    /// Creates an [`AliasOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
+    pub fn new_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        alias_id: AliasId,
+    ) -> Result<AliasOutputBuilder, Error> {
+        Self::new(OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config), alias_id)
+    }
+
+    fn new(amount: OutputBuilderAmount, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
         Ok(Self {
-            amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount,
             native_tokens: Vec::new(),
             alias_id,
             state_index: None,
@@ -105,6 +121,19 @@ impl AliasOutputBuilder {
     }
 
     ///
+    pub fn replace_unlock_condition(mut self, unlock_condition: UnlockCondition) -> Result<Self, Error> {
+        match self
+            .unlock_conditions
+            .iter_mut()
+            .find(|u| u.kind() == unlock_condition.kind())
+        {
+            Some(u) => *u = unlock_condition,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
+    }
+
+    ///
     #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
@@ -116,6 +145,19 @@ impl AliasOutputBuilder {
     pub fn with_feature_blocks(mut self, feature_blocks: impl IntoIterator<Item = FeatureBlock>) -> Self {
         self.feature_blocks = feature_blocks.into_iter().collect();
         self
+    }
+
+    ///
+    pub fn replace_feature_block(mut self, feature_block: FeatureBlock) -> Result<Self, Error> {
+        match self
+            .feature_blocks
+            .iter_mut()
+            .find(|f| f.kind() == feature_block.kind())
+        {
+            Some(f) => *f = feature_block,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
     }
 
     ///
@@ -133,6 +175,19 @@ impl AliasOutputBuilder {
     ) -> Self {
         self.immutable_feature_blocks = immutable_feature_blocks.into_iter().collect();
         self
+    }
+
+    ///
+    pub fn replace_immutable_feature_block(mut self, immutable_feature_block: FeatureBlock) -> Result<Self, Error> {
+        match self
+            .immutable_feature_blocks
+            .iter_mut()
+            .find(|f| f.kind() == immutable_feature_block.kind())
+        {
+            Some(f) => *f = immutable_feature_block,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
     }
 
     ///
@@ -160,8 +215,8 @@ impl AliasOutputBuilder {
 
         verify_allowed_feature_blocks(&immutable_feature_blocks, AliasOutput::ALLOWED_IMMUTABLE_FEATURE_BLOCKS)?;
 
-        Ok(AliasOutput {
-            amount: self.amount,
+        let mut output = AliasOutput {
+            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             alias_id: self.alias_id,
             state_index,
@@ -170,7 +225,33 @@ impl AliasOutputBuilder {
             unlock_conditions,
             feature_blocks,
             immutable_feature_blocks,
-        })
+        };
+
+        output.amount = match self.amount {
+            OutputBuilderAmount::Amount(amount) => amount,
+            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config) => Output::Alias(output.clone())
+                .byte_cost(&byte_cost_config)
+                .try_into()
+                .map_err(Error::InvalidOutputAmount)?,
+        };
+
+        Ok(output)
+    }
+}
+
+impl From<&AliasOutput> for AliasOutputBuilder {
+    fn from(output: &AliasOutput) -> Self {
+        AliasOutputBuilder {
+            amount: OutputBuilderAmount::Amount(output.amount),
+            native_tokens: output.native_tokens.to_vec(),
+            alias_id: output.alias_id,
+            state_index: Some(output.state_index),
+            state_metadata: output.state_metadata.to_vec(),
+            foundry_counter: Some(output.foundry_counter),
+            unlock_conditions: output.unlock_conditions.to_vec(),
+            feature_blocks: output.feature_blocks.to_vec(),
+            immutable_feature_blocks: output.immutable_feature_blocks.to_vec(),
+        }
     }
 }
 
@@ -178,7 +259,7 @@ pub(crate) type StateMetadataLength = BoundedU16<0, { AliasOutput::STATE_METADAT
 
 /// Describes an alias account in the ledger that can be controlled by the state and governance controllers.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AliasOutput {
     // Amount of IOTA tokens held by the output.
     amount: OutputAmount,
@@ -213,16 +294,36 @@ impl AliasOutput {
     pub const ALLOWED_IMMUTABLE_FEATURE_BLOCKS: FeatureBlockFlags =
         FeatureBlockFlags::ISSUER.union(FeatureBlockFlags::METADATA);
 
-    /// Creates a new [`AliasOutput`].
+    /// Creates a new [`AliasOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new(amount: u64, alias_id: AliasId) -> Result<Self, Error> {
-        AliasOutputBuilder::new(amount, alias_id)?.finish()
+    pub fn new_with_amount(amount: u64, alias_id: AliasId) -> Result<Self, Error> {
+        AliasOutputBuilder::new_with_amount(amount, alias_id)?.finish()
     }
 
-    /// Creates a new [`AliasOutputBuilder`].
+    /// Creates a new [`AliasOutput`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn build(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
-        AliasOutputBuilder::new(amount, alias_id)
+    pub fn new_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        alias_id: AliasId,
+    ) -> Result<Self, Error> {
+        AliasOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, alias_id)?.finish()
+    }
+
+    /// Creates a new [`AliasOutputBuilder`] with a provided amount.
+    #[inline(always)]
+    pub fn build_with_amount(amount: u64, alias_id: AliasId) -> Result<AliasOutputBuilder, Error> {
+        AliasOutputBuilder::new_with_amount(amount, alias_id)
+    }
+
+    /// Creates a new [`AliasOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
+    #[inline(always)]
+    pub fn build_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        alias_id: AliasId,
+    ) -> Result<AliasOutputBuilder, Error> {
+        AliasOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, alias_id)
     }
 
     ///
@@ -320,18 +421,22 @@ impl AliasOutput {
         };
         let next_state = context.output_chains.get(&ChainId::from(alias_id));
 
-        let locked_address = match next_state {
-            Some(Output::Alias(next_state)) => {
-                if self.state_index() == next_state.state_index() {
-                    self.governor_address()
-                } else {
-                    self.state_controller_address()
+        let locked_address = self.unlock_conditions().locked_address(
+            match next_state {
+                Some(Output::Alias(next_state)) => {
+                    if self.state_index() == next_state.state_index() {
+                        self.governor_address()
+                    } else {
+                        self.state_controller_address()
+                    }
                 }
-            }
-            None => self.governor_address(),
-            // The next state can only be an alias output since it is identified by an alias chain identifier.
-            Some(_) => unreachable!(),
-        };
+                None => self.governor_address(),
+                // The next state can only be an alias output since it is identified by an alias chain identifier.
+                Some(_) => unreachable!(),
+            },
+            context.milestone_index,
+            context.milestone_timestamp,
+        );
 
         locked_address.unlock(unlock_block, inputs, context)?;
 
@@ -347,14 +452,6 @@ impl StateTransitionVerifier for AliasOutput {
     fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
         if !next_state.alias_id.is_null() {
             return Err(StateTransitionError::NonZeroCreatedId);
-        }
-
-        if next_state.state_index != 0 {
-            return Err(StateTransitionError::NonZeroCreatedStateIndex);
-        }
-
-        if next_state.foundry_counter != 0 {
-            return Err(StateTransitionError::NonZeroCreatedFoundryCounter);
         }
 
         if let Some(issuer) = next_state.immutable_feature_blocks().issuer() {
@@ -386,7 +483,7 @@ impl StateTransitionVerifier for AliasOutput {
 
             let created_foundries = context.essence.outputs().iter().filter_map(|output| {
                 if let Output::Foundry(foundry) = output {
-                    if foundry.alias_address().alias_id() == &current_state.alias_id
+                    if foundry.alias_address().alias_id() == &next_state.alias_id
                         && !context.input_chains.contains_key(&foundry.chain_id())
                     {
                         Some(foundry)
@@ -401,11 +498,11 @@ impl StateTransitionVerifier for AliasOutput {
             let mut created_foundries_count = 0;
 
             for foundry in created_foundries {
+                created_foundries_count += 1;
+
                 if foundry.serial_number() != current_state.foundry_counter + created_foundries_count {
                     return Err(StateTransitionError::UnsortedCreatedFoundries);
                 }
-
-                created_foundries_count += 1;
             }
 
             if current_state.foundry_counter + created_foundries_count != next_state.foundry_counter {
@@ -458,12 +555,12 @@ impl Packable for AliasOutput {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
-        let alias_id = AliasId::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let state_index = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let alias_id = AliasId::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let state_index = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
         let state_metadata = BoxedSlicePrefix::<u8, StateMetadataLength>::unpack::<_, VERIFY>(unpacker)
             .map_packable_err(|err| Error::InvalidStateMetadataLength(err.into_prefix_err().into()))?;
 
-        let foundry_counter = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let foundry_counter = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         if VERIFY {
             verify_index_counter(&alias_id, state_index, foundry_counter).map_err(UnpackError::Packable)?;
@@ -604,7 +701,7 @@ pub mod dto {
         type Error = DtoError;
 
         fn try_from(value: &AliasOutputDto) -> Result<Self, Self::Error> {
-            let mut builder = AliasOutputBuilder::new(
+            let mut builder = AliasOutputBuilder::new_with_amount(
                 value
                     .amount
                     .parse::<u64>()

@@ -104,7 +104,7 @@ pub(crate) type OutputCount = BoundedU16<{ *OUTPUT_COUNT_RANGE.start() }, { *OUT
 
 /// A transaction regular essence consuming inputs, creating outputs and carrying an optional payload.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct RegularTransactionEssence {
     /// The unique value denoting whether the message was meant for mainnet, testnet, or a private network.
@@ -190,14 +190,14 @@ fn verify_outputs<const VERIFY: bool>(outputs: &[Output]) -> Result<(), Error> {
             .checked_add(amount)
             .ok_or(Error::InvalidTransactionAmountSum(amount_sum as u128 + amount as u128))?;
 
-        native_tokens_count = native_tokens_count.checked_add(native_tokens.len() as u8).ok_or(
-            Error::InvalidTransactionNativeTokensCount(native_tokens_count as u16 + native_tokens.len() as u16),
-        )?;
-
         // Accumulated output balance must not exceed the total supply of tokens.
         if amount_sum > IOTA_SUPPLY {
             return Err(Error::InvalidTransactionAmountSum(amount_sum as u128));
         }
+
+        native_tokens_count = native_tokens_count.checked_add(native_tokens.len() as u8).ok_or(
+            Error::InvalidTransactionNativeTokensCount(native_tokens_count as u16 + native_tokens.len() as u16),
+        )?;
 
         if native_tokens_count > NativeTokens::COUNT_MAX {
             return Err(Error::InvalidTransactionNativeTokensCount(native_tokens_count as u16));

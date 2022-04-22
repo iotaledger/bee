@@ -13,14 +13,14 @@ type ConfirmationUnixTimestamp = u32;
 
 /// Builder for a [`ByteCostConfig`].
 #[derive(Default, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 #[must_use]
 pub struct ByteCostConfigBuilder {
-    #[cfg_attr(feature = "serde1", serde(alias = "vByteCost"))]
+    #[cfg_attr(feature = "serde", serde(alias = "vByteCost"))]
     v_byte_cost: Option<u64>,
-    #[cfg_attr(feature = "serde1", serde(alias = "vByteFactorKey"))]
+    #[cfg_attr(feature = "serde", serde(alias = "vByteFactorKey"))]
     v_byte_factor_key: Option<u64>,
-    #[cfg_attr(feature = "serde1", serde(alias = "vByteFactorData"))]
+    #[cfg_attr(feature = "serde", serde(alias = "vByteFactorData"))]
     v_byte_factor_data: Option<u64>,
 }
 

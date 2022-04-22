@@ -11,7 +11,7 @@ impl_id!(
     "A transaction identifier, the BLAKE2b-256 hash of the transaction bytes. See <https://www.blake2.net/> for more information."
 );
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 string_serde_impl!(TransactionId);
 
 impl From<MilestoneId> for TransactionId {

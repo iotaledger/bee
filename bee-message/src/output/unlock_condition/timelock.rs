@@ -13,7 +13,7 @@ use crate::{milestone::MilestoneIndex, Error};
 
 /// Defines a milestone index and/or unix timestamp until which the output can not be unlocked.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TimelockUnlockCondition {
     // The milestone index starting from which the output can be consumed.
     milestone_index: MilestoneIndex,
@@ -62,8 +62,8 @@ impl Packable for TimelockUnlockCondition {
     fn unpack<U: Unpacker, const VERIFY: bool>(
         unpacker: &mut U,
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let timestamp = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let milestone_index = MilestoneIndex::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let timestamp = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
 
         if VERIFY {
             verify_milestone_index_timestamp(milestone_index, timestamp).map_err(UnpackError::Packable)?;

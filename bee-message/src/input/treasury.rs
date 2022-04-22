@@ -27,7 +27,7 @@ impl TreasuryInput {
     }
 }
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 string_serde_impl!(TreasuryInput);
 
 impl FromStr for TreasuryInput {

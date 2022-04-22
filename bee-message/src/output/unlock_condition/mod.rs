@@ -23,12 +23,12 @@ pub use self::{
     state_controller_address::StateControllerAddressUnlockCondition,
     storage_deposit_return::StorageDepositReturnUnlockCondition, timelock::TimelockUnlockCondition,
 };
-use crate::{create_bitflags, Error};
+use crate::{address::Address, create_bitflags, milestone::MilestoneIndex, Error};
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, From, Packable)]
 #[cfg_attr(
-    feature = "serde1",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
@@ -105,7 +105,7 @@ pub(crate) type UnlockConditionCount = BoundedU8<0, { UnlockConditions::COUNT_MA
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Deref, Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = |e| e.unwrap_item_err_or_else(|p| Error::InvalidUnlockConditionCount(p.into())))]
 pub struct UnlockConditions(
     #[packable(verify_with = verify_unique_sorted)] BoxedSlicePrefix<UnlockCondition, UnlockConditionCount>,
@@ -231,6 +231,19 @@ impl UnlockConditions {
         } else {
             None
         }
+    }
+
+    /// Returns the address to be unlocked.
+    #[inline(always)]
+    pub fn locked_address<'a>(
+        &'a self,
+        address: &'a Address,
+        milestone_index: MilestoneIndex,
+        milestone_timestamp: u32,
+    ) -> &'a Address {
+        self.expiration()
+            .and_then(|e| e.return_address_expired(milestone_index, milestone_timestamp as u32))
+            .unwrap_or(address)
     }
 }
 

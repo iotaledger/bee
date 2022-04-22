@@ -3,6 +3,8 @@
 
 //! Defines a type to represent different health states in which the storage backend can be.
 
+use core::convert::Infallible;
+
 /// Errors related to storage health statuses.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -12,6 +14,12 @@ pub enum Error {
     /// Unknown storage health variant.
     #[error("unknown storage health variant: {0}")]
     UnknownHealth(u8),
+}
+
+impl From<Infallible> for Error {
+    fn from(err: Infallible) -> Self {
+        match err {}
+    }
 }
 
 /// Represents different health states for a `StorageBackend`.

@@ -119,7 +119,8 @@ pub(crate) async fn white_flag<B: StorageBackend>(
         }
     }
 
-    let mut metadata = WhiteFlagMetadata::new(index, 0);
+    // TODO Actually pass the previous milestone id ?
+    let mut metadata = WhiteFlagMetadata::new(index, 0, None);
 
     // Wait for all parents to get solid or the timeout to expire.
     let response = match timeout(args.rest_api_config.white_flag_solidification_timeout(), receiver).await {
@@ -129,8 +130,8 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 .await
                 .map_err(ApiError::InvalidWhiteflag)?;
 
-            Ok(Json(WhiteFlagResponse {
-                merkle_tree_hash: prefix_hex::encode(metadata.merkle_proof()),
+            Ok(warp::reply::json(&WhiteFlagResponse {
+                merkle_tree_hash: prefix_hex::encode(metadata.applied_merkle_proof()),
             }))
         }
         Err(_) => {

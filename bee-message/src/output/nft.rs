@@ -15,8 +15,8 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ChainId, NativeToken, NativeTokens, NftId, Output, OutputAmount, OutputId, StateTransitionError,
-        StateTransitionVerifier,
+        ByteCost, ByteCostConfig, ChainId, NativeToken, NativeTokens, NftId, Output, OutputAmount, OutputBuilderAmount,
+        OutputId, StateTransitionError, StateTransitionVerifier,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -26,7 +26,7 @@ use crate::{
 ///
 #[must_use]
 pub struct NftOutputBuilder {
-    amount: OutputAmount,
+    amount: OutputBuilderAmount,
     native_tokens: Vec<NativeToken>,
     nft_id: NftId,
     unlock_conditions: Vec<UnlockCondition>,
@@ -35,10 +35,26 @@ pub struct NftOutputBuilder {
 }
 
 impl NftOutputBuilder {
-    ///
-    pub fn new(amount: u64, nft_id: NftId) -> Result<NftOutputBuilder, Error> {
+    /// Creates an [`NftOutputBuilder`] with a provided amount.
+    pub fn new_with_amount(amount: u64, nft_id: NftId) -> Result<NftOutputBuilder, Error> {
+        Self::new(
+            OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
+            nft_id,
+        )
+    }
+
+    /// Creates an [`NftOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
+    pub fn new_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        nft_id: NftId,
+    ) -> Result<NftOutputBuilder, Error> {
+        Self::new(OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config), nft_id)
+    }
+
+    fn new(amount: OutputBuilderAmount, nft_id: NftId) -> Result<NftOutputBuilder, Error> {
         Ok(Self {
-            amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount,
             native_tokens: Vec::new(),
             nft_id,
             unlock_conditions: Vec::new(),
@@ -76,6 +92,19 @@ impl NftOutputBuilder {
     }
 
     ///
+    pub fn replace_unlock_condition(mut self, unlock_condition: UnlockCondition) -> Result<Self, Error> {
+        match self
+            .unlock_conditions
+            .iter_mut()
+            .find(|u| u.kind() == unlock_condition.kind())
+        {
+            Some(u) => *u = unlock_condition,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
+    }
+
+    ///
     #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
@@ -87,6 +116,19 @@ impl NftOutputBuilder {
     pub fn with_feature_blocks(mut self, feature_blocks: impl IntoIterator<Item = FeatureBlock>) -> Self {
         self.feature_blocks = feature_blocks.into_iter().collect();
         self
+    }
+
+    ///
+    pub fn replace_feature_block(mut self, feature_block: FeatureBlock) -> Result<Self, Error> {
+        match self
+            .feature_blocks
+            .iter_mut()
+            .find(|f| f.kind() == feature_block.kind())
+        {
+            Some(f) => *f = feature_block,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
     }
 
     ///
@@ -107,6 +149,19 @@ impl NftOutputBuilder {
     }
 
     ///
+    pub fn replace_immutable_feature_block(mut self, immutable_feature_block: FeatureBlock) -> Result<Self, Error> {
+        match self
+            .immutable_feature_blocks
+            .iter_mut()
+            .find(|f| f.kind() == immutable_feature_block.kind())
+        {
+            Some(f) => *f = immutable_feature_block,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
+    }
+
+    ///
     pub fn finish(self) -> Result<NftOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
@@ -120,20 +175,43 @@ impl NftOutputBuilder {
 
         verify_allowed_feature_blocks(&immutable_feature_blocks, NftOutput::ALLOWED_IMMUTABLE_FEATURE_BLOCKS)?;
 
-        Ok(NftOutput {
-            amount: self.amount,
+        let mut output = NftOutput {
+            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             nft_id: self.nft_id,
             unlock_conditions,
             feature_blocks,
             immutable_feature_blocks,
-        })
+        };
+
+        output.amount = match self.amount {
+            OutputBuilderAmount::Amount(amount) => amount,
+            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config) => Output::Nft(output.clone())
+                .byte_cost(&byte_cost_config)
+                .try_into()
+                .map_err(Error::InvalidOutputAmount)?,
+        };
+
+        Ok(output)
+    }
+}
+
+impl From<&NftOutput> for NftOutputBuilder {
+    fn from(output: &NftOutput) -> Self {
+        NftOutputBuilder {
+            amount: OutputBuilderAmount::Amount(output.amount),
+            native_tokens: output.native_tokens.to_vec(),
+            nft_id: output.nft_id,
+            unlock_conditions: output.unlock_conditions.to_vec(),
+            feature_blocks: output.feature_blocks.to_vec(),
+            immutable_feature_blocks: output.immutable_feature_blocks.to_vec(),
+        }
     }
 }
 
 /// Describes an NFT output, a globally unique token with metadata attached.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct NftOutput {
     // Amount of IOTA tokens held by the output.
     amount: OutputAmount,
@@ -162,16 +240,33 @@ impl NftOutput {
     pub const ALLOWED_IMMUTABLE_FEATURE_BLOCKS: FeatureBlockFlags =
         FeatureBlockFlags::ISSUER.union(FeatureBlockFlags::METADATA);
 
-    /// Creates a new [`NftOutput`].
+    /// Creates a new [`NftOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new(amount: u64, nft_id: NftId) -> Result<Self, Error> {
-        NftOutputBuilder::new(amount, nft_id)?.finish()
+    pub fn new_with_amount(amount: u64, nft_id: NftId) -> Result<Self, Error> {
+        NftOutputBuilder::new_with_amount(amount, nft_id)?.finish()
     }
 
-    /// Creates a new [`NftOutputBuilder`].
+    /// Creates a new [`NftOutput`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn build(amount: u64, nft_id: NftId) -> Result<NftOutputBuilder, Error> {
-        NftOutputBuilder::new(amount, nft_id)
+    pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig, nft_id: NftId) -> Result<Self, Error> {
+        NftOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, nft_id)?.finish()
+    }
+
+    /// Creates a new [`NftOutputBuilder`] with a provided amount.
+    #[inline(always)]
+    pub fn build_with_amount(amount: u64, nft_id: NftId) -> Result<NftOutputBuilder, Error> {
+        NftOutputBuilder::new_with_amount(amount, nft_id)
+    }
+
+    /// Creates a new [`NftOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
+    #[inline(always)]
+    pub fn build_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        nft_id: NftId,
+    ) -> Result<NftOutputBuilder, Error> {
+        NftOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, nft_id)
     }
 
     ///
@@ -234,7 +329,11 @@ impl NftOutput {
         inputs: &[(OutputId, &Output)],
         context: &mut ValidationContext,
     ) -> Result<(), ConflictReason> {
-        let locked_address = self.address();
+        let locked_address = self.unlock_conditions().locked_address(
+            self.address(),
+            context.milestone_index,
+            context.milestone_timestamp,
+        );
         let nft_id = if self.nft_id().is_null() {
             NftId::from(*output_id)
         } else {
@@ -302,7 +401,7 @@ impl Packable for NftOutput {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
-        let nft_id = NftId::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let nft_id = NftId::unpack::<_, VERIFY>(unpacker).coerce()?;
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
 
         if VERIFY {
@@ -401,7 +500,7 @@ pub mod dto {
         type Error = DtoError;
 
         fn try_from(value: &NftOutputDto) -> Result<Self, Self::Error> {
-            let mut builder = NftOutputBuilder::new(
+            let mut builder = NftOutputBuilder::new_with_amount(
                 value
                     .amount
                     .parse::<u64>()

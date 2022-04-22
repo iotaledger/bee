@@ -47,10 +47,10 @@ where
                 if time_diff > 0 {
                     let metrics = ConfirmedMilestoneMetrics {
                         ms_index: *event.index,
-                        mps: new_msg_diff / time_diff,
-                        rmps: event.referenced_messages as u64 / time_diff,
+                        mps: new_msg_diff / time_diff as u64,
+                        rmps: event.referenced_messages as u64 / time_diff as u64,
                         referenced_rate,
-                        time_since_last_ms: time_diff,
+                        time_since_last_ms: time_diff as u64,
                     };
                     broadcast(metrics.into(), &users).await;
                 }  else {

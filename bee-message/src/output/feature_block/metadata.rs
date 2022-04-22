@@ -13,7 +13,7 @@ pub(crate) type MetadataFeatureBlockLength =
 
 /// Defines metadata, arbitrary binary data, that will be stored in the output.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, packable::Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = |err| Error::InvalidMetadataFeatureBlockLength(err.into_prefix_err().into()))]
 pub struct MetadataFeatureBlock(
     // Binary data.

@@ -15,7 +15,6 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::MessageMetadata, Tangle, TangleWorker};
 use futures::{channel::oneshot::Sender, stream::StreamExt};
 use log::{error, info, trace};
-use packable::PackableExt;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -119,7 +118,7 @@ where
                     {
                         trace!("Processing received message...");
 
-                        let message = match Message::unpack_verified(&mut &message_packet.bytes[..]) {
+                        let message = match Message::unpack_strict(&mut &message_packet.bytes[..]) {
                             Ok(message) => message,
                             Err(e) => {
                                 notify_invalid_message(format!("Invalid message: {:?}.", e), &metrics, notifier);

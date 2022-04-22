@@ -339,7 +339,7 @@ version = "0.2.0"
 dependencies = [
  "bech32",
  "bee-pow",
- "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bee-test",
  "bitflags",
  "bytemuck",
@@ -361,7 +361,7 @@ dependencies = [
 
 [[package]]
 name = "bee-node"
-version = "1.0.0-alpha1"
+version = "1.0.0-alpha.3"
 dependencies = [
  "anymap",
  "async-trait",
@@ -475,7 +475,7 @@ dependencies = [
 name = "bee-pow"
 version = "0.2.0"
 dependencies = [
- "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-ternary 0.5.2",
  "bee-test",
  "iota-crypto",
  "thiserror",
@@ -662,6 +662,16 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e8479555c8e9bf3cad36daf16e6a2f77771774e977276a08df4d8ac5f1dda66"
+dependencies = [
+ "autocfg",
+ "num-traits",
+]
+
+[[package]]
+name = "bee-ternary"
+version = "0.6.0"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -670,9 +680,9 @@ dependencies = [
 
 [[package]]
 name = "bee-ternary"
-version = "0.5.2"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e8479555c8e9bf3cad36daf16e6a2f77771774e977276a08df4d8ac5f1dda66"
+checksum = "b0b9489a68e42231e9f4f1443c765d3f80433a52101510ab413e6a9cd2240d21"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -686,7 +696,7 @@ dependencies = [
  "bee-ledger",
  "bee-message",
  "bee-tangle",
- "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-ternary 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytemuck",
  "hex",
  "primitive-types",
@@ -1918,7 +1928,7 @@ version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c98a3248cde6b42cb479a52089fe4fc20d12de51b8edd923294cd5240ec89b0"
 dependencies = [
- "bee-ternary 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-ternary 0.5.2",
  "blake2",
  "digest 0.9.0",
  "ed25519-zebra",
@@ -2758,9 +2768,9 @@ dependencies = [
 
 [[package]]
 name = "packable"
-version = "0.2.1"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20cec85c48c3327e1255919f61f5d132a7e54408f3ed39e1801414c456786d6e"
+checksum = "e7dc9526643ad02793553407dbbea8924e467e48670c5e04eddd5051435a2b4c"
 dependencies = [
  "autocfg",
  "packable-derive",
@@ -2770,9 +2780,9 @@ dependencies = [
 
 [[package]]
 name = "packable-derive"
-version = "0.2.1"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5a8ea15d7e52c248d0f90fd5d420bcfe08b0ad15ff2b9a1b4b1b9eb81a15c63"
+checksum = "1a920d9686d0f165c5749e60d7ff1dfbfd470feabdd311d3c52f5e471dac8432"
 dependencies = [
  "proc-macro-crate",
  "proc-macro-error",

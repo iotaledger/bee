@@ -32,7 +32,7 @@ impl NftAddress {
     }
 }
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 string_serde_impl!(NftAddress);
 
 impl FromStr for NftAddress {

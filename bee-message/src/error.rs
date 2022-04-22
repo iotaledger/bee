@@ -17,7 +17,8 @@ use crate::{
     },
     parent::ParentCount,
     payload::{
-        InputCount, MigratedFundsAmount, OutputCount, ReceiptFundsCount, SignatureCount, TagLength, TaggedDataLength,
+        InputCount, MigratedFundsAmount, MilestoneMetadataLength, MilestoneOptionCount, OutputCount, ReceiptFundsCount,
+        SignatureCount, TagLength, TaggedDataLength,
     },
     unlock_block::{UnlockBlockCount, UnlockBlockIndex},
 };
@@ -26,6 +27,11 @@ use crate::{
 #[derive(Debug, PartialEq)]
 #[allow(missing_docs)]
 pub enum Error {
+    CannotReplaceMissingField,
+    ConsumedAmountOverflow,
+    ConsumedNativeTokensAmountOverflow,
+    CreatedAmountOverflow,
+    CreatedNativeTokensAmountOverflow,
     CryptoError(CryptoError),
     DuplicateSignatureUnlockBlock(u16),
     DuplicateUtxo(UtxoInput),
@@ -41,7 +47,6 @@ pub enum Error {
     InsufficientStorageDepositAmount { amount: u64, required: u64 },
     StorageDepositReturnExceedsOutputAmount { deposit: u64, amount: u64 },
     InsufficientStorageDepositReturnAmount { deposit: u64, required: u64 },
-    UnnecessaryStorageDepositReturnCondition { logical_amount: u64, required: u64 },
     InvalidEssenceKind(u8),
     InvalidFeatureBlockCount(<FeatureBlockCount as TryFrom<usize>>::Error),
     InvalidFeatureBlockKind(u8),
@@ -53,6 +58,9 @@ pub enum Error {
     InvalidMessageLength(usize),
     InvalidStateMetadataLength(<StateMetadataLength as TryFrom<usize>>::Error),
     InvalidMetadataFeatureBlockLength(<MetadataFeatureBlockLength as TryFrom<usize>>::Error),
+    InvalidMilestoneMetadataLength(<MilestoneMetadataLength as TryFrom<usize>>::Error),
+    InvalidMilestoneOptionCount(<MilestoneOptionCount as TryFrom<usize>>::Error),
+    InvalidMilestoneOptionKind(u8),
     InvalidMigratedFundsEntryAmount(<MigratedFundsAmount as TryFrom<u64>>::Error),
     InvalidNativeTokenCount(<NativeTokenCount as TryFrom<usize>>::Error),
     InvalidNftIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
@@ -64,6 +72,7 @@ pub enum Error {
     InvalidPayloadLength { expected: usize, actual: usize },
     InvalidPowScoreValues { nps: u32, npsmi: u32 },
     InvalidReceiptFundsCount(<ReceiptFundsCount as TryFrom<usize>>::Error),
+    InvalidReceiptFundsSum(u128),
     InvalidReferenceIndex(<UnlockBlockIndex as TryFrom<u16>>::Error),
     InvalidSignature,
     InvalidSignatureKind(u8),
@@ -85,6 +94,7 @@ pub enum Error {
     MigratedFundsNotSorted,
     MilestoneInvalidSignatureCount(<SignatureCount as TryFrom<usize>>::Error),
     MilestonePublicKeysSignaturesCountMismatch { key_count: usize, sig_count: usize },
+    MilestoneOptionsNotUniqueSorted,
     MilestoneSignaturesNotUniqueSorted,
     MissingAddressUnlockCondition,
     MissingGovernorUnlockCondition,
@@ -101,11 +111,13 @@ pub enum Error {
     SelfControlledAliasOutput(AliasId),
     SelfDepositNft(NftId),
     SignaturePublicKeyMismatch { expected: String, actual: String },
+    StorageDepositReturnOverflow,
     TailTransactionHashNotUnique { previous: usize, current: usize },
     TimelockUnlockConditionZero,
     UnallowedFeatureBlock { index: usize, kind: u8 },
     UnallowedUnlockCondition { index: usize, kind: u8 },
     UnlockConditionsNotUniqueSorted,
+    UnsupportedOutputKind(u8),
 }
 
 #[cfg(feature = "std")]
@@ -114,6 +126,11 @@ impl std::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Error::CannotReplaceMissingField => write!(f, "cannot replace missing field"),
+            Error::ConsumedAmountOverflow => write!(f, "consumed amount overflow"),
+            Error::ConsumedNativeTokensAmountOverflow => write!(f, "consumed native tokens amount overflow"),
+            Error::CreatedAmountOverflow => write!(f, "created amount overflow"),
+            Error::CreatedNativeTokensAmountOverflow => write!(f, "created native tokens amount overflow"),
             Error::CryptoError(e) => write!(f, "cryptographic error: {}", e),
             Error::DuplicateSignatureUnlockBlock(index) => {
                 write!(f, "duplicate signature unlock block at index: {0}", index)
@@ -159,13 +176,6 @@ impl fmt::Display for Error {
                 f,
                 "storage deposit return of {deposit} exceeds the original output amount of {amount}"
             ),
-            Error::UnnecessaryStorageDepositReturnCondition {
-                logical_amount,
-                required,
-            } => write!(
-                f,
-                "no storage deposit return is needed, the logical output amount {logical_amount} already covers the required deposit {required}"
-            ),
             Error::InvalidEssenceKind(k) => write!(f, "invalid essence kind: {}", k),
             Error::InvalidFeatureBlockCount(count) => write!(f, "invalid feature block count: {}", count),
             Error::InvalidFeatureBlockKind(k) => write!(f, "invalid feature block kind: {}", k),
@@ -180,10 +190,15 @@ impl fmt::Display for Error {
             Error::InvalidMessageLength(length) => write!(f, "invalid message length {}", length),
             Error::InvalidStateMetadataLength(length) => write!(f, "invalid state metadata length {}", length),
             Error::InvalidMetadataFeatureBlockLength(length) => {
-                write!(f, "invalid metadata feature block length {}", length)
+                write!(f, "invalid metadata feature block length {length}")
             }
+            Error::InvalidMilestoneMetadataLength(length) => {
+                write!(f, "invalid milestone metadata length {length}")
+            }
+            Error::InvalidMilestoneOptionCount(count) => write!(f, "invalid milestone option count: {count}"),
+            Error::InvalidMilestoneOptionKind(k) => write!(f, "invalid milestone option kind: {k}"),
             Error::InvalidMigratedFundsEntryAmount(amount) => {
-                write!(f, "invalid migrated funds entry amount: {}", amount)
+                write!(f, "invalid migrated funds entry amount: {amount}")
             }
             Error::InvalidNativeTokenCount(count) => write!(f, "invalid native token count: {}", count),
             Error::InvalidNftIndex(index) => write!(f, "invalid nft index: {}", index),
@@ -203,6 +218,7 @@ impl fmt::Display for Error {
                 nps, npsmi
             ),
             Error::InvalidReceiptFundsCount(count) => write!(f, "invalid receipt funds count: {}", count),
+            Error::InvalidReceiptFundsSum(sum) => write!(f, "invalid receipt amount sum: {sum}"),
             Error::InvalidReferenceIndex(index) => write!(f, "invalid reference index: {}", index),
             Error::InvalidSignature => write!(f, "invalid signature provided"),
             Error::InvalidSignatureKind(k) => write!(f, "invalid signature kind: {}", k),
@@ -248,6 +264,9 @@ impl fmt::Display for Error {
                     key_count, sig_count
                 )
             }
+            Error::MilestoneOptionsNotUniqueSorted => {
+                write!(f, "milestone options are not unique and/or sorted")
+            }
             Error::MilestoneSignaturesNotUniqueSorted => {
                 write!(f, "milestone signatures are not unique and/or sorted")
             }
@@ -286,6 +305,9 @@ impl fmt::Display for Error {
                     expected, actual
                 )
             }
+            Error::StorageDepositReturnOverflow => {
+                write!(f, "storage deposit return overflow",)
+            }
             Error::TailTransactionHashNotUnique { previous, current } => {
                 write!(
                     f,
@@ -306,6 +328,7 @@ impl fmt::Display for Error {
                 write!(f, "unallowed unlock condition at index {} with kind {}", index, kind)
             }
             Error::UnlockConditionsNotUniqueSorted => write!(f, "unlock conditions are not unique and/or sorted"),
+            Error::UnsupportedOutputKind(k) => write!(f, "unsupported output kind: {k}"),
         }
     }
 }

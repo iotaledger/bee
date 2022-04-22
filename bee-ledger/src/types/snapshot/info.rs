@@ -10,7 +10,7 @@ pub struct SnapshotInfo {
     snapshot_index: MilestoneIndex,
     entry_point_index: MilestoneIndex,
     pruning_index: MilestoneIndex,
-    timestamp: u64,
+    timestamp: u32,
 }
 
 impl SnapshotInfo {
@@ -20,7 +20,7 @@ impl SnapshotInfo {
         snapshot_index: MilestoneIndex,
         entry_point_index: MilestoneIndex,
         pruning_index: MilestoneIndex,
-        timestamp: u64,
+        timestamp: u32,
     ) -> Self {
         Self {
             network_id,
@@ -67,12 +67,12 @@ impl SnapshotInfo {
     }
 
     /// Returns the timestamp of a `SnapshotInfo`.
-    pub fn timestamp(&self) -> u64 {
+    pub fn timestamp(&self) -> u32 {
         self.timestamp
     }
 
     /// Updates the timestamp of a `SnapshotInfo`.
-    pub fn update_timestamp(&mut self, timestamp: u64) {
+    pub fn update_timestamp(&mut self, timestamp: u32) {
         self.timestamp = timestamp;
     }
 }

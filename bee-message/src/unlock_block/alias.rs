@@ -5,7 +5,7 @@ use crate::{unlock_block::UnlockBlockIndex, Error};
 
 /// Points to the unlock block of a consumed alias output.
 #[derive(Clone, Debug, Eq, PartialEq, Hash, packable::Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = Error::InvalidAliasIndex)]
 pub struct AliasUnlockBlock(
     /// Index of input and unlock block corresponding to an [`AliasOutput`](crate::output::AliasOutput).

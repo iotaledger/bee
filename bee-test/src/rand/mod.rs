@@ -15,6 +15,8 @@ pub mod message;
 pub mod metadata;
 /// Module providing random milestone generation utilities.
 pub mod milestone;
+/// Module providing random milestone option generation utilities.
+pub mod milestone_option;
 /// Module providing random number generation utilities.
 pub mod number;
 /// Module providing random option generation utilities.

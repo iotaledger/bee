@@ -21,7 +21,7 @@ pub(crate) type TaggedDataLength =
 
 /// A payload which holds a tag and associated data.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct TaggedDataPayload {
     #[packable(unpack_error_with = |err| Error::InvalidTagLength(err.into_prefix_err().into()))]

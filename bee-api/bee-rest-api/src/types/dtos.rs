@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_ledger::types::Receipt;
-use bee_message::payload::dto::ReceiptPayloadDto;
+use bee_message::payload::milestone::option::dto::ReceiptMilestoneOptionDto;
 #[cfg(feature = "peer")]
 use bee_protocol::types::peer::Peer;
 use serde::{Deserialize, Serialize};
@@ -127,7 +127,7 @@ pub struct MetricsDto {
 /// Describes a receipt.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceiptDto {
-    pub receipt: ReceiptPayloadDto,
+    pub receipt: ReceiptMilestoneOptionDto,
     #[serde(rename = "milestoneIndex")]
     pub milestone_index: u32,
 }

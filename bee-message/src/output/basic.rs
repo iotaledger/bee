@@ -10,7 +10,7 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        NativeToken, NativeTokens, Output, OutputAmount, OutputId,
+        ByteCost, ByteCostConfig, NativeToken, NativeTokens, Output, OutputAmount, OutputBuilderAmount, OutputId,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -20,18 +20,31 @@ use crate::{
 ///
 #[must_use]
 pub struct BasicOutputBuilder {
-    amount: OutputAmount,
+    amount: OutputBuilderAmount,
     native_tokens: Vec<NativeToken>,
     unlock_conditions: Vec<UnlockCondition>,
     feature_blocks: Vec<FeatureBlock>,
 }
 
 impl BasicOutputBuilder {
-    ///
+    /// Creates a [`BasicOutputBuilder`] with a provided amount.
     #[inline(always)]
-    pub fn new(amount: u64) -> Result<Self, Error> {
+    pub fn new_with_amount(amount: u64) -> Result<Self, Error> {
+        Self::new(OutputBuilderAmount::Amount(
+            amount.try_into().map_err(Error::InvalidOutputAmount)?,
+        ))
+    }
+
+    /// Creates an [`BasicOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
+    #[inline(always)]
+    pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
+        Self::new(OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config))
+    }
+
+    fn new(amount: OutputBuilderAmount) -> Result<Self, Error> {
         Ok(Self {
-            amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount,
             native_tokens: Vec::new(),
             unlock_conditions: Vec::new(),
             feature_blocks: Vec::new(),
@@ -67,6 +80,19 @@ impl BasicOutputBuilder {
     }
 
     ///
+    pub fn replace_unlock_condition(mut self, unlock_condition: UnlockCondition) -> Result<Self, Error> {
+        match self
+            .unlock_conditions
+            .iter_mut()
+            .find(|u| u.kind() == unlock_condition.kind())
+        {
+            Some(u) => *u = unlock_condition,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
+    }
+
+    ///
     #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
@@ -81,6 +107,19 @@ impl BasicOutputBuilder {
     }
 
     ///
+    pub fn replace_feature_block(mut self, feature_block: FeatureBlock) -> Result<Self, Error> {
+        match self
+            .feature_blocks
+            .iter_mut()
+            .find(|f| f.kind() == feature_block.kind())
+        {
+            Some(f) => *f = feature_block,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
+    }
+
+    ///
     pub fn finish(self) -> Result<BasicOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
@@ -90,18 +129,39 @@ impl BasicOutputBuilder {
 
         verify_feature_blocks::<true>(&feature_blocks)?;
 
-        Ok(BasicOutput {
-            amount: self.amount,
+        let mut output = BasicOutput {
+            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             unlock_conditions,
             feature_blocks,
-        })
+        };
+
+        output.amount = match self.amount {
+            OutputBuilderAmount::Amount(amount) => amount,
+            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config) => Output::Basic(output.clone())
+                .byte_cost(&byte_cost_config)
+                .try_into()
+                .map_err(Error::InvalidOutputAmount)?,
+        };
+
+        Ok(output)
+    }
+}
+
+impl From<&BasicOutput> for BasicOutputBuilder {
+    fn from(output: &BasicOutput) -> Self {
+        BasicOutputBuilder {
+            amount: OutputBuilderAmount::Amount(output.amount),
+            native_tokens: output.native_tokens.to_vec(),
+            unlock_conditions: output.unlock_conditions.to_vec(),
+            feature_blocks: output.feature_blocks.to_vec(),
+        }
     }
 }
 
 /// Describes a basic output with optional features.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error)]
 pub struct BasicOutput {
     // Amount of IOTA tokens held by the output.
@@ -129,16 +189,30 @@ impl BasicOutput {
         .union(FeatureBlockFlags::METADATA)
         .union(FeatureBlockFlags::TAG);
 
-    /// Creates a new [`BasicOutput`].
+    /// Creates a new [`BasicOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new(amount: u64) -> Result<Self, Error> {
-        BasicOutputBuilder::new(amount)?.finish()
+    pub fn new_with_amount(amount: u64) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_amount(amount)?.finish()
     }
 
-    /// Creates a new [`BasicOutputBuilder`].
+    /// Creates a new [`BasicOutput`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn build(amount: u64) -> Result<BasicOutputBuilder, Error> {
-        BasicOutputBuilder::new(amount)
+    pub fn new_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<Self, Error> {
+        BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)?.finish()
+    }
+
+    /// Creates a new [`BasicOutputBuilder`] with a provided amount.
+    #[inline(always)]
+    pub fn build_with_amount(amount: u64) -> Result<BasicOutputBuilder, Error> {
+        BasicOutputBuilder::new_with_amount(amount)
+    }
+
+    /// Creates a new [`BasicOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
+    #[inline(always)]
+    pub fn build_with_minimum_storage_deposit(byte_cost_config: ByteCostConfig) -> Result<BasicOutputBuilder, Error> {
+        BasicOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config)
     }
 
     ///
@@ -183,7 +257,11 @@ impl BasicOutput {
         inputs: &[(OutputId, &Output)],
         context: &mut ValidationContext,
     ) -> Result<(), ConflictReason> {
-        let locked_address = self.address();
+        let locked_address = self.unlock_conditions().locked_address(
+            self.address(),
+            context.milestone_index,
+            context.milestone_timestamp,
+        );
 
         locked_address.unlock(unlock_block, inputs, context)
     }
@@ -255,7 +333,7 @@ pub mod dto {
         type Error = DtoError;
 
         fn try_from(value: &BasicOutputDto) -> Result<Self, Self::Error> {
-            let mut builder = BasicOutputBuilder::new(
+            let mut builder = BasicOutputBuilder::new_with_amount(
                 value
                     .amount
                     .parse::<u64>()

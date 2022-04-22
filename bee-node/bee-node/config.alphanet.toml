@@ -1,8 +1,8 @@
 # Duplicate this file to config.toml to use it
 
 alias      = "Bee alphanet node"
-bech32_hrp = "atoi"
-network_id = "alphanet-1"
+bech32_hrp = "rms"
+network_id = "alphanet-2"
 
 [logger]
 [[logger.outputs]]

@@ -1,15 +1,16 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::fmt;
+use core::{convert::Infallible, fmt};
 
 use hashbrown::{HashMap, HashSet};
 use primitive_types::U256;
 
 use crate::{
     address::Address,
+    error::Error,
     milestone::MilestoneIndex,
-    output::{create_inputs_commitment, ChainId, Output, OutputId, TokenId},
+    output::{create_inputs_commitment, ChainId, NativeTokens, Output, OutputId, TokenId, UnlockCondition},
     payload::transaction::{RegularTransactionEssence, TransactionEssence, TransactionId},
     unlock_block::UnlockBlocks,
 };
@@ -29,13 +30,19 @@ impl fmt::Display for ConflictError {
     }
 }
 
+impl From<Infallible> for ConflictError {
+    fn from(err: Infallible) -> Self {
+        match err {}
+    }
+}
+
 #[cfg(feature = "std")]
 impl std::error::Error for ConflictError {}
 
 /// Represents the different reasons why a transaction can conflict with the ledger state.
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, packable::Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = ConflictError)]
 #[packable(tag_type = u8, with_error = ConflictError::InvalidConflict)]
 pub enum ConflictReason {
@@ -69,6 +76,10 @@ pub enum ConflictReason {
     UnlockAddressMismatch = 13,
     /// The address was not previously unlocked.
     AddressNotUnlocked = 14,
+    /// Too many native tokens.
+    TooManyNativeTokens = 15,
+    /// Non unique token id for founfry.
+    NonUniqueTokenIdForFoundry = 16,
     /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
 }
@@ -99,6 +110,8 @@ impl TryFrom<u8> for ConflictReason {
             12 => Self::StorageDepositReturnMismatch,
             13 => Self::UnlockAddressMismatch,
             14 => Self::AddressNotUnlocked,
+            15 => Self::TooManyNativeTokens,
+            16 => Self::NonUniqueTokenIdForFoundry,
             255 => Self::SemanticValidationFailed,
             x => return Err(Self::Error::InvalidConflict(x)),
         })
@@ -118,7 +131,7 @@ pub struct ValidationContext<'a> {
     ///
     pub milestone_index: MilestoneIndex,
     ///
-    pub milestone_timestamp: u64,
+    pub milestone_timestamp: u32,
     ///
     pub input_amount: u64,
     ///
@@ -147,7 +160,7 @@ impl<'a> ValidationContext<'a> {
         inputs: impl Iterator<Item = (&'a OutputId, &'a Output)> + Clone,
         unlock_blocks: &'a UnlockBlocks,
         milestone_index: MilestoneIndex,
-        milestone_timestamp: u64,
+        milestone_timestamp: u32,
     ) -> Self {
         Self {
             essence,
@@ -185,4 +198,202 @@ impl<'a> ValidationContext<'a> {
             simple_deposits: HashMap::new(),
         }
     }
+}
+
+///
+pub fn semantic_validation(
+    mut context: ValidationContext,
+    inputs: &[(OutputId, &Output)],
+    unlock_blocks: &UnlockBlocks,
+) -> Result<ConflictReason, Error> {
+    // Validation of the inputs commitment.
+    if context.essence.inputs_commitment() != &context.inputs_commitment {
+        return Ok(ConflictReason::InputsCommitmentsMismatch);
+    }
+
+    // Validation of inputs.
+    for ((output_id, consumed_output), unlock_block) in inputs.iter().zip(unlock_blocks.iter()) {
+        let (conflict, amount, consumed_native_tokens, unlock_conditions) = match consumed_output {
+            Output::Basic(output) => (
+                output.unlock(output_id, unlock_block, inputs, &mut context),
+                output.amount(),
+                output.native_tokens(),
+                output.unlock_conditions(),
+            ),
+            Output::Alias(output) => (
+                output.unlock(output_id, unlock_block, inputs, &mut context),
+                output.amount(),
+                output.native_tokens(),
+                output.unlock_conditions(),
+            ),
+            Output::Foundry(output) => (
+                output.unlock(output_id, unlock_block, inputs, &mut context),
+                output.amount(),
+                output.native_tokens(),
+                output.unlock_conditions(),
+            ),
+            Output::Nft(output) => (
+                output.unlock(output_id, unlock_block, inputs, &mut context),
+                output.amount(),
+                output.native_tokens(),
+                output.unlock_conditions(),
+            ),
+            _ => return Err(Error::UnsupportedOutputKind(consumed_output.kind())),
+        };
+
+        if let Err(conflict) = conflict {
+            return Ok(conflict);
+        }
+
+        if let Some(timelock) = unlock_conditions.timelock() {
+            if *timelock.milestone_index() != 0 && context.milestone_index < timelock.milestone_index() {
+                return Ok(ConflictReason::TimelockMilestoneIndex);
+            }
+            if timelock.timestamp() != 0 && context.milestone_timestamp < timelock.timestamp() {
+                return Ok(ConflictReason::TimelockUnix);
+            }
+        }
+
+        if let Some(storage_deposit_return) = unlock_conditions.storage_deposit_return() {
+            let amount = context
+                .storage_deposit_returns
+                .entry(*storage_deposit_return.return_address())
+                .or_default();
+
+            *amount = amount
+                .checked_add(storage_deposit_return.amount())
+                .ok_or(Error::StorageDepositReturnOverflow)?;
+        }
+
+        context.input_amount = context
+            .input_amount
+            .checked_add(amount)
+            .ok_or(Error::ConsumedAmountOverflow)?;
+
+        for native_token in consumed_native_tokens.iter() {
+            let native_token_amount = context.input_native_tokens.entry(*native_token.token_id()).or_default();
+
+            *native_token_amount = native_token_amount
+                .checked_add(*native_token.amount())
+                .ok_or(Error::ConsumedNativeTokensAmountOverflow)?;
+        }
+    }
+
+    // Validation of outputs.
+    for created_output in context.essence.outputs() {
+        let (amount, created_native_tokens, feature_blocks) = match created_output {
+            Output::Basic(output) => {
+                if let [UnlockCondition::Address(address)] = output.unlock_conditions().as_ref() {
+                    if output.feature_blocks().is_empty() {
+                        let amount = context.simple_deposits.entry(*address.address()).or_default();
+
+                        *amount = amount
+                            .checked_add(output.amount())
+                            .ok_or(Error::CreatedAmountOverflow)?;
+                    }
+                }
+                (output.amount(), output.native_tokens(), output.feature_blocks())
+            }
+            Output::Alias(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
+            Output::Foundry(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
+            Output::Nft(output) => (output.amount(), output.native_tokens(), output.feature_blocks()),
+            _ => return Err(Error::UnsupportedOutputKind(created_output.kind())),
+        };
+
+        if let Some(sender) = feature_blocks.sender() {
+            if !context.unlocked_addresses.contains(sender.address()) {
+                return Ok(ConflictReason::UnverifiedSender);
+            }
+        }
+
+        context.output_amount = context
+            .output_amount
+            .checked_add(amount)
+            .ok_or(Error::CreatedAmountOverflow)?;
+
+        for native_token in created_native_tokens.iter() {
+            let native_token_amount = context
+                .output_native_tokens
+                .entry(*native_token.token_id())
+                .or_default();
+
+            *native_token_amount = native_token_amount
+                .checked_add(*native_token.amount())
+                .ok_or(Error::CreatedNativeTokensAmountOverflow)?;
+        }
+    }
+
+    // Validation of storage deposit returns.
+    for (return_address, return_amount) in context.storage_deposit_returns.iter() {
+        if let Some(deposit_amount) = context.simple_deposits.get(return_address) {
+            if deposit_amount < return_amount {
+                return Ok(ConflictReason::StorageDepositReturnMismatch);
+            }
+        } else {
+            return Ok(ConflictReason::StorageDepositReturnMismatch);
+        }
+    }
+
+    // Validation of amounts.
+    if context.input_amount != context.output_amount {
+        return Ok(ConflictReason::CreatedConsumedAmountMismatch);
+    }
+
+    let mut native_token_ids = HashMap::new();
+
+    // Validation of input native tokens.
+    for (token_id, _input_amount) in context.input_native_tokens.iter() {
+        if let Some(token_tag) = native_token_ids.insert(token_id.foundry_id(), token_id.token_tag()) {
+            if token_tag != token_id.token_tag() {
+                return Ok(ConflictReason::NonUniqueTokenIdForFoundry);
+            }
+        }
+    }
+
+    // Validation of output native tokens.
+    for (token_id, output_amount) in context.output_native_tokens.iter() {
+        let input_amount = context.input_native_tokens.get(token_id).copied().unwrap_or_default();
+
+        if output_amount > &input_amount
+            && !context
+                .output_chains
+                .contains_key(&ChainId::from(token_id.foundry_id()))
+        {
+            return Ok(ConflictReason::CreatedConsumedNativeTokensAmountMismatch);
+        }
+
+        if let Some(token_tag) = native_token_ids.insert(token_id.foundry_id(), token_id.token_tag()) {
+            if token_tag != token_id.token_tag() {
+                return Ok(ConflictReason::NonUniqueTokenIdForFoundry);
+            }
+        }
+    }
+
+    if native_token_ids.len() > NativeTokens::COUNT_MAX as usize {
+        return Ok(ConflictReason::TooManyNativeTokens);
+    }
+
+    // Validation of state transitions and destructions.
+    for (chain_id, current_state) in context.input_chains.iter() {
+        if Output::verify_state_transition(
+            Some(current_state),
+            context.output_chains.get(chain_id).map(core::ops::Deref::deref),
+            &context,
+        )
+        .is_err()
+        {
+            return Ok(ConflictReason::SemanticValidationFailed);
+        }
+    }
+
+    // Validation of state creations.
+    for (chain_id, next_state) in context.output_chains.iter() {
+        if context.input_chains.get(chain_id).is_none()
+            && Output::verify_state_transition(None, Some(next_state), &context).is_err()
+        {
+            return Ok(ConflictReason::SemanticValidationFailed);
+        }
+    }
+
+    Ok(ConflictReason::None)
 }

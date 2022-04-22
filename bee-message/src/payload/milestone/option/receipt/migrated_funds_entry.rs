@@ -5,7 +5,7 @@ use core::ops::RangeInclusive;
 
 use packable::{bounded::BoundedU64, Packable};
 
-use crate::{address::Address, constant::IOTA_SUPPLY, payload::receipt::TailTransactionHash, Error};
+use crate::{address::Address, constant::IOTA_SUPPLY, payload::milestone::option::receipt::TailTransactionHash, Error};
 
 const MIGRATED_FUNDS_ENTRY_AMOUNT_MIN: u64 = 1_000_000;
 
@@ -14,7 +14,7 @@ pub(crate) type MigratedFundsAmount =
 
 /// Describes funds which were migrated from a legacy network.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MigratedFundsEntry {
     tail_transaction_hash: TailTransactionHash,
     // The target address of the migrated funds.

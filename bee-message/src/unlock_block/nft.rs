@@ -5,7 +5,7 @@ use crate::{unlock_block::UnlockBlockIndex, Error};
 
 /// Points to the unlock block of a consumed NFT output.
 #[derive(Clone, Debug, Eq, PartialEq, Hash, packable::Packable)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = Error, with = Error::InvalidNftIndex)]
 pub struct NftUnlockBlock(
     /// Index of input and unlock block corresponding to an [`NftOutput`](crate::output::NftOutput).

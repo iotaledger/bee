@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use alloc::vec::Vec;
+use core::cmp::Ordering;
 
 use packable::{
     error::{UnpackError, UnpackErrorExt},
@@ -15,8 +16,8 @@ use crate::{
     output::{
         feature_block::{verify_allowed_feature_blocks, FeatureBlock, FeatureBlockFlags, FeatureBlocks},
         unlock_condition::{verify_allowed_unlock_conditions, UnlockCondition, UnlockConditionFlags, UnlockConditions},
-        ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount, OutputId, StateTransitionError,
-        StateTransitionVerifier, TokenId, TokenScheme, TokenTag,
+        ByteCost, ByteCostConfig, ChainId, FoundryId, NativeToken, NativeTokens, Output, OutputAmount,
+        OutputBuilderAmount, OutputId, StateTransitionError, StateTransitionVerifier, TokenId, TokenScheme, TokenTag,
     },
     semantic::{ConflictReason, ValidationContext},
     unlock_block::UnlockBlock,
@@ -26,7 +27,7 @@ use crate::{
 ///
 #[must_use]
 pub struct FoundryOutputBuilder {
-    amount: OutputAmount,
+    amount: OutputBuilderAmount,
     native_tokens: Vec<NativeToken>,
     serial_number: u32,
     token_tag: TokenTag,
@@ -37,15 +38,45 @@ pub struct FoundryOutputBuilder {
 }
 
 impl FoundryOutputBuilder {
-    ///
-    pub fn new(
+    /// Creates a [`FoundryOutputBuilder`] with a provided amount.
+    pub fn new_with_amount(
         amount: u64,
         serial_number: u32,
         token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
+        Self::new(
+            OutputBuilderAmount::Amount(amount.try_into().map_err(Error::InvalidOutputAmount)?),
+            serial_number,
+            token_tag,
+            token_scheme,
+        )
+    }
+
+    /// Creates a [`FoundryOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
+    pub fn new_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        serial_number: u32,
+        token_tag: TokenTag,
+        token_scheme: TokenScheme,
+    ) -> Result<FoundryOutputBuilder, Error> {
+        Self::new(
+            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config),
+            serial_number,
+            token_tag,
+            token_scheme,
+        )
+    }
+
+    fn new(
+        amount: OutputBuilderAmount,
+        serial_number: u32,
+        token_tag: TokenTag,
+        token_scheme: TokenScheme,
+    ) -> Result<FoundryOutputBuilder, Error> {
         Ok(Self {
-            amount: amount.try_into().map_err(Error::InvalidOutputAmount)?,
+            amount,
             native_tokens: Vec::new(),
             serial_number,
             token_tag,
@@ -85,6 +116,19 @@ impl FoundryOutputBuilder {
     }
 
     ///
+    pub fn replace_unlock_condition(mut self, unlock_condition: UnlockCondition) -> Result<Self, Error> {
+        match self
+            .unlock_conditions
+            .iter_mut()
+            .find(|u| u.kind() == unlock_condition.kind())
+        {
+            Some(u) => *u = unlock_condition,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
+    }
+
+    ///
     #[inline(always)]
     pub fn add_feature_block(mut self, feature_block: FeatureBlock) -> Self {
         self.feature_blocks.push(feature_block);
@@ -96,6 +140,19 @@ impl FoundryOutputBuilder {
     pub fn with_feature_blocks(mut self, feature_blocks: impl IntoIterator<Item = FeatureBlock>) -> Self {
         self.feature_blocks = feature_blocks.into_iter().collect();
         self
+    }
+
+    ///
+    pub fn replace_feature_block(mut self, feature_block: FeatureBlock) -> Result<Self, Error> {
+        match self
+            .feature_blocks
+            .iter_mut()
+            .find(|f| f.kind() == feature_block.kind())
+        {
+            Some(f) => *f = feature_block,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
     }
 
     ///
@@ -116,6 +173,19 @@ impl FoundryOutputBuilder {
     }
 
     ///
+    pub fn replace_immutable_feature_block(mut self, immutable_feature_block: FeatureBlock) -> Result<Self, Error> {
+        match self
+            .immutable_feature_blocks
+            .iter_mut()
+            .find(|f| f.kind() == immutable_feature_block.kind())
+        {
+            Some(f) => *f = immutable_feature_block,
+            None => return Err(Error::CannotReplaceMissingField),
+        }
+        Ok(self)
+    }
+
+    ///
     pub fn finish(self) -> Result<FoundryOutput, Error> {
         let unlock_conditions = UnlockConditions::new(self.unlock_conditions)?;
 
@@ -132,8 +202,8 @@ impl FoundryOutputBuilder {
             FoundryOutput::ALLOWED_IMMUTABLE_FEATURE_BLOCKS,
         )?;
 
-        Ok(FoundryOutput {
-            amount: self.amount,
+        let mut output = FoundryOutput {
+            amount: 1u64.try_into().map_err(Error::InvalidOutputAmount)?,
             native_tokens: NativeTokens::new(self.native_tokens)?,
             serial_number: self.serial_number,
             token_tag: self.token_tag,
@@ -141,13 +211,38 @@ impl FoundryOutputBuilder {
             unlock_conditions,
             feature_blocks,
             immutable_feature_blocks,
-        })
+        };
+
+        output.amount = match self.amount {
+            OutputBuilderAmount::Amount(amount) => amount,
+            OutputBuilderAmount::MinimumStorageDeposit(byte_cost_config) => Output::Foundry(output.clone())
+                .byte_cost(&byte_cost_config)
+                .try_into()
+                .map_err(Error::InvalidOutputAmount)?,
+        };
+
+        Ok(output)
+    }
+}
+
+impl From<&FoundryOutput> for FoundryOutputBuilder {
+    fn from(output: &FoundryOutput) -> Self {
+        FoundryOutputBuilder {
+            amount: OutputBuilderAmount::Amount(output.amount),
+            native_tokens: output.native_tokens.to_vec(),
+            serial_number: output.serial_number,
+            token_tag: output.token_tag,
+            token_scheme: output.token_scheme.clone(),
+            unlock_conditions: output.unlock_conditions.to_vec(),
+            feature_blocks: output.feature_blocks.to_vec(),
+            immutable_feature_blocks: output.immutable_feature_blocks.to_vec(),
+        }
     }
 }
 
 /// Describes a foundry output that is controlled by an alias.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FoundryOutput {
     // Amount of IOTA tokens held by the output.
     amount: OutputAmount,
@@ -173,21 +268,56 @@ impl FoundryOutput {
     /// The set of allowed immutable [`FeatureBlock`]s for a [`FoundryOutput`].
     pub const ALLOWED_IMMUTABLE_FEATURE_BLOCKS: FeatureBlockFlags = FeatureBlockFlags::METADATA;
 
-    /// Creates a new [`FoundryOutput`].
+    /// Creates a new [`FoundryOutput`] with a provided amount.
     #[inline(always)]
-    pub fn new(amount: u64, serial_number: u32, token_tag: TokenTag, token_scheme: TokenScheme) -> Result<Self, Error> {
-        FoundryOutputBuilder::new(amount, serial_number, token_tag, token_scheme)?.finish()
+    pub fn new_with_amount(
+        amount: u64,
+        serial_number: u32,
+        token_tag: TokenTag,
+        token_scheme: TokenScheme,
+    ) -> Result<Self, Error> {
+        FoundryOutputBuilder::new_with_amount(amount, serial_number, token_tag, token_scheme)?.finish()
     }
 
-    /// Creates a new [`FoundryOutputBuilder`].
+    /// Creates a new [`FoundryOutput`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
     #[inline(always)]
-    pub fn build(
+    pub fn new_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        serial_number: u32,
+        token_tag: TokenTag,
+        token_scheme: TokenScheme,
+    ) -> Result<Self, Error> {
+        FoundryOutputBuilder::new_with_minimum_storage_deposit(
+            byte_cost_config,
+            serial_number,
+            token_tag,
+            token_scheme,
+        )?
+        .finish()
+    }
+
+    /// Creates a new [`FoundryOutputBuilder`] with a provided amount.
+    #[inline(always)]
+    pub fn build_with_amount(
         amount: u64,
         serial_number: u32,
         token_tag: TokenTag,
         token_scheme: TokenScheme,
     ) -> Result<FoundryOutputBuilder, Error> {
-        FoundryOutputBuilder::new(amount, serial_number, token_tag, token_scheme)
+        FoundryOutputBuilder::new_with_amount(amount, serial_number, token_tag, token_scheme)
+    }
+
+    /// Creates a new [`FoundryOutputBuilder`] with a provided byte cost config.
+    /// The amount will be set to the minimum storage deposit.
+    #[inline(always)]
+    pub fn build_with_minimum_storage_deposit(
+        byte_cost_config: ByteCostConfig,
+        serial_number: u32,
+        token_tag: TokenTag,
+        token_scheme: TokenScheme,
+    ) -> Result<FoundryOutputBuilder, Error> {
+        FoundryOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, serial_number, token_tag, token_scheme)
     }
 
     ///
@@ -274,6 +404,12 @@ impl FoundryOutput {
     ) -> Result<(), ConflictReason> {
         let locked_address = Address::from(*self.alias_address());
 
+        let locked_address = self.unlock_conditions().locked_address(
+            &locked_address,
+            context.milestone_index,
+            context.milestone_timestamp,
+        );
+
         locked_address.unlock(unlock_block, inputs, context)
     }
 }
@@ -282,11 +418,30 @@ impl StateTransitionVerifier for FoundryOutput {
     fn creation(next_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
         let alias_chain_id = ChainId::from(*next_state.alias_address().alias_id());
 
-        if let (Some(_input_alias), Some(_output_alias)) = (
+        if let (Some(Output::Alias(input_alias)), Some(Output::Alias(output_alias))) = (
             context.input_chains.get(&alias_chain_id),
             context.output_chains.get(&alias_chain_id),
         ) {
-            // TODO check serial
+            if input_alias.foundry_counter() >= next_state.serial_number()
+                || next_state.serial_number() > output_alias.foundry_counter()
+            {
+                return Err(StateTransitionError::InconsistentFoundrySerialNumber);
+            }
+        } else {
+            return Err(StateTransitionError::MissingAliasForFoundry);
+        }
+
+        let token_id = next_state.token_id();
+        let output_tokens = context.output_native_tokens.get(&token_id).copied().unwrap_or_default();
+        let TokenScheme::Simple(ref next_token_scheme) = next_state.token_scheme;
+
+        // No native tokens should be referenced prior to the foundry creation.
+        if context.input_native_tokens.contains_key(&token_id) {
+            return Err(StateTransitionError::InconsistentNativeTokensFoundryCreation);
+        }
+
+        if &output_tokens != next_token_scheme.minted_tokens() || !next_token_scheme.melted_tokens().is_zero() {
+            return Err(StateTransitionError::InconsistentNativeTokensFoundryCreation);
         }
 
         Ok(())
@@ -295,17 +450,19 @@ impl StateTransitionVerifier for FoundryOutput {
     fn transition(
         current_state: &Self,
         next_state: &Self,
-        _context: &ValidationContext,
+        context: &ValidationContext,
     ) -> Result<(), StateTransitionError> {
         if current_state.alias_address() != next_state.alias_address()
             || current_state.serial_number != next_state.serial_number
             || current_state.token_tag != next_state.token_tag
-            || current_state.token_scheme != next_state.token_scheme
             || current_state.immutable_feature_blocks != next_state.immutable_feature_blocks
         {
             return Err(StateTransitionError::MutatedImmutableField);
         }
 
+        let token_id = next_state.token_id();
+        let input_tokens = context.input_native_tokens.get(&token_id).copied().unwrap_or_default();
+        let output_tokens = context.output_native_tokens.get(&token_id).copied().unwrap_or_default();
         let TokenScheme::Simple(ref current_token_scheme) = current_state.token_scheme;
         let TokenScheme::Simple(ref next_token_scheme) = next_state.token_scheme;
 
@@ -313,10 +470,78 @@ impl StateTransitionVerifier for FoundryOutput {
             return Err(StateTransitionError::MutatedImmutableField);
         }
 
+        if current_token_scheme.minted_tokens() > next_token_scheme.minted_tokens()
+            || current_token_scheme.melted_tokens() > next_token_scheme.melted_tokens()
+        {
+            return Err(StateTransitionError::NonMonotonicallyIncreasingNativeTokens);
+        }
+
+        match input_tokens.cmp(&output_tokens) {
+            Ordering::Less => {
+                // Mint
+
+                // This can't underflow as it is known that current_minted_tokens <= next_minted_tokens.
+                let minted_diff = next_token_scheme.minted_tokens() - current_token_scheme.minted_tokens();
+                // This can't underflow as it is known that input_tokens < output_tokens (Ordering::Less).
+                let token_diff = output_tokens - input_tokens;
+
+                if minted_diff != token_diff {
+                    return Err(StateTransitionError::InconsistentNativeTokensMint);
+                }
+
+                if current_token_scheme.melted_tokens() != next_token_scheme.melted_tokens() {
+                    return Err(StateTransitionError::InconsistentNativeTokensMint);
+                }
+            }
+            Ordering::Equal => {
+                // Transition
+
+                if current_token_scheme.minted_tokens() != next_token_scheme.minted_tokens()
+                    || current_token_scheme.melted_tokens() != next_token_scheme.melted_tokens()
+                {
+                    return Err(StateTransitionError::InconsistentNativeTokensTransition);
+                }
+            }
+            Ordering::Greater => {
+                // Melt / Burn
+
+                if current_token_scheme.melted_tokens() != next_token_scheme.melted_tokens()
+                    && current_token_scheme.minted_tokens() != next_token_scheme.minted_tokens()
+                {
+                    return Err(StateTransitionError::InconsistentNativeTokensMeltBurn);
+                }
+
+                // This can't underflow as it is known that current_melted_tokens <= next_melted_tokens.
+                let melted_diff = next_token_scheme.melted_tokens() - current_token_scheme.melted_tokens();
+                // This can't underflow as it is known that input_tokens > output_tokens (Ordering::Greater).
+                let token_diff = input_tokens - output_tokens;
+
+                if melted_diff > token_diff {
+                    return Err(StateTransitionError::InconsistentNativeTokensMeltBurn);
+                }
+            }
+        }
+
         Ok(())
     }
 
-    fn destruction(_current_state: &Self, _context: &ValidationContext) -> Result<(), StateTransitionError> {
+    fn destruction(current_state: &Self, context: &ValidationContext) -> Result<(), StateTransitionError> {
+        let token_id = current_state.token_id();
+        let input_tokens = context.input_native_tokens.get(&token_id).copied().unwrap_or_default();
+        let TokenScheme::Simple(ref current_token_scheme) = current_state.token_scheme;
+
+        // No native tokens should be referenced after the foundry destruction.
+        if context.output_native_tokens.contains_key(&token_id) {
+            return Err(StateTransitionError::InconsistentNativeTokensFoundryDestruction);
+        }
+
+        // This can't underflow as it is known that minted_tokens >= melted_tokens (syntactic rule).
+        let minted_melted_diff = current_token_scheme.minted_tokens() - current_token_scheme.melted_tokens();
+
+        if minted_melted_diff != input_tokens {
+            return Err(StateTransitionError::InconsistentNativeTokensFoundryDestruction);
+        }
+
         Ok(())
     }
 }
@@ -342,8 +567,8 @@ impl Packable for FoundryOutput {
     ) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let amount = OutputAmount::unpack::<_, VERIFY>(unpacker).map_packable_err(Error::InvalidOutputAmount)?;
         let native_tokens = NativeTokens::unpack::<_, VERIFY>(unpacker)?;
-        let serial_number = u32::unpack::<_, VERIFY>(unpacker).infallible()?;
-        let token_tag = TokenTag::unpack::<_, VERIFY>(unpacker).infallible()?;
+        let serial_number = u32::unpack::<_, VERIFY>(unpacker).coerce()?;
+        let token_tag = TokenTag::unpack::<_, VERIFY>(unpacker).coerce()?;
         let token_scheme = TokenScheme::unpack::<_, VERIFY>(unpacker)?;
 
         let unlock_conditions = UnlockConditions::unpack::<_, VERIFY>(unpacker)?;
@@ -450,7 +675,7 @@ pub mod dto {
         type Error = DtoError;
 
         fn try_from(value: &FoundryOutputDto) -> Result<Self, Self::Error> {
-            let mut builder = FoundryOutputBuilder::new(
+            let mut builder = FoundryOutputBuilder::new_with_amount(
                 value
                     .amount
                     .parse::<u64>()

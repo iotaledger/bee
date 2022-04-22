@@ -79,7 +79,7 @@ pub mod trit;
 /// Types and traits used to represent trytes and buffers of trytes.
 pub mod tryte;
 
-#[cfg(feature = "serde1")]
+#[cfg(feature = "serde")]
 mod serde;
 
 use alloc::borrow::ToOwned;

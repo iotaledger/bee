@@ -52,6 +52,10 @@ impl core::fmt::Display for ChainId {
 
 impl core::fmt::Debug for ChainId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "ChainId({})", self)
+        match self {
+            ChainId::Alias(id) => write!(f, "ChainId({:?})", id),
+            ChainId::Foundry(id) => write!(f, "ChainId({:?})", id),
+            ChainId::Nft(id) => write!(f, "ChainId({:?})", id),
+        }
     }
 }

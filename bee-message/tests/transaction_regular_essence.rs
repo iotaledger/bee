@@ -37,7 +37,7 @@ fn build_valid() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -61,7 +61,7 @@ fn build_valid_with_payload() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -87,7 +87,7 @@ fn build_valid_add_inputs_outputs() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -111,7 +111,7 @@ fn build_invalid_payload_kind() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -134,7 +134,7 @@ fn build_invalid_input_count_low() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -159,7 +159,7 @@ fn build_invalid_input_count_high() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -200,7 +200,7 @@ fn build_invalid_output_count_high() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -226,7 +226,7 @@ fn build_invalid_duplicate_utxo() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -248,7 +248,7 @@ fn build_invalid_input_kind() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()
@@ -287,7 +287,7 @@ fn build_invalid_accumulated_output() {
     let address1 = Address::from(Ed25519Address::new(bytes1));
     let amount1 = IOTA_SUPPLY - 1_000_000;
     let output1 = Output::Basic(
-        BasicOutput::build(amount1)
+        BasicOutput::build_with_amount(amount1)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address1).into())
             .finish()
@@ -298,7 +298,7 @@ fn build_invalid_accumulated_output() {
     let address2 = Address::from(Ed25519Address::new(bytes2));
     let amount2 = 2_000_000;
     let output2 = Output::Basic(
-        BasicOutput::build(amount2)
+        BasicOutput::build_with_amount(amount2)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address2).into())
             .finish()
@@ -322,7 +322,7 @@ fn getters() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let outputs = vec![Output::Basic(
-        BasicOutput::build(amount)
+        BasicOutput::build_with_amount(amount)
             .unwrap()
             .add_unlock_condition(AddressUnlockCondition::new(address).into())
             .finish()

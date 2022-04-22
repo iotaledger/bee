@@ -14,7 +14,7 @@ use crate::Error;
 /// A generic essence that can represent different types defining transaction essences.
 #[derive(Clone, Debug, Eq, PartialEq, From, packable::Packable)]
 #[cfg_attr(
-    feature = "serde1",
+    feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
