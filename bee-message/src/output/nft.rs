@@ -194,6 +194,11 @@ impl NftOutputBuilder {
 
         Ok(output)
     }
+
+    /// Finishes the [`NftOutputBuilder`] into an [`Output`].
+    pub fn finish_output(self) -> Result<Output, Error> {
+        Ok(Output::Nft(self.finish()?))
+    }
 }
 
 impl From<&NftOutput> for NftOutputBuilder {

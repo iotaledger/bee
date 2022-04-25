@@ -237,6 +237,11 @@ impl AliasOutputBuilder {
 
         Ok(output)
     }
+
+    /// Finishes the [`AliasOutputBuilder`] into an [`Output`].
+    pub fn finish_output(self) -> Result<Output, Error> {
+        Ok(Output::Alias(self.finish()?))
+    }
 }
 
 impl From<&AliasOutput> for AliasOutputBuilder {

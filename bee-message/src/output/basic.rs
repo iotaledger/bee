@@ -146,6 +146,11 @@ impl BasicOutputBuilder {
 
         Ok(output)
     }
+
+    /// Finishes the [`BasicOutputBuilder`] into an [`Output`].
+    pub fn finish_output(self) -> Result<Output, Error> {
+        Ok(Output::Basic(self.finish()?))
+    }
 }
 
 impl From<&BasicOutput> for BasicOutputBuilder {

@@ -223,6 +223,11 @@ impl FoundryOutputBuilder {
 
         Ok(output)
     }
+
+    /// Finishes the [`FoundryOutputBuilder`] into an [`Output`].
+    pub fn finish_output(self) -> Result<Output, Error> {
+        Ok(Output::Foundry(self.finish()?))
+    }
 }
 
 impl From<&FoundryOutput> for FoundryOutputBuilder {
