@@ -79,8 +79,6 @@ impl PruningMilestonesConfigBuilder {
     }
 
     /// Sets how many milestones to hold available in the storage.
-    ///
-    /// Note: values below [`MILESTONES_TO_KEEP_MIN`] are not accepted.
     pub fn max_milestones_to_keep(mut self, max_milestones_to_keep: u32) -> Self {
         let max_milestones_to_keep = max_milestones_to_keep.max(MILESTONES_TO_KEEP_MIN);
         self.max_milestones_to_keep.replace(max_milestones_to_keep);
@@ -97,7 +95,7 @@ impl PruningMilestonesConfigBuilder {
     }
 }
 
-/// Builder for a [`PruningSizeConfig`].
+/// Builder for a [`PruningDbSizeConfig`].
 #[derive(Default, Debug, Deserialize, PartialEq)]
 #[must_use]
 pub struct PruningDbSizeConfigBuilder {
@@ -135,7 +133,7 @@ impl PruningDbSizeConfigBuilder {
         self
     }
 
-    /// Finishes this builder into a [`PruningSizeConfig`].
+    /// Finishes this builder into a [`PruningDbSizeConfig`].
     #[must_use]
     pub fn finish(self) -> PruningDbSizeConfig {
         let target_size = self.target_size.unwrap_or_else(|| TARGET_SIZE_DEFAULT.to_string());
