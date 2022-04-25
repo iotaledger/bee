@@ -18,7 +18,7 @@ use super::{
     error::Error,
 };
 
-pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(9);
+pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(10);
 
 pub struct Storage {
     pub(crate) config: StorageConfig,
