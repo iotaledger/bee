@@ -1,7 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{output::dto::OutputDto, MessageDto};
+use bee_message::{output::dto::OutputDto, payload::milestone::dto::MilestonePayloadDto, MessageDto};
 use serde::{Deserialize, Serialize};
 
 use crate::types::{
@@ -30,14 +30,36 @@ impl BodyInner for InfoResponse {}
 pub struct StatusResponse {
     #[serde(rename = "isHealthy")]
     pub is_healthy: bool,
-    #[serde(rename = "latestMilestoneTimestamp")]
-    pub latest_milestone_timestamp: u32,
-    #[serde(rename = "latestMilestoneIndex")]
-    pub latest_milestone_index: u32,
-    #[serde(rename = "confirmedMilestoneIndex")]
-    pub confirmed_milestone_index: u32,
+    #[serde(rename = "latestMilestone")]
+    pub latest_milestone: LatestMilestoneResponse,
+    #[serde(rename = "confirmedMilestone")]
+    pub confirmed_milestone: ConfirmedMilestoneResponse,
     #[serde(rename = "pruningIndex")]
     pub pruning_index: u32,
+}
+
+/// Returned in [`StatusResponse`].
+/// Information about the latest milestone.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct LatestMilestoneResponse {
+    #[serde(rename = "index")]
+    pub index: u32,
+    #[serde(rename = "timestamp")]
+    pub timestamp: u32,
+    #[serde(rename = "milestoneId")]
+    pub milestone_id: String,
+}
+
+/// Returned in [`StatusResponse`].
+/// Information about the confirmed milestone.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ConfirmedMilestoneResponse {
+    #[serde(rename = "index")]
+    pub index: u32,
+    #[serde(rename = "timestamp")]
+    pub timestamp: u32,
+    #[serde(rename = "milestoneId")]
+    pub milestone_id: String,
 }
 
 /// Returned in [`InfoResponse`].
@@ -199,13 +221,7 @@ impl BodyInner for TreasuryResponse {}
 /// Response of GET /api/v2/milestone/{milestone_index}.
 /// Returns information about a milestone.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MilestoneResponse {
-    #[serde(rename = "index")]
-    pub milestone_index: u32,
-    #[serde(rename = "messageId")]
-    pub message_id: String,
-    pub timestamp: u64,
-}
+pub struct MilestoneResponse(pub MilestonePayloadDto);
 
 impl BodyInner for MilestoneResponse {}
 

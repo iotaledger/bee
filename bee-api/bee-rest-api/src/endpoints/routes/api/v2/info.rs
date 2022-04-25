@@ -20,7 +20,10 @@ use crate::{
         storage::StorageBackend,
         Bech32Hrp, NetworkId,
     },
-    types::responses::{InfoResponse, MetricsResponse, ProtocolResponse, RentStructureResponse, StatusResponse},
+    types::responses::{
+        ConfirmedMilestoneResponse, InfoResponse, LatestMilestoneResponse, MetricsResponse, ProtocolResponse,
+        RentStructureResponse, StatusResponse,
+    },
 };
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
@@ -63,20 +66,23 @@ pub(crate) async fn info<B: StorageBackend>(
     peer_manager: ResourceHandle<PeerManager>,
 ) -> Result<impl Reply, Infallible> {
     let latest_milestone_index = tangle.get_latest_milestone_index();
-    let latest_milestone_timestamp = tangle
-        .get_milestone(latest_milestone_index)
-        .await
-        .map(|m| m.timestamp())
-        .unwrap_or_default();
+    let confirmed_milestone_index = tangle.get_confirmed_milestone_index();
 
     Ok(warp::reply::json(&InfoResponse {
         name: node_info.name.clone(),
         version: node_info.version.clone(),
         status: StatusResponse {
             is_healthy: health::is_healthy(&tangle, &peer_manager).await,
-            latest_milestone_timestamp,
-            latest_milestone_index: *latest_milestone_index,
-            confirmed_milestone_index: *tangle.get_confirmed_milestone_index(),
+            latest_milestone: LatestMilestoneResponse {
+                index: *latest_milestone_index,
+                timestamp: 0,                 // TODO: replace with correct timestamp
+                milestone_id: "".to_string(), // TODO: replace with correct milestone id
+            },
+            confirmed_milestone: ConfirmedMilestoneResponse {
+                index: *confirmed_milestone_index,
+                timestamp: 0,                 // TODO: replace with correct timestamp
+                milestone_id: "".to_string(), // TODO: replace with correct milestone id
+            },
             pruning_index: *tangle.get_pruning_index(),
         },
         protocol: ProtocolResponse {

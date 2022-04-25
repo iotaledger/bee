@@ -3,7 +3,10 @@
 
 use std::net::IpAddr;
 
-use bee_message::milestone::MilestoneIndex;
+use bee_message::{
+    milestone::MilestoneIndex,
+    payload::{dto::MilestonePayloadDto, Payload},
+};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::Tangle;
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
@@ -32,23 +35,27 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MILESTONE, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(milestone)
+        .and_then(milestone_by_milestone_index)
         .boxed()
 }
 
-pub(crate) async fn milestone<B: StorageBackend>(
+pub(crate) async fn milestone_by_milestone_index<B: StorageBackend>(
     milestone_index: MilestoneIndex,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     match tangle.get_milestone_message_id(milestone_index).await {
-        Some(message_id) => match tangle.get_metadata(&message_id).await {
-            Some(metadata) => Ok(warp::reply::json(&MilestoneResponse {
-                milestone_index: *milestone_index,
-                message_id: message_id.to_string(),
-                timestamp: metadata.arrival_timestamp(),
-            })),
+        Some(message_id) => match tangle.get(&message_id).await {
+            Some(message) => {
+                if let Some(Payload::Milestone(milestone_payload)) = message.payload() {
+                    Ok(warp::reply::json(&MilestoneResponse(MilestonePayloadDto::from(
+                        milestone_payload.as_ref(),
+                    ))))
+                } else {
+                    unreachable!()
+                }
+            }
             None => Err(reject::custom(CustomRejection::NotFound(
-                "can not find metadata for milestone".to_string(),
+                "can not find milestone".to_string(),
             ))),
         },
         None => Err(reject::custom(CustomRejection::NotFound(
