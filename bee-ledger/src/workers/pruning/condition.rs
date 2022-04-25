@@ -22,7 +22,7 @@ static LAST_PRUNING_BY_SIZE: AtomicU64 = AtomicU64::new(0);
 pub(crate) enum PruningSkipReason {
     #[error("Pruning disabled.")]
     Disabled,
-    #[error("Pruning by milestone below index threshold.")]
+    #[error("Pruning by index range below index threshold.")]
     BelowMilestoneIndexThreshold,
     #[error("Pruning by size not supported by the storage layer.")]
     PruningBySizeUnsupported,
@@ -35,11 +35,11 @@ pub(crate) enum PruningSkipReason {
 }
 
 pub(crate) enum PruningTask {
-    ByRange {
+    ByIndexRange {
         start_index: MilestoneIndex,
         target_index: MilestoneIndex,
     },
-    BySize {
+    ByDbSize {
         num_bytes_to_prune: usize,
     },
 }
@@ -60,7 +60,7 @@ pub(crate) fn should_prune<S: StorageBackend>(
         } else {
             let target_pruning_index = *ledger_index - milestones_to_keep;
 
-            Ok(PruningTask::ByRange {
+            Ok(PruningTask::ByIndexRange {
                 start_index: pruning_index.into(),
                 target_index: if target_pruning_index > pruning_index + PRUNING_BATCH_SIZE_MAX {
                     (pruning_index + PRUNING_BATCH_SIZE_MAX).into()
@@ -106,7 +106,7 @@ pub(crate) fn should_prune<S: StorageBackend>(
             // Store the time we issued a pruning-by-size.
             LAST_PRUNING_BY_SIZE.store(now.as_secs(), Ordering::Relaxed);
 
-            Ok(PruningTask::BySize { num_bytes_to_prune })
+            Ok(PruningTask::ByDbSize { num_bytes_to_prune })
         }
     } else {
         Err(PruningSkipReason::Disabled)
