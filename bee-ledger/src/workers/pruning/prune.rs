@@ -58,7 +58,7 @@ pub async fn prune_by_range<S: StorageBackend>(
     }
 
     for index in *start_index..=*target_index {
-        prune_milestone::<_, false>(index, tangle, storage, bus, &mut timings, &mut metrics, config).await?;
+        prune_milestone(index, tangle, storage, bus, &mut timings, &mut metrics, config, false).await?;
     }
 
     if start_index == target_index {
@@ -93,7 +93,7 @@ pub async fn prune_by_size<S: StorageBackend>(
         }
 
         num_pruned_bytes +=
-            prune_milestone::<_, true>(index, tangle, storage, bus, &mut timings, &mut metrics, config).await?;
+            prune_milestone(index, tangle, storage, bus, &mut timings, &mut metrics, config, true).await?;
 
         log::debug!("Pruned {num_pruned_bytes}/{num_bytes_to_prune} bytes.");
     }
@@ -102,7 +102,8 @@ pub async fn prune_by_size<S: StorageBackend>(
 }
 
 /// Prunes a single milestone.
-async fn prune_milestone<S: StorageBackend, const BY_SIZE: bool>(
+#[allow(clippy::too_many_arguments)]
+async fn prune_milestone<S: StorageBackend>(
     index: u32,
     tangle: &Tangle<S>,
     storage: &S,
@@ -110,6 +111,7 @@ async fn prune_milestone<S: StorageBackend, const BY_SIZE: bool>(
     timings: &mut Timings,
     metrics: &mut PruningMetrics,
     config: &PruningConfig,
+    by_size: bool,
 ) -> Result<usize, PruningError> {
     let mut byte_length = 0usize;
     let index = MilestoneIndex(index);
@@ -133,7 +135,7 @@ async fn prune_milestone<S: StorageBackend, const BY_SIZE: bool>(
     // NOTE: This is the most costly thing during pruning, because it has to perform a past-cone traversal.
     let batch_confirmed_data = Instant::now();
     let (mut new_seps, confirmed_data_metrics, num_bytes) =
-        batch::batch_prunable_confirmed_data::<_, BY_SIZE>(storage, &mut batch, index, &curr_seps)?;
+        batch::batch_prunable_confirmed_data(storage, &mut batch, index, &curr_seps, by_size)?;
     timings.batch_confirmed_data = batch_confirmed_data.elapsed();
 
     byte_length += num_bytes;
@@ -187,7 +189,7 @@ async fn prune_milestone<S: StorageBackend, const BY_SIZE: bool>(
 
     let batch_milestones = Instant::now();
     let (num_bytes, milestone_data_metrics) =
-        batch::prune_milestone_data::<_, BY_SIZE>(storage, &mut batch, index, config.receipts().enabled())?;
+        batch::prune_milestone_data(storage, &mut batch, index, config.receipts().enabled(), by_size)?;
     timings.batch_milestone_data = batch_milestones.elapsed();
 
     byte_length += num_bytes;
@@ -196,7 +198,7 @@ async fn prune_milestone<S: StorageBackend, const BY_SIZE: bool>(
     // Add unconfirmed data to the delete batch.
     let batch_unconfirmed_data = Instant::now();
     let (num_bytes, unconfirmed_data_metrics) =
-        batch::batch_prunable_unconfirmed_data::<_, BY_SIZE>(storage, &mut batch, index)?;
+        batch::batch_prunable_unconfirmed_data(storage, &mut batch, index, by_size)?;
     timings.batch_unconfirmed_data = batch_unconfirmed_data.elapsed();
 
     byte_length += num_bytes;
@@ -248,7 +250,7 @@ async fn prune_milestone<S: StorageBackend, const BY_SIZE: bool>(
         index,
         num_next_seps
     );
-    if BY_SIZE {
+    if by_size {
         log::debug!("Pruned milestone {}: {} bytes", index, byte_length);
     } else {
         log::debug!("Pruned milestone {}", index);

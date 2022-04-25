@@ -43,11 +43,12 @@ pub(crate) struct Edge {
     pub(crate) to_child: MessageId,
 }
 
-pub(crate) fn batch_prunable_confirmed_data<S: StorageBackend, const BY_SIZE: bool>(
+pub(crate) fn batch_prunable_confirmed_data<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     prune_index: MilestoneIndex,
     current_seps: &Seps,
+    by_size: bool,
 ) -> Result<(Seps, ConfirmedDataPruningMetrics, ByteLength), PruningError> {
     // We keep a list of already visited messages.
     let mut visited = Messages::with_capacity(512);
@@ -113,7 +114,7 @@ pub(crate) fn batch_prunable_confirmed_data<S: StorageBackend, const BY_SIZE: bo
         if let Some(indexation) = unwrap_indexation(payload) {
             let padded_index = indexation.padded_index();
 
-            byte_length += prune_indexation_data::<_, BY_SIZE>(storage, batch, &(padded_index, message_id))?;
+            byte_length += prune_indexation_data(storage, batch, &(padded_index, message_id), by_size)?;
 
             metrics.prunable_indexations += 1;
         }
@@ -121,7 +122,7 @@ pub(crate) fn batch_prunable_confirmed_data<S: StorageBackend, const BY_SIZE: bo
         // Delete its edges.
         let parents = msg.parents();
         for parent_id in parents.iter() {
-            byte_length += prune_edge::<_, BY_SIZE>(storage, batch, &(*parent_id, message_id))?;
+            byte_length += prune_edge(storage, batch, &(*parent_id, message_id), by_size)?;
 
             metrics.prunable_edges += 1;
         }
@@ -133,7 +134,7 @@ pub(crate) fn batch_prunable_confirmed_data<S: StorageBackend, const BY_SIZE: bo
         visited.insert(message_id);
 
         // Delete its associated data.
-        byte_length += prune_message_and_metadata::<_, BY_SIZE>(storage, batch, &message_id)?;
+        byte_length += prune_message_and_metadata(storage, batch, &message_id, by_size)?;
 
         // ---
         // Everything that follows is required to decide whether this message's id should be kept as a solid entry
@@ -210,10 +211,11 @@ pub(crate) fn batch_prunable_confirmed_data<S: StorageBackend, const BY_SIZE: bo
     Ok((new_seps, metrics, byte_length))
 }
 
-pub(crate) fn batch_prunable_unconfirmed_data<S: StorageBackend, const BY_SIZE: bool>(
+pub(crate) fn batch_prunable_unconfirmed_data<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     prune_index: MilestoneIndex,
+    by_size: bool,
 ) -> Result<(ByteLength, UnconfirmedDataPruningMetrics), PruningError> {
     let mut byte_length = 0usize;
     let mut metrics = UnconfirmedDataPruningMetrics::default();
@@ -263,7 +265,7 @@ pub(crate) fn batch_prunable_unconfirmed_data<S: StorageBackend, const BY_SIZE: 
                 let parents = msg.parents();
 
                 // Add message data to the delete batch.
-                byte_length += prune_message_and_metadata::<_, BY_SIZE>(storage, batch, unconf_msg_id)?;
+                byte_length += prune_message_and_metadata(storage, batch, unconf_msg_id, by_size)?;
 
                 log::trace!("Pruned unconfirmed msg {} at {}.", unconf_msg_id, prune_index);
 
@@ -272,14 +274,14 @@ pub(crate) fn batch_prunable_unconfirmed_data<S: StorageBackend, const BY_SIZE: 
                     let message_id = *unconf_msg_id;
 
                     // Add prunable indexations to the delete batch.
-                    byte_length += prune_indexation_data::<_, BY_SIZE>(storage, batch, &(padded_index, message_id))?;
+                    byte_length += prune_indexation_data(storage, batch, &(padded_index, message_id), by_size)?;
 
                     metrics.prunable_indexations += 1;
                 }
 
                 // Add prunable edges to the delete batch.
                 for parent in parents.iter() {
-                    byte_length += prune_edge::<_, BY_SIZE>(storage, batch, &(*parent, *unconf_msg_id))?;
+                    byte_length += prune_edge(storage, batch, &(*parent, *unconf_msg_id), by_size)?;
 
                     metrics.prunable_edges += 1;
                 }
@@ -290,7 +292,7 @@ pub(crate) fn batch_prunable_unconfirmed_data<S: StorageBackend, const BY_SIZE: 
             }
         }
 
-        byte_length += prune_unreferenced_message::<_, BY_SIZE>(storage, batch, prune_index, (*unconf_msg_id).into())?;
+        byte_length += prune_unreferenced_message(storage, batch, prune_index, (*unconf_msg_id).into(), by_size)?;
 
         metrics.prunable_messages += 1;
     }
@@ -298,20 +300,21 @@ pub(crate) fn batch_prunable_unconfirmed_data<S: StorageBackend, const BY_SIZE: 
     Ok((byte_length, metrics))
 }
 
-pub(crate) fn prune_milestone_data<S: StorageBackend, const BY_SIZE: bool>(
+pub(crate) fn prune_milestone_data<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     prune_index: MilestoneIndex,
     should_prune_receipts: bool,
+    by_size: bool,
 ) -> Result<(ByteLength, MilestoneDataPruningMetrics), PruningError> {
     let mut byte_length = 0usize;
     let mut metrics = MilestoneDataPruningMetrics::default();
 
-    byte_length += prune_milestone::<_, BY_SIZE>(storage, batch, prune_index)?;
-    byte_length += prune_output_diff::<_, BY_SIZE>(storage, batch, prune_index)?;
+    byte_length += prune_milestone(storage, batch, prune_index, by_size)?;
+    byte_length += prune_output_diff(storage, batch, prune_index, by_size)?;
 
     if should_prune_receipts {
-        let (num_receipts, num_bytes) = prune_receipts::<_, BY_SIZE>(storage, batch, prune_index)?;
+        let (num_receipts, num_bytes) = prune_receipts(storage, batch, prune_index, by_size)?;
 
         metrics.receipts = num_receipts;
         byte_length += num_bytes;
@@ -320,14 +323,15 @@ pub(crate) fn prune_milestone_data<S: StorageBackend, const BY_SIZE: bool>(
     Ok((byte_length, metrics))
 }
 
-fn prune_message_and_metadata<S: StorageBackend, const BY_SIZE: bool>(
+fn prune_message_and_metadata<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     message_id: &MessageId,
+    by_size: bool,
 ) -> Result<ByteLength, PruningError> {
     let mut byte_length = 0usize;
 
-    if BY_SIZE {
+    if by_size {
         let msg = Fetch::<MessageId, Message>::fetch(storage, message_id)
             .map_err(|e| PruningError::Storage(Box::new(e)))?
             .unwrap();
@@ -348,14 +352,15 @@ fn prune_message_and_metadata<S: StorageBackend, const BY_SIZE: bool>(
     Ok(byte_length)
 }
 
-fn prune_edge<S: StorageBackend, const BY_SIZE: bool>(
+fn prune_edge<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     edge: &(MessageId, MessageId),
+    by_size: bool,
 ) -> Result<ByteLength, PruningError> {
     let mut byte_length = 0usize;
 
-    if BY_SIZE {
+    if by_size {
         byte_length += edge.0.packed_len() + edge.1.packed_len();
     }
 
@@ -365,14 +370,15 @@ fn prune_edge<S: StorageBackend, const BY_SIZE: bool>(
     Ok(byte_length)
 }
 
-fn prune_indexation_data<S: StorageBackend, const BY_SIZE: bool>(
+fn prune_indexation_data<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     index_message_id: &(PaddedIndex, MessageId),
+    by_size: bool,
 ) -> Result<ByteLength, PruningError> {
     let mut byte_length = 0usize;
 
-    if BY_SIZE {
+    if by_size {
         byte_length += index_message_id.0.packed_len() + index_message_id.1.packed_len();
     }
 
@@ -382,15 +388,16 @@ fn prune_indexation_data<S: StorageBackend, const BY_SIZE: bool>(
     Ok(byte_length)
 }
 
-fn prune_unreferenced_message<S: StorageBackend, const BY_SIZE: bool>(
+fn prune_unreferenced_message<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     prune_index: MilestoneIndex,
     unreferenced_message: UnreferencedMessage,
+    by_size: bool,
 ) -> Result<ByteLength, PruningError> {
     let mut byte_length = 0usize;
 
-    if BY_SIZE {
+    if by_size {
         byte_length += prune_index.packed_len() + unreferenced_message.packed_len();
     }
 
@@ -404,14 +411,15 @@ fn prune_unreferenced_message<S: StorageBackend, const BY_SIZE: bool>(
     Ok(byte_length)
 }
 
-fn prune_milestone<S: StorageBackend, const BY_SIZE: bool>(
+fn prune_milestone<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     index: MilestoneIndex,
+    by_size: bool,
 ) -> Result<ByteLength, PruningError> {
     let mut byte_length = 0usize;
 
-    if BY_SIZE {
+    if by_size {
         let ms = Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
             .map_err(|e| PruningError::Storage(Box::new(e)))?
             .unwrap();
@@ -424,10 +432,11 @@ fn prune_milestone<S: StorageBackend, const BY_SIZE: bool>(
     Ok(byte_length)
 }
 
-fn prune_output_diff<S: StorageBackend, const BY_SIZE: bool>(
+fn prune_output_diff<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     index: MilestoneIndex,
+    by_size: bool,
 ) -> Result<ByteLength, PruningError> {
     let mut byte_length = 0usize;
 
@@ -438,7 +447,7 @@ fn prune_output_diff<S: StorageBackend, const BY_SIZE: bool>(
         byte_length += output_diff.packed_len();
 
         for consumed_output_id in output_diff.consumed_outputs() {
-            if BY_SIZE {
+            if by_size {
                 let consumed_output = Fetch::<OutputId, ConsumedOutput>::fetch(storage, consumed_output_id)
                     .map_err(|e| PruningError::Storage(Box::new(e)))?
                     .unwrap();
@@ -468,10 +477,11 @@ fn prune_output_diff<S: StorageBackend, const BY_SIZE: bool>(
     Ok(byte_length)
 }
 
-fn prune_receipts<S: StorageBackend, const BY_SIZE: bool>(
+fn prune_receipts<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     index: MilestoneIndex,
+    by_size: bool,
 ) -> Result<(usize, ByteLength), PruningError> {
     let mut byte_length = 0usize;
 
@@ -482,7 +492,7 @@ fn prune_receipts<S: StorageBackend, const BY_SIZE: bool>(
 
     let mut num = 0;
     for receipt in receipts.into_iter() {
-        if BY_SIZE {
+        if by_size {
             byte_length += index.packed_len();
             byte_length += receipt.packed_len();
         }
@@ -518,7 +528,7 @@ fn unwrap_indexation(payload: Option<&Payload>) -> Option<&IndexationPayload> {
 
 // TODO: consider using this instead of 'truncate'.
 #[allow(dead_code)]
-fn prune_seps<S: StorageBackend, const BY_SIZE: bool>(
+fn prune_seps<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     seps: &[SolidEntryPoint],
