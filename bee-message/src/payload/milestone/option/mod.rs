@@ -1,8 +1,8 @@
 // Copyright 2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod pow;
-mod receipt;
+pub mod pow;
+pub mod receipt;
 
 use derive_more::{Deref, From};
 use iterator_sorted::is_unique_sorted;
