@@ -3,7 +3,7 @@
 
 use alloc::vec::Vec;
 
-use derive_more::Deref;
+use derive_more::{Deref, DerefMut};
 use hashbrown::HashMap;
 use iterator_sorted::is_unique_sorted;
 use packable::{bounded::BoundedU8, prefix::BoxedSlicePrefix, Packable};
@@ -55,7 +55,7 @@ fn verify_amount<const VERIFY: bool>(amount: &U256) -> Result<(), Error> {
 }
 
 /// A builder for [`NativeTokens`].
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Deref, DerefMut)]
 #[must_use]
 pub struct NativeTokensBuilder(HashMap<TokenId, U256>);
 
@@ -92,21 +92,6 @@ impl NativeTokensBuilder {
         }
 
         Ok(())
-    }
-
-    /// Returns whether the [`NativeTokensBuilder`] is empty or not.
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    /// Gets an amount from the [`NativeTokensBuilder`].
-    pub fn get(&self, token_id: &TokenId) -> Option<&U256> {
-        self.0.get(token_id)
-    }
-
-    /// Inserts a new entry in the [`NativeTokensBuilder`].
-    pub fn insert(&mut self, token_id: TokenId, amount: U256) -> Option<U256> {
-        self.0.insert(token_id, amount)
     }
 
     /// Finishes the [`NativeTokensBuilder`] into [`NativeTokens`].
