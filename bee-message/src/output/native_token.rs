@@ -104,6 +104,11 @@ impl NativeTokensBuilder {
         self.0.get(token_id)
     }
 
+    /// Inserts a new entry in the [`NativeTokensBuilder`].
+    pub fn insert(&mut self, token_id: TokenId, amount: U256) -> Option<U256> {
+        self.0.insert(token_id, amount)
+    }
+
     /// Finishes the [`NativeTokensBuilder`] into [`NativeTokens`].
     pub fn finish(self) -> Result<NativeTokens, Error> {
         NativeTokens::try_from(
