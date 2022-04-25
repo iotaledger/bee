@@ -332,11 +332,13 @@ fn prune_message_and_metadata<S: StorageBackend>(
     let mut byte_length = 0usize;
 
     if by_size {
+        // Panic: we know the message is in the database.
         let msg = Fetch::<MessageId, Message>::fetch(storage, message_id)
             .map_err(|e| PruningError::Storage(Box::new(e)))?
             .unwrap();
         byte_length += msg.packed_len();
 
+        // Panic: we know the message metadata is in the database.
         let md = Fetch::<MessageId, MessageMetadata>::fetch(storage, message_id)
             .map_err(|e| PruningError::Storage(Box::new(e)))?
             .unwrap();
@@ -420,6 +422,7 @@ fn prune_milestone<S: StorageBackend>(
     let mut byte_length = 0usize;
 
     if by_size {
+        // Panic: we know the milestone is in the database.
         let ms = Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
             .map_err(|e| PruningError::Storage(Box::new(e)))?
             .unwrap();
@@ -448,6 +451,7 @@ fn prune_output_diff<S: StorageBackend>(
 
         for consumed_output_id in output_diff.consumed_outputs() {
             if by_size {
+                // Panic: we know the output is in this database table.
                 let consumed_output = Fetch::<OutputId, ConsumedOutput>::fetch(storage, consumed_output_id)
                     .map_err(|e| PruningError::Storage(Box::new(e)))?
                     .unwrap();
@@ -455,6 +459,7 @@ fn prune_output_diff<S: StorageBackend>(
                 byte_length += consumed_output_id.packed_len();
                 byte_length += consumed_output.packed_len();
 
+                // Panic: we know the output is in this database table.
                 let created_output = Fetch::<OutputId, CreatedOutput>::fetch(storage, consumed_output_id)
                     .map_err(|e| PruningError::Storage(Box::new(e)))?
                     .unwrap();
@@ -485,9 +490,9 @@ fn prune_receipts<S: StorageBackend>(
 ) -> Result<(usize, ByteLength), PruningError> {
     let mut byte_length = 0usize;
 
+    // Panic: Fine since Fetch of a Vec<_> always returns Some(Vec<_>).
     let receipts = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
         .map_err(|e| PruningError::Storage(Box::new(e)))?
-        // Fine since Fetch of a Vec<_> always returns Some(Vec<_>).
         .unwrap();
 
     let mut num = 0;

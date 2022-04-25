@@ -71,6 +71,7 @@ pub(crate) fn should_prune<S: StorageBackend>(
         }
     } else if config.db_size().enabled() {
         let last = Duration::from_secs(LAST_PRUNING_BY_SIZE.load(Ordering::Relaxed));
+        // Panic: should not cause problems on properly set up hosts.
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
 
         if now < last + config.db_size().cooldown_time() {
