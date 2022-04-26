@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
+    milestone::MilestoneIndex,
+    payload::milestone::{MilestoneId, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{
@@ -18,12 +19,14 @@ pub trait StorageBackend:
     + Insert<MessageId, Message>
     + Insert<MessageId, MessageMetadata>
     + Insert<(MessageId, MessageId), ()>
-    + Insert<MilestoneIndex, Milestone>
+    + Insert<MilestoneIndex, MilestoneId>
+    + Insert<MilestoneId, MilestonePayload>
     + Insert<SolidEntryPoint, MilestoneIndex>
     + Fetch<MessageId, Message>
     + Fetch<MessageId, MessageMetadata>
     + Fetch<MessageId, Vec<MessageId>>
-    + Fetch<MilestoneIndex, Milestone>
+    + Fetch<MilestoneIndex, MilestoneId>
+    + Fetch<MilestoneId, MilestonePayload>
 {
 }
 
@@ -32,11 +35,13 @@ impl<T> StorageBackend for T where
         + Insert<MessageId, Message>
         + Insert<MessageId, MessageMetadata>
         + Insert<(MessageId, MessageId), ()>
-        + Insert<MilestoneIndex, Milestone>
+        + Insert<MilestoneIndex, MilestoneId>
+        + Insert<MilestoneId, MilestonePayload>
         + Insert<SolidEntryPoint, MilestoneIndex>
         + Fetch<MessageId, Message>
         + Fetch<MessageId, MessageMetadata>
         + Fetch<MessageId, Vec<MessageId>>
-        + Fetch<MilestoneIndex, Milestone>
+        + Fetch<MilestoneIndex, MilestoneId>
+        + Fetch<MilestoneId, MilestonePayload>
 {
 }

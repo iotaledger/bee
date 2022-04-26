@@ -6,8 +6,9 @@
 use std::collections::HashMap;
 
 use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
+    milestone::MilestoneIndex,
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{
@@ -42,13 +43,15 @@ pub trait StorageBackend:
     + Batch<(MessageId, MessageId), ()>
     + Batch<MessageId, Message>
     + Batch<MessageId, MessageMetadata>
-    + Batch<MilestoneIndex, Milestone>
+    + Batch<MilestoneIndex, MilestoneId>
+    + Batch<MilestoneId, MilestonePayload>
     + Exist<Unspent, ()>
     + Fetch<(), SnapshotInfo>
     + Fetch<OutputId, CreatedOutput>
     + Fetch<(), LedgerIndex>
     + Fetch<bool, Vec<TreasuryOutput>>
-    + Fetch<MilestoneIndex, Milestone>
+    + Fetch<MilestoneIndex, MilestoneId>
+    + Fetch<MilestoneId, MilestonePayload>
     + Fetch<MilestoneIndex, Vec<Receipt>>
     + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
     + Fetch<MilestoneIndex, OutputDiff>
@@ -77,13 +80,15 @@ impl<T> StorageBackend for T where
         + Batch<(MessageId, MessageId), ()>
         + Batch<MessageId, Message>
         + Batch<MessageId, MessageMetadata>
-        + Batch<MilestoneIndex, Milestone>
+        + Batch<MilestoneIndex, MilestoneId>
+        + Batch<MilestoneId, MilestonePayload>
         + Exist<Unspent, ()>
         + Fetch<(), SnapshotInfo>
         + Fetch<OutputId, CreatedOutput>
         + Fetch<(), LedgerIndex>
         + Fetch<bool, Vec<TreasuryOutput>>
-        + Fetch<MilestoneIndex, Milestone>
+        + Fetch<MilestoneIndex, MilestoneId>
+        + Fetch<MilestoneId, MilestonePayload>
         + Fetch<MilestoneIndex, Vec<Receipt>>
         + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
         + Fetch<MilestoneIndex, OutputDiff>
