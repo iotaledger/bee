@@ -9,8 +9,9 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
+    milestone::MilestoneIndex,
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{
@@ -34,7 +35,8 @@ pub struct StorageBatch {
     output_id_unspent: TableBatch<Unspent, ()>,
     ed25519_address_to_output_id: TableBatch<(Ed25519Address, OutputId), ()>,
     ledger_index: TableBatch<(), LedgerIndex>,
-    milestone_index_to_milestone: TableBatch<MilestoneIndex, Milestone>,
+    milestone_index_to_milestone_id: TableBatch<MilestoneIndex, MilestoneId>,
+    milestone_id_to_milestone_payload: TableBatch<MilestoneId, MilestonePayload>,
     snapshot_info: TableBatch<(), SnapshotInfo>,
     solid_entry_point_to_milestone_index: TableBatch<SolidEntryPoint, MilestoneIndex>,
     milestone_index_to_output_diff: TableBatch<MilestoneIndex, OutputDiff>,
@@ -67,7 +69,8 @@ impl BatchBuilder for Storage {
         apply_batch!(output_id_unspent);
         apply_batch!(ed25519_address_to_output_id);
         apply_batch!(ledger_index);
-        apply_batch!(milestone_index_to_milestone);
+        apply_batch!(milestone_index_to_milestone_id);
+        apply_batch!(milestone_id_to_milestone_payload);
         apply_batch!(snapshot_info);
         apply_batch!(solid_entry_point_to_milestone_index);
         apply_batch!(milestone_index_to_output_diff);
@@ -110,7 +113,8 @@ impl_batch!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_batch!(Unspent, (), output_id_unspent);
 impl_batch!((Ed25519Address, OutputId), (), ed25519_address_to_output_id);
 impl_batch!((), LedgerIndex, ledger_index);
-impl_batch!(MilestoneIndex, Milestone, milestone_index_to_milestone);
+impl_batch!(MilestoneIndex, MilestoneId, milestone_index_to_milestone_id);
+impl_batch!(MilestoneId, MilestonePayload, milestone_id_to_milestone_payload);
 impl_batch!((), SnapshotInfo, snapshot_info);
 impl_batch!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_batch!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);

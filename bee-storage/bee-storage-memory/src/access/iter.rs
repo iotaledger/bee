@@ -8,8 +8,9 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
+    milestone::MilestoneIndex,
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{access::AsIterator, backend::StorageBackend, system::System};
@@ -42,6 +43,7 @@ macro_rules! impl_iter {
             }
         }
     };
+
     ($key:ty, $value:ty, $field:ident) => {
         impl<'a> AsIterator<'a, $key, $value> for Storage {
             type AsIter = TableIter<$key, $value>;
@@ -62,7 +64,8 @@ impl_iter!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_iter!(Unspent, (), output_id_unspent);
 impl_iter!((Ed25519Address, OutputId), (), ed25519_address_to_output_id);
 impl_iter!((), LedgerIndex, ledger_index);
-impl_iter!(MilestoneIndex, Milestone, milestone_index_to_milestone);
+impl_iter!(MilestoneIndex, MilestoneId, milestone_index_to_milestone_id);
+impl_iter!(MilestoneId, MilestonePayload, milestone_id_to_milestone_payload);
 impl_iter!((), SnapshotInfo, snapshot_info);
 impl_iter!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_iter!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);

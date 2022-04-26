@@ -9,8 +9,9 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
+    milestone::MilestoneIndex,
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{access::Delete, backend::StorageBackend};
@@ -40,7 +41,8 @@ impl_delete!(OutputId, ConsumedOutput, output_id_to_consumed_output);
 impl_delete!(Unspent, (), output_id_unspent);
 impl_delete!((Ed25519Address, OutputId), (), ed25519_address_to_output_id);
 impl_delete!((), LedgerIndex, ledger_index);
-impl_delete!(MilestoneIndex, Milestone, milestone_index_to_milestone);
+impl_delete!(MilestoneIndex, MilestoneId, milestone_index_to_milestone_id);
+impl_delete!(MilestoneId, MilestonePayload, milestone_id_to_milestone_payload);
 impl_delete!((), SnapshotInfo, snapshot_info);
 impl_delete!(SolidEntryPoint, MilestoneIndex, solid_entry_point_to_milestone_index);
 impl_delete!(MilestoneIndex, OutputDiff, milestone_index_to_output_diff);
