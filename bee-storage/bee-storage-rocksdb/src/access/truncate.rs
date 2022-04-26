@@ -6,8 +6,9 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
+    milestone::MilestoneIndex,
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::access::Truncate;
@@ -70,7 +71,8 @@ impl_truncate!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_truncate!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
 impl_truncate!((Ed25519Address, OutputId), (), CF_ED25519_ADDRESS_TO_OUTPUT_ID);
 impl_truncate!((), LedgerIndex, CF_LEDGER_INDEX);
-impl_truncate!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
+impl_truncate!(MilestoneIndex, MilestoneId, CF_MILESTONE_INDEX_TO_MILESTONE_ID);
+impl_truncate!(MilestoneId, MilestonePayload, CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD);
 impl_truncate!((), SnapshotInfo, CF_SNAPSHOT_INFO);
 impl_truncate!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
 impl_truncate!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);

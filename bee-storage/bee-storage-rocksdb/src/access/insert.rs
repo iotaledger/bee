@@ -7,8 +7,9 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
+    milestone::MilestoneIndex,
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{access::Insert, system::System};
@@ -129,12 +130,24 @@ impl Insert<(), LedgerIndex> for Storage {
     }
 }
 
-impl Insert<MilestoneIndex, Milestone> for Storage {
-    fn insert(&self, index: &MilestoneIndex, milestone: &Milestone) -> Result<(), <Self as StorageBackend>::Error> {
+impl Insert<MilestoneIndex, MilestoneId> for Storage {
+    fn insert(&self, index: &MilestoneIndex, id: &MilestoneId) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.put_cf(
-            self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?,
+            self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE_ID)?,
             index.pack_to_vec(),
-            milestone.pack_to_vec(),
+            id.pack_to_vec(),
+        )?;
+
+        Ok(())
+    }
+}
+
+impl Insert<MilestoneId, MilestonePayload> for Storage {
+    fn insert(&self, id: &MilestoneId, payload: &MilestonePayload) -> Result<(), <Self as StorageBackend>::Error> {
+        self.inner.put_cf(
+            self.cf_handle(CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?,
+            id.pack_to_vec(),
+            payload.pack_to_vec(),
         )?;
 
         Ok(())

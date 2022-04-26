@@ -6,8 +6,9 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
+    milestone::MilestoneIndex,
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{access::Fetch, system::System};
@@ -117,13 +118,23 @@ impl Fetch<(), LedgerIndex> for Storage {
     }
 }
 
-impl Fetch<MilestoneIndex, Milestone> for Storage {
-    fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Milestone>, <Self as StorageBackend>::Error> {
+impl Fetch<MilestoneIndex, MilestoneId> for Storage {
+    fn fetch(&self, index: &MilestoneIndex) -> Result<Option<MilestoneId>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_to_vec())?
+            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE_ID)?, index.pack_to_vec())?
             // Unpacking from storage is fine.
-            .map(|v| Milestone::unpack_unverified(&mut v.as_slice()).unwrap()))
+            .map(|v| MilestoneId::unpack_unverified(&mut v.as_slice()).unwrap()))
+    }
+}
+
+impl Fetch<MilestoneId, MilestonePayload> for Storage {
+    fn fetch(&self, id: &MilestoneId) -> Result<Option<MilestonePayload>, <Self as StorageBackend>::Error> {
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?, id.pack_to_vec())?
+            // Unpacking from storage is fine.
+            .map(|v| MilestonePayload::unpack_unverified(&mut v.as_slice()).unwrap()))
     }
 }
 

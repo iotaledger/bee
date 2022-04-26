@@ -5,8 +5,9 @@ use std::{marker::PhantomData, vec::IntoIter};
 
 use bee_ledger::types::{ConsumedOutput, CreatedOutput, OutputDiff};
 use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
+    milestone::MilestoneIndex,
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{access::MultiFetch, system::System};
@@ -61,6 +62,7 @@ impl_multi_fetch!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_multi_fetch!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_multi_fetch!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_multi_fetch!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
-impl_multi_fetch!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
+impl_multi_fetch!(MilestoneIndex, MilestoneId, CF_MILESTONE_INDEX_TO_MILESTONE_ID);
+impl_multi_fetch!(MilestoneId, MilestonePayload, CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD);
 impl_multi_fetch!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
 impl_multi_fetch!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);

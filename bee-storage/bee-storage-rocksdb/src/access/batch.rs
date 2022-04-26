@@ -7,8 +7,9 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
+    milestone::MilestoneIndex,
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::access::{Batch, BatchBuilder};
@@ -306,22 +307,22 @@ impl Batch<(), LedgerIndex> for Storage {
     }
 }
 
-impl Batch<MilestoneIndex, Milestone> for Storage {
+impl Batch<MilestoneIndex, MilestoneId> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
         index: &MilestoneIndex,
-        milestone: &Milestone,
+        id: &MilestoneId,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
         // Packing to bytes can't fail.
         index.pack(&mut batch.key_buf).unwrap();
         batch.value_buf.clear();
         // Packing to bytes can't fail.
-        milestone.pack(&mut batch.value_buf).unwrap();
+        id.pack(&mut batch.value_buf).unwrap();
 
         batch.inner.put_cf(
-            self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?,
+            self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE_ID)?,
             &batch.key_buf,
             &batch.value_buf,
         );
@@ -340,7 +341,43 @@ impl Batch<MilestoneIndex, Milestone> for Storage {
 
         batch
             .inner
-            .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, &batch.key_buf);
+            .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE_ID)?, &batch.key_buf);
+
+        Ok(())
+    }
+}
+
+impl Batch<MilestoneId, MilestonePayload> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        id: &MilestoneId,
+        payload: &MilestonePayload,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        batch.key_buf.clear();
+        // Packing to bytes can't fail.
+        id.pack(&mut batch.key_buf).unwrap();
+        batch.value_buf.clear();
+        // Packing to bytes can't fail.
+        payload.pack(&mut batch.value_buf).unwrap();
+
+        batch.inner.put_cf(
+            self.cf_handle(CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?,
+            &batch.key_buf,
+            &batch.value_buf,
+        );
+
+        Ok(())
+    }
+
+    fn batch_delete(&self, batch: &mut Self::Batch, id: &MilestoneId) -> Result<(), <Self as StorageBackend>::Error> {
+        batch.key_buf.clear();
+        // Packing to bytes can't fail.
+        id.pack(&mut batch.key_buf).unwrap();
+
+        batch
+            .inner
+            .delete_cf(self.cf_handle(CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?, &batch.key_buf);
 
         Ok(())
     }

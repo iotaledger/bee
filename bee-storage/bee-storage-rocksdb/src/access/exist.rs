@@ -7,8 +7,9 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
+    milestone::MilestoneIndex,
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::access::Exist;
@@ -103,11 +104,20 @@ impl Exist<(), LedgerIndex> for Storage {
     }
 }
 
-impl Exist<MilestoneIndex, Milestone> for Storage {
+impl Exist<MilestoneIndex, MilestoneId> for Storage {
     fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_to_vec())?
+            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE_ID)?, index.pack_to_vec())?
+            .is_some())
+    }
+}
+
+impl Exist<MilestoneId, MilestonePayload> for Storage {
+    fn exist(&self, id: &MilestoneId) -> Result<bool, <Self as StorageBackend>::Error> {
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?, id.pack_to_vec())?
             .is_some())
     }
 }

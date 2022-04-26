@@ -7,8 +7,9 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
+    milestone::MilestoneIndex,
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::access::Delete;
@@ -101,10 +102,19 @@ impl Delete<(), LedgerIndex> for Storage {
     }
 }
 
-impl Delete<MilestoneIndex, Milestone> for Storage {
+impl Delete<MilestoneIndex, MilestoneId> for Storage {
     fn delete(&self, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
-            .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_to_vec())?;
+            .delete_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE_ID)?, index.pack_to_vec())?;
+
+        Ok(())
+    }
+}
+
+impl Delete<MilestoneId, MilestonePayload> for Storage {
+    fn delete(&self, id: &MilestoneId) -> Result<(), <Self as StorageBackend>::Error> {
+        self.inner
+            .delete_cf(self.cf_handle(CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD)?, id.pack_to_vec())?;
 
         Ok(())
     }
