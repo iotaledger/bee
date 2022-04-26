@@ -8,8 +8,9 @@ use bee_ledger::types::{
 };
 use bee_message::{
     address::Ed25519Address,
-    milestone::{Milestone, MilestoneIndex},
+    milestone::MilestoneIndex,
     output::OutputId,
+    payload::milestone::{MilestoneId, MilestonePayload},
     Message, MessageId,
 };
 use bee_storage::{
@@ -197,15 +198,31 @@ fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError>
                 }
             }
         },
-        CF_MILESTONE_INDEX_TO_MILESTONE => match &tool.command {
+        CF_MILESTONE_INDEX_TO_MILESTONE_ID => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = Fetch::<MilestoneIndex, Milestone>::fetch(storage, &key)?;
+                let value = Fetch::<MilestoneIndex, MilestoneId>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Iterator => {
-                let iterator = AsIterator::<MilestoneIndex, Milestone>::iter(storage)?;
+                let iterator = AsIterator::<MilestoneIndex, MilestoneId>::iter(storage)?;
+
+                for result in iterator {
+                    let (key, value) = result?;
+                    println!("Key: {:?}\nValue: {:?}\n", key, value);
+                }
+            }
+        },
+        CF_MILESTONE_ID_TO_MILESTONE_PAYLOAD => match &tool.command {
+            RocksdbCommand::Fetch { key } => {
+                let key = MilestoneId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
+                let value = Fetch::<MilestoneId, MilestonePayload>::fetch(storage, &key)?;
+
+                println!("Key: {:?}\nValue: {:?}\n", key, value);
+            }
+            RocksdbCommand::Iterator => {
+                let iterator = AsIterator::<MilestoneId, MilestonePayload>::iter(storage)?;
 
                 for result in iterator {
                     let (key, value) = result?;
