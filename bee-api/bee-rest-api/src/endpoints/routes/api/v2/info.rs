@@ -49,11 +49,23 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(with_protocol_config(protocol_config))
         .and(with_node_info(node_info))
         .and(with_peer_manager(peer_manager))
-        .and_then(info)
+        .and_then(
+            |tangle, network_id, bech32_hrp, rest_api_config, protocol_config, node_info, peer_manager| async {
+                info(
+                    tangle,
+                    network_id,
+                    bech32_hrp,
+                    rest_api_config,
+                    protocol_config,
+                    node_info,
+                    peer_manager,
+                )
+            },
+        )
         .boxed()
 }
 
-pub(crate) async fn info<B: StorageBackend>(
+pub(crate) fn info<B: StorageBackend>(
     tangle: ResourceHandle<Tangle<B>>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
@@ -65,7 +77,6 @@ pub(crate) async fn info<B: StorageBackend>(
     let latest_milestone_index = tangle.get_latest_milestone_index();
     let latest_milestone_timestamp = tangle
         .get_milestone(latest_milestone_index)
-        .await
         .map(|m| m.timestamp())
         .unwrap_or_default();
 
@@ -73,7 +84,7 @@ pub(crate) async fn info<B: StorageBackend>(
         name: node_info.name.clone(),
         version: node_info.version.clone(),
         status: StatusResponse {
-            is_healthy: health::is_healthy(&tangle, &peer_manager).await,
+            is_healthy: health::is_healthy(&tangle, &peer_manager),
             latest_milestone_timestamp,
             latest_milestone_index: *latest_milestone_index,
             confirmed_milestone_index: *tangle.get_confirmed_milestone_index(),

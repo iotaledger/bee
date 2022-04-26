@@ -550,6 +550,7 @@ dependencies = [
  "bee-test",
  "num_cpus",
  "packable",
+ "parking_lot 0.12.0",
  "rocksdb",
  "serde",
  "thiserror",

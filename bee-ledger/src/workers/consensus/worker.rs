@@ -55,7 +55,7 @@ pub struct ConsensusWorker {
     pub tx: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 }
 
-pub(crate) async fn migration_from_milestone(
+pub(crate) fn migration_from_milestone(
     milestone_index: MilestoneIndex,
     milestone_id: MilestoneId,
     receipt: &ReceiptMilestoneOption,
@@ -83,7 +83,6 @@ where
 {
     let message = tangle
         .get(&message_id)
-        .await
         .ok_or(Error::MilestoneMessageNotFound(message_id))?;
 
     let milestone = match message.payload() {
@@ -159,15 +158,12 @@ where
             *receipt_migrated_at = *receipt_migrated_at + 1;
         }
 
-        Some(
-            migration_from_milestone(
-                milestone.essence().index(),
-                milestone_id,
-                receipt,
-                storage::fetch_unspent_treasury_output(storage)?,
-            )
-            .await?,
-        )
+        Some(migration_from_milestone(
+            milestone.essence().index(),
+            milestone_id,
+            receipt,
+            storage::fetch_unspent_treasury_output(storage)?,
+        )?)
     } else {
         None
     };
@@ -184,36 +180,30 @@ where
     tangle.update_confirmed_milestone_index(milestone.essence().index());
 
     for message_id in metadata.excluded_no_transaction_messages.iter() {
-        tangle
-            .update_metadata(message_id, |message_metadata| {
-                message_metadata.set_conflict(ConflictReason::None);
-                message_metadata.reference(milestone.essence().timestamp());
-            })
-            .await;
+        tangle.update_metadata(message_id, |message_metadata| {
+            message_metadata.set_conflict(ConflictReason::None);
+            message_metadata.reference(milestone.essence().timestamp());
+        });
         bus.dispatch(MessageReferenced {
             message_id: *message_id,
         });
     }
 
     for (message_id, conflict) in metadata.excluded_conflicting_messages.iter() {
-        tangle
-            .update_metadata(message_id, |message_metadata| {
-                message_metadata.set_conflict(*conflict);
-                message_metadata.reference(milestone.essence().timestamp());
-            })
-            .await;
+        tangle.update_metadata(message_id, |message_metadata| {
+            message_metadata.set_conflict(*conflict);
+            message_metadata.reference(milestone.essence().timestamp());
+        });
         bus.dispatch(MessageReferenced {
             message_id: *message_id,
         });
     }
 
     for message_id in metadata.included_messages.iter() {
-        tangle
-            .update_metadata(message_id, |message_metadata| {
-                message_metadata.set_conflict(ConflictReason::None);
-                message_metadata.reference(milestone.essence().timestamp());
-            })
-            .await;
+        tangle.update_metadata(message_id, |message_metadata| {
+            message_metadata.set_conflict(ConflictReason::None);
+            message_metadata.reference(milestone.essence().timestamp());
+        });
         bus.dispatch(MessageReferenced {
             message_id: *message_id,
         });

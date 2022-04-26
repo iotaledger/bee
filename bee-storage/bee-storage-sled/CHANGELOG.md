@@ -19,18 +19,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.6.0 - 2022-XX-XX
+## 0.7.0 - 2022-XX-XX
+
+### Changed
+
+- Use `packable` instead of `bee-common::packable` to serialize to and deserialize from storage.
 
 ### Removed
 
 - All `Balance` operations;
 - All `PaddedIndex` operations;
 
-## 0.5.0 - 2022-XX-XX
+## 0.6.0 - 2022-03-17
 
-### Changed
+### Added
 
-- Use `packable` instead of `bee-common::packable` to serialize to and deserialize from storage.
+- Implementation of `InsertStrict<MessageId, MessageMetadata>` for `Storage`;
+
+### Removed
+
+- Implementation of `Insert<MessageId, MessageMetadata>` for `Storage`;
+
+## 0.5.0 - 2022-03-11
+
+### Added
+
+- Implementation of `Update` for `Storage`;
 
 ## 0.4.0 - 2021-06-15
 

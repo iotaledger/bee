@@ -28,9 +28,7 @@ pub struct MessageMetadata {
     solidification_timestamp: u64,
     reference_timestamp: u32,
     #[packable(unpack_error_with = MessageMetadataError::OptionIndexId)]
-    omrsi: Option<IndexId>,
-    #[packable(unpack_error_with = MessageMetadataError::OptionIndexId)]
-    ymrsi: Option<IndexId>,
+    omrsi_and_ymrsi: Option<(IndexId, IndexId)>,
     #[packable(unpack_error_with = MessageMetadataError::Conflict)]
     conflict: ConflictReason,
 }
@@ -44,8 +42,7 @@ impl MessageMetadata {
         arrival_timestamp: u64,
         solidification_timestamp: u64,
         reference_timestamp: u32,
-        omrsi: Option<IndexId>,
-        ymrsi: Option<IndexId>,
+        omrsi_and_ymrsi: Option<(IndexId, IndexId)>,
         conflict: ConflictReason,
     ) -> Self {
         Self {
@@ -54,8 +51,7 @@ impl MessageMetadata {
             arrival_timestamp,
             solidification_timestamp,
             reference_timestamp,
-            omrsi,
-            ymrsi,
+            omrsi_and_ymrsi,
             conflict,
         }
     }
@@ -101,24 +97,22 @@ impl MessageMetadata {
         self.solidification_timestamp
     }
 
-    /// Get the oldest message root snapshot index of this message.
-    pub fn omrsi(&self) -> Option<IndexId> {
-        self.omrsi
+    /// Get the oldest and youngest message root snapshot index of this message.
+    pub fn omrsi_and_ymrsi(&self) -> Option<(IndexId, IndexId)> {
+        self.omrsi_and_ymrsi
     }
 
-    /// Set the oldest message root snapshot index of this message.
-    pub fn set_omrsi(&mut self, omrsi: IndexId) {
-        self.omrsi = Some(omrsi);
+    /// Set the oldest and youngest message root snapshot index of this message.
+    pub fn set_omrsi_and_ymrsi(&mut self, omrsi: IndexId, ymrsi: IndexId) {
+        self.omrsi_and_ymrsi = Some((omrsi, ymrsi));
     }
 
-    /// Get the youngest message root snapshot index of this message.
-    pub fn ymrsi(&self) -> Option<IndexId> {
-        self.ymrsi
-    }
-
-    /// Set the youngest message root snapshot index of this message.
-    pub fn set_ymrsi(&mut self, ymrsi: IndexId) {
-        self.ymrsi = Some(ymrsi);
+    /// Update the oldest and youngest message root snapshot index of this message if they have
+    /// been set already.
+    pub fn update_omrsi_and_ymrsi(&mut self, f: impl FnOnce(&mut IndexId, &mut IndexId)) {
+        if let Some((omrsi, ymrsi)) = self.omrsi_and_ymrsi.as_mut() {
+            f(omrsi, ymrsi);
+        }
     }
 
     /// Get the reference timestamp (seconds from the unix epoch) of this message.
