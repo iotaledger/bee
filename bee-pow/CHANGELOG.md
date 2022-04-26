@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.3.0 - 2022-04-26
+
+### Changed
+
+- Bumped `bee-ternary` to `v0.6.0`;
+- Bumped `iota-crypto` to `v0.9.2`;
+
 ## 0.2.0 - 2021-11-19
 
 ### Changed

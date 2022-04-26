@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New `./dashboard` route;
 - Automatically migrate identity from `Config.toml`;
 - Generate new identity if none is present;
+- Updated dependencies;
 
 ### Changed
 
