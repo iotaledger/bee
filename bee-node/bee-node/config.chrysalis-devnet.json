@@ -80,9 +80,6 @@
     "whiteFlagSolidificationTimeout": 2
   },
   "snapshot": {
-    "depth": 50,
-    "intervalSynced": 50,
-    "intervalUnsynced": 1000,
     "fullPath": "./snapshots/devnet/full_snapshot.bin",
     "deltaPath": "./snapshots/devnet/delta_snapshot.bin",
     "downloadUrls": [
@@ -90,7 +87,13 @@
         "full": "http://dbfiles.chrysalis-devnet.iota.cafe/snapshots/hornet/latest-full_snapshot.bin",
         "delta": "http://dbfiles.chrysalis-devnet.iota.cafe/snapshots/hornet/latest-delta_snapshot.bin"
       }
-    ]
+    ],
+    "create": {
+      "enabled": false,
+      "depth": 50,
+      "intervalSynced": 50,
+      "intervalUnsynced": 1000
+    }
   },
   "pruning": {
     "milestones": {

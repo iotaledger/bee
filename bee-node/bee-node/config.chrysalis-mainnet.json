@@ -115,9 +115,6 @@
     "whiteFlagSolidificationTimeout": 2
   },
   "snapshot": {
-    "depth": 50,
-    "intervalSynced": 50,
-    "intervalUnsynced": 1000,
     "fullPath": "./snapshots/mainnet/full_snapshot.bin",
     "deltaPath": "./snapshots/mainnet/delta_snapshot.bin",
     "downloadUrls": [
@@ -129,7 +126,13 @@
         "full": "https://cdn.tanglebay.com/snapshots/mainnet/full_snapshot.bin",
         "delta": "https://cdn.tanglebay.com/snapshots/mainnet/delta_snapshot.bin"
       }
-    ]
+    ],
+    "create": {
+      "enabled": false,
+      "depth": 50,
+      "intervalSynced": 50,
+      "intervalUnsynced": 1000
+    }
   },
   "pruning": {
     "milestones": {

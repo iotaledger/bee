@@ -8,10 +8,12 @@ use crate::{types::LedgerIndex, workers::snapshot::config::SnapshotConfig};
 /// Reasons for skipping snapshotting.
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum SnapshottingSkipReason {
-    #[error("Snapshotting skipped for the next {reached_in} indexes.")]
-    BelowThreshold { reached_in: u32 },
-    #[error("Snapshotting deferred for the next {next_in} indexes.")]
-    Deferred { next_in: u32 },
+    #[error("Snapshotting disabled.")]
+    Disabled,
+    #[error("Ledger index below snapshotting depth.")]
+    BelowDepth,
+    #[error("Ledger index below next snapshot index {next_snapshot_index}.")]
+    BelowNextSnapshotIndex { next_snapshot_index: u32 },
 }
 
 pub(crate) fn should_snapshot<B: StorageBackend>(
@@ -20,21 +22,24 @@ pub(crate) fn should_snapshot<B: StorageBackend>(
     snapshot_depth: u32,
     snapshot_config: &SnapshotConfig,
 ) -> Result<(), SnapshottingSkipReason> {
+    if !snapshot_config.snapshotting().enabled() {
+        return Err(SnapshottingSkipReason::Disabled);
+    }
+
+    // Get the index of the last snapshot.
     let snapshot_index = *tangle.get_snapshot_index();
 
     let snapshot_interval = if tangle.is_synced() {
-        snapshot_config.interval_synced()
+        snapshot_config.snapshotting().interval_synced()
     } else {
-        snapshot_config.interval_unsynced()
+        snapshot_config.snapshotting().interval_unsynced()
     };
 
-    if *ledger_index < snapshot_depth {
-        Err(SnapshottingSkipReason::BelowThreshold {
-            reached_in: snapshot_depth - *ledger_index,
-        })
+    if *ledger_index < snapshot_index + snapshot_depth {
+        Err(SnapshottingSkipReason::BelowDepth)
     } else if *ledger_index < snapshot_index + snapshot_interval {
-        Err(SnapshottingSkipReason::Deferred {
-            next_in: (snapshot_index + snapshot_interval) - *ledger_index,
+        Err(SnapshottingSkipReason::BelowNextSnapshotIndex {
+            next_snapshot_index: snapshot_index + snapshot_interval,
         })
     } else {
         Ok(())

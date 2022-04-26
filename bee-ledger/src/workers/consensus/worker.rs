@@ -283,15 +283,15 @@ where
         let bmd = tangle.config().below_max_depth();
 
         let snapshot_depth_min = bmd + EXTRA_SNAPSHOT_DEPTH;
-        let snapshot_depth = if snapshot_config.depth() < snapshot_depth_min {
+        let snapshot_depth = if snapshot_config.snapshotting().depth() < snapshot_depth_min {
             warn!(
                 "Configuration value for \"snapshot.depth\" is too low ({}), value changed to {}.",
-                snapshot_config.depth(),
+                snapshot_config.snapshotting().depth(),
                 snapshot_depth_min
             );
             snapshot_depth_min
         } else {
-            snapshot_config.depth()
+            snapshot_config.snapshotting().depth()
         };
 
         let snapshot_pruning_delta = bmd + EXTRA_PRUNING_DEPTH;
