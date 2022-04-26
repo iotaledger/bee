@@ -171,7 +171,7 @@ pub mod dto {
         pub kind: u32,
         pub index: u32,
         pub timestamp: u32,
-        #[serde(rename = "lastMilestoneId")]
+        #[serde(rename = "previousMilestoneId")]
         pub previous_milestone_id: String,
         #[serde(rename = "parentMessageIds")]
         pub parents: Vec<String>,
