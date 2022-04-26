@@ -567,7 +567,7 @@ dependencies = [
 
 [[package]]
 name = "bee-plugin-mps"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "bee-plugin",
@@ -698,7 +698,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-memory"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -720,7 +720,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-rocksdb"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -738,7 +738,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-sled"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -755,7 +755,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-test"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "bee-common",
  "bee-ledger",
