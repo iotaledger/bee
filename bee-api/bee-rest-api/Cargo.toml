@@ -1,6 +1,6 @@
 [package]
 name = "bee-rest-api"
-version = "0.2.2"
+version = "0.3.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "The default REST API implementation for the IOTA Bee node software."
@@ -14,13 +14,13 @@ homepage = "https://www.iota.org"
 bee-common = { version = "0.6.0", path = "../../bee-common/bee-common", default-features = false, optional = true }
 bee-gossip = { version = "0.6.0", path = "../../bee-network/bee-gossip", default-features = false, optional = true }
 bee-identity = { version = "0.1.0", path = "../../bee-identity", default-features = false }
-bee-ledger = { version = "0.6.1", path = "../../bee-ledger", default-features = false }
-bee-message = { version = "0.1.6", path = "../../bee-message", default-features = false }
-bee-pow = { version = "0.2.0", path = "../../bee-pow", default-features = false }
-bee-protocol = { version = "0.2.2", path = "../../bee-protocol", default-features = false, optional = true }
+bee-ledger = { version = "0.7.0", path = "../../bee-ledger", default-features = false }
+bee-message = { version = "0.2.0", path = "../../bee-message", default-features = false }
+bee-pow = { version = "0.3.0", path = "../../bee-pow", default-features = false }
+bee-protocol = { version = "0.3.0", path = "../../bee-protocol", default-features = false, optional = true }
 bee-runtime = { version = "0.1.1-alpha", path = "../../bee-runtime", default-features = false, optional = true  }
 bee-storage = { version = "0.11.0", path = "../../bee-storage/bee-storage", default-features = false, optional = true }
-bee-tangle = { version = "0.3.0", path = "../../bee-tangle", default-features = false, optional = true }
+bee-tangle = { version = "0.4.0", path = "../../bee-tangle", default-features = false, optional = true }
 
 async-trait = { version = "0.1.51", default-features = false, optional = true }
 auth-helper = { version = "0.2.0", default-features = false }
