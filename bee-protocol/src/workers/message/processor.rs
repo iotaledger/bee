@@ -36,6 +36,7 @@ use crate::{
 pub(crate) struct ProcessorWorkerEvent {
     pub(crate) from: Option<PeerId>,
     pub(crate) message_packet: MessagePacket,
+    pub(crate) pow_score: f64,
     pub(crate) notifier: Option<Sender<Result<MessageId, MessageSubmitterError>>>,
 }
 
@@ -46,6 +47,7 @@ pub(crate) struct ProcessorWorker {
 #[derive(Clone)]
 pub(crate) struct ProcessorWorkerConfig {
     pub(crate) network_id: u64,
+    pub(crate) minimum_pow_score: f64,
     pub(crate) byte_cost: ByteCostConfig,
 }
 
@@ -113,6 +115,7 @@ where
                     'next_event: while let Ok(ProcessorWorkerEvent {
                         from,
                         message_packet,
+                        pow_score,
                         notifier,
                     }) = rx.recv().await
                     {
@@ -133,6 +136,15 @@ where
                                     message.protocol_version(),
                                     PROTOCOL_VERSION
                                 ),
+                                &metrics,
+                                notifier,
+                            );
+                            continue;
+                        }
+
+                        if pow_score < config.minimum_pow_score {
+                            notify_invalid_message(
+                                format!("Insufficient pow score: {} < {}.", pow_score, config.minimum_pow_score),
                                 &metrics,
                                 notifier,
                             );
